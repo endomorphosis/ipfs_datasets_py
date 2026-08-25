@@ -115,12 +115,13 @@ pytest tests/unit/legal_scrapers/test_phase11_legal_scrapers.py::TestCommonCrawl
 ```python
 from unittest.mock import patch, AsyncMock
 
-@patch('ipfs_datasets_py.processors.legal_scrapers.common_crawl_scraper.CommonCrawlSearchEngine')
+
+@patch("ipfs_datasets_py.processors.legal_scrapers.common_crawl_scraper.CommonCrawlSearchEngine")
 async def test_with_mocked_cc(mock_cc):
     mock_engine = AsyncMock()
     mock_engine.search_domain.return_value = [...]
     mock_cc.return_value = mock_engine
-    
+
     # Test code here
 ```
 
@@ -128,6 +129,7 @@ async def test_with_mocked_cc(mock_cc):
 
 ```python
 import pytest
+
 
 @pytest.mark.asyncio
 async def test_async_function():
@@ -141,6 +143,7 @@ async def test_async_function():
 @pytest.fixture
 def sample_data():
     return {"key": "value"}
+
 
 def test_with_fixture(sample_data):
     assert sample_data["key"] == "value"

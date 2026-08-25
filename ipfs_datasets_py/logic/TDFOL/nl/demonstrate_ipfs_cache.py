@@ -9,11 +9,7 @@ This script demonstrates:
 4. CID validation and parsing
 """
 
-from ipfs_datasets_py.logic.TDFOL.nl.cache_utils import (
-    create_cache_cid,
-    validate_cid,
-    parse_cid
-)
+from ipfs_datasets_py.logic.TDFOL.nl.cache_utils import create_cache_cid, validate_cid, parse_cid
 from ipfs_datasets_py.logic.TDFOL.nl.llm_nl_converter import LLMResponseCache
 
 
@@ -22,14 +18,10 @@ def demonstrate_cid_generation():
     print("=" * 70)
     print("1. IPFS CID Generation")
     print("=" * 70)
-    
+
     # Example cache data
-    data = {
-        "text": "All contractors must pay taxes",
-        "provider": "openai",
-        "prompt_hash": "abc123"
-    }
-    
+    data = {"text": "All contractors must pay taxes", "provider": "openai", "prompt_hash": "abc123"}
+
     # Generate CID
     cid = create_cache_cid(data)
     print(f"Input data: {data}")
@@ -44,14 +36,14 @@ def demonstrate_cid_determinism():
     print("=" * 70)
     print("2. CID Determinism")
     print("=" * 70)
-    
+
     data = {"text": "test", "provider": "openai", "prompt_hash": "xyz"}
-    
+
     # Generate same CID multiple times
     cid1 = create_cache_cid(data)
     cid2 = create_cache_cid(data)
     cid3 = create_cache_cid(data)
-    
+
     print(f"Input data: {data}")
     print(f"CID #1: {cid1}")
     print(f"CID #2: {cid2}")
@@ -65,15 +57,15 @@ def demonstrate_cid_uniqueness():
     print("=" * 70)
     print("3. CID Uniqueness")
     print("=" * 70)
-    
+
     data1 = {"text": "text1", "provider": "openai", "prompt_hash": "a"}
     data2 = {"text": "text2", "provider": "openai", "prompt_hash": "a"}
     data3 = {"text": "text1", "provider": "anthropic", "prompt_hash": "a"}
-    
+
     cid1 = create_cache_cid(data1)
     cid2 = create_cache_cid(data2)
     cid3 = create_cache_cid(data3)
-    
+
     print(f"Data 1: {data1}")
     print(f"  CID: {cid1[:30]}...")
     print()
@@ -92,23 +84,18 @@ def demonstrate_cid_validation():
     print("=" * 70)
     print("4. CID Validation")
     print("=" * 70)
-    
+
     # Valid CID
     data = {"text": "hello", "provider": "openai", "prompt_hash": "xyz"}
     valid_cid = create_cache_cid(data)
-    
+
     # Invalid CIDs
-    invalid_cids = [
-        "not_a_cid",
-        "bafk_incomplete",
-        "12345",
-        ""
-    ]
-    
+    invalid_cids = ["not_a_cid", "bafk_incomplete", "12345", ""]
+
     print(f"Valid CID: {valid_cid}")
     print(f"  Validation: {validate_cid(valid_cid)} ✓")
     print()
-    
+
     for invalid_cid in invalid_cids:
         print(f"Invalid CID: '{invalid_cid}'")
         print(f"  Validation: {validate_cid(invalid_cid)} ✓")
@@ -120,13 +107,13 @@ def demonstrate_cid_parsing():
     print("=" * 70)
     print("5. CID Parsing")
     print("=" * 70)
-    
+
     data = {"text": "parse test", "provider": "openai", "prompt_hash": "abc"}
     cid = create_cache_cid(data)
-    
+
     print(f"CID: {cid}")
     print()
-    
+
     info = parse_cid(cid)
     print("Parsed CID metadata:")
     print(f"  Version: {info['version']} (CIDv1)")
@@ -141,37 +128,37 @@ def demonstrate_cache_operations():
     print("=" * 70)
     print("6. Cache Operations")
     print("=" * 70)
-    
+
     # Create cache
     cache = LLMResponseCache(max_size=10)
-    
+
     # Store some responses
     print("Storing responses in cache:")
     cache.put("hello world", "openai", "hash1", "∀x.Hello(x)", 0.95)
     cache.put("contractors must pay", "openai", "hash2", "∀x.(Contractor(x) → O(Pay(x)))", 0.90)
     cache.put("eventually succeed", "anthropic", "hash3", "F(Succeed())", 0.88)
-    
+
     print(f"  Stored 3 responses")
     print(f"  Cache size: {len(cache.cache)} entries")
     print()
-    
+
     # Retrieve responses
     print("Retrieving responses from cache:")
     result1 = cache.get("hello world", "openai", "hash1")
     result2 = cache.get("contractors must pay", "openai", "hash2")
     result3 = cache.get("unknown text", "openai", "hash99")  # Cache miss
-    
+
     if result1:
         formula, confidence = result1
         print(f"  Hit: 'hello world' → {formula} (confidence: {confidence})")
-    
+
     if result2:
         formula, confidence = result2
         print(f"  Hit: 'contractors must pay' → {formula} (confidence: {confidence})")
-    
+
     print(f"  Miss: 'unknown text' → None")
     print()
-    
+
     # Cache statistics
     stats = cache.stats()
     print("Cache statistics:")
@@ -188,7 +175,7 @@ def main():
     print("║" + " " * 10 + "IPFS CID-Based Cache Demonstration" + " " * 24 + "║")
     print("╚" + "═" * 68 + "╝")
     print()
-    
+
     try:
         demonstrate_cid_generation()
         demonstrate_cid_determinism()
@@ -196,7 +183,7 @@ def main():
         demonstrate_cid_validation()
         demonstrate_cid_parsing()
         demonstrate_cache_operations()
-        
+
         print("=" * 70)
         print("✅ All demonstrations completed successfully!")
         print("=" * 70)
@@ -209,13 +196,14 @@ def main():
         print("  • Cache operations work seamlessly with CIDs")
         print("  • CIDs enable distributed caching with IPFS")
         print()
-        
+
     except Exception as e:
         print(f"❌ Error during demonstration: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
-    
+
     return 0
 
 

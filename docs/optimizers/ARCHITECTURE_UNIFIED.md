@@ -164,16 +164,22 @@ from ipfs_datasets_py.optimizers.common import (
     BaseHarness,
 )
 
+
 class LogicTheoremOptimizer(BaseOptimizer):
     """Extends base with theorem-proving specific logic."""
+
     pass
+
 
 class GraphRAGOptimizer(BaseOptimizer):
     """Extends base with knowledge graph specific logic."""
+
     pass
+
 
 class AgenticCodeOptimizer(BaseOptimizer):
     """Extends base with code optimization specific logic."""
+
     pass
 ```
 
@@ -234,30 +240,31 @@ They serve as both documentation and as reference implementations for new optimi
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
+
 class BaseOptimizer(ABC):
-  """Base class for all optimizers."""
+    """Base class for all optimizers."""
 
-  @abstractmethod
-  def generate(self, input_data: Any, context: OptimizationContext) -> Any:
-    """Generate initial artifact from input."""
+    @abstractmethod
+    def generate(self, input_data: Any, context: OptimizationContext) -> Any:
+        """Generate initial artifact from input."""
 
-  @abstractmethod
-  def critique(self, artifact: Any, context: OptimizationContext) -> Tuple[float, List[str]]:
-    """Evaluate artifact quality (score + feedback list)."""
+    @abstractmethod
+    def critique(self, artifact: Any, context: OptimizationContext) -> Tuple[float, List[str]]:
+        """Evaluate artifact quality (score + feedback list)."""
 
-  @abstractmethod
-  def optimize(
-    self,
-    artifact: Any,
-    score: float,
-    feedback: List[str],
-    context: OptimizationContext,
-  ) -> Any:
-    """Improve artifact based on critique feedback."""
+    @abstractmethod
+    def optimize(
+        self,
+        artifact: Any,
+        score: float,
+        feedback: List[str],
+        context: OptimizationContext,
+    ) -> Any:
+        """Improve artifact based on critique feedback."""
 
-  def run_session(self, input_data: Any, context: OptimizationContext) -> Dict[str, Any]:
-    """Run a full optimization session (generate → critique → optimize → validate)."""
-    ...
+    def run_session(self, input_data: Any, context: OptimizationContext) -> Dict[str, Any]:
+        """Run a full optimization session (generate → critique → optimize → validate)."""
+        ...
 ```
 
 ### BaseCritic Interface
@@ -267,22 +274,25 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, List
 
+
 @dataclass
 class CriticScore:
     """Standardized critic score."""
+
     overall: float  # 0-1
     dimensions: Dict[str, float]  # Dimension scores
     feedback: List[str]  # Improvement suggestions
     confidence: float  # Score confidence
 
+
 class BaseCritic(ABC):
     """Base class for all critics."""
-    
+
     @abstractmethod
     def evaluate(self, artifact: Any, context: Dict) -> CriticScore:
         """Evaluate artifact quality."""
         pass
-    
+
     @abstractmethod
     def get_dimensions(self) -> List[str]:
         """Return evaluation dimensions."""
@@ -299,34 +309,38 @@ convergence rather than an abstract interface. It exposes helpers such as
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+
 @dataclass
 class RoundRecord:
-  round_number: int
-  score: float
-  feedback: List[str] = field(default_factory=list)
-  artifact_snapshot: Optional[Any] = None
-  duration_ms: float = 0.0
-  metadata: Dict[str, Any] = field(default_factory=dict)
+    round_number: int
+    score: float
+    feedback: List[str] = field(default_factory=list)
+    artifact_snapshot: Optional[Any] = None
+    duration_ms: float = 0.0
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class BaseSession:
-  session_id: str
-  domain: str = "general"
-  max_rounds: int = 10
-  target_score: float = 0.85
-  convergence_threshold: float = 0.01
-  rounds: List[RoundRecord] = field(default_factory=list)
-  converged: bool = False
-  metadata: Dict[str, Any] = field(default_factory=dict)
+    session_id: str
+    domain: str = "general"
+    max_rounds: int = 10
+    target_score: float = 0.85
+    convergence_threshold: float = 0.01
+    rounds: List[RoundRecord] = field(default_factory=list)
+    converged: bool = False
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
-  def start_round(self) -> int: ...
-  def record_round(self, score: float, feedback: Optional[List[str]] = None, **kwargs) -> RoundRecord: ...
-  @property
-  def current_round(self) -> int: ...
-  @property
-  def best_score(self) -> float: ...
-  @property
-  def trend(self) -> str: ...
+    def start_round(self) -> int: ...
+    def record_round(
+        self, score: float, feedback: Optional[List[str]] = None, **kwargs
+    ) -> RoundRecord: ...
+    @property
+    def current_round(self) -> int: ...
+    @property
+    def best_score(self) -> float: ...
+    @property
+    def trend(self) -> str: ...
 ```
 
 ## Integration Strategy

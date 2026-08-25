@@ -7,10 +7,12 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-def select_sampled_places(citations: list[Path], sample_strategy: dict[str, int], reference_db) -> list[int]:
+def select_sampled_places(
+    citations: list[Path], sample_strategy: dict[str, int], reference_db
+) -> list[int]:
     """
     Randomly select specific places to validate based on sampling strategy.
-    
+
     Args:
         citations (list[Path]): list of citation parquet files.
         sample_strategy (dict[str, int]): Dictionary mapping state names to sample sizes.
@@ -19,14 +21,14 @@ def select_sampled_places(citations: list[Path], sample_strategy: dict[str, int]
     Returns:
         list[int]: list of sampled place GNIS identifiers.
     """
-    RANDOM_SEED = 420 # TODO Import this from a config file or environment variable
+    RANDOM_SEED = 420  # TODO Import this from a config file or environment variable
     # Extract GNIS IDs from citation filenames
-    gnis_set: set[int] = set(int(file.stem.split('_')[0]) for file in citations)
+    gnis_set: set[int] = set(int(file.stem.split("_")[0]) for file in citations)
 
     # Get state information for each GNIS ID
     state_to_gnis: dict[str, list[int]] = {}
     for batch in itertools.batched(gnis_set, 100):
-        batch_str = ', '.join(map(str, batch))
+        batch_str = ", ".join(map(str, batch))
         query = f"""
             SELECT gnis, state_name
             FROM locations 

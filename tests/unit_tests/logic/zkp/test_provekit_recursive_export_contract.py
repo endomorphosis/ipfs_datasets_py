@@ -117,9 +117,7 @@ class _FakeOnchainClient:
         self.calls.append(("submit", (proof_hex, public_inputs_hex, from_account)))
         return "0x" + "cc" * 32
 
-    def wait_for_confirmation(
-        self, tx_hash: str, timeout_seconds: int = 300
-    ) -> Mapping[str, Any]:
+    def wait_for_confirmation(self, tx_hash: str, timeout_seconds: int = 300) -> Mapping[str, Any]:
         self.calls.append(("confirm", tx_hash))
         return {"transactionHash": tx_hash, "status": 1, "blockNumber": 42}
 
@@ -238,18 +236,14 @@ class TestNoLeakRecursivePublicInputs:
         # Public inputs should only contain hashes / commitments, not raw text.
         for k, v in proof.public_inputs.items():
             for axiom in private_axioms:
-                assert axiom not in str(v), (
-                    f"Private axiom text found in public input '{k}': {v!r}"
-                )
+                assert axiom not in str(v), f"Private axiom text found in public input '{k}': {v!r}"
 
     def test_recursive_zkpproof_bytes_contain_no_private_axiom_text(self):
         private_axioms = [b"private_axiom_text_must_not_leak", b"also_private"]
         proof = _sample_zkpproof()
 
         for axiom in private_axioms:
-            assert axiom not in proof.proof_data, (
-                f"Private axiom bytes found in proof_data"
-            )
+            assert axiom not in proof.proof_data, f"Private axiom bytes found in proof_data"
 
     def test_recursive_zkpproof_metadata_contains_no_private_axiom_text(self):
         private_axioms = ["private_secret", "witness_material"]
@@ -386,15 +380,11 @@ class TestGateCriteriaDocs:
     """Verify that the evaluation document exists and covers required topics."""
 
     EVAL_DOC = (
-        Path(__file__).resolve().parents[5]
-        / "docs"
-        / "PROVEKIT_RECURSIVE_ONCHAIN_EVALUATION.md"
+        Path(__file__).resolve().parents[5] / "docs" / "PROVEKIT_RECURSIVE_ONCHAIN_EVALUATION.md"
     )
 
     def test_evaluation_document_exists(self):
-        assert self.EVAL_DOC.exists(), (
-            f"Missing evaluation document: {self.EVAL_DOC}"
-        )
+        assert self.EVAL_DOC.exists(), f"Missing evaluation document: {self.EVAL_DOC}"
 
     def test_evaluation_document_references_gate_criteria(self):
         text = self.EVAL_DOC.read_text(encoding="utf-8")

@@ -3,6 +3,7 @@ Embedding Generation Tools — thin MCP shim.
 
 All business logic lives in ipfs_datasets_py.embeddings.generation_engine.
 """
+
 from __future__ import annotations
 
 from ipfs_datasets_py.embeddings.generation_engine import (  # noqa: F401
@@ -15,15 +16,28 @@ from ipfs_datasets_py.embeddings.generation_engine import (  # noqa: F401
 def get_available_tools():
     """Return the list of available embedding tools for MCP registration."""
     return [
-        {"name": "generate_embedding", "description": "Generate a single text embedding", "function": generate_embedding},
-        {"name": "generate_batch_embeddings", "description": "Generate embeddings for multiple texts", "function": generate_batch_embeddings},
-        {"name": "generate_embeddings_from_file", "description": "Generate embeddings from a file", "function": generate_embeddings_from_file},
+        {
+            "name": "generate_embedding",
+            "description": "Generate a single text embedding",
+            "function": generate_embedding,
+        },
+        {
+            "name": "generate_batch_embeddings",
+            "description": "Generate embeddings for multiple texts",
+            "function": generate_batch_embeddings,
+        },
+        {
+            "name": "generate_embeddings_from_file",
+            "description": "Generate embeddings from a file",
+            "function": generate_embeddings_from_file,
+        },
     ]
 
 
 # ---------------------------------------------------------------------------
 # Backward-compatible legacy class shims
 # ---------------------------------------------------------------------------
+
 
 class EmbeddingGenerationTool:
     """Legacy MCP tool wrapper for embedding generation (backward compat)."""

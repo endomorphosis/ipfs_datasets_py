@@ -31,24 +31,17 @@ from .contracts import (
 )
 
 
-HAMMER_EVIDENCE_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.hammer-evidence.v1"
-)
+HAMMER_EVIDENCE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.hammer-evidence.v1"
 HAMMER_TRANSLATED_ENTAILMENT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "hammer-translated-entailment.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.hammer-translated-entailment.v1"
 )
 HAMMER_TRANSLATION_TERMINAL_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "hammer-translation-terminal.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.hammer-translation-terminal.v1"
 )
 HAMMER_PREMISE_SELECTION_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "hammer-premise-selection.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.hammer-premise-selection.v1"
 )
-SEMANTIC_CONTEXT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.semantic-stage-context.v1"
-)
+SEMANTIC_CONTEXT_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.semantic-stage-context.v1"
 
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 
@@ -231,19 +224,11 @@ def _json(value: object, *, field: str) -> object:
     if isinstance(value, Mapping):
         if not all(isinstance(key, str) for key in value):
             raise _error(f"{field} object keys must be strings")
-        result = {
-            key: _json(item, field=f"{field}.{key}")
-            for key, item in value.items()
-        }
+        result = {key: _json(item, field=f"{field}.{key}") for key, item in value.items()}
         canonical_json(result)
         return result
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
-        result = [
-            _json(item, field=f"{field}[]")
-            for item in value
-        ]
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        result = [_json(item, field=f"{field}[]") for item in value]
         canonical_json(result)
         return result
     if value is None or isinstance(value, (str, bool, int, float)):
@@ -277,8 +262,7 @@ def _exact_keys(
         missing = sorted(set(expected) - actual)
         unknown = sorted(actual - set(expected))
         raise _error(
-            f"{field} used an unexpected schema "
-            f"(missing={missing!r}, unknown={unknown!r})"
+            f"{field} used an unexpected schema (missing={missing!r}, unknown={unknown!r})"
         )
 
 
@@ -343,9 +327,7 @@ def _self_digest(
         for key, item in value.items()
         if key != digest_field
     }
-    expected = hashlib.sha256(
-        canonical_json(body).encode("utf-8")
-    ).hexdigest()
+    expected = hashlib.sha256(canonical_json(body).encode("utf-8")).hexdigest()
     if supplied != expected:
         raise _error(f"{field}.{digest_field} does not match its payload")
     return supplied
@@ -388,8 +370,7 @@ def project_hammer_semantic_context_for_replay(
             "schema": SEMANTIC_CONTEXT_SCHEMA,
             "source_text_sha256": source,
             "artifact_bindings": [
-                f"@semantic-artifact-{index:03d}"
-                for index in range(len(artifact_digests))
+                f"@semantic-artifact-{index:03d}" for index in range(len(artifact_digests))
             ],
         }
 
@@ -462,10 +443,7 @@ def project_hammer_semantic_context_for_replay(
                     "policy_reason": artifact.get("policy_reason"),
                     "evidence": _json(
                         artifact["evidence"],
-                        field=(
-                            f"Hammer semantic context.artifacts[{index}]."
-                            "evidence"
-                        ),
+                        field=(f"Hammer semantic context.artifacts[{index}].evidence"),
                     ),
                 }
             )
@@ -551,10 +529,13 @@ def project_hammer_premise_selection_for_replay(
             item.get("premise_id"),
             field=f"Hammer premise selection.selected[{index}].premise_id",
         )
-        if _integer(
-            item.get("rank"),
-            field=f"Hammer premise selection.selected[{index}].rank",
-        ) != index:
+        if (
+            _integer(
+                item.get("rank"),
+                field=f"Hammer premise selection.selected[{index}].rank",
+            )
+            != index
+        ):
             raise _error("Hammer premise selection ranks are not contiguous")
         source_index = _integer(
             item.get("source_index"),
@@ -565,10 +546,7 @@ def project_hammer_premise_selection_for_replay(
         source_indices.append(source_index)
         _digest(
             item.get("statement_sha256"),
-            field=(
-                f"Hammer premise selection.selected[{index}]."
-                "statement_sha256"
-            ),
+            field=(f"Hammer premise selection.selected[{index}].statement_sha256"),
         )
         if policy == "learned_selector":
             score = item.get("score")
@@ -578,17 +556,11 @@ def project_hammer_premise_selection_for_replay(
         else:
             _integer(
                 item.get("overlap_count"),
-                field=(
-                    f"Hammer premise selection.selected[{index}]."
-                    "overlap_count"
-                ),
+                field=(f"Hammer premise selection.selected[{index}].overlap_count"),
             )
             basis_points = _integer(
                 item.get("overlap_basis_points"),
-                field=(
-                    f"Hammer premise selection.selected[{index}]."
-                    "overlap_basis_points"
-                ),
+                field=(f"Hammer premise selection.selected[{index}].overlap_basis_points"),
             )
             if basis_points > 10_000:
                 raise _error("Hammer overlap_basis_points exceeds 10000")
@@ -628,9 +600,7 @@ def project_hammer_premise_selection_for_replay(
             field="Hammer premise selection.symai_invoked",
         )
         expected_contract = (
-            "hssl-symai-semantic-overlap-v1"
-            if invoked
-            else "ambiguity-gate-closed-source-order-v1"
+            "hssl-symai-semantic-overlap-v1" if invoked else "ambiguity-gate-closed-source-order-v1"
         )
         if ranking_contract != expected_contract:
             raise _error("Hammer SyMAI invocation/ranking contract disagrees")
@@ -647,9 +617,7 @@ def project_hammer_premise_selection_for_replay(
                 field="Hammer premise selection.symai_output_sha256",
             )
         elif output_digest is not None:
-            raise _error(
-                "non-invoked SyMAI premise selection carried an output digest"
-            )
+            raise _error("non-invoked SyMAI premise selection carried an output digest")
         _integer(
             receipt.get("semantic_term_count"),
             field="Hammer premise selection.semantic_term_count",
@@ -717,9 +685,7 @@ def validate_hammer_premise_selection_upstream_bindings(
         )
         if key in identity
     }
-    identity_sha256 = hashlib.sha256(
-        canonical_json(stable_identity).encode("utf-8")
-    ).hexdigest()
+    identity_sha256 = hashlib.sha256(canonical_json(stable_identity).encode("utf-8")).hexdigest()
     if receipt.get("symai_identity_sha256") != identity_sha256:
         raise _error("Hammer A11 ranking references another SyMAI backend identity")
 
@@ -788,9 +754,7 @@ def _project_direct_hammer(value: Mapping[str, object]) -> dict[str, object]:
     )
     returncode = raw.get("returncode")
     if isinstance(returncode, bool) or not isinstance(returncode, int):
-        raise _error(
-            "Hammer translated evidence.returncode must be an integer"
-        )
+        raise _error("Hammer translated evidence.returncode must be an integer")
     termination_reason = _nonempty(
         raw.get("termination_reason"),
         field="Hammer translated evidence.termination_reason",
@@ -804,9 +768,7 @@ def _project_direct_hammer(value: Mapping[str, object]) -> dict[str, object]:
         "wall_clock_deadline",
     }
     if termination_reason not in allowed_terminations:
-        raise _error(
-            "Hammer translated evidence used an unknown termination reason"
-        )
+        raise _error("Hammer translated evidence used an unknown termination reason")
     expected_termination = (
         "orphaned_process_group"
         if not reaped
@@ -816,11 +778,7 @@ def _project_direct_hammer(value: Mapping[str, object]) -> dict[str, object]:
             else (
                 "signal_exit"
                 if returncode < 0
-                else (
-                    "nonzero_exit"
-                    if returncode > 0
-                    else termination_reason
-                )
+                else ("nonzero_exit" if returncode > 0 else termination_reason)
             )
         )
     )
@@ -828,12 +786,9 @@ def _project_direct_hammer(value: Mapping[str, object]) -> dict[str, object]:
         returncode == 0
         and not timed_out
         and reaped
-        and termination_reason
-        not in {"completed", "completed_with_descendant_cleanup"}
+        and termination_reason not in {"completed", "completed_with_descendant_cleanup"}
     ):
-        raise _error(
-            "Hammer translated evidence termination reason is inconsistent"
-        )
+        raise _error("Hammer translated evidence termination reason is inconsistent")
     proof_success = _boolean(
         raw.get("proof_success"),
         field="Hammer translated evidence.proof_success",
@@ -874,9 +829,10 @@ def _project_direct_hammer(value: Mapping[str, object]) -> dict[str, object]:
         )
         if native.get("strategy") != raw.get("translation_shape"):
             raise _error("Hammer reconstruction strategy drifted from translation")
-        if native.get("certificate_sha256") != hashlib.sha256(
-            proof_text.encode("utf-8")
-        ).hexdigest():
+        if (
+            native.get("certificate_sha256")
+            != hashlib.sha256(proof_text.encode("utf-8")).hexdigest()
+        ):
             raise _error("Hammer native reconstruction certificate is mismatched")
         if native.get("authoritative") is not False:
             raise _error("Hammer candidate cannot be authoritative")
@@ -885,9 +841,7 @@ def _project_direct_hammer(value: Mapping[str, object]) -> dict[str, object]:
     elif proof_text is not None or reconstruction is not None:
         raise _error("Hammer non-candidate carried proof/reconstruction data")
 
-    raw["semantic_context"] = project_hammer_semantic_context_for_replay(
-        raw["semantic_context"]
-    )
+    raw["semantic_context"] = project_hammer_semantic_context_for_replay(raw["semantic_context"])
     if "premise_selection" in raw:
         premise = _mapping(
             raw["premise_selection"],
@@ -899,12 +853,8 @@ def _project_direct_hammer(value: Mapping[str, object]) -> dict[str, object]:
             "obligation_sha256",
         ):
             if premise.get(field_name) != raw.get(field_name):
-                raise _error(
-                    "Hammer premise selection does not bind translated evidence"
-                )
-        raw["premise_selection"] = (
-            project_hammer_premise_selection_for_replay(premise)
-        )
+                raise _error("Hammer premise selection does not bind translated evidence")
+        raw["premise_selection"] = project_hammer_premise_selection_for_replay(premise)
     return raw
 
 
@@ -929,9 +879,7 @@ def _coerce_exact_record(
             validator()
         serialized = record.to_dict()
     except (KeyError, TypeError, ValueError) as exc:
-        raise _error(
-            f"{field} is not a valid {record_type.__name__}: {exc}"
-        ) from exc
+        raise _error(f"{field} is not a valid {record_type.__name__}: {exc}") from exc
     canonical = _mapping(serialized, field=f"{field}.to_dict()")
     if canonical != raw:
         raise _error(f"{field} is not in canonical serialized form")
@@ -946,16 +894,12 @@ def _normalize_solver_command(
     field: str,
 ) -> list[str]:
     argv = _sequence(command, field=field)
-    if len(argv) < 2 or not all(
-        isinstance(item, str) and item for item in argv
-    ):
+    if len(argv) < 2 or not all(isinstance(item, str) and item for item in argv):
         raise _error(f"{field} must contain non-empty argv strings")
     suffix = {"smtlib": ".smt2", "tptp": ".p"}.get(target)
     if suffix is None:
         raise _error(f"{field} used an unsupported translation target")
-    expected_name = (
-        hashlib.sha256(attempt_id.encode("utf-8")).hexdigest()[:32] + suffix
-    )
+    expected_name = hashlib.sha256(attempt_id.encode("utf-8")).hexdigest()[:32] + suffix
     input_path = argv[-1]
     assert isinstance(input_path, str)
     path = PurePath(input_path)
@@ -1020,10 +964,7 @@ def _normalize_reconstruction_command(
         except (ValueError, IndexError) as exc:
             raise _error(f"{field} omitted Isabelle's -d directory") from exc
         directory = PurePath(argv[directory_index])
-        if (
-            not directory.is_absolute()
-            or not directory.name.startswith("hammer-isabelle-recon-")
-        ):
+        if not directory.is_absolute() or not directory.name.startswith("hammer-isabelle-recon-"):
             raise _error(f"{field} contains an unexpected Isabelle directory")
         argv[directory_index] = "<HAMMER_RECONSTRUCTION_DIRECTORY>"
     else:
@@ -1087,28 +1028,18 @@ def _normalize_kernel_command_template(
         source_count != 1 or directory_count != 0 or wildcard_indices
     ):
         raise _error(f"{field} must bind exactly one reconstruction source")
-    if target_itp == "isabelle" and (
-        source_count != 0 or directory_count != 1
-    ):
-        raise _error(
-            f"{field} must bind exactly one reconstruction directory"
-        )
+    if target_itp == "isabelle" and (source_count != 0 or directory_count != 1):
+        raise _error(f"{field} must bind exactly one reconstruction directory")
 
     executed = list(reconstruction_command)
     if len(argv) != len(executed):
         raise _error(f"{field} disagrees with the reconstruction command")
-    for index, (template_token, executed_token) in enumerate(
-        zip(argv, executed, strict=True)
-    ):
+    for index, (template_token, executed_token) in enumerate(zip(argv, executed, strict=True)):
         if not isinstance(executed_token, str) or not executed_token:
-            raise _error(
-                "Hammer reconstruction command contains an invalid argv token"
-            )
+            raise _error("Hammer reconstruction command contains an invalid argv token")
         if index in wildcard_indices:
             if executed_token.startswith("<HAMMER_"):
-                raise _error(
-                    f"{field} theory placeholder did not bind a concrete value"
-                )
+                raise _error(f"{field} theory placeholder did not bind a concrete value")
             argv[index] = executed_token
         elif template_token != executed_token:
             raise _error(f"{field} disagrees with the reconstruction command")
@@ -1277,12 +1208,8 @@ def _project_full_hammer(value: Mapping[str, object]) -> dict[str, object]:
             raise _error("Hammer solver evidence raw_stdout must be a string")
         if not isinstance(one_raw["raw_stderr"], str):
             raise _error("Hammer solver evidence raw_stderr must be a string")
-        if one_raw["solver_trace"] is not None and not isinstance(
-            one_raw["solver_trace"], str
-        ):
-            raise _error(
-                "Hammer solver evidence solver_trace must be null or a string"
-            )
+        if one_raw["solver_trace"] is not None and not isinstance(one_raw["solver_trace"], str):
+            raise _error("Hammer solver evidence solver_trace must be null or a string")
         expected_raw_digest = compute_content_digest(
             {
                 "stdout": evidence.raw_stdout,
@@ -1305,9 +1232,8 @@ def _project_full_hammer(value: Mapping[str, object]) -> dict[str, object]:
         portfolio_raw["cancelled_attempt_ids"],
         field="Hammer portfolio.cancelled_attempt_ids",
     )
-    if (
-        len(set(cancelled)) != len(cancelled)
-        or any(item not in attempt_tokens for item in cancelled)
+    if len(set(cancelled)) != len(cancelled) or any(
+        item not in attempt_tokens for item in cancelled
     ):
         raise _error("Hammer portfolio cancellation ids are invalid")
     denied_raw = _sequence(
@@ -1332,9 +1258,7 @@ def _project_full_hammer(value: Mapping[str, object]) -> dict[str, object]:
             )
         translation_id = str(denial["translation_id"])
         if translation_id not in translation_tokens:
-            translation_tokens[translation_id] = (
-                f"@translation-{len(translation_tokens):03d}"
-            )
+            translation_tokens[translation_id] = f"@translation-{len(translation_tokens):03d}"
         projected_denial = dict(denial)
         projected_denial["translation_id"] = translation_tokens[translation_id]
         projected_denied.append(projected_denial)
@@ -1350,9 +1274,7 @@ def _project_full_hammer(value: Mapping[str, object]) -> dict[str, object]:
     projected_portfolio["attempts"] = projected_attempts
     projected_portfolio["evidence"] = projected_evidence
     projected_portfolio["denied"] = projected_denied
-    projected_portfolio["cancelled_attempt_ids"] = [
-        attempt_tokens[str(item)] for item in cancelled
-    ]
+    projected_portfolio["cancelled_attempt_ids"] = [attempt_tokens[str(item)] for item in cancelled]
     projected_portfolio["resource_telemetry"] = telemetry
 
     candidate = None
@@ -1385,10 +1307,7 @@ def _project_full_hammer(value: Mapping[str, object]) -> dict[str, object]:
         supplied_content = digest_body.pop("content_digest")
         supplied_evidence = digest_body.pop("evidence_id")
         expected_content = compute_content_digest(digest_body)
-        if (
-            supplied_content != expected_content
-            or supplied_evidence != expected_content
-        ):
+        if supplied_content != expected_content or supplied_evidence != expected_content:
             raise _error("Hammer normalized evidence content address is invalid")
         attempt = attempt_records.get(attempt_id)
         if (
@@ -1400,14 +1319,11 @@ def _project_full_hammer(value: Mapping[str, object]) -> dict[str, object]:
         if normalized.verdict is not attempt.verdict:
             raise _error("Hammer normalized evidence verdict drifted from attempt")
         if normalized.candidate_id is not None and (
-            candidate is None
-            or normalized.candidate_id != candidate.candidate_id
+            candidate is None or normalized.candidate_id != candidate.candidate_id
         ):
             raise _error("Hammer normalized evidence candidate join is invalid")
         if normalized.translation_ids != [attempt.translation_id]:
-            raise _error(
-                "Hammer normalized evidence must bind exactly its translation"
-            )
+            raise _error("Hammer normalized evidence must bind exactly its translation")
         evidence = portfolio.evidence[attempt_id]
         expected_trace = (
             compute_content_digest(
@@ -1424,12 +1340,9 @@ def _project_full_hammer(value: Mapping[str, object]) -> dict[str, object]:
         projected = dict(normalized_record_raw)
         projected["request_id"] = "@request"
         projected["attempt_id"] = attempt_tokens[attempt_id]
-        projected["candidate_id"] = (
-            None if normalized.candidate_id is None else "@candidate"
-        )
+        projected["candidate_id"] = None if normalized.candidate_id is None else "@candidate"
         projected["translation_ids"] = [
-            translation_tokens[translation_id]
-            for translation_id in normalized.translation_ids
+            translation_tokens[translation_id] for translation_id in normalized.translation_ids
         ]
         projected.pop("evidence_id")
         projected.pop("content_digest")
@@ -1441,9 +1354,7 @@ def _project_full_hammer(value: Mapping[str, object]) -> dict[str, object]:
     environment_raw = raw["environment_lock"]
     if reconstruction_raw is not None:
         if candidate is None or candidate_raw is None or environment_raw is None:
-            raise _error(
-                "Hammer reconstruction requires candidate and environment lock"
-            )
+            raise _error("Hammer reconstruction requires candidate and environment lock")
         environment_record, environment_dict = _coerce_exact_record(
             environment_raw,
             EnvironmentLockRecord,
@@ -1451,13 +1362,9 @@ def _project_full_hammer(value: Mapping[str, object]) -> dict[str, object]:
         )
         if environment_record.itp is not request.itp:
             raise _error("Hammer environment lock targets another ITP")
-        expected_policy_digest = compute_content_digest(
-            request.policy.to_dict()
-        )
+        expected_policy_digest = compute_content_digest(request.policy.to_dict())
         if environment_record.policy_digest != expected_policy_digest:
-            raise _error(
-                "Hammer environment lock policy_digest is request-mismatched"
-            )
+            raise _error("Hammer environment lock policy_digest is request-mismatched")
         if environment_record.container_digest is not None:
             _content_address(
                 environment_dict["container_digest"],
@@ -1497,18 +1404,14 @@ def _project_full_hammer(value: Mapping[str, object]) -> dict[str, object]:
             "coq": "coqtop",
             "isabelle": "isabelle",
         }[request.itp.value]
-        pinned_kernel = environment_record.executable_paths.get(
-            primary_executable
-        )
+        pinned_kernel = environment_record.executable_paths.get(primary_executable)
         if (
             not isinstance(pinned_kernel, str)
             or not pinned_kernel.strip()
             or not PurePath(pinned_kernel).is_absolute()
             or reconstruction["kernel_command"][0] != pinned_kernel
         ):
-            raise _error(
-                "Hammer reconstruction command is not environment-locked"
-            )
+            raise _error("Hammer reconstruction command is not environment-locked")
         _normalize_kernel_command_template(
             environment_record.kernel_command_template,
             target_itp=request.itp.value,
@@ -1517,32 +1420,22 @@ def _project_full_hammer(value: Mapping[str, object]) -> dict[str, object]:
             field="Hammer environment lock.kernel_command_template",
         )
         for attempt_id, attempt in attempt_records.items():
-            command = projected_evidence[attempt_tokens[attempt_id]][
-                "command"
-            ]
-            pinned_solver = environment_record.executable_paths.get(
-                attempt.solver_name
-            )
+            command = projected_evidence[attempt_tokens[attempt_id]]["command"]
+            pinned_solver = environment_record.executable_paths.get(attempt.solver_name)
             if (
                 not isinstance(pinned_solver, str)
                 or not pinned_solver.strip()
                 or not PurePath(pinned_solver).is_absolute()
                 or command[0] != pinned_solver
             ):
-                raise _error(
-                    "Hammer solver command is not environment-locked"
-                )
-            pinned_version = environment_record.solver_versions.get(
-                attempt.solver_name
-            )
+                raise _error("Hammer solver command is not environment-locked")
+            pinned_version = environment_record.solver_versions.get(attempt.solver_name)
             if (
                 not isinstance(pinned_version, str)
                 or not pinned_version.strip()
                 or attempt.solver_version != pinned_version
             ):
-                raise _error(
-                    "Hammer solver version is not environment-locked"
-                )
+                raise _error("Hammer solver version is not environment-locked")
         environment = dict(environment_dict)
         environment["lock_id"] = "@environment"
         environment.pop("pinned_at")
@@ -1557,9 +1450,7 @@ def _project_full_hammer(value: Mapping[str, object]) -> dict[str, object]:
     if raw["reconstruction_kernel_accepted"] is not accepted:
         raise _error("Hammer reconstruction acceptance summary is inconsistent")
     expected_status = (
-        "verified"
-        if accepted
-        else ("candidate" if candidate is not None else "unknown")
+        "verified" if accepted else ("candidate" if candidate is not None else "unknown")
     )
     if raw["status"] != expected_status:
         raise _error("Hammer status is inconsistent with its native records")
@@ -1572,9 +1463,7 @@ def _project_full_hammer(value: Mapping[str, object]) -> dict[str, object]:
         candidate_projected = dict(candidate_raw)
         candidate_projected["candidate_id"] = "@candidate"
         candidate_projected["request_id"] = "@request"
-        candidate_projected["solver_attempt_id"] = attempt_tokens[
-            candidate.solver_attempt_id
-        ]
+        candidate_projected["solver_attempt_id"] = attempt_tokens[candidate.solver_attempt_id]
 
     return {
         "schema": HAMMER_EVIDENCE_SCHEMA,
@@ -1625,9 +1514,7 @@ def _full_hammer_failure_code(
     if not isinstance(portfolio, Mapping):
         return None  # the strict data projection reports the schema error
     attempts = portfolio.get("attempts")
-    if not isinstance(attempts, Sequence) or isinstance(
-        attempts, (str, bytes, bytearray)
-    ):
+    if not isinstance(attempts, Sequence) or isinstance(attempts, (str, bytes, bytearray)):
         return None
 
     saw_signal_or_spawn_failure = False
@@ -1646,22 +1533,12 @@ def _full_hammer_failure_code(
             # the typed verdict, like the direct receipt's timed_out flag,
             # takes priority over that cleanup return code.
             saw_solver_failure = True
-        elif (
-            (
-                isinstance(exit_code, int)
-                and not isinstance(exit_code, bool)
-                and exit_code < 0
-            )
-            or (verdict == "error" and exit_code is None)
+        elif (isinstance(exit_code, int) and not isinstance(exit_code, bool) and exit_code < 0) or (
+            verdict == "error" and exit_code is None
         ):
             saw_signal_or_spawn_failure = True
-        elif (
-            verdict == "error"
-            or (
-                isinstance(exit_code, int)
-                and not isinstance(exit_code, bool)
-                and exit_code > 0
-            )
+        elif verdict == "error" or (
+            isinstance(exit_code, int) and not isinstance(exit_code, bool) and exit_code > 0
         ):
             saw_solver_failure = True
     if saw_signal_or_spawn_failure:
@@ -1695,18 +1572,13 @@ def _validate_hammer_stage_outcome(
             or data.get("termination_reason")
             not in {"completed", "completed_with_descendant_cleanup"}
         ):
-            raise _error(
-                "successful Hammer stage contains a failed process outcome"
-            )
+            raise _error("successful Hammer stage contains a failed process outcome")
         return
     if stage.status is not StageStatus.FAILED:
-        raise _error(
-            "supported Hammer evidence must have success or failed status"
-        )
+        raise _error("supported Hammer evidence must have success or failed status")
     if schema == HAMMER_TRANSLATION_TERMINAL_SCHEMA:
         raise _error(
-            "unsupported-translation Hammer receipt must remain a successful "
-            "typed terminal outcome"
+            "unsupported-translation Hammer receipt must remain a successful typed terminal outcome"
         )
     if schema == HAMMER_TRANSLATED_ENTAILMENT_SCHEMA:
         timed_out = data.get("timed_out") is True
@@ -1733,20 +1605,13 @@ def _validate_hammer_stage_outcome(
                 )
             )
         )
-        if (
-            expected_failure is None
-            or stage.failure_code is not expected_failure
-        ):
-            raise _error(
-                "failed Hammer stage disagrees with its process outcome"
-            )
+        if expected_failure is None or stage.failure_code is not expected_failure:
+            raise _error("failed Hammer stage disagrees with its process outcome")
         return
     if schema == HAMMER_EVIDENCE_SCHEMA:
         expected_failure = _full_hammer_failure_code(data)
         if expected_failure is None or stage.failure_code is not expected_failure:
-            raise _error(
-                "failed full Hammer stage disagrees with its native records"
-            )
+            raise _error("failed full Hammer stage disagrees with its native records")
 
 
 def project_hammer_stage_for_replay(stage: StageRecord) -> dict[str, object]:
@@ -1789,9 +1654,7 @@ def project_hammer_stage_for_replay(stage: StageRecord) -> dict[str, object]:
                 if name not in identity_value:
                     continue
                 if identity_value[name] != request_id:
-                    raise _error(
-                        f"Hammer stage {identity_name}.{name} is cross-bound"
-                    )
+                    raise _error(f"Hammer stage {identity_name}.{name} is cross-bound")
                 identity_value[name] = "@request"
     semantic = data_raw.get("semantic_context")
     if semantic is not None:
@@ -1807,18 +1670,10 @@ def project_hammer_stage_for_replay(stage: StageRecord) -> dict[str, object]:
             premise,
             field="Hammer stage premise selection",
         )
-        if (
-            identity.get("premise_selection_sha256")
-            != premise_mapping.get("receipt_sha256")
-        ):
+        if identity.get("premise_selection_sha256") != premise_mapping.get("receipt_sha256"):
             raise _error("Hammer premise selection does not bind stage identity")
-        if (
-            identity.get("premise_ranking_contract")
-            != premise_mapping.get("ranking_contract")
-        ):
-            raise _error(
-                "Hammer premise ranking contract does not bind stage identity"
-            )
+        if identity.get("premise_ranking_contract") != premise_mapping.get("ranking_contract"):
+            raise _error("Hammer premise ranking contract does not bind stage identity")
     elif "premise_selection_sha256" in identity:
         raise _error("Hammer identity has an orphan premise-selection binding")
     for name in _OPERATIONAL_IDENTITY_FIELDS:

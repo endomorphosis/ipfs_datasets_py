@@ -25,7 +25,7 @@ from ipfs_datasets_py.pdf_processing.ocr_engine import (
     SuryaOCR,
     TesseractOCR,
     TrOCREngine,
-    MultiEngineOCR
+    MultiEngineOCR,
 )
 
 from ipfs_datasets_py.pdf_processing.ocr_engine import OCREngine
@@ -34,7 +34,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 from tests.unit_tests.pdf_processing_.ocr_engine_ import REPO_ROOT
@@ -43,8 +43,12 @@ file_path = str(REPO_ROOT / "ipfs_datasets_py" / "pdf_processing" / "ocr_engine.
 md_path = str(REPO_ROOT / "ipfs_datasets_py" / "pdf_processing" / "ocr_engine_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.ocr_engine import (
     EasyOCR,
@@ -52,7 +56,7 @@ from ipfs_datasets_py.pdf_processing.ocr_engine import (
     OCREngine,
     SuryaOCR,
     TesseractOCR,
-    TrOCREngine
+    TrOCREngine,
 )
 
 # Check if each classes methods are accessible:
@@ -86,22 +90,21 @@ except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
 
-
 class TestEasyOCREngine:
     """Test suite for EasyOCR neural network-based OCR engine."""
 
-    def create_test_image_data(self, width=100, height=50, color='white'):
+    def create_test_image_data(self, width=100, height=50, color="white"):
         """Helper method to create test image data as bytes."""
-        img = Image.new('RGB', (width, height), color=color)
+        img = Image.new("RGB", (width, height), color=color)
         buf = io.BytesIO()
-        img.save(buf, format='PNG')
+        img.save(buf, format="PNG")
         return buf.getvalue()
 
     def create_mock_easyocr_engine_with_builtin_import(self, mock_results=None, should_fail=False):
         """Helper method to create a properly mocked EasyOCR engine using builtins.__import__."""
-        
+
         def mock_import_side_effect(name, *args, **kwargs):
-            if name == 'easyocr':
+            if name == "easyocr":
                 if should_fail:
                     raise ImportError("No module named 'easyocr'")
                 mock_easyocr = Mock()
@@ -111,24 +114,24 @@ class TestEasyOCREngine:
                 mock_easyocr.Reader.return_value = mock_reader
                 return mock_easyocr
             return __import__(name, *args, **kwargs)
-        
+
         return mock_import_side_effect
 
     def create_mock_engine_for_extract_text(self, mock_results):
         """Create a mock engine for extract_text tests using direct object manipulation."""
-        with patch('builtins.__import__') as mock_import:
+        with patch("builtins.__import__") as mock_import:
             mock_easyocr = Mock()
             mock_reader = Mock()
             mock_reader.readtext.return_value = mock_results
             mock_easyocr.Reader.return_value = mock_reader
-            
+
             def side_effect(name, *args, **kwargs):
-                if name == 'easyocr':
+                if name == "easyocr":
                     return mock_easyocr
                 return __import__(name, *args, **kwargs)
-            
+
             mock_import.side_effect = side_effect
-            
+
             engine = EasyOCR()
             engine.available = True
             return engine, mock_reader
@@ -141,25 +144,25 @@ class TestEasyOCREngine:
         AND should set available to True
         AND should download models on first use
         """
-        with patch('builtins.__import__') as mock_import:
+        with patch("builtins.__import__") as mock_import:
             # Mock the easyocr import
             mock_easyocr = Mock()
             mock_reader_instance = Mock()
             mock_easyocr.Reader.return_value = mock_reader_instance
-            
+
             # Configure __import__ to return our mock when importing 'easyocr'
             def side_effect(name, *args, **kwargs):
-                if name == 'easyocr':
+                if name == "easyocr":
                     return mock_easyocr
                 # For other imports, call the original __import__
                 return __import__(name, *args, **kwargs)
-            
+
             mock_import.side_effect = side_effect
-            
+
             engine = EasyOCR()
-            assert engine.name == 'easyocr'
+            assert engine.name == "easyocr"
             assert engine.available == True
-            mock_easyocr.Reader.assert_called_once_with(['en'])
+            mock_easyocr.Reader.assert_called_once_with(["en"])
 
     def test_easyocr_initialization_missing_dependencies(self):
         """
@@ -168,20 +171,20 @@ class TestEasyOCREngine:
         THEN should handle ImportError gracefully
         AND should set available to False
         """
-        with patch('builtins.__import__') as mock_import:
+        with patch("builtins.__import__") as mock_import:
             # Configure __import__ to raise ImportError for 'easyocr'
             def side_effect(name, *args, **kwargs):
-                if name == 'easyocr':
+                if name == "easyocr":
                     raise ImportError("No module named 'easyocr'")
                 # For other imports, call the original __import__
                 return __import__(name, *args, **kwargs)
-            
+
             mock_import.side_effect = side_effect
-            
+
             engine = EasyOCR()
-            assert hasattr(engine, 'name')
-            assert engine.name == 'easyocr'
-            assert hasattr(engine, 'available')
+            assert hasattr(engine, "name")
+            assert engine.name == "easyocr"
+            assert hasattr(engine, "available")
             assert engine.available == False
 
     def test_easyocr_initialization_model_download_failure(self):
@@ -191,23 +194,23 @@ class TestEasyOCREngine:
         THEN should handle download errors appropriately
         AND should set available to False
         """
-        with patch('builtins.__import__') as mock_import:
+        with patch("builtins.__import__") as mock_import:
             # Mock the easyocr import
             mock_easyocr = Mock()
             mock_easyocr.Reader.side_effect = RuntimeError("Model download failed")
-            
+
             # Configure __import__ to return our mock when importing 'easyocr'
             def side_effect(name, *args, **kwargs):
-                if name == 'easyocr':
+                if name == "easyocr":
                     return mock_easyocr
                 return __import__(name, *args, **kwargs)
-            
+
             mock_import.side_effect = side_effect
-            
+
             engine = EasyOCR()
-            assert hasattr(engine, 'available')
-            assert hasattr(engine, 'name')
-            assert engine.name == 'easyocr'
+            assert hasattr(engine, "available")
+            assert hasattr(engine, "name")
+            assert engine.name == "easyocr"
             assert engine.available == False
 
     def test_easyocr_extract_text_complex_layout(self):
@@ -219,28 +222,28 @@ class TestEasyOCREngine:
         """
         # Mock complex layout detection results
         mock_results = [
-            ([[10, 10], [50, 15], [48, 30], [8, 25]], 'Rotated Text', 0.92),
-            ([[60, 20], [95, 25], [93, 40], [58, 35]], 'Curved Line', 0.88)
+            ([[10, 10], [50, 15], [48, 30], [8, 25]], "Rotated Text", 0.92),
+            ([[60, 20], [95, 25], [93, 40], [58, 35]], "Curved Line", 0.88),
         ]
-        
+
         engine, mock_reader = self.create_mock_engine_for_extract_text(mock_results)
-        
+
         image_data = self.create_test_image_data()
         result = engine.extract_text(image_data)
-        
+
         # Verify return structure
         assert isinstance(result, dict)
-        assert 'text' in result
-        assert 'confidence' in result
-        assert 'text_blocks' in result
-        assert 'engine' in result
-        
+        assert "text" in result
+        assert "confidence" in result
+        assert "text_blocks" in result
+        assert "engine" in result
+
         # Verify content
-        assert result['engine'] == 'easyocr'
-        assert 'Rotated Text' in result['text']
-        assert 'Curved Line' in result['text']
-        assert isinstance(result['confidence'], float)
-        assert 0.0 <= result['confidence'] <= 1.0
+        assert result["engine"] == "easyocr"
+        assert "Rotated Text" in result["text"]
+        assert "Curved Line" in result["text"]
+        assert isinstance(result["confidence"], float)
+        assert 0.0 <= result["confidence"] <= 1.0
 
     def test_easyocr_extract_text_rotated_text(self):
         """
@@ -250,18 +253,16 @@ class TestEasyOCREngine:
         AND should return properly oriented text
         """
         # Mock rotated text detection
-        mock_results = [
-            ([[20, 10], [80, 25], [75, 40], [15, 25]], 'ROTATED', 0.95)
-        ]
-        
+        mock_results = [([[20, 10], [80, 25], [75, 40], [15, 25]], "ROTATED", 0.95)]
+
         engine, mock_reader = self.create_mock_engine_for_extract_text(mock_results)
-        
+
         image_data = self.create_test_image_data()
         result = engine.extract_text(image_data)
-        
-        assert 'ROTATED' in result['text']
-        assert result['engine'] == 'easyocr'
-        
+
+        assert "ROTATED" in result["text"]
+        assert result["engine"] == "easyocr"
+
         # Should have called readtext with image
         mock_reader.readtext.assert_called_once()
 
@@ -273,22 +274,20 @@ class TestEasyOCREngine:
         AND should extract text accurately despite curvature
         """
         # Mock curved text with polygon bounding box
-        mock_results = [
-            ([[15, 5], [85, 15], [90, 35], [10, 25]], 'Curved Text Here', 0.89)
-        ]
-        
+        mock_results = [([[15, 5], [85, 15], [90, 35], [10, 25]], "Curved Text Here", 0.89)]
+
         engine, mock_reader = self.create_mock_engine_for_extract_text(mock_results)
-        
+
         image_data = self.create_test_image_data()
         result = engine.extract_text(image_data)
-        
-        assert 'Curved Text Here' in result['text']
-        assert len(result['text_blocks']) == 1
-        
+
+        assert "Curved Text Here" in result["text"]
+        assert len(result["text_blocks"]) == 1
+
         # Check that bounding box is polygon (4 points)
-        text_block = result['text_blocks'][0]
-        assert 'bbox' in text_block
-        bbox = text_block['bbox']
+        text_block = result["text_blocks"][0]
+        assert "bbox" in text_block
+        bbox = text_block["bbox"]
         assert len(bbox) == 4  # 4 corner points
         assert all(len(point) == 2 for point in bbox)  # Each point has x,y
 
@@ -301,23 +300,23 @@ class TestEasyOCREngine:
         """
         # Mock multilingual results
         mock_results = [
-            ([[10, 10], [40, 10], [40, 25], [10, 25]], 'Hello', 0.95),
-            ([[50, 10], [80, 10], [80, 25], [50, 25]], 'Hola', 0.92),
-            ([[10, 30], [50, 30], [50, 45], [10, 45]], 'Bonjour', 0.88)
+            ([[10, 10], [40, 10], [40, 25], [10, 25]], "Hello", 0.95),
+            ([[50, 10], [80, 10], [80, 25], [50, 25]], "Hola", 0.92),
+            ([[10, 30], [50, 30], [50, 45], [10, 45]], "Bonjour", 0.88),
         ]
-        
+
         engine, mock_reader = self.create_mock_engine_for_extract_text(mock_results)
-        
+
         image_data = self.create_test_image_data()
         result = engine.extract_text(image_data)
-        
+
         # Should contain text from multiple languages
-        text = result['text']
-        assert 'Hello' in text
-        assert 'Hola' in text
-        assert 'Bonjour' in text
-        
-        assert len(result['text_blocks']) == 3
+        text = result["text"]
+        assert "Hello" in text
+        assert "Hola" in text
+        assert "Bonjour" in text
+
+        assert len(result["text_blocks"]) == 3
 
     def test_easyocr_extract_text_polygon_bounding_boxes(self):
         """
@@ -328,24 +327,24 @@ class TestEasyOCREngine:
         """
         # Mock results with detailed polygon coordinates
         mock_results = [
-            ([[15, 12], [65, 8], [67, 28], [17, 32]], 'Sample Text', 0.94),
-            ([[20, 35], [75, 35], [75, 50], [20, 50]], 'Another Line', 0.91)
+            ([[15, 12], [65, 8], [67, 28], [17, 32]], "Sample Text", 0.94),
+            ([[20, 35], [75, 35], [75, 50], [20, 50]], "Another Line", 0.91),
         ]
-        
+
         engine, mock_reader = self.create_mock_engine_for_extract_text(mock_results)
-        
+
         image_data = self.create_test_image_data(100, 60)
         result = engine.extract_text(image_data)
-        
+
         # Check polygon bounding boxes
-        text_blocks = result['text_blocks']
+        text_blocks = result["text_blocks"]
         assert len(text_blocks) == 2
-        
+
         for block in text_blocks:
-            bbox = block['bbox']
+            bbox = block["bbox"]
             assert isinstance(bbox, list)
             assert len(bbox) == 4  # 4 corner points
-            
+
             # Each point should be [x, y]
             for point in bbox:
                 assert isinstance(point, list)
@@ -364,28 +363,28 @@ class TestEasyOCREngine:
         """
         # Mock varying confidence scores
         mock_results = [
-            ([[10, 10], [50, 10], [50, 25], [10, 25]], 'Clear', 0.98),
-            ([[60, 10], [90, 10], [90, 25], [60, 25]], 'Blurry', 0.65),
-            ([[10, 30], [70, 30], [70, 45], [10, 45]], 'Very unclear', 0.32)
+            ([[10, 10], [50, 10], [50, 25], [10, 25]], "Clear", 0.98),
+            ([[60, 10], [90, 10], [90, 25], [60, 25]], "Blurry", 0.65),
+            ([[10, 30], [70, 30], [70, 45], [10, 45]], "Very unclear", 0.32),
         ]
-        
+
         engine, mock_reader = self.create_mock_engine_for_extract_text(mock_results)
-        
+
         image_data = self.create_test_image_data()
         result = engine.extract_text(image_data)
-        
+
         # Check overall confidence
-        assert isinstance(result['confidence'], float)
-        assert 0.0 <= result['confidence'] <= 1.0
-        
+        assert isinstance(result["confidence"], float)
+        assert 0.0 <= result["confidence"] <= 1.0
+
         # Check individual block confidences
-        text_blocks = result['text_blocks']
-        confidences = [block['confidence'] for block in text_blocks]
-        
+        text_blocks = result["text_blocks"]
+        confidences = [block["confidence"] for block in text_blocks]
+
         # Should reflect the varying quality
         assert max(confidences) > 0.9  # Clear text
         assert min(confidences) < 0.4  # Very unclear text
-        
+
         for conf in confidences:
             assert 0.0 <= conf <= 1.0
 
@@ -396,16 +395,14 @@ class TestEasyOCREngine:
         THEN should utilize GPU acceleration if available
         AND should fall back to CPU if GPU unavailable
         """
-        mock_results = [
-            ([[10, 10], [50, 10], [50, 25], [10, 25]], 'GPU Text', 0.95)
-        ]
-        
+        mock_results = [([[10, 10], [50, 10], [50, 25], [10, 25]], "GPU Text", 0.95)]
+
         engine, mock_reader = self.create_mock_engine_for_extract_text(mock_results)
-        
+
         image_data = self.create_test_image_data()
         result = engine.extract_text(image_data)
-        
-        assert 'GPU Text' in result['text']
+
+        assert "GPU Text" in result["text"]
         mock_reader.readtext.assert_called_once()
 
     def test_easyocr_extract_text_memory_usage(self):
@@ -416,19 +413,17 @@ class TestEasyOCREngine:
         AND should not cause memory overflow
         """
         # Mock processing of large image
-        mock_results = [
-            ([[50, 100], [450, 100], [450, 150], [50, 150]], 'Large Image Text', 0.90)
-        ]
-        
+        mock_results = [([[50, 100], [450, 100], [450, 150], [50, 150]], "Large Image Text", 0.90)]
+
         engine, mock_reader = self.create_mock_engine_for_extract_text(mock_results)
-        
+
         # Create larger test image
         large_image_data = self.create_test_image_data(500, 300)
         result = engine.extract_text(large_image_data)
-        
+
         # Should handle large image without issues
         assert isinstance(result, dict)
-        assert 'Large Image Text' in result['text']
+        assert "Large Image Text" in result["text"]
         mock_reader.readtext.assert_called_once()
 
     def test_easyocr_extract_text_empty_image_data(self):
@@ -438,10 +433,10 @@ class TestEasyOCREngine:
         THEN should raise ValueError
         """
         engine, mock_reader = self.create_mock_engine_for_extract_text([])
-        
+
         # PIL.Image.open will raise ValueError for empty bytes
         with pytest.raises(ValueError):
-            engine.extract_text(b'')
+            engine.extract_text(b"")
 
     def test_easyocr_extract_text_invalid_image_format(self):
         """
@@ -450,10 +445,11 @@ class TestEasyOCREngine:
         THEN should raise PIL.UnidentifiedImageError or ValueError
         """
         engine, mock_reader = self.create_mock_engine_for_extract_text([])
-        
+
         from PIL import UnidentifiedImageError
+
         with pytest.raises((UnidentifiedImageError, Exception)):
-            engine.extract_text(b'not_an_image')
+            engine.extract_text(b"not_an_image")
 
     def test_easyocr_extract_text_engine_not_available(self):
         """
@@ -463,7 +459,7 @@ class TestEasyOCREngine:
         """
         engine, mock_reader = self.create_mock_engine_for_extract_text([])
         engine.available = False
-        
+
         with pytest.raises(RuntimeError, match="not.*available|not.*initialized"):
             engine.extract_text(self.create_test_image_data())
 
@@ -476,15 +472,15 @@ class TestEasyOCREngine:
         """
         # Mock no text detection
         engine, mock_reader = self.create_mock_engine_for_extract_text([])
-        
+
         image_data = self.create_test_image_data()
         result = engine.extract_text(image_data)
-        
+
         assert isinstance(result, dict)
-        assert result['text'] == ''
-        assert result['confidence'] == 0.0
-        assert result['text_blocks'] == []
-        assert result['engine'] == 'easyocr'
+        assert result["text"] == ""
+        assert result["confidence"] == 0.0
+        assert result["text_blocks"] == []
+        assert result["engine"] == "easyocr"
 
     def test_easyocr_extract_text_result_format_consistency(self):
         """
@@ -495,33 +491,31 @@ class TestEasyOCREngine:
         # Test different result scenarios
         test_cases = [
             # Normal case
-            [([[10, 10], [50, 10], [50, 25], [10, 25]], 'Normal', 0.95)],
+            [([[10, 10], [50, 10], [50, 25], [10, 25]], "Normal", 0.95)],
             # Single character
-            [([[15, 15], [20, 15], [20, 25], [15, 25]], 'A', 0.88)],
+            [([[15, 15], [20, 15], [20, 25], [15, 25]], "A", 0.88)],
             # Multiple blocks
             [
-                ([[10, 10], [30, 10], [30, 20], [10, 20]], 'First', 0.92),
-                ([[40, 10], [60, 10], [60, 20], [40, 20]], 'Second', 0.87)
-            ]
+                ([[10, 10], [30, 10], [30, 20], [10, 20]], "First", 0.92),
+                ([[40, 10], [60, 10], [60, 20], [40, 20]], "Second", 0.87),
+            ],
         ]
-        
+
         for mock_result in test_cases:
             engine, mock_reader = self.create_mock_engine_for_extract_text(mock_result)
-            
+
             image_data = self.create_test_image_data()
             result = engine.extract_text(image_data)
-            
+
             # Check consistent format
             assert isinstance(result, dict)
-            required_keys = {'text', 'confidence', 'text_blocks', 'engine'}
+            required_keys = {"text", "confidence", "text_blocks", "engine"}
             assert required_keys.issubset(result.keys())
-            
-            assert isinstance(result['text'], str)
-            assert isinstance(result['confidence'], float)
-            assert isinstance(result['text_blocks'], list)
-            assert result['engine'] == 'easyocr'
 
-
+            assert isinstance(result["text"], str)
+            assert isinstance(result["confidence"], float)
+            assert isinstance(result["text_blocks"], list)
+            assert result["engine"] == "easyocr"
 
 
 if __name__ == "__main__":

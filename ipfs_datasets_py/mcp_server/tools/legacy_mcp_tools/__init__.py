@@ -26,4 +26,4 @@ TEMPORAL_DEONTIC_LOGIC_TOOLS = [
     add_theorem,
 ]
 
-__all__ = ['TEMPORAL_DEONTIC_LOGIC_TOOLS']
+__all__ = ["TEMPORAL_DEONTIC_LOGIC_TOOLS"]

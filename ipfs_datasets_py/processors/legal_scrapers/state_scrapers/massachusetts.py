@@ -4,9 +4,11 @@ This module contains the scraper for Massachusetts statutes from the official st
 legislative website.
 """
 
-from typing import List, Dict, Optional, Tuple
-import urllib.request
+from typing import Any, Dict, List, Optional, Tuple
+import json
 import re
+import ssl
+import urllib.request
 from urllib.parse import urljoin
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
@@ -25,7 +27,49 @@ class MassachusettsScraper(BaseStateScraper):
         r"/laws/generallaws/(?:part[a-z0-9-]*|title[a-z0-9-]*|chapter[a-z0-9-]*|section[a-z0-9-]*)(?:/|$)",
         re.IGNORECASE,
     )
-    
+    _MA_PART_TITLE_RE = re.compile(
+        r"/Laws/GeneralLaws/Part(?P<part>[IVX]+)(?:/Title(?P<title>[IVX]+))?",
+        re.IGNORECASE,
+    )
+    OFFICIAL_DOMAIN = "malegislature.gov"
+    OFFICIAL_ENTRY_PATH = "/Laws/GeneralLaws"
+    OFFICIAL_ENTRY_URL = "https://malegislature.gov/Laws/GeneralLaws"
+    OFFICIAL_TITLES = (
+        ("I", "I", "Jurisdiction and Emblems of the Commonwealth, the General Court, Statutes and Public Documents"),
+        ("I", "II", "Executive and Administrative Officers of the Commonwealth"),
+        ("I", "III", "Laws Relating to State Officers"),
+        ("I", "IV", "Civil Service, Retirements and Pensions"),
+        ("I", "V", "Militia"),
+        ("I", "VI", "Counties and County Officers"),
+        ("I", "VII", "Cities, Towns and Districts"),
+        ("I", "VIII", "Elections"),
+        ("I", "IX", "Taxation"),
+        ("I", "X", "Public Records"),
+        ("I", "XI", "Certain Religious and Charitable Matters"),
+        ("I", "XII", "Education"),
+        ("I", "XIII", "Eminent Domain and Betterments"),
+        ("I", "XIV", "Public Ways and Works"),
+        ("I", "XV", "Regulation of Trade"),
+        ("I", "XVI", "Public Health"),
+        ("I", "XVII", "Public Welfare"),
+        ("I", "XVIII", "Prisons, Imprisonment, Paroles and Pardons"),
+        ("I", "XIX", "Agriculture and Conservation"),
+        ("I", "XX", "Public Safety and Good Order"),
+        ("I", "XXI", "Labor and Industries"),
+        ("I", "XXII", "Corporations"),
+        ("II", "I", "Title to Real Property"),
+        ("II", "II", "Descent and Distribution, Wills, Estates, Guardianship, Conservatorship and Trusts"),
+        ("II", "III", "Domestic Relations"),
+        ("III", "I", "Courts and Judicial Officers"),
+        ("III", "II", "Actions and Proceedings Therein"),
+        ("III", "III", "Remedies Relating to Real Property"),
+        ("III", "IV", "Certain Writs and Proceedings in Special Cases"),
+        ("III", "V", "Statutes of Frauds and Limitations"),
+        ("IV", "I", "Crimes and Punishments"),
+        ("IV", "II", "Proceedings in Criminal Cases"),
+        ("V", "I", "The General Laws and Express Repeal of Certain Acts and Resolves"),
+    )
+
     def get_base_url(self) -> str:
         """Return the base URL for Massachusetts's legislative website."""
         return "https://malegislature.gov"
@@ -61,6 +105,32 @@ class MassachusettsScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .massachusetts_constitution import (
+            configured_constitution_html_path,
+            parse_massachusetts_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_massachusetts_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Massachusetts Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        from .massachusetts_section import configured_section_html_path, parse_massachusetts_section_html
+
+        html_path = configured_section_html_path()
+        if html_path is not None:
+            parsed = parse_massachusetts_section_html(
+                html_path.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://malegislature.gov/Laws/GeneralLaws/PartIV/TitleI/Chapter265/Section1",
+                code_name=code_name,
+            )
+            if parsed is not None:
+                return [parsed]
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/Laws/GeneralLaws/PartI",
@@ -81,22 +151,26 @@ class MassachusettsScraper(BaseStateScraper):
                 merged_keys.add(key)
                 merged.append(statute)
 
-        return_threshold = self._bounded_return_threshold(160)
-        if max_statutes is not None:
-            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        probe_threshold = limit if limit is not None else self._bounded_return_threshold(160)
 
         if not self._full_corpus_enabled() or max_statutes is not None:
-            direct_sections = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            direct_sections = await self._scrape_direct_seed_sections(
+                code_name,
+                max_statutes=max(1, int(probe_threshold)),
+            )
             if direct_sections:
                 _merge(direct_sections)
 
         official_statutes = await self._scrape_official_general_laws_tree(
             code_name,
-            max_statutes=max(10, return_threshold),
+            max_statutes=limit,
         )
         if official_statutes:
-            return official_statutes[:return_threshold]
+            return official_statutes if limit is None else official_statutes[: int(limit)]
 
+        generic_cap = limit if limit is not None else max(10, int(probe_threshold))
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -106,20 +180,26 @@ class MassachusettsScraper(BaseStateScraper):
                 code_name,
                 candidate,
                 "Mass. Gen. Laws",
-                max_sections=max(10, return_threshold),
+                max_sections=max(10, int(generic_cap)),
             )
             statutes = self._filter_section_level(statutes)
             _merge(statutes)
-            if len(merged) >= return_threshold:
-                return merged
+            if limit is not None and len(merged) >= int(limit):
+                return merged[: int(limit)]
 
-        return merged
+        return merged if limit is None else merged[: int(limit)]
 
-    async def _scrape_official_general_laws_tree(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_official_general_laws_tree(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
+
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
 
         root_html = await self._request_text_direct(f"{self.get_base_url()}/Laws/GeneralLaws", timeout=20)
         if not root_html:
@@ -141,11 +221,15 @@ class MassachusettsScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         seen_sections = set()
         for part_url in part_links:
-            if len(statutes) >= max_statutes:
+            if limit is not None and len(statutes) >= limit:
                 break
-            section_links = await self._discover_section_links_from_part(part_url, max_sections=max_statutes * 4)
+            section_budget = (limit * 4) if limit is not None else 1000000
+            section_links = await self._discover_section_links_from_part(
+                part_url,
+                max_sections=max(1, int(section_budget)),
+            )
             for section_url in section_links:
-                if len(statutes) >= max_statutes:
+                if limit is not None and len(statutes) >= limit:
                     break
                 if section_url in seen_sections:
                     continue
@@ -230,6 +314,11 @@ class MassachusettsScraper(BaseStateScraper):
         html = await self._request_text_direct(section_url, timeout=20)
         if not html:
             return None
+        from .massachusetts_section import parse_massachusetts_section_html
+
+        parsed = parse_massachusetts_section_html(html, source_url=section_url, code_name=code_name)
+        if parsed is not None:
+            return parsed
         soup = BeautifulSoup(html, "html.parser")
 
         heading = soup.select_one("h2.genLawHeading")
@@ -248,8 +337,12 @@ class MassachusettsScraper(BaseStateScraper):
         if len(body) < 80:
             return None
 
-        chapter_match = self._MA_CHAPTER_NUMBER_RE.search(section_url)
-        section_match = self._MA_SECTION_NUMBER_RE.search(section_url)
+        chapter_match = re.search(r"/Chapter(?P<chapter>[a-z0-9.]+)", section_url, re.IGNORECASE)
+        section_match = re.search(r"/Section(?P<section>[a-z0-9.]+)", section_url, re.IGNORECASE)
+        if chapter_match is None:
+            chapter_match = self._MA_CHAPTER_NUMBER_RE.search(section_url)
+        if section_match is None:
+            section_match = self._MA_SECTION_NUMBER_RE.search(section_url)
         chapter_number = chapter_match.group("chapter") if chapter_match else ""
         section_number = section_match.group("section") if section_match else ""
         statute_id = f"{code_name} ch. {chapter_number} § {section_number}".strip()
@@ -339,6 +432,168 @@ class MassachusettsScraper(BaseStateScraper):
             return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
         except Exception:
             return ""
+
+    def official_title_url(self, part: str, title: str) -> str:
+        return (
+            f"{self.get_base_url()}/Laws/GeneralLaws/Part{str(part).upper()}"
+            f"/Title{str(title).upper()}"
+        )
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Massachusetts General Laws title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for part, title, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(part, title)
+            rows.append(
+                {
+                    "canonical_key": f"ma:part-{part.lower()}:title-{title.lower()}",
+                    "part": str(part),
+                    "title_number": str(title),
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Massachusetts General Laws Part {part} Title {title} "
+                        f"({name}) official catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-massachusetts-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-massachusetts-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[Tuple[str, str], str]:
+        found: Dict[Tuple[str, str], str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._MA_PART_TITLE_RE.search(absolute)
+            if not match or not match.group("title"):
+                continue
+            key = (match.group("part").upper(), match.group("title").upper())
+            if key not in found:
+                found[key] = self.official_title_url(*key)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official MGL title and repair missing live links."""
+
+        del page_url
+        discovered = self._parse_official_title_links(html)
+        rows = self.official_title_catalog()
+        for row in rows:
+            live_url = discovered.get((str(row["part"]), str(row["title_number"])))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_leginfo"
+        return rows
+
+    def fetch_official(self, code: str = "MA"):
+        """Acquire the exhaustive official Massachusetts General Laws title catalog.
+
+        Live HTTPS retains the official General Laws landing page. Every MGL
+        title is enumerated with an official malegislature.gov URL. This hook
+        never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "MA").strip().upper() or "MA"
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < 3:
+            raise RuntimeError("massachusetts official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry

@@ -4,11 +4,13 @@ Test stubs for ipfs_knn_index module.
 Feature: IPFS KNN Index
   K-nearest neighbors search on IPFS
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_knn_index_and_distance_threshold():
@@ -83,6 +85,7 @@ def an_index_with_vectors():
 
 
 # Test scenarios
+
 
 def test_build_knn_index():
     """
@@ -176,6 +179,7 @@ def test_remove_vectors_from_index():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a KNN index and distance threshold")

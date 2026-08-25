@@ -28,6 +28,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import Ontol
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _ctx(domain: str = "test") -> OntologyGenerationContext:
     return OntologyGenerationContext(data_source="t", data_type="text", domain=domain)
 
@@ -47,7 +48,10 @@ def _optimizer_with_history(scores):
     opt = OntologyOptimizer()
 
     for i, score in enumerate(scores):
-        fake_ont = {"entities": [{"id": f"e{i}", "type": "T", "text": f"E{i}"}], "relationships": []}
+        fake_ont = {
+            "entities": [{"id": f"e{i}", "type": "T", "text": f"E{i}"}],
+            "relationships": [],
+        }
         report = OptimizationReport(
             average_score=score,
             trend="stable",
@@ -62,6 +66,7 @@ def _optimizer_with_history(scores):
 # ---------------------------------------------------------------------------
 # Entity.from_dict
 # ---------------------------------------------------------------------------
+
 
 class TestEntityFromDict:
     def test_round_trip(self):
@@ -106,6 +111,7 @@ class TestEntityFromDict:
 # EntityExtractionResult.to_csv
 # ---------------------------------------------------------------------------
 
+
 class TestEntityExtractionResultToCsv:
     def test_returns_string(self):
         result = _make_result(_make_entity())
@@ -118,7 +124,9 @@ class TestEntityExtractionResultToCsv:
 
     def test_correct_row_count(self):
         result = _make_result(_make_entity("e1"), _make_entity("e2", text="Bob"))
-        lines = _make_result(_make_entity("e1"), _make_entity("e2", text="Bob")).to_csv().splitlines()
+        lines = (
+            _make_result(_make_entity("e1"), _make_entity("e2", text="Bob")).to_csv().splitlines()
+        )
         assert len(lines) == 3  # header + 2 entity rows
 
     def test_entity_values_in_row(self):
@@ -157,6 +165,7 @@ class TestEntityExtractionResultToCsv:
 # OntologyOptimizer.top_n_ontologies
 # ---------------------------------------------------------------------------
 
+
 class TestTopNOntologies:
     def test_returns_list(self):
         opt = _optimizer_with_history([0.5, 0.8, 0.6])
@@ -192,6 +201,7 @@ class TestTopNOntologies:
 # OntologyOptimizer.score_variance
 # ---------------------------------------------------------------------------
 
+
 class TestScoreVariance:
     def test_returns_float(self):
         opt = _optimizer_with_history([0.5, 0.7, 0.9])
@@ -222,6 +232,7 @@ class TestScoreVariance:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.improvement_rate
 # ---------------------------------------------------------------------------
+
 
 class TestImprovementRate:
     def test_returns_float(self):

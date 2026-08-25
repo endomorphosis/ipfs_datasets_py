@@ -21,6 +21,7 @@ Future Implementation TODOs:
 - Add support for model-specific prompt formats
 - Implement advanced visualization capabilities for reasoning paths
 """
+
 import datetime
 import json
 import logging
@@ -41,6 +42,7 @@ logger = logging.getLogger(__name__)
 
 class ReasoningNodeType(Enum):
     """Types of reasoning nodes in a reasoning trace."""
+
     QUERY = "query"
     DOCUMENT = "document"
     ENTITY = "entity"
@@ -54,6 +56,7 @@ class ReasoningNodeType(Enum):
 @dataclass
 class ReasoningNode:
     """A node in a reasoning trace."""
+
     node_id: str
     node_type: ReasoningNodeType
     content: str
@@ -66,6 +69,7 @@ class ReasoningNode:
 @dataclass
 class ReasoningEdge:
     """An edge in a reasoning trace."""
+
     source_id: str
     target_id: str
     edge_type: str
@@ -76,6 +80,7 @@ class ReasoningEdge:
 @dataclass
 class ReasoningTrace:
     """A complete reasoning trace."""
+
     trace_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     query: str = ""
     nodes: Dict[str, ReasoningNode] = field(default_factory=dict)
@@ -85,9 +90,14 @@ class ReasoningTrace:
     metadata: Dict[str, Any] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
 
-    def add_node(self, node_type: ReasoningNodeType, content: str,
-                source: Optional[str] = None, confidence: float = 1.0,
-                metadata: Optional[Dict[str, Any]] = None) -> str:
+    def add_node(
+        self,
+        node_type: ReasoningNodeType,
+        content: str,
+        source: Optional[str] = None,
+        confidence: float = 1.0,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """
         Add a node to the reasoning trace.
 
@@ -108,7 +118,7 @@ class ReasoningTrace:
             content=content,
             source=source,
             confidence=confidence,
-            metadata=metadata if metadata is not None else {}
+            metadata=metadata if metadata is not None else {},
         )
 
         # If this is the first node and it's a query, set as root
@@ -121,8 +131,14 @@ class ReasoningTrace:
 
         return node_id
 
-    def add_edge(self, source_id: str, target_id: str, edge_type: str,
-                weight: float = 1.0, metadata: Optional[Dict[str, Any]] = None) -> None:
+    def add_edge(
+        self,
+        source_id: str,
+        target_id: str,
+        edge_type: str,
+        weight: float = 1.0,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """
         Add an edge to the reasoning trace.
 
@@ -138,13 +154,15 @@ class ReasoningTrace:
         if target_id not in self.nodes:
             raise ValueError(f"Target node {target_id} not found in trace")
 
-        self.edges.append(ReasoningEdge(
-            source_id=source_id,
-            target_id=target_id,
-            edge_type=edge_type,
-            weight=weight,
-            metadata=metadata or {}
-        ))
+        self.edges.append(
+            ReasoningEdge(
+                source_id=source_id,
+                target_id=target_id,
+                edge_type=edge_type,
+                weight=weight,
+                metadata=metadata or {},
+            )
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -156,11 +174,11 @@ class ReasoningTrace:
             "root_node_id": self.root_node_id,
             "conclusion_node_ids": self.conclusion_node_ids,
             "metadata": self.metadata,
-            "created_at": self.created_at
+            "created_at": self.created_at,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ReasoningTrace':
+    def from_dict(cls, data: Dict[str, Any]) -> "ReasoningTrace":
         """Create from dictionary."""
         trace = cls(
             trace_id=data.get("trace_id", str(uuid.uuid4())),
@@ -168,7 +186,7 @@ class ReasoningTrace:
             root_node_id=data.get("root_node_id"),
             conclusion_node_ids=data.get("conclusion_node_ids", []),
             metadata=data.get("metadata", {}),
-            created_at=data.get("created_at", time.time())
+            created_at=data.get("created_at", time.time()),
         )
 
         # Recreate nodes
@@ -180,18 +198,20 @@ class ReasoningTrace:
                 source=node_data.get("source"),
                 confidence=node_data.get("confidence", 1.0),
                 metadata=node_data.get("metadata", {}),
-                created_at=node_data.get("created_at", time.time())
+                created_at=node_data.get("created_at", time.time()),
             )
 
         # Recreate edges
         for edge_data in data.get("edges", []):
-            trace.edges.append(ReasoningEdge(
-                source_id=edge_data["source_id"],
-                target_id=edge_data["target_id"],
-                edge_type=edge_data["edge_type"],
-                weight=edge_data.get("weight", 1.0),
-                metadata=edge_data.get("metadata", {})
-            ))
+            trace.edges.append(
+                ReasoningEdge(
+                    source_id=edge_data["source_id"],
+                    target_id=edge_data["target_id"],
+                    edge_type=edge_data["edge_type"],
+                    weight=edge_data.get("weight", 1.0),
+                    metadata=edge_data.get("metadata", {}),
+                )
+            )
 
         return trace
 
@@ -214,7 +234,7 @@ class ReasoningTrace:
         return filename
 
     @classmethod
-    def load(cls, filename: str) -> 'ReasoningTrace':
+    def load(cls, filename: str) -> "ReasoningTrace":
         """
         Load a reasoning trace from a file.
 
@@ -249,27 +269,37 @@ class ReasoningTrace:
             return "No conclusions were reached for this query."
 
         # Count evidence nodes
-        evidence_count = sum(1 for node in self.nodes.values()
-                          if node.node_type == ReasoningNodeType.EVIDENCE)
+        evidence_count = sum(
+            1 for node in self.nodes.values() if node.node_type == ReasoningNodeType.EVIDENCE
+        )
 
         # Simple templated explanation
         if detail_level == "low":
             conclusion_texts = [c.content for c in conclusions]
-            return f"Based on {evidence_count} pieces of evidence, the system concluded: " + " ".join(conclusion_texts)
+            return (
+                f"Based on {evidence_count} pieces of evidence, the system concluded: "
+                + " ".join(conclusion_texts)
+            )
 
         elif detail_level == "medium":
             # Include some key evidence nodes
-            evidence_nodes = [n for n in self.nodes.values() if n.node_type == ReasoningNodeType.EVIDENCE]
+            evidence_nodes = [
+                n for n in self.nodes.values() if n.node_type == ReasoningNodeType.EVIDENCE
+            ]
             evidence_sample = evidence_nodes[:3] if len(evidence_nodes) > 3 else evidence_nodes
 
             evidence_text = ""
             if evidence_sample:
-                evidence_text = "Key evidence:\n" + "\n".join([f"- {e.content}" for e in evidence_sample])
+                evidence_text = "Key evidence:\n" + "\n".join(
+                    [f"- {e.content}" for e in evidence_sample]
+                )
                 if len(evidence_nodes) > 3:
                     evidence_text += f"\n- and {len(evidence_nodes) - 3} more evidence points..."
 
             conclusion_texts = [c.content for c in conclusions]
-            return f"Query: {self.query}\n\n{evidence_text}\n\nConclusions:\n" + "\n".join([f"- {c}" for c in conclusion_texts])
+            return f"Query: {self.query}\n\n{evidence_text}\n\nConclusions:\n" + "\n".join(
+                [f"- {c}" for c in conclusion_texts]
+            )
 
         elif detail_level == "high":
             # This would be much more detailed in a real implementation
@@ -279,14 +309,18 @@ class ReasoningTrace:
             steps.append(f"Evidence collected: {evidence_count} pieces")
 
             # Add inferences
-            inferences = [n for n in self.nodes.values() if n.node_type == ReasoningNodeType.INFERENCE]
+            inferences = [
+                n for n in self.nodes.values() if n.node_type == ReasoningNodeType.INFERENCE
+            ]
             if inferences:
                 steps.append("Reasoning steps:")
                 for i, inf in enumerate(inferences):
-                    steps.append(f"  {i+1}. {inf.content}")
+                    steps.append(f"  {i + 1}. {inf.content}")
 
             # Add contradictions if any
-            contradictions = [n for n in self.nodes.values() if n.node_type == ReasoningNodeType.CONTRADICTION]
+            contradictions = [
+                n for n in self.nodes.values() if n.node_type == ReasoningNodeType.CONTRADICTION
+            ]
             if contradictions:
                 steps.append("Contradictions found:")
                 for c in contradictions:
@@ -350,7 +384,9 @@ class LLMReasoningTracer:
                 try:
                     from .llm_interface import LLMInterfaceFactory
 
-                    self.llm = LLMInterfaceFactory.create(model_name=self.llm_config.get("model_name", "mock-llm"))
+                    self.llm = LLMInterfaceFactory.create(
+                        model_name=self.llm_config.get("model_name", "mock-llm")
+                    )
                 except Exception:
                     self.llm = None
 
@@ -371,10 +407,7 @@ class LLMReasoningTracer:
         trace = ReasoningTrace(query=query, metadata=metadata or {})
 
         # Add query node
-        query_node_id = trace.add_node(
-            node_type=ReasoningNodeType.QUERY,
-            content=query
-        )
+        query_node_id = trace.add_node(node_type=ReasoningNodeType.QUERY, content=query)
 
         # Store trace
         self.traces[trace.trace_id] = trace
@@ -387,7 +420,7 @@ class LLMReasoningTracer:
         document_content: str,
         document_id: str,
         relevance_score: float,
-        parent_node_id: Optional[str] = None
+        parent_node_id: Optional[str] = None,
     ) -> str:
         """
         Trace access to a document during reasoning.
@@ -408,7 +441,7 @@ class LLMReasoningTracer:
             content=document_content[:500] + ("..." if len(document_content) > 500 else ""),
             source=document_id,
             confidence=relevance_score,
-            metadata={"document_id": document_id, "relevance_score": relevance_score}
+            metadata={"document_id": document_id, "relevance_score": relevance_score},
         )
 
         # Connect to parent if provided
@@ -417,7 +450,7 @@ class LLMReasoningTracer:
                 source_id=parent_node_id,
                 target_id=doc_node_id,
                 edge_type="retrieves",
-                weight=relevance_score
+                weight=relevance_score,
             )
         # Otherwise connect to query node
         elif trace.root_node_id:
@@ -425,7 +458,7 @@ class LLMReasoningTracer:
                 source_id=trace.root_node_id,
                 target_id=doc_node_id,
                 edge_type="retrieves",
-                weight=relevance_score
+                weight=relevance_score,
             )
 
         return doc_node_id
@@ -437,7 +470,7 @@ class LLMReasoningTracer:
         entity_id: str,
         entity_type: str,
         relevance_score: float,
-        parent_node_id: Optional[str] = None
+        parent_node_id: Optional[str] = None,
     ) -> str:
         """
         Trace access to an entity during reasoning.
@@ -463,8 +496,8 @@ class LLMReasoningTracer:
                 "entity_id": entity_id,
                 "entity_name": entity_name,
                 "entity_type": entity_type,
-                "relevance_score": relevance_score
-            }
+                "relevance_score": relevance_score,
+            },
         )
 
         # Connect to parent if provided
@@ -473,7 +506,7 @@ class LLMReasoningTracer:
                 source_id=parent_node_id,
                 target_id=entity_node_id,
                 edge_type="identifies",
-                weight=relevance_score
+                weight=relevance_score,
             )
         # Otherwise connect to query node
         elif trace.root_node_id:
@@ -481,7 +514,7 @@ class LLMReasoningTracer:
                 source_id=trace.root_node_id,
                 target_id=entity_node_id,
                 edge_type="identifies",
-                weight=relevance_score
+                weight=relevance_score,
             )
 
         return entity_node_id
@@ -493,7 +526,7 @@ class LLMReasoningTracer:
         target_node_id: str,
         relationship_type: str,
         confidence: float = 1.0,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Trace a relationship between nodes during reasoning.
@@ -511,7 +544,7 @@ class LLMReasoningTracer:
             target_id=target_node_id,
             edge_type=relationship_type,
             weight=confidence,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
     def trace_inference(
@@ -519,7 +552,7 @@ class LLMReasoningTracer:
         trace: ReasoningTrace,
         inference_text: str,
         source_node_ids: List[str],
-        confidence: float = 1.0
+        confidence: float = 1.0,
     ) -> str:
         """
         Trace an inference made during reasoning.
@@ -535,9 +568,7 @@ class LLMReasoningTracer:
         """
         # Create inference node
         inference_node_id = trace.add_node(
-            node_type=ReasoningNodeType.INFERENCE,
-            content=inference_text,
-            confidence=confidence
+            node_type=ReasoningNodeType.INFERENCE, content=inference_text, confidence=confidence
         )
 
         # Connect from source nodes
@@ -546,7 +577,7 @@ class LLMReasoningTracer:
                 source_id=source_id,
                 target_id=inference_node_id,
                 edge_type="supports",
-                weight=confidence
+                weight=confidence,
             )
 
         return inference_node_id
@@ -556,7 +587,7 @@ class LLMReasoningTracer:
         trace: ReasoningTrace,
         evidence_text: str,
         source_node_id: str,
-        confidence: float = 1.0
+        confidence: float = 1.0,
     ) -> str:
         """
         Trace evidence found during reasoning.
@@ -572,9 +603,7 @@ class LLMReasoningTracer:
         """
         # Create evidence node
         evidence_node_id = trace.add_node(
-            node_type=ReasoningNodeType.EVIDENCE,
-            content=evidence_text,
-            confidence=confidence
+            node_type=ReasoningNodeType.EVIDENCE, content=evidence_text, confidence=confidence
         )
 
         # Connect from source node
@@ -582,7 +611,7 @@ class LLMReasoningTracer:
             source_id=source_node_id,
             target_id=evidence_node_id,
             edge_type="provides",
-            weight=confidence
+            weight=confidence,
         )
 
         return evidence_node_id
@@ -592,7 +621,7 @@ class LLMReasoningTracer:
         trace: ReasoningTrace,
         contradiction_text: str,
         conflicting_node_ids: List[str],
-        confidence: float = 1.0
+        confidence: float = 1.0,
     ) -> str:
         """
         Trace a contradiction found during reasoning.
@@ -610,7 +639,7 @@ class LLMReasoningTracer:
         contradiction_node_id = trace.add_node(
             node_type=ReasoningNodeType.CONTRADICTION,
             content=contradiction_text,
-            confidence=confidence
+            confidence=confidence,
         )
 
         # Connect from conflicting nodes
@@ -619,7 +648,7 @@ class LLMReasoningTracer:
                 source_id=node_id,
                 target_id=contradiction_node_id,
                 edge_type="conflicts",
-                weight=confidence
+                weight=confidence,
             )
 
         return contradiction_node_id
@@ -629,7 +658,7 @@ class LLMReasoningTracer:
         trace: ReasoningTrace,
         conclusion_text: str,
         supporting_node_ids: List[str],
-        confidence: float = 1.0
+        confidence: float = 1.0,
     ) -> str:
         """
         Trace a conclusion reached during reasoning.
@@ -645,9 +674,7 @@ class LLMReasoningTracer:
         """
         # Create conclusion node
         conclusion_node_id = trace.add_node(
-            node_type=ReasoningNodeType.CONCLUSION,
-            content=conclusion_text,
-            confidence=confidence
+            node_type=ReasoningNodeType.CONCLUSION, content=conclusion_text, confidence=confidence
         )
 
         # Connect from supporting nodes
@@ -656,7 +683,7 @@ class LLMReasoningTracer:
                 source_id=node_id,
                 target_id=conclusion_node_id,
                 edge_type="supports",
-                weight=confidence
+                weight=confidence,
             )
 
         return conclusion_node_id
@@ -691,14 +718,19 @@ class LLMReasoningTracer:
         avg_confidence = sum(confidences) / len(confidences) if confidences else 0
 
         # Count evidence -> conclusion paths
-        conclusion_nodes = [node_id for node_id in trace.nodes
-                           if trace.nodes[node_id].node_type == ReasoningNodeType.CONCLUSION]
+        conclusion_nodes = [
+            node_id
+            for node_id in trace.nodes
+            if trace.nodes[node_id].node_type == ReasoningNodeType.CONCLUSION
+        ]
 
         evidence_to_conclusion_paths = 0
         if conclusion_nodes:
             for edge in trace.edges:
-                if edge.target_id in conclusion_nodes and \
-                   trace.nodes[edge.source_id].node_type == ReasoningNodeType.EVIDENCE:
+                if (
+                    edge.target_id in conclusion_nodes
+                    and trace.nodes[edge.source_id].node_type == ReasoningNodeType.EVIDENCE
+                ):
                     evidence_to_conclusion_paths += 1
 
         return {
@@ -711,7 +743,7 @@ class LLMReasoningTracer:
             "avg_confidence": avg_confidence,
             "conclusion_count": len(conclusion_nodes),
             "evidence_to_conclusion_paths": evidence_to_conclusion_paths,
-            "reasoning_complexity": len(trace.edges) / len(trace.nodes) if trace.nodes else 0
+            "reasoning_complexity": len(trace.edges) / len(trace.nodes) if trace.nodes else 0,
         }
 
     def get_trace(self, trace_id: str) -> Optional[ReasoningTrace]:
@@ -755,10 +787,7 @@ class LLMReasoningTracer:
         return ReasoningTrace.load(filename)
 
     def generate_explanation(
-        self,
-        trace: ReasoningTrace,
-        detail_level: str = "medium",
-        max_tokens: int = 1000
+        self, trace: ReasoningTrace, detail_level: str = "medium", max_tokens: int = 1000
     ) -> str:
         """
         Generate a natural language explanation of a reasoning trace.
@@ -782,7 +811,9 @@ class LLMReasoningTracer:
                 "query": trace.query,
                 "node_count": len(trace.nodes),
                 "edge_count": len(trace.edges),
-                "conclusions": [trace.nodes[n].content for n in trace.conclusion_node_ids if n in trace.nodes],
+                "conclusions": [
+                    trace.nodes[n].content for n in trace.conclusion_node_ids if n in trace.nodes
+                ],
                 "template_explanation": trace.get_explanation(detail_level),
             }
 
@@ -803,10 +834,7 @@ class LLMReasoningTracer:
         return trace.get_explanation(detail_level)
 
     def export_visualization(
-        self,
-        trace: ReasoningTrace,
-        output_format: str = "json",
-        output_file: Optional[str] = None
+        self, trace: ReasoningTrace, output_format: str = "json", output_file: Optional[str] = None
     ) -> Any:
         """
         Export a visualization of a reasoning trace.
@@ -833,32 +861,36 @@ class LLMReasoningTracer:
             # Create D3.js compatible graph structure
             nodes = []
             for node_id, node in trace.nodes.items():
-                nodes.append({
-                    "id": node_id,
-                    "type": node.node_type.value,
-                    "label": node.content[:50] + ("..." if len(node.content) > 50 else ""),
-                    "confidence": node.confidence,
-                    "data": {
-                        "content": node.content,
-                        "source": node.source,
-                        "metadata": node.metadata
+                nodes.append(
+                    {
+                        "id": node_id,
+                        "type": node.node_type.value,
+                        "label": node.content[:50] + ("..." if len(node.content) > 50 else ""),
+                        "confidence": node.confidence,
+                        "data": {
+                            "content": node.content,
+                            "source": node.source,
+                            "metadata": node.metadata,
+                        },
                     }
-                })
+                )
 
             links = []
             for edge in trace.edges:
-                links.append({
-                    "source": edge.source_id,
-                    "target": edge.target_id,
-                    "type": edge.edge_type,
-                    "weight": edge.weight
-                })
+                links.append(
+                    {
+                        "source": edge.source_id,
+                        "target": edge.target_id,
+                        "type": edge.edge_type,
+                        "weight": edge.weight,
+                    }
+                )
 
             d3_data = {
                 "trace_id": trace.trace_id,
                 "query": trace.query,
                 "nodes": nodes,
-                "links": links
+                "links": links,
             }
 
             if output_file:
@@ -887,21 +919,21 @@ def create_example_trace() -> ReasoningTrace:
         trace=trace,
         document_content="Electric vehicles produce zero direct emissions, which significantly improves air quality in urban areas.",
         document_id="doc_ev_emissions",
-        relevance_score=0.95
+        relevance_score=0.95,
     )
 
     doc2_id = tracer.trace_document_access(
         trace=trace,
         document_content="Manufacturing batteries for electric vehicles has significant environmental impacts, including mining of rare earth metals and energy-intensive production processes.",
         document_id="doc_battery_production",
-        relevance_score=0.87
+        relevance_score=0.87,
     )
 
     doc3_id = tracer.trace_document_access(
         trace=trace,
         document_content="Gas vehicles emit carbon dioxide and other pollutants during operation, contributing to climate change and air pollution.",
         document_id="doc_gas_emissions",
-        relevance_score=0.92
+        relevance_score=0.92,
     )
 
     # Trace entity access
@@ -910,7 +942,7 @@ def create_example_trace() -> ReasoningTrace:
         entity_name="Electric Vehicle",
         entity_id="entity_ev",
         entity_type="Vehicle",
-        relevance_score=0.98
+        relevance_score=0.98,
     )
 
     entity2_id = tracer.trace_entity_access(
@@ -918,7 +950,7 @@ def create_example_trace() -> ReasoningTrace:
         entity_name="Gas Vehicle",
         entity_id="entity_gas",
         entity_type="Vehicle",
-        relevance_score=0.96
+        relevance_score=0.96,
     )
 
     entity3_id = tracer.trace_entity_access(
@@ -927,7 +959,7 @@ def create_example_trace() -> ReasoningTrace:
         entity_id="entity_battery",
         entity_type="Component",
         relevance_score=0.85,
-        parent_node_id=entity1_id
+        parent_node_id=entity1_id,
     )
 
     # Trace relationships
@@ -936,7 +968,7 @@ def create_example_trace() -> ReasoningTrace:
         source_node_id=entity1_id,
         target_node_id=entity3_id,
         relationship_type="contains",
-        confidence=0.99
+        confidence=0.99,
     )
 
     # Trace evidence
@@ -944,21 +976,21 @@ def create_example_trace() -> ReasoningTrace:
         trace=trace,
         evidence_text="Electric vehicles produce zero direct emissions during operation",
         source_node_id=doc1_id,
-        confidence=0.95
+        confidence=0.95,
     )
 
     evidence2_id = tracer.trace_evidence(
         trace=trace,
         evidence_text="Battery production involves environmental impacts from mining and manufacturing",
         source_node_id=doc2_id,
-        confidence=0.9
+        confidence=0.9,
     )
 
     evidence3_id = tracer.trace_evidence(
         trace=trace,
         evidence_text="Gas vehicles produce CO2 and other pollutants during operation",
         source_node_id=doc3_id,
-        confidence=0.95
+        confidence=0.95,
     )
 
     # Trace inferences
@@ -966,14 +998,14 @@ def create_example_trace() -> ReasoningTrace:
         trace=trace,
         inference_text="Electric vehicles have better operational environmental impact than gas vehicles",
         source_node_ids=[evidence1_id, evidence3_id],
-        confidence=0.92
+        confidence=0.92,
     )
 
     inference2_id = tracer.trace_inference(
         trace=trace,
         inference_text="Electric vehicles have manufacturing impacts that gas vehicles don't have",
         source_node_ids=[evidence2_id],
-        confidence=0.85
+        confidence=0.85,
     )
 
     # Trace conclusions
@@ -981,7 +1013,7 @@ def create_example_trace() -> ReasoningTrace:
         trace=trace,
         conclusion_text="Electric vehicles typically have lower overall environmental impact than gas vehicles over their lifetime, despite higher manufacturing impacts.",
         supporting_node_ids=[inference1_id, inference2_id],
-        confidence=0.88
+        confidence=0.88,
     )
 
     # Save the trace
@@ -1128,21 +1160,21 @@ class WikipediaKnowledgeGraphTracer:
             metadata={
                 "document_title": document_title,
                 "text_length": len(text_snippet),
-                "extraction_source": "wikipedia"
-            }
+                "extraction_source": "wikipedia",
+            },
         )
 
         # Add initial nodes for document
         root_node_id = trace.add_node(
             node_type=ReasoningNodeType.DOCUMENT,
             content=f"Document: {document_title}",
-            metadata={"title": document_title}
+            metadata={"title": document_title},
         )
 
         text_node_id = trace.add_node(
             node_type=ReasoningNodeType.EVIDENCE,
             content=f"Text snippet: {text_snippet[:100]}...",
-            metadata={"full_text": text_snippet}
+            metadata={"full_text": text_snippet},
         )
 
         # Link text to document
@@ -1159,7 +1191,7 @@ class WikipediaKnowledgeGraphTracer:
         entity_type: str,
         confidence: float,
         source_text: str,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Trace the extraction of an entity.
@@ -1189,8 +1221,8 @@ class WikipediaKnowledgeGraphTracer:
                 "entity_type": entity_type,
                 "confidence": confidence,
                 "source_text": source_text,
-                **(metadata or {})
-            }
+                **(metadata or {}),
+            },
         )
 
         # Find the text evidence node to link to
@@ -1210,7 +1242,7 @@ class WikipediaKnowledgeGraphTracer:
         target_entity_id: str,
         confidence: float,
         source_text: str,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Trace the extraction of a relationship.
@@ -1240,8 +1272,8 @@ class WikipediaKnowledgeGraphTracer:
                 "relationship_type": relationship_type,
                 "confidence": confidence,
                 "source_text": source_text,
-                **(metadata or {})
-            }
+                **(metadata or {}),
+            },
         )
 
         # Link to source and target entities
@@ -1262,7 +1294,7 @@ class WikipediaKnowledgeGraphTracer:
         wikidata_id: Optional[str],
         validation_result: bool,
         confidence: float,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Trace the validation of an entity against Wikidata.
@@ -1295,7 +1327,7 @@ class WikipediaKnowledgeGraphTracer:
         validation_node_id = trace.add_node(
             node_type=ReasoningNodeType.INFERENCE,
             content=f"Wikidata validation: {'Successful' if validation_result else 'Failed'}",
-            metadata=base_metadata
+            metadata=base_metadata,
         )
 
         # Link to entity
@@ -1307,7 +1339,7 @@ class WikipediaKnowledgeGraphTracer:
         self.validation_results[trace_id][entity_id] = {
             "wikidata_id": wikidata_id,
             "validation_result": validation_result,
-            "confidence": confidence
+            "confidence": confidence,
         }
 
         return validation_node_id
@@ -1320,7 +1352,7 @@ class WikipediaKnowledgeGraphTracer:
         validation_result: bool,
         confidence: float,
         result_count: int,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Trace the validation of a relationship using SPARQL against Wikidata.
@@ -1351,8 +1383,8 @@ class WikipediaKnowledgeGraphTracer:
                 "validation_result": validation_result,
                 "confidence": confidence,
                 "result_count": result_count,
-                **(metadata or {})
-            }
+                **(metadata or {}),
+            },
         )
 
         # Link to relationship
@@ -1365,7 +1397,7 @@ class WikipediaKnowledgeGraphTracer:
             "sparql_query": sparql_query,
             "validation_result": validation_result,
             "confidence": confidence,
-            "result_count": result_count
+            "result_count": result_count,
         }
 
         return validation_node_id
@@ -1377,7 +1409,7 @@ class WikipediaKnowledgeGraphTracer:
         decision: str,
         confidence: float,
         reasoning: str,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Trace a decision about integrating an entity or relationship.
@@ -1406,8 +1438,8 @@ class WikipediaKnowledgeGraphTracer:
                 "decision": decision,
                 "confidence": confidence,
                 "reasoning": reasoning,
-                **(metadata or {})
-            }
+                **(metadata or {}),
+            },
         )
 
         # Link to entity or relationship
@@ -1427,11 +1459,7 @@ class WikipediaKnowledgeGraphTracer:
         """
         return self.traces.get(trace_id)
 
-    def get_trace_visualization(
-        self,
-        trace_id: str,
-        format: str = "text"
-    ) -> str:
+    def get_trace_visualization(self, trace_id: str, format: str = "text") -> str:
         """
         Get a visualization of the trace.
 
@@ -1469,7 +1497,7 @@ class WikipediaKnowledgeGraphTracer:
         lines = [
             f"Knowledge Graph Extraction Trace: {trace.trace_id}",
             f"Document: {trace.metadata.get('document_title', 'Unknown')}",
-            "-" * 80
+            "-" * 80,
         ]
 
         # Add entity nodes
@@ -1479,11 +1507,15 @@ class WikipediaKnowledgeGraphTracer:
             metadata = node.metadata or {}
             confidence = metadata.get("confidence", "Unknown")
             entity_type = metadata.get("entity_type", "Unknown")
-            lines.append(f"  - {metadata.get('entity_text', 'Unknown')} "
-                       f"(Type: {entity_type}, Confidence: {confidence:.2f})")
+            lines.append(
+                f"  - {metadata.get('entity_text', 'Unknown')} "
+                f"(Type: {entity_type}, Confidence: {confidence:.2f})"
+            )
 
         # Add relationship nodes
-        relationship_nodes = [n for n in trace.nodes.values() if n.node_type == ReasoningNodeType.RELATIONSHIP]
+        relationship_nodes = [
+            n for n in trace.nodes.values() if n.node_type == ReasoningNodeType.RELATIONSHIP
+        ]
         lines.append(f"\nRelationships ({len(relationship_nodes)}):")
         for node in relationship_nodes:
             metadata = node.metadata or {}
@@ -1491,28 +1523,51 @@ class WikipediaKnowledgeGraphTracer:
             rel_type = metadata.get("relationship_type", "Unknown")
 
             # Find source and target entities
-            source_edges = [e for e in trace.edges if e.target_id == node.node_id and e.edge_type == "source_entity"]
-            target_edges = [e for e in trace.edges if e.target_id == node.node_id and e.edge_type == "target_entity"]
+            source_edges = [
+                e
+                for e in trace.edges
+                if e.target_id == node.node_id and e.edge_type == "source_entity"
+            ]
+            target_edges = [
+                e
+                for e in trace.edges
+                if e.target_id == node.node_id and e.edge_type == "target_entity"
+            ]
 
             source_entity = "Unknown"
             target_entity = "Unknown"
 
             if source_edges and source_edges[0].source_id in trace.nodes:
                 source_node = trace.nodes[source_edges[0].source_id]
-                source_entity = source_node.metadata.get("entity_text", "Unknown") if source_node.metadata else "Unknown"
+                source_entity = (
+                    source_node.metadata.get("entity_text", "Unknown")
+                    if source_node.metadata
+                    else "Unknown"
+                )
 
             if target_edges and target_edges[0].source_id in trace.nodes:
                 target_node = trace.nodes[target_edges[0].source_id]
-                target_entity = target_node.metadata.get("entity_text", "Unknown") if target_node.metadata else "Unknown"
+                target_entity = (
+                    target_node.metadata.get("entity_text", "Unknown")
+                    if target_node.metadata
+                    else "Unknown"
+                )
 
-            lines.append(f"  - {source_entity} --[{rel_type}]--> {target_entity} "
-                       f"(Confidence: {confidence:.2f})")
+            lines.append(
+                f"  - {source_entity} --[{rel_type}]--> {target_entity} "
+                f"(Confidence: {confidence:.2f})"
+            )
 
         # Add validation results
-        validation_nodes = [n for n in trace.nodes.values() if
-                          n.node_type == ReasoningNodeType.INFERENCE and
-                          (n.content.startswith("Wikidata validation") or
-                           n.content.startswith("SPARQL validation"))]
+        validation_nodes = [
+            n
+            for n in trace.nodes.values()
+            if n.node_type == ReasoningNodeType.INFERENCE
+            and (
+                n.content.startswith("Wikidata validation")
+                or n.content.startswith("SPARQL validation")
+            )
+        ]
 
         if validation_nodes:
             lines.append(f"\nValidation Results ({len(validation_nodes)}):")
@@ -1524,13 +1579,17 @@ class WikipediaKnowledgeGraphTracer:
                 if "wikidata_id" in metadata:
                     # Entity validation
                     wikidata_id = metadata.get("wikidata_id", "Not found")
-                    lines.append(f"  - Entity Validation: {result} "
-                               f"(Wikidata ID: {wikidata_id}, Confidence: {confidence:.2f})")
+                    lines.append(
+                        f"  - Entity Validation: {result} "
+                        f"(Wikidata ID: {wikidata_id}, Confidence: {confidence:.2f})"
+                    )
                 else:
                     # Relationship validation
-                    lines.append(f"  - Relationship Validation: {result} "
-                               f"(Results: {metadata.get('result_count', 0)}, "
-                               f"Confidence: {confidence:.2f})")
+                    lines.append(
+                        f"  - Relationship Validation: {result} "
+                        f"(Results: {metadata.get('result_count', 0)}, "
+                        f"Confidence: {confidence:.2f})"
+                    )
 
         return "\n".join(lines)
 
@@ -1547,8 +1606,8 @@ class WikipediaKnowledgeGraphTracer:
         mermaid_lines = [
             "```mermaid",
             "graph TD",
-            f"    title[\"Knowledge Graph Extraction: {trace.metadata.get('document_title', 'Unknown')}\"]",
-            "    style title fill:#f9f,stroke:#333,stroke-width:2px"
+            f'    title["Knowledge Graph Extraction: {trace.metadata.get("document_title", "Unknown")}"]',
+            "    style title fill:#f9f,stroke:#333,stroke-width:2px",
         ]
 
         # Add nodes
@@ -1558,7 +1617,7 @@ class WikipediaKnowledgeGraphTracer:
 
             if node.node_type == ReasoningNodeType.DOCUMENT:
                 node_style = "style document fill:#d4f1f9,stroke:#333,stroke-width:1px"
-                label = f"\"{node.content}\""
+                label = f'"{node.content}"'
                 mermaid_lines.append(f"    document{node.node_id}[{label}]")
                 mermaid_lines.append(f"    {node_style}")
 
@@ -1570,9 +1629,11 @@ class WikipediaKnowledgeGraphTracer:
 
                 # Color based on confidence
                 fill_color = "#d5f5e3" if confidence >= 0.7 else "#fcf3cf"
-                node_style = f"style entity{node.node_id} fill:{fill_color},stroke:#333,stroke-width:1px"
+                node_style = (
+                    f"style entity{node.node_id} fill:{fill_color},stroke:#333,stroke-width:1px"
+                )
 
-                label = f"\"{entity_text}<br/>(Type: {entity_type})\""
+                label = f'"{entity_text}<br/>(Type: {entity_type})"'
                 mermaid_lines.append(f"    entity{node.node_id}[{label}]")
                 mermaid_lines.append(f"    {node_style}")
 
@@ -1583,26 +1644,33 @@ class WikipediaKnowledgeGraphTracer:
 
                 # Color based on confidence
                 fill_color = "#d5f5e3" if confidence >= 0.7 else "#fcf3cf"
-                node_style = f"style relation{node.node_id} fill:{fill_color},stroke:#333,stroke-width:1px"
+                node_style = (
+                    f"style relation{node.node_id} fill:{fill_color},stroke:#333,stroke-width:1px"
+                )
 
-                label = f"\"{rel_type}\""
+                label = f'"{rel_type}"'
                 mermaid_lines.append(f"    relation{node.node_id}({label})")
                 mermaid_lines.append(f"    {node_style}")
 
-            elif node.node_type == ReasoningNodeType.INFERENCE and "validation" in node.content.lower():
+            elif (
+                node.node_type == ReasoningNodeType.INFERENCE
+                and "validation" in node.content.lower()
+            ):
                 metadata = node.metadata or {}
                 result = metadata.get("validation_result", False)
 
                 # Color based on validation result
                 fill_color = "#d5f5e3" if result else "#f5b7b1"
-                node_style = f"style validation{node.node_id} fill:{fill_color},stroke:#333,stroke-width:1px"
+                node_style = (
+                    f"style validation{node.node_id} fill:{fill_color},stroke:#333,stroke-width:1px"
+                )
 
                 if "wikidata_id" in metadata:
                     wikidata_id = metadata.get("wikidata_id", "Not found")
-                    label = f"\"Wikidata: {wikidata_id if wikidata_id else 'Not found'}\""
+                    label = f'"Wikidata: {wikidata_id if wikidata_id else "Not found"}"'
                 else:
                     result_count = metadata.get("result_count", 0)
-                    label = f"\"SPARQL: {result_count} results\""
+                    label = f'"SPARQL: {result_count} results"'
 
                 mermaid_lines.append(f"    validation{node.node_id}[{label}]")
                 mermaid_lines.append(f"    {node_style}")
@@ -1623,7 +1691,9 @@ class WikipediaKnowledgeGraphTracer:
             source_prefix = self._get_node_prefix(source_node.node_type)
             target_prefix = self._get_node_prefix(target_node.node_type)
 
-            mermaid_lines.append(f"    {source_prefix}{source_id} -->|{label}| {target_prefix}{target_id}")
+            mermaid_lines.append(
+                f"    {source_prefix}{source_id} -->|{label}| {target_prefix}{target_id}"
+            )
 
         mermaid_lines.append("```")
         return "\n".join(mermaid_lines)
@@ -1676,11 +1746,11 @@ class WikipediaKnowledgeGraphTracer:
             "<body>",
             f"    <h1>Knowledge Graph Extraction Trace: {trace.trace_id}</h1>",
             f"    <h2>Document: {trace.metadata.get('document_title', 'Unknown')}</h2>",
-            "    <pre>"
+            "    <pre>",
         ]
 
         # Add text visualization with some HTML formatting
-        for line in text_viz.split('\n'):
+        for line in text_viz.split("\n"):
             if "Entities" in line or "Relationships" in line or "Validation Results" in line:
                 line = f"<b>{line}</b>"
             elif line.strip().startswith("-") and "Type:" in line:
@@ -1692,11 +1762,7 @@ class WikipediaKnowledgeGraphTracer:
 
             html_lines.append(f"        {line}")
 
-        html_lines.extend([
-            "    </pre>",
-            "</body>",
-            "</html>"
-        ])
+        html_lines.extend(["    </pre>", "</body>", "</html>"])
 
         return "\n".join(html_lines)
 
@@ -1738,8 +1804,8 @@ if __name__ == "__main__":
     wiki_tracer = WikipediaKnowledgeGraphTracer()
     trace_id = wiki_tracer.create_extraction_trace(
         document_title="Artificial Intelligence",
-        text_snippet="Artificial Intelligence (AI) is intelligence demonstrated by machines. " +
-                   "Machine learning is a subset of AI that focuses on data and algorithms."
+        text_snippet="Artificial Intelligence (AI) is intelligence demonstrated by machines. "
+        + "Machine learning is a subset of AI that focuses on data and algorithms.",
     )
 
     # Trace entity extraction
@@ -1748,7 +1814,7 @@ if __name__ == "__main__":
         entity_text="Artificial Intelligence",
         entity_type="concept",
         confidence=0.95,
-        source_text="Artificial Intelligence (AI) is intelligence demonstrated by machines."
+        source_text="Artificial Intelligence (AI) is intelligence demonstrated by machines.",
     )
 
     entity2_id = wiki_tracer.trace_entity_extraction(
@@ -1756,7 +1822,7 @@ if __name__ == "__main__":
         entity_text="Machine learning",
         entity_type="concept",
         confidence=0.92,
-        source_text="Machine learning is a subset of AI that focuses on data and algorithms."
+        source_text="Machine learning is a subset of AI that focuses on data and algorithms.",
     )
 
     # Trace relationship extraction
@@ -1766,7 +1832,7 @@ if __name__ == "__main__":
         source_entity_id=entity2_id,
         target_entity_id=entity1_id,
         confidence=0.88,
-        source_text="Machine learning is a subset of AI that focuses on data and algorithms."
+        source_text="Machine learning is a subset of AI that focuses on data and algorithms.",
     )
 
     # Trace validation
@@ -1775,7 +1841,7 @@ if __name__ == "__main__":
         entity_id=entity1_id,
         wikidata_id="Q11660",
         validation_result=True,
-        confidence=0.95
+        confidence=0.95,
     )
 
     wiki_tracer.trace_wikidata_validation(
@@ -1783,7 +1849,7 @@ if __name__ == "__main__":
         entity_id=entity2_id,
         wikidata_id="Q2539",
         validation_result=True,
-        confidence=0.93
+        confidence=0.93,
     )
 
     # Print the visualization

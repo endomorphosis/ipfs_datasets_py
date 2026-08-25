@@ -4,11 +4,13 @@ Test stubs for cross_document_lineage_enhanced module.
 Feature: Cross-Document Lineage Enhanced
   Enhanced cross-document lineage tracking
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_lineage_graph():
@@ -83,6 +85,7 @@ def lineage_information():
 
 
 # Test scenarios
+
 
 def test_track_complex_document_relationships():
     """
@@ -173,6 +176,7 @@ def test_export_lineage_metadata():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a lineage graph")
@@ -343,4 +347,3 @@ def matching_paths_are_returned():
     """Step: Then matching paths are returned"""
     # TODO: Implement step
     pass
-

@@ -88,6 +88,7 @@ _FORM_PURPOSE_KEYWORDS: list[tuple[str, str]] = [
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class KGNode:
     """A node in the :class:`FormKnowledgeGraph`."""
@@ -177,6 +178,7 @@ class FormKnowledgeGraph:
 # ---------------------------------------------------------------------------
 # Builder helpers
 # ---------------------------------------------------------------------------
+
 
 def _extract_statutes(text: str) -> List[Tuple[str, str]]:
     """Return list of (statute_id, matched_text) pairs from *text*."""
@@ -278,7 +280,7 @@ def build_form_knowledge_graph(
         kg.add_edge(KGEdge(fnode.node_id, dt_id, EDGE_EXPECTS_TYPE, confidence=0.95))
 
     # Dependency edges from the existing FormDependencyGraph
-    for edge in (analysis.dependency_graph.edges or ()):
+    for edge in analysis.dependency_graph.edges or ():
         src = f"field:{edge.source}"
         tgt = f"field:{edge.target}"
         if src in kg.nodes and tgt in kg.nodes:
@@ -297,7 +299,9 @@ def build_form_knowledge_graph(
         kg.add_node(cnode)
         # Link all fields to the concept
         for spec in analysis.fields:
-            kg.add_edge(KGEdge(f"field:{spec.name}", cnode.node_id, EDGE_GOVERNED_BY, confidence=0.6))
+            kg.add_edge(
+                KGEdge(f"field:{spec.name}", cnode.node_id, EDGE_GOVERNED_BY, confidence=0.6)
+            )
 
     # ------------------------------------------------------------------
     # 3. Statute nodes
@@ -344,6 +348,7 @@ def build_form_knowledge_graph(
 # ---------------------------------------------------------------------------
 # FormToLegalIR
 # ---------------------------------------------------------------------------
+
 
 class FormToLegalIR:
     """Convert a :class:`FormKnowledgeGraph` (or a raw
@@ -445,7 +450,10 @@ class FormToLegalIR:
                 confidence=float(node.properties.get("confidence", 1.0)),
                 source_text=node.label,
                 legal_context=legal_ctx,
-                variables={"field": field_name, "data_type": node.properties.get("data_type", "string")},
+                variables={
+                    "field": field_name,
+                    "data_type": node.properties.get("data_type", "string"),
+                },
             )
             formulas.append(formula)
 
@@ -475,6 +483,7 @@ class FormToLegalIR:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def pdf_to_legal_ir(
     pdf_path: str | Path,

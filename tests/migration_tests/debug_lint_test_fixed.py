@@ -13,7 +13,9 @@ sys.path.insert(0, str(Path(__file__).parent))
 try:
     # Import linting tool
     print("Importing linting_tools module...")
-    from ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools import lint_python_codebase
+    from ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools import (
+        lint_python_codebase,
+    )
 
     print(f"Type of lint_python_codebase: {type(lint_python_codebase)}")
 
@@ -24,7 +26,7 @@ try:
         print("WARNING: lint_python_codebase is not callable!")
 
     # Create a temporary Python file with deliberate linting issues
-    with tempfile.NamedTemporaryFile(suffix='.py', mode='w+', delete=False) as temp:
+    with tempfile.NamedTemporaryFile(suffix=".py", mode="w+", delete=False) as temp:
         print(f"Creating temporary file {temp.name}...")
         temp.write("""
 import sys, os  # Multiple imports should be on separate lines
@@ -37,6 +39,7 @@ def bad_function( a,b ):  # Extra space after open paren
     # Import config for debugging
     print("Getting configuration...")
     from ipfs_datasets_py.mcp_server.tools.development_tools.config import get_config
+
     config = get_config()
     print(f"LintingToolsConfig attributes: {vars(config.linting_tools)}")
 
@@ -49,18 +52,12 @@ def bad_function( a,b ):  # Extra space after open paren
     print("Running the execute method asynchronously...")
     try:
         loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(tool_instance.execute(
-            path=temp_path,
-            fix_issues=False,
-            dry_run=True
-        ))
+        result = loop.run_until_complete(
+            tool_instance.execute(path=temp_path, fix_issues=False, dry_run=True)
+        )
     except RuntimeError:
         # No event loop in thread
-        result = anyio.run(tool_instance.execute(
-            path=temp_path,
-            fix_issues=False,
-            dry_run=True
-        ))
+        result = anyio.run(tool_instance.execute(path=temp_path, fix_issues=False, dry_run=True))
 
     print(f"Result: {result}")
 

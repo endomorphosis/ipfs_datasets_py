@@ -184,9 +184,7 @@ class FLogicSemanticOptimizer:
             :class:`FLogicOptimizerResult` with similarity score, pass/fail
             status, and any ontology violations.
         """
-        similarity = _cosine_similarity(
-            list(source_embedding), list(decoded_embedding)
-        )
+        similarity = _cosine_similarity(list(source_embedding), list(decoded_embedding))
         violations: List[OntologyViolation] = []
         ontology_consistent = True
 
@@ -194,9 +192,7 @@ class FLogicSemanticOptimizer:
             violations = self._check_flogic_consistency(kg_triples)
             ontology_consistent = len(violations) == 0
 
-        passed = (
-            similarity >= self.config.similarity_threshold and ontology_consistent
-        )
+        passed = similarity >= self.config.similarity_threshold and ontology_consistent
 
         frame_metadata = _frame_ontology_metadata(
             kg_triples=kg_triples or [],
@@ -264,9 +260,7 @@ class FLogicSemanticOptimizer:
         if self._ergo is None:
             from ipfs_datasets_py.logic.flogic import ErgoAIWrapper
 
-            self._ergo = ErgoAIWrapper(
-                ontology_name=self.config.ontology_name
-            )
+            self._ergo = ErgoAIWrapper(ontology_name=self.config.ontology_name)
         return self._ergo
 
     def _check_flogic_consistency(
@@ -336,16 +330,10 @@ class FLogicSemanticOptimizer:
         for subj, facts in sorted(triples_by_subject.items()):
             if _facts_reference_modal_frame_logic_view(facts):
                 modal_frame_logic_view_subjects.add(subj)
-            selected_frames = [
-                obj for pred, obj in facts if pred == "selected_ontology_frame"
-            ]
-            selected_terms = {
-                obj for pred, obj in facts if pred == "selected_ontology_term"
-            }
+            selected_frames = [obj for pred, obj in facts if pred == "selected_ontology_frame"]
+            selected_terms = {obj for pred, obj in facts if pred == "selected_ontology_term"}
             selected_frame_constraints = {
-                obj
-                for pred, obj in facts
-                if pred == "modal_frame_logic_ontology_constraint"
+                obj for pred, obj in facts if pred == "modal_frame_logic_ontology_constraint"
             }
             if selected_frames:
                 unique_frames = sorted(set(selected_frames))
@@ -431,16 +419,12 @@ class FLogicSemanticOptimizer:
                         OntologyViolation(
                             frame_id=subj,
                             constraint="interpreted_frame_has_selected_terms",
-                            details=(
-                                f"Interpreted frame {obj!r} has no selected term grounding"
-                            ),
+                            details=(f"Interpreted frame {obj!r} has no selected term grounding"),
                         )
                     )
                     continue
                 interpreted_terms = {
-                    term
-                    for term_pred, term in facts
-                    if term_pred == "interpreted_in_frame_term"
+                    term for term_pred, term in facts if term_pred == "interpreted_in_frame_term"
                 }
                 ungrounded_terms = sorted(
                     interpreted_terms - selected_terms_by_frame.get(obj, set())
@@ -452,8 +436,7 @@ class FLogicSemanticOptimizer:
                             constraint="interpreted_frame_terms_selected",
                             details=(
                                 f"Formula terms are not selected ontology terms "
-                                f"for frame {obj!r}: "
-                                + ", ".join(ungrounded_terms)
+                                f"for frame {obj!r}: " + ", ".join(ungrounded_terms)
                             ),
                         )
                     )
@@ -563,9 +546,7 @@ def _selected_frame_constraint_violations(
 def _cosine_similarity(a: List[float], b: List[float]) -> float:
     """Compute cosine similarity between two vectors."""
     if len(a) != len(b):
-        raise ValueError(
-            f"Embedding dimension mismatch: {len(a)} vs {len(b)}"
-        )
+        raise ValueError(f"Embedding dimension mismatch: {len(a)} vs {len(b)}")
     dot = sum(x * y for x, y in zip(a, b))
     norm_a = math.sqrt(sum(x * x for x in a))
     norm_b = math.sqrt(sum(y * y for y in b))
@@ -582,16 +563,11 @@ def _frame_ontology_metadata(
     feature_keys = _normalized_frame_feature_keys(frame_feature_keys)
     audit_feature_keys = sorted(
         frame_ontology_feature_keys(
-            feature_keys
-            + frame_ontology_feature_keys_from_values(frame_feature_keys)
+            feature_keys + frame_ontology_feature_keys_from_values(frame_feature_keys)
         )
     )
-    feature_terms = sorted(
-        frame_ontology_terms_from_feature_keys(audit_feature_keys)
-    )
-    triple_terms = sorted(
-        frame_ontology_terms_from_triples(kg_triples)
-    )
+    feature_terms = sorted(frame_ontology_terms_from_feature_keys(audit_feature_keys))
+    triple_terms = sorted(frame_ontology_terms_from_triples(kg_triples))
     contextualized_terms = sorted(
         frame_ontology_contextualized_terms(
             feature_keys=audit_feature_keys,
@@ -612,9 +588,7 @@ def _frame_ontology_metadata(
     )
     feature_high_signal_terms = frame_ontology_high_signal_terms(feature_terms)
     triple_high_signal_terms = frame_ontology_high_signal_terms(triple_terms)
-    contextualized_high_signal_terms = frame_ontology_high_signal_terms(
-        contextualized_terms
-    )
+    contextualized_high_signal_terms = frame_ontology_high_signal_terms(contextualized_terms)
     high_signal_terms = frame_ontology_high_signal_terms(ontology_terms)
 
     return {
@@ -630,13 +604,9 @@ def _frame_ontology_metadata(
         "frame_ontology_contextualized_terms": contextualized_terms,
         "frame_ontology_term_count": len(ontology_terms),
         "frame_ontology_terms": ontology_terms,
-        "frame_ontology_high_signal_terms_from_feature_keys_count": len(
-            feature_high_signal_terms
-        ),
+        "frame_ontology_high_signal_terms_from_feature_keys_count": len(feature_high_signal_terms),
         "frame_ontology_high_signal_terms_from_feature_keys": feature_high_signal_terms,
-        "frame_ontology_high_signal_terms_from_triples_count": len(
-            triple_high_signal_terms
-        ),
+        "frame_ontology_high_signal_terms_from_triples_count": len(triple_high_signal_terms),
         "frame_ontology_high_signal_terms_from_triples": triple_high_signal_terms,
         "frame_ontology_high_signal_terms_from_contextualized_count": len(
             contextualized_high_signal_terms
@@ -694,13 +664,7 @@ def _normalized_frame_feature_keys(values: Sequence[Any]) -> List[str]:
     collected: List[str] = []
     _collect_frame_feature_key_values(values, collected)
     collected.extend(frame_ontology_feature_keys_from_values(values))
-    return sorted(
-        {
-            str(value or "").strip()
-            for value in collected
-            if str(value or "").strip()
-        }
-    )
+    return sorted({str(value or "").strip() for value in collected if str(value or "").strip()})
 
 
 def _collect_frame_feature_key_values(

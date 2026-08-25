@@ -12,7 +12,7 @@ from ipfs_datasets_py.processors.web_archiving.web_archive import (
     _is_valid_http_url,
     archive_web_content,
     retrieve_web_content,
-    create_web_archive
+    create_web_archive,
 )
 
 from tests._test_utils import (
@@ -20,7 +20,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 
@@ -43,7 +43,9 @@ class TestWebArchiveDocstringQuality:
         try:
             has_good_callable_metadata(WebArchiveProcessor.__init__)
         except Exception as e:
-            pytest.fail(f"Callable metadata in WebArchiveProcessor.__init__ does not meet standards: {e}")
+            pytest.fail(
+                f"Callable metadata in WebArchiveProcessor.__init__ does not meet standards: {e}"
+            )
 
     def test_archive_url_docstring_quality(self):
         """
@@ -61,7 +63,9 @@ class TestWebArchiveDocstringQuality:
         try:
             has_good_callable_metadata(WebArchive.retrieve_archive)
         except Exception as e:
-            pytest.fail(f"Callable metadata in WebArchive.retrieve_archive does not meet standards: {e}")
+            pytest.fail(
+                f"Callable metadata in WebArchive.retrieve_archive does not meet standards: {e}"
+            )
 
     def test_list_archives_docstring_quality(self):
         """
@@ -70,7 +74,9 @@ class TestWebArchiveDocstringQuality:
         try:
             has_good_callable_metadata(WebArchive.list_archives)
         except Exception as e:
-            pytest.fail(f"Callable metadata in WebArchive.list_archives does not meet standards: {e}")
+            pytest.fail(
+                f"Callable metadata in WebArchive.list_archives does not meet standards: {e}"
+            )
 
     def test_process_urls_docstring_quality(self):
         """
@@ -79,7 +85,9 @@ class TestWebArchiveDocstringQuality:
         try:
             has_good_callable_metadata(WebArchiveProcessor.process_urls)
         except Exception as e:
-            pytest.fail(f"Callable metadata in WebArchiveProcessor.process_urls does not meet standards: {e}")
+            pytest.fail(
+                f"Callable metadata in WebArchiveProcessor.process_urls does not meet standards: {e}"
+            )
 
     def test_extract_text_from_html_docstring_quality(self):
         """
@@ -88,7 +96,9 @@ class TestWebArchiveDocstringQuality:
         try:
             has_good_callable_metadata(WebArchiveProcessor.extract_text_from_html)
         except Exception as e:
-            pytest.fail(f"Callable metadata in WebArchiveProcessor.extract_text_from_html does not meet standards: {e}")
+            pytest.fail(
+                f"Callable metadata in WebArchiveProcessor.extract_text_from_html does not meet standards: {e}"
+            )
 
     def test_search_archives_docstring_quality(self):
         """
@@ -97,7 +107,9 @@ class TestWebArchiveDocstringQuality:
         try:
             has_good_callable_metadata(WebArchiveProcessor.search_archives)
         except Exception as e:
-            pytest.fail(f"Callable metadata in WebArchiveProcessor.search_archives does not meet standards: {e}")
+            pytest.fail(
+                f"Callable metadata in WebArchiveProcessor.search_archives does not meet standards: {e}"
+            )
 
     def test_create_warc_docstring_quality(self):
         """
@@ -106,7 +118,9 @@ class TestWebArchiveDocstringQuality:
         try:
             has_good_callable_metadata(WebArchiveProcessor.create_warc)
         except Exception as e:
-            pytest.fail(f"Callable metadata in WebArchiveProcessor.create_warc does not meet standards: {e}")
+            pytest.fail(
+                f"Callable metadata in WebArchiveProcessor.create_warc does not meet standards: {e}"
+            )
 
     def test_extract_text_from_warc_docstring_quality(self):
         """
@@ -115,7 +129,9 @@ class TestWebArchiveDocstringQuality:
         try:
             has_good_callable_metadata(WebArchiveProcessor.extract_text_from_warc)
         except Exception as e:
-            pytest.fail(f"Callable metadata in WebArchiveProcessor.extract_text_from_warc does not meet standards: {e}")
+            pytest.fail(
+                f"Callable metadata in WebArchiveProcessor.extract_text_from_warc does not meet standards: {e}"
+            )
 
     def test_extract_links_from_warc_docstring_quality(self):
         """
@@ -124,7 +140,9 @@ class TestWebArchiveDocstringQuality:
         try:
             has_good_callable_metadata(WebArchiveProcessor.extract_links_from_warc)
         except Exception as e:
-            pytest.fail(f"Callable metadata in WebArchiveProcessor.extract_links_from_warc does not meet standards: {e}")
+            pytest.fail(
+                f"Callable metadata in WebArchiveProcessor.extract_links_from_warc does not meet standards: {e}"
+            )
 
     def test_extract_metadata_from_warc_docstring_quality(self):
         """
@@ -133,7 +151,9 @@ class TestWebArchiveDocstringQuality:
         try:
             has_good_callable_metadata(WebArchiveProcessor.extract_metadata_from_warc)
         except Exception as e:
-            pytest.fail(f"Callable metadata in WebArchiveProcessor.extract_metadata_from_warc does not meet standards: {e}")
+            pytest.fail(
+                f"Callable metadata in WebArchiveProcessor.extract_metadata_from_warc does not meet standards: {e}"
+            )
 
     def test_index_warc_docstring_quality(self):
         """
@@ -142,7 +162,9 @@ class TestWebArchiveDocstringQuality:
         try:
             has_good_callable_metadata(WebArchiveProcessor.index_warc)
         except Exception as e:
-            pytest.fail(f"Callable metadata in WebArchiveProcessor.index_warc does not meet standards: {e}")
+            pytest.fail(
+                f"Callable metadata in WebArchiveProcessor.index_warc does not meet standards: {e}"
+            )
 
     def test_extract_dataset_from_cdxj_docstring_quality(self):
         """
@@ -151,7 +173,9 @@ class TestWebArchiveDocstringQuality:
         try:
             has_good_callable_metadata(WebArchiveProcessor.extract_dataset_from_cdxj)
         except Exception as e:
-            pytest.fail(f"Callable metadata in WebArchiveProcessor.extract_dataset_from_cdxj does not meet standards: {e}")
+            pytest.fail(
+                f"Callable metadata in WebArchiveProcessor.extract_dataset_from_cdxj does not meet standards: {e}"
+            )
 
     def test_process_html_content_docstring_quality(self):
         """
@@ -160,7 +184,9 @@ class TestWebArchiveDocstringQuality:
         try:
             has_good_callable_metadata(WebArchiveProcessor.process_html_content)
         except Exception as e:
-            pytest.fail(f"Callable metadata in WebArchiveProcessor.process_html_content does not meet standards: {e}")
+            pytest.fail(
+                f"Callable metadata in WebArchiveProcessor.process_html_content does not meet standards: {e}"
+            )
 
     def test_is_valid_http_url_docstring_quality(self):
         """

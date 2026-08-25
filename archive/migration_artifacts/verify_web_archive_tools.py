@@ -5,6 +5,7 @@ Verify MCP Web Archive Tools Implementation.
 This script checks if the web archive tools are properly implemented
 in the MCP server and attempts to run them with mocked dependencies.
 """
+
 import os
 import sys
 import inspect
@@ -13,6 +14,7 @@ from unittest.mock import patch, MagicMock
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 
 def verify_web_archive_tools():
     """Verify the implementation of web archive tools."""
@@ -26,7 +28,7 @@ def verify_web_archive_tools():
         "extract_dataset_from_cdxj",
         "extract_text_from_warc",
         "extract_links_from_warc",
-        "extract_metadata_from_warc"
+        "extract_metadata_from_warc",
     ]
 
     # Create test paths
@@ -55,18 +57,21 @@ def verify_web_archive_tools():
     results = []
 
     # Apply patch to WebArchiveProcessor
-    with patch("ipfs_datasets_py.web_archive_utils.WebArchiveProcessor",
-               return_value=mock_processor):
-
+    with patch(
+        "ipfs_datasets_py.web_archive_utils.WebArchiveProcessor", return_value=mock_processor
+    ):
         # Try to import ipfs_datasets_py
         try:
             import ipfs_datasets_py
+
             print("✓ Successfully imported ipfs_datasets_py")
 
             # Check each tool
             for tool_name in tools:
                 print(f"\nChecking {tool_name}...")
-                tool_path = Path(f"ipfs_datasets_py/mcp_server/tools/web_archive_tools/{tool_name}.py")
+                tool_path = Path(
+                    f"ipfs_datasets_py/mcp_server/tools/web_archive_tools/{tool_name}.py"
+                )
 
                 if not (Path.cwd() / tool_path).exists():
                     print(f"✗ Tool file not found: {tool_path}")
@@ -100,7 +105,11 @@ def verify_web_archive_tools():
                                 result = func(str(warc_path), str(output_path))
                             elif tool_name == "extract_dataset_from_cdxj":
                                 result = func(str(cdxj_path), str(output_path))
-                            elif tool_name in ["extract_text_from_warc", "extract_links_from_warc", "extract_metadata_from_warc"]:
+                            elif tool_name in [
+                                "extract_text_from_warc",
+                                "extract_links_from_warc",
+                                "extract_metadata_from_warc",
+                            ]:
                                 result = func(str(warc_path), str(output_path))
                             else:
                                 result = {"status": "untested"}
@@ -148,7 +157,9 @@ def verify_web_archive_tools():
 
     # Clean up
     import shutil
+
     shutil.rmtree(test_dir)
+
 
 if __name__ == "__main__":
     verify_web_archive_tools()

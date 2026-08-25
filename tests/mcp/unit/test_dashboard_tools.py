@@ -7,6 +7,7 @@ Covers:
 - reset_tdfol_metrics: clears metrics state
 - get_tdfol_profiler_report: report generation
 """
+
 from __future__ import annotations
 
 import pytest
@@ -17,6 +18,7 @@ class TestGetTdfolMetrics:
         from ipfs_datasets_py.mcp_server.tools.dashboard_tools.tdfol_performance_tool import (
             get_tdfol_metrics,
         )
+
         r = get_tdfol_metrics()
         assert isinstance(r, dict)
 
@@ -24,6 +26,7 @@ class TestGetTdfolMetrics:
         from ipfs_datasets_py.mcp_server.tools.dashboard_tools.tdfol_performance_tool import (
             get_tdfol_metrics,
         )
+
         r = get_tdfol_metrics()
         assert len(r) > 0
 
@@ -31,6 +34,7 @@ class TestGetTdfolMetrics:
         from ipfs_datasets_py.mcp_server.tools.dashboard_tools.tdfol_performance_tool import (
             get_tdfol_metrics,
         )
+
         r1 = get_tdfol_metrics()
         r2 = get_tdfol_metrics()
         assert type(r1) == type(r2) == dict
@@ -41,6 +45,7 @@ class TestProfileTdfolOperation:
         from ipfs_datasets_py.mcp_server.tools.dashboard_tools.tdfol_performance_tool import (
             profile_tdfol_operation,
         )
+
         r = profile_tdfol_operation("O(a)", [], runs=1)
         assert isinstance(r, dict)
 
@@ -48,6 +53,7 @@ class TestProfileTdfolOperation:
         from ipfs_datasets_py.mcp_server.tools.dashboard_tools.tdfol_performance_tool import (
             profile_tdfol_operation,
         )
+
         r = profile_tdfol_operation("P(b)", [], runs=1, strategy="default")
         assert isinstance(r, dict)
 
@@ -55,6 +61,7 @@ class TestProfileTdfolOperation:
         from ipfs_datasets_py.mcp_server.tools.dashboard_tools.tdfol_performance_tool import (
             profile_tdfol_operation,
         )
+
         r = profile_tdfol_operation("", [])
         assert isinstance(r, dict)
 
@@ -64,6 +71,7 @@ class TestExportTdfolStatistics:
         from ipfs_datasets_py.mcp_server.tools.dashboard_tools.tdfol_performance_tool import (
             export_tdfol_statistics,
         )
+
         r = export_tdfol_statistics("json")
         assert isinstance(r, (dict, str))
 
@@ -71,6 +79,7 @@ class TestExportTdfolStatistics:
         from ipfs_datasets_py.mcp_server.tools.dashboard_tools.tdfol_performance_tool import (
             export_tdfol_statistics,
         )
+
         r = export_tdfol_statistics("csv")
         assert isinstance(r, (dict, str))
 
@@ -78,6 +87,7 @@ class TestExportTdfolStatistics:
         from ipfs_datasets_py.mcp_server.tools.dashboard_tools.tdfol_performance_tool import (
             export_tdfol_statistics,
         )
+
         r = export_tdfol_statistics("json", include_raw_data=True)
         assert isinstance(r, (dict, str))
 
@@ -87,6 +97,7 @@ class TestResetTdfolMetrics:
         from ipfs_datasets_py.mcp_server.tools.dashboard_tools.tdfol_performance_tool import (
             reset_tdfol_metrics,
         )
+
         r = reset_tdfol_metrics()
         assert isinstance(r, dict)
 
@@ -96,6 +107,7 @@ class TestGetTdfolProfilerReport:
         from ipfs_datasets_py.mcp_server.tools.dashboard_tools.tdfol_performance_tool import (
             get_tdfol_profiler_report,
         )
+
         r = get_tdfol_profiler_report("text")
         assert isinstance(r, (dict, str))
 
@@ -103,5 +115,6 @@ class TestGetTdfolProfilerReport:
         from ipfs_datasets_py.mcp_server.tools.dashboard_tools.tdfol_performance_tool import (
             get_tdfol_profiler_report,
         )
+
         r = get_tdfol_profiler_report("text", top_n=5)
         assert isinstance(r, (dict, str))

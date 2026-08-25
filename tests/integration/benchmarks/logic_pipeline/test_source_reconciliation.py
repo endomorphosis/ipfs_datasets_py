@@ -48,9 +48,7 @@ V1_MANIFEST = (
     / "a0-baseline-v1/state/baseline-manifest.json"
 )
 V2_MANIFEST = ROOT / DEFAULT_RECONCILED_MANIFEST_PATH
-V1_BYTES_SHA256 = (
-    "063caddfa99fcb0307d59fdefb3a6313c194e1dc07054e92254b7d6dc2bca8fa"
-)
+V1_BYTES_SHA256 = "063caddfa99fcb0307d59fdefb3a6313c194e1dc07054e92254b7d6dc2bca8fa"
 IMMUTABLE_V1_ARTIFACTS = {
     V1_MANIFEST: V1_BYTES_SHA256,
     ROOT
@@ -79,12 +77,8 @@ IMMUTABLE_V1_ARTIFACTS = {
         "0e53798d3f1deaab040cf99f10034644f421ffd51f15090a948aa7085041a84e"
     ),
 }
-V2_MANIFEST_SHA256 = (
-    "6c7084db784022d81abc65148fb0d72a8046da881c4d4b448434b9b13af7e469"
-)
-NORMALIZED_PILOT_SHA256 = (
-    "599e85c5c19c87c370cdf28f8a156ff5af3fc6f6c186028c963c84f659319b22"
-)
+V2_MANIFEST_SHA256 = "6c7084db784022d81abc65148fb0d72a8046da881c4d4b448434b9b13af7e469"
+NORMALIZED_PILOT_SHA256 = "599e85c5c19c87c370cdf28f8a156ff5af3fc6f6c186028c963c84f659319b22"
 FRESH_TEST_RUN_ID = "post-repair-source-test"
 
 
@@ -301,19 +295,15 @@ def test_checked_manifest_is_canonical_complete_and_source_fresh() -> None:
         "6b37a6493d6328102b558258843218128ad0bf6f8cc7be13f8d0c2e0bb61e156"
     )
     assert payload["predecessor"]["immutable"] is True
-    assert source["repository_commit"] == (
-        "3e053f6edece026fef48c153aa5c4d62a50da3d2"
-    )
+    assert source["repository_commit"] == ("3e053f6edece026fef48c153aa5c4d62a50da3d2")
     assert source["detached"] is True
     assert len(manifest.recursive_gitlinks) == 20
     assert [item.path for item in manifest.recursive_gitlinks] == sorted(
         item.path for item in manifest.recursive_gitlinks
     )
-    assert {
-        item.path: item.commit for item in manifest.recursive_gitlinks
-    }["ipfs_accelerate_py"] == (
-        "0c27224e02b91ebd102647f93781ca2b27e9cd88"
-    )
+    assert {item.path: item.commit for item in manifest.recursive_gitlinks}[
+        "ipfs_accelerate_py"
+    ] == ("0c27224e02b91ebd102647f93781ca2b27e9cd88")
     assert reconciliation["coordinate_count"] == 20
     assert reconciliation["predecessor_sha256"] == NORMALIZED_PILOT_SHA256
     assert reconciliation["fresh_sha256"] == NORMALIZED_PILOT_SHA256
@@ -321,27 +311,25 @@ def test_checked_manifest_is_canonical_complete_and_source_fresh() -> None:
     assert reconciliation["unexplained_drift"] == []
     assert payload["environment"]["source_commit"] == source["repository_commit"]
     assert payload["environment"]["run_id"] == REASSESSMENT_RUN_ID
-    assert V2_MANIFEST.read_bytes() == (
-        canonical_reconciled_baseline_json(manifest) + "\n"
-    ).encode("utf-8")
+    assert V2_MANIFEST.read_bytes() == (canonical_reconciled_baseline_json(manifest) + "\n").encode(
+        "utf-8"
+    )
 
 
 def test_v1_manifest_remains_byte_exact_historical_evidence() -> None:
     assert {
-        path: hashlib.sha256(path.read_bytes()).hexdigest()
-        for path in IMMUTABLE_V1_ARTIFACTS
+        path: hashlib.sha256(path.read_bytes()).hexdigest() for path in IMMUTABLE_V1_ARTIFACTS
     } == IMMUTABLE_V1_ARTIFACTS
     payload = json.loads(V1_MANIFEST.read_text(encoding="utf-8"))
 
     assert payload["schema"].endswith("frozen-baseline-manifest.v1")
-    assert payload["source"]["repository_commit"] == (
-        "2a1be00b1b76e6652c25d418752affbf0f85d176"
+    assert payload["source"]["repository_commit"] == ("2a1be00b1b76e6652c25d418752affbf0f85d176")
+    assert (
+        next(
+            item for item in payload["source"]["submodules"] if item["path"] == "ipfs_accelerate_py"
+        )["commit"]
+        == "d3db5eea637a69c2e919b1c850f0f0089071cbcb"
     )
-    assert next(
-        item
-        for item in payload["source"]["submodules"]
-        if item["path"] == "ipfs_accelerate_py"
-    )["commit"] == "d3db5eea637a69c2e919b1c850f0f0089071cbcb"
 
 
 def test_recursive_gitlinks_come_from_pinned_trees_not_active_heads(
@@ -438,9 +426,7 @@ def test_uninitialized_nested_repository_fails_closed(tmp_path: Path) -> None:
     with pytest.raises(SourceReconciliationError, match="partial|inspect"):
         capture_recursive_gitlinks(clone, revision)
 
-    partial = capture_recursive_gitlinks(
-        clone, revision, require_complete=False
-    )
+    partial = capture_recursive_gitlinks(clone, revision, require_complete=False)
     assert [(item.path, item.commit) for item in partial] == [
         (
             "vendor/dependency",
@@ -452,17 +438,14 @@ def test_uninitialized_nested_repository_fails_closed(tmp_path: Path) -> None:
 def test_normalized_output_comparison_ignores_only_run_volatile_fields() -> None:
     case_ids = ("pilot-p01", "pilot-p02")
     old = [
-        _semantic_output(case_id, run_id="a0-baseline-v1", wall_time_ms=1.0)
-        for case_id in case_ids
+        _semantic_output(case_id, run_id="a0-baseline-v1", wall_time_ms=1.0) for case_id in case_ids
     ]
     fresh = [
         _semantic_output(case_id, run_id="reassessment-v2", wall_time_ms=99.0)
         for case_id in case_ids
     ]
 
-    comparison = compare_a0_outputs(
-        old, fresh, expected_case_ids=case_ids
-    )
+    comparison = compare_a0_outputs(old, fresh, expected_case_ids=case_ids)
 
     assert comparison["equivalent"] is True
     assert comparison["predecessor_sha256"] == comparison["fresh_sha256"]
@@ -477,14 +460,8 @@ def test_normalized_output_drift_fails_closed(
     mutation: str,
 ) -> None:
     case_ids = ("pilot-p01", "pilot-p02")
-    old = [
-        _semantic_output(case_id, run_id="old", wall_time_ms=1.0)
-        for case_id in case_ids
-    ]
-    fresh = [
-        _semantic_output(case_id, run_id="fresh", wall_time_ms=2.0)
-        for case_id in case_ids
-    ]
+    old = [_semantic_output(case_id, run_id="old", wall_time_ms=1.0) for case_id in case_ids]
+    fresh = [_semantic_output(case_id, run_id="fresh", wall_time_ms=2.0) for case_id in case_ids]
     if mutation == "semantic":
         fresh[0]["stages"][0]["data"]["modal_ir_sha256"] = "b" * 64
     elif mutation == "status":
@@ -521,10 +498,7 @@ def test_all_mutable_namespaces_are_v2_scoped_and_disjoint(
     assert len(filesystem) == len(set(filesystem))
     assert all(REASSESSMENT_RUN_ID in value for value in filesystem)
     assert cache["cold"] != cache["warm"]
-    assert all(
-        REASSESSMENT_RUN_ID in cache[name]
-        for name in ("root", "cold", "warm")
-    )
+    assert all(REASSESSMENT_RUN_ID in cache[name] for name in ("root", "cold", "warm"))
     assert "a0-baseline-v1" not in canonical_json(namespaces)
 
 
@@ -538,9 +512,10 @@ def test_environment_inventory_is_source_bound_and_rejects_credentials() -> None
 
     assert record["run_id"] == REASSESSMENT_RUN_ID
     assert record["source_commit"] == commit
-    assert record["sha256"] == hashlib.sha256(
-        canonical_json(record["inventory"]).encode("utf-8")
-    ).hexdigest()
+    assert (
+        record["sha256"]
+        == hashlib.sha256(canonical_json(record["inventory"]).encode("utf-8")).hexdigest()
+    )
     with pytest.raises(SourceReconciliationError, match="credential"):
         environment_inventory_record(
             {"api_token": "must-not-be-serialized"},
@@ -651,9 +626,7 @@ def test_fresh_repaired_source_baseline_is_external_local_only_and_matrix_deferr
         "variant_id": "A0",
         "definition": "repaired_source_within_run_control",
         "historical_a0_equivalence_claimed": False,
-        "reason": (
-            "repaired_environment_and_code_define_a_new_within_run_A0_control"
-        ),
+        "reason": ("repaired_environment_and_code_define_a_new_within_run_A0_control"),
     }
     assert payload["behavior_comparison"] == {
         "status": "deferred",
@@ -663,9 +636,7 @@ def test_fresh_repaired_source_baseline_is_external_local_only_and_matrix_deferr
     }
     assert payload["predecessor"]["run_id"] == REASSESSMENT_RUN_ID
     assert payload["predecessor"]["immutable"] is True
-    assert [
-        item["path"] for item in payload["predecessor"]["artifacts"]
-    ] == [
+    assert [item["path"] for item in payload["predecessor"]["artifacts"]] == [
         path.as_posix() for path in DEFAULT_FRESH_PREDECESSOR_ARTIFACT_PATHS
     ]
     assert [(item.path, item.depth) for item in loaded.recursive_gitlinks] == [
@@ -690,20 +661,18 @@ def test_fresh_repaired_source_baseline_is_external_local_only_and_matrix_deferr
             "remote.origin.url",
         ).stdout.strip()
         assert Path(origin).resolve() == local_source.resolve()
-        assert _git(
-            materialized,
-            "symbolic-ref",
-            "--quiet",
-            "HEAD",
-            check=False,
-        ).returncode != 0
-    assert not (
-        detached / "ipfs_accelerate_py" / "deps" / "leaf" / ".git"
-    ).exists()
-    assert all(
-        item.path != "ipfs_kit_py/deps/leaf"
-        for item in loaded.recursive_gitlinks
-    )
+        assert (
+            _git(
+                materialized,
+                "symbolic-ref",
+                "--quiet",
+                "HEAD",
+                check=False,
+            ).returncode
+            != 0
+        )
+    assert not (detached / "ipfs_accelerate_py" / "deps" / "leaf" / ".git").exists()
+    assert all(item.path != "ipfs_kit_py/deps/leaf" for item in loaded.recursive_gitlinks)
 
     forbidden = source / "fresh-baseline.json"
     with pytest.raises(SourceReconciliationError, match="external run root"):
@@ -777,9 +746,7 @@ def test_fresh_source_baseline_fails_closed_on_semantic_and_byte_tampering(
         )
     receipt.write_bytes(original_receipt)
 
-    predecessor_artifact = (
-        detached / DEFAULT_FRESH_PREDECESSOR_ARTIFACT_PATHS[0]
-    )
+    predecessor_artifact = detached / DEFAULT_FRESH_PREDECESSOR_ARTIFACT_PATHS[0]
     original_artifact = predecessor_artifact.read_bytes()
     predecessor_artifact.write_bytes(original_artifact + b"\n")
     with pytest.raises(
@@ -842,9 +809,7 @@ def test_fresh_loader_requires_exact_clean_detached_materialized_source(
             benchmark_root=paths.benchmark_root,
         )
     child_commit = next(
-        item.commit
-        for item in manifest.recursive_gitlinks
-        if item.path == "ipfs_kit_py"
+        item.commit for item in manifest.recursive_gitlinks if item.path == "ipfs_kit_py"
     )
     _git(submodule, "checkout", "--detach", child_commit)
 
@@ -900,9 +865,7 @@ def test_fresh_paths_reject_symlinked_root_state_and_manifest(
         )
     assert not (real_root / FRESH_TEST_RUN_ID).exists()
 
-    source_two, commit_two = _fresh_source_repository(
-        tmp_path / "state-alias-case"
-    )
+    source_two, commit_two = _fresh_source_repository(tmp_path / "state-alias-case")
     state_paths = RunPaths.for_run(
         FRESH_TEST_RUN_ID,
         benchmark_root=tmp_path / "state-external-root",
@@ -979,9 +942,7 @@ def test_fresh_generic_inventory_rejects_credential_shaped_values() -> None:
         run_id=FRESH_TEST_RUN_ID,
         source_commit="d" * 40,
     )
-    assert (
-        record["inventory"]["identity"]["credential_configured"] is False
-    )
+    assert record["inventory"]["identity"]["credential_configured"] is False
 
     with pytest.raises(SourceReconciliationError, match="credential-shaped"):
         fresh_environment_inventory_record(

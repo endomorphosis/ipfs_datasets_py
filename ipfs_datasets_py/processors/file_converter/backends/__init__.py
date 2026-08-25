@@ -1,3 +1,3 @@
 """Backend adapters package."""
 
-__all__ = ['MarkItDownBackend', 'OmniBackend', 'NativeBackend']
+__all__ = ["MarkItDownBackend", "OmniBackend", "NativeBackend"]

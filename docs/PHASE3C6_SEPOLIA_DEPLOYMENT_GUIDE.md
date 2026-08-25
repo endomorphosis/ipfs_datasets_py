@@ -78,7 +78,7 @@ SEPOLIA_CONFIG = EthereumConfig(
     network_id=11155111,
     network_name="sepolia",
     verifier_contract_address="",  # Will be set after deployment
-    registry_contract_address="",   # Will be set after deployment
+    registry_contract_address="",  # Will be set after deployment
     confirmation_blocks=20,
     gas_price_multiplier=1.2,
 )
@@ -204,44 +204,51 @@ from web3 import Web3
 import json
 from deployment_config import SEPOLIA_CONFIG, ACCOUNT_ADDRESS, PRIVATE_KEY
 
+
 def deploy_registry(verifier_address):
     w3 = Web3(Web3.HTTPProvider(SEPOLIA_CONFIG.rpc_url))
-    
+
     # Load compiled contract
-    with open("ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/compiled_contracts/ComplaintRegistry.abi") as f:
+    with open(
+        "ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/compiled_contracts/ComplaintRegistry.abi"
+    ) as f:
         abi = json.load(f)
-    with open("ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/compiled_contracts/ComplaintRegistry.bin") as f:
+    with open(
+        "ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/compiled_contracts/ComplaintRegistry.bin"
+    ) as f:
         bytecode = "0x" + f.read().strip()
-    
+
     # Create contract factory
     Contract = w3.eth.contract(abi=abi, bytecode=bytecode)
-    
+
     # Build transaction
     checksum_address = Web3.to_checksum_address(ACCOUNT_ADDRESS)
     nonce = w3.eth.get_transaction_count(checksum_address)
-    
-    tx = Contract.constructor().build_transaction({
-        "from": checksum_address,
-        "nonce": nonce,
-        "gasPrice": int(w3.eth.gas_price * SEPOLIA_CONFIG.gas_price_multiplier),
-        "gas": 1000000,
-    })
-    
+
+    tx = Contract.constructor().build_transaction(
+        {
+            "from": checksum_address,
+            "nonce": nonce,
+            "gasPrice": int(w3.eth.gas_price * SEPOLIA_CONFIG.gas_price_multiplier),
+            "gas": 1000000,
+        }
+    )
+
     # Estimate gas
     estimated_gas = w3.eth.estimate_gas(tx)
     tx["gas"] = estimated_gas
-    
+
     print(f"Registry Deployment Cost: {(estimated_gas * tx['gasPrice']) / 1e18:.4f} ETH")
-    
+
     # Sign and send
     signed_tx = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
     tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
-    
+
     print(f"Deploying registry: {tx_hash.hex()}")
-    
+
     # Wait for confirmation
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=300)
-    
+
     if receipt.status == 1:
         registry_address = receipt.contractAddress
         print(f"✅ Registry Deployed: {registry_address}")
@@ -249,6 +256,7 @@ def deploy_registry(verifier_address):
     else:
         print("❌ Registry deployment failed")
         return None
+
 
 if __name__ == "__main__":
     verifier_addr = "0x..."  # From step 3
@@ -265,6 +273,7 @@ from web3 import Web3
 from eth_integration import EthereumProofClient, EthereumConfig
 import json
 
+
 def validate():
     config = EthereumConfig(
         rpc_url="https://ethereum-sepolia.publicrpc.com",
@@ -273,24 +282,25 @@ def validate():
         verifier_contract_address="0x...",  # From deployment
         registry_contract_address="0x...",  # From deployment
     )
-    
+
     client = EthereumProofClient(config)
-    
+
     # Check verifier contract exists
     verifier_code = client.w3.eth.get_code(config.verifier_contract_address)
     print(f"Verifier Code Length: {len(verifier_code)} bytes")
     assert len(verifier_code) > 0, "Verifier contract not deployed"
-    
+
     # Check registry contract exists
     registry_code = client.w3.eth.get_code(config.registry_contract_address)
     print(f"Registry Code Length: {len(registry_code)} bytes")
     assert len(registry_code) > 0, "Registry contract not deployed"
-    
+
     # Get verifier key hash
     vk_hash = client.verifier_contract.functions.getVerifierKeyHash().call()
     print(f"Verifier Key Hash: {vk_hash.hex()}")
-    
+
     print("✅ Deployment validation successful!")
+
 
 if __name__ == "__main__":
     validate()
@@ -306,6 +316,7 @@ from eth_integration import ProofSubmissionPipeline, EthereumConfig
 from backends.groth16_ffi import Groth16BackendFallback
 import json
 
+
 def test_submission():
     config = EthereumConfig(
         rpc_url="https://ethereum-sepolia.publicrpc.com",
@@ -314,10 +325,10 @@ def test_submission():
         verifier_contract_address="0x...",
         registry_contract_address="0x...",
     )
-    
+
     backend = Groth16BackendFallback()
     pipeline = ProofSubmissionPipeline(config, backend)
-    
+
     # Sample witness
     witness = {
         "private_axioms": ["P", "P -> Q"],
@@ -327,25 +338,26 @@ def test_submission():
         "circuit_version": 1,
         "ruleset_id": "TDFOL_v1",
     }
-    
+
     print("Submitting proof to Sepolia...")
     print(f"Witness: {json.dumps(witness, indent=2)}")
-    
+
     from_account = "0x..."
     private_key = "0x..."
-    
+
     result = pipeline.generate_and_verify_proof(
         witness_json=json.dumps(witness),
         from_account=from_account,
         private_key=private_key,
         dry_run=False,
     )
-    
+
     print(f"\n✅ Proof verified on-chain!")
     print(f"Transaction: {result.transaction_hash}")
     print(f"Block: {result.block_number}")
     print(f"Gas Used: {result.gas_used}")
     print(f"Cost: {result.transaction_fee:.6f} ETH")
+
 
 if __name__ == "__main__":
     test_submission()
@@ -372,6 +384,7 @@ Example: `https://sepolia.etherscan.io/address/0x...`
 ### Check Latest Block
 ```python
 from web3 import Web3
+
 w3 = Web3(Web3.HTTPProvider("https://ethereum-sepolia.publicrpc.com"))
 print(f"Latest Block: {w3.eth.block_number}")
 print(f"Latest Block Time: {w3.eth.get_block('latest')['timestamp']}")

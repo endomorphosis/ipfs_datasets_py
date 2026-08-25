@@ -30,11 +30,8 @@ from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_prove
 
 result = await tdfol_prove(
     formula="Obligated(file_taxes(alice, 2024))",
-    axioms=[
-        "∀x∀y(citizen(x, y) → Obligated(file_taxes(x, y)))",
-        "citizen(alice, 2024)"
-    ],
-    logic="TDFOL"   # "TDFOL" | "FOL" | "deontic"
+    axioms=["∀x∀y(citizen(x, y) → Obligated(file_taxes(x, y)))", "citizen(alice, 2024)"],
+    logic="TDFOL",  # "TDFOL" | "FOL" | "deontic"
 )
 # Returns: {"status": "success", "proved": True, "proof": {...}, "steps": [...]}
 ```
@@ -45,9 +42,7 @@ result = await tdfol_prove(
 from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_kb_add_axiom, tdfol_kb_query
 
 # Add axioms
-await tdfol_kb_add_axiom(
-    formula="∀x(person(x) → Obligated(pay_taxes(x)))"
-)
+await tdfol_kb_add_axiom(formula="∀x(person(x) → Obligated(pay_taxes(x)))")
 
 # Query
 result = await tdfol_kb_query()
@@ -60,10 +55,7 @@ from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_prove
 
 result = await cec_prove(
     goal="BF(agent1, knows(agent2, P), t1)",
-    axioms=[
-        "K(agent1, P, t0)",
-        "communicates(agent1, agent2, P, t0, t1)"
-    ]
+    axioms=["K(agent1, P, t0)", "communicates(agent1, agent2, P, t0, t1)"],
 )
 ```
 

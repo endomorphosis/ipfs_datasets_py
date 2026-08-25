@@ -141,6 +141,7 @@ async def my_tool(arg1, arg2):
     result = await some_operation()
     return result
 
+
 # CLI handles it automatically
 # No special flags needed
 ```
@@ -232,6 +233,7 @@ class DynamicToolRunner:
 ```python
 def print_result(result, format_type="pretty"):
     """Print results with ✅/❌ indicators"""
+
 
 def parse_tool_args(args_list):
     """Parse CLI args into tool parameters"""
@@ -326,16 +328,9 @@ async def my_tool(arg1: str, arg2: int = 10) -> dict:
     """Tool description."""
     try:
         result = await process(arg1, arg2)
-        return {
-            "status": "success",
-            "result": result,
-            "message": "Operation completed"
-        }
+        return {"status": "success", "result": result, "message": "Operation completed"}
     except Exception as e:
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
 ```
 
 ## Future Enhancements

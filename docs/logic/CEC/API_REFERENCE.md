@@ -36,6 +36,7 @@ pip install -e .
 **Import the module:**
 ```python
 from ipfs_datasets_py.logic.CEC import native
+
 # Or import specific components
 from ipfs_datasets_py.logic.CEC.native import DCECContainer, TheoremProver
 ```
@@ -49,9 +50,9 @@ from ipfs_datasets_py.logic.CEC.native import DCECContainer, TheoremProver
 ```python
 # Essential imports for most use cases
 from ipfs_datasets_py.logic.CEC.native import (
-    DCECContainer,           # Main container for DCEC statements
-    TheoremProver,           # Automated theorem prover
-    NaturalLanguageConverter,# NL ↔ DCEC conversion
+    DCECContainer,  # Main container for DCEC statements
+    TheoremProver,  # Automated theorem prover
+    NaturalLanguageConverter,  # NL ↔ DCEC conversion
 )
 ```
 
@@ -61,15 +62,23 @@ from ipfs_datasets_py.logic.CEC.native import (
 # Advanced imports for specific use cases
 from ipfs_datasets_py.logic.CEC.native import (
     # Operators
-    DeonticOperator, CognitiveOperator, TemporalOperator,
+    DeonticOperator,
+    CognitiveOperator,
+    TemporalOperator,
     # Formula classes
-    DeonticFormula, CognitiveFormula, TemporalFormula,
+    DeonticFormula,
+    CognitiveFormula,
+    TemporalFormula,
     # Modal logic
-    ShadowProver, ModalTableau, TableauProver,
+    ShadowProver,
+    ModalTableau,
+    TableauProver,
     # Grammar engine
-    GrammarEngine, DCECEnglishGrammar,
+    GrammarEngine,
+    DCECEnglishGrammar,
     # Parsing
-    parse_dcec_string, validate_formula,
+    parse_dcec_string,
+    validate_formula,
 )
 ```
 
@@ -83,14 +92,14 @@ Operators for normative/deontic reasoning.
 
 ```python
 class DeonticOperator(Enum):
-    OBLIGATION = "O"         # O(φ) - it is obligatory that φ
-    PERMISSION = "P"         # P(φ) - it is permitted that φ
-    PROHIBITION = "F"        # F(φ) - it is forbidden that φ
-    SUPEREROGATION = "S"     # S(φ) - it is supererogatory that φ
-    RIGHT = "R"              # R(φ) - φ is a right
-    LIBERTY = "L"            # L(φ) - φ is a liberty/privilege
-    POWER = "POW"            # POW(φ) - power to bring about φ
-    IMMUNITY = "IMM"         # IMM(φ) - immunity from φ
+    OBLIGATION = "O"  # O(φ) - it is obligatory that φ
+    PERMISSION = "P"  # P(φ) - it is permitted that φ
+    PROHIBITION = "F"  # F(φ) - it is forbidden that φ
+    SUPEREROGATION = "S"  # S(φ) - it is supererogatory that φ
+    RIGHT = "R"  # R(φ) - φ is a right
+    LIBERTY = "L"  # L(φ) - φ is a liberty/privilege
+    POWER = "POW"  # POW(φ) - power to bring about φ
+    IMMUNITY = "IMM"  # IMM(φ) - immunity from φ
 ```
 
 **Example:**
@@ -114,11 +123,11 @@ Operators for cognitive/mental state reasoning.
 
 ```python
 class CognitiveOperator(Enum):
-    BELIEF = "B"             # B(agent, φ) - agent believes φ
-    KNOWLEDGE = "K"          # K(agent, φ) - agent knows φ
-    INTENTION = "I"          # I(agent, φ) - agent intends φ
-    DESIRE = "D"             # D(agent, φ) - agent desires φ
-    GOAL = "G"               # G(agent, φ) - agent has goal φ
+    BELIEF = "B"  # B(agent, φ) - agent believes φ
+    KNOWLEDGE = "K"  # K(agent, φ) - agent knows φ
+    INTENTION = "I"  # I(agent, φ) - agent intends φ
+    DESIRE = "D"  # D(agent, φ) - agent desires φ
+    GOAL = "G"  # G(agent, φ) - agent has goal φ
 ```
 
 **Example:**
@@ -138,13 +147,13 @@ Standard logical connectives.
 
 ```python
 class LogicalConnective(Enum):
-    AND = "∧"                # Conjunction
-    OR = "∨"                 # Disjunction
-    NOT = "¬"                # Negation
-    IMPLIES = "→"            # Implication
-    BICONDITIONAL = "↔"      # Biconditional
-    EXISTS = "∃"             # Existential quantifier
-    FORALL = "∀"             # Universal quantifier
+    AND = "∧"  # Conjunction
+    OR = "∨"  # Disjunction
+    NOT = "¬"  # Negation
+    IMPLIES = "→"  # Implication
+    BICONDITIONAL = "↔"  # Biconditional
+    EXISTS = "∃"  # Existential quantifier
+    FORALL = "∀"  # Universal quantifier
 ```
 
 **Example:**
@@ -164,11 +173,11 @@ Operators for temporal reasoning.
 
 ```python
 class TemporalOperator(Enum):
-    ALWAYS = "□"             # Always/necessarily
-    EVENTUALLY = "◊"         # Eventually/possibly
-    NEXT = "X"               # Next time point
-    UNTIL = "U"              # Until
-    SINCE = "S"              # Since
+    ALWAYS = "□"  # Always/necessarily
+    EVENTUALLY = "◊"  # Eventually/possibly
+    NEXT = "X"  # Next time point
+    UNTIL = "U"  # Until
+    SINCE = "S"  # Since
 ```
 
 **Example:**
@@ -192,9 +201,9 @@ Represents a type/sort in the logic system.
 @dataclass(frozen=True)
 class Sort:
     name: str
-    parent: Optional['Sort'] = None
-    
-    def is_subtype_of(self, other: 'Sort') -> bool:
+    parent: Optional["Sort"] = None
+
+    def is_subtype_of(self, other: "Sort") -> bool:
         """Check if this sort is a subtype of another."""
 ```
 
@@ -208,9 +217,9 @@ agent = Sort("Agent", parent=entity)
 robot = Sort("Robot", parent=agent)
 
 # Check subtype
-print(robot.is_subtype_of(agent))   # True
+print(robot.is_subtype_of(agent))  # True
 print(robot.is_subtype_of(entity))  # True
-print(agent.is_subtype_of(robot))   # False
+print(agent.is_subtype_of(robot))  # False
 ```
 
 ---
@@ -265,8 +274,8 @@ agent = Sort("Agent")
 action = Sort("Action")
 performs = Function("performs", [agent, action], Sort("Bool"))
 
-print(performs)           # "performs(Agent, Action) -> Bool"
-print(performs.arity())   # 2
+print(performs)  # "performs(Agent, Action) -> Bool"
+print(performs.arity())  # 2
 ```
 
 ---
@@ -294,8 +303,8 @@ agent = Sort("Agent")
 task = Sort("Task")
 completes = Predicate("completes", [agent, task])
 
-print(completes)           # "completes(Agent, Task)"
-print(completes.arity())   # 2
+print(completes)  # "completes(Agent, Task)"
+print(completes.arity())  # 2
 ```
 
 ---
@@ -311,13 +320,13 @@ class Formula(ABC):
     @abstractmethod
     def to_string(self) -> str:
         """Convert formula to string representation."""
-    
+
     @abstractmethod
     def get_free_variables(self) -> Set[Variable]:
         """Get all free variables in this formula."""
-    
+
     @abstractmethod
-    def substitute(self, var: Variable, term: Term) -> 'Formula':
+    def substitute(self, var: Variable, term: Term) -> "Formula":
         """Substitute a variable with a term."""
 ```
 
@@ -339,9 +348,7 @@ class AtomicFormula(Formula):
 
 **Example:**
 ```python
-from ipfs_datasets_py.logic.CEC.native import (
-    AtomicFormula, Predicate, Sort, VariableTerm, Variable
-)
+from ipfs_datasets_py.logic.CEC.native import AtomicFormula, Predicate, Sort, VariableTerm, Variable
 
 # Create predicate
 completes = Predicate("completes", [Sort("Agent"), Sort("Task")])
@@ -445,9 +452,9 @@ Formula with logical connective.
 @dataclass
 class ConnectiveFormula(Formula):
     connective: LogicalConnective
-    left: Optional[Formula]     # None for unary NOT
+    left: Optional[Formula]  # None for unary NOT
     right: Formula
-    
+
     def to_string(self) -> str:
         """Convert to string: 'φ ∧ ψ', '¬φ', etc."""
 ```
@@ -486,9 +493,7 @@ class QuantifiedFormula(Formula):
 
 **Example:**
 ```python
-from ipfs_datasets_py.logic.CEC.native import (
-    QuantifiedFormula, LogicalConnective, Variable, Sort
-)
+from ipfs_datasets_py.logic.CEC.native import QuantifiedFormula, LogicalConnective, Variable, Sort
 
 # Create ∀x. P(x)
 x = Variable("x", Sort("Agent"))
@@ -569,29 +574,28 @@ Namespace management for DCEC symbols.
 class DCECNamespace:
     def __init__(self):
         """Initialize a DCEC namespace."""
-    
+
     def declare_sort(self, name: str, parent: Optional[Sort] = None) -> Sort:
         """Declare a new sort/type."""
-    
+
     def declare_variable(self, name: str, sort: Sort) -> Variable:
         """Declare a new variable."""
-    
-    def declare_function(self, name: str, arg_sorts: List[Sort], 
-                         return_sort: Sort) -> Function:
+
+    def declare_function(self, name: str, arg_sorts: List[Sort], return_sort: Sort) -> Function:
         """Declare a new function symbol."""
-    
+
     def declare_predicate(self, name: str, arg_sorts: List[Sort]) -> Predicate:
         """Declare a new predicate symbol."""
-    
+
     def get_sort(self, name: str) -> Optional[Sort]:
         """Get a sort by name."""
-    
+
     def get_variable(self, name: str) -> Optional[Variable]:
         """Get a variable by name."""
-    
+
     def get_function(self, name: str) -> Optional[Function]:
         """Get a function by name."""
-    
+
     def get_predicate(self, name: str) -> Optional[Predicate]:
         """Get a predicate by name."""
 ```
@@ -696,16 +700,16 @@ Result of a proof attempt.
 ```python
 @dataclass
 class ProofResult:
-    is_proven: bool                    # True if goal was proven
-    goal: str                          # Goal formula
-    proof_steps: List[str]             # List of proof steps
-    proof_tree: Optional[ProofTree]    # Proof tree structure
-    time_taken: float                  # Time in seconds
-    cached: bool                       # True if result was cached
-    
+    is_proven: bool  # True if goal was proven
+    goal: str  # Goal formula
+    proof_steps: List[str]  # List of proof steps
+    proof_tree: Optional[ProofTree]  # Proof tree structure
+    time_taken: float  # Time in seconds
+    cached: bool  # True if result was cached
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
-    
+
     def __str__(self) -> str:
         """Human-readable representation."""
 ```
@@ -807,7 +811,7 @@ converter = NaturalLanguageConverter()
 sentences = [
     "The robot must perform the task",
     "The robot believes the task is complete",
-    "It is permitted to open the door"
+    "It is permitted to open the door",
 ]
 
 for sentence in sentences:
@@ -815,11 +819,7 @@ for sentence in sentences:
     print(f"'{sentence}' → {dcec}")
 
 # DCEC to English
-formulas = [
-    "O(performTask(robot))",
-    "B(robot, taskComplete)",
-    "P(openDoor)"
-]
+formulas = ["O(performTask(robot))", "B(robot, taskComplete)", "P(openDoor)"]
 
 for formula in formulas:
     english = converter.dcec_to_english(formula)
@@ -838,7 +838,7 @@ class ConversionResult:
     success: bool
     formula: Optional[str]
     english: Optional[str]
-    confidence: float          # 0.0 to 1.0
+    confidence: float  # 0.0 to 1.0
     pattern_used: Optional[str]
     error: Optional[str]
 ```
@@ -901,14 +901,15 @@ Pre-built English grammar for DCEC.
 ```python
 def create_dcec_grammar() -> DCECEnglishGrammar:
     """Create a pre-built DCEC English grammar.
-    
+
     Returns:
         DCECEnglishGrammar with 200+ lexical entries and 50+ rules
     """
 
+
 class DCECEnglishGrammar(GrammarEngine):
     """English grammar specialized for DCEC conversion."""
-    
+
     def parse_to_dcec(self, text: str) -> str:
         """Parse English and convert directly to DCEC."""
 ```
@@ -1001,29 +1002,32 @@ print(f"Satisfiable: {is_sat}")
 ```python
 def parse_dcec_string(dcec_str: str) -> Formula:
     """Parse a DCEC string into a Formula object.
-    
+
     Args:
         dcec_str: DCEC formula string
-    
+
     Returns:
         Formula object
-    
+
     Raises:
         DCECParsingError: If parsing fails
     """
 
+
 def validate_formula(formula: str) -> bool:
     """Validate a DCEC formula string.
-    
+
     Args:
         formula: Formula string to validate
-    
+
     Returns:
         True if valid, False otherwise
     """
 
+
 def parse_expression_to_token(expr: str) -> ParseToken:
     """Parse expression into token tree."""
+
 
 def token_to_formula(token: ParseToken) -> Formula:
     """Convert token tree to Formula object."""
@@ -1052,7 +1056,7 @@ print(f"Valid: {is_valid}")  # False
 ```python
 def clean_dcec_expression(expr: str) -> str:
     """Clean and normalize a DCEC expression.
-    
+
     Performs:
     - Whitespace normalization
     - Comment removal
@@ -1060,14 +1064,18 @@ def clean_dcec_expression(expr: str) -> str:
     - Symbol tucking
     """
 
+
 def strip_whitespace(expr: str) -> str:
     """Remove unnecessary whitespace."""
+
 
 def strip_comments(expr: str) -> str:
     """Remove comments from expression."""
 
+
 def consolidate_parens(expr: str) -> str:
     """Consolidate nested parentheses."""
+
 
 def check_parens(expr: str) -> bool:
     """Check if parentheses are balanced."""
@@ -1127,6 +1135,7 @@ for formula in formulas:
 ```python
 def parse_problem_file(filename: str, format: str = "tptp") -> List[Formula]:
     """Parse a problem file (TPTP or custom format)."""
+
 
 def parse_problem_string(content: str, format: str = "tptp") -> List[Formula]:
     """Parse problem content from string."""
@@ -1199,9 +1208,7 @@ print(f"Problem parser available: {native.PROBLEM_PARSER_AVAILABLE}")
 ### Example 1: Robot Task Planning
 
 ```python
-from ipfs_datasets_py.logic.CEC.native import (
-    DCECContainer, TheoremProver, NaturalLanguageConverter
-)
+from ipfs_datasets_py.logic.CEC.native import DCECContainer, TheoremProver, NaturalLanguageConverter
 
 # Setup
 container = DCECContainer()
@@ -1212,7 +1219,7 @@ converter = NaturalLanguageConverter()
 rules = [
     "The robot must clean the room",
     "The robot believes the room is dirty",
-    "If the robot believes the room is dirty, then the robot intends to clean"
+    "If the robot believes the room is dirty, then the robot intends to clean",
 ]
 
 for rule in rules:
@@ -1242,7 +1249,9 @@ container.create_obligation("client", "payInvoice")
 
 # Add rules
 prover.add_axiom("O(deliverProject(contractor)) → P(requestPayment(contractor))")
-prover.add_axiom("O(payInvoice(client)) ∧ P(requestPayment(contractor)) → O(processPayment(client))")
+prover.add_axiom(
+    "O(payInvoice(client)) ∧ P(requestPayment(contractor)) → O(processPayment(client))"
+)
 
 # Check permissions and obligations
 can_request = prover.prove("P(requestPayment(contractor))")

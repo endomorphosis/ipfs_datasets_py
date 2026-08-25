@@ -196,10 +196,12 @@ def test_invalid_format_raises_not_implemented():
     with pytest.raises(NotImplementedError):
         save_to_file(graph, "output.graphml", format="graphml")
 
+
 def test_malformed_csv_raises_error():
     """Verify proper error handling for malformed input"""
     with pytest.raises(ValueError):
         load_from_file("malformed.csv", format="csv")
+
 
 def test_empty_graph_export():
     """Verify empty graphs export correctly"""
@@ -221,6 +223,7 @@ def test_neural_extraction_without_transformers():
     # Mock transformers as unavailable
     # Assert rule-based extraction still works
 
+
 def test_spacy_dependency_parsing_optional():
     """Verify extraction works without spaCy advanced features"""
     # Test that basic extraction works even if spaCy not fully configured
@@ -240,22 +243,19 @@ def test_spacy_dependency_parsing_optional():
 ```python
 def _compile_not_expression(self, expr):
     """Compile NOT logical operator.
-    
+
     Args:
         expr: NOT expression node from parser
-        
+
     Returns:
         dict: Compiled NOT expression
-        
+
     Example:
         WHERE NOT p.age > 30
         -> {"type": "NOT", "operand": {"type": "GT", ...}}
     """
     operand = self._compile_expression(expr.operand)
-    return {
-        "type": "NOT",
-        "operand": operand
-    }
+    return {"type": "NOT", "operand": operand}
 ```
 
 **Tests:**
@@ -264,6 +264,7 @@ def test_not_operator_basic():
     query = "MATCH (p:Person) WHERE NOT p.age > 30 RETURN p"
     result = engine.execute(query)
     assert all(p.age <= 30 for p in result)
+
 
 def test_not_operator_with_and():
     query = """
@@ -281,13 +282,13 @@ def test_not_operator_with_and():
 ```python
 def _compile_create_relationship(self, rel):
     """Compile relationship creation in CREATE clause.
-    
+
     Args:
         rel: Relationship node from parser
-        
+
     Returns:
         dict: Compiled CREATE RELATIONSHIP operation
-        
+
     Example:
         CREATE (a)-[r:KNOWS {since: 2020}]->(b)
         -> {
@@ -303,7 +304,7 @@ def _compile_create_relationship(self, rel):
         "start_node": rel.start_node,
         "end_node": rel.end_node,
         "rel_type": rel.relationship_type,
-        "properties": rel.properties or {}
+        "properties": rel.properties or {},
     }
 ```
 
@@ -318,6 +319,7 @@ def test_create_relationship_basic():
     result = engine.execute(query)
     assert len(result) == 1
     assert result[0].type == "KNOWS"
+
 
 def test_create_relationship_with_properties():
     query = """

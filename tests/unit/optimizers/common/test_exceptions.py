@@ -1,4 +1,5 @@
 """Tests for the typed exception hierarchy in common/exceptions.py."""
+
 from __future__ import annotations
 
 import pytest

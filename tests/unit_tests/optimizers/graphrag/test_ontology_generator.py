@@ -20,6 +20,7 @@ try:
         ExtractionStrategy,
         DataType,
     )
+
     GENERATOR_AVAILABLE = True
 except ImportError as e:
     GENERATOR_AVAILABLE = False
@@ -28,7 +29,7 @@ except ImportError as e:
 
 class TestOntologyGenerationContext:
     """Test OntologyGenerationContext dataclass."""
-    
+
     def test_context_creation_minimal(self):
         """
         GIVEN: Basic context parameters
@@ -40,11 +41,11 @@ class TestOntologyGenerationContext:
             data_type="text",
             domain="legal",
         )
-        
+
         assert context.domain == "legal"
         assert context.data_type == DataType.TEXT
         assert context.extraction_strategy == ExtractionStrategy.HYBRID
-    
+
     def test_context_creation_full(self):
         """
         GIVEN: Complete context parameters
@@ -57,14 +58,14 @@ class TestOntologyGenerationContext:
             domain="medical",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
-        
+
         assert context.domain == "medical"
         assert context.extraction_strategy == ExtractionStrategy.RULE_BASED
 
 
 class TestOntologyGenerationResult:
     """Test OntologyGenerationResult dataclass."""
-    
+
     def test_result_creation_basic(self):
         """
         GIVEN: Basic result data
@@ -76,28 +77,26 @@ class TestOntologyGenerationResult:
             "relationships": [{"type": "knows", "source": "e1", "target": "e2", "confidence": 0.8}],
         }
         result = OntologyGenerationResult.from_ontology(ontology, domain="general")
-        
+
         assert result.entity_count == 1
         assert result.relationship_count == 1
         assert result.ontology == ontology
-    
+
     def test_result_empty(self):
         """
         GIVEN: Empty ontology
         WHEN: Creating an empty generation result
         THEN: Result is created with zero counts
         """
-        result = OntologyGenerationResult.from_ontology(
-            {"entities": [], "relationships": []}
-        )
-        
+        result = OntologyGenerationResult.from_ontology({"entities": [], "relationships": []})
+
         assert result.entity_count == 0
         assert result.relationship_count == 0
 
 
 class TestOntologyGeneratorInitialization:
     """Test OntologyGenerator initialization."""
-    
+
     def test_generator_initialization_default(self):
         """
         GIVEN: No configuration
@@ -105,21 +104,21 @@ class TestOntologyGeneratorInitialization:
         THEN: Generator is created with default settings
         """
         generator = OntologyGenerator()
-        
+
         assert generator is not None
-        assert hasattr(generator, 'ipfs_accelerate_config')
-    
+        assert hasattr(generator, "ipfs_accelerate_config")
+
     def test_generator_initialization_custom_model(self):
         """
         GIVEN: Custom model configuration
         WHEN: Initializing generator with custom model
         THEN: Generator stores the configuration
         """
-        config = {'model': 'bert-large-uncased'}
+        config = {"model": "bert-large-uncased"}
         generator = OntologyGenerator(ipfs_accelerate_config=config)
-        
-        assert generator.ipfs_accelerate_config['model'] == 'bert-large-uncased'
-    
+
+        assert generator.ipfs_accelerate_config["model"] == "bert-large-uncased"
+
     def test_generator_has_strategies(self):
         """
         GIVEN: Initialized generator
@@ -127,19 +126,19 @@ class TestOntologyGeneratorInitialization:
         THEN: Generator has extraction strategy methods
         """
         generator = OntologyGenerator()
-        
-        assert hasattr(generator, '_extract_rule_based')
-        assert hasattr(generator, '_extract_llm_based')
-        assert hasattr(generator, '_extract_hybrid')
+
+        assert hasattr(generator, "_extract_rule_based")
+        assert hasattr(generator, "_extract_llm_based")
+        assert hasattr(generator, "_extract_hybrid")
 
 
 class TestOntologyGeneratorExtraction:
     """Test ontology extraction methods."""
-    
+
     def setup_method(self):
         """Setup for each test."""
         self.generator = OntologyGenerator()
-    
+
     def _ctx(self, domain="general", strategy=None):
         """Helper: build a minimal valid context."""
         kwargs = dict(data_source="test", data_type="text", domain=domain)
@@ -155,10 +154,10 @@ class TestOntologyGeneratorExtraction:
         """
         data = "John works at Company X. Mary manages the team."
         result = self.generator.generate_ontology_rich(data, self._ctx())
-        
+
         assert result is not None
         assert isinstance(result, OntologyGenerationResult)
-    
+
     def test_generate_with_confidence_threshold(self):
         """
         GIVEN: Text data with config confidence threshold
@@ -166,6 +165,7 @@ class TestOntologyGeneratorExtraction:
         THEN: Result is returned
         """
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import GraphRAGExtractionConfig
+
         data = "The patient has a diagnosis of diabetes."
         ctx = OntologyGenerationContext(
             data_source="test",
@@ -175,7 +175,7 @@ class TestOntologyGeneratorExtraction:
         )
         result = self.generator.generate_ontology_rich(data, ctx)
         assert result is not None
-    
+
     def test_generate_with_max_entities(self):
         """
         GIVEN: Text data
@@ -183,6 +183,7 @@ class TestOntologyGeneratorExtraction:
         THEN: entity_count does not exceed max_entities in config
         """
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import GraphRAGExtractionConfig
+
         data = "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z"
         ctx = OntologyGenerationContext(
             data_source="test",
@@ -193,13 +194,16 @@ class TestOntologyGeneratorExtraction:
         result = self.generator.generate_ontology_rich(data, ctx)
         assert result is not None
         assert result.entity_count <= 10
-    
-    @pytest.mark.parametrize("strategy", [
-        ExtractionStrategy.NEURAL,
-        ExtractionStrategy.RULE_BASED,
-        ExtractionStrategy.LLM_BASED,
-        ExtractionStrategy.HYBRID
-    ])
+
+    @pytest.mark.parametrize(
+        "strategy",
+        [
+            ExtractionStrategy.NEURAL,
+            ExtractionStrategy.RULE_BASED,
+            ExtractionStrategy.LLM_BASED,
+            ExtractionStrategy.HYBRID,
+        ],
+    )
     def test_generate_with_different_strategies(self, strategy):
         """
         GIVEN: Text data and extraction strategy
@@ -214,14 +218,14 @@ class TestOntologyGeneratorExtraction:
 
 class TestOntologyGeneratorEdgeCases:
     """Test edge cases and error handling."""
-    
+
     def setup_method(self):
         """Setup for each test."""
         self.generator = OntologyGenerator()
 
     def _ctx(self, domain="general"):
         return OntologyGenerationContext(data_source="test", data_type="text", domain=domain)
-    
+
     def test_generate_empty_data(self):
         """
         GIVEN: Empty string data
@@ -231,7 +235,7 @@ class TestOntologyGeneratorEdgeCases:
         result = self.generator.generate_ontology_rich("", self._ctx())
         assert result is not None
         assert isinstance(result, OntologyGenerationResult)
-    
+
     def test_generate_null_data(self):
         """
         GIVEN: None as data
@@ -243,7 +247,7 @@ class TestOntologyGeneratorEdgeCases:
             assert result is not None
         except (ValueError, TypeError):
             pass  # Acceptable to raise
-    
+
     def test_generate_very_long_text(self):
         """
         GIVEN: Very long text data
@@ -254,7 +258,7 @@ class TestOntologyGeneratorEdgeCases:
         result = self.generator.generate_ontology_rich(data, self._ctx())
         assert result is not None
         assert isinstance(result, OntologyGenerationResult)
-    
+
     def test_generate_special_characters(self):
         """
         GIVEN: Text with special characters
@@ -269,18 +273,15 @@ class TestOntologyGeneratorEdgeCases:
 
 class TestOntologyGeneratorIntegration:
     """Test integration with other components."""
-    
+
     def setup_method(self):
         """Setup for each test."""
         self.generator = OntologyGenerator()
 
     def _ctx(self, domain="general"):
         return OntologyGenerationContext(data_source="test", data_type="text", domain=domain)
-    
-    @pytest.mark.skipif(
-        not GENERATOR_AVAILABLE,
-        reason="Generator dependencies not available"
-    )
+
+    @pytest.mark.skipif(not GENERATOR_AVAILABLE, reason="Generator dependencies not available")
     def test_generate_legal_domain(self):
         """
         GIVEN: Legal text
@@ -294,11 +295,8 @@ class TestOntologyGeneratorIntegration:
         result = self.generator.generate_ontology_rich(data, self._ctx("legal"))
         assert result is not None
         assert result.entity_count >= 0
-    
-    @pytest.mark.skipif(
-        not GENERATOR_AVAILABLE,
-        reason="Generator dependencies not available"
-    )
+
+    @pytest.mark.skipif(not GENERATOR_AVAILABLE, reason="Generator dependencies not available")
     def test_generate_medical_domain(self):
         """
         GIVEN: Medical text
@@ -313,7 +311,7 @@ class TestOntologyGeneratorIntegration:
         result = self.generator.generate_ontology_rich(data, self._ctx("medical"))
         assert result is not None
         assert isinstance(result, OntologyGenerationResult)
-    
+
     def test_generate_with_metadata(self):
         """
         GIVEN: Data with context
@@ -328,19 +326,19 @@ class TestOntologyGeneratorIntegration:
         )
         result = self.generator.generate_ontology_rich(data, ctx)
         assert result is not None
-        assert hasattr(result, 'metadata')
+        assert hasattr(result, "metadata")
 
 
 class TestOntologyGeneratorPerformance:
     """Test performance characteristics."""
-    
+
     def setup_method(self):
         """Setup for each test."""
         self.generator = OntologyGenerator()
 
     def _ctx(self, domain="general"):
         return OntologyGenerationContext(data_source="test", data_type="text", domain=domain)
-    
+
     @pytest.mark.slow
     def test_batch_generation_performance(self):
         """
@@ -354,12 +352,12 @@ class TestOntologyGeneratorPerformance:
             "Sample text 3 about topic C.",
         ]
         ctx = self._ctx()
-        
+
         results = [self.generator.generate_ontology_rich(d, ctx) for d in data_samples]
-        
+
         assert len(results) == len(data_samples)
         assert all(isinstance(r, OntologyGenerationResult) for r in results)
-    
+
     def test_incremental_generation(self):
         """
         GIVEN: Two independent data samples
@@ -369,7 +367,7 @@ class TestOntologyGeneratorPerformance:
         ctx = self._ctx()
         result1 = self.generator.generate_ontology_rich("Entity A relates to Entity B.", ctx)
         result2 = self.generator.generate_ontology_rich("Entity C relates to Entity D.", ctx)
-        
+
         assert result1 is not None
         assert result2 is not None
         assert isinstance(result1, OntologyGenerationResult)

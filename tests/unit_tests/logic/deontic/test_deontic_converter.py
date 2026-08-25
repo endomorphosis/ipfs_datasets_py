@@ -11,19 +11,19 @@ from ipfs_datasets_py.logic.common.converters import ConversionStatus
 
 class TestDeonticConverter:
     """Test suite for DeonticConverter."""
-    
+
     def test_initialization_default(self):
         """Test DeonticConverter initializes with default settings."""
         # GIVEN: Default initialization
         # WHEN: Creating converter
         converter = DeonticConverter()
-        
+
         # THEN: Should initialize successfully
         assert converter is not None
         assert converter.jurisdiction == "us"
         assert converter.document_type == "statute"
         assert converter.confidence_threshold == 0.7
-    
+
     def test_initialization_custom_settings(self):
         """Test DeonticConverter with custom settings."""
         # GIVEN: Custom settings
@@ -33,24 +33,24 @@ class TestDeonticConverter:
             document_type="regulation",
             use_cache=True,
             use_ml=False,
-            confidence_threshold=0.8
+            confidence_threshold=0.8,
         )
-        
+
         # THEN: Settings should be applied
         assert converter.jurisdiction == "eu"
         assert converter.document_type == "regulation"
         assert converter.confidence_threshold == 0.8
         assert converter.use_ml is False
-    
+
     def test_simple_obligation_conversion(self):
         """Test converting a simple obligation statement."""
         # GIVEN: A simple obligation text
         converter = DeonticConverter(use_ml=False, enable_monitoring=False)
         text = "The tenant must pay rent monthly"
-        
+
         # WHEN: Converting to deontic logic
         result = converter.convert(text)
-        
+
         # THEN: Should successfully convert
         assert result.success
         assert result.status == ConversionStatus.SUCCESS
@@ -71,7 +71,10 @@ class TestDeonticConverter:
         assert result.metadata["deterministic_parser"]["formula_record_count"] == 1
         assert result.metadata["deterministic_parser"]["formula_record_proof_ready_count"] == 1
         assert result.metadata["deterministic_parser"]["parser_capability_profile_count"] == 1
-        assert result.metadata["deterministic_parser"]["prover_syntax_target_coverage_record_count"] == 1
+        assert (
+            result.metadata["deterministic_parser"]["prover_syntax_target_coverage_record_count"]
+            == 1
+        )
         assert result.metadata["deterministic_parser"]["formal_syntax_valid_count"] == 1
         assert result.metadata["deterministic_parser"]["proof_ready"] is True
         assert result.metadata["deterministic_parser"]["blockers"] == []
@@ -84,14 +87,19 @@ class TestDeonticConverter:
         assert legal_norm_ir["action"] == "pay rent monthly"
         assert legal_norm_ir["proof_ready"] is True
         assert result.metadata["legal_norm_irs"] == [legal_norm_ir]
-        assert result.metadata["legal_formula_records"][0]["source_id"] == parser_element["source_id"]
+        assert (
+            result.metadata["legal_formula_records"][0]["source_id"] == parser_element["source_id"]
+        )
         assert result.metadata["legal_formula_records"][0]["proof_ready"] is True
         capability_records = result.metadata["legal_parser_capability_profile_records"]
         assert len(capability_records) == 1
         capability_record = capability_records[0]
         assert capability_record["source_id"] == parser_element["source_id"]
         assert capability_record["capability_family"] == "ordinary_duty"
-        assert capability_record["formula"] == "O(∀x (Tenant(x) ∧ PeriodMonthly(x) → PayRentMonthly(x)))"
+        assert (
+            capability_record["formula"]
+            == "O(∀x (Tenant(x) ∧ PeriodMonthly(x) → PayRentMonthly(x)))"
+        )
         assert capability_record["formula_proof_ready"] is True
         assert capability_record["requires_validation"] is False
         assert capability_record["checked_slots"] == ["actor", "modality", "action"]
@@ -129,7 +137,10 @@ class TestDeonticConverter:
         assert result.metadata["deterministic_parser"]["formula_record_proof_ready_count"] == 0
         assert result.metadata["deterministic_parser"]["parser_capability_profile_count"] == 0
         assert result.metadata["legal_parser_capability_profile_records"] == []
-        assert result.metadata["deterministic_parser"]["prover_syntax_target_coverage_record_count"] == 0
+        assert (
+            result.metadata["deterministic_parser"]["prover_syntax_target_coverage_record_count"]
+            == 0
+        )
         assert result.metadata["deterministic_parser"]["formal_syntax_valid_count"] == 0
         assert result.metadata["legal_norm_irs"] == []
         assert result.metadata["legal_formula_records"] == []
@@ -173,7 +184,11 @@ class TestDeonticConverter:
             "submit a report",
             "maintain records",
         ]
-        assert [norm["enumeration_index"] for norm in result.metadata["legal_norm_irs"]] == [1, 2, 3]
+        assert [norm["enumeration_index"] for norm in result.metadata["legal_norm_irs"]] == [
+            1,
+            2,
+            3,
+        ]
         assert [record["formula"] for record in result.metadata["legal_formula_records"]] == [
             "O(∀x (Secretary(x) → EstablishProcedures(x)))",
             "O(∀x (Secretary(x) → SubmitReport(x)))",
@@ -291,13 +306,18 @@ class TestDeonticConverter:
             assert parser_element["llm_repair"]["required"] is False
             assert parser_element["llm_repair"]["allow_llm_repair"] is False
             assert parser_element["llm_repair"]["deterministically_resolved"] is True
-            assert parser_element["llm_repair"]["deterministic_resolution"]["type"] == resolution_type
+            assert (
+                parser_element["llm_repair"]["deterministic_resolution"]["type"] == resolution_type
+            )
             assert parser_element["export_readiness"]["parser_proof_ready"] is False
             assert parser_element["export_readiness"]["formula_proof_ready"] is True
             assert parser_element["export_readiness"]["proof_ready"] is True
             assert parser_element["export_readiness"]["formula_requires_validation"] is False
             assert parser_element["export_readiness"]["formula_repair_required"] is False
-            assert parser_element["export_readiness"]["deterministic_resolution"]["type"] == resolution_type
+            assert (
+                parser_element["export_readiness"]["deterministic_resolution"]["type"]
+                == resolution_type
+            )
             assert formula_record["proof_ready"] is True
             assert formula_record["requires_validation"] is False
             assert formula_record["deterministic_resolution"]["type"] == resolution_type
@@ -329,9 +349,7 @@ class TestDeonticConverter:
         """Formula records may resolve simple exceptions while IR stays conservative."""
         converter = DeonticConverter(use_ml=False, enable_monitoring=False)
 
-        result = converter.convert(
-            "The applicant shall obtain a permit unless approval is denied."
-        )
+        result = converter.convert("The applicant shall obtain a permit unless approval is denied.")
 
         assert result.success
         norm = result.metadata["legal_norm_ir"]
@@ -380,32 +398,38 @@ class TestDeonticConverter:
         assert legal_norm_ir["overrides"][0]["span"] == [16, 32]
         assert legal_norm_ir["overrides"][0]["clause_span"] == [0, 33]
         assert parser_element["override_clauses"] == ["section 5.01.020"]
-        assert "override_clause_requires_precedence_review" in legal_norm_ir["quality"]["parser_warnings"]
+        assert (
+            "override_clause_requires_precedence_review"
+            in legal_norm_ir["quality"]["parser_warnings"]
+        )
         assert result.metadata["deterministic_parser"]["proof_ready"] is False
-        assert "override_clause_requires_precedence_review" in result.metadata["deterministic_parser"]["blockers"]
-    
+        assert (
+            "override_clause_requires_precedence_review"
+            in result.metadata["deterministic_parser"]["blockers"]
+        )
+
     def test_permission_conversion(self):
         """Test converting a permission statement."""
         # GIVEN: A permission text
         converter = DeonticConverter(use_ml=False, enable_monitoring=False)
         text = "The defendant may appeal the decision"
-        
+
         # WHEN: Converting to deontic logic
         result = converter.convert(text)
-        
+
         # THEN: Should successfully convert with permission operator
         assert result.success
         assert result.output is not None
-    
+
     def test_prohibition_conversion(self):
         """Test converting a prohibition statement."""
         # GIVEN: A prohibition text
         converter = DeonticConverter(use_ml=False, enable_monitoring=False)
         text = "The contractor shall not subcontract without approval"
-        
+
         # WHEN: Converting to deontic logic
         result = converter.convert(text)
-        
+
         # THEN: Should successfully convert with prohibition operator
         assert result.success
         assert result.output is not None
@@ -420,7 +444,10 @@ class TestDeonticConverter:
         assert result.output is not None
         assert result.output.operator.value == "F"
         assert result.output.proposition == "∀x (Contractor(x) ∧ ¬Approval(x) → Subcontract(x))"
-        assert result.output.formula == "F[contractor](∀x (Contractor(x) ∧ ¬Approval(x) → Subcontract(x)))"
+        assert (
+            result.output.formula
+            == "F[contractor](∀x (Contractor(x) ∧ ¬Approval(x) → Subcontract(x)))"
+        )
 
     def test_structured_modal_clause_extraction_preserves_condition_and_exception(self):
         """The deterministic scaffold should expose useful legal clause structure."""
@@ -441,7 +468,9 @@ class TestDeonticConverter:
     def test_non_normative_text_gets_low_confidence_unparsed_scaffold(self):
         """Do not pretend arbitrary descriptive text is a high-quality obligation."""
         converter = DeonticConverter(use_ml=False, enable_monitoring=False)
-        result = converter.convert("This section contains historical notes and editorial references.")
+        result = converter.convert(
+            "This section contains historical notes and editorial references."
+        )
 
         assert result.success
         assert result.output is not None
@@ -452,7 +481,9 @@ class TestDeonticConverter:
         """'Without approval' should qualify the norm instead of becoming the action."""
         from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
 
-        elements = extract_normative_elements("The contractor shall not subcontract without written approval.")
+        elements = extract_normative_elements(
+            "The contractor shall not subcontract without written approval."
+        )
 
         assert len(elements) == 1
         assert elements[0]["deontic_operator"] == "F"
@@ -668,7 +699,9 @@ class TestDeonticConverter:
         """Passive duties should not make the object look like the regulated actor."""
         from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
 
-        elements = extract_normative_elements("A report shall be submitted by the Secretary within 90 days.")
+        elements = extract_normative_elements(
+            "A report shall be submitted by the Secretary within 90 days."
+        )
 
         assert len(elements) == 1
         assert elements[0]["subject"] == ["Secretary"]
@@ -758,7 +791,10 @@ class TestDeonticConverter:
         assert len({element["parent_source_id"] for element in elements}) == 1
         assert len({element["source_id"] for element in elements}) == 3
         assert all(element["promotable_to_theorem"] for element in elements)
-        assert all("enumerated_clause_requires_item_level_review" not in element["parser_warnings"] for element in elements)
+        assert all(
+            "enumerated_clause_requires_item_level_review" not in element["parser_warnings"]
+            for element in elements
+        )
         assert build_deontic_formula(elements[1]) == "O(∀x (Secretary(x) → SubmitReport(x)))"
 
     def test_scaffold_quality_metadata_guides_theorem_promotion(self):
@@ -828,7 +864,10 @@ class TestDeonticConverter:
         assert len(elements) == 2
         definition, norm = elements
         assert definition["norm_type"] == "definition"
-        assert definition["definition_scope"] == {"scope_type": "section", "raw_text": "in this section"}
+        assert definition["definition_scope"] == {
+            "scope_type": "section",
+            "raw_text": "in this section",
+        }
         assert norm["defined_term_refs"] == [
             {
                 "term": "food cart",
@@ -859,12 +898,22 @@ class TestDeonticConverter:
         """Ontology hints should expose common municipal actors and instruments."""
         from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
 
-        element = extract_normative_elements("The Director may issue a permit after inspection of the premises.")[0]
+        element = extract_normative_elements(
+            "The Director may issue a permit after inspection of the premises."
+        )[0]
 
-        assert {"term": "Director", "type": "government_actor", "span": [4, 12]} in element["ontology_terms"]
-        assert {"term": "permit", "type": "legal_instrument", "span": [25, 31]} in element["ontology_terms"]
-        assert {"term": "inspection", "type": "legal_event", "span": [38, 48]} in element["ontology_terms"]
-        assert {"term": "premises", "type": "regulated_property", "span": [56, 64]} in element["ontology_terms"]
+        assert {"term": "Director", "type": "government_actor", "span": [4, 12]} in element[
+            "ontology_terms"
+        ]
+        assert {"term": "permit", "type": "legal_instrument", "span": [25, 31]} in element[
+            "ontology_terms"
+        ]
+        assert {"term": "inspection", "type": "legal_event", "span": [38, 48]} in element[
+            "ontology_terms"
+        ]
+        assert {"term": "premises", "type": "regulated_property", "span": [56, 64]} in element[
+            "ontology_terms"
+        ]
 
     def test_ontology_terms_capture_portland_municipal_vocabulary(self):
         """Portland-style offices, instruments, and properties should be grounded."""
@@ -875,10 +924,20 @@ class TestDeonticConverter:
         )[0]
 
         assert element["actor_type"] == "government_actor"
-        assert {"term": "Code Hearings Officer", "type": "government_actor", "span": [4, 25]} in element["ontology_terms"]
-        assert {"term": "variance", "type": "legal_instrument", "span": [38, 46]} in element["ontology_terms"]
-        assert {"term": "permittee", "type": "legal_person", "span": [54, 63]} in element["ontology_terms"]
-        assert {"term": "right-of-way", "type": "regulated_property", "span": [80, 92]} in element["ontology_terms"]
+        assert {
+            "term": "Code Hearings Officer",
+            "type": "government_actor",
+            "span": [4, 25],
+        } in element["ontology_terms"]
+        assert {"term": "variance", "type": "legal_instrument", "span": [38, 46]} in element[
+            "ontology_terms"
+        ]
+        assert {"term": "permittee", "type": "legal_person", "span": [54, 63]} in element[
+            "ontology_terms"
+        ]
+        assert {"term": "right-of-way", "type": "regulated_property", "span": [80, 92]} in element[
+            "ontology_terms"
+        ]
         assert {
             "subject": "issue a variance to the permittee for work in the right-of-way",
             "predicate": "requiresLegalInstrument",
@@ -895,7 +954,10 @@ class TestDeonticConverter:
         assert element["llm_repair"]["reasons"] == []
         assert element["llm_repair"]["target_schema_version"] == element["schema_version"]
         assert len(element["llm_repair"]["prompt_hash"]) == 64
-        assert element["llm_repair"]["prompt_context"]["source_text"] == "The tenant must pay rent monthly"
+        assert (
+            element["llm_repair"]["prompt_context"]["source_text"]
+            == "The tenant must pay rent monthly"
+        )
 
     def test_warning_clause_routes_to_llm_repair_with_context(self):
         """Warnings should become actionable llm_router repair metadata."""
@@ -913,7 +975,15 @@ class TestDeonticConverter:
         assert element["llm_repair"]["prompt_template"] == "legal_deontic_parser_repair_v1"
         context = element["llm_repair"]["prompt_context"]
         assert context["legal_frame"]["actor"] == "Secretary"
-        assert context["cross_references"] == [{"type": "section", "value": "552", "raw_text": "section 552", "normalized_text": "section 552", "span": [87, 98]}]
+        assert context["cross_references"] == [
+            {
+                "type": "section",
+                "value": "552",
+                "raw_text": "section 552",
+                "normalized_text": "section 552",
+                "span": [87, 98],
+            }
+        ]
         assert context["parser_warnings"] == element["llm_repair"]["reasons"]
 
     def test_internal_cross_reference_resolution_removes_resolution_warning(self):
@@ -995,7 +1065,10 @@ The applicant shall pay a fee."""
             }
         ]
         assert referrer["resolved_cross_references"][0]["resolution_status"] == "resolved"
-        assert [target["section"] for target in referrer["resolved_cross_references"][0]["target_sections"]] == [
+        assert [
+            target["section"]
+            for target in referrer["resolved_cross_references"][0]["target_sections"]
+        ] == [
             "5.01.020",
             "5.01.030",
         ]
@@ -1043,7 +1116,10 @@ A food cart shall obtain a permit."""
         )
 
         assert len(elements) == 2
-        assert elements[0]["definition_scope"] == {"scope_type": "section", "raw_text": "in this section"}
+        assert elements[0]["definition_scope"] == {
+            "scope_type": "section",
+            "raw_text": "in this section",
+        }
         assert elements[1]["section_context"]["section"] == "5.01.020"
         assert elements[1]["defined_term_refs"] == []
 
@@ -1064,9 +1140,15 @@ A food cart shall post a notice."""
 
         definition, same_chapter_norm, other_chapter_norm = elements
         assert definition["defined_term"] == "food cart"
-        assert definition["definition_scope"] == {"scope_type": "chapter", "raw_text": "as used in this chapter"}
+        assert definition["definition_scope"] == {
+            "scope_type": "chapter",
+            "raw_text": "as used in this chapter",
+        }
         assert same_chapter_norm["defined_term_refs"][0]["term"] == "food cart"
-        assert same_chapter_norm["defined_term_refs"][0]["definition_body"] == "a mobile food vending unit"
+        assert (
+            same_chapter_norm["defined_term_refs"][0]["definition_body"]
+            == "a mobile food vending unit"
+        )
         assert other_chapter_norm["defined_term_refs"] == []
 
     def test_clean_clause_export_readiness_allows_proof_candidate(self):
@@ -1089,7 +1171,9 @@ A food cart shall post a notice."""
         """Temporal/procedural clauses should advertise temporal/event-calculus exports."""
         from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
 
-        element = extract_normative_elements("An appeal may be filed within 10 days after the decision.")[0]
+        element = extract_normative_elements(
+            "An appeal may be filed within 10 days after the decision."
+        )[0]
 
         readiness = element["export_readiness"]
         assert readiness["kg_ready"] is True
@@ -1704,7 +1788,12 @@ The applicant shall obtain a permit."""
         assert element["hierarchy_details"] == [
             {"level": "title", "value": "5", "heading": "Business Licenses", "span": [0, 25]},
             {"level": "chapter", "value": "5.01", "heading": "Food Carts", "span": [26, 49]},
-            {"level": "section", "value": "5.01.010", "heading": "Permits required", "span": [50, 76]},
+            {
+                "level": "section",
+                "value": "5.01.010",
+                "heading": "Permits required",
+                "span": [50, 76],
+            },
         ]
 
     def test_implicit_unlawful_clause_is_prohibition(self):
@@ -1743,7 +1832,9 @@ The applicant shall obtain a permit."""
             extract_normative_elements,
         )
 
-        elements = extract_normative_elements("This section applies to food carts and mobile vendors.")
+        elements = extract_normative_elements(
+            "This section applies to food carts and mobile vendors."
+        )
 
         assert len(elements) == 1
         element = elements[0]
@@ -1784,7 +1875,9 @@ The applicant shall obtain a permit."""
             extract_normative_elements,
         )
 
-        elements = extract_normative_elements("Emergency repairs are exempt from permit requirements.")
+        elements = extract_normative_elements(
+            "Emergency repairs are exempt from permit requirements."
+        )
 
         assert len(elements) == 1
         element = elements[0]
@@ -1922,7 +2015,9 @@ Failure to comply with this section is a violation."""
 
         assert elements[0]["resolved_cross_references"][0]["resolution_status"] == "resolved"
         assert elements[0]["resolved_cross_references"][0]["target_section"] == "5.01.010"
-        assert elements[0]["resolved_cross_references"][0]["target_hierarchy_path"] == ["paragraph:1"]
+        assert elements[0]["resolved_cross_references"][0]["target_hierarchy_path"] == [
+            "paragraph:1"
+        ]
         assert "cross_reference_requires_resolution" not in elements[0]["parser_warnings"]
 
     def test_penalty_clause_extracts_money_and_sanction_frame(self):
@@ -1937,7 +2032,9 @@ Failure to comply with this section is a violation."""
         assert elements[0]["entity_type"] == "legal_event"
         assert elements[0]["monetary_amounts"] == [{"raw_text": "$500", "span": [39, 43]}]
         assert elements[0]["penalty"]["has_fine"] is True
-        assert {"subject": "law", "predicate": "mentionsAmount", "object": "$500"} in elements[0]["kg_relationship_hints"]
+        assert {"subject": "law", "predicate": "mentionsAmount", "object": "$500"} in elements[0][
+            "kg_relationship_hints"
+        ]
 
     def test_violation_and_penalty_link_to_enforced_section(self):
         """Enforcement clauses should point to the section they make provable."""
@@ -2004,7 +2101,10 @@ A violation is punishable by a fine of $500."""
         assert penalty["enforcement_links"][0]["target_section"] == "5.01.010"
         assert penalty["enforcement_links"][0]["resolution_status"] == "inferred"
         assert penalty["enforcement_links"][0]["source"] == "same_section_violation"
-        assert penalty["enforcement_links"][0]["target_violation_text"] == "Failure to comply with this section is a violation"
+        assert (
+            penalty["enforcement_links"][0]["target_violation_text"]
+            == "Failure to comply with this section is a violation"
+        )
 
     def test_penalty_bounds_and_recurrence_are_normalized(self):
         """Municipal penalty ranges and recurring violations should be structured."""
@@ -2096,7 +2196,9 @@ A violation is punishable by a fine of $500."""
         """Appeal windows are procedural event chains, not just generic permissions."""
         from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
 
-        elements = extract_normative_elements("An appeal may be filed within 10 days after the decision.")
+        elements = extract_normative_elements(
+            "An appeal may be filed within 10 days after the decision."
+        )
 
         assert len(elements) == 1
         assert elements[0]["deontic_operator"] == "P"
@@ -2118,12 +2220,30 @@ A violation is punishable by a fine of $500."""
         assert len(elements) == 1
         first = elements[0]
         assert first["legal_frame"]["category"] == "procedure"
-        assert [item["event"] for item in first["procedure"]["event_chain"]] == ["notice", "hearing", "decision", "issuance", "appeal"]
+        assert [item["event"] for item in first["procedure"]["event_chain"]] == [
+            "notice",
+            "hearing",
+            "decision",
+            "issuance",
+            "appeal",
+        ]
         assert first["procedure"]["trigger_event"] == "notice"
         assert first["procedure"]["terminal_event"] == "appeal"
-        assert {"subject": "Director", "predicate": "providesNoticeTo", "object": "provide notice of the hearing and issue a decision that may be appealed"} in first["kg_relationship_hints"]
-        assert {"subject": "Director", "predicate": "holdsHearingFor", "object": "provide notice of the hearing and issue a decision that may be appealed"} in first["kg_relationship_hints"]
-        assert {"subject": "Director", "predicate": "issuesDecision", "object": "provide notice of the hearing and issue a decision that may be appealed"} in first["kg_relationship_hints"]
+        assert {
+            "subject": "Director",
+            "predicate": "providesNoticeTo",
+            "object": "provide notice of the hearing and issue a decision that may be appealed",
+        } in first["kg_relationship_hints"]
+        assert {
+            "subject": "Director",
+            "predicate": "holdsHearingFor",
+            "object": "provide notice of the hearing and issue a decision that may be appealed",
+        } in first["kg_relationship_hints"]
+        assert {
+            "subject": "Director",
+            "predicate": "issuesDecision",
+            "object": "provide notice of the hearing and issue a decision that may be appealed",
+        } in first["kg_relationship_hints"]
 
     def test_procedure_event_records_flatten_event_chain(self):
         """Event-calculus exporters should get stable event rows."""
@@ -2185,24 +2305,40 @@ A violation is punishable by a fine of $500."""
         """Permit enforcement workflows should become KG hints."""
         from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
 
-        elements = extract_normative_elements("The Director may revoke or suspend the permit after notice.")
+        elements = extract_normative_elements(
+            "The Director may revoke or suspend the permit after notice."
+        )
 
         assert len(elements) == 1
         assert elements[0]["legal_frame"]["category"] == "procedure"
         assert elements[0]["procedure"]["events"] == ["notice", "suspension", "revocation"]
-        assert {"subject": "Director", "predicate": "mayRevokeInstrument", "object": "permit"} in elements[0]["kg_relationship_hints"]
-        assert {"subject": "Director", "predicate": "maySuspendInstrument", "object": "permit"} in elements[0]["kg_relationship_hints"]
+        assert {
+            "subject": "Director",
+            "predicate": "mayRevokeInstrument",
+            "object": "permit",
+        } in elements[0]["kg_relationship_hints"]
+        assert {
+            "subject": "Director",
+            "predicate": "maySuspendInstrument",
+            "object": "permit",
+        } in elements[0]["kg_relationship_hints"]
 
     def test_inspection_clause_emits_property_relationship(self):
         """Inspection powers are central to municipal enforcement."""
         from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
 
-        elements = extract_normative_elements("The Bureau may inspect the premises during business hours.")
+        elements = extract_normative_elements(
+            "The Bureau may inspect the premises during business hours."
+        )
 
         assert len(elements) == 1
         assert elements[0]["legal_frame"]["category"] == "procedure"
         assert elements[0]["procedure"]["events"] == ["inspection"]
-        assert {"subject": "Bureau", "predicate": "mayInspect", "object": "the premises during business hours"} in elements[0]["kg_relationship_hints"]
+        assert {
+            "subject": "Bureau",
+            "predicate": "mayInspect",
+            "object": "the premises during business hours",
+        } in elements[0]["kg_relationship_hints"]
 
     def test_conflict_detection_handles_parser_element_lists(self):
         """Conflict detection should work on current parser element schema."""
@@ -2235,43 +2371,43 @@ A violation is punishable by a fine of $500."""
         assert "normative_conflict_requires_resolution" in elements[1]["llm_repair"]["reasons"]
         assert elements[0]["export_readiness"]["proof_ready"] is False
         assert "proof_candidate" not in elements[1]["export_readiness"]["allowed_exports"]
-    
+
     def test_empty_input_validation(self):
         """Test that empty input is handled properly."""
         # GIVEN: Empty text
         converter = DeonticConverter(use_ml=False, enable_monitoring=False)
         text = ""
-        
+
         # WHEN: Attempting to convert
         result = converter.convert(text)
-        
+
         # THEN: Should fail validation
         assert not result.success
         assert result.status == ConversionStatus.FAILED
-    
+
     def test_whitespace_input_validation(self):
         """Test that whitespace-only input is handled properly."""
         # GIVEN: Whitespace-only text
         converter = DeonticConverter(use_ml=False, enable_monitoring=False)
         text = "   \n\t   "
-        
+
         # WHEN: Attempting to convert
         result = converter.convert(text)
-        
+
         # THEN: Should fail validation
         assert not result.success
         assert result.status == ConversionStatus.FAILED
-    
+
     def test_caching_functionality(self):
         """Test that caching works correctly."""
         # GIVEN: Converter with caching enabled
         converter = DeonticConverter(use_cache=True, use_ml=False, enable_monitoring=False)
         text = "The employee must report to work on time"
-        
+
         # WHEN: Converting same text twice
         result1 = converter.convert(text)
         result2 = converter.convert(text)
-        
+
         # THEN: Both should succeed and second should be from cache
         assert result1.success
         assert result2.success
@@ -2279,7 +2415,7 @@ A violation is punishable by a fine of $500."""
         cache_stats = converter.get_cache_stats()
         # At minimum, we converted twice, so there should be activity
         assert result1.output.formula == result2.output.formula
-    
+
     def test_batch_conversion(self):
         """Test batch conversion of multiple legal texts."""
         # GIVEN: Multiple legal texts
@@ -2287,70 +2423,70 @@ A violation is punishable by a fine of $500."""
         texts = [
             "The tenant must pay rent",
             "The landlord may inspect the premises",
-            "The party shall not disclose confidential information"
+            "The party shall not disclose confidential information",
         ]
-        
+
         # WHEN: Converting in batch
         results = converter.convert_batch(texts, max_workers=2)
-        
+
         # THEN: All should be processed
         assert len(results) == 3
         successful = [r for r in results if r.success]
         assert len(successful) > 0  # At least some should succeed
-    
+
     @pytest.mark.asyncio
     async def test_async_conversion(self):
         """Test async conversion interface."""
         # GIVEN: Legal text
         converter = DeonticConverter(use_ml=False, enable_monitoring=False)
         text = "The borrower must repay the loan"
-        
+
         # WHEN: Converting asynchronously
         result = await converter.convert_async(text)
-        
+
         # THEN: Should complete successfully
         assert result.success
         assert result.output is not None
-    
+
     def test_confidence_calculation(self):
         """Test confidence score calculation."""
         # GIVEN: Legal text with clear normative content
         converter = DeonticConverter(use_ml=False, enable_monitoring=False)
         text = "The seller must deliver the goods by the agreed date"
-        
+
         # WHEN: Converting
         result = converter.convert(text)
-        
+
         # THEN: Should have reasonable confidence
         assert result.success
         assert 0 <= result.output.confidence <= 1.0
         # Obligation with clear subject and action should have decent confidence
         assert result.output.confidence > 0.5
-    
+
     def test_multiple_jurisdictions(self):
         """Test conversion with different jurisdictions."""
         # GIVEN: Converters for different jurisdictions
         converter_us = DeonticConverter(jurisdiction="us", use_ml=False, enable_monitoring=False)
         converter_eu = DeonticConverter(jurisdiction="eu", use_ml=False, enable_monitoring=False)
         text = "The data controller must obtain consent"
-        
+
         # WHEN: Converting with different jurisdictions
         result_us = converter_us.convert(text)
         result_eu = converter_eu.convert(text)
-        
+
         # THEN: Both should succeed
         assert result_us.success
         assert result_eu.success
-    
+
     def test_stats_tracking(self):
         """Test statistics tracking."""
         # GIVEN: Converter with stats tracking
         converter = DeonticConverter(use_ml=False, enable_monitoring=False)
-        
+
         # WHEN: Performing conversions
         converter.convert("Must comply")
         converter.convert("May appeal")
-        
+
         # THEN: Stats should be available
         stats = converter.get_stats()
         assert stats is not None
@@ -2393,7 +2529,7 @@ A violation is punishable by a fine of $500."""
             assert element["norm_type"] == "permission"
             assert element["subject"] == [actor]
             assert element["action"] == [action]
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "authority"
             assert element["legal_frame"]["deontic_operator"] == "P"
             assert element["llm_repair"]["required"] is False
@@ -2438,7 +2574,7 @@ A violation is punishable by a fine of $500."""
             assert element["norm_type"] == "obligation"
             assert element["subject"] == [actor]
             assert element["action"] == [action]
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "authority_duty"
             assert element["legal_frame"]["deontic_operator"] == "O"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
@@ -2492,7 +2628,7 @@ A violation is punishable by a fine of $500."""
             assert element["norm_type"] == "obligation"
             assert element["subject"] == [actor]
             assert element["action"] == [action]
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
                 "kg_relationship_hints"
             ]
@@ -2538,7 +2674,7 @@ A violation is punishable by a fine of $500."""
             assert element["norm_type"] == "obligation"
             assert element["subject"] == [actor]
             assert element["action"] == [action]
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "duty_assignment"
             assert element["legal_frame"]["deontic_operator"] == "O"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
@@ -2589,7 +2725,7 @@ A violation is punishable by a fine of $500."""
             assert element["norm_type"] == "obligation"
             assert element["subject"] == [actor]
             assert element["action"] == [action]
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "duty_assignment"
             assert element["legal_frame"]["deontic_operator"] == "O"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
@@ -2640,7 +2776,7 @@ A violation is punishable by a fine of $500."""
             assert element["norm_type"] == "obligation"
             assert element["subject"] == [actor]
             assert element["action"] == [action]
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "duty_assignment"
             assert element["legal_frame"]["deontic_operator"] == "O"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
@@ -2691,7 +2827,7 @@ A violation is punishable by a fine of $500."""
             assert element["norm_type"] == "obligation"
             assert element["subject"] == [actor]
             assert element["action"] == [action]
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "duty_assignment"
             assert element["legal_frame"]["deontic_operator"] == "O"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
@@ -2744,7 +2880,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "duty_assignment"
             assert element["legal_frame"]["deontic_operator"] == "O"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
@@ -2797,7 +2933,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "duty_assignment"
             assert element["legal_frame"]["deontic_operator"] == "O"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
@@ -2850,7 +2986,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "duty_assignment"
             assert element["legal_frame"]["deontic_operator"] == "O"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
@@ -2903,7 +3039,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "duty_assignment"
             assert element["legal_frame"]["deontic_operator"] == "O"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
@@ -2956,7 +3092,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "duty_assignment"
             assert element["legal_frame"]["deontic_operator"] == "O"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
@@ -3016,7 +3152,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "duty_assignment"
             assert element["legal_frame"]["deontic_operator"] == "O"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
@@ -3069,7 +3205,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
                 "kg_relationship_hints"
             ]
@@ -3120,7 +3256,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["conditions"] == []
             assert element["condition_details"] == []
             assert element["legal_frame"]["category"] == "duty_assignment"
@@ -3175,7 +3311,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
                 "kg_relationship_hints"
             ]
@@ -3226,7 +3362,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
                 "kg_relationship_hints"
             ]
@@ -3277,7 +3413,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "directive_duty"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
                 "kg_relationship_hints"
@@ -3329,7 +3465,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "directive_duty"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
                 "kg_relationship_hints"
@@ -3381,7 +3517,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "duty_assignment"
             assert element["legal_frame"]["deontic_operator"] == "O"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
@@ -3434,7 +3570,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "duty_assignment"
             assert element["legal_frame"]["deontic_operator"] == "O"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
@@ -3487,7 +3623,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "duty_assignment"
             assert element["legal_frame"]["deontic_operator"] == "O"
             assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
@@ -3540,7 +3676,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "authority"
             assert element["legal_frame"]["deontic_operator"] == "P"
             assert {"subject": "law", "predicate": "grantsAuthorityTo", "object": actor} in element[
@@ -3593,7 +3729,7 @@ A violation is punishable by a fine of $500."""
             assert element["subject"] == [actor]
             assert element["action"] == [action]
             assert element["field_spans"]["action"] == action_span
-            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["text"][action_span[0] : action_span[1]] == action
             assert element["legal_frame"]["category"] == "authority"
             assert element["legal_frame"]["deontic_operator"] == "P"
             assert {"subject": "law", "predicate": "grantsAuthorityTo", "object": actor} in element[

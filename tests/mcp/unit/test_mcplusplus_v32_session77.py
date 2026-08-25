@@ -7,6 +7,7 @@ Tests for:
 4. ComplianceChecker.backup_age(path)
 5. E2E diagnostics / health-check scenario
 """
+
 import os
 import tempfile
 import time
@@ -22,6 +23,7 @@ from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
 # ---------------------------------------------------------------------------
 # 1. MergeResult.__repr__
 # ---------------------------------------------------------------------------
+
 
 class TestMergeResultRepr:
     def test_repr_basic(self):
@@ -72,6 +74,7 @@ class TestMergeResultRepr:
 # ---------------------------------------------------------------------------
 # 2. IPFSReloadResult.__repr__
 # ---------------------------------------------------------------------------
+
 
 class TestIPFSReloadResultRepr:
     def test_repr_basic(self):
@@ -137,24 +140,34 @@ class TestIPFSReloadResultRepr:
 # 3. PubSubBus.handler_topics
 # ---------------------------------------------------------------------------
 
+
 class TestPubSubBusHandlerTopics:
     def _bus(self):
         return PubSubBus()
 
     def test_handler_topics_empty(self):
         bus = self._bus()
-        def cb(t, p): pass
+
+        def cb(t, p):
+            pass
+
         assert bus.handler_topics(cb) == []
 
     def test_handler_topics_single(self):
         bus = self._bus()
-        def cb(t, p): pass
+
+        def cb(t, p):
+            pass
+
         bus.subscribe("receipts", cb)
         assert bus.handler_topics(cb) == ["receipts"]
 
     def test_handler_topics_multiple(self):
         bus = self._bus()
-        def cb(t, p): pass
+
+        def cb(t, p):
+            pass
+
         bus.subscribe("receipts", cb)
         bus.subscribe("audit", cb)
         result = bus.handler_topics(cb)
@@ -162,7 +175,10 @@ class TestPubSubBusHandlerTopics:
 
     def test_handler_topics_sorted(self):
         bus = self._bus()
-        def cb(t, p): pass
+
+        def cb(t, p):
+            pass
+
         bus.subscribe("z_topic", cb)
         bus.subscribe("a_topic", cb)
         bus.subscribe("m_topic", cb)
@@ -171,8 +187,13 @@ class TestPubSubBusHandlerTopics:
 
     def test_handler_topics_not_affecting_others(self):
         bus = self._bus()
-        def cb1(t, p): pass
-        def cb2(t, p): pass
+
+        def cb1(t, p):
+            pass
+
+        def cb2(t, p):
+            pass
+
         bus.subscribe("receipts", cb1)
         bus.subscribe("audit", cb2)
         assert bus.handler_topics(cb1) == ["receipts"]
@@ -180,7 +201,10 @@ class TestPubSubBusHandlerTopics:
 
     def test_handler_topics_after_unsubscribe(self):
         bus = self._bus()
-        def cb(t, p): pass
+
+        def cb(t, p):
+            pass
+
         bus.subscribe("receipts", cb)
         bus.subscribe("audit", cb)
         bus.unsubscribe("receipts", cb)
@@ -188,12 +212,18 @@ class TestPubSubBusHandlerTopics:
 
     def test_handler_topics_returns_list(self):
         bus = self._bus()
-        def cb(t, p): pass
+
+        def cb(t, p):
+            pass
+
         assert isinstance(bus.handler_topics(cb), list)
 
     def test_handler_topics_after_clear_topic(self):
         bus = self._bus()
-        def cb(t, p): pass
+
+        def cb(t, p):
+            pass
+
         bus.subscribe("receipts", cb)
         bus.subscribe("audit", cb)
         bus.clear_topic("receipts")
@@ -201,7 +231,10 @@ class TestPubSubBusHandlerTopics:
 
     def test_handler_topics_after_clear_all(self):
         bus = self._bus()
-        def cb(t, p): pass
+
+        def cb(t, p):
+            pass
+
         bus.subscribe("receipts", cb)
         bus.subscribe("audit", cb)
         bus.clear_all()
@@ -217,6 +250,7 @@ class TestPubSubBusHandlerTopics:
 # ---------------------------------------------------------------------------
 # 4. ComplianceChecker.backup_age
 # ---------------------------------------------------------------------------
+
 
 class TestComplianceCheckerBackupAge:
     def test_backup_age_no_backup(self):
@@ -288,6 +322,7 @@ class TestComplianceCheckerBackupAge:
 # 5. E2E: diagnostics / health-check scenario
 # ---------------------------------------------------------------------------
 
+
 class TestE2ESession77:
     def test_merge_result_repr_roundtrip(self):
         r = MergeResult(added_count=5, conflict_count=2, revocations_copied=1)
@@ -298,17 +333,22 @@ class TestE2ESession77:
         assert "71.4%" in s
 
     def test_ipfs_result_repr_roundtrip(self):
-        r = IPFSReloadResult(count=5, pin_results={
-            "a": "Q1", "b": "Q2", "c": "Q3", "d": None, "e": None
-        })
+        r = IPFSReloadResult(
+            count=5, pin_results={"a": "Q1", "b": "Q2", "c": "Q3", "d": None, "e": None}
+        )
         s = repr(r)
         assert "3/5" in s
         assert "60.0%" in s
 
     def test_handler_topics_health_check(self):
         bus = PubSubBus()
-        def metrics_cb(t, p): pass
-        def audit_cb(t, p): pass
+
+        def metrics_cb(t, p):
+            pass
+
+        def audit_cb(t, p):
+            pass
+
         bus.subscribe("delegation_add", metrics_cb)
         bus.subscribe("receipt_disseminate", metrics_cb)
         bus.subscribe("receipt_disseminate", audit_cb)

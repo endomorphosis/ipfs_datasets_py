@@ -56,16 +56,36 @@ def _load_json_if_exists(path: Path) -> Optional[Dict[str, Any]]:
     return payload if isinstance(payload, dict) else None
 
 
-def _grounding_overview(grounding_bundle: Dict[str, Any], upload_report: Dict[str, Any]) -> Dict[str, Any]:
-    anchor_sections = [str(item) for item in list(grounding_bundle.get("anchor_sections") or []) if str(item)]
-    anchor_passages = [dict(item) for item in list(grounding_bundle.get("anchor_passages") or []) if isinstance(item, dict)]
-    upload_candidates = [dict(item) for item in list(grounding_bundle.get("upload_candidates") or []) if isinstance(item, dict)]
-    mediator_packets = [dict(item) for item in list(grounding_bundle.get("mediator_evidence_packets") or []) if isinstance(item, dict)]
-    uploads = [dict(item) for item in list(upload_report.get("uploads") or []) if isinstance(item, dict)]
+def _grounding_overview(
+    grounding_bundle: Dict[str, Any], upload_report: Dict[str, Any]
+) -> Dict[str, Any]:
+    anchor_sections = [
+        str(item) for item in list(grounding_bundle.get("anchor_sections") or []) if str(item)
+    ]
+    anchor_passages = [
+        dict(item)
+        for item in list(grounding_bundle.get("anchor_passages") or [])
+        if isinstance(item, dict)
+    ]
+    upload_candidates = [
+        dict(item)
+        for item in list(grounding_bundle.get("upload_candidates") or [])
+        if isinstance(item, dict)
+    ]
+    mediator_packets = [
+        dict(item)
+        for item in list(grounding_bundle.get("mediator_evidence_packets") or [])
+        if isinstance(item, dict)
+    ]
+    uploads = [
+        dict(item) for item in list(upload_report.get("uploads") or []) if isinstance(item, dict)
+    ]
 
     top_titles: list[str] = []
     for item in upload_candidates[:3]:
-        title = str(item.get("title") or item.get("relative_path") or item.get("source_path") or "").strip()
+        title = str(
+            item.get("title") or item.get("relative_path") or item.get("source_path") or ""
+        ).strip()
         if title and title not in top_titles:
             top_titles.append(title)
 
@@ -104,9 +124,15 @@ def _build_adversarial_seed_complaints(
         for item in list(grounding_bundle.get("mediator_evidence_packets") or [])
         if isinstance(item, dict)
     ]
-    anchor_sections = [str(item) for item in list(grounding_bundle.get("anchor_sections") or []) if str(item)]
-    top_documents = [str(item) for item in list(grounding_overview.get("top_documents") or []) if str(item)]
-    evidence_summary = str(grounding_bundle.get("evidence_summary") or grounding_overview.get("evidence_summary") or "").strip()
+    anchor_sections = [
+        str(item) for item in list(grounding_bundle.get("anchor_sections") or []) if str(item)
+    ]
+    top_documents = [
+        str(item) for item in list(grounding_overview.get("top_documents") or []) if str(item)
+    ]
+    evidence_summary = str(
+        grounding_bundle.get("evidence_summary") or grounding_overview.get("evidence_summary") or ""
+    ).strip()
     description = evidence_summary or f"Grounded HACC evidence for '{query}'"
 
     base_seed = {
@@ -126,12 +152,20 @@ def _build_adversarial_seed_complaints(
             "supporting_documents": top_documents,
             "synthetic_prompts": synthetic_prompts,
             "search_summary": dict(grounding_bundle.get("search_summary") or {}),
-            "external_research_bundle": dict(grounding_bundle.get("external_research_bundle") or {}),
+            "external_research_bundle": dict(
+                grounding_bundle.get("external_research_bundle") or {}
+            ),
             "chronology_analysis": dict(grounding_bundle.get("chronology_analysis") or {}),
-            "claim_support_temporal_handoff": dict(grounding_bundle.get("claim_support_temporal_handoff") or {}),
+            "claim_support_temporal_handoff": dict(
+                grounding_bundle.get("claim_support_temporal_handoff") or {}
+            ),
             "drafting_readiness": dict(grounding_bundle.get("drafting_readiness") or {}),
-            "document_generation_handoff": dict(grounding_bundle.get("document_generation_handoff") or {}),
-            "workflow_phase_priorities": list(synthetic_prompts.get("workflow_phase_priorities") or []),
+            "document_generation_handoff": dict(
+                grounding_bundle.get("document_generation_handoff") or {}
+            ),
+            "workflow_phase_priorities": list(
+                synthetic_prompts.get("workflow_phase_priorities") or []
+            ),
             "blocker_objectives": list(synthetic_prompts.get("blocker_objectives") or []),
             "extraction_targets": list(synthetic_prompts.get("extraction_targets") or []),
         },
@@ -241,8 +275,12 @@ def _write_grounding_artifacts(
     upload_path: Path,
 ) -> Dict[str, Any]:
     grounding_overview = _json_safe(_grounding_overview(grounding_bundle, upload_report))
-    grounding_path.write_text(json.dumps(grounding_bundle, ensure_ascii=False, indent=2), encoding="utf-8")
-    grounding_overview_path.write_text(json.dumps(grounding_overview, ensure_ascii=False, indent=2), encoding="utf-8")
+    grounding_path.write_text(
+        json.dumps(grounding_bundle, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    grounding_overview_path.write_text(
+        json.dumps(grounding_overview, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     anchor_passages_path.write_text(
         json.dumps(grounding_bundle.get("anchor_passages", []), ensure_ascii=False, indent=2),
         encoding="utf-8",
@@ -252,7 +290,9 @@ def _write_grounding_artifacts(
         encoding="utf-8",
     )
     mediator_packets_path.write_text(
-        json.dumps(grounding_bundle.get("mediator_evidence_packets", []), ensure_ascii=False, indent=2),
+        json.dumps(
+            grounding_bundle.get("mediator_evidence_packets", []), ensure_ascii=False, indent=2
+        ),
         encoding="utf-8",
     )
     prompts_path.write_text(
@@ -260,11 +300,15 @@ def _write_grounding_artifacts(
         encoding="utf-8",
     )
     retrieval_support_path.write_text(
-        json.dumps(grounding_bundle.get("retrieval_support_bundle", {}), ensure_ascii=False, indent=2),
+        json.dumps(
+            grounding_bundle.get("retrieval_support_bundle", {}), ensure_ascii=False, indent=2
+        ),
         encoding="utf-8",
     )
     external_research_path.write_text(
-        json.dumps(grounding_bundle.get("external_research_bundle", {}), ensure_ascii=False, indent=2),
+        json.dumps(
+            grounding_bundle.get("external_research_bundle", {}), ensure_ascii=False, indent=2
+        ),
         encoding="utf-8",
     )
     interfaces_path.write_text(
@@ -275,7 +319,9 @@ def _write_grounding_artifacts(
         ),
         encoding="utf-8",
     )
-    upload_path.write_text(json.dumps(upload_report, ensure_ascii=False, indent=2), encoding="utf-8")
+    upload_path.write_text(
+        json.dumps(upload_report, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return grounding_overview
 
 
@@ -312,7 +358,9 @@ def run_hacc_grounded_pipeline(
 
     default_request = _default_grounding_request(hacc_preset)
     grounding_query = str(query or default_request["query"])
-    resolved_claim_type = str(claim_type or default_request["claim_type"] or "housing_discrimination")
+    resolved_claim_type = str(
+        claim_type or default_request["claim_type"] or "housing_discrimination"
+    )
 
     grounding_path = output_root / "grounding_bundle.json"
     grounding_overview_path = output_root / "grounding_overview.json"
@@ -430,7 +478,9 @@ def run_hacc_grounded_pipeline(
         count=num_sessions,
     )
 
-    adversarial_summary = _load_json_if_exists(adversarial_path) if reuse_existing_artifacts else None
+    adversarial_summary = (
+        _load_json_if_exists(adversarial_path) if reuse_existing_artifacts else None
+    )
     if adversarial_summary is None and reuse_existing_artifacts:
         adversarial_summary = _load_json_if_exists(output_root / "adversarial" / "run_summary.json")
     if adversarial_summary is None:
@@ -487,12 +537,21 @@ def run_hacc_grounded_pipeline(
         interfaces_path=interfaces_path,
         upload_path=upload_path,
     )
-    adversarial_path.write_text(json.dumps(adversarial_summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    adversarial_path.write_text(
+        json.dumps(adversarial_summary, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
     synthesis_summary: Dict[str, Any] = {}
     if synthesize_complaint:
         successful_sessions = int(
-            ((adversarial_summary.get("statistics") if isinstance(adversarial_summary, dict) else {}) or {}).get(
+            (
+                (
+                    adversarial_summary.get("statistics")
+                    if isinstance(adversarial_summary, dict)
+                    else {}
+                )
+                or {}
+            ).get(
                 "successful_sessions",
                 0,
             )
@@ -535,7 +594,9 @@ def run_hacc_grounded_pipeline(
                     )
                 )
             except ValueError as exc:
-                if "No successful session with critic_score found in results payload" not in str(exc):
+                if "No successful session with critic_score found in results payload" not in str(
+                    exc
+                ):
                     raise
                 synthesis_summary = _build_synthesis_skip_summary(
                     reason="missing_successful_session_with_critic_score",
@@ -608,17 +669,31 @@ def run_hacc_grounded_pipeline(
             "adversarial_summary_json": str(adversarial_path),
             "adversarial_output_dir": str(output_root / "adversarial"),
             "complaint_synthesis_dir": synthesis_summary.get("output_dir", ""),
-            "draft_complaint_package_json": synthesis_summary.get("draft_complaint_package_json", ""),
+            "draft_complaint_package_json": synthesis_summary.get(
+                "draft_complaint_package_json", ""
+            ),
             "draft_complaint_package_md": synthesis_summary.get("draft_complaint_package_md", ""),
-            "intake_follow_up_worksheet_json": synthesis_summary.get("intake_follow_up_worksheet_json", ""),
-            "intake_follow_up_worksheet_md": synthesis_summary.get("intake_follow_up_worksheet_md", ""),
+            "intake_follow_up_worksheet_json": synthesis_summary.get(
+                "intake_follow_up_worksheet_json", ""
+            ),
+            "intake_follow_up_worksheet_md": synthesis_summary.get(
+                "intake_follow_up_worksheet_md", ""
+            ),
             "progress_json": str(progress_path),
             "complaint_synthesis": {
                 "output_dir": synthesis_summary.get("output_dir", ""),
-                "draft_complaint_package_json": synthesis_summary.get("draft_complaint_package_json", ""),
-                "draft_complaint_package_md": synthesis_summary.get("draft_complaint_package_md", ""),
-                "intake_follow_up_worksheet_json": synthesis_summary.get("intake_follow_up_worksheet_json", ""),
-                "intake_follow_up_worksheet_md": synthesis_summary.get("intake_follow_up_worksheet_md", ""),
+                "draft_complaint_package_json": synthesis_summary.get(
+                    "draft_complaint_package_json", ""
+                ),
+                "draft_complaint_package_md": synthesis_summary.get(
+                    "draft_complaint_package_md", ""
+                ),
+                "intake_follow_up_worksheet_json": synthesis_summary.get(
+                    "intake_follow_up_worksheet_json", ""
+                ),
+                "intake_follow_up_worksheet_md": synthesis_summary.get(
+                    "intake_follow_up_worksheet_md", ""
+                ),
             },
         },
     }
@@ -642,11 +717,24 @@ def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run repository-grounded evidence upload simulation plus HACC adversarial optimization.",
     )
-    parser.add_argument("--output-dir", default=str(REPO_ROOT / "research_results" / "grounded_runs" / _timestamp()))
-    parser.add_argument("--query", default=None, help="Optional explicit grounding query. Defaults to the first query in the selected preset.")
+    parser.add_argument(
+        "--output-dir", default=str(REPO_ROOT / "research_results" / "grounded_runs" / _timestamp())
+    )
+    parser.add_argument(
+        "--query",
+        default=None,
+        help="Optional explicit grounding query. Defaults to the first query in the selected preset.",
+    )
     parser.add_argument("--hacc-preset", default="core_hacc_policies")
-    parser.add_argument("--claim-type", default=None, help="Optional explicit claim type for upload simulation.")
-    parser.add_argument("--top-k", type=int, default=5, help="Maximum number of repository evidence files to upload.")
+    parser.add_argument(
+        "--claim-type", default=None, help="Optional explicit claim type for upload simulation."
+    )
+    parser.add_argument(
+        "--top-k",
+        type=int,
+        default=5,
+        help="Maximum number of repository evidence files to upload.",
+    )
     parser.add_argument("--num-sessions", type=int, default=3)
     parser.add_argument("--max-turns", type=int, default=4)
     parser.add_argument("--max-parallel", type=int, default=1)
@@ -657,19 +745,37 @@ def create_parser() -> argparse.ArgumentParser:
         default="package",
         help="Search strategy used for HACC evidence retrieval during the adversarial batch.",
     )
-    parser.add_argument("--demo", action="store_true", help="Use deterministic demo backends for the adversarial run.")
+    parser.add_argument(
+        "--demo",
+        action="store_true",
+        help="Use deterministic demo backends for the adversarial run.",
+    )
     parser.add_argument("--config", default=None, help="Optional complaint-generator config JSON.")
-    parser.add_argument("--backend-id", default=None, help="Optional backend id from the selected config.")
+    parser.add_argument(
+        "--backend-id", default=None, help="Optional backend id from the selected config."
+    )
     parser.add_argument(
         "--provider",
         default=HACC_DEFAULT_PROVIDER,
         help=f"LLM router provider override for the adversarial batch. Defaults to {HACC_DEFAULT_PROVIDER}.",
     )
     parser.add_argument("--model", default=HACC_DEFAULT_MODEL)
-    parser.add_argument("--synthesize-complaint", action="store_true", help="Run complaint synthesis after the grounded adversarial batch completes.")
+    parser.add_argument(
+        "--synthesize-complaint",
+        action="store_true",
+        help="Run complaint synthesis after the grounded adversarial batch completes.",
+    )
     parser.add_argument("--filing-forum", default="court", choices=("court", "hud", "state_agency"))
-    parser.add_argument("--completed-intake-worksheet", default=None, help="Optional completed intake_follow_up_worksheet.json to merge into synthesis.")
-    parser.add_argument("--reuse-existing-artifacts", action="store_true", help="Reuse existing grounding/adversarial artifacts in the output directory before rerunning expensive stages.")
+    parser.add_argument(
+        "--completed-intake-worksheet",
+        default=None,
+        help="Optional completed intake_follow_up_worksheet.json to merge into synthesis.",
+    )
+    parser.add_argument(
+        "--reuse-existing-artifacts",
+        action="store_true",
+        help="Reuse existing grounding/adversarial artifacts in the output directory before rerunning expensive stages.",
+    )
     parser.add_argument("--json", action="store_true", help="Print the full workflow summary JSON.")
     return parser
 
@@ -731,7 +837,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"Adversarial output directory: {summary['artifacts']['adversarial_output_dir']}")
         print(f"Synthetic prompts: {summary['artifacts']['synthetic_prompts_json']}")
         if summary["artifacts"].get("draft_complaint_package_json"):
-            print(f"Draft complaint package: {summary['artifacts']['draft_complaint_package_json']}")
+            print(
+                f"Draft complaint package: {summary['artifacts']['draft_complaint_package_json']}"
+            )
         if summary["artifacts"].get("intake_follow_up_worksheet_json"):
             print(f"Intake worksheet: {summary['artifacts']['intake_follow_up_worksheet_json']}")
     return 0

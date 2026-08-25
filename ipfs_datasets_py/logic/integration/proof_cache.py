@@ -34,6 +34,7 @@ __all__ = [
 # CachedProof
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CachedProof:
     """Single cached proof result.
@@ -99,6 +100,7 @@ class CachedProof:
 # ---------------------------------------------------------------------------
 # ProofCache
 # ---------------------------------------------------------------------------
+
 
 class ProofCache:
     """LRU + TTL proof-result cache.

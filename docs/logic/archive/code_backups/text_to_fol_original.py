@@ -32,7 +32,7 @@ async def convert_text_to_fol(
 ) -> Dict[str, Any]:
     """
     Convert natural language text to First-Order Logic (FOL).
-    
+
     Args:
         text_input: Text string or dataset dictionary
         domain_predicates: Optional list of domain-specific predicates
@@ -40,7 +40,7 @@ async def convert_text_to_fol(
         confidence_threshold: Minimum confidence for including results
         include_metadata: Whether to include metadata in output
         use_nlp: Whether to use NLP-enhanced extraction (spaCy) vs regex fallback
-        
+
     Returns:
         Dictionary with FOL formulas and metadata
     """
@@ -49,7 +49,9 @@ async def convert_text_to_fol(
 
         if text_input is None:
             text_input = ""
-        if not isinstance(confidence_threshold, (int, float)) or not (0 <= confidence_threshold <= 1):
+        if not isinstance(confidence_threshold, (int, float)) or not (
+            0 <= confidence_threshold <= 1
+        ):
             raise ValueError("Confidence threshold must be a number between 0 and 1")
 
         if isinstance(text_input, str):
@@ -121,13 +123,15 @@ async def convert_text_to_fol(
                 else:
                     predicates = extract_predicates(sentence)
                     relations = extract_logical_relations(sentence)
-                
+
                 quantifiers = parse_quantifiers(sentence)
                 operators = parse_logical_operators(sentence)
                 relations = extract_logical_relations(sentence)
 
                 fol_formula = build_fol_formula(quantifiers, predicates, operators, relations)
-                confidence = calculate_conversion_confidence(sentence, fol_formula, predicates, quantifiers)
+                confidence = calculate_conversion_confidence(
+                    sentence, fol_formula, predicates, quantifiers
+                )
                 validation = validate_fol_syntax(fol_formula)
 
                 if confidence >= confidence_threshold and validation["valid"]:
@@ -177,7 +181,11 @@ async def convert_text_to_fol(
         }
 
         if total_processed > 0:
-            logger.info("Successfully converted %s/%s statements to FOL", successful_conversions, total_processed)
+            logger.info(
+                "Successfully converted %s/%s statements to FOL",
+                successful_conversions,
+                total_processed,
+            )
 
         return {
             "status": "success",
@@ -208,19 +216,19 @@ async def convert_text_to_fol(
 
 def extract_text_from_dataset(dataset: Dict[str, Any]) -> List[str]:
     """Extract text content from various dataset formats.
-    
+
     This function handles multiple common dataset structures including:
     - Direct text fields
     - Nested data with text/sentence/content keys
     - Lists of sentences
     - Fallback to any string values
-    
+
     Args:
         dataset: Dictionary containing dataset in various formats
-        
+
     Returns:
         List of extracted text strings, stripped of whitespace
-        
+
     Examples:
         >>> extract_text_from_dataset({"text": "Hello world"})
         ["Hello world"]
@@ -263,14 +271,14 @@ def extract_text_from_dataset(dataset: Dict[str, Any]) -> List[str]:
 
 def extract_predicate_names(predicates: Dict[str, List[str]]) -> List[str]:
     """Extract unique predicate names from categorized predicates dictionary.
-    
+
     Args:
         predicates: Dictionary mapping categories to lists of predicate names
                    e.g., {"entities": ["Person", "Dog"], "actions": ["Run", "Walk"]}
-        
+
     Returns:
         Deduplicated list of all predicate names across all categories
-        
+
     Examples:
         >>> extract_predicate_names({"entities": ["Dog", "Cat"], "actions": ["Run"]})
         ["Dog", "Cat", "Run"]
@@ -288,7 +296,7 @@ def calculate_conversion_confidence(
     quantifiers: List[Dict[str, Any]],
 ) -> float:
     """Calculate confidence score for FOL conversion quality.
-    
+
     Uses multiple heuristics to estimate conversion quality:
     - Predicate count (up to 0.3)
     - Quantifier presence (up to 0.2)
@@ -296,16 +304,16 @@ def calculate_conversion_confidence(
     - Logical indicator count (up to 0.2)
     - Syntax validity (0.1)
     - Bonus for clean quantified statements (0.1)
-    
+
     Args:
         sentence: Original natural language sentence
         fol_formula: Generated first-order logic formula
         predicates: Dictionary of extracted predicates by category
         quantifiers: List of identified quantifiers
-        
+
     Returns:
         Confidence score between 0.0 and 1.0
-        
+
     Examples:
         >>> calculate_conversion_confidence(
         ...     "All dogs are mammals",
@@ -351,10 +359,10 @@ def calculate_conversion_confidence(
 
 def estimate_sentence_complexity(sentence: str) -> int:
     """Estimate complexity of natural language sentence by token count.
-    
+
     Args:
         sentence: Natural language sentence
-        
+
     Returns:
         Number of space-separated tokens
     """
@@ -364,12 +372,12 @@ def estimate_sentence_complexity(sentence: str) -> int:
 
 def estimate_formula_complexity(formula: str) -> int:
     """Estimate complexity of FOL formula by operator count.
-    
+
     Counts logical operators: ∀, ∃, ∧, ∨, →, ↔, ¬
-    
+
     Args:
         formula: First-order logic formula string
-        
+
     Returns:
         Sum of all logical operators plus 1
     """
@@ -378,11 +386,11 @@ def estimate_formula_complexity(formula: str) -> int:
 
 def count_indicators(sentence: str, indicators: List[str]) -> int:
     """Count occurrences of logical indicator words in sentence.
-    
+
     Args:
         sentence: Natural language sentence
         indicators: List of indicator words to count (e.g., ["all", "some", "if"])
-        
+
     Returns:
         Total count of all indicators found (case-insensitive)
     """
@@ -392,10 +400,10 @@ def count_indicators(sentence: str, indicators: List[str]) -> int:
 
 def get_quantifier_distribution(results: List[Dict[str, Any]]) -> Dict[str, int]:
     """Calculate distribution of quantifiers across conversion results.
-    
+
     Args:
         results: List of FOL conversion result dictionaries
-        
+
     Returns:
         Dictionary mapping quantifier symbols to counts {"∀": count, "∃": count}
     """
@@ -409,10 +417,10 @@ def get_quantifier_distribution(results: List[Dict[str, Any]]) -> Dict[str, int]
 
 def get_operator_distribution(results: List[Dict[str, Any]]) -> Dict[str, int]:
     """Calculate distribution of logical operators across conversion results.
-    
+
     Args:
         results: List of FOL conversion result dictionaries
-        
+
     Returns:
         Dictionary mapping operator symbols to counts {"∧": count, "∨": count, ...}
     """

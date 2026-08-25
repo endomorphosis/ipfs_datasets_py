@@ -1,4 +1,3 @@
-
 from .factory import make_citation_validator
 
 __all__ = [

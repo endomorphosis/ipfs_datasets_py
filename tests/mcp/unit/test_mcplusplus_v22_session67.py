@@ -8,6 +8,7 @@ Tests for:
   4. ComplianceChecker.migrate_encrypted() atomic .bak backup
   5. Full E2E regression (sessions 66 + 67)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -31,16 +32,24 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 # 1. DelegationManager.merge(audit_log=None)
 # ---------------------------------------------------------------------------
 
+
 class TestDelegationManagerMergeAuditLog:
     def _make_manager(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         return DelegationManager()
 
     def _add_delegation(self, mgr, cid: str):
         """Add a mock delegation to a manager."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationToken
-        d = DelegationToken(issuer="did:test:issuer", audience="did:test:audience",
-                            resource="test", ability="read", expiry=9999999999.0)
+
+        d = DelegationToken(
+            issuer="did:test:issuer",
+            audience="did:test:audience",
+            resource="test",
+            ability="read",
+            expiry=9999999999.0,
+        )
         object.__setattr__(d, "cid", cid) if hasattr(d, "__dataclass_fields__") else None
         # Use store directly
         mgr._store._delegations[cid] = d  # type: ignore[attr-defined]
@@ -97,8 +106,7 @@ class TestDelegationManagerMergeAuditLog:
             def append(self, entry):
                 log.append(entry)
 
-        dst.merge(src, copy_revocations=True,
-                  skip_revocations={"cid-skip"}, audit_log=SimpleLog())
+        dst.merge(src, copy_revocations=True, skip_revocations={"cid-skip"}, audit_log=SimpleLog())
         logged_cids = {e["cid"] for e in log}
         assert "cid-keep" in logged_cids
         assert "cid-skip" not in logged_cids
@@ -146,9 +154,11 @@ class TestDelegationManagerMergeAuditLog:
 # 2. IPFSPolicyStore.save(max_retries=1)
 # ---------------------------------------------------------------------------
 
+
 class TestIPFSPolicyStoreSaveMaxRetries:
     def _make_store(self, path: str):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSPolicyStore, PolicyRegistry
+
         store = IPFSPolicyStore(path=path, registry=None)
         return store
 
@@ -222,10 +232,12 @@ class TestIPFSPolicyStoreSaveMaxRetries:
 # 3. PubSubBus.publish_async() → PublishAsyncResult
 # ---------------------------------------------------------------------------
 
+
 class TestPublishAsyncResult:
     def test_namedtuple_fields(self):
         """PublishAsyncResult has notified and timed_out fields."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PublishAsyncResult
+
         r = PublishAsyncResult(notified=5, timed_out=2)
         assert r.notified == 5
         assert r.timed_out == 2
@@ -233,6 +245,7 @@ class TestPublishAsyncResult:
     def test_namedtuple_indexing(self):
         """PublishAsyncResult supports index access."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PublishAsyncResult
+
         r = PublishAsyncResult(notified=3, timed_out=1)
         assert r[0] == 3
         assert r[1] == 1
@@ -240,12 +253,14 @@ class TestPublishAsyncResult:
     def test_namedtuple_is_tuple(self):
         """PublishAsyncResult is a tuple subclass."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PublishAsyncResult
+
         r = PublishAsyncResult(notified=0, timed_out=0)
         assert isinstance(r, tuple)
 
     def test_publish_async_returns_namedtuple(self):
         """publish_async() returns a PublishAsyncResult (or compatible int in fallback)."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus, PublishAsyncResult
+
         bus = PubSubBus()
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
@@ -256,6 +271,7 @@ class TestPublishAsyncResult:
     def test_publish_async_no_subscribers_zero_counts(self):
         """With no subscribers, notified=0 and timed_out=0."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus, PublishAsyncResult
+
         bus = PubSubBus()
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
@@ -267,6 +283,7 @@ class TestPublishAsyncResult:
     def test_publish_async_with_one_handler(self):
         """With one sync handler, notified=1."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus, PublishAsyncResult
+
         bus = PubSubBus()
         received: List[Any] = []
         bus.subscribe("topic", lambda _t, p: received.append(p))
@@ -281,6 +298,7 @@ class TestPublishAsyncResult:
     def test_publish_async_fallback_returns_compatible_result(self):
         """When anyio absent, sync fallback result is compatible."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus, PublishAsyncResult
+
         bus = PubSubBus()
         bus.subscribe("topic", lambda _t, _p: None)
         with patch.dict("sys.modules", {"anyio": None}):
@@ -295,10 +313,12 @@ class TestPublishAsyncResult:
 # 4. ComplianceChecker.migrate_encrypted() atomic .bak backup
 # ---------------------------------------------------------------------------
 
+
 class TestComplianceCheckerMigrateEncryptedBackup:
     def _can_encrypt(self) -> bool:
         try:
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # noqa: F401
+
             return True
         except ImportError:
             return False
@@ -308,6 +328,7 @@ class TestComplianceCheckerMigrateEncryptedBackup:
         if not self._can_encrypt():
             pytest.skip("cryptography not installed")
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         checker = ComplianceChecker()
         path = str(tmp_path / "rules.enc")
         checker.save_encrypted(path, "old-pass")
@@ -323,6 +344,7 @@ class TestComplianceCheckerMigrateEncryptedBackup:
         if not self._can_encrypt():
             pytest.skip("cryptography not installed")
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         checker = ComplianceChecker()
         path = str(tmp_path / "rules.enc")
         checker.save_encrypted(path, "old-pass")
@@ -330,6 +352,7 @@ class TestComplianceCheckerMigrateEncryptedBackup:
 
         # Simulate a write failure
         import builtins
+
         original_open = builtins.open
 
         def patched_open(file, mode="r", *args, **kwargs):
@@ -348,6 +371,7 @@ class TestComplianceCheckerMigrateEncryptedBackup:
         if not self._can_encrypt():
             pytest.skip("cryptography not installed")
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         checker = ComplianceChecker()
         path = str(tmp_path / "rules.enc")
         checker.save_encrypted(path, "correct-pass")
@@ -362,6 +386,7 @@ class TestComplianceCheckerMigrateEncryptedBackup:
         if not self._can_encrypt():
             pytest.skip("cryptography not installed")
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         checker = ComplianceChecker()
         path = str(tmp_path / "nonexistent.enc")
         result = checker.migrate_encrypted(path, "pass", "new-pass")
@@ -373,6 +398,7 @@ class TestComplianceCheckerMigrateEncryptedBackup:
         if not self._can_encrypt():
             pytest.skip("cryptography not installed")
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         checker = ComplianceChecker()
         path = str(tmp_path / "rules.enc")
         checker.save_encrypted(path, "old-pass")
@@ -389,6 +415,7 @@ class TestComplianceCheckerMigrateEncryptedBackup:
             pytest.skip("cryptography not installed")
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
         import inspect
+
         src = inspect.getsource(ComplianceChecker.migrate_encrypted)
         assert ".bak" in src, "migrate_encrypted source should reference .bak suffix"
 
@@ -397,10 +424,12 @@ class TestComplianceCheckerMigrateEncryptedBackup:
 # 5. Full E2E regression (sessions 66 + 67)
 # ---------------------------------------------------------------------------
 
+
 class TestE2ESession67:
     def test_delegation_manager_merge_audit_and_skip_combined(self):
         """merge() with copy_revocations, skip_revocations, and audit_log all at once."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = DelegationManager()
         src._revocation.revoke("cid-1")
         src._revocation.revoke("cid-2")
@@ -426,6 +455,7 @@ class TestE2ESession67:
     def test_publish_async_result_notified_timed_out_attributes(self):
         """PublishAsyncResult(notified=N, timed_out=M) is accessible by name and index."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PublishAsyncResult
+
         r = PublishAsyncResult(notified=7, timed_out=3)
         assert r.notified == 7
         assert r.timed_out == 3
@@ -441,6 +471,7 @@ class TestE2ESession67:
         except ImportError:
             pytest.skip("cryptography not installed")
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         c1 = ComplianceChecker()
         c2 = ComplianceChecker()
         c1.add_rule("custom_rule", lambda _intent: None)  # type: ignore
@@ -455,6 +486,7 @@ class TestE2ESession67:
         """IPFSPolicyStore.save() accepts max_retries keyword arg."""
         import inspect
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSPolicyStore
+
         sig = inspect.signature(IPFSPolicyStore.save)
         params = list(sig.parameters)
         assert "max_retries" in params, "save() should have max_retries parameter"
@@ -462,6 +494,7 @@ class TestE2ESession67:
     def test_delegation_manager_merge_audit_log_no_write_on_copy_false(self):
         """audit_log is never called when copy_revocations=False."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = DelegationManager()
         src._revocation.revoke("cid-a")
         dst = DelegationManager()
@@ -487,11 +520,13 @@ class TestE2ESession67:
         """PublishAsyncResult is importable and is a NamedTuple."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PublishAsyncResult
         import collections
+
         assert issubclass(PublishAsyncResult, tuple)
 
     def test_delegation_manager_merge_audit_log_list_entries_are_dicts(self):
         """Each audit entry is a dict with 'event' and 'cid' keys."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = DelegationManager()
         src._revocation.revoke("audit-cid")
         dst = DelegationManager()
@@ -509,6 +544,7 @@ class TestE2ESession67:
         """migrate_encrypted has path, old_password, new_password params."""
         import inspect
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         sig = inspect.signature(ComplianceChecker.migrate_encrypted)
         params = list(sig.parameters.keys())
         assert "path" in params

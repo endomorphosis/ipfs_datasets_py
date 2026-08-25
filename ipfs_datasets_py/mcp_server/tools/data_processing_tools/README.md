@@ -17,16 +17,16 @@ from ipfs_datasets_py.mcp_server.tools.data_processing_tools import chunk_text, 
 # Chunk text for LLM context windows
 chunks = await chunk_text(
     text=long_document,
-    chunk_size=512,          # tokens
+    chunk_size=512,  # tokens
     overlap=50,
-    strategy="sentence"      # "sentence" | "paragraph" | "fixed"
+    strategy="sentence",  # "sentence" | "paragraph" | "fixed"
 )
 
 # Deduplicate a dataset
 result = await deduplicate(
     dataset="my_corpus",
     key_columns=["url", "content_hash"],
-    strategy="exact"         # "exact" | "fuzzy" | "semantic"
+    strategy="exact",  # "exact" | "fuzzy" | "semantic"
 )
 ```
 

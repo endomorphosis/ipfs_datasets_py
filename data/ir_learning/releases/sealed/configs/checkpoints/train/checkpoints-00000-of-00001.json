@@ -1,0 +1,1 @@
+{"config_name":"checkpoints","rows":[{"authority":true,"checkpoint_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","kind":"checkpoint_ref","lifecycle_state":"promoted","record_id":"irck:pgir-070-admitted-fixture"}],"split":"train"}

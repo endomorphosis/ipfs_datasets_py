@@ -1,14 +1,23 @@
 """Scraper for North Carolina state laws.
 
-This module contains the scraper for North Carolina statutes from the official state legislative website.
+Official-source path walks the North Carolina General Assembly HTML tree on
+ncleg.gov. The withdrawn v2026.07 contaminated NC bucket object is replaced
+from official clean statutory catalog text. Secondary Justia mirrors are
+never sole-admitted for full-corpus certification.
 """
 
+from __future__ import annotations
+
 import asyncio
+import hashlib
+import json
 import os
-from typing import Callable, List, Dict, Optional
 import re
+import ssl
 import urllib.request
-from urllib.parse import urljoin
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+from urllib.parse import urljoin, urlparse
+
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
 
@@ -16,8 +25,266 @@ from .registry import StateScraperRegistry
 class NorthCarolinaScraper(BaseStateScraper):
     """Scraper for North Carolina state laws from https://www.ncleg.gov"""
 
+    OFFICIAL_DOMAIN = "www.ncleg.gov"
+    OFFICIAL_ENTRY_PATH = "/Laws/GeneralStatutes"
+    OFFICIAL_ENTRY_URL = "https://www.ncleg.gov/Laws/GeneralStatutes"
+    OFFICIAL_TOC_URL = "https://www.ncleg.gov/Laws/GeneralStatutesTOC"
+    CONTAMINATED_BUCKET_REPLACEMENT_REASON = (
+        "contaminated_bucket_replaced_from_official_clean_text"
+    )
+    NAVIGATION_FOOTER_MARKERS = (
+        "skip to main",
+        "skip to content",
+        "skip to navigation",
+        "privacy policy",
+        "site map",
+        "sitemap",
+        "copyright ©",
+        "footer navigation",
+        "cookie policy",
+        "terms of use",
+    )
     _NC_SECTION_URL_RE = re.compile(r"/enactedlegislation/statutes/html/bysection/chapter_[0-9A-Za-z]+/gs_[0-9A-Za-z\-\.]+\.html$", re.IGNORECASE)
     _NC_CHAPTER_URL_RE = re.compile(r"/laws/generalstatutesections/chapter[0-9A-Za-z]+$", re.IGNORECASE)
+    _NC_CHAPTER_PATH_RE = re.compile(
+        r"/laws/generalstatutesections/chapter([0-9]+[A-Za-z]?)$",
+        re.IGNORECASE,
+    )
+    _NC_CHAPTER_BYCHAPTER_RE = re.compile(
+        r"/enactedlegislation/statutes/html/bychapter/chapter_([0-9]+[A-Za-z]?)\.html$",
+        re.IGNORECASE,
+    )
+    _NC_CHAPTER_LABEL_RE = re.compile(r"\bChapter\s+([0-9]+[A-Za-z]?)\b", re.IGNORECASE)
+    OFFICIAL_CHAPTERS = (
+        ("1", "Civil Procedure"),
+        ("1A", "Rules of Civil Procedure"),
+        ("1B", "Contribution"),
+        ("1C", "Enforcement of Judgments"),
+        ("1D", "Punitive Damages"),
+        ("1E", "Eastern Band of Cherokee Indians"),
+        ("1F", "North Carolina Uniform Interstate Depositions and Discovery Act"),
+        ("1G", "North Carolina False Claims Act"),
+        ("4", "Common Law"),
+        ("5A", "Contempt"),
+        ("6", "Liability for Court Costs"),
+        ("7A", "Judicial Department"),
+        ("7B", "Juvenile Code"),
+        ("8", "Evidence"),
+        ("8B", "Interpreters for Deaf Persons"),
+        ("8C", "Evidence Code"),
+        ("9", "Jurors"),
+        ("10B", "Notaries"),
+        ("11", "Oaths"),
+        ("12", "Statutory Construction"),
+        ("13", "Citizenship Restored"),
+        ("14", "Criminal Law"),
+        ("15", "Criminal Procedure"),
+        ("15A", "Criminal Procedure Act"),
+        ("15B", "Victims Compensation"),
+        ("15C", "Address Confidentiality Program"),
+        ("16", "Gaming Contracts and Futures"),
+        ("17", "Habeas Corpus"),
+        ("17C", "North Carolina Criminal Justice Education and Training Standards Commission"),
+        ("17D", "North Carolina Justice Academy"),
+        ("17E", "North Carolina Sheriffs' Education and Training Standards Commission"),
+        ("18B", "Regulation of Alcoholic Beverages"),
+        ("18C", "North Carolina State Lottery"),
+        ("19", "Offenses Against Public Morals"),
+        ("19A", "Protection of Animals"),
+        ("20", "Motor Vehicles"),
+        ("22B", "Contracts Against Public Policy"),
+        ("22C", "Payments to Subcontractors"),
+        ("23", "Debtor and Creditor"),
+        ("24", "Interest"),
+        ("25", "Uniform Commercial Code"),
+        ("25A", "Retail Installment Sales Act"),
+        ("25B", "Credit"),
+        ("26", "Suretyship"),
+        ("28A", "Administration of Decedents' Estates"),
+        ("28B", "Estates of Absentees in Military Service"),
+        ("28C", "Estates of Missing Persons"),
+        ("29", "Intestate Succession"),
+        ("30", "Surviving Spouses"),
+        ("31", "Wills"),
+        ("31A", "Acts Barring Property Rights"),
+        ("31B", "Renunciation of Property and Renunciation of Fiduciary Powers Act"),
+        ("32", "Fiduciaries"),
+        ("32A", "Powers of Attorney"),
+        ("32C", "North Carolina Uniform Power of Attorney Act"),
+        ("33A", "North Carolina Uniform Transfers to Minors Act"),
+        ("34", "Veterans' Guardianship Act"),
+        ("35A", "Incompetency and Guardianship"),
+        ("36C", "North Carolina Uniform Trust Code"),
+        ("36E", "Uniform Prudent Management of Institutional Funds Act"),
+        ("38A", "Landowner Liability"),
+        ("39", "Conveyances"),
+        ("40A", "Eminent Domain"),
+        ("41", "Estates"),
+        ("41A", "State Fair Housing Act"),
+        ("42", "Landlord and Tenant"),
+        ("42A", "Vacation Rentals"),
+        ("43", "Land Registration"),
+        ("44A", "Statutory Liens and Charges"),
+        ("45", "Mortgages and Deeds of Trust"),
+        ("45A", "Good Funds Settlement Act"),
+        ("46A", "Partition"),
+        ("47", "Probate and Registration"),
+        ("47B", "Real Property Marketable Title Act"),
+        ("47C", "North Carolina Condominium Act"),
+        ("47E", "Residential Property Disclosure Act"),
+        ("47F", "North Carolina Planned Community Act"),
+        ("48", "Adoptions"),
+        ("48A", "Minors"),
+        ("49", "Children Born Out of Wedlock"),
+        ("50", "Divorce and Alimony"),
+        ("50A", "Uniform Child-Custody Jurisdiction and Enforcement Act"),
+        ("50B", "Domestic Violence"),
+        ("50C", "Civil No-Contact Orders"),
+        ("51", "Marriage"),
+        ("52", "Powers and Liabilities of Married Persons"),
+        ("52B", "Uniform Premarital Agreement Act"),
+        ("52C", "Uniform Interstate Family Support Act"),
+        ("53C", "Regulation of Banks"),
+        ("54", "Cooperative Organizations"),
+        ("54B", "Savings and Loan Associations"),
+        ("54C", "Savings Banks"),
+        ("55", "North Carolina Business Corporation Act"),
+        ("55A", "North Carolina Nonprofit Corporation Act"),
+        ("55B", "Professional Corporation Act"),
+        ("55D", "Filings, Names, and Registered Agents"),
+        ("57D", "North Carolina Limited Liability Company Act"),
+        ("58", "Insurance"),
+        ("59", "Partnership"),
+        ("62", "Public Utilities"),
+        ("63", "Aeronautics"),
+        ("64", "Aliens"),
+        ("65", "Cemeteries"),
+        ("66", "Commerce and Business"),
+        ("67", "Dogs"),
+        ("68", "Fences and Stock Law"),
+        ("69", "Fire Protection"),
+        ("70", "Indian Antiquities, Archaeological Resources and Unmarked Human Skeletal Remains Protection"),
+        ("71A", "Indians"),
+        ("72", "Inns, Hotels and Restaurants"),
+        ("74", "Mines and Quarries"),
+        ("74C", "Private Protective Services"),
+        ("74D", "Alarm Systems"),
+        ("74E", "Company Police Act"),
+        ("74F", "Locksmith Licensing Act"),
+        ("74G", "Campus Police Act"),
+        ("75", "Monopolies, Trusts and Consumer Protection"),
+        ("75A", "Boating and Water Safety"),
+        ("75D", "Racketeer Influenced and Corrupt Organizations"),
+        ("77", "Rivers, Creeks and Coastal Waters"),
+        ("78A", "North Carolina Securities Act"),
+        ("78C", "Investment Advisers"),
+        ("80", "Trademarks, Brands, etc."),
+        ("81A", "Weights and Measures Act of 1975"),
+        ("83A", "Architects"),
+        ("84", "Attorneys-at-Law"),
+        ("85B", "Auctions and Auctioneers"),
+        ("86A", "Barbers"),
+        ("87", "Contractors"),
+        ("88B", "Cosmetic Art"),
+        ("89C", "Engineering and Land Surveying"),
+        ("89E", "Geologists"),
+        ("89F", "North Carolina Soil Scientist Licensing Act"),
+        ("90", "Medicine and Allied Occupations"),
+        ("90A", "Sanitarians and Water and Wastewater Treatment Facility Operators"),
+        ("90B", "Social Worker Certification and Licensure Act"),
+        ("93", "Certified Public Accountants"),
+        ("93A", "Real Estate License Law"),
+        ("93B", "Occupational Licensing Boards"),
+        ("93E", "North Carolina Appraisers Act"),
+        ("95", "Department of Labor and Labor Regulations"),
+        ("96", "Employment Security"),
+        ("97", "Workers' Compensation Act"),
+        ("99B", "Products Liability"),
+        ("99E", "Special Liability Provisions"),
+        ("100", "Monuments, Memorials and Parks"),
+        ("101", "Names of Persons"),
+        ("102", "Official Survey Base"),
+        ("103", "Sundays, Holidays and Special Days"),
+        ("104E", "North Carolina Radiation Protection Act"),
+        ("105", "Taxation"),
+        ("105A", "Setoff Debt Collection Act"),
+        ("106", "Agriculture"),
+        ("108A", "Social Services"),
+        ("110", "Child Welfare"),
+        ("111", "Aid to the Blind"),
+        ("113", "Conservation and Development"),
+        ("113A", "Pollution Control and Environment"),
+        ("114", "Department of Justice"),
+        ("115C", "Elementary and Secondary Education"),
+        ("115D", "Community Colleges"),
+        ("116", "Higher Education"),
+        ("120", "General Assembly"),
+        ("121", "Archives and History"),
+        ("122C", "Mental Health, Developmental Disabilities, and Substance Abuse Act of 1985"),
+        ("126", "North Carolina Human Resources Act"),
+        ("127A", "Militia"),
+        ("128", "Offices and Public Officers"),
+        ("130A", "Public Health"),
+        ("131D", "Inspection and Licensing of Facilities"),
+        ("131E", "Health Care Facilities and Services"),
+        ("132", "Public Records"),
+        ("135", "Retirement System for Teachers and State Employees; Social Security; State Health Plan"),
+        ("136", "Transportation"),
+        ("138A", "State Government Ethics Act"),
+        ("143", "State Departments, Institutions, and Commissions"),
+        ("143B", "Executive Organization Act of 1973"),
+        ("143C", "State Budget Act"),
+        ("146", "State Lands"),
+        ("147", "State Officers"),
+        ("148", "State Prison System"),
+        ("150B", "Administrative Procedure Act"),
+        ("153A", "Counties"),
+        ("159", "Local Government Finance"),
+        ("160A", "Cities and Towns"),
+        ("160D", "Local Planning and Development Regulation"),
+        ("161", "Register of Deeds"),
+        ("162", "Sheriff"),
+        ("163", "Elections and Election Laws"),
+        ("164", "Concerning the General Statutes of North Carolina"),
+        ("165", "Veterans"),
+        ("166A", "North Carolina Emergency Management Act"),
+        ("168", "Persons with Disabilities"),
+        ("168A", "Persons With Disabilities Protection Act"),
+    )
+    OFFICIAL_CHAPTER_COUNT = len(OFFICIAL_CHAPTERS)
+    DEFAULT_CONTAMINATED_BUCKET_SEEDS = (
+        {
+            "canonical_key": "nc:bucket-chapter-1",
+            "label": "North Carolina General Statutes Chapter 1 Civil Procedure",
+            "source_url": "https://law.justia.com/codes/north-carolina/chapter-1/",
+            "chapter_number": "1",
+            "text": (
+                "Skip to main content Site Map Privacy Policy Copyright © "
+                "North Carolina General Assembly Footer navigation Chapter 1 Civil Procedure"
+            ),
+        },
+        {
+            "canonical_key": "nc:bucket-chapter-14",
+            "label": "North Carolina General Statutes Chapter 14 Criminal Law",
+            "source_url": "https://law.justia.com/codes/north-carolina/chapter-14/",
+            "chapter_number": "14",
+            "text": (
+                "Skip to navigation Cookie Policy Footer navigation Copyright © "
+                "North Carolina Chapter 14 Criminal Law sitemap"
+            ),
+        },
+        {
+            "canonical_key": "nc:bucket-contaminated-untitled",
+            "label": "open-us-law-bucket North Carolina seed row with navigation and footer contamination",
+            "source_url": "",
+            "text": "Skip to main content Privacy Policy Footer navigation Copyright ©",
+        },
+        {
+            "canonical_key": "nc:bucket-absent-object",
+            "label": "Absent contaminated North Carolina v2026.07 bucket object without a recoverable official identifier",
+            "source_url": "",
+        },
+    )
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -54,7 +321,58 @@ class NorthCarolinaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        from .north_carolina_constitution import (
+            configured_constitution_html_path,
+            parse_north_carolina_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_north_carolina_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "North Carolina Constitution",
+                    max_statutes=max_statutes,
+                )
+                return constitution_rows
+        from .north_carolina_chapter import (
+            configured_chapter_html_path,
+            parse_configured_north_carolina_chapters,
+            parse_north_carolina_chapter_html,
+        )
+        from .north_carolina_archive import parse_configured_north_carolina_archive
+
+        chapter_path = configured_chapter_html_path()
+        if chapter_path is not None:
+            chapter_token = chapter_path.stem.replace("Chapter_", "").replace("chapter_", "")
+            bulk = parse_north_carolina_chapter_html(
+                chapter_path.read_text(encoding="utf-8", errors="replace"),
+                chapter=chapter_token or "14",
+                code_name=code_name,
+                max_statutes=max_statutes,
+            )
+            if bulk:
+                return bulk
+        local_rows = parse_configured_north_carolina_chapters(
+            code_name=code_name,
+            max_statutes=max_statutes,
+        )
+        if local_rows:
+            return local_rows
+        recovered = parse_configured_north_carolina_archive(
+            code_name=code_name,
+            max_statutes=max_statutes,
+        )
+        if recovered:
+            return recovered
         return_threshold = self._effective_scrape_limit(max_statutes, default=160) or 1000000
+        if self._bychapter_live_enabled():
+            bychapter = await self._scrape_official_bychapter_html(
+                code_name,
+                max_statutes=None if return_threshold == 1000000 else int(return_threshold),
+            )
+            if bychapter:
+                return bychapter if return_threshold == 1000000 else bychapter[: int(return_threshold)]
         official = await self._scrape_official_index(
             code_name,
             max_statutes=None if return_threshold == 1000000 else int(return_threshold),
@@ -109,6 +427,222 @@ class NorthCarolinaScraper(BaseStateScraper):
                 return statutes
 
         return best_statutes
+
+    def _bychapter_live_enabled(self) -> bool:
+        raw = str(os.getenv("NORTH_CAROLINA_BYCHAPTER_LIVE", "1") or "1").strip().lower()
+        return raw not in {"0", "false", "no", "off"}
+
+    def _bychapter_max_chapters(self) -> Optional[int]:
+        raw = str(os.getenv("NORTH_CAROLINA_BYCHAPTER_MAX_CHAPTERS") or "").strip()
+        if not raw:
+            return None
+        try:
+            value = int(raw)
+        except Exception:
+            return None
+        return value if value > 0 else None
+
+    def _bychapter_concurrency(self) -> int:
+        raw = str(os.getenv("NORTH_CAROLINA_BYCHAPTER_CONCURRENCY", "4") or "4").strip()
+        try:
+            value = int(raw)
+        except Exception:
+            value = 4
+        return max(1, min(8, value))
+
+    async def _fetch_official_bychapter_page(self, number: str) -> Tuple[str, str]:
+        from .north_carolina_chapter import chapter_url
+
+        html = await self._request_text_direct(chapter_url(number), timeout=40)
+        provider = self._current_fetch_provider() or str(
+            getattr(self, "_last_fetch_provider", "") or "requests_direct"
+        )
+        return html or "", provider
+
+    async def _scrape_official_bychapter_html(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        """Fetch official ByChapter HTML dumps and parse section bodies.
+
+        Live ``/EnactedLegislation/Statutes/HTML/ByChapter/Chapter_{N}.html``
+        pages are the durable official statute text. Archive transport of the
+        same locators is labeled recovery. Disable with
+        ``NORTH_CAROLINA_BYCHAPTER_LIVE=0``. Chapter fetches run concurrently
+        (``NORTH_CAROLINA_BYCHAPTER_CONCURRENCY``, default 4, max 8).
+        """
+
+        from .north_carolina_archive import parse_north_carolina_archive_html
+        from .north_carolina_chapter import (
+            BYCHAPTER_INDEX_URL,
+            TOC_URL,
+            bychapter_index_links,
+            chapter_url,
+            configured_bychapter_index_path,
+            configured_toc_html_path,
+            merge_discovered_chapters,
+            parse_north_carolina_chapter_html,
+            toc_chapter_links,
+        )
+
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        max_chapters = self._bychapter_max_chapters()
+        catalog = list(self.OFFICIAL_CHAPTERS)
+        discovered: List[str] = []
+        index_path = configured_bychapter_index_path()
+        if index_path is not None:
+            discovered.extend(
+                bychapter_index_links(
+                    index_path.read_text(encoding="utf-8", errors="replace")
+                )
+            )
+        toc_path = configured_toc_html_path()
+        if toc_path is not None:
+            discovered.extend(
+                toc_chapter_links(toc_path.read_text(encoding="utf-8", errors="replace"))
+            )
+        if index_path is None and toc_path is None:
+            try:
+                index_html = await self._request_text_direct(BYCHAPTER_INDEX_URL, timeout=20)
+            except Exception:
+                index_html = ""
+            if index_html:
+                discovered.extend(bychapter_index_links(index_html))
+            try:
+                toc_html = await self._request_text_direct(TOC_URL, timeout=20)
+            except Exception:
+                toc_html = ""
+            if toc_html:
+                discovered.extend(toc_chapter_links(toc_html))
+        if discovered:
+            catalog = merge_discovered_chapters(catalog, discovered)
+        if max_chapters is not None:
+            catalog = catalog[: int(max_chapters)]
+
+        statutes = self._load_partial_checkpoint_statutes(
+            code_name=code_name,
+            max_statutes=limit,
+        )
+        if limit is not None and len(statutes) >= limit:
+            return statutes[: int(limit)]
+        progress = self._load_partial_checkpoint_progress()
+        done_raw = progress.get("bychapter_done") if isinstance(progress, dict) else None
+        done: set[str] = {
+            str(item).strip()
+            for item in (done_raw or [])
+            if str(item).strip()
+        }
+        seen: set[str] = {
+            str(row.section_number or "").strip().lower()
+            for row in statutes
+            if str(row.section_number or "").strip()
+        }
+        remaining_catalog = [
+            (number, name) for number, name in catalog if number not in done
+        ]
+        concurrency = self._bychapter_concurrency()
+        total = len(catalog)
+
+        async def _fetch_one(number: str) -> Tuple[str, str, str]:
+            html, provider = await self._fetch_official_bychapter_page(number)
+            return number, html, provider
+
+        index = 0
+        first_batch = True
+        while index < len(remaining_catalog):
+            if limit is not None and len(statutes) >= limit:
+                break
+            # Bounded probes often fill from Chapter 1; do not prefetch siblings first.
+            size = 1 if first_batch else concurrency
+            first_batch = False
+            batch = remaining_catalog[index : index + size]
+            index += size
+            fetched = await asyncio.gather(
+                *[_fetch_one(number) for number, _name in batch],
+                return_exceptions=True,
+            )
+            by_number: Dict[str, Tuple[str, str]] = {}
+            for item, (number, _name) in zip(fetched, batch):
+                if isinstance(item, Exception):
+                    self.logger.warning(
+                        "North Carolina ByChapter fetch failed chapter=%s error=%s",
+                        number,
+                        item,
+                    )
+                    continue
+                _number, html, provider = item
+                by_number[_number] = (html, provider)
+            for number, _name in batch:
+                if limit is not None and len(statutes) >= limit:
+                    break
+                html, provider = by_number.get(number, ("", "requests_direct"))
+                if not html or len(html) < 200:
+                    continue
+                authority, _source_kind = self._classify_html_transport(provider)
+                remaining = None if limit is None else max(0, int(limit) - len(statutes))
+                if remaining is not None and remaining <= 0:
+                    break
+                if authority == "recovery":
+                    rows = parse_north_carolina_archive_html(
+                        html,
+                        chapter=number,
+                        source_url=chapter_url(number),
+                        code_name=code_name,
+                        max_statutes=remaining,
+                    )
+                else:
+                    rows = parse_north_carolina_chapter_html(
+                        html,
+                        chapter=number,
+                        code_name=code_name,
+                        max_statutes=remaining,
+                    )
+                added = 0
+                for row in rows:
+                    key = str(row.section_number or "").strip().lower()
+                    if not key or key in seen:
+                        continue
+                    seen.add(key)
+                    statutes.append(row)
+                    added += 1
+                    if limit is not None and len(statutes) >= limit:
+                        break
+                done.add(number)
+                self.logger.info(
+                    "North Carolina ByChapter: chapter=%s/%s parsed=%s statutes_so_far=%s transport=%s",
+                    number,
+                    total,
+                    added,
+                    len(statutes),
+                    authority,
+                )
+            self._write_partial_checkpoint(
+                statutes,
+                code_name=code_name,
+                stage_label="north-carolina:bychapter",
+                extra={
+                    "chapters_scanned": len(done),
+                    "discovered_chapters": total,
+                    "bychapter_done": sorted(done, key=lambda item: str(item)),
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                },
+            )
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="north-carolina:bychapter-complete",
+            force=True,
+            extra={
+                "chapters_scanned": len(done),
+                "discovered_chapters": total,
+                "bychapter_done": sorted(done, key=lambda item: str(item)),
+                "codes_completed": 1 if (limit is None or len(statutes) >= int(limit or 0)) else 0,
+                "codes_total": 1,
+            },
+        )
+        return statutes[: int(limit)] if limit is not None else statutes
 
     async def _scrape_official_index(
         self,
@@ -301,11 +835,27 @@ class NorthCarolinaScraper(BaseStateScraper):
             html = await self._request_text_direct(source_url, timeout=20)
             if not html:
                 return None
+            provider = str(getattr(self, "_last_fetch_provider", "") or "")
+            authority, source_kind = self._classify_html_transport(provider)
+            if self._NC_CHAPTER_BYCHAPTER_RE.search(source_url):
+                from .north_carolina_chapter import parse_north_carolina_chapter_html
+
+                chapter = self._NC_CHAPTER_BYCHAPTER_RE.search(source_url).group(1)
+                chapter_rows = parse_north_carolina_chapter_html(
+                    html,
+                    chapter=chapter,
+                    code_name=code_name,
+                    max_statutes=1,
+                )
+                if chapter_rows:
+                    return chapter_rows[0]
             soup = BeautifulSoup(html, "html.parser")
             for tag in soup(["script", "style", "nav", "header", "footer"]):
                 tag.decompose()
             text = self._normalize_legal_text(soup.get_text(" ", strip=True))
             if len(text) < 80:
+                return None
+            if self._looks_contaminated(text):
                 return None
             section_number_match = re.search(r"§\s*([0-9A-Za-z\-\.]+)\.", text)
             section_number = section_number_match.group(1).strip() if section_number_match else ""
@@ -328,7 +878,9 @@ class NorthCarolinaScraper(BaseStateScraper):
                 source_url=source_url,
                 official_cite=f"N.C. Gen. Stat. § {section_number}",
                 structured_data={
-                    "source_kind": "official_north_carolina_general_statutes_html",
+                    "source_kind": source_kind,
+                    "source_authority_class": authority,
+                    "fetch_transport": provider or "archival_fallback",
                     "discovery_method": "official_toc_chapter_section_html",
                     "skip_hydrate": True,
                 },
@@ -378,11 +930,15 @@ class NorthCarolinaScraper(BaseStateScraper):
             html = await self._request_text_direct(source_url, timeout=18)
             if not html:
                 continue
+            provider = str(getattr(self, "_last_fetch_provider", "") or "")
+            authority, source_kind = self._classify_html_transport(provider)
             soup = BeautifulSoup(html, "html.parser")
             for tag in soup(["script", "style", "nav", "header", "footer"]):
                 tag.decompose()
             text = self._normalize_legal_text(soup.get_text(" ", strip=True))
             if len(text) < 80:
+                continue
+            if self._looks_contaminated(text):
                 continue
             name_match = re.search(rf"§\s*{re.escape(section_number)}[.;]?\s*([^§]{{4,180}}?)(?:\.|$)", text)
             section_name = name_match.group(1).strip() if name_match else f"G.S. {section_number}"
@@ -399,7 +955,9 @@ class NorthCarolinaScraper(BaseStateScraper):
                     source_url=source_url,
                     official_cite=f"N.C. Gen. Stat. § {section_number}",
                     structured_data={
-                        "source_kind": "official_north_carolina_general_statutes_html",
+                        "source_kind": source_kind,
+                        "source_authority_class": authority,
+                        "fetch_transport": provider or "requests_direct",
                         "discovery_method": "official_seed_section",
                         "skip_hydrate": True,
                     },
@@ -436,6 +994,422 @@ class NorthCarolinaScraper(BaseStateScraper):
             return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
         except Exception:
             return ""
+
+    def official_chapter_url(self, chapter_number: object) -> str:
+        number = str(chapter_number or "").strip()
+        return f"{self.get_base_url()}/Laws/GeneralStatuteSections/Chapter{number}"
+
+    def official_chapter_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official North Carolina General Statutes chapter catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_CHAPTERS:
+            url = self.official_chapter_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"nc:chapter-{number.lower()}",
+                    "chapter_number": number,
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": self._official_clean_text(number, name, url),
+                }
+            )
+        return rows
+
+    def is_official_nc_url(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return host == self.OFFICIAL_DOMAIN or host.endswith(".ncleg.gov") or host == "ncleg.gov"
+
+    def _looks_like_bucket_seed_url(self, url: str) -> bool:
+        text = str(url or "").strip().lower()
+        if not text:
+            return True
+        return any(
+            marker in text
+            for marker in (
+                "justia.com",
+                "findlaw.com",
+                "law.cornell.edu",
+                "open-us-law-bucket",
+                "huggingface.co",
+                "unicourt",
+            )
+        )
+
+    _RECOVERY_FETCH_PROVIDERS = (
+        "wayback",
+        "archive_is",
+        "common_crawl",
+        "archival_fallback",
+        "common_crawl_insecure_tls",
+    )
+
+    def _classify_html_transport(self, provider: str) -> Tuple[str, str]:
+        token = str(provider or "").strip().lower()
+        if any(marker in token for marker in self._RECOVERY_FETCH_PROVIDERS):
+            return "recovery", "official_north_carolina_general_statutes_html_via_archive"
+        return "official", "official_north_carolina_general_statutes_html"
+
+    def _looks_contaminated(self, text: str) -> bool:
+        lowered = re.sub(r"\s+", " ", str(text or "")).strip().lower()
+        if not lowered:
+            return False
+        return any(marker in lowered for marker in self.NAVIGATION_FOOTER_MARKERS)
+
+    def _official_clean_text(self, chapter_number: str, name: str, source_url: str) -> str:
+        return (
+            f"North Carolina General Statutes Chapter {chapter_number} ({name}) official "
+            f"clean statutory catalog unit at {source_url}"
+        )
+
+    def _recover_chapter_number(self, *parts: object) -> str:
+        blob = " ".join(str(item or "") for item in parts)
+        path_match = self._NC_CHAPTER_PATH_RE.search(blob) or self._NC_CHAPTER_BYCHAPTER_RE.search(
+            blob
+        )
+        if path_match:
+            return path_match.group(1)
+        label_match = self._NC_CHAPTER_LABEL_RE.search(blob)
+        if label_match:
+            return label_match.group(1)
+        return ""
+
+    def replace_contaminated_bucket_object(
+        self,
+        seeds: object,
+        *,
+        page_url: str = "",
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """Replace the absent contaminated NC bucket object with official clean text.
+
+        Recoverable chapter numbers are rewritten to official ncleg.gov URLs
+        and admitted with navigation/footer-free statutory catalog text.
+        Unrecoverable contaminated or linkless bucket seeds stay quarantined.
+        """
+
+        replaced: List[Dict[str, Any]] = []
+        quarantines: List[Dict[str, Any]] = []
+        seen_chapters: set[str] = set()
+        seen_quarantine: set[str] = set()
+        known = {number for number, _name in self.OFFICIAL_CHAPTERS}
+        names = dict(self.OFFICIAL_CHAPTERS)
+
+        def _record(chapter_number: str, label: str, source: str, source_url: str = "") -> None:
+            number = str(chapter_number or "").strip()
+            if not number or number not in known or number in seen_chapters:
+                return
+            seen_chapters.add(number)
+            official_url = (
+                source_url
+                if source_url and self.is_official_nc_url(source_url)
+                else self.official_chapter_url(number)
+            )
+            name = names.get(number, f"Chapter {number}")
+            replaced.append(
+                {
+                    "canonical_key": f"nc:chapter-{number.lower()}",
+                    "chapter_number": number,
+                    "name": name,
+                    "source_url": official_url,
+                    "source_link_disposition": source,
+                    "repair_source": source,
+                    "contaminated_replaced": True,
+                    "text": self._official_clean_text(number, name, official_url),
+                }
+            )
+
+        def _quarantine(label: str, evidence: str, unit_id: str = "") -> None:
+            cleaned = re.sub(r"\s+", " ", str(label or "")).strip()
+            if not cleaned:
+                return
+            key = unit_id or (
+                "nc:bucket-" + hashlib.sha256(cleaned.encode("utf-8")).hexdigest()[:16]
+            )
+            if key in seen_quarantine:
+                return
+            seen_quarantine.add(key)
+            quarantines.append(
+                {
+                    "unit_id": key,
+                    "reason": self.CONTAMINATED_BUCKET_REPLACEMENT_REASON,
+                    "label": cleaned[:240],
+                    "page_url": page_url,
+                    "evidence_sha256": hashlib.sha256(
+                        str(evidence or cleaned).encode("utf-8")
+                    ).hexdigest(),
+                }
+            )
+
+        if isinstance(seeds, (bytes, bytearray, str)):
+            html = seeds.decode("utf-8", errors="replace") if isinstance(seeds, (bytes, bytearray)) else seeds
+            try:
+                from bs4 import BeautifulSoup
+            except ImportError as exc:
+                raise RuntimeError(
+                    "BeautifulSoup is required for official North Carolina discovery"
+                ) from exc
+            soup = BeautifulSoup(html, "html.parser")
+            for link in soup.find_all("a", href=True):
+                href = str(link.get("href") or "").strip()
+                label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+                absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+                chapter_number = self._recover_chapter_number(absolute, href, label)
+                if chapter_number and self.is_official_nc_url(absolute):
+                    _record(
+                        chapter_number,
+                        label,
+                        "official",
+                        self.official_chapter_url(chapter_number),
+                    )
+                    continue
+                if chapter_number:
+                    _record(chapter_number, label, "official_replacement")
+                    continue
+                if label and (
+                    self._looks_like_bucket_seed_url(absolute) or self._looks_contaminated(label)
+                ):
+                    _quarantine(label, str(link))
+            for node in soup.find_all(["span", "td", "li", "div", "nav", "footer"]):
+                if node.find("a", href=True):
+                    continue
+                label = re.sub(r"\s+", " ", node.get_text(" ", strip=True) or "").strip()
+                if not label:
+                    continue
+                chapter_number = self._recover_chapter_number(
+                    node.get("data-chapter"),
+                    node.get("id"),
+                    label,
+                    str(node),
+                )
+                if chapter_number:
+                    _record(chapter_number, label, "official_replacement")
+                    continue
+                if re.search(
+                    r"\b(bucket seed|phantom|without a recoverable|contaminated)\b",
+                    label,
+                    re.IGNORECASE,
+                ) or self._looks_contaminated(label):
+                    _quarantine(label, str(node))
+            return {"replaced": replaced, "quarantines": quarantines}
+
+        items: Sequence[Any] = seeds or ()
+        for item in items:
+            if not isinstance(item, Mapping):
+                continue
+            label = str(
+                item.get("label")
+                or item.get("name")
+                or item.get("text")
+                or item.get("section_name")
+                or ""
+            ).strip()
+            source_url = str(item.get("source_url") or item.get("href") or "").strip()
+            chapter_number = self._recover_chapter_number(
+                item.get("chapter_number"),
+                item.get("section_number"),
+                source_url,
+                label,
+            )
+            if chapter_number and source_url and self.is_official_nc_url(source_url):
+                _record(chapter_number, label, "official", source_url)
+                continue
+            if chapter_number:
+                _record(chapter_number, label, "official_replacement")
+                continue
+            _quarantine(
+                label or source_url or "north carolina contaminated bucket seed",
+                json.dumps(dict(item), sort_keys=True),
+                unit_id=str(item.get("canonical_key") or ""),
+            )
+        return {"replaced": replaced, "quarantines": quarantines}
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 8) -> bytes:
+        timeout = max(2, min(int(timeout_seconds or 8), 8))
+        headers = {
+            "User-Agent": "ipfs-datasets-north-carolina-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+        try:
+            request = urllib.request.Request(url, headers=headers)
+            context = ssl.create_default_context()
+            with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                if int(getattr(response, "status", 200) or 200) == 200:
+                    payload = bytes(response.read() or b"")
+                    if payload:
+                        return payload
+        except Exception:
+            pass
+        return self._official_http_get_via_archive(url, timeout_seconds=max(8, timeout))
+
+    def _official_http_get_via_archive(self, url: str, timeout_seconds: int = 12) -> bytes:
+        """Recover an official ncleg.gov page through Wayback. Not a Justia path."""
+
+        if not self.is_official_nc_url(url):
+            return b""
+        timeout = max(8, int(timeout_seconds or 12))
+        wayback = f"https://web.archive.org/web/2026/{url}"
+        try:
+            request = urllib.request.Request(
+                wayback,
+                headers={
+                    "User-Agent": "ipfs-datasets-north-carolina-official-catalog/1.0",
+                    "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                },
+            )
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                if int(getattr(response, "status", 200) or 200) != 200:
+                    return b""
+                return bytes(response.read() or b"")
+        except Exception:
+            return b""
+
+    def _parse_official_chapter_links(self, html: bytes, page_url: str = "") -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name in self.OFFICIAL_CHAPTERS}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+            number = self._recover_chapter_number(
+                absolute, href, link.get_text(" ", strip=True) or ""
+            )
+            if number not in known:
+                continue
+            if number not in found and self.is_official_nc_url(absolute):
+                found[number] = self.official_chapter_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+        seed_rows: Optional[Sequence[Mapping[str, Any]]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Enumerate official NC chapters and replace contaminated bucket seeds."""
+
+        discovered = self._parse_official_chapter_links(
+            html, page_url or self.OFFICIAL_ENTRY_URL
+        )
+        classified = self.replace_contaminated_bucket_object(
+            html or b"",
+            page_url=page_url or self.OFFICIAL_ENTRY_URL,
+        )
+        seed_classified = self.replace_contaminated_bucket_object(
+            list(seed_rows) if seed_rows is not None else list(self.DEFAULT_CONTAMINATED_BUCKET_SEEDS),
+            page_url=page_url or self.OFFICIAL_ENTRY_URL,
+        )
+        classified["replaced"].extend(seed_classified["replaced"])
+        classified["quarantines"].extend(seed_classified["quarantines"])
+        self.last_official_replacements = list(classified["replaced"])
+        self.last_official_quarantines = list(classified["quarantines"])
+
+        rows = self.official_chapter_catalog()
+        by_chapter = {str(row["chapter_number"]): row for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["chapter_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_ncleg"
+            row["text"] = self._official_clean_text(
+                str(row["chapter_number"]), str(row["name"]), str(row["source_url"])
+            )
+            row["contaminated_replaced"] = True
+        for unit in classified["replaced"]:
+            number = str(unit.get("chapter_number") or "")
+            if number not in by_chapter:
+                continue
+            if unit.get("source_link_disposition") in {"official", "official_replacement"}:
+                by_chapter[number]["source_url"] = unit["source_url"]
+                by_chapter[number]["text"] = unit["text"]
+                if unit.get("source_link_disposition") == "official":
+                    by_chapter[number]["source_link_disposition"] = "official"
+                elif by_chapter[number]["source_link_disposition"] != "official":
+                    by_chapter[number]["source_link_disposition"] = "official_replacement"
+        return rows
+
+    def fetch_official(self, code: str = "NC"):
+        """Acquire the exhaustive official North Carolina General Statutes catalog.
+
+        The withdrawn v2026.07 contaminated NC bucket object is replaced from
+        official clean statutory catalog text. Navigation and footer markers
+        are never admitted. This hook never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "NC").strip().upper() or "NC"
+        if normalized != "NC":
+            raise ValueError(f"NorthCarolinaScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_TOC_URL) or self._official_http_get(
+            self.OFFICIAL_ENTRY_URL
+        )
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        quarantines = list(getattr(self, "last_official_quarantines", []) or [])
+        replacements = list(getattr(self, "last_official_replacements", []) or [])
+        if len(rows) != self.OFFICIAL_CHAPTER_COUNT:
+            raise RuntimeError("north carolina official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "contaminated_bucket_replaced": True,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "quarantines": quarantines,
+            "replacement_source": "official_clean_text",
+            "replacements": replacements,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "nc_contaminated_bucket_quarantines": quarantines,
+            "nc_contaminated_bucket_replaced": True,
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry

@@ -27,6 +27,7 @@ from .thread_pool import run_in_thread_pool
 
 try:
     import duckdb as _duckdb
+
     _DUCKDB_AVAILABLE = True
 except ImportError:
     _DUCKDB_AVAILABLE = False
@@ -86,7 +87,9 @@ def _load_documents_for_place(gnis: int, document_dir: Path) -> list[dict]:
         if stem_gnis.isdigit() and int(stem_gnis) == gnis:
             return pd.read_parquet(path).to_dict("records")
 
-    logger.warning("No HTML parquet found for gnis %d in %s; documents will be empty.", gnis, document_dir)
+    logger.warning(
+        "No HTML parquet found for gnis %d in %s; documents will be empty.", gnis, document_dir
+    )
     return []
 
 
@@ -216,8 +219,7 @@ class CitationValidator:
 
             if any(e is not None for e in (geo_err, type_err, sec_err, date_err, fmt_err)):
                 error_parts = [
-                    e for e in (geo_err, type_err, sec_err, date_err, fmt_err)
-                    if e is not None
+                    e for e in (geo_err, type_err, sec_err, date_err, fmt_err) if e is not None
                 ]
                 num_errors = len(error_parts)
                 is_critical = (geo_err is not None) or (type_err is not None)
@@ -303,9 +305,7 @@ class CitationValidator:
     # Public: main entry point
     # ------------------------------------------------------------------
 
-    def validate_citations_against_html_and_references(
-        self, sampled_gnis: list[int]
-    ) -> int:
+    def validate_citations_against_html_and_references(self, sampled_gnis: list[int]) -> int:
         """Validate citations for every GNIS in *sampled_gnis*.
 
         Bug #5 fix: loop now iterates ``sampled_gnis`` (not the undefined
@@ -327,11 +327,14 @@ class CitationValidator:
 
         # Consume the queue in concurrency-bounded batches.
         while not self._gnis_queue.empty():
-            batch = list(itertools.islice(self._queue_to_iterable(self._gnis_queue), self._max_concurrency))
+            batch = list(
+                itertools.islice(self._queue_to_iterable(self._gnis_queue), self._max_concurrency)
+            )
             if not batch:
                 break
             for _gnis, place_results in run_in_thread_pool(
-                self._validate_citations, batch,
+                self._validate_citations,
+                batch,
                 max_concurrency=self._max_concurrency,
                 use_tqdm=False,
             ):

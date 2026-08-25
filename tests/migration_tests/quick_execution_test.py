@@ -6,7 +6,9 @@ Quick execution test for the core 9 tools.
 import sys
 import anyio
 import importlib
-sys.path.insert(0, '.')
+
+sys.path.insert(0, ".")
+
 
 async def test_tool_execution(module_name, function_name, test_args):
     """Test executing a tool function."""
@@ -21,11 +23,12 @@ async def test_tool_execution(module_name, function_name, test_args):
         else:
             result = func(**test_args)
 
-        status = result.get('status', 'unknown')
+        status = result.get("status", "unknown")
         return True, status, str(result)[:100] + "..." if len(str(result)) > 100 else str(result)
 
     except Exception as e:
         return False, "error", str(e)[:100] + "..." if len(str(e)) > 100 else str(e)
+
 
 async def main():
     """Test all tools."""
@@ -33,10 +36,18 @@ async def main():
         ("audit_tools", "record_audit_event", {"action": "test.operation"}),
         ("dataset_tools", "save_dataset", {"dataset_id": "test", "destination": "/tmp/test.json"}),
         ("dataset_tools", "load_dataset", {"dataset_path": "/tmp/test.json"}),
-        ("dataset_tools", "convert_dataset_format", {"dataset_id": "test", "target_format": "json", "output_path": "/tmp/test.json"}),
+        (
+            "dataset_tools",
+            "convert_dataset_format",
+            {"dataset_id": "test", "target_format": "json", "output_path": "/tmp/test.json"},
+        ),
         ("security_tools", "check_access_permission", {"resource_id": "test", "user_id": "user"}),
         ("vector_tools", "create_vector_index", {"vectors": [[1.0, 2.0], [3.0, 4.0]]}),
-        ("graph_tools", "query_knowledge_graph", {"graph_id": "test", "query": "MATCH (n) RETURN n LIMIT 5"}),
+        (
+            "graph_tools",
+            "query_knowledge_graph",
+            {"graph_id": "test", "query": "MATCH (n) RETURN n LIMIT 5"},
+        ),
         ("provenance_tools", "record_provenance", {"dataset_id": "test", "operation": "test_op"}),
         ("ipfs_tools", "get_from_ipfs", {"cid": "QmTest123"}),
     ]
@@ -54,7 +65,8 @@ async def main():
 
     print(f"\n=== Summary ===")
     print(f"Successfully executed: {success_count}/{total_count}")
-    print(f"Success rate: {(success_count/total_count)*100:.1f}%")
+    print(f"Success rate: {(success_count / total_count) * 100:.1f}%")
+
 
 if __name__ == "__main__":
     anyio.run(main())

@@ -1,0 +1,320 @@
+{
+  "schema": "ipfs_accelerate_py.agent_supervisor.legal_corpora_reindex.scheduler_config@1",
+  "taskboard_path": "docs/architecture/legal_corpora_reindex.todo.md",
+  "objectives_path": "docs/architecture/legal_corpora_reindex.objectives.md",
+  "plan_path": "docs/architecture/LEGAL_CORPORA_REINDEX_PLAN.md",
+  "validator_path": "scripts/validate_legal_corpora_reindex_board.py",
+  "task_prefix": "LCR-",
+  "goal_prefix": "LCR-G",
+  "board_namespace": "legal-corpora-reindex-v1",
+  "merge_target_branch": "feature/legal-corpora-reindex",
+  "source_binding": {
+    "accelerator_required_ancestor": "1ade8211360bee8ad8e26552c885e51eaf6d9fdb",
+    "accelerator_required_branch": "feature/legal-corpora-reindex",
+    "paired_accelerator": {
+      "sibling_path": "../ipfs_accelerate_py",
+      "repository_name": "ipfs_accelerate_py",
+      "required_revision": "bcadc044f8accd411280d86772616b8e0d7a4b28",
+      "require_clean_worktree": true,
+      "require_exact_revision": true
+    },
+    "require_initialized_gitlinks": false,
+    "require_superproject_gitlink_equals_nested_head": false,
+    "require_clean_nested_worktree_at_task_start": true,
+    "record_recursive_repository_forest_at_launch": true,
+    "changed_revision_requires_fresh_inventory_and_baseline": true,
+    "planning_revision_is_runtime_completion_evidence": false
+  },
+  "controller_runtime": {
+    "deployments": [
+      {
+        "pythonpath": "/opt/ipfs-accelerate-controller-duckdb-3781192a-1.5.2/site-packages",
+        "receipt_path": "/opt/ipfs-accelerate-controller-duckdb-3781192a-1.5.2/DEPLOYMENT.json",
+        "receipt_sha256": "8e3fb57e753b6c77c7608e7f54155436521d082e735c54e0cd66924cef4b31b8"
+      }
+    ],
+    "required_modules": [
+      "duckdb"
+    ]
+  },
+  "validation_runtime": {
+    "python_executable": "/usr/bin/python3.12",
+    "pythonpath_entries": [
+      "/opt/ipfs-accelerate-legal-validation-7ffe92439767/site-packages"
+    ],
+    "required_modules": [
+      "aiohttp",
+      "anyio",
+      "bs4",
+      "cachetools",
+      "cryptography",
+      "datasets",
+      "duckdb",
+      "faiss",
+      "fsspec",
+      "httpx",
+      "huggingface_hub",
+      "hypothesis",
+      "jsonschema",
+      "multiformats",
+      "networkx",
+      "numpy",
+      "pandas",
+      "playwright",
+      "pyarrow",
+      "pydantic",
+      "pydantic_settings",
+      "pypdf",
+      "PyPDF2",
+      "pytest",
+      "pytest_asyncio",
+      "pytest_benchmark",
+      "pytest_cov",
+      "pytest_mock",
+      "pytest_parallel",
+      "pytest_timeout",
+      "xdist",
+      "yaml",
+      "rdflib",
+      "requests",
+      "sklearn",
+      "scipy",
+      "sentence_transformers",
+      "torch",
+      "tqdm",
+      "transformers",
+      "trio",
+      "urllib3"
+    ],
+    "playwright_browsers_path": "/opt/ipfs-accelerate-legal-playwright-3c176393527b"
+  },
+  "initial_projection": {
+    "task_count": 70,
+    "completed_task_ids": [
+      "LCR-000"
+    ],
+    "ready_task_ids": [
+      "LCR-001",
+      "LCR-002",
+      "LCR-003",
+      "LCR-004",
+      "LCR-005",
+      "LCR-006",
+      "LCR-007",
+      "LCR-008",
+      "LCR-048",
+      "LCR-049",
+      "LCR-050",
+      "LCR-051"
+    ],
+    "blocked_task_ids": [],
+    "terminal_task_id": "LCR-069",
+    "goal_count": 19,
+    "root_goal_id": "LCR-G000"
+  },
+  "max_lanes": 4,
+  "strict_task_sharding": true,
+  "exit_when_all_tracks_terminal": true,
+  "objective_refill_enabled": true,
+  "codebase_refill_enabled": true,
+  "refill_policy": {
+    "initial_population_is_sealed": true,
+    "generated_task_number_floor": 70,
+    "generated_tasks_must_use_next_numeric_id": true,
+    "generated_goals_and_tasks_must_preserve_metadata_contract": true,
+    "generated_work_must_bind_discovery_evidence": true,
+    "generated_work_must_preserve_output_ownership_and_dependencies": true,
+    "deduplicate_equivalent_gaps": true,
+    "preserve_terminal_publication_chain": true,
+    "publication_gate_generated_task_number_floor": 77,
+    "publication_gate_denies_nonterminal_generated_work": true,
+    "publication_gate_goal_lineage_source": "release_policy_phase_requirements",
+    "refill_on_nonterminal_idle": true,
+    "refill_on_acceptance_or_canary_gap": true,
+    "minimum_open_tasks": 4,
+    "maximum_findings_per_scan": 5,
+    "cooldown_seconds": 300,
+    "scan_timeout_seconds": 900,
+    "objective_task_janitor_enabled": true,
+    "objective_goal_completion_reconcile_enabled": true,
+    "objective_goal_migration_enabled": false
+  },
+  "poll_interval_seconds": 5,
+  "daemon_interval_seconds": 30,
+  "check_interval_seconds": 15,
+  "stale_seconds": 120,
+  "watchdog_startup_grace_seconds": 300,
+  "max_restarts": 4,
+  "max_task_attempts": 4,
+  "implementation_retry_budget": 3,
+  "validation_retry_budget": 3,
+  "merge_retry_budget": 3,
+  "implementation_timeout_seconds": 21600,
+  "implementation_max_timeout_seconds": 43200,
+  "implementation_log_stall_seconds": 600,
+  "worktree_submodule_paths": [],
+  "protected_paths": [
+    ".gitignore",
+    "pyproject.toml",
+    "pytest.ini",
+    "requirements-agent-supervisor-validation.txt",
+    "docs/architecture/LEGAL_CORPORA_REINDEX_PLAN.md",
+    "docs/architecture/legal_corpora_reindex.objectives.md",
+    "docs/architecture/legal_corpora_reindex.todo.md",
+    "config/agent_supervisor_legal_corpora_reindex_scheduler.json",
+    "scripts/validate_legal_corpora_reindex_board.py",
+    "scripts/ops/agent_supervisor/configured_board_scheduler.py",
+    "scripts/ops/agent_supervisor/implementation_daemon_entry.py",
+    "scripts/ops/agent_supervisor/implementation_supervisor_entry.py",
+    "scripts/ops/agent_supervisor/multi_supervisor_entry.py",
+    "scripts/ops/agent_supervisor/paired_accelerator_bootstrap.py",
+    "scripts/ops/legal_corpora_reindex/preflight.py",
+    "scripts/ops/legal_corpora_reindex/status.py",
+    "scripts/ops/legal_corpora_reindex/status.sh",
+    "scripts/ops/legal_corpora_reindex/README.md",
+    "tests/unit/supervisor/test_legal_corpora_reindex_board.py",
+    "tests/unit/supervisor/test_paired_accelerator_bootstrap.py",
+    "tests/unit/scripts/test_legal_corpora_reindex_process_identity.py",
+    "data/agent_supervisor/legal_corpora_reindex/bundles/lane_matrix.json",
+    "data/agent_supervisor/legal_corpora_reindex/bundles/release_policy.json"
+  ],
+  "runtime_paths": {
+    "root": "workspace/agent-supervisor/legal-corpora-reindex",
+    "state": "workspace/agent-supervisor/legal-corpora-reindex/state",
+    "worktrees": "workspace/agent-supervisor/legal-corpora-reindex/worktrees",
+    "merge_queue": "workspace/agent-supervisor/legal-corpora-reindex/merge-queue",
+    "logs": "workspace/agent-supervisor/legal-corpora-reindex/logs",
+    "evidence": "workspace/agent-supervisor/legal-corpora-reindex/evidence",
+    "generated_runtime_artifacts_are_completion_authority": false
+  },
+  "health_policy": {
+    "blocked_tasks_are_unhealthy": true,
+    "nonterminal_zero_ready_zero_active_is_unhealthy": true,
+    "heartbeat_max_age_seconds": 120,
+    "progress_stall_seconds": 900,
+    "duplicate_or_orphaned_workers_are_unhealthy": true,
+    "protected_path_incidents_are_unhealthy": true,
+    "merge_queue_or_provider_errors_are_unhealthy": true,
+    "process_liveness_alone_is_healthy": false
+  },
+  "lanes": [
+    {
+      "index": 0,
+      "name": "lcr-lane-0",
+      "strict_shard_remainder": 0,
+      "initial_task_ids": [
+        "LCR-002",
+        "LCR-003",
+        "LCR-007",
+        "LCR-048"
+      ],
+      "initial_focus": "state-authority-completeness-runner-and-federal-baseline"
+    },
+    {
+      "index": 1,
+      "name": "lcr-lane-1",
+      "strict_shard_remainder": 1,
+      "initial_task_ids": [
+        "LCR-005",
+        "LCR-008"
+      ],
+      "initial_focus": "state-frontier-and-publication-contract"
+    },
+    {
+      "index": 2,
+      "name": "lcr-lane-2",
+      "strict_shard_remainder": 2,
+      "initial_task_ids": [
+        "LCR-001",
+        "LCR-006",
+        "LCR-049"
+      ],
+      "initial_focus": "state-baseline-identity-and-federal-completeness"
+    },
+    {
+      "index": 3,
+      "name": "lcr-lane-3",
+      "strict_shard_remainder": 3,
+      "initial_task_ids": [
+        "LCR-004",
+        "LCR-050",
+        "LCR-051"
+      ],
+      "initial_focus": "state-schema-and-federal-schema-gold"
+    }
+  ],
+  "task_groups": {
+    "LCR-G010": ["LCR-001", "LCR-002", "LCR-003", "LCR-004", "LCR-005", "LCR-006", "LCR-007", "LCR-008"],
+    "LCR-G020": ["LCR-009", "LCR-010", "LCR-011", "LCR-012", "LCR-013", "LCR-014", "LCR-015", "LCR-016", "LCR-017", "LCR-018", "LCR-019", "LCR-020", "LCR-021", "LCR-022", "LCR-023"],
+    "LCR-G021": ["LCR-009", "LCR-010", "LCR-011", "LCR-012"],
+    "LCR-G022": ["LCR-013", "LCR-014", "LCR-015", "LCR-016"],
+    "LCR-G023": ["LCR-017", "LCR-018", "LCR-019", "LCR-020", "LCR-021"],
+    "LCR-G024": ["LCR-022", "LCR-023"],
+    "LCR-G030": ["LCR-024", "LCR-025", "LCR-026"],
+    "LCR-G040": ["LCR-027", "LCR-028", "LCR-029", "LCR-030", "LCR-031", "LCR-032"],
+    "LCR-G050": ["LCR-033", "LCR-034"],
+    "LCR-G060": ["LCR-035", "LCR-036", "LCR-037", "LCR-038"],
+    "LCR-G070": ["LCR-039", "LCR-040", "LCR-041"],
+    "LCR-G080": ["LCR-042", "LCR-043", "LCR-044"],
+    "LCR-G090": ["LCR-045", "LCR-046", "LCR-047"],
+    "LCR-G100": ["LCR-048", "LCR-049", "LCR-050", "LCR-051"],
+    "LCR-G110": ["LCR-052", "LCR-053", "LCR-054", "LCR-055"],
+    "LCR-G120": ["LCR-056", "LCR-057", "LCR-058", "LCR-059", "LCR-060"],
+    "LCR-G130": ["LCR-061", "LCR-062", "LCR-063", "LCR-064"],
+    "LCR-G140": ["LCR-065", "LCR-066", "LCR-067", "LCR-068", "LCR-069"]
+  },
+  "provider": {
+    "primary_provider_id": "grok_cli",
+    "primary_model_id": "grok-4.6",
+    "fallback_provider_id": "codex",
+    "fallback_model_id": "gpt-5.6-terra",
+    "fallback_trigger": "primary_quota_exhausted",
+    "fallback_reasoning_effort": "medium",
+    "max_concurrency": 4,
+    "secrets_from_environment_only": true,
+    "secrets_in_argv_prompts_logs_or_receipts": false
+  },
+  "authority_policy": {
+    "exact_jurisdiction_count_required": 51,
+    "district_of_columbia_required": true,
+    "official_source_and_per_jurisdiction_receipts_required": true,
+    "source_rights_compliance_required": true,
+    "source_rights_compliance_receipt": "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
+    "unknown_or_prohibited_source_rights_allowed": false,
+    "filename_or_nonzero_row_count_proves_completeness": false,
+    "content_or_embedding_without_canonical_identity_allowed": false,
+    "vector_dimension_implies_vector_space_compatibility": false,
+    "bm25_similarity_is_legal_authority": false,
+    "graph_or_embedding_output_is_legal_advice": false,
+    "unknown_ambiguous_stale_or_unsupported_disposition": "abstain_or_expose_uncertainty",
+    "publication_authorization_recorded": true,
+    "publication_authorization_date": "2026-08-10",
+    "publication_authorized_datasets": [
+      "justicedao/ipfs_state_laws",
+      "justicedao/ipfs_federal_register"
+    ],
+    "manifest_bound_prepublication_seal_required": true,
+    "additional_human_publication_approval_required": false,
+    "autonomous_live_dataset_publication_allowed_under_recorded_authorization": true
+  },
+  "release_policy": {
+    "target_datasets": {
+      "justicedao/ipfs_state_laws": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
+      "justicedao/ipfs_federal_register": "720668ae016cc400916dda884c9005e03618edfa"
+    },
+    "required_jurisdiction_count": 51,
+    "district_of_columbia_required": true,
+    "migration_mode": "additive",
+    "legacy_artifact_deletion_allowed": false,
+    "staging_target_must_be_explicit": true,
+    "main_target_must_equal_target_dataset": true,
+    "production_target_is_default": false,
+    "staging_and_main_must_use_identical_manifest": true,
+    "immutable_redownload_canary_required": true,
+    "rollback_rehearsal_required": true,
+    "force_push_allowed": false,
+    "history_rewrite_allowed": false,
+    "visibility_change_allowed": false,
+    "alternate_dataset_target_allowed": false
+  }
+}

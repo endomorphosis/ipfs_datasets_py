@@ -31,10 +31,10 @@ Modified `ipfs_datasets_py/knowledge_graphs/storage/ipld_backend.py`:
 class IPLDBackend:
     def __init__(
         self,
-        deps: Optional['RouterDeps'] = None,
+        deps: Optional["RouterDeps"] = None,
         database: str = "neo4j",  # ← NEW parameter
         pin_by_default: bool = True,
-        cache_capacity: int = 1000
+        cache_capacity: int = 1000,
     ):
         self.deps = deps if deps is not None else RouterDeps()
         self.database = database  # ← NEW
@@ -42,7 +42,7 @@ class IPLDBackend:
         self.pin_by_default = pin_by_default
         self._backend = None
         self._cache = LRUCache(cache_capacity) if cache_capacity > 0 else None
-    
+
     def _make_key(self, key: str) -> str:
         """Add database namespace to key for multi-database isolation."""
         return f"{self._namespace}{key}"
@@ -114,18 +114,18 @@ Modified `ipfs_datasets_py/knowledge_graphs/neo4j_compat/session.py`:
 class IPFSSession:
     def __init__(
         self,
-        driver: 'IPFSDriver',
+        driver: "IPFSDriver",
         backend: Optional[Any] = None,  # ← NEW parameter
         database: Optional[str] = None,
         default_access_mode: str = "WRITE",
-        bookmarks: Optional[Union[str, List[str], Bookmarks]] = None
+        bookmarks: Optional[Union[str, List[str], Bookmarks]] = None,
     ):
         self._driver = driver
         self._database = database or "neo4j"
         self._default_access_mode = default_access_mode
         self._closed = False
         self._transaction = None
-        
+
         # Use provided backend or get from driver
         if backend is not None:  # ← NEW
             self.backend = backend
@@ -196,17 +196,21 @@ def fn_abs(n: Union[int, float]) -> Union[int, float]:
     """Return absolute value."""
     return abs(n) if n is not None else None
 
+
 def fn_ceil(n: Union[int, float]) -> int:
     """Return ceiling (smallest integer ≥ n)."""
     return math.ceil(n) if n is not None else None
+
 
 def fn_floor(n: Union[int, float]) -> int:
     """Return floor (largest integer ≤ n)."""
     return math.floor(n) if n is not None else None
 
+
 def fn_round(n: Union[int, float], precision: int = 0) -> Union[int, float]:
     """Round to nearest integer or decimal places."""
     return round(n, precision) if n is not None else None
+
 
 def fn_sqrt(n: Union[int, float]) -> float:
     """Return square root."""
@@ -216,11 +220,13 @@ def fn_sqrt(n: Union[int, float]) -> float:
         raise ValueError(f"Cannot calculate square root of negative number: {n}")
     return math.sqrt(n)
 
+
 def fn_sign(n: Union[int, float]) -> int:
     """Return sign (-1, 0, 1)."""
     if n is None:
         return None
     return 1 if n > 0 else (-1 if n < 0 else 0)
+
 
 def fn_rand() -> float:
     """Return random number [0, 1)."""
@@ -232,22 +238,25 @@ def fn_rand() -> float:
 ```python
 class Point:
     """2D Point for spatial operations."""
+
     def __init__(self, x: float, y: float, srid: int = 7203):
         self.x = float(x)
         self.y = float(y)
         self.srid = srid  # Spatial Reference System ID
-    
+
     def __repr__(self) -> str:
         return f"point({{x: {self.x}, y: {self.y}, srid: {self.srid}}})"
+
 
 def fn_point(params: Dict[str, float]) -> Point:
     """Create 2D point from coordinates."""
     if params is None:
         return None
-    x = params.get('x', 0)
-    y = params.get('y', 0)
-    srid = params.get('srid', 7203)
+    x = params.get("x", 0)
+    y = params.get("y", 0)
+    srid = params.get("srid", 7203)
     return Point(x, y, srid)
+
 
 def fn_distance(point1: Point, point2: Point) -> float:
     """Calculate Euclidean distance between two points."""
@@ -273,6 +282,7 @@ def fn_date(value: Optional[str] = None) -> date:
         return date.fromisoformat(value)
     raise TypeError(f"Cannot create date from: {type(value)}")
 
+
 def fn_datetime(value: Optional[str] = None) -> datetime:
     """Create or parse a datetime."""
     if value is None:
@@ -292,9 +302,11 @@ def fn_datetime(value: Optional[str] = None) -> datetime:
             raise ValueError(f"Cannot parse datetime: {value}")
     raise TypeError(f"Cannot create datetime from: {type(value)}")
 
+
 def fn_timestamp() -> int:
     """Return current timestamp in milliseconds since epoch."""
     return int(datetime.now().timestamp() * 1000)
+
 
 def fn_duration(value: str) -> timedelta:
     """Parse ISO 8601 duration string (P1DT2H = 1 day 2 hours)."""
@@ -306,23 +318,21 @@ def fn_duration(value: str) -> timedelta:
 ```python
 FUNCTION_REGISTRY = {
     # Math functions
-    'abs': fn_abs,
-    'ceil': fn_ceil,
-    'floor': fn_floor,
-    'round': fn_round,
-    'sqrt': fn_sqrt,
-    'sign': fn_sign,
-    'rand': fn_rand,
-    
+    "abs": fn_abs,
+    "ceil": fn_ceil,
+    "floor": fn_floor,
+    "round": fn_round,
+    "sqrt": fn_sqrt,
+    "sign": fn_sign,
+    "rand": fn_rand,
     # Spatial functions
-    'point': fn_point,
-    'distance': fn_distance,
-    
+    "point": fn_point,
+    "distance": fn_distance,
     # Temporal functions
-    'date': fn_date,
-    'datetime': fn_datetime,
-    'timestamp': fn_timestamp,
-    'duration': fn_duration,
+    "date": fn_date,
+    "datetime": fn_datetime,
+    "timestamp": fn_timestamp,
+    "duration": fn_duration,
 }
 ```
 
@@ -334,9 +344,10 @@ Modified `ipfs_datasets_py/knowledge_graphs/core/query_executor.py`:
 def _call_function(self, func_name: str, args: List[Any]) -> Any:
     """Call a built-in function."""
     func_name_lower = func_name.lower()
-    
+
     # Try function registry first (math, spatial, temporal)
     from ..cypher.functions import FUNCTION_REGISTRY
+
     if func_name_lower in FUNCTION_REGISTRY:
         try:
             func = FUNCTION_REGISTRY[func_name_lower]
@@ -352,7 +363,7 @@ def _call_function(self, func_name: str, args: List[Any]) -> Any:
         except Exception as e:
             logger.warning("Function %s raised exception: %s", func_name, e)
             return None
-    
+
     # String functions (existing implementation continues...)
     # ...
 ```

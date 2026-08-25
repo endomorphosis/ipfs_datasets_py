@@ -6,6 +6,7 @@ This package contains the interfaces used by the Omni-Converter, including:
 - CLI for command-line interaction
 - GUI for graphical user interface # TODO: Implement GUI
 """
+
 from interfaces.interfaces_factory import make_cli, make_api, make_gui
 
 __all__ = [

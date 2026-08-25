@@ -1,0 +1,328 @@
+{
+  "acceptance": {
+    "all_expected_outputs_required": true,
+    "all_refill_findings_completed": true,
+    "criteria": "Rollback repoints without deleting immutable releases; quarterly delta builds preserve identities and rebuild affected indexes; interrupted uploads resume safely; all refill findings are completed and prior public pins remain queryable.",
+    "interrupted_uploads_resume_safely": true,
+    "mutation_not_executed": true,
+    "no_deletion": true,
+    "no_root_raw_object_overwritten": true,
+    "no_secret_or_path_leak": true,
+    "pointer_updated_last": true,
+    "prior_public_pins_remain_queryable": true,
+    "quarterly_delta_preserves_identities": true,
+    "quarterly_delta_rebuilds_affected_indexes": true,
+    "rollback_repoints_without_deleting_immutable_releases": true
+  },
+  "adr_path": "docs/architecture/OPEN_US_LAW_REINDEX_PLAN.md",
+  "board_namespace": "open-us-law-reindex-v1",
+  "bundle": "operations",
+  "code_version": "1",
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "depends_on": [
+    "OUL-045",
+    "OUL-046"
+  ],
+  "dry_run": true,
+  "fixture_id": "open-us-law-operations-rehearsal-v1",
+  "forbidden_operations": [
+    "change_visibility",
+    "delete",
+    "delete_file",
+    "delete_folder",
+    "direct_main_upload",
+    "force",
+    "force-push",
+    "force_push",
+    "make_private",
+    "overwrite_history",
+    "overwrite_prior_prefix",
+    "overwrite_raw_root",
+    "pointer_before_prefix_complete",
+    "visibility_change"
+  ],
+  "goal_id": "OUL-G090",
+  "live_network": false,
+  "mutation_authorized": false,
+  "mutation_executed": false,
+  "network_required": false,
+  "no_mutate": true,
+  "notes": "Offline operations rehearsal for Open US Law sparse GraphRAG (OUL-047). Rollback changes only the tiny LATEST.json pointer. Quarterly delta builds preserve unchanged statute identities, rebuild affected BM25/vector/graph indexes, and mint a new manifest digest, Dataset commit, and Bucket prefix. Interrupted add-only uploads resume by skipping already-present objects. Every OUL-023 refill finding is terminal. Prior and new public pins remain queryable. This receipt does not authorize mutation.",
+  "prior_public_pin": {
+    "bucket_id": "justicedao/open-us-law-bucket",
+    "bucket_prefix": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/",
+    "dataset_id": "justicedao/open-us-law-sparse-graphrag",
+    "dataset_revision": "40a3fc58dea1e948d7e5446fcb705a2a31f8bfef",
+    "identities_digest": "b75c57f086ec1a148b6682fe6b481d871f9b8948472832a9f9a8a2a1ea229d49",
+    "manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+    "path": "docs/reports/open_us_law_reindex/publication_receipt.json",
+    "pointer_path": "LATEST.json",
+    "receipt_sha256": "0a56e9ad25348e7c83eccb2507388f8bf919a5a8e28bb4afa0dadbe699834f8d",
+    "remote_object_count": 51,
+    "seeded_bucket_object_count": 25,
+    "seeded_dataset_object_count": 25,
+    "task_id": "OUL-044"
+  },
+  "producer": "rehearse_open_us_law_operations.py",
+  "program_id": "open-us-law-reindex-v1",
+  "public_canary": {
+    "bucket_content_root": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/",
+    "dataset_revision": "40a3fc58dea1e948d7e5446fcb705a2a31f8bfef",
+    "manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+    "path": "docs/reports/open_us_law_reindex/public_canary.json",
+    "query_mode_count": 5,
+    "receipt_sha256": "f69b20857a1e23d69bc018506a335f85b972487345b2d1a4afa19d92298a5a6f",
+    "require_public_pin": true,
+    "task_id": "OUL-045"
+  },
+  "public_mutation_authorized": false,
+  "publication_authorized": false,
+  "quarterly": {
+    "affected_indexes": [
+      "bm25",
+      "vectors",
+      "graph"
+    ],
+    "affected_jurisdictions": [
+      "CA"
+    ],
+    "artifacts": [
+      {
+        "rebuilt": true,
+        "relative_path": "manifest.json",
+        "sha256": "621d2d7991cf8f2f1b1cde3df5e41233930b9d0fb87d1f67ac60f684ba3e8c0b"
+      },
+      {
+        "rebuilt": false,
+        "relative_path": "corpus/root",
+        "sha256": "852ad51e85fa34b9b6505874d3b338ea6e41c2a52d62427cd5a3b7a28386dc6c"
+      },
+      {
+        "rebuilt": true,
+        "relative_path": "bm25/index_root",
+        "sha256": "14f018a8ed5e41bda46a3ea9d7bff179102fe15f2634459b9d65b8d70c31d640"
+      },
+      {
+        "rebuilt": true,
+        "relative_path": "vectors/index_root",
+        "sha256": "5d86eac53d3457b47a884311274b7aa65c9c69939648b489f42cc0a32746fc42"
+      },
+      {
+        "rebuilt": true,
+        "relative_path": "graph/adjacency",
+        "sha256": "aef24da95d56b3a6951b5c0d2c52c55c8cf3e0022918bae2186361e8fe0841a7"
+      },
+      {
+        "rebuilt": true,
+        "relative_path": "evidence/embeddings",
+        "sha256": "85d6d8ed46ccd9abf8cc7ae00b392c04f8c6082008bbe35f75e07018b4d55402"
+      },
+      {
+        "rebuilt": false,
+        "relative_path": "evidence/exact_51_coverage",
+        "sha256": "c71a8875b675cc2d2e16f215bf2ffcade560764d735a124cfb72cb98d9efd5e5"
+      },
+      {
+        "rebuilt": true,
+        "relative_path": "evidence/delta_admission",
+        "sha256": "063ba9dfed9940b2a399114e9625e21c8ee16a25e207461945443dc6a481c9d2"
+      }
+    ],
+    "bucket_prefix": "releases/1ed198526e001a1258c958c6c7bc8b8bdab7f392b9066b74c971046c17b99d01/",
+    "dataset_revision": "e563dbab19ac1f48167927fcc49effefcc377e4b",
+    "identities": {
+      "ok": true,
+      "preserved_count": 2,
+      "preserved_legal_ids": [
+        "oul:al:1-1-1:2024",
+        "oul:dc:2-1-201:2024"
+      ],
+      "rebuilt_count": 1,
+      "rebuilt_legal_ids": [
+        "oul:ca:1-2-100:2024"
+      ]
+    },
+    "manifest_digest": "1ed198526e001a1258c958c6c7bc8b8bdab7f392b9066b74c971046c17b99d01",
+    "observations_digest": "42796284e8f514cc1eb2967cf0f4c20c38159ee2bd46668aef3a8132a33bb3d6",
+    "ok": true,
+    "pointer_updated_last": true,
+    "prior_pin_retained": {
+      "bucket_prefix": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/",
+      "dataset_revision": "40a3fc58dea1e948d7e5446fcb705a2a31f8bfef",
+      "manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+      "prefix_present": true,
+      "revision_present": true
+    },
+    "rebuilt_relative_paths": [
+      "manifest.json",
+      "bm25/index_root",
+      "vectors/index_root",
+      "graph/adjacency",
+      "evidence/embeddings",
+      "evidence/delta_admission"
+    ],
+    "reused_index_families": [
+      "corpus"
+    ],
+    "reused_relative_paths": [
+      "corpus/root",
+      "evidence/exact_51_coverage"
+    ],
+    "status": "rehearsed",
+    "window": "2026-Q3"
+  },
+  "queries": {
+    "canary_bound_to_prior_pin": true,
+    "ok": true,
+    "pins": [
+      {
+        "bucket_prefix": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/",
+        "dataset_revision": "40a3fc58dea1e948d7e5446fcb705a2a31f8bfef",
+        "kind": "prior_public",
+        "manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+        "modes": [
+          "bm25",
+          "vector",
+          "hybrid",
+          "graph",
+          "semantic-graph"
+        ],
+        "queryable": true,
+        "source": "OUL-044"
+      },
+      {
+        "bucket_prefix": "releases/1ed198526e001a1258c958c6c7bc8b8bdab7f392b9066b74c971046c17b99d01/",
+        "dataset_revision": "e563dbab19ac1f48167927fcc49effefcc377e4b",
+        "kind": "quarterly_delta",
+        "manifest_digest": "1ed198526e001a1258c958c6c7bc8b8bdab7f392b9066b74c971046c17b99d01",
+        "modes": [
+          "bm25",
+          "vector",
+          "hybrid",
+          "graph",
+          "semantic-graph"
+        ],
+        "queryable": true,
+        "source": "OUL-047"
+      }
+    ],
+    "prior_pin_queryable_after_rollback": true,
+    "quarterly_pin_queryable_after_rollback": true,
+    "query_mode_count": 5,
+    "used_mutable_pointer": false
+  },
+  "receipt_sha256": "13b86d1333e5333ae36528ebecbe7e08a871e612ff541650424b09be0f324538",
+  "refill_closure": {
+    "completed_repair_count": 255,
+    "every_finding_terminal": true,
+    "finding_count": 260,
+    "finding_kinds": {
+      "acquisition": 54,
+      "attribution": 51,
+      "contamination": 52,
+      "freshness": 52,
+      "frontier": 51
+    },
+    "ok": true,
+    "path": "docs/reports/open_us_law_reindex/acquisition_refill_closure.json",
+    "receipt_digest": "dadc5fb5c20842085c54463918a577a8b13ff106e41a36bf1a173df77bbfdce5",
+    "schema_version": "open-us-law-acquisition-refill-closure-v1",
+    "status": "success",
+    "task_id": "OUL-023",
+    "terminal_dispositions": {
+      "completed_repair": 255,
+      "typed_terminal_quarantine": 5
+    },
+    "typed_terminal_quarantine_count": 5,
+    "unresolved_count": 0,
+    "unresolved_finding_ids": []
+  },
+  "remote_write_contacted": false,
+  "resume": {
+    "first_pass": {
+      "interrupted": true,
+      "pointer_still_prior": true,
+      "remaining_count": 5,
+      "uploaded_count": 3
+    },
+    "forbidden_operations": [
+      "change_visibility",
+      "delete",
+      "delete_file",
+      "delete_folder",
+      "direct_main_upload",
+      "force",
+      "force-push",
+      "force_push",
+      "make_private",
+      "overwrite_history",
+      "overwrite_prior_prefix",
+      "overwrite_raw_root",
+      "pointer_before_prefix_complete",
+      "visibility_change"
+    ],
+    "interrupt_after": 3,
+    "ok": true,
+    "prefix_complete": true,
+    "redownload": {
+      "ok": true,
+      "verified": true,
+      "verified_count": 8
+    },
+    "resume_pass": {
+      "interrupted": false,
+      "skipped_count": 3,
+      "skipped_paths": [
+        "manifest.json",
+        "corpus/root",
+        "bm25/index_root"
+      ],
+      "uploaded_count": 5,
+      "uploaded_paths": [
+        "vectors/index_root",
+        "graph/adjacency",
+        "evidence/embeddings",
+        "evidence/exact_51_coverage",
+        "evidence/delta_admission"
+      ]
+    },
+    "resumed_safely": true,
+    "status": "resumed"
+  },
+  "rollback": {
+    "advertised_mapping": {
+      "bucket_prefix": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/",
+      "dataset_repo_id": "justicedao/open-us-law-sparse-graphrag",
+      "dataset_revision": "40a3fc58dea1e948d7e5446fcb705a2a31f8bfef",
+      "kind": "open-us-law-release-pointer",
+      "manifest_sha256": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+      "release_root_cid": "sha256:99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+      "schema": "ipfs_datasets_py/open-us-law-release-pointer@1",
+      "source_bucket": "justicedao/open-us-law-bucket"
+    },
+    "candidate_tree_retained": true,
+    "deletion_performed": false,
+    "force_push_performed": false,
+    "legacy_files_deleted": false,
+    "ok": true,
+    "path": "rollback",
+    "pointer_path": "LATEST.json",
+    "pointer_updated_last": true,
+    "policy": "Change only the tiny LATEST.json pointer / recommended Dataset revision; immutable prior Dataset commits and Bucket prefixes remain addressable.",
+    "prior_advertised_revision": "40a3fc58dea1e948d7e5446fcb705a2a31f8bfef",
+    "prior_bucket_prefix": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/",
+    "prior_manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+    "quarterly_prefix_retained": "releases/1ed198526e001a1258c958c6c7bc8b8bdab7f392b9066b74c971046c17b99d01/",
+    "quarterly_revision_retained": "e563dbab19ac1f48167927fcc49effefcc377e4b",
+    "retained_prefixes": [
+      "releases/1ed198526e001a1258c958c6c7bc8b8bdab7f392b9066b74c971046c17b99d01/",
+      "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/"
+    ],
+    "status": "rehearsed",
+    "visibility_changed": false
+  },
+  "schema": "ipfs_datasets_py/open-us-law-operations-rehearsal@1",
+  "schema_version": "open-us-law-operations-rehearsal/v1",
+  "status": "rehearsed",
+  "task_id": "OUL-047"
+}

@@ -231,10 +231,7 @@ result = await load_dataset_tool.execute({"source": "squad"})
 from ipfs_accelerate_py import InferenceAccelerator
 
 accelerator = InferenceAccelerator()  # Auto-detects hardware
-processor = PDFProcessor(
-    use_acceleration=True,
-    accelerator=accelerator
-)
+processor = PDFProcessor(use_acceleration=True, accelerator=accelerator)
 # Get 2-20x speedup automatically!
 ```
 
@@ -243,10 +240,7 @@ processor = PDFProcessor(
 from ipfs_kit_py import IPFSKit
 
 ipfs = IPFSKit()
-manager = DatasetManager(
-    storage_backend="ipfs",
-    ipfs_client=ipfs
-)
+manager = DatasetManager(storage_backend="ipfs", ipfs_client=ipfs)
 
 # Save to IPFS
 cid = manager.save_to_ipfs(dataset)

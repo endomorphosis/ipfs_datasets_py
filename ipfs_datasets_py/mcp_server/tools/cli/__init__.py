@@ -9,16 +9,16 @@ try:
         scrape_clinical_trials_cli,
         discover_protein_binders_cli,
         discover_enzyme_inhibitors_cli,
-        discover_biomolecules_rag_cli
+        discover_biomolecules_rag_cli,
     )
+
     __all__ = [
-        'scrape_pubmed_cli',
-        'scrape_clinical_trials_cli',
-        'discover_protein_binders_cli',
-        'discover_enzyme_inhibitors_cli',
-        'discover_biomolecules_rag_cli'
+        "scrape_pubmed_cli",
+        "scrape_clinical_trials_cli",
+        "discover_protein_binders_cli",
+        "discover_enzyme_inhibitors_cli",
+        "discover_biomolecules_rag_cli",
     ]
 except ImportError as e:
     # Medical research tools not available
     __all__ = []
-

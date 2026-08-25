@@ -21,6 +21,7 @@ class TestDataProcessorAvailability:
         """
         try:
             from ipfs_datasets_py.core_operations import DataProcessor
+
             assert DataProcessor is not None
         except ImportError as e:
             pytest.skip(f"DataProcessor not available: {e}")
@@ -33,13 +34,13 @@ class TestDataProcessorAvailability:
         """
         try:
             from ipfs_datasets_py.core_operations import DataProcessor
-            
+
             processor = DataProcessor()
-            
+
             assert hasattr(processor, "supported_formats")
             assert hasattr(processor, "chunk_strategies")
             assert hasattr(processor, "valid_transformations")
-            
+
             # Check expected values
             assert "json" in processor.supported_formats
             assert "fixed_size" in processor.chunk_strategies
@@ -60,10 +61,10 @@ class TestDataProcessorChunking:
         """
         try:
             from ipfs_datasets_py.core_operations import DataProcessor
-            
+
             processor = DataProcessor()
             result = await processor.chunk_text(text="")
-            
+
             assert result["status"] == "error"
             assert "message" in result
         except ImportError:
@@ -78,17 +79,14 @@ class TestDataProcessorChunking:
         """
         try:
             from ipfs_datasets_py.core_operations import DataProcessor
-            
+
             processor = DataProcessor()
             test_text = "This is a test. " * 100  # Create text that needs chunking
-            
+
             result = await processor.chunk_text(
-                text=test_text,
-                strategy="fixed_size",
-                chunk_size=100,
-                overlap=10
+                text=test_text, strategy="fixed_size", chunk_size=100, overlap=10
             )
-            
+
             assert "status" in result
             if result["status"] == "success":
                 assert "chunks" in result
@@ -106,13 +104,10 @@ class TestDataProcessorChunking:
         """
         try:
             from ipfs_datasets_py.core_operations import DataProcessor
-            
+
             processor = DataProcessor()
-            result = await processor.chunk_text(
-                text="Test text",
-                strategy="invalid_strategy"
-            )
-            
+            result = await processor.chunk_text(text="Test text", strategy="invalid_strategy")
+
             assert result["status"] == "error"
             assert "Invalid strategy" in result["message"]
         except ImportError:
@@ -127,13 +122,10 @@ class TestDataProcessorChunking:
         """
         try:
             from ipfs_datasets_py.core_operations import DataProcessor
-            
+
             processor = DataProcessor()
-            result = await processor.chunk_text(
-                text="Test text",
-                chunk_size=-100
-            )
-            
+            result = await processor.chunk_text(text="Test text", chunk_size=-100)
+
             assert result["status"] == "error"
             assert "chunk_size" in result["message"].lower()
         except ImportError:
@@ -152,18 +144,12 @@ class TestDataProcessorTransformation:
         """
         try:
             from ipfs_datasets_py.core_operations import DataProcessor
-            
+
             processor = DataProcessor()
-            test_data = [
-                {"text": "  Test 1  ", "value": 100},
-                {"text": "  Test 2  ", "value": 200}
-            ]
-            
-            result = await processor.transform_data(
-                data=test_data,
-                transformation="normalize_text"
-            )
-            
+            test_data = [{"text": "  Test 1  ", "value": 100}, {"text": "  Test 2  ", "value": 200}]
+
+            result = await processor.transform_data(data=test_data, transformation="normalize_text")
+
             assert "status" in result
             if result["status"] == "success":
                 assert "result" in result or "transformed_data" in result
@@ -180,13 +166,10 @@ class TestDataProcessorTransformation:
         """
         try:
             from ipfs_datasets_py.core_operations import DataProcessor
-            
+
             processor = DataProcessor()
-            result = await processor.transform_data(
-                data=[],
-                transformation="normalize_text"
-            )
-            
+            result = await processor.transform_data(data=[], transformation="normalize_text")
+
             # Empty data may be handled gracefully
             assert "status" in result
             assert result["status"] in ["success", "error"]
@@ -202,15 +185,14 @@ class TestDataProcessorTransformation:
         """
         try:
             from ipfs_datasets_py.core_operations import DataProcessor
-            
+
             processor = DataProcessor()
             test_data = [{"text": "Test"}]
-            
+
             result = await processor.transform_data(
-                data=test_data,
-                transformation="invalid_transformation"
+                data=test_data, transformation="invalid_transformation"
             )
-            
+
             assert result["status"] == "error"
             assert "invalid" in result["message"].lower()
         except (ImportError, AttributeError):
@@ -229,16 +211,14 @@ class TestDataProcessorConversion:
         """
         try:
             from ipfs_datasets_py.core_operations import DataProcessor
-            
+
             processor = DataProcessor()
             test_data = [{"name": "test1", "value": 100}]
-            
+
             result = await processor.convert_format(
-                data=test_data,
-                source_format="json",
-                target_format="csv"
+                data=test_data, source_format="json", target_format="csv"
             )
-            
+
             assert "status" in result
             if result["status"] == "success":
                 assert "result" in result or "converted_data" in result or "output_path" in result
@@ -254,16 +234,14 @@ class TestDataProcessorConversion:
         """
         try:
             from ipfs_datasets_py.core_operations import DataProcessor
-            
+
             processor = DataProcessor()
             test_data = [{"name": "test"}]
-            
+
             result = await processor.convert_format(
-                data=test_data,
-                source_format="json",
-                target_format="unsupported_format"
+                data=test_data, source_format="json", target_format="unsupported_format"
             )
-            
+
             assert result["status"] == "error"
             assert "format" in result["message"].lower() or "supported" in result["message"].lower()
         except (ImportError, AttributeError):
@@ -282,21 +260,18 @@ class TestDataProcessorIntegration:
         """
         try:
             from ipfs_datasets_py.core_operations import DataProcessor
-            
+
             processor = DataProcessor()
-            
+
             # First chunk text
             test_text = "Sample text for chunking. " * 50
-            chunk_result = await processor.chunk_text(
-                text=test_text,
-                chunk_size=100
-            )
-            
+            chunk_result = await processor.chunk_text(text=test_text, chunk_size=100)
+
             if chunk_result["status"] == "success":
                 # Process each chunk
                 for chunk in chunk_result.get("chunks", []):
                     assert "text" in chunk or "content" in chunk
-                    
+
         except ImportError:
             pytest.skip("DataProcessor not available")
 
@@ -309,18 +284,14 @@ class TestDataProcessorIntegration:
         """
         try:
             from ipfs_datasets_py.core_operations import DataProcessor
-            
+
             processor = DataProcessor()
             large_text = "A" * 10000  # Large text
-            
-            result = await processor.chunk_text(
-                text=large_text,
-                chunk_size=100,
-                max_chunks=5
-            )
-            
+
+            result = await processor.chunk_text(text=large_text, chunk_size=100, max_chunks=5)
+
             if result["status"] == "success":
                 assert result["total_chunks"] <= 5
-                
+
         except ImportError:
             pytest.skip("DataProcessor not available")

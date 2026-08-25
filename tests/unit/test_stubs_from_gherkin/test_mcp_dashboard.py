@@ -4,11 +4,13 @@ Test stubs for mcp_dashboard module.
 Feature: MCP Dashboard
   Model Context Protocol monitoring dashboard
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def mcp_error_logs_exist():
@@ -83,6 +85,7 @@ def admin_access():
 
 
 # Test scenarios
+
 
 def test_display_mcp_server_status():
     """
@@ -173,6 +176,7 @@ def test_configure_mcp_settings():
 
 
 # Step definitions
+
 
 # Given steps
 @given("MCP error logs exist")
@@ -343,4 +347,3 @@ def tool_usage_statistics_are_displayed():
     """Step: Then tool usage statistics are displayed"""
     # TODO: Implement step
     pass
-

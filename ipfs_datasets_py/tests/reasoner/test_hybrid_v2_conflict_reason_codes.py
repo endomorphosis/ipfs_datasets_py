@@ -3,6 +3,7 @@
 Covers CONFLICT_CLASSES, CONFLICT_REASON_CODES, classify_conflict_class,
 and detect_proof_conflicts.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -30,6 +31,7 @@ from reasoner.hybrid_v2_blueprint import (
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_norm(
     norm_key: str,
@@ -77,6 +79,7 @@ def _ir_with_norms(*norms: NormV2) -> LegalIRV2:
 # TestConflictTaxonomy
 # ---------------------------------------------------------------------------
 
+
 class TestConflictTaxonomy:
     def test_all_three_classes_have_reason_codes(self):
         for cls in ("modal_conflict", "temporal_conflict", "exception_precedence_conflict"):
@@ -90,7 +93,10 @@ class TestConflictTaxonomy:
         assert classify_conflict_class("temporal_conflict") == "PC_CONFLICT_TEMPORAL"
 
     def test_classify_exception_precedence_conflict(self):
-        assert classify_conflict_class("exception_precedence_conflict") == "PC_CONFLICT_EXCEPTION_PRECEDENCE"
+        assert (
+            classify_conflict_class("exception_precedence_conflict")
+            == "PC_CONFLICT_EXCEPTION_PRECEDENCE"
+        )
 
     def test_unknown_class_returns_unknown_code_no_exception(self):
         # Contract-safe: must not raise
@@ -104,6 +110,7 @@ class TestConflictTaxonomy:
 # ---------------------------------------------------------------------------
 # TestDetectProofConflicts
 # ---------------------------------------------------------------------------
+
 
 class TestDetectProofConflicts:
     def test_envelope_keys_always_present(self):

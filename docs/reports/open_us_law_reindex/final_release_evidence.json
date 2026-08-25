@@ -1,0 +1,69 @@
+{
+  "acceptance": {
+    "bm25_backed_graph": true,
+    "bounded_sorted_indexes": true,
+    "closed_refills": true,
+    "exact_51_official_completeness": true,
+    "generated_review_cards_closed": true,
+    "gte_embeddings_bound": true,
+    "health_history_recorded": true,
+    "immutable_public_pin": true,
+    "no_blocked_generated_work": true,
+    "publication_isolated_pin_present": true,
+    "source_rights_bound": true,
+    "sparse_direct_hf_retrieval": true,
+    "successful_isolated_publication": true,
+    "zero_blocked_work": true
+  },
+  "authorizing_for_live_hub_rewrite": false,
+  "board_namespace": "open-us-law-reindex-v1",
+  "bound_artifacts": {
+    "exact_51_coverage": "docs/reports/open_us_law_reindex/exact_51_coverage.json",
+    "operations_rehearsal": "docs/reports/open_us_law_reindex/operations_rehearsal.json",
+    "prepublication_seal": "docs/reports/open_us_law_reindex/prepublication_seal.json",
+    "public_benchmark": "docs/reports/open_us_law_reindex/public_benchmark.json",
+    "public_canary": "docs/reports/open_us_law_reindex/public_canary.json",
+    "publication_receipt": "docs/reports/open_us_law_reindex/publication_receipt.json",
+    "release_candidate": "docs/reports/open_us_law_reindex/release_candidate.json"
+  },
+  "bound_pins": {
+    "canary_status": "verified_isolated",
+    "dataset_revision": "40a3fc58dea1e948d7e5446fcb705a2a31f8bfef",
+    "exact_51_status": "success",
+    "publication_status": "published_isolated",
+    "rehearsal_status": "rehearsed"
+  },
+  "bundle": "terminal-evidence",
+  "candidate_kind": "fixture_local",
+  "checks": {
+    "require_public_pin": true,
+    "require_public_pin_ok": true
+  },
+  "code_version": "1",
+  "content_digest": "d3123027409a4eb4748bf09b29f28f5cb9ad07d174064eca758a8054f7e6d4d6",
+  "dataset_id": "justicedao/open-us-law-sparse-graphrag",
+  "dataset_revision": "40a3fc58dea1e948d7e5446fcb705a2a31f8bfef",
+  "depends_on": [
+    "OUL-047"
+  ],
+  "digest": "d3123027409a4eb4748bf09b29f28f5cb9ad07d174064eca758a8054f7e6d4d6",
+  "exact_51_count": 51,
+  "fixture_local_candidate": true,
+  "goal_id": "OUL-G090",
+  "jurisdiction_count": 51,
+  "live_network": false,
+  "manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+  "model_id": "thenlper/gte-small",
+  "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+  "phase": "state_terminal_evidence",
+  "producer": "seal_open_us_law_final_release_evidence.py",
+  "program_id": "open-us-law-reindex-v1",
+  "publication_authorized": false,
+  "read_only": true,
+  "report_digest_sha256": "d3123027409a4eb4748bf09b29f28f5cb9ad07d174064eca758a8054f7e6d4d6",
+  "schema": "ipfs_datasets_py/open-us-law-final-release-evidence@1",
+  "sealed_at": "2026-08-19T03:40:05Z",
+  "source_bucket": "justicedao/open-us-law-bucket",
+  "status": "sealed",
+  "task_id": "OUL-048"
+}

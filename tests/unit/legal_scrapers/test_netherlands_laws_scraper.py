@@ -269,7 +269,9 @@ def test_historical_law_status_detection_from_official_valid_to():
 
 
 def test_repealed_and_superseded_status_detection_uses_official_text():
-    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import _extract_status_metadata
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
+        _extract_status_metadata,
+    )
 
     repealed = _extract_status_metadata(
         "<dl><dt>Status</dt><dd>Ingetrokken en buiten werking</dd></dl>",
@@ -287,7 +289,9 @@ def test_repealed_and_superseded_status_detection_uses_official_text():
 
 
 def test_unknown_status_stays_unknown_without_official_evidence():
-    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import _merge_status_metadata
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
+        _merge_status_metadata,
+    )
 
     normalized = _merge_status_metadata(
         info_status={},
@@ -303,7 +307,9 @@ def test_unknown_status_stays_unknown_without_official_evidence():
 
 
 def test_article_status_inheritance_from_parent_law():
-    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import _build_article_records
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
+        _build_article_records,
+    )
 
     rows = _build_article_records(
         {
@@ -321,7 +327,14 @@ def test_article_status_inheritance_from_parent_law():
             "status_source": "wetten.overheid.nl/informatie",
             "status_confidence": "medium",
             "status_note": "Official validity end date is before the retrieval date.",
-            "articles": [{"number": "1", "label": "Artikel 1", "text": "Historische bepaling.", "hierarchy_path": []}],
+            "articles": [
+                {
+                    "number": "1",
+                    "label": "Artikel 1",
+                    "text": "Historische bepaling.",
+                    "hierarchy_path": [],
+                }
+            ],
         }
     )
 
@@ -332,7 +345,9 @@ def test_article_status_inheritance_from_parent_law():
 
 
 def test_status_summary_counts_and_ambiguous_laws():
-    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import _law_status_summary
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
+        _law_status_summary,
+    )
 
     summary = _law_status_summary(
         [
@@ -519,7 +534,10 @@ async def test_scrape_netherlands_laws_with_explicit_document_urls(monkeypatch, 
     assert result["data"][0]["law_identifier"] == "BWBR0001854"
     assert result["data"][0]["law_version_identifier"] == "BWBR0001854@1994-02-01"
     assert result["data"][0]["canonical_law_url"] == "https://wetten.overheid.nl/BWBR0001854/"
-    assert result["data"][0]["versioned_law_url"] == "https://wetten.overheid.nl/BWBR0001854/1994-02-01/0/"
+    assert (
+        result["data"][0]["versioned_law_url"]
+        == "https://wetten.overheid.nl/BWBR0001854/1994-02-01/0/"
+    )
     assert result["data"][0]["last_modified_date"] == "2024-10-01"
     assert result["data"][0]["law_status"] == "current"
     assert result["data"][0]["is_current"] is True
@@ -528,10 +546,22 @@ async def test_scrape_netherlands_laws_with_explicit_document_urls(monkeypatch, 
     assert result["metadata"]["current_laws_count"] == 1
     assert result["metadata"]["historical_repealed_superseded_laws_count"] == 0
     assert result["metadata"]["unknown_status_laws_count"] == 0
-    assert any(version["effective_date"] == "2012-01-01" for version in result["data"][0]["historical_versions"])
-    assert any(version["is_current"] is True for version in result["data"][0]["historical_versions"])
-    assert any(version["law_version_identifier"] == "BWBR0001854@2012-01-01" for version in result["data"][0]["historical_versions"])
-    assert any(version["version_end_date"] for version in result["data"][0]["historical_versions"] if version["effective_date"] == "2012-01-01")
+    assert any(
+        version["effective_date"] == "2012-01-01"
+        for version in result["data"][0]["historical_versions"]
+    )
+    assert any(
+        version["is_current"] is True for version in result["data"][0]["historical_versions"]
+    )
+    assert any(
+        version["law_version_identifier"] == "BWBR0001854@2012-01-01"
+        for version in result["data"][0]["historical_versions"]
+    )
+    assert any(
+        version["version_end_date"]
+        for version in result["data"][0]["historical_versions"]
+        if version["effective_date"] == "2012-01-01"
+    )
     assert result["data"][0]["citations"] == ["Artikel 1", "Artikel 2", "Artikel 92"]
     assert result["article_data"][0]["citation"].startswith("Sr, Boek 1 Algemene bepalingen")
     assert result["article_data"][0]["document_version_identifier"] == "BWBR0001854@1994-02-01"
@@ -610,15 +640,16 @@ async def test_scrape_netherlands_laws_reports_non_article_documents(monkeypatch
 
 
 @pytest.mark.anyio
-async def test_scrape_netherlands_laws_crawls_seed_pages_and_writes_run_metadata(monkeypatch, tmp_path):
+async def test_scrape_netherlands_laws_crawls_seed_pages_and_writes_run_metadata(
+    monkeypatch, tmp_path
+):
     from ipfs_datasets_py.processors.legal_scrapers import netherlands_laws_scraper as scraper
 
     document_fixture = _fixture_text("netherlands_wetten_document.html")
     info_fixture = _fixture_text("netherlands_wetten_informatie.html")
     bw_fixture = document_fixture.replace("Wetboek van Strafrecht", "Burgerlijk Wetboek Boek 1")
     bw_info_fixture = (
-        info_fixture
-        .replace("BWBR0001854", "BWBR0002656")
+        info_fixture.replace("BWBR0001854", "BWBR0002656")
         .replace("Wetboek van Strafrecht", "Burgerlijk Wetboek Boek 1")
         .replace(">Sr<", ">BW Boek 1<")
     )
@@ -649,7 +680,10 @@ async def test_scrape_netherlands_laws_crawls_seed_pages_and_writes_run_metadata
         def get(self, url, timeout=40):  # noqa: ARG002
             if url == "https://wetten.overheid.nl/zoeken/":
                 return _Response(seed_one)
-            if url == "https://wetten.overheid.nl/zoeken/zoekresultaat/titel/verloten/titelf/0/tekstf/1/d/10-5-2025/dx/0/page/2/count/100/s/2/":
+            if (
+                url
+                == "https://wetten.overheid.nl/zoeken/zoekresultaat/titel/verloten/titelf/0/tekstf/1/d/10-5-2025/dx/0/page/2/count/100/s/2/"
+            ):
                 return _Response(seed_two)
             if url == "https://wetten.overheid.nl/BWBR0001854/informatie":
                 return _Response(info_fixture)
@@ -693,15 +727,16 @@ async def test_scrape_netherlands_laws_crawls_seed_pages_and_writes_run_metadata
 
 
 @pytest.mark.anyio
-async def test_scrape_netherlands_laws_resume_skip_existing_preserves_and_extends_outputs(monkeypatch, tmp_path):
+async def test_scrape_netherlands_laws_resume_skip_existing_preserves_and_extends_outputs(
+    monkeypatch, tmp_path
+):
     from ipfs_datasets_py.processors.legal_scrapers import netherlands_laws_scraper as scraper
 
     document_fixture = _fixture_text("netherlands_wetten_document.html")
     info_fixture = _fixture_text("netherlands_wetten_informatie.html")
     bw_fixture = document_fixture.replace("Wetboek van Strafrecht", "Burgerlijk Wetboek Boek 1")
     bw_info_fixture = (
-        info_fixture
-        .replace("BWBR0001854", "BWBR0002656")
+        info_fixture.replace("BWBR0001854", "BWBR0002656")
         .replace("Wetboek van Strafrecht", "Burgerlijk Wetboek Boek 1")
         .replace(">Sr<", ">BW Boek 1<")
     )

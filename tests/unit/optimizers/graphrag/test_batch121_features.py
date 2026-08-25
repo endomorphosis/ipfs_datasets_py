@@ -6,6 +6,7 @@ Methods under test:
   - OntologyGenerator.entities_by_type(result, entity_type)
   - OntologyGenerator.deduplicate_entities(result)
 """
+
 import pytest
 import dataclasses as _dc
 
@@ -14,18 +15,22 @@ import dataclasses as _dc
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_entity(eid, etype="person", confidence=0.8):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type=etype, text=eid, properties={}, confidence=confidence)
 
 
 def _make_result(entities):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities,
         relationships=[],
@@ -36,6 +41,7 @@ def _make_result(entities):
 # ---------------------------------------------------------------------------
 # OntologyGenerator.average_confidence
 # ---------------------------------------------------------------------------
+
 
 class TestAverageConfidence:
     def test_empty(self):
@@ -50,17 +56,20 @@ class TestAverageConfidence:
 
     def test_multiple(self):
         g = _make_generator()
-        result = _make_result([
-            _make_entity("a", confidence=0.6),
-            _make_entity("b", confidence=0.8),
-            _make_entity("c", confidence=1.0),
-        ])
+        result = _make_result(
+            [
+                _make_entity("a", confidence=0.6),
+                _make_entity("b", confidence=0.8),
+                _make_entity("c", confidence=1.0),
+            ]
+        )
         assert g.average_confidence(result) == pytest.approx(0.8)
 
 
 # ---------------------------------------------------------------------------
 # OntologyGenerator.high_confidence_entities
 # ---------------------------------------------------------------------------
+
 
 class TestHighConfidenceEntities:
     def test_empty(self):
@@ -70,10 +79,12 @@ class TestHighConfidenceEntities:
 
     def test_all_high(self):
         g = _make_generator()
-        result = _make_result([
-            _make_entity("a", confidence=0.9),
-            _make_entity("b", confidence=0.85),
-        ])
+        result = _make_result(
+            [
+                _make_entity("a", confidence=0.9),
+                _make_entity("b", confidence=0.85),
+            ]
+        )
         assert len(g.high_confidence_entities(result)) == 2
 
     def test_none_high(self):
@@ -83,11 +94,13 @@ class TestHighConfidenceEntities:
 
     def test_custom_threshold(self):
         g = _make_generator()
-        result = _make_result([
-            _make_entity("a", confidence=0.3),
-            _make_entity("b", confidence=0.6),
-            _make_entity("c", confidence=0.9),
-        ])
+        result = _make_result(
+            [
+                _make_entity("a", confidence=0.3),
+                _make_entity("b", confidence=0.6),
+                _make_entity("c", confidence=0.9),
+            ]
+        )
         high = g.high_confidence_entities(result, threshold=0.5)
         ids = [e.id for e in high]
         assert "b" in ids and "c" in ids
@@ -98,6 +111,7 @@ class TestHighConfidenceEntities:
 # OntologyGenerator.entities_by_type
 # ---------------------------------------------------------------------------
 
+
 class TestEntitiesByType:
     def test_empty(self):
         g = _make_generator()
@@ -106,11 +120,13 @@ class TestEntitiesByType:
 
     def test_matching(self):
         g = _make_generator()
-        result = _make_result([
-            _make_entity("a", etype="person"),
-            _make_entity("b", etype="org"),
-            _make_entity("c", etype="person"),
-        ])
+        result = _make_result(
+            [
+                _make_entity("a", etype="person"),
+                _make_entity("b", etype="org"),
+                _make_entity("c", etype="person"),
+            ]
+        )
         persons = g.filter_entities_by_type(result, "person")
         assert len(persons) == 2
         assert all(e.type == "person" for e in persons)
@@ -124,6 +140,7 @@ class TestEntitiesByType:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.deduplicate_entities
 # ---------------------------------------------------------------------------
+
 
 class TestDeduplicateEntities:
     def test_no_duplicates(self):

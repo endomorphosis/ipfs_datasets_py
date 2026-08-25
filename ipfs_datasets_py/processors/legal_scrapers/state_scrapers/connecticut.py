@@ -5,6 +5,7 @@ This module contains the scraper for Connecticut statutes from the official stat
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 import json
+import os
 import re
 import ssl
 import urllib.parse
@@ -20,6 +21,11 @@ class ConnecticutScraper(BaseStateScraper):
 
     _CHAPTER_LINK_RE = re.compile(r"chap_[0-9a-z]+\.htm$", re.IGNORECASE)
     _TITLE_LINK_RE = re.compile(r"title_[0-9a-z]+\.htm$", re.IGNORECASE)
+    _TITLE_NUMBER_RE = re.compile(r"title[_-]?([0-9a-z]+)\.htm$", re.IGNORECASE)
+    OFFICIAL_DOMAIN = "www.cga.ct.gov"
+    OFFICIAL_ENTRY_PATH = "/current/pub/titles.htm"
+    OFFICIAL_ENTRY_URL = "https://www.cga.ct.gov/current/pub/titles.htm"
+    OFFICIAL_TITLE_COUNT = 54
     
     def get_base_url(self) -> str:
         """Return the base URL for Connecticut's legislative website."""
@@ -35,6 +41,25 @@ class ConnecticutScraper(BaseStateScraper):
             "type": "Code"
         }]
     
+    def _justia_fallback_allowed(self) -> bool:
+        return str(
+            os.getenv("STATE_SCRAPER_CT_ALLOW_JUSTIA_FALLBACK", "0")
+        ).strip().lower() in {"1", "true", "yes", "on"}
+
+    def _is_justia_url(self, url: str) -> bool:
+        return "justia.com" in str(url or "").lower()
+
+    def _filter_official_only(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
+        """Drop secondary/Justia rows when full-corpus admission is sealed."""
+        if not self._full_corpus_enabled() or self._justia_fallback_allowed():
+            return statutes
+        return [
+            s
+            for s in statutes
+            if not self._is_justia_url(str(s.source_url or ""))
+            and "justia" not in str((s.structured_data or {}).get("source_kind") or "").lower()
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -42,46 +67,110 @@ class ConnecticutScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Connecticut's legislative website.
-        
-        Args:
-            code_name: Name of the code to scrape
-            code_url: URL of the code
-            
-        Returns:
-            List of NormalizedStatute objects
+
+        Full-corpus mode with ``max_statutes=None`` remains uncapped. Secondary
+        Justia mirrors are never sole full-corpus admission unless explicitly
+        re-enabled via ``STATE_SCRAPER_CT_ALLOW_JUSTIA_FALLBACK``.
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
         return_threshold = limit if limit is not None else 1000000
-        direct_sections: List[NormalizedStatute] = []
+        allow_justia = self._justia_fallback_allowed()
 
-        live_stubs = await self._scrape_live_title_stubs(code_name, max_statutes=max(10, return_threshold))
+        from .connecticut_constitution import (
+            configured_constitution_html_path,
+            parse_connecticut_constitution_html,
+        )
 
-        archival_stubs = await self._scrape_archived_chapter_stubs(code_name, max_statutes=max(10, return_threshold))
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_connecticut_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Connecticut Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        from .connecticut_chapter import configured_chapter_html_path, parse_connecticut_chapter_html
 
-        candidate_urls = [
+        local_chapter = configured_chapter_html_path()
+        if local_chapter is not None:
+            local_rows = parse_connecticut_chapter_html(
+                local_chapter.read_text(encoding="utf-8", errors="replace"),
+                chapter_url="https://www.cga.ct.gov/current/pub/chap_952.htm",
+                code_name=code_name,
+                max_statutes=limit,
+            )
+            if local_rows:
+                return local_rows if limit is None else local_rows[: int(limit)]
+
+        # Prefer official CGA title/chapter HTML tree first.
+        official_candidates = [
             code_url,
             "https://www.cga.ct.gov/current/pub/titles.htm",
-            "https://law.justia.com/codes/connecticut/",
-            "http://web.archive.org/web/20250101000000/https://law.justia.com/codes/connecticut/",
         ]
-
         best: List[NormalizedStatute] = []
         seen = set()
-        for candidate in candidate_urls:
+        for candidate in official_candidates:
+            if not candidate or candidate in seen:
+                continue
+            seen.add(candidate)
+            if self._is_justia_url(candidate) and not allow_justia:
+                continue
+
+            statutes = self._filter_official_only(
+                await self._custom_scrape_connecticut(
+                    code_name,
+                    candidate,
+                    "Conn. Gen. Stat.",
+                    max_sections=return_threshold,
+                )
+            )
+            if len(statutes) > len(best):
+                best = statutes
+            if limit is not None and len(statutes) >= int(limit):
+                return statutes[: int(limit)]
+            if limit is None and statutes:
+                return statutes
+
+        # Bounded probes may use direct chapter seeds.
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct_budget = limit if limit is not None else max(1, int(return_threshold))
+            direct_sections = await self._scrape_direct_chapters(
+                code_name,
+                max_statutes=max(1, int(direct_budget)),
+            )
+            if direct_sections and len(direct_sections) > len(best):
+                best = direct_sections
+            if limit is not None and len(best) >= int(limit):
+                return best[: int(limit)]
+
+        # Secondary Justia mirrors are never sole full-corpus admission unless
+        # explicitly re-enabled; bounded probes may still use them as last resort.
+        secondary_urls: List[str] = []
+        if allow_justia or (not self._full_corpus_enabled()):
+            secondary_urls = [
+                "https://law.justia.com/codes/connecticut/",
+                "http://web.archive.org/web/20250101000000/https://law.justia.com/codes/connecticut/",
+            ]
+
+        for candidate in secondary_urls:
             if candidate in seen:
                 continue
             seen.add(candidate)
+            if self._full_corpus_enabled() and not allow_justia:
+                continue
 
             statutes = await self._custom_scrape_connecticut(
                 code_name,
                 candidate,
                 "Conn. Gen. Stat.",
-                max_sections=return_threshold,
+                max_sections=return_threshold if limit is not None else 260,
             )
+            statutes = self._filter_official_only(statutes) if self._full_corpus_enabled() else statutes
             if len(statutes) > len(best):
                 best = statutes
-            if len(statutes) >= return_threshold:
-                return statutes
+            if limit is not None and len(statutes) >= int(limit):
+                return statutes[: int(limit)]
 
             generic = await self._generic_scrape(
                 code_name,
@@ -89,24 +178,33 @@ class ConnecticutScraper(BaseStateScraper):
                 "Conn. Gen. Stat.",
                 max_sections=return_threshold if limit is not None else 260,
             )
+            generic = self._filter_official_only(generic) if self._full_corpus_enabled() else generic
             if len(generic) > len(best):
                 best = generic
-            if len(generic) >= return_threshold:
-                return generic
+            if limit is not None and len(generic) >= int(limit):
+                return generic[: int(limit)]
 
-        if not self._full_corpus_enabled():
-            direct_sections = await self._scrape_direct_chapters(code_name, max_statutes=return_threshold)
+        # Full corpus: refuse Justia-only admission.
+        if self._full_corpus_enabled() and not allow_justia:
+            best = self._filter_official_only(best)
+            if not best:
+                return []
 
-        if len(live_stubs) > len(best):
-            best = live_stubs
+        if not best and (not self._full_corpus_enabled() or max_statutes is not None):
+            live_stubs = await self._scrape_live_title_stubs(
+                code_name,
+                max_statutes=max(10, int(return_threshold) if limit is not None else 120),
+            )
+            if len(live_stubs) > len(best):
+                best = live_stubs
+            archival_stubs = await self._scrape_archived_chapter_stubs(
+                code_name,
+                max_statutes=max(10, int(return_threshold) if limit is not None else 120),
+            )
+            if len(archival_stubs) > len(best):
+                best = archival_stubs
 
-        if len(archival_stubs) > len(best):
-            best = archival_stubs
-
-        if direct_sections and len(direct_sections) > len(best):
-            best = direct_sections
-
-        return best
+        return best if limit is None else best[: int(limit)]
 
     async def _scrape_direct_chapters(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         """Fetch official CGA chapter pages directly, tolerating their TLS chain."""
@@ -150,7 +248,11 @@ class ConnecticutScraper(BaseStateScraper):
                     legal_area=self._identify_legal_area(title),
                     official_cite=f"Conn. Gen. Stat. ch. {chapter}",
                     metadata=StatuteMetadata(),
-                    structured_data={"source_kind": "official_direct_chapter", "skip_hydrate": True},
+                    structured_data={
+                        "source_kind": "official_connecticut_direct_chapter",
+                        "discovery_method": "official_seed_chapter",
+                        "skip_hydrate": True,
+                    },
                 )
             )
         return out
@@ -364,6 +466,23 @@ class ConnecticutScraper(BaseStateScraper):
         seen: set[str] = set()
         title_urls: List[str] = []
         out: List[str] = []
+        html_text = (
+            payload.decode("utf-8", errors="replace")
+            if isinstance(payload, (bytes, bytearray))
+            else str(payload)
+        )
+        from .connecticut_chapter import chapters_from_title, titles_from_index
+
+        for href, _number in chapters_from_title(html_text, base_url=code_url):
+            if href in seen:
+                continue
+            seen.add(href)
+            out.append(href)
+            if len(out) >= limit:
+                return out
+        for href, _number in titles_from_index(html_text, base_url=code_url):
+            if href not in title_urls:
+                title_urls.append(href)
 
         for link in soup.find_all("a", href=True):
             href = str(link.get("href") or "").strip()
@@ -416,6 +535,21 @@ class ConnecticutScraper(BaseStateScraper):
             return []
 
         soup = BeautifulSoup(payload, "html.parser")
+        from .connecticut_chapter import parse_connecticut_chapter_html
+
+        parsed = parse_connecticut_chapter_html(
+            payload.decode("utf-8", errors="replace") if isinstance(payload, (bytes, bytearray)) else str(payload),
+            chapter_url=chapter_url,
+            code_name=code_name,
+        )
+        if parsed:
+            for row in parsed:
+                row.official_cite = f"{citation_format} § {row.section_number}"
+                data = dict(row.structured_data or {})
+                data["discovery_method"] = "official_title_chapter_section_html"
+                row.structured_data = data
+            return parsed
+
         chapter_title = ""
         title_node = soup.find("title")
         if title_node:
@@ -448,6 +582,7 @@ class ConnecticutScraper(BaseStateScraper):
                         "source_kind": "official_connecticut_chapter_html",
                         "discovery_method": "official_title_chapter_section_html",
                         "chapter_url": chapter_url,
+                        "skip_hydrate": True,
                     },
                 )
             )
@@ -499,6 +634,144 @@ class ConnecticutScraper(BaseStateScraper):
         if direct:
             return direct
         return await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout_seconds)
+
+    def official_title_url(self, title_number: int) -> str:
+        return f"https://www.cga.ct.gov/current/pub/title_{int(title_number)}.htm"
+
+    def official_title_catalog(self) -> List[Dict[str, object]]:
+        """Return the exhaustive official Connecticut General Statutes title catalog."""
+
+        rows: List[Dict[str, object]] = []
+        for number in range(1, self.OFFICIAL_TITLE_COUNT + 1):
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"ct:title-{number}",
+                    "title_number": str(number),
+                    "name": f"Title {number}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Connecticut General Statutes Title {number} official "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-connecticut-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-connecticut-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            match = self._TITLE_NUMBER_RE.search(href)
+            if not match:
+                continue
+            number = match.group(1).lstrip("0") or "0"
+            if not number.isdigit():
+                continue
+            found[number] = urllib.parse.urljoin(self.OFFICIAL_ENTRY_URL, href)
+        return found
+
+    def fetch_official(self, code: str = "CT"):
+        """Acquire the exhaustive official Connecticut title catalog.
+
+        Live HTTPS retains the official titles index. Every General Statutes
+        title is enumerated with an official CGA URL. This hook never returns
+        fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "CT").strip().upper() or "CT"
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        discovered = self._parse_official_title_links(html)
+        rows = self.official_title_catalog()
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+        if len(rows) < 3:
+            raise RuntimeError("connecticut official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry

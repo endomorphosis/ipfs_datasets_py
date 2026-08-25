@@ -6,11 +6,14 @@ Scrapes laws from the Texas Legislature Online website
 
 import io
 import json
-from typing import List, Dict, Optional
 import re
+import ssl
+import urllib.request
 import zipfile
 from html import unescape
-from urllib.parse import urljoin
+from typing import Any, Dict, List, Mapping, Optional, Sequence
+from urllib.parse import urljoin, urlparse
+
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -37,6 +40,54 @@ def _extract_meta_refresh_target(html: str) -> Optional[str]:
 
 class TexasScraper(BaseStateScraper):
     """Scraper for Texas state laws."""
+
+    OFFICIAL_DOMAIN = "statutes.capitol.texas.gov"
+    OFFICIAL_ENTRY_PATH = "/"
+    OFFICIAL_ENTRY_URL = "https://statutes.capitol.texas.gov/"
+    OFFICIAL_DOWNLOADS_URL = "https://statutes.capitol.texas.gov/assets/StatuteCodeDownloads.json"
+    OFFICIAL_ZIP_HOST = "tcss.legis.texas.gov"
+    last_mixed_reconciliation: Dict[str, Any] = {}
+    _TX_HTML_CODE_RE = re.compile(
+        r"/Docs/(?P<code>[A-Z]{2})/htm/\1\.(?P<chapter>[0-9A-Za-z]+)\.htm",
+        re.IGNORECASE,
+    )
+    _TX_ZIP_CODE_RE = re.compile(
+        r"(?:Zips/|resources/)(?P<code>[A-Z]{2})\.htm\.zip",
+        re.IGNORECASE,
+    )
+    _TX_CODE_LABEL_RE = re.compile(
+        r"\b(?P<code>AG|AL|BC|BO|CP|CR|ED|EL|ES|FA|FI|GV|HR|HS|IN|LA|LG|NR|OC|PE|PR|PW|SD|TN|TX|UT|WA)\b"
+    )
+    OFFICIAL_CODES = (
+        ("AG", "Agriculture Code"),
+        ("AL", "Alcoholic Beverage Code"),
+        ("BC", "Business and Commerce Code"),
+        ("BO", "Business Organizations Code"),
+        ("CP", "Civil Practice and Remedies Code"),
+        ("CR", "Code of Criminal Procedure"),
+        ("ED", "Education Code"),
+        ("EL", "Election Code"),
+        ("ES", "Estates Code"),
+        ("FA", "Family Code"),
+        ("FI", "Finance Code"),
+        ("GV", "Government Code"),
+        ("HR", "Human Resources Code"),
+        ("HS", "Health and Safety Code"),
+        ("IN", "Insurance Code"),
+        ("LA", "Labor Code"),
+        ("LG", "Local Government Code"),
+        ("NR", "Natural Resources Code"),
+        ("OC", "Occupations Code"),
+        ("PE", "Penal Code"),
+        ("PR", "Property Code"),
+        ("PW", "Parks and Wildlife Code"),
+        ("SD", "Special District Local Laws Code"),
+        ("TN", "Transportation Code"),
+        ("TX", "Tax Code"),
+        ("UT", "Utilities Code"),
+        ("WA", "Water Code"),
+    )
+    OFFICIAL_CODE_COUNT = len(OFFICIAL_CODES)
     
     def get_base_url(self) -> str:
         """Get base URL for Texas statutes."""
@@ -49,12 +100,8 @@ class TexasScraper(BaseStateScraper):
         """
         base_url = self.get_base_url()
         
+        # Prefer statutory codes first; TAC is a separate regulation corpus.
         codes = [
-            {
-                "name": "Texas Administrative Code",
-                "url": "https://texreg.sos.state.tx.us/public/readtac$ext.ViewTAC",
-                "type": "Regulation",
-            },
             {"name": "Agriculture Code", "url": f"{base_url}/Docs/AG/htm/AG.1.htm", "type": "AG"},
             {"name": "Alcoholic Beverage Code", "url": f"{base_url}/Docs/AL/htm/AL.1.htm", "type": "AL"},
             {"name": "Business and Commerce Code", "url": f"{base_url}/Docs/BC/htm/BC.1.htm", "type": "BC"},
@@ -79,6 +126,11 @@ class TexasScraper(BaseStateScraper):
             {"name": "Transportation Code", "url": f"{base_url}/Docs/TN/htm/TN.1.htm", "type": "TN"},
             {"name": "Utilities Code", "url": f"{base_url}/Docs/UT/htm/UT.1.htm", "type": "UT"},
             {"name": "Water Code", "url": f"{base_url}/Docs/WA/htm/WA.1.htm", "type": "WA"},
+            {
+                "name": "Texas Administrative Code",
+                "url": "https://texreg.sos.state.tx.us/public/readtac$ext.ViewTAC",
+                "type": "Regulation",
+            },
         ]
         
         return codes
@@ -116,6 +168,36 @@ class TexasScraper(BaseStateScraper):
                     code_url=code_url,
                     max_statutes=limit,
                 )
+
+            from .texas_constitution import (
+                configured_constitution_html_path,
+                parse_texas_constitution_html,
+            )
+
+            constitution_path = configured_constitution_html_path()
+            if constitution_path is not None or "constitution" in lower_name:
+                if constitution_path is not None:
+                    constitution_rows = parse_texas_constitution_html(
+                        constitution_path.read_text(encoding="utf-8", errors="replace"),
+                        article_id="1",
+                        code_name=code_name or "Texas Constitution",
+                        max_statutes=limit,
+                    )
+                    if constitution_rows:
+                        return constitution_rows if limit is None else constitution_rows[: int(limit)]
+
+            from .texas_chapter import configured_chapter_html_path, parse_texas_chapter_html
+
+            local_chapter = configured_chapter_html_path()
+            if local_chapter is not None:
+                local_rows = parse_texas_chapter_html(
+                    local_chapter.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name,
+                    code_abbrev=self._derive_code_abbrev(code_name=code_name, code_url=code_url) or "PE",
+                    max_statutes=limit,
+                )
+                if local_rows:
+                    return local_rows if limit is None else local_rows[: int(limit)]
 
             bundled_statutes = await self._scrape_statute_html_zip(
                 code_name=code_name,
@@ -191,7 +273,12 @@ class TexasScraper(BaseStateScraper):
                     source_url=section_url,
                     legal_area=legal_area,
                     official_cite=f"Tex. {code_name} § {section_number}",
-                    metadata=StatuteMetadata()
+                    metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "official_texas_statutes_html",
+                        "discovery_method": "official_code_section_links",
+                        "skip_hydrate": True,
+                    },
                 )
                 
                 statutes.append(statute)
@@ -211,6 +298,11 @@ class TexasScraper(BaseStateScraper):
                         legal_area=legal_area,
                         official_cite=f"Tex. {code_name}",
                         metadata=StatuteMetadata(),
+                        structured_data={
+                            "source_kind": "official_texas_statutes_html",
+                            "discovery_method": "official_code_level_fallback",
+                            "skip_hydrate": True,
+                        },
                     )
                 )
             
@@ -308,6 +400,29 @@ class TexasScraper(BaseStateScraper):
         seen_sections: set[str],
         remaining: Optional[int],
     ) -> List[NormalizedStatute]:
+        from .texas_chapter import parse_texas_chapter_html as parse_vaquill_chapter
+
+        vaquill_rows = parse_vaquill_chapter(
+            html,
+            code_name=code_name,
+            code_abbrev=code_abbrev,
+            member_name=member_name,
+            zip_url=zip_url,
+            max_statutes=remaining,
+        )
+        if vaquill_rows:
+            out: List[NormalizedStatute] = []
+            for row in vaquill_rows:
+                number = str(row.section_number or "")
+                if not number or number in seen_sections:
+                    continue
+                seen_sections.add(number)
+                out.append(row)
+                if remaining is not None and len(out) >= remaining:
+                    break
+            if out:
+                return out
+
         text = self._extract_text_from_html(html, max_chars=1_000_000)
         if len(text) < 280:
             return []
@@ -479,6 +594,11 @@ class TexasScraper(BaseStateScraper):
                         legal_area="administrative",
                         official_cite=f"Tex. Admin. Code § {section_number}",
                         metadata=StatuteMetadata(),
+                        structured_data={
+                            "source_kind": "official_texas_admin_code_html",
+                            "discovery_method": "official_readtac_rule_links",
+                            "skip_hydrate": True,
+                        },
                     )
                 )
 
@@ -523,6 +643,329 @@ class TexasScraper(BaseStateScraper):
         value = re.sub(r'\s*\n\s*', '\n', value)
         value = re.sub(r'\n{3,}', '\n\n', value)
         return value.strip()[:max_chars]
+
+    def official_html_url(self, code_abbrev: str) -> str:
+        abbrev = str(code_abbrev or "").strip().upper()
+        return f"{self.get_base_url()}/Docs/{abbrev}/htm/{abbrev}.1.htm"
+
+    def official_zip_url(self, code_abbrev: str) -> str:
+        abbrev = str(code_abbrev or "").strip().upper()
+        return f"https://tcss.legis.texas.gov/resources/Zips/{abbrev}.htm.zip"
+
+    def official_code_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Texas statute-code catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for abbrev, name in self.OFFICIAL_CODES:
+            html_url = self.official_html_url(abbrev)
+            zip_url = self.official_zip_url(abbrev)
+            rows.append(
+                {
+                    "canonical_key": f"tx:code-{abbrev.lower()}",
+                    "code_abbrev": abbrev,
+                    "name": name,
+                    "source_url": html_url,
+                    "zip_url": zip_url,
+                    "acquisition_channels": ["html", "zip"],
+                    "mixed_reconciled": True,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Texas {name} ({abbrev}) official catalog unit at {html_url} "
+                        f"with zip bundle {zip_url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        suffixes = (
+            "statutes.capitol.texas.gov",
+            "tcss.legis.texas.gov",
+            "capitol.texas.gov",
+        )
+        return any(host == item or host.endswith("." + item) for item in suffixes)
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+        headers = {
+            "User-Agent": "ipfs-datasets-texas-official-catalog/1.0",
+            "Accept": "text/html,application/json,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(url, headers=headers)
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(url, headers=headers)
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _normalize_code_abbrev(self, value: Any) -> str:
+        text = str(value or "").strip().upper()
+        known = {abbrev for abbrev, _name in self.OFFICIAL_CODES}
+        return text if text in known else ""
+
+    def _parse_html_code_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            soup = None
+        else:
+            soup = BeautifulSoup(html, "html.parser")
+        if soup is not None:
+            for link in soup.find_all("a", href=True):
+                href = str(link.get("href") or "").strip()
+                label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+                if not href:
+                    continue
+                absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+                match = self._TX_HTML_CODE_RE.search(absolute)
+                if not match:
+                    match = self._TX_CODE_LABEL_RE.search(label)
+                    if not match:
+                        continue
+                    abbrev = self._normalize_code_abbrev(match.group("code"))
+                else:
+                    abbrev = self._normalize_code_abbrev(match.group("code"))
+                if not abbrev or abbrev in found:
+                    continue
+                if self._host_is_official(absolute) or self._TX_HTML_CODE_RE.search(absolute):
+                    found[abbrev] = self.official_html_url(abbrev)
+        for match in self._TX_HTML_CODE_RE.finditer(
+            html.decode("utf-8", errors="replace") if html else ""
+        ):
+            abbrev = self._normalize_code_abbrev(match.group("code"))
+            if abbrev and abbrev not in found:
+                found[abbrev] = self.official_html_url(abbrev)
+        return found
+
+    def _parse_zip_code_links(self, payload: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not payload:
+            return found
+        text = payload.decode("utf-8", errors="replace")
+        try:
+            data = json.loads(text)
+        except Exception:
+            data = None
+        rows = data.get("StatuteCode") if isinstance(data, dict) else None
+        if isinstance(rows, list):
+            for row in rows:
+                if not isinstance(row, Mapping):
+                    continue
+                abbrev = self._normalize_code_abbrev(row.get("code"))
+                if not abbrev:
+                    continue
+                html_path = str(row.get("Html") or "").strip()
+                if html_path:
+                    found[abbrev] = (
+                        "https://tcss.legis.texas.gov/resources/" + html_path.lstrip("/")
+                    )
+                else:
+                    found[abbrev] = self.official_zip_url(abbrev)
+        for match in self._TX_ZIP_CODE_RE.finditer(text):
+            abbrev = self._normalize_code_abbrev(match.group("code"))
+            if abbrev and abbrev not in found:
+                found[abbrev] = self.official_zip_url(abbrev)
+        return found
+
+    def reconcile_mixed_acquisition(
+        self,
+        html_codes: Optional[Mapping[str, str]] = None,
+        zip_codes: Optional[Mapping[str, str]] = None,
+        *,
+        extra_candidates: Optional[Sequence[Mapping[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        """Reconcile Texas HTML index units with official HTML-zip bundles.
+
+        Every statute code is required on both official channels. TAC and
+        other non-statute hosts are excluded rather than mixed into the
+        statute catalog.
+        """
+
+        html_map = {str(key).upper(): str(value) for key, value in dict(html_codes or {}).items()}
+        zip_map = {str(key).upper(): str(value) for key, value in dict(zip_codes or {}).items()}
+        units: List[Dict[str, Any]] = []
+        excluded: List[Dict[str, str]] = []
+        for abbrev, name in self.OFFICIAL_CODES:
+            html_url = html_map.get(abbrev) or self.official_html_url(abbrev)
+            zip_url = zip_map.get(abbrev) or self.official_zip_url(abbrev)
+            if not self._host_is_official(html_url):
+                html_url = self.official_html_url(abbrev)
+            if not self._host_is_official(zip_url):
+                zip_url = self.official_zip_url(abbrev)
+            channels = []
+            if self._host_is_official(html_url):
+                channels.append("html")
+            if self._host_is_official(zip_url):
+                channels.append("zip")
+            units.append(
+                {
+                    "canonical_key": f"tx:code-{abbrev.lower()}",
+                    "code_abbrev": abbrev,
+                    "name": name,
+                    "source_url": html_url,
+                    "zip_url": zip_url,
+                    "acquisition_channels": channels,
+                    "mixed_reconciled": channels == ["html", "zip"],
+                    "source_link_disposition": (
+                        "official" if "html" in channels else "repaired_official_leginfo"
+                    ),
+                    "text": (
+                        f"Texas {name} ({abbrev}) official catalog unit at {html_url} "
+                        f"with zip bundle {zip_url}"
+                    ),
+                }
+            )
+        for item in extra_candidates or ():
+            if not isinstance(item, Mapping):
+                continue
+            label = str(item.get("name") or item.get("label") or item.get("code") or "").strip()
+            source_url = str(item.get("source_url") or item.get("href") or "").strip()
+            lowered = f"{label} {source_url}".lower()
+            if "administrative" in lowered or "readtac" in lowered or "texreg.sos" in lowered:
+                excluded.append(
+                    {
+                        "code_abbrev": "TAC",
+                        "name": label or "Texas Administrative Code",
+                        "source_url": source_url,
+                        "reason": "excluded_non_statute_mixed_source",
+                    }
+                )
+        reconciled = bool(units) and all(item.get("mixed_reconciled") for item in units)
+        result = {
+            "units": units,
+            "excluded": excluded,
+            "reconciled": reconciled,
+            "html_count": len(html_map),
+            "zip_count": len(zip_map),
+            "expected_codes": [abbrev for abbrev, _name in self.OFFICIAL_CODES],
+        }
+        self.last_mixed_reconciliation = result
+        return result
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+        downloads_payload: bytes = b"",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official Texas statute code and reconcile mixed paths."""
+
+        del page_url
+        html_codes = self._parse_html_code_links(html)
+        zip_codes = self._parse_zip_code_links(downloads_payload or html)
+        extra = []
+        if html:
+            text = html.decode("utf-8", errors="replace")
+            if "readtac" in text.lower() or "administrative code" in text.lower():
+                extra.append(
+                    {
+                        "name": "Texas Administrative Code",
+                        "source_url": "https://texreg.sos.state.tx.us/public/readtac$ext.ViewTAC",
+                    }
+                )
+        reconciled = self.reconcile_mixed_acquisition(
+            html_codes,
+            zip_codes,
+            extra_candidates=extra,
+        )
+        return list(reconciled["units"])
+
+    def fetch_official(self, code: str = "TX"):
+        """Acquire the exhaustive official Texas statute-code catalog.
+
+        Mixed HTML index and HTML-zip bundle discovery is fully reconciled
+        onto official statutes.capitol.texas.gov and tcss.legis.texas.gov
+        URLs. TAC and other non-statute hosts are excluded. This hook
+        never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "TX").strip().upper() or "TX"
+        if normalized != "TX":
+            raise ValueError(f"TexasScraper cannot acquire {normalized}")
+        self.last_mixed_reconciliation = {}
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        downloads = self._official_http_get(self.OFFICIAL_DOWNLOADS_URL)
+        rows = self.enumerate_official_catalog(
+            html,
+            page_url=self.OFFICIAL_ENTRY_URL,
+            downloads_payload=downloads,
+        )
+        if len(rows) != self.OFFICIAL_CODE_COUNT:
+            raise RuntimeError(
+                "texas official catalog enumeration rejected incomplete "
+                "mixed-acquisition reacquisition"
+            )
+        if not all(item.get("mixed_reconciled") for item in rows):
+            raise RuntimeError("texas mixed html/zip acquisition is not fully reconciled")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        reconciliation = dict(getattr(self, "last_mixed_reconciliation", {}) or {})
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+            "excluded": list(reconciliation.get("excluded") or []),
+            "mixed_reconciled": True,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+            "tx_mixed_reconciled": True,
+            "tx_excluded_non_statute": list(reconciliation.get("excluded") or []),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register the scraper

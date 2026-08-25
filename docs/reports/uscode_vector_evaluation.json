@@ -1,0 +1,974 @@
+{
+  "acceptance": {
+    "default_probe_evidence_backed": true,
+    "fallback_policy_evidence_backed": true,
+    "no_production_claim_below_recall_gate": true,
+    "production_searchable": true,
+    "recall_gate": 0.95,
+    "test_split_not_tuned": true,
+    "test_split_reported_once": true
+  },
+  "cluster_diagnostics": {
+    "balance_ratio_max_over_mean": 1.0,
+    "cluster_count": 6,
+    "radius": {
+      "max": 0.342454,
+      "mean": 0.279643,
+      "min": 0.206315
+    },
+    "rows_per_cluster": {
+      "max": 3,
+      "mean": 3.0,
+      "min": 3,
+      "stdev": 0.0
+    },
+    "shard_count": 6,
+    "total_rows": 18
+  },
+  "code_version": "1",
+  "corpus": {
+    "chunk_count": 18,
+    "cluster_count": 6,
+    "dimension": 384,
+    "document_count": 18,
+    "layout_seed": 1431520073,
+    "model_id": "sentence-transformers/all-MiniLM-L6-v2",
+    "model_revision": "c9745ed1d9f207416be6d2e6f19aa49b8566f3e3",
+    "shard_count": 6,
+    "vector_count": 18,
+    "vector_root_cid": "sha256:f868b615e7bb9a579c86d2c2a2ed6b3dd12e045c74b7c5d7cf901f765ab84309",
+    "vector_space_id": "all-minilm-l6-v2@c9745ed1d9f207416be6d2e6f19aa49b8566f3e3:d384:pool=mean:norm=l2"
+  },
+  "embedding_receipt": {
+    "admitted_count": 18,
+    "backend": "local_deterministic_projection",
+    "config_cid": "sha256:99edc778ecbc941cf959b7d8bd639d8080ada51eef1954aff8d601695bd801a2",
+    "dimension": 384,
+    "missing_count": 0,
+    "model_id": "sentence-transformers/all-MiniLM-L6-v2",
+    "model_revision": "c9745ed1d9f207416be6d2e6f19aa49b8566f3e3"
+  },
+  "evaluation": {
+    "inspection_partition": "train",
+    "partitions": {
+      "dev": {
+        "curve": {
+          "per_probe": {
+            "1": {
+              "bytes_fetched": {
+                "mean": 6384.0,
+                "p50": 6384.0,
+                "p95": 6384.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.08,
+                "p50": 0.08,
+                "p95": 0.08
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 1,
+              "query_count": 18,
+              "recall_at_1": 1.0,
+              "recall_at_10": 0.277778,
+              "recall_at_5": 0.511111,
+              "rows_scored": {
+                "mean": 3.0,
+                "p50": 3.0,
+                "p95": 3.0
+              },
+              "shards_fetched": {
+                "mean": 1.0,
+                "p50": 1.0,
+                "p95": 1.0
+              }
+            },
+            "2": {
+              "bytes_fetched": {
+                "mean": 12768.0,
+                "p50": 12768.0,
+                "p95": 12768.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.16,
+                "p50": 0.16,
+                "p95": 0.16
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 2,
+              "query_count": 18,
+              "recall_at_1": 1.0,
+              "recall_at_10": 0.516667,
+              "recall_at_5": 0.722222,
+              "rows_scored": {
+                "mean": 6.0,
+                "p50": 6.0,
+                "p95": 6.0
+              },
+              "shards_fetched": {
+                "mean": 2.0,
+                "p50": 2.0,
+                "p95": 2.0
+              }
+            },
+            "4": {
+              "bytes_fetched": {
+                "mean": 25536.0,
+                "p50": 25536.0,
+                "p95": 25536.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.32,
+                "p50": 0.32,
+                "p95": 0.32
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 4,
+              "query_count": 18,
+              "recall_at_1": 1.0,
+              "recall_at_10": 0.855556,
+              "recall_at_5": 0.944444,
+              "rows_scored": {
+                "mean": 12.0,
+                "p50": 12.0,
+                "p95": 12.0
+              },
+              "shards_fetched": {
+                "mean": 4.0,
+                "p50": 4.0,
+                "p95": 4.0
+              }
+            },
+            "6": {
+              "bytes_fetched": {
+                "mean": 38304.0,
+                "p50": 38304.0,
+                "p95": 38304.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.48,
+                "p50": 0.48,
+                "p95": 0.48
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 6,
+              "query_count": 18,
+              "recall_at_1": 1.0,
+              "recall_at_10": 1.0,
+              "recall_at_5": 1.0,
+              "rows_scored": {
+                "mean": 18.0,
+                "p50": 18.0,
+                "p95": 18.0
+              },
+              "shards_fetched": {
+                "mean": 6.0,
+                "p50": 6.0,
+                "p95": 6.0
+              }
+            }
+          },
+          "primary_top_k": 1,
+          "probe_candidates": [
+            1,
+            2,
+            4,
+            6
+          ],
+          "query_count": 18,
+          "recall_gate": 0.95,
+          "top_k_values": [
+            1,
+            5,
+            10
+          ]
+        },
+        "gold_only_curve": {
+          "per_probe": {
+            "1": {
+              "bytes_fetched": {
+                "mean": 6384.0,
+                "p50": 6384.0,
+                "p95": 6384.0
+              },
+              "failure_modes": {
+                "missed_exhaustive_top1": 1
+              },
+              "latency_ms": {
+                "mean": 0.08,
+                "p50": 0.08,
+                "p95": 0.08
+              },
+              "meets_recall_gate": false,
+              "probe_centroids": 1,
+              "query_count": 8,
+              "recall_at_1": 0.875,
+              "recall_at_10": 0.25,
+              "recall_at_5": 0.425,
+              "rows_scored": {
+                "mean": 3.0,
+                "p50": 3.0,
+                "p95": 3.0
+              },
+              "shards_fetched": {
+                "mean": 1.0,
+                "p50": 1.0,
+                "p95": 1.0
+              }
+            },
+            "2": {
+              "bytes_fetched": {
+                "mean": 12768.0,
+                "p50": 12768.0,
+                "p95": 12768.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.16,
+                "p50": 0.16,
+                "p95": 0.16
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 2,
+              "query_count": 8,
+              "recall_at_1": 1.0,
+              "recall_at_10": 0.45,
+              "recall_at_5": 0.65,
+              "rows_scored": {
+                "mean": 6.0,
+                "p50": 6.0,
+                "p95": 6.0
+              },
+              "shards_fetched": {
+                "mean": 2.0,
+                "p50": 2.0,
+                "p95": 2.0
+              }
+            },
+            "4": {
+              "bytes_fetched": {
+                "mean": 25536.0,
+                "p50": 25536.0,
+                "p95": 25536.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.32,
+                "p50": 0.32,
+                "p95": 0.32
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 4,
+              "query_count": 8,
+              "recall_at_1": 1.0,
+              "recall_at_10": 0.8,
+              "recall_at_5": 0.925,
+              "rows_scored": {
+                "mean": 12.0,
+                "p50": 12.0,
+                "p95": 12.0
+              },
+              "shards_fetched": {
+                "mean": 4.0,
+                "p50": 4.0,
+                "p95": 4.0
+              }
+            },
+            "6": {
+              "bytes_fetched": {
+                "mean": 38304.0,
+                "p50": 38304.0,
+                "p95": 38304.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.48,
+                "p50": 0.48,
+                "p95": 0.48
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 6,
+              "query_count": 8,
+              "recall_at_1": 1.0,
+              "recall_at_10": 1.0,
+              "recall_at_5": 1.0,
+              "rows_scored": {
+                "mean": 18.0,
+                "p50": 18.0,
+                "p95": 18.0
+              },
+              "shards_fetched": {
+                "mean": 6.0,
+                "p50": 6.0,
+                "p95": 6.0
+              }
+            }
+          },
+          "primary_top_k": 1,
+          "probe_candidates": [
+            1,
+            2,
+            4,
+            6
+          ],
+          "query_count": 8,
+          "recall_gate": 0.95,
+          "top_k_values": [
+            1,
+            5,
+            10
+          ]
+        },
+        "gold_query_count": 8,
+        "includes_structural": true,
+        "role": "probe_selection_only",
+        "selection_query_kind": "structural_self",
+        "total_query_count": 18
+      },
+      "test": {
+        "curve": {
+          "per_probe": {
+            "1": {
+              "bytes_fetched": {
+                "mean": 6384.0,
+                "p50": 6384.0,
+                "p95": 6384.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.08,
+                "p50": 0.08,
+                "p95": 0.08
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 1,
+              "query_count": 18,
+              "recall_at_1": 1.0,
+              "recall_at_10": 0.277778,
+              "recall_at_5": 0.511111,
+              "rows_scored": {
+                "mean": 3.0,
+                "p50": 3.0,
+                "p95": 3.0
+              },
+              "shards_fetched": {
+                "mean": 1.0,
+                "p50": 1.0,
+                "p95": 1.0
+              }
+            },
+            "2": {
+              "bytes_fetched": {
+                "mean": 12768.0,
+                "p50": 12768.0,
+                "p95": 12768.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.16,
+                "p50": 0.16,
+                "p95": 0.16
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 2,
+              "query_count": 18,
+              "recall_at_1": 1.0,
+              "recall_at_10": 0.516667,
+              "recall_at_5": 0.722222,
+              "rows_scored": {
+                "mean": 6.0,
+                "p50": 6.0,
+                "p95": 6.0
+              },
+              "shards_fetched": {
+                "mean": 2.0,
+                "p50": 2.0,
+                "p95": 2.0
+              }
+            },
+            "4": {
+              "bytes_fetched": {
+                "mean": 25536.0,
+                "p50": 25536.0,
+                "p95": 25536.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.32,
+                "p50": 0.32,
+                "p95": 0.32
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 4,
+              "query_count": 18,
+              "recall_at_1": 1.0,
+              "recall_at_10": 0.855556,
+              "recall_at_5": 0.944444,
+              "rows_scored": {
+                "mean": 12.0,
+                "p50": 12.0,
+                "p95": 12.0
+              },
+              "shards_fetched": {
+                "mean": 4.0,
+                "p50": 4.0,
+                "p95": 4.0
+              }
+            },
+            "6": {
+              "bytes_fetched": {
+                "mean": 38304.0,
+                "p50": 38304.0,
+                "p95": 38304.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.48,
+                "p50": 0.48,
+                "p95": 0.48
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 6,
+              "query_count": 18,
+              "recall_at_1": 1.0,
+              "recall_at_10": 1.0,
+              "recall_at_5": 1.0,
+              "rows_scored": {
+                "mean": 18.0,
+                "p50": 18.0,
+                "p95": 18.0
+              },
+              "shards_fetched": {
+                "mean": 6.0,
+                "p50": 6.0,
+                "p95": 6.0
+              }
+            }
+          },
+          "primary_top_k": 1,
+          "probe_candidates": [
+            1,
+            2,
+            4,
+            6
+          ],
+          "query_count": 18,
+          "recall_gate": 0.95,
+          "top_k_values": [
+            1,
+            5,
+            10
+          ]
+        },
+        "geometry_confirmation_query_count": 18,
+        "gold_only_curve": {
+          "per_probe": {
+            "1": {
+              "bytes_fetched": {
+                "mean": 6384.0,
+                "p50": 6384.0,
+                "p95": 6384.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.08,
+                "p50": 0.08,
+                "p95": 0.08
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 1,
+              "query_count": 9,
+              "recall_at_1": 1.0,
+              "recall_at_10": 0.188889,
+              "recall_at_5": 0.311111,
+              "rows_scored": {
+                "mean": 3.0,
+                "p50": 3.0,
+                "p95": 3.0
+              },
+              "shards_fetched": {
+                "mean": 1.0,
+                "p50": 1.0,
+                "p95": 1.0
+              }
+            },
+            "2": {
+              "bytes_fetched": {
+                "mean": 12768.0,
+                "p50": 12768.0,
+                "p95": 12768.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.16,
+                "p50": 0.16,
+                "p95": 0.16
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 2,
+              "query_count": 9,
+              "recall_at_1": 1.0,
+              "recall_at_10": 0.444444,
+              "recall_at_5": 0.688889,
+              "rows_scored": {
+                "mean": 6.0,
+                "p50": 6.0,
+                "p95": 6.0
+              },
+              "shards_fetched": {
+                "mean": 2.0,
+                "p50": 2.0,
+                "p95": 2.0
+              }
+            },
+            "4": {
+              "bytes_fetched": {
+                "mean": 25536.0,
+                "p50": 25536.0,
+                "p95": 25536.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.32,
+                "p50": 0.32,
+                "p95": 0.32
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 4,
+              "query_count": 9,
+              "recall_at_1": 1.0,
+              "recall_at_10": 0.788889,
+              "recall_at_5": 0.866667,
+              "rows_scored": {
+                "mean": 12.0,
+                "p50": 12.0,
+                "p95": 12.0
+              },
+              "shards_fetched": {
+                "mean": 4.0,
+                "p50": 4.0,
+                "p95": 4.0
+              }
+            },
+            "6": {
+              "bytes_fetched": {
+                "mean": 38304.0,
+                "p50": 38304.0,
+                "p95": 38304.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.48,
+                "p50": 0.48,
+                "p95": 0.48
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 6,
+              "query_count": 9,
+              "recall_at_1": 1.0,
+              "recall_at_10": 1.0,
+              "recall_at_5": 1.0,
+              "rows_scored": {
+                "mean": 18.0,
+                "p50": 18.0,
+                "p95": 18.0
+              },
+              "shards_fetched": {
+                "mean": 6.0,
+                "p50": 6.0,
+                "p95": 6.0
+              }
+            }
+          },
+          "primary_top_k": 1,
+          "probe_candidates": [
+            1,
+            2,
+            4,
+            6
+          ],
+          "query_count": 9,
+          "recall_gate": 0.95,
+          "top_k_values": [
+            1,
+            5,
+            10
+          ]
+        },
+        "gold_query_count": 9,
+        "includes_structural": true,
+        "role": "sealed_one_shot_report",
+        "total_query_count": 18,
+        "tuned": false
+      },
+      "train": {
+        "curve": {
+          "per_probe": {
+            "1": {
+              "bytes_fetched": {
+                "mean": 6384.0,
+                "p50": 6384.0,
+                "p95": 6384.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.08,
+                "p50": 0.08,
+                "p95": 0.08
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 1,
+              "query_count": 10,
+              "recall_at_1": 1.0,
+              "recall_at_10": 0.25,
+              "recall_at_5": 0.46,
+              "rows_scored": {
+                "mean": 3.0,
+                "p50": 3.0,
+                "p95": 3.0
+              },
+              "shards_fetched": {
+                "mean": 1.0,
+                "p50": 1.0,
+                "p95": 1.0
+              }
+            },
+            "2": {
+              "bytes_fetched": {
+                "mean": 12768.0,
+                "p50": 12768.0,
+                "p95": 12768.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.16,
+                "p50": 0.16,
+                "p95": 0.16
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 2,
+              "query_count": 10,
+              "recall_at_1": 1.0,
+              "recall_at_10": 0.49,
+              "recall_at_5": 0.8,
+              "rows_scored": {
+                "mean": 6.0,
+                "p50": 6.0,
+                "p95": 6.0
+              },
+              "shards_fetched": {
+                "mean": 2.0,
+                "p50": 2.0,
+                "p95": 2.0
+              }
+            },
+            "4": {
+              "bytes_fetched": {
+                "mean": 25536.0,
+                "p50": 25536.0,
+                "p95": 25536.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.32,
+                "p50": 0.32,
+                "p95": 0.32
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 4,
+              "query_count": 10,
+              "recall_at_1": 1.0,
+              "recall_at_10": 0.83,
+              "recall_at_5": 1.0,
+              "rows_scored": {
+                "mean": 12.0,
+                "p50": 12.0,
+                "p95": 12.0
+              },
+              "shards_fetched": {
+                "mean": 4.0,
+                "p50": 4.0,
+                "p95": 4.0
+              }
+            },
+            "6": {
+              "bytes_fetched": {
+                "mean": 38304.0,
+                "p50": 38304.0,
+                "p95": 38304.0
+              },
+              "failure_modes": {},
+              "latency_ms": {
+                "mean": 0.48,
+                "p50": 0.48,
+                "p95": 0.48
+              },
+              "meets_recall_gate": true,
+              "probe_centroids": 6,
+              "query_count": 10,
+              "recall_at_1": 1.0,
+              "recall_at_10": 1.0,
+              "recall_at_5": 1.0,
+              "rows_scored": {
+                "mean": 18.0,
+                "p50": 18.0,
+                "p95": 18.0
+              },
+              "shards_fetched": {
+                "mean": 6.0,
+                "p50": 6.0,
+                "p95": 6.0
+              }
+            }
+          },
+          "primary_top_k": 1,
+          "probe_candidates": [
+            1,
+            2,
+            4,
+            6
+          ],
+          "query_count": 10,
+          "recall_gate": 0.95,
+          "top_k_values": [
+            1,
+            5,
+            10
+          ]
+        },
+        "gold_query_count": 10,
+        "role": "inspection_only_not_reported_as_gate",
+        "total_query_count": 10
+      }
+    },
+    "primary_top_k": 1,
+    "probe_candidates": [
+      1,
+      2,
+      4,
+      6
+    ],
+    "recall_gate": 0.95,
+    "report_partition": "test",
+    "selection_partition": "dev",
+    "structural_curve": {
+      "per_probe": {
+        "1": {
+          "bytes_fetched": {
+            "mean": 6384.0,
+            "p50": 6384.0,
+            "p95": 6384.0
+          },
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.08,
+            "p50": 0.08,
+            "p95": 0.08
+          },
+          "meets_recall_gate": true,
+          "probe_centroids": 1,
+          "query_count": 18,
+          "recall_at_1": 1.0,
+          "recall_at_10": 0.277778,
+          "recall_at_5": 0.511111,
+          "rows_scored": {
+            "mean": 3.0,
+            "p50": 3.0,
+            "p95": 3.0
+          },
+          "shards_fetched": {
+            "mean": 1.0,
+            "p50": 1.0,
+            "p95": 1.0
+          }
+        },
+        "2": {
+          "bytes_fetched": {
+            "mean": 12768.0,
+            "p50": 12768.0,
+            "p95": 12768.0
+          },
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.16,
+            "p50": 0.16,
+            "p95": 0.16
+          },
+          "meets_recall_gate": true,
+          "probe_centroids": 2,
+          "query_count": 18,
+          "recall_at_1": 1.0,
+          "recall_at_10": 0.516667,
+          "recall_at_5": 0.722222,
+          "rows_scored": {
+            "mean": 6.0,
+            "p50": 6.0,
+            "p95": 6.0
+          },
+          "shards_fetched": {
+            "mean": 2.0,
+            "p50": 2.0,
+            "p95": 2.0
+          }
+        },
+        "4": {
+          "bytes_fetched": {
+            "mean": 25536.0,
+            "p50": 25536.0,
+            "p95": 25536.0
+          },
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.32,
+            "p50": 0.32,
+            "p95": 0.32
+          },
+          "meets_recall_gate": true,
+          "probe_centroids": 4,
+          "query_count": 18,
+          "recall_at_1": 1.0,
+          "recall_at_10": 0.855556,
+          "recall_at_5": 0.944444,
+          "rows_scored": {
+            "mean": 12.0,
+            "p50": 12.0,
+            "p95": 12.0
+          },
+          "shards_fetched": {
+            "mean": 4.0,
+            "p50": 4.0,
+            "p95": 4.0
+          }
+        },
+        "6": {
+          "bytes_fetched": {
+            "mean": 38304.0,
+            "p50": 38304.0,
+            "p95": 38304.0
+          },
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.48,
+            "p50": 0.48,
+            "p95": 0.48
+          },
+          "meets_recall_gate": true,
+          "probe_centroids": 6,
+          "query_count": 18,
+          "recall_at_1": 1.0,
+          "recall_at_10": 1.0,
+          "recall_at_5": 1.0,
+          "rows_scored": {
+            "mean": 18.0,
+            "p50": 18.0,
+            "p95": 18.0
+          },
+          "shards_fetched": {
+            "mean": 6.0,
+            "p50": 6.0,
+            "p95": 6.0
+          }
+        }
+      },
+      "primary_top_k": 1,
+      "probe_candidates": [
+        1,
+        2,
+        4,
+        6
+      ],
+      "query_count": 18,
+      "recall_gate": 0.95,
+      "top_k_values": [
+        1,
+        5,
+        10
+      ]
+    },
+    "structural_query_count": 18,
+    "top_k_values": [
+      1,
+      5,
+      10
+    ]
+  },
+  "fallback_policy": {
+    "default_meets_gate": true,
+    "default_probe_centroids": 4,
+    "name": "escalate_probe_then_exhaustive",
+    "notes": "Fallback is fail-closed: systems must not advertise production centroid search when measured exhaustive agreement is below the declared recall gate (0.95).",
+    "policy_version": "uscode-vector-fallback/v1",
+    "production_searchable_requires": [
+      "default_probe_meets_recall_gate_on_dev",
+      "default_probe_meets_recall_gate_on_test",
+      "no_claim_below_gate"
+    ],
+    "rules": [
+      {
+        "action": "use_default_centroid_probe",
+        "probe_centroids": 4,
+        "when": "default_request"
+      },
+      {
+        "action": "increase_probe_to_next_candidate",
+        "next_probes": [
+          6
+        ],
+        "when": "routed_recall_estimate_below_gate_or_empty_route"
+      },
+      {
+        "action": "exhaustive_cosine_fallback",
+        "applies_to_fixture_corpus": true,
+        "corpus_row_threshold": 4096,
+        "when": "still_below_gate_after_max_probe OR corpus_rows <= 4096"
+      },
+      {
+        "action": "refuse_production_searchable_label",
+        "when": "measured_recall_below_declared_gate"
+      }
+    ]
+  },
+  "fixture_layout_bounds": {
+    "kmeans_iterations": 6,
+    "max_rows_per_centroid": 6,
+    "max_rows_per_shard": 3,
+    "max_shards_per_centroid": 2,
+    "seed": 1431520073,
+    "target_rows_per_centroid": 3
+  },
+  "goal_id": "USCIR-G050",
+  "historical_plan_default_probe_centroids": 4,
+  "probe_selection": {
+    "default_probe_centroids": 4,
+    "evidence_partition": "dev",
+    "meets_recall_gate": true,
+    "preferred_historical_default": 4,
+    "production_searchable": true,
+    "qualifying_probes": [
+      1,
+      2,
+      4,
+      6
+    ],
+    "reason": "historical default probe=4 meets recall gate 0.95 on dev; retained as production default",
+    "selection_metric": "mean_recall_at_1",
+    "selection_value": 1.0
+  },
+  "producer": "evaluate_uscode_vectors.py",
+  "production_claim": {
+    "claim": "centroid-routed dense search may be labeled production-searchable at probe=4",
+    "declared_recall_gate": 0.95,
+    "default_probe_centroids": 4,
+    "dev_meets_gate": true,
+    "production_searchable": true,
+    "test_meets_gate": true,
+    "test_recall_at_primary_k": 1.0
+  },
+  "program_id": "uscode-sparse-graphrag-v1",
+  "release_profile": "publicus-ir-graphrag/v2",
+  "schema_version": "ipfs_datasets_py/uscode-vector-evaluation@1",
+  "task_id": "USCIR-020"
+}

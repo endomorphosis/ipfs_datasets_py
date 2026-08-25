@@ -62,7 +62,7 @@ The migrated development tools are now ready for:
 
 ```python
 # Direct import approach (recommended)
-sys.path.insert(0, './ipfs_datasets_py/mcp_server/tools/development_tools/')
+sys.path.insert(0, "./ipfs_datasets_py/mcp_server/tools/development_tools/")
 from test_generator import TestGeneratorTool
 from documentation_generator import DocumentationGeneratorTool
 from codebase_search import CodebaseSearchEngine

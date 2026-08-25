@@ -6,19 +6,20 @@ Test data factory for generating LLMChunk instances and field dictionaries.
 Provides methods to create valid baseline data, invalid variations, and edge cases
 for comprehensive testing of the LLMChunk class validation logic.
 """
+
 from typing import Dict, Any
 import numpy as np
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk, LLMChunkMetadata
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
-    LLMChunkMetadataTestDataFactory
+    LLMChunkMetadataTestDataFactory,
 )
 
 
 class LLMChunkTestDataFactory:
     """
     Test data factory for generating LLMChunk instances and field dictionaries.
-    
+
     Provides methods to create valid baseline data, invalid variations, and edge cases
     for comprehensive testing of the LLMChunk class validation logic.
     """
@@ -27,7 +28,7 @@ class LLMChunkTestDataFactory:
     def create_valid_baseline_data(cls) -> Dict[str, Any]:
         """
         Create a complete dictionary of valid field values for LLMChunk.
-        
+
         Returns:
             Dict[str, Any]: Dictionary with all required fields populated with valid values for LLMChunk creation.
         """
@@ -43,14 +44,14 @@ class LLMChunkTestDataFactory:
             "semantic_types": "text",
             "metadata": metadata,
             "relationships": ["chunk_0000", "chunk_0002"],
-            "embedding": np.array([0.1, 0.2, 0.3, 0.4, 0.5])
+            "embedding": np.array([0.1, 0.2, 0.3, 0.4, 0.5]),
         }
 
     @classmethod
     def create_minimal_valid_data(cls) -> Dict[str, Any]:
         """
         Create minimal valid data using default values for LLMChunk.
-        
+
         Returns:
             Dict[str, Any]: Dictionary with minimal valid values and defaults for LLMChunk creation.
         """
@@ -66,17 +67,17 @@ class LLMChunkTestDataFactory:
             "semantic_types": "text",
             "metadata": metadata,
             "relationships": [],
-            "embedding": None
+            "embedding": None,
         }
 
     @classmethod
     def create_data_missing_field(cls, field_name: str) -> Dict[str, Any]:
         """
         Create valid data dictionary with one specific field removed for LLMChunk.
-        
+
         Args:
             field_name: Name of field to exclude from the dictionary.
-            
+
         Returns:
             Dict[str, Any]: Valid data dictionary missing the specified field.
         """
@@ -89,11 +90,11 @@ class LLMChunkTestDataFactory:
     def create_data_with_invalid_type(cls, field_name: str, invalid_value: Any) -> Dict[str, Any]:
         """
         Create data dictionary with one field having an invalid type for LLMChunk.
-        
+
         Args:
             field_name: Name of field to modify with invalid value.
             invalid_value: Invalid value to assign to the field.
-            
+
         Returns:
             Dict[str, Any]: Data dictionary with one field having invalid type.
         """
@@ -105,11 +106,11 @@ class LLMChunkTestDataFactory:
     def make_boundary_value_data(cls, field_name: str, boundary_value: Any) -> Dict[str, Any]:
         """
         Create data dictionary with one field set to a boundary value for LLMChunk.
-        
+
         Args:
             field_name: Name of field to set to boundary value.
             boundary_value: Boundary value to test.
-            
+
         Returns:
             Dict[str, Any]: Data dictionary with field at boundary value.
         """
@@ -121,10 +122,10 @@ class LLMChunkTestDataFactory:
     def create_logically_inconsistent_data(cls, **field_overrides) -> Dict[str, Any]:
         """
         Create data dictionary with logically inconsistent field values for LLMChunk.
-        
+
         Args:
             **field_overrides: Fields to override with inconsistent values.
-            
+
         Returns:
             Dict[str, Any]: Data dictionary with logical inconsistencies.
         """
@@ -136,10 +137,10 @@ class LLMChunkTestDataFactory:
     def create_chunk_instance(cls, **overrides) -> LLMChunk:
         """
         Create a complete LLMChunk instance with optional field overrides.
-        
+
         Args:
             **overrides: Field values to override in the baseline data.
-            
+
         Returns:
             LLMChunk: Fully constructed LLMChunk instance.
         """
@@ -151,10 +152,10 @@ class LLMChunkTestDataFactory:
     def create_minimal_chunk_instance(cls, **overrides) -> LLMChunk:
         """
         Create a minimal LLMChunk instance with optional field overrides.
-        
+
         Args:
             **overrides: Field values to override in the minimal data.
-            
+
         Returns:
             LLMChunk: Minimal LLMChunk instance.
         """

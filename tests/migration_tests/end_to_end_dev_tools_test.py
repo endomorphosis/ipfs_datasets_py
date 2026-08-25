@@ -33,12 +33,16 @@ sys.path.insert(0, ".")
 
 {test_code}
 '''
-        result = subprocess.run([
-            sys.executable, '-c', script
-        ], capture_output=True, text=True, timeout=timeout, cwd=str(Path(__file__).parent))
-        
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=str(Path(__file__).parent),
+        )
+
         if result.returncode == 0:
-            if 'SUCCESS' in result.stdout:
+            if "SUCCESS" in result.stdout:
                 print(f"✅ {tool_name}: SUCCESS")
                 return True
             else:
@@ -51,7 +55,7 @@ sys.path.insert(0, ".")
             print(f"   stdout: {result.stdout.strip()}")
             print(f"   stderr: {result.stderr.strip()}")
             return False
-            
+
     except subprocess.TimeoutExpired:
         print(f"❌ {tool_name}: TIMEOUT after {timeout} seconds")
         return False
@@ -63,8 +67,8 @@ sys.path.insert(0, ".")
 def test_codebase_search():
     """Test codebase_search with correct parameters."""
     print("\n🔍 Testing codebase_search...")
-    
-    test_code = '''
+
+    test_code = """
 try:
     from ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search import codebase_search
     result = codebase_search(
@@ -82,18 +86,20 @@ except Exception as e:
     print(f"ERROR - {e}")
     import traceback
     traceback.print_exc()
-'''
-    
-    return run_tool_test("codebase_search", 
-                        "ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search", 
-                        test_code)
+"""
+
+    return run_tool_test(
+        "codebase_search",
+        "ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search",
+        test_code,
+    )
 
 
 def test_documentation_generator():
     """Test documentation_generator with correct parameters."""
     print("\n📄 Testing documentation_generator...")
-    
-    test_code = '''
+
+    test_code = """
 import tempfile
 try:
     from ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator import documentation_generator
@@ -114,17 +120,19 @@ except Exception as e:
     print(f"ERROR - {e}")
     import traceback
     traceback.print_exc()
-'''
-    
-    return run_tool_test("documentation_generator", 
-                        "ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator", 
-                        test_code)
+"""
+
+    return run_tool_test(
+        "documentation_generator",
+        "ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator",
+        test_code,
+    )
 
 
 def test_linting_tools():
     """Test lint_python_codebase with correct parameters."""
     print("\n🔬 Testing lint_python_codebase...")
-    
+
     test_code = '''
 import tempfile
 from pathlib import Path
@@ -159,17 +167,19 @@ except Exception as e:
     import traceback
     traceback.print_exc()
 '''
-    
-    return run_tool_test("lint_python_codebase", 
-                        "ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools", 
-                        test_code)
+
+    return run_tool_test(
+        "lint_python_codebase",
+        "ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools",
+        test_code,
+    )
 
 
 def test_test_generator():
     """Test test_generator with correct parameters."""
     print("\n🧪 Testing test_generator...")
-    
-    test_code = '''
+
+    test_code = """
 import json
 import os
 try:
@@ -206,18 +216,20 @@ except Exception as e:
     print(f"ERROR - {e}")
     import traceback
     traceback.print_exc()
-'''
-    
-    return run_tool_test("test_generator", 
-                        "ipfs_datasets_py.mcp_server.tools.development_tools.test_generator", 
-                        test_code)
+"""
+
+    return run_tool_test(
+        "test_generator",
+        "ipfs_datasets_py.mcp_server.tools.development_tools.test_generator",
+        test_code,
+    )
 
 
 def test_run_comprehensive_tests():
     """Test run_comprehensive_tests with correct parameters."""
     print("\n🔄 Testing run_comprehensive_tests...")
-    
-    test_code = '''
+
+    test_code = """
 try:
     # Simply test that the TestRunner class can be instantiated
     # This simpler approach is more robust and avoids issues with
@@ -234,11 +246,13 @@ except Exception as e:
     print(f"ERROR - {e}")
     import traceback
     traceback.print_exc()
-'''
-    
-    return run_tool_test("run_comprehensive_tests", 
-                        "ipfs_datasets_py.mcp_server.tools.development_tools.test_runner", 
-                        test_code)
+"""
+
+    return run_tool_test(
+        "run_comprehensive_tests",
+        "ipfs_datasets_py.mcp_server.tools.development_tools.test_runner",
+        test_code,
+    )
 
 
 def run_all_tests():
@@ -252,7 +266,7 @@ def run_all_tests():
         "documentation_generator": test_documentation_generator(),
         "lint_python_codebase": test_linting_tools(),
         "test_generator": test_test_generator(),
-        "run_comprehensive_tests": test_run_comprehensive_tests()
+        "run_comprehensive_tests": test_run_comprehensive_tests(),
     }
 
     print("\n" + "=" * 50)

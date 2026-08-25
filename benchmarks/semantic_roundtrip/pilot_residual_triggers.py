@@ -52,9 +52,7 @@ from benchmarks.semantic_roundtrip.selective_repair import (
 
 PILOT_RESIDUAL_TRIGGERS_INTERFACE: Final = "PilotResidualTriggers@1"
 PILOT_RESIDUAL_TRIGGER_MAP_INTERFACE: Final = "PilotResidualTriggerMap@1"
-PILOT_RESIDUAL_TRIGGER_DETECTOR_INTERFACE: Final = (
-    "PilotResidualTriggerDetector@1"
-)
+PILOT_RESIDUAL_TRIGGER_DETECTOR_INTERFACE: Final = "PilotResidualTriggerDetector@1"
 PILOT_RESIDUAL_TRIGGERS_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-pilot-residual-triggers.v1"
 )
@@ -84,9 +82,7 @@ def _nonblank(value: object, path: str) -> str:
 
 
 def _mapping(value: object, path: str) -> Mapping[str, Any]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise PilotResidualTriggerError(f"{path} must be an object")
     return value
 
@@ -147,9 +143,7 @@ def trigger_from_residual_facet(
     if not residual_facet_is_projectable(facet):
         if require_projectable:
             return None
-        raise PilotResidualTriggerError(
-            f"residual facet {facet.field_path!r} is not projectable"
-        )
+        raise PilotResidualTriggerError(f"residual facet {facet.field_path!r} is not projectable")
 
     kind = RepairTriggerKind(facet.suggested_trigger_kind)
     rule_index = int(facet.candidate_rule_index)  # type: ignore[arg-type]
@@ -158,9 +152,7 @@ def trigger_from_residual_facet(
     if baseline_ir is not None:
         if rule_index >= len(baseline_ir.rules):
             return None
-        if kind is RepairTriggerKind.MISSING and not is_slot_empty(
-            baseline_ir, rule_index, field
-        ):
+        if kind is RepairTriggerKind.MISSING and not is_slot_empty(baseline_ir, rule_index, field):
             return None
         if kind is RepairTriggerKind.LOW_CONFIDENCE:
             # Structural residual catalog does not supply confidences.
@@ -214,12 +206,8 @@ def triggers_from_residual_facets(
             if isinstance(facet, Mapping):
                 facet = ResidualFacet.from_dict(facet)
             else:
-                raise PilotResidualTriggerError(
-                    "facets must be ResidualFacet records"
-                )
-        trigger = trigger_from_residual_facet(
-            facet, baseline_ir=baseline_ir
-        )
+                raise PilotResidualTriggerError("facets must be ResidualFacet records")
+        trigger = trigger_from_residual_facet(facet, baseline_ir=baseline_ir)
         if trigger is None:
             continue
         if trigger.path in seen_paths:
@@ -252,9 +240,7 @@ def triggers_from_case_residual(
     """Project one case residual record into RepairTrigger slots."""
 
     case = (
-        record
-        if isinstance(record, CaseResidualRecord)
-        else CaseResidualRecord.from_dict(record)
+        record if isinstance(record, CaseResidualRecord) else CaseResidualRecord.from_dict(record)
     )
     if case.is_zero_residual_control:
         return ()
@@ -287,32 +273,20 @@ class PilotCaseTriggerRecord:
             tuple(self.skipped_residual_paths),
         )
         if not all(isinstance(item, RepairTrigger) for item in self.triggers):
-            raise PilotResidualTriggerError(
-                "triggers must be RepairTrigger records"
-            )
+            raise PilotResidualTriggerError("triggers must be RepairTrigger records")
         for name in ("residual_count", "projectable_residual_count"):
             value = getattr(self, name)
-            if (
-                isinstance(value, bool)
-                or not isinstance(value, int)
-                or value < 0
-            ):
-                raise PilotResidualTriggerError(
-                    f"{name} must be a nonnegative integer"
-                )
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise PilotResidualTriggerError(f"{name} must be a nonnegative integer")
         if (
             isinstance(self.forward_loss, bool)
             or not isinstance(self.forward_loss, (int, float))
             or not 0.0 <= float(self.forward_loss) <= 1.0
         ):
-            raise PilotResidualTriggerError(
-                "forward_loss must be a finite number from zero to one"
-            )
+            raise PilotResidualTriggerError("forward_loss must be a finite number from zero to one")
         object.__setattr__(self, "forward_loss", float(self.forward_loss))
         if self.is_zero_residual_control and self.triggers:
-            raise PilotResidualTriggerError(
-                "zero-residual control cannot emit triggers"
-            )
+            raise PilotResidualTriggerError("zero-residual control cannot emit triggers")
 
     @property
     def trigger_count(self) -> int:
@@ -364,13 +338,9 @@ class PilotCaseTriggerRecord:
             case_id=_nonblank(data.get("case_id"), "case_id"),
             triggers=triggers,
             residual_count=int(data.get("residual_count", 0)),
-            projectable_residual_count=int(
-                data.get("projectable_residual_count", 0)
-            ),
+            projectable_residual_count=int(data.get("projectable_residual_count", 0)),
             forward_loss=float(data.get("forward_loss", 0.0)),
-            is_zero_residual_control=bool(
-                data.get("is_zero_residual_control")
-            ),
+            is_zero_residual_control=bool(data.get("is_zero_residual_control")),
             skipped_residual_paths=tuple(
                 str(item) for item in data.get("skipped_residual_paths", ())
             ),
@@ -392,45 +362,31 @@ class PilotResidualTriggerMap:
     def __post_init__(self) -> None:
         object.__setattr__(self, "cases", tuple(self.cases))
         if not self.cases:
-            raise PilotResidualTriggerError(
-                "pilot residual trigger map requires case records"
-            )
-        if not all(
-            isinstance(item, PilotCaseTriggerRecord) for item in self.cases
-        ):
-            raise PilotResidualTriggerError(
-                "cases must be PilotCaseTriggerRecord records"
-            )
+            raise PilotResidualTriggerError("pilot residual trigger map requires case records")
+        if not all(isinstance(item, PilotCaseTriggerRecord) for item in self.cases):
+            raise PilotResidualTriggerError("cases must be PilotCaseTriggerRecord records")
         observed = tuple(item.case_id for item in self.cases)
         if len(set(observed)) != len(observed):
-            raise PilotResidualTriggerError(
-                "pilot residual trigger map case_ids must be unique"
-            )
+            raise PilotResidualTriggerError("pilot residual trigger map case_ids must be unique")
         if (
             isinstance(self.max_repair_slots, bool)
             or not isinstance(self.max_repair_slots, int)
             or self.max_repair_slots < 1
         ):
-            raise PilotResidualTriggerError(
-                "max_repair_slots must be a positive integer"
-            )
+            raise PilotResidualTriggerError("max_repair_slots must be a positive integer")
         object.__setattr__(
             self,
             "production_arm_id",
             _nonblank(self.production_arm_id, "production_arm_id"),
         )
-        object.__setattr__(
-            self, "interface", _nonblank(self.interface, "interface")
-        )
+        object.__setattr__(self, "interface", _nonblank(self.interface, "interface"))
         object.__setattr__(
             self,
             "schema_version",
             _nonblank(self.schema_version, "schema_version"),
         )
         if self.catalog_cid is not None:
-            object.__setattr__(
-                self, "catalog_cid", _nonblank(self.catalog_cid, "catalog_cid")
-            )
+            object.__setattr__(self, "catalog_cid", _nonblank(self.catalog_cid, "catalog_cid"))
         if self.policy_digest is not None:
             object.__setattr__(
                 self,
@@ -455,17 +411,12 @@ class PilotResidualTriggerMap:
 
     @property
     def meets_coverage_acceptance(self) -> bool:
-        return (
-            self.triggered_nonzero_pilot_count
-            >= MIN_NONZERO_PILOTS_WITH_TRIGGERS
-        )
+        return self.triggered_nonzero_pilot_count >= MIN_NONZERO_PILOTS_WITH_TRIGGERS
 
     def triggers_for(self, case_id: str) -> tuple[RepairTrigger, ...]:
         record = self.by_case_id().get(case_id)
         if record is None:
-            raise PilotResidualTriggerError(
-                f"unknown pilot case_id: {case_id!r}"
-            )
+            raise PilotResidualTriggerError(f"unknown pilot case_id: {case_id!r}")
         return record.triggers
 
     def to_dict(self) -> dict[str, object]:
@@ -476,9 +427,7 @@ class PilotResidualTriggerMap:
             "max_repair_slots": self.max_repair_slots,
             "meets_coverage_acceptance": self.meets_coverage_acceptance,
             "min_nonzero_pilots_with_triggers": MIN_NONZERO_PILOTS_WITH_TRIGGERS,
-            "nonzero_case_ids_with_triggers": list(
-                self.nonzero_case_ids_with_triggers
-            ),
+            "nonzero_case_ids_with_triggers": list(self.nonzero_case_ids_with_triggers),
             "policy_digest": self.policy_digest,
             "production_arm_id": self.production_arm_id,
             "schema_version": self.schema_version,
@@ -496,19 +445,11 @@ def project_case_trigger_record(
     """Build a per-case trigger projection receipt from residual forensics."""
 
     case = (
-        record
-        if isinstance(record, CaseResidualRecord)
-        else CaseResidualRecord.from_dict(record)
+        record if isinstance(record, CaseResidualRecord) else CaseResidualRecord.from_dict(record)
     )
-    projectable = [
-        facet
-        for facet in case.residuals
-        if residual_facet_is_projectable(facet)
-    ]
+    projectable = [facet for facet in case.residuals if residual_facet_is_projectable(facet)]
     skipped = [
-        facet.field_path
-        for facet in case.residuals
-        if not residual_facet_is_projectable(facet)
+        facet.field_path for facet in case.residuals if not residual_facet_is_projectable(facet)
     ]
     triggers = triggers_from_case_residual(
         case,
@@ -543,11 +484,7 @@ def project_pilot_residual_trigger_map(
     """
 
     del repo_root  # reserved for path overrides; catalog loader uses default
-    payload = (
-        dict(catalog)
-        if catalog is not None
-        else load_plateau_residual_catalog()
-    )
+    payload = dict(catalog) if catalog is not None else load_plateau_residual_catalog()
     resolved_policy = policy if policy is not None else SelectiveRepairPolicy()
     bound = (
         int(max_repair_slots)
@@ -594,14 +531,10 @@ def validate_pilot_trigger_coverage(
     """Fail closed when residual→trigger coverage is below acceptance."""
 
     if min_nonzero_with_triggers < 1:
-        raise PilotResidualTriggerError(
-            "min_nonzero_with_triggers must be positive"
-        )
+        raise PilotResidualTriggerError("min_nonzero_with_triggers must be positive")
     control = trigger_map.by_case_id().get(ZERO_RESIDUAL_CONTROL_CASE_ID)
     if control is not None and control.has_trigger:
-        raise PilotResidualTriggerError(
-            "zero-residual control must not emit triggers"
-        )
+        raise PilotResidualTriggerError("zero-residual control must not emit triggers")
     if trigger_map.triggered_nonzero_pilot_count < min_nonzero_with_triggers:
         raise PilotResidualTriggerError(
             "pilot residual trigger coverage "
@@ -655,9 +588,7 @@ def untriggered_fields_preserved(
         return False
 
     allowed = {item.path for item in triggers}
-    for rule_index, (left, right) in enumerate(
-        zip(baseline_ir.rules, candidate_ir.rules)
-    ):
+    for rule_index, (left, right) in enumerate(zip(baseline_ir.rules, candidate_ir.rules)):
         for field in RULE_FIELDS:
             if getattr(left, field) != getattr(right, field):
                 path = f"rules[{rule_index}].{field}"
@@ -696,16 +627,10 @@ class PilotResidualTriggerDetector:
             for item in triggers
         )
         if not all(isinstance(item, RepairTrigger) for item in normalized):
-            raise PilotResidualTriggerError(
-                "detector triggers must be RepairTrigger records"
-            )
+            raise PilotResidualTriggerError("detector triggers must be RepairTrigger records")
         self._triggers = normalized
-        self._case_id = (
-            _nonblank(case_id, "case_id") if case_id is not None else None
-        )
-        self._policy = (
-            policy if policy is not None else SelectiveRepairPolicy()
-        )
+        self._case_id = _nonblank(case_id, "case_id") if case_id is not None else None
+        self._policy = policy if policy is not None else SelectiveRepairPolicy()
 
     @property
     def case_id(self) -> str | None:
@@ -736,9 +661,7 @@ class CatalogPilotResidualTriggerDetector:
     3. Empty triggers (fail closed / no repair) when unresolved
     """
 
-    identity: Final = (
-        "CatalogPilotResidualTriggerDetector@1"
-    )
+    identity: Final = "CatalogPilotResidualTriggerDetector@1"
 
     def __init__(
         self,
@@ -749,8 +672,7 @@ class CatalogPilotResidualTriggerDetector:
     ) -> None:
         if isinstance(trigger_map, PilotResidualTriggerMap):
             mapping = {
-                case_id: record.triggers
-                for case_id, record in trigger_map.by_case_id().items()
+                case_id: record.triggers for case_id, record in trigger_map.by_case_id().items()
             }
         else:
             mapping = {
@@ -770,13 +692,9 @@ class CatalogPilotResidualTriggerDetector:
             }
         self._by_case = MappingProxyType(mapping)
         self._default_case_id = (
-            _nonblank(default_case_id, "default_case_id")
-            if default_case_id is not None
-            else None
+            _nonblank(default_case_id, "default_case_id") if default_case_id is not None else None
         )
-        self._policy = (
-            policy if policy is not None else SelectiveRepairPolicy()
-        )
+        self._policy = policy if policy is not None else SelectiveRepairPolicy()
 
     def detect(
         self,
@@ -804,9 +722,7 @@ def production_path_is_no_repair(arm_id: str | None = None) -> bool:
 
     target = arm_id if arm_id is not None else PRODUCTION_NO_REPAIR_ARM_ID
     return (
-        isinstance(target, str)
-        and "no_repair" in target
-        and target == PRODUCTION_NO_REPAIR_ARM_ID
+        isinstance(target, str) and "no_repair" in target and target == PRODUCTION_NO_REPAIR_ARM_ID
     )
 
 

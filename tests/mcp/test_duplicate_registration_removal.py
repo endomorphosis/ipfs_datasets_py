@@ -25,21 +25,21 @@ class TestServerRegistration:
         """
         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
 
-        with patch('ipfs_datasets_py.mcp_server.server.FastMCP'):
+        with patch("ipfs_datasets_py.mcp_server.server.FastMCP"):
             server = IPFSDatasetsMCPServer()
             asyncio.run(server.register_tools())
 
-            assert len(server.tools) == 4, \
-                f"Expected 4 meta-tools, got {len(server.tools)}"
+            assert len(server.tools) == 4, f"Expected 4 meta-tools, got {len(server.tools)}"
 
             expected_tools = {
                 "tools_list_categories",
                 "tools_list_tools",
                 "tools_get_schema",
-                "tools_dispatch"
+                "tools_dispatch",
             }
-            assert set(server.tools.keys()) == expected_tools, \
+            assert set(server.tools.keys()) == expected_tools, (
                 f"Expected meta-tools {expected_tools}, got {set(server.tools.keys())}"
+            )
 
     def test_no_duplicate_registrations(self):
         """
@@ -49,15 +49,14 @@ class TestServerRegistration:
         """
         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
 
-        with patch('ipfs_datasets_py.mcp_server.server.FastMCP'):
+        with patch("ipfs_datasets_py.mcp_server.server.FastMCP"):
             server = IPFSDatasetsMCPServer()
             asyncio.run(server.register_tools())
 
             tool_names = list(server.tools.keys())
             unique_names = set(tool_names)
 
-            assert len(tool_names) == len(unique_names), \
-                "Found duplicate tool registrations"
+            assert len(tool_names) == len(unique_names), "Found duplicate tool registrations"
 
     def test_hierarchical_system_available(self):
         """
@@ -70,15 +69,13 @@ class TestServerRegistration:
         manager = get_tool_manager()
 
         if manager is not None:
-            assert hasattr(manager, 'list_categories'), \
-                "Manager should have list_categories method"
-            assert hasattr(manager, 'list_tools'), \
-                "Manager should have list_tools method"
+            assert hasattr(manager, "list_categories"), "Manager should have list_categories method"
+            assert hasattr(manager, "list_tools"), "Manager should have list_tools method"
 
 
 class TestP2PAdapterWithHierarchical:
     """Test P2P adapter works with hierarchical tools."""
-    
+
     def test_adapter_discovers_hierarchical_tools(self):
         """
         GIVEN a P2P adapter with hierarchical-only server
@@ -87,7 +84,7 @@ class TestP2PAdapterWithHierarchical:
         """
         # GIVEN
         from ipfs_datasets_py.mcp_server.p2p_mcp_registry_adapter import P2PMCPRegistryAdapter
-        
+
         mock_server = Mock()
         mock_server.tools = {
             "tools_list_categories": Mock(),
@@ -95,24 +92,24 @@ class TestP2PAdapterWithHierarchical:
             "tools_get_schema": Mock(),
             "tools_dispatch": Mock(),
         }
-        
+
         adapter = P2PMCPRegistryAdapter(mock_server)
-        
+
         # WHEN
-        with patch.object(adapter, '_get_hierarchical_tools') as mock_hierarchical:
+        with patch.object(adapter, "_get_hierarchical_tools") as mock_hierarchical:
             mock_hierarchical.return_value = {
                 "test_tool_1": {"function": Mock(), "description": "Test 1"},
                 "test_tool_2": {"function": Mock(), "description": "Test 2"},
             }
-            
+
             tools = adapter.tools
-        
+
         # THEN
-        assert mock_hierarchical.called, \
+        assert mock_hierarchical.called, (
             "Should call _get_hierarchical_tools when only meta-tools present"
-        assert len(tools) == 2, \
-            f"Expected 2 tools discovered, got {len(tools)}"
-    
+        )
+        assert len(tools) == 2, f"Expected 2 tools discovered, got {len(tools)}"
+
     def test_hierarchical_tool_discovery_metadata(self):
         """
         GIVEN hierarchical tool discovery
@@ -122,23 +119,24 @@ class TestP2PAdapterWithHierarchical:
         # GIVEN
         from ipfs_datasets_py.mcp_server.p2p_mcp_registry_adapter import P2PMCPRegistryAdapter
         from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import get_tool_manager
-        
+
         mock_server = Mock()
         mock_server.tools = {"tools_dispatch": Mock()}
-        
+
         adapter = P2PMCPRegistryAdapter(mock_server)
-        
+
         # WHEN
         tools = adapter._get_hierarchical_tools()
-        
+
         # THEN
         if len(tools) > 0:
             # Check first tool has hierarchical metadata
             first_tool = list(tools.values())[0]
             assert "runtime_metadata" in first_tool
-            assert first_tool["runtime_metadata"].get("hierarchical") == True, \
+            assert first_tool["runtime_metadata"].get("hierarchical") == True, (
                 "Hierarchical tools should have hierarchical=True metadata"
-    
+            )
+
     def test_tool_callable_through_dispatch(self):
         """
         GIVEN a tool discovered through hierarchical system
@@ -147,37 +145,38 @@ class TestP2PAdapterWithHierarchical:
         """
         # GIVEN
         from ipfs_datasets_py.mcp_server.p2p_mcp_registry_adapter import P2PMCPRegistryAdapter
-        
+
         mock_server = Mock()
         mock_server.tools = {"tools_dispatch": Mock()}
-        
+
         adapter = P2PMCPRegistryAdapter(mock_server)
-        
+
         # WHEN - Create a simple mock for testing
         #  The actual hierarchical discovery requires asyncio which is complex to test
         # Instead, verify the wrapper pattern works
         tools = {}
-        
+
         # Simulate what _get_hierarchical_tools would return
         def make_wrapper():
             async def wrapper(**kwargs):
                 return {"result": "dispatched"}
+
             wrapper.__name__ = "test_tool"
             wrapper.__doc__ = "Test"
             return wrapper
-        
+
         fn = make_wrapper()
         tools["test_tool"] = {
             "function": fn,
             "description": "Test tool",
-            "runtime_metadata": {"hierarchical": True}
+            "runtime_metadata": {"hierarchical": True},
         }
-        
+
         # THEN
         assert "test_tool" in tools
         assert callable(tools["test_tool"]["function"])
         assert tools["test_tool"]["runtime_metadata"]["hierarchical"] == True
-    
+
     def test_no_flat_tools_dependency(self):
         """
         GIVEN a server with an empty tools dict (no tools registered yet)
@@ -193,7 +192,7 @@ class TestP2PAdapterWithHierarchical:
         adapter = P2PMCPRegistryAdapter(mock_server)
 
         # WHEN
-        with patch.object(adapter, '_get_hierarchical_tools') as mock_hierarchical:
+        with patch.object(adapter, "_get_hierarchical_tools") as mock_hierarchical:
             mock_hierarchical.return_value = {}
             tools = adapter.tools
 
@@ -204,7 +203,7 @@ class TestP2PAdapterWithHierarchical:
 
 class TestBackwardCompatibility:
     """Test backward compatibility with flat tools."""
-    
+
     def test_adapter_works_with_flat_tools(self):
         """
         GIVEN a server with flat tools (legacy)
@@ -213,7 +212,7 @@ class TestBackwardCompatibility:
         """
         # GIVEN
         from ipfs_datasets_py.mcp_server.p2p_mcp_registry_adapter import P2PMCPRegistryAdapter
-        
+
         mock_fn = Mock(__doc__="Test function")
         mock_server = Mock()
         mock_server.tools = {
@@ -223,19 +222,19 @@ class TestBackwardCompatibility:
             "flat_tool_4": mock_fn,
             "flat_tool_5": mock_fn,  # More than 4 = flat registration
         }
-        
+
         adapter = P2PMCPRegistryAdapter(mock_server)
-        
+
         # WHEN
-        with patch.object(adapter, '_get_hierarchical_tools') as mock_hierarchical:
+        with patch.object(adapter, "_get_hierarchical_tools") as mock_hierarchical:
             tools = adapter.tools
-        
+
         # THEN
-        assert not mock_hierarchical.called, \
+        assert not mock_hierarchical.called, (
             "Should not call hierarchical discovery with 5+ flat tools"
-        assert len(tools) == 5, \
-            f"Expected 5 flat tools, got {len(tools)}"
-    
+        )
+        assert len(tools) == 5, f"Expected 5 flat tools, got {len(tools)}"
+
     def test_adapter_works_with_hierarchical_tools(self):
         """
         GIVEN a server with only hierarchical tools (new)
@@ -244,29 +243,28 @@ class TestBackwardCompatibility:
         """
         # GIVEN
         from ipfs_datasets_py.mcp_server.p2p_mcp_registry_adapter import P2PMCPRegistryAdapter
-        
+
         mock_server = Mock()
         mock_server.tools = {
             "tools_list_categories": Mock(),
             "tools_dispatch": Mock(),
         }  # Only 2 meta-tools = hierarchical
-        
+
         adapter = P2PMCPRegistryAdapter(mock_server)
-        
+
         # WHEN
-        with patch.object(adapter, '_get_hierarchical_tools') as mock_hierarchical:
+        with patch.object(adapter, "_get_hierarchical_tools") as mock_hierarchical:
             mock_hierarchical.return_value = {"test": {}}
             tools = adapter.tools
-        
+
         # THEN
-        assert mock_hierarchical.called, \
-            "Should call hierarchical discovery with <=4 tools"
+        assert mock_hierarchical.called, "Should call hierarchical discovery with <=4 tools"
 
 
 @pytest.mark.slow
 class TestPerformanceImprovement:
     """Test performance improvements from duplicate registration removal."""
-    
+
     def test_startup_time_improved(self):
         """
         GIVEN server with hierarchical-only registration
@@ -276,7 +274,7 @@ class TestPerformanceImprovement:
         # This test would measure actual startup time
         # Marked as slow and skipped by default
         pytest.skip("Performance test - run manually with pytest -m slow")
-    
+
     def test_memory_usage_reduced(self):
         """
         GIVEN server with single registration path

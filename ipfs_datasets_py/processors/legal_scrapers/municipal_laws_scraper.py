@@ -3,6 +3,7 @@
 This tool scrapes municipal codes and local ordinances from various
 municipal government websites and legal databases.
 """
+
 import logging
 import time
 from typing import Dict, List, Optional, Any
@@ -39,17 +40,15 @@ MAJOR_CITIES = {
 
 
 async def search_municipal_codes(
-    city_name: Optional[str] = None,
-    keywords: Optional[str] = None,
-    limit: int = 100
+    city_name: Optional[str] = None, keywords: Optional[str] = None, limit: int = 100
 ) -> Dict[str, Any]:
     """Search municipal codes and ordinances.
-    
+
     Args:
         city_name: Name of city to search (e.g., "New York City", "Los Angeles")
         keywords: Search keywords
         limit: Maximum number of results
-    
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -60,7 +59,7 @@ async def search_municipal_codes(
     """
     try:
         logger.info(f"Searching municipal codes: city={city_name}, keywords={keywords}")
-        
+
         # Find matching city
         matching_city = None
         if city_name:
@@ -69,45 +68,42 @@ async def search_municipal_codes(
                 if city_lower in info["name"].lower():
                     matching_city = {"code": code, **info}
                     break
-        
+
         if not matching_city and city_name:
             return {
                 "status": "error",
                 "error": f"City '{city_name}' not found in database",
                 "ordinances": [],
-                "count": 0
+                "count": 0,
             }
-        
+
         # Placeholder search results
         ordinances = []
         if matching_city:
-            ordinances.append({
-                "ordinance_number": f"{matching_city['code']}-2024-001",
-                "title": f"Sample Municipal Ordinance - {matching_city['name']}",
-                "city": matching_city["name"],
-                "state": matching_city["state"],
-                "type": "Ordinance",
-                "enacted_date": datetime.now().strftime("%Y-%m-%d"),
-                "abstract": f"This is a placeholder municipal ordinance from {matching_city['name']}. Production version would fetch actual municipal codes.",
-                "url": f"https://library.municode.com/{matching_city['name'].lower().replace(' ', '-')}",
-            })
-        
+            ordinances.append(
+                {
+                    "ordinance_number": f"{matching_city['code']}-2024-001",
+                    "title": f"Sample Municipal Ordinance - {matching_city['name']}",
+                    "city": matching_city["name"],
+                    "state": matching_city["state"],
+                    "type": "Ordinance",
+                    "enacted_date": datetime.now().strftime("%Y-%m-%d"),
+                    "abstract": f"This is a placeholder municipal ordinance from {matching_city['name']}. Production version would fetch actual municipal codes.",
+                    "url": f"https://library.municode.com/{matching_city['name'].lower().replace(' ', '-')}",
+                }
+            )
+
         return {
             "status": "success",
             "ordinances": ordinances,
             "count": len(ordinances),
             "city": matching_city,
-            "note": "This is a placeholder implementation. Production version would query actual municipal code databases."
+            "note": "This is a placeholder implementation. Production version would query actual municipal code databases.",
         }
-        
+
     except Exception as e:
         logger.error(f"Municipal code search failed: {e}")
-        return {
-            "status": "error",
-            "error": str(e),
-            "ordinances": [],
-            "count": 0
-        }
+        return {"status": "error", "error": str(e), "ordinances": [], "count": 0}
 
 
 async def scrape_municipal_laws(
@@ -115,10 +111,10 @@ async def scrape_municipal_laws(
     output_format: str = "json",
     include_metadata: bool = True,
     rate_limit_delay: float = 2.0,
-    max_ordinances: Optional[int] = None
+    max_ordinances: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Scrape municipal codes and ordinances to build a structured dataset.
-    
+
     Args:
         cities: List of city codes or names to scrape (e.g., ["NYC", "LAX", "CHI"]).
                 If None or ["all"], scrapes major cities.
@@ -126,7 +122,7 @@ async def scrape_municipal_laws(
         include_metadata: Include ordinance metadata (enactment dates, amendments, etc.)
         rate_limit_delay: Delay between requests in seconds (default 2.0)
         max_ordinances: Maximum number of ordinances to scrape
-    
+
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -152,18 +148,18 @@ async def scrape_municipal_laws(
                         if city.lower() in info["name"].lower():
                             selected_cities.append(code)
                             break
-            
+
             if not selected_cities:
                 return {
                     "status": "error",
                     "error": "No valid cities specified",
                     "data": [],
-                    "metadata": {}
+                    "metadata": {},
                 }
-        
+
         logger.info(f"Starting municipal laws scraping for cities: {selected_cities}")
         start_time = time.time()
-        
+
         # Import required libraries
         try:
             import requests
@@ -173,30 +169,30 @@ async def scrape_municipal_laws(
                 "status": "error",
                 "error": f"Required library not available: {ie}. Install with: pip install requests beautifulsoup4",
                 "data": [],
-                "metadata": {}
+                "metadata": {},
             }
-        
+
         scraped_ordinances = []
         ordinances_count = 0
-        
+
         # Scrape each selected city
         for city_code in selected_cities:
             if max_ordinances and ordinances_count >= max_ordinances:
                 logger.info(f"Reached max_ordinances limit of {max_ordinances}")
                 break
-            
+
             city_info = MAJOR_CITIES[city_code]
             city_name = city_info["name"]
             state_code = city_info["state"]
-            
+
             logger.info(f"Scraping {city_code}: {city_name}, {state_code}")
-            
+
             # In production, this would scrape from:
             # - Municode Library (library.municode.com)
             # - American Legal Publishing (codelibrary.amlegal.com)
             # - Individual city websites
             # - State municipal leagues
-            
+
             # Placeholder data
             ordinance_data = {
                 "city_code": city_code,
@@ -218,17 +214,17 @@ async def scrape_municipal_laws(
                         "last_amended": "2024-01-15" if include_metadata else None,
                         "sponsor": "City Council" if include_metadata else None,
                     }
-                ]
+                ],
             }
-            
+
             scraped_ordinances.append(ordinance_data)
             ordinances_count += len(ordinance_data["ordinances"])
-            
+
             # Rate limiting
             time.sleep(rate_limit_delay)
-        
+
         elapsed_time = time.time() - start_time
-        
+
         metadata = {
             "cities_scraped": [MAJOR_CITIES[c]["name"] for c in selected_cities],
             "cities_count": len(selected_cities),
@@ -237,27 +233,24 @@ async def scrape_municipal_laws(
             "scraped_at": datetime.now().isoformat(),
             "sources": ["Municode Library", "American Legal Publishing", "City websites"],
             "rate_limit_delay": rate_limit_delay,
-            "include_metadata": include_metadata
+            "include_metadata": include_metadata,
         }
-        
-        logger.info(f"Completed municipal laws scraping: {ordinances_count} ordinances in {elapsed_time:.2f}s")
-        
+
+        logger.info(
+            f"Completed municipal laws scraping: {ordinances_count} ordinances in {elapsed_time:.2f}s"
+        )
+
         return {
             "status": "success",
             "data": scraped_ordinances,
             "metadata": metadata,
             "output_format": output_format,
-            "note": "This is a placeholder implementation. Production version would fetch actual data from municipal code databases."
+            "note": "This is a placeholder implementation. Production version would fetch actual data from municipal code databases.",
         }
-        
+
     except Exception as e:
         logger.error(f"Municipal laws scraping failed: {e}")
-        return {
-            "status": "error",
-            "error": str(e),
-            "data": [],
-            "metadata": {}
-        }
+        return {"status": "error", "error": str(e), "data": [], "metadata": {}}
 
 
 __all__ = [

@@ -133,20 +133,20 @@ from ipfs_datasets_py.processors.file_converter import FileConverter
 converter = FileConverter()
 
 # Or specify backend explicitly
-converter = FileConverter(backend='omni')  # Rich metadata
-converter = FileConverter(backend='markitdown')  # Fast async
-converter = FileConverter(backend='native')  # Native (Phase 2+)
+converter = FileConverter(backend="omni")  # Rich metadata
+converter = FileConverter(backend="markitdown")  # Fast async
+converter = FileConverter(backend="native")  # Native (Phase 2+)
 
 # Convert file (async)
-result = await converter.convert('document.pdf')
+result = await converter.convert("document.pdf")
 print(result.text)
 print(result.metadata)
 
 # Batch convert (async)
-results = await converter.convert_batch(['file1.pdf', 'file2.docx'])
+results = await converter.convert_batch(["file1.pdf", "file2.docx"])
 
 # Sync wrapper for convenience
-result_sync = converter.convert_sync('document.pdf')
+result_sync = converter.convert_sync("document.pdf")
 ```
 
 ---
@@ -158,34 +158,31 @@ result_sync = converter.convert_sync('document.pdf')
 ```python
 # In setup.py extras_require section
 
-extras_require={
+extras_require = {
     # Existing extras...
-    
     # File conversion support (Phase 1)
-    'file_conversion': [
-        'markitdown>=0.1.0',          # Microsoft's converter
-        'aiohttp>=3.8.0',              # Async HTTP
-        'playwright>=1.40.0',          # Web content
+    "file_conversion": [
+        "markitdown>=0.1.0",  # Microsoft's converter
+        "aiohttp>=3.8.0",  # Async HTTP
+        "playwright>=1.40.0",  # Web content
     ],
-    
-    'file_conversion_full': [
-        'markitdown>=0.1.0',
-        'aiohttp>=3.8.0',
-        'playwright>=1.40.0',
+    "file_conversion_full": [
+        "markitdown>=0.1.0",
+        "aiohttp>=3.8.0",
+        "playwright>=1.40.0",
         # omni_converter_mk2 dependencies (selective)
-        'pytesseract>=0.3.10',         # OCR for images
-        'python-docx>=0.8.11',         # Word documents
-        'openpyxl>=3.0.0',             # Excel
-        'PyPDF2>=3.0.0',               # PDF processing
-        'python-pptx>=0.6.21',         # PowerPoint
-        'beautifulsoup4>=4.11.0',      # HTML parsing
+        "pytesseract>=0.3.10",  # OCR for images
+        "python-docx>=0.8.11",  # Word documents
+        "openpyxl>=3.0.0",  # Excel
+        "PyPDF2>=3.0.0",  # PDF processing
+        "python-pptx>=0.6.21",  # PowerPoint
+        "beautifulsoup4>=4.11.0",  # HTML parsing
     ],
-    
     # All features
-    'all': [
+    "all": [
         # ... existing all deps ...
-        'markitdown>=0.1.0',
-        'aiohttp>=3.8.0',
+        "markitdown>=0.1.0",
+        "aiohttp>=3.8.0",
     ],
 }
 ```
@@ -223,43 +220,44 @@ from typing import Optional, Union, List, Literal
 from dataclasses import dataclass
 import asyncio
 
+
 @dataclass
 class ConversionResult:
     """Result of file conversion."""
+
     text: str
     metadata: dict
     backend: str
     success: bool
     error: Optional[str] = None
 
+
 class FileConverter:
     """
     Unified file converter with pluggable backends.
-    
+
     Phase 1: Uses omni_converter_mk2 and convert_to_txt_based_on_mime_type
     Phase 2+: Gradually adds native implementations
-    
+
     Examples:
         # Auto-select backend
         converter = FileConverter()
         result = await converter.convert('document.pdf')
-        
+
         # Specify backend
         converter = FileConverter(backend='markitdown')
         result = await converter.convert('file.docx')
-        
+
         # Batch processing
         results = await converter.convert_batch(['f1.pdf', 'f2.docx'])
     """
-    
+
     def __init__(
-        self,
-        backend: Literal['auto', 'omni', 'markitdown', 'native'] = 'auto',
-        **options
+        self, backend: Literal["auto", "omni", "markitdown", "native"] = "auto", **options
     ):
         """
         Initialize converter.
-        
+
         Args:
             backend: Which backend to use
                 - 'auto': Choose best based on requirements
@@ -271,103 +269,98 @@ class FileConverter:
         self.backend_name = backend
         self.options = options
         self._backend = None
-    
+
     def _get_backend(self):
         """Lazy-load backend on first use."""
         if self._backend is not None:
             return self._backend
-            
-        if self.backend_name == 'auto':
+
+        if self.backend_name == "auto":
             # Try markitdown first (fast, stable)
             try:
                 from .backends.markitdown_backend import MarkItDownBackend
+
                 self._backend = MarkItDownBackend(**self.options)
                 return self._backend
             except ImportError:
                 pass
-            
+
             # Fallback to omni
             try:
                 from .backends.omni_backend import OmniBackend
+
                 self._backend = OmniBackend(**self.options)
                 return self._backend
             except ImportError:
                 pass
-            
+
             # Last resort: native (Phase 2+)
             from .backends.native_backend import NativeBackend
+
             self._backend = NativeBackend(**self.options)
-            
-        elif self.backend_name == 'omni':
+
+        elif self.backend_name == "omni":
             from .backends.omni_backend import OmniBackend
+
             self._backend = OmniBackend(**self.options)
-            
-        elif self.backend_name == 'markitdown':
+
+        elif self.backend_name == "markitdown":
             from .backends.markitdown_backend import MarkItDownBackend
+
             self._backend = MarkItDownBackend(**self.options)
-            
-        elif self.backend_name == 'native':
+
+        elif self.backend_name == "native":
             from .backends.native_backend import NativeBackend
+
             self._backend = NativeBackend(**self.options)
-            
+
         return self._backend
-    
-    async def convert(
-        self,
-        file_path: Union[str, Path],
-        **kwargs
-    ) -> ConversionResult:
+
+    async def convert(self, file_path: Union[str, Path], **kwargs) -> ConversionResult:
         """
         Convert file to text asynchronously.
-        
+
         Args:
             file_path: Path to file to convert
             **kwargs: Backend-specific options
-            
+
         Returns:
             ConversionResult with text and metadata
         """
         backend = self._get_backend()
         return await backend.convert(file_path, **kwargs)
-    
-    def convert_sync(
-        self,
-        file_path: Union[str, Path],
-        **kwargs
-    ) -> ConversionResult:
+
+    def convert_sync(self, file_path: Union[str, Path], **kwargs) -> ConversionResult:
         """
         Convert file to text synchronously.
-        
+
         Convenience wrapper around async convert().
         """
         return asyncio.run(self.convert(file_path, **kwargs))
-    
+
     async def convert_batch(
-        self,
-        file_paths: List[Union[str, Path]],
-        max_concurrent: int = 5,
-        **kwargs
+        self, file_paths: List[Union[str, Path]], max_concurrent: int = 5, **kwargs
     ) -> List[ConversionResult]:
         """
         Convert multiple files concurrently.
-        
+
         Args:
             file_paths: List of files to convert
             max_concurrent: Maximum concurrent conversions
             **kwargs: Backend-specific options
-            
+
         Returns:
             List of ConversionResults
         """
         semaphore = asyncio.Semaphore(max_concurrent)
-        
+
         async def convert_with_semaphore(path):
             async with semaphore:
                 return await self.convert(path, **kwargs)
-        
+
         tasks = [convert_with_semaphore(p) for p in file_paths]
         return await asyncio.gather(*tasks, return_exceptions=True)
-    
+
     def get_supported_formats(self) -> List[str]:
         """Get list of supported file formats."""
         backend = self._get_backend()
@@ -385,66 +378,83 @@ from pathlib import Path
 from typing import Union
 from ..converter import ConversionResult
 
+
 class MarkItDownBackend:
     """Backend using convert_to_txt_based_on_mime_type."""
-    
+
     def __init__(self, **options):
         self.options = options
         self._converter = None
-    
+
     def _get_converter(self):
         """Lazy-load converter."""
         if self._converter is None:
             try:
                 # Try importing from submodule
                 import sys
-                sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'multimedia' / 'convert_to_txt_based_on_mime_type'))
+
+                sys.path.insert(
+                    0,
+                    str(
+                        Path(__file__).parent.parent.parent
+                        / "multimedia"
+                        / "convert_to_txt_based_on_mime_type"
+                    ),
+                )
                 from converter_system.conversion_pipeline import file_converter
+
                 self._converter = file_converter
             except ImportError:
                 # Try installed package
                 from markitdown import MarkItDown
+
                 self._converter = MarkItDown()
         return self._converter
-    
+
     async def convert(self, file_path: Union[str, Path], **kwargs) -> ConversionResult:
         """Convert file using MarkItDown."""
         try:
             converter = self._get_converter()
-            
+
             # Use MarkItDown directly (simple case)
-            if hasattr(converter, 'convert'):
+            if hasattr(converter, "convert"):
                 result = converter.convert(str(file_path))
                 return ConversionResult(
                     text=result.text_content,
-                    metadata={'title': result.title},
-                    backend='markitdown',
-                    success=True
+                    metadata={"title": result.title},
+                    backend="markitdown",
+                    success=True,
                 )
             else:
                 # Use full convert_to_txt pipeline
                 from converter_system.conversion_pipeline.file_unit import FileUnit
+
                 file_unit = FileUnit(file_path=Path(file_path))
                 converted = await converter(file_unit)
                 return ConversionResult(
-                    text=converted.data,
-                    metadata={},
-                    backend='convert_to_txt',
-                    success=True
+                    text=converted.data, metadata={}, backend="convert_to_txt", success=True
                 )
         except Exception as e:
             return ConversionResult(
-                text='',
-                metadata={},
-                backend='markitdown',
-                success=False,
-                error=str(e)
+                text="", metadata={}, backend="markitdown", success=False, error=str(e)
             )
-    
+
     def get_supported_formats(self):
         """Return supported formats."""
-        return ['pdf', 'docx', 'xlsx', 'pptx', 'html', 'xml', 
-                'jpg', 'png', 'gif', 'mp3', 'wav', 'mp4']
+        return [
+            "pdf",
+            "docx",
+            "xlsx",
+            "pptx",
+            "html",
+            "xml",
+            "jpg",
+            "png",
+            "gif",
+            "mp3",
+            "wav",
+            "mp4",
+        ]
 ```
 
 **File:** `ipfs_datasets_py/file_converter/backends/omni_backend.py`
@@ -456,51 +466,69 @@ from pathlib import Path
 from typing import Union
 from ..converter import ConversionResult
 
+
 class OmniBackend:
     """Backend using omni_converter_mk2."""
-    
+
     def __init__(self, **options):
         self.options = options
         self._converter = None
-    
+
     def _get_converter(self):
         """Lazy-load converter."""
         if self._converter is None:
             import sys
-            omni_path = Path(__file__).parent.parent.parent / 'multimedia' / 'omni_converter_mk2'
+
+            omni_path = Path(__file__).parent.parent.parent / "multimedia" / "omni_converter_mk2"
             sys.path.insert(0, str(omni_path))
             from interfaces import make_api
+
             self._converter = make_api()
         return self._converter
-    
+
     async def convert(self, file_path: Union[str, Path], **kwargs) -> ConversionResult:
         """Convert file using omni_converter_mk2."""
         try:
             converter = self._get_converter()
             result = converter.convert_file(str(file_path))
-            
+
             return ConversionResult(
-                text=result.content,
-                metadata=result.metadata,
-                backend='omni',
-                success=True
+                text=result.content, metadata=result.metadata, backend="omni", success=True
             )
         except Exception as e:
             return ConversionResult(
-                text='',
-                metadata={},
-                backend='omni',
-                success=False,
-                error=str(e)
+                text="", metadata={}, backend="omni", success=False, error=str(e)
             )
-    
+
     def get_supported_formats(self):
         """Return supported formats."""
-        return ['html', 'xml', 'txt', 'csv', 'ical',
-                'jpg', 'png', 'gif', 'webp', 'svg',
-                'mp3', 'wav', 'ogg', 'flac', 'aac',
-                'mp4', 'webm', 'avi', 'mkv', 'mov',
-                'pdf', 'json', 'docx', 'xlsx', 'zip']
+        return [
+            "html",
+            "xml",
+            "txt",
+            "csv",
+            "ical",
+            "jpg",
+            "png",
+            "gif",
+            "webp",
+            "svg",
+            "mp3",
+            "wav",
+            "ogg",
+            "flac",
+            "aac",
+            "mp4",
+            "webm",
+            "avi",
+            "mkv",
+            "mov",
+            "pdf",
+            "json",
+            "docx",
+            "xlsx",
+            "zip",
+        ]
 ```
 
 **File:** `ipfs_datasets_py/file_converter/backends/native_backend.py`
@@ -512,48 +540,42 @@ from pathlib import Path
 from typing import Union
 from ..converter import ConversionResult
 
+
 class NativeBackend:
     """Native implementation - gradually built out in Phase 2+."""
-    
+
     def __init__(self, **options):
         self.options = options
-    
+
     async def convert(self, file_path: Union[str, Path], **kwargs) -> ConversionResult:
         """Convert file using native implementation."""
         file_path = Path(file_path)
-        
+
         # Phase 2+: Implement native converters
         # For now, basic text file support
-        if file_path.suffix.lower() in ['.txt', '.md', '.rst']:
+        if file_path.suffix.lower() in [".txt", ".md", ".rst"]:
             try:
                 text = file_path.read_text()
                 return ConversionResult(
-                    text=text,
-                    metadata={'format': file_path.suffix},
-                    backend='native',
-                    success=True
+                    text=text, metadata={"format": file_path.suffix}, backend="native", success=True
                 )
             except Exception as e:
                 return ConversionResult(
-                    text='',
-                    metadata={},
-                    backend='native',
-                    success=False,
-                    error=str(e)
+                    text="", metadata={}, backend="native", success=False, error=str(e)
                 )
-        
+
         return ConversionResult(
-            text='',
+            text="",
             metadata={},
-            backend='native',
+            backend="native",
             success=False,
-            error=f'Format {file_path.suffix} not yet implemented in native backend'
+            error=f"Format {file_path.suffix} not yet implemented in native backend",
         )
-    
+
     def get_supported_formats(self):
         """Return supported formats."""
         # Phase 2+: Expand this list as we implement
-        return ['txt', 'md', 'rst']
+        return ["txt", "md", "rst"]
 ```
 
 ---
@@ -568,7 +590,7 @@ from ipfs_datasets_py.processors.file_converter import FileConverter
 converter = FileConverter()
 
 # Convert a file
-result = await converter.convert('document.pdf')
+result = await converter.convert("document.pdf")
 print(f"Text: {result.text[:200]}...")
 print(f"Backend used: {result.backend}")
 ```
@@ -582,12 +604,9 @@ converter = FileConverter()
 graph = GraphRAG()
 
 # Convert and add to knowledge graph
-result = await converter.convert('research_paper.pdf')
+result = await converter.convert("research_paper.pdf")
 if result.success:
-    await graph.add_document(
-        result.text,
-        metadata=result.metadata
-    )
+    await graph.add_document(result.text, metadata=result.metadata)
 ```
 
 ### Example 3: Batch Processing
@@ -598,7 +617,7 @@ from pathlib import Path
 converter = FileConverter()
 
 # Find all PDFs
-pdf_files = list(Path('documents/').rglob('*.pdf'))
+pdf_files = list(Path("documents/").rglob("*.pdf"))
 
 # Convert in batches
 results = await converter.convert_batch(pdf_files, max_concurrent=5)
@@ -615,13 +634,13 @@ print(f"Converted: {len(successful)}/{len(results)}")
 from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Use specific backend for rich metadata
-omni_converter = FileConverter(backend='omni')
-result = await omni_converter.convert('document.pdf')
+omni_converter = FileConverter(backend="omni")
+result = await omni_converter.convert("document.pdf")
 print(result.metadata)  # Rich metadata
 
 # Use specific backend for speed
-fast_converter = FileConverter(backend='markitdown')
-result = await fast_converter.convert('document.pdf')
+fast_converter = FileConverter(backend="markitdown")
+result = await fast_converter.convert("document.pdf")
 print(result.text)  # Fast conversion
 ```
 
@@ -672,32 +691,35 @@ print(result.text)  # Fast conversion
 import pytest
 from ipfs_datasets_py.processors.file_converter import FileConverter
 
+
 @pytest.mark.asyncio
 async def test_basic_conversion():
     """Test basic file conversion."""
     converter = FileConverter()
-    result = await converter.convert('test_data/sample.txt')
+    result = await converter.convert("test_data/sample.txt")
     assert result.success
     assert len(result.text) > 0
+
 
 @pytest.mark.asyncio
 async def test_backend_selection():
     """Test explicit backend selection."""
     # MarkItDown backend
-    converter1 = FileConverter(backend='markitdown')
-    result1 = await converter1.convert('test_data/sample.pdf')
-    assert result1.backend == 'markitdown'
-    
+    converter1 = FileConverter(backend="markitdown")
+    result1 = await converter1.convert("test_data/sample.pdf")
+    assert result1.backend == "markitdown"
+
     # Omni backend
-    converter2 = FileConverter(backend='omni')
-    result2 = await converter2.convert('test_data/sample.pdf')
-    assert result2.backend == 'omni'
+    converter2 = FileConverter(backend="omni")
+    result2 = await converter2.convert("test_data/sample.pdf")
+    assert result2.backend == "omni"
+
 
 @pytest.mark.asyncio
 async def test_batch_conversion():
     """Test batch processing."""
     converter = FileConverter()
-    files = ['file1.txt', 'file2.txt', 'file3.txt']
+    files = ["file1.txt", "file2.txt", "file3.txt"]
     results = await converter.convert_batch(files)
     assert len(results) == 3
 ```

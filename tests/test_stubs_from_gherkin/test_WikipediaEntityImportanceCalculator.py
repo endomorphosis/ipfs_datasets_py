@@ -18,13 +18,19 @@ def wikipediaentityimportancecalculator_instance():
     try:
         instance = WikipediaEntityImportanceCalculator()
         if instance is None:
-            raise FixtureError("Failed to create WikipediaEntityImportanceCalculator instance: instance is None")
+            raise FixtureError(
+                "Failed to create WikipediaEntityImportanceCalculator instance: instance is None"
+            )
         return instance
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture wikipediaentityimportancecalculator_instance: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture wikipediaentityimportancecalculator_instance: {e}"
+        ) from e
 
 
-def test_initialize_with_default_configuration_entity_importance_cache_is_empty(wikipediaentityimportancecalculator_instance):
+def test_initialize_with_default_configuration_entity_importance_cache_is_empty(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Initialize with default configuration entity_importance_cache is empty
 
@@ -36,15 +42,17 @@ def test_initialize_with_default_configuration_entity_importance_cache_is_empty(
     """
     calculator = wikipediaentityimportancecalculator_instance
     expected_length = 0
-    
+
     # When: the calculator is initialized (done in fixture)
     actual_length = len(calculator.entity_importance_cache)
-    
+
     # Then: entity_importance_cache is empty
     assert actual_length == expected_length, f"expected {expected_length}, got {actual_length}"
 
 
-def test_initialize_with_default_configuration_feature_weights_contains_connection_count_as_03(wikipediaentityimportancecalculator_instance):
+def test_initialize_with_default_configuration_feature_weights_contains_connection_count_as_03(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Initialize with default configuration feature_weights contains connection_count as 0.3
 
@@ -57,15 +65,17 @@ def test_initialize_with_default_configuration_feature_weights_contains_connecti
     calculator = wikipediaentityimportancecalculator_instance
     feature_name = "connection_count"
     expected_weight = 0.3
-    
+
     # When: the calculator is initialized (done in fixture)
     actual_weight = calculator.feature_weights.get(feature_name)
-    
+
     # Then: feature_weights contains connection_count as 0.3
     assert actual_weight == expected_weight, f"expected {expected_weight}, got {actual_weight}"
 
 
-def test_initialize_with_default_configuration_feature_weights_contains_reference_count_as_02(wikipediaentityimportancecalculator_instance):
+def test_initialize_with_default_configuration_feature_weights_contains_reference_count_as_02(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Initialize with default configuration feature_weights contains reference_count as 0.2
 
@@ -78,15 +88,17 @@ def test_initialize_with_default_configuration_feature_weights_contains_referenc
     calculator = wikipediaentityimportancecalculator_instance
     feature_name = "reference_count"
     expected_weight = 0.2
-    
+
     # When: the calculator is initialized (done in fixture)
     actual_weight = calculator.feature_weights.get(feature_name)
-    
+
     # Then: feature_weights contains reference_count as 0.2
     assert actual_weight == expected_weight, f"expected {expected_weight}, got {actual_weight}"
 
 
-def test_initialize_with_default_configuration_feature_weights_contains_category_importance_as_02(wikipediaentityimportancecalculator_instance):
+def test_initialize_with_default_configuration_feature_weights_contains_category_importance_as_02(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Initialize with default configuration feature_weights contains category_importance as 0.2
 
@@ -99,15 +111,17 @@ def test_initialize_with_default_configuration_feature_weights_contains_category
     calculator = wikipediaentityimportancecalculator_instance
     feature_name = "category_importance"
     expected_weight = 0.2
-    
+
     # When: the calculator is initialized (done in fixture)
     actual_weight = calculator.feature_weights.get(feature_name)
-    
+
     # Then: feature_weights contains category_importance as 0.2
     assert actual_weight == expected_weight, f"expected {expected_weight}, got {actual_weight}"
 
 
-def test_initialize_with_default_configuration_feature_weights_contains_explicitness_as_015(wikipediaentityimportancecalculator_instance):
+def test_initialize_with_default_configuration_feature_weights_contains_explicitness_as_015(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Initialize with default configuration feature_weights contains explicitness as 0.15
 
@@ -120,15 +134,17 @@ def test_initialize_with_default_configuration_feature_weights_contains_explicit
     calculator = wikipediaentityimportancecalculator_instance
     feature_name = "explicitness"
     expected_weight = 0.15
-    
+
     # When: the calculator is initialized (done in fixture)
     actual_weight = calculator.feature_weights.get(feature_name)
-    
+
     # Then: feature_weights contains explicitness as 0.15
     assert actual_weight == expected_weight, f"expected {expected_weight}, got {actual_weight}"
 
 
-def test_initialize_with_default_configuration_feature_weights_contains_recency_as_015(wikipediaentityimportancecalculator_instance):
+def test_initialize_with_default_configuration_feature_weights_contains_recency_as_015(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Initialize with default configuration feature_weights contains recency as 0.15
 
@@ -141,15 +157,17 @@ def test_initialize_with_default_configuration_feature_weights_contains_recency_
     calculator = wikipediaentityimportancecalculator_instance
     feature_name = "recency"
     expected_weight = 0.15
-    
+
     # When: the calculator is initialized (done in fixture)
     actual_weight = calculator.feature_weights.get(feature_name)
-    
+
     # Then: feature_weights contains recency as 0.15
     assert actual_weight == expected_weight, f"expected {expected_weight}, got {actual_weight}"
 
 
-def test_calculate_importance_for_entity_with_connections_importance_score_is_between_00_and_10(wikipediaentityimportancecalculator_instance):
+def test_calculate_importance_for_entity_with_connections_importance_score_is_between_00_and_10(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Calculate importance for entity with connections importance score is between 0.0 and 1.0
 
@@ -172,20 +190,22 @@ def test_calculate_importance_for_entity_with_connections_importance_score_is_be
         "references": [],
         "categories": [],
         "mention_count": 0,
-        "last_modified": 1693958400.0
+        "last_modified": 1693958400.0,
     }
     min_value = 0.0
     max_value = 1.0
-    
+
     # When: calculate_entity_importance is called
     result = calculator.calculate_entity_importance(entity_data)
     actual_in_range = min_value <= result <= max_value
-    
+
     # Then: importance score is between 0.0 and 1.0
     assert actual_in_range, f"expected value between {min_value} and {max_value}, got {result}"
 
 
-def test_calculate_importance_for_entity_with_connections_importance_score_reflects_connection_count(wikipediaentityimportancecalculator_instance):
+def test_calculate_importance_for_entity_with_connections_importance_score_reflects_connection_count(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Calculate importance for entity with connections importance score reflects connection count
 
@@ -208,18 +228,20 @@ def test_calculate_importance_for_entity_with_connections_importance_score_refle
         "references": [],
         "categories": [],
         "mention_count": 0,
-        "last_modified": 1693958400.0
+        "last_modified": 1693958400.0,
     }
-    
+
     # When: calculate_entity_importance is called
     result = calculator.calculate_entity_importance(entity_data)
     actual_greater_than_zero = result > 0
-    
+
     # Then: importance score reflects connection count
     assert actual_greater_than_zero, f"expected result > 0, got {result}"
 
 
-def test_calculate_importance_for_entity_with_references_importance_score_is_between_00_and_10(wikipediaentityimportancecalculator_instance):
+def test_calculate_importance_for_entity_with_references_importance_score_is_between_00_and_10(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Calculate importance for entity with references importance score is between 0.0 and 1.0
 
@@ -241,20 +263,22 @@ def test_calculate_importance_for_entity_with_references_importance_score_is_bet
         "references": ["ref1", "ref2", "ref3", "ref4", "ref5"],
         "categories": [],
         "mention_count": 0,
-        "last_modified": 1693958400.0
+        "last_modified": 1693958400.0,
     }
     min_value = 0.0
     max_value = 1.0
-    
+
     # When: calculate_entity_importance is called
     result = calculator.calculate_entity_importance(entity_data)
     actual_in_range = min_value <= result <= max_value
-    
+
     # Then: importance score is between 0.0 and 1.0
     assert actual_in_range, f"expected value between {min_value} and {max_value}, got {result}"
 
 
-def test_calculate_importance_for_entity_with_references_importance_score_reflects_reference_count(wikipediaentityimportancecalculator_instance):
+def test_calculate_importance_for_entity_with_references_importance_score_reflects_reference_count(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Calculate importance for entity with references importance score reflects reference count
 
@@ -276,18 +300,20 @@ def test_calculate_importance_for_entity_with_references_importance_score_reflec
         "references": ["ref1", "ref2", "ref3", "ref4", "ref5"],
         "categories": [],
         "mention_count": 0,
-        "last_modified": 1693958400.0
+        "last_modified": 1693958400.0,
     }
-    
+
     # When: calculate_entity_importance is called
     result = calculator.calculate_entity_importance(entity_data)
     actual_greater_than_zero = result > 0
-    
+
     # Then: importance score reflects reference count
     assert actual_greater_than_zero, f"expected result > 0, got {result}"
 
 
-def test_calculate_importance_with_category_weights_importance_score_reflects_category_importance(wikipediaentityimportancecalculator_instance):
+def test_calculate_importance_with_category_weights_importance_score_reflects_category_importance(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Calculate importance with category weights importance score reflects category importance
 
@@ -310,19 +336,21 @@ def test_calculate_importance_with_category_weights_importance_score_reflects_ca
         "references": [],
         "categories": ["Physics", "Chemistry"],
         "mention_count": 0,
-        "last_modified": 1693958400.0
+        "last_modified": 1693958400.0,
     }
     category_weights = {"Physics": 0.9, "Chemistry": 0.8}
-    
+
     # When: calculate_entity_importance is called with category_weights
     result = calculator.calculate_entity_importance(entity_data, category_weights)
     actual_greater_than_zero = result > 0
-    
+
     # Then: importance score reflects category importance
     assert actual_greater_than_zero, f"expected result > 0, got {result}"
 
 
-def test_calculate_importance_with_category_weights_importance_score_is_between_00_and_10(wikipediaentityimportancecalculator_instance):
+def test_calculate_importance_with_category_weights_importance_score_is_between_00_and_10(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Calculate importance with category weights importance score is between 0.0 and 1.0
 
@@ -345,21 +373,23 @@ def test_calculate_importance_with_category_weights_importance_score_is_between_
         "references": [],
         "categories": ["Physics", "Chemistry"],
         "mention_count": 0,
-        "last_modified": 1693958400.0
+        "last_modified": 1693958400.0,
     }
     category_weights = {"Physics": 0.9, "Chemistry": 0.8}
     min_value = 0.0
     max_value = 1.0
-    
+
     # When: calculate_entity_importance is called with category_weights
     result = calculator.calculate_entity_importance(entity_data, category_weights)
     actual_in_range = min_value <= result <= max_value
-    
+
     # Then: importance score is between 0.0 and 1.0
     assert actual_in_range, f"expected value between {min_value} and {max_value}, got {result}"
 
 
-def test_calculate_importance_with_mention_count_importance_score_reflects_explicitness(wikipediaentityimportancecalculator_instance):
+def test_calculate_importance_with_mention_count_importance_score_reflects_explicitness(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Calculate importance with mention count importance score reflects explicitness
 
@@ -376,7 +406,9 @@ def test_calculate_importance_with_mention_count_importance_score_reflects_expli
     pass
 
 
-def test_calculate_importance_with_mention_count_importance_score_is_between_00_and_10(wikipediaentityimportancecalculator_instance):
+def test_calculate_importance_with_mention_count_importance_score_is_between_00_and_10(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Calculate importance with mention count importance score is between 0.0 and 1.0
 
@@ -393,7 +425,9 @@ def test_calculate_importance_with_mention_count_importance_score_is_between_00_
     pass
 
 
-def test_calculate_importance_with_recency_importance_score_reflects_recency(wikipediaentityimportancecalculator_instance):
+def test_calculate_importance_with_recency_importance_score_reflects_recency(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Calculate importance with recency importance score reflects recency
 
@@ -410,7 +444,9 @@ def test_calculate_importance_with_recency_importance_score_reflects_recency(wik
     pass
 
 
-def test_calculate_importance_with_recency_importance_score_is_between_00_and_10(wikipediaentityimportancecalculator_instance):
+def test_calculate_importance_with_recency_importance_score_is_between_00_and_10(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Calculate importance with recency importance score is between 0.0 and 1.0
 
@@ -444,7 +480,9 @@ def test_calculate_importance_uses_cache(wikipediaentityimportancecalculator_ins
     pass
 
 
-def test_calculate_importance_for_entity_without_optional_fields_importance_score_is_between_00_and_10(wikipediaentityimportancecalculator_instance):
+def test_calculate_importance_for_entity_without_optional_fields_importance_score_is_between_00_and_10(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Calculate importance for entity without optional fields importance score is between 0.0 and 1.0
 
@@ -460,7 +498,9 @@ def test_calculate_importance_for_entity_without_optional_fields_importance_scor
     pass
 
 
-def test_calculate_importance_for_entity_without_optional_fields_default_values_are_used_for_missing_fields(wikipediaentityimportancecalculator_instance):
+def test_calculate_importance_for_entity_without_optional_fields_default_values_are_used_for_missing_fields(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Calculate importance for entity without optional fields default values are used for missing fields
 
@@ -476,7 +516,9 @@ def test_calculate_importance_for_entity_without_optional_fields_default_values_
     pass
 
 
-def test_rank_entities_by_importance_first_entity_in_result_is_entity_3(wikipediaentityimportancecalculator_instance):
+def test_rank_entities_by_importance_first_entity_in_result_is_entity_3(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Rank entities by importance first entity in result is entity_3
 
@@ -495,7 +537,9 @@ def test_rank_entities_by_importance_first_entity_in_result_is_entity_3(wikipedi
     pass
 
 
-def test_rank_entities_by_importance_second_entity_in_result_is_entity_1(wikipediaentityimportancecalculator_instance):
+def test_rank_entities_by_importance_second_entity_in_result_is_entity_1(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Rank entities by importance second entity in result is entity_1
 
@@ -514,7 +558,9 @@ def test_rank_entities_by_importance_second_entity_in_result_is_entity_1(wikiped
     pass
 
 
-def test_rank_entities_by_importance_third_entity_in_result_is_entity_2(wikipediaentityimportancecalculator_instance):
+def test_rank_entities_by_importance_third_entity_in_result_is_entity_2(
+    wikipediaentityimportancecalculator_instance,
+):
     """
     Scenario: Rank entities by importance third entity in result is entity_2
 
@@ -566,4 +612,3 @@ def test_rank_empty_entities_list(wikipediaentityimportancecalculator_instance):
         result is empty list
     """
     pass
-

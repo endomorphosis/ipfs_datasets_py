@@ -8,10 +8,27 @@ import hashlib
 import logging
 import os
 from pathlib import Path
-from typing import Annotated, Any, AsyncGenerator, Callable, ClassVar, Generator, Iterator, Optional, Self
+from typing import (
+    Annotated,
+    Any,
+    AsyncGenerator,
+    Callable,
+    ClassVar,
+    Generator,
+    Iterator,
+    Optional,
+    Self,
+)
 
 
-from pydantic import AfterValidator, BaseModel, computed_field, Field, field_validator, ValidationError
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    computed_field,
+    Field,
+    field_validator,
+    ValidationError,
+)
 
 
 from external_interface.file_paths_manager.supported_mime_types import (
@@ -20,7 +37,7 @@ from external_interface.file_paths_manager.supported_mime_types import (
     SupportedAudioTypes,
     SupportedImageTypes,
     SupportedTextTypes,
-    SupportedVideoTypes
+    SupportedVideoTypes,
 )
 
 from pydantic_models.configs import Configs
@@ -31,6 +48,7 @@ from pydantic_models.types.valid_path import ValidPath
 
 from utils.common.get_cid import get_cid
 from utils.common.anyio_queues import AnyioQueue
+
 
 class FilePathsManager:
     """Manages file paths and their metadata for batch processing operations.
@@ -63,7 +81,7 @@ class FilePathsManager:
         comparison_pipeline (List[ComparisonFunction]): Ordered list of comparison functions
         logger (logging.Logger): Logger instance
         _executor (ThreadPoolExecutor): Thread pool for concurrent operations
-    
+
     Methods:
         __init__: Initialize the manager with paths and configuration
         __aenter__: Async Context manager entry
@@ -80,17 +98,17 @@ class FilePathsManager:
         ...         needs_processing = fpm.requires_processing(file)
         ...         if needs_processing:
         ...             fpm.extract_metadata_queue.put(file)
-        ... 
+        ...
         ...      async for file_path_and_metadata in extract_metadata():
         ...         fpm.output_queue.put(file_path_and_metadata)
-        ... 
+        ...
         ...      async for batch in fpm.output_queue:
                     fpm.send_to_external_file_manager(batch)
     """
 
     def __init__(self, configs: Configs) -> None:
         """Initialize the FilePathsManager.
-        
+
         Args:
             configs: A configuration object
             input_dir: Root directory to search for files
@@ -127,8 +145,7 @@ class FilePathsManager:
         #     pass
         print("FilePathsManager initialized")
 
-
-    async def __aenter__(self) -> 'FilePathsManager':
+    async def __aenter__(self) -> "FilePathsManager":
         """Enter context manager, initializing resources.
 
         Returns:
@@ -140,7 +157,6 @@ class FilePathsManager:
             ...         process_file(file)
         """
         return await self
-
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit context manager, ensuring cleanup.
@@ -157,7 +173,6 @@ class FilePathsManager:
         """
         return await self.cleanup()
 
-
     def scan_for_files(self) -> Generator[Path, None, None]:
         """
         Scan the input directory for files.
@@ -166,7 +181,7 @@ class FilePathsManager:
         Yields:
             Path: A Path object for a file in the input directory.
         """
-        for path in self._input_folder.rglob('*'):
+        for path in self._input_folder.rglob("*"):
             try:
                 # Only yield files, not directories or symlinks
                 if path.is_file() and not path.is_symlink():
@@ -174,7 +189,6 @@ class FilePathsManager:
             except Exception as e:
                 self._logger.error(f"Error scanning input directory: {e}")
                 raise e
-
 
     async def get_inputs(self) -> None:
         """Validate paths coming in from the input directory
@@ -194,20 +208,19 @@ class FilePathsManager:
             ...         fpm.extract_metadata_queue.task_done()
         """
         for file_path in self.scan_for_files():
-            try: 
+            try:
                 validated_path = FilePath(file_path=file_path)
                 await self.extract_metadata_queue.put(validated_path)
                 print(f"Valid file path: {validated_path}")
             except ValidationError as e:
                 self._logger.error(f"Invalid file path: {e}")
 
-
     async def extract_metadata(self) -> None:
         """Extract both basic and content-based metadata from a file.
-        
+
         Returns:
             None: The result is that the file_path is put in the processing_queue.
-        
+
         Example Output:
             >>> async with FilePathsManager(configs) as fpm:
             ...     async for path in fpm.get_inputs():
@@ -220,14 +233,14 @@ class FilePathsManager:
             file_path: FilePath = await self.extract_metadata_queue.get()
             try:
                 file_path_and_metadata = FilePathAndMetadata(
-                    max_program_memory=self._max_program_memory,
-                    file_path=file_path
+                    max_program_memory=self._max_program_memory, file_path=file_path
                 )
                 await self.processing_queue.put(file_path_and_metadata)
                 self.extract_metadata_queue.task_done()
             except ValidationError as e:
-                self._logger.error(f"Could not create FilePathAndMetadata object for '{file_path.file_path}': {e}")
-
+                self._logger.error(
+                    f"Could not create FilePathAndMetadata object for '{file_path.file_path}': {e}"
+                )
 
     def requires_processing(self, input_path: FilePathAndMetadata) -> bool:
         """Determine if a file requires processing based on whether
@@ -264,20 +277,23 @@ class FilePathsManager:
 
             # If input file is newer, it needs processing
             if input_timestamp > output_timestamp:
-                self._logger.debug(f"input_timestamp is newer than the output_timestamp, file needs processing")
+                self._logger.debug(
+                    f"input_timestamp is newer than the output_timestamp, file needs processing"
+                )
                 return True
             else:
-                self._logger.debug(f"input_timestamp is older than the output timestamp, file does not need processing")
+                self._logger.debug(
+                    f"input_timestamp is older than the output timestamp, file does not need processing"
+                )
                 return False
         else:
             self._logger.debug(f"Output file does not exist, file needs processing")
             # If the file doesn't exist in the output folder, it needs processing
             return True
 
-
     async def make_batch(self) -> None:
         """
-        Package the file paths currently in the processing_queue into batches, 
+        Package the file paths currently in the processing_queue into batches,
             and then put them into the output_queue.
 
         Example:
@@ -286,16 +302,15 @@ class FilePathsManager:
             ...         input_path,
             ...         output_path
             ...     )
-            ...    
+            ...
         """
         # TODO Might have to move these back inside the loop.
-        # We *want* this to loop endlessly, we just need to make sure that we don't 
+        # We *want* this to loop endlessly, we just need to make sure that we don't
         await self.get_inputs()
         await self.extract_metadata()
 
         batch = []
         while not self.processing_queue.empty():
-
             input_path = await self.processing_queue.get()
 
             if self.requires_processing(input_path):
@@ -308,10 +323,8 @@ class FilePathsManager:
         if batch:
             await self.output_queue.put(batch)
 
-
-    def __aiter__(self) -> 'FilePathsManager':
+    def __aiter__(self) -> "FilePathsManager":
         return self
-
 
     async def __anext__(self) -> list[FilePathAndMetadata]:
         """
@@ -321,7 +334,6 @@ class FilePathsManager:
             return await self.output_queue.get()
         else:
             raise StopAsyncIteration
-
 
     async def cleanup(self) -> None:
         """Clean up resources, ensuring proper release of system resources.
@@ -339,5 +351,7 @@ class FilePathsManager:
         """
         if self._duck_db:
             for input_path in self.processing_queue:
-                self._duck_db.execute("INSERT INTO file_paths (input_path) VALUES (?)", (input_path,))
+                self._duck_db.execute(
+                    "INSERT INTO file_paths (input_path) VALUES (?)", (input_path,)
+                )
                 self._duck_db.close()

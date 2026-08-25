@@ -51,7 +51,7 @@ class Entity:
         name: str = "",
         properties: Optional[Dict[str, Any]] = None,
         confidence: float = 1.0,
-        source_text: Optional[str] = None
+        source_text: Optional[str] = None,
     ):
         """
         Initialize an entity.
@@ -85,11 +85,11 @@ class Entity:
             "name": self.name,
             "properties": self.properties,
             "confidence": self.confidence,
-            "source_text": self.source_text
+            "source_text": self.source_text,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Entity':
+    def from_dict(cls, data: Dict[str, Any]) -> "Entity":
         """
         Create entity from dictionary representation.
 
@@ -105,7 +105,7 @@ class Entity:
             name=data.get("name", ""),
             properties=data.get("properties", {}),
             confidence=data.get("confidence", 1.0),
-            source_text=data.get("source_text")
+            source_text=data.get("source_text"),
         )
         entity.cid = data.get("cid")
         return entity
@@ -165,11 +165,11 @@ class Relationship:
         self,
         relationship_id: Optional[RelationshipID] = None,
         relationship_type: str = "related_to",
-        source: Union['Entity', EntityID, None] = None,
-        target: Union['Entity', EntityID, None] = None,
+        source: Union["Entity", EntityID, None] = None,
+        target: Union["Entity", EntityID, None] = None,
         properties: Optional[Dict[str, Any]] = None,
         confidence: float = 1.0,
-        source_text: Optional[str] = None
+        source_text: Optional[str] = None,
     ):
         """
         Initialize a relationship.
@@ -216,11 +216,11 @@ class Relationship:
             "target_id": self.target_id,
             "properties": self.properties,
             "confidence": self.confidence,
-            "source_text": self.source_text
+            "source_text": self.source_text,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Relationship':
+    def from_dict(cls, data: Dict[str, Any]) -> "Relationship":
         """
         Create relationship from dictionary representation.
 
@@ -237,7 +237,7 @@ class Relationship:
             target=data.get("target_id"),
             properties=data.get("properties", {}),
             confidence=data.get("confidence", 1.0),
-            source_text=data.get("source_text")
+            source_text=data.get("source_text"),
         )
         relationship.cid = data.get("cid")
         return relationship

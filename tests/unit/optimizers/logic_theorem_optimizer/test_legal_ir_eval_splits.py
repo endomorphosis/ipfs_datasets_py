@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -10,9 +11,11 @@ import pytest
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_eval_splits import (
     CANARY_SPLIT,
     CODEX_TODO_PROJECTION_OPERATION,
+    DECLARED_HOLDOUTS,
     EXTERNAL_TEST_SPLIT,
     HOLDOUT_SPLIT,
     HPARAM_SELECTION_OPERATION,
+    IR_SPLIT_MANIFEST_SCHEMA,
     JURISDICTION_SPLIT,
     REPRESENTATION_PROMOTION_OPERATION,
     STATUTE_FAMILY_SPLIT,
@@ -25,12 +28,16 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_eval_splits im
     LegalIRSplitLeakageError,
     LegalIRSplitManifest,
     LegalIRSplitPolicyError,
+    build_ir_campaign_splits,
     build_legal_ir_eval_splits,
+    campaign_samples_from_corpus_root,
+    load_and_seal_corpus_splits,
     require_codex_todo_projection_split,
     require_hparam_selection_split,
     require_legal_ir_split_guard,
     require_representation_promotion_split,
     require_training_split,
+    seal_ir_campaign_splits,
     split_guard_blocks_operation,
     validate_legal_ir_eval_splits,
 )
@@ -43,6 +50,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_run
     compiler_guidance_promotion_gate,
     hammer_failure_projection_todos,
 )
+
 ROOT = Path(__file__).resolve().parents[4]
 
 
@@ -541,3 +549,106 @@ def test_codex_projection_drops_guidance_that_crosses_protected_split() -> None:
         {"legal_ir_split_guard": _failed_guard()},
         CODEX_TODO_PROJECTION_OPERATION,
     )
+
+
+def test_lineage_siblings_stay_in_one_split() -> None:
+    samples = [
+        {
+            "lineage_group_id": "grp:patent:0000",
+            "sample_id": "src:patent:0000",
+            "text": "source article one",
+        },
+        {
+            "derivation_kind": "vectors",
+            "lineage_group_id": "grp:patent:0000",
+            "parent_record_id": "src:patent:0000",
+            "sample_id": "drv:patent:vectors:0000",
+            "text": "vector sibling one",
+        },
+        {
+            "lineage_group_id": "grp:patent:0000",
+            "paraphrase_of": "src:patent:0000",
+            "sample_id": "para:patent:0000",
+            "text": "paraphrase of article one",
+        },
+        {
+            "lineage_group_id": "grp:patent:0001",
+            "sample_id": "src:patent:0001",
+            "text": "unrelated second source",
+        },
+    ]
+    manifest = build_ir_campaign_splits(samples, LegalIREvalSplitConfig(seed="lineage-unit"))
+    assert manifest.assignments["src:patent:0000"] == manifest.assignments["drv:patent:vectors:0000"]
+    assert manifest.assignments["src:patent:0000"] == manifest.assignments["para:patent:0000"]
+    assert manifest.guard_result().passed is True
+    assert set(manifest.metadata["holdouts"]) == {name for name, _split in DECLARED_HOLDOUTS}
+    assert manifest.metadata["ir_split_schema"] == IR_SPLIT_MANIFEST_SCHEMA
+    assert manifest.metadata["hidden_test_commitment"].startswith("sha256:")
+
+
+def test_forced_cross_split_lineage_is_detected() -> None:
+    examples = (
+        LegalIRSplitExample.from_sample(
+            {
+                "lineage_group_id": "grp:leak",
+                "sample_id": "src:leak",
+                "text": "source row",
+            }
+        ),
+        LegalIRSplitExample.from_sample(
+            {
+                "derivation_kind": "bm25",
+                "lineage_group_id": "grp:leak",
+                "parent_record_id": "src:leak",
+                "sample_id": "drv:leak",
+                "text": "derived row",
+            }
+        ),
+    )
+    leaked = LegalIRSplitManifest(
+        examples=examples,
+        assignments={"src:leak": TRAIN_SPLIT, "drv:leak": HOLDOUT_SPLIT},
+        config_digest="unit",
+    )
+    result = validate_legal_ir_eval_splits(leaked)
+    assert result.passed is False
+    assert any(item.kind == "lineage_group" for item in result.violations)
+
+
+def test_campaign_split_replay_and_seal(tmp_path: Path) -> None:
+    corpus = {
+        "source_record_ids": ["src:patent:0000", "src:patent:0001", "src:dutch-law:0000"],
+        "derived_artifact_ids": [
+            "drv:patent:vectors:0000",
+            "drv:patent:bm25:0000",
+            "drv:patent:vectors:0001",
+        ],
+        "include_derived": True,
+    }
+    samples = campaign_samples_from_corpus_root(corpus)
+    first = seal_ir_campaign_splits(samples, tmp_path / "a", config=LegalIREvalSplitConfig(seed="replay"))
+    second = seal_ir_campaign_splits(samples, tmp_path / "b", config=LegalIREvalSplitConfig(seed="replay"))
+    assert first["split_manifest_digest"] == second["split_manifest_digest"]
+    assert first["hidden_test_commitment"] == second["hidden_test_commitment"]
+    assert first["leakage_passed"] is True
+    holdouts = first["holdouts"]
+    assert holdouts["lineage"]["status"] == "insufficient"
+    assert holdouts["jurisdiction"]["status"] == "insufficient"
+    assert (tmp_path / "a" / "ir_split_manifest.json").is_file()
+
+
+def test_official_corpus_seal_keeps_patent_groups_together(tmp_path: Path) -> None:
+    corpus_dir = ROOT / "data" / "ir_learning" / "corpora"
+    root = load_and_seal_corpus_splits(
+        corpus_dir,
+        tmp_path,
+        config=LegalIREvalSplitConfig(seed="pgir-012-jdao-pinset-1"),
+    )
+    assert root["leakage_passed"] is True
+    payload = json.loads((tmp_path / "ir_split_manifest.json").read_text())
+    assignments = payload["assignments"]
+    patent_sources = [key for key in assignments if key.startswith("src:patent:")]
+    assert len(patent_sources) == 2174
+    assert all(key.startswith("src:") for key in assignments)
+    assert payload["hidden_test_commitment"].startswith("sha256:")
+    assert set(payload["holdouts"]) == {name for name, _split in DECLARED_HOLDOUTS}

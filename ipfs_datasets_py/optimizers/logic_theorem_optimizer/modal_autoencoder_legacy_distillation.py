@@ -42,16 +42,10 @@ from .modal_autoencoder import (
 )
 
 
-LEGACY_DISTILLATION_SCHEMA_VERSION = (
-    "modal-autoencoder-legacy-embedding-distillation-v1"
-)
+LEGACY_DISTILLATION_SCHEMA_VERSION = "modal-autoencoder-legacy-embedding-distillation-v1"
 LEGACY_ADAPTER_SCHEMA_VERSION = "modal-autoencoder-bounded-low-rank-adapter-v1"
-LEGACY_ADAPTER_BUNDLE_SCHEMA_VERSION = (
-    "modal-autoencoder-legacy-adapter-bundle-v1"
-)
-LEGACY_DISTILLATION_PROMOTION_SCHEMA_VERSION = (
-    "modal-autoencoder-legacy-distillation-promotion-v1"
-)
+LEGACY_ADAPTER_BUNDLE_SCHEMA_VERSION = "modal-autoencoder-legacy-adapter-bundle-v1"
+LEGACY_DISTILLATION_PROMOTION_SCHEMA_VERSION = "modal-autoencoder-legacy-distillation-promotion-v1"
 DEFAULT_LEGACY_ADAPTER_RANK = 8
 DEFAULT_LEGACY_ADAPTER_MAX_ROWS = 8192
 DEFAULT_LEGACY_ADAPTER_MAX_COUNT = 13
@@ -159,9 +153,7 @@ def _state_binding(state: ModalAutoencoderTrainingState) -> str:
 def _safe_checkpoint_binding(value: str, fallback: str) -> str:
     binding = str(value or fallback).strip()
     if not binding:
-        raise LegacyDistillationLineageError(
-            "checkpoint binding must be non-empty"
-        )
+        raise LegacyDistillationLineageError("checkpoint binding must be non-empty")
     return binding
 
 
@@ -205,17 +197,11 @@ class LegacyDistillationLineage:
             "split_id",
         ):
             if not str(getattr(self, name)).strip():
-                raise LegacyDistillationLineageError(
-                    f"{name} must be non-empty"
-                )
+                raise LegacyDistillationLineageError(f"{name} must be non-empty")
         if not str(self.teacher_architecture).strip():
-            raise LegacyDistillationLineageError(
-                "teacher_architecture must be non-empty"
-            )
+            raise LegacyDistillationLineageError("teacher_architecture must be non-empty")
         if not str(self.student_architecture).strip():
-            raise LegacyDistillationLineageError(
-                "student_architecture must be non-empty"
-            )
+            raise LegacyDistillationLineageError("student_architecture must be non-empty")
 
     @property
     def lineage_id(self) -> str:
@@ -260,12 +246,10 @@ class LegacyDistillationLineage:
             split_id=str(value.get("split_id") or value.get("split") or ""),
             seed=int(value.get("seed", 0)),
             teacher_architecture=str(
-                value.get("teacher_architecture")
-                or MODAL_AUTOENCODER_LEGACY_ARCHITECTURE_VERSION
+                value.get("teacher_architecture") or MODAL_AUTOENCODER_LEGACY_ARCHITECTURE_VERSION
             ),
             student_architecture=str(
-                value.get("student_architecture")
-                or MODAL_AUTOENCODER_ARCHITECTURE_VERSION
+                value.get("student_architecture") or MODAL_AUTOENCODER_ARCHITECTURE_VERSION
             ),
             inventory_sha256=str(value.get("inventory_sha256") or ""),
             parent_lineage_id=str(value.get("parent_lineage_id") or ""),
@@ -307,31 +291,21 @@ class LegacyDistillationConfig:
                 float(self.minimum_confidence) != 0.0
                 and float(self.minimum_confidence) != threshold
             ):
-                raise ValueError(
-                    "minimum_confidence and confidence_threshold disagree"
-                )
+                raise ValueError("minimum_confidence and confidence_threshold disagree")
             object.__setattr__(self, "minimum_confidence", threshold)
         _bounded_unit(self.minimum_confidence, name="minimum_confidence")
         _bounded_unit(self.default_confidence, name="default_confidence")
         _bounded_unit(self.influence, name="influence")
-        if _finite_float(
-            self.max_adjustment_norm, name="max_adjustment_norm"
-        ) < 0.0:
+        if _finite_float(self.max_adjustment_norm, name="max_adjustment_norm") < 0.0:
             raise ValueError("max_adjustment_norm must be non-negative")
         if _finite_float(self.gradient_clip_norm, name="gradient_clip_norm") <= 0.0:
             raise ValueError("gradient_clip_norm must be positive")
-        unknown = set(self.source_field_allowlist) - set(
-            LEGACY_DISTILLABLE_EMBEDDING_FIELDS
-        )
+        unknown = set(self.source_field_allowlist) - set(LEGACY_DISTILLABLE_EMBEDDING_FIELDS)
         if unknown:
             raise ValueError(
-                "unknown legacy embedding adapter fields: "
-                + ", ".join(sorted(unknown))
+                "unknown legacy embedding adapter fields: " + ", ".join(sorted(unknown))
             )
-        if (
-            self.direct_bulk_embedding_replacement
-            or self.direct_bulk_transfer_allowed
-        ):
+        if self.direct_bulk_embedding_replacement or self.direct_bulk_transfer_allowed:
             raise DirectBulkEmbeddingTransferError(
                 "direct bulk embedding replacement is forbidden because the "
                 "measured direct transfer regressed autoencoder cosine"
@@ -412,16 +386,12 @@ class BoundedLowRankLegacyAdapter:
             self.minimum_confidence,
             name="minimum_confidence",
         )
-        if _finite_float(
-            self.max_adjustment_norm, name="max_adjustment_norm"
-        ) < 0.0:
+        if _finite_float(self.max_adjustment_norm, name="max_adjustment_norm") < 0.0:
             raise ValueError("max_adjustment_norm must be non-negative")
         if _finite_float(self.gradient_clip_norm, name="gradient_clip_norm") <= 0:
             raise ValueError("gradient_clip_norm must be positive")
         if not str(self.lineage_id).strip():
-            raise LegacyDistillationLineageError(
-                "adapter lineage_id must be non-empty"
-            )
+            raise LegacyDistillationLineageError("adapter lineage_id must be non-empty")
         self._key_index = {key: index for index, key in enumerate(self.keys)}
         self._validate_optimizer_state()
 
@@ -635,9 +605,7 @@ class BoundedLowRankLegacyAdapter:
             prediction = self.coefficients[index] @ self.basis
             error = prediction - target
             losses.append(float(np.mean(error * error)))
-            coefficient_gradient[index] += (2.0 / normalization) * (
-                error @ self.basis.T
-            )
+            coefficient_gradient[index] += (2.0 / normalization) * (error @ self.basis.T)
             basis_gradient += (2.0 / normalization) * np.outer(
                 self.coefficients[index],
                 error,
@@ -680,9 +648,7 @@ class BoundedLowRankLegacyAdapter:
             second_moment += (1.0 - second_decay) * (gradient * gradient)
             corrected_first = first_moment / (1.0 - first_decay**step)
             corrected_second = second_moment / (1.0 - second_decay**step)
-            parameter -= rate * corrected_first / (
-                np.sqrt(corrected_second) + eps
-            )
+            parameter -= rate * corrected_first / (np.sqrt(corrected_second) + eps)
         return {
             "adapter_id": self.adapter_id,
             "adapter_name": self.name,
@@ -696,15 +662,9 @@ class BoundedLowRankLegacyAdapter:
 
     def optimizer_state_dict(self) -> Dict[str, Any]:
         return {
-            "basis_first_moment": self._optimizer_state[
-                "basis_first_moment"
-            ].tolist(),
-            "basis_second_moment": self._optimizer_state[
-                "basis_second_moment"
-            ].tolist(),
-            "coefficient_first_moment": self._optimizer_state[
-                "coefficient_first_moment"
-            ].tolist(),
+            "basis_first_moment": self._optimizer_state["basis_first_moment"].tolist(),
+            "basis_second_moment": self._optimizer_state["basis_second_moment"].tolist(),
+            "coefficient_first_moment": self._optimizer_state["coefficient_first_moment"].tolist(),
             "coefficient_second_moment": self._optimizer_state[
                 "coefficient_second_moment"
             ].tolist(),
@@ -771,9 +731,7 @@ class LegacyEmbeddingAdapterBundle:
 
     def __post_init__(self) -> None:
         if self.direct_bulk_embedding_replacement:
-            raise DirectBulkEmbeddingTransferError(
-                "direct bulk embedding replacement is forbidden"
-            )
+            raise DirectBulkEmbeddingTransferError("direct bulk embedding replacement is forbidden")
         self.adapters = dict(sorted(self.adapters.items()))
         if len(self.adapters) > DEFAULT_LEGACY_ADAPTER_MAX_COUNT:
             raise LegacyAdapterCapacityError("adapter bundle count exceeds hard maximum")
@@ -781,29 +739,21 @@ class LegacyEmbeddingAdapterBundle:
             if name != adapter.name:
                 raise ValueError("adapter bundle name mismatch")
             if adapter.lineage_id != self.lineage.lineage_id:
-                raise LegacyDistillationLineageError(
-                    f"adapter {name!r} lineage mismatch"
-                )
+                raise LegacyDistillationLineageError(f"adapter {name!r} lineage mismatch")
         if self.promotion_evidence:
-            minimum_seeds = int(
-                self.promotion_evidence.get("minimum_seeds", 0)
-            )
+            minimum_seeds = int(self.promotion_evidence.get("minimum_seeds", 0))
             if (
                 self.promotion_evidence.get("schema_version")
                 != LEGACY_DISTILLATION_PROMOTION_SCHEMA_VERSION
                 or not self.promotion_evidence.get("promotion_allowed")
-                or str(self.promotion_evidence.get("lineage_id") or "")
-                != self.lineage.lineage_id
+                or str(self.promotion_evidence.get("lineage_id") or "") != self.lineage.lineage_id
                 or minimum_seeds < 2
-                or int(self.promotion_evidence.get("seed_count", 0))
-                < minimum_seeds
+                or int(self.promotion_evidence.get("seed_count", 0)) < minimum_seeds
             ):
                 raise LegacyDistillationPromotionError(
                     "serialized legacy adapter promotion evidence is invalid"
                 )
-            expected_digest = str(
-                self.promotion_evidence.get("report_sha256") or ""
-            )
+            expected_digest = str(self.promotion_evidence.get("report_sha256") or "")
             comparison = dict(self.promotion_evidence)
             comparison.pop("report_sha256", None)
             if expected_digest != _digest(comparison):
@@ -858,10 +808,7 @@ class LegacyEmbeddingAdapterBundle:
     ) -> Dict[str, Any]:
         """Bind passing held-out evidence before enabling runtime influence."""
 
-        if (
-            promotion_report.get("schema_version")
-            != LEGACY_DISTILLATION_PROMOTION_SCHEMA_VERSION
-        ):
+        if promotion_report.get("schema_version") != LEGACY_DISTILLATION_PROMOTION_SCHEMA_VERSION:
             raise LegacyDistillationPromotionError(
                 "unsupported legacy distillation promotion evidence"
             )
@@ -870,13 +817,9 @@ class LegacyEmbeddingAdapterBundle:
                 "legacy distillation promotion evidence did not pass"
             )
         if str(promotion_report.get("lineage_id") or "") != self.lineage.lineage_id:
-            raise LegacyDistillationPromotionError(
-                "legacy distillation promotion lineage mismatch"
-            )
+            raise LegacyDistillationPromotionError("legacy distillation promotion lineage mismatch")
         minimum_seeds = int(promotion_report.get("minimum_seeds", 0))
-        if minimum_seeds < 2 or int(
-            promotion_report.get("seed_count", 0)
-        ) < minimum_seeds:
+        if minimum_seeds < 2 or int(promotion_report.get("seed_count", 0)) < minimum_seeds:
             raise LegacyDistillationPromotionError(
                 "legacy distillation promotion has insufficient seeds"
             )
@@ -963,19 +906,13 @@ class LegacyEmbeddingAdapterBundle:
             "adapters": {
                 name: {
                     "adapter_id": adapter.adapter_id,
-                    "confidence_max": round(
-                        float(np.max(adapter.confidences)), 12
-                    )
+                    "confidence_max": round(float(np.max(adapter.confidences)), 12)
                     if adapter.row_count
                     else 0.0,
-                    "confidence_mean": round(
-                        float(np.mean(adapter.confidences)), 12
-                    )
+                    "confidence_mean": round(float(np.mean(adapter.confidences)), 12)
                     if adapter.row_count
                     else 0.0,
-                    "confidence_min": round(
-                        float(np.min(adapter.confidences)), 12
-                    )
+                    "confidence_min": round(float(np.min(adapter.confidences)), 12)
                     if adapter.row_count
                     else 0.0,
                     "dimension": adapter.dimension,
@@ -992,9 +929,7 @@ class LegacyEmbeddingAdapterBundle:
             "direct_bulk_embedding_replacement": False,
             "lineage": self.lineage.to_dict(),
             "promotion_allowed": self.promotion_allowed,
-            "promotion_report_sha256": str(
-                self.promotion_evidence.get("report_sha256") or ""
-            ),
+            "promotion_report_sha256": str(self.promotion_evidence.get("report_sha256") or ""),
             "runtime_activation_authorized": self.promotion_allowed,
             "sample_memory_included": False,
             "schema_version": LEGACY_ADAPTER_BUNDLE_SCHEMA_VERSION,
@@ -1006,9 +941,7 @@ class LegacyEmbeddingAdapterBundle:
     def to_dict(self, *, include_optimizer_state: bool = True) -> Dict[str, Any]:
         return {
             "adapters": {
-                name: adapter.to_dict(
-                    include_optimizer_state=include_optimizer_state
-                )
+                name: adapter.to_dict(include_optimizer_state=include_optimizer_state)
                 for name, adapter in sorted(self.adapters.items())
             },
             "direct_bulk_embedding_replacement": False,
@@ -1040,11 +973,7 @@ class LegacyEmbeddingAdapterBundle:
         )
         try:
             with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-                handle.write(
-                    self.to_json(
-                        include_optimizer_state=include_optimizer_state
-                    )
-                )
+                handle.write(self.to_json(include_optimizer_state=include_optimizer_state))
                 handle.flush()
                 os.fsync(handle.fileno())
             os.replace(temporary_name, target)
@@ -1064,9 +993,7 @@ class LegacyEmbeddingAdapterBundle:
         ):
             raise ValueError("unsupported legacy adapter bundle schema")
         if value.get("sample_memory_included"):
-            raise LegacyDistillationError(
-                "legacy adapter bundle contains forbidden sample memory"
-            )
+            raise LegacyDistillationError("legacy adapter bundle contains forbidden sample memory")
         if value.get("direct_bulk_embedding_replacement") or value.get(
             "direct_bulk_transfer_allowed"
         ):
@@ -1077,9 +1004,7 @@ class LegacyEmbeddingAdapterBundle:
         if not isinstance(raw_adapters, Mapping):
             raise ValueError("adapter bundle adapters must be a mapping")
         return cls(
-            lineage=LegacyDistillationLineage.from_dict(
-                value.get("lineage", {})
-            ),
+            lineage=LegacyDistillationLineage.from_dict(value.get("lineage", {})),
             adapters={
                 str(name): BoundedLowRankLegacyAdapter.from_dict(adapter)
                 for name, adapter in raw_adapters.items()
@@ -1148,9 +1073,7 @@ def _fit_adapter(
 ) -> tuple[BoundedLowRankLegacyAdapter, Dict[str, Any]]:
     dimensions = {len(vector) for _, vector, _ in rows}
     if len(dimensions) != 1:
-        raise LegacyDistillationError(
-            f"legacy adapter {field_name!r} has incompatible dimensions"
-        )
+        raise LegacyDistillationError(f"legacy adapter {field_name!r} has incompatible dimensions")
     dimension = dimensions.pop()
     matrix = _finite_array(
         [vector for _, vector, _ in rows],
@@ -1171,9 +1094,7 @@ def _fit_adapter(
             if basis_row[pivot] < 0.0:
                 right[component] *= -1.0
                 left[:, component] *= -1.0
-        coefficients = (
-            left[:, :effective_rank] * singular_values[:effective_rank]
-        )
+        coefficients = left[:, :effective_rank] * singular_values[:effective_rank]
         basis = right[:effective_rank, :]
     else:
         coefficients = np.zeros((len(rows), 0), dtype=np.float64)
@@ -1181,18 +1102,12 @@ def _fit_adapter(
     reconstructed = coefficients @ basis
     residual = matrix - reconstructed
     denominator = float(np.linalg.norm(matrix))
-    relative_error = (
-        float(np.linalg.norm(residual)) / denominator
-        if denominator > 0.0
-        else 0.0
-    )
+    relative_error = float(np.linalg.norm(residual)) / denominator if denominator > 0.0 else 0.0
     row_cosines: list[float] = []
     for original, fitted in zip(matrix, reconstructed):
         norm_product = float(np.linalg.norm(original) * np.linalg.norm(fitted))
         row_cosines.append(
-            float(np.dot(original, fitted) / norm_product)
-            if norm_product > 0.0
-            else 0.0
+            float(np.dot(original, fitted) / norm_product) if norm_product > 0.0 else 0.0
         )
     adapter = BoundedLowRankLegacyAdapter(
         name=field_name,
@@ -1221,9 +1136,7 @@ def _fit_adapter(
         "dense_scalar_count": int(matrix.size),
         "dimension": dimension,
         "key_digest": _key_digest(key for key, _, _ in rows),
-        "low_rank_scalar_count": int(
-            coefficients.size + basis.size
-        ),
+        "low_rank_scalar_count": int(coefficients.size + basis.size),
         "rank": effective_rank,
         "reconstruction_cosine_mean": round(
             math.fsum(row_cosines) / len(row_cosines),
@@ -1253,25 +1166,18 @@ def distill_legacy_embedding_tails(
 
     policy = config or LegacyDistillationConfig()
     if confidence_by_adapter is not None and confidence_by_field is not None:
-        raise ValueError(
-            "provide only one of confidence_by_adapter and confidence_by_field"
-        )
+        raise ValueError("provide only one of confidence_by_adapter and confidence_by_field")
     confidences = dict(
-        confidence_by_adapter
-        if confidence_by_adapter is not None
-        else confidence_by_field
-        or {}
+        confidence_by_adapter if confidence_by_adapter is not None else confidence_by_field or {}
     )
     unknown_confidence_fields = {
         key
         for key, value in confidences.items()
-        if isinstance(value, Mapping)
-        and key not in LEGACY_DISTILLABLE_EMBEDDING_FIELDS
+        if isinstance(value, Mapping) and key not in LEGACY_DISTILLABLE_EMBEDDING_FIELDS
     }
     if unknown_confidence_fields:
         raise ValueError(
-            "unknown confidence adapter fields: "
-            + ", ".join(sorted(unknown_confidence_fields))
+            "unknown confidence adapter fields: " + ", ".join(sorted(unknown_confidence_fields))
         )
 
     teacher_before = _state_binding(teacher)
@@ -1301,8 +1207,7 @@ def distill_legacy_embedding_tails(
     if (
         lineage is not None
         and teacher_checkpoint_sha256
-        and effective_lineage.teacher_checkpoint_sha256
-        != teacher_checkpoint_sha256
+        and effective_lineage.teacher_checkpoint_sha256 != teacher_checkpoint_sha256
     ):
         raise LegacyDistillationLineageError(
             "teacher checkpoint lineage conflicts with the supplied binding"
@@ -1310,8 +1215,7 @@ def distill_legacy_embedding_tails(
     if (
         lineage is not None
         and student_checkpoint_sha256
-        and effective_lineage.student_checkpoint_sha256
-        != student_checkpoint_sha256
+        and effective_lineage.student_checkpoint_sha256 != student_checkpoint_sha256
     ):
         raise LegacyDistillationLineageError(
             "student checkpoint lineage conflicts with the supplied binding"
@@ -1340,9 +1244,7 @@ def distill_legacy_embedding_tails(
         teacher_map = teacher_maps[field_name]
         student_map = student_maps[field_name]
 
-        def eligible_rows() -> Iterable[
-            tuple[str, Sequence[float], float, float]
-        ]:
+        def eligible_rows() -> Iterable[tuple[str, Sequence[float], float, float]]:
             nonlocal excluded_shared
             nonlocal excluded_incompatible
             nonlocal excluded_low_confidence
@@ -1361,8 +1263,7 @@ def distill_legacy_embedding_tails(
                     continue
                 try:
                     vector = [
-                        _finite_float(value, name="legacy embedding value")
-                        for value in raw_vector
+                        _finite_float(value, name="legacy embedding value") for value in raw_vector
                     ]
                 except (TypeError, ValueError):
                     excluded_incompatible += 1
@@ -1379,9 +1280,7 @@ def distill_legacy_embedding_tails(
                 if confidence < policy.minimum_confidence:
                     excluded_low_confidence += 1
                     continue
-                norm = math.sqrt(
-                    math.fsum(value * value for value in vector)
-                )
+                norm = math.sqrt(math.fsum(value * value for value in vector))
                 eligible_tail_rows += 1
                 yield key, vector, confidence, norm
 
@@ -1430,23 +1329,16 @@ def distill_legacy_embedding_tails(
     teacher_after = _state_binding(teacher)
     student_after = _state_binding(student)
     if teacher_after != teacher_before:
-        raise LegacyDistillationError(
-            "immutable teacher state changed during distillation"
-        )
+        raise LegacyDistillationError("immutable teacher state changed during distillation")
     if student_after != student_before:
-        raise LegacyDistillationError(
-            "student state changed during adapter distillation"
-        )
+        raise LegacyDistillationError("student state changed during adapter distillation")
     bundle = LegacyEmbeddingAdapterBundle(
         lineage=effective_lineage,
         adapters=adapters,
     )
-    dense_scalars = sum(
-        int(report["dense_scalar_count"]) for report in adapter_reports.values()
-    )
+    dense_scalars = sum(int(report["dense_scalar_count"]) for report in adapter_reports.values())
     low_rank_scalars = sum(
-        int(report["low_rank_scalar_count"])
-        for report in adapter_reports.values()
+        int(report["low_rank_scalar_count"]) for report in adapter_reports.values()
     )
     report: Dict[str, Any] = {
         "accepted": True,
@@ -1485,15 +1377,11 @@ def distill_legacy_embedding_tails(
         "selected_tail_row_count": selected_tail_rows,
         "shadow_mode": True,
         "split_id": effective_lineage.split_id,
-        "student_checkpoint_sha256": (
-            effective_lineage.student_checkpoint_sha256
-        ),
+        "student_checkpoint_sha256": (effective_lineage.student_checkpoint_sha256),
         "student_parameter_rows_changed": 0,
         "student_state_sha256": student_before,
         "student_state_immutable": student_after == student_before,
-        "teacher_checkpoint_sha256": (
-            effective_lineage.teacher_checkpoint_sha256
-        ),
+        "teacher_checkpoint_sha256": (effective_lineage.teacher_checkpoint_sha256),
         "teacher_role": "immutable_read_only_distillation_teacher",
         "teacher_state_sha256": teacher_before,
         "teacher_state_immutable": teacher_after == teacher_before,
@@ -1529,15 +1417,21 @@ class LegacyDistillationPromotionConfig:
     def __post_init__(self) -> None:
         if int(self.minimum_seeds) < 2:
             raise ValueError("minimum_seeds must be at least two")
-        if _finite_float(
-            self.minimum_objective_improvement,
-            name="minimum_objective_improvement",
-        ) < 0.0:
+        if (
+            _finite_float(
+                self.minimum_objective_improvement,
+                name="minimum_objective_improvement",
+            )
+            < 0.0
+        ):
             raise ValueError("minimum_objective_improvement must be non-negative")
-        if _finite_float(
-            self.regression_tolerance,
-            name="regression_tolerance",
-        ) < 0.0:
+        if (
+            _finite_float(
+                self.regression_tolerance,
+                name="regression_tolerance",
+            )
+            < 0.0
+        ):
             raise ValueError("regression_tolerance must be non-negative")
 
 
@@ -1639,10 +1533,10 @@ def _metric_matches(name: str, aliases: Sequence[str]) -> bool:
 
 def _lower_is_better(name: str) -> bool:
     leaf = str(name).lower().rsplit(".", 1)[-1]
-    return any(
-        marker in leaf
-        for marker in ("loss", "error", "penalty", "regression", "excess")
-    ) and "success" not in leaf
+    return (
+        any(marker in leaf for marker in ("loss", "error", "penalty", "regression", "excess"))
+        and "success" not in leaf
+    )
 
 
 def _metric_improvement(
@@ -1735,9 +1629,7 @@ def _per_family_comparisons(
         or candidate_side.get("family_metrics")
         or {}
     )
-    if isinstance(baseline_families, Mapping) and isinstance(
-        candidate_families, Mapping
-    ):
+    if isinstance(baseline_families, Mapping) and isinstance(candidate_families, Mapping):
         for family in sorted(set(baseline_families) | set(candidate_families)):
             comparisons[str(family)] = {
                 "baseline": baseline_families.get(family, {}),
@@ -1773,11 +1665,7 @@ def evaluate_legacy_distillation_promotion(
             reasons.append(f"seed_{seed}:duplicate_seed")
             continue
         observed_seeds.add(seed)
-        split = str(
-            packet.get("split_id")
-            or packet.get("split")
-            or ""
-        ).strip()
+        split = str(packet.get("split_id") or packet.get("split") or "").strip()
         if "heldout" not in split.lower() and "holdout" not in split.lower():
             reasons.append(f"seed_{seed}:not_held_out")
         if split:
@@ -1791,15 +1679,12 @@ def evaluate_legacy_distillation_promotion(
         objective_improvements: Dict[str, float] = {}
         for objective, aliases in LEGACY_DISTILLATION_OBJECTIVE_ALIASES.items():
             names = sorted(
-                name
-                for name in set(baseline) & set(candidate)
-                if _metric_matches(name, aliases)
+                name for name in set(baseline) & set(candidate) if _metric_matches(name, aliases)
             )
             if not names:
                 continue
             improvements = [
-                _metric_improvement(name, baseline[name], candidate[name])
-                for name in names
+                _metric_improvement(name, baseline[name], candidate[name]) for name in names
             ]
             objective_improvements[objective] = min(improvements)
         ce_improvement = objective_improvements.get("ce")
@@ -1809,14 +1694,10 @@ def evaluate_legacy_distillation_promotion(
         if cosine_improvement is not None:
             all_cosine_improvements.append(cosine_improvement)
         objective_passed = (
-            (
-                ce_improvement is not None
-                and ce_improvement > policy.minimum_objective_improvement
-            )
-            or (
-                cosine_improvement is not None
-                and cosine_improvement > policy.minimum_objective_improvement
-            )
+            ce_improvement is not None and ce_improvement > policy.minimum_objective_improvement
+        ) or (
+            cosine_improvement is not None
+            and cosine_improvement > policy.minimum_objective_improvement
         )
         if ce_improvement is None and cosine_improvement is None:
             reasons.append(f"seed_{seed}:missing_autoencoder_objective")
@@ -1826,9 +1707,7 @@ def evaluate_legacy_distillation_promotion(
         category_reports: Dict[str, Any] = {}
         for category, aliases in LEGACY_DISTILLATION_GUARDRAIL_ALIASES.items():
             names = sorted(
-                name
-                for name in set(baseline) & set(candidate)
-                if _metric_matches(name, aliases)
+                name for name in set(baseline) & set(candidate) if _metric_matches(name, aliases)
             )
             regressions = {
                 name: round(
@@ -1871,9 +1750,7 @@ def evaluate_legacy_distillation_promotion(
                 family_name = str(family)
                 observed_families.add(family_name)
                 if not isinstance(family_packet, Mapping):
-                    reasons.append(
-                        f"seed_{seed}:family_{family_name}_invalid_evidence"
-                    )
+                    reasons.append(f"seed_{seed}:family_{family_name}_invalid_evidence")
                     continue
                 raw_family_baseline = family_packet.get("baseline", {})
                 raw_family_candidate = family_packet.get("candidate", {})
@@ -1889,9 +1766,7 @@ def evaluate_legacy_distillation_promotion(
                 )
                 if not family_baseline and not family_candidate:
                     # Also accept {metric: {baseline: x, candidate: y}}.
-                    raw_comparisons = family_packet.get(
-                        "raw", family_packet
-                    )
+                    raw_comparisons = family_packet.get("raw", family_packet)
                     if not isinstance(raw_comparisons, Mapping):
                         raw_comparisons = {}
                     for metric, comparison in raw_comparisons.items():
@@ -1933,39 +1808,24 @@ def evaluate_legacy_distillation_promotion(
                     < -policy.regression_tolerance
                 }
                 if not names:
-                    reasons.append(
-                        f"seed_{seed}:family_{family_name}_missing_metrics"
-                    )
+                    reasons.append(f"seed_{seed}:family_{family_name}_missing_metrics")
                 if not semantic_names:
-                    reasons.append(
-                        f"seed_{seed}:family_{family_name}_"
-                        "missing_semantic_guardrail"
-                    )
+                    reasons.append(f"seed_{seed}:family_{family_name}_missing_semantic_guardrail")
                 if regressions:
-                    reasons.append(
-                        f"seed_{seed}:family_{family_name}_regression"
-                    )
+                    reasons.append(f"seed_{seed}:family_{family_name}_regression")
                 family_reports[family_name] = {
                     "evidence_metric_count": len(names),
-                    "passed": (
-                        bool(names)
-                        and bool(semantic_names)
-                        and not regressions
-                    ),
+                    "passed": (bool(names) and bool(semantic_names) and not regressions),
                     "regressions": regressions,
                     "semantic_evidence_metric_count": len(semantic_names),
                 }
         seed_reports.append(
             {
                 "autoencoder_ce_improvement": (
-                    round(ce_improvement, 12)
-                    if ce_improvement is not None
-                    else None
+                    round(ce_improvement, 12) if ce_improvement is not None else None
                 ),
                 "autoencoder_cosine_improvement": (
-                    round(cosine_improvement, 12)
-                    if cosine_improvement is not None
-                    else None
+                    round(cosine_improvement, 12) if cosine_improvement is not None else None
                 ),
                 "guardrails": category_reports,
                 "objective_passed": objective_passed,
@@ -1983,18 +1843,15 @@ def evaluate_legacy_distillation_promotion(
     if missing_families:
         reasons.append("missing_required_families")
     aggregate_improvement = (
-        (
-            len(all_ce_improvements) == len(observed_seeds)
-            and all_ce_improvements
-            and math.fsum(all_ce_improvements) / len(all_ce_improvements)
-            > policy.minimum_objective_improvement
-        )
-        or (
-            len(all_cosine_improvements) == len(observed_seeds)
-            and all_cosine_improvements
-            and math.fsum(all_cosine_improvements) / len(all_cosine_improvements)
-            > policy.minimum_objective_improvement
-        )
+        len(all_ce_improvements) == len(observed_seeds)
+        and all_ce_improvements
+        and math.fsum(all_ce_improvements) / len(all_ce_improvements)
+        > policy.minimum_objective_improvement
+    ) or (
+        len(all_cosine_improvements) == len(observed_seeds)
+        and all_cosine_improvements
+        and math.fsum(all_cosine_improvements) / len(all_cosine_improvements)
+        > policy.minimum_objective_improvement
     )
     if not aggregate_improvement:
         reasons.append("no_multi_seed_aggregate_autoencoder_improvement")
@@ -2018,9 +1875,7 @@ def evaluate_legacy_distillation_promotion(
         "missing_required_families": sorted(missing_families),
         "promotion_allowed": not reasons,
         "reasons": reasons,
-        "required_guardrail_categories": sorted(
-            LEGACY_DISTILLATION_GUARDRAIL_ALIASES
-        ),
+        "required_guardrail_categories": sorted(LEGACY_DISTILLATION_GUARDRAIL_ALIASES),
         "schema_version": LEGACY_DISTILLATION_PROMOTION_SCHEMA_VERSION,
         "seed_count": len(observed_seeds),
         "seed_reports": seed_reports,
@@ -2045,8 +1900,7 @@ def require_legacy_distillation_promotion(
     )
     if not report["promotion_allowed"]:
         raise LegacyDistillationPromotionError(
-            "legacy adapter promotion rejected: "
-            + ", ".join(report["reasons"])
+            "legacy adapter promotion rejected: " + ", ".join(report["reasons"])
         )
     return report
 

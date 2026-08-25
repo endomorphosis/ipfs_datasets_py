@@ -114,7 +114,11 @@ class LegalIRAuthorityNode:
             name=str(data.get("name") or data.get("authority_id") or ""),
             jurisdiction=str(data.get("jurisdiction") or ""),
             authority_type=str(data.get("authority_type") or data.get("type") or ""),
-            hierarchy_rank=int(data.get("hierarchy_rank") if data.get("hierarchy_rank") is not None else data.get("rank") or 0),
+            hierarchy_rank=int(
+                data.get("hierarchy_rank")
+                if data.get("hierarchy_rank") is not None
+                else data.get("rank") or 0
+            ),
             parent_authority_ids=tuple(_unique(_strings(data.get("parent_authority_ids", ())))),
             version=str(data.get("version") or ""),
             source_uri=str(data.get("source_uri") or ""),
@@ -147,7 +151,9 @@ class LegalIRTemporalWindow:
         ]
         if not dates:
             return ""
-        parsed = sorted((_parse_date(item), item) for item in dates if _parse_date(item) is not None)
+        parsed = sorted(
+            (_parse_date(item), item) for item in dates if _parse_date(item) is not None
+        )
         return parsed[0][1] if parsed else ""
 
     def contains(self, query_date: date) -> bool:
@@ -175,7 +181,9 @@ class LegalIRTemporalWindow:
             sunset_date=_date_text(data.get("sunset_date") or data.get("sunsets_on")),
             repeal_date=_date_text(data.get("repeal_date") or data.get("repealed_on")),
             superseded_date=_date_text(data.get("superseded_date") or data.get("superseded_on")),
-            emergency_expires_on=_date_text(data.get("emergency_expires_on") or data.get("emergency_expiration_date")),
+            emergency_expires_on=_date_text(
+                data.get("emergency_expires_on") or data.get("emergency_expiration_date")
+            ),
         )
 
 
@@ -225,11 +233,18 @@ class LegalIRLawVersion:
 
     @property
     def active_without_query(self) -> bool:
-        return not (self.repealed_by or self.superseded_by or self.repeal_date or self.superseded_date)
+        return not (
+            self.repealed_by or self.superseded_by or self.repeal_date or self.superseded_date
+        )
 
     @property
     def applicability_key(self) -> str:
-        return self.conflict_key or self.canonical_citation or self.citation_target_id or self.law_version_id
+        return (
+            self.conflict_key
+            or self.canonical_citation
+            or self.citation_target_id
+            or self.law_version_id
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -272,7 +287,11 @@ class LegalIRLawVersion:
             "version": data.get("version") or "",
         }
         return cls(
-            law_version_id=str(data.get("law_version_id") or data.get("target_id") or f"lir-law-version-{_stable_hash(payload)[:24]}"),
+            law_version_id=str(
+                data.get("law_version_id")
+                or data.get("target_id")
+                or f"lir-law-version-{_stable_hash(payload)[:24]}"
+            ),
             canonical_citation=canonical,
             authority_id=authority_id,
             jurisdiction=str(data.get("jurisdiction") or ""),
@@ -288,7 +307,9 @@ class LegalIRLawVersion:
             span_ids=tuple(_unique(_strings(data.get("span_ids", ())))),
             citation_target_id=str(data.get("citation_target_id") or data.get("target_id") or ""),
             formula_ids=tuple(_unique(_strings(data.get("formula_ids", ())))),
-            conclusion_kinds=tuple(_unique(_atom(item) for item in _strings(data.get("conclusion_kinds", ())))),
+            conclusion_kinds=tuple(
+                _unique(_atom(item) for item in _strings(data.get("conclusion_kinds", ())))
+            ),
             conflict_key=str(data.get("conflict_key") or ""),
             metadata=dict(data.get("metadata") or {}),
         )
@@ -337,13 +358,17 @@ class LegalIRTemporalChange:
             "target": target_id,
         }
         return cls(
-            change_id=str(data.get("change_id") or f"lir-temporal-change-{_stable_hash(payload)[:24]}"),
+            change_id=str(
+                data.get("change_id") or f"lir-temporal-change-{_stable_hash(payload)[:24]}"
+            ),
             change_kind=kind,
             target_law_version_id=target_id,
             effective_date=effective,
             authority_id=str(data.get("authority_id") or ""),
             enacted_date=_date_text(data.get("enacted_date") or data.get("enacted_on")),
-            replacement_law_version_id=str(data.get("replacement_law_version_id") or data.get("replacement_id") or ""),
+            replacement_law_version_id=str(
+                data.get("replacement_law_version_id") or data.get("replacement_id") or ""
+            ),
             jurisdiction=str(data.get("jurisdiction") or ""),
             source_node_ids=tuple(_unique(_strings(data.get("source_node_ids", ())))),
             span_ids=tuple(_unique(_strings(data.get("span_ids", ())))),
@@ -392,7 +417,9 @@ class LegalIRTemporalQueryContext:
             citation=str(data.get("citation") or data.get("canonical_citation") or ""),
             law_version_ids=tuple(_unique(_strings(data.get("law_version_ids", ())))),
             formula_id=str(data.get("formula_id") or ""),
-            conclusion_kind=_atom(data.get("conclusion_kind") or data.get("kind") or "", fallback=""),
+            conclusion_kind=_atom(
+                data.get("conclusion_kind") or data.get("kind") or "", fallback=""
+            ),
             include_emergency_rules=bool(data.get("include_emergency_rules", True)),
             metadata=dict(data.get("metadata") or {}),
         )
@@ -496,7 +523,10 @@ class LegalIRTemporalDecision:
             effective_date=_date_text(data.get("effective_date")),
             end_date=_date_text(data.get("end_date")),
             hierarchy_rank=int(data.get("hierarchy_rank") or 0),
-            diagnostics=tuple(LegalIRTemporalDiagnostic.from_dict(_mapping(item)) for item in data.get("diagnostics", []) or []),
+            diagnostics=tuple(
+                LegalIRTemporalDiagnostic.from_dict(_mapping(item))
+                for item in data.get("diagnostics", []) or []
+            ),
         )
 
 
@@ -515,7 +545,9 @@ class LegalIRTemporalApplicability:
 
     @property
     def excluded_law_version_ids(self) -> tuple[str, ...]:
-        return tuple(decision.law_version_id for decision in self.decisions if not decision.applicable)
+        return tuple(
+            decision.law_version_id for decision in self.decisions if not decision.applicable
+        )
 
     @property
     def proof_safe(self) -> bool:
@@ -603,13 +635,26 @@ class LegalIRTemporalAuthorityGraph:
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "LegalIRTemporalAuthorityGraph":
         return cls(
-            temporal_authority_graph_id=str(data.get("temporal_authority_graph_id") or data.get("graph_id") or ""),
-            authorities=tuple(LegalIRAuthorityNode.from_dict(_mapping(item)) for item in data.get("authorities", []) or []),
-            law_versions=tuple(LegalIRLawVersion.from_dict(_mapping(item)) for item in data.get("law_versions", []) or []),
-            changes=tuple(LegalIRTemporalChange.from_dict(_mapping(item)) for item in data.get("changes", []) or []),
+            temporal_authority_graph_id=str(
+                data.get("temporal_authority_graph_id") or data.get("graph_id") or ""
+            ),
+            authorities=tuple(
+                LegalIRAuthorityNode.from_dict(_mapping(item))
+                for item in data.get("authorities", []) or []
+            ),
+            law_versions=tuple(
+                LegalIRLawVersion.from_dict(_mapping(item))
+                for item in data.get("law_versions", []) or []
+            ),
+            changes=tuple(
+                LegalIRTemporalChange.from_dict(_mapping(item))
+                for item in data.get("changes", []) or []
+            ),
             source_map_id=str(data.get("source_map_id") or ""),
             metadata=dict(data.get("metadata") or {}),
-            schema_version=str(data.get("schema_version") or LEGAL_IR_TEMPORAL_AUTHORITY_SCHEMA_VERSION),
+            schema_version=str(
+                data.get("schema_version") or LEGAL_IR_TEMPORAL_AUTHORITY_SCHEMA_VERSION
+            ),
         )
 
 
@@ -645,7 +690,9 @@ class LegalIRTemporalAuthorityGraphBuilder:
         emergency_power: bool = False,
         metadata: Mapping[str, Any] | None = None,
     ) -> LegalIRAuthorityNode:
-        resolved_rank = hierarchy_rank if hierarchy_rank is not None else rank if rank is not None else 0
+        resolved_rank = (
+            hierarchy_rank if hierarchy_rank is not None else rank if rank is not None else 0
+        )
         authority = LegalIRAuthorityNode(
             authority_id=str(authority_id or ""),
             name=str(name or authority_id or ""),
@@ -840,13 +887,17 @@ class LegalIRTemporalAuthorityGraphBuilder:
         )
 
     def to_temporal_authority_graph(self) -> LegalIRTemporalAuthorityGraph:
-        graph_id = self.temporal_authority_graph_id or "lir-temporal-authority-graph-" + _stable_hash(
-            {
-                "authorities": sorted(self._authorities),
-                "changes": sorted(self._changes),
-                "law_versions": sorted(self._law_versions),
-            }
-        )[:24]
+        graph_id = (
+            self.temporal_authority_graph_id
+            or "lir-temporal-authority-graph-"
+            + _stable_hash(
+                {
+                    "authorities": sorted(self._authorities),
+                    "changes": sorted(self._changes),
+                    "law_versions": sorted(self._law_versions),
+                }
+            )[:24]
+        )
         return LegalIRTemporalAuthorityGraph(
             temporal_authority_graph_id=graph_id,
             authorities=tuple(self._authorities[key] for key in sorted(self._authorities)),
@@ -870,7 +921,10 @@ class LegalIRTemporalAuthorityGraphBuilder:
                 emergency_expires_on=window.emergency_expires_on,
             )
             law = _replace_law(law, temporal_window=window, repealed_by=change.change_id)
-        elif change.change_kind in {LegalIRTemporalChangeKind.AMENDMENT, LegalIRTemporalChangeKind.SUPERSESSION}:
+        elif change.change_kind in {
+            LegalIRTemporalChangeKind.AMENDMENT,
+            LegalIRTemporalChangeKind.SUPERSESSION,
+        }:
             window = LegalIRTemporalWindow(
                 effective_date=window.effective_date,
                 sunset_date=window.sunset_date,
@@ -881,7 +935,9 @@ class LegalIRTemporalAuthorityGraphBuilder:
             law = _replace_law(
                 law,
                 temporal_window=window,
-                amended_by=(*law.amended_by, change.change_id) if change.change_kind is LegalIRTemporalChangeKind.AMENDMENT else law.amended_by,
+                amended_by=(*law.amended_by, change.change_id)
+                if change.change_kind is LegalIRTemporalChangeKind.AMENDMENT
+                else law.amended_by,
                 superseded_by=change.replacement_law_version_id or change.change_id,
             )
         elif change.change_kind is LegalIRTemporalChangeKind.SUNSET:
@@ -950,9 +1006,18 @@ def validate_legal_ir_temporal_authority_graph(
     authority_ids = [authority.authority_id for authority in graph.authorities]
     law_ids = [law.law_version_id for law in graph.law_versions]
     change_ids = [change.change_id for change in graph.changes]
-    _duplicate_diagnostics("authority", authority_ids, diagnostics, LegalIRTemporalDiagnosticType.DUPLICATE_AUTHORITY_ID)
-    _duplicate_diagnostics("law_version", law_ids, diagnostics, LegalIRTemporalDiagnosticType.DUPLICATE_LAW_VERSION_ID)
-    _duplicate_diagnostics("change", change_ids, diagnostics, LegalIRTemporalDiagnosticType.DUPLICATE_CHANGE_ID)
+    _duplicate_diagnostics(
+        "authority",
+        authority_ids,
+        diagnostics,
+        LegalIRTemporalDiagnosticType.DUPLICATE_AUTHORITY_ID,
+    )
+    _duplicate_diagnostics(
+        "law_version", law_ids, diagnostics, LegalIRTemporalDiagnosticType.DUPLICATE_LAW_VERSION_ID
+    )
+    _duplicate_diagnostics(
+        "change", change_ids, diagnostics, LegalIRTemporalDiagnosticType.DUPLICATE_CHANGE_ID
+    )
     authorities = graph.authority_by_id
     laws = graph.law_version_by_id
 
@@ -1016,7 +1081,11 @@ def validate_legal_ir_temporal_authority_graph(
                     field_path=f"changes.{change.change_id}.target_law_version_id",
                 )
             )
-        if change.change_kind in {LegalIRTemporalChangeKind.AMENDMENT, LegalIRTemporalChangeKind.SUPERSESSION} and change.replacement_law_version_id not in laws:
+        if (
+            change.change_kind
+            in {LegalIRTemporalChangeKind.AMENDMENT, LegalIRTemporalChangeKind.SUPERSESSION}
+            and change.replacement_law_version_id not in laws
+        ):
             diagnostics.append(
                 _diagnostic(
                     LegalIRTemporalDiagnosticType.CHANGE_REPLACEMENT_MISSING,
@@ -1064,7 +1133,10 @@ def assert_legal_ir_temporal_authority_applicable(
 
     result = _applicability(applicability)
     if not result.proof_safe:
-        codes = ",".join(issue.code for issue in result.diagnostics) or "temporal_authority_not_applicable"
+        codes = (
+            ",".join(issue.code for issue in result.diagnostics)
+            or "temporal_authority_not_applicable"
+        )
         raise ValueError(f"LegalIR temporal authority is not proof-safe: {codes}")
     return result
 
@@ -1078,11 +1150,28 @@ def build_legal_ir_temporal_authority_graph(
 
     sample = _payload_mapping(document_or_sample)
     document = _mapping(sample.get("modal_ir") or sample.get("document") or sample)
-    document_id = str(document.get("document_id") or sample.get("document_id") or sample.get("sample_id") or "legal-ir-document")
+    document_id = str(
+        document.get("document_id")
+        or sample.get("document_id")
+        or sample.get("sample_id")
+        or "legal-ir-document"
+    )
     authority_payload = _mapping(document.get("authority") or sample.get("authority"))
-    authority_id = str(authority_payload.get("authority_id") or document.get("authority_id") or sample.get("authority_id") or "")
-    jurisdiction = str(authority_payload.get("jurisdiction") or document.get("jurisdiction") or sample.get("jurisdiction") or "")
-    version = str(authority_payload.get("version") or document.get("version") or sample.get("version") or "")
+    authority_id = str(
+        authority_payload.get("authority_id")
+        or document.get("authority_id")
+        or sample.get("authority_id")
+        or ""
+    )
+    jurisdiction = str(
+        authority_payload.get("jurisdiction")
+        or document.get("jurisdiction")
+        or sample.get("jurisdiction")
+        or ""
+    )
+    version = str(
+        authority_payload.get("version") or document.get("version") or sample.get("version") or ""
+    )
     builder = LegalIRTemporalAuthorityGraphBuilder(
         metadata={"builder": "build_legal_ir_temporal_authority_graph", "document_id": document_id}
     )
@@ -1096,12 +1185,18 @@ def build_legal_ir_temporal_authority_graph(
                 name=str(item.get("name") or item_id),
                 jurisdiction=str(item.get("jurisdiction") or ""),
                 authority_type=str(item.get("authority_type") or item.get("type") or ""),
-                hierarchy_rank=int(item.get("hierarchy_rank") if item.get("hierarchy_rank") is not None else item.get("rank") or 0),
+                hierarchy_rank=int(
+                    item.get("hierarchy_rank")
+                    if item.get("hierarchy_rank") is not None
+                    else item.get("rank") or 0
+                ),
                 parent_authority_ids=_strings(item.get("parent_authority_ids", ())),
                 version=str(item.get("version") or ""),
                 source_uri=str(item.get("source_uri") or ""),
                 emergency_power=bool(item.get("emergency_power")),
-                metadata={key: value for key, value in item.items() if key not in {"authority_id", "name"}},
+                metadata={
+                    key: value for key, value in item.items() if key not in {"authority_id", "name"}
+                },
             )
 
     if authority_id:
@@ -1109,8 +1204,14 @@ def build_legal_ir_temporal_authority_graph(
             authority_id,
             name=str(authority_payload.get("name") or authority_id),
             jurisdiction=jurisdiction,
-            authority_type=str(authority_payload.get("authority_type") or authority_payload.get("type") or ""),
-            hierarchy_rank=int(authority_payload.get("hierarchy_rank") if authority_payload.get("hierarchy_rank") is not None else authority_payload.get("rank") or 0),
+            authority_type=str(
+                authority_payload.get("authority_type") or authority_payload.get("type") or ""
+            ),
+            hierarchy_rank=int(
+                authority_payload.get("hierarchy_rank")
+                if authority_payload.get("hierarchy_rank") is not None
+                else authority_payload.get("rank") or 0
+            ),
             parent_authority_ids=_strings(authority_payload.get("parent_authority_ids", ())),
             version=str(authority_payload.get("version") or version),
             source_uri=str(authority_payload.get("source_uri") or ""),
@@ -1142,7 +1243,8 @@ def build_legal_ir_temporal_authority_graph(
                     "authority_id": payload.get("authority_id") or target.authority_id,
                     "citation": payload.get("citation") or target.canonical_citation,
                     "citation_target_id": target.target_id,
-                    "jurisdiction": payload.get("jurisdiction") or _authority_jurisdiction(builder, target.authority_id),
+                    "jurisdiction": payload.get("jurisdiction")
+                    or _authority_jurisdiction(builder, target.authority_id),
                     "law_version_id": payload.get("law_version_id") or target.target_id,
                     "source_node_ids": payload.get("source_node_ids") or target.source_node_ids,
                     "span_ids": payload.get("span_ids") or target.span_ids,
@@ -1153,7 +1255,11 @@ def build_legal_ir_temporal_authority_graph(
                 default_version=target.version,
             )
 
-    for item in _sequence(document.get("law_versions") or document.get("temporal_authorities") or document.get("temporal_authority")):
+    for item in _sequence(
+        document.get("law_versions")
+        or document.get("temporal_authorities")
+        or document.get("temporal_authority")
+    ):
         _add_law_from_payload(
             builder,
             _mapping(item),
@@ -1162,7 +1268,9 @@ def build_legal_ir_temporal_authority_graph(
             default_version=version,
         )
 
-    for item in _sequence(document.get("citation_targets") or document.get("targets") or document.get("sections")):
+    for item in _sequence(
+        document.get("citation_targets") or document.get("targets") or document.get("sections")
+    ):
         payload = _mapping(item)
         if _has_temporal_payload(payload):
             _add_law_from_payload(
@@ -1175,7 +1283,9 @@ def build_legal_ir_temporal_authority_graph(
 
     for index, formula in enumerate(_sequence(document.get("formulas")), start=1):
         formula_payload = _mapping(formula)
-        authority_context = _mapping(formula_payload.get("authority_context") or formula_payload.get("temporal_authority"))
+        authority_context = _mapping(
+            formula_payload.get("authority_context") or formula_payload.get("temporal_authority")
+        )
         if not authority_context and not _has_temporal_payload(formula_payload):
             continue
         formula_id = str(formula_payload.get("formula_id") or f"formula-{index}")
@@ -1202,8 +1312,11 @@ def build_legal_ir_temporal_authority_graph(
                 **authority_context,
                 "citation": citation,
                 "formula_ids": [formula_id],
-                "law_version_id": authority_context.get("law_version_id") or formula_payload.get("law_version_id") or f"law:{formula_id}",
-                "conclusion_kinds": _strings(authority_context.get("conclusion_kinds", ())) or ([conclusion_kind] if conclusion_kind else []),
+                "law_version_id": authority_context.get("law_version_id")
+                or formula_payload.get("law_version_id")
+                or f"law:{formula_id}",
+                "conclusion_kinds": _strings(authority_context.get("conclusion_kinds", ()))
+                or ([conclusion_kind] if conclusion_kind else []),
                 "source_node_ids": _source_node_ids(formula_payload) or (formula_id,),
             },
             default_authority_id=str(authority_context.get("authority_id") or authority_id),
@@ -1211,24 +1324,43 @@ def build_legal_ir_temporal_authority_graph(
             default_version=str(authority_context.get("version") or version),
         )
 
-    for item in _sequence(document.get("changes") or document.get("temporal_changes") or document.get("amendments")):
+    for item in _sequence(
+        document.get("changes") or document.get("temporal_changes") or document.get("amendments")
+    ):
         payload = _mapping(item)
-        kind = payload.get("change_kind") or payload.get("kind") or (
-            LegalIRTemporalChangeKind.AMENDMENT.value if payload.get("replacement_law_version_id") or payload.get("amends") else ""
+        kind = (
+            payload.get("change_kind")
+            or payload.get("kind")
+            or (
+                LegalIRTemporalChangeKind.AMENDMENT.value
+                if payload.get("replacement_law_version_id") or payload.get("amends")
+                else ""
+            )
         )
         if kind:
             builder.add_change(
                 kind,
-                str(payload.get("target_law_version_id") or payload.get("target_id") or payload.get("amends") or ""),
+                str(
+                    payload.get("target_law_version_id")
+                    or payload.get("target_id")
+                    or payload.get("amends")
+                    or ""
+                ),
                 change_id=str(payload.get("change_id") or ""),
                 effective_date=payload.get("effective_date") or payload.get("effective_on"),
                 authority_id=str(payload.get("authority_id") or authority_id),
                 enacted_date=payload.get("enacted_date") or payload.get("enacted_on"),
-                replacement_law_version_id=str(payload.get("replacement_law_version_id") or payload.get("replacement_id") or ""),
+                replacement_law_version_id=str(
+                    payload.get("replacement_law_version_id") or payload.get("replacement_id") or ""
+                ),
                 jurisdiction=str(payload.get("jurisdiction") or jurisdiction),
                 source_node_ids=_source_node_ids(payload),
                 span_ids=_strings(payload.get("span_ids", ())),
-                metadata={key: value for key, value in payload.items() if key not in {"change_id", "target_law_version_id"}},
+                metadata={
+                    key: value
+                    for key, value in payload.items()
+                    if key not in {"change_id", "target_law_version_id"}
+                },
             )
 
     return builder.to_temporal_authority_graph()
@@ -1245,9 +1377,21 @@ def generate_legal_ir_temporal_authority_obligation_specs(
     sample = _payload_mapping(document_or_sample)
     document = _mapping(sample.get("modal_ir") or sample.get("document") or sample)
     sample_id = str(sample.get("sample_id") or document.get("document_id") or "legal-ir-sample")
-    query_defaults = _mapping(document.get("temporal_query_context") or sample.get("temporal_query_context"))
-    default_query_date = _date_text(query_defaults.get("query_date") or query_defaults.get("as_of") or document.get("query_date") or sample.get("query_date"))
-    default_jurisdiction = str(query_defaults.get("jurisdiction") or document.get("jurisdiction") or sample.get("jurisdiction") or "")
+    query_defaults = _mapping(
+        document.get("temporal_query_context") or sample.get("temporal_query_context")
+    )
+    default_query_date = _date_text(
+        query_defaults.get("query_date")
+        or query_defaults.get("as_of")
+        or document.get("query_date")
+        or sample.get("query_date")
+    )
+    default_jurisdiction = str(
+        query_defaults.get("jurisdiction")
+        or document.get("jurisdiction")
+        or sample.get("jurisdiction")
+        or ""
+    )
     specs: list[dict[str, Any]] = []
 
     for law in graph.law_versions:
@@ -1268,9 +1412,15 @@ def generate_legal_ir_temporal_authority_obligation_specs(
             status = (
                 "applicable"
                 if applicable
-                else applicability.decisions[0].status.value if applicability.decisions else "unresolved"
+                else applicability.decisions[0].status.value
+                if applicability.decisions
+                else "unresolved"
             )
-            family = "deontic" if kind in {"deontic", "obligation", "permission", "prohibition"} else "temporal"
+            family = (
+                "deontic"
+                if kind in {"deontic", "obligation", "permission", "prohibition"}
+                else "temporal"
+            )
             obligation_kind = (
                 "temporal_authority_deontic_scope"
                 if family == "deontic"
@@ -1290,7 +1440,9 @@ def generate_legal_ir_temporal_authority_obligation_specs(
                     "logic_family": family,
                     "metadata": {
                         "applicability_status": status,
-                        "applicable_law_version_ids": list(applicability.applicable_law_version_ids),
+                        "applicable_law_version_ids": list(
+                            applicability.applicable_law_version_ids
+                        ),
                         "authority_id": law.authority_id,
                         "canonical_citation": law.canonical_citation,
                         "conclusion_kind": kind,
@@ -1330,28 +1482,118 @@ def _decision_for_law(
     status = LegalIRTemporalApplicabilityStatus.APPLICABLE
 
     if authority is None:
-        diagnostics.append(_diagnostic(LegalIRTemporalDiagnosticType.AUTHORITY_MISSING, "Applicable law has no resolved authority.", law_version_id=law.law_version_id, authority_id=law.authority_id, source_node_ids=law.source_node_ids))
+        diagnostics.append(
+            _diagnostic(
+                LegalIRTemporalDiagnosticType.AUTHORITY_MISSING,
+                "Applicable law has no resolved authority.",
+                law_version_id=law.law_version_id,
+                authority_id=law.authority_id,
+                source_node_ids=law.source_node_ids,
+            )
+        )
         status = LegalIRTemporalApplicabilityStatus.UNRESOLVED_AUTHORITY
     elif context.jurisdiction and not _jurisdiction_matches(context.jurisdiction, jurisdiction):
-        diagnostics.append(_diagnostic(LegalIRTemporalDiagnosticType.WRONG_JURISDICTION, "Law version does not apply in the query jurisdiction.", law_version_id=law.law_version_id, authority_id=law.authority_id, formula_id=context.formula_id, source_node_ids=law.source_node_ids))
+        diagnostics.append(
+            _diagnostic(
+                LegalIRTemporalDiagnosticType.WRONG_JURISDICTION,
+                "Law version does not apply in the query jurisdiction.",
+                law_version_id=law.law_version_id,
+                authority_id=law.authority_id,
+                formula_id=context.formula_id,
+                source_node_ids=law.source_node_ids,
+            )
+        )
         status = LegalIRTemporalApplicabilityStatus.WRONG_JURISDICTION
     elif law.emergency and not context.include_emergency_rules:
-        diagnostics.append(_diagnostic(LegalIRTemporalDiagnosticType.EMERGENCY_RULE_EXPIRED, "Emergency rule is excluded by the query context.", law_version_id=law.law_version_id, authority_id=law.authority_id, formula_id=context.formula_id, source_node_ids=law.source_node_ids))
+        diagnostics.append(
+            _diagnostic(
+                LegalIRTemporalDiagnosticType.EMERGENCY_RULE_EXPIRED,
+                "Emergency rule is excluded by the query context.",
+                law_version_id=law.law_version_id,
+                authority_id=law.authority_id,
+                formula_id=context.formula_id,
+                source_node_ids=law.source_node_ids,
+            )
+        )
         status = LegalIRTemporalApplicabilityStatus.EMERGENCY_EXPIRED
-    elif _parse_date(law.effective_date) is not None and query_date < _parse_date(law.effective_date):  # type: ignore[arg-type]
-        diagnostics.append(_diagnostic(LegalIRTemporalDiagnosticType.NOT_YET_EFFECTIVE_LAW_USED, "Law version is not effective at the query date.", law_version_id=law.law_version_id, authority_id=law.authority_id, formula_id=context.formula_id, source_node_ids=law.source_node_ids))
+    elif _parse_date(law.effective_date) is not None and query_date < _parse_date(
+        law.effective_date
+    ):  # type: ignore[arg-type]
+        diagnostics.append(
+            _diagnostic(
+                LegalIRTemporalDiagnosticType.NOT_YET_EFFECTIVE_LAW_USED,
+                "Law version is not effective at the query date.",
+                law_version_id=law.law_version_id,
+                authority_id=law.authority_id,
+                formula_id=context.formula_id,
+                source_node_ids=law.source_node_ids,
+            )
+        )
         status = LegalIRTemporalApplicabilityStatus.NOT_YET_EFFECTIVE
-    elif law.repeal_date and _parse_date(law.repeal_date) is not None and query_date >= _parse_date(law.repeal_date):  # type: ignore[arg-type]
-        diagnostics.append(_diagnostic(LegalIRTemporalDiagnosticType.REPEALED_LAW_USED, "Law version was repealed before the query date.", law_version_id=law.law_version_id, authority_id=law.authority_id, formula_id=context.formula_id, source_node_ids=law.source_node_ids))
+    elif (
+        law.repeal_date
+        and _parse_date(law.repeal_date) is not None
+        and query_date >= _parse_date(law.repeal_date)
+    ):  # type: ignore[arg-type]
+        diagnostics.append(
+            _diagnostic(
+                LegalIRTemporalDiagnosticType.REPEALED_LAW_USED,
+                "Law version was repealed before the query date.",
+                law_version_id=law.law_version_id,
+                authority_id=law.authority_id,
+                formula_id=context.formula_id,
+                source_node_ids=law.source_node_ids,
+            )
+        )
         status = LegalIRTemporalApplicabilityStatus.REPEALED
-    elif law.superseded_date and _parse_date(law.superseded_date) is not None and query_date >= _parse_date(law.superseded_date):  # type: ignore[arg-type]
-        diagnostics.append(_diagnostic(LegalIRTemporalDiagnosticType.SUPERSEDED_LAW_USED, "Law version was superseded before the query date.", law_version_id=law.law_version_id, authority_id=law.authority_id, formula_id=context.formula_id, source_node_ids=law.source_node_ids))
+    elif (
+        law.superseded_date
+        and _parse_date(law.superseded_date) is not None
+        and query_date >= _parse_date(law.superseded_date)
+    ):  # type: ignore[arg-type]
+        diagnostics.append(
+            _diagnostic(
+                LegalIRTemporalDiagnosticType.SUPERSEDED_LAW_USED,
+                "Law version was superseded before the query date.",
+                law_version_id=law.law_version_id,
+                authority_id=law.authority_id,
+                formula_id=context.formula_id,
+                source_node_ids=law.source_node_ids,
+            )
+        )
         status = LegalIRTemporalApplicabilityStatus.SUPERSEDED
-    elif law.emergency and law.emergency_expires_on and _parse_date(law.emergency_expires_on) is not None and query_date >= _parse_date(law.emergency_expires_on):  # type: ignore[arg-type]
-        diagnostics.append(_diagnostic(LegalIRTemporalDiagnosticType.EMERGENCY_RULE_EXPIRED, "Emergency rule expired before the query date.", law_version_id=law.law_version_id, authority_id=law.authority_id, formula_id=context.formula_id, source_node_ids=law.source_node_ids))
+    elif (
+        law.emergency
+        and law.emergency_expires_on
+        and _parse_date(law.emergency_expires_on) is not None
+        and query_date >= _parse_date(law.emergency_expires_on)
+    ):  # type: ignore[arg-type]
+        diagnostics.append(
+            _diagnostic(
+                LegalIRTemporalDiagnosticType.EMERGENCY_RULE_EXPIRED,
+                "Emergency rule expired before the query date.",
+                law_version_id=law.law_version_id,
+                authority_id=law.authority_id,
+                formula_id=context.formula_id,
+                source_node_ids=law.source_node_ids,
+            )
+        )
         status = LegalIRTemporalApplicabilityStatus.EMERGENCY_EXPIRED
-    elif law.sunset_date and _parse_date(law.sunset_date) is not None and query_date >= _parse_date(law.sunset_date):  # type: ignore[arg-type]
-        diagnostics.append(_diagnostic(LegalIRTemporalDiagnosticType.EXPIRED_LAW_USED, "Law version sunset before the query date.", law_version_id=law.law_version_id, authority_id=law.authority_id, formula_id=context.formula_id, source_node_ids=law.source_node_ids))
+    elif (
+        law.sunset_date
+        and _parse_date(law.sunset_date) is not None
+        and query_date >= _parse_date(law.sunset_date)
+    ):  # type: ignore[arg-type]
+        diagnostics.append(
+            _diagnostic(
+                LegalIRTemporalDiagnosticType.EXPIRED_LAW_USED,
+                "Law version sunset before the query date.",
+                law_version_id=law.law_version_id,
+                authority_id=law.authority_id,
+                formula_id=context.formula_id,
+                source_node_ids=law.source_node_ids,
+            )
+        )
         status = LegalIRTemporalApplicabilityStatus.EXPIRED
 
     return LegalIRTemporalDecision(
@@ -1419,7 +1661,9 @@ def _candidate_law_versions(
         wanted = set(context.law_version_ids)
         laws = tuple(law for law in laws if law.law_version_id in wanted)
     if context.formula_id:
-        scoped = tuple(law for law in laws if not law.formula_ids or context.formula_id in law.formula_ids)
+        scoped = tuple(
+            law for law in laws if not law.formula_ids or context.formula_id in law.formula_ids
+        )
         laws = scoped or laws
     if context.canonical_citation:
         laws = tuple(law for law in laws if law.canonical_citation == context.canonical_citation)
@@ -1442,7 +1686,9 @@ def _add_law_from_payload(
     default_jurisdiction: str = "",
     default_version: str = "",
 ) -> None:
-    citation = str(payload.get("canonical_citation") or payload.get("citation") or payload.get("section") or "")
+    citation = str(
+        payload.get("canonical_citation") or payload.get("citation") or payload.get("section") or ""
+    )
     if not citation:
         return
     authority_id = str(payload.get("authority_id") or default_authority_id)
@@ -1457,7 +1703,8 @@ def _add_law_from_payload(
         repeal_date=payload.get("repeal_date") or payload.get("repealed_on"),
         superseded_date=payload.get("superseded_date") or payload.get("superseded_on"),
         emergency=bool(payload.get("emergency") or payload.get("emergency_rule")),
-        emergency_expires_on=payload.get("emergency_expires_on") or payload.get("emergency_expiration_date"),
+        emergency_expires_on=payload.get("emergency_expires_on")
+        or payload.get("emergency_expiration_date"),
         amended_by=_strings(payload.get("amended_by", ())),
         amends=_strings(payload.get("amends", ())),
         repealed_by=str(payload.get("repealed_by") or ""),
@@ -1468,8 +1715,15 @@ def _add_law_from_payload(
         citation_target_id=str(payload.get("citation_target_id") or payload.get("target_id") or ""),
         formula_ids=_strings(payload.get("formula_ids", ())),
         conclusion_kinds=_strings(payload.get("conclusion_kinds", ())),
-        conflict_key=str(payload.get("conflict_key") or normalize_legal_citation(citation, default_authority=authority_id)),
-        metadata={key: value for key, value in payload.items() if key not in {"citation", "canonical_citation", "section"}},
+        conflict_key=str(
+            payload.get("conflict_key")
+            or normalize_legal_citation(citation, default_authority=authority_id)
+        ),
+        metadata={
+            key: value
+            for key, value in payload.items()
+            if key not in {"citation", "canonical_citation", "section"}
+        },
     )
 
 
@@ -1481,13 +1735,17 @@ def _replace_law(law: LegalIRLawVersion, **updates: Any) -> LegalIRLawVersion:
     return LegalIRLawVersion.from_dict(data)
 
 
-def _temporal_authority_graph(value: LegalIRTemporalAuthorityGraph | Mapping[str, Any]) -> LegalIRTemporalAuthorityGraph:
+def _temporal_authority_graph(
+    value: LegalIRTemporalAuthorityGraph | Mapping[str, Any],
+) -> LegalIRTemporalAuthorityGraph:
     if isinstance(value, LegalIRTemporalAuthorityGraph):
         return value
     return LegalIRTemporalAuthorityGraph.from_dict(_mapping(value))
 
 
-def _citation_graph_or_none(value: LegalIRCitationGraph | Mapping[str, Any] | None) -> LegalIRCitationGraph | None:
+def _citation_graph_or_none(
+    value: LegalIRCitationGraph | Mapping[str, Any] | None,
+) -> LegalIRCitationGraph | None:
     if value is None:
         return None
     if isinstance(value, LegalIRCitationGraph):
@@ -1495,21 +1753,33 @@ def _citation_graph_or_none(value: LegalIRCitationGraph | Mapping[str, Any] | No
     return LegalIRCitationGraph.from_dict(_mapping(value))
 
 
-def _query_context(value: LegalIRTemporalQueryContext | Mapping[str, Any]) -> LegalIRTemporalQueryContext:
+def _query_context(
+    value: LegalIRTemporalQueryContext | Mapping[str, Any],
+) -> LegalIRTemporalQueryContext:
     if isinstance(value, LegalIRTemporalQueryContext):
         return value
     return LegalIRTemporalQueryContext.from_dict(_mapping(value))
 
 
-def _applicability(value: LegalIRTemporalApplicability | Mapping[str, Any]) -> LegalIRTemporalApplicability:
+def _applicability(
+    value: LegalIRTemporalApplicability | Mapping[str, Any],
+) -> LegalIRTemporalApplicability:
     if isinstance(value, LegalIRTemporalApplicability):
         return value
     data = _mapping(value)
     return LegalIRTemporalApplicability(
         query_context=LegalIRTemporalQueryContext.from_dict(_mapping(data.get("query_context"))),
-        decisions=tuple(LegalIRTemporalDecision.from_dict(_mapping(item)) for item in data.get("decisions", []) or []),
-        diagnostics=tuple(LegalIRTemporalDiagnostic.from_dict(_mapping(item)) for item in data.get("diagnostics", []) or []),
-        schema_version=str(data.get("schema_version") or LEGAL_IR_TEMPORAL_AUTHORITY_SCHEMA_VERSION),
+        decisions=tuple(
+            LegalIRTemporalDecision.from_dict(_mapping(item))
+            for item in data.get("decisions", []) or []
+        ),
+        diagnostics=tuple(
+            LegalIRTemporalDiagnostic.from_dict(_mapping(item))
+            for item in data.get("diagnostics", []) or []
+        ),
+        schema_version=str(
+            data.get("schema_version") or LEGAL_IR_TEMPORAL_AUTHORITY_SCHEMA_VERSION
+        ),
     )
 
 
@@ -1535,7 +1805,9 @@ def _has_temporal_payload(payload: Mapping[str, Any]) -> bool:
     )
 
 
-def _authority_jurisdiction(builder: LegalIRTemporalAuthorityGraphBuilder, authority_id: str) -> str:
+def _authority_jurisdiction(
+    builder: LegalIRTemporalAuthorityGraphBuilder, authority_id: str
+) -> str:
     authority = builder._authorities.get(authority_id)
     return authority.jurisdiction if authority is not None else ""
 
@@ -1543,7 +1815,9 @@ def _authority_jurisdiction(builder: LegalIRTemporalAuthorityGraphBuilder, autho
 def _conclusion_kind_for_law(law: LegalIRLawVersion) -> str:
     if law.conclusion_kinds:
         return law.conclusion_kinds[0]
-    return _atom(law.metadata.get("conclusion_kind") or law.metadata.get("role") or "", fallback="factual")
+    return _atom(
+        law.metadata.get("conclusion_kind") or law.metadata.get("role") or "", fallback="factual"
+    )
 
 
 def _jurisdiction_matches(query_jurisdiction: str, law_jurisdiction: str) -> bool:
@@ -1624,11 +1898,17 @@ def _duplicate_diagnostics(
         if not value:
             continue
         if value in seen:
-            diagnostics.append(_diagnostic(diagnostic_type, f"Duplicate {label} id.", field_path=f"{label}.{value}"))
+            diagnostics.append(
+                _diagnostic(
+                    diagnostic_type, f"Duplicate {label} id.", field_path=f"{label}.{value}"
+                )
+            )
         seen.add(value)
 
 
-def _dedupe_diagnostics(items: Sequence[LegalIRTemporalDiagnostic]) -> tuple[LegalIRTemporalDiagnostic, ...]:
+def _dedupe_diagnostics(
+    items: Sequence[LegalIRTemporalDiagnostic],
+) -> tuple[LegalIRTemporalDiagnostic, ...]:
     deduped: dict[str, LegalIRTemporalDiagnostic] = {}
     for item in items:
         key = _stable_hash(item.to_dict())

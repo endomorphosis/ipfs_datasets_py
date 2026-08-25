@@ -40,7 +40,7 @@ def sample_entity():
         entity_type="organization",
         name="Apple Inc.",
         properties={"founded": "1976", "location": "Cupertino"},
-        confidence=0.95
+        confidence=0.95,
     )
 
 
@@ -53,21 +53,21 @@ def sample_entities():
             entity_type="organization",
             name="Apple Inc.",
             properties={"founded": "1976"},
-            confidence=0.95
+            confidence=0.95,
         ),
         Entity(
             entity_id="e2",
             entity_type="person",
             name="Steve Jobs",
             properties={"role": "founder"},
-            confidence=0.98
+            confidence=0.98,
         ),
         Entity(
             entity_id="e3",
             entity_type="location",
             name="Cupertino",
             properties={"state": "California"},
-            confidence=0.92
+            confidence=0.92,
         ),
     ]
 
@@ -80,7 +80,7 @@ def sample_relationship(sample_entities):
         target_entity=sample_entities[0],  # Apple Inc.
         relationship_type="FOUNDED",
         properties={"year": "1976"},
-        confidence=0.90
+        confidence=0.90,
     )
 
 
@@ -93,14 +93,14 @@ def sample_relationships(sample_entities):
             target_entity=sample_entities[0],  # Apple Inc.
             relationship_type="FOUNDED",
             properties={"year": "1976"},
-            confidence=0.90
+            confidence=0.90,
         ),
         Relationship(
             source_entity=sample_entities[0],  # Apple Inc.
             target_entity=sample_entities[2],  # Cupertino
             relationship_type="LOCATED_IN",
             properties={},
-            confidence=0.88
+            confidence=0.88,
         ),
     ]
 
@@ -142,7 +142,7 @@ def mock_wikipedia_response():
             "pages": {
                 "123": {
                     "title": "Apple Inc.",
-                    "extract": "Apple Inc. is an American multinational technology company..."
+                    "extract": "Apple Inc. is an American multinational technology company...",
                 }
             }
         }

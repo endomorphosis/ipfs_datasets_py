@@ -129,40 +129,40 @@ tools/
 
 **TaskQueue Tools (14):**
 ```python
-p2p_taskqueue_status          # Service health + auto-discovery
-p2p_taskqueue_submit          # Submit inference/docker tasks
-p2p_taskqueue_cancel          # Cancel running task
-p2p_taskqueue_get_result      # Retrieve task result
-p2p_taskqueue_list_tasks      # List all tasks
-p2p_taskqueue_update_task     # Modify task metadata
-p2p_taskqueue_task_status     # Get single task status
-p2p_taskqueue_resubmit        # Retry failed task
-p2p_taskqueue_priority        # Adjust task priority
-p2p_taskqueue_worker_stats    # Worker metrics
+p2p_taskqueue_status  # Service health + auto-discovery
+p2p_taskqueue_submit  # Submit inference/docker tasks
+p2p_taskqueue_cancel  # Cancel running task
+p2p_taskqueue_get_result  # Retrieve task result
+p2p_taskqueue_list_tasks  # List all tasks
+p2p_taskqueue_update_task  # Modify task metadata
+p2p_taskqueue_task_status  # Get single task status
+p2p_taskqueue_resubmit  # Retry failed task
+p2p_taskqueue_priority  # Adjust task priority
+p2p_taskqueue_worker_stats  # Worker metrics
 p2p_taskqueue_discover_peers  # Find available peers
-p2p_taskqueue_announce        # Broadcast availability
-p2p_taskqueue_heartbeat       # Keep-alive signal
-p2p_taskqueue_shutdown        # Graceful shutdown
+p2p_taskqueue_announce  # Broadcast availability
+p2p_taskqueue_heartbeat  # Keep-alive signal
+p2p_taskqueue_shutdown  # Graceful shutdown
 ```
 
 **Workflow Tools (6):**
 ```python
-p2p_workflow_submit           # Submit multi-step workflow
-p2p_workflow_status           # Check workflow progress
-p2p_workflow_cancel           # Cancel entire workflow
-p2p_workflow_list             # List all workflows
-p2p_workflow_get_dag          # Retrieve workflow DAG
-p2p_workflow_coordinate       # Coordinate across peers
+p2p_workflow_submit  # Submit multi-step workflow
+p2p_workflow_status  # Check workflow progress
+p2p_workflow_cancel  # Cancel entire workflow
+p2p_workflow_list  # List all workflows
+p2p_workflow_get_dag  # Retrieve workflow DAG
+p2p_workflow_coordinate  # Coordinate across peers
 ```
 
 **Peer Management Tools (New):**
 ```python
-p2p_peer_register             # Register local peer
-p2p_peer_discover             # Find available peers
-p2p_peer_bootstrap            # Initialize from bootstrap nodes
-p2p_peer_cleanup              # Remove stale entries
-p2p_peer_get_public_ip        # Detect public IP
-p2p_peer_list                 # List all known peers
+p2p_peer_register  # Register local peer
+p2p_peer_discover  # Find available peers
+p2p_peer_bootstrap  # Initialize from bootstrap nodes
+p2p_peer_cleanup  # Remove stale entries
+p2p_peer_get_public_ip  # Detect public IP
+p2p_peer_list  # List all known peers
 ```
 
 ---
@@ -421,13 +421,14 @@ class RuntimeRouter:
 # ipfs_datasets_py/mcp_server/trio_adapter.py
 from ipfs_accelerate_py.mcplusplus_module import TrioMCPServer
 
+
 class TrioMCPServerAdapter:
     """Adapter for Trio MCP server in ipfs_datasets_py"""
-    
+
     def __init__(self, config: ServerConfig):
         self.config = config
         self.server = None
-    
+
     async def start(self):
         """Start Trio server"""
         self.server = TrioMCPServer(
@@ -436,10 +437,10 @@ class TrioMCPServerAdapter:
             port=self.config.trio_port or (self.config.port + 1),
             enable_p2p_tools=True,
             enable_workflow_tools=True,
-            enable_taskqueue_tools=True
+            enable_taskqueue_tools=True,
         )
         await self.server.run()
-    
+
     async def shutdown(self):
         """Graceful shutdown"""
         if self.server:
@@ -485,38 +486,28 @@ runtime:
 **Implementation:**
 ```python
 # mcp_server/tools/p2p_tools.py
-from ipfs_accelerate_py.mcplusplus_module.tools import (
-    taskqueue_tools,
-    workflow_tools
-)
+from ipfs_accelerate_py.mcplusplus_module.tools import taskqueue_tools, workflow_tools
+
 
 def register_p2p_tools(server):
     """Register all P2P tools from MCP++"""
-    
+
     # TaskQueue tools (14)
     for tool in taskqueue_tools.get_all_tools():
         server.register_tool(
             name=tool.name,
             handler=tool.handler,
             schema=tool.schema,
-            metadata={
-                "runtime": "trio",
-                "category": "p2p_taskqueue",
-                "requires_p2p": True
-            }
+            metadata={"runtime": "trio", "category": "p2p_taskqueue", "requires_p2p": True},
         )
-    
+
     # Workflow tools (6)
     for tool in workflow_tools.get_all_tools():
         server.register_tool(
             name=tool.name,
             handler=tool.handler,
             schema=tool.schema,
-            metadata={
-                "runtime": "trio",
-                "category": "p2p_workflow",
-                "requires_p2p": True
-            }
+            metadata={"runtime": "trio", "category": "p2p_workflow", "requires_p2p": True},
         )
 ```
 
@@ -540,18 +531,19 @@ def register_p2p_tools(server):
 from ipfs_accelerate_py.mcplusplus_module.p2p import (
     P2PPeerRegistry,
     SimplePeerBootstrap,
-    ConnectivityHelper
+    ConnectivityHelper,
 )
+
 
 class PeerDiscoveryManager:
     """Manages peer discovery across multiple methods"""
-    
+
     def __init__(self, config):
         self.config = config
         self.registry = None
         self.bootstrap = None
         self.connectivity = None
-    
+
     async def initialize(self):
         """Initialize all discovery mechanisms"""
         # GitHub Issues registry
@@ -559,38 +551,36 @@ class PeerDiscoveryManager:
             self.registry = P2PPeerRegistry(
                 repo_owner=self.config.repo_owner,
                 repo_name=self.config.repo_name,
-                ttl_seconds=self.config.peer_ttl
+                ttl_seconds=self.config.peer_ttl,
             )
-        
+
         # Local file bootstrap
         if self.config.enable_local_bootstrap:
-            self.bootstrap = SimplePeerBootstrap(
-                registry_path=self.config.bootstrap_path
-            )
-        
+            self.bootstrap = SimplePeerBootstrap(registry_path=self.config.bootstrap_path)
+
         # Connectivity helper
         self.connectivity = ConnectivityHelper(
             enable_mdns=self.config.enable_mdns,
             enable_dht=self.config.enable_dht,
-            enable_relay=self.config.enable_relay
+            enable_relay=self.config.enable_relay,
         )
-    
+
     async def discover_peers(self, max_peers=10):
         """Discover available peers"""
         peers = []
-        
+
         # Try GitHub registry
         if self.registry:
             peers.extend(await self.registry.discover_peers(max_peers))
-        
+
         # Try local bootstrap
         if self.bootstrap and len(peers) < max_peers:
             peers.extend(await self.bootstrap.get_peers())
-        
+
         # Try connectivity helper
         if self.connectivity and len(peers) < max_peers:
             peers.extend(await self.connectivity.discover())
-        
+
         return peers[:max_peers]
 ```
 
@@ -633,32 +623,32 @@ p2p:
 # mcp_server/p2p/workflow_integration.py
 from ipfs_accelerate_py.mcplusplus_module.p2p import P2PWorkflowScheduler
 
+
 class WorkflowManager:
     """Manages P2P workflow execution"""
-    
+
     def __init__(self, config, peer_discovery):
         self.config = config
         self.peer_discovery = peer_discovery
         self.scheduler = None
-    
+
     async def initialize(self):
         """Initialize workflow scheduler"""
         self.scheduler = P2PWorkflowScheduler(
-            peer_id=self.config.peer_id,
-            discovery=self.peer_discovery
+            peer_id=self.config.peer_id, discovery=self.peer_discovery
         )
         await self.scheduler.start()
-    
+
     async def submit_workflow(self, workflow_dag: dict) -> str:
         """Submit a multi-step workflow"""
         # Convert to P2PWorkflow format
         workflow = self._convert_dag(workflow_dag)
-        
+
         # Submit to scheduler
         workflow_id = await self.scheduler.submit(workflow)
-        
+
         return workflow_id
-    
+
     async def get_workflow_status(self, workflow_id: str) -> dict:
         """Get workflow execution status"""
         return await self.scheduler.get_status(workflow_id)
@@ -804,16 +794,17 @@ import asyncio
 import time
 from statistics import mean, stdev
 
+
 async def benchmark_fastapi_tool(tool_name, params, iterations=100):
     """Benchmark FastAPI tool execution"""
     latencies = []
-    
+
     for _ in range(iterations):
         start = time.perf_counter()
         await fastapi_server.call_tool(tool_name, params)
         latency = (time.perf_counter() - start) * 1000  # ms
         latencies.append(latency)
-    
+
     return {
         "mean": mean(latencies),
         "stdev": stdev(latencies),
@@ -821,39 +812,35 @@ async def benchmark_fastapi_tool(tool_name, params, iterations=100):
         "max": max(latencies),
         "p50": sorted(latencies)[len(latencies) // 2],
         "p95": sorted(latencies)[int(len(latencies) * 0.95)],
-        "p99": sorted(latencies)[int(len(latencies) * 0.99)]
+        "p99": sorted(latencies)[int(len(latencies) * 0.99)],
     }
+
 
 async def benchmark_trio_tool(tool_name, params, iterations=100):
     """Benchmark Trio tool execution"""
     # Same as above but with trio_server
     ...
 
+
 async def compare_runtimes():
     """Compare FastAPI vs Trio for P2P tools"""
-    tools = [
-        "p2p_taskqueue_submit",
-        "p2p_workflow_submit",
-        "p2p_peer_discover"
-    ]
-    
+    tools = ["p2p_taskqueue_submit", "p2p_workflow_submit", "p2p_peer_discover"]
+
     results = {}
     for tool in tools:
         fastapi_stats = await benchmark_fastapi_tool(tool, {})
         trio_stats = await benchmark_trio_tool(tool, {})
-        
-        improvement = (
-            (fastapi_stats["mean"] - trio_stats["mean"]) 
-            / fastapi_stats["mean"] * 100
-        )
-        
+
+        improvement = (fastapi_stats["mean"] - trio_stats["mean"]) / fastapi_stats["mean"] * 100
+
         results[tool] = {
             "fastapi": fastapi_stats,
             "trio": trio_stats,
-            "improvement_pct": improvement
+            "improvement_pct": improvement,
         }
-    
+
     return results
+
 
 # Expected results:
 # p2p_taskqueue_submit: 50-70% faster with Trio
@@ -877,7 +864,7 @@ async def compare_runtimes():
 # tests/integration/test_p2p_workflow.py
 class TestP2PWorkflowIntegration:
     """End-to-end P2P workflow tests"""
-    
+
     async def test_submit_and_execute_workflow(self):
         """Submit workflow and verify execution"""
         # Submit workflow
@@ -887,36 +874,30 @@ class TestP2PWorkflowIntegration:
                 "workflow": {
                     "tasks": [
                         {"type": "inference", "model": "gpt2"},
-                        {"type": "embedding", "model": "bert"}
+                        {"type": "embedding", "model": "bert"},
                     ]
                 }
-            }
+            },
         )
-        
+
         # Wait for completion
         status = await self._wait_for_completion(workflow_id)
         assert status["state"] == "completed"
-        
+
     async def test_peer_discovery_and_coordination(self):
         """Test peer discovery and workflow coordination"""
         # Discover peers
         peers = await server.call_tool("p2p_peer_discover", {})
         assert len(peers) > 0
-        
+
         # Submit workflow across peers
         workflow_id = await server.call_tool(
             "p2p_workflow_submit",
-            {
-                "workflow": {...},
-                "target_peers": [p["peer_id"] for p in peers]
-            }
+            {"workflow": {...}, "target_peers": [p["peer_id"] for p in peers]},
         )
-        
+
         # Verify coordination
-        status = await server.call_tool(
-            "p2p_workflow_status",
-            {"workflow_id": workflow_id}
-        )
+        status = await server.call_tool("p2p_workflow_status", {"workflow_id": workflow_id})
         assert "coordinating_peers" in status
 ```
 
@@ -1108,39 +1089,39 @@ services:
 ```python
 class RuntimeRouter:
     """Intelligent tool routing between FastAPI and Trio"""
-    
+
     TRIO_TOOL_PATTERNS = [
-        "p2p_*",           # All P2P tools
-        "*workflow*",      # Workflow tools
-        "*taskqueue*",     # TaskQueue tools
-        "*peer*"           # Peer management
+        "p2p_*",  # All P2P tools
+        "*workflow*",  # Workflow tools
+        "*taskqueue*",  # TaskQueue tools
+        "*peer*",  # Peer management
     ]
-    
+
     def _detect_runtime(self, tool_name: str, metadata: dict) -> str:
         """Detect required runtime for tool"""
-        
+
         # 1. Check explicit metadata
         if metadata.get("runtime") == "trio":
             return "trio"
         if metadata.get("runtime") == "fastapi":
             return "fastapi"
-        
+
         # 2. Check P2P requirement
         if metadata.get("requires_p2p", False):
             return "trio"
-        
+
         # 3. Pattern matching
         for pattern in self.TRIO_TOOL_PATTERNS:
             if self._matches_pattern(tool_name, pattern):
                 return "trio"
-        
+
         # 4. Default to FastAPI
         return "fastapi"
-    
+
     async def route_call(self, tool_name: str, params: dict) -> Any:
         """Route tool call with fallback"""
         runtime = self._detect_runtime(tool_name)
-        
+
         try:
             if runtime == "trio" and self.trio_server:
                 return await self._call_trio(tool_name, params)

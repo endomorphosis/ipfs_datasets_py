@@ -113,9 +113,7 @@ def test_hammer_report_includes_complete_contract_field_family_coverage_matrix()
     assert coverage.schema_version == LEGAL_IR_HAMMER_COVERAGE_SCHEMA_VERSION
     assert coverage.promotion_allowed is True
     assert coverage.block_reasons == ()
-    assert set(REQUIRED_LEGAL_IR_HAMMER_COVERAGE_FAMILIES) <= set(
-        coverage.coverage_by_family
-    )
+    assert set(REQUIRED_LEGAL_IR_HAMMER_COVERAGE_FAMILIES) <= set(coverage.coverage_by_family)
     assert coverage.covered_family_count == coverage.required_family_count
     assert coverage.unsupported_translations
     assert coverage.promotion_allowed is True

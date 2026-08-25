@@ -122,8 +122,7 @@ def test_compiler_surfaces_packet_003775_explicit_adaptive_ambiguity() -> None:
             family_margin=family_margin,
         )
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         ambiguities = compiler._adaptive_family_margin_ambiguities(
             SpaCyLegalEncoding(
@@ -146,28 +145,24 @@ def test_compiler_surfaces_packet_003775_explicit_adaptive_ambiguity() -> None:
 
         expected_direction = "outvoted" if family_margin <= 0.0 else "contested"
         expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_"
-            f"{expected_direction}_margin_low"
+            f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
         )
         explicit = next(
-            ambiguity
-            for ambiguity in ambiguities
-            if ambiguity.ambiguity_type == expected_type
+            ambiguity for ambiguity in ambiguities if ambiguity.ambiguity_type == expected_type
         )
         assert explicit.metadata["is_explicit_adaptive_ambiguity"] is True
         assert explicit.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert explicit.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
-        assert explicit.metadata["adaptive_policy_pair"] == (
-            f"{predicted_family}->{target_family}"
-        )
-        assert abs(
-            float(explicit.metadata["family_margin_raw"]) - family_margin
-        ) <= 1e-12
+        assert explicit.metadata["adaptive_policy_pair"] == (f"{predicted_family}->{target_family}")
+        assert abs(float(explicit.metadata["family_margin_raw"]) - family_margin) <= 1e-12
         expected_threshold = 0.15 + compiler_refined_modal_family_cue_margin_buffer(
             predicted_family,
             target_family,
         )
-        assert abs(
-            float(explicit.metadata["adaptive_effective_family_margin_threshold"])
-            - expected_threshold
-        ) <= 1e-12
+        assert (
+            abs(
+                float(explicit.metadata["adaptive_effective_family_margin_threshold"])
+                - expected_threshold
+            )
+            <= 1e-12
+        )

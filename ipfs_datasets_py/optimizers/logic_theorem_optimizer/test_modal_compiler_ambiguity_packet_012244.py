@@ -142,10 +142,7 @@ def test_compiler_exposes_packet_012244_explicit_adaptive_ambiguities() -> None:
             "family_margin": -0.337296111773,
             "expected_type": "adaptive_frame_deontic_outvoted_margin_low",
             "severity": "requires_rule",
-            "text": (
-                "The committee has authority under this section and shall submit "
-                "a report."
-            ),
+            "text": ("The committee has authority under this section and shall submit a report."),
         },
         {
             "sample_id": "us-code-22-4083a-d3f4aee930be80fb",
@@ -163,8 +160,7 @@ def test_compiler_exposes_packet_012244_explicit_adaptive_ambiguities() -> None:
             "target_family": ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
             "family_margin": 0.136101013634,
             "expected_type": (
-                "adaptive_conditional_normative_conditional_normative_"
-                "contested_margin_low"
+                "adaptive_conditional_normative_conditional_normative_contested_margin_low"
             ),
             "severity": "review",
             "runner_up_family": ModalLogicFamily.DEONTIC.value,
@@ -186,9 +182,7 @@ def test_compiler_exposes_packet_012244_explicit_adaptive_ambiguities() -> None:
     )
 
     for case in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         predicted_family = str(case["predicted_family"])
         target_family = str(case["target_family"])
         family_margin = float(case["family_margin"])
@@ -197,9 +191,7 @@ def test_compiler_exposes_packet_012244_explicit_adaptive_ambiguities() -> None:
             target_family=target_family,
             family_margin=family_margin,
             runner_up_family=(
-                str(case["runner_up_family"])
-                if case.get("runner_up_family") is not None
-                else None
+                str(case["runner_up_family"]) if case.get("runner_up_family") is not None else None
             ),
         )
 
@@ -222,16 +214,8 @@ def test_compiler_exposes_packet_012244_explicit_adaptive_ambiguities() -> None:
         assert ambiguity.severity == case["severity"]
         assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
-        assert (
-            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12
         expected_priority = (
-            abs(family_margin) + 0.15
-            if family_margin <= 0.0
-            else 0.15 - family_margin
+            abs(family_margin) + 0.15 if family_margin <= 0.0 else 0.15 - family_margin
         )
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12

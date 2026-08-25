@@ -1,0 +1,38 @@
+{
+  "acceptance": "Planner gap for BM25/GTE/graph indexes had no authorized edit targets. Index producing tasks are already completed.",
+  "authorizing_for_publication": false,
+  "board_namespace": "open-us-law-reindex-v1",
+  "canonical_board_task": false,
+  "checks": {
+    "authorizing_for_publication": false,
+    "claims_live_corpus": false,
+    "no_authorized_edit_targets": true,
+    "planner_gap_is_not_new_implementation": true,
+    "producing_tasks_completed": true,
+    "review_only": true
+  },
+  "code_version": "1",
+  "content_digest": "7a548fdfde85123e81de5298d3548d05fbc0de0871f7a3b0697bc9e89cae1ff0",
+  "digest": "7a548fdfde85123e81de5298d3548d05fbc0de0871f7a3b0697bc9e89cae1ff0",
+  "discovery": "workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-16-oul-076-objective-gap-indexes.md",
+  "finding": "Planner gap for BM25/GTE/graph indexes had no authorized edit targets. Index producing tasks are already completed.",
+  "goal_id": "OUL-G000",
+  "kind": "objective-gap-review",
+  "operator_resolution": null,
+  "producer": "operator_close_uscir_oul_boards.py",
+  "producing_task_status": {
+    "OUL-027": "completed",
+    "OUL-028": "completed",
+    "OUL-029": "completed",
+    "OUL-030": "completed",
+    "OUL-031": "completed",
+    "OUL-032": "completed"
+  },
+  "program_id": "open-us-law-reindex-v1",
+  "report_digest_sha256": "7a548fdfde85123e81de5298d3548d05fbc0de0871f7a3b0697bc9e89cae1ff0",
+  "review_only": true,
+  "reviewed_at": "2026-08-19T03:36:28Z",
+  "schema": "ipfs_datasets_py/open-us-law-review-receipt@1",
+  "status": "passed",
+  "task_id": "OUL-076"
+}

@@ -38,13 +38,9 @@ def test_packet_000295_required_pairs_are_in_registry_constant() -> None:
 def test_packet_000295_required_pairs_are_policy_targets() -> None:
     for predicted_family, target_family in _PACKET_000295_REQUIRED_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
 
 
 def test_packet_000295_required_pairs_support_explicit_adaptive_ambiguity() -> None:

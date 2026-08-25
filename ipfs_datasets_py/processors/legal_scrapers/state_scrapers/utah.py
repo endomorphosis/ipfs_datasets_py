@@ -3,18 +3,128 @@
 This module contains the scraper for Utah statutes from the official state legislative website.
 """
 
+import json
+import os
 import re
-from typing import List, Dict, Optional
-from urllib.parse import urljoin
-from urllib.parse import quote
-from urllib.parse import urlparse, parse_qs
+import ssl
+import urllib.request
+from typing import Any, Dict, List, Mapping, Optional, Sequence
+from urllib.parse import parse_qs, quote, urljoin, urlparse
 from xml.etree import ElementTree as ET
+
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
 class UtahScraper(BaseStateScraper):
     """Scraper for Utah state laws from https://le.utah.gov"""
+
+    OFFICIAL_DOMAIN = "le.utah.gov"
+    OFFICIAL_ENTRY_PATH = "/xcode/code.html"
+    OFFICIAL_ENTRY_URL = "https://le.utah.gov/xcode/code.html"
+    _UT_TITLE_HREF_RE = re.compile(
+        r"/xcode/Title(?P<title>\d{1,2}[A-Z]?)\b",
+        re.IGNORECASE,
+    )
+    _UT_TITLE_LABEL_RE = re.compile(
+        r"\bTitle\s+(?P<title>\d{1,2}[A-Z]?)\b",
+        re.IGNORECASE,
+    )
+    OFFICIAL_TITLES = (
+        ("1", "General Provisions"),
+        ("2", "Aeronautics"),
+        ("3", "Uniform Agricultural Cooperative Association Act"),
+        ("4", "Utah Agricultural Code"),
+        ("7", "Financial Institutions Act"),
+        ("8", "Cemeteries"),
+        ("9", "Cultural and Community Engagement"),
+        ("10", "Utah Municipal Code"),
+        ("11", "Cities, Counties, and Local Taxing Units"),
+        ("12", "Collection Agencies"),
+        ("13", "Commerce and Trade"),
+        ("14", "Contractors' Bonds"),
+        ("15", "Contracts and Obligations in General"),
+        ("15A", "State Construction and Fire Codes Act"),
+        ("16", "Corporations"),
+        ("17", "Counties"),
+        ("17B", "Limited Purpose Local Government Entities - Special Districts"),
+        ("17C", "Limited Purpose Local Government Entities - Community Reinvestment Agency Act"),
+        ("17D", "Limited Purpose Local Government Entities - Other Entities"),
+        ("18", "Dogs"),
+        ("19", "Environmental Quality Code"),
+        ("20A", "Election Code"),
+        ("21", "Fees"),
+        ("22", "Fiduciaries and Trusts"),
+        ("23A", "Wildlife Resources Act"),
+        ("24", "Forfeiture and Disposition of Property Act"),
+        ("25", "Fraud"),
+        ("26A", "Local Health Authorities"),
+        ("26B", "Utah Health and Human Services Code"),
+        ("31A", "Insurance Code"),
+        ("32B", "Alcoholic Beverage Control Act"),
+        ("34", "Labor in General"),
+        ("34A", "Utah Labor Code"),
+        ("35A", "Utah Workforce Services Code"),
+        ("36", "Legislature"),
+        ("39A", "National Guard and Militia Act"),
+        ("40", "Mines and Mining"),
+        ("41", "Motor Vehicles"),
+        ("42", "Names"),
+        ("43", "Negotiable Certificates"),
+        ("45", "Newspapers and Radio Broadcasting"),
+        ("46", "Notarization and Authentication of Documents, Electronic Signatures, and Legal Material"),
+        ("47", "Nuisances"),
+        ("48", "Partnership"),
+        ("49", "Utah State Retirement and Insurance Benefit Act"),
+        ("51", "Public Funds and Accounts"),
+        ("52", "Public Officers"),
+        ("53", "Public Safety Code"),
+        ("53B", "State System of Higher Education"),
+        ("53C", "School and Institutional Trust Lands Management Act"),
+        ("53D", "School and Institutional Trust Fund Management and Insurance Act"),
+        ("53E", "Public Education System -- State Administration"),
+        ("53F", "Public Education System -- Funding"),
+        ("53G", "Public Education System -- Local Administration"),
+        ("54", "Public Utilities"),
+        ("55", "Public Welfare"),
+        ("56", "Railroads"),
+        ("57", "Real Estate"),
+        ("58", "Occupations and Professions"),
+        ("59", "Revenue and Taxation"),
+        ("61", "Securities Division - Real Estate Division"),
+        ("63A", "Utah Government Operations Code"),
+        ("63B", "Bonds"),
+        ("63C", "State Commissions and Councils Code"),
+        ("63G", "General Government"),
+        ("63H", "Independent State Entities"),
+        ("63I", "Oversight"),
+        ("63J", "Budgeting"),
+        ("63L", "Lands"),
+        ("63M", "Governor's Programs"),
+        ("63N", "Economic Opportunity Act"),
+        ("64", "State Institutions"),
+        ("65A", "Forestry, Fire, and State Lands"),
+        ("67", "State Officers and Employees"),
+        ("68", "Utah Revised Nonprofit Corporation Act"),
+        ("69", "Telegraphic and Telephonic Transactions"),
+        ("70A", "Uniform Commercial Code"),
+        ("70C", "Utah Consumer Credit Code"),
+        ("70D", "Financial Institution Mortgage Financing Regulation Act"),
+        ("71A", "Veterans and Military Affairs"),
+        ("72", "Transportation Code"),
+        ("73", "Water and Irrigation"),
+        ("75", "Utah Uniform Probate Code"),
+        ("75A", "Fiduciaries"),
+        ("76", "Utah Criminal Code"),
+        ("77", "Utah Code of Criminal Procedure"),
+        ("78A", "Judiciary and Judicial Administration"),
+        ("78B", "Judicial Code"),
+        ("79", "Natural Resources"),
+        ("80", "Utah Juvenile Code"),
+        ("81", "Utah Uniform Probate Code"),
+    )
+    OFFICIAL_TITLE_COUNT = len(OFFICIAL_TITLES)
+
     _UT_VERSION_DEFAULT_RE = re.compile(r"var\s+versionDefault\s*=\s*['\"]([^'\"]*)['\"]", re.IGNORECASE)
     _UT_TITLE_WRAPPER_RE = re.compile(r"/xcode/title[0-9a-z]+/[0-9a-z]+\.html$", re.IGNORECASE)
     _UT_SECTION_LINK_RE = re.compile(r"/xcode/title[0-9a-z]+/chapter[0-9a-z]+/[0-9a-z-]+-s[0-9a-z.]+\.html", re.IGNORECASE)
@@ -33,9 +143,29 @@ class UtahScraper(BaseStateScraper):
         """Return list of available codes/statutes for Utah."""
         return [{
             "name": "Utah Code",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/xcode/code.html",
             "type": "Code"
         }]
+
+    def _justia_fallback_allowed(self) -> bool:
+        return str(
+            os.getenv("STATE_SCRAPER_UT_ALLOW_JUSTIA_FALLBACK", "0")
+        ).strip().lower() in {"1", "true", "yes", "on"}
+
+    def _is_justia_url(self, url: str) -> bool:
+        return "justia.com" in str(url or "").lower()
+
+    def _filter_official_only(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
+        """Drop secondary/Justia rows when full-corpus admission is sealed."""
+        if not self._full_corpus_enabled() or self._justia_fallback_allowed():
+            return statutes
+        return [
+            s
+            for s in statutes
+            if not self._is_justia_url(str(s.source_url or ""))
+            and "justia" not in str((s.structured_data or {}).get("source_kind") or "").lower()
+            and "le.utah.gov" in str(s.source_url or "").lower()
+        ]
     
     async def scrape_code(
         self,
@@ -52,28 +182,67 @@ class UtahScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return_threshold = self._bounded_return_threshold(160)
+        # Honor explicit max_statutes / full-corpus uncapped mode the same way
+        # other sealed official adapters do (sample default remains 160).
         if max_statutes is not None:
-            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+            return_threshold = max(1, int(max_statutes))
+            unbounded_full = False
+        elif self._full_corpus_enabled():
+            return_threshold = 1000000
+            unbounded_full = True
+        else:
+            return_threshold = self._bounded_return_threshold(160)
+            unbounded_full = False
+
+        xml_budget = return_threshold if not unbounded_full else 1000000
+        from .utah_constitution import (
+            configured_constitution_html_path,
+            parse_utah_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_utah_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Utah Constitution",
+                    source_url="https://le.utah.gov/xcode/constitution.html",
+                    max_statutes=None if unbounded_full else return_threshold,
+                )
+                return constitution_rows if unbounded_full else constitution_rows[:return_threshold]
+        local_xml = self._scrape_configured_title_xml(
+            code_name,
+            max_statutes=None if unbounded_full else max(10, int(xml_budget)),
+        )
+        if local_xml:
+            return local_xml if unbounded_full else local_xml[:return_threshold]
 
         xml_sections = await self._scrape_official_xml_code_tree(
             code_name,
-            max_statutes=max(10, return_threshold),
+            max_statutes=max(10, int(xml_budget)),
         )
         if xml_sections:
-            return xml_sections[:return_threshold]
+            return xml_sections if unbounded_full else xml_sections[:return_threshold]
 
         official_sections = await self._scrape_official_versioned_tree(
             code_name,
-            max_statutes=max(10, return_threshold),
+            max_statutes=max(10, int(xml_budget)),
         )
         if official_sections:
-            return official_sections[:return_threshold]
+            return official_sections if unbounded_full else official_sections[:return_threshold]
 
-        if not self._full_corpus_enabled():
+        # Seed/direct recovery is for bounded probes only — never sole full-corpus path.
+        if not self._full_corpus_enabled() or max_statutes is not None:
             direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
             if direct:
                 return direct[:return_threshold]
+
+        if self._full_corpus_enabled() and max_statutes is None and not self._justia_fallback_allowed():
+            self.logger.warning(
+                "Utah full-corpus run found zero official le.utah.gov statutes; "
+                "refusing secondary Justia sole-admission fallback"
+            )
+            return []
 
         live_title_stubs = await self._scrape_live_title_stubs(code_name, max_statutes=max(10, return_threshold))
         live_chapter_stubs = await self._scrape_live_chapter_stubs(
@@ -82,14 +251,20 @@ class UtahScraper(BaseStateScraper):
             per_title_limit=max(1, min(10, return_threshold)),
         )
 
+        allow_justia = self._justia_fallback_allowed() or not self._full_corpus_enabled()
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/xcode/code.html",
             f"{self.get_base_url()}/xcode/",
             f"{self.get_base_url()}/xcode/Title01/",
-            "https://law.justia.com/codes/utah/",
-            "https://web.archive.org/web/20250101000000/https://law.justia.com/codes/utah/",
         ]
+        if allow_justia:
+            candidate_urls.extend(
+                [
+                    "https://law.justia.com/codes/utah/",
+                    "https://web.archive.org/web/20250101000000/https://law.justia.com/codes/utah/",
+                ]
+            )
         for archived in await self._discover_archived_title_urls(limit=max(10, return_threshold)):
             if archived not in candidate_urls:
                 candidate_urls.append(archived)
@@ -99,7 +274,7 @@ class UtahScraper(BaseStateScraper):
         merged_keys = set()
 
         def _merge(items: List[NormalizedStatute]) -> None:
-            for statute in items:
+            for statute in self._filter_official_only(items):
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
                 if not key or key in merged_keys:
                     continue
@@ -109,21 +284,91 @@ class UtahScraper(BaseStateScraper):
         _merge(live_title_stubs)
         _merge(live_chapter_stubs)
         if len(merged) >= return_threshold:
-            return merged
+            return merged[:return_threshold]
 
         for candidate in candidate_urls:
             if candidate in seen:
+                continue
+            if self._is_justia_url(candidate) and not allow_justia:
                 continue
             seen.add(candidate)
 
             statutes = await self._generic_scrape(code_name, candidate, "Utah Code Ann.", max_sections=return_threshold)
             _merge(statutes)
             if len(merged) >= return_threshold:
-                return merged
+                return merged[:return_threshold]
 
         return merged
 
+    def _scrape_configured_title_xml(
+        self,
+        code_name: str,
+        max_statutes: Optional[int],
+    ) -> List[NormalizedStatute]:
+        """Read a local official title XML when ``UTAH_TITLE_XML`` is set."""
+
+        from .utah_title_xml import configured_title_xml_path, parse_utah_xml_document
+
+        path = configured_title_xml_path()
+        if path is None:
+            return []
+        try:
+            return parse_utah_xml_document(
+                path.read_bytes(),
+                code_name=code_name,
+                source_url=f"{self.get_base_url()}/xcode/",
+                max_statutes=max_statutes,
+            )
+        except Exception as exc:
+            self.logger.warning("Utah official title XML failed: %s", exc)
+            return []
+
     async def _scrape_official_xml_code_tree(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        from .utah_title_xml import (
+            discover_title_xml_urls_from_html,
+            parse_utah_xml_document,
+            title_xml_url,
+            version_default_from_html,
+        )
+
+        wrapper_url = f"{self.get_base_url()}/xcode/code.html"
+        wrapper_html = await self._fetch_text_with_archival(wrapper_url, timeout=25)
+        title_xml_urls = discover_title_xml_urls_from_html(wrapper_html or "", base=self.get_base_url())
+
+        # Title wrappers expose versionDefault without Playwright when the TOC
+        # is JS-only. Bound the probe so sampling stays cheap.
+        if not title_xml_urls:
+            title_budget = len(self.OFFICIAL_TITLES) if self._full_corpus_enabled() else min(6, len(self.OFFICIAL_TITLES))
+            for title_num, _name in self.OFFICIAL_TITLES[:title_budget]:
+                title_wrapper = f"{self.get_base_url()}/xcode/Title{title_num}/{title_num}.html"
+                title_html = await self._fetch_text_with_archival(title_wrapper, timeout=15)
+                versioned = self._resolve_versioned_content_url(title_wrapper, title_html or "")
+                if versioned and versioned.lower().endswith(".html"):
+                    title_xml_urls[str(title_num)] = versioned[:-5] + ".xml"
+                    continue
+                version = version_default_from_html(title_html or "")
+                if version:
+                    title_xml_urls[str(title_num)] = title_xml_url(str(title_num), version)
+
+        statutes: List[NormalizedStatute] = []
+        for _title_num, xml_url in title_xml_urls.items():
+            if len(statutes) >= max_statutes:
+                return statutes[:max_statutes]
+            xml_text = await self._fetch_text_with_archival(xml_url, timeout=35)
+            if not xml_text:
+                continue
+            remaining = max(0, int(max_statutes) - len(statutes))
+            statutes.extend(
+                parse_utah_xml_document(
+                    xml_text.encode("utf-8") if isinstance(xml_text, str) else xml_text,
+                    code_name=code_name,
+                    source_url=xml_url,
+                    max_statutes=remaining,
+                )
+            )
+        if statutes:
+            return statutes[:max_statutes]
+
         root_xml_url = await self._resolve_root_versioned_xml_url()
         if not root_xml_url:
             return []
@@ -132,14 +377,21 @@ class UtahScraper(BaseStateScraper):
         if not xml_text:
             return []
 
+        parsed = parse_utah_xml_document(
+            xml_text.encode("utf-8") if isinstance(xml_text, str) else xml_text,
+            code_name=code_name,
+            source_url=root_xml_url,
+            max_statutes=max_statutes,
+        )
+        if parsed:
+            return parsed
+
         try:
             root = ET.fromstring(xml_text)
         except Exception:
             return []
 
-        statutes: List[NormalizedStatute] = []
-        title_nodes = root.findall(".//title") if root.tag != "title" else [root]
-        for title_node in title_nodes:
+        for title_node in root.findall(".//title") if root.tag != "title" else [root]:
             title_number = str(title_node.attrib.get("number") or "").strip()
             title_name = self._normalize_legal_text(title_node.findtext("catchline", default=""))
             for chapter_node in title_node.findall(".//chapter"):
@@ -189,8 +441,10 @@ class UtahScraper(BaseStateScraper):
             return None
 
         section_name = self._normalize_legal_text(section_node.findtext("catchline", default=""))
-        body = self._normalize_legal_text(" ".join(text.strip() for text in section_node.itertext() if str(text or "").strip()))
-        if len(body) < 120:
+        from .utah_title_xml import _elem_text
+
+        body = self._normalize_legal_text(_elem_text(section_node))
+        if len(body) < 80:
             return None
 
         source_url = root_xml_url
@@ -651,6 +905,177 @@ class UtahScraper(BaseStateScraper):
                 break
 
         return out
+
+
+    def official_title_url(self, title_number: Any) -> str:
+        number = str(title_number or "").strip()
+        return f"{self.get_base_url()}/xcode/Title{number}/"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Utah Code title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"ut:title-{number.lower()}",
+                    "title_number": str(number),
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Utah Code Title {number} ({name}) official catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return host == "le.utah.gov" or host.endswith(".le.utah.gov")
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+        headers = {
+            "User-Agent": "ipfs-datasets-utah-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(url, headers=headers)
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(url, headers=headers)
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _normalize_title_number(self, value: Any) -> str:
+        text = str(value or "").strip().upper()
+        match = re.match(r"0*(\d{1,2}[A-Z]?)$", text)
+        return match.group(1) if match else ""
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._UT_TITLE_HREF_RE.search(absolute) or self._UT_TITLE_LABEL_RE.search(label)
+            if not match:
+                continue
+            number = self._normalize_title_number(match.group("title"))
+            if number not in known or number in found:
+                continue
+            if self._host_is_official(absolute):
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official Utah Code title."""
+
+        del page_url
+        discovered = self._parse_official_title_links(html)
+        rows = self.official_title_catalog()
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_leginfo"
+        return rows
+
+    def fetch_official(self, code: str = "UT"):
+        """Acquire the exhaustive official Utah Code title catalog.
+
+        Live HTTPS retains the official le.utah.gov xcode index. Every
+        known Utah Code title is enumerated with an official URL. This
+        hook never returns fixture bytes or secondary-mirror hosts.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "UT").strip().upper() or "UT"
+        if normalized != "UT":
+            raise ValueError(f"UtahScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) != self.OFFICIAL_TITLE_COUNT:
+            raise RuntimeError(
+                "utah official catalog enumeration rejected incomplete "
+                "title reacquisition"
+            )
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry

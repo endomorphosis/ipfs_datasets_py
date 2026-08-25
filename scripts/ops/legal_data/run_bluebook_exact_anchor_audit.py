@@ -20,9 +20,15 @@ def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
             "Run exact-anchor Bluebook citation guarantee audit against a JSON document bundle."
         )
     )
-    parser.add_argument("--input", required=True, help="Path to input JSON. Accepts a list of documents or an object with 'documents'.")
+    parser.add_argument(
+        "--input",
+        required=True,
+        help="Path to input JSON. Accepts a list of documents or an object with 'documents'.",
+    )
     parser.add_argument("--state-code", default="", help="Optional state code hint (e.g., OR, MN).")
-    parser.add_argument("--no-exhaustive", action="store_true", help="Disable exhaustive fallback query pass.")
+    parser.add_argument(
+        "--no-exhaustive", action="store_true", help="Disable exhaustive fallback query pass."
+    )
     parser.add_argument(
         "--allow-non-exact",
         action="store_true",
@@ -61,7 +67,9 @@ def _render_text_report(audit: dict[str, Any]) -> str:
         "Non-Exact Matches",
         "-" * 40,
     ]
-    non_exact = [dict(item) for item in list(audit.get("non_exact_matches") or []) if isinstance(item, dict)]
+    non_exact = [
+        dict(item) for item in list(audit.get("non_exact_matches") or []) if isinstance(item, dict)
+    ]
     if not non_exact:
         lines.append("(none)")
     else:

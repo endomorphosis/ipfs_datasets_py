@@ -92,7 +92,7 @@ result = detect_i18n_clauses("يجوز", "ar")
 
 # detect_all_languages now covers 11 languages
 report = detect_all_languages(text)
-assert set(report.by_language) >= {"fr","es","de","en","pt","nl","it","ja","zh","ko","ar"}
+assert set(report.by_language) >= {"fr", "es", "de", "en", "pt", "nl", "it", "ja", "zh", "ko", "ar"}
 ```
 
 ---

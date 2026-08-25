@@ -128,34 +128,30 @@ if cache.is_available():
         offset=0,
         country="us",
         safesearch="moderate",
-        metadata={"total": 100}
+        metadata={"total": 100},
     )
     print(f"Stored in IPFS: {cid}")
-    
+
     # Retrieve from IPFS
     cached = cache.retrieve(
-        query="test query",
-        count=10,
-        offset=0,
-        country="us",
-        safesearch="moderate"
+        query="test query", count=10, offset=0, country="us", safesearch="moderate"
     )
     if cached:
         print(f"Cache hit! CID: {cached['cid']}")
         print(f"Results: {len(cached['results'])}")
         print(f"Cache age: {cached['cache_age_s']}s")
-    
+
     # Get statistics
     stats = cache.stats()
     print(f"IPFS version: {stats['ipfs_version']}")
     print(f"Peer ID: {stats['ipfs_peer_id']}")
     print(f"Index entries: {stats['cid_index_entries']}")
-    
+
     # Pin management
     cache.pin_entry(cid)
     cache.list_pins()
     cache.unpin_entry(cid)
-    
+
     # Garbage collection
     result = cache.gc()
     print(f"Freed {result['freed_count']} items")
@@ -278,7 +274,7 @@ client.ipfs_cache_pin("QmHash...")
 
 # List all pins
 pins = client.ipfs_cache_list_pins()
-for pin in pins['pins']:
+for pin in pins["pins"]:
     print(f"CID: {pin['cid']}, Type: {pin['type']}")
 
 # Unpin when no longer needed
@@ -396,11 +392,11 @@ from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
 client = BraveSearchClient()
 stats = client.ipfs_cache_stats()
 
-if not stats['available']:
+if not stats["available"]:
     print("IPFS cache not available")
     print("Enable with: export BRAVE_SEARCH_IPFS_CACHE=1")
 
-if not stats['ipfs_connected']:
+if not stats["ipfs_connected"]:
     print("IPFS daemon not running")
     print("Start with: ipfs daemon")
 ```

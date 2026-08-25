@@ -1,7 +1,7 @@
 """
 Tests for FileSystem implementation - pytest conversion.
 
-This module contains pytest conversions of unittest tests for the FileSystem class, 
+This module contains pytest conversions of unittest tests for the FileSystem class,
 covering file existence checks, directory operations, and file system utilities.
 """
 
@@ -34,7 +34,7 @@ class TestFileSystemFileExists:
                     os.unlink(temp_file)
             except OSError:
                 pass
-        
+
         # Clean up temporary directories
         for temp_dir in self.temp_dirs:
             try:
@@ -47,7 +47,7 @@ class TestFileSystemFileExists:
         """Helper method to create temporary files."""
         fd, temp_path = tempfile.mkstemp()
         try:
-            os.write(fd, content.encode('utf-8'))
+            os.write(fd, content.encode("utf-8"))
         finally:
             os.close(fd)
         self.temp_files.append(temp_path)
@@ -61,9 +61,9 @@ class TestFileSystemFileExists:
             - Return value == True
         """
         temp_file = self._create_temp_file()
-        
+
         result = FileSystem.file_exists(temp_file)
-        
+
         assert result is True
 
     def test_file_exists_with_nonexistent_file(self):
@@ -74,9 +74,9 @@ class TestFileSystemFileExists:
             - Return value == False
         """
         nonexistent_file = "/path/to/nonexistent/file.txt"
-        
+
         result = FileSystem.file_exists(nonexistent_file)
-        
+
         assert result is False
 
     def test_file_exists_with_directory_path(self):
@@ -90,9 +90,9 @@ class TestFileSystemFileExists:
         """
         directory_path = tempfile.mkdtemp()
         self.temp_dirs.append(directory_path)
-        
+
         result = FileSystem.file_exists(directory_path)
-        
+
         assert result is False
 
     def test_file_exists_with_relative_path(self):
@@ -109,14 +109,14 @@ class TestFileSystemFileExists:
         # Create file in current directory
         temp_file = self._create_temp_file()
         relative_path = "./" + os.path.basename(temp_file)
-        
+
         # Create the file at relative path
-        with open(relative_path, 'w') as f:
+        with open(relative_path, "w") as f:
             f.write("test content")
         self.temp_files.append(relative_path)
-        
+
         result = FileSystem.file_exists(relative_path)
-        
+
         assert result is True
 
     def test_file_exists_with_absolute_path(self):
@@ -131,18 +131,12 @@ class TestFileSystemFileExists:
         """
         temp_file = self._create_temp_file()
         absolute_path = os.path.abspath(temp_file)
-        
+
         result = FileSystem.file_exists(absolute_path)
-        
+
         assert result is True
 
-    @pytest.mark.parametrize("invalid_path", [
-        None,
-        "",
-        123,
-        [],
-        {}
-    ])
+    @pytest.mark.parametrize("invalid_path", [None, "", 123, [], {}])
     def test_file_exists_with_invalid_input_types(self, invalid_path):
         """
         GIVEN invalid input types for path parameter
@@ -167,10 +161,10 @@ class TestFileSystemFileExists:
         """
         # Create a temporary file
         temp_file = self._create_temp_file()
-        
+
         # Remove all permissions
         os.chmod(temp_file, 0o000)
-        
+
         try:
             result = FileSystem.file_exists(temp_file)
             # Should handle permission errors gracefully
@@ -191,12 +185,12 @@ class TestFileSystemFileExists:
         temp_dir = tempfile.mkdtemp()
         self.temp_dirs.append(temp_dir)
         special_file = os.path.join(temp_dir, "test_file_!@#$%^&()_+.txt")
-        
+
         # Create the file
-        with open(special_file, 'w') as f:
+        with open(special_file, "w") as f:
             f.write("test content")
         self.temp_files.append(special_file)
-        
+
         result = FileSystem.file_exists(special_file)
-        
+
         assert result is True

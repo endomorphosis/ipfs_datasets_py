@@ -6,13 +6,14 @@ import multiprocessing
 import time
 from multiprocessing import Pool
 
+
 class ipfs_parquet_to_car_py:
     def __init__(self, resources, metadata):
         self.resources = resources
         self.metadata = metadata
         self.ipfs_parquet_to_car_py_version = "1.0.0"
 
-    async def  __call__(self, src, dst):
+    async def __call__(self, src, dst):
         if os.path.isdir(src):
             return await self.run_batch(src, dst)
         else:
@@ -35,9 +36,17 @@ class ipfs_parquet_to_car_py:
         return True
 
     async def test(self):
-        ipfs_parquet_to_car_py_version_cmd = ["nodejs", "-e", "console.log(require('ipfs_parquet_to_car_js').version)"]
-        ipfs_parquet_to_car_py_version = subprocess.run(ipfs_parquet_to_car_py_version_cmd, stdout=subprocess.PIPE)
-        ipfs_parquet_to_car_py_version = ipfs_parquet_to_car_py_version.stdout.decode("utf-8").strip()
+        ipfs_parquet_to_car_py_version_cmd = [
+            "nodejs",
+            "-e",
+            "console.log(require('ipfs_parquet_to_car_js').version)",
+        ]
+        ipfs_parquet_to_car_py_version = subprocess.run(
+            ipfs_parquet_to_car_py_version_cmd, stdout=subprocess.PIPE
+        )
+        ipfs_parquet_to_car_py_version = ipfs_parquet_to_car_py_version.stdout.decode(
+            "utf-8"
+        ).strip()
         if ipfs_parquet_to_car_py_version < self.ipfs_parquet_to_car_py_version:
             install = await self.install()
             if not install:
@@ -117,16 +126,15 @@ class ipfs_parquet_to_car_py:
             p.map(subprocess.run, cmds)
         return True
 
+
 if __name__ == "__main__":
-    resources = {
-        "ipfs_parquet_to_car.js": "/mnt/data/ipfs_parquet_to_car.js"
-    }
+    resources = {"ipfs_parquet_to_car.js": "/mnt/data/ipfs_parquet_to_car.js"}
     metadata = {
         "name": "ipfs_parquet_to_car",
         "format": "parquet",
         "version": "0.0.1",
         "type": "transform",
-        "language": "nodejs"
+        "language": "nodejs",
     }
     ipfs_parquet_to_car = ipfs_parquet_to_car_py(resources, metadata)
     ipfs_parquet_to_car.install()
@@ -137,18 +145,15 @@ ipfs_parquet_to_car_py = ipfs_parquet_to_car_py
 ipfs_parquet_to_car = ipfs_parquet_to_car_py
 
 if __name__ == "__main__":
-    resources = {
-        "ipfs_parquet_to_car.js": "/mnt/data/ipfs_parquet_to_car.js"
-    }
+    resources = {"ipfs_parquet_to_car.js": "/mnt/data/ipfs_parquet_to_car.js"}
     metadata = {
         "name": "ipfs_parquet_to_car",
         "format": "parquet",
         "version": "0.0.1",
         "type": "transform",
-        "language": "nodejs"
+        "language": "nodejs",
     }
     ipfs_parquet_to_car = ipfs_parquet_to_car_py(resources, metadata)
     ipfs_parquet_to_car.install()
     ipfs_parquet_to_car.test()
     anyio.run(ipfs_parquet_to_car.run("/mnt/data/parquet", "/mnt/data/car"))
-

@@ -25,9 +25,9 @@ def test_create_two_merkle_clocks_with_counter_0(peer_id_peer1, peer_id_peer2):
         clock1.counter == 0
     """
     expected_counter = 0
-    
+
     clock1 = MerkleClock(peer_id=peer_id_peer1)
-    
+
     actual_counter = clock1.counter
     assert actual_counter == expected_counter, f"expected {expected_counter}, got {actual_counter}"
 
@@ -48,9 +48,9 @@ def test_create_two_merkle_clocks_with_counter_0_peer2(peer_id_peer1, peer_id_pe
         clock2.counter == 0
     """
     expected_counter = 0
-    
+
     clock2 = MerkleClock(peer_id=peer_id_peer2)
-    
+
     actual_counter = clock2.counter
     assert actual_counter == expected_counter, f"expected {expected_counter}, got {actual_counter}"
 
@@ -70,10 +70,10 @@ def test_tick_clock_twice_increments_counter_to_2(merkle_clock_peer1):
         clock.counter == 2
     """
     expected_counter = 2
-    
+
     clock_after_first_tick = merkle_clock_peer1.tick()
     clock_after_second_tick = clock_after_first_tick.tick()
-    
+
     actual_counter = clock_after_second_tick.counter
     assert actual_counter == expected_counter, f"expected {expected_counter}, got {actual_counter}"
 
@@ -94,10 +94,10 @@ def test_tick_peer1_clock_twice_sets_counter_to_2(merkle_clock_peer1, merkle_clo
         clock1.counter == 2
     """
     expected_counter = 2
-    
+
     clock1_after_tick1 = merkle_clock_peer1.tick()
     clock1_after_tick2 = clock1_after_tick1.tick()
-    
+
     actual_counter = clock1_after_tick2.counter
     assert actual_counter == expected_counter, f"expected {expected_counter}, got {actual_counter}"
 
@@ -118,14 +118,16 @@ def test_tick_peer2_clock_once_sets_counter_to_1(merkle_clock_peer1, merkle_cloc
         clock2.counter == 1
     """
     expected_counter = 1
-    
+
     clock2_after_tick = merkle_clock_peer2.tick()
-    
+
     actual_counter = clock2_after_tick.counter
     assert actual_counter == expected_counter, f"expected {expected_counter}, got {actual_counter}"
 
 
-def test_merge_clocks_with_counters_2_and_1_produces_counter_3(merkle_clock_with_counter_2, merkle_clock_with_counter_1):
+def test_merge_clocks_with_counters_2_and_1_produces_counter_3(
+    merkle_clock_with_counter_2, merkle_clock_with_counter_1
+):
     """
     Scenario: Merge clocks with counters 2 and 1 produces counter 3
 
@@ -140,9 +142,9 @@ def test_merge_clocks_with_counters_2_and_1_produces_counter_3(merkle_clock_with
         merged_clock.counter == 3
     """
     expected_counter = 3
-    
+
     merged_clock = merkle_clock_with_counter_2.merge(merkle_clock_with_counter_1)
-    
+
     actual_counter = merged_clock.counter
     assert actual_counter == expected_counter, f"expected {expected_counter}, got {actual_counter}"
 
@@ -161,10 +163,8 @@ def test_hash_returns_64_character_hex_string(merkle_clock_peer1):
         len(result) == 64
     """
     expected_length = 64
-    
+
     result = merkle_clock_peer1.hash()
-    
+
     actual_length = len(result)
     assert actual_length == expected_length, f"expected {expected_length}, got {actual_length}"
-
-

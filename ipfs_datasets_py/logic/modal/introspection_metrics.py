@@ -22,9 +22,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
 INTROSPECTION_METRIC_SCHEMA_VERSION = "legal-ir-introspection-metrics-v1"
 INTROSPECTION_METRIC_CONFIG_VERSION = "legal-ir-introspection-metrics-config-v1"
 LEANSTRAL_CANARY_MANIFEST_VERSION = "legal-ir-leanstral-canary-manifest-v1"
-STATE_TO_COMPILER_PATCH_LIFECYCLE_SCHEMA_VERSION = (
-    "legal-ir-state-to-compiler-patch-lifecycle-v1"
-)
+STATE_TO_COMPILER_PATCH_LIFECYCLE_SCHEMA_VERSION = "legal-ir-state-to-compiler-patch-lifecycle-v1"
 STATE_TO_COMPILER_PATCH_STAGES = (
     "state_snapshot",
     "audit",
@@ -141,8 +139,12 @@ class SourceDecodedMetrics:
     token_similarity: float
 
     def __post_init__(self) -> None:
-        _require_non_negative_finite("source_to_decoded.embedding_cosine_loss", self.embedding_cosine_loss)
-        _require_finite("source_to_decoded.embedding_cosine_similarity", self.embedding_cosine_similarity)
+        _require_non_negative_finite(
+            "source_to_decoded.embedding_cosine_loss", self.embedding_cosine_loss
+        )
+        _require_finite(
+            "source_to_decoded.embedding_cosine_similarity", self.embedding_cosine_similarity
+        )
         _require_non_negative_finite("source_to_decoded.token_loss", self.token_loss)
         _require_probability("source_to_decoded.token_similarity", self.token_similarity)
 
@@ -184,11 +186,17 @@ class StructuralProverValidity:
             ("proved_count", self.proved_count),
         ):
             if not isinstance(value, int) or value < 0:
-                raise IntrospectionMetricSchemaError(f"validity.{key} must be a non-negative integer")
+                raise IntrospectionMetricSchemaError(
+                    f"validity.{key} must be a non-negative integer"
+                )
         if self.valid_count > self.attempted_count:
-            raise IntrospectionMetricSchemaError("validity.valid_count cannot exceed attempted_count")
+            raise IntrospectionMetricSchemaError(
+                "validity.valid_count cannot exceed attempted_count"
+            )
         if self.proved_count > self.attempted_count:
-            raise IntrospectionMetricSchemaError("validity.proved_count cannot exceed attempted_count")
+            raise IntrospectionMetricSchemaError(
+                "validity.proved_count cannot exceed attempted_count"
+            )
         _require_probability("validity.failure_ratio", self.failure_ratio)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -328,9 +336,7 @@ class StateToCompilerPatchMilestone:
                 "lifecycle milestone cycle_id must be a non-negative integer"
             )
         if not str(self.version_id).strip():
-            raise IntrospectionMetricSchemaError(
-                "lifecycle milestone version_id must not be empty"
-            )
+            raise IntrospectionMetricSchemaError("lifecycle milestone version_id must not be empty")
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -398,9 +404,7 @@ class StateToCompilerPatchLifecycle:
                 raise IntrospectionMetricSchemaError(
                     f"lifecycle stage {stage!r} is present after missing stage {missing_stage!r}"
                 )
-            current_timestamp = _parse_aware_timestamp(
-                milestone.timestamp, f"{stage}.timestamp"
-            )
+            current_timestamp = _parse_aware_timestamp(milestone.timestamp, f"{stage}.timestamp")
             if previous_timestamp is not None and current_timestamp < previous_timestamp:
                 raise IntrospectionMetricSchemaError(
                     f"lifecycle timestamp for {stage!r} precedes {previous_stage!r}"
@@ -424,10 +428,7 @@ class StateToCompilerPatchLifecycle:
     def milestones(self) -> Dict[str, Optional[StateToCompilerPatchMilestone]]:
         """Return the canonical, ordered milestone mapping."""
 
-        return {
-            stage: getattr(self, stage)
-            for stage in STATE_TO_COMPILER_PATCH_STAGES
-        }
+        return {stage: getattr(self, stage) for stage in STATE_TO_COMPILER_PATCH_STAGES}
 
     @property
     def complete(self) -> bool:
@@ -464,8 +465,7 @@ class StateToCompilerPatchLifecycle:
     def from_mapping(cls, data: Mapping[str, Any]) -> "StateToCompilerPatchLifecycle":
         raw = dict(data)
         schema_version = str(
-            raw.get("schema_version")
-            or STATE_TO_COMPILER_PATCH_LIFECYCLE_SCHEMA_VERSION
+            raw.get("schema_version") or STATE_TO_COMPILER_PATCH_LIFECYCLE_SCHEMA_VERSION
         )
         staged: Dict[str, Optional[StateToCompilerPatchMilestone]] = {
             stage: None for stage in STATE_TO_COMPILER_PATCH_STAGES
@@ -523,10 +523,7 @@ class StateToCompilerPatchLifecycle:
             )
         return cls(
             path_id=str(
-                raw.get("path_id")
-                or raw.get("lifecycle_id")
-                or raw.get("correlation_id")
-                or ""
+                raw.get("path_id") or raw.get("lifecycle_id") or raw.get("correlation_id") or ""
             ),
             state_snapshot=state_snapshot,
             schema_version=schema_version,
@@ -561,7 +558,9 @@ class IntrospectionMetricRecord:
 
     def __post_init__(self) -> None:
         if self.schema_version != INTROSPECTION_METRIC_SCHEMA_VERSION:
-            raise IntrospectionMetricSchemaError(f"unsupported metric schema_version: {self.schema_version}")
+            raise IntrospectionMetricSchemaError(
+                f"unsupported metric schema_version: {self.schema_version}"
+            )
         if not self.case_id.strip():
             raise IntrospectionMetricSchemaError("case_id must not be empty")
         _require_known_family(self.family)
@@ -617,7 +616,9 @@ class IntrospectionMetricRecord:
     def from_mapping(cls, data: Mapping[str, Any]) -> "IntrospectionMetricRecord":
         schema_version = str(data.get("schema_version") or "")
         if schema_version != INTROSPECTION_METRIC_SCHEMA_VERSION:
-            raise IntrospectionMetricSchemaError(f"unsupported metric schema_version: {schema_version}")
+            raise IntrospectionMetricSchemaError(
+                f"unsupported metric schema_version: {schema_version}"
+            )
         learned_raw = _as_mapping(data, "learned_ir_view_by_family")
         learned = {
             str(family): LearnedIRViewFamilyMetrics.from_mapping(str(family), _mapping(metric))
@@ -628,7 +629,9 @@ class IntrospectionMetricRecord:
             family=str(data.get("family") or ""),
             compiler_ir=CompilerIRMetrics.from_mapping(_as_mapping(data, "compiler_ir")),
             learned_ir_view_by_family=learned,
-            source_to_decoded=SourceDecodedMetrics.from_mapping(_as_mapping(data, "source_to_decoded")),
+            source_to_decoded=SourceDecodedMetrics.from_mapping(
+                _as_mapping(data, "source_to_decoded")
+            ),
             validity=StructuralProverValidity.from_mapping(_as_mapping(data, "validity")),
             anti_copy=AntiCopyMetrics.from_mapping(_as_mapping(data, "anti_copy")),
             versions=StateConfigVersions.from_mapping(_as_mapping(data, "versions")),
@@ -666,7 +669,9 @@ class LeanstralCanaryManifest:
             raise IntrospectionMetricSchemaError("canary manifest must be frozen")
         required = tuple(str(family) for family in self.required_families)
         if tuple(required) != REQUIRED_LEGAL_LOGIC_FAMILIES:
-            raise IntrospectionMetricSchemaError("required_families must match the frozen LegalIR family set")
+            raise IntrospectionMetricSchemaError(
+                "required_families must match the frozen LegalIR family set"
+            )
         seen = {case.family for case in self.cases}
         missing = [family for family in required if family not in seen]
         if missing:
@@ -675,7 +680,9 @@ class LeanstralCanaryManifest:
             )
         case_ids = [case.case_id for case in self.cases]
         if len(set(case_ids)) != len(case_ids):
-            raise IntrospectionMetricSchemaError("canary manifest contains duplicate case_id values")
+            raise IntrospectionMetricSchemaError(
+                "canary manifest contains duplicate case_id values"
+            )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -708,7 +715,9 @@ class LeanstralCanaryManifest:
             ),
             manifest_version=manifest_version,
             metric_schema_version=metric_schema_version,
-            required_families=tuple(str(value) for value in _as_sequence(data, "required_families")),
+            required_families=tuple(
+                str(value) for value in _as_sequence(data, "required_families")
+            ),
             frozen=_as_bool(data, "frozen"),
         )
 
@@ -845,9 +854,7 @@ def _parse_aware_timestamp(value: str, name: str) -> datetime:
     try:
         parsed = datetime.fromisoformat(normalized)
     except ValueError as exc:
-        raise IntrospectionMetricSchemaError(
-            f"{name} must be an ISO-8601 timestamp"
-        ) from exc
+        raise IntrospectionMetricSchemaError(f"{name} must be an ISO-8601 timestamp") from exc
     if parsed.tzinfo is None or parsed.utcoffset() is None:
         raise IntrospectionMetricSchemaError(f"{name} must include a UTC offset")
     return parsed

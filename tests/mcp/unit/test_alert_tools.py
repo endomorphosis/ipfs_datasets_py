@@ -1,6 +1,7 @@
 """
 Phase B2 unit tests for alert_tools/discord_alert_tools.py
 """
+
 from __future__ import annotations
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -10,10 +11,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def no_alerts_module():
     """Patch ALERTS_AVAILABLE = False so tests never need Discord credentials."""
     import importlib
+
     with patch(
         "ipfs_datasets_py.mcp_server.tools.alert_tools.discord_alert_tools.ALERTS_AVAILABLE",
         False,
@@ -25,6 +28,7 @@ def no_alerts_module():
 # send_discord_message
 # ---------------------------------------------------------------------------
 
+
 class TestSendDiscordMessage:
     """Tests for send_discord_message."""
 
@@ -34,6 +38,7 @@ class TestSendDiscordMessage:
         from ipfs_datasets_py.mcp_server.tools.alert_tools.discord_alert_tools import (
             send_discord_message,
         )
+
         result = await send_discord_message(text="hello")
         assert "error" in result or result.get("status") == "error"
 
@@ -50,6 +55,7 @@ class TestSendDiscordMessage:
             from ipfs_datasets_py.mcp_server.tools.alert_tools.discord_alert_tools import (
                 send_discord_message,
             )
+
             result = await send_discord_message(text="Market alert!")
 
         mock_notifier.send_message.assert_called_once()
@@ -68,9 +74,8 @@ class TestSendDiscordMessage:
             from ipfs_datasets_py.mcp_server.tools.alert_tools.discord_alert_tools import (
                 send_discord_message,
             )
-            await send_discord_message(
-                text="Alert!", channel_id="ch1", role_names=["ops"]
-            )
+
+            await send_discord_message(text="Alert!", channel_id="ch1", role_names=["ops"])
 
         _, call_kwargs = mock_notifier.send_message.call_args
         assert call_kwargs.get("channel_id") == "ch1"
@@ -81,6 +86,7 @@ class TestSendDiscordMessage:
 # list_alert_rules
 # ---------------------------------------------------------------------------
 
+
 class TestListAlertRules:
     """Tests for list_alert_rules."""
 
@@ -89,6 +95,7 @@ class TestListAlertRules:
         from ipfs_datasets_py.mcp_server.tools.alert_tools.discord_alert_tools import (
             list_alert_rules,
         )
+
         result = list_alert_rules()
         assert isinstance(result, dict)
 
@@ -104,6 +111,7 @@ class TestListAlertRules:
             from ipfs_datasets_py.mcp_server.tools.alert_tools.discord_alert_tools import (
                 list_alert_rules,
             )
+
             result = list_alert_rules()
 
         assert isinstance(result, dict)
@@ -113,6 +121,7 @@ class TestListAlertRules:
 # add_alert_rule / remove_alert_rule
 # ---------------------------------------------------------------------------
 
+
 class TestAddRemoveAlertRule:
     """Tests for add_alert_rule and remove_alert_rule."""
 
@@ -121,7 +130,10 @@ class TestAddRemoveAlertRule:
         from ipfs_datasets_py.mcp_server.tools.alert_tools.discord_alert_tools import (
             add_alert_rule,
         )
-        result = add_alert_rule(rule_data={"rule_id": "r1", "name": "cpu_high", "condition": {}, "severity": "info"})
+
+        result = add_alert_rule(
+            rule_data={"rule_id": "r1", "name": "cpu_high", "condition": {}, "severity": "info"}
+        )
         assert isinstance(result, dict)
 
     def test_remove_nonexistent_rule_returns_dict(self, no_alerts_module):
@@ -129,6 +141,7 @@ class TestAddRemoveAlertRule:
         from ipfs_datasets_py.mcp_server.tools.alert_tools.discord_alert_tools import (
             remove_alert_rule,
         )
+
         result = remove_alert_rule(rule_id="missing_rule")
         assert isinstance(result, dict)
 
@@ -137,6 +150,7 @@ class TestAddRemoveAlertRule:
 # get_suppression_status
 # ---------------------------------------------------------------------------
 
+
 class TestGetSuppressionStatus:
     """Tests for get_suppression_status."""
 
@@ -144,5 +158,6 @@ class TestGetSuppressionStatus:
         from ipfs_datasets_py.mcp_server.tools.alert_tools.discord_alert_tools import (
             get_suppression_status,
         )
+
         result = get_suppression_status()
         assert isinstance(result, dict)

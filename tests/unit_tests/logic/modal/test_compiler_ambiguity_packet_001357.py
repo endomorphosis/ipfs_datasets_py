@@ -99,9 +99,7 @@ def test_packet_001357_frame_to_deontic_emits_without_lexical_signal(
     assert len(ambiguities) == 1
     ambiguity = ambiguities[0]
     assert ambiguity.ambiguity_type == "deontic_scope_family_outvoted"
-    assert ambiguity.metadata.get("compiler_ambiguity_policy_pair") == (
-        "frame->deontic"
-    )
+    assert ambiguity.metadata.get("compiler_ambiguity_policy_pair") == ("frame->deontic")
     assert ambiguity.metadata.get("signal_free_pair_policy_applied") is True
     assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
 
@@ -125,14 +123,11 @@ def test_packet_001357_deontic_self_pair_emits_on_small_adaptive_margin(
     explicit = [
         ambiguity
         for ambiguity in ambiguities
-        if ambiguity.ambiguity_type
-        == "adaptive_deontic_deontic_contested_margin_low"
+        if ambiguity.ambiguity_type == "adaptive_deontic_deontic_contested_margin_low"
     ]
     assert explicit
     ambiguity = explicit[0]
-    assert ambiguity.metadata.get("effective_ambiguity_policy_bundle") == (
-        "compiler_ambiguity"
-    )
+    assert ambiguity.metadata.get("effective_ambiguity_policy_bundle") == ("compiler_ambiguity")
     assert ambiguity.metadata.get("adaptive_policy_pair") == "deontic->deontic"
     assert ambiguity.metadata.get("predicted_margin_to_runner_up") == 0.036
     assert compiler_refined_modal_family_cue_margin_buffer("deontic", "deontic") > 0

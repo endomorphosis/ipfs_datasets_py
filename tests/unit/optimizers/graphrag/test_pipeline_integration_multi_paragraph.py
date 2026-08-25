@@ -3,6 +3,7 @@
 Validates that the full pipeline produces more than 3 entities when given
 a realistic multi-paragraph text input.
 """
+
 from __future__ import annotations
 
 import pytest

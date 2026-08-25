@@ -4,6 +4,7 @@ FFmpeg Convert Engine — canonical business logic for media conversion.
 Extracted from ipfs_datasets_py/mcp_server/tools/media_tools/ffmpeg_convert.py.
 This module is callable independently of the MCP layer.
 """
+
 from __future__ import annotations
 
 import logging
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.processors.multimedia import FFmpegWrapper
+
     _ffmpeg_wrapper: Optional[FFmpegWrapper] = None
     HAVE_FFMPEG_WRAPPER = True
 except ImportError:
@@ -82,47 +84,82 @@ async def ffmpeg_convert_media(
     """
     input_path = _resolve_input_path(input_file)
     if not input_path:
-        return {"success": False, "status": "error", "error": "Invalid or missing input_file",
-                "input_file": str(input_file), "output_file": output_file}
+        return {
+            "success": False,
+            "status": "error",
+            "error": "Invalid or missing input_file",
+            "input_file": str(input_file),
+            "output_file": output_file,
+        }
 
     if not output_file:
-        return {"success": False, "status": "error", "error": "output_file is required",
-                "input_file": input_path, "output_file": output_file}
+        return {
+            "success": False,
+            "status": "error",
+            "error": "output_file is required",
+            "input_file": input_path,
+            "output_file": output_file,
+        }
 
     wrapper = _get_wrapper()
     if wrapper is None:
-        return {"success": False, "status": "error",
-                "error": "FFmpegWrapper not available (processors.multimedia not importable)",
-                "input_file": input_path, "output_file": output_file}
+        return {
+            "success": False,
+            "status": "error",
+            "error": "FFmpegWrapper not available (processors.multimedia not importable)",
+            "input_file": input_path,
+            "output_file": output_file,
+        }
 
     if not wrapper.is_available():
-        return {"success": False, "status": "error",
-                "error": "FFmpeg binary not found — please install FFmpeg",
-                "input_file": input_path, "output_file": output_file}
+        return {
+            "success": False,
+            "status": "error",
+            "error": "FFmpeg binary not found — please install FFmpeg",
+            "input_file": input_path,
+            "output_file": output_file,
+        }
 
     if not Path(input_path).exists():
-        return {"success": False, "status": "error",
-                "error": f"Input file not found: {input_path}",
-                "input_file": input_path, "output_file": output_file}
+        return {
+            "success": False,
+            "status": "error",
+            "error": f"Input file not found: {input_path}",
+            "input_file": input_path,
+            "output_file": output_file,
+        }
 
     kwargs: Dict[str, Any] = {}
     for k, v in [
-        ("output_format", output_format), ("video_codec", video_codec),
-        ("audio_codec", audio_codec), ("video_bitrate", video_bitrate),
-        ("audio_bitrate", audio_bitrate), ("resolution", resolution),
-        ("framerate", framerate), ("quality", quality), ("preset", preset),
-        ("custom_args", custom_args), ("timeout", timeout),
+        ("output_format", output_format),
+        ("video_codec", video_codec),
+        ("audio_codec", audio_codec),
+        ("video_bitrate", video_bitrate),
+        ("audio_bitrate", audio_bitrate),
+        ("resolution", resolution),
+        ("framerate", framerate),
+        ("quality", quality),
+        ("preset", preset),
+        ("custom_args", custom_args),
+        ("timeout", timeout),
     ]:
         if v is not None:
             kwargs[k] = v
 
     try:
-        result = await wrapper.convert_video(input_path=input_path, output_path=output_file, **kwargs)
+        result = await wrapper.convert_video(
+            input_path=input_path, output_path=output_file, **kwargs
+        )
     except Exception as exc:
         logger.error("ffmpeg_convert_media failed: %s", exc, exc_info=True)
-        return {"success": False, "status": "error", "error": str(exc),
-                "error_type": type(exc).__name__,
-                "input_file": input_path, "output_file": output_file}
+        return {
+            "success": False,
+            "status": "error",
+            "error": str(exc),
+            "error_type": type(exc).__name__,
+            "input_file": input_path,
+            "output_file": output_file,
+        }
 
     if not isinstance(result, dict):
         result = {"status": "success", "result": result}
@@ -164,8 +201,11 @@ async def ffmpeg_extract_audio_engine(
         return {"success": False, "status": "error", "error": "FFmpegWrapper unavailable"}
 
     kwargs: Dict[str, Any] = {}
-    for k, v in [("audio_codec", audio_codec), ("audio_bitrate", audio_bitrate),
-                 ("sample_rate", sample_rate)]:
+    for k, v in [
+        ("audio_codec", audio_codec),
+        ("audio_bitrate", audio_bitrate),
+        ("sample_rate", sample_rate),
+    ]:
         if v is not None:
             kwargs[k] = v
 

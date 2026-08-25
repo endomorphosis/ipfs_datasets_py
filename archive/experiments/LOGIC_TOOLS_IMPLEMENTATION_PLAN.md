@@ -115,62 +115,58 @@ class PDFProcessingPipeline:
         self.graphrag_integrator = GraphRAGIntegrator()
         self.cross_doc_analyzer = CrossDocumentAnalyzer()
         self.query_interface = QueryInterface()
-    
+
     async def process_pdf(self, pdf_path: str, metadata: dict = None):
         """Execute the complete PDF processing pipeline."""
-        
+
         # Stage 1: PDF Input
         pdf_info = await self.validate_and_analyze_pdf(pdf_path)
-        
+
         # Stage 2: Decomposition
         decomposed_content = await self.decomposer.decompose_pdf(pdf_path)
-        
+
         # Stage 3: IPLD Structuring
         ipld_structure = await self.ipld_structurer.create_structure(decomposed_content)
-        
+
         # Stage 4: OCR Processing
         ocr_results = await self.ocr_processor.process_content(decomposed_content)
-        
+
         # Stage 5: LLM Optimization
         optimized_content = await self.llm_optimizer.optimize_for_llm(
             decomposed_content, ocr_results
         )
-        
+
         # Stage 6: Entity Extraction
-        entities_and_relations = await self.entity_extractor.extract_entities(
-            optimized_content
-        )
-        
+        entities_and_relations = await self.entity_extractor.extract_entities(optimized_content)
+
         # Stage 7: Vector Embedding
         embeddings = await self.vector_embedder.create_embeddings(
             optimized_content, entities_and_relations
         )
-        
+
         # Stage 8: IPLD GraphRAG Integration
         graph_nodes = await self.graphrag_integrator.integrate_content(
             ipld_structure, entities_and_relations, embeddings
         )
-        
+
         # Stage 9: Cross-Document Analysis
-        cross_doc_relations = await self.cross_doc_analyzer.analyze_relationships(
-            graph_nodes
-        )
-        
+        cross_doc_relations = await self.cross_doc_analyzer.analyze_relationships(graph_nodes)
+
         # Stage 10: Query Interface Setup
         await self.query_interface.register_document(graph_nodes, cross_doc_relations)
-        
+
         return {
-            'status': 'success',
-            'document_id': graph_nodes['document']['id'],
-            'ipld_cid': ipld_structure['root_cid'],
-            'entities_count': len(entities_and_relations['entities']),
-            'relationships_count': len(entities_and_relations['relationships']),
-            'cross_doc_relations': len(cross_doc_relations),
-            'processing_metadata': {
-                'pipeline_version': '2.0',
-                'processing_time': self.get_processing_time(),
-                'quality_scores': self.get_quality_scores()
-            }
+            "status": "success",
+            "document_id": graph_nodes["document"]["id"],
+            "ipld_cid": ipld_structure["root_cid"],
+            "entities_count": len(entities_and_relations["entities"]),
+            "relationships_count": len(entities_and_relations["relationships"]),
+            "cross_doc_relations": len(cross_doc_relations),
+            "processing_metadata": {
+                "pipeline_version": "2.0",
+                "processing_time": self.get_processing_time(),
+                "quality_scores": self.get_quality_scores(),
+            },
         }
 ```
 
@@ -287,36 +283,37 @@ from PIL import Image
 import cv2
 import numpy as np
 
+
 def extract_text_with_tesseract(image_data, preprocess=True):
     # Convert to PIL Image
     img = Image.open(io.BytesIO(image_data))
-    
+
     if preprocess:
         # Convert to OpenCV format for preprocessing
         opencv_img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-        
+
         # Preprocessing for better OCR
         gray = cv2.cvtColor(opencv_img, cv2.COLOR_BGR2GRAY)
-        
+
         # Noise removal
         denoised = cv2.fastNlMeansDenoising(gray)
-        
+
         # Thresholding
         _, thresh = cv2.threshold(denoised, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        
+
         img = Image.fromarray(thresh)
-    
+
     # OCR with configuration
-    config = '--oem 3 --psm 6'  # LSTM engine, single uniform block
+    config = "--oem 3 --psm 6"  # LSTM engine, single uniform block
     text = pytesseract.image_to_string(img, config=config)
-    
+
     # Get bounding boxes and confidence
     data = pytesseract.image_to_data(img, config=config, output_type=pytesseract.Output.DICT)
-    
+
     return {
-        'text': text,
-        'confidence': calculate_average_confidence(data),
-        'word_boxes': extract_word_boxes(data)
+        "text": text,
+        "confidence": calculate_average_confidence(data),
+        "word_boxes": extract_word_boxes(data),
     }
 ```
 
@@ -346,32 +343,29 @@ def extract_text_with_tesseract(image_data, preprocess=True):
 ```python
 import easyocr
 
-def extract_text_with_easyocr(image_data, languages=['en']):
+
+def extract_text_with_easyocr(image_data, languages=["en"]):
     reader = easyocr.Reader(languages)
-    
+
     # Convert image data to numpy array
     img_array = np.frombuffer(image_data, np.uint8)
     img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-    
+
     results = reader.readtext(img, detail=1)
-    
+
     extracted_text = ""
     word_boxes = []
     confidences = []
-    
-    for (bbox, text, confidence) in results:
+
+    for bbox, text, confidence in results:
         extracted_text += text + " "
-        word_boxes.append({
-            'text': text,
-            'bbox': bbox,
-            'confidence': confidence
-        })
+        word_boxes.append({"text": text, "bbox": bbox, "confidence": confidence})
         confidences.append(confidence)
-    
+
     return {
-        'text': extracted_text.strip(),
-        'confidence': np.mean(confidences) if confidences else 0.0,
-        'word_boxes': word_boxes
+        "text": extracted_text.strip(),
+        "confidence": np.mean(confidences) if confidences else 0.0,
+        "word_boxes": word_boxes,
     }
 ```
 
@@ -442,39 +436,43 @@ def extract_text_with_easyocr(image_data, languages=['en']):
 **Code Example:**
 ```python
 from surya.ocr import run_ocr
-from surya.model.detection.segformer import load_model as load_det_model, load_processor as load_detection_predictor
+from surya.model.detection.segformer import (
+    load_model as load_det_model,
+    load_processor as load_detection_predictor,
+)
 from surya.model.recognition.model import load_model as load_rec_model
 from surya.model.recognition.processor import load_processor as load_recognition_predictor
 from PIL import Image
 
-def extract_text_with_surya(image_data, languages=['en']):
+
+def extract_text_with_surya(image_data, languages=["en"]):
     # Load models
     detection_predictor, det_model = load_detection_predictor(), load_det_model()
     rec_model, recognition_predictor = load_rec_model(), load_recognition_predictor()
-    
+
     # Convert image
     image = Image.open(io.BytesIO(image_data))
-    
+
     # Run OCR
-    predictions = run_ocr([image], [languages], det_model, detection_predictor, rec_model, recognition_predictor)
-    
+    predictions = run_ocr(
+        [image], [languages], det_model, detection_predictor, rec_model, recognition_predictor
+    )
+
     # Process results
     result = predictions[0]
     full_text = ""
     text_blocks = []
-    
+
     for text_line in result.text_lines:
         full_text += text_line.text + "\n"
-        text_blocks.append({
-            'text': text_line.text,
-            'confidence': text_line.confidence,
-            'bbox': text_line.bbox
-        })
-    
+        text_blocks.append(
+            {"text": text_line.text, "confidence": text_line.confidence, "bbox": text_line.bbox}
+        )
+
     return {
-        'text': full_text.strip(),
-        'confidence': sum(block['confidence'] for block in text_blocks) / len(text_blocks),
-        'text_blocks': text_blocks
+        "text": full_text.strip(),
+        "confidence": sum(block["confidence"] for block in text_blocks) / len(text_blocks),
+        "text_blocks": text_blocks,
     }
 ```
 
@@ -536,39 +534,39 @@ def extract_text_with_surya(image_data, languages=['en']):
 class MultiEngineOCR:
     def __init__(self):
         self.engines = {
-            'surya': SuryaOCR(),
-            'tesseract': TesseractOCR(),
-            'easyocr': EasyOCR(),
-            'doctr': DocTREngine(),
-            'paddleocr': PaddleOCREngine(),
-            'got_ocr': GOTOCREngine()
+            "surya": SuryaOCR(),
+            "tesseract": TesseractOCR(),
+            "easyocr": EasyOCR(),
+            "doctr": DocTREngine(),
+            "paddleocr": PaddleOCREngine(),
+            "got_ocr": GOTOCREngine(),
         }
-        
-    def extract_with_ocr(self, image_data, strategy='quality_first'):
+
+    def extract_with_ocr(self, image_data, strategy="quality_first"):
         results = []
-        
-        if strategy == 'quality_first':
-            engine_order = ['surya', 'paddleocr', 'tesseract', 'easyocr']
-        elif strategy == 'speed_first':
-            engine_order = ['tesseract', 'surya', 'easyocr', 'paddleocr']
-        elif strategy == 'accuracy_first':
-            engine_order = ['got_ocr', 'paddleocr', 'surya', 'doctr']
-        
+
+        if strategy == "quality_first":
+            engine_order = ["surya", "paddleocr", "tesseract", "easyocr"]
+        elif strategy == "speed_first":
+            engine_order = ["tesseract", "surya", "easyocr", "paddleocr"]
+        elif strategy == "accuracy_first":
+            engine_order = ["got_ocr", "paddleocr", "surya", "doctr"]
+
         for engine_name in engine_order:
             try:
                 result = self.engines[engine_name].extract(image_data)
-                if result['confidence'] > 0.8:  # High confidence threshold
+                if result["confidence"] > 0.8:  # High confidence threshold
                     return result
                 results.append((engine_name, result))
             except Exception as e:
                 logging.warning(f"OCR engine {engine_name} failed: {e}")
                 continue
-        
+
         # Return best result if no high-confidence result found
         if results:
-            return max(results, key=lambda x: x[1]['confidence'])[1]
-        
-        return {'text': '', 'confidence': 0.0, 'error': 'All OCR engines failed'}
+            return max(results, key=lambda x: x[1]["confidence"])[1]
+
+        return {"text": "", "confidence": 0.0, "error": "All OCR engines failed"}
 ```
 
 ## PDF Tool Survey and Comparison
@@ -598,50 +596,40 @@ class MultiEngineOCR:
 ```python
 import pymupdf  # PyMuPDF
 
+
 def extract_with_pymupdf(pdf_path):
     doc = pymupdf.open(pdf_path)
-    extracted = {
-        'text_blocks': [],
-        'images': [],
-        'drawings': [],
-        'annotations': []
-    }
-    
+    extracted = {"text_blocks": [], "images": [], "drawings": [], "annotations": []}
+
     for page_num, page in enumerate(doc):
         # Text extraction with position
         text_dict = page.get_text("dict")
-        extracted['text_blocks'].append({
-            'page': page_num,
-            'blocks': text_dict['blocks']
-        })
-        
+        extracted["text_blocks"].append({"page": page_num, "blocks": text_dict["blocks"]})
+
         # Image extraction
         image_list = page.get_images()
         for img_index, img in enumerate(image_list):
-            extracted['images'].append({
-                'page': page_num,
-                'index': img_index,
-                'xref': img[0],
-                'data': doc.extract_image(img[0])
-            })
-        
+            extracted["images"].append(
+                {
+                    "page": page_num,
+                    "index": img_index,
+                    "xref": img[0],
+                    "data": doc.extract_image(img[0]),
+                }
+            )
+
         # Vector drawings
         drawings = page.get_drawings()
-        extracted['drawings'].append({
-            'page': page_num,
-            'paths': drawings
-        })
-        
+        extracted["drawings"].append({"page": page_num, "paths": drawings})
+
         # Annotations
         annotations = []
         for annot in page.annots():
-            annotations.append({
-                'type': annot.type[1],
-                'content': annot.info['content'],
-                'rect': annot.rect
-            })
-        extracted['annotations'].append(annotations)
-    
+            annotations.append(
+                {"type": annot.type[1], "content": annot.info["content"], "rect": annot.rect}
+            )
+        extracted["annotations"].append(annotations)
+
     return extracted
 ```
 
@@ -999,30 +987,35 @@ class AdvancedLLMOptimizedProcessor:
 ```python
 class SemanticChunker:
     def __init__(self):
-        self.sentence_model = SentenceTransformer('all-MiniLM-L6-v2')
+        self.sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
         self.similarity_threshold = 0.7
-    
+
     def chunk_by_semantic_similarity(self, text, max_chunk_size=1000):
         sentences = self.split_into_sentences(text)
         embeddings = self.sentence_model.encode(sentences)
-        
+
         chunks = []
         current_chunk = []
         current_size = 0
-        
+
         for i, (sentence, embedding) in enumerate(zip(sentences, embeddings)):
             # Check semantic similarity with current chunk
             if current_chunk:
                 chunk_embedding = np.mean([embeddings[j] for j in current_chunk], axis=0)
                 similarity = cosine_similarity([embedding], [chunk_embedding])[0][0]
-                
-                if similarity < self.similarity_threshold or current_size + len(sentence) > max_chunk_size:
+
+                if (
+                    similarity < self.similarity_threshold
+                    or current_size + len(sentence) > max_chunk_size
+                ):
                     # Start new chunk
-                    chunks.append({
-                        'text': ' '.join([sentences[j] for j in current_chunk]),
-                        'sentence_indices': current_chunk.copy(),
-                        'coherence_score': self.calculate_coherence(current_chunk, embeddings)
-                    })
+                    chunks.append(
+                        {
+                            "text": " ".join([sentences[j] for j in current_chunk]),
+                            "sentence_indices": current_chunk.copy(),
+                            "coherence_score": self.calculate_coherence(current_chunk, embeddings),
+                        }
+                    )
                     current_chunk = [i]
                     current_size = len(sentence)
                 else:
@@ -1031,42 +1024,44 @@ class SemanticChunker:
             else:
                 current_chunk.append(i)
                 current_size = len(sentence)
-        
+
         # Add final chunk
         if current_chunk:
-            chunks.append({
-                'text': ' '.join([sentences[j] for j in current_chunk]),
-                'sentence_indices': current_chunk,
-                'coherence_score': self.calculate_coherence(current_chunk, embeddings)
-            })
-        
+            chunks.append(
+                {
+                    "text": " ".join([sentences[j] for j in current_chunk]),
+                    "sentence_indices": current_chunk,
+                    "coherence_score": self.calculate_coherence(current_chunk, embeddings),
+                }
+            )
+
         return chunks
 ```
 
 #### 2. Context-Aware Overlap Strategy
 ```python
 class ContextAwareOverlap:
-    def create_overlapping_chunks(self, chunks, overlap_strategy='semantic'):
+    def create_overlapping_chunks(self, chunks, overlap_strategy="semantic"):
         overlapped_chunks = []
-        
+
         for i, chunk in enumerate(chunks):
             enhanced_chunk = chunk.copy()
-            
+
             # Add previous context
             if i > 0:
-                prev_context = self.extract_relevant_context(chunks[i-1], chunk)
-                enhanced_chunk['previous_context'] = prev_context
-            
+                prev_context = self.extract_relevant_context(chunks[i - 1], chunk)
+                enhanced_chunk["previous_context"] = prev_context
+
             # Add following context
             if i < len(chunks) - 1:
-                next_context = self.extract_relevant_context(chunks[i+1], chunk)
-                enhanced_chunk['following_context'] = next_context
-            
+                next_context = self.extract_relevant_context(chunks[i + 1], chunk)
+                enhanced_chunk["following_context"] = next_context
+
             # Add cross-chunk relationships
-            enhanced_chunk['related_chunks'] = self.find_related_chunks(chunk, chunks)
-            
+            enhanced_chunk["related_chunks"] = self.find_related_chunks(chunk, chunks)
+
             overlapped_chunks.append(enhanced_chunk)
-        
+
         return overlapped_chunks
 ```
 
@@ -1403,255 +1398,274 @@ class PDFRAGIntegration:
     def __init__(self):
         # Initialize existing GraphRAG components
         self.ipld_storage = IPLDStorage()
-        self.vector_store = IPLDVectorStore(dimension=768, metric="cosine", storage=self.ipld_storage)
-        self.knowledge_graph = IPLDKnowledgeGraph(name="pdf_corpus", storage=self.ipld_storage, vector_store=self.vector_store)
-        
+        self.vector_store = IPLDVectorStore(
+            dimension=768, metric="cosine", storage=self.ipld_storage
+        )
+        self.knowledge_graph = IPLDKnowledgeGraph(
+            name="pdf_corpus", storage=self.ipld_storage, vector_store=self.vector_store
+        )
+
         # PDF processing components
         self.pdf_processor = AdvancedLLMOptimizedProcessor()
         self.entity_extractor = KnowledgeGraphExtractor()
         self.relationship_builder = RelationshipBuilder()
-        
+
         # Query and reasoning components
         self.query_optimizer = UnifiedGraphRAGQueryOptimizer(
-            enable_query_rewriting=True,
-            enable_budget_management=True,
-            auto_detect_graph_type=True
+            enable_query_rewriting=True, enable_budget_management=True, auto_detect_graph_type=True
         )
         self.cross_doc_reasoner = CrossDocumentReasoner(
-            query_optimizer=self.query_optimizer,
-            min_connection_strength=0.6,
-            max_reasoning_depth=3
+            query_optimizer=self.query_optimizer, min_connection_strength=0.6, max_reasoning_depth=3
         )
-    
+
     def ingest_pdf_into_graphrag(self, pdf_path, document_metadata=None):
         """Complete pipeline to process PDF and integrate into GraphRAG system."""
-        
+
         # Stage 1: PDF Processing with LLM optimization
-        processed_content = self.pdf_processor.process_for_llm(pdf_path, optimization_level='advanced')
-        
+        processed_content = self.pdf_processor.process_for_llm(
+            pdf_path, optimization_level="advanced"
+        )
+
         # Stage 2: Entity and Relationship Extraction
         entities_and_relations = self.extract_semantic_structures(processed_content)
-        
+
         # Stage 3: Vector Embedding Generation
         embeddings = self.generate_multimodal_embeddings(processed_content)
-        
+
         # Stage 4: Knowledge Graph Integration
         graph_nodes = self.create_knowledge_graph_nodes(
             processed_content, entities_and_relations, embeddings, document_metadata
         )
-        
+
         # Stage 5: Cross-Document Relationship Discovery
         cross_doc_relations = self.discover_cross_document_relationships(graph_nodes)
-        
+
         # Stage 6: GraphRAG Index Updates
         self.update_graphrag_indexes(graph_nodes, cross_doc_relations)
-        
+
         return {
-            'document_id': graph_nodes['document']['id'],
-            'entities_added': len(graph_nodes['entities']),
-            'relationships_added': len(graph_nodes['relationships']),
-            'cross_doc_connections': len(cross_doc_relations),
-            'vector_embeddings': len(embeddings),
-            'ipld_cid': graph_nodes['document']['ipld_cid']
+            "document_id": graph_nodes["document"]["id"],
+            "entities_added": len(graph_nodes["entities"]),
+            "relationships_added": len(graph_nodes["relationships"]),
+            "cross_doc_connections": len(cross_doc_relations),
+            "vector_embeddings": len(embeddings),
+            "ipld_cid": graph_nodes["document"]["ipld_cid"],
         }
-    
+
     def extract_semantic_structures(self, processed_content):
         """Extract entities and relationships optimized for GraphRAG integration."""
         all_entities = []
         all_relationships = []
-        
+
         # Extract from each chunk
-        for chunk in processed_content['chunks']:
+        for chunk in processed_content["chunks"]:
             # Extract named entities with enhanced context
             entities = self.entity_extractor.extract_entities_with_context(
-                text=chunk['text'],
-                context=chunk.get('context', ''),
-                page_info=chunk.get('page_range', {}),
-                visual_context=chunk.get('image_descriptions', [])
+                text=chunk["text"],
+                context=chunk.get("context", ""),
+                page_info=chunk.get("page_range", {}),
+                visual_context=chunk.get("image_descriptions", []),
             )
-            
+
             # Extract relationships within the chunk
             relationships = self.entity_extractor.extract_relationships(
-                text=chunk['text'],
+                text=chunk["text"],
                 entities=entities,
-                context_window=chunk.get('previous_context', '') + chunk.get('following_context', '')
+                context_window=chunk.get("previous_context", "")
+                + chunk.get("following_context", ""),
             )
-            
+
             # Add chunk-level metadata to entities and relationships
             for entity in entities:
-                entity['source_chunk'] = chunk['id']
-                entity['document_section'] = chunk.get('section', 'unknown')
-                entity['confidence_score'] = entity.get('confidence', 0.8)
-                
+                entity["source_chunk"] = chunk["id"]
+                entity["document_section"] = chunk.get("section", "unknown")
+                entity["confidence_score"] = entity.get("confidence", 0.8)
+
             for relationship in relationships:
-                relationship['source_chunk'] = chunk['id']
-                relationship['context'] = chunk['text'][:200] + "..." if len(chunk['text']) > 200 else chunk['text']
-            
+                relationship["source_chunk"] = chunk["id"]
+                relationship["context"] = (
+                    chunk["text"][:200] + "..." if len(chunk["text"]) > 200 else chunk["text"]
+                )
+
             all_entities.extend(entities)
             all_relationships.extend(relationships)
-        
+
         # Deduplicate and merge similar entities
         merged_entities = self.merge_similar_entities(all_entities)
-        consolidated_relationships = self.consolidate_relationships(all_relationships, merged_entities)
-        
+        consolidated_relationships = self.consolidate_relationships(
+            all_relationships, merged_entities
+        )
+
         return {
-            'entities': merged_entities,
-            'relationships': consolidated_relationships,
-            'entity_stats': {
-                'total_extracted': len(all_entities),
-                'after_deduplication': len(merged_entities),
-                'types': self.count_entity_types(merged_entities)
-            }
+            "entities": merged_entities,
+            "relationships": consolidated_relationships,
+            "entity_stats": {
+                "total_extracted": len(all_entities),
+                "after_deduplication": len(merged_entities),
+                "types": self.count_entity_types(merged_entities),
+            },
         }
-    
+
     def generate_multimodal_embeddings(self, processed_content):
         """Generate embeddings for text, images, and structured data."""
         embeddings = {
-            'text_embeddings': [],
-            'image_embeddings': [],
-            'table_embeddings': [],
-            'multimodal_embeddings': []
+            "text_embeddings": [],
+            "image_embeddings": [],
+            "table_embeddings": [],
+            "multimodal_embeddings": [],
         }
-        
+
         # Text embeddings for each chunk
-        for chunk in processed_content['chunks']:
-            text_embedding = self.vector_store.embedding_model.encode(chunk['text'])
-            embeddings['text_embeddings'].append({
-                'chunk_id': chunk['id'],
-                'embedding': text_embedding.tolist(),
-                'text': chunk['text'],
-                'metadata': {
-                    'section': chunk.get('section'),
-                    'page_range': chunk.get('page_range'),
-                    'complexity': chunk.get('complexity', 0.5)
+        for chunk in processed_content["chunks"]:
+            text_embedding = self.vector_store.embedding_model.encode(chunk["text"])
+            embeddings["text_embeddings"].append(
+                {
+                    "chunk_id": chunk["id"],
+                    "embedding": text_embedding.tolist(),
+                    "text": chunk["text"],
+                    "metadata": {
+                        "section": chunk.get("section"),
+                        "page_range": chunk.get("page_range"),
+                        "complexity": chunk.get("complexity", 0.5),
+                    },
                 }
-            })
-            
+            )
+
             # Image embeddings if present
-            if chunk.get('image_descriptions'):
-                for idx, img_desc in enumerate(chunk['image_descriptions']):
+            if chunk.get("image_descriptions"):
+                for idx, img_desc in enumerate(chunk["image_descriptions"]):
                     img_embedding = self.vector_store.embedding_model.encode(img_desc)
-                    embeddings['image_embeddings'].append({
-                        'chunk_id': chunk['id'],
-                        'image_index': idx,
-                        'embedding': img_embedding.tolist(),
-                        'description': img_desc,
-                        'modality': 'image'
-                    })
-            
+                    embeddings["image_embeddings"].append(
+                        {
+                            "chunk_id": chunk["id"],
+                            "image_index": idx,
+                            "embedding": img_embedding.tolist(),
+                            "description": img_desc,
+                            "modality": "image",
+                        }
+                    )
+
             # Table embeddings if present
-            if chunk.get('table_summaries'):
-                for idx, table_summary in enumerate(chunk['table_summaries']):
+            if chunk.get("table_summaries"):
+                for idx, table_summary in enumerate(chunk["table_summaries"]):
                     table_embedding = self.vector_store.embedding_model.encode(table_summary)
-                    embeddings['table_embeddings'].append({
-                        'chunk_id': chunk['id'],
-                        'table_index': idx,
-                        'embedding': table_embedding.tolist(),
-                        'summary': table_summary,
-                        'modality': 'table'
-                    })
-            
+                    embeddings["table_embeddings"].append(
+                        {
+                            "chunk_id": chunk["id"],
+                            "table_index": idx,
+                            "embedding": table_embedding.tolist(),
+                            "summary": table_summary,
+                            "modality": "table",
+                        }
+                    )
+
             # Create multimodal embedding combining text and visual elements
-            if chunk.get('integrated_narrative'):
-                multimodal_embedding = self.vector_store.embedding_model.encode(chunk['integrated_narrative'])
-                embeddings['multimodal_embeddings'].append({
-                    'chunk_id': chunk['id'],
-                    'embedding': multimodal_embedding.tolist(),
-                    'narrative': chunk['integrated_narrative'],
-                    'modalities': self.identify_modalities_in_chunk(chunk)
-                })
-        
+            if chunk.get("integrated_narrative"):
+                multimodal_embedding = self.vector_store.embedding_model.encode(
+                    chunk["integrated_narrative"]
+                )
+                embeddings["multimodal_embeddings"].append(
+                    {
+                        "chunk_id": chunk["id"],
+                        "embedding": multimodal_embedding.tolist(),
+                        "narrative": chunk["integrated_narrative"],
+                        "modalities": self.identify_modalities_in_chunk(chunk),
+                    }
+                )
+
         return embeddings
-    
-    def create_knowledge_graph_nodes(self, processed_content, entities_and_relations, embeddings, document_metadata):
+
+    def create_knowledge_graph_nodes(
+        self, processed_content, entities_and_relations, embeddings, document_metadata
+    ):
         """Create knowledge graph nodes optimized for GraphRAG integration."""
-        
+
         # Create document node
         document_node = {
-            'id': f"doc_{hash(processed_content.get('metadata', {}).get('source', 'unknown'))}",
-            'type': 'Document',
-            'properties': {
-                'title': document_metadata.get('title', 'Untitled Document'),
-                'source': processed_content.get('metadata', {}).get('source'),
-                'creation_date': document_metadata.get('creation_date'),
-                'author': document_metadata.get('author'),
-                'document_type': processed_content.get('metadata', {}).get('document_type', 'pdf'),
-                'page_count': len(processed_content.get('chunks', [])),
-                'processing_timestamp': datetime.datetime.now().isoformat(),
-                'quality_score': self.calculate_document_quality_score(processed_content),
-                'language': document_metadata.get('language', 'en'),
-                'subject_areas': self.extract_subject_areas(entities_and_relations)
+            "id": f"doc_{hash(processed_content.get('metadata', {}).get('source', 'unknown'))}",
+            "type": "Document",
+            "properties": {
+                "title": document_metadata.get("title", "Untitled Document"),
+                "source": processed_content.get("metadata", {}).get("source"),
+                "creation_date": document_metadata.get("creation_date"),
+                "author": document_metadata.get("author"),
+                "document_type": processed_content.get("metadata", {}).get("document_type", "pdf"),
+                "page_count": len(processed_content.get("chunks", [])),
+                "processing_timestamp": datetime.datetime.now().isoformat(),
+                "quality_score": self.calculate_document_quality_score(processed_content),
+                "language": document_metadata.get("language", "en"),
+                "subject_areas": self.extract_subject_areas(entities_and_relations),
             },
-            'ipld_cid': None  # Will be set after storing in IPLD
+            "ipld_cid": None,  # Will be set after storing in IPLD
         }
-        
+
         # Create entity nodes
         entity_nodes = []
-        for entity in entities_and_relations['entities']:
+        for entity in entities_and_relations["entities"]:
             entity_node = {
-                'id': f"entity_{entity['id']}",
-                'type': 'Entity',
-                'entity_type': entity['type'],
-                'properties': {
-                    'name': entity['name'],
-                    'aliases': entity.get('aliases', []),
-                    'description': entity.get('description', ''),
-                    'confidence': entity.get('confidence', 0.8),
-                    'source_document': document_node['id'],
-                    'source_chunks': entity.get('source_chunks', []),
-                    'first_mention': entity.get('first_mention', ''),
-                    'context': entity.get('context', ''),
-                    'attributes': entity.get('attributes', {})
-                }
+                "id": f"entity_{entity['id']}",
+                "type": "Entity",
+                "entity_type": entity["type"],
+                "properties": {
+                    "name": entity["name"],
+                    "aliases": entity.get("aliases", []),
+                    "description": entity.get("description", ""),
+                    "confidence": entity.get("confidence", 0.8),
+                    "source_document": document_node["id"],
+                    "source_chunks": entity.get("source_chunks", []),
+                    "first_mention": entity.get("first_mention", ""),
+                    "context": entity.get("context", ""),
+                    "attributes": entity.get("attributes", {}),
+                },
             }
             entity_nodes.append(entity_node)
-        
+
         # Create relationship nodes
         relationship_nodes = []
-        for relation in entities_and_relations['relationships']:
+        for relation in entities_and_relations["relationships"]:
             relationship_node = {
-                'id': f"rel_{relation['id']}",
-                'type': 'Relationship',
-                'relationship_type': relation['type'],
-                'source_entity': f"entity_{relation['source_id']}",
-                'target_entity': f"entity_{relation['target_id']}",
-                'properties': {
-                    'confidence': relation.get('confidence', 0.7),
-                    'context': relation.get('context', ''),
-                    'source_document': document_node['id'],
-                    'evidence': relation.get('evidence', ''),
-                    'strength': relation.get('strength', 0.5)
-                }
+                "id": f"rel_{relation['id']}",
+                "type": "Relationship",
+                "relationship_type": relation["type"],
+                "source_entity": f"entity_{relation['source_id']}",
+                "target_entity": f"entity_{relation['target_id']}",
+                "properties": {
+                    "confidence": relation.get("confidence", 0.7),
+                    "context": relation.get("context", ""),
+                    "source_document": document_node["id"],
+                    "evidence": relation.get("evidence", ""),
+                    "strength": relation.get("strength", 0.5),
+                },
             }
             relationship_nodes.append(relationship_node)
-        
+
         # Create chunk nodes for detailed content access
         chunk_nodes = []
-        for chunk in processed_content['chunks']:
+        for chunk in processed_content["chunks"]:
             chunk_node = {
-                'id': f"chunk_{chunk['id']}",
-                'type': 'TextChunk',
-                'properties': {
-                    'text': chunk['text'],
-                    'summary': chunk.get('summary', ''),
-                    'section': chunk.get('section', ''),
-                    'page_range': chunk.get('page_range', {}),
-                    'parent_document': document_node['id'],
-                    'complexity': chunk.get('complexity', 0.5),
-                    'readability_score': chunk.get('readability_score', 0.5),
-                    'key_terms': chunk.get('key_terms', []),
-                    'entities': [f"entity_{e}" for e in chunk.get('entities', [])],
-                    'has_images': bool(chunk.get('image_descriptions')),
-                    'has_tables': bool(chunk.get('table_summaries'))
-                }
+                "id": f"chunk_{chunk['id']}",
+                "type": "TextChunk",
+                "properties": {
+                    "text": chunk["text"],
+                    "summary": chunk.get("summary", ""),
+                    "section": chunk.get("section", ""),
+                    "page_range": chunk.get("page_range", {}),
+                    "parent_document": document_node["id"],
+                    "complexity": chunk.get("complexity", 0.5),
+                    "readability_score": chunk.get("readability_score", 0.5),
+                    "key_terms": chunk.get("key_terms", []),
+                    "entities": [f"entity_{e}" for e in chunk.get("entities", [])],
+                    "has_images": bool(chunk.get("image_descriptions")),
+                    "has_tables": bool(chunk.get("table_summaries")),
+                },
             }
             chunk_nodes.append(chunk_node)
-        
+
         return {
-            'document': document_node,
-            'entities': entity_nodes,
-            'relationships': relationship_nodes,
-            'chunks': chunk_nodes
+            "document": document_node,
+            "entities": entity_nodes,
+            "relationships": relationship_nodes,
+            "chunks": chunk_nodes,
         }
 ```
 
@@ -1665,88 +1679,90 @@ class CrossDocumentGraphRAGAnalyzer:
         self.similarity_threshold = 0.75
         self.entity_matcher = EntityMatcher()
         self.concept_mapper = ConceptMapper()
-    
+
     def discover_cross_document_relationships(self, new_document_nodes):
         """Discover relationships between new PDF content and existing knowledge graph."""
-        
+
         cross_doc_relations = []
-        
+
         # 1. Entity co-reference resolution
-        entity_corefs = self.resolve_entity_coreferences(new_document_nodes['entities'])
+        entity_corefs = self.resolve_entity_coreferences(new_document_nodes["entities"])
         cross_doc_relations.extend(entity_corefs)
-        
+
         # 2. Concept similarity mapping
         concept_similarities = self.map_concept_similarities(new_document_nodes)
         cross_doc_relations.extend(concept_similarities)
-        
+
         # 3. Citation and reference detection
         citations = self.detect_citations_and_references(new_document_nodes)
         cross_doc_relations.extend(citations)
-        
+
         # 4. Thematic clustering
         thematic_clusters = self.identify_thematic_clusters(new_document_nodes)
         cross_doc_relations.extend(thematic_clusters)
-        
+
         return cross_doc_relations
-    
+
     def resolve_entity_coreferences(self, new_entities):
         """Find entities in the knowledge graph that refer to the same real-world entities."""
         coreferences = []
-        
+
         for new_entity in new_entities:
             # Search for similar entities in existing graph
             similar_entities = self.knowledge_graph.find_similar_entities(
-                entity_name=new_entity['properties']['name'],
-                entity_type=new_entity['entity_type'],
-                similarity_threshold=self.similarity_threshold
+                entity_name=new_entity["properties"]["name"],
+                entity_type=new_entity["entity_type"],
+                similarity_threshold=self.similarity_threshold,
             )
-            
+
             for similar_entity in similar_entities:
                 # Calculate detailed similarity score
                 similarity_score = self.entity_matcher.calculate_similarity(
                     new_entity, similar_entity
                 )
-                
+
                 if similarity_score > self.similarity_threshold:
-                    coreferences.append({
-                        'type': 'entity_coreference',
-                        'source_entity': new_entity['id'],
-                        'target_entity': similar_entity['id'],
-                        'confidence': similarity_score,
-                        'evidence': self.entity_matcher.get_similarity_evidence(
-                            new_entity, similar_entity
-                        )
-                    })
-        
+                    coreferences.append(
+                        {
+                            "type": "entity_coreference",
+                            "source_entity": new_entity["id"],
+                            "target_entity": similar_entity["id"],
+                            "confidence": similarity_score,
+                            "evidence": self.entity_matcher.get_similarity_evidence(
+                                new_entity, similar_entity
+                            ),
+                        }
+                    )
+
         return coreferences
-    
+
     def map_concept_similarities(self, new_document_nodes):
         """Map conceptual similarities between new content and existing documents."""
         concept_similarities = []
-        
+
         # Get concept embeddings for new document
-        new_concepts = self.concept_mapper.extract_concepts(new_document_nodes['chunks'])
-        
+        new_concepts = self.concept_mapper.extract_concepts(new_document_nodes["chunks"])
+
         for concept in new_concepts:
             # Search for similar concepts in vector store
             similar_concepts = self.vector_store.search(
-                query_vector=concept['embedding'],
-                top_k=10,
-                filter_metadata={'type': 'concept'}
+                query_vector=concept["embedding"], top_k=10, filter_metadata={"type": "concept"}
             )
-            
+
             for similar_concept in similar_concepts:
                 if similar_concept.score > 0.8:  # High similarity threshold for concepts
-                    concept_similarities.append({
-                        'type': 'concept_similarity',
-                        'source_concept': concept['id'],
-                        'target_concept': similar_concept.metadata['concept_id'],
-                        'source_document': new_document_nodes['document']['id'],
-                        'target_document': similar_concept.metadata['document_id'],
-                        'similarity_score': similar_concept.score,
-                        'concept_type': concept['type']
-                    })
-        
+                    concept_similarities.append(
+                        {
+                            "type": "concept_similarity",
+                            "source_concept": concept["id"],
+                            "target_concept": similar_concept.metadata["concept_id"],
+                            "source_document": new_document_nodes["document"]["id"],
+                            "target_document": similar_concept.metadata["document_id"],
+                            "similarity_score": similar_concept.score,
+                            "concept_type": concept["type"],
+                        }
+                    )
+
         return concept_similarities
 ```
 
@@ -1759,26 +1775,26 @@ class PDFGraphRAGQueryEngine:
         self.query_router = QueryRouter()
         self.context_builder = PDFContextBuilder()
         self.answer_synthesizer = PDFAnswerSynthesizer()
-    
-    def query_pdf_corpus(self, query, query_type='hybrid', max_documents=10):
+
+    def query_pdf_corpus(self, query, query_type="hybrid", max_documents=10):
         """Query the PDF corpus using GraphRAG capabilities."""
-        
+
         # 1. Analyze query and determine optimal strategy
         query_analysis = self.query_router.analyze_query(query)
-        
+
         # 2. Route to appropriate retrieval strategy
-        if query_analysis['requires_cross_document_reasoning']:
+        if query_analysis["requires_cross_document_reasoning"]:
             return self.cross_document_query(query, max_documents)
-        elif query_analysis['requires_multimodal_retrieval']:
+        elif query_analysis["requires_multimodal_retrieval"]:
             return self.multimodal_query(query, max_documents)
-        elif query_analysis['requires_entity_focus']:
+        elif query_analysis["requires_entity_focus"]:
             return self.entity_focused_query(query, max_documents)
         else:
             return self.semantic_query(query, max_documents)
-    
+
     def cross_document_query(self, query, max_documents):
         """Handle queries that require reasoning across multiple PDF documents."""
-        
+
         # Use existing cross-document reasoner with PDF-specific enhancements
         reasoning_results = self.integrator.cross_doc_reasoner.reason_across_documents(
             query=query,
@@ -1790,58 +1806,52 @@ class PDFGraphRAGQueryEngine:
             max_hops=3,
             return_trace=True,
             pdf_specific_filters={
-                'content_types': ['text', 'multimodal'],
-                'quality_threshold': 0.7,
-                'recency_bias': True
-            }
+                "content_types": ["text", "multimodal"],
+                "quality_threshold": 0.7,
+                "recency_bias": True,
+            },
         )
-        
+
         # Enhance results with PDF-specific context
         enhanced_results = self.add_pdf_context_to_results(reasoning_results)
-        
+
         return enhanced_results
-    
+
     def multimodal_query(self, query, max_documents):
         """Handle queries that involve both text and visual content from PDFs."""
-        
+
         # Search across text, image, and table embeddings
         text_results = self.integrator.vector_store.search(
-            query_text=query,
-            top_k=max_documents * 2,
-            filter_metadata={'modality': 'text'}
+            query_text=query, top_k=max_documents * 2, filter_metadata={"modality": "text"}
         )
-        
+
         image_results = self.integrator.vector_store.search(
-            query_text=query,
-            top_k=max_documents,
-            filter_metadata={'modality': 'image'}
+            query_text=query, top_k=max_documents, filter_metadata={"modality": "image"}
         )
-        
+
         table_results = self.integrator.vector_store.search(
-            query_text=query,
-            top_k=max_documents,
-            filter_metadata={'modality': 'table'}
+            query_text=query, top_k=max_documents, filter_metadata={"modality": "table"}
         )
-        
+
         # Combine and rank multimodal results
         combined_results = self.combine_multimodal_results(
             text_results, image_results, table_results, query
         )
-        
+
         return combined_results
-    
+
     def generate_pdf_insights(self, query_results):
         """Generate insights specific to PDF content from query results."""
-        
+
         insights = {
-            'document_coverage': self.analyze_document_coverage(query_results),
-            'content_quality': self.assess_content_quality(query_results),
-            'visual_elements': self.analyze_visual_elements(query_results),
-            'cross_references': self.identify_cross_references(query_results),
-            'concept_evolution': self.track_concept_evolution(query_results),
-            'source_reliability': self.assess_source_reliability(query_results)
+            "document_coverage": self.analyze_document_coverage(query_results),
+            "content_quality": self.assess_content_quality(query_results),
+            "visual_elements": self.analyze_visual_elements(query_results),
+            "cross_references": self.identify_cross_references(query_results),
+            "concept_evolution": self.track_concept_evolution(query_results),
+            "source_reliability": self.assess_source_reliability(query_results),
         }
-        
+
         return insights
 ```
 
@@ -1850,76 +1860,68 @@ class PDFGraphRAGQueryEngine:
 ```python
 # MCP Tools for PDF GraphRAG operations
 class PDFGraphRAGTools:
-    
     async def ingest_pdf_to_graphrag(self, pdf_path: str, metadata: dict = None):
         """MCP tool to ingest PDF into the GraphRAG system."""
         try:
             integrator = PDFGraphRAGIntegrator()
             result = integrator.ingest_pdf_into_graphrag(pdf_path, metadata)
-            
+
             return {
                 "status": "success",
                 "message": "PDF successfully ingested into GraphRAG system",
-                "document_id": result['document_id'],
-                "entities_added": result['entities_added'],
-                "relationships_added": result['relationships_added'],
-                "ipld_cid": result['ipld_cid']
+                "document_id": result["document_id"],
+                "entities_added": result["entities_added"],
+                "relationships_added": result["relationships_added"],
+                "ipld_cid": result["ipld_cid"],
             }
         except Exception as e:
-            return {
-                "status": "error",
-                "message": f"Failed to ingest PDF: {str(e)}"
-            }
-    
+            return {"status": "error", "message": f"Failed to ingest PDF: {str(e)}"}
+
     async def query_pdf_corpus(self, query: str, query_type: str = "hybrid", max_docs: int = 10):
         """MCP tool to query the PDF corpus using GraphRAG."""
         try:
             integrator = PDFGraphRAGIntegrator()
             query_engine = PDFGraphRAGQueryEngine(integrator)
-            
+
             results = query_engine.query_pdf_corpus(query, query_type, max_docs)
             insights = query_engine.generate_pdf_insights(results)
-            
+
             return {
                 "status": "success",
                 "query": query,
                 "results": results,
                 "insights": insights,
-                "document_count": len(set(r.get('document_id') for r in results.get('documents', [])))
+                "document_count": len(
+                    set(r.get("document_id") for r in results.get("documents", []))
+                ),
             }
         except Exception as e:
-            return {
-                "status": "error",
-                "message": f"Query failed: {str(e)}"
-            }
-    
+            return {"status": "error", "message": f"Query failed: {str(e)}"}
+
     async def analyze_pdf_relationships(self, document_id: str):
         """MCP tool to analyze relationships for a specific PDF document."""
         try:
             integrator = PDFGraphRAGIntegrator()
-            
+
             # Get document relationships
             relationships = integrator.knowledge_graph.get_document_relationships(document_id)
-            
+
             # Analyze relationship patterns
             analysis = {
-                'internal_relationships': len([r for r in relationships if r.get('scope') == 'internal']),
-                'external_relationships': len([r for r in relationships if r.get('scope') == 'external']),
-                'entity_connections': integrator.analyze_entity_connections(document_id),
-                'cross_document_links': integrator.find_cross_document_links(document_id),
-                'relationship_quality': integrator.assess_relationship_quality(relationships)
+                "internal_relationships": len(
+                    [r for r in relationships if r.get("scope") == "internal"]
+                ),
+                "external_relationships": len(
+                    [r for r in relationships if r.get("scope") == "external"]
+                ),
+                "entity_connections": integrator.analyze_entity_connections(document_id),
+                "cross_document_links": integrator.find_cross_document_links(document_id),
+                "relationship_quality": integrator.assess_relationship_quality(relationships),
             }
-            
-            return {
-                "status": "success",
-                "document_id": document_id,
-                "analysis": analysis
-            }
+
+            return {"status": "success", "document_id": document_id, "analysis": analysis}
         except Exception as e:
-            return {
-                "status": "error",
-                "message": f"Relationship analysis failed: {str(e)}"
-            }
+            return {"status": "error", "message": f"Relationship analysis failed: {str(e)}"}
 ```
 
 ### 5. Performance Optimization for PDF GraphRAG
@@ -1930,43 +1932,39 @@ class PDFGraphRAGOptimizer:
         self.cache_manager = CacheManager()
         self.index_optimizer = IndexOptimizer()
         self.query_planner = QueryPlanner()
-    
+
     def optimize_pdf_ingestion(self, batch_size=10, parallel_processing=True):
         """Optimize PDF ingestion performance."""
-        
+
         optimization_config = {
-            'batch_processing': {
-                'enabled': True,
-                'batch_size': batch_size,
-                'parallel_workers': 4 if parallel_processing else 1
+            "batch_processing": {
+                "enabled": True,
+                "batch_size": batch_size,
+                "parallel_workers": 4 if parallel_processing else 1,
             },
-            'caching': {
-                'entity_cache': True,
-                'embedding_cache': True,
-                'ocr_cache': True
+            "caching": {"entity_cache": True, "embedding_cache": True, "ocr_cache": True},
+            "indexing": {
+                "incremental_updates": True,
+                "background_indexing": True,
+                "compression": True,
             },
-            'indexing': {
-                'incremental_updates': True,
-                'background_indexing': True,
-                'compression': True
-            }
         }
-        
+
         return optimization_config
-    
+
     def optimize_query_performance(self, query_patterns):
         """Optimize query performance based on usage patterns."""
-        
+
         # Analyze query patterns
         pattern_analysis = self.query_planner.analyze_patterns(query_patterns)
-        
+
         # Generate optimization recommendations
         optimizations = {
-            'index_tuning': self.index_optimizer.recommend_index_changes(pattern_analysis),
-            'caching_strategy': self.cache_manager.recommend_caching(pattern_analysis),
-            'query_rewriting': self.query_planner.suggest_query_rewrites(pattern_analysis)
+            "index_tuning": self.index_optimizer.recommend_index_changes(pattern_analysis),
+            "caching_strategy": self.cache_manager.recommend_caching(pattern_analysis),
+            "query_rewriting": self.query_planner.suggest_query_rewrites(pattern_analysis),
         }
-        
+
         return optimizations
 ```
 

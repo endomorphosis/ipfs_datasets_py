@@ -110,9 +110,9 @@ Create `common/log_redaction.py` with centralized redaction patterns:
 def redact_sensitive(text: str) -> str:
     """Redact sensitive data from log messages."""
     patterns = [
-        (r'api[_-]?key\s*[:=]\s*["\']?([a-zA-Z0-9_-]+)', 'api_key=***REDACTED***'),
-        (r'token\s*[:=]\s*["\']?([a-zA-Z0-9_.-]+)', 'token=***REDACTED***'),
-        (r'password\s*[:=]\s*["\']?([^\s"\']+)', 'password=***REDACTED***'),
+        (r'api[_-]?key\s*[:=]\s*["\']?([a-zA-Z0-9_-]+)', "api_key=***REDACTED***"),
+        (r'token\s*[:=]\s*["\']?([a-zA-Z0-9_.-]+)', "token=***REDACTED***"),
+        (r'password\s*[:=]\s*["\']?([^\s"\']+)', "password=***REDACTED***"),
     ]
     for pattern, replacement in patterns:
         text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
@@ -124,8 +124,9 @@ Add filter to `common/structured_logging.py`:
 ```python
 class SensitiveDataFilter(logging.Filter):
     """Filter out sensitive data from log records."""
+
     def filter(self, record: logging.LogRecord) -> bool:
-        if hasattr(record, 'msg'):
+        if hasattr(record, "msg"):
             record.msg = redact_sensitive(str(record.msg))
         return True
 ```

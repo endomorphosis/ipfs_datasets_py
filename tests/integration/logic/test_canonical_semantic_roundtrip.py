@@ -40,16 +40,11 @@ REPLACEMENT_REPORT = (
     / "2026-07-27_semantic_roundtrip_composition_replacement.json"
 )
 PARITY_SNAPSHOT = (
-    ROOT
-    / "docs/performance_snapshots"
-    / "2026-07-26_canonical_semantic_roundtrip.json"
+    ROOT / "docs/performance_snapshots" / "2026-07-26_canonical_semantic_roundtrip.json"
 )
 SELECTED_ARM = IMPLEMENTATION_REPRESENTATIVE_ARM_ID
 IMPLEMENTATION_PATHS = {
-    "ir_schema": (
-        "ipfs_datasets_py/logic/legal_ir/schemas/"
-        "canonical_roundtrip_ir.schema.json"
-    ),
+    "ir_schema": ("ipfs_datasets_py/logic/legal_ir/schemas/canonical_roundtrip_ir.schema.json"),
     "compiler": "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
     "decompiler": "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
     "roundtrip": "ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py",
@@ -121,10 +116,7 @@ def test_pilot_cases_complete_with_measured_partial_disclosure() -> None:
         assert result.t1_result is not None
         assert result.l2_result is not None
         assert result.l1_result.provenance["source_cid"] == result.source_cid
-        assert (
-            result.l2_result.provenance["source_cid"]
-            == result.t1_result.text_cid
-        )
+        assert result.l2_result.provenance["source_cid"] == result.t1_result.text_cid
 
 
 def test_pilot_parity_is_noninferior_to_selected_replacement_arm() -> None:
@@ -178,15 +170,10 @@ def test_checked_in_parity_snapshot_matches_live_run() -> None:
     assert snapshot["selected_arm_id"] == SELECTED_ARM
     assert snapshot["comparison"]["within_tolerance"] is True
     assert snapshot["comparison"]["estimate"] == 0.0
-    assert (
-        snapshot["lineage"]["configuration_cids"]
-        == [CANONICAL_SEMANTIC_ROUNDTRIP_CONFIG_CID]
-    )
+    assert snapshot["lineage"]["configuration_cids"] == [CANONICAL_SEMANTIC_ROUNDTRIP_CONFIG_CID]
     for name, relative in IMPLEMENTATION_PATHS.items():
         expected = cid_for_bytes((ROOT / relative).read_bytes())
-        assert (
-            snapshot["lineage"]["implementation_raw_cids"][name] == expected
-        ), name
+        assert snapshot["lineage"]["implementation_raw_cids"][name] == expected, name
     payload = dict(snapshot)
     report_cid = payload.pop("report_cid")
     assert cid_for_dag_json(payload) == report_cid

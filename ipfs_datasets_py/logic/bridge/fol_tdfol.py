@@ -42,8 +42,7 @@ _DEONTIC_EXPORT_OPERATOR_ALIASES = {
 _DEONTIC_EXPORT_OPERATOR_PATTERN = re.compile(
     r"\b("
     + "|".join(
-        re.escape(name)
-        for name in sorted(_DEONTIC_EXPORT_OPERATOR_ALIASES, key=len, reverse=True)
+        re.escape(name) for name in sorted(_DEONTIC_EXPORT_OPERATOR_ALIASES, key=len, reverse=True)
     )
     + r")\s*\(",
     flags=re.IGNORECASE,
@@ -132,9 +131,7 @@ class FolTdfolBridgeAdapter:
         )
         formula_records = _merge_formula_records(
             compiler_guidance_records,
-            _formula_records_from_proof_obligation_rows(
-                bridge_inputs["proof_obligation_rows"]
-            ),
+            _formula_records_from_proof_obligation_rows(bridge_inputs["proof_obligation_rows"]),
             _tdfol_formula_records(norms),
         )
         triples = tuple(
@@ -149,12 +146,8 @@ class FolTdfolBridgeAdapter:
             metadata={
                 "source": "tdfol_bridge_ir",
                 "tdfol_formula_count": len(formula_records),
-                "compiler_guidance_formula_count": len(
-                    compiler_guidance_records
-                ),
-                "guidance_formula_count": len(
-                    bridge_inputs["proof_obligation_rows"]
-                ),
+                "compiler_guidance_formula_count": len(compiler_guidance_records),
+                "guidance_formula_count": len(bridge_inputs["proof_obligation_rows"]),
             },
         )
         views = {
@@ -162,12 +155,7 @@ class FolTdfolBridgeAdapter:
                 name="tdfol_formula",
                 format="tdfol-formula-records",
                 source_component="TDFOL.prover",
-                payload={
-                    "records": [
-                        _public_formula_record(record)
-                        for record in formula_records
-                    ]
-                },
+                payload={"records": [_public_formula_record(record) for record in formula_records]},
                 metadata={"formula_count": len(formula_records)},
             ),
             "proof_obligations": LogicIRView(
@@ -218,15 +206,9 @@ class FolTdfolBridgeAdapter:
                 metadata={
                     "deontic_norm_count": len(norms),
                     "tdfol_formula_count": len(formula_records),
-                    "compiler_guidance_formula_count": len(
-                        compiler_guidance_records
-                    ),
-                    "guidance_formula_count": len(
-                        bridge_inputs["proof_obligation_rows"]
-                    ),
-                    "compiler_guidance_applied": bool(
-                        compiler_guidance_records
-                    ),
+                    "compiler_guidance_formula_count": len(compiler_guidance_records),
+                    "guidance_formula_count": len(bridge_inputs["proof_obligation_rows"]),
+                    "compiler_guidance_applied": bool(compiler_guidance_records),
                 },
             ),
             {
@@ -299,16 +281,11 @@ class FolTdfolBridgeAdapter:
             round_trip=round_trip,
             proof_gate=proof_gate,
             graph_projection=graph_result,
-            decoded_text=" ".join(
-                str(record.get("formula") or "")
-                for record in formula_records
-            ),
+            decoded_text=" ".join(str(record.get("formula") or "") for record in formula_records),
             status=status,
             metadata={
                 "adapter": "fol_tdfol_bridge_v1",
-                "compiler_guidance_applied": bool(
-                    context["compiler_guidance_records"]
-                ),
+                "compiler_guidance_applied": bool(context["compiler_guidance_records"]),
                 "compiler_guidance_routes": sorted(
                     {
                         str(record.get("compiler_guidance_route") or "")
@@ -427,9 +404,7 @@ def _formula_records_from_proof_obligation_rows(
         )
         predicates = sorted(formula_object.get_predicates()) if formula_object is not None else []
         source_id = str(
-            row.get("source_id")
-            or row.get("proof_obligation_id")
-            or f"tdfol:guidance:{index}"
+            row.get("source_id") or row.get("proof_obligation_id") or f"tdfol:guidance:{index}"
         )
         records.append(
             {
@@ -460,9 +435,7 @@ def _tdfol_formula_from_raw_proof_obligation_row(
     if norm is None:
         return None
     norm["source_id"] = str(
-        row.get("source_id")
-        or row.get("proof_obligation_id")
-        or f"tdfol:guidance:raw:{index}"
+        row.get("source_id") or row.get("proof_obligation_id") or f"tdfol:guidance:raw:{index}"
     )
     return _tdfol_formula_from_norm(norm)
 
@@ -591,10 +564,7 @@ def _proof_obligation_rows_from_value(value: Any) -> list[dict[str, Any]]:
                 rows.extend(dict(item) for item in records if isinstance(item, Mapping))
         if rows:
             return rows
-        if any(
-            key in value
-            for key in _TDFOL_FORMULA_EXPORT_KEYS
-        ):
+        if any(key in value for key in _TDFOL_FORMULA_EXPORT_KEYS):
             return [dict(value)]
         return []
     if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
@@ -620,12 +590,10 @@ def _tdfol_formula_from_norm(norm: Mapping[str, Any]) -> Any:
         str(norm.get(key) or "") for key in ("modality", "norm_type", "action")
     ).lower()
     permission_context = " ".join(
-        str(norm.get(key) or "")
-        for key in ("modality", "norm_type", "source_text")
+        str(norm.get(key) or "") for key in ("modality", "norm_type", "source_text")
     ).lower()
     prohibition_context = " ".join(
-        str(norm.get(key) or "")
-        for key in ("modality", "norm_type", "action", "source_text")
+        str(norm.get(key) or "") for key in ("modality", "norm_type", "action", "source_text")
     ).lower()
     if (
         "prohib" in prohibition_context
@@ -643,8 +611,7 @@ def _tdfol_formula_from_norm(norm: Mapping[str, Any]) -> Any:
         operator = DeonticOperator.OBLIGATION
     inner: Any = predicate
     temporal_text = " ".join(
-        str(norm.get(key) or "")
-        for key in ("action", "condition", "temporal", "source_text")
+        str(norm.get(key) or "") for key in ("action", "condition", "temporal", "source_text")
     ).lower()
     if any(token in temporal_text for token in ("before", "after", "when", "until")):
         inner = TemporalFormula(TemporalOperator.ALWAYS, predicate)
@@ -678,20 +645,12 @@ def _formula_records_from_compiler_guidance(
             "source_id": source_id,
             "source_norm": {
                 "compiler_guidance_route": guidance["route"],
-                "compiler_guidance_semantic_overlay_terms": tuple(
-                    guidance["semantic_terms"]
-                ),
-                "compiler_guidance_surface_features": tuple(
-                    guidance["surface_features"]
-                ),
+                "compiler_guidance_semantic_overlay_terms": tuple(guidance["semantic_terms"]),
+                "compiler_guidance_surface_features": tuple(guidance["surface_features"]),
             },
             "compiler_guidance_route": guidance["route"],
-            "compiler_guidance_semantic_overlay_terms": tuple(
-                guidance["semantic_terms"]
-            ),
-            "compiler_guidance_surface_features": tuple(
-                guidance["surface_features"]
-            ),
+            "compiler_guidance_semantic_overlay_terms": tuple(guidance["semantic_terms"]),
+            "compiler_guidance_surface_features": tuple(guidance["surface_features"]),
         }
     ]
 
@@ -713,21 +672,17 @@ def _tdfol_compiler_guidance_signal(
     semantic_terms = _tdfol_guidance_semantic_terms(compiler_guidance)
     surface_features = _tdfol_guidance_surface_features(compiler_guidance)
     route = "repair_tdfol_bridge_parse"
-    has_route = route in routes or _has_tdfol_parse_repair_evidence(
-        compiler_guidance
+    has_route = route in routes or _has_tdfol_parse_repair_evidence(compiler_guidance)
+    conditioned_temporal = any(term in {"if", "when"} for term in semantic_terms) or any(
+        "conditioned+temporal" in feature for feature in surface_features
     )
-    conditioned_temporal = any(
-        term in {"if", "when"} for term in semantic_terms
-    ) or any("conditioned+temporal" in feature for feature in surface_features)
     has_deontic_surface = (
         "shall" in semantic_terms
         or "may" in semantic_terms
         or any("polarity-template:" in feature for feature in surface_features)
     )
     targeted_tdfol = (
-        not target_components
-        or "tdfol.prover" in target_components
-        or "tdfol" in target_components
+        not target_components or "tdfol.prover" in target_components or "tdfol" in target_components
     )
     return {
         "active": bool(
@@ -866,8 +821,7 @@ def _has_packet_tdfol_guidance_evidence(
     if _has_passing_tdfol_guidance_evidence(compiler_guidance):
         return True
     return any(
-        str(bundle.get("program_synthesis_scope") or "").strip().lower()
-        == "tdfol"
+        str(bundle.get("program_synthesis_scope") or "").strip().lower() == "tdfol"
         for bundle in _tdfol_guidance_bundles(compiler_guidance)
     )
 
@@ -884,15 +838,11 @@ def _has_passing_tdfol_guidance_evidence(
             return True
 
     if _tdfol_guidance_targets_tdfol(compiler_guidance) and (
-        _tdfol_guidance_quality_gate_passes(
-            compiler_guidance.get("compiler_guidance_quality_gate")
-        )
+        _tdfol_guidance_quality_gate_passes(compiler_guidance.get("compiler_guidance_quality_gate"))
         or _tdfol_guidance_quality_gate_passes(compiler_guidance.get("quality_gate"))
         or (
             _tdfol_guidance_source_is_passing_distillation(compiler_guidance)
-            and _tdfol_guidance_positive_support(
-                _tdfol_guidance_support_value(compiler_guidance)
-            )
+            and _tdfol_guidance_positive_support(_tdfol_guidance_support_value(compiler_guidance))
         )
     ):
         return True
@@ -992,8 +942,7 @@ def _tdfol_guidance_targets_tdfol(value: Mapping[str, Any]) -> bool:
 def _tdfol_guidance_key_targets_tdfol(value: Any) -> bool:
     if isinstance(value, Mapping):
         return any(
-            _tdfol_guidance_key_targets_tdfol(key)
-            or _tdfol_guidance_key_targets_tdfol(item)
+            _tdfol_guidance_key_targets_tdfol(key) or _tdfol_guidance_key_targets_tdfol(item)
             for key, item in value.items()
         )
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
@@ -1005,8 +954,7 @@ def _tdfol_guidance_key_targets_tdfol(value: Any) -> bool:
     if ":" in text:
         candidates.add(text.split(":", 1)[1])
     normalized = {
-        candidate.replace("-", "_").replace(".", "_").replace(" ", "_")
-        for candidate in candidates
+        candidate.replace("-", "_").replace(".", "_").replace(" ", "_") for candidate in candidates
     }
     return bool(
         normalized
@@ -1032,8 +980,7 @@ def _tdfol_guidance_gap_summary_targets_tdfol(
     if not _tdfol_guidance_quality_gate_passes(quality_gate):
         return False
     return any(
-        _tdfol_guidance_key_targets_tdfol(key)
-        and _tdfol_guidance_positive_support(count)
+        _tdfol_guidance_key_targets_tdfol(key) and _tdfol_guidance_positive_support(count)
         for key, count in value.items()
     )
 
@@ -1085,24 +1032,16 @@ def _has_tdfol_parse_repair_evidence(
             or evidence.get("target")
         )
         if (
-            (
-                failure_name == "tdfol_parse_failure_ratio"
-                or "tdfol_parse_failure_ratio" in target_metrics
-            )
-            and (
-                target_lane == "tdfol"
-                or target_view in {"tdfol.prover", "tdfol"}
-            )
-        ):
+            failure_name == "tdfol_parse_failure_ratio"
+            or "tdfol_parse_failure_ratio" in target_metrics
+        ) and (target_lane == "tdfol" or target_view in {"tdfol.prover", "tdfol"}):
             return True
-        if (
-            _tdfol_guidance_sample_route(evidence.get("samples"))
-            == "repair_tdfol_bridge_parse"
-            and (
-                target_lane == "tdfol"
-                or target_view in {"tdfol.prover", "tdfol"}
-                or "tdfol_parse_failure_ratio" in target_metrics
-            )
+        if _tdfol_guidance_sample_route(
+            evidence.get("samples")
+        ) == "repair_tdfol_bridge_parse" and (
+            target_lane == "tdfol"
+            or target_view in {"tdfol.prover", "tdfol"}
+            or "tdfol_parse_failure_ratio" in target_metrics
         ):
             return True
     return False
@@ -1280,9 +1219,7 @@ def _tdfol_guidance_formula(
         else ""
     )
     action = _predicate_name(
-        action_hint
-        or source_norm.get("predicate")
-        or _infer_guidance_action_from_text(text)
+        action_hint or source_norm.get("predicate") or _infer_guidance_action_from_text(text)
     )
     condition_name = _predicate_name(
         source_norm.get("condition") or _infer_condition_from_text(text)
@@ -1323,23 +1260,14 @@ def _tdfol_guidance_formula(
 def _guidance_tokens(value: Any) -> set[str]:
     if isinstance(value, Mapping):
         return {
-            token
-            for token in (_normalized_guidance_token(item) for item in value.keys())
-            if token
+            token for token in (_normalized_guidance_token(item) for item in value.keys()) if token
         }
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-        return {
-            token
-            for token in (_normalized_guidance_token(item) for item in value)
-            if token
-        }
+        return {token for token in (_normalized_guidance_token(item) for item in value) if token}
     if isinstance(value, str):
         return {
             token
-            for token in (
-                _normalized_guidance_token(item)
-                for item in re.split(r"[\s,;|]+", value)
-            )
+            for token in (_normalized_guidance_token(item) for item in re.split(r"[\s,;|]+", value))
             if token
         }
     token = _normalized_guidance_token(value)
@@ -1502,12 +1430,11 @@ def _tdfol_formula_from_ast_mapping(formula: Mapping[str, Any]) -> Optional[Any]
 
     def term_from(value: Any) -> Optional[Any]:
         if isinstance(value, Mapping):
-            kind = str(
-                value.get("type")
-                or value.get("node_type")
-                or value.get("kind")
-                or ""
-            ).strip().lower()
+            kind = (
+                str(value.get("type") or value.get("node_type") or value.get("kind") or "")
+                .strip()
+                .lower()
+            )
             name = str(value.get("name") or value.get("value") or "").strip()
             sort = _tdfol_ast_sort(value.get("sort"), Sort)
             if kind in {"function", "function_application", "call"}:
@@ -1515,9 +1442,7 @@ def _tdfol_formula_from_ast_mapping(formula: Mapping[str, Any]) -> Optional[Any]
                     term
                     for term in (
                         term_from(item)
-                        for item in value.get("arguments")
-                        or value.get("args")
-                        or ()
+                        for item in value.get("arguments") or value.get("args") or ()
                     )
                     if term is not None
                 )
@@ -1563,9 +1488,7 @@ def _tdfol_formula_from_ast_mapping(formula: Mapping[str, Any]) -> Optional[Any]
             DeonticOperator,
         )
         inner = formula_from(
-            formula.get("formula")
-            or formula.get("operand")
-            or formula.get("body")
+            formula.get("formula") or formula.get("operand") or formula.get("body")
         )
         if operator is None or inner is None:
             return None
@@ -1578,9 +1501,7 @@ def _tdfol_formula_from_ast_mapping(formula: Mapping[str, Any]) -> Optional[Any]
             TemporalOperator,
         )
         inner = formula_from(
-            formula.get("formula")
-            or formula.get("operand")
-            or formula.get("body")
+            formula.get("formula") or formula.get("operand") or formula.get("body")
         )
         if operator is None or inner is None:
             return None
@@ -1591,9 +1512,7 @@ def _tdfol_formula_from_ast_mapping(formula: Mapping[str, Any]) -> Optional[Any]
         if node_type == "not" and operator is None:
             operator = LogicOperator.NOT
         inner = formula_from(
-            formula.get("formula")
-            or formula.get("operand")
-            or formula.get("body")
+            formula.get("formula") or formula.get("operand") or formula.get("body")
         )
         if operator != LogicOperator.NOT or inner is None:
             return None
@@ -1627,11 +1546,7 @@ def _tdfol_formula_from_ast_mapping(formula: Mapping[str, Any]) -> Optional[Any]
         )
         variable_value = formula.get("variable") or formula.get("var") or "x"
         variable_term = term_from(variable_value)
-        body = formula_from(
-            formula.get("formula")
-            or formula.get("body")
-            or formula.get("scope")
-        )
+        body = formula_from(formula.get("formula") or formula.get("body") or formula.get("scope"))
         if quantifier is None or body is None:
             return None
         if not isinstance(variable_term, Variable):
@@ -1643,13 +1558,18 @@ def _tdfol_formula_from_ast_mapping(formula: Mapping[str, Any]) -> Optional[Any]
 
 
 def _tdfol_ast_tag(formula: Mapping[str, Any]) -> str:
-    return str(
-        formula.get("type")
-        or formula.get("node_type")
-        or formula.get("kind")
-        or formula.get("formula_type")
-        or ""
-    ).strip().lower().replace("-", "_")
+    return (
+        str(
+            formula.get("type")
+            or formula.get("node_type")
+            or formula.get("kind")
+            or formula.get("formula_type")
+            or ""
+        )
+        .strip()
+        .lower()
+        .replace("-", "_")
+    )
 
 
 def _tdfol_ast_enum(
@@ -1819,9 +1739,7 @@ def _normalize_tdfol_export_formula(text: str) -> str:
         flags=re.IGNORECASE,
     )
     raw_obligation_formula = (
-        _formula_from_labeled_raw_proof_obligation(normalized)
-        if proof_label_count
-        else ""
+        _formula_from_labeled_raw_proof_obligation(normalized) if proof_label_count else ""
     )
     if raw_obligation_formula:
         normalized = raw_obligation_formula
@@ -1913,16 +1831,12 @@ def _unwrap_tdfol_assignment_export(text: str) -> str:
         value = _extract_tdfol_key_value(normalized, key)
         if value:
             normalized_value = _normalize_tdfol_export_value(value)
-            raw_obligation_formula = _formula_from_labeled_raw_proof_obligation(
-                normalized_value
-            )
+            raw_obligation_formula = _formula_from_labeled_raw_proof_obligation(normalized_value)
             return raw_obligation_formula or normalized_value
     for key in _TDFOL_CONTAINER_EXPORT_KEYS:
         value = _extract_tdfol_key_value(normalized, key)
         if value:
-            extracted = _tdfol_formula_text_from_export_payload(
-                value.strip("`\"'").strip()
-            )
+            extracted = _tdfol_formula_text_from_export_payload(value.strip("`\"'").strip())
             if extracted:
                 return extracted
     return normalized
@@ -2014,9 +1928,7 @@ def _normalize_deontic_operator_aliases(text: str) -> str:
     if not normalized:
         return normalized
     return _DEONTIC_EXPORT_OPERATOR_PATTERN.sub(
-        lambda match: (
-            f"{_DEONTIC_EXPORT_OPERATOR_ALIASES[match.group(1).lower()]}("
-        ),
+        lambda match: f"{_DEONTIC_EXPORT_OPERATOR_ALIASES[match.group(1).lower()]}(",
         normalized,
     )
 
@@ -2048,8 +1960,7 @@ def _normalize_deontic_text_label_export(text: str) -> str:
     if not normalized:
         return normalized
     operator_names = "|".join(
-        re.escape(name)
-        for name in sorted(_DEONTIC_EXPORT_OPERATOR_ALIASES, key=len, reverse=True)
+        re.escape(name) for name in sorted(_DEONTIC_EXPORT_OPERATOR_ALIASES, key=len, reverse=True)
     )
     match = re.match(rf"(?is)^({operator_names})\s*[:=]\s*(.+)$", normalized)
     if not match:
@@ -2095,10 +2006,8 @@ def _normalize_bracketed_deontic_agent_export(text: str) -> str:
         if close_index is None:
             result.append(text[index:])
             break
-        inner = _normalize_deontic_agent_annotation_export(
-            text[open_index + 1:close_index]
-        )
-        result.append(text[index:match.start()])
+        inner = _normalize_deontic_agent_annotation_export(text[open_index + 1 : close_index])
+        result.append(text[index : match.start()])
         raw_formula = _formula_from_bracketed_deontic_agent(
             match.group(1),
             match.group(2),
@@ -2151,12 +2060,10 @@ def _normalize_underscored_deontic_agent_export(text: str) -> str:
             result.append(text[index:])
             break
         if agent.lower() in {"t", "time"}:
-            result.append(text[index:close_index + 1])
+            result.append(text[index : close_index + 1])
         else:
-            result.append(text[index:match.start()])
-            inner = _normalize_deontic_agent_annotation_export(
-                text[open_index + 1:close_index]
-            )
+            result.append(text[index : match.start()])
+            inner = _normalize_deontic_agent_annotation_export(text[open_index + 1 : close_index])
             result.append(f"{match.group(1)}({inner})")
         index = close_index + 1
     return "".join(result)
@@ -2177,9 +2084,7 @@ def _unwrap_tdfol_json_export(text: str) -> str:
         if extracted:
             return extracted
 
-    export_key_pattern = "|".join(
-        re.escape(key) for key in _TDFOL_FORMULA_EXPORT_KEYS
-    )
+    export_key_pattern = "|".join(re.escape(key) for key in _TDFOL_FORMULA_EXPORT_KEYS)
     match = re.search(
         rf"""(?is)(?:^|[,{{\s])["']?(?:{export_key_pattern})["']?\s*:\s*(["'])(.*?)\1""",
         normalized,
@@ -2468,11 +2373,7 @@ def _formula_argument_from_deontic_parts(parts: Sequence[str]) -> str:
 def _formula_from_deontic_agent_action_parts(parts: Sequence[str]) -> str:
     """Synthesize predicate(agent) from O(agent, raw legal action text)."""
 
-    cleaned = [
-        str(part or "").strip("`\"' ").strip()
-        for part in parts
-        if str(part or "").strip()
-    ]
+    cleaned = [str(part or "").strip("`\"' ").strip() for part in parts if str(part or "").strip()]
     if len(cleaned) < 2:
         return ""
     actor = cleaned[0]
@@ -2642,9 +2543,7 @@ def _proof_gate_from_tdfol_records(
                 "source_id": record.get("source_id"),
                 **(
                     {
-                        "compiler_guidance_route": record.get(
-                            "compiler_guidance_route"
-                        ),
+                        "compiler_guidance_route": record.get("compiler_guidance_route"),
                         "proof_rule": "compiler_guidance_parse_repair",
                     }
                     if parse_ok and record.get("compiler_guidance_route")
@@ -2674,9 +2573,7 @@ def _tdfol_frame_logic_triples(
     *,
     formula_records: Sequence[Mapping[str, Any]],
 ) -> list[dict[str, str]]:
-    triples = [
-        {"subject": document_id, "predicate": "type", "object": "legal_tdfol_document"}
-    ]
+    triples = [{"subject": document_id, "predicate": "type", "object": "legal_tdfol_document"}]
     for record in formula_records:
         source_id = str(record.get("source_id") or "")
         if not source_id:
@@ -2685,8 +2582,16 @@ def _tdfol_frame_logic_triples(
             [
                 {"subject": document_id, "predicate": "contains_formula", "object": source_id},
                 {"subject": source_id, "predicate": "type", "object": "tdfol_formula"},
-                {"subject": source_id, "predicate": "formula", "object": str(record.get("formula") or "")},
-                {"subject": source_id, "predicate": "parse_ok", "object": str(bool(record.get("parse_ok"))).lower()},
+                {
+                    "subject": source_id,
+                    "predicate": "formula",
+                    "object": str(record.get("formula") or ""),
+                },
+                {
+                    "subject": source_id,
+                    "predicate": "parse_ok",
+                    "object": str(bool(record.get("parse_ok"))).lower(),
+                },
             ]
         )
         for predicate in record.get("predicates") or []:
@@ -2771,10 +2676,7 @@ def _norm_from_parser_element(
     fallback_text: str,
 ) -> dict[str, Any]:
     source_text = str(
-        parser_element.get("text")
-        or parser_element.get("support_text")
-        or fallback_text
-        or ""
+        parser_element.get("text") or parser_element.get("support_text") or fallback_text or ""
     ).strip()
     modality = _normalized_modality(
         parser_element.get("modality")

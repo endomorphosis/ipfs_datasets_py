@@ -130,7 +130,9 @@ def _leanstral_gap(
         "target_component": component,
         "target_surface": {
             "action": action,
-            "allowed_paths": [f"ipfs_datasets_py/logic/modal/{'compiler' if component == 'modal.compiler' else 'decompiler'}.py"],
+            "allowed_paths": [
+                f"ipfs_datasets_py/logic/modal/{'compiler' if component == 'modal.compiler' else 'decompiler'}.py"
+            ],
             "component": component,
             "target_file_lane": "compiler_parser"
             if component == "modal.compiler"
@@ -147,7 +149,9 @@ def _leanstral_gap(
         },
         "title": f"Verified rule gap {gap_id}",
         "validation_set": {
-            "allowed_paths": [f"ipfs_datasets_py/logic/modal/{'compiler' if component == 'modal.compiler' else 'decompiler'}.py"],
+            "allowed_paths": [
+                f"ipfs_datasets_py/logic/modal/{'compiler' if component == 'modal.compiler' else 'decompiler'}.py"
+            ],
             "formal_validity_checks": ["modal_operator_preserved"]
             if component == "modal.compiler"
             else ["decompiler_round_trip"],
@@ -320,22 +324,13 @@ def test_loss_generator_routes_deontic_bridge_losses_to_deontic_scope() -> None:
 
     todos = ModalLossTodoGenerator().generate([snapshot])
 
-    assert {
-        todo.action
-        for todo in todos
-    } == {
+    assert {todo.action for todo in todos} == {
         "repair_deontic_bridge_quality_gate",
         "repair_deontic_graph_bridge",
         "repair_deontic_prover_bridge",
     }
-    assert {
-        todo.metadata["target_component"]
-        for todo in todos
-    } == {"deontic.ir"}
-    assert {
-        todo.metadata["program_synthesis_scope"]
-        for todo in todos
-    } == {"deontic"}
+    assert {todo.metadata["target_component"] for todo in todos} == {"deontic.ir"}
+    assert {todo.metadata["program_synthesis_scope"] for todo in todos} == {"deontic"}
 
 
 def test_loss_generator_routes_cross_logic_bridge_losses_to_ast_scopes() -> None:
@@ -356,19 +351,36 @@ def test_loss_generator_routes_cross_logic_bridge_losses_to_ast_scopes() -> None
     actions_by_loss = {todo.loss_name: todo for todo in todos}
 
     assert actions_by_loss["tdfol_parse_failure_ratio"].action == "repair_tdfol_bridge_parse"
-    assert actions_by_loss["tdfol_parse_failure_ratio"].metadata["program_synthesis_scope"] == "tdfol"
-    assert actions_by_loss["cec_dcec_event_formula_invalid_ratio"].action == "repair_cec_dcec_bridge"
-    assert actions_by_loss["cec_dcec_event_formula_invalid_ratio"].metadata["program_synthesis_scope"] == "cec"
+    assert (
+        actions_by_loss["tdfol_parse_failure_ratio"].metadata["program_synthesis_scope"] == "tdfol"
+    )
+    assert (
+        actions_by_loss["cec_dcec_event_formula_invalid_ratio"].action == "repair_cec_dcec_bridge"
+    )
+    assert (
+        actions_by_loss["cec_dcec_event_formula_invalid_ratio"].metadata["program_synthesis_scope"]
+        == "cec"
+    )
     assert actions_by_loss["cec_dcec_validation_failure_ratio"].action == "repair_cec_dcec_bridge"
-    assert actions_by_loss["cec_dcec_validation_failure_ratio"].metadata["program_synthesis_scope"] == "cec"
-    assert actions_by_loss["external_prover_unavailable_loss"].action == "repair_external_prover_router"
-    assert actions_by_loss["external_prover_unavailable_loss"].metadata[
-        "program_synthesis_scope"
-    ] == "external_provers"
-    assert actions_by_loss["zkp_verification_failure_ratio"].action == "repair_zkp_attestation_bridge"
-    assert actions_by_loss["zkp_verification_failure_ratio"].metadata[
-        "program_synthesis_scope"
-    ] == "zkp"
+    assert (
+        actions_by_loss["cec_dcec_validation_failure_ratio"].metadata["program_synthesis_scope"]
+        == "cec"
+    )
+    assert (
+        actions_by_loss["external_prover_unavailable_loss"].action
+        == "repair_external_prover_router"
+    )
+    assert (
+        actions_by_loss["external_prover_unavailable_loss"].metadata["program_synthesis_scope"]
+        == "external_provers"
+    )
+    assert (
+        actions_by_loss["zkp_verification_failure_ratio"].action == "repair_zkp_attestation_bridge"
+    )
+    assert (
+        actions_by_loss["zkp_verification_failure_ratio"].metadata["program_synthesis_scope"]
+        == "zkp"
+    )
 
 
 def test_autoencoder_residual_router_targets_logic_submodules() -> None:
@@ -383,22 +395,28 @@ def test_autoencoder_residual_router_targets_logic_submodules() -> None:
     )
     assert decompiled_cosine_route.target_component == "modal.ir_decompiler"
     assert decompiled_cosine_route.action == "refine_semantic_decompiler_reconstruction"
-    assert route_autoencoder_residual(
-        "source_decompiled_text_token_loss"
-    ).target_component == "modal.ir_decompiler"
-    assert route_autoencoder_residual(
-        "legal_ir_multiview_proof_failure_ratio"
-    ).target_component == "external_provers.router"
-    assert route_autoencoder_residual(
-        "legal_ir_multiview_graph_failure_penalty"
-    ).target_component == "knowledge_graphs.neo4j_compat"
+    assert (
+        route_autoencoder_residual("source_decompiled_text_token_loss").target_component
+        == "modal.ir_decompiler"
+    )
+    assert (
+        route_autoencoder_residual("legal_ir_multiview_proof_failure_ratio").target_component
+        == "external_provers.router"
+    )
+    assert (
+        route_autoencoder_residual("legal_ir_multiview_graph_failure_penalty").target_component
+        == "knowledge_graphs.neo4j_compat"
+    )
     assert route_autoencoder_residual("deontic_decoder_slot_loss").target_component == (
         "deontic.ir"
     )
-    assert route_autoencoder_residual(
-        "unknown_loss",
-        focus=("repair_multiview_legal_ir_graph_projection",),
-    ).target_component == "knowledge_graphs.neo4j_compat"
+    assert (
+        route_autoencoder_residual(
+            "unknown_loss",
+            focus=("repair_multiview_legal_ir_graph_projection",),
+        ).target_component
+        == "knowledge_graphs.neo4j_compat"
+    )
 
 
 def test_queue_claims_multiple_pending_todos_at_once() -> None:
@@ -473,7 +491,9 @@ def test_queue_merge_preserves_externally_claimed_program_synthesis_todos() -> N
     latest.merge_from(incoming, preserve_claimed_role="program_synthesis")
 
     assert latest.claimed_count(optimizer_role="program_synthesis") == 1
-    assert latest.claimed(optimizer_role="program_synthesis")[0].claimed_by == "codex-program-worker"
+    assert (
+        latest.claimed(optimizer_role="program_synthesis")[0].claimed_by == "codex-program-worker"
+    )
 
 
 def test_queue_merge_preserves_externally_completed_program_synthesis_todos() -> None:
@@ -572,7 +592,9 @@ def test_persist_supervisor_queue_preserves_external_program_synthesis_claim(
 
     reloaded = ModalTodoQueue.load_jsonl(queue_path)
     assert reloaded.claimed_count(optimizer_role="program_synthesis") == 1
-    assert reloaded.claimed(optimizer_role="program_synthesis")[0].claimed_by == "codex-program-worker"
+    assert (
+        reloaded.claimed(optimizer_role="program_synthesis")[0].claimed_by == "codex-program-worker"
+    )
 
 
 def test_queue_semantic_dedupe_collapses_program_synthesis_loss_duplicates() -> None:
@@ -692,8 +714,7 @@ def test_queue_add_many_merges_program_synthesis_duplicate_metric_evidence() -> 
         "python -m pytest -q tests/b.py",
     ]
     assert [
-        payload["sample_id"]
-        for payload in representative.metadata["metric_sample_payloads"]
+        payload["sample_id"] for payload in representative.metadata["metric_sample_payloads"]
     ] == ["a", "b"]
 
 
@@ -712,8 +733,7 @@ def test_supervisor_projects_verified_leanstral_gaps_into_existing_program_queue
                     {
                         "audit_evidence_id": "evidence-gap-decompiler-a",
                         "candidate": (
-                            "obligation(agency, notify(applicant)) "
-                            "unless emergency_review"
+                            "obligation(agency, notify(applicant)) unless emergency_review"
                         ),
                         "compiler_surface": "modal.ir_decompiler",
                         "guidance_only": True,
@@ -769,15 +789,11 @@ def test_supervisor_projects_verified_leanstral_gaps_into_existing_program_queue
     pending = supervisor.queue.pending(optimizer_role="program_synthesis")
     assert len(pending) == 2
     decompiler = next(
-        todo
-        for todo in pending
-        if todo.metadata["program_synthesis_scope"] == "ir_decompiler"
+        todo for todo in pending if todo.metadata["program_synthesis_scope"] == "ir_decompiler"
     )
     assert decompiler.metadata["source"] == "leanstral_rule_gap_projection_v1"
     assert decompiler.metadata["leanstral_projection"] is True
-    assert decompiler.metadata["allowed_paths"] == [
-        "ipfs_datasets_py/logic/modal/decompiler.py"
-    ]
+    assert decompiler.metadata["allowed_paths"] == ["ipfs_datasets_py/logic/modal/decompiler.py"]
     assert decompiler.metadata["evidence_ids"] == ["evidence-gap-decompiler-a"]
     assert decompiler.metadata["audit_request_ids"] == ["request-gap-decompiler-a"]
     assert decompiler.metadata["audit_response_hashes"] == ["response-gap-decompiler-a"]
@@ -786,15 +802,11 @@ def test_supervisor_projects_verified_leanstral_gaps_into_existing_program_queue
         "exception_scope:unless",
     ]
     assert decompiler.metadata["proof_obligation_ids"] == ["proof-gap-decompiler-a"]
-    assert decompiler.metadata["leanstral_guidance_mode"] == (
-        "draft_logic_guidance_only"
+    assert decompiler.metadata["leanstral_guidance_mode"] == ("draft_logic_guidance_only")
+    assert decompiler.metadata["leanstral_drafted_logic_candidates"][0]["candidate"].startswith(
+        "obligation"
     )
-    assert decompiler.metadata["leanstral_drafted_logic_candidates"][0][
-        "candidate"
-    ].startswith("obligation")
-    assert decompiler.metadata["leanstral_drafted_logic_candidates"][0][
-        "guidance_only"
-    ] is True
+    assert decompiler.metadata["leanstral_drafted_logic_candidates"][0]["guidance_only"] is True
     assert decompiler.metadata["proof_ids"] == [
         "proof-gap-decompiler-a",
         "decompiler_round_trip",
@@ -821,10 +833,7 @@ def test_supervisor_projects_verified_leanstral_gaps_into_existing_program_queue
     assert attribution["post_patch_metric_goals"][0]["metric"] == "reconstruction_loss"
     assert decompiler.metadata["validation_commands"]
     assert decompiler.metadata["dedupe_signature"].startswith("leanstral-rule-gap:")
-    assert all(
-        item.get("report_only_state")
-        for item in result.report_only_audits
-    )
+    assert all(item.get("report_only_state") for item in result.report_only_audits)
 
     repeated = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
         report,
@@ -889,9 +898,7 @@ def test_leanstral_patch_feedback_records_accepted_compiler_target() -> None:
         ]
     }
     supervisor = ModalTodoSupervisor(queue=ModalTodoQueue())
-    projection = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
-        report
-    )
+    projection = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(report)
     assert projection.seeded_count == 1
     [claimed] = supervisor.claim_program_synthesis_batch(
         worker_id="codex-worker",
@@ -915,9 +922,7 @@ def test_leanstral_patch_feedback_records_accepted_compiler_target() -> None:
     assert completed is not None
     assert completed.status == "completed"
     assert completed.metadata["leanstral_patch_outcome"] == "accepted_improvement"
-    assert completed.metadata["leanstral_feedback_rescue_category"] == (
-        "accepted_compiler_target"
-    )
+    assert completed.metadata["leanstral_feedback_rescue_category"] == ("accepted_compiler_target")
     assert completed.metadata["leanstral_feedback_rescue_action"] == (
         "evaluate_compiler_target_without_weight_update"
     )
@@ -928,13 +933,9 @@ def test_leanstral_patch_feedback_records_accepted_compiler_target() -> None:
     assert target["write_to_autoencoder_weights"] is False
     assert target["leanstral_guidance_mode"] == "draft_logic_guidance_only"
     assert target["leanstral_drafted_logic_candidates"][0]["guidance_only"] is True
-    assert target["leanstral_drafted_logic_candidates"][0]["candidate"].startswith(
-        "obligation"
-    )
+    assert target["leanstral_drafted_logic_candidates"][0]["candidate"].startswith("obligation")
 
-    followup = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
-        {"gaps": []}
-    )
+    followup = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report({"gaps": []})
 
     assert followup.compiler_targets_for_autoencoder_evaluation == [target]
 
@@ -954,9 +955,7 @@ def test_leanstral_patch_feedback_categorizes_operational_rescue() -> None:
         ]
     }
     supervisor = ModalTodoSupervisor(queue=ModalTodoQueue())
-    projection = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
-        report
-    )
+    projection = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(report)
     assert projection.seeded_count == 1
     [claimed] = supervisor.claim_program_synthesis_batch(
         worker_id="codex-worker",
@@ -977,9 +976,7 @@ def test_leanstral_patch_feedback_categorizes_operational_rescue() -> None:
     assert requeued.metadata["leanstral_feedback_rescue_category"] == (
         "codex_retry_or_prompt_repair"
     )
-    assert requeued.metadata["leanstral_feedback_rescue_action"] == (
-        "requeue_with_smaller_scope"
-    )
+    assert requeued.metadata["leanstral_feedback_rescue_action"] == ("requeue_with_smaller_scope")
 
 
 def test_leanstral_feedback_backfill_updates_existing_failed_todos() -> None:
@@ -1016,9 +1013,7 @@ def test_leanstral_feedback_backfill_updates_existing_failed_todos() -> None:
     assert report["updated_count"] == 1
     assert report["category_counts"] == {"validation_replay_needed": 1}
     assert updated is not None
-    assert updated.metadata["leanstral_feedback_rescue_category"] == (
-        "validation_replay_needed"
-    )
+    assert updated.metadata["leanstral_feedback_rescue_category"] == ("validation_replay_needed")
     assert updated.metadata["leanstral_feedback_rescue_action"] == (
         "rerun_validation_with_expanded_timeout"
     )
@@ -1074,12 +1069,8 @@ def test_leanstral_projection_suppresses_repeatedly_disproven_clusters() -> None
     )
 
     assert result.seeded_count == 0
-    assert result.suppressed_feature_clusters == [
-        template.metadata["semantic_bundle_key"]
-    ]
-    assert result.report_only_audits[-1]["report_only_state"] == (
-        "suppressed_disproven_cluster"
-    )
+    assert result.suppressed_feature_clusters == [template.metadata["semantic_bundle_key"]]
+    assert result.report_only_audits[-1]["report_only_state"] == ("suppressed_disproven_cluster")
     assert supervisor.queue.pending_count(optimizer_role="program_synthesis") == 0
 
 
@@ -1107,9 +1098,7 @@ def test_direct_leanstral_guidance_projects_to_program_synthesis_queue() -> None
         "modal_ir_hash": "modal-hash-direct-a",
         "mutation_cases": ["remove_exception"],
         "proof_obligation_ids": ["proof-direct-guidance"],
-        "ranked_guidance_features": [
-            {"feature": "leanstral:logic:deontic:direct", "score": 0.9}
-        ],
+        "ranked_guidance_features": [{"feature": "leanstral:logic:deontic:direct", "score": 0.9}],
         "sample_id": "sample-direct-guidance",
         "source": "leanstral_shadow_proof",
         "target_component": "modal.ir_decompiler",
@@ -1128,9 +1117,9 @@ def test_direct_leanstral_guidance_projects_to_program_synthesis_queue() -> None
     assert template.metadata["source"] == "leanstral_direct_guidance_projection_v1"
     assert template.metadata["leanstral_projection"] is True
     assert template.metadata["leanstral_verified"] is True
-    assert template.metadata["leanstral_drafted_logic_candidates"][0][
-        "candidate"
-    ].startswith("obligation")
+    assert template.metadata["leanstral_drafted_logic_candidates"][0]["candidate"].startswith(
+        "obligation"
+    )
     assert template.metadata["proof_obligation_ids"] == ["proof-direct-guidance"]
     assert "source_decompiled_text_embedding_cosine_loss" in template.metadata["target_metrics"]
 
@@ -1180,10 +1169,7 @@ def test_supervisor_keeps_unverified_leanstral_report_in_report_only_state() -> 
     assert result.stale_count == 0
     assert result.report_only_count == 4
     assert result.report_only_audits[0]["report_only_state"] == "unverified_or_rejected"
-    assert {
-        audit["report_only_state"]
-        for audit in result.report_only_audits
-    } == {
+    assert {audit["report_only_state"] for audit in result.report_only_audits} == {
         "conflicting_or_unverified",
         "unverified_or_incomplete_rule_gap",
         "unverified_or_rejected",
@@ -1227,10 +1213,10 @@ def test_supervisor_counts_stale_and_nonlocal_leanstral_gaps_without_seeding() -
     assert result.seeded_count == 0
     assert result.stale_count == 1
     assert result.report_only_count == 4
-    assert {
-        item["report_only_state"]
-        for item in result.report_only_audits
-    } >= {"stale", "unverified_or_incomplete_rule_gap"}
+    assert {item["report_only_state"] for item in result.report_only_audits} >= {
+        "stale",
+        "unverified_or_incomplete_rule_gap",
+    }
     assert supervisor.queue.pending(optimizer_role="program_synthesis") == []
 
 
@@ -1362,9 +1348,7 @@ def test_leanstral_projection_ignores_resolved_historical_transient_failures() -
     assert result.seeded_count == 1
     assert result.seed_block_reasons == []
     assert result.executor_health["transient_failure_count"] == 0
-    assert result.executor_health["transient_failure_count_scope"] == (
-        "active_pending_or_claimed"
-    )
+    assert result.executor_health["transient_failure_count_scope"] == ("active_pending_or_claimed")
 
 
 def test_runner_projects_verified_leanstral_report_into_existing_queue(
@@ -1463,8 +1447,7 @@ def test_runner_projects_direct_leanstral_guidance_artifact_into_existing_queue(
                     "drafted_logic_candidates": [
                         {
                             "candidate": (
-                                "obligation(agency, provide_notice) unless "
-                                "exception(scope)"
+                                "obligation(agency, provide_notice) unless exception(scope)"
                             ),
                             "compiler_surface": "modal.ir_decompiler",
                             "confidence": 0.9,
@@ -1542,9 +1525,7 @@ def test_runner_projects_direct_leanstral_guidance_artifact_into_existing_queue(
     assert projection["seeded_count"] == 1
     assert projection["guidance_ids"] == ["leanstral-guidance-runner-a"]
     assert projection["autoencoder_training"]["applied_count"] == 1
-    assert autoencoder.state.applied_leanstral_guidance_ids == [
-        "leanstral-guidance-runner-a"
-    ]
+    assert autoencoder.state.applied_leanstral_guidance_ids == ["leanstral-guidance-runner-a"]
     assert combined["seeded_count"] == 1
     assert len(pending) == 1
     assert pending[0].metadata["source"] == "leanstral_direct_guidance_projection_v1"
@@ -1784,9 +1765,7 @@ def test_supervisor_seeds_failed_validation_rescue_todos_from_cluster() -> None:
     assert rescue.metadata["target_component"] == "modal.ir_decompiler"
     assert "embedding_cosine_similarity" in rescue.metadata["target_metrics"]
     assert "reconstruction_loss" in rescue.metadata["target_metrics"]
-    assert "python -m pytest -q tests/example_ir.py" in rescue.metadata[
-        "validation_commands"
-    ]
+    assert "python -m pytest -q tests/example_ir.py" in rescue.metadata["validation_commands"]
     assert len(rescue.metadata["metric_sample_payloads"]) == 2
     assert rescue.metadata["hint_evidence"][0]["failed_todo_id"] == "failed-a"
     assert supervisor.queue.get(rescue.todo_id) is rescue
@@ -1851,9 +1830,7 @@ def test_supervisor_routes_syntax_failed_validation_rescue_separately() -> None:
             },
         },
     )
-    supervisor = ModalTodoSupervisor(
-        queue=ModalTodoQueue([syntax_failed, pytest_failed])
-    )
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue([syntax_failed, pytest_failed]))
 
     seeded = supervisor.seed_failed_validation_rescue_todos(max_clusters=4)
 
@@ -1903,11 +1880,7 @@ def test_supervisor_shards_large_failed_validation_rescue_clusters() -> None:
     seeded = supervisor.seed_failed_validation_rescue_todos(max_clusters=8)
 
     assert len(seeded) == 3
-    covered = {
-        todo_id
-        for rescue in seeded
-        for todo_id in rescue.metadata["failed_todo_ids"]
-    }
+    covered = {todo_id for rescue in seeded for todo_id in rescue.metadata["failed_todo_ids"]}
     assert covered == {todo.todo_id for todo in failed}
     assert [rescue.metadata.get("rescue_cluster_shard") for rescue in seeded] == [
         "part-1-of-3",
@@ -1953,9 +1926,7 @@ def test_supervisor_retries_terminal_failed_validation_rescue_todos() -> None:
     assert retry[0].metadata["source"] == "failed_validation_rescue_retry_v1"
     assert retry[0].metadata["rescue_attempt"] == 2
     assert retry[0].metadata["previous_rescue_todo_ids"] == [first[0].todo_id]
-    assert retry[0].metadata["root_rescue_signature"] == first[0].metadata[
-        "dedupe_signature"
-    ]
+    assert retry[0].metadata["root_rescue_signature"] == first[0].metadata["dedupe_signature"]
 
     while retry:
         assert supervisor.queue.fail_validation(
@@ -2007,9 +1978,9 @@ def test_supervisor_supersedes_failures_covered_by_completed_rescue() -> None:
     assert supervisor.last_failed_validation_superseded_count == 2
     assert supervisor.queue.get("failed-ir").status == "superseded"
     assert supervisor.queue.get(first.todo_id).status == "superseded"
-    assert supervisor.queue.get("failed-ir").metadata[
-        "superseded_by_rescue_todo_id"
-    ] == retry.todo_id
+    assert (
+        supervisor.queue.get("failed-ir").metadata["superseded_by_rescue_todo_id"] == retry.todo_id
+    )
     assert supervisor.program_synthesis_status()["failed_validation"] == 0
 
 
@@ -2155,9 +2126,7 @@ def test_supervisor_refreshes_rescue_for_new_failures_after_completed_rescue() -
     assert len(seeded) == 1
     assert seeded[0].metadata["source"] == "failed_validation_rescue_refresh_v1"
     assert seeded[0].metadata["failed_todo_ids"] == ["failed-new"]
-    assert seeded[0].metadata["previous_completed_rescue_todo_ids"] == [
-        "rescue-completed"
-    ]
+    assert seeded[0].metadata["previous_completed_rescue_todo_ids"] == ["rescue-completed"]
     assert supervisor.last_failed_validation_superseded_count == 1
     assert supervisor.queue.get("failed-old").status == "superseded"
     assert supervisor.queue.get("failed-new").status == "failed_validation"
@@ -2212,9 +2181,10 @@ def test_supervisor_failed_validation_rescue_filters_scope() -> None:
     assert seeded[0].metadata["program_synthesis_scope"] == "bridge"
     assert seeded[0].metadata["target_component"] == "bridge.contracts"
     assert seeded[0].metadata["failed_todo_ids"] == ["failed-bridge"]
-    assert daemon._failed_validation_rescue_strategy(
-        "main_apply_target_metric_regression_rolled_back"
-    ) == "preserve_target_metrics_before_expanding_fix"
+    assert (
+        daemon._failed_validation_rescue_strategy("main_apply_target_metric_regression_rolled_back")
+        == "preserve_target_metrics_before_expanding_fix"
+    )
 
 
 def test_supervisor_can_claim_program_synthesis_by_ast_scope() -> None:
@@ -2339,9 +2309,7 @@ def test_supervisor_can_claim_semantic_program_synthesis_bundle_by_ast_scope() -
     assert claimed[0].metadata["semantic_bundle_anchor_id"] == "program-anchor"
     assert claimed[0].metadata["semantic_bundle_reason"] == "same_semantic_bundle_key"
     assert (
-        supervisor.queue.get("program-different-family").metadata[
-            "semantic_bundle_reason"
-        ]
+        supervisor.queue.get("program-different-family").metadata["semantic_bundle_reason"]
         == "same_ast_scope_and_target_component"
     )
     assert supervisor.queue.get("program-frame").status == "pending"
@@ -2620,9 +2588,7 @@ def test_supervisor_seeds_bridge_loss_todos_from_evaluator() -> None:
     seeded = supervisor.seed_from_evaluation([sample])
 
     bridge_todos = [
-        todo
-        for todo in seeded
-        if todo.loss_name == "deontic_quality_requires_validation_loss"
+        todo for todo in seeded if todo.loss_name == "deontic_quality_requires_validation_loss"
     ]
     assert len(bridge_todos) == 1
     assert bridge_todos[0].action == "repair_deontic_bridge_quality_gate"
@@ -2843,18 +2809,12 @@ def test_autoencoder_evaluation_bounds_only_expensive_bridge_text() -> None:
                     {"deontic.ir": 0.6} if bridge_enabled else {}
                 ),
                 legal_ir_target_hashes=(
-                    {row.sample_id: "hash" for row in rows}
-                    if bridge_enabled
-                    else {}
+                    {row.sample_id: "hash" for row in rows} if bridge_enabled else {}
                 ),
                 legal_ir_grammar_rejection_reasons=(
-                    {row.sample_id: ["test-reason"] for row in rows}
-                    if bridge_enabled
-                    else {}
+                    {row.sample_id: ["test-reason"] for row in rows} if bridge_enabled else {}
                 ),
-                legal_ir_view_distribution=(
-                    {"deontic.ir": 1.0} if bridge_enabled else {}
-                ),
+                legal_ir_view_distribution=({"deontic.ir": 1.0} if bridge_enabled else {}),
                 legal_ir_view_family_metrics=(
                     {
                         "deontic": {
@@ -2935,22 +2895,21 @@ def test_bounded_bridge_targets_are_aliased_before_full_sample_evaluation() -> N
         legal_ir_bridge_names=(),
         use_sample_memory=False,
     )
-    assert repeated.cross_entropy_loss == pytest.approx(
-        evaluation.cross_entropy_loss
+    assert repeated.cross_entropy_loss == pytest.approx(evaluation.cross_entropy_loss)
+    assert repeated.cross_entropy_excess_loss == pytest.approx(evaluation.cross_entropy_excess_loss)
+    assert (
+        autoencoder._nudge_legal_ir_view_global_logits(
+            sample,
+            learning_rate=0.1,
+        )
+        is True
     )
-    assert repeated.cross_entropy_excess_loss == pytest.approx(
-        evaluation.cross_entropy_excess_loss
+    assert (
+        evaluation.legal_ir_view_family_metrics["deontic"]["autoencoder_cross_entropy_loss"] > 0.0
     )
-    assert autoencoder._nudge_legal_ir_view_global_logits(
-        sample,
-        learning_rate=0.1,
-    ) is True
-    assert evaluation.legal_ir_view_family_metrics["deontic"][
-        "autoencoder_cross_entropy_loss"
-    ] > 0.0
-    assert evaluation.legal_ir_view_family_metrics["deontic"][
-        "autoencoder_cosine_similarity"
-    ] >= 0.0
+    assert (
+        evaluation.legal_ir_view_family_metrics["deontic"]["autoencoder_cosine_similarity"] >= 0.0
+    )
 
 
 def test_learned_representation_promotion_reports_safe_non_activation() -> None:
@@ -3036,9 +2995,7 @@ def test_autoencoder_metric_bridge_defaults_survive_disabled_bridge_loss(
         "IPFS_DATASETS_AUTOENCODER_METRIC_BRIDGE_ADAPTERS",
         raising=False,
     )
-    bridge_adapters = runner.bridge_loss_adapter_names(
-        SimpleNamespace(bridge_loss_adapters="none")
-    )
+    bridge_adapters = runner.bridge_loss_adapter_names(SimpleNamespace(bridge_loss_adapters="none"))
 
     names = runner.autoencoder_metric_bridge_adapter_names(
         SimpleNamespace(autoencoder_metric_bridge_adapters=None),
@@ -3047,14 +3004,20 @@ def test_autoencoder_metric_bridge_defaults_survive_disabled_bridge_loss(
 
     assert bridge_adapters == []
     assert names == list(runner.DEFAULT_AUTOENCODER_METRIC_BRIDGE_ADAPTERS)
-    assert runner.autoencoder_metric_bridge_adapter_names(
-        SimpleNamespace(autoencoder_metric_bridge_adapters="same"),
-        bridge_adapters,
-    ) == []
-    assert runner.autoencoder_metric_bridge_adapter_names(
-        SimpleNamespace(autoencoder_metric_bridge_adapters="none"),
-        bridge_adapters,
-    ) == []
+    assert (
+        runner.autoencoder_metric_bridge_adapter_names(
+            SimpleNamespace(autoencoder_metric_bridge_adapters="same"),
+            bridge_adapters,
+        )
+        == []
+    )
+    assert (
+        runner.autoencoder_metric_bridge_adapter_names(
+            SimpleNamespace(autoencoder_metric_bridge_adapters="none"),
+            bridge_adapters,
+        )
+        == []
+    )
 
 
 def test_bridge_ir_metric_block_caches_multiview_reports(monkeypatch) -> None:
@@ -3278,9 +3241,7 @@ def test_bridge_ir_metric_block_uses_persistent_metric_cache(
     assert block_cache_path is not None
     block_cache_wrapper = json.loads(block_cache_path.read_text(encoding="utf-8"))
     block_cache_wrapper["payload"].pop("adapter_metric_cache_schema", None)
-    block_cache_wrapper["payload"]["adapters"]["deontic_norms"][
-        "evaluated_count"
-    ] = 0
+    block_cache_wrapper["payload"]["adapters"]["deontic_norms"]["evaluated_count"] = 0
     block_cache_path.write_text(
         json.dumps(block_cache_wrapper, sort_keys=True),
         encoding="utf-8",
@@ -3338,12 +3299,13 @@ def test_supervisor_seeds_canonical_multiview_loss_todos() -> None:
     assert "repair_multiview_legal_ir_loss" in actions
     assert "repair_multiview_legal_ir_view_coverage" in actions
     by_action = {todo.action: todo for todo in seeded}
-    assert by_action["repair_multiview_legal_ir_loss"].metadata[
-        "target_component"
-    ] == "bridge.contracts"
-    assert by_action["repair_multiview_legal_ir_loss"].metadata[
-        "program_synthesis_scope"
-    ] == "bridge"
+    assert (
+        by_action["repair_multiview_legal_ir_loss"].metadata["target_component"]
+        == "bridge.contracts"
+    )
+    assert (
+        by_action["repair_multiview_legal_ir_loss"].metadata["program_synthesis_scope"] == "bridge"
+    )
 
 
 def test_generic_legal_ir_loss_backs_off_when_specific_bridge_loss_exists() -> None:
@@ -3389,11 +3351,7 @@ def test_supervisor_seeds_legal_ir_view_cross_entropy_sgd_todo() -> None:
 
     seeded = supervisor.seed_from_evaluation([sample], autoencoder=evaluation)
 
-    view_todos = [
-        todo
-        for todo in seeded
-        if todo.loss_name == "legal_ir_view_cross_entropy_loss"
-    ]
+    view_todos = [todo for todo in seeded if todo.loss_name == "legal_ir_view_cross_entropy_loss"]
     assert len(view_todos) == 1
     assert view_todos[0].action == "improve_legal_ir_view_distribution"
     assert view_todos[0].metadata["optimizer_role"] == "autoencoder_sgd"
@@ -3408,8 +3366,7 @@ def test_autoencoder_caches_legal_ir_view_candidate_scan() -> None:
     )
     state = ModalAutoencoderTrainingState(
         feature_family_logits={
-            f"feature-{index}": {"modal.frame_logic": 0.1}
-            for index in range(100)
+            f"feature-{index}": {"modal.frame_logic": 0.1} for index in range(100)
         }
     )
     autoencoder = AdaptiveModalAutoencoder(state=state)
@@ -3435,9 +3392,7 @@ def test_supervisor_caps_loss_derived_program_synthesis_todos() -> None:
             "frame_ranking_loss": 1.0,
         }
     )
-    supervisor = ModalTodoSupervisor(
-        policy=ModalOptimizerPolicy(max_program_synthesis_pending=0)
-    )
+    supervisor = ModalTodoSupervisor(policy=ModalOptimizerPolicy(max_program_synthesis_pending=0))
 
     seeded = supervisor.seed_from_evaluation([sample])
 
@@ -3476,10 +3431,7 @@ def test_program_synthesis_generator_clusters_stable_autoencoder_residuals(
 
     assert todos
     assert introspection_calls
-    assert all(
-        call.get("include_causal_attribution") is False
-        for call in introspection_calls
-    )
+    assert all(call.get("include_causal_attribution") is False for call in introspection_calls)
     assert any(todo.action == "refine_typed_ir_or_decompiler_slots" for todo in todos)
     assert all(todo.metadata["optimizer_role"] == "program_synthesis" for todo in todos)
     assert all(todo.metadata["execution_target"] == "codex_program_repair" for todo in todos)
@@ -3490,9 +3442,7 @@ def test_program_synthesis_generator_clusters_stable_autoencoder_residuals(
     assert all(todo.metadata["validation_commands"] for todo in todos)
     assert all(todo.metadata["metric_sample_payloads"] for todo in todos)
     decompiler_todo = next(
-        todo
-        for todo in todos
-        if todo.action == "refine_typed_ir_or_decompiler_slots"
+        todo for todo in todos if todo.action == "refine_typed_ir_or_decompiler_slots"
     )
     assert "compiler_ir_cross_entropy_loss" in decompiler_todo.metadata["target_metrics"]
     assert "compiler_ir_cosine_similarity" in decompiler_todo.metadata["target_metrics"]
@@ -3501,9 +3451,9 @@ def test_program_synthesis_generator_clusters_stable_autoencoder_residuals(
         in decompiler_todo.metadata["target_metrics"]
     )
     for todo in todos:
-        assert {
-            evidence["hint_id"] for evidence in todo.metadata["hint_evidence"]
-        } == set(todo.metadata["hint_ids"])
+        assert {evidence["hint_id"] for evidence in todo.metadata["hint_evidence"]} == set(
+            todo.metadata["hint_ids"]
+        )
         assert all(
             evidence.get("sample_id") in todo.sample_ids
             for evidence in todo.metadata["hint_evidence"]
@@ -3535,26 +3485,24 @@ def test_program_synthesis_generator_uses_legal_ir_view_introspection() -> None:
     assert "repair_multiview_legal_ir_loss" in actions
     assert "repair_deontic_bridge_quality_gate" in actions
     by_action = {todo.action: todo for todo in seeded}
-    assert by_action["repair_multiview_legal_ir_loss"].metadata[
-        "target_component"
-    ] == "bridge.contracts"
-    assert by_action["repair_deontic_bridge_quality_gate"].metadata[
-        "program_synthesis_scope"
-    ] == "deontic"
+    assert (
+        by_action["repair_multiview_legal_ir_loss"].metadata["target_component"]
+        == "bridge.contracts"
+    )
+    assert (
+        by_action["repair_deontic_bridge_quality_gate"].metadata["program_synthesis_scope"]
+        == "deontic"
+    )
     assert (
         by_action["repair_multiview_legal_ir_loss"].priority
         < by_action["repair_deontic_bridge_quality_gate"].priority
     )
-    deontic_evidence = by_action["repair_deontic_bridge_quality_gate"].metadata[
-        "hint_evidence"
-    ][0]
+    deontic_evidence = by_action["repair_deontic_bridge_quality_gate"].metadata["hint_evidence"][0]
     assert deontic_evidence["target_view"].startswith("deontic.")
     assert deontic_evidence["predicted_view"].startswith("deontic.")
     assert deontic_evidence["bridge_failure_name"] == "deontic_decoder_slot_loss"
     assert by_action["repair_multiview_legal_ir_loss"].metadata["target_metrics"]
-    assert by_action["repair_multiview_legal_ir_loss"].metadata[
-        "validation_commands"
-    ]
+    assert by_action["repair_multiview_legal_ir_loss"].metadata["validation_commands"]
 
 
 def test_program_synthesis_generator_fans_out_legal_ir_view_introspection() -> None:
@@ -3582,7 +3530,13 @@ def test_program_synthesis_generator_fans_out_legal_ir_view_introspection() -> N
     )
     supervisor = ModalTodoSupervisor(
         policy=ModalOptimizerPolicy(program_synthesis_min_support=1),
-        bridge_names=("deontic_norms", "fol_tdfol", "cec_dcec", "external_prover_router", "zkp_attestation"),
+        bridge_names=(
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router",
+            "zkp_attestation",
+        ),
     )
 
     seeded = supervisor.seed_program_synthesis_from_introspection(
@@ -3643,7 +3597,9 @@ def test_fast_program_synthesis_bootstrap_todos_cover_parallel_scopes() -> None:
     assert all(todo.loss_name == "program_synthesis_bootstrap" for todo in todos)
     assert all(todo.metadata["optimizer_role"] == "program_synthesis" for todo in todos)
     assert all(todo.metadata["execution_target"] == "codex_program_repair" for todo in todos)
-    assert all(todo.metadata["source"] == "modal_program_synthesis_fast_bootstrap_v1" for todo in todos)
+    assert all(
+        todo.metadata["source"] == "modal_program_synthesis_fast_bootstrap_v1" for todo in todos
+    )
     assert all(todo.metadata["support_count"] == len(samples) for todo in todos)
     assert all(todo.metadata["hint_evidence"] for todo in todos)
     assert all(todo.metadata["metric_sample_payloads"] for todo in todos)
@@ -3697,9 +3653,7 @@ def test_supervisor_optimizes_autoencoder_first_and_leaves_program_synthesis_bac
         ),
     ]
     autoencoder = AdaptiveModalAutoencoder(feature_family_logit_scale=1.0)
-    supervisor = ModalTodoSupervisor(
-        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
-    )
+    supervisor = ModalTodoSupervisor(policy=ModalOptimizerPolicy(program_synthesis_min_support=2))
 
     step = supervisor.optimize_once(
         samples,
@@ -3717,10 +3671,7 @@ def test_supervisor_optimizes_autoencoder_first_and_leaves_program_synthesis_bac
     assert all(todo.metadata["residual_cluster_stage"] == "post_sgd" for todo in program_todos)
     assert all("post_sgd_metric_deltas" in todo.metadata for todo in program_todos)
     assert all(todo.metadata["post_sgd_requires_codex"] is True for todo in program_todos)
-    assert all(
-        todo.metadata["optimizer_role"] == "program_synthesis"
-        for todo in program_todos
-    )
+    assert all(todo.metadata["optimizer_role"] == "program_synthesis" for todo in program_todos)
 
 
 def test_supervisor_caps_program_synthesis_backlog() -> None:
@@ -3773,9 +3724,7 @@ def test_supervisor_can_claim_program_synthesis_batch_for_codex_worker() -> None
         ),
     ]
     autoencoder = AdaptiveModalAutoencoder(feature_family_logit_scale=1.0)
-    supervisor = ModalTodoSupervisor(
-        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
-    )
+    supervisor = ModalTodoSupervisor(policy=ModalOptimizerPolicy(program_synthesis_min_support=2))
     supervisor.seed_program_synthesis_from_introspection(
         samples,
         autoencoder=autoencoder,
@@ -3788,10 +3737,7 @@ def test_supervisor_can_claim_program_synthesis_batch_for_codex_worker() -> None
 
     assert claimed
     assert all(todo.claimed_by == "codex-program-worker" for todo in claimed)
-    assert all(
-        todo.metadata["optimizer_role"] == "program_synthesis"
-        for todo in claimed
-    )
+    assert all(todo.metadata["optimizer_role"] == "program_synthesis" for todo in claimed)
     assert supervisor.queue.claimed_count(optimizer_role="program_synthesis") == len(claimed)
     status = program_synthesis_status_block(supervisor.queue, supervisor.policy)
     assert status["claimed"] == len(claimed)
@@ -3811,9 +3757,7 @@ def test_supervisor_program_synthesis_status_reuses_queue_role_counts() -> None:
             text="The agency must provide notice before adopting a rule.",
         ),
     ]
-    supervisor = ModalTodoSupervisor(
-        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
-    )
+    supervisor = ModalTodoSupervisor(policy=ModalOptimizerPolicy(program_synthesis_min_support=2))
     seeded = supervisor.seed_program_synthesis_from_introspection(
         samples,
         autoencoder=AdaptiveModalAutoencoder(feature_family_logit_scale=1.0),
@@ -3847,9 +3791,7 @@ def test_supervisor_program_synthesis_summary_writes_standard_keys() -> None:
             text="The agency must provide notice before adopting a rule.",
         ),
     ]
-    supervisor = ModalTodoSupervisor(
-        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
-    )
+    supervisor = ModalTodoSupervisor(policy=ModalOptimizerPolicy(program_synthesis_min_support=2))
     supervisor.seed_program_synthesis_from_introspection(
         samples,
         autoencoder=AdaptiveModalAutoencoder(feature_family_logit_scale=1.0),
@@ -3967,9 +3909,7 @@ def test_codex_runner_extracts_todo_validation_commands_and_packet_report() -> N
     )
     assert baseline_red_report["status"] == "passed"
     assert baseline_red_report["baseline_failure_accepted"] is True
-    assert baseline_red_report["main_apply_validation_gate"] == (
-        "inconclusive_baseline_failed"
-    )
+    assert baseline_red_report["main_apply_validation_gate"] == ("inconclusive_baseline_failed")
 
 
 def test_codex_target_metric_validation_reports_regressions() -> None:
@@ -4154,9 +4094,7 @@ def test_program_synthesis_validation_gate_accepts_target_metric_tradeoff() -> N
     assert gate["accepted_tradeoff"] is True
     assert gate["regressed_metrics"] == []
     assert gate["raw_regressed_metrics"] == ["structural_text_reconstruction_loss"]
-    assert gate["tolerated_regressed_metrics"] == [
-        "structural_text_reconstruction_loss"
-    ]
+    assert gate["tolerated_regressed_metrics"] == ["structural_text_reconstruction_loss"]
 
 
 def test_codex_metric_payloads_keep_holdout_separate() -> None:
@@ -4260,10 +4198,7 @@ def test_codex_target_metric_snapshot_uses_shared_process_capture(
 
     assert captured["command"][:2] == [sys.executable, "-c"]
     assert captured["kwargs"]["cwd"] == tmp_path
-    assert (
-        captured["kwargs"]["env"][runner.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV]
-        == str(cache_dir)
-    )
+    assert captured["kwargs"]["env"][runner.LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV] == str(cache_dir)
     assert captured["kwargs"]["timeout_seconds"] == 7.0
     assert "sample-a" in captured["kwargs"]["input_text"]
     payload = json.loads(captured["kwargs"]["input_text"])
@@ -4336,9 +4271,9 @@ def test_codex_target_metric_bridge_adapter_selection_is_metric_scoped() -> None
     from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
 
     assert runner._codex_target_metric_bridge_adapter_names(["cross_entropy_loss"]) == []
-    assert runner._codex_target_metric_bridge_adapter_names(
-        ["zkp_verification_failure_ratio"]
-    ) == ["zkp_attestation"]
+    assert runner._codex_target_metric_bridge_adapter_names(["zkp_verification_failure_ratio"]) == [
+        "zkp_attestation"
+    ]
     assert runner._codex_target_metric_bridge_adapter_names(
         ["deontic_decoder_slot_loss", "legal_ir_view_cross_entropy_loss"]
     ) == ["deontic_norms"]
@@ -4360,9 +4295,7 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
             text="The agency must provide notice before adopting a rule.",
         ),
     ]
-    supervisor = ModalTodoSupervisor(
-        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
-    )
+    supervisor = ModalTodoSupervisor(policy=ModalOptimizerPolicy(program_synthesis_min_support=2))
     supervisor.seed_program_synthesis_from_introspection(
         samples,
         autoencoder=AdaptiveModalAutoencoder(feature_family_logit_scale=1.0),
@@ -4392,21 +4325,17 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     completed_todo = supervisor.queue.get(claimed[0].todo_id)
     assert completed_todo.status == "completed"
     assert completed_todo.metadata["validation_gate"]["accepted"] is True
-    assert completed_todo.metadata["validation_gate"]["improved_metrics"] == [
-        "cross_entropy_loss"
-    ]
+    assert completed_todo.metadata["validation_gate"]["improved_metrics"] == ["cross_entropy_loss"]
     assert completed_todo.metadata["completed_patch_status"] == "created"
     assert completed_todo.metadata["completed_codex_exec_status"] == "succeeded"
     assert completed_todo.metadata["completed_target_metric_status"] == "improved"
-    assert (
-        completed_todo.metadata["completed_holdout_target_metric_status"] == "improved"
-    )
+    assert completed_todo.metadata["completed_holdout_target_metric_status"] == "improved"
     assert completed_todo.metadata["completed_validation_report"]["metric_deltas"] == {
         "cross_entropy_loss": 0.2
     }
-    assert completed_todo.metadata["completed_validation_report"][
-        "holdout_metric_deltas"
-    ] == {"cross_entropy_loss": 0.1}
+    assert completed_todo.metadata["completed_validation_report"]["holdout_metric_deltas"] == {
+        "cross_entropy_loss": 0.1
+    }
 
     supervisor_regression = ModalTodoSupervisor(
         policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
@@ -4439,9 +4368,7 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     assert regression_todo.metadata["validation_gate"]["regressed_metrics"] == [
         "cross_entropy_loss"
     ]
-    assert regression_todo.metadata["failed_validation_reason"] == (
-        "target_metric_regression"
-    )
+    assert regression_todo.metadata["failed_validation_reason"] == ("target_metric_regression")
     assert regression_todo.metadata["failed_validation_patch_status"] == "created"
     assert regression_todo.metadata["failed_validation_report"]["metric_deltas"] == {
         "cross_entropy_loss": -0.2
@@ -4496,7 +4423,9 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     assert timeout_patch["updated"] is True
     assert timeout_patch["completed_count"] == 1
     assert timeout_patch["failed_validation_count"] == 0
-    assert supervisor_timeout_patch.queue.get(claimed_timeout_patch[0].todo_id).status == "completed"
+    assert (
+        supervisor_timeout_patch.queue.get(claimed_timeout_patch[0].todo_id).status == "completed"
+    )
 
     supervisor_applied = ModalTodoSupervisor(
         policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
@@ -4546,9 +4475,7 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
             "status": "failed",
         },
     )
-    applied_failed_todo = supervisor_applied_failed.queue.get(
-        claimed_applied_failed[0].todo_id
-    )
+    applied_failed_todo = supervisor_applied_failed.queue.get(claimed_applied_failed[0].todo_id)
     assert applied_failed["updated"] is True
     assert applied_failed["completed_count"] == 0
     assert applied_failed["failed_validation_count"] == 1
@@ -4564,9 +4491,12 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     assert applied_failed_todo.metadata["failed_validation_report"][
         "main_apply_validation_syntax_locations"
     ] == ["ipfs_datasets_py/logic/bridge/modal_frame_logic.py:511"]
-    assert "IndentationError" in applied_failed_todo.metadata[
-        "failed_validation_report"
-    ]["main_apply_validation_stderr_tail"]
+    assert (
+        "IndentationError"
+        in applied_failed_todo.metadata["failed_validation_report"][
+            "main_apply_validation_stderr_tail"
+        ]
+    )
 
     supervisor_no_delta = ModalTodoSupervisor(
         policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
@@ -4605,13 +4535,9 @@ def test_program_synthesis_metric_feedback_report_surfaces_canary_blind_spot() -
                 status="completed",
                 metadata={
                     "completed_validation_report": {
-                        "holdout_metric_deltas": {
-                            "compiler_ir_cosine_similarity": 0.01
-                        },
+                        "holdout_metric_deltas": {"compiler_ir_cosine_similarity": 0.01},
                         "holdout_target_metric_status": "flat",
-                        "metric_deltas": {
-                            "compiler_ir_cosine_similarity": 0.03
-                        },
+                        "metric_deltas": {"compiler_ir_cosine_similarity": 0.03},
                         "target_metric_status": "improved",
                     },
                     "optimizer_role": daemon.PROGRAM_SYNTHESIS_ROLE,
@@ -4662,17 +4588,11 @@ def test_program_synthesis_metric_feedback_report_surfaces_canary_blind_spot() -
     assert report["completed_unique_sample_count"] == 2
     assert report["completed_canary_overlap_sample_count"] == 0
     assert report["failed_validation_canary_overlap_sample_count"] == 1
-    assert report["failed_validation_reason_counts"] == {
-        "target_metric_regression": 1
-    }
+    assert report["failed_validation_reason_counts"] == {"target_metric_regression": 1}
     assert report["completed_target_metric_status_counts"] == {"improved": 1}
     assert report["completed_holdout_target_metric_status_counts"] == {"flat": 1}
-    assert report["completed_metric_delta_sums"] == {
-        "compiler_ir_cosine_similarity": 0.03
-    }
-    assert report["completed_holdout_metric_delta_sums"] == {
-        "compiler_ir_cosine_similarity": 0.01
-    }
+    assert report["completed_metric_delta_sums"] == {"compiler_ir_cosine_similarity": 0.03}
+    assert report["completed_holdout_metric_delta_sums"] == {"compiler_ir_cosine_similarity": 0.01}
 
 
 def test_supervisor_finalize_requeues_transient_codex_failure() -> None:
@@ -4688,9 +4608,7 @@ def test_supervisor_finalize_requeues_transient_codex_failure() -> None:
             text="The agency must provide notice before adopting a rule.",
         ),
     ]
-    supervisor = ModalTodoSupervisor(
-        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
-    )
+    supervisor = ModalTodoSupervisor(policy=ModalOptimizerPolicy(program_synthesis_min_support=2))
     supervisor.seed_program_synthesis_from_introspection(
         samples,
         autoencoder=AdaptiveModalAutoencoder(feature_family_logit_scale=1.0),
@@ -4731,9 +4649,7 @@ def test_supervisor_finalize_requeues_baseline_validation_failure() -> None:
             text="The agency must provide notice before adopting a rule.",
         ),
     ]
-    supervisor = ModalTodoSupervisor(
-        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
-    )
+    supervisor = ModalTodoSupervisor(policy=ModalOptimizerPolicy(program_synthesis_min_support=2))
     supervisor.seed_program_synthesis_from_introspection(
         samples,
         autoencoder=AdaptiveModalAutoencoder(feature_family_logit_scale=1.0),
@@ -4775,9 +4691,7 @@ def test_supervisor_finalize_requeues_target_metric_infrastructure_failure() -> 
             text="The agency must provide notice before adopting a rule.",
         ),
     ]
-    supervisor = ModalTodoSupervisor(
-        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
-    )
+    supervisor = ModalTodoSupervisor(policy=ModalOptimizerPolicy(program_synthesis_min_support=2))
     supervisor.seed_program_synthesis_from_introspection(
         samples,
         autoencoder=AdaptiveModalAutoencoder(feature_family_logit_scale=1.0),
@@ -4818,9 +4732,7 @@ def test_supervisor_transient_requeue_has_retry_limit() -> None:
             text="The agency must provide notice before adopting a rule.",
         ),
     ]
-    supervisor = ModalTodoSupervisor(
-        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
-    )
+    supervisor = ModalTodoSupervisor(policy=ModalOptimizerPolicy(program_synthesis_min_support=2))
     supervisor.seed_program_synthesis_from_introspection(
         samples,
         autoencoder=AdaptiveModalAutoencoder(feature_family_logit_scale=1.0),
@@ -4914,17 +4826,11 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     assert "--queue-run-id" in paired["codex_command"]
     queue_index = paired["codex_command"].index("--queue-run-id")
     assert paired["codex_command"][queue_index + 1] == paired["queue_run_id"]
-    direct_guidance_index = paired["autoencoder_command"].index(
-        "--leanstral-direct-guidance-path"
-    )
-    assert paired["autoencoder_command"][direct_guidance_index + 1] == (
-        "/tmp/leanstral-guidance"
-    )
+    direct_guidance_index = paired["autoencoder_command"].index("--leanstral-direct-guidance-path")
+    assert paired["autoencoder_command"][direct_guidance_index + 1] == ("/tmp/leanstral-guidance")
     duration_index = paired["codex_command"].index("--duration-seconds")
     assert paired["codex_command"][duration_index + 1] == "451.5"
-    max_executions_index = paired["codex_command"].index(
-        "--codex-max-executions"
-    )
+    max_executions_index = paired["codex_command"].index("--codex-max-executions")
     assert paired["codex_command"][max_executions_index + 1] == "0"
     canary_index = paired["autoencoder_command"].index("--validation-canary-count")
     assert paired["autoencoder_command"][canary_index + 1] == str(
@@ -4944,9 +4850,7 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         "--autoencoder-diagnostic-bridge-adapters"
     )
     assert paired["autoencoder_command"][diagnostic_bridge_index + 1] == "none"
-    text_policy_index = paired["autoencoder_command"].index(
-        "--compiler-ir-metric-text-policy"
-    )
+    text_policy_index = paired["autoencoder_command"].index("--compiler-ir-metric-text-policy")
     assert paired["autoencoder_command"][text_policy_index + 1] == "truncate"
     sample_timeout_index = paired["autoencoder_command"].index(
         "--compiler-ir-metric-sample-timeout-seconds"
@@ -4962,9 +4866,7 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     )
     apply_index = paired["codex_command"].index("--codex-apply-mode")
     assert paired["codex_command"][apply_index + 1] == "apply_to_main"
-    scale_index = paired["autoencoder_command"].index(
-        "--autoencoder-feature-family-logit-scale"
-    )
+    scale_index = paired["autoencoder_command"].index("--autoencoder-feature-family-logit-scale")
     assert paired["autoencoder_command"][scale_index + 1] == "1.0"
     codec_feature_index = paired["autoencoder_command"].index(
         "--autoencoder-max-codec-feature-keys"
@@ -4976,22 +4878,22 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     assert paired["codex_command"][scope_index + 1] == "frame_logic"
     assert paired["autoencoder_command"].count("--warm-start-run-id") == 2
     assert paired["autoencoder_command"].count("--warm-start-state") == 1
-    canonical_mode_index = paired["autoencoder_command"].index(
-        "--autoencoder-canonical-warm-start"
-    )
+    canonical_mode_index = paired["autoencoder_command"].index("--autoencoder-canonical-warm-start")
     assert paired["autoencoder_command"][canonical_mode_index + 1] == "auto"
     assert "--generalizable-projection-max-cosine-regression" in paired["autoencoder_command"]
-    assert "--generalizable-projection-max-reconstruction-regression" in paired["autoencoder_command"]
-    assert "--generalizable-projection-max-cross-entropy-regression" in paired["autoencoder_command"]
-    assert "--generalizable-projection-max-legal-ir-loss-regression" in paired["autoencoder_command"]
+    assert (
+        "--generalizable-projection-max-reconstruction-regression" in paired["autoencoder_command"]
+    )
+    assert (
+        "--generalizable-projection-max-cross-entropy-regression" in paired["autoencoder_command"]
+    )
+    assert (
+        "--generalizable-projection-max-legal-ir-loss-regression" in paired["autoencoder_command"]
+    )
     assert "--autoencoder-projection-deadband-mode" in paired["autoencoder_command"]
-    deadband_index = paired["autoencoder_command"].index(
-        "--autoencoder-projection-deadband-mode"
-    )
+    deadband_index = paired["autoencoder_command"].index("--autoencoder-projection-deadband-mode")
     assert paired["autoencoder_command"][deadband_index + 1] == "shadow"
-    ce_deadband_index = paired["autoencoder_command"].index(
-        "--autoencoder-max-ce-deadband"
-    )
+    ce_deadband_index = paired["autoencoder_command"].index("--autoencoder-max-ce-deadband")
     assert paired["autoencoder_command"][ce_deadband_index + 1] == "0.0001"
     assert "--autoencoder-hard-guardrail-metrics" in paired["autoencoder_command"]
     assert "--autoencoder-projection-prescreen-mode" in paired["autoencoder_command"]
@@ -5007,9 +4909,7 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         "--autoencoder-projection-periodic-full-search-every-n-cycles"
     )
     assert paired["autoencoder_command"][full_search_index + 1] == "8"
-    compiler_train_mode_index = paired["autoencoder_command"].index(
-        "--compiler-ir-train-mode"
-    )
+    compiler_train_mode_index = paired["autoencoder_command"].index("--compiler-ir-train-mode")
     assert (
         paired["autoencoder_command"][compiler_train_mode_index + 1]
         == runner.DEFAULT_COMPILER_IR_TRAIN_MODE
@@ -5018,9 +4918,7 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         "--compiler-ir-train-every-n-cycles"
     )
     assert paired["autoencoder_command"][compiler_train_cadence_index + 1] == "4"
-    guided_train_mode_index = paired["autoencoder_command"].index(
-        "--compiler-ir-guided-train-mode"
-    )
+    guided_train_mode_index = paired["autoencoder_command"].index("--compiler-ir-guided-train-mode")
     assert (
         paired["autoencoder_command"][guided_train_mode_index + 1]
         == runner.DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE
@@ -5063,19 +4961,65 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     )
     assert paired["autoencoder_command"][todo_supervisor_min_open_index + 1] == "12"
     autoencoder_command = paired["autoencoder_command"]
-    assert autoencoder_command[autoencoder_command.index("--autoencoder-introspection-mode") + 1] == "seed"
-    assert autoencoder_command[autoencoder_command.index("--autoencoder-max-audits-per-cycle") + 1] == "5"
-    assert autoencoder_command[autoencoder_command.index("--autoencoder-max-todos-per-cycle") + 1] == "4"
-    assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-report-path") + 1] == "/tmp/leanstral-rule-gaps.json"
-    assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-wait-seconds") + 1] == "45.0"
-    assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-max-todos-per-scope") + 1] == "2"
-    assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-expected-compiler-commit") + 1] == "compiler-sha"
-    assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-expected-state-hash") + 1] == "state-sha"
-    assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-max-report-age-seconds") + 1] == "900.0"
-    assert autoencoder_command[autoencoder_command.index("--autoencoder-target-scope-filters") + 1] == "compiler_parser,ir_decompiler"
-    assert autoencoder_command[autoencoder_command.index("--autoencoder-require-prover-confirmation") + 1] == "true"
+    assert (
+        autoencoder_command[autoencoder_command.index("--autoencoder-introspection-mode") + 1]
+        == "seed"
+    )
+    assert (
+        autoencoder_command[autoencoder_command.index("--autoencoder-max-audits-per-cycle") + 1]
+        == "5"
+    )
+    assert (
+        autoencoder_command[autoencoder_command.index("--autoencoder-max-todos-per-cycle") + 1]
+        == "4"
+    )
+    assert (
+        autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-report-path") + 1]
+        == "/tmp/leanstral-rule-gaps.json"
+    )
+    assert (
+        autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-wait-seconds") + 1]
+        == "45.0"
+    )
+    assert (
+        autoencoder_command[
+            autoencoder_command.index("--leanstral-rule-gap-max-todos-per-scope") + 1
+        ]
+        == "2"
+    )
+    assert (
+        autoencoder_command[
+            autoencoder_command.index("--leanstral-rule-gap-expected-compiler-commit") + 1
+        ]
+        == "compiler-sha"
+    )
+    assert (
+        autoencoder_command[
+            autoencoder_command.index("--leanstral-rule-gap-expected-state-hash") + 1
+        ]
+        == "state-sha"
+    )
+    assert (
+        autoencoder_command[
+            autoencoder_command.index("--leanstral-rule-gap-max-report-age-seconds") + 1
+        ]
+        == "900.0"
+    )
+    assert (
+        autoencoder_command[autoencoder_command.index("--autoencoder-target-scope-filters") + 1]
+        == "compiler_parser,ir_decompiler"
+    )
+    assert (
+        autoencoder_command[
+            autoencoder_command.index("--autoencoder-require-prover-confirmation") + 1
+        ]
+        == "true"
+    )
     codex_command = paired["codex_command"]
-    assert codex_command[codex_command.index("--codex-main-apply-lock-timeout-seconds") + 1] == "1200.0"
+    assert (
+        codex_command[codex_command.index("--codex-main-apply-lock-timeout-seconds") + 1]
+        == "1200.0"
+    )
     assert "--autoencoder-max-cosine-regression" not in paired["autoencoder_command"]
     assert "--learning-rate-floor-ratio" in paired["autoencoder_command"]
     assert "--learning-rate-cap-ratio" in paired["autoencoder_command"]
@@ -5308,7 +5252,9 @@ def test_load_warm_start_state_enforces_checkpoint_capacity_contract(
     }
 
 
-def test_resolve_warm_start_state_paths_can_disable_or_require_canonical_state(tmp_path: Path) -> None:
+def test_resolve_warm_start_state_paths_can_disable_or_require_canonical_state(
+    tmp_path: Path,
+) -> None:
     queue_dir = tmp_path / "todo-queues"
     queue_dir.mkdir()
     args_off = SimpleNamespace(
@@ -5342,9 +5288,7 @@ def test_explicit_warm_start_replaces_automatic_canonical_state(tmp_path: Path) 
         warm_start_run_id=[],
         warm_start_state=[explicit],
         autoencoder_canonical_warm_start="auto",
-        canonical_warm_start_state=Path(
-            runner.DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME
-        ),
+        canonical_warm_start_state=Path(runner.DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME),
     )
 
     assert runner.resolve_warm_start_state_paths(args, queue_dir) == [explicit]
@@ -5399,7 +5343,10 @@ def test_build_paired_daemon_commands_can_launch_parallel_scoped_codex_children(
     assert all("--codex-bundle-mode" in child["command"] for child in children)
     assert all("--codex-scope" in child["command"] for child in children)
     assert "--codex-scope" in paired["codex_command"]
-    assert paired["codex_command"][paired["codex_command"].index("--codex-scope") + 1] == "compiler_ambiguity"
+    assert (
+        paired["codex_command"][paired["codex_command"].index("--codex-scope") + 1]
+        == "compiler_ambiguity"
+    )
     capacity_index = paired["autoencoder_command"].index(
         "--autoencoder-max-generalizable-entries-per-group"
     )
@@ -5463,8 +5410,7 @@ def test_build_paired_daemon_commands_can_launch_multiple_workers_per_scope() ->
         "codex-worker-frame_logic-02",
     ]
     assert {
-        child["command"][child["command"].index("--codex-scope") + 1]
-        for child in children
+        child["command"][child["command"].index("--codex-scope") + 1] for child in children
     } == {"compiler_ambiguity", "frame_logic"}
 
 
@@ -5577,12 +5523,18 @@ def test_build_paired_daemon_commands_pass_vector_bundle_options_to_children() -
         assert command[command.index("--codex-vector-max-bundle-wait-seconds") + 1] == "180.0"
         assert command[command.index("--codex-vector-stale-drain-cooldown-seconds") + 1] == "90.0"
         assert command[command.index("--codex-target-file-lane-lock-seconds") + 1] == "300.0"
-        assert command[command.index("--codex-target-file-lane-lock-scopes") + 1] == "compiler_registry"
+        assert (
+            command[command.index("--codex-target-file-lane-lock-scopes") + 1]
+            == "compiler_registry"
+        )
         assert command[command.index("--codex-task-embeddings-provider") + 1] == "local_adapter"
         assert command[command.index("--codex-task-embeddings-model") + 1] == "thenlper/gte-small"
         assert command[command.index("--codex-task-embeddings-device") + 1] == "cpu"
         assert command[command.index("--codex-task-embeddings-batch-size") + 1] == "16"
-        assert command[command.index("--codex-vector-index-path") + 1] == "/tmp/codex-task-vectors.json"
+        assert (
+            command[command.index("--codex-vector-index-path") + 1]
+            == "/tmp/codex-task-vectors.json"
+        )
 
 
 def test_build_paired_daemon_commands_pass_projection_bounds_to_autoencoder() -> None:
@@ -5628,14 +5580,8 @@ def test_build_paired_daemon_commands_pass_projection_bounds_to_autoencoder() ->
     command = paired["autoencoder_command"]
     assert command[command.index("--sampling-seed") + 1] == "shared-hparam-seed"
     assert command[command.index("--generalizable-projection-timeout-seconds") + 1] == "123.0"
-    assert (
-        command[command.index("--generalizable-projection-max-line-search-attempts") + 1]
-        == "4"
-    )
-    assert (
-        command[command.index("--generalizable-projection-max-update-families") + 1]
-        == "2"
-    )
+    assert command[command.index("--generalizable-projection-max-line-search-attempts") + 1] == "4"
+    assert command[command.index("--generalizable-projection-max-update-families") + 1] == "2"
     assert command[command.index("--autoencoder-bootstrap-mode") + 1] == "fast"
 
 
@@ -5667,7 +5613,9 @@ def test_guarded_daemon_passes_projection_runtime_bounds_to_autoencoder(
                 embedding_cosine_similarity=0.0,
             )
 
-        def train_generalizable_projection(self, *_args: object, **kwargs: object) -> dict[str, object]:
+        def train_generalizable_projection(
+            self, *_args: object, **kwargs: object
+        ) -> dict[str, object]:
             captured.update(kwargs)
             raise SystemExit(17)
 
@@ -5975,21 +5923,30 @@ def test_paired_completion_rejects_parent_timeout_even_when_children_succeeded()
 
 
 def test_paired_runner_fails_fast_when_autoencoder_child_crashes() -> None:
-    assert runner._paired_finite_child_failure_reason(
-        autoencoder_exit_code=1,
-        leanstral_enabled=True,
-        leanstral_exit_code=None,
-    ) == "autoencoder_child_failed"
-    assert runner._paired_finite_child_failure_reason(
-        autoencoder_exit_code=0,
-        leanstral_enabled=True,
-        leanstral_exit_code=2,
-    ) == "leanstral_child_failed"
-    assert runner._paired_finite_child_failure_reason(
-        autoencoder_exit_code=0,
-        leanstral_enabled=True,
-        leanstral_exit_code=None,
-    ) == ""
+    assert (
+        runner._paired_finite_child_failure_reason(
+            autoencoder_exit_code=1,
+            leanstral_enabled=True,
+            leanstral_exit_code=None,
+        )
+        == "autoencoder_child_failed"
+    )
+    assert (
+        runner._paired_finite_child_failure_reason(
+            autoencoder_exit_code=0,
+            leanstral_enabled=True,
+            leanstral_exit_code=2,
+        )
+        == "leanstral_child_failed"
+    )
+    assert (
+        runner._paired_finite_child_failure_reason(
+            autoencoder_exit_code=0,
+            leanstral_enabled=True,
+            leanstral_exit_code=None,
+        )
+        == ""
+    )
 
 
 def test_codex_shutdown_drain_window_covers_fallback_attempts() -> None:
@@ -6753,7 +6710,7 @@ def test_codex_validation_failure_details_extracts_pytest_banner_node_id() -> No
             "___ test_spacy_compiler_adds_title_transfer_power_heading_prefix_for_43_617f ___\n"
             "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py:7642: "
             "in test_spacy_compiler_adds_title_transfer_power_heading_prefix_for_43_617f\n"
-            "    assert \"transfer of title;\" in prefix_spans\n"
+            '    assert "transfer of title;" in prefix_spans\n'
             "E   AssertionError: assert 'transfer of title;' in {'Canals and appurtenant structures;'}\n"
         ),
         stderr="",
@@ -6834,9 +6791,7 @@ def test_paired_program_synthesis_health_detects_starved_codex_queue(tmp_path: P
     assert health["program_synthesis_failed_validation_reason_counts"] == {
         "main_apply_validation_failed_rolled_back": 1
     }
-    assert health["program_synthesis_failed_validation_kind_counts"] == {
-        "pytest": 1
-    }
+    assert health["program_synthesis_failed_validation_kind_counts"] == {"pytest": 1}
     assert health["program_synthesis_failed_validation_test_counts"] == {
         "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py::test_heading_prefix": 1
     }
@@ -7404,11 +7359,7 @@ def test_codex_transient_failure_detection_ignores_applied_packets(tmp_path) -> 
 def test_run_codex_exec_attempt_timeout_returns_promptly(tmp_path) -> None:
     codex_stub = tmp_path / "codex-stub.py"
     codex_stub.write_text(
-        "#!/usr/bin/env python3\n"
-        "import sys\n"
-        "import time\n"
-        "sys.stdin.read()\n"
-        "time.sleep(10)\n",
+        "#!/usr/bin/env python3\nimport sys\nimport time\nsys.stdin.read()\ntime.sleep(10)\n",
         encoding="utf-8",
     )
     codex_stub.chmod(0o755)
@@ -7657,9 +7608,7 @@ def test_vector_claim_skips_fresh_singleton_when_later_bundle_is_ready(
     assert queue.get("program-parser-singleton").status == "pending"
     assert status["claimed"] == 2
     assert report["mode"] == "vector_skipped_fresh_undersized_anchor"
-    assert report["skipped_fresh_undersized_anchor_ids"] == [
-        "program-parser-singleton"
-    ]
+    assert report["skipped_fresh_undersized_anchor_ids"] == ["program-parser-singleton"]
     assert report["selected_count"] == 2
 
 
@@ -7722,7 +7671,9 @@ def test_vector_claim_allows_stale_undersized_bundle(tmp_path, monkeypatch) -> N
     assert report["selected_count"] == 1
 
 
-def test_vector_claim_target_file_lane_waits_when_claimed_packet_overlaps(tmp_path, monkeypatch) -> None:
+def test_vector_claim_target_file_lane_waits_when_claimed_packet_overlaps(
+    tmp_path, monkeypatch
+) -> None:
     claimed_todo = ModalTodo(
         todo_id="program-registry-active",
         action="refine_modal_family_cue_rules",
@@ -7917,7 +7868,9 @@ def test_vector_claim_ast_lane_allows_disjoint_modal_family_pairs(tmp_path, monk
     assert report["target_file_lane_locked_count"] == 1
 
 
-def test_vector_claim_stale_drain_lease_throttles_parallel_singletons(tmp_path, monkeypatch) -> None:
+def test_vector_claim_stale_drain_lease_throttles_parallel_singletons(
+    tmp_path, monkeypatch
+) -> None:
     first = ModalTodo(
         todo_id="program-registry-first",
         action="refine_modal_family_cue_rules",
@@ -8075,7 +8028,9 @@ def _create_git_repo_with_program_synthesis_packet(
     subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
     if tracked_python_module:
         subprocess.run(["git", "add", "module.py"], cwd=repo, check=True)
-    subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True
+    )
 
     samples = [
         build_us_code_sample(
@@ -8089,9 +8044,7 @@ def _create_git_repo_with_program_synthesis_packet(
             text="The agency must provide notice before adopting a rule.",
         ),
     ]
-    supervisor = ModalTodoSupervisor(
-        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
-    )
+    supervisor = ModalTodoSupervisor(policy=ModalOptimizerPolicy(program_synthesis_min_support=2))
     supervisor.seed_program_synthesis_from_introspection(
         samples,
         autoencoder=AdaptiveModalAutoencoder(feature_family_logit_scale=1.0),
@@ -8136,7 +8089,9 @@ def test_codex_work_packet_creates_git_worktree_and_patch_slot(tmp_path) -> None
     assert "## Metric Guard" in task_text
     assert "target_metrics:" in task_text
     assert "sample_text:" in task_text
-    packet_data = json.loads((tmp_path / "codex-work" / "packet-000001" / "packet.json").read_text())
+    packet_data = json.loads(
+        (tmp_path / "codex-work" / "packet-000001" / "packet.json").read_text()
+    )
     assert packet_data["worktree_path"] == packet["worktree_path"]
     assert packet_data["todos"][0]["metadata"]["hint_evidence"]
 
@@ -8254,9 +8209,7 @@ def test_codex_work_packet_apply_to_main_keeps_patch_when_baseline_validation_is
 
     updated = apply_codex_worktree_changes_to_main(
         packet,
-        validation_commands=(
-            [sys.executable, "-c", "raise SystemExit(1)"],
-        ),
+        validation_commands=([sys.executable, "-c", "raise SystemExit(1)"],),
     )
 
     assert updated["patch_status"] == "applied_to_main"
@@ -8290,9 +8243,7 @@ def test_codex_work_packet_apply_to_main_commits_baseline_red_acceptance(
     updated = apply_codex_worktree_changes_to_main(
         packet,
         commit_mode="commit_applied",
-        validation_commands=(
-            [sys.executable, "-c", "raise SystemExit(1)"],
-        ),
+        validation_commands=([sys.executable, "-c", "raise SystemExit(1)"],),
     )
 
     assert updated["patch_status"] == "applied_to_main"
@@ -8407,9 +8358,7 @@ def test_codex_work_packet_apply_to_main_rejects_packet_only_validation_failure(
 
     updated = apply_codex_worktree_changes_to_main(
         packet,
-        validation_commands=(
-            [sys.executable, "-c", validation_script],
-        ),
+        validation_commands=([sys.executable, "-c", validation_script],),
     )
 
     assert updated["patch_status"] == "main_apply_baseline_validation_failed_rolled_back"
@@ -8517,7 +8466,9 @@ def test_codex_work_packet_apply_to_main_repairs_stale_patch_against_current_mai
     subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
     (repo / "README.md").write_text("alpha\nbeta\ngamma\n", encoding="utf-8")
     subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
-    subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True
+    )
     todo = ModalTodo(
         todo_id="program-repair",
         action="add_or_review_modal_ambiguity_policy",
@@ -8550,7 +8501,13 @@ def test_codex_work_packet_apply_to_main_repairs_stale_patch_against_current_mai
     )
     (repo / "README.md").write_text("alpha\nbeta\nmain-gamma\n", encoding="utf-8")
     subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
-    subprocess.run(["git", "commit", "-m", "advance main"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "commit", "-m", "advance main"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
 
     updated = apply_codex_worktree_changes_to_main(
         packet,
@@ -8563,9 +8520,7 @@ def test_codex_work_packet_apply_to_main_repairs_stale_patch_against_current_mai
     assert updated["main_apply_status"] == "applied"
     assert updated["main_apply_repair_status"] == "repaired"
     assert updated["main_apply_merge_repair"]["status"] == "repaired"
-    assert (repo / "README.md").read_text(encoding="utf-8") == (
-        "codex-alpha\nbeta\nmain-gamma\n"
-    )
+    assert (repo / "README.md").read_text(encoding="utf-8") == ("codex-alpha\nbeta\nmain-gamma\n")
 
     subprocess.run(
         ["git", "worktree", "remove", packet["worktree_path"], "--force"],
@@ -8586,7 +8541,9 @@ def test_codex_work_packet_apply_to_main_union_repairs_stale_patch_conflict(
     subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
     (repo / "README.md").write_text("alpha\nbeta\ngamma\n", encoding="utf-8")
     subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
-    subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True
+    )
     todo = ModalTodo(
         todo_id="program-stale-union-repair",
         action="add_or_review_modal_ambiguity_policy",
@@ -8619,7 +8576,13 @@ def test_codex_work_packet_apply_to_main_union_repairs_stale_patch_conflict(
     )
     (repo / "README.md").write_text("main-alpha\nbeta\ngamma\n", encoding="utf-8")
     subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
-    subprocess.run(["git", "commit", "-m", "advance main"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "commit", "-m", "advance main"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
 
     updated = apply_codex_worktree_changes_to_main(
         packet,
@@ -8657,7 +8620,9 @@ def test_codex_work_packet_apply_to_main_repairs_dirty_target_in_worktree(tmp_pa
     subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
     (repo / "README.md").write_text("alpha\nbeta\ngamma\n", encoding="utf-8")
     subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
-    subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True
+    )
     todo = ModalTodo(
         todo_id="program-dirty-repair",
         action="add_or_review_modal_ambiguity_policy",
@@ -8703,9 +8668,7 @@ def test_codex_work_packet_apply_to_main_repairs_dirty_target_in_worktree(tmp_pa
     assert updated["main_apply_merge_repair"]["mode"] == "dirty_target_worktree_merge"
     assert updated["main_apply_merge_repair"]["status"] == "repaired"
     assert updated["main_apply_dirty_files"] == ["README.md"]
-    assert (repo / "README.md").read_text(encoding="utf-8") == (
-        "codex-alpha\nbeta\nmain-gamma\n"
-    )
+    assert (repo / "README.md").read_text(encoding="utf-8") == ("codex-alpha\nbeta\nmain-gamma\n")
 
     subprocess.run(
         ["git", "worktree", "remove", packet["worktree_path"], "--force"],
@@ -8726,7 +8689,9 @@ def test_codex_work_packet_apply_to_main_union_repairs_dirty_target_conflict(
     subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
     (repo / "README.md").write_text("alpha\nbeta\ngamma\n", encoding="utf-8")
     subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
-    subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True
+    )
     todo = ModalTodo(
         todo_id="program-dirty-union-repair",
         action="add_or_review_modal_ambiguity_policy",
@@ -8796,7 +8761,9 @@ def test_codex_work_packet_apply_to_main_marks_no_merged_delta_as_complete(
     subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
     (repo / "README.md").write_text("alpha\nbeta\ngamma\n", encoding="utf-8")
     subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
-    subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True
+    )
     todo = ModalTodo(
         todo_id="program-dirty-no-delta",
         action="add_or_review_modal_ambiguity_policy",
@@ -8840,9 +8807,7 @@ def test_codex_work_packet_apply_to_main_marks_no_merged_delta_as_complete(
     assert updated["main_apply_status"] == "no_changes"
     assert updated["main_apply_repair_status"] == "no_merged_delta"
     assert updated["patch_error"] is None
-    assert (repo / "README.md").read_text(encoding="utf-8") == (
-        "codex-alpha\nbeta\ngamma\n"
-    )
+    assert (repo / "README.md").read_text(encoding="utf-8") == ("codex-alpha\nbeta\ngamma\n")
 
     subprocess.run(
         ["git", "worktree", "remove", packet["worktree_path"], "--force"],
@@ -8863,7 +8828,9 @@ def test_codex_work_packet_apply_to_main_union_repairs_dirty_and_stale_conflict(
     subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
     (repo / "README.md").write_text("alpha\nbeta\ngamma\n", encoding="utf-8")
     subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
-    subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True
+    )
     todo = ModalTodo(
         todo_id="program-dirty-stale-union-repair",
         action="add_or_review_modal_ambiguity_policy",
@@ -8896,7 +8863,13 @@ def test_codex_work_packet_apply_to_main_union_repairs_dirty_and_stale_conflict(
     )
     (repo / "README.md").write_text("main-alpha\nbeta\ngamma\n", encoding="utf-8")
     subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
-    subprocess.run(["git", "commit", "-m", "advance main"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "commit", "-m", "advance main"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
     (repo / "README.md").write_text("source-alpha\nbeta\ngamma\n", encoding="utf-8")
 
     updated = apply_codex_worktree_changes_to_main(
@@ -8927,7 +8900,9 @@ def test_codex_work_packet_apply_to_main_union_repairs_dirty_and_stale_conflict(
     )
 
 
-def test_codex_work_packet_executor_writes_prompt_and_refreshes_patch(tmp_path, monkeypatch) -> None:
+def test_codex_work_packet_executor_writes_prompt_and_refreshes_patch(
+    tmp_path, monkeypatch
+) -> None:
     repo, packet = _create_git_repo_with_program_synthesis_packet(tmp_path)
     codex_stub = tmp_path / "codex-stub.py"
     codex_stub.write_text(
@@ -9039,9 +9014,7 @@ def test_codex_patch_only_packet_accepts_unchanged_baseline_failures(tmp_path) -
     assert updated["isolated_validation"]["status"] == "failed"
     assert updated["isolated_baseline_validation"]["status"] == "failed"
     assert updated["isolated_baseline_failure_accepted"] is True
-    assert not updated["isolated_validation_comparison"][
-        "packet_only_failure_tokens"
-    ]
+    assert not updated["isolated_validation_comparison"]["packet_only_failure_tokens"]
     assert updated["patch_status"] == "created"
     adaptive_plan = runner._codex_packet_adaptive_worker_plan(
         updated,
@@ -9210,7 +9183,9 @@ def test_codex_work_packet_executor_retries_with_sandbox_fallback(tmp_path, monk
     )
 
 
-def test_codex_work_packet_action_hints_cover_parser_rule_without_target_component(tmp_path) -> None:
+def test_codex_work_packet_action_hints_cover_parser_rule_without_target_component(
+    tmp_path,
+) -> None:
     repo = tmp_path / "repo-action-hints"
     repo.mkdir()
     subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
@@ -9218,7 +9193,9 @@ def test_codex_work_packet_action_hints_cover_parser_rule_without_target_compone
     subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
     (repo / "README.md").write_text("repo for action hints\n", encoding="utf-8")
     subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
-    subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True
+    )
 
     sample = build_us_code_sample(
         title="16",
@@ -9246,9 +9223,10 @@ def test_codex_work_packet_action_hints_cover_parser_rule_without_target_compone
         worker_id="codex-worker",
     )
 
-    assert "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py" in packet[
-        "suggested_target_files"
-    ]
+    assert (
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py"
+        in packet["suggested_target_files"]
+    )
     assert "ipfs_datasets_py/logic/modal/compiler.py" in packet["suggested_target_files"]
 
     subprocess.run(
@@ -9455,9 +9433,7 @@ def test_compiler_ir_metric_block_reports_deterministic_codec_losses(monkeypatch
     assert block["sample_count"] == 1
     assert block["evaluated_count"] == 1
     assert block["metric_failures"] == 0
-    assert block["metric_profile_version"] == (
-        runner.COMPILER_IR_METRIC_PROFILE_VERSION
-    )
+    assert block["metric_profile_version"] == (runner.COMPILER_IR_METRIC_PROFILE_VERSION)
     assert block["llm_call_count"] == 0.0
     assert "cross_entropy_entropy_loss" in block
     assert "cross_entropy_excess_loss" in block
@@ -9482,12 +9458,8 @@ def test_compiler_ir_metric_block_reports_deterministic_codec_losses(monkeypatch
     assert "text_reconstruction_loss" in block
     assert "compiler_ir_text_reconstruction_loss" in block
     assert "modal_span_coverage" in block
-    assert block["compiler_ir_cross_entropy_loss"] == pytest.approx(
-        block["cross_entropy_loss"]
-    )
-    assert block["compiler_ir_cosine_similarity"] == pytest.approx(
-        block["cosine_similarity"]
-    )
+    assert block["compiler_ir_cross_entropy_loss"] == pytest.approx(block["cross_entropy_loss"])
+    assert block["compiler_ir_cosine_similarity"] == pytest.approx(block["cosine_similarity"])
     assert block["source_decompiled_text_embedding_cosine_loss"] == pytest.approx(
         max(0.0, 1.0 - block["source_decompiled_text_embedding_cosine_similarity"])
     )
@@ -9837,9 +9809,7 @@ def test_compiler_ir_metric_timeout_cache_ignores_guidance_drift(
         def compiler_guidance_for_sample(self, *_args, **_kwargs):
             self.calls += 1
             return {
-                "ranked_guidance_features": [
-                    {"feature": f"feature-{self.calls}", "weight": 1.0}
-                ],
+                "ranked_guidance_features": [{"feature": f"feature-{self.calls}", "weight": 1.0}],
                 "synthesis_focus": f"focus-{self.calls}",
             }
 
@@ -10121,10 +10091,7 @@ def test_compiler_ir_metric_guided_cache_ignores_decoded_embedding_drift(
     assert first["persistent_cache_hit"] is False
     assert second["persistent_cache_hit"] is True
     assert second["sample_cache_not_consulted_due_block_hit"] is True
-    assert (
-        second["compiler_ir_guidance_cache_policy"]
-        == runner._COMPILER_IR_GUIDANCE_CACHE_POLICY
-    )
+    assert second["compiler_ir_guidance_cache_policy"] == runner._COMPILER_IR_GUIDANCE_CACHE_POLICY
     assert first["cross_entropy_loss"] == second["cross_entropy_loss"]
 
 
@@ -10319,9 +10286,7 @@ def test_compiler_guidance_diagnostics_do_not_pad_structural_decode_metrics() ->
         compiler_guidance={
             "family_distribution": {"deontic": 1.0},
             "feature_groups": {
-                "decompiler_surface_template": [
-                    "decompiler-surface:diagnostic-only-token"
-                ],
+                "decompiler_surface_template": ["decompiler-surface:diagnostic-only-token"],
             },
             "legal_ir_predicted_view_distribution": {"modal.frame_logic": 1.0},
             "legal_ir_target_view_distribution": {"modal.frame_logic": 1.0},
@@ -10334,19 +10299,14 @@ def test_compiler_guidance_diagnostics_do_not_pad_structural_decode_metrics() ->
     assert guided.metadata["compiler_guidance_applied"] is True
     assert any(
         "diagnostic-only-token" in value
-        for value in guided_slots[
-            "compiler_guidance_decompiler_surface_template_feature"
-        ]
+        for value in guided_slots["compiler_guidance_decompiler_surface_template_feature"]
     )
-    assert "diagnostic-only-token" not in guided.metadata[
-        "modal_decompiler_structural_text"
-    ]
-    assert "repair_deontic_bridge_quality_gate" not in guided.metadata[
-        "modal_decompiler_structural_text"
-    ]
-    assert guided.losses["source_copy_loss"] == pytest.approx(
-        plain.losses["source_copy_loss"]
+    assert "diagnostic-only-token" not in guided.metadata["modal_decompiler_structural_text"]
+    assert (
+        "repair_deontic_bridge_quality_gate"
+        not in guided.metadata["modal_decompiler_structural_text"]
     )
+    assert guided.losses["source_copy_loss"] == pytest.approx(plain.losses["source_copy_loss"])
 
 
 def test_compiler_guidance_surface_terms_activate_structural_decode() -> None:
@@ -10447,9 +10407,7 @@ def test_compiler_guidance_cue_terms_and_views_reach_deterministic_ir() -> None:
     triples = modal_ir_to_flogic_triples(guided.modal_ir)
     triples_by_predicate = {}
     for triple in triples:
-        triples_by_predicate.setdefault(triple["predicate"], set()).add(
-            triple["object"]
-        )
+        triples_by_predicate.setdefault(triple["predicate"], set()).add(triple["object"])
 
     assert guided.metadata["compiler_guidance_semantic_overlay_terms"] == [
         "authority",
@@ -10487,8 +10445,7 @@ def test_compiler_guidance_promotes_exception_and_prohibition_to_typed_ir() -> N
         title="5",
         section="552",
         text=(
-            "The agency may not disclose protected records except as authorized "
-            "by subsection (b)."
+            "The agency may not disclose protected records except as authorized by subsection (b)."
         ),
     )
     codec = DeterministicModalLogicCodec(
@@ -10518,9 +10475,7 @@ def test_compiler_guidance_promotes_exception_and_prohibition_to_typed_ir() -> N
     triples = modal_ir_to_flogic_triples(guided.modal_ir)
     triples_by_predicate = {}
     for triple in triples:
-        triples_by_predicate.setdefault(triple["predicate"], set()).add(
-            triple["object"]
-        )
+        triples_by_predicate.setdefault(triple["predicate"], set()).add(triple["object"])
 
     typed_semantics = guided.modal_ir.metadata["compiler_guidance_typed_semantics"]
     assert guided.metadata["compiler_guidance_semantic_overlay_terms"] == [
@@ -10534,15 +10489,10 @@ def test_compiler_guidance_promotes_exception_and_prohibition_to_typed_ir() -> N
         formula.metadata.get("compiler_guidance_typed_prohibition") is True
         for formula in guided.modal_ir.formulas
     )
-    assert {"exception", "prohibition"} <= triples_by_predicate[
-        "compiler_guidance_typed_semantic"
-    ]
+    assert {"exception", "prohibition"} <= triples_by_predicate["compiler_guidance_typed_semantic"]
     assert "negative" in triples_by_predicate["compiler_guidance_force_polarity"]
     assert "prohibition" in triples_by_predicate["compiler_guidance_deontic_force"]
-    assert any(
-        value.lower().startswith("except")
-        for value in triples_by_predicate["exception"]
-    )
+    assert any(value.lower().startswith("except") for value in triples_by_predicate["exception"])
 
 
 def test_compiler_guidance_overlay_drops_redundant_negation_marker() -> None:
@@ -10611,16 +10561,10 @@ def test_compiler_guidance_canary_block_reports_quality_gate() -> None:
         "sample_metric_records": [
             {
                 "compiler_guidance_applied": True,
-                "compiler_guidance_legal_ir_view_gaps": [
-                    "deontic_norms:underrepresented"
-                ],
-                "compiler_guidance_legal_ir_view_family_gaps": [
-                    "deontic:underrepresented"
-                ],
+                "compiler_guidance_legal_ir_view_gaps": ["deontic_norms:underrepresented"],
+                "compiler_guidance_legal_ir_view_family_gaps": ["deontic:underrepresented"],
                 "compiler_guidance_semantic_overlay_terms": ["shall"],
-                "compiler_guidance_todo_routes": [
-                    "refine_semantic_decompiler_reconstruction"
-                ],
+                "compiler_guidance_todo_routes": ["refine_semantic_decompiler_reconstruction"],
                 "metrics": {
                     "cosine_similarity": 0.25,
                     "cross_entropy_excess_loss": 0.35,
@@ -10654,24 +10598,21 @@ def test_compiler_guidance_canary_block_reports_quality_gate() -> None:
     assert block["frame_changed_count"] == 1
     assert block["attribution"]["basis"] == "sample_records"
     assert block["attribution"]["matched_sample_count"] == 1
-    assert block["attribution"]["semantic_overlay_terms"]["shall"][
-        "quality_gate"
-    ] == "pass"
-    assert block["attribution"]["semantic_overlay_terms"]["shall"][
-        "ce_delta"
+    assert block["attribution"]["semantic_overlay_terms"]["shall"]["quality_gate"] == "pass"
+    assert block["attribution"]["semantic_overlay_terms"]["shall"]["ce_delta"] == pytest.approx(0.2)
+    assert (
+        block["attribution"]["legal_ir_view_gaps"]["deontic_norms:underrepresented"]["quality_gate"]
+        == "pass"
+    )
+    assert block["attribution"]["legal_ir_view_gaps"]["deontic_norms:underrepresented"][
+        "copy_hack_delta"
     ] == pytest.approx(0.2)
-    assert block["attribution"]["legal_ir_view_gaps"][
-        "deontic_norms:underrepresented"
-    ]["quality_gate"] == "pass"
-    assert block["attribution"]["legal_ir_view_gaps"][
-        "deontic_norms:underrepresented"
-    ]["copy_hack_delta"] == pytest.approx(0.2)
-    assert block["attribution"]["legal_ir_view_family_gaps"][
-        "deontic:underrepresented"
-    ]["copy_hack_delta"] == pytest.approx(0.2)
-    assert block["attribution"]["todo_routes"][
-        "refine_semantic_decompiler_reconstruction"
-    ]["cosine_delta"] == pytest.approx(0.05)
+    assert block["attribution"]["legal_ir_view_family_gaps"]["deontic:underrepresented"][
+        "copy_hack_delta"
+    ] == pytest.approx(0.2)
+    assert block["attribution"]["todo_routes"]["refine_semantic_decompiler_reconstruction"][
+        "cosine_delta"
+    ] == pytest.approx(0.05)
 
     regressed = compiler_guidance_canary_block(
         deterministic,
@@ -10689,15 +10630,9 @@ def test_compiler_guidance_canary_block_reports_quality_gate() -> None:
 
 
 def test_compiler_guidance_promotion_gate_blocks_failed_canary() -> None:
-    passed = compiler_guidance_promotion_gate(
-        {"applied_count": 3, "quality_gate": "pass"}
-    )
-    failed = compiler_guidance_promotion_gate(
-        {"applied_count": 3, "quality_gate": "fail"}
-    )
-    inactive = compiler_guidance_promotion_gate(
-        {"applied_count": 0, "quality_gate": "inactive"}
-    )
+    passed = compiler_guidance_promotion_gate({"applied_count": 3, "quality_gate": "pass"})
+    failed = compiler_guidance_promotion_gate({"applied_count": 3, "quality_gate": "fail"})
+    inactive = compiler_guidance_promotion_gate({"applied_count": 0, "quality_gate": "inactive"})
 
     assert passed["promotion_allowed"] is True
     assert passed["recommended_mode"] == "promote_deterministic_rules"
@@ -10728,9 +10663,10 @@ def test_compiler_guidance_scope_hints_route_learned_todos_to_codex_scopes() -> 
         "ir_decompiler",
         "tdfol",
     ]
-    assert hints["route_scope_map"]["repair_deontic_bridge_quality_gate"][
-        "target_component"
-    ] == "deontic.ir"
+    assert (
+        hints["route_scope_map"]["repair_deontic_bridge_quality_gate"]["target_component"]
+        == "deontic.ir"
+    )
 
 
 def test_compiler_guidance_signed_view_gaps_route_to_codex_scopes() -> None:
@@ -10744,7 +10680,7 @@ def test_compiler_guidance_signed_view_gaps_route_to_codex_scopes() -> None:
             "deontic_norms:underrepresented": 3,
             "modal_frame_logic:overrepresented": 2,
             "TDFOL_prover:underrepresented": 1,
-        }
+        },
     }
 
     hints = compiler_guidance_scope_hints(guided_block)
@@ -10800,9 +10736,7 @@ def test_compiler_guidance_distillation_candidates_include_promotion_and_routes(
         {
             "compiler_guidance_feature_groups": {"decompiler_plan": 2},
             "compiler_guidance_surface_features": {"must_provide_notice": 2},
-            "compiler_guidance_todo_routes": {
-                "refine_semantic_decompiler_reconstruction": 2
-            },
+            "compiler_guidance_todo_routes": {"refine_semantic_decompiler_reconstruction": 2},
             "compiler_guidance_todo_route_examples": {
                 "refine_semantic_decompiler_reconstruction": [
                     {
@@ -10820,12 +10754,13 @@ def test_compiler_guidance_distillation_candidates_include_promotion_and_routes(
     assert candidates["promotion_allowed"] is True
     assert candidates["recommended_mode"] == "promote_deterministic_rules"
     assert candidates["top_feature_groups"] == {"decompiler_plan": 2}
-    assert candidates["top_todo_routes"] == {
-        "refine_semantic_decompiler_reconstruction": 2
-    }
-    assert candidates["top_todo_route_examples"][
-        "refine_semantic_decompiler_reconstruction"
-    ][0]["sample_id"] == "sample-552"
+    assert candidates["top_todo_routes"] == {"refine_semantic_decompiler_reconstruction": 2}
+    assert (
+        candidates["top_todo_route_examples"]["refine_semantic_decompiler_reconstruction"][0][
+            "sample_id"
+        ]
+        == "sample-552"
+    )
     assert candidates["scope_hints"]["scope_counts"] == {"ir_decompiler": 2}
 
 
@@ -10893,24 +10828,17 @@ def test_compiler_guidance_distillation_candidates_augment_surface_route() -> No
     assert todos[0].metadata["compiler_guidance_semantic_overlay_terms"] == {
         "except": 1,
     }
-    assert todos[0].metadata["compiler_guidance_attribution"]["basis"] == (
-        "sample_records"
-    )
+    assert todos[0].metadata["compiler_guidance_attribution"]["basis"] == ("sample_records")
     assert todos[0].metadata["compiler_guidance_attribution_summary"][
         "warn_semantic_overlay_terms"
     ] == ["except"]
-    assert (
-        todos[0].metadata["compiler_guidance_todo_routes_augmented_from_features"]
-        is True
-    )
+    assert todos[0].metadata["compiler_guidance_todo_routes_augmented_from_features"] is True
 
 
 def test_compiler_guidance_distillation_todos_convert_passing_routes() -> None:
     candidates = compiler_guidance_distillation_candidates(
         {
-            "compiler_guidance_todo_routes": {
-                "refine_semantic_decompiler_reconstruction": 2
-            },
+            "compiler_guidance_todo_routes": {"refine_semantic_decompiler_reconstruction": 2},
             "compiler_guidance_todo_route_examples": {
                 "refine_semantic_decompiler_reconstruction": [
                     {
@@ -10938,9 +10866,7 @@ def test_compiler_guidance_distillation_todos_convert_passing_routes() -> None:
     assert todo.metadata["target_component"] == "modal.ir_decompiler"
     assert todo.metadata["source"] == "compiler_guidance_distillation_v1"
     assert "source_copy_reward_hack_penalty" in todo.metadata["target_metrics"]
-    assert todo.metadata["metric_sample_payloads"][0]["text"] == (
-        "The agency must provide notice."
-    )
+    assert todo.metadata["metric_sample_payloads"][0]["text"] == ("The agency must provide notice.")
 
 
 def test_compiler_guidance_distillation_todos_infer_surface_route() -> None:
@@ -10961,16 +10887,12 @@ def test_compiler_guidance_distillation_todos_infer_surface_route() -> None:
     todos = compiler_guidance_distillation_todos(candidates)
 
     assert candidates["todo_routes_inferred_from_features"] is True
-    assert candidates["top_todo_routes"] == {
-        "refine_semantic_decompiler_reconstruction": 2
-    }
+    assert candidates["top_todo_routes"] == {"refine_semantic_decompiler_reconstruction": 2}
     assert candidates["scope_hints"]["scope_counts"] == {"ir_decompiler": 2}
     assert len(todos) == 1
     todo = todos[0]
     assert todo.action == "refine_semantic_decompiler_reconstruction"
-    assert todo.sample_ids == [
-        "compiler-guidance:refine_semantic_decompiler_reconstruction"
-    ]
+    assert todo.sample_ids == ["compiler-guidance:refine_semantic_decompiler_reconstruction"]
     assert todo.metadata["program_synthesis_scope"] == "ir_decompiler"
     assert todo.metadata["compiler_guidance_todo_routes_inferred_from_features"] is True
     assert todo.metadata["compiler_guidance_surface_features"] == {
@@ -10982,9 +10904,7 @@ def test_compiler_guidance_distillation_todos_infer_surface_route() -> None:
 def test_compiler_guidance_distillation_todos_skip_blocked_candidates() -> None:
     candidates = compiler_guidance_distillation_candidates(
         {
-            "compiler_guidance_todo_routes": {
-                "refine_semantic_decompiler_reconstruction": 2
-            },
+            "compiler_guidance_todo_routes": {"refine_semantic_decompiler_reconstruction": 2},
         },
         {"applied_count": 2, "quality_gate": "fail"},
     )
@@ -10995,9 +10915,7 @@ def test_compiler_guidance_distillation_todos_skip_blocked_candidates() -> None:
 def test_compiler_guidance_activation_todos_convert_warn_routes() -> None:
     candidates = compiler_guidance_distillation_candidates(
         {
-            "compiler_guidance_todo_routes": {
-                "repair_multiview_legal_ir_graph_projection": 1
-            },
+            "compiler_guidance_todo_routes": {"repair_multiview_legal_ir_graph_projection": 1},
             "compiler_guidance_todo_route_examples": {
                 "repair_multiview_legal_ir_graph_projection": [
                     {
@@ -11152,12 +11070,12 @@ def test_bridge_ir_metric_block_reports_per_adapter_views(monkeypatch) -> None:
 
     deontic = block["adapters"]["deontic_norms"]
     assert deontic["views"]["deontic_ir"]["metadata"]["norm_count"] >= 1
-    assert deontic["views"]["deontic_decoder_reconstructions"]["metadata"][
-        "decoder_record_count"
-    ] >= 1
-    assert deontic["views"]["deontic_ir_slot_provenance"]["metadata"][
-        "provenance_record_count"
-    ] >= 1
+    assert (
+        deontic["views"]["deontic_decoder_reconstructions"]["metadata"]["decoder_record_count"] >= 1
+    )
+    assert (
+        deontic["views"]["deontic_ir_slot_provenance"]["metadata"]["provenance_record_count"] >= 1
+    )
     assert deontic["views"]["deontic_graph"]["metadata"]["rule_count"] >= 1
     assert deontic["views"]["frame_logic"]["metadata"]["triple_count"] >= 1
     assert "deontic_decoder_slot_loss" in deontic
@@ -11225,9 +11143,7 @@ def test_autoencoder_memory_gap_block_flags_memorization_probe() -> None:
     )
     autoencoder = AdaptiveModalAutoencoder()
     generalized = autoencoder.evaluate([sample], use_sample_memory=False)
-    autoencoder.state.decoded_embeddings[sample.sample_id] = list(
-        sample.embedding_vector
-    )
+    autoencoder.state.decoded_embeddings[sample.sample_id] = list(sample.embedding_vector)
     sample_memory = autoencoder.evaluate([sample], use_sample_memory=True)
 
     block = runner.autoencoder_memory_gap_block(
@@ -11305,9 +11221,7 @@ def test_autoencoder_low_rank_load_report_hydrates_sidecar(
         },
     )
     state_path = tmp_path / "state.json"
-    sidecar_path = ModalAutoencoderTrainingState.low_rank_shadow_sidecar_path(
-        state_path
-    )
+    sidecar_path = ModalAutoencoderTrainingState.low_rank_shadow_sidecar_path(state_path)
     source.save_low_rank_shadow_json(sidecar_path, rank=4)
     target = ModalAutoencoderTrainingState(
         feature_embedding_weights={"token:agency": [9.0, 9.0, 9.0, 9.0]},
@@ -11329,9 +11243,7 @@ def test_autoencoder_low_rank_load_report_hydrates_sidecar(
         9.0,
         9.0,
     ]
-    assert target.feature_embedding_weights["token:duty"] == pytest.approx(
-        [2.0, 0.0, -2.0, 1.0]
-    )
+    assert target.feature_embedding_weights["token:duty"] == pytest.approx([2.0, 0.0, -2.0, 1.0])
 
 
 def test_learned_ir_metric_block_reports_autoencoder_view_alignment() -> None:
@@ -11383,10 +11295,7 @@ def test_supervisor_optimization_run_reduces_ce_and_reconstruction_loss(tmp_path
     assert len(run.steps) >= 1
     assert run.final_evaluation.cross_entropy_loss < before.cross_entropy_loss
     assert run.final_evaluation.reconstruction_loss < before.reconstruction_loss
-    assert (
-        run.final_evaluation.embedding_cosine_similarity
-        > before.embedding_cosine_similarity
-    )
+    assert run.final_evaluation.embedding_cosine_similarity > before.embedding_cosine_similarity
     assert run.final_evaluation.embedding_cosine_similarity > 0.999
     assert run.to_dict()["steps"]
     assert path.read_text(encoding="utf-8").startswith("{")
@@ -11458,17 +11367,15 @@ def test_todo_precomputed_evaluations_follow_accepted_projection_state() -> None
     assert reused_train is before_train
     assert reused_validation is before_validation
 
-    projected_train, projected_validation = (
-        runner._todo_supervisor_precomputed_evaluations(
-            feature_projection_report={
-                "accepted_epochs": 1,
-                "after": before_validation.to_dict(),
-            },
-            train_samples=[train],
-            validation_samples=[validation],
-            before_train=before_train,
-            before_validation=before_validation,
-        )
+    projected_train, projected_validation = runner._todo_supervisor_precomputed_evaluations(
+        feature_projection_report={
+            "accepted_epochs": 1,
+            "after": before_validation.to_dict(),
+        },
+        train_samples=[train],
+        validation_samples=[validation],
+        before_train=before_train,
+        before_validation=before_validation,
     )
     assert projected_train is None
     assert projected_validation is not None

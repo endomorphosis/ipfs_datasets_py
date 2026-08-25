@@ -35,6 +35,7 @@ import pytest
 # domain/__init__.py ImportError branches (lines 17-18, 22-23, 27-28)
 # ─────────────────────────────────────────────────────────────
 
+
 class TestDomainInitImportErrorBranches:
     """GIVEN forced ImportErrors in domain/__init__.py,
     WHEN the module is imported,
@@ -45,10 +46,12 @@ class TestDomainInitImportErrorBranches:
         WHEN domain/__init__ is loaded,
         THEN LegalDomainKnowledge is None (lines 17-18)."""
         import importlib
-        with patch.dict(sys.modules, {
-            'ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge': None
-        }):
+
+        with patch.dict(
+            sys.modules, {"ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge": None}
+        ):
             import ipfs_datasets_py.logic.integration.domain as dm
+
             importlib.reload(dm)
             assert dm.LegalDomainKnowledge is None
 
@@ -57,10 +60,12 @@ class TestDomainInitImportErrorBranches:
         WHEN domain/__init__ is loaded,
         THEN LegalSymbolicAnalyzer is None (lines 22-23)."""
         import importlib
-        with patch.dict(sys.modules, {
-            'ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer': None
-        }):
+
+        with patch.dict(
+            sys.modules, {"ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer": None}
+        ):
             import ipfs_datasets_py.logic.integration.domain as dm
+
             importlib.reload(dm)
             assert dm.LegalSymbolicAnalyzer is None
 
@@ -69,10 +74,12 @@ class TestDomainInitImportErrorBranches:
         WHEN domain/__init__ is loaded,
         THEN DeonticQueryEngine is None (lines 27-28)."""
         import importlib
-        with patch.dict(sys.modules, {
-            'ipfs_datasets_py.logic.integration.domain.deontic_query_engine': None
-        }):
+
+        with patch.dict(
+            sys.modules, {"ipfs_datasets_py.logic.integration.domain.deontic_query_engine": None}
+        ):
             import ipfs_datasets_py.logic.integration.domain as dm
+
             importlib.reload(dm)
             assert dm.DeonticQueryEngine is None
 
@@ -81,6 +88,7 @@ class TestDomainInitImportErrorBranches:
 # deontological_reasoning.py – conditional/exception modality paths
 # ─────────────────────────────────────────────────────────────
 
+
 class TestDeontologicalReasoningModalityPaths:
     """GIVEN a DeonticExtractor,
     WHEN extracting conditional/exception statements with different modal words,
@@ -88,7 +96,10 @@ class TestDeontologicalReasoningModalityPaths:
 
     @pytest.fixture
     def extractor(self):
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import DeonticExtractor
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
+            DeonticExtractor,
+        )
+
         return DeonticExtractor()
 
     def test_conditional_may_modality_hits_permission_branch(self, extractor):
@@ -98,8 +109,13 @@ class TestDeontologicalReasoningModalityPaths:
         text = "if there is a breach, the contractor may terminate the agreement"
         stmts = extractor._extract_conditional_statements(text, "doc1")
         assert len(stmts) >= 1
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import DeonticModality
-        assert stmts[0].modality == DeonticModality.CONDITIONAL  # stored as CONDITIONAL (see line 163)
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
+            DeonticModality,
+        )
+
+        assert (
+            stmts[0].modality == DeonticModality.CONDITIONAL
+        )  # stored as CONDITIONAL (see line 163)
 
     def test_conditional_cannot_modality_hits_prohibition_branch(self, extractor):
         """GIVEN conditional pattern with 'cannot',
@@ -114,11 +130,14 @@ class TestDeontologicalReasoningModalityPaths:
         WHEN _extract_conditional_statements is called,
         THEN continue is hit (line 154) and no statement is appended."""
         # Inject a custom pattern to force an unknown modal word
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import DeonticPatterns
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            DeonticPatterns,
+        )
+
         old_patterns = DeonticPatterns.CONDITIONAL_PATTERNS[:]
         # Pattern that matches but with modal word 'might' (not in allowed set)
         DeonticPatterns.CONDITIONAL_PATTERNS = [
-            r'if\s+([^,]+),?\s+(?:then\s+)?(\w+(?:\s+\w+)*)\s+(might)\s+([^.!?]+)'
+            r"if\s+([^,]+),?\s+(?:then\s+)?(\w+(?:\s+\w+)*)\s+(might)\s+([^.!?]+)"
         ]
         try:
             text = "if rain occurs, the farmer might irrigate the field"
@@ -147,10 +166,13 @@ class TestDeontologicalReasoningModalityPaths:
         """GIVEN exception pattern with unknown modal word,
         WHEN _extract_exception_statements is called,
         THEN continue is hit (line 198) and no statement appended."""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import DeonticPatterns
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            DeonticPatterns,
+        )
+
         old_patterns = DeonticPatterns.EXCEPTION_PATTERNS[:]
         DeonticPatterns.EXCEPTION_PATTERNS = [
-            r'(\w+(?:\s+\w+)*)\s+(might)\s+([^,]+),?\s+(?:unless|except when)\s+([^.!?]+)'
+            r"(\w+(?:\s+\w+)*)\s+(might)\s+([^,]+),?\s+(?:unless|except when)\s+([^.!?]+)"
         ]
         try:
             text = "the agent might act, unless circumstances change"
@@ -163,10 +185,13 @@ class TestDeontologicalReasoningModalityPaths:
         """GIVEN a conditional pattern that captures fewer groups than expected,
         WHEN the extractor processes it,
         THEN IndexError is caught and continues (lines 172-173)."""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import DeonticPatterns
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            DeonticPatterns,
+        )
+
         old_patterns = DeonticPatterns.CONDITIONAL_PATTERNS[:]
         # Pattern with only 1 group (not 4) → match.group(2) raises IndexError
-        DeonticPatterns.CONDITIONAL_PATTERNS = [r'if\s+([^,]+)']
+        DeonticPatterns.CONDITIONAL_PATTERNS = [r"if\s+([^,]+)"]
         try:
             text = "if it happens it happens it happens it happens"
             stmts = extractor._extract_conditional_statements(text, "doc1")
@@ -178,9 +203,12 @@ class TestDeontologicalReasoningModalityPaths:
         """GIVEN an exception pattern that captures fewer groups than expected,
         WHEN the extractor processes it,
         THEN IndexError is caught and continues (lines 216-217)."""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import DeonticPatterns
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            DeonticPatterns,
+        )
+
         old_patterns = DeonticPatterns.EXCEPTION_PATTERNS[:]
-        DeonticPatterns.EXCEPTION_PATTERNS = [r'(\w+)\s+must']  # only 1 group
+        DeonticPatterns.EXCEPTION_PATTERNS = [r"(\w+)\s+must"]  # only 1 group
         try:
             text = "employee must comply with rules"
             stmts = extractor._extract_exception_statements(text, "doc1")
@@ -193,6 +221,7 @@ class TestDeontologicalReasoningModalityPaths:
 # temporal_deontic_rag_store.py – TheoremMetadata and retrieval paths
 # ─────────────────────────────────────────────────────────────
 
+
 class TestTemporalDeonticRAGStorePaths:
     """GIVEN a TemporalDeonticRAGStore and TheoremMetadata,
     WHEN calling various methods,
@@ -200,22 +229,32 @@ class TestTemporalDeonticRAGStorePaths:
 
     @pytest.fixture
     def store(self):
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TemporalDeonticRAGStore
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TemporalDeonticRAGStore,
+        )
+
         return TemporalDeonticRAGStore()
 
     @pytest.fixture
     def formula(self):
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         return DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="test_prop")
 
     @pytest.fixture
     def theorem_meta(self, formula):
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TheoremMetadata
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TheoremMetadata,
+        )
+
         return TheoremMetadata(
             theorem_id="t1",
             formula=formula,
             embedding=np.random.random(768),
-            temporal_scope=(None, None)
+            temporal_scope=(None, None),
         )
 
     def test_theorem_metadata_hash_is_stable(self, theorem_meta):
@@ -238,7 +277,10 @@ class TestTemporalDeonticRAGStorePaths:
         """GIVEN two TheoremMetadata with the same theorem_id,
         WHEN __eq__ is called,
         THEN returns True (line 61)."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TheoremMetadata
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TheoremMetadata,
+        )
+
         m1 = TheoremMetadata("t42", formula, np.zeros(3), (None, None))
         m2 = TheoremMetadata("t42", formula, np.ones(3), (None, None))
         assert m1 == m2
@@ -253,11 +295,16 @@ class TestTemporalDeonticRAGStorePaths:
         results = store.retrieve_relevant_theorems(formula)
         assert isinstance(results, list)
 
-    def test_retrieve_relevant_theorems_none_embedding_uses_default_similarity(self, store, formula):
+    def test_retrieve_relevant_theorems_none_embedding_uses_default_similarity(
+        self, store, formula
+    ):
         """GIVEN a theorem with embedding=None in the store,
         WHEN retrieve_relevant_theorems is called,
         THEN similarity defaults to 0.5 (line 235)."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TheoremMetadata
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TheoremMetadata,
+        )
+
         m = TheoremMetadata("t_no_embed", formula, None, (None, None))
         store.theorems["t_no_embed"] = m
         results = store.retrieve_relevant_theorems(formula)
@@ -267,9 +314,16 @@ class TestTemporalDeonticRAGStorePaths:
         """GIVEN a theorem in temporal_index,
         WHEN retrieve_relevant_theorems is called with temporal_context,
         THEN theorems from temporal_index are included (line 361)."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TheoremMetadata
-        m = TheoremMetadata("t_temporal", formula, np.random.random(768),
-                            (datetime(2020, 1, 1), datetime(2025, 1, 1)))
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TheoremMetadata,
+        )
+
+        m = TheoremMetadata(
+            "t_temporal",
+            formula,
+            np.random.random(768),
+            (datetime(2020, 1, 1), datetime(2025, 1, 1)),
+        )
         store.theorems["t_temporal"] = m
         store.temporal_index["2023-06"] = ["t_temporal"]
         results = store.retrieve_relevant_theorems(formula, temporal_context=datetime(2023, 6, 15))
@@ -279,9 +333,16 @@ class TestTemporalDeonticRAGStorePaths:
         """GIVEN a theorem whose temporal scope overlaps the query time,
         WHEN retrieve_relevant_theorems is called,
         THEN the temporal overlap check is executed (line 298)."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TheoremMetadata
-        m = TheoremMetadata("t_overlap", formula, np.random.random(768),
-                            (datetime(2020, 1, 1), datetime(2025, 1, 1)))
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TheoremMetadata,
+        )
+
+        m = TheoremMetadata(
+            "t_overlap",
+            formula,
+            np.random.random(768),
+            (datetime(2020, 1, 1), datetime(2025, 1, 1)),
+        )
         store.theorems["t_overlap"] = m
         results = store.retrieve_relevant_theorems(formula, temporal_context=datetime(2022, 6, 15))
         assert any(r.theorem_id == "t_overlap" for r in results)
@@ -306,9 +367,11 @@ class TestTemporalDeonticRAGStorePaths:
         """GIVEN a theorem with scope (2010-2015) and context_time=2023,
         WHEN _check_temporal_conflicts is called,
         THEN returns a conflict dict (line 458)."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TheoremMetadata
-        m = TheoremMetadata("t_old", formula, None,
-                            (datetime(2010, 1, 1), datetime(2015, 1, 1)))
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TheoremMetadata,
+        )
+
+        m = TheoremMetadata("t_old", formula, None, (datetime(2010, 1, 1), datetime(2015, 1, 1)))
         conflict = store._check_temporal_conflicts(formula, [m], datetime(2023, 6, 15))
         assert conflict is not None
         assert conflict["type"] == "temporal_conflict"
@@ -317,7 +380,10 @@ class TestTemporalDeonticRAGStorePaths:
         """GIVEN temporal_conflicts list,
         WHEN _generate_consistency_reasoning is called,
         THEN 'Temporal conflicts:' appears in output (lines 504-507)."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import TheoremMetadata
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
+            TheoremMetadata,
+        )
+
         m = TheoremMetadata("t_x", formula, None, (None, None))
         temporal_conflict = {"type": "temporal_conflict", "description": "some conflict"}
         reasoning = store._generate_consistency_reasoning([], [temporal_conflict], [m])
@@ -328,19 +394,25 @@ class TestTemporalDeonticRAGStorePaths:
         WHEN the module is imported with forced ImportError on vector_stores,
         THEN the fallback stubs are used (lines 25, 30, 34)."""
         import importlib
-        with patch.dict(sys.modules, {
-            'ipfs_datasets_py.logic.integration.vector_stores.base': None,
-            'ipfs_datasets_py.logic.integration.embeddings.base': None,
-        }):
+
+        with patch.dict(
+            sys.modules,
+            {
+                "ipfs_datasets_py.logic.integration.vector_stores.base": None,
+                "ipfs_datasets_py.logic.integration.embeddings.base": None,
+            },
+        ):
             import ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store as m
+
             importlib.reload(m)
             # Verify the fallback stubs exist
-            assert hasattr(m, 'BaseVectorStore') or hasattr(m, 'TemporalDeonticRAGStore')
+            assert hasattr(m, "BaseVectorStore") or hasattr(m, "TemporalDeonticRAGStore")
 
 
 # ─────────────────────────────────────────────────────────────
 # symbolic/neurosymbolic_graphrag.py
 # ─────────────────────────────────────────────────────────────
+
 
 class TestNeurosymbolicGraphRAGPaths:
     """GIVEN NeurosymbolicGraphRAG,
@@ -361,9 +433,11 @@ class TestNeurosymbolicGraphRAGPaths:
         mock_strategy.NEURAL_ONLY = "NEURAL_ONLY"
         mock_strategy.HYBRID = "HYBRID"
 
-        with patch.object(mod, "HAS_NEUROSYMBOLIC", True), \
-             patch.object(mod, "NeuralSymbolicCoordinator", mock_coord_class), \
-             patch.object(mod, "ReasoningStrategy", mock_strategy):
+        with (
+            patch.object(mod, "HAS_NEUROSYMBOLIC", True),
+            patch.object(mod, "NeuralSymbolicCoordinator", mock_coord_class),
+            patch.object(mod, "ReasoningStrategy", mock_strategy),
+        ):
             g = mod.NeurosymbolicGraphRAG(use_neural=True)
             assert g._neural_available is True
             assert g.reasoning_coordinator is not None
@@ -377,9 +451,11 @@ class TestNeurosymbolicGraphRAGPaths:
         mock_strategy = MagicMock()
         mock_strategy.AUTO = "AUTO"
 
-        with patch.object(mod, "HAS_NEUROSYMBOLIC", True), \
-             patch.object(mod, "NeuralSymbolicCoordinator", side_effect=RuntimeError("init fail")), \
-             patch.object(mod, "ReasoningStrategy", mock_strategy):
+        with (
+            patch.object(mod, "HAS_NEUROSYMBOLIC", True),
+            patch.object(mod, "NeuralSymbolicCoordinator", side_effect=RuntimeError("init fail")),
+            patch.object(mod, "ReasoningStrategy", mock_strategy),
+        ):
             g = mod.NeurosymbolicGraphRAG(use_neural=True)
             assert g.reasoning_coordinator is None
 
@@ -392,8 +468,10 @@ class TestNeurosymbolicGraphRAGPaths:
         mock_prover = MagicMock()
         mock_prover.enable_cache.side_effect = Exception("cache error")
 
-        with patch("ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag.TDFOLProver",
-                   return_value=mock_prover):
+        with patch(
+            "ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag.TDFOLProver",
+            return_value=mock_prover,
+        ):
             g = mod.NeurosymbolicGraphRAG(use_neural=False, enable_proof_caching=True)
             assert g.prover is mock_prover
 
@@ -411,9 +489,11 @@ class TestNeurosymbolicGraphRAGPaths:
         mock_strategy = MagicMock()
         mock_strategy.AUTO = "AUTO"
 
-        with patch.object(mod, "HAS_NEUROSYMBOLIC", True), \
-             patch.object(mod, "NeuralSymbolicCoordinator", MagicMock(return_value=mock_coord)), \
-             patch.object(mod, "ReasoningStrategy", mock_strategy):
+        with (
+            patch.object(mod, "HAS_NEUROSYMBOLIC", True),
+            patch.object(mod, "NeuralSymbolicCoordinator", MagicMock(return_value=mock_coord)),
+            patch.object(mod, "ReasoningStrategy", mock_strategy),
+        ):
             g = mod.NeurosymbolicGraphRAG(use_neural=True)
             result = g.process_document("Alice must pay Bob", "doc_neural", auto_prove=True)
             assert len(result.proven_theorems) >= 1
@@ -429,8 +509,10 @@ class TestNeurosymbolicGraphRAGPaths:
         mock_prover_result.proven = True
         mock_prover.prove.return_value = mock_prover_result
 
-        with patch("ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag.TDFOLProver",
-                   return_value=mock_prover):
+        with patch(
+            "ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag.TDFOLProver",
+            return_value=mock_prover,
+        ):
             g = mod.NeurosymbolicGraphRAG(use_neural=False)
             g.reasoning_coordinator = None
             result = g.process_document("Bob shall comply", "doc_symbolic", auto_prove=True)
@@ -470,8 +552,10 @@ class TestNeurosymbolicGraphRAGPaths:
         THEN exception is caught and formula is skipped (lines 244-245)."""
         import ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag as mod
 
-        with patch("ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag.parse_tdfol",
-                   side_effect=Exception("parse error")):
+        with patch(
+            "ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag.parse_tdfol",
+            side_effect=Exception("parse error"),
+        ):
             g = mod.NeurosymbolicGraphRAG(use_neural=False)
             formulas = g._extract_formulas("Alice must pay Bob")
             assert isinstance(formulas, list)
@@ -481,12 +565,19 @@ class TestNeurosymbolicGraphRAGPaths:
         WHEN get_pipeline_stats is called,
         THEN line 348 (total_entities += d.entities as int) is hit."""
         import ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag as mod
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag import PipelineResult
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag import (
+            PipelineResult,
+        )
 
         g = mod.NeurosymbolicGraphRAG(use_neural=False)
         g.documents["d_int"] = PipelineResult(
-            doc_id="d_int", text="test", entities=5,
-            formulas=[], proven_theorems=[], reasoning_chain=[], confidence=0.9
+            doc_id="d_int",
+            text="test",
+            entities=5,
+            formulas=[],
+            proven_theorems=[],
+            reasoning_chain=[],
+            confidence=0.9,
         )
         stats = g.get_pipeline_stats()
         assert stats["total_entities"] == 5
@@ -506,6 +597,7 @@ class TestNeurosymbolicGraphRAGPaths:
 # symbolic/neurosymbolic_api.py
 # ─────────────────────────────────────────────────────────────
 
+
 class TestNeurosymbolicAPIPaths:
     """GIVEN NeurosymbolicReasoner,
     WHEN prove/query/get_capabilities methods are called,
@@ -514,11 +606,16 @@ class TestNeurosymbolicAPIPaths:
     @pytest.fixture
     def reasoner(self):
         import ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api as mod
+
         return mod.NeurosymbolicReasoner()
 
     @pytest.fixture
     def formula(self):
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         return DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="test_obligation")
 
     def test_detect_capabilities_cec_bridge_exception_sets_zero(self, reasoner):
@@ -526,10 +623,15 @@ class TestNeurosymbolicAPIPaths:
         WHEN _detect_capabilities is called,
         THEN cec_rules = 0 (lines 121-122)."""
         import ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api as mod
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api import ReasoningCapabilities
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api import (
+            ReasoningCapabilities,
+        )
+
         caps_default = ReasoningCapabilities()
-        with patch("ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api.NeurosymbolicReasoner._detect_capabilities",
-                   return_value=caps_default):
+        with patch(
+            "ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api.NeurosymbolicReasoner._detect_capabilities",
+            return_value=caps_default,
+        ):
             caps2 = reasoner._detect_capabilities()
         # Just verify calling it succeeds
         assert hasattr(caps2, "cec_rules")
@@ -538,8 +640,10 @@ class TestNeurosymbolicAPIPaths:
         """GIVEN TDFOLShadowProverBridge init raises,
         WHEN _detect_capabilities is called,
         THEN shadowprover_available = False (lines 131-132)."""
-        with patch("ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge.TDFOLShadowProverBridge",
-                   side_effect=RuntimeError("no shadowprover")):
+        with patch(
+            "ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge.TDFOLShadowProverBridge",
+            side_effect=RuntimeError("no shadowprover"),
+        ):
             caps = reasoner._detect_capabilities()
             # Whether True or False, it should not crash
             assert isinstance(caps.shadowprover_available, bool)
@@ -548,7 +652,11 @@ class TestNeurosymbolicAPIPaths:
         """GIVEN given=[formula_object] with axioms in kb,
         WHEN prove() is called,
         THEN axioms are copied to temp_kb (lines 274-276)."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         axiom = DeonticFormula(operator=DeonticOperator.PERMISSION, proposition="extra_rule")
         reasoner.kb.add_axiom(axiom)
 
@@ -566,7 +674,11 @@ class TestNeurosymbolicAPIPaths:
         """GIVEN kb.theorems has entries,
         WHEN prove() is called with given=[],
         THEN theorem copy path (line 277) is hit."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         theorem = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="already_proven")
         reasoner.kb.add_theorem(theorem)
 
@@ -623,6 +735,7 @@ class TestNeurosymbolicAPIPaths:
         WHEN both calls are made,
         THEN the same instance is returned (lines 365-366 in get_reasoner)."""
         import ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api as mod
+
         mod._global_reasoner = None  # reset
         r1 = mod.get_reasoner()
         r2 = mod.get_reasoner()
@@ -634,6 +747,7 @@ class TestNeurosymbolicAPIPaths:
 # caselaw_bulk_processor.py – async paths
 # ─────────────────────────────────────────────────────────────
 
+
 class TestCaselawBulkProcessorAsyncPaths:
     """GIVEN CaselawBulkProcessor with various config options,
     WHEN async methods are called,
@@ -641,7 +755,10 @@ class TestCaselawBulkProcessorAsyncPaths:
 
     @pytest.fixture
     def config_with_validation(self):
-        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import BulkProcessingConfig
+        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
+            BulkProcessingConfig,
+        )
+
         return BulkProcessingConfig(
             caselaw_directories=["/nonexistent_dir"],
             enable_consistency_validation=True,
@@ -651,18 +768,25 @@ class TestCaselawBulkProcessorAsyncPaths:
 
     @pytest.fixture
     def processor(self, config_with_validation):
-        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import CaselawBulkProcessor
+        from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
+            CaselawBulkProcessor,
+        )
+
         return CaselawBulkProcessor(config_with_validation)
 
     def test_process_caselaw_corpus_calls_validate_when_enabled(self, processor):
         """GIVEN enable_consistency_validation=True,
         WHEN process_caselaw_corpus is called,
         THEN _validate_unified_system is invoked (line 167)."""
-        with patch.object(processor, "_discover_caselaw_documents", new_callable=AsyncMock), \
-             patch.object(processor, "_extract_theorems_bulk", new_callable=AsyncMock), \
-             patch.object(processor, "_build_unified_system", new_callable=AsyncMock), \
-             patch.object(processor, "_validate_unified_system", new_callable=AsyncMock) as mock_validate, \
-             patch.object(processor, "_export_unified_system", new_callable=AsyncMock):
+        with (
+            patch.object(processor, "_discover_caselaw_documents", new_callable=AsyncMock),
+            patch.object(processor, "_extract_theorems_bulk", new_callable=AsyncMock),
+            patch.object(processor, "_build_unified_system", new_callable=AsyncMock),
+            patch.object(
+                processor, "_validate_unified_system", new_callable=AsyncMock
+            ) as mock_validate,
+            patch.object(processor, "_export_unified_system", new_callable=AsyncMock),
+        ):
             asyncio.new_event_loop().run_until_complete(processor.process_caselaw_corpus())
         mock_validate.assert_called_once()
 
@@ -670,6 +794,7 @@ class TestCaselawBulkProcessorAsyncPaths:
         """GIVEN _discover_caselaw_documents raises RuntimeError,
         WHEN process_caselaw_corpus is called,
         THEN exception propagates and end_time is set (lines 177-180)."""
+
         async def mock_discover():
             raise RuntimeError("discovery failed")
 
@@ -683,13 +808,16 @@ class TestCaselawBulkProcessorAsyncPaths:
         WHEN _discover_caselaw_documents is called,
         THEN processing_errors increments (lines 213-215)."""
         import tempfile
+
         tmpdir = tempfile.mkdtemp()
         with open(os.path.join(tmpdir, "test.txt"), "w") as f:
             f.write("test document")
 
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            BulkProcessingConfig, CaselawBulkProcessor
+            BulkProcessingConfig,
+            CaselawBulkProcessor,
         )
+
         config = BulkProcessingConfig(
             caselaw_directories=[tmpdir],
             file_patterns=["*.txt"],
@@ -709,8 +837,11 @@ class TestCaselawBulkProcessorAsyncPaths:
         WHEN _extract_theorems_parallel is called with a doc in queue,
         THEN processing_errors increments (lines 350-354)."""
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            BulkProcessingConfig, CaselawBulkProcessor, CaselawDocument
+            BulkProcessingConfig,
+            CaselawBulkProcessor,
+            CaselawDocument,
         )
+
         config = BulkProcessingConfig(
             caselaw_directories=["/nonexistent"],
             enable_parallel_processing=True,
@@ -720,8 +851,13 @@ class TestCaselawBulkProcessorAsyncPaths:
         )
         proc = CaselawBulkProcessor(config)
         doc = CaselawDocument(
-            document_id="d1", title="T", text="test",
-            date=datetime.now(), jurisdiction="US", court="SC", citation="123"
+            document_id="d1",
+            title="T",
+            text="test",
+            date=datetime.now(),
+            jurisdiction="US",
+            court="SC",
+            citation="123",
         )
         proc.processing_queue = [doc]
 
@@ -734,13 +870,21 @@ class TestCaselawBulkProcessorAsyncPaths:
         WHEN _extract_theorems_sequential is called,
         THEN processing_errors increments (lines 368-372)."""
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            BulkProcessingConfig, CaselawBulkProcessor, CaselawDocument
+            BulkProcessingConfig,
+            CaselawBulkProcessor,
+            CaselawDocument,
         )
+
         config = BulkProcessingConfig(caselaw_directories=["/nonexistent"])
         proc = CaselawBulkProcessor(config)
         doc = CaselawDocument(
-            document_id="d1", title="T", text="test",
-            date=datetime.now(), jurisdiction="US", court="SC", citation="123"
+            document_id="d1",
+            title="T",
+            text="test",
+            date=datetime.now(),
+            jurisdiction="US",
+            court="SC",
+            citation="123",
         )
         proc.processing_queue = [doc]
 
@@ -753,8 +897,11 @@ class TestCaselawBulkProcessorAsyncPaths:
         WHEN _validate_unified_system is called,
         THEN check_document is called for each doc (lines 579-604)."""
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            BulkProcessingConfig, CaselawBulkProcessor, CaselawDocument
+            BulkProcessingConfig,
+            CaselawBulkProcessor,
+            CaselawDocument,
         )
+
         config = BulkProcessingConfig(
             caselaw_directories=["/nonexistent"],
             enable_consistency_validation=True,
@@ -762,9 +909,14 @@ class TestCaselawBulkProcessorAsyncPaths:
         )
         proc = CaselawBulkProcessor(config)
         doc = CaselawDocument(
-            document_id="d1", title="T", text="Alice must pay Bob",
-            date=datetime.now(), jurisdiction="US", court="SC", citation="123",
-            legal_domains=["contract"]
+            document_id="d1",
+            title="T",
+            text="Alice must pay Bob",
+            date=datetime.now(),
+            jurisdiction="US",
+            court="SC",
+            citation="123",
+            legal_domains=["contract"],
         )
         proc.processing_queue = [doc]
 
@@ -773,7 +925,9 @@ class TestCaselawBulkProcessorAsyncPaths:
         mock_analysis.consistency_result.is_consistent = False
         mock_analysis.consistency_result.conflicts = [{"desc": "conflict"}]
 
-        with patch("ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor.DocumentConsistencyChecker") as MockChecker:
+        with patch(
+            "ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor.DocumentConsistencyChecker"
+        ) as MockChecker:
             mock_checker_inst = MagicMock()
             mock_checker_inst.check_document.return_value = mock_analysis
             MockChecker.return_value = mock_checker_inst
@@ -785,8 +939,11 @@ class TestCaselawBulkProcessorAsyncPaths:
         WHEN _validate_unified_system is called,
         THEN validation_report.json is written (lines 607-617)."""
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            BulkProcessingConfig, CaselawBulkProcessor, CaselawDocument
+            BulkProcessingConfig,
+            CaselawBulkProcessor,
+            CaselawDocument,
         )
+
         config = BulkProcessingConfig(
             caselaw_directories=["/nonexistent"],
             enable_consistency_validation=True,
@@ -795,9 +952,14 @@ class TestCaselawBulkProcessorAsyncPaths:
         )
         proc = CaselawBulkProcessor(config)
         doc = CaselawDocument(
-            document_id="d1", title="T", text="Alice must pay",
-            date=datetime.now(), jurisdiction="US", court="SC", citation="123",
-            legal_domains=["contract"]
+            document_id="d1",
+            title="T",
+            text="Alice must pay",
+            date=datetime.now(),
+            jurisdiction="US",
+            court="SC",
+            citation="123",
+            legal_domains=["contract"],
         )
         proc.processing_queue = [doc]
 
@@ -806,7 +968,9 @@ class TestCaselawBulkProcessorAsyncPaths:
         mock_analysis.consistency_result.is_consistent = False
         mock_analysis.consistency_result.conflicts = [{"d": "conflict"}]
 
-        with patch("ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor.DocumentConsistencyChecker") as MockChecker:
+        with patch(
+            "ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor.DocumentConsistencyChecker"
+        ) as MockChecker:
             mock_checker_inst = MagicMock()
             mock_checker_inst.check_document.return_value = mock_analysis
             MockChecker.return_value = mock_checker_inst
@@ -820,7 +984,9 @@ class TestCaselawBulkProcessorAsyncPaths:
         WHEN _validate_unified_system is called,
         THEN DocumentConsistencyChecker.check_document is never called."""
         processor.processing_queue = []
-        with patch("ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor.DocumentConsistencyChecker") as MockChecker:
+        with patch(
+            "ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor.DocumentConsistencyChecker"
+        ) as MockChecker:
             mock_inst = MagicMock()
             MockChecker.return_value = mock_inst
             asyncio.new_event_loop().run_until_complete(processor._validate_unified_system())
@@ -834,6 +1000,7 @@ class TestCaselawBulkProcessorAsyncPaths:
 try:
     from unittest.mock import AsyncMock  # Python 3.8+
 except ImportError:
+
     class AsyncMock(MagicMock):
         async def __call__(self, *args, **kwargs):
             return super().__call__(*args, **kwargs)

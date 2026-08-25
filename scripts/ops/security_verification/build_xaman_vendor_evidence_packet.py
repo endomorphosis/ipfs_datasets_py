@@ -29,7 +29,7 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_vendor
 )
 
 
-DEFAULT_TEMPLATE_PATH = Path(MANIFEST_PATH).parent / 'vendor-evidence-intake-template.json'
+DEFAULT_TEMPLATE_PATH = Path(MANIFEST_PATH).parent / "vendor-evidence-intake-template.json"
 DEFAULT_MANIFEST_OUT = Path(MANIFEST_PATH)
 DEFAULT_REVIEW_TEMPLATE_OUT = Path(REVIEW_TEMPLATE_PATH)
 DEFAULT_REVIEW_OUT = Path(REVIEW_PATH)
@@ -43,12 +43,14 @@ def _resolve(root: Path, value: str | Path) -> Path:
 
 def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + '\n', encoding='utf-8')
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + "\n", encoding="utf-8"
+    )
 
 
 def _write_text(path: Path, payload: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(payload, encoding='utf-8')
+    path.write_text(payload, encoding="utf-8")
 
 
 def _label(path: Path, root: Path) -> str:
@@ -81,17 +83,19 @@ def generate(
     if write_template:
         review_template = build_vendor_evidence_review_template(manifest)
         if review_template_out is None:
-            raise VendorEvidenceError('review template output path must be set when --write-review-template is used')
+            raise VendorEvidenceError(
+                "review template output path must be set when --write-review-template is used"
+            )
         _write_json(review_template_out, review_template)
 
     if review_path is not None:
         if verification_out is None:
-            raise VendorEvidenceError('verification output path must be set when --review is used')
+            raise VendorEvidenceError("verification output path must be set when --review is used")
         review_payload = load_json(review_path)
         if set(review_payload.keys()) >= REVIEW_REQUIRED_KEYS:
             review_verification = validate_vendor_evidence_review(review_payload, manifest=manifest)
         else:
-            raise VendorEvidenceError('review payload is missing required reviewer keys')
+            raise VendorEvidenceError("review payload is missing required reviewer keys")
         _write_json(verification_out, review_verification)
 
     return manifest, review_template, review_verification
@@ -99,29 +103,35 @@ def generate(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--repo-root', default=str(ROOT_DIR), help='Repository root containing security_artifacts')
     parser.add_argument(
-        '--intake-template',
+        "--repo-root", default=str(ROOT_DIR), help="Repository root containing security_artifacts"
+    )
+    parser.add_argument(
+        "--intake-template",
         default=str(DEFAULT_TEMPLATE_PATH),
-        help='Input vendor-evidence-intake template path.',
+        help="Input vendor-evidence-intake template path.",
     )
-    parser.add_argument('--manifest-in', default=None, help='Existing manifest to validate and refresh from.')
     parser.add_argument(
-        '--manifest-out',
+        "--manifest-in", default=None, help="Existing manifest to validate and refresh from."
+    )
+    parser.add_argument(
+        "--manifest-out",
         default=str(DEFAULT_MANIFEST_OUT),
-        help='Output path for validated or placeholder vendor-evidence manifest.',
+        help="Output path for validated or placeholder vendor-evidence manifest.",
     )
-    parser.add_argument('--write-review-template', action='store_true', help='Emit a non-evidence review template.')
     parser.add_argument(
-        '--review-template-out',
+        "--write-review-template", action="store_true", help="Emit a non-evidence review template."
+    )
+    parser.add_argument(
+        "--review-template-out",
         default=str(DEFAULT_REVIEW_TEMPLATE_OUT),
-        help='Output path for review template JSON.',
+        help="Output path for review template JSON.",
     )
-    parser.add_argument('--review', default=None, help='Vendor review JSON to validate.')
+    parser.add_argument("--review", default=None, help="Vendor review JSON to validate.")
     parser.add_argument(
-        '--verification-out',
+        "--verification-out",
         default=str(DEFAULT_VERIFICATION_OUT),
-        help='Output path for validated review verification payload.',
+        help="Output path for validated review verification payload.",
     )
     args = parser.parse_args(argv)
 
@@ -138,21 +148,29 @@ def main(argv: list[str] | None = None) -> int:
             verification_out=_resolve(repo_root, args.verification_out) if args.review else None,
         )
         payload = {
-            'manifest_path': _label(_resolve(repo_root, args.manifest_out), repo_root),
-            'manifest_cid': manifest['artifact_cid'],
-            'manifest_status': manifest['manifest_status'],
-            'verification_path': _label(_resolve(repo_root, args.verification_out), repo_root) if args.review else None,
-            'verification_status': review_verification['decision'] if review_verification else None,
-            'review_template_path': _label(_resolve(repo_root, args.review_template_out), repo_root)
+            "manifest_path": _label(_resolve(repo_root, args.manifest_out), repo_root),
+            "manifest_cid": manifest["artifact_cid"],
+            "manifest_status": manifest["manifest_status"],
+            "verification_path": _label(_resolve(repo_root, args.verification_out), repo_root)
+            if args.review
+            else None,
+            "verification_status": review_verification["decision"] if review_verification else None,
+            "review_template_path": _label(_resolve(repo_root, args.review_template_out), repo_root)
             if review_template
             else None,
-            'review_template_status': review_template['template_status'] if review_template else None,
+            "review_template_status": review_template["template_status"]
+            if review_template
+            else None,
         }
-        print(json.dumps({key: value for key, value in payload.items() if value is not None}, sort_keys=True))
+        print(
+            json.dumps(
+                {key: value for key, value in payload.items() if value is not None}, sort_keys=True
+            )
+        )
     except VendorEvidenceError as exc:
         parser.error(str(exc))
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

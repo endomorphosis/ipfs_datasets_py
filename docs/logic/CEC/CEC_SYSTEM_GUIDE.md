@@ -143,12 +143,12 @@ The CEC system is organized into several modules under `ipfs_datasets_py/logic/C
 
 ```python
 from ipfs_datasets_py.logic.CEC.native.dcec_core import (
-    DeonticOperator,      # O, P, F
-    CognitiveOperator,    # B, K, I
-    TemporalOperator,     # □, ◊, X
-    AtomicFormula,        # Basic predicates
-    DeonticFormula,       # Deontic expressions
-    CognitiveFormula,     # Cognitive expressions
+    DeonticOperator,  # O, P, F
+    CognitiveOperator,  # B, K, I
+    TemporalOperator,  # □, ◊, X
+    AtomicFormula,  # Basic predicates
+    DeonticFormula,  # Deontic expressions
+    CognitiveFormula,  # Cognitive expressions
 )
 ```
 
@@ -274,16 +274,10 @@ cec.namespace.add_sort("Robot", parent="Agent")
 cec.namespace.add_sort("Task", parent="Action")
 
 # Create obligation
-obligation = cec.create_obligation(
-    "robot:Robot",
-    "performTask(t:Task)"
-)
+obligation = cec.create_obligation("robot:Robot", "performTask(t:Task)")
 
 # Create permission
-permission = cec.create_permission(
-    "robot:Robot", 
-    "skipTask(t:Task)"
-)
+permission = cec.create_permission("robot:Robot", "skipTask(t:Task)")
 
 # Query
 print(f"Obligations: {cec.get_obligations()}")
@@ -321,22 +315,13 @@ from ipfs_datasets_py.logic.CEC.native import DCECContainer
 cec = DCECContainer()
 
 # Always safe
-always_safe = cec.create_temporal(
-    TemporalOperator.ALWAYS,
-    "safe(system)"
-)
+always_safe = cec.create_temporal(TemporalOperator.ALWAYS, "safe(system)")
 
 # Eventually complete
-eventually_done = cec.create_temporal(
-    TemporalOperator.EVENTUALLY,
-    "complete(task)"
-)
+eventually_done = cec.create_temporal(TemporalOperator.EVENTUALLY, "complete(task)")
 
 # Next state
-next_action = cec.create_temporal(
-    TemporalOperator.NEXT,
-    "execute(action)"
-)
+next_action = cec.create_temporal(TemporalOperator.NEXT, "execute(action)")
 ```
 
 ### Example 4: Event Calculus
@@ -415,8 +400,8 @@ prover = create_prover(ModalLogic.S5)
 
 # Knowledge axioms
 assumptions = [
-    "K(agent, p)",           # Agent knows p
-    "K(agent, p → q)",       # Agent knows p implies q
+    "K(agent, p)",  # Agent knows p
+    "K(agent, p → q)",  # Agent knows p implies q
 ]
 
 # Prove agent knows q
@@ -509,11 +494,12 @@ def create_prover(logic: ModalLogic) -> Prover:
     """Create prover for specific modal logic."""
     ...
 
+
 class ModalLogic(Enum):
-    K = "K"      # Basic modal logic
-    T = "T"      # Reflexive
-    S4 = "S4"    # Reflexive + transitive
-    S5 = "S5"    # Reflexive + symmetric + transitive
+    K = "K"  # Basic modal logic
+    T = "T"  # Reflexive
+    S4 = "S4"  # Reflexive + transitive
+    S5 = "S5"  # Reflexive + symmetric + transitive
 ```
 
 ---
@@ -527,14 +513,16 @@ Create custom rules for domain-specific reasoning:
 ```python
 from ipfs_datasets_py.logic.CEC.native.prover_core import InferenceRule
 
+
 class CustomRule(InferenceRule):
     def can_apply(self, formula: Formula) -> bool:
         # Check if rule applies
         return isinstance(formula, MyFormulaType)
-    
+
     def apply(self, formula: Formula) -> List[Formula]:
         # Apply rule and return conclusions
         return [transformed_formula]
+
 
 prover = TheoremProver()
 prover.add_rule(CustomRule())
@@ -563,16 +551,11 @@ print(ns.is_subtype("MobileRobot", "Agent"))  # True
 Extend the grammar system:
 
 ```python
-from ipfs_datasets_py.logic.CEC.native.grammar_engine import (
-    GrammarRule, Category, LexicalEntry
-)
+from ipfs_datasets_py.logic.CEC.native.grammar_engine import GrammarRule, Category, LexicalEntry
 
 # Add custom lexical entries
 custom_lexicon = {
-    "navigate": LexicalEntry(
-        category=Category.VERB,
-        semantics=lambda: Action("navigate")
-    ),
+    "navigate": LexicalEntry(category=Category.VERB, semantics=lambda: Action("navigate")),
 }
 
 # Add custom grammar rules
@@ -580,7 +563,7 @@ custom_rules = [
     GrammarRule(
         name="NavigateRule",
         pattern=[Category.AGENT, Category.VERB, Category.LOCATION],
-        semantics=lambda agent, verb, loc: DeonticFormula(...)
+        semantics=lambda agent, verb, loc: DeonticFormula(...),
     )
 ]
 ```
@@ -604,6 +587,7 @@ prover.prove(goal, timeout=5.0)  # Adjust based on complexity
 
 # 4. Cache parsed formulas
 from functools import lru_cache
+
 
 @lru_cache(maxsize=1000)
 def parse_cached(formula_str: str):

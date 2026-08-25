@@ -108,24 +108,24 @@ python validate_citations_against_html_and_references.py --database mysql://conn
 ### Example Validation Logic
 ```python
 def validate_citation(row):
-    citation = row['bluebook_citation']
-    
+    citation = row["bluebook_citation"]
+
     # Parse: "Garland, Ark., County Code, §14-75 (2007)"
     parsed = parse_municipal_citation(citation)
-    
+
     errors = []
-    
+
     # Format validation
     if not follows_municipal_format(parsed):
         errors.append("Invalid municipal citation format")
-    
-    # Content validation  
-    if parsed.place != row['place_name']:
+
+    # Content validation
+    if parsed.place != row["place_name"]:
         errors.append(f"Place mismatch: {parsed.place} vs {row['place_name']}")
-    
-    if parsed.year != extract_year(row['date']):
+
+    if parsed.year != extract_year(row["date"]):
         errors.append(f"Year mismatch: {parsed.year} vs {extract_year(row['date'])}")
-        
+
     return len(errors) == 0, errors
 ```
 

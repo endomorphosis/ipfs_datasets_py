@@ -19,36 +19,35 @@ from ipfs_datasets_py.logic.common import (
     LogicConverter,
     ConversionResult,
     ValidationResult,
-    ConversionError
+    ConversionError,
 )
+
 
 class NaturalLanguageToFOLConverter(LogicConverter[str, str]):
     """Convert natural language to First-Order Logic."""
-    
+
     def validate_input(self, text: str) -> ValidationResult:
         """Validate the input text."""
         result = ValidationResult(valid=True)
-        
+
         if not text or not text.strip():
             result.add_error("Input text cannot be empty")
-        
+
         if len(text) > 10000:
             result.add_warning("Text is very long and may take time to process")
-        
+
         return result
-    
+
     def _convert_impl(self, text: str, options: Dict[str, Any]) -> str:
         """Implement the actual conversion logic."""
         # Your conversion logic here
         fol_formula = parse_nl_to_fol(text)
-        
+
         if not fol_formula:
-            raise ConversionError(
-                "Failed to parse natural language",
-                context={"text": text[:100]}
-            )
-        
+            raise ConversionError("Failed to parse natural language", context={"text": text[:100]})
+
         return fol_formula
+
 
 # Usage
 converter = NaturalLanguageToFOLConverter()
@@ -149,13 +148,9 @@ Pass options to control conversion behavior:
 ```python
 result = converter.convert(
     "Alice must pay Bob",
-    options={
-        "confidence": 0.8,
-        "timeout": 30,
-        "model": "gpt-4",
-        "max_length": 1000
-    }
+    options={"confidence": 0.8, "timeout": 30, "model": "gpt-4", "max_length": 1000},
 )
+
 
 # Options are passed to _convert_impl
 def _convert_impl(self, input_data: str, options: Dict[str, Any]) -> str:
@@ -172,11 +167,9 @@ Use `ChainedConverter` to compose multi-step conversions:
 from ipfs_datasets_py.logic.common import ChainedConverter
 
 # Create a pipeline: NL → FOL → TDFOL → SMT
-pipeline = ChainedConverter([
-    NaturalLanguageToFOLConverter(),
-    FOLToTDFOLConverter(),
-    TDFOLToSMTConverter()
-])
+pipeline = ChainedConverter(
+    [NaturalLanguageToFOLConverter(), FOLToTDFOLConverter(), TDFOLToSMTConverter()]
+)
 
 # Execute the entire chain
 result = pipeline.convert("Alice must pay Bob")
@@ -195,27 +188,24 @@ The converter system uses the standardized error hierarchy from `logic.common.er
 ```python
 from ipfs_datasets_py.logic.common import ConversionError
 
+
 def _convert_impl(self, input_data: str, options: Dict[str, Any]) -> str:
     try:
         # Conversion logic
         result = complex_conversion(input_data)
-        
+
         if not result:
             raise ConversionError(
                 "Conversion produced empty result",
-                context={
-                    "input_length": len(input_data),
-                    "input_preview": input_data[:50]
-                }
+                context={"input_length": len(input_data), "input_preview": input_data[:50]},
             )
-        
+
         return result
-        
+
     except SomeExternalError as e:
         # Convert external errors to ConversionError
         raise ConversionError(
-            f"External error: {str(e)}",
-            context={"original_error": type(e).__name__}
+            f"External error: {str(e)}", context={"original_error": type(e).__name__}
         )
 ```
 
@@ -226,17 +216,19 @@ The converter uses generics for type safety:
 ```python
 from typing import Dict
 
+
 class DictToJSONConverter(LogicConverter[Dict, str]):
     """Convert dictionary to JSON string."""
-    
+
     def validate_input(self, input_data: Dict) -> ValidationResult:
         result = ValidationResult(valid=True)
         if not isinstance(input_data, dict):
             result.add_error("Input must be a dictionary")
         return result
-    
+
     def _convert_impl(self, input_data: Dict, options: Dict[str, Any]) -> str:
         import json
+
         return json.dumps(input_data, indent=2)
 ```
 
@@ -248,6 +240,7 @@ Example test structure:
 import pytest
 from your_module import YourConverter
 
+
 class TestYourConverter:
     def test_successful_conversion(self):
         """GIVEN valid input
@@ -256,11 +249,11 @@ class TestYourConverter:
         """
         converter = YourConverter()
         result = converter.convert("valid input")
-        
+
         assert result.success is True
         assert result.output == "expected output"
         assert len(result.errors) == 0
-    
+
     def test_validation_error(self):
         """GIVEN invalid input
         WHEN converting
@@ -268,20 +261,20 @@ class TestYourConverter:
         """
         converter = YourConverter()
         result = converter.convert("invalid")
-        
+
         assert result.success is False
         assert len(result.errors) > 0
-    
+
     def test_caching(self):
         """GIVEN same input twice
         WHEN converting
         THEN second result is cached
         """
         converter = YourConverter()
-        
+
         result1 = converter.convert("input")
         result2 = converter.convert("input")
-        
+
         assert result2.status == ConversionStatus.CACHED
 ```
 
@@ -306,10 +299,11 @@ class NLToFOLConverter(LogicConverter[str, str]):
         if not text:
             result.add_error("Empty input")
         return result
-    
+
     def _convert_impl(self, text: str, options: Dict[str, Any]) -> str:
         # Same conversion logic
         return result
+
 
 # Usage remains simple
 converter = NLToFOLConverter()

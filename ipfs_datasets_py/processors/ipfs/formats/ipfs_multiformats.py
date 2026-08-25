@@ -72,20 +72,20 @@ class ipfs_multiformats_py:
         resources = {"ipfs_gateway": "http://localhost:8080"}
         metadata = {"version": "1.0"}
         formatter = ipfs_multiformats_py(resources, metadata)
-        
+
         # Generate CID for file content
         file_cid = formatter.get_cid("/path/to/document.pdf")
         print(f"File CID: {file_cid}")
-        
+
         # Generate CID for string content
         text_content = "Hello, IPFS world!"
         text_cid = formatter.get_cid(text_content)
         print(f"Text CID: {text_cid}")
-        
+
         # Direct hash operations for advanced use cases
         file_hash = formatter.get_file_sha256("/path/to/data.json")
         multihash_obj = formatter.get_multihash_sha256(file_hash)
-        
+
         # Batch CID generation for multiple files
         file_paths = ["/data/file1.txt", "/data/file2.csv", "/data/file3.json"]
         cids = [formatter.get_cid(path) for path in file_paths]
@@ -107,6 +107,7 @@ class ipfs_multiformats_py:
         - File paths are resolved to absolute paths for consistent processing
         - Base32 encoding provides human-readable content identifiers
     """
+
     def __init__(self, resources: Any, metadata: Any) -> None:
         """
         Initialize IPFS Multiformats Content Identifier Generation System
@@ -127,7 +128,7 @@ class ipfs_multiformats_py:
                 - Performance optimization settings for large file processing
                 - Custom hashing algorithm configurations and extensions
                 - Network timeouts and retry policies for distributed operations
-                
+
             metadata (Any): Operational metadata containing version information,
                 processing configurations, and compatibility settings. Similar
                 to resources, this parameter ensures interface consistency and
@@ -148,7 +149,7 @@ class ipfs_multiformats_py:
             resources = {"ipfs_gateway": "http://localhost:8080"}
             metadata = {"version": "1.0", "format": "raw"}
             formatter = ipfs_multiformats_py(resources, metadata)
-            
+
             # Development configuration with debugging enabled
             dev_resources = {
                 "ipfs_gateway": "http://localhost:8080",
@@ -172,14 +173,14 @@ class ipfs_multiformats_py:
     # Step 1: Hash the file content with SHA-256
     def get_file_sha256(self, file_path: str) -> str:
         hasher = hashlib.sha256()
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             while chunk := f.read(8192):
                 hasher.update(chunk)
         return hasher.digest()
 
     # Step 2: Wrap the hash in Multihash format
     def get_multihash_sha256(self, file_content_hash: str) -> str:
-        mh = self.multihash.wrap(file_content_hash, 'sha2-256')
+        mh = self.multihash.wrap(file_content_hash, "sha2-256")
         return mh
 
     # Step 3: Generate CID from Multihash (CIDv1)
@@ -188,15 +189,15 @@ class ipfs_multiformats_py:
             absolute_path = os.path.abspath(file_data)
             file_content_hash = self.get_file_sha256(file_data)
             mh = self.get_multihash_sha256(file_content_hash)
-            cid = CID('base32', 1, 'raw', mh)
+            cid = CID("base32", 1, "raw", mh)
         else:
-            with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
                 filename = f.name
-                with open(filename, 'w') as f_new:
+                with open(filename, "w") as f_new:
                     f_new.write(file_data)
                 file_content_hash = self.get_file_sha256(filename)
                 mh = self.get_multihash_sha256(file_content_hash)
-                cid = CID('base32', 1, 'raw', mh)
+                cid = CID("base32", 1, "raw", mh)
                 os.remove(filename)
         return str(cid)
 
@@ -218,8 +219,8 @@ def _get_cid_for_string(string: str) -> str:
         - The CID is constructed using the base32 encoding, version 1, and the 'raw' codec.
     """
     hash = hashlib.sha256(string.encode()).digest()
-    mh = multihash.wrap(hash, 'sha2-256')
-    cid = CID('base32', 1, 'raw', mh)
+    mh = multihash.wrap(hash, "sha2-256")
+    cid = CID("base32", 1, "raw", mh)
     return str(cid)
 
 
@@ -231,14 +232,16 @@ def get_cid(file_data: str | Path | bytes, for_string: bool = False) -> str:
 
     Args:
         file_data (str | Path | bytes): The file path or string data to generate a CID for.
-        for_string (bool): Flag to indicate if the input is an arbitrary string 
+        for_string (bool): Flag to indicate if the input is an arbitrary string
             (as opposed to a Path or the string of a path). Defaults to False.
 
     Returns:
         str: The generated CID as a string.
     """
     if not isinstance(file_data, (str, Path, bytes)):
-        raise TypeError(f"file_data must be of type str, Path, or bytes, got {type(file_data).__name__}")
+        raise TypeError(
+            f"file_data must be of type str, Path, or bytes, got {type(file_data).__name__}"
+        )
     if not isinstance(for_string, bool):
         raise TypeError(f"for_string must be of type bool, got {type(for_string).__name__}")
 
@@ -246,7 +249,7 @@ def get_cid(file_data: str | Path | bytes, for_string: bool = False) -> str:
         return _get_cid_for_string(file_data)
 
     if isinstance(file_data, Path):
-       file_data = str(file_data)
+        file_data = str(file_data)
 
     ipfs_multiformats = ipfs_multiformats_py(None, None)
     return ipfs_multiformats.get_cid(file_data)

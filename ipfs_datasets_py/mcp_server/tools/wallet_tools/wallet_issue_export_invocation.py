@@ -9,7 +9,10 @@ from ipfs_datasets_py.wallet.ucan import invocation_to_token, resource_for_expor
 from ._helpers import default_blob_dir, default_wallet_dir, key_from_optional_hex, load, save
 
 
-@tool_metadata(category="wallet_tools", mcp_description="Issue a signed wallet UCAN invocation for encrypted export.")
+@tool_metadata(
+    category="wallet_tools",
+    mcp_description="Issue a signed wallet UCAN invocation for encrypted export.",
+)
 async def wallet_issue_export_invocation(
     wallet_id: str,
     grant_id: str,

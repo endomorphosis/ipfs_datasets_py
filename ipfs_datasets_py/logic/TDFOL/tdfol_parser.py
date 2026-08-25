@@ -62,7 +62,7 @@ logger = logging.getLogger(__name__)
 
 class TokenType:
     """Token types for lexical analysis."""
-    
+
     # Logical operators
     AND = "AND"
     OR = "OR"
@@ -70,16 +70,16 @@ class TokenType:
     IMPLIES = "IMPLIES"
     IFF = "IFF"
     XOR = "XOR"
-    
+
     # Quantifiers
     FORALL = "FORALL"
     EXISTS = "EXISTS"
-    
+
     # Deontic operators
     OBLIGATION = "OBLIGATION"
     PERMISSION = "PERMISSION"
     PROHIBITION = "PROHIBITION"
-    
+
     # Temporal operators
     ALWAYS = "ALWAYS"
     EVENTUALLY = "EVENTUALLY"
@@ -88,37 +88,37 @@ class TokenType:
     SINCE = "SINCE"
     WEAK_UNTIL = "WEAK_UNTIL"
     RELEASE = "RELEASE"
-    
+
     # Structural
     LPAREN = "LPAREN"
     RPAREN = "RPAREN"
     COMMA = "COMMA"
     DOT = "DOT"
     COLON = "COLON"
-    
+
     # Literals
     IDENTIFIER = "IDENTIFIER"
     NUMBER = "NUMBER"
-    
+
     # End
     EOF = "EOF"
 
 
 class Token:
     """Token from lexical analysis."""
-    
+
     def __init__(self, type: str, value: str, position: int):
         self.type = type
         self.value = value
         self.position = position
-    
+
     def __repr__(self) -> str:
         return f"Token({self.type}, {self.value!r}, {self.position})"
 
 
 class TDFOLLexer:
     """Lexical analyzer for TDFOL formulas."""
-    
+
     SYMBOLS = {
         # Logical operators
         "∧": TokenType.AND,
@@ -142,18 +142,15 @@ class TDFOLLexer:
         "iff": TokenType.IFF,
         "⊕": TokenType.XOR,
         "xor": TokenType.XOR,
-        
         # Quantifiers
         "∀": TokenType.FORALL,
         "forall": TokenType.FORALL,
         "∃": TokenType.EXISTS,
         "exists": TokenType.EXISTS,
-        
         # Deontic operators
         "O": TokenType.OBLIGATION,
         "P": TokenType.PERMISSION,
         "F": TokenType.PROHIBITION,
-        
         # Temporal operators
         "□": TokenType.ALWAYS,
         "[]": TokenType.ALWAYS,
@@ -173,7 +170,6 @@ class TDFOLLexer:
         "weakuntil": TokenType.WEAK_UNTIL,
         "R": TokenType.RELEASE,
         "release": TokenType.RELEASE,
-        
         # Structural
         "(": TokenType.LPAREN,
         ")": TokenType.RPAREN,
@@ -181,82 +177,74 @@ class TDFOLLexer:
         ".": TokenType.DOT,
         ":": TokenType.COLON,
     }
-    
+
     def __init__(self, text: str):
         self.text = text
         self.position = 0
         self.tokens: List[Token] = []
-    
+
     def current_char(self) -> Optional[str]:
         """Get current character."""
         if self.position < len(self.text):
             return self.text[self.position]
         return None
-    
+
     def peek_char(self, offset: int = 1) -> Optional[str]:
         """Peek ahead at character."""
         pos = self.position + offset
         if pos < len(self.text):
             return self.text[pos]
         return None
-    
+
     def advance(self, count: int = 1) -> None:
         """Advance position."""
         self.position += count
-    
+
     def skip_whitespace(self) -> None:
         """Skip whitespace characters."""
         while self.current_char() and self.current_char().isspace():
             self.advance()
-    
+
     def read_identifier(self) -> str:
         """Read an identifier."""
         start = self.position
         while self.current_char() and (
             self.current_char().isalnum()
             or self.current_char() == "_"
-            or (
-                self.current_char() == "-"
-                and self.peek_char()
-                and self.peek_char().isalnum()
-            )
+            or (self.current_char() == "-" and self.peek_char() and self.peek_char().isalnum())
         ):
             self.advance()
-        return self.text[start:self.position]
-    
+        return self.text[start : self.position]
+
     def read_number(self) -> str:
         """Read a number."""
         start = self.position
         while self.current_char() and (
             self.current_char().isalnum()
-            or (
-                self.current_char() == "-"
-                and self.peek_char()
-                and self.peek_char().isalnum()
-            )
+            or (self.current_char() == "-" and self.peek_char() and self.peek_char().isalnum())
         ):
             self.advance()
-        return self.text[start:self.position]
+        return self.text[start : self.position]
 
     def read_iso_date_literal(self) -> Optional[str]:
         """Read an ISO date literal (YYYY-MM-DD) if present."""
-        match = re.match(r"\d{4}-\d{2}-\d{2}", self.text[self.position:])
+        match = re.match(r"\d{4}-\d{2}-\d{2}", self.text[self.position :])
         if not match:
             return None
         literal = match.group(0)
         self.advance(len(literal))
         return literal
-    
+
     def tokenize(self) -> List[Token]:
         """Tokenize the input text."""
         self.tokens = []
-        
+
         while self.position < len(self.text):
             self.skip_whitespace()
-            
+
             if self.position >= len(self.text):
                 break
-            
+
             char = self.current_char()
 
             # Read full word-like tokens before matching textual operators.
@@ -269,29 +257,26 @@ class TDFOLLexer:
                 and not (
                     char in {"O", "P", "F", "G", "X", "U", "S", "W", "R"}
                     and not (
-                        self.peek_char()
-                        and (self.peek_char().isalnum() or self.peek_char() == "_")
+                        self.peek_char() and (self.peek_char().isalnum() or self.peek_char() == "_")
                     )
                 )
             ):
                 identifier = self.read_identifier()
                 token_type = self.SYMBOLS.get(identifier.lower(), TokenType.IDENTIFIER)
-                self.tokens.append(
-                    Token(token_type, identifier, self.position - len(identifier))
-                )
+                self.tokens.append(Token(token_type, identifier, self.position - len(identifier)))
                 continue
 
             # Try multi-character symbols first
             matched = False
             for length in [3, 2]:  # Try 3-char, then 2-char symbols
                 if self.position + length <= len(self.text):
-                    substring = self.text[self.position:self.position + length]
+                    substring = self.text[self.position : self.position + length]
                     if substring in self.SYMBOLS:
                         self.tokens.append(Token(self.SYMBOLS[substring], substring, self.position))
                         self.advance(length)
                         matched = True
                         break
-            
+
             if matched:
                 continue
 
@@ -310,7 +295,7 @@ class TDFOLLexer:
                         Token(token_type, identifier, self.position - len(identifier))
                     )
                     continue
-            
+
             # Single character symbols
             if char in self.SYMBOLS:
                 self.tokens.append(Token(self.SYMBOLS[char], char, self.position))
@@ -341,7 +326,7 @@ class TDFOLLexer:
             else:
                 logger.warning(f"Unknown character at position {self.position}: {char}")
                 self.advance()
-        
+
         self.tokens.append(Token(TokenType.EOF, "", self.position))
         return self.tokens
 
@@ -397,124 +382,124 @@ class TDFOLParser:
         }
     )
     _KNOWN_SORT_NAMES = frozenset(Sort.__members__)
-    
+
     def __init__(self, tokens: List[Token]):
         self.tokens = tokens
         self.position = 0
         self._last_quantifier_colon_separator = False
-    
+
     def current_token(self) -> Token:
         """Get current token."""
         if self.position < len(self.tokens):
             return self.tokens[self.position]
         return self.tokens[-1]  # EOF
-    
+
     def peek_token(self, offset: int = 1) -> Token:
         """Peek ahead at token."""
         pos = self.position + offset
         if pos < len(self.tokens):
             return self.tokens[pos]
         return self.tokens[-1]  # EOF
-    
+
     def advance(self) -> Token:
         """Advance to next token and return current."""
         token = self.current_token()
         if self.position < len(self.tokens) - 1:
             self.position += 1
         return token
-    
+
     def expect(self, token_type: str) -> Token:
         """Expect a specific token type."""
         token = self.current_token()
         if token.type != token_type:
-            raise ValueError(f"Expected {token_type} but got {token.type} at position {token.position}")
+            raise ValueError(
+                f"Expected {token_type} but got {token.type} at position {token.position}"
+            )
         return self.advance()
-    
+
     def parse(self) -> Formula:
         """Parse a formula."""
         formula = self.parse_formula()
         if self.current_token().type != TokenType.EOF:
             token = self.current_token()
-            raise ValueError(
-                f"Unexpected trailing token {token.type} at position {token.position}"
-            )
+            raise ValueError(f"Unexpected trailing token {token.type} at position {token.position}")
         return formula
-    
+
     def parse_formula(self) -> Formula:
         """Parse a formula (handles precedence)."""
         return self.parse_iff()
-    
+
     def parse_iff(self) -> Formula:
         """Parse bi-implication (lowest precedence)."""
         left = self.parse_implies()
-        
+
         while self.current_token().type == TokenType.IFF:
             self.advance()
             right = self.parse_implies()
             left = BinaryFormula(LogicOperator.IFF, left, right)
-        
+
         return left
-    
+
     def parse_implies(self) -> Formula:
         """Parse implication."""
         left = self.parse_or()
-        
+
         while self.current_token().type == TokenType.IMPLIES:
             self.advance()
             right = self.parse_or()
             left = BinaryFormula(LogicOperator.IMPLIES, left, right)
-        
+
         return left
-    
+
     def parse_or(self) -> Formula:
         """Parse disjunction."""
         left = self.parse_and()
-        
+
         while self.current_token().type == TokenType.OR:
             self.advance()
             right = self.parse_and()
             left = BinaryFormula(LogicOperator.OR, left, right)
-        
+
         return left
-    
+
     def parse_and(self) -> Formula:
         """Parse conjunction."""
         left = self.parse_not()
-        
+
         while self.current_token().type == TokenType.AND:
             self.advance()
             right = self.parse_not()
             left = BinaryFormula(LogicOperator.AND, left, right)
-        
+
         return left
-    
+
     def parse_not(self) -> Formula:
         """Parse negation."""
         if self.current_token().type == TokenType.NOT:
             self.advance()
             formula = self.parse_not()
             return UnaryFormula(LogicOperator.NOT, formula)
-        
+
         return self.parse_quantified()
-    
+
     def parse_quantified(self) -> Formula:
         """Parse quantified formula."""
         token = self.current_token()
-        
+
         if token.type == TokenType.FORALL:
             return self.parse_forall()
         elif token.type == TokenType.EXISTS:
             return self.parse_exists()
-        
+
         return self.parse_modal()
-    
+
     def parse_forall(self) -> Formula:
         """Parse universal quantification."""
         self.expect(TokenType.FORALL)
         variables = self.parse_quantifier_variables()
         formula = self.parse_formula()
         return self._nest_quantified_formula(Quantifier.FORALL, variables, formula)
-    
+
     def parse_exists(self) -> Formula:
         """Parse existential quantification."""
         self.expect(TokenType.EXISTS)
@@ -553,7 +538,7 @@ class TDFOLParser:
         for variable in reversed(variables):
             formula = QuantifiedFormula(quantifier, variable, formula)
         return formula
-    
+
     def parse_modal(self) -> Formula:
         """Parse modal (deontic/temporal) formula."""
         token = self.current_token()
@@ -564,7 +549,7 @@ class TDFOLParser:
         ):
             self.advance()
             return Predicate(token.value, ())
-        
+
         # Deontic operators
         if token.type == TokenType.OBLIGATION:
             self.advance()
@@ -575,7 +560,7 @@ class TDFOLParser:
         elif token.type == TokenType.PROHIBITION:
             self.advance()
             return self.parse_deontic(DeonticOperator.PROHIBITION)
-        
+
         # Temporal operators
         elif token.type == TokenType.ALWAYS:
             self.advance()
@@ -595,7 +580,7 @@ class TDFOLParser:
         elif token.type == TokenType.SINCE:
             # Binary temporal operator - handle differently
             pass
-        
+
         return self.parse_atomic()
 
     def _prefix_logical_operator(self, token: Token) -> Optional[LogicOperator]:
@@ -606,7 +591,7 @@ class TDFOLParser:
 
     def _token_can_start_formula(self, token: Token) -> bool:
         return token.type in self._FORMULA_START_TOKENS
-    
+
     def parse_deontic(self, operator: DeonticOperator) -> Formula:
         """Parse deontic formula."""
         self.expect(TokenType.LPAREN)
@@ -622,14 +607,14 @@ class TDFOLParser:
             formula = self.parse_legacy_deontic_target()
             self.expect(TokenType.RPAREN)
             return DeonticFormula(operator, formula)
-    
+
     def parse_temporal(self, operator: TemporalOperator) -> Formula:
         """Parse temporal formula."""
         self.expect(TokenType.LPAREN)
         formula = self.parse_formula()
         self.expect(TokenType.RPAREN)
         return TemporalFormula(operator, formula)
-    
+
     def parse_atomic(self) -> Formula:
         """Parse atomic formula."""
         if self.current_token().type == TokenType.LPAREN:
@@ -668,16 +653,16 @@ class TDFOLParser:
 
             self.expect(TokenType.RPAREN)
             return formula
-        
+
         return self.parse_predicate()
-    
+
     def parse_predicate(self) -> Formula:
         """Parse predicate formula."""
         name_token = self.expect(TokenType.IDENTIFIER)
         name = name_token.value
         if self.current_token().type == TokenType.COLON:
             name = self.parse_colon_qualified_symbol(name)
-        
+
         # Check if it has arguments
         if self.current_token().type == TokenType.LPAREN:
             self.advance()
@@ -687,27 +672,27 @@ class TDFOLParser:
         else:
             # Nullary predicate (propositional variable)
             return Predicate(name, ())
-    
+
     def parse_term_list(self, *, allow_empty: bool = False) -> List[Term]:
         """Parse a comma-separated list of terms."""
         if allow_empty and self.current_token().type == TokenType.RPAREN:
             return []
         terms = [self.parse_term()]
-        
+
         while self.current_token().type == TokenType.COMMA:
             self.advance()
             terms.append(self.parse_term())
-        
+
         return terms
-    
+
     def parse_term(self) -> Term:
         """Parse a term."""
         token = self.current_token()
-        
+
         if token.type == TokenType.IDENTIFIER:
             name = token.value
             self.advance()
-            
+
             # Check if it's a function application
             if self.current_token().type == TokenType.LPAREN:
                 self.advance()
@@ -739,12 +724,12 @@ class TDFOLParser:
                 if name and (name[0].isdigit() or "-" in name):
                     return Constant(name)
                 return Variable(name)
-        
+
         elif token.type == TokenType.NUMBER:
             value = token.value
             self.advance()
             return Constant(value)
-        
+
         else:
             raise ValueError(f"Unexpected token in term: {token}")
 
@@ -776,13 +761,13 @@ class TDFOLParser:
             if isinstance(term, (Constant, Variable)):
                 return Predicate(term.to_string(), ())
         return Predicate("legacy_deontic_target", tuple(terms))
-    
+
     def parse_variable(self, *, allow_formula_separator_colon: bool = False) -> Variable:
         """Parse a variable."""
         self._last_quantifier_colon_separator = False
         name_token = self.expect(TokenType.IDENTIFIER)
         name = name_token.value
-        
+
         # Check for sort annotation
         sort = None
         if self.current_token().type == TokenType.COLON:
@@ -792,7 +777,7 @@ class TDFOLParser:
                 return Variable(name, sort)
             sort_token = self.expect(TokenType.IDENTIFIER)
             sort = self.parse_sort(sort_token.value)
-        
+
         return Variable(name, sort)
 
     def _colon_introduces_formula(self) -> bool:
@@ -804,7 +789,7 @@ class TDFOLParser:
         if token.value.upper() in self._KNOWN_SORT_NAMES:
             return False
         return self._token_can_start_formula(token)
-    
+
     def parse_sort(self, sort_name: str) -> Optional[Sort]:
         """Parse a sort name."""
         try:
@@ -822,23 +807,23 @@ class TDFOLParser:
 def parse_tdfol(formula_str: str) -> Formula:
     """
     Parse a TDFOL formula from string representation.
-    
+
     Args:
         formula_str: String representation of formula
-    
+
     Returns:
         Parsed Formula object
-    
+
     Examples:
         >>> parse_tdfol("P(x)")
         Predicate('P', (Variable('x'),))
-        
+
         >>> parse_tdfol("forall x. P(x) -> Q(x)")
         QuantifiedFormula(...)
-        
+
         >>> parse_tdfol("O(P(x))")
         DeonticFormula(DeonticOperator.OBLIGATION, Predicate('P', (Variable('x'),)))
-        
+
         >>> parse_tdfol("G(P(x))")
         TemporalFormula(TemporalOperator.ALWAYS, Predicate('P', (Variable('x'),)))
     """
@@ -851,10 +836,10 @@ def parse_tdfol(formula_str: str) -> Formula:
 def parse_tdfol_safe(formula_str: str) -> Optional[Formula]:
     """
     Safely parse a TDFOL formula, returning None on error.
-    
+
     Args:
         formula_str: String representation of formula
-    
+
     Returns:
         Parsed Formula object or None if parsing fails
     """

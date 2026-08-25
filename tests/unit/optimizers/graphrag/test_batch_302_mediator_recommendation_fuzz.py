@@ -43,7 +43,9 @@ def _base_ontology() -> dict:
 
 
 def _mediator() -> OntologyMediator:
-    return OntologyMediator(generator=OntologyGenerator(use_ipfs_accelerate=False), critic=OntologyCritic(use_llm=False))
+    return OntologyMediator(
+        generator=OntologyGenerator(use_ipfs_accelerate=False), critic=OntologyCritic(use_llm=False)
+    )
 
 
 @settings(max_examples=60, deadline=None)
@@ -54,7 +56,9 @@ def _mediator() -> OntologyMediator:
         max_size=12,
     )
 )
-def test_refine_ontology_fuzz_recommendations_structural_invariants(recommendations: list[str]) -> None:
+def test_refine_ontology_fuzz_recommendations_structural_invariants(
+    recommendations: list[str],
+) -> None:
     """Random recommendation strings should not break structural output invariants."""
     mediator = _mediator()
     ontology = _base_ontology()

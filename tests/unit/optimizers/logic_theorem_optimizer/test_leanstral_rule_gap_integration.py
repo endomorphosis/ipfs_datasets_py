@@ -113,8 +113,7 @@ def _frame_obligation(task: LegalIRLeanTask) -> dict:
     return next(
         dict(item)
         for item in task.proof_obligations
-        if dict(item).get("metadata", {}).get("contract_id")
-        == "legal-ir-view/frame-logic/v1"
+        if dict(item).get("metadata", {}).get("contract_id") == "legal-ir-view/frame-logic/v1"
     )
 
 
@@ -209,9 +208,7 @@ def test_current_sanitizer_and_trusted_hammer_receipts_are_required_end_to_end()
     assert candidate["schema_version"] == LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION
     assert candidate["compiler_surface"] == "modal.frame_logic"
     assert candidate["logic_family"] == "frame_logic"
-    candidate["candidate"] = prompt["failed_obligation_subtrees"][0][
-        "candidate_language"
-    ][
+    candidate["candidate"] = prompt["failed_obligation_subtrees"][0]["candidate_language"][
         "grounded_candidate_seed"
     ]
     candidate["confidence"] = 0.75
@@ -246,9 +243,7 @@ def test_current_helper_preserves_sanitizer_rejection_as_zero_influence() -> Non
     obligation = _frame_obligation(task)
     obligation_id = str(obligation["obligation_id"])
     failures = [{"obligation_id": obligation_id, "proved": False, "trusted": False}]
-    response = json.loads(build_leanstral_failure_branch_prompt(task, failures))[
-        "response_shape"
-    ]
+    response = json.loads(build_leanstral_failure_branch_prompt(task, failures))["response_shape"]
     response["candidates"][0]["candidate"] = "by simp [frame_terms_preserved]"
     response["candidates"][0]["confidence"] = 0.9
 

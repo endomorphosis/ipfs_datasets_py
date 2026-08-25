@@ -5,6 +5,7 @@ Methods under test:
   - LogicValidator.max_degree_entity(ontology)
   - LogicValidator.entity_type_counts(ontology)
 """
+
 import pytest
 
 
@@ -12,8 +13,10 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
@@ -35,6 +38,7 @@ def _rel(src, tgt, rtype="knows"):
 # ---------------------------------------------------------------------------
 # LogicValidator.isolated_entities
 # ---------------------------------------------------------------------------
+
 
 class TestIsolatedEntities:
     def test_empty_ontology(self):
@@ -73,6 +77,7 @@ class TestIsolatedEntities:
 # LogicValidator.max_degree_entity
 # ---------------------------------------------------------------------------
 
+
 class TestMaxDegreeEntity:
     def test_no_relationships(self):
         v = _make_validator()
@@ -104,6 +109,7 @@ class TestMaxDegreeEntity:
 # ---------------------------------------------------------------------------
 # LogicValidator.entity_type_counts
 # ---------------------------------------------------------------------------
+
 
 class TestEntityTypeCounts:
     def test_empty(self):

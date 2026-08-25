@@ -14,7 +14,7 @@ Components:
 
 Usage:
     from ipfs_datasets_py.logic.CEC.nl import LanguageDetector, get_parser
-    
+
     detector = LanguageDetector()
     language = detector.detect("Esta es una obligación legal")
     parser = get_parser(language)
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from .base_parser import BaseParser
 
 __all__ = [
-    'LanguageDetector',
-    'Language',
-    'BaseParser',
+    "LanguageDetector",
+    "Language",
+    "BaseParser",
 ]

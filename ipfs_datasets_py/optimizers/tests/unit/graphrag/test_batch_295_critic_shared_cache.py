@@ -28,7 +28,13 @@ def test_evaluate_ontology_uses_shared_cache_across_instances(monkeypatch) -> No
             {"id": "e2", "text": "Acme", "type": "Organization", "confidence": 0.8},
         ],
         "relationships": [
-            {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "works_at", "confidence": 0.7}
+            {
+                "id": "r1",
+                "source_id": "e1",
+                "target_id": "e2",
+                "type": "works_at",
+                "confidence": 0.7,
+            }
         ],
     }
     context = _context()

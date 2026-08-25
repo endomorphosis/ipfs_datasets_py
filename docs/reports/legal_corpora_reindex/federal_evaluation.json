@@ -1,0 +1,2138 @@
+{
+  "abstention": {
+    "all_honest": true,
+    "case_count": 5,
+    "cases": [
+      {
+        "abstain": false,
+        "expectation": "missing_body",
+        "exposed_observation_cutoff": null,
+        "exposed_release_point": null,
+        "honesty_ok": true,
+        "must_expose_cutoff": false,
+        "partition": "test",
+        "query_id": "q-test-missing-body-metadata",
+        "query_kind": "missing_body"
+      },
+      {
+        "abstain": false,
+        "expectation": "missing_body",
+        "exposed_observation_cutoff": null,
+        "exposed_release_point": null,
+        "honesty_ok": true,
+        "must_expose_cutoff": false,
+        "partition": "test",
+        "query_id": "q-test-missing-body-unavailable",
+        "query_kind": "missing_body"
+      },
+      {
+        "abstain": true,
+        "expectation": "time_sensitive",
+        "exposed_observation_cutoff": "2026-08-10T00:00:00Z",
+        "exposed_release_point": "federal-register/v2/2026-08-10",
+        "honesty_ok": true,
+        "must_expose_cutoff": true,
+        "partition": "test",
+        "query_id": "q-test-time-sensitive-current",
+        "query_kind": "time_sensitive"
+      },
+      {
+        "abstain": true,
+        "expectation": "abstention",
+        "exposed_observation_cutoff": "2026-08-10T00:00:00Z",
+        "exposed_release_point": "federal-register/v2/2026-08-10",
+        "honesty_ok": true,
+        "must_expose_cutoff": true,
+        "partition": "test",
+        "query_id": "q-test-abstain-individualized",
+        "query_kind": "abstention"
+      },
+      {
+        "abstain": true,
+        "expectation": "known_ambiguity",
+        "exposed_observation_cutoff": "2026-08-10T00:00:00Z",
+        "exposed_release_point": "federal-register/v2/2026-08-10",
+        "honesty_ok": true,
+        "must_expose_cutoff": true,
+        "partition": "test",
+        "query_id": "q-test-known-ambiguity-rfs-vintage",
+        "query_kind": "semantic"
+      }
+    ],
+    "honesty_ok_count": 5,
+    "honesty_rate": 1.0,
+    "policy": "Non-retrieval queries must abstain from currentness claims and expose the sealed observation cutoff / release pin when required. This fixture evaluation is not a live canary and does not emit live legal advice."
+  },
+  "acceptance": {
+    "abstention_honesty": true,
+    "all_expected_outputs_required": true,
+    "all_modes_meet_declared_recall_and_ranking": true,
+    "bm25_meets_declared_gates": true,
+    "bounded_shard_selection": true,
+    "budget_exhaustion_fail_closed": true,
+    "chosen_defaults_declared": true,
+    "component_and_fused_baselines_reported": true,
+    "coverage_pass": true,
+    "criteria": "Sealed thresholds and differential references pass; traversal, tamper, digest, decompression, budget, mutable-revision, and secret tests fail closed; no fixture result is called a live canary.",
+    "decompression_fail_closed": true,
+    "differential_references_pass": true,
+    "digest_fail_closed": true,
+    "fetch_traces_prove_sparse_io": true,
+    "filters_pass": true,
+    "graph_edges_pass": true,
+    "graph_meets_declared_gates": true,
+    "graph_path_success": true,
+    "hard_negatives_ok": false,
+    "hub_upload": false,
+    "hybrid_meets_declared_gates": true,
+    "live_canary": false,
+    "missing_body_ok": true,
+    "mutable_revision_fail_closed": true,
+    "no_fixture_result_called_live_canary": true,
+    "no_unapproved_regression": true,
+    "no_unsupported_production_claim": true,
+    "production_searchable": false,
+    "reference_hardware_network_recorded": true,
+    "regressions_and_exceptions_explicit": true,
+    "sealed_thresholds_pass": true,
+    "secrets_absent_fail_closed": true,
+    "security_probes_fail_closed": true,
+    "semantic_traversal_meets_declared_gates": true,
+    "substantially_less_than_full_release": true,
+    "tamper_fail_closed": true,
+    "test_split_not_tuned": true,
+    "test_split_reported_once": true,
+    "traversal_fail_closed": true,
+    "two_build_determinism": true,
+    "vector_meets_declared_gates": true,
+    "vector_recall_meets_declared_gate": true
+  },
+  "adr_path": "docs/architecture/federal_register_document_number_grammar.md",
+  "authorizing_for_publication": false,
+  "authorizing_for_release": false,
+  "authorizing_hub_upload": false,
+  "board_namespace": "legal-corpora-reindex-v1",
+  "bundle": "federal-release-assurance",
+  "canary": {
+    "deferred_to": "LCR-064",
+    "fixture_result_called_live_canary": false,
+    "kind": "fixture_offline_not_live",
+    "live_canary": false,
+    "staging_canary": false
+  },
+  "chosen_defaults": {
+    "bm25": {
+      "evidence_partition": "dev",
+      "parameters": {
+        "b": 0.75,
+        "field_weights": {
+          "agency": 3.0,
+          "body": 1.0,
+          "citation": 8.0,
+          "document_type": 2.0,
+          "heading": 4.0,
+          "hierarchy": 2.0,
+          "note": 0.5,
+          "title": 5.0
+        },
+        "k1": 1.2,
+        "terms_per_shard": 4,
+        "tokenizer_id": "federal-register-bm25-tokenizer/v1"
+      },
+      "selection_reason": "plan default k1=1.2 b=0.75 multi-field weights",
+      "source": "LCR-056"
+    },
+    "fusion": {
+      "candidate_id": "vector_heavy_weighted_0_3_0_7",
+      "config": {
+        "bm25_weight": 0.3,
+        "method": "weighted",
+        "rrf_k": 60,
+        "stage": "late",
+        "vector_weight": 0.7
+      },
+      "config_digest": "a991f51dcc2083ff08073ee33940ee8e8a888f65ad0832618bf1086fdc026e08",
+      "evidence_partition": "dev",
+      "is_plan_default": false,
+      "selection_reason": "selected on sealed dev split by primary hybrid recall, then MRR, then nDCG@10; test split is not used for selection",
+      "source": "LCR-059"
+    },
+    "graph": {
+      "path_success_requires": "all_expected_paths_pass",
+      "source": "LCR-058",
+      "walk_strategy": "structural_bfs"
+    },
+    "semantic-graph": {
+      "hydration_policy": "entry_locator",
+      "source": "LCR-059",
+      "walk_strategy": "embedding_guided_beam"
+    },
+    "vector": {
+      "default_probe_centroids": 4,
+      "embedding_backend": "local_deterministic_projection",
+      "embedding_model_id": "thenlper/gte-small",
+      "embedding_model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+      "embedding_note": "Fixture vectors use the local deterministic projection for offline parity; production GTE-small identity is declared by the vector receipt and cannot be authorized by this gate.",
+      "evidence_partition": "dev",
+      "historical_plan_default": 4,
+      "selection_reason": "plan default probe=4",
+      "source": "LCR-057"
+    }
+  },
+  "code_version": "1",
+  "component_baselines": {
+    "bm25": {
+      "available": true,
+      "consumed_read_only": true,
+      "index_root_cid": "sha256:8da9a632c6cfa74186666c49e5950df7f8b68f0d5b28034213df06a1d970645c",
+      "path": "docs/reports/legal_corpora_reindex/federal_bm25.json",
+      "task_id": "LCR-056"
+    },
+    "candidate": {
+      "available": true,
+      "consumed_read_only": true,
+      "manifest_digest": "e5d39ebe0ec4caea4d02c24666bf68898abfbbe6c808b8ffa93db745a517a8f6",
+      "path": "docs/reports/legal_corpora_reindex/federal_candidate.json",
+      "task_id": "LCR-062"
+    },
+    "gold": {
+      "available": true,
+      "consumed_read_only": true,
+      "manifest_digest": "825bfccdecc1be8d635e8ebbeef8e07950d081e7fcac1288a359089d4d2be578",
+      "path": "tests/fixtures/legal_ir/federal_register_gold_v1.json",
+      "task_id": "LCR-051"
+    },
+    "graph": {
+      "available": true,
+      "consumed_read_only": true,
+      "graph_cid": "sha256:a4fcf7baf29996f890d37669040f2f45b415e8c3c5db735fc7756ab72452af92",
+      "path": "docs/reports/legal_corpora_reindex/federal_graph.json",
+      "task_id": "LCR-058"
+    },
+    "query": {
+      "available": true,
+      "consumed_read_only": true,
+      "contract_cid": "sha256:83403034dc95659b77dcc3f0dad604040d0cc66116b517400093bbd2a0a813f3",
+      "path": "docs/reports/legal_corpora_reindex/federal_query_contract.json",
+      "task_id": "LCR-059"
+    },
+    "vector": {
+      "available": true,
+      "consumed_read_only": true,
+      "path": "docs/reports/legal_corpora_reindex/federal_vectors.json",
+      "task_id": "LCR-057",
+      "vector_root_cid": "sha256:8d771c1008913be1cc86d276e20fc4487aff5696695b56d96a3b42ad2a2a81ca"
+    }
+  },
+  "consumed_inputs": {
+    "candidate": {
+      "available": true,
+      "consumed_read_only": true,
+      "manifest_digest": "e5d39ebe0ec4caea4d02c24666bf68898abfbbe6c808b8ffa93db745a517a8f6",
+      "path": "docs/reports/legal_corpora_reindex/federal_candidate.json",
+      "task_id": "LCR-062"
+    },
+    "gold": {
+      "available": true,
+      "consumed_read_only": true,
+      "manifest_digest": "825bfccdecc1be8d635e8ebbeef8e07950d081e7fcac1288a359089d4d2be578",
+      "path": "tests/fixtures/legal_ir/federal_register_gold_v1.json",
+      "task_id": "LCR-051"
+    },
+    "hub_upload": false,
+    "query": {
+      "available": true,
+      "consumed_read_only": true,
+      "contract_cid": "sha256:83403034dc95659b77dcc3f0dad604040d0cc66116b517400093bbd2a0a813f3",
+      "path": "docs/reports/legal_corpora_reindex/federal_query_contract.json",
+      "task_id": "LCR-059"
+    },
+    "read_only": true
+  },
+  "corpus": {
+    "bm25_term_shard_count": 61,
+    "bm25_terms_per_shard": 4,
+    "cluster_count": 8,
+    "dataset_repo_id": "justicedao/ipfs_federal_register",
+    "dimension": 384,
+    "document_count": 18,
+    "graph_edge_count": 18,
+    "graph_shard_count": 5,
+    "max_shards_per_centroid": 2,
+    "observation_cutoff": "2026-08-10T00:00:00Z",
+    "term_count": 243,
+    "tokenizer_id": "federal-register-bm25-tokenizer/v1",
+    "vector_count": 18,
+    "vector_shard_count": 10
+  },
+  "coverage": {
+    "agencies": [
+      "DHS",
+      "DOE",
+      "DOI",
+      "DOJ",
+      "DOL",
+      "DOT",
+      "EOP",
+      "EPA",
+      "FCC",
+      "HHS",
+      "SBA",
+      "SEC"
+    ],
+    "agency_count": 12,
+    "candidate_missing_families": [],
+    "candidate_semantic_family_closed": true,
+    "document_count": 18,
+    "document_type_count": 5,
+    "document_types": [
+      "correction",
+      "notice",
+      "presidential_document",
+      "proposed_rule",
+      "rule"
+    ],
+    "eras": [
+      "2020s",
+      "early_2010s",
+      "late_2010s"
+    ],
+    "ok": true,
+    "publication_years": [
+      "2011",
+      "2012",
+      "2014",
+      "2015",
+      "2016",
+      "2017",
+      "2018",
+      "2019",
+      "2020",
+      "2021",
+      "2022",
+      "2023",
+      "2024"
+    ]
+  },
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a Federal Register package was retrieved or sealed; they are not a claim that the document is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official FederalRegister.gov or GovInfo source. Time-sensitive gold queries must expose the observation cutoff / release pin rather than imply currentness.",
+  "dense_agreement": {
+    "dev": {
+      "meets_recall_gate": true,
+      "probe_centroids": 4,
+      "query_count": 8,
+      "recall_at_1": 1.0,
+      "recall_gate": 0.95,
+      "top_k": 1
+    },
+    "test": {
+      "meets_recall_gate": true,
+      "probe_centroids": 4,
+      "query_count": 6,
+      "recall_at_1": 1.0,
+      "recall_gate": 0.95,
+      "top_k": 1
+    }
+  },
+  "depends_on": [
+    "LCR-051",
+    "LCR-059",
+    "LCR-062"
+  ],
+  "differential_references": {
+    "candidate_content_digest": "dbd62f2d217c10eceb99a56f4f26bad995b8fad61517c6f6dc7e4cc12db935bf",
+    "candidate_manifest_digest": "e5d39ebe0ec4caea4d02c24666bf68898abfbbe6c808b8ffa93db745a517a8f6",
+    "candidate_task_id": "LCR-062",
+    "gold_manifest_digest": "825bfccdecc1be8d635e8ebbeef8e07950d081e7fcac1288a359089d4d2be578",
+    "gold_task_id": "LCR-051",
+    "ok": true,
+    "query_contract_cid": "sha256:83403034dc95659b77dcc3f0dad604040d0cc66116b517400093bbd2a0a813f3",
+    "query_task_id": "LCR-059"
+  },
+  "evaluation": {
+    "gates": {
+      "bm25": 0.75,
+      "dense": 0.95,
+      "exact_citation": 1.0,
+      "filters": 1.0,
+      "graph": 1.0,
+      "hybrid": 0.8,
+      "mrr": 0.7,
+      "ndcg": 0.7,
+      "semantic-graph": 0.75,
+      "vector": 0.7
+    },
+    "inspection_partition": "train",
+    "partitions": {
+      "dev": {
+        "bm25": {
+          "bytes_fetched": {
+            "mean": 1194.0,
+            "p50": 1176.0,
+            "p95": 1790.4
+          },
+          "docs_scored": {
+            "mean": 9.125,
+            "p50": 8.0,
+            "p95": 18.0
+          },
+          "exact_citation_query_count": 1,
+          "exact_citation_success_rate": 1.0,
+          "failure_modes": {},
+          "fetch_traces": [
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 1824,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 14,
+              "mode": "bm25",
+              "query_id": "q-dev-proposed-vs-final-epa",
+              "route_family": "bm25_term_range",
+              "routed_paths": [
+                "data/bm25/postings/part-000015.parquet",
+                "data/bm25/postings/part-000031.parquet",
+                "data/bm25/postings/part-000033.parquet",
+                "data/bm25/postings/part-000036.parquet",
+                "data/bm25/postings/part-000044.parquet",
+                "data/bm25/postings/part-000049.parquet",
+                "data/bm25/postings/part-000053.parquet",
+                "data/bm25/postings/part-000056.parquet"
+              ],
+              "shards_available": 61,
+              "shards_fetched": 8
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 1728,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 18,
+              "mode": "bm25",
+              "query_id": "q-dev-correction-path-epa",
+              "route_family": "bm25_term_range",
+              "routed_paths": [
+                "data/bm25/postings/part-000006.parquet",
+                "data/bm25/postings/part-000023.parquet",
+                "data/bm25/postings/part-000027.parquet",
+                "data/bm25/postings/part-000029.parquet",
+                "data/bm25/postings/part-000031.parquet",
+                "data/bm25/postings/part-000056.parquet"
+              ],
+              "shards_available": 61,
+              "shards_fetched": 6
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 1056,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 1,
+              "mode": "bm25",
+              "query_id": "q-dev-presidential-climate-eo",
+              "route_family": "bm25_term_range",
+              "routed_paths": [
+                "data/bm25/postings/part-000012.parquet",
+                "data/bm25/postings/part-000020.parquet",
+                "data/bm25/postings/part-000023.parquet",
+                "data/bm25/postings/part-000032.parquet",
+                "data/bm25/postings/part-000037.parquet",
+                "data/bm25/postings/part-000046.parquet",
+                "data/bm25/postings/part-000056.parquet"
+              ],
+              "shards_available": 61,
+              "shards_fetched": 7
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 384,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 2,
+              "mode": "bm25",
+              "query_id": "q-dev-filter-type-notice",
+              "route_family": "bm25_term_range",
+              "routed_paths": [
+                "data/bm25/postings/part-000042.parquet",
+                "data/bm25/postings/part-000050.parquet"
+              ],
+              "shards_available": 61,
+              "shards_fetched": 2
+            }
+          ],
+          "latency_ms": {
+            "mean": 0.35375,
+            "p50": 0.35,
+            "p95": 0.519
+          },
+          "mean_reciprocal_rank": 1.0,
+          "meets_ranking_gate": true,
+          "meets_recall_gate": true,
+          "mode": "bm25",
+          "ndcg_at_1": 0.928571,
+          "ndcg_at_10": 0.979249,
+          "ndcg_at_5": 0.979249,
+          "primary_metric": "relevance_recall_at_5",
+          "primary_metric_value": 1.0,
+          "queries_with_relevant_labels": 8,
+          "query_count": 8,
+          "ranking_mrr_gate": 0.7,
+          "ranking_ndcg_gate": 0.7,
+          "recall_gate": 0.75,
+          "relevance_recall_at_1": 0.8125,
+          "relevance_recall_at_10": 1.0,
+          "relevance_recall_at_5": 1.0,
+          "shards_available_mean": 61.0,
+          "shards_fetched": {
+            "mean": 5.25,
+            "p50": 5.5,
+            "p95": 7.65
+          }
+        },
+        "fused": {
+          "candidate_id": "vector_heavy_weighted_0_3_0_7",
+          "mean_reciprocal_rank": 1.0,
+          "meets_recall_gate": true,
+          "primary_metric_value": 1.0
+        },
+        "fusion_candidates": [
+          {
+            "bm25_weight": 0.5,
+            "candidate_id": "plan_default_weighted_0_5_0_5",
+            "config_digest": "1260bd06c379936d82a51747e4827578ad15ba4df5cada62e72876092e08f61a",
+            "is_plan_default": true,
+            "mean_reciprocal_rank": 1.0,
+            "meets_recall_gate": true,
+            "method": "weighted",
+            "ndcg_at_10": 0.979249,
+            "primary_metric_value": 1.0,
+            "relevance_recall_at_5": 1.0,
+            "rrf_k": 60,
+            "vector_weight": 0.5
+          },
+          {
+            "bm25_weight": 0.7,
+            "candidate_id": "bm25_heavy_weighted_0_7_0_3",
+            "config_digest": "f7758593684bdfc29b27737d2014f6e2aa874b54be88cd37a44c3210408453c9",
+            "is_plan_default": false,
+            "mean_reciprocal_rank": 1.0,
+            "meets_recall_gate": true,
+            "method": "weighted",
+            "ndcg_at_10": 0.979249,
+            "primary_metric_value": 1.0,
+            "relevance_recall_at_5": 1.0,
+            "rrf_k": 60,
+            "vector_weight": 0.3
+          },
+          {
+            "bm25_weight": 0.3,
+            "candidate_id": "vector_heavy_weighted_0_3_0_7",
+            "config_digest": "a991f51dcc2083ff08073ee33940ee8e8a888f65ad0832618bf1086fdc026e08",
+            "is_plan_default": false,
+            "mean_reciprocal_rank": 1.0,
+            "meets_recall_gate": true,
+            "method": "weighted",
+            "ndcg_at_10": 0.979249,
+            "primary_metric_value": 1.0,
+            "relevance_recall_at_5": 1.0,
+            "rrf_k": 60,
+            "vector_weight": 0.7
+          },
+          {
+            "bm25_weight": 1.0,
+            "candidate_id": "rrf_k_60",
+            "config_digest": "9cbc3a25429ac2921adc1a6a0b3605273cad274a7d7a0220bfdbc92be19c9e9b",
+            "is_plan_default": false,
+            "mean_reciprocal_rank": 0.9375,
+            "meets_recall_gate": true,
+            "method": "rrf",
+            "ndcg_at_10": 0.933115,
+            "primary_metric_value": 1.0,
+            "relevance_recall_at_5": 1.0,
+            "rrf_k": 60,
+            "vector_weight": 1.0
+          },
+          {
+            "bm25_weight": 1.0,
+            "candidate_id": "rrf_k_30",
+            "config_digest": "63fb608662f74c1823d9ebae1582378a814046706929882278f34dad489df0dd",
+            "is_plan_default": false,
+            "mean_reciprocal_rank": 0.9375,
+            "meets_recall_gate": true,
+            "method": "rrf",
+            "ndcg_at_10": 0.933115,
+            "primary_metric_value": 1.0,
+            "relevance_recall_at_5": 1.0,
+            "rrf_k": 30,
+            "vector_weight": 1.0
+          }
+        ],
+        "gold_query_count": 8,
+        "role": "fusion_selection_only",
+        "tuned": true,
+        "vector": {
+          "bytes_fetched": {
+            "mean": 17936.0,
+            "p50": 20736.0,
+            "p95": 20736.0
+          },
+          "docs_scored": {
+            "mean": 7.25,
+            "p50": 9.0,
+            "p95": 9.0
+          },
+          "exact_citation_query_count": 1,
+          "exact_citation_success_rate": 1.0,
+          "failure_modes": {},
+          "fetch_traces": [
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 20736,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 9,
+              "mode": "vector",
+              "query_id": "q-dev-proposed-vs-final-epa",
+              "route_family": "vector_centroid_probe",
+              "routed_paths": [
+                "data/vectors/cluster-0000/part-0000.parquet",
+                "data/vectors/cluster-0000/part-0001.parquet",
+                "data/vectors/cluster-0002/part-0000.parquet",
+                "data/vectors/cluster-0004/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 10,
+              "shards_fetched": 5
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 20736,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 9,
+              "mode": "vector",
+              "query_id": "q-dev-correction-path-epa",
+              "route_family": "vector_centroid_probe",
+              "routed_paths": [
+                "data/vectors/cluster-0000/part-0000.parquet",
+                "data/vectors/cluster-0000/part-0001.parquet",
+                "data/vectors/cluster-0004/part-0000.parquet",
+                "data/vectors/cluster-0006/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 10,
+              "shards_fetched": 5
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 20736,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 9,
+              "mode": "vector",
+              "query_id": "q-dev-presidential-climate-eo",
+              "route_family": "vector_centroid_probe",
+              "routed_paths": [
+                "data/vectors/cluster-0000/part-0000.parquet",
+                "data/vectors/cluster-0000/part-0001.parquet",
+                "data/vectors/cluster-0003/part-0000.parquet",
+                "data/vectors/cluster-0005/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 10,
+              "shards_fetched": 5
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 11136,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 3,
+              "mode": "vector",
+              "query_id": "q-dev-filter-type-notice",
+              "route_family": "vector_centroid_probe",
+              "routed_paths": [
+                "data/vectors/cluster-0000/part-0000.parquet",
+                "data/vectors/cluster-0000/part-0001.parquet",
+                "data/vectors/cluster-0001/part-0000.parquet",
+                "data/vectors/cluster-0001/part-0001.parquet",
+                "data/vectors/cluster-0004/part-0000.parquet",
+                "data/vectors/cluster-0005/part-0000.parquet"
+              ],
+              "shards_available": 10,
+              "shards_fetched": 6
+            }
+          ],
+          "latency_ms": {
+            "mean": 0.335,
+            "p50": 0.34,
+            "p95": 0.34
+          },
+          "mean_reciprocal_rank": 0.9375,
+          "meets_ranking_gate": true,
+          "meets_recall_gate": true,
+          "mode": "vector",
+          "ndcg_at_1": 0.803571,
+          "ndcg_at_10": 0.933115,
+          "ndcg_at_5": 0.933115,
+          "primary_metric": "relevance_recall_at_5",
+          "primary_metric_value": 1.0,
+          "queries_with_relevant_labels": 8,
+          "query_count": 8,
+          "ranking_mrr_gate": 0.7,
+          "ranking_ndcg_gate": 0.7,
+          "recall_gate": 0.7,
+          "relevance_recall_at_1": 0.6875,
+          "relevance_recall_at_10": 1.0,
+          "relevance_recall_at_5": 1.0,
+          "shards_available_mean": 10.0,
+          "shards_fetched": {
+            "mean": 5.25,
+            "p50": 5.0,
+            "p95": 6.0
+          }
+        }
+      },
+      "test": {
+        "bm25": {
+          "bytes_fetched": {
+            "mean": 1104.0,
+            "p50": 1104.0,
+            "p95": 1440.0
+          },
+          "docs_scored": {
+            "mean": 5.833333,
+            "p50": 6.0,
+            "p95": 10.25
+          },
+          "exact_citation_query_count": 0,
+          "exact_citation_success_rate": 0.0,
+          "failure_modes": {},
+          "fetch_traces": [
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 1536,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 11,
+              "mode": "bm25",
+              "query_id": "q-test-dot-withdrawal-path",
+              "route_family": "bm25_term_range",
+              "routed_paths": [
+                "data/bm25/postings/part-000016.parquet",
+                "data/bm25/postings/part-000028.parquet",
+                "data/bm25/postings/part-000046.parquet",
+                "data/bm25/postings/part-000049.parquet",
+                "data/bm25/postings/part-000050.parquet",
+                "data/bm25/postings/part-000053.parquet",
+                "data/bm25/postings/part-000059.parquet"
+              ],
+              "shards_available": 61,
+              "shards_fetched": 7
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 1152,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 6,
+              "mode": "bm25",
+              "query_id": "q-test-doj-ada-accessibility",
+              "route_family": "bm25_term_range",
+              "routed_paths": [
+                "data/bm25/postings/part-000013.parquet",
+                "data/bm25/postings/part-000014.parquet",
+                "data/bm25/postings/part-000026.parquet",
+                "data/bm25/postings/part-000028.parquet",
+                "data/bm25/postings/part-000044.parquet",
+                "data/bm25/postings/part-000056.parquet"
+              ],
+              "shards_available": 61,
+              "shards_fetched": 6
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 1104,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 8,
+              "mode": "bm25",
+              "query_id": "q-test-dhs-flood-notice",
+              "route_family": "bm25_term_range",
+              "routed_paths": [
+                "data/bm25/postings/part-000025.parquet",
+                "data/bm25/postings/part-000033.parquet",
+                "data/bm25/postings/part-000034.parquet",
+                "data/bm25/postings/part-000036.parquet",
+                "data/bm25/postings/part-000044.parquet"
+              ],
+              "shards_available": 61,
+              "shards_fetched": 5
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 1008,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 2,
+              "mode": "bm25",
+              "query_id": "q-test-fda-menu-labeling",
+              "route_family": "bm25_term_range",
+              "routed_paths": [
+                "data/bm25/postings/part-000032.parquet",
+                "data/bm25/postings/part-000039.parquet",
+                "data/bm25/postings/part-000042.parquet",
+                "data/bm25/postings/part-000045.parquet",
+                "data/bm25/postings/part-000052.parquet",
+                "data/bm25/postings/part-000056.parquet"
+              ],
+              "shards_available": 61,
+              "shards_fetched": 6
+            }
+          ],
+          "latency_ms": {
+            "mean": 0.341667,
+            "p50": 0.345,
+            "p95": 0.4375
+          },
+          "mean_reciprocal_rank": 0.916667,
+          "meets_ranking_gate": true,
+          "meets_recall_gate": true,
+          "mode": "bm25",
+          "ndcg_at_1": 0.833333,
+          "ndcg_at_10": 0.938488,
+          "ndcg_at_5": 0.938488,
+          "primary_metric": "relevance_recall_at_5",
+          "primary_metric_value": 1.0,
+          "queries_with_relevant_labels": 6,
+          "query_count": 6,
+          "ranking_mrr_gate": 0.7,
+          "ranking_ndcg_gate": 0.7,
+          "recall_gate": 0.75,
+          "relevance_recall_at_1": 0.666667,
+          "relevance_recall_at_10": 1.0,
+          "relevance_recall_at_5": 1.0,
+          "shards_available_mean": 61.0,
+          "shards_fetched": {
+            "mean": 5.666667,
+            "p50": 6.0,
+            "p95": 7.0
+          }
+        },
+        "fused": {
+          "bytes_fetched": {
+            "mean": 19973.333333,
+            "p50": 21792.0,
+            "p95": 23148.0
+          },
+          "docs_scored": {
+            "mean": 13.666667,
+            "p50": 13.0,
+            "p95": 19.25
+          },
+          "exact_citation_query_count": 0,
+          "exact_citation_success_rate": 0.0,
+          "failure_modes": {},
+          "fetch_traces": [
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 22272,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 20,
+              "mode": "hybrid",
+              "query_id": "q-test-dot-withdrawal-path",
+              "route_family": "hybrid_late_fusion",
+              "routed_paths": [
+                "data/bm25/postings/part-000016.parquet",
+                "data/bm25/postings/part-000028.parquet",
+                "data/bm25/postings/part-000046.parquet",
+                "data/bm25/postings/part-000049.parquet",
+                "data/bm25/postings/part-000050.parquet",
+                "data/bm25/postings/part-000053.parquet",
+                "data/bm25/postings/part-000059.parquet",
+                "data/vectors/cluster-0000/part-0000.parquet",
+                "data/vectors/cluster-0000/part-0001.parquet",
+                "data/vectors/cluster-0002/part-0000.parquet",
+                "data/vectors/cluster-0006/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 71,
+              "shards_fetched": 12
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 20288,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 14,
+              "mode": "hybrid",
+              "query_id": "q-test-doj-ada-accessibility",
+              "route_family": "hybrid_late_fusion",
+              "routed_paths": [
+                "data/bm25/postings/part-000013.parquet",
+                "data/bm25/postings/part-000014.parquet",
+                "data/bm25/postings/part-000026.parquet",
+                "data/bm25/postings/part-000028.parquet",
+                "data/bm25/postings/part-000044.parquet",
+                "data/bm25/postings/part-000056.parquet",
+                "data/vectors/cluster-0002/part-0000.parquet",
+                "data/vectors/cluster-0004/part-0000.parquet",
+                "data/vectors/cluster-0005/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 71,
+              "shards_fetched": 10
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 21840,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 17,
+              "mode": "hybrid",
+              "query_id": "q-test-dhs-flood-notice",
+              "route_family": "hybrid_late_fusion",
+              "routed_paths": [
+                "data/bm25/postings/part-000025.parquet",
+                "data/bm25/postings/part-000033.parquet",
+                "data/bm25/postings/part-000034.parquet",
+                "data/bm25/postings/part-000036.parquet",
+                "data/bm25/postings/part-000044.parquet",
+                "data/vectors/cluster-0001/part-0000.parquet",
+                "data/vectors/cluster-0001/part-0001.parquet",
+                "data/vectors/cluster-0003/part-0000.parquet",
+                "data/vectors/cluster-0006/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 71,
+              "shards_fetched": 10
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 21744,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 11,
+              "mode": "hybrid",
+              "query_id": "q-test-fda-menu-labeling",
+              "route_family": "hybrid_late_fusion",
+              "routed_paths": [
+                "data/bm25/postings/part-000032.parquet",
+                "data/bm25/postings/part-000039.parquet",
+                "data/bm25/postings/part-000042.parquet",
+                "data/bm25/postings/part-000045.parquet",
+                "data/bm25/postings/part-000052.parquet",
+                "data/bm25/postings/part-000056.parquet",
+                "data/vectors/cluster-0000/part-0000.parquet",
+                "data/vectors/cluster-0000/part-0001.parquet",
+                "data/vectors/cluster-0004/part-0000.parquet",
+                "data/vectors/cluster-0005/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 71,
+              "shards_fetched": 11
+            }
+          ],
+          "latency_ms": {
+            "mean": 0.67,
+            "p50": 0.665,
+            "p95": 0.7925
+          },
+          "mean_reciprocal_rank": 0.916667,
+          "meets_ranking_gate": true,
+          "meets_recall_gate": true,
+          "mode": "hybrid",
+          "ndcg_at_1": 0.833333,
+          "ndcg_at_10": 0.938488,
+          "ndcg_at_5": 0.938488,
+          "primary_metric": "relevance_recall_at_5",
+          "primary_metric_value": 1.0,
+          "queries_with_relevant_labels": 6,
+          "query_count": 6,
+          "ranking_mrr_gate": 0.7,
+          "ranking_ndcg_gate": 0.7,
+          "recall_gate": 0.8,
+          "relevance_recall_at_1": 0.666667,
+          "relevance_recall_at_10": 1.0,
+          "relevance_recall_at_5": 1.0,
+          "shards_available_mean": 71.0,
+          "shards_fetched": {
+            "mean": 10.666667,
+            "p50": 10.5,
+            "p95": 12.75
+          }
+        },
+        "gold_query_count": 6,
+        "graph": {
+          "bytes_fetched": {
+            "mean": 6917.333333,
+            "p50": 4544.0,
+            "p95": 12680.0
+          },
+          "docs_scored": {
+            "mean": 3.166667,
+            "p50": 2.0,
+            "p95": 5.75
+          },
+          "exact_citation_query_count": 0,
+          "exact_citation_success_rate": 0.0,
+          "failure_modes": {},
+          "fetch_traces": [
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 4544,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 2,
+              "mode": "graph",
+              "query_id": "q-test-dot-withdrawal-path",
+              "route_family": "graph_adjacency",
+              "routed_paths": [
+                "data/graph/adjacency/out/part-000002.parquet",
+                "data/graph/adjacency/out/part-000004.parquet"
+              ],
+              "shards_available": 5,
+              "shards_fetched": 2
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 10976,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 5,
+              "mode": "graph",
+              "query_id": "q-test-doj-ada-accessibility",
+              "route_family": "graph_adjacency",
+              "routed_paths": [
+                "data/graph/adjacency/out/part-000000.parquet",
+                "data/graph/adjacency/out/part-000002.parquet",
+                "data/graph/adjacency/out/part-000003.parquet"
+              ],
+              "shards_available": 5,
+              "shards_fetched": 3
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 4096,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 2,
+              "mode": "graph",
+              "query_id": "q-test-dhs-flood-notice",
+              "route_family": "graph_adjacency",
+              "routed_paths": [],
+              "shards_available": 5,
+              "shards_fetched": 0
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 13248,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 6,
+              "mode": "graph",
+              "query_id": "q-test-fda-menu-labeling",
+              "route_family": "graph_adjacency",
+              "routed_paths": [
+                "data/graph/adjacency/out/part-000000.parquet",
+                "data/graph/adjacency/out/part-000001.parquet",
+                "data/graph/adjacency/out/part-000002.parquet",
+                "data/graph/adjacency/out/part-000003.parquet"
+              ],
+              "shards_available": 5,
+              "shards_fetched": 4
+            }
+          ],
+          "latency_ms": {
+            "mean": 0.123333,
+            "p50": 0.12,
+            "p95": 0.245
+          },
+          "mean_reciprocal_rank": 0.916667,
+          "meets_ranking_gate": true,
+          "meets_recall_gate": true,
+          "mode": "graph",
+          "ndcg_at_1": 0.738095,
+          "ndcg_at_10": 0.91082,
+          "ndcg_at_5": 0.91082,
+          "primary_metric": "relevance_recall_at_5",
+          "primary_metric_value": 1.0,
+          "queries_with_relevant_labels": 6,
+          "query_count": 6,
+          "ranking_mrr_gate": 0.7,
+          "ranking_ndcg_gate": 0.7,
+          "recall_gate": 0.75,
+          "relevance_recall_at_1": 0.666667,
+          "relevance_recall_at_10": 1.0,
+          "relevance_recall_at_5": 1.0,
+          "shards_available_mean": 5.0,
+          "shards_fetched": {
+            "mean": 1.833333,
+            "p50": 2.0,
+            "p95": 3.75
+          }
+        },
+        "hybrid": {
+          "bytes_fetched": {
+            "mean": 19973.333333,
+            "p50": 21792.0,
+            "p95": 23148.0
+          },
+          "docs_scored": {
+            "mean": 13.666667,
+            "p50": 13.0,
+            "p95": 19.25
+          },
+          "exact_citation_query_count": 0,
+          "exact_citation_success_rate": 0.0,
+          "failure_modes": {},
+          "fetch_traces": [
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 22272,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 20,
+              "mode": "hybrid",
+              "query_id": "q-test-dot-withdrawal-path",
+              "route_family": "hybrid_late_fusion",
+              "routed_paths": [
+                "data/bm25/postings/part-000016.parquet",
+                "data/bm25/postings/part-000028.parquet",
+                "data/bm25/postings/part-000046.parquet",
+                "data/bm25/postings/part-000049.parquet",
+                "data/bm25/postings/part-000050.parquet",
+                "data/bm25/postings/part-000053.parquet",
+                "data/bm25/postings/part-000059.parquet",
+                "data/vectors/cluster-0000/part-0000.parquet",
+                "data/vectors/cluster-0000/part-0001.parquet",
+                "data/vectors/cluster-0002/part-0000.parquet",
+                "data/vectors/cluster-0006/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 71,
+              "shards_fetched": 12
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 20288,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 14,
+              "mode": "hybrid",
+              "query_id": "q-test-doj-ada-accessibility",
+              "route_family": "hybrid_late_fusion",
+              "routed_paths": [
+                "data/bm25/postings/part-000013.parquet",
+                "data/bm25/postings/part-000014.parquet",
+                "data/bm25/postings/part-000026.parquet",
+                "data/bm25/postings/part-000028.parquet",
+                "data/bm25/postings/part-000044.parquet",
+                "data/bm25/postings/part-000056.parquet",
+                "data/vectors/cluster-0002/part-0000.parquet",
+                "data/vectors/cluster-0004/part-0000.parquet",
+                "data/vectors/cluster-0005/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 71,
+              "shards_fetched": 10
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 21840,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 17,
+              "mode": "hybrid",
+              "query_id": "q-test-dhs-flood-notice",
+              "route_family": "hybrid_late_fusion",
+              "routed_paths": [
+                "data/bm25/postings/part-000025.parquet",
+                "data/bm25/postings/part-000033.parquet",
+                "data/bm25/postings/part-000034.parquet",
+                "data/bm25/postings/part-000036.parquet",
+                "data/bm25/postings/part-000044.parquet",
+                "data/vectors/cluster-0001/part-0000.parquet",
+                "data/vectors/cluster-0001/part-0001.parquet",
+                "data/vectors/cluster-0003/part-0000.parquet",
+                "data/vectors/cluster-0006/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 71,
+              "shards_fetched": 10
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 21744,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 11,
+              "mode": "hybrid",
+              "query_id": "q-test-fda-menu-labeling",
+              "route_family": "hybrid_late_fusion",
+              "routed_paths": [
+                "data/bm25/postings/part-000032.parquet",
+                "data/bm25/postings/part-000039.parquet",
+                "data/bm25/postings/part-000042.parquet",
+                "data/bm25/postings/part-000045.parquet",
+                "data/bm25/postings/part-000052.parquet",
+                "data/bm25/postings/part-000056.parquet",
+                "data/vectors/cluster-0000/part-0000.parquet",
+                "data/vectors/cluster-0000/part-0001.parquet",
+                "data/vectors/cluster-0004/part-0000.parquet",
+                "data/vectors/cluster-0005/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 71,
+              "shards_fetched": 11
+            }
+          ],
+          "latency_ms": {
+            "mean": 0.67,
+            "p50": 0.665,
+            "p95": 0.7925
+          },
+          "mean_reciprocal_rank": 0.916667,
+          "meets_ranking_gate": true,
+          "meets_recall_gate": true,
+          "mode": "hybrid",
+          "ndcg_at_1": 0.833333,
+          "ndcg_at_10": 0.938488,
+          "ndcg_at_5": 0.938488,
+          "primary_metric": "relevance_recall_at_5",
+          "primary_metric_value": 1.0,
+          "queries_with_relevant_labels": 6,
+          "query_count": 6,
+          "ranking_mrr_gate": 0.7,
+          "ranking_ndcg_gate": 0.7,
+          "recall_gate": 0.8,
+          "relevance_recall_at_1": 0.666667,
+          "relevance_recall_at_10": 1.0,
+          "relevance_recall_at_5": 1.0,
+          "shards_available_mean": 71.0,
+          "shards_fetched": {
+            "mean": 10.666667,
+            "p50": 10.5,
+            "p95": 12.75
+          }
+        },
+        "report_count": 1,
+        "role": "sealed_one_shot_report",
+        "semantic-graph": {
+          "bytes_fetched": {
+            "mean": 11056.0,
+            "p50": 7488.0,
+            "p95": 18728.0
+          },
+          "docs_scored": {
+            "mean": 3.166667,
+            "p50": 2.0,
+            "p95": 5.75
+          },
+          "exact_citation_query_count": 0,
+          "exact_citation_success_rate": 0.0,
+          "failure_modes": {},
+          "fetch_traces": [
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 7488,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 2,
+              "mode": "semantic-graph",
+              "query_id": "q-test-dot-withdrawal-path",
+              "route_family": "semantic_entry_locator",
+              "routed_paths": [
+                "data/vectors/cluster-0002/part-0000.parquet",
+                "data/vectors/cluster-0006/part-0000.parquet"
+              ],
+              "shards_available": 15,
+              "shards_fetched": 2
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 17120,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 5,
+              "mode": "semantic-graph",
+              "query_id": "q-test-doj-ada-accessibility",
+              "route_family": "semantic_entry_locator",
+              "routed_paths": [
+                "data/vectors/cluster-0000/part-0000.parquet",
+                "data/vectors/cluster-0002/part-0000.parquet",
+                "data/vectors/cluster-0004/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 15,
+              "shards_fetched": 4
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 7488,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 2,
+              "mode": "semantic-graph",
+              "query_id": "q-test-dhs-flood-notice",
+              "route_family": "semantic_entry_locator",
+              "routed_paths": [
+                "data/vectors/cluster-0001/part-0001.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 15,
+              "shards_fetched": 2
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 19264,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 6,
+              "mode": "semantic-graph",
+              "query_id": "q-test-fda-menu-labeling",
+              "route_family": "semantic_entry_locator",
+              "routed_paths": [
+                "data/vectors/cluster-0000/part-0000.parquet",
+                "data/vectors/cluster-0004/part-0000.parquet",
+                "data/vectors/cluster-0005/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 15,
+              "shards_fetched": 4
+            }
+          ],
+          "latency_ms": {
+            "mean": 0.165,
+            "p50": 0.12,
+            "p95": 0.2575
+          },
+          "mean_reciprocal_rank": 1.0,
+          "meets_ranking_gate": true,
+          "meets_recall_gate": true,
+          "mode": "semantic-graph",
+          "ndcg_at_1": 1.0,
+          "ndcg_at_10": 1.0,
+          "ndcg_at_5": 1.0,
+          "primary_metric": "relevance_recall_at_5",
+          "primary_metric_value": 1.0,
+          "queries_with_relevant_labels": 6,
+          "query_count": 6,
+          "ranking_mrr_gate": 0.7,
+          "ranking_ndcg_gate": 0.7,
+          "recall_gate": 0.75,
+          "relevance_recall_at_1": 0.833333,
+          "relevance_recall_at_10": 1.0,
+          "relevance_recall_at_5": 1.0,
+          "shards_available_mean": 15.0,
+          "shards_fetched": {
+            "mean": 2.666667,
+            "p50": 2.0,
+            "p95": 4.0
+          }
+        },
+        "tuned": false,
+        "vector": {
+          "bytes_fetched": {
+            "mean": 18869.333333,
+            "p50": 20736.0,
+            "p95": 21936.0
+          },
+          "docs_scored": {
+            "mean": 7.833333,
+            "p50": 9.0,
+            "p95": 9.75
+          },
+          "exact_citation_query_count": 0,
+          "exact_citation_success_rate": 0.0,
+          "failure_modes": {},
+          "fetch_traces": [
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 20736,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 9,
+              "mode": "vector",
+              "query_id": "q-test-dot-withdrawal-path",
+              "route_family": "vector_centroid_probe",
+              "routed_paths": [
+                "data/vectors/cluster-0000/part-0000.parquet",
+                "data/vectors/cluster-0000/part-0001.parquet",
+                "data/vectors/cluster-0002/part-0000.parquet",
+                "data/vectors/cluster-0006/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 10,
+              "shards_fetched": 5
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 19136,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 8,
+              "mode": "vector",
+              "query_id": "q-test-doj-ada-accessibility",
+              "route_family": "vector_centroid_probe",
+              "routed_paths": [
+                "data/vectors/cluster-0002/part-0000.parquet",
+                "data/vectors/cluster-0004/part-0000.parquet",
+                "data/vectors/cluster-0005/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 10,
+              "shards_fetched": 4
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 20736,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 9,
+              "mode": "vector",
+              "query_id": "q-test-dhs-flood-notice",
+              "route_family": "vector_centroid_probe",
+              "routed_paths": [
+                "data/vectors/cluster-0001/part-0000.parquet",
+                "data/vectors/cluster-0001/part-0001.parquet",
+                "data/vectors/cluster-0003/part-0000.parquet",
+                "data/vectors/cluster-0006/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 10,
+              "shards_fetched": 5
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 20736,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 9,
+              "mode": "vector",
+              "query_id": "q-test-fda-menu-labeling",
+              "route_family": "vector_centroid_probe",
+              "routed_paths": [
+                "data/vectors/cluster-0000/part-0000.parquet",
+                "data/vectors/cluster-0000/part-0001.parquet",
+                "data/vectors/cluster-0004/part-0000.parquet",
+                "data/vectors/cluster-0005/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 10,
+              "shards_fetched": 5
+            }
+          ],
+          "latency_ms": {
+            "mean": 0.328333,
+            "p50": 0.34,
+            "p95": 0.385
+          },
+          "mean_reciprocal_rank": 1.0,
+          "meets_ranking_gate": true,
+          "meets_recall_gate": true,
+          "mode": "vector",
+          "ndcg_at_1": 1.0,
+          "ndcg_at_10": 1.0,
+          "ndcg_at_5": 1.0,
+          "primary_metric": "relevance_recall_at_5",
+          "primary_metric_value": 1.0,
+          "queries_with_relevant_labels": 6,
+          "query_count": 6,
+          "ranking_mrr_gate": 0.7,
+          "ranking_ndcg_gate": 0.7,
+          "recall_gate": 0.7,
+          "relevance_recall_at_1": 0.833333,
+          "relevance_recall_at_10": 1.0,
+          "relevance_recall_at_5": 1.0,
+          "shards_available_mean": 10.0,
+          "shards_fetched": {
+            "mean": 5.0,
+            "p50": 5.0,
+            "p95": 5.75
+          }
+        }
+      },
+      "train": {
+        "fused": {
+          "bytes_fetched": {
+            "mean": 21184.0,
+            "p50": 21816.0,
+            "p95": 23790.4
+          },
+          "docs_scored": {
+            "mean": 18.5,
+            "p50": 19.5,
+            "p95": 26.0
+          },
+          "exact_citation_query_count": 1,
+          "exact_citation_success_rate": 1.0,
+          "failure_modes": {},
+          "fetch_traces": [
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 20576,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 26,
+              "mode": "hybrid",
+              "query_id": "q-train-epa-exact-docnum",
+              "route_family": "hybrid_late_fusion",
+              "routed_paths": [
+                "data/bm25/postings/part-000006.parquet",
+                "data/bm25/postings/part-000027.parquet",
+                "data/bm25/postings/part-000033.parquet",
+                "data/bm25/postings/part-000051.parquet",
+                "data/vectors/cluster-0003/part-0000.parquet",
+                "data/vectors/cluster-0004/part-0000.parquet",
+                "data/vectors/cluster-0006/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 71,
+              "shards_fetched": 8
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 22272,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 16,
+              "mode": "hybrid",
+              "query_id": "q-train-epa-semantic-emissions",
+              "route_family": "hybrid_late_fusion",
+              "routed_paths": [
+                "data/bm25/postings/part-000013.parquet",
+                "data/bm25/postings/part-000015.parquet",
+                "data/bm25/postings/part-000020.parquet",
+                "data/bm25/postings/part-000029.parquet",
+                "data/bm25/postings/part-000031.parquet",
+                "data/bm25/postings/part-000033.parquet",
+                "data/bm25/postings/part-000036.parquet",
+                "data/bm25/postings/part-000056.parquet",
+                "data/vectors/cluster-0000/part-0000.parquet",
+                "data/vectors/cluster-0000/part-0001.parquet",
+                "data/vectors/cluster-0002/part-0000.parquet",
+                "data/vectors/cluster-0004/part-0000.parquet",
+                "data/vectors/cluster-0007/part-0000.parquet"
+              ],
+              "shards_available": 71,
+              "shards_fetched": 13
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 21360,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 10,
+              "mode": "hybrid",
+              "query_id": "q-train-sec-hedging-rule",
+              "route_family": "hybrid_late_fusion",
+              "routed_paths": [
+                "data/bm25/postings/part-000025.parquet",
+                "data/bm25/postings/part-000026.parquet",
+                "data/bm25/postings/part-000036.parquet",
+                "data/bm25/postings/part-000045.parquet",
+                "data/vectors/cluster-0000/part-0000.parquet",
+                "data/vectors/cluster-0000/part-0001.parquet",
+                "data/vectors/cluster-0002/part-0000.parquet",
+                "data/vectors/cluster-0005/part-0000.parquet",
+                "data/vectors/cluster-0006/part-0000.parquet"
+              ],
+              "shards_available": 71,
+              "shards_fetched": 9
+            },
+            {
+              "bounded_shard_selection": true,
+              "bytes_fetched": 23680,
+              "cache_hit_ratio": 0.0,
+              "docs_scored": 19,
+              "mode": "hybrid",
+              "query_id": "q-train-hhs-medicare-notice",
+              "route_family": "hybrid_late_fusion",
+              "routed_paths": [
+                "data/bm25/postings/part-000037.parquet",
+                "data/bm25/postings/part-000041.parquet",
+                "data/bm25/postings/part-000042.parquet",
+                "data/bm25/postings/part-000044.parquet",
+                "data/bm25/postings/part-000047.parquet",
+                "data/bm25/postings/part-000050.parquet",
+                "data/vectors/cluster-0000/part-0000.parquet",
+                "data/vectors/cluster-0000/part-0001.parquet",
+                "data/vectors/cluster-0001/part-0000.parquet",
+                "data/vectors/cluster-0001/part-0001.parquet",
+                "data/vectors/cluster-0005/part-0000.parquet",
+                "data/vectors/cluster-0006/part-0000.parquet"
+              ],
+              "shards_available": 71,
+              "shards_fetched": 12
+            }
+          ],
+          "latency_ms": {
+            "mean": 0.71,
+            "p50": 0.75,
+            "p95": 0.836
+          },
+          "mean_reciprocal_rank": 0.904762,
+          "meets_ranking_gate": true,
+          "meets_recall_gate": true,
+          "mode": "hybrid",
+          "ndcg_at_1": 0.857143,
+          "ndcg_at_10": 0.934124,
+          "ndcg_at_5": 0.934124,
+          "primary_metric": "relevance_recall_at_5",
+          "primary_metric_value": 1.0,
+          "queries_with_relevant_labels": 7,
+          "query_count": 8,
+          "ranking_mrr_gate": 0.7,
+          "ranking_ndcg_gate": 0.7,
+          "recall_gate": 0.8,
+          "relevance_recall_at_1": 0.714286,
+          "relevance_recall_at_10": 1.0,
+          "relevance_recall_at_5": 1.0,
+          "shards_available_mean": 71.0,
+          "shards_fetched": {
+            "mean": 10.5,
+            "p50": 10.5,
+            "p95": 13.0
+          }
+        },
+        "gold_query_count": 8,
+        "role": "inspection_only_not_reported_as_gate",
+        "tuned": false
+      }
+    },
+    "primary_top_k": 5,
+    "report_partition": "test",
+    "selection_partition": "dev",
+    "top_k_values": [
+      1,
+      5,
+      10
+    ]
+  },
+  "evaluation_cid": "sha256:3d8d43a9bccd15736467b5f2e5d2f5f2beb5e338eda940a692922c4c67353734",
+  "filters": {
+    "case_count": 4,
+    "cases": [
+      {
+        "filters": {
+          "agency": "EPA"
+        },
+        "hit_count": 4,
+        "leaked": [],
+        "ok": true,
+        "query_id": "q-train-filter-agency-epa",
+        "query_kind": "filter_agency"
+      },
+      {
+        "filters": {
+          "document_type": "notice"
+        },
+        "hit_count": 3,
+        "leaked": [],
+        "ok": true,
+        "query_id": "q-dev-filter-type-notice",
+        "query_kind": "filter_type"
+      },
+      {
+        "filters": {
+          "date_from": "2020-06-01",
+          "date_to": "2020-06-30"
+        },
+        "hit_count": 1,
+        "leaked": [],
+        "ok": true,
+        "query_id": "q-dev-filter-date-2020",
+        "query_kind": "filter_date"
+      },
+      {
+        "filters": {
+          "agency": "DOT"
+        },
+        "hit_count": 2,
+        "leaked": [],
+        "ok": true,
+        "query_id": "q-test-filter-agency-dot",
+        "query_kind": "filter_agency"
+      }
+    ],
+    "filter_gate": 1.0,
+    "meets_filter_gate": true,
+    "ok": true,
+    "ok_count": 4,
+    "success_rate": 1.0
+  },
+  "fixture_only": true,
+  "fusion_selection": {
+    "candidate_id": "vector_heavy_weighted_0_3_0_7",
+    "config": {
+      "bm25_weight": 0.3,
+      "method": "weighted",
+      "rrf_k": 60,
+      "stage": "late",
+      "vector_weight": 0.7
+    },
+    "config_digest": "a991f51dcc2083ff08073ee33940ee8e8a888f65ad0832618bf1086fdc026e08",
+    "evidence_partition": "dev",
+    "is_plan_default": false,
+    "meets_recall_gate": true,
+    "primary_metric_value": 1.0,
+    "reason": "selected on sealed dev split by primary hybrid recall, then MRR, then nDCG@10; test split is not used for selection"
+  },
+  "goal_id": "LCR-G130",
+  "graph_path": {
+    "all_partitions": {
+      "case_count": 3,
+      "cases": [
+        {
+          "edge_count": 1,
+          "expected_count": 2,
+          "missing": [],
+          "ok": true,
+          "partition": "dev",
+          "path_id": "path-dev-epa-correction",
+          "query_id": "q-dev-correction-path-epa",
+          "recovered_count": 2,
+          "shards_available": 5,
+          "shards_fetched": 3
+        },
+        {
+          "edge_count": 1,
+          "expected_count": 2,
+          "missing": [],
+          "ok": true,
+          "partition": "test",
+          "path_id": "path-test-dot-withdrawal",
+          "query_id": "q-test-dot-withdrawal-path",
+          "recovered_count": 2,
+          "shards_available": 5,
+          "shards_fetched": 2
+        },
+        {
+          "edge_count": 1,
+          "expected_count": 2,
+          "missing": [],
+          "ok": true,
+          "partition": "train",
+          "path_id": "path-train-epa-proposed-final",
+          "query_id": "q-train-epa-semantic-emissions",
+          "recovered_count": 2,
+          "shards_available": 5,
+          "shards_fetched": 3
+        }
+      ],
+      "edge_count": 18,
+      "failed_count": 0,
+      "matched_count": 3,
+      "meets_recall_gate": true,
+      "ok": true,
+      "recall_gate": 1.0,
+      "success_rate": 1.0
+    },
+    "edge_count": 18,
+    "ok": true,
+    "test": {
+      "case_count": 1,
+      "cases": [
+        {
+          "edge_count": 1,
+          "expected_count": 2,
+          "missing": [],
+          "ok": true,
+          "partition": "test",
+          "path_id": "path-test-dot-withdrawal",
+          "query_id": "q-test-dot-withdrawal-path",
+          "recovered_count": 2,
+          "shards_available": 5,
+          "shards_fetched": 2
+        }
+      ],
+      "edge_count": 18,
+      "failed_count": 0,
+      "matched_count": 1,
+      "meets_recall_gate": true,
+      "ok": true,
+      "recall_gate": 1.0,
+      "success_rate": 1.0
+    }
+  },
+  "hard_negatives": {
+    "all_ok": false,
+    "case_count": 6,
+    "cases": [
+      {
+        "control_id": "hn-fabricated-document-number",
+        "control_kind": "fabricated_document_number",
+        "leaked_blocked": [
+          "bafkreie2f8e2b3a69e652a8972036d37ff77bb6d391aa68b2ac3f1"
+        ],
+        "ok": false,
+        "partition": "train"
+      },
+      {
+        "control_id": "hn-wrong-agency-emissions",
+        "control_kind": "wrong_agency",
+        "leaked_blocked": [],
+        "ok": true,
+        "partition": "dev"
+      },
+      {
+        "control_id": "hn-wrong-document-type-presidential",
+        "control_kind": "wrong_document_type",
+        "leaked_blocked": [
+          "bafkreie9cf849d6b14657957730db3991045ccc0d40f2008f8c645"
+        ],
+        "ok": false,
+        "partition": "test"
+      },
+      {
+        "control_id": "hn-wrong-type-proposed-as-final",
+        "control_kind": "proposed_final_confusion",
+        "leaked_blocked": [],
+        "ok": true,
+        "partition": "dev"
+      },
+      {
+        "control_id": "hn-out-of-cutoff-fabricated-future",
+        "control_kind": "out_of_cutoff",
+        "leaked_blocked": [],
+        "ok": true,
+        "partition": "test"
+      },
+      {
+        "control_id": "hn-lexical-decoy-section-230-style",
+        "control_kind": "lexical_decoy",
+        "leaked_blocked": [],
+        "ok": true,
+        "partition": "train"
+      }
+    ],
+    "ok_count": 4
+  },
+  "host_snapshot": {
+    "machine": "aarch64",
+    "processor": "aarch64",
+    "python_version": "3.12.3",
+    "role": "evaluation_host_snapshot_not_sla",
+    "system": "Linux"
+  },
+  "hub_upload": false,
+  "io": {
+    "bm25_test": {
+      "bytes_fetched": {
+        "mean": 1104.0,
+        "p50": 1104.0,
+        "p95": 1440.0
+      },
+      "latency_ms": {
+        "mean": 0.341667,
+        "p50": 0.345,
+        "p95": 0.4375
+      },
+      "shards_fetched": {
+        "mean": 5.666667,
+        "p50": 6.0,
+        "p95": 7.0
+      }
+    },
+    "cache_hit_ratio": 0.0,
+    "graph_test": {
+      "bytes_fetched": {
+        "mean": 6917.333333,
+        "p50": 4544.0,
+        "p95": 12680.0
+      },
+      "latency_ms": {
+        "mean": 0.123333,
+        "p50": 0.12,
+        "p95": 0.245
+      },
+      "shards_fetched": {
+        "mean": 1.833333,
+        "p50": 2.0,
+        "p95": 3.75
+      }
+    },
+    "hybrid_test": {
+      "bytes_fetched": {
+        "mean": 19973.333333,
+        "p50": 21792.0,
+        "p95": 23148.0
+      },
+      "latency_ms": {
+        "mean": 0.67,
+        "p50": 0.665,
+        "p95": 0.7925
+      },
+      "shards_fetched": {
+        "mean": 10.666667,
+        "p50": 10.5,
+        "p95": 12.75
+      }
+    },
+    "model": "deterministic_fixture_io/v1",
+    "semantic_test": {
+      "bytes_fetched": {
+        "mean": 11056.0,
+        "p50": 7488.0,
+        "p95": 18728.0
+      },
+      "latency_ms": {
+        "mean": 0.165,
+        "p50": 0.12,
+        "p95": 0.2575
+      },
+      "shards_fetched": {
+        "mean": 2.666667,
+        "p50": 2.0,
+        "p95": 4.0
+      }
+    },
+    "sparse": {
+      "bounded_shard_selection": true,
+      "byte_ratio_gate": 0.4,
+      "full_release_bytes": 74016,
+      "modes": {
+        "bm25": {
+          "bounded_shard_selection": true,
+          "bytes_mean": 1104.0,
+          "bytes_ratio": 0.014916,
+          "shard_ratio": 0.092896,
+          "shards_available_mean": 61.0,
+          "shards_mean": 5.666667,
+          "substantially_less_than_full_release": true
+        },
+        "graph": {
+          "bounded_shard_selection": true,
+          "bytes_mean": 6917.333333,
+          "bytes_ratio": 0.093457,
+          "shard_ratio": 0.366667,
+          "shards_available_mean": 5.0,
+          "shards_mean": 1.833333,
+          "substantially_less_than_full_release": true
+        },
+        "hybrid": {
+          "bounded_shard_selection": true,
+          "bytes_mean": 19973.333333,
+          "bytes_ratio": 0.269852,
+          "shard_ratio": 0.150235,
+          "shards_available_mean": 71.0,
+          "shards_mean": 10.666667,
+          "substantially_less_than_full_release": true
+        },
+        "semantic-graph": {
+          "bounded_shard_selection": true,
+          "bytes_mean": 11056.0,
+          "bytes_ratio": 0.149373,
+          "shard_ratio": 0.177778,
+          "shards_available_mean": 15.0,
+          "shards_mean": 2.666667,
+          "substantially_less_than_full_release": true
+        },
+        "vector": {
+          "bounded_shard_selection": true,
+          "bytes_mean": 18869.333333,
+          "bytes_ratio": 0.254936,
+          "shard_ratio": 0.5,
+          "shards_available_mean": 10.0,
+          "shards_mean": 5.0,
+          "substantially_less_than_full_release": true
+        }
+      },
+      "notes": "I/O uses a deterministic synthetic cost model so sealed reports are wall-clock independent. Routed queries must select a proper subset of shards and stay under the declared byte/shard ratios.",
+      "shard_ratio_gate": 0.5,
+      "substantially_less_than_full_release": true
+    },
+    "vector_test": {
+      "bytes_fetched": {
+        "mean": 18869.333333,
+        "p50": 20736.0,
+        "p95": 21936.0
+      },
+      "latency_ms": {
+        "mean": 0.328333,
+        "p50": 0.34,
+        "p95": 0.385
+      },
+      "shards_fetched": {
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.75
+      }
+    }
+  },
+  "live_canary": false,
+  "missing_body": {
+    "all_ok": true,
+    "case_count": 3,
+    "cases": [
+      {
+        "body_present": false,
+        "case_id": "mb-fcc-metadata-only",
+        "document_id": "doc:fcc-meta-2024-01111",
+        "must_not_claim_full_text": true,
+        "ok": true,
+        "text_availability": "metadata_only"
+      },
+      {
+        "body_present": false,
+        "case_id": "mb-fcc-unavailable",
+        "document_id": "doc:fcc-unavail-2024-02222",
+        "must_not_claim_full_text": true,
+        "ok": true,
+        "text_availability": "unavailable"
+      },
+      {
+        "body_present": false,
+        "case_id": "mb-sba-abstract-only",
+        "document_id": "doc:sba-abstract-2011-03333",
+        "must_not_claim_full_text": true,
+        "ok": true,
+        "text_availability": "abstract_only"
+      }
+    ],
+    "ok_count": 3
+  },
+  "modes_meet_declared_gates": {
+    "bm25": true,
+    "graph": true,
+    "hybrid": true,
+    "semantic-graph": true,
+    "vector": true
+  },
+  "not_legal_advice": true,
+  "producer": "evaluate_federal_register_sparse_graphrag.py",
+  "production_claim": {
+    "claim": "NO production-searchable claim: fixture uses local deterministic projection, not live GTE-small; fixture evaluation is not a live canary and does not authorize Hub upload.",
+    "declared_bm25_recall_gate": 0.75,
+    "declared_dense_recall_gate": 0.95,
+    "declared_graph_recall_gate": 1.0,
+    "declared_hybrid_recall_gate": 0.8,
+    "declared_semantic_recall_gate": 0.75,
+    "declared_vector_recall_gate": 0.7,
+    "default_fusion_candidate_id": "vector_heavy_weighted_0_3_0_7",
+    "default_probe_centroids": 4,
+    "fixture_result_called_live_canary": false,
+    "live_canary": false,
+    "modes_meet_declared_gates": true,
+    "production_searchable": false
+  },
+  "program_id": "legal-corpora-reindex-v1",
+  "proves_software_contract_only": true,
+  "reference_hardware": {
+    "architecture": "x86_64",
+    "cpu_cores_logical": 8,
+    "cpu_model": "reference-generic-8vCPU",
+    "memory_gib": 32,
+    "notes": "Sealed offline evaluation uses a deterministic synthetic cost model; numbers are comparable across commits on this fixture, not absolute production SLAs for arbitrary hardware.",
+    "os_family": "linux",
+    "python_target": "python3.12",
+    "storage": "nvme-ssd"
+  },
+  "reference_network": {
+    "assumed_bandwidth_mbps": 100.0,
+    "assumed_rtt_ms": 20.0,
+    "hub_access": "disabled_in_fixture_gate",
+    "mode": "fixture_offline",
+    "network_required": false,
+    "notes": "LCR-063 fixture evaluation never contacts the network. Remote Hub byte budgets for live staging/canary are deferred to LCR-064 and must not be inferred from this report."
+  },
+  "regressions": {
+    "bm25_primary": 1.0,
+    "delta_vs_stronger": 0.0,
+    "delta_vs_weaker": 0.0,
+    "exceptions": [],
+    "fused_primary": 1.0,
+    "no_unapproved_regression": true,
+    "regression_tolerance": 0.02,
+    "stronger_component_primary": 1.0,
+    "vector_primary": 1.0,
+    "weaker_component_primary": 1.0
+  },
+  "release_profile": "federal-register-ir-graphrag/v2",
+  "resources": {
+    "build_estimated_seconds": 0.0144,
+    "build_throughput_rows_per_second": 2500.0,
+    "cache_hit_ratio": 0.0,
+    "model": "deterministic_fixture_resource_model/v1",
+    "notes": "Peak memory and build throughput are synthetic fixture estimates for regression tracking; they are not measured OS samples.",
+    "peak_memory_bytes": 95040,
+    "peak_memory_mib": 0.090637
+  },
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-federal-evaluation@1",
+  "schema_version": "ipfs_datasets_py/legal-corpora-reindex-federal-evaluation@1",
+  "security": {
+    "all_fail_closed": true,
+    "fixture_result_called_live_canary": false,
+    "kinds": {
+      "budget": true,
+      "decompression": true,
+      "digest": true,
+      "mutable-revision": true,
+      "secrets_absent": true,
+      "tamper": true,
+      "traversal": true
+    },
+    "live_canary": false,
+    "policy": "security_probes_fail_closed",
+    "probes": [
+      {
+        "detail": "relative_path must not contain empty, '.', or '..' segments: '../etc/passwd'",
+        "error_type": "ArtifactPathError",
+        "fail_closed": true,
+        "failed_closed": true,
+        "kind": "traversal",
+        "ok": true,
+        "probe_id": "traversal_relative_path"
+      },
+      {
+        "detail": "relative_path must not contain empty, '.', or '..' segments: '../../secret.json'",
+        "error_type": "UnsafePathError",
+        "fail_closed": true,
+        "failed_closed": true,
+        "kind": "traversal",
+        "ok": true,
+        "probe_id": "traversal_resolver_path"
+      },
+      {
+        "detail": "manifest_digest mismatch: declared=825bfccdecc1be8d635e8ebbeef8e07950d081e7fcac1288a359089d4d2be578 expected=4a59288d8ddd8e6bfc80f3384e7712ba86e463113db5e44fdd3bdca2d91a1397",
+        "error_type": "GoldChecksumError",
+        "fail_closed": true,
+        "failed_closed": true,
+        "kind": "tamper",
+        "ok": true,
+        "probe_id": "tamper_gold_checksum"
+      },
+      {
+        "detail": "cid does not match sha256 for data/corpus/part-000000.parquet",
+        "error_type": "DigestDriftError",
+        "fail_closed": true,
+        "failed_closed": true,
+        "kind": "digest",
+        "ok": true,
+        "probe_id": "digest_drift"
+      },
+      {
+        "detail": "artifact exceeds max_artifact_bytes: data/vectors/bomb.parquet",
+        "error_type": "OversizedArtifactError",
+        "fail_closed": true,
+        "failed_closed": true,
+        "kind": "decompression",
+        "ok": true,
+        "probe_id": "decompression_artifact_budget"
+      },
+      {
+        "detail": "stop_reason=nodes",
+        "error_type": "QueryBudgetExhausted",
+        "fail_closed": true,
+        "failed_closed": true,
+        "kind": "budget",
+        "ok": true,
+        "probe_id": "traversal_budget_graph_walk"
+      },
+      {
+        "detail": "query budget exhausted: bytes",
+        "error_type": "QueryBudgetExhausted",
+        "fail_closed": true,
+        "failed_closed": true,
+        "kind": "budget",
+        "ok": true,
+        "probe_id": "budget_typed_exhaustion"
+      },
+      {
+        "detail": "revision must be an immutable 40-hex Hub commit SHA, not a mutable ref: 'main'",
+        "error_type": "ImmutablePinError",
+        "fail_closed": true,
+        "failed_closed": true,
+        "kind": "mutable-revision",
+        "ok": true,
+        "probe_id": "mutable_revision_main"
+      },
+      {
+        "detail": "federal_evaluation contains secret or private surfaces: $.token",
+        "error_type": "SecretInReceiptError",
+        "fail_closed": true,
+        "failed_closed": true,
+        "kind": "secrets_absent",
+        "ok": true,
+        "probe_id": "credential_surface"
+      }
+    ]
+  },
+  "task_id": "LCR-063",
+  "two_build_determinism": {
+    "bm25_match": true,
+    "digest_a": "8fb2678d04e39eae5192be2291466689a2effb70479007db70f0dc2b46ffa3d5",
+    "digest_b": "8fb2678d04e39eae5192be2291466689a2effb70479007db70f0dc2b46ffa3d5",
+    "graph_match": true,
+    "ok": true,
+    "policy": "two_independent_fixture_builds_must_match",
+    "runs": 2,
+    "vector_match": true
+  }
+}

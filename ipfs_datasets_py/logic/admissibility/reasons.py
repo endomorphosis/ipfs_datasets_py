@@ -139,9 +139,7 @@ def parse_reason_code(value: object) -> AdmissibilityReasonCode:
     if isinstance(value, AdmissibilityReasonCode):
         return value
     if not isinstance(value, str) or not value.strip():
-        raise AdmissibilityReasonError(
-            "reason code must be a non-empty string; fail closed"
-        )
+        raise AdmissibilityReasonError("reason code must be a non-empty string; fail closed")
     normalized = value.strip()
     try:
         return AdmissibilityReasonCode(normalized)
@@ -221,9 +219,7 @@ if _enum_values != REASON_CODE_WIRE_VALUES:
         f"enum={_enum_values!r} pinned={REASON_CODE_WIRE_VALUES!r}"
     )
 if set(_DEFAULT_STATUS_FOR_REASON) != set(AdmissibilityReasonCode):
-    raise RuntimeError(
-        "default status map must cover every AdmissibilityReasonCode member"
-    )
+    raise RuntimeError("default status map must cover every AdmissibilityReasonCode member")
 
 
 __all__ = [

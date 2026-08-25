@@ -170,16 +170,20 @@ converter = FileConverter(config=config)
 # OLD ❌ (asyncio)
 import asyncio
 
+
 async def main():
     result = await old_converter.convert_async("file.pdf")
+
 
 asyncio.run(main())
 
 # NEW ✅ (anyio)
 import anyio
 
+
 async def main():
     result = await converter.convert("file.pdf")
+
 
 anyio.run(main)
 ```

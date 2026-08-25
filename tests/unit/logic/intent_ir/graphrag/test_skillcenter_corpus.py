@@ -130,13 +130,8 @@ def test_builds_verified_cid_primary_key_corpus(tmp_path: Path) -> None:
     assert all(row["entry_cid"].startswith("bafk") for row in rows)
     assert all(row["entry_multihash"] for row in rows)
     assert all(row["skill_md"] for row in rows)
-    assert [row["entry_cid"] for row in loaded.cid_rows] == sorted(
-        row["entry_cid"] for row in rows
-    )
-    assert (
-        pq.read_schema(output / "corpus.parquet").metadata[b"primary_key"]
-        == b"entry_cid"
-    )
+    assert [row["entry_cid"] for row in loaded.cid_rows] == sorted(row["entry_cid"] for row in rows)
+    assert pq.read_schema(output / "corpus.parquet").metadata[b"primary_key"] == b"entry_cid"
     assert loaded.manifest["inputs"][0]["declared_total_skills"] == 99
     assert loaded.manifest["inputs"][0]["total_skills"] == 1
 
@@ -170,9 +165,7 @@ def test_full_corpus_bm25_uses_entry_cid_primary_key(tmp_path: Path) -> None:
 
     assert summary.indexed_entries == 2
     assert summary.primary_key == "entry_cid"
-    assert hit.entry_cid in SkillCenterCorpusIndex.load(
-        corpus_output, verify_rows=False
-    ).entry_cids
+    assert hit.entry_cid in SkillCenterCorpusIndex.load(corpus_output, verify_rows=False).entry_cids
     assert hit.matched_terms == ("result", "verify")
     assert hit.proof_authority is False
     assert index.entry_neighbors(hit.entry_cid, k=1)
@@ -214,9 +207,7 @@ def test_cid_graph_resumes_and_uses_bm25_entry_edges(tmp_path: Path) -> None:
         corpus_dir=corpus_output,
         bm25_dir=bm25_output,
     )
-    entry_cid = next(iter(SkillCenterCorpusIndex.load(
-        corpus_output, verify_rows=False
-    ).entry_cids))
+    entry_cid = next(iter(SkillCenterCorpusIndex.load(corpus_output, verify_rows=False).entry_cids))
 
     assert summary.skill_nodes == 2
     assert summary.neighbor_edges == 2
@@ -242,11 +233,7 @@ def test_faiss_id_map_joins_vectors_by_entry_cid(tmp_path: Path) -> None:
 
     def embed(texts: list[str]) -> list[list[float]]:
         return [
-            [
-                float(value)
-                for value in hashlib.sha256(text.encode()).digest()[:3]
-            ]
-            for text in texts
+            [float(value) for value in hashlib.sha256(text.encode()).digest()[:3]] for text in texts
         ]
 
     for index, reader in enumerate(readers):
@@ -269,9 +256,7 @@ def test_faiss_id_map_joins_vectors_by_entry_cid(tmp_path: Path) -> None:
         vector_output,
         corpus_dir=corpus_output,
     )
-    first_embedding = next(
-        iter_skillcenter_embedding_rows(embedding_dirs[0])
-    )
+    first_embedding = next(iter_skillcenter_embedding_rows(embedding_dirs[0]))
     hit = vector_index.search_vector(first_embedding["embedding"], k=1)[0]
 
     assert summary.vector_count == 2

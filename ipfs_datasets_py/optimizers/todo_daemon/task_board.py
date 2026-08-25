@@ -136,11 +136,7 @@ def managed_status_block_pattern(start_marker: str, end_marker: str) -> re.Patte
     """Return a regex matching a daemon-managed generated-status block."""
 
     return re.compile(
-        r"\n?"
-        + re.escape(start_marker)
-        + r"[\s\S]*?"
-        + re.escape(end_marker)
-        + r"\n?",
+        r"\n?" + re.escape(start_marker) + r"[\s\S]*?" + re.escape(end_marker) + r"\n?",
         re.MULTILINE,
     )
 

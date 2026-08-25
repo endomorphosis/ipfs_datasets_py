@@ -29,6 +29,7 @@ try:
         HierarchicalToolManager,
         ToolCategory,
     )
+
     HTM_AVAILABLE = True
 except Exception:
     HTM_AVAILABLE = False
@@ -40,6 +41,7 @@ try:
         GRPCToolResponse,
         GRPC_AVAILABLE,
     )
+
     GRPC_MODULE_OK = True
 except Exception:
     GRPC_MODULE_OK = False
@@ -49,6 +51,7 @@ try:
         PrometheusExporter,
         PROMETHEUS_AVAILABLE,
     )
+
     PROM_MODULE_OK = True
 except Exception:
     PROM_MODULE_OK = False
@@ -60,6 +63,7 @@ try:
         OTEL_AVAILABLE,
         _NoOpSpan,
     )
+
     OTEL_MODULE_OK = True
 except Exception:
     OTEL_MODULE_OK = False
@@ -68,6 +72,7 @@ except Exception:
 # ===========================================================================
 # K51 — adaptive batch sizing
 # ===========================================================================
+
 
 @pytest.mark.skipif(not HTM_AVAILABLE, reason="HierarchicalToolManager not importable")
 class TestDispatchParallelAdaptiveBatch:
@@ -88,12 +93,10 @@ class TestDispatchParallelAdaptiveBatch:
 
     def test_max_concurrent_none_is_default(self):
         """max_concurrent=None runs all calls at once (original behaviour)."""
+
         async def _run():
             mgr = self._make_manager_with_echo()
-            calls = [
-                {"category": "echo", "tool": "ping", "params": {"n": i}}
-                for i in range(5)
-            ]
+            calls = [{"category": "echo", "tool": "ping", "params": {"n": i}} for i in range(5)]
             return await mgr.dispatch_parallel(calls, max_concurrent=None)
 
         results = asyncio.get_event_loop().run_until_complete(_run())
@@ -121,6 +124,7 @@ class TestDispatchParallelAdaptiveBatch:
 
     def test_max_concurrent_2_batches_of_2(self):
         """With max_concurrent=2 and 6 calls, 3 batches of 2 are processed."""
+
         async def _run():
             mgr = HierarchicalToolManager()
 
@@ -136,6 +140,7 @@ class TestDispatchParallelAdaptiveBatch:
 
     def test_max_concurrent_larger_than_calls_runs_all_at_once(self):
         """max_concurrent >= len(calls) is equivalent to max_concurrent=None."""
+
         async def _run():
             mgr = HierarchicalToolManager()
             mgr.dispatch = AsyncMock(return_value={"status": "ok"})
@@ -143,11 +148,13 @@ class TestDispatchParallelAdaptiveBatch:
             return await mgr.dispatch_parallel(calls, max_concurrent=100)
 
         from unittest.mock import AsyncMock
+
         results = asyncio.get_event_loop().run_until_complete(_run())
         assert len(results) == 3
 
     def test_max_concurrent_preserves_order(self):
         """Results are returned in the same order as input calls regardless of batching."""
+
         async def _run():
             mgr = HierarchicalToolManager()
 
@@ -165,6 +172,7 @@ class TestDispatchParallelAdaptiveBatch:
 
     def test_max_concurrent_with_errors_in_batch(self):
         """Errors within a batch are captured (return_exceptions=True)."""
+
         async def _run():
             mgr = HierarchicalToolManager()
 
@@ -183,6 +191,7 @@ class TestDispatchParallelAdaptiveBatch:
 
     def test_empty_calls_returns_empty_list(self):
         """Empty call list returns [] regardless of max_concurrent."""
+
         async def _run():
             mgr = HierarchicalToolManager()
             return await mgr.dispatch_parallel([], max_concurrent=5)
@@ -195,14 +204,16 @@ class TestDispatchParallelAdaptiveBatch:
 # L52 — gRPC Transport Adapter
 # ===========================================================================
 
+
 @pytest.mark.skipif(not GRPC_MODULE_OK, reason="grpc_transport not importable")
 class TestGRPCTransportAdapter:
-
     def _make_mock_manager(self):
         """Create a minimal mock manager that responds to dispatch."""
+
         class MockManager:
             async def dispatch(self, category, tool, params):
                 return {"status": "ok", "category": category, "tool": tool, "params": params}
+
         return MockManager()
 
     def test_get_info_returns_dict(self):
@@ -262,6 +273,7 @@ class TestGRPCTransportAdapter:
             class FailManager:
                 async def dispatch(self, *a, **kw):
                     raise RuntimeError("db offline")
+
             adapter = GRPCTransportAdapter(FailManager())
             req = GRPCToolRequest(category="x", tool="y", request_id="r2")
             return await adapter.handle_request(req)
@@ -292,9 +304,9 @@ class TestGRPCTransportAdapter:
 # L53 — Prometheus Exporter
 # ===========================================================================
 
+
 @pytest.mark.skipif(not PROM_MODULE_OK, reason="prometheus_exporter not importable")
 class TestPrometheusExporter:
-
     def test_get_info_returns_dict(self):
         exp = PrometheusExporter(port=9090)
         info = exp.get_info()
@@ -334,6 +346,7 @@ class TestPrometheusExporter:
                     "active_connections": 3,
                     "system_metrics": {"cpu_percent": 42.0, "memory_percent": 60.0},
                 }
+
         exp = PrometheusExporter(collector=MockCollector())
         exp.update()  # no error
 
@@ -341,6 +354,7 @@ class TestPrometheusExporter:
         class BadCollector:
             def get_snapshot(self):
                 raise RuntimeError("collector crashed")
+
         exp = PrometheusExporter(collector=BadCollector())
         exp.update()  # swallows the error
 
@@ -357,9 +371,11 @@ class TestPrometheusExporter:
 
     def test_update_collector_with_get_current_metrics_fallback(self):
         """Falls back to get_current_metrics when get_snapshot absent."""
+
         class AltCollector:
             def get_current_metrics(self):
                 return {"error_rate": 0.1}
+
         exp = PrometheusExporter(collector=AltCollector())
         exp.update()  # no error
 
@@ -368,9 +384,9 @@ class TestPrometheusExporter:
 # L54 — OpenTelemetry Tracing
 # ===========================================================================
 
+
 @pytest.mark.skipif(not OTEL_MODULE_OK, reason="otel_tracing not importable")
 class TestOTelTracing:
-
     def test_configure_tracing_returns_false_when_unavailable(self):
         if OTEL_AVAILABLE:
             pytest.skip("opentelemetry installed; cannot test False path")

@@ -47,16 +47,18 @@ less ipfs_datasets_py/mcp_server/tools/media_tools/ffmpeg_convert.py
 # 1. Core Module (ipfs_datasets_py/module_name/core.py)
 """Core business logic."""
 
+
 class CoreEngine:
     """Core implementation."""
-    
+
     def __init__(self):
         self.config = {}
-    
+
     def process(self, data):
         """Main processing logic."""
         # Business logic here
         return result
+
 
 # 2. MCP Tool Wrapper (mcp_server/tools/tool_name/tool.py)
 """
@@ -66,6 +68,7 @@ Core implementation: ipfs_datasets_py.module_name.core
 """
 
 from ipfs_datasets_py.module_name import CoreEngine
+
 
 async def mcp_tool_function(**kwargs):
     """Thin wrapper - delegates to core."""
@@ -256,9 +259,11 @@ grep -r "from.*tools.*import" tests/
 # Add compatibility shim in MCP tool
 from ipfs_datasets_py.core import CoreClass
 
+
 # Legacy support
 class LegacyClass(CoreClass):
     """Backward compatibility wrapper."""
+
     pass
 ```
 

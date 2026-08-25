@@ -167,9 +167,7 @@ def test_codex_projection_has_one_contract_and_one_validation_command() -> None:
     todos = project_legal_ir_subgoals_to_codex_todos(reversed(subgoals))
 
     assert len(todos) == 10
-    assert todos == sorted(
-        todos, key=lambda item: (item["parent_obligation_id"], item["ordinal"])
-    )
+    assert todos == sorted(todos, key=lambda item: (item["parent_obligation_id"], item["ordinal"]))
     for todo in todos:
         assert todo["contract_id"].startswith("legal-ir-view/")
         assert len(todo["validation_commands"]) == 1
@@ -205,9 +203,7 @@ def test_leanstral_packets_are_per_subgoal_source_free_and_content_addressed() -
         assert packet.request.evidence["failure_subgoal"]["subgoal_id"] == (
             packet.subgoal.subgoal_id
         )
-        assert packet.request.prompt["primary_contract_id"] == (
-            packet.subgoal.primary_contract_id
-        )
+        assert packet.request.prompt["primary_contract_id"] == (packet.subgoal.primary_contract_id)
         assert packet.codex_todo_projection["subgoal_id"] == packet.subgoal.subgoal_id
         assert len(packet.codex_todo_projection["validation_commands"]) == 1
         assert source not in serialized

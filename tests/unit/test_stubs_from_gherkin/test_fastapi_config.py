@@ -4,11 +4,13 @@ Test stubs for fastapi_config module.
 Feature: FastAPI Configuration
   Configuration management for FastAPI service
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def api_version_settings():
@@ -101,6 +103,7 @@ def rate_limit_configuration():
 
 
 # Test scenarios
+
 
 def test_load_fastapi_configuration():
     """
@@ -213,6 +216,7 @@ def test_override_configuration_with_environment_variables():
 
 
 # Step definitions
+
 
 # Given steps
 @given("API version settings")
@@ -425,4 +429,3 @@ def the_service_listens_on_specified_host_and_port():
     """Step: Then the service listens on specified host and port"""
     # TODO: Implement step
     pass
-

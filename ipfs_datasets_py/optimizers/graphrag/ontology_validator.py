@@ -17,7 +17,7 @@ _logger = logging.getLogger(__name__)
 @dataclass
 class MergeSuggestion:
     """Suggestion to merge two entities.
-    
+
     Attributes:
         entity1_id: ID of first entity
         entity2_id: ID of second entity
@@ -25,27 +25,30 @@ class MergeSuggestion:
         reason: Explanation for why entities should be merged
         evidence: Dict with detailed evidence (name_similarity, type_match, etc.)
     """
+
     entity1_id: str
     entity2_id: str
     similarity_score: float
     reason: str
     evidence: MergeEvidenceDict
-    
+
     def __repr__(self) -> str:
         """Return concise string representation."""
-        return (f"MergeSuggestion({self.entity1_id} + {self.entity2_id}, "
-                f"score={self.similarity_score:.3f}, reason={self.reason})")
+        return (
+            f"MergeSuggestion({self.entity1_id} + {self.entity2_id}, "
+            f"score={self.similarity_score:.3f}, reason={self.reason})"
+        )
 
 
 class OntologyValidator:
     """Validator for ontology quality and improvement suggestions.
-    
+
     Provides methods to:
     - Validate ontology structure
     - Suggest entity merges (deduplication)
     - Identify quality issues
     - Recommend optimizations
-    
+
     Example:
         >>> validator = OntologyValidator()
         >>> ontology = {
@@ -59,10 +62,10 @@ class OntologyValidator:
         >>> for sugg in suggestions:
         ...     print(f"Merge {sugg.entity1_id} + {sugg.entity2_id}: {sugg.reason}")
     """
-    
+
     def __init__(self, min_name_similarity: float = 0.75):
         """Initialize validator.
-        
+
         Args:
             min_name_similarity: Minimum string similarity threshold (0-1) for
                 considering names as similar. Default 0.75 (75% similar).
@@ -116,7 +119,7 @@ class OntologyValidator:
             return ValidationResult(errors=[str(exc)])
 
         return _validate(ontology, strict=strict)
-    
+
     def suggest_entity_merges(
         self,
         ontology: Dict[str, Any],
@@ -124,78 +127,76 @@ class OntologyValidator:
         max_suggestions: Optional[int] = None,
     ) -> List[MergeSuggestion]:
         """Suggest pairs of entities that could be merged.
-        
+
         Analyzes entities to find candidates for merging based on:
         - Name similarity (using sequence matching)
         - Type compatibility (same entity type)
         - Confidence thresholds
         - Relationship redundancy
-        
+
         Args:
             ontology: Ontology dict with 'entities' and optionally 'relationships'
             threshold: Minimum similarity score (0-1) for suggestions. Default 0.8.
             max_suggestions: Optional limit on number of suggestions to return.
                 If None, returns all suggestions above threshold.
-        
+
         Returns:
             List of MergeSuggestion objects sorted by similarity_score (descending)
-        
+
         Raises:
             OntologyValidationError: If ontology is invalid or threshold out of range
         """
         if not isinstance(ontology, dict):
             raise OntologyValidationError("ontology must be a dictionary")
-        
+
         if not 0.0 <= threshold <= 1.0:
             raise OntologyValidationError("threshold must be between 0.0 and 1.0")
-        
+
         entities = ontology.get("entities", [])
         relationships = ontology.get("relationships", [])
-        
+
         if not isinstance(entities, list):
             raise OntologyValidationError("ontology['entities'] must be a list")
-        
+
         # Find entity IDs that are involved in relationships
         entity_ids_in_relationships = self._get_entity_ids_in_relationships(relationships)
-        
+
         suggestions: List[MergeSuggestion] = []
-        
+
         # Compare all pairs of entities
         for i, entity1 in enumerate(entities):
-            for entity2 in entities[i + 1:]:
+            for entity2 in entities[i + 1 :]:
                 # Extract entity IDs
                 id1 = entity1.get("id") or entity1.get("Id")
                 id2 = entity2.get("id") or entity2.get("Id")
-                
+
                 if not id1 or not id2:
                     continue  # Skip entities without IDs
-                
+
                 # Skip if entities are already identical
                 if id1 == id2:
                     continue
-                
+
                 # Calculate merge suitability
                 suggestion = self._evaluate_merge_pair(entity1, entity2, relationships)
-                
+
                 if suggestion and suggestion.similarity_score >= threshold:
                     suggestions.append(suggestion)
-        
+
         # Sort by similarity score (descending)
         suggestions.sort(key=lambda s: s.similarity_score, reverse=True)
-        
+
         # Apply max_suggestions limit if specified
         if max_suggestions is not None:
             if max_suggestions > 0:
                 suggestions = suggestions[:max_suggestions]
             else:
                 suggestions = []
-        
-        _logger.info(
-            f"Found {len(suggestions)} merge suggestions (threshold={threshold})"
-        )
-        
+
+        _logger.info(f"Found {len(suggestions)} merge suggestions (threshold={threshold})")
+
         return suggestions
-    
+
     def _evaluate_merge_pair(
         self,
         entity1: Dict[str, Any],
@@ -203,12 +204,12 @@ class OntologyValidator:
         relationships: List[Dict[str, Any]],
     ) -> Optional[MergeSuggestion]:
         """Evaluate if two entities should be merged.
-        
+
         Args:
             entity1: First entity dict
             entity2: Second entity dict
             relationships: List of relationships in ontology
-        
+
         Returns:
             MergeSuggestion if entities are mergeable, None otherwise
         """
@@ -223,24 +224,20 @@ class OntologyValidator:
 
         if not isinstance(id1, str) or not isinstance(id2, str):
             return None
-        
+
         # Calculate similarity components
         name_similarity = self._calculate_string_similarity(text1, text2)
         type_match = 1.0 if type1 == type2 else 0.0
         confidence_similarity = 1.0 - abs(conf1 - conf2)  # Higher if confidences are similar
-        
+
         # Don't suggest merging if names are too different
         if name_similarity < self.min_name_similarity:
             return None
-        
+
         # Calculate overall similarity score
         # Weight: name (50%), type match (30%), confidence similarity (20%)
-        overall_score = (
-            0.5 * name_similarity +
-            0.3 * type_match +
-            0.2 * confidence_similarity
-        )
-        
+        overall_score = 0.5 * name_similarity + 0.3 * type_match + 0.2 * confidence_similarity
+
         # Build evidence dict
         evidence = {
             "name_similarity": name_similarity,
@@ -251,22 +248,22 @@ class OntologyValidator:
             "confidence2": conf2,
             "confidence_difference": abs(conf1 - conf2),
         }
-        
+
         # Build reason string
         reasons = []
         if name_similarity >= 0.9:
             reasons.append("very similar names")
         elif name_similarity >= 0.8:
             reasons.append("similar names")
-        
+
         if type_match > 0.5:
             reasons.append("same entity type")
-        
+
         if abs(conf1 - conf2) < 0.1:
             reasons.append("similar confidence")
-        
+
         reason = "; ".join(reasons) if reasons else "potential duplicate"
-        
+
         return MergeSuggestion(
             entity1_id=id1,
             entity2_id=id2,
@@ -274,53 +271,53 @@ class OntologyValidator:
             reason=reason,
             evidence=evidence,
         )
-    
+
     def _calculate_string_similarity(self, str1: str, str2: str) -> float:
         """Calculate string similarity using SequenceMatcher.
-        
+
         Args:
             str1: First string
             str2: Second string
-        
+
         Returns:
             Similarity score 0-1 (1.0 = identical, 0.0 = completely different)
         """
         if not str1 or not str2:
             return 0.0
-        
+
         # Normalize strings (lowercase, strip whitespace)
         s1 = str(str1).strip().lower()
         s2 = str(str2).strip().lower()
-        
+
         # Quick check for exact match
         if s1 == s2:
             return 1.0
-        
+
         # Use SequenceMatcher for similarity ratio
         ratio = SequenceMatcher(None, s1, s2).ratio()
         return float(ratio)
-    
+
     def _get_entity_ids_in_relationships(
         self,
         relationships: List[Dict[str, Any]],
     ) -> set[str]:
         """Get all entity IDs that are involved in any relationship.
-        
+
         Args:
             relationships: List of relationship dicts
-        
+
         Returns:
             Set of entity IDs
         """
         entity_ids: set[str] = set()
-        
+
         for rel in relationships:
             source_id = rel.get("source_id") or rel.get("SourceId")
             target_id = rel.get("target_id") or rel.get("TargetId")
-            
+
             if isinstance(source_id, str) and source_id:
                 entity_ids.add(source_id)
             if isinstance(target_id, str) and target_id:
                 entity_ids.add(target_id)
-        
+
         return entity_ids

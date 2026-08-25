@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional, Union
 
 try:
     import jinja2
+
     JINJA2_AVAILABLE = True
 except ImportError:
     JINJA2_AVAILABLE = False
@@ -271,8 +272,7 @@ class TestGeneratorCore:
     def __init__(self, config: Optional[TestGeneratorConfig] = None) -> None:
         if not JINJA2_AVAILABLE:
             raise TestGeneratorExecutionError(
-                "jinja2 is required for test generation; "
-                "install it with: pip install jinja2"
+                "jinja2 is required for test generation; install it with: pip install jinja2"
             )
         self.config = config or TestGeneratorConfig()
         self._jinja_env = jinja2.Environment(
@@ -343,9 +343,7 @@ class TestGeneratorCore:
             "harness": spec["harness"],
             "num_tests": len(spec["tests"]),
             "has_fixtures": bool(spec.get("fixtures")),
-            "has_dataset_features": any(
-                t.get("is_dataset_test", False) for t in spec["tests"]
-            ),
+            "has_dataset_features": any(t.get("is_dataset_test", False) for t in spec["tests"]),
             "file_size": dest.stat().st_size,
         }
 
@@ -353,16 +351,12 @@ class TestGeneratorCore:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _parse_specification(
-        self, raw: Union[str, Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _parse_specification(self, raw: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
         if isinstance(raw, str):
             try:
                 spec: Dict[str, Any] = json.loads(raw)
             except json.JSONDecodeError as exc:
-                raise TestGeneratorValidationError(
-                    f"Invalid JSON specification: {exc}"
-                ) from exc
+                raise TestGeneratorValidationError(f"Invalid JSON specification: {exc}") from exc
         else:
             spec = dict(raw)
 
@@ -402,8 +396,7 @@ class TestGeneratorCore:
         dataset_keywords = {"dataset", "ipfs", "load", "save", "transform"}
         for test in spec["tests"]:
             test["is_dataset_test"] = any(
-                kw in test.get("description", "").lower()
-                for kw in dataset_keywords
+                kw in test.get("description", "").lower() for kw in dataset_keywords
             )
             if test["is_dataset_test"] and "dataset_operations" not in test:
                 test["dataset_operations"] = [
@@ -415,11 +408,7 @@ class TestGeneratorCore:
     def _render(self, spec: Dict[str, Any]) -> str:
         """Render the Jinja2 template for the given specification."""
         spec["timestamp"] = datetime.now().isoformat()
-        template_str = (
-            PYTEST_TEMPLATE
-            if spec["harness"].lower() == "pytest"
-            else UNITTEST_TEMPLATE
-        )
+        template_str = PYTEST_TEMPLATE if spec["harness"].lower() == "pytest" else UNITTEST_TEMPLATE
         return self._jinja_env.from_string(template_str).render(**spec)
 
 

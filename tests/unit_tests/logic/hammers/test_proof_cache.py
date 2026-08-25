@@ -68,9 +68,7 @@ def test_unverified_atp_output_cannot_be_marked_trusted() -> None:
             atp_claimed_proof=True,
         )
 
-    candidate = ProofCacheOutcome.non_trusted(
-        "proved", {"solver": "z3"}, atp_claimed_proof=True
-    )
+    candidate = ProofCacheOutcome.non_trusted("proved", {"solver": "z3"}, atp_claimed_proof=True)
     assert candidate.trusted is False
 
 
@@ -82,9 +80,7 @@ def test_persists_trusted_and_explicit_non_trusted_outcomes(tmp_path) -> None:
     cache.put(trusted_key, ProofCacheOutcome.trusted_kernel("accepted", {"proof": "ok"}))
     cache.put(
         candidate_key,
-        ProofCacheOutcome.non_trusted(
-            "proved", {"candidate": "atp"}, atp_claimed_proof=True
-        ),
+        ProofCacheOutcome.non_trusted("proved", {"candidate": "atp"}, atp_claimed_proof=True),
     )
 
     restarted = PersistentProofCache(path, max_entries=10, ttl_seconds=60)

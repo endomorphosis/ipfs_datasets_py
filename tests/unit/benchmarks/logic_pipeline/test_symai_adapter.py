@@ -97,9 +97,7 @@ def _contract(
             "entities": ["agency", "annual report"],
             "ambiguity_flags": ["modal_scope"],
             "confidence": confidence,
-            "validation_errors": (
-                [] if validation_errors is None else validation_errors
-            ),
+            "validation_errors": ([] if validation_errors is None else validation_errors),
         },
         sort_keys=True,
         separators=(",", ":"),
@@ -171,9 +169,7 @@ def test_objective_evidence_and_config_bounds_are_public() -> None:
         "bounded retries and isolated cache namespaces"
     )
     assert adapters.SYMAI_EVIDENCE_SCHEMA.endswith("symai-evidence.v1")
-    assert adapters.SYMAI_ROUTER_ENGINE.endswith(
-        "IPFSSyMAINeurosymbolicEngine"
-    )
+    assert adapters.SYMAI_ROUTER_ENGINE.endswith("IPFSSyMAINeurosymbolicEngine")
     assert adapters.SYMAI_MAX_RETRIES == 2
     assert adapters.SYMAI_RESPONSE_FORMAT["type"] == "json_schema"
     schema = adapters.SYMAI_RESPONSE_FORMAT["json_schema"]["schema"]
@@ -298,12 +294,8 @@ def test_prompt_is_concise_and_does_not_expose_the_cache_envelope() -> None:
 
 def test_success_round_trip_and_digest_are_stable_for_fixed_measurement() -> None:
     raw = _contract()
-    first = _configured(_FakeEngine([raw])).run(
-        _request(), telemetry=_telemetry()
-    )
-    second = _configured(_FakeEngine([raw])).run(
-        _request(), telemetry=_telemetry()
-    )
+    first = _configured(_FakeEngine([raw])).run(_request(), telemetry=_telemetry())
+    second = _configured(_FakeEngine([raw])).run(_request(), telemetry=_telemetry())
 
     assert first.digest == second.digest
     restored = contracts.StageRecord.from_dict(first.to_dict())
@@ -361,9 +353,7 @@ def test_warm_cache_uses_complete_canonical_scope_and_avoids_second_call() -> No
     ).namespace
     assert len(engine.calls) == 1
     assert first.data["cache"]["namespace"] == expected_namespace
-    assert first.data["cache"]["key"].startswith(
-        f"{expected_namespace}/stage/symai/"
-    )
+    assert first.data["cache"]["key"].startswith(f"{expected_namespace}/stage/symai/")
     assert first.data["cache"]["hit"] is False
     assert second.data["cache"]["hit"] is True
     assert first.telemetry.cache_misses == 1
@@ -379,10 +369,7 @@ def test_live_and_cached_results_require_complete_exact_inner_route_trace() -> N
     missing = _configured(missing_engine).run(_request())
 
     assert missing.status is contracts.StageStatus.FAILED
-    assert (
-        missing.failure_code
-        is contracts.FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR
-    )
+    assert missing.failure_code is contracts.FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR
     assert "omitted: resolved_model_name" in (missing.failure_detail or "")
     assert len(missing_engine.calls) == 1
 
@@ -392,9 +379,7 @@ def test_live_and_cached_results_require_complete_exact_inner_route_trace() -> N
     )
     drifted = _configured(drift_engine).run(_request())
     assert drifted.status is contracts.StageStatus.FAILED
-    assert "identity drifted: service_endpoint" in (
-        drifted.failure_detail or ""
-    )
+    assert "identity drifted: service_endpoint" in (drifted.failure_detail or "")
 
     shared_cache: dict[str, object] = {}
     cached_engine = _FakeEngine([_contract()])
@@ -490,10 +475,7 @@ def test_malformed_json_or_contract_fails_closed_after_bound(raw: str) -> None:
     record = _configured(engine, config=config).run(_request())
 
     assert record.status is contracts.StageStatus.FAILED
-    assert (
-        record.failure_code
-        is contracts.FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE
-    )
+    assert record.failure_code is contracts.FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE
     assert record.output_sha256 is None
     assert not record.kernel_accepted
     assert record.data["candidate_ir"] is None
@@ -511,8 +493,7 @@ def test_malformed_contract_can_repair_once_with_bounded_retry() -> None:
     assert record.telemetry.retries == 1
     assert record.data["backend_provenance"]["retries"] == 1
     assert (
-        record.data["backend_provenance"]["repair_failure_class"]
-        == "structured_contract_failure"
+        record.data["backend_provenance"]["repair_failure_class"] == "structured_contract_failure"
     )
     first_prompt = engine.calls[0].prop.prepared_input
     repair_prompt = engine.calls[1].prop.prepared_input
@@ -532,17 +513,11 @@ def test_output_token_limit_is_typed_as_contract_failure_and_repairs_safely() ->
     record = _configured(engine, cache=cache).run(_request())
 
     assert record.status is contracts.StageStatus.FAILED
-    assert (
-        record.failure_code
-        is contracts.FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE
-    )
+    assert record.failure_code is contracts.FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE
     assert record.data["raw_output"] is None
     assert record.data["candidate_ir"] is None
     assert record.data["safe_failure_class"] == "output_token_limit"
-    assert (
-        record.provenance.effective_identity["symai_safe_failure_class"]
-        == "output_token_limit"
-    )
+    assert record.provenance.effective_identity["symai_safe_failure_class"] == "output_token_limit"
     assert "frozen output token limit" in (record.failure_detail or "")
     assert "RuntimeError" not in (record.failure_detail or "")
     assert record.telemetry.model_calls == 2
@@ -570,10 +545,7 @@ def test_oversized_raw_output_is_explicit_contract_failure() -> None:
     ).run(_request())
 
     assert record.status is contracts.StageStatus.FAILED
-    assert (
-        record.failure_code
-        is contracts.FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE
-    )
+    assert record.failure_code is contracts.FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE
     assert "exceeds 128" in (record.failure_detail or "")
 
 
@@ -594,9 +566,7 @@ def test_unavailable_package_or_import_configuration_is_explicit(
 
     assert record.status is contracts.StageStatus.UNAVAILABLE
     assert record.failure_code is contracts.FailureCode.CAPABILITY_UNAVAILABLE
-    assert "preflight configuration is unavailable" in (
-        record.failure_detail or ""
-    )
+    assert "preflight configuration is unavailable" in (record.failure_detail or "")
     assert (
         record.provenance.effective_identity["symai_failure_code"]
         == contracts.FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR.value
@@ -613,18 +583,12 @@ def test_router_configuration_failure_retries_only_to_frozen_bound() -> None:
     record = _configured(engine, config=config).run(_request())
 
     assert record.status is contracts.StageStatus.FAILED
-    assert (
-        record.failure_code
-        is contracts.FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR
-    )
+    assert record.failure_code is contracts.FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR
     assert len(engine.calls) == adapters.SYMAI_MAX_RETRIES + 1
     assert record.telemetry.retries == adapters.SYMAI_MAX_RETRIES
     prompts = [call.prop.prepared_input for call in engine.calls]
     assert "SAFE_REPAIR_CLASS:" not in prompts[0]
-    assert all(
-        "SAFE_REPAIR_CLASS:engine_invocation_failure" in prompt
-        for prompt in prompts[1:]
-    )
+    assert all("SAFE_REPAIR_CLASS:engine_invocation_failure" in prompt for prompt in prompts[1:])
     assert prompts[1] == prompts[2]
     assert "router down" not in prompts[1]
 
@@ -641,10 +605,7 @@ def test_recursive_route_stack_is_rejected_before_engine_call() -> None:
     )
 
     assert record.status is contracts.StageStatus.FAILED
-    assert (
-        record.failure_code
-        is contracts.FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR
-    )
+    assert record.failure_code is contracts.FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR
     assert "recursive SyMAI" in (record.failure_detail or "")
     assert not engine.calls
 
@@ -681,9 +642,7 @@ def test_default_factory_uses_existing_engine_without_starting_service(
             constructed["kwargs"] = kwargs
 
     symai_module = SimpleNamespace(__version__="test")
-    engine_module = SimpleNamespace(
-        IPFSSyMAINeurosymbolicEngine=ExistingEngine
-    )
+    engine_module = SimpleNamespace(IPFSSyMAINeurosymbolicEngine=ExistingEngine)
 
     def fake_import(name: str) -> object:
         if name == "symai":
@@ -712,9 +671,9 @@ def test_default_factory_uses_existing_engine_without_starting_service(
 
 def test_unconfigured_and_explicit_handler_modes_remain_compatible() -> None:
     assert adapters.SymaiAdapter().handler is None
-    generic = adapters.SymaiAdapter(
-        lambda _request: {"candidate": "legacy-injected-handler"}
-    ).run(_request(), telemetry=_telemetry())
+    generic = adapters.SymaiAdapter(lambda _request: {"candidate": "legacy-injected-handler"}).run(
+        _request(), telemetry=_telemetry()
+    )
     assert generic.status is contracts.StageStatus.SUCCESS
     assert generic.data == {"candidate": "legacy-injected-handler"}
 

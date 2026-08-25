@@ -91,10 +91,7 @@ def _apply_mutation(payload: Any, mutation: Mapping[str, Any]) -> None:
 
 def _reverse_mapping_items(value: Any) -> Any:
     if isinstance(value, Mapping):
-        return {
-            key: _reverse_mapping_items(item)
-            for key, item in reversed(list(value.items()))
-        }
+        return {key: _reverse_mapping_items(item) for key, item in reversed(list(value.items()))}
     if isinstance(value, list):
         return [_reverse_mapping_items(item) for item in value]
     return value
@@ -176,8 +173,7 @@ def test_valid_model_canonical_bytes_and_both_legacy_identifiers(
     assert observed == [canonical]
 
     assert {
-        field_name: len(getattr(model, field_name))
-        for field_name in fixture["expected_counts"]
+        field_name: len(getattr(model, field_name)) for field_name in fixture["expected_counts"]
     } == fixture["expected_counts"]
     domains = sorted(set(claim_domains(model).values()))
     assert domains == fixture["expected_claim_domains"]
@@ -263,9 +259,7 @@ def test_legacy_collection_order_semantics(case: Mapping[str, Any]) -> None:
         else:
             raise AssertionError(f"unsupported collection operation: {case['operation']}")
 
-    canonical_after = canonicalize_ir(
-        SecurityModelIR.from_untrusted_dict(mutated, strict=True)
-    )
+    canonical_after = canonicalize_ir(SecurityModelIR.from_untrusted_dict(mutated, strict=True))
     assert (canonical_after == canonical_before) is case["expected_canonical_equal"]
     assert _sha256_label(canonical_after) == case["expected_canonical_sha256"]
 
@@ -319,8 +313,7 @@ def test_unavailable_required_solver_is_asserted_as_unknown_not_skipped_success(
 
     report = Z3Runner(timeout_ms=1).run_claim(claim, model)
     assert {
-        field_name: getattr(report, field_name)
-        for field_name in metadata["expected_report"]
+        field_name: getattr(report, field_name) for field_name in metadata["expected_report"]
     } == metadata["expected_report"]
     assert report.status not in metadata["accepted_success_statuses"]
     assert metadata["skipped_is_success"] is False

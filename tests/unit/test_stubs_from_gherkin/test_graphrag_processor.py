@@ -4,11 +4,13 @@ Test stubs for graphrag_processor module.
 Feature: GraphRAG Processor
   Process documents for GraphRAG system
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_knowledge_graph():
@@ -83,6 +85,7 @@ def extracted_entities_and_relationships():
 
 
 # Test scenarios
+
 
 def test_process_document_for_graphrag():
     """
@@ -173,6 +176,7 @@ def test_index_graph_for_retrieval():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a knowledge graph")
@@ -343,4 +347,3 @@ def the_local_graph_is_merged_into_global_graph():
     """Step: Then the local graph is merged into global graph"""
     # TODO: Implement step
     pass
-

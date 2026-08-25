@@ -68,10 +68,7 @@ def _matching_explicit_ambiguity(
             continue
         if metadata.get("target_family") != target_family:
             continue
-        if (
-            abs(float(metadata.get("family_margin_raw", 0.0)) - expected_margin)
-            > 1e-12
-        ):
+        if abs(float(metadata.get("family_margin_raw", 0.0)) - expected_margin) > 1e-12:
             continue
         return ambiguity
     return None
@@ -96,9 +93,7 @@ def test_modal_registry_packet_000132_frame_pairs_are_explicit_policy_pairs() ->
             target_family,
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -121,9 +116,7 @@ def test_compiler_emits_packet_000132_explicit_frame_ambiguities() -> None:
     predicted_family = ModalLogicFamily.FRAME.value
     threshold = 0.15
     for sample_id, target_family, family_margin in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _adaptive_ranking_for_outvote(
             predicted_family=predicted_family,
             target_family=target_family,
@@ -151,10 +144,7 @@ def test_compiler_emits_packet_000132_explicit_frame_ambiguities() -> None:
             sample_id,
             [item.to_dict() for item in result.ambiguities],
         )
-        assert (
-            ambiguity.ambiguity_type
-            == f"adaptive_frame_{target_family}_outvoted_margin_low"
-        )
+        assert ambiguity.ambiguity_type == f"adaptive_frame_{target_family}_outvoted_margin_low"
         assert ambiguity.severity == "requires_rule"
         assert ambiguity.metadata.get("adaptive_policy_pair") == (
             f"{predicted_family}->{target_family}"
@@ -165,9 +155,6 @@ def test_compiler_emits_packet_000132_explicit_frame_ambiguities() -> None:
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
         assert (
-            abs(
-                float(ambiguity.metadata.get("priority", 0.0))
-                - (abs(family_margin) + threshold)
-            )
+            abs(float(ambiguity.metadata.get("priority", 0.0)) - (abs(family_margin) + threshold))
             <= 1e-12
         )

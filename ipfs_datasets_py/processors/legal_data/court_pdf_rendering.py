@@ -43,7 +43,9 @@ def wrap_text(text: str, width_chars: int = 100) -> list[str]:
         if not paragraph.strip():
             lines.append("")
             continue
-        lines.extend(wrap(paragraph, width=width_chars, replace_whitespace=False, drop_whitespace=False))
+        lines.extend(
+            wrap(paragraph, width=width_chars, replace_whitespace=False, drop_whitespace=False)
+        )
     return lines or [""]
 
 
@@ -58,10 +60,15 @@ def paginate_wrapped_lines(
         wrapped.extend(wrap_text(raw, width_chars))
     if not wrapped:
         return [[""]]
-    return [wrapped[index : index + body_lines_per_page] for index in range(0, len(wrapped), body_lines_per_page)]
+    return [
+        wrapped[index : index + body_lines_per_page]
+        for index in range(0, len(wrapped), body_lines_per_page)
+    ]
 
 
-def draw_footer(pdf: canvas.Canvas, width: float, label: str, page_num: int, total_pages: int) -> None:
+def draw_footer(
+    pdf: canvas.Canvas, width: float, label: str, page_num: int, total_pages: int
+) -> None:
     pdf.setFont("Times-Roman", 10)
     pdf.drawString(0.75 * inch, 0.42 * inch, f"{label} | Page {page_num} of {total_pages}")
 
@@ -83,7 +90,9 @@ def render_text_lines_pdf(
     bottom = 1.0 * inch
     line_height = 13
     footer_label = footer_label or title
-    pages = paginate_wrapped_lines(lines, width_chars=width_chars, body_lines_per_page=body_lines_per_page)
+    pages = paginate_wrapped_lines(
+        lines, width_chars=width_chars, body_lines_per_page=body_lines_per_page
+    )
     total_pages = len(pages)
 
     for page_num, page_lines in enumerate(pages, start=1):
@@ -176,7 +185,9 @@ DEFAULT_EXHIBIT_CAPTION = ExhibitCaptionConfig(
 )
 
 
-def draw_exhibit_caption(pdf: canvas.Canvas, top_y: float, *, config: ExhibitCaptionConfig = DEFAULT_EXHIBIT_CAPTION) -> float:
+def draw_exhibit_caption(
+    pdf: canvas.Canvas, top_y: float, *, config: ExhibitCaptionConfig = DEFAULT_EXHIBIT_CAPTION
+) -> float:
     width, _ = letter
     left = 0.85 * inch
     right = width - 0.85 * inch
@@ -273,9 +284,15 @@ def render_exhibit_cover_from_markdown(
     pdf.line(left, y, right, y)
     y -= 0.32 * inch
 
-    y = draw_labeled_block(pdf, left, y, right - left, "1. Exhibit Label", [exhibit_label], line_height=12)
-    y = draw_labeled_block(pdf, left, y, right - left, "2. Short Title", [short_title], line_height=12)
-    y = draw_labeled_block(pdf, left, y, right - left, "3. Primary Source Record", [source], line_height=11)
+    y = draw_labeled_block(
+        pdf, left, y, right - left, "1. Exhibit Label", [exhibit_label], line_height=12
+    )
+    y = draw_labeled_block(
+        pdf, left, y, right - left, "2. Short Title", [short_title], line_height=12
+    )
+    y = draw_labeled_block(
+        pdf, left, y, right - left, "3. Primary Source Record", [source], line_height=11
+    )
     y = draw_labeled_block(
         pdf,
         left,
@@ -383,13 +400,49 @@ def render_state_court_markdown_to_pdf(
     md_path = Path(md_path)
     pdf_path = Path(pdf_path)
     styles = getSampleStyleSheet()
-    base = ParagraphStyle("base", parent=styles["Normal"], fontName="Times-Roman", fontSize=11.5, leading=15, spaceAfter=3)
-    h1 = ParagraphStyle("h1", parent=base, fontName="Times-Bold", fontSize=12.5, leading=15.5, spaceBefore=2, spaceAfter=8, alignment=1)
-    h2 = ParagraphStyle("h2", parent=base, fontName="Times-Bold", fontSize=12, leading=15, spaceBefore=8, spaceAfter=5)
-    h3 = ParagraphStyle("h3", parent=base, fontName="Times-BoldItalic", fontSize=11.5, leading=14, spaceBefore=6, spaceAfter=3)
+    base = ParagraphStyle(
+        "base",
+        parent=styles["Normal"],
+        fontName="Times-Roman",
+        fontSize=11.5,
+        leading=15,
+        spaceAfter=3,
+    )
+    h1 = ParagraphStyle(
+        "h1",
+        parent=base,
+        fontName="Times-Bold",
+        fontSize=12.5,
+        leading=15.5,
+        spaceBefore=2,
+        spaceAfter=8,
+        alignment=1,
+    )
+    h2 = ParagraphStyle(
+        "h2",
+        parent=base,
+        fontName="Times-Bold",
+        fontSize=12,
+        leading=15,
+        spaceBefore=8,
+        spaceAfter=5,
+    )
+    h3 = ParagraphStyle(
+        "h3",
+        parent=base,
+        fontName="Times-BoldItalic",
+        fontSize=11.5,
+        leading=14,
+        spaceBefore=6,
+        spaceAfter=3,
+    )
     small = ParagraphStyle("small", parent=base, fontSize=10.2, leading=13)
-    quote = ParagraphStyle("quote", parent=base, leftIndent=18, fontName="Courier", fontSize=9.8, leading=12)
-    centered = ParagraphStyle("centered", parent=base, alignment=1, fontName="Times-Bold", fontSize=11.5, leading=14)
+    quote = ParagraphStyle(
+        "quote", parent=base, leftIndent=18, fontName="Courier", fontSize=9.8, leading=12
+    )
+    centered = ParagraphStyle(
+        "centered", parent=base, alignment=1, fontName="Times-Bold", fontSize=11.5, leading=14
+    )
     cap = ParagraphStyle("cap", parent=base, fontSize=11, leading=13)
     bodynum = ParagraphStyle("bodynum", parent=base, leftIndent=12, firstLineIndent=-12)
 
@@ -417,7 +470,11 @@ def render_state_court_markdown_to_pdf(
             body_start += 1
         if body_start < len(lines):
             first_after = lines[body_start].strip()
-            if first_after.isupper() or first_after.startswith("DEFENDANTS'") or first_after.startswith("[Proposed]"):
+            if (
+                first_after.isupper()
+                or first_after.startswith("DEFENDANTS'")
+                or first_after.startswith("[Proposed]")
+            ):
                 title_line = first_after
                 body_start += 1
         while body_start < len(lines) and not lines[body_start].strip():
@@ -463,7 +520,9 @@ def render_state_court_markdown_to_pdf(
                 in_code = True
                 code_lines = []
             else:
-                story.append(Paragraph("<br/>".join(clean_inline(item) for item in code_lines), quote))
+                story.append(
+                    Paragraph("<br/>".join(clean_inline(item) for item in code_lines), quote)
+                )
                 story.append(Spacer(1, 0.06 * inch))
                 in_code = False
             continue
@@ -502,7 +561,9 @@ def render_state_court_markdown_to_pdf(
         story.append(Paragraph(clean_inline(stripped), small if "Case No." in stripped else base))
 
     stem = md_path.stem.lower()
-    if any(keyword in stem for keyword in config.signature_doc_keywords) and not stem.startswith("proposed_order"):
+    if any(keyword in stem for keyword in config.signature_doc_keywords) and not stem.startswith(
+        "proposed_order"
+    ):
         signature_names = list(config.signature_names or ["Party 1, pro se", "Party 2, pro se"])
         sig_block = [
             Spacer(1, 0.22 * inch),
@@ -561,10 +622,14 @@ def render_state_court_markdown_to_pdf(
     def _capture_page_count(count_pdf: canvas.Canvas, _doc: SimpleDocTemplate) -> None:
         page_counter.append(count_pdf.getPageNumber())
 
-    count_doc.build(story_for_count, onFirstPage=_capture_page_count, onLaterPages=_capture_page_count)
+    count_doc.build(
+        story_for_count, onFirstPage=_capture_page_count, onLaterPages=_capture_page_count
+    )
     doc = SimpleDocTemplate(str(pdf_path), **doc_kwargs)
     doc.page_count = len(page_counter)
-    doc.build(story, onFirstPage=_state_court_pleading_paper, onLaterPages=_state_court_pleading_paper)
+    doc.build(
+        story, onFirstPage=_state_court_pleading_paper, onLaterPages=_state_court_pleading_paper
+    )
     return pdf_path
 
 

@@ -4,11 +4,13 @@ Test stubs for advanced_graphrag_website_processor module.
 Feature: Advanced GraphRAG Website Processor
   Advanced website processing for GraphRAG
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_website():
@@ -65,6 +67,7 @@ def website_content():
 
 
 # Test scenarios
+
 
 def test_extract_structured_data_from_website():
     """
@@ -155,6 +158,7 @@ def test_optimize_website_graph_for_retrieval():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a website")
@@ -311,4 +315,3 @@ def the_graph_is_optimized_for_efficient_retrieval():
     """Step: Then the graph is optimized for efficient retrieval"""
     # TODO: Implement step
     pass
-

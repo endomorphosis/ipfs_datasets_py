@@ -32,9 +32,11 @@ from ipfs_datasets_py.mcp_server.compat import CompatibilityShim
 
 shim = CompatibilityShim()
 
+
 @shim.wrap_tool
 async def my_existing_tool(param: str) -> dict:
     return {"result": param}
+
 
 # Tool now works with both runtimes
 result = await my_existing_tool("test")

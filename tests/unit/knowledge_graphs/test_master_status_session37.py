@@ -44,12 +44,16 @@ class TestExtractionTypesImportError:
     def test_have_tracer_false_on_import_error(self):
         """GIVEN llm_reasoning_tracer absent WHEN types reloaded THEN HAVE_TRACER=False."""
         import ipfs_datasets_py.knowledge_graphs.extraction.types as m
+
         real_tracer = sys.modules.get("ipfs_datasets_py.ml.llm.llm_reasoning_tracer")
         real_accel = sys.modules.get("ipfs_datasets_py.ml.accelerate_integration")
-        with patch.dict(sys.modules, {
-            "ipfs_datasets_py.ml.llm.llm_reasoning_tracer": None,
-            "ipfs_datasets_py.ml.accelerate_integration": None,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "ipfs_datasets_py.ml.llm.llm_reasoning_tracer": None,
+                "ipfs_datasets_py.ml.accelerate_integration": None,
+            },
+        ):
             importlib.reload(m)
             assert m.HAVE_TRACER is False
             assert m.WikipediaKnowledgeGraphTracer is None
@@ -76,6 +80,7 @@ class TestValidationImportError:
 
     def test_have_jsonschema_false_on_import_error(self):
         import ipfs_datasets_py.knowledge_graphs.jsonld.validation as val_mod
+
         real_js = sys.modules.get("jsonschema")
         with patch.dict(sys.modules, {"jsonschema": None}):
             importlib.reload(val_mod)
@@ -103,6 +108,7 @@ class TestReasoningTypesImportFallback:
     def test_np_attribute_exists(self):
         """Verify module-level np attribute is accessible."""
         import ipfs_datasets_py.knowledge_graphs.reasoning.types as rt_mod
+
         # Lines 24-26 are the except ImportError block.  Coverage of these lines
         # requires a reload that breaks enum identity.  Instead we assert the
         # guard variables exist to confirm the try/except structure is correct.
@@ -115,6 +121,7 @@ class TestLineageCoreImportFallback:
 
     def test_networkx_available_attribute_exists(self):
         import ipfs_datasets_py.knowledge_graphs.lineage.core as lc_mod
+
         assert hasattr(lc_mod, "NETWORKX_AVAILABLE")
         assert hasattr(lc_mod, "nx")
 
@@ -124,6 +131,7 @@ class TestCrossDocumentNumpyFallback:
 
     def test_np_attribute_exists(self):
         import ipfs_datasets_py.knowledge_graphs.reasoning.cross_document as cd_mod
+
         assert hasattr(cd_mod, "np")
 
 
@@ -135,12 +143,16 @@ class TestIPLDBackendImportError:
 
     def test_have_router_false_on_import_error(self):
         import ipfs_datasets_py.knowledge_graphs.storage.ipld_backend as sb
+
         real_router = sys.modules.get("ipfs_datasets_py.ipfs_backend_router")
         real_rdeps = sys.modules.get("ipfs_datasets_py.router_deps")
-        with patch.dict(sys.modules, {
-            "ipfs_datasets_py.ipfs_backend_router": None,
-            "ipfs_datasets_py.router_deps": None,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "ipfs_datasets_py.ipfs_backend_router": None,
+                "ipfs_datasets_py.router_deps": None,
+            },
+        ):
             importlib.reload(sb)
             assert sb.HAVE_ROUTER is False
             assert sb.RouterDeps is None
@@ -158,6 +170,7 @@ class TestIPLDBackendImportError:
     def test_get_backend_lazy_init_lines_166_167(self):
         """GIVEN backend=None WHEN _get_backend() called THEN get_ipfs_backend invoked and cached."""
         import ipfs_datasets_py.knowledge_graphs.storage.ipld_backend as sb
+
         storage = sb.IPLDBackend()
         assert storage._backend is None
         mock_be = MagicMock()
@@ -180,6 +193,7 @@ class TestLineageVisualizationImportError:
 
     def test_matplotlib_unavailable_on_import_error(self):
         import ipfs_datasets_py.knowledge_graphs.lineage.visualization as viz_mod
+
         real_mpl = sys.modules.get("matplotlib")
         real_plt = sys.modules.get("matplotlib.pyplot")
         with patch.dict(sys.modules, {"matplotlib": None, "matplotlib.pyplot": None}):
@@ -197,6 +211,7 @@ class TestLineageVisualizationImportError:
         """GIVEN node in _graph but not in _nodes WHEN render_networkx THEN lightgray color used."""
         import networkx as nx
         import matplotlib
+
         matplotlib.use("Agg")
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageGraph, LineageNode
         from ipfs_datasets_py.knowledge_graphs.lineage.visualization import LineageVisualizer
@@ -218,7 +233,9 @@ class TestLineageVisualizationImportError:
         with patch("networkx.draw_networkx_nodes", side_effect=fake_draw_nodes):
             with patch("networkx.draw_networkx_edges"):
                 with patch("networkx.draw_networkx_labels"):
-                    with patch.object(viz_mod.plt, "subplots", return_value=(MagicMock(), MagicMock())):
+                    with patch.object(
+                        viz_mod.plt, "subplots", return_value=(MagicMock(), MagicMock())
+                    ):
                         with patch.object(viz_mod.plt, "tight_layout"):
                             with patch.object(viz_mod.plt, "savefig"):
                                 with patch.object(viz_mod.plt, "close"):
@@ -233,6 +250,7 @@ class TestLineageVisualizationImportError:
     def test_render_plotly_ghost_node_gets_gray(self):
         """GIVEN ghost node in graph WHEN render_plotly THEN gray color used."""
         import ipfs_datasets_py.knowledge_graphs.lineage.visualization as viz_mod
+
         if not viz_mod.PLOTLY_AVAILABLE:
             return  # plotly not installed – skip
 
@@ -267,11 +285,11 @@ class TestLineageVisualizationImportError:
 #    NOT complex (440-447), UnaryOpNode (953)
 # ---------------------------------------------------------------------------
 class TestCypherCompilerUncoveredLines:
-
     def _compile(self, cypher: str):
         from ipfs_datasets_py.knowledge_graphs.cypher.lexer import CypherLexer
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler
+
         tokens = CypherLexer().tokenize(cypher)
         ast = CypherParser().parse(tokens)
         return CypherCompiler().compile(ast)
@@ -333,6 +351,7 @@ class TestRecordFingerprint:
     def test_circular_ref_falls_back_to_str_lines_902_903(self):
         """GIVEN dict with circular ref WHEN _record_fingerprint THEN str fallback used."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _record_fingerprint
+
         rec: dict = {"key": "value"}
         rec["self"] = rec  # circular reference — json.dumps will raise
         result = _record_fingerprint(rec)
@@ -347,6 +366,7 @@ class TestHybridSearchAlreadyVisited:
     def test_already_visited_node_skipped_line_205(self):
         """GIVEN n2 in both seed and n1's neighbours WHEN expand_graph THEN n2 processed once."""
         from ipfs_datasets_py.knowledge_graphs.query.hybrid_search import HybridSearchEngine
+
         backend = MagicMock()
         engine = HybridSearchEngine(backend=backend)
 
@@ -374,10 +394,19 @@ class TestHybridSearchAlreadyVisited:
 class TestKnowledgeGraphExportBooleanProperty:
     def test_entity_bool_property_rdf_line_629(self):
         """GIVEN entity with bool property WHEN export_to_rdf THEN XSD.boolean triple added."""
-        from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Entity, Relationship
+        from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
+            KnowledgeGraph,
+            Entity,
+            Relationship,
+        )
+
         kg = KnowledgeGraph()
-        e1 = Entity(entity_id="e1", name="Alice", entity_type="person",
-                    properties={"active": True, "score": 0.9})
+        e1 = Entity(
+            entity_id="e1",
+            name="Alice",
+            entity_type="person",
+            properties={"active": True, "score": 0.9},
+        )
         e2 = Entity(entity_id="e2", name="Bob", entity_type="person", properties={})
         kg.add_entity(e1)
         kg.add_entity(e2)
@@ -386,15 +415,24 @@ class TestKnowledgeGraphExportBooleanProperty:
 
     def test_relationship_bool_property_rdf_line_661(self):
         """GIVEN relationship with bool property WHEN export_to_rdf THEN XSD.boolean triple added."""
-        from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Entity, Relationship
+        from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
+            KnowledgeGraph,
+            Entity,
+            Relationship,
+        )
+
         kg = KnowledgeGraph()
         e1 = Entity(entity_id="e1", name="Alice", entity_type="person", properties={})
         e2 = Entity(entity_id="e2", name="Bob", entity_type="person", properties={})
         kg.add_entity(e1)
         kg.add_entity(e2)
-        rel = Relationship(relationship_id="r1", relationship_type="knows",
-                           source_entity=e1, target_entity=e2,
-                           properties={"verified": True, "weight": 1.5})
+        rel = Relationship(
+            relationship_id="r1",
+            relationship_type="knows",
+            source_entity=e1,
+            target_entity=e2,
+            properties={"verified": True, "weight": 1.5},
+        )
         kg.add_relationship(rel)
         rdf = kg.export_to_rdf("turtle")
         assert "true" in rdf.lower() or "boolean" in rdf.lower()
@@ -406,7 +444,11 @@ class TestKnowledgeGraphExportBooleanProperty:
 class TestIPFSImporterEmptyData:
     def test_import_data_raises_on_no_graph_data_line_378(self):
         """GIVEN _load_graph_data returns None WHEN import_data THEN error recorded."""
-        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter, ImportConfig
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
+            IPFSImporter,
+            ImportConfig,
+        )
+
         config = ImportConfig()
         importer = IPFSImporter(config=config)
         with patch.object(importer, "_load_graph_data", return_value=None):
@@ -421,7 +463,10 @@ class TestIPFSImporterEmptyData:
 class TestNeo4jExporterConstraintException:
     def test_export_schema_constraint_exception_lines_309_310(self):
         """GIVEN SHOW CONSTRAINTS raises WHEN _export_schema THEN warning logged, no crash."""
-        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter, ExportConfig
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
+            Neo4jExporter,
+            ExportConfig,
+        )
 
         with patch.dict(sys.modules, {"neo4j": MagicMock()}):
             exporter = Neo4jExporter(ExportConfig())
@@ -451,6 +496,7 @@ class TestIndexEntryStringKey:
     def test_string_key_hash_line_83(self):
         """GIVEN IndexEntry with plain string key WHEN hashed THEN key itself used directly."""
         from ipfs_datasets_py.knowledge_graphs.indexing.types import IndexEntry
+
         entry = IndexEntry(key="plain_string_key", entity_id="e1")
         h = hash(entry)
         assert isinstance(h, int)
@@ -466,10 +512,15 @@ class TestIndexEntryStringKey:
 class TestJSONLDTranslatorNoExpand:
     def test_no_expand_context_line_64(self):
         """GIVEN expand_context=False WHEN jsonld_to_ipld THEN expanded=jsonld directly."""
-        from ipfs_datasets_py.knowledge_graphs.jsonld.translator import JSONLDTranslator, TranslationOptions
+        from ipfs_datasets_py.knowledge_graphs.jsonld.translator import (
+            JSONLDTranslator,
+            TranslationOptions,
+        )
+
         t = JSONLDTranslator(options=TranslationOptions(expand_context=False))
         result = t.jsonld_to_ipld({"@id": "http://ex.org/1", "name": "test"})
         from ipfs_datasets_py.knowledge_graphs.jsonld.types import IPLDGraph
+
         assert isinstance(result, IPLDGraph)
 
 
@@ -480,20 +531,26 @@ class TestJSONLDContextFromDict:
     def test_non_string_context_value_line_91(self):
         """GIVEN context dict with dict value WHEN from_dict THEN stored in terms."""
         from ipfs_datasets_py.knowledge_graphs.jsonld.types import JSONLDContext
-        ctx = JSONLDContext.from_dict({
-            "foaf": "http://xmlns.com/foaf/",
-            "complex": {"@id": "http://schema.org/name", "@type": "@id"},
-        })
+
+        ctx = JSONLDContext.from_dict(
+            {
+                "foaf": "http://xmlns.com/foaf/",
+                "complex": {"@id": "http://schema.org/name", "@type": "@id"},
+            }
+        )
         assert "complex" in ctx.terms
         assert isinstance(ctx.terms["complex"], dict)
 
     def test_list_context_sub_context_base_uri_line_97(self):
         """GIVEN list context with @base entry WHEN from_dict THEN base_uri propagated."""
         from ipfs_datasets_py.knowledge_graphs.jsonld.types import JSONLDContext
-        ctx = JSONLDContext.from_dict([
-            {"@base": "http://example.org/"},
-            {"prefix": "http://other.org/"},
-        ])
+
+        ctx = JSONLDContext.from_dict(
+            [
+                {"@base": "http://example.org/"},
+                {"prefix": "http://other.org/"},
+            ]
+        )
         assert ctx.base_uri == "http://example.org/"
 
 
@@ -504,6 +561,7 @@ class TestLineageDeprecationWarning:
     def test_show_deprecation_warning_line_113(self):
         """GIVEN _show_deprecation_warning called WHEN it runs THEN DeprecationWarning raised."""
         from ipfs_datasets_py.knowledge_graphs import lineage as lin
+
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             lin._show_deprecation_warning()
@@ -517,6 +575,7 @@ class TestFinanceGraphRAGImportError:
     def test_graphrag_unavailable_on_import_error_lines_25_26_31(self):
         """GIVEN pdf_processing absent WHEN finance_graphrag reloaded THEN GRAPHRAG_AVAILABLE=False."""
         import ipfs_datasets_py.knowledge_graphs.extraction.finance_graphrag as fg
+
         real_pdf = sys.modules.get("ipfs_datasets_py.pdf_processing")
         with patch.dict(sys.modules, {"ipfs_datasets_py.pdf_processing": None}):
             importlib.reload(fg)

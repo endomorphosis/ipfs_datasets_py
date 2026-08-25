@@ -1,0 +1,929 @@
+{
+  "acceptance": {
+    "all_expected_outputs_required": true,
+    "attribution_notice": true,
+    "bucket_content_root": true,
+    "criteria": "The public 40-hex dataset revision, Viewer configs, bucket content root, exact-51 coverage, model receipt, every descriptor, sparse query mode, fetch trace, attribution notice, and legacy raw preservation are independently verified.",
+    "every_descriptor": true,
+    "exact_51_coverage": true,
+    "fetch_trace": true,
+    "legacy_raw_preservation": true,
+    "model_receipt": true,
+    "no_secret_or_path_leak": true,
+    "public_40_hex_dataset_revision": true,
+    "sparse_query_mode": true,
+    "viewer_configs": true
+  },
+  "adr_path": "docs/architecture/OPEN_US_LAW_REINDEX_PLAN.md",
+  "attribution": {
+    "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+    "jurisdiction_count": 51,
+    "notice_count": 51,
+    "notices": [
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "AL",
+        "notice": "Source: Alabama Legislature ALISON, Code of Alabama. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "AK",
+        "notice": "Source: Alaska Legislature, Alaska Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "AZ",
+        "notice": "Source: Arizona Legislature, Arizona Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "AR",
+        "notice": "Source: Arkansas Legislature, Arkansas Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "CA",
+        "notice": "Source: California Legislative Information, California Codes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "CO",
+        "notice": "Source: Colorado General Assembly, Colorado Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "CT",
+        "notice": "Source: Connecticut General Assembly, Connecticut General Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "DE",
+        "notice": "Source: Delaware Code Online, Delaware Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "FL",
+        "notice": "Source: Florida Legislature, Florida Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "GA",
+        "notice": "Source: Georgia General Assembly, Official Code of Georgia Annotated. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "HI",
+        "notice": "Source: Hawaii State Legislature, Hawaii Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "ID",
+        "notice": "Source: Idaho Legislature, Idaho Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "IL",
+        "notice": "Source: Illinois General Assembly, Illinois Compiled Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "IN",
+        "notice": "Source: Indiana General Assembly, Indiana Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "IA",
+        "notice": "Source: Iowa Legislature, Iowa Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "KS",
+        "notice": "Source: Kansas Legislature, Kansas Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "KY",
+        "notice": "Source: Kentucky Legislature, Kentucky Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "LA",
+        "notice": "Source: Louisiana Legislature, Louisiana Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "ME",
+        "notice": "Source: Maine Legislature, Maine Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "MD",
+        "notice": "Source: Maryland General Assembly, Maryland Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "MA",
+        "notice": "Source: Massachusetts General Court, Massachusetts General Laws. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "MI",
+        "notice": "Source: Michigan Legislature, Michigan Compiled Laws. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "MN",
+        "notice": "Source: Minnesota Revisor Of Statutes, Minnesota Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "MS",
+        "notice": "Source: Mississippi Legislature, Mississippi Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "MO",
+        "notice": "Source: Missouri Revisor Of Statutes, Missouri Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "MT",
+        "notice": "Source: Montana Legislature, Montana Code Annotated. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "NE",
+        "notice": "Source: Nebraska Legislature, Nebraska Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "NV",
+        "notice": "Source: Nevada Legislature, Nevada Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "NH",
+        "notice": "Source: New Hampshire General Court, New Hampshire Revised Statutes Annotated. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "NJ",
+        "notice": "Source: New Jersey Legislature, New Jersey Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "NM",
+        "notice": "Source: New Mexico Compilation Commission, New Mexico Statutes Annotated. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "NY",
+        "notice": "Source: New York State Senate, New York Consolidated Laws. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "NC",
+        "notice": "Source: North Carolina General Assembly, North Carolina General Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "ND",
+        "notice": "Source: North Dakota Legislative Branch, North Dakota Century Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "OH",
+        "notice": "Source: Ohio Legislative Service Commission, Ohio Revised Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "OK",
+        "notice": "Source: Oklahoma State Courts Network, Oklahoma Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "OR",
+        "notice": "Source: Oregon Legislature, Oregon Revised Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "PA",
+        "notice": "Source: Pennsylvania General Assembly, Pennsylvania Consolidated Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "RI",
+        "notice": "Source: Rhode Island General Assembly, Rhode Island General Laws. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "SC",
+        "notice": "Source: South Carolina Legislature, South Carolina Code of Laws. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "SD",
+        "notice": "Source: South Dakota Legislature, South Dakota Codified Laws. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "TN",
+        "notice": "Source: Tennessee General Assembly, Tennessee Code Annotated. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "TX",
+        "notice": "Source: Texas Legislature, Texas Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "UT",
+        "notice": "Source: Utah State Legislature, Utah Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "VT",
+        "notice": "Source: Vermont General Assembly, Vermont Statutes Annotated. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "VA",
+        "notice": "Source: Virginia Legislative Information System, Code of Virginia. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "WA",
+        "notice": "Source: Washington State Legislature, Revised Code of Washington. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "WV",
+        "notice": "Source: West Virginia Legislature, West Virginia Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "WI",
+        "notice": "Source: Wisconsin Legislature, Wisconsin Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "WY",
+        "notice": "Source: Wyoming Legislature, Wyoming Statutes. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      },
+      {
+        "currentness_disclaimer_required": true,
+        "jurisdiction_code": "DC",
+        "notice": "Source: DC Council, District of Columbia Official Code. Statutory text is attributed to the official enacting authority. This corpus is a research aid and is not a substitute for the official source.",
+        "required": true
+      }
+    ],
+    "required": true,
+    "verified": true
+  },
+  "board_namespace": "open-us-law-reindex-v1",
+  "bucket_content_root": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/",
+  "bucket_id": "justicedao/open-us-law-bucket",
+  "bundle": "public-verification",
+  "code_version": "1",
+  "dataset_id": "justicedao/open-us-law-sparse-graphrag",
+  "dataset_revision": "40a3fc58dea1e948d7e5446fcb705a2a31f8bfef",
+  "depends_on": [
+    "OUL-044"
+  ],
+  "descriptors": {
+    "configuration_descriptor_count": 7,
+    "configuration_descriptors": [
+      "state_statutes_exact_51",
+      "federal_uscode",
+      "puerto_rico",
+      "constitutions",
+      "historical",
+      "recovery",
+      "quarantine"
+    ],
+    "descriptor_count": 25,
+    "paths": [
+      "bm25/index_root",
+      "build/config",
+      "corpus/root",
+      "evidence/acquisition_closure",
+      "evidence/adjacency",
+      "evidence/bm25",
+      "evidence/bucket_inventory",
+      "evidence/corpus_admission",
+      "evidence/embeddings",
+      "evidence/evaluation",
+      "evidence/exact_51_coverage",
+      "evidence/full_build",
+      "evidence/goldset",
+      "evidence/identity_schema",
+      "evidence/legal_graph",
+      "evidence/publication_policy_schema",
+      "evidence/query_contract",
+      "evidence/release_policy",
+      "evidence/reproducibility",
+      "evidence/rights_matrix",
+      "evidence/source_admission",
+      "evidence/vectors",
+      "graph/projection",
+      "vectors/membership",
+      "vectors/root"
+    ],
+    "verified": true,
+    "verified_count": 25
+  },
+  "exact_51": {
+    "configuration": "state_statutes_exact_51",
+    "dc_counted_once": true,
+    "jurisdiction_codes": [
+      "AL",
+      "AK",
+      "AZ",
+      "AR",
+      "CA",
+      "CO",
+      "CT",
+      "DE",
+      "FL",
+      "GA",
+      "HI",
+      "ID",
+      "IL",
+      "IN",
+      "IA",
+      "KS",
+      "KY",
+      "LA",
+      "ME",
+      "MD",
+      "MA",
+      "MI",
+      "MN",
+      "MS",
+      "MO",
+      "MT",
+      "NE",
+      "NV",
+      "NH",
+      "NJ",
+      "NM",
+      "NY",
+      "NC",
+      "ND",
+      "OH",
+      "OK",
+      "OR",
+      "PA",
+      "RI",
+      "SC",
+      "SD",
+      "TN",
+      "TX",
+      "UT",
+      "VT",
+      "VA",
+      "WA",
+      "WV",
+      "WI",
+      "WY",
+      "DC"
+    ],
+    "jurisdiction_count": 51,
+    "verified": true
+  },
+  "fetch_trace": {
+    "credential_free": true,
+    "full_index_downloaded": false,
+    "local_path_free": true,
+    "ok": true,
+    "queries": [
+      {
+        "credential_free": true,
+        "full_index_downloaded": false,
+        "id": "bm25_foia",
+        "local_path_free": true,
+        "mode": "bm25",
+        "sparse_io": true,
+        "unused_siblings_not_fetched": [
+          "data/bm25/postings/part-000001.parquet"
+        ]
+      },
+      {
+        "credential_free": true,
+        "full_index_downloaded": false,
+        "id": "vector_centroid0",
+        "local_path_free": true,
+        "mode": "vector",
+        "sparse_io": true,
+        "unused_siblings_not_fetched": [
+          "data/vectors/centroid-000001-part-000000.parquet"
+        ]
+      },
+      {
+        "credential_free": true,
+        "full_index_downloaded": false,
+        "id": "hybrid_foia_agency",
+        "local_path_free": true,
+        "mode": "hybrid",
+        "sparse_io": true,
+        "unused_siblings_not_fetched": []
+      },
+      {
+        "credential_free": true,
+        "full_index_downloaded": false,
+        "id": "graph_entry_a",
+        "local_path_free": true,
+        "mode": "graph",
+        "sparse_io": true,
+        "unused_siblings_not_fetched": []
+      },
+      {
+        "credential_free": true,
+        "full_index_downloaded": false,
+        "id": "semantic_graph_entry_a",
+        "local_path_free": true,
+        "mode": "semantic-graph",
+        "sparse_io": true,
+        "unused_siblings_not_fetched": []
+      }
+    ],
+    "query_count": 5,
+    "unused_siblings_not_fetched": [
+      "data/bm25/postings/part-000001.parquet",
+      "data/vectors/centroid-000001-part-000000.parquet"
+    ],
+    "verified": true
+  },
+  "fixture_id": "open-us-law-public-canary-v1",
+  "goal_id": "OUL-G080",
+  "isolated_transport": true,
+  "legacy_raw": {
+    "deletion_occurred": false,
+    "object_count": 107,
+    "protected_raw_root_present": [
+      "README.md",
+      "SHA256SUMS.json"
+    ],
+    "raw_parquet_count": 103,
+    "raw_root_untouched": true,
+    "root_raw_object_overwritten": false,
+    "verified": true
+  },
+  "live_network": false,
+  "local_artifact_fallback": false,
+  "local_root_used": false,
+  "manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+  "model": {
+    "dimension": 384,
+    "max_tokens": 512,
+    "model_id": "thenlper/gte-small",
+    "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "normalization": "l2",
+    "pooling": "mean",
+    "published_embeddings_descriptor": true,
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2",
+    "verified": true
+  },
+  "network_required": false,
+  "notes": "Independent public-pin canary of the immutable Open US Law Dataset and content-addressed Bucket release (OUL-045). The public 40-hex Dataset revision, Viewer configs, Bucket content root, exact-51 coverage, pinned GTE-small model receipt, every descriptor, sparse query mode, fetch trace, attribution notice, and legacy raw-root preservation were verified without Hub contact or local-root fallback.",
+  "producer": "check_open_us_law_public_release.py",
+  "program_id": "open-us-law-reindex-v1",
+  "public_mutation_authorized": false,
+  "publication": {
+    "bucket_release_prefix": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/",
+    "dataset_revision": "40a3fc58dea1e948d7e5446fcb705a2a31f8bfef",
+    "identities_digest": "b75c57f086ec1a148b6682fe6b481d871f9b8948472832a9f9a8a2a1ea229d49",
+    "manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+    "receipt_sha256": "0a56e9ad25348e7c83eccb2507388f8bf919a5a8e28bb4afa0dadbe699834f8d",
+    "remote_object_count": 51,
+    "status": "published_isolated",
+    "task_id": "OUL-044"
+  },
+  "publication_authorized": false,
+  "queries": [
+    {
+      "expected_min_results": 1,
+      "id": "bm25_foia",
+      "mode": "bm25",
+      "query": "foia",
+      "sparse_io": true,
+      "start_node_cid": "",
+      "top_entry_cid": "entry-a",
+      "unused_siblings_not_fetched": [
+        "data/bm25/postings/part-000001.parquet"
+      ]
+    },
+    {
+      "expected_min_results": 1,
+      "id": "vector_centroid0",
+      "mode": "vector",
+      "query": "foia agency",
+      "sparse_io": true,
+      "start_node_cid": "",
+      "top_entry_cid": "entry-a",
+      "unused_siblings_not_fetched": [
+        "data/vectors/centroid-000001-part-000000.parquet"
+      ]
+    },
+    {
+      "expected_min_results": 1,
+      "id": "hybrid_foia_agency",
+      "mode": "hybrid",
+      "query": "foia agency",
+      "sparse_io": true,
+      "start_node_cid": "",
+      "top_entry_cid": "entry-a",
+      "unused_siblings_not_fetched": []
+    },
+    {
+      "expected_min_results": 1,
+      "id": "graph_entry_a",
+      "mode": "graph",
+      "query": "",
+      "sparse_io": true,
+      "start_node_cid": "entry-a",
+      "top_entry_cid": "",
+      "unused_siblings_not_fetched": []
+    },
+    {
+      "expected_min_results": 1,
+      "id": "semantic_graph_entry_a",
+      "mode": "semantic-graph",
+      "query": "foia",
+      "sparse_io": true,
+      "start_node_cid": "entry-a",
+      "top_entry_cid": "",
+      "unused_siblings_not_fetched": []
+    }
+  ],
+  "query_mode_count": 5,
+  "query_modes": [
+    "bm25",
+    "vector",
+    "hybrid",
+    "graph",
+    "semantic-graph"
+  ],
+  "receipt_sha256": "f69b20857a1e23d69bc018506a335f85b972487345b2d1a4afa19d92298a5a6f",
+  "redownload": {
+    "bucket_content_root": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/",
+    "clean_cache": true,
+    "dataset_revision": "40a3fc58dea1e948d7e5446fcb705a2a31f8bfef",
+    "public_identities": {
+      "bytes_verified": true,
+      "clean_cache": true,
+      "file_count": 25,
+      "files": [
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/bm25/index_root#f5039027b4413666f75b4350879ed9f777d8741a2cede6661e0da5bf8ce9341f",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:bm25/index_root#f5039027b4413666f75b4350879ed9f777d8741a2cede6661e0da5bf8ce9341f",
+          "relative_path": "bm25/index_root",
+          "sha256": "f5039027b4413666f75b4350879ed9f777d8741a2cede6661e0da5bf8ce9341f",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/build/config#071363557463792c49d1ddadffabd986cea209965cd0a7f66bd4ebc38699c35a",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:build/config#071363557463792c49d1ddadffabd986cea209965cd0a7f66bd4ebc38699c35a",
+          "relative_path": "build/config",
+          "sha256": "071363557463792c49d1ddadffabd986cea209965cd0a7f66bd4ebc38699c35a",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/corpus/root#f92708535f139baa3b3cdc076e6958ff349eff2b1ee91b0d4cb740aefeb8c6fd",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:corpus/root#f92708535f139baa3b3cdc076e6958ff349eff2b1ee91b0d4cb740aefeb8c6fd",
+          "relative_path": "corpus/root",
+          "sha256": "f92708535f139baa3b3cdc076e6958ff349eff2b1ee91b0d4cb740aefeb8c6fd",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/acquisition_closure#f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/acquisition_closure#f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+          "relative_path": "evidence/acquisition_closure",
+          "sha256": "f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/adjacency#6777646ccd3e3b7c86cd5d80ac88ead22c1bcd6a2755f5c4c8d6fcf52b3ac848",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/adjacency#6777646ccd3e3b7c86cd5d80ac88ead22c1bcd6a2755f5c4c8d6fcf52b3ac848",
+          "relative_path": "evidence/adjacency",
+          "sha256": "6777646ccd3e3b7c86cd5d80ac88ead22c1bcd6a2755f5c4c8d6fcf52b3ac848",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/bm25#6f150e4dc86fc51da24d122c872c8c6b487f728b9e4093e94af3263f1b7376fd",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/bm25#6f150e4dc86fc51da24d122c872c8c6b487f728b9e4093e94af3263f1b7376fd",
+          "relative_path": "evidence/bm25",
+          "sha256": "6f150e4dc86fc51da24d122c872c8c6b487f728b9e4093e94af3263f1b7376fd",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/bucket_inventory#17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/bucket_inventory#17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+          "relative_path": "evidence/bucket_inventory",
+          "sha256": "17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/corpus_admission#f2cbdc94df00f6d50e8d055a280f0ed6e0e4f52729bdb1f05d2ffabc18f7fe68",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/corpus_admission#f2cbdc94df00f6d50e8d055a280f0ed6e0e4f52729bdb1f05d2ffabc18f7fe68",
+          "relative_path": "evidence/corpus_admission",
+          "sha256": "f2cbdc94df00f6d50e8d055a280f0ed6e0e4f52729bdb1f05d2ffabc18f7fe68",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/embeddings#02aceb18a30e46c4f8beab3fd0f2b00406c92943f4e89432fc969477334ffd75",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/embeddings#02aceb18a30e46c4f8beab3fd0f2b00406c92943f4e89432fc969477334ffd75",
+          "relative_path": "evidence/embeddings",
+          "sha256": "02aceb18a30e46c4f8beab3fd0f2b00406c92943f4e89432fc969477334ffd75",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/evaluation#60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/evaluation#60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+          "relative_path": "evidence/evaluation",
+          "sha256": "60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/exact_51_coverage#afe7d1d421f3cac56d7b385006c73a8374c0c341223db8bcf301d0157c2c5c69",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/exact_51_coverage#afe7d1d421f3cac56d7b385006c73a8374c0c341223db8bcf301d0157c2c5c69",
+          "relative_path": "evidence/exact_51_coverage",
+          "sha256": "afe7d1d421f3cac56d7b385006c73a8374c0c341223db8bcf301d0157c2c5c69",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/full_build#c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/full_build#c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+          "relative_path": "evidence/full_build",
+          "sha256": "c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/goldset#e1ac7cc2d3cc20833216f9f07835b17c48a60b4da1fcf83b68b4de0ba875cb4e",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/goldset#e1ac7cc2d3cc20833216f9f07835b17c48a60b4da1fcf83b68b4de0ba875cb4e",
+          "relative_path": "evidence/goldset",
+          "sha256": "e1ac7cc2d3cc20833216f9f07835b17c48a60b4da1fcf83b68b4de0ba875cb4e",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/identity_schema#8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/identity_schema#8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+          "relative_path": "evidence/identity_schema",
+          "sha256": "8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/legal_graph#0e3f059df3669a5ab9a8561c0be0ff383c3ae2d6926a95dc71a8aa4c3e9213fd",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/legal_graph#0e3f059df3669a5ab9a8561c0be0ff383c3ae2d6926a95dc71a8aa4c3e9213fd",
+          "relative_path": "evidence/legal_graph",
+          "sha256": "0e3f059df3669a5ab9a8561c0be0ff383c3ae2d6926a95dc71a8aa4c3e9213fd",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/publication_policy_schema#237cf41f65fcd688eff3ebf1869b81406b232bc5d4416a348c388aa1bf5ff6dc",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/publication_policy_schema#237cf41f65fcd688eff3ebf1869b81406b232bc5d4416a348c388aa1bf5ff6dc",
+          "relative_path": "evidence/publication_policy_schema",
+          "sha256": "237cf41f65fcd688eff3ebf1869b81406b232bc5d4416a348c388aa1bf5ff6dc",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/query_contract#a53e95a33236a063f4b88b3008463b682a9d02db5ec10a72020ae0b31424c191",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/query_contract#a53e95a33236a063f4b88b3008463b682a9d02db5ec10a72020ae0b31424c191",
+          "relative_path": "evidence/query_contract",
+          "sha256": "a53e95a33236a063f4b88b3008463b682a9d02db5ec10a72020ae0b31424c191",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/release_policy#f076708f3c38a3bea32af821c7d278b3551b50e6bce0bf9212baadf3f5bc52ee",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/release_policy#f076708f3c38a3bea32af821c7d278b3551b50e6bce0bf9212baadf3f5bc52ee",
+          "relative_path": "evidence/release_policy",
+          "sha256": "f076708f3c38a3bea32af821c7d278b3551b50e6bce0bf9212baadf3f5bc52ee",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/reproducibility#f4505ae81ea7ddb7aa6c1b98872adf63596ed969d1790acaf20f1a2b61b27cc9",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/reproducibility#f4505ae81ea7ddb7aa6c1b98872adf63596ed969d1790acaf20f1a2b61b27cc9",
+          "relative_path": "evidence/reproducibility",
+          "sha256": "f4505ae81ea7ddb7aa6c1b98872adf63596ed969d1790acaf20f1a2b61b27cc9",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/rights_matrix#660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/rights_matrix#660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+          "relative_path": "evidence/rights_matrix",
+          "sha256": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/source_admission#660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/source_admission#660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+          "relative_path": "evidence/source_admission",
+          "sha256": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/vectors#fc7060aa4e6d23ed14586b7b8944ff7795cce5beb410a460b5b1e34322f9e298",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:evidence/vectors#fc7060aa4e6d23ed14586b7b8944ff7795cce5beb410a460b5b1e34322f9e298",
+          "relative_path": "evidence/vectors",
+          "sha256": "fc7060aa4e6d23ed14586b7b8944ff7795cce5beb410a460b5b1e34322f9e298",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/graph/projection#8573755b774c9a141b69616ac7e56fc015071834321a95f2406927158bcd40e7",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:graph/projection#8573755b774c9a141b69616ac7e56fc015071834321a95f2406927158bcd40e7",
+          "relative_path": "graph/projection",
+          "sha256": "8573755b774c9a141b69616ac7e56fc015071834321a95f2406927158bcd40e7",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/vectors/membership#c8c7e9cd75297485c2a1a51108a2a831938f76780c937b81e2dad8827285e269",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:vectors/membership#c8c7e9cd75297485c2a1a51108a2a831938f76780c937b81e2dad8827285e269",
+          "relative_path": "vectors/membership",
+          "sha256": "c8c7e9cd75297485c2a1a51108a2a831938f76780c937b81e2dad8827285e269",
+          "source": "isolated_public_store",
+          "verified": true
+        },
+        {
+          "bucket_object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/vectors/root#fa8e4ad3f31ed412742bf224b7f106a7382b03aa6e63e6406a694641e71cd9b3",
+          "dataset_object_id": "dataset:justicedao/open-us-law-sparse-graphrag@40a3fc58dea1e948d7e5446fcb705a2a31f8bfef:vectors/root#fa8e4ad3f31ed412742bf224b7f106a7382b03aa6e63e6406a694641e71cd9b3",
+          "relative_path": "vectors/root",
+          "sha256": "fa8e4ad3f31ed412742bf224b7f106a7382b03aa6e63e6406a694641e71cd9b3",
+          "source": "isolated_public_store",
+          "verified": true
+        }
+      ],
+      "verified_count": 25
+    },
+    "transport": "isolated_recorded_public_store"
+  },
+  "require_public_pin": true,
+  "schema": "ipfs_datasets_py/open-us-law-public-canary@1",
+  "schema_version": "open-us-law-public-canary/v1",
+  "sparse_io": {
+    "full_index_downloaded": false,
+    "local_artifact_fallback": false,
+    "query_modes_sparse": true,
+    "unused_siblings_not_fetched": [
+      "data/bm25/postings/part-000001.parquet",
+      "data/vectors/centroid-000001-part-000000.parquet"
+    ]
+  },
+  "status": "verified_isolated",
+  "target_repo": "justicedao/open-us-law-sparse-graphrag",
+  "task_id": "OUL-045",
+  "tokens_used": false,
+  "transport": "isolated_recorded_public_store",
+  "viewer": {
+    "config_count": 7,
+    "config_names": [
+      "state_statutes_exact_51",
+      "federal_uscode",
+      "puerto_rico",
+      "constitutions",
+      "historical",
+      "recovery",
+      "quarantine"
+    ],
+    "configs": [
+      {
+        "default": true,
+        "description": "Current official statutes for exactly the 50 states plus DC.",
+        "name": "state_statutes_exact_51",
+        "relative_split": "configs/state_statutes_exact_51",
+        "satisfies_exact_51_gate": true,
+        "viewer_visible": true
+      },
+      {
+        "default": false,
+        "description": "Federal United States Code rows. Useful corpus; never default exact-51.",
+        "name": "federal_uscode",
+        "relative_split": "configs/federal_uscode",
+        "satisfies_exact_51_gate": false,
+        "viewer_visible": true
+      },
+      {
+        "default": false,
+        "description": "Puerto Rico statutory rows. Explicit non-default configuration.",
+        "name": "puerto_rico",
+        "relative_split": "configs/puerto_rico",
+        "satisfies_exact_51_gate": false,
+        "viewer_visible": true
+      },
+      {
+        "default": false,
+        "description": "Federal, state, DC, and territorial constitution rows.",
+        "name": "constitutions",
+        "relative_split": "configs/constitutions",
+        "satisfies_exact_51_gate": false,
+        "viewer_visible": true
+      },
+      {
+        "default": false,
+        "description": "Superseded, repealed, or otherwise non-current statute versions.",
+        "name": "historical",
+        "relative_split": "configs/historical",
+        "satisfies_exact_51_gate": false,
+        "viewer_visible": true
+      },
+      {
+        "default": false,
+        "description": "Recovery records that cannot enter canonical default counts.",
+        "name": "recovery",
+        "relative_split": "configs/recovery",
+        "satisfies_exact_51_gate": false,
+        "viewer_visible": false
+      },
+      {
+        "default": false,
+        "description": "Quarantined or rejected rows excluded from the Viewer default split.",
+        "name": "quarantine",
+        "relative_split": "configs/quarantine",
+        "satisfies_exact_51_gate": false,
+        "viewer_visible": false
+      }
+    ],
+    "default_config": "state_statutes_exact_51",
+    "default_excludes_quarantine": true,
+    "default_excludes_recovery": true,
+    "exactly_one_default": true,
+    "hidden_configurations": [
+      "recovery",
+      "quarantine"
+    ],
+    "schema_coherent": true,
+    "verified": true
+  }
+}

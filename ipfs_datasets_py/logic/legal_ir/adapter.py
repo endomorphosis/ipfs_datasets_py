@@ -294,9 +294,7 @@ def _as_mapping(value: Any, field_name: str) -> dict[str, Any]:
 
 
 def _as_sequence(value: Any, field_name: str) -> list[Any]:
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return list(value)
     raise LegalIRAdapterError(f"{field_name} must be a sequence")
 
@@ -313,9 +311,7 @@ def _legal_sample_dict(legal_sample: Any) -> dict[str, Any]:
                 raise LegalIRAdapterError(str(exc)) from exc
         serializer = getattr(legal_sample, "to_dict", None)
         if not callable(serializer):
-            raise LegalIRAdapterError(
-                "legal_sample must be a LegalSample or its persisted mapping"
-            )
+            raise LegalIRAdapterError("legal_sample must be a LegalSample or its persisted mapping")
         result = _as_mapping(serializer(), "LegalSample.to_dict()")
 
     missing = sorted(
@@ -449,20 +445,14 @@ def _unsupported_field_manifest(data: Mapping[str, Any]) -> list[dict[str, str]]
 def _modal_semantics(modal: Mapping[str, Any]) -> dict[str, Any]:
     """Return all Legal modal semantics while excluding the source-body copy."""
 
-    return {
-        key: value
-        for key, value in modal.items()
-        if key != "normalized_text"
-    }
+    return {key: value for key, value in modal.items() if key != "normalized_text"}
 
 
 def _char_to_byte(text: str, offset: int) -> int:
     if isinstance(offset, bool) or not isinstance(offset, int):
         raise LegalIRAdapterError("Legal formula character offsets must be integers")
     if offset < 0 or offset > len(text):
-        raise LegalIRAdapterError(
-            f"Legal formula character offset {offset} is outside source text"
-        )
+        raise LegalIRAdapterError(f"Legal formula character offset {offset} is outside source text")
     return len(text[:offset].encode("utf-8"))
 
 
@@ -492,8 +482,7 @@ def _source_span_ids(
         (
             span.span_id
             for span in sample.provenance.spans
-            if span.source_ref_id == source_id
-            and span.metadata.get("scope") == "legal_document"
+            if span.source_ref_id == source_id and span.metadata.get("scope") == "legal_document"
         ),
         sample.span_ids[0],
     )
@@ -508,9 +497,7 @@ def _deontic_projection(
 ) -> tuple[dict[str, Any], tuple[str, ...]]:
     operator = _as_mapping(legacy_formula.get("operator", {}), "formula.operator")
     predicate = _as_mapping(legacy_formula.get("predicate", {}), "formula.predicate")
-    arguments = _as_sequence(
-        predicate.get("arguments", ()), "formula.predicate.arguments"
-    )
+    arguments = _as_sequence(predicate.get("arguments", ()), "formula.predicate.arguments")
     symbol = str(operator.get("symbol") or "")
     label = str(operator.get("label") or "").lower()
     force = {
@@ -591,9 +578,7 @@ def _symbol_specs(
     for index, argument in enumerate(predicate.get("arguments") or ()):
         result.append(
             (
-                _shared_id(
-                    f"{shared_formula_id}:argument:{index}", kind="symbol"
-                ),
+                _shared_id(f"{shared_formula_id}:argument:{index}", kind="symbol"),
                 str(argument),
                 "constant",
                 "legal_argument",
@@ -725,9 +710,7 @@ class LegalIRFormalizationAdapter:
                 )
             spans.append(
                 SourceSpan(
-                    span_id=_shared_id(
-                        f"span:{shared_formula_id}", kind="formula-span"
-                    ),
+                    span_id=_shared_id(f"span:{shared_formula_id}", kind="formula-span"),
                     source_ref_id=source_ref_id,
                     start_byte=start_byte,
                     end_byte=end_byte,
@@ -767,9 +750,7 @@ class LegalIRFormalizationAdapter:
                 "title": data["title"],
             },
             "unsupported_fields": _unsupported_field_manifest(data),
-            "view_aliases": {
-                key: list(values) for key, values in self.view_aliases.items()
-            },
+            "view_aliases": {key: list(values) for key, values in self.view_aliases.items()},
         }
         source = SourceRef(
             ref_id=source_ref_id,
@@ -794,9 +775,7 @@ class LegalIRFormalizationAdapter:
         )
         subjects = tuple(dict.fromkeys((sample_id, declaration_id)))
         provenance = Provenance(
-            provenance_id=_shared_id(
-                f"provenance:{sample_id}", kind="provenance"
-            ),
+            provenance_id=_shared_id(f"provenance:{sample_id}", kind="provenance"),
             sources=(source,),
             spans=tuple(spans),
             bindings=tuple(
@@ -851,9 +830,7 @@ class LegalIRFormalizationAdapter:
         targets = set()
         for item in modal.get("formulas") or ():
             formula = _as_mapping(item, "modal formula")
-            operator = _as_mapping(
-                formula.get("operator", {}), "modal formula operator"
-            )
+            operator = _as_mapping(formula.get("operator", {}), "modal formula operator")
             targets.add(_view_for_family(operator.get("family"))[0])
         frame_logic = _as_mapping(
             modal.get("frame_logic", {}), "legal_document.modal_ir.frame_logic"
@@ -892,8 +869,7 @@ class LegalIRFormalizationAdapter:
         unknown_views = set(config.target_view_ids) - set(self.view_registry.view_ids)
         if unknown_views:
             raise LegalIRAdapterError(
-                "Legal compiler targets unknown views: "
-                + ", ".join(sorted(unknown_views))
+                "Legal compiler targets unknown views: " + ", ".join(sorted(unknown_views))
             )
 
         legal_document = _as_mapping(payload["legal_document"], "legal_document")
@@ -907,9 +883,7 @@ class LegalIRFormalizationAdapter:
             if span.metadata.get("legacy_formula_id")
         }
         severity = (
-            DiagnosticSeverity.ERROR
-            if config.strict_unsupported
-            else DiagnosticSeverity.WARNING
+            DiagnosticSeverity.ERROR if config.strict_unsupported else DiagnosticSeverity.WARNING
         )
 
         formulas: list[FormalFormula] = []
@@ -917,14 +891,10 @@ class LegalIRFormalizationAdapter:
         diagnostics: list[Diagnostic] = []
         bindings = list(sample.provenance.bindings)
         binding_producer_id = config.producer_id or self.producer_id
-        legacy_to_shared = {
-            str(legacy): str(shared) for shared, legacy in formula_aliases.items()
-        }
+        legacy_to_shared = {str(legacy): str(shared) for shared, legacy in formula_aliases.items()}
 
         for index, raw_formula in enumerate(modal.get("formulas") or ()):
-            legacy_formula = _as_mapping(
-                raw_formula, f"legal_document.modal_ir.formulas[{index}]"
-            )
+            legacy_formula = _as_mapping(raw_formula, f"legal_document.modal_ir.formulas[{index}]")
             legacy_formula_id = str(legacy_formula.get("formula_id") or "")
             shared_formula_id = legacy_to_shared.get(legacy_formula_id)
             if shared_formula_id is None:
@@ -932,12 +902,8 @@ class LegalIRFormalizationAdapter:
                     f"missing shared ID alias for Legal formula {legacy_formula_id!r}"
                 )
             span_id = span_by_legacy_formula.get(legacy_formula_id, whole_span_id)
-            operator = _as_mapping(
-                legacy_formula.get("operator", {}), "formula.operator"
-            )
-            preferred_view, inherently_opaque = _view_for_family(
-                operator.get("family")
-            )
+            operator = _as_mapping(legacy_formula.get("operator", {}), "formula.operator")
+            preferred_view, inherently_opaque = _view_for_family(operator.get("family"))
             target_view = preferred_view
             reasons: list[str] = []
             if inherently_opaque:
@@ -948,9 +914,7 @@ class LegalIRFormalizationAdapter:
             if target_view not in config.target_view_ids:
                 target_view = config.target_view_ids[0]
                 inherently_opaque = True
-                reasons.append(
-                    f"preferred Legal view {preferred_view!r} was not requested"
-                )
+                reasons.append(f"preferred Legal view {preferred_view!r} was not requested")
 
             if preferred_view == _DEONTIC_VIEW_ID:
                 expression, projection_reasons = _deontic_projection(
@@ -967,8 +931,7 @@ class LegalIRFormalizationAdapter:
                     "unlowered_logic_family": operator.get("family"),
                 }
                 reasons.append(
-                    "legacy modal semantics have no faithful typed lowering in "
-                    f"{preferred_view}"
+                    f"legacy modal semantics have no faithful typed lowering in {preferred_view}"
                 )
 
             formula_symbol_ids = []
@@ -1012,9 +975,7 @@ class LegalIRFormalizationAdapter:
                     input_node_ids=(sample.declaration_id,),
                     opaque=opaque,
                     metadata={
-                        "legal_contract_aliases": list(
-                            self.view_aliases[target_view]
-                        ),
+                        "legal_contract_aliases": list(self.view_aliases[target_view]),
                         "legacy_formula_id": legacy_formula_id,
                         "legacy_logic_family": operator.get("family"),
                         "preferred_view_id": preferred_view,
@@ -1066,9 +1027,7 @@ class LegalIRFormalizationAdapter:
             if opaque:
                 if target_view not in config.target_view_ids:
                     target_view = config.target_view_ids[0]
-                    frame_reasons.append(
-                        "frame-logic view was not requested by compiler config"
-                    )
+                    frame_reasons.append("frame-logic view was not requested by compiler config")
             expression = {
                 "formula_id": frame_formula_id,
                 "frame_id": (
@@ -1093,9 +1052,7 @@ class LegalIRFormalizationAdapter:
                     input_node_ids=(sample.declaration_id,),
                     opaque=opaque,
                     metadata={
-                        "legal_contract_aliases": list(
-                            self.view_aliases[target_view]
-                        ),
+                        "legal_contract_aliases": list(self.view_aliases[target_view]),
                         "preferred_view_id": _FRAME_LOGIC_VIEW_ID,
                     },
                 )
@@ -1165,10 +1122,7 @@ class LegalIRFormalizationAdapter:
 
         emitted_views = {formula.view_id for formula in formulas}
         for view_id in sorted(set(config.target_view_ids) - emitted_views):
-            if any(
-                item.metadata.get("view_id") == view_id
-                for item in diagnostics
-            ):
+            if any(item.metadata.get("view_id") == view_id for item in diagnostics):
                 continue
             diagnostics.append(
                 self._unsupported_diagnostic(
@@ -1185,9 +1139,7 @@ class LegalIRFormalizationAdapter:
 
         cross_view_links = [
             CrossViewLink(
-                link_id=_shared_id(
-                    f"link:{formula.formula_id}:{frame_id}", kind="cross-view-link"
-                ),
+                link_id=_shared_id(f"link:{formula.formula_id}:{frame_id}", kind="cross-view-link"),
                 source_formula_id=formula.formula_id,
                 target_formula_id=frame_id,
                 relation=CrossViewRelation.CORRESPONDS_TO,
@@ -1203,9 +1155,7 @@ class LegalIRFormalizationAdapter:
             if formula.formula_id not in frame_formula_ids
             for frame_id in frame_formula_ids
             if formula.view_id
-            != next(
-                item.view_id for item in formulas if item.formula_id == frame_id
-            )
+            != next(item.view_id for item in formulas if item.formula_id == frame_id)
         ]
 
         producer = ProducerBinding(
@@ -1225,14 +1175,12 @@ class LegalIRFormalizationAdapter:
             spans=sample.provenance.spans,
             producers=tuple(
                 {
-                    item.producer_id: item
-                    for item in (*sample.provenance.producers, producer)
+                    item.producer_id: item for item in (*sample.provenance.producers, producer)
                 }.values()
             ),
             configs=tuple(
                 {
-                    item.config_id: item
-                    for item in (*sample.provenance.configs, config_binding)
+                    item.config_id: item for item in (*sample.provenance.configs, config_binding)
                 }.values()
             ),
             bindings=tuple(bindings),
@@ -1243,9 +1191,7 @@ class LegalIRFormalizationAdapter:
                 f"diagnostics:{sample.sample_id}:{config.digest[7:23]}",
                 kind="diagnostics",
             ),
-            diagnostics=tuple(
-                sorted(diagnostics, key=lambda item: item.diagnostic_id)
-            ),
+            diagnostics=tuple(sorted(diagnostics, key=lambda item: item.diagnostic_id)),
             provenance_id=source_map.provenance_id,
             # A generic config may omit ``producer_id``.  The diagnostic
             # remains attributable to this adapter without mutating config
@@ -1254,22 +1200,18 @@ class LegalIRFormalizationAdapter:
             config_id=config.config_id,
             metadata={
                 "adapter_schema_version": LEGAL_IR_FORMALIZATION_ADAPTER_VERSION,
-                "unsupported_field_count": len(
-                    payload.get("unsupported_fields") or ()
-                ),
+                "unsupported_field_count": len(payload.get("unsupported_fields") or ()),
             },
         )
-        legacy_identity = _as_mapping(
-            payload["legacy_output_identity"], "legacy_output_identity"
-        )["hexdigest"]
+        legacy_identity = _as_mapping(payload["legacy_output_identity"], "legacy_output_identity")[
+            "hexdigest"
+        ]
         return FormalizationArtifact.from_sample(
             sample,
             compiler_config=config,
             view_registry=self.view_registry,
             symbol_table=SymbolTable(
-                table_id=_shared_id(
-                    f"symbols:{sample.declaration_id}", kind="symbol-table"
-                ),
+                table_id=_shared_id(f"symbols:{sample.declaration_id}", kind="symbol-table"),
                 symbols=tuple(symbols),
                 metadata={"domain": LEGAL_IR_DOMAIN},
             ),
@@ -1281,9 +1223,7 @@ class LegalIRFormalizationAdapter:
                 "adapter_schema_version": LEGAL_IR_FORMALIZATION_ADAPTER_VERSION,
                 "legacy_modal_ir_canonical_hash": legacy_identity,
                 "legacy_output_identity": legacy_identity,
-                "view_aliases": {
-                    key: list(values) for key, values in self.view_aliases.items()
-                },
+                "view_aliases": {key: list(values) for key, values in self.view_aliases.items()},
             },
         )
 

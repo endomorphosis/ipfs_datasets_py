@@ -78,29 +78,18 @@ from .variants import (
 )
 
 
-ABLATION_PLAN_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.ablation-plan.v1"
-)
-LEGACY_ABLATION_RESULT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.ablation-result.v1"
-)
-ABLATION_RESULT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.ablation-result.v2"
-)
+ABLATION_PLAN_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.ablation-plan.v1"
+LEGACY_ABLATION_RESULT_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.ablation-result.v1"
+ABLATION_RESULT_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.ablation-result.v2"
 ORDERING_ALGORITHM: Final = "sha256-seeded-counterbalanced-blocks-v2"
 SEMANTIC_EXECUTION_PROFILE_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.semantic-execution-profile.v2"
 )
-SEMANTIC_V2_PROOF_SUPPRESSION_REASON: Final = (
-    "semantic_v2_proof_boundary_closed_until_g210"
-)
+SEMANTIC_V2_PROOF_SUPPRESSION_REASON: Final = "semantic_v2_proof_boundary_closed_until_g210"
 SEMANTIC_AMBIGUITY_GATE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "semantic-ambiguity-gate-decision.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.semantic-ambiguity-gate-decision.v2"
 )
-SEMANTIC_AMBIGUITY_GATE_RULE_V2: Final = (
-    "strict-semantic-projection-uncertainty-v2"
-)
+SEMANTIC_AMBIGUITY_GATE_RULE_V2: Final = "strict-semantic-projection-uncertainty-v2"
 MAX_CASE_INPUT_BYTES: Final = 64 * 1024
 _SAFE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
@@ -123,42 +112,29 @@ def _unix_time_ms() -> int:
 
 
 def _safe_id(value: object, field: str) -> str:
-    if (
-        not isinstance(value, str)
-        or not _SAFE_ID.fullmatch(value)
-        or value in {".", ".."}
-    ):
-        raise AblationValidationError(
-            f"{field} must be a safe 1-128 character identifier"
-        )
+    if not isinstance(value, str) or not _SAFE_ID.fullmatch(value) or value in {".", ".."}:
+        raise AblationValidationError(f"{field} must be a safe 1-128 character identifier")
     return value
 
 
 def _digest(value: object, field: str) -> str:
     if not isinstance(value, str) or not _SHA256.fullmatch(value):
-        raise AblationValidationError(
-            f"{field} must be a lowercase SHA-256 digest"
-        )
+        raise AblationValidationError(f"{field} must be a lowercase SHA-256 digest")
     return value
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise AblationValidationError(f"{field} must be an object")
     return value
 
 
-def _exact(
-    value: Mapping[str, object], expected: set[str], field: str
-) -> None:
+def _exact(value: Mapping[str, object], expected: set[str], field: str) -> None:
     missing = expected - set(value)
     unknown = set(value) - expected
     if missing or unknown:
         raise AblationValidationError(
-            f"{field} fields invalid: missing={sorted(missing)}, "
-            f"unknown={sorted(unknown)}"
+            f"{field} fields invalid: missing={sorted(missing)}, unknown={sorted(unknown)}"
         )
 
 
@@ -168,9 +144,7 @@ def _sha(value: object) -> str:
 
 def _freeze(value: object) -> object:
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {str(key): _freeze(item) for key, item in value.items()}
-        )
+        return MappingProxyType({str(key): _freeze(item) for key, item in value.items()})
     if isinstance(value, (list, tuple)):
         return tuple(_freeze(item) for item in value)
     return value
@@ -188,13 +162,9 @@ def _bounded_json(value: object, field: str) -> object:
     try:
         encoded = canonical_json(value).encode("utf-8")
     except (ProtocolContractError, TypeError, ValueError) as exc:
-        raise AblationValidationError(
-            f"{field} must contain JSON-compatible data"
-        ) from exc
+        raise AblationValidationError(f"{field} must contain JSON-compatible data") from exc
     if len(encoded) > MAX_CASE_INPUT_BYTES:
-        raise AblationValidationError(
-            f"{field} exceeds {MAX_CASE_INPUT_BYTES} encoded bytes"
-        )
+        raise AblationValidationError(f"{field} exceeds {MAX_CASE_INPUT_BYTES} encoded bytes")
     # A canonical round trip detaches caller-owned containers before freezing.
     return _freeze(json.loads(encoded))
 
@@ -257,9 +227,7 @@ class AblationCase:
             "expected_ir": _thaw(case.expected_ir),
             "proof_obligation": _thaw(case.proof_obligation),
             "obligation_id": (
-                None
-                if case.proof_obligation is None
-                else f"{case.case_id}-obligation"
+                None if case.proof_obligation is None else f"{case.case_id}-obligation"
             ),
             "negative_controls": list(case.negative_controls),
         }
@@ -271,9 +239,7 @@ class AblationCase:
         )
 
     @classmethod
-    def from_benchmark_case_semantic_v2(
-        cls, case: BenchmarkCase
-    ) -> "AblationCase":
+    def from_benchmark_case_semantic_v2(cls, case: BenchmarkCase) -> "AblationCase":
         """Project a reviewed case onto the source-only G200 trust boundary.
 
         Ground-truth labels and reviewed proof material stay on the caller's
@@ -322,9 +288,7 @@ class AblationCase:
             data["input_data"],
             _digest(data["case_sha256"], "case_sha256"),
         )
-        if result.input_sha256 != _digest(
-            data["input_sha256"], "input_sha256"
-        ):
+        if result.input_sha256 != _digest(data["input_sha256"], "input_sha256"):
             raise AblationValidationError("ablation case input digest changed")
         return result
 
@@ -363,15 +327,10 @@ class ResourceLimits:
             or not math.isfinite(float(timeout))
             or not 0 < float(timeout) <= 86_400
         ):
-            raise AblationValidationError(
-                "case_timeout_seconds must be finite and from 0 to 86400"
-            )
+            raise AblationValidationError("case_timeout_seconds must be finite and from 0 to 86400")
 
     def to_dict(self) -> dict[str, object]:
-        return {
-            name: getattr(self, name)
-            for name in self.__dataclass_fields__
-        }
+        return {name: getattr(self, name) for name in self.__dataclass_fields__}
 
     @classmethod
     def from_dict(cls, value: object) -> "ResourceLimits":
@@ -400,9 +359,7 @@ class ScheduledCase:
         for field in ("ordinal", "block_ordinal", "within_block_ordinal"):
             value = getattr(self, field)
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-                raise AblationValidationError(
-                    f"{field} must be a nonnegative integer"
-                )
+                raise AblationValidationError(f"{field} must be a nonnegative integer")
         _safe_id(self.block_id, "block_id")
         _safe_id(self.job_id, "job_id")
         get_variant_definition(self.variant_id)
@@ -495,9 +452,7 @@ class AblationPlan:
         if self.schema != ABLATION_PLAN_SCHEMA:
             raise AblationValidationError("unsupported ablation-plan schema")
         if self.protocol_sha256 != DEFAULT_PROTOCOL_SHA256:
-            raise AblationValidationError(
-                "plan must bind frozen protocol revision 1"
-            )
+            raise AblationValidationError("plan must bind frozen protocol revision 1")
         if self.registry_sha256 != VARIANT_REGISTRY_SHA256:
             raise AblationValidationError("plan variant registry changed")
         if self.ordering_algorithm != ORDERING_ALGORITHM:
@@ -513,18 +468,14 @@ class AblationPlan:
             or not isinstance(self.seed, int)
             or not 0 <= self.seed < 1 << 63
         ):
-            raise AblationValidationError(
-                "seed must be a nonnegative signed 63-bit integer"
-            )
+            raise AblationValidationError("seed must be a nonnegative signed 63-bit integer")
         variants = tuple(self.variant_ids)
         if (
             not variants
             or len(set(variants)) != len(variants)
             or any(item not in VARIANT_REGISTRY for item in variants)
         ):
-            raise AblationValidationError(
-                "variant_ids must be distinct registered variants"
-            )
+            raise AblationValidationError("variant_ids must be distinct registered variants")
         object.__setattr__(self, "variant_ids", variants)
         modes = tuple(self.cache_modes)
         if (
@@ -532,9 +483,7 @@ class AblationPlan:
             or len(set(modes)) != len(modes)
             or any(not isinstance(item, CacheMode) for item in modes)
         ):
-            raise AblationValidationError(
-                "cache_modes must be distinct CacheMode values"
-            )
+            raise AblationValidationError("cache_modes must be distinct CacheMode values")
         object.__setattr__(self, "cache_modes", modes)
         case_ids = tuple(_safe_id(item, "case_ids[]") for item in self.case_ids)
         if not case_ids or len(set(case_ids)) != len(case_ids):
@@ -545,9 +494,7 @@ class AblationPlan:
         jobs = tuple(self.jobs)
         expected_count = len(case_ids) * len(modes) * len(variants)
         if len(jobs) != expected_count:
-            raise AblationValidationError(
-                "jobs do not form complete case/cache/variant pairing"
-            )
+            raise AblationValidationError("jobs do not form complete case/cache/variant pairing")
         if any(not isinstance(job, ScheduledCase) for job in jobs):
             raise AblationValidationError("jobs must contain ScheduledCase values")
         if tuple(job.ordinal for job in jobs) != tuple(range(len(jobs))):
@@ -560,14 +507,9 @@ class AblationPlan:
             for mode in modes
             for variant in variants
         }
-        actual = {
-            (job.case.case_id, job.cache_mode, job.variant_id)
-            for job in jobs
-        }
+        actual = {(job.case.case_id, job.cache_mode, job.variant_id) for job in jobs}
         if actual != expected:
-            raise AblationValidationError(
-                "jobs are missing or duplicate paired combinations"
-            )
+            raise AblationValidationError("jobs are missing or duplicate paired combinations")
         blocks: dict[str, list[ScheduledCase]] = {}
         block_sequence: list[str] = []
         for job in jobs:
@@ -575,9 +517,7 @@ class AblationPlan:
                 raise AblationValidationError("job case belongs to another split")
             if not block_sequence or block_sequence[-1] != job.block_id:
                 if job.block_id in block_sequence:
-                    raise AblationValidationError(
-                        "paired block jobs must be contiguous"
-                    )
+                    raise AblationValidationError("paired block jobs must be contiguous")
                 block_sequence.append(job.block_id)
             blocks.setdefault(job.block_id, []).append(job)
         if len(blocks) != len(case_ids) * len(modes):
@@ -588,11 +528,8 @@ class AblationPlan:
             if (
                 len(items) != len(variants)
                 or {item.variant_id for item in items} != set(variants)
-                or {
-                    item.within_block_ordinal for item in items
-                } != set(range(len(variants)))
-                or tuple(item.within_block_ordinal for item in items)
-                != tuple(range(len(variants)))
+                or {item.within_block_ordinal for item in items} != set(range(len(variants)))
+                or tuple(item.within_block_ordinal for item in items) != tuple(range(len(variants)))
                 or any(
                     item.case.to_dict() != first.case.to_dict()
                     or item.cache_mode is not first.cache_mode
@@ -600,18 +537,14 @@ class AblationPlan:
                     for item in items
                 )
             ):
-                raise AblationValidationError(
-                    "paired block does not share one input and every arm"
-                )
+                raise AblationValidationError("paired block does not share one input and every arm")
             block_ordinals.add(first.block_ordinal)
         if block_ordinals != set(range(len(blocks))):
             raise AblationValidationError("block ordinals must be contiguous")
-        if tuple(
-            blocks[block_id][0].block_ordinal for block_id in block_sequence
-        ) != tuple(range(len(blocks))):
-            raise AblationValidationError(
-                "recorded block sequence and ordinals disagree"
-            )
+        if tuple(blocks[block_id][0].block_ordinal for block_id in block_sequence) != tuple(
+            range(len(blocks))
+        ):
+            raise AblationValidationError("recorded block sequence and ordinals disagree")
         if self.split is Split.HOLDOUT and set(modes) == {
             CacheMode.COLD,
             CacheMode.WARM,
@@ -633,26 +566,12 @@ class AblationPlan:
                 leading = (
                     first_mode
                     if index % 2 == 0
-                    else (
-                        CacheMode.WARM
-                        if first_mode is CacheMode.COLD
-                        else CacheMode.COLD
-                    )
+                    else (CacheMode.WARM if first_mode is CacheMode.COLD else CacheMode.COLD)
                 )
-                trailing = (
-                    CacheMode.WARM
-                    if leading is CacheMode.COLD
-                    else CacheMode.COLD
-                )
-                expected_blocks.extend(
-                    ((case_id, leading), (case_id, trailing))
-                )
+                trailing = CacheMode.WARM if leading is CacheMode.COLD else CacheMode.COLD
+                expected_blocks.extend(((case_id, leading), (case_id, trailing)))
         else:
-            expected_blocks = [
-                (case_id, mode)
-                for case_id in case_ids
-                for mode in modes
-            ]
+            expected_blocks = [(case_id, mode) for case_id in case_ids for mode in modes]
             expected_blocks.sort(
                 key=lambda item: (
                     _rank(self.seed, "block", item[0], item[1].value),
@@ -668,23 +587,17 @@ class AblationPlan:
             for block_id in block_sequence
         ]
         if actual_blocks != expected_blocks:
-            raise AblationValidationError(
-                "block order does not match recorded seed and algorithm"
-            )
+            raise AblationValidationError("block order does not match recorded seed and algorithm")
         base_arm_order = sorted(
             variants,
             key=lambda arm: (_rank(self.seed, "arm-base", arm), arm),
         )
-        position_counts = {
-            arm: [0 for _ in variants] for arm in variants
-        }
+        position_counts = {arm: [0 for _ in variants] for arm in variants}
         for block_id in block_sequence:
             items = blocks[block_id]
             block_ordinal = items[0].block_ordinal
             rotation = block_ordinal % len(base_arm_order)
-            expected_arms = (
-                base_arm_order[rotation:] + base_arm_order[:rotation]
-            )
+            expected_arms = base_arm_order[rotation:] + base_arm_order[:rotation]
             if [item.variant_id for item in items] != expected_arms:
                 raise AblationValidationError(
                     "arm order does not match recorded seed and algorithm"
@@ -692,32 +605,22 @@ class AblationPlan:
             for position, arm in enumerate(expected_arms):
                 position_counts[arm][position] += 1
             first = items[0]
-            expected_block_id = (
-                f"b-{first.cache_mode.value}-{first.case.case_id}"
-            )
+            expected_block_id = f"b-{first.cache_mode.value}-{first.case.case_id}"
             if block_id != expected_block_id:
                 raise AblationValidationError("block id is not canonical")
             for item in items:
                 expected_job_id = (
-                    f"j-{item.cache_mode.value}-{item.case.case_id}-"
-                    f"{item.variant_id.lower()}"
+                    f"j-{item.cache_mode.value}-{item.case.case_id}-{item.variant_id.lower()}"
                 )
                 if item.job_id != expected_job_id:
                     raise AblationValidationError("job id is not canonical")
-        if any(
-            max(counts) - min(counts) > 1
-            for counts in position_counts.values()
-        ):
-            raise AblationValidationError(
-                "arm positions are not counterbalanced across blocks"
-            )
+        if any(max(counts) - min(counts) > 1 for counts in position_counts.values()):
+            raise AblationValidationError("arm positions are not counterbalanced across blocks")
         object.__setattr__(self, "jobs", jobs)
         if self.split is Split.HOLDOUT:
             _safe_id(self.holdout_access_log_id, "holdout_access_log_id")
         elif self.holdout_access_log_id is not None:
-            raise AblationValidationError(
-                "holdout_access_log_id is only valid for holdout"
-            )
+            raise AblationValidationError("holdout_access_log_id is only valid for holdout")
 
     @property
     def digest(self) -> str:
@@ -766,9 +669,7 @@ class AblationPlan:
     def from_dict(cls, value: object) -> "AblationPlan":
         data = _mapping(value, "ablation_plan")
         _exact(data, set(cls.__dataclass_fields__), "ablation_plan")
-        if not isinstance(data["cache_modes"], list) or not isinstance(
-            data["jobs"], list
-        ):
+        if not isinstance(data["cache_modes"], list) or not isinstance(data["jobs"], list):
             raise AblationValidationError("plan jobs/cache_modes must be arrays")
         return cls(
             schema=data["schema"],  # type: ignore[arg-type]
@@ -782,8 +683,7 @@ class AblationPlan:
             seed=data["seed"],  # type: ignore[arg-type]
             variant_ids=_tuple_of_strings(data["variant_ids"], "variant_ids"),
             cache_modes=tuple(
-                _enum(CacheMode, item, "cache_modes[]")
-                for item in data["cache_modes"]
+                _enum(CacheMode, item, "cache_modes[]") for item in data["cache_modes"]
             ),
             case_ids=_tuple_of_strings(data["case_ids"], "case_ids"),
             limits=ResourceLimits.from_dict(data["limits"]),
@@ -818,9 +718,7 @@ def build_ablation_plan(
     """Create deterministic SHA-ranked paired blocks without filesystem I/O."""
 
     normalized = tuple(
-        AblationCase.from_benchmark_case(case)
-        if isinstance(case, BenchmarkCase)
-        else case
+        AblationCase.from_benchmark_case(case) if isinstance(case, BenchmarkCase) else case
         for case in cases
     )
     if (
@@ -875,17 +773,9 @@ def build_ablation_plan(
             leading = (
                 first_mode
                 if index % 2 == 0
-                else (
-                    CacheMode.WARM
-                    if first_mode is CacheMode.COLD
-                    else CacheMode.COLD
-                )
+                else (CacheMode.WARM if first_mode is CacheMode.COLD else CacheMode.COLD)
             )
-            trailing = (
-                CacheMode.WARM
-                if leading is CacheMode.COLD
-                else CacheMode.COLD
-            )
+            trailing = CacheMode.WARM if leading is CacheMode.COLD else CacheMode.COLD
             blocks.extend(((case, leading), (case, trailing)))
     else:
         blocks = [(case, mode) for case in normalized for mode in modes]
@@ -904,9 +794,7 @@ def build_ablation_plan(
     for block_ordinal, (case, mode) in enumerate(blocks):
         block_id = f"b-{mode.value}-{case.case_id}"
         rotation = block_ordinal % len(base_arm_order)
-        arm_order = (
-            base_arm_order[rotation:] + base_arm_order[:rotation]
-        )
+        arm_order = base_arm_order[rotation:] + base_arm_order[:rotation]
         for within, arm in enumerate(arm_order):
             jobs.append(
                 ScheduledCase(
@@ -1010,10 +898,7 @@ class AblationRunResult:
 
     @property
     def complete(self) -> bool:
-        return (
-            self.stop_failure_code is None
-            and len(self.results) == len(self.plan.jobs)
-        )
+        return self.stop_failure_code is None and len(self.results) == len(self.plan.jobs)
 
     @property
     def executed_count(self) -> int:
@@ -1041,8 +926,7 @@ class _ProtocolStopTracker:
         self._global: tuple[FailureCode, int] | None = None
         self._by_variant: dict[str, tuple[FailureCode, int]] = {}
         self._configured = frozenset(
-            condition.failure_code
-            for condition in DEFAULT_PROTOCOL.stop_conditions
+            condition.failure_code for condition in DEFAULT_PROTOCOL.stop_conditions
         )
 
     @staticmethod
@@ -1053,23 +937,15 @@ class _ProtocolStopTracker:
         input_data = job.input_data
         invalid_control = (
             isinstance(input_data, Mapping)
-            and input_data.get("expected_class")
-            == ExpectedClass.UNSUPPORTED.value
+            and input_data.get("expected_class") == ExpectedClass.UNSUPPORTED.value
         )
         if invalid_control:
             kernel = next(
-                (
-                    stage
-                    for stage in result.stages
-                    if stage.stage is StageName.KERNEL
-                ),
+                (stage for stage in result.stages if stage.stage is StageName.KERNEL),
                 None,
             )
             kernel_data = (
-                kernel.data
-                if kernel is not None
-                and isinstance(kernel.data, Mapping)
-                else {}
+                kernel.data if kernel is not None and isinstance(kernel.data, Mapping) else {}
             )
             claims_raw_acceptance = bool(
                 kernel is not None
@@ -1164,9 +1040,7 @@ def validate_ablation_evidence(
     if not isinstance(plan, AblationPlan):
         raise AblationValidationError("plan must be an AblationPlan")
     if type(allow_legacy_results) is not bool:
-        raise AblationValidationError(
-            "allow_legacy_results must be a boolean"
-        )
+        raise AblationValidationError("allow_legacy_results must be a boolean")
     if plan.split is Split.HOLDOUT:
         raise AblationValidationError(
             "generic persisted validation is forbidden for holdout evidence"
@@ -1184,8 +1058,7 @@ def validate_ablation_evidence(
 
     contracts = plan.run_contracts
     contract_map = {
-        (contract.requested_variant_id, contract.cache_mode): contract
-        for contract in contracts
+        (contract.requested_variant_id, contract.cache_mode): contract for contract in contracts
     }
     for contract in contracts:
         contract_path = _contract_path(root, contract)
@@ -1209,9 +1082,7 @@ def validate_ablation_evidence(
             raise AblationValidationError(
                 "persisted cache scope resolves outside the selected output root"
             )
-        portable_scope_root = expected_scope_root.relative_to(
-            canonical_output_root
-        ).as_posix()
+        portable_scope_root = expected_scope_root.relative_to(canonical_output_root).as_posix()
         expected_scope = {
             "schema": "ipfs-datasets.logic-pipeline-benchmark.cache-scope.v1",
             "plan_sha256": plan.digest,
@@ -1233,9 +1104,7 @@ def validate_ablation_evidence(
     expected_paths = {_result_path(root, job) for job in plan.jobs}
     results_root = root / "results"
     actual_paths = (
-        {path for path in results_root.rglob("*.json")}
-        if results_root.exists()
-        else set()
+        {path for path in results_root.rglob("*.json")} if results_root.exists() else set()
     )
     missing = expected_paths - actual_paths
     foreign = actual_paths - expected_paths
@@ -1262,8 +1131,7 @@ def validate_ablation_evidence(
         stop_code = stop_tracker.observe(job, result)
         if stop_code is not None:
             raise AblationValidationError(
-                "persisted evidence reaches a frozen protocol stop "
-                f"condition: {stop_code.value}"
+                f"persisted evidence reaches a frozen protocol stop condition: {stop_code.value}"
             )
     return AblationRunResult(
         plan=plan,
@@ -1282,13 +1150,16 @@ def _contract(plan: AblationPlan, variant: str, mode: CacheMode) -> RunContract:
         # A plan owns one logical access ledger, while each run contract needs
         # a distinct immutable audit identity so the complete ledger can be
         # validated for duplicates and contiguous sequencing.
-        access_log_id = "ha-" + _sha(
-            {
-                "ledger_id": plan.holdout_access_log_id,
-                "variant_id": variant,
-                "cache_mode": mode.value,
-            }
-        )[:32]
+        access_log_id = (
+            "ha-"
+            + _sha(
+                {
+                    "ledger_id": plan.holdout_access_log_id,
+                    "variant_id": variant,
+                    "cache_mode": mode.value,
+                }
+            )[:32]
+        )
     return RunContract(
         schema=RUN_CONTRACT_SCHEMA,
         protocol_sha256=plan.protocol_sha256,
@@ -1321,9 +1192,7 @@ def _write_once(path: Path, value: object) -> None:
             stream.flush()
             os.fsync(stream.fileno())
     except FileExistsError as exc:
-        raise AblationValidationError(
-            f"refusing to overwrite immutable record: {path}"
-        ) from exc
+        raise AblationValidationError(f"refusing to overwrite immutable record: {path}") from exc
 
 
 def _read_canonical(path: Path, field: str) -> object:
@@ -1396,26 +1265,18 @@ def _semantic_source_manifest_cid(plan: AblationPlan) -> str:
     for job in plan.jobs:
         source_text = job.case.input_data.get("text")
         if not isinstance(source_text, str):
-            raise AblationValidationError(
-                "semantic source manifest requires exact source text"
-            )
+            raise AblationValidationError("semantic source manifest requires exact source text")
         source_cid = cid_for_bytes(source_text.encode("utf-8"))
         previous = cases.setdefault(job.case.case_id, source_cid)
         if previous != source_cid:
-            raise AblationValidationError(
-                "semantic source manifest case identity drifted"
-            )
+            raise AblationValidationError("semantic source manifest case identity drifted")
     return cid_for_dag_json(
         {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark."
-                "semantic-source-manifest.v2"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.semantic-source-manifest.v2"),
             "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
             "split": plan.split.value,
             "cases": [
-                {"case_id": case_id, "source_cid": cases[case_id]}
-                for case_id in sorted(cases)
+                {"case_id": case_id, "source_cid": cases[case_id]} for case_id in sorted(cases)
             ],
         }
     )
@@ -1428,15 +1289,9 @@ def _semantic_execution_profile(plan: AblationPlan) -> dict[str, object]:
         "plan_cid": cid_for_dag_json(plan.to_dict()),
         "source_manifest_cid": _semantic_source_manifest_cid(plan),
         "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
-        "calibration_route_manifest_cid": (
-            SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
-        ),
-        "calibration_metric_spec_cid": (
-            SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID
-        ),
-        "reviewed_target_source_cid": (
-            SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
-        ),
+        "calibration_route_manifest_cid": (SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID),
+        "calibration_metric_spec_cid": (SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID),
+        "reviewed_target_source_cid": (SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID),
         "producer_input_fields": ["text"],
         "proof_boundary": SEMANTIC_V2_PROOF_SUPPRESSION_REASON,
         "ambiguity_gate": {
@@ -1460,9 +1315,7 @@ def _read_semantic_execution_profile(
     )
     expected = _semantic_execution_profile(plan)
     if dict(profile) != expected:
-        raise AblationValidationError(
-            "semantic execution profile conflicts with plan or protocol"
-        )
+        raise AblationValidationError("semantic execution profile conflicts with plan or protocol")
     return SEMANTIC_PROTOCOL_V2_CID
 
 
@@ -1473,9 +1326,7 @@ def _select_adapters(
     if not all(isinstance(key, StageName) for key in adapters):
         selected = adapters.get(variant)
     if not isinstance(selected, Mapping):
-        raise AblationValidationError(
-            f"adapters do not provide requested variant {variant}"
-        )
+        raise AblationValidationError(f"adapters do not provide requested variant {variant}")
     result: dict[StageName, StageAdapter] = {}
     for stage, adapter in selected.items():
         if (
@@ -1483,9 +1334,7 @@ def _select_adapters(
             or not isinstance(adapter, StageAdapter)
             or adapter.stage is not stage
         ):
-            raise AblationValidationError(
-                "adapters must map matching StageName to StageAdapter"
-            )
+            raise AblationValidationError("adapters must map matching StageName to StageAdapter")
         result[stage] = adapter
     return MappingProxyType(result)
 
@@ -1510,21 +1359,15 @@ def _validate_semantic_v2_adapters(
             adapter = selected.get(stage)
             if adapter is None:
                 raise AblationValidationError(
-                    f"semantic-v2 adapter map omits "
-                    f"{variant_id}/{stage.value}"
+                    f"semantic-v2 adapter map omits {variant_id}/{stage.value}"
                 )
             if adapter.adapter_version != "2":
                 raise AblationValidationError(
-                    f"semantic-v2 requires adapter version 2 for "
-                    f"{variant_id}/{stage.value}"
+                    f"semantic-v2 requires adapter version 2 for {variant_id}/{stage.value}"
                 )
             if isinstance(adapter, (SpacyAdapter, SymaiAdapter)):
                 config = adapter.config
-                if (
-                    config is not None
-                    and config.semantic_protocol_cid
-                    != SEMANTIC_PROTOCOL_V2_CID
-                ):
+                if config is not None and config.semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID:
                     raise AblationValidationError(
                         f"{variant_id}/{stage.value} config is not bound "
                         "to the semantic-v2 protocol CID"
@@ -1562,10 +1405,7 @@ def _validate_semantic_v2_result_frontends(
             StageName.SYMAI,
         }:
             continue
-        if (
-            stage.provenance.effective_identity.get("graph_invoked")
-            is not True
-        ):
+        if stage.provenance.effective_identity.get("graph_invoked") is not True:
             continue
         _validate_semantic_v2_stage_record(
             stage,
@@ -1595,8 +1435,7 @@ def _validate_semantic_v2_stage_record(
     ) as exc:
         stage_name = getattr(getattr(stage, "stage", None), "value", "frontend")
         raise _SemanticFrontendValidationError(
-            f"semantic-v2 {stage_name} evidence failed strict "
-            "validation"
+            f"semantic-v2 {stage_name} evidence failed strict validation"
         ) from exc
 
 
@@ -1648,23 +1487,14 @@ def _frozen_invocation_order(
 
     proof_stages = set(definition.proof_order)
     frontend = tuple(
-        stage
-        for stage in definition.stages
-        if stage not in proof_stages | {StageName.KERNEL}
+        stage for stage in definition.stages if stage not in proof_stages | {StageName.KERNEL}
     )
     order = (
         *frontend,
         *definition.proof_order,
-        *(
-            (StageName.KERNEL,)
-            if StageName.KERNEL in definition.stages
-            else ()
-        ),
+        *((StageName.KERNEL,) if StageName.KERNEL in definition.stages else ()),
     )
-    if (
-        len(order) != len(definition.stages)
-        or set(order) != set(definition.stages)
-    ):
+    if len(order) != len(definition.stages) or set(order) != set(definition.stages):
         raise AblationValidationError(
             "registered invocation order is not a complete stage permutation"
         )
@@ -1689,39 +1519,27 @@ def _ambiguity_gate_receipt(
             or artifact.status is not StageStatus.SUCCESS
             or not isinstance(artifact.data, Mapping)
         ):
-            uncertainty_signals.add(
-                f"{artifact.stage.value}_evidence_unavailable"
-            )
+            uncertainty_signals.add(f"{artifact.stage.value}_evidence_unavailable")
             continue
         data = artifact.data
         if artifact.stage is StageName.COMPILER:
-            if data.get("schema") == (
-                "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"
-            ):
+            if data.get("schema") == ("ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"):
                 found_structured_frontend = True
                 compiled = data.get("compiled_obligation")
                 translation = data.get("entailment_translation")
                 if isinstance(translation, Mapping):
-                    confidence_signals.add(
-                        "reviewed_entailment_translation_supported"
-                    )
+                    confidence_signals.add("reviewed_entailment_translation_supported")
                 elif isinstance(compiled, Mapping):
-                    uncertainty_signals.add(
-                        "reviewed_entailment_translation_unsupported"
-                    )
+                    uncertainty_signals.add("reviewed_entailment_translation_unsupported")
         if artifact.stage is StageName.SPACY and data.get("schema") == (
             "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v1"
         ):
             found_structured_frontend = True
             modal_ir = data.get("modal_ir")
             normalized_text = (
-                modal_ir.get("normalized_text")
-                if isinstance(modal_ir, Mapping)
-                else None
+                modal_ir.get("normalized_text") if isinstance(modal_ir, Mapping) else None
             )
-            if isinstance(normalized_text, str) and _UNCERTAINTY_CUE.search(
-                normalized_text
-            ):
+            if isinstance(normalized_text, str) and _UNCERTAINTY_CUE.search(normalized_text):
                 uncertainty_signals.add("lexical_uncertainty_cue")
             modal_cues = data.get("modal_cues")
             if isinstance(modal_cues, (list, tuple)):
@@ -1734,17 +1552,10 @@ def _ambiguity_gate_receipt(
                     uncertainty_signals.add("multiple_modal_cues")
                 if cue_labels & {"may", "might", "could", "can"}:
                     uncertainty_signals.add("ambiguous_modal_cue")
-            formulas = (
-                modal_ir.get("formulas")
-                if isinstance(modal_ir, Mapping)
-                else None
-            )
+            formulas = modal_ir.get("formulas") if isinstance(modal_ir, Mapping) else None
             if isinstance(formulas, (list, tuple)) and any(
                 isinstance(formula, Mapping)
-                and (
-                    bool(formula.get("conditions"))
-                    or bool(formula.get("exceptions"))
-                )
+                and (bool(formula.get("conditions")) or bool(formula.get("exceptions")))
                 for formula in formulas
             ):
                 uncertainty_signals.add("conditional_or_exception_scope")
@@ -1759,14 +1570,10 @@ def _ambiguity_gate_receipt(
                     elif value["ambiguity_detected"] is False:
                         confidence_signals.add("explicit_unambiguous_signal")
                 for key in ("ambiguity_flags", "ambiguities"):
-                    if key in value and isinstance(
-                        value[key], (list, tuple)
-                    ):
+                    if key in value and isinstance(value[key], (list, tuple)):
                         found_structured_frontend = True
                         if value[key]:
-                            uncertainty_signals.add(
-                                f"structured_{key}"
-                            )
+                            uncertainty_signals.add(f"structured_{key}")
                 queue.extend(value.values())
             elif isinstance(value, (list, tuple)):
                 queue.extend(value)
@@ -1777,10 +1584,7 @@ def _ambiguity_gate_receipt(
         uncertainty_signals.add("structured_frontend_signal_unavailable")
     ambiguous = bool(uncertainty_signals)
     body = {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark."
-            "ambiguity-gate-decision.v1"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.ambiguity-gate-decision.v1"),
         "decision": "invoke_symai" if ambiguous else "skip_symai",
         "ambiguity_detected": ambiguous,
         "uncertainty_signals": sorted(uncertainty_signals),
@@ -1814,21 +1618,16 @@ def _semantic_ambiguity_gate_receipt_v2(
             continue
         raw_projection = artifact.data.get("semantic_projection")
         try:
-            projection = SemanticProjection.from_dict(
-                _thaw(raw_projection)
-            )
+            projection = SemanticProjection.from_dict(_thaw(raw_projection))
         except (ProtocolContractError, TypeError, ValueError) as exc:
             raise AblationValidationError(
                 "semantic ambiguity gate received an invalid projection"
             ) from exc
         if (
             projection.source_cid != source_cid
-            or projection.semantic_protocol_cid
-            != SEMANTIC_PROTOCOL_V2_CID
+            or projection.semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
         ):
-            raise AblationValidationError(
-                "semantic ambiguity gate projection identity drifted"
-            )
+            raise AblationValidationError("semantic ambiguity gate projection identity drifted")
         projections.append(projection)
 
     uncertainty_signals: set[str] = set()
@@ -1844,18 +1643,14 @@ def _semantic_ambiguity_gate_receipt_v2(
         if not all(projection.completeness.values()):
             uncertainty_signals.add(f"{prefix}:incomplete")
         if projection.semantic_class in {"ambiguous", "unsupported"}:
-            uncertainty_signals.add(
-                f"{prefix}:class_{projection.semantic_class}"
-            )
+            uncertainty_signals.add(f"{prefix}:class_{projection.semantic_class}")
         if (
             not projection.ambiguity_flags
             and not projection.validation_errors
             and all(projection.completeness.values())
             and projection.semantic_class in {"proved", "disproved"}
         ):
-            confidence_signals.add(
-                f"{prefix}:complete_explicit_class"
-            )
+            confidence_signals.add(f"{prefix}:complete_explicit_class")
     ambiguous = bool(uncertainty_signals)
     body = {
         "schema": SEMANTIC_AMBIGUITY_GATE_SCHEMA_V2,
@@ -1865,9 +1660,7 @@ def _semantic_ambiguity_gate_receipt_v2(
         "ambiguity_detected": ambiguous,
         "uncertainty_signals": sorted(uncertainty_signals),
         "confidence_signals": sorted(confidence_signals),
-        "input_projection_cids": [
-            projection.projection_cid for projection in projections
-        ],
+        "input_projection_cids": [projection.projection_cid for projection in projections],
         "input_semantic_content_cids": [
             projection.semantic_content_cid for projection in projections
         ],
@@ -1907,9 +1700,7 @@ def _proof_candidate_ready(artifact: StageArtifact) -> bool:
         )
     if artifact.stage is StageName.LEANSTRAL:
         draft = data.get("draft")
-        return isinstance(draft, Mapping) and bool(
-            draft.get("proof_text", draft.get("draft_text"))
-        )
+        return isinstance(draft, Mapping) and bool(draft.get("proof_text", draft.get("draft_text")))
     return False
 
 
@@ -1925,11 +1716,7 @@ def _compiler_translation_unsupported(
     """
 
     compiler = next(
-        (
-            artifact
-            for artifact in artifacts
-            if artifact.stage is StageName.COMPILER
-        ),
+        (artifact for artifact in artifacts if artifact.stage is StageName.COMPILER),
         None,
     )
     if (
@@ -1949,8 +1736,7 @@ def _compiler_translation_unsupported(
         return False
     compiled = data["compiled_obligation"]
     return bool(
-        data.get("schema")
-        == "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"
+        data.get("schema") == "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"
         and isinstance(compiled, Mapping)
         and compiled.get("schema")
         == "ipfs-datasets.logic-pipeline-benchmark.compiled-obligation.v1"
@@ -1973,11 +1759,7 @@ def _compiler_native_candidate_ready(
     """
 
     compiler = next(
-        (
-            artifact
-            for artifact in artifacts
-            if artifact.stage is StageName.COMPILER
-        ),
+        (artifact for artifact in artifacts if artifact.stage is StageName.COMPILER),
         None,
     )
     if (
@@ -1987,10 +1769,7 @@ def _compiler_native_candidate_ready(
         or not isinstance(compiler.data, Mapping)
         or not isinstance(input_data, Mapping)
         or compiler.effective_identity.get("entrypoint")
-        != (
-            "ipfs_datasets_py.logic.modal.codec."
-            "DeterministicModalLogicCodec.encode"
-        )
+        != ("ipfs_datasets_py.logic.modal.codec.DeterministicModalLogicCodec.encode")
         or compiler.effective_identity.get("graph_invoked") is not True
         or compiler.effective_identity.get("graph_invocation_index") != 0
     ):
@@ -2004,8 +1783,7 @@ def _compiler_native_candidate_ready(
         "native_proof_candidate",
     }
     if (
-        data.get("schema")
-        != "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"
+        data.get("schema") != "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"
         or not required_fields.issubset(data)
     ):
         return False
@@ -2030,10 +1808,7 @@ def _compiler_native_candidate_ready(
             logic=expected_compiled.logic,
             semantic_target=expected_compiled.semantic_target,
         )
-        if (
-            expected_translation is None
-            or expected_translation.native_proof_text is None
-        ):
+        if expected_translation is None or expected_translation.native_proof_text is None:
             return False
         expected_candidate = {
             "schema": NATIVE_PROOF_CANDIDATE_SCHEMA,
@@ -2049,16 +1824,11 @@ def _compiler_native_candidate_ready(
         return False
 
     return bool(
-        _thaw(data["compiled_obligation"])
-        == expected_compiled.to_dict()
-        and data["compiled_obligation_sha256"]
-        == expected_compiled.digest
-        and _thaw(data["entailment_translation"])
-        == expected_translation.to_dict()
-        and data["entailment_translation_sha256"]
-        == expected_translation.digest
-        and _thaw(data["native_proof_candidate"])
-        == expected_candidate
+        _thaw(data["compiled_obligation"]) == expected_compiled.to_dict()
+        and data["compiled_obligation_sha256"] == expected_compiled.digest
+        and _thaw(data["entailment_translation"]) == expected_translation.to_dict()
+        and data["entailment_translation_sha256"] == expected_translation.digest
+        and _thaw(data["native_proof_candidate"]) == expected_candidate
     )
 
 
@@ -2095,18 +1865,12 @@ def _synthetic_invocation(
     reason: str,
     policy_decision: Mapping[str, object] | None = None,
 ) -> StageInvocation:
-    decision = (
-        {}
-        if policy_decision is None
-        else {"policy_decision": _thaw(policy_decision)}
-    )
+    decision = {} if policy_decision is None else {"policy_decision": _thaw(policy_decision)}
     decision_identity = (
         {}
         if policy_decision is None
         else {
-            "policy_decision_sha256": policy_decision.get(
-                "decision_sha256"
-            ),
+            "policy_decision_sha256": policy_decision.get("decision_sha256"),
             "policy_decision": policy_decision.get("decision"),
         }
     )
@@ -2155,9 +1919,7 @@ def _artifact(
 ) -> StageArtifact:
     output = invocation.output
     output_sha256 = (
-        hashlib.sha256(
-            canonical_json(_thaw(output.data)).encode("utf-8")
-        ).hexdigest()
+        hashlib.sha256(canonical_json(_thaw(output.data)).encode("utf-8")).hexdigest()
         if output.status is StageStatus.SUCCESS
         else None
     )
@@ -2181,13 +1943,8 @@ def _failure(
     *,
     semantic_protocol_cid: str | None = None,
 ) -> CaseResultRecord:
-    if (
-        semantic_protocol_cid is not None
-        and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
-    ):
-        raise AblationValidationError(
-            "unsupported semantic execution protocol CID"
-        )
+    if semantic_protocol_cid is not None and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID:
+        raise AblationValidationError("unsupported semantic execution protocol CID")
     if semantic_protocol_cid is not None:
         _validate_semantic_v2_plan(plan)
     definition = get_variant_definition(job.variant_id)
@@ -2212,20 +1969,11 @@ def _failure(
             invocation_index=invocation_index,
             semantic_protocol_cid=semantic_protocol_cid,
         )
-        reason = (
-            "retained_job_failure"
-            if invocation_index == 0
-            else "upstream_terminal_failure"
-        )
+        reason = "retained_job_failure" if invocation_index == 0 else "upstream_terminal_failure"
         if invocation_index == 0:
-            consumed = tuple(
-                artifact.digest for artifact in request.upstream_artifacts
-            )
+            consumed = tuple(artifact.digest for artifact in request.upstream_artifacts)
             data = {
-                "schema": (
-                    "ipfs-datasets.logic-pipeline-benchmark."
-                    "policy-decision.v1"
-                ),
+                "schema": ("ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1"),
                 "stage": stage.value,
                 "invoked": False,
                 "reason": reason,
@@ -2279,9 +2027,7 @@ def _failure(
     canonical_upstream: tuple[str, ...] = ()
     by_stage_artifacts = tuple(artifacts)
     for stage in definition.stages:
-        artifact = next(
-            item for item in artifacts if item.stage is stage
-        )
+        artifact = next(item for item in artifacts if item.stage is stage)
         request = StageRequest(
             run_id=plan.run_id,
             case_id=job.case.case_id,
@@ -2315,13 +2061,8 @@ def _execute_job(
     *,
     semantic_protocol_cid: str | None = None,
 ) -> CaseResultRecord:
-    if (
-        semantic_protocol_cid is not None
-        and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
-    ):
-        raise AblationValidationError(
-            "unsupported semantic execution protocol CID"
-        )
+    if semantic_protocol_cid is not None and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID:
+        raise AblationValidationError("unsupported semantic execution protocol CID")
     if semantic_protocol_cid is not None:
         _validate_semantic_v2_plan(plan)
         _validate_semantic_v2_adapters(plan, adapters)
@@ -2376,9 +2117,7 @@ def _execute_job(
                 resource_class = _RESOURCE_CLASS[stage]
                 requested_model = request.requested_identity.get(
                     "model",
-                    request.requested_identity.get(
-                        "requested_model", "shared-model-service"
-                    ),
+                    request.requested_identity.get("requested_model", "shared-model-service"),
                 )
                 model_identity = (
                     re.sub(r"[^A-Za-z0-9._-]", "-", str(requested_model))[:128]
@@ -2387,13 +2126,10 @@ def _execute_job(
                 )
                 if model_identity in {"", ".", ".."}:
                     model_identity = "shared-model-service"
-                remaining_case_ms = (
-                    case_deadline_unix_ms - _unix_time_ms()
-                )
+                remaining_case_ms = case_deadline_unix_ms - _unix_time_ms()
                 if remaining_case_ms <= 0:
                     raise ResourceLeaseTimeout(
-                        "case deadline expired before resource lease for "
-                        f"{job.job_id}"
+                        f"case deadline expired before resource lease for {job.job_id}"
                     )
                 lease_request = ResourceLeaseRequest(
                     owner_id=f"lease-{job.ordinal}-{stage.value}",
@@ -2405,12 +2141,9 @@ def _execute_job(
                     lease.assert_active()
                     if _unix_time_ms() >= case_deadline_unix_ms:
                         raise ResourceLeaseTimeout(
-                            "case deadline expired during resource lease for "
-                            f"{job.job_id}"
+                            f"case deadline expired during resource lease for {job.job_id}"
                         )
-                    invocation = invoke_with_symai_cache_measurement(
-                        adapter, request
-                    )
+                    invocation = invoke_with_symai_cache_measurement(adapter, request)
                 if policy_decision is not None:
                     output = invocation.output
                     if isinstance(output.data, Mapping):
@@ -2430,39 +2163,26 @@ def _execute_job(
                         invocation.telemetry,
                     )
                 identity = {
-                    **dict(
-                        invocation.output.effective_identity
-                        or request.requested_identity
-                    ),
+                    **dict(invocation.output.effective_identity or request.requested_identity),
                     **_semantic_identity_binding(request),
                     "graph_invocation_index": invocation_index,
                     "graph_invoked": True,
                     "graph_policy_reason": reason,
-                    "consumed_artifact_sha256": tuple(
-                        artifact.digest for artifact in artifacts
-                    ),
+                    "consumed_artifact_sha256": tuple(artifact.digest for artifact in artifacts),
                     **(
                         {}
                         if policy_decision is None
                         else {
                             **(
-                                {
-                                    "policy_decision_cid": (
-                                        policy_decision.get("decision_cid")
-                                    )
-                                }
+                                {"policy_decision_cid": (policy_decision.get("decision_cid"))}
                                 if "decision_cid" in policy_decision
                                 else {
                                     "policy_decision_sha256": (
-                                        policy_decision.get(
-                                            "decision_sha256"
-                                        )
+                                        policy_decision.get("decision_sha256")
                                     )
                                 }
                             ),
-                            "policy_decision": policy_decision.get(
-                                "decision"
-                            ),
+                            "policy_decision": policy_decision.get("decision"),
                         }
                     ),
                 }
@@ -2473,15 +2193,11 @@ def _execute_job(
                     ),
                     invocation.telemetry,
                 )
-                if (
-                    semantic_protocol_cid is not None
-                    and stage
-                    in {
-                        StageName.COMPILER,
-                        StageName.SPACY,
-                        StageName.SYMAI,
-                    }
-                ):
+                if semantic_protocol_cid is not None and stage in {
+                    StageName.COMPILER,
+                    StageName.SPACY,
+                    StageName.SYMAI,
+                }:
                     source_text = job.case.input_data.get("text")
                     if not isinstance(source_text, str):
                         raise _SemanticFrontendValidationError(
@@ -2505,9 +2221,7 @@ def _execute_job(
 
         proof_stages = {StageName.HAMMER, StageName.LEANSTRAL}
         frontend = tuple(
-            stage
-            for stage in definition.stages
-            if stage not in proof_stages | {StageName.KERNEL}
+            stage for stage in definition.stages if stage not in proof_stages | {StageName.KERNEL}
         )
         for stage in frontend:
             if terminal_failure:
@@ -2521,16 +2235,13 @@ def _execute_job(
                 (
                     _semantic_ambiguity_gate_receipt_v2(
                         artifacts,
-                        source_cid=cid_for_bytes(
-                            str(job.case.input_data["text"]).encode("utf-8")
-                        ),
+                        source_cid=cid_for_bytes(str(job.case.input_data["text"]).encode("utf-8")),
                     )
                     if semantic_protocol_cid is not None
                     else _ambiguity_gate_receipt(artifacts)
                 )
                 if stage is StageName.SYMAI
-                and definition.symai_policy
-                is StagePolicy.AMBIGUITY_GATED
+                and definition.symai_policy is StagePolicy.AMBIGUITY_GATED
                 else None
             )
             should_invoke = not (
@@ -2548,8 +2259,7 @@ def _execute_job(
                     else (
                         "frontend_ambiguity_gate_open"
                         if stage is StageName.SYMAI
-                        and definition.symai_policy
-                        is StagePolicy.AMBIGUITY_GATED
+                        and definition.symai_policy is StagePolicy.AMBIGUITY_GATED
                         else "frontend_scheduled"
                     )
                 ),
@@ -2559,14 +2269,8 @@ def _execute_job(
                 terminal_failure = True
 
         semantic_v2 = semantic_protocol_cid is not None
-        has_obligation = (
-            False
-            if semantic_v2
-            else _has_obligation(job.case.input_data)
-        )
-        compiler_translation_unsupported = (
-            _compiler_translation_unsupported(artifacts)
-        )
+        has_obligation = False if semantic_v2 else _has_obligation(job.case.input_data)
+        compiler_translation_unsupported = _compiler_translation_unsupported(artifacts)
         previous_proof: StageArtifact | None = None
         if semantic_v2:
             for stage in definition.proof_order:
@@ -2594,18 +2298,14 @@ def _execute_job(
                 elif (
                     proof_index == 0
                     and stage is StageName.LEANSTRAL
-                    and definition.leanstral_policy
-                    is StagePolicy.PROOF_FAILURE_FALLBACK
-                    and _compiler_native_candidate_ready(
-                        artifacts, job.case.input_data
-                    )
+                    and definition.leanstral_policy is StagePolicy.PROOF_FAILURE_FALLBACK
+                    and _compiler_native_candidate_ready(artifacts, job.case.input_data)
                 ):
                     should_invoke = False
                     reason = "proof_fallback_suppressed"
                 elif proof_index and job.variant_id != "A12":
                     should_invoke = not (
-                        previous_proof is not None
-                        and _proof_candidate_ready(previous_proof)
+                        previous_proof is not None and _proof_candidate_ready(previous_proof)
                     )
                     reason = (
                         "proof_fallback_suppressed"
@@ -2627,9 +2327,7 @@ def _execute_job(
             kernel_should_invoke = (
                 not semantic_v2
                 and not terminal_failure
-                and not (
-                    definition.proof_order and not has_obligation
-                )
+                and not (definition.proof_order and not has_obligation)
             )
             kernel_artifact = invoke(
                 StageName.KERNEL,
@@ -2674,17 +2372,11 @@ def _execute_job(
                     environment_sha256=plan.environment_sha256,
                     stage_status=original.output.status,
                     kernel_accepted=True,
-                    kernel_receipt_sha256=(
-                        original.output.kernel_receipt_sha256
-                    ),
-                    consumed_artifact_sha256s=tuple(
-                        artifact.digest for artifact in artifacts[:-1]
-                    ),
+                    kernel_receipt_sha256=(original.output.kernel_receipt_sha256),
+                    consumed_artifact_sha256s=tuple(artifact.digest for artifact in artifacts[:-1]),
                     failure_code=original.output.failure_code,
                 ):
-                    raise AblationValidationError(
-                        "S1 diagnostic kernel receipt was not accepted"
-                    )
+                    raise AblationValidationError("S1 diagnostic kernel receipt was not accepted")
                 diagnostic_receipt = _thaw(original_data)
                 signed_rejection = {
                     key: diagnostic_receipt[key]
@@ -2710,9 +2402,7 @@ def _execute_job(
                         "diagnostic_only": True,
                         "authority_withheld": True,
                         "diagnostic_kernel_accepted": True,
-                        "diagnostic_receipt_sha256": diagnostic_receipt[
-                            "receipt_sha256"
-                        ],
+                        "diagnostic_receipt_sha256": diagnostic_receipt["receipt_sha256"],
                         "diagnostic_receipt": diagnostic_receipt,
                     }
                 )
@@ -2760,9 +2450,7 @@ def _execute_job(
                 upstream_stage_digests=canonical_upstream,
                 upstream_artifacts=by_stage_artifacts,
                 invocation_index=next(
-                    artifact.invocation_index
-                    for artifact in artifacts
-                    if artifact.stage is stage
+                    artifact.invocation_index for artifact in artifacts if artifact.stage is stage
                 ),
                 semantic_protocol_cid=semantic_protocol_cid,
                 deadline_unix_ms=case_deadline_unix_ms,
@@ -2774,9 +2462,7 @@ def _execute_job(
         if semantic_protocol_cid is not None:
             source_text = job.case.input_data.get("text")
             if not isinstance(source_text, str):
-                raise _SemanticFrontendValidationError(
-                    "semantic-v2 job lost its exact source text"
-                )
+                raise _SemanticFrontendValidationError("semantic-v2 job lost its exact source text")
             _validate_semantic_v2_result_frontends(
                 result,
                 source_text=source_text,
@@ -2803,30 +2489,23 @@ def _execute_job(
     setup_telemetry = tuple(
         setup
         for record in result.stages
-        if (
-            setup := extract_symai_cache_setup_telemetry(record)
-        )
-        is not None
+        if (setup := extract_symai_cache_setup_telemetry(record)) is not None
     )
-    wall_ms = sum(
-        record.telemetry.wall_time_ms for record in result.stages
-    ) + sum(item.wall_time_ms for item in setup_telemetry)
+    wall_ms = sum(record.telemetry.wall_time_ms for record in result.stages) + sum(
+        item.wall_time_ms for item in setup_telemetry
+    )
     peak_memory = max(
         (
-            *(
-                record.telemetry.peak_memory_bytes
-                for record in result.stages
-            ),
+            *(record.telemetry.peak_memory_bytes for record in result.stages),
             *(item.peak_memory_bytes for item in setup_telemetry),
         ),
         default=0,
     )
-    model_calls = sum(
-        record.telemetry.model_calls for record in result.stages
-    ) + sum(item.model_calls for item in setup_telemetry)
+    model_calls = sum(record.telemetry.model_calls for record in result.stages) + sum(
+        item.model_calls for item in setup_telemetry
+    )
     solver_stages = sum(
-        record.telemetry.resource_lane is ResourceLane.SOLVER
-        for record in result.stages
+        record.telemetry.resource_lane is ResourceLane.SOLVER for record in result.stages
     )
     if peak_memory > plan.limits.max_memory_bytes:
         return _failure(
@@ -2874,16 +2553,12 @@ def _envelope(
         "plan_sha256": plan.digest,
         "job": job.to_dict(),
         "run_contract": contract.to_dict(),
-        "requested_configuration": get_variant_definition(
-            job.variant_id
-        ).to_dict(),
+        "requested_configuration": get_variant_definition(job.variant_id).to_dict(),
         "effective_configuration": [
             {
                 "stage": stage.stage.value,
                 "status": stage.status.value,
-                "effective_identity": _thaw(
-                    stage.provenance.effective_identity
-                ),
+                "effective_identity": _thaw(stage.provenance.effective_identity),
             }
             for stage in result.stages
         ],
@@ -2936,8 +2611,7 @@ def _validate_current_policy_graph(
             )
         ):
             raise AblationValidationError(
-                "current result graph has a noncanonical retained runner "
-                "failure route"
+                "current result graph has a noncanonical retained runner failure route"
             )
         return
 
@@ -2964,9 +2638,7 @@ def _validate_current_policy_graph(
     evaluated: list[StageArtifact] = []
     proof_stages = set(definition.proof_order)
     frontend = tuple(
-        stage
-        for stage in definition.stages
-        if stage not in proof_stages | {StageName.KERNEL}
+        stage for stage in definition.stages if stage not in proof_stages | {StageName.KERNEL}
     )
     terminal_failure = False
     for stage in frontend:
@@ -2981,9 +2653,7 @@ def _validate_current_policy_graph(
                 (
                     _semantic_ambiguity_gate_receipt_v2(
                         evaluated,
-                        source_cid=cid_for_bytes(
-                            str(job.case.input_data["text"]).encode("utf-8")
-                        ),
+                        source_cid=cid_for_bytes(str(job.case.input_data["text"]).encode("utf-8")),
                     )
                     if semantic_protocol_cid is not None
                     else _ambiguity_gate_receipt(evaluated)
@@ -2993,8 +2663,7 @@ def _validate_current_policy_graph(
                 else None
             )
             should_invoke = not (
-                gate_receipt is not None
-                and not bool(gate_receipt["ambiguity_detected"])
+                gate_receipt is not None and not bool(gate_receipt["ambiguity_detected"])
             )
             reason = (
                 "frontend_ambiguity_gate_closed"
@@ -3011,28 +2680,19 @@ def _validate_current_policy_graph(
                 reason=reason,
             )
             if gate_receipt is not None:
-                receipt_field = (
-                    "routing_policy"
-                    if should_invoke
-                    else "policy_decision"
-                )
+                receipt_field = "routing_policy" if should_invoke else "policy_decision"
                 decision_identity_field = (
                     "policy_decision_cid"
                     if semantic_protocol_cid is not None
                     else "policy_decision_sha256"
                 )
                 decision_receipt_field = (
-                    "decision_cid"
-                    if semantic_protocol_cid is not None
-                    else "decision_sha256"
+                    "decision_cid" if semantic_protocol_cid is not None else "decision_sha256"
                 )
                 if (
                     not isinstance(artifact.data, Mapping)
-                    or _thaw(artifact.data.get(receipt_field))
-                    != gate_receipt
-                    or artifact.effective_identity.get(
-                        decision_identity_field
-                    )
+                    or _thaw(artifact.data.get(receipt_field)) != gate_receipt
+                    or artifact.effective_identity.get(decision_identity_field)
                     != gate_receipt[decision_receipt_field]
                     or artifact.effective_identity.get("policy_decision")
                     != gate_receipt["decision"]
@@ -3046,12 +2706,8 @@ def _validate_current_policy_graph(
         evaluated.append(artifact)
 
     semantic_v2 = semantic_protocol_cid is not None
-    has_obligation = (
-        False if semantic_v2 else _has_obligation(job.case.input_data)
-    )
-    compiler_translation_unsupported = (
-        _compiler_translation_unsupported(evaluated)
-    )
+    has_obligation = False if semantic_v2 else _has_obligation(job.case.input_data)
+    compiler_translation_unsupported = _compiler_translation_unsupported(evaluated)
     previous_proof: StageArtifact | None = None
     for proof_index, stage in enumerate(definition.proof_order):
         if semantic_v2:
@@ -3077,8 +2733,7 @@ def _validate_current_policy_graph(
             elif (
                 proof_index == 0
                 and stage is StageName.LEANSTRAL
-                and definition.leanstral_policy
-                is StagePolicy.PROOF_FAILURE_FALLBACK
+                and definition.leanstral_policy is StagePolicy.PROOF_FAILURE_FALLBACK
                 and _compiler_native_candidate_ready(
                     evaluated,
                     job.case.input_data,
@@ -3088,13 +2743,10 @@ def _validate_current_policy_graph(
                 reason = "proof_fallback_suppressed"
             elif proof_index and job.variant_id != "A12":
                 should_invoke = not (
-                    previous_proof is not None
-                    and _proof_candidate_ready(previous_proof)
+                    previous_proof is not None and _proof_candidate_ready(previous_proof)
                 )
                 reason = (
-                    "proof_fallback_suppressed"
-                    if not should_invoke
-                    else "proof_failure_fallback"
+                    "proof_fallback_suppressed" if not should_invoke else "proof_failure_fallback"
                 )
             artifact = require(
                 stage,
@@ -3142,13 +2794,8 @@ def validate_current_result_graph(
 ) -> None:
     """Bind a v2 result to the complete frozen route and invocation graph."""
 
-    if (
-        semantic_protocol_cid is not None
-        and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
-    ):
-        raise AblationValidationError(
-            "unsupported semantic execution protocol CID"
-        )
+    if semantic_protocol_cid is not None and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID:
+        raise AblationValidationError("unsupported semantic execution protocol CID")
     if semantic_protocol_cid is not None:
         _validate_semantic_v2_plan(plan)
     definition = get_variant_definition(job.variant_id)
@@ -3159,28 +2806,20 @@ def validate_current_result_graph(
 
     indexed: list[tuple[int, StageArtifact]] = []
     for stage in result.stages:
-        expected_requested_identity = dict(
-            definition.requested_identity(stage.stage)
-        )
+        expected_requested_identity = dict(definition.requested_identity(stage.stage))
         if semantic_protocol_cid is not None:
             source_text = job.case.input_data["text"]
             assert isinstance(source_text, str)
             expected_requested_identity.update(
                 {
                     "semantic_protocol_cid": semantic_protocol_cid,
-                    "source_cid": cid_for_bytes(
-                        source_text.encode("utf-8")
-                    ),
+                    "source_cid": cid_for_bytes(source_text.encode("utf-8")),
                     "proof_context_cid": None,
                 }
             )
-        if (
-            stage.provenance.requested_identity
-            != expected_requested_identity
-        ):
+        if stage.provenance.requested_identity != expected_requested_identity:
             raise AblationValidationError(
-                "current result stage identity differs from the frozen "
-                "variant definition"
+                "current result stage identity differs from the frozen variant definition"
             )
         identity = stage.provenance.effective_identity
         invoked = identity.get("graph_invoked")
@@ -3191,61 +2830,46 @@ def validate_current_result_graph(
             or not isinstance(invocation_index, int)
             or not 0 <= invocation_index < len(result.stages)
         ):
-            raise AblationValidationError(
-                "current result graph invocation fields are invalid"
-            )
+            raise AblationValidationError("current result graph invocation fields are invalid")
         if (
             stage.stage is StageName.SYMAI
             and job.cache_mode is CacheMode.WARM
             and invoked
-            and definition.symai_policy
-            is not StagePolicy.LEGACY_DIAGNOSTIC
+            and definition.symai_policy is not StagePolicy.LEGACY_DIAGNOSTIC
         ):
             try:
                 cache_prime = extract_symai_cache_prime_receipt(stage)
             except ProtocolContractError as exc:
                 raise AblationValidationError(
-                    "current warm SyMAI stage has an invalid cache-prime "
-                    "receipt"
+                    "current warm SyMAI stage has an invalid cache-prime receipt"
                 ) from exc
             if cache_prime is None:
                 raise AblationValidationError(
                     "current warm graph-invoked non-legacy SyMAI stage "
                     "omitted its cache-prime receipt"
                 )
-        reason_field = (
-            "graph_policy_reason" if invoked else "policy_reason"
-        )
+        reason_field = "graph_policy_reason" if invoked else "policy_reason"
         reason = identity.get(reason_field)
         if not isinstance(reason, str) or not reason.strip():
-            raise AblationValidationError(
-                "current result graph policy reason is missing"
-            )
+            raise AblationValidationError("current result graph policy reason is missing")
         if not invoked:
             policy = stage.data
             if (
                 not isinstance(policy, Mapping)
                 or policy.get("schema")
-                != (
-                    "ipfs-datasets.logic-pipeline-benchmark."
-                    "policy-decision.v1"
-                )
+                != ("ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1")
                 or policy.get("stage") != stage.stage.value
                 or policy.get("invoked") is not False
                 or policy.get("reason") != reason
                 or policy.get("invocation_index") != invocation_index
             ):
                 raise AblationValidationError(
-                    "suppressed current result stage lacks its exact graph "
-                    "decision receipt"
+                    "suppressed current result stage lacks its exact graph decision receipt"
                 )
         elif (
             isinstance(stage.data, Mapping)
             and stage.data.get("schema")
-            == (
-                "ipfs-datasets.logic-pipeline-benchmark."
-                "policy-decision.v1"
-            )
+            == ("ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1")
             and stage.data.get("invoked") is False
         ):
             raise AblationValidationError(
@@ -3263,16 +2887,12 @@ def validate_current_result_graph(
                 policy_reason=reason,
             )
         except ProtocolContractError as exc:
-            raise AblationValidationError(
-                "current result graph artifact is invalid"
-            ) from exc
+            raise AblationValidationError("current result graph artifact is invalid") from exc
         indexed.append((invocation_index, artifact))
 
     indexed.sort(key=lambda item: item[0])
     if [index for index, _ in indexed] != list(range(len(result.stages))):
-        raise AblationValidationError(
-            "current result graph invocation order is incomplete"
-        )
+        raise AblationValidationError("current result graph invocation order is incomplete")
     frozen_order = _frozen_invocation_order(definition)
     if tuple(artifact.stage for _, artifact in indexed) != frozen_order:
         raise AblationValidationError(
@@ -3280,31 +2900,22 @@ def validate_current_result_graph(
         )
     consumed: list[str] = []
     for _, artifact in indexed:
-        raw_consumed = artifact.effective_identity.get(
-            "consumed_artifact_sha256"
-        )
+        raw_consumed = artifact.effective_identity.get("consumed_artifact_sha256")
         if (
             not isinstance(raw_consumed, Sequence)
             or isinstance(raw_consumed, (str, bytes, bytearray))
             or tuple(raw_consumed) != tuple(consumed)
         ):
-            raise AblationValidationError(
-                "current result graph artifact chain is invalid"
-            )
+            raise AblationValidationError("current result graph artifact chain is invalid")
         if not artifact.invoked:
-            policy_consumed = artifact.data.get(
-                "consumed_artifact_sha256"
-            )
+            policy_consumed = artifact.data.get("consumed_artifact_sha256")
             if (
                 not isinstance(policy_consumed, Sequence)
-                or isinstance(
-                    policy_consumed, (str, bytes, bytearray)
-                )
+                or isinstance(policy_consumed, (str, bytes, bytearray))
                 or tuple(policy_consumed) != tuple(consumed)
             ):
                 raise AblationValidationError(
-                    "suppressed current result stage receipt has an invalid "
-                    "artifact chain"
+                    "suppressed current result stage receipt has an invalid artifact chain"
                 )
         consumed.append(artifact.digest)
 
@@ -3317,19 +2928,13 @@ def validate_current_result_graph(
     )
 
     try:
-        result.validate_provenance(
-            expected_environment_sha256=plan.environment_sha256
-        )
+        result.validate_provenance(expected_environment_sha256=plan.environment_sha256)
     except ProtocolContractError as exc:
-        raise AblationValidationError(
-            "current result provenance graph is invalid"
-        ) from exc
+        raise AblationValidationError("current result provenance graph is invalid") from exc
     if semantic_protocol_cid is not None:
         source_text = job.case.input_data.get("text")
         if not isinstance(source_text, str):
-            raise AblationValidationError(
-                "semantic-v2 result lost its exact source text"
-            )
+            raise AblationValidationError("semantic-v2 result lost its exact source text")
         _validate_semantic_v2_result_frontends(
             result,
             source_text=source_text,
@@ -3346,9 +2951,7 @@ def _validate_envelope(
     semantic_protocol_cid: str | None = None,
 ) -> CaseResultRecord:
     if type(allow_legacy_result) is not bool:
-        raise AblationValidationError(
-            "allow_legacy_result must be a boolean"
-        )
+        raise AblationValidationError("allow_legacy_result must be a boolean")
     data = _mapping(value, "ablation_result")
     _exact(
         data,
@@ -3365,20 +2968,13 @@ def _validate_envelope(
         "ablation_result",
     )
     result_schema = data["schema"]
+    if result_schema == LEGACY_ABLATION_RESULT_SCHEMA and not allow_legacy_result:
+        raise AblationValidationError("current validation requires an ablation-result.v2 envelope")
     if (
-        result_schema == LEGACY_ABLATION_RESULT_SCHEMA
-        and not allow_legacy_result
-    ):
-        raise AblationValidationError(
-            "current validation requires an ablation-result.v2 envelope"
-        )
-    if (
-        result_schema
-        not in {LEGACY_ABLATION_RESULT_SCHEMA, ABLATION_RESULT_SCHEMA}
+        result_schema not in {LEGACY_ABLATION_RESULT_SCHEMA, ABLATION_RESULT_SCHEMA}
         or data["plan_sha256"] != plan.digest
         or ScheduledCase.from_dict(data["job"]) != job
-        or data["requested_configuration"]
-        != get_variant_definition(job.variant_id).to_dict()
+        or data["requested_configuration"] != get_variant_definition(job.variant_id).to_dict()
     ):
         raise AblationValidationError("result envelope identity changed")
     try:
@@ -3392,9 +2988,7 @@ def _validate_envelope(
         data["run_contract"] != restored_contract.to_dict()
         or data["case_result"] != result.to_dict()
     ):
-        raise AblationValidationError(
-            "current result envelope contains a noncanonical wire record"
-        )
+        raise AblationValidationError("current result envelope contains a noncanonical wire record")
     if (
         result_schema == ABLATION_RESULT_SCHEMA
         and CaseResultRecord.from_stages(result.stages) != result
@@ -3426,8 +3020,7 @@ def _validate_envelope(
         result.case_manifest_sha256,
     )
     if actual_identity != expected_identity or any(
-        stage.provenance.input_sha256 != job.input_sha256
-        for stage in result.stages
+        stage.provenance.input_sha256 != job.input_sha256 for stage in result.stages
     ):
         raise AblationValidationError("result differs from scheduled paired input")
     effective = [
@@ -3466,9 +3059,7 @@ def _execute_ablation(
     if type(authorized_holdout) is not bool:
         raise AblationValidationError("authorized_holdout must be a boolean")
     if authorized_holdout and plan.split is not Split.HOLDOUT:
-        raise AblationValidationError(
-            "authorized holdout execution requires a holdout plan"
-        )
+        raise AblationValidationError("authorized holdout execution requires a holdout plan")
     if plan.split is Split.HOLDOUT and not authorized_holdout:
         raise AblationValidationError(
             "generic ablation execution is forbidden for holdout; use an "
@@ -3478,13 +3069,8 @@ def _execute_ablation(
         )
     if not isinstance(adapters, Mapping):
         raise AblationValidationError("adapters must be a mapping")
-    if (
-        semantic_protocol_cid is not None
-        and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
-    ):
-        raise AblationValidationError(
-            "unsupported semantic execution protocol CID"
-        )
+    if semantic_protocol_cid is not None and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID:
+        raise AblationValidationError("unsupported semantic execution protocol CID")
     if semantic_protocol_cid is not None:
         _validate_semantic_v2_plan(plan)
         _validate_semantic_v2_adapters(plan, adapters)
@@ -3493,21 +3079,16 @@ def _execute_ablation(
     if isinstance(output_root, str) and not output_root.strip():
         raise AblationValidationError("output_root must not be empty")
     if resource_scheduler is None:
-        scheduler = ResourceScheduler(
-            ResourcePolicy.from_resource_limits(plan.limits)
-        )
+        scheduler = ResourceScheduler(ResourcePolicy.from_resource_limits(plan.limits))
     elif not isinstance(resource_scheduler, ResourceScheduler):
-        raise AblationValidationError(
-            "resource_scheduler must be a ResourceScheduler"
-        )
+        raise AblationValidationError("resource_scheduler must be a ResourceScheduler")
     else:
         scheduler = resource_scheduler
         policy = scheduler.policy
         if (
             policy.max_workers > plan.limits.max_workers
             or policy.max_memory_bytes > plan.limits.max_memory_bytes
-            or policy.max_solver_processes
-            > plan.limits.max_solver_processes_per_case
+            or policy.max_solver_processes > plan.limits.max_solver_processes_per_case
         ):
             raise AblationValidationError(
                 "resource scheduler policy exceeds the frozen plan limits"
@@ -3525,15 +3106,12 @@ def _execute_ablation(
     elif persisted_semantic_cid is None:
         if plan_path.exists():
             raise AblationValidationError(
-                "semantic-v2 execution cannot adopt an existing revision-1 "
-                "plan namespace"
+                "semantic-v2 execution cannot adopt an existing revision-1 plan namespace"
             )
         _write_once(profile_path, _semantic_execution_profile(plan))
     if plan_path.exists():
         if not resume:
-            raise AblationValidationError(
-                "existing plan cannot be used with resume disabled"
-            )
+            raise AblationValidationError("existing plan cannot be used with resume disabled")
         existing = AblationPlan.from_dict(_read_canonical(plan_path, "plan"))
         if existing != plan or existing.digest != plan.digest:
             raise AblationValidationError("existing plan conflicts with request")
@@ -3544,36 +3122,25 @@ def _execute_ablation(
     # canonical projection prevents per-executor duplicate contracts.
     contracts = plan.run_contracts
     contract_map = {
-        (contract.requested_variant_id, contract.cache_mode): contract
-        for contract in contracts
+        (contract.requested_variant_id, contract.cache_mode): contract for contract in contracts
     }
     for contract in contracts:
         path = _contract_path(root, contract)
         if path.exists():
             try:
-                existing = RunContract.from_dict(
-                    _read_canonical(path, "run contract")
-                )
+                existing = RunContract.from_dict(_read_canonical(path, "run contract"))
             except (ProtocolContractError, TypeError, ValueError) as exc:
-                raise AblationValidationError(
-                    f"invalid existing run contract: {path}"
-                ) from exc
+                raise AblationValidationError(f"invalid existing run contract: {path}") from exc
             if existing != contract:
-                raise AblationValidationError(
-                    f"run contract conflicts with plan: {path}"
-                )
+                raise AblationValidationError(f"run contract conflicts with plan: {path}")
         else:
             _write_once(path, contract.to_dict())
         scope_path = _cache_scope_path(root, contract)
         canonical_scope_root = scope_path.parent.resolve(strict=False)
         canonical_output_root = root.resolve(strict=False)
         if not canonical_scope_root.is_relative_to(canonical_output_root):
-            raise AblationValidationError(
-                "cache scope resolves outside the selected output root"
-            )
-        portable_scope_root = canonical_scope_root.relative_to(
-            canonical_output_root
-        ).as_posix()
+            raise AblationValidationError("cache scope resolves outside the selected output root")
+        portable_scope_root = canonical_scope_root.relative_to(canonical_output_root).as_posix()
         scope_record = {
             "schema": "ipfs-datasets.logic-pipeline-benchmark.cache-scope.v1",
             "plan_sha256": plan.digest,
@@ -3589,24 +3156,17 @@ def _execute_ablation(
         }
         if scope_path.exists():
             if _read_canonical(scope_path, "cache scope") != scope_record:
-                raise AblationValidationError(
-                    f"cache scope conflicts with plan: {scope_path}"
-                )
+                raise AblationValidationError(f"cache scope conflicts with plan: {scope_path}")
         else:
             _write_once(scope_path, scope_record)
 
     expected_paths = {_result_path(root, job) for job in plan.jobs}
     results_root = root / "results"
     if results_root.exists():
-        foreign = {
-            path
-            for path in results_root.rglob("*.json")
-            if path not in expected_paths
-        }
+        foreign = {path for path in results_root.rglob("*.json") if path not in expected_paths}
         if foreign:
             raise AblationValidationError(
-                "foreign result records found: "
-                + ", ".join(str(path) for path in sorted(foreign))
+                "foreign result records found: " + ", ".join(str(path) for path in sorted(foreign))
             )
 
     results: list[CaseResultRecord] = []
@@ -3619,9 +3179,7 @@ def _execute_ablation(
         contract = contract_map[(job.variant_id, job.cache_mode)]
         if path.exists():
             if not resume:
-                raise AblationValidationError(
-                    f"result exists with resume disabled: {path}"
-                )
+                raise AblationValidationError(f"result exists with resume disabled: {path}")
             result = _validate_envelope(
                 _read_canonical(path, "result"),
                 plan,
@@ -3740,9 +3298,7 @@ def validate_semantic_ablation_evidence(
 
     root = Path(output_root)
     if _read_semantic_execution_profile(root, plan) is None:
-        raise AblationValidationError(
-            "semantic-v2 evidence requires a persisted execution profile"
-        )
+        raise AblationValidationError("semantic-v2 evidence requires a persisted execution profile")
     return validate_ablation_evidence(plan, output_root=root)
 
 

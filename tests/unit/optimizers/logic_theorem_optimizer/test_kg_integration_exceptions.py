@@ -36,8 +36,12 @@ def test_get_context_handles_ontology_and_theorem_errors() -> None:
         enable_entity_extraction=False,
         enable_theorem_augmentation=False,
     )
-    integration.theorem_rag = SimpleNamespace(query_with_theorems=lambda *_a, **_k: (_ for _ in ()).throw(ValueError("bad theorem query")))
-    integration._extract_ontology_constraints = lambda: (_ for _ in ()).throw(TypeError("bad ontology"))  # type: ignore[method-assign]
+    integration.theorem_rag = SimpleNamespace(
+        query_with_theorems=lambda *_a, **_k: (_ for _ in ()).throw(ValueError("bad theorem query"))
+    )
+    integration._extract_ontology_constraints = lambda: (_ for _ in ()).throw(
+        TypeError("bad ontology")
+    )  # type: ignore[method-assign]
 
     context = integration.get_context_for_extraction("Alice must pay Bob")
 
@@ -59,7 +63,9 @@ def test_load_ontology_handles_bad_schema_type() -> None:
 
 def test_query_kg_returns_empty_on_typed_query_error() -> None:
     integration = KnowledgeGraphIntegration(
-        kg=SimpleNamespace(query=lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError("query fail"))),
+        kg=SimpleNamespace(
+            query=lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError("query fail"))
+        ),
         enable_entity_extraction=False,
         enable_theorem_augmentation=False,
     )

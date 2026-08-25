@@ -22,16 +22,22 @@ Complete migration guide for the new modular knowledge graphs architecture. Cove
 **Old (deprecated):**
 ```python
 from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
-    Entity, Relationship, KnowledgeGraph,
-    KnowledgeGraphExtractor, KnowledgeGraphExtractorWithValidation
+    Entity,
+    Relationship,
+    KnowledgeGraph,
+    KnowledgeGraphExtractor,
+    KnowledgeGraphExtractorWithValidation,
 )
 ```
 
 **New (recommended):**
 ```python
 from ipfs_datasets_py.knowledge_graphs.extraction import (
-    Entity, Relationship, KnowledgeGraph,
-    KnowledgeGraphExtractor, KnowledgeGraphExtractorWithValidation
+    Entity,
+    Relationship,
+    KnowledgeGraph,
+    KnowledgeGraphExtractor,
+    KnowledgeGraphExtractorWithValidation,
 )
 ```
 
@@ -42,6 +48,7 @@ from ipfs_datasets_py.knowledge_graphs.extraction import (
 **Old (scattered implementations):**
 ```python
 from ipfs_datasets_py.knowledge_graphs.cypher import CypherCompiler
+
 compiler = CypherCompiler()
 result = compiler.execute(query)
 ```
@@ -52,7 +59,7 @@ from ipfs_datasets_py.knowledge_graphs.query import UnifiedQueryEngine
 from ipfs_datasets_py.search.graph_query.budgets import budgets_from_preset
 
 engine = UnifiedQueryEngine(backend=backend)
-budgets = budgets_from_preset('moderate')
+budgets = budgets_from_preset("moderate")
 result = engine.execute_query(query, budgets=budgets)
 ```
 
@@ -95,7 +102,7 @@ from ipfs_datasets_py.knowledge_graphs.query import UnifiedQueryEngine
 from ipfs_datasets_py.search.graph_query.budgets import budgets_from_preset
 
 engine = UnifiedQueryEngine(backend, enable_caching=True)
-budgets = budgets_from_preset('moderate')
+budgets = budgets_from_preset("moderate")
 
 result = engine.execute_query(query, budgets=budgets)
 ```

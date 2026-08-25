@@ -134,9 +134,7 @@ def test_packet_000407_frame_outvotes_emit_explicit_adaptive_ambiguities() -> No
 
     threshold = 0.15
     for sample_id, target_family, family_margin in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _mock_adaptive_ranking(
             predicted_family=ModalLogicFamily.FRAME.value,
             target_family=target_family,
@@ -167,9 +165,6 @@ def test_packet_000407_frame_outvotes_emit_explicit_adaptive_ambiguities() -> No
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
         assert ambiguity.metadata.get("has_target_signal_evidence") is True
         assert (
-            abs(
-                float(ambiguity.metadata.get("priority", 0.0))
-                - (abs(family_margin) + threshold)
-            )
+            abs(float(ambiguity.metadata.get("priority", 0.0)) - (abs(family_margin) + threshold))
             <= 1e-12
         )

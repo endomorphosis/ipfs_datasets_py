@@ -78,6 +78,7 @@ def ontology_builder(ontology_dict_factory):
 # infer_relationships
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestInferRelationships:
     def test_empty_entities_returns_empty(self, generator, ctx):
         rels = generator.infer_relationships([], ctx, "some text")
@@ -153,6 +154,7 @@ class TestInferRelationships:
 # ──────────────────────────────────────────────────────────────────────────────
 # _extract_rule_based
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 class TestExtractRuleBased:
     def test_extracts_person_names(self, generator, ctx):
@@ -284,6 +286,7 @@ class TestExtractRuleBased:
 # _merge_ontologies
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestMergeOntologies:
     def test_non_overlapping_entities_are_all_present(self, generator, ontology_builder):
         base = ontology_builder(["e0", "e1", "e2"], source="base")
@@ -299,39 +302,104 @@ class TestMergeOntologies:
         assert "e99" in ids
 
     def test_duplicate_entity_ids_are_merged_not_duplicated(self, generator):
-        base = {"entities": [{"id": "e0", "type": "X", "text": "a", "properties": {}}], "relationships": [], "metadata": {}}
-        ext = {"entities": [{"id": "e0", "type": "X", "text": "a", "properties": {"key": "val"}}], "relationships": [], "metadata": {}}
+        base = {
+            "entities": [{"id": "e0", "type": "X", "text": "a", "properties": {}}],
+            "relationships": [],
+            "metadata": {},
+        }
+        ext = {
+            "entities": [{"id": "e0", "type": "X", "text": "a", "properties": {"key": "val"}}],
+            "relationships": [],
+            "metadata": {},
+        }
         merged = generator._merge_ontologies(base, ext)
         ids = [e["id"] for e in merged["entities"]]
         assert ids.count("e0") == 1
 
     def test_merged_entity_has_combined_properties(self, generator):
-        base = {"entities": [{"id": "e0", "type": "X", "text": "a", "properties": {"p1": "v1"}, "confidence": 0.5}], "relationships": [], "metadata": {}}
-        ext = {"entities": [{"id": "e0", "type": "X", "text": "a", "properties": {"p2": "v2"}, "confidence": 0.9}], "relationships": [], "metadata": {}}
+        base = {
+            "entities": [
+                {
+                    "id": "e0",
+                    "type": "X",
+                    "text": "a",
+                    "properties": {"p1": "v1"},
+                    "confidence": 0.5,
+                }
+            ],
+            "relationships": [],
+            "metadata": {},
+        }
+        ext = {
+            "entities": [
+                {
+                    "id": "e0",
+                    "type": "X",
+                    "text": "a",
+                    "properties": {"p2": "v2"},
+                    "confidence": 0.9,
+                }
+            ],
+            "relationships": [],
+            "metadata": {},
+        }
         merged = generator._merge_ontologies(base, ext)
         e0 = next(e for e in merged["entities"] if e["id"] == "e0")
         assert "p1" in e0["properties"] or "p2" in e0["properties"]
 
     def test_higher_confidence_wins_on_merge(self, generator):
-        base = {"entities": [{"id": "e0", "type": "X", "text": "a", "properties": {}, "confidence": 0.3}], "relationships": [], "metadata": {}}
-        ext = {"entities": [{"id": "e0", "type": "X", "text": "a", "properties": {}, "confidence": 0.9}], "relationships": [], "metadata": {}}
+        base = {
+            "entities": [
+                {"id": "e0", "type": "X", "text": "a", "properties": {}, "confidence": 0.3}
+            ],
+            "relationships": [],
+            "metadata": {},
+        }
+        ext = {
+            "entities": [
+                {"id": "e0", "type": "X", "text": "a", "properties": {}, "confidence": 0.9}
+            ],
+            "relationships": [],
+            "metadata": {},
+        }
         merged = generator._merge_ontologies(base, ext)
         e0 = next(e for e in merged["entities"] if e["id"] == "e0")
         assert e0["confidence"] == 0.9
 
     def test_duplicate_relationships_not_duplicated(self, generator):
-        base = {"entities": [{"id": "e0"}, {"id": "e1"}], "relationships": [{"id": "r0", "source_id": "e0", "target_id": "e1", "type": "related_to"}], "metadata": {}}
-        ext = {"entities": [], "relationships": [{"id": "r0", "source_id": "e0", "target_id": "e1", "type": "related_to"}], "metadata": {}}
+        base = {
+            "entities": [{"id": "e0"}, {"id": "e1"}],
+            "relationships": [
+                {"id": "r0", "source_id": "e0", "target_id": "e1", "type": "related_to"}
+            ],
+            "metadata": {},
+        }
+        ext = {
+            "entities": [],
+            "relationships": [
+                {"id": "r0", "source_id": "e0", "target_id": "e1", "type": "related_to"}
+            ],
+            "metadata": {},
+        }
         merged = generator._merge_ontologies(base, ext)
         same_rels = [
-            r for r in merged["relationships"]
-            if r.get("source_id") == "e0" and r.get("target_id") == "e1" and r.get("type") == "related_to"
+            r
+            for r in merged["relationships"]
+            if r.get("source_id") == "e0"
+            and r.get("target_id") == "e1"
+            and r.get("type") == "related_to"
         ]
         assert len(same_rels) == 1
 
     def test_new_relationships_added(self, generator):
         base = {"entities": [{"id": "e0"}, {"id": "e1"}], "relationships": [], "metadata": {}}
-        ext = {"entities": [], "relationships": [{"id": "r0", "source_id": "e0", "target_id": "e1", "type": "related_to"}], "metadata": {}}
+        ext = {
+            "entities": [],
+            "relationships": [
+                {"id": "r0", "source_id": "e0", "target_id": "e1", "type": "related_to"}
+            ],
+            "metadata": {},
+        }
         merged = generator._merge_ontologies(base, ext)
         assert len(merged["relationships"]) == 1
 
@@ -357,6 +425,7 @@ class TestMergeOntologies:
 
     def test_base_not_mutated(self, generator, ontology_builder):
         import copy
+
         base = ontology_builder(["e0", "e1"], source="base")
         orig_base = copy.deepcopy(base)
         ext = ontology_builder(["e0", "e1"], source="ext")
@@ -369,6 +438,7 @@ class TestMergeOntologies:
 # ──────────────────────────────────────────────────────────────────────────────
 # Domain-specific and custom rules
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 class TestDomainSpecificExtraction:
     @pytest.mark.parametrize(
@@ -399,7 +469,8 @@ class TestDomainSpecificExtraction:
 
     def test_custom_rules_pluggable(self, generator):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
-        cfg = ExtractionConfig(custom_rules=[(r'\b(?:Widget|Gadget)\b', 'Product')])
+
+        cfg = ExtractionConfig(custom_rules=[(r"\b(?:Widget|Gadget)\b", "Product")])
         custom_ctx = OntologyGenerationContext(
             data_source="test",
             data_type=DataType.TEXT,
@@ -487,6 +558,7 @@ class TestMergeEntitiesTypeConflict:
 # Property-based test: _merge_ontologies is idempotent
 # ---------------------------------------------------------------------------
 
+
 class TestMergeOntologiesIdempotent:
     """Merging an ontology with itself should be idempotent (same entity count)."""
 
@@ -496,10 +568,7 @@ class TestMergeOntologiesIdempotent:
         assert len(merged["entities"]) == 3
 
     def test_merge_self_relationship_count_unchanged(self, generator, ontology_builder):
-        onto = ontology_builder(
-            ["e1", "e2"],
-            relationship_pairs=[("e1", "e2"), ("e2", "e1")]
-        )
+        onto = ontology_builder(["e1", "e2"], relationship_pairs=[("e1", "e2"), ("e2", "e1")])
         merged = generator._merge_ontologies(onto, onto)
         assert len(merged["relationships"]) == 2
 
@@ -527,11 +596,13 @@ class TestMergeOntologiesIdempotent:
 # Tests for Relationship.direction field (directionality detection)
 # ---------------------------------------------------------------------------
 
+
 class TestRelationshipDirectionality:
     """Verb-frame relationships are subject_to_object; co-occurrence is undirected."""
 
     def _make_entities(self, pairs):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity, DataType
+
         return [
             Entity(id=f"e{i}", text=name, type="Concept", confidence=0.9)
             for i, (name, _) in enumerate(pairs)
@@ -539,6 +610,7 @@ class TestRelationshipDirectionality:
 
     def test_verb_frame_rel_is_subject_to_object(self, generator, ctx):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity, DataType
+
         e1 = Entity(id="e1", text="Alice", type="Person", confidence=0.9)
         e2 = Entity(id="e2", text="report", type="Concept", confidence=0.9)
         rels = generator.infer_relationships([e1, e2], ctx, data="Alice causes report")
@@ -548,35 +620,48 @@ class TestRelationshipDirectionality:
 
     def test_cooccurrence_rel_is_undirected(self, generator, ctx):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity, DataType
+
         e1 = Entity(id="e1", text="widget", type="Person", confidence=0.9)
         e2 = Entity(id="e2", text="gadget", type="Organization", confidence=0.9)
         # No verb pattern, only co-occurrence
         rels = generator.infer_relationships([e1, e2], ctx, data="widget and gadget are close")
         co_rels = [
-            r for r in rels
-            if (getattr(r, "properties", {}) or {}).get("type_method") in {"cooccurrence", "context_window"}
+            r
+            for r in rels
+            if (getattr(r, "properties", {}) or {}).get("type_method")
+            in {"cooccurrence", "context_window"}
         ]
         assert len(co_rels) >= 1
         assert co_rels[0].direction == "undirected"
 
     def test_default_relationship_direction_is_unknown(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
         r = Relationship(id="r0", source_id="s", target_id="t", type="foo")
         assert r.direction == "unknown"
 
     def test_direction_subject_to_object_explicit(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
         r = Relationship(
-            id="r1", source_id="s", target_id="t", type="owns",
+            id="r1",
+            source_id="s",
+            target_id="t",
+            type="owns",
             direction="subject_to_object",
         )
         assert r.direction == "subject_to_object"
 
     def test_relationship_to_dict_includes_direction(self, generator):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
         r = Relationship(
-            id="r2", source_id="s", target_id="t", type="causes",
-            confidence=0.7, direction="subject_to_object",
+            id="r2",
+            source_id="s",
+            target_id="t",
+            type="causes",
+            confidence=0.7,
+            direction="subject_to_object",
         )
         d = generator._relationship_to_dict(r)
         assert d["direction"] == "subject_to_object"
@@ -585,6 +670,7 @@ class TestRelationshipDirectionality:
 # ---------------------------------------------------------------------------
 # Fuzz/edge-case tests for _extract_rule_based()
 # ---------------------------------------------------------------------------
+
 
 class TestExtractRuleBasedEdgeCases:
     """Malformed and edge-case inputs to _extract_rule_based()."""
@@ -620,7 +706,9 @@ class TestExtractRuleBasedEdgeCases:
         assert isinstance(result.entities, list)
 
     def test_all_lowercase_no_proper_nouns(self, generator, ctx):
-        result = generator._extract_rule_based("this is entirely lowercase text without any capitals.", ctx)
+        result = generator._extract_rule_based(
+            "this is entirely lowercase text without any capitals.", ctx
+        )
         assert isinstance(result.entities, list)
 
     def test_no_duplicate_entities_for_repeated_text(self, generator, ctx):
@@ -634,6 +722,7 @@ class TestExtractRuleBasedEdgeCases:
 # ---------------------------------------------------------------------------
 # Tests for co-occurrence confidence decay
 # ---------------------------------------------------------------------------
+
 
 class TestCoOccurrenceConfidenceDecay:
     """Entities >100 chars apart get lower confidence than close entities."""
@@ -677,10 +766,16 @@ class TestMinEntityLength:
 
     def test_default_min_length_filters_single_chars(self, gen):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            ExtractionConfig, OntologyGenerationContext, DataType, ExtractionStrategy,
+            ExtractionConfig,
+            OntologyGenerationContext,
+            DataType,
+            ExtractionStrategy,
         )
+
         ctx = OntologyGenerationContext(
-            data_source="t", data_type=DataType.TEXT, domain="general",
+            data_source="t",
+            data_type=DataType.TEXT,
+            domain="general",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
             config=ExtractionConfig(min_entity_length=2),
         )
@@ -690,10 +785,16 @@ class TestMinEntityLength:
 
     def test_custom_min_length_filters_short_entities(self, gen):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            ExtractionConfig, OntologyGenerationContext, DataType, ExtractionStrategy,
+            ExtractionConfig,
+            OntologyGenerationContext,
+            DataType,
+            ExtractionStrategy,
         )
+
         ctx = OntologyGenerationContext(
-            data_source="t", data_type=DataType.TEXT, domain="general",
+            data_source="t",
+            data_type=DataType.TEXT,
+            domain="general",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
             config=ExtractionConfig(min_entity_length=10),
         )
@@ -702,22 +803,26 @@ class TestMinEntityLength:
 
     def test_to_dict_includes_min_entity_length(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig(min_entity_length=5)
         assert cfg.to_dict()["min_entity_length"] == 5
 
     def test_from_dict_reads_min_entity_length(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig.from_dict({"min_entity_length": 7})
         assert cfg.min_entity_length == 7
 
     def test_from_dict_default_is_two(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         assert ExtractionConfig.from_dict({}).min_entity_length == 2
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # filter_by_confidence
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 class TestFilterByConfidence:
     """Test OntologyGenerator.filter_by_confidence() with detailed stats."""
@@ -730,6 +835,7 @@ class TestFilterByConfidence:
             Entity,
             Relationship,
         )
+
         entities = [
             Entity(id="e1", text="Alice", type="Person", confidence=0.9),
             Entity(id="e2", text="Bob", type="Person", confidence=0.7),
@@ -769,13 +875,13 @@ class TestFilterByConfidence:
     def test_filter_default_threshold(self, generator, sample_result):
         """Test filtering with default threshold (0.5)."""
         filtered_data = generator.filter_by_confidence(sample_result)
-        
+
         assert "result" in filtered_data
         assert "stats" in filtered_data
-        
+
         result = filtered_data["result"]
         stats = filtered_data["stats"]
-        
+
         # Should keep e1 (0.9), e2 (0.7), e3 (0.5) - exactly at threshold
         assert len(result.entities) == 3
         assert stats["filtered_entity_count"] == 3
@@ -786,10 +892,10 @@ class TestFilterByConfidence:
     def test_filter_high_threshold(self, generator, sample_result):
         """Test filtering with high threshold (0.8)."""
         filtered_data = generator.filter_by_confidence(sample_result, threshold=0.8)
-        
+
         result = filtered_data["result"]
         stats = filtered_data["stats"]
-        
+
         # Should keep only e1 (0.9)
         assert len(result.entities) == 1
         assert result.entities[0].id == "e1"
@@ -799,10 +905,10 @@ class TestFilterByConfidence:
     def test_filter_low_threshold(self, generator, sample_result):
         """Test filtering with low threshold (0.1)."""
         filtered_data = generator.filter_by_confidence(sample_result, threshold=0.1)
-        
+
         result = filtered_data["result"]
         stats = filtered_data["stats"]
-        
+
         # Should keep all 5 entities (all >= 0.1)
         assert len(result.entities) == 5
         assert stats["filtered_entity_count"] == 5
@@ -812,10 +918,10 @@ class TestFilterByConfidence:
         """Test that relationships without valid endpoints are removed."""
         # Filter to keep only e1, e2 (threshold=0.7)
         filtered_data = generator.filter_by_confidence(sample_result, threshold=0.7)
-        
+
         result = filtered_data["result"]
         stats = filtered_data["stats"]
-        
+
         # Should keep r1 (e1→e2) but not r2 (e2→e3, e3 removed) or r3 (e4→e5, both removed)
         assert len(result.relationships) == 1
         assert result.relationships[0].id == "r1"
@@ -826,21 +932,21 @@ class TestFilterByConfidence:
     def test_filter_retention_rate(self, generator, sample_result):
         """Test retention_rate statistic calculation."""
         filtered_data = generator.filter_by_confidence(sample_result, threshold=0.5)
-        
+
         stats = filtered_data["stats"]
-        
+
         # 3 out of 5 entities kept = 0.6 retention rate
         assert stats["retention_rate"] == 0.6
 
     def test_filter_avg_confidence_computation(self, generator, sample_result):
         """Test average confidence before and after filtering."""
         filtered_data = generator.filter_by_confidence(sample_result, threshold=0.5)
-        
+
         stats = filtered_data["stats"]
-        
+
         # Before: (0.9 + 0.7 + 0.5 + 0.3 + 0.1) / 5 = 0.5
         assert abs(stats["avg_confidence_before"] - 0.5) < 0.01
-        
+
         # After: (0.9 + 0.7 + 0.5) / 3 = 0.7
         assert abs(stats["avg_confidence_after"] - 0.7) < 0.01
 
@@ -859,14 +965,15 @@ class TestFilterByConfidence:
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
             EntityExtractionResult,
         )
+
         empty_result = EntityExtractionResult(
             entities=[],
             relationships=[],
             confidence=0.0,
         )
-        
+
         filtered_data = generator.filter_by_confidence(empty_result, threshold=0.5)
-        
+
         stats = filtered_data["stats"]
         assert stats["original_entity_count"] == 0
         assert stats["filtered_entity_count"] == 0
@@ -878,10 +985,10 @@ class TestFilterByConfidence:
         """Test filtering when all entities are below threshold."""
         # All entities have confidence <= 0.9, set threshold = 1.0
         filtered_data = generator.filter_by_confidence(sample_result, threshold=1.0)
-        
+
         result = filtered_data["result"]
         stats = filtered_data["stats"]
-        
+
         assert len(result.entities) == 0
         assert len(result.relationships) == 0
         assert stats["retention_rate"] == 0.0
@@ -890,7 +997,7 @@ class TestFilterByConfidence:
     def test_filter_stats_keys_present(self, generator, sample_result):
         """Test that all expected stats keys are present in the response."""
         filtered_data = generator.filter_by_confidence(sample_result, threshold=0.5)
-        
+
         stats = filtered_data["stats"]
         expected_keys = {
             "original_entity_count",
@@ -904,7 +1011,7 @@ class TestFilterByConfidence:
             "avg_confidence_before",
             "avg_confidence_after",
         }
-        
+
         assert set(stats.keys()) == expected_keys
 
     def test_filter_preserves_metadata(self, generator):
@@ -913,15 +1020,16 @@ class TestFilterByConfidence:
             EntityExtractionResult,
             Entity,
         )
+
         result = EntityExtractionResult(
             entities=[Entity(id="e1", text="Alice", type="Person", confidence=0.9)],
             relationships=[],
             confidence=0.8,
             metadata={"source": "test", "version": "1.0"},
         )
-        
+
         filtered_data = generator.filter_by_confidence(result, threshold=0.5)
-        
+
         # Check that metadata from EntityExtractionResult.filter_by_confidence is present
         assert "filter_confidence_stats" in filtered_data["result"].metadata
         # Original metadata should still be there
@@ -933,6 +1041,7 @@ class TestFilterByConfidence:
 # _extract_rule_based timing instrumentation
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestExtractRuleBasedTiming:
     """Test timing instrumentation in _extract_rule_based method."""
 
@@ -940,7 +1049,7 @@ class TestExtractRuleBasedTiming:
         """Test that extraction result includes timing metrics in metadata."""
         text = "Dr. Smith works at Acme Corp. He mentioned the obligation of the company."
         result = generator._extract_rule_based(text, ctx)
-        
+
         # Check that timing metrics are in metadata
         assert "pattern_time_ms" in result.metadata
         assert "extraction_time_ms" in result.metadata
@@ -951,7 +1060,7 @@ class TestExtractRuleBasedTiming:
         """Test that all timing metrics are float values."""
         text = "Alice and Bob work together."
         result = generator._extract_rule_based(text, ctx)
-        
+
         assert isinstance(result.metadata["pattern_time_ms"], float)
         assert isinstance(result.metadata["extraction_time_ms"], float)
         assert isinstance(result.metadata["relationship_time_ms"], float)
@@ -961,7 +1070,7 @@ class TestExtractRuleBasedTiming:
         """Test that timing values are non-negative."""
         text = "Test text"
         result = generator._extract_rule_based(text, ctx)
-        
+
         assert result.metadata["pattern_time_ms"] >= 0
         assert result.metadata["extraction_time_ms"] >= 0
         assert result.metadata["relationship_time_ms"] >= 0
@@ -971,12 +1080,12 @@ class TestExtractRuleBasedTiming:
         """Test that total_time is approximately the sum of component times."""
         text = "Dr. Johnson is from New York. The company mentioned he has an obligation."
         result = generator._extract_rule_based(text, ctx)
-        
+
         pattern_time = result.metadata["pattern_time_ms"]
         extraction_time = result.metadata["extraction_time_ms"]
         relationship_time = result.metadata["relationship_time_ms"]
         total_time = result.metadata["total_time_ms"]
-        
+
         # Total should be >= sum of components (with small tolerance for overhead)
         component_sum = pattern_time + extraction_time + relationship_time
         assert total_time >= component_sum
@@ -986,19 +1095,16 @@ class TestExtractRuleBasedTiming:
     def test_empty_text_still_records_timing(self, generator, ctx):
         """Test that even empty text produces timing metrics."""
         result = generator._extract_rule_based("", ctx)
-        
+
         assert "total_time_ms" in result.metadata
         assert result.metadata["total_time_ms"] >= 0
 
     def test_timing_recorded_on_large_text(self, generator, ctx):
         """Test that timing metrics work on larger text extractions."""
         # Generate larger text with multiple entities
-        text = " ".join([
-            f"Dr. Person{i} works at Company{i} Corp."
-            for i in range(20)
-        ])
+        text = " ".join([f"Dr. Person{i} works at Company{i} Corp." for i in range(20)])
         result = generator._extract_rule_based(text, ctx)
-        
+
         # Should have timing metrics
         assert result.metadata["total_time_ms"] >= 0
         # Larger text should take measurable time
@@ -1007,14 +1113,14 @@ class TestExtractRuleBasedTiming:
     def test_metadata_includes_method_field(self, generator, ctx):
         """Test that metadata includes the extraction method name."""
         result = generator._extract_rule_based("Test", ctx)
-        
+
         assert result.metadata.get("method") == "rule_based"
 
     def test_metadata_includes_entity_count(self, generator, ctx):
         """Test that metadata includes entity count."""
         text = "Dr. Smith and Prof. Jones work at Acme Corp."
         result = generator._extract_rule_based(text, ctx)
-        
+
         assert "entity_count" in result.metadata
         assert result.metadata["entity_count"] == len(result.entities)
 
@@ -1022,7 +1128,7 @@ class TestExtractRuleBasedTiming:
         """Test that timing values are in reasonable range (not absurdly high)."""
         text = "Simple test text"
         result = generator._extract_rule_based(text, ctx)
-        
+
         # Timing should complete in reasonable time (< 1000ms for simple extraction)
         assert result.metadata["total_time_ms"] < 1000.0
         assert result.metadata["pattern_time_ms"] < 500.0

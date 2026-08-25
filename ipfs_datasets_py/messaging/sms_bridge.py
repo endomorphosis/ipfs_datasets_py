@@ -62,18 +62,23 @@ except Exception:  # pragma: no cover - optional dependency
 try:
     from ipfs_datasets_py.utils.secrets import resolve_secret
 except Exception:  # pragma: no cover - optional dependency
+
     def resolve_secret(*names: str, explicit: str | None = None) -> str:
         return str(explicit or "")
 
 
 _PHONE_DIGITS_RE = re.compile(r"\D")
 _TWILIO_EMPTY_RESPONSE = b'<?xml version="1.0" encoding="UTF-8"?><Response></Response>'
-_DEFAULT_VOICE_GREETING = "Hi, this is Abby voice with 211 AI. Tell me what you need help with after the tone."
+_DEFAULT_VOICE_GREETING = (
+    "Hi, this is Abby voice with 211 AI. Tell me what you need help with after the tone."
+)
 _DEFAULT_VOICE_NO_SPEECH_PROMPT = "I didn't catch that. Please tell me what you need help with."
 _DEFAULT_VOICE_FOLLOW_UP = "What else can I help with today?"
 _DEFAULT_VOICE_FAREWELL = "Thanks for calling 211 AI. Goodbye."
 _DEFAULT_VOICE_UNAVAILABLE_PROMPT = "I'm sorry, the AI voice service is unavailable right now. Please try again later or use the website chat."
-_VOICE_HANGUP_PATTERNS = re.compile(r"\b(?:bye|goodbye|that is all|hang up|stop now|end call|no thanks)\b", re.IGNORECASE)
+_VOICE_HANGUP_PATTERNS = re.compile(
+    r"\b(?:bye|goodbye|that is all|hang up|stop now|end call|no thanks)\b", re.IGNORECASE
+)
 
 
 def _truthy(value: str | None) -> bool:
@@ -253,7 +258,9 @@ def _encode_multipart_form(
     for field_name, filename, content_type, content in files:
         body.extend(f"--{boundary}\r\n".encode("utf-8"))
         body.extend(
-            f'Content-Disposition: form-data; name="{field_name}"; filename="{filename}"\r\n'.encode("utf-8")
+            f'Content-Disposition: form-data; name="{field_name}"; filename="{filename}"\r\n'.encode(
+                "utf-8"
+            )
         )
         body.extend(f"Content-Type: {content_type}\r\n\r\n".encode("utf-8"))
         body.extend(content)
@@ -268,7 +275,9 @@ def _resolve_public_base_url(request: Request, configured_base_url: str) -> str:
     if normalized:
         return normalized
     forwarded_proto = request.headers.get("x-forwarded-proto") or request.url.scheme
-    forwarded_host = request.headers.get("x-forwarded-host") or request.headers.get("host") or request.url.netloc
+    forwarded_host = (
+        request.headers.get("x-forwarded-host") or request.headers.get("host") or request.url.netloc
+    )
     return f"{forwarded_proto}://{forwarded_host}".rstrip("/")
 
 
@@ -300,7 +309,7 @@ def _xml_text(value: str) -> str:
 
 
 def _twiml_response(*nodes: str) -> str:
-    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response>" + "".join(nodes) + "</Response>"
+    return '<?xml version="1.0" encoding="UTF-8"?><Response>' + "".join(nodes) + "</Response>"
 
 
 def _twiml_say(text: str) -> str:
@@ -342,7 +351,9 @@ def _inbound_sms_reply_text(message: str) -> str:
 
 def _twiml_gather(*, action_url: str, prompt_text: str, language: str = "en-US") -> str:
     timeout = str(os.getenv("IPFS_DATASETS_TWILIO_GATHER_TIMEOUT_SECONDS") or "3").strip() or "3"
-    speech_timeout = str(os.getenv("IPFS_DATASETS_TWILIO_GATHER_SPEECH_TIMEOUT") or "1").strip() or "1"
+    speech_timeout = (
+        str(os.getenv("IPFS_DATASETS_TWILIO_GATHER_SPEECH_TIMEOUT") or "1").strip() or "1"
+    )
     return (
         f'<Gather input="speech" action="{_xml_text(action_url)}" method="POST" '
         f'actionOnEmptyResult="true" timeout="{_xml_text(timeout)}" '
@@ -365,7 +376,10 @@ def _public_ws_url(public_base: str, path: str, params: Mapping[str, str] | None
 
 
 def _openai_realtime_model() -> str:
-    return str(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_MODEL") or "gpt-realtime").strip() or "gpt-realtime"
+    return (
+        str(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_MODEL") or "gpt-realtime").strip()
+        or "gpt-realtime"
+    )
 
 
 def _openai_realtime_voice() -> str:
@@ -423,8 +437,12 @@ def _openai_session_update_event(profile: "VoiceAssistantProfile") -> dict[str, 
                         "type": "server_vad",
                         "create_response": True,
                         "interrupt_response": True,
-                        "silence_duration_ms": int(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_SILENCE_MS") or "450"),
-                        "prefix_padding_ms": int(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_PREFIX_MS") or "300"),
+                        "silence_duration_ms": int(
+                            os.getenv("IPFS_DATASETS_OPENAI_REALTIME_SILENCE_MS") or "450"
+                        ),
+                        "prefix_padding_ms": int(
+                            os.getenv("IPFS_DATASETS_OPENAI_REALTIME_PREFIX_MS") or "300"
+                        ),
                     },
                 },
                 "output": {
@@ -432,7 +450,9 @@ def _openai_session_update_event(profile: "VoiceAssistantProfile") -> dict[str, 
                     "voice": _openai_realtime_voice(),
                 },
             },
-            "max_output_tokens": int(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_MAX_TOKENS") or "220"),
+            "max_output_tokens": int(
+                os.getenv("IPFS_DATASETS_OPENAI_REALTIME_MAX_TOKENS") or "220"
+            ),
         },
     }
 
@@ -798,13 +818,17 @@ class VoiceAssistantProfile:
         session: VoiceCallSessionRecord,
         turns: Sequence[VoiceCallTurnRecord],
     ) -> dict[str, str]:
-        normalized_transcript = _normalize_turn_text(transcript, max_length=480) or "The caller asked for help."
+        normalized_transcript = (
+            _normalize_turn_text(transcript, max_length=480) or "The caller asked for help."
+        )
         recent_turns = [turn for turn in turns if turn.role in {"caller", "assistant"}][-6:]
         history_lines = []
         for turn in recent_turns:
             prefix = "Caller" if turn.role == "caller" else "Assistant"
             history_lines.append(f"{prefix}: {_normalize_turn_text(turn.text, max_length=280)}")
-        history_block = "\n".join(history_lines) if history_lines else "Caller has just joined the call."
+        history_block = (
+            "\n".join(history_lines) if history_lines else "Caller has just joined the call."
+        )
         system_lines = [
             f"You are {self.assistant_name}, a helpful and empathetic voice assistant for {self.service_name}.",
             "Help callers navigate shelter, food, health, benefits, crisis support, transportation, and other 211-style social services.",
@@ -1005,7 +1029,9 @@ class SmsBridgeStore:
         finally:
             connection.close()
 
-    def create_bridge_export(self, export_id: str, *, parquet_dir: str, metadata: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    def create_bridge_export(
+        self, export_id: str, *, parquet_dir: str, metadata: Mapping[str, Any] | None = None
+    ) -> dict[str, Any]:
         timestamp = _utcnow_iso()
         connection = self._connect()
         try:
@@ -1077,8 +1103,16 @@ class SmsBridgeStore:
                     str(status or current.get("status") or "running"),
                     str(car_path if car_path is not None else current.get("car_path") or ""),
                     str(ipfs_cid if ipfs_cid is not None else current.get("ipfs_cid") or ""),
-                    str(filecoin_request_id if filecoin_request_id is not None else current.get("filecoin_request_id") or ""),
-                    str(error_message if error_message is not None else current.get("error_message") or ""),
+                    str(
+                        filecoin_request_id
+                        if filecoin_request_id is not None
+                        else current.get("filecoin_request_id") or ""
+                    ),
+                    str(
+                        error_message
+                        if error_message is not None
+                        else current.get("error_message") or ""
+                    ),
                     _json_dumps(merged_metadata),
                     updated_at,
                     export_id,
@@ -1145,9 +1179,15 @@ class SmsBridgeStore:
         table_names: Sequence[str] | None = None,
     ) -> dict[str, Any]:
         requested_tables = tuple(table_names or _SMS_BRIDGE_EXPORT_TABLES)
-        invalid_tables = [table_name for table_name in requested_tables if table_name not in _SMS_BRIDGE_EXPORT_TABLES]
+        invalid_tables = [
+            table_name
+            for table_name in requested_tables
+            if table_name not in _SMS_BRIDGE_EXPORT_TABLES
+        ]
         if invalid_tables:
-            raise ValueError(f"Unsupported bridge export tables: {', '.join(sorted(invalid_tables))}")
+            raise ValueError(
+                f"Unsupported bridge export tables: {', '.join(sorted(invalid_tables))}"
+            )
 
         parquet_dir = Path(output_dir).expanduser().resolve()
         parquet_dir.mkdir(parents=True, exist_ok=True)
@@ -1169,7 +1209,11 @@ class SmsBridgeStore:
         }
         manifest_path = parquet_dir / "manifest.json"
         manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
-        return {"parquet_dir": str(parquet_dir), "tables": exported_files, "manifest_path": str(manifest_path)}
+        return {
+            "parquet_dir": str(parquet_dir),
+            "tables": exported_files,
+            "manifest_path": str(manifest_path),
+        }
 
     def _insert_message(
         self,
@@ -1260,7 +1304,9 @@ class SmsBridgeStore:
         metadata: Mapping[str, Any] | None = None,
     ) -> SmsMessageRecord:
         normalized_to_phone = normalize_phone_number(to_phone, field_name="to_phone")
-        normalized_from_phone = normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
+        normalized_from_phone = (
+            normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
+        )
         return self._insert_message(
             direction="outbound",
             provider=provider,
@@ -1287,7 +1333,9 @@ class SmsBridgeStore:
         metadata: Mapping[str, Any] | None = None,
     ) -> SmsMessageRecord:
         normalized_from_phone = normalize_phone_number(from_phone, field_name="from_phone")
-        normalized_to_phone = normalize_phone_number(to_phone, field_name="to_phone") if to_phone else ""
+        normalized_to_phone = (
+            normalize_phone_number(to_phone, field_name="to_phone") if to_phone else ""
+        )
         resolved_wallet_id = str(wallet_id or "").strip()
         resolved_external_reference = str(external_reference or "").strip()
         resolved_metadata = _coerce_metadata(metadata)
@@ -1299,14 +1347,21 @@ class SmsBridgeStore:
             )
             if correlated_outbound is not None:
                 resolved_wallet_id = resolved_wallet_id or correlated_outbound.wallet_id
-                resolved_external_reference = resolved_external_reference or correlated_outbound.external_reference
-                if correlated_outbound.message_id and "reply_to_message_id" not in resolved_metadata:
+                resolved_external_reference = (
+                    resolved_external_reference or correlated_outbound.external_reference
+                )
+                if (
+                    correlated_outbound.message_id
+                    and "reply_to_message_id" not in resolved_metadata
+                ):
                     resolved_metadata["reply_to_message_id"] = correlated_outbound.message_id
                 if (
                     correlated_outbound.provider_message_id
                     and "reply_to_provider_message_id" not in resolved_metadata
                 ):
-                    resolved_metadata["reply_to_provider_message_id"] = correlated_outbound.provider_message_id
+                    resolved_metadata["reply_to_provider_message_id"] = (
+                        correlated_outbound.provider_message_id
+                    )
         return self._insert_message(
             direction="inbound",
             provider=provider,
@@ -1327,7 +1382,9 @@ class SmsBridgeStore:
         service_phone: str = "",
     ) -> SmsMessageRecord | None:
         normalized_reply_phone = normalize_phone_number(reply_from_phone, field_name="from_phone")
-        normalized_service_phone = normalize_phone_number(service_phone, field_name="to_phone") if service_phone else ""
+        normalized_service_phone = (
+            normalize_phone_number(service_phone, field_name="to_phone") if service_phone else ""
+        )
         connection = self._connect()
         try:
             rows = connection.execute(
@@ -1492,7 +1549,9 @@ class SmsBridgeStore:
         metadata: Mapping[str, Any] | None = None,
     ) -> EmailDeliveryRecord:
         normalized_to_email = normalize_email_address(to_email, field_name="to_email")
-        normalized_from_email = normalize_email_address(from_email, field_name="from_email") if from_email else ""
+        normalized_from_email = (
+            normalize_email_address(from_email, field_name="from_email") if from_email else ""
+        )
         normalized_subject = str(subject or "").strip()
         normalized_body = str(body or "")
         if not normalized_subject:
@@ -1681,7 +1740,9 @@ class SmsBridgeStore:
         metadata: Mapping[str, Any] | None = None,
     ) -> PhoneCallRecord:
         normalized_to_phone = normalize_phone_number(to_phone, field_name="to_phone")
-        normalized_from_phone = normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
+        normalized_from_phone = (
+            normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
+        )
         return self._insert_call(
             provider=provider,
             status=status,
@@ -1920,7 +1981,9 @@ class SmsBridgeStore:
             connection.close()
         return VoiceCallSessionRecord.from_row(row) if row is not None else None
 
-    def get_voice_session_by_provider_call_id(self, provider_call_id: str) -> VoiceCallSessionRecord | None:
+    def get_voice_session_by_provider_call_id(
+        self, provider_call_id: str
+    ) -> VoiceCallSessionRecord | None:
         normalized_provider_call_id = str(provider_call_id or "").strip()
         if not normalized_provider_call_id:
             return None
@@ -2068,7 +2131,12 @@ class SmsBridgeStore:
                 SET status = ?, metadata_json = ?, updated_at = ?
                 WHERE session_id = ?
                 """,
-                (normalized_status, _json_dumps(merged_metadata), updated_at, current_session.session_id),
+                (
+                    normalized_status,
+                    _json_dumps(merged_metadata),
+                    updated_at,
+                    current_session.session_id,
+                ),
             )
         finally:
             connection.close()
@@ -2165,7 +2233,9 @@ def _bridge_export_row_to_dict(row: Sequence[Any]) -> dict[str, Any]:
     }
 
 
-def _create_bridge_export_car(parquet_dir: Path, *, export_id: str) -> tuple[Path, str, dict[str, Any]]:
+def _create_bridge_export_car(
+    parquet_dir: Path, *, export_id: str
+) -> tuple[Path, str, dict[str, Any]]:
     car_path = parquet_dir.parent / f"{export_id}.car"
     from ipfs_datasets_py.ipfs_backend_router import get_ipfs_backend
 
@@ -2206,7 +2276,9 @@ def _bridge_mock_filecoin_status() -> str:
     return str(os.getenv("WALLET_FILECOIN_PIN_MOCK_STATUS") or "pinned").strip() or "pinned"
 
 
-def _bridge_mock_filecoin_pin_request(method: str, path: str, *, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+def _bridge_mock_filecoin_pin_request(
+    method: str, path: str, *, payload: dict[str, Any] | None = None
+) -> dict[str, Any]:
     normalized_method = str(method or "").strip().upper()
     normalized_path = str(path or "").strip()
     if normalized_method == "POST" and normalized_path == "/pins":
@@ -2229,7 +2301,9 @@ def _bridge_mock_filecoin_pin_request(method: str, path: str, *, payload: dict[s
     raise RuntimeError(f"mock Filecoin Pin does not support {normalized_method} {normalized_path}")
 
 
-def _bridge_filecoin_pin_request(method: str, path: str, *, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+def _bridge_filecoin_pin_request(
+    method: str, path: str, *, payload: dict[str, Any] | None = None
+) -> dict[str, Any]:
     service_url = _bridge_filecoin_pin_service_url()
     if not service_url:
         return {}
@@ -2245,14 +2319,20 @@ def _bridge_filecoin_pin_request(method: str, path: str, *, payload: dict[str, A
         method=method,
     )
     try:
-        with urllib_request.urlopen(req, timeout=_bridge_filecoin_pin_timeout_seconds()) as response:
+        with urllib_request.urlopen(
+            req, timeout=_bridge_filecoin_pin_timeout_seconds()
+        ) as response:
             raw = response.read().decode("utf-8")
             content_type = str(getattr(response, "headers", {}).get("content-type", ""))
     except urllib_error.HTTPError as exc:
         error_body = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(error_body or f"Filecoin Pin sidecar rejected the request with HTTP {exc.code}") from exc
+        raise RuntimeError(
+            error_body or f"Filecoin Pin sidecar rejected the request with HTTP {exc.code}"
+        ) from exc
     except urllib_error.URLError as exc:
-        raise RuntimeError(f"Unable to reach Filecoin Pin sidecar at {endpoint}: {exc.reason}") from exc
+        raise RuntimeError(
+            f"Unable to reach Filecoin Pin sidecar at {endpoint}: {exc.reason}"
+        ) from exc
     if not raw:
         return {}
     if "json" not in content_type.lower() and not raw.lstrip().startswith("{"):
@@ -2305,7 +2385,9 @@ class SmsBridgeArchiveExporter:
         enabled: bool = False,
     ):
         self.repository = repository
-        self.export_root = Path(export_root or default_sms_bridge_export_root()).expanduser().resolve()
+        self.export_root = (
+            Path(export_root or default_sms_bridge_export_root()).expanduser().resolve()
+        )
         self.interval_seconds = max(1.0, float(interval_seconds))
         self.enabled = bool(enabled)
         self._stop_event = threading.Event()
@@ -2316,7 +2398,10 @@ class SmsBridgeArchiveExporter:
         return cls(
             repository=repository,
             export_root=os.getenv("IPFS_DATASETS_SMS_BRIDGE_ARCHIVE_EXPORT_ROOT", ""),
-            interval_seconds=float(os.getenv("IPFS_DATASETS_SMS_BRIDGE_ARCHIVE_EXPORT_INTERVAL_SECONDS", "3600") or "3600"),
+            interval_seconds=float(
+                os.getenv("IPFS_DATASETS_SMS_BRIDGE_ARCHIVE_EXPORT_INTERVAL_SECONDS", "3600")
+                or "3600"
+            ),
             enabled=_truthy(os.getenv("IPFS_DATASETS_SMS_BRIDGE_ARCHIVE_EXPORT_ENABLED")),
         )
 
@@ -2326,7 +2411,9 @@ class SmsBridgeArchiveExporter:
         if self._thread is not None and self._thread.is_alive():
             return
         self._stop_event.clear()
-        self._thread = threading.Thread(target=self._run_loop, name="sms-bridge-archive-exporter", daemon=True)
+        self._thread = threading.Thread(
+            target=self._run_loop, name="sms-bridge-archive-exporter", daemon=True
+        )
         self._thread.start()
 
     def stop(self) -> None:
@@ -2354,7 +2441,9 @@ class SmsBridgeArchiveExporter:
         )
         try:
             parquet_result = self.repository.export_tables_to_parquet(parquet_dir)
-            car_path, root_cid, car_result = _create_bridge_export_car(parquet_dir, export_id=export_id)
+            car_path, root_cid, car_result = _create_bridge_export_car(
+                parquet_dir, export_id=export_id
+            )
             filecoin_result = _submit_bridge_export_cid_to_filecoin_pin(
                 root_cid,
                 export_id=export_id,
@@ -2362,27 +2451,37 @@ class SmsBridgeArchiveExporter:
                 parquet_tables=tuple(parquet_result["tables"].keys()),
             )
             filecoin_request_id = str(
-                (filecoin_result or {}).get("requestid") or (filecoin_result or {}).get("requestId") or ""
+                (filecoin_result or {}).get("requestid")
+                or (filecoin_result or {}).get("requestId")
+                or ""
             ).strip()
-            final_status = str((filecoin_result or {}).get("status") or "stored").strip() or "stored"
-            export_record = self.repository.update_bridge_export(
-                export_id,
-                status=final_status,
-                car_path=str(car_path),
-                ipfs_cid=root_cid,
-                filecoin_request_id=filecoin_request_id,
-                metadata={
-                    "parquet": parquet_result,
-                    "car": {"path": str(car_path), **car_result},
-                    "filecoin": filecoin_result or {},
-                },
-            ) or export_record
+            final_status = (
+                str((filecoin_result or {}).get("status") or "stored").strip() or "stored"
+            )
+            export_record = (
+                self.repository.update_bridge_export(
+                    export_id,
+                    status=final_status,
+                    car_path=str(car_path),
+                    ipfs_cid=root_cid,
+                    filecoin_request_id=filecoin_request_id,
+                    metadata={
+                        "parquet": parquet_result,
+                        "car": {"path": str(car_path), **car_result},
+                        "filecoin": filecoin_result or {},
+                    },
+                )
+                or export_record
+            )
         except Exception as exc:
-            export_record = self.repository.update_bridge_export(
-                export_id,
-                status="failed",
-                error_message=str(exc),
-            ) or export_record
+            export_record = (
+                self.repository.update_bridge_export(
+                    export_id,
+                    status="failed",
+                    error_message=str(exc),
+                )
+                or export_record
+            )
         return export_record
 
 
@@ -2404,7 +2503,9 @@ class MockSmsProvider:
     provider_name = "mock"
 
     def __init__(self, *, from_phone: str = "", provider_name: str = "mock"):
-        self.from_phone = normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
+        self.from_phone = (
+            normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
+        )
         self.provider_name = str(provider_name or "mock")
 
     def send_sms(
@@ -2435,7 +2536,9 @@ class MockEmailProvider:
     provider_name = "mock"
 
     def __init__(self, *, from_email: str = "", provider_name: str = "mock"):
-        self.from_email = normalize_email_address(from_email, field_name="from_email") if from_email else ""
+        self.from_email = (
+            normalize_email_address(from_email, field_name="from_email") if from_email else ""
+        )
         self.provider_name = str(provider_name or "mock")
 
     def send_email(
@@ -2475,7 +2578,9 @@ class MockCallProvider:
     provider_name = "mock"
 
     def __init__(self, *, from_phone: str = "", provider_name: str = "mock"):
-        self.from_phone = normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
+        self.from_phone = (
+            normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
+        )
         self.provider_name = str(provider_name or "mock")
 
     def send_call(
@@ -2672,7 +2777,9 @@ class WebhookEmailProvider:
         if attachment_base64:
             payload["attachment_base64"] = str(attachment_base64)
             payload["attachment_filename"] = str(attachment_filename or "attachment.bin")
-            payload["attachment_mime_type"] = str(attachment_mime_type or "application/octet-stream")
+            payload["attachment_mime_type"] = str(
+                attachment_mime_type or "application/octet-stream"
+            )
         if metadata:
             payload["metadata"] = _coerce_metadata(metadata)
 
@@ -2720,7 +2827,9 @@ class SmtpEmailProvider:
         self.smtp_starttls = bool(smtp_starttls)
         self.smtp_username = str(smtp_username or "").strip()
         self.smtp_password = str(smtp_password or "")
-        self.from_email = normalize_email_address(from_email, field_name="from_email") if from_email else ""
+        self.from_email = (
+            normalize_email_address(from_email, field_name="from_email") if from_email else ""
+        )
         self.timeout_seconds = float(timeout_seconds)
         if self.timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
@@ -2739,7 +2848,11 @@ class SmtpEmailProvider:
     ) -> dict[str, Any]:
         del metadata
         normalized_to_email = normalize_email_address(to_email, field_name="to_email")
-        normalized_from_email = normalize_email_address(from_email, field_name="from_email") if from_email else self.from_email
+        normalized_from_email = (
+            normalize_email_address(from_email, field_name="from_email")
+            if from_email
+            else self.from_email
+        )
         if not normalized_from_email:
             raise ValueError("from_email is required")
         normalized_subject = str(subject or "").strip()
@@ -2753,7 +2866,9 @@ class SmtpEmailProvider:
         message["From"] = normalized_from_email
         message["To"] = normalized_to_email
         message["Subject"] = normalized_subject
-        sender_domain = normalized_from_email.rsplit("@", 1)[-1].strip() if "@" in normalized_from_email else ""
+        sender_domain = (
+            normalized_from_email.rsplit("@", 1)[-1].strip() if "@" in normalized_from_email else ""
+        )
         message["Message-Id"] = make_msgid(domain=sender_domain or None)
         message.set_content(normalized_body)
         if attachment_base64:
@@ -2804,7 +2919,9 @@ class TwilioSmsProvider:
         self.auth_token = str(auth_token or "").strip()
         if not self.account_sid or not self.auth_token:
             raise ValueError("Twilio account_sid and auth_token are required")
-        self.from_phone = normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
+        self.from_phone = (
+            normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
+        )
         self.messaging_service_sid = str(messaging_service_sid or "").strip()
         self.status_callback_url = str(status_callback_url or "").strip()
         self.timeout_seconds = float(timeout_seconds)
@@ -2824,7 +2941,11 @@ class TwilioSmsProvider:
         if not normalized_message.strip():
             raise ValueError("message is required")
 
-        resolved_from_phone = normalize_phone_number(from_phone, field_name="from_phone") if from_phone else self.from_phone
+        resolved_from_phone = (
+            normalize_phone_number(from_phone, field_name="from_phone")
+            if from_phone
+            else self.from_phone
+        )
         form_payload = {
             "To": normalized_to_phone,
             "Body": normalized_message,
@@ -2859,7 +2980,9 @@ class TwilioSmsProvider:
         return {
             "provider": self.provider_name,
             "provider_status": str(response_payload.get("status") or status_code),
-            "provider_message_id": str(response_payload.get("sid") or response_payload.get("message_id") or ""),
+            "provider_message_id": str(
+                response_payload.get("sid") or response_payload.get("message_id") or ""
+            ),
         }
 
 
@@ -3023,7 +3146,11 @@ class TwilioCallProvider:
         if not normalized_script.strip():
             raise ValueError("script is required")
 
-        resolved_from_phone = normalize_phone_number(from_phone, field_name="from_phone") if from_phone else self.from_phone
+        resolved_from_phone = (
+            normalize_phone_number(from_phone, field_name="from_phone")
+            if from_phone
+            else self.from_phone
+        )
         form_payload = {
             "To": normalized_to_phone,
             "From": resolved_from_phone,
@@ -3054,7 +3181,9 @@ class TwilioCallProvider:
         return {
             "provider": self.provider_name,
             "provider_status": str(response_payload.get("status") or status_code),
-            "provider_call_id": str(response_payload.get("sid") or response_payload.get("call_id") or ""),
+            "provider_call_id": str(
+                response_payload.get("sid") or response_payload.get("call_id") or ""
+            ),
         }
 
 
@@ -3075,7 +3204,9 @@ class VoiceMediaAssetStore:
         meta_path = self.root_path / f"{asset_id}.json"
         asset_path.write_bytes(content)
         meta_path.write_text(
-            json.dumps({"mime_type": normalized_mime_type, "filename": asset_path.name}, sort_keys=True),
+            json.dumps(
+                {"mime_type": normalized_mime_type, "filename": asset_path.name}, sort_keys=True
+            ),
             encoding="utf-8",
         )
         return {
@@ -3133,7 +3264,9 @@ class RemoteVoiceProxyProvider:
         total_start = time.perf_counter()
         timings: dict[str, int] = {}
         stage_start = time.perf_counter()
-        prompt = self.assistant_profile.build_reply_prompt(transcript=transcript, session=session, turns=turns)
+        prompt = self.assistant_profile.build_reply_prompt(
+            transcript=transcript, session=session, turns=turns
+        )
         timings["prompt_build_ms"] = _elapsed_ms(stage_start)
         body, content_type = _encode_multipart_form(
             fields={
@@ -3170,11 +3303,19 @@ class RemoteVoiceProxyProvider:
                 metadata={"latency": timings},
             )
 
-        payload = _parse_response_payload(raw_bytes.decode("utf-8", errors="replace"), response_content_type)
-        audio_base64 = _first_string(payload, ["audioBase64", "audio_base64", "audio", "wavBase64", "wav_base64"])
+        payload = _parse_response_payload(
+            raw_bytes.decode("utf-8", errors="replace"), response_content_type
+        )
+        audio_base64 = _first_string(
+            payload, ["audioBase64", "audio_base64", "audio", "wavBase64", "wav_base64"]
+        )
         generated_text = _first_string(payload, ["text", "outputText", "output_text"])
-        model_name = _first_string(payload, ["model", "modelName", "model_name"]) or self.provider_name
-        remote_latency = payload.get("latency") if isinstance(payload.get("latency"), Mapping) else None
+        model_name = (
+            _first_string(payload, ["model", "modelName", "model_name"]) or self.provider_name
+        )
+        remote_latency = (
+            payload.get("latency") if isinstance(payload.get("latency"), Mapping) else None
+        )
         if audio_base64:
             mime_type = _first_string(payload, ["mimeType", "mime_type"]) or "audio/wav"
             stage_start = time.perf_counter()
@@ -3288,7 +3429,9 @@ def build_email_provider(
     from_email: str | None = None,
     timeout_seconds: float | None = None,
 ) -> EmailDeliveryProvider | None:
-    resolved_webhook_url = _first_non_empty(webhook_url, os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_WEBHOOK_URL"))
+    resolved_webhook_url = _first_non_empty(
+        webhook_url, os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_WEBHOOK_URL")
+    )
     resolved_smtp_host = _first_non_empty(
         smtp_host,
         os.getenv("IPFS_DATASETS_EMAIL_SMTP_HOST"),
@@ -3305,7 +3448,9 @@ def build_email_provider(
 
     resolved_timeout = timeout_seconds
     if resolved_timeout is None:
-        resolved_timeout = float(_first_non_empty(os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_TIMEOUT_SECONDS"), "20"))
+        resolved_timeout = float(
+            _first_non_empty(os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_TIMEOUT_SECONDS"), "20")
+        )
 
     normalized_kind = resolved_kind.lower()
     if normalized_kind == "mock":
@@ -3320,9 +3465,15 @@ def build_email_provider(
     if normalized_kind == "webhook":
         return WebhookEmailProvider(
             webhook_url=resolved_webhook_url,
-            bearer_token=_first_non_empty(bearer_token, os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_BEARER_TOKEN")),
-            header_name=_first_non_empty(header_name, os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_HTTP_HEADER_NAME")),
-            header_value=_first_non_empty(header_value, os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_HTTP_HEADER_VALUE")),
+            bearer_token=_first_non_empty(
+                bearer_token, os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_BEARER_TOKEN")
+            ),
+            header_name=_first_non_empty(
+                header_name, os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_HTTP_HEADER_NAME")
+            ),
+            header_value=_first_non_empty(
+                header_value, os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_HTTP_HEADER_VALUE")
+            ),
             timeout_seconds=resolved_timeout,
         )
     if normalized_kind == "smtp":
@@ -3392,9 +3543,15 @@ def build_sms_provider(
     status_callback_url: str | None = None,
     timeout_seconds: float | None = None,
 ) -> SmsDeliveryProvider | None:
-    resolved_webhook_url = _first_non_empty(webhook_url, os.getenv("IPFS_DATASETS_SMS_PROVIDER_WEBHOOK_URL"))
-    resolved_account_sid = _first_non_empty(account_sid, os.getenv("IPFS_DATASETS_SMS_TWILIO_ACCOUNT_SID"))
-    resolved_auth_token = _first_non_empty(auth_token, os.getenv("IPFS_DATASETS_SMS_TWILIO_AUTH_TOKEN"))
+    resolved_webhook_url = _first_non_empty(
+        webhook_url, os.getenv("IPFS_DATASETS_SMS_PROVIDER_WEBHOOK_URL")
+    )
+    resolved_account_sid = _first_non_empty(
+        account_sid, os.getenv("IPFS_DATASETS_SMS_TWILIO_ACCOUNT_SID")
+    )
+    resolved_auth_token = _first_non_empty(
+        auth_token, os.getenv("IPFS_DATASETS_SMS_TWILIO_AUTH_TOKEN")
+    )
     resolved_kind = _first_non_empty(provider_kind, os.getenv("IPFS_DATASETS_SMS_PROVIDER_KIND"))
     if not resolved_kind:
         if resolved_webhook_url:
@@ -3406,26 +3563,38 @@ def build_sms_provider(
 
     resolved_timeout = timeout_seconds
     if resolved_timeout is None:
-        resolved_timeout = float(_first_non_empty(os.getenv("IPFS_DATASETS_SMS_PROVIDER_TIMEOUT_SECONDS"), "15"))
+        resolved_timeout = float(
+            _first_non_empty(os.getenv("IPFS_DATASETS_SMS_PROVIDER_TIMEOUT_SECONDS"), "15")
+        )
 
     normalized_kind = resolved_kind.lower()
     if normalized_kind == "mock":
         return MockSmsProvider(
-            from_phone=_first_non_empty(from_phone, os.getenv("IPFS_DATASETS_SMS_TWILIO_FROM_PHONE")),
+            from_phone=_first_non_empty(
+                from_phone, os.getenv("IPFS_DATASETS_SMS_TWILIO_FROM_PHONE")
+            ),
         )
     if normalized_kind == "webhook":
         return WebhookSmsProvider(
             webhook_url=resolved_webhook_url,
-            bearer_token=_first_non_empty(bearer_token, os.getenv("IPFS_DATASETS_SMS_PROVIDER_BEARER_TOKEN")),
-            header_name=_first_non_empty(header_name, os.getenv("IPFS_DATASETS_SMS_PROVIDER_HTTP_HEADER_NAME")),
-            header_value=_first_non_empty(header_value, os.getenv("IPFS_DATASETS_SMS_PROVIDER_HTTP_HEADER_VALUE")),
+            bearer_token=_first_non_empty(
+                bearer_token, os.getenv("IPFS_DATASETS_SMS_PROVIDER_BEARER_TOKEN")
+            ),
+            header_name=_first_non_empty(
+                header_name, os.getenv("IPFS_DATASETS_SMS_PROVIDER_HTTP_HEADER_NAME")
+            ),
+            header_value=_first_non_empty(
+                header_value, os.getenv("IPFS_DATASETS_SMS_PROVIDER_HTTP_HEADER_VALUE")
+            ),
             timeout_seconds=resolved_timeout,
         )
     if normalized_kind == "twilio":
         return TwilioSmsProvider(
             account_sid=resolved_account_sid,
             auth_token=resolved_auth_token,
-            from_phone=_first_non_empty(from_phone, os.getenv("IPFS_DATASETS_SMS_TWILIO_FROM_PHONE")),
+            from_phone=_first_non_empty(
+                from_phone, os.getenv("IPFS_DATASETS_SMS_TWILIO_FROM_PHONE")
+            ),
             messaging_service_sid=_first_non_empty(
                 messaging_service_sid,
                 os.getenv("IPFS_DATASETS_SMS_TWILIO_MESSAGING_SERVICE_SID"),
@@ -3447,17 +3616,27 @@ def build_inbound_forwarder(
     header_value: str | None = None,
     timeout_seconds: float | None = None,
 ) -> WebhookEventForwarder | None:
-    resolved_webhook_url = _first_non_empty(webhook_url, os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_URL"))
+    resolved_webhook_url = _first_non_empty(
+        webhook_url, os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_URL")
+    )
     if not resolved_webhook_url:
         return None
     resolved_timeout = timeout_seconds
     if resolved_timeout is None:
-        resolved_timeout = float(_first_non_empty(os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_TIMEOUT_SECONDS"), "15"))
+        resolved_timeout = float(
+            _first_non_empty(os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_TIMEOUT_SECONDS"), "15")
+        )
     return WebhookEventForwarder(
         webhook_url=resolved_webhook_url,
-        bearer_token=_first_non_empty(bearer_token, os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_BEARER_TOKEN")),
-        header_name=_first_non_empty(header_name, os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_HTTP_HEADER_NAME")),
-        header_value=_first_non_empty(header_value, os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_HTTP_HEADER_VALUE")),
+        bearer_token=_first_non_empty(
+            bearer_token, os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_BEARER_TOKEN")
+        ),
+        header_name=_first_non_empty(
+            header_name, os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_HTTP_HEADER_NAME")
+        ),
+        header_value=_first_non_empty(
+            header_value, os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_HTTP_HEADER_VALUE")
+        ),
         timeout_seconds=resolved_timeout,
     )
 
@@ -3475,9 +3654,15 @@ def build_call_provider(
     status_callback_url: str | None = None,
     timeout_seconds: float | None = None,
 ) -> CallDeliveryProvider | None:
-    resolved_webhook_url = _first_non_empty(webhook_url, os.getenv("IPFS_DATASETS_CALL_PROVIDER_WEBHOOK_URL"))
-    resolved_account_sid = _first_non_empty(account_sid, os.getenv("IPFS_DATASETS_CALL_TWILIO_ACCOUNT_SID"))
-    resolved_auth_token = _first_non_empty(auth_token, os.getenv("IPFS_DATASETS_CALL_TWILIO_AUTH_TOKEN"))
+    resolved_webhook_url = _first_non_empty(
+        webhook_url, os.getenv("IPFS_DATASETS_CALL_PROVIDER_WEBHOOK_URL")
+    )
+    resolved_account_sid = _first_non_empty(
+        account_sid, os.getenv("IPFS_DATASETS_CALL_TWILIO_ACCOUNT_SID")
+    )
+    resolved_auth_token = _first_non_empty(
+        auth_token, os.getenv("IPFS_DATASETS_CALL_TWILIO_AUTH_TOKEN")
+    )
     resolved_kind = _first_non_empty(provider_kind, os.getenv("IPFS_DATASETS_CALL_PROVIDER_KIND"))
     if not resolved_kind:
         if resolved_webhook_url:
@@ -3489,26 +3674,38 @@ def build_call_provider(
 
     resolved_timeout = timeout_seconds
     if resolved_timeout is None:
-        resolved_timeout = float(_first_non_empty(os.getenv("IPFS_DATASETS_CALL_PROVIDER_TIMEOUT_SECONDS"), "20"))
+        resolved_timeout = float(
+            _first_non_empty(os.getenv("IPFS_DATASETS_CALL_PROVIDER_TIMEOUT_SECONDS"), "20")
+        )
 
     normalized_kind = resolved_kind.lower()
     if normalized_kind == "mock":
         return MockCallProvider(
-            from_phone=_first_non_empty(from_phone, os.getenv("IPFS_DATASETS_CALL_TWILIO_FROM_PHONE")),
+            from_phone=_first_non_empty(
+                from_phone, os.getenv("IPFS_DATASETS_CALL_TWILIO_FROM_PHONE")
+            ),
         )
     if normalized_kind == "webhook":
         return WebhookCallProvider(
             webhook_url=resolved_webhook_url,
-            bearer_token=_first_non_empty(bearer_token, os.getenv("IPFS_DATASETS_CALL_PROVIDER_BEARER_TOKEN")),
-            header_name=_first_non_empty(header_name, os.getenv("IPFS_DATASETS_CALL_PROVIDER_HTTP_HEADER_NAME")),
-            header_value=_first_non_empty(header_value, os.getenv("IPFS_DATASETS_CALL_PROVIDER_HTTP_HEADER_VALUE")),
+            bearer_token=_first_non_empty(
+                bearer_token, os.getenv("IPFS_DATASETS_CALL_PROVIDER_BEARER_TOKEN")
+            ),
+            header_name=_first_non_empty(
+                header_name, os.getenv("IPFS_DATASETS_CALL_PROVIDER_HTTP_HEADER_NAME")
+            ),
+            header_value=_first_non_empty(
+                header_value, os.getenv("IPFS_DATASETS_CALL_PROVIDER_HTTP_HEADER_VALUE")
+            ),
             timeout_seconds=resolved_timeout,
         )
     if normalized_kind == "twilio":
         return TwilioCallProvider(
             account_sid=resolved_account_sid,
             auth_token=resolved_auth_token,
-            from_phone=_first_non_empty(from_phone, os.getenv("IPFS_DATASETS_CALL_TWILIO_FROM_PHONE")),
+            from_phone=_first_non_empty(
+                from_phone, os.getenv("IPFS_DATASETS_CALL_TWILIO_FROM_PHONE")
+            ),
             status_callback_url=_first_non_empty(
                 status_callback_url,
                 os.getenv("IPFS_DATASETS_CALL_TWILIO_STATUS_CALLBACK_URL"),
@@ -3535,20 +3732,29 @@ def build_voice_assistant_profile(
     if resolved_max_turns is None:
         resolved_max_turns = int(_first_non_empty(os.getenv("IPFS_DATASETS_VOICE_MAX_TURNS"), "8"))
     return VoiceAssistantProfile(
-        assistant_name=_first_non_empty(assistant_name, os.getenv("IPFS_DATASETS_VOICE_AGENT_NAME")) or "Abby",
-        service_name=_first_non_empty(service_name, os.getenv("IPFS_DATASETS_VOICE_SERVICE_NAME")) or "211 AI",
-        greeting=_first_non_empty(greeting, os.getenv("IPFS_DATASETS_VOICE_GREETING")) or _DEFAULT_VOICE_GREETING,
-        no_speech_prompt=_first_non_empty(no_speech_prompt, os.getenv("IPFS_DATASETS_VOICE_NO_SPEECH_PROMPT"))
+        assistant_name=_first_non_empty(assistant_name, os.getenv("IPFS_DATASETS_VOICE_AGENT_NAME"))
+        or "Abby",
+        service_name=_first_non_empty(service_name, os.getenv("IPFS_DATASETS_VOICE_SERVICE_NAME"))
+        or "211 AI",
+        greeting=_first_non_empty(greeting, os.getenv("IPFS_DATASETS_VOICE_GREETING"))
+        or _DEFAULT_VOICE_GREETING,
+        no_speech_prompt=_first_non_empty(
+            no_speech_prompt, os.getenv("IPFS_DATASETS_VOICE_NO_SPEECH_PROMPT")
+        )
         or _DEFAULT_VOICE_NO_SPEECH_PROMPT,
-        follow_up_prompt=_first_non_empty(follow_up_prompt, os.getenv("IPFS_DATASETS_VOICE_FOLLOW_UP_PROMPT"))
+        follow_up_prompt=_first_non_empty(
+            follow_up_prompt, os.getenv("IPFS_DATASETS_VOICE_FOLLOW_UP_PROMPT")
+        )
         or _DEFAULT_VOICE_FOLLOW_UP,
-        farewell=_first_non_empty(farewell, os.getenv("IPFS_DATASETS_VOICE_FAREWELL")) or _DEFAULT_VOICE_FAREWELL,
+        farewell=_first_non_empty(farewell, os.getenv("IPFS_DATASETS_VOICE_FAREWELL"))
+        or _DEFAULT_VOICE_FAREWELL,
         unavailable_prompt=_first_non_empty(
             unavailable_prompt,
             os.getenv("IPFS_DATASETS_VOICE_UNAVAILABLE_PROMPT"),
         )
         or _DEFAULT_VOICE_UNAVAILABLE_PROMPT,
-        website_url=_first_non_empty(website_url, os.getenv("IPFS_DATASETS_VOICE_WEBSITE_URL")) or "https://211-ai.com",
+        website_url=_first_non_empty(website_url, os.getenv("IPFS_DATASETS_VOICE_WEBSITE_URL"))
+        or "https://211-ai.com",
         system_prompt_append=_first_non_empty(
             system_prompt_append,
             os.getenv("IPFS_DATASETS_VOICE_SYSTEM_PROMPT_APPEND"),
@@ -3567,7 +3773,9 @@ def build_voice_reply_provider(
     mock_reply_text: str | None = None,
     assistant_profile: VoiceAssistantProfile | None = None,
 ) -> VoiceReplyProvider | None:
-    resolved_kind = _first_non_empty(provider_kind, os.getenv("IPFS_DATASETS_VOICE_REPLY_PROVIDER_KIND"))
+    resolved_kind = _first_non_empty(
+        provider_kind, os.getenv("IPFS_DATASETS_VOICE_REPLY_PROVIDER_KIND")
+    )
     resolved_base_url = _first_non_empty(base_url, os.getenv("IPFS_DATASETS_VOICE_PROXY_BASE_URL"))
     resolved_infer_url = _first_non_empty(
         infer_url,
@@ -3578,14 +3786,18 @@ def build_voice_reply_provider(
     resolved_profile = assistant_profile or build_voice_assistant_profile()
     if resolved_kind and resolved_kind.lower() == "mock":
         return MockVoiceReplyProvider(
-            reply_text=_first_non_empty(mock_reply_text, os.getenv("IPFS_DATASETS_VOICE_MOCK_REPLY_TEXT")),
+            reply_text=_first_non_empty(
+                mock_reply_text, os.getenv("IPFS_DATASETS_VOICE_MOCK_REPLY_TEXT")
+            ),
             assistant_profile=resolved_profile,
         )
     if not resolved_infer_url:
         return None
     resolved_timeout = timeout_seconds
     if resolved_timeout is None:
-        resolved_timeout = float(_first_non_empty(os.getenv("IPFS_DATASETS_VOICE_PROXY_TIMEOUT_SECONDS"), "45"))
+        resolved_timeout = float(
+            _first_non_empty(os.getenv("IPFS_DATASETS_VOICE_PROXY_TIMEOUT_SECONDS"), "45")
+        )
     return RemoteVoiceProxyProvider(
         infer_url=resolved_infer_url,
         tts_url=_resolve_proxy_url(
@@ -3646,7 +3858,11 @@ def _sms_bridge_cors_origins() -> list[str]:
 
 def _allowed_magic_link_hosts() -> set[str]:
     raw = str(os.getenv("IPFS_DATASETS_MAGIC_LOGIN_ALLOWED_HOSTS") or "").strip()
-    values = raw.split(",") if raw else ["211-ai.com", "www.211-ai.com", "211-ai.github.io", "localhost", "127.0.0.1"]
+    values = (
+        raw.split(",")
+        if raw
+        else ["211-ai.com", "www.211-ai.com", "211-ai.github.io", "localhost", "127.0.0.1"]
+    )
     return {value.strip().lower() for value in values if value.strip()}
 
 
@@ -3689,12 +3905,16 @@ def create_sms_bridge_app(
     voice_profile: VoiceAssistantProfile | None = None,
     public_base_url: str = "",
 ):
-    if FastAPI is None or HTTPException is None or Request is None or Response is None:  # pragma: no cover
+    if (
+        FastAPI is None or HTTPException is None or Request is None or Response is None
+    ):  # pragma: no cover
         raise RuntimeError("FastAPI is required to create the SMS bridge app")
 
     sms_store = repository or SmsBridgeStore()
     delivery_provider = provider if provider is not None else build_sms_provider()
-    outbound_email_provider = email_provider if email_provider is not None else build_email_provider()
+    outbound_email_provider = (
+        email_provider if email_provider is not None else build_email_provider()
+    )
     forwarder = inbound_forwarder if inbound_forwarder is not None else build_inbound_forwarder()
     outbound_call_provider = call_provider if call_provider is not None else build_call_provider()
     resolved_voice_profile = voice_profile or build_voice_assistant_profile()
@@ -3705,7 +3925,9 @@ def create_sms_bridge_app(
     )
     media_store = voice_media_store or VoiceMediaAssetStore()
     archive_exporter = SmsBridgeArchiveExporter.from_env(repository=sms_store)
-    configured_public_base_url = str(public_base_url or os.getenv("IPFS_DATASETS_VOICE_PUBLIC_BASE_URL") or "").strip()
+    configured_public_base_url = str(
+        public_base_url or os.getenv("IPFS_DATASETS_VOICE_PUBLIC_BASE_URL") or ""
+    ).strip()
 
     app = FastAPI(title="IPFS Datasets Messaging Bridge", version="0.1.0")
     if CORSMiddleware is not None:
@@ -3736,12 +3958,15 @@ def create_sms_bridge_app(
             "email_provider_configured": outbound_email_provider is not None,
             "call_provider": getattr(outbound_call_provider, "provider_name", "") or "",
             "call_provider_configured": outbound_call_provider is not None,
-            "voice_reply_provider": getattr(resolved_voice_reply_provider, "provider_name", "") or "",
+            "voice_reply_provider": getattr(resolved_voice_reply_provider, "provider_name", "")
+            or "",
             "voice_reply_provider_configured": resolved_voice_reply_provider is not None,
             "inbound_forwarding_configured": forwarder is not None,
             "db_path": sms_store.path,
             "archive_export_enabled": archive_exporter.enabled,
-            "archive_export_interval_seconds": archive_exporter.interval_seconds if archive_exporter.enabled else 0,
+            "archive_export_interval_seconds": archive_exporter.interval_seconds
+            if archive_exporter.enabled
+            else 0,
             "latest_archive_export": sms_store.get_latest_bridge_export(),
         }
 
@@ -3758,12 +3983,18 @@ def create_sms_bridge_app(
         payload = _model_dump(request)
         attachment_metadata: dict[str, Any] = {}
         if payload.get("attachment_filename"):
-            attachment_metadata["attachment_filename"] = str(payload.get("attachment_filename") or "")
+            attachment_metadata["attachment_filename"] = str(
+                payload.get("attachment_filename") or ""
+            )
         if payload.get("attachment_mime_type"):
-            attachment_metadata["attachment_mime_type"] = str(payload.get("attachment_mime_type") or "")
+            attachment_metadata["attachment_mime_type"] = str(
+                payload.get("attachment_mime_type") or ""
+            )
         if payload.get("attachment_base64"):
             try:
-                attachment_metadata["attachment_bytes"] = len(base64.b64decode(str(payload.get("attachment_base64") or "")))
+                attachment_metadata["attachment_bytes"] = len(
+                    base64.b64decode(str(payload.get("attachment_base64") or ""))
+                )
             except Exception:
                 attachment_metadata["attachment_invalid_base64"] = True
         record_metadata = {**dict(payload.get("metadata") or {}), **attachment_metadata}
@@ -3781,7 +4012,10 @@ def create_sms_bridge_app(
             )
             raise HTTPException(
                 status_code=503,
-                detail={"message": "Email provider not configured", "record": failed_record.to_dict()},
+                detail={
+                    "message": "Email provider not configured",
+                    "record": failed_record.to_dict(),
+                },
             )
         try:
             delivery = outbound_email_provider.send_email(
@@ -3791,11 +4025,16 @@ def create_sms_bridge_app(
                 from_email=payload.get("from_email", ""),
                 attachment_base64=payload.get("attachment_base64", ""),
                 attachment_filename=payload.get("attachment_filename", ""),
-                attachment_mime_type=payload.get("attachment_mime_type", "application/octet-stream"),
+                attachment_mime_type=payload.get(
+                    "attachment_mime_type", "application/octet-stream"
+                ),
                 metadata=payload.get("metadata") or {},
             )
             record = sms_store.record_outbound_email(
-                provider=str(delivery.get("provider") or getattr(outbound_email_provider, "provider_name", "unknown")),
+                provider=str(
+                    delivery.get("provider")
+                    or getattr(outbound_email_provider, "provider_name", "unknown")
+                ),
                 status=str(delivery.get("provider_status") or "sent"),
                 provider_message_id=str(delivery.get("provider_message_id") or ""),
                 to_email=payload["to_email"],
@@ -3824,7 +4063,9 @@ def create_sms_bridge_app(
                 external_reference=payload.get("external_reference", ""),
                 metadata={**record_metadata, "error": str(exc)},
             )
-            raise HTTPException(status_code=400, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+            raise HTTPException(
+                status_code=400, detail={"message": str(exc), "record": failed_record.to_dict()}
+            ) from exc
         except RuntimeError as exc:
             failed_record = sms_store.record_outbound_email(
                 provider=getattr(outbound_email_provider, "provider_name", "unknown"),
@@ -3837,7 +4078,9 @@ def create_sms_bridge_app(
                 external_reference=payload.get("external_reference", ""),
                 metadata={**record_metadata, "error": str(exc)},
             )
-            raise HTTPException(status_code=502, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+            raise HTTPException(
+                status_code=502, detail={"message": str(exc), "record": failed_record.to_dict()}
+            ) from exc
 
     @app.get("/messages/email")
     def list_email_messages(
@@ -3847,7 +4090,9 @@ def create_sms_bridge_app(
         to_email: str = "",
     ) -> dict[str, Any]:
         try:
-            messages = sms_store.list_email_messages(limit=limit, provider=provider, status=status, to_email=to_email)
+            messages = sms_store.list_email_messages(
+                limit=limit, provider=provider, status=status, to_email=to_email
+            )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"count": len(messages), "messages": [message.to_dict() for message in messages]}
@@ -3864,11 +4109,17 @@ def create_sms_bridge_app(
                 from_phone=payload.get("from_phone", ""),
                 wallet_id=payload.get("wallet_id", ""),
                 external_reference=payload.get("external_reference", ""),
-                metadata={**dict(payload.get("metadata") or {}), "error": "SMS provider not configured"},
+                metadata={
+                    **dict(payload.get("metadata") or {}),
+                    "error": "SMS provider not configured",
+                },
             )
             raise HTTPException(
                 status_code=503,
-                detail={"message": "SMS provider not configured", "record": failed_record.to_dict()},
+                detail={
+                    "message": "SMS provider not configured",
+                    "record": failed_record.to_dict(),
+                },
             )
         try:
             delivery = delivery_provider.send_sms(
@@ -3878,7 +4129,10 @@ def create_sms_bridge_app(
                 metadata=payload.get("metadata") or {},
             )
             record = sms_store.record_outbound(
-                provider=str(delivery.get("provider") or getattr(delivery_provider, "provider_name", "unknown")),
+                provider=str(
+                    delivery.get("provider")
+                    or getattr(delivery_provider, "provider_name", "unknown")
+                ),
                 status=str(delivery.get("provider_status") or "sent"),
                 provider_message_id=str(delivery.get("provider_message_id") or ""),
                 to_phone=payload["to_phone"],
@@ -3904,7 +4158,9 @@ def create_sms_bridge_app(
                 external_reference=payload.get("external_reference", ""),
                 metadata={**dict(payload.get("metadata") or {}), "error": str(exc)},
             )
-            raise HTTPException(status_code=400, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+            raise HTTPException(
+                status_code=400, detail={"message": str(exc), "record": failed_record.to_dict()}
+            ) from exc
         except RuntimeError as exc:
             failed_record = sms_store.record_outbound(
                 provider=getattr(delivery_provider, "provider_name", "unknown"),
@@ -3916,7 +4172,9 @@ def create_sms_bridge_app(
                 external_reference=payload.get("external_reference", ""),
                 metadata={**dict(payload.get("metadata") or {}), "error": str(exc)},
             )
-            raise HTTPException(status_code=502, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+            raise HTTPException(
+                status_code=502, detail={"message": str(exc), "record": failed_record.to_dict()}
+            ) from exc
 
     @app.post("/auth/magic-link/sms")
     def send_magic_link_sms(request: MagicLinkSmsRequest) -> dict[str, Any]:
@@ -3928,11 +4186,19 @@ def create_sms_bridge_app(
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
         now = time.monotonic()
-        window_seconds = float(os.getenv("IPFS_DATASETS_MAGIC_LOGIN_SMS_RATE_WINDOW_SECONDS", "900") or "900")
+        window_seconds = float(
+            os.getenv("IPFS_DATASETS_MAGIC_LOGIN_SMS_RATE_WINDOW_SECONDS", "900") or "900"
+        )
         max_attempts = int(os.getenv("IPFS_DATASETS_MAGIC_LOGIN_SMS_RATE_LIMIT", "3") or "3")
-        recent_attempts = [timestamp for timestamp in magic_link_sms_attempts.get(normalized_to_phone, []) if now - timestamp < window_seconds]
+        recent_attempts = [
+            timestamp
+            for timestamp in magic_link_sms_attempts.get(normalized_to_phone, [])
+            if now - timestamp < window_seconds
+        ]
         if len(recent_attempts) >= max_attempts:
-            raise HTTPException(status_code=429, detail="too many magic-link SMS requests for this phone number")
+            raise HTTPException(
+                status_code=429, detail="too many magic-link SMS requests for this phone number"
+            )
         recent_attempts.append(now)
         magic_link_sms_attempts[normalized_to_phone] = recent_attempts
 
@@ -3951,7 +4217,10 @@ def create_sms_bridge_app(
             )
             raise HTTPException(
                 status_code=503,
-                detail={"message": "SMS provider not configured", "record": failed_record.to_dict()},
+                detail={
+                    "message": "SMS provider not configured",
+                    "record": failed_record.to_dict(),
+                },
             )
         try:
             delivery = delivery_provider.send_sms(
@@ -3960,7 +4229,10 @@ def create_sms_bridge_app(
                 metadata=metadata,
             )
             record = sms_store.record_outbound(
-                provider=str(delivery.get("provider") or getattr(delivery_provider, "provider_name", "unknown")),
+                provider=str(
+                    delivery.get("provider")
+                    or getattr(delivery_provider, "provider_name", "unknown")
+                ),
                 status=str(delivery.get("provider_status") or "sent"),
                 provider_message_id=str(delivery.get("provider_message_id") or ""),
                 to_phone=normalized_to_phone,
@@ -3980,7 +4252,9 @@ def create_sms_bridge_app(
                 message=message,
                 metadata={**metadata, "error": str(exc)},
             )
-            raise HTTPException(status_code=400, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+            raise HTTPException(
+                status_code=400, detail={"message": str(exc), "record": failed_record.to_dict()}
+            ) from exc
         except RuntimeError as exc:
             failed_record = sms_store.record_outbound(
                 provider=getattr(delivery_provider, "provider_name", "unknown"),
@@ -3989,7 +4263,9 @@ def create_sms_bridge_app(
                 message=message,
                 metadata={**metadata, "error": str(exc)},
             )
-            raise HTTPException(status_code=502, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+            raise HTTPException(
+                status_code=502, detail={"message": str(exc), "record": failed_record.to_dict()}
+            ) from exc
 
     @app.get("/messages/sms")
     def list_sms_messages(
@@ -4023,11 +4299,17 @@ def create_sms_bridge_app(
                 from_phone=payload.get("from_phone", ""),
                 wallet_id=payload.get("wallet_id", ""),
                 external_reference=payload.get("external_reference", ""),
-                metadata={**dict(payload.get("metadata") or {}), "error": "Call provider not configured"},
+                metadata={
+                    **dict(payload.get("metadata") or {}),
+                    "error": "Call provider not configured",
+                },
             )
             raise HTTPException(
                 status_code=503,
-                detail={"message": "Call provider not configured", "record": failed_record.to_dict()},
+                detail={
+                    "message": "Call provider not configured",
+                    "record": failed_record.to_dict(),
+                },
             )
         try:
             delivery = outbound_call_provider.send_call(
@@ -4036,9 +4318,14 @@ def create_sms_bridge_app(
                 from_phone=payload.get("from_phone", ""),
                 metadata=payload.get("metadata") or {},
             )
-            provider_call_id = str(delivery.get("provider_call_id") or delivery.get("provider_message_id") or "")
+            provider_call_id = str(
+                delivery.get("provider_call_id") or delivery.get("provider_message_id") or ""
+            )
             record = sms_store.record_outbound_call(
-                provider=str(delivery.get("provider") or getattr(outbound_call_provider, "provider_name", "unknown")),
+                provider=str(
+                    delivery.get("provider")
+                    or getattr(outbound_call_provider, "provider_name", "unknown")
+                ),
                 status=str(delivery.get("provider_status") or "queued"),
                 provider_call_id=provider_call_id,
                 to_phone=payload["to_phone"],
@@ -4066,7 +4353,9 @@ def create_sms_bridge_app(
                 external_reference=payload.get("external_reference", ""),
                 metadata={**dict(payload.get("metadata") or {}), "error": str(exc)},
             )
-            raise HTTPException(status_code=400, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+            raise HTTPException(
+                status_code=400, detail={"message": str(exc), "record": failed_record.to_dict()}
+            ) from exc
         except RuntimeError as exc:
             failed_record = sms_store.record_outbound_call(
                 provider=getattr(outbound_call_provider, "provider_name", "unknown"),
@@ -4078,7 +4367,9 @@ def create_sms_bridge_app(
                 external_reference=payload.get("external_reference", ""),
                 metadata={**dict(payload.get("metadata") or {}), "error": str(exc)},
             )
-            raise HTTPException(status_code=502, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+            raise HTTPException(
+                status_code=502, detail={"message": str(exc), "record": failed_record.to_dict()}
+            ) from exc
 
     @app.get("/messages/calls")
     def list_phone_calls(
@@ -4150,7 +4441,9 @@ def create_sms_bridge_app(
                 "delivery": "twiml",
             },
         )
-        return Response(content=_twiml_response(_twiml_message(reply_text)), media_type="application/xml")
+        return Response(
+            content=_twiml_response(_twiml_message(reply_text)), media_type="application/xml"
+        )
 
     @app.post("/providers/twilio/status")
     async def receive_twilio_status_callback(request: Request) -> dict[str, Any]:
@@ -4206,10 +4499,16 @@ def create_sms_bridge_app(
             "voice_session_updated": voice_session is not None,
         }
 
-    async def _create_or_load_voice_session(request: Request, *, provider_name: str, entrypoint: str) -> tuple[VoiceCallSessionRecord, str]:
+    async def _create_or_load_voice_session(
+        request: Request, *, provider_name: str, entrypoint: str
+    ) -> tuple[VoiceCallSessionRecord, str]:
         form = _parse_form_body(await request.body())
         provider_call_id = str(form.get("CallSid") or form.get("call_sid") or "").strip()
-        session = sms_store.get_voice_session_by_provider_call_id(provider_call_id) if provider_call_id else None
+        session = (
+            sms_store.get_voice_session_by_provider_call_id(provider_call_id)
+            if provider_call_id
+            else None
+        )
         if session is None:
             session = sms_store.create_voice_session(
                 provider=provider_name,
@@ -4254,7 +4553,10 @@ def create_sms_bridge_app(
         return _join_public_url(public_base, f"/voice/media/{asset_id}")
 
     def _mock_voice_proxy_enabled() -> bool:
-        return str(getattr(resolved_voice_reply_provider, "provider_name", "") or "").strip() == "mock-voice"
+        return (
+            str(getattr(resolved_voice_reply_provider, "provider_name", "") or "").strip()
+            == "mock-voice"
+        )
 
     def _mock_voice_proxy_session() -> VoiceCallSessionRecord:
         timestamp = _utcnow_iso()
@@ -4311,15 +4613,20 @@ def create_sms_bridge_app(
             raise HTTPException(status_code=502, detail="mock voice provider returned no text")
         return {
             "provider": "mock-voice-proxy",
-            "model": reply.model_name or getattr(resolved_voice_reply_provider, "provider_name", "mock-voice"),
+            "model": reply.model_name
+            or getattr(resolved_voice_reply_provider, "provider_name", "mock-voice"),
             "text": reply.text,
         }
 
     @app.post("/providers/twilio/voice/inbound")
     async def receive_twilio_voice_inbound(request: Request) -> Response:
-        session, public_base = await _create_or_load_voice_session(request, provider_name="twilio", entrypoint="voice")
+        session, public_base = await _create_or_load_voice_session(
+            request, provider_name="twilio", entrypoint="voice"
+        )
         if _truthy(os.getenv("IPFS_DATASETS_TWILIO_VOICE_OPENAI_REALTIME")):
-            return Response(content=_openai_realtime_twiml(public_base, session), media_type="application/xml")
+            return Response(
+                content=_openai_realtime_twiml(public_base, session), media_type="application/xml"
+            )
         xml = _twiml_response(
             _twiml_gather(
                 action_url=_voice_turn_action_url(public_base, session.session_id),
@@ -4335,10 +4642,14 @@ def create_sms_bridge_app(
             provider_name="twilio-openai-realtime",
             entrypoint="voice-openai-realtime",
         )
-        return Response(content=_openai_realtime_twiml(public_base, session), media_type="application/xml")
+        return Response(
+            content=_openai_realtime_twiml(public_base, session), media_type="application/xml"
+        )
 
     @app.websocket("/providers/twilio/voice/openai-realtime-stream")
-    async def twilio_voice_openai_realtime_stream(websocket: WebSocket, session_id: str = "") -> None:
+    async def twilio_voice_openai_realtime_stream(
+        websocket: WebSocket, session_id: str = ""
+    ) -> None:
         await websocket.accept()
         if websockets is None:
             await websocket.close(code=1011, reason="websockets dependency is unavailable")
@@ -4364,13 +4675,18 @@ def create_sms_bridge_app(
                 _openai_realtime_url(),
                 additional_headers=[
                     ("Authorization", f"Bearer {api_key}"),
-                    ("OpenAI-Safety-Identifier", hashlib.sha256(session.session_id.encode("utf-8")).hexdigest()),
+                    (
+                        "OpenAI-Safety-Identifier",
+                        hashlib.sha256(session.session_id.encode("utf-8")).hexdigest(),
+                    ),
                 ],
                 ping_interval=20,
                 ping_timeout=20,
                 max_size=8 * 1024 * 1024,
             ) as openai_ws:
-                await openai_ws.send(json.dumps(_openai_session_update_event(resolved_voice_profile)))
+                await openai_ws.send(
+                    json.dumps(_openai_session_update_event(resolved_voice_profile))
+                )
 
                 async def from_twilio() -> None:
                     nonlocal stream_sid, call_sid
@@ -4382,8 +4698,14 @@ def create_sms_bridge_app(
                         payload = json.loads(raw)
                         event_type = str(payload.get("event") or "")
                         if event_type == "start":
-                            start_payload = payload.get("start") if isinstance(payload.get("start"), Mapping) else {}
-                            stream_sid = str(start_payload.get("streamSid") or payload.get("streamSid") or "")
+                            start_payload = (
+                                payload.get("start")
+                                if isinstance(payload.get("start"), Mapping)
+                                else {}
+                            )
+                            stream_sid = str(
+                                start_payload.get("streamSid") or payload.get("streamSid") or ""
+                            )
                             call_sid = str(start_payload.get("callSid") or call_sid or "")
                             await openai_ws.send(
                                 json.dumps(
@@ -4403,10 +4725,18 @@ def create_sms_bridge_app(
                                 )
                             )
                         elif event_type == "media":
-                            media = payload.get("media") if isinstance(payload.get("media"), Mapping) else {}
+                            media = (
+                                payload.get("media")
+                                if isinstance(payload.get("media"), Mapping)
+                                else {}
+                            )
                             audio = str(media.get("payload") or "")
                             if audio:
-                                await openai_ws.send(json.dumps({"type": "input_audio_buffer.append", "audio": audio}))
+                                await openai_ws.send(
+                                    json.dumps(
+                                        {"type": "input_audio_buffer.append", "audio": audio}
+                                    )
+                                )
                         elif event_type == "stop":
                             break
                     with contextlib.suppress(Exception):
@@ -4429,12 +4759,16 @@ def create_sms_bridge_app(
                                 )
                         elif event_type == "input_audio_buffer.speech_started" and stream_sid:
                             with contextlib.suppress(Exception):
-                                await websocket.send_json({"event": "clear", "streamSid": stream_sid})
+                                await websocket.send_json(
+                                    {"event": "clear", "streamSid": stream_sid}
+                                )
                         elif event_type in {
                             "conversation.item.input_audio_transcription.completed",
                             "conversation.item.input_audio_transcription.segment",
                         }:
-                            text = str(payload.get("transcript") or payload.get("text") or "").strip()
+                            text = str(
+                                payload.get("transcript") or payload.get("text") or ""
+                            ).strip()
                             if text:
                                 transcript_parts.append(text)
                         elif event_type == "response.output_audio_transcript.delta":
@@ -4478,7 +4812,9 @@ def create_sms_bridge_app(
             )
         finally:
             user_text = " ".join(part.strip() for part in transcript_parts if part.strip()).strip()
-            assistant_text = " ".join(part.strip() for part in assistant_transcript_parts if part.strip()).strip()
+            assistant_text = " ".join(
+                part.strip() for part in assistant_transcript_parts if part.strip()
+            ).strip()
             if user_text:
                 sms_store.append_voice_turn(
                     session.session_id,
@@ -4491,7 +4827,10 @@ def create_sms_bridge_app(
                     session.session_id,
                     role="assistant",
                     text=assistant_text,
-                    metadata={"provider": "openai-realtime", "model_name": _openai_realtime_model()},
+                    metadata={
+                        "provider": "openai-realtime",
+                        "model_name": _openai_realtime_model(),
+                    },
                 )
             sms_store.update_voice_session_status(
                 session.session_id,
@@ -4511,7 +4850,9 @@ def create_sms_bridge_app(
 
     @app.post("/providers/twilio/sip/inbound")
     async def receive_twilio_sip_inbound(request: Request) -> Response:
-        session, public_base = await _create_or_load_voice_session(request, provider_name="twilio-sip", entrypoint="sip")
+        session, public_base = await _create_or_load_voice_session(
+            request, provider_name="twilio-sip", entrypoint="sip"
+        )
         xml = _twiml_response(
             _twiml_gather(
                 action_url=_voice_turn_action_url(public_base, session.session_id),
@@ -4527,17 +4868,25 @@ def create_sms_bridge_app(
         session = sms_store.get_voice_session(session_id)
         latency["session_lookup_ms"] = _elapsed_ms(turn_start)
         if session is None:
-            xml = _twiml_response(_twiml_say("This call session is no longer available."), "<Hangup/>")
+            xml = _twiml_response(
+                _twiml_say("This call session is no longer available."), "<Hangup/>"
+            )
             return Response(content=xml, media_type="application/xml", status_code=404)
 
         stage_start = time.perf_counter()
         form = _parse_form_body(await request.body())
         latency["parse_form_ms"] = _elapsed_ms(stage_start)
-        transcript = _normalize_turn_text(str(form.get("SpeechResult") or form.get("speech_result") or ""), max_length=480)
+        transcript = _normalize_turn_text(
+            str(form.get("SpeechResult") or form.get("speech_result") or ""), max_length=480
+        )
         public_base = _resolve_public_base_url(request, configured_public_base_url)
         action_url = _voice_turn_action_url(public_base, session.session_id)
         if not transcript:
-            xml = _twiml_response(_twiml_gather(action_url=action_url, prompt_text=resolved_voice_profile.no_speech_prompt))
+            xml = _twiml_response(
+                _twiml_gather(
+                    action_url=action_url, prompt_text=resolved_voice_profile.no_speech_prompt
+                )
+            )
             return Response(content=xml, media_type="application/xml")
 
         sms_store.append_voice_turn(
@@ -4554,25 +4903,37 @@ def create_sms_bridge_app(
         turns = sms_store.list_voice_turns(session.session_id)
         latency["load_turns_ms"] = _elapsed_ms(stage_start)
 
-        if _should_hangup_from_text(transcript) or len(turns) >= max(1, resolved_voice_profile.max_turns * 2):
-            sms_store.append_voice_turn(session.session_id, role="assistant", text=resolved_voice_profile.farewell)
+        if _should_hangup_from_text(transcript) or len(turns) >= max(
+            1, resolved_voice_profile.max_turns * 2
+        ):
+            sms_store.append_voice_turn(
+                session.session_id, role="assistant", text=resolved_voice_profile.farewell
+            )
             sms_store.update_voice_session_status(session.session_id, status="completed")
             xml = _twiml_response(_twiml_say(resolved_voice_profile.farewell), "<Hangup/>")
             return Response(content=xml, media_type="application/xml")
 
         if resolved_voice_reply_provider is None:
-            sms_store.append_voice_turn(session.session_id, role="assistant", text=resolved_voice_profile.unavailable_prompt)
-            xml = _twiml_response(_twiml_say(resolved_voice_profile.unavailable_prompt), "<Hangup/>")
+            sms_store.append_voice_turn(
+                session.session_id, role="assistant", text=resolved_voice_profile.unavailable_prompt
+            )
+            xml = _twiml_response(
+                _twiml_say(resolved_voice_profile.unavailable_prompt), "<Hangup/>"
+            )
             return Response(content=xml, media_type="application/xml")
 
         try:
             stage_start = time.perf_counter()
-            reply = resolved_voice_reply_provider.generate_reply(transcript=transcript, session=session, turns=turns)
+            reply = resolved_voice_reply_provider.generate_reply(
+                transcript=transcript, session=session, turns=turns
+            )
             latency["reply_provider_ms"] = _elapsed_ms(stage_start)
         except Exception as exc:
             latency["reply_provider_ms"] = _elapsed_ms(stage_start)
             latency["total_ms"] = _elapsed_ms(turn_start)
-            sms_store.append_voice_turn(session.session_id, role="assistant", text=resolved_voice_profile.unavailable_prompt)
+            sms_store.append_voice_turn(
+                session.session_id, role="assistant", text=resolved_voice_profile.unavailable_prompt
+            )
             print(
                 json.dumps(
                     {
@@ -4587,14 +4948,18 @@ def create_sms_bridge_app(
                 ),
                 flush=True,
             )
-            xml = _twiml_response(_twiml_say(resolved_voice_profile.unavailable_prompt), "<Hangup/>")
+            xml = _twiml_response(
+                _twiml_say(resolved_voice_profile.unavailable_prompt), "<Hangup/>"
+            )
             return Response(content=xml, media_type="application/xml")
 
         twiml_nodes: list[str] = []
         asset_id = ""
         if reply.audio_bytes:
             stage_start = time.perf_counter()
-            saved_asset = media_store.save(content=reply.audio_bytes, mime_type=reply.mime_type or "audio/wav")
+            saved_asset = media_store.save(
+                content=reply.audio_bytes, mime_type=reply.mime_type or "audio/wav"
+            )
             latency["media_save_ms"] = _elapsed_ms(stage_start)
             asset_id = saved_asset["asset_id"]
             twiml_nodes.append(_twiml_play(_voice_media_url(public_base, asset_id)))
@@ -4613,8 +4978,12 @@ def create_sms_bridge_app(
                 "provider": reply.provider,
                 "model_name": reply.model_name,
                 "latency": latency,
-                "provider_latency": reply.metadata.get("latency") if isinstance(reply.metadata, Mapping) else {},
-                "remote_latency": reply.metadata.get("remote_latency") if isinstance(reply.metadata, Mapping) else {},
+                "provider_latency": reply.metadata.get("latency")
+                if isinstance(reply.metadata, Mapping)
+                else {},
+                "remote_latency": reply.metadata.get("remote_latency")
+                if isinstance(reply.metadata, Mapping)
+                else {},
             },
         )
         print(
@@ -4626,14 +4995,22 @@ def create_sms_bridge_app(
                     "model_name": reply.model_name,
                     "audio": bool(asset_id),
                     "latency": latency,
-                    "provider_latency": reply.metadata.get("latency") if isinstance(reply.metadata, Mapping) else {},
-                    "remote_latency": reply.metadata.get("remote_latency") if isinstance(reply.metadata, Mapping) else {},
+                    "provider_latency": reply.metadata.get("latency")
+                    if isinstance(reply.metadata, Mapping)
+                    else {},
+                    "remote_latency": reply.metadata.get("remote_latency")
+                    if isinstance(reply.metadata, Mapping)
+                    else {},
                 },
                 sort_keys=True,
             ),
             flush=True,
         )
-        twiml_nodes.append(_twiml_gather(action_url=action_url, prompt_text=resolved_voice_profile.follow_up_prompt))
+        twiml_nodes.append(
+            _twiml_gather(
+                action_url=action_url, prompt_text=resolved_voice_profile.follow_up_prompt
+            )
+        )
         xml = _twiml_response(*twiml_nodes)
         return Response(content=xml, media_type="application/xml")
 
@@ -4670,51 +5047,178 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="ipfs-datasets-sms-bridge")
     parser.add_argument("--db-path", default=default_sms_bridge_db_path())
     parser.add_argument("--host", default=os.getenv("IPFS_DATASETS_SMS_BRIDGE_HOST", "0.0.0.0"))
-    parser.add_argument("--port", type=int, default=int(os.getenv("IPFS_DATASETS_SMS_BRIDGE_PORT", "8061")))
-    parser.add_argument("--reload", action="store_true", default=_truthy(os.getenv("IPFS_DATASETS_SMS_BRIDGE_RELOAD")))
-    parser.add_argument("--provider", choices=["mock", "webhook", "twilio"], default=os.getenv("IPFS_DATASETS_SMS_PROVIDER_KIND"))
-    parser.add_argument("--provider-webhook-url", default=os.getenv("IPFS_DATASETS_SMS_PROVIDER_WEBHOOK_URL", ""))
-    parser.add_argument("--provider-bearer-token", default=os.getenv("IPFS_DATASETS_SMS_PROVIDER_BEARER_TOKEN", ""))
-    parser.add_argument("--provider-header-name", default=os.getenv("IPFS_DATASETS_SMS_PROVIDER_HTTP_HEADER_NAME", ""))
-    parser.add_argument("--provider-header-value", default=os.getenv("IPFS_DATASETS_SMS_PROVIDER_HTTP_HEADER_VALUE", ""))
-    parser.add_argument("--provider-timeout-seconds", type=float, default=float(os.getenv("IPFS_DATASETS_SMS_PROVIDER_TIMEOUT_SECONDS", "15")))
-    parser.add_argument("--twilio-account-sid", default=os.getenv("IPFS_DATASETS_SMS_TWILIO_ACCOUNT_SID", ""))
-    parser.add_argument("--twilio-auth-token", default=os.getenv("IPFS_DATASETS_SMS_TWILIO_AUTH_TOKEN", ""))
-    parser.add_argument("--twilio-from-phone", default=os.getenv("IPFS_DATASETS_SMS_TWILIO_FROM_PHONE", ""))
-    parser.add_argument("--twilio-messaging-service-sid", default=os.getenv("IPFS_DATASETS_SMS_TWILIO_MESSAGING_SERVICE_SID", ""))
-    parser.add_argument("--twilio-status-callback-url", default=os.getenv("IPFS_DATASETS_SMS_TWILIO_STATUS_CALLBACK_URL", ""))
-    parser.add_argument("--call-provider", choices=["mock", "webhook", "twilio"], default=os.getenv("IPFS_DATASETS_CALL_PROVIDER_KIND"))
-    parser.add_argument("--call-provider-webhook-url", default=os.getenv("IPFS_DATASETS_CALL_PROVIDER_WEBHOOK_URL", ""))
-    parser.add_argument("--call-provider-bearer-token", default=os.getenv("IPFS_DATASETS_CALL_PROVIDER_BEARER_TOKEN", ""))
-    parser.add_argument("--call-provider-header-name", default=os.getenv("IPFS_DATASETS_CALL_PROVIDER_HTTP_HEADER_NAME", ""))
-    parser.add_argument("--call-provider-header-value", default=os.getenv("IPFS_DATASETS_CALL_PROVIDER_HTTP_HEADER_VALUE", ""))
-    parser.add_argument("--call-provider-timeout-seconds", type=float, default=float(os.getenv("IPFS_DATASETS_CALL_PROVIDER_TIMEOUT_SECONDS", "20")))
-    parser.add_argument("--call-twilio-account-sid", default=os.getenv("IPFS_DATASETS_CALL_TWILIO_ACCOUNT_SID", ""))
-    parser.add_argument("--call-twilio-auth-token", default=os.getenv("IPFS_DATASETS_CALL_TWILIO_AUTH_TOKEN", ""))
-    parser.add_argument("--call-twilio-from-phone", default=os.getenv("IPFS_DATASETS_CALL_TWILIO_FROM_PHONE", ""))
-    parser.add_argument("--call-twilio-status-callback-url", default=os.getenv("IPFS_DATASETS_CALL_TWILIO_STATUS_CALLBACK_URL", ""))
-    parser.add_argument("--voice-public-base-url", default=os.getenv("IPFS_DATASETS_VOICE_PUBLIC_BASE_URL", ""))
-    parser.add_argument("--voice-provider", choices=["mock", "remote-proxy"], default=os.getenv("IPFS_DATASETS_VOICE_REPLY_PROVIDER_KIND"))
-    parser.add_argument("--voice-proxy-base-url", default=os.getenv("IPFS_DATASETS_VOICE_PROXY_BASE_URL", ""))
-    parser.add_argument("--voice-proxy-infer-url", default=os.getenv("IPFS_DATASETS_VOICE_PROXY_INFER_URL", ""))
-    parser.add_argument("--voice-proxy-tts-url", default=os.getenv("IPFS_DATASETS_VOICE_PROXY_TTS_URL", ""))
-    parser.add_argument("--voice-proxy-timeout-seconds", type=float, default=float(os.getenv("IPFS_DATASETS_VOICE_PROXY_TIMEOUT_SECONDS", "45")))
-    parser.add_argument("--voice-mock-reply-text", default=os.getenv("IPFS_DATASETS_VOICE_MOCK_REPLY_TEXT", ""))
-    parser.add_argument("--voice-agent-name", default=os.getenv("IPFS_DATASETS_VOICE_AGENT_NAME", "Abby"))
-    parser.add_argument("--voice-service-name", default=os.getenv("IPFS_DATASETS_VOICE_SERVICE_NAME", "211 AI"))
-    parser.add_argument("--voice-greeting", default=os.getenv("IPFS_DATASETS_VOICE_GREETING", _DEFAULT_VOICE_GREETING))
-    parser.add_argument("--voice-no-speech-prompt", default=os.getenv("IPFS_DATASETS_VOICE_NO_SPEECH_PROMPT", _DEFAULT_VOICE_NO_SPEECH_PROMPT))
-    parser.add_argument("--voice-follow-up-prompt", default=os.getenv("IPFS_DATASETS_VOICE_FOLLOW_UP_PROMPT", _DEFAULT_VOICE_FOLLOW_UP))
-    parser.add_argument("--voice-farewell", default=os.getenv("IPFS_DATASETS_VOICE_FAREWELL", _DEFAULT_VOICE_FAREWELL))
-    parser.add_argument("--voice-unavailable-prompt", default=os.getenv("IPFS_DATASETS_VOICE_UNAVAILABLE_PROMPT", _DEFAULT_VOICE_UNAVAILABLE_PROMPT))
-    parser.add_argument("--voice-website-url", default=os.getenv("IPFS_DATASETS_VOICE_WEBSITE_URL", "https://211-ai.com"))
-    parser.add_argument("--voice-system-prompt-append", default=os.getenv("IPFS_DATASETS_VOICE_SYSTEM_PROMPT_APPEND", ""))
-    parser.add_argument("--voice-max-turns", type=int, default=int(os.getenv("IPFS_DATASETS_VOICE_MAX_TURNS", "8")))
-    parser.add_argument("--inbound-forward-url", default=os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_URL", ""))
-    parser.add_argument("--inbound-forward-bearer-token", default=os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_BEARER_TOKEN", ""))
-    parser.add_argument("--inbound-forward-header-name", default=os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_HTTP_HEADER_NAME", ""))
-    parser.add_argument("--inbound-forward-header-value", default=os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_HTTP_HEADER_VALUE", ""))
-    parser.add_argument("--inbound-forward-timeout-seconds", type=float, default=float(os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_TIMEOUT_SECONDS", "15")))
+    parser.add_argument(
+        "--port", type=int, default=int(os.getenv("IPFS_DATASETS_SMS_BRIDGE_PORT", "8061"))
+    )
+    parser.add_argument(
+        "--reload",
+        action="store_true",
+        default=_truthy(os.getenv("IPFS_DATASETS_SMS_BRIDGE_RELOAD")),
+    )
+    parser.add_argument(
+        "--provider",
+        choices=["mock", "webhook", "twilio"],
+        default=os.getenv("IPFS_DATASETS_SMS_PROVIDER_KIND"),
+    )
+    parser.add_argument(
+        "--provider-webhook-url", default=os.getenv("IPFS_DATASETS_SMS_PROVIDER_WEBHOOK_URL", "")
+    )
+    parser.add_argument(
+        "--provider-bearer-token", default=os.getenv("IPFS_DATASETS_SMS_PROVIDER_BEARER_TOKEN", "")
+    )
+    parser.add_argument(
+        "--provider-header-name",
+        default=os.getenv("IPFS_DATASETS_SMS_PROVIDER_HTTP_HEADER_NAME", ""),
+    )
+    parser.add_argument(
+        "--provider-header-value",
+        default=os.getenv("IPFS_DATASETS_SMS_PROVIDER_HTTP_HEADER_VALUE", ""),
+    )
+    parser.add_argument(
+        "--provider-timeout-seconds",
+        type=float,
+        default=float(os.getenv("IPFS_DATASETS_SMS_PROVIDER_TIMEOUT_SECONDS", "15")),
+    )
+    parser.add_argument(
+        "--twilio-account-sid", default=os.getenv("IPFS_DATASETS_SMS_TWILIO_ACCOUNT_SID", "")
+    )
+    parser.add_argument(
+        "--twilio-auth-token", default=os.getenv("IPFS_DATASETS_SMS_TWILIO_AUTH_TOKEN", "")
+    )
+    parser.add_argument(
+        "--twilio-from-phone", default=os.getenv("IPFS_DATASETS_SMS_TWILIO_FROM_PHONE", "")
+    )
+    parser.add_argument(
+        "--twilio-messaging-service-sid",
+        default=os.getenv("IPFS_DATASETS_SMS_TWILIO_MESSAGING_SERVICE_SID", ""),
+    )
+    parser.add_argument(
+        "--twilio-status-callback-url",
+        default=os.getenv("IPFS_DATASETS_SMS_TWILIO_STATUS_CALLBACK_URL", ""),
+    )
+    parser.add_argument(
+        "--call-provider",
+        choices=["mock", "webhook", "twilio"],
+        default=os.getenv("IPFS_DATASETS_CALL_PROVIDER_KIND"),
+    )
+    parser.add_argument(
+        "--call-provider-webhook-url",
+        default=os.getenv("IPFS_DATASETS_CALL_PROVIDER_WEBHOOK_URL", ""),
+    )
+    parser.add_argument(
+        "--call-provider-bearer-token",
+        default=os.getenv("IPFS_DATASETS_CALL_PROVIDER_BEARER_TOKEN", ""),
+    )
+    parser.add_argument(
+        "--call-provider-header-name",
+        default=os.getenv("IPFS_DATASETS_CALL_PROVIDER_HTTP_HEADER_NAME", ""),
+    )
+    parser.add_argument(
+        "--call-provider-header-value",
+        default=os.getenv("IPFS_DATASETS_CALL_PROVIDER_HTTP_HEADER_VALUE", ""),
+    )
+    parser.add_argument(
+        "--call-provider-timeout-seconds",
+        type=float,
+        default=float(os.getenv("IPFS_DATASETS_CALL_PROVIDER_TIMEOUT_SECONDS", "20")),
+    )
+    parser.add_argument(
+        "--call-twilio-account-sid", default=os.getenv("IPFS_DATASETS_CALL_TWILIO_ACCOUNT_SID", "")
+    )
+    parser.add_argument(
+        "--call-twilio-auth-token", default=os.getenv("IPFS_DATASETS_CALL_TWILIO_AUTH_TOKEN", "")
+    )
+    parser.add_argument(
+        "--call-twilio-from-phone", default=os.getenv("IPFS_DATASETS_CALL_TWILIO_FROM_PHONE", "")
+    )
+    parser.add_argument(
+        "--call-twilio-status-callback-url",
+        default=os.getenv("IPFS_DATASETS_CALL_TWILIO_STATUS_CALLBACK_URL", ""),
+    )
+    parser.add_argument(
+        "--voice-public-base-url", default=os.getenv("IPFS_DATASETS_VOICE_PUBLIC_BASE_URL", "")
+    )
+    parser.add_argument(
+        "--voice-provider",
+        choices=["mock", "remote-proxy"],
+        default=os.getenv("IPFS_DATASETS_VOICE_REPLY_PROVIDER_KIND"),
+    )
+    parser.add_argument(
+        "--voice-proxy-base-url", default=os.getenv("IPFS_DATASETS_VOICE_PROXY_BASE_URL", "")
+    )
+    parser.add_argument(
+        "--voice-proxy-infer-url", default=os.getenv("IPFS_DATASETS_VOICE_PROXY_INFER_URL", "")
+    )
+    parser.add_argument(
+        "--voice-proxy-tts-url", default=os.getenv("IPFS_DATASETS_VOICE_PROXY_TTS_URL", "")
+    )
+    parser.add_argument(
+        "--voice-proxy-timeout-seconds",
+        type=float,
+        default=float(os.getenv("IPFS_DATASETS_VOICE_PROXY_TIMEOUT_SECONDS", "45")),
+    )
+    parser.add_argument(
+        "--voice-mock-reply-text", default=os.getenv("IPFS_DATASETS_VOICE_MOCK_REPLY_TEXT", "")
+    )
+    parser.add_argument(
+        "--voice-agent-name", default=os.getenv("IPFS_DATASETS_VOICE_AGENT_NAME", "Abby")
+    )
+    parser.add_argument(
+        "--voice-service-name", default=os.getenv("IPFS_DATASETS_VOICE_SERVICE_NAME", "211 AI")
+    )
+    parser.add_argument(
+        "--voice-greeting",
+        default=os.getenv("IPFS_DATASETS_VOICE_GREETING", _DEFAULT_VOICE_GREETING),
+    )
+    parser.add_argument(
+        "--voice-no-speech-prompt",
+        default=os.getenv("IPFS_DATASETS_VOICE_NO_SPEECH_PROMPT", _DEFAULT_VOICE_NO_SPEECH_PROMPT),
+    )
+    parser.add_argument(
+        "--voice-follow-up-prompt",
+        default=os.getenv("IPFS_DATASETS_VOICE_FOLLOW_UP_PROMPT", _DEFAULT_VOICE_FOLLOW_UP),
+    )
+    parser.add_argument(
+        "--voice-farewell",
+        default=os.getenv("IPFS_DATASETS_VOICE_FAREWELL", _DEFAULT_VOICE_FAREWELL),
+    )
+    parser.add_argument(
+        "--voice-unavailable-prompt",
+        default=os.getenv(
+            "IPFS_DATASETS_VOICE_UNAVAILABLE_PROMPT", _DEFAULT_VOICE_UNAVAILABLE_PROMPT
+        ),
+    )
+    parser.add_argument(
+        "--voice-website-url",
+        default=os.getenv("IPFS_DATASETS_VOICE_WEBSITE_URL", "https://211-ai.com"),
+    )
+    parser.add_argument(
+        "--voice-system-prompt-append",
+        default=os.getenv("IPFS_DATASETS_VOICE_SYSTEM_PROMPT_APPEND", ""),
+    )
+    parser.add_argument(
+        "--voice-max-turns", type=int, default=int(os.getenv("IPFS_DATASETS_VOICE_MAX_TURNS", "8"))
+    )
+    parser.add_argument(
+        "--inbound-forward-url", default=os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_URL", "")
+    )
+    parser.add_argument(
+        "--inbound-forward-bearer-token",
+        default=os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_BEARER_TOKEN", ""),
+    )
+    parser.add_argument(
+        "--inbound-forward-header-name",
+        default=os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_HTTP_HEADER_NAME", ""),
+    )
+    parser.add_argument(
+        "--inbound-forward-header-value",
+        default=os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_HTTP_HEADER_VALUE", ""),
+    )
+    parser.add_argument(
+        "--inbound-forward-timeout-seconds",
+        type=float,
+        default=float(os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_TIMEOUT_SECONDS", "15")),
+    )
     return parser
 
 

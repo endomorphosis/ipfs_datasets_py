@@ -57,6 +57,7 @@ class OpenVerseSearchAPI:
         """
         try:
             import aiohttp  # noqa: F401
+
             aiohttp_installed = True
         except ImportError:
             aiohttp_installed = False
@@ -152,9 +153,7 @@ class OpenVerseSearchAPI:
         return {
             "queue_length": len(self.queue),
             "queued_operations": self.queue,
-            "operations_pending": sum(
-                1 for item in self.queue if item["status"] == "queued"
-            ),
+            "operations_pending": sum(1 for item in self.queue if item["status"] == "queued"),
         }
 
     def clear_queue(self) -> Dict[str, Any]:
@@ -215,16 +214,25 @@ async def search_openverse_images(
                 if resp.status == 200:
                     data = await resp.json()
                     results = [
-                        {"id": r.get("id", ""), "title": r.get("title", ""),
-                         "url": r.get("url", ""), "thumbnail": r.get("thumbnail", ""),
-                         "creator": r.get("creator", ""), "license": r.get("license", ""),
-                         "source": r.get("source", "")}
+                        {
+                            "id": r.get("id", ""),
+                            "title": r.get("title", ""),
+                            "url": r.get("url", ""),
+                            "thumbnail": r.get("thumbnail", ""),
+                            "creator": r.get("creator", ""),
+                            "license": r.get("license", ""),
+                            "source": r.get("source", ""),
+                        }
                         for r in data.get("results", [])
                     ]
-                    return {"status": "success", "results": results, "query": query,
-                            "result_count": data.get("count", len(results)),
-                            "page_count": data.get("page_count", 1),
-                            "search_timestamp": _datetime.now().isoformat()}
+                    return {
+                        "status": "success",
+                        "results": results,
+                        "query": query,
+                        "result_count": data.get("count", len(results)),
+                        "page_count": data.get("page_count", 1),
+                        "search_timestamp": _datetime.now().isoformat(),
+                    }
                 elif resp.status == 401:
                     return {"status": "error", "error": "Invalid OpenVerse API key"}
                 elif resp.status == 429:
@@ -269,16 +277,25 @@ async def search_openverse_audio(
                 if resp.status == 200:
                     data = await resp.json()
                     results = [
-                        {"id": r.get("id", ""), "title": r.get("title", ""),
-                         "url": r.get("url", ""), "creator": r.get("creator", ""),
-                         "license": r.get("license", ""), "source": r.get("source", ""),
-                         "duration": r.get("duration")}
+                        {
+                            "id": r.get("id", ""),
+                            "title": r.get("title", ""),
+                            "url": r.get("url", ""),
+                            "creator": r.get("creator", ""),
+                            "license": r.get("license", ""),
+                            "source": r.get("source", ""),
+                            "duration": r.get("duration"),
+                        }
                         for r in data.get("results", [])
                     ]
-                    return {"status": "success", "results": results, "query": query,
-                            "result_count": data.get("count", len(results)),
-                            "page_count": data.get("page_count", 1),
-                            "search_timestamp": _datetime.now().isoformat()}
+                    return {
+                        "status": "success",
+                        "results": results,
+                        "query": query,
+                        "result_count": data.get("count", len(results)),
+                        "page_count": data.get("page_count", 1),
+                        "search_timestamp": _datetime.now().isoformat(),
+                    }
                 elif resp.status == 401:
                     return {"status": "error", "error": "Invalid OpenVerse API key"}
                 else:
@@ -301,6 +318,7 @@ async def batch_search_openverse(
     if not all(isinstance(q, str) for q in queries):
         return {"status": "error", "error": "All queries must be strings"}
     import anyio
+
     search_func = search_openverse_images if search_type == "images" else search_openverse_audio
     results: Dict[str, Any] = {}
     success_count = 0
@@ -314,9 +332,15 @@ async def batch_search_openverse(
             error_count += 1
         if q != queries[-1]:
             await anyio.sleep(delay_seconds)
-    return {"status": "success", "results": results, "search_type": search_type,
-            "total_queries": len(queries), "success_count": success_count,
-            "error_count": error_count, "batch_completed_at": _datetime.now().isoformat()}
+    return {
+        "status": "success",
+        "results": results,
+        "search_type": search_type,
+        "total_queries": len(queries),
+        "success_count": success_count,
+        "error_count": error_count,
+        "batch_completed_at": _datetime.now().isoformat(),
+    }
 
 
 __all__ = [

@@ -11,10 +11,10 @@ Example usage::
         analyze_entity_distribution,
         analyze_relationship_distribution,
     )
-    
+
     ontology1 = {"entities": [...], "relationships": [...]}
     ontology2 = {"entities": [...], "relationships": [...]}
-    
+
     comparison = compare_ontologies(ontology1, ontology2)
     print(f"Similarity: {comparison['similarity']:.1%}")
     print(f"Common entities: {comparison['entity_overlap']}")
@@ -36,7 +36,7 @@ from typing import Any, Dict, List, Set, Tuple
 @dataclass
 class ComparisonResult:
     """Result of comparing two ontologies.
-    
+
     Attributes:
         entity_overlap: Count of entities (by ID) in both ontologies
         relationship_overlap: Count of relationships (by ID) in both ontologies
@@ -46,7 +46,7 @@ class ComparisonResult:
         relationship_similarity: Jaccard similarity for relationships (0.0 to 1.0)
         overall_similarity: Weighted average of entity/relationship similarity
     """
-    
+
     entity_overlap: int = 0
     relationship_overlap: int = 0
     entity_only_left: List[str] = field(default_factory=list)
@@ -55,22 +55,22 @@ class ComparisonResult:
     rel_only_right: List[str] = field(default_factory=list)
     entity_similarity: float = 0.0
     relationship_similarity: float = 0.0
-    
+
     @property
     def overall_similarity(self) -> float:
         """Return weighted average of entity and relationship similarity."""
         return (self.entity_similarity + self.relationship_similarity) / 2.0
-    
+
     @property
     def total_entities_union(self) -> int:
         """Return total unique entities across both ontologies."""
         return self.entity_overlap + len(self.entity_only_left) + len(self.entity_only_right)
-    
+
     @property
     def total_relationships_union(self) -> int:
         """Return total unique relationships across both ontologies."""
         return self.relationship_overlap + len(self.rel_only_left) + len(self.rel_only_right)
-    
+
     def __repr__(self) -> str:
         """Return concise representation."""
         return (
@@ -83,7 +83,7 @@ class ComparisonResult:
 @dataclass
 class DistributionStats:
     """Statistics about entity or relationship type distribution.
-    
+
     Attributes:
         type_counts: Dict of type -> count
         total_items: Total number of items
@@ -91,22 +91,22 @@ class DistributionStats:
         dominant_type: Most common type
         dominant_type_percentage: Percentage of total for dominant type
     """
-    
+
     type_counts: Dict[str, int] = field(default_factory=dict)
     total_items: int = 0
-    
+
     @property
     def unique_types(self) -> int:
         """Return number of unique types."""
         return len(self.type_counts)
-    
+
     @property
     def dominant_type(self) -> str:
         """Return most common type, or empty string if no items."""
         if not self.type_counts:
             return ""
         return max(self.type_counts, key=lambda k: self.type_counts[k])
-    
+
     @property
     def dominant_type_percentage(self) -> float:
         """Return percentage of items that are dominant type."""
@@ -114,7 +114,7 @@ class DistributionStats:
             return 0.0
         max_count = self.type_counts.get(self.dominant_type, 0)
         return 100.0 * max_count / self.total_items
-    
+
     def __repr__(self) -> str:
         """Return concise representation."""
         return (
@@ -131,22 +131,22 @@ def compare_ontologies(
     relationship_weight: float = 0.5,
 ) -> ComparisonResult:
     """Compare two ontologies and produce structured comparison.
-    
+
     Computes:
     - Overlap counts (entities and relationships in both)
     - Only-left and only-right IDs
     - Jaccard similarity for both entity and relationship levels
     - Overall weighted similarity
-    
+
     Args:
         ontology_left: First ontology dict
         ontology_right: Second ontology dict
         entity_weight: Weight for entity similarity in overall metric (0.0-1.0)
         relationship_weight: Weight for relationship similarity (should sum to ~1.0)
-    
+
     Returns:
         ComparisonResult with detailed comparison metrics
-    
+
     Example:
         >>> ont1 = {"entities": [{"id": "e1"}], "relationships": []}
         >>> ont2 = {"entities": [{"id": "e1"}], "relationships": []}
@@ -155,29 +155,21 @@ def compare_ontologies(
         1.0
     """
     result = ComparisonResult()
-    
+
     # Extract entity and relationship IDs
-    entities_left = set(
-        e.get("id") for e in ontology_left.get("entities", []) if "id" in e
-    )
-    entities_right = set(
-        e.get("id") for e in ontology_right.get("entities", []) if "id" in e
-    )
-    
-    rels_left = set(
-        r.get("id") for r in ontology_left.get("relationships", []) if "id" in r
-    )
-    rels_right = set(
-        r.get("id") for r in ontology_right.get("relationships", []) if "id" in r
-    )
-    
+    entities_left = set(e.get("id") for e in ontology_left.get("entities", []) if "id" in e)
+    entities_right = set(e.get("id") for e in ontology_right.get("entities", []) if "id" in e)
+
+    rels_left = set(r.get("id") for r in ontology_left.get("relationships", []) if "id" in r)
+    rels_right = set(r.get("id") for r in ontology_right.get("relationships", []) if "id" in r)
+
     # Compute overlaps
     entity_overlap = entities_left & entities_right
     entity_union = entities_left | entities_right
-    
+
     rel_overlap = rels_left & rels_right
     rel_union = rels_left | rels_right
-    
+
     # Set result values
     result.entity_overlap = len(entity_overlap)
     result.relationship_overlap = len(rel_overlap)
@@ -185,18 +177,18 @@ def compare_ontologies(
     result.entity_only_right = sorted(list(entities_right - entities_left))
     result.rel_only_left = sorted(list(rels_left - rels_right))
     result.rel_only_right = sorted(list(rels_right - rels_left))
-    
+
     # Compute Jaccard similarity: |intersection| / |union|
     if entity_union:
         result.entity_similarity = len(entity_overlap) / len(entity_union)
     else:
         result.entity_similarity = 1.0  # Both empty -> identical
-    
+
     if rel_union:
         result.relationship_similarity = len(rel_overlap) / len(rel_union)
     else:
         result.relationship_similarity = 1.0
-    
+
     return result
 
 
@@ -205,17 +197,17 @@ def compute_similarity(
     ontology_right: Dict[str, Any],
 ) -> float:
     """Compute Jaccard similarity between two ontologies.
-    
+
     Returns a single float (0.0 to 1.0) representing the average
     Jaccard similarity of entities and relationships.
-    
+
     Args:
         ontology_left: First ontology
         ontology_right: Second ontology
-    
+
     Returns:
         Similarity score where 0.0 = completely different, 1.0 = identical
-    
+
     Example:
         >>> ont1 = {"entities": [{"id": "e1"}], "relationships": []}
         >>> ont2 = {"entities": [{"id": "e2"}], "relationships": []}
@@ -231,15 +223,15 @@ def analyze_entity_distribution(
     ontology: Dict[str, Any],
 ) -> DistributionStats:
     """Analyze the distribution of entity types in an ontology.
-    
+
     Counts how many entities of each type are present.
-    
+
     Args:
         ontology: Ontology dict with 'entities' key
-    
+
     Returns:
         DistributionStats with type counts and percentages
-    
+
     Example:
         >>> ont = {
         ...     "entities": [
@@ -255,15 +247,15 @@ def analyze_entity_distribution(
         66.66...
     """
     stats = DistributionStats()
-    
+
     entities = ontology.get("entities", [])
     stats.total_items = len(entities)
-    
+
     for entity in entities:
         if isinstance(entity, dict) and "type" in entity:
             entity_type = entity["type"]
             stats.type_counts[entity_type] = stats.type_counts.get(entity_type, 0) + 1
-    
+
     return stats
 
 
@@ -271,15 +263,15 @@ def analyze_relationship_distribution(
     ontology: Dict[str, Any],
 ) -> DistributionStats:
     """Analyze the distribution of relationship types in an ontology.
-    
+
     Counts how many relationships of each type are present.
-    
+
     Args:
         ontology: Ontology dict with 'relationships' key
-    
+
     Returns:
         DistributionStats with type counts and percentages
-    
+
     Example:
         >>> ont = {
         ...     "relationships": [
@@ -293,15 +285,15 @@ def analyze_relationship_distribution(
         2
     """
     stats = DistributionStats()
-    
+
     relationships = ontology.get("relationships", [])
     stats.total_items = len(relationships)
-    
+
     for rel in relationships:
         if isinstance(rel, dict) and "type" in rel:
             rel_type = rel["type"]
             stats.type_counts[rel_type] = stats.type_counts.get(rel_type, 0) + 1
-    
+
     return stats
 
 
@@ -310,27 +302,23 @@ def find_entity_overlap(
     ontology_right: Dict[str, Any],
 ) -> List[str]:
     """Find entity IDs that appear in both ontologies.
-    
+
     Args:
         ontology_left: First ontology
         ontology_right: Second ontology
-    
+
     Returns:
         Sorted list of entity IDs present in both
-    
+
     Example:
         >>> ont1 = {"entities": [{"id": "e1"}, {"id": "e2"}]}
         >>> ont2 = {"entities": [{"id": "e1"}, {"id": "e3"}]}
         >>> find_entity_overlap(ont1, ont2)
         ['e1']
     """
-    entities_left = set(
-        e.get("id") for e in ontology_left.get("entities", []) if "id" in e
-    )
-    entities_right = set(
-        e.get("id") for e in ontology_right.get("entities", []) if "id" in e
-    )
-    
+    entities_left = set(e.get("id") for e in ontology_left.get("entities", []) if "id" in e)
+    entities_right = set(e.get("id") for e in ontology_right.get("entities", []) if "id" in e)
+
     overlap = entities_left & entities_right
     return sorted(list(overlap))
 
@@ -340,65 +328,61 @@ def find_relationship_overlap(
     ontology_right: Dict[str, Any],
 ) -> List[str]:
     """Find relationship IDs that appear in both ontologies.
-    
+
     Args:
         ontology_left: First ontology
         ontology_right: Second ontology
-    
+
     Returns:
         Sorted list of relationship IDs present in both
-    
+
     Example:
         >>> ont1 = {"relationships": [{"id": "r1"}, {"id": "r2"}]}
         >>> ont2 = {"relationships": [{"id": "r1"}, {"id": "r3"}]}
         >>> find_relationship_overlap(ont1, ont2)
         ['r1']
     """
-    rels_left = set(
-        r.get("id") for r in ontology_left.get("relationships", []) if "id" in r
-    )
-    rels_right = set(
-        r.get("id") for r in ontology_right.get("relationships", []) if "id" in r
-    )
-    
+    rels_left = set(r.get("id") for r in ontology_left.get("relationships", []) if "id" in r)
+    rels_right = set(r.get("id") for r in ontology_right.get("relationships", []) if "id" in r)
+
     overlap = rels_left & rels_right
     return sorted(list(overlap))
 
 
 def extract_type_distribution(items: List[Dict[str, Any]]) -> Dict[str, int]:
     """Extract type distribution from a list of items (entities or relationships).
-    
+
     Args:
         items: List of dicts with 'type' field
-    
+
     Returns:
         Dict mapping type -> count
-    
+
     Example:
         >>> items = [{"type": "A"}, {"type": "B"}, {"type": "A"}]
         >>> extract_type_distribution(items)
         {'A': 2, 'B': 1}
     """
     distribution: Dict[str, int] = {}
-    
+
     for item in items:
         if isinstance(item, dict) and "type" in item:
             item_type = item["type"]
             distribution[item_type] = distribution.get(item_type, 0) + 1
-    
+
     return distribution
 
 
 def format_comparison_result(result: ComparisonResult, verbose: bool = False) -> str:
     """Format comparison result as human-readable string.
-    
+
     Args:
         result: ComparisonResult to format
         verbose: If True, include detailed breakdowns
-    
+
     Returns:
         Formatted string
-    
+
     Example:
         >>> result = ComparisonResult(entity_overlap=5, entity_similarity=0.8)
         >>> formatted = format_comparison_result(result)
@@ -409,19 +393,19 @@ def format_comparison_result(result: ComparisonResult, verbose: bool = False) ->
     lines.append("Ontology Comparison")
     lines.append("=" * 40)
     lines.append("")
-    
+
     # Summary
     lines.append(f"Overall Similarity: {result.overall_similarity:.1%}")
     lines.append(f"  Entity Similarity:       {result.entity_similarity:.1%}")
     lines.append(f"  Relationship Similarity: {result.relationship_similarity:.1%}")
     lines.append("")
-    
+
     # Overlap counts
     lines.append("Overlaps:")
     lines.append(f"  Shared Entities:       {result.entity_overlap}")
     lines.append(f"  Shared Relationships:  {result.relationship_overlap}")
     lines.append("")
-    
+
     if verbose:
         # Only-left
         if result.entity_only_left:
@@ -431,7 +415,7 @@ def format_comparison_result(result: ComparisonResult, verbose: bool = False) ->
             if len(result.entity_only_left) > 5:
                 lines.append(f"  ... and {len(result.entity_only_left) - 5} more")
             lines.append("")
-        
+
         # Only-right
         if result.entity_only_right:
             lines.append(f"Only in Right ({len(result.entity_only_right)} entities):")
@@ -450,5 +434,5 @@ def format_comparison_result(result: ComparisonResult, verbose: bool = False) ->
             lines.append(
                 f"Unique to Right: {right_count} entities, {len(result.rel_only_right)} relationships"
             )
-    
+
     return "\n".join(lines)

@@ -81,7 +81,10 @@ def _classify_procedure_family(record: Dict[str, Any]) -> Optional[str]:
     lower_signal = signal.lower()
 
     civil = any(pattern.search(signal) for pattern in CIVIL_PATTERNS) and (
-        "civil" in lower_signal or "civ" in lower_signal or "ccp" in lower_signal or "cplr" in lower_signal
+        "civil" in lower_signal
+        or "civ" in lower_signal
+        or "ccp" in lower_signal
+        or "cplr" in lower_signal
     )
     criminal = any(pattern.search(signal) for pattern in CRIMINAL_PATTERNS) and (
         "criminal" in lower_signal or "crim" in lower_signal or "crp" in lower_signal
@@ -183,7 +186,9 @@ def run_extraction(input_dir: Path, output_jsonl: Path, output_summary: Path) ->
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Extract US civil/criminal procedure rules from state JSONL corpus")
+    parser = argparse.ArgumentParser(
+        description="Extract US civil/criminal procedure rules from state JSONL corpus"
+    )
     parser.add_argument(
         "--input-dir",
         default=str(Path.home() / ".ipfs_datasets" / "state_laws" / "state_laws_jsonld"),
@@ -191,12 +196,24 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output-jsonl",
-        default=str(Path.home() / ".ipfs_datasets" / "state_laws" / "procedural_rules" / "us_state_procedural_rules.jsonl"),
+        default=str(
+            Path.home()
+            / ".ipfs_datasets"
+            / "state_laws"
+            / "procedural_rules"
+            / "us_state_procedural_rules.jsonl"
+        ),
         help="Consolidated procedural-rules JSONL output",
     )
     parser.add_argument(
         "--output-summary",
-        default=str(Path.home() / ".ipfs_datasets" / "state_laws" / "procedural_rules" / "us_state_procedural_rules_summary.json"),
+        default=str(
+            Path.home()
+            / ".ipfs_datasets"
+            / "state_laws"
+            / "procedural_rules"
+            / "us_state_procedural_rules_summary.json"
+        ),
         help="Coverage and counts summary JSON output",
     )
     return parser.parse_args()

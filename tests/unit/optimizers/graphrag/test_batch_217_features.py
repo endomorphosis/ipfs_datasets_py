@@ -10,11 +10,13 @@ Methods under test (3 new + 3 stale-verified):
     - OntologyGenerator.entity_confidence_cv(result)
     - OntologyPipeline.run_score_coefficient_of_variation()
 """
+
 import math
 import pytest
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -27,11 +29,15 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -41,12 +47,20 @@ def _push_feedback(adapter, score):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic.__new__(OntologyCritic)
 
 
-def _make_score(completeness=0.5, consistency=0.5, clarity=0.5,
-                granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5):
+def _make_score(
+    completeness=0.5,
+    consistency=0.5,
+    clarity=0.5,
+    granularity=0.5,
+    relationship_coherence=0.5,
+    domain_alignment=0.5,
+):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     return CriticScore(
         completeness=completeness,
         consistency=consistency,
@@ -59,16 +73,19 @@ def _make_score(completeness=0.5, consistency=0.5, clarity=0.5,
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_entity(eid, text=None, confidence=1.0, entity_type="T"):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type=entity_type, text=text or eid, confidence=confidence)
 
 
 def _make_result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -78,6 +95,7 @@ def _make_result(entities=None, relationships=None):
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     p = OntologyPipeline.__new__(OntologyPipeline)
     p._run_history = []
     return p
@@ -108,8 +126,8 @@ def _graph(entities, edges):
 # OntologyOptimizer.score_bimodality_ratio
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class TestScoreBimodalityRatio:
 
+class TestScoreBimodalityRatio:
     def test_empty_history_returns_zero(self):
         o = _make_optimizer()
         assert o.score_bimodality_ratio() == 0.0
@@ -174,8 +192,8 @@ class TestScoreBimodalityRatio:
 # OntologyLearningAdapter.feedback_peak_score
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class TestFeedbackPeakScore:
 
+class TestFeedbackPeakScore:
     def test_empty_feedback_returns_zero(self):
         a = _make_adapter()
         assert a.feedback_peak_score() == 0.0
@@ -249,8 +267,8 @@ class TestFeedbackPeakScore:
 # LogicValidator.periphery_size
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class TestPeripherySize:
 
+class TestPeripherySize:
     def test_empty_graph_returns_zero(self):
         v = _make_validator()
         assert v.periphery_size({}) == 0
@@ -285,8 +303,7 @@ class TestPeripherySize:
     def test_star_out_single_hub(self):
         # Hub→A, Hub→B, Hub→C: Hub ecc=1; A/B/C ecc=0; diameter=1; periphery={Hub} → 1
         v = _make_validator()
-        g = _graph(["Hub", "A", "B", "C"],
-                   [("Hub", "A"), ("Hub", "B"), ("Hub", "C")])
+        g = _graph(["Hub", "A", "B", "C"], [("Hub", "A"), ("Hub", "B"), ("Hub", "C")])
         assert v.periphery_size(g) == 1
 
     def test_disconnected_uses_positive_eccs_only(self):
@@ -311,8 +328,7 @@ class TestPeripherySize:
 
     def test_periphery_leq_total_nodes(self):
         v = _make_validator()
-        g = _graph(["A", "B", "C", "D"],
-                   [("A", "B"), ("B", "C"), ("C", "D")])
+        g = _graph(["A", "B", "C", "D"], [("A", "B"), ("B", "C"), ("C", "D")])
         entities = g["entities"]
         assert v.periphery_size(g) <= len(entities)
 
@@ -327,8 +343,8 @@ class TestPeripherySize:
 # Stale smoke tests (methods already existed)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class TestStaleMethodsSmoke:
 
+class TestStaleMethodsSmoke:
     def test_dimension_harmonic_mean_returns_float(self):
         c = _make_critic()
         score = _make_score(0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
@@ -342,6 +358,7 @@ class TestStaleMethodsSmoke:
 
     def test_entity_confidence_cv_returns_float(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
         g = OntologyGenerator.__new__(OntologyGenerator)
         entities = [_make_entity("E1", confidence=0.3), _make_entity("E2", confidence=0.7)]
         result = _make_result(entities=entities)
@@ -349,6 +366,7 @@ class TestStaleMethodsSmoke:
 
     def test_entity_confidence_cv_zero_for_uniform(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
         g = OntologyGenerator.__new__(OntologyGenerator)
         entities = [_make_entity(f"E{i}", confidence=0.5) for i in range(4)]
         result = _make_result(entities=entities)

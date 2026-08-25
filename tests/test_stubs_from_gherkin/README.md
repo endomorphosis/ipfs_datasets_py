@@ -32,7 +32,9 @@ def wikipediarelationshipweightcalculator_instance():
 Each scenario becomes a test function:
 
 ```python
-def test_initialize_calculator_with_default_weights_for_subclass_of(wikipediarelationshipweightcalculator_instance):
+def test_initialize_calculator_with_default_weights_for_subclass_of(
+    wikipediarelationshipweightcalculator_instance,
+):
     """
     Scenario: Initialize calculator with default weights for subclass_of
 
@@ -84,6 +86,7 @@ def wikipediarelationshipweightcalculator_instance():
     """
     pass
 
+
 def test_get_weight_for_known_relationship_type(wikipediarelationshipweightcalculator_instance):
     """
     Scenario: Get weight for known relationship type
@@ -105,7 +108,9 @@ def wikipediarelationshipweightcalculator_instance():
     a WikipediaRelationshipWeightCalculator instance
     """
     from ipfs_datasets_py.wikipedia_rag_optimizer import WikipediaRelationshipWeightCalculator
+
     return WikipediaRelationshipWeightCalculator()
+
 
 def test_get_weight_for_known_relationship_type(wikipediarelationshipweightcalculator_instance):
     """
@@ -119,7 +124,7 @@ def test_get_weight_for_known_relationship_type(wikipediarelationshipweightcalcu
     """
     # When: get_relationship_weight is called with subclass_of
     weight = wikipediarelationshipweightcalculator_instance.get_relationship_weight("subclass_of")
-    
+
     # Then: the returned weight is 1.5
     assert weight == 1.5
 ```

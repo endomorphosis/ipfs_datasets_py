@@ -22,7 +22,9 @@ class KentuckyScraper(BaseStateScraper):
     _KY_SECTION_URL_RE = re.compile(r"/law/statutes/statute\.aspx\?id=\d+$", re.IGNORECASE)
     _KY_CHAPTER_URL_RE = re.compile(r"/law/statutes/chapter\.aspx\?id=\d+$", re.IGNORECASE)
     _CHAPTER_LABEL_RE = re.compile(r"^\s*chapter\s+(\d+[A-Za-z]?)\b", re.IGNORECASE)
-    _SECTION_LABEL_RE = re.compile(r"^\s*(?:KRS\s+)?(?:§\s*)?(\d+\.\d+[A-Za-z0-9\.-]*|\.\d+[A-Za-z0-9\.-]*)\b")
+    _SECTION_LABEL_RE = re.compile(
+        r"^\s*(?:KRS\s+)?(?:§\s*)?(\d+\.\d+[A-Za-z0-9\.-]*|\.\d+[A-Za-z0-9\.-]*)\b"
+    )
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -37,18 +39,16 @@ class KentuckyScraper(BaseStateScraper):
                         statute.section_number = m.group(1)
                 filtered.append(statute)
         return filtered
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Kentucky's legislative website."""
         return "https://apps.legislature.ky.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Kentucky."""
-        return [{
-            "name": "Kentucky Revised Statutes",
-            "url": self._KY_STATUTES_BASE,
-            "type": "Code"
-        }]
+        return [
+            {"name": "Kentucky Revised Statutes", "url": self._KY_STATUTES_BASE, "type": "Code"}
+        ]
 
     async def _fetch_official_ky_bytes(self, url: str, timeout_seconds: int = 5) -> bytes:
         """Fetch Kentucky's official KRS pages directly.
@@ -89,7 +89,9 @@ class KentuckyScraper(BaseStateScraper):
 
         self._record_fetch_event(provider="requests_direct", success=bool(payload))
         if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
+            await self._cache_successful_page_fetch(
+                url=url, payload=payload, provider="requests_direct"
+            )
         return payload
 
     async def _fetch_html(self, url: str, timeout_seconds: int = 5) -> str:
@@ -135,7 +137,9 @@ class KentuckyScraper(BaseStateScraper):
         if value.startswith("%PDF-") or " startxref " in value[:4000] or " endobj " in value[:4000]:
             return True
         sample = value[:2000]
-        controlish = sum(1 for char in sample if char == "\ufffd" or (ord(char) < 32 and char not in "\n\r\t"))
+        controlish = sum(
+            1 for char in sample if char == "\ufffd" or (ord(char) < 32 and char not in "\n\r\t")
+        )
         return bool(sample) and (controlish / len(sample)) > 0.05
 
     async def _discover_chapter_links(self) -> List[Tuple[str, str, str]]:
@@ -220,7 +224,9 @@ class KentuckyScraper(BaseStateScraper):
                 raw_bytes=raw_bytes,
             )
             if isinstance(document_extraction, dict):
-                extracted_text = self._normalize_legal_text(str(document_extraction.get("text") or ""))
+                extracted_text = self._normalize_legal_text(
+                    str(document_extraction.get("text") or "")
+                )
                 method = str(document_extraction.get("method") or "document_processor")
             else:
                 try:
@@ -236,7 +242,11 @@ class KentuckyScraper(BaseStateScraper):
 
         section_name = self._section_name_from_label(section_label, section_number)
         if extracted_text:
-            first_line = re.sub(r"\s+", " ", extracted_text.splitlines()[0] if "\n" in extracted_text else extracted_text[:240]).strip()
+            first_line = re.sub(
+                r"\s+",
+                " ",
+                extracted_text.splitlines()[0] if "\n" in extracted_text else extracted_text[:240],
+            ).strip()
             parsed_name = self._section_name_from_label(first_line, section_number)
             if parsed_name:
                 section_name = parsed_name[:200]
@@ -244,10 +254,14 @@ class KentuckyScraper(BaseStateScraper):
         effective_date = None
         history: List[str] = []
         if extracted_text:
-            effective_match = re.search(r"\bEffective:\s*(.*?)(?:\s+History:|$)", extracted_text, re.IGNORECASE | re.DOTALL)
+            effective_match = re.search(
+                r"\bEffective:\s*(.*?)(?:\s+History:|$)", extracted_text, re.IGNORECASE | re.DOTALL
+            )
             if effective_match:
                 effective_date = effective_match.group(1).strip()
-            history_match = re.search(r"\bHistory:\s*(.+)$", extracted_text, re.IGNORECASE | re.DOTALL)
+            history_match = re.search(
+                r"\bHistory:\s*(.+)$", extracted_text, re.IGNORECASE | re.DOTALL
+            )
             if history_match:
                 history = [self._normalize_legal_text(history_match.group(1))]
 
@@ -274,7 +288,7 @@ class KentuckyScraper(BaseStateScraper):
                 "skip_hydrate": bool(extracted_text) or method == "failed_pdf_extraction",
             },
         )
-    
+
     async def scrape_code(
         self,
         code_name: str,
@@ -282,15 +296,80 @@ class KentuckyScraper(BaseStateScraper):
         max_statutes: int | None = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Kentucky's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
-        limit = max(1, int(max_statutes)) if max_statutes else None
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .kentucky_constitution import parse_configured_kentucky_constitution
+
+        constitution_rows = parse_configured_kentucky_constitution(
+            code_name=code_name or "Kentucky Constitution",
+            max_statutes=limit,
+        )
+        if constitution_rows:
+            return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        from .kentucky_section import parse_configured_kentucky_section
+
+        local_row = parse_configured_kentucky_section(code_name=code_name)
+        if local_row is not None:
+            return [local_row]
+        official = await self._scrape_official_krs_tree(code_name, max_statutes=limit)
+        if official:
+            kept = [
+                statute
+                for statute in official
+                if self._KY_SECTION_URL_RE.search(str(statute.source_url or ""))
+            ] or official
+            return kept if limit is None else kept[: int(limit)]
+
+        # Full-corpus runs must not sole-admit generic/Justia mirrors.
+        if self._full_corpus_enabled() and max_statutes is None:
+            return []
+
+        fallback_limit = int(limit) if limit is not None else 200
+        fallback_candidates = [self._KY_STATUTES_BASE]
+        if code_url and code_url not in fallback_candidates:
+            fallback_candidates.append(code_url)
+
+        best_statutes: List[NormalizedStatute] = []
+        for candidate in fallback_candidates:
+            if "justia.com" in str(candidate).lower() or "findlaw.com" in str(candidate).lower():
+                continue
+            try:
+                generic_statutes = await self._generic_scrape(
+                    code_name,
+                    candidate,
+                    "Ky. Rev. Stat.",
+                    max_sections=fallback_limit,
+                )
+            except Exception:
+                continue
+            filtered = self._filter_section_level(generic_statutes)
+            generic_statutes = [
+                statute
+                for statute in (filtered or generic_statutes)
+                if self._KY_SECTION_URL_RE.search(str(statute.source_url or ""))
+            ][:fallback_limit]
+            if len(generic_statutes) > len(best_statutes):
+                best_statutes = generic_statutes
+            if limit is not None and len(best_statutes) >= limit:
+                break
+
+        return best_statutes[:fallback_limit]
+
+    async def _scrape_official_krs_tree(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        """Walk the official KRS chapter/section tree without silent clamps."""
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
         statutes: List[NormalizedStatute] = []
 
         chapter_links = await self._discover_chapter_links()
@@ -322,7 +401,9 @@ class KentuckyScraper(BaseStateScraper):
         last_heartbeat = time.monotonic()
         total_sections_seen = 0
 
-        for chapter_index, (chapter_url, chapter_label, chapter_number) in enumerate(chapter_links, start=1):
+        for chapter_index, (chapter_url, chapter_label, chapter_number) in enumerate(
+            chapter_links, start=1
+        ):
             if limit is not None and len(statutes) >= limit:
                 break
 
@@ -347,7 +428,12 @@ class KentuckyScraper(BaseStateScraper):
                 chapter_label,
                 len(section_links),
             )
-            for section_index, (section_url, section_label, section_number, discovered_chapter_label) in enumerate(section_links, start=1):
+            for section_index, (
+                section_url,
+                section_label,
+                section_number,
+                discovered_chapter_label,
+            ) in enumerate(section_links, start=1):
                 if limit is not None and len(statutes) >= limit:
                     break
                 total_sections_seen += 1
@@ -388,7 +474,9 @@ class KentuckyScraper(BaseStateScraper):
                         exc,
                     )
                     continue
-                if statute is not None and self._KY_SECTION_URL_RE.search(str(statute.source_url or "")):
+                if statute is not None and self._KY_SECTION_URL_RE.search(
+                    str(statute.source_url or "")
+                ):
                     statute.structured_data = {
                         **(statute.structured_data or {}),
                         "chapter_url": chapter_url,
@@ -404,33 +492,174 @@ class KentuckyScraper(BaseStateScraper):
                 time.monotonic() - chapter_started_at,
             )
 
-        if statutes:
-            return statutes[:limit] if limit is not None else statutes
+        return statutes if limit is None else statutes[: int(limit)]
 
-        fallback_limit = limit or 200
-        fallback_candidates = [self._KY_STATUTES_BASE]
-        if code_url and code_url not in fallback_candidates:
-            fallback_candidates.append(code_url)
+    def _official_ssl_context(self, *, unverified: bool = False):
+        import ssl
 
-        best_statutes: List[NormalizedStatute] = []
-        for candidate in fallback_candidates:
+        if unverified:
+            return ssl._create_unverified_context()
+        return ssl.create_default_context()
+
+    def _official_http_get(self, url: str, timeout: int = 20) -> Tuple[bytes, bytes, bytes]:
+        """Fetch one official Kentucky URL and retain request/response/body bytes."""
+        import ssl
+        import urllib.error
+        import urllib.request
+        from urllib.parse import urlparse
+
+        parsed = urlparse(url)
+        host = parsed.netloc
+        path = parsed.path or "/"
+        if parsed.query:
+            path = f"{path}?{parsed.query}"
+        request_bytes = (
+            f"GET {path} HTTP/1.1\n"
+            f"host: {host}\n"
+            "accept: text/html,application/xhtml+xml;q=0.9,*/*;q=0.8\n"
+        ).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-open-us-law-kentucky/1.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            },
+            method="GET",
+        )
+        last_exc: Exception | None = None
+        body = b""
+        status = 0
+        header_block = ""
+        for unverified in (False, True):
             try:
-                generic_statutes = await self._generic_scrape(
-                    code_name,
-                    candidate,
-                    "Ky. Rev. Stat.",
-                    max_sections=fallback_limit,
-                )
-            except Exception:
-                continue
-            filtered = self._filter_section_level(generic_statutes)
-            generic_statutes = (filtered or generic_statutes)[:fallback_limit]
-            if len(generic_statutes) > len(best_statutes):
-                best_statutes = generic_statutes
-            if limit is not None and len(best_statutes) >= limit:
+                with urllib.request.urlopen(
+                    req,
+                    timeout=max(5, int(timeout)),
+                    context=self._official_ssl_context(unverified=unverified),
+                ) as resp:
+                    body = bytes(resp.read() or b"")
+                    status = int(getattr(resp, "status", 200) or 200)
+                    header_block = "".join(
+                        f"{key}: {value}\n" for key, value in resp.headers.items()
+                    )
+                last_exc = None
                 break
+            except (urllib.error.URLError, ssl.SSLError, TimeoutError, OSError) as exc:
+                last_exc = exc
+                continue
+        if last_exc is not None:
+            raise RuntimeError(f"official Kentucky GET failed for {url}: {last_exc}") from last_exc
+        if status != 200 or not body:
+            raise RuntimeError(f"official Kentucky GET returned HTTP {status} for {url}")
+        response_bytes = f"HTTP/1.1 {status} OK\n{header_block}\n".encode("utf-8") + body
+        return request_bytes, response_bytes, body
 
-        return best_statutes[:fallback_limit]
+    def _parse_official_chapter_index(self, html: str, index_url: str) -> List[Dict[str, str]]:
+        """Parse every official KRS chapter unit from the live statutes index."""
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError as exc:
+            raise RuntimeError("BeautifulSoup is required for official Kentucky discovery") from exc
+
+        soup = BeautifulSoup(html, "html.parser")
+        units: List[Dict[str, str]] = []
+        seen: set[str] = set()
+        for link in soup.find_all("a", href=True):
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            href = urljoin(index_url, str(link.get("href") or ""))
+            if not self._KY_CHAPTER_URL_RE.search(href):
+                continue
+            if href in seen:
+                continue
+            chapter_number = self._extract_chapter_number(label)
+            if not chapter_number:
+                id_match = re.search(r"[?&]id=(\d+)", href, flags=re.IGNORECASE)
+                if not id_match or not re.match(r"^\d+[A-Za-z]?$", label):
+                    continue
+                chapter_number = label
+            if not label.upper().startswith("CHAPTER ") and not re.match(
+                r"^\d+[A-Za-z]?$", label
+            ):
+                if "CHAPTER" not in label.upper():
+                    continue
+            seen.add(href)
+            units.append(
+                {
+                    "canonical_key": f"ky:chapter-{chapter_number.lower()}",
+                    "source_url": href,
+                    "label": label,
+                    "chapter_number": chapter_number,
+                    "text": (
+                        f"Kentucky Revised Statutes {label} official chapter index "
+                        f"entry retained from {href}"
+                    ),
+                }
+            )
+        return units
+
+    def fetch_official(self, code: str = "KY"):
+        """Acquire the uncapped official KRS chapter frontier.
+
+        Returns an ``OfficialFetch`` whose rows enumerate every official
+        chapter unit discovered from ``apps.legislature.ky.gov``. The
+        retained body is the compact official catalog derived from the
+        live index response.
+        """
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or self.state_code or "KY").strip().upper()
+        if normalized != "KY":
+            raise ValueError(f"KentuckyScraper cannot acquire {normalized}")
+        index_url = self._KY_STATUTES_BASE
+        request_bytes, response_bytes, index_body = self._official_http_get(index_url)
+        html = index_body.decode("utf-8", errors="replace")
+        units = self._parse_official_chapter_index(html, index_url)
+        if len(units) < 3:
+            raise RuntimeError(
+                f"official Kentucky chapter index is incomplete: {len(units)} units"
+            )
+        rows = tuple(
+            {
+                "canonical_key": unit["canonical_key"],
+                "source_url": unit["source_url"],
+                "text": unit["text"],
+            }
+            for unit in units
+        )
+        catalog = "\n".join(
+            f"{unit['canonical_key']}\t{unit['source_url']}\t{unit['label']}"
+            for unit in units
+        ).encode("utf-8")
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code="KY",
+            request_bytes=request_bytes,
+            response_bytes=response_bytes,
+            body_bytes=catalog,
+            source_domain="apps.legislature.ky.gov",
+            source_path="/law/statutes/",
+            frontier=frontier,
+            rows=rows,
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=rows[0]["canonical_key"],
+            last_hierarchy_unit=rows[-1]["canonical_key"],
+        )
 
 
 # Register this scraper with the registry

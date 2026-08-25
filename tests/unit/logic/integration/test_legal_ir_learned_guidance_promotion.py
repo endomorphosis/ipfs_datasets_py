@@ -174,8 +174,16 @@ def test_promotion_emits_deterministic_contract_guidance_and_rollback() -> None:
 @pytest.mark.parametrize(
     ("candidate", "reason", "evidence_field"),
     [
-        (_canary(copy=0.2, symbolic=1.0), "source_copy_guardrail_regression", "source_copy_regressions"),
-        (_canary(copy=0.0, symbolic=0.8), "symbolic_validity_guardrail_regression", "symbolic_validity_regressions"),
+        (
+            _canary(copy=0.2, symbolic=1.0),
+            "source_copy_guardrail_regression",
+            "source_copy_regressions",
+        ),
+        (
+            _canary(copy=0.0, symbolic=0.8),
+            "symbolic_validity_guardrail_regression",
+            "symbolic_validity_regressions",
+        ),
     ],
 )
 def test_promotion_blocks_hard_guardrail_regressions(
@@ -216,9 +224,7 @@ def test_promotion_requires_fixed_complete_canary_and_rejects_unsafe_features() 
     baseline = _canary()
     candidate = _canary()
     candidate["canary_id"] = "different-canary"
-    del candidate["view_family_metrics"]["deontic"][
-        "symbolic_validity_success_rate"
-    ]
+    del candidate["view_family_metrics"]["deontic"]["symbolic_validity_success_rate"]
 
     result = promote_learned_autoencoder_guidance(
         export,

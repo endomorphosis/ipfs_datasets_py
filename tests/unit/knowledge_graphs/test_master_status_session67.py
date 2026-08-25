@@ -67,8 +67,9 @@ class TestTestStatusMdUpdated:
     def test_broken_link_fixed(self):
         """IMPLEMENTATION_STATUS.md link in See Also must be replaced with MASTER_STATUS.md."""
         content = _read(_TEST_STATUS)
-        assert "IMPLEMENTATION_STATUS.md" not in content, \
+        assert "IMPLEMENTATION_STATUS.md" not in content, (
             "Stale IMPLEMENTATION_STATUS.md link must be removed from TEST_STATUS.md"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -97,16 +98,19 @@ class TestTestGuideMdUpdated:
     def test_stale_not_implemented_notes_removed(self):
         """Stale 'not yet implemented - v2.1.0' notes must be removed."""
         content = _read(_TEST_GUIDE)
-        assert "not yet implemented - v2.1.0" not in content, \
+        assert "not yet implemented - v2.1.0" not in content, (
             "Stale 'not yet implemented' notes must be removed from TEST_GUIDE.md"
+        )
 
     def test_broken_links_fixed(self):
         """Broken IMPLEMENTATION_STATUS.md and NEW_COMPREHENSIVE_IMPROVEMENT_PLAN links must be gone."""
         content = _read(_TEST_GUIDE)
-        assert "IMPLEMENTATION_STATUS.md" not in content, \
+        assert "IMPLEMENTATION_STATUS.md" not in content, (
             "Stale IMPLEMENTATION_STATUS.md link must be removed from TEST_GUIDE.md"
-        assert "NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18" not in content, \
+        )
+        assert "NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18" not in content, (
             "Stale NEW_COMPREHENSIVE_IMPROVEMENT_PLAN link must be removed from TEST_GUIDE.md"
+        )
 
     def test_last_updated_date(self):
         """Last Updated must say 2026-02-22."""
@@ -124,14 +128,16 @@ class TestArchiveReadmeUpdated:
     def test_new_tag_removed(self):
         """**NEW** tag on COMPREHENSIVE_ANALYSIS link must be removed."""
         content = _read(_ARCHIVE_README)
-        assert "⭐ **NEW**" not in content, \
+        assert "⭐ **NEW**" not in content, (
             "Stale **NEW** tag must be removed from archive/README.md"
+        )
 
     def test_implementation_status_link_fixed(self):
         """IMPLEMENTATION_STATUS.md link must be replaced (file was archived)."""
         content = _read(_ARCHIVE_README)
-        assert "IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS" not in content, \
+        assert "IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS" not in content, (
             "Broken IMPLEMENTATION_STATUS.md parent link must be removed from archive/README.md"
+        )
 
     def test_last_updated_date(self):
         """Last Updated must say 2026-02-22."""
@@ -141,8 +147,9 @@ class TestArchiveReadmeUpdated:
     def test_comprehensive_analysis_has_historical_note(self):
         """COMPREHENSIVE_ANALYSIS entry must mention 'historical'."""
         content = _read(_ARCHIVE_README)
-        assert "historical" in content.lower(), \
+        assert "historical" in content.lower(), (
             "archive/README.md must note that COMPREHENSIVE_ANALYSIS is historical"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -154,57 +161,65 @@ class TestMasterRefactoringPlanUpdated:
     def test_section_1_session_updated(self):
         """Section 1 Module Snapshot heading must say session 66 or later."""
         content = _read(_REFACTORING_PLAN)
-        assert any(f"session {n}" in content for n in range(66, 80)), \
+        assert any(f"session {n}" in content for n in range(66, 80)), (
             "MASTER_REFACTORING_PLAN_2026.md section 1 must say session 66 or later"
+        )
 
     def test_section_1_old_session_gone(self):
         """Stale 'session 63)' heading (not multi-session refs) must be replaced."""
         content = _read(_REFACTORING_PLAN)
         # Remove multi-session reference lines to check only the section heading
         filtered = "\n".join(
-            line for line in content.splitlines()
+            line
+            for line in content.splitlines()
             if "sessions 63-64" not in line and "session 63-64" not in line
         )
-        assert "session 63)" not in filtered, \
+        assert "session 63)" not in filtered, (
             "Stale 'session 63)' heading must be replaced in MASTER_REFACTORING_PLAN_2026.md"
+        )
 
     def test_test_count_updated(self):
         """Test count must say 3,856+ or higher (not stale 3,782)."""
         content = _read(_REFACTORING_PLAN)
-        assert any(f"{n}+" in content for n in ["3,856", "3,939", "3,971"]), \
+        assert any(f"{n}+" in content for n in ["3,856", "3,939", "3,971"]), (
             "MASTER_REFACTORING_PLAN_2026.md must show 3,856+ or higher test count"
+        )
 
     def test_test_files_updated(self):
         """Test files count must say 108+ or higher (not stale 95+)."""
         content = _read(_REFACTORING_PLAN)
-        assert any(f"{n}+" in content for n in ["108", "110"]), \
+        assert any(f"{n}+" in content for n in ["108", "110"]), (
             "MASTER_REFACTORING_PLAN_2026.md must show 108+ or higher test files"
+        )
 
     def test_document_version_updated(self):
         """Footer Document Version must say 3.22.21 or later (not stale 1.0)."""
         content = _read(_REFACTORING_PLAN)
-        assert any(f"Document Version:** {v}" in content
-                   for v in ["3.22.21", "3.22.22", "3.22.23", "3.22.24"]), \
-            "MASTER_REFACTORING_PLAN_2026.md Document Version must be 3.22.21 or later"
-        assert "Document Version:** 1.0" not in content, \
-            "Stale Document Version: 1.0 must be gone"
+        assert any(
+            f"Document Version:** {v}" in content
+            for v in ["3.22.21", "3.22.22", "3.22.23", "3.22.24"]
+        ), "MASTER_REFACTORING_PLAN_2026.md Document Version must be 3.22.21 or later"
+        assert "Document Version:** 1.0" not in content, "Stale Document Version: 1.0 must be gone"
 
     def test_next_review_section_present(self):
         """'Next scheduled review' line must be present in the document."""
         content = _read(_REFACTORING_PLAN)
-        assert "Next scheduled review" in content, \
+        assert "Next scheduled review" in content, (
             "MASTER_REFACTORING_PLAN_2026.md must have a 'Next scheduled review' line"
+        )
 
     def test_next_review_no_stale_v201(self):
         """Next scheduled review must not reference stale v2.0.1."""
         content = _read(_REFACTORING_PLAN)
-        assert "Next scheduled review" in content, \
+        assert "Next scheduled review" in content, (
             "MASTER_REFACTORING_PLAN_2026.md must have a 'Next scheduled review' line"
+        )
         review_line = next(
             (line for line in content.splitlines() if "Next scheduled review" in line), ""
         )
-        assert "v2.0.1" not in review_line, \
+        assert "v2.0.1" not in review_line, (
             f"Stale 'v2.0.1' must be removed from Next scheduled review line: {review_line!r}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -216,10 +231,12 @@ class TestDocumentationGuideTODOTicked:
     def test_test_guide_todo_ticked(self):
         """The [ ] Update tests/knowledge_graphs/TEST_GUIDE.md item must now be [x]."""
         content = _read(_DOC_GUIDE)
-        assert "- [x] Update tests/knowledge_graphs/TEST_GUIDE.md" in content, \
+        assert "- [x] Update tests/knowledge_graphs/TEST_GUIDE.md" in content, (
             "DOCUMENTATION_GUIDE.md must have TEST_GUIDE.md TODO ticked [x]"
-        assert "- [ ] Update tests/knowledge_graphs/TEST_GUIDE.md" not in content, \
+        )
+        assert "- [ ] Update tests/knowledge_graphs/TEST_GUIDE.md" not in content, (
             "Stale unchecked TEST_GUIDE.md TODO must be gone"
+        )
 
 
 # ---------------------------------------------------------------------------

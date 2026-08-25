@@ -26,6 +26,7 @@ try:
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.backends import default_backend
     from cryptography.exceptions import InvalidSignature
+
     CRYPTOGRAPHY_AVAILABLE = True
 except ImportError:
     CRYPTOGRAPHY_AVAILABLE = False
@@ -35,11 +36,11 @@ DEFAULT_UCAN_DIR = os.path.expanduser("~/.ipfs_datasets/ucan")
 DEFAULT_KEY_SIZE = 2048
 DEFAULT_TTL = 3600  # 1 hour
 SUPPORTED_CAPABILITIES = [
-    "encrypt",    # Can encrypt data
-    "decrypt",    # Can decrypt data
-    "delegate",   # Can delegate capabilities to others
-    "revoke",     # Can revoke capabilities
-    "manage"      # Can manage keys (create, delete, etc.)
+    "encrypt",  # Can encrypt data
+    "decrypt",  # Can decrypt data
+    "delegate",  # Can delegate capabilities to others
+    "revoke",  # Can revoke capabilities
+    "manage",  # Can manage keys (create, delete, etc.)
 ]
 
 
@@ -77,6 +78,7 @@ class UCANKeyPair:
         Consider using environment variables or secure key management systems
         for production deployments.
     """
+
     did: str  # Decentralized Identifier (DID)
     public_key_pem: str
     private_key_pem: Optional[str] = None  # None for public-only keys
@@ -114,6 +116,7 @@ class UCANCapability:
         ...     caveats={"expires_at": "2024-12-31T23:59:59Z"}
         ... )
     """
+
     resource: str  # What resource this capability applies to
     action: str  # What action this capability allows (encrypt, decrypt, delegate, etc.)
     caveats: Dict[str, Any] = field(default_factory=dict)  # Restrictions on the capability
@@ -148,6 +151,7 @@ class UCANToken:
         capabilities can be passed down from one entity to another with proper
         cryptographic verification.
     """
+
     token_id: str
     issuer: str  # DID of the issuer
     audience: str  # DID of the audience
@@ -170,7 +174,7 @@ class UCANRevocation:
 
     Attributes:
         token_id (str): Unique identifier of the UCAN token being revoked.
-        revoked_by (str): Decentralized Identifier (DID) of the entity that 
+        revoked_by (str): Decentralized Identifier (DID) of the entity that
                          initiated the revocation. This should be an authorized
                          party capable of revoking the token.
         revoked_at (str): ISO 8601 timestamp indicating when the revocation
@@ -191,6 +195,7 @@ class UCANRevocation:
         This class follows the UCAN specification for token revocation.
         The revoked_by DID must have appropriate authority to revoke the token.
     """
+
     token_id: str
     revoked_by: str  # DID of the revoker
     revoked_at: str
@@ -200,17 +205,17 @@ class UCANRevocation:
 class UCANManager:
     """
     Comprehensive manager for UCAN (User Controlled Authorization Networks) operations.
-    
+
     The UCANManager class provides a complete implementation for managing decentralized
     authorization through cryptographically verifiable capability tokens. It handles
     the full lifecycle of UCAN operations including keypair management, token creation,
     verification, delegation, and revocation.
-    
+
     This manager implements the UCAN specification for capability-based authorization,
     enabling secure delegation of permissions between decentralized identities (DIDs)
     without requiring a central authority. Each operation is cryptographically secured
     and maintains an immutable audit trail.
-    
+
     Key Features:
     - **Keypair Management**: Generate, import, and store RSA keypairs with DIDs
     - **Token Lifecycle**: Create, verify, delegate, and revoke UCAN tokens
@@ -219,14 +224,14 @@ class UCANManager:
     - **Revocation Support**: Immediate token invalidation with audit trails
     - **Persistent Storage**: Automatic persistence of keypairs, tokens, and revocations
     - **Cryptographic Security**: RS256 signatures for token integrity
-    
+
     Supported Capabilities:
     - encrypt: Permission to encrypt data or resources
-    - decrypt: Permission to decrypt data or resources  
+    - decrypt: Permission to decrypt data or resources
     - delegate: Permission to delegate capabilities to others
     - revoke: Permission to revoke previously granted capabilities
     - manage: Permission to manage keys and system operations
-    
+
     Storage Structure:
     The manager maintains persistent storage in ~/.ipfs_datasets/ucan/:
     - keypairs.json: RSA keypairs with DIDs and metadata
@@ -238,14 +243,14 @@ class UCANManager:
         >>> manager.initialize()
         >>> alice = manager.generate_keypair()
         >>> bob = manager.generate_keypair()
-        >>> 
+        >>>
         >>> capability = UCANCapability("file://secret.txt", "read")
         >>> token = manager.create_token(
         ...     issuer_did=alice.did,
         ...     audience_did=bob.did,
         ...     capabilities=[capability]
         ... )
-        >>> 
+        >>>
         >>> is_valid, error = manager.verify_token(token.token_id)
         >>> has_access = manager.has_capability(bob.did, "file://secret.txt", "read")
     """
@@ -253,7 +258,7 @@ class UCANManager:
     _instance = None
 
     @classmethod
-    def get_instance(cls) -> 'UCANManager':
+    def get_instance(cls) -> "UCANManager":
         """Get the singleton instance."""
         if cls._instance is None:
             cls._instance = cls()
@@ -287,25 +292,25 @@ class UCANManager:
     def initialize(self) -> bool:
         """
         Initialize the UCAN (User Controlled Authorization Networks) manager.
-        
+
         This method performs the complete initialization sequence for the UCAN manager,
         including loading cryptographic keypairs, authentication tokens, and revocation
         lists. The initialization process requires the cryptography module to be available.
-        
+
         The initialization process includes:
         - Verification of cryptography module availability
         - Loading and validating stored keypairs
         - Loading existing authentication tokens
         - Loading token revocation lists
         - Setting the manager's initialized state
-        
-            bool: True if initialization completed successfully, False if the 
+
+            bool: True if initialization completed successfully, False if the
                   cryptography module is unavailable or initialization fails.
-                  
+
         Note:
             If the cryptography module is not available, a warning will be printed
             and the method will return False without attempting initialization.
-            
+
         Raises:
             This method handles exceptions internally and returns False on failure
             rather than propagating exceptions.
@@ -328,14 +333,14 @@ class UCANManager:
 
     def _load_keypairs(self) -> None:
         """Load cryptographic keypairs from persistent storage.
-        
+
         Reads keypair data from the default UCAN directory's keypairs.json file
         and reconstructs UCANKeyPair objects with their associated metadata.
-        
+
         The method handles missing files gracefully and provides error handling
         for corrupted or invalid keypair data. Successfully loaded keypairs are
         stored in the instance's keypairs dictionary, indexed by their DID.
-        
+
         File Format:
             The keypairs.json file should contain a JSON object where:
             - Keys are DID strings
@@ -344,19 +349,19 @@ class UCANManager:
                 - private_key_pem (str, optional): PEM-encoded private key
                 - created_at (str, optional): ISO format timestamp
                 - key_type (str, optional): Key algorithm type, defaults to "RSA"
-        
+
         Side Effects:
             - Populates self.keypairs dictionary with loaded UCANKeyPair objects
             - Prints status messages to stdout
             - Handles file I/O exceptions gracefully
-        
+
         Raises:
             Does not raise exceptions - errors are caught and logged to stdout.
         """
         keypairs_file = os.path.join(DEFAULT_UCAN_DIR, "keypairs.json")
         if os.path.exists(keypairs_file):
             try:
-                with open(keypairs_file, 'r') as f:
+                with open(keypairs_file, "r") as f:
                     keypair_data = json.load(f)
 
                 self.keypairs = {}
@@ -366,7 +371,7 @@ class UCANManager:
                         public_key_pem=data["public_key_pem"],
                         private_key_pem=data.get("private_key_pem"),
                         created_at=data.get("created_at", datetime.datetime.now().isoformat()),
-                        key_type=data.get("key_type", "RSA")
+                        key_type=data.get("key_type", "RSA"),
                     )
 
                 print(f"Loaded {len(self.keypairs)} keypairs from storage")
@@ -375,24 +380,24 @@ class UCANManager:
 
     def _save_keypairs(self) -> None:
         """Save all keypairs to persistent storage as JSON.
-        
+
         Serializes the current keypairs dictionary to a JSON file located at
         {DEFAULT_UCAN_DIR}/keypairs.json. Each keypair is stored with its DID
         as the key and includes public key PEM, private key PEM, creation timestamp,
         and key type.
-        
+
         The method handles serialization of KeyPair objects by extracting their
         attributes into a dictionary format suitable for JSON storage.
-        
+
         Raises:
             Exception: If file writing fails or serialization encounters an error.
             The error is caught and logged but not re-raised.
-            
+
         Side Effects:
             - Creates or overwrites the keypairs.json file
             - Prints success message with count of saved keypairs
             - Prints error message if save operation fails
-        
+
         Note:
             This is a private method intended for internal storage management.
             The keypairs file contains sensitive cryptographic material and should
@@ -407,10 +412,10 @@ class UCANManager:
                     "public_key_pem": keypair.public_key_pem,
                     "private_key_pem": keypair.private_key_pem,
                     "created_at": keypair.created_at,
-                    "key_type": keypair.key_type
+                    "key_type": keypair.key_type,
                 }
 
-            with open(keypairs_file, 'w') as f:
+            with open(keypairs_file, "w") as f:
                 json.dump(keypair_data, f, indent=2)
 
             print(f"Saved {len(self.keypairs)} keypairs to storage")
@@ -419,22 +424,22 @@ class UCANManager:
 
     def _load_tokens(self) -> None:
         """Load UCAN tokens from persistent storage.
-        
+
         Reads token data from the tokens.json file in the default UCAN directory
         and reconstructs UCANToken objects with their associated capabilities.
-        Each token contains issuer/audience information, capabilities with 
+        Each token contains issuer/audience information, capabilities with
         resources/actions/caveats, expiration times, and cryptographic proofs.
-        
+
         The method populates the self.tokens dictionary with token_id as keys
         and UCANToken instances as values. If the tokens file doesn't exist,
         the method completes silently. Loading errors are caught and reported
         but don't raise exceptions.
-        
+
         Side Effects:
             - Modifies self.tokens dictionary
             - Prints loading status to stdout
             - Prints error messages on failure
-            
+
         File Format:
             Expected JSON structure with token_id keys mapping to objects
             containing issuer, audience, capabilities array, expires_at,
@@ -443,18 +448,20 @@ class UCANManager:
         tokens_file = os.path.join(DEFAULT_UCAN_DIR, "tokens.json")
         if os.path.exists(tokens_file):
             try:
-                with open(tokens_file, 'r') as f:
+                with open(tokens_file, "r") as f:
                     token_data = json.load(f)
 
                 self.tokens = {}
                 for token_id, data in token_data.items():
                     capabilities = []
                     for cap_data in data["capabilities"]:
-                        capabilities.append(UCANCapability(
-                            resource=cap_data["resource"],
-                            action=cap_data["action"],
-                            caveats=cap_data.get("caveats", {})
-                        ))
+                        capabilities.append(
+                            UCANCapability(
+                                resource=cap_data["resource"],
+                                action=cap_data["action"],
+                                caveats=cap_data.get("caveats", {}),
+                            )
+                        )
 
                     self.tokens[token_id] = UCANToken(
                         token_id=token_id,
@@ -464,7 +471,7 @@ class UCANManager:
                         expires_at=data["expires_at"],
                         not_before=data["not_before"],
                         proof=data.get("proof"),
-                        signature=data.get("signature")
+                        signature=data.get("signature"),
                     )
 
                 print(f"Loaded {len(self.tokens)} tokens from storage")
@@ -473,18 +480,18 @@ class UCANManager:
 
     def _save_tokens(self) -> None:
         """Save UCAN tokens to persistent JSON storage.
-        
+
         Serializes all tokens in the token cache to a JSON file in the default
         UCAN directory. Each token is converted to a dictionary containing its
         issuer, audience, capabilities, expiration times, proof, and signature.
-        
+
         The tokens are saved to `{DEFAULT_UCAN_DIR}/tokens.json` with pretty
         printing (2-space indentation) for readability.
-        
+
         Raises:
             Exception: If there's an error creating the directory, opening the file,
                       or writing the JSON data. Error details are printed to stdout.
-        
+
         Note:
             This is a private method intended for internal token persistence.
             Capabilities are flattened to dictionaries containing resource, action,
@@ -497,11 +504,9 @@ class UCANManager:
             for token_id, token in self.tokens.items():
                 capabilities = []
                 for cap in token.capabilities:
-                    capabilities.append({
-                        "resource": cap.resource,
-                        "action": cap.action,
-                        "caveats": cap.caveats
-                    })
+                    capabilities.append(
+                        {"resource": cap.resource, "action": cap.action, "caveats": cap.caveats}
+                    )
 
                 token_data[token_id] = {
                     "issuer": token.issuer,
@@ -510,10 +515,10 @@ class UCANManager:
                     "expires_at": token.expires_at,
                     "not_before": token.not_before,
                     "proof": token.proof,
-                    "signature": token.signature
+                    "signature": token.signature,
                 }
 
-            with open(tokens_file, 'w') as f:
+            with open(tokens_file, "w") as f:
                 json.dump(token_data, f, indent=2)
 
             print(f"Saved {len(self.tokens)} tokens to storage")
@@ -553,7 +558,7 @@ class UCANManager:
         revocations_file = os.path.join(DEFAULT_UCAN_DIR, "revocations.json")
         if os.path.exists(revocations_file):
             try:
-                with open(revocations_file, 'r') as f:
+                with open(revocations_file, "r") as f:
                     revocation_data = json.load(f)
 
                 self.revocations = {}
@@ -562,28 +567,27 @@ class UCANManager:
                         token_id=token_id,
                         revoked_by=data["revoked_by"],
                         revoked_at=data["revoked_at"],
-                        reason=data["reason"]
+                        reason=data["reason"],
                     )
 
                 print(f"Loaded {len(self.revocations)} revocations from storage")
             except Exception as e:
                 print(f"Error loading revocations: {str(e)}")
 
-
     def _save_revocations(self) -> None:
         """Save UCAN token revocations to persistent storage.
-        
+
         Serializes the current revocations dictionary to a JSON file in the default
         UCAN directory. Each revocation entry is converted from a dataclass to a
         dictionary format for JSON serialization.
-        
+
         The revocations are saved to '{DEFAULT_UCAN_DIR}/revocations.json' with
         pretty-printed formatting (2-space indentation).
-        
+
         Raises:
             Exception: If file writing fails due to permissions, disk space, or
                       serialization errors. Error details are printed to stdout.
-        
+
         Note:
             This is a private method intended for internal use by the UCAN manager.
             Revocations are automatically saved when modified through public methods.
@@ -595,7 +599,7 @@ class UCANManager:
             for token_id, revocation in self.revocations.items():
                 revocation_data[token_id] = asdict(revocation)
 
-            with open(revocations_file, 'w') as f:
+            with open(revocations_file, "w") as f:
                 json.dump(revocation_data, f, indent=2)
 
             print(f"Saved {len(self.revocations)} revocations to storage")
@@ -639,9 +643,7 @@ class UCANManager:
 
         # Generate RSA keypair
         private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=DEFAULT_KEY_SIZE,
-            backend=default_backend()
+            public_exponent=65537, key_size=DEFAULT_KEY_SIZE, backend=default_backend()
         )
 
         # Extract public key
@@ -651,24 +653,20 @@ class UCANManager:
         private_pem = private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
-        ).decode('utf-8')
+            encryption_algorithm=serialization.NoEncryption(),
+        ).decode("utf-8")
 
         public_pem = public_key.public_bytes(
             encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        ).decode('utf-8')
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        ).decode("utf-8")
 
         # Generate DID
         key_fingerprint = hashlib.sha256(public_pem.encode()).hexdigest()
         did = f"did:key:{key_fingerprint}"
 
         # Create keypair
-        keypair = UCANKeyPair(
-            did=did,
-            public_key_pem=public_pem,
-            private_key_pem=private_pem
-        )
+        keypair = UCANKeyPair(did=did, public_key_pem=public_pem, private_key_pem=private_pem)
 
         # Store keypair
         self.keypairs[did] = keypair
@@ -676,37 +674,39 @@ class UCANManager:
 
         return keypair
 
-    def import_keypair(self, public_key_pem: str, private_key_pem: Optional[str] = None) -> UCANKeyPair:
+    def import_keypair(
+        self, public_key_pem: str, private_key_pem: Optional[str] = None
+    ) -> UCANKeyPair:
         """
         Import an existing cryptographic keypair into the UCAN manager.
-        
+
         This method allows you to import previously generated keypairs for use in UCAN
         operations. The keypair is stored internally and can be retrieved using the
         generated DID identifier.
-        
+
         Args:
             public_key_pem (str): PEM-encoded public key string. Must be a valid
                 PEM format public key.
             private_key_pem (Optional[str], optional): PEM-encoded private key string.
                 If not provided, only signing operations requiring the private key
                 will be unavailable. Defaults to None.
-        
+
         Returns:
             UCANKeyPair: The imported keypair object containing the DID identifier
                 and key material.
-        
+
         Raises:
             RuntimeError: If the UCAN manager is not initialized or if the
                 cryptography module is not available.
             ValueError: If the provided PEM keys are invalid or malformed.
-        
+
         Example:
             >>> public_pem = "-----BEGIN PUBLIC KEY-----\n..."
             >>> private_pem = "-----BEGIN PRIVATE KEY-----\n..."
             >>> keypair = ucan_manager.import_keypair(public_pem, private_pem)
             >>> print(keypair.did)
             did:key:abc123...
-        
+
         Note:
             The DID is generated by hashing the public key PEM content with SHA-256.
             The keypair is automatically saved to persistent storage.
@@ -723,9 +723,7 @@ class UCANManager:
 
         # Create keypair
         keypair = UCANKeyPair(
-            did=did,
-            public_key_pem=public_key_pem,
-            private_key_pem=private_key_pem
+            did=did, public_key_pem=public_key_pem, private_key_pem=private_key_pem
         )
 
         # Store keypair
@@ -738,19 +736,19 @@ class UCANManager:
         """
         Retrieve a cryptographic keypair associated with a specific DID.
 
-        This method looks up and returns a UCAN keypair from the manager's 
+        This method looks up and returns a UCAN keypair from the manager's
         internal storage based on the provided Decentralized Identifier (DID).
         The manager must be initialized before calling this method.
 
-            did (str): The Decentralized Identifier (DID) string used as the 
+            did (str): The Decentralized Identifier (DID) string used as the
                        lookup key for the desired keypair.
 
-            Optional[UCANKeyPair]: The UCAN keypair object associated with the 
-                                  provided DID, or None if no keypair is found 
+            Optional[UCANKeyPair]: The UCAN keypair object associated with the
+                                  provided DID, or None if no keypair is found
                                   for the given DID.
 
         Raises:
-            RuntimeError: If the UCAN manager has not been initialized prior 
+            RuntimeError: If the UCAN manager has not been initialized prior
                          to calling this method.
 
         Example:
@@ -765,9 +763,15 @@ class UCANManager:
 
         return self.keypairs.get(did)
 
-    def create_token(self, issuer_did: str, audience_did: str, capabilities: List[UCANCapability],
-                    ttl: int = DEFAULT_TTL, not_before: Optional[str] = None,
-                    proof: Optional[str] = None) -> UCANToken:
+    def create_token(
+        self,
+        issuer_did: str,
+        audience_did: str,
+        capabilities: List[UCANCapability],
+        ttl: int = DEFAULT_TTL,
+        not_before: Optional[str] = None,
+        proof: Optional[str] = None,
+    ) -> UCANToken:
         """
         Create a new UCAN (User Controlled Authorization Network) token for decentralized authorization.
 
@@ -785,7 +789,7 @@ class UCANManager:
         Args:
             issuer_did (str): Decentralized Identifier (DID) of the entity issuing the token.
             Must exist in the keypair store and have an associated private key for signing.
-            audience_did (str): Decentralized Identifier (DID) of the entity receiving the 
+            audience_did (str): Decentralized Identifier (DID) of the entity receiving the
             authorization. Must exist in the keypair store.
             capabilities (List[UCANCapability]): List of specific capabilities being granted.
             Each capability defines a resource, action, and optional caveats that constrain
@@ -815,7 +819,7 @@ class UCANManager:
             ... )
             >>> token = manager.create_token(
             ...     issuer_did="did:key:alice123",
-            ...     audience_did="did:key:bob456", 
+            ...     audience_did="did:key:bob456",
             ...     capabilities=[capability],
             ...     ttl=7200,
             ...     proof="parent-token-id"
@@ -861,7 +865,7 @@ class UCANManager:
             capabilities=capabilities,
             expires_at=expires.isoformat(),
             not_before=not_before or now.isoformat(),
-            proof=proof
+            proof=proof,
         )
 
         # Create token payload
@@ -871,7 +875,7 @@ class UCANManager:
             "exp": int(expires.timestamp()),
             "nbf": int(datetime.datetime.fromisoformat(token.not_before).timestamp()),
             "cap": [asdict(cap) for cap in capabilities],
-            "jti": token_id
+            "jti": token_id,
         }
 
         if proof:
@@ -879,9 +883,7 @@ class UCANManager:
 
         # Sign token
         private_key = serialization.load_pem_private_key(
-            issuer.private_key_pem.encode(),
-            password=None,
-            backend=default_backend()
+            issuer.private_key_pem.encode(), password=None, backend=default_backend()
         )
 
         # Use JWT for simplicity in this mock implementation
@@ -944,7 +946,10 @@ class UCANManager:
         # Check if token is revoked
         if token_id in self.revocations:
             revocation = self.revocations[token_id]
-            return False, f"Token revoked by {revocation.revoked_by} at {revocation.revoked_at}: {revocation.reason}"
+            return (
+                False,
+                f"Token revoked by {revocation.revoked_by} at {revocation.revoked_at}: {revocation.reason}",
+            )
 
         # Check expiration
         now = datetime.datetime.now()
@@ -1004,8 +1009,8 @@ class UCANManager:
         a timestamp and reason for audit purposes.
 
             token_id (str): Unique identifier of the UCAN token to revoke
-            revoker_did (str): Decentralized identifier (DID) of the entity 
-                              requesting revocation. Must be either the token's 
+            revoker_did (str): Decentralized identifier (DID) of the entity
+                              requesting revocation. Must be either the token's
                               issuer or audience
             reason (str): Human-readable explanation for the revocation
                          (e.g., "compromised", "expired", "no longer needed")
@@ -1042,7 +1047,7 @@ class UCANManager:
             token_id=token_id,
             revoked_by=revoker_did,
             revoked_at=datetime.datetime.now().isoformat(),
-            reason=reason
+            reason=reason,
         )
 
         # Store revocation
@@ -1129,7 +1134,7 @@ class UCANManager:
         The method checks for:
         - Exact resource and action matches
         - Wildcard resource matches (resource="*") with specific actions
-        - Wildcard action matches (action="*") with specific resources  
+        - Wildcard action matches (action="*") with specific resources
         - Full wildcard matches (resource="*", action="*") for unrestricted access
 
         Args:
@@ -1156,10 +1161,10 @@ class UCANManager:
             ...     "ipfs://QmExample",
             ...     "read"
             ... )
-            >>> 
+            >>>
             >>> # Check with wildcard resource
             >>> has_admin = manager.has_capability(
-            ...     "did:key:admin456", 
+            ...     "did:key:admin456",
             ...     "*",
             ...     "manage"
             ... )
@@ -1187,9 +1192,15 @@ class UCANManager:
 
         return False
 
-    def delegate_capability(self, issuer_did: str, audience_did: str, resource: str,
-                         action: str, caveats: Optional[Dict[str, Any]] = None,
-                         ttl: int = DEFAULT_TTL) -> Optional[UCANToken]:
+    def delegate_capability(
+        self,
+        issuer_did: str,
+        audience_did: str,
+        resource: str,
+        action: str,
+        caveats: Optional[Dict[str, Any]] = None,
+        ttl: int = DEFAULT_TTL,
+    ) -> Optional[UCANToken]:
         """
         Delegate a specific capability from one DID to another through UCAN token creation.
 
@@ -1246,18 +1257,11 @@ class UCANManager:
             return None
 
         # Create capability
-        capability = UCANCapability(
-            resource=resource,
-            action=action,
-            caveats=caveats or {}
-        )
+        capability = UCANCapability(resource=resource, action=action, caveats=caveats or {})
 
         # Create token
         token = self.create_token(
-            issuer_did=issuer_did,
-            audience_did=audience_did,
-            capabilities=[capability],
-            ttl=ttl
+            issuer_did=issuer_did, audience_did=audience_did, capabilities=[capability], ttl=ttl
         )
 
         return token
@@ -1285,43 +1289,42 @@ def get_ucan_manager() -> UCANManager:
     return UCANManager.get_instance()
 
 
-
 def ucan_demonstration():
     """
     Demonstrates the complete UCAN (User Controlled Authorization Networks) workflow.
-    
+
     This function provides a comprehensive example of UCAN token lifecycle management,
     including keypair generation, token creation, verification, capability delegation,
     and token revocation. It showcases how UCAN enables decentralized authorization
     through cryptographic tokens that can be verified without central authority.
-    
+
     The demonstration includes:
-    
+
     1. **System Initialization**: Sets up the UCAN manager and checks for required
        cryptographic dependencies.
-    
+
     2. **Keypair Generation**: Creates cryptographic keypairs for three users (Alice,
        Bob, and Charlie) with their corresponding Decentralized Identifiers (DIDs).
-    
+
     3. **Token Creation**: Alice creates a UCAN token granting Bob encryption
        capabilities for a specific resource with time-based expiration.
-    
+
     4. **Token Verification**: Validates the cryptographic integrity and validity
        of issued tokens using the UCAN verification protocol.
-    
+
     5. **Capability Checking**: Demonstrates how to query whether a DID holder
        has specific permissions for resources and actions.
-    
+
     6. **Delegation Chain**: Shows the full delegation process where:
        - Alice grants Bob delegation rights
        - Bob then delegates encryption capabilities to Charlie
        - Each step maintains cryptographic proof of authorization
-    
+
     7. **Token Revocation**: Demonstrates how token issuers can revoke previously
        granted capabilities and how this affects token validity.
-    
+
     **UCAN Concepts Demonstrated:**
-    
+
     - **Decentralized Identity**: Each user has a cryptographic DID
     - **Capability-based Security**: Permissions are resource and action specific
     - **Cryptographic Verification**: All tokens are cryptographically signed
@@ -1329,16 +1332,16 @@ def ucan_demonstration():
     - **Temporal Constraints**: Tokens can have TTL and expiration caveats
     - **Usage Constraints**: Delegation can include usage limits and other caveats
     - **Revocation**: Tokens can be invalidated by their issuers
-    
+
     **Security Features:**
-    
+
     - All operations are cryptographically secured using public key cryptography
     - Token integrity is maintained through digital signatures
     - Delegation preserves the chain of trust from original issuer
     - Revocation is tamper-proof and immediately effective
-    
+
     **Output:**
-    
+
     Prints detailed information about each operation including:
     - Generated DIDs for each participant
     - Token IDs and their issuer/audience relationships
@@ -1346,14 +1349,14 @@ def ucan_demonstration():
     - Capability check results
     - Delegation operation outcomes
     - Revocation confirmation and subsequent verification failure
-    
+
     **Requirements:**
-    
+
     - cryptography module (optional but recommended for production use)
     - Properly initialized UCAN manager instance
-    
+
     **Note:**
-    
+
     This demonstration uses realistic examples with encryption capabilities,
     but the same patterns apply to any resource and action combinations
     (e.g., file access, API endpoints, database operations, etc.).
@@ -1378,14 +1381,14 @@ def ucan_demonstration():
     encryption_capability = UCANCapability(
         resource="encryption-key-123",
         action="encrypt",
-        caveats={"expiry": datetime.datetime.now().isoformat()}
+        caveats={"expiry": datetime.datetime.now().isoformat()},
     )
 
     token = manager.create_token(
         issuer_did=alice.did,
         audience_did=bob.did,
         capabilities=[encryption_capability],
-        ttl=3600  # 1 hour
+        ttl=3600,  # 1 hour
     )
 
     print(f"Created token {token.token_id} from {token.issuer} to {token.audience}")
@@ -1403,19 +1406,18 @@ def ucan_demonstration():
     print(f"Generated keypair for Charlie: {charlie.did}")
 
     # First, give Bob delegation capability
-    delegation_capability = UCANCapability(
-        resource="encryption-key-123",
-        action="delegate"
-    )
+    delegation_capability = UCANCapability(resource="encryption-key-123", action="delegate")
 
     delegate_token = manager.create_token(
         issuer_did=alice.did,
         audience_did=bob.did,
         capabilities=[delegation_capability],
-        ttl=3600  # 1 hour
+        ttl=3600,  # 1 hour
     )
 
-    print(f"Created delegation token {delegate_token.token_id} from {delegate_token.issuer} to {delegate_token.audience}")
+    print(
+        f"Created delegation token {delegate_token.token_id} from {delegate_token.issuer} to {delegate_token.audience}"
+    )
 
     # Now Bob can delegate to Charlie
     charlie_token = manager.delegate_capability(
@@ -1423,7 +1425,7 @@ def ucan_demonstration():
         audience_did=charlie.did,
         resource="encryption-key-123",
         action="encrypt",
-        caveats={"max_uses": 5}
+        caveats={"max_uses": 5},
     )
 
     if charlie_token:
@@ -1431,7 +1433,9 @@ def ucan_demonstration():
 
         # Verify Charlie's token
         is_valid, error = manager.verify_token(charlie_token.token_id)
-        print(f"Charlie's token verification: {'valid' if is_valid else 'invalid'} - {error or 'no error'}")
+        print(
+            f"Charlie's token verification: {'valid' if is_valid else 'invalid'} - {error or 'no error'}"
+        )
 
         # Check if Charlie has the capability
         has_cap = manager.has_capability(charlie.did, "encryption-key-123", "encrypt")
@@ -1445,7 +1449,9 @@ def ucan_demonstration():
 
     # Verify the token again
     is_valid, error = manager.verify_token(token.token_id)
-    print(f"Token verification after revocation: {'valid' if is_valid else 'invalid'} - {error or 'no error'}")
+    print(
+        f"Token verification after revocation: {'valid' if is_valid else 'invalid'} - {error or 'no error'}"
+    )
 
 
 if __name__ == "__main__":

@@ -42,6 +42,7 @@ Requirements
 ``py-ucan>=1.0.0``        (``ucan`` extra, for key derivation via
                            :class:`DIDKeyManager`)
 """
+
 from __future__ import annotations
 
 import base64
@@ -72,12 +73,14 @@ try:
     from cryptography.hazmat.primitives.kdf.hkdf import HKDF
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
     _CRYPTO_AVAILABLE = True
 except ImportError:  # pragma: no cover
     _CRYPTO_AVAILABLE = False
 
 try:
     import ucan as _ucan_lib  # type: ignore[import-not-found]
+
     _UCAN_AVAILABLE = True
 except ImportError:  # pragma: no cover
     _ucan_lib = None  # type: ignore[assignment]
@@ -87,6 +90,7 @@ except ImportError:  # pragma: no cover
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _b64_encode(data: bytes) -> str:
     return base64.b64encode(data).decode()
@@ -127,6 +131,7 @@ def _derive_enc_key(private_key_b64url: str) -> bytes:
 # ---------------------------------------------------------------------------
 # SecretsVault
 # ---------------------------------------------------------------------------
+
 
 class SecretsVault:
     """Encrypt and persist project secrets using a DID-derived AES-GCM key.
@@ -175,6 +180,7 @@ class SecretsVault:
         # Lazy import to avoid circular dep at module level
         if self._mgr is None:
             from .did_key_manager import get_did_key_manager
+
             self._mgr = get_did_key_manager()
 
         try:
@@ -352,10 +358,7 @@ class SecretsVault:
         }
 
     def __repr__(self) -> str:
-        return (
-            f"SecretsVault(vault_file={self._vault_file!r}, "
-            f"secrets={self.list_names()!r})"
-        )
+        return f"SecretsVault(vault_file={self._vault_file!r}, secrets={self.list_names()!r})"
 
 
 # ---------------------------------------------------------------------------

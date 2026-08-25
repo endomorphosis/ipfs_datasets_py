@@ -1,4 +1,4 @@
-#\!/usr/bin/env python3
+# \!/usr/bin/env python3
 
 import unittest
 import sys
@@ -7,6 +7,7 @@ import numpy as np
 from collections import defaultdict
 import datetime
 import json
+
 
 # Define a simplified version of the GraphRAGQueryStats class with our fixes
 class GraphRAGQueryStats:
@@ -85,6 +86,7 @@ class GraphRAGQueryStats:
         # Convert pattern keys back to dictionaries
         return [(json.loads(pattern), count) for pattern, count in sorted_patterns[:top_n]]
 
+
 # Create simplified optimizer class that demonstrates the cache handling logic
 class SimplifiedOptimizer:
     """A simplified optimizer for testing cache logic"""
@@ -145,6 +147,7 @@ class SimplifiedOptimizer:
         """Add a query result to the cache."""
         self.query_cache[query_key] = result
 
+
 class TestCaching(unittest.TestCase):
     """Test that caching works correctly."""
 
@@ -199,12 +202,13 @@ class TestCaching(unittest.TestCase):
 
         # Check stats after second execution - should increment both cache_hits and query_count
         self.assertEqual(self.optimizer.query_stats.query_count, 2)  # Cache hits are queries too
-        self.assertEqual(self.optimizer.query_stats.cache_hits, 1)   # Should be 1
+        self.assertEqual(self.optimizer.query_stats.cache_hits, 1)  # Should be 1
 
         # Cache hit rate should be 1/2 = 0.5
         self.assertEqual(self.optimizer.query_stats.cache_hit_rate, 0.5)
 
         print("Caching integration test passed")
+
 
 if __name__ == "__main__":
     unittest.main()

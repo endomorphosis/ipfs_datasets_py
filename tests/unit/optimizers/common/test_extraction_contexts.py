@@ -52,9 +52,7 @@ def test_graphrag_config_roundtrip_dict() -> None:
 
 
 def test_logic_config_invalid_mode_falls_back_to_auto() -> None:
-    cfg = LogicExtractionConfig.from_dict(
-        {"domain": "legal", "extraction_mode": "not-a-real-mode"}
-    )
+    cfg = LogicExtractionConfig.from_dict({"domain": "legal", "extraction_mode": "not-a-real-mode"})
     assert cfg.domain == "legal"
     assert cfg.extraction_mode == ExtractionMode.AUTO
 

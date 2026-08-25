@@ -223,22 +223,16 @@ def test_complete_multiview_lowering_is_source_and_node_grounded() -> None:
         artifact.compiler_config.target_view_ids
     )
 
-    bindings = {
-        binding.subject_id: binding for binding in artifact.source_map.bindings
-    }
+    bindings = {binding.subject_id: binding for binding in artifact.source_map.bindings}
     for formula in artifact.formulas:
         assert formula.input_node_ids
         assert formula.source_ref_ids
         assert set(formula.input_node_ids).issubset(bindings)
-        assert set(formula.source_ref_ids).issubset(
-            bindings[formula.formula_id].source_ref_ids
-        )
+        assert set(formula.source_ref_ids).issubset(bindings[formula.formula_id].source_ref_ids)
         assert formula.metadata["intent_node_ids"]
 
     retrieved = [
-        item
-        for item in artifact.assumptions
-        if item.metadata.get("authority") == "context_only"
+        item for item in artifact.assumptions if item.metadata.get("authority") == "context_only"
     ]
     assert len(retrieved) == 1
     assert retrieved[0].metadata["proof_authority"] is False
@@ -249,8 +243,7 @@ def test_complete_multiview_lowering_is_source_and_node_grounded() -> None:
         for obligation in artifact.proof_obligations
     )
     assert all(
-        retrieved[0].assumption_id not in formula.assumption_ids
-        for formula in artifact.formulas
+        retrieved[0].assumption_id not in formula.assumption_ids for formula in artifact.formulas
     )
     uncertain_goal = next(
         item
@@ -263,10 +256,7 @@ def test_complete_multiview_lowering_is_source_and_node_grounded() -> None:
         for formula in artifact.formulas
         if "statement:goal" in formula.metadata["intent_node_ids"]
     )
-    assert {
-        obligation.metadata["intent_node_id"]
-        for obligation in artifact.proof_obligations
-    } == {
+    assert {obligation.metadata["intent_node_id"] for obligation in artifact.proof_obligations} == {
         "statement:invariant",
         "statement:failure",
         "statement:verify",
@@ -308,8 +298,7 @@ def test_untyped_semantics_are_retained_as_opaque_diagnostics() -> None:
     assert goal_formulas
     assert all(formula.opaque for formula in goal_formulas)
     assert all(
-        formula.to_dict()["expression"]["body"]["text"]
-        == "Publish the result"
+        formula.to_dict()["expression"]["body"]["text"] == "Publish the result"
         if "body" in formula.to_dict()["expression"]
         else formula.to_dict()["expression"]["text"] == "Publish the result"
         for formula in goal_formulas
@@ -319,10 +308,7 @@ def test_untyped_semantics_are_retained_as_opaque_diagnostics() -> None:
         for diagnostic in artifact.unsupported_diagnostics
         if diagnostic.metadata.get("opaque_formula_id")
     } == {formula.formula_id for formula in goal_formulas}
-    assert all(
-        diagnostic.location.traceable
-        for diagnostic in artifact.unsupported_diagnostics
-    )
+    assert all(diagnostic.location.traceable for diagnostic in artifact.unsupported_diagnostics)
 
     strict = replace(
         compiler.default_config(document),
@@ -336,9 +322,7 @@ def test_invalid_context_foreign_sample_tamper_and_unknown_views_fail_closed() -
     compiler = IntentFormalizationCompiler()
     sample = compiler.adapt_sample(_document())
 
-    with pytest.raises(
-        IntentFormalizationCompilerError, match="proof authority"
-    ):
+    with pytest.raises(IntentFormalizationCompilerError, match="proof authority"):
         compiler.compile(
             sample,
             graph_context={
@@ -352,9 +336,7 @@ def test_invalid_context_foreign_sample_tamper_and_unknown_views_fail_closed() -
             },
         )
 
-    with pytest.raises(
-        IntentFormalizationCompilerError, match="Intent FormalizationSample"
-    ):
+    with pytest.raises(IntentFormalizationCompilerError, match="Intent FormalizationSample"):
         compiler.compile(
             replace(sample, domain="legal"),
             compiler.default_config(sample),
@@ -362,9 +344,7 @@ def test_invalid_context_foreign_sample_tamper_and_unknown_views_fail_closed() -
 
     payload = sample.payload.to_dict()
     payload["declaration"]["title"] = "Tampered title"
-    with pytest.raises(
-        IntentFormalizationCompilerError, match="digest"
-    ):
+    with pytest.raises(IntentFormalizationCompilerError, match="digest"):
         compiler.compile(
             replace(sample, payload=payload),
             compiler.default_config(sample),
@@ -374,7 +354,5 @@ def test_invalid_context_foreign_sample_tamper_and_unknown_views_fail_closed() -
         compiler.default_config(sample),
         target_view_ids=("intent-ir-view/unknown/v1",),
     )
-    with pytest.raises(
-        IntentFormalizationCompilerError, match="unknown views"
-    ):
+    with pytest.raises(IntentFormalizationCompilerError, match="unknown views"):
         compiler.compile(sample, unknown)

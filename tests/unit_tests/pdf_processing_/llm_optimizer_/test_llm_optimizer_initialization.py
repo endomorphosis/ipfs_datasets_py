@@ -17,7 +17,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -30,15 +30,19 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimize
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     ChunkOptimizer,
     LLMOptimizer,
     TextProcessor,
     LLMChunk,
-    LLMDocument
+    LLMDocument,
 )
 
 
@@ -76,46 +80,55 @@ except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
 
-
 class TestLLMOptimizerInitialization:
     """Test LLMOptimizer initialization and configuration validation."""
 
-    @pytest.mark.parametrize("attribute_name", [
-        "model_name",
-        "tokenizer_name", 
-        "max_chunk_size",
-        "chunk_overlap",
-        "min_chunk_size",
-        "embedding_model",
-        "tokenizer",
-        "text_processor",
-        "chunk_optimizer"
-    ])
+    @pytest.mark.parametrize(
+        "attribute_name",
+        [
+            "model_name",
+            "tokenizer_name",
+            "max_chunk_size",
+            "chunk_overlap",
+            "min_chunk_size",
+            "embedding_model",
+            "tokenizer",
+            "text_processor",
+            "chunk_optimizer",
+        ],
+    )
     def test_init_has_required_attributes(self, llm_optimizer_with_mocks, attribute_name):
         """
         GIVEN default initialization parameters
         WHEN LLMOptimizer is initialized without arguments
         THEN expect all required attributes to be present
         """
-        assert hasattr(llm_optimizer_with_mocks, attribute_name), \
+        assert hasattr(llm_optimizer_with_mocks, attribute_name), (
             f"Optimizer should have {attribute_name} attribute"
+        )
 
-    @pytest.mark.parametrize("attribute_name,expected_value", [
-        ("model_name", "sentence-transformers/all-MiniLM-L6-v2"),
-        ("tokenizer_name", "gpt-3.5-turbo"),
-        ("max_chunk_size", 2048),
-        ("chunk_overlap", 200),
-        ("min_chunk_size", 100)
-    ])
-    def test_init_default_parameter_values(self, llm_optimizer_with_mocks, attribute_name, expected_value):
+    @pytest.mark.parametrize(
+        "attribute_name,expected_value",
+        [
+            ("model_name", "sentence-transformers/all-MiniLM-L6-v2"),
+            ("tokenizer_name", "gpt-3.5-turbo"),
+            ("max_chunk_size", 2048),
+            ("chunk_overlap", 200),
+            ("min_chunk_size", 100),
+        ],
+    )
+    def test_init_default_parameter_values(
+        self, llm_optimizer_with_mocks, attribute_name, expected_value
+    ):
         """
         GIVEN default initialization parameters
         WHEN LLMOptimizer is initialized without arguments
         THEN expect default parameter values to be set correctly
         """
         actual_value = getattr(llm_optimizer_with_mocks, attribute_name)
-        assert actual_value == expected_value, \
+        assert actual_value == expected_value, (
             f"Default {attribute_name} should be {expected_value}, got {actual_value}"
+        )
 
     def test_init_creates_instance_successfully(self):
         """
@@ -124,8 +137,9 @@ class TestLLMOptimizerInitialization:
         THEN expect instance to be created
         """
         optimizer = LLMOptimizer()
-        assert isinstance(optimizer, LLMOptimizer), \
+        assert isinstance(optimizer, LLMOptimizer), (
             f"Should create LLMOptimizer instance, got {type(optimizer).__name__} instead."
+        )
 
 
 if __name__ == "__main__":

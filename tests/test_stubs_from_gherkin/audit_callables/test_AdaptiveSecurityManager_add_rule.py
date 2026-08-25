@@ -19,19 +19,28 @@ def an_adaptivesecuritymanager_instance_is_initialized():
     """
     try:
         manager = AdaptiveSecurityManager()
-        
+
         if manager is None:
-            raise FixtureError("Failed to create fixture an_adaptivesecuritymanager_instance_is_initialized: AdaptiveSecurityManager instance is None") from None
-        
-        if not hasattr(manager, 'add_rule'):
-            raise FixtureError("Failed to create fixture an_adaptivesecuritymanager_instance_is_initialized: AdaptiveSecurityManager missing 'add_rule' method") from None
-        
-        if not hasattr(manager, 'response_rules'):
-            raise FixtureError("Failed to create fixture an_adaptivesecuritymanager_instance_is_initialized: AdaptiveSecurityManager missing 'response_rules' attribute") from None
-        
+            raise FixtureError(
+                "Failed to create fixture an_adaptivesecuritymanager_instance_is_initialized: AdaptiveSecurityManager instance is None"
+            ) from None
+
+        if not hasattr(manager, "add_rule"):
+            raise FixtureError(
+                "Failed to create fixture an_adaptivesecuritymanager_instance_is_initialized: AdaptiveSecurityManager missing 'add_rule' method"
+            ) from None
+
+        if not hasattr(manager, "response_rules"):
+            raise FixtureError(
+                "Failed to create fixture an_adaptivesecuritymanager_instance_is_initialized: AdaptiveSecurityManager missing 'response_rules' attribute"
+            ) from None
+
         return manager
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture an_adaptivesecuritymanager_instance_is_initialized: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture an_adaptivesecuritymanager_instance_is_initialized: {e}"
+        ) from e
+
 
 @pytest.fixture
 def no_custom_response_rules_exist(an_adaptivesecuritymanager_instance_is_initialized):
@@ -40,20 +49,24 @@ def no_custom_response_rules_exist(an_adaptivesecuritymanager_instance_is_initia
     """
     try:
         manager = an_adaptivesecuritymanager_instance_is_initialized
-        
+
         # Clear all custom response rules
         manager.response_rules = []
-        
+
         # Verify no custom rules exist
         if len(manager.response_rules) != 0:
-            raise FixtureError(f"Failed to create fixture no_custom_response_rules_exist: {len(manager.response_rules)} rules exist, expected 0") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture no_custom_response_rules_exist: {len(manager.response_rules)} rules exist, expected 0"
+            ) from None
+
         return manager
     except Exception as e:
         raise FixtureError(f"Failed to create fixture no_custom_response_rules_exist: {e}") from e
 
 
-def test_add_rule_increases_rules_count(an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist):
+def test_add_rule_increases_rules_count(
+    an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist
+):
     """
     Scenario: Add rule increases rules count
 
@@ -70,7 +83,9 @@ def test_add_rule_increases_rules_count(an_adaptivesecuritymanager_instance_is_i
     pass
 
 
-def test_add_rule_appends_to_response_rules_list(an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist):
+def test_add_rule_appends_to_response_rules_list(
+    an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist
+):
     """
     Scenario: Add rule appends to response_rules list
 
@@ -87,7 +102,9 @@ def test_add_rule_appends_to_response_rules_list(an_adaptivesecuritymanager_inst
     pass
 
 
-def test_add_rule_allows_multiple_rules(an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist):
+def test_add_rule_allows_multiple_rules(
+    an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist
+):
     """
     Scenario: Add rule allows multiple rules
 
@@ -104,7 +121,9 @@ def test_add_rule_allows_multiple_rules(an_adaptivesecuritymanager_instance_is_i
     pass
 
 
-def test_add_rule_preserves_rule_configuration(an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist):
+def test_add_rule_preserves_rule_configuration(
+    an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist
+):
     """
     Scenario: Add rule preserves rule configuration
 
@@ -121,7 +140,9 @@ def test_add_rule_preserves_rule_configuration(an_adaptivesecuritymanager_instan
     pass
 
 
-def test_add_rule_makes_rule_available_for_alert_matching(an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist):
+def test_add_rule_makes_rule_available_for_alert_matching(
+    an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist
+):
     """
     Scenario: Add rule makes rule available for alert matching
 
@@ -138,7 +159,9 @@ def test_add_rule_makes_rule_available_for_alert_matching(an_adaptivesecurityman
     pass
 
 
-def test_add_rule_with_duplicate_rule_id(an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist):
+def test_add_rule_with_duplicate_rule_id(
+    an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist
+):
     """
     Scenario: Add rule with duplicate rule_id
 
@@ -155,7 +178,9 @@ def test_add_rule_with_duplicate_rule_id(an_adaptivesecuritymanager_instance_is_
     pass
 
 
-def test_add_rule_is_thread_safe(an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist):
+def test_add_rule_is_thread_safe(
+    an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist
+):
     """
     Scenario: Add rule is thread-safe
 
@@ -172,7 +197,9 @@ def test_add_rule_is_thread_safe(an_adaptivesecuritymanager_instance_is_initiali
     pass
 
 
-def test_add_rule_with_disabled_rule_stores_in_list(an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist):
+def test_add_rule_with_disabled_rule_stores_in_list(
+    an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist
+):
     """
     Scenario: Add rule with disabled rule stores in list
 
@@ -189,7 +216,9 @@ def test_add_rule_with_disabled_rule_stores_in_list(an_adaptivesecuritymanager_i
     pass
 
 
-def test_add_rule_with_disabled_rule_will_not_match_alerts(an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist):
+def test_add_rule_with_disabled_rule_will_not_match_alerts(
+    an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist
+):
     """
     Scenario: Add rule with disabled rule will not match alerts
 
@@ -206,7 +235,9 @@ def test_add_rule_with_disabled_rule_will_not_match_alerts(an_adaptivesecurityma
     pass
 
 
-def test_add_rule_with_multiple_severity_levels(an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist):
+def test_add_rule_with_multiple_severity_levels(
+    an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist
+):
     """
     Scenario: Add rule with multiple severity levels
 
@@ -223,7 +254,9 @@ def test_add_rule_with_multiple_severity_levels(an_adaptivesecuritymanager_insta
     pass
 
 
-def test_add_rule_with_multiple_actions(an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist):
+def test_add_rule_with_multiple_actions(
+    an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist
+):
     """
     Scenario: Add rule with multiple actions
 
@@ -238,4 +271,3 @@ def test_add_rule_with_multiple_actions(an_adaptivesecuritymanager_instance_is_i
     """
     # TODO: Implement test
     pass
-

@@ -8,6 +8,7 @@ Or include in the normal test run (benchmarks are skipped automatically if
 ``pytest-benchmark`` is not installed, or if the ``--benchmark-disable`` flag
 is passed).
 """
+
 from __future__ import annotations
 
 import pytest
@@ -15,6 +16,7 @@ import pytest
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_small_ontology(n_entities: int = 20, n_rels: int = 10):
     entities = [
@@ -40,8 +42,24 @@ def _make_medium_ontology(n_entities: int = 100, n_rels: int = 50):
 
 def _make_document(n_tokens: int = 1000) -> str:
     import itertools
-    words = ["Alice", "Bob", "London", "Paris", "Acme", "signed", "contract",
-             "agreement", "met", "visited", "on", "in", "the", "and", "a"]
+
+    words = [
+        "Alice",
+        "Bob",
+        "London",
+        "Paris",
+        "Acme",
+        "signed",
+        "contract",
+        "agreement",
+        "met",
+        "visited",
+        "on",
+        "in",
+        "the",
+        "and",
+        "a",
+    ]
     cycle = itertools.cycle(words)
     return " ".join(next(cycle) for _ in range(n_tokens))
 
@@ -65,6 +83,7 @@ def _make_traversal_query(max_depth: int = 4):
 # OntologyGenerator benchmarks
 # ---------------------------------------------------------------------------
 
+
 class TestExtractEntitiesBenchmarks:
     """Benchmark entity extraction at various document sizes."""
 
@@ -75,6 +94,7 @@ class TestExtractEntitiesBenchmarks:
             ExtractionConfig,
             OntologyGenerationContext,
         )
+
         self.generator = OntologyGenerator()
         self.context = OntologyGenerationContext(
             data_source="bench",
@@ -100,6 +120,7 @@ class TestExtractEntitiesBenchmarks:
 # OntologyCritic benchmarks
 # ---------------------------------------------------------------------------
 
+
 class TestCriticEvaluateBenchmarks:
     """Benchmark critic evaluation at various ontology sizes."""
 
@@ -107,6 +128,7 @@ class TestCriticEvaluateBenchmarks:
     def _setup(self):
         from unittest.mock import MagicMock
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         ctx = MagicMock()
         ctx.domain = "general"
         self.critic = OntologyCritic(context=ctx)
@@ -129,12 +151,14 @@ class TestCriticEvaluateBenchmarks:
 # LogicValidator benchmarks
 # ---------------------------------------------------------------------------
 
+
 class TestLogicValidatorBenchmarks:
     """Benchmark TDFOL conversion and validation."""
 
     @pytest.fixture(autouse=True)
     def _setup(self):
         from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
         self.validator = LogicValidator(use_cache=True)
         self.validator_no_cache = LogicValidator(use_cache=False)
 
@@ -159,12 +183,14 @@ class TestLogicValidatorBenchmarks:
 # Ontology merge benchmarks
 # ---------------------------------------------------------------------------
 
+
 class TestOntologyMergeBenchmarks:
     """Benchmark ontology merge behavior on large ontologies."""
 
     @pytest.fixture(autouse=True)
     def _setup(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
         self.generator = OntologyGenerator()
 
     def test_merge_ontologies_1000_entities(self, benchmark):
@@ -222,6 +248,7 @@ class TestOntologyMergeBenchmarks:
 # Query traversal benchmarks
 # ---------------------------------------------------------------------------
 
+
 class TestQueryTraversalBenchmarks:
     """Benchmark query optimization paths for graph traversal queries."""
 
@@ -230,6 +257,7 @@ class TestQueryTraversalBenchmarks:
         from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import (
             UnifiedGraphRAGQueryOptimizer,
         )
+
         self.optimizer = UnifiedGraphRAGQueryOptimizer()
         self.entity_scores = {
             "acme": 0.92,

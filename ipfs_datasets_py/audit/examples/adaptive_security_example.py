@@ -12,7 +12,11 @@ from datetime import datetime, timedelta
 
 from ipfs_datasets_py.audit.intrusion import IntrusionDetection, SecurityAlertManager
 from ipfs_datasets_py.audit.adaptive_security import (
-    AdaptiveSecurityManager, ResponseAction, ResponseRule, SecurityResponse, RuleCondition
+    AdaptiveSecurityManager,
+    ResponseAction,
+    ResponseRule,
+    SecurityResponse,
+    RuleCondition,
 )
 from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditLevel, AuditCategory
 
@@ -24,21 +28,17 @@ def setup_components():
 
     # Create security alert manager
     alert_manager = SecurityAlertManager(
-        alert_storage_path="examples/security_alerts.json",
-        audit_logger=audit_logger
+        alert_storage_path="examples/security_alerts.json", audit_logger=audit_logger
     )
 
     # Create intrusion detection system
-    intrusion_detection = IntrusionDetection(
-        alert_manager=alert_manager,
-        audit_logger=audit_logger
-    )
+    intrusion_detection = IntrusionDetection(alert_manager=alert_manager, audit_logger=audit_logger)
 
     # Create adaptive security manager
     adaptive_security = AdaptiveSecurityManager(
         alert_manager=alert_manager,
         audit_logger=audit_logger,
-        response_storage_path="examples/security_responses.json"
+        response_storage_path="examples/security_responses.json",
     )
 
     return audit_logger, alert_manager, intrusion_detection, adaptive_security
@@ -54,20 +54,14 @@ def create_sample_rules(adaptive_security):
         alert_type="brute_force_login",
         severity_levels=["medium", "high"],
         actions=[
-            {
-                "type": "LOCKOUT",
-                "duration_minutes": 30,
-                "account": "{{alert.source_entity}}"
-            },
+            {"type": "LOCKOUT", "duration_minutes": 30, "account": "{{alert.source_entity}}"},
             {
                 "type": "NOTIFY",
                 "message": "Brute force login attempt detected from {{alert.source_entity}}",
-                "recipients": ["security@example.com"]
-            }
+                "recipients": ["security@example.com"],
+            },
         ],
-        conditions=[
-            RuleCondition("alert.attempt_count", ">=", 5)
-        ]
+        conditions=[RuleCondition("alert.attempt_count", ">=", 5)],
     )
 
     # Rule 2: Suspicious data access
@@ -82,15 +76,15 @@ def create_sample_rules(adaptive_security):
                 "type": "THROTTLE",
                 "duration_minutes": 60,
                 "max_requests_per_minute": 10,
-                "user_id": "{{alert.user_id}}"
+                "user_id": "{{alert.user_id}}",
             },
             {
                 "type": "AUDIT",
                 "level": "enhanced",
                 "duration_hours": 24,
-                "target": "{{alert.user_id}}"
-            }
-        ]
+                "target": "{{alert.user_id}}",
+            },
+        ],
     )
 
     # Rule 3: Data exfiltration attempt
@@ -105,19 +99,15 @@ def create_sample_rules(adaptive_security):
                 "type": "RESTRICT",
                 "permissions": ["download", "export"],
                 "duration_hours": 48,
-                "user_id": "{{alert.user_id}}"
+                "user_id": "{{alert.user_id}}",
             },
             {
                 "type": "NOTIFY",
                 "message": "Potential data exfiltration by {{alert.user_id}} detected",
-                "recipients": ["security@example.com", "admin@example.com"]
+                "recipients": ["security@example.com", "admin@example.com"],
             },
-            {
-                "type": "ESCALATE",
-                "priority": "high",
-                "assignee": "security-team"
-            }
-        ]
+            {"type": "ESCALATE", "priority": "high", "assignee": "security-team"},
+        ],
     )
 
     # Add rules to the adaptive security manager
@@ -143,8 +133,8 @@ def simulate_security_alerts(alert_manager):
         "details": {
             "failed_attempts": 7,
             "last_attempt": datetime.now().isoformat(),
-            "authentication_method": "password"
-        }
+            "authentication_method": "password",
+        },
     }
     alert_manager.add_alert(brute_force_alert)
     print(f"Added brute force login alert: {brute_force_alert['alert_id']}")
@@ -161,8 +151,8 @@ def simulate_security_alerts(alert_manager):
         "details": {
             "typical_access_hours": "9-17",
             "access_time": "03:45:22",
-            "accessed_from": "unknown_location"
-        }
+            "accessed_from": "unknown_location",
+        },
     }
     alert_manager.add_alert(data_access_alert)
     print(f"Added suspicious access alert: {data_access_alert['alert_id']}")
@@ -179,8 +169,8 @@ def simulate_security_alerts(alert_manager):
             "download_size_mb": 1250,
             "normal_usage_mb": 50,
             "destination": "external-storage",
-            "files_accessed": 47
-        }
+            "files_accessed": 47,
+        },
     }
     alert_manager.add_alert(exfiltration_alert)
     print(f"Added data exfiltration alert: {exfiltration_alert['alert_id']}")
@@ -217,8 +207,8 @@ def demonstrate_response_lifecycle(adaptive_security):
         parameters={
             "isolation_level": "network",
             "allow_admin_access": True,
-            "reason": "Manual security response for demonstration"
-        }
+            "reason": "Manual security response for demonstration",
+        },
     )
 
     adaptive_security.add_response(manual_response)

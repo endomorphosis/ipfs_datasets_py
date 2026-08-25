@@ -6,15 +6,21 @@ Methods under test:
   - OntologyGenerator.avg_relationship_count(result)
   - OntologyOptimizer.history_variance()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -22,11 +28,15 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -38,16 +48,19 @@ def _push_feedback(a, score):
 
 def _make_entity(eid):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="Test", text=eid)
 
 
 def _make_relationship(sid, oid):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
     return Relationship(id=f"{sid}-{oid}", type="rel", source_id=sid, target_id=oid)
 
 
 def _make_result(entities, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities,
         relationships=relationships or [],
@@ -59,11 +72,13 @@ def _make_result(entities, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -81,11 +96,18 @@ def _push_opt(o, avg):
 # OntologyCritic.all_dimensions_above
 # ---------------------------------------------------------------------------
 
+
 class TestAllDimensionsAbove:
     def test_all_above_returns_true(self):
         critic = _make_critic()
-        score = _make_score(completeness=0.8, consistency=0.9, clarity=0.7,
-                            granularity=0.6, relationship_coherence=0.75, domain_alignment=0.85)
+        score = _make_score(
+            completeness=0.8,
+            consistency=0.9,
+            clarity=0.7,
+            granularity=0.6,
+            relationship_coherence=0.75,
+            domain_alignment=0.85,
+        )
         assert critic.all_dimensions_above(score, threshold=0.5) is True
 
     def test_one_below_returns_false(self):
@@ -100,14 +122,21 @@ class TestAllDimensionsAbove:
 
     def test_custom_threshold(self):
         critic = _make_critic()
-        score = _make_score(completeness=0.2, consistency=0.2, clarity=0.2,
-                            granularity=0.2, relationship_coherence=0.2, domain_alignment=0.2)
+        score = _make_score(
+            completeness=0.2,
+            consistency=0.2,
+            clarity=0.2,
+            granularity=0.2,
+            relationship_coherence=0.2,
+            domain_alignment=0.2,
+        )
         assert critic.all_dimensions_above(score, threshold=0.1) is True
 
 
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_in_range
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackInRange:
     def test_empty_returns_empty(self):
@@ -147,6 +176,7 @@ class TestFeedbackInRange:
 # OntologyGenerator.avg_relationship_count
 # ---------------------------------------------------------------------------
 
+
 class TestAvgRelationshipCount:
     def test_empty_returns_zero(self):
         gen = _make_generator()
@@ -163,8 +193,11 @@ class TestAvgRelationshipCount:
         gen = _make_generator()
         entities = [_make_entity("e1"), _make_entity("e2")]
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
-        rels = [Relationship(id="r1", type="rel", source_id="e1", target_id="e2"),
-                Relationship(id="r2", type="rel", source_id="e2", target_id="e1")]
+
+        rels = [
+            Relationship(id="r1", type="rel", source_id="e1", target_id="e2"),
+            Relationship(id="r2", type="rel", source_id="e2", target_id="e1"),
+        ]
         result = _make_result(entities, rels)
         assert gen.avg_relationship_count(result) == pytest.approx(1.0)
 
@@ -172,8 +205,11 @@ class TestAvgRelationshipCount:
         gen = _make_generator()
         entities = [_make_entity("e1")]
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
-        rels = [Relationship(id="r1", type="rel", source_id="e1", target_id="e1"),
-                Relationship(id="r2", type="rel", source_id="e1", target_id="e1")]
+
+        rels = [
+            Relationship(id="r1", type="rel", source_id="e1", target_id="e1"),
+            Relationship(id="r2", type="rel", source_id="e1", target_id="e1"),
+        ]
         result = _make_result(entities, rels)
         assert gen.avg_relationship_count(result) == pytest.approx(2.0)
 
@@ -181,6 +217,7 @@ class TestAvgRelationshipCount:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.history_variance
 # ---------------------------------------------------------------------------
+
 
 class TestHistoryVariance:
     def test_empty_returns_zero(self):

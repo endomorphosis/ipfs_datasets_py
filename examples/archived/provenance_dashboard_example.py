@@ -14,18 +14,24 @@ from typing import Dict, List, Any, Optional
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 # Import required modules
 from ipfs_datasets_py.analytics.data_provenance import ProvenanceManager, ProvenanceContext
 from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import LineageTracker
-from ipfs_datasets_py.dashboards.provenance_dashboard import ProvenanceDashboard, setup_provenance_dashboard
+from ipfs_datasets_py.dashboards.provenance_dashboard import (
+    ProvenanceDashboard,
+    setup_provenance_dashboard,
+)
 
 # Optional imports for integrated dashboard
 try:
-    from ipfs_datasets_py.rag.rag_query_visualization import QueryMetricsCollector, RAGQueryVisualizer
+    from ipfs_datasets_py.rag.rag_query_visualization import (
+        QueryMetricsCollector,
+        RAGQueryVisualizer,
+    )
+
     QUERY_VIS_AVAILABLE = True
 except ImportError:
     QUERY_VIS_AVAILABLE = False
@@ -33,6 +39,7 @@ except ImportError:
 try:
     from ipfs_datasets_py.audit.audit_logger import AuditLogger
     from ipfs_datasets_py.audit.audit_visualization import setup_audit_visualization
+
     AUDIT_VIS_AVAILABLE = True
 except ImportError:
     AUDIT_VIS_AVAILABLE = False
@@ -45,7 +52,7 @@ def create_sample_data_provenance():
         storage_path=None,  # In-memory only
         enable_ipld_storage=False,
         default_agent_id="example_user",
-        tracking_level="detailed"
+        tracking_level="detailed",
     )
 
     # Record a source
@@ -56,7 +63,7 @@ def create_sample_data_provenance():
         format="csv",
         description="Raw data from customer survey",
         size=1024 * 1024,  # 1 MB
-        hash="sha256:abc123"
+        hash="sha256:abc123",
     )
 
     # Record a transformation
@@ -67,7 +74,7 @@ def create_sample_data_provenance():
         tool="pandas",
         version="1.5.3",
         input_ids=["raw_data_001"],
-        parameters={"dropna": True, "normalize": True}
+        parameters={"dropna": True, "normalize": True},
     ) as context:
         # Simulate processing
         time.sleep(0.5)  # Simulate some work
@@ -81,7 +88,7 @@ def create_sample_data_provenance():
         query_type="sql",
         query_text="SELECT * FROM survey_data WHERE age > 30",
         description="Filter survey data for respondents over 30",
-        query_parameters={"min_age": 30}
+        query_parameters={"min_age": 30},
     )
 
     # Record the query result
@@ -91,7 +98,7 @@ def create_sample_data_provenance():
         result_count=250,
         result_type="filtered_dataset",
         size=512 * 1024,  # 512 KB
-        fields=["id", "age", "gender", "response"]
+        fields=["id", "age", "gender", "response"],
     )
 
     # Record a merge operation
@@ -102,14 +109,14 @@ def create_sample_data_provenance():
         description="Merge survey data with external demographic data",
         merge_keys=["respondent_id"],
         merge_strategy="left_join",
-        parameters={"how": "left", "on": "respondent_id"}
+        parameters={"how": "left", "on": "respondent_id"},
     )
 
     # Record a checkpoint
     checkpoint_id = provenance_manager.record_checkpoint(
         data_id="merged_data_001",
         description="Checkpoint after merging data",
-        checkpoint_type="snapshot"
+        checkpoint_type="snapshot",
     )
 
     return provenance_manager
@@ -128,8 +135,8 @@ def create_sample_cross_document_lineage():
         metadata={
             "author": "John Smith",
             "publication_date": "2023-01-15",
-            "keywords": ["machine learning", "neural networks"]
-        }
+            "keywords": ["machine learning", "neural networks"],
+        },
     )
 
     doc2_id = lineage_tracker.add_document(
@@ -139,19 +146,15 @@ def create_sample_cross_document_lineage():
         metadata={
             "author": "Jane Doe",
             "publication_date": "2023-03-22",
-            "keywords": ["deep learning", "transformers"]
-        }
+            "keywords": ["deep learning", "transformers"],
+        },
     )
 
     doc3_id = lineage_tracker.add_document(
         document_id="doc_003",
         name="Dataset Documentation",
         document_type="documentation",
-        metadata={
-            "author": "Data Team",
-            "creation_date": "2023-02-10",
-            "dataset_size": "10GB"
-        }
+        metadata={"author": "Data Team", "creation_date": "2023-02-10", "dataset_size": "10GB"},
     )
 
     # Add relationships
@@ -161,18 +164,15 @@ def create_sample_cross_document_lineage():
         relationship_type="cites",
         metadata={
             "citation_context": "As demonstrated by Smith (2023)...",
-            "section": "Related Work"
-        }
+            "section": "Related Work",
+        },
     )
 
     lineage_tracker.add_relationship(
         source_id="doc_003",
         target_id="doc_001",
         relationship_type="references",
-        metadata={
-            "reference_type": "methodology",
-            "page": 42
-        }
+        metadata={"reference_type": "methodology", "page": 42},
     )
 
     lineage_tracker.add_relationship(
@@ -181,8 +181,8 @@ def create_sample_cross_document_lineage():
         relationship_type="uses",
         metadata={
             "usage_context": "We evaluate our model on the dataset described in...",
-            "section": "Evaluation"
-        }
+            "section": "Evaluation",
+        },
     )
 
     return lineage_tracker
@@ -206,8 +206,8 @@ def create_sample_query_metrics():
             query_params={
                 "query_text": f"Sample query text {i}",
                 "query_type": "semantic" if i % 2 == 0 else "keyword",
-                "filters": {"category": "finance" if i % 3 == 0 else "technology"}
-            }
+                "filters": {"category": "finance" if i % 3 == 0 else "technology"},
+            },
         )
 
         # Simulate processing
@@ -217,11 +217,7 @@ def create_sample_query_metrics():
         metrics.record_query_end(
             query_id=query_id,
             results=[{"id": f"doc_{j}", "score": 0.9 - (j * 0.1)} for j in range(5)],
-            metrics={
-                "vector_search_time": 0.05,
-                "graph_traversal_time": 0.03,
-                "results_count": 5
-            }
+            metrics={"vector_search_time": 0.05, "graph_traversal_time": 0.03, "results_count": 5},
         )
 
     return metrics
@@ -239,19 +235,19 @@ def create_sample_audit_metrics():
     audit_logger.info(
         category="DATA_ACCESS",
         action="read_dataset",
-        details={"dataset_id": "ds_001", "user": "alice"}
+        details={"dataset_id": "ds_001", "user": "alice"},
     )
 
     audit_logger.warning(
         category="SECURITY",
         action="failed_authentication",
-        details={"user": "bob", "ip": "192.168.1.10", "reason": "invalid_password"}
+        details={"user": "bob", "ip": "192.168.1.10", "reason": "invalid_password"},
     )
 
     audit_logger.error(
         category="DATA_PROCESSING",
         action="transformation_failed",
-        details={"job_id": "job_123", "reason": "missing_column"}
+        details={"job_id": "job_123", "reason": "missing_column"},
     )
 
     # Set up audit visualization
@@ -298,23 +294,21 @@ def main():
         provenance_manager=provenance_manager,
         lineage_tracker=lineage_tracker,
         query_metrics=query_metrics,
-        audit_metrics=audit_metrics
+        audit_metrics=audit_metrics,
     )
 
     # Generate visualizations
     print("Generating data lineage visualization...")
     lineage_path = os.path.join(output_dir, "data_lineage.png")
     dashboard.visualize_data_lineage(
-        data_ids=["filtered_data_001", "merged_data_001"],
-        output_file=lineage_path
+        data_ids=["filtered_data_001", "merged_data_001"], output_file=lineage_path
     )
     print(f"Data lineage visualization saved to: {lineage_path}")
 
     print("Generating cross-document lineage visualization...")
     cross_doc_path = os.path.join(output_dir, "cross_doc_lineage.png")
     dashboard.visualize_cross_document_lineage(
-        document_ids=["doc_001", "doc_002", "doc_003"],
-        output_file=cross_doc_path
+        document_ids=["doc_001", "doc_002", "doc_003"], output_file=cross_doc_path
     )
     print(f"Cross-document lineage visualization saved to: {cross_doc_path}")
 
@@ -327,7 +321,7 @@ def main():
         include_lineage_graph=True,
         include_audit_events=True,
         include_query_metrics=True,
-        output_file=report_path
+        output_file=report_path,
     )
     print(f"Provenance report saved to: {report_path}")
 
@@ -338,7 +332,7 @@ def main():
         data_ids=["filtered_data_001", "merged_data_001", "raw_data_001", "preprocessed_data_001"],
         include_audit=True,
         include_query=True,
-        include_cross_doc=True
+        include_cross_doc=True,
     )
     print(f"Integrated dashboard saved to: {dashboard_path}")
 

@@ -1,0 +1,56 @@
+{
+  "schema_version": "federal-register-gold-v1",
+  "fixture_id": "federal-register-gold-v1",
+  "format": "sealed_recipe_v1",
+  "task_id": "LCR-051",
+  "goal_id": "LCR-G100",
+  "program_id": "federal-register-ir-graphrag/v2",
+  "use_builtin_recipe": true,
+  "description": "Compact sealed recipe for the temporally and agency-diverse Federal Register gold set (LCR-051). Expand via ipfs_datasets_py.processors.legal_data.federal_register_gold.materialize_gold_payload(); digests and full document/query envelopes are generated deterministically by the loader rather than re-emitted as bulk golden dumps.",
+  "generator": "ipfs_datasets_py.processors.legal_data.federal_register_gold.materialize_gold_payload",
+  "acceptance": {
+    "source_cited": true,
+    "checksum_sealed": true,
+    "temporally_diverse": true,
+    "agency_diverse": true,
+    "leak_free_partitions": true,
+    "hard_negatives": true,
+    "missing_body_cases": true
+  },
+  "required_document_types": [
+    "rule",
+    "proposed_rule",
+    "notice",
+    "presidential_document",
+    "correction"
+  ],
+  "required_agencies": [
+    "EPA",
+    "HHS",
+    "SEC",
+    "DOT",
+    "DOE",
+    "DOL",
+    "DOI",
+    "DHS",
+    "DOJ",
+    "FCC",
+    "EOP"
+  ],
+  "partitions": ["train", "dev", "test"],
+  "label_surface": [
+    "exact document-number queries",
+    "agency/topic and semantic/lexical queries",
+    "proposed-vs-final distinctions",
+    "agency/date/type filters",
+    "correction and withdrawal graph edges",
+    "citation paths",
+    "hard negatives",
+    "missing-body dispositions",
+    "time-sensitive cutoff exposure",
+    "known-ambiguity vintage cases",
+    "abstention boundaries"
+  ],
+  "frozen": true,
+  "ground_truth_policy": "human_reviewed_official_publication_identity_grounding_no_model_labels"
+}

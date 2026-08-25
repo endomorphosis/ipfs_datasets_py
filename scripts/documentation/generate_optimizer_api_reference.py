@@ -105,7 +105,9 @@ def _format_params(node: ast.FunctionDef | ast.AsyncFunctionDef, *, drop_self: b
     return ", ".join(params)
 
 
-def _format_signature(node: ast.FunctionDef | ast.AsyncFunctionDef, *, drop_self: bool = False) -> str:
+def _format_signature(
+    node: ast.FunctionDef | ast.AsyncFunctionDef, *, drop_self: bool = False
+) -> str:
     params = _format_params(node, drop_self=drop_self)
     ret = _annotation_to_str(node.returns) if node.returns is not None else "Any"
     return f"{node.name}({params}) -> {ret}"
@@ -119,7 +121,9 @@ def _extract_module_doc(module_path: Path, repo_root: Path) -> ModuleDoc:
     classes: list[ClassDoc] = []
 
     for node in tree.body:
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and not node.name.startswith("_"):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and not node.name.startswith(
+            "_"
+        ):
             functions.append(
                 FunctionDoc(
                     name=node.name,
@@ -130,7 +134,9 @@ def _extract_module_doc(module_path: Path, repo_root: Path) -> ModuleDoc:
         elif isinstance(node, ast.ClassDef) and not node.name.startswith("_"):
             methods: list[FunctionDoc] = []
             for class_node in node.body:
-                if isinstance(class_node, (ast.FunctionDef, ast.AsyncFunctionDef)) and not class_node.name.startswith("_"):
+                if isinstance(
+                    class_node, (ast.FunctionDef, ast.AsyncFunctionDef)
+                ) and not class_node.name.startswith("_"):
                     methods.append(
                         FunctionDoc(
                             name=class_node.name,

@@ -58,12 +58,6 @@ def test_packet_000139_pairs_are_registered_across_ambiguity_policies() -> None:
 def test_packet_000139_pairs_are_exposed_by_target_lookup_tables() -> None:
     for predicted_family, target_family in _PACKET_000139_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)

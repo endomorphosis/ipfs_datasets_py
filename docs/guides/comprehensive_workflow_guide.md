@@ -48,7 +48,7 @@ optimizer = QueryOptimizer()
 # Create metrics collector
 metrics_collector = MetricsCollector(
     window_size=3600,  # 1 hour of metrics retention
-    collection_interval=10  # Collect metrics every 10 seconds
+    collection_interval=10,  # Collect metrics every 10 seconds
 )
 
 # Register the optimizer with the metrics collector
@@ -67,7 +67,7 @@ from ipfs_datasets_py.audit.audit_visualization import OptimizerLearningMetricsV
 visualizer = OptimizerLearningMetricsVisualizer(
     metrics_collector=metrics_collector,
     output_dir="./monitoring/visualizations",
-    update_interval=300  # Update visualizations every 5 minutes
+    update_interval=300,  # Update visualizations every 5 minutes
 )
 
 # Initialize visualizations
@@ -89,20 +89,20 @@ alert_system = setup_learning_alerts(
         "parameter_oscillation": {
             "window_size": 5,  # Number of adaptations to consider
             "direction_changes": 3,  # Number of direction changes to trigger alert
-            "severity": "warning"
+            "severity": "warning",
         },
         "performance_decline": {
             "success_rate_drop": 0.15,  # 15% drop in success rate
             "latency_increase": 0.25,  # 25% increase in latency
-            "severity": "critical"
+            "severity": "critical",
         },
         "learning_stall": {
             "min_queries": 50,  # Minimum queries to consider
             "min_adaptations": 1,  # Minimum expected adaptations
-            "severity": "info"
-        }
+            "severity": "info",
+        },
     },
-    alert_history_size=100  # Number of alerts to retain
+    alert_history_size=100,  # Number of alerts to retain
 )
 
 # Add custom alert handlers
@@ -120,7 +120,7 @@ dashboard = create_unified_dashboard(
     dashboard_dir="./monitoring/dashboard",
     dashboard_title="RAG Query Monitoring Dashboard",
     refresh_interval=300,  # 5 minutes
-    auto_refresh=True
+    auto_refresh=True,
 )
 
 # Register components
@@ -141,16 +141,19 @@ from flask import Flask, send_from_directory
 
 app = Flask(__name__)
 
-@app.route('/')
+
+@app.route("/")
 def dashboard():
-    return send_from_directory('./monitoring/dashboard', 'index.html')
+    return send_from_directory("./monitoring/dashboard", "index.html")
 
-@app.route('/<path:path>')
+
+@app.route("/<path:path>")
 def static_files(path):
-    return send_from_directory('./monitoring/dashboard', path)
+    return send_from_directory("./monitoring/dashboard", path)
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
 ```
 
 ## Real-World Workflows
@@ -174,7 +177,7 @@ metrics_collector = MetricsCollector(window_size=1800)  # 30 minutes
 visualizer = OptimizerLearningMetricsVisualizer(
     metrics_collector=metrics_collector,
     output_dir="./dev_monitoring/visualizations",
-    update_interval=60  # More frequent updates for development
+    update_interval=60,  # More frequent updates for development
 )
 
 # Create dashboard with development-focused configuration
@@ -183,7 +186,7 @@ dashboard = create_unified_dashboard(
     dashboard_title="DEV - RAG Optimizer Dashboard",
     refresh_interval=60,  # 1 minute refresh for quick feedback
     auto_refresh=True,
-    max_alerts=50
+    max_alerts=50,
 )
 
 # Register components
@@ -216,7 +219,7 @@ from ipfs_datasets_py.rag.rag_query_optimizer import QueryOptimizer
 optimizer = QueryOptimizer(enable_learning=True)
 metrics_collector = MetricsCollector(
     window_size=86400,  # 24 hours
-    collection_interval=30  # Less frequent collection to reduce overhead
+    collection_interval=30,  # Less frequent collection to reduce overhead
 )
 
 # Create alert system with production thresholds
@@ -226,14 +229,14 @@ alert_system = setup_learning_alerts(
         "parameter_oscillation": {
             "window_size": 10,  # More samples required for production alert
             "direction_changes": 5,
-            "severity": "warning"
+            "severity": "warning",
         },
         "performance_decline": {
             "success_rate_drop": 0.20,  # 20% drop required for alert
             "latency_increase": 0.30,  # 30% increase required for alert
-            "severity": "critical"
-        }
-    }
+            "severity": "critical",
+        },
+    },
 )
 
 # Connect to production alert channels
@@ -244,7 +247,7 @@ alert_system.add_handler("monitoring_system", send_to_monitoring_system)
 visualizer = OptimizerLearningMetricsVisualizer(
     metrics_collector=metrics_collector,
     output_dir="/var/www/html/rag_monitoring/visualizations",
-    update_interval=1800  # 30 minutes
+    update_interval=1800,  # 30 minutes
 )
 
 # Create dashboard with production settings
@@ -253,7 +256,7 @@ dashboard = create_unified_dashboard(
     dashboard_title="Production RAG Optimizer Dashboard",
     refresh_interval=1800,  # 30 minutes
     auto_refresh=True,
-    max_alerts=1000
+    max_alerts=1000,
 )
 ```
 
@@ -279,7 +282,7 @@ from ipfs_datasets_py.unified_monitoring_dashboard import create_unified_dashboa
 metrics_collector = DistributedMetricsCollector(
     collection_nodes=["node1", "node2", "node3"],
     aggregation_interval=60,  # Aggregate metrics every minute
-    storage_backend="redis://redis-master:6379/0"
+    storage_backend="redis://redis-master:6379/0",
 )
 
 # Create alert system with threshold auto-tuning
@@ -287,7 +290,7 @@ alert_system = setup_distributed_alerts(
     metrics_collector=metrics_collector,
     auto_tune_thresholds=True,
     alert_aggregation="cluster",  # Aggregate alerts across cluster
-    deduplication_window=300  # 5 minute deduplication window
+    deduplication_window=300,  # 5 minute deduplication window
 )
 
 # Create optimized visualizer for large datasets
@@ -295,7 +298,7 @@ visualizer = ScalableVisualizer(
     metrics_collector=metrics_collector,
     output_dir="/shared/visualizations",
     use_sampling=True,  # Use data sampling for large datasets
-    max_data_points=1000  # Limit data points for performance
+    max_data_points=1000,  # Limit data points for performance
 )
 
 # Create dashboard with high-scale optimizations
@@ -304,7 +307,7 @@ dashboard = create_unified_dashboard(
     dashboard_title="High-Scale RAG Monitoring",
     refresh_interval=300,
     use_caching=True,
-    static_generation=True  # Generate static files for better performance
+    static_generation=True,  # Generate static files for better performance
 )
 ```
 
@@ -333,18 +336,14 @@ metrics_collector = MetricsCollector()
 
 # Add exporters for existing monitoring systems
 metrics_collector.add_exporter(
-    PrometheusExporter(
-        endpoint="/metrics",
-        port=9090,
-        metric_prefix="rag_optimizer_"
-    )
+    PrometheusExporter(endpoint="/metrics", port=9090, metric_prefix="rag_optimizer_")
 )
 
 metrics_collector.add_exporter(
     DatadogExporter(
         api_key="YOUR_DATADOG_API_KEY",
         app_key="YOUR_DATADOG_APP_KEY",
-        tags=["service:rag-query", "env:production"]
+        tags=["service:rag-query", "env:production"],
     )
 )
 ```
@@ -357,9 +356,9 @@ Connect the alert system to external notification channels:
 # Connect to external alert systems
 from ipfs_datasets_py.optimizer_alert_system import setup_learning_alerts
 from ipfs_datasets_py.alert_handlers import (
-    SlackAlertHandler, 
-    PagerDutyAlertHandler, 
-    EmailAlertHandler
+    SlackAlertHandler,
+    PagerDutyAlertHandler,
+    EmailAlertHandler,
 )
 
 # Create alert system
@@ -372,8 +371,8 @@ alert_system.add_handler(
         webhook_url="https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
         channel="#rag-alerts",
         username="RAG Monitoring",
-        icon_emoji=":robot_face:"
-    )
+        icon_emoji=":robot_face:",
+    ),
 )
 
 # Add PagerDuty handler
@@ -381,12 +380,8 @@ alert_system.add_handler(
     "pagerduty",
     PagerDutyAlertHandler(
         routing_key="YOUR_PAGERDUTY_ROUTING_KEY",
-        severity_mapping={
-            "critical": "critical",
-            "warning": "warning",
-            "info": "info"
-        }
-    )
+        severity_mapping={"critical": "critical", "warning": "warning", "info": "info"},
+    ),
 )
 
 # Add Email handler
@@ -399,8 +394,8 @@ alert_system.add_handler(
         password="password",
         from_email="rag-alerts@example.com",
         to_emails=["team@example.com"],
-        subject_prefix="[RAG ALERT]"
-    )
+        subject_prefix="[RAG ALERT]",
+    ),
 )
 ```
 
@@ -414,43 +409,44 @@ from ipfs_datasets_py.audit.audit_visualization import BaseVisualizer
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
 class CustomRAGVisualizer(BaseVisualizer):
     """Custom visualizer for RAG query metrics."""
-    
+
     def __init__(self, metrics_collector, output_dir):
         super().__init__(metrics_collector, output_dir)
-        
+
     def create_visualizations(self):
         """Create custom visualizations."""
         # Get metrics data
         metrics = self.metrics_collector.get_metrics_snapshot()
-        
+
         # Create custom visualization
         plt.figure(figsize=(12, 8))
-        
+
         # Custom section for query distribution by type
-        if 'performance' in metrics and 'query_types' in metrics['performance']:
-            query_types = metrics['performance']['query_types']
+        if "performance" in metrics and "query_types" in metrics["performance"]:
+            query_types = metrics["performance"]["query_types"]
             types = list(query_types.keys())
-            counts = [data['count'] for data in query_types.values()]
-            
+            counts = [data["count"] for data in query_types.values()]
+
             plt.subplot(2, 2, 1)
             sns.barplot(x=types, y=counts)
-            plt.title('Query Distribution by Type')
+            plt.title("Query Distribution by Type")
             plt.xticks(rotation=45)
-            
+
         # Save visualization
-        output_path = os.path.join(self.output_dir, 'custom_visualization.png')
+        output_path = os.path.join(self.output_dir, "custom_visualization.png")
         plt.tight_layout()
         plt.savefig(output_path)
         plt.close()
-        
-        return {'custom_visualization': output_path}
+
+        return {"custom_visualization": output_path}
+
 
 # Create and register custom visualizer
 custom_visualizer = CustomRAGVisualizer(
-    metrics_collector=metrics_collector,
-    output_dir="./monitoring/custom_visualizations"
+    metrics_collector=metrics_collector, output_dir="./monitoring/custom_visualizations"
 )
 
 # Register with dashboard
@@ -479,9 +475,8 @@ alert_system = setup_learning_alerts(
             "direction_changes": 3,  # Number of direction changes to trigger alert
             "min_change_percentage": 0.05,  # Minimum relative change to count (5%)
             "parameters_to_monitor": ["max_vector_results", "min_similarity", "traversal_depth"],
-            "severity": "warning"
+            "severity": "warning",
         },
-        
         # Performance decline detection
         "performance_decline": {
             "success_rate_drop": 0.15,  # 15% drop in success rate
@@ -489,25 +484,23 @@ alert_system = setup_learning_alerts(
             "min_sample_size": 50,  # Minimum queries to consider
             "window_comparison": "day_over_day",  # Compare to same time yesterday
             "strategies_to_monitor": ["vector_first", "graph_first", "balanced"],
-            "severity": "critical"
+            "severity": "critical",
         },
-        
         # Learning stall detection
         "learning_stall": {
             "min_queries": 100,  # Minimum queries to analyze
             "min_adaptations": 2,  # Minimum expected adaptations
             "time_window": 3600,  # Time window in seconds (1 hour)
-            "severity": "info"
+            "severity": "info",
         },
-        
         # Strategy ineffectiveness
         "strategy_ineffectiveness": {
             "min_success_rate": 0.70,  # Minimum expected success rate
             "min_sample_size": 30,  # Minimum queries to consider
             "strategies_to_monitor": ["vector_first", "graph_first", "balanced"],
-            "severity": "warning"
-        }
-    }
+            "severity": "warning",
+        },
+    },
 )
 ```
 
@@ -551,7 +544,6 @@ custom_templates = {
         </body>
         </html>
     """,
-    
     "overview": """
         <div class="row">
             <div class="col-md-6">
@@ -573,14 +565,14 @@ custom_templates = {
                 </div>
             </div>
         </div>
-    """
+    """,
 }
 
 # Create dashboard with custom templates
 dashboard = create_unified_dashboard(
     dashboard_dir="./monitoring/dashboard",
     dashboard_title="Custom RAG Dashboard",
-    custom_templates=custom_templates
+    custom_templates=custom_templates,
 )
 ```
 
@@ -598,12 +590,9 @@ from ipfs_datasets_py.unified_monitoring_dashboard import create_unified_dashboa
 metrics_collector = DistributedMetricsCollector(
     nodes=["node1.example.com", "node2.example.com", "node3.example.com"],
     coordinator_url="http://coordinator.example.com:8080",
-    authentication={
-        "api_key": "YOUR_API_KEY",
-        "secret": "YOUR_API_SECRET"
-    },
+    authentication={"api_key": "YOUR_API_KEY", "secret": "YOUR_API_SECRET"},
     sync_interval=60,  # Sync metrics every minute
-    local_cache_size=10000  # Cache up to 10K metrics locally
+    local_cache_size=10000,  # Cache up to 10K metrics locally
 )
 
 # Create distributed alert system
@@ -611,7 +600,7 @@ alert_system = DistributedAlertSystem(
     metrics_collector=metrics_collector,
     coordinator_url="http://coordinator.example.com:8080/alerts",
     local_alert_handling=True,  # Handle alerts locally as well
-    alert_sync_interval=30  # Sync alerts every 30 seconds
+    alert_sync_interval=30,  # Sync alerts every 30 seconds
 )
 
 # Create dashboard
@@ -619,7 +608,7 @@ dashboard = create_unified_dashboard(
     dashboard_dir="/shared/dashboard",
     dashboard_title="Distributed RAG Monitoring",
     distributed_mode=True,
-    coordinator_url="http://coordinator.example.com:8080"
+    coordinator_url="http://coordinator.example.com:8080",
 )
 ```
 
@@ -655,7 +644,7 @@ auth_middleware = SecureAccessMiddleware(
     oauth_provider_url="https://auth.example.com",
     client_id="YOUR_CLIENT_ID",
     client_secret="YOUR_CLIENT_SECRET",
-    authorized_roles=["admin", "monitoring", "developer"]
+    authorized_roles=["admin", "monitoring", "developer"],
 )
 
 # Create secure dashboard
@@ -669,8 +658,8 @@ dashboard = create_unified_dashboard(
         "use_https": True,
         "content_security_policy": "default-src 'self'; script-src 'self' cdn.example.com",
         "data_sanitization": True,
-        "data_retention_days": 30
-    }
+        "data_retention_days": 30,
+    },
 )
 ```
 
@@ -713,6 +702,7 @@ Common issues and their solutions:
 2. Verify the output directory exists and is writable:
    ```python
    import os
+
    output_dir = visualizer.output_dir
    print(f"Output dir exists: {os.path.exists(output_dir)}")
    print(f"Output dir is writable: {os.access(output_dir, os.W_OK)}")
@@ -734,17 +724,19 @@ Common issues and their solutions:
    ```
 2. Verify alert handler is registered:
    ```python
-   print(f"Dashboard alert handler registered: {any(h.__name__ == 'DashboardAlertHandler' for h in alert_system.handlers)}")
+   print(
+       f"Dashboard alert handler registered: {any(h.__name__ == 'DashboardAlertHandler' for h in alert_system.handlers)}"
+   )
    ```
 3. Manually trigger a test alert:
    ```python
    from ipfs_datasets_py.optimizer_alert_system import LearningAnomaly
-   
+
    test_anomaly = LearningAnomaly(
        anomaly_type="test_anomaly",
        severity="info",
        description="Test alert for troubleshooting",
-       affected_parameters=["test_param"]
+       affected_parameters=["test_param"],
    )
    alert_system.process_anomaly(test_anomaly)
    ```

@@ -56,7 +56,7 @@ Example:
     ...     OntologyGenerationContext,
     ...     ExtractionStrategy
     ... )
-    >>> 
+    >>>
     >>> # Generate ontology
     >>> generator = OntologyGenerator()
     >>> context = OntologyGenerationContext(
@@ -66,12 +66,12 @@ Example:
     ...     extraction_strategy=ExtractionStrategy.HYBRID
     ... )
     >>> ontology = generator.generate_ontology(data, context)
-    >>> 
+    >>>
     >>> # Evaluate quality
     >>> critic = OntologyCritic()
     >>> score = critic.evaluate_ontology(ontology, context, data)
     >>> print(f"Quality: {score.overall:.2f}")
-    >>> 
+    >>>
     >>> # Validate logic
     >>> validator = LogicValidator()
     >>> result = validator.check_consistency(ontology)
@@ -83,10 +83,8 @@ References:
     - GraphRAG Integration: GRAPHRAG_INTEGRATION_DETAILED.md
 """
 
-
 from .score_analyzer import ScoreAnalyzer, DimensionStats, STANDARD_DIMENSIONS
 from .ontology_comparator import OntologyComparator
-
 
 
 # Core components (scaffolding complete)
@@ -240,100 +238,100 @@ from .ontology_types import (
 # Export public API
 __all__ = [
     # Generator
-    'OntologyGenerator',
-    'OntologyGenerationContext',
-    'ExtractionConfig',
-    'Entity',
-    'Relationship',
-    'EntityExtractionResult',
-    'OntologyGenerationResult',
-    'ExtractionStrategy',
-    'DataType',
+    "OntologyGenerator",
+    "OntologyGenerationContext",
+    "ExtractionConfig",
+    "Entity",
+    "Relationship",
+    "EntityExtractionResult",
+    "OntologyGenerationResult",
+    "ExtractionStrategy",
+    "DataType",
     # Critic
-    'OntologyCritic',
-    'CriticScore',
-    'BackendConfig',
-    'DIMENSION_WEIGHTS',
-    'ScoreAnalyzer',
-    'DimensionStats',
-    'STANDARD_DIMENSIONS',
-    'OntologyComparator',
+    "OntologyCritic",
+    "CriticScore",
+    "BackendConfig",
+    "DIMENSION_WEIGHTS",
+    "ScoreAnalyzer",
+    "DimensionStats",
+    "STANDARD_DIMENSIONS",
+    "OntologyComparator",
     # Validator
-    'LogicValidator',
-    'ValidationResult',
-    'ProverConfig',
+    "LogicValidator",
+    "ValidationResult",
+    "ProverConfig",
     # Mediator (Phase 2)
-    'OntologyMediator',
-    'MediatorState',
+    "OntologyMediator",
+    "MediatorState",
     # Optimizer (Phase 2)
-    'OntologyOptimizer',
-    'OptimizationReport',
+    "OntologyOptimizer",
+    "OptimizationReport",
     # Session (Phase 2)
-    'OntologySession',
-    'SessionResult',
+    "OntologySession",
+    "SessionResult",
     # Harness (Phase 2)
-    'OntologyHarness',
-    'OntologyPipelineHarness',
-    'BatchResult',
+    "OntologyHarness",
+    "OntologyPipelineHarness",
+    "BatchResult",
     # Prompt Generator (Phase 2)
-    'PromptGenerator',
-    'PromptTemplate',
+    "PromptGenerator",
+    "PromptTemplate",
     # Templates (Phase 3)
-    'OntologyTemplate',
-    'OntologyTemplateLibrary',
+    "OntologyTemplate",
+    "OntologyTemplateLibrary",
     # Metrics (Phase 3)
-    'MetricsCollector',
-    'SessionMetrics',
+    "MetricsCollector",
+    "SessionMetrics",
     # Visualization (Phase 3)
-    'OntologyVisualizer',
-    'MetricsVisualizer',
-    'GraphVisualization',
+    "OntologyVisualizer",
+    "MetricsVisualizer",
+    "GraphVisualization",
     # Agent scaffolding
-    'OntologyRefinementAgent',
-    'NoOpRefinementAgent',
+    "OntologyRefinementAgent",
+    "NoOpRefinementAgent",
     # Exceptions
-    'GraphRAGError',
-    'OptimizerError',
-    'ExtractionError',
-    'ValidationError',
-    'ProvingError',
-    'RefinementError',
-    'ConfigurationError',
+    "GraphRAGError",
+    "OptimizerError",
+    "ExtractionError",
+    "ValidationError",
+    "ProvingError",
+    "RefinementError",
+    "ConfigurationError",
     # Learning Adapter
-    'OntologyLearningAdapter',
-    'FeedbackRecord',
+    "OntologyLearningAdapter",
+    "FeedbackRecord",
     # Type Definitions (for static type checking)
-    'EntityType',
-    'RelationshipType',
-    'OntologyMetadata',
-    'Ontology',
-    'EntityExtractionResultType',
-    'RelationshipExtractionResult',
-    'DimensionalScore',
-    'CriticRecommendation',
-    'RefinementAction',
-    'ActionLogEntry',
-    'ActionSummaryEntry',
-    'CriticScoreType',
-    'SessionRound',
-    'OntologySessionType',
-    'GenerationContext',
-    'EntityStatistics',
-    'RelationshipStatistics',
-    'OntologyStatistics',
-    'PerformanceMetrics',
-    'QualityMetrics',
-    'PipelineStageResult',
-    'RefinementCycleResult',
-    'ExtractionConfigDict',
-    'OptimizerConfig',
-    'ScoreAnalyzer',
-    'DimensionStats',
-    'STANDARD_DIMENSIONS',
-    'OntologyComparator',
+    "EntityType",
+    "RelationshipType",
+    "OntologyMetadata",
+    "Ontology",
+    "EntityExtractionResultType",
+    "RelationshipExtractionResult",
+    "DimensionalScore",
+    "CriticRecommendation",
+    "RefinementAction",
+    "ActionLogEntry",
+    "ActionSummaryEntry",
+    "CriticScoreType",
+    "SessionRound",
+    "OntologySessionType",
+    "GenerationContext",
+    "EntityStatistics",
+    "RelationshipStatistics",
+    "OntologyStatistics",
+    "PerformanceMetrics",
+    "QualityMetrics",
+    "PipelineStageResult",
+    "RefinementCycleResult",
+    "ExtractionConfigDict",
+    "OptimizerConfig",
+    "ScoreAnalyzer",
+    "DimensionStats",
+    "STANDARD_DIMENSIONS",
+    "OntologyComparator",
 ]
 
 
-__version__ = '0.1.0'
-__author__ = 'IPFS Datasets Team'
-__status__ = 'Scaffolding'  # Will change to 'Production' after Phase 6
+__version__ = "0.1.0"
+__author__ = "IPFS Datasets Team"
+__status__ = "Scaffolding"  # Will change to 'Production' after Phase 6

@@ -1,0 +1,168 @@
+{
+  "schema": "ipfs_accelerate_py.agent_supervisor.uscode_sparse_graphrag.scheduler_config@1",
+  "taskboard_path": "docs/architecture/uscode_sparse_graphrag.todo.md",
+  "objectives_path": "docs/architecture/uscode_sparse_graphrag.objectives.md",
+  "plan_path": "docs/architecture/USCODE_SPARSE_GRAPHRAG_PLAN.md",
+  "validator_path": "scripts/validate_uscode_sparse_graphrag_board.py",
+  "task_prefix": "USCIR-",
+  "goal_prefix": "USCIR-G",
+  "board_namespace": "uscode-sparse-graphrag-v1",
+  "merge_target_branch": "feature/uscode-sparse-graphrag",
+  "source_binding": {
+    "accelerator_required_ancestor": "a2f5400b7cb89c8481819379a1b7b9959fe81d45",
+    "accelerator_required_branch": "feature/uscode-sparse-graphrag",
+    "require_initialized_gitlinks": false,
+    "require_superproject_gitlink_equals_nested_head": false,
+    "require_clean_nested_worktree_at_task_start": true,
+    "record_recursive_repository_forest_at_launch": true,
+    "changed_revision_requires_fresh_inventory_and_baseline": true,
+    "planning_revision_is_runtime_completion_evidence": false
+  },
+  "initial_projection": {
+    "task_count": 41,
+    "completed_task_ids": [
+      "USCIR-000"
+    ],
+    "ready_task_ids": [
+      "USCIR-001",
+      "USCIR-002",
+      "USCIR-003",
+      "USCIR-004",
+      "USCIR-006",
+      "USCIR-007"
+    ],
+    "blocked_task_ids": [],
+    "terminal_task_id": "USCIR-040",
+    "goal_count": 11,
+    "root_goal_id": "USCIR-G000"
+  },
+  "max_lanes": 4,
+  "strict_task_sharding": true,
+  "exit_when_all_tracks_terminal": true,
+  "objective_refill_enabled": false,
+  "codebase_refill_enabled": false,
+  "poll_interval_seconds": 5,
+  "daemon_interval_seconds": 30,
+  "check_interval_seconds": 15,
+  "stale_seconds": 900,
+  "watchdog_startup_grace_seconds": 300,
+  "max_restarts": 4,
+  "max_task_attempts": 4,
+  "implementation_retry_budget": 3,
+  "validation_retry_budget": 3,
+  "merge_retry_budget": 3,
+  "implementation_timeout_seconds": 7200,
+  "implementation_max_timeout_seconds": 21600,
+  "implementation_log_stall_seconds": 600,
+  "worktree_submodule_paths": [],
+  "protected_paths": [
+    ".gitignore",
+    "docs/architecture/USCODE_SPARSE_GRAPHRAG_PLAN.md",
+    "docs/architecture/uscode_sparse_graphrag.objectives.md",
+    "docs/architecture/uscode_sparse_graphrag.todo.md",
+    "config/agent_supervisor_uscode_sparse_graphrag_scheduler.json",
+    "scripts/validate_uscode_sparse_graphrag_board.py",
+    "scripts/ops/agent_supervisor/configured_board_scheduler.py",
+    "scripts/ops/agent_supervisor/implementation_supervisor_entry.py",
+    "scripts/ops/uscode_sparse_graphrag/preflight.py",
+    "scripts/ops/uscode_sparse_graphrag/status.py",
+    "scripts/ops/uscode_sparse_graphrag/status.sh",
+    "scripts/ops/uscode_sparse_graphrag/README.md",
+    "tests/unit/supervisor/test_uscode_sparse_graphrag_board.py",
+    "data/agent_supervisor/uscode_sparse_graphrag/bundles/lane_matrix.json",
+    "data/agent_supervisor/uscode_sparse_graphrag/bundles/release_policy.json"
+  ],
+  "runtime_paths": {
+    "root": "workspace/agent-supervisor/uscode-sparse-graphrag",
+    "state": "workspace/agent-supervisor/uscode-sparse-graphrag/state",
+    "worktrees": "workspace/agent-supervisor/uscode-sparse-graphrag/worktrees",
+    "merge_queue": "workspace/agent-supervisor/uscode-sparse-graphrag/merge-queue",
+    "logs": "workspace/agent-supervisor/uscode-sparse-graphrag/logs",
+    "evidence": "workspace/agent-supervisor/uscode-sparse-graphrag/evidence",
+    "generated_runtime_artifacts_are_completion_authority": false
+  },
+  "lanes": [
+    {
+      "index": 0,
+      "name": "uscir-lane-0",
+      "strict_shard_remainder": 0,
+      "initial_task_ids": [
+        "USCIR-002",
+        "USCIR-004"
+      ],
+      "initial_focus": "schema-and-official-source-contract"
+    },
+    {
+      "index": 1,
+      "name": "uscir-lane-1",
+      "strict_shard_remainder": 1,
+      "initial_task_ids": [
+        "USCIR-007"
+      ],
+      "initial_focus": "structure-aware-legal-chunking"
+    },
+    {
+      "index": 2,
+      "name": "uscir-lane-2",
+      "strict_shard_remainder": 2,
+      "initial_task_ids": [
+        "USCIR-006"
+      ],
+      "initial_focus": "canonical-legal-identity"
+    },
+    {
+      "index": 3,
+      "name": "uscir-lane-3",
+      "strict_shard_remainder": 3,
+      "initial_task_ids": [
+        "USCIR-001",
+        "USCIR-003"
+      ],
+      "initial_focus": "pinned-baseline-and-goldset"
+    }
+  ],
+  "task_groups": {
+    "USCIR-G010": ["USCIR-001", "USCIR-002", "USCIR-003", "USCIR-004"],
+    "USCIR-G020": ["USCIR-005", "USCIR-006", "USCIR-007", "USCIR-008"],
+    "USCIR-G030": ["USCIR-009", "USCIR-010", "USCIR-011", "USCIR-012"],
+    "USCIR-G040": ["USCIR-013", "USCIR-014", "USCIR-015", "USCIR-016"],
+    "USCIR-G050": ["USCIR-017", "USCIR-018", "USCIR-019", "USCIR-020"],
+    "USCIR-G060": ["USCIR-021", "USCIR-022", "USCIR-023", "USCIR-024"],
+    "USCIR-G070": ["USCIR-025", "USCIR-026", "USCIR-027", "USCIR-028"],
+    "USCIR-G080": ["USCIR-029", "USCIR-030", "USCIR-031", "USCIR-032"],
+    "USCIR-G090": ["USCIR-033", "USCIR-034", "USCIR-035", "USCIR-036"],
+    "USCIR-G100": ["USCIR-037", "USCIR-038", "USCIR-039", "USCIR-040"]
+  },
+  "provider": {
+    "primary_provider_id": "grok_cli",
+    "primary_model_id": "grok-4.5",
+    "fallback_provider_id": "codex",
+    "fallback_model_id": "gpt-5.6-terra",
+    "fallback_trigger": "primary_quota_exhausted",
+    "fallback_reasoning_effort": "medium",
+    "max_concurrency": 4,
+    "secrets_from_environment_only": true,
+    "secrets_in_argv_prompts_logs_or_receipts": false
+  },
+  "authority_policy": {
+    "official_release_point_and_per_title_receipts_required": true,
+    "mixed_unapproved_title_vintages_allowed": false,
+    "content_or_embedding_without_canonical_identity_allowed": false,
+    "vector_dimension_implies_vector_space_compatibility": false,
+    "bm25_similarity_is_legal_authority": false,
+    "graph_or_embedding_output_is_legal_advice": false,
+    "unknown_ambiguous_stale_or_unsupported_disposition": "abstain_or_expose_uncertainty",
+    "autonomous_live_dataset_publication_allowed": false,
+    "human_publication_seal_required": true
+  },
+  "release_policy": {
+    "target_dataset": "justicedao/ipfs_uscode",
+    "baseline_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+    "migration_mode": "additive",
+    "legacy_artifact_deletion_allowed": false,
+    "staging_target_must_be_explicit": true,
+    "production_target_is_default": false,
+    "immutable_redownload_canary_required": true,
+    "rollback_rehearsal_required": true
+  }
+}

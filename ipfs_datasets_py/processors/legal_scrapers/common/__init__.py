@@ -51,23 +51,23 @@ from .complaint_types import (
 
 __all__ = [
     # Keywords
-    'COMPLAINT_KEYWORDS',
-    'register_keywords',
-    'register_legal_terms',
-    'get_keywords',
-    'get_type_specific_keywords',
+    "COMPLAINT_KEYWORDS",
+    "register_keywords",
+    "register_legal_terms",
+    "get_keywords",
+    "get_type_specific_keywords",
     # Legal Patterns
-    'LegalPatternExtractor',
-    'ComplaintLegalPatternExtractor',
-    'extract_legal_patterns',
-    'extract_complaint_patterns',
+    "LegalPatternExtractor",
+    "ComplaintLegalPatternExtractor",
+    "extract_legal_patterns",
+    "extract_complaint_patterns",
     # Base Classes
-    'BaseComplaintAnalyzer',
-    'BaseRiskScorer',
-    'BaseComplaintIndexer',
+    "BaseComplaintAnalyzer",
+    "BaseRiskScorer",
+    "BaseComplaintIndexer",
     # Complaint Types
-    'ComplaintType',
-    'register_complaint_type',
-    'get_registered_types',
-    'get_complaint_type',
+    "ComplaintType",
+    "register_complaint_type",
+    "get_registered_types",
+    "get_complaint_type",
 ]

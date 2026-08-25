@@ -5,7 +5,9 @@ import argparse
 import json
 from pathlib import Path
 
-from ipfs_datasets_py.processors.legal_data.reasoner.optimizer_policy import build_optimizer_chain_plan
+from ipfs_datasets_py.processors.legal_data.reasoner.optimizer_policy import (
+    build_optimizer_chain_plan,
+)
 
 
 def _load_json(path: str) -> dict:
@@ -19,7 +21,9 @@ def _write_json(path: str, payload: dict) -> None:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Select optimizer chain stage toggles from policy decision")
+    ap = argparse.ArgumentParser(
+        description="Select optimizer chain stage toggles from policy decision"
+    )
     ap.add_argument("--decision", required=True, help="Optimizer acceptance decision JSON path")
     ap.add_argument("--output", required=True, help="Output chain plan JSON path")
     args = ap.parse_args()

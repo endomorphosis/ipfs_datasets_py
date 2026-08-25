@@ -56,9 +56,7 @@ MAX_TAG_CHARS = 128
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
 _CONTROL_CHAR_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
-_BASE64_BLOCK_RE = re.compile(
-    r"(?:^|\s)(?:[A-Za-z0-9+/]{256,}={0,2})(?:\s|$)", re.MULTILINE
-)
+_BASE64_BLOCK_RE = re.compile(r"(?:^|\s)(?:[A-Za-z0-9+/]{256,}={0,2})(?:\s|$)", re.MULTILINE)
 _SPACE_RE = re.compile(r"\s+")
 
 
@@ -76,8 +74,7 @@ class PromptPolicyError(PromptSourceError):
     def __init__(self, decision: "PromptSourcePolicyDecision") -> None:
         self.decision = decision
         super().__init__(
-            "Prompt is not eligible for content normalization: "
-            f"{decision.allowed_use.value}"
+            f"Prompt is not eligible for content normalization: {decision.allowed_use.value}"
         )
 
 
@@ -162,8 +159,7 @@ class PromptSourcePolicyDecision:
     @property
     def secret_pii_decision(self) -> FindingDecision:
         if any(
-            finding.category
-            in {FindingCategory.SECRET, FindingCategory.PERSONAL_DATA}
+            finding.category in {FindingCategory.SECRET, FindingCategory.PERSONAL_DATA}
             for finding in self.findings
         ):
             return FindingDecision.QUARANTINED
@@ -210,9 +206,7 @@ class PromptEntryIdentity:
             or bytes(decoded.digest) != self.multihash_bytes
             or decoded.raw_digest.hex() != self.sha256
         ):
-            raise PromptRecordError(
-                "entry identity does not use CIDv1/raw/sha2-256 consistently"
-            )
+            raise PromptRecordError("entry identity does not use CIDv1/raw/sha2-256 consistently")
         if self.identity_schema_version != PROMPT_ENTRY_IDENTITY_SCHEMA_VERSION:
             raise PromptRecordError("entry identity schema version is unsupported")
 
@@ -335,12 +329,8 @@ class PromptRecord:
         encoded_id = quote(self.prompt_id, safe=":")
         source_uri = self.source_uri or f"prompt://local/{encoded_id}"
         source_id = self.source_id or self.prompt_id
-        reference_material = (
-            f"{source_id}@{self.source_revision}#{self.content_sha256}"
-        )
-        reference_digest = hashlib.sha256(
-            reference_material.encode("utf-8")
-        ).hexdigest()
+        reference_material = f"{source_id}@{self.source_revision}#{self.content_sha256}"
+        reference_digest = hashlib.sha256(reference_material.encode("utf-8")).hexdigest()
         return SourceRef(
             ref_id=f"prompt:{reference_digest}",
             source_uri=source_uri,
@@ -622,16 +612,8 @@ class PromptSourcePolicy:
                 if field != "text"
                 else FindingCategory.GENERATED_BINARY
             )
-            code = (
-                "metadata.control_character"
-                if field != "text"
-                else "content.control_character"
-            )
-            findings.append(
-                PromptPolicyFinding(
-                    category, code, field, match.start(), match.end()
-                )
-            )
+            code = "metadata.control_character" if field != "text" else "content.control_character"
+            findings.append(PromptPolicyFinding(category, code, field, match.start(), match.end()))
         if field == "text":
             for index, match in enumerate(_BASE64_BLOCK_RE.finditer(value)):
                 if index >= MAX_FINDINGS_PER_DETECTOR:
@@ -805,9 +787,7 @@ def _require_text(value: Any, label: str) -> str:
         if not isinstance(value, str) or not value.strip():
             raise PromptRecordError(f"{label} must be a non-empty string")
         if value.strip() != value:
-            raise PromptRecordError(
-                f"{label} must not have surrounding whitespace"
-            )
+            raise PromptRecordError(f"{label} must not have surrounding whitespace")
     if "\x00" in value:
         raise PromptRecordError(f"{label} must not contain NUL")
     return value

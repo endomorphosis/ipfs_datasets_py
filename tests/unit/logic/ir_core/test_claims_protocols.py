@@ -56,8 +56,7 @@ def _claim() -> IRClaim:
             ProofObligation(
                 obligation_id="obligation:authorization",
                 statement=(
-                    "For every broadcast in the bounded model, an authorization "
-                    "precedes it."
+                    "For every broadcast in the bounded model, an authorization precedes it."
                 ),
                 assumption_ids=("assumption:event-log-complete",),
                 logic_family="first_order_temporal",
@@ -534,9 +533,7 @@ def test_proof_backend_is_solver_neutral_structural_protocol() -> None:
         def supports(self, request: BackendRequest) -> bool:
             return self.capabilities.supports(request.logic_family, request.query_kind)
 
-        def run(
-            self, request: BackendRequest
-        ) -> tuple[BackendAttempt, BoundedResult]:
+        def run(self, request: BackendRequest) -> tuple[BackendAttempt, BoundedResult]:
             attempt = _attempt(request)
             authority = ResultAuthority(
                 kind=request.query_kind.authority_kind,

@@ -42,12 +42,8 @@ from ipfs_datasets_py.utils.cid_utils import cid_for_bytes, cid_for_dag_json
 
 
 CANONICAL_DECOMPILER_COMPONENT_ID: Final = "source_withheld_paraphrase"
-CANONICAL_DECOMPILER_ATTRIBUTION_INTERFACE: Final = (
-    "CanonicalDecompilerAttribution@1"
-)
-CANONICAL_DECOMPILER_ATTRIBUTION_SCHEMA: Final = (
-    "ipfs-datasets.canonical-decompiler-attribution.v1"
-)
+CANONICAL_DECOMPILER_ATTRIBUTION_INTERFACE: Final = "CanonicalDecompilerAttribution@1"
+CANONICAL_DECOMPILER_ATTRIBUTION_SCHEMA: Final = "ipfs-datasets.canonical-decompiler-attribution.v1"
 
 _PUBLIC_ADAPTER_INPUT_FIELDS: Final = (
     "canonical_ir",
@@ -134,14 +130,12 @@ def decompile_rule(rule: CanonicalRule) -> str:
     if rule.temporal:
         sentence += " " + _join_atoms(rule.temporal, "and")
     if rule.conditions:
-        sentence += (
-            f" {SOURCE_WITHHELD_DECOMPILER_CONFIG['condition_connector']} "
-            + _join_atoms(rule.conditions, "and")
+        sentence += f" {SOURCE_WITHHELD_DECOMPILER_CONFIG['condition_connector']} " + _join_atoms(
+            rule.conditions, "and"
         )
     if rule.exceptions:
-        sentence += (
-            f" {SOURCE_WITHHELD_DECOMPILER_CONFIG['exception_connector']} "
-            + _join_atoms(rule.exceptions, "or")
+        sentence += f" {SOURCE_WITHHELD_DECOMPILER_CONFIG['exception_connector']} " + _join_atoms(
+            rule.exceptions, "or"
         )
     if not sentence.strip():
         raise CanonicalContractError("rule cannot produce a nonblank sentence")
@@ -177,16 +171,13 @@ def _request_drift(request: DecompilerRequest) -> tuple[str, str] | None:
         )
     if (
         dict(request.config) != dict(SOURCE_WITHHELD_DECOMPILER_CONFIG)
-        or cid_for_dag_json(dict(request.config))
-        != SOURCE_WITHHELD_DECOMPILER_CONFIG_CID
+        or cid_for_dag_json(dict(request.config)) != SOURCE_WITHHELD_DECOMPILER_CONFIG_CID
     ):
         return (
             "config_cid",
             "decompiler request configuration does not match the frozen profile",
         )
-    if cid_for_dag_json(_rendering_spec_payload()) != (
-        SOURCE_WITHHELD_RENDERING_SPEC_CID
-    ):
+    if cid_for_dag_json(_rendering_spec_payload()) != (SOURCE_WITHHELD_RENDERING_SPEC_CID):
         return (
             "rendering_spec_cid",
             "decompiler rendering specification does not match the frozen profile",
@@ -205,9 +196,7 @@ def _attribution_receipt(
         or result.text is None
         or result.text_cid is None
     ):
-        raise CanonicalContractError(
-            "attribution requires a successful decompiler result"
-        )
+        raise CanonicalContractError("attribution requires a successful decompiler result")
     body: dict[str, object] = {
         "interface": CANONICAL_DECOMPILER_ATTRIBUTION_INTERFACE,
         "schema_version": CANONICAL_DECOMPILER_ATTRIBUTION_SCHEMA,
@@ -226,9 +215,7 @@ def _attribution_receipt(
             "text_cid": result.text_cid,
             "character_count": len(result.text),
         },
-        "component_trace": [
-            trace.to_dict() for trace in result.component_trace
-        ],
+        "component_trace": [trace.to_dict() for trace in result.component_trace],
     }
     return {**body, "receipt_cid": cid_for_dag_json(body)}
 
@@ -264,11 +251,7 @@ class SourceWithheldCanonicalDecompiler:
                 _INVALID_REQUEST_CID,
                 CanonicalErrorCode.INVALID_REQUEST,
                 "request must be DecompilerRequest",
-                details={
-                    "expected_interface": (
-                        CANONICAL_STRUCTURED_TEXT_DECOMPILER_INTERFACE
-                    )
-                },
+                details={"expected_interface": (CANONICAL_STRUCTURED_TEXT_DECOMPILER_INTERFACE)},
             )
 
         try:
@@ -304,9 +287,7 @@ class SourceWithheldCanonicalDecompiler:
             )
 
         try:
-            text = " ".join(
-                decompile_rule(rule) for rule in request.canonical_ir.rules
-            )
+            text = " ".join(decompile_rule(rule) for rule in request.canonical_ir.rules)
         except CanonicalContractError as exc:
             return _failure(
                 request_cid,
@@ -363,9 +344,7 @@ class SourceWithheldCanonicalDecompiler:
     decompile_with_receipt = decompile_with_attribution
 
 
-assert isinstance(
-    SourceWithheldCanonicalDecompiler(), CanonicalStructuredTextDecompiler
-)
+assert isinstance(SourceWithheldCanonicalDecompiler(), CanonicalStructuredTextDecompiler)
 
 
 CanonicalDecompiler = SourceWithheldCanonicalDecompiler

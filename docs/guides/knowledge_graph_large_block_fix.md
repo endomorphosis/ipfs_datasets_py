@@ -112,11 +112,7 @@ kg = IPLDKnowledgeGraph(name="my_large_graph", storage=storage)
 
 # Add many entities (will automatically chunk if needed)
 for i in range(30000):
-    kg.add_entity(
-        entity_type="person",
-        name=f"Entity {i}",
-        properties={"index": i}
-    )
+    kg.add_entity(entity_type="person", name=f"Entity {i}", properties={"index": i})
 
 # Root node is automatically kept under 1MB
 # Data is chunked transparently when needed

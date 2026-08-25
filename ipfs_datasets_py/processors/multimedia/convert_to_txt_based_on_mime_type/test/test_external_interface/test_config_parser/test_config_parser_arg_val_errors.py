@@ -14,18 +14,15 @@ from external_interface.config_parser.config_parser import ConfigParser, Configs
 
 # NOTE Passed all these tests, but they also kept overwriting the configs.yaml file.
 class TestConfigParserValidation:
-
     @pytest.fixture
     def setup_config_file(self, tmp_path: Path) -> None:
-
         """Helper to write test config to configs.yaml"""
+
         def _write_config(config_data: dict[str, Any]) -> None:
-            with open('configs.yaml', 'w') as f:
+            with open("configs.yaml", "w") as f:
                 yaml.dump(config_data, f)
 
         return _write_config
-
-
 
     # # def test_empty_config(self, setup_config_file):
     # #     """Test handling of empty config file"""

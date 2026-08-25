@@ -1,0 +1,339 @@
+{
+  "admission_status": "recovery",
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "bucket_id": "justicedao/open-us-law-bucket",
+  "bucket_url": "https://huggingface.co/buckets/justicedao/open-us-law-bucket",
+  "expected_jurisdictions": [
+    "AK",
+    "AL",
+    "AR",
+    "AZ",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "IA",
+    "ID",
+    "IL",
+    "IN",
+    "KS",
+    "KY",
+    "LA",
+    "MA",
+    "MD",
+    "ME",
+    "MI",
+    "MN",
+    "MO",
+    "MS",
+    "MT",
+    "NC",
+    "ND",
+    "NE",
+    "NH",
+    "NJ",
+    "NM",
+    "NV",
+    "NY",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VA",
+    "VT",
+    "WA",
+    "WI",
+    "WV",
+    "WY",
+    "DC"
+  ],
+  "extra_codes": [
+    "FEDERAL",
+    "PR"
+  ],
+  "file_count": 51,
+  "goal_id": "LCR-G146",
+  "missing_expected": [
+    "GA",
+    "NC"
+  ],
+  "present_expected": [
+    "AK",
+    "AL",
+    "AR",
+    "AZ",
+    "CA",
+    "CO",
+    "CT",
+    "DC",
+    "DE",
+    "FL",
+    "HI",
+    "IA",
+    "ID",
+    "IL",
+    "IN",
+    "KS",
+    "KY",
+    "LA",
+    "MA",
+    "MD",
+    "ME",
+    "MI",
+    "MN",
+    "MO",
+    "MS",
+    "MT",
+    "ND",
+    "NE",
+    "NH",
+    "NJ",
+    "NM",
+    "NV",
+    "NY",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VA",
+    "VT",
+    "WA",
+    "WI",
+    "WV",
+    "WY"
+  ],
+  "producer": "inventory_lcr084_bucket_statutes.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "reasons": [
+    "bucket statute parquet listing is recovery-only and is not official live scrape evidence",
+    "missing expected jurisdictions: ['GA', 'NC']",
+    "extra non-exact-51 codes: ['FEDERAL', 'PR']"
+  ],
+  "satisfies_exact_51_official": false,
+  "schema": "ipfs_datasets_py/lcr084-bucket-statute-inventory@1",
+  "source_authority_class": "secondary",
+  "status": "blocked",
+  "statute_files": [
+    {
+      "code": "AK",
+      "path": "us_ak_statutes.parquet"
+    },
+    {
+      "code": "AL",
+      "path": "us_al_statutes.parquet"
+    },
+    {
+      "code": "AR",
+      "path": "us_ar_statutes.parquet"
+    },
+    {
+      "code": "AZ",
+      "path": "us_az_statutes.parquet"
+    },
+    {
+      "code": "CA",
+      "path": "us_ca_statutes.parquet"
+    },
+    {
+      "code": "CO",
+      "path": "us_co_statutes.parquet"
+    },
+    {
+      "code": "CT",
+      "path": "us_ct_statutes.parquet"
+    },
+    {
+      "code": "DC",
+      "path": "us_dc_statutes.parquet"
+    },
+    {
+      "code": "DE",
+      "path": "us_de_statutes.parquet"
+    },
+    {
+      "code": "FEDERAL",
+      "path": "us_federal_statutes.parquet"
+    },
+    {
+      "code": "FL",
+      "path": "us_fl_statutes.parquet"
+    },
+    {
+      "code": "HI",
+      "path": "us_hi_statutes.parquet"
+    },
+    {
+      "code": "IA",
+      "path": "us_ia_statutes.parquet"
+    },
+    {
+      "code": "ID",
+      "path": "us_id_statutes.parquet"
+    },
+    {
+      "code": "IL",
+      "path": "us_il_statutes.parquet"
+    },
+    {
+      "code": "IN",
+      "path": "us_in_statutes.parquet"
+    },
+    {
+      "code": "KS",
+      "path": "us_ks_statutes.parquet"
+    },
+    {
+      "code": "KY",
+      "path": "us_ky_statutes.parquet"
+    },
+    {
+      "code": "LA",
+      "path": "us_la_statutes.parquet"
+    },
+    {
+      "code": "MA",
+      "path": "us_ma_statutes.parquet"
+    },
+    {
+      "code": "MD",
+      "path": "us_md_statutes.parquet"
+    },
+    {
+      "code": "ME",
+      "path": "us_me_statutes.parquet"
+    },
+    {
+      "code": "MI",
+      "path": "us_mi_statutes.parquet"
+    },
+    {
+      "code": "MN",
+      "path": "us_mn_statutes.parquet"
+    },
+    {
+      "code": "MO",
+      "path": "us_mo_statutes.parquet"
+    },
+    {
+      "code": "MS",
+      "path": "us_ms_statutes.parquet"
+    },
+    {
+      "code": "MT",
+      "path": "us_mt_statutes.parquet"
+    },
+    {
+      "code": "ND",
+      "path": "us_nd_statutes.parquet"
+    },
+    {
+      "code": "NE",
+      "path": "us_ne_statutes.parquet"
+    },
+    {
+      "code": "NH",
+      "path": "us_nh_statutes.parquet"
+    },
+    {
+      "code": "NJ",
+      "path": "us_nj_statutes.parquet"
+    },
+    {
+      "code": "NM",
+      "path": "us_nm_statutes.parquet"
+    },
+    {
+      "code": "NV",
+      "path": "us_nv_statutes.parquet"
+    },
+    {
+      "code": "NY",
+      "path": "us_ny_statutes.parquet"
+    },
+    {
+      "code": "OH",
+      "path": "us_oh_statutes.parquet"
+    },
+    {
+      "code": "OK",
+      "path": "us_ok_statutes.parquet"
+    },
+    {
+      "code": "OR",
+      "path": "us_or_statutes.parquet"
+    },
+    {
+      "code": "PA",
+      "path": "us_pa_statutes.parquet"
+    },
+    {
+      "code": "PR",
+      "path": "us_pr_statutes.parquet"
+    },
+    {
+      "code": "RI",
+      "path": "us_ri_statutes.parquet"
+    },
+    {
+      "code": "SC",
+      "path": "us_sc_statutes.parquet"
+    },
+    {
+      "code": "SD",
+      "path": "us_sd_statutes.parquet"
+    },
+    {
+      "code": "TN",
+      "path": "us_tn_statutes.parquet"
+    },
+    {
+      "code": "TX",
+      "path": "us_tx_statutes.parquet"
+    },
+    {
+      "code": "UT",
+      "path": "us_ut_statutes.parquet"
+    },
+    {
+      "code": "VA",
+      "path": "us_va_statutes.parquet"
+    },
+    {
+      "code": "VT",
+      "path": "us_vt_statutes.parquet"
+    },
+    {
+      "code": "WA",
+      "path": "us_wa_statutes.parquet"
+    },
+    {
+      "code": "WI",
+      "path": "us_wi_statutes.parquet"
+    },
+    {
+      "code": "WV",
+      "path": "us_wv_statutes.parquet"
+    },
+    {
+      "code": "WY",
+      "path": "us_wy_statutes.parquet"
+    }
+  ],
+  "task_id": "LCR-084"
+}

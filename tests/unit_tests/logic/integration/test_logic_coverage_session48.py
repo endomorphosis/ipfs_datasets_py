@@ -26,15 +26,18 @@ from unittest.mock import MagicMock, patch
 # Helper fixtures
 # ---------------------------------------------------------------------------
 
+
 def _make_formula(text: str = "O(pay(alice))"):
     """Create a real TDFOL Formula for testing."""
     from ipfs_datasets_py.logic.TDFOL.tdfol_parser import parse_tdfol
+
     return parse_tdfol(text)
 
 
 def _make_proof_result(proved: bool = False):
     """Create a real ProofResult for testing."""
     from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofResult, ProofStatus
+
     status = ProofStatus.PROVED if proved else ProofStatus.UNKNOWN
     return ProofResult(status=status, formula=None, time_ms=0, method="test")
 
@@ -43,11 +46,15 @@ def _make_proof_result(proved: bool = False):
 # 1. EmbeddingEnhancedProver
 # ===========================================================================
 
+
 class TestEmbeddingEnhancedProver:
     """Tests for symbolic/neurosymbolic/embedding_prover.py"""
 
     def setup_method(self):
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.embedding_prover import EmbeddingEnhancedProver
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.embedding_prover import (
+            EmbeddingEnhancedProver,
+        )
+
         self.EmbeddingEnhancedProver = EmbeddingEnhancedProver
 
     def test_init_no_model(self):
@@ -183,13 +190,17 @@ class TestEmbeddingEnhancedProver:
 # 2. HybridConfidenceScorer
 # ===========================================================================
 
+
 class TestHybridConfidenceScorer:
     """Tests for symbolic/neurosymbolic/hybrid_confidence.py"""
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.hybrid_confidence import (
-            HybridConfidenceScorer, ConfidenceBreakdown, ConfidenceSource
+            HybridConfidenceScorer,
+            ConfidenceBreakdown,
+            ConfidenceSource,
         )
+
         self.Scorer = HybridConfidenceScorer
         self.Breakdown = ConfidenceBreakdown
         self.Source = ConfidenceSource
@@ -305,13 +316,17 @@ class TestHybridConfidenceScorer:
 # 3. NeuralSymbolicCoordinator
 # ===========================================================================
 
+
 class TestNeuralSymbolicCoordinator:
     """Tests for symbolic/neurosymbolic/reasoning_coordinator.py"""
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
-            NeuralSymbolicCoordinator, ReasoningStrategy, CoordinatedResult
+            NeuralSymbolicCoordinator,
+            ReasoningStrategy,
+            CoordinatedResult,
         )
+
         self.Coordinator = NeuralSymbolicCoordinator
         self.Strategy = ReasoningStrategy
         self.Result = CoordinatedResult
@@ -361,9 +376,7 @@ class TestNeuralSymbolicCoordinator:
         """GIVEN axioms list WHEN prove THEN axioms are added to KB."""
         coord = self.Coordinator(use_cec=False, use_modal=False, use_embeddings=False)
         result = coord.prove(
-            "O(pay(alice))",
-            axioms=["O(pay(bob))"],
-            strategy=self.Strategy.SYMBOLIC_ONLY
+            "O(pay(alice))", axioms=["O(pay(bob))"], strategy=self.Strategy.SYMBOLIC_ONLY
         )
         assert isinstance(result.is_proved, bool)
 
@@ -406,13 +419,17 @@ class TestNeuralSymbolicCoordinator:
 # 4. NeurosymbolicReasoner (neurosymbolic_api.py)
 # ===========================================================================
 
+
 class TestNeurosymbolicReasoner:
     """Tests for symbolic/neurosymbolic_api.py"""
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api import (
-            NeurosymbolicReasoner, ReasoningCapabilities, get_reasoner
+            NeurosymbolicReasoner,
+            ReasoningCapabilities,
+            get_reasoner,
         )
+
         self.NeurosymbolicReasoner = NeurosymbolicReasoner
         self.ReasoningCapabilities = ReasoningCapabilities
         self.get_reasoner = get_reasoner
@@ -454,10 +471,11 @@ class TestNeurosymbolicReasoner:
     def test_prove_returns_proof_result(self):
         """GIVEN goal WHEN prove THEN returns ProofResult-compatible object."""
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofResult
+
         r = self._make_reasoner()
         result = r.prove("O(pay(alice))")
-        assert hasattr(result, 'status')
-        assert hasattr(result, 'is_proved')
+        assert hasattr(result, "status")
+        assert hasattr(result, "is_proved")
 
     def test_explain_formula_object(self):
         """GIVEN Formula object WHEN explain THEN returns string."""
@@ -491,6 +509,7 @@ class TestNeurosymbolicReasoner:
     def test_get_reasoner_singleton(self):
         """GIVEN global reasoner WHEN get_reasoner called twice THEN same instance."""
         import ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api as mod
+
         # Reset global
         mod._global_reasoner = None
         r1 = mod.get_reasoner()
@@ -511,13 +530,16 @@ class TestNeurosymbolicReasoner:
 # 5. NeurosymbolicGraphRAG
 # ===========================================================================
 
+
 class TestNeurosymbolicGraphRAG:
     """Tests for symbolic/neurosymbolic_graphrag.py"""
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag import (
-            NeurosymbolicGraphRAG, PipelineResult
+            NeurosymbolicGraphRAG,
+            PipelineResult,
         )
+
         self.GraphRAG = NeurosymbolicGraphRAG
         self.PipelineResult = PipelineResult
 
@@ -599,6 +621,7 @@ class TestNeurosymbolicGraphRAG:
     def test_pipeline_result_dataclass(self):
         """GIVEN PipelineResult WHEN created THEN default fields set."""
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Formula
+
         pr = self.PipelineResult(doc_id="test", text="test text")
         assert pr.doc_id == "test"
         assert pr.formulas == []
@@ -625,14 +648,19 @@ class TestNeurosymbolicGraphRAG:
 # 6. LogicPrimitives (symbolic_logic_primitives.py)
 # ===========================================================================
 
+
 class TestLogicPrimitives:
     """Tests for symbolic/symbolic_logic_primitives.py"""
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
-            LogicPrimitives, Symbol, get_available_primitives,
-            create_logic_symbol, SYMBOLIC_AI_AVAILABLE
+            LogicPrimitives,
+            Symbol,
+            get_available_primitives,
+            create_logic_symbol,
+            SYMBOLIC_AI_AVAILABLE,
         )
+
         self.LogicPrimitives = LogicPrimitives
         self.Symbol = Symbol
         self.get_available_primitives = get_available_primitives
@@ -644,14 +672,15 @@ class TestLogicPrimitives:
             def __init__(self, value: str):
                 self.value = value
                 self._semantic = False
+
             def _to_type(self, result):
                 return Symbol(str(result))
 
         self.TestLP = TestLP
 
     @pytest.mark.skipif(
-        __import__('importlib.util', fromlist=['find_spec']).find_spec('symai') is not None,
-        reason="Test only valid when symai is not installed"
+        __import__("importlib.util", fromlist=["find_spec"]).find_spec("symai") is not None,
+        reason="Test only valid when symai is not installed",
     )
     def test_symbolic_ai_not_available(self):
         """GIVEN no symai installed WHEN check THEN SYMBOLIC_AI_AVAILABLE is False."""
@@ -756,53 +785,74 @@ class TestLogicPrimitives:
 # 7. BaseProverBridge
 # ===========================================================================
 
+
 class TestBaseProverBridge:
     """Tests for bridges/base_prover_bridge.py — the `available` attribute fix."""
 
     def test_available_attribute_set_on_init(self):
         """GIVEN BaseProverBridge subclass WHEN init THEN self.available is set."""
         from ipfs_datasets_py.logic.integration.bridges.base_prover_bridge import (
-            BaseProverBridge, BridgeMetadata, BridgeCapability
+            BaseProverBridge,
+            BridgeMetadata,
+            BridgeCapability,
         )
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Formula
 
         class ConcreteTestBridge(BaseProverBridge):
             def _init_metadata(self):
                 return BridgeMetadata(
-                    name="test", version="0.1", target_system="test",
-                    capabilities=[], requires_external_prover=False, description="test bridge"
+                    name="test",
+                    version="0.1",
+                    target_system="test",
+                    capabilities=[],
+                    requires_external_prover=False,
+                    description="test bridge",
                 )
+
             def _check_availability(self):
                 return False  # Not available
+
             def to_target_format(self, formula):
                 return str(formula)
+
             def from_target_format(self, result):
                 from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofResult, ProofStatus
-                return ProofResult(status=ProofStatus.FAILED, formula=None, time_ms=0, method="test")
+
+                return ProofResult(
+                    status=ProofStatus.FAILED, formula=None, time_ms=0, method="test"
+                )
+
             def prove(self, formula, **kwargs):
                 return self.from_target_format(None)
 
         bridge = ConcreteTestBridge()
-        assert hasattr(bridge, 'available')
+        assert hasattr(bridge, "available")
         assert bridge.available is False
         assert bridge._available is False
 
     def test_tdfol_shadowprover_bridge_init_no_crash(self):
         """GIVEN TDFOLShadowProverBridge WHEN init THEN no AttributeError on self.available."""
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import TDFOLShadowProverBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            TDFOLShadowProverBridge,
+        )
+
         bridge = TDFOLShadowProverBridge()
-        assert hasattr(bridge, 'available')
+        assert hasattr(bridge, "available")
 
     def test_tdfol_grammar_bridge_init_no_crash(self):
         """GIVEN TDFOLGrammarBridge WHEN init THEN no AttributeError on self.available."""
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import TDFOLGrammarBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
+            TDFOLGrammarBridge,
+        )
+
         bridge = TDFOLGrammarBridge()
-        assert hasattr(bridge, 'available')
+        assert hasattr(bridge, "available")
 
 
 # ===========================================================================
 # 8. Integration smoke test
 # ===========================================================================
+
 
 class TestNeurosymbolicIntegrationSmoke:
     """End-to-end smoke tests combining multiple neurosymbolic modules."""
@@ -810,8 +860,10 @@ class TestNeurosymbolicIntegrationSmoke:
     def test_embedding_prover_in_coordinator(self):
         """GIVEN coordinator with embeddings WHEN prove THEN uses embedding prover."""
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
-            NeuralSymbolicCoordinator, ReasoningStrategy
+            NeuralSymbolicCoordinator,
+            ReasoningStrategy,
         )
+
         # use_embeddings=True will try to init EmbeddingEnhancedProver (which works without sentence-transformers)
         coord = NeuralSymbolicCoordinator(use_cec=False, use_modal=False, use_embeddings=True)
         # If embedding_prover loaded, test neural path
@@ -822,19 +874,23 @@ class TestNeurosymbolicIntegrationSmoke:
 
     def test_hybrid_confidence_with_embedding_similarity(self):
         """GIVEN HybridConfidenceScorer WHEN given both proofs THEN produces valid confidence."""
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.hybrid_confidence import HybridConfidenceScorer
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.hybrid_confidence import (
+            HybridConfidenceScorer,
+        )
+
         scorer = HybridConfidenceScorer()
         pr_proved = _make_proof_result(proved=True)
         bd = scorer.compute_confidence(
-            symbolic_result=pr_proved,
-            neural_similarity=0.9,
-            formula=_make_formula()
+            symbolic_result=pr_proved, neural_similarity=0.9, formula=_make_formula()
         )
         assert 0.5 < bd.total_confidence <= 1.0
 
     def test_full_pipeline_process_and_query(self):
         """GIVEN NeurosymbolicGraphRAG WHEN process + query THEN no exception."""
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag import NeurosymbolicGraphRAG
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag import (
+            NeurosymbolicGraphRAG,
+        )
+
         rag = NeurosymbolicGraphRAG(use_neural=False, enable_proof_caching=False)
         rag.process_document("Bob must sign the contract", "contract1")
         rag.process_document("Alice must deliver the goods", "contract2")

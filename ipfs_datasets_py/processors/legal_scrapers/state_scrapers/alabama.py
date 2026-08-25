@@ -4,8 +4,11 @@ import asyncio
 import hashlib
 import json
 import re
+import ssl
 import time
-from typing import List, Dict, Any
+import urllib.request
+from typing import Any, Dict, List, Mapping, Optional, Sequence
+from urllib.parse import parse_qs, urljoin, urlparse
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -16,6 +19,61 @@ class AlabamaScraper(BaseStateScraper):
 
     GRAPHQL_URL = "https://alison.legislature.state.al.us/graphql"
     CODE_URL = "https://alison.legislature.state.al.us/code-of-alabama"
+    OFFICIAL_DOMAIN = "alison.legislature.state.al.us"
+    OFFICIAL_ENTRY_PATH = "/code-of-alabama"
+    OFFICIAL_ENTRY_URL = "https://alison.legislature.state.al.us/code-of-alabama"
+    MISSING_LINK_QUARANTINE_REASON = "missing_official_source_link"
+    _AL_TITLE_QUERY_RE = re.compile(r"[?&]title=([0-9]+[A-Za-z]?)", re.IGNORECASE)
+    _AL_TITLE_LABEL_RE = re.compile(
+        r"\bTitle\s+([0-9]+[A-Za-z]?)\b",
+        re.IGNORECASE,
+    )
+    OFFICIAL_TITLES = (
+        ("1", "General Provisions"),
+        ("2", "Agriculture"),
+        ("3", "Animals"),
+        ("4", "Aviation"),
+        ("5", "Banks and Financial Institutions"),
+        ("6", "Civil Practice"),
+        ("7", "Commercial Code"),
+        ("8", "Commercial Law and Consumer Protection"),
+        ("9", "Conservation and Natural Resources"),
+        ("10A", "Alabama Business and Nonprofit Entities Code"),
+        ("11", "Counties and Municipal Corporations"),
+        ("12", "Courts"),
+        ("13A", "Criminal Code"),
+        ("14", "Criminal Correctional and Detention Facilities"),
+        ("15", "Criminal Procedure"),
+        ("16", "Education"),
+        ("17", "Elections"),
+        ("18", "Eminent Domain"),
+        ("19", "Fiduciaries and Trusts"),
+        ("20", "Food, Drugs, and Cosmetics"),
+        ("21", "Handicapped Persons"),
+        ("22", "Health, Mental Health, and Environmental Control"),
+        ("23", "Highways, Roads, Bridges, and Ferries"),
+        ("24", "Housing"),
+        ("25", "Industrial Relations and Labor"),
+        ("26", "Infants and Incompetents"),
+        ("27", "Insurance"),
+        ("28", "Intoxicating Liquor, Malt Beverages and Wine"),
+        ("29", "Legislature"),
+        ("30", "Marital and Domestic Relations"),
+        ("31", "Military Affairs and Civil Defense"),
+        ("32", "Motor Vehicles and Traffic"),
+        ("33", "Navigation and Watercourses"),
+        ("34", "Professions and Businesses"),
+        ("35", "Property"),
+        ("36", "Public Officers and Employees"),
+        ("37", "Public Utilities and Public Transportation"),
+        ("38", "Public Welfare"),
+        ("39", "Public Works"),
+        ("40", "Revenue and Taxation"),
+        ("41", "State Government"),
+        ("43", "Wills and Decedents' Estates"),
+        ("44", "Youth Services"),
+        ("45", "Local Laws"),
+    )
     
     def get_base_url(self) -> str:
         """Return the base URL for Alabama's legislative website."""
@@ -45,18 +103,38 @@ class AlabamaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
-        statutes = await self._scrape_alison_graphql(code_name, limit or 1000000)
+        from .alabama_constitution import (
+            configured_constitution_titles_path,
+            parse_configured_alabama_constitution,
+        )
+
+        constitution_path = configured_constitution_titles_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_configured_alabama_constitution(
+                    code_name=code_name or "Alabama Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        from .alabama_section import parse_configured_alabama
+
+        local_rows = parse_configured_alabama(code_name=code_name, max_statutes=limit)
+        if local_rows:
+            return local_rows if limit is None else local_rows[: int(limit)]
+        statutes = await self._scrape_alison_graphql(code_name, limit)
         if statutes:
-            return statutes
+            return statutes[:limit] if limit is not None else statutes
 
         self.logger.warning(
             "Alabama GraphQL returned no statutes; falling back to archival/custom scrape path"
         )
+        # Full-corpus mode must not silently clamp the official tree.
+        custom_limit = limit if limit is not None else 1000000
         return await self._custom_scrape_alabama(
             code_name,
             code_url or self.CODE_URL,
             "Ala. Code",
-            max_sections=limit or 1000000,
+            max_sections=custom_limit,
         )
 
     async def _graphql(self, query: str, variables: Dict[str, Any] | None = None, timeout_seconds: int = 15) -> Dict[str, Any]:
@@ -114,7 +192,9 @@ class AlabamaScraper(BaseStateScraper):
             )
         return data
 
-    def _parse_scaffold_section_parent_ids(self, scaffold: str, limit: int) -> List[str]:
+    def _parse_scaffold_section_parent_ids(
+        self, scaffold: str, limit: Optional[int]
+    ) -> List[str]:
         if not scaffold or len(scaffold) < 3:
             return []
         field_sep = scaffold[0]
@@ -135,19 +215,25 @@ class AlabamaScraper(BaseStateScraper):
                 continue
             seen.add(parent_id)
             parent_ids.append(parent_id)
-            if len(parent_ids) >= max(1, limit):
+            if limit is not None and len(parent_ids) >= max(1, int(limit)):
                 break
         return parent_ids
 
-    async def _scrape_alison_graphql(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_alison_graphql(
+        self, code_name: str, max_statutes: Optional[int]
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
 
         self.logger.info("Alabama GraphQL: fetching scaffold")
-        scaffold_data = await self._graphql("query codeOfAlabamaScaffold { scaffold: codeOfAlabamaScaffold }")
-        parent_ids = self._parse_scaffold_section_parent_ids(str(scaffold_data.get("scaffold") or ""), max_statutes)
+        scaffold_data = await self._graphql(
+            "query codeOfAlabamaScaffold { scaffold: codeOfAlabamaScaffold }"
+        )
+        parent_ids = self._parse_scaffold_section_parent_ids(
+            str(scaffold_data.get("scaffold") or ""), max_statutes
+        )
         self.logger.info("Alabama GraphQL: discovered %d section parent ids", len(parent_ids))
         if not parent_ids:
             return []
@@ -170,13 +256,17 @@ class AlabamaScraper(BaseStateScraper):
         """
         statutes: List[NormalizedStatute] = []
         batch_size = 64 if self._full_corpus_enabled() else 8
-        heartbeat_seconds = max(15.0, float(self._env_int("STATE_SCRAPER_HEARTBEAT_SECONDS", default=60)))
+        heartbeat_seconds = max(
+            15.0, float(self._env_int("STATE_SCRAPER_HEARTBEAT_SECONDS", default=60))
+        )
         last_heartbeat = time.monotonic()
         for offset in range(0, len(parent_ids), batch_size):
-            data = await self._graphql(query, {"parentId": parent_ids[offset : offset + batch_size]})
+            data = await self._graphql(
+                query, {"parentId": parent_ids[offset : offset + batch_size]}
+            )
             rows = ((data.get("codeItems") or {}).get("data") or [])
             for row in rows:
-                if len(statutes) >= max_statutes:
+                if max_statutes is not None and len(statutes) >= max_statutes:
                     return statutes
                 if not row.get("isContentNode") or str(row.get("type") or "").lower() != "section":
                     continue
@@ -185,15 +275,21 @@ class AlabamaScraper(BaseStateScraper):
                 history = str(row.get("history") or "")
                 text_parts = []
                 if content:
-                    text_parts.append(BeautifulSoup(content, "html.parser").get_text(" ", strip=True))
+                    text_parts.append(
+                        BeautifulSoup(content, "html.parser").get_text(" ", strip=True)
+                    )
                 if history:
-                    history_text = BeautifulSoup(history, "html.parser").get_text(" ", strip=True)
+                    history_text = BeautifulSoup(history, "html.parser").get_text(
+                        " ", strip=True
+                    )
                     if history_text:
                         text_parts.append(f"History: {history_text}")
                 full_text = re.sub(r"\s+", " ", " ".join(text_parts)).strip()
                 if not display_id or len(full_text) < 80:
                     continue
-                title = re.sub(r"\s+", " ", str(row.get("title") or f"Section {display_id}")).strip()
+                title = re.sub(
+                    r"\s+", " ", str(row.get("title") or f"Section {display_id}")
+                ).strip()
                 statute = NormalizedStatute(
                     state_code=self.state_code,
                     state_name=self.state_name,
@@ -206,13 +302,14 @@ class AlabamaScraper(BaseStateScraper):
                     source_url=f"{self.CODE_URL}?section={display_id}",
                     official_cite=f"Ala. Code § {display_id}",
                     metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "official_alison_graphql",
+                        "discovery_method": "official_alison_scaffold_parent_batch",
+                        "skip_hydrate": True,
+                        "code_id": row.get("codeId"),
+                        "parent_id": row.get("parentId"),
+                    },
                 )
-                statute.structured_data = {
-                    "source_kind": "official_alison_graphql",
-                    "skip_hydrate": True,
-                    "code_id": row.get("codeId"),
-                    "parent_id": row.get("parentId"),
-                }
                 statutes.append(statute)
             now = time.monotonic()
             if now - last_heartbeat >= heartbeat_seconds:
@@ -388,6 +485,226 @@ class AlabamaScraper(BaseStateScraper):
         self.logger.info("  2. Try again later when site is accessible")
         self.logger.info("  3. Contact Alabama Legislative Services")
         return await self._generic_scrape(code_name, code_url, citation_format, max_sections=max_sections)
+
+    def official_title_url(self, title_number: object) -> str:
+        return f"{self.CODE_URL}?title={title_number}"
+
+    def official_section_url(self, section_number: str) -> str:
+        section = str(section_number or "").strip()
+        return f"{self.CODE_URL}?section={section}"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Code of Alabama title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"al:title-{str(number).lower()}",
+                    "title_number": str(number),
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Code of Alabama Title {number} ({name}) official ALISON "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def is_official_alison_url(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return host == self.OFFICIAL_DOMAIN or host.endswith("." + self.OFFICIAL_DOMAIN)
+
+    def repair_or_type_missing_source_link(
+        self,
+        statute: NormalizedStatute,
+    ) -> NormalizedStatute:
+        """Attach an official ALISON URL or type a linkless row as quarantine."""
+
+        structured = dict(statute.structured_data or {})
+        source_url = str(statute.source_url or "").strip()
+        if source_url and self.is_official_alison_url(source_url):
+            structured.setdefault("source_link_disposition", "official")
+            statute.structured_data = structured
+            return statute
+
+        section_number = str(statute.section_number or "").strip()
+        if section_number:
+            repaired = self.official_section_url(section_number)
+            statute.source_url = repaired
+            structured["source_kind"] = (
+                structured.get("source_kind") or "official_alison_graphql"
+            )
+            structured["source_link_disposition"] = "repaired_official_alison"
+            structured["previous_source_url"] = source_url or None
+            statute.structured_data = structured
+            return statute
+
+        structured["source_link_disposition"] = "typed_quarantine"
+        structured["quarantine_reason"] = self.MISSING_LINK_QUARANTINE_REASON
+        statute.structured_data = structured
+        return statute
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-alabama-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    if int(getattr(response, "status", 200) or 200) != 200:
+                        return b""
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-alabama-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _parse_official_title_links(self, html: bytes, page_url: str = "") -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+            parsed = urlparse(absolute)
+            query = parse_qs(parsed.query)
+            title_values = query.get("title") or []
+            number = str((title_values or [""])[0]).strip()
+            if not number:
+                match = self._AL_TITLE_QUERY_RE.search(absolute) or self._AL_TITLE_LABEL_RE.search(
+                    link.get_text(" ", strip=True) or ""
+                )
+                number = match.group(1) if match else ""
+            if number not in known:
+                continue
+            if number not in found and self.is_official_alison_url(absolute):
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official Alabama title and repair missing-link rows."""
+
+        discovered = self._parse_official_title_links(
+            html, page_url or self.OFFICIAL_ENTRY_URL
+        )
+        rows: List[Dict[str, Any]] = []
+        for item in self.official_title_catalog():
+            number = str(item["title_number"])
+            official_url = str(item["source_url"])
+            live_url = discovered.get(number)
+            source_url = live_url or official_url
+            disposition = "official" if live_url else "repaired_official_alison"
+            rows.append(
+                {
+                    **item,
+                    "source_url": source_url,
+                    "source_link_disposition": disposition,
+                    "text": (
+                        f"Code of Alabama Title {number} ({item['name']}) official "
+                        f"ALISON catalog unit at {source_url}"
+                    ),
+                }
+            )
+        return rows
+
+    def fetch_official(self, code: str = "AL"):
+        """Acquire the exhaustive official Code of Alabama title catalog.
+
+        Live HTTPS retains the official ALISON landing page. Every known
+        Alabama title is enumerated with an official ALISON URL. Linkless
+        catalog members are repaired to the official title URL. This hook
+        never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "AL").strip().upper() or "AL"
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < 3:
+            raise RuntimeError("alabama official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry

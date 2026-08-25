@@ -18,7 +18,7 @@ def _safe_error_text(error: Exception) -> str:
 class QueryRewriter:
     """
     Analyzes and rewrites queries for better performance.
-    
+
     Features:
     - Predicate pushdown for early filtering
     - Join reordering based on edge selectivity
@@ -29,11 +29,11 @@ class QueryRewriter:
     - Statistical relation prioritization
     - Entity importance-based pruning
     """
-    
+
     def __init__(self, traversal_stats: Optional[Dict[str, Any]] = None):
         """
         Initialize the query rewriter.
-        
+
         Args:
             traversal_stats: Optional statistics from previous traversals
         """
@@ -44,27 +44,29 @@ class QueryRewriter:
             "path_scores": {},
             "entity_frequency": {},
             "entity_connectivity": {},
-            "relation_usefulness": {}
+            "relation_usefulness": {},
         }
-        
-    def rewrite_query(self, 
-                     query: Dict[str, Any], 
-                     graph_info: Optional[Dict[str, Any]] = None,
-                     entity_scores: Optional[Dict[str, float]] = None) -> Dict[str, Any]:
+
+    def rewrite_query(
+        self,
+        query: Dict[str, Any],
+        graph_info: Optional[Dict[str, Any]] = None,
+        entity_scores: Optional[Dict[str, float]] = None,
+    ) -> Dict[str, Any]:
         """
         Rewrite a query for better performance.
-        
+
         Args:
             query (Dict): Original query
             graph_info (Dict, optional): Information about the graph structure
             entity_scores (Dict, optional): Entity importance scores
-            
+
         Returns:
             Dict: Rewritten query
         """
         # Start with a copy of the original query
         rewritten_query = query.copy()
-        
+
         # Apply optimization patterns in deterministic order.
         rewritten_query = self._apply_predicate_pushdown(rewritten_query, graph_info)
         rewritten_query = self._reorder_joins_by_selectivity(rewritten_query, graph_info)
@@ -76,122 +78,126 @@ class QueryRewriter:
             graph_info,
             entity_scores,
         )
-            
+
         # Return the rewritten query
         return rewritten_query
-        
-    def _apply_adaptive_optimizations(self, 
-                                     query: Dict[str, Any], 
-                                     graph_info: Optional[Dict[str, Any]],
-                                     entity_scores: Optional[Dict[str, float]] = None) -> Dict[str, Any]:
+
+    def _apply_adaptive_optimizations(
+        self,
+        query: Dict[str, Any],
+        graph_info: Optional[Dict[str, Any]],
+        entity_scores: Optional[Dict[str, float]] = None,
+    ) -> Dict[str, Any]:
         """
         Apply optimizations based on query execution history and statistics.
-        
+
         This method uses historical traversal data to adaptively optimize
         queries based on what has worked well in the past.
-        
+
         Args:
             query: Query to optimize
             graph_info: Graph structure information
             entity_scores: Entity importance scores
-            
+
         Returns:
             Dict: Query with adaptive optimizations applied
         """
         result = query.copy()
-        
+
         # Ensure traversal section exists
         if "traversal" not in result:
             result["traversal"] = {}
-            
+
         # If edge_types is in the top-level query, move it to traversal section
         if "edge_types" in result and "edge_types" not in result["traversal"]:
             result["traversal"]["edge_types"] = result.pop("edge_types")
-            
+
         # If max_traversal_depth is in the top-level query, move it to max_depth in traversal section
         if "max_traversal_depth" in result and "max_depth" not in result["traversal"]:
             result["traversal"]["max_depth"] = result.pop("max_traversal_depth")
-            
+
         # Adaptive relation type prioritization based on usefulness scores
         if "edge_types" in result["traversal"] and self.traversal_stats["relation_usefulness"]:
             edge_types = result["traversal"]["edge_types"]
-            
+
             # Sort edge types by usefulness
             usefulness_scores = self.traversal_stats["relation_usefulness"]
-            scored_edges = [(edge_type, usefulness_scores.get(edge_type, 0.5)) for edge_type in edge_types]
+            scored_edges = [
+                (edge_type, usefulness_scores.get(edge_type, 0.5)) for edge_type in edge_types
+            ]
             scored_edges.sort(key=lambda x: x[1], reverse=True)
-            
+
             # Reorder edge types by usefulness score
             result["traversal"]["edge_types"] = [edge for edge, _ in scored_edges]
-            
+
             # Add usefulness metadata for debugging/monitoring
             result["traversal"]["edge_usefulness"] = {edge: score for edge, score in scored_edges}
-            
+
         # Add promising paths based on historical performance if appropriate
         if self.traversal_stats["path_scores"]:
             # Find high-scoring paths
             high_scoring_paths = sorted(
-                self.traversal_stats["path_scores"].items(),
-                key=lambda x: x[1],
-                reverse=True
+                self.traversal_stats["path_scores"].items(), key=lambda x: x[1], reverse=True
             )[:5]  # Top 5 paths
-            
+
             # If we have high-scoring paths, add them as hints
             if high_scoring_paths and high_scoring_paths[0][1] > 0.7:
                 result["traversal"]["path_hints"] = [path for path, _ in high_scoring_paths]
-                
+
         # Entity-based pruning using importance scores
         if entity_scores and len(entity_scores) > 0:
             # Enable importance-based pruning
             result["traversal"]["use_importance_pruning"] = True
-            
+
             # Determine dynamic threshold based on distribution of scores
             scores = list(entity_scores.values())
             avg_score = sum(scores) / len(scores)
-            
+
             # Set threshold at 70% of average score to avoid over-pruning
             result["traversal"]["importance_threshold"] = avg_score * 0.7
-            
+
             # Add entity importance scores for pruning
             result["traversal"]["entity_scores"] = entity_scores
-            
+
         # Adaptive max depth based on graph insights
         if self.traversal_stats["entity_connectivity"]:
             connectivity_values = list(self.traversal_stats["entity_connectivity"].values())
             if connectivity_values:
                 # Calculate average connectivity
                 avg_connectivity = sum(connectivity_values) / len(connectivity_values)
-                
+
                 # For highly connected graphs, reduce depth
                 if avg_connectivity > 15 and result["traversal"].get("max_depth", 2) > 2:
                     result["traversal"]["max_depth"] = 2
                     # But increase breadth to compensate
                     result["traversal"]["max_breadth_per_level"] = 8
-                
+
                 # For sparsely connected graphs, increase depth
                 elif avg_connectivity < 5 and result["traversal"].get("max_depth", 2) < 3:
                     result["traversal"]["max_depth"] = 3
-            
+
         return result
-    
-    def _apply_predicate_pushdown(self, query: Dict[str, Any], graph_info: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+
+    def _apply_predicate_pushdown(
+        self, query: Dict[str, Any], graph_info: Optional[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         Applies predicate pushdown to filter early in the query.
-        
+
         Args:
             query (Dict): Query to optimize
             graph_info (Dict, optional): Graph structure information
-            
+
         Returns:
             Dict: Query with predicates pushed down
         """
         # Clone the query
         result = query.copy()
-        
+
         # If the query has a similarity threshold, apply it during vector search
         if "min_similarity" in result and "vector_params" in result:
             result["vector_params"]["min_score"] = result.pop("min_similarity")
-            
+
         # If there are entity type filters, push those to initial entity selection
         if "entity_filters" in result and "entity_types" in result.get("entity_filters", {}):
             entity_types = result["entity_filters"]["entity_types"]
@@ -200,30 +206,32 @@ class QueryRewriter:
                 result["vector_params"]["entity_types"] = entity_types
                 # Remove the entity_filters to pass the test
                 result.pop("entity_filters")
-                
+
         return result
-    
-    def _reorder_joins_by_selectivity(self, query: Dict[str, Any], graph_info: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+
+    def _reorder_joins_by_selectivity(
+        self, query: Dict[str, Any], graph_info: Optional[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         Reorders graph traversal joins based on edge selectivity.
-        
+
         Args:
             query (Dict): Query to optimize
             graph_info (Dict, optional): Graph structure information
-            
+
         Returns:
             Dict: Query with reordered joins
         """
         result = query.copy()
-        
+
         # Ensure traversal section exists
         if "traversal" not in result:
             result["traversal"] = {}
-            
+
         # If edge_types is in the top-level query, move it to traversal section
         if "edge_types" in result and "edge_types" not in result["traversal"]:
             result["traversal"]["edge_types"] = result.pop("edge_types")
-            
+
         # If traversal specified and graph_info available, reorder by selectivity
         # Assumes graph_info['edge_selectivity'] is a dict like {'edge_type': float_selectivity}
         # Lower selectivity values mean fewer resulting nodes, so these edges should be traversed first.
@@ -246,28 +254,30 @@ class QueryRewriter:
                     )
 
         return result
-    
-    def _optimize_traversal_path(self, query: Dict[str, Any], graph_info: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+
+    def _optimize_traversal_path(
+        self, query: Dict[str, Any], graph_info: Optional[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         Optimizes graph traversal paths based on graph characteristics.
-        
+
         Args:
             query (Dict): Query to optimize
             graph_info (Dict, optional): Graph structure information
-            
+
         Returns:
             Dict: Query with optimized traversal paths
         """
         result = query.copy()
-        
+
         # Ensure traversal section exists
         if "traversal" not in result:
             result["traversal"] = {}
-            
+
         # If max_traversal_depth is in the top-level query, move it to max_depth in traversal section
         if "max_traversal_depth" in result and "max_depth" not in result["traversal"]:
             result["traversal"]["max_depth"] = result.pop("max_traversal_depth")
-            
+
         # For dense graphs, use sampling strategy to avoid combinatorial explosion
         if graph_info and graph_info.get("graph_density", 0) > 0.7:
             result["traversal"]["strategy"] = "sampling"
@@ -276,29 +286,31 @@ class QueryRewriter:
         elif result["traversal"].get("max_depth", 0) > 2:
             result["traversal"]["strategy"] = "breadth_limited"
             result["traversal"]["max_breadth_per_level"] = 5  # Limit nodes expanded per level
-                
+
         return result
-    
-    def _apply_pattern_specific_optimizations(self, query: Dict[str, Any], graph_info: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+
+    def _apply_pattern_specific_optimizations(
+        self, query: Dict[str, Any], graph_info: Optional[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         Applies optimizations specific to common query patterns.
-        
+
         Args:
             query (Dict): Query to optimize
             graph_info (Dict, optional): Graph structure information
-            
+
         Returns:
             Dict: Query with pattern-specific optimizations
         """
         result = query.copy()
-        
+
         # Ensure traversal section exists
         if "traversal" not in result:
             result["traversal"] = {}
-            
+
         # Detect query pattern type
         pattern = self._detect_query_pattern(result)
-        
+
         # Apply optimizations based on pattern
         if pattern == "entity_lookup":
             # Direct entity lookup - skip vector search if possible
@@ -311,33 +323,35 @@ class QueryRewriter:
             # Fact verification - use direct path finding instead of exploration
             result["traversal"]["strategy"] = "path_finding"
             result["traversal"]["find_shortest_path"] = True
-                
+
         return result
-    
-    def _apply_domain_optimizations(self, query: Dict[str, Any], graph_info: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+
+    def _apply_domain_optimizations(
+        self, query: Dict[str, Any], graph_info: Optional[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         Applies domain-specific query transformations.
-        
+
         Args:
             query (Dict): Query to optimize
             graph_info (Dict, optional): Graph structure information
-            
+
         Returns:
             Dict: Query with domain-specific optimizations
         """
         result = query.copy()
-        
+
         # Ensure traversal section exists
         if "traversal" not in result:
             result["traversal"] = {}
-            
+
         # If edge_types is in the top-level query, move it to traversal section
         if "edge_types" in result and "edge_types" not in result["traversal"]:
             result["traversal"]["edge_types"] = result.pop("edge_types")
-            
+
         # Detect if query is for wikipedia-derived graph
         is_wikipedia = graph_info and graph_info.get("graph_type") == "wikipedia"
-        
+
         if is_wikipedia:
             # Wikipedia-specific optimizations
             # Prioritize high-quality relationship types in Wikipedia
@@ -346,27 +360,27 @@ class QueryRewriter:
                 # Prioritize more reliable Wikipedia relationships
                 # Used in test_query_rewriter_domain_optimizations - order matters for test
                 priority_edges = ["subclass_of", "instance_of", "part_of", "located_in"]
-                
+
                 # Move priority edge types to the beginning
                 for edge_type in reversed(priority_edges):
                     if edge_type in edge_types:
                         edge_types.remove(edge_type)
                         edge_types.insert(0, edge_type)
-                        
+
                 result["traversal"]["edge_types"] = edge_types
-                
+
             # For Wikipedia, trust hierarchical relationships more
             result["traversal"]["hierarchical_weight"] = 1.5
-                
+
         return result
-    
+
     def _detect_query_pattern(self, query: Dict[str, Any]) -> str:
         """
         Detects the query pattern type from the query structure.
-        
+
         Args:
             query (Dict): Query to analyze
-            
+
         Returns:
             str: Detected pattern type
         """
@@ -377,7 +391,11 @@ class QueryRewriter:
         elif "relation_type" in query:
             return "relation_centric"
         # Check for edge_types in traversal section if it exists
-        elif "traversal" in query and "edge_types" in query["traversal"] and len(query["traversal"]["edge_types"]) == 1:
+        elif (
+            "traversal" in query
+            and "edge_types" in query["traversal"]
+            and len(query["traversal"]["edge_types"]) == 1
+        ):
             return "relation_centric"
         # Check for edge_types at top level (might not have been moved to traversal yet)
         elif "edge_types" in query and len(query["edge_types"]) == 1:
@@ -386,63 +404,67 @@ class QueryRewriter:
             return "complex_question"
         else:
             return "general"
-            
+
     def analyze_query(self, query: Dict[str, Any]) -> Dict[str, Any]:
         """
         Analyzes a query to determine its characteristics and potential optimizations.
-        
+
         Args:
             query (Dict): Query to analyze
-            
+
         Returns:
             Dict: Analysis results
         """
         analysis: Dict[str, Any] = {
             "pattern": self._detect_query_pattern(query),
             "complexity": self._estimate_query_complexity(query),
-            "optimizations": []
+            "optimizations": [],
         }
-        
+
         # Check for potential optimizations
         if "min_similarity" in query and query["min_similarity"] < 0.5:
-            analysis["optimizations"].append({
-                "type": "threshold_increase",
-                "description": "Consider increasing min_similarity to improve precision"
-            })
-            
+            analysis["optimizations"].append(
+                {
+                    "type": "threshold_increase",
+                    "description": "Consider increasing min_similarity to improve precision",
+                }
+            )
+
         if "traversal" in query and query["traversal"].get("max_depth", 0) > 3:
-            analysis["optimizations"].append({
-                "type": "depth_reduction",
-                "description": "Deep traversal may cause performance issues, consider reducing max_depth"
-            })
-            
+            analysis["optimizations"].append(
+                {
+                    "type": "depth_reduction",
+                    "description": "Deep traversal may cause performance issues, consider reducing max_depth",
+                }
+            )
+
         return analysis
-        
+
     def _estimate_query_complexity(self, query: Dict[str, Any]) -> str:
         """
         Estimates the complexity of a query.
-        
+
         Args:
             query (Dict): Query to analyze
-            
+
         Returns:
             str: Complexity level ("low", "medium", "high")
         """
         complexity_score = 0
-        
+
         # Vector search complexity
         vector_params = query.get("vector_params", {})
         complexity_score += vector_params.get("top_k", 5) * 0.5
-        
+
         # Traversal complexity
         traversal = query.get("traversal", {})
         max_depth = traversal.get("max_depth", 0)
         complexity_score += max_depth * 2  # Depth has exponential impact
-        
+
         # Edge type complexity
         edge_types = traversal.get("edge_types", [])
         complexity_score += len(edge_types) * 0.3
-        
+
         # Determine complexity level
         if complexity_score < 5:
             return "low"

@@ -46,7 +46,9 @@ def test_search_domain_hf_redirects_stateish_domains_before_hf_lookup() -> None:
     assert records[0]["url"] == "https://apps.azsos.gov/rules"
 
 
-def test_search_domain_local_uses_hf_remote_meta_when_local_assets_missing(monkeypatch, tmp_path) -> None:
+def test_search_domain_local_uses_hf_remote_meta_when_local_assets_missing(
+    monkeypatch, tmp_path
+) -> None:
     engine = CommonCrawlSearchEngine.__new__(CommonCrawlSearchEngine)
     observed = {}
 
@@ -69,7 +71,9 @@ def test_search_domain_local_uses_hf_remote_meta_when_local_assets_missing(monke
     engine.master_db_path = tmp_path / "missing-master.duckdb"
     engine._normalize_records = CommonCrawlSearchEngine._normalize_records
 
-    records = engine._search_domain_local("www.revisor.mn.gov", 3, None, parquet_root=tmp_path / "missing-parquet")
+    records = engine._search_domain_local(
+        "www.revisor.mn.gov", 3, None, parquet_root=tmp_path / "missing-parquet"
+    )
 
     assert records[0]["url"] == "https://www.revisor.mn.gov/statutes/cite/518.17"
     assert observed["domain"] == "www.revisor.mn.gov"

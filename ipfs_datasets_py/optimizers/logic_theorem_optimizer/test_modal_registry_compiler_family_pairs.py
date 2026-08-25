@@ -33,9 +33,7 @@ _PACKET_003089_FAMILY_PAIRS = (
 
 def test_packet_003089_pairs_are_priority_signal_free_targets() -> None:
     for predicted_family, target_family in _PACKET_003089_FAMILY_PAIRS:
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
 
 
 def test_packet_003089_pairs_are_supported_across_compiler_ambiguity_policies() -> None:

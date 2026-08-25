@@ -122,7 +122,7 @@ entity_ids_by_text = {e.text.lower(): e.id for e in entities}  # Call 2: Duplica
 # Later in co-occurrence loop:
 for i, e1 in enumerate(entity_list):
     pos1 = text.lower().find(e1.text.lower())  # Call 3: e1.text lowered again
-    for e2 in entity_list[i + 1:]:
+    for e2 in entity_list[i + 1 :]:
         pos2 = text.lower().find(e2.text.lower())  # Call 4: e2.text lowered again
 ```
 
@@ -143,7 +143,7 @@ for i, e1 in enumerate(entity_list):
     pos1 = text.lower().find(e1.text.lower())  # Search entire text for e1
     if pos1 < 0:
         continue
-    for e2 in entity_list[i + 1:]:
+    for e2 in entity_list[i + 1 :]:
         pos2 = text.lower().find(e2.text.lower())  # Search entire text for e2
         if pos2 < 0:
             continue
@@ -217,20 +217,20 @@ def infer_relationships(self, entities, context, data=None):
 def infer_relationships(self, entities, context, data=None):
     text_lower = text.lower()
     entity_lower_map = {e.id: e.text.lower() for e in entities}
-    
+
     # ✅ Pre-compute positions for all entities ONCE
     entity_positions = {}
     for e in entities:
         pos = text_lower.find(entity_lower_map[e.id])
         if pos >= 0:
             entity_positions[e.id] = pos
-    
+
     # Co-occurrence loop using cached positions
     for i, e1 in enumerate(entity_list):
         pos1 = entity_positions.get(e1.id)
         if pos1 is None:
             continue
-        for e2 in entity_list[i + 1:]:
+        for e2 in entity_list[i + 1 :]:
             pos2 = entity_positions.get(e2.id)
             if pos2 is None:
                 continue
@@ -281,25 +281,26 @@ for pattern_re, rel_type in _VERB_PATTERNS:
 ```python
 from intervaltree import IntervalTree
 
+
 def infer_relationships(self, entities, context, data=None):
     # Build interval tree: [pos, pos+len] → entity
     tree = IntervalTree()
     entity_lower_map = {e.id: e.text.lower() for e in entities}
     entity_positions = {}
-    
+
     for e in entities:
         text_lower_e = entity_lower_map[e.id]
         pos = text_lower.find(text_lower_e)
         if pos >= 0:
             entity_positions[e.id] = pos
             tree.add(Interval(pos, pos + len(text_lower_e), e))
-    
+
     # Query only entities within 200-char window
     for e1 in entities:
         pos1 = entity_positions.get(e1.id)
         if pos1 is None:
             continue
-        
+
         # ✅ Query tree for entities in [pos1-200, pos1+200] range
         nearby = tree.overlap(pos1 - 200, pos1 + 200)
         for interval in nearby:

@@ -2,7 +2,7 @@
 Knowledge Graph Extractor Module
 
 This module provides the KnowledgeGraphExtractor class for extracting structured
-knowledge graphs from unstructured text. It handles entity and relationship 
+knowledge graphs from unstructured text. It handles entity and relationship
 extraction, confidence scoring, and supports Wikipedia integration with SPARQL
 validation against Wikidata.
 
@@ -28,11 +28,7 @@ from .graph import KnowledgeGraph
 from .relation_patterns import _default_relation_patterns
 
 # Import custom exceptions
-from ..exceptions import (
-    EntityExtractionError,
-    RelationshipExtractionError,
-    ValidationError
-)
+from ..exceptions import EntityExtractionError, RelationshipExtractionError, ValidationError
 
 # Import the Wikipedia knowledge graph tracer for enhanced tracing capabilities
 from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
@@ -52,6 +48,7 @@ logger = logging.getLogger(__name__)
 
 
 # Main Extractor Class
+
 
 class KnowledgeGraphExtractor(WikipediaExtractionMixin):
     """
@@ -115,11 +112,14 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                 # pip install "ipfs_datasets_py[knowledge_graphs]"
                 # python -m spacy download en_core_web_sm
                 import spacy
+
                 try:
                     self.nlp = spacy.load("en_core_web_sm")
                 except (OSError, IOError) as e:
                     # If the model is not available, download it
-                    logger.warning("spaCy model 'en_core_web_sm' not found (%s) — downloading...", e)
+                    logger.warning(
+                        "spaCy model 'en_core_web_sm' not found (%s) — downloading...", e
+                    )
                     spacy.cli.download("en_core_web_sm")
                     self.nlp = spacy.load("en_core_web_sm")
             except ImportError:
@@ -133,9 +133,12 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
         if use_transformers:
             try:
                 from transformers import pipeline
+
                 self.ner_model = pipeline("ner")
-                self.re_model = pipeline("text-classification",
-                                        model="Rajkumar-Murugesan/roberta-base-finetuned-tacred-relation")
+                self.re_model = pipeline(
+                    "text-classification",
+                    model="Rajkumar-Murugesan/roberta-base-finetuned-tacred-relation",
+                )
             except ImportError:
                 logger.warning(
                     "transformers not installed — running without transformer models. "
@@ -147,11 +150,11 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
         self.srl_extractor = None
         if use_srl:
             from .srl import SRLExtractor
+
             self.srl_extractor = SRLExtractor(nlp=self.nlp)
 
         # Initialize relation patterns
         self.relation_patterns = relation_patterns or _default_relation_patterns()
-
 
     def extract_entities(self, text: str) -> List[Entity]:
         """
@@ -183,7 +186,9 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                     entity_type=entity_type,
                     name=ent.text,
                     confidence=getattr(ent._, "confidence", 0.8),
-                    source_text=text[max(0, ent.start_char - 20):min(len(text), ent.end_char + 20)]
+                    source_text=text[
+                        max(0, ent.start_char - 20) : min(len(text), ent.end_char + 20)
+                    ],
                 )
 
                 # Add to entities list
@@ -207,13 +212,13 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                     if entity_text not in entity_groups:
                         entity_groups[entity_text] = {
                             "type": entity_type,
-                            "confidence": result["score"]
+                            "confidence": result["score"],
                         }
                     elif result["score"] > entity_groups[entity_text]["confidence"]:
                         # Update if confidence is higher
                         entity_groups[entity_text] = {
                             "type": entity_type,
-                            "confidence": result["score"]
+                            "confidence": result["score"],
                         }
 
                 # Create entities from groups
@@ -222,13 +227,15 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                         entity_type=entity_info["type"],
                         name=entity_text,
                         confidence=entity_info["confidence"],
-                        source_text=text
+                        source_text=text,
                     )
 
                     entities.append(entity)
 
             except (ImportError, AttributeError, ValueError) as e:
-                logger.warning(f"Transformers NER failed: {e}. Falling back to rule-based extraction.")
+                logger.warning(
+                    f"Transformers NER failed: {e}. Falling back to rule-based extraction."
+                )
                 # Fall back to rule-based extraction
                 entities.extend(_rule_based_entity_extraction(text))
             except Exception as e:
@@ -236,24 +243,19 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                 raise EntityExtractionError(
                     f"Failed to extract entities using transformers: {e}",
                     details={
-                        'operation': 'entity_extraction',
-                        'text_length': len(text),
-                        'use_transformers': True,
-                        'error_class': type(e).__name__,
-                        'remediation': "Check that the transformers pipeline is loaded correctly; "
-                                       "fall back with use_transformers=False.",
-                    }
+                        "operation": "entity_extraction",
+                        "text_length": len(text),
+                        "use_transformers": True,
+                        "error_class": type(e).__name__,
+                        "remediation": "Check that the transformers pipeline is loaded correctly; "
+                        "fall back with use_transformers=False.",
+                    },
                 ) from e
         else:
             # Use rule-based entity extraction
             entities.extend(_rule_based_entity_extraction(text))
 
         return entities
-
-
-
-
-
 
     def extract_relationships(self, text: str, entities: List[Entity]) -> List[Relationship]:
         """Extract relationships between entities from text.
@@ -280,52 +282,56 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                 neural_relationships = self._neural_relationship_extraction(text, entity_map)
                 relationships.extend(neural_relationships)
             except RelationshipExtractionError as e:
-                logger.warning(f"Neural relationship extraction failed: {e}. Falling back to rule-based.")
-        
+                logger.warning(
+                    f"Neural relationship extraction failed: {e}. Falling back to rule-based."
+                )
+
         # Use rule-based relationship extraction (always runs as fallback or primary)
         relationships.extend(self._rule_based_relationship_extraction(text, entity_map))
 
         return relationships
-    
-    def _neural_relationship_extraction(self, text: str, entity_map: Dict[str, Entity]) -> List[Relationship]:
+
+    def _neural_relationship_extraction(
+        self, text: str, entity_map: Dict[str, Entity]
+    ) -> List[Relationship]:
         """Extract relationships using neural transformer models.
-        
+
         This method uses pre-trained transformer models for end-to-end relationship extraction.
         Supports models like REBEL, LUKE, or other relation extraction models from HuggingFace.
-        
+
         Args:
             text (str): Text to extract relationships from
             entity_map (Dict): Map from entity names to Entity objects
-            
+
         Returns:
             List[Relationship]: List of extracted relationships with confidence scores
-            
+
         Note:
             Requires transformers library and a loaded relation extraction model.
             Falls back gracefully if model is not available.
         """
         relationships = []
-        
+
         if not self.re_model:
             return relationships
-        
+
         try:
             # Check if we have a triplet extraction model
-            if hasattr(self.re_model, 'task') and 'text2text' in str(self.re_model.task):
+            if hasattr(self.re_model, "task") and "text2text" in str(self.re_model.task):
                 # REBEL-style generation model
                 triplets = self.re_model(text, max_length=512)
-                
+
                 # Parse triplets (format varies by model)
                 # REBEL format: "<triplet> subject <subj> relation <obj> object"
                 if isinstance(triplets, list) and len(triplets) > 0:
-                    generated_text = triplets[0].get('generated_text', '')
+                    generated_text = triplets[0].get("generated_text", "")
                     parsed_triplets = self._parse_rebel_output(generated_text)
-                    
+
                     for subject, relation, obj in parsed_triplets:
                         # Find matching entities
                         source_entity = self._find_best_entity_match(subject, entity_map)
                         target_entity = self._find_best_entity_match(obj, entity_map)
-                        
+
                         if source_entity and target_entity and source_entity != target_entity:
                             rel = Relationship(
                                 relationship_type=relation,
@@ -333,34 +339,37 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                                 target_entity=target_entity,
                                 confidence=0.85,  # Neural models typically have high confidence
                                 source_text=text[:200],  # Context snippet
-                                extraction_method='neural'
+                                extraction_method="neural",
                             )
                             relationships.append(rel)
-            
+
             else:
                 # Classification-based relation extraction
                 # Split text into sentence chunks for processing
-                sentences = text.split('. ')
-                
+                sentences = text.split(". ")
+
                 for sentence in sentences[:10]:  # Limit to first 10 sentences for efficiency
                     if len(sentence.strip()) < 10:
                         continue
-                    
+
                     # Extract relationships from sentence
                     # This approach works with models trained on datasets like TACRED
                     try:
                         result = self.re_model(sentence)
                         if isinstance(result, list) and len(result) > 0:
                             top_result = result[0]
-                            relation_label = top_result.get('label', 'related_to')
-                            confidence = top_result.get('score', 0.7)
-                            
+                            relation_label = top_result.get("label", "related_to")
+                            confidence = top_result.get("score", 0.7)
+
                             # Only include high-confidence relationships
                             if confidence > 0.6:
                                 # Try to extract entities from the sentence
-                                sentence_entities = [e for e in entity_map.values()
-                                                   if e.name.lower() in sentence.lower()]
-                                
+                                sentence_entities = [
+                                    e
+                                    for e in entity_map.values()
+                                    if e.name.lower() in sentence.lower()
+                                ]
+
                                 # Create relationships between entities in the sentence
                                 if len(sentence_entities) >= 2:
                                     rel = Relationship(
@@ -369,13 +378,13 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                                         target_entity=sentence_entities[1],
                                         confidence=confidence,
                                         source_text=sentence,
-                                        extraction_method='neural'
+                                        extraction_method="neural",
                                     )
                                     relationships.append(rel)
                     except (TypeError, ValueError, KeyError, IndexError, AttributeError) as e:
                         logger.debug(f"Failed to process sentence with neural model: {e}")
                         continue
-        
+
         except (ImportError, AttributeError, TypeError, ValueError, KeyError, IndexError) as e:
             logger.warning(f"Neural relationship extraction encountered an error: {e}")
             # Return whatever we extracted so far
@@ -385,56 +394,58 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
             raise RelationshipExtractionError(
                 f"Neural relationship extraction failed: {e}",
                 details={
-                    'operation': 'relationship_extraction',
-                    'text_length': len(text),
-                    'entity_count': len(entity_map),
-                    'error_class': type(e).__name__,
-                    'remediation': "Check that the NER/RE pipeline is loaded; "
-                                   "set use_transformers=False to use rule-based extraction.",
-                }
+                    "operation": "relationship_extraction",
+                    "text_length": len(text),
+                    "entity_count": len(entity_map),
+                    "error_class": type(e).__name__,
+                    "remediation": "Check that the NER/RE pipeline is loaded; "
+                    "set use_transformers=False to use rule-based extraction.",
+                },
             ) from e
-        
+
         return relationships
-    
+
     def _parse_rebel_output(self, generated_text: str) -> List[Tuple[str, str, str]]:
         """Parse REBEL model output into triplets.
-        
+
         Args:
             generated_text: Generated text from REBEL model
-            
+
         Returns:
             List of (subject, relation, object) tuples
         """
         triplets = []
-        
+
         try:
             # REBEL format: "<triplet> subject <subj> relation <obj> object <triplet> ..."
             # Split by <triplet> marker
-            parts = generated_text.split('<triplet>')
-            
+            parts = generated_text.split("<triplet>")
+
             for part in parts:
                 if not part.strip():
                     continue
-                
+
                 # Extract subject, relation, object
-                if '<subj>' in part and '<obj>' in part:
+                if "<subj>" in part and "<obj>" in part:
                     try:
-                        subject = part.split('<subj>')[0].strip()
-                        rest = part.split('<subj>')[1]
-                        relation = rest.split('<obj>')[0].strip()
-                        obj = rest.split('<obj>')[1].strip()
-                        
+                        subject = part.split("<subj>")[0].strip()
+                        rest = part.split("<subj>")[1]
+                        relation = rest.split("<obj>")[0].strip()
+                        obj = rest.split("<obj>")[1].strip()
+
                         if subject and relation and obj:
                             triplets.append((subject, relation, obj))
                     except (IndexError, ValueError):
                         continue
-        
+
         except (AttributeError, ValueError, TypeError) as e:
             logger.debug(f"Failed to parse REBEL output: {e}")
-        
+
         return triplets
 
-    def _rule_based_relationship_extraction(self, text: str, entity_map: Dict[str, Entity]) -> List[Relationship]:
+    def _rule_based_relationship_extraction(
+        self, text: str, entity_map: Dict[str, Entity]
+    ) -> List[Relationship]:
         """Extract relationships using rule-based patterns.
 
         Args:
@@ -463,7 +474,7 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                     # Check if the pattern has exactly 2 groups
                     if len(match.groups()) < 2:
                         continue
-                        
+
                     source_text = match.group(1).strip()
                     target_text = match.group(2).strip()
 
@@ -478,92 +489,98 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                             source_entity=source_entity,
                             target_entity=target_entity,
                             confidence=confidence,
-                            source_text=text[max(0, match.start() - 20):min(len(text), match.end() + 20)],
-                            bidirectional=bidirectional
+                            source_text=text[
+                                max(0, match.start() - 20) : min(len(text), match.end() + 20)
+                            ],
+                            bidirectional=bidirectional,
                         )
 
                         relationships.append(rel)
-            
+
             except (re.error, ValueError) as e:
                 # Pattern matching error - log and skip this pattern
-                logger.warning(f"Skipping problematic relationship pattern '{pattern_info.get('name', 'unknown')}': {e}")
+                logger.warning(
+                    f"Skipping problematic relationship pattern '{pattern_info.get('name', 'unknown')}': {e}"
+                )
                 continue
             except Exception as e:
                 # Unexpected error in relationship extraction
                 raise RelationshipExtractionError(
                     f"Failed to extract relationships using pattern '{pattern_info.get('name', 'unknown')}': {e}",
-                    details={'pattern': pattern_info.get('pattern', ''), 'text_length': len(text)}
+                    details={"pattern": pattern_info.get("pattern", ""), "text_length": len(text)},
                 ) from e
 
         return relationships
-    
-    def _aggressive_entity_extraction(self, text: str, existing_entities: List[Entity]) -> List[Entity]:
+
+    def _aggressive_entity_extraction(
+        self, text: str, existing_entities: List[Entity]
+    ) -> List[Entity]:
         """Extract additional entities using aggressive spaCy techniques.
-        
+
         Uses dependency parsing, compound noun extraction, and advanced NER patterns
         to find entities that might be missed by standard extraction.
-        
+
         Args:
             text: Text to extract from
             existing_entities: Already extracted entities (to avoid duplicates)
-            
+
         Returns:
             List of additional entities
         """
         additional_entities = []
-        
+
         if not self.nlp:
             return additional_entities
-        
+
         try:
             doc = self.nlp(text)
             existing_names = {e.name.lower() for e in existing_entities}
-            
+
             # 1. Extract compound nouns using dependency parsing
             for chunk in doc.noun_chunks:
                 chunk_text = chunk.text.strip()
                 if len(chunk_text) > 2 and chunk_text.lower() not in existing_names:
                     # Check if it's a meaningful compound noun
-                    if len(chunk) >= 2 or chunk.root.pos_ in ['PROPN', 'NOUN']:
+                    if len(chunk) >= 2 or chunk.root.pos_ in ["PROPN", "NOUN"]:
                         entity = Entity(
                             name=chunk_text,
-                            entity_type='concept',
+                            entity_type="concept",
                             confidence=0.6,
-                            extraction_method='dependency_parsing'
+                            extraction_method="dependency_parsing",
                         )
                         additional_entities.append(entity)
                         existing_names.add(chunk_text.lower())
-            
+
             # 2. Extract entities based on syntactic patterns
             # Look for subjects and objects in sentences
             for token in doc:
                 # Subject entities
-                if token.dep_ in ['nsubj', 'nsubjpass'] and token.pos_ in ['NOUN', 'PROPN']:
+                if token.dep_ in ["nsubj", "nsubjpass"] and token.pos_ in ["NOUN", "PROPN"]:
                     # Get the full noun phrase
-                    subtree = ' '.join([t.text for t in token.subtree])
+                    subtree = " ".join([t.text for t in token.subtree])
                     if len(subtree) > 2 and subtree.lower() not in existing_names:
                         entity = Entity(
                             name=subtree.strip(),
-                            entity_type='agent',
+                            entity_type="agent",
                             confidence=0.65,
-                            extraction_method='syntax_pattern'
+                            extraction_method="syntax_pattern",
                         )
                         additional_entities.append(entity)
                         existing_names.add(subtree.lower())
-                
+
                 # Object entities
-                elif token.dep_ in ['dobj', 'pobj'] and token.pos_ in ['NOUN', 'PROPN']:
-                    subtree = ' '.join([t.text for t in token.subtree])
+                elif token.dep_ in ["dobj", "pobj"] and token.pos_ in ["NOUN", "PROPN"]:
+                    subtree = " ".join([t.text for t in token.subtree])
                     if len(subtree) > 2 and subtree.lower() not in existing_names:
                         entity = Entity(
                             name=subtree.strip(),
-                            entity_type='object',
+                            entity_type="object",
                             confidence=0.65,
-                            extraction_method='syntax_pattern'
+                            extraction_method="syntax_pattern",
                         )
                         additional_entities.append(entity)
                         existing_names.add(subtree.lower())
-            
+
             # 3. Extract capitalized phrases (likely proper nouns)
             for i, token in enumerate(doc):
                 if token.is_title and i + 1 < len(doc):
@@ -573,105 +590,109 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                     while j < len(doc) and doc[j].is_title:
                         phrase_tokens.append(doc[j])
                         j += 1
-                    
+
                     if len(phrase_tokens) >= 2:
-                        phrase = ' '.join([t.text for t in phrase_tokens])
+                        phrase = " ".join([t.text for t in phrase_tokens])
                         if phrase.lower() not in existing_names:
                             entity = Entity(
                                 name=phrase,
-                                entity_type='named_entity',
+                                entity_type="named_entity",
                                 confidence=0.7,
-                                extraction_method='capitalization_pattern'
+                                extraction_method="capitalization_pattern",
                             )
                             additional_entities.append(entity)
                             existing_names.add(phrase.lower())
-        
+
         except (AttributeError, ValueError, TypeError) as e:
             logger.warning(f"Error in aggressive entity extraction: {e}")
         except Exception as e:
             raise EntityExtractionError(
                 f"Aggressive entity extraction failed: {e}",
-                details={"text_length": len(text), "existing_entity_count": len(existing_entities)}
+                details={"text_length": len(text), "existing_entity_count": len(existing_entities)},
             ) from e
-        
+
         return additional_entities
-    
-    def _infer_complex_relationships(self, text: str, existing_relationships: List[Relationship],
-                                    entities: List[Entity]) -> List[Relationship]:
+
+    def _infer_complex_relationships(
+        self, text: str, existing_relationships: List[Relationship], entities: List[Entity]
+    ) -> List[Relationship]:
         """Infer complex relationships using semantic role labeling and dependency parsing.
-        
+
         Identifies implicit relationships, hierarchical structures, and semantic roles
         that may not be captured by pattern matching.
-        
+
         Args:
             text: Source text
             existing_relationships: Already extracted relationships
             entities: Extracted entities
-            
+
         Returns:
             List of inferred relationships
         """
         inferred_relationships = []
-        
+
         if not self.nlp:
             return inferred_relationships
-        
+
         try:
             doc = self.nlp(text)
             entity_map = {e.name.lower(): e for e in entities}
-            
+
             # Track existing relationships to avoid duplicates
-            existing_pairs = {(r.source_id, r.target_id, r.relationship_type) 
-                            for r in existing_relationships}
-            
+            existing_pairs = {
+                (r.source_id, r.target_id, r.relationship_type) for r in existing_relationships
+            }
+
             # 1. Infer hierarchical relationships from compound nouns
             # e.g., "machine learning algorithm" implies "algorithm" is_a "machine learning"
             for chunk in doc.noun_chunks:
                 if len(list(chunk)) >= 3:
                     tokens = list(chunk)
                     # Check if first tokens form a modifier and last is head
-                    modifier = ' '.join([t.text for t in tokens[:-1]])
+                    modifier = " ".join([t.text for t in tokens[:-1]])
                     head = tokens[-1].text
-                    
+
                     modifier_entity = entity_map.get(modifier.lower())
                     head_entity = entity_map.get(head.lower())
-                    
+
                     if modifier_entity and head_entity:
-                        rel_key = (head_entity.entity_id, modifier_entity.entity_id, 'subtype_of')
+                        rel_key = (head_entity.entity_id, modifier_entity.entity_id, "subtype_of")
                         if rel_key not in existing_pairs:
                             rel = Relationship(
-                                relationship_type='subtype_of',
+                                relationship_type="subtype_of",
                                 source_entity=head_entity,
                                 target_entity=modifier_entity,
                                 confidence=0.6,
                                 source_text=chunk.text,
-                                extraction_method='hierarchical_inference'
+                                extraction_method="hierarchical_inference",
                             )
                             inferred_relationships.append(rel)
                             existing_pairs.add(rel_key)
-            
+
             # 2. Infer relationships from dependency patterns
             # Agent-Action-Patient patterns
             for token in doc:
-                if token.pos_ == 'VERB':
+                if token.pos_ == "VERB":
                     # Find subject (agent)
-                    subjects = [child for child in token.children if child.dep_ in ['nsubj', 'nsubjpass']]
+                    subjects = [
+                        child for child in token.children if child.dep_ in ["nsubj", "nsubjpass"]
+                    ]
                     # Find object (patient)
-                    objects = [child for child in token.children if child.dep_ in ['dobj', 'pobj']]
-                    
+                    objects = [child for child in token.children if child.dep_ in ["dobj", "pobj"]]
+
                     for subj in subjects:
                         for obj in objects:
-                            subj_text = ' '.join([t.text for t in subj.subtree])
-                            obj_text = ' '.join([t.text for t in obj.subtree])
-                            
+                            subj_text = " ".join([t.text for t in subj.subtree])
+                            obj_text = " ".join([t.text for t in obj.subtree])
+
                             subj_entity = entity_map.get(subj_text.lower())
                             obj_entity = entity_map.get(obj_text.lower())
-                            
+
                             if subj_entity and obj_entity:
                                 # Create relationship based on verb
-                                rel_type = token.lemma_ + '_of'  # e.g., "uses" -> "uses_of"
+                                rel_type = token.lemma_ + "_of"  # e.g., "uses" -> "uses_of"
                                 rel_key = (subj_entity.entity_id, obj_entity.entity_id, rel_type)
-                                
+
                                 if rel_key not in existing_pairs:
                                     rel = Relationship(
                                         relationship_type=rel_type,
@@ -679,21 +700,21 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                                         target_entity=obj_entity,
                                         confidence=0.65,
                                         source_text=token.sent.text[:100],
-                                        extraction_method='srl_inference'
+                                        extraction_method="srl_inference",
                                     )
                                     inferred_relationships.append(rel)
                                     existing_pairs.add(rel_key)
-            
+
             # 3. Infer transitive relationships
             # If A relates to B and B relates to C, infer A relates to C (with lower confidence)
             entity_ids = {e.entity_id for e in entities}
             relationship_graph = {}
-            
+
             for rel in existing_relationships:
                 if rel.source_id not in relationship_graph:
                     relationship_graph[rel.source_id] = []
                 relationship_graph[rel.source_id].append((rel.target_id, rel.relationship_type))
-            
+
             # Look for 2-hop paths
             for source_id in relationship_graph:
                 for target_id, rel_type1 in relationship_graph.get(source_id, []):
@@ -701,22 +722,26 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                         # Avoid cycles
                         if next_target_id != source_id and next_target_id in entity_ids:
                             # Infer transitive relationship with reduced confidence
-                            rel_key = (source_id, next_target_id, f'transitive_{rel_type1}')
+                            rel_key = (source_id, next_target_id, f"transitive_{rel_type1}")
                             if rel_key not in existing_pairs:
-                                source_entity = next(e for e in entities if e.entity_id == source_id)
-                                target_entity = next(e for e in entities if e.entity_id == next_target_id)
-                                
+                                source_entity = next(
+                                    e for e in entities if e.entity_id == source_id
+                                )
+                                target_entity = next(
+                                    e for e in entities if e.entity_id == next_target_id
+                                )
+
                                 rel = Relationship(
-                                    relationship_type=f'transitive_{rel_type1}',
+                                    relationship_type=f"transitive_{rel_type1}",
                                     source_entity=source_entity,
                                     target_entity=target_entity,
                                     confidence=0.5,  # Lower confidence for inferred relationships
-                                    source_text='',
-                                    extraction_method='transitive_inference'
+                                    source_text="",
+                                    extraction_method="transitive_inference",
                                 )
                                 inferred_relationships.append(rel)
                                 existing_pairs.add(rel_key)
-                                
+
                                 # Limit transitive relationships to avoid explosion
                                 if len(inferred_relationships) >= 20:
                                     break
@@ -724,7 +749,7 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                         break
                 if len(inferred_relationships) >= 20:
                     break
-        
+
         except (AttributeError, ValueError, TypeError, KeyError, IndexError, StopIteration) as e:
             logger.warning(f"Error in complex relationship inference: {e}")
         except Exception as e:
@@ -734,9 +759,9 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                     "text_length": len(text),
                     "entity_count": len(entities),
                     "relationship_count": len(existing_relationships),
-                }
+                },
             ) from e
-        
+
         return inferred_relationships
 
     def _find_best_entity_match(self, text: str, entity_map: Dict[str, Entity]) -> Optional[Entity]:
@@ -766,7 +791,9 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
 
         return None
 
-    def extract_knowledge_graph(self, text: str, extraction_temperature: float = 0.7, structure_temperature: float = 0.5) -> KnowledgeGraph:
+    def extract_knowledge_graph(
+        self, text: str, extraction_temperature: float = 0.7, structure_temperature: float = 0.5
+    ) -> KnowledgeGraph:
         """
         Extract a knowledge graph from text with tunable parameters.
 
@@ -825,14 +852,18 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
         if structure_temperature < 0.3:
             # Keep only the most important relationship types for low structure temperature
             common_relationship_types = ["is_a", "part_of", "has_part", "related_to", "subfield_of"]
-            relationships = [r for r in relationships if r.relationship_type in common_relationship_types]
+            relationships = [
+                r for r in relationships if r.relationship_type in common_relationship_types
+            ]
         elif structure_temperature > 0.8:
             # For high structure temperature, include all relationship types and try to infer
             # additional hierarchical relationships
             # v2.5.0: Complex relationship inference with semantic role labeling
             if self.use_spacy and self.nlp:
                 try:
-                    inferred_relationships = self._infer_complex_relationships(text, relationships, entities)
+                    inferred_relationships = self._infer_complex_relationships(
+                        text, relationships, entities
+                    )
                     relationships.extend(inferred_relationships)
                 except RelationshipExtractionError as e:
                     logger.warning(f"Complex relationship inference failed: {e}")
@@ -880,9 +911,7 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
             return
 
         # Build a case-insensitive name → entity lookup
-        name_map: Dict[str, "Entity"] = {
-            e.name.lower(): e for e in entities
-        }
+        name_map: Dict[str, "Entity"] = {e.name.lower(): e for e in entities}
 
         for frame in frames:
             agents = frame.get_roles("Agent")
@@ -892,14 +921,14 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
 
             # Prefer first agent; fall back to any role as a source
             src_entity = None
-            for role_arg in (agents or frame.arguments[:1]):
+            for role_arg in agents or frame.arguments[:1]:
                 src_entity = name_map.get(role_arg.text.lower())
                 if src_entity:
                     break
 
             # Prefer first patient; fall back to second argument
             tgt_entity = None
-            for role_arg in (patients or frame.arguments[1:2]):
+            for role_arg in patients or frame.arguments[1:2]:
                 tgt_entity = name_map.get(role_arg.text.lower())
                 if tgt_entity:
                     break
@@ -956,9 +985,13 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
         frames = extractor.extract_srl(text)
         return extractor.to_knowledge_graph(frames)
 
-
-    def extract_enhanced_knowledge_graph(self, text: str, use_chunking: bool = True,
-                                   extraction_temperature: float = 0.7, structure_temperature: float = 0.5) -> KnowledgeGraph:
+    def extract_enhanced_knowledge_graph(
+        self,
+        text: str,
+        use_chunking: bool = True,
+        extraction_temperature: float = 0.7,
+        structure_temperature: float = 0.5,
+    ) -> KnowledgeGraph:
         """
         Extract a knowledge graph with enhanced processing and tunable parameters.
 
@@ -988,13 +1021,15 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
             chunks = []
 
             for idx in range(0, len(text), chunk_size - overlap):
-                chunk = text[idx:idx + chunk_size]
+                chunk = text[idx : idx + chunk_size]
                 chunks.append(chunk)
 
             # Process each chunk and merge the results
             for idx, chunk in enumerate(chunks):
                 # Extract knowledge graph from chunk using temperature parameters
-                chunk_kg = self.extract_knowledge_graph(chunk, extraction_temperature, structure_temperature)
+                chunk_kg = self.extract_knowledge_graph(
+                    chunk, extraction_temperature, structure_temperature
+                )
 
                 # For the first chunk, use it as the base
                 if idx == 0:
@@ -1009,8 +1044,13 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
 
         return kg
 
-    def extract_from_documents(self, documents: List[Dict[str, str]], text_key: str = "text",
-                             extraction_temperature: float = 0.7, structure_temperature: float = 0.5) -> KnowledgeGraph:
+    def extract_from_documents(
+        self,
+        documents: List[Dict[str, str]],
+        text_key: str = "text",
+        extraction_temperature: float = 0.7,
+        structure_temperature: float = 0.5,
+    ) -> KnowledgeGraph:
         """
         Extract a knowledge graph from a collection of documents with tunable parameters.
 
@@ -1043,7 +1083,7 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                 doc[text_key],
                 use_chunking=True,
                 extraction_temperature=extraction_temperature,
-                structure_temperature=structure_temperature
+                structure_temperature=structure_temperature,
             )
 
             # Add document metadata to entities
@@ -1252,9 +1292,7 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                     connected.add(getattr(src, "entity_id", id(src)))
                 if tgt is not None:
                     connected.add(getattr(tgt, "entity_id", id(tgt)))
-            isolated = sum(
-                1 for e in entities if getattr(e, "entity_id", id(e)) not in connected
-            )
+            isolated = sum(1 for e in entities if getattr(e, "entity_id", id(e)) not in connected)
             isolated_ratio = isolated / n_ent
         else:
             isolated_ratio = 0.0
@@ -1271,5 +1309,3 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
             "relationship_type_diversity": len(rel_types),
             "isolated_entity_ratio": isolated_ratio,
         }
-
-

@@ -6,6 +6,7 @@ All search logic lives in ipfs_datasets_py.search.search_tools_api.
 Each function below is a minimal async wrapper that unpacks MCP-style
 parameters and delegates straight to the canonical implementation.
 """
+
 from __future__ import annotations
 
 import logging
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Thin standalone wrappers (no ClaudeMCPTool class needed)
 # ---------------------------------------------------------------------------
+
 
 async def semantic_search(
     query: str,
@@ -129,6 +131,7 @@ async def faceted_search(
 # Backward-compatible class aliases (kept so existing code that instantiates
 # these classes still imports without error; they wrap the standalone fns)
 # ---------------------------------------------------------------------------
+
 
 class SemanticSearchTool:  # noqa: E302
     """Thin compatibility shim — wraps semantic_search()."""

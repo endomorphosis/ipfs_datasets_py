@@ -464,7 +464,9 @@ class TestTranslationContextSupported:
         lam = Lambda((LambdaParam("y", NAT),), App(p, (Var("y", NAT),)))
         goal = Forall("a", NAT, App(lam, (Var("a", NAT),)))
         ctx = TranslationContext(request_id="req-3")
-        record = ctx.translate(source_construct="beta_goal", term=goal, target=TranslationTarget.TPTP)
+        record = ctx.translate(
+            source_construct="beta_goal", term=goal, target=TranslationTarget.TPTP
+        )
         assert record.status == TranslationStatus.PARTIAL
         assert any("beta-eliminated" in o for o in record.obligations)
 
@@ -560,7 +562,9 @@ class TestTranslationContextFailsClosed:
         c = Const("ax", NAT, opaque=True, opaque_reason="axiom without a body")
         goal = Eq(c, c)
         ctx = TranslationContext(request_id="neg-3")
-        record = ctx.translate(source_construct="opaque_const_goal", term=goal, target=TranslationTarget.TPTP)
+        record = ctx.translate(
+            source_construct="opaque_const_goal", term=goal, target=TranslationTarget.TPTP
+        )
         self._assert_fails_closed(record, reason_contains="opaque")
 
     def test_unresolved_type_variable_fails_closed(self):
@@ -569,20 +573,26 @@ class TestTranslationContextFailsClosed:
         goal = Forall("x", NAT, Eq(App(idfn, (Var("x", alpha),)), Var("x", alpha)))
         ctx = TranslationContext(request_id="neg-4")
         # No monomorphization instance is supplied.
-        record = ctx.translate(source_construct="poly_goal", term=goal, target=TranslationTarget.TPTP)
+        record = ctx.translate(
+            source_construct="poly_goal", term=goal, target=TranslationTarget.TPTP
+        )
         self._assert_fails_closed(record, reason_contains="unresolved type variable")
 
     def test_higher_order_quantification_over_function_type_fails_closed(self):
         fty = FunctionTypeRef((NAT,), NAT)
         goal = Forall("f", fty, Eq(App(Var("f", fty), (Var("x", NAT),)), Var("x", NAT)))
         ctx = TranslationContext(request_id="neg-5")
-        record = ctx.translate(source_construct="ho_quant_goal", term=goal, target=TranslationTarget.TPTP)
+        record = ctx.translate(
+            source_construct="ho_quant_goal", term=goal, target=TranslationTarget.TPTP
+        )
         self._assert_fails_closed(record, reason_contains="higher-order quantification")
 
     def test_higher_order_quantification_over_prop_type_fails_closed(self):
         goal = Forall("p", PROP_SORT, Var("p", PROP_SORT))
         ctx = TranslationContext(request_id="neg-6")
-        record = ctx.translate(source_construct="ho_prop_quant_goal", term=goal, target=TranslationTarget.TPTP)
+        record = ctx.translate(
+            source_construct="ho_prop_quant_goal", term=goal, target=TranslationTarget.TPTP
+        )
         self._assert_fails_closed(record, reason_contains="higher-order quantification")
 
     def test_higher_order_argument_passing_fails_closed(self):
@@ -591,7 +601,9 @@ class TestTranslationContextFailsClosed:
         g = Const("g", fty)
         goal = Eq(App(higher, (g, Var("x", NAT))), Var("x", NAT))
         ctx = TranslationContext(request_id="neg-7")
-        record = ctx.translate(source_construct="ho_arg_goal", term=goal, target=TranslationTarget.TPTP)
+        record = ctx.translate(
+            source_construct="ho_arg_goal", term=goal, target=TranslationTarget.TPTP
+        )
         self._assert_fails_closed(record, reason_contains="higher-order")
 
     def test_escaping_lambda_fails_closed(self):
@@ -599,13 +611,17 @@ class TestTranslationContextFailsClosed:
         lam2 = Lambda((LambdaParam("y", NAT),), BoolLit(False))
         goal = Eq(lam1, lam2)
         ctx = TranslationContext(request_id="neg-8")
-        record = ctx.translate(source_construct="escaping_lambda_goal", term=goal, target=TranslationTarget.TPTP)
+        record = ctx.translate(
+            source_construct="escaping_lambda_goal", term=goal, target=TranslationTarget.TPTP
+        )
         self._assert_fails_closed(record, reason_contains="higher-order")
 
     def test_goal_not_a_proposition_fails_closed(self):
         c = Const("c", NAT)
         ctx = TranslationContext(request_id="neg-9")
-        record = ctx.translate(source_construct="not_a_prop_goal", term=c, target=TranslationTarget.TPTP)
+        record = ctx.translate(
+            source_construct="not_a_prop_goal", term=c, target=TranslationTarget.TPTP
+        )
         self._assert_fails_closed(record, reason_contains="proposition")
 
     def test_malformed_term_fails_closed_instead_of_raising(self):
@@ -613,7 +629,9 @@ class TestTranslationContextFailsClosed:
         # Deliberately malformed: applying a unary predicate to two arguments.
         bad = App(p, (Var("x", NAT), Var("y", NAT)))
         ctx = TranslationContext(request_id="neg-10")
-        record = ctx.translate(source_construct="malformed_goal", term=bad, target=TranslationTarget.TPTP)
+        record = ctx.translate(
+            source_construct="malformed_goal", term=bad, target=TranslationTarget.TPTP
+        )
         self._assert_fails_closed(record, reason_contains="malformed")
 
     def test_unsupported_records_are_never_partial_or_supported(self):
@@ -752,7 +770,12 @@ class TestTPTPRendering:
         "goal_factory",
         [
             lambda: Forall(
-                "x", NAT, Implies(App(make_predicate("P"), (Var("x", NAT),)), App(make_predicate("P"), (Var("x", NAT),)))
+                "x",
+                NAT,
+                Implies(
+                    App(make_predicate("P"), (Var("x", NAT),)),
+                    App(make_predicate("P"), (Var("x", NAT),)),
+                ),
             ),
             lambda: Exists("x", NAT, App(make_predicate("Q"), (Var("x", NAT),))),
             lambda: Forall(
@@ -825,7 +848,12 @@ class TestSMTLIBRendering:
         "goal_factory",
         [
             lambda: Forall(
-                "x", NAT, Implies(App(make_predicate("P"), (Var("x", NAT),)), App(make_predicate("P"), (Var("x", NAT),)))
+                "x",
+                NAT,
+                Implies(
+                    App(make_predicate("P"), (Var("x", NAT),)),
+                    App(make_predicate("P"), (Var("x", NAT),)),
+                ),
             ),
             lambda: Exists("x", NAT, App(make_predicate("Q"), (Var("x", NAT),))),
             lambda: Forall(
@@ -896,7 +924,10 @@ class TestFullPipelineRoundTrip:
         rec_tptp = ctx_tptp.translate(
             source_construct="my_def", term=lam_def, target=TranslationTarget.TPTP
         )
-        assert tptp.render_tff(tptp.parse_tff(rec_tptp.translated_text)).text == rec_tptp.translated_text
+        assert (
+            tptp.render_tff(tptp.parse_tff(rec_tptp.translated_text)).text
+            == rec_tptp.translated_text
+        )
 
         ctx_smt = TranslationContext(request_id="rt-4")
         rec_smt = ctx_smt.translate(
@@ -919,7 +950,10 @@ class TestFullPipelineRoundTrip:
             target=TranslationTarget.TPTP,
             monomorphization={"alpha": NAT},
         )
-        assert tptp.render_tff(tptp.parse_tff(rec_tptp.translated_text)).text == rec_tptp.translated_text
+        assert (
+            tptp.render_tff(tptp.parse_tff(rec_tptp.translated_text)).text
+            == rec_tptp.translated_text
+        )
 
         ctx_smt = TranslationContext(request_id="rt-6")
         rec_smt = ctx_smt.translate(

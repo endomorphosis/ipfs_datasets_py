@@ -10,6 +10,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def discover_tools_from_files():
     """Discover tools based on file structure."""
     print("=== Discovering MCP Tools ===")
@@ -20,8 +21,9 @@ def discover_tools_from_files():
     total_tools = 0
 
     # Get list of tool categories
-    categories = [d.name for d in tools_base_path.iterdir()
-                 if d.is_dir() and not d.name.startswith("__")]
+    categories = [
+        d.name for d in tools_base_path.iterdir() if d.is_dir() and not d.name.startswith("__")
+    ]
 
     for category in categories:
         category_path = tools_base_path / category
@@ -42,6 +44,7 @@ def discover_tools_from_files():
     print(f"\nTotal discovered tools: {total_tools}")
     return discovered_tools
 
+
 def find_existing_tests(discovered_tools):
     """Find existing tool tests."""
     print("\n=== Finding Existing Tests ===")
@@ -59,6 +62,7 @@ def find_existing_tests(discovered_tools):
         print(f"  - {tool}")
 
     return tested_tools
+
 
 def generate_simple_test(category, tool):
     """Generate a basic test file for a tool."""
@@ -101,7 +105,7 @@ class Test{tool.title().replace("_", "")}(unittest.TestCase):
             # with patch('dependency.module') as mock_module:
             #     mock_instance = MagicMock()
             #     mock_module.return_value = mock_instance
-            #     mock_instance.method.return_value = {'expected': 'result'}
+            #     mock_instance.method.return_value = {"expected": 'result'}
 
             # Call the function with test parameters
             # If the function requires arguments, add them here
@@ -117,6 +121,7 @@ if __name__ == '__main__':
     unittest.main()
 """
     return template
+
 
 def generate_missing_tests(discovered_tools, tested_tools):
     """Generate test files for untested tools."""
@@ -145,7 +150,7 @@ def generate_missing_tests(discovered_tools, tested_tools):
 
             # Don't overwrite existing test file
             if not output_path.exists():
-                with open(output_path, 'w') as f:
+                with open(output_path, "w") as f:
                     f.write(test_content)
                 print(f"✓ Generated test for {category}.{tool}: {output_path}")
                 generated_count += 1
@@ -156,6 +161,7 @@ def generate_missing_tests(discovered_tools, tested_tools):
 
     print(f"\nGenerated {generated_count} new test files")
     return generated_count
+
 
 def create_test_summary(discovered_tools, tested_tools):
     """Create a summary of test status."""
@@ -177,6 +183,7 @@ def create_test_summary(discovered_tools, tested_tools):
         category_coverage = (category_tested / category_total) * 100 if category_total > 0 else 0
 
         print(f"  - {category}: {category_tested}/{category_total} ({category_coverage:.1f}%)")
+
 
 def create_test_runner():
     """Create a script to run all MCP tool tests."""
@@ -215,12 +222,13 @@ if __name__ == "__main__":
 """
 
     output_path = Path("run_mcp_tests.py")
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         f.write(content)
 
     print(f"\nCreated test runner script: {output_path}")
     print("To run all MCP tool tests, execute:")
     print("python run_mcp_tests.py")
+
 
 def main():
     """Main entry point."""
@@ -229,6 +237,7 @@ def main():
     generate_missing_tests(discovered_tools, tested_tools)
     create_test_summary(discovered_tools, tested_tools)
     create_test_runner()
+
 
 if __name__ == "__main__":
     main()

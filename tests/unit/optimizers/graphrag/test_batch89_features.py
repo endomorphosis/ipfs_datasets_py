@@ -45,13 +45,21 @@ def _make_result(entities=None, rels=None, conf=0.8) -> EntityExtractionResult:
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     gen = OntologyGenerator()
     crit = OntologyCritic()
     return OntologyMediator(gen, crit)
 
 
 def _make_score(c=0.8, con=0.7, cl=0.6, g=0.5, da=0.9) -> CriticScore:
-    return CriticScore(completeness=c, consistency=con, clarity=cl, granularity=g, relationship_coherence=da, domain_alignment=da)
+    return CriticScore(
+        completeness=c,
+        consistency=con,
+        clarity=cl,
+        granularity=g,
+        relationship_coherence=da,
+        domain_alignment=da,
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -111,8 +111,7 @@ def test_compiler_exposes_packet_001774_explicit_ambiguity_margins() -> None:
             family_margin=family_margin,
         )
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         ambiguities = compiler._adaptive_family_margin_ambiguities(
             SpaCyLegalEncoding(
@@ -142,20 +141,12 @@ def test_compiler_exposes_packet_001774_explicit_ambiguity_margins() -> None:
             predicted_family_source="adaptive_logits",
         )
 
-        explicit_type = (
-            f"adaptive_{predicted_family}_{target_family}_{direction}_margin_low"
-        )
+        explicit_type = f"adaptive_{predicted_family}_{target_family}_{direction}_margin_low"
         explicit = next(
-            ambiguity
-            for ambiguity in ambiguities
-            if ambiguity.ambiguity_type == explicit_type
+            ambiguity for ambiguity in ambiguities if ambiguity.ambiguity_type == explicit_type
         )
         assert explicit.metadata["is_explicit_adaptive_ambiguity"] is True
         assert explicit.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert explicit.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
-        assert explicit.metadata["adaptive_policy_pair"] == (
-            f"{predicted_family}->{target_family}"
-        )
-        assert abs(
-            float(explicit.metadata["family_margin_raw"]) - family_margin
-        ) <= 1e-12
+        assert explicit.metadata["adaptive_policy_pair"] == (f"{predicted_family}->{target_family}")
+        assert abs(float(explicit.metadata["family_margin_raw"]) - family_margin) <= 1e-12

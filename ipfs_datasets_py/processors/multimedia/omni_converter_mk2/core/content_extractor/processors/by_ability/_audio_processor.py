@@ -5,8 +5,6 @@
 # speech-to-text capabilities.
 
 
-
-
 # """
 # from datetime import timedelta
 # import os
@@ -14,7 +12,7 @@
 # from typing import Any, Tuple
 
 
-# from deprecated.processors.base_processor import BaseProcessor # TODO 
+# from deprecated.processors.base_processor import BaseProcessor # TODO
 # from logger import logger
 # from configs import configs
 # from utils.common.try_except_decorator import try_except
@@ -45,7 +43,7 @@
 #     Args:
 #         samples: The audio samples as a numpy array.
 #         sample_rate: The sample rate of the audio signal.
-    
+
 #     Returns:
 #         The spectral centroid in Hz. TODO - Validate unit.
 #     """
@@ -53,11 +51,11 @@
 #     n_samples = len(samples)
 #     window = np.hamming(n_samples)  # Apply Hamming window to reduce spectral leakage
 #     windowed_samples = samples * window
-    
+
 #     # Calculate FFT and get magnitudes
 #     fft_result = np.abs(np.fft.rfft(windowed_samples))
 #     frequencies = np.fft.rfftfreq(n_samples, 1.0/sample_rate)
-    
+
 #     # Calculate spectral centroid (weighted average of frequencies)
 #     if np.sum(fft_result) > 0:
 #         return np.sum(frequencies * fft_result) / np.sum(fft_result)
@@ -68,7 +66,7 @@
 # def _calc_spectral_centroid(samples: np.ndarray, sample_rate: int) -> float:
 #     """
 #     TODO - Validate this function.
-    
+
 #     """
 #     np.sum( # Sum the absolute differences between consecutive samples
 #         np.abs( # Calculate the absolute differences
@@ -81,12 +79,12 @@
 # def _analyze_waveform(audio: 'AudioSegment', sample_rate: int, duration: float) -> dict[str, Any]:
 #     """
 #     Analyze the waveform of an audio segment.
-    
+
 #     Args:
 #         audio: The audio segment to analyze.
 #         sample_rate: The sample rate of the audio.
 #         duration: The duration of the audio in seconds.
-        
+
 #     Returns:
 #         A dictionary containing waveform analysis results.
 #     """
@@ -95,7 +93,7 @@
 
 #     # Convert to numpy array for analysis
 #     samples = np.array(audio.get_array_of_samples())
-    
+
 #     # If stereo, average the channels for simplicity
 #     if audio.channels > 1:
 #         samples = samples.reshape((-1, audio.channels)).mean(axis=1)
@@ -103,23 +101,23 @@
 #     # Normalize to -1.0 to 1.0 range
 #     max_value = 2**(audio.sample_width * 8 - 1) - 1
 #     samples = samples / max_value
-    
+
 #     # Calculate some basic statistics
 #     rms = np.sqrt(np.mean(samples**2)) # Root Mean Square
 #     peak = np.max(np.abs(samples)) # Peak amplitude
-    
+
 #     # Calculate spectral centroid (rough estimate of "brightness")
 #     if len(samples) > 0 and duration > 0:
 #         spectral_centroid = _calc_spectral_centroid_using_fft(samples, sample_rate) if len(samples) > 0 else 0
 #     else:
 #         spectral_centroid = 0
-    
+
 #     # Create a reduced version for visualization
 #     # Aim for about 1000 points max
 #     points = min(1000, len(samples))
 #     step = max(1, len(samples) // points)
 #     visualization = samples[::step].tolist()[:points]
-    
+
 #     return {
 #         "num_samples": len(samples),
 #         "rms": float(rms),
@@ -137,15 +135,15 @@
 # class AudioProcessor:
 #     """
 #     Audio processor framework class.
-    
+
 #     This class provides functionality to extract metadata, waveform data, and
 #     transcribe speech to text from audio files using the Whisper library.
 #     """
-    
+
 #     def __init__(self, model_name: str = "base", resources=None, configs=None) -> None:
 #         """
 #         Initialize the Whisper audio processor.
-        
+
 #         Args:
 #             model_name: The name of the Whisper model to use.
 #                 Options include: "tiny", "base", "small", "medium", "large".
@@ -171,35 +169,35 @@
 #         if self.model is not None:
 #             if not hasattr(self.model, "transcribe"):
 #                 raise AttributeError(f"Whisper model {self.model_name} does not have a transcribe method")
-    
+
 #     def can_process(self, format_name: str) -> bool:
 #         """
 #         Check if this processor can handle the given format.
-        
+
 #         Args:
 #             format_name: The name of the format to check.
-            
+
 #         Returns:
 #             True if this processor can handle the format and required libraries are available,
 #             False otherwise.
 #         """
 #         has_requirements = WHISPER_AVAILABLE and PYDUB_AVAILABLE
 #         return has_requirements and format_name.lower() in self.supported_formats
-    
+
 #     @property
 #     def supported_formats(self) -> list[str]:
 #         """
 #         Get the list of formats supported by this processor.
-        
+
 #         Returns:
 #             A list of format names supported by this processor.
 #         """
 #         return self._supported_formats if WHISPER_AVAILABLE and PYDUB_AVAILABLE else []
-    
+
 #     def get_processor_info(self) -> dict[str, Any]:
 #         """
 #         Get information about this processor.
-        
+
 #         Returns:
 #             A dictionary containing information about this processor.
 #         """
@@ -211,43 +209,43 @@
 #             "model_name": self.model_name,
 #             "model_loaded": self.model is not None
 #         }
-        
+
 #         if WHISPER_AVAILABLE:
 #             info["whisper_version"] = whisper.__version__
-        
+
 #         return info
-    
+
 #     def extract_metadata(self, data: bytes, format_name: str, options: dict[str, Any]) -> dict[str, Any]:
 #         """
 #         Extract metadata from an audio file.
-        
+
 #         Args:
 #             data: The binary data of the audio file.
 #             format_name: The format of the audio file.
 #             options: Processing options.
-            
+
 #         Returns:
 #             Metadata extracted from the audio file.
-            
+
 #         Raises:
 #             ValueError: If pydub is not available or the data cannot be processed.
 #         """
 #         if not PYDUB_AVAILABLE:
 #             raise ValueError("pydub is not available for audio metadata extraction")
-        
+
 #         try:
 #             # Save audio data to a temporary file
 #             with tempfile.NamedTemporaryFile(suffix=f'.{format_name}', delete=False) as temp_file:
 #                 temp_file.write(data)
 #                 temp_file_path = temp_file.name
-            
+
 #             try:
 #                 # Get media info
 #                 info = mediainfo(temp_file_path)
-                
+
 #                 # Load audio file to get additional properties
 #                 audio = AudioSegment.from_file(temp_file_path, format=format_name)
-                
+
 #                 # Extract common properties
 #                 duration_seconds = len(audio) / 1000.0
 #                 # Calculate average loudness (dBFS)
@@ -270,39 +268,39 @@
 #                     for key, value in info.items():
 #                         if key not in metadata and value:
 #                             metadata[key] = value
-                
+
 #                 # Extract tags if available
 #                 if 'TAG' in info:
 #                     for tag_key, tag_value in info['TAG'].items():
 #                         if tag_value:
 #                             metadata[f'tag_{tag_key}'] = tag_value
-                
+
 #                 return metadata
-                
+
 #             finally:
 #                 # Remove temporary file
 #                 try:
 #                     os.unlink(temp_file_path)
 #                 except Exception:
 #                     pass
-                
+
 #         except Exception as e:
 #             logger.error(f"Error extracting metadata from audio: {e}")
 #             raise ValueError(f"Error extracting metadata from audio: {e}")
-    
+
 #     @try_except(raise_=True, exception_type=ValueError, msg="Error in waveform analysis")
 #     def extract_waveform(self, data: bytes, format_name: str, options: dict[str, Any]) -> dict[str, Any]:
 #         """
 #         Extract waveform data from an audio file.
-        
+
 #         Args:
 #             data: The binary data of the audio file.
 #             format_name: The format of the audio file.
 #             options: Processing options.
-            
+
 #         Returns:
 #             Waveform data extracted from the audio file.
-            
+
 #         Raises:
 #             ValueError: If pydub is not available or the data cannot be processed.
 #         """
@@ -313,7 +311,7 @@
 #         with tempfile.NamedTemporaryFile(suffix=f'.{format_name}', delete=False) as temp_file:
 #             temp_file.write(data)
 #             temp_file_path = temp_file.name
-        
+
 #         try:
 #             # Load audio file
 #             audio = AudioSegment.from_file(temp_file_path, format=format_name)
@@ -322,7 +320,7 @@
 #             # For a 30-second visualization, we'll extract 150 samples (1 sample per 0.2 seconds)
 #             duration_seconds = len(audio) / 1000.0
 #             max_samples = options.get("waveform_samples", 150)
-            
+
 #             # Calculate sample interval based on duration
 #             sample_interval_ms = (len(audio) / max_samples) if duration_seconds > 0 else 200
 
@@ -335,7 +333,7 @@
 #                 segment = audio[i:i+10]  # Get a 10ms segment
 #                 if len(segment) > 0:
 #                     samples.append(segment.dBFS)
-            
+
 #             return {
 #                 'waveform_type': 'dBFS',
 #                 'sample_count': len(samples),
@@ -344,7 +342,7 @@
 #                 'max_value': max(samples) if samples else None,
 #                 'samples': samples
 #             }
-            
+
 #         finally:
 #             # Remove temporary file
 #             try:
@@ -356,23 +354,23 @@
 #     def transcribe_audio(self, data: bytes, format_name: str, options: dict[str, Any]) -> str:
 #         """
 #         Transcribe speech to text from an audio file using Whisper.
-        
+
 #         Args:
 #             data: The binary data of the audio file.
 #             format_name: The format of the audio file.
 #             options: Processing options including:
 #                 language: The language code for transcription (e.g., "en")
 #                 task: The task to perform ("transcribe" or "translate")
-                
+
 #         Returns:
 #             Transcribed text from the audio file.
-            
+
 #         Raises:
 #             ValueError: If Whisper is not available or the data cannot be processed.
 #         """
 #         if not WHISPER_AVAILABLE or self.model is None:
 #             raise ValueError("Whisper is not available for speech-to-text transcription")
-        
+
 #         if not PYDUB_AVAILABLE:
 #             raise ValueError("pydub is not available for audio processing")
 
@@ -380,22 +378,22 @@
 #         with tempfile.NamedTemporaryFile(suffix=f'.{format_name}', delete=False) as temp_file:
 #             temp_file.write(data)
 #             temp_file_path = temp_file.name
-        
+
 #         try:
 #             # Parse options
 #             language = options.get("language")
 #             task = options.get("task", "transcribe")  # Default to transcribe
-            
+
 #             # Transcribe the audio
 #             result = self.model.transcribe(
 #                 temp_file_path,
 #                 language=language,
 #                 task=task
 #             )
-            
+
 #             # Extract the transcribed text
 #             text = result.get("text", "")
-            
+
 #             # Extract segments with timestamps if available
 #             segments = []
 #             if "segments" in result:
@@ -405,10 +403,10 @@
 #                         "end": segment.get("end"),
 #                         "text": segment.get("text")
 #                     })
-            
+
 #             # Combine them into a nicely formatted transcript
 #             transcript = text.strip()
-            
+
 #             # Add detailed transcript with timestamps if segments are available
 #             if segments:
 #                 detailed_transcript = []
@@ -419,42 +417,42 @@
 #                         detailed_transcript.append(f"[{start_str}] {segment.get('text', '')}")
 #                     else:
 #                         detailed_transcript.append(segment.get("text", ""))
-                
+
 #                 transcript += "\n\n--- Transcript with Timestamps ---\n\n"
 #                 transcript += "\n".join(detailed_transcript)
-            
+
 #             return transcript
-            
+
 #         finally:
 #             # Remove temporary file
 #             try:
 #                 os.unlink(temp_file_path)
 #             except Exception:
 #                 pass
-            
+
 
 #     def process_audio(self, data: bytes, format_name: str, options: dict[str, Any]) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
 #         """
 #         Process an audio file completely, extracting metadata, waveform, and transcribing if available.
-        
+
 #         Args:
 #             data: The binary data of the audio file.
 #             format_name: The format of the audio file.
 #             options: Processing options.
-            
+
 #         Returns:
 #             A tuple of (text content, metadata, sections).
-            
+
 #         Raises:
 #             ValueError: If required dependencies are not available or the data cannot be processed.
 #         """
 #         try:
 #             # Extract metadata
 #             metadata = self.extract_metadata(data, format_name, options)
-            
+
 #             # Initialize sections
 #             sections = []
-            
+
 #             # Extract waveform data if requested
 #             waveform_data = None
 #             if options.get("extract_waveform", True):
@@ -466,11 +464,11 @@
 #                     })
 #                 except Exception as e:
 #                     logger.warning(f"Error extracting waveform: {e}")
-            
+
 #             # Transcribe the audio if requested and Whisper is available
 #             transcript = ""
 #             transcribe_enabled = options.get("transcribe", True)
-            
+
 #             if transcribe_enabled and WHISPER_AVAILABLE and self.model is not None:
 #                 try:
 #                     transcript = self.transcribe_audio(data, format_name, options)
@@ -487,32 +485,32 @@
 #                     'type': 'transcript',
 #                     'content': transcript
 #                 })
-            
+
 #             # Generate human-readable description
 #             text_content = [f"Audio File: {metadata.get('tag_title', 'Untitled')}"]
 #             text_content.append(f"Format: {format_name.upper()}")
 #             text_content.append(f"Duration: {metadata.get('duration', '0:00:00')}")
-            
+
 #             # Add artist and album if available
 #             if "tag_artist" in metadata:
 #                 text_content.append(f"Artist: {metadata['tag_artist']}")
-            
+
 #             if "tag_album" in metadata:
 #                 text_content.append(f"Album: {metadata['tag_album']}")
-            
+
 #             # Add technical info
 #             text_content.append(f"Channels: {metadata.get('channels', '?')} ({metadata.get('channel_mode', '?')})")
 #             text_content.append(f"Sample Rate: {metadata.get('frame_rate_hz', '?')} Hz")
 #             text_content.append(f"Bit Depth: {metadata.get('sample_width_bytes', '?') * 8} bits")
-            
+
 #             if "bitrate" in metadata:
 #                 text_content.append(f"Bitrate: {float(metadata['bitrate']) / 1000:.0f} kbps")
-            
+
 #             # Add transcript if available
 #             if transcript:
 #                 text_content.append("\n--- Transcript ---\n")
 #                 text_content.append(transcript)
-            
+
 #             # Add audio info section
 #             sections.append({
 #                 'type': 'audio_info',
@@ -524,19 +522,18 @@
 #                     'bit_depth': metadata.get('sample_width_bytes', 0) * 8
 #                 }
 #             })
-            
+
 #             # Add metadata section
 #             sections.append({
 #                 'type': 'metadata',
 #                 'content': metadata
 #             })
-            
+
 #             return "\n".join(text_content), metadata, sections
-            
+
 #         except Exception as e:
 #             logger.error(f"Error processing audio file: {e}")
 #             raise ValueError(f"Error processing audio file: {e}")
-
 
 
 # # Create a global instance for usage

@@ -21,7 +21,7 @@ from . import query
 from . import relationship
 
 __all__ = [
-    'llm',
-    'query',
-    'relationship',
+    "llm",
+    "query",
+    "relationship",
 ]

@@ -10,10 +10,14 @@ The security-provenance integration system combines the enhanced security featur
 
 ```python
 from ipfs_datasets_py.audit.security_provenance_integration import (
-    SecurityProvenanceIntegrator, secure_provenance_operation
+    SecurityProvenanceIntegrator,
+    secure_provenance_operation,
 )
 from ipfs_datasets_py.audit.enhanced_security import (
-    EnhancedSecurityManager, DataClassification, AccessDecision, SecuritySession
+    EnhancedSecurityManager,
+    DataClassification,
+    AccessDecision,
+    SecuritySession,
 )
 
 # Get integrator instance
@@ -27,11 +31,11 @@ record_id = integrator.record_secure_transformation(
     parameters={  # Transformation parameters
         "method": "differential_privacy",
         "epsilon": 0.1,
-        "fields_anonymized": ["name", "address", "phone"]
+        "fields_anonymized": ["name", "address", "phone"],
     },
     user_id="alice",  # User performing the operation
     verify_lineage=True,  # Verify upstream lineage for sensitive data
-    classification=DataClassification.INTERNAL  # Classification for output
+    classification=DataClassification.INTERNAL,  # Classification for output
 )
 
 # Add security metadata to a provenance record
@@ -42,7 +46,7 @@ decision, context = integrator.check_access_with_lineage(
     user_id="bob",
     resource_id="processed_data_001",
     operation="read",
-    max_depth=2  # How far to trace lineage
+    max_depth=2,  # How far to trace lineage
 )
 
 if decision == AccessDecision.ALLOW:
@@ -56,6 +60,7 @@ elif decision == AccessDecision.ELEVATE:
 else:
     print("Access denied")
 
+
 # Secure function with provenance-aware access control
 @secure_provenance_operation(user_id_arg="user", data_id_arg="resource_id")
 def access_data_with_lineage(user, resource_id):
@@ -66,10 +71,10 @@ def access_data_with_lineage(user, resource_id):
     # Function body only executes if access is allowed
     return {"status": "access_granted", "resource": resource_id}
 
+
 # Verify security across document boundaries
 results = integrator.verify_cross_document_security(
-    document_ids=["document_001", "document_002", "document_003"],
-    user_id="security_officer"
+    document_ids=["document_001", "document_002", "document_003"], user_id="security_officer"
 )
 
 # Check for security issues
@@ -80,12 +85,9 @@ if not results["is_secure"]:
 
 # Perform a security-aware provenance query
 query_results = integrator.secure_provenance_query(
-    query_params={
-        "record_type": "transformation",
-        "transformation_type": "anonymize"
-    },
+    query_params={"record_type": "transformation", "transformation_type": "anonymize"},
     user_id="analyst",
-    include_cross_document=True
+    include_cross_document=True,
 )
 
 # The results are automatically filtered based on user permissions
@@ -100,8 +102,14 @@ The enhanced security system provides advanced features for data classification,
 
 ```python
 from ipfs_datasets_py.audit.enhanced_security import (
-    EnhancedSecurityManager, SecurityPolicy, AccessControlEntry, DataClassification, 
-    DataEncryptionConfig, AccessDecision, SecuritySession, security_operation
+    EnhancedSecurityManager,
+    SecurityPolicy,
+    AccessControlEntry,
+    DataClassification,
+    DataEncryptionConfig,
+    AccessDecision,
+    SecuritySession,
+    security_operation,
 )
 
 # Get the security manager
@@ -111,7 +119,7 @@ security_manager = EnhancedSecurityManager.get_instance()
 security_manager.set_data_classification(
     resource_id="customer_data",
     classification=DataClassification.CONFIDENTIAL,
-    user_id="admin_user"
+    user_id="admin_user",
 )
 
 # Add access control entries
@@ -121,7 +129,7 @@ ace = AccessControlEntry(
     principal_id="data_analyst",
     principal_type="user",
     permissions=["read"],
-    conditions={"time_range": {"start": "08:00:00", "end": "18:00:00"}}
+    conditions={"time_range": {"start": "08:00:00", "end": "18:00:00"}},
 )
 security_manager.add_access_control_entry(ace)
 
@@ -136,24 +144,21 @@ policy = SecurityPolicy(
             "type": "access_time",
             "allowed_hours": {"start": 8, "end": 18},
             "severity": "medium",
-            "description": "Restricts access to business hours"
+            "description": "Restricts access to business hours",
         },
         {
             "type": "data_volume",
             "threshold_bytes": 50 * 1024 * 1024,  # 50MB
             "severity": "high",
-            "description": "Alerts on large data operations"
-        }
-    ]
+            "description": "Alerts on large data operations",
+        },
+    ],
 )
 security_manager.add_security_policy(policy)
 
 # Create encryption configurations
 encryption_config = DataEncryptionConfig(
-    enabled=True,
-    key_id="customer_data_key",
-    algorithm="AES-256-GCM",
-    key_rotation_days=30
+    enabled=True, key_id="customer_data_key", algorithm="AES-256-GCM", key_rotation_days=30
 )
 security_manager.add_encryption_config("customer_data", encryption_config)
 
@@ -162,7 +167,7 @@ decision = security_manager.check_access(
     user_id="data_analyst",
     resource_id="customer_data",
     operation="read",
-    context={"client_ip": "192.168.1.100"}
+    context={"client_ip": "192.168.1.100"},
 )
 
 if decision == AccessDecision.ALLOW:
@@ -174,25 +179,27 @@ elif decision == AccessDecision.ELEVATE:
 elif decision == AccessDecision.AUDIT_ONLY:
     print("Access allowed with detailed auditing")
 
+
 # Secure operations with security decorator
-@security_operation(user_id_arg="user_id", resource_id_arg="resource_id", action="process_sensitive_data")
+@security_operation(
+    user_id_arg="user_id", resource_id_arg="resource_id", action="process_sensitive_data"
+)
 def process_sensitive_data(user_id, resource_id, operation_type):
     # Function is automatically protected with access checks and auditing
     return f"Processed {resource_id} with {operation_type} operation"
 
+
 # Security session context manager
 with SecuritySession(
-    user_id="data_analyst",
-    resource_id="customer_data",
-    action="analyze_data"
+    user_id="data_analyst", resource_id="customer_data", action="analyze_data"
 ) as session:
     # Set context for the session
     session.set_context("purpose", "quarterly_analysis")
     session.set_context("client_ip", "192.168.1.100")
-    
+
     # Check access within the session
     decision = session.check_access("read")
-    
+
     # Perform operation if allowed
     if decision == AccessDecision.ALLOW:
         # Perform analysis operation
@@ -210,6 +217,7 @@ security = SecurityManager()
 # Create users with different roles
 admin_id = security.create_user("admin", "admin_password", role="admin")
 user_id = security.create_user("standard_user", "user_password", role="user")
+
 
 # Use authentication and access control
 @require_authentication
@@ -243,10 +251,7 @@ security_manager = EnhancedSecurityManager.get_instance()
 
 # Configure encryption for a sensitive resource
 encryption_config = DataEncryptionConfig(
-    enabled=True,
-    key_id="sensitive_data_key",
-    algorithm="AES-256-GCM",
-    key_rotation_days=30
+    enabled=True, key_id="sensitive_data_key", algorithm="AES-256-GCM", key_rotation_days=30
 )
 security_manager.add_encryption_config("sensitive_data", encryption_config)
 
@@ -266,7 +271,9 @@ The integrated audit logging system provides comprehensive logging capabilities 
 from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditCategory, AuditLevel
 from ipfs_datasets_py.audit.handlers import FileAuditHandler, JSONAuditHandler
 from ipfs_datasets_py.audit.integration import (
-    AuditContextManager, AuditProvenanceIntegrator, IntegratedComplianceReporter
+    AuditContextManager,
+    AuditProvenanceIntegrator,
+    IntegratedComplianceReporter,
 )
 
 # Get the global audit logger
@@ -282,8 +289,11 @@ audit_logger.set_context(user="admin", session_id="session-123")
 # Log various types of events
 audit_logger.auth("login", status="success", details={"ip": "192.168.1.100"})
 audit_logger.data_access("read", resource_id="dataset123", resource_type="dataset")
-audit_logger.security("permission_change", level=AuditLevel.WARNING,
-                   details={"target_role": "admin", "changes": ["added_user"]})
+audit_logger.security(
+    "permission_change",
+    level=AuditLevel.WARNING,
+    details={"target_role": "admin", "changes": ["added_user"]},
+)
 
 # Use context manager for automatic timing and error handling
 with AuditContextManager(
@@ -291,7 +301,7 @@ with AuditContextManager(
     action="transform_dataset",
     resource_id="dataset123",
     resource_type="dataset",
-    details={"transformation": "normalization"}
+    details={"transformation": "normalization"},
 ):
     # Perform the transformation
     # Timing information and exceptions are automatically logged
@@ -306,7 +316,9 @@ The system now features comprehensive bidirectional integration between audit lo
 from ipfs_datasets_py.data_provenance_enhanced import EnhancedProvenanceManager
 from ipfs_datasets_py.cross_document_lineage import EnhancedLineageTracker
 from ipfs_datasets_py.audit.integration import (
-    AuditProvenanceIntegrator, ProvenanceAuditSearchIntegrator, LineageAuditIntegrator
+    AuditProvenanceIntegrator,
+    ProvenanceAuditSearchIntegrator,
+    LineageAuditIntegrator,
 )
 from ipfs_datasets_py.security import SecurityManager
 
@@ -314,8 +326,7 @@ from ipfs_datasets_py.security import SecurityManager
 audit_logger = AuditLogger.get_instance()
 security_manager = SecurityManager.get_instance()
 provenance_manager = EnhancedProvenanceManager(
-    enable_ipld_storage=True,
-    enable_crypto_verification=True
+    enable_ipld_storage=True, enable_crypto_verification=True
 )
 
 # Create domains with security controls
@@ -326,15 +337,15 @@ finance_domain = {
         "sensitivity": "high",
         "compliance_frameworks": ["SOX", "GDPR"],
         "security_classification": "restricted",
-        "data_owner": "finance_team"
+        "data_owner": "finance_team",
     },
     "metadata_schema": {
         "required": ["classification", "retention_period"],
         "properties": {
             "classification": {"enum": ["public", "internal", "confidential", "restricted"]},
-            "retention_period": {"type": "string"}
-        }
-    }
+            "retention_period": {"type": "string"},
+        },
+    },
 }
 
 analytics_domain = {
@@ -343,8 +354,8 @@ analytics_domain = {
     "attributes": {
         "sensitivity": "medium",
         "security_classification": "internal",
-        "data_owner": "analytics_team"
-    }
+        "data_owner": "analytics_team",
+    },
 }
 
 # Set up the enhanced lineage tracker with audit and security integration
@@ -357,8 +368,8 @@ lineage_tracker = EnhancedLineageTracker(
         "enable_ipld_storage": True,
         "enable_temporal_consistency": True,
         "security_manager": security_manager,
-        "domain_validation_level": "strict"  # Enforce domain boundary validation
-    }
+        "domain_validation_level": "strict",  # Enforce domain boundary validation
+    },
 )
 
 # Create the domains
@@ -374,26 +385,24 @@ boundary_id = lineage_tracker.create_domain_boundary(
         "encryption": "AES-256",
         "access_control": "role_based",
         "data_masking": "enabled",
-        "approval_required": True
+        "approval_required": True,
     },
     constraints=[
         {"type": "field_level", "fields": ["ssn", "account_number"], "action": "mask"},
         {"type": "time_constraint", "hours": "8-17", "days": "mon-fri"},
-        {"type": "approval", "approvers": ["data_governance_team"]}
-    ]
+        {"type": "approval", "approvers": ["data_governance_team"]},
+    ],
 )
 
 # Set up bidirectional audit-provenance integration
 audit_provenance_integrator = AuditProvenanceIntegrator(
-    audit_logger=audit_logger,
-    provenance_manager=provenance_manager
+    audit_logger=audit_logger, provenance_manager=provenance_manager
 )
 audit_provenance_integrator.setup_audit_event_listener()
 
 # Set up lineage-audit integration
 lineage_audit_integrator = LineageAuditIntegrator(
-    audit_logger=audit_logger,
-    lineage_tracker=lineage_tracker
+    audit_logger=audit_logger, lineage_tracker=lineage_tracker
 )
 lineage_audit_integrator.setup_lineage_event_listeners()
 
@@ -406,8 +415,8 @@ with audit_logger.audit_context(
     security_context={
         "authentication": "mfa",
         "authorization": "role_based",
-        "security_clearance": "confidential"
-    }
+        "security_clearance": "confidential",
+    },
 ):
     # Create lineage node with security attributes
     customer_data_node = lineage_tracker.create_node(
@@ -422,11 +431,11 @@ with audit_logger.audit_context(
             "encryption": "column-level",
             "security_controls": {
                 "access_restriction": "need-to-know",
-                "masking_rules": ["customer_id", "ssn", "phone"]
-            }
+                "masking_rules": ["customer_id", "ssn", "phone"],
+            },
         },
         domain_id=finance_domain_id,
-        entity_id="customer_data_001"
+        entity_id="customer_data_001",
     )
 
 # Record access and transformation with security audit integration
@@ -439,8 +448,8 @@ with audit_logger.audit_context(
     details={
         "transformation_type": "anonymization",
         "fields_affected": ["customer_id", "ssn", "phone"],
-        "compliance": "GDPR Article 17"
-    }
+        "compliance": "GDPR Article 17",
+    },
 ):
     # Create transformation node with security context
     transform_node = lineage_tracker.create_node(
@@ -455,11 +464,11 @@ with audit_logger.audit_context(
                 "security_classification": "confidential",
                 "compliance_verified": True,
                 "verification_date": "2023-06-15T14:30:00Z",
-                "verifier": "compliance_team"
-            }
+                "verifier": "compliance_team",
+            },
         },
         domain_id=finance_domain_id,
-        entity_id="pii_anonymize_transform_001"
+        entity_id="pii_anonymize_transform_001",
     )
 
     # Create transformation details with security requirements
@@ -470,21 +479,27 @@ with audit_logger.audit_context(
             {"field": "customer_id", "type": "string", "sensitivity": "high", "pii": True},
             {"field": "ssn", "type": "string", "sensitivity": "high", "pii": True},
             {"field": "phone", "type": "string", "sensitivity": "high", "pii": True},
-            {"field": "purchase_history", "type": "array", "sensitivity": "medium", "pii": False}
+            {"field": "purchase_history", "type": "array", "sensitivity": "medium", "pii": False},
         ],
         outputs=[
-            {"field": "customer_hash", "type": "string", "sensitivity": "low", "pii": False, "anonymized": True},
+            {
+                "field": "customer_hash",
+                "type": "string",
+                "sensitivity": "low",
+                "pii": False,
+                "anonymized": True,
+            },
             {"field": "ssn", "type": "null", "removed": True},
             {"field": "phone", "type": "null", "removed": True},
-            {"field": "purchase_history", "type": "array", "sensitivity": "medium", "pii": False}
+            {"field": "purchase_history", "type": "array", "sensitivity": "medium", "pii": False},
         ],
         parameters={
             "anonymization_method": "sha256",
             "salt": "secure-random-salt",
             "k_anonymity": 5,
-            "security_verified": True
+            "security_verified": True,
         },
-        impact_level="field"
+        impact_level="field",
     )
 
     # Create link with security attributes for governance
@@ -497,10 +512,10 @@ with audit_logger.audit_context(
             "security_controls": {
                 "access_approved_by": "data_governance_team",
                 "verification_status": "verified",
-                "audit_recorded": True
-            }
+                "audit_recorded": True,
+            },
         },
-        confidence=1.0
+        confidence=1.0,
     )
 
     # Create anonymized data node in analytics domain
@@ -514,12 +529,10 @@ with audit_logger.audit_context(
             "contains_pii": False,
             "retention_period": "3 years",
             "purpose_limitation": "analytics_only",
-            "security_controls": {
-                "access_restriction": "department-level"
-            }
+            "security_controls": {"access_restriction": "department-level"},
         },
         domain_id=analytics_domain_id,
-        entity_id="anonymized_data_001"
+        entity_id="anonymized_data_001",
     )
 
     # Create cross-domain link with boundary crossing security controls
@@ -532,11 +545,11 @@ with audit_logger.audit_context(
                 "approved_by": "data_governance_team",
                 "approval_date": "2023-06-15T15:00:00Z",
                 "security_validation": "passed",
-                "data_quality_score": 0.98
+                "data_quality_score": 0.98,
             }
         },
         confidence=1.0,
-        cross_domain=True  # Explicitly mark as cross-domain
+        cross_domain=True,  # Explicitly mark as cross-domain
     )
 
 # Unified search across audit logs, provenance records, and lineage
@@ -544,35 +557,24 @@ search_integrator = ProvenanceAuditSearchIntegrator(
     audit_logger=audit_logger,
     provenance_manager=provenance_manager,
     lineage_tracker=lineage_tracker,
-    security_manager=security_manager
+    security_manager=security_manager,
 )
 
 # Search with security context and correlation across all systems
 results = search_integrator.search(
     query={
-        "timerange": {
-            "start": "2023-01-01T00:00:00Z",
-            "end": "2023-12-31T23:59:59Z"
-        },
+        "timerange": {"start": "2023-01-01T00:00:00Z", "end": "2023-12-31T23:59:59Z"},
         "resource_type": "dataset",
         "action": "transform",
-        "metadata_filters": {
-            "sensitivity": "high",
-            "classification": "restricted"
-        },
-        "security_context": {
-            "compliance_frameworks": ["GDPR"]
-        },
-        "lineage_filter": {
-            "cross_domain": True,
-            "relationship_types": ["input_to", "output_from"]
-        }
+        "metadata_filters": {"sensitivity": "high", "classification": "restricted"},
+        "security_context": {"compliance_frameworks": ["GDPR"]},
+        "lineage_filter": {"cross_domain": True, "relationship_types": ["input_to", "output_from"]},
     },
     include_audit=True,
     include_provenance=True,
     include_lineage=True,
     include_security_context=True,
-    correlation_mode="comprehensive"
+    correlation_mode="comprehensive",
 )
 
 # Generate comprehensive governance report with impact analysis
@@ -582,34 +584,36 @@ report = lineage_tracker.generate_provenance_report(
     include_security_context=True,
     include_audit_trail=True,
     include_impact_analysis=True,
-    format="html"
+    format="html",
 )
 
 # Access the unified governance view
 for correlation in results["correlations"]:
-    print(f"Governance Correlation: {correlation['type']} between "
-          f"audit event {correlation['audit_event_id']}, "
-          f"provenance record {correlation['provenance_record_id']}, and "
-          f"lineage node {correlation['lineage_node_id']}")
-    
+    print(
+        f"Governance Correlation: {correlation['type']} between "
+        f"audit event {correlation['audit_event_id']}, "
+        f"provenance record {correlation['provenance_record_id']}, and "
+        f"lineage node {correlation['lineage_node_id']}"
+    )
+
     # Get security implications
     if "security_implications" in correlation:
         for implication in correlation["security_implications"]:
             print(f"Security: {implication['type']} - {implication['description']}")
-            
+
     # Get compliance implications
     if "compliance_implications" in correlation:
         for framework, status in correlation["compliance_implications"].items():
             print(f"Compliance: {framework} - {status}")
 
-# Export lineage graph with security context to IPLD with encryption 
+# Export lineage graph with security context to IPLD with encryption
 root_cid = lineage_tracker.export_to_ipld(
     include_domains=True,
     include_boundaries=True,
     include_versions=True,
     include_transformation_details=True,
     include_security_context=True,
-    encrypt_sensitive_data=True
+    encrypt_sensitive_data=True,
 )
 print(f"Exported secure governance data to IPLD with root CID: {root_cid}")
 
@@ -618,13 +622,13 @@ compliance_report = integrator.generate_compliance_report(
     standard="GDPR",
     include_lineage=True,
     timeline_start="2023-01-01T00:00:00Z",
-    timeline_end="2023-12-31T23:59:59Z"
+    timeline_end="2023-12-31T23:59:59Z",
 )
 
 # Access detailed cross-domain lineage in compliance context
 if "domain_boundaries" in compliance_report:
     print(f"Domain boundaries analyzed: {len(compliance_report['domain_boundaries'])}")
-    for boundary in compliance_report['domain_boundaries']:
+    for boundary in compliance_report["domain_boundaries"]:
         print(f"Boundary {boundary['id']}: {boundary['source']} -> {boundary['target']}")
         print(f"Compliance status: {boundary['compliance_status']}")
 ```
@@ -639,10 +643,7 @@ dataset_integrator = AuditDatasetIntegrator(audit_logger=audit_logger)
 
 # Record dataset operations
 dataset_integrator.record_dataset_load(
-    dataset_name="example_dataset",
-    dataset_id="ds123",
-    source="huggingface",
-    user="user123"
+    dataset_name="example_dataset", dataset_id="ds123", source="huggingface", user="user123"
 )
 
 dataset_integrator.record_dataset_transform(
@@ -650,7 +651,7 @@ dataset_integrator.record_dataset_transform(
     output_dataset="ds123_transformed",
     transformation_type="normalize",
     parameters={"columns": ["col1", "col2"]},
-    user="user123"
+    user="user123",
 )
 
 dataset_integrator.record_dataset_save(
@@ -658,7 +659,7 @@ dataset_integrator.record_dataset_save(
     dataset_id="ds123_transformed",
     destination="ipfs",
     format="car",
-    user="user123"
+    user="user123",
 )
 ```
 
@@ -684,7 +685,9 @@ The enhanced security system provides comprehensive data classification and poli
 
 ```python
 from ipfs_datasets_py.audit.enhanced_security import (
-    EnhancedSecurityManager, SecurityPolicy, DataClassification
+    EnhancedSecurityManager,
+    SecurityPolicy,
+    DataClassification,
 )
 
 # Get the security manager
@@ -695,7 +698,7 @@ classifications = {
     "customer_database": DataClassification.CONFIDENTIAL,
     "financial_reports": DataClassification.RESTRICTED,
     "product_catalog": DataClassification.INTERNAL,
-    "press_releases": DataClassification.PUBLIC
+    "press_releases": DataClassification.PUBLIC,
 }
 
 for resource_id, classification in classifications.items():
@@ -714,9 +717,9 @@ time_policy = SecurityPolicy(
             "type": "access_time",
             "allowed_hours": {"start": 8, "end": 18},
             "severity": "medium",
-            "description": "Access outside business hours"
+            "description": "Access outside business hours",
         }
-    ]
+    ],
 )
 security_manager.add_security_policy(time_policy)
 
@@ -732,9 +735,9 @@ volume_policy = SecurityPolicy(
             "type": "data_volume",
             "threshold_bytes": 50 * 1024 * 1024,  # 50MB
             "severity": "high",
-            "description": "Large data operation detected"
+            "description": "Large data operation detected",
         }
-    ]
+    ],
 )
 security_manager.add_security_policy(volume_policy)
 
@@ -750,9 +753,9 @@ classification_policy = SecurityPolicy(
             "type": "data_classification",
             "min_classification": "CONFIDENTIAL",
             "severity": "high",
-            "description": "Access to confidential data without clearance"
+            "description": "Access to confidential data without clearance",
         }
-    ]
+    ],
 )
 security_manager.add_security_policy(classification_policy)
 
@@ -780,44 +783,46 @@ from ipfs_datasets_py.audit.integration import IntegratedComplianceReporter
 reporter = IntegratedComplianceReporter(
     standard=ComplianceStandard.GDPR,
     audit_logger=audit_logger,
-    provenance_manager=provenance_manager
+    provenance_manager=provenance_manager,
 )
 
 # Add compliance requirements
-reporter.add_requirement(ComplianceRequirement(
-    id="GDPR-Art30",
-    standard=ComplianceStandard.GDPR,
-    description="Records of processing activities",
-    audit_categories=[AuditCategory.DATA_ACCESS, AuditCategory.DATA_MODIFICATION],
-    actions=["read", "write", "update", "delete"]
-))
+reporter.add_requirement(
+    ComplianceRequirement(
+        id="GDPR-Art30",
+        standard=ComplianceStandard.GDPR,
+        description="Records of processing activities",
+        audit_categories=[AuditCategory.DATA_ACCESS, AuditCategory.DATA_MODIFICATION],
+        actions=["read", "write", "update", "delete"],
+    )
+)
 
 # Generate enhanced report with cross-document lineage analysis
 report = reporter.generate_report(
     start_time="2023-01-01T00:00:00Z",
     end_time="2023-12-31T23:59:59Z",
     include_cross_document_analysis=True,  # Enable document boundary analysis
-    include_lineage_metrics=True           # Include detailed lineage metrics
+    include_lineage_metrics=True,  # Include detailed lineage metrics
 )
 
 # Access cross-document compliance insights
 if "cross_document_lineage" in report.details:
     lineage_info = report.details["cross_document_lineage"]
     print(f"Document count: {lineage_info.get('document_count', 0)}")
-    
+
     # Document boundaries information
     if "document_boundaries" in lineage_info:
         boundaries = lineage_info["document_boundaries"]
         print(f"Document boundary count: {boundaries.get('count', 0)}")
         print(f"Cross-boundary flows: {boundaries.get('cross_boundary_flow_count', 0)}")
-    
-    # Check for high-risk relationships 
+
+    # Check for high-risk relationships
     if "document_relationships" in lineage_info:
         relationships = lineage_info["document_relationships"]
         high_risk = relationships.get("high_risk_relationships", 0)
         if high_risk > 0:
             print(f"WARNING: {high_risk} high-risk cross-document data relationships found")
-    
+
     # Compliance-specific insights based on document boundaries
     if "provenance_insights" in report.details:
         print("Compliance insights from cross-document analysis:")
@@ -837,7 +842,7 @@ gdpr_report = generate_integrated_compliance_report(
     start_time="2023-01-01T00:00:00Z",
     end_time="2023-12-31T23:59:59Z",
     output_format="html",
-    output_path="gdpr_report.html"
+    output_path="gdpr_report.html",
 )
 ```
 
@@ -858,8 +863,11 @@ Identify and respond to potential security threats with the enhanced integrated 
 from ipfs_datasets_py.audit.intrusion import IntrusionDetection, SecurityAlertManager
 from ipfs_datasets_py.audit.enhanced_security import EnhancedSecurityManager
 from ipfs_datasets_py.audit.adaptive_security import (
-    AdaptiveSecurityManager, ResponseRule, ResponseAction, RuleCondition, 
-    SecurityResponse
+    AdaptiveSecurityManager,
+    ResponseRule,
+    ResponseAction,
+    RuleCondition,
+    SecurityResponse,
 )
 
 # Get the security manager
@@ -872,14 +880,16 @@ alert_manager = SecurityAlertManager(alert_storage_path="logs/alerts.json")
 adaptive_security = AdaptiveSecurityManager(
     security_manager=security_manager,
     alert_manager=alert_manager,
-    response_storage_path="logs/security_responses.json"
+    response_storage_path="logs/security_responses.json",
 )
+
 
 # Add an email alert handler
 def email_alert_handler(alert):
-    if alert.level in ['high', 'critical']:
+    if alert.level in ["high", "critical"]:
         # Email sending logic
         print(f"ALERT: {alert.level.upper()} - {alert.description}")
+
 
 alert_manager.add_notification_handler(email_alert_handler)
 
@@ -903,8 +913,8 @@ custom_rule = ResponseRule(
             "parameters": {
                 "user_id": "{{alert.user_id}}",
                 "level": "forensic",
-                "reason": "Suspicious sensitive data access"
-            }
+                "reason": "Suspicious sensitive data access",
+            },
         },
         {
             # Throttle access for 2 hours
@@ -914,8 +924,8 @@ custom_rule = ResponseRule(
                 "user_id": "{{alert.user_id}}",
                 "resource_type": "sensitive_data",
                 "rate_limit": 5,  # 5 requests per minute
-                "reason": "Unusual sensitive data access pattern"
-            }
+                "reason": "Unusual sensitive data access pattern",
+            },
         },
         {
             # Notify security team
@@ -924,17 +934,17 @@ custom_rule = ResponseRule(
                 "recipient": "security_team",
                 "message": "Suspicious sensitive data access detected",
                 "severity": "{{alert.severity}}",
-                "include_details": True
-            }
-        }
+                "include_details": True,
+            },
+        },
     ],
     conditions=[
         # Multiple conditions that can be evaluated
         RuleCondition("alert.user_type", "in", ["new_user", "contractor", "external"]),
         RuleCondition("alert.resource_type", "in", ["financial", "personal_data", "credentials"]),
-        RuleCondition("alert.access_count", ">=", 10)
+        RuleCondition("alert.access_count", ">=", 10),
     ],
-    description="Enhanced response for suspicious sensitive data access by high-risk users"
+    description="Enhanced response for suspicious sensitive data access by high-risk users",
 )
 
 # Add the custom rule to the adaptive security manager
@@ -961,7 +971,9 @@ print(f"Active security responses: {len(active_responses)}")
 # Get responses for a specific user
 user_responses = adaptive_security.get_active_responses(target="suspicious_user")
 for response in user_responses:
-    print(f"Response {response.response_id}: {response.response_type.name} until {response.expires_at}")
+    print(
+        f"Response {response.response_id}: {response.response_type.name} until {response.expires_at}"
+    )
 
 # Create a manual response
 manual_response = SecurityResponse(
@@ -977,8 +989,8 @@ manual_response = SecurityResponse(
     parameters={
         "isolation_level": "network",
         "allow_admin_access": True,
-        "reason": "Manual security response for demonstration"
-    }
+        "reason": "Manual security response for demonstration",
+    },
 )
 
 # Add the manual response
@@ -987,7 +999,7 @@ adaptive_security.add_response(manual_response)
 # Cancel a response if needed
 if user_responses:
     adaptive_security.cancel_response(user_responses[0].response_id)
-    
+
 # Check for expired responses
 expired_count = adaptive_security.check_expired_responses()
 print(f"Found {expired_count} expired responses")
@@ -1028,8 +1040,8 @@ exfiltration_rule = ResponseRule(
             "duration_minutes": 60,
             "parameters": {
                 "user_id": "$user",  # Dynamic parameter from alert
-                "reason": "Potential data exfiltration"
-            }
+                "reason": "Potential data exfiltration",
+            },
         },
         {
             "type": "AUDIT",  # Enhanced auditing
@@ -1037,19 +1049,19 @@ exfiltration_rule = ResponseRule(
             "parameters": {
                 "user_id": "$user",
                 "level": "forensic",
-                "reason": "Data exfiltration investigation"
-            }
+                "reason": "Data exfiltration investigation",
+            },
         },
         {
             "type": "ESCALATE",  # Escalate to incident response
             "parameters": {
                 "priority": "high",
                 "team": "security_incident_response",
-                "message": "Potential data exfiltration detected"
-            }
-        }
+                "message": "Potential data exfiltration detected",
+            },
+        },
     ],
-    description="Respond to potential data exfiltration with access restriction and enhanced auditing"
+    description="Respond to potential data exfiltration with access restriction and enhanced auditing",
 )
 
 # Add the rule to the adaptive security manager
@@ -1075,10 +1087,10 @@ rule = ResponseRule(
                 "user_id": "$user",  # Will be replaced with alert.details["user"]
                 "source_ip": "$source_ip",  # Will be replaced with alert.details["source_ip"]
                 "failure_count": "$failure_count",  # Will be replaced with alert.details["failure_count"]
-                "reason": "Brute force login detection"
-            }
+                "reason": "Brute force login detection",
+            },
         }
-    ]
+    ],
 )
 ```
 
@@ -1103,14 +1115,14 @@ conditional_rule = ResponseRule(
             "parameters": {
                 "recipient": "security_admin",
                 "message": "Admin account brute force attempt",
-                "severity": "critical"  # Higher severity notification
-            }
-        }
+                "severity": "critical",  # Higher severity notification
+            },
+        },
     ],
     conditions={
         "user": ["admin", "root", "system"],  # Only for these users
-        "failure_count": lambda x: x > 3  # Custom condition function
-    }
+        "failure_count": lambda x: x > 3,  # Custom condition function
+    },
 )
 ```
 
@@ -1153,7 +1165,7 @@ lineage_tracker = CrossDocumentLineageTracker(
     provenance_storage=provenance_manager,
     audit_logger=audit_logger,
     link_verification=True,  # Enable cryptographic verification of links
-    min_confidence_threshold=0.85  # Set minimum confidence threshold for links
+    min_confidence_threshold=0.85,  # Set minimum confidence threshold for links
 )
 
 # Create detailed lineage integrator for enhanced capabilities
@@ -1161,7 +1173,7 @@ lineage_integrator = DetailedLineageIntegrator(
     provenance_manager=provenance_manager,
     lineage_tracker=lineage_tracker,
     semantic_detection_level="high",  # Enable high-level semantic detection
-    flow_pattern_analysis=True  # Enable flow pattern analysis
+    flow_pattern_analysis=True,  # Enable flow pattern analysis
 )
 
 # Create unified search integrator
@@ -1169,19 +1181,18 @@ search = ProvenanceAuditSearchIntegrator(
     audit_logger=audit_logger,
     provenance_manager=provenance_manager,
     lineage_tracker=lineage_tracker,  # Include lineage tracker for enhanced capabilities
-    lineage_integrator=lineage_integrator  # Include the new detailed lineage integrator
+    lineage_integrator=lineage_integrator,  # Include the new detailed lineage integrator
 )
 
 # Create detailed lineage with semantic relationship enrichment
 integrated_lineage = lineage_integrator.integrate_provenance_with_lineage(
     provenance_graph=provenance_manager.get_provenance_graph(),
-    lineage_graph=lineage_tracker.get_lineage_graph()
+    lineage_graph=lineage_tracker.get_lineage_graph(),
 )
 
 # Use the enhanced provenance manager to create detailed cross-document lineage
 detailed_lineage = provenance_manager.create_cross_document_lineage(
-    output_path="cross_document_lineage_report.html",
-    include_visualization=True
+    output_path="cross_document_lineage_report.html", include_visualization=True
 )
 
 # Perform advanced security analysis with semantic understanding
@@ -1189,7 +1200,7 @@ security_insights = lineage_integrator.analyze_security_boundaries(
     integrated_lineage,
     include_semantic_analysis=True,
     include_flow_patterns=True,
-    detect_security_anomalies=True
+    detect_security_anomalies=True,
 )
 
 # Trace PII data flows across document boundaries for GDPR compliance
@@ -1201,30 +1212,30 @@ pii_flows = search.search(
         "min_confidence": 0.9,  # Only include high-confidence links
         "timerange": {
             "start": (datetime.datetime.now() - datetime.timedelta(days=365)).isoformat(),
-            "end": datetime.datetime.now().isoformat()
+            "end": datetime.datetime.now().isoformat(),
         },
         "security_context": {  # Add security context for more accurate analysis
             "classification_min": "CONFIDENTIAL",
-            "require_verification": True
+            "require_verification": True,
         },
         "semantic_context": {  # New semantic analysis capabilities
             "relationship_semantics": ["transfers", "processes", "anonymizes"],
             "detect_implied_relationships": True,
-            "confidence_threshold": 0.75
-        }
+            "confidence_threshold": 0.75,
+        },
     },
     include_audit=True,
     include_provenance=True,
     include_cross_document=True,  # Enable cross-document search
     include_security_context=True,  # Include security information
-    include_detailed_lineage=True  # Use new detailed lineage capabilities
+    include_detailed_lineage=True,  # Use new detailed lineage capabilities
 )
 
 # Analyze PII data flows for compliance risks with enhanced detection
 if "cross_document_analysis" in pii_flows:
     analysis = pii_flows["cross_document_analysis"]
     print(f"Documents involved in PII processing: {analysis.get('document_count', 0)}")
-    
+
     # Get flow pattern insights from the new analysis capabilities
     if "flow_patterns" in analysis:
         patterns = analysis["flow_patterns"]
@@ -1233,20 +1244,30 @@ if "cross_document_analysis" in pii_flows:
             print(f"Flow pattern: {pattern['name']} (confidence: {pattern['confidence']})")
             print(f"  Security impact: {pattern['security_impact']}")
             print(f"  Compliance impact: {pattern['compliance_impact']}")
-    
+
     # Check for international transfers (GDPR risk)
-    if "relationship_types" in analysis and LinkType.INTERNATIONAL_TRANSFER in analysis["relationship_types"]:
+    if (
+        "relationship_types" in analysis
+        and LinkType.INTERNATIONAL_TRANSFER in analysis["relationship_types"]
+    ):
         transfer_count = analysis["relationship_types"][LinkType.INTERNATIONAL_TRANSFER]
         print(f"WARNING: {transfer_count} international PII transfers detected")
         print("Action required: Document these transfers and ensure appropriate safeguards")
-        
+
     # Check for cross-domain transfers without proper anonymization
     if "security_insights" in analysis:
         insights = analysis["security_insights"]
-        if "pii_transfer_without_anonymization" in insights and insights["pii_transfer_without_anonymization"] > 0:
-            print(f"CRITICAL: {insights['pii_transfer_without_anonymization']} PII transfers without proper anonymization")
-            print("Action required: Implement anonymization before transfer or obtain explicit consent")
-            
+        if (
+            "pii_transfer_without_anonymization" in insights
+            and insights["pii_transfer_without_anonymization"] > 0
+        ):
+            print(
+                f"CRITICAL: {insights['pii_transfer_without_anonymization']} PII transfers without proper anonymization"
+            )
+            print(
+                "Action required: Implement anonymization before transfer or obtain explicit consent"
+            )
+
         # New detailed document boundary analysis
         if "document_boundaries" in insights:
             boundaries = insights["document_boundaries"]
@@ -1255,10 +1276,10 @@ if "cross_document_analysis" in pii_flows:
                 print(f"Boundary: {boundary['source']} -> {boundary['target']}")
                 print(f"  Security classification: {boundary['security_classification']}")
                 print(f"  Security controls: {', '.join(boundary['security_controls'])}")
-                if boundary.get('potential_data_leakage', False):
+                if boundary.get("potential_data_leakage", False):
                     print(f"  ⚠️ ALERT: Potential data leakage path detected")
                     print(f"  Recommended action: {boundary['recommended_action']}")
-        
+
     # Check records with cross-document info
     for record in pii_flows.get("provenance_records", []):
         if "cross_document_info" in record:
@@ -1266,24 +1287,37 @@ if "cross_document_analysis" in pii_flows:
             print(f"Record {record['record_id']} in document {doc_info.get('document_id')}")
             print(f"  Distance from source: {doc_info.get('distance_from_source')}")
             print(f"  Confidence: {doc_info.get('confidence', 'unknown')}")
-            
+
             # Examine relationship path to detect unauthorized flows
             if "relationship_path" in doc_info:
                 path = doc_info["relationship_path"]
                 for step in path:
-                    if step["type"] in [LinkType.UNAUTHORIZED_TRANSFER, LinkType.HIGH_RISK_PROCESSING]:
-                        print(f"  SECURITY ALERT: Unauthorized data flow: {step['from']} --({step['type']})--> {step['to']}")
-                        
+                    if step["type"] in [
+                        LinkType.UNAUTHORIZED_TRANSFER,
+                        LinkType.HIGH_RISK_PROCESSING,
+                    ]:
+                        print(
+                            f"  SECURITY ALERT: Unauthorized data flow: {step['from']} --({step['type']})--> {step['to']}"
+                        )
+
                     # Show verification status for each step in the path
                     if "verification" in step:
                         verification = step["verification"]
-                        status = "✓ Verified" if verification.get("verified", False) else "⚠ Not verified"
-                        print(f"    Verification: {status} ({verification.get('method', 'unknown')})")
-                    
+                        status = (
+                            "✓ Verified"
+                            if verification.get("verified", False)
+                            else "⚠ Not verified"
+                        )
+                        print(
+                            f"    Verification: {status} ({verification.get('method', 'unknown')})"
+                        )
+
                     # New: Show semantic relationship insights
                     if "semantic_insights" in step:
                         semantics = step["semantic_insights"]
-                        print(f"    Semantic relationship: {semantics.get('relationship_type', 'unknown')}")
+                        print(
+                            f"    Semantic relationship: {semantics.get('relationship_type', 'unknown')}"
+                        )
                         print(f"    Data context: {semantics.get('data_context', 'unknown')}")
                         print(f"    Semantic confidence: {semantics.get('confidence', 0.0)}")
 
@@ -1295,7 +1329,7 @@ security_report = lineage_integrator.generate_detailed_security_report(
     include_flow_patterns=True,
     include_boundary_analysis=True,
     output_format="html",
-    output_path="security_lineage_report.html"
+    output_path="security_lineage_report.html",
 )
 ```
 
@@ -1304,58 +1338,62 @@ security_report = lineage_integrator.generate_detailed_security_report(
 The cross-document lineage system provides comprehensive security and compliance capabilities through its specialized link types and verification mechanisms:
 
 ```python
-from ipfs_datasets_py.cross_document_lineage import CrossDocumentLineageTracker, LinkType, SecurityLinkAnalyzer
+from ipfs_datasets_py.cross_document_lineage import (
+    CrossDocumentLineageTracker,
+    LinkType,
+    SecurityLinkAnalyzer,
+)
 from ipfs_datasets_py.audit.integration import LineagePolicyEnforcer
 from ipfs_datasets_py.security import SecurityManager
 
 # Initialize components
 security_manager = SecurityManager.get_instance()
 lineage_tracker = CrossDocumentLineageTracker(
-    provenance_storage=provenance_manager,
-    audit_logger=audit_logger,
-    link_verification=True
+    provenance_storage=provenance_manager, audit_logger=audit_logger, link_verification=True
 )
 
 # Create a security analyzer for cross-document links
 security_analyzer = SecurityLinkAnalyzer(
-    lineage_tracker=lineage_tracker,
-    security_manager=security_manager
+    lineage_tracker=lineage_tracker, security_manager=security_manager
 )
 
 # Define security policies for cross-document links
-policy_enforcer = LineagePolicyEnforcer(
-    audit_logger=audit_logger,
-    lineage_tracker=lineage_tracker
-)
+policy_enforcer = LineagePolicyEnforcer(audit_logger=audit_logger, lineage_tracker=lineage_tracker)
 
 # Add a data classification preservation policy
-policy_enforcer.add_policy({
-    "id": "SEC-001",
-    "name": "Classification Preservation Policy",
-    "description": "Data flowing to lower classification domains must be properly sanitized",
-    "rule": {
-        "condition": {
-            "source_classification": ["CONFIDENTIAL", "RESTRICTED"],
-            "target_classification": ["INTERNAL", "PUBLIC"]
+policy_enforcer.add_policy(
+    {
+        "id": "SEC-001",
+        "name": "Classification Preservation Policy",
+        "description": "Data flowing to lower classification domains must be properly sanitized",
+        "rule": {
+            "condition": {
+                "source_classification": ["CONFIDENTIAL", "RESTRICTED"],
+                "target_classification": ["INTERNAL", "PUBLIC"],
+            },
+            "requirement": {
+                "intermediate_link_types": [
+                    LinkType.ANONYMIZES,
+                    LinkType.SANITIZES,
+                    LinkType.DECLASSIFIES,
+                ],
+                "required": True,
+                "verified": True,
+            },
         },
-        "requirement": {
-            "intermediate_link_types": [LinkType.ANONYMIZES, LinkType.SANITIZES, LinkType.DECLASSIFIES],
-            "required": True,
-            "verified": True
-        }
-    },
-    "action": {
-        "if_violated": {
-            "log_level": "WARNING",
-            "notification": ["security@example.com"],
-            "remediation": "Insert proper anonymization or declassification step"
-        }
+        "action": {
+            "if_violated": {
+                "log_level": "WARNING",
+                "notification": ["security@example.com"],
+                "remediation": "Insert proper anonymization or declassification step",
+            }
+        },
     }
-})
+)
 
 # Create security-enhanced links with verification
 source_doc = "financial_data_document"  # CONFIDENTIAL classification
-target_doc = "analytics_document"       # INTERNAL classification
+target_doc = "analytics_document"  # INTERNAL classification
 
 # Create a proper flow with anonymization
 anonymize_link = lineage_tracker.create_link(
@@ -1368,16 +1406,16 @@ anonymize_link = lineage_tracker.create_link(
         "k_value": 5,
         "fields_anonymized": ["customer_id", "account_number"],
         "verified_by": "data_privacy_officer",
-        "verification_date": datetime.datetime.now().isoformat()
+        "verification_date": datetime.datetime.now().isoformat(),
     },
     security_context={
         "source_classification": "CONFIDENTIAL",
         "target_classification": "INTERNAL",
         "requires_approval": True,
         "approval_status": "APPROVED",
-        "approved_by": "compliance_team"
+        "approved_by": "compliance_team",
     },
-    sign=True  # Cryptographically sign this link
+    sign=True,  # Cryptographically sign this link
 )
 
 # Create link from anonymized data to analytics document
@@ -1386,26 +1424,19 @@ analytics_link = lineage_tracker.create_link(
     target_document_id=target_doc,
     link_type=LinkType.DERIVED_FROM,
     confidence=0.95,
-    metadata={
-        "transformation": "aggregation",
-        "purpose": "quarterly_analytics"
-    },
-    security_context={
-        "source_classification": "INTERNAL",
-        "target_classification": "INTERNAL"
-    },
-    sign=True
+    metadata={"transformation": "aggregation", "purpose": "quarterly_analytics"},
+    security_context={"source_classification": "INTERNAL", "target_classification": "INTERNAL"},
+    sign=True,
 )
 
 # Verify the entire chain meets security policies
 verification_result = policy_enforcer.verify_path_compliance(
-    source_document_id=source_doc,
-    target_document_id=target_doc
+    source_document_id=source_doc, target_document_id=target_doc
 )
 
 print(f"Path compliance: {'Compliant' if verification_result['compliant'] else 'Non-compliant'}")
-if not verification_result['compliant']:
-    for violation in verification_result['violations']:
+if not verification_result["compliant"]:
+    for violation in verification_result["violations"]:
         print(f"Violation: {violation['policy_id']} - {violation['description']}")
         print(f"Severity: {violation['severity']}")
         print(f"Remediation: {violation['remediation']}")
@@ -1416,7 +1447,7 @@ security_report = security_analyzer.generate_security_report(
     include_downstream=True,
     max_depth=3,
     include_verification=True,
-    include_audit_events=True
+    include_audit_events=True,
 )
 
 # Export the security report
@@ -1429,15 +1460,12 @@ visualization = lineage_tracker.generate_visualization_data(
     include_downstream=True,
     max_depth=3,
     highlight_security_issues=True,
-    include_verification_status=True
+    include_verification_status=True,
 )
 
 # Verify cryptographic integrity of a document's complete lineage
 crypto_verification = lineage_tracker.verify_document_lineage(
-    document_id=target_doc,
-    include_upstream=True,
-    include_downstream=False,
-    max_depth=3
+    document_id=target_doc, include_upstream=True, include_downstream=False, max_depth=3
 )
 
 print(f"Lineage verification: {'Verified' if crypto_verification['verified'] else 'Failed'}")
@@ -1445,7 +1473,7 @@ print(f"Links verified: {crypto_verification['links_verified']}")
 print(f"Links with issues: {crypto_verification['links_with_issues']}")
 
 # If verification fails, log security incident
-if not crypto_verification['verified']:
+if not crypto_verification["verified"]:
     audit_logger.log(
         level="CRITICAL",
         category="SECURITY",
@@ -1454,8 +1482,8 @@ if not crypto_verification['verified']:
         resource_type="document",
         details={
             "verification_result": crypto_verification,
-            "affected_links": crypto_verification['links_with_issues']
-        }
+            "affected_links": crypto_verification["links_with_issues"],
+        },
     )
 ```
 
@@ -1468,8 +1496,7 @@ from ipfs_datasets_py.cross_document_lineage import LinkType, CrossDocumentLinea
 
 # Create links with security-specific link types
 lineage_tracker = CrossDocumentLineageTracker(
-    provenance_storage=provenance_manager,
-    audit_logger=audit_logger
+    provenance_storage=provenance_manager, audit_logger=audit_logger
 )
 
 # Personal data protection links
@@ -1484,8 +1511,8 @@ pii_link = lineage_tracker.create_link(
         "consent_reference": "CONSENT-456789",
         "legal_basis": "GDPR Art. 6(1)(a)",
         "data_controller": "Example Corp",
-        "retention_period": "24 months"
-    }
+        "retention_period": "24 months",
+    },
 )
 
 # Data sanitization and anonymization links
@@ -1501,8 +1528,8 @@ anonymization_link = lineage_tracker.create_link(
         "fields_anonymized": ["name", "email", "address", "phone", "dob"],
         "tools_used": ["anonymization_toolkit_v3"],
         "verified_by": "privacy_officer",
-        "verification_date": "2023-06-20T14:30:00Z"
-    }
+        "verification_date": "2023-06-20T14:30:00Z",
+    },
 )
 
 # International transfer links with appropriate safeguards
@@ -1518,8 +1545,8 @@ transfer_link = lineage_tracker.create_link(
         "transfer_date": "2023-06-22T09:15:00Z",
         "safeguards": ["encryption", "access_controls", "sccs"],
         "impact_assessment": "DPIA-2023-005",
-        "approved_by": "legal_department"
-    }
+        "approved_by": "legal_department",
+    },
 )
 
 # Declassification links for changing security classifications
@@ -1534,8 +1561,8 @@ declassify_link = lineage_tracker.create_link(
         "declassification_authority": "security_committee",
         "declassification_date": "2023-06-25T11:00:00Z",
         "review_process": "multi_level_review",
-        "approval_reference": "DECL-2023-078"
-    }
+        "approval_reference": "DECL-2023-078",
+    },
 )
 
 # Query for all links related to personal data protection
@@ -1544,9 +1571,9 @@ personal_data_links = lineage_tracker.query_links(
         LinkType.CONTAINS_PII,
         LinkType.ANONYMIZES,
         LinkType.PROCESSES_PII,
-        LinkType.INTERNATIONAL_TRANSFER
+        LinkType.INTERNATIONAL_TRANSFER,
     ],
-    min_confidence=0.9
+    min_confidence=0.9,
 )
 
 print(f"Found {len(personal_data_links)} links related to personal data protection")
@@ -1574,10 +1601,7 @@ Track the complete lineage of data with enhanced IPLD-based provenance tracking:
 from ipfs_datasets_py.data_provenance_enhanced import EnhancedProvenanceManager
 
 # Initialize with enhanced IPLD storage
-manager = EnhancedProvenanceManager(
-    enable_ipld_storage=True,
-    enable_crypto_verification=True
-)
+manager = EnhancedProvenanceManager(enable_ipld_storage=True, enable_crypto_verification=True)
 
 # Record source data
 source_id = manager.record_source(
@@ -1585,7 +1609,7 @@ source_id = manager.record_source(
     source_type="database",
     source_uri="duckdb://data/databases/analytics.db",
     format="table",
-    description="Raw customer data from analytics database"
+    description="Raw customer data from analytics database",
 )
 
 # Record transformation step
@@ -1595,7 +1619,7 @@ transform_id = manager.record_transformation(
     transformation_type="filter",
     tool="duckdb",
     parameters={"condition": "value > 50"},
-    description="Filter rows where value > 50"
+    description="Filter rows where value > 50",
 )
 
 # Record verification of the filtered dataset
@@ -1606,7 +1630,7 @@ verify_id = manager.record_verification(
     validation_rules=[{"rule": "range", "column": "value", "min": 50}],
     pass_count=850,
     fail_count=0,
-    description="Verify filtered dataset schema and value range"
+    description="Verify filtered dataset schema and value range",
 )
 
 # Advanced traversal to trace data lineage
@@ -1614,7 +1638,7 @@ lineage_graph = manager.traverse_provenance(
     record_id="filtered_dataset",
     max_depth=5,
     direction="both",  # Trace both upstream and downstream
-    relation_filter=None  # Include all relation types
+    relation_filter=None,  # Include all relation types
 )
 
 # Generate a visualization of data lineage
@@ -1624,7 +1648,7 @@ visualization = manager.visualize_provenance_enhanced(
     show_timestamps=True,
     highlight_critical_path=True,
     format="html",
-    file_path="data_lineage.html"
+    file_path="data_lineage.html",
 )
 
 # Export provenance to CAR file for secure storage and verification
@@ -1633,7 +1657,9 @@ print(f"Exported provenance with root CID: {cid}")
 
 # Verify the cryptographic integrity of the provenance records
 verification_results = manager.verify_all_records()
-valid_percentage = sum(1 for v in verification_results.values() if v) / len(verification_results) * 100
+valid_percentage = (
+    sum(1 for v in verification_results.values() if v) / len(verification_results) * 100
+)
 print(f"Provenance integrity: {valid_percentage:.1f}% valid records")
 ```
 
@@ -1722,16 +1748,19 @@ class LDAPAuthBackend:
         # LDAP authentication logic
         return user_id if successful else None
 
+
 # Register custom backend
 security.register_auth_backend(LDAPAuthBackend())
 
 # Custom audit log handler for SIEM integration
 from ipfs_datasets_py.audit import AuditHandler
 
+
 class SIEMHandler(AuditHandler):
     def _handle_event(self, event):
         # SIEM integration logic
         return True
+
 
 # Add SIEM handler
 audit_logger.add_handler(SIEMHandler("siem"))
@@ -1745,38 +1774,44 @@ The security and audit logging systems can be configured through code or configu
 from ipfs_datasets_py.security import SecurityConfig
 
 # Configure security features
-security = SecurityManager.initialize(SecurityConfig(
-    enable_encryption=True,
-    require_authentication=True,
-    audit_log_path="/var/log/ipfs_datasets/audit.log",
-    use_system_keyring=True,
-    track_provenance=True
-))
+security = SecurityManager.initialize(
+    SecurityConfig(
+        enable_encryption=True,
+        require_authentication=True,
+        audit_log_path="/var/log/ipfs_datasets/audit.log",
+        use_system_keyring=True,
+        track_provenance=True,
+    )
+)
 
 # Configure audit logging
 from ipfs_datasets_py.audit import AuditLogger
 
 audit_logger = AuditLogger.get_instance()
-audit_logger.configure({
-    "enabled": True,
-    "min_level": "INFO",
-    "default_user": "system",
-    "included_categories": ["AUTHENTICATION", "DATA_ACCESS", "SECURITY"],
-    "excluded_categories": []
-})
+audit_logger.configure(
+    {
+        "enabled": True,
+        "min_level": "INFO",
+        "default_user": "system",
+        "included_categories": ["AUTHENTICATION", "DATA_ACCESS", "SECURITY"],
+        "excluded_categories": [],
+    }
+)
 
 # Configure enhanced security manager
 from ipfs_datasets_py.audit.enhanced_security import EnhancedSecurityManager
 
 security_manager = EnhancedSecurityManager.get_instance()
-security_manager.configure({
-    "default_classification": "INTERNAL",
-    "enforce_data_classification": True,
-    "enforce_access_control": True,
-    "enable_intrusion_detection": True,
-    "enable_encryption": True,
-    "default_encryption_algorithm": "AES-256-GCM"
-})
+security_manager.configure(
+    {
+        "default_classification": "INTERNAL",
+        "enforce_data_classification": True,
+        "enforce_access_control": True,
+        "enable_intrusion_detection": True,
+        "enable_encryption": True,
+        "default_encryption_algorithm": "AES-256-GCM",
+    }
+)
 ```
 
 ## Additional Resources

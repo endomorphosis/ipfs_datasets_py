@@ -326,8 +326,7 @@ def generate_verified_legal_ir_gap_repairs(
                 "timeout_policy": "bounded_per_backend",
                 "source_copy_policy": "hash_only",
             },
-            proof_obligation_ids=external_ids
-            or _proof_ids_from_items(external_failures),
+            proof_obligation_ids=external_ids or _proof_ids_from_items(external_failures),
         )
 
     if clustered_gaps is not None:
@@ -376,10 +375,7 @@ def generate_clustered_verified_legal_ir_gap_repairs(
         contract = _cluster_contract(cluster)
         if contract is None:
             continue
-        target_component = str(
-            getattr(contract, "target_component", "")
-            or cluster["target_view"]
-        )
+        target_component = str(getattr(contract, "target_component", "") or cluster["target_view"])
         lane = _cluster_repair_lane(contract)
         action = _cluster_action(cluster["obligation_family"], target_component)
         allowed_paths = _cluster_allowed_paths(cluster, contract=contract, lane=lane)
@@ -396,8 +392,7 @@ def generate_clustered_verified_legal_ir_gap_repairs(
             source_hash=source_hash,
         )
         identity = {
-            field_name: cluster[field_name]
-            for field_name in _HAMMER_FAILURE_CLUSTER_DEDUPE_FIELDS
+            field_name: cluster[field_name] for field_name in _HAMMER_FAILURE_CLUSTER_DEDUPE_FIELDS
         }
         repair_id = "lir-cluster-repair-" + _stable_hash(identity)[:20]
         validation_commands = _cluster_validation_commands(cluster, lane=lane)
@@ -425,9 +420,7 @@ def generate_clustered_verified_legal_ir_gap_repairs(
                     "cluster_schema_version": _HAMMER_FAILURE_CLUSTER_SCHEMA_VERSION,
                     "contract_id": str(cluster["contract_id"]),
                     "failure_reason": str(cluster["failure_reason"]),
-                    "high_impact_replay_failure": bool(
-                        cluster.get("high_impact_replay_failure")
-                    ),
+                    "high_impact_replay_failure": bool(cluster.get("high_impact_replay_failure")),
                     "obligation_family": str(cluster["obligation_family"]),
                     "promotion_rule": (
                         "improve_or_preserve_fixed_canary_per_view_metrics_and_symbolic_validity"
@@ -483,11 +476,7 @@ def generate_clustered_legal_ir_decompiler_repairs(
         clustered_gaps=clustered_gaps,
         sample_or_document=sample_or_document,
     )
-    return [
-        repair
-        for repair in repairs
-        if repair.target_component == "modal.ir_decompiler"
-    ]
+    return [repair for repair in repairs if repair.target_component == "modal.ir_decompiler"]
 
 
 def _as_mapping(value: Any) -> Dict[str, Any]:
@@ -587,8 +576,7 @@ def _normalized_qualified_clusters(value: Any) -> List[Dict[str, Any]]:
             int(cluster.get("support_count") or 0),
         )
         existing["high_impact_replay_failure"] = bool(
-            existing.get("high_impact_replay_failure")
-            or cluster.get("high_impact_replay_failure")
+            existing.get("high_impact_replay_failure") or cluster.get("high_impact_replay_failure")
         )
         existing["qualification_reason"] = sorted(
             _unique_strings(
@@ -622,12 +610,16 @@ def _normalize_cluster(value: Mapping[str, Any]) -> Dict[str, Any] | None:
             explicit_normalized = (
                 _safe_paths(explicit) if name == "allowed_paths" else str(explicit).strip()
             )
-            keyed_normalized = (
-                _safe_paths(keyed) if name == "allowed_paths" else str(keyed).strip()
-            )
+            keyed_normalized = _safe_paths(keyed) if name == "allowed_paths" else str(keyed).strip()
             if explicit_normalized != keyed_normalized:
                 return None
-        return explicit if explicit not in (None, "") else keyed if keyed not in (None, "") else default
+        return (
+            explicit
+            if explicit not in (None, "")
+            else keyed
+            if keyed not in (None, "")
+            else default
+        )
 
     contract_id = field("contract_id")
     obligation_family = field("obligation_family")
@@ -649,7 +641,9 @@ def _normalize_cluster(value: Mapping[str, Any]) -> Dict[str, Any] | None:
 
     support_count = _safe_positive_int(value.get("support_count"))
     recurrence_threshold = max(2, _safe_positive_int(value.get("recurrence_threshold")) or 2)
-    recurring = _truthy(value.get("recurring_verified_failure")) or support_count >= recurrence_threshold
+    recurring = (
+        _truthy(value.get("recurring_verified_failure")) or support_count >= recurrence_threshold
+    )
     high_impact = _truthy(value.get("high_impact_replay_failure"))
     qualification_reason = str(value.get("qualification_reason") or "").strip()
     qualified = recurring or high_impact
@@ -678,7 +672,11 @@ def _normalize_cluster(value: Mapping[str, Any]) -> Dict[str, Any] | None:
         "high_impact_replay_failure": high_impact,
         "proof_obligation_ids": _unique_strings(value.get("proof_obligation_ids") or []),
         "qualification_reason": qualification_reason
-        or ("high_impact_replay_failure" if high_impact and not recurring else "recurring_verified_failure"),
+        or (
+            "high_impact_replay_failure"
+            if high_impact and not recurring
+            else "recurring_verified_failure"
+        ),
         "support_count": support_count,
         "target_metrics": _unique_strings(value.get("target_metrics") or []),
         "validation_commands": _unique_strings(value.get("validation_commands") or []),
@@ -708,15 +706,11 @@ def _cluster_repair_lane(contract: Any) -> Any:
     return lanes[0] if lanes else None
 
 
-def _cluster_allowed_paths(
-    cluster: Mapping[str, Any], *, contract: Any, lane: Any
-) -> List[str]:
+def _cluster_allowed_paths(cluster: Mapping[str, Any], *, contract: Any, lane: Any) -> List[str]:
     explicit = _safe_paths(cluster.get("allowed_paths"))
     contract_paths = _safe_paths(getattr(lane, "allowed_paths", ()) or ())
     if not contract_paths and contract is not None:
-        contract_paths = _safe_paths(
-            contract.codex_todo_projection().get("allowed_paths", [])
-        )
+        contract_paths = _safe_paths(contract.codex_todo_projection().get("allowed_paths", []))
     if contract_paths:
         approved = set(contract_paths)
         return [path for path in explicit if path in approved][:8]
@@ -809,8 +803,10 @@ def _compile_cluster_semantics(
             "exception_scope": "defeasible_override",
             "precedence": "exception_over_general_rule",
         }
-    elif "prohibition" in family or "polarity" in family or (
-        "deontic" in view and "required_fields" not in family
+    elif (
+        "prohibition" in family
+        or "polarity" in family
+        or ("deontic" in view and "required_fields" not in family)
     ):
         result = _call_text_lane(
             "ipfs_datasets_py.logic.deontic", "compile_prohibition_polarity", text, provenance_id
@@ -820,25 +816,46 @@ def _compile_cluster_semantics(
         result = _call_text_lane(
             "ipfs_datasets_py.logic.TDFOL", "compile_temporal_deadline", text, provenance_id
         )
-        fallback = {"event_relation": "deadline_or_ordering", "temporal_logic": "TDFOL", "time_anchor": "typed_event_anchor"}
+        fallback = {
+            "event_relation": "deadline_or_ordering",
+            "temporal_logic": "TDFOL",
+            "time_anchor": "typed_event_anchor",
+        }
     elif "frame" in family and "role" in family:
         result = _call_text_lane(
             "ipfs_datasets_py.logic.modal", "compile_frame_role_bindings", text, provenance_id
         )
         fallback = {"role_bindings": ["agent", "action", "object", "recipient", "remedy"]}
-    elif "knowledge_graph" in family or "endpoint" in family or "knowledge_graph" in view or "neo4j" in view:
+    elif (
+        "knowledge_graph" in family
+        or "endpoint" in family
+        or "knowledge_graph" in view
+        or "neo4j" in view
+    ):
         result = _call_text_lane(
-            "ipfs_datasets_py.logic.knowledge_graphs", "compile_legal_role_graph", text, provenance_id
+            "ipfs_datasets_py.logic.knowledge_graphs",
+            "compile_legal_role_graph",
+            text,
+            provenance_id,
         )
-        fallback = {"edge_types": ["HAS_ACTOR", "HAS_ACTION", "HAS_OBJECT", "HAS_REMEDY"], "directed": True}
+        fallback = {
+            "edge_types": ["HAS_ACTOR", "HAS_ACTION", "HAS_OBJECT", "HAS_REMEDY"],
+            "directed": True,
+        }
     elif "cec" in family or "lifecycle" in family or "cec" in view:
         result = _call_text_lane(
             "ipfs_datasets_py.logic.CEC.native", "compile_lifecycle_events", text, provenance_id
         )
-        fallback = {"event_calculus": "CEC", "transition_operators": ["Happens", "Initiates", "Terminates"]}
+        fallback = {
+            "event_calculus": "CEC",
+            "transition_operators": ["Happens", "Initiates", "Terminates"],
+        }
     elif "prover" in family or "route" in family or "external" in view:
         result = _call_route_lane(cluster, provenance_id=provenance_id)
-        fallback = {"route_policy": "deterministic_capability_order", "timeout_policy": "bounded_per_backend"}
+        fallback = {
+            "route_policy": "deterministic_capability_order",
+            "timeout_policy": "bounded_per_backend",
+        }
     else:
         result = {}
         fallback = {"preservation": "canonical_contract_required_fields_and_semantics"}
@@ -859,7 +876,9 @@ def _call_decompiler_lane(value: Any, *, provenance_id: str) -> Dict[str, Any]:
     return mapping if mapping else {}
 
 
-def _call_text_lane(module_name: str, function_name: str, text: str, provenance_id: str) -> Dict[str, Any]:
+def _call_text_lane(
+    module_name: str, function_name: str, text: str, provenance_id: str
+) -> Dict[str, Any]:
     try:
         function = getattr(importlib.import_module(module_name), function_name)
         value = function(text, provenance_id=provenance_id)
@@ -1006,16 +1025,12 @@ def _get(value: Any, key: str, default: Any = None) -> Any:
 
 def _stable_hash(value: Any) -> str:
     return hashlib.sha256(
-        json.dumps(value, default=str, ensure_ascii=True, sort_keys=True).encode(
-            "utf-8"
-        )
+        json.dumps(value, default=str, ensure_ascii=True, sort_keys=True).encode("utf-8")
     ).hexdigest()
 
 
 def _unique_lower(values: Sequence[Any]) -> List[str]:
-    return list(
-        dict.fromkeys(str(value).strip().lower() for value in values if str(value).strip())
-    )
+    return list(dict.fromkeys(str(value).strip().lower() for value in values if str(value).strip()))
 
 
 def _actor_action_object_record(text: str) -> Dict[str, Any]:

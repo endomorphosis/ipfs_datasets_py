@@ -18,11 +18,11 @@ Usage:
     from ipfs_datasets_py.logic.CEC.optimization import (
         CacheManager, FormulaProfiler
     )
-    
+
     # Set up caching
     cache_mgr = CacheManager()
     interned_formula = cache_mgr.formula_interning.intern(my_formula)
-    
+
     # Profile operations
     profiler = FormulaProfiler()
     profiler.start_profiling("parse_operation")
@@ -49,16 +49,16 @@ from .profiling_utils import (
 
 __all__ = [
     # Cache components
-    'CacheEntry',
-    'FormulaInterningCache',
-    'LRUCache',
-    'ProofResultCache',
-    'ParseResultCache',
-    'MemoizationCache',
-    'CacheManager',
+    "CacheEntry",
+    "FormulaInterningCache",
+    "LRUCache",
+    "ProofResultCache",
+    "ParseResultCache",
+    "MemoizationCache",
+    "CacheManager",
     # Profiling components
-    'ProfilingResult',
-    'Bottleneck',
-    'FormulaProfiler',
-    'BottleneckAnalyzer',
+    "ProfilingResult",
+    "Bottleneck",
+    "FormulaProfiler",
+    "BottleneckAnalyzer",
 ]

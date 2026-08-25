@@ -22,17 +22,20 @@ Every tool should use `argparse` for command-line argument handling:
 ```python
 import argparse
 
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Tool description here")
-    parser.add_argument('--input', type=str, help='Input parameter description')
-    parser.add_argument('--output', type=str, help='Output parameter description')
-    parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
+    parser.add_argument("--input", type=str, help="Input parameter description")
+    parser.add_argument("--output", type=str, help="Output parameter description")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     return parser.parse_args()
+
 
 def main():
     args = parse_arguments()
     # Tool logic here
-    
+
+
 if __name__ == "__main__":
     main()
 ```
@@ -96,11 +99,11 @@ Created for: [Worker X assignment / specific need]
 
 Usage:
     python tool_name.py --input file.txt --output result.txt
-    
+
 Examples:
     # Basic usage
     python tool_name.py --input data.json
-    
+
     # With verbose output
     python tool_name.py --input data.json --verbose
 """
@@ -109,57 +112,59 @@ import argparse
 import sys
 from pathlib import Path
 
+
 def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description="Tool description",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__
+        epilog=__doc__,
     )
-    
+
     # Add arguments here
-    parser.add_argument('--input', type=str, required=True,
-                       help='Input file or parameter')
-    parser.add_argument('--output', type=str,
-                       help='Output file or parameter')
-    parser.add_argument('--verbose', action='store_true',
-                       help='Enable verbose output')
-    
+    parser.add_argument("--input", type=str, required=True, help="Input file or parameter")
+    parser.add_argument("--output", type=str, help="Output file or parameter")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
+
     return parser.parse_args()
+
 
 def main():
     """Main function."""
     args = parse_arguments()
-    
+
     try:
         # Tool logic here
         if args.verbose:
             print("Starting processing...")
-            
+
         # Actual work
         result = do_work(args.input)
-        
+
         if args.output:
             save_result(result, args.output)
         else:
             print(result)
-            
+
         if args.verbose:
             print("Processing completed successfully!")
-            
+
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
+
 
 def do_work(input_param):
     """Core tool functionality."""
     # Implementation here
     pass
 
+
 def save_result(result, output_path):
     """Save result to file."""
     # Implementation here
     pass
+
 
 if __name__ == "__main__":
     main()

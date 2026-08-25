@@ -4,6 +4,7 @@ Validates that state_checksum() returns a stable, deterministic fingerprint
 of the optimizer configuration and that it differentiates between distinct
 configurations.
 """
+
 from __future__ import annotations
 
 import pytest

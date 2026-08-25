@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class WikipediaConfig:
     """Configuration for Wikipedia dataset processing."""
+
     cache_dir: Optional[str] = None
     trust_remote_code: bool = False
     revision: Optional[str] = None
@@ -77,11 +78,11 @@ class WikipediaProcessor:
 
             # Merge config with kwargs, giving precedence to kwargs
             load_kwargs = {
-                'cache_dir': self.config.cache_dir,
-                'trust_remote_code': self.config.trust_remote_code,
-                'revision': self.config.revision,
-                'use_auth_token': self.config.use_auth_token,
-                **kwargs
+                "cache_dir": self.config.cache_dir,
+                "trust_remote_code": self.config.trust_remote_code,
+                "revision": self.config.revision,
+                "use_auth_token": self.config.use_auth_token,
+                **kwargs,
             }
 
             # Remove None values
@@ -156,14 +157,14 @@ class WikipediaProcessor:
         dataset = self.db[dataset_name]
         try:
             return {
-                'name': dataset_name,
-                'features': str(dataset.features) if hasattr(dataset, 'features') else None,
-                'num_rows': len(dataset) if hasattr(dataset, '__len__') else None,
-                'splits': list(dataset.keys()) if isinstance(dataset, dict) else None
+                "name": dataset_name,
+                "features": str(dataset.features) if hasattr(dataset, "features") else None,
+                "num_rows": len(dataset) if hasattr(dataset, "__len__") else None,
+                "splits": list(dataset.keys()) if isinstance(dataset, dict) else None,
             }
         except Exception as e:
             self.logger.warning(f"Could not get info for dataset {dataset_name}: {e}")
-            return {'name': dataset_name, 'error': str(e)}
+            return {"name": dataset_name, "error": str(e)}
 
     def clear_cache(self) -> None:
         """Clear the internal dataset cache."""

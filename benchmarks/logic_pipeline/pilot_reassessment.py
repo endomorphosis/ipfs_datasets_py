@@ -66,13 +66,10 @@ PILOT_REASSESSMENT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.reassessment-pilot-shortlist.v1"
 )
 PILOT_REASSESSMENT_SNAPSHOT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "reassessment-pilot-shortlist-snapshot.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.reassessment-pilot-shortlist-snapshot.v1"
 )
 PILOT_REASSESSMENT_RUN_ID: Final = PUBLISHED_REASSESSMENT_RUN_ID
-_PUBLISHED_LAYOUT: Final = ReassessmentRunLayout.for_run(
-    PILOT_REASSESSMENT_RUN_ID
-)
+_PUBLISHED_LAYOUT: Final = ReassessmentRunLayout.for_run(PILOT_REASSESSMENT_RUN_ID)
 DEFAULT_PILOT_REASSESSMENT_PATH: Final = _PUBLISHED_LAYOUT.pilot_report
 DEFAULT_PILOT_REASSESSMENT_SNAPSHOT: Final = _PUBLISHED_LAYOUT.pilot_snapshot
 REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[2]
@@ -81,9 +78,7 @@ VALIDATION_COMMAND: Final = (
     "--artifact workspace/benchmarks/hammer-symai-spacy-leanstral/"
     "reassessment-v2/results/pilot-shortlist-v2.json"
 )
-_CANDIDATE_IDS: Final = tuple(
-    item for item in ALL_VARIANT_IDS if item not in {"A0", "S1"}
-)
+_CANDIDATE_IDS: Final = tuple(item for item in ALL_VARIANT_IDS if item not in {"A0", "S1"})
 _SELECTION_SPLITS: Final = ("pilot", "development")
 _CACHE_MODES: Final = ("cold", "warm")
 _FRONTEND_REPRESENTATIVE: Final = {
@@ -129,9 +124,7 @@ def _sha_bytes(value: bytes) -> str:
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise PilotReassessmentError(f"{field} must be an object")
     return value
 
@@ -161,9 +154,7 @@ def _read_canonical(path: Path, field: str) -> tuple[object, bytes]:
     try:
         file_stat = path.lstat()
         if stat.S_ISLNK(file_stat.st_mode) or not stat.S_ISREG(file_stat.st_mode):
-            raise PilotReassessmentError(
-                f"{field} must be a regular non-symlink file"
-            )
+            raise PilotReassessmentError(f"{field} must be a regular non-symlink file")
         if file_stat.st_size <= 0 or file_stat.st_size > _MAX_ARTIFACT_BYTES:
             raise PilotReassessmentError(f"{field} size is outside the safe bound")
         raw = path.read_bytes()
@@ -185,9 +176,7 @@ def _read_canonical(path: Path, field: str) -> tuple[object, bytes]:
     try:
         expected = (canonical_json(value) + "\n").encode("utf-8")
     except (TypeError, ValueError) as exc:
-        raise PilotReassessmentError(
-            f"{field} is not canonically serializable"
-        ) from exc
+        raise PilotReassessmentError(f"{field} is not canonically serializable") from exc
     if raw != expected:
         raise PilotReassessmentError(f"{field} is not canonical JSON")
     return value, raw
@@ -210,9 +199,7 @@ def _rooted(root: Path, path: str | Path) -> Path:
 
 def _relative_reference(value: object, field: str) -> PurePosixPath:
     if not isinstance(value, str) or not value or "\\" in value:
-        raise PilotReassessmentError(
-            f"{field} must be a canonical relative POSIX path"
-        )
+        raise PilotReassessmentError(f"{field} must be a canonical relative POSIX path")
     path = PurePosixPath(value)
     if (
         path.is_absolute()
@@ -220,9 +207,7 @@ def _relative_reference(value: object, field: str) -> PurePosixPath:
         or any(part in {"", ".", ".."} for part in path.parts)
         or path.as_posix() != value
     ):
-        raise PilotReassessmentError(
-            f"{field} must be a canonical relative POSIX path"
-        )
+        raise PilotReassessmentError(f"{field} must be a canonical relative POSIX path")
     return path
 
 
@@ -231,15 +216,11 @@ def _assert_no_symlink_chain(root: Path, target: Path, field: str) -> None:
     logical_target = target.absolute()
     for ancestor in reversed((logical_root, *logical_root.parents)):
         if ancestor.is_symlink():
-            raise PilotReassessmentError(
-                f"{field} reference root must not use a symlink"
-            )
+            raise PilotReassessmentError(f"{field} reference root must not use a symlink")
     try:
         relative = logical_target.relative_to(logical_root)
     except ValueError as exc:
-        raise PilotReassessmentError(
-            f"{field} escaped its canonical reference root"
-        ) from exc
+        raise PilotReassessmentError(f"{field} escaped its canonical reference root") from exc
     current = logical_root
     for part in relative.parts:
         current = current / part
@@ -272,9 +253,7 @@ def _fresh_artifact_reference(
         resolved = target.resolve(strict=expected_kind is not None)
         relative = resolved.relative_to(resolved_root)
     except (OSError, ValueError) as exc:
-        raise PilotReassessmentError(
-            f"{field} escaped its canonical reference root"
-        ) from exc
+        raise PilotReassessmentError(f"{field} escaped its canonical reference root") from exc
     if expected_kind == "file" and not resolved.is_file():
         raise PilotReassessmentError(f"{field} must be a regular file")
     if expected_kind == "directory" and not resolved.is_dir():
@@ -290,32 +269,17 @@ def _snapshot_capture_date(
 ) -> str:
     if run_id == PILOT_REASSESSMENT_RUN_ID:
         if value not in {None, "2026-07-24"}:
-            raise PilotReassessmentError(
-                "published pilot snapshot capture date changed"
-            )
+            raise PilotReassessmentError("published pilot snapshot capture date changed")
         return "2026-07-24"
-    captured_on = (
-        datetime.now(timezone.utc).date().isoformat()
-        if value is None
-        else value
-    )
+    captured_on = datetime.now(timezone.utc).date().isoformat() if value is None else value
     if not isinstance(captured_on, str):
-        raise PilotReassessmentError(
-            "fresh pilot snapshot capture date is invalid"
-        )
+        raise PilotReassessmentError("fresh pilot snapshot capture date is invalid")
     try:
         captured = date.fromisoformat(captured_on)
     except ValueError as exc:
-        raise PilotReassessmentError(
-            "fresh pilot snapshot capture date is invalid"
-        ) from exc
-    if (
-        captured_on != captured.isoformat()
-        or captured > datetime.now(timezone.utc).date()
-    ):
-        raise PilotReassessmentError(
-            "fresh pilot snapshot capture date is invalid"
-        )
+        raise PilotReassessmentError("fresh pilot snapshot capture date is invalid") from exc
+    if captured_on != captured.isoformat() or captured > datetime.now(timezone.utc).date():
+        raise PilotReassessmentError("fresh pilot snapshot capture date is invalid")
     return captured_on
 
 
@@ -346,9 +310,7 @@ def _safe_result_path(
         resolved = candidate.resolve(strict=True)
         resolved.relative_to(result_root.resolve(strict=True))
     except (OSError, ValueError) as exc:
-        raise PilotReassessmentError(
-            f"matrix result path is unavailable: {relative_path}"
-        ) from exc
+        raise PilotReassessmentError(f"matrix result path is unavailable: {relative_path}") from exc
     return resolved
 
 
@@ -403,9 +365,7 @@ def _result_observations(
             try:
                 result = CaseResultRecord.from_dict(outer.get("case_result"))
             except (TypeError, ValueError) as exc:
-                raise PilotReassessmentError(
-                    f"case result failed validation: {path}"
-                ) from exc
+                raise PilotReassessmentError(f"case result failed validation: {path}") from exc
             if (
                 result.digest != index.get("case_result_sha256")
                 or _sha_bytes(raw_bytes) != index.get("bytes_sha256")
@@ -415,9 +375,7 @@ def _result_observations(
                 or result.cache_mode.value != index.get("cache_mode")
                 or result.status.value != index.get("status")
             ):
-                raise PilotReassessmentError(
-                    "case result differs from its validated matrix index"
-                )
+                raise PilotReassessmentError("case result differs from its validated matrix index")
             key = (
                 result.split.value,
                 result.cache_mode.value,
@@ -428,54 +386,34 @@ def _result_observations(
                 raise PilotReassessmentError("matrix coordinate is duplicated")
             seen.add(key)
             stages = tuple(result.stages)
-            current_envelope = (
-                outer.get("schema") == ABLATION_RESULT_SCHEMA
-            )
+            current_envelope = outer.get("schema") == ABLATION_RESULT_SCHEMA
             cache_setups = tuple(
                 setup
                 for stage in stages
-                if (
-                    setup := extract_symai_cache_setup_telemetry(stage)
-                )
-                is not None
+                if (setup := extract_symai_cache_setup_telemetry(stage)) is not None
             )
             invoked_stages = (
                 tuple(
                     stage
                     for stage in stages
-                    if stage.provenance.effective_identity.get(
-                        "graph_invoked"
-                    )
-                    is True
+                    if stage.provenance.effective_identity.get("graph_invoked") is True
                 )
                 if current_envelope
                 else stages
             )
-            cache_setup_wall_time_ms = sum(
-                item.wall_time_ms for item in cache_setups
-            )
-            cache_setup_model_calls = sum(
-                item.model_calls for item in cache_setups
-            )
-            cache_setup_retries = sum(
-                item.retries for item in cache_setups
-            )
+            cache_setup_wall_time_ms = sum(item.wall_time_ms for item in cache_setups)
+            cache_setup_model_calls = sum(item.model_calls for item in cache_setups)
+            cache_setup_retries = sum(item.retries for item in cache_setups)
             wall_time_ms = round(
-                sum(item.telemetry.wall_time_ms for item in stages)
-                + cache_setup_wall_time_ms,
+                sum(item.telemetry.wall_time_ms for item in stages) + cache_setup_wall_time_ms,
                 6,
             )
             model_calls = (
-                sum(item.telemetry.model_calls for item in stages)
-                + cache_setup_model_calls
+                sum(item.telemetry.model_calls for item in stages) + cache_setup_model_calls
             )
-            retries = (
-                sum(item.telemetry.retries for item in stages)
-                + cache_setup_retries
-            )
+            retries = sum(item.telemetry.retries for item in stages) + cache_setup_retries
             proof_processes = sum(
-                item.stage in {StageName.HAMMER, StageName.LEANSTRAL}
-                for item in invoked_stages
+                item.stage in {StageName.HAMMER, StageName.LEANSTRAL} for item in invoked_stages
             )
             if current_envelope:
                 try:
@@ -484,10 +422,7 @@ def _result_observations(
                             symai_backend_invocation_count(item)
                             if item.stage is StageName.SYMAI
                             else int(
-                                item.provenance.effective_identity.get(
-                                    "graph_invoked"
-                                )
-                                is True
+                                item.provenance.effective_identity.get("graph_invoked") is True
                             )
                         )
                         for item in stages
@@ -497,13 +432,11 @@ def _result_observations(
                         "SyMAI backend invocation accounting is invalid"
                     ) from exc
             else:
-                stage_invocations = (
-                    len(invoked_stages) + len(cache_setups)
-                )
+                stage_invocations = len(invoked_stages) + len(cache_setups)
             input_data = _mapping(
-                _mapping(
-                    _mapping(outer.get("job"), "job").get("case"), "job.case"
-                ).get("input_data"),
+                _mapping(_mapping(outer.get("job"), "job").get("case"), "job.case").get(
+                    "input_data"
+                ),
                 "job.case.input_data",
             )
             observations.append(
@@ -516,9 +449,7 @@ def _result_observations(
                     "difficulty": input_data.get("difficulty"),
                     "status": result.status.value,
                     "failure_code": (
-                        None
-                        if result.failure_code is None
-                        else result.failure_code.value
+                        None if result.failure_code is None else result.failure_code.value
                     ),
                     "verified": result.status is OutcomeStatus.VERIFIED,
                     "kernel_accepted": result.kernel_accepted,
@@ -529,9 +460,7 @@ def _result_observations(
                     "model_calls": model_calls,
                     "retries": retries,
                     "cache_setup_count": len(cache_setups),
-                    "cache_setup_wall_time_ms": round(
-                        cache_setup_wall_time_ms, 6
-                    ),
+                    "cache_setup_wall_time_ms": round(cache_setup_wall_time_ms, 6),
                     "cache_setup_model_calls": cache_setup_model_calls,
                     "cache_setup_retries": cache_setup_retries,
                     "solver_processes": proof_processes,
@@ -539,20 +468,13 @@ def _result_observations(
                     "graph_stage_invocations": len(invoked_stages),
                     "peak_memory_bytes": max(
                         (
-                            *(
-                                item.telemetry.peak_memory_bytes
-                                for item in stages
-                            ),
-                            *(
-                                item.peak_memory_bytes
-                                for item in cache_setups
-                            ),
+                            *(item.telemetry.peak_memory_bytes for item in stages),
+                            *(item.peak_memory_bytes for item in cache_setups),
                         ),
                         default=0,
                     ),
                     "frontend_stage_invocations": sum(
-                        item.stage
-                        in {StageName.COMPILER, StageName.SPACY, StageName.SYMAI}
+                        item.stage in {StageName.COMPILER, StageName.SPACY, StageName.SYMAI}
                         for item in invoked_stages
                     ),
                     "proof_stage_invocations": sum(
@@ -573,11 +495,7 @@ def _result_observations(
         (split, cache, case_id, variant)
         for split in _SELECTION_SPLITS
         for cache in _CACHE_MODES
-        for case_id in {
-            str(item["case_id"])
-            for item in observations
-            if item["split"] == split
-        }
+        for case_id in {str(item["case_id"]) for item in observations if item["split"] == split}
         for variant in ALL_VARIANT_IDS
     }
     if seen != expected:
@@ -659,9 +577,7 @@ def _semantic_quality_evidence(
         or report.get("protocol_sha256") != DEFAULT_PROTOCOL_SHA256
         or report.get("registry_sha256") != VARIANT_REGISTRY_SHA256
     ):
-        raise PilotReassessmentError(
-            "front-end semantic report identity differs from this run"
-        )
+        raise PilotReassessmentError("front-end semantic report identity differs from this run")
 
     matrix_receipts = {
         (
@@ -683,12 +599,9 @@ def _semantic_quality_evidence(
         )
         if (
             coordinate not in matrix_receipts
-            or row.get("source_receipt_sha256")
-            != matrix_receipts[coordinate]
+            or row.get("source_receipt_sha256") != matrix_receipts[coordinate]
         ):
-            raise PilotReassessmentError(
-                "front-end semantic receipt is not bound to the matrix"
-            )
+            raise PilotReassessmentError("front-end semantic receipt is not bound to the matrix")
         rows_by_variant.setdefault(str(row["variant_id"]), []).append(row)
 
     quality: dict[str, Mapping[str, object]] = {}
@@ -697,8 +610,7 @@ def _semantic_quality_evidence(
         measured = [
             row
             for row in rows
-            if row.get("status")
-            not in {"unavailable", "infrastructure_failure"}
+            if row.get("status") not in {"unavailable", "infrastructure_failure"}
         ]
         receipts = [
             str(row["semantic_validator_receipt_sha256"])
@@ -716,18 +628,13 @@ def _semantic_quality_evidence(
             "observation_count": len(measured),
             "rate": _rate(successes, len(measured)),
             "complete": complete,
-            "validator_receipt_set_sha256": (
-                _sha(sorted(receipts)) if receipts else None
-            ),
+            "validator_receipt_set_sha256": (_sha(sorted(receipts)) if receipts else None),
         }
-    all_rows = [
-        row for rows in rows_by_variant.values() for row in rows
-    ]
+    all_rows = [row for rows in rows_by_variant.values() for row in rows]
     all_measured = [
         row
         for row in all_rows
-        if row.get("status")
-        not in {"unavailable", "infrastructure_failure"}
+        if row.get("status") not in {"unavailable", "infrastructure_failure"}
     ]
     all_successes = sum(
         bool(row.get("normalized_ir_exact_match"))
@@ -786,9 +693,7 @@ def _semantic_quality_evidence(
         },
         "receipt_directory": directory_reference,
         "receipt_reference_count": len(receipt_references),
-        "receipt_reference_set_sha256": _sha(
-            sorted(_sha(item) for item in receipt_references)
-        ),
+        "receipt_reference_set_sha256": _sha(sorted(_sha(item) for item in receipt_references)),
         "receipt_references": receipt_references,
         "run_id": layout.run_id,
         "source_validated": True,
@@ -803,9 +708,7 @@ def _candidate_metrics(
     semantic_quality: Mapping[str, Mapping[str, object]] | None,
 ) -> tuple[list[dict[str, object]], dict[str, object]]:
     by_variant = {
-        variant_id: [
-            item for item in observations if item["variant_id"] == variant_id
-        ]
+        variant_id: [item for item in observations if item["variant_id"] == variant_id]
         for variant_id in ALL_VARIANT_IDS
     }
     baseline = {
@@ -815,16 +718,12 @@ def _candidate_metrics(
     baseline_latencies = [float(item["wall_time_ms"]) for item in baseline.values()]
     baseline_p95 = _percentile(baseline_latencies, 0.95)
     baseline_model_calls = sum(int(item["model_calls"]) for item in baseline.values())
-    baseline_cache_setup_count = sum(
-        int(item["cache_setup_count"]) for item in baseline.values()
-    )
+    baseline_cache_setup_count = sum(int(item["cache_setup_count"]) for item in baseline.values())
     baseline_cache_setup_wall_time_ms = sum(
-        float(item["cache_setup_wall_time_ms"])
-        for item in baseline.values()
+        float(item["cache_setup_wall_time_ms"]) for item in baseline.values()
     )
     baseline_cache_setup_model_calls = sum(
-        int(item["cache_setup_model_calls"])
-        for item in baseline.values()
+        int(item["cache_setup_model_calls"]) for item in baseline.values()
     )
     baseline_verified = sum(bool(item["verified"]) for item in baseline.values())
     complete_quality_rates = [
@@ -832,27 +731,19 @@ def _candidate_metrics(
         for item in (semantic_quality or {}).values()
         if item.get("complete") is True and item.get("rate") is not None
     ]
-    best_quality_rate = (
-        max(complete_quality_rates) if complete_quality_rates else None
-    )
+    best_quality_rate = max(complete_quality_rates) if complete_quality_rates else None
 
     candidates: list[dict[str, object]] = []
     for variant_id in _CANDIDATE_IDS:
         rows = by_variant[variant_id]
         if len(rows) != 40:
-            raise PilotReassessmentError(
-                f"{variant_id} does not have 40 paired observations"
-            )
+            raise PilotReassessmentError(f"{variant_id} does not have 40 paired observations")
         status_counts = Counter(str(item["status"]) for item in rows)
         failure_counts = Counter(
-            str(item["failure_code"])
-            for item in rows
-            if item["failure_code"] is not None
+            str(item["failure_code"]) for item in rows if item["failure_code"] is not None
         )
         recovered_failure_counts = Counter(
-            str(code)
-            for item in rows
-            for code in item["recovered_failure_codes"]
+            str(code) for item in rows for code in item["recovered_failure_codes"]
         )
         verified = sum(bool(item["verified"]) for item in rows)
         hard_rows = [item for item in rows if item["difficulty"] == "hard"]
@@ -867,15 +758,9 @@ def _candidate_metrics(
             )
             base = baseline.get(key)
             if base is None:
-                raise PilotReassessmentError(
-                    f"{variant_id} has an unpaired coordinate"
-                )
-            paired_values.append(
-                int(bool(row["verified"])) - int(bool(base["verified"]))
-            )
-            baseline_regressions += bool(base["verified"]) and not bool(
-                row["verified"]
-            )
+                raise PilotReassessmentError(f"{variant_id} has an unpaired coordinate")
+            paired_values.append(int(bool(row["verified"])) - int(bool(base["verified"])))
+            baseline_regressions += bool(base["verified"]) and not bool(row["verified"])
             receipt_pairs.append(
                 {
                     "baseline": str(base["case_result_sha256"]),
@@ -886,18 +771,10 @@ def _candidate_metrics(
         latencies = [float(item["wall_time_ms"]) for item in rows]
         p95 = _percentile(latencies, 0.95)
         total_model_calls = sum(int(item["model_calls"]) for item in rows)
-        cache_setup_count = sum(
-            int(item["cache_setup_count"]) for item in rows
-        )
-        cache_setup_wall_time_ms = sum(
-            float(item["cache_setup_wall_time_ms"]) for item in rows
-        )
-        cache_setup_model_calls = sum(
-            int(item["cache_setup_model_calls"]) for item in rows
-        )
-        cache_setup_retries = sum(
-            int(item["cache_setup_retries"]) for item in rows
-        )
+        cache_setup_count = sum(int(item["cache_setup_count"]) for item in rows)
+        cache_setup_wall_time_ms = sum(float(item["cache_setup_wall_time_ms"]) for item in rows)
+        cache_setup_model_calls = sum(int(item["cache_setup_model_calls"]) for item in rows)
+        cache_setup_retries = sum(int(item["cache_setup_retries"]) for item in rows)
         latency_reduction = (
             0.0
             if baseline_p95 == 0 and p95 == 0
@@ -914,8 +791,7 @@ def _candidate_metrics(
                 -1.0,
                 min(
                     1.0,
-                    (baseline_model_calls - total_model_calls)
-                    / baseline_model_calls,
+                    (baseline_model_calls - total_model_calls) / baseline_model_calls,
                 ),
             )
         )
@@ -930,30 +806,16 @@ def _candidate_metrics(
             ]
             for item in hard_rows
         ]
-        baseline_hard_verified = sum(
-            bool(item["verified"]) for item in baseline_hard
-        )
+        baseline_hard_verified = sum(bool(item["verified"]) for item in baseline_hard)
         hard_gain = (
-            0.0
-            if not hard_rows
-            else (hard_verified - baseline_hard_verified) / len(hard_rows)
+            0.0 if not hard_rows else (hard_verified - baseline_hard_verified) / len(hard_rows)
         )
-        quality = (
-            None
-            if semantic_quality is None
-            else semantic_quality.get(variant_id)
-        )
+        quality = None if semantic_quality is None else semantic_quality.get(variant_id)
         quality_complete = quality is not None and quality.get("complete") is True
         quality_rate = (
-            float(quality["rate"])
-            if quality_complete and quality.get("rate") is not None
-            else None
+            float(quality["rate"]) if quality_complete and quality.get("rate") is not None else None
         )
-        quality_count = (
-            int(quality["observation_count"])
-            if quality is not None
-            else 0
-        )
+        quality_count = int(quality["observation_count"]) if quality is not None else 0
         quality_gap = (
             0.0
             if semantic_quality is None
@@ -969,18 +831,13 @@ def _candidate_metrics(
             p95_latency_reduction=latency_reduction,
             model_usage_reduction=model_reduction,
             baseline_solved_regression_rate=(
-                0.0
-                if baseline_verified == 0
-                else baseline_regressions / baseline_verified
+                0.0 if baseline_verified == 0 else baseline_regressions / baseline_verified
             ),
             unexplained_baseline_regressions=baseline_regressions,
             all_successes_kernel_bound_and_replayable=all(
-                not bool(item["verified"]) or bool(item["kernel_accepted"])
-                for item in rows
+                not bool(item["verified"]) or bool(item["kernel_accepted"]) for item in rows
             ),
-            infrastructure_failure_count=status_counts[
-                OutcomeStatus.INFRASTRUCTURE_FAILURE.value
-            ],
+            infrastructure_failure_count=status_counts[OutcomeStatus.INFRASTRUCTURE_FAILURE.value],
         )
         gate = evaluate_candidate_gate(observation, protocol=DEFAULT_PROTOCOL)
         reasons = list(gate.reasons)
@@ -993,9 +850,7 @@ def _candidate_metrics(
             # Even after that check, a relative near-best comparison is
             # vacuous when every measured front end has zero validated
             # successes. Receipt completeness alone cannot create eligibility.
-            reasons.append(
-                "no independently validated semantic-quality success"
-            )
+            reasons.append("no independently validated semantic-quality success")
         eligible = gate.status is GateStatus.PASSED and not reasons
         candidates.append(
             {
@@ -1011,12 +866,8 @@ def _candidate_metrics(
                     {}
                     if not recovered_failure_counts
                     else {
-                        "recovered_failure_count": sum(
-                            recovered_failure_counts.values()
-                        ),
-                        "recovered_failure_counts": dict(
-                            sorted(recovered_failure_counts.items())
-                        ),
+                        "recovered_failure_count": sum(recovered_failure_counts.values()),
+                        "recovered_failure_counts": dict(sorted(recovered_failure_counts.items())),
                     }
                 ),
                 "efficacy": {
@@ -1045,9 +896,7 @@ def _candidate_metrics(
                             "semantic_validator_receipt_set_sha256": (
                                 None
                                 if quality is None
-                                else quality.get(
-                                    "validator_receipt_set_sha256"
-                                )
+                                else quality.get("validator_receipt_set_sha256")
                             ),
                         }
                     ),
@@ -1055,21 +904,13 @@ def _candidate_metrics(
                 "cost": {
                     "coordinate_count": len(rows),
                     "wall_time_ms_total": round(sum(latencies), 6),
-                    "wall_time_ms_mean_per_coordinate": round(
-                        sum(latencies) / len(rows), 6
-                    ),
+                    "wall_time_ms_mean_per_coordinate": round(sum(latencies) / len(rows), 6),
                     "wall_time_ms_p95_per_coordinate": p95,
                     "model_calls": total_model_calls,
-                    "solver_processes": sum(
-                        int(item["solver_processes"]) for item in rows
-                    ),
+                    "solver_processes": sum(int(item["solver_processes"]) for item in rows),
                     "retries": sum(int(item["retries"]) for item in rows),
-                    "stage_invocations": sum(
-                        int(item["stage_invocations"]) for item in rows
-                    ),
-                    "peak_memory_bytes_max": max(
-                        int(item["peak_memory_bytes"]) for item in rows
-                    ),
+                    "stage_invocations": sum(int(item["stage_invocations"]) for item in rows),
+                    "peak_memory_bytes_max": max(int(item["peak_memory_bytes"]) for item in rows),
                     "latency_reduction_vs_a0": latency_reduction,
                     "model_usage_reduction_vs_a0": model_reduction,
                     **(
@@ -1077,26 +918,17 @@ def _candidate_metrics(
                         if not cache_setup_count
                         else {
                             "cache_setup_invocations": cache_setup_count,
-                            "cache_setup_wall_time_ms_total": round(
-                                cache_setup_wall_time_ms, 6
-                            ),
-                            "cache_setup_model_calls": (
-                                cache_setup_model_calls
-                            ),
+                            "cache_setup_wall_time_ms_total": round(cache_setup_wall_time_ms, 6),
+                            "cache_setup_model_calls": (cache_setup_model_calls),
                             "cache_setup_retries": cache_setup_retries,
                             "graph_stage_invocations": sum(
-                                int(item["graph_stage_invocations"])
-                                for item in rows
+                                int(item["graph_stage_invocations"]) for item in rows
                             ),
                             "measured_wall_time_ms_total": round(
-                                sum(latencies)
-                                - cache_setup_wall_time_ms,
+                                sum(latencies) - cache_setup_wall_time_ms,
                                 6,
                             ),
-                            "measured_model_calls": (
-                                total_model_calls
-                                - cache_setup_model_calls
-                            ),
+                            "measured_model_calls": (total_model_calls - cache_setup_model_calls),
                         }
                     ),
                 },
@@ -1110,16 +942,12 @@ def _candidate_metrics(
                     "baseline_solved_count": baseline_verified,
                     "baseline_solved_regression_count": baseline_regressions,
                     "baseline_solved_regression_rate": (
-                        None
-                        if baseline_verified == 0
-                        else baseline_regressions / baseline_verified
+                        None if baseline_verified == 0 else baseline_regressions / baseline_verified
                     ),
                     "receipt_pairs_sha256": _sha(receipt_pairs),
                 },
                 "complexity": {
-                    "registered_stage_count": len(
-                        VARIANT_REGISTRY[variant_id].stages
-                    ),
+                    "registered_stage_count": len(VARIANT_REGISTRY[variant_id].stages),
                     "registered_stages": [
                         item.value for item in VARIANT_REGISTRY[variant_id].stages
                     ],
@@ -1155,32 +983,20 @@ def _candidate_metrics(
         baseline_summary.update(
             {
                 "cache_setup_invocations": baseline_cache_setup_count,
-                "cache_setup_wall_time_ms_total": round(
-                    baseline_cache_setup_wall_time_ms, 6
-                ),
-                "cache_setup_model_calls": (
-                    baseline_cache_setup_model_calls
-                ),
+                "cache_setup_wall_time_ms_total": round(baseline_cache_setup_wall_time_ms, 6),
+                "cache_setup_model_calls": (baseline_cache_setup_model_calls),
                 "measured_wall_time_ms_total": round(
-                    sum(baseline_latencies)
-                    - baseline_cache_setup_wall_time_ms,
+                    sum(baseline_latencies) - baseline_cache_setup_wall_time_ms,
                     6,
                 ),
-                "measured_model_calls": (
-                    baseline_model_calls
-                    - baseline_cache_setup_model_calls
-                ),
+                "measured_model_calls": (baseline_model_calls - baseline_cache_setup_model_calls),
             }
         )
     baseline_recovered_failures = Counter(
-        str(code)
-        for item in baseline.values()
-        for code in item["recovered_failure_codes"]
+        str(code) for item in baseline.values() for code in item["recovered_failure_codes"]
     )
     if baseline_recovered_failures:
-        baseline_summary["recovered_failure_count"] = sum(
-            baseline_recovered_failures.values()
-        )
+        baseline_summary["recovered_failure_count"] = sum(baseline_recovered_failures.values())
         baseline_summary["recovered_failure_counts"] = dict(
             sorted(baseline_recovered_failures.items())
         )
@@ -1216,8 +1032,7 @@ def _dominates(left: Mapping[str, object], right: Mapping[str, object]) -> bool:
         _candidate_failure_total(left) <= _candidate_failure_total(right),
     )
     strict = (
-        float(left_efficacy["kernel_verified_rate"])
-        > float(right_efficacy["kernel_verified_rate"])
+        float(left_efficacy["kernel_verified_rate"]) > float(right_efficacy["kernel_verified_rate"])
         or float(left_cost["wall_time_ms_p95_per_coordinate"])
         < float(right_cost["wall_time_ms_p95_per_coordinate"])
         or int(left_cost["model_calls"]) < int(right_cost["model_calls"])
@@ -1233,8 +1048,7 @@ def _pareto(candidates: Sequence[Mapping[str, object]]) -> dict[str, object]:
         str(candidate["variant_id"])
         for candidate in candidates
         if not any(
-            other["variant_id"] != candidate["variant_id"]
-            and _dominates(other, candidate)
+            other["variant_id"] != candidate["variant_id"] and _dominates(other, candidate)
             for other in candidates
         )
     )
@@ -1243,8 +1057,7 @@ def _pareto(candidates: Sequence[Mapping[str, object]]) -> dict[str, object]:
         str(candidate["variant_id"])
         for candidate in eligible
         if not any(
-            other["variant_id"] != candidate["variant_id"]
-            and _dominates(other, candidate)
+            other["variant_id"] != candidate["variant_id"] and _dominates(other, candidate)
             for other in eligible
         )
     )
@@ -1262,9 +1075,7 @@ def _pareto(candidates: Sequence[Mapping[str, object]]) -> dict[str, object]:
         ],
         "candidate_ids": list(_CANDIDATE_IDS),
         "observed_nondominated_candidate_ids": observed_frontier,
-        "eligible_candidate_ids": sorted(
-            str(item["variant_id"]) for item in eligible
-        ),
+        "eligible_candidate_ids": sorted(str(item["variant_id"]) for item in eligible),
         "eligible_nondominated_candidate_ids": frontier,
         "safety_is_a_hard_constraint": True,
         "semantic_quality_is_a_hard_constraint": True,
@@ -1273,9 +1084,7 @@ def _pareto(candidates: Sequence[Mapping[str, object]]) -> dict[str, object]:
     }
 
 
-def _freeze_inputs(
-    matrix: Mapping[str, object], *, run_id: str
-) -> dict[str, object]:
+def _freeze_inputs(matrix: Mapping[str, object], *, run_id: str) -> dict[str, object]:
     selection = _mapping(matrix["selection_inputs"], "matrix.selection_inputs")
     source = _mapping(matrix["source_binding"], "matrix.source_binding")
     snapshots: dict[str, object] = {
@@ -1349,9 +1158,7 @@ def build_pilot_reassessment_report(
             snapshot_path=layout.matrix_snapshot,
         )
     except MatrixReassessmentError as exc:
-        raise PilotReassessmentError(
-            "reassessment matrix failed source validation"
-        ) from exc
+        raise PilotReassessmentError("reassessment matrix failed source validation") from exc
     observations = _result_observations(
         root,
         matrix,
@@ -1381,12 +1188,8 @@ def build_pilot_reassessment_report(
     totals = _mapping(matrix["totals"], "matrix.totals")
     safety_source = _mapping(matrix["safety"], "matrix.safety")
     status_counts = Counter(str(item["status"]) for item in observations)
-    frontend_stage_count = sum(
-        int(item["frontend_stage_invocations"]) for item in observations
-    )
-    proof_stage_count = sum(
-        int(item["proof_stage_invocations"]) for item in observations
-    )
+    frontend_stage_count = sum(int(item["frontend_stage_invocations"]) for item in observations)
+    proof_stage_count = sum(int(item["proof_stage_invocations"]) for item in observations)
     measured_efficacy = [
         item
         for item in observations
@@ -1401,33 +1204,18 @@ def build_pilot_reassessment_report(
     semantic_complete = (
         semantic_quality is not None
         and bool(semantic_quality)
-        and all(
-            item.get("complete") is True
-            for item in semantic_quality.values()
-        )
+        and all(item.get("complete") is True for item in semantic_quality.values())
     )
     model_calls = sum(int(item["model_calls"]) for item in observations)
     retries = sum(int(item["retries"]) for item in observations)
-    cache_setup_count = sum(
-        int(item["cache_setup_count"]) for item in observations
-    )
-    cache_setup_wall_time_ms = sum(
-        float(item["cache_setup_wall_time_ms"])
-        for item in observations
-    )
-    cache_setup_model_calls = sum(
-        int(item["cache_setup_model_calls"])
-        for item in observations
-    )
-    cache_setup_retries = sum(
-        int(item["cache_setup_retries"]) for item in observations
-    )
+    cache_setup_count = sum(int(item["cache_setup_count"]) for item in observations)
+    cache_setup_wall_time_ms = sum(float(item["cache_setup_wall_time_ms"]) for item in observations)
+    cache_setup_model_calls = sum(int(item["cache_setup_model_calls"]) for item in observations)
+    cache_setup_retries = sum(int(item["cache_setup_retries"]) for item in observations)
     solver_processes = sum(int(item["solver_processes"]) for item in observations)
     wall_time_ms = sum(float(item["wall_time_ms"]) for item in observations)
     recovered_failure_counts = Counter(
-        str(code)
-        for item in observations
-        for code in item["recovered_failure_codes"]
+        str(code) for item in observations for code in item["recovered_failure_codes"]
     )
     freeze_inputs = _freeze_inputs(matrix, run_id=run_id)
 
@@ -1439,13 +1227,9 @@ def build_pilot_reassessment_report(
     status = "complete" if eligible else "incomplete"
     remediation: list[dict[str, object]] = []
     if not eligible:
-        candidate_by_id = {
-            str(item["variant_id"]): item for item in candidates
-        }
+        candidate_by_id = {str(item["variant_id"]): item for item in candidates}
 
-        def has_unresolved_failure(
-            variant_ids: Sequence[str], prefix: str
-        ) -> bool:
+        def has_unresolved_failure(variant_ids: Sequence[str], prefix: str) -> bool:
             return any(
                 any(
                     str(code).startswith(prefix) and int(count) > 0
@@ -1566,11 +1350,7 @@ def build_pilot_reassessment_report(
         **(
             {}
             if semantic_source_binding is None
-            else {
-                "semantic_source_binding_sha256": _sha(
-                    semantic_source_binding
-                )
-            }
+            else {"semantic_source_binding_sha256": _sha(semantic_source_binding)}
         ),
         "selected_configurations": [
             {
@@ -1582,11 +1362,7 @@ def build_pilot_reassessment_report(
         "freeze_sha256": "",
     }
     deep_freeze["freeze_sha256"] = _sha(
-        {
-            key: value
-            for key, value in deep_freeze.items()
-            if key != "freeze_sha256"
-        }
+        {key: value for key, value in deep_freeze.items() if key != "freeze_sha256"}
     )
     report: dict[str, object] = {
         "schema": PILOT_REASSESSMENT_SCHEMA,
@@ -1614,8 +1390,7 @@ def build_pilot_reassessment_report(
             "splits": list(_SELECTION_SPLITS),
             "cache_modes": list(_CACHE_MODES),
             "status_counts": dict(sorted(status_counts.items())),
-            "all_coordinates_terminal": len(observations)
-            == EXPECTED_COORDINATE_COUNT,
+            "all_coordinates_terminal": len(observations) == EXPECTED_COORDINATE_COUNT,
             "typed_missingness_retained": True,
         },
         "reports": {
@@ -1628,17 +1403,13 @@ def build_pilot_reassessment_report(
                     if not cache_setup_count
                     else {
                         "cache_setup_invocations": cache_setup_count,
-                        "cache_setup_model_calls": (
-                            cache_setup_model_calls
-                        ),
+                        "cache_setup_model_calls": (cache_setup_model_calls),
                     }
                 ),
                 "semantic_quality_observation_count": (
                     0
                     if semantic_source_binding is None
-                    else semantic_source_binding[
-                        "semantic_quality_observation_count"
-                    ]
+                    else semantic_source_binding["semantic_quality_observation_count"]
                 ),
                 "semantic_quality_rate": (
                     None
@@ -1657,9 +1428,7 @@ def build_pilot_reassessment_report(
             "proof": {
                 "efficacy_observation_count": len(measured_efficacy),
                 "kernel_verified_count": verified,
-                "kernel_verified_rate": _rate(
-                    verified, len(measured_efficacy)
-                ),
+                "kernel_verified_rate": _rate(verified, len(measured_efficacy)),
                 "proof_stage_invocation_count": proof_stage_count,
                 "kernel_invocation_count": totals["kernel_invoked_count"],
                 "kernel_acceptance_count": totals["kernel_accepted_count"],
@@ -1667,12 +1436,8 @@ def build_pilot_reassessment_report(
                     {}
                     if not recovered_failure_counts
                     else {
-                        "recovered_failure_count": sum(
-                            recovered_failure_counts.values()
-                        ),
-                        "recovered_failure_counts": dict(
-                            sorted(recovered_failure_counts.items())
-                        ),
+                        "recovered_failure_count": sum(recovered_failure_counts.values()),
+                        "recovered_failure_counts": dict(sorted(recovered_failure_counts.items())),
                         "reliability_status": "degraded_recovered",
                     }
                 ),
@@ -1680,17 +1445,12 @@ def build_pilot_reassessment_report(
             "efficiency": {
                 "coordinate_count": len(observations),
                 "wall_time_ms_total": round(wall_time_ms, 6),
-                "wall_time_ms_mean_per_coordinate": round(
-                    wall_time_ms / len(observations), 6
-                ),
+                "wall_time_ms_mean_per_coordinate": round(wall_time_ms / len(observations), 6),
                 "model_calls": model_calls,
                 "solver_processes": solver_processes,
                 "retries": retries,
                 "stage_invocations": (
-                    sum(
-                        int(item["stage_invocations"])
-                        for item in observations
-                    )
+                    sum(int(item["stage_invocations"]) for item in observations)
                     if cache_setup_count
                     else totals["invoked_stage_count"]
                 ),
@@ -1701,27 +1461,18 @@ def build_pilot_reassessment_report(
                     if not cache_setup_count
                     else {
                         "cache_setup_invocations": cache_setup_count,
-                        "cache_setup_wall_time_ms_total": round(
-                            cache_setup_wall_time_ms, 6
-                        ),
-                        "cache_setup_model_calls": (
-                            cache_setup_model_calls
-                        ),
+                        "cache_setup_wall_time_ms_total": round(cache_setup_wall_time_ms, 6),
+                        "cache_setup_model_calls": (cache_setup_model_calls),
                         "cache_setup_retries": cache_setup_retries,
                         "graph_stage_invocations": sum(
-                            int(item["graph_stage_invocations"])
-                            for item in observations
+                            int(item["graph_stage_invocations"]) for item in observations
                         ),
                         "measured_wall_time_ms_total": round(
                             wall_time_ms - cache_setup_wall_time_ms,
                             6,
                         ),
-                        "measured_model_calls": (
-                            model_calls - cache_setup_model_calls
-                        ),
-                        "measured_retries": (
-                            retries - cache_setup_retries
-                        ),
+                        "measured_model_calls": (model_calls - cache_setup_model_calls),
+                        "measured_retries": (retries - cache_setup_retries),
                     }
                 ),
             },
@@ -1743,15 +1494,11 @@ def build_pilot_reassessment_report(
                     int(safety_source["invalid_control_verified_count"]),
                     int(safety_source["invalid_control_coordinate_count"]),
                 ),
-                "fatal_safety_incident": int(
-                    safety_source["invalid_control_verified_count"]
-                )
+                "fatal_safety_incident": int(safety_source["invalid_control_verified_count"])
                 > DEFAULT_PROTOCOL.thresholds.invalid_control_verified_max,
                 "holdout_accessed": safety_source["holdout_accessed"],
                 "fallback_used": safety_source["fallback_used"],
-                "production_routing_changed": safety_source[
-                    "production_routing_changed"
-                ],
+                "production_routing_changed": safety_source["production_routing_changed"],
             },
             "pareto": pareto,
         },
@@ -1760,9 +1507,7 @@ def build_pilot_reassessment_report(
             "status": status,
             "frozen": True,
             "freeze_kind": (
-                "exact_nondominated_shortlist"
-                if eligible
-                else "empty_due_to_no_eligible_candidate"
+                "exact_nondominated_shortlist" if eligible else "empty_due_to_no_eligible_candidate"
             ),
             "candidate_max": DEFAULT_PROTOCOL.thresholds.shortlist_candidate_max,
             "selected_variant_ids": selected if eligible else [],
@@ -1805,21 +1550,13 @@ def build_pilot_reassessment_report(
             "status": status,
             "structurally_valid": True,
             "matrix_complete": True,
-            "efficacy_status": (
-                "measured_zero" if verified == 0 else "measured_nonzero"
-            ),
+            "efficacy_status": ("measured_zero" if verified == 0 else "measured_nonzero"),
             "semantic_quality_status": (
                 "unavailable"
                 if semantic_source_binding is None
-                else (
-                    "complete"
-                    if semantic_complete
-                    else "incomplete"
-                )
+                else ("complete" if semantic_complete else "incomplete")
             ),
-            "shortlist_status": (
-                "frozen_nonempty" if eligible else "frozen_empty"
-            ),
+            "shortlist_status": ("frozen_nonempty" if eligible else "frozen_empty"),
             "holdout_authorized": eligible,
             "production_promotion_authorized": False,
             "reason": (
@@ -1872,9 +1609,7 @@ def validate_pilot_reassessment_report(
         benchmark_root=benchmark_root,
     )
     if data != expected:
-        raise PilotReassessmentError(
-            "pilot reassessment differs from recomputed source evidence"
-        )
+        raise PilotReassessmentError("pilot reassessment differs from recomputed source evidence")
     return data
 
 
@@ -1888,9 +1623,7 @@ def _snapshot(
 ) -> dict[str, object]:
     shortlist = _mapping(report["shortlist"], "shortlist")
     decision = _mapping(report["decision"], "decision")
-    safety = _mapping(
-        _mapping(report["reports"], "reports")["safety"], "reports.safety"
-    )
+    safety = _mapping(_mapping(report["reports"], "reports")["safety"], "reports.safety")
     run_id = str(report["run_id"])
     try:
         layout = ReassessmentRunLayout.for_run(
@@ -1898,9 +1631,7 @@ def _snapshot(
             benchmark_root=benchmark_root,
         )
     except ValueError as exc:
-        raise PilotReassessmentError(
-            "pilot snapshot run_id is invalid"
-        ) from exc
+        raise PilotReassessmentError("pilot snapshot run_id is invalid") from exc
     artifact_reference = (
         DEFAULT_PILOT_REASSESSMENT_PATH.as_posix()
         if run_id == PILOT_REASSESSMENT_RUN_ID
@@ -1915,14 +1646,8 @@ def _snapshot(
     if run_id == PILOT_REASSESSMENT_RUN_ID:
         notes = [
             "The complete unchanged pilot/development matrix was source-validated.",
-            (
-                "Zero kernel acceptances are measured efficacy, not missing "
-                "or positive evidence."
-            ),
-            (
-                "No eligible arm passed; the shortlist is frozen empty and "
-                "holdout remains sealed."
-            ),
+            ("Zero kernel acceptances are measured efficacy, not missing or positive evidence."),
+            ("No eligible arm passed; the shortlist is frozen empty and holdout remains sealed."),
         ]
     else:
         selected_count = int(shortlist["selected_count"])
@@ -1977,9 +1702,7 @@ def _snapshot(
                 "reason": shortlist["reason"],
             },
             "holdout_authorized": decision["holdout_authorized"],
-            "production_promotion_authorized": decision[
-                "production_promotion_authorized"
-            ],
+            "production_promotion_authorized": decision["production_promotion_authorized"],
             "safety": dict(safety),
             "remediation": report["remediation"],
         },
@@ -2023,11 +1746,7 @@ def load_pilot_reassessment_report(
         benchmark_root=benchmark_root,
     )
     if validate_snapshot:
-        selected_snapshot = Path(
-            layout.pilot_snapshot
-            if snapshot_path is None
-            else snapshot_path
-        )
+        selected_snapshot = Path(layout.pilot_snapshot if snapshot_path is None else snapshot_path)
         selected_snapshot_path = _rooted(root, selected_snapshot)
         if run_id != PILOT_REASSESSMENT_RUN_ID:
             _fresh_artifact_reference(
@@ -2052,9 +1771,7 @@ def load_pilot_reassessment_report(
             benchmark_root=benchmark_root,
             captured_on=snapshot_mapping.get("captured_on"),
         ):
-            raise PilotReassessmentError(
-                "pilot reassessment snapshot differs from the artifact"
-            )
+            raise PilotReassessmentError("pilot reassessment snapshot differs from the artifact")
     return report
 
 
@@ -2115,14 +1832,8 @@ def write_pilot_reassessment_report(
             run_id,
             benchmark_root=benchmark_root,
         )
-        artifact_reference = Path(
-            layout.pilot_report if path is None else path
-        )
-        snapshot_reference = Path(
-            layout.pilot_snapshot
-            if snapshot_path is None
-            else snapshot_path
-        )
+        artifact_reference = Path(layout.pilot_report if path is None else path)
+        snapshot_reference = Path(layout.pilot_snapshot if snapshot_path is None else snapshot_path)
         reject_published_write_targets(
             repository_root=root,
             run_id=run_id,
@@ -2176,9 +1887,7 @@ def pilot_reassessment_summary(report: object) -> dict[str, object]:
     shortlist = _mapping(value["shortlist"], "shortlist")
     decision = _mapping(value["decision"], "decision")
     completeness = _mapping(value["completeness"], "completeness")
-    safety = _mapping(
-        _mapping(value["reports"], "reports")["safety"], "reports.safety"
-    )
+    safety = _mapping(_mapping(value["reports"], "reports")["safety"], "reports.safety")
     return {
         "section": "pilot-shortlist",
         "schema": value["schema"],

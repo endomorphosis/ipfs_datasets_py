@@ -203,9 +203,7 @@ class TestGoalFeatures:
         assert "CustomType" in goal.types
 
     def test_from_statement_normalizes_imports(self):
-        goal = GoalFeatures.from_statement(
-            "theorem t : True", imports=["A", "B", "A"]
-        )
+        goal = GoalFeatures.from_statement("theorem t : True", imports=["A", "B", "A"])
         assert goal.imports == frozenset({"A", "B"})
 
     def test_from_theorem_entry_uses_statement_and_imports(self):
@@ -429,11 +427,7 @@ class TestSelectPremises:
         result = select_premises(manifest, goal, top_k=10)
         selected_ids = {p.premise_id for p in result.selected}
         assert "Nat.add_comm" not in selected_ids
-        self_excluded = [
-            e
-            for e in result.excluded
-            if e.premise_id == "Nat.add_comm"
-        ]
+        self_excluded = [e for e in result.excluded if e.premise_id == "Nat.add_comm"]
         assert len(self_excluded) == 1
         assert self_excluded[0].reason == PremiseExclusionReason.SELF_REFERENCE
 
@@ -452,9 +446,7 @@ class TestSelectPremises:
         result = select_premises(manifest, make_goal(), top_k=10, min_score=0.9)
         assert result.selected == []
         floor_excluded = [
-            e
-            for e in result.excluded
-            if e.reason == PremiseExclusionReason.BELOW_SCORE_FLOOR
+            e for e in result.excluded if e.reason == PremiseExclusionReason.BELOW_SCORE_FLOOR
         ]
         assert len(floor_excluded) == len(manifest.entries)
 
@@ -467,9 +459,7 @@ class TestSelectPremises:
             e for e in result.excluded if e.reason == PremiseExclusionReason.BELOW_CUTOFF
         ]
         floor_excluded = [
-            e
-            for e in result.excluded
-            if e.reason == PremiseExclusionReason.BELOW_SCORE_FLOOR
+            e for e in result.excluded if e.reason == PremiseExclusionReason.BELOW_SCORE_FLOOR
         ]
         assert len(result.selected) <= 1
         assert len(below_cutoff) + len(floor_excluded) + len(result.selected) == len(
@@ -569,7 +559,9 @@ class TestSelectPremisesForTheorem:
 class TestExcludedPremise:
     def test_valid_record_passes_validation(self):
         ExcludedPremise(
-            premise_id="p1", score=0.5, reason=PremiseExclusionReason.BELOW_CUTOFF,
+            premise_id="p1",
+            score=0.5,
+            reason=PremiseExclusionReason.BELOW_CUTOFF,
             corpus_revision="rev1",
         ).validate()
 
@@ -579,9 +571,7 @@ class TestExcludedPremise:
 
     def test_non_finite_score_rejected(self):
         with pytest.raises(ValueError):
-            ExcludedPremise(
-                premise_id="p1", score=float("inf"), corpus_revision="rev1"
-            ).validate()
+            ExcludedPremise(premise_id="p1", score=float("inf"), corpus_revision="rev1").validate()
 
     def test_invalid_reason_type_rejected(self):
         record = ExcludedPremise(premise_id="p1", corpus_revision="rev1")

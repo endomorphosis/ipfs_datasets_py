@@ -115,9 +115,7 @@ def test_v1_canonical_vector_is_pinned() -> None:
     assert shared_identity.digest == (
         "sha256:4a7e98fc3787f2b664cc026bb5ece8350268a9340d3a50838f4ba0097c9de231"
     )
-    assert shared_identity.cid == (
-        "bafkreickp2mpyn4h6k3gjtacno26z2bvajuksnanhjiihd2luaexzhpcge"
-    )
+    assert shared_identity.cid == ("bafkreickp2mpyn4h6k3gjtacno26z2bvajuksnanhjiihd2luaexzhpcge")
 
 
 @pytest.mark.parametrize(
@@ -166,9 +164,7 @@ def test_decoder_rejects_unknown_fields_and_duplicate_json_keys() -> None:
         (("terminal_action_ids",), "action:missing"),
     ],
 )
-def test_decoder_rejects_every_dangling_internal_reference(
-    path: tuple, missing_id: str
-) -> None:
+def test_decoder_rejects_every_dangling_internal_reference(path: tuple, missing_id: str) -> None:
     payload = _v1_payload()
     target = payload
     for part in path[:-1]:
@@ -194,13 +190,9 @@ def test_grounded_and_inferred_nodes_are_explicit() -> None:
 
 def test_collection_semantics_are_declared_and_enforced() -> None:
     assert (
-        INTENT_IR_COLLECTION_SEMANTICS["IntentStatement.arguments"]
-        is CollectionSemantics.ORDERED
+        INTENT_IR_COLLECTION_SEMANTICS["IntentStatement.arguments"] is CollectionSemantics.ORDERED
     )
-    assert (
-        INTENT_IR_COLLECTION_SEMANTICS["IntentIRDocument.tags"]
-        is CollectionSemantics.SET_LIKE
-    )
+    assert INTENT_IR_COLLECTION_SEMANTICS["IntentIRDocument.tags"] is CollectionSemantics.SET_LIKE
     with pytest.raises(TypeError):
         INTENT_IR_COLLECTION_SEMANTICS["IntentIRDocument.tags"] = (  # type: ignore[index]
             CollectionSemantics.ORDERED
@@ -244,11 +236,9 @@ def test_v0_1_migration_is_auditable_and_classifies_nodes() -> None:
     assert result.receipt is not None
     assert result.receipt.loss_report.lossy
     assert result.receipt.verifies(payload, result.document.to_dict())
-    assert (
-        INTENT_IR_SCHEMA_REGISTRY.negotiate(
-            LEGACY_INTENT_IR_SCHEMA_VERSION, INTENT_IR_SCHEMA_VERSION
-        ).requires_migration
-    )
+    assert INTENT_IR_SCHEMA_REGISTRY.negotiate(
+        LEGACY_INTENT_IR_SCHEMA_VERSION, INTENT_IR_SCHEMA_VERSION
+    ).requires_migration
 
 
 def test_v0_1_migration_reports_and_can_reject_loss() -> None:
@@ -258,9 +248,7 @@ def test_v0_1_migration_reports_and_can_reject_loss() -> None:
     result = migrate_intent_ir(payload)
     assert not result.is_lossless
     duplicate_loss = next(
-        item
-        for item in result.loss_diagnostics
-        if item.code == "duplicate_set_members_removed"
+        item for item in result.loss_diagnostics if item.code == "duplicate_set_members_removed"
     )
     assert duplicate_loss.path == "$.tags"
     assert result.document.tags == ("canonical",)
@@ -309,9 +297,7 @@ def test_json_schema_declares_closed_v1_and_collection_semantics() -> None:
     assert schema["x-extension-policy"] == "closed"
     assert schema["properties"]["actions"]["x-collection-semantics"] == "set-like"
     assert (
-        schema["$defs"]["statement"]["properties"]["arguments"][
-            "x-collection-semantics"
-        ]
+        schema["$defs"]["statement"]["properties"]["arguments"]["x-collection-semantics"]
         == "ordered"
     )
     assert set(schema["$defs"]["grounding"]["enum"]) == {"grounded", "inferred"}

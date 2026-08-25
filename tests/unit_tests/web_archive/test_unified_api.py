@@ -483,7 +483,10 @@ def test_unified_api_fetch_uses_search_for_thin_successful_fetch() -> None:
     assert response.document is not None
     assert response.document.url == "https://new.example.org/indiana/code"
     assert response.document.metadata.get("relocated_via_search") is True
-    assert response.document.extraction_provenance.get("relocated_to") == "https://new.example.org/indiana/code"
+    assert (
+        response.document.extraction_provenance.get("relocated_to")
+        == "https://new.example.org/indiana/code"
+    )
 
 
 def test_unified_api_fetch_filters_irrelevant_relocation_hits() -> None:

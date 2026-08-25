@@ -5,6 +5,7 @@ Methods under test:
   - OntologyOptimizer.convergence_score()
   - LogicValidator.strongly_connected_components(ontology)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -13,11 +14,17 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -25,6 +32,7 @@ def _make_score(**kwargs):
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     gen = MagicMock()
     critic = MagicMock()
     m = OntologyMediator(gen, critic)
@@ -34,6 +42,7 @@ def _make_mediator():
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -49,12 +58,14 @@ def _push_opt(o, avg):
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 # ---------------------------------------------------------------------------
 # OntologyMediator.apply_feedback_list
 # ---------------------------------------------------------------------------
+
 
 class TestApplyFeedbackList:
     @pytest.mark.parametrize(
@@ -84,6 +95,7 @@ class TestApplyFeedbackList:
 # OntologyOptimizer.convergence_score
 # ---------------------------------------------------------------------------
 
+
 class TestConvergenceScore:
     @pytest.mark.parametrize(
         "history,predicate",
@@ -109,6 +121,7 @@ class TestConvergenceScore:
 # LogicValidator.strongly_connected_components
 # ---------------------------------------------------------------------------
 
+
 class TestStronglyConnectedComponents:
     @pytest.mark.parametrize(
         "ontology,predicate",
@@ -116,7 +129,10 @@ class TestStronglyConnectedComponents:
             ({}, lambda sccs: sccs == []),
             (
                 {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}], "relationships": []},
-                lambda sccs: sorted([n for scc in sccs for n in scc]) == ["A", "B", "C"] and all(len(s) == 1 for s in sccs),
+                lambda sccs: (
+                    sorted([n for scc in sccs for n in scc]) == ["A", "B", "C"]
+                    and all(len(s) == 1 for s in sccs)
+                ),
             ),
             (
                 {
@@ -132,7 +148,10 @@ class TestStronglyConnectedComponents:
             (
                 {
                     "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
-                    "relationships": [{"subject_id": "A", "object_id": "B"}, {"subject_id": "B", "object_id": "C"}],
+                    "relationships": [
+                        {"subject_id": "A", "object_id": "B"},
+                        {"subject_id": "B", "object_id": "C"},
+                    ],
                 },
                 lambda sccs: all(len(s) == 1 for s in sccs),
             ),

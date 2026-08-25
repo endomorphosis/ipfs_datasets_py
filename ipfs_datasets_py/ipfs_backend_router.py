@@ -172,7 +172,9 @@ class KuboCLIBackend:
         pin_flag = "true" if pin else "false"
         # `ipfs add` can read from stdin.
         # Kubo treats `--pin` as a boolean flag; pass as `--pin=true/false`.
-        out = self._run(["add", "-Q", f"--pin={pin_flag}", "--stdin-name", "data.bin"], input_bytes=data)
+        out = self._run(
+            ["add", "-Q", f"--pin={pin_flag}", "--stdin-name", "data.bin"], input_bytes=data
+        )
         return out.decode("utf-8", errors="replace").strip()
 
     def cat(self, cid: str) -> bytes:
@@ -190,7 +192,9 @@ class KuboCLIBackend:
             handle.write(data)
             handle.flush()
             try:
-                out = self._run(["block", "put", "--cid-version", "1", "--format", str(codec), handle.name])
+                out = self._run(
+                    ["block", "put", "--cid-version", "1", "--format", str(codec), handle.name]
+                )
             except RuntimeError as e:
                 # Some IPFS CLIs don't support these flags; retry with a minimal invocation.
                 msg = str(e)
@@ -242,7 +246,9 @@ class KuboCLIBackend:
 
     # ---- Optional: IPNS + pubsub (best-effort) ----
 
-    def name_publish(self, cid: str, *, key: Optional[str] = None, allow_offline: bool = True) -> str:
+    def name_publish(
+        self, cid: str, *, key: Optional[str] = None, allow_offline: bool = True
+    ) -> str:
         args: list[str] = ["name", "publish"]
         if allow_offline:
             args.append("--allow-offline")
@@ -353,7 +359,9 @@ def _get_httpapi_backend() -> Optional[IPFSBackend]:
 
             # Optional: IPNS + pubsub (best-effort)
 
-            def name_publish(self, cid: str, *, key: Optional[str] = None, allow_offline: bool = True) -> str:
+            def name_publish(
+                self, cid: str, *, key: Optional[str] = None, allow_offline: bool = True
+            ) -> str:
                 kwargs: dict = {"allow_offline": bool(allow_offline)}
                 if key:
                     kwargs["key"] = str(key)
@@ -511,7 +519,9 @@ def _get_ipfs_kit_backend() -> Optional[IPFSBackend]:
         def _extract_cid(result) -> Optional[str]:
             if isinstance(result, str) and result:
                 return result
-            cid = _extract_nested_value(result, ("cid", "Cid", "Hash", "hash", "Key", "key", "path"))
+            cid = _extract_nested_value(
+                result, ("cid", "Cid", "Hash", "hash", "Key", "key", "path")
+            )
             if isinstance(cid, str) and cid:
                 return cid
             return None
@@ -548,7 +558,9 @@ def _get_ipfs_kit_backend() -> Optional[IPFSBackend]:
             )
             if isinstance(detail, list):
                 detail = "; ".join(str(item) for item in detail if item not in (None, ""))
-            text = str(detail).strip() if detail not in (None, "") else f"ipfs_kit_py {action} failed"
+            text = (
+                str(detail).strip() if detail not in (None, "") else f"ipfs_kit_py {action} failed"
+            )
             return RuntimeError(text)
 
         def _is_success(result) -> bool:
@@ -850,7 +862,9 @@ def get_to_path(
     backend_instance: Optional[IPFSBackend] = None,
     deps: Optional[RouterDeps] = None,
 ) -> None:
-    return (backend_instance or get_ipfs_backend(backend, deps=deps)).get_to_path(cid, output_path=output_path)
+    return (backend_instance or get_ipfs_backend(backend, deps=deps)).get_to_path(
+        cid, output_path=output_path
+    )
 
 
 def ls(

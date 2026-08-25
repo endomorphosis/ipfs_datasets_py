@@ -24,26 +24,31 @@ import pytest
 # Profile A: interface_descriptor.py
 # ============================================================
 
+
 class TestArtifactCid:
     """artifact_cid() / _canonical_cid() shared behaviour."""
 
     def test_canonical_cid_deterministic(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import _canonical_cid
+
         a = _canonical_cid({"b": 2, "a": 1})
         b = _canonical_cid({"a": 1, "b": 2})
         assert a == b, "CID must be key-order independent"
 
     def test_canonical_cid_prefix(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import _canonical_cid
+
         cid = _canonical_cid({"x": 1})
         assert cid.startswith("bafy-mock-")
 
     def test_canonical_cid_different_content(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import _canonical_cid
+
         assert _canonical_cid({"a": 1}) != _canonical_cid({"a": 2})
 
     def test_canonical_cid_length(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import _canonical_cid
+
         cid = _canonical_cid({})
         # "bafy-mock-" + 32 hex chars
         assert len(cid) == len("bafy-mock-") + 32
@@ -52,6 +57,7 @@ class TestArtifactCid:
 class TestMethodSignature:
     def test_defaults(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import MethodSignature
+
         m = MethodSignature(name="repo.status")
         assert m.input_schema == {}
         assert m.output_schema == {}
@@ -59,6 +65,7 @@ class TestMethodSignature:
 
     def test_custom(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import MethodSignature
+
         m = MethodSignature(
             name="repo.clone",
             input_schema={"url": "string"},
@@ -72,12 +79,14 @@ class TestMethodSignature:
 class TestCompatibilityInfo:
     def test_defaults(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import CompatibilityInfo
+
         c = CompatibilityInfo()
         assert c.compatible_with == []
         assert c.supersedes == []
 
     def test_custom(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import CompatibilityInfo
+
         c = CompatibilityInfo(compatible_with=["bafy-abc"], supersedes=["bafy-old"])
         assert "bafy-abc" in c.compatible_with
         assert "bafy-old" in c.supersedes
@@ -86,8 +95,11 @@ class TestCompatibilityInfo:
 class TestInterfaceDescriptor:
     def _make(self) -> Any:
         from ipfs_datasets_py.mcp_server.interface_descriptor import (
-            InterfaceDescriptor, MethodSignature, CompatibilityInfo,
+            InterfaceDescriptor,
+            MethodSignature,
+            CompatibilityInfo,
         )
+
         return InterfaceDescriptor(
             name="git",
             namespace="com.example.tools",
@@ -108,7 +120,15 @@ class TestInterfaceDescriptor:
     def test_to_dict_contains_all_keys(self) -> None:
         d = self._make()
         dd = d.to_dict()
-        for key in ("name", "namespace", "version", "methods", "errors", "requires", "compatibility"):
+        for key in (
+            "name",
+            "namespace",
+            "version",
+            "methods",
+            "errors",
+            "requires",
+            "compatibility",
+        ):
             assert key in dd, f"Missing key: {key}"
 
     def test_interface_cid_is_stable(self) -> None:
@@ -119,12 +139,14 @@ class TestInterfaceDescriptor:
 
     def test_different_descriptors_different_cids(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import InterfaceDescriptor
+
         d1 = InterfaceDescriptor(name="a", namespace="ns", version="1.0.0")
         d2 = InterfaceDescriptor(name="b", namespace="ns", version="1.0.0")
         assert d1.interface_cid != d2.interface_cid
 
     def test_minimal_descriptor(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import InterfaceDescriptor
+
         d = InterfaceDescriptor(name="tool", namespace="ns", version="1.0.0")
         assert d.interface_cid.startswith("bafy-mock-")
 
@@ -132,8 +154,10 @@ class TestInterfaceDescriptor:
 class TestInterfaceRepository:
     def test_register_and_list(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import (
-            InterfaceDescriptor, InterfaceRepository,
+            InterfaceDescriptor,
+            InterfaceRepository,
         )
+
         repo = InterfaceRepository()
         desc = InterfaceDescriptor(name="git", namespace="ns", version="1.0.0")
         cid = repo.register(desc)
@@ -142,8 +166,10 @@ class TestInterfaceRepository:
 
     def test_get_existing(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import (
-            InterfaceDescriptor, InterfaceRepository,
+            InterfaceDescriptor,
+            InterfaceRepository,
         )
+
         repo = InterfaceRepository()
         desc = InterfaceDescriptor(name="git", namespace="ns", version="1.0.0")
         cid = repo.register(desc)
@@ -152,13 +178,16 @@ class TestInterfaceRepository:
 
     def test_get_missing_returns_none(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import InterfaceRepository
+
         repo = InterfaceRepository()
         assert repo.get("bafy-nonexistent") is None
 
     def test_check_compat_direct_match(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import (
-            InterfaceDescriptor, InterfaceRepository,
+            InterfaceDescriptor,
+            InterfaceRepository,
         )
+
         repo = InterfaceRepository()
         desc = InterfaceDescriptor(name="git", namespace="ns", version="1.0.0")
         cid = repo.register(desc)
@@ -167,11 +196,15 @@ class TestInterfaceRepository:
 
     def test_check_compat_missing_capability(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import (
-            InterfaceDescriptor, InterfaceRepository,
+            InterfaceDescriptor,
+            InterfaceRepository,
         )
+
         repo = InterfaceRepository()
         desc = InterfaceDescriptor(
-            name="git", namespace="ns", version="1.0.0",
+            name="git",
+            namespace="ns",
+            version="1.0.0",
             requires=["mcp++/ucan"],
         )
         cid = repo.register(desc)
@@ -181,11 +214,15 @@ class TestInterfaceRepository:
 
     def test_check_compat_satisfied_capability(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import (
-            InterfaceDescriptor, InterfaceRepository,
+            InterfaceDescriptor,
+            InterfaceRepository,
         )
+
         repo = InterfaceRepository()
         desc = InterfaceDescriptor(
-            name="git", namespace="ns", version="1.0.0",
+            name="git",
+            namespace="ns",
+            version="1.0.0",
             requires=["mcp++/ucan"],
         )
         cid = repo.register(desc)
@@ -194,6 +231,7 @@ class TestInterfaceRepository:
 
     def test_check_compat_unknown_cid(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import InterfaceRepository
+
         repo = InterfaceRepository()
         verdict = repo.check_compat("bafy-unknown")
         assert verdict.compatible is False
@@ -201,12 +239,17 @@ class TestInterfaceRepository:
 
     def test_check_compat_via_compatible_with(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import (
-            InterfaceDescriptor, InterfaceRepository, CompatibilityInfo,
+            InterfaceDescriptor,
+            InterfaceRepository,
+            CompatibilityInfo,
         )
+
         repo = InterfaceRepository()
         old_cid = "bafy-mock-old-interface"
         desc = InterfaceDescriptor(
-            name="git", namespace="ns", version="2.0.0",
+            name="git",
+            namespace="ns",
+            version="2.0.0",
             compatibility=CompatibilityInfo(compatible_with=[old_cid]),
         )
         repo.register(desc)
@@ -215,8 +258,10 @@ class TestInterfaceRepository:
 
     def test_toolset_slice_no_filter(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import (
-            InterfaceDescriptor, InterfaceRepository,
+            InterfaceDescriptor,
+            InterfaceRepository,
         )
+
         repo = InterfaceRepository()
         for i in range(5):
             repo.register(InterfaceDescriptor(name=f"t{i}", namespace="ns", version="1.0.0"))
@@ -225,8 +270,10 @@ class TestInterfaceRepository:
 
     def test_toolset_slice_budget(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import (
-            InterfaceDescriptor, InterfaceRepository,
+            InterfaceDescriptor,
+            InterfaceRepository,
         )
+
         repo = InterfaceRepository()
         for i in range(10):
             repo.register(InterfaceDescriptor(name=f"t{i}", namespace="ns", version="1.0.0"))
@@ -235,21 +282,37 @@ class TestInterfaceRepository:
 
     def test_toolset_slice_semantic_tags(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import (
-            InterfaceDescriptor, InterfaceRepository,
+            InterfaceDescriptor,
+            InterfaceRepository,
         )
+
         repo = InterfaceRepository()
-        repo.register(InterfaceDescriptor(name="git", namespace="ns", version="1.0.0", semantic_tags=["vcs"]))
-        repo.register(InterfaceDescriptor(name="s3", namespace="ns", version="1.0.0", semantic_tags=["storage"]))
+        repo.register(
+            InterfaceDescriptor(name="git", namespace="ns", version="1.0.0", semantic_tags=["vcs"])
+        )
+        repo.register(
+            InterfaceDescriptor(
+                name="s3", namespace="ns", version="1.0.0", semantic_tags=["storage"]
+            )
+        )
         result = repo.toolset_slice(semantic_tags=["vcs"])
         assert len(result) == 1
 
     def test_toolset_slice_required_capabilities(self) -> None:
         from ipfs_datasets_py.mcp_server.interface_descriptor import (
-            InterfaceDescriptor, InterfaceRepository,
+            InterfaceDescriptor,
+            InterfaceRepository,
         )
+
         repo = InterfaceRepository()
-        repo.register(InterfaceDescriptor(name="free", namespace="ns", version="1.0.0", requires=[]))
-        repo.register(InterfaceDescriptor(name="ucan", namespace="ns", version="1.0.0", requires=["mcp++/ucan"]))
+        repo.register(
+            InterfaceDescriptor(name="free", namespace="ns", version="1.0.0", requires=[])
+        )
+        repo.register(
+            InterfaceDescriptor(
+                name="ucan", namespace="ns", version="1.0.0", requires=["mcp++/ucan"]
+            )
+        )
         # Caller only has no capabilities — should only get "free"
         result = repo.toolset_slice(required_capabilities=[])
         assert len(result) == 1
@@ -259,25 +322,30 @@ class TestInterfaceRepository:
 # Profile B: cid_artifacts.py
 # ============================================================
 
+
 class TestArtifactCidHelper:
     def test_deterministic(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import artifact_cid
+
         a = artifact_cid({"z": 0, "a": 1})
         b = artifact_cid({"a": 1, "z": 0})
         assert a == b
 
     def test_prefix(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import artifact_cid
+
         assert artifact_cid({}).startswith("bafy-mock-")
 
     def test_distinct_for_different_values(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import artifact_cid
+
         assert artifact_cid({"v": 1}) != artifact_cid({"v": 2})
 
 
 class TestIntentObject:
     def _make(self) -> Any:
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
+
         return IntentObject(
             interface_cid="bafy-mock-iface",
             tool="repo.status",
@@ -304,6 +372,7 @@ class TestIntentObject:
 
     def test_different_tools_different_cids(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
+
         a = IntentObject(interface_cid="x", tool="a", input_cid="y")
         b = IntentObject(interface_cid="x", tool="b", input_cid="y")
         assert a.intent_cid != b.intent_cid
@@ -312,24 +381,29 @@ class TestIntentObject:
 class TestDecisionObject:
     def test_allow_verdict(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import DecisionObject
+
         d = DecisionObject(decision="allow", intent_cid="bafy-i", policy_cid="bafy-p")
         assert d.decision == "allow"
 
     def test_decision_cid_prefix(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import DecisionObject
+
         d = DecisionObject(decision="deny", intent_cid="bafy-i", policy_cid="bafy-p")
         assert d.decision_cid.startswith("bafy-mock-")
 
     def test_decision_cid_stable(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import DecisionObject
+
         d = DecisionObject(decision="allow", intent_cid="bafy-i", policy_cid="bafy-p")
         assert d.decision_cid == d.decision_cid
 
     def test_to_dict_contains_obligations(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import DecisionObject
+
         d = DecisionObject(
             decision="allow_with_obligations",
-            intent_cid="bafy-i", policy_cid="bafy-p",
+            intent_cid="bafy-i",
+            policy_cid="bafy-p",
             obligations=[{"type": "produce_receipt", "deadline": "2026-12-31"}],
         )
         assert d.to_dict()["obligations"][0]["type"] == "produce_receipt"
@@ -338,21 +412,25 @@ class TestDecisionObject:
 class TestReceiptObject:
     def test_fields(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import ReceiptObject
+
         r = ReceiptObject(intent_cid="bafy-i", output_cid="bafy-o", decision_cid="bafy-d")
         assert r.intent_cid == "bafy-i"
 
     def test_receipt_cid_prefix(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import ReceiptObject
+
         r = ReceiptObject(intent_cid="bafy-i", output_cid="bafy-o", decision_cid="bafy-d")
         assert r.receipt_cid.startswith("bafy-mock-")
 
     def test_time_observed_auto_set(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import ReceiptObject
+
         r = ReceiptObject(intent_cid="bafy-i", output_cid="bafy-o", decision_cid="bafy-d")
         assert r.time_observed  # non-empty
 
     def test_to_dict_contains_correlation_id(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import ReceiptObject
+
         r = ReceiptObject(intent_cid="i", output_cid="o", decision_cid="d", correlation_id="x")
         assert r.to_dict()["correlation_id"] == "x"
 
@@ -360,6 +438,7 @@ class TestReceiptObject:
 class TestExecutionEnvelope:
     def test_fields(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import ExecutionEnvelope
+
         e = ExecutionEnvelope(
             interface_cid="bafy-iface",
             input_cid="bafy-input",
@@ -370,11 +449,13 @@ class TestExecutionEnvelope:
 
     def test_envelope_cid_stable(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import ExecutionEnvelope
+
         e = ExecutionEnvelope(interface_cid="x", input_cid="y", intent_cid="z")
         assert e.envelope_cid == e.envelope_cid
 
     def test_to_dict_keys(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import ExecutionEnvelope
+
         e = ExecutionEnvelope(interface_cid="x", input_cid="y", intent_cid="z")
         d = e.to_dict()
         for k in ("interface_cid", "input_cid", "intent_cid", "parents"):
@@ -384,6 +465,7 @@ class TestExecutionEnvelope:
 class TestEventNode:
     def test_fields(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         node = EventNode(
             parents=["bafy-parent"],
             interface_cid="bafy-iface",
@@ -393,17 +475,20 @@ class TestEventNode:
 
     def test_event_cid_prefix(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         node = EventNode()
         assert node.event_cid.startswith("bafy-mock-")
 
     def test_event_cid_differs_when_parents_differ(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         a = EventNode(parents=[], intent_cid="same")
         b = EventNode(parents=["bafy-x"], intent_cid="same")
         assert a.event_cid != b.event_cid
 
     def test_to_dict_timestamps(self) -> None:
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         node = EventNode()
         d = node.to_dict()
         assert "created" in d["timestamps"]
@@ -414,9 +499,11 @@ class TestEventNode:
 # Profile D: temporal_policy.py
 # ============================================================
 
+
 class TestPolicyClause:
     def test_defaults(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import PolicyClause
+
         c = PolicyClause(clause_type="permission")
         assert c.actor == "*"
         assert c.action == "*"
@@ -424,6 +511,7 @@ class TestPolicyClause:
 
     def test_to_dict_keys(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import PolicyClause
+
         d = PolicyClause(clause_type="prohibition", actor="alice", action="delete").to_dict()
         for k in ("clause_type", "actor", "action", "resource", "valid_from", "valid_until"):
             assert k in d
@@ -432,16 +520,19 @@ class TestPolicyClause:
 class TestPolicyObject:
     def test_policy_cid_stable(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import PolicyObject, PolicyClause
+
         p = PolicyObject(clauses=[PolicyClause(clause_type="permission")])
         assert p.policy_cid == p.policy_cid
 
     def test_policy_cid_prefix(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import PolicyObject
+
         p = PolicyObject()
         assert p.policy_cid.startswith("bafy-mock-")
 
     def test_to_dict_has_clauses(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import PolicyObject, PolicyClause
+
         p = PolicyObject(clauses=[PolicyClause(clause_type="obligation")])
         d = p.to_dict()
         assert len(d["clauses"]) == 1
@@ -451,6 +542,7 @@ class TestPolicyObject:
 class TestMakeSimplePermissionPolicy:
     def test_creates_permission_clause(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import make_simple_permission_policy
+
         p = make_simple_permission_policy("alice", "repo.status")
         assert len(p.clauses) == 1
         assert p.clauses[0].clause_type == "permission"
@@ -459,8 +551,10 @@ class TestMakeSimplePermissionPolicy:
 
     def test_with_time_window(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import make_simple_permission_policy
+
         p = make_simple_permission_policy(
-            "*", "read",
+            "*",
+            "read",
             valid_from="2026-01-01T00:00:00Z",
             valid_until="2026-12-31T23:59:59Z",
         )
@@ -468,13 +562,16 @@ class TestMakeSimplePermissionPolicy:
 
     def test_description_auto_generated(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import make_simple_permission_policy
+
         p = make_simple_permission_policy("bob", "write")
         assert "bob" in p.description or "write" in p.description
 
     def test_returns_policy_object(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import (
-            make_simple_permission_policy, PolicyObject,
+            make_simple_permission_policy,
+            PolicyObject,
         )
+
         p = make_simple_permission_policy("*", "*")
         assert isinstance(p, PolicyObject)
 
@@ -482,9 +579,11 @@ class TestMakeSimplePermissionPolicy:
 class TestPolicyEvaluatorAllow:
     def _setup(self) -> Any:
         from ipfs_datasets_py.mcp_server.temporal_policy import (
-            make_simple_permission_policy, PolicyEvaluator,
+            make_simple_permission_policy,
+            PolicyEvaluator,
         )
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
+
         policy = make_simple_permission_policy("alice", "repo.status")
         intent = IntentObject(
             interface_cid="bafy-iface",
@@ -516,9 +615,11 @@ class TestPolicyEvaluatorAllow:
 
     def test_wildcard_actor_allows_any(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import (
-            make_simple_permission_policy, PolicyEvaluator,
+            make_simple_permission_policy,
+            PolicyEvaluator,
         )
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
+
         policy = make_simple_permission_policy("*", "repo.status")
         intent = IntentObject(interface_cid="x", tool="repo.status", input_cid="y")
         evaluator = PolicyEvaluator()
@@ -529,9 +630,11 @@ class TestPolicyEvaluatorAllow:
 class TestPolicyEvaluatorDeny:
     def test_deny_when_actor_mismatch(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import (
-            make_simple_permission_policy, PolicyEvaluator,
+            make_simple_permission_policy,
+            PolicyEvaluator,
         )
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
+
         policy = make_simple_permission_policy("alice", "repo.status")
         intent = IntentObject(interface_cid="x", tool="repo.status", input_cid="y")
         evaluator = PolicyEvaluator()
@@ -540,9 +643,11 @@ class TestPolicyEvaluatorDeny:
 
     def test_deny_when_action_mismatch(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import (
-            make_simple_permission_policy, PolicyEvaluator,
+            make_simple_permission_policy,
+            PolicyEvaluator,
         )
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
+
         policy = make_simple_permission_policy("alice", "repo.status")
         intent = IntentObject(interface_cid="x", tool="repo.delete", input_cid="y")
         evaluator = PolicyEvaluator()
@@ -551,13 +656,18 @@ class TestPolicyEvaluatorDeny:
 
     def test_deny_when_prohibition_matches(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import (
-            PolicyEvaluator, PolicyObject, PolicyClause,
+            PolicyEvaluator,
+            PolicyObject,
+            PolicyClause,
         )
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
-        policy = PolicyObject(clauses=[
-            PolicyClause(clause_type="permission", actor="*", action="*"),
-            PolicyClause(clause_type="prohibition", actor="*", action="repo.delete"),
-        ])
+
+        policy = PolicyObject(
+            clauses=[
+                PolicyClause(clause_type="permission", actor="*", action="*"),
+                PolicyClause(clause_type="prohibition", actor="*", action="repo.delete"),
+            ]
+        )
         intent = IntentObject(interface_cid="x", tool="repo.delete", input_cid="y")
         evaluator = PolicyEvaluator()
         decision = evaluator.evaluate(intent, policy, actor="alice")
@@ -565,16 +675,22 @@ class TestPolicyEvaluatorDeny:
 
     def test_deny_when_expired_valid_until(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import (
-            PolicyEvaluator, PolicyObject, PolicyClause,
+            PolicyEvaluator,
+            PolicyObject,
+            PolicyClause,
         )
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
-        policy = PolicyObject(clauses=[
-            PolicyClause(
-                clause_type="permission",
-                actor="*", action="*",
-                valid_until="2020-01-01T00:00:00Z",  # in the past
-            ),
-        ])
+
+        policy = PolicyObject(
+            clauses=[
+                PolicyClause(
+                    clause_type="permission",
+                    actor="*",
+                    action="*",
+                    valid_until="2020-01-01T00:00:00Z",  # in the past
+                ),
+            ]
+        )
         intent = IntentObject(interface_cid="x", tool="read", input_cid="y")
         evaluator = PolicyEvaluator()
         decision = evaluator.evaluate(intent, policy)
@@ -582,13 +698,20 @@ class TestPolicyEvaluatorDeny:
 
     def test_deny_when_not_yet_valid(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import (
-            PolicyEvaluator, PolicyObject, PolicyClause,
+            PolicyEvaluator,
+            PolicyObject,
+            PolicyClause,
         )
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
+
         far_future = "2099-01-01T00:00:00Z"
-        policy = PolicyObject(clauses=[
-            PolicyClause(clause_type="permission", actor="*", action="*", valid_from=far_future),
-        ])
+        policy = PolicyObject(
+            clauses=[
+                PolicyClause(
+                    clause_type="permission", actor="*", action="*", valid_from=far_future
+                ),
+            ]
+        )
         intent = IntentObject(interface_cid="x", tool="read", input_cid="y")
         evaluator = PolicyEvaluator()
         decision = evaluator.evaluate(intent, policy)
@@ -598,17 +721,23 @@ class TestPolicyEvaluatorDeny:
 class TestPolicyEvaluatorObligations:
     def test_allow_with_obligations(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import (
-            PolicyEvaluator, PolicyObject, PolicyClause,
+            PolicyEvaluator,
+            PolicyObject,
+            PolicyClause,
         )
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
-        policy = PolicyObject(clauses=[
-            PolicyClause(clause_type="permission", actor="*", action="read"),
-            PolicyClause(
-                clause_type="obligation",
-                actor="*", action="*",
-                obligation_deadline="2026-12-31T23:59:59Z",
-            ),
-        ])
+
+        policy = PolicyObject(
+            clauses=[
+                PolicyClause(clause_type="permission", actor="*", action="read"),
+                PolicyClause(
+                    clause_type="obligation",
+                    actor="*",
+                    action="*",
+                    obligation_deadline="2026-12-31T23:59:59Z",
+                ),
+            ]
+        )
         intent = IntentObject(interface_cid="x", tool="read", input_cid="y")
         evaluator = PolicyEvaluator()
         decision = evaluator.evaluate(intent, policy)
@@ -618,9 +747,11 @@ class TestPolicyEvaluatorObligations:
 
     def test_proofs_checked_recorded(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import (
-            make_simple_permission_policy, PolicyEvaluator,
+            make_simple_permission_policy,
+            PolicyEvaluator,
         )
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
+
         policy = make_simple_permission_policy("*", "*")
         intent = IntentObject(interface_cid="x", tool="t", input_cid="y")
         evaluator = PolicyEvaluator()
@@ -629,9 +760,11 @@ class TestPolicyEvaluatorObligations:
 
     def test_evaluator_did_recorded(self) -> None:
         from ipfs_datasets_py.mcp_server.temporal_policy import (
-            make_simple_permission_policy, PolicyEvaluator,
+            make_simple_permission_policy,
+            PolicyEvaluator,
         )
         from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
+
         policy = make_simple_permission_policy("*", "*")
         intent = IntentObject(interface_cid="x", tool="t", input_cid="y")
         evaluator = PolicyEvaluator()
@@ -643,19 +776,23 @@ class TestPolicyEvaluatorObligations:
 # Event DAG: event_dag.py
 # ============================================================
 
+
 class TestEventDAGBasics:
     def _node(self, parents=None, intent="intent-1") -> Any:
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         return EventNode(parents=parents or [], intent_cid=intent)
 
     def test_empty_dag(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
+
         dag = EventDAG()
         assert len(dag) == 0
         assert dag.frontier() == []
 
     def test_append_single_node(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
+
         dag = EventDAG()
         node = self._node()
         cid = dag.append(node)
@@ -664,6 +801,7 @@ class TestEventDAGBasics:
 
     def test_get_existing_node(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
+
         dag = EventDAG()
         node = self._node()
         cid = dag.append(node)
@@ -671,11 +809,13 @@ class TestEventDAGBasics:
 
     def test_get_missing_returns_none(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
+
         dag = EventDAG()
         assert dag.get("bafy-unknown") is None
 
     def test_idempotent_append(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
+
         dag = EventDAG()
         node = self._node()
         cid1 = dag.append(node)
@@ -686,6 +826,7 @@ class TestEventDAGBasics:
     def test_strict_mode_rejects_unknown_parent(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         dag = EventDAG(strict=True)
         child = EventNode(parents=["bafy-missing-parent"])
         with pytest.raises(ValueError, match="Unknown parent CID"):
@@ -694,6 +835,7 @@ class TestEventDAGBasics:
     def test_non_strict_mode_accepts_unknown_parent(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         dag = EventDAG(strict=False)
         child = EventNode(parents=["bafy-unknown"])
         cid = dag.append(child)
@@ -704,6 +846,7 @@ class TestEventDAGFrontier:
     def test_single_root_is_frontier(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         dag = EventDAG()
         root = EventNode(intent_cid="root")
         cid_root = dag.append(root)
@@ -712,6 +855,7 @@ class TestEventDAGFrontier:
     def test_child_replaces_parent_in_frontier(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         dag = EventDAG()
         root = EventNode(intent_cid="root")
         cid_root = dag.append(root)
@@ -724,6 +868,7 @@ class TestEventDAGFrontier:
     def test_two_independent_nodes_both_in_frontier(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         dag = EventDAG(strict=False)
         a = EventNode(intent_cid="a")
         b = EventNode(intent_cid="b")
@@ -738,6 +883,7 @@ class TestEventDAGWalk:
     def _build_chain(self, n: int) -> tuple:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         dag = EventDAG()
         cids = []
         prev = None
@@ -764,6 +910,7 @@ class TestEventDAGWalk:
     def test_walk_deduplicates_shared_ancestors(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         # Diamond: root → A, root → B, merge → [A, B]
         dag = EventDAG()
         root = EventNode(intent_cid="root")
@@ -783,6 +930,7 @@ class TestEventDAGRollback:
     def test_descendants_of_root(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         dag = EventDAG()
         root = EventNode(intent_cid="root")
         cid_root = dag.append(root)
@@ -795,6 +943,7 @@ class TestEventDAGRollback:
     def test_rollback_to_alias(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         dag = EventDAG()
         root = EventNode(intent_cid="root")
         cid_root = dag.append(root)
@@ -805,6 +954,7 @@ class TestEventDAGRollback:
     def test_leaf_has_no_descendants(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         dag = EventDAG()
         node = EventNode(intent_cid="leaf")
         cid = dag.append(node)
@@ -815,6 +965,7 @@ class TestEventDAGConcurrency:
     def test_independent_nodes_are_concurrent(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         dag = EventDAG(strict=False)
         a = EventNode(intent_cid="a")
         b = EventNode(intent_cid="b")
@@ -825,6 +976,7 @@ class TestEventDAGConcurrency:
     def test_parent_child_not_concurrent(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         dag = EventDAG()
         root = EventNode(intent_cid="root")
         cid_root = dag.append(root)
@@ -837,6 +989,7 @@ class TestBuildLinearDag:
     def test_linear_chain_linked(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import build_linear_dag
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         nodes = [EventNode(intent_cid=f"step-{i}") for i in range(3)]
         dag = build_linear_dag(nodes)
         assert len(dag) == 3
@@ -844,6 +997,7 @@ class TestBuildLinearDag:
     def test_linear_chain_single_frontier(self) -> None:
         from ipfs_datasets_py.mcp_server.event_dag import build_linear_dag
         from ipfs_datasets_py.mcp_server.cid_artifacts import EventNode
+
         nodes = [EventNode(intent_cid=f"s{i}") for i in range(4)]
         dag = build_linear_dag(nodes)
         # Only the last node should be in the frontier

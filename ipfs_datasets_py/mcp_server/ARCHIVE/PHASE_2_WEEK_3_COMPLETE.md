@@ -109,23 +109,23 @@ def get_scheduler(context: Optional[ServerContext] = None) -> Optional[P2PWorkfl
     """Get scheduler from context or MCP++ global."""
     if context is not None:
         return context.workflow_scheduler
-    
+
     # Backward compatibility fallback
     if not HAVE_WORKFLOW_SCHEDULER:
         return None
     return _get_scheduler() if _get_scheduler else None
 
+
 def create_workflow_scheduler(
-    context: Optional[ServerContext] = None,
-    **kwargs
+    context: Optional[ServerContext] = None, **kwargs
 ) -> Optional[P2PWorkflowScheduler]:
     """Create scheduler and optionally store in context."""
     scheduler = _get_scheduler() if _get_scheduler else None
-    
+
     # Store in context for lifecycle management
     if context is not None and scheduler is not None:
         context.workflow_scheduler = scheduler
-        
+
     return scheduler
 ```
 
@@ -154,23 +154,24 @@ async def get_global_manager(context: Optional[ServerContext] = None) -> Dict[st
         return {
             "status": "success",
             "message": "Using ServerContext vector stores",
-            "manager_available": True
+            "manager_available": True,
         }
-    
+
     # Backward compatibility fallback
     global _global_manager
     if _global_manager is None:
         try:
             from ipfs_datasets_py.ml.embeddings.ipfs_knn_index import IPFSKnnIndexManager
+
             _global_manager = IPFSKnnIndexManager()
         except ImportError:
             _global_manager = None
             return {"status": "error", "message": "IPFSKnnIndexManager not available"}
-    
+
     return {
         "status": "success",
         "message": "Global manager retrieved successfully",
-        "manager_available": _global_manager is not None
+        "manager_available": _global_manager is not None,
     }
 ```
 
@@ -312,7 +313,7 @@ from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import get_tool_manag
 from ipfs_datasets_py.mcp_server.tool_metadata import get_registry
 
 manager = get_tool_manager()  # Uses global
-registry = get_registry()      # Uses global
+registry = get_registry()  # Uses global
 ```
 
 ### For New Code (Recommended)
@@ -327,8 +328,8 @@ from ipfs_datasets_py.mcp_server.tool_metadata import get_registry
 
 with ServerContext() as context:
     manager = get_tool_manager(context)  # Uses context
-    registry = get_registry(context)      # Uses context
-    
+    registry = get_registry(context)  # Uses context
+
     # All resources automatically cleaned up on exit
 ```
 

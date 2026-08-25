@@ -11,7 +11,12 @@ import networkx as nx
 from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 from pydantic import ValidationError
-from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator, KnowledgeGraph, Entity, Relationship
+from ipfs_datasets_py.pdf_processing.graphrag_integrator import (
+    GraphRAGIntegrator,
+    KnowledgeGraph,
+    Entity,
+    Relationship,
+)
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
 from pydantic import ValidationError
 
@@ -21,7 +26,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -34,8 +39,12 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/graphrag_int
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/graphrag_integrator_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator
 
@@ -72,20 +81,25 @@ try:
     import numpy as np
 
     from ipfs_datasets_py.ipld import IPLDStorage
-    from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk, LLMChunkMetadata
+    from ipfs_datasets_py.pdf_processing.llm_optimizer import (
+        LLMDocument,
+        LLMChunk,
+        LLMChunkMetadata,
+    )
 except ImportError as e:
-    raise ImportError(f"Could into import the module's dependencies: {e}") 
+    raise ImportError(f"Could into import the module's dependencies: {e}")
 
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
-    LLMChunkMetadataTestDataFactory as MetadataFactory
+    LLMChunkMetadataTestDataFactory as MetadataFactory,
 )
 
 
 @pytest.fixture
 async def integrator_where_integrate_document_was_called_once_before(
-    integrator: GraphRAGIntegrator, sample_llm_document):
+    integrator: GraphRAGIntegrator, sample_llm_document
+):
     """
-    Fixture that returns a GraphRAGIntegrator instance where 
+    Fixture that returns a GraphRAGIntegrator instance where
     integrate_document was called once with sample_llm_document fixture
     """
     _ = await integrator.integrate_document(sample_llm_document)
@@ -104,7 +118,9 @@ class TestIntegrateDocument:
     """Test class for GraphRAGIntegrator.integrate_document method."""
 
     @pytest.mark.asyncio
-    async def test_when_integrating_valid_document_then_returns_knowledge_graph(self, integrator: GraphRAGIntegrator, sample_llm_document):
+    async def test_when_integrating_valid_document_then_returns_knowledge_graph(
+        self, integrator: GraphRAGIntegrator, sample_llm_document
+    ):
         """
         GIVEN a valid LLMDocument with chunks, title, and document_id
         WHEN integrate_document is called
@@ -112,12 +128,14 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
         assert isinstance(result, KnowledgeGraph), f"Expected KnowledgeGraph, got {type(result)}"
 
     @pytest.mark.asyncio
-    async def test_when_integrating_valid_document_then_document_id_matches(self, integrator: GraphRAGIntegrator, sample_llm_document):
+    async def test_when_integrating_valid_document_then_document_id_matches(
+        self, integrator: GraphRAGIntegrator, sample_llm_document
+    ):
         """
         GIVEN a valid LLMDocument with chunks, title, and document_id
         WHEN integrate_document is called
@@ -125,13 +143,16 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
-        assert result.document_id == sample_llm_document.document_id, \
+        assert result.document_id == sample_llm_document.document_id, (
             f"Expected document_id {sample_llm_document.document_id}, got {result.document_id}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_valid_document_then_chunks_are_preserved(self, integrator: GraphRAGIntegrator, sample_llm_document):
+    async def test_when_integrating_valid_document_then_chunks_are_preserved(
+        self, integrator: GraphRAGIntegrator, sample_llm_document
+    ):
         """
         GIVEN a valid LLMDocument with chunks, title, and document_id
         WHEN integrate_document is called
@@ -139,13 +160,16 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
-        assert result.chunks == sample_llm_document.chunks, \
+        assert result.chunks == sample_llm_document.chunks, (
             f"Expected chunks to be preserved, got different chunks"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_empty_chunks_then_returns_knowledge_graph(self, integrator: GraphRAGIntegrator, empty_document):
+    async def test_when_integrating_empty_chunks_then_returns_knowledge_graph(
+        self, integrator: GraphRAGIntegrator, empty_document
+    ):
         """
         GIVEN an LLMDocument with empty chunks list
         WHEN integrate_document is called
@@ -153,12 +177,14 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(empty_document)
-        
+
         # Assert
         assert isinstance(result, KnowledgeGraph), f"Expected KnowledgeGraph, got {type(result)}"
 
     @pytest.mark.asyncio
-    async def test_when_integrating_empty_chunks_then_document_id_matches(self, integrator: GraphRAGIntegrator, empty_document):
+    async def test_when_integrating_empty_chunks_then_document_id_matches(
+        self, integrator: GraphRAGIntegrator, empty_document
+    ):
         """
         GIVEN an LLMDocument with empty chunks list
         WHEN integrate_document is called
@@ -166,13 +192,16 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(empty_document)
-        
+
         # Assert
-        assert result.document_id == empty_document.document_id, \
+        assert result.document_id == empty_document.document_id, (
             f"Expected document_id {empty_document.document_id}, got {result.document_id}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_empty_chunks_then_chunks_list_is_empty(self, integrator: GraphRAGIntegrator, empty_document):
+    async def test_when_integrating_empty_chunks_then_chunks_list_is_empty(
+        self, integrator: GraphRAGIntegrator, empty_document
+    ):
         """
         GIVEN an LLMDocument with empty chunks list
         WHEN integrate_document is called
@@ -180,12 +209,14 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(empty_document)
-        
+
         # Assert
         assert result.chunks == [], f"Expected empty chunks list, got {result.chunks}"
 
     @pytest.mark.asyncio
-    async def test_when_integrating_single_chunk_then_returns_knowledge_graph(self, integrator: GraphRAGIntegrator, single_chunk_document):
+    async def test_when_integrating_single_chunk_then_returns_knowledge_graph(
+        self, integrator: GraphRAGIntegrator, single_chunk_document
+    ):
         """
         GIVEN an LLMDocument with a single chunk containing entities
         WHEN integrate_document is called
@@ -193,12 +224,14 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(single_chunk_document)
-        
+
         # Assert
         assert isinstance(result, KnowledgeGraph), f"Expected KnowledgeGraph, got {type(result)}"
 
     @pytest.mark.asyncio
-    async def test_when_integrating_single_chunk_then_chunk_count_is_one(self, integrator: GraphRAGIntegrator, single_chunk_document):
+    async def test_when_integrating_single_chunk_then_chunk_count_is_one(
+        self, integrator: GraphRAGIntegrator, single_chunk_document
+    ):
         """
         GIVEN an LLMDocument with a single chunk containing entities
         WHEN integrate_document is called
@@ -206,12 +239,14 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(single_chunk_document)
-        
+
         # Assert
         assert len(result.chunks) == 1, f"Expected 1 chunk, got {len(result.chunks)}"
 
     @pytest.mark.asyncio
-    async def test_when_integrating_multiple_chunks_then_returns_knowledge_graph(self, integrator: GraphRAGIntegrator, sample_llm_document):
+    async def test_when_integrating_multiple_chunks_then_returns_knowledge_graph(
+        self, integrator: GraphRAGIntegrator, sample_llm_document
+    ):
         """
         GIVEN an LLMDocument with multiple chunks from the same page
         WHEN integrate_document is called
@@ -219,12 +254,14 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
         assert isinstance(result, KnowledgeGraph), f"Expected KnowledgeGraph, got {type(result)}"
 
     @pytest.mark.asyncio
-    async def test_when_integrating_multiple_chunks_then_chunk_count_matches(self, integrator: GraphRAGIntegrator, sample_llm_document):
+    async def test_when_integrating_multiple_chunks_then_chunk_count_matches(
+        self, integrator: GraphRAGIntegrator, sample_llm_document
+    ):
         """
         GIVEN an LLMDocument with multiple chunks from the same page
         WHEN integrate_document is called
@@ -232,16 +269,19 @@ class TestIntegrateDocument:
         """
         # Arrange
         expected_chunk_count = len(sample_llm_document.chunks)
-        
+
         # Act
         result = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
-        assert len(result.chunks) == expected_chunk_count, \
+        assert len(result.chunks) == expected_chunk_count, (
             f"Expected {expected_chunk_count} chunks, got {len(result.chunks)}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_multi_page_document_then_returns_knowledge_graph(self, integrator: GraphRAGIntegrator, multi_page_document):
+    async def test_when_integrating_multi_page_document_then_returns_knowledge_graph(
+        self, integrator: GraphRAGIntegrator, multi_page_document
+    ):
         """
         GIVEN an LLMDocument with chunks from different pages
         WHEN integrate_document is called
@@ -249,12 +289,14 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(multi_page_document)
-        
+
         # Assert
         assert isinstance(result, KnowledgeGraph), f"Expected KnowledgeGraph, got {type(result)}"
 
     @pytest.mark.asyncio
-    async def test_when_integrating_multi_page_document_then_all_chunks_processed(self, integrator: GraphRAGIntegrator, multi_page_document):
+    async def test_when_integrating_multi_page_document_then_all_chunks_processed(
+        self, integrator: GraphRAGIntegrator, multi_page_document
+    ):
         """
         GIVEN an LLMDocument with chunks from different pages
         WHEN integrate_document is called
@@ -262,16 +304,19 @@ class TestIntegrateDocument:
         """
         # Arrange
         expected_chunk_count = len(multi_page_document.chunks)
-        
+
         # Act
         result = await integrator.integrate_document(multi_page_document)
-        
+
         # Assert
-        assert len(result.chunks) == expected_chunk_count, \
+        assert len(result.chunks) == expected_chunk_count, (
             f"Expected {expected_chunk_count} chunks, got {len(result.chunks)}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_none_input_then_raises_type_error(self, integrator: GraphRAGIntegrator, test_constants):
+    async def test_when_integrating_none_input_then_raises_type_error(
+        self, integrator: GraphRAGIntegrator, test_constants
+    ):
         """
         GIVEN None is passed as the llm_document parameter
         WHEN integrate_document is called
@@ -280,12 +325,15 @@ class TestIntegrateDocument:
         # Act & Assert
         with pytest.raises(TypeError) as exc_info:
             await integrator.integrate_document(None)
-        
-        assert test_constants['NONE_INPUT_ERROR_MSG'] in str(exc_info.value), \
+
+        assert test_constants["NONE_INPUT_ERROR_MSG"] in str(exc_info.value), (
             f"Expected error message containing '{test_constants['NONE_INPUT_ERROR_MSG']}'"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_with_missing_document_id_then_raises_value_error(self, integrator: GraphRAGIntegrator, invalid_document_for_missing_id, test_constants):
+    async def test_when_integrating_document_with_missing_document_id_then_raises_value_error(
+        self, integrator: GraphRAGIntegrator, invalid_document_for_missing_id, test_constants
+    ):
         """
         GIVEN an LLMDocument without a document_id
         WHEN integrate_document is called
@@ -293,16 +341,19 @@ class TestIntegrateDocument:
         """
         # Arrange
         invalid_document_for_missing_id.document_id = None  # Simulate missing document_id
-        
+
         # Act & Assert
         with pytest.raises(ValueError) as exc_info:
             await integrator.integrate_document(invalid_document_for_missing_id)
-        
-        assert test_constants['MISSING_DOC_ID_ERROR_MSG'] in str(exc_info.value), \
+
+        assert test_constants["MISSING_DOC_ID_ERROR_MSG"] in str(exc_info.value), (
             f"Expected error message containing '{test_constants['MISSING_DOC_ID_ERROR_MSG']}'"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_with_missing_title_then_raises_value_error(self, integrator: GraphRAGIntegrator, invalid_document_for_missing_title, test_constants):
+    async def test_when_integrating_document_with_missing_title_then_raises_value_error(
+        self, integrator: GraphRAGIntegrator, invalid_document_for_missing_title, test_constants
+    ):
         """
         GIVEN an LLMDocument without a title
         WHEN integrate_document is called
@@ -310,33 +361,42 @@ class TestIntegrateDocument:
         """
         # Arrange
         invalid_document_for_missing_title.title = None  # Simulate missing title
-        
+
         # Act & Assert
         with pytest.raises(ValueError) as exc_info:
             await integrator.integrate_document(invalid_document_for_missing_title)
-        
-        assert test_constants['MISSING_TITLE_ERROR_MSG'] in str(exc_info.value), \
+
+        assert test_constants["MISSING_TITLE_ERROR_MSG"] in str(exc_info.value), (
             f"Expected error message containing '{test_constants['MISSING_TITLE_ERROR_MSG']}'"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_with_invalid_chunks_type_then_raises_type_error(self, integrator: GraphRAGIntegrator, invalid_document_for_chunks_type, test_constants):
+    async def test_when_integrating_document_with_invalid_chunks_type_then_raises_type_error(
+        self, integrator: GraphRAGIntegrator, invalid_document_for_chunks_type, test_constants
+    ):
         """
         GIVEN an LLMDocument with chunks that are not LLMChunk instances
         WHEN integrate_document is called
         THEN a TypeError should be raised
         """
         # Arrange
-        invalid_document_for_chunks_type.chunks = ["Not a chunk", "Also not a chunk"]  # Simulate invalid chunks
-        
+        invalid_document_for_chunks_type.chunks = [
+            "Not a chunk",
+            "Also not a chunk",
+        ]  # Simulate invalid chunks
+
         # Act & Assert
         with pytest.raises(TypeError) as exc_info:
             await integrator.integrate_document(invalid_document_for_chunks_type)
 
-        assert test_constants['INVALID_CHUNKS_ERROR_MSG'] in str(exc_info.value), \
+        assert test_constants["INVALID_CHUNKS_ERROR_MSG"] in str(exc_info.value), (
             f"Expected error message containing '{test_constants['INVALID_CHUNKS_ERROR_MSG']}'"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_has_valid_creation_timestamp(self, integrator: GraphRAGIntegrator, sample_llm_document, test_constants):
+    async def test_when_integrating_document_then_has_valid_creation_timestamp(
+        self, integrator: GraphRAGIntegrator, sample_llm_document, test_constants
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called
@@ -347,16 +407,19 @@ class TestIntegrateDocument:
         # Act
         result = await integrator.integrate_document(sample_llm_document)
         after_time = datetime.now()
-        
+
         # Assert - Parse the timestamp (remove Z suffix and parse as naive datetime)
-        timestamp_str = result.creation_timestamp.rstrip(test_constants['TIMESTAMP_Z_SUFFIX'])
+        timestamp_str = result.creation_timestamp.rstrip(test_constants["TIMESTAMP_Z_SUFFIX"])
         timestamp = datetime.fromisoformat(timestamp_str)
-        
-        assert before_time <= timestamp <= after_time, \
+
+        assert before_time <= timestamp <= after_time, (
             f"Timestamp {timestamp} should be between {before_time} and {after_time}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_has_timestamp_in_iso_format(self, integrator: GraphRAGIntegrator, sample_llm_document, test_constants):
+    async def test_when_integrating_document_then_has_timestamp_in_iso_format(
+        self, integrator: GraphRAGIntegrator, sample_llm_document, test_constants
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called
@@ -366,13 +429,14 @@ class TestIntegrateDocument:
         result = await integrator.integrate_document(sample_llm_document)
 
         # Assert
-        assert result.creation_timestamp.endswith(test_constants['TIMESTAMP_Z_SUFFIX']), \
+        assert result.creation_timestamp.endswith(test_constants["TIMESTAMP_Z_SUFFIX"]), (
             f"Timestamp should end with '{test_constants['TIMESTAMP_Z_SUFFIX']}'"
-
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_has_unique_graph_id(self, 
-    integrator: GraphRAGIntegrator, sample_llm_document, result1):
+    async def test_when_integrating_document_then_has_unique_graph_id(
+        self, integrator: GraphRAGIntegrator, sample_llm_document, result1
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called multiple times with same document
@@ -381,13 +445,16 @@ class TestIntegrateDocument:
         # Act
         result1 = await integrator.integrate_document(sample_llm_document)
         result2 = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
-        assert result1.graph_id == result2.graph_id, \
+        assert result1.graph_id == result2.graph_id, (
             f"Graph IDs should be consistent for same document: {result1.graph_id} vs {result2.graph_id}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_graph_id_contains_document_id(self, integrator: GraphRAGIntegrator, sample_llm_document):
+    async def test_when_integrating_document_then_graph_id_contains_document_id(
+        self, integrator: GraphRAGIntegrator, sample_llm_document
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called
@@ -395,18 +462,19 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
-        assert sample_llm_document.document_id in result.graph_id, \
+        assert sample_llm_document.document_id in result.graph_id, (
             f"Graph ID {result.graph_id} should contain document ID {sample_llm_document.document_id}"
+        )
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("expected_field", [
-        'document_title',
-        'chunk_count', 
-        'processing_timestamp'
-    ])
-    async def test_when_integrating_document_then_metadata_contains_expected_field(self, integrator: GraphRAGIntegrator, sample_llm_document, expected_field):
+    @pytest.mark.parametrize(
+        "expected_field", ["document_title", "chunk_count", "processing_timestamp"]
+    )
+    async def test_when_integrating_document_then_metadata_contains_expected_field(
+        self, integrator: GraphRAGIntegrator, sample_llm_document, expected_field
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called
@@ -414,12 +482,16 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
-        assert expected_field in result.metadata, f"Metadata should contain field '{expected_field}'"
+        assert expected_field in result.metadata, (
+            f"Metadata should contain field '{expected_field}'"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_metadata_document_title_matches_input(self, integrator: GraphRAGIntegrator, sample_llm_document):
+    async def test_when_integrating_document_then_metadata_document_title_matches_input(
+        self, integrator: GraphRAGIntegrator, sample_llm_document
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called
@@ -429,11 +501,14 @@ class TestIntegrateDocument:
         result = await integrator.integrate_document(sample_llm_document)
 
         # Assert
-        assert result.metadata['document_title'] == sample_llm_document.title, \
+        assert result.metadata["document_title"] == sample_llm_document.title, (
             f"Expected title {sample_llm_document.title}, got {result.metadata['document_title']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_metadata_chunk_count_matches_input(self, integrator: GraphRAGIntegrator, sample_llm_document):
+    async def test_when_integrating_document_then_metadata_chunk_count_matches_input(
+        self, integrator: GraphRAGIntegrator, sample_llm_document
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called
@@ -443,11 +518,14 @@ class TestIntegrateDocument:
         result = await integrator.integrate_document(sample_llm_document)
 
         # Assert
-        assert result.metadata['chunk_count'] == len(sample_llm_document.chunks), \
+        assert result.metadata["chunk_count"] == len(sample_llm_document.chunks), (
             f"Expected chunk count {len(sample_llm_document.chunks)}, got {result.metadata['chunk_count']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_stores_document_in_graph_collection(self, integrator: GraphRAGIntegrator, sample_llm_document):
+    async def test_when_integrating_document_then_stores_document_in_graph_collection(
+        self, integrator: GraphRAGIntegrator, sample_llm_document
+    ):
         """
         GIVEN a document with entities and relationships
         WHEN integrate_document is called
@@ -455,13 +533,16 @@ class TestIntegrateDocument:
         """
         # Act
         _ = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
-        assert sample_llm_document.document_id in integrator.document_graphs, \
+        assert sample_llm_document.document_id in integrator.document_graphs, (
             f"Document {sample_llm_document.document_id} should be stored in document_graphs"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_creates_networkx_digraph(self, integrator: GraphRAGIntegrator, sample_llm_document):
+    async def test_when_integrating_document_then_creates_networkx_digraph(
+        self, integrator: GraphRAGIntegrator, sample_llm_document
+    ):
         """
         GIVEN a document with entities and relationships
         WHEN integrate_document is called
@@ -469,13 +550,15 @@ class TestIntegrateDocument:
         """
         # Act
         _ = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
         graph = integrator.document_graphs[sample_llm_document.document_id]
         assert isinstance(graph, nx.DiGraph), f"Expected NetworkX DiGraph, got {type(graph)}"
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_updates_global_graph(self, integrator: GraphRAGIntegrator, sample_llm_document):
+    async def test_when_integrating_document_then_updates_global_graph(
+        self, integrator: GraphRAGIntegrator, sample_llm_document
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called
@@ -483,20 +566,20 @@ class TestIntegrateDocument:
         """
         # Arrange - Check initial state
         initial_entity_count = len(integrator.global_entities)
-        
+
         # Act
         _ = await integrator.integrate_document(sample_llm_document)
-        
-        # Assert - Global entities should be updated 
+
+        # Assert - Global entities should be updated
         final_entity_count = len(integrator.global_entities)
-        assert final_entity_count >= initial_entity_count, \
+        assert final_entity_count >= initial_entity_count, (
             "Global entities should be updated with document entities"
+        )
 
     @pytest.mark.asyncio
     async def test_when_integrating_multiple_documents_then_discovers_cross_document_relationships(
-        self, 
-        integrator: GraphRAGIntegrator, 
-        sample_llm_document, concurrent_test_documents):
+        self, integrator: GraphRAGIntegrator, sample_llm_document, concurrent_test_documents
+    ):
         """
         GIVEN multiple documents with potentially related entities
         WHEN documents are integrated sequentially
@@ -505,17 +588,20 @@ class TestIntegrateDocument:
         # Arrange - Integrate first document
         await integrator.integrate_document(sample_llm_document)
         initial_relationship_count = len(integrator.cross_document_relationships)
-        
+
         # Act - Integrate additional documents
         _ = [await integrator.integrate_document(doc) for doc in concurrent_test_documents]
-        
+
         # Assert - Cross-document relationships may be discovered
         final_relationship_count = len(integrator.cross_document_relationships)
-        assert final_relationship_count >= initial_relationship_count, \
+        assert final_relationship_count >= initial_relationship_count, (
             "Cross-document relationships should be maintained or increased"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_timestamp_is_within_reasonable_bounds(self, integrator: GraphRAGIntegrator, sample_llm_document, test_constants):
+    async def test_when_integrating_document_then_timestamp_is_within_reasonable_bounds(
+        self, integrator: GraphRAGIntegrator, sample_llm_document, test_constants
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called
@@ -523,19 +609,22 @@ class TestIntegrateDocument:
         """
         # Arrange
         before_time = datetime.now()
-        
+
         # Act
         result = await integrator.integrate_document(sample_llm_document)
         after_time = datetime.now()
-        
+
         # Assert
-        timestamp_str = result.creation_timestamp.rstrip(test_constants['TIMESTAMP_Z_SUFFIX'])
+        timestamp_str = result.creation_timestamp.rstrip(test_constants["TIMESTAMP_Z_SUFFIX"])
         timestamp = datetime.fromisoformat(timestamp_str)
-        assert before_time <= timestamp <= after_time, \
+        assert before_time <= timestamp <= after_time, (
             f"Timestamp {timestamp} should be between {before_time} and {after_time}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_timestamp_has_z_suffix(self, integrator: GraphRAGIntegrator, sample_llm_document, test_constants):
+    async def test_when_integrating_document_then_timestamp_has_z_suffix(
+        self, integrator: GraphRAGIntegrator, sample_llm_document, test_constants
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called
@@ -543,16 +632,19 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(sample_llm_document)
-        
-        # Assert
-        assert result.creation_timestamp.endswith(test_constants['TIMESTAMP_Z_SUFFIX']), \
-            f"Timestamp should end with '{test_constants['TIMESTAMP_Z_SUFFIX']}'"
 
+        # Assert
+        assert result.creation_timestamp.endswith(test_constants["TIMESTAMP_Z_SUFFIX"]), (
+            f"Timestamp should end with '{test_constants['TIMESTAMP_Z_SUFFIX']}'"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_multiple_times_then_graph_id_is_consistent(self, 
-        integrator_where_integrate_document_was_called_once_before: GraphRAGIntegrator, 
-        sample_llm_document, result1):
+    async def test_when_integrating_document_multiple_times_then_graph_id_is_consistent(
+        self,
+        integrator_where_integrate_document_was_called_once_before: GraphRAGIntegrator,
+        sample_llm_document,
+        result1,
+    ):
         """
         GIVEN a document is being integrated multiple times
         WHEN integrate_document is called with the same document
@@ -561,14 +653,16 @@ class TestIntegrateDocument:
         integrator = integrator_where_integrate_document_was_called_once_before
         # Act
         result2 = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
-        assert result1.graph_id == result2.graph_id, \
+        assert result1.graph_id == result2.graph_id, (
             f"Graph IDs should be consistent: {result1.graph_id} vs {result2.graph_id}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_graph_id_contains_document_id(self, 
-        integrator: GraphRAGIntegrator, sample_llm_document):
+    async def test_when_integrating_document_then_graph_id_contains_document_id(
+        self, integrator: GraphRAGIntegrator, sample_llm_document
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called
@@ -576,14 +670,16 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
-        assert sample_llm_document.document_id in result.graph_id, \
+        assert sample_llm_document.document_id in result.graph_id, (
             f"Graph ID should contain document ID: {result.graph_id}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_graph_id_is_enhanced_beyond_document_id(self, 
-        integrator: GraphRAGIntegrator, sample_llm_document):
+    async def test_when_integrating_document_then_graph_id_is_enhanced_beyond_document_id(
+        self, integrator: GraphRAGIntegrator, sample_llm_document
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called
@@ -591,20 +687,26 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
-        assert len(result.graph_id) > len(sample_llm_document.document_id), \
+        assert len(result.graph_id) > len(sample_llm_document.document_id), (
             "Graph ID should be enhanced beyond just document ID"
+        )
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("expected_field", [
-        'document_title',
-        'entity_count', 
-        'relationship_count',
-        'chunk_count',
-        'processing_timestamp'
-    ])
-    async def test_when_integrating_document_then_metadata_contains_expected_field(self, integrator: GraphRAGIntegrator, sample_llm_document, expected_field):
+    @pytest.mark.parametrize(
+        "expected_field",
+        [
+            "document_title",
+            "entity_count",
+            "relationship_count",
+            "chunk_count",
+            "processing_timestamp",
+        ],
+    )
+    async def test_when_integrating_document_then_metadata_contains_expected_field(
+        self, integrator: GraphRAGIntegrator, sample_llm_document, expected_field
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called
@@ -612,12 +714,16 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
-        assert expected_field in result.metadata, f"Metadata should contain field '{expected_field}'"
+        assert expected_field in result.metadata, (
+            f"Metadata should contain field '{expected_field}'"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_metadata_document_title_matches_input(self, integrator: GraphRAGIntegrator, sample_llm_document):
+    async def test_when_integrating_document_then_metadata_document_title_matches_input(
+        self, integrator: GraphRAGIntegrator, sample_llm_document
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called
@@ -625,13 +731,16 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
-        assert result.metadata['document_title'] == sample_llm_document.title, \
+        assert result.metadata["document_title"] == sample_llm_document.title, (
             f"Title should match: expected {sample_llm_document.title}, got {result.metadata['document_title']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_then_metadata_chunk_count_matches_input(self, integrator: GraphRAGIntegrator, sample_llm_document):
+    async def test_when_integrating_document_then_metadata_chunk_count_matches_input(
+        self, integrator: GraphRAGIntegrator, sample_llm_document
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called
@@ -639,17 +748,19 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
-        assert result.metadata['chunk_count'] == len(sample_llm_document.chunks), \
+        assert result.metadata["chunk_count"] == len(sample_llm_document.chunks), (
             f"Chunk count should match: expected {len(sample_llm_document.chunks)}, got {result.metadata['chunk_count']}"
+        )
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("metadata_field,expected_type", [
-        ('entity_count', int),
-        ('relationship_count', int)
-    ])
-    async def test_when_integrating_document_then_metadata_count_fields_are_integers(self, integrator: GraphRAGIntegrator, sample_llm_document, metadata_field, expected_type):
+    @pytest.mark.parametrize(
+        "metadata_field,expected_type", [("entity_count", int), ("relationship_count", int)]
+    )
+    async def test_when_integrating_document_then_metadata_count_fields_are_integers(
+        self, integrator: GraphRAGIntegrator, sample_llm_document, metadata_field, expected_type
+    ):
         """
         GIVEN a document is being integrated
         WHEN integrate_document is called
@@ -657,12 +768,16 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(sample_llm_document)
-        
+
         # Assert
-        assert isinstance(result.metadata[metadata_field], expected_type), f"{metadata_field} should be an {expected_type.__name__}"
+        assert isinstance(result.metadata[metadata_field], expected_type), (
+            f"{metadata_field} should be an {expected_type.__name__}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_multiple_documents_concurrently_then_all_complete_successfully(self, integrator: GraphRAGIntegrator, concurrent_test_documents, test_constants):
+    async def test_when_integrating_multiple_documents_concurrently_then_all_complete_successfully(
+        self, integrator: GraphRAGIntegrator, concurrent_test_documents, test_constants
+    ):
         """
         GIVEN multiple documents are being integrated concurrently
         WHEN integrate_document is called simultaneously
@@ -678,13 +793,16 @@ class TestIntegrateDocument:
         async with anyio.create_task_group() as tg:
             for i, coro in enumerate(tasks):
                 tg.start_soon(_run_one, i, coro)
-        
+
         # Assert
-        assert len(results) == test_constants['CONCURRENT_TASK_COUNT'], \
+        assert len(results) == test_constants["CONCURRENT_TASK_COUNT"], (
             f"Expected {test_constants['CONCURRENT_TASK_COUNT']} results, got {len(results)}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_multiple_documents_concurrently_then_each_document_has_unique_knowledge_graph(self, integrator: GraphRAGIntegrator, concurrent_test_documents, test_constants):
+    async def test_when_integrating_multiple_documents_concurrently_then_each_document_has_unique_knowledge_graph(
+        self, integrator: GraphRAGIntegrator, concurrent_test_documents, test_constants
+    ):
         """
         GIVEN multiple documents are being integrated concurrently
         WHEN integrate_document is called simultaneously
@@ -704,11 +822,14 @@ class TestIntegrateDocument:
         # Assert
         doc_ids = [result.document_id for result in results]
         unique_doc_ids = set(doc_ids)
-        assert len(unique_doc_ids) == test_constants['CONCURRENT_TASK_COUNT'], \
+        assert len(unique_doc_ids) == test_constants["CONCURRENT_TASK_COUNT"], (
             f"Expected {test_constants['CONCURRENT_TASK_COUNT']} unique document IDs, got {len(unique_doc_ids)}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_large_document_then_completes_within_reasonable_time(self, integrator: GraphRAGIntegrator, large_document, test_constants):
+    async def test_when_integrating_large_document_then_completes_within_reasonable_time(
+        self, integrator: GraphRAGIntegrator, large_document, test_constants
+    ):
         """
         GIVEN an LLMDocument with a large number of chunks
         WHEN integrate_document is called
@@ -721,11 +842,14 @@ class TestIntegrateDocument:
         end_time = time.time()
 
         # Assert
-        assert end_time - start_time < test_constants['PERFORMANCE_TIMEOUT_SECONDS'], \
+        assert end_time - start_time < test_constants["PERFORMANCE_TIMEOUT_SECONDS"], (
             f"Integration took {end_time - start_time}s, should be under {test_constants['PERFORMANCE_TIMEOUT_SECONDS']}s"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_large_document_then_all_chunks_processed(self, integrator: GraphRAGIntegrator, large_document, test_constants):
+    async def test_when_integrating_large_document_then_all_chunks_processed(
+        self, integrator: GraphRAGIntegrator, large_document, test_constants
+    ):
         """
         GIVEN an LLMDocument with a large number of chunks
         WHEN integrate_document is called
@@ -733,13 +857,16 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(large_document)
-        
+
         # Assert
-        assert len(result.chunks) == test_constants['LARGE_CHUNK_COUNT'], \
+        assert len(result.chunks) == test_constants["LARGE_CHUNK_COUNT"], (
             f"Expected {test_constants['LARGE_CHUNK_COUNT']} chunks, got {len(result.chunks)}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_without_entities_then_returns_knowledge_graph(self, integrator: GraphRAGIntegrator, no_entities_document):
+    async def test_when_integrating_document_without_entities_then_returns_knowledge_graph(
+        self, integrator: GraphRAGIntegrator, no_entities_document
+    ):
         """
         GIVEN an LLMDocument with chunks that contain no extractable entities
         WHEN integrate_document is called
@@ -747,12 +874,14 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(no_entities_document)
-        
+
         # Assert
         assert isinstance(result, KnowledgeGraph), f"Expected KnowledgeGraph, got {type(result)}"
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_without_entities_then_chunk_is_processed(self, integrator: GraphRAGIntegrator, no_entities_document, test_constants):
+    async def test_when_integrating_document_without_entities_then_chunk_is_processed(
+        self, integrator: GraphRAGIntegrator, no_entities_document, test_constants
+    ):
         """
         GIVEN an LLMDocument with chunks that contain no extractable entities
         WHEN integrate_document is called
@@ -760,27 +889,31 @@ class TestIntegrateDocument:
         """
         # Act
         result = await integrator.integrate_document(no_entities_document)
-        
+
         # Assert
-        assert len(result.chunks) == test_constants['EXPECTED_RESULT_COUNT_ONE'], \
+        assert len(result.chunks) == test_constants["EXPECTED_RESULT_COUNT_ONE"], (
             f"Expected {test_constants['EXPECTED_RESULT_COUNT_ONE']} chunk, got {len(result.chunks)}"
+        )
 
     @pytest.mark.asyncio
-    async def test_when_integrating_document_with_low_confidence_entities_then_entities_filtered(self, integrator: GraphRAGIntegrator, low_confidence_document, test_constants):
+    async def test_when_integrating_document_with_low_confidence_entities_then_entities_filtered(
+        self, integrator: GraphRAGIntegrator, low_confidence_document, test_constants
+    ):
         """
         GIVEN an LLMDocument with chunks containing only low-confidence entities
         WHEN integrate_document is called with high entity_extraction_confidence
         THEN entities below the threshold should be filtered out
         """
         # Arrange - Set high confidence threshold
-        integrator.entity_extraction_confidence = test_constants['HIGH_CONFIDENCE_THRESHOLD']
-        
+        integrator.entity_extraction_confidence = test_constants["HIGH_CONFIDENCE_THRESHOLD"]
+
         # Act
         result = await integrator.integrate_document(low_confidence_document)
-        
+
         # Assert - Low confidence entities should be filtered out
-        assert len(result.entities) == 0, \
+        assert len(result.entities) == 0, (
             f"Expected 0 entities due to confidence filtering, got {len(result.entities)}"
+        )
 
 
 if __name__ == "__main__":

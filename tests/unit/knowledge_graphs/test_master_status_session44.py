@@ -10,6 +10,7 @@ Missed targets:
   srl.py:613             continue for empty sentence in build_temporal_graph
   hybrid_search.py:205   continue when node already visited in expand_graph
 """
+
 from unittest.mock import MagicMock, patch, PropertyMock
 import importlib
 import pytest
@@ -42,15 +43,20 @@ class TestExtractorSpacyModelOSError:
                 raise OSError("model not found: en_core_web_sm")
             return mock_nlp
 
-        with patch("spacy.load", side_effect=fake_load) as mock_spacy_load, \
-             patch("spacy.cli.download") as mock_download:
+        with (
+            patch("spacy.load", side_effect=fake_load) as mock_spacy_load,
+            patch("spacy.cli.download") as mock_download,
+        ):
             from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
                 KnowledgeGraphExtractor,
             )
+
             extractor = KnowledgeGraphExtractor(use_spacy=True)
 
         # First call raised OSError → download called → second call succeeded
-        assert len(load_calls) == 2, "spacy.load should be called twice (first fails, second succeeds)"
+        assert len(load_calls) == 2, (
+            "spacy.load should be called twice (first fails, second succeeds)"
+        )
         mock_download.assert_called_once_with("en_core_web_sm")
         assert extractor.nlp is mock_nlp, "nlp should be set to the successful load result"
 
@@ -67,11 +73,11 @@ class TestExtractorSpacyModelOSError:
                 raise IOError("IO failure reading model")
             return mock_nlp
 
-        with patch("spacy.load", side_effect=fake_load), \
-             patch("spacy.cli.download") as mock_dl:
+        with patch("spacy.load", side_effect=fake_load), patch("spacy.cli.download") as mock_dl:
             from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
                 KnowledgeGraphExtractor,
             )
+
             extractor = KnowledgeGraphExtractor(use_spacy=True)
 
         mock_dl.assert_called_once()
@@ -81,6 +87,7 @@ class TestExtractorSpacyModelOSError:
 # ===========================================================================
 # 2. extractor.py:178 – continue when ent._.confidence < min_confidence
 # ===========================================================================
+
 
 @_skip_no_spacy
 class TestExtractEntitiesLowConfidenceSkip:
@@ -104,6 +111,7 @@ class TestExtractEntitiesLowConfidenceSkip:
             from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
                 KnowledgeGraphExtractor,
             )
+
             extractor = KnowledgeGraphExtractor(use_spacy=True, min_confidence=0.5)
             # min_confidence=0.5; extension default is 0.0 → 0.0 < 0.5 → continue
             text = "Alice Smith works at Google in New York."
@@ -132,6 +140,7 @@ class TestExtractEntitiesLowConfidenceSkip:
             from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
                 KnowledgeGraphExtractor,
             )
+
             extractor = KnowledgeGraphExtractor(use_spacy=True, min_confidence=0.5)
             text = "Barack Obama was born in Hawaii."
             entities = extractor.extract_entities(text)
@@ -146,6 +155,7 @@ class TestExtractEntitiesLowConfidenceSkip:
 # 3. extractor.py:428-429 – IndexError in _parse_rebel_output inner try/except
 # ===========================================================================
 
+
 class TestParseRebelOutputIndexError:
     """GIVEN REBEL output where <obj> marker appears BEFORE <subj>,
     the inner split for '<obj>' in rest would fail (IndexError) triggering
@@ -159,6 +169,7 @@ class TestParseRebelOutputIndexError:
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
             KnowledgeGraphExtractor,
         )
+
         extractor = KnowledgeGraphExtractor()
 
         # Craft a string where <obj> is before <subj> in the part.
@@ -180,12 +191,13 @@ class TestParseRebelOutputIndexError:
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
             KnowledgeGraphExtractor,
         )
+
         extractor = KnowledgeGraphExtractor()
 
         # First triplet: bad (obj before subj) → IndexError → continue
         # Second triplet: good
         rebel_output = (
-            "<triplet> obj_text <obj> rel_text <subj>"     # bad: obj before subj
+            "<triplet> obj_text <obj> rel_text <subj>"  # bad: obj before subj
             "<triplet> Alice <subj> works_at <obj> Google"  # good
         )
         result = extractor._parse_rebel_output(rebel_output)
@@ -199,6 +211,7 @@ class TestParseRebelOutputIndexError:
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
             KnowledgeGraphExtractor,
         )
+
         extractor = KnowledgeGraphExtractor()
         result = extractor._parse_rebel_output("")
         assert result == []
@@ -208,6 +221,7 @@ class TestParseRebelOutputIndexError:
 # 4. srl.py:613 – continue for empty sentence in build_temporal_graph
 #    (test-ordering artifact: covered by session39 alone but missed in suite)
 # ===========================================================================
+
 
 class TestBuildTemporalGraphEmptySentSkip:
     """GIVEN text that when split produces an empty-string sentence element,
@@ -219,6 +233,7 @@ class TestBuildTemporalGraphEmptySentSkip:
         WHEN build_temporal_graph called
         THEN no exception; empty sentences are skipped via line 613."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         extractor = SRLExtractor()
         # "Alice ran.  " → re.split gives ["Alice ran.", ""]
         # The empty string "" → "".strip() = "" → not sent → continue (line 613)
@@ -229,6 +244,7 @@ class TestBuildTemporalGraphEmptySentSkip:
         """GIVEN text that is all spaces WHEN build_temporal_graph called
         THEN all sentences are empty and skipped via line 613; result is empty KG."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         extractor = SRLExtractor()
         kg = extractor.build_temporal_graph("   ")
         assert kg is not None
@@ -238,6 +254,7 @@ class TestBuildTemporalGraphEmptySentSkip:
         WHEN build_temporal_graph called
         THEN extra empty-string elements are each skipped via line 613."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         extractor = SRLExtractor()
         # Multiple blank elements from consecutive delimiters
         kg = extractor.build_temporal_graph("Alice ran.  Bob walked.  ")
@@ -248,6 +265,7 @@ class TestBuildTemporalGraphEmptySentSkip:
 # 5. hybrid_search.py:205 – continue when node already visited in expand_graph
 #    (test-ordering artifact: covered by session36 alone but missed in suite)
 # ===========================================================================
+
 
 class TestExpandGraphAlreadyVisitedContinue:
     """GIVEN a seed set where the same node appears twice (directly and via hop=0
@@ -318,6 +336,7 @@ class TestExpandGraphAlreadyVisitedContinue:
 # 6. extraction/finance_graphrag.py:25-26 – _MINIMAL_IMPORTS=True path
 #    and :31 – GRAPHRAG_AVAILABLE=True path (successful import)
 # ===========================================================================
+
 
 class TestFinanceGraphRAGMinimalImports:
     """GIVEN IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 env var,

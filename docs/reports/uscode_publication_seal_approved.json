@@ -1,0 +1,112 @@
+{
+  "acceptance": {
+    "approver_fields_present": true,
+    "complete_authorization_request": true,
+    "exact_digests_bound": true,
+    "human_approval_required": true,
+    "legacy_rollback_mapping_named": true,
+    "main_not_mutated_by_this_tool": true,
+    "no_agent_self_authorization": true,
+    "no_secret_or_path_leak": true,
+    "pending_valid_as_request": true,
+    "production_repo_branch_named": true,
+    "requested_mutations_enumerated": true
+  },
+  "approver": {
+    "approved_at": "2026-08-10T04:15:38Z",
+    "identity": "benjamin barber <starworks5@gmail.com>",
+    "kind": "external_human",
+    "signature": "478ab1c3ad59995344c52963878756f791a4d54229a86952af70be84d94aee3f",
+    "status": "approved"
+  },
+  "candidate": {
+    "dataset_id": "justicedao/ipfs_uscode",
+    "default_config": "publicus-ir-graphrag/v2",
+    "kind": "hub_published_full",
+    "manifest_digest": "6a5e9d06a124c45b8d49a087a824e2661bd5718a03664a28295f8d2a6412daa3",
+    "package_version": "2",
+    "release_point": "us/pl/118/45",
+    "release_profile": "publicus-ir-graphrag/v2",
+    "release_root_cid": "bafkreicu56or275w2gtokcxy7hj73su4653xyqxxz6ee24t6hnkbuepmfe",
+    "revision": "a9720a26a52251526035c2ca8cebea418965bcf9",
+    "root_label": "hf://justicedao/ipfs_uscode@a9720a26a52251526035c2ca8cebea418965bcf9",
+    "source_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+    "staging_branch": "stage/uscode-sparse-graphrag-v2",
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+  },
+  "code_version": "1",
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "depends_on": [
+    "USCIR-039"
+  ],
+  "digests": {
+    "code": "b671ed1d7abfcff39ec1009b04aaec9d0fdc391c60f914e990fc81d5a37b5586",
+    "config": "ef3aeb382c36e9d072cd9153193caad1be85e54ff34462950430fca1f1705c2b",
+    "manifest": "6a5e9d06a124c45b8d49a087a824e2661bd5718a03664a28295f8d2a6412daa3",
+    "model": "3be3346bc467482fd0e66eb7a4dcc3175dbe74bc2c76678f760a1f6704841af6",
+    "release_candidate_file_sha256": "3ab498de0b2973009a673789120f47158d51187b98c3258965ddcd139714ad4f",
+    "release_root_cid": "bafkreicu56or275w2gtokcxy7hj73su4653xyqxxz6ee24t6hnkbuepmfe",
+    "staging_canary_file_sha256": "bd050b64673d18ff2870aaa58ae5c805f09d1c303b716f4159cd5a1a6cd83a31",
+    "validation_receipt": "1dcd8f8795d1aa6098a09ff2ce48556a349ecd312567dd9f1a7bd4790e91a893"
+  },
+  "evidence": {
+    "release_candidate": {
+      "path": "docs/reports/uscode_release_candidate.json",
+      "receipt_sha256": "1dcd8f8795d1aa6098a09ff2ce48556a349ecd312567dd9f1a7bd4790e91a893",
+      "task_id": "USCIR-038"
+    },
+    "staging_canary": {
+      "file_sha256": "bd050b64673d18ff2870aaa58ae5c805f09d1c303b716f4159cd5a1a6cd83a31",
+      "path": "docs/reports/uscode_staging_canary.json",
+      "promotion_status": "rehearsed",
+      "rollback_status": "rehearsed",
+      "task_id": "USCIR-039"
+    }
+  },
+  "fixture_id": "uscode-publication-seal-v1",
+  "goal_id": "USCIR-G100",
+  "main_published": false,
+  "network_required": false,
+  "notes": "Human publication seal for full US Code sparse GraphRAG v2 (60,068 admitted rows; gte-small CUDA). Hub main=a9720a26a52251526035c2ca8cebea418965bcf9. Legacy uscode_parquet preserved. Approve with external human identity + signature.",
+  "producer": "check_uscode_publication_seal.py",
+  "production": {
+    "branch": "main",
+    "dataset_id": "justicedao/ipfs_uscode",
+    "default_config": "publicus-ir-graphrag/v2",
+    "publication_requires_human_seal": true
+  },
+  "program_id": "uscode-sparse-graphrag-v1",
+  "publication_authorized": true,
+  "release_point": "us/pl/118/45",
+  "release_profile": "publicus-ir-graphrag/v2",
+  "requested_mutations": [
+    {
+      "from_default_config": "publicus-ir-graphrag/v2",
+      "from_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+      "operation": "advertise_revision",
+      "target_branch": "main",
+      "target_repo": "justicedao/ipfs_uscode",
+      "to_default_config": "publicus-ir-graphrag/v2",
+      "to_revision": "a9720a26a52251526035c2ca8cebea418965bcf9"
+    },
+    {
+      "default_config": "publicus-ir-graphrag/v2",
+      "operation": "switch_default_config",
+      "target_branch": "main",
+      "target_repo": "justicedao/ipfs_uscode"
+    }
+  ],
+  "rollback": {
+    "dataset_id": "justicedao/ipfs_uscode",
+    "default_config": "publicus-ir-graphrag/v2",
+    "legacy_files_deleted": false,
+    "policy": "Re-advertise the prior immutable revision and default config without deleting the failed candidate tree or legacy files.",
+    "revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+    "staging_branch_retained": true
+  },
+  "schema": "ipfs_datasets_py/uscode-sparse-graphrag-publication-seal@1",
+  "schema_version": "uscode-publication-seal/v1",
+  "seal_sha256": "f87bafd63227a00b4f03c2c02786bec4b6198d0197bdbdff1e89c3e66b2b70f0",
+  "status": "approved",
+  "task_id": "USCIR-040"
+}

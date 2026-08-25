@@ -11,7 +11,10 @@ from .exhibit_binder_export import (
     pdf_page_count,
     source_to_pdf,
 )
-from .exhibit_binder_templates import render_exhibit_binder_front_sheet, render_table_of_exhibits_pdf
+from .exhibit_binder_templates import (
+    render_exhibit_binder_front_sheet,
+    render_table_of_exhibits_pdf,
+)
 from .legal_pdf_manifest import (
     binder_court_config_from_manifest,
     exhibit_caption_config_from_manifest,
@@ -19,7 +22,9 @@ from .legal_pdf_manifest import (
 )
 
 
-def _resolve_exhibit_source(base_dir: Path, payload: dict[str, Any], exhibit: dict[str, Any], code: str) -> str:
+def _resolve_exhibit_source(
+    base_dir: Path, payload: dict[str, Any], exhibit: dict[str, Any], code: str
+) -> str:
     explicit = str(exhibit.get("source") or "").strip()
     if explicit:
         return explicit
@@ -73,25 +78,44 @@ def build_exhibit_binder_from_manifest(path: str | Path) -> dict[str, Any]:
             generated_dir=working_dir,
             caption_config=caption_config,
         )
-        source_to_pdf(source, output_path=source_pdf, label=f"Exhibit {code}", family=str(payload.get("family") or "Exhibit Binder"))
+        source_to_pdf(
+            source,
+            output_path=source_pdf,
+            label=f"Exhibit {code}",
+            family=str(payload.get("family") or "Exhibit Binder"),
+        )
 
         starts[code] = current_page
-        counts[code] = pdf_page_count(divider_pdf) + pdf_page_count(cover_pdf) + pdf_page_count(source_pdf)
+        counts[code] = (
+            pdf_page_count(divider_pdf) + pdf_page_count(cover_pdf) + pdf_page_count(source_pdf)
+        )
         current_page += counts[code]
 
-        build_exhibit_binder(front_pdf=divider_pdf, packet_pdfs=[cover_pdf, source_pdf], output_pdf=packet_pdf)
+        build_exhibit_binder(
+            front_pdf=divider_pdf, packet_pdfs=[cover_pdf, source_pdf], output_pdf=packet_pdf
+        )
         packet_paths.append(packet_pdf)
 
     table_pdf = working_dir / "0001_Table_Of_Exhibits.pdf"
     render_table_of_exhibits_pdf(
         table_pdf,
-        exhibit_order=[str(item.get("code") or "") for item in list(payload.get("exhibits") or []) if isinstance(item, dict)],
-        exhibit_titles={str(item.get("code") or ""): str(item.get("title") or "") for item in list(payload.get("exhibits") or []) if isinstance(item, dict)},
+        exhibit_order=[
+            str(item.get("code") or "")
+            for item in list(payload.get("exhibits") or [])
+            if isinstance(item, dict)
+        ],
+        exhibit_titles={
+            str(item.get("code") or ""): str(item.get("title") or "")
+            for item in list(payload.get("exhibits") or [])
+            if isinstance(item, dict)
+        },
         starts=starts,
         counts=counts,
         config=court_config,
     )
-    result = build_exhibit_binder(front_pdf=front_pdf, table_pdf=table_pdf, packet_pdfs=packet_paths, output_pdf=output_pdf)
+    result = build_exhibit_binder(
+        front_pdf=front_pdf, table_pdf=table_pdf, packet_pdfs=packet_paths, output_pdf=output_pdf
+    )
     return {
         "manifest_path": str(manifest_path),
         "output_pdf": str(result),

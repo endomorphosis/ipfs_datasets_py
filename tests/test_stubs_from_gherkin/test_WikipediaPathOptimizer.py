@@ -24,7 +24,9 @@ def wikipediapathoptimizer_instance():
         raise FixtureError(f"Failed to create fixture wikipediapathoptimizer_instance: {e}") from e
 
 
-def test_initialize_with_default_configuration_relationship_calculator_is_set(wikipediapathoptimizer_instance):
+def test_initialize_with_default_configuration_relationship_calculator_is_set(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Initialize with default configuration relationship_calculator is set
 
@@ -37,7 +39,9 @@ def test_initialize_with_default_configuration_relationship_calculator_is_set(wi
     pass
 
 
-def test_initialize_with_default_configuration_traversal_costs_contains_subclass_of_as_06(wikipediapathoptimizer_instance):
+def test_initialize_with_default_configuration_traversal_costs_contains_subclass_of_as_06(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Initialize with default configuration traversal_costs contains subclass_of as 0.6
 
@@ -50,7 +54,9 @@ def test_initialize_with_default_configuration_traversal_costs_contains_subclass
     pass
 
 
-def test_initialize_with_default_configuration_traversal_costs_contains_instance_of_as_06(wikipediapathoptimizer_instance):
+def test_initialize_with_default_configuration_traversal_costs_contains_instance_of_as_06(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Initialize with default configuration traversal_costs contains instance_of as 0.6
 
@@ -63,7 +69,9 @@ def test_initialize_with_default_configuration_traversal_costs_contains_instance
     pass
 
 
-def test_initialize_with_default_configuration_traversal_costs_contains_mentions_as_15(wikipediapathoptimizer_instance):
+def test_initialize_with_default_configuration_traversal_costs_contains_mentions_as_15(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Initialize with default configuration traversal_costs contains mentions as 1.5
 
@@ -76,7 +84,9 @@ def test_initialize_with_default_configuration_traversal_costs_contains_mentions
     pass
 
 
-def test_initialize_with_default_configuration_traversal_costs_contains_default_as_10(wikipediapathoptimizer_instance):
+def test_initialize_with_default_configuration_traversal_costs_contains_default_as_10(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Initialize with default configuration traversal_costs contains default as 1.0
 
@@ -128,7 +138,9 @@ def test_get_edge_traversal_cost_with_normalization(wikipediapathoptimizer_insta
     pass
 
 
-def test_optimize_traversal_path_with_basic_parameters_result_contains_strategy_as_wikipedia_hierarchical(wikipediapathoptimizer_instance):
+def test_optimize_traversal_path_with_basic_parameters_result_contains_strategy_as_wikipedia_hierarchical(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal path with basic parameters result contains strategy as wikipedia_hierarchical
 
@@ -147,7 +159,9 @@ def test_optimize_traversal_path_with_basic_parameters_result_contains_strategy_
     pass
 
 
-def test_optimize_traversal_path_with_basic_parameters_result_contains_relationship_priority(wikipediapathoptimizer_instance):
+def test_optimize_traversal_path_with_basic_parameters_result_contains_relationship_priority(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal path with basic parameters result contains relationship_priority
 
@@ -166,7 +180,9 @@ def test_optimize_traversal_path_with_basic_parameters_result_contains_relations
     pass
 
 
-def test_optimize_traversal_path_with_basic_parameters_result_contains_level_budgets(wikipediapathoptimizer_instance):
+def test_optimize_traversal_path_with_basic_parameters_result_contains_level_budgets(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal path with basic parameters result contains level_budgets
 
@@ -185,7 +201,9 @@ def test_optimize_traversal_path_with_basic_parameters_result_contains_level_bud
     pass
 
 
-def test_optimize_traversal_path_with_basic_parameters_result_contains_relationship_activation(wikipediapathoptimizer_instance):
+def test_optimize_traversal_path_with_basic_parameters_result_contains_relationship_activation(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal path with basic parameters result contains relationship_activation
 
@@ -204,7 +222,9 @@ def test_optimize_traversal_path_with_basic_parameters_result_contains_relations
     pass
 
 
-def test_optimize_traversal_path_with_basic_parameters_result_contains_traversal_costs(wikipediapathoptimizer_instance):
+def test_optimize_traversal_path_with_basic_parameters_result_contains_traversal_costs(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal path with basic parameters result contains traversal_costs
 
@@ -223,7 +243,9 @@ def test_optimize_traversal_path_with_basic_parameters_result_contains_traversal
     pass
 
 
-def test_optimize_traversal_path_with_basic_parameters_result_contains_original_max_depth_as_3(wikipediapathoptimizer_instance):
+def test_optimize_traversal_path_with_basic_parameters_result_contains_original_max_depth_as_3(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal path with basic parameters result contains original_max_depth as 3
 
@@ -242,7 +264,9 @@ def test_optimize_traversal_path_with_basic_parameters_result_contains_original_
     pass
 
 
-def test_optimize_traversal_prioritizes_relationships_relationship_priority_first_item_is_subclass_of(wikipediapathoptimizer_instance):
+def test_optimize_traversal_prioritizes_relationships_relationship_priority_first_item_is_subclass_of(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal prioritizes relationships relationship_priority first item is subclass_of
 
@@ -261,7 +285,9 @@ def test_optimize_traversal_prioritizes_relationships_relationship_priority_firs
     pass
 
 
-def test_optimize_traversal_prioritizes_relationships_relationship_priority_second_item_is_instance_of(wikipediapathoptimizer_instance):
+def test_optimize_traversal_prioritizes_relationships_relationship_priority_second_item_is_instance_of(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal prioritizes relationships relationship_priority second item is instance_of
 
@@ -280,7 +306,9 @@ def test_optimize_traversal_prioritizes_relationships_relationship_priority_seco
     pass
 
 
-def test_optimize_traversal_prioritizes_relationships_relationship_priority_third_item_is_mentions(wikipediapathoptimizer_instance):
+def test_optimize_traversal_prioritizes_relationships_relationship_priority_third_item_is_mentions(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal prioritizes relationships relationship_priority third item is mentions
 
@@ -299,7 +327,9 @@ def test_optimize_traversal_prioritizes_relationships_relationship_priority_thir
     pass
 
 
-def test_optimize_traversal_allocates_budget_by_level_level_budgets_has_3_items(wikipediapathoptimizer_instance):
+def test_optimize_traversal_allocates_budget_by_level_level_budgets_has_3_items(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal allocates budget by level level_budgets has 3 items
 
@@ -318,7 +348,9 @@ def test_optimize_traversal_allocates_budget_by_level_level_budgets_has_3_items(
     pass
 
 
-def test_optimize_traversal_allocates_budget_by_level_level_budgets_first_item_is_largest(wikipediapathoptimizer_instance):
+def test_optimize_traversal_allocates_budget_by_level_level_budgets_first_item_is_largest(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal allocates budget by level level_budgets first item is largest
 
@@ -337,7 +369,9 @@ def test_optimize_traversal_allocates_budget_by_level_level_budgets_first_item_i
     pass
 
 
-def test_optimize_traversal_allocates_budget_by_level_level_budgets_uses_exponential_decay(wikipediapathoptimizer_instance):
+def test_optimize_traversal_allocates_budget_by_level_level_budgets_uses_exponential_decay(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal allocates budget by level level_budgets uses exponential decay
 
@@ -356,7 +390,9 @@ def test_optimize_traversal_allocates_budget_by_level_level_budgets_uses_exponen
     pass
 
 
-def test_optimize_traversal_sets_relationship_activation_depths_relationship_activation_for_subclass_of_is_3(wikipediapathoptimizer_instance):
+def test_optimize_traversal_sets_relationship_activation_depths_relationship_activation_for_subclass_of_is_3(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal sets relationship activation depths relationship_activation for subclass_of is 3
 
@@ -375,7 +411,9 @@ def test_optimize_traversal_sets_relationship_activation_depths_relationship_act
     pass
 
 
-def test_optimize_traversal_sets_relationship_activation_depths_relationship_activation_for_mentions_is_at_most_2(wikipediapathoptimizer_instance):
+def test_optimize_traversal_sets_relationship_activation_depths_relationship_activation_for_mentions_is_at_most_2(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal sets relationship activation depths relationship_activation for mentions is at most 2
 
@@ -394,7 +432,9 @@ def test_optimize_traversal_sets_relationship_activation_depths_relationship_act
     pass
 
 
-def test_optimize_traversal_with_single_depth_level_budgets_has_1_item(wikipediapathoptimizer_instance):
+def test_optimize_traversal_with_single_depth_level_budgets_has_1_item(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal with single depth level_budgets has 1 item
 
@@ -413,7 +453,9 @@ def test_optimize_traversal_with_single_depth_level_budgets_has_1_item(wikipedia
     pass
 
 
-def test_optimize_traversal_with_single_depth_relationship_activation_for_subclass_of_is_1(wikipediapathoptimizer_instance):
+def test_optimize_traversal_with_single_depth_relationship_activation_for_subclass_of_is_1(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal with single depth relationship_activation for subclass_of is 1
 
@@ -432,7 +474,9 @@ def test_optimize_traversal_with_single_depth_relationship_activation_for_subcla
     pass
 
 
-def test_optimize_traversal_calculates_costs_for_all_types_traversal_costs_contains_subclass_of(wikipediapathoptimizer_instance):
+def test_optimize_traversal_calculates_costs_for_all_types_traversal_costs_contains_subclass_of(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal calculates costs for all types traversal_costs contains subclass_of
 
@@ -451,7 +495,9 @@ def test_optimize_traversal_calculates_costs_for_all_types_traversal_costs_conta
     pass
 
 
-def test_optimize_traversal_calculates_costs_for_all_types_traversal_costs_contains_mentions(wikipediapathoptimizer_instance):
+def test_optimize_traversal_calculates_costs_for_all_types_traversal_costs_contains_mentions(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal calculates costs for all types traversal_costs contains mentions
 
@@ -470,7 +516,9 @@ def test_optimize_traversal_calculates_costs_for_all_types_traversal_costs_conta
     pass
 
 
-def test_optimize_traversal_calculates_costs_for_all_types_traversal_costs_contains_related_to(wikipediapathoptimizer_instance):
+def test_optimize_traversal_calculates_costs_for_all_types_traversal_costs_contains_related_to(
+    wikipediapathoptimizer_instance,
+):
     """
     Scenario: Optimize traversal calculates costs for all types traversal_costs contains related_to
 
@@ -487,4 +535,3 @@ def test_optimize_traversal_calculates_costs_for_all_types_traversal_costs_conta
         traversal_costs contains related_to
     """
     pass
-

@@ -198,11 +198,13 @@ processors/
 ```python
 # Old
 from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
+
 processor = GraphRAGProcessor()
 result = processor.process(url)
 
 # New
 from ipfs_datasets_py.processors import UniversalProcessor
+
 processor = UniversalProcessor()
 result = processor.process(url)  # Same result format
 ```
@@ -224,6 +226,7 @@ results = processor.process_batch(files)
 ```python
 # Old - manual scanning
 import os
+
 for file in os.listdir(folder):
     path = os.path.join(folder, file)
     result = processor.process(path)
@@ -253,13 +256,16 @@ result = processor.process("any/input/here")
 # Create custom processor
 from ipfs_datasets_py.processors.core import ProcessorProtocol
 
+
 class MyCustomProcessor:
     def can_handle(self, context): ...
     def process(self, context): ...
     def get_capabilities(self): ...
 
+
 # Register
 from ipfs_datasets_py.processors import UniversalProcessor
+
 processor = UniversalProcessor()
 processor.registry.register("my_processor", MyCustomProcessor())
 

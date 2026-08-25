@@ -23,6 +23,7 @@ _CHANGELOG = _DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
@@ -30,6 +31,7 @@ def _read(path: Path) -> str:
 # ---------------------------------------------------------------------------
 # 1. ROADMAP "Planned" items inside CANCELLED sections now resolved
 # ---------------------------------------------------------------------------
+
 
 class TestRoadmapPlannedItemsFixed:
     """GIVEN the ROADMAP.md WHEN checking items in CANCELLED sections
@@ -106,6 +108,7 @@ class TestRoadmapPlannedItemsFixed:
 # 2. MASTER_REFACTORING_PLAN_2026.md version and date
 # ---------------------------------------------------------------------------
 
+
 class TestMasterRefactoringPlanVersion:
     """GIVEN the MASTER_REFACTORING_PLAN_2026.md WHEN checking metadata
     THEN version and date should reflect current state.
@@ -140,9 +143,7 @@ class TestMasterRefactoringPlanVersion:
         last_updated_lines = [l for l in lines if "Last Updated:" in l and "2026-02-20" in l]
         # The header line should not be the only "Last Updated" line with 2026-02-20
         # (it may still appear in the completed work summary as a historical date)
-        header_stale = any(
-            "**Last Updated:** 2026-02-20" in l for l in last_updated_lines
-        )
+        header_stale = any("**Last Updated:** 2026-02-20" in l for l in last_updated_lines)
         assert not header_stale, (
             "MASTER_REFACTORING_PLAN_2026.md still has stale **Last Updated:** 2026-02-20"
         )
@@ -151,6 +152,7 @@ class TestMasterRefactoringPlanVersion:
 # ---------------------------------------------------------------------------
 # 3. MASTER_REFACTORING_PLAN §1 snapshot and §2 sessions 59-62
 # ---------------------------------------------------------------------------
+
 
 class TestMasterRefactoringPlanContent:
     """GIVEN MASTER_REFACTORING_PLAN_2026.md WHEN checking content
@@ -170,9 +172,9 @@ class TestMasterRefactoringPlanContent:
     def test_sessions_59_to_62_mentioned(self):
         """Sessions 59-62 documentation work should appear in completed summary."""
         text = _read(_REFPLAN)
-        assert "session 59" in text.lower() or "Session 59" in text or "sessions 59" in text.lower(), (
-            "MASTER_REFACTORING_PLAN_2026.md should mention session 59 doc work"
-        )
+        assert (
+            "session 59" in text.lower() or "Session 59" in text or "sessions 59" in text.lower()
+        ), "MASTER_REFACTORING_PLAN_2026.md should mention session 59 doc work"
 
     def test_validator_split_deferred_to_v4(self):
         """§3.3.2 Extraction Validation Split should be deferred to v4.0+, not just 🟡."""
@@ -199,6 +201,7 @@ class TestMasterRefactoringPlanContent:
 # 4. Four-document version agreement
 # ---------------------------------------------------------------------------
 
+
 class TestFourDocVersionAgreement:
     """GIVEN all four tracking documents WHEN checking version references
     THEN they should all agree on the current version (3.22.17).
@@ -212,7 +215,9 @@ class TestFourDocVersionAgreement:
     def test_changelog_has_v3_22_17(self):
         """CHANGELOG should have a ## [3.22.17] section."""
         text = _read(_CHANGELOG)
-        assert "## [3.22.17]" in text, "CHANGELOG_KNOWLEDGE_GRAPHS.md should have a [3.22.17] section"
+        assert "## [3.22.17]" in text, (
+            "CHANGELOG_KNOWLEDGE_GRAPHS.md should have a [3.22.17] section"
+        )
 
     def test_refactoring_plan_on_v3_22_17(self):
         """MASTER_REFACTORING_PLAN_2026.md should reference v3.22.17."""

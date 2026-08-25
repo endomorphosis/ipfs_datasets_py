@@ -201,17 +201,12 @@ def test_interface_constants_and_defaults() -> None:
     assert DEFAULT_BASELINE_E2E == pytest.approx(0.088333333)
     assert DEFAULT_PREDICTED_FILES
     assert DEFAULT_VALIDATION_COMMANDS
-    assert "benchmarks/semantic_roundtrip/constructors/" in (
-        ALLOWED_PREDICTED_FILE_PREFIXES
-    )
+    assert "benchmarks/semantic_roundtrip/constructors/" in (ALLOWED_PREDICTED_FILE_PREFIXES)
     assert AdmissionDisposition.VALIDATOR_REJECT in NON_IMPLEMENTABLE_DISPOSITIONS
     assert AdmissionDisposition.TIMEOUT in NON_IMPLEMENTABLE_DISPOSITIONS
     assert AdmissionDisposition.ERROR in NON_IMPLEMENTABLE_DISPOSITIONS
     assert disposition_is_implementable(AdmissionDisposition.ACCEPTED) is True
-    assert (
-        disposition_is_implementable(AdmissionDisposition.VALIDATOR_REJECT)
-        is False
-    )
+    assert disposition_is_implementable(AdmissionDisposition.VALIDATOR_REJECT) is False
 
 
 def test_accepted_packet_is_implementable_with_required_fields() -> None:
@@ -245,18 +240,13 @@ def test_accepted_packet_is_implementable_with_required_fields() -> None:
     receipt = packet.admission_receipts[0]
     assert receipt.disposition is AdmissionDisposition.ACCEPTED
     assert receipt.semantic_authority is False
-    assert all(
-        check.semantic_authority is False for check in receipt.check_receipts
-    )
+    assert all(check.semantic_authority is False for check in receipt.check_receipts)
     assert packet.proof_obligation_ids == ()
     assert packet.proof_obligations == ()
     assert packet.predicted_files
     assert packet.validation_commands
     assert packet.admitted_field_changes
-    assert all(
-        change.canonical_field == "object"
-        for change in packet.admitted_field_changes
-    )
+    assert all(change.canonical_field == "object" for change in packet.admitted_field_changes)
     payload = packet.to_dict()
     assert payload["interface"] == PLATEAU_CODEX_PACKET_INTERFACE
     assert payload["schema"] == PLATEAU_CODEX_PACKET_SCHEMA
@@ -486,14 +476,17 @@ def test_mint_proof_obligations_from_reject() -> None:
     assert obligations
     assert all(item.semantic_authority is False for item in obligations)
     assert all(item.disposition == "validator_reject" for item in obligations)
-    assert mint_proof_obligations(
-        admit_hybrid_repair(
-            PRIOR,
-            CANDIDATE,
-            gate=_accept_gate(),
-            allowed_field_paths=(OBJECT_PATH,),
+    assert (
+        mint_proof_obligations(
+            admit_hybrid_repair(
+                PRIOR,
+                CANDIDATE,
+                gate=_accept_gate(),
+                allowed_field_paths=(OBJECT_PATH,),
+            )
         )
-    ) == ()
+        == ()
+    )
 
 
 def test_packet_required_keys_for_supervisor_consumption() -> None:
@@ -679,19 +672,12 @@ def test_holdout_constants_and_validation_commands() -> None:
     assert HOLDOUT_BASELINE_E2E == pytest.approx(0.0)
     assert HOLDOUT_POPULATION_KIND == "holdout"
     assert DEFAULT_HOLDOUT_VALIDATION_COMMANDS
-    assert any(
-        "test_holdout_cases" in cmd for cmd in DEFAULT_HOLDOUT_VALIDATION_COMMANDS
-    )
-    assert any(
-        "test_structural_admission" in cmd
-        for cmd in DEFAULT_HOLDOUT_VALIDATION_COMMANDS
-    )
+    assert any("test_holdout_cases" in cmd for cmd in DEFAULT_HOLDOUT_VALIDATION_COMMANDS)
+    assert any("test_structural_admission" in cmd for cmd in DEFAULT_HOLDOUT_VALIDATION_COMMANDS)
 
 
 def test_residual_refs_from_holdout_catalog() -> None:
-    assert HOLDOUT_CATALOG_PATH.is_file(), (
-        "holdout_residual_catalog.json must exist (PLAT2-010)"
-    )
+    assert HOLDOUT_CATALOG_PATH.is_file(), "holdout_residual_catalog.json must exist (PLAT2-010)"
     catalog = json.loads(HOLDOUT_CATALOG_PATH.read_text(encoding="utf-8"))
     assert catalog.get("population_kind") == "holdout"
 
@@ -711,14 +697,10 @@ def test_residual_refs_from_holdout_catalog() -> None:
 
     # Facet projection helper round-trips a catalog row.
     facet = catalog["residuals"][0]
-    single = residual_ref_from_catalog_facet(
-        facet, catalog_digest=catalog["catalog_cid"]
-    )
+    single = residual_ref_from_catalog_facet(facet, catalog_digest=catalog["catalog_cid"])
     assert single.case_id == facet["case_id"]
     assert single.field_paths == (facet["field_path"],)
-    assert single.estimated_forward_contribution == pytest.approx(
-        float(facet["loss_contribution"])
-    )
+    assert single.estimated_forward_contribution == pytest.approx(float(facet["loss_contribution"]))
 
 
 def test_holdout_accepted_packet_is_implementable() -> None:
@@ -854,10 +836,7 @@ def test_build_holdout_packets_from_residual_catalog() -> None:
     assert packet.case_id == "low_confidence_object"
     assert packet.packet_id.startswith("holdout-pkt-")
     assert all(
-        any(
-            packet_path.startswith(prefix)
-            for prefix in ALLOWED_PREDICTED_FILE_PREFIXES
-        )
+        any(packet_path.startswith(prefix) for prefix in ALLOWED_PREDICTED_FILE_PREFIXES)
         for packet_path in packet.predicted_files
     )
     assert packet.validation_commands
@@ -937,22 +916,10 @@ def test_repair_dev_constants_and_validation_commands() -> None:
     assert REPAIR_DEV_BASELINE_E2E == pytest.approx(0.0)
     assert REPAIR_DEV_POPULATION_KIND == "repair_development"
     assert DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
-    assert any(
-        "test_structural_admission" in cmd
-        for cmd in DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
-    )
-    assert any(
-        "test_plateau_codex_packet" in cmd
-        for cmd in DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
-    )
-    assert any(
-        "test_holdout_baseline" in cmd
-        for cmd in DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
-    )
-    assert any(
-        "test_residual_catalog" in cmd
-        for cmd in DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
-    )
+    assert any("test_structural_admission" in cmd for cmd in DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS)
+    assert any("test_plateau_codex_packet" in cmd for cmd in DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS)
+    assert any("test_holdout_baseline" in cmd for cmd in DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS)
+    assert any("test_residual_catalog" in cmd for cmd in DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS)
     assert any(
         "test_plateau_supervisor_materialize" in cmd
         for cmd in DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
@@ -1056,9 +1023,7 @@ def test_repair_dev_reject_and_not_measured_not_implementable() -> None:
     assert packet.implementable_blockers
     assert any("admission" in b or "no_accepted" in b for b in packet.implementable_blockers)
 
-    bindings = extract_catalog_bindings(
-        catalog, case_id="low_confidence_object"
-    )
+    bindings = extract_catalog_bindings(catalog, case_id="low_confidence_object")
     stale_bindings = PacketBindings(
         baseline_cid=bindings.baseline_cid,
         tree_cid=bindings.tree_cid,
@@ -1089,9 +1054,7 @@ def test_repair_dev_reject_and_not_measured_not_implementable() -> None:
         catalog=catalog,
     )
     assert blocked.implementable is False
-    assert any(
-        "evidence_status" in b for b in blocked.implementable_blockers
-    )
+    assert any("evidence_status" in b for b in blocked.implementable_blockers)
 
     unsupported_bindings = PacketBindings(
         baseline_cid=bindings.baseline_cid,
@@ -1131,9 +1094,7 @@ def test_repair_dev_reject_and_not_measured_not_implementable() -> None:
         require_repair_dev_evidence=True,
     )
     assert missing.implementable is False
-    assert any(
-        "missing_required_evidence" in b for b in missing.implementable_blockers
-    )
+    assert any("missing_required_evidence" in b for b in missing.implementable_blockers)
 
 
 def test_repair_dev_stale_bindings_force_non_implementable() -> None:
@@ -1291,9 +1252,7 @@ def test_build_repair_dev_packets_and_context_metrics(tmp_path: Path) -> None:
         proposals_by_case={"low_confidence_object": proposal},
         admissions_by_case={"low_confidence_object": admission},
         case_ids=("low_confidence_object",),
-        acceptance_ids_by_case={
-            "low_confidence_object": ("ACC-low-confidence",)
-        },
+        acceptance_ids_by_case={"low_confidence_object": ("ACC-low-confidence",)},
     )
     assert len(packets) == 1
     packet = packets[0]
@@ -1303,9 +1262,7 @@ def test_build_repair_dev_packets_and_context_metrics(tmp_path: Path) -> None:
     assert packet.bindings is not None
     assert packet.invariant_context is not None
 
-    metrics = build_repair_dev_packet_context_metrics(
-        packets, catalog=catalog
-    )
+    metrics = build_repair_dev_packet_context_metrics(packets, catalog=catalog)
     assert metrics["interface"] == REPAIR_DEV_PACKET_CONTEXT_METRICS_INTERFACE
     assert metrics["population_kind"] == REPAIR_DEV_POPULATION_KIND
     assert metrics["aggregate"]["packet_count"] == 1
@@ -1315,9 +1272,7 @@ def test_build_repair_dev_packets_and_context_metrics(tmp_path: Path) -> None:
     assert metrics["packets"][0]["token_count"] >= 0
 
     out = tmp_path / "repair_dev_packet_context_metrics.json"
-    written = write_repair_dev_packet_context_metrics(
-        packets, path=out, catalog=catalog
-    )
+    written = write_repair_dev_packet_context_metrics(packets, path=out, catalog=catalog)
     assert out.is_file()
     loaded = json.loads(out.read_text(encoding="utf-8"))
     assert loaded["metrics_cid"] == written["metrics_cid"]

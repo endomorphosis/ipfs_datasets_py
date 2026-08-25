@@ -7,6 +7,7 @@ Methods under test:
   - OntologyOptimizer.max_score()
   - OntologyOptimizer.median_score()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -15,8 +16,10 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -30,6 +33,7 @@ def _push_run(p, overall):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -46,6 +50,7 @@ def _push_opt(o, avg):
 # ---------------------------------------------------------------------------
 # OntologyPipeline.score_ewma
 # ---------------------------------------------------------------------------
+
 
 class TestScoreEwma:
     @pytest.mark.parametrize(
@@ -73,6 +78,7 @@ class TestScoreEwma:
 # OntologyPipeline.trend_slope
 # ---------------------------------------------------------------------------
 
+
 class TestTrendSlope:
     @pytest.mark.parametrize(
         "scores,predicate",
@@ -95,6 +101,7 @@ class TestTrendSlope:
 # OntologyOptimizer.min_score
 # ---------------------------------------------------------------------------
 
+
 class TestMinScore:
     @pytest.mark.parametrize(
         "scores,expected",
@@ -115,6 +122,7 @@ class TestMinScore:
 # OntologyOptimizer.max_score
 # ---------------------------------------------------------------------------
 
+
 class TestMaxScore:
     @pytest.mark.parametrize(
         "scores,expected",
@@ -134,6 +142,7 @@ class TestMaxScore:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.median_score
 # ---------------------------------------------------------------------------
+
 
 class TestOptimizerMedianScore:
     @pytest.mark.parametrize(

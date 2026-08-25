@@ -198,7 +198,7 @@ for file in test_files:
     tree = ast.parse(file_content)
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef):
-            if node.name.startswith('test_'):
+            if node.name.startswith("test_"):
                 test_count += 1
 ```
 
@@ -210,7 +210,7 @@ for file in test_files:
 
 **setup.py confirms:**
 ```python
-python_requires='>=3.12'
+python_requires = ">=3.12"
 ```
 
 **Current environment:**

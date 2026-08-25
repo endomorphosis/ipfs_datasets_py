@@ -1,0 +1,37 @@
+{
+  "acceptance": "Planner gap for cohorts I-M had no authorized edit targets. Cohort tasks OUL-017 through OUL-021 are already completed.",
+  "authorizing_for_publication": false,
+  "board_namespace": "open-us-law-reindex-v1",
+  "canonical_board_task": false,
+  "checks": {
+    "authorizing_for_publication": false,
+    "claims_live_corpus": false,
+    "no_authorized_edit_targets": true,
+    "planner_gap_is_not_new_implementation": true,
+    "producing_tasks_completed": true,
+    "review_only": true
+  },
+  "code_version": "1",
+  "content_digest": "0d360fed65e1c2c0041952455d47504eead169f4fec6e10ce79fdeed2598152a",
+  "digest": "0d360fed65e1c2c0041952455d47504eead169f4fec6e10ce79fdeed2598152a",
+  "discovery": "workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-16-oul-078-objective-gap.md",
+  "finding": "Planner gap for cohorts I-M had no authorized edit targets. Cohort tasks OUL-017 through OUL-021 are already completed.",
+  "goal_id": "OUL-G023",
+  "kind": "objective-gap-review",
+  "operator_resolution": null,
+  "producer": "operator_close_uscir_oul_boards.py",
+  "producing_task_status": {
+    "OUL-017": "completed",
+    "OUL-018": "completed",
+    "OUL-019": "completed",
+    "OUL-020": "completed",
+    "OUL-021": "completed"
+  },
+  "program_id": "open-us-law-reindex-v1",
+  "report_digest_sha256": "0d360fed65e1c2c0041952455d47504eead169f4fec6e10ce79fdeed2598152a",
+  "review_only": true,
+  "reviewed_at": "2026-08-19T03:36:28Z",
+  "schema": "ipfs_datasets_py/open-us-law-review-receipt@1",
+  "status": "passed",
+  "task_id": "OUL-078"
+}

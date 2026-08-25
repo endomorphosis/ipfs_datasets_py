@@ -11,6 +11,7 @@ All production modules under test were created or modified in v20:
 * DE167 — TDFOL ``NLParser.parse()`` with mocked dependencies
 * DF168 — ``evaluate_with_manager`` + ``detect_all_languages`` combined E2E
 """
+
 from __future__ import annotations
 
 import importlib
@@ -27,6 +28,7 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _import(module_path: str) -> Any:
     return importlib.import_module(module_path)
 
@@ -34,6 +36,7 @@ def _import(module_path: str) -> Any:
 # ============================================================================
 # CY161 — merge_and_publish() full metrics snapshot
 # ============================================================================
+
 
 class TestCY161MergePublishMetrics:
     """merge_and_publish() now includes a 'metrics' key in the pubsub payload."""
@@ -55,10 +58,12 @@ class TestCY161MergePublishMetrics:
         mgr_dst = self._make_manager()
         mgr_src.add(self._make_token())
         captured = {}
+
         class MockPubSub:
             def publish(self, topic, payload):
                 captured["topic"] = topic
                 captured["payload"] = payload
+
         mgr_dst.merge_and_publish(mgr_src, MockPubSub())
         assert "metrics" in captured["payload"]
 
@@ -67,9 +72,11 @@ class TestCY161MergePublishMetrics:
         mgr_dst = self._make_manager()
         mgr_src.add(self._make_token())
         payloads = []
+
         class MockPubSub:
             def publish(self, topic, payload):
                 payloads.append(payload)
+
         mgr_dst.merge_and_publish(mgr_src, MockPubSub())
         # get_metrics() returns 'token_count' for the delegation count
         assert "token_count" in payloads[0]["metrics"]
@@ -79,9 +86,11 @@ class TestCY161MergePublishMetrics:
         mgr_dst = self._make_manager()
         mgr_src.add(self._make_token())
         payloads = []
+
         class MockPubSub:
             def publish(self, topic, payload):
                 payloads.append(payload)
+
         mgr_dst.merge_and_publish(mgr_src, MockPubSub())
         # get_metrics() returns 'revoked_count' for revoked CIDs
         assert "revoked_count" in payloads[0]["metrics"]
@@ -92,9 +101,11 @@ class TestCY161MergePublishMetrics:
         for i in range(3):
             mgr_src.add(self._make_token(audience=f"did:key:user{i}"))
         payloads = []
+
         class MockPubSub:
             def publish(self, topic, payload):
                 payloads.append(payload)
+
         mgr_dst.merge_and_publish(mgr_src, MockPubSub())
         # token_count should include the 3 newly merged tokens
         assert payloads[0]["metrics"]["token_count"] == 3
@@ -105,9 +116,11 @@ class TestCY161MergePublishMetrics:
         mgr_dst = self._make_manager()
         mgr_src.add(self._make_token())
         payloads = []
+
         class MockPubSub:
             def publish(self, topic, payload):
                 payloads.append(payload)
+
         mgr_dst.merge_and_publish(mgr_src, MockPubSub())
         assert "added" in payloads[0]
         assert "total" in payloads[0]
@@ -117,9 +130,11 @@ class TestCY161MergePublishMetrics:
         mgr_dst = self._make_manager()
         mgr_src.add(self._make_token())
         payloads = []
+
         class MockPubSub:
             def publish(self, topic, payload):
                 payloads.append(payload)
+
         mgr_dst.merge_and_publish(mgr_src, MockPubSub())
         assert isinstance(payloads[0]["metrics"], dict)
 
@@ -128,9 +143,11 @@ class TestCY161MergePublishMetrics:
         mgr_src = self._make_manager()
         mgr_dst = self._make_manager()
         payloads = []
+
         class MockPubSub:
             def publish(self, topic, payload):
                 payloads.append(payload)
+
         mgr_dst.merge_and_publish(mgr_src, MockPubSub())
         assert "metrics" in payloads[0]
         assert payloads[0]["metrics"]["token_count"] == 0
@@ -139,6 +156,7 @@ class TestCY161MergePublishMetrics:
 # ============================================================================
 # CZ162 — PolicyAuditLog.export_jsonl(metadata=...)
 # ============================================================================
+
 
 class TestCZ162ExportJsonlMetadata:
     """export_jsonl() writes optional __metadata__ header line."""
@@ -234,6 +252,7 @@ class TestCZ162ExportJsonlMetadata:
 # DA163 — ComplianceChecker.merge(other)
 # ============================================================================
 
+
 class TestDA163ComplianceCheckerMerge:
     """ComplianceChecker.merge(other) adds rules from other, symmetric to diff()."""
 
@@ -311,6 +330,7 @@ class TestDA163ComplianceCheckerMerge:
 # DB164 — NLUCANPolicyCompiler.compile_explain(sentences)
 # ============================================================================
 
+
 class TestDB164CompileExplain:
     """NLUCANPolicyCompiler.compile_explain() returns (result, explanation)."""
 
@@ -357,9 +377,7 @@ class TestDB164CompileExplain:
 
     def test_compile_explain_accepts_policy_id(self):
         compiler = self._make_compiler()
-        result, explanation = compiler.compile_explain(
-            ["Frank may write"], policy_id="test-v20"
-        )
+        result, explanation = compiler.compile_explain(["Frank may write"], policy_id="test-v20")
         assert isinstance(result, object)
         assert isinstance(explanation, str)
 
@@ -367,6 +385,7 @@ class TestDB164CompileExplain:
 # ============================================================================
 # DC165 — detect_all_languages() includes "en"
 # ============================================================================
+
 
 class TestDC165EnglishKeywords:
     """detect_all_languages() now includes an English ('en') keyword pass."""
@@ -430,6 +449,7 @@ class TestDC165EnglishKeywords:
 # DD166 — merge_and_publish() with duck-typed PubSubBus
 # ============================================================================
 
+
 class TestDD166MergeAndPublishWithBus:
     """merge_and_publish() works with any duck-typed publish(topic, payload)."""
 
@@ -447,8 +467,10 @@ class TestDD166MergeAndPublishWithBus:
 
     class _SimpleBus:
         """Minimal duck-typed pubsub bus for testing."""
+
         def __init__(self):
             self.calls = []
+
         def publish(self, topic, payload):
             self.calls.append((topic, payload))
 
@@ -489,6 +511,7 @@ class TestDD166MergeAndPublishWithBus:
         class BrokenBus:
             def publish(self, topic, payload):
                 raise RuntimeError("bus down")
+
         mgr_src = self._make_manager()
         mgr_dst = self._make_manager()
         mgr_src.add(self._make_token())
@@ -517,6 +540,7 @@ class TestDD166MergeAndPublishWithBus:
 # ============================================================================
 # DE167 — TDFOL NLParser.parse() with mocked dependencies
 # ============================================================================
+
 
 class TestDE167TDFOLNLParserMocked:
     """NLParser / parse_natural_language() work with mocked spaCy / TDFOL deps."""
@@ -611,6 +635,7 @@ class TestDE167TDFOLNLParserMocked:
 # DF168 — evaluate_with_manager + detect_all_languages combined E2E
 # ============================================================================
 
+
 class TestDF168EvaluateAndDetectE2E:
     """Combined E2E: evaluate_with_manager + detect_all_languages."""
 
@@ -630,9 +655,7 @@ class TestDF168EvaluateAndDetectE2E:
     def test_detect_all_languages_en_has_conflict_on_conflict_text(self):
         mod = _import("ipfs_datasets_py.logic.api")
         # English text with both permission and prohibition
-        report = mod.detect_all_languages(
-            "Alice may read files and must not read files"
-        )
+        report = mod.detect_all_languages("Alice may read files and must not read files")
         assert "en" in report.by_language
 
     def test_total_conflicts_is_int(self):

@@ -24,13 +24,13 @@ from ipfs_datasets_py.monitoring import (
     get_logger,
     get_metrics_registry,
     monitor_context,
-    timed
+    timed,
 )
 
 from ipfs_datasets_py.dashboards.admin_dashboard import (
     start_dashboard,
     stop_dashboard,
-    DashboardConfig
+    DashboardConfig,
 )
 
 
@@ -51,9 +51,7 @@ class SampleDataGenerator:
 
         self.running = True
         self.thread = threading.Thread(
-            target=self._generate_data_loop,
-            args=(interval,),
-            daemon=True
+            target=self._generate_data_loop, args=(interval,), daemon=True
         )
         self.thread.start()
         self.logger.info("Sample data generator started")
@@ -90,7 +88,7 @@ class SampleDataGenerator:
             (self.logger.debug, "Debug message", 0.4),
             (self.logger.info, "Info message", 0.3),
             (self.logger.warning, "Warning message", 0.2),
-            (self.logger.error, "Error message", 0.1)
+            (self.logger.error, "Error message", 0.1),
         ]
 
         for log_fn, prefix, probability in level_choices:
@@ -101,47 +99,58 @@ class SampleDataGenerator:
         """Generate sample metrics."""
         # Simulate CPU load oscillation (sine wave)
         timestamp = time.time()
-        cpu_load = 50 + 30 * abs(round(1/0.1 * timestamp) % 20 - 10) / 10  # Oscillates between 20% and 80%
-        memory_usage = 40 + 20 * abs(round(1/0.15 * timestamp) % 20 - 10) / 10  # Oscillates between 20% and 60%
+        cpu_load = (
+            50 + 30 * abs(round(1 / 0.1 * timestamp) % 20 - 10) / 10
+        )  # Oscillates between 20% and 80%
+        memory_usage = (
+            40 + 20 * abs(round(1 / 0.15 * timestamp) % 20 - 10) / 10
+        )  # Oscillates between 20% and 60%
 
         # Record system-like metrics
-        self.metrics.gauge("sample_cpu_usage", cpu_load,
-                        labels={"source": "sample_generator"})
-        self.metrics.gauge("sample_memory_usage", memory_usage,
-                         labels={"source": "sample_generator"})
+        self.metrics.gauge("sample_cpu_usage", cpu_load, labels={"source": "sample_generator"})
+        self.metrics.gauge(
+            "sample_memory_usage", memory_usage, labels={"source": "sample_generator"}
+        )
 
         # Record counter metrics
-        self.metrics.increment("sample_requests",
-                             labels={"method": random.choice(["GET", "POST", "PUT", "DELETE"])})
+        self.metrics.increment(
+            "sample_requests", labels={"method": random.choice(["GET", "POST", "PUT", "DELETE"])}
+        )
 
         # Record histogram metrics
-        self.metrics.histogram("sample_response_time",
-                             random.uniform(10, 500),  # 10-500ms
-                             labels={"endpoint": random.choice(["/api/data", "/api/user", "/api/auth"])})
+        self.metrics.histogram(
+            "sample_response_time",
+            random.uniform(10, 500),  # 10-500ms
+            labels={"endpoint": random.choice(["/api/data", "/api/user", "/api/auth"])},
+        )
 
         # Record timer metrics
-        self.metrics.timer("sample_processing_time",
-                         random.uniform(50, 200),  # 50-200ms
-                         labels={"process": "data_processing"})
+        self.metrics.timer(
+            "sample_processing_time",
+            random.uniform(50, 200),  # 50-200ms
+            labels={"process": "data_processing"},
+        )
 
     def _simulate_operations(self):
         """Simulate operations."""
         # With 20% probability, start a new operation
         if random.random() < 0.2:
             # Choose a random operation type
-            operation_type = random.choice([
-                "data_indexing",
-                "vector_search",
-                "knowledge_graph_query",
-                "dataset_loading",
-                "graph_traversal"
-            ])
+            operation_type = random.choice(
+                [
+                    "data_indexing",
+                    "vector_search",
+                    "knowledge_graph_query",
+                    "dataset_loading",
+                    "graph_traversal",
+                ]
+            )
 
             # Start operation
             with monitor_context(
                 operation_name=operation_type,
                 entity_count=random.randint(10, 1000),
-                dataset_size=f"{random.randint(1, 100)}MB"
+                dataset_size=f"{random.randint(1, 100)}MB",
             ):
                 # Simulate work
                 time.sleep(random.uniform(0.1, 0.5))
@@ -151,7 +160,12 @@ class SampleDataGenerator:
                     pass  # Success
                 else:
                     # Simulate error
-                    error_types = ["TimeoutError", "ConnectionError", "ValidationError", "ResourceNotFound"]
+                    error_types = [
+                        "TimeoutError",
+                        "ConnectionError",
+                        "ValidationError",
+                        "ResourceNotFound",
+                    ]
                     raise Exception(f"{random.choice(error_types)}: Operation failed")
 
 
@@ -184,7 +198,7 @@ def admin_dashboard_example():
             file_path=log_file,
             console=True,
             rotate_logs=True,
-            include_context=True
+            include_context=True,
         ),
         metrics=MetricsConfig(
             enabled=True,
@@ -192,8 +206,8 @@ def admin_dashboard_example():
             output_file=metrics_file,
             system_metrics=True,
             memory_metrics=True,
-            network_metrics=True
-        )
+            network_metrics=True,
+        ),
     )
 
     # Initialize monitoring
@@ -212,7 +226,7 @@ def admin_dashboard_example():
             refresh_interval=5,
             open_browser=True,
             data_dir=temp_dir,
-            monitoring_config=monitoring_config
+            monitoring_config=monitoring_config,
         )
 
         # Start dashboard
@@ -251,11 +265,7 @@ def admin_dashboard_example():
         print(f"Generated files in: {temp_dir}")
         print(f"To clean up temporary files, run: rm -rf {temp_dir}")
 
-        return {
-            "temp_dir": temp_dir,
-            "log_file": log_file,
-            "metrics_file": metrics_file
-        }
+        return {"temp_dir": temp_dir, "log_file": log_file, "metrics_file": metrics_file}
 
     except Exception as e:
         logger.error(f"Error in admin dashboard example: {str(e)}", exc_info=True)

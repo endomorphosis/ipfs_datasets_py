@@ -26,17 +26,17 @@ Successfully integrated the `scrape_the_law_mk3` submodule as a Model Context Pr
 **Parameters (11 total):**
 ```python
 {
-    "jurisdiction": str,           # Single jurisdiction
-    "jurisdictions": List[str],    # Multiple jurisdictions
-    "provider": str,               # Legal code provider (auto-detect available)
-    "output_format": str,          # json, parquet, or sql
-    "include_metadata": bool,      # Include citation info, version history
-    "include_text": bool,          # Include full legal text
-    "rate_limit_delay": float,     # Delay between requests (seconds)
-    "max_sections": int,           # Max sections per jurisdiction
-    "scraper_type": str,           # playwright or selenium
-    "job_id": str,                 # Custom job ID (auto-generated if not provided)
-    "resume": bool                 # Resume previous job
+    "jurisdiction": str,  # Single jurisdiction
+    "jurisdictions": List[str],  # Multiple jurisdictions
+    "provider": str,  # Legal code provider (auto-detect available)
+    "output_format": str,  # json, parquet, or sql
+    "include_metadata": bool,  # Include citation info, version history
+    "include_text": bool,  # Include full legal text
+    "rate_limit_delay": float,  # Delay between requests (seconds)
+    "max_sections": int,  # Max sections per jurisdiction
+    "scraper_type": str,  # playwright or selenium
+    "job_id": str,  # Custom job ID (auto-generated if not provided)
+    "resume": bool,  # Resume previous job
 }
 ```
 
@@ -138,21 +138,19 @@ AI Assistants (Claude, GPT, etc.)
 
 ### Basic Usage
 ```python
-from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.legal_dataset_mcp_tools import ScrapeMunicipalCodesTool
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.legal_dataset_mcp_tools import (
+    ScrapeMunicipalCodesTool,
+)
 
 tool = ScrapeMunicipalCodesTool()
 
 # Single jurisdiction
-result = await tool.execute({
-    "jurisdiction": "Seattle, WA",
-    "provider": "municode"
-})
+result = await tool.execute({"jurisdiction": "Seattle, WA", "provider": "municode"})
 
 # Multiple jurisdictions
-result = await tool.execute({
-    "jurisdictions": ["New York, NY", "Los Angeles, CA"],
-    "output_format": "parquet"
-})
+result = await tool.execute(
+    {"jurisdictions": ["New York, NY", "Los Angeles, CA"], "output_format": "parquet"}
+)
 ```
 
 ### Via MCP Server

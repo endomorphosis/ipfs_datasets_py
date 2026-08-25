@@ -32,11 +32,14 @@ Found **3 critical drift issues** and **2 minor issues** across optimizers docum
 def generate(self, source_data: Any, context: Dict[str, Any]) -> Dict[str, Any]:
     return {"artifact": source_data}
 
+
 def critique(self, artifact: Dict[str, Any], context: Dict[str, Any]):
     return {"overall": 1.0, "recommendations": []}
 
+
 def optimize(self, artifact: Dict[str, Any], feedback: Dict[str, Any], context: Dict[str, Any]):
     return artifact
+
 
 def validate(self, artifact: Dict[str, Any], context: Dict[str, Any]) -> bool:
     return True
@@ -49,10 +52,11 @@ def generate(self, input_data: Any, context: OptimizationContext) -> Any:
     """Generate initial artifact from input data."""
     pass
 
+
 @abstractmethod
 def critique(self, artifact: Any, context: OptimizationContext) -> Tuple[float, List[str]]:
     """Evaluate quality of artifact.
-    
+
     Returns:
         Tuple of (score, feedback_list)
         - score: Quality score from 0 (worst) to 1 (best)
@@ -60,10 +64,14 @@ def critique(self, artifact: Any, context: OptimizationContext) -> Tuple[float, 
     """
     pass
 
+
 @abstractmethod
-def optimize(self, artifact: Any, score: float, feedback: List[str], context: OptimizationContext) -> Any:
+def optimize(
+    self, artifact: Any, score: float, feedback: List[str], context: OptimizationContext
+) -> Any:
     """Improve artifact based on critique feedback."""
     pass
+
 
 def validate(self, artifact: Any, context: OptimizationContext) -> bool:
     """Validate that artifact meets requirements."""

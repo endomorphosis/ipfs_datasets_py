@@ -19,8 +19,11 @@ and reasoning capabilities.
 from .storage import IPLDStorage
 from .dag_pb import create_dag_node, parse_dag_node
 from .optimized_codec import (
-    OptimizedEncoder, OptimizedDecoder, BatchProcessor,
-    create_batch_processor, optimize_node_structure
+    OptimizedEncoder,
+    OptimizedDecoder,
+    BatchProcessor,
+    create_batch_processor,
+    optimize_node_structure,
 )
 
 # Optional components: these can pull in heavy deps (e.g., numpy). Keep the
@@ -33,9 +36,7 @@ except Exception:  # pragma: no cover
     SearchResult = None  # type: ignore[assignment]
 
 try:
-    from .knowledge_graph import (
-        IPLDKnowledgeGraph, Entity, Relationship
-    )
+    from .knowledge_graph import IPLDKnowledgeGraph, Entity, Relationship
 except Exception:  # pragma: no cover
     IPLDKnowledgeGraph = None  # type: ignore[assignment]
     Entity = None  # type: ignore[assignment]
@@ -44,33 +45,36 @@ except Exception:  # pragma: no cover
 # Check if official implementations are available
 try:
     from ipld_dag_pb import PBNode, PBLink
+
     HAVE_IPLD_DAG_PB = True
 except ImportError:
     from .dag_pb import PBNode, PBLink
+
     HAVE_IPLD_DAG_PB = False
 
 try:
     import ipld_car
+
     HAVE_IPLD_CAR = True
 except ImportError:
     HAVE_IPLD_CAR = False
 
 __all__ = [
-    'IPLDStorage',
-    'create_dag_node',
-    'parse_dag_node',
-    'PBNode',
-    'PBLink',
-    'OptimizedEncoder',
-    'OptimizedDecoder',
-    'BatchProcessor',
-    'create_batch_processor',
-    'optimize_node_structure',
-    'IPLDVectorStore',
-    'SearchResult',
-    'IPLDKnowledgeGraph',
-    'Entity',
-    'Relationship',
-    'HAVE_IPLD_DAG_PB',
-    'HAVE_IPLD_CAR'
+    "IPLDStorage",
+    "create_dag_node",
+    "parse_dag_node",
+    "PBNode",
+    "PBLink",
+    "OptimizedEncoder",
+    "OptimizedDecoder",
+    "BatchProcessor",
+    "create_batch_processor",
+    "optimize_node_structure",
+    "IPLDVectorStore",
+    "SearchResult",
+    "IPLDKnowledgeGraph",
+    "Entity",
+    "Relationship",
+    "HAVE_IPLD_DAG_PB",
+    "HAVE_IPLD_CAR",
 ]

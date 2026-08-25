@@ -84,16 +84,18 @@ class TestTypePrefilteringOptimization:
     def test_performance_benefit_realistic_data(self, generator):
         """
         Integration test: verify that type pre-filtering reduces pairs evaluated.
-        
+
         With realistic data containing many dates and locations, the filter should
         skip ~20-30% of pairs before type inference.
         """
         # Create a context with realistic data
-        data = ("The meeting on 2025-01-15 at New York with Alice from Acme Corp "
+        data = (
+            "The meeting on 2025-01-15 at New York with Alice from Acme Corp "
             "and Bob from TechCorp happened on 2025-01-16 in San Francisco. "
             "Two dates (2025-01-15, 2025-01-16) exist, two locations (New York, "
             "San Francisco), and three people (Alice, Bob) plus two companies "
-            "(Acme Corp, TechCorp).")
+            "(Acme Corp, TechCorp)."
+        )
         context = OntologyGenerationContext(
             data_source="test_doc",
             data_type=DataType.TEXT,
@@ -120,7 +122,7 @@ class TestTypePrefilteringOptimization:
         # Type filtering should reduce work: 2 Date pairs + 2 Location pairs = 4 skipped
         # But due to co-occurrence distance filtering, actual count may be lower
         assert len(relationships) >= 0  # Some relationships should be found
-        
+
         # Verify that the optimization allows realistic relationships
         # (person-to-person, person-to-organization, person-to-event, etc.)
         relationship_types = {r.type for r in relationships}

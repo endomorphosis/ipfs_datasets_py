@@ -271,8 +271,12 @@ def _logic_context(
         "section_number": _compact(row.get("section_number")),
         "official_cite": _section_ref(row),
         "chapter": chapter,
-        "public_laws": list(citations.get("public_laws") or [])[:12] if isinstance(citations, Mapping) else [],
-        "usc_citations": list(citations.get("usc_citations") or [])[:12] if isinstance(citations, Mapping) else [],
+        "public_laws": list(citations.get("public_laws") or [])[:12]
+        if isinstance(citations, Mapping)
+        else [],
+        "usc_citations": list(citations.get("usc_citations") or [])[:12]
+        if isinstance(citations, Mapping)
+        else [],
         "relationships": grouped,
         "bm25": {
             "document_length": int(bm25_row.get("document_length") or 0),
@@ -290,7 +294,11 @@ def _make_tdfol(row: Mapping[str, Any], op: str, context: Mapping[str, Any]) -> 
         f"FederalStatuteSection({section})",
         f"PartOfTitle({section},{title})",
     ]
-    chapter_name = _compact((context.get("chapter") or {}).get("chapter_name") if isinstance(context.get("chapter"), Mapping) else "")
+    chapter_name = _compact(
+        (context.get("chapter") or {}).get("chapter_name")
+        if isinstance(context.get("chapter"), Mapping)
+        else ""
+    )
     if chapter_name:
         clauses.append(f"PartOfChapter({section},{_symbol(chapter_name, prefix='chapter')})")
     for term in (context.get("bm25") or {}).get("top_terms", [])[:10]:
@@ -300,22 +308,33 @@ def _make_tdfol(row: Mapping[str, Any], op: str, context: Mapping[str, Any]) -> 
     for cite in context.get("usc_citations", [])[:8]:
         clauses.append(f"ReferencesUSC({section},{_symbol(cite, prefix='usc_ref')})")
     if op == "P":
-        clauses.append(f"∀a((SubjectTo(a,{section}) ∧ FederalActorOrPerson(a)) → P(◇ExerciseRightOrAuthority(a,{section})))")
+        clauses.append(
+            f"∀a((SubjectTo(a,{section}) ∧ FederalActorOrPerson(a)) → P(◇ExerciseRightOrAuthority(a,{section})))"
+        )
     elif op == "F":
-        clauses.append(f"∀a((SubjectTo(a,{section}) ∧ FederalActorOrPerson(a)) → F(◇Violate(a,{section})))")
+        clauses.append(
+            f"∀a((SubjectTo(a,{section}) ∧ FederalActorOrPerson(a)) → F(◇Violate(a,{section})))"
+        )
     else:
-        clauses.append(f"∀a((SubjectTo(a,{section}) ∧ FederalActorOrPerson(a)) → O(□ComplyWith(a,{section})))")
+        clauses.append(
+            f"∀a((SubjectTo(a,{section}) ∧ FederalActorOrPerson(a)) → O(□ComplyWith(a,{section})))"
+        )
     return "(" + " ∧ ".join(_unique(clauses)) + ")"
 
 
 def _make_dcec(row: Mapping[str, Any], op: str, context: Mapping[str, Any]) -> str:
     section = _symbol(_section_ref(row), prefix="usc_section")
-    statements = [f"(section {section})", f"(title {section} usc_title_{_symbol(row.get('title_number'), prefix='title')})"]
+    statements = [
+        f"(section {section})",
+        f"(title {section} usc_title_{_symbol(row.get('title_number'), prefix='title')})",
+    ]
     for term in (context.get("bm25") or {}).get("top_terms", [])[:10]:
         statements.append(f"(salient_term {section} {_symbol(term.get('term'), prefix='term')})")
     for law in context.get("public_laws", [])[:6]:
         statements.append(f"(source_public_law {section} {_symbol(law, prefix='public_law')})")
-    statements.append(f"(forall agent (implies (subject_to agent {section}) ({op} (always (comply_with agent {section})))))")
+    statements.append(
+        f"(forall agent (implies (subject_to agent {section}) ({op} (always (comply_with agent {section})))))"
+    )
     return "(and " + " ".join(_unique(statements)) + ")"
 
 
@@ -334,8 +353,7 @@ def _make_flogic(row: Mapping[str, Any], op: str, context: Mapping[str, Any]) ->
         for item in (context.get("bm25") or {}).get("top_terms", [])[:20]
     ]
     set_methods["sourcePublicLaw"] = [
-        json.dumps(item, ensure_ascii=False)
-        for item in list(context.get("public_laws") or [])[:12]
+        json.dumps(item, ensure_ascii=False) for item in list(context.get("public_laws") or [])[:12]
     ]
     scalar_methods = {
         "identifier": json.dumps(_section_ref(row), ensure_ascii=False),
@@ -425,9 +443,9 @@ def _logic_generation_prompt(
                     "object_id": "stable symbol",
                     "isa": "UnitedStatesCodeSection",
                     "scalar_methods": {},
-                    "set_methods": {}
+                    "set_methods": {},
                 },
-                "ergo_program": "Ergo/Flora-2 style frame logic rules"
+                "ergo_program": "Ergo/Flora-2 style frame logic rules",
             },
             "confidence": 0.0,
             "notes": "brief caveats about ambiguity or missing context",
@@ -540,7 +558,9 @@ def _generate_llm_logic(
                 tdfol = _compact(candidate.get("deontic_temporal_fol"))
                 dcec = _compact(candidate.get("deontic_cognitive_event_calculus"))
                 if not tdfol or not dcec:
-                    raise ValueError("LLM response missing deontic_temporal_fol or deontic_cognitive_event_calculus")
+                    raise ValueError(
+                        "LLM response missing deontic_temporal_fol or deontic_cognitive_event_calculus"
+                    )
                 parsed = candidate
                 break
             except Exception as exc:
@@ -548,7 +568,9 @@ def _generate_llm_logic(
         if parsed is not None:
             break
     if parsed is None:
-        raise ValueError(f"LLM response could not be parsed/validated after {attempts} attempt(s): {last_error}")
+        raise ValueError(
+            f"LLM response could not be parsed/validated after {attempts} attempt(s): {last_error}"
+        )
     frame_logic = parsed.get("frame_logic_json")
     fol_payload = parsed.get("fol_json")
     deontic_payload = parsed.get("deontic_json")
@@ -565,8 +587,12 @@ def _generate_llm_logic(
         "tdfol": tdfol,
         "dcec": dcec,
         "flogic": dict(frame_logic),
-        "norm_operator": _compact(parsed.get("norm_operator")) or _compact(deontic_payload.get("operator")) or "MIXED",
-        "norm_type": _compact(parsed.get("norm_type")) or _compact(deontic_payload.get("norm_type")) or "mixed",
+        "norm_operator": _compact(parsed.get("norm_operator"))
+        or _compact(deontic_payload.get("operator"))
+        or "MIXED",
+        "norm_type": _compact(parsed.get("norm_type"))
+        or _compact(deontic_payload.get("norm_type"))
+        or "mixed",
         "llm_model": active_model,
         "llm_prompt_cid": cid_for_obj({"prompt": prompt}),
         "llm_response_cid": cid_for_obj({"response": response}),
@@ -599,7 +625,9 @@ def _build_row(
     text = _compact(row.get("text"))
     input_text = text[:max_chars] if max_chars > 0 else text
     op = _norm_operator(input_text)
-    context = _logic_context(row, bm25_by_cid=bm25_by_cid, relationships_by_source=relationships_by_source)
+    context = _logic_context(
+        row, bm25_by_cid=bm25_by_cid, relationships_by_source=relationships_by_source
+    )
     tdfol = _make_tdfol(row, op, context)
     dcec = _make_dcec(row, op, context)
     flogic = _make_flogic(row, op, context)
@@ -754,11 +782,15 @@ def _write_parquet(path: Path, rows: List[Dict[str, Any]]) -> None:
 
 def _write_manifest(path: Path, manifest: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(_json_safe(manifest), indent=2, ensure_ascii=False), encoding="utf-8")
+    path.write_text(
+        json.dumps(_json_safe(manifest), indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build U.S. Code formal logic and proof artifacts.")
+    parser = argparse.ArgumentParser(
+        description="Build U.S. Code formal logic and proof artifacts."
+    )
     parser.add_argument("--input", required=True)
     parser.add_argument("--output-root", required=True)
     parser.add_argument("--bm25-index", required=True)
@@ -838,11 +870,16 @@ def main() -> int:
                 completed = {
                     _compact(row.get("ipfs_cid"))
                     for row in out_rows
-                    if _compact(row.get("ipfs_cid")) and row.get("logic_generation_method") == "llm_router"
+                    if _compact(row.get("ipfs_cid"))
+                    and row.get("logic_generation_method") == "llm_router"
                 }
                 out_rows = [row for row in out_rows if _compact(row.get("ipfs_cid")) in completed]
             else:
-                completed = {_compact(row.get("ipfs_cid")) for row in out_rows if _compact(row.get("ipfs_cid"))}
+                completed = {
+                    _compact(row.get("ipfs_cid"))
+                    for row in out_rows
+                    if _compact(row.get("ipfs_cid"))
+                }
         except Exception:
             out_rows = []
             completed = set()
@@ -867,14 +904,26 @@ def main() -> int:
             "formalization_scope": "machine_generated_candidate",
             "logic_source": str(args.logic_source),
             "require_llm": bool(args.require_llm),
-            "llm_provider": str(args.llm_provider or "") if str(args.logic_source) == "llm_router" else "",
-            "llm_model": str(args.llm_model or "") if str(args.logic_source) == "llm_router" else "",
+            "llm_provider": str(args.llm_provider or "")
+            if str(args.logic_source) == "llm_router"
+            else "",
+            "llm_model": str(args.llm_model or "")
+            if str(args.logic_source) == "llm_router"
+            else "",
             "ontology_version": "uscode-logic-ontology-v1",
             "zkp_backend": zkp_backend,
             "zkp_circuit_version": zkp_circuit_version,
             "zkp_verified_count": sum(1 for row in out_rows if row.get("zkp_verified")),
-            "llm_generated_count": sum(1 for row in out_rows if row.get("logic_generation_method") == "llm_router"),
-            "llm_fallback_count": sum(1 for row in out_rows if str(row.get("logic_generation_method") or "").startswith("deterministic_scaffold")),
+            "llm_generated_count": sum(
+                1 for row in out_rows if row.get("logic_generation_method") == "llm_router"
+            ),
+            "llm_fallback_count": sum(
+                1
+                for row in out_rows
+                if str(row.get("logic_generation_method") or "").startswith(
+                    "deterministic_scaffold"
+                )
+            ),
             "status": status,
             "started_at": started_at,
             "updated_at": datetime.now(timezone.utc).isoformat(),

@@ -82,9 +82,7 @@ def _legal_envelope() -> ArtifactEnvelope:
 
 
 def _intent_envelope() -> ArtifactEnvelope:
-    return ArtifactEnvelope.from_intent_artifact(
-        _intent_artifact(), profile=_intent_profile()
-    )
+    return ArtifactEnvelope.from_intent_artifact(_intent_artifact(), profile=_intent_profile())
 
 
 def _security_envelope() -> ArtifactEnvelope:
@@ -185,9 +183,7 @@ def test_honest_legal_fixture_verifies_on_disk_store(tmp_path: Path) -> None:
     put_attestation(store, legal.content_cid, attestation)
 
     reloaded = ProofCorpusStore(root=tmp_path)
-    result = verify_attestation(
-        reloaded, legal.content_cid, legal.profile
-    )
+    result = verify_attestation(reloaded, legal.content_cid, legal.profile)
     assert result.status is AttestationStatus.PASS
     assert result.ok is True
     assert has_attestation(reloaded, legal.content_cid) is True
@@ -196,9 +192,7 @@ def test_honest_legal_fixture_verifies_on_disk_store(tmp_path: Path) -> None:
 def test_prove_and_verify_for_envelope_helper() -> None:
     legal = _legal_envelope()
     attestation = _prove_legal(legal)
-    result = verify_attestation_for_envelope(
-        legal, legal.profile, attestation=attestation
-    )
+    result = verify_attestation_for_envelope(legal, legal.profile, attestation=attestation)
     assert result.status is AttestationStatus.PASS
     assert result.ok is True
 
@@ -397,8 +391,7 @@ def test_result_round_trip_dict() -> None:
         family="legal",
         reason="zkp_verified",
         statement_digest=(
-            "sha256:abababababababababababababababab"
-            "abababababababababababababababab"
+            "sha256:abababababababababababababababababababababababababababababababab"
         ),
         is_simulated=True,
         attestation_interface=LEGAL_CONSTRAINT_ZKP_INTERFACE,

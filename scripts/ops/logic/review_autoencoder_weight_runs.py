@@ -234,9 +234,7 @@ def _run_rows(test_log_dir: Path) -> list[dict[str, Any]]:
             "metric_schema": summary.get("metric_schema_version"),
             "backend": summary.get("autoencoder_compute_backend"),
             "device": summary.get("autoencoder_compute_device"),
-            "cosine_reconstruction_weight": summary.get(
-                "autoencoder_cosine_reconstruction_weight"
-            ),
+            "cosine_reconstruction_weight": summary.get("autoencoder_cosine_reconstruction_weight"),
             "bridge_loss_adapters": summary.get("bridge_loss_adapters", []),
             "validation_mode": summary.get("validation_mode"),
         }
@@ -248,7 +246,10 @@ def _run_rows(test_log_dir: Path) -> list[dict[str, Any]]:
         row["deprecated"] = status == "deprecated"
         row["deprecation_reasons"] = reasons
         rows.append(row)
-    rows.sort(key=lambda item: (_finite_float(item.get("score")), int(item.get("cycles") or 0)), reverse=True)
+    rows.sort(
+        key=lambda item: (_finite_float(item.get("score")), int(item.get("cycles") or 0)),
+        reverse=True,
+    )
     return rows
 
 
@@ -560,9 +561,7 @@ def _write_canonical_state(
 def _markdown_report(report: Mapping[str, Any]) -> str:
     rows = list(report["runs"])
     eligible_sources = [
-        row
-        for row in rows
-        if row["status"] in set(report.get("canonical_source_statuses", ()))
+        row for row in rows if row["status"] in set(report.get("canonical_source_statuses", ()))
     ]
     selected_source_paths = {str(path) for path in report.get("canonical_source_state_paths", [])}
     deprecated = [row for row in rows if row["deprecated"]]

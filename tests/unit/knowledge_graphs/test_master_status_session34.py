@@ -31,6 +31,7 @@ import pytest
 #    (entity not found in kg during property-chain application)
 # ===========================================================================
 
+
 class TestOntologyReasonerRemainingPaths:
     """GIVEN an OntologyReasoner, WHEN get_inferred_types is called or a
     property-chain references a deleted entity, THEN the correct branches fire."""
@@ -72,9 +73,7 @@ class TestOntologyReasonerRemainingPaths:
         )
 
         schema = OntologySchema()
-        schema.property_chains = [
-            (["parentOf", "parentOf"], "grandparentOf")
-        ]
+        schema.property_chains = [(["parentOf", "parentOf"], "grandparentOf")]
         kg = KnowledgeGraph()
         e1 = Entity(name="Alice", entity_type="Person")
         e2 = Entity(name="Bob", entity_type="Person")
@@ -82,12 +81,14 @@ class TestOntologyReasonerRemainingPaths:
         for e in [e1, e2, e3]:
             kg.add_entity(e)
         kg.add_relationship(
-            Relationship(source_entity=e1, target_entity=e2,
-                         relationship_type="parentOf", confidence=0.9)
+            Relationship(
+                source_entity=e1, target_entity=e2, relationship_type="parentOf", confidence=0.9
+            )
         )
         kg.add_relationship(
-            Relationship(source_entity=e2, target_entity=e3,
-                         relationship_type="parentOf", confidence=0.9)
+            Relationship(
+                source_entity=e2, target_entity=e3, relationship_type="parentOf", confidence=0.9
+            )
         )
         # Remove e3 so it's referenced by relationships but absent from entities
         del kg.entities[e3.entity_id]
@@ -95,8 +96,9 @@ class TestOntologyReasonerRemainingPaths:
         reasoner = OntologyReasoner(schema, max_iterations=2)
         result = reasoner.materialize(kg)  # should not raise
         # grandparentOf cannot be inferred since e3 is missing
-        gp_rels = [r for r in result.relationships.values()
-                   if r.relationship_type == "grandparentOf"]
+        gp_rels = [
+            r for r in result.relationships.values() if r.relationship_type == "grandparentOf"
+        ]
         assert len(gp_rels) == 0
 
 
@@ -105,6 +107,7 @@ class TestOntologyReasonerRemainingPaths:
 #    (lazy-load properties: cypher_compiler, ir_executor, graph_engine)
 # ===========================================================================
 
+
 class TestUnifiedQueryEngineLazyProperties:
     """GIVEN a UnifiedQueryEngine with a mock backend,
     WHEN the lazy properties are accessed,
@@ -112,6 +115,7 @@ class TestUnifiedQueryEngineLazyProperties:
 
     def _engine(self):
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         return UnifiedQueryEngine(backend=MagicMock())
 
     def test_cypher_compiler_lazy_loaded(self):
@@ -152,6 +156,7 @@ class TestUnifiedQueryEngineLazyProperties:
 # 3. query/distributed.py – lines 751-752, 767, 902-903
 # ===========================================================================
 
+
 class TestDistributedQueryMissedPaths:
     """GIVEN a FederatedQueryExecutor, WHEN errors and deduplication are
     exercised, THEN the fallback paths fire correctly."""
@@ -183,9 +188,7 @@ class TestDistributedQueryMissedPaths:
 
         fqe = self._executor()
         kg = KnowledgeGraph()
-        with patch(
-            "ipfs_datasets_py.knowledge_graphs.core.query_executor.QueryExecutor"
-        ) as MockQE:
+        with patch("ipfs_datasets_py.knowledge_graphs.core.query_executor.QueryExecutor") as MockQE:
             MockQE.return_value.execute.side_effect = RuntimeError("exec failed")
             result = fqe._execute_on_partition(kg, "MATCH (n) RETURN n", {})
         assert result == []
@@ -221,6 +224,7 @@ class TestDistributedQueryMissedPaths:
 # 4. query/hybrid_search.py – lines 159, 205, 383, 428
 # ===========================================================================
 
+
 class TestHybridSearchMissedPaths:
     """GIVEN a HybridSearchEngine with mocked components,
     WHEN CancelledError is injected or duplicate nodes are supplied,
@@ -228,6 +232,7 @@ class TestHybridSearchMissedPaths:
 
     def _engine(self, vector_store=None, backend=None):
         from ipfs_datasets_py.knowledge_graphs.query.hybrid_search import HybridSearchEngine
+
         return HybridSearchEngine(
             backend=backend or MagicMock(),
             vector_store=vector_store or MagicMock(),
@@ -290,6 +295,7 @@ class TestHybridSearchMissedPaths:
 # ===========================================================================
 # 5. reasoning/helpers.py – lines 120-121, 368
 # ===========================================================================
+
 
 class TestReasoningHelpersMissedPaths:
     """GIVEN a ReasoningHelpersMixin subclass, WHEN traversal paths are
@@ -373,6 +379,7 @@ class TestReasoningHelpersMissedPaths:
 #    (asyncio.CancelledError re-raises in store/retrieve)
 # ===========================================================================
 
+
 class TestIPLDBackendCancelledErrors:
     """GIVEN an IPLDBackend with a mocked IPFS client,
     WHEN asyncio.CancelledError is raised during store/retrieve,
@@ -380,6 +387,7 @@ class TestIPLDBackendCancelledErrors:
 
     def _backend(self, mock_ipfs=None):
         from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import IPLDBackend
+
         b = IPLDBackend()
         b._backend = mock_ipfs or MagicMock()
         b._cache = None
@@ -429,6 +437,7 @@ class TestIPLDBackendCancelledErrors:
 #    (fn_properties returns {} when no properties attr and no __dict__)
 # ===========================================================================
 
+
 class TestCypherFunctionsFnProperties:
     """GIVEN fn_properties is called with an object that has neither a
     'properties' attribute nor a '__dict__', THEN {} is returned (line 575)."""
@@ -455,6 +464,7 @@ class TestCypherFunctionsFnProperties:
 # 8. cypher/lexer.py – line 330
 #    (scientific notation – digit loop after 'e'/'E')
 # ===========================================================================
+
 
 class TestCypherLexerScientificNotation:
     """GIVEN a Cypher expression containing a number in scientific notation,
@@ -485,6 +495,7 @@ class TestCypherLexerScientificNotation:
 #    (Result.keys() with empty records returns [])
 # ===========================================================================
 
+
 class TestNeo4jCompatResultKeys:
     """GIVEN a Result with no records, WHEN keys() is called,
     THEN an empty list is returned (line 129)."""
@@ -512,6 +523,7 @@ class TestNeo4jCompatResultKeys:
 # 10. neo4j_compat/types.py – line 237
 #     (Path node/relationship count mismatch → ValueError)
 # ===========================================================================
+
 
 class TestNeo4jCompatPathValidation:
     """GIVEN a Path with mismatched node and relationship counts,
@@ -552,6 +564,7 @@ class TestNeo4jCompatPathValidation:
 # 11. jsonld/rdf_serializer.py – lines 237, 297, 307-308, 312-313
 # ===========================================================================
 
+
 class TestRDFSerializerMissedPaths:
     """GIVEN various malformed or edge-case Turtle inputs,
     WHEN TurtleParser.parse or _parse_triples is called,
@@ -559,6 +572,7 @@ class TestRDFSerializerMissedPaths:
 
     def _parser(self):
         from ipfs_datasets_py.knowledge_graphs.jsonld.rdf_serializer import TurtleParser
+
         return TurtleParser()
 
     # -----------------------------------------------------------------------
@@ -614,6 +628,7 @@ class TestRDFSerializerMissedPaths:
 #     (test_hypothesis – exec with no companies → continue)
 # ===========================================================================
 
+
 class TestFinanceGraphRAGTestHypothesis:
     """GIVEN a GraphRAGNewsAnalyzer with mixed executives (some with no
     companies), WHEN test_hypothesis is called, THEN executives with empty
@@ -633,12 +648,12 @@ class TestFinanceGraphRAGTestHypothesis:
         analyzer = GraphRAGNewsAnalyzer()
 
         # Executive with NO companies (triggers line 263 continue)
-        exec_no_comp = ExecutiveProfile(
-            person_id="e1", name="Alice", gender="female", companies=[]
-        )
+        exec_no_comp = ExecutiveProfile(person_id="e1", name="Alice", gender="female", companies=[])
         # Executive WITH companies
         exec_with_comp = ExecutiveProfile(
-            person_id="e2", name="Bob", gender="male",
+            person_id="e2",
+            name="Bob",
+            gender="male",
             companies=["AAPL"],
             attributes={"sector": "tech"},
         )
@@ -650,7 +665,5 @@ class TestFinanceGraphRAGTestHypothesis:
         comp.metadata = {"sector": "tech"}
         analyzer.companies = {"c1": comp}
 
-        result = analyzer.test_hypothesis(
-            "sector hypothesis", "sector", "tech", "finance"
-        )
+        result = analyzer.test_hypothesis("sector hypothesis", "sector", "tech", "finance")
         assert isinstance(result, HypothesisTest)

@@ -29,9 +29,7 @@ from .provenance import (
 
 IR_DIAGNOSTICS_SCHEMA_VERSION: Final = "ir-diagnostics/v1"
 
-_CODE_RE = re.compile(
-    r"^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*){1,7}$"
-)
+_CODE_RE = re.compile(r"^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*){1,7}$")
 
 
 class DiagnosticValidationError(ValueError):
@@ -189,9 +187,7 @@ class Diagnostic:
                     "Diagnostic.severity must be a DiagnosticSeverity member"
                 )
             if not isinstance(self.message, str) or not self.message.strip():
-                raise ProvenanceValidationError(
-                    "Diagnostic.message must not be empty"
-                )
+                raise ProvenanceValidationError("Diagnostic.message must not be empty")
             self.location.validate()
             for value in (*self.evidence_ref_ids, *self.related_diagnostic_ids):
                 _validate_id("Diagnostic reference", value)
@@ -200,9 +196,7 @@ class Diagnostic:
             if self.config_id:
                 _validate_id("Diagnostic.config_id", self.config_id)
             if self.config_id and not self.producer_id:
-                raise ProvenanceValidationError(
-                    "Diagnostic config_id requires producer_id"
-                )
+                raise ProvenanceValidationError("Diagnostic config_id requires producer_id")
         except ProvenanceValidationError as exc:
             raise DiagnosticValidationError(str(exc)) from exc
 
@@ -248,16 +242,12 @@ class Diagnostic:
             code=str(data.get("code") or ""),
             message=str(data.get("message") or ""),
             severity=severity,
-            location=DiagnosticLocation.from_dict(
-                _as_mapping(data.get("location"))
-            ),
+            location=DiagnosticLocation.from_dict(_as_mapping(data.get("location"))),
             evidence_ref_ids=_string_tuple(data.get("evidence_ref_ids")),
             producer_id=str(data.get("producer_id") or ""),
             config_id=str(data.get("config_id") or ""),
             remediation=str(data.get("remediation") or ""),
-            related_diagnostic_ids=_string_tuple(
-                data.get("related_diagnostic_ids")
-            ),
+            related_diagnostic_ids=_string_tuple(data.get("related_diagnostic_ids")),
             diagnostic_id=str(data.get("diagnostic_id") or ""),
             metadata=_as_mapping(data.get("metadata")),
         )
@@ -283,9 +273,7 @@ class DiagnosticReport:
             self,
             "diagnostics",
             tuple(
-                item
-                if isinstance(item, Diagnostic)
-                else Diagnostic.from_dict(_as_mapping(item))
+                item if isinstance(item, Diagnostic) else Diagnostic.from_dict(_as_mapping(item))
                 for item in self.diagnostics
             ),
         )
@@ -297,9 +285,7 @@ class DiagnosticReport:
 
     @property
     def warning_count(self) -> int:
-        return sum(
-            item.severity is DiagnosticSeverity.WARNING for item in self.diagnostics
-        )
+        return sum(item.severity is DiagnosticSeverity.WARNING for item in self.diagnostics)
 
     @property
     def valid(self) -> bool:
@@ -318,9 +304,7 @@ class DiagnosticReport:
             "config_id": self.config_id,
             "diagnostics": [
                 item.to_dict()
-                for item in sorted(
-                    self.diagnostics, key=lambda item: item.diagnostic_id
-                )
+                for item in sorted(self.diagnostics, key=lambda item: item.diagnostic_id)
             ],
             "error_count": self.error_count,
             "evidence_set_id": self.evidence_set_id,
@@ -358,9 +342,7 @@ class DiagnosticReport:
                 producer_id=str(data.get("producer_id") or ""),
                 config_id=str(data.get("config_id") or ""),
                 metadata=_as_mapping(data.get("metadata")),
-                schema_version=str(
-                    data.get("schema_version") or IR_DIAGNOSTICS_SCHEMA_VERSION
-                ),
+                schema_version=str(data.get("schema_version") or IR_DIAGNOSTICS_SCHEMA_VERSION),
             )
         except ProvenanceValidationError as exc:
             raise DiagnosticValidationError(str(exc)) from exc
@@ -385,9 +367,7 @@ def validate_diagnostics(
     """Validate report structure and all supplied registry references."""
 
     if not isinstance(report, DiagnosticReport):
-        raise DiagnosticValidationError(
-            "report must be a DiagnosticReport instance"
-        )
+        raise DiagnosticValidationError("report must be a DiagnosticReport instance")
     try:
         if report.schema_version != IR_DIAGNOSTICS_SCHEMA_VERSION:
             raise ProvenanceValidationError(
@@ -426,9 +406,7 @@ def validate_diagnostics(
 
         if provenance is not None:
             provenance.validate(
-                evidence_ref_ids=tuple(evidence_ids)
-                if evidence_ids is not None
-                else None
+                evidence_ref_ids=tuple(evidence_ids) if evidence_ids is not None else None
             )
             if report.provenance_id != provenance.provenance_id:
                 raise ProvenanceValidationError(
@@ -452,9 +430,7 @@ def validate_diagnostics(
                     "DiagnosticReport.config_id",
                 )
             if report.config_id and not report.producer_id:
-                raise ProvenanceValidationError(
-                    "DiagnosticReport config_id requires producer_id"
-                )
+                raise ProvenanceValidationError("DiagnosticReport config_id requires producer_id")
             for diagnostic in report.diagnostics:
                 location = diagnostic.location
                 _require_known(

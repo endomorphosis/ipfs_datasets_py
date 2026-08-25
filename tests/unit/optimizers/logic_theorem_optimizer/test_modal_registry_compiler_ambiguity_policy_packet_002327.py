@@ -30,22 +30,15 @@ _PACKET_002327_FAMILY_PAIRS = (
 
 
 def test_packet_002327_pairs_are_pinned_in_packet_pair_table() -> None:
-    assert (
-        tuple(COMPILER_AMBIGUITY_PACKET_002327_FAMILY_PAIRS)
-        == _PACKET_002327_FAMILY_PAIRS
-    )
+    assert tuple(COMPILER_AMBIGUITY_PACKET_002327_FAMILY_PAIRS) == _PACKET_002327_FAMILY_PAIRS
 
 
 def test_packet_002327_pairs_are_exposed_by_policy_helpers() -> None:
     for predicted_family, target_family in _PACKET_002327_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,

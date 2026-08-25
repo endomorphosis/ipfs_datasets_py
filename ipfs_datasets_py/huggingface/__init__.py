@@ -16,6 +16,18 @@ from .bucket import (
     HuggingFaceBucketObject,
     HuggingFaceBucketStore,
 )
+from .corpus import (
+    CORPUS_ROOT_SCHEMA,
+    CorpusBuildError,
+    DEFAULT_MAX_FILE_BYTES,
+    PATENT_SOURCE_GROUP_COUNT,
+    ingest_local_snapshot,
+    load_release_inventory,
+    plan_corpus,
+    reject_path_attack,
+    seal_corpus,
+    seal_inventory_path,
+)
 from .repository import (
     HUGGINGFACE_REPOSITORY_REVISION_SCHEMA_VERSION,
     HuggingFaceRepository,
@@ -36,9 +48,13 @@ from .snapshot import (
 )
 
 __all__ = [
+    "CORPUS_ROOT_SCHEMA",
+    "CorpusBuildError",
+    "DEFAULT_MAX_FILE_BYTES",
     "HUGGINGFACE_BUCKET_INVENTORY_SCHEMA_VERSION",
     "HUGGINGFACE_BUCKET_LISTING_SCHEMA_VERSION",
     "HUGGINGFACE_REPOSITORY_REVISION_SCHEMA_VERSION",
+    "PATENT_SOURCE_GROUP_COUNT",
     "HuggingFaceBucketError",
     "HuggingFaceBucketHttpClient",
     "HuggingFaceBucketInventory",
@@ -59,4 +75,10 @@ __all__ = [
     "HuggingFaceSnapshotIntegrityError",
     "HuggingFaceSnapshotValidationError",
     "HuggingFaceStaleCacheAliasError",
+    "ingest_local_snapshot",
+    "load_release_inventory",
+    "plan_corpus",
+    "reject_path_attack",
+    "seal_corpus",
+    "seal_inventory_path",
 ]

@@ -10,6 +10,7 @@ as MCP tools. It will:
 2. Check for corresponding MCP tools in the server implementation
 3. Generate a report of coverage and any missing features
 """
+
 import os
 import sys
 import inspect
@@ -37,7 +38,7 @@ KEY_MODULES = [
     "security",
     "monitoring",
     "knowledge_graph_extraction",
-    "rag_query_optimizer"
+    "rag_query_optimizer",
 ]
 
 # Expected mapping between library features and MCP tool categories
@@ -49,7 +50,7 @@ FEATURE_TO_TOOL_CATEGORY = {
     "security": "security_tools",
     "monitoring": "audit_tools",
     "knowledge_graph_extraction": "graph_tools",
-    "rag_query_optimizer": "vector_tools"
+    "rag_query_optimizer": "vector_tools",
 }
 
 # Results structure
@@ -58,8 +59,9 @@ coverage_results = {
     "mcp_tools": {},
     "mapping_coverage": {},
     "unmapped_features": [],
-    "overall_coverage": 0.0
+    "overall_coverage": 0.0,
 }
+
 
 def print_header(title: str) -> None:
     """Print a section header."""
@@ -67,13 +69,16 @@ def print_header(title: str) -> None:
     print(f" {title}")
     print("=" * 80)
 
+
 def is_public_function(name: str, obj: Any) -> bool:
     """Check if an object is a public function (not private, not a dunder)."""
-    return (inspect.isfunction(obj) or inspect.ismethod(obj)) and not name.startswith('_')
+    return (inspect.isfunction(obj) or inspect.ismethod(obj)) and not name.startswith("_")
+
 
 def is_public_class(name: str, obj: Any) -> bool:
     """Check if an object is a public class (not private, not a dunder)."""
-    return inspect.isclass(obj) and not name.startswith('_')
+    return inspect.isclass(obj) and not name.startswith("_")
+
 
 def get_public_class_methods(cls: Any) -> Dict[str, Any]:
     """Get all public methods of a class."""
@@ -82,6 +87,7 @@ def get_public_class_methods(cls: Any) -> Dict[str, Any]:
         if is_public_function(name, member):
             methods[name] = member
     return methods
+
 
 def analyze_library_module(module_name: str) -> Dict[str, Any]:
     """
@@ -98,7 +104,7 @@ def analyze_library_module(module_name: str) -> Dict[str, Any]:
         "classes": {},
         "class_methods": {},
         "total_features": 0,
-        "key_features": set()
+        "key_features": set(),
     }
 
     # Try to import the module
@@ -112,17 +118,13 @@ def analyze_library_module(module_name: str) -> Dict[str, Any]:
                 module_info["functions"][name] = {
                     "name": name,
                     "doc": inspect.getdoc(member),
-                    "signature": str(inspect.signature(member))
+                    "signature": str(inspect.signature(member)),
                 }
                 module_info["key_features"].add(name)
 
             # Get public classes
             elif is_public_class(name, member):
-                class_info = {
-                    "name": name,
-                    "doc": inspect.getdoc(member),
-                    "methods": {}
-                }
+                class_info = {"name": name, "doc": inspect.getdoc(member), "methods": {}}
 
                 # Get public methods of the class
                 methods = get_public_class_methods(member)
@@ -130,14 +132,14 @@ def analyze_library_module(module_name: str) -> Dict[str, Any]:
                     class_info["methods"][method_name] = {
                         "name": method_name,
                         "doc": inspect.getdoc(method),
-                        "signature": str(inspect.signature(method))
+                        "signature": str(inspect.signature(method)),
                     }
                     module_info["key_features"].add(f"{name}.{method_name}")
                     module_info["class_methods"][f"{name}.{method_name}"] = {
                         "name": method_name,
                         "class": name,
                         "doc": inspect.getdoc(method),
-                        "signature": str(inspect.signature(method))
+                        "signature": str(inspect.signature(method)),
                     }
 
                 module_info["classes"][name] = class_info
@@ -145,9 +147,9 @@ def analyze_library_module(module_name: str) -> Dict[str, Any]:
 
         # Calculate total features
         module_info["total_features"] = (
-            len(module_info["functions"]) +
-            len(module_info["classes"]) +
-            len(module_info["class_methods"])
+            len(module_info["functions"])
+            + len(module_info["classes"])
+            + len(module_info["class_methods"])
         )
 
         print(f"✓ Analyzed module {module_name}: {module_info['total_features']} features found")
@@ -159,6 +161,7 @@ def analyze_library_module(module_name: str) -> Dict[str, Any]:
         print(f"✗ Error analyzing module {module_name}: {e}")
 
     return module_info
+
 
 def get_all_mcp_tools() -> Dict[str, List[Dict[str, Any]]]:
     """
@@ -189,7 +192,7 @@ def get_all_mcp_tools() -> Dict[str, List[Dict[str, Any]]]:
                     "name": tool_name,
                     "path": str(tool_file.relative_to(MCP_SERVER_PATH)),
                     "doc": None,
-                    "implements": None
+                    "implements": None,
                 }
 
                 # Try to extract documentation and implementation info
@@ -203,12 +206,12 @@ def get_all_mcp_tools() -> Dict[str, List[Dict[str, Any]]]:
                             tool_info["doc"] = doc_match.group(1).strip()
 
                         # Look for imports from the library
-                        imports = re.findall(r'from\s+\.\.\.\.(\w+)\s+import', content)
+                        imports = re.findall(r"from\s+\.\.\.\.(\w+)\s+import", content)
                         if imports:
                             tool_info["implements"] = imports
 
                         # Look for class instantiations
-                        class_inits = re.findall(r'(\w+)\s*\(\s*\)', content)
+                        class_inits = re.findall(r"(\w+)\s*\(\s*\)", content)
                         if class_inits:
                             if not tool_info.get("implements"):
                                 tool_info["implements"] = []
@@ -219,9 +222,12 @@ def get_all_mcp_tools() -> Dict[str, List[Dict[str, Any]]]:
 
                 tools_by_category[category_name].append(tool_info)
 
-            print(f"✓ Found {len(tools_by_category[category_name])} tools in category: {category_name}")
+            print(
+                f"✓ Found {len(tools_by_category[category_name])} tools in category: {category_name}"
+            )
 
     return tools_by_category
+
 
 def map_features_to_tools() -> Dict[str, Any]:
     """
@@ -230,11 +236,7 @@ def map_features_to_tools() -> Dict[str, Any]:
     Returns:
         Dict containing mapping information
     """
-    mapping_results = {
-        "mapped_features": {},
-        "unmapped_features": [],
-        "coverage_by_module": {}
-    }
+    mapping_results = {"mapped_features": {}, "unmapped_features": [], "coverage_by_module": {}}
 
     # Get all library features
     all_library_features = {}
@@ -242,17 +244,19 @@ def map_features_to_tools() -> Dict[str, Any]:
         mapping_results["coverage_by_module"][module_name] = {
             "mapped": [],
             "unmapped": [],
-            "coverage_percentage": 0.0
+            "coverage_percentage": 0.0,
         }
 
         # Add functions and class names
         for feature_name in module_info["key_features"]:
             all_library_features[feature_name] = {
                 "module": module_name,
-                "type": "function" if "." not in feature_name and feature_name in module_info["functions"]
-                        else "class" if "." not in feature_name
-                        else "method",
-                "mapped_to": None
+                "type": "function"
+                if "." not in feature_name and feature_name in module_info["functions"]
+                else "class"
+                if "." not in feature_name
+                else "method",
+                "mapped_to": None,
             }
 
     # Match features to tools
@@ -276,10 +280,12 @@ def map_features_to_tools() -> Dict[str, Any]:
                 if expected_category and category_name == expected_category:
                     # Direct name match
                     short_name = feature_name.split(".")[-1]
-                    if (tool_name == feature_name.lower() or
-                        tool_name == short_name.lower() or
-                        tool_name == f"{short_name.lower()}_from_{module_name.lower()}" or
-                        tool_name == f"{module_name.lower()}_{short_name.lower()}"):
+                    if (
+                        tool_name == feature_name.lower()
+                        or tool_name == short_name.lower()
+                        or tool_name == f"{short_name.lower()}_from_{module_name.lower()}"
+                        or tool_name == f"{module_name.lower()}_{short_name.lower()}"
+                    ):
                         matched_features.append(feature_name)
                         continue
 
@@ -290,16 +296,20 @@ def map_features_to_tools() -> Dict[str, Any]:
 
                     # Implementation evidence (if available)
                     if tool.get("implements") and (
-                        module_name in tool["implements"] or
-                        feature_name in tool["implements"] or
-                        (feature_name.split(".")[0] if "." in feature_name else None) in tool["implements"]):
+                        module_name in tool["implements"]
+                        or feature_name in tool["implements"]
+                        or (feature_name.split(".")[0] if "." in feature_name else None)
+                        in tool["implements"]
+                    ):
                         matched_features.append(feature_name)
                         continue
 
                     # Check if the tool description mentions the feature
                     if tool.get("doc") and (
-                        feature_name.lower() in tool["doc"].lower() or
-                        (feature_name.split(".")[0] if "." in feature_name else "").lower() in tool["doc"].lower()):
+                        feature_name.lower() in tool["doc"].lower()
+                        or (feature_name.split(".")[0] if "." in feature_name else "").lower()
+                        in tool["doc"].lower()
+                    ):
                         matched_features.append(feature_name)
                         continue
 
@@ -324,16 +334,18 @@ def map_features_to_tools() -> Dict[str, Any]:
     for module_name, coverage_info in mapping_results["coverage_by_module"].items():
         total_features = len(coverage_info["mapped"]) + len(coverage_info["unmapped"])
         if total_features > 0:
-            coverage_info["coverage_percentage"] = (len(coverage_info["mapped"]) / total_features) * 100
+            coverage_info["coverage_percentage"] = (
+                len(coverage_info["mapped"]) / total_features
+            ) * 100
         else:
             coverage_info["coverage_percentage"] = 0.0
 
     mapping_results["mapped_features"] = {
-        name: info for name, info in all_library_features.items()
-        if info["mapped_to"] is not None
+        name: info for name, info in all_library_features.items() if info["mapped_to"] is not None
     }
 
     return mapping_results
+
 
 def run_coverage_test():
     """Run the full MCP server feature coverage test."""
@@ -373,11 +385,15 @@ def run_coverage_test():
     print(f"Overall coverage: {coverage_results['overall_coverage']:.2f}%\n")
 
     print("Coverage by module:")
-    for module_name, coverage_info in coverage_results["mapping_coverage"]["coverage_by_module"].items():
+    for module_name, coverage_info in coverage_results["mapping_coverage"][
+        "coverage_by_module"
+    ].items():
         mapped_count = len(coverage_info["mapped"])
         unmapped_count = len(coverage_info["unmapped"])
         total_count = mapped_count + unmapped_count
-        print(f"  - {module_name}: {coverage_info['coverage_percentage']:.2f}% ({mapped_count}/{total_count})")
+        print(
+            f"  - {module_name}: {coverage_info['coverage_percentage']:.2f}% ({mapped_count}/{total_count})"
+        )
 
     # Show some unmapped features (if any)
     if unmapped_features > 0:
@@ -387,7 +403,10 @@ def run_coverage_test():
                 if feature_name in module_info["key_features"]:
                     if "." in feature_name:  # It's a method
                         class_name, method_name = feature_name.split(".")
-                        if class_name in module_info["classes"] and method_name in module_info["classes"][class_name]["methods"]:
+                        if (
+                            class_name in module_info["classes"]
+                            and method_name in module_info["classes"][class_name]["methods"]
+                        ):
                             feature_type = "method"
                             feature_desc = f"Class method in module {module_name}"
                     elif feature_name in module_info["functions"]:
@@ -401,12 +420,25 @@ def run_coverage_test():
                     break
 
         if len(coverage_results["mapping_coverage"]["unmapped_features"]) > 10:
-            print(f"  ... and {len(coverage_results['mapping_coverage']['unmapped_features']) - 10} more")
+            print(
+                f"  ... and {len(coverage_results['mapping_coverage']['unmapped_features']) - 10} more"
+            )
 
     # Save results to a file
     with open("mcp_feature_coverage_results.json", "w") as f:
         # Convert sets to lists for JSON serialization
-        serializable_results = json.loads(json.dumps(coverage_results, default=lambda o: list(o) if isinstance(o, set) else o.__dict__ if hasattr(o, "__dict__") else str(o)))
+        serializable_results = json.loads(
+            json.dumps(
+                coverage_results,
+                default=lambda o: (
+                    list(o)
+                    if isinstance(o, set)
+                    else o.__dict__
+                    if hasattr(o, "__dict__")
+                    else str(o)
+                ),
+            )
+        )
         json.dump(serializable_results, f, indent=2)
 
     print(f"\nDetailed results saved to: mcp_feature_coverage_results.json")
@@ -414,6 +446,7 @@ def run_coverage_test():
     # Return success based on coverage threshold
     COVERAGE_THRESHOLD = 80.0  # Consider success if 80% or more features are covered
     return coverage_results["overall_coverage"] >= COVERAGE_THRESHOLD
+
 
 if __name__ == "__main__":
     success = run_coverage_test()

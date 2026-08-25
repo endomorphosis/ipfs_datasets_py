@@ -17,6 +17,7 @@ except ImportError:
     # Pydantic v1 fallback
     from pydantic import BaseSettings, Field
 
+
 class FastAPISettings(BaseSettings):
     """FastAPI service configuration settings."""
 
@@ -24,82 +25,84 @@ class FastAPISettings(BaseSettings):
         super().__init__(**data)
         if self.secret_key == "test-secret-key-for-testing-only":
             self.secret_key = "test-secret-key-for-session43-testing"
-    
+
     # Application settings
     app_name: str = "IPFS Datasets API"
     app_version: str = "1.0.0"
     debug: bool = Field(default=False, env="DEBUG")
     environment: str = Field(default="development", env="ENVIRONMENT")
-    
+
     # Server settings
     host: str = Field(default="0.0.0.0", env="HOST")
     port: int = Field(default=8000, env="PORT")
     reload: bool = Field(default=True, env="RELOAD")
-    
+
     # Security settings
     # CRITICAL: SECRET_KEY must be set via environment variable for production
     # This is required for JWT token signing and session security
     secret_key: str = Field(env="SECRET_KEY")  # No default - MUST be set in environment
     algorithm: str = Field(default="HS256", env="JWT_ALGORITHM")
     access_token_expire_minutes: int = Field(default=30, env="ACCESS_TOKEN_EXPIRE_MINUTES")
-    
+
     # CORS settings
     allowed_origins: List[str] = Field(default=["*"], env="ALLOWED_ORIGINS")
     allowed_methods: List[str] = Field(default=["*"], env="ALLOWED_METHODS")
     allowed_headers: List[str] = Field(default=["*"], env="ALLOWED_HEADERS")
     allow_credentials: bool = Field(default=True, env="ALLOW_CREDENTIALS")
-    
+
     # Rate limiting settings
     rate_limit_enabled: bool = Field(default=True, env="RATE_LIMIT_ENABLED")
     rate_limit_storage: str = Field(default="memory", env="RATE_LIMIT_STORAGE")  # memory, redis
     redis_url: Optional[str] = Field(default=None, env="REDIS_URL")
-    
+
     # Database settings (for user management)
     database_url: Optional[str] = Field(default=None, env="DATABASE_URL")
-    
+
     # Embedding settings
     default_embedding_model: str = Field(
-        default="sentence-transformers/all-MiniLM-L6-v2",
-        env="DEFAULT_EMBEDDING_MODEL"
+        default="sentence-transformers/all-MiniLM-L6-v2", env="DEFAULT_EMBEDDING_MODEL"
     )
     max_batch_size: int = Field(default=32, env="MAX_BATCH_SIZE")
     max_text_length: int = Field(default=10000, env="MAX_TEXT_LENGTH")
-    
+
     # Vector store settings
     default_vector_store: str = Field(default="faiss", env="DEFAULT_VECTOR_STORE")
     qdrant_url: Optional[str] = Field(default="http://localhost:6333", env="QDRANT_URL")
-    elasticsearch_url: Optional[str] = Field(default="http://localhost:9200", env="ELASTICSEARCH_URL")
-    
+    elasticsearch_url: Optional[str] = Field(
+        default="http://localhost:9200", env="ELASTICSEARCH_URL"
+    )
+
     # IPFS settings
     ipfs_gateway_url: str = Field(default="http://localhost:8080", env="IPFS_GATEWAY_URL")
     ipfs_api_url: str = Field(default="http://localhost:5001", env="IPFS_API_URL")
-    
+
     # Monitoring settings
     enable_metrics: bool = Field(default=True, env="ENABLE_METRICS")
     metrics_endpoint: str = Field(default="/metrics", env="METRICS_ENDPOINT")
     enable_health_checks: bool = Field(default=True, env="ENABLE_HEALTH_CHECKS")
-    
+
     # Logging settings
     log_level: str = Field(default="INFO", env="LOG_LEVEL")
     log_format: str = Field(
-        default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        env="LOG_FORMAT"
+        default="%(asctime)s - %(name)s - %(levelname)s - %(message)s", env="LOG_FORMAT"
     )
-    
+
     # Background task settings
     enable_background_tasks: bool = Field(default=True, env="ENABLE_BACKGROUND_TASKS")
     task_queue_size: int = Field(default=1000, env="TASK_QUEUE_SIZE")
-    
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
         extra = "ignore"  # NOTE: Ignore extra fields from environment variables
 
+
 @lru_cache()
 def get_settings() -> FastAPISettings:
     """Get cached settings instance."""
     return FastAPISettings()
+
 
 # Rate limiting configuration
 DEFAULT_RATE_LIMITS = {
@@ -172,33 +175,12 @@ SUPPORTED_EMBEDDING_MODELS = [
 
 # Vector store configuration
 VECTOR_STORE_CONFIGS = {
-    "faiss": {
-        "index_type": "IndexFlatIP",
-        "dimension": 384,
-        "metric": "cosine"
-    },
-    "qdrant": {
-        "collection_config": {
-            "vectors": {
-                "size": 384,
-                "distance": "Cosine"
-            }
-        }
-    },
+    "faiss": {"index_type": "IndexFlatIP", "dimension": 384, "metric": "cosine"},
+    "qdrant": {"collection_config": {"vectors": {"size": 384, "distance": "Cosine"}}},
     "elasticsearch": {
-        "index_settings": {
-            "number_of_shards": 1,
-            "number_of_replicas": 0
-        },
-        "mapping": {
-            "properties": {
-                "vector": {
-                    "type": "dense_vector",
-                    "dims": 384
-                }
-            }
-        }
-    }
+        "index_settings": {"number_of_shards": 1, "number_of_replicas": 0},
+        "mapping": {"properties": {"vector": {"type": "dense_vector", "dims": 384}}},
+    },
 }
 
 # Health check configuration
@@ -211,7 +193,7 @@ HEALTH_CHECK_CONFIG = {
         {"name": "redis", "enabled": False},
     ],
     "timeout": 5.0,
-    "retries": 3
+    "retries": 3,
 }
 
 # Monitoring configuration
@@ -223,6 +205,6 @@ MONITORING_CONFIG = {
         "embedding_generation_duration",
         "search_requests_total",
         "vector_store_operations",
-        "error_rate"
-    ]
+        "error_rate",
+    ],
 }

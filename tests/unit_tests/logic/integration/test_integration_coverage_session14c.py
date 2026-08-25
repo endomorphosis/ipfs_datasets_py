@@ -13,6 +13,7 @@ Targets:
   - symbolic/neurosymbolic/...             83-84% → 93%+
   - integration/__init__.py               84% → 95%+ (register_prover, etc.)
 """
+
 from __future__ import annotations
 
 import tempfile
@@ -26,6 +27,7 @@ from typing import Any
 # Section 1: SymbolicLogicPrimitives — fallback operations
 # ===========================================================================
 
+
 class TestLogicPrimitivesAllOperations:
     """Cover all 9 operations in LogicPrimitives fallback mode."""
 
@@ -33,6 +35,7 @@ class TestLogicPrimitivesAllOperations:
         from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
             create_logic_symbol,
         )
+
         return create_logic_symbol(text)
 
     def test_to_fol_all_universal(self):
@@ -138,6 +141,7 @@ class TestLogicSymbolConstruction:
         from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
             create_logic_symbol,
         )
+
         sym = create_logic_symbol("test text", semantic=True)
         assert sym._semantic is True
 
@@ -145,6 +149,7 @@ class TestLogicSymbolConstruction:
         from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
             create_logic_symbol,
         )
+
         sym = create_logic_symbol("test text", semantic=False)
         assert sym._semantic is False
 
@@ -152,6 +157,7 @@ class TestLogicSymbolConstruction:
         from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
             LogicalStructure,
         )
+
         ls = LogicalStructure(
             quantifiers=["all"],
             variables=["x", "y"],
@@ -168,6 +174,7 @@ class TestLogicSymbolConstruction:
 # Section 2: DeonticLogicConverter — remaining relationship and deep methods
 # ===========================================================================
 
+
 class TestDeonticLogicConverterRelationships:
     """Cover relationship conversion methods."""
 
@@ -175,9 +182,17 @@ class TestDeonticLogicConverterRelationships:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
             DeonticLogicConverter,
         )
+
         return DeonticLogicConverter()
 
-    def _make_rel(self, rel_id="r1", rel_type="obligation", description="must pay", source_id="e1", target_id="e2"):
+    def _make_rel(
+        self,
+        rel_id="r1",
+        rel_type="obligation",
+        description="must pay",
+        source_id="e1",
+        target_id="e2",
+    ):
         rel = MagicMock()
         rel.relationship_id = rel_id
         rel.relationship_type = rel_type
@@ -196,10 +211,10 @@ class TestDeonticLogicConverterRelationships:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
             ConversionContext,
         )
+
         ctx = ConversionContext(source_document_path="", confidence_threshold=0.1)
         rel = self._make_rel(
-            rel_type="obligation",
-            description="The company must pay monthly fees."
+            rel_type="obligation", description="The company must pay monthly fees."
         )
         formulas = conv.convert_relationships_to_logic([rel], ctx)
         assert isinstance(formulas, list)
@@ -209,10 +224,10 @@ class TestDeonticLogicConverterRelationships:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
             ConversionContext,
         )
+
         ctx = ConversionContext(source_document_path="", confidence_threshold=0.1)
         rel = self._make_rel(
-            rel_type="permission",
-            description="The user may access confidential records."
+            rel_type="permission", description="The user may access confidential records."
         )
         formulas = conv.convert_relationships_to_logic([rel], ctx)
         assert isinstance(formulas, list)
@@ -222,6 +237,7 @@ class TestDeonticLogicConverterRelationships:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
             ConversionContext,
         )
+
         ctx = ConversionContext(source_document_path="")
         formulas = conv.convert_relationships_to_logic([], ctx)
         assert formulas == []
@@ -252,19 +268,30 @@ class TestDeonticLogicConverterRelationships:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
             ConversionContext,
         )
+
         ctx = ConversionContext(source_document_path="")
         result = conv._analyze_relationship_for_deontic_content(rel, ctx)
         # Should find prohibition
         if result is not None:
-            from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+            from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+                DeonticOperator,
+            )
+
             operator, confidence, proposition = result
-            assert operator in (DeonticOperator.OBLIGATION, DeonticOperator.PERMISSION, DeonticOperator.PROHIBITION)
+            assert operator in (
+                DeonticOperator.OBLIGATION,
+                DeonticOperator.PERMISSION,
+                DeonticOperator.PROHIBITION,
+            )
 
     def test_validate_rule_set_consistency(self):
         conv = self._converter()
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, DeonticRuleSet,
+            DeonticFormula,
+            DeonticOperator,
+            DeonticRuleSet,
         )
+
         f1 = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="pay", confidence=0.9)
         f2 = DeonticFormula(operator=DeonticOperator.PROHIBITION, proposition="pay", confidence=0.9)
         rule_set = DeonticRuleSet(name="test_rules", formulas=[f1, f2])
@@ -276,6 +303,7 @@ class TestDeonticLogicConverterRelationships:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
             ConversionContext,
         )
+
         ctx = ConversionContext(source_document_path="/tmp/test.txt")
         entity = MagicMock()
         entity.entity_id = "e1"
@@ -290,6 +318,7 @@ class TestDeonticLogicConverterRelationships:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
             ConversionContext,
         )
+
         ctx = ConversionContext(source_document_path="", confidence_threshold=0.1)
         entity = MagicMock()
         entity.entity_id = "e_obligation"
@@ -306,6 +335,7 @@ class TestDeonticLogicConverterRelationships:
 # Section 3: LegalSymbolicAnalyzer — LegalReasoningEngine + fallback paths
 # ===========================================================================
 
+
 class TestLegalSymbolicAnalyzerEngine:
     """Cover LegalReasoningEngine in legal_symbolic_analyzer.py."""
 
@@ -313,6 +343,7 @@ class TestLegalSymbolicAnalyzerEngine:
         from ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer import (
             LegalSymbolicAnalyzer,
         )
+
         return LegalSymbolicAnalyzer()
 
     def test_analyze_legal_document(self):
@@ -354,6 +385,7 @@ class TestLegalReasoningEngine:
         from ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer import (
             LegalReasoningEngine,
         )
+
         return LegalReasoningEngine()
 
     def test_analyze_legal_precedents(self):
@@ -363,7 +395,7 @@ class TestLegalReasoningEngine:
             precedents=[
                 "Smith v. Jones (2020): Contractor must provide written notice",
                 "Brown v. Corp (2019): Notice required before termination",
-            ]
+            ],
         )
         assert result is not None
         assert isinstance(result, dict)
@@ -394,13 +426,16 @@ class TestLegalReasoningEngine:
 # Section 4: CaseLawBulkProcessor — batch limits + statistics
 # ===========================================================================
 
+
 class TestCaseLawBulkProcessorMore:
     """Additional CaselawBulkProcessor coverage."""
 
     def _processor(self):
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            CaselawBulkProcessor, BulkProcessingConfig,
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
         )
+
         config = BulkProcessingConfig()
         return CaselawBulkProcessor(config=config)
 
@@ -417,8 +452,10 @@ class TestCaseLawBulkProcessorMore:
 
     def test_config_default(self):
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
-            BulkProcessingConfig, CaselawBulkProcessor,
+            BulkProcessingConfig,
+            CaselawBulkProcessor,
         )
+
         config = BulkProcessingConfig()
         proc = CaselawBulkProcessor(config=config)
         assert proc is not None
@@ -427,6 +464,7 @@ class TestCaseLawBulkProcessorMore:
         from ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor import (
             CaselawDocument,
         )
+
         doc = CaselawDocument(
             document_id="test_001",
             title="Smith v. Jones",
@@ -444,11 +482,13 @@ class TestCaseLawBulkProcessorMore:
 # Section 5: TDFOLCECBridge — more paths
 # ===========================================================================
 
+
 class TestTDFOLCECBridgePaths:
     """Additional TDFOLCECBridge coverage."""
 
     def _bridge(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
+
         return TDFOLCECBridge()
 
     def test_bridge_not_available_by_default(self):
@@ -458,6 +498,7 @@ class TestTDFOLCECBridgePaths:
     def test_prove_formula_string(self):
         bridge = self._bridge()
         from ipfs_datasets_py.logic.TDFOL import parse_tdfol
+
         try:
             formula = parse_tdfol("O(pay(alice))")
             result = bridge.prove(formula)
@@ -468,6 +509,7 @@ class TestTDFOLCECBridgePaths:
     def test_formula_to_cec_string(self):
         bridge = self._bridge()
         from ipfs_datasets_py.logic.TDFOL import parse_tdfol
+
         try:
             formula = parse_tdfol("O(pay(alice))")
             cec_str = bridge.to_target_format(formula)
@@ -495,6 +537,7 @@ class TestTDFOLCECBridgePaths:
 # Section 6: TDFOLGrammarBridge — formula_to_nl various paths
 # ===========================================================================
 
+
 class TestTDFOLGrammarBridgePaths:
     """Additional TDFOLGrammarBridge paths for formula_to_nl."""
 
@@ -502,6 +545,7 @@ class TestTDFOLGrammarBridgePaths:
         from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
             TDFOLGrammarBridge,
         )
+
         return TDFOLGrammarBridge()
 
     def test_parse_obligation(self):
@@ -523,6 +567,7 @@ class TestTDFOLGrammarBridgePaths:
         """When grammar not available, use fallback."""
         bridge = self._bridge()
         from ipfs_datasets_py.logic.TDFOL import parse_tdfol
+
         try:
             formula = parse_tdfol("O(pay(alice))")
             result = bridge.formula_to_natural_language(formula)
@@ -550,9 +595,7 @@ class TestTDFOLGrammarBridgePaths:
 
     def test_parse_with_agent(self):
         bridge = self._bridge()
-        result = bridge.parse_natural_language(
-            "It is obligatory for the company to pay dividends"
-        )
+        result = bridge.parse_natural_language("It is obligatory for the company to pay dividends")
         assert result is None or hasattr(result, "to_string")
 
 
@@ -560,25 +603,33 @@ class TestTDFOLGrammarBridgePaths:
 # Section 7: IPLD Logic Storage — store_collection + provenance
 # ===========================================================================
 
+
 class TestIPLDLogicStorageAdvanced:
     """Cover advanced LogicIPLDStorage paths."""
 
     def test_store_logic_collection(self):
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicIPLDStorage
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = LogicIPLDStorage(storage_path=tmpdir)
             formulas = [
-                DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="pay", confidence=0.9),
-                DeonticFormula(operator=DeonticOperator.PERMISSION, proposition="appeal", confidence=0.8),
+                DeonticFormula(
+                    operator=DeonticOperator.OBLIGATION, proposition="pay", confidence=0.9
+                ),
+                DeonticFormula(
+                    operator=DeonticOperator.PERMISSION, proposition="appeal", confidence=0.8
+                ),
             ]
             result = storage.store_logic_collection(formulas, collection_name="test_coll")
             assert result is not None
 
     def test_create_provenance_chain(self):
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicIPLDStorage
+
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = LogicIPLDStorage(storage_path=tmpdir)
             result = storage.create_provenance_chain(
@@ -591,11 +642,15 @@ class TestIPLDLogicStorageAdvanced:
     def test_retrieve_formula_translations(self):
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicIPLDStorage
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = LogicIPLDStorage(storage_path=tmpdir)
-            formula = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="pay_taxes", confidence=0.9)
+            formula = DeonticFormula(
+                operator=DeonticOperator.OBLIGATION, proposition="pay_taxes", confidence=0.9
+            )
             cid = storage.store_logic_formula(formula)
             if cid:
                 retrieved = storage.retrieve_formula_translations(cid)
@@ -606,6 +661,7 @@ class TestIPLDLogicStorageAdvanced:
 # Section 8: NeurosymbolicGraphRAG — remaining paths
 # ===========================================================================
 
+
 class TestNeurosymbolicGraphRAGMore:
     """Additional coverage for neurosymbolic_graphrag.py."""
 
@@ -613,6 +669,7 @@ class TestNeurosymbolicGraphRAGMore:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag import (
             NeurosymbolicGraphRAG,
         )
+
         return NeurosymbolicGraphRAG()
 
     def test_query_with_fallback(self):
@@ -641,23 +698,27 @@ class TestNeurosymbolicGraphRAGMore:
 # Section 9: integration/__init__.py — register_prover, list_provers etc.
 # ===========================================================================
 
+
 class TestIntegrationInitPaths:
     """Cover integration/__init__.py uncovered paths."""
 
     def test_get_all_provers(self):
         from ipfs_datasets_py.logic import integration
+
         if hasattr(integration, "get_all_provers"):
             provers = integration.get_all_provers()
             assert isinstance(provers, (list, dict))
 
     def test_register_prover(self):
         from ipfs_datasets_py.logic import integration
+
         if hasattr(integration, "register_prover"):
             result = integration.register_prover("test_prover", MagicMock())
             assert True  # Should not crash
 
     def test_get_prover(self):
         from ipfs_datasets_py.logic import integration
+
         if hasattr(integration, "get_prover"):
             result = integration.get_prover("z3")
             # May return None if z3 not installed
@@ -668,6 +729,7 @@ class TestIntegrationInitPaths:
 # Section 10: SymbolicLogicPrimitives — conditional branches
 # ===========================================================================
 
+
 class TestLogicPrimitivesEdgeCases:
     """Cover edge cases in fallback mode."""
 
@@ -675,6 +737,7 @@ class TestLogicPrimitivesEdgeCases:
         from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
             create_logic_symbol,
         )
+
         return create_logic_symbol(text)
 
     def test_existential_with_can_verb(self):
@@ -710,6 +773,7 @@ class TestLogicPrimitivesEdgeCases:
 # Section 11: EmbeddingEnhancedProver — more coverage
 # ===========================================================================
 
+
 class TestEmbeddingEnhancedProverMore:
     """Additional coverage for EmbeddingEnhancedProver."""
 
@@ -717,11 +781,13 @@ class TestEmbeddingEnhancedProverMore:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.embedding_prover import (
             EmbeddingEnhancedProver,
         )
+
         return EmbeddingEnhancedProver()
 
     def test_compute_similarity(self):
         prover = self._prover()
         from ipfs_datasets_py.logic.TDFOL import parse_tdfol
+
         try:
             f1 = parse_tdfol("O(pay(alice))")
             f2 = parse_tdfol("O(pay(bob))")
@@ -733,6 +799,7 @@ class TestEmbeddingEnhancedProverMore:
     def test_find_similar_formulas(self):
         prover = self._prover()
         from ipfs_datasets_py.logic.TDFOL import parse_tdfol
+
         try:
             f1 = parse_tdfol("O(pay(alice))")
             f2 = parse_tdfol("O(deliver(alice))")
@@ -757,6 +824,7 @@ class TestEmbeddingEnhancedProverMore:
 # Section 12: NeuralSymbolicCoordinator — more paths
 # ===========================================================================
 
+
 class TestNeuralSymbolicCoordinatorMore:
     """Additional NeuralSymbolicCoordinator coverage."""
 
@@ -764,6 +832,7 @@ class TestNeuralSymbolicCoordinatorMore:
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
             NeuralSymbolicCoordinator,
         )
+
         return NeuralSymbolicCoordinator()
 
     def test_coordinator_has_prove(self):
@@ -773,6 +842,7 @@ class TestNeuralSymbolicCoordinatorMore:
     def test_prove_with_fallback(self):
         coord = self._coordinator()
         from ipfs_datasets_py.logic.TDFOL import parse_tdfol
+
         try:
             formula = parse_tdfol("O(pay(alice))")
             result = coord.prove(formula)

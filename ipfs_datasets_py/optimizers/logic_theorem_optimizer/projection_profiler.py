@@ -249,8 +249,7 @@ class ProjectionProfiler:
                 by_stage[event.stage].append(event.seconds)
 
         cost_summary = {
-            name: _bucket(by_cost.get(name, ()))
-            for name in PROJECTION_PROFILE_COST_FAMILIES
+            name: _bucket(by_cost.get(name, ())) for name in PROJECTION_PROFILE_COST_FAMILIES
         }
         total_seconds = sum(event.seconds for event in self.events)
         return {
@@ -268,17 +267,12 @@ class ProjectionProfiler:
             ),
             "by_cost_family": cost_summary,
             "by_legal_family": {
-                family: _bucket(values)
-                for family, values in sorted(by_family.items())
+                family: _bucket(values) for family, values in sorted(by_family.items())
             },
             "by_feature_head": {
-                head: _bucket(values)
-                for head, values in sorted(by_feature_head.items())
+                head: _bucket(values) for head, values in sorted(by_feature_head.items())
             },
-            "by_stage": {
-                stage: _bucket(values)
-                for stage, values in sorted(by_stage.items())
-            },
+            "by_stage": {stage: _bucket(values) for stage, values in sorted(by_stage.items())},
             "counters": dict(sorted(self.counters.items())),
             "events": [event.to_dict() for event in self.events],
         }

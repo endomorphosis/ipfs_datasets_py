@@ -44,14 +44,17 @@ from typing import Any, Dict, List
 # A. extraction/srl.py — heuristic modifier roles + temporal-graph bug fix
 # ===========================================================================
 
+
 class TestSRLHeuristicModifierRoles:
     """Tests for lines 313-315 (Location), 337-339 (Result) in _extract_heuristic_frames."""
 
     def test_location_modifier_added_to_frame(self):
         """GIVEN sentence with 'at … ,' WHEN extracting THEN Location argument present."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            _extract_heuristic_frames, ROLE_LOCATION,
+            _extract_heuristic_frames,
+            ROLE_LOCATION,
         )
+
         sentence = "She worked at the office, every day."
         frames = _extract_heuristic_frames(sentence)
         # Sentence has agent ("She") → at least one frame
@@ -61,8 +64,10 @@ class TestSRLHeuristicModifierRoles:
     def test_time_modifier_added_to_frame(self):
         """GIVEN sentence with 'before …,' WHEN extracting THEN Time argument present."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            _extract_heuristic_frames, ROLE_TIME,
+            _extract_heuristic_frames,
+            ROLE_TIME,
         )
+
         sentence = "Bob arrived before noon, to his surprise."
         frames = _extract_heuristic_frames(sentence)
         roles = [a.role for f in frames for a in f.arguments]
@@ -71,8 +76,10 @@ class TestSRLHeuristicModifierRoles:
     def test_cause_modifier_added_to_frame(self):
         """GIVEN sentence with 'because …,' WHEN extracting THEN Cause argument present."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            _extract_heuristic_frames, ROLE_CAUSE,
+            _extract_heuristic_frames,
+            ROLE_CAUSE,
         )
+
         sentence = "She studied math because she wanted to, and succeeded."
         frames = _extract_heuristic_frames(sentence)
         roles = [a.role for f in frames for a in f.arguments]
@@ -81,8 +88,10 @@ class TestSRLHeuristicModifierRoles:
     def test_result_modifier_added_to_frame(self):
         """GIVEN sentence with 'so that …,' WHEN extracting THEN Result argument present."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            _extract_heuristic_frames, ROLE_RESULT,
+            _extract_heuristic_frames,
+            ROLE_RESULT,
         )
+
         sentence = "Bob built the bridge so that people could cross,"
         frames = _extract_heuristic_frames(sentence)
         roles = [a.role for f in frames for a in f.arguments]
@@ -91,8 +100,10 @@ class TestSRLHeuristicModifierRoles:
     def test_instrument_modifier_added_to_frame(self):
         """GIVEN sentence with 'with …,' WHEN extracting THEN Instrument argument present."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            _extract_heuristic_frames, ROLE_INSTRUMENT,
+            _extract_heuristic_frames,
+            ROLE_INSTRUMENT,
         )
+
         sentence = "John fixed the car with a wrench, and it worked."
         frames = _extract_heuristic_frames(sentence)
         roles = [a.role for f in frames for a in f.arguments]
@@ -104,14 +115,15 @@ class TestSRLHeuristicModifierRoles:
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
             _extract_heuristic_frames,
         )
+
         # Pure preposition phrase – no NP-V-NP structure extractable
         sentence = "At the park near the river."
         frames = _extract_heuristic_frames(sentence)
         # No verb → no frame, or verb with neither agent nor patient
-        patient_texts = [a.text for f in frames for a in f.arguments
-                         if a.role in ("Patient", "Theme")]
-        agent_texts = [a.text for f in frames for a in f.arguments
-                       if a.role == "Agent"]
+        patient_texts = [
+            a.text for f in frames for a in f.arguments if a.role in ("Patient", "Theme")
+        ]
+        agent_texts = [a.text for f in frames for a in f.arguments if a.role == "Agent"]
         # If a frame exists it must have either agent or patient
         for f in frames:
             roles = {a.role for a in f.arguments}
@@ -125,8 +137,10 @@ class TestSRLToKnowledgeGraph:
         """GIVEN frame with confidence below min WHEN calling to_knowledge_graph
         THEN frame is skipped (covers line 518)."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            SRLExtractor, SRLFrame,
+            SRLExtractor,
+            SRLFrame,
         )
+
         extractor = SRLExtractor(min_confidence=0.9)
         low_conf_frame = SRLFrame(predicate="test", sentence="He runs.", confidence=0.5)
         kg = extractor.to_knowledge_graph([low_conf_frame])
@@ -136,12 +150,17 @@ class TestSRLToKnowledgeGraph:
         """GIVEN frame with argument whose text is empty WHEN converting
         THEN empty argument is not added to KG (covers line 536)."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            SRLExtractor, SRLFrame, RoleArgument, ROLE_AGENT,
+            SRLExtractor,
+            SRLFrame,
+            RoleArgument,
+            ROLE_AGENT,
         )
+
         extractor = SRLExtractor()
         blank_arg = RoleArgument(role=ROLE_AGENT, text="   ", confidence=0.8)
-        frame = SRLFrame(predicate="runs", sentence="He runs.", confidence=0.8,
-                         arguments=[blank_arg])
+        frame = SRLFrame(
+            predicate="runs", sentence="He runs.", confidence=0.8, arguments=[blank_arg]
+        )
         kg = extractor.to_knowledge_graph([frame])
         # Event entity added but no Agent entity (blank text)
         names = [e.name for e in kg.entities.values()]
@@ -153,13 +172,21 @@ class TestSRLToKnowledgeGraph:
         """GIVEN two frames sharing an entity name WHEN converting THEN entity
         appears only once in KG (covers line 545 entity reuse)."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            SRLExtractor, SRLFrame, RoleArgument, ROLE_AGENT,
+            SRLExtractor,
+            SRLFrame,
+            RoleArgument,
+            ROLE_AGENT,
         )
+
         extractor = SRLExtractor()
         arg1 = RoleArgument(role=ROLE_AGENT, text="Alice", confidence=0.8)
         arg2 = RoleArgument(role=ROLE_AGENT, text="Alice", confidence=0.8)
-        frame1 = SRLFrame(predicate="runs", sentence="Alice runs.", confidence=0.8, arguments=[arg1])
-        frame2 = SRLFrame(predicate="walks", sentence="Alice walks.", confidence=0.8, arguments=[arg2])
+        frame1 = SRLFrame(
+            predicate="runs", sentence="Alice runs.", confidence=0.8, arguments=[arg1]
+        )
+        frame2 = SRLFrame(
+            predicate="walks", sentence="Alice walks.", confidence=0.8, arguments=[arg2]
+        )
         kg = extractor.to_knowledge_graph([frame1, frame2])
         alice_entities = [e for e in kg.entities.values() if e.name == "Alice"]
         assert len(alice_entities) == 1
@@ -172,10 +199,9 @@ class TestSRLBuildTemporalGraph:
         """GIVEN two sentences with 'Meanwhile' WHEN building temporal graph
         THEN OVERLAPS relationship created (covers line 646 + lines 661-668)."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         extractor = SRLExtractor()
-        kg = extractor.build_temporal_graph(
-            "Alice cleaned the room. Meanwhile Bob fixed the car."
-        )
+        kg = extractor.build_temporal_graph("Alice cleaned the room. Meanwhile Bob fixed the car.")
         rel_types = {r.relationship_type for r in kg.relationships.values()}
         assert "OVERLAPS" in rel_types
 
@@ -183,10 +209,9 @@ class TestSRLBuildTemporalGraph:
         """GIVEN two sentences with 'Then' WHEN building temporal graph
         THEN PRECEDES relationship created."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         extractor = SRLExtractor()
-        kg = extractor.build_temporal_graph(
-            "Alice cleaned the room. Then Bob fixed the car."
-        )
+        kg = extractor.build_temporal_graph("Alice cleaned the room. Then Bob fixed the car.")
         rel_types = {r.relationship_type for r in kg.relationships.values()}
         assert "PRECEDES" in rel_types
 
@@ -194,20 +219,21 @@ class TestSRLBuildTemporalGraph:
         """GIVEN two consecutive sentences without temporal marker
         THEN default PRECEDES relationship created."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         extractor = SRLExtractor()
-        kg = extractor.build_temporal_graph(
-            "Alice cleaned the room. Bob fixed the car."
-        )
+        kg = extractor.build_temporal_graph("Alice cleaned the room. Bob fixed the car.")
         rel_types = {r.relationship_type for r in kg.relationships.values()}
         assert "PRECEDES" in rel_types
 
     def test_temporal_graph_single_sentence_no_temporal_rels(self):
         """GIVEN a single sentence WHEN building temporal graph THEN no temporal rels."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         extractor = SRLExtractor()
         kg = extractor.build_temporal_graph("Alice cleaned the room.")
-        temporal = [r for r in kg.relationships.values()
-                    if r.relationship_type in ("OVERLAPS", "PRECEDES")]
+        temporal = [
+            r for r in kg.relationships.values() if r.relationship_type in ("OVERLAPS", "PRECEDES")
+        ]
         assert temporal == []
 
 
@@ -218,6 +244,7 @@ class TestSRLExtractHeuristicSentenceSplit:
         """GIVEN sentence_split=False and multi-sentence text
         WHEN calling _extract_heuristic THEN text treated as one sentence."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         extractor = SRLExtractor(sentence_split=False)
         frames = extractor._extract_heuristic("Alice cleaned the room.")
         # Should still extract frames from the text as a whole
@@ -227,6 +254,7 @@ class TestSRLExtractHeuristicSentenceSplit:
         """GIVEN text with trailing space after period WHEN sentence_split=True
         THEN empty sentence token is silently skipped (covers line 724)."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         extractor = SRLExtractor(sentence_split=True)
         # "Alice ran. " → split gives ["Alice ran.", ""] → empty string skipped
         frames = extractor._extract_heuristic("Alice ran.  ")
@@ -237,6 +265,7 @@ class TestSRLExtractHeuristicSentenceSplit:
 # B. query/knowledge_graph.py — validation + processor + ir mode paths
 # ===========================================================================
 
+
 class TestQueryKnowledgeGraphValidation:
     """Tests for compile_ir and parse_ir_ops_from_query error paths."""
 
@@ -244,6 +273,7 @@ class TestQueryKnowledgeGraphValidation:
         """GIVEN op dict missing 'op'/'type'/'name' WHEN calling compile_ir
         THEN ValueError raised (covers line 48 continue branch)."""
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import compile_ir
+
         with pytest.raises(ValueError, match="IR op missing"):
             compile_ir([{"foo": "bar"}])
 
@@ -251,8 +281,8 @@ class TestQueryKnowledgeGraphValidation:
         """GIVEN ScanType op with scope list WHEN compiling
         THEN QueryIR produced with scope attribute (covers line 62)."""
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import compile_ir
-        ir = compile_ir([{"op": "ScanType", "entity_type": "Document",
-                          "scope": ["cid1", "cid2"]}])
+
+        ir = compile_ir([{"op": "ScanType", "entity_type": "Document", "scope": ["cid1", "cid2"]}])
         assert ir is not None
         assert hasattr(ir.ops[0], "scope") or len(ir.ops) == 1
 
@@ -262,9 +292,9 @@ class TestQueryKnowledgeGraphValidation:
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import (
             query_knowledge_graph,
         )
+
         with pytest.raises(ValueError, match="max_results must be a positive integer"):
-            query_knowledge_graph(query="SELECT ?x WHERE {}", query_type="ir",
-                                  max_results=-1)
+            query_knowledge_graph(query="SELECT ?x WHERE {}", query_type="ir", max_results=-1)
 
     def test_query_kg_empty_query_raises(self):
         """GIVEN empty query string WHEN calling query_knowledge_graph
@@ -272,6 +302,7 @@ class TestQueryKnowledgeGraphValidation:
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import (
             query_knowledge_graph,
         )
+
         with pytest.raises(ValueError, match="query must be a non-empty string"):
             query_knowledge_graph(query="  ", query_type="ir", max_results=5)
 
@@ -281,9 +312,11 @@ class TestQueryKnowledgeGraphValidation:
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import (
             query_knowledge_graph,
         )
+
         with pytest.raises(ValueError, match="graph_id is required"):
-            query_knowledge_graph(query="SELECT * WHERE {?s ?p ?o}",
-                                  query_type="sparql", max_results=10)
+            query_knowledge_graph(
+                query="SELECT * WHERE {?s ?p ?o}", query_type="sparql", max_results=10
+            )
 
     def test_query_kg_unsupported_type_with_manifest_raises(self):
         """GIVEN unsupported query_type with manifest_cid WHEN calling
@@ -291,9 +324,11 @@ class TestQueryKnowledgeGraphValidation:
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import (
             query_knowledge_graph,
         )
+
         with pytest.raises(ValueError, match="Unsupported query_type"):
-            query_knowledge_graph(query="some query", query_type="gremlin2",
-                                  max_results=10, manifest_cid="QmXYZ")
+            query_knowledge_graph(
+                query="some query", query_type="gremlin2", max_results=10, manifest_cid="QmXYZ"
+            )
 
     def test_query_kg_ir_mode_missing_manifest_raises(self):
         """GIVEN query_type='ir' without manifest_cid WHEN calling
@@ -301,6 +336,7 @@ class TestQueryKnowledgeGraphValidation:
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import (
             query_knowledge_graph,
         )
+
         with pytest.raises(ValueError, match="manifest_cid is required"):
             query_knowledge_graph(
                 query='[{"op":"ScanType","entity_type":"Person"}]',
@@ -315,6 +351,7 @@ class TestQueryKnowledgeGraphValidation:
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import (
             query_knowledge_graph,
         )
+
         mock_proc = MagicMock()
         mock_graph = MagicMock()
         mock_proc.load_graph.return_value = mock_graph
@@ -325,13 +362,19 @@ class TestQueryKnowledgeGraphValidation:
         mock_graphrag_mod.MockGraphRAGProcessor.return_value = mock_proc
 
         # Patch via sys.modules so the import inside the function resolves
-        with patch.dict("sys.modules", {
-            "ipfs_datasets_py.processors.graphrag_processor": mock_graphrag_mod,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "ipfs_datasets_py.processors.graphrag_processor": mock_graphrag_mod,
+            },
+        ):
             # Also ensure unified_graphrag raises ImportError
-            with patch.dict("sys.modules", {
-                "ipfs_datasets_py.processors.specialized.graphrag.unified_graphrag": None,
-            }):
+            with patch.dict(
+                "sys.modules",
+                {
+                    "ipfs_datasets_py.processors.specialized.graphrag.unified_graphrag": None,
+                },
+            ):
                 try:
                     result = query_knowledge_graph(
                         query="SELECT * WHERE {?s ?p ?o}",
@@ -350,6 +393,7 @@ class TestQueryKnowledgeGraphValidation:
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import (
             query_knowledge_graph,
         )
+
         mock_proc = MagicMock()
         mock_graph = MagicMock()
         mock_proc.load_graph.return_value = mock_graph
@@ -359,10 +403,13 @@ class TestQueryKnowledgeGraphValidation:
         mock_graphrag_mod.GraphRAGProcessor.return_value = mock_proc
         mock_graphrag_mod.MockGraphRAGProcessor.return_value = mock_proc
 
-        with patch.dict("sys.modules", {
-            "ipfs_datasets_py.processors.graphrag_processor": mock_graphrag_mod,
-            "ipfs_datasets_py.processors.specialized.graphrag.unified_graphrag": None,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "ipfs_datasets_py.processors.graphrag_processor": mock_graphrag_mod,
+                "ipfs_datasets_py.processors.specialized.graphrag.unified_graphrag": None,
+            },
+        ):
             try:
                 result = query_knowledge_graph(
                     query="MATCH (n) RETURN n LIMIT 5",
@@ -379,12 +426,14 @@ class TestQueryKnowledgeGraphValidation:
 # C. core/query_executor.py — raise_on_error + error-handler paths
 # ===========================================================================
 
+
 class TestQueryExecutorErrorHandlers:
     """Tests covering lines 118, 206, 220-233, 236-249, 252-265, 270, 380-381."""
 
     def _make_executor(self):
         from ipfs_datasets_py.knowledge_graphs.core.query_executor import QueryExecutor
         from ipfs_datasets_py.knowledge_graphs.core.graph_engine import GraphEngine
+
         engine = MagicMock(spec=GraphEngine)
         engine.find_nodes.return_value = []
         engine.get_relationships.return_value = []
@@ -412,7 +461,7 @@ class TestQueryExecutorErrorHandlers:
         # Patch CypherCompiler inside the cypher package so that when the
         # local import inside _execute_cypher resolves it, it raises CypherCompileError
         with patch(
-            'ipfs_datasets_py.knowledge_graphs.cypher.CypherCompiler',
+            "ipfs_datasets_py.knowledge_graphs.cypher.CypherCompiler",
         ) as MockCompiler:
             MockCompiler.return_value.compile.side_effect = CypherCompileError("fail")
             result = ex.execute("MATCH (n) RETURN n", {}, raise_on_error=False)
@@ -429,7 +478,7 @@ class TestQueryExecutorErrorHandlers:
         engine = MagicMock(spec=GraphEngine)
         ex = QueryExecutor(engine)
 
-        with patch('ipfs_datasets_py.knowledge_graphs.cypher.CypherCompiler') as MockCompiler:
+        with patch("ipfs_datasets_py.knowledge_graphs.cypher.CypherCompiler") as MockCompiler:
             MockCompiler.return_value.compile.side_effect = CypherCompileError("fail")
             with pytest.raises(QueryParseError):
                 ex.execute("MATCH (n) RETURN n", {}, raise_on_error=True)
@@ -445,7 +494,7 @@ class TestQueryExecutorErrorHandlers:
         ex = QueryExecutor(engine)
 
         with patch(
-            'ipfs_datasets_py.knowledge_graphs.core.query_executor._execute_ir_operations',
+            "ipfs_datasets_py.knowledge_graphs.core.query_executor._execute_ir_operations",
             side_effect=QueryExecutionError("query failed"),
         ):
             result = ex.execute("MATCH (n) RETURN n", {}, raise_on_error=False)
@@ -462,7 +511,7 @@ class TestQueryExecutorErrorHandlers:
         ex = QueryExecutor(engine)
 
         with patch(
-            'ipfs_datasets_py.knowledge_graphs.core.query_executor._execute_ir_operations',
+            "ipfs_datasets_py.knowledge_graphs.core.query_executor._execute_ir_operations",
             side_effect=StorageError("disk full"),
         ):
             result = ex.execute("MATCH (n) RETURN n", {}, raise_on_error=False)
@@ -479,7 +528,7 @@ class TestQueryExecutorErrorHandlers:
         ex = QueryExecutor(engine)
 
         with patch(
-            'ipfs_datasets_py.knowledge_graphs.core.query_executor._execute_ir_operations',
+            "ipfs_datasets_py.knowledge_graphs.core.query_executor._execute_ir_operations",
             side_effect=KnowledgeGraphError("graph error"),
         ):
             result = ex.execute("MATCH (n) RETURN n", {}, raise_on_error=False)
@@ -495,7 +544,7 @@ class TestQueryExecutorErrorHandlers:
         ex = QueryExecutor(engine)
 
         with patch(
-            'ipfs_datasets_py.knowledge_graphs.core.query_executor._execute_ir_operations',
+            "ipfs_datasets_py.knowledge_graphs.core.query_executor._execute_ir_operations",
             side_effect=RuntimeError("unexpected"),
         ):
             result = ex.execute("MATCH (n) RETURN n", {}, raise_on_error=False)
@@ -560,6 +609,7 @@ class TestQueryExecutorErrorHandlers:
 # D. extraction/_entity_helpers.py — transformer mapping + dedup + stopword
 # ===========================================================================
 
+
 class TestEntityHelpers:
     """Tests for lines 53-68 (_map_transformers_entity_type) and 117/121/125."""
 
@@ -568,6 +618,7 @@ class TestEntityHelpers:
         from ipfs_datasets_py.knowledge_graphs.extraction._entity_helpers import (
             _map_transformers_entity_type,
         )
+
         assert _map_transformers_entity_type("B-PER") == "person"
 
     def test_map_transformers_bio_prefixed_iorg(self):
@@ -575,6 +626,7 @@ class TestEntityHelpers:
         from ipfs_datasets_py.knowledge_graphs.extraction._entity_helpers import (
             _map_transformers_entity_type,
         )
+
         assert _map_transformers_entity_type("I-ORG") == "organization"
 
     def test_map_transformers_gpe_maps_to_location(self):
@@ -582,6 +634,7 @@ class TestEntityHelpers:
         from ipfs_datasets_py.knowledge_graphs.extraction._entity_helpers import (
             _map_transformers_entity_type,
         )
+
         assert _map_transformers_entity_type("GPE") == "location"
 
     def test_map_transformers_loc_maps_to_location(self):
@@ -589,6 +642,7 @@ class TestEntityHelpers:
         from ipfs_datasets_py.knowledge_graphs.extraction._entity_helpers import (
             _map_transformers_entity_type,
         )
+
         assert _map_transformers_entity_type("LOC") == "location"
 
     def test_map_transformers_misc_maps_to_entity(self):
@@ -596,6 +650,7 @@ class TestEntityHelpers:
         from ipfs_datasets_py.knowledge_graphs.extraction._entity_helpers import (
             _map_transformers_entity_type,
         )
+
         assert _map_transformers_entity_type("MISC") == "entity"
 
     def test_map_transformers_date_maps_correctly(self):
@@ -603,6 +658,7 @@ class TestEntityHelpers:
         from ipfs_datasets_py.knowledge_graphs.extraction._entity_helpers import (
             _map_transformers_entity_type,
         )
+
         assert _map_transformers_entity_type("DATE") == "date"
 
     def test_map_transformers_unknown_returns_entity(self):
@@ -610,6 +666,7 @@ class TestEntityHelpers:
         from ipfs_datasets_py.knowledge_graphs.extraction._entity_helpers import (
             _map_transformers_entity_type,
         )
+
         assert _map_transformers_entity_type("UNKNOWN_TAG") == "entity"
 
     def test_rule_based_dedup_skips_duplicate_entity(self):
@@ -618,6 +675,7 @@ class TestEntityHelpers:
         from ipfs_datasets_py.knowledge_graphs.extraction._entity_helpers import (
             _rule_based_entity_extraction,
         )
+
         result = _rule_based_entity_extraction(
             "Alice Smith and Bob Jones met Alice Smith at the event."
         )
@@ -630,6 +688,7 @@ class TestEntityHelpers:
         from ipfs_datasets_py.knowledge_graphs.extraction._entity_helpers import (
             _rule_based_entity_extraction,
         )
+
         # "From Lab" → org pattern captures "From" → stopword → filtered
         result = _rule_based_entity_extraction("From Lab presented findings in 2023.")
         names = [e.name for e in result]
@@ -639,6 +698,7 @@ class TestEntityHelpers:
 # ===========================================================================
 # E. extraction/relationships.py — wrong calling pattern + source_text
 # ===========================================================================
+
 
 class TestRelationshipEdgeCases:
     """Tests for lines 74-82 (wrong calling pattern) and 159 (source_text)."""
@@ -656,9 +716,9 @@ class TestRelationshipEdgeCases:
 
         # Wrong order: Relationship(source, target, type) instead of using kwargs
         rel = Relationship(
-            relationship_id=e1,      # wrong: Entity passed as relationship_id
-            relationship_type=e2,    # wrong: Entity passed as relationship_type
-            source_entity="KNOWS",   # wrong: str passed as source_entity
+            relationship_id=e1,  # wrong: Entity passed as relationship_id
+            relationship_type=e2,  # wrong: Entity passed as relationship_type
+            source_entity="KNOWS",  # wrong: str passed as source_entity
         )
         # After __post_init__ auto-correction:
         assert rel.source_entity.name == "Alice"
@@ -691,6 +751,7 @@ class TestRelationshipEdgeCases:
 # F. core/ir_executor.py — missed execution paths
 # ===========================================================================
 
+
 class TestIRExecutorMissedPaths:
     """Tests for lines 145, 182, 207, 288, 350-356, 424-426, 430-444."""
 
@@ -702,8 +763,7 @@ class TestIRExecutorMissedPaths:
 
         def _find_nodes(labels=None, **kw):
             if labels:
-                return [n for n in _nodes
-                        if any(lb in getattr(n, "labels", []) for lb in labels)]
+                return [n for n in _nodes if any(lb in getattr(n, "labels", []) for lb in labels)]
             return list(_nodes)
 
         def _get_node(nid):
@@ -719,8 +779,7 @@ class TestIRExecutorMissedPaths:
                     result.append(r)
                 elif direction == "in" and r._end_node == nid:
                     result.append(r)
-                elif direction == "both" and (r._start_node == nid
-                                              or r._end_node == nid):
+                elif direction == "both" and (r._start_node == nid or r._end_node == nid):
                     result.append(r)
             if rel_type:
                 result = [r for r in result if r.type == rel_type]
@@ -787,6 +846,7 @@ class TestIRExecutorMissedPaths:
         from ipfs_datasets_py.knowledge_graphs.core.ir_executor import (
             execute_ir_operations,
         )
+
         if engine is None:
             engine = self._make_engine()
         return execute_ir_operations(
@@ -896,8 +956,10 @@ class TestIRExecutorMissedPaths:
                 "direction": "out",
                 "target_labels": ["Person"],
             },
-            {"op": "Return", "items": [{"expression": "n", "alias": "n"},
-                                       {"expression": "m", "alias": "m"}]},
+            {
+                "op": "Return",
+                "items": [{"expression": "n", "alias": "n"}, {"expression": "m", "alias": "m"}],
+            },
         ]
         result = self._run_ops(ops, engine)
         assert isinstance(result, list)
@@ -917,7 +979,7 @@ class TestIRExecutorMissedPaths:
         node_b = MagicMock()
         node_b.id = "b"
         node_b.labels = ["Person"]
-        node_b._properties = {"age": 30}   # same age → dedup
+        node_b._properties = {"age": 30}  # same age → dedup
         node_b.properties = {"age": 30}
 
         engine = self._make_engine(nodes=[node_a, node_b])
@@ -925,12 +987,14 @@ class TestIRExecutorMissedPaths:
             {"op": "ScanLabel", "label": "Person", "variable": "n"},
             {
                 "op": "Aggregate",
-                "items": [{
-                    "function": "count",
-                    "expression": "n.age",
-                    "alias": "cnt",
-                    "distinct": True,
-                }],
+                "items": [
+                    {
+                        "function": "count",
+                        "expression": "n.age",
+                        "alias": "cnt",
+                        "distinct": True,
+                    }
+                ],
                 "group_by": [],
             },
             {"op": "Return", "items": [{"expression": "cnt", "alias": "cnt"}]},
@@ -958,8 +1022,7 @@ class TestIRExecutorMissedPaths:
                 "op": "WithProject",
                 "items": [{"expression": "n.name", "alias": "person_name"}],
             },
-            {"op": "Return", "items": [{"expression": "person_name",
-                                        "alias": "person_name"}]},
+            {"op": "Return", "items": [{"expression": "person_name", "alias": "person_name"}]},
         ]
         result = self._run_ops(ops, engine)
         assert isinstance(result, list)
@@ -1081,6 +1144,7 @@ class TestIRExecutorMissedPaths:
 # G. reasoning/cross_document.py — missed paths
 # ===========================================================================
 
+
 class TestCrossDocumentReasoningMissedPaths:
     """Tests for lines 31-32, 133, 174-176, 199, 740."""
 
@@ -1090,6 +1154,7 @@ class TestCrossDocumentReasoningMissedPaths:
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import (
             _MissingUnifiedGraphRAGQueryOptimizer,
         )
+
         sentinel_err = ImportError("test missing")
         stub = _MissingUnifiedGraphRAGQueryOptimizer(sentinel_err)
         with pytest.raises(ImportError):
@@ -1101,6 +1166,7 @@ class TestCrossDocumentReasoningMissedPaths:
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import (
             CrossDocumentReasoner,
         )
+
         custom_opt = MagicMock()
         reasoner = CrossDocumentReasoner(query_optimizer=custom_opt)
         assert reasoner.query_optimizer is custom_opt
@@ -1144,18 +1210,20 @@ class TestCrossDocumentReasoningMissedPaths:
 
         reasoner = CrossDocumentReasoner()
         doc_a = DocumentNode(
-            id="d1", source="s1", content="test alpha term",
+            id="d1",
+            source="s1",
+            content="test alpha term",
             vector=np.array([1.0, 0.0]),
         )
         doc_b = DocumentNode(
-            id="d2", source="s2", content="test alpha term",
+            id="d2",
+            source="s2",
+            content="test alpha term",
             vector=np.array([1.0, 0.0]),
         )
 
         # Patch np module-level to raise on linalg operations
-        with patch(
-            "ipfs_datasets_py.knowledge_graphs.reasoning.cross_document.np"
-        ) as mock_np:
+        with patch("ipfs_datasets_py.knowledge_graphs.reasoning.cross_document.np") as mock_np:
             mock_np.asarray.return_value = np.array([1.0, 0.0])
             mock_np.linalg.norm.side_effect = np.linalg.LinAlgError("singular")
             mock_np.linalg.LinAlgError = np.linalg.LinAlgError
@@ -1175,11 +1243,15 @@ class TestCrossDocumentReasoningMissedPaths:
 
         reasoner = CrossDocumentReasoner()
         doc_a = DocumentNode(
-            id="d1", source="s1", content="alpha",
+            id="d1",
+            source="s1",
+            content="alpha",
             vector=np.array([1.0, 0.0, 0.0]),
         )
         doc_b = DocumentNode(
-            id="d2", source="s2", content="beta",
+            id="d2",
+            source="s2",
+            content="beta",
             vector=np.array([0.0, 1.0, 0.0]),
         )
         sim = reasoner._compute_document_similarity(doc_a, doc_b)
@@ -1206,7 +1278,9 @@ class TestCrossDocumentReasoningMissedPaths:
             CrossDocumentReasoner,
         )
         from ipfs_datasets_py.knowledge_graphs.reasoning.types import (
-            DocumentNode, EntityMediatedConnection, InformationRelationType,
+            DocumentNode,
+            EntityMediatedConnection,
+            InformationRelationType,
         )
 
         mock_router = MagicMock()
@@ -1224,13 +1298,10 @@ class TestCrossDocumentReasoningMissedPaths:
             connection_strength=0.8,
         )
 
-        with patch.object(reasoner, '_generate_llm_answer',
-                          return_value=("LLM answer here", 0.95)):
+        with patch.object(reasoner, "_generate_llm_answer", return_value=("LLM answer here", 0.95)):
             docs = [
-                DocumentNode(id="d1", source="s1",
-                             content="IPFS uses content addressing."),
-                DocumentNode(id="d2", source="s2",
-                             content="Content addressing uses hashes."),
+                DocumentNode(id="d1", source="s1", content="IPFS uses content addressing."),
+                DocumentNode(id="d2", source="s2", content="Content addressing uses hashes."),
             ]
             answer, confidence = reasoner._synthesize_answer(
                 "How does IPFS work?", docs, [conn], [], "shallow"
@@ -1245,10 +1316,14 @@ class TestCrossDocumentReasoningMissedPaths:
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import (
             _example_usage,
         )
+
         mock_opt_module = MagicMock()
-        with patch.dict(sys.modules, {
-            "ipfs_datasets_py.optimizers.graphrag.query_optimizer": mock_opt_module,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "ipfs_datasets_py.optimizers.graphrag.query_optimizer": mock_opt_module,
+            },
+        ):
             try:
                 _example_usage()
             except Exception:

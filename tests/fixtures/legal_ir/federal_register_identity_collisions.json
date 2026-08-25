@@ -1,0 +1,368 @@
+{
+  "description": "Compact recipe for Federal Register identity collisions and version dispositions. Correction/withdrawal pairs remain separately addressable. Source-format duplicates of the same publication reconcile deterministically (html preferred). Changed-text pairs share legal_id with different content. Publication-date variants of the same document number stay distinct. Content-CID-only and positional-only pairs must not merge. Unknown effective dates are preserved without invention.",
+  "disposition_cases": [
+    {
+      "case_id": "logical-duplicate",
+      "expected_disposition": "duplicate",
+      "left": {
+        "document_number": "2020-12345",
+        "document_type": "rule",
+        "entry_cid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "publication_date": "2020-06-15",
+        "source_format": "html",
+        "text": "same body"
+      },
+      "right": {
+        "document_number": "2020-12345",
+        "document_type": "rule",
+        "entry_cid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "publication_date": "2020-06-15",
+        "source_format": "html",
+        "text": "same body"
+      }
+    },
+    {
+      "case_id": "source-format-duplicate",
+      "expected_disposition": "duplicate_source_format",
+      "left": {
+        "document_number": "2020-12345",
+        "document_type": "rule",
+        "entry_cid": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "publication_date": "2020-06-15",
+        "source_format": "html",
+        "text": "official body"
+      },
+      "right": {
+        "document_number": "2020-12345",
+        "document_type": "rule",
+        "entry_cid": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "publication_date": "2020-06-15",
+        "source_format": "pdf",
+        "text": "official body"
+      }
+    },
+    {
+      "case_id": "changed-text-version",
+      "expected_disposition": "changed_text_version",
+      "left": {
+        "document_number": "2021-05678",
+        "document_type": "proposed_rule",
+        "entry_cid": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "publication_date": "2021-03-01",
+        "source_format": "html",
+        "text": "old body"
+      },
+      "right": {
+        "document_number": "2021-05678",
+        "document_type": "proposed_rule",
+        "entry_cid": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "publication_date": "2021-03-01",
+        "source_format": "html",
+        "text": "new body"
+      }
+    },
+    {
+      "case_id": "correction-distinct",
+      "expected_disposition": "correction_distinct",
+      "left": {
+        "correction_relation": "none",
+        "document_number": "2020-12345",
+        "document_type": "rule",
+        "entry_cid": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "publication_date": "2020-06-15",
+        "text": "original"
+      },
+      "right": {
+        "correction_relation": "corrects",
+        "document_number": "2020-13000",
+        "document_type": "correction",
+        "entry_cid": "1111111111111111111111111111111111111111111111111111111111111111",
+        "include_correction_qualifier": true,
+        "include_type_qualifier": true,
+        "publication_date": "2020-07-01",
+        "related_document_number": "2020-12345",
+        "text": "correction"
+      }
+    },
+    {
+      "case_id": "content-cid-only-reject",
+      "expected_disposition": "reject_content_cid_only_merge",
+      "left": {
+        "content_cid": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "document_number": "2022-01000",
+        "document_type": "notice",
+        "entry_cid": "2222222222222222222222222222222222222222222222222222222222222222",
+        "publication_date": "2022-01-10",
+        "text": "boilerplate"
+      },
+      "right": {
+        "content_cid": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "document_number": "2022-02000",
+        "document_type": "notice",
+        "entry_cid": "3333333333333333333333333333333333333333333333333333333333333333",
+        "publication_date": "2022-02-10",
+        "text": "boilerplate"
+      }
+    },
+    {
+      "case_id": "positional-only-reject",
+      "expected_disposition": "reject_positional_merge",
+      "left": {
+        "document_index": 42,
+        "document_number": "2023-01000",
+        "document_type": "rule",
+        "entry_cid": "4444444444444444444444444444444444444444444444444444444444444444",
+        "publication_date": "2023-01-15",
+        "text": "alpha"
+      },
+      "right": {
+        "document_index": 42,
+        "document_number": "2023-02000",
+        "document_type": "rule",
+        "entry_cid": "5555555555555555555555555555555555555555555555555555555555555555",
+        "publication_date": "2023-02-15",
+        "text": "beta"
+      }
+    },
+    {
+      "case_id": "publication-date-distinct",
+      "expected_disposition": "distinct_identity",
+      "left": {
+        "document_number": "2021-04000",
+        "document_type": "notice",
+        "entry_cid": "6666666666666666666666666666666666666666666666666666666666666666",
+        "publication_date": "2021-01-05",
+        "text": "first publication"
+      },
+      "right": {
+        "document_number": "2021-04000",
+        "document_type": "notice",
+        "entry_cid": "7777777777777777777777777777777777777777777777777777777777777777",
+        "publication_date": "2021-01-15",
+        "text": "second publication"
+      }
+    }
+  ],
+  "expected_row_count": 370,
+  "generators": [
+    {
+      "count": 35,
+      "kind": "correction_pairs",
+      "serial_start": 10000,
+      "year_start": 2018
+    },
+    {
+      "count": 25,
+      "formats": ["html", "pdf", "xml"],
+      "kind": "source_format_duplicates",
+      "serial_start": 20000,
+      "year_start": 2019
+    },
+    {
+      "count": 25,
+      "kind": "changed_text_versions",
+      "serial_start": 30000,
+      "year_start": 2020
+    },
+    {
+      "count": 20,
+      "kind": "publication_date_variants",
+      "serial_start": 40000,
+      "year_start": 2021
+    },
+    {
+      "count": 12,
+      "kind": "content_cid_only_pairs",
+      "serial_start": 50000,
+      "year_start": 2022
+    },
+    {
+      "count": 12,
+      "kind": "positional_only_pairs",
+      "serial_start": 60000,
+      "year_start": 2023
+    },
+    {
+      "count": 21,
+      "kind": "unknown_effective_dates",
+      "serial_start": 70000,
+      "unknown_tokens": ["unknown", "n/a", "tbd", null, ""],
+      "year_start": 2024
+    },
+    {
+      "count": 20,
+      "kind": "document_type_variants",
+      "serial_start": 80000,
+      "year_start": 2017
+    },
+    {
+      "count": 15,
+      "kind": "withdrawal_pairs",
+      "serial_start": 90000,
+      "year_start": 2016
+    }
+  ],
+  "schema_version": "federal-register-identity-collisions-v1",
+  "seed_rows": [
+    {
+      "collision_family": "seed-basic",
+      "correction_relation": "none",
+      "document_number": "2020-12345",
+      "document_type": "rule",
+      "effective_date": "2020-07-15",
+      "publication_date": "2020-06-15",
+      "row_id": "seed-rule",
+      "source_format": "html",
+      "text": "EPA final rule body"
+    },
+    {
+      "collision_family": "seed-basic",
+      "correction_relation": "corrects",
+      "document_number": "2020-13000",
+      "document_type": "correction",
+      "include_correction_qualifier": true,
+      "include_type_qualifier": true,
+      "publication_date": "2020-07-01",
+      "related_document_number": "2020-12345",
+      "row_id": "seed-correction",
+      "source_format": "html",
+      "text": "EPA correction body"
+    },
+    {
+      "collision_family": "seed-withdrawal",
+      "correction_relation": "none",
+      "document_number": "2022-05678",
+      "document_type": "proposed_rule",
+      "effective_date": "unknown",
+      "publication_date": "2022-04-10",
+      "row_id": "seed-proposed",
+      "source_format": "html",
+      "text": "DOT proposed rule"
+    },
+    {
+      "collision_family": "seed-withdrawal",
+      "correction_relation": "withdraws",
+      "document_number": "2022-06000",
+      "document_type": "notice",
+      "publication_date": "2022-05-01",
+      "related_document_number": "2022-05678",
+      "row_id": "seed-withdraw",
+      "source_format": "html",
+      "text": "DOT withdrawal notice"
+    },
+    {
+      "collision_family": "seed-format",
+      "document_number": "2019-11111",
+      "document_type": "rule",
+      "publication_date": "2019-03-20",
+      "row_id": "seed-fmt-html",
+      "source_format": "html",
+      "text": "multi-format official body"
+    },
+    {
+      "collision_family": "seed-format",
+      "document_number": "2019-11111",
+      "document_type": "rule",
+      "publication_date": "2019-03-20",
+      "row_id": "seed-fmt-pdf",
+      "source_format": "pdf",
+      "text": "multi-format official body"
+    },
+    {
+      "collision_family": "seed-format",
+      "document_number": "2019-11111",
+      "document_type": "rule",
+      "publication_date": "2019-03-20",
+      "row_id": "seed-fmt-xml",
+      "source_format": "xml",
+      "text": "multi-format official body"
+    },
+    {
+      "acquisition_time": "2021-08-08T01:00:00Z",
+      "collision_family": "seed-version",
+      "document_number": "2021-22222",
+      "document_type": "notice",
+      "publication_date": "2021-08-08",
+      "row_id": "seed-version-old",
+      "source_format": "html",
+      "text": "version-one body"
+    },
+    {
+      "acquisition_time": "2021-08-08T02:00:00Z",
+      "collision_family": "seed-version",
+      "document_number": "2021-22222",
+      "document_type": "notice",
+      "publication_date": "2021-08-08",
+      "row_id": "seed-version-new",
+      "source_format": "html",
+      "text": "version-two body"
+    },
+    {
+      "collision_family": "seed-pubdate",
+      "document_number": "2018-33333",
+      "document_type": "notice",
+      "publication_date": "2018-01-05",
+      "row_id": "seed-pubdate-a",
+      "source_format": "html",
+      "text": "first appearance"
+    },
+    {
+      "collision_family": "seed-pubdate",
+      "document_number": "2018-33333",
+      "document_type": "notice",
+      "publication_date": "2018-01-15",
+      "row_id": "seed-pubdate-b",
+      "source_format": "html",
+      "text": "second appearance"
+    },
+    {
+      "collision_family": "seed-unknown-eff",
+      "document_number": "2024-44444",
+      "document_type": "rule",
+      "effective_date": "tbd",
+      "publication_date": "2024-02-29",
+      "row_id": "seed-unknown-eff",
+      "source_format": "html",
+      "text": "effective date not yet known"
+    },
+    {
+      "collision_family": "seed-types",
+      "document_number": "2017-55555",
+      "document_type": "presidential_document",
+      "publication_date": "2017-01-20",
+      "row_id": "seed-presidential",
+      "source_format": "html",
+      "text": "executive order body"
+    },
+    {
+      "collision_family": "seed-types",
+      "document_number": "2017-55556",
+      "document_type": "sunshine_act_meeting",
+      "publication_date": "2017-02-01",
+      "row_id": "seed-sunshine",
+      "source_format": "html",
+      "text": "sunshine meeting notice"
+    },
+    {
+      "collision_family": "seed-cid-only",
+      "content_cid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "document_number": "2022-66666",
+      "document_type": "notice",
+      "publication_date": "2022-05-05",
+      "row_id": "seed-cid-a",
+      "source_format": "html",
+      "text": "shared boilerplate"
+    },
+    {
+      "collision_family": "seed-cid-only",
+      "content_cid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "document_number": "2022-66667",
+      "document_type": "notice",
+      "publication_date": "2022-05-06",
+      "row_id": "seed-cid-b",
+      "source_format": "html",
+      "text": "shared boilerplate"
+    }
+  ],
+  "task_id": "LCR-054"
+}

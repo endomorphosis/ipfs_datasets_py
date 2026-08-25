@@ -17,8 +17,7 @@ MCP tools for authentication, authorisation, token management, and user administ
 from ipfs_datasets_py.mcp_server.tools.auth_tools import validate_token
 
 result = await validate_token(
-    token="eyJhbGciOiJIUzI1NiIs...",
-    required_scopes=["read:datasets", "write:ipfs"]
+    token="eyJhbGciOiJIUzI1NiIs...", required_scopes=["read:datasets", "write:ipfs"]
 )
 # Returns: {"valid": True, "user_id": "user_42", "scopes": [...], "expires_at": "..."}
 ```
@@ -28,11 +27,7 @@ result = await validate_token(
 ```python
 from ipfs_datasets_py.mcp_server.tools.auth_tools import check_permission
 
-result = await check_permission(
-    user_id="user_42",
-    action="dataset.upload",
-    resource="my_dataset"
-)
+result = await check_permission(user_id="user_42", action="dataset.upload", resource="my_dataset")
 # Returns: {"allowed": True, "reason": "user has write:datasets scope"}
 ```
 
@@ -41,11 +36,7 @@ result = await check_permission(
 ```python
 from ipfs_datasets_py.mcp_server.tools.auth_tools import create_user, list_users
 
-new_user = await create_user(
-    username="alice",
-    email="alice@example.com",
-    roles=["contributor"]
-)
+new_user = await create_user(username="alice", email="alice@example.com", roles=["contributor"])
 
 users = await list_users(role="admin")
 ```

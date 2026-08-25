@@ -1,6 +1,7 @@
 """
 Test progress callback parameter for OntologyPipeline.run()
 """
+
 import pytest
 from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
 
@@ -35,11 +36,17 @@ def test_pipeline_run_with_progress_callback():
 
     # Verify callback parameters in each call
     for i, (round_num, max_rounds, score) in enumerate(callback_calls):
-        assert isinstance(round_num, int), f"Call {i}: round_num should be int, got {type(round_num)}"
+        assert isinstance(round_num, int), (
+            f"Call {i}: round_num should be int, got {type(round_num)}"
+        )
         assert round_num >= 1, f"Call {i}: round_num should be >= 1, got {round_num}"
-        assert isinstance(max_rounds, int), f"Call {i}: max_rounds should be int, got {type(max_rounds)}"
+        assert isinstance(max_rounds, int), (
+            f"Call {i}: max_rounds should be int, got {type(max_rounds)}"
+        )
         assert max_rounds >= 1, f"Call {i}: max_rounds should be >= 1, got {max_rounds}"
-        assert round_num <= max_rounds, f"Call {i}: round_num {round_num} should be <= max_rounds {max_rounds}"
+        assert round_num <= max_rounds, (
+            f"Call {i}: round_num {round_num} should be <= max_rounds {max_rounds}"
+        )
         assert isinstance(score, float), f"Call {i}: score should be float, got {type(score)}"
         assert 0.0 <= score <= 1.0, f"Call {i}: score should be in [0.0, 1.0], got {score}"
 

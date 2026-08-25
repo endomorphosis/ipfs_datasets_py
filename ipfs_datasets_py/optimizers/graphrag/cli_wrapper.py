@@ -57,6 +57,7 @@ def _safe_resolve(path_str: str, *, must_exist: bool = False) -> Path:
             details={"path": path_str},
         ) from exc
 
+
 try:
     from ipfs_datasets_py.optimizers.graphrag import (
         OntologyGenerator,
@@ -70,6 +71,7 @@ try:
         ExtractionStrategy,
         DataType,
     )
+
     GRAPHRAG_AVAILABLE = True
 except ImportError:
     GRAPHRAG_AVAILABLE = False
@@ -77,10 +79,11 @@ except ImportError:
 
 class GraphRAGOptimizerCLI:
     """Command-line interface for GraphRAG Optimizer."""
-    
+
     def __init__(self):
         """Initialize CLI."""
         from .exceptions import ConfigurationError
+
         if not GRAPHRAG_AVAILABLE:
             raise ConfigurationError("GraphRAG Optimizer not available (ImportError)")
 
@@ -88,17 +91,16 @@ class GraphRAGOptimizerCLI:
     def _safe_error_text(error: Exception) -> str:
         """Return redacted error text for user-facing CLI output."""
         return redact_sensitive(str(error))
-    
-    
+
     def create_parser(self) -> argparse.ArgumentParser:
         """Create argument parser.
-        
+
         Returns:
             Configured ArgumentParser
         """
         parser = argparse.ArgumentParser(
-            prog='optimizers --type graphrag',
-            description='GraphRAG Optimizer - Knowledge graph and ontology optimization',
+            prog="optimizers --type graphrag",
+            description="GraphRAG Optimizer - Knowledge graph and ontology optimization",
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog="""
 Examples:
@@ -122,167 +124,104 @@ Examples:
 
     # Show query optimizer health snapshot
     %(prog)s health --window 100
-""")
-        
-        subparsers = parser.add_subparsers(dest='command', help='Commands', required=True)
-        
+""",
+        )
+
+        subparsers = parser.add_subparsers(dest="command", help="Commands", required=True)
+
         # generate command
         generate_parser = subparsers.add_parser(
-            'generate',
-            help='Generate ontology from documents/data'
+            "generate", help="Generate ontology from documents/data"
         )
         generate_parser.add_argument(
-            '--input', '-i',
-            required=True,
-            help='Input file (PDF, JSON, text, etc.)'
+            "--input", "-i", required=True, help="Input file (PDF, JSON, text, etc.)"
+        )
+        generate_parser.add_argument("--output", "-o", help="Output ontology file (OWL, RDF, JSON)")
+        generate_parser.add_argument(
+            "--domain",
+            choices=["legal", "scientific", "medical", "general"],
+            default="general",
+            help="Domain context",
         )
         generate_parser.add_argument(
-            '--output', '-o',
-            help='Output ontology file (OWL, RDF, JSON)'
+            "--strategy",
+            choices=["rule_based", "neural", "hybrid"],
+            default="hybrid",
+            help="Extraction strategy",
         )
         generate_parser.add_argument(
-            '--domain',
-            choices=['legal', 'scientific', 'medical', 'general'],
-            default='general',
-            help='Domain context'
+            "--format", choices=["owl", "rdf", "json"], default="owl", help="Output format"
         )
-        generate_parser.add_argument(
-            '--strategy',
-            choices=['rule_based', 'neural', 'hybrid'],
-            default='hybrid',
-            help='Extraction strategy'
-        )
-        generate_parser.add_argument(
-            '--format',
-            choices=['owl', 'rdf', 'json'],
-            default='owl',
-            help='Output format'
-        )
-        
+
         # optimize command
         optimize_parser = subparsers.add_parser(
-            'optimize',
-            help='Optimize knowledge graph structure and quality'
+            "optimize", help="Optimize knowledge graph structure and quality"
+        )
+        optimize_parser.add_argument("--input", "-i", required=True, help="Input ontology file")
+        optimize_parser.add_argument(
+            "--cycles", type=int, default=3, help="Number of optimization cycles"
         )
         optimize_parser.add_argument(
-            '--input', '-i',
-            required=True,
-            help='Input ontology file'
+            "--parallel", action="store_true", help="Run optimization in parallel"
         )
+        optimize_parser.add_argument("--output", "-o", help="Output optimized ontology")
         optimize_parser.add_argument(
-            '--cycles',
-            type=int,
-            default=3,
-            help='Number of optimization cycles'
+            "--target",
+            choices=["structure", "consistency", "coverage", "all"],
+            default="all",
+            help="Optimization target",
         )
-        optimize_parser.add_argument(
-            '--parallel',
-            action='store_true',
-            help='Run optimization in parallel'
-        )
-        optimize_parser.add_argument(
-            '--output', '-o',
-            help='Output optimized ontology'
-        )
-        optimize_parser.add_argument(
-            '--target',
-            choices=['structure', 'consistency', 'coverage', 'all'],
-            default='all',
-            help='Optimization target'
-        )
-        
+
         # validate command
         validate_parser = subparsers.add_parser(
-            'validate',
-            help='Validate ontology consistency and quality'
+            "validate", help="Validate ontology consistency and quality"
+        )
+        validate_parser.add_argument("--input", "-i", required=True, help="Input ontology file")
+        validate_parser.add_argument(
+            "--check-consistency", action="store_true", help="Check logical consistency"
         )
         validate_parser.add_argument(
-            '--input', '-i',
-            required=True,
-            help='Input ontology file'
+            "--check-coverage", action="store_true", help="Check domain coverage"
         )
         validate_parser.add_argument(
-            '--check-consistency',
-            action='store_true',
-            help='Check logical consistency'
+            "--check-clarity", action="store_true", help="Check relationship clarity"
         )
+        validate_parser.add_argument("--output", "-o", help="Output validation report")
         validate_parser.add_argument(
-            '--check-coverage',
-            action='store_true',
-            help='Check domain coverage'
+            "--tdfol-output",
+            help="Output file for generated TDFOL formulas (JSON list of predicates)",
         )
-        validate_parser.add_argument(
-            '--check-clarity',
-            action='store_true',
-            help='Check relationship clarity'
-        )
-        validate_parser.add_argument(
-            '--output', '-o',
-            help='Output validation report'
-        )
-        validate_parser.add_argument(
-            '--tdfol-output',
-            help='Output file for generated TDFOL formulas (JSON list of predicates)'
-        )
-        
+
         # query command
-        query_parser = subparsers.add_parser(
-            'query',
-            help='Query optimization for RAG systems'
-        )
+        query_parser = subparsers.add_parser("query", help="Query optimization for RAG systems")
+        query_parser.add_argument("--ontology", required=True, help="Knowledge graph/ontology file")
+        query_parser.add_argument("--query", required=True, help="Query string")
         query_parser.add_argument(
-            '--ontology',
-            required=True,
-            help='Knowledge graph/ontology file'
+            "--optimize", action="store_true", help="Optimize query performance"
         )
-        query_parser.add_argument(
-            '--query',
-            required=True,
-            help='Query string'
-        )
-        query_parser.add_argument(
-            '--optimize',
-            action='store_true',
-            help='Optimize query performance'
-        )
-        query_parser.add_argument(
-            '--explain',
-            action='store_true',
-            help='Explain query execution'
-        )
-        query_parser.add_argument(
-            '--output', '-o',
-            help='Output results file'
-        )
-        
+        query_parser.add_argument("--explain", action="store_true", help="Explain query execution")
+        query_parser.add_argument("--output", "-o", help="Output results file")
+
         # status command
         status_parser = subparsers.add_parser(
-            'status',
-            help='Show optimizer status and capabilities'
+            "status", help="Show optimizer status and capabilities"
         )
 
         # health command
-        health_parser = subparsers.add_parser(
-            'health',
-            help='Show query optimizer health snapshot'
-        )
+        health_parser = subparsers.add_parser("health", help="Show query optimizer health snapshot")
         health_parser.add_argument(
-            '--window',
+            "--window",
             type=int,
             default=100,
-            help='Number of recent sessions to use for error-rate calculation'
+            help="Number of recent sessions to use for error-rate calculation",
         )
-        health_parser.add_argument(
-            '--output', '-o',
-            help='Optional output JSON file path'
-        )
+        health_parser.add_argument("--output", "-o", help="Optional output JSON file path")
 
         # interactive command
         subparsers.add_parser(
-            'interactive',
-            help='Launch interactive GraphRAG REPL with history and completion'
+            "interactive", help="Launch interactive GraphRAG REPL with history and completion"
         )
-        
+
         return parser
 
     def _read_text(self, path: Path) -> str:
@@ -297,22 +236,28 @@ Examples:
         Expected keys: 'entities' and 'relationships'.
         """
         from .exceptions import OntologyValidationError
-        
+
         obj = self._load_json(path)
         if not isinstance(obj, dict):
             raise OntologyValidationError("Ontology JSON must be a JSON object")
         if "entities" not in obj or "relationships" not in obj:
-            raise OntologyValidationError("Ontology JSON must include 'entities' and 'relationships'")
-        if not isinstance(obj.get("entities"), list) or not isinstance(obj.get("relationships"), list):
-            raise OntologyValidationError("Ontology JSON 'entities' and 'relationships' must be lists")
+            raise OntologyValidationError(
+                "Ontology JSON must include 'entities' and 'relationships'"
+            )
+        if not isinstance(obj.get("entities"), list) or not isinstance(
+            obj.get("relationships"), list
+        ):
+            raise OntologyValidationError(
+                "Ontology JSON 'entities' and 'relationships' must be lists"
+            )
         return obj
-    
+
     def cmd_generate(self, args: argparse.Namespace) -> int:
         """Generate ontology from data.
-        
+
         Args:
             args: Command arguments
-            
+
         Returns:
             Exit code
         """
@@ -320,25 +265,25 @@ Examples:
         print(f"   Domain: {args.domain}")
         print(f"   Strategy: {args.strategy}")
         print(f"   Format: {args.format}\n")
-        
+
         input_path = _safe_resolve(args.input, must_exist=True)
         if not input_path.exists():
             print(f"❌ Input file not found: {args.input}")
             return 1
-        
+
         try:
             data = self._read_text(input_path)
-            
+
             # Create generator
             generator = OntologyGenerator()
-            
+
             # Map strategy
             strategy_map = {
-                'rule_based': ExtractionStrategy.RULE_BASED,
-                'neural': ExtractionStrategy.NEURAL,
-                'hybrid': ExtractionStrategy.HYBRID,
+                "rule_based": ExtractionStrategy.RULE_BASED,
+                "neural": ExtractionStrategy.NEURAL,
+                "hybrid": ExtractionStrategy.HYBRID,
             }
-            
+
             # Create context
             context = OntologyGenerationContext(
                 data_source=str(input_path),
@@ -346,49 +291,57 @@ Examples:
                 domain=args.domain,
                 extraction_strategy=strategy_map[args.strategy],
             )
-            
+
             # Generate ontology
             print("⏳ Generating ontology...")
             ontology = generator.generate_ontology(data, context)
-            
+
             print(f"✅ Generated ontology")
             print(f"   Entities: {len(ontology.get('entities', []))}")
             print(f"   Relationships: {len(ontology.get('relationships', []))}")
-            confidence = ontology.get('metadata', {}).get('confidence', None)
+            confidence = ontology.get("metadata", {}).get("confidence", None)
             if isinstance(confidence, (int, float)):
                 print(f"   Confidence: {confidence:.2f}")
-            
+
             # Evaluate quality
             critic = OntologyCritic()
             score = critic.evaluate_ontology(ontology, context, data)
             print(f"   Quality score: {score.overall:.2f}")
-            
+
             # Output results
             if args.output:
                 output_path = _safe_resolve(args.output)
                 output_data = {
-                    'entities': ontology.get('entities', []),
-                    'relationships': ontology.get('relationships', []),
-                    'metadata': ontology.get('metadata', {}),
-                    'quality_score': score.overall,
+                    "entities": ontology.get("entities", []),
+                    "relationships": ontology.get("relationships", []),
+                    "metadata": ontology.get("metadata", {}),
+                    "quality_score": score.overall,
                 }
 
-                with open(output_path, 'w') as f:
+                with open(output_path, "w") as f:
                     json.dump(output_data, f, indent=2)
                 print(f"📄 Saved to: {output_path}")
-            
+
             return 0
-            
-        except (ConfigurationError, OSError, ValueError, TypeError, RuntimeError, json.JSONDecodeError, KeyError) as e:
+
+        except (
+            ConfigurationError,
+            OSError,
+            ValueError,
+            TypeError,
+            RuntimeError,
+            json.JSONDecodeError,
+            KeyError,
+        ) as e:
             print(f"❌ Error: {self._safe_error_text(e)}")
             return 1
-    
+
     def cmd_optimize(self, args: argparse.Namespace) -> int:
         """Optimize knowledge graph.
-        
+
         Args:
             args: Command arguments
-            
+
         Returns:
             Exit code
         """
@@ -404,12 +357,12 @@ Examples:
         if args.cycles <= 0:
             print("❌ Error: cycles must be greater than 0")
             return 1
-        
+
         input_path = _safe_resolve(args.input, must_exist=True)
         if not input_path.exists():
             print(f"❌ Input file not found: {args.input}")
             return 1
-        
+
         try:
             data = self._read_text(input_path)
 
@@ -453,10 +406,8 @@ Examples:
 
             if result.critic_score is None:
                 from .exceptions import SessionError
-                raise SessionError(
-                    "Optimization session failed",
-                    details=result.metadata
-                )
+
+                raise SessionError("Optimization session failed", details=result.metadata)
 
             print("\n✅ Optimization complete")
             print(f"   Quality score: {result.critic_score.overall:.2f}")
@@ -488,26 +439,34 @@ Examples:
 
             return 0
 
-        except (ConfigurationError, OSError, ValueError, TypeError, RuntimeError, json.JSONDecodeError, KeyError) as e:
+        except (
+            ConfigurationError,
+            OSError,
+            ValueError,
+            TypeError,
+            RuntimeError,
+            json.JSONDecodeError,
+            KeyError,
+        ) as e:
             print(f"❌ Error: {self._safe_error_text(e)}")
             return 1
-    
+
     def cmd_validate(self, args: argparse.Namespace) -> int:
         """Validate ontology.
-        
+
         Args:
             args: Command arguments
-            
+
         Returns:
             Exit code
         """
         print(f"✓ Validating ontology: {args.input}\n")
-        
+
         input_path = _safe_resolve(args.input, must_exist=True)
         if not input_path.exists():
             print(f"❌ Input file not found: {args.input}")
             return 1
-        
+
         try:
             if input_path.suffix.lower() != ".json":
                 raise ConfigurationError("validate currently supports JSON ontology files only")
@@ -569,7 +528,7 @@ Examples:
                 print(f"\n📄 Report saved to: {output_path}")
 
             # Generate TDFOL formulas if requested
-            if hasattr(args, 'tdfol_output') and args.tdfol_output:
+            if hasattr(args, "tdfol_output") and args.tdfol_output:
                 try:
                     tdfol_path = _safe_resolve(args.tdfol_output)
                     formulas = validator.ontology_to_tdfol(ontology)
@@ -582,8 +541,17 @@ Examples:
                     }
                     with open(tdfol_path, "w") as f:
                         json.dump(tdfol_report, f, indent=2)
-                    print(f"📐 TDFOL formulas saved to: {tdfol_path} ({len(formula_strings)} formulas)")
-                except (ConfigurationError, OSError, ValueError, TypeError, RuntimeError, AttributeError) as e:
+                    print(
+                        f"📐 TDFOL formulas saved to: {tdfol_path} ({len(formula_strings)} formulas)"
+                    )
+                except (
+                    ConfigurationError,
+                    OSError,
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    AttributeError,
+                ) as e:
                     print(f"⚠️  Failed to generate TDFOL formulas: {self._safe_error_text(e)}")
 
             # Exit code: 0 only if consistency check passed when run.
@@ -591,10 +559,17 @@ Examples:
                 return 0 if report["checks"]["consistency"]["is_consistent"] else 2
             return 0
 
-        except (ConfigurationError, OSError, ValueError, TypeError, RuntimeError, json.JSONDecodeError, KeyError) as e:
+        except (
+            ConfigurationError,
+            OSError,
+            ValueError,
+            TypeError,
+            RuntimeError,
+            json.JSONDecodeError,
+            KeyError,
+        ) as e:
             print(f"❌ Error: {self._safe_error_text(e)}")
             return 1
-    
 
     def cmd_query(self, args: argparse.Namespace) -> int:
         """Optimize query.
@@ -633,7 +608,9 @@ Examples:
                     # Best-effort: not all JSON files are ontology dicts.
                     graph_info = {}
 
-            from ipfs_datasets_py.optimizers.graphrag.query_optimizer import UnifiedGraphRAGQueryOptimizer
+            from ipfs_datasets_py.optimizers.graphrag.query_optimizer import (
+                UnifiedGraphRAGQueryOptimizer,
+            )
 
             optimizer = UnifiedGraphRAGQueryOptimizer(graph_info=graph_info, metrics_dir=None)
 
@@ -648,7 +625,9 @@ Examples:
             if args.optimize:
                 print("⏳ Optimizing query plan...")
 
-            plan = optimizer.optimize_query(query=query_dict, priority="normal", graph_processor=None)
+            plan = optimizer.optimize_query(
+                query=query_dict, priority="normal", graph_processor=None
+            )
 
             if args.optimize:
                 print("✅ Query plan optimized")
@@ -657,15 +636,21 @@ Examples:
                 if isinstance(budget, dict):
                     print(
                         "   Budget(ms):",
-                        f"vector={budget.get('vector_search_ms','?')}",
-                        f"graph={budget.get('graph_traversal_ms','?')}",
-                        f"rank={budget.get('ranking_ms','?')}"
+                        f"vector={budget.get('vector_search_ms', '?')}",
+                        f"graph={budget.get('graph_traversal_ms', '?')}",
+                        f"rank={budget.get('ranking_ms', '?')}",
                     )
 
             execution_plan: Optional[Dict[str, Any]] = None
             if args.explain:
-                execution_plan = optimizer.get_execution_plan(query_dict, priority="normal", graph_processor=None)
-                steps = execution_plan.get("execution_steps", []) if isinstance(execution_plan, dict) else []
+                execution_plan = optimizer.get_execution_plan(
+                    query_dict, priority="normal", graph_processor=None
+                )
+                steps = (
+                    execution_plan.get("execution_steps", [])
+                    if isinstance(execution_plan, dict)
+                    else []
+                )
 
                 print()
                 print("📋 Query execution plan:")
@@ -709,17 +694,17 @@ Examples:
 
     def cmd_status(self, args: argparse.Namespace) -> int:
         """Show status.
-        
+
         Args:
             args: Command arguments
-            
+
         Returns:
             Exit code
         """
         print("📊 GraphRAG Optimizer Status\n")
         print("Version: 0.1.0")
         print("Status: ✓ Available\n")
-        
+
         print("Capabilities:")
         print("  ✓ Ontology generation from multiple sources")
         print("  ✓ Knowledge graph optimization")
@@ -727,19 +712,19 @@ Examples:
         print("  ✓ RAG query optimization")
         print("  ✓ Wikipedia integration")
         print("  ✓ SGD-based improvement cycles\n")
-        
+
         print("Supported formats:")
         print("  • OWL (Web Ontology Language)")
         print("  • RDF (Resource Description Framework)")
         print("  • JSON (JSON-LD)")
         print("  • PDF document processing")
         print("  • Wikipedia data\n")
-        
+
         print("Extraction strategies:")
         print("  • Rule-based (fast, deterministic)")
         print("  • Neural (AI-powered, flexible)")
         print("  • Hybrid (best of both)\n")
-        
+
         return 0
 
     def cmd_health(self, args: argparse.Namespace) -> int:
@@ -811,39 +796,39 @@ Examples:
         ) as e:
             print(f"❌ Error: {self._safe_error_text(e)}")
             return 1
-    
+
     def run(self, args: Optional[List[str]] = None) -> int:
         """Run CLI.
-        
+
         Args:
             args: Command-line arguments
-            
+
         Returns:
             Exit code
         """
         parser = self.create_parser()
         parsed_args = parser.parse_args(args)
-        
+
         try:
             # Route to appropriate command
-            if parsed_args.command == 'generate':
+            if parsed_args.command == "generate":
                 return self.cmd_generate(parsed_args)
-            elif parsed_args.command == 'optimize':
+            elif parsed_args.command == "optimize":
                 return self.cmd_optimize(parsed_args)
-            elif parsed_args.command == 'validate':
+            elif parsed_args.command == "validate":
                 return self.cmd_validate(parsed_args)
-            elif parsed_args.command == 'query':
+            elif parsed_args.command == "query":
                 return self.cmd_query(parsed_args)
-            elif parsed_args.command == 'status':
+            elif parsed_args.command == "status":
                 return self.cmd_status(parsed_args)
-            elif parsed_args.command == 'health':
+            elif parsed_args.command == "health":
                 return self.cmd_health(parsed_args)
-            elif parsed_args.command == 'interactive':
+            elif parsed_args.command == "interactive":
                 return self.cmd_interactive(parsed_args)
             else:
                 parser.print_help()
                 return 1
-                
+
         except KeyboardInterrupt:
             print("\n\nInterrupted by user")
             return 130
@@ -862,10 +847,10 @@ Examples:
 
 def main(args: Optional[List[str]] = None) -> int:
     """Main entry point.
-    
+
     Args:
         args: Command-line arguments
-        
+
     Returns:
         Exit code
     """
@@ -873,5 +858,5 @@ def main(args: Optional[List[str]] = None) -> int:
     return cli.run(args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

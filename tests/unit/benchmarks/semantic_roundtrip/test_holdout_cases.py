@@ -42,12 +42,8 @@ FROZEN_HOLDOUT_CASE_IDS = (
 )
 
 # Byte-exact freeze of tests/fixtures/semantic_roundtrip/holdout_cases.json
-FROZEN_FIXTURE_SHA256 = (
-    "4a00c6f18345a58fa7fbfda9bd5b692f5a11739e270373ac2bfa3e20272fb92d"
-)
-FROZEN_FIXTURE_CID = (
-    "bafkreickaddpda2fuwh2p675vg6vw2jpliixhhrhanz2yk72hyqcol5zfu"
-)
+FROZEN_FIXTURE_SHA256 = "4a00c6f18345a58fa7fbfda9bd5b692f5a11739e270373ac2bfa3e20272fb92d"
+FROZEN_FIXTURE_CID = "bafkreickaddpda2fuwh2p675vg6vw2jpliixhhrhanz2yk72hyqcol5zfu"
 
 REQUIRED_CASE_KEYS = frozenset(
     {
@@ -140,9 +136,7 @@ def test_cases_load_through_matrix_contracts() -> None:
         assert isinstance(case, MatrixCase)
         assert not case.gold_ir.is_empty
         case.gold_ir.validate_vocabulary(case.allowed_atom_vocabulary)
-        assert case.case_cid.startswith("baguqeera") or case.case_cid.startswith(
-            "bafk"
-        )
+        assert case.case_cid.startswith("baguqeera") or case.case_cid.startswith("bafk")
         assert case.gold_ir_cid
         assert case.source_text_cid
 

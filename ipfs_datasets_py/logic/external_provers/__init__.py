@@ -20,7 +20,7 @@ Usage:
     >>> from ipfs_datasets_py.logic.external_provers import Z3ProverBridge
     >>> prover = Z3ProverBridge()
     >>> result = prover.prove(formula)
-    
+
     >>> from ipfs_datasets_py.logic.external_provers import ProverRouter
     >>> router = ProverRouter(enable_z3=True, enable_cvc5=True)
     >>> result = router.prove(formula, strategy='auto')
@@ -93,7 +93,11 @@ except ImportError:
 
 # Try to import neural provers (require LLM access)
 try:
-    from .neural.symbolicai_prover_bridge import SymbolicAIProverBridge, SYMBOLICAI_AVAILABLE, NeuralProofResult
+    from .neural.symbolicai_prover_bridge import (
+        SymbolicAIProverBridge,
+        SYMBOLICAI_AVAILABLE,
+        NeuralProofResult,
+    )
 except ImportError:
     SymbolicAIProverBridge = None
     SYMBOLICAI_AVAILABLE = False
@@ -107,12 +111,7 @@ except ImportError:
 
 # Formula analyzer
 try:
-    from .formula_analyzer import (
-        FormulaAnalyzer,
-        FormulaAnalysis,
-        FormulaType,
-        FormulaComplexity
-    )
+    from .formula_analyzer import FormulaAnalyzer, FormulaAnalysis, FormulaType, FormulaComplexity
 except ImportError:
     FormulaAnalyzer = None
     FormulaAnalysis = None
@@ -122,7 +121,7 @@ except ImportError:
 
 def get_available_provers() -> List[str]:
     """Get list of available external provers.
-    
+
     Returns:
         List of prover names that are available on this system.
     """
@@ -142,10 +141,10 @@ def get_available_provers() -> List[str]:
 
 def check_prover_availability(prover_name: str) -> bool:
     """Check if a specific prover is available.
-    
+
     Args:
         prover_name: Name of the prover ("Z3", "CVC5", "Lean", "Coq", "SymbolicAI")
-        
+
     Returns:
         True if the prover is available, False otherwise.
     """

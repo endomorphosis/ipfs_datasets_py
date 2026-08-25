@@ -147,18 +147,18 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
         phrases.append(_fixed_phrase("to", "recipient_connector"))
         phrases.append(_phrase(recipient, "recipient", norm))
     elif recipient:
-        phrases.append(
-            _provenance_phrase(recipient, "recipient", _slot_spans(norm, "recipient"))
-        )
+        phrases.append(_provenance_phrase(recipient, "recipient", _slot_spans(norm, "recipient")))
 
     rendered_conditions = 0
     for condition in norm.conditions:
         condition_text = _condition_phrase_text(condition)
         if condition_text:
-            phrases.append(_fixed_phrase(
-                _condition_connector(condition, rendered_conditions),
-                "condition_connector",
-            ))
+            phrases.append(
+                _fixed_phrase(
+                    _condition_connector(condition, rendered_conditions),
+                    "condition_connector",
+                )
+            )
             phrases.append(_detail_phrase(condition_text, "conditions", condition, norm))
             rendered_conditions += 1
 
@@ -193,10 +193,12 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
     for exception in norm.exceptions:
         exception_text = _exception_phrase_text(exception)
         if exception_text:
-            phrases.append(_fixed_phrase(
-                _exception_connector(exception, exception_text, rendered_exceptions),
-                "exception_connector",
-            ))
+            phrases.append(
+                _fixed_phrase(
+                    _exception_connector(exception, exception_text, rendered_exceptions),
+                    "exception_connector",
+                )
+            )
             phrases.append(_detail_phrase(exception_text, "exceptions", exception, norm))
             rendered_exceptions += 1
 
@@ -226,10 +228,12 @@ def _decode_definition(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List[str
     for condition in norm.conditions:
         condition_text = _condition_phrase_text(condition)
         if condition_text:
-            phrases.append(_fixed_phrase(
-                _condition_connector(condition, rendered_conditions),
-                "condition_connector",
-            ))
+            phrases.append(
+                _fixed_phrase(
+                    _condition_connector(condition, rendered_conditions),
+                    "condition_connector",
+                )
+            )
             phrases.append(_detail_phrase(condition_text, "conditions", condition, norm))
             rendered_conditions += 1
 
@@ -331,7 +335,9 @@ def _penalty_sanction_text(norm: LegalNormIR) -> str:
 
     minimum = penalty.get("minimum_amount")
     maximum = penalty.get("maximum_amount")
-    classification = _clean_text(str(penalty.get("classification") or penalty.get("sanction_class") or ""))
+    classification = _clean_text(
+        str(penalty.get("classification") or penalty.get("sanction_class") or "")
+    )
     recurrence = penalty.get("recurrence")
     recurrence_text = _slot_text(recurrence) if isinstance(recurrence, Mapping) else ""
 
@@ -531,9 +537,7 @@ def _append_cross_reference_provenance(
 def _cross_reference_records(norm: LegalNormIR) -> List[Mapping[str, Any]]:
     records: List[Mapping[str, Any]] = []
     seen: set[tuple[tuple[int, int], ...]] = set()
-    for reference in list(norm.cross_references or []) + list(
-        norm.resolved_cross_references or []
-    ):
+    for reference in list(norm.cross_references or []) + list(norm.resolved_cross_references or []):
         if not isinstance(reference, Mapping):
             continue
         text = _reference_text(reference)
@@ -578,9 +582,7 @@ def _condition_phrase_text(record: Mapping[str, Any]) -> str:
 
 
 def _condition_connector(record: Mapping[str, Any], rendered_count: int) -> str:
-    clause_type = str(
-        record.get("clause_type") or record.get("type") or ""
-    ).strip().lower()
+    clause_type = str(record.get("clause_type") or record.get("type") or "").strip().lower()
     connector = {
         "if": "if",
         "when": "when",
@@ -602,9 +604,7 @@ def _exception_connector(
     exception_text: str,
     rendered_count: int,
 ) -> str:
-    clause_type = str(
-        record.get("clause_type") or record.get("type") or ""
-    ).strip().lower()
+    clause_type = str(record.get("clause_type") or record.get("type") or "").strip().lower()
     lowered = str(exception_text or "").strip().lower()
     connector = (
         "except"
@@ -633,7 +633,9 @@ def _temporal_phrase_text(record: Mapping[str, Any]) -> str:
     ):
         return raw_text
     lowered = value.lower()
-    if lowered.startswith(("within ", "by ", "before ", "after ", "not later than ", "no later than ")):
+    if lowered.startswith(
+        ("within ", "by ", "before ", "after ", "not later than ", "no later than ")
+    ):
         return value
     if re.search(r"\b\d+\b", value) or " after " in lowered or " before " in lowered:
         return f"within {value}"
@@ -747,12 +749,14 @@ def _procedure_event_phrase(connector: str, trigger: str, anchor: str) -> str:
 
 
 def _procedure_trigger_takes_direct_object(trigger: str) -> bool:
-    return bool(re.search(
-        r"\b(?:consultation with|service on|notice to|delivery to|transmission to|"
-        r"filing with|submission to|payment to)\b$",
-        str(trigger or "").strip(),
-        re.IGNORECASE,
-    ))
+    return bool(
+        re.search(
+            r"\b(?:consultation with|service on|notice to|delivery to|transmission to|"
+            r"filing with|submission to|payment to)\b$",
+            str(trigger or "").strip(),
+            re.IGNORECASE,
+        )
+    )
 
 
 def _procedure_event_connector(
@@ -864,9 +868,7 @@ def _coerce_span(value: Any) -> List[int]:
 
 def _sentence_from_phrases(phrases: Iterable[DecodedPhrase]) -> str:
     text = " ".join(
-        phrase.text
-        for phrase in phrases
-        if phrase.text and not phrase.provenance_only
+        phrase.text for phrase in phrases if phrase.text and not phrase.provenance_only
     ).strip()
     text = re.sub(r"\s+", " ", text)
     text = re.sub(r"\s+([,.;:])", r"\1", text)
@@ -878,7 +880,12 @@ def _sentence_from_phrases(phrases: Iterable[DecodedPhrase]) -> str:
 
 
 def _action_without_leading_modal(action: str) -> str:
-    return re.sub(r"^(?:shall not|must not|may not|shall|must|may)\s+", "", action.strip(), flags=re.IGNORECASE)
+    return re.sub(
+        r"^(?:shall not|must not|may not|shall|must|may)\s+",
+        "",
+        action.strip(),
+        flags=re.IGNORECASE,
+    )
 
 
 def _action_without_leading_mental_state(action: str, mental_state: str) -> str:

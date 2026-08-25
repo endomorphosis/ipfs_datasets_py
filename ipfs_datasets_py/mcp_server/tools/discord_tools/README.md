@@ -15,7 +15,9 @@ MCP tools for exporting, listing, converting, and analysing Discord chat data.
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.discord_tools import (
-    discord_export_channel, discord_convert, discord_analyze_messages
+    discord_export_channel,
+    discord_convert,
+    discord_analyze_messages,
 )
 
 # Export a channel
@@ -23,20 +25,20 @@ export = await discord_export_channel(
     token="YOUR_DISCORD_TOKEN",
     channel_id="123456789",
     output_path="/data/discord_export.json",
-    date_after="2024-01-01"
+    date_after="2024-01-01",
 )
 
 # Convert to Parquet
 await discord_convert(
     input_path="/data/discord_export.json",
     output_path="/data/discord_export.parquet",
-    output_format="parquet"
+    output_format="parquet",
 )
 
 # Analyse message activity
 analysis = await discord_analyze_messages(
     input_path="/data/discord_export.json",
-    metrics=["volume_per_day", "top_users", "keyword_frequency"]
+    metrics=["volume_per_day", "top_users", "keyword_frequency"],
 )
 ```
 

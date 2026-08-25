@@ -15,7 +15,9 @@ from multiformats import CID, multihash
 
 def canonical_dag_json(value: Any) -> bytes:
     """Encode a value with the Profile D canonical DAG-JSON byte contract."""
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode(
+        "utf-8"
+    )
 
 
 def dag_json_cid(value: Any) -> str:

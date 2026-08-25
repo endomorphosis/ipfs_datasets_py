@@ -1,0 +1,85 @@
+{
+  "schema": "ipfs_datasets_py/state-laws-publication-authorization@1",
+  "schema_version": "state-laws-publication-policy-v1",
+  "task_id": "LCR-008",
+  "goal_id": "LCR-G010",
+  "program_id": "legal-corpora-reindex-v1",
+  "producer": "state_laws_publication_policy.py",
+  "fixture_id": "state-laws-publication-authorization-v1",
+  "notes": "Sealed 2026-08-10 operator authorization for additive updates of justicedao/ipfs_state_laws only. Live mutation is refused until exact-51 coverage, final manifest authorization, staging canary, and secret-redaction checks all pass. Credentials are environment-only and never enter argv, plans, receipts, or Git.",
+  "status": "recorded",
+  "recorded_on": "2026-08-10",
+  "dataset_repo_id": "justicedao/ipfs_state_laws",
+  "authorized_dataset_repo_ids": [
+    "justicedao/ipfs_state_laws"
+  ],
+  "authorized_operations": [
+    "additive_main_upload",
+    "additive_staging_upload"
+  ],
+  "previous_public_pin": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
+  "release_mode": "additive",
+  "credentials_environment_only": true,
+  "credentials_scope": "dataset:write:justicedao/ipfs_state_laws",
+  "secret_redaction_required": true,
+  "staging_first_required": true,
+  "exact_51_coverage_required": true,
+  "final_manifest_authorization_required": true,
+  "staging_canary_required": true,
+  "immutable_redownload_required": true,
+  "rollback_pin_must_be_preserved": true,
+  "deletion_allowed": false,
+  "force_push_allowed": false,
+  "history_rewrite_allowed": false,
+  "visibility_change_allowed": false,
+  "alternate_dataset_targets_allowed": false,
+  "required_gates": [
+    "exact_51_coverage",
+    "final_manifest_authorization",
+    "staging_canary",
+    "secret_redaction"
+  ],
+  "default_staging_branch": "stage/state-laws-sparse-graphrag-v2",
+  "jurisdiction_contract": {
+    "required_count": 51,
+    "required_codes": [
+      "AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL",
+      "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA",
+      "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE",
+      "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI",
+      "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV",
+      "WY"
+    ],
+    "extra_codes_allowed": false,
+    "subset_rejection_required": true
+  },
+  "live_publication": {
+    "staging_target_must_be_explicit": true,
+    "staging_redownload_canary_required": true,
+    "staging_and_main_manifest_identity_required": true,
+    "public_immutable_redownload_canary_required": true,
+    "rollback_rehearsal_required": true,
+    "previous_public_pin_must_be_preserved": true,
+    "legacy_artifact_deletion_allowed": false
+  },
+  "credential_policy": {
+    "environment_only": true,
+    "secret_env_names": [
+      "HF_TOKEN",
+      "HUGGING_FACE_HUB_TOKEN",
+      "HUGGINGFACE_TOKEN",
+      "HUGGINGFACE_HUB_TOKEN",
+      "STATE_LAWS_HF_TOKEN",
+      "STATE_LAWS_PUBLICATION_AUTHORIZATION"
+    ],
+    "argv_secrets_forbidden": true,
+    "receipt_secrets_forbidden": true,
+    "missing_credentials_park_publication_only": true
+  },
+  "payload": {
+    "authorization_source": "2026-08-10 operator request",
+    "mutation_requires_authorization": true,
+    "credentials_environment_only": true,
+    "secret_redacted": true
+  }
+}

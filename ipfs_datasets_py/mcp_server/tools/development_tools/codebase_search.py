@@ -23,21 +23,25 @@ from .codebase_search_engine import (  # noqa: F401 — re-export for compat
 )
 
 logger = logging.getLogger(__name__)
+
+
 # MCP tool wrapper function
-def codebase_search(pattern: str,
-                   path: str = ".",
-                   case_insensitive: bool = False,
-                   whole_word: bool = False,
-                   regex: bool = False,
-                   extensions: Optional[str] = None,
-                   exclude: Optional[str] = None,
-                   max_depth: Optional[int] = None,
-                   context: int = 0,
-                   format: str = "text",
-                   output: Optional[str] = None,
-                   compact: bool = False,
-                   group_by_file: bool = False,
-                   summary: bool = False) -> Union[str, Dict[str, Any]]:
+def codebase_search(
+    pattern: str,
+    path: str = ".",
+    case_insensitive: bool = False,
+    whole_word: bool = False,
+    regex: bool = False,
+    extensions: Optional[str] = None,
+    exclude: Optional[str] = None,
+    max_depth: Optional[int] = None,
+    context: int = 0,
+    format: str = "text",
+    output: Optional[str] = None,
+    compact: bool = False,
+    group_by_file: bool = False,
+    summary: bool = False,
+) -> Union[str, Dict[str, Any]]:
     """
     Search codebase for patterns with structured output.
 
@@ -77,7 +81,7 @@ def codebase_search(pattern: str,
             extensions=extensions,
             exclude=exclude,
             max_depth=max_depth,
-            context=context
+            context=context,
         )
 
         # Return standardized format for MCP tools when format is json and no output file
@@ -89,19 +93,17 @@ def codebase_search(pattern: str,
                     "tool": "codebase_search",
                     "total_matches": results.summary.total_matches,
                     "files_searched": results.summary.total_files_searched,
-                    "search_time": results.summary.search_time_seconds
-                }
+                    "search_time": results.summary.search_time_seconds,
+                },
             }
 
         # Format results as string
-        formatted_output = search_engine.format_results(
-            results, format, compact, group_by_file
-        )
+        formatted_output = search_engine.format_results(results, format, compact, group_by_file)
 
         # Write to file if specified
         if output:
             try:
-                with open(output, 'w', encoding='utf-8') as f:
+                with open(output, "w", encoding="utf-8") as f:
                     f.write(formatted_output)
                 return {
                     "success": True,
@@ -109,15 +111,15 @@ def codebase_search(pattern: str,
                     "metadata": {
                         "tool": "codebase_search",
                         "output_file": output,
-                        "total_matches": results.summary.total_matches
-                    }
+                        "total_matches": results.summary.total_matches,
+                    },
                 }
             except OSError as e:
                 return {
                     "success": False,
                     "error": "file_write_error",
                     "message": f"Error writing to file {output}: {e}",
-                    "metadata": {"tool": "codebase_search"}
+                    "metadata": {"tool": "codebase_search"},
                 }
 
         return formatted_output
@@ -127,6 +129,5 @@ def codebase_search(pattern: str,
             "success": False,
             "error": "search_error",
             "message": str(e),
-            "metadata": {"tool": "codebase_search"}
+            "metadata": {"tool": "codebase_search"},
         }
-

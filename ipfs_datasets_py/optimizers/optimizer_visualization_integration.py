@@ -15,10 +15,13 @@ from typing import Dict, List, Any, Optional, Union, Set, Callable
 # Import visualization components
 from ipfs_datasets_py.audit.audit_visualization import OptimizerLearningMetricsVisualizer
 from ipfs_datasets_py.optimizers.optimizer_learning_metrics import OptimizerLearningMetricsCollector
-from ipfs_datasets_py.optimizers.optimizer_learning_metrics_integration import MetricsCollectorAdapter
+from ipfs_datasets_py.optimizers.optimizer_learning_metrics_integration import (
+    MetricsCollectorAdapter,
+)
 
 # Setup logging
 logger = logging.getLogger(__name__)
+
 
 class LiveOptimizerVisualization:
     """
@@ -35,7 +38,7 @@ class LiveOptimizerVisualization:
         visualization_dir: Optional[str] = None,
         visualization_interval: int = 3600,  # 1 hour by default
         dashboard_filename: str = "rag_optimizer_dashboard.html",
-        metrics_source=None
+        metrics_source=None,
     ):
         """
         Initialize the live visualization integration.
@@ -57,7 +60,9 @@ class LiveOptimizerVisualization:
             os.makedirs(self.metrics_dir, exist_ok=True)
 
         # Set visualization directory
-        self.visualization_dir = visualization_dir or os.path.join(self.metrics_dir, "visualizations")
+        self.visualization_dir = visualization_dir or os.path.join(
+            self.metrics_dir, "visualizations"
+        )
         if not os.path.exists(self.visualization_dir):
             os.makedirs(self.visualization_dir, exist_ok=True)
 
@@ -71,7 +76,7 @@ class LiveOptimizerVisualization:
         # Create visualizer
         self.visualizer = OptimizerLearningMetricsVisualizer(
             metrics_collector=self.get_learning_metrics_collector(),
-            output_dir=self.visualization_dir
+            output_dir=self.visualization_dir,
         )
 
         # Setup auto-update thread for visualizations
@@ -94,28 +99,26 @@ class LiveOptimizerVisualization:
             return
 
         # Check if optimizer already has a metrics collector
-        if hasattr(self.optimizer, 'metrics_collector'):
+        if hasattr(self.optimizer, "metrics_collector"):
             existing_collector = self.optimizer.metrics_collector
 
             # If it's already an adapter, verify it has learning metrics
             if isinstance(existing_collector, MetricsCollectorAdapter):
                 # Ensure it has a learning metrics collector
                 if existing_collector.learning_metrics_collector is None:
-                    existing_collector.learning_metrics_collector = OptimizerLearningMetricsCollector(
-                        metrics_dir=self.metrics_dir
+                    existing_collector.learning_metrics_collector = (
+                        OptimizerLearningMetricsCollector(metrics_dir=self.metrics_dir)
                     )
             else:
                 # Wrap existing collector in an adapter
                 self.optimizer.metrics_collector = MetricsCollectorAdapter(
-                    query_metrics_collector=existing_collector,
-                    metrics_dir=self.metrics_dir
+                    query_metrics_collector=existing_collector, metrics_dir=self.metrics_dir
                 )
         else:
             # Create new metrics collector and adapter
             learning_metrics = OptimizerLearningMetricsCollector(metrics_dir=self.metrics_dir)
             self.optimizer.metrics_collector = MetricsCollectorAdapter(
-                learning_metrics_collector=learning_metrics,
-                metrics_dir=self.metrics_dir
+                learning_metrics_collector=learning_metrics, metrics_dir=self.metrics_dir
             )
 
     def get_learning_metrics_collector(self) -> OptimizerLearningMetricsCollector:
@@ -128,12 +131,14 @@ class LiveOptimizerVisualization:
         if self.optimizer is None:
             return self.standalone_metrics_collector
 
-        if hasattr(self.optimizer, 'metrics_collector'):
+        if hasattr(self.optimizer, "metrics_collector"):
             if isinstance(self.optimizer.metrics_collector, MetricsCollectorAdapter):
                 return self.optimizer.metrics_collector.learning_metrics_collector
 
         # If we got here, something is wrong with the setup
-        logger.warning("Metrics collector not properly configured in optimizer. Creating standalone instance.")
+        logger.warning(
+            "Metrics collector not properly configured in optimizer. Creating standalone instance."
+        )
         self.standalone_metrics_collector = OptimizerLearningMetricsCollector(
             metrics_dir=self.metrics_dir
         )
@@ -148,12 +153,11 @@ class LiveOptimizerVisualization:
             return
 
         self._stop_auto_update.clear()
-        self._auto_update_thread = threading.Thread(
-            target=self._auto_update_loop,
-            daemon=True
-        )
+        self._auto_update_thread = threading.Thread(target=self._auto_update_loop, daemon=True)
         self._auto_update_thread.start()
-        logger.info(f"Started auto-update thread with interval {self.visualization_interval} seconds")
+        logger.info(
+            f"Started auto-update thread with interval {self.visualization_interval} seconds"
+        )
 
     def stop_auto_update(self):
         """
@@ -211,39 +215,34 @@ class LiveOptimizerVisualization:
         # Generate static visualizations
         cycles_png = os.path.join(self.visualization_dir, f"learning_cycles_{timestamp}.png")
         cycles_result = self.visualizer.visualize_learning_cycles(
-            output_file=cycles_png,
-            interactive=False,
-            alert_markers=self.alert_markers
+            output_file=cycles_png, interactive=False, alert_markers=self.alert_markers
         )
         if cycles_result:
-            results['learning_cycles_static'] = cycles_png
+            results["learning_cycles_static"] = cycles_png
 
         params_png = os.path.join(self.visualization_dir, f"parameter_adaptations_{timestamp}.png")
         params_result = self.visualizer.visualize_parameter_adaptations(
-            output_file=params_png,
-            interactive=False,
-            alert_markers=self.alert_markers
+            output_file=params_png, interactive=False, alert_markers=self.alert_markers
         )
         if params_result:
-            results['parameter_adaptations_static'] = params_png
+            results["parameter_adaptations_static"] = params_png
 
-        strategy_png = os.path.join(self.visualization_dir, f"strategy_effectiveness_{timestamp}.png")
+        strategy_png = os.path.join(
+            self.visualization_dir, f"strategy_effectiveness_{timestamp}.png"
+        )
         strategy_result = self.visualizer.visualize_strategy_effectiveness(
-            output_file=strategy_png,
-            interactive=False,
-            alert_markers=self.alert_markers
+            output_file=strategy_png, interactive=False, alert_markers=self.alert_markers
         )
         if strategy_result:
-            results['strategy_effectiveness_static'] = strategy_png
+            results["strategy_effectiveness_static"] = strategy_png
 
         # Generate dashboard if requested
         if create_dashboard:
             dashboard_path = self.visualizer.generate_learning_metrics_dashboard(
-                output_file=self.dashboard_path,
-                alert_markers=self.alert_markers
+                output_file=self.dashboard_path, alert_markers=self.alert_markers
             )
             if dashboard_path:
-                results['dashboard'] = dashboard_path
+                results["dashboard"] = dashboard_path
 
         return results
 
@@ -256,11 +255,7 @@ class LiveOptimizerVisualization:
             alert_type (str): Type of alert (e.g., "oscillation", "performance")
             message (str): Alert message
         """
-        marker = {
-            "timestamp": timestamp,
-            "type": alert_type,
-            "message": message
-        }
+        marker = {"timestamp": timestamp, "type": alert_type, "message": message}
         self.alert_markers.append(marker)
         logger.info(f"Added alert marker: {alert_type} at {timestamp}: {message}")
 
@@ -290,26 +285,26 @@ class LiveOptimizerVisualization:
                 patterns_identified=2 + i + random.randint(0, 2),
                 parameters_adjusted={f"param{j}": float(j) for j in range(i % 3 + 1)},
                 execution_time=2.5 + i * 0.5 + random.random(),
-                timestamp=now - datetime.timedelta(days=num_cycles-i)
+                timestamp=now - datetime.timedelta(days=num_cycles - i),
             )
 
         # Generate sample parameter adaptations
-        param_names = ['max_depth', 'min_similarity', 'vector_weight', 'graph_weight', 'cache_ttl']
+        param_names = ["max_depth", "min_similarity", "vector_weight", "graph_weight", "cache_ttl"]
         for i in range(num_adaptations):
             param_idx = i % len(param_names)
             param_name = param_names[param_idx]
 
             # Create different adaptation patterns for different parameters
-            if param_name == 'max_depth':
+            if param_name == "max_depth":
                 old_value = 2 + (i // 4)
                 new_value = old_value + 1
-            elif param_name == 'min_similarity':
+            elif param_name == "min_similarity":
                 old_value = 0.5 + (i // 5) * 0.05
                 new_value = max(0.4, old_value - 0.05) if i % 2 == 0 else min(0.9, old_value + 0.05)
-            elif param_name == 'vector_weight':
+            elif param_name == "vector_weight":
                 old_value = 0.6
                 new_value = 0.7 if i % 4 == 0 else 0.6
-            elif param_name == 'graph_weight':
+            elif param_name == "graph_weight":
                 old_value = 0.4
                 new_value = 0.3 if i % 4 == 0 else 0.4
             else:  # cache_ttl
@@ -320,25 +315,25 @@ class LiveOptimizerVisualization:
                 parameter_name=param_name,
                 old_value=old_value,
                 new_value=new_value,
-                adaptation_reason=f"Performance tuning cycle {i//3}",
+                adaptation_reason=f"Performance tuning cycle {i // 3}",
                 confidence=0.8 + random.random() * 0.2,
-                timestamp=now - datetime.timedelta(days=num_adaptations//2-i//2)
+                timestamp=now - datetime.timedelta(days=num_adaptations // 2 - i // 2),
             )
 
         # Generate sample strategy effectiveness data
-        strategies = ['vector_first', 'graph_first', 'balanced']
-        query_types = ['factual', 'complex', 'exploratory']
+        strategies = ["vector_first", "graph_first", "balanced"]
+        query_types = ["factual", "complex", "exploratory"]
 
         for i in range(num_strategies):
             strategy = strategies[i % len(strategies)]
             query_type = query_types[(i // 3) % len(query_types)]
-            timestamp = now - datetime.timedelta(days=num_strategies//2-i//2)
+            timestamp = now - datetime.timedelta(days=num_strategies // 2 - i // 2)
 
             # Create different patterns for different strategies
-            if strategy == 'vector_first':
+            if strategy == "vector_first":
                 success_rate = 0.7 + min(0.25, (i / 40))
                 mean_latency = 2.0 - min(1.0, (i / 30))
-            elif strategy == 'graph_first':
+            elif strategy == "graph_first":
                 success_rate = 0.6 + min(0.35, (i / 30))
                 mean_latency = 2.5 - min(1.2, (i / 25))
             else:  # balanced
@@ -346,10 +341,10 @@ class LiveOptimizerVisualization:
                 mean_latency = 1.8 - min(0.7, (i / 35))
 
             # Adjust by query type
-            if query_type == 'factual':
+            if query_type == "factual":
                 success_rate = min(0.95, success_rate + 0.1)
                 mean_latency = max(0.5, mean_latency - 0.5)
-            elif query_type == 'complex':
+            elif query_type == "complex":
                 success_rate = max(0.6, success_rate - 0.1)
                 mean_latency = mean_latency + 0.8
 
@@ -359,10 +354,12 @@ class LiveOptimizerVisualization:
                 effectiveness_score=success_rate,
                 execution_time=mean_latency,
                 result_count=10 + i,
-                timestamp=timestamp
+                timestamp=timestamp,
             )
 
-        logger.info(f"Injected sample data: {num_cycles} cycles, {num_adaptations} adaptations, {num_strategies} strategy records")
+        logger.info(
+            f"Injected sample data: {num_cycles} cycles, {num_adaptations} adaptations, {num_strategies} strategy records"
+        )
 
 
 # Convenience function to create and setup visualization for an optimizer
@@ -372,7 +369,7 @@ def setup_optimizer_visualization(
     visualization_dir=None,
     auto_update=True,
     visualization_interval=3600,
-    dashboard_filename="rag_optimizer_dashboard.html"
+    dashboard_filename="rag_optimizer_dashboard.html",
 ) -> LiveOptimizerVisualization:
     """
     Set up live visualization for a RAG query optimizer.
@@ -393,7 +390,7 @@ def setup_optimizer_visualization(
         metrics_dir=metrics_dir,
         visualization_dir=visualization_dir,
         visualization_interval=visualization_interval,
-        dashboard_filename=dashboard_filename
+        dashboard_filename=dashboard_filename,
     )
 
     if auto_update:

@@ -121,9 +121,9 @@ def fix_import_paths():
     """Fix all invalid import paths."""
     fixes = [
         (
-            Path('tests/file.py'),
-            r'old_import_pattern',
-            'corrected_import_pattern',
+            Path("tests/file.py"),
+            r"old_import_pattern",
+            "corrected_import_pattern",
         ),
         # ... more fixes
     ]
@@ -133,25 +133,25 @@ def fix_import_paths():
 ### Results Data Structure
 ```python
 {
-    'valid_imports': [
+    "valid_imports": [
         {
-            'file': 'tests/test_file.py',
-            'line': 42,
-            'import': 'from x import y',
-            'message': 'Valid import path'
+            "file": "tests/test_file.py",
+            "line": 42,
+            "import": "from x import y",
+            "message": "Valid import path",
         }
     ],
-    'invalid_imports': [
+    "invalid_imports": [
         {
-            'file': 'tests/test_file.py',
-            'line': 50,
-            'import': 'from x import invalid',
-            'message': 'Tool not found...',
-            'suggested_fix': 'corrected import'
+            "file": "tests/test_file.py",
+            "line": 50,
+            "import": "from x import invalid",
+            "message": "Tool not found...",
+            "suggested_fix": "corrected import",
         }
     ],
-    'files_processed': 562,
-    'total_imports': 1208
+    "files_processed": 562,
+    "total_imports": 1208,
 }
 ```
 
@@ -175,7 +175,7 @@ This script directly supports the MCP Tools Test Coverage TODO by:
 ```python
 # Gracefully handles unreadable files
 try:
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
 except Exception as e:
     self.warnings.append(f"Could not read {file_path}: {e}")

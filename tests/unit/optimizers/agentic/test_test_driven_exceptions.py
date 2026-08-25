@@ -94,7 +94,9 @@ def test_generate_tests_passes_optimization_method(optimizer, task):
     result = optimizer._generate_tests(task, analysis={})
 
     assert result["success"] is True
-    assert optimizer.llm_router.generate.call_args.kwargs["method"] == OptimizationMethod.TEST_DRIVEN
+    assert (
+        optimizer.llm_router.generate.call_args.kwargs["method"] == OptimizationMethod.TEST_DRIVEN
+    )
 
 
 def test_generate_tests_skips_llm_for_symbol_scoped_task(optimizer, tmp_path):
@@ -188,9 +190,7 @@ def test_generate_optimizations_keeps_raw_preview_for_symbol_indentation_error(t
 
     target = tmp_path / "generic_module.py"
     target.write_text(
-        "class Example:\n"
-        "    def target_method(self):\n"
-        "        return 'original'\n",
+        "class Example:\n    def target_method(self):\n        return 'original'\n",
         encoding="utf-8",
     )
     task = OptimizationTask(
@@ -293,7 +293,9 @@ def test_generate_optimizations_falls_back_when_session_injection_policy_json_is
         task_id="task-session-fallback",
         target_files=[target],
         description="Optimize session injection policy",
-        constraints={"target_symbols": {str(target.resolve()): ["_inject_intake_prompt_questions"]}},
+        constraints={
+            "target_symbols": {str(target.resolve()): ["_inject_intake_prompt_questions"]}
+        },
     )
 
     result = optimizer._generate_optimizations(task, analysis={}, baseline={})
@@ -304,7 +306,9 @@ def test_generate_optimizations_falls_back_when_session_injection_policy_json_is
     ast.parse(updated)
 
 
-def test_generate_optimizations_falls_back_when_complainant_guidance_policy_json_is_invalid(tmp_path):
+def test_generate_optimizations_falls_back_when_complainant_guidance_policy_json_is_invalid(
+    tmp_path,
+):
     router = Mock()
     router.generate.return_value = "not valid json"
     optimizer = TestDrivenOptimizer(agent_id="td-complainant-guidance-fallback", llm_router=router)
@@ -354,7 +358,9 @@ def test_generate_optimizations_falls_back_when_complainant_guidance_policy_json
     ast.parse(updated)
 
 
-def test_generate_optimizations_falls_back_when_merge_seed_with_grounding_policy_json_is_invalid(tmp_path):
+def test_generate_optimizations_falls_back_when_merge_seed_with_grounding_policy_json_is_invalid(
+    tmp_path,
+):
     router = Mock()
     router.generate.return_value = "not valid json"
     optimizer = TestDrivenOptimizer(agent_id="td-merge-seed-fallback", llm_router=router)
@@ -379,7 +385,7 @@ def test_generate_optimizations_falls_back_when_merge_seed_with_grounding_policy
         "    anchor_passages = [dict(item) for item in list(key_facts.get('anchor_passages') or []) if isinstance(item, dict)]\n"
         "    for passage in anchor_passages[:4]:\n"
         "        pass\n"
-        "    for evidence in [dict(item) for item in list(merged.get(\"hacc_evidence\") or []) if isinstance(item, dict)][:6]:\n"
+        '    for evidence in [dict(item) for item in list(merged.get("hacc_evidence") or []) if isinstance(item, dict)][:6]:\n'
         "        pass\n"
         "    blocker_handoff_raw_answers = []\n"
         "    for answer in blocker_handoff_raw_answers[:8]:\n"
@@ -401,7 +407,7 @@ def test_generate_optimizations_falls_back_when_merge_seed_with_grounding_policy
     updated = result[str(target)]
 
     assert "anchor_passages[:5]" in updated
-    assert "hacc_evidence\") or []) if isinstance(item, dict)][:8]" in updated
+    assert 'hacc_evidence") or []) if isinstance(item, dict)][:8]' in updated
     assert "blocker_handoff_raw_answers[:6]" in updated
     assert "prioritized[:3]" in updated
     ast.parse(updated)
@@ -436,7 +442,9 @@ def test_generate_optimizations_falls_back_when_inquiries_policy_json_is_invalid
         task_id="task-inquiries-fallback",
         target_files=[target],
         description="Optimize inquiries policy",
-        constraints={"target_symbols": {str(target.resolve()): ["get_next", "merge_legal_questions"]}},
+        constraints={
+            "target_symbols": {str(target.resolve()): ["get_next", "merge_legal_questions"]}
+        },
     )
 
     result = optimizer._generate_optimizations(task, analysis={}, baseline={})
@@ -476,7 +484,9 @@ def test_replace_symbols_in_source_preserves_tab_indentation(tmp_path):
         task_id="task-tabs",
         target_files=[target],
         description="Optimize inquiries policy",
-        constraints={"target_symbols": {str(target.resolve()): ["get_next", "merge_legal_questions"]}},
+        constraints={
+            "target_symbols": {str(target.resolve()): ["get_next", "merge_legal_questions"]}
+        },
     )
 
     result = optimizer._generate_optimizations(task, analysis={}, baseline={})
@@ -516,7 +526,10 @@ def test_optimize_failed_result_includes_generation_diagnostics(optimizer, task,
 
     assert result.success is False
     assert "No changes found in worktree" in (result.error_message or "")
-    assert result.metadata["generation_diagnostics"][0]["error_message"] == "codex exec timed out after 60s"
+    assert (
+        result.metadata["generation_diagnostics"][0]["error_message"]
+        == "codex exec timed out after 60s"
+    )
 
 
 def test_generate_optimizations_can_patch_target_symbols(tmp_path):
@@ -698,7 +711,10 @@ def test_answer_policy_renderer_preserves_process_answer_contract():
     assert "'relationships_added': 0" in rendered
     assert "'requirements_satisfied': 0" in rendered
     assert "req_node.satisfied = True" in rendered
-    assert "self._update_responsible_parties_from_answer(answer_text, knowledge_graph, updates)" in rendered
+    assert (
+        "self._update_responsible_parties_from_answer(answer_text, knowledge_graph, updates)"
+        in rendered
+    )
     assert "_apply_timeline_enrichment()" in rendered
     ast.parse(rendered)
 
@@ -787,7 +803,7 @@ def test_knowledge_graph_build_policy_renderer_preserves_return_contract():
     assert "graph.metadata['source_text_char_count'] = len(normalized_text)" in rendered
     assert "graph.metadata['build_status'] = 'empty_input'" in rendered
     assert "graph.metadata['extracted_entity_candidates'] = len(entities)" in rendered
-    assert "graph.metadata[\"actor_critic\"] = {" in rendered
+    assert 'graph.metadata["actor_critic"] = {' in rendered
     assert "self._built_graphs.append(graph)" in rendered
     ast.parse(rendered)
 
@@ -821,7 +837,7 @@ def test_merge_seed_with_grounding_policy_transform_preserves_function_shape():
         "    for passage in anchor_passages[:4]:\n"
         "        pass\n"
         "    merged = {}\n"
-        "    for evidence in [dict(item) for item in list(merged.get(\"hacc_evidence\") or []) if isinstance(item, dict)][:6]:\n"
+        '    for evidence in [dict(item) for item in list(merged.get("hacc_evidence") or []) if isinstance(item, dict)][:6]:\n'
         "        pass\n"
         "    blocker_handoff_raw_answers = []\n"
         "    for answer in blocker_handoff_raw_answers[:8]:\n"
@@ -863,7 +879,7 @@ def test_formal_document_render_policy_transform_preserves_function_shape():
         "    for exhibit in exhibits:\n"
         "        pass\n"
         "    affidavit = {}\n"
-        "    for index, fact in enumerate(_listify(affidavit.get(\"facts\")), 1):\n"
+        '    for index, fact in enumerate(_listify(affidavit.get("facts")), 1):\n'
         "        pass\n"
         "    return ''\n"
     )
@@ -881,7 +897,7 @@ def test_formal_document_render_policy_transform_preserves_function_shape():
     assert "chronology_lines[:4]" in rendered
     assert "supporting_facts[:3]" in rendered
     assert "exhibits[:6]" in rendered
-    assert "affidavit.get(\"facts\"))[:5]" in rendered
+    assert 'affidavit.get("facts"))[:5]' in rendered
     ast.parse(rendered)
 
 
@@ -896,7 +912,10 @@ def test_standard_intake_policy_renderer_preserves_method_contract():
         }
     )
 
-    assert "def _ensure_standard_intake_questions(self, questions: List[Dict[str, Any]], max_questions: int) -> List[Dict[str, Any]]:" in rendered
+    assert (
+        "def _ensure_standard_intake_questions(self, questions: List[Dict[str, Any]], max_questions: int) -> List[Dict[str, Any]]:"
+        in rendered
+    )
     assert "if len(questions) >= max_questions:" in rendered
     assert "self._already_asked(timeline_text)" in rendered
     assert "self._already_asked(impact_text)" in rendered
@@ -1288,7 +1307,7 @@ def test_generate_optimizations_can_use_knowledge_graph_build_policy_mode(tmp_pa
     assert "normalized_text = ' '.join(source_text.split())" in updated
     assert "graph.metadata['source_text_char_count'] = len(normalized_text)" in updated
     assert "graph.metadata['extracted_entity_candidates'] = len(entities)" in updated
-    assert "graph.metadata[\"actor_critic\"] = {" in updated
+    assert 'graph.metadata["actor_critic"] = {' in updated
     ast.parse(updated)
 
 
@@ -1300,7 +1319,9 @@ def test_generate_optimizations_can_use_formal_document_render_policy_mode(tmp_p
   "exhibit_limit": 6,
   "affidavit_fact_limit": 5
 }"""
-    optimizer = TestDrivenOptimizer(agent_id="td-formal-document-render-generate", llm_router=router)
+    optimizer = TestDrivenOptimizer(
+        agent_id="td-formal-document-render-generate", llm_router=router
+    )
 
     target = tmp_path / "formal_document.py"
     target.write_text(
@@ -1333,7 +1354,7 @@ def test_generate_optimizations_can_use_formal_document_render_policy_mode(tmp_p
         "        for exhibit in exhibits:\n"
         "            lines.append(str(exhibit))\n"
         "        affidavit = draft.get('affidavit', {}) if isinstance(draft.get('affidavit'), dict) else {}\n"
-        "        for index, fact in enumerate(_listify(affidavit.get(\"facts\")), 1):\n"
+        '        for index, fact in enumerate(_listify(affidavit.get("facts")), 1):\n'
         "            lines.append(f'{index}. {_clean_sentence(fact)}')\n"
         "        lines.extend(self._signature_block_lines({}))\n"
         "        return '\\n'.join(line for line in lines if line is not None)\n",
@@ -1356,5 +1377,5 @@ def test_generate_optimizations_can_use_formal_document_render_policy_mode(tmp_p
     assert "enumerate(chronology_lines[:4], 1)" in updated
     assert "for fact in supporting_facts[:3]:" in updated
     assert "for exhibit in exhibits[:6]:" in updated
-    assert "_listify(affidavit.get(\"facts\"))[:5]" in updated
+    assert '_listify(affidavit.get("facts"))[:5]' in updated
     ast.parse(updated)

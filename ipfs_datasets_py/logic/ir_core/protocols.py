@@ -155,9 +155,7 @@ def _unique(values: Any, field_name: str) -> tuple[str, ...]:
     try:
         normalized = tuple(_text(value, field_name) for value in values)
     except TypeError as exc:
-        raise ProtocolValidationError(
-            f"{field_name} must be a sequence of strings"
-        ) from exc
+        raise ProtocolValidationError(f"{field_name} must be a sequence of strings") from exc
     if len(normalized) != len(set(normalized)):
         raise ProtocolValidationError(f"{field_name} values must be unique")
     return normalized
@@ -177,14 +175,10 @@ def _mapping(value: Any, field_name: str) -> dict[str, Any]:
     return dict(value)
 
 
-def _reject_unknown(
-    value: dict[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: dict[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise ProtocolValidationError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise ProtocolValidationError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _payload_digest(payload: FrozenMap) -> str:
@@ -228,9 +222,7 @@ class ExecutionBounds:
         payload = _mapping(value, "execution bounds")
         _reject_unknown(
             payload,
-            frozenset(
-                {"timeout_ms", "max_steps", "max_memory_bytes", "max_output_bytes"}
-            ),
+            frozenset({"timeout_ms", "max_steps", "max_memory_bytes", "max_output_bytes"}),
             "execution bounds",
         )
         return cls(**payload)
@@ -292,9 +284,7 @@ class BackendCapabilities:
     schema_version: str = BACKEND_CAPABILITIES_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "logic_families", _unique(self.logic_families, "logic_family")
-        )
+        object.__setattr__(self, "logic_families", _unique(self.logic_families, "logic_family"))
         if not self.logic_families:
             raise ProtocolValidationError("logic_families must not be empty")
         try:
@@ -306,9 +296,7 @@ class BackendCapabilities:
         object.__setattr__(self, "query_kinds", query_kinds)
         if not isinstance(self.deterministic, bool):
             raise ProtocolValidationError("deterministic must be a boolean")
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != BACKEND_CAPABILITIES_SCHEMA_VERSION:
             raise ProtocolValidationError(
                 f"unsupported backend capabilities schema version: {self.schema_version}"
@@ -330,18 +318,14 @@ class BackendCapabilities:
         payload = _mapping(value, "backend capabilities")
         _reject_unknown(
             payload,
-            frozenset(
-                {"logic_families", "query_kinds", "deterministic", "schema_version"}
-            ),
+            frozenset({"logic_families", "query_kinds", "deterministic", "schema_version"}),
             "backend capabilities",
         )
         return cls(
             logic_families=tuple(payload.get("logic_families", ())),
             query_kinds=tuple(payload.get("query_kinds", ())),
             deterministic=payload.get("deterministic", False),
-            schema_version=payload.get(
-                "schema_version", BACKEND_CAPABILITIES_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", BACKEND_CAPABILITIES_SCHEMA_VERSION),
         )
 
 
@@ -366,21 +350,15 @@ class BackendRequest:
     def __post_init__(self) -> None:
         object.__setattr__(self, "request_id", _text(self.request_id, "request_id"))
         object.__setattr__(self, "claim_id", _text(self.claim_id, "claim_id"))
-        object.__setattr__(
-            self, "declaration_id", _text(self.declaration_id, "declaration_id")
-        )
+        object.__setattr__(self, "declaration_id", _text(self.declaration_id, "declaration_id"))
         object.__setattr__(self, "claim_digest", _digest(self.claim_digest, "claim_digest"))
-        object.__setattr__(
-            self, "obligation_id", _text(self.obligation_id, "obligation_id")
-        )
+        object.__setattr__(self, "obligation_id", _text(self.obligation_id, "obligation_id"))
         object.__setattr__(
             self,
             "obligation_digest",
             _digest(self.obligation_digest, "obligation_digest"),
         )
-        object.__setattr__(
-            self, "assumption_ids", _unique(self.assumption_ids, "assumption_id")
-        )
+        object.__setattr__(self, "assumption_ids", _unique(self.assumption_ids, "assumption_id"))
         object.__setattr__(self, "logic_family", _text(self.logic_family, "logic_family"))
         object.__setattr__(self, "query_kind", _enum(self.query_kind, QueryKind, "query_kind"))
         if not isinstance(self.bounds, ExecutionBounds):
@@ -395,9 +373,7 @@ class BackendRequest:
             "requested_backend_id",
             _optional_text(self.requested_backend_id, "requested_backend_id"),
         )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != BACKEND_REQUEST_SCHEMA_VERSION:
             raise ProtocolValidationError(
                 f"unsupported backend request schema version: {self.schema_version}"
@@ -518,13 +494,9 @@ class BackendAttempt:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "attempt_id", _text(self.attempt_id, "attempt_id"))
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
         object.__setattr__(self, "backend_id", _text(self.backend_id, "backend_id"))
-        object.__setattr__(
-            self, "backend_version", _text(self.backend_version, "backend_version")
-        )
+        object.__setattr__(self, "backend_version", _text(self.backend_version, "backend_version"))
         object.__setattr__(self, "status", _enum(self.status, AttemptStatus, "status"))
         if not isinstance(self.bounds, ExecutionBounds):
             raise ProtocolValidationError("bounds must be an ExecutionBounds value")
@@ -542,12 +514,8 @@ class BackendAttempt:
         )
         if len(self.artifact_digests) != len(set(self.artifact_digests)):
             raise ProtocolValidationError("artifact digests must be unique")
-        object.__setattr__(
-            self, "diagnostics", _unique(self.diagnostics, "diagnostic")
-        )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "diagnostics", _unique(self.diagnostics, "diagnostic"))
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != BACKEND_ATTEMPT_SCHEMA_VERSION:
             raise ProtocolValidationError(
                 f"unsupported backend attempt schema version: {self.schema_version}"
@@ -555,8 +523,7 @@ class BackendAttempt:
         exceeded = self.usage.exceeds(self.bounds)
         if exceeded and self.status in {AttemptStatus.SUCCEEDED, AttemptStatus.UNAVAILABLE}:
             raise ProtocolValidationError(
-                "a successful/unavailable attempt cannot exceed bounds: "
-                + ", ".join(exceeded)
+                "a successful/unavailable attempt cannot exceed bounds: " + ", ".join(exceeded)
             )
         if self.status is AttemptStatus.SUCCEEDED and not self.output_digest:
             raise ProtocolValidationError("a successful attempt must bind an output_digest")
@@ -633,9 +600,7 @@ class ResultAuthority:
         object.__setattr__(self, "kind", _enum(self.kind, AuthorityKind, "kind"))
         object.__setattr__(self, "issuer", _text(self.issuer, "issuer"))
         object.__setattr__(self, "method", _text(self.method, "method"))
-        object.__setattr__(
-            self, "scope_digest", _digest(self.scope_digest, "scope_digest")
-        )
+        object.__setattr__(self, "scope_digest", _digest(self.scope_digest, "scope_digest"))
         object.__setattr__(
             self,
             "evidence_digests",
@@ -652,9 +617,7 @@ class ResultAuthority:
                 else ""
             ),
         )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != RESULT_AUTHORITY_SCHEMA_VERSION:
             raise ProtocolValidationError(
                 f"unsupported result authority schema version: {self.schema_version}"
@@ -740,31 +703,19 @@ class BoundedResult:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "result_id", _text(self.result_id, "result_id"))
-        object.__setattr__(
-            self, "request_digest", _digest(self.request_digest, "request_digest")
-        )
-        object.__setattr__(
-            self, "attempt_digest", _digest(self.attempt_digest, "attempt_digest")
-        )
+        object.__setattr__(self, "request_digest", _digest(self.request_digest, "request_digest"))
+        object.__setattr__(self, "attempt_digest", _digest(self.attempt_digest, "attempt_digest"))
         object.__setattr__(self, "claim_digest", _digest(self.claim_digest, "claim_digest"))
-        object.__setattr__(
-            self, "declaration_id", _text(self.declaration_id, "declaration_id")
-        )
-        object.__setattr__(
-            self, "obligation_id", _text(self.obligation_id, "obligation_id")
-        )
+        object.__setattr__(self, "declaration_id", _text(self.declaration_id, "declaration_id"))
+        object.__setattr__(self, "obligation_id", _text(self.obligation_id, "obligation_id"))
         object.__setattr__(
             self,
             "obligation_digest",
             _digest(self.obligation_digest, "obligation_digest"),
         )
         object.__setattr__(self, "backend_id", _text(self.backend_id, "backend_id"))
-        object.__setattr__(
-            self, "backend_version", _text(self.backend_version, "backend_version")
-        )
-        object.__setattr__(
-            self, "assumption_ids", _unique(self.assumption_ids, "assumption_id")
-        )
+        object.__setattr__(self, "backend_version", _text(self.backend_version, "backend_version"))
+        object.__setattr__(self, "assumption_ids", _unique(self.assumption_ids, "assumption_id"))
         if not isinstance(self.authority, ResultAuthority):
             raise ProtocolValidationError("authority must be a ResultAuthority value")
         object.__setattr__(self, "status", _enum(self.status, ResultStatus, "status"))
@@ -788,9 +739,7 @@ class BoundedResult:
             raise ProtocolValidationError(
                 "bounded result usage exceeds its declared bounds: " + ", ".join(exceeded)
             )
-        object.__setattr__(
-            self, "output_digest", _digest(self.output_digest, "output_digest")
-        )
+        object.__setattr__(self, "output_digest", _digest(self.output_digest, "output_digest"))
         object.__setattr__(
             self,
             "payload",
@@ -807,20 +756,14 @@ class BoundedResult:
         )
         if payload_size > self.bounds.max_output_bytes:
             raise ProtocolValidationError("result payload exceeds max_output_bytes")
-        object.__setattr__(
-            self, "diagnostics", _unique(self.diagnostics, "diagnostic")
-        )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "diagnostics", _unique(self.diagnostics, "diagnostic"))
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != BOUNDED_RESULT_SCHEMA_VERSION:
             raise ProtocolValidationError(
                 f"unsupported bounded result schema version: {self.schema_version}"
             )
         if self.authority.scope_digest != self.request_digest:
-            raise ProtocolValidationError(
-                "result authority scope_digest must equal request_digest"
-            )
+            raise ProtocolValidationError("result authority scope_digest must equal request_digest")
 
     @classmethod
     def for_attempt(
@@ -851,17 +794,13 @@ class BoundedResult:
             ResultStatus.UNKNOWN,
             ResultStatus.ERROR,
         }:
-            raise ProtocolValidationError(
-                "a non-successful attempt can produce only unknown/error"
-            )
+            raise ProtocolValidationError("a non-successful attempt can produce only unknown/error")
         frozen_payload = payload if isinstance(payload, FrozenMap) else FrozenMap(payload)
         effective_output_digest = output_digest or attempt.output_digest
         if not effective_output_digest:
             effective_output_digest = _payload_digest(frozen_payload)
         if attempt.output_digest and effective_output_digest != attempt.output_digest:
-            raise ProtocolValidationError(
-                "result output_digest differs from attempt output_digest"
-            )
+            raise ProtocolValidationError("result output_digest differs from attempt output_digest")
         return cls(
             result_id=result_id,
             request_digest=request.digest,
@@ -896,14 +835,10 @@ class BoundedResult:
 
     def require_theorem_proof(self) -> "ProofResult":
         if not isinstance(self, ProofResult):
-            raise AuthorityMismatchError(
-                f"{type(self).__name__} cannot be used as theorem proof"
-            )
+            raise AuthorityMismatchError(f"{type(self).__name__} cannot be used as theorem proof")
         self.authority.require(AuthorityKind.THEOREM_PROOF)
         if self.status is not ResultStatus.PROVED:
-            raise AuthorityMismatchError(
-                f"{self.status.value} is not an affirmative theorem proof"
-            )
+            raise AuthorityMismatchError(f"{self.status.value} is not an affirmative theorem proof")
         return self
 
     def to_dict(self) -> dict[str, Any]:
@@ -1077,8 +1012,7 @@ def _verify_result_bindings(
         result.authority.kind is request.query_kind.authority_kind,
         result.bounds == request.bounds == attempt.bounds,
         not attempt.output_digest or result.output_digest == attempt.output_digest,
-        not request.requested_backend_id
-        or attempt.backend_id == request.requested_backend_id,
+        not request.requested_backend_id or attempt.backend_id == request.requested_backend_id,
         attempt.status is AttemptStatus.SUCCEEDED
         or result.status in {ResultStatus.UNKNOWN, ResultStatus.ERROR},
     )
@@ -1133,16 +1067,12 @@ class ResultReceipt:
             "bounds_digest",
             "output_digest",
         ):
-            object.__setattr__(
-                self, field_name, _digest(getattr(self, field_name), field_name)
-            )
+            object.__setattr__(self, field_name, _digest(getattr(self, field_name), field_name))
         object.__setattr__(
             self, "authority_kind", _enum(self.authority_kind, AuthorityKind, "authority_kind")
         )
         object.__setattr__(self, "status", _enum(self.status, ResultStatus, "status"))
-        object.__setattr__(
-            self, "assumption_ids", _unique(self.assumption_ids, "assumption_id")
-        )
+        object.__setattr__(self, "assumption_ids", _unique(self.assumption_ids, "assumption_id"))
         if self.result_type not in _RESULT_CLASSES:
             raise ProtocolValidationError(f"unsupported receipt result_type: {self.result_type}")
         if self.status not in _AUTHORITY_STATUSES[self.authority_kind]:
@@ -1150,16 +1080,11 @@ class ResultReceipt:
                 f"{self.status.value} is not valid for {self.authority_kind.value} authority"
             )
         expected_authority = _RESULT_CLASSES[self.result_type].expected_authority
-        if (
-            expected_authority is not None
-            and self.authority_kind is not expected_authority
-        ):
+        if expected_authority is not None and self.authority_kind is not expected_authority:
             raise AuthorityMismatchError(
                 f"{self.result_type} receipt cannot carry {self.authority_kind.value} authority"
             )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != RESULT_RECEIPT_SCHEMA_VERSION:
             raise ProtocolValidationError(
                 f"unsupported result receipt schema version: {self.schema_version}"
@@ -1323,22 +1248,16 @@ class ProofReceipt:
             "bounds_digest",
             "output_digest",
         ):
-            object.__setattr__(
-                self, field_name, _digest(getattr(self, field_name), field_name)
-            )
+            object.__setattr__(self, field_name, _digest(getattr(self, field_name), field_name))
         object.__setattr__(
             self,
             "proof_authority",
             _enum(self.proof_authority, AuthorityKind, "proof_authority"),
         )
         object.__setattr__(self, "status", _enum(self.status, ResultStatus, "status"))
-        object.__setattr__(
-            self, "assumption_ids", _unique(self.assumption_ids, "assumption_id")
-        )
+        object.__setattr__(self, "assumption_ids", _unique(self.assumption_ids, "assumption_id"))
         if self.result_type != ProofResult.result_type:
-            raise AuthorityMismatchError(
-                f"{self.result_type} cannot label a theorem proof receipt"
-            )
+            raise AuthorityMismatchError(f"{self.result_type} cannot label a theorem proof receipt")
         if self.proof_authority is not AuthorityKind.THEOREM_PROOF:
             raise AuthorityMismatchError(
                 f"{self.proof_authority.value} cannot label a theorem proof receipt"
@@ -1347,9 +1266,7 @@ class ProofReceipt:
             raise AuthorityMismatchError(
                 f"{self.status.value} cannot label an affirmative theorem proof receipt"
             )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != PROOF_RECEIPT_SCHEMA_VERSION:
             raise ProtocolValidationError(
                 f"unsupported proof receipt schema version: {self.schema_version}"

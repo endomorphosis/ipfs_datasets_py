@@ -138,15 +138,15 @@ Given a verdict bucket and the raw trace text:
 @dataclass
 class NormalizedEvidence:
     schema_version: str
-    evidence_id: str                     # == content_digest
+    evidence_id: str  # == content_digest
     request_id: str
     attempt_id: str
     candidate_id: Optional[str]
-    kind: str                            # an EvidenceKind value
-    format: str                          # "tstp" | "smtlib" | "unknown" | <unsupported format>
+    kind: str  # an EvidenceKind value
+    format: str  # "tstp" | "smtlib" | "unknown" | <unsupported format>
     verdict: SolverVerdict
-    premise_ids: List[str]               # verbatim caller input
-    translation_ids: List[str]           # verbatim caller input
+    premise_ids: List[str]  # verbatim caller input
+    translation_ids: List[str]  # verbatim caller input
     translation_map_refs: List[TranslationMapEntry]
     proof_steps: List[ProofStep]
     unsat_core: Optional[NormalizedUnsatCore]
@@ -252,30 +252,52 @@ this module maps to `EvidenceKind.MALFORMED`.
 
 ```python
 def normalize_solver_evidence(
-    *, request_id: str, attempt: SolverAttemptRecord,
+    *,
+    request_id: str,
+    attempt: SolverAttemptRecord,
     evidence: Optional[SolverAttemptEvidence] = None,
-    raw_stdout: str = "", raw_stderr: str = "",
-    premise_ids: Sequence[str] = (), translation_ids: Optional[Sequence[str]] = None,
-    translation_map: Optional[TranslationMap] = None, candidate_id: Optional[str] = None,
+    raw_stdout: str = "",
+    raw_stderr: str = "",
+    premise_ids: Sequence[str] = (),
+    translation_ids: Optional[Sequence[str]] = None,
+    translation_map: Optional[TranslationMap] = None,
+    candidate_id: Optional[str] = None,
 ) -> NormalizedEvidence: ...
+
 
 def normalize_certificate(
-    *, request_id: str, attempt_id: str, verdict: SolverVerdict,
-    certificate: Optional[str], certificate_format: Optional[str],
-    premise_ids: Sequence[str] = (), translation_ids: Sequence[str] = (),
-    translation_map: Optional[TranslationMap] = None, candidate_id: Optional[str] = None,
+    *,
+    request_id: str,
+    attempt_id: str,
+    verdict: SolverVerdict,
+    certificate: Optional[str],
+    certificate_format: Optional[str],
+    premise_ids: Sequence[str] = (),
+    translation_ids: Sequence[str] = (),
+    translation_map: Optional[TranslationMap] = None,
+    candidate_id: Optional[str] = None,
 ) -> NormalizedEvidence: ...
 
+
 def normalize_portfolio_run(
-    run_result: PortfolioRunResult, *, request_id: Optional[str] = None,
-    premise_ids: Sequence[str] = (), translation_map: Optional[TranslationMap] = None,
+    run_result: PortfolioRunResult,
+    *,
+    request_id: Optional[str] = None,
+    premise_ids: Sequence[str] = (),
+    translation_map: Optional[TranslationMap] = None,
 ) -> Dict[str, NormalizedEvidence]: ...
 
+
 def build_proof_candidate_record(
-    normalized: NormalizedEvidence, *, candidate_id: str, request_id: str,
-    solver_attempt_id: str, certificate: Optional[str] = None,
+    normalized: NormalizedEvidence,
+    *,
+    candidate_id: str,
+    request_id: str,
+    solver_attempt_id: str,
+    certificate: Optional[str] = None,
     certificate_format: Optional[str] = None,
 ) -> ProofCandidateRecord: ...
+
 
 def aggregate_recommended_status(evidences: Iterable[NormalizedEvidence]) -> HammerResultStatus: ...
 ```

@@ -3,15 +3,15 @@
 This tool creates a Web ARChive (WARC) file from a specified URL
 using the WebArchiveProcessor from web_archive_utils.
 """
+
 import os
 from typing import Dict, Optional, Any
 
 from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchiveProcessor
 
+
 async def create_warc(
-    url: str,
-    output_path: Optional[str] = None,
-    options: Optional[Dict[str, Any]] = None
+    url: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Create a WARC file from a URL.
 
@@ -33,14 +33,15 @@ async def create_warc(
     try:
         # Convert single URL to list if needed
         urls = [url] if isinstance(url, str) else url
-        warc_data = processor.create_warc(urls, output_path or f"/tmp/archive_{url.replace('://', '_').replace('/', '_')}.warc", options)
+        warc_data = processor.create_warc(
+            urls,
+            output_path or f"/tmp/archive_{url.replace('://', '_').replace('/', '_')}.warc",
+            options,
+        )
         return {
             "status": "success",
             "warc_path": warc_data.get("output_file", output_path),
-            "details": warc_data
+            "details": warc_data,
         }
     except Exception as e:
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}

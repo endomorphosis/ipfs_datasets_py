@@ -122,11 +122,14 @@ Successfully completed all Week 0 tasks with 55 comprehensive tests across cache
 def create_simple_proof():
     """p, p→q, therefore q"""
 
+
 def create_complex_proof():
     """O(p), O(p)→O(q), therefore O(q)"""
 
+
 def create_large_kb(num_axioms=100):
     """Chain of reasoning with N axioms"""
+
 
 def measure_time(func, *args, **kwargs):
     """Precise timing measurement"""

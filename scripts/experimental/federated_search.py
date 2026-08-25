@@ -33,6 +33,7 @@ import hashlib
 # Conditional imports for optional dependencies
 try:
     import faiss
+
     FAISS_AVAILABLE = True
 except ImportError:
     FAISS_AVAILABLE = False
@@ -44,10 +45,12 @@ try:
 except ImportError:
     LIBP2P_AVAILABLE = False
 
+
 # Create a local type stub for stream annotations; runtime streams are supplied
 # by the MCP++ libp2p transport.
 class INetStream:
     pass
+
 
 # Import legacy distributed-dataset data models. Runtime P2P host creation is
 # handled by the MCP++ libp2p runtime in ipfs_accelerate_py.
@@ -57,10 +60,12 @@ from ipfs_datasets_py.p2p_networking.libp2p_kit_full import (
     ShardMetadata,
 )
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class SearchType(Enum):
     """Types of search supported by the federated search system."""
+
     VECTOR = "vector"
     KEYWORD = "keyword"
     HYBRID = "hybrid"
@@ -71,6 +76,7 @@ class SearchType(Enum):
 @dataclass
 class SearchQuery:
     """Represents a search query to be executed across the network."""
+
     dataset_id: str
     query_type: SearchType
     top_k: int = 10
@@ -107,6 +113,7 @@ class SearchQuery:
 @dataclass
 class SearchResult:
     """Represents a single search result."""
+
     id: str  # Unique identifier for the result
     dataset_id: str  # Dataset ID the result belongs to
     shard_id: str  # Shard ID the result was found in
@@ -123,6 +130,7 @@ class SearchResult:
 @dataclass
 class AggregatedSearchResults:
     """Represents search results aggregated from multiple nodes."""
+
     query: SearchQuery
     total_results: int = 0
     results: List[SearchResult] = field(default_factory=list)
@@ -137,6 +145,7 @@ class AggregatedSearchResults:
 
 class RankingStrategy(Enum):
     """Strategies for ranking and aggregating results from multiple nodes."""
+
     SCORE = "score"  # Rank by score alone
     SOURCE_WEIGHTED = "source_weighted"  # Weight by source node reliability
     ROUND_ROBIN = "round_robin"  # Take results from each node in turn
@@ -160,7 +169,7 @@ class FederatedSearch:
         use_cache: bool = True,
         cache_ttl_seconds: int = 300,  # 5 minutes
         max_cache_size: int = 100,
-        ranking_strategy: RankingStrategy = RankingStrategy.SCORE
+        ranking_strategy: RankingStrategy = RankingStrategy.SCORE,
     ):
         """
         Initialize the federated search engine.
@@ -177,8 +186,7 @@ class FederatedSearch:
         """
         if not LIBP2P_AVAILABLE:
             raise LibP2PNotAvailableError(
-                "LibP2P is required for federated search. "
-                "Install with: pip install py-libp2p"
+                "LibP2P is required for federated search. Install with: pip install py-libp2p"
             )
 
         self.node = node
@@ -195,7 +203,9 @@ class FederatedSearch:
         os.makedirs(os.path.join(self.storage_dir, "indices"), exist_ok=True)
 
         # Initialize caches
-        self.result_cache: Dict[str, Tuple[AggregatedSearchResults, float]] = {}  # {query_hash: (results, timestamp)}
+        self.result_cache: Dict[
+            str, Tuple[AggregatedSearchResults, float]
+        ] = {}  # {query_hash: (results, timestamp)}
 
         # Register protocol handlers
         self._setup_protocol_handlers()
@@ -206,21 +216,23 @@ class FederatedSearch:
             "cache_hits": 0,
             "total_execution_time_ms": 0,
             "nodes_queried": set(),
-            "errors": 0
+            "errors": 0,
         }
 
     def _setup_protocol_handlers(self):
         """Set up protocol handlers for federated search."""
-        if hasattr(self.node, 'register_protocol_handler'):
+        if hasattr(self.node, "register_protocol_handler"):
             # Register the federated search handler
             self.node.register_protocol_handler(
-                NetworkProtocol.FEDERATED_SEARCH, # TODO This doesn't exist!
-                self._handle_federated_search
+                NetworkProtocol.FEDERATED_SEARCH,  # TODO This doesn't exist!
+                self._handle_federated_search,
             )
         else:
-            logging.warning("Node does not support protocol handlers, search handling will not be available")
+            logging.warning(
+                "Node does not support protocol handlers, search handling will not be available"
+            )
 
-    async def _handle_federated_search(self, stream: 'INetStream'):
+    async def _handle_federated_search(self, stream: "INetStream"):
         """
         Handle incoming federated search requests.
 
@@ -241,7 +253,7 @@ class FederatedSearch:
                     dataset_id=query_dict.get("dataset_id", ""),
                     query_type=query_type,
                     top_k=query_dict.get("top_k", 10),
-                    timeout_ms=query_dict.get("timeout_ms", self.default_timeout_ms)
+                    timeout_ms=query_dict.get("timeout_ms", self.default_timeout_ms),
                 )
 
                 # Set type-specific parameters
@@ -279,13 +291,13 @@ class FederatedSearch:
                     "total_results": len(results),
                     "dataset_id": query.dataset_id,
                     "searched_shards": query.shard_routing_hint,  # Return which shards were searched
-                    "trace_id": query.trace_id
+                    "trace_id": query.trace_id,
                 }
             else:
                 # Unknown action
                 response = {
                     "status": "error",
-                    "message": f"Unknown action: {request.get('action')}"
+                    "message": f"Unknown action: {request.get('action')}",
                 }
 
             # Send response
@@ -298,7 +310,7 @@ class FederatedSearch:
                 error_response = {
                     "status": "error",
                     "message": str(e),
-                    "node_id": getattr(self.node, "node_id", "unknown")
+                    "node_id": getattr(self.node, "node_id", "unknown"),
                 }
                 await stream.write(json.dumps(error_response).encode())
             except:
@@ -318,21 +330,21 @@ class FederatedSearch:
             List[SearchResult]: Search results from local shards
         """
         # Access the shard manager to get relevant shards
-        if not hasattr(self.node, 'shard_manager'):
+        if not hasattr(self.node, "shard_manager"):
             logging.warning("Node does not have a shard manager, cannot search local shards")
             return []
 
         # Get shards for the dataset
         dataset_shards = [
-            shard for shard in self.node.shard_manager.shards.values()
+            shard
+            for shard in self.node.shard_manager.shards.values()
             if shard.dataset_id == query.dataset_id
         ]
 
         # Filter by shard routing hint if provided
         if query.shard_routing_hint:
             dataset_shards = [
-                shard for shard in dataset_shards
-                if shard.shard_id in query.shard_routing_hint
+                shard for shard in dataset_shards if shard.shard_id in query.shard_routing_hint
             ]
 
         # If no shards available, return empty results
@@ -345,9 +357,7 @@ class FederatedSearch:
         for shard in dataset_shards:
             # Get shard storage path
             shard_path = os.path.join(
-                self.node.shard_manager.storage_dir,
-                "shards",
-                f"{shard.shard_id}.{shard.format}"
+                self.node.shard_manager.storage_dir, "shards", f"{shard.shard_id}.{shard.format}"
             )
 
             # Check if the shard file exists
@@ -374,13 +384,10 @@ class FederatedSearch:
 
         # Sort results by score (descending) and limit to top_k
         results.sort(key=lambda x: x.score, reverse=True)
-        return results[:query.top_k]
+        return results[: query.top_k]
 
     async def _vector_search_shard(
-        self,
-        shard: ShardMetadata,
-        shard_path: str,
-        query: SearchQuery
+        self, shard: ShardMetadata, shard_path: str, query: SearchQuery
     ) -> List[SearchResult]:
         """
         Perform vector search on a shard.
@@ -399,9 +406,11 @@ class FederatedSearch:
             # Load the shard data
             if shard.format == "parquet":
                 import pyarrow.parquet as pq
+
                 shard_data = pq.read_table(shard_path)
             elif shard.format == "arrow":
                 import pyarrow as pa
+
                 with pa.memory_map(shard_path, "r") as source:
                     shard_data = pa.ipc.open_file(source).read_all()
             else:
@@ -410,7 +419,9 @@ class FederatedSearch:
 
             # Check if the vector field exists
             if query.vector_field not in shard_data.column_names:
-                logging.warning(f"Vector field '{query.vector_field}' not found in shard {shard.shard_id}")
+                logging.warning(
+                    f"Vector field '{query.vector_field}' not found in shard {shard.shard_id}"
+                )
                 return results
 
             # Extract vectors from the shard
@@ -432,7 +443,9 @@ class FederatedSearch:
             if query.distance_metric == "cosine":
                 # Normalize vectors for cosine similarity
                 vectors_norm = np.linalg.norm(vectors, axis=1, keepdims=True)
-                vectors_norm = np.where(vectors_norm == 0, 1e-10, vectors_norm)  # Avoid division by zero
+                vectors_norm = np.where(
+                    vectors_norm == 0, 1e-10, vectors_norm
+                )  # Avoid division by zero
                 normalized_vectors = vectors / vectors_norm
 
                 query_norm = np.linalg.norm(query_vector)
@@ -444,7 +457,7 @@ class FederatedSearch:
                 distances = 1 - similarities
             elif query.distance_metric == "l2":
                 # Compute Euclidean (L2) distances
-                distances = np.sqrt(np.sum((vectors - query_vector)**2, axis=1))
+                distances = np.sqrt(np.sum((vectors - query_vector) ** 2, axis=1))
                 similarities = 1 / (1 + distances)  # Convert to similarity score
             elif query.distance_metric == "dot":
                 # Compute dot product
@@ -466,7 +479,7 @@ class FederatedSearch:
             sorted_indices = valid_indices[np.argsort(-similarities[valid_indices])]
 
             # Get top_k results
-            top_indices = sorted_indices[:query.top_k]
+            top_indices = sorted_indices[: query.top_k]
 
             # Create result objects
             for i, idx in enumerate(top_indices):
@@ -503,7 +516,7 @@ class FederatedSearch:
                     node_id=self.node.node_id,
                     metadata=metadata,
                     vector=result_vector,
-                    source_rank=i
+                    source_rank=i,
                 )
 
                 results.append(result)
@@ -514,10 +527,7 @@ class FederatedSearch:
         return results
 
     async def _keyword_search_shard(
-        self,
-        shard: ShardMetadata,
-        shard_path: str,
-        query: SearchQuery
+        self, shard: ShardMetadata, shard_path: str, query: SearchQuery
     ) -> List[SearchResult]:
         """
         Perform keyword search on a shard.
@@ -536,9 +546,11 @@ class FederatedSearch:
             # Load the shard data
             if shard.format == "parquet":
                 import pyarrow.parquet as pq
+
                 shard_data = pq.read_table(shard_path)
             elif shard.format == "arrow":
                 import pyarrow as pa
+
                 with pa.memory_map(shard_path, "r") as source:
                     shard_data = pa.ipc.open_file(source).read_all()
             else:
@@ -547,13 +559,19 @@ class FederatedSearch:
 
             # Convert to pandas DataFrame for easier text search
             import pandas as pd
+
             df = shard_data.to_pandas()
 
             # Determine which fields to search
-            search_fields = query.fields if query.fields else [
-                col for col in df.columns
-                if df[col].dtype == 'object'  # String columns
-            ]
+            search_fields = (
+                query.fields
+                if query.fields
+                else [
+                    col
+                    for col in df.columns
+                    if df[col].dtype == "object"  # String columns
+                ]
+            )
 
             # Filter out fields that don't exist
             search_fields = [field for field in search_fields if field in df.columns]
@@ -594,7 +612,7 @@ class FederatedSearch:
                 match_scores = np.where(valid_mask, match_scores, 0)
 
             # Sort by score and get top results
-            top_indices = np.argsort(-match_scores)[:query.top_k]
+            top_indices = np.argsort(-match_scores)[: query.top_k]
 
             # Create result objects
             for i, idx in enumerate(top_indices):
@@ -625,7 +643,7 @@ class FederatedSearch:
                     metadata=metadata,
                     source_rank=i,
                     matched_terms=matched_terms_list[idx],
-                    matched_fields=list(matched_fields_list[idx])
+                    matched_fields=list(matched_fields_list[idx]),
                 )
 
                 results.append(result)
@@ -636,10 +654,7 @@ class FederatedSearch:
         return results
 
     async def _hybrid_search_shard(
-        self,
-        shard: ShardMetadata,
-        shard_path: str,
-        query: SearchQuery
+        self, shard: ShardMetadata, shard_path: str, query: SearchQuery
     ) -> List[SearchResult]:
         """
         Perform hybrid search (vector + keyword) on a shard.
@@ -661,7 +676,7 @@ class FederatedSearch:
             distance_metric=query.distance_metric,
             min_similarity=0.0,  # No minimum similarity for hybrid
             vector_field=query.vector_field,
-            include_metadata=query.include_metadata
+            include_metadata=query.include_metadata,
         )
 
         keyword_query = SearchQuery(
@@ -671,7 +686,7 @@ class FederatedSearch:
             query_text=query.query_text,
             fields=query.fields,
             operator=query.operator,
-            include_metadata=query.include_metadata
+            include_metadata=query.include_metadata,
         )
 
         # Execute both searches
@@ -709,13 +724,10 @@ class FederatedSearch:
         results.sort(key=lambda x: x.score, reverse=True)
 
         # Return top_k results
-        return results[:query.top_k]
+        return results[: query.top_k]
 
     async def _filter_search_shard(
-        self,
-        shard: ShardMetadata,
-        shard_path: str,
-        query: SearchQuery
+        self, shard: ShardMetadata, shard_path: str, query: SearchQuery
     ) -> List[SearchResult]:
         """
         Perform filter-based search on a shard.
@@ -735,9 +747,11 @@ class FederatedSearch:
             match shard.format:
                 case "parquet":
                     import pyarrow.parquet as pq
+
                     shard_data = pq.read_table(shard_path)
                 case "arrow":
                     import pyarrow as pa
+
                     with pa.memory_map(shard_path, "r") as source:
                         shard_data = pa.ipc.open_file(source).read_all()
                 case _:
@@ -746,6 +760,7 @@ class FederatedSearch:
 
             # Convert to pandas DataFrame for filtering
             import pandas as pd
+
             df = shard_data.to_pandas()
 
             # No filters provided, return all rows
@@ -770,12 +785,12 @@ class FederatedSearch:
                         score=1.0,
                         node_id=self.node.node_id,
                         metadata=metadata,
-                        source_rank=i
+                        source_rank=i,
                     )
 
                     results.append(result)
 
-                return results[:query.top_k]
+                return results[: query.top_k]
 
             # Apply each filter
             mask = pd.Series([True] * len(df))
@@ -836,7 +851,7 @@ class FederatedSearch:
                     score=1.0,
                     node_id=self.node.node_id,
                     metadata=metadata,
-                    source_rank=i
+                    source_rank=i,
                 )
 
                 results.append(result)
@@ -911,7 +926,7 @@ class FederatedSearch:
         if len(self.result_cache) > self.max_cache_size:
             # Remove oldest items
             sorted_items = sorted(self.result_cache.items(), key=lambda x: x[1][1])
-            items_to_remove = sorted_items[:len(self.result_cache) // 4]  # Remove 25%
+            items_to_remove = sorted_items[: len(self.result_cache) // 4]  # Remove 25%
             for key, _ in items_to_remove:
                 del self.result_cache[key]
 
@@ -938,14 +953,11 @@ class FederatedSearch:
         trace_info = {"search_started": start_time, "query": asdict(query)}
 
         # Initialize empty results
-        aggregated_results = AggregatedSearchResults(
-            query=query,
-            trace_info=trace_info
-        )
+        aggregated_results = AggregatedSearchResults(query=query, trace_info=trace_info)
 
         try:
             # Get dataset metadata
-            if not hasattr(self.node, 'shard_manager'):
+            if not hasattr(self.node, "shard_manager"):
                 raise ValueError("Node does not have a shard manager")
 
             if query.dataset_id not in self.node.shard_manager.datasets:
@@ -955,8 +967,7 @@ class FederatedSearch:
 
             # Find all shards for this dataset
             dataset_info = await self.node.shard_manager.find_dataset_shards(
-                dataset_id=query.dataset_id,
-                include_metadata=True
+                dataset_id=query.dataset_id, include_metadata=True
             )
 
             # Get all nodes with shards
@@ -980,20 +991,20 @@ class FederatedSearch:
 
             # Add local shard IDs
             local_shard_ids = [
-                shard.shard_id for shard in self.node.shard_manager.shards.values()
+                shard.shard_id
+                for shard in self.node.shard_manager.shards.values()
                 if shard.dataset_id == query.dataset_id
             ]
             aggregated_results.shards_searched.extend(local_shard_ids)
 
             # Query remote nodes
-            remote_nodes = [node_id for node_id in nodes_with_shards if node_id != self.node.node_id]
+            remote_nodes = [
+                node_id for node_id in nodes_with_shards if node_id != self.node.node_id
+            ]
 
             # Search remote nodes if present
             if remote_nodes:
-                remote_results = await self._search_remote_nodes(
-                    query=query,
-                    node_ids=remote_nodes
-                )
+                remote_results = await self._search_remote_nodes(query=query, node_ids=remote_nodes)
 
                 # Add remote results
                 for node_results in remote_results:
@@ -1012,12 +1023,14 @@ class FederatedSearch:
 
                         # Add searched shards
                         if "searched_shards" in node_results and node_results["searched_shards"]:
-                            aggregated_results.shards_searched.extend(node_results["searched_shards"])
+                            aggregated_results.shards_searched.extend(
+                                node_results["searched_shards"]
+                            )
                     else:
                         # Add error info
                         error = {
                             "node_id": node_results.get("node_id", "unknown"),
-                            "message": node_results.get("message", "Unknown error")
+                            "message": node_results.get("message", "Unknown error"),
                         }
                         aggregated_results.errors.append(error)
 
@@ -1028,9 +1041,7 @@ class FederatedSearch:
 
             # Rank and limit results
             aggregated_results.results = self._rank_results(
-                aggregated_results.results,
-                query.top_k,
-                self.ranking_strategy
+                aggregated_results.results, query.top_k, self.ranking_strategy
             )
 
         except Exception as e:
@@ -1073,10 +1084,7 @@ class FederatedSearch:
             List[Dict[str, Any]]: Results from each node
         """
         # Prepare search request
-        search_request = {
-            "action": "search",
-            "query": asdict(query)
-        }
+        search_request = {"action": "search", "query": asdict(query)}
 
         # Create tasks for each node
         tasks = []
@@ -1106,10 +1114,14 @@ class FederatedSearch:
 
         if cancel_scope.cancelled_caught:
             logging.warning(f"Search timed out after {timeout} seconds")
-            results = [{"status": "error", "message": f"Timeout after {timeout} seconds"}] * len(tasks)
+            results = [{"status": "error", "message": f"Timeout after {timeout} seconds"}] * len(
+                tasks
+            )
         else:
             results = [
-                result if result is not None else RuntimeError("Search task completed without a result")
+                result
+                if result is not None
+                else RuntimeError("Search task completed without a result")
                 for result in results
             ]
 
@@ -1120,11 +1132,9 @@ class FederatedSearch:
 
             if isinstance(result, Exception):
                 # Handle exceptions
-                processed_results.append({
-                    "status": "error",
-                    "node_id": node_id,
-                    "message": str(result)
-                })
+                processed_results.append(
+                    {"status": "error", "node_id": node_id, "message": str(result)}
+                )
             elif isinstance(result, dict):
                 # Add node_id if not present
                 if "node_id" not in result:
@@ -1132,11 +1142,13 @@ class FederatedSearch:
                 processed_results.append(result)
             else:
                 # Unexpected result type
-                processed_results.append({
-                    "status": "error",
-                    "node_id": node_id,
-                    "message": f"Unexpected result type: {type(result)}"
-                })
+                processed_results.append(
+                    {
+                        "status": "error",
+                        "node_id": node_id,
+                        "message": f"Unexpected result type: {type(result)}",
+                    }
+                )
 
         return processed_results
 
@@ -1154,24 +1166,15 @@ class FederatedSearch:
         try:
             # Send message to the node
             response = await self.node.send_message(
-                peer_id=node_id,
-                protocol=NetworkProtocol.FEDERATED_SEARCH,
-                data=request
+                peer_id=node_id, protocol=NetworkProtocol.FEDERATED_SEARCH, data=request
             )
             return response
         except Exception as e:
             # Return error response
-            return {
-                "status": "error",
-                "node_id": node_id,
-                "message": str(e)
-            }
+            return {"status": "error", "node_id": node_id, "message": str(e)}
 
     def _rank_results(
-        self,
-        results: List[SearchResult],
-        top_k: int,
-        strategy: RankingStrategy
+        self, results: List[SearchResult], top_k: int, strategy: RankingStrategy
     ) -> List[SearchResult]:
         """
         Rank and limit the search results.
@@ -1280,7 +1283,7 @@ class FederatedSearch:
         distance_metric: str = "cosine",
         min_similarity: float = 0.0,
         timeout_ms: int = 5000,
-        include_metadata: bool = True
+        include_metadata: bool = True,
     ) -> AggregatedSearchResults:
         """
         Perform a federated vector search.
@@ -1306,7 +1309,7 @@ class FederatedSearch:
             vector=query_vector,
             distance_metric=distance_metric,
             min_similarity=min_similarity,
-            include_metadata=include_metadata
+            include_metadata=include_metadata,
         )
 
         # Execute the search
@@ -1320,7 +1323,7 @@ class FederatedSearch:
         top_k: int = 10,
         operator: str = "and",
         timeout_ms: int = 5000,
-        include_metadata: bool = True
+        include_metadata: bool = True,
     ) -> AggregatedSearchResults:
         """
         Perform a federated keyword search.
@@ -1346,7 +1349,7 @@ class FederatedSearch:
             query_text=query_text,
             fields=fields,
             operator=operator,
-            include_metadata=include_metadata
+            include_metadata=include_metadata,
         )
 
         # Execute the search
@@ -1362,7 +1365,7 @@ class FederatedSearch:
         vector_weight: float = 0.5,
         text_weight: float = 0.5,
         timeout_ms: int = 5000,
-        include_metadata: bool = True
+        include_metadata: bool = True,
     ) -> AggregatedSearchResults:
         """
         Perform a federated hybrid search (vector + keyword).
@@ -1392,7 +1395,7 @@ class FederatedSearch:
             fields=fields,
             vector_weight=vector_weight,
             text_weight=text_weight,
-            include_metadata=include_metadata
+            include_metadata=include_metadata,
         )
 
         # Execute the search
@@ -1404,7 +1407,7 @@ class FederatedSearch:
         filters: List[Dict[str, Any]],
         top_k: int = 10,
         timeout_ms: int = 5000,
-        include_metadata: bool = True
+        include_metadata: bool = True,
     ) -> AggregatedSearchResults:
         """
         Perform a federated filter search.
@@ -1426,7 +1429,7 @@ class FederatedSearch:
             top_k=top_k,
             timeout_ms=timeout_ms,
             filters=filters,
-            include_metadata=include_metadata
+            include_metadata=include_metadata,
         )
 
         # Execute the search
@@ -1443,7 +1446,9 @@ class FederatedSearch:
 
         # Calculate derived statistics
         if stats["total_queries"] > 0:
-            stats["avg_execution_time_ms"] = stats["total_execution_time_ms"] / stats["total_queries"]
+            stats["avg_execution_time_ms"] = (
+                stats["total_execution_time_ms"] / stats["total_queries"]
+            )
             stats["cache_hit_rate"] = stats["cache_hits"] / stats["total_queries"]
             stats["error_rate"] = stats["errors"] / stats["total_queries"]
         else:
@@ -1472,16 +1477,12 @@ class FederatedSearch:
             "cache_hits": 0,
             "total_execution_time_ms": 0,
             "nodes_queried": set(),
-            "errors": 0
+            "errors": 0,
         }
 
 
 # Helper for vector similarity calculation
-def vector_similarity(
-    vec1: np.ndarray,
-    vec2: np.ndarray,
-    metric: str = "cosine"
-) -> float:
+def vector_similarity(vec1: np.ndarray, vec2: np.ndarray, metric: str = "cosine") -> float:
     """
     Calculate similarity between two vectors.
 
@@ -1536,7 +1537,7 @@ class DistributedSearchIndex:
         base_dir: str,
         vector_dimensions: Optional[int] = None,
         distance_metric: str = "cosine",
-        enable_faiss: bool = True
+        enable_faiss: bool = True,
     ):
         """
         Initialize a distributed search index.
@@ -1595,7 +1596,7 @@ class DistributedSearchIndex:
         shard_format: str = "parquet",
         vector_field: str = "vector",
         text_fields: Optional[List[str]] = None,
-        include_all_text_fields: bool = True
+        include_all_text_fields: bool = True,
     ) -> Dict[str, Any]:
         """
         Build search indices for a shard.
@@ -1617,16 +1618,18 @@ class DistributedSearchIndex:
             "text_index": False,
             "vector_count": 0,
             "text_field_count": 0,
-            "errors": []
+            "errors": [],
         }
 
         try:
             # Load the shard data
             if shard_format == "parquet":
                 import pyarrow.parquet as pq
+
                 shard_data = pq.read_table(shard_path)
             elif shard_format == "arrow":
                 import pyarrow as pa
+
                 with pa.memory_map(shard_path, "r") as source:
                     shard_data = pa.ipc.open_file(source).read_all()
             else:
@@ -1674,6 +1677,7 @@ class DistributedSearchIndex:
 
             # Build text index
             import pandas as pd
+
             df = shard_data.to_pandas()
 
             # Determine fields to index
@@ -1682,8 +1686,9 @@ class DistributedSearchIndex:
             elif include_all_text_fields:
                 # Include all string/object columns
                 fields_to_index = [
-                    col for col in df.columns
-                    if df[col].dtype == 'object' or pd.api.types.is_string_dtype(df[col])
+                    col
+                    for col in df.columns
+                    if df[col].dtype == "object" or pd.api.types.is_string_dtype(df[col])
                 ]
             else:
                 fields_to_index = []
@@ -1701,7 +1706,8 @@ class DistributedSearchIndex:
 
                     # Store document data
                     doc_data[doc_id] = {
-                        field: row[field] for field in fields_to_index
+                        field: row[field]
+                        for field in fields_to_index
                         if field in row and pd.notna(row[field])
                     }
 
@@ -1763,7 +1769,7 @@ class DistributedSearchIndex:
                     "vector_dimensions": self.vector_dimensions,
                     "distance_metric": self.distance_metric,
                     "vector_count": self.vector_index.ntotal,
-                    "created_at": time.time()
+                    "created_at": time.time(),
                 }
 
                 metadata_path = os.path.join(self.index_dir, "vector_index_metadata.json")
@@ -1787,7 +1793,7 @@ class DistributedSearchIndex:
         distance_metric: str = "cosine",
         vector_field: str = "vector",
         text_fields: Optional[List[str]] = None,
-        include_all_text_fields: bool = True
+        include_all_text_fields: bool = True,
     ) -> "DistributedSearchIndex":
         """
         Build search indices for an entire dataset.
@@ -1810,16 +1816,13 @@ class DistributedSearchIndex:
 
         # Get all shards for the dataset
         dataset_shards = [
-            shard for shard in shard_manager.shards.values()
-            if shard.dataset_id == dataset_id
+            shard for shard in shard_manager.shards.values() if shard.dataset_id == dataset_id
         ]
 
         # Build indices for each shard
         for shard in dataset_shards:
             shard_path = os.path.join(
-                shard_manager.storage_dir,
-                "shards",
-                f"{shard.shard_id}.{shard.format}"
+                shard_manager.storage_dir, "shards", f"{shard.shard_id}.{shard.format}"
             )
 
             # Skip if shard file doesn't exist
@@ -1833,7 +1836,7 @@ class DistributedSearchIndex:
                 shard_format=shard.format,
                 vector_field=vector_field,
                 text_fields=text_fields,
-                include_all_text_fields=include_all_text_fields
+                include_all_text_fields=include_all_text_fields,
             )
 
         # Save the indices

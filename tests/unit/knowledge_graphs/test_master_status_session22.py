@@ -22,6 +22,7 @@ from unittest.mock import MagicMock, patch, PropertyMock
 # Section 1: query/unified_engine.py — error / timeout / re-raise paths
 # ---------------------------------------------------------------------------
 
+
 class TestUnifiedEngineErrorPaths:
     """GIVEN a UnifiedQueryEngine with mocked sub-components,
     WHEN error conditions are triggered inside execute_cypher/execute_ir/execute_hybrid/execute_graphrag,
@@ -29,6 +30,7 @@ class TestUnifiedEngineErrorPaths:
 
     def _make_engine(self, *, llm=None):
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         backend = MagicMock()
         engine = UnifiedQueryEngine(backend=backend, llm_processor=llm)
         # Inject a mock ir_executor so property init doesn't fail
@@ -43,6 +45,7 @@ class TestUnifiedEngineErrorPaths:
         WHEN execute_cypher is called,
         THEN QueryTimeoutError is raised."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryTimeoutError
+
         engine = self._make_engine()
         mock_parser = MagicMock()
         mock_parser.parse.side_effect = TimeoutError("parse timeout")
@@ -56,6 +59,7 @@ class TestUnifiedEngineErrorPaths:
         WHEN execute_cypher is called,
         THEN QueryExecutionError is raised."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryExecutionError
+
         engine = self._make_engine()
         mock_parser = MagicMock()
         mock_parser.parse.return_value = MagicMock()
@@ -73,6 +77,7 @@ class TestUnifiedEngineErrorPaths:
         WHEN execute_ir is called,
         THEN QueryParseError is raised."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryParseError
+
         engine = self._make_engine()
         engine._ir_executor.execute.side_effect = ValueError("bad IR")
         with pytest.raises(QueryParseError):
@@ -83,6 +88,7 @@ class TestUnifiedEngineErrorPaths:
         WHEN execute_ir is called,
         THEN QueryTimeoutError is raised."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryTimeoutError
+
         engine = self._make_engine()
         engine._ir_executor.execute.side_effect = TimeoutError("ir timeout")
         with pytest.raises(QueryTimeoutError):
@@ -93,6 +99,7 @@ class TestUnifiedEngineErrorPaths:
         WHEN execute_ir is called,
         THEN QueryExecutionError is raised."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryExecutionError
+
         engine = self._make_engine()
         engine._ir_executor.execute.side_effect = RuntimeError("runtime fail")
         with pytest.raises(QueryExecutionError):
@@ -103,6 +110,7 @@ class TestUnifiedEngineErrorPaths:
         WHEN execute_ir is called,
         THEN the same QueryExecutionError is re-raised (not double-wrapped)."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryExecutionError
+
         engine = self._make_engine()
         original = QueryExecutionError("direct")
         engine._ir_executor.execute.side_effect = original
@@ -117,6 +125,7 @@ class TestUnifiedEngineErrorPaths:
         WHEN execute_hybrid is called,
         THEN QueryExecutionError is raised."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryExecutionError
+
         engine = self._make_engine()
         with patch.object(engine.hybrid_search, "search", side_effect=ValueError("bad config")):
             with pytest.raises(QueryExecutionError):
@@ -127,8 +136,11 @@ class TestUnifiedEngineErrorPaths:
         WHEN execute_hybrid is called,
         THEN QueryTimeoutError is raised."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryTimeoutError
+
         engine = self._make_engine()
-        with patch.object(engine.hybrid_search, "search", side_effect=TimeoutError("hybrid timeout")):
+        with patch.object(
+            engine.hybrid_search, "search", side_effect=TimeoutError("hybrid timeout")
+        ):
             with pytest.raises(QueryTimeoutError):
                 engine.execute_hybrid("test query")
 
@@ -137,6 +149,7 @@ class TestUnifiedEngineErrorPaths:
         WHEN execute_hybrid is called,
         THEN QueryExecutionError is raised with details."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryExecutionError
+
         engine = self._make_engine()
         with patch.object(engine.hybrid_search, "search", side_effect=RuntimeError("boom")):
             with pytest.raises(QueryExecutionError) as exc_info:
@@ -161,6 +174,7 @@ class TestUnifiedEngineErrorPaths:
         WHEN execute_graphrag is called,
         THEN QueryExecutionError is raised."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryExecutionError
+
         llm = MagicMock()
         llm.reason.side_effect = RuntimeError("llm crashed")
         engine = self._make_engine(llm=llm)
@@ -173,8 +187,11 @@ class TestUnifiedEngineErrorPaths:
         WHEN execute_graphrag is called,
         THEN QueryTimeoutError is raised with 'GraphRAG query timed out'."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryTimeoutError
+
         engine = self._make_engine()
-        with patch.object(engine, "execute_hybrid", side_effect=TimeoutError("graphrag outer timeout")):
+        with patch.object(
+            engine, "execute_hybrid", side_effect=TimeoutError("graphrag outer timeout")
+        ):
             with pytest.raises(QueryTimeoutError) as exc_info:
                 engine.execute_graphrag("test question")
         assert "GraphRAG query timed out" in str(exc_info.value)
@@ -184,6 +201,7 @@ class TestUnifiedEngineErrorPaths:
         WHEN execute_graphrag is called,
         THEN QueryExecutionError is raised with 'Failed to execute GraphRAG query'."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryExecutionError
+
         engine = self._make_engine()
         with patch.object(engine, "execute_hybrid", side_effect=OSError("io error")):
             with pytest.raises(QueryExecutionError) as exc_info:
@@ -195,6 +213,7 @@ class TestUnifiedEngineErrorPaths:
         WHEN execute_graphrag is called,
         THEN the same QueryExecutionError is re-raised (not double-wrapped)."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryExecutionError
+
         engine = self._make_engine()
         original = QueryExecutionError("original")
         with patch.object(engine, "execute_hybrid", side_effect=original):
@@ -207,6 +226,7 @@ class TestUnifiedEngineErrorPaths:
         WHEN execute_graphrag is called,
         THEN the same QueryTimeoutError is re-raised (not double-wrapped)."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryTimeoutError
+
         engine = self._make_engine()
         original = QueryTimeoutError("original")
         with patch.object(engine, "execute_hybrid", side_effect=original):
@@ -219,6 +239,7 @@ class TestUnifiedEngineErrorPaths:
 # Section 2: neo4j_compat/result.py — keys/value/graph/bool paths
 # ---------------------------------------------------------------------------
 
+
 class TestNeo4jResultMissingPaths:
     """GIVEN a Result object with varying record contents,
     WHEN various methods are called,
@@ -226,6 +247,7 @@ class TestNeo4jResultMissingPaths:
 
     def _make_result(self, rows):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result, Record
+
         records = [Record(list(row.keys()), list(row.values())) for row in rows]
         return Result(records)
 
@@ -234,6 +256,7 @@ class TestNeo4jResultMissingPaths:
         WHEN keys() is called,
         THEN an empty list is returned."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result
+
         r = Result([])
         assert r.keys() == []
 
@@ -242,6 +265,7 @@ class TestNeo4jResultMissingPaths:
         WHEN value() is called with key=None,
         THEN an empty list is returned."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result, Record
+
         r = Result([Record([], [])])
         result = r.value()
         assert result == []
@@ -252,6 +276,7 @@ class TestNeo4jResultMissingPaths:
         THEN the relationships list contains that Relationship."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result, Record
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Node, Relationship
+
         n1 = Node("1", ["Person"], {"name": "Alice"})
         n2 = Node("2", ["Person"], {"name": "Bob"})
         rel = Relationship("r1", "KNOWS", n1, n2, {})
@@ -266,6 +291,7 @@ class TestNeo4jResultMissingPaths:
         THEN paths, nodes from the path, and relationships from the path are all included."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result, Record
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Node, Relationship, Path
+
         n1 = Node("1", ["Person"], {"name": "Alice"})
         n2 = Node("2", ["Person"], {"name": "Bob"})
         rel = Relationship("r1", "KNOWS", n1, n2, {})
@@ -284,6 +310,7 @@ class TestNeo4jResultMissingPaths:
         THEN the node appears only once."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result, Record
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Node
+
         n = Node("1", ["Person"], {"name": "Alice"})
         r = Result([Record(["n"], [n]), Record(["n"], [n])])
         graph_data = r.graph()
@@ -294,6 +321,7 @@ class TestNeo4jResultMissingPaths:
         WHEN bool() is called,
         THEN it returns False."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result
+
         assert not Result([])
 
     def test_bool_is_true_for_nonempty_result(self):
@@ -301,6 +329,7 @@ class TestNeo4jResultMissingPaths:
         WHEN bool() is called,
         THEN it returns True."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result, Record
+
         r = Result([Record(["n"], [42])])
         assert bool(r) is True
 
@@ -309,6 +338,7 @@ class TestNeo4jResultMissingPaths:
 # Section 3: neo4j_compat/session.py — bookmarks, run errors, tx retry
 # ---------------------------------------------------------------------------
 
+
 class TestIPFSSessionMissingPaths:
     """GIVEN an IPFSSession with a mocked driver,
     WHEN various error conditions occur,
@@ -316,6 +346,7 @@ class TestIPFSSessionMissingPaths:
 
     def _make_session(self, *, bookmarks=None, llm=None):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.session import IPFSSession
+
         driver = MagicMock()
         driver.backend = MagicMock()
         if bookmarks is not None:
@@ -328,6 +359,7 @@ class TestIPFSSessionMissingPaths:
         THEN self._bookmarks is that exact Bookmarks object."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.session import IPFSSession
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.bookmarks import Bookmarks
+
         bm = Bookmarks()
         driver = MagicMock()
         driver.backend = MagicMock()
@@ -348,7 +380,9 @@ class TestIPFSSessionMissingPaths:
         WHEN run() is called,
         THEN NotImplementedError propagates."""
         session = self._make_session()
-        with patch.object(session._query_executor, "execute", side_effect=NotImplementedError("not yet")):
+        with patch.object(
+            session._query_executor, "execute", side_effect=NotImplementedError("not yet")
+        ):
             with pytest.raises(NotImplementedError):
                 session.run("MATCH (n) RETURN n")
 
@@ -384,6 +418,7 @@ class TestIPFSSessionMissingPaths:
         WHEN read_transaction() is called,
         THEN KnowledgeGraphError is raised without retrying."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import KnowledgeGraphError
+
         session = self._make_session()
         call_count = [0]
 
@@ -415,6 +450,7 @@ class TestIPFSSessionMissingPaths:
         WHEN read_transaction() is called with max_retries=2,
         THEN it retries up to max_retries times before re-raising."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionConflictError
+
         session = self._make_session()
         call_count = [0]
 
@@ -440,6 +476,7 @@ class TestIPFSSessionMissingPaths:
         WHEN write_transaction() is called,
         THEN KnowledgeGraphError is raised without retrying."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import KnowledgeGraphError
+
         session = self._make_session()
         call_count = [0]
 
@@ -456,6 +493,7 @@ class TestIPFSSessionMissingPaths:
         WHEN write_transaction() is called with max_retries=3,
         THEN it retries up to max_retries times."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionConflictError
+
         session = self._make_session()
         call_count = [0]
 
@@ -495,6 +533,7 @@ class TestIPFSSessionMissingPaths:
 # Section 4: cypher/compiler.py — missing compilation paths
 # ---------------------------------------------------------------------------
 
+
 class TestCypherCompilerMissingPaths:
     """GIVEN Cypher AST nodes,
     WHEN _compile_clause / compile is called,
@@ -502,10 +541,12 @@ class TestCypherCompilerMissingPaths:
 
     def _make_compiler(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler
+
         return CypherCompiler()
 
     def _parse_and_compile(self, query: str):
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
+
         c = self._make_compiler()
         p = CypherParser()
         ast = p.parse(query)
@@ -517,6 +558,7 @@ class TestCypherCompilerMissingPaths:
         THEN CypherCompileError is raised."""
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompileError
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import ASTNode, ASTNodeType
+
         c = self._make_compiler()
 
         class _Bogus(ASTNode):
@@ -583,6 +625,7 @@ class TestCypherCompilerMissingPaths:
         THEN a dict with compiled values is returned."""
         c = self._make_compiler()
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import LiteralNode, ASTNodeType
+
         raw_dict = {"key": LiteralNode(node_type=ASTNodeType.LITERAL, value=42, value_type="int")}
         result = c._compile_expression(raw_dict)
         assert isinstance(result, dict)
@@ -609,6 +652,7 @@ class TestCypherCompilerMissingPaths:
         WHEN _compile_aggregation is called,
         THEN expression='*' is returned."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import FunctionCallNode, ASTNodeType
+
         c = self._make_compiler()
         fn = FunctionCallNode(
             node_type=ASTNodeType.FUNCTION_CALL, name="count", arguments=[], distinct=False
@@ -632,6 +676,7 @@ class TestCypherCompilerMissingPaths:
 # Section 5: extraction/graph.py — add_relationship weird obj + export_to_rdf
 # ---------------------------------------------------------------------------
 
+
 class TestExtractionGraphMissingPaths:
     """GIVEN a KnowledgeGraph with entities and relationships,
     WHEN methods that were previously uncovered are called,
@@ -639,10 +684,12 @@ class TestExtractionGraphMissingPaths:
 
     def _make_kg(self, name="test"):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         return KnowledgeGraph(name=name)
 
     def _add_person(self, kg, eid, name, **props):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import Entity
+
         e = Entity(entity_id=eid, entity_type="Person", name=name, properties=props)
         return kg.add_entity(e)
 
@@ -814,6 +861,7 @@ class TestExtractionGraphMissingPaths:
 # Section 6: core/expression_evaluator.py — function / compiled paths
 # ---------------------------------------------------------------------------
 
+
 class TestExpressionEvaluatorMissingPaths:
     """GIVEN expression evaluator functions,
     WHEN they are called with edge-case inputs,
@@ -825,6 +873,7 @@ class TestExpressionEvaluatorMissingPaths:
         THEN the correct float result is returned."""
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
         import math
+
         result = call_function("atan2", [1.0, 1.0])
         assert abs(result - math.pi / 4) < 1e-9
 
@@ -834,6 +883,7 @@ class TestExpressionEvaluatorMissingPaths:
         THEN None is returned (exception is swallowed and logged)."""
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import FUNCTION_REGISTRY
+
         FUNCTION_REGISTRY["_test_io_explode"] = lambda x: (_ for _ in ()).throw(IOError("io"))
         result = call_function("_test_io_explode", [42])
         assert result is None
@@ -844,42 +894,52 @@ class TestExpressionEvaluatorMissingPaths:
         WHEN call_function('toupper', [None]) is called,
         THEN None is returned."""
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
+
         assert call_function("toupper", [None]) is None
 
     def test_call_function_trim_none_returns_none(self):
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
+
         assert call_function("trim", [None]) is None
 
     def test_call_function_ltrim_none_returns_none(self):
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
+
         assert call_function("ltrim", [None]) is None
 
     def test_call_function_rtrim_none_returns_none(self):
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
+
         assert call_function("rtrim", [None]) is None
 
     def test_call_function_replace_none_string_returns_none(self):
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
+
         assert call_function("replace", [None, "a", "b"]) is None
 
     def test_call_function_reverse_none_returns_none(self):
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
+
         assert call_function("reverse", [None]) is None
 
     def test_call_function_size_none_returns_none(self):
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
+
         assert call_function("size", [None]) is None
 
     def test_call_function_split_none_returns_none(self):
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
+
         assert call_function("split", [None, ","]) is None
 
     def test_call_function_left_none_returns_none(self):
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
+
         assert call_function("left", [None, 3]) is None
 
     def test_call_function_right_none_returns_none(self):
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
+
         assert call_function("right", [None, 3]) is None
 
     def test_call_function_unknown_returns_none(self):
@@ -887,6 +947,7 @@ class TestExpressionEvaluatorMissingPaths:
         WHEN call_function is called,
         THEN None is returned."""
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
+
         assert call_function("_nonexistent_fn_xyz", [42]) is None
 
     def test_evaluate_expression_multi_arg_function(self):
@@ -895,6 +956,7 @@ class TestExpressionEvaluatorMissingPaths:
         THEN the correct float result is returned."""
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import evaluate_expression
         import math
+
         result = evaluate_expression("atan2(1, 1)", {})
         assert abs(result - math.pi / 4) < 1e-9
 
@@ -903,6 +965,7 @@ class TestExpressionEvaluatorMissingPaths:
         WHEN evaluate_expression is called,
         THEN the function is called with the int argument."""
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import evaluate_expression
+
         result = evaluate_expression("abs(5)", {})
         assert result == 5
 
@@ -911,6 +974,7 @@ class TestExpressionEvaluatorMissingPaths:
         WHEN evaluate_expression is called,
         THEN 'hello' is returned."""
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import evaluate_expression
+
         result = evaluate_expression("tolower('HELLO')", {})
         assert result == "hello"
 
@@ -918,7 +982,9 @@ class TestExpressionEvaluatorMissingPaths:
         """GIVEN an object with _properties dict attribute,
         WHEN evaluate_compiled_expression({'property': 'n.name'}, {'n': obj}) is called,
         THEN the property value from _properties is returned."""
-        from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import evaluate_compiled_expression
+        from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import (
+            evaluate_compiled_expression,
+        )
 
         class NodeLike:
             def __init__(self, props):
@@ -932,7 +998,10 @@ class TestExpressionEvaluatorMissingPaths:
         """GIVEN a compiled expression with an unknown unary operator,
         WHEN evaluate_compiled_expression is called,
         THEN the operand value is returned unchanged."""
-        from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import evaluate_compiled_expression
+        from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import (
+            evaluate_compiled_expression,
+        )
+
         result = evaluate_compiled_expression({"op": "UNKNOWN_OP", "operand": 7}, {})
         assert result == 7
 
@@ -940,7 +1009,10 @@ class TestExpressionEvaluatorMissingPaths:
         """GIVEN a compiled expression is just a variable name that exists in the binding,
         WHEN evaluate_compiled_expression('x', {'x': 42}) is called,
         THEN 42 is returned."""
-        from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import evaluate_compiled_expression
+        from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import (
+            evaluate_compiled_expression,
+        )
+
         result = evaluate_compiled_expression("x", {"x": 42})
         assert result == 42
 
@@ -951,6 +1023,7 @@ class TestExpressionEvaluatorMissingPaths:
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
         from ipfs_datasets_py.knowledge_graphs.cypher.functions import FUNCTION_REGISTRY
         from ipfs_datasets_py.knowledge_graphs.exceptions import KnowledgeGraphError
+
         FUNCTION_REGISTRY["_test_kg_reraise"] = lambda x: (_ for _ in ()).throw(
             KnowledgeGraphError("kg error")
         )
@@ -963,6 +1036,7 @@ class TestExpressionEvaluatorMissingPaths:
         WHEN call_function is called,
         THEN 'olleh' is returned."""
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
+
         assert call_function("reverse", ["hello"]) == "olleh"
 
     def test_call_function_size_with_list_returns_length(self):
@@ -970,6 +1044,7 @@ class TestExpressionEvaluatorMissingPaths:
         WHEN call_function is called,
         THEN 3 is returned."""
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
+
         assert call_function("size", [[1, 2, 3]]) == 3
 
     def test_call_function_size_with_string_returns_length(self):
@@ -977,6 +1052,7 @@ class TestExpressionEvaluatorMissingPaths:
         WHEN call_function is called,
         THEN 5 is returned."""
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
+
         assert call_function("size", ["hello"]) == 5
 
     def test_evaluate_expression_case_prefix_handled(self):
@@ -984,6 +1060,7 @@ class TestExpressionEvaluatorMissingPaths:
         WHEN evaluate_expression is called,
         THEN evaluate_case_expression is invoked; a generic/incomplete CASE returns None."""
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import evaluate_expression
+
         # The CASE|...|END prefix triggers the case evaluation branch (line 189)
         result = evaluate_expression("CASE|GENERIC|END", {})
         assert result is None  # incomplete CASE with no WHEN matches returns None
@@ -993,9 +1070,11 @@ class TestExpressionEvaluatorMissingPaths:
         WHEN evaluate_expression is called,
         THEN the correct result is returned (3 elements in split list)."""
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import evaluate_expression
+
         # This exercises the paren_depth tracking (lines 206, 208)
         result = evaluate_expression("atan2(1, 1)", {})
         import math
+
         assert abs(result - math.pi / 4) < 1e-9
 
     def test_evaluate_expression_no_arg_function_uses_empty_eval_args(self):
@@ -1003,6 +1082,7 @@ class TestExpressionEvaluatorMissingPaths:
         WHEN evaluate_expression is called,
         THEN a float result is returned (exercises empty args path at line 224)."""
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import evaluate_expression
+
         result = evaluate_expression("rand()", {})
         assert isinstance(result, float)
 
@@ -1011,11 +1091,13 @@ class TestExpressionEvaluatorMissingPaths:
 # Section 7: Additional unified_engine.py paths
 # ---------------------------------------------------------------------------
 
+
 class TestUnifiedEngineAdditionalPaths:
     """GIVEN a UnifiedQueryEngine, cover the remaining execution success/cancel paths."""
 
     def _make_engine(self, llm=None):
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         backend = MagicMock()
         engine = UnifiedQueryEngine(backend=backend, llm_processor=llm)
         engine._ir_executor = MagicMock()
@@ -1027,6 +1109,7 @@ class TestUnifiedEngineAdditionalPaths:
         WHEN execute_ir is called,
         THEN a successful QueryResult with items is returned."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryResult
+
         engine = self._make_engine()
         result = engine.execute_ir(MagicMock())
         assert isinstance(result, QueryResult)
@@ -1038,6 +1121,7 @@ class TestUnifiedEngineAdditionalPaths:
         WHEN execute_cypher is called,
         THEN the same QueryError is re-raised (line 322-323)."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryParseError
+
         engine = self._make_engine()
         original = QueryParseError("parse error")
         mock_parser = MagicMock()
@@ -1082,6 +1166,7 @@ class TestUnifiedEngineAdditionalPaths:
         WHEN execute_graphrag is called,
         THEN a GraphRAGResult with success=False is returned (lines 521-523)."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import GraphRAGResult
+
         engine = self._make_engine()
         failed_result = MagicMock()
         failed_result.success = False
@@ -1096,6 +1181,7 @@ class TestUnifiedEngineAdditionalPaths:
         WHEN execute_graphrag is called,
         THEN the QueryError is re-raised (line 583-584)."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryParseError
+
         engine = self._make_engine()
         original = QueryParseError("outer query error")
         with patch.object(engine, "execute_hybrid", side_effect=original):
@@ -1108,6 +1194,7 @@ class TestUnifiedEngineAdditionalPaths:
         WHEN execute_hybrid is called,
         THEN the QueryParseError is re-raised unchanged (line 468-469)."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryParseError
+
         engine = self._make_engine()
         original = QueryParseError("hybrid query error")
         with patch.object(engine.hybrid_search, "search", side_effect=original):

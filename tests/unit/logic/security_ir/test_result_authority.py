@@ -447,8 +447,7 @@ def test_solver_disagreement_fails_closed_regardless_of_order() -> None:
     assert first.status is ResultStatus.ERROR
     assert "security.result.portfolio_rejected" in first.diagnostics
     assert any(
-        item.startswith("security.result.solver_disagreement:")
-        for item in first.diagnostics
+        item.startswith("security.result.solver_disagreement:") for item in first.diagnostics
     )
 
 

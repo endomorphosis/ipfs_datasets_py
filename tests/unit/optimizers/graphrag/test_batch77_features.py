@@ -35,7 +35,9 @@ def _make_entity(eid: str, text: str, span: tuple | None = None) -> Entity:
 
 
 def _make_result(*entities: Entity) -> EntityExtractionResult:
-    return EntityExtractionResult(entities=list(entities), relationships=[], confidence=0.8, metadata={})
+    return EntityExtractionResult(
+        entities=list(entities), relationships=[], confidence=0.8, metadata={}
+    )
 
 
 def _make_mediator():
@@ -50,7 +52,8 @@ def _make_score(c=0.8, con=0.7, cl=0.6, g=0.5, da=0.9) -> CriticScore:
         consistency=con,
         clarity=cl,
         granularity=g,
-        relationship_coherence=da, domain_alignment=da,
+        relationship_coherence=da,
+        domain_alignment=da,
     )
 
 
@@ -206,7 +209,14 @@ class TestScoreDelta:
     def test_returns_five_plus_overall(self):
         s = _make_score()
         delta = self.critic.score_delta(s, s)
-        for key in ["completeness", "consistency", "clarity", "granularity", "domain_alignment", "overall"]:
+        for key in [
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "domain_alignment",
+            "overall",
+        ]:
             assert key in delta
 
     def test_all_dims_computed(self):
@@ -260,10 +270,15 @@ class TestFilterBySpan:
         e1 = _make_entity("1", "Alice", (0, 5))
         e2 = _make_entity("2", "Bob", (100, 110))
         rel = Relationship(
-            id="r1", source_id="1", target_id="2",
-            type="knows", confidence=0.9,
+            id="r1",
+            source_id="1",
+            target_id="2",
+            type="knows",
+            confidence=0.9,
         )
-        r = EntityExtractionResult(entities=[e1, e2], relationships=[rel], confidence=0.8, metadata={})
+        r = EntityExtractionResult(
+            entities=[e1, e2], relationships=[rel], confidence=0.8, metadata={}
+        )
         filtered = r.filter_by_span(0, 10)
         assert len(filtered.entities) == 1
         assert len(filtered.relationships) == 0
@@ -272,10 +287,15 @@ class TestFilterBySpan:
         e1 = _make_entity("1", "Alice", (0, 5))
         e2 = _make_entity("2", "Bob", (10, 15))
         rel = Relationship(
-            id="r1", source_id="1", target_id="2",
-            type="knows", confidence=0.9,
+            id="r1",
+            source_id="1",
+            target_id="2",
+            type="knows",
+            confidence=0.9,
         )
-        r = EntityExtractionResult(entities=[e1, e2], relationships=[rel], confidence=0.8, metadata={})
+        r = EntityExtractionResult(
+            entities=[e1, e2], relationships=[rel], confidence=0.8, metadata={}
+        )
         filtered = r.filter_by_span(0, 20)
         assert len(filtered.relationships) == 1
 

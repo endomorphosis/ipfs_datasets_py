@@ -1,0 +1,382 @@
+{
+  "acceptance": {
+    "all_routed_terms_covered": true,
+    "default_parameters_have_evidence_receipt": true,
+    "exact_scoring_parity_within_tolerance": true,
+    "production_searchable": false,
+    "recall_gate": 0.75,
+    "score_tolerance": 1e-09,
+    "test_split_not_tuned": true,
+    "test_split_reported_once": true
+  },
+  "code_version": "1",
+  "corpus": {
+    "average_document_length": 25.777778,
+    "corpus_root_cid": "sha256:ab3d4a59949d4117d174456c8e69b60e6be7be466da7f89e21ce3b392b22a621",
+    "document_count": 18,
+    "index_root_cid": "sha256:8370c6473dfeaa3016692755a64eb893fff5c245b7e56be9220a2a69db480a0a",
+    "term_count": 185,
+    "token_instance_count": 464,
+    "tokenizer_id": "uscode-bm25-tokenizer/v1"
+  },
+  "default_parameters_receipt": {
+    "candidate_id": "plan_default_k1_1_2",
+    "config_digest": "50d023e4827fe89a2ccc1598433f7ce7f397e75dc1c1c430eb47579db456a971",
+    "dev_metrics": {
+      "all_routed_terms_covered": true,
+      "max_score_delta": 0.0,
+      "mean_reciprocal_rank": 0.916667,
+      "meets_recall_gate": false,
+      "parity_within_tolerance": true,
+      "primary_metric": "relevance_recall_at_1",
+      "primary_metric_value": 0.666667,
+      "relevance_recall_at_1": 0.666667,
+      "relevance_recall_at_10": 0.9375,
+      "relevance_recall_at_5": 0.9375
+    },
+    "evidence_partition": "dev",
+    "legacy_parameter_delta": {
+      "b": {
+        "changed": false,
+        "delta": 0.0,
+        "evaluation_default": 0.75,
+        "legacy": 0.75
+      },
+      "k1": {
+        "changed": true,
+        "delta": -0.30000000000000004,
+        "evaluation_default": 1.2,
+        "legacy": 1.5
+      },
+      "legacy_field_separation": false,
+      "legacy_tokenizer_identity": null,
+      "notes": "Legacy US Code BM25 used k1=1.5 with a single unweighted term array and no tokenizer identity. Evaluation defaults use k1=1.2, explicit multi-field weights, and the sealed legal tokenizer.",
+      "shared_layout_defaults": {
+        "b": 0.75,
+        "k1": 1.2
+      }
+    },
+    "parameters": {
+      "b": 0.75,
+      "field_weights": {
+        "body": 1.0,
+        "citation": 8.0,
+        "heading": 4.0,
+        "hierarchy": 3.0,
+        "note": 0.5,
+        "title": 5.0
+      },
+      "k1": 1.2,
+      "tokenizer_id": "uscode-bm25-tokenizer/v1"
+    },
+    "receipt_schema": "uscode-bm25-default-parameters-receipt/v1",
+    "selection_metric": "relevance_recall_at_1",
+    "selection_reason": "no candidate met recall gate, scoring parity, and term coverage on dev; retaining plan_default_k1_1_2 for diagnostics only",
+    "selection_value": 0.666667,
+    "task_id": "USCIR-016"
+  },
+  "differential": {
+    "fixture_terms_per_shard": 4,
+    "production_terms_per_shard_bound": 4096,
+    "randomized": {
+      "max_score_delta": 0.0,
+      "parity_within_tolerance": true,
+      "query_count": 32,
+      "score_mismatch_count": 0,
+      "score_tolerance": 1e-09,
+      "seed": 23859222
+    },
+    "routing_shard_count": 47,
+    "routing_term_count": 185,
+    "score_tolerance": 1e-09,
+    "term_range_coverage": {
+      "all_terms_covered_exactly_once": true,
+      "overlap_or_gap_count": 0,
+      "shard_count": 47,
+      "term_count": 185,
+      "terms_covered": 185,
+      "terms_per_shard": 4,
+      "vocabulary_equals_union": true
+    }
+  },
+  "evaluation": {
+    "candidate_count": 6,
+    "inspection_partition": "train",
+    "partitions": {
+      "dev": {
+        "candidate_results": [
+          {
+            "all_routed_terms_covered": true,
+            "candidate_id": "plan_default_k1_1_2",
+            "config_digest": "50d023e4827fe89a2ccc1598433f7ce7f397e75dc1c1c430eb47579db456a971",
+            "is_plan_default": true,
+            "max_score_delta": 0.0,
+            "mean_reciprocal_rank": 0.916667,
+            "meets_recall_gate": false,
+            "parity_within_tolerance": true,
+            "primary_metric_value": 0.666667
+          },
+          {
+            "all_routed_terms_covered": true,
+            "candidate_id": "legacy_k1_1_5",
+            "config_digest": "713f2a7a79cc448058183909c8dbe9f2a6a87e83a6f304d2109be1b0134f2bf3",
+            "is_plan_default": false,
+            "max_score_delta": 0.0,
+            "mean_reciprocal_rank": 0.916667,
+            "meets_recall_gate": false,
+            "parity_within_tolerance": true,
+            "primary_metric_value": 0.666667
+          },
+          {
+            "all_routed_terms_covered": true,
+            "candidate_id": "soft_k1_1_0",
+            "config_digest": "7672113ff9117480d8548f554e61e5380e78184f38c3a47dc41a9c4b45b4faf4",
+            "is_plan_default": false,
+            "max_score_delta": 0.0,
+            "mean_reciprocal_rank": 0.916667,
+            "meets_recall_gate": false,
+            "parity_within_tolerance": true,
+            "primary_metric_value": 0.666667
+          },
+          {
+            "all_routed_terms_covered": true,
+            "candidate_id": "body_boost",
+            "config_digest": "6fd40997dcc31c62114c3914a638dd0302726b8319c71ee6d3ffaca13e1210a5",
+            "is_plan_default": false,
+            "max_score_delta": 0.0,
+            "mean_reciprocal_rank": 0.9375,
+            "meets_recall_gate": false,
+            "parity_within_tolerance": true,
+            "primary_metric_value": 0.666667
+          },
+          {
+            "all_routed_terms_covered": true,
+            "candidate_id": "citation_emphasis",
+            "config_digest": "194bf100a0c5e380be3f43ebacff7c8f1f89cc9d67af3f714f13c4499f263a70",
+            "is_plan_default": false,
+            "max_score_delta": 0.0,
+            "mean_reciprocal_rank": 0.916667,
+            "meets_recall_gate": false,
+            "parity_within_tolerance": true,
+            "primary_metric_value": 0.666667
+          },
+          {
+            "all_routed_terms_covered": true,
+            "candidate_id": "length_b_0_5",
+            "config_digest": "b04476558dd1b475401f0fccd8483bfdddf1a02bef42b50f4570e2c6f0b12fb7",
+            "is_plan_default": false,
+            "max_score_delta": 0.0,
+            "mean_reciprocal_rank": 0.9375,
+            "meets_recall_gate": false,
+            "parity_within_tolerance": true,
+            "primary_metric_value": 0.666667
+          }
+        ],
+        "gold_query_count": 8,
+        "metrics": {
+          "all_routed_terms_covered": true,
+          "bytes_fetched": {
+            "mean": 726.0,
+            "p50": 744.0,
+            "p95": 1164.0
+          },
+          "candidate_id": "plan_default_k1_1_2",
+          "config_digest": "50d023e4827fe89a2ccc1598433f7ce7f397e75dc1c1c430eb47579db456a971",
+          "docs_scored": {
+            "mean": 2.625,
+            "p50": 2.0,
+            "p95": 5.65
+          },
+          "failure_modes": {},
+          "is_plan_default": true,
+          "latency_ms": {
+            "mean": 0.2325,
+            "p50": 0.24,
+            "p95": 0.3755
+          },
+          "max_score_delta": 0.0,
+          "mean_reciprocal_rank": 0.916667,
+          "meets_recall_gate": false,
+          "parameters": {
+            "b": 0.75,
+            "field_weights": {
+              "body": 1.0,
+              "citation": 8.0,
+              "heading": 4.0,
+              "hierarchy": 3.0,
+              "note": 0.5,
+              "title": 5.0
+            },
+            "k1": 1.2,
+            "tokenizer_id": "uscode-bm25-tokenizer/v1"
+          },
+          "parity_query_count": 8,
+          "parity_within_tolerance": true,
+          "primary_metric": "relevance_recall_at_1",
+          "primary_metric_value": 0.666667,
+          "queries_with_relevant_labels": 8,
+          "query_count": 8,
+          "ranking_recall_at_1": 1.0,
+          "ranking_recall_at_10": 1.0,
+          "ranking_recall_at_5": 1.0,
+          "relevance_recall_at_1": 0.666667,
+          "relevance_recall_at_10": 0.9375,
+          "relevance_recall_at_5": 0.9375,
+          "score_mismatch_count": 0,
+          "score_tolerance": 1e-09,
+          "shards_fetched": {
+            "mean": 4.125,
+            "p50": 4.5,
+            "p95": 6.65
+          }
+        },
+        "role": "parameter_selection_only",
+        "tuned": true
+      },
+      "test": {
+        "gold_query_count": 9,
+        "metrics": {
+          "all_routed_terms_covered": true,
+          "bytes_fetched": {
+            "mean": 544.0,
+            "p50": 480.0,
+            "p95": 1065.6
+          },
+          "docs_scored": {
+            "mean": 2.666667,
+            "p50": 1.0,
+            "p95": 6.6
+          },
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.171111,
+            "p50": 0.16,
+            "p95": 0.326
+          },
+          "max_score_delta": 0.0,
+          "mean_reciprocal_rank": 1.0,
+          "meets_recall_gate": true,
+          "parity_query_count": 9,
+          "parity_within_tolerance": true,
+          "primary_metric": "relevance_recall_at_1",
+          "primary_metric_value": 0.87037,
+          "queries_with_relevant_labels": 9,
+          "query_count": 9,
+          "ranking_recall_at_1": 1.0,
+          "ranking_recall_at_10": 1.0,
+          "ranking_recall_at_5": 1.0,
+          "relevance_recall_at_1": 0.87037,
+          "relevance_recall_at_10": 1.0,
+          "relevance_recall_at_5": 1.0,
+          "score_mismatch_count": 0,
+          "score_tolerance": 1e-09,
+          "shards_fetched": {
+            "mean": 2.888889,
+            "p50": 3.0,
+            "p95": 5.2
+          }
+        },
+        "report_count": 1,
+        "role": "sealed_one_shot_report",
+        "tuned": false
+      },
+      "train": {
+        "gold_query_count": 10,
+        "metrics": {
+          "all_routed_terms_covered": true,
+          "bytes_fetched": {
+            "mean": 643.2,
+            "p50": 624.0,
+            "p95": 1065.6
+          },
+          "docs_scored": {
+            "mean": 2.8,
+            "p50": 2.0,
+            "p95": 7.1
+          },
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.203,
+            "p50": 0.195,
+            "p95": 0.324
+          },
+          "max_score_delta": 0.0,
+          "mean_reciprocal_rank": 0.95,
+          "meets_recall_gate": true,
+          "parity_query_count": 10,
+          "parity_within_tolerance": true,
+          "primary_metric": "relevance_recall_at_1",
+          "primary_metric_value": 0.75,
+          "queries_with_relevant_labels": 10,
+          "query_count": 10,
+          "ranking_recall_at_1": 1.0,
+          "ranking_recall_at_10": 1.0,
+          "ranking_recall_at_5": 1.0,
+          "relevance_recall_at_1": 0.75,
+          "relevance_recall_at_10": 0.9,
+          "relevance_recall_at_5": 0.9,
+          "score_mismatch_count": 0,
+          "score_tolerance": 1e-09,
+          "shards_fetched": {
+            "mean": 3.5,
+            "p50": 3.5,
+            "p95": 5.55
+          }
+        },
+        "role": "inspection_only_not_reported_as_gate",
+        "tuned": false
+      }
+    },
+    "primary_top_k": 1,
+    "recall_gate": 0.75,
+    "report_partition": "test",
+    "selection_partition": "dev",
+    "top_k_values": [
+      1,
+      5,
+      10
+    ]
+  },
+  "goal_id": "USCIR-G040",
+  "parameter_selection": {
+    "candidate_id": "plan_default_k1_1_2",
+    "default_parameters": {
+      "b": 0.75,
+      "field_weights": {
+        "body": 1.0,
+        "citation": 8.0,
+        "heading": 4.0,
+        "hierarchy": 3.0,
+        "note": 0.5,
+        "title": 5.0
+      },
+      "k1": 1.2,
+      "tokenizer_id": "uscode-bm25-tokenizer/v1"
+    },
+    "evidence_partition": "dev",
+    "meets_recall_gate": false,
+    "parity_within_tolerance": true,
+    "production_searchable": false,
+    "qualifying_candidates": [],
+    "reason": "no candidate met recall gate, scoring parity, and term coverage on dev; retaining plan_default_k1_1_2 for diagnostics only",
+    "selection_metric": "relevance_recall_at_1",
+    "selection_value": 0.666667
+  },
+  "producer": "evaluate_uscode_bm25.py",
+  "production_claim": {
+    "all_routed_terms_covered": true,
+    "claim": "NO production-searchable claim: measured relevance, scoring parity, or term coverage failed the sealed gates (recall>=0.75, |\u0394score|<=1e-09)",
+    "declared_recall_gate": 0.75,
+    "declared_score_tolerance": 1e-09,
+    "default_candidate_id": "plan_default_k1_1_2",
+    "dev_meets_gate": false,
+    "parity_within_tolerance": true,
+    "production_searchable": false,
+    "test_meets_gate": true,
+    "test_relevance_recall_at_primary_k": 0.87037
+  },
+  "program_id": "uscode-sparse-graphrag-v1",
+  "release_profile": "publicus-ir-graphrag/v2",
+  "schema_version": "ipfs_datasets_py/uscode-bm25-evaluation@1",
+  "task_id": "USCIR-016"
+}

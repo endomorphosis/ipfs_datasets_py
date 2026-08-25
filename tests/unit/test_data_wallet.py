@@ -116,7 +116,10 @@ def test_wallet_add_document_encrypts_and_decrypts_for_owner(tmp_path):
     record = service.add_document(wallet.wallet_id, source)
 
     assert record.data_type == "document"
-    assert service.decrypt_record(wallet.wallet_id, record.record_id, actor_did=OWNER) == source.read_bytes()
+    assert (
+        service.decrypt_record(wallet.wallet_id, record.record_id, actor_did=OWNER)
+        == source.read_bytes()
+    )
     manifest = service.get_wallet_manifest(wallet.wallet_id)
     assert manifest["records"][0]["public_descriptor"] == "document"
     assert "benefits.txt" not in service.get_wallet_manifest_canonical(wallet.wallet_id)
@@ -474,24 +477,33 @@ def test_document_output_type_caveats_are_enforced_by_operation(tmp_path):
         caveats={"output_types": ["redacted_derived_only"]},
     )
 
-    assert service.analyze_record_summary(
-        wallet.wallet_id,
-        record.record_id,
-        actor_did=ADVOCATE,
-        grant_id=summary_only.grant_id,
-    ).artifact_type == "summary"
-    assert service.decrypt_record(
-        wallet.wallet_id,
-        record.record_id,
-        actor_did=CASE_MANAGER,
-        grant_id=plaintext_only.grant_id,
-    ) == source.read_bytes()
-    assert service.analyze_document_with_redaction(
-        wallet.wallet_id,
-        record.record_id,
-        actor_did="did:key:redacted-reviewer",
-        grant_id=redacted_only.grant_id,
-    )["output"]["output_policy"] == "redacted_derived_only"
+    assert (
+        service.analyze_record_summary(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did=ADVOCATE,
+            grant_id=summary_only.grant_id,
+        ).artifact_type
+        == "summary"
+    )
+    assert (
+        service.decrypt_record(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did=CASE_MANAGER,
+            grant_id=plaintext_only.grant_id,
+        )
+        == source.read_bytes()
+    )
+    assert (
+        service.analyze_document_with_redaction(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did="did:key:redacted-reviewer",
+            grant_id=redacted_only.grant_id,
+        )["output"]["output_policy"]
+        == "redacted_derived_only"
+    )
 
     vector_profile_grant = service.create_grant(
         wallet_id=wallet.wallet_id,
@@ -501,12 +513,15 @@ def test_document_output_type_caveats_are_enforced_by_operation(tmp_path):
         abilities=["record/analyze"],
         caveats={"output_types": ["vector_profile"]},
     )
-    assert service.create_document_vector_profile(
-        wallet.wallet_id,
-        record.record_id,
-        actor_did="did:key:vector-reviewer",
-        grant_id=vector_profile_grant.grant_id,
-    )["output"]["output_policy"] == "encrypted_vector_profile"
+    assert (
+        service.create_document_vector_profile(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did="did:key:vector-reviewer",
+            grant_id=vector_profile_grant.grant_id,
+        )["output"]["output_policy"]
+        == "encrypted_vector_profile"
+    )
 
     extracted_text_grant = service.create_grant(
         wallet_id=wallet.wallet_id,
@@ -516,12 +531,15 @@ def test_document_output_type_caveats_are_enforced_by_operation(tmp_path):
         abilities=["record/analyze"],
         caveats={"output_types": ["redacted_extracted_text"]},
     )
-    assert service.extract_document_text_with_redaction(
-        wallet.wallet_id,
-        record.record_id,
-        actor_did="did:key:extractor",
-        grant_id=extracted_text_grant.grant_id,
-    )["output"]["output_policy"] == "redacted_extracted_text"
+    assert (
+        service.extract_document_text_with_redaction(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did="did:key:extractor",
+            grant_id=extracted_text_grant.grant_id,
+        )["output"]["output_policy"]
+        == "redacted_extracted_text"
+    )
 
     form_analysis_grant = service.create_grant(
         wallet_id=wallet.wallet_id,
@@ -531,12 +549,15 @@ def test_document_output_type_caveats_are_enforced_by_operation(tmp_path):
         abilities=["record/analyze"],
         caveats={"output_types": ["redacted_form_analysis"]},
     )
-    assert service.analyze_document_form_with_redaction(
-        wallet.wallet_id,
-        record.record_id,
-        actor_did="did:key:form-reviewer",
-        grant_id=form_analysis_grant.grant_id,
-    )["output"]["output_policy"] == "redacted_form_analysis"
+    assert (
+        service.analyze_document_form_with_redaction(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did="did:key:form-reviewer",
+            grant_id=form_analysis_grant.grant_id,
+        )["output"]["output_policy"]
+        == "redacted_form_analysis"
+    )
 
     graphrag_grant = service.create_grant(
         wallet_id=wallet.wallet_id,
@@ -546,12 +567,15 @@ def test_document_output_type_caveats_are_enforced_by_operation(tmp_path):
         abilities=["record/analyze"],
         caveats={"output_types": ["redacted_graphrag"]},
     )
-    assert service.create_redacted_graphrag(
-        wallet.wallet_id,
-        [record.record_id],
-        actor_did="did:key:graphrag-reviewer",
-        grant_id=graphrag_grant.grant_id,
-    )["output"]["output_policy"] == "redacted_graphrag"
+    assert (
+        service.create_redacted_graphrag(
+            wallet.wallet_id,
+            [record.record_id],
+            actor_did="did:key:graphrag-reviewer",
+            grant_id=graphrag_grant.grant_id,
+        )["output"]["output_policy"]
+        == "redacted_graphrag"
+    )
 
     with pytest.raises(AccessDeniedError, match="output_types"):
         service.decrypt_record(
@@ -833,18 +857,26 @@ def test_record_key_rotation_reencrypts_current_version_and_preserves_active_gra
     assert new_version.version_id != old_version.version_id
     assert new_version.encrypted_payload_ref.sha256 != old_version.encrypted_payload_ref.sha256
     assert service.records[record.record_id].current_version_id == new_version.version_id
-    assert any(wrap.recipient_did == ADVOCATE and wrap.grant_id == grant.grant_id for wrap in new_version.key_wraps)
-    assert service.decrypt_record(
-        wallet.wallet_id,
-        record.record_id,
-        actor_did=ADVOCATE,
-        grant_id=grant.grant_id,
-        actor_secret=delegate_secret,
-    ) == b"rotation plaintext stays encrypted"
+    assert any(
+        wrap.recipient_did == ADVOCATE and wrap.grant_id == grant.grant_id
+        for wrap in new_version.key_wraps
+    )
+    assert (
+        service.decrypt_record(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did=ADVOCATE,
+            grant_id=grant.grant_id,
+            actor_secret=delegate_secret,
+        )
+        == b"rotation plaintext stays encrypted"
+    )
     assert [version["version_id"] for version in snapshot["versions"]] == [new_version.version_id]
     assert "rotation plaintext" not in public_snapshot
     assert service.get_audit_log(wallet.wallet_id)[-1].action == "record/decrypt"
-    assert any(event.action == "record/key_rotate" for event in service.get_audit_log(wallet.wallet_id))
+    assert any(
+        event.action == "record/key_rotate" for event in service.get_audit_log(wallet.wallet_id)
+    )
 
 
 def test_threshold_approval_required_for_sensitive_decrypt_grant(tmp_path):
@@ -902,12 +934,15 @@ def test_threshold_approval_required_for_sensitive_decrypt_grant(tmp_path):
     )
 
     assert approval.status == "approved"
-    assert service.decrypt_record(
-        wallet.wallet_id,
-        record.record_id,
-        actor_did=ADVOCATE,
-        grant_id=grant.grant_id,
-    ) == b"identity document plaintext"
+    assert (
+        service.decrypt_record(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did=ADVOCATE,
+            grant_id=grant.grant_id,
+        )
+        == b"identity document plaintext"
+    )
     manifest = service.get_wallet_manifest(wallet.wallet_id)
     assert manifest["approvals"][0]["approval_id"] == approval.approval_id
 
@@ -959,7 +994,9 @@ def test_controller_changes_require_wallet_admin_threshold_approval(tmp_path):
         resources=[wallet_resource],
         abilities=["wallet/admin"],
     )
-    service.approve_approval(wallet.wallet_id, approval_id=remove_approval.approval_id, approver_did=OWNER)
+    service.approve_approval(
+        wallet.wallet_id, approval_id=remove_approval.approval_id, approver_did=OWNER
+    )
     service.approve_approval(
         wallet.wallet_id,
         approval_id=remove_approval.approval_id,
@@ -1059,7 +1096,9 @@ def test_world_id_binding_indexes_manifest_and_snapshot(tmp_path):
     )
     assert raw_nullifier not in public_payload
     assert "0xproof" not in public_payload
-    assert "proof/world_id_bind" in [event.action for event in service.get_audit_log(wallet.wallet_id)]
+    assert "proof/world_id_bind" in [
+        event.action for event in service.get_audit_log(wallet.wallet_id)
+    ]
 
     restored = WalletService(storage_dir=tmp_path / "restored-world-id")
     restored.import_wallet_snapshot(snapshot)
@@ -1078,7 +1117,9 @@ def test_world_id_binding_indexes_manifest_and_snapshot(tmp_path):
     assert legacy_restored.list_world_id_bindings(wallet.wallet_id) == []
 
 
-def test_world_id_binding_nullifier_index_is_idempotent_per_wallet_and_unique_across_wallets(tmp_path):
+def test_world_id_binding_nullifier_index_is_idempotent_per_wallet_and_unique_across_wallets(
+    tmp_path,
+):
     service = WalletService(storage_dir=tmp_path)
     wallet = service.create_wallet(owner_did=OWNER)
     other_wallet = service.create_wallet(owner_did="did:key:other-owner")
@@ -1168,7 +1209,10 @@ def test_recovery_policy_requires_threshold_and_recovers_controller(tmp_path):
     snapshot = service.export_wallet_snapshot(wallet.wallet_id)
     restored = WalletService(storage_dir=tmp_path / "restored-recovery")
     restored.import_wallet_snapshot(snapshot)
-    assert restored.wallets[wallet.wallet_id].governance_policy["recovery_policy"]["contact_dids"] == recovery_contacts
+    assert (
+        restored.wallets[wallet.wallet_id].governance_policy["recovery_policy"]["contact_dids"]
+        == recovery_contacts
+    )
 
     with pytest.raises(ApprovalRequiredError):
         service.recover_controller(
@@ -1245,7 +1289,10 @@ def test_grant_receipt_tracks_sharing_and_survives_snapshot(tmp_path):
     assert receipt.abilities == ["record/analyze"]
     assert receipt.purpose == "benefits_screening"
     assert receipt.receipt_hash
-    assert service.get_wallet_manifest(wallet.wallet_id)["grant_receipts"][0]["receipt_id"] == receipt.receipt_id
+    assert (
+        service.get_wallet_manifest(wallet.wallet_id)["grant_receipts"][0]["receipt_id"]
+        == receipt.receipt_id
+    )
 
     restored = WalletService(storage_dir=tmp_path)
     restored.import_wallet_snapshot(service.export_wallet_snapshot(wallet.wallet_id))
@@ -1319,8 +1366,12 @@ class FakeLocationRegionProofBackend:
         witness_record_ids: list[str],
     ) -> ProofReceipt:
         self.last_witness = dict(witness)
-        digest = hashlib.sha256(f"{self.proof_system}:{self.verifier_id}".encode("utf-8")).hexdigest()
-        proof_hash = hashlib.sha256(json.dumps(public_inputs, sort_keys=True).encode("utf-8")).hexdigest()
+        digest = hashlib.sha256(
+            f"{self.proof_system}:{self.verifier_id}".encode("utf-8")
+        ).hexdigest()
+        proof_hash = hashlib.sha256(
+            json.dumps(public_inputs, sort_keys=True).encode("utf-8")
+        ).hexdigest()
         return ProofReceipt(
             proof_id=f"proof-{uuid.uuid4().hex}",
             wallet_id=wallet_id,
@@ -1339,7 +1390,9 @@ class FakeLocationRegionProofBackend:
         )
 
     def verify(self, receipt: ProofReceipt) -> bool:
-        return self.verifies and receipt.verifier_id == self.verifier_id and not receipt.is_simulated
+        return (
+            self.verifies and receipt.verifier_id == self.verifier_id and not receipt.is_simulated
+        )
 
 
 def test_location_region_proof_fails_closed_when_simulated_disabled(tmp_path):
@@ -1404,7 +1457,9 @@ def test_location_region_proof_accepts_deterministic_integration_backend(tmp_pat
     assert receipt.is_simulated is False
     assert receipt.proof_system == "deterministic-test-proof"
     assert receipt.circuit_id == "deterministic-location-region-v0.1"
-    assert receipt.proof_artifact_ref and receipt.proof_artifact_ref.startswith("deterministic-proof://")
+    assert receipt.proof_artifact_ref and receipt.proof_artifact_ref.startswith(
+        "deterministic-proof://"
+    )
     assert service.proof_backend.verify(receipt) is True
     public_receipt = json.dumps(receipt.to_dict())
     assert "45.515232" not in public_receipt
@@ -1533,7 +1588,9 @@ def test_location_distance_proof_accepts_deterministic_integration_backend(tmp_p
     assert receipt.proof_type == "location_distance"
     assert receipt.proof_system == "deterministic-test-proof"
     assert receipt.circuit_id == "deterministic-location-distance-v0.1"
-    assert receipt.proof_artifact_ref and receipt.proof_artifact_ref.startswith("deterministic-proof://")
+    assert receipt.proof_artifact_ref and receipt.proof_artifact_ref.startswith(
+        "deterministic-proof://"
+    )
     assert service.proof_backend.verify(receipt) is True
     public_receipt = json.dumps(receipt.to_dict())
     for secret in ("45.515232", "-122.678385", "45.516", "-122.679"):
@@ -1629,7 +1686,9 @@ def test_export_bundle_requires_grant_and_excludes_plaintext_location(tmp_path):
     source = tmp_path / "notice.txt"
     source.write_text("Eviction notice with confidential case facts", encoding="utf-8")
     document = service.add_document(wallet.wallet_id, source)
-    location = service.add_location(wallet.wallet_id, actor_did=OWNER, lat=45.515232, lon=-122.678385)
+    location = service.add_location(
+        wallet.wallet_id, actor_did=OWNER, lat=45.515232, lon=-122.678385
+    )
 
     with pytest.raises(AccessDeniedError):
         service.create_export_bundle(
@@ -1660,7 +1719,10 @@ def test_export_bundle_requires_grant_and_excludes_plaintext_location(tmp_path):
     assert service.verify_export_bundle(bundle) is True
     assert "controller_dids" not in bundle["wallet"]
     assert "device_dids" not in bundle["wallet"]
-    assert [record["record_id"] for record in bundle["records"]] == [document.record_id, location.record_id]
+    assert [record["record_id"] for record in bundle["records"]] == [
+        document.record_id,
+        location.record_id,
+    ]
     assert all(version["key_wraps"] == [] for version in bundle["versions"])
     public_export = json.dumps(bundle)
     assert "Eviction notice" not in public_export
@@ -1674,7 +1736,9 @@ def test_export_bundle_requires_grant_and_excludes_plaintext_location(tmp_path):
     assert available_storage["ok"] is True
     assert available_storage["record_count"] == 2
     broken_storage_bundle = json.loads(json.dumps(bundle))
-    broken_storage_bundle["versions"][0]["encrypted_payload_ref"]["uri"] = "local:///missing/export-payload.bin"
+    broken_storage_bundle["versions"][0]["encrypted_payload_ref"]["uri"] = (
+        "local:///missing/export-payload.bin"
+    )
     broken_storage_bundle["versions"][0]["encrypted_payload_ref"]["mirrors"] = []
     broken_storage_bundle["bundle_hash"] = imported.export_bundle_hash(broken_storage_bundle)
     broken_storage_bundle["bundle_id"] = f"export-{broken_storage_bundle['bundle_hash'][:24]}"
@@ -1759,7 +1823,9 @@ def test_export_bundle_accepts_signed_invocation_and_invocation_caveats(tmp_path
     source = tmp_path / "export-note.txt"
     source.write_text("Export through invocation", encoding="utf-8")
     document = service.add_document(wallet.wallet_id, source)
-    location = service.add_location(wallet.wallet_id, actor_did=OWNER, lat=45.515232, lon=-122.678385)
+    location = service.add_location(
+        wallet.wallet_id, actor_did=OWNER, lat=45.515232, lon=-122.678385
+    )
     grant = service.create_grant(
         wallet_id=wallet.wallet_id,
         issuer_did=OWNER,
@@ -1866,7 +1932,9 @@ def test_export_grant_requires_threshold_approval(tmp_path):
         abilities=["export/create"],
     )
     service.approve_approval(wallet.wallet_id, approval_id=approval.approval_id, approver_did=OWNER)
-    service.approve_approval(wallet.wallet_id, approval_id=approval.approval_id, approver_did=SECOND_CONTROLLER)
+    service.approve_approval(
+        wallet.wallet_id, approval_id=approval.approval_id, approver_did=SECOND_CONTROLLER
+    )
     grant = service.create_grant(
         wallet_id=wallet.wallet_id,
         issuer_did=OWNER,
@@ -2063,7 +2131,9 @@ def test_wallet_ucan_external_adapter_fixture_preserves_dag_cbor_bytes(tmp_path)
     delegate_secret = b"d" * 32
     wallet = service.create_wallet(owner_did=OWNER)
     source = tmp_path / "adapter-interop-case-note.txt"
-    source.write_text("External adapter fixture must not expose this document text.", encoding="utf-8")
+    source.write_text(
+        "External adapter fixture must not expose this document text.", encoding="utf-8"
+    )
     record = service.add_document(wallet.wallet_id, source, actor_secret=owner_secret)
     resource = resource_for_record(wallet.wallet_id, record.record_id)
     grant = service.create_grant(
@@ -2108,12 +2178,16 @@ def test_wallet_ucan_external_adapter_fixture_preserves_dag_cbor_bytes(tmp_path)
     ]
     assert normalized["resource"] == resource
     assert normalized["ability"] == "record/analyze"
-    assert "External adapter fixture must not expose this document text" not in json.dumps(adapter_fixture)
+    assert "External adapter fixture must not expose this document text" not in json.dumps(
+        adapter_fixture
+    )
 
     tampered_adapter = json.loads(json.dumps(adapter_fixture))
     tampered_adapter["decoded"]["att"][0]["can"] = "record/decrypt"
     with pytest.raises(ValueError, match="decoded block"):
-        validate_wallet_ucan_external_adapter_fixture(tampered_adapter, profile_payload=profile_payload)
+        validate_wallet_ucan_external_adapter_fixture(
+            tampered_adapter, profile_payload=profile_payload
+        )
 
     tampered_profile = json.loads(json.dumps(profile_payload))
     tampered_profile["ucan"]["att"].append({"with": resource, "can": "record/decrypt", "nb": {}})
@@ -2124,7 +2198,10 @@ def test_wallet_ucan_external_adapter_fixture_preserves_dag_cbor_bytes(tmp_path)
     fixture_normalized = validate_wallet_ucan_conformance_fixture(fixture)
     assert WALLET_UCAN_EXTERNAL_ADAPTER_KEY in fixture["external_adapters"]
     assert fixture_normalized["external_adapter"] == WALLET_UCAN_EXTERNAL_ADAPTER_ID
-    assert fixture_normalized["external_cid"] == fixture["external_adapters"][WALLET_UCAN_EXTERNAL_ADAPTER_KEY]["cid"]
+    assert (
+        fixture_normalized["external_cid"]
+        == fixture["external_adapters"][WALLET_UCAN_EXTERNAL_ADAPTER_KEY]["cid"]
+    )
 
 
 def test_wallet_ucan_external_adapter_rejects_grant_widening(tmp_path):
@@ -2178,7 +2255,9 @@ def test_wallet_ucan_external_adapter_rejects_grant_widening(tmp_path):
         validate_ucan_profile_payload(widened_ability)
 
     widened_resource = json.loads(json.dumps(profile_payload))
-    widened_resource["ucan"]["att"][0]["with"] = resource_for_record(wallet.wallet_id, "different-record")
+    widened_resource["ucan"]["att"][0]["with"] = resource_for_record(
+        wallet.wallet_id, "different-record"
+    )
     widened_resource["wallet_invocation"]["resource"] = widened_resource["ucan"]["att"][0]["with"]
     with pytest.raises(ValueError, match="wallet_grant resources"):
         validate_ucan_profile_payload(widened_resource)
@@ -2258,7 +2337,10 @@ def test_wallet_ucan_conformance_fixture_cli_round_trip(tmp_path, capsys):
         json.dumps(fixture["profile_payload"], sort_keys=True),
         encoding="utf-8",
     )
-    assert wallet_cli_main(["--json", "ucan-validate-profile", "--path", str(profile_payload_path)]) == 0
+    assert (
+        wallet_cli_main(["--json", "ucan-validate-profile", "--path", str(profile_payload_path)])
+        == 0
+    )
     profile_validation = json.loads(capsys.readouterr().out)
     assert profile_validation["valid"] is True
     assert profile_validation["ability"] == "record/analyze"
@@ -2320,10 +2402,9 @@ def test_legacy_invocation_token_without_issuer_remains_verifiable(tmp_path):
     legacy_invocation.signature = sign_invocation(legacy_invocation, delegate_secret)
     legacy_payload = legacy_invocation.to_dict()
     legacy_payload.pop("issuer_did", None)
-    legacy_token = (
-        WALLET_UCAN_TOKEN_PREFIX
-        + base64.urlsafe_b64encode(canonical_bytes(legacy_payload)).decode("ascii")
-    )
+    legacy_token = WALLET_UCAN_TOKEN_PREFIX + base64.urlsafe_b64encode(
+        canonical_bytes(legacy_payload)
+    ).decode("ascii")
     restored = invocation_from_token(legacy_token)
 
     artifact = service.analyze_record_summary_with_invocation(
@@ -2402,7 +2483,9 @@ def test_access_request_rejection_records_decision(tmp_path):
     assert rejected.status == "rejected"
     assert rejected.decided_by == OWNER
     assert rejected.details["rejection_reason"] == "insufficient purpose"
-    assert service.get_wallet_manifest(wallet.wallet_id)["access_requests"][0]["status"] == "rejected"
+    assert (
+        service.get_wallet_manifest(wallet.wallet_id)["access_requests"][0]["status"] == "rejected"
+    )
 
 
 def test_access_request_revocation_updates_request_and_blocks_invocation(tmp_path):
@@ -2439,7 +2522,10 @@ def test_access_request_revocation_updates_request_and_blocks_invocation(tmp_pat
     assert revoked.status == "revoked"
     assert revoked.details["revocation_reason"] == "user withdrew consent"
     assert service.grants[approved.grant_id].status == "revoked"
-    assert service.list_access_requests(wallet.wallet_id, status="revoked")[0].request_id == request.request_id
+    assert (
+        service.list_access_requests(wallet.wallet_id, status="revoked")[0].request_id
+        == request.request_id
+    )
     restored = WalletService(storage_dir=tmp_path)
     restored.import_wallet_snapshot(service.export_wallet_snapshot(wallet.wallet_id))
     assert restored.access_requests[request.request_id].status == "revoked"
@@ -2483,7 +2569,10 @@ def test_access_request_listing_filters_for_review_inbox(tmp_path):
         first.request_id,
         second.request_id,
     ]
-    assert [request.request_id for request in service.list_access_requests(wallet.wallet_id, status="pending")] == [
+    assert [
+        request.request_id
+        for request in service.list_access_requests(wallet.wallet_id, status="pending")
+    ] == [
         first.request_id,
     ]
     assert [
@@ -2539,7 +2628,9 @@ def test_access_request_review_items_include_approval_and_grant_state(tmp_path):
     assert partial_item["approval_threshold"] == 2
     assert partial_item["approval_count"] == 1
 
-    service.approve_approval(wallet.wallet_id, approval_id=approval.approval_id, approver_did=SECOND_CONTROLLER)
+    service.approve_approval(
+        wallet.wallet_id, approval_id=approval.approval_id, approver_did=SECOND_CONTROLLER
+    )
     service.approve_access_request(
         wallet.wallet_id,
         request_id=access_request.request_id,
@@ -2672,9 +2763,9 @@ def test_manifest_serialization_is_stable(tmp_path):
     source.write_text("stable manifest", encoding="utf-8")
     service.add_document(wallet.wallet_id, source)
 
-    assert service.get_wallet_manifest_canonical(wallet.wallet_id) == service.get_wallet_manifest_canonical(
+    assert service.get_wallet_manifest_canonical(
         wallet.wallet_id
-    )
+    ) == service.get_wallet_manifest_canonical(wallet.wallet_id)
 
 
 def test_audit_events_form_hash_chain(tmp_path):
@@ -2705,7 +2796,10 @@ def test_ipfs_storage_backend_stores_only_encrypted_payloads(tmp_path):
     assert version.encrypted_payload_ref.uri.startswith("ipfs://fakecid-")
     assert fake_ipfs.pinned
     assert b"plain secret" not in b"".join(fake_ipfs.blocks.values())
-    assert service.decrypt_record(wallet.wallet_id, record.record_id, actor_did=OWNER) == source.read_bytes()
+    assert (
+        service.decrypt_record(wallet.wallet_id, record.record_id, actor_did=OWNER)
+        == source.read_bytes()
+    )
 
 
 def test_ipfs_storage_backend_rejects_hash_mismatch():
@@ -2762,11 +2856,17 @@ def test_replicated_storage_records_mirrors_and_keeps_plaintext_out(tmp_path):
     assert b"replicated plaintext" not in b"".join(s3_client.objects.values())
     assert b"replicated plaintext" not in b"".join(filecoin_backend.objects.values())
     manifest = service.export_wallet_snapshot(wallet.wallet_id)
-    assert {mirror["storage_type"] for mirror in manifest["versions"][0]["encrypted_payload_ref"]["mirrors"]} == mirror_types
+    assert {
+        mirror["storage_type"]
+        for mirror in manifest["versions"][0]["encrypted_payload_ref"]["mirrors"]
+    } == mirror_types
     restored = WalletService(storage_backend=storage)
     restored.import_wallet_snapshot(manifest)
     restored.set_principal_secret(OWNER, owner_secret)
-    assert restored.decrypt_record(wallet.wallet_id, record.record_id, actor_did=OWNER) == source.read_bytes()
+    assert (
+        restored.decrypt_record(wallet.wallet_id, record.record_id, actor_did=OWNER)
+        == source.read_bytes()
+    )
 
 
 def test_replicated_storage_reads_from_mirror_when_primary_fails():
@@ -2801,7 +2901,9 @@ def test_record_storage_health_detects_and_repairs_bad_mirrors(tmp_path):
     version = service.versions[record.current_version_id]
 
     assert service.verify_record_storage(wallet.wallet_id, record.record_id).ok is True
-    ipfs_payload = next(mirror for mirror in version.encrypted_payload_ref.mirrors if mirror.storage_type == "ipfs")
+    ipfs_payload = next(
+        mirror for mirror in version.encrypted_payload_ref.mirrors if mirror.storage_type == "ipfs"
+    )
     fake_ipfs.blocks[ipfs_payload.uri.removeprefix("ipfs://")] = b"tampered encrypted payload"
     s3_client.objects.clear()
 
@@ -2827,7 +2929,9 @@ def test_record_storage_health_detects_and_repairs_bad_mirrors(tmp_path):
     assert b"repair plaintext" not in b"".join(s3_client.objects.values())
     assert service.verify_record_storage(wallet.wallet_id, record.record_id).ok is True
     assert service.get_audit_log(wallet.wallet_id)[-1].action == "storage/verify"
-    assert any(event.action == "storage/repair" for event in service.get_audit_log(wallet.wallet_id))
+    assert any(
+        event.action == "storage/repair" for event in service.get_audit_log(wallet.wallet_id)
+    )
 
 
 def test_wallet_storage_repair_repairs_all_record_replicas(tmp_path):
@@ -2883,7 +2987,9 @@ def test_record_storage_repair_restores_missing_primary_from_mirror(tmp_path):
     primary_path = version.encrypted_payload_ref.uri.removeprefix("local://")
 
     os.unlink(primary_path)
-    broken = service.verify_record_storage(wallet.wallet_id, record.record_id, include_metadata=False)
+    broken = service.verify_record_storage(
+        wallet.wallet_id, record.record_id, include_metadata=False
+    )
     assert broken.ok is False
     assert broken.payload[0].role == "primary"
 
@@ -2895,7 +3001,10 @@ def test_record_storage_repair_restores_missing_primary_from_mirror(tmp_path):
     )
     assert repaired.ok is True
     assert repaired.payload[0].repaired is True
-    assert service.decrypt_record(wallet.wallet_id, record.record_id, actor_did=OWNER) == source.read_bytes()
+    assert (
+        service.decrypt_record(wallet.wallet_id, record.record_id, actor_did=OWNER)
+        == source.read_bytes()
+    )
 
 
 def test_analytics_contribution_requires_consented_fields(tmp_path):
@@ -2952,7 +3061,9 @@ def test_analytics_nullifier_is_secret_keyed_not_wallet_id_hash(tmp_path):
         fields={"county": "Multnomah"},
     )
 
-    legacy_wallet_id_hash = hashlib.sha256(f"{wallet.wallet_id}:{template_id}".encode("utf-8")).hexdigest()
+    legacy_wallet_id_hash = hashlib.sha256(
+        f"{wallet.wallet_id}:{template_id}".encode("utf-8")
+    ).hexdigest()
     assert contribution.nullifier == wallet_analytics.contribution_nullifier(
         wallet.wallet_id,
         template_id,
@@ -2977,7 +3088,9 @@ def test_analytics_template_constrains_consent_and_snapshot(tmp_path):
     )
 
     assert template.template_id == "housing_template_v1"
-    assert [item.template_id for item in service.list_analytics_templates()] == ["housing_template_v1"]
+    assert [item.template_id for item in service.list_analytics_templates()] == [
+        "housing_template_v1"
+    ]
 
     with pytest.raises(AccessDeniedError, match="fields exceed template"):
         service.create_analytics_consent(
@@ -3059,7 +3172,9 @@ def test_analytics_ledger_redacts_subject_ids_and_import_preserves_wallet_consen
 
     ledger_first = WalletService(storage_dir=tmp_path / "ledger-first")
     ledger_first.import_analytics_ledger(ledger)
-    assert ledger_first.analytics_consents[consents[0].consent_id].wallet_id.startswith("analytics-subject:")
+    assert ledger_first.analytics_consents[consents[0].consent_id].wallet_id.startswith(
+        "analytics-subject:"
+    )
     ledger_first.import_wallet_snapshot(service.export_wallet_snapshot(wallet1.wallet_id))
     assert ledger_first.analytics_consents[consents[0].consent_id].wallet_id == wallet1.wallet_id
 
@@ -3098,9 +3213,13 @@ def test_analytics_template_review_states_gate_consent_contribution_and_queries(
         )
 
     with pytest.raises(AccessDeniedError, match="Only the template creator"):
-        service.set_analytics_template_status(template.template_id, actor_did=OWNER, status="approved")
+        service.set_analytics_template_status(
+            template.template_id, actor_did=OWNER, status="approved"
+        )
 
-    service.set_analytics_template_status(template.template_id, actor_did="did:key:analyst", status="approved")
+    service.set_analytics_template_status(
+        template.template_id, actor_did="did:key:analyst", status="approved"
+    )
     assert service.list_analytics_templates()[0].template_id == template.template_id
     consent = service.create_analytics_consent(
         wallet.wallet_id,
@@ -3117,7 +3236,9 @@ def test_analytics_template_review_states_gate_consent_contribution_and_queries(
         fields={"county": "Multnomah"},
     )
 
-    service.set_analytics_template_status(template.template_id, actor_did="did:key:analyst", status="paused")
+    service.set_analytics_template_status(
+        template.template_id, actor_did="did:key:analyst", status="paused"
+    )
     with pytest.raises(AccessDeniedError, match="not active"):
         service.run_aggregate_count(template.template_id, min_cohort_size=1)
     with pytest.raises(AccessDeniedError, match="not active"):
@@ -3130,7 +3251,9 @@ def test_analytics_template_review_states_gate_consent_contribution_and_queries(
         )
 
     with pytest.raises(ValueError, match="status"):
-        service.set_analytics_template_status(template.template_id, actor_did="did:key:analyst", status="live")
+        service.set_analytics_template_status(
+            template.template_id, actor_did="did:key:analyst", status="live"
+        )
 
 
 def test_retired_analytics_template_blocks_new_contributions(tmp_path):
@@ -3192,7 +3315,9 @@ def test_revoked_analytics_consent_blocks_future_contribution_preserves_aggregat
     result = service.run_aggregate_count(template_id, epsilon=0.25)
     assert result.released is True
     assert result.result_id in service.aggregate_results
-    service.revoke_analytics_consent(wallet1.wallet_id, consents[0][2].consent_id, actor_did="did:key:owner1")
+    service.revoke_analytics_consent(
+        wallet1.wallet_id, consents[0][2].consent_id, actor_did="did:key:owner1"
+    )
 
     with pytest.raises(AccessDeniedError, match="not active"):
         service.create_analytics_contribution(
@@ -3205,10 +3330,14 @@ def test_revoked_analytics_consent_blocks_future_contribution_preserves_aggregat
 
     assert service.aggregate_results[result.result_id].to_dict() == result.to_dict()
     query_events = [
-        event for event in service.get_audit_log(wallet1.wallet_id) if event.action == "analytics/query"
+        event
+        for event in service.get_audit_log(wallet1.wallet_id)
+        if event.action == "analytics/query"
     ]
     revoke_events = [
-        event for event in service.get_audit_log(wallet1.wallet_id) if event.action == "analytics/consent_revoke"
+        event
+        for event in service.get_audit_log(wallet1.wallet_id)
+        if event.action == "analytics/consent_revoke"
     ]
     assert query_events[-1].details["result_id"] == result.result_id
     assert revoke_events[-1].details["template_id"] == template_id
@@ -3519,6 +3648,10 @@ def test_differentially_private_aggregate_count_suppresses_small_cohorts(tmp_pat
     assert result.exact_count_released is False
     assert result.cohort_size_released is False
     assert "suppressed-small-cohort" in result.privacy_notes
-    query_events = [event for event in service.get_audit_log(wallet.wallet_id) if event.action == "analytics/query"]
+    query_events = [
+        event
+        for event in service.get_audit_log(wallet.wallet_id)
+        if event.action == "analytics/query"
+    ]
     assert query_events[-1].decision == "suppress"
     assert query_events[-1].details["suppressed"] is True

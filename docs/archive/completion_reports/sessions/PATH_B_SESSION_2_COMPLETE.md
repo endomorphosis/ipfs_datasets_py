@@ -122,7 +122,7 @@ result = adapter.query(
     top_k=10,
     include_vector_results=True,
     include_graph_results=True,
-    include_cross_document_reasoning=True
+    include_cross_document_reasoning=True,
 )
 
 # Returns old format:
@@ -139,13 +139,10 @@ result = adapter.query(
 ```python
 from ipfs_datasets_py.knowledge_graphs.query import UnifiedQueryEngine
 
-engine = UnifiedQueryEngine(backend=backend, vector_store=vector_stores['default'])
+engine = UnifiedQueryEngine(backend=backend, vector_store=vector_stores["default"])
 
 # New method signature
-result = engine.execute_hybrid(
-    query_text="What is IPFS?",
-    top_k=10
-)
+result = engine.execute_hybrid(query_text="What is IPFS?", top_k=10)
 
 # Returns QueryResult object:
 # QueryResult(
@@ -190,9 +187,9 @@ def _get_query_embedding(self, query_text: str) -> Optional[List[float]]:
     """Get query embedding from vector store with multiple API support."""
     if not self.vector_store:
         return None
-    
+
     # Try common vector store methods
-    for method in ['embed_query', 'get_embedding', 'encode']:
+    for method in ["embed_query", "get_embedding", "encode"]:
         if hasattr(self.vector_store, method):
             try:
                 embedding = getattr(self.vector_store, method)(query_text)
@@ -200,18 +197,20 @@ def _get_query_embedding(self, query_text: str) -> Optional[List[float]]:
                     return embedding
             except Exception as e:
                 logger.warning(f"Failed to get embedding via {method}: {e}")
-    
+
     return None
 ```
 
 **Graph Backend Neighbors:**
 ```python
-def _get_neighbors(self, node_id: str, relationship_types: Optional[List[str]] = None) -> List[Dict]:
+def _get_neighbors(
+    self, node_id: str, relationship_types: Optional[List[str]] = None
+) -> List[Dict]:
     """Get neighbors from graph backend with multiple API support."""
     neighbors = []
-    
+
     # Try common backend methods
-    for method in ['get_neighbors', 'get_relationships', 'get_adjacent']:
+    for method in ["get_neighbors", "get_relationships", "get_adjacent"]:
         if hasattr(self.backend, method):
             try:
                 results = getattr(self.backend, method)(node_id, relationship_types)
@@ -220,7 +219,7 @@ def _get_neighbors(self, node_id: str, relationship_types: Optional[List[str]] =
                     break
             except Exception as e:
                 logger.warning(f"Failed to get neighbors via {method}: {e}")
-    
+
     return neighbors
 ```
 

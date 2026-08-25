@@ -89,9 +89,7 @@ def test_mean_pilot_forward_not_worse_than_sealed_plateau() -> None:
     losses: list[float] = []
     for case in load_pilot_matrix_cases():
         l1 = construct_baseline_l1(case)
-        losses.append(
-            float(compare_semantic_ir(case.gold_ir, l1)["semantic_loss"])
-        )
+        losses.append(float(compare_semantic_ir(case.gold_ir, l1)["semantic_loss"]))
     mean_forward = sum(losses) / len(losses)
     assert mean_forward <= BASELINE_E2E_MEAN + 1e-9
     assert mean_forward < 0.05
@@ -167,15 +165,9 @@ def test_passive_dispute_resolution_and_qualifier_harvest() -> None:
                 "modality": "O",
                 "norm_type": "obligation",
                 "actor": "All disputes",
-                "action": (
-                    "be resolved through binding arbitration in "
-                    "Springfield, Illinois"
-                ),
+                "action": ("be resolved through binding arbitration in Springfield, Illinois"),
                 "action_verb": "be",
-                "action_object": (
-                    "resolved through binding arbitration in "
-                    "Springfield Illinois"
-                ),
+                "action_object": ("resolved through binding arbitration in Springfield Illinois"),
                 "conditions": [],
                 "exceptions": [],
                 "temporal_constraints": [],
@@ -190,19 +182,14 @@ def test_passive_dispute_resolution_and_qualifier_harvest() -> None:
                 "modality": "P",
                 "norm_type": "permission",
                 "actor": "Client",
-                "action": (
-                    "inspect the work at any time with 24 hours advance notice"
-                ),
+                "action": ("inspect the work at any time with 24 hours advance notice"),
                 "action_verb": "inspect",
-                "action_object": (
-                    "the work at any time with hours advance notice"
-                ),
+                "action_object": ("the work at any time with hours advance notice"),
                 "conditions": [],
                 "exceptions": [],
                 "temporal_constraints": [],
                 "source_text": (
-                    "The Client may inspect the work at any time with "
-                    "24 hours advance notice"
+                    "The Client may inspect the work at any time with 24 hours advance notice"
                 ),
             }
         ),
@@ -214,10 +201,7 @@ def test_passive_dispute_resolution_and_qualifier_harvest() -> None:
     assert "resolve" in by_action
     resolve = by_action["resolve"]
     assert resolve.actor == "parties"
-    assert (
-        resolve.object
-        == "disputes_through_binding_arbitration_in_springfield_illinois"
-    )
+    assert resolve.object == "disputes_through_binding_arbitration_in_springfield_illinois"
     inspect = by_action["inspect"]
     assert inspect.object == "work"
     assert inspect.conditions == ("with_24_hours_advance_notice",)
@@ -252,9 +236,10 @@ def test_edit_wave_receipt_cites_packet_and_forbids_optional_promotion() -> None
 
     post = receipt["post_scores"]
     assert isinstance(post, dict)
-    assert float(post["construction_contract_forward_loss"]) <= float(
-        prior["construction_contract_forward_loss"]
-    ) + 1e-9
+    assert (
+        float(post["construction_contract_forward_loss"])
+        <= float(prior["construction_contract_forward_loss"]) + 1e-9
+    )
     assert float(post["mean_pilot_forward_loss"]) <= BASELINE_E2E_MEAN + 1e-9
 
     assert receipt["optional_runtimes_promoted"] == []
@@ -290,9 +275,9 @@ def test_constructor_identity_unchanged_and_no_llm_dependency() -> None:
     constructor = TypedDeonticCanonicalConstructor()
     assert constructor.identity == TYPED_DEONTIC_CANONICAL_CONSTRUCTOR_INTERFACE
     # Module surface stays deterministic: no teacher runtime hooks on construct.
-    source = (
-        ROOT / "benchmarks/semantic_roundtrip/constructors/typed_deontic.py"
-    ).read_text(encoding="utf-8")
+    source = (ROOT / "benchmarks/semantic_roundtrip/constructors/typed_deontic.py").read_text(
+        encoding="utf-8"
+    )
     lowered = source.lower()
     for banned in (
         "openai",
@@ -303,11 +288,7 @@ def test_constructor_identity_unchanged_and_no_llm_dependency() -> None:
         "autoencoder_guided",
     ):
         assert banned not in lowered, banned
-    case = next(
-        c
-        for c in load_pilot_matrix_cases()
-        if c.case_id == "construction_contract"
-    )
+    case = next(c for c in load_pilot_matrix_cases() if c.case_id == "construction_contract")
     result = constructor.construct(
         ConstructorRequest(case.source_text, case.allowed_atom_vocabulary, {})
     )

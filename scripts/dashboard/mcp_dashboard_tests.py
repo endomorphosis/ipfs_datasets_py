@@ -28,379 +28,404 @@ def setup_sys_path():
 
 class MCPDashboardTester:
     """Comprehensive MCP Dashboard testing with Playwright."""
-    
+
     def __init__(self, dashboard_url: str = "http://127.0.0.1:8899", headless: bool = True):
         self.dashboard_url = dashboard_url
         self.headless = headless
         self.screenshots_dir = Path("test_screenshots")
         self.screenshots_dir.mkdir(exist_ok=True)
-        self.test_results = {
-            "tests": [],
-            "screenshots": [],
-            "summary": {}
-        }
-        
+        self.test_results = {"tests": [], "screenshots": [], "summary": {}}
+
     def setup_dashboard_if_needed(self) -> bool:
         """Start the MCP dashboard if it's not running."""
         try:
             import requests
+
             response = requests.get(f"{self.dashboard_url}/api/mcp/status", timeout=5)
             if response.status_code == 200:
                 print(f"✓ Dashboard already running at {self.dashboard_url}")
                 return True
         except:
             pass
-        
+
         print(f"Starting MCP dashboard at {self.dashboard_url}...")
-        
+
         # Try to start the dashboard
         try:
             env = os.environ.copy()
-            env.update({
-                "MCP_DASHBOARD_HOST": "127.0.0.1",
-                "MCP_DASHBOARD_PORT": "8899",
-                "MCP_DASHBOARD_BLOCKING": "1"
-            })
-            
+            env.update(
+                {
+                    "MCP_DASHBOARD_HOST": "127.0.0.1",
+                    "MCP_DASHBOARD_PORT": "8899",
+                    "MCP_DASHBOARD_BLOCKING": "1",
+                }
+            )
+
             cmd = [sys.executable, "-m", "ipfs_datasets_py.mcp_dashboard"]
             self.dashboard_process = subprocess.Popen(
-                cmd, 
-                env=env,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
-            
+
             # Wait for dashboard to start
             for _ in range(30):  # Wait up to 30 seconds
                 try:
                     import requests
+
                     response = requests.get(f"{self.dashboard_url}/api/mcp/status", timeout=2)
                     if response.status_code == 200:
                         print(f"✓ Dashboard started successfully")
                         return True
                 except:
                     time.sleep(1)
-            
+
             print("✗ Dashboard failed to start within timeout")
             return False
-            
+
         except Exception as e:
             print(f"✗ Failed to start dashboard: {e}")
             return False
-    
+
     async def run_comprehensive_tests(self) -> Dict[str, Any]:
         """Run all dashboard tests."""
         print("Starting comprehensive MCP Dashboard tests...")
-        
+
         # Check if dashboard is running
         if not self.setup_dashboard_if_needed():
             return self._generate_static_test_results()
-        
+
         try:
             from playwright.async_api import async_playwright
-            
+
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=self.headless)
                 context = await browser.new_context()
                 page = await context.new_page()
-                
+
                 # Run test suite
                 await self.test_dashboard_loading(page)
                 await self.test_tool_discovery(page)
                 await self.test_tool_execution(page)
                 await self.test_status_endpoints(page)
                 await self.test_ui_interactions(page)
-                
+
                 await browser.close()
-                
+
         except ImportError:
             print("Playwright not available, generating static test results...")
             return self._generate_static_test_results()
         except Exception as e:
             print(f"Test execution failed: {e}")
             return self._generate_static_test_results()
-        
+
         # Generate summary
         self.test_results["summary"] = {
             "total_tests": len(self.test_results["tests"]),
             "passed": len([t for t in self.test_results["tests"] if t["status"] == "pass"]),
             "failed": len([t for t in self.test_results["tests"] if t["status"] == "fail"]),
-            "screenshots_captured": len(self.test_results["screenshots"])
+            "screenshots_captured": len(self.test_results["screenshots"]),
         }
-        
+
         return self.test_results
-    
+
     async def test_dashboard_loading(self, page) -> None:
         """Test basic dashboard loading and responsiveness."""
         test_name = "Dashboard Loading"
-        
+
         try:
             # Navigate to dashboard
             await page.goto(f"{self.dashboard_url}/mcp")
-            await page.wait_for_load_state('networkidle')
-            
+            await page.wait_for_load_state("networkidle")
+
             # Take screenshot
             screenshot_path = self.screenshots_dir / "01_dashboard_loading.png"
             await page.screenshot(path=screenshot_path)
-            self.test_results["screenshots"].append({
-                "name": "Dashboard Loading",
-                "path": str(screenshot_path),
-                "description": "Initial dashboard load and main interface"
-            })
-            
+            self.test_results["screenshots"].append(
+                {
+                    "name": "Dashboard Loading",
+                    "path": str(screenshot_path),
+                    "description": "Initial dashboard load and main interface",
+                }
+            )
+
             # Check page title
             title = await page.title()
             assert "MCP Dashboard" in title or "IPFS Datasets" in title
-            
+
             # Check for main navigation elements
             nav_elements = await page.query_selector_all("nav, .nav, .navbar")
             assert len(nav_elements) > 0, "No navigation elements found"
-            
+
             # Check for tool listing area
             tool_areas = await page.query_selector_all(".tool, .category, .mcp-tool")
-            
-            self.test_results["tests"].append({
-                "name": test_name,
-                "status": "pass",
-                "details": f"Page loaded successfully, title: {title}, nav elements: {len(nav_elements)}"
-            })
-            
+
+            self.test_results["tests"].append(
+                {
+                    "name": test_name,
+                    "status": "pass",
+                    "details": f"Page loaded successfully, title: {title}, nav elements: {len(nav_elements)}",
+                }
+            )
+
         except Exception as e:
-            self.test_results["tests"].append({
-                "name": test_name,
-                "status": "fail",
-                "error": str(e)
-            })
-    
+            self.test_results["tests"].append(
+                {"name": test_name, "status": "fail", "error": str(e)}
+            )
+
     async def test_tool_discovery(self, page) -> None:
         """Test MCP tool discovery and listing."""
         test_name = "Tool Discovery"
-        
+
         try:
             # Navigate to tools API
             await page.goto(f"{self.dashboard_url}/api/mcp/tools")
-            
+
             # Get tools data
             content = await page.content()
-            tools_data = json.loads(await page.locator("pre").inner_text()) if await page.locator("pre").count() > 0 else {}
-            
+            tools_data = (
+                json.loads(await page.locator("pre").inner_text())
+                if await page.locator("pre").count() > 0
+                else {}
+            )
+
             # Verify tools structure
             assert isinstance(tools_data, dict), "Tools data should be a dictionary"
-            
+
             # Take screenshot of tools API
             screenshot_path = self.screenshots_dir / "02_tools_api.png"
             await page.screenshot(path=screenshot_path)
-            self.test_results["screenshots"].append({
-                "name": "Tools API Response",
-                "path": str(screenshot_path),
-                "description": "MCP tools API endpoint showing available tools"
-            })
-            
-            self.test_results["tests"].append({
-                "name": test_name,
-                "status": "pass",
-                "details": f"Discovered {len(tools_data)} tool categories"
-            })
-            
+            self.test_results["screenshots"].append(
+                {
+                    "name": "Tools API Response",
+                    "path": str(screenshot_path),
+                    "description": "MCP tools API endpoint showing available tools",
+                }
+            )
+
+            self.test_results["tests"].append(
+                {
+                    "name": test_name,
+                    "status": "pass",
+                    "details": f"Discovered {len(tools_data)} tool categories",
+                }
+            )
+
         except Exception as e:
-            self.test_results["tests"].append({
-                "name": test_name,
-                "status": "fail",
-                "error": str(e)
-            })
-    
+            self.test_results["tests"].append(
+                {"name": test_name, "status": "fail", "error": str(e)}
+            )
+
     async def test_tool_execution(self, page) -> None:
         """Test tool execution through the dashboard."""
         test_name = "Tool Execution"
-        
+
         try:
             # Go back to main dashboard
             await page.goto(f"{self.dashboard_url}/mcp")
-            await page.wait_for_load_state('networkidle')
-            
+            await page.wait_for_load_state("networkidle")
+
             # Look for tool execution forms or buttons
-            execute_buttons = await page.query_selector_all("button[class*='execute'], .execute-btn, input[type='submit']")
+            execute_buttons = await page.query_selector_all(
+                "button[class*='execute'], .execute-btn, input[type='submit']"
+            )
             tool_forms = await page.query_selector_all("form")
-            
+
             # Take screenshot of execution interface
             screenshot_path = self.screenshots_dir / "03_tool_execution.png"
             await page.screenshot(path=screenshot_path)
-            self.test_results["screenshots"].append({
-                "name": "Tool Execution Interface",
-                "path": str(screenshot_path),
-                "description": "Tool execution forms and controls"
-            })
-            
+            self.test_results["screenshots"].append(
+                {
+                    "name": "Tool Execution Interface",
+                    "path": str(screenshot_path),
+                    "description": "Tool execution forms and controls",
+                }
+            )
+
             # Try to find and interact with a simple tool
             if tool_forms:
                 # Fill out a basic form if available
                 form = tool_forms[0]
                 inputs = await form.query_selector_all("input[type='text'], textarea")
-                
+
                 for input_elem in inputs[:2]:  # Fill first 2 inputs
                     await input_elem.fill("test_value")
-                
+
                 # Take screenshot after filling form
                 screenshot_path = self.screenshots_dir / "04_form_filled.png"
                 await page.screenshot(path=screenshot_path)
-                self.test_results["screenshots"].append({
-                    "name": "Form Filled",
-                    "path": str(screenshot_path),
-                    "description": "Tool execution form with test data"
-                })
-            
-            self.test_results["tests"].append({
-                "name": test_name,
-                "status": "pass",
-                "details": f"Found {len(execute_buttons)} execute buttons, {len(tool_forms)} forms"
-            })
-            
+                self.test_results["screenshots"].append(
+                    {
+                        "name": "Form Filled",
+                        "path": str(screenshot_path),
+                        "description": "Tool execution form with test data",
+                    }
+                )
+
+            self.test_results["tests"].append(
+                {
+                    "name": test_name,
+                    "status": "pass",
+                    "details": f"Found {len(execute_buttons)} execute buttons, {len(tool_forms)} forms",
+                }
+            )
+
         except Exception as e:
-            self.test_results["tests"].append({
-                "name": test_name,
-                "status": "fail",
-                "error": str(e)
-            })
-    
+            self.test_results["tests"].append(
+                {"name": test_name, "status": "fail", "error": str(e)}
+            )
+
     async def test_status_endpoints(self, page) -> None:
         """Test dashboard status and health endpoints."""
         test_name = "Status Endpoints"
-        
+
         try:
             # Test status endpoint
             await page.goto(f"{self.dashboard_url}/api/mcp/status")
-            
+
             status_content = await page.content()
             if await page.locator("pre").count() > 0:
                 status_data = json.loads(await page.locator("pre").inner_text())
             else:
                 # Try to parse from page content
-                status_data = json.loads(status_content.split('<body>')[1].split('</body>')[0])
-            
+                status_data = json.loads(status_content.split("<body>")[1].split("</body>")[0])
+
             # Verify status structure
             assert "status" in status_data, "Status data missing 'status' field"
             assert status_data["status"] == "running", "MCP server not running"
-            
+
             # Take screenshot
             screenshot_path = self.screenshots_dir / "05_status_endpoint.png"
             await page.screenshot(path=screenshot_path)
-            self.test_results["screenshots"].append({
-                "name": "Status Endpoint",
-                "path": str(screenshot_path),
-                "description": "MCP server status API response"
-            })
-            
-            self.test_results["tests"].append({
-                "name": test_name,
-                "status": "pass",
-                "details": f"Status: {status_data.get('status')}, Tools: {status_data.get('tools_available', 0)}"
-            })
-            
+            self.test_results["screenshots"].append(
+                {
+                    "name": "Status Endpoint",
+                    "path": str(screenshot_path),
+                    "description": "MCP server status API response",
+                }
+            )
+
+            self.test_results["tests"].append(
+                {
+                    "name": test_name,
+                    "status": "pass",
+                    "details": f"Status: {status_data.get('status')}, Tools: {status_data.get('tools_available', 0)}",
+                }
+            )
+
         except Exception as e:
-            self.test_results["tests"].append({
-                "name": test_name,
-                "status": "fail",
-                "error": str(e)
-            })
-    
+            self.test_results["tests"].append(
+                {"name": test_name, "status": "fail", "error": str(e)}
+            )
+
     async def test_ui_interactions(self, page) -> None:
         """Test UI interactions and responsiveness."""
         test_name = "UI Interactions"
-        
+
         try:
             # Go to main dashboard
             await page.goto(f"{self.dashboard_url}/mcp")
-            await page.wait_for_load_state('networkidle')
-            
+            await page.wait_for_load_state("networkidle")
+
             # Test navigation if present
             nav_links = await page.query_selector_all("a[href], .nav-link, .menu-item")
-            
+
             if nav_links:
                 # Click first navigation link
                 await nav_links[0].click()
-                await page.wait_for_load_state('networkidle')
-                
+                await page.wait_for_load_state("networkidle")
+
                 # Take screenshot after navigation
                 screenshot_path = self.screenshots_dir / "06_navigation.png"
                 await page.screenshot(path=screenshot_path)
-                self.test_results["screenshots"].append({
-                    "name": "Navigation Test",
-                    "path": str(screenshot_path),
-                    "description": "Dashboard after navigation interaction"
-                })
-            
+                self.test_results["screenshots"].append(
+                    {
+                        "name": "Navigation Test",
+                        "path": str(screenshot_path),
+                        "description": "Dashboard after navigation interaction",
+                    }
+                )
+
             # Test responsive design (resize viewport)
             await page.set_viewport_size({"width": 768, "height": 1024})  # Tablet size
-            
+
             screenshot_path = self.screenshots_dir / "07_responsive_tablet.png"
             await page.screenshot(path=screenshot_path)
-            self.test_results["screenshots"].append({
-                "name": "Responsive - Tablet",
-                "path": str(screenshot_path),
-                "description": "Dashboard in tablet viewport (768x1024)"
-            })
-            
+            self.test_results["screenshots"].append(
+                {
+                    "name": "Responsive - Tablet",
+                    "path": str(screenshot_path),
+                    "description": "Dashboard in tablet viewport (768x1024)",
+                }
+            )
+
             await page.set_viewport_size({"width": 375, "height": 667})  # Mobile size
-            
+
             screenshot_path = self.screenshots_dir / "08_responsive_mobile.png"
             await page.screenshot(path=screenshot_path)
-            self.test_results["screenshots"].append({
-                "name": "Responsive - Mobile",
-                "path": str(screenshot_path),
-                "description": "Dashboard in mobile viewport (375x667)"
-            })
-            
-            self.test_results["tests"].append({
-                "name": test_name,
-                "status": "pass",
-                "details": f"Tested {len(nav_links)} navigation links, responsive design"
-            })
-            
+            self.test_results["screenshots"].append(
+                {
+                    "name": "Responsive - Mobile",
+                    "path": str(screenshot_path),
+                    "description": "Dashboard in mobile viewport (375x667)",
+                }
+            )
+
+            self.test_results["tests"].append(
+                {
+                    "name": test_name,
+                    "status": "pass",
+                    "details": f"Tested {len(nav_links)} navigation links, responsive design",
+                }
+            )
+
         except Exception as e:
-            self.test_results["tests"].append({
-                "name": test_name,
-                "status": "fail",
-                "error": str(e)
-            })
-    
+            self.test_results["tests"].append(
+                {"name": test_name, "status": "fail", "error": str(e)}
+            )
+
     def _generate_static_test_results(self) -> Dict[str, Any]:
         """Generate static test results when Playwright is unavailable."""
         print("Generating static test results...")
-        
+
         # Create static HTML preview
         html_content = self._create_static_dashboard_html()
-        
+
         # Write to file
         static_preview_path = self.screenshots_dir / "static_dashboard_preview.html"
-        with open(static_preview_path, 'w') as f:
+        with open(static_preview_path, "w") as f:
             f.write(html_content)
-        
-        self.test_results["screenshots"].append({
-            "name": "Static Dashboard Preview",
-            "path": str(static_preview_path),
-            "description": "Complete dashboard interface preview (static version)"
-        })
-        
+
+        self.test_results["screenshots"].append(
+            {
+                "name": "Static Dashboard Preview",
+                "path": str(static_preview_path),
+                "description": "Complete dashboard interface preview (static version)",
+            }
+        )
+
         # Add mock test results
         mock_tests = [
             {"name": "Dashboard Loading", "status": "pass", "details": "Static preview generated"},
             {"name": "Tool Discovery", "status": "pass", "details": "Tool structure documented"},
             {"name": "Tool Execution", "status": "pass", "details": "Execution interface designed"},
             {"name": "Status Endpoints", "status": "pass", "details": "API endpoints documented"},
-            {"name": "UI Interactions", "status": "pass", "details": "Interaction patterns defined"}
+            {
+                "name": "UI Interactions",
+                "status": "pass",
+                "details": "Interaction patterns defined",
+            },
         ]
-        
+
         self.test_results["tests"] = mock_tests
         self.test_results["summary"] = {
             "total_tests": len(mock_tests),
             "passed": len(mock_tests),
             "failed": 0,
             "screenshots_captured": 1,
-            "note": "Static preview generated - install Playwright for interactive testing"
+            "note": "Static preview generated - install Playwright for interactive testing",
         }
-        
+
         return self.test_results
-    
+
     def _create_static_dashboard_html(self) -> str:
         """Create a static HTML preview of the MCP dashboard."""
         return """<!DOCTYPE html>
@@ -601,44 +626,44 @@ class MCPDashboardTester:
 def main():
     """Main test runner."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="MCP Dashboard Playwright Tests")
     parser.add_argument("--url", default="http://127.0.0.1:8899", help="Dashboard URL")
     parser.add_argument("--headless", action="store_true", help="Run in headless mode")
     parser.add_argument("--output", default="test_results.json", help="Output file for results")
-    
+
     args = parser.parse_args()
-    
+
     # Setup test environment
     setup_sys_path()
-    
+
     # Run tests
     tester = MCPDashboardTester(dashboard_url=args.url, headless=args.headless)
-    
+
     async def run_tests():
         results = await tester.run_comprehensive_tests()
-        
+
         # Save results
-        with open(args.output, 'w') as f:
+        with open(args.output, "w") as f:
             json.dump(results, f, indent=2, default=str)
-        
+
         # Print summary
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("MCP Dashboard Test Results")
-        print("="*50)
-        
+        print("=" * 50)
+
         summary = results.get("summary", {})
         print(f"Total Tests: {summary.get('total_tests', 0)}")
         print(f"Passed: {summary.get('passed', 0)}")
         print(f"Failed: {summary.get('failed', 0)}")
         print(f"Screenshots: {summary.get('screenshots_captured', 0)}")
-        
+
         if "note" in summary:
             print(f"Note: {summary['note']}")
-        
+
         print(f"\nDetailed results saved to: {args.output}")
         print(f"Screenshots saved to: test_screenshots/")
-        
+
         # Show failed tests
         failed_tests = [t for t in results.get("tests", []) if t.get("status") == "fail"]
         if failed_tests:
@@ -647,7 +672,7 @@ def main():
                 print(f"  ❌ {test['name']}: {test.get('error', 'Unknown error')}")
         else:
             print("\n✅ All tests passed!")
-    
+
     try:
         anyio.run(run_tests())
     except KeyboardInterrupt:

@@ -50,9 +50,13 @@ STATUS_ORDER = {
 _LOG_TS_RE = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)")
 _LOG_STATE_RE = re.compile(r"base_scraper\.([A-Z]{2})\]")
 _LOG_STATE_START_RE = re.compile(r"Scraping\s+\d+\s+codes\s+for\s+", flags=re.IGNORECASE)
-_LOG_SCRAPED_STATUTES_RE = re.compile(r"Scraped\s+(\d+)\s+(?:statutes|sections)\s+from\s+", flags=re.IGNORECASE)
+_LOG_SCRAPED_STATUTES_RE = re.compile(
+    r"Scraped\s+(\d+)\s+(?:statutes|sections)\s+from\s+", flags=re.IGNORECASE
+)
 _LOG_STATUTES_SOFAR_RE = re.compile(r"statutes_so_far=(\d+)", flags=re.IGNORECASE)
-_LOG_COUNTER_EQ_RE = re.compile(r"\b(?:statutes|records|sections|pages)=(\d+)\b", flags=re.IGNORECASE)
+_LOG_COUNTER_EQ_RE = re.compile(
+    r"\b(?:statutes|records|sections|pages)=(\d+)\b", flags=re.IGNORECASE
+)
 _LOG_SCANNED_SECTIONS_RE = re.compile(r"scanned_sections=\d+/\d+", flags=re.IGNORECASE)
 _LOG_SCANNED_DISCOVERED_PAIR_RE = re.compile(
     r"\bscanned_(?P<label>[a-z_]+)\s*=\s*(?P<scanned>\d+)\b.*?\bdiscovered_(?P=label)\s*=\s*(?P<discovered>\d+)\b",
@@ -302,7 +306,9 @@ def _upsert_task(
         existing["category"] = str(task.get("category")).strip()
     if str(task.get("source") or "").strip():
         existing["source"] = str(task.get("source")).strip()
-    existing["priority"] = min(_safe_int(existing.get("priority"), 50), _safe_int(task.get("priority"), 50))
+    existing["priority"] = min(
+        _safe_int(existing.get("priority"), 50), _safe_int(task.get("priority"), 50)
+    )
 
     incoming_status = _normalize_status(task.get("status"))
     existing_status = _normalize_status(existing.get("status"))
@@ -321,10 +327,18 @@ def _upsert_task(
         if incoming_rank < existing_rank:
             existing["status"] = incoming_status
 
-    existing["states"] = _uniq(list(existing.get("states") or []) + _normalize_states(task.get("states") or []))
-    existing["evidence"] = _uniq(list(existing.get("evidence") or []) + [str(x) for x in list(task.get("evidence") or [])])
-    existing["commands"] = _uniq(list(existing.get("commands") or []) + [str(x) for x in list(task.get("commands") or [])])
-    existing["notes"] = _uniq(list(existing.get("notes") or []) + [str(x) for x in list(task.get("notes") or [])])
+    existing["states"] = _uniq(
+        list(existing.get("states") or []) + _normalize_states(task.get("states") or [])
+    )
+    existing["evidence"] = _uniq(
+        list(existing.get("evidence") or []) + [str(x) for x in list(task.get("evidence") or [])]
+    )
+    existing["commands"] = _uniq(
+        list(existing.get("commands") or []) + [str(x) for x in list(task.get("commands") or [])]
+    )
+    existing["notes"] = _uniq(
+        list(existing.get("notes") or []) + [str(x) for x in list(task.get("notes") or [])]
+    )
 
     if task.get("llm_rewrite_plan"):
         existing["llm_rewrite_plan"] = task.get("llm_rewrite_plan")
@@ -359,7 +373,9 @@ def _extract_weak_states(section: Any) -> List[str]:
     return []
 
 
-def _ingest_retry_manifest(backlog: Dict[str, Any], path: Path, *, reopen_complete: bool) -> Dict[str, Any]:
+def _ingest_retry_manifest(
+    backlog: Dict[str, Any], path: Path, *, reopen_complete: bool
+) -> Dict[str, Any]:
     payload = _read_json(path)
     if not payload:
         return {"found": False}
@@ -419,13 +435,17 @@ def _ingest_retry_manifest(backlog: Dict[str, Any], path: Path, *, reopen_comple
     return output
 
 
-def _ingest_state_law_page_gap_report(backlog: Dict[str, Any], path: Path, *, reopen_complete: bool) -> Dict[str, Any]:
+def _ingest_state_law_page_gap_report(
+    backlog: Dict[str, Any], path: Path, *, reopen_complete: bool
+) -> Dict[str, Any]:
     payload = _read_json(path)
     if not payload:
         return {"found": False}
 
     summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
-    weak_states = _extract_weak_states(summary.get("weak_states")) or _extract_weak_states(payload.get("weak_states"))
+    weak_states = _extract_weak_states(summary.get("weak_states")) or _extract_weak_states(
+        payload.get("weak_states")
+    )
     output: Dict[str, Any] = {
         "found": True,
         "weak_states": weak_states,
@@ -479,20 +499,26 @@ def _ingest_state_law_page_gap_report(backlog: Dict[str, Any], path: Path, *, re
     return output
 
 
-def _ingest_state_admin_page_gap_report(backlog: Dict[str, Any], path: Path, *, reopen_complete: bool) -> Dict[str, Any]:
+def _ingest_state_admin_page_gap_report(
+    backlog: Dict[str, Any], path: Path, *, reopen_complete: bool
+) -> Dict[str, Any]:
     payload = _read_json(path)
     if not payload:
         return {"found": False}
 
     summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
-    weak_states = _extract_weak_states(summary.get("weak_states")) or _extract_weak_states(payload.get("weak_states"))
+    weak_states = _extract_weak_states(summary.get("weak_states")) or _extract_weak_states(
+        payload.get("weak_states")
+    )
     output: Dict[str, Any] = {
         "found": True,
         "weak_states": weak_states,
         "pages_total": _safe_int(summary.get("pages_total"), 0),
         "non_substantive_pages_total": _safe_int(summary.get("non_substantive_pages_total"), 0),
         "blocked_pages_total": _safe_int(summary.get("blocked_pages_total"), 0),
-        "candidate_substantive_pages_total": _safe_int(summary.get("candidate_substantive_pages_total"), 0),
+        "candidate_substantive_pages_total": _safe_int(
+            summary.get("candidate_substantive_pages_total"), 0
+        ),
     }
 
     for state in weak_states:
@@ -547,7 +573,9 @@ def _ingest_state_admin_page_gap_report(backlog: Dict[str, Any], path: Path, *, 
     return output
 
 
-def _ingest_state_admin_deep_summary(backlog: Dict[str, Any], path: Path, *, reopen_complete: bool) -> Dict[str, Any]:
+def _ingest_state_admin_deep_summary(
+    backlog: Dict[str, Any], path: Path, *, reopen_complete: bool
+) -> Dict[str, Any]:
     payload = _read_json(path)
     if not payload:
         return {"found": False}
@@ -708,7 +736,11 @@ def _list_legal_scraper_daemons() -> List[Dict[str, Any]]:
             output_dir = _extract_flag_value(tokens, "--output-dir")
             output_root = _extract_flag_value(tokens, "--output-root")
             states = _extract_flag_value(tokens, "--states")
-            daemon_kind = "refresh_state_laws_corpus" if "refresh_state_laws_corpus.py" in args else "legal_scraper_daemon"
+            daemon_kind = (
+                "refresh_state_laws_corpus"
+                if "refresh_state_laws_corpus.py" in args
+                else "legal_scraper_daemon"
+            )
             daemons.append(
                 {
                     "pid": pid,
@@ -723,7 +755,11 @@ def _list_legal_scraper_daemons() -> List[Dict[str, Any]]:
 
 
 def _find_legal_scraper_daemon_pids() -> List[int]:
-    return [int(row.get("pid") or 0) for row in _list_legal_scraper_daemons() if int(row.get("pid") or 0) > 0]
+    return [
+        int(row.get("pid") or 0)
+        for row in _list_legal_scraper_daemons()
+        if int(row.get("pid") or 0) > 0
+    ]
 
 
 def _find_legal_scraper_daemon_pid() -> Optional[int]:
@@ -890,7 +926,9 @@ def _extract_checkpoint_work_signal(payload: Dict[str, Any]) -> Tuple[str, int, 
     return "", 0, 0
 
 
-def _compute_samples_rate_per_minute(samples: List[Tuple[float, int]], *, now: float, window_seconds: float) -> Optional[float]:
+def _compute_samples_rate_per_minute(
+    samples: List[Tuple[float, int]], *, now: float, window_seconds: float
+) -> Optional[float]:
     if len(samples) < 2:
         return None
     window_start = now - max(60.0, float(window_seconds))
@@ -906,7 +944,9 @@ def _compute_samples_rate_per_minute(samples: List[Tuple[float, int]], *, now: f
     return round((float(delta) * 60.0) / span_seconds, 4)
 
 
-def _load_state_refresh_progress_payload(output_dir: Path, phase_path: Optional[Path]) -> Tuple[Dict[str, Any], Optional[Path]]:
+def _load_state_refresh_progress_payload(
+    output_dir: Path, phase_path: Optional[Path]
+) -> Tuple[Dict[str, Any], Optional[Path]]:
     candidates: List[Path] = []
     if phase_path is not None:
         candidates.append(phase_path.parent / "state_laws_refresh" / "state_refresh_progress.json")
@@ -942,11 +982,13 @@ def _collect_state_rate_analytics(
     state_stall_seconds: float,
 ) -> Dict[str, Any]:
     progress_payload, progress_path = _load_state_refresh_progress_payload(output_dir, phase_path)
-    progress_state_results = progress_payload.get("state_results") if isinstance(progress_payload.get("state_results"), dict) else {}
+    progress_state_results = (
+        progress_payload.get("state_results")
+        if isinstance(progress_payload.get("state_results"), dict)
+        else {}
+    )
     progress_states = _normalize_states(
-        progress_payload.get("active_states")
-        or progress_payload.get("states")
-        or []
+        progress_payload.get("active_states") or progress_payload.get("states") or []
     )
     progress_started_epoch = _safe_iso_to_epoch(progress_payload.get("started_at"))
     completed_states = {
@@ -1015,13 +1057,18 @@ def _collect_state_rate_analytics(
         work_discovered = 0
         scanned_discovered_match = _LOG_SCANNED_DISCOVERED_PAIR_RE.search(line)
         if scanned_discovered_match:
-            work_signal_kind = str(scanned_discovered_match.group("label") or "").strip().lower() or "scanned_discovered"
+            work_signal_kind = (
+                str(scanned_discovered_match.group("label") or "").strip().lower()
+                or "scanned_discovered"
+            )
             work_scanned = _safe_int(scanned_discovered_match.group("scanned"), 0)
             work_discovered = _safe_int(scanned_discovered_match.group("discovered"), 0)
         else:
             scanned_total_match = _LOG_SCANNED_TOTAL_RE.search(line)
             if scanned_total_match:
-                work_signal_kind = str(scanned_total_match.group("label") or "").strip().lower() or "scan_total"
+                work_signal_kind = (
+                    str(scanned_total_match.group("label") or "").strip().lower() or "scan_total"
+                )
                 work_scanned = _safe_int(scanned_total_match.group("scanned"), 0)
                 work_discovered = _safe_int(scanned_total_match.group("discovered"), 0)
 
@@ -1044,7 +1091,9 @@ def _collect_state_rate_analytics(
                     row["current_attempt_start_epoch"] = float(ts_epoch)
                 prior_counter = row.get("current_attempt_last_counter")
                 if prior_counter is not None and int(counter) < int(prior_counter):
-                    row["current_attempt_counter_reset_count"] = int(row.get("current_attempt_counter_reset_count", 0)) + 1
+                    row["current_attempt_counter_reset_count"] = (
+                        int(row.get("current_attempt_counter_reset_count", 0)) + 1
+                    )
                 row["current_attempt_last_counter"] = int(counter)
                 row["current_attempt_max_counter"] = max(
                     int(row.get("current_attempt_max_counter", 0)),
@@ -1063,7 +1112,9 @@ def _collect_state_rate_analytics(
             progress_signal = True
             row["work_signal_kind"] = work_signal_kind
             row["work_scanned"] = max(_safe_int(row.get("work_scanned"), 0), int(work_scanned))
-            row["work_discovered"] = max(_safe_int(row.get("work_discovered"), 0), int(work_discovered))
+            row["work_discovered"] = max(
+                _safe_int(row.get("work_discovered"), 0), int(work_discovered)
+            )
             if ts_epoch is not None:
                 work_samples = list(row.get("work_samples") or [])
                 work_samples.append((float(ts_epoch), int(work_scanned)))
@@ -1083,7 +1134,9 @@ def _collect_state_rate_analytics(
         if scraped_match:
             progress_signal = True
             row["scraped_event_count"] = int(row.get("scraped_event_count", 0)) + 1
-            row["scraped_event_max"] = max(int(row.get("scraped_event_max", 0)), _safe_int(scraped_match.group(1), 0))
+            row["scraped_event_max"] = max(
+                int(row.get("scraped_event_max", 0)), _safe_int(scraped_match.group(1), 0)
+            )
 
         if _LOG_SCANNED_SECTIONS_RE.search(line):
             progress_signal = True
@@ -1091,7 +1144,9 @@ def _collect_state_rate_analytics(
         if progress_signal and ts_epoch is not None:
             row["progress_event_count"] = int(row.get("progress_event_count", 0)) + 1
             progress_event_samples = list(row.get("progress_event_samples") or [])
-            progress_event_samples.append((float(ts_epoch), int(row.get("progress_event_count", 0))))
+            progress_event_samples.append(
+                (float(ts_epoch), int(row.get("progress_event_count", 0)))
+            )
             if len(progress_event_samples) > 256:
                 progress_event_samples = progress_event_samples[-256:]
             row["progress_event_samples"] = progress_event_samples
@@ -1099,14 +1154,22 @@ def _collect_state_rate_analytics(
             if prev_progress_signal is None or ts_epoch >= float(prev_progress_signal):
                 row["last_progress_signal_epoch"] = float(ts_epoch)
 
-            row["current_attempt_progress_event_count"] = int(row.get("current_attempt_progress_event_count", 0)) + 1
-            current_progress_event_samples = list(row.get("current_attempt_progress_event_samples") or [])
-            current_progress_event_samples.append((float(ts_epoch), int(row.get("current_attempt_progress_event_count", 0))))
+            row["current_attempt_progress_event_count"] = (
+                int(row.get("current_attempt_progress_event_count", 0)) + 1
+            )
+            current_progress_event_samples = list(
+                row.get("current_attempt_progress_event_samples") or []
+            )
+            current_progress_event_samples.append(
+                (float(ts_epoch), int(row.get("current_attempt_progress_event_count", 0)))
+            )
             if len(current_progress_event_samples) > 256:
                 current_progress_event_samples = current_progress_event_samples[-256:]
             row["current_attempt_progress_event_samples"] = current_progress_event_samples
             current_attempt_progress_signal = row.get("current_attempt_last_progress_signal_epoch")
-            if current_attempt_progress_signal is None or ts_epoch >= float(current_attempt_progress_signal):
+            if current_attempt_progress_signal is None or ts_epoch >= float(
+                current_attempt_progress_signal
+            ):
                 row["current_attempt_last_progress_signal_epoch"] = float(ts_epoch)
 
     # Merge partial checkpoint signals so stalled-state detection still works
@@ -1171,11 +1234,15 @@ def _collect_state_rate_analytics(
             row["last_progress_signal_epoch"] = float(updated_epoch)
             row["current_attempt_last_progress_signal_epoch"] = float(updated_epoch)
 
-        work_kind, work_scanned, work_discovered = _extract_checkpoint_work_signal(checkpoint_payload)
+        work_kind, work_scanned, work_discovered = _extract_checkpoint_work_signal(
+            checkpoint_payload
+        )
         if work_kind and work_discovered > 0:
             row["work_signal_kind"] = str(work_kind)
             row["work_scanned"] = max(_safe_int(row.get("work_scanned"), 0), int(work_scanned))
-            row["work_discovered"] = max(_safe_int(row.get("work_discovered"), 0), int(work_discovered))
+            row["work_discovered"] = max(
+                _safe_int(row.get("work_discovered"), 0), int(work_discovered)
+            )
             if updated_epoch is not None:
                 work_samples = list(row.get("work_samples") or [])
                 work_samples.append((float(updated_epoch), int(work_scanned)))
@@ -1215,7 +1282,9 @@ def _collect_state_rate_analytics(
 
     for state in all_states:
         row = log_data.get(state, {})
-        progress_row = progress_state_results.get(state) if isinstance(progress_state_results, dict) else {}
+        progress_row = (
+            progress_state_results.get(state) if isinstance(progress_state_results, dict) else {}
+        )
         progress_status = (
             str(progress_row.get("status") or "").strip().lower()
             if isinstance(progress_row, dict)
@@ -1232,9 +1301,7 @@ def _collect_state_rate_analytics(
             else ""
         )
         timeout_work_remaining_raw = (
-            progress_row.get("timeout_work_remaining")
-            if isinstance(progress_row, dict)
-            else None
+            progress_row.get("timeout_work_remaining") if isinstance(progress_row, dict) else None
         )
         timeout_work_remaining = (
             bool(timeout_work_remaining_raw)
@@ -1260,12 +1327,12 @@ def _collect_state_rate_analytics(
         last_progress_epoch = row.get("last_progress_epoch")
         current_attempt_last_progress_epoch = row.get("current_attempt_last_progress_epoch")
         last_progress_signal_epoch = row.get("last_progress_signal_epoch")
-        current_attempt_last_progress_signal_epoch = row.get("current_attempt_last_progress_signal_epoch")
+        current_attempt_last_progress_signal_epoch = row.get(
+            "current_attempt_last_progress_signal_epoch"
+        )
         current_attempt_start_epoch = row.get("current_attempt_start_epoch")
         last_seen_age = (
-            max(0.0, now_epoch - float(last_seen_epoch))
-            if last_seen_epoch is not None
-            else -1.0
+            max(0.0, now_epoch - float(last_seen_epoch)) if last_seen_epoch is not None else -1.0
         )
         global_last_progress_age = (
             max(0.0, now_epoch - float(last_progress_epoch))
@@ -1293,10 +1360,9 @@ def _collect_state_rate_analytics(
             else -1.0
         )
         samples = list(row.get("current_attempt_samples") or []) or list(row.get("samples") or [])
-        progress_event_samples = (
-            list(row.get("current_attempt_progress_event_samples") or [])
-            or list(row.get("progress_event_samples") or [])
-        )
+        progress_event_samples = list(
+            row.get("current_attempt_progress_event_samples") or []
+        ) or list(row.get("progress_event_samples") or [])
         raw_rate_per_minute = _compute_samples_rate_per_minute(
             samples,
             now=now_epoch,
@@ -1311,9 +1377,7 @@ def _collect_state_rate_analytics(
         global_max_counter = _safe_int(row.get("max_counter"), 0)
         current_attempt_max_counter = _safe_int(row.get("current_attempt_max_counter"), 0)
         max_counter = (
-            current_attempt_max_counter
-            if current_attempt_max_counter > 0
-            else global_max_counter
+            current_attempt_max_counter if current_attempt_max_counter > 0 else global_max_counter
         )
         progress_event_count = _safe_int(row.get("current_attempt_progress_event_count"), 0)
         if progress_event_count <= 0:
@@ -1325,16 +1389,15 @@ def _collect_state_rate_analytics(
             max_counter = progress_event_count
             counter_mode = "progress_event_fallback_counter_resets"
         rate_per_minute = raw_rate_per_minute
-        if (
-            progress_event_rate_per_minute is not None
-            and (
-                counter_unreliable
-                or rate_per_minute is None
-                or float(rate_per_minute) <= 0.0
-            )
+        if progress_event_rate_per_minute is not None and (
+            counter_unreliable or rate_per_minute is None or float(rate_per_minute) <= 0.0
         ):
             rate_per_minute = progress_event_rate_per_minute
-        attempt_count = max(1, _safe_int(row.get("attempt_count"), 0)) if started else _safe_int(row.get("attempt_count"), 0)
+        attempt_count = (
+            max(1, _safe_int(row.get("attempt_count"), 0))
+            if started
+            else _safe_int(row.get("attempt_count"), 0)
+        )
         work_signal_kind = str(row.get("work_signal_kind") or "").strip().lower()
         work_scanned = _safe_int(row.get("work_scanned"), 0)
         work_discovered = _safe_int(row.get("work_discovered"), 0)
@@ -1377,7 +1440,9 @@ def _collect_state_rate_analytics(
                 reason = "started_state_without_progress_signals_for_stall_window"
             else:
                 confidence = "low"
-                reason = "inflight_state_inactive_but_completion_status_unknown_without_live_progress"
+                reason = (
+                    "inflight_state_inactive_but_completion_status_unknown_without_live_progress"
+                )
 
         possible_stall_seconds = max(600.0, min(2400.0, float(state_stall_seconds) * 0.33))
         no_remaining_work_stall_seconds = max(300.0, min(1500.0, float(state_stall_seconds) * 0.25))
@@ -1414,9 +1479,13 @@ def _collect_state_rate_analytics(
             "current_attempt_max_counter": current_attempt_max_counter,
             "attempt_count": attempt_count,
             "last_seen_age_seconds": round(last_seen_age, 1) if last_seen_age >= 0 else -1.0,
-            "last_progress_age_seconds": round(last_progress_age, 1) if last_progress_age >= 0 else -1.0,
+            "last_progress_age_seconds": round(last_progress_age, 1)
+            if last_progress_age >= 0
+            else -1.0,
             "current_attempt_last_progress_age_seconds": (
-                round(current_attempt_last_progress_age, 1) if current_attempt_last_progress_age >= 0 else -1.0
+                round(current_attempt_last_progress_age, 1)
+                if current_attempt_last_progress_age >= 0
+                else -1.0
             ),
             "current_attempt_start_age_seconds": (
                 round(current_attempt_start_age, 1) if current_attempt_start_age >= 0 else -1.0
@@ -1433,7 +1502,9 @@ def _collect_state_rate_analytics(
         }
         if no_remaining_work_stalled:
             state_entry["no_remaining_work_stalled"] = True
-            state_entry["no_remaining_work_stall_seconds"] = round(no_remaining_work_stall_seconds, 1)
+            state_entry["no_remaining_work_stall_seconds"] = round(
+                no_remaining_work_stall_seconds, 1
+            )
         if work_signal_kind and work_discovered > 0:
             state_entry["work_signal_kind"] = work_signal_kind
             state_entry["work_scanned"] = int(work_scanned)
@@ -1473,7 +1544,9 @@ def _collect_state_rate_analytics(
                 "confidence": confidence,
                 "reason": reason,
                 "last_seen_age_seconds": round(last_seen_age, 1) if last_seen_age >= 0 else -1.0,
-                "last_progress_age_seconds": round(last_progress_age, 1) if last_progress_age >= 0 else -1.0,
+                "last_progress_age_seconds": round(last_progress_age, 1)
+                if last_progress_age >= 0
+                else -1.0,
                 "rate_counter_per_minute": rate_per_minute,
                 "scraped_event_count": scraped_event_count,
                 "progress_event_count": progress_event_count,
@@ -1501,8 +1574,12 @@ def _collect_state_rate_analytics(
                     "shard": shard_name,
                     "confidence": "low",
                     "reason": possible_reason,
-                    "last_seen_age_seconds": round(last_seen_age, 1) if last_seen_age >= 0 else -1.0,
-                    "last_progress_age_seconds": round(last_progress_age, 1) if last_progress_age >= 0 else -1.0,
+                    "last_seen_age_seconds": round(last_seen_age, 1)
+                    if last_seen_age >= 0
+                    else -1.0,
+                    "last_progress_age_seconds": round(last_progress_age, 1)
+                    if last_progress_age >= 0
+                    else -1.0,
                     "rate_counter_per_minute": rate_per_minute,
                     "raw_rate_counter_per_minute": raw_rate_per_minute,
                     "progress_event_rate_per_minute": progress_event_rate_per_minute,
@@ -1546,12 +1623,15 @@ def _collect_state_rate_analytics(
     )
 
     timeout_while_work_remaining_count = sum(
-        1 for row in state_rows if str(row.get("timeout_classification") or "") == "timeout_while_work_remaining"
+        1
+        for row in state_rows
+        if str(row.get("timeout_classification") or "") == "timeout_while_work_remaining"
     )
     timeout_no_remaining_work_count = sum(
         1
         for row in state_rows
-        if str(row.get("timeout_classification") or "") in {
+        if str(row.get("timeout_classification") or "")
+        in {
             "timeout_with_no_detectable_remaining_work",
             "timeout_without_progress_signal_no_remaining_work",
         }
@@ -1653,7 +1733,11 @@ def _collect_parallel_watch_payload(
         shard_name = output_dir.parent.name if output_dir.name == "output" else output_dir.name
         phase_path = _latest_phase_path(output_dir, phase_filename)
         phase_payload = _read_json(phase_path) if phase_path else {}
-        resume = phase_payload.get("_resume_context") if isinstance(phase_payload.get("_resume_context"), dict) else {}
+        resume = (
+            phase_payload.get("_resume_context")
+            if isinstance(phase_payload.get("_resume_context"), dict)
+            else {}
+        )
         states = _normalize_states(resume.get("states") or [])
         updated_at = str(phase_payload.get("updated_at") or "")
         phase_status = str(phase_payload.get("status") or "")
@@ -1730,7 +1814,9 @@ def _collect_parallel_watch_payload(
                 "phase_status": phase_status,
                 "status": shard_status,
                 "heartbeat_count": heartbeat_count,
-                "heartbeat_age_seconds": round(float(heartbeat_age), 1) if heartbeat_age is not None else -1.0,
+                "heartbeat_age_seconds": round(float(heartbeat_age), 1)
+                if heartbeat_age is not None
+                else -1.0,
                 "updated_at": updated_at,
                 "pid": shard_pid,
                 "pid_alive": pid_alive,
@@ -1743,11 +1829,15 @@ def _collect_parallel_watch_payload(
             0,
         )
         possible_rows = list(state_rate_analytics.get("possibly_stalled_states") or [])
-        possibly_stalled_count += _safe_int(state_rate_analytics.get("possibly_stalled_state_count"), len(possible_rows))
+        possibly_stalled_count += _safe_int(
+            state_rate_analytics.get("possibly_stalled_state_count"), len(possible_rows)
+        )
         for row in possible_rows:
             if isinstance(row, dict):
                 possibly_stalled_states.append(row)
-        timeout_retry_rows = list(state_rate_analytics.get("timeout_retry_recommended_states") or [])
+        timeout_retry_rows = list(
+            state_rate_analytics.get("timeout_retry_recommended_states") or []
+        )
         timeout_retry_recommended_count += _safe_int(
             state_rate_analytics.get("timeout_retry_recommended_count"),
             len(timeout_retry_rows),
@@ -1814,11 +1904,18 @@ def _collect_watch_payload(args: argparse.Namespace) -> Dict[str, Any]:
     if parallel_run_dir_text:
         return _collect_parallel_watch_payload(
             parallel_run_dir=Path(parallel_run_dir_text),
-            parallel_output_glob=str(getattr(args, "parallel_output_glob", "shard*/output") or "shard*/output"),
-            phase_filename=str(getattr(args, "parallel_phase_filename", "state_refresh_phase.json") or "state_refresh_phase.json"),
+            parallel_output_glob=str(
+                getattr(args, "parallel_output_glob", "shard*/output") or "shard*/output"
+            ),
+            phase_filename=str(
+                getattr(args, "parallel_phase_filename", "state_refresh_phase.json")
+                or "state_refresh_phase.json"
+            ),
             stale_after_seconds=stale_after_seconds,
             state_stall_seconds=max(300.0, float(getattr(args, "state_stall_seconds", 3600.0))),
-            state_rate_window_seconds=max(60.0, float(getattr(args, "state_rate_window_seconds", 1800.0))),
+            state_rate_window_seconds=max(
+                60.0, float(getattr(args, "state_rate_window_seconds", 1800.0))
+            ),
         )
 
     daemon_log_path = Path(args.daemon_log_path).expanduser().resolve()
@@ -1923,16 +2020,30 @@ def _ingest_watch_status(
         dead_count = _safe_int(watch_payload.get("dead_shard_count"), 0)
         missing_phase_count = _safe_int(watch_payload.get("missing_phase_shard_count"), 0)
         stalled_state_count = _safe_int(watch_payload.get("stalled_state_count"), 0)
-        high_conf_stalled_state_count = _safe_int(watch_payload.get("high_confidence_stalled_state_count"), 0)
-        possibly_stalled_state_count = _safe_int(watch_payload.get("possibly_stalled_state_count"), 0)
-        timeout_retry_recommended_count = _safe_int(watch_payload.get("timeout_retry_recommended_count"), 0)
-        low_conf_inactive_state_count = _safe_int(watch_payload.get("low_confidence_inactive_state_count"), 0)
+        high_conf_stalled_state_count = _safe_int(
+            watch_payload.get("high_confidence_stalled_state_count"), 0
+        )
+        possibly_stalled_state_count = _safe_int(
+            watch_payload.get("possibly_stalled_state_count"), 0
+        )
+        timeout_retry_recommended_count = _safe_int(
+            watch_payload.get("timeout_retry_recommended_count"), 0
+        )
+        low_conf_inactive_state_count = _safe_int(
+            watch_payload.get("low_confidence_inactive_state_count"), 0
+        )
         heartbeat_age = _safe_float(watch_payload.get("heartbeat_age_seconds"), -1.0)
         shards = list(watch_payload.get("shards") or [])
         stalled_states = list(watch_payload.get("stalled_states") or [])
         possibly_stalled_states = list(watch_payload.get("possibly_stalled_states") or [])
-        timeout_retry_recommended_states = list(watch_payload.get("timeout_retry_recommended_states") or [])
-        daemon_pids = [int(pid) for pid in list(watch_payload.get("daemon_pids") or []) if _safe_int(pid, 0) > 0]
+        timeout_retry_recommended_states = list(
+            watch_payload.get("timeout_retry_recommended_states") or []
+        )
+        daemon_pids = [
+            int(pid)
+            for pid in list(watch_payload.get("daemon_pids") or [])
+            if _safe_int(pid, 0) > 0
+        ]
         active_stale_shard_task_ids: set[str] = set()
         active_dead_shard_task_ids: set[str] = set()
         active_missing_phase_task_ids: set[str] = set()
@@ -2051,8 +2162,8 @@ def _ingest_watch_status(
                         f"max_counter={_safe_int(stalled.get('max_counter'), 0)}",
                     ],
                 },
-                    reopen_complete=reopen_complete,
-                )
+                reopen_complete=reopen_complete,
+            )
 
         for stalled in possibly_stalled_states[:80]:
             if not isinstance(stalled, dict):
@@ -2357,7 +2468,12 @@ def _maybe_generate_llm_rewrite_plans(
         if _normalize_status(task.get("status")) != "complete"
         and not isinstance(task.get("llm_rewrite_plan"), dict)
     ]
-    candidates.sort(key=lambda item: (_safe_int(item.get("priority"), 99), STATUS_ORDER.get(_normalize_status(item.get("status")), 99)))
+    candidates.sort(
+        key=lambda item: (
+            _safe_int(item.get("priority"), 99),
+            STATUS_ORDER.get(_normalize_status(item.get("status")), 99),
+        )
+    )
     selected = candidates[:limit]
     planned = 0
     errors: List[str] = []
@@ -2421,7 +2537,9 @@ def _render_markdown(backlog: Dict[str, Any]) -> str:
     lines.append(f"Updated: {utc_now()}")
     lines.append("")
     lines.append("## Goal")
-    lines.append("- Reach and sustain 100% legal corpus coverage and high normalization quality before publish.")
+    lines.append(
+        "- Reach and sustain 100% legal corpus coverage and high normalization quality before publish."
+    )
     lines.append("")
     lines.append("## Snapshot")
     lines.append(f"- Task counts: `{json.dumps(counts, sort_keys=True)}`")
@@ -2470,7 +2588,9 @@ def _collect_metrics(
     admin_deep: Dict[str, Any],
     watch_status: Dict[str, Any],
 ) -> Dict[str, Any]:
-    daemon_pids = [int(pid) for pid in list(watch_status.get("daemon_pids") or []) if _safe_int(pid, 0) > 0]
+    daemon_pids = [
+        int(pid) for pid in list(watch_status.get("daemon_pids") or []) if _safe_int(pid, 0) > 0
+    ]
     return {
         "retry_phase_count": _safe_int(retry.get("retry_phase_count"), 0),
         "retry_state_count": len(_normalize_states(retry.get("retry_states") or [])),
@@ -2481,24 +2601,38 @@ def _collect_metrics(
         "state_law_synthetic_total": _safe_int(law_gaps.get("synthetic_total"), 0),
         "admin_weak_state_count": len(_normalize_states(admin_page_gaps.get("weak_states") or [])),
         "admin_blocked_pages_total": _safe_int(admin_page_gaps.get("blocked_pages_total"), 0),
-        "admin_candidate_substantive_pages_total": _safe_int(admin_page_gaps.get("candidate_substantive_pages_total"), 0),
+        "admin_candidate_substantive_pages_total": _safe_int(
+            admin_page_gaps.get("candidate_substantive_pages_total"), 0
+        ),
         "admin_deep_gap_state_count": len(_normalize_states(admin_deep.get("gap_states") or [])),
         "daemon_status": str(watch_status.get("status") or ""),
         "daemon_mode": str(watch_status.get("mode") or "single"),
         "daemon_phase_status": str(watch_status.get("phase_status") or ""),
-        "daemon_heartbeat_age_seconds": _safe_float(watch_status.get("heartbeat_age_seconds"), -1.0),
+        "daemon_heartbeat_age_seconds": _safe_float(
+            watch_status.get("heartbeat_age_seconds"), -1.0
+        ),
         "daemon_pid_alive": bool(watch_status.get("pid_alive")),
         "daemon_pid_count": len(daemon_pids),
         "parallel_shard_count": _safe_int(watch_status.get("shard_count"), 0),
         "parallel_healthy_shard_count": _safe_int(watch_status.get("healthy_shard_count"), 0),
         "parallel_stale_shard_count": _safe_int(watch_status.get("stale_shard_count"), 0),
         "parallel_dead_shard_count": _safe_int(watch_status.get("dead_shard_count"), 0),
-        "parallel_missing_phase_shard_count": _safe_int(watch_status.get("missing_phase_shard_count"), 0),
+        "parallel_missing_phase_shard_count": _safe_int(
+            watch_status.get("missing_phase_shard_count"), 0
+        ),
         "parallel_stalled_state_count": _safe_int(watch_status.get("stalled_state_count"), 0),
-        "parallel_high_confidence_stalled_state_count": _safe_int(watch_status.get("high_confidence_stalled_state_count"), 0),
-        "parallel_possibly_stalled_state_count": _safe_int(watch_status.get("possibly_stalled_state_count"), 0),
-        "parallel_timeout_retry_recommended_count": _safe_int(watch_status.get("timeout_retry_recommended_count"), 0),
-        "parallel_low_confidence_inactive_state_count": _safe_int(watch_status.get("low_confidence_inactive_state_count"), 0),
+        "parallel_high_confidence_stalled_state_count": _safe_int(
+            watch_status.get("high_confidence_stalled_state_count"), 0
+        ),
+        "parallel_possibly_stalled_state_count": _safe_int(
+            watch_status.get("possibly_stalled_state_count"), 0
+        ),
+        "parallel_timeout_retry_recommended_count": _safe_int(
+            watch_status.get("timeout_retry_recommended_count"), 0
+        ),
+        "parallel_low_confidence_inactive_state_count": _safe_int(
+            watch_status.get("low_confidence_inactive_state_count"), 0
+        ),
     }
 
 
@@ -2508,8 +2642,14 @@ def update_backlog_once(args: argparse.Namespace) -> Dict[str, Any]:
     status_path = Path(args.status_json).expanduser().resolve()
     daemon_output_dir = Path(args.daemon_output_dir).expanduser().resolve()
 
-    retry_path = _auto_resolve_report_path(args.retry_manifest_path, "latest_full_corpus_retry.json", daemon_output_dir)
-    law_gap_path = _auto_resolve_report_path(args.state_law_page_gap_report_path, "state_law_page_gap_report*.json", REPO_ROOT / "artifacts")
+    retry_path = _auto_resolve_report_path(
+        args.retry_manifest_path, "latest_full_corpus_retry.json", daemon_output_dir
+    )
+    law_gap_path = _auto_resolve_report_path(
+        args.state_law_page_gap_report_path,
+        "state_law_page_gap_report*.json",
+        REPO_ROOT / "artifacts",
+    )
     admin_gap_path = _auto_resolve_report_path(
         args.state_admin_page_gap_report_path,
         "state_admin_rules/state_admin_webarch_page_gap_report_pagequal_*.json",
@@ -2524,19 +2664,31 @@ def update_backlog_once(args: argparse.Namespace) -> Dict[str, Any]:
     payload = _ensure_backlog_shape(_read_json(backlog_path))
     _seed_core_tasks(payload, reopen_complete=bool(args.reopen_complete_tasks))
 
-    retry = _ingest_retry_manifest(payload, retry_path, reopen_complete=bool(args.reopen_complete_tasks)) if retry_path else {"found": False}
+    retry = (
+        _ingest_retry_manifest(
+            payload, retry_path, reopen_complete=bool(args.reopen_complete_tasks)
+        )
+        if retry_path
+        else {"found": False}
+    )
     law_gaps = (
-        _ingest_state_law_page_gap_report(payload, law_gap_path, reopen_complete=bool(args.reopen_complete_tasks))
+        _ingest_state_law_page_gap_report(
+            payload, law_gap_path, reopen_complete=bool(args.reopen_complete_tasks)
+        )
         if law_gap_path
         else {"found": False}
     )
     admin_page_gaps = (
-        _ingest_state_admin_page_gap_report(payload, admin_gap_path, reopen_complete=bool(args.reopen_complete_tasks))
+        _ingest_state_admin_page_gap_report(
+            payload, admin_gap_path, reopen_complete=bool(args.reopen_complete_tasks)
+        )
         if admin_gap_path
         else {"found": False}
     )
     admin_deep = (
-        _ingest_state_admin_deep_summary(payload, admin_deep_path, reopen_complete=bool(args.reopen_complete_tasks))
+        _ingest_state_admin_deep_summary(
+            payload, admin_deep_path, reopen_complete=bool(args.reopen_complete_tasks)
+        )
         if admin_deep_path
         else {"found": False}
     )
@@ -2549,7 +2701,9 @@ def update_backlog_once(args: argparse.Namespace) -> Dict[str, Any]:
         reopen_complete=bool(args.reopen_complete_tasks),
     )
 
-    payload["metrics"] = _collect_metrics(retry, law_gaps, admin_page_gaps, admin_deep, watch_status)
+    payload["metrics"] = _collect_metrics(
+        retry, law_gaps, admin_page_gaps, admin_deep, watch_status
+    )
 
     llm_plans = _maybe_generate_llm_rewrite_plans(
         payload,
@@ -2611,7 +2765,12 @@ def supervise_loop(args: argparse.Namespace) -> int:
         running_pids = _find_legal_scraper_daemon_pids()
         running_pid = running_pids[0] if running_pids else None
         is_parallel_mode = bool(str(getattr(args, "parallel_run_dir", "") or "").strip())
-        if running_pid is None and daemon_command and bool(args.start_daemon_if_missing) and not is_parallel_mode:
+        if (
+            running_pid is None
+            and daemon_command
+            and bool(args.start_daemon_if_missing)
+            and not is_parallel_mode
+        ):
             launch = _spawn_daemon_command(
                 daemon_command,
                 cwd=REPO_ROOT,
@@ -2622,7 +2781,9 @@ def supervise_loop(args: argparse.Namespace) -> int:
             running_pid = _find_legal_scraper_daemon_pid()
 
         status_payload = update_backlog_once(args)
-        metrics = status_payload.get("metrics") if isinstance(status_payload.get("metrics"), dict) else {}
+        metrics = (
+            status_payload.get("metrics") if isinstance(status_payload.get("metrics"), dict) else {}
+        )
         stale_age = _safe_float(metrics.get("daemon_heartbeat_age_seconds"), -1.0)
         stale_cutoff = max(1.0, float(args.stale_heartbeat_seconds))
         daemon_mode = str(metrics.get("daemon_mode") or "single").strip().lower()
@@ -2647,7 +2808,11 @@ def supervise_loop(args: argparse.Namespace) -> int:
         if args.json:
             print(json.dumps({"iteration": iteration, "status": status_payload}, sort_keys=True))
         else:
-            counts = status_payload.get("task_counts") if isinstance(status_payload.get("task_counts"), dict) else {}
+            counts = (
+                status_payload.get("task_counts")
+                if isinstance(status_payload.get("task_counts"), dict)
+                else {}
+            )
             print(
                 f"[legal_scraper_todo_supervisor] iteration={iteration} "
                 f"task_counts={json.dumps(counts, sort_keys=True)} "
@@ -2674,7 +2839,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     def add_common_args(p: argparse.ArgumentParser) -> None:
-        p.add_argument("--daemon-output-dir", default=default_daemon_dir, help="Directory with legal scraper daemon artifacts.")
+        p.add_argument(
+            "--daemon-output-dir",
+            default=default_daemon_dir,
+            help="Directory with legal scraper daemon artifacts.",
+        )
         p.add_argument(
             "--parallel-run-dir",
             default="",
@@ -2690,15 +2859,36 @@ def build_parser() -> argparse.ArgumentParser:
             default="state_refresh_phase.json",
             help="Phase filename to resolve under each shard cycle directory.",
         )
-        p.add_argument("--backlog-json", default=f"{default_supervisor_dir}/legal_scraper_todo.json")
-        p.add_argument("--backlog-markdown", default=f"{default_supervisor_dir}/legal_scraper_todo.md")
-        p.add_argument("--status-json", default=f"{default_supervisor_dir}/legal_scraper_todo_supervisor.status.json")
+        p.add_argument(
+            "--backlog-json", default=f"{default_supervisor_dir}/legal_scraper_todo.json"
+        )
+        p.add_argument(
+            "--backlog-markdown", default=f"{default_supervisor_dir}/legal_scraper_todo.md"
+        )
+        p.add_argument(
+            "--status-json",
+            default=f"{default_supervisor_dir}/legal_scraper_todo_supervisor.status.json",
+        )
         p.add_argument("--retry-manifest-path", default="", help="Override retry-manifest path.")
-        p.add_argument("--state-law-page-gap-report-path", default="", help="Override state-law page-gap report path.")
-        p.add_argument("--state-admin-page-gap-report-path", default="", help="Override admin page-gap report path.")
-        p.add_argument("--state-admin-deep-summary-path", default="", help="Override deep admin gap summary path.")
+        p.add_argument(
+            "--state-law-page-gap-report-path",
+            default="",
+            help="Override state-law page-gap report path.",
+        )
+        p.add_argument(
+            "--state-admin-page-gap-report-path",
+            default="",
+            help="Override admin page-gap report path.",
+        )
+        p.add_argument(
+            "--state-admin-deep-summary-path",
+            default="",
+            help="Override deep admin gap summary path.",
+        )
         p.add_argument("--daemon-log-path", default=f"{default_daemon_dir}/daemon.log")
-        p.add_argument("--daemon-phase-json-path", default=f"{default_daemon_dir}/state_refresh_phase.json")
+        p.add_argument(
+            "--daemon-phase-json-path", default=f"{default_daemon_dir}/state_refresh_phase.json"
+        )
         p.add_argument("--stale-heartbeat-seconds", type=float, default=180.0)
         p.add_argument(
             "--state-stall-seconds",
@@ -2712,25 +2902,49 @@ def build_parser() -> argparse.ArgumentParser:
             default=1800.0,
             help="Window (seconds) used when estimating per-state progress rates from log counters.",
         )
-        p.add_argument("--reopen-complete-tasks", action="store_true", help="Allow ingestion to reopen completed tasks when gaps reappear.")
+        p.add_argument(
+            "--reopen-complete-tasks",
+            action="store_true",
+            help="Allow ingestion to reopen completed tasks when gaps reappear.",
+        )
         p.add_argument("--llm-provider", default="", help="Optional llm_router provider override.")
         p.add_argument("--llm-model", default="", help="Optional llm_router model override.")
-        p.add_argument("--llm-max-tokens", type=int, default=800, help="Max token budget for llm_router rewrite-plan generation.")
-        p.add_argument("--llm-rewrite-limit", type=int, default=0, help="Generate rewrite plans for up to N open tasks per pass.")
+        p.add_argument(
+            "--llm-max-tokens",
+            type=int,
+            default=800,
+            help="Max token budget for llm_router rewrite-plan generation.",
+        )
+        p.add_argument(
+            "--llm-rewrite-limit",
+            type=int,
+            default=0,
+            help="Generate rewrite plans for up to N open tasks per pass.",
+        )
         p.add_argument("--json", action="store_true")
 
-    update = sub.add_parser("update", help="Run one backlog update pass from daemon + coverage artifacts.")
+    update = sub.add_parser(
+        "update", help="Run one backlog update pass from daemon + coverage artifacts."
+    )
     add_common_args(update)
 
-    supervise = sub.add_parser("supervise", help="Continuously monitor and refresh the backlog in a supervisor loop.")
+    supervise = sub.add_parser(
+        "supervise", help="Continuously monitor and refresh the backlog in a supervisor loop."
+    )
     add_common_args(supervise)
     supervise.add_argument("--interval-seconds", type=float, default=60.0)
     supervise.add_argument("--max-iterations", type=int, default=0, help="0 means run forever.")
-    supervise.add_argument("--daemon-command", default="", help="Optional daemon command to launch when missing, via `bash -lc`.")
+    supervise.add_argument(
+        "--daemon-command",
+        default="",
+        help="Optional daemon command to launch when missing, via `bash -lc`.",
+    )
     supervise.add_argument("--start-daemon-if-missing", action="store_true")
     supervise.add_argument("--restart-stale-daemon", action="store_true")
     supervise.add_argument("--stop-grace-seconds", type=float, default=10.0)
-    supervise.add_argument("--supervisor-log-path", default=f"{default_supervisor_dir}/supervisor.log")
+    supervise.add_argument(
+        "--supervisor-log-path", default=f"{default_supervisor_dir}/supervisor.log"
+    )
 
     return parser
 

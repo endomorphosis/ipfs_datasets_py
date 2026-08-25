@@ -41,13 +41,13 @@ This document summarizes the comprehensive implementation plan for processing PD
 ```python
 # Intelligent OCR selection based on content type
 class MultiEngineOCR:
-    def extract_with_ocr(self, image_data, strategy='quality_first'):
-        if strategy == 'quality_first':
-            engine_order = ['surya', 'paddleocr', 'tesseract', 'easyocr']
-        elif strategy == 'speed_first':
-            engine_order = ['tesseract', 'surya', 'easyocr', 'paddleocr']
-        elif strategy == 'accuracy_first':
-            engine_order = ['got_ocr', 'paddleocr', 'surya', 'doctr']
+    def extract_with_ocr(self, image_data, strategy="quality_first"):
+        if strategy == "quality_first":
+            engine_order = ["surya", "paddleocr", "tesseract", "easyocr"]
+        elif strategy == "speed_first":
+            engine_order = ["tesseract", "surya", "easyocr", "paddleocr"]
+        elif strategy == "accuracy_first":
+            engine_order = ["got_ocr", "paddleocr", "surya", "doctr"]
 ```
 
 ## LLM-Centric Design Features

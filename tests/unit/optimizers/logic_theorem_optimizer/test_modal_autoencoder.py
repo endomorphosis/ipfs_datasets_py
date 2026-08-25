@@ -89,9 +89,7 @@ def test_source_decompiled_loss_normalization_prefers_same_space_cosine() -> Non
         }
     )
 
-    assert losses["source_decompiled_text_embedding_cosine_loss"] == pytest.approx(
-        0.18
-    )
+    assert losses["source_decompiled_text_embedding_cosine_loss"] == pytest.approx(0.18)
     assert losses["source_decompiled_text_token_loss"] == pytest.approx(0.27)
 
     explicit_losses = _source_decompiled_text_losses_from_targets(
@@ -102,9 +100,7 @@ def test_source_decompiled_loss_normalization_prefers_same_space_cosine() -> Non
         }
     )
 
-    assert explicit_losses["source_decompiled_text_embedding_cosine_loss"] == (
-        pytest.approx(0.11)
-    )
+    assert explicit_losses["source_decompiled_text_embedding_cosine_loss"] == (pytest.approx(0.11))
 
 
 def test_modal_autoencoder_baseline_reports_fixture_losses() -> None:
@@ -212,10 +208,7 @@ def test_adaptive_autoencoder_reports_legal_ir_view_family_losses() -> None:
         assert f"legal_ir_view_family_{family}_cross_entropy_excess_loss" in losses
         assert f"legal_ir_view_family_{family}_cosine_gap_loss" in losses
     introspection = autoencoder.introspect_sample(sample).to_dict()
-    assert (
-        introspection["legal_ir_losses"]["legal_ir_view_family_deontic_cosine_gap_loss"]
-        >= 0.0
-    )
+    assert introspection["legal_ir_losses"]["legal_ir_view_family_deontic_cosine_gap_loss"] >= 0.0
 
 
 def test_legal_ir_target_cache_key_uses_source_text_not_citation_identity() -> None:
@@ -281,15 +274,12 @@ def test_legal_ir_target_timeout_becomes_loss(monkeypatch) -> None:
     assert evaluation.legal_ir_target_count == 1
     assert evaluation.legal_ir_losses["legal_ir_target_timeout_loss"] == pytest.approx(1.0)
     assert 0.0 < evaluation.legal_ir_losses["legal_ir_multiview_total_loss"] < 1.0
-    assert (
-        evaluation.legal_ir_losses["legal_ir_target_timeout_fallback_loss"]
-        == pytest.approx(evaluation.legal_ir_losses["legal_ir_multiview_total_loss"])
+    assert evaluation.legal_ir_losses["legal_ir_target_timeout_fallback_loss"] == pytest.approx(
+        evaluation.legal_ir_losses["legal_ir_multiview_total_loss"]
     )
     assert evaluation.legal_ir_view_distribution
     assert evaluation.legal_ir_view_distribution.get("deontic.ir", 0.0) > 0.0
-    assert evaluation.legal_ir_target_hashes[sample.sample_id].startswith(
-        "timeout-fallback:"
-    )
+    assert evaluation.legal_ir_target_hashes[sample.sample_id].startswith("timeout-fallback:")
 
 
 def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> None:
@@ -306,7 +296,7 @@ def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> Non
         "www.gpo.gov"
     )
     deposit_text = (
-        '§93. Deposit of moneys deposited by unknown parties Amounts that appear '
+        "§93. Deposit of moneys deposited by unknown parties Amounts that appear "
         'in the accounts of a district land office as "Moneys deposited by unknown '
         'parties" shall also be deposited to the credit of the Treasurer of the '
         "United States."
@@ -382,9 +372,7 @@ def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> Non
         text=assistance_text,
     )
     assistance_features = set(autoencoder._feature_keys_for(assistance_sample))
-    status_legal_ir_features = set(
-        autoencoder._legal_ir_view_core_feature_keys_for(status_sample)
-    )
+    status_legal_ir_features = set(autoencoder._legal_ir_view_core_feature_keys_for(status_sample))
     assistance_legal_ir_features = set(
         autoencoder._legal_ir_view_core_feature_keys_for(assistance_sample)
     )
@@ -401,26 +389,23 @@ def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> Non
             title="7",
             section="9999",
             citation="7 U.S.C. 9999",
-            text=(
-                "Authorization of appropriations Amounts shall remain available "
-                "until expended."
-            ),
+            text=("Authorization of appropriations Amounts shall remain available until expended."),
         )
     )
-    effective_surface_target = _legal_ir_surface_profile_view_distribution(
-        effective_text
-    )
-    enumeration_surface_target = _legal_ir_surface_profile_view_distribution(
-        enumeration_text
-    )
+    effective_surface_target = _legal_ir_surface_profile_view_distribution(effective_text)
+    enumeration_surface_target = _legal_ir_surface_profile_view_distribution(enumeration_text)
     status_round_trip = set(autoencoder._round_trip_signal_distribution_for(status_sample))
     heading_plan = set(autoencoder._decompiler_plan_distribution_for(heading_sample))
 
-    assert "legal-semantic-frame:uscode-surface-profile:editorial_reclassification" in status_features
+    assert (
+        "legal-semantic-frame:uscode-surface-profile:editorial_reclassification" in status_features
+    )
     assert "decompiler-surface:uscode-surface-profile:editorial_reclassification" in status_features
     assert "round-trip:uscode-surface-profile:editorial_reclassification" in status_round_trip
     assert "legal-semantic-frame:uscode-surface-profile:printing_binding" in heading_features
-    assert "legal-semantic-frame:uscode-surface-profile:article_reprint_purchase" in heading_features
+    assert (
+        "legal-semantic-frame:uscode-surface-profile:article_reprint_purchase" in heading_features
+    )
     assert "decompiler-plan:uscode-surface-profile:printing_binding" in heading_plan
     assert (
         "uscode-surface-profile-family:health_professional_education_assistance:deontic"
@@ -436,8 +421,7 @@ def test_autoencoder_surface_profiles_cover_sparse_uscode_frame_records() -> Non
     )
     assert (
         "legal-ir:uscode-surface-profile-view:"
-        "health_professional_education_assistance:deontic.ir"
-        in assistance_legal_ir_features
+        "health_professional_education_assistance:deontic.ir" in assistance_legal_ir_features
     )
     assert status_timeout_target["modal.frame_logic"] > status_timeout_target.get(
         "deontic.ir",
@@ -576,9 +560,7 @@ def test_legal_ir_timeout_fallback_does_not_poison_persistent_disk_cache(
         legal_ir_evaluate_provers=False,
     )
 
-    assert first.legal_ir_target_hashes[sample.sample_id].startswith(
-        "timeout-fallback:"
-    )
+    assert first.legal_ir_target_hashes[sample.sample_id].startswith("timeout-fallback:")
     assert not list(tmp_path.rglob("*.json"))
 
     target = SimpleNamespace(
@@ -750,16 +732,12 @@ def test_adaptive_autoencoder_applies_trusted_leanstral_guidance_once() -> None:
     assert report["target_view_counts"]["deontic.ir"] > 0.0
     assert after_loss < before_loss
     assert autoencoder._legal_ir_view_target_cache == {}
-    assert autoencoder.state.applied_leanstral_guidance_ids == [
-        "leanstral-guidance-unit-a"
-    ]
+    assert autoencoder.state.applied_leanstral_guidance_ids == ["leanstral-guidance-unit-a"]
     assert duplicate["applied_count"] == 0
     assert duplicate["duplicate_count"] == 1
     assert untrusted_report["applied_count"] == 0
     assert untrusted_report["skipped_untrusted_count"] == 1
-    assert reloaded.applied_leanstral_guidance_ids == [
-        "leanstral-guidance-unit-a"
-    ]
+    assert reloaded.applied_leanstral_guidance_ids == ["leanstral-guidance-unit-a"]
 
 
 def test_generalizable_projection_lowers_legal_ir_view_ce_on_holdout() -> None:
@@ -811,8 +789,7 @@ def test_generalizable_projection_lowers_legal_ir_view_ce_on_holdout() -> None:
         "legal_ir_view_logits",
     }
     assert any(
-        candidate["update"] == "legal_ir_view_logits"
-        and candidate["accepted"]
+        candidate["update"] == "legal_ir_view_logits" and candidate["accepted"]
         for candidate in report["epoch_reports"][0]["candidate_reports"]
     )
     assert (
@@ -860,12 +837,18 @@ def test_generalizable_projection_reports_progress_and_attempt_cap() -> None:
     }
     assert len(report["epoch_reports"][0]["candidate_reports"]) == 1
     assert report["projection_prescreen_summary"]["enabled_attempt_count"] >= 1
-    assert report["epoch_reports"][0]["candidate_reports"][0]["attempt_reports"][0][
-        "projection_deadband"
-    ]["mode"] == "shadow"
-    assert report["epoch_reports"][0]["candidate_reports"][0]["attempt_reports"][0][
-        "projection_prescreen"
-    ]["mode"] == "shadow"
+    assert (
+        report["epoch_reports"][0]["candidate_reports"][0]["attempt_reports"][0][
+            "projection_deadband"
+        ]["mode"]
+        == "shadow"
+    )
+    assert (
+        report["epoch_reports"][0]["candidate_reports"][0]["attempt_reports"][0][
+            "projection_prescreen"
+        ]["mode"]
+        == "shadow"
+    )
     assert "before_holdout_evaluation" in stages
     assert "projection_prescreen_baseline" in stages
     assert "projection_prescreen_evaluation" in stages
@@ -982,9 +965,7 @@ def test_generalizable_projection_auto_caps_large_state_line_search(
 
     assert report["effective_max_line_search_attempts"] == 2
     assert report["line_search_attempt_policy"] == "auto_large_state_cap"
-    assert report["epoch_reports"][0]["candidate_reports"][0][
-        "line_search_attempt_count"
-    ] <= 2
+    assert report["epoch_reports"][0]["candidate_reports"][0]["line_search_attempt_count"] <= 2
 
 
 def test_legal_ir_view_global_projection_isolates_core_heads() -> None:
@@ -1078,9 +1059,7 @@ def test_projection_timeout_keeps_best_completed_candidate(monkeypatch) -> None:
     assert report["stopped_reason"] == "projection_timeout"
     assert report["accepted_epochs"] == 1
     assert report["epoch_reports"][0]["accepted"] is True
-    assert report["epoch_reports"][0]["selected_update"] == (
-        "legal_ir_view_global_logits"
-    )
+    assert report["epoch_reports"][0]["selected_update"] == ("legal_ir_view_global_logits")
 
 
 def test_rejected_projection_restores_state_dependent_evaluator_caches(
@@ -1155,12 +1134,8 @@ def test_rejected_projection_restores_state_dependent_evaluator_caches(
     assert report["accepted_epochs"] == 0
     assert autoencoder.state.to_dict() == state_before
     assert after.cross_entropy_loss == pytest.approx(before.cross_entropy_loss)
-    assert after.cross_entropy_excess_loss == pytest.approx(
-        before.cross_entropy_excess_loss
-    )
-    assert after.embedding_cosine_similarity == pytest.approx(
-        before.embedding_cosine_similarity
-    )
+    assert after.cross_entropy_excess_loss == pytest.approx(before.cross_entropy_excess_loss)
+    assert after.embedding_cosine_similarity == pytest.approx(before.embedding_cosine_similarity)
     assert after.legal_ir_losses == pytest.approx(before.legal_ir_losses)
 
 
@@ -1287,29 +1262,23 @@ def test_autoencoder_surfaces_typed_family_pair_view_bridge_slots() -> None:
     slot_texts = set(autoencoder._semantic_slot_distribution_for(sample))
 
     assert (
-        "slot:typed-decompiler-family-pair-view-contract:"
-        "deontic->temporal||TDFOL.prover"
+        "slot:typed-decompiler-family-pair-view-contract:deontic->temporal||TDFOL.prover"
     ) in slot_texts
     assert (
         "slot:typed-decompiler-family-pair-view-contract:"
         "conditional_normative->frame||modal.frame_logic"
     ) in slot_texts
     assert (
-        "slot:typed-decompiler-family-pair-view-contract:"
-        "epistemic->doxastic||TDFOL.prover"
+        "slot:typed-decompiler-family-pair-view-contract:epistemic->doxastic||TDFOL.prover"
     ) in slot_texts
     assert any(
-        slot.startswith(
-            "slot:typed-decompiler-family-pair-bridge:"
-            "deontic->temporal:"
-        )
+        slot.startswith("slot:typed-decompiler-family-pair-bridge:deontic->temporal:")
         and slot.endswith("||modal.frame_logic")
         for slot in slot_texts
     )
     assert any(
         slot.startswith(
-            "slot:typed-decompiler-force-view-family-pair:"
-            "permission:enabling:deontic->temporal"
+            "slot:typed-decompiler-force-view-family-pair:permission:enabling:deontic->temporal"
         )
         and slot.endswith("||TDFOL.prover")
         for slot in slot_texts
@@ -1556,19 +1525,16 @@ def test_projection_deadband_tolerates_only_ce_micro_regressions() -> None:
     assert shadow["would_accept"] is True
     assert shadow["enforced_accepted"] is False
     assert shadow["adjusted_pareto_regressions"] == {}
-    assert shadow["tolerated_regressions"]["cross_entropy_excess_loss"] == pytest.approx(
-        5.0e-5
-    )
+    assert shadow["tolerated_regressions"]["cross_entropy_excess_loss"] == pytest.approx(5.0e-5)
     assert enforced["would_accept"] is True
     assert enforced["enforced_accepted"] is True
     assert hard_guarded["would_accept"] is False
-    assert "embedding_cosine_similarity" in hard_guarded[
-        "hard_guardrail_blocked_regressions"
-    ]
+    assert "embedding_cosine_similarity" in hard_guarded["hard_guardrail_blocked_regressions"]
     assert legal_ir_guarded["would_accept"] is False
-    assert "legal_ir:legal_ir_view_cross_entropy_excess_loss" in legal_ir_guarded[
-        "hard_guardrail_blocked_regressions"
-    ]
+    assert (
+        "legal_ir:legal_ir_view_cross_entropy_excess_loss"
+        in legal_ir_guarded["hard_guardrail_blocked_regressions"]
+    )
     assert strict["would_accept"] is False
 
 
@@ -1650,10 +1616,7 @@ def test_generalizable_projection_prescreen_enforce_skips_holdout_attempts() -> 
         for attempt in candidate["attempt_reports"]
     ]
     assert any(not attempt["holdout_evaluated"] for attempt in attempts)
-    assert any(
-        attempt["acceptance_source"] == "prescreen_filtered"
-        for attempt in attempts
-    )
+    assert any(attempt["acceptance_source"] == "prescreen_filtered" for attempt in attempts)
 
 
 def test_legal_ir_component_gap_focus_routes_only_underrepresented_views() -> None:
@@ -1767,7 +1730,7 @@ def test_hard_example_objective_uses_mixed_family_cross_entropy_targets() -> Non
                     "temporal": -4.0,
                 }
             }
-        )
+        ),
     )
     distribution = autoencoder._family_distribution(
         mixed_sample,
@@ -1881,11 +1844,10 @@ def test_compiler_latent_profile_features_bridge_source_and_ir_shape() -> None:
         feature.startswith("compiler-profile:source-object-family:permit:")
         for feature in profile_features
     )
+    assert any(feature.startswith("compiler-profile:role-shape:") for feature in profile_features)
     assert any(
-        feature.startswith("compiler-profile:role-shape:")
-        for feature in profile_features
+        feature.startswith("compiler-profile:frame-family:") for feature in fallback_features
     )
-    assert any(feature.startswith("compiler-profile:frame-family:") for feature in fallback_features)
     assert any(
         feature.startswith("legal-ir:compiler-profile:source-cue-family:deontic:")
         for feature in legal_ir_features
@@ -1912,9 +1874,7 @@ def test_compiler_latent_profile_feature_head_lowers_holdout_ce() -> None:
     )
     shared_profile_features = set(
         autoencoder._compiler_latent_profile_feature_keys_for(train)
-    ).intersection(
-        autoencoder._compiler_latent_profile_feature_keys_for(validation)
-    )
+    ).intersection(autoencoder._compiler_latent_profile_feature_keys_for(validation))
     before = autoencoder.evaluate([validation], use_sample_memory=False)
 
     autoencoder._nudge_family_logits(
@@ -1924,12 +1884,16 @@ def test_compiler_latent_profile_feature_head_lowers_holdout_ce() -> None:
     )
     after = autoencoder.evaluate([validation], use_sample_memory=False)
 
-    assert any(feature.startswith("compiler-profile:family:") for feature in shared_profile_features)
+    assert any(
+        feature.startswith("compiler-profile:family:") for feature in shared_profile_features
+    )
     assert any(
         feature.startswith("compiler-profile:")
         for feature in autoencoder.state.feature_family_logits
     )
-    assert any(feature in autoencoder.state.feature_family_logits for feature in shared_profile_features)
+    assert any(
+        feature in autoencoder.state.feature_family_logits for feature in shared_profile_features
+    )
     assert after.cross_entropy_loss < before.cross_entropy_loss
 
 
@@ -2013,12 +1977,10 @@ def test_typed_family_pair_slots_preserve_surface_cue_targets() -> None:
     round_trip_features = autoencoder._round_trip_bridge_feature_keys_for(temporal_sample)
 
     assert (
-        "slot:typed-decompiler-surface-cue-family-pair:"
-        "temporal:temporal->deontic"
+        "slot:typed-decompiler-surface-cue-family-pair:temporal:temporal->deontic"
     ) in semantic_slots
     assert (
-        "round-trip-bridge:surface-cue-to-family-pair:"
-        "temporal:temporal->deontic"
+        "round-trip-bridge:surface-cue-to-family-pair:temporal:temporal->deontic"
     ) in round_trip_features
 
 
@@ -2057,13 +2019,10 @@ def test_decompiler_plan_preserves_typed_family_pair_scope_features() -> None:
     assert "decompiler-plan:typed-family-pair:frame->deontic" in decompiler_plan
     assert "decompiler-plan:typed-family-pair:frame->temporal" in decompiler_plan
     assert (
-        "decompiler-plan:force-polarity-family-pair:"
-        "obligation:mandatory:frame->deontic"
+        "decompiler-plan:force-polarity-family-pair:obligation:mandatory:frame->deontic"
     ) in decompiler_plan
     assert any(
-        key.startswith(
-            "decompiler-plan:typed-family-pair-scope:"
-        )
+        key.startswith("decompiler-plan:typed-family-pair-scope:")
         and key.endswith(":frame->deontic")
         for key in decompiler_plan
     )
@@ -2091,11 +2050,12 @@ def test_round_trip_bridge_features_encode_source_ir_equivalence() -> None:
         feature.startswith("round-trip-bridge:compile-path:approve->permit:")
         for feature in bridge_features
     )
-    assert any(feature.startswith("round-trip-bridge:ir-role-shape:") for feature in bridge_features)
+    assert any(
+        feature.startswith("round-trip-bridge:ir-role-shape:") for feature in bridge_features
+    )
     assert "round-trip-bridge:surface-action-to-family:approve:deontic" in fallback_features
     assert (
-        "legal-ir:round-trip-bridge:surface-action-to-family:approve:deontic"
-        in legal_ir_features
+        "legal-ir:round-trip-bridge:surface-action-to-family:approve:deontic" in legal_ir_features
     )
 
 
@@ -2121,19 +2081,15 @@ def test_round_trip_bridge_features_encode_typed_family_pair_reconstruction() ->
 
     bridge_features = autoencoder._round_trip_bridge_feature_keys_for(sample)
 
-    assert "round-trip-bridge:typed-family-pair:frame->conditional_normative" in (
-        bridge_features
-    )
+    assert "round-trip-bridge:typed-family-pair:frame->conditional_normative" in (bridge_features)
     assert any(
         feature.startswith(
-            "round-trip-bridge:typed-family-pair-predicate:"
-            "frame->conditional_normative:"
+            "round-trip-bridge:typed-family-pair-predicate:frame->conditional_normative:"
         )
         for feature in bridge_features
     )
     assert (
-        "round-trip-bridge:surface-action-to-family-pair:"
-        "approve:frame->conditional_normative"
+        "round-trip-bridge:surface-action-to-family-pair:approve:frame->conditional_normative"
     ) in bridge_features
 
 
@@ -2250,25 +2206,14 @@ def test_targeted_reconstruction_slots_cover_frame_conditional_and_deontic_self_
     deontic_slots = set(autoencoder._semantic_slot_distribution_for(deontic_sample))
 
     assert (
-        "slot:typed-decompiler-target-reconstruction-pair:"
-        "frame->conditional_normative"
+        "slot:typed-decompiler-target-reconstruction-pair:frame->conditional_normative"
     ) in frame_slots
+    assert ("slot:typed-decompiler-target-reconstruction-cue:frame->deontic:shall") in frame_slots
     assert (
-        "slot:typed-decompiler-target-reconstruction-cue:"
-        "frame->deontic:shall"
-    ) in frame_slots
-    assert (
-        "round-trip-bridge:target-reconstruction-surface-cue-family-pair:"
-        "shall:frame->deontic"
+        "round-trip-bridge:target-reconstruction-surface-cue-family-pair:shall:frame->deontic"
     ) in frame_bridge_features
-    assert (
-        "slot:typed-decompiler-target-reconstruction-pair:deontic->deontic"
-        in deontic_slots
-    )
-    assert (
-        "slot:typed-decompiler-target-reconstruction-cue:deontic->deontic:shall"
-        in deontic_slots
-    )
+    assert "slot:typed-decompiler-target-reconstruction-pair:deontic->deontic" in deontic_slots
+    assert "slot:typed-decompiler-target-reconstruction-cue:deontic->deontic:shall" in deontic_slots
 
 
 def test_targeted_reconstruction_slots_downweight_registry_only_family_pairs() -> None:
@@ -2319,9 +2264,7 @@ def test_round_trip_bridge_feature_head_transfers_ce_and_cosine_to_holdout() -> 
     )
     shared_bridge_features = set(
         family_autoencoder._round_trip_bridge_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._round_trip_bridge_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._round_trip_bridge_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -2498,11 +2441,9 @@ def test_reconstruction_family_slot_head_uses_observed_ir_when_classifier_misrou
         update_sample_memory=False,
     )
     after = autoencoder.evaluate([validation], use_sample_memory=False)
-    embedding_family_slots = (
-        autoencoder._family_semantic_slot_distribution_for_embedding(
-            validation,
-            use_sample_memory=False,
-        )
+    embedding_family_slots = autoencoder._family_semantic_slot_distribution_for_embedding(
+        validation,
+        use_sample_memory=False,
     )
 
     assert predicted["frame"] > predicted["temporal"]
@@ -2533,10 +2474,7 @@ def test_clause_topology_features_capture_abstract_source_ir_graph() -> None:
     assert "clause-topology:surface-scope:conditional+exception+normative" in topology_features
     assert "clause-topology:surface-role-edge:condition->action" in topology_features
     assert "clause-topology:surface-role-edge:exception->action" in topology_features
-    assert (
-        "clause-topology:ir-scope:deontic:condition:yes:exception:yes"
-        in topology_features
-    )
+    assert "clause-topology:ir-scope:deontic:condition:yes:exception:yes" in topology_features
     assert (
         "clause-topology:surface-scope-to-family:conditional+exception+normative:deontic"
         in topology_features
@@ -2544,8 +2482,7 @@ def test_clause_topology_features_capture_abstract_source_ir_graph() -> None:
     assert (
         "clause-topology:surface-topology-to-ir:"
         "conditional+exception+normative:"
-        "condition+subject+action+object+exception:deontic:condition"
-        in topology_features
+        "condition+subject+action+object+exception:deontic:condition" in topology_features
     )
     assert "clause-topology:surface-scope:conditional+exception+normative" in fallback_features
     assert (
@@ -2584,9 +2521,7 @@ def test_clause_topology_feature_head_transfers_across_lexical_holdout() -> None
     )
     shared_topology_features = set(
         family_autoencoder._clause_topology_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._clause_topology_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._clause_topology_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -2664,15 +2599,11 @@ def test_legal_semantic_frame_features_canonicalize_legal_roles() -> None:
     shared_features = set(sample_features).intersection(validation_features)
 
     assert "legal-semantic-frame:source-action-class:grant_authorization" in sample_features
-    assert (
-        "legal-semantic-frame:source-object-class:authorization_instrument"
-        in sample_features
-    )
+    assert "legal-semantic-frame:source-object-class:authorization_instrument" in sample_features
     assert "legal-semantic-frame:source-subject-class:government_actor" in sample_features
     assert (
         "legal-semantic-frame:source-frame:"
-        "government_actor:grant_authorization:authorization_instrument"
-        in shared_features
+        "government_actor:grant_authorization:authorization_instrument" in shared_features
     )
     assert (
         "legal-semantic-frame:source-action-class-family:grant_authorization:deontic"
@@ -2680,16 +2611,11 @@ def test_legal_semantic_frame_features_canonicalize_legal_roles() -> None:
     )
     assert (
         "legal-semantic-frame:source-object-class-family:"
-        "authorization_instrument:deontic"
-        in shared_features
+        "authorization_instrument:deontic" in shared_features
     )
+    assert "legal-semantic-frame:source-action-class:grant_authorization" in fallback_features
     assert (
-        "legal-semantic-frame:source-action-class:grant_authorization"
-        in fallback_features
-    )
-    assert (
-        "legal-ir:legal-semantic-frame:source-action-class:grant_authorization"
-        in legal_ir_features
+        "legal-ir:legal-semantic-frame:source-action-class:grant_authorization" in legal_ir_features
     )
 
 
@@ -2718,9 +2644,7 @@ def test_legal_semantic_frame_feature_head_transfers_across_paraphrase() -> None
     )
     shared_semantic_features = set(
         family_autoencoder._legal_semantic_frame_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._legal_semantic_frame_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._legal_semantic_frame_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -2732,8 +2656,7 @@ def test_legal_semantic_frame_feature_head_transfers_across_paraphrase() -> None
 
     assert (
         "legal-semantic-frame:source-frame:"
-        "government_actor:grant_authorization:authorization_instrument"
-        in shared_semantic_features
+        "government_actor:grant_authorization:authorization_instrument" in shared_semantic_features
     )
     assert any(
         feature.startswith("legal-semantic-frame:")
@@ -2809,14 +2732,10 @@ def test_normative_polarity_features_encode_force_and_negated_scope() -> None:
     assert autoencoder._source_role_anchors_for(negated)["action"] == "issue"
     assert "normative-polarity:polarity:negative_scope" in negated_features
     assert "normative-polarity:polarity:enabling" not in negated_features
-    assert (
-        "normative-polarity:force-polarity:obligation:negative_scope"
-        in negated_features
-    )
+    assert "normative-polarity:force-polarity:obligation:negative_scope" in negated_features
     assert (
         "normative-polarity:action-class-polarity:"
-        "grant_authorization:negative_scope"
-        in negated_features
+        "grant_authorization:negative_scope" in negated_features
     )
     assert "normative-polarity:force:permission" in fallback_features
     assert "legal-ir:normative-polarity:force:permission" in legal_ir_features
@@ -2848,9 +2767,7 @@ def test_normative_polarity_feature_head_transfers_permission_holdout() -> None:
     )
     shared_polarity_features = set(
         family_autoencoder._normative_polarity_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._normative_polarity_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._normative_polarity_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -2932,14 +2849,12 @@ def test_compiler_contract_features_compose_source_and_ir_contract() -> None:
     assert (
         "compiler-contract:source-contract:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "permission:enabling:conditioned+temporal"
-        in contract_features
+        "permission:enabling:conditioned+temporal" in contract_features
     )
     assert "compiler-contract:ir-contract:deontic:d:p:clause:a0:cno:eno" in contract_features
     assert (
         "compiler-contract:source-ir-contract:"
-        "grant_authorization:permission:enabling:deontic:p:clause"
-        in contract_features
+        "grant_authorization:permission:enabling:deontic:p:clause" in contract_features
     )
     assert (
         "compiler-contract:frame-ir-contract:"
@@ -2949,8 +2864,7 @@ def test_compiler_contract_features_compose_source_and_ir_contract() -> None:
     assert (
         "compiler-contract:source-contract:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "obligation:negative_scope:conditioned"
-        in negated_contract_features
+        "obligation:negative_scope:conditioned" in negated_contract_features
     )
     assert (
         "compiler-contract:source-ir-contract:"
@@ -2960,8 +2874,7 @@ def test_compiler_contract_features_compose_source_and_ir_contract() -> None:
     assert "compiler-contract:force-polarity:obligation:enabling" not in negated_contract_features
     assert "compiler-contract:ir-contract:deontic:d:p:clause:a0:cno:eno" in fallback_features
     assert (
-        "legal-ir:compiler-contract:ir-contract:deontic:d:p:clause:a0:cno:eno"
-        in legal_ir_features
+        "legal-ir:compiler-contract:ir-contract:deontic:d:p:clause:a0:cno:eno" in legal_ir_features
     )
 
 
@@ -3117,10 +3030,7 @@ def test_compiler_guidance_surfaces_underrepresented_legal_ir_views() -> None:
 
     slot_texts = decoded_modal_phrase_slot_text_map(result.decoded_modal_text)
     assert slot_texts["compiler_guidance_legal_ir_underrepresented_view"] == ["cec_native"]
-    assert (
-        slot_texts["compiler_guidance_legal_ir_underrepresented_view_ranked"]
-        == ["1:cec_native"]
-    )
+    assert slot_texts["compiler_guidance_legal_ir_underrepresented_view_ranked"] == ["1:cec_native"]
 
 
 def test_compiler_contract_feature_head_transfers_permission_holdout() -> None:
@@ -3150,9 +3060,7 @@ def test_compiler_contract_feature_head_transfers_permission_holdout() -> None:
     )
     shared_contract_features = set(
         family_autoencoder._compiler_contract_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._compiler_contract_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._compiler_contract_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -3164,8 +3072,7 @@ def test_compiler_contract_feature_head_transfers_permission_holdout() -> None:
 
     assert (
         "compiler-contract:source-ir-contract:"
-        "grant_authorization:permission:enabling:deontic:p:clause"
-        in shared_contract_features
+        "grant_authorization:permission:enabling:deontic:p:clause" in shared_contract_features
     )
     assert any(
         feature.startswith("compiler-contract:")
@@ -3230,28 +3137,23 @@ def test_decompiler_surface_template_features_encode_ir_to_text_plan() -> None:
     )
 
     surface_features = autoencoder._decompiler_surface_template_feature_keys_for(sample)
-    negated_surface_features = autoencoder._decompiler_surface_template_feature_keys_for(
-        negated
-    )
+    negated_surface_features = autoencoder._decompiler_surface_template_feature_keys_for(negated)
     fallback_features = autoencoder._fallback_feature_keys_for(sample)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(sample)
 
     assert (
         "decompiler-surface:slot-order:"
-        "subject>force>polarity>action>object>temporal"
-        in surface_features
+        "subject>force>polarity>action>object>temporal" in surface_features
     )
     assert "decompiler-surface:force-lexeme:permission:may" in surface_features
     assert (
         "decompiler-surface:template:"
         "government_actor:permission:enabling:"
-        "grant_authorization:authorization_instrument:conditioned+temporal"
-        in surface_features
+        "grant_authorization:authorization_instrument:conditioned+temporal" in surface_features
     )
     assert (
         "decompiler-surface:ir-realization:"
-        "deontic:d:p:permission:enabling:conditioned+temporal"
-        in surface_features
+        "deontic:d:p:permission:enabling:conditioned+temporal" in surface_features
     )
     assert (
         "decompiler-surface:surface-ir-template:"
@@ -3262,19 +3164,14 @@ def test_decompiler_surface_template_features_encode_ir_to_text_plan() -> None:
     assert (
         "decompiler-surface:template:"
         "government_actor:obligation:negative_scope:"
-        "grant_authorization:authorization_instrument:conditioned"
-        in negated_surface_features
+        "grant_authorization:authorization_instrument:conditioned" in negated_surface_features
     )
     assert not any(
-        feature.startswith("decompiler-surface:template:")
-        and ":enabling:" in feature
+        feature.startswith("decompiler-surface:template:") and ":enabling:" in feature
         for feature in negated_surface_features
     )
     assert "decompiler-surface:force-lexeme:permission:may" in fallback_features
-    assert (
-        "legal-ir:decompiler-surface:force-lexeme:permission:may"
-        in legal_ir_features
-    )
+    assert "legal-ir:decompiler-surface:force-lexeme:permission:may" in legal_ir_features
 
 
 def test_decompiler_surface_template_feature_head_transfers_permission_holdout() -> None:
@@ -3305,9 +3202,7 @@ def test_decompiler_surface_template_feature_head_transfers_permission_holdout()
     )
     shared_surface_features = set(
         family_autoencoder._decompiler_surface_template_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._decompiler_surface_template_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._decompiler_surface_template_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -3319,8 +3214,7 @@ def test_decompiler_surface_template_feature_head_transfers_permission_holdout()
 
     assert (
         "decompiler-surface:ir-realization:"
-        "deontic:d:p:permission:enabling:conditioned+temporal"
-        in shared_surface_features
+        "deontic:d:p:permission:enabling:conditioned+temporal" in shared_surface_features
     )
     assert any(
         feature.startswith("decompiler-surface:")
@@ -3402,35 +3296,27 @@ def test_canonical_ir_graph_features_normalize_surface_paraphrases() -> None:
     assert (
         "canonical-ir:canonical-formula:"
         "deontic:p:clause:grant_authorization:authorization_instrument:"
-        "permission:enabling:conditioned+temporal"
-        in graph_features
+        "permission:enabling:conditioned+temporal" in graph_features
     )
     assert (
         "canonical-ir:semantic-node:"
-        "grant_authorization:authorization_instrument:deontic:p:clause"
-        in graph_features
+        "grant_authorization:authorization_instrument:deontic:p:clause" in graph_features
     )
     assert "canonical-ir:ir-node:deontic:d:p:clause:a0:c0:e0" in graph_features
     assert (
         "canonical-ir:canonical-formula:"
         "deontic:p:clause:grant_authorization:authorization_instrument:"
-        "permission:enabling:conditioned+temporal"
-        in paraphrase_features
+        "permission:enabling:conditioned+temporal" in paraphrase_features
     )
     assert (
         "canonical-ir:condition-edge:"
-        "eligibility_condition->conditional_normative:o:condition"
-        in conditional_features
+        "eligibility_condition->conditional_normative:o:condition" in conditional_features
     )
     assert (
-        "canonical-ir:exception-edge:record_exception->deontic:o:condition"
-        in conditional_features
+        "canonical-ir:exception-edge:record_exception->deontic:o:condition" in conditional_features
     )
     assert "canonical-ir:ir-node:deontic:d:p:clause:a0:c0:e0" in fallback_features
-    assert (
-        "legal-ir:canonical-ir:ir-node:deontic:d:p:clause:a0:c0:e0"
-        in legal_ir_features
-    )
+    assert "legal-ir:canonical-ir:ir-node:deontic:d:p:clause:a0:c0:e0" in legal_ir_features
 
 
 def test_canonical_ir_graph_feature_head_transfers_permission_holdout() -> None:
@@ -3462,9 +3348,7 @@ def test_canonical_ir_graph_feature_head_transfers_permission_holdout() -> None:
     )
     shared_graph_features = set(
         family_autoencoder._canonical_ir_graph_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._canonical_ir_graph_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._canonical_ir_graph_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -3477,8 +3361,7 @@ def test_canonical_ir_graph_feature_head_transfers_permission_holdout() -> None:
     assert (
         "canonical-ir:canonical-formula:"
         "deontic:p:clause:grant_authorization:authorization_instrument:"
-        "permission:enabling:conditioned+temporal"
-        in shared_graph_features
+        "permission:enabling:conditioned+temporal" in shared_graph_features
     )
     assert any(
         feature.startswith("canonical-ir:")
@@ -3548,31 +3431,23 @@ def test_cycle_consistency_features_bind_source_ir_and_decompiler_scope() -> Non
     )
 
     cycle_features = autoencoder._cycle_consistency_feature_keys_for(sample)
-    conditional_cycle_features = autoencoder._cycle_consistency_feature_keys_for(
-        conditional
-    )
+    conditional_cycle_features = autoencoder._cycle_consistency_feature_keys_for(conditional)
     fallback_features = autoencoder._fallback_feature_keys_for(sample)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(sample)
 
     assert (
         "cycle-consistency:source-ir-cycle:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "permission:enabling:deontic:p:clause:conditioned+temporal:cno:eno"
-        in cycle_features
+        "permission:enabling:deontic:p:clause:conditioned+temporal:cno:eno" in cycle_features
     )
-    assert (
-        "cycle-consistency:condition-cycle:source-no:ir-no:deontic:clause"
-        in cycle_features
-    )
+    assert "cycle-consistency:condition-cycle:source-no:ir-no:deontic:clause" in cycle_features
     assert (
         "cycle-consistency:scope-cycle:"
-        "deontic:clause:conditioned+temporal->temporal"
-        in cycle_features
+        "deontic:clause:conditioned+temporal->temporal" in cycle_features
     )
     assert (
         "cycle-consistency:condition-cycle:"
-        "source-yes:ir-yes:conditional_normative:condition"
-        in conditional_cycle_features
+        "source-yes:ir-yes:conditional_normative:condition" in conditional_cycle_features
     )
     assert (
         "cycle-consistency:exception-cycle:source-yes:ir-yes:deontic:condition"
@@ -3581,13 +3456,11 @@ def test_cycle_consistency_features_bind_source_ir_and_decompiler_scope() -> Non
     assert (
         "cycle-consistency:source-ir-cycle:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "permission:enabling:deontic:p:clause:conditioned+temporal:cno:eno"
-        in fallback_features
+        "permission:enabling:deontic:p:clause:conditioned+temporal:cno:eno" in fallback_features
     )
     assert (
         "legal-ir:cycle-consistency:condition-cycle:"
-        "source-no:ir-no:deontic:clause"
-        in legal_ir_features
+        "source-no:ir-no:deontic:clause" in legal_ir_features
     )
 
 
@@ -3621,9 +3494,7 @@ def test_cycle_consistency_feature_head_transfers_permission_holdout() -> None:
     )
     shared_cycle_features = set(
         family_autoencoder._cycle_consistency_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._cycle_consistency_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._cycle_consistency_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -3636,8 +3507,7 @@ def test_cycle_consistency_feature_head_transfers_permission_holdout() -> None:
     assert (
         "cycle-consistency:source-ir-cycle:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "permission:enabling:deontic:p:clause:conditioned+temporal:cno:eno"
-        in shared_cycle_features
+        "permission:enabling:deontic:p:clause:conditioned+temporal:cno:eno" in shared_cycle_features
     )
     assert any(
         feature.startswith("cycle-consistency:")
@@ -3713,12 +3583,8 @@ def test_equivalence_prototype_features_share_logical_paraphrase_class() -> None
     )
 
     prototype_features = autoencoder._equivalence_prototype_feature_keys_for(sample)
-    paraphrase_features = autoencoder._equivalence_prototype_feature_keys_for(
-        paraphrase
-    )
-    conditional_features = autoencoder._equivalence_prototype_feature_keys_for(
-        conditional
-    )
+    paraphrase_features = autoencoder._equivalence_prototype_feature_keys_for(paraphrase)
+    conditional_features = autoencoder._equivalence_prototype_feature_keys_for(conditional)
     shared_equivalence_classes = {
         feature
         for feature in prototype_features
@@ -3732,24 +3598,20 @@ def test_equivalence_prototype_features_share_logical_paraphrase_class() -> None
         "equivalence-prototype:round-trip-prototype:"
         "government_actor:grant_authorization:authorization_instrument:"
         "permission:enabling:deontic:p:clause:conditioned+temporal:"
-        "unconditioned:unexcepted"
-        in prototype_features
+        "unconditioned:unexcepted" in prototype_features
     )
     assert (
         "equivalence-prototype:role-prototype:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "eligibility_condition:record_exception:atemporal"
-        in conditional_features
+        "eligibility_condition:record_exception:atemporal" in conditional_features
     )
     assert (
         "equivalence-prototype:operator-prototype:"
-        "deontic:d:p:clause:a0:unconditioned:unexcepted"
-        in fallback_features
+        "deontic:d:p:clause:a0:unconditioned:unexcepted" in fallback_features
     )
     assert (
         "legal-ir:equivalence-prototype:operator-prototype:"
-        "deontic:d:p:clause:a0:unconditioned:unexcepted"
-        in legal_ir_features
+        "deontic:d:p:clause:a0:unconditioned:unexcepted" in legal_ir_features
     )
 
 
@@ -3784,9 +3646,7 @@ def test_equivalence_prototype_feature_head_transfers_permission_holdout() -> No
     )
     shared_prototype_features = set(
         family_autoencoder._equivalence_prototype_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._equivalence_prototype_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._equivalence_prototype_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -3804,8 +3664,7 @@ def test_equivalence_prototype_feature_head_transfers_permission_holdout() -> No
         "equivalence-prototype:round-trip-prototype:"
         "government_actor:grant_authorization:authorization_instrument:"
         "permission:enabling:deontic:p:clause:conditioned+temporal:"
-        "unconditioned:unexcepted"
-        in shared_prototype_features
+        "unconditioned:unexcepted" in shared_prototype_features
     )
     assert any(
         feature.startswith("equivalence-prototype:")
@@ -3878,12 +3737,8 @@ def test_contrastive_ir_boundary_features_separate_minimal_pairs() -> None:
         max_contrastive_ir_boundary_features=128,
     )
 
-    permission_features = autoencoder._contrastive_ir_boundary_feature_keys_for(
-        permission
-    )
-    obligation_features = autoencoder._contrastive_ir_boundary_feature_keys_for(
-        obligation
-    )
+    permission_features = autoencoder._contrastive_ir_boundary_feature_keys_for(permission)
+    obligation_features = autoencoder._contrastive_ir_boundary_feature_keys_for(obligation)
     negated_features = autoencoder._contrastive_ir_boundary_feature_keys_for(negated)
     fallback_features = autoencoder._fallback_feature_keys_for(permission)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(permission)
@@ -3907,26 +3762,19 @@ def test_contrastive_ir_boundary_features_separate_minimal_pairs() -> None:
     assert (
         "contrastive-ir:minimal-pair-boundary:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "permission:enabling:cyes:eno:tyes"
-        in permission_features
+        "permission:enabling:cyes:eno:tyes" in permission_features
     )
+    assert "contrastive-ir:negation-boundary:negated:conditioned" in negated_features
     assert (
-        "contrastive-ir:negation-boundary:negated:conditioned"
-        in negated_features
-    )
-    assert (
-        "contrastive-ir:operator-axis:deontic:d:p:clause:a0:cno:eno:tyes"
-        not in obligation_features
+        "contrastive-ir:operator-axis:deontic:d:p:clause:a0:cno:eno:tyes" not in obligation_features
     )
     assert (
         "contrastive-ir:force-axis:"
-        "permission:vs-obligation+prohibition+definition+enforcement+assertive"
-        in fallback_features
+        "permission:vs-obligation+prohibition+definition+enforcement+assertive" in fallback_features
     )
     assert (
         "legal-ir:contrastive-ir:force-axis:"
-        "permission:vs-obligation+prohibition+definition+enforcement+assertive"
-        in legal_ir_features
+        "permission:vs-obligation+prohibition+definition+enforcement+assertive" in legal_ir_features
     )
 
 
@@ -3962,9 +3810,7 @@ def test_contrastive_ir_boundary_feature_head_transfers_permission_holdout() -> 
     )
     shared_boundary_features = set(
         family_autoencoder._contrastive_ir_boundary_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._contrastive_ir_boundary_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._contrastive_ir_boundary_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -3977,8 +3823,7 @@ def test_contrastive_ir_boundary_feature_head_transfers_permission_holdout() -> 
     assert (
         "contrastive-ir:semantic-operator-boundary:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "deontic:p:permission:enabling:cyes:eno:tyes"
-        in shared_boundary_features
+        "deontic:p:permission:enabling:cyes:eno:tyes" in shared_boundary_features
     )
     assert any(
         feature.startswith("contrastive-ir:")
@@ -4062,59 +3907,36 @@ def test_repair_plan_features_encode_todo_repair_axes() -> None:
     assert (
         "repair-plan:source-ir-rule:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "deontic:p:clause"
-        in permission_features
+        "deontic:p:clause" in permission_features
     )
-    assert (
-        "repair-plan:force-operator:"
-        "permission:enabling:deontic:p:clause"
-        in permission_features
-    )
+    assert "repair-plan:force-operator:permission:enabling:deontic:p:clause" in permission_features
     assert (
         "repair-plan:surface-template:"
-        "permission:enabling:conditioned+temporal:deontic:p"
-        in permission_features
+        "permission:enabling:conditioned+temporal:deontic:p" in permission_features
     )
-    assert (
-        "repair-plan:lexeme-operator:may:deontic:p:permission"
-        in permission_features
-    )
+    assert "repair-plan:lexeme-operator:may:deontic:p:permission" in permission_features
     assert (
         "repair-plan:preserve-force-boundary:"
         "grant_authorization:authorization_instrument:"
-        "permission:enabling:deontic:p"
-        in permission_features
+        "permission:enabling:deontic:p" in permission_features
     )
-    assert (
-        "repair-plan:add-condition-extractor:deontic:clause"
-        in permission_features
-    )
-    assert (
-        "repair-plan:preserve-negation-boundary:negated:deontic:o"
-        in negated_features
-    )
+    assert "repair-plan:add-condition-extractor:deontic:clause" in permission_features
+    assert "repair-plan:preserve-negation-boundary:negated:deontic:o" in negated_features
     assert (
         "repair-plan:condition-state:"
-        "source-yes:ir-yes:conditional_normative:condition"
-        in conditional_features
+        "source-yes:ir-yes:conditional_normative:condition" in conditional_features
     )
-    assert (
-        "repair-plan:exception-state:"
-        "source-yes:ir-yes:deontic:condition"
-        in conditional_features
-    )
+    assert "repair-plan:exception-state:source-yes:ir-yes:deontic:condition" in conditional_features
     assert "repair-plan:kg-build-needed:t0:r0" in permission_features
     assert (
         "repair-plan:source-ir-rule:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "deontic:p:clause"
-        in fallback_features
+        "deontic:p:clause" in fallback_features
     )
     assert (
         "legal-ir:repair-plan:source-ir-rule:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "deontic:p:clause"
-        in legal_ir_features
+        "deontic:p:clause" in legal_ir_features
     )
 
 
@@ -4164,13 +3986,11 @@ def test_repair_plan_feature_head_transfers_permission_holdout() -> None:
     assert (
         "repair-plan:source-ir-rule:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "deontic:p:clause"
-        in shared_repair_features
+        "deontic:p:clause" in shared_repair_features
     )
     assert (
         "repair-plan:surface-template:"
-        "permission:enabling:conditioned+temporal:deontic:p"
-        in shared_repair_features
+        "permission:enabling:conditioned+temporal:deontic:p" in shared_repair_features
     )
     assert any(
         feature.startswith("repair-plan:")
@@ -4244,57 +4064,43 @@ def test_logic_view_contract_features_bind_multiview_bridge_slots() -> None:
     )
 
     permission_features = autoencoder._logic_view_contract_feature_keys_for(permission)
-    conditional_features = autoencoder._logic_view_contract_feature_keys_for(
-        conditional
-    )
+    conditional_features = autoencoder._logic_view_contract_feature_keys_for(conditional)
     fallback_features = autoencoder._fallback_feature_keys_for(permission)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(permission)
 
     assert "logic-view-contract:expected-view:deontic_norms" in permission_features
     assert "logic-view-contract:expected-view:fol_tdfol" in permission_features
     assert "logic-view-contract:expected-view:cec_native" in permission_features
-    assert (
-        "logic-view-contract:expected-view:knowledge_graphs_neo4j_compat"
-        in permission_features
-    )
+    assert "logic-view-contract:expected-view:knowledge_graphs_neo4j_compat" in permission_features
     assert (
         "logic-view-contract:todo-route:"
         "refine_typed_ir_or_decompiler_slots:"
         "modal_ir+external_provers_router+deontic_norms+fol_tdfol+"
-        "cec_native+knowledge_graphs_neo4j_compat+modal_frame_logic"
-        in permission_features
+        "cec_native+knowledge_graphs_neo4j_compat+modal_frame_logic" in permission_features
     )
     assert (
         "logic-view-contract:deontic-slot:"
         "permission:enabling:government_actor:grant_authorization:"
-        "authorization_instrument:deontic:p"
-        in permission_features
+        "authorization_instrument:deontic:p" in permission_features
     )
     assert (
         "logic-view-contract:cec-slot:"
-        "temporal:grant_authorization:deontic:p:clause"
-        in permission_features
+        "temporal:grant_authorization:deontic:p:clause" in permission_features
     )
     assert (
         "logic-view-contract:kg-slot:"
-        "government_actor:grant_authorization:authorization_instrument:t0:r0"
-        in permission_features
+        "government_actor:grant_authorization:authorization_instrument:t0:r0" in permission_features
     )
     assert (
         "logic-view-contract:tdfol-slot:"
-        "grant_authorization:cyes:eyes:a0:deontic:o"
-        in conditional_features
+        "grant_authorization:cyes:eyes:a0:deontic:o" in conditional_features
     )
     assert (
         "logic-view-contract:scope-slot:"
-        "conditional_normative:o:source-cyes:eyes:tno:ir-cyes:eyes"
-        in conditional_features
+        "conditional_normative:o:source-cyes:eyes:tno:ir-cyes:eyes" in conditional_features
     )
     assert "logic-view-contract:expected-view:deontic_norms" in fallback_features
-    assert (
-        "legal-ir:logic-view-contract:expected-view:deontic_norms"
-        in legal_ir_features
-    )
+    assert "legal-ir:logic-view-contract:expected-view:deontic_norms" in legal_ir_features
 
 
 def test_logic_view_contract_feature_head_transfers_permission_holdout() -> None:
@@ -4348,9 +4154,7 @@ def test_logic_view_contract_feature_head_transfers_permission_holdout() -> None
     )
     shared_contract_features = set(
         family_autoencoder._logic_view_contract_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._logic_view_contract_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._logic_view_contract_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -4363,13 +4167,11 @@ def test_logic_view_contract_feature_head_transfers_permission_holdout() -> None
     assert (
         "logic-view-contract:deontic-slot:"
         "permission:enabling:government_actor:grant_authorization:"
-        "authorization_instrument:deontic:p"
-        in shared_contract_features
+        "authorization_instrument:deontic:p" in shared_contract_features
     )
     assert (
         "logic-view-contract:cec-slot:"
-        "temporal:grant_authorization:deontic:p:clause"
-        in shared_contract_features
+        "temporal:grant_authorization:deontic:p:clause" in shared_contract_features
     )
     assert any(
         feature.startswith("logic-view-contract:")
@@ -4529,58 +4331,48 @@ def test_objective_residual_features_bind_loss_profile_to_todo_routes() -> None:
     assert (
         "objective-residual:loss-route:"
         "repair_multiview_legal_ir_graph_projection:"
-        "legal_ir_multiview_graph_failure_penalty:large"
-        in objective_features
+        "legal_ir_multiview_graph_failure_penalty:large" in objective_features
     )
     assert (
         "objective-residual:loss-route:"
-        "repair_cec_dcec_bridge:cec_dcec_validation_failure_ratio:large"
-        in objective_features
+        "repair_cec_dcec_bridge:cec_dcec_validation_failure_ratio:large" in objective_features
     )
     assert (
         "objective-residual:loss-route:"
         "refine_typed_ir_or_decompiler_slots:"
-        "legal_ir_multiview_cosine_loss:large"
-        in objective_features
+        "legal_ir_multiview_cosine_loss:large" in objective_features
     )
     assert (
         "objective-residual:loss-route:"
         "refine_semantic_decompiler_reconstruction:"
-        "source_copy_reward_hack_penalty:large"
-        in objective_features
+        "source_copy_reward_hack_penalty:large" in objective_features
     )
     assert (
         "objective-residual:loss-route:"
         "refine_semantic_decompiler_reconstruction:"
-        "source_decompiled_text_embedding_cosine_loss:large"
-        in objective_features
+        "source_decompiled_text_embedding_cosine_loss:large" in objective_features
     )
     assert (
         "objective-residual:view-route:"
-        "repair_deontic_bridge_quality_gate:deontic_norms:high"
-        in objective_features
+        "repair_deontic_bridge_quality_gate:deontic_norms:high" in objective_features
     )
     assert (
         "objective-residual:force-objective:"
         "permission:enabling:repair_cec_dcec_bridge:"
         "conditioned+temporal:government_actor:grant_authorization:"
-        "authorization_instrument"
-        in objective_features
+        "authorization_instrument" in objective_features
     )
     assert (
         "objective-residual:operator-view-objective:"
-        "deontic:p:knowledge_graphs_neo4j_compat:large"
-        in objective_features
+        "deontic:p:knowledge_graphs_neo4j_compat:large" in objective_features
     )
     assert (
         "objective-residual:view-route:"
-        "repair_deontic_bridge_quality_gate:deontic_norms:high"
-        in fallback_features
+        "repair_deontic_bridge_quality_gate:deontic_norms:high" in fallback_features
     )
     assert (
         "legal-ir:objective-residual:view-route:"
-        "repair_deontic_bridge_quality_gate:deontic_norms:high"
-        in legal_ir_features
+        "repair_deontic_bridge_quality_gate:deontic_norms:high" in legal_ir_features
     )
 
 
@@ -4656,9 +4448,7 @@ def test_objective_residual_feature_head_transfers_loss_profile_holdout() -> Non
     )
     shared_objective_features = set(
         family_autoencoder._objective_residual_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._objective_residual_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._objective_residual_feature_keys_for(validation))
 
     family_autoencoder._nudge_family_logits(
         train,
@@ -4816,23 +4606,16 @@ def test_provenance_alignment_features_encode_span_and_cue_contracts() -> None:
         max_provenance_alignment_features=180,
     )
 
-    permission_features = autoencoder._provenance_alignment_feature_keys_for(
-        permission
-    )
-    conditional_features = autoencoder._provenance_alignment_feature_keys_for(
-        conditional
-    )
+    permission_features = autoencoder._provenance_alignment_feature_keys_for(permission)
+    conditional_features = autoencoder._provenance_alignment_feature_keys_for(conditional)
     fallback_features = autoencoder._fallback_feature_keys_for(permission)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(permission)
 
     assert (
         "provenance-alignment:operator-span:"
-        "deontic:p:clause:start-0:len-very-high"
-        in permission_features
+        "deontic:p:clause:start-0:len-very-high" in permission_features
     )
-    assert "provenance-alignment:cue-span:may:deontic:p:inside" in (
-        permission_features
-    )
+    assert "provenance-alignment:cue-span:may:deontic:p:inside" in (permission_features)
     assert (
         "provenance-alignment:span-role-contract:"
         "subject-action-object-temporal:deontic:p:clause:conditioned+temporal"
@@ -4841,27 +4624,23 @@ def test_provenance_alignment_features_encode_span_and_cue_contracts() -> None:
     assert (
         "provenance-alignment:decompiler-span-contract:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "conditioned+temporal:coverage-very-high"
-        in permission_features
+        "conditioned+temporal:coverage-very-high" in permission_features
     )
     assert "provenance-alignment:coverage:very-high" in permission_features
     assert "provenance-alignment:span-order:monotonic" in permission_features
     assert (
         "provenance-alignment:span-role-contract:"
         "subject-action-object-condition-exception:"
-        "conditional_normative:o:condition:conditioned+excepted"
-        in conditional_features
+        "conditional_normative:o:condition:conditioned+excepted" in conditional_features
     )
     assert "provenance-alignment:span-order:overlap" in conditional_features
     assert (
         "provenance-alignment:operator-span:"
-        "deontic:p:clause:start-0:len-very-high"
-        in fallback_features
+        "deontic:p:clause:start-0:len-very-high" in fallback_features
     )
     assert (
         "legal-ir:provenance-alignment:operator-span:"
-        "deontic:p:clause:start-0:len-very-high"
-        in legal_ir_features
+        "deontic:p:clause:start-0:len-very-high" in legal_ir_features
     )
 
 
@@ -4901,9 +4680,7 @@ def test_provenance_alignment_feature_head_transfers_permission_holdout() -> Non
     )
     shared_provenance_features = set(
         family_autoencoder._provenance_alignment_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._provenance_alignment_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._provenance_alignment_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -4916,8 +4693,7 @@ def test_provenance_alignment_feature_head_transfers_permission_holdout() -> Non
     assert (
         "provenance-alignment:decompiler-span-contract:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "conditioned+temporal:coverage-very-high"
-        in shared_provenance_features
+        "conditioned+temporal:coverage-very-high" in shared_provenance_features
     )
     assert any(
         feature.startswith("provenance-alignment:")
@@ -5006,35 +4782,28 @@ def test_discourse_flow_features_encode_clause_order_and_decompiler_routes() -> 
     assert (
         "discourse-flow:role-flow:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "subject->action->object->temporal:conditioned+temporal"
-        in permission_features
+        "subject->action->object->temporal:conditioned+temporal" in permission_features
     )
     assert (
         "discourse-flow:decompiler-order:"
         "permission->temporal:subject->action->object->temporal:"
-        "conditioned+temporal"
-        in permission_features
+        "conditioned+temporal" in permission_features
     )
     assert (
-        "discourse-flow:cue-operator-flow:"
-        "before:deontic:p:temporal:clause"
-        in permission_features
+        "discourse-flow:cue-operator-flow:before:deontic:p:temporal:clause" in permission_features
     )
     assert (
         "discourse-flow:todo-route:"
         "refine_semantic_decompiler_reconstruction:"
-        "permission->temporal:subject->action->object->temporal"
-        in permission_features
+        "permission->temporal:subject->action->object->temporal" in permission_features
     )
     assert (
         "discourse-flow:phase-sequence:"
-        "condition->event->obligation->exception->condition"
-        in conditional_features
+        "condition->event->obligation->exception->condition" in conditional_features
     )
     assert (
         "discourse-flow:phase-transition:"
-        "obligation->exception:conditioned+excepted"
-        in conditional_features
+        "obligation->exception:conditioned+excepted" in conditional_features
     )
     assert (
         "discourse-flow:scope-order:condition:before-action:conditioned+excepted"
@@ -5045,15 +4814,10 @@ def test_discourse_flow_features_encode_clause_order_and_decompiler_routes() -> 
         in conditional_features
     )
     assert (
-        "discourse-flow:cue-operator-flow:"
-        "files:dynamic:a:event:condition"
-        in conditional_features
+        "discourse-flow:cue-operator-flow:files:dynamic:a:event:condition" in conditional_features
     )
     assert "discourse-flow:phase-sequence:permission->temporal" in fallback_features
-    assert (
-        "legal-ir:discourse-flow:phase-sequence:permission->temporal"
-        in legal_ir_features
-    )
+    assert "legal-ir:discourse-flow:phase-sequence:permission->temporal" in legal_ir_features
 
 
 def test_discourse_flow_feature_head_transfers_permission_holdout() -> None:
@@ -5093,9 +4857,7 @@ def test_discourse_flow_feature_head_transfers_permission_holdout() -> None:
     )
     shared_discourse_features = set(
         family_autoencoder._discourse_flow_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._discourse_flow_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._discourse_flow_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -5108,8 +4870,7 @@ def test_discourse_flow_feature_head_transfers_permission_holdout() -> None:
     assert (
         "discourse-flow:decompiler-order:"
         "permission->temporal:subject->action->object->temporal:"
-        "conditioned+temporal"
-        in shared_discourse_features
+        "conditioned+temporal" in shared_discourse_features
     )
     assert any(
         feature.startswith("discourse-flow:")
@@ -5197,20 +4958,17 @@ def test_proof_obligation_features_encode_bridge_and_prover_routes() -> None:
 
     assert (
         "proof-obligation:formula-proof:"
-        "prove-permission:deontic:p:clause:cno:eno:a0"
-        in permission_features
+        "prove-permission:deontic:p:clause:cno:eno:a0" in permission_features
     )
     assert (
         "proof-obligation:proof-route:"
         "deontic_norms:prove-permission:deontic:p:"
-        "grant_authorization:conditioned+temporal"
-        in permission_features
+        "grant_authorization:conditioned+temporal" in permission_features
     )
     assert (
         "proof-obligation:proof-route:"
         "zkp_attestation:prove-permission:deontic:p:"
-        "grant_authorization:conditioned+temporal"
-        in permission_features
+        "grant_authorization:conditioned+temporal" in permission_features
     )
     assert (
         "proof-obligation:compiler-proof-plan:"
@@ -5218,44 +4976,37 @@ def test_proof_obligation_features_encode_bridge_and_prover_routes() -> None:
         "modal_frame_logic+deontic_norms+fol_tdfol+cec_dcec+"
         "external_prover_router+zkp_attestation:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "none:none:none:conditioned+temporal"
-        in permission_features
+        "none:none:none:conditioned+temporal" in permission_features
     )
     assert (
         "proof-obligation:formula-proof:"
-        "prove-event-transition:dynamic:a:condition:cyes:eyes:a0"
-        in conditional_features
+        "prove-event-transition:dynamic:a:condition:cyes:eyes:a0" in conditional_features
     )
     assert (
         "proof-obligation:proof-route:"
         "cec_dcec:prove-event-transition:dynamic:a:"
-        "disclose_or_notify:conditioned+excepted"
-        in conditional_features
+        "disclose_or_notify:conditioned+excepted" in conditional_features
     )
     assert (
         "proof-obligation:guarded-proof:"
         "prove-guarded-duty:source-cyes:source-eyes:ir-cyes:ir-eyes:"
         "modal_frame_logic+deontic_norms+fol_tdfol+"
-        "external_prover_router+zkp_attestation"
-        in conditional_features
+        "external_prover_router+zkp_attestation" in conditional_features
     )
     assert (
         "proof-obligation:todo-route:"
         "repair_zkp_attestation_bridge:zkp_attestation:"
-        "prove-guarded-duty:conditioned+excepted"
-        in conditional_features
+        "prove-guarded-duty:conditioned+excepted" in conditional_features
     )
     assert (
         "proof-obligation:proof-route:"
         "deontic_norms:prove-permission:deontic:p:"
-        "grant_authorization:conditioned+temporal"
-        in fallback_features
+        "grant_authorization:conditioned+temporal" in fallback_features
     )
     assert (
         "legal-ir:proof-obligation:proof-route:"
         "deontic_norms:prove-permission:deontic:p:"
-        "grant_authorization:conditioned+temporal"
-        in legal_ir_features
+        "grant_authorization:conditioned+temporal" in legal_ir_features
     )
 
 
@@ -5297,9 +5048,7 @@ def test_proof_obligation_feature_head_transfers_permission_holdout() -> None:
     )
     shared_proof_features = set(
         family_autoencoder._proof_obligation_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._proof_obligation_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._proof_obligation_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -5315,8 +5064,7 @@ def test_proof_obligation_feature_head_transfers_permission_holdout() -> None:
         "modal_frame_logic+deontic_norms+fol_tdfol+cec_dcec+"
         "external_prover_router+zkp_attestation:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "none:none:none:conditioned+temporal"
-        in shared_proof_features
+        "none:none:none:conditioned+temporal" in shared_proof_features
     )
     assert any(
         feature.startswith("proof-obligation:")
@@ -5406,63 +5154,53 @@ def test_entity_binding_features_encode_role_variable_graph() -> None:
     assert (
         "entity-binding:source-binding:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "none:none:none:conditioned+temporal"
-        in permission_features
+        "none:none:none:conditioned+temporal" in permission_features
     )
     assert (
         "entity-binding:binding-edge:"
-        "subject->action:government_actor->grant_authorization"
-        in permission_features
+        "subject->action:government_actor->grant_authorization" in permission_features
     )
     assert (
         "entity-binding:quantifier-binding:"
         "guarded-permission-exists:deontic:p:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "none:none:none:conditioned+temporal"
-        in permission_features
+        "none:none:none:conditioned+temporal" in permission_features
     )
     assert (
         "entity-binding:decompiler-binding-plan:"
         "guarded-permission-exists:subject->action->object->temporal:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "none:none:none:deontic:p"
-        in permission_features
+        "none:none:none:deontic:p" in permission_features
     )
     assert (
         "entity-binding:binding-edge:"
-        "condition->action:eligibility_condition->grant_authorization"
-        in conditional_features
+        "condition->action:eligibility_condition->grant_authorization" in conditional_features
     )
     assert (
         "entity-binding:binding-edge:"
-        "exception->action:record_exception->grant_authorization"
-        in conditional_features
+        "exception->action:record_exception->grant_authorization" in conditional_features
     )
     assert (
         "entity-binding:formula-binding:"
         "dynamic:a:condition:disclose_or_notify:a0:cyes:eyes:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "eligibility_condition:record_exception:none"
-        in conditional_features
+        "eligibility_condition:record_exception:none" in conditional_features
     )
     assert (
         "entity-binding:quantifier-path:"
-        "guarded-duty-forall->guarded-event-exists:conditioned+excepted"
-        in conditional_features
+        "guarded-duty-forall->guarded-event-exists:conditioned+excepted" in conditional_features
     )
     assert (
         "entity-binding:todo-route:"
         "refine_predicate_argument_binding:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "none:none:none:deontic:p:conditioned+temporal"
-        in fallback_features
+        "none:none:none:deontic:p:conditioned+temporal" in fallback_features
     )
     assert (
         "legal-ir:entity-binding:todo-route:"
         "refine_predicate_argument_binding:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "none:none:none:deontic:p:conditioned+temporal"
-        in legal_ir_features
+        "none:none:none:deontic:p:conditioned+temporal" in legal_ir_features
     )
 
 
@@ -5505,9 +5243,7 @@ def test_entity_binding_feature_head_transfers_permission_holdout() -> None:
     )
     shared_entity_features = set(
         family_autoencoder._entity_binding_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._entity_binding_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._entity_binding_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -5521,8 +5257,7 @@ def test_entity_binding_feature_head_transfers_permission_holdout() -> None:
         "entity-binding:decompiler-binding-plan:"
         "guarded-permission-exists:subject->action->object->temporal:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "none:none:none:deontic:p"
-        in shared_entity_features
+        "none:none:none:deontic:p" in shared_entity_features
     )
     assert any(
         feature.startswith("entity-binding:")
@@ -5622,57 +5357,48 @@ def test_defeasible_priority_features_encode_exception_and_override_scope() -> N
     assert (
         "defeasible-priority:rule-priority:"
         "temporal-guard:deontic:p:clause:grant_authorization:"
-        "cno:eno:conditioned+temporal"
-        in permission_features
+        "cno:eno:conditioned+temporal" in permission_features
     )
     assert (
         "defeasible-priority:decompiler-priority-plan:"
         "temporal-guard:deontic:p:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "none:none:none:conditioned+temporal"
-        in permission_features
+        "none:none:none:conditioned+temporal" in permission_features
     )
     assert (
         "defeasible-priority:source-priority-marker:"
-        "except:exception-overrides:conditioned+excepted"
-        in conditional_features
+        "except:exception-overrides:conditioned+excepted" in conditional_features
     )
     assert (
         "defeasible-priority:rule-priority:"
         "exception-overrides:deontic:o:condition:grant_authorization:"
-        "cyes:eyes:conditioned+excepted"
-        in conditional_features
+        "cyes:eyes:conditioned+excepted" in conditional_features
     )
     assert (
         "defeasible-priority:exception-contract:"
         "exception-overrides:record_exception:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "eligibility_condition:record_exception:none"
-        in conditional_features
+        "eligibility_condition:record_exception:none" in conditional_features
     )
     assert (
         "defeasible-priority:source-priority-marker:"
-        "notwithstanding:express-override:conditioned+excepted"
-        in override_features
+        "notwithstanding:express-override:conditioned+excepted" in override_features
     )
     assert (
         "defeasible-priority:priority-sequence:"
-        "express-override:conditioned+excepted"
-        in override_features
+        "express-override:conditioned+excepted" in override_features
     )
     assert (
         "defeasible-priority:todo-route:"
         "refine_defeasible_priority_scope:temporal-guard:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "none:none:none:conditioned+temporal"
-        in fallback_features
+        "none:none:none:conditioned+temporal" in fallback_features
     )
     assert (
         "legal-ir:defeasible-priority:todo-route:"
         "refine_defeasible_priority_scope:temporal-guard:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "none:none:none:conditioned+temporal"
-        in legal_ir_features
+        "none:none:none:conditioned+temporal" in legal_ir_features
     )
 
 
@@ -5716,9 +5442,7 @@ def test_defeasible_priority_feature_head_transfers_permission_holdout() -> None
     )
     shared_priority_features = set(
         family_autoencoder._defeasible_priority_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._defeasible_priority_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._defeasible_priority_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -5732,8 +5456,7 @@ def test_defeasible_priority_feature_head_transfers_permission_holdout() -> None
         "defeasible-priority:decompiler-priority-plan:"
         "temporal-guard:deontic:p:"
         "government_actor:grant_authorization:authorization_instrument:"
-        "none:none:none:conditioned+temporal"
-        in shared_priority_features
+        "none:none:none:conditioned+temporal" in shared_priority_features
     )
     assert any(
         feature.startswith("defeasible-priority:")
@@ -5831,18 +5554,14 @@ def test_constraint_grounding_features_encode_deadlines_thresholds_and_crossrefs
     assert (
         "constraint-grounding:constraint-signature:"
         "temporal-deadline:within:16-31:day+"
-        "statutory-crossref:under:b:subsection"
-        in deadline_features
+        "statutory-crossref:under:b:subsection" in deadline_features
     )
     assert (
-        "constraint-grounding:constraint-exact:"
-        "temporal-deadline:within:30:day"
-        in deadline_features
+        "constraint-grounding:constraint-exact:temporal-deadline:within:30:day" in deadline_features
     )
     assert (
         "constraint-grounding:cross-reference-grounding:"
-        "under:subsection:b:temporal"
-        in deadline_features
+        "under:subsection:b:temporal" in deadline_features
     )
     assert (
         "constraint-grounding:todo-route:"
@@ -5850,8 +5569,7 @@ def test_constraint_grounding_features_encode_deadlines_thresholds_and_crossrefs
         "temporal-deadline:within:16-31:day+"
         "statutory-crossref:under:b:subsection:"
         "government_actor:disclose_or_notify:notice_or_record:"
-        "none:none:deadline_temporal"
-        in fallback_features
+        "none:none:deadline_temporal" in fallback_features
     )
     assert (
         "legal-ir:constraint-grounding:todo-route:"
@@ -5859,41 +5577,33 @@ def test_constraint_grounding_features_encode_deadlines_thresholds_and_crossrefs
         "temporal-deadline:within:16-31:day+"
         "statutory-crossref:under:b:subsection:"
         "government_actor:disclose_or_notify:notice_or_record:"
-        "none:none:deadline_temporal"
-        in legal_ir_features
+        "none:none:deadline_temporal" in legal_ir_features
     )
     assert (
         "constraint-grounding:constraint-signature:"
         "percentage-threshold:at_least:32-90:percent+"
-        "statutory-crossref:under:1:paragraph"
-        in percent_features
+        "statutory-crossref:under:1:paragraph" in percent_features
     )
     assert (
         "constraint-grounding:constraint-exact:"
-        "percentage-threshold:at_least:60:percent"
-        in percent_features
+        "percentage-threshold:at_least:60:percent" in percent_features
     )
     assert (
         "constraint-grounding:threshold-constraint:"
         "percentage-threshold:at_least:32-90:percent:"
-        "authorization_instrument"
-        in percent_features
+        "authorization_instrument" in percent_features
     )
     assert (
         "constraint-grounding:constraint-signature:"
         "monetary-threshold:exact:1k_10k:usd+"
-        "temporal-deadline:not_later_than:16-31:day"
-        in money_features
+        "temporal-deadline:not_later_than:16-31:day" in money_features
+    )
+    assert (
+        "constraint-grounding:constraint-exact:monetary-threshold:exact:5000:usd" in money_features
     )
     assert (
         "constraint-grounding:constraint-exact:"
-        "monetary-threshold:exact:5000:usd"
-        in money_features
-    )
-    assert (
-        "constraint-grounding:constraint-exact:"
-        "temporal-deadline:not_later_than:30:day"
-        in money_features
+        "temporal-deadline:not_later_than:30:day" in money_features
     )
 
 
@@ -5945,9 +5655,7 @@ def test_constraint_grounding_feature_head_transfers_deadline_holdout() -> None:
     )
     shared_constraint_features = set(
         family_autoencoder._constraint_grounding_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._constraint_grounding_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._constraint_grounding_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -6023,10 +5731,7 @@ def test_quantitative_formula_features_encode_arithmetic_ir_nodes() -> None:
     greater = build_us_code_sample(
         title="5",
         section="552",
-        text=(
-            "The penalty shall be the greater of $500 or 10 percent of the "
-            "payment."
-        ),
+        text=("The penalty shall be the greater of $500 or 10 percent of the payment."),
     )
     lesser = build_us_code_sample(
         title="5",
@@ -6053,9 +5758,7 @@ def test_quantitative_formula_features_encode_arithmetic_ir_nodes() -> None:
     greater_features = autoencoder._quantitative_formula_feature_keys_for(greater)
     lesser_features = autoencoder._quantitative_formula_feature_keys_for(lesser)
     cap_features = autoencoder._quantitative_formula_feature_keys_for(cap)
-    multiplier_features = autoencoder._quantitative_formula_feature_keys_for(
-        multiplier
-    )
+    multiplier_features = autoencoder._quantitative_formula_feature_keys_for(multiplier)
     sum_features = autoencoder._quantitative_formula_feature_keys_for(summation)
     fallback_features = autoencoder._fallback_feature_keys_for(greater)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(greater)
@@ -6064,55 +5767,42 @@ def test_quantitative_formula_features_encode_arithmetic_ir_nodes() -> None:
         "greater_of_formula:monetary_amount+percentage_amount->"
         "penalty_amount:obligation:computed_amount:lump_sum"
     )
-    assert (
-        f"quantitative-formula:formula-signature:{greater_signature}"
-        in greater_features
-    )
+    assert f"quantitative-formula:formula-signature:{greater_signature}" in greater_features
     assert (
         "quantitative-formula:compiler-arithmetic-node:"
         "greater_of_formula:monetary_amount+percentage_amount:"
-        "penalty_amount:obligation"
-        in greater_features
+        "penalty_amount:obligation" in greater_features
     )
     assert (
         "quantitative-formula:frame-logic-arithmetic-slot:"
         "greater_of_formula:penalty_amount:monetary_amount:"
-        "percentage_amount:lump_sum"
-        in greater_features
+        "percentage_amount:lump_sum" in greater_features
     )
-    assert (
-        f"quantitative-formula:decompiler-formula-plan:{greater_signature}"
-        in fallback_features
-    )
+    assert f"quantitative-formula:decompiler-formula-plan:{greater_signature}" in fallback_features
     assert (
         f"legal-ir:quantitative-formula:decompiler-formula-plan:"
-        f"{greater_signature}"
-        in legal_ir_features
+        f"{greater_signature}" in legal_ir_features
     )
 
     assert (
         "quantitative-formula:formula-signature:"
         "lesser_of_formula:monetary_amount+damages_amount->"
-        "fee_amount:obligation:upper_bound:lump_sum"
-        in lesser_features
+        "fee_amount:obligation:upper_bound:lump_sum" in lesser_features
     )
     assert (
         "quantitative-formula:formula-signature:"
         "cap_formula:monetary_amount+period_amount->"
-        "penalty_amount:prohibition:upper_bound:per_day"
-        in cap_features
+        "penalty_amount:prohibition:upper_bound:per_day" in cap_features
     )
     assert (
         "quantitative-formula:formula-signature:"
         "multiplier_formula:multiplier_amount+payment_amount->"
-        "refund_amount:obligation:computed_amount:lump_sum"
-        in multiplier_features
+        "refund_amount:obligation:computed_amount:lump_sum" in multiplier_features
     )
     assert (
         "quantitative-formula:formula-signature:"
         "sum_formula:monetary_amount+cost_amount->"
-        "payment_amount:obligation:computed_amount:lump_sum"
-        in sum_features
+        "payment_amount:obligation:computed_amount:lump_sum" in sum_features
     )
 
 
@@ -6125,19 +5815,13 @@ def test_quantitative_formula_feature_head_transfers_arithmetic_holdout() -> Non
     train = build_us_code_sample(
         title="5",
         section="552",
-        text=(
-            "The penalty shall be the greater of $500 or 10 percent of the "
-            "payment."
-        ),
+        text=("The penalty shall be the greater of $500 or 10 percent of the payment."),
         embedding_vector=[1.0, 0.0],
     )
     validation = build_us_code_sample(
         title="12",
         section="1841",
-        text=(
-            "The civil fine must equal the greater of $500 or 10 percent of "
-            "the payment."
-        ),
+        text=("The civil fine must equal the greater of $500 or 10 percent of the payment."),
         embedding_vector=[1.0, 0.0],
     )
     family_autoencoder = AdaptiveModalAutoencoder(
@@ -6183,9 +5867,7 @@ def test_quantitative_formula_feature_head_transfers_arithmetic_holdout() -> Non
     )
     shared_formula_features = set(
         family_autoencoder._quantitative_formula_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._quantitative_formula_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._quantitative_formula_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -6284,18 +5966,12 @@ def test_definition_grounding_features_encode_terms_inclusions_and_exclusions() 
     includes = build_us_code_sample(
         title="5",
         section="553",
-        text=(
-            "The term license includes any permit or certification issued by "
-            "the board."
-        ),
+        text=("The term license includes any permit or certification issued by the board."),
     )
     excludes = build_us_code_sample(
         title="5",
         section="554",
-        text=(
-            "The term permit does not include a temporary waiver issued under "
-            "this section."
-        ),
+        text=("The term permit does not include a temporary waiver issued under this section."),
     )
     autoencoder = AdaptiveModalAutoencoder(max_definition_grounding_features=240)
 
@@ -6307,54 +5983,45 @@ def test_definition_grounding_features_encode_terms_inclusions_and_exclusions() 
 
     assert (
         "definition-grounding:definition-signature:"
-        "means:record_term:notice_or_record:this_section:event_anchored"
-        in means_features
+        "means:record_term:notice_or_record:this_section:event_anchored" in means_features
     )
     assert (
         "definition-grounding:kg-definition-edge:"
-        "record_term:means:notice_or_record"
-        in means_features
+        "record_term:means:notice_or_record" in means_features
     )
     assert (
         "definition-grounding:operator-definition:"
-        "temporal:f:definition:means:record_term:notice_or_record:this_section"
-        in means_features
+        "temporal:f:definition:means:record_term:notice_or_record:this_section" in means_features
     )
     assert (
         "definition-grounding:todo-route:"
         "refine_definition_grounding:"
         "means:record_term:notice_or_record:this_section:event_anchored:"
-        "none:none:notice_or_record:none:none:none"
-        in fallback_features
+        "none:none:notice_or_record:none:none:none" in fallback_features
     )
     assert (
         "legal-ir:definition-grounding:todo-route:"
         "refine_definition_grounding:"
         "means:record_term:notice_or_record:this_section:event_anchored:"
-        "none:none:notice_or_record:none:none:none"
-        in legal_ir_features
+        "none:none:notice_or_record:none:none:none" in legal_ir_features
     )
     assert (
         "definition-grounding:definition-signature:"
         "includes:authorization_term:authorization_instrument:"
-        "unspecified_scope:enumerated+event_anchored"
-        in includes_features
+        "unspecified_scope:enumerated+event_anchored" in includes_features
     )
     assert (
         "definition-grounding:subclass-expansion:"
-        "authorization_term:authorization_instrument:enumerated+event_anchored"
-        in includes_features
+        "authorization_term:authorization_instrument:enumerated+event_anchored" in includes_features
     )
     assert (
         "definition-grounding:definition-signature:"
         "excludes:authorization_term:authorization_instrument:this_section:"
-        "negative_boundary+cross_reference+event_anchored"
-        in excludes_features
+        "negative_boundary+cross_reference+event_anchored" in excludes_features
     )
     assert (
         "definition-grounding:exclusion-boundary:"
-        "authorization_term:authorization_instrument:this_section"
-        in excludes_features
+        "authorization_term:authorization_instrument:this_section" in excludes_features
     )
 
 
@@ -6377,8 +6044,7 @@ def test_definition_grounding_feature_head_transfers_definition_holdout() -> Non
         title="12",
         section="1841",
         text=(
-            "As used in this section, the term document means any data "
-            "maintained by a department."
+            "As used in this section, the term document means any data maintained by a department."
         ),
         embedding_vector=[1.0, 0.0],
     )
@@ -6411,9 +6077,7 @@ def test_definition_grounding_feature_head_transfers_definition_holdout() -> Non
     )
     shared_definition_features = set(
         family_autoencoder._definition_grounding_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._definition_grounding_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._definition_grounding_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -6513,60 +6177,46 @@ def test_quantifier_scope_features_encode_universal_negative_and_existential_sco
     assert (
         "quantifier-scope:quantifier-signature:"
         "universal:government_actor:subject:conditioned+temporal+"
-        "universal:private_party:object:conditioned+temporal"
-        in universal_features
+        "universal:private_party:object:conditioned+temporal" in universal_features
     )
-    assert (
-        "quantifier-scope:fol-quantifier:forall:government_actor:subject"
-        in universal_features
-    )
+    assert "quantifier-scope:fol-quantifier:forall:government_actor:subject" in universal_features
     assert (
         "quantifier-scope:operator-quantifier:"
-        "deontic:o:clause:universal:private_party:object:conditioned+temporal"
-        in universal_features
+        "deontic:o:clause:universal:private_party:object:conditioned+temporal" in universal_features
     )
     assert (
         "quantifier-scope:todo-route:"
         "refine_quantifier_scope:"
         "universal:government_actor:subject:conditioned+temporal+"
         "universal:private_party:object:conditioned+temporal:"
-        "government_actor:disclose_or_notify:notice_or_record:none:none:none"
-        in fallback_features
+        "government_actor:disclose_or_notify:notice_or_record:none:none:none" in fallback_features
     )
     assert (
         "legal-ir:quantifier-scope:todo-route:"
         "refine_quantifier_scope:"
         "universal:government_actor:subject:conditioned+temporal+"
         "universal:private_party:object:conditioned+temporal:"
-        "government_actor:disclose_or_notify:notice_or_record:none:none:none"
-        in legal_ir_features
+        "government_actor:disclose_or_notify:notice_or_record:none:none:none" in legal_ir_features
     )
     assert (
         "quantifier-scope:quantifier-signature:"
         "negative_universal:private_party:subject:conditioned+"
-        "universal:authorization_instrument:object:conditioned"
-        in negative_features
+        "universal:authorization_instrument:object:conditioned" in negative_features
     )
-    assert (
-        "quantifier-scope:fol-quantifier:forall_not:private_party:subject"
-        in negative_features
-    )
+    assert "quantifier-scope:fol-quantifier:forall_not:private_party:subject" in negative_features
     assert (
         "quantifier-scope:negative-scope-binder:"
-        "private_party:subject:conditioned"
-        in negative_features
+        "private_party:subject:conditioned" in negative_features
     )
     assert (
         "quantifier-scope:quantifier-signature:"
         "existential_min_one:private_party:subject:conditioned+"
         "existential:application_or_proof:object:conditioned+"
-        "conditional_restriction:payment_or_fee:condition:conditioned"
-        in existential_features
+        "conditional_restriction:payment_or_fee:condition:conditioned" in existential_features
     )
     assert (
         "quantifier-scope:existential-witness:"
-        "existential_min_one:private_party:subject:conditioned"
-        in existential_features
+        "existential_min_one:private_party:subject:conditioned" in existential_features
     )
     assert (
         "quantifier-scope:guarded-quantifier:payment_or_fee:condition:conditioned"
@@ -6624,9 +6274,7 @@ def test_quantifier_scope_feature_head_transfers_universal_holdout() -> None:
     )
     shared_quantifier_features = set(
         family_autoencoder._quantifier_scope_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._quantifier_scope_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._quantifier_scope_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -6727,41 +6375,32 @@ def test_procedural_lifecycle_features_encode_ordered_event_stages() -> None:
 
     assert (
         "procedural-lifecycle:stage-sequence:"
-        "initiate_filing->notice->hearing->decision->effectiveness"
-        in procedure_features
+        "initiate_filing->notice->hearing->decision->effectiveness" in procedure_features
     )
     assert (
         "procedural-lifecycle:stage-class-signature:"
         "initiate_filing:application_or_proof+"
         "notice:notice_or_record+hearing:proceeding_or_order+"
-        "decision:proceeding_or_order+effectiveness:authorization_instrument"
-        in procedure_features
+        "decision:proceeding_or_order+effectiveness:authorization_instrument" in procedure_features
     )
     assert (
         "procedural-lifecycle:event-calculus-transition:"
-        "hearing->decision:filing_to_decision"
-        in procedure_features
+        "hearing->decision:filing_to_decision" in procedure_features
     )
     assert (
         "procedural-lifecycle:decompiler-lifecycle-plan:"
         "initiate_filing->notice->hearing->decision->effectiveness:"
-        "filing_to_decision:none:none:none:none:none:none"
-        in fallback_features
+        "filing_to_decision:none:none:none:none:none:none" in fallback_features
     )
     assert (
         "legal-ir:procedural-lifecycle:decompiler-lifecycle-plan:"
         "initiate_filing->notice->hearing->decision->effectiveness:"
-        "filing_to_decision:none:none:none:none:none:none"
-        in legal_ir_features
+        "filing_to_decision:none:none:none:none:none:none" in legal_ir_features
     )
-    assert (
-        "procedural-lifecycle:stage-sequence:appeal_review"
-        in review_features
-    )
+    assert "procedural-lifecycle:stage-sequence:appeal_review" in review_features
     assert (
         "procedural-lifecycle:event-calculus-review:"
-        "private_party:proceeding_or_order:conditioned+temporal"
-        in review_features
+        "private_party:proceeding_or_order:conditioned+temporal" in review_features
     )
 
 
@@ -6822,9 +6461,7 @@ def test_procedural_lifecycle_feature_head_transfers_process_holdout() -> None:
     )
     shared_lifecycle_features = set(
         family_autoencoder._procedural_lifecycle_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._procedural_lifecycle_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._procedural_lifecycle_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -6903,36 +6540,23 @@ def test_enforcement_remedy_features_encode_violations_and_remedies() -> None:
     liability = build_us_code_sample(
         title="15",
         section="77x",
-        text=(
-            "A person who violates this section shall be liable for a civil "
-            "penalty."
-        ),
+        text=("A person who violates this section shall be liable for a civil penalty."),
     )
     agency_sanction = build_us_code_sample(
         title="7",
         section="13a",
-        text=(
-            "The agency may impose a sanction for each violation of this "
-            "chapter."
-        ),
+        text=("The agency may impose a sanction for each violation of this chapter."),
     )
     court_injunction = build_us_code_sample(
         title="28",
         section="1651",
-        text=(
-            "The court may enjoin a person who fails to comply with the "
-            "order."
-        ),
+        text=("The court may enjoin a person who fails to comply with the order."),
     )
     autoencoder = AdaptiveModalAutoencoder(max_enforcement_remedy_features=240)
 
     liability_features = autoencoder._enforcement_remedy_feature_keys_for(liability)
-    agency_features = autoencoder._enforcement_remedy_feature_keys_for(
-        agency_sanction
-    )
-    court_features = autoencoder._enforcement_remedy_feature_keys_for(
-        court_injunction
-    )
+    agency_features = autoencoder._enforcement_remedy_feature_keys_for(agency_sanction)
+    court_features = autoencoder._enforcement_remedy_feature_keys_for(court_injunction)
     fallback_features = autoencoder._fallback_feature_keys_for(liability)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(liability)
 
@@ -6940,61 +6564,48 @@ def test_enforcement_remedy_features_encode_violations_and_remedies() -> None:
         "statutory_violation:this_section->civil_penalty:"
         "payment_or_fee:none:strict_or_unspecified:private_party"
     )
-    assert (
-        f"enforcement-remedy:enforcement-signature:{liability_signature}"
-        in liability_features
-    )
+    assert f"enforcement-remedy:enforcement-signature:{liability_signature}" in liability_features
     assert (
         "enforcement-remedy:event-calculus-enforcement:"
-        "statutory_violation->civil_penalty:this_section"
-        in liability_features
+        "statutory_violation->civil_penalty:this_section" in liability_features
     )
     assert (
         "enforcement-remedy:operator-enforcement:"
         "deontic:o:remedy:civil_penalty:payment_or_fee:"
-        "private_party:strict_or_unspecified"
-        in liability_features
+        "private_party:strict_or_unspecified" in liability_features
     )
     assert (
-        f"enforcement-remedy:decompiler-enforcement-plan:{liability_signature}"
-        in fallback_features
+        f"enforcement-remedy:decompiler-enforcement-plan:{liability_signature}" in fallback_features
     )
     assert (
         f"legal-ir:enforcement-remedy:decompiler-enforcement-plan:"
-        f"{liability_signature}"
-        in legal_ir_features
+        f"{liability_signature}" in legal_ir_features
     )
     assert (
         "enforcement-remedy:todo-route:refine_enforcement_remedy:"
-        f"{liability_signature}"
-        in liability_features
+        f"{liability_signature}" in liability_features
     )
 
     assert (
         "enforcement-remedy:remedy:administrative_sanction:"
         "administrative_sanction:government_actor:none:"
-        "strict_or_unspecified"
-        in agency_features
+        "strict_or_unspecified" in agency_features
     )
     assert (
         "enforcement-remedy:enforcement-actor:"
-        "government_actor:impose:administrative_sanction"
-        in agency_features
+        "government_actor:impose:administrative_sanction" in agency_features
     )
     assert (
         "enforcement-remedy:violation-trigger:"
-        "noncompliance:the_order:private_party"
-        in court_features
+        "noncompliance:the_order:private_party" in court_features
     )
     assert (
         "enforcement-remedy:remedy:injunction:private_party:"
-        "judicial_actor:private_party:strict_or_unspecified"
-        in court_features
+        "judicial_actor:private_party:strict_or_unspecified" in court_features
     )
     assert (
         "enforcement-remedy:event-calculus-enforcement:"
-        "noncompliance->injunction:the_order"
-        in court_features
+        "noncompliance->injunction:the_order" in court_features
     )
 
 
@@ -7007,19 +6618,13 @@ def test_enforcement_remedy_feature_head_transfers_liability_holdout() -> None:
     train = build_us_code_sample(
         title="15",
         section="77x",
-        text=(
-            "A person who violates this section shall be liable for a civil "
-            "penalty."
-        ),
+        text=("A person who violates this section shall be liable for a civil penalty."),
         embedding_vector=[1.0, 0.0],
     )
     validation = build_us_code_sample(
         title="42",
         section="1320a-7a",
-        text=(
-            "Any owner that violates this section shall be subject to a civil "
-            "fine."
-        ),
+        text=("Any owner that violates this section shall be subject to a civil fine."),
         embedding_vector=[1.0, 0.0],
     )
     family_autoencoder = AdaptiveModalAutoencoder(
@@ -7054,9 +6659,7 @@ def test_enforcement_remedy_feature_head_transfers_liability_holdout() -> None:
     )
     shared_enforcement_features = set(
         family_autoencoder._enforcement_remedy_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._enforcement_remedy_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._enforcement_remedy_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -7136,10 +6739,7 @@ def test_mental_state_features_encode_culpability_and_knowledge_gates() -> None:
     knowing = build_us_code_sample(
         title="15",
         section="77x",
-        text=(
-            "A person who knowingly violates this section shall be liable "
-            "for a civil penalty."
-        ),
+        text=("A person who knowingly violates this section shall be liable for a civil penalty."),
     )
     reason_to_know = build_us_code_sample(
         title="15",
@@ -7169,47 +6769,35 @@ def test_mental_state_features_encode_culpability_and_knowledge_gates() -> None:
         "knowing:private_party:statutory_violation:obligation:"
         "affirmative_mental_state:liability_scope"
     )
-    assert (
-        f"mental-state:mental-state-signature:{knowing_signature}"
-        in knowing_features
-    )
+    assert f"mental-state:mental-state-signature:{knowing_signature}" in knowing_features
     assert (
         "mental-state:compiler-mental-state-gate:"
-        "knowing:private_party:statutory_violation:liability_scope"
-        in knowing_features
+        "knowing:private_party:statutory_violation:liability_scope" in knowing_features
     )
     assert (
         "mental-state:frame-logic-mental-slot:"
-        "private_party:knowing:statutory_violation:liability_scope"
-        in knowing_features
+        "private_party:knowing:statutory_violation:liability_scope" in knowing_features
     )
-    assert (
-        f"mental-state:decompiler-mental-state-plan:{knowing_signature}"
-        in fallback_features
-    )
+    assert f"mental-state:decompiler-mental-state-plan:{knowing_signature}" in fallback_features
     assert (
         f"legal-ir:mental-state:decompiler-mental-state-plan:"
-        f"{knowing_signature}"
-        in legal_ir_features
+        f"{knowing_signature}" in legal_ir_features
     )
 
     assert (
         "mental-state:mental-state-signature:"
         "reason_to_know:private_party:material_fact:assertive:"
-        "affirmative_mental_state:general_scope"
-        in reason_features
+        "affirmative_mental_state:general_scope" in reason_features
     )
     assert (
         "mental-state:culpability-edge:"
         "negligent:private_party:noncompliance:assertive:"
-        "affirmative_mental_state"
-        in negligent_features
+        "affirmative_mental_state" in negligent_features
     )
     assert (
         "mental-state:mental-state-signature:"
         "lack_of_intent:private_party:legal_conduct:permission:"
-        "negated_mental_state:disclosure_scope"
-        in lack_features
+        "negated_mental_state:disclosure_scope" in lack_features
     )
 
 
@@ -7222,19 +6810,13 @@ def test_mental_state_feature_head_transfers_culpability_holdout() -> None:
     train = build_us_code_sample(
         title="15",
         section="77x",
-        text=(
-            "A person who knowingly violates this section shall be liable "
-            "for a civil penalty."
-        ),
+        text=("A person who knowingly violates this section shall be liable for a civil penalty."),
         embedding_vector=[1.0, 0.0],
     )
     validation = build_us_code_sample(
         title="42",
         section="1320a-7a",
-        text=(
-            "Any owner that knowingly violates this section shall be subject "
-            "to a civil fine."
-        ),
+        text=("Any owner that knowingly violates this section shall be subject to a civil fine."),
         embedding_vector=[1.0, 0.0],
     )
     family_autoencoder = AdaptiveModalAutoencoder(
@@ -7283,9 +6865,7 @@ def test_mental_state_feature_head_transfers_culpability_holdout() -> None:
     )
     shared_mental_features = set(
         family_autoencoder._mental_state_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._mental_state_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._mental_state_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -7379,10 +6959,7 @@ def test_reference_dependency_features_encode_imports_and_applicability() -> Non
     exception_import = build_us_code_sample(
         title="5",
         section="552",
-        text=(
-            "Except as provided in subsection (b), the agency shall approve "
-            "the application."
-        ),
+        text=("Except as provided in subsection (b), the agency shall approve the application."),
     )
     authority_import = build_us_code_sample(
         title="5",
@@ -7401,78 +6978,55 @@ def test_reference_dependency_features_encode_imports_and_applicability() -> Non
     )
     autoencoder = AdaptiveModalAutoencoder(max_reference_dependency_features=240)
 
-    exception_features = autoencoder._reference_dependency_feature_keys_for(
-        exception_import
-    )
-    authority_features = autoencoder._reference_dependency_feature_keys_for(
-        authority_import
-    )
-    applicability_features = autoencoder._reference_dependency_feature_keys_for(
-        applicability
-    )
-    exclusion_features = autoencoder._reference_dependency_feature_keys_for(
-        exclusion
-    )
+    exception_features = autoencoder._reference_dependency_feature_keys_for(exception_import)
+    authority_features = autoencoder._reference_dependency_feature_keys_for(authority_import)
+    applicability_features = autoencoder._reference_dependency_feature_keys_for(applicability)
+    exclusion_features = autoencoder._reference_dependency_feature_keys_for(exclusion)
     fallback_features = autoencoder._fallback_feature_keys_for(exception_import)
-    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(
-        exception_import
-    )
+    legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(exception_import)
 
     exception_signature = "exception_import:local_subdivision:conditioned+excepted"
-    assert (
-        f"reference-dependency:reference-signature:{exception_signature}"
-        in exception_features
-    )
+    assert f"reference-dependency:reference-signature:{exception_signature}" in exception_features
     assert (
         "reference-dependency:reference-exact:"
-        "exception_import:subsection:b:except_as_provided_in"
-        in exception_features
+        "exception_import:subsection:b:except_as_provided_in" in exception_features
     )
     assert (
         "reference-dependency:defeasible-reference:"
-        "exception:local_subdivision:conditioned+excepted"
-        in exception_features
+        "exception:local_subdivision:conditioned+excepted" in exception_features
     )
     assert (
         "reference-dependency:operator-reference:"
         "conditional_normative:o:condition:"
-        "exception_import:local_subdivision"
-        in exception_features
+        "exception_import:local_subdivision" in exception_features
     )
     assert (
-        f"reference-dependency:decompiler-reference-plan:{exception_signature}"
-        in fallback_features
+        f"reference-dependency:decompiler-reference-plan:{exception_signature}" in fallback_features
     )
     assert (
         f"legal-ir:reference-dependency:decompiler-reference-plan:"
-        f"{exception_signature}"
-        in legal_ir_features
+        f"{exception_signature}" in legal_ir_features
     )
 
     assert (
         "reference-dependency:reference-exact:"
-        "authority_import:section:552:under"
-        in authority_features
+        "authority_import:section:552:under" in authority_features
     )
     assert (
         "reference-dependency:compiler-import-edge:"
-        "authority_import:statutory_section:unscoped"
-        in authority_features
+        "authority_import:statutory_section:unscoped" in authority_features
     )
     assert (
         "reference-dependency:applicability-reference:"
-        "applicability_scope:current_section:positive"
-        in applicability_features
+        "applicability_scope:current_section:positive" in applicability_features
     )
     assert (
         "reference-dependency:applicability-reference:"
-        "applicability_exclusion:current_subdivision:exceptional"
-        in exclusion_features
+        "applicability_exclusion:current_subdivision:exceptional" in exclusion_features
     )
     assert (
         "reference-dependency:decompiler-reference-plan:"
-        "applicability_exclusion:current_subdivision:unscoped"
-        in exclusion_features
+        "applicability_exclusion:current_subdivision:unscoped" in exclusion_features
     )
 
 
@@ -7484,19 +7038,13 @@ def test_reference_dependency_feature_head_transfers_citation_holdout() -> None:
     train = build_us_code_sample(
         title="5",
         section="552",
-        text=(
-            "Except as provided in subsection (b), the agency shall approve "
-            "the application."
-        ),
+        text=("Except as provided in subsection (b), the agency shall approve the application."),
         embedding_vector=[1.0, 0.0],
     )
     validation = build_us_code_sample(
         title="12",
         section="1841",
-        text=(
-            "Except as provided in paragraph (2), the department must grant "
-            "the license."
-        ),
+        text=("Except as provided in paragraph (2), the department must grant the license."),
         embedding_vector=[1.0, 0.0],
     )
     family_autoencoder = AdaptiveModalAutoencoder(
@@ -7532,9 +7080,7 @@ def test_reference_dependency_feature_head_transfers_citation_holdout() -> None:
     )
     shared_reference_features = set(
         family_autoencoder._reference_dependency_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._reference_dependency_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._reference_dependency_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -7662,10 +7208,7 @@ def test_amendment_operation_features_encode_text_and_structural_edits() -> None
     replacement = build_us_code_sample(
         title="5",
         section="552",
-        text=(
-            "Section 552 shall be amended by striking old text and "
-            "inserting new text."
-        ),
+        text=("Section 552 shall be amended by striking old text and inserting new text."),
     )
     addition = build_us_code_sample(
         title="5",
@@ -7684,13 +7227,9 @@ def test_amendment_operation_features_encode_text_and_structural_edits() -> None
     )
     autoencoder = AdaptiveModalAutoencoder(max_amendment_operation_features=240)
 
-    replacement_features = autoencoder._amendment_operation_feature_keys_for(
-        replacement
-    )
+    replacement_features = autoencoder._amendment_operation_feature_keys_for(replacement)
     addition_features = autoencoder._amendment_operation_feature_keys_for(addition)
-    redesignation_features = autoencoder._amendment_operation_feature_keys_for(
-        redesignation
-    )
+    redesignation_features = autoencoder._amendment_operation_feature_keys_for(redesignation)
     repeal_features = autoencoder._amendment_operation_feature_keys_for(repeal)
     fallback_features = autoencoder._fallback_feature_keys_for(replacement)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(replacement)
@@ -7700,8 +7239,7 @@ def test_amendment_operation_features_encode_text_and_structural_edits() -> None
         "positive_amendment:textual_scope"
     )
     assert (
-        f"amendment-operation:amendment-signature:{replacement_signature}"
-        in replacement_features
+        f"amendment-operation:amendment-signature:{replacement_signature}" in replacement_features
     )
     assert (
         "amendment-operation:compiler-amendment-node:"
@@ -7710,8 +7248,7 @@ def test_amendment_operation_features_encode_text_and_structural_edits() -> None
     )
     assert (
         "amendment-operation:operator-amendment:"
-        "deontic:o:clause:replace_text:statutory_section:positive_amendment"
-        in replacement_features
+        "deontic:o:clause:replace_text:statutory_section:positive_amendment" in replacement_features
     )
     assert (
         f"amendment-operation:decompiler-amendment-plan:{replacement_signature}"
@@ -7719,24 +7256,20 @@ def test_amendment_operation_features_encode_text_and_structural_edits() -> None
     )
     assert (
         f"legal-ir:amendment-operation:decompiler-amendment-plan:"
-        f"{replacement_signature}"
-        in legal_ir_features
+        f"{replacement_signature}" in legal_ir_features
     )
 
     assert (
         "amendment-operation:operation:"
-        "add_text:local_subdivision:none->introduced_text:textual_scope"
-        in addition_features
+        "add_text:local_subdivision:none->introduced_text:textual_scope" in addition_features
     )
     assert (
         "amendment-operation:structural-redesignation:"
-        "statutory_section:paragraph_reference->paragraph_reference"
-        in redesignation_features
+        "statutory_section:paragraph_reference->paragraph_reference" in redesignation_features
     )
     assert (
         "amendment-operation:structural-repeal:"
-        "statutory_section:negative_amendment:structural_scope"
-        in repeal_features
+        "statutory_section:negative_amendment:structural_scope" in repeal_features
     )
 
 
@@ -7749,10 +7282,7 @@ def test_amendment_operation_feature_head_transfers_edit_holdout() -> None:
     train = build_us_code_sample(
         title="5",
         section="552",
-        text=(
-            "Section 552 shall be amended by striking old text and "
-            "inserting new text."
-        ),
+        text=("Section 552 shall be amended by striking old text and inserting new text."),
         embedding_vector=[1.0, 0.0],
     )
     validation = build_us_code_sample(
@@ -7771,9 +7301,7 @@ def test_amendment_operation_feature_head_transfers_edit_holdout() -> None:
     )
     shared_amendment_features = set(
         family_autoencoder._amendment_operation_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._amendment_operation_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._amendment_operation_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -7832,94 +7360,70 @@ def test_authority_jurisdiction_features_encode_power_scope_and_preemption() -> 
     waiver = build_us_code_sample(
         title="5",
         section="553",
-        text=(
-            "The agency is authorized to grant a waiver under this "
-            "subsection."
-        ),
+        text=("The agency is authorized to grant a waiver under this subsection."),
     )
     preemption = build_us_code_sample(
         title="49",
         section="14501",
-        text=(
-            "No State may establish or enforce any requirement relating to "
-            "this subject."
-        ),
+        text=("No State may establish or enforce any requirement relating to this subject."),
     )
     jurisdiction = build_us_code_sample(
         title="28",
         section="1331",
         text="The court has jurisdiction over any action under this chapter.",
     )
-    autoencoder = AdaptiveModalAutoencoder(
-        max_authority_jurisdiction_features=240
-    )
+    autoencoder = AdaptiveModalAutoencoder(max_authority_jurisdiction_features=240)
 
-    rulemaking_features = autoencoder._authority_jurisdiction_feature_keys_for(
-        rulemaking
-    )
+    rulemaking_features = autoencoder._authority_jurisdiction_feature_keys_for(rulemaking)
     waiver_features = autoencoder._authority_jurisdiction_feature_keys_for(waiver)
-    preemption_features = autoencoder._authority_jurisdiction_feature_keys_for(
-        preemption
-    )
-    jurisdiction_features = autoencoder._authority_jurisdiction_feature_keys_for(
-        jurisdiction
-    )
+    preemption_features = autoencoder._authority_jurisdiction_feature_keys_for(preemption)
+    jurisdiction_features = autoencoder._authority_jurisdiction_feature_keys_for(jurisdiction)
     fallback_features = autoencoder._fallback_feature_keys_for(rulemaking)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(rulemaking)
 
     rulemaking_signature = (
-        "rulemaking_authority:government_actor:rulemaking_instrument:"
-        "local_statutory_scope:positive"
+        "rulemaking_authority:government_actor:rulemaking_instrument:local_statutory_scope:positive"
     )
     assert (
-        f"authority-jurisdiction:authority-signature:{rulemaking_signature}"
-        in rulemaking_features
+        f"authority-jurisdiction:authority-signature:{rulemaking_signature}" in rulemaking_features
     )
     assert (
         "authority-jurisdiction:rulemaking-power:"
         "government_actor:rulemaking_instrument:"
-        "local_statutory_scope:positive"
-        in rulemaking_features
+        "local_statutory_scope:positive" in rulemaking_features
     )
     assert (
         "authority-jurisdiction:operator-authority:"
         "deontic:p:clause:rulemaking_authority:"
-        "government_actor:rulemaking_instrument:positive"
-        in rulemaking_features
+        "government_actor:rulemaking_instrument:positive" in rulemaking_features
     )
     assert (
         f"authority-jurisdiction:decompiler-authority-plan:"
-        f"{rulemaking_signature}"
-        in fallback_features
+        f"{rulemaking_signature}" in fallback_features
     )
     assert (
         f"legal-ir:authority-jurisdiction:decompiler-authority-plan:"
-        f"{rulemaking_signature}"
-        in legal_ir_features
+        f"{rulemaking_signature}" in legal_ir_features
     )
 
     assert (
         "authority-jurisdiction:authority-grant:"
         "waiver_authority:government_actor:waiver_instrument:"
-        "local_statutory_scope:positive"
-        in waiver_features
+        "local_statutory_scope:positive" in waiver_features
     )
     assert (
         "authority-jurisdiction:preemption-edge:"
-        "state_actor:legal_requirement:state_law_scope:preemptive"
-        in preemption_features
+        "state_actor:legal_requirement:state_law_scope:preemptive" in preemption_features
     )
     assert (
         "authority-jurisdiction:decompiler-authority-plan:"
         "preemption_limit:state_actor:legal_requirement:"
-        "state_law_scope:preemptive"
-        in preemption_features
+        "state_law_scope:preemptive" in preemption_features
     )
     assert (
         "authority-jurisdiction:forum-authority:"
         "judicial_actor:adjudicatory_instrument:"
-        "local_statutory_scope:positive"
-        in jurisdiction_features
+        "local_statutory_scope:positive" in jurisdiction_features
     )
 
 
@@ -7975,9 +7479,7 @@ def test_authority_jurisdiction_feature_head_transfers_rulemaking_holdout() -> N
     )
     shared_authority_features = set(
         family_autoencoder._authority_jurisdiction_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._authority_jurisdiction_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._authority_jurisdiction_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -8082,22 +7584,12 @@ def test_discretion_standard_features_encode_evaluative_gates() -> None:
             "the rule is in the public interest."
         ),
     )
-    autoencoder = AdaptiveModalAutoencoder(
-        max_discretion_standard_features=240
-    )
+    autoencoder = AdaptiveModalAutoencoder(max_discretion_standard_features=240)
 
-    necessity_features = autoencoder._discretion_standard_feature_keys_for(
-        necessity
-    )
-    reasonable_features = autoencoder._discretion_standard_feature_keys_for(
-        reasonable
-    )
-    good_cause_features = autoencoder._discretion_standard_feature_keys_for(
-        good_cause
-    )
-    public_interest_features = autoencoder._discretion_standard_feature_keys_for(
-        public_interest
-    )
+    necessity_features = autoencoder._discretion_standard_feature_keys_for(necessity)
+    reasonable_features = autoencoder._discretion_standard_feature_keys_for(reasonable)
+    good_cause_features = autoencoder._discretion_standard_feature_keys_for(good_cause)
+    public_interest_features = autoencoder._discretion_standard_feature_keys_for(public_interest)
     fallback_features = autoencoder._fallback_feature_keys_for(necessity)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(necessity)
 
@@ -8105,50 +7597,40 @@ def test_discretion_standard_features_encode_evaluative_gates() -> None:
         "discretionary_determination:government_actor:necessity_standard:"
         "authorization_instrument:permission:epistemic_gate:instrument_scope"
     )
-    assert (
-        f"discretion-standard:standard-signature:{necessity_signature}"
-        in necessity_features
-    )
+    assert f"discretion-standard:standard-signature:{necessity_signature}" in necessity_features
     assert (
         "discretion-standard:compiler-discretion-gate:"
         "discretionary_determination:government_actor:"
-        "authorization_instrument:necessity_standard:epistemic_gate"
-        in necessity_features
+        "authorization_instrument:necessity_standard:epistemic_gate" in necessity_features
     )
     assert (
         "discretion-standard:frame-logic-standard-slot:"
         "government_actor:necessity_standard:"
-        "authorization_instrument:instrument_scope"
-        in necessity_features
+        "authorization_instrument:instrument_scope" in necessity_features
     )
     assert (
-        f"discretion-standard:decompiler-standard-plan:{necessity_signature}"
-        in fallback_features
+        f"discretion-standard:decompiler-standard-plan:{necessity_signature}" in fallback_features
     )
     assert (
         f"legal-ir:discretion-standard:decompiler-standard-plan:"
-        f"{necessity_signature}"
-        in legal_ir_features
+        f"{necessity_signature}" in legal_ir_features
     )
 
     assert (
         "discretion-standard:standard-signature:"
         "judicial_finding:judicial_actor:reasonableness_standard:"
-        "payment_or_fee:permission:evaluative_gate:payment_scope"
-        in reasonable_features
+        "payment_or_fee:permission:evaluative_gate:payment_scope" in reasonable_features
     )
     assert (
         "discretion-standard:standard-edge:"
         "good_cause_finding:government_actor:good_cause_standard:"
-        "deadline_condition:permission"
-        in good_cause_features
+        "deadline_condition:permission" in good_cause_features
     )
     assert (
         "discretion-standard:standard-signature:"
         "public_interest_determination:government_actor:"
         "public_interest_standard:rulemaking_instrument:"
-        "permission:epistemic_gate:rulemaking_scope"
-        in public_interest_features
+        "permission:epistemic_gate:rulemaking_scope" in public_interest_features
     )
 
 
@@ -8221,9 +7703,7 @@ def test_discretion_standard_feature_head_transfers_determination_holdout() -> N
     )
     shared_standard_features = set(
         family_autoencoder._discretion_standard_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._discretion_standard_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._discretion_standard_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -8326,10 +7806,7 @@ def test_temporal_validity_features_encode_effective_sunset_and_retroactivity() 
     retroactive = build_us_code_sample(
         title="26",
         section="7805",
-        text=(
-            "This amendment applies retroactively to claims filed before "
-            "January 1, 2020."
-        ),
+        text=("This amendment applies retroactively to claims filed before January 1, 2020."),
     )
     applicability = build_us_code_sample(
         title="42",
@@ -8339,67 +7816,47 @@ def test_temporal_validity_features_encode_effective_sunset_and_retroactivity() 
     transition = build_us_code_sample(
         title="42",
         section="1320b",
-        text=(
-            "The transition rule shall apply during the 2-year period after "
-            "enactment."
-        ),
+        text=("The transition rule shall apply during the 2-year period after enactment."),
     )
     autoencoder = AdaptiveModalAutoencoder(max_temporal_validity_features=240)
 
     effective_features = autoencoder._temporal_validity_feature_keys_for(effective)
     sunset_features = autoencoder._temporal_validity_feature_keys_for(sunset)
-    retroactive_features = autoencoder._temporal_validity_feature_keys_for(
-        retroactive
-    )
-    applicability_features = autoencoder._temporal_validity_feature_keys_for(
-        applicability
-    )
+    retroactive_features = autoencoder._temporal_validity_feature_keys_for(retroactive)
+    applicability_features = autoencoder._temporal_validity_feature_keys_for(applicability)
     transition_features = autoencoder._temporal_validity_feature_keys_for(transition)
     fallback_features = autoencoder._fallback_feature_keys_for(effective)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(effective)
 
     effective_signature = (
-        "effective_start:norm_unit:calendar_date:"
-        "prospective:local_statutory_scope"
+        "effective_start:norm_unit:calendar_date:prospective:local_statutory_scope"
     )
-    assert (
-        f"temporal-validity:validity-signature:{effective_signature}"
-        in effective_features
-    )
+    assert f"temporal-validity:validity-signature:{effective_signature}" in effective_features
     assert (
         "temporal-validity:validity-exact:"
-        "effective_start:take_effect:january_1_2027:calendar_date"
-        in effective_features
+        "effective_start:take_effect:january_1_2027:calendar_date" in effective_features
     )
     assert (
         "temporal-validity:effective-date:"
-        "norm_unit:calendar_date:local_statutory_scope:prospective"
-        in effective_features
+        "norm_unit:calendar_date:local_statutory_scope:prospective" in effective_features
     )
-    assert (
-        f"temporal-validity:decompiler-validity-plan:{effective_signature}"
-        in fallback_features
-    )
+    assert f"temporal-validity:decompiler-validity-plan:{effective_signature}" in fallback_features
     assert (
         f"legal-ir:temporal-validity:decompiler-validity-plan:"
-        f"{effective_signature}"
-        in legal_ir_features
+        f"{effective_signature}" in legal_ir_features
     )
 
     assert (
         "temporal-validity:sunset-expiration:"
-        "norm_unit:relative_duration:local_statutory_scope:expiring"
-        in sunset_features
+        "norm_unit:relative_duration:local_statutory_scope:expiring" in sunset_features
     )
     assert (
         "temporal-validity:validity-exact:"
-        "validity_end:expires:5_years_after_the_date_of_enactment:4-7_year"
-        in sunset_features
+        "validity_end:expires:5_years_after_the_date_of_enactment:4-7_year" in sunset_features
     )
     assert (
         "temporal-validity:retroactivity:"
-        "case_or_claim:before:calendar_date:case_or_claim_scope"
-        in retroactive_features
+        "case_or_claim:before:calendar_date:case_or_claim_scope" in retroactive_features
     )
     assert (
         "temporal-validity:applicability-date:"
@@ -8408,8 +7865,7 @@ def test_temporal_validity_features_encode_effective_sunset_and_retroactivity() 
     )
     assert (
         "temporal-validity:transition-window:"
-        "rule_unit:relative_duration:enactment_scope:transition"
-        in transition_features
+        "rule_unit:relative_duration:enactment_scope:transition" in transition_features
     )
 
 
@@ -8466,9 +7922,7 @@ def test_temporal_validity_feature_head_transfers_effective_date_holdout() -> No
     )
     shared_validity_features = set(
         family_autoencoder._temporal_validity_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._temporal_validity_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._temporal_validity_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -8559,10 +8013,7 @@ def test_evidentiary_burden_features_encode_standards_and_presumptions() -> None
     presumption = build_us_code_sample(
         title="5",
         section="553",
-        text=(
-            "A record is presumed valid unless rebutted by clear and "
-            "convincing evidence."
-        ),
+        text=("A record is presumed valid unless rebutted by clear and convincing evidence."),
     )
     prima_facie = build_us_code_sample(
         title="5",
@@ -8582,72 +8033,50 @@ def test_evidentiary_burden_features_encode_standards_and_presumptions() -> None
     autoencoder = AdaptiveModalAutoencoder(max_evidentiary_burden_features=240)
 
     burden_features = autoencoder._evidentiary_burden_feature_keys_for(burden)
-    presumption_features = autoencoder._evidentiary_burden_feature_keys_for(
-        presumption
-    )
-    prima_facie_features = autoencoder._evidentiary_burden_feature_keys_for(
-        prima_facie
-    )
-    government_features = autoencoder._evidentiary_burden_feature_keys_for(
-        government_proof
-    )
-    exception_features = autoencoder._evidentiary_burden_feature_keys_for(
-        exception_burden
-    )
+    presumption_features = autoencoder._evidentiary_burden_feature_keys_for(presumption)
+    prima_facie_features = autoencoder._evidentiary_burden_feature_keys_for(prima_facie)
+    government_features = autoencoder._evidentiary_burden_feature_keys_for(government_proof)
+    exception_features = autoencoder._evidentiary_burden_feature_keys_for(exception_burden)
     fallback_features = autoencoder._fallback_feature_keys_for(burden)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(burden)
 
     burden_signature = (
-        "burden_of_proof:private_party:eligibility_issue:"
-        "preponderance:persuasion_burden"
+        "burden_of_proof:private_party:eligibility_issue:preponderance:persuasion_burden"
     )
-    assert (
-        f"evidentiary-burden:burden-signature:{burden_signature}"
-        in burden_features
-    )
+    assert f"evidentiary-burden:burden-signature:{burden_signature}" in burden_features
     assert (
         "evidentiary-burden:proof-burden:"
-        "private_party:eligibility_issue:preponderance:persuasion_burden"
-        in burden_features
+        "private_party:eligibility_issue:preponderance:persuasion_burden" in burden_features
     )
     assert (
         "evidentiary-burden:standard-of-proof:"
-        "preponderance:burden_of_proof:private_party:eligibility_issue"
-        in burden_features
+        "preponderance:burden_of_proof:private_party:eligibility_issue" in burden_features
     )
-    assert (
-        f"evidentiary-burden:decompiler-burden-plan:{burden_signature}"
-        in fallback_features
-    )
+    assert f"evidentiary-burden:decompiler-burden-plan:{burden_signature}" in fallback_features
     assert (
         f"legal-ir:evidentiary-burden:decompiler-burden-plan:"
-        f"{burden_signature}"
-        in legal_ir_features
+        f"{burden_signature}" in legal_ir_features
     )
 
     assert (
         "evidentiary-burden:presumption:"
         "rebuttable_presumption:record_issue:"
-        "clear_and_convincing:rebuttal_burden"
-        in presumption_features
+        "clear_and_convincing:rebuttal_burden" in presumption_features
     )
     assert (
         "evidentiary-burden:evidence-rule:"
         "prima_facie_evidence:compliance_issue:"
-        "prima_facie:production_burden"
-        in prima_facie_features
+        "prima_facie:production_burden" in prima_facie_features
     )
     assert (
         "evidentiary-burden:proof-burden:"
         "government_actor:violation_issue:"
-        "substantial_evidence:persuasion_burden"
-        in government_features
+        "substantial_evidence:persuasion_burden" in government_features
     )
     assert (
         "evidentiary-burden:proof-burden:"
         "private_party:exception_issue:"
-        "unspecified_standard:persuasion_burden"
-        in exception_features
+        "unspecified_standard:persuasion_burden" in exception_features
     )
 
 
@@ -8669,10 +8098,7 @@ def test_evidentiary_burden_feature_head_transfers_burden_holdout() -> None:
     validation = build_us_code_sample(
         title="12",
         section="1841",
-        text=(
-            "An owner has the burden to prove eligibility by a preponderance "
-            "of the evidence."
-        ),
+        text=("An owner has the burden to prove eligibility by a preponderance of the evidence."),
         embedding_vector=[1.0, 0.0],
     )
     family_autoencoder = AdaptiveModalAutoencoder(
@@ -8711,9 +8137,7 @@ def test_evidentiary_burden_feature_head_transfers_burden_holdout() -> None:
     )
     shared_burden_features = set(
         family_autoencoder._evidentiary_burden_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._evidentiary_burden_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._evidentiary_burden_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -8845,66 +8269,50 @@ def test_legal_relation_features_encode_hohfeld_correlatives() -> None:
         "right_duty:private_party:government_actor:notice_or_record:"
         "investigate_or_enforce:positive:general_scope"
     )
-    assert (
-        f"legal-relation:relation-signature:{right_signature}"
-        in right_features
-    )
+    assert f"legal-relation:relation-signature:{right_signature}" in right_features
     assert (
         "legal-relation:hohfeld-relation:"
         "right_duty:private_party:government_actor:"
-        "notice_or_record:investigate_or_enforce:positive"
-        in right_features
+        "notice_or_record:investigate_or_enforce:positive" in right_features
     )
     assert (
         "legal-relation:correlative:right->duty:"
         "private_party->government_actor:"
-        "notice_or_record:investigate_or_enforce"
-        in right_features
+        "notice_or_record:investigate_or_enforce" in right_features
     )
     assert (
         "legal-relation:claim-right:"
         "private_party:government_actor:"
-        "notice_or_record:investigate_or_enforce"
-        in right_features
+        "notice_or_record:investigate_or_enforce" in right_features
     )
+    assert f"legal-relation:decompiler-relation-plan:{right_signature}" in fallback_features
     assert (
-        f"legal-relation:decompiler-relation-plan:{right_signature}"
-        in fallback_features
-    )
-    assert (
-        f"legal-ir:legal-relation:decompiler-relation-plan:{right_signature}"
-        in legal_ir_features
+        f"legal-ir:legal-relation:decompiler-relation-plan:{right_signature}" in legal_ir_features
     )
 
     assert (
         "legal-relation:legal-duty:government_actor:private_party:"
-        "notice_or_record:disclose_or_notify"
-        in duty_features
+        "notice_or_record:disclose_or_notify" in duty_features
     )
     assert (
         "legal-relation:privilege-liberty:"
-        "private_party:proceeding_or_order:submit_or_file:positive"
-        in privilege_features
+        "private_party:proceeding_or_order:submit_or_file:positive" in privilege_features
     )
     assert (
         "legal-relation:legal-power:government_actor:private_party:"
-        "authorization_instrument:deny_or_revoke"
-        in power_features
+        "authorization_instrument:deny_or_revoke" in power_features
     )
     assert (
         "legal-relation:legal-liability:private_party:government_actor:"
-        "authorization_instrument:deny_or_revoke"
-        in liability_features
+        "authorization_instrument:deny_or_revoke" in liability_features
     )
     assert (
         "legal-relation:legal-immunity:government_actor:private_party:"
-        "liability_or_penalty:enforcement_liability"
-        in immunity_features
+        "liability_or_penalty:enforcement_liability" in immunity_features
     )
     assert (
         "legal-relation:legal-disability:government_actor:private_party:"
-        "authorization_instrument:deny_or_revoke"
-        in disability_features
+        "authorization_instrument:deny_or_revoke" in disability_features
     )
 
 
@@ -8963,9 +8371,7 @@ def test_legal_relation_feature_head_transfers_privilege_holdout() -> None:
     )
     shared_relation_features = set(
         family_autoencoder._legal_relation_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._legal_relation_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._legal_relation_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -9099,61 +8505,46 @@ def test_status_transition_features_encode_legal_state_machines() -> None:
         "active_authorization->terminated_authorization:"
         "authorization_termination:permission:affirmed:instrument_scope"
     )
-    assert (
-        f"status-transition:transition-signature:{revoke_signature}"
-        in revoke_features
-    )
+    assert f"status-transition:transition-signature:{revoke_signature}" in revoke_features
     assert (
         "status-transition:status-state:authorization_status:"
         "authorization_instrument:active_authorization->"
-        "terminated_authorization:authorization_termination:affirmed"
-        in revoke_features
+        "terminated_authorization:authorization_termination:affirmed" in revoke_features
     )
     assert (
         "status-transition:event-calculus-terminates-status:"
-        "active_authorization:government_actor:authorization_instrument"
-        in revoke_features
+        "active_authorization:government_actor:authorization_instrument" in revoke_features
     )
+    assert f"status-transition:decompiler-status-plan:{revoke_signature}" in fallback_features
     assert (
-        f"status-transition:decompiler-status-plan:{revoke_signature}"
-        in fallback_features
-    )
-    assert (
-        f"legal-ir:status-transition:decompiler-status-plan:{revoke_signature}"
-        in legal_ir_features
+        f"legal-ir:status-transition:decompiler-status-plan:{revoke_signature}" in legal_ir_features
     )
 
     assert (
         "status-transition:event-calculus-initiates-status:"
-        "active_authorization:government_actor:authorization_instrument"
-        in issue_features
+        "active_authorization:government_actor:authorization_instrument" in issue_features
     )
     assert (
         "status-transition:status-state:authorization_status:"
         "authorization_instrument:pending_authorization->"
-        "active_authorization:effectiveness_activation:affirmed"
-        in effective_features
+        "active_authorization:effectiveness_activation:affirmed" in effective_features
     )
     assert (
         "status-transition:event-calculus-terminates-status:"
-        "active_authorization:status_actor:authorization_instrument"
-        in expiration_features
+        "active_authorization:status_actor:authorization_instrument" in expiration_features
     )
     assert (
         "status-transition:event-calculus-initiates-status:"
-        "eligible_status:private_party:eligibility_status"
-        in eligible_features
+        "eligible_status:private_party:eligibility_status" in eligible_features
     )
     assert (
         "status-transition:event-calculus-terminates-status:"
-        "eligible_status:private_party:eligibility_status"
-        in ineligible_features
+        "eligible_status:private_party:eligibility_status" in ineligible_features
     )
     assert (
         "status-transition:status-state:authorization_status:"
         "authorization_instrument:active_authorization->"
-        "suspended_authorization:authorization_suspension:affirmed"
-        in suspend_features
+        "suspended_authorization:authorization_suspension:affirmed" in suspend_features
     )
 
 
@@ -9214,9 +8605,7 @@ def test_status_transition_feature_head_transfers_termination_holdout() -> None:
     )
     shared_status_features = set(
         family_autoencoder._status_transition_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._status_transition_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._status_transition_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -9302,10 +8691,7 @@ def test_condition_consequence_features_encode_guarded_rule_edges() -> None:
     sufficient = build_us_code_sample(
         title="5",
         section="552",
-        text=(
-            "If the applicant files an application, the agency shall approve "
-            "the permit."
-        ),
+        text=("If the applicant files an application, the agency shall approve the permit."),
     )
     exception = build_us_code_sample(
         title="5",
@@ -9320,24 +8706,13 @@ def test_condition_consequence_features_encode_guarded_rule_edges() -> None:
     proviso = build_us_code_sample(
         title="5",
         section="555",
-        text=(
-            "The agency may grant a waiver provided that the application is "
-            "complete."
-        ),
+        text=("The agency may grant a waiver provided that the application is complete."),
     )
-    autoencoder = AdaptiveModalAutoencoder(
-        max_condition_consequence_features=240
-    )
+    autoencoder = AdaptiveModalAutoencoder(max_condition_consequence_features=240)
 
-    sufficient_features = autoencoder._condition_consequence_feature_keys_for(
-        sufficient
-    )
-    exception_features = autoencoder._condition_consequence_feature_keys_for(
-        exception
-    )
-    necessary_features = autoencoder._condition_consequence_feature_keys_for(
-        necessary
-    )
+    sufficient_features = autoencoder._condition_consequence_feature_keys_for(sufficient)
+    exception_features = autoencoder._condition_consequence_feature_keys_for(exception)
+    necessary_features = autoencoder._condition_consequence_feature_keys_for(necessary)
     proviso_features = autoencoder._condition_consequence_feature_keys_for(proviso)
     fallback_features = autoencoder._fallback_feature_keys_for(sufficient)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(sufficient)
@@ -9347,51 +8722,41 @@ def test_condition_consequence_features_encode_guarded_rule_edges() -> None:
         "government_actor:authorization_instrument:obligation:"
         "positive_consequence:instrument_scope"
     )
-    assert (
-        f"condition-consequence:guard-signature:{sufficient_signature}"
-        in sufficient_features
-    )
+    assert f"condition-consequence:guard-signature:{sufficient_signature}" in sufficient_features
     assert (
         "condition-consequence:event-calculus-precondition:"
-        "application_or_proof->grant_authorization:authorization_instrument"
-        in sufficient_features
+        "application_or_proof->grant_authorization:authorization_instrument" in sufficient_features
     )
     assert (
         "condition-consequence:operator-guard:"
         "deontic:o:condition:sufficient_condition:"
-        "application_or_proof->grant_authorization"
-        in sufficient_features
+        "application_or_proof->grant_authorization" in sufficient_features
     )
     assert (
-        f"condition-consequence:decompiler-guard-plan:{sufficient_signature}"
-        in fallback_features
+        f"condition-consequence:decompiler-guard-plan:{sufficient_signature}" in fallback_features
     )
     assert (
         f"legal-ir:condition-consequence:decompiler-guard-plan:"
-        f"{sufficient_signature}"
-        in legal_ir_features
+        f"{sufficient_signature}" in legal_ir_features
     )
 
     assert (
         "condition-consequence:guard-signature:"
         "exception_guard:payment_or_fee->grant_authorization:"
         "government_actor:authorization_instrument:obligation:"
-        "exception_consequence:instrument_scope"
-        in exception_features
+        "exception_consequence:instrument_scope" in exception_features
     )
     assert (
         "condition-consequence:guard-signature:"
         "necessary_condition:notice_or_record->submit_or_file:"
         "private_party:proceeding_or_order:permission:"
-        "positive_consequence:procedure_scope"
-        in necessary_features
+        "positive_consequence:procedure_scope" in necessary_features
     )
     assert (
         "condition-consequence:guard-signature:"
         "proviso_guard:application_or_proof->grant_authorization:"
         "government_actor:authorization_instrument:permission:"
-        "positive_consequence:instrument_scope"
-        in proviso_features
+        "positive_consequence:instrument_scope" in proviso_features
     )
 
 
@@ -9453,9 +8818,7 @@ def test_condition_consequence_feature_head_transfers_guard_holdout() -> None:
     )
     shared_guard_features = set(
         family_autoencoder._condition_consequence_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._condition_consequence_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._condition_consequence_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -9552,57 +8915,37 @@ def test_applicability_scope_features_encode_domain_and_exception_edges() -> Non
     respect = build_us_code_sample(
         title="5",
         section="554",
-        text=(
-            "This section applies with respect to any record maintained by "
-            "the agency."
-        ),
+        text=("This section applies with respect to any record maintained by the agency."),
     )
     purpose = build_us_code_sample(
         title="5",
         section="555",
-        text=(
-            "For purposes of this section, a covered entity includes any "
-            "recipient."
-        ),
+        text=("For purposes of this section, a covered entity includes any recipient."),
     )
     case_scope = build_us_code_sample(
         title="5",
         section="556",
-        text=(
-            "In the case of a licensee, this subsection applies to the "
-            "renewal."
-        ),
+        text=("In the case of a licensee, this subsection applies to the renewal."),
     )
     autoencoder = AdaptiveModalAutoencoder(max_applicability_scope_features=240)
 
-    inclusion_features = autoencoder._applicability_scope_feature_keys_for(
-        inclusion
-    )
-    exclusion_features = autoencoder._applicability_scope_feature_keys_for(
-        exclusion
-    )
-    respect_features = autoencoder._applicability_scope_feature_keys_for(
-        respect
-    )
-    purpose_features = autoencoder._applicability_scope_feature_keys_for(
-        purpose
-    )
+    inclusion_features = autoencoder._applicability_scope_feature_keys_for(inclusion)
+    exclusion_features = autoencoder._applicability_scope_feature_keys_for(exclusion)
+    respect_features = autoencoder._applicability_scope_feature_keys_for(respect)
+    purpose_features = autoencoder._applicability_scope_feature_keys_for(purpose)
     case_features = autoencoder._applicability_scope_feature_keys_for(case_scope)
     fallback_features = autoencoder._fallback_feature_keys_for(inclusion)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(inclusion)
 
     inclusion_signature = (
-        "inclusion_scope:positive_applicability:"
-        "current_section->regulated_entity:entity_scope"
+        "inclusion_scope:positive_applicability:current_section->regulated_entity:entity_scope"
     )
     assert (
-        f"applicability-scope:applicability-signature:{inclusion_signature}"
-        in inclusion_features
+        f"applicability-scope:applicability-signature:{inclusion_signature}" in inclusion_features
     )
     assert (
         "applicability-scope:frame-logic-domain-slot:"
-        "inclusion_scope:regulated_entity:entity_scope:current_section"
-        in inclusion_features
+        "inclusion_scope:regulated_entity:entity_scope:current_section" in inclusion_features
     )
     assert (
         "applicability-scope:kg-applicability-edge:"
@@ -9611,43 +8954,36 @@ def test_applicability_scope_features_encode_domain_and_exception_edges() -> Non
     )
     assert (
         f"applicability-scope:decompiler-applicability-plan:"
-        f"{inclusion_signature}"
-        in fallback_features
+        f"{inclusion_signature}" in fallback_features
     )
     assert (
         f"legal-ir:applicability-scope:decompiler-applicability-plan:"
-        f"{inclusion_signature}"
-        in legal_ir_features
+        f"{inclusion_signature}" in legal_ir_features
     )
 
     assert (
         "applicability-scope:applicability-signature:"
         "exclusion_scope:negative_applicability:"
-        "current_subsection->affiliated_person:entity_scope"
-        in exclusion_features
+        "current_subsection->affiliated_person:entity_scope" in exclusion_features
     )
     assert (
         "applicability-scope:defeasible-applicability-exception:"
-        "current_subsection->affiliated_person:entity_scope"
-        in exclusion_features
+        "current_subsection->affiliated_person:entity_scope" in exclusion_features
     )
     assert (
         "applicability-scope:applicability-signature:"
         "respect_scope:scoped_applicability:"
-        "current_section->notice_or_record:record_scope"
-        in respect_features
+        "current_section->notice_or_record:record_scope" in respect_features
     )
     assert (
         "applicability-scope:applicability-signature:"
         "purpose_scope:scoped_applicability:"
-        "current_section->regulated_entity:entity_scope"
-        in purpose_features
+        "current_section->regulated_entity:entity_scope" in purpose_features
     )
     assert (
         "applicability-scope:applicability-signature:"
         "case_scope:scoped_applicability:"
-        "current_subsection->benefit_participant:entity_scope"
-        in case_features
+        "current_subsection->benefit_participant:entity_scope" in case_features
     )
 
 
@@ -9666,10 +9002,7 @@ def test_applicability_scope_feature_head_transfers_domain_holdout() -> None:
     validation = build_us_code_sample(
         title="12",
         section="1841",
-        text=(
-            "The requirements of this section shall apply to every regulated "
-            "entity."
-        ),
+        text=("The requirements of this section shall apply to every regulated entity."),
         embedding_vector=[1.0, 0.0],
     )
     family_autoencoder = AdaptiveModalAutoencoder(
@@ -9712,9 +9045,7 @@ def test_applicability_scope_feature_head_transfers_domain_holdout() -> None:
     )
     shared_scope_features = set(
         family_autoencoder._applicability_scope_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._applicability_scope_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._applicability_scope_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -9802,97 +9133,64 @@ def test_coreference_binding_features_encode_deictic_reference_edges() -> None:
     such_person = build_us_code_sample(
         title="5",
         section="552",
-        text=(
-            "A person may request a permit. Such person shall file the "
-            "application."
-        ),
+        text=("A person may request a permit. Such person shall file the application."),
     )
     that_license = build_us_code_sample(
         title="5",
         section="553",
-        text=(
-            "The agency shall issue a license. That license expires after "
-            "one year."
-        ),
+        text=("The agency shall issue a license. That license expires after one year."),
     )
     therein_record = build_us_code_sample(
         title="5",
         section="554",
-        text=(
-            "The applicant shall file a record. Data contained therein shall "
-            "be protected."
-        ),
+        text=("The applicant shall file a record. Data contained therein shall be protected."),
     )
     that_subsection = build_us_code_sample(
         title="5",
         section="555",
-        text=(
-            "Subsection (b) applies to the claim. An appeal under that "
-            "subsection may be filed."
-        ),
+        text=("Subsection (b) applies to the claim. An appeal under that subsection may be filed."),
     )
     autoencoder = AdaptiveModalAutoencoder(max_coreference_binding_features=240)
 
-    person_features = autoencoder._coreference_binding_feature_keys_for(
-        such_person
-    )
-    license_features = autoencoder._coreference_binding_feature_keys_for(
-        that_license
-    )
-    record_features = autoencoder._coreference_binding_feature_keys_for(
-        therein_record
-    )
-    subsection_features = autoencoder._coreference_binding_feature_keys_for(
-        that_subsection
-    )
+    person_features = autoencoder._coreference_binding_feature_keys_for(such_person)
+    license_features = autoencoder._coreference_binding_feature_keys_for(that_license)
+    record_features = autoencoder._coreference_binding_feature_keys_for(therein_record)
+    subsection_features = autoencoder._coreference_binding_feature_keys_for(that_subsection)
     fallback_features = autoencoder._fallback_feature_keys_for(such_person)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(such_person)
 
-    person_signature = (
-        "such_reference:private_party->private_party:"
-        "cross_sentence:class_preserving"
-    )
-    assert (
-        f"coreference-binding:coreference-signature:{person_signature}"
-        in person_features
-    )
+    person_signature = "such_reference:private_party->private_party:cross_sentence:class_preserving"
+    assert f"coreference-binding:coreference-signature:{person_signature}" in person_features
     assert (
         "coreference-binding:compiler-variable-binding:"
-        "private_party->private_party:such_reference:cross_sentence"
-        in person_features
+        "private_party->private_party:such_reference:cross_sentence" in person_features
     )
     assert (
         "coreference-binding:frame-logic-same-as:"
-        "private_party:private_party:such_reference:class_preserving"
-        in person_features
+        "private_party:private_party:such_reference:class_preserving" in person_features
     )
     assert (
-        f"coreference-binding:decompiler-coreference-plan:{person_signature}"
-        in fallback_features
+        f"coreference-binding:decompiler-coreference-plan:{person_signature}" in fallback_features
     )
     assert (
         f"legal-ir:coreference-binding:decompiler-coreference-plan:"
-        f"{person_signature}"
-        in legal_ir_features
+        f"{person_signature}" in legal_ir_features
     )
 
     assert (
         "coreference-binding:coreference-signature:"
         "that_reference:authorization_instrument->authorization_instrument:"
-        "cross_sentence:class_preserving"
-        in license_features
+        "cross_sentence:class_preserving" in license_features
     )
     assert (
         "coreference-binding:coreference-signature:"
         "therein_reference:notice_or_record->notice_or_record:"
-        "cross_sentence:class_preserving"
-        in record_features
+        "cross_sentence:class_preserving" in record_features
     )
     assert (
         "coreference-binding:coreference-signature:"
         "under_that_reference:statutory_reference->statutory_reference:"
-        "cross_sentence:class_preserving"
-        in subsection_features
+        "cross_sentence:class_preserving" in subsection_features
     )
 
 
@@ -9911,10 +9209,7 @@ def test_coreference_binding_feature_head_transfers_deictic_holdout() -> None:
     validation = build_us_code_sample(
         title="12",
         section="1841",
-        text=(
-            "An individual must submit a claim. Such individual must maintain "
-            "records."
-        ),
+        text=("An individual must submit a claim. Such individual must maintain records."),
         embedding_vector=[1.0, 0.0],
     )
     family_autoencoder = AdaptiveModalAutoencoder(
@@ -9958,9 +9253,7 @@ def test_coreference_binding_feature_head_transfers_deictic_holdout() -> None:
     )
     shared_coreference_features = set(
         family_autoencoder._coreference_binding_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._coreference_binding_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._coreference_binding_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -10073,19 +9366,11 @@ def test_logical_connective_features_encode_boolean_ir_edges() -> None:
     )
     autoencoder = AdaptiveModalAutoencoder(max_logical_connective_features=240)
 
-    conjunction_features = autoencoder._logical_connective_feature_keys_for(
-        conjunction
-    )
-    disjunction_features = autoencoder._logical_connective_feature_keys_for(
-        disjunction
-    )
+    conjunction_features = autoencoder._logical_connective_feature_keys_for(conjunction)
+    disjunction_features = autoencoder._logical_connective_feature_keys_for(disjunction)
     negative_features = autoencoder._logical_connective_feature_keys_for(negative)
-    cumulative_features = autoencoder._logical_connective_feature_keys_for(
-        cumulative
-    )
-    enumerated_features = autoencoder._logical_connective_feature_keys_for(
-        enumerated
-    )
+    cumulative_features = autoencoder._logical_connective_feature_keys_for(cumulative)
+    enumerated_features = autoencoder._logical_connective_feature_keys_for(enumerated)
     fallback_features = autoencoder._fallback_feature_keys_for(conjunction)
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(conjunction)
 
@@ -10094,53 +9379,44 @@ def test_logical_connective_features_encode_boolean_ir_edges() -> None:
         "obligation:positive_connective:modal_scope:2-3"
     )
     assert (
-        f"logical-connective:connective-signature:{conjunction_signature}"
-        in conjunction_features
+        f"logical-connective:connective-signature:{conjunction_signature}" in conjunction_features
     )
     assert (
         "logical-connective:compiler-boolean-node:"
-        "conjunction:application_or_proof+payment_or_fee:modal_scope:2-3"
-        in conjunction_features
+        "conjunction:application_or_proof+payment_or_fee:modal_scope:2-3" in conjunction_features
     )
     assert (
         "logical-connective:frame-logic-connective-slot:"
-        "conjunction:application_or_proof:payment_or_fee:modal_scope"
-        in conjunction_features
+        "conjunction:application_or_proof:payment_or_fee:modal_scope" in conjunction_features
     )
     assert (
         f"logical-connective:decompiler-connective-plan:"
-        f"{conjunction_signature}"
-        in fallback_features
+        f"{conjunction_signature}" in fallback_features
     )
     assert (
         f"legal-ir:logical-connective:decompiler-connective-plan:"
-        f"{conjunction_signature}"
-        in legal_ir_features
+        f"{conjunction_signature}" in legal_ir_features
     )
 
     assert (
         "logical-connective:connective-signature:"
         "inclusive_disjunction:proceeding_or_order+application_or_proof:"
-        "permission:positive_connective:modal_scope:2-3"
-        in disjunction_features
+        "permission:positive_connective:modal_scope:2-3" in disjunction_features
     )
     assert (
         "logical-connective:connective-signature:"
         "negative_conjunction:notice_or_record+notice_or_record:"
-        "prohibition:negative_connective:same_role_scope:2-3"
-        in negative_features
+        "prohibition:negative_connective:same_role_scope:2-3" in negative_features
     )
     assert (
         "logical-connective:connective-signature:"
         "cumulative_conjunction:notice_or_record+application_or_proof:"
-        "obligation:positive_connective:mixed_role_scope:2-3"
-        in cumulative_features
+        "obligation:positive_connective:mixed_role_scope:2-3" in cumulative_features
     )
     assert (
         "logical-connective:connective-signature:"
         "enumerated_disjunction:notice_or_record+notice_or_record:"
-        "obligation:positive_connective:enumeration_scope:2-3"
-        in enumerated_features
+        "obligation:positive_connective:enumeration_scope:2-3" in enumerated_features
     )
 
 
@@ -10204,9 +9480,7 @@ def test_logical_connective_feature_head_transfers_boolean_holdout() -> None:
     )
     shared_connective_features = set(
         family_autoencoder._logical_connective_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._logical_connective_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._logical_connective_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -10297,25 +9571,18 @@ def test_enumeration_hierarchy_features_encode_numbered_list_scope() -> None:
         title="5",
         section="552",
         text=(
-            "The person shall do any of the following: "
-            "(1) file an application; (2) pay the fee."
+            "The person shall do any of the following: (1) file an application; (2) pay the fee."
         ),
     )
     nested = build_us_code_sample(
         title="5",
         section="553",
-        text=(
-            "The application must include: "
-            "(1) filing instructions; (A) records; (B) notices."
-        ),
+        text=("The application must include: (1) filing instructions; (A) records; (B) notices."),
     )
     crossref = build_us_code_sample(
         title="5",
         section="554",
-        text=(
-            "The requirements of paragraphs (1) and (2) shall apply to "
-            "clauses (i) and (ii)."
-        ),
+        text=("The requirements of paragraphs (1) and (2) shall apply to clauses (i) and (ii)."),
     )
     autoencoder = AdaptiveModalAutoencoder(max_enumeration_hierarchy_features=240)
 
@@ -10329,20 +9596,15 @@ def test_enumeration_hierarchy_features_encode_numbered_list_scope() -> None:
         "numbered_list:paragraph_level:application_or_proof+payment_or_fee:"
         "any:2-3:positive_enumeration:list_scope"
     )
-    assert (
-        f"enumeration-hierarchy:enumeration-signature:{numbered_signature}"
-        in numbered_features
-    )
+    assert f"enumeration-hierarchy:enumeration-signature:{numbered_signature}" in numbered_features
     assert (
         "enumeration-hierarchy:compiler-enumeration-node:"
         "numbered_list:paragraph_level:application_or_proof+payment_or_fee:"
-        "any:2-3"
-        in numbered_features
+        "any:2-3" in numbered_features
     )
     assert (
         "enumeration-hierarchy:frame-logic-enumeration-slot:"
-        "paragraph_level:application_or_proof+payment_or_fee:list_scope"
-        in numbered_features
+        "paragraph_level:application_or_proof+payment_or_fee:list_scope" in numbered_features
     )
     assert (
         f"enumeration-hierarchy:decompiler-enumeration-plan:{numbered_signature}"
@@ -10350,26 +9612,22 @@ def test_enumeration_hierarchy_features_encode_numbered_list_scope() -> None:
     )
     assert (
         f"legal-ir:enumeration-hierarchy:decompiler-enumeration-plan:"
-        f"{numbered_signature}"
-        in legal_ir_features
+        f"{numbered_signature}" in legal_ir_features
     )
 
     assert (
         "enumeration-hierarchy:enumeration-signature:"
         "numbered_list:paragraph_level->subparagraph_level:"
         "application_or_proof+notice_or_record:"
-        "unspecified:2-3:positive_enumeration:inline_scope"
-        in nested_features
+        "unspecified:2-3:positive_enumeration:inline_scope" in nested_features
     )
     assert (
         "enumeration-hierarchy:reference-target:"
-        "paragraph_reference:paragraph_level:2-3"
-        in crossref_features
+        "paragraph_reference:paragraph_level:2-3" in crossref_features
     )
     assert (
         "enumeration-hierarchy:reference-target:"
-        "clause_reference:clause_level:2-3"
-        in crossref_features
+        "clause_reference:clause_level:2-3" in crossref_features
     )
 
 
@@ -10383,8 +9641,7 @@ def test_enumeration_hierarchy_feature_head_transfers_numbered_holdout() -> None
         title="5",
         section="552",
         text=(
-            "The person shall do any of the following: "
-            "(1) file an application; (2) pay the fee."
+            "The person shall do any of the following: (1) file an application; (2) pay the fee."
         ),
         embedding_vector=[1.0, 0.0],
     )
@@ -10441,9 +9698,7 @@ def test_enumeration_hierarchy_feature_head_transfers_numbered_holdout() -> None
     )
     shared_enumeration_features = set(
         family_autoencoder._enumeration_hierarchy_feature_keys_for(train)
-    ).intersection(
-        family_autoencoder._enumeration_hierarchy_feature_keys_for(validation)
-    )
+    ).intersection(family_autoencoder._enumeration_hierarchy_feature_keys_for(validation))
     before_ce = family_autoencoder.evaluate([validation], use_sample_memory=False)
 
     family_autoencoder._nudge_family_logits(
@@ -10701,9 +9956,7 @@ def test_semantic_slot_interactions_capture_compositional_ir() -> None:
     )
 
     distribution = autoencoder._semantic_slot_distribution_for(sample)
-    pair_slots = [
-        slot for slot in distribution if slot.startswith("slot-pair:")
-    ]
+    pair_slots = [slot for slot in distribution if slot.startswith("slot-pair:")]
 
     assert len(pair_slots) == 3
     assert any("condition-present" in slot for slot in pair_slots)
@@ -10714,8 +9967,7 @@ def test_semantic_slot_interactions_capture_compositional_ir() -> None:
         max_semantic_slot_interactions=3,
     )
     assert not any(
-        slot.startswith("slot-pair:")
-        for slot in disabled._semantic_slot_distribution_for(sample)
+        slot.startswith("slot-pair:") for slot in disabled._semantic_slot_distribution_for(sample)
     )
 
 
@@ -10769,9 +10021,7 @@ def test_semantic_slots_surface_typed_family_pair_reconstruction_contracts() -> 
     ]
     mixed_sample = replace(sample, modal_ir=replace(sample.modal_ir, formulas=formulas))
 
-    distribution = AdaptiveModalAutoencoder()._semantic_slot_distribution_for(
-        mixed_sample
-    )
+    distribution = AdaptiveModalAutoencoder()._semantic_slot_distribution_for(mixed_sample)
 
     for family_pair in (
         "deontic->epistemic",
@@ -10781,14 +10031,8 @@ def test_semantic_slots_surface_typed_family_pair_reconstruction_contracts() -> 
     ):
         assert f"slot:typed-decompiler-family-pair:{family_pair}" in distribution
 
-    assert (
-        "slot:typed-decompiler-family-pair-cue:deontic->epistemic:determines"
-        in distribution
-    )
-    assert (
-        "slot:typed-decompiler-family-pair-cue:temporal->epistemic:after"
-        in distribution
-    )
+    assert "slot:typed-decompiler-family-pair-cue:deontic->epistemic:determines" in distribution
+    assert "slot:typed-decompiler-family-pair-cue:temporal->epistemic:after" in distribution
 
 
 def test_typed_family_pair_strengths_demote_registry_only_candidates() -> None:
@@ -10889,14 +10133,8 @@ def test_autoencoder_exact_statutory_cues_drive_typed_family_pair_reconstruction
         "temporal->deontic",
     ):
         assert f"slot:typed-decompiler-family-pair:{family_pair}" in distribution
-    assert (
-        "slot:typed-decompiler-family-pair-cue:frame->deontic:may"
-        in distribution
-    )
-    assert (
-        "slot:typed-decompiler-family-pair-cue:temporal->deontic:not_later_than"
-        in distribution
-    )
+    assert "slot:typed-decompiler-family-pair-cue:frame->deontic:may" in distribution
+    assert "slot:typed-decompiler-family-pair-cue:temporal->deontic:not_later_than" in distribution
 
 
 def test_semantic_slot_interactions_retain_packet_family_pair_contracts() -> None:
@@ -10949,9 +10187,7 @@ def test_semantic_slot_interactions_retain_packet_family_pair_contracts() -> Non
     ]
     mixed_sample = replace(sample, modal_ir=replace(sample.modal_ir, formulas=formulas))
 
-    distribution = AdaptiveModalAutoencoder()._semantic_slot_distribution_for(
-        mixed_sample
-    )
+    distribution = AdaptiveModalAutoencoder()._semantic_slot_distribution_for(mixed_sample)
 
     for family_pair in (
         "deontic->temporal",
@@ -10962,8 +10198,7 @@ def test_semantic_slot_interactions_retain_packet_family_pair_contracts() -> Non
     ):
         assert f"slot:typed-decompiler-family-pair:{family_pair}" in distribution
         assert any(
-            slot.startswith("slot-pair:")
-            and f"typed-decompiler-family-pair:{family_pair}" in slot
+            slot.startswith("slot-pair:") and f"typed-decompiler-family-pair:{family_pair}" in slot
             for slot in distribution
         )
 
@@ -11043,23 +10278,14 @@ def test_targeted_typed_family_pairs_have_reconstruction_slots() -> None:
         "temporal->frame",
         "temporal->temporal",
     ):
+        assert f"slot:typed-decompiler-target-reconstruction-pair:{family_pair}" in distribution
         assert (
-            f"slot:typed-decompiler-target-reconstruction-pair:{family_pair}"
-            in distribution
-        )
-        assert (
-            f"slot:typed-decompiler-target-reconstruction-view:"
-            f"{family_pair}||modal.autoencoder"
+            f"slot:typed-decompiler-target-reconstruction-view:{family_pair}||modal.autoencoder"
         ) in distribution
 
-    assert (
-        "slot:typed-decompiler-target-reconstruction-cue:"
-        "frame->deontic:may"
-    ) in distribution
+    assert ("slot:typed-decompiler-target-reconstruction-cue:frame->deontic:may") in distribution
     assert any(
-        slot.startswith(
-            "slot:typed-decompiler-target-reconstruction-surface-cue:"
-        )
+        slot.startswith("slot:typed-decompiler-target-reconstruction-surface-cue:")
         and slot.endswith(":temporal->conditional_normative")
         for slot in distribution
     )
@@ -11089,28 +10315,22 @@ def test_frame_target_family_pair_slots_gate_semantic_embedding_heads() -> None:
     sample = replace(sample, modal_ir=replace(sample.modal_ir, formulas=[frame_formula]))
     autoencoder = AdaptiveModalAutoencoder()
 
-    family_distribution = (
-        autoencoder._target_family_distribution_for_semantic_slot_embedding(sample)
+    family_distribution = autoencoder._target_family_distribution_for_semantic_slot_embedding(
+        sample
     )
-    family_slot_distribution = (
-        autoencoder._target_family_semantic_slot_distribution_for_sample(sample)
+    family_slot_distribution = autoencoder._target_family_semantic_slot_distribution_for_sample(
+        sample
     )
     family_slot_view_distribution = (
-        autoencoder._target_family_semantic_slot_legal_ir_view_distribution_for_sample(
-            sample
-        )
+        autoencoder._target_family_semantic_slot_legal_ir_view_distribution_for_sample(sample)
     )
 
     assert (
-        family_distribution["deontic"]
-        + family_distribution["conditional_normative"]
+        family_distribution["deontic"] + family_distribution["conditional_normative"]
     ) > family_distribution["frame"]
     assert family_distribution["conditional_normative"] > 0.0
     assert any(
-        key.startswith(
-            "deontic||slot:typed-decompiler-target-reconstruction-pair:"
-            "frame->deontic"
-        )
+        key.startswith("deontic||slot:typed-decompiler-target-reconstruction-pair:frame->deontic")
         for key in family_slot_distribution
     )
     assert any(
@@ -11121,10 +10341,7 @@ def test_frame_target_family_pair_slots_gate_semantic_embedding_heads() -> None:
         for key in family_slot_distribution
     )
     assert any(
-        key.startswith(
-            "deontic||slot:typed-decompiler-family-pair-view-contract:"
-            "frame->deontic"
-        )
+        key.startswith("deontic||slot:typed-decompiler-family-pair-view-contract:frame->deontic")
         and key.endswith("||modal.autoencoder")
         for key in family_slot_view_distribution
     )
@@ -11315,36 +10532,30 @@ def test_semantic_slots_surface_pair_scoped_force_and_topology_contracts() -> No
 
     assert (
         "slot:typed-decompiler-force-polarity-family-pair:"
-        "obligation:negative_scope:conditional_normative->deontic"
-        in distribution
+        "obligation:negative_scope:conditional_normative->deontic" in distribution
     )
     assert (
         "slot:typed-decompiler-force-polarity-scope-family-pair:"
         "obligation:negative_scope:conditioned+excepted+temporal:"
-        "conditional_normative->deontic"
-        in distribution
+        "conditional_normative->deontic" in distribution
     )
     assert (
         "slot:typed-decompiler-force-polarity-family-pair:"
-        "permission:positive_scope:frame->deontic"
-        in distribution
+        "permission:positive_scope:frame->deontic" in distribution
     )
     assert (
         "slot:typed-decompiler-force-polarity-family-pair:"
-        "obligation:positive_scope:temporal->deontic"
-        in distribution
+        "obligation:positive_scope:temporal->deontic" in distribution
     )
     assert (
         "slot:typed-decompiler-source-predicate-force-pair:"
         "conditional_normative:publish|"
-        "typed-decompiler-force-polarity:obligation:negative_scope"
-        in distribution
+        "typed-decompiler-force-polarity:obligation:negative_scope" in distribution
     )
     assert (
         "slot:typed-decompiler-source-clause-topology-family-pair:"
         "condition+subject+action+object+exception+temporal:conditional_normative|"
-        "typed-decompiler-family-pair:conditional_normative->deontic"
-        in distribution
+        "typed-decompiler-family-pair:conditional_normative->deontic" in distribution
     )
 
 
@@ -11425,9 +10636,7 @@ def test_semantic_slot_pair_logits_can_drive_compositional_family_ce() -> None:
         semantic_slot_interaction_weight=0.5,
         max_semantic_slot_interactions=8,
         state=ModalAutoencoderTrainingState(
-            semantic_slot_family_logits={
-                pair_slot: {"conditional_normative": 2.0}
-            }
+            semantic_slot_family_logits={pair_slot: {"conditional_normative": 2.0}}
         ),
     )
 
@@ -11499,18 +10708,9 @@ def test_source_cue_targets_extend_typed_family_pair_reconstruction_slots() -> N
     ):
         assert f"slot:typed-decompiler-family-pair:{family_pair}" in distribution
 
-    assert (
-        "slot:typed-decompiler-family-pair-cue:temporal->frame:not_later_than"
-        in distribution
-    )
-    assert (
-        "round-trip-bridge:typed-family-pair:deontic->frame"
-        in round_trip_features
-    )
-    assert (
-        "round-trip-bridge:surface-role:subject:authority"
-        in round_trip_features
-    )
+    assert "slot:typed-decompiler-family-pair-cue:temporal->frame:not_later_than" in distribution
+    assert "round-trip-bridge:typed-family-pair:deontic->frame" in round_trip_features
+    assert "round-trip-bridge:surface-role:subject:authority" in round_trip_features
     assert (
         "round-trip-bridge:surface-action-to-family-pair:issue:deontic->frame"
         in round_trip_features
@@ -11796,9 +10996,7 @@ def test_legal_ir_view_embedding_prototype_head_transfers_cosine_to_holdout() ->
         use_sample_memory=False,
     )
 
-    assert autoencoder.state.legal_ir_view_embedding_weights[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    assert autoencoder.state.legal_ir_view_embedding_weights["knowledge_graphs.neo4j_compat"]
     assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
     introspection = autoencoder.introspect_sample(validation)
     assert any(
@@ -11935,8 +11133,7 @@ def test_family_semantic_slot_legal_ir_view_embedding_head_transfers_cosine_to_h
     assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
     introspection = autoencoder.introspect_sample(validation)
     assert any(
-        contribution.contribution_type
-        == "family_semantic_slot_legal_ir_view_embedding_weight"
+        contribution.contribution_type == "family_semantic_slot_legal_ir_view_embedding_weight"
         for contribution in introspection.top_embedding_contributions
     )
 
@@ -12686,6 +11883,8 @@ def test_encoder_decoder_todo_default_update_budget_preserves_cosine_direction()
     assert autoencoder._active_embedding_update_head_count(sample) > 1
     assert evaluation.embedding_cosine_similarity == pytest.approx(1.0)
     assert evaluation.reconstruction_loss < 0.5
+
+
 def test_decoded_embedding_projection_clamps_reusable_head_overshoot() -> None:
     sample = build_us_code_sample(
         title="5",
@@ -12762,12 +11961,8 @@ def test_family_logit_head_update_normalization_shares_multi_head_step_budget() 
         update_sample_memory=False,
     )
 
-    unnormalized_step = _max_abs(
-        unnormalized.state.compiler_quality_family_logits["quality:bias"]
-    )
-    normalized_step = _max_abs(
-        normalized.state.compiler_quality_family_logits["quality:bias"]
-    )
+    unnormalized_step = _max_abs(unnormalized.state.compiler_quality_family_logits["quality:bias"])
+    normalized_step = _max_abs(normalized.state.compiler_quality_family_logits["quality:bias"])
 
     assert normalized._active_family_logit_update_head_count(sample) > 1
     assert 0.0 < normalized_step < unnormalized_step
@@ -12812,12 +12007,8 @@ def test_legal_ir_view_head_update_normalization_shares_multi_head_step_budget()
         update_sample_memory=False,
     )
 
-    unnormalized_step = unnormalized.state.legal_ir_view_logits[
-        "knowledge_graphs.neo4j_compat"
-    ]
-    normalized_step = normalized.state.legal_ir_view_logits[
-        "knowledge_graphs.neo4j_compat"
-    ]
+    unnormalized_step = unnormalized.state.legal_ir_view_logits["knowledge_graphs.neo4j_compat"]
+    normalized_step = normalized.state.legal_ir_view_logits["knowledge_graphs.neo4j_compat"]
 
     assert normalized._active_legal_ir_view_logit_update_head_count(sample) > 1
     assert 0.0 < normalized_step < unnormalized_step
@@ -12945,8 +12136,7 @@ def test_target_family_semantic_slot_head_transfers_frame_deontic_holdout() -> N
         title="16",
         section="410y-1",
         text=(
-            "Sec. 410y-1 - Boundaries The Secretary may acquire lands for "
-            "inclusion in the park."
+            "Sec. 410y-1 - Boundaries The Secretary may acquire lands for inclusion in the park."
         ),
         embedding_vector=[0.0, 1.0],
     )
@@ -12981,8 +12171,7 @@ def test_target_family_semantic_slot_head_transfers_frame_deontic_holdout() -> N
     assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
     introspection = autoencoder.introspect_sample(validation)
     assert any(
-        "slot:typed-decompiler-target-reconstruction-family:deontic"
-        in contribution.feature
+        "slot:typed-decompiler-target-reconstruction-family:deontic" in contribution.feature
         for contribution in introspection.top_embedding_contributions
     )
 
@@ -13182,10 +12371,7 @@ def test_feature_codec_keys_are_augmented_with_fallback_modal_features() -> None
 def test_sparse_codec_noise_does_not_drown_fallback_family_updates() -> None:
     class NoisyFeatureCodec:
         def feature_keys_for_sample(self, sample):
-            return [
-                f"codec-noise:{sample.sample_id}:{index}"
-                for index in range(100)
-            ]
+            return [f"codec-noise:{sample.sample_id}:{index}" for index in range(100)]
 
     train = build_us_code_sample(
         title="5",
@@ -13216,12 +12402,10 @@ def test_sparse_codec_noise_does_not_drown_fallback_family_updates() -> None:
 
     autoencoder.apply_todos([todo], {train.sample_id: train}, learning_rate=0.5)
     after = autoencoder.evaluate([validation])
-    fallback_logit = autoencoder.state.feature_family_logits["modal-family:deontic"][
+    fallback_logit = autoencoder.state.feature_family_logits["modal-family:deontic"]["deontic"]
+    noisy_logit = autoencoder.state.feature_family_logits[f"codec-noise:{train.sample_id}:0"][
         "deontic"
     ]
-    noisy_logit = autoencoder.state.feature_family_logits[
-        f"codec-noise:{train.sample_id}:0"
-    ]["deontic"]
 
     assert fallback_logit > noisy_logit
     assert after.cross_entropy_loss < before.cross_entropy_loss
@@ -13333,10 +12517,7 @@ def test_fallback_features_include_structural_and_ngram_signals() -> None:
     assert any(feature.startswith("semantic-slot:slot-pair:") for feature in features)
 
     legal_ir_features = autoencoder._legal_ir_view_core_feature_keys_for(sample)
-    assert any(
-        feature.startswith("legal-ir:predicate:")
-        for feature in legal_ir_features
-    )
+    assert any(feature.startswith("legal-ir:predicate:") for feature in legal_ir_features)
     assert "legal-ir:condition-count-bin:2-3" in legal_ir_features
     assert "legal-ir:exception-count-bin:1" in legal_ir_features
     assert any(
@@ -13344,8 +12525,7 @@ def test_fallback_features_include_structural_and_ngram_signals() -> None:
         for feature in legal_ir_features
     )
     assert any(
-        feature.startswith("legal-ir:semantic-slot:slot-pair:")
-        for feature in legal_ir_features
+        feature.startswith("legal-ir:semantic-slot:slot-pair:") for feature in legal_ir_features
     )
 
 
@@ -13365,11 +12545,7 @@ def test_feature_update_groups_prioritize_structural_fallback_over_noisy_codec_k
     )
 
     groups = autoencoder._feature_update_groups_for(sample, step=1.0)
-    per_feature_step = {
-        feature: feature_step
-        for keys, feature_step in groups
-        for feature in keys
-    }
+    per_feature_step = {feature: feature_step for keys, feature_step in groups for feature in keys}
 
     assert per_feature_step["modal-family:deontic"] > per_feature_step["token:agency"]
     assert per_feature_step["token:agency"] > per_feature_step["codec-noise:0"]
@@ -13570,12 +12746,8 @@ def test_adaptive_autoencoder_state_roundtrip(tmp_path) -> None:
     state = ModalAutoencoderTrainingState(
         decoded_embeddings={"sample": [0.1, 0.2]},
         family_logits={"sample": {"deontic": 1.0}},
-        compiler_quality_embedding_weights={
-            "quality:symbolic:missing-formula": [0.21, 0.22]
-        },
-        compiler_quality_family_logits={
-            "quality:symbolic:missing-formula": {"hybrid": 0.31}
-        },
+        compiler_quality_embedding_weights={"quality:symbolic:missing-formula": [0.21, 0.22]},
+        compiler_quality_family_logits={"quality:symbolic:missing-formula": {"hybrid": 0.31}},
         logic_signature_embedding_weights={
             "signature:role-schema:deontic:clause:arity:0": [0.23, 0.24]
         },
@@ -13583,31 +12755,17 @@ def test_adaptive_autoencoder_state_roundtrip(tmp_path) -> None:
             "signature:role-schema:deontic:clause:arity:0": {"deontic": 0.33}
         },
         logic_signature_legal_ir_view_logits={
-            "signature:role-schema:deontic:clause:arity:0": {
-                "knowledge_graphs.neo4j_compat": 0.35
-            }
+            "signature:role-schema:deontic:clause:arity:0": {"knowledge_graphs.neo4j_compat": 0.35}
         },
-        round_trip_signal_embedding_weights={
-            "round-trip:modal-family-ambiguous": [0.25, 0.26]
-        },
-        round_trip_signal_family_logits={
-            "round-trip:modal-family-ambiguous": {"hybrid": 0.37}
-        },
+        round_trip_signal_embedding_weights={"round-trip:modal-family-ambiguous": [0.25, 0.26]},
+        round_trip_signal_family_logits={"round-trip:modal-family-ambiguous": {"hybrid": 0.37}},
         round_trip_signal_legal_ir_view_logits={
-            "round-trip:modal-family-ambiguous": {
-                "knowledge_graphs.neo4j_compat": 0.39
-            }
+            "round-trip:modal-family-ambiguous": {"knowledge_graphs.neo4j_compat": 0.39}
         },
-        decompiler_plan_embedding_weights={
-            "decompiler-plan:cue:deontic": [0.27, 0.28]
-        },
-        decompiler_plan_family_logits={
-            "decompiler-plan:cue:deontic": {"deontic": 0.41}
-        },
+        decompiler_plan_embedding_weights={"decompiler-plan:cue:deontic": [0.27, 0.28]},
+        decompiler_plan_family_logits={"decompiler-plan:cue:deontic": {"deontic": 0.41}},
         decompiler_plan_legal_ir_view_logits={
-            "decompiler-plan:cue:deontic": {
-                "knowledge_graphs.neo4j_compat": 0.43
-            }
+            "decompiler-plan:cue:deontic": {"knowledge_graphs.neo4j_compat": 0.43}
         },
         predicate_argument_embedding_weights={
             "predicate-argument:role-arity:deontic:clause:0": [0.29, 0.3]
@@ -13622,9 +12780,7 @@ def test_adaptive_autoencoder_state_roundtrip(tmp_path) -> None:
         },
         feature_embedding_weights={"token:agency": [0.01, -0.01]},
         family_embedding_weights={"deontic": [0.03, 0.04]},
-        family_semantic_slot_embedding_weights={
-            "deontic||slot:condition-present": [0.11, 0.12]
-        },
+        family_semantic_slot_embedding_weights={"deontic||slot:condition-present": [0.11, 0.12]},
         family_semantic_slot_legal_ir_view_embedding_weights={
             "deontic||slot:condition-present||knowledge_graphs.neo4j_compat": [
                 0.15,
@@ -13642,9 +12798,7 @@ def test_adaptive_autoencoder_state_roundtrip(tmp_path) -> None:
         },
         legal_ir_view_logits={"deontic.ir": 0.3},
         legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.05, 0.06]},
-        legal_ir_view_family_logits={
-            "knowledge_graphs.neo4j_compat": {"deontic": 0.8}
-        },
+        legal_ir_view_family_logits={"knowledge_graphs.neo4j_compat": {"deontic": 0.8}},
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.4}},
         semantic_slot_legal_ir_view_embedding_weights={
             "slot:condition-present||knowledge_graphs.neo4j_compat": [0.13, 0.14]
@@ -13676,25 +12830,16 @@ def test_training_state_telemetry_reports_dense_state_size() -> None:
             "token:agency": [0.3, -0.1, 0.2],
             "token:duty": [0.4, 0.5],
         },
-        legal_ir_view_embedding_weights={
-            "knowledge_graphs.neo4j_compat": [0.05, 0.06]
-        },
-        feature_family_logits={
-            "modal-family:deontic": {"deontic": 0.2, "temporal": -0.1}
-        },
-        feature_legal_ir_view_logits={
-            "legal-ir:cue:deontic": {"frame_logic": 0.4}
-        },
+        legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.05, 0.06]},
+        feature_family_logits={"modal-family:deontic": {"deontic": 0.2, "temporal": -0.1}},
+        feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"frame_logic": 0.4}},
         legal_ir_view_logits={"deontic.ir": 0.3},
         applied_todo_ids=["todo-1"],
     )
 
     telemetry = state.telemetry()
 
-    assert (
-        telemetry["architecture_version"]
-        == MODAL_AUTOENCODER_ARCHITECTURE_VERSION
-    )
+    assert telemetry["architecture_version"] == MODAL_AUTOENCODER_ARCHITECTURE_VERSION
     assert telemetry["schema_version"] == MODAL_AUTOENCODER_STATE_SCHEMA_VERSION
     assert telemetry["applied_todo_count"] == 1
     assert telemetry["decoded_embedding_count"] == 1
@@ -13719,9 +12864,7 @@ def test_training_state_low_rank_shadow_report_estimates_compression() -> None:
             "token:agency": [1.0, 2.0, 3.0, 4.0],
             "token:duty": [2.0, 2.0, 2.0, 2.0],
         },
-        legal_ir_view_embedding_weights={
-            "knowledge_graphs.neo4j_compat": [0.5, 1.5, 2.5, 3.5]
-        },
+        legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.5, 1.5, 2.5, 3.5]},
     )
 
     report = state.low_rank_shadow_report(rank=2, max_vectors=8)
@@ -13740,10 +12883,7 @@ def test_training_state_low_rank_shadow_report_estimates_compression() -> None:
     assert 0.0 <= report["sample_average_reconstruction_cosine"] <= 1.0
     assert report["sample_average_reconstruction_mse"] >= 0.0
     assert report["per_map"]["feature_embedding_weights"]["entry_count"] == 2
-    assert (
-        report["per_map"]["feature_embedding_weights"]["dimension_counts"]["4"]
-        == 2
-    )
+    assert report["per_map"]["feature_embedding_weights"]["dimension_counts"]["4"] == 2
 
 
 def test_training_state_low_rank_shadow_report_full_rank_reconstructs() -> None:
@@ -13766,17 +12906,13 @@ def test_training_state_low_rank_shadow_state_roundtrip(tmp_path) -> None:
             "token:agency": [1.0, -2.0, 3.0, -4.0],
             "token:duty": [2.0, 0.0, -2.0, 1.0],
         },
-        semantic_slot_embedding_weights={
-            "slot:condition-present": [0.5, -0.5, 1.5, -1.5]
-        },
+        semantic_slot_embedding_weights={"slot:condition-present": [0.5, -0.5, 1.5, -1.5]},
     )
     path = tmp_path / "state.low-rank-shadow.json"
 
     payload = state.save_low_rank_shadow_json(path, rank=4)
     loaded = ModalAutoencoderTrainingState.load_low_rank_shadow_json(path)
-    reconstructed = ModalAutoencoderTrainingState.reconstruct_low_rank_embedding_maps(
-        loaded
-    )
+    reconstructed = ModalAutoencoderTrainingState.reconstruct_low_rank_embedding_maps(loaded)
 
     assert payload["complete"] is True
     assert loaded["schema_version"] == MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION
@@ -13803,9 +12939,7 @@ def test_training_state_low_rank_shadow_state_can_be_bounded() -> None:
     )
 
     payload = state.materialize_low_rank_shadow_state(rank=2, max_vectors=2)
-    reconstructed = ModalAutoencoderTrainingState.reconstruct_low_rank_embedding_maps(
-        payload
-    )
+    reconstructed = ModalAutoencoderTrainingState.reconstruct_low_rank_embedding_maps(payload)
 
     assert payload["complete"] is False
     assert payload["max_vectors"] == 2
@@ -13839,9 +12973,7 @@ def test_training_state_low_rank_shadow_hydration_merges_without_overwrite(
         9.0,
         9.0,
     ]
-    assert target.feature_embedding_weights["token:duty"] == pytest.approx(
-        [2.0, 0.0, -2.0, 1.0]
-    )
+    assert target.feature_embedding_weights["token:duty"] == pytest.approx([2.0, 0.0, -2.0, 1.0])
 
 
 def test_training_state_low_rank_shadow_hydration_can_overwrite(tmp_path) -> None:
@@ -13859,21 +12991,15 @@ def test_training_state_low_rank_shadow_hydration_can_overwrite(tmp_path) -> Non
     assert report["dense_state_hydrated"] is True
     assert report["merged_vector_entry_count"] == 1
     assert report["skipped_existing_vector_entry_count"] == 0
-    assert target.feature_embedding_weights["token:agency"] == pytest.approx(
-        [1.0, -2.0, 3.0, -4.0]
-    )
+    assert target.feature_embedding_weights["token:agency"] == pytest.approx([1.0, -2.0, 3.0, -4.0])
 
 
 def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
     state = ModalAutoencoderTrainingState(
         decoded_embeddings={"sample": [0.1, 0.2]},
         family_logits={"sample": {"deontic": 1.0}},
-        compiler_quality_embedding_weights={
-            "quality:symbolic:missing-formula": [0.21, 0.22]
-        },
-        compiler_quality_family_logits={
-            "quality:symbolic:missing-formula": {"hybrid": 0.31}
-        },
+        compiler_quality_embedding_weights={"quality:symbolic:missing-formula": [0.21, 0.22]},
+        compiler_quality_family_logits={"quality:symbolic:missing-formula": {"hybrid": 0.31}},
         logic_signature_embedding_weights={
             "signature:role-schema:deontic:clause:arity:0": [0.23, 0.24]
         },
@@ -13881,31 +13007,17 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
             "signature:role-schema:deontic:clause:arity:0": {"deontic": 0.33}
         },
         logic_signature_legal_ir_view_logits={
-            "signature:role-schema:deontic:clause:arity:0": {
-                "knowledge_graphs.neo4j_compat": 0.35
-            }
+            "signature:role-schema:deontic:clause:arity:0": {"knowledge_graphs.neo4j_compat": 0.35}
         },
-        round_trip_signal_embedding_weights={
-            "round-trip:modal-family-ambiguous": [0.25, 0.26]
-        },
-        round_trip_signal_family_logits={
-            "round-trip:modal-family-ambiguous": {"hybrid": 0.37}
-        },
+        round_trip_signal_embedding_weights={"round-trip:modal-family-ambiguous": [0.25, 0.26]},
+        round_trip_signal_family_logits={"round-trip:modal-family-ambiguous": {"hybrid": 0.37}},
         round_trip_signal_legal_ir_view_logits={
-            "round-trip:modal-family-ambiguous": {
-                "knowledge_graphs.neo4j_compat": 0.39
-            }
+            "round-trip:modal-family-ambiguous": {"knowledge_graphs.neo4j_compat": 0.39}
         },
-        decompiler_plan_embedding_weights={
-            "decompiler-plan:cue:deontic": [0.27, 0.28]
-        },
-        decompiler_plan_family_logits={
-            "decompiler-plan:cue:deontic": {"deontic": 0.41}
-        },
+        decompiler_plan_embedding_weights={"decompiler-plan:cue:deontic": [0.27, 0.28]},
+        decompiler_plan_family_logits={"decompiler-plan:cue:deontic": {"deontic": 0.41}},
         decompiler_plan_legal_ir_view_logits={
-            "decompiler-plan:cue:deontic": {
-                "knowledge_graphs.neo4j_compat": 0.43
-            }
+            "decompiler-plan:cue:deontic": {"knowledge_graphs.neo4j_compat": 0.43}
         },
         predicate_argument_embedding_weights={
             "predicate-argument:role-arity:deontic:clause:0": [0.29, 0.3]
@@ -13920,9 +13032,7 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
         },
         feature_embedding_weights={"token:agency": [0.01, -0.01]},
         family_embedding_weights={"deontic": [0.03, 0.04]},
-        family_semantic_slot_embedding_weights={
-            "deontic||slot:condition-present": [0.11, 0.12]
-        },
+        family_semantic_slot_embedding_weights={"deontic||slot:condition-present": [0.11, 0.12]},
         family_semantic_slot_legal_ir_view_embedding_weights={
             "deontic||slot:condition-present||knowledge_graphs.neo4j_compat": [
                 0.15,
@@ -13940,9 +13050,7 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
         },
         legal_ir_view_logits={"deontic.ir": 0.3},
         legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.05, 0.06]},
-        legal_ir_view_family_logits={
-            "knowledge_graphs.neo4j_compat": {"deontic": 0.8}
-        },
+        legal_ir_view_family_logits={"knowledge_graphs.neo4j_compat": {"deontic": 0.8}},
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.4}},
         semantic_slot_legal_ir_view_embedding_weights={
             "slot:condition-present||knowledge_graphs.neo4j_compat": [0.13, 0.14]
@@ -13962,21 +13070,13 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
     assert generalizable.family_logits == {}
     assert generalizable.applied_todo_ids == []
     assert (
-        generalizable.compiler_quality_embedding_weights
-        == state.compiler_quality_embedding_weights
+        generalizable.compiler_quality_embedding_weights == state.compiler_quality_embedding_weights
     )
+    assert generalizable.compiler_quality_family_logits == state.compiler_quality_family_logits
     assert (
-        generalizable.compiler_quality_family_logits
-        == state.compiler_quality_family_logits
+        generalizable.logic_signature_embedding_weights == state.logic_signature_embedding_weights
     )
-    assert (
-        generalizable.logic_signature_embedding_weights
-        == state.logic_signature_embedding_weights
-    )
-    assert (
-        generalizable.logic_signature_family_logits
-        == state.logic_signature_family_logits
-    )
+    assert generalizable.logic_signature_family_logits == state.logic_signature_family_logits
     assert (
         generalizable.logic_signature_legal_ir_view_logits
         == state.logic_signature_legal_ir_view_logits
@@ -13985,22 +13085,15 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
         generalizable.round_trip_signal_embedding_weights
         == state.round_trip_signal_embedding_weights
     )
-    assert (
-        generalizable.round_trip_signal_family_logits
-        == state.round_trip_signal_family_logits
-    )
+    assert generalizable.round_trip_signal_family_logits == state.round_trip_signal_family_logits
     assert (
         generalizable.round_trip_signal_legal_ir_view_logits
         == state.round_trip_signal_legal_ir_view_logits
     )
     assert (
-        generalizable.decompiler_plan_embedding_weights
-        == state.decompiler_plan_embedding_weights
+        generalizable.decompiler_plan_embedding_weights == state.decompiler_plan_embedding_weights
     )
-    assert (
-        generalizable.decompiler_plan_family_logits
-        == state.decompiler_plan_family_logits
-    )
+    assert generalizable.decompiler_plan_family_logits == state.decompiler_plan_family_logits
     assert (
         generalizable.decompiler_plan_legal_ir_view_logits
         == state.decompiler_plan_legal_ir_view_logits
@@ -14009,10 +13102,7 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
         generalizable.predicate_argument_embedding_weights
         == state.predicate_argument_embedding_weights
     )
-    assert (
-        generalizable.predicate_argument_family_logits
-        == state.predicate_argument_family_logits
-    )
+    assert generalizable.predicate_argument_family_logits == state.predicate_argument_family_logits
     assert (
         generalizable.predicate_argument_legal_ir_view_logits
         == state.predicate_argument_legal_ir_view_logits
@@ -14033,18 +13123,9 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
     )
     assert generalizable.feature_family_logits == state.feature_family_logits
     assert generalizable.legal_ir_view_logits == state.legal_ir_view_logits
-    assert (
-        generalizable.legal_ir_view_embedding_weights
-        == state.legal_ir_view_embedding_weights
-    )
-    assert (
-        generalizable.legal_ir_view_family_logits
-        == state.legal_ir_view_family_logits
-    )
-    assert (
-        generalizable.semantic_slot_embedding_weights
-        == state.semantic_slot_embedding_weights
-    )
+    assert generalizable.legal_ir_view_embedding_weights == state.legal_ir_view_embedding_weights
+    assert generalizable.legal_ir_view_family_logits == state.legal_ir_view_family_logits
+    assert generalizable.semantic_slot_embedding_weights == state.semantic_slot_embedding_weights
     assert generalizable.semantic_slot_family_logits == state.semantic_slot_family_logits
     assert (
         generalizable.family_semantic_slot_legal_ir_view_logits
@@ -14059,13 +13140,9 @@ def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
         == state.semantic_slot_legal_ir_view_family_logits
     )
     assert (
-        generalizable.semantic_slot_legal_ir_view_logits
-        == state.semantic_slot_legal_ir_view_logits
+        generalizable.semantic_slot_legal_ir_view_logits == state.semantic_slot_legal_ir_view_logits
     )
-    assert (
-        generalizable.feature_legal_ir_view_logits
-        == state.feature_legal_ir_view_logits
-    )
+    assert generalizable.feature_legal_ir_view_logits == state.feature_legal_ir_view_logits
 
 
 def test_training_state_copy_avoids_sorted_serialization(monkeypatch) -> None:
@@ -14098,12 +13175,8 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
     first = ModalAutoencoderTrainingState(
         decoded_embeddings={"sample-a": [1.0, 1.0]},
         family_logits={"sample-a": {"deontic": 4.0}},
-        compiler_quality_embedding_weights={
-            "quality:symbolic:missing-formula": [0.2, 0.6]
-        },
-        compiler_quality_family_logits={
-            "quality:symbolic:missing-formula": {"hybrid": 0.8}
-        },
+        compiler_quality_embedding_weights={"quality:symbolic:missing-formula": [0.2, 0.6]},
+        compiler_quality_family_logits={"quality:symbolic:missing-formula": {"hybrid": 0.8}},
         logic_signature_embedding_weights={
             "signature:role-schema:deontic:clause:arity:0": [0.6, 1.0]
         },
@@ -14111,31 +13184,17 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
             "signature:role-schema:deontic:clause:arity:0": {"deontic": 1.0}
         },
         logic_signature_legal_ir_view_logits={
-            "signature:role-schema:deontic:clause:arity:0": {
-                "knowledge_graphs.neo4j_compat": 1.2
-            }
+            "signature:role-schema:deontic:clause:arity:0": {"knowledge_graphs.neo4j_compat": 1.2}
         },
-        round_trip_signal_embedding_weights={
-            "round-trip:modal-family-ambiguous": [0.2, 0.6]
-        },
-        round_trip_signal_family_logits={
-            "round-trip:modal-family-ambiguous": {"hybrid": 0.8}
-        },
+        round_trip_signal_embedding_weights={"round-trip:modal-family-ambiguous": [0.2, 0.6]},
+        round_trip_signal_family_logits={"round-trip:modal-family-ambiguous": {"hybrid": 0.8}},
         round_trip_signal_legal_ir_view_logits={
-            "round-trip:modal-family-ambiguous": {
-                "knowledge_graphs.neo4j_compat": 1.2
-            }
+            "round-trip:modal-family-ambiguous": {"knowledge_graphs.neo4j_compat": 1.2}
         },
-        decompiler_plan_embedding_weights={
-            "decompiler-plan:cue:deontic": [0.4, 0.8]
-        },
-        decompiler_plan_family_logits={
-            "decompiler-plan:cue:deontic": {"deontic": 1.0}
-        },
+        decompiler_plan_embedding_weights={"decompiler-plan:cue:deontic": [0.4, 0.8]},
+        decompiler_plan_family_logits={"decompiler-plan:cue:deontic": {"deontic": 1.0}},
         decompiler_plan_legal_ir_view_logits={
-            "decompiler-plan:cue:deontic": {
-                "knowledge_graphs.neo4j_compat": 1.2
-            }
+            "decompiler-plan:cue:deontic": {"knowledge_graphs.neo4j_compat": 1.2}
         },
         predicate_argument_embedding_weights={
             "predicate-argument:role-arity:deontic:clause:0": [0.6, 1.0]
@@ -14144,15 +13203,11 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
             "predicate-argument:role-arity:deontic:clause:0": {"deontic": 1.0}
         },
         predicate_argument_legal_ir_view_logits={
-            "predicate-argument:role-arity:deontic:clause:0": {
-                "knowledge_graphs.neo4j_compat": 1.2
-            }
+            "predicate-argument:role-arity:deontic:clause:0": {"knowledge_graphs.neo4j_compat": 1.2}
         },
         feature_embedding_weights={"token:agency": [0.2, -0.2]},
         family_embedding_weights={"deontic": [0.2, 0.4]},
-        family_semantic_slot_embedding_weights={
-            "deontic||slot:condition-present": [0.4, 0.8]
-        },
+        family_semantic_slot_embedding_weights={"deontic||slot:condition-present": [0.4, 0.8]},
         family_semantic_slot_legal_ir_view_embedding_weights={
             "deontic||slot:condition-present||knowledge_graphs.neo4j_compat": [
                 0.8,
@@ -14170,9 +13225,7 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
         },
         legal_ir_view_logits={"deontic.ir": 0.6},
         legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.2, 0.6]},
-        legal_ir_view_family_logits={
-            "knowledge_graphs.neo4j_compat": {"deontic": 0.6}
-        },
+        legal_ir_view_family_logits={"knowledge_graphs.neo4j_compat": {"deontic": 0.6}},
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.8}},
         semantic_slot_legal_ir_view_embedding_weights={
             "slot:condition-present||knowledge_graphs.neo4j_compat": [0.6, 1.0]
@@ -14187,12 +13240,8 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
     second = ModalAutoencoderTrainingState(
         decoded_embeddings={"sample-b": [2.0, 2.0]},
         family_logits={"sample-b": {"temporal": 4.0}},
-        compiler_quality_embedding_weights={
-            "quality:symbolic:missing-formula": [0.4, 1.0]
-        },
-        compiler_quality_family_logits={
-            "quality:symbolic:missing-formula": {"hybrid": 0.4}
-        },
+        compiler_quality_embedding_weights={"quality:symbolic:missing-formula": [0.4, 1.0]},
+        compiler_quality_family_logits={"quality:symbolic:missing-formula": {"hybrid": 0.4}},
         logic_signature_embedding_weights={
             "signature:role-schema:deontic:clause:arity:0": [0.2, 0.4]
         },
@@ -14200,31 +13249,17 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
             "signature:role-schema:deontic:clause:arity:0": {"deontic": 0.4}
         },
         logic_signature_legal_ir_view_logits={
-            "signature:role-schema:deontic:clause:arity:0": {
-                "knowledge_graphs.neo4j_compat": 0.8
-            }
+            "signature:role-schema:deontic:clause:arity:0": {"knowledge_graphs.neo4j_compat": 0.8}
         },
-        round_trip_signal_embedding_weights={
-            "round-trip:modal-family-ambiguous": [0.4, 1.0]
-        },
-        round_trip_signal_family_logits={
-            "round-trip:modal-family-ambiguous": {"hybrid": 0.4}
-        },
+        round_trip_signal_embedding_weights={"round-trip:modal-family-ambiguous": [0.4, 1.0]},
+        round_trip_signal_family_logits={"round-trip:modal-family-ambiguous": {"hybrid": 0.4}},
         round_trip_signal_legal_ir_view_logits={
-            "round-trip:modal-family-ambiguous": {
-                "knowledge_graphs.neo4j_compat": 0.8
-            }
+            "round-trip:modal-family-ambiguous": {"knowledge_graphs.neo4j_compat": 0.8}
         },
-        decompiler_plan_embedding_weights={
-            "decompiler-plan:cue:deontic": [0.2, 0.6]
-        },
-        decompiler_plan_family_logits={
-            "decompiler-plan:cue:deontic": {"deontic": 0.4}
-        },
+        decompiler_plan_embedding_weights={"decompiler-plan:cue:deontic": [0.2, 0.6]},
+        decompiler_plan_family_logits={"decompiler-plan:cue:deontic": {"deontic": 0.4}},
         decompiler_plan_legal_ir_view_logits={
-            "decompiler-plan:cue:deontic": {
-                "knowledge_graphs.neo4j_compat": 0.8
-            }
+            "decompiler-plan:cue:deontic": {"knowledge_graphs.neo4j_compat": 0.8}
         },
         predicate_argument_embedding_weights={
             "predicate-argument:role-arity:deontic:clause:0": [0.2, 0.4]
@@ -14233,15 +13268,11 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
             "predicate-argument:role-arity:deontic:clause:0": {"deontic": 0.4}
         },
         predicate_argument_legal_ir_view_logits={
-            "predicate-argument:role-arity:deontic:clause:0": {
-                "knowledge_graphs.neo4j_compat": 0.8
-            }
+            "predicate-argument:role-arity:deontic:clause:0": {"knowledge_graphs.neo4j_compat": 0.8}
         },
         feature_embedding_weights={"token:agency": [0.4, -0.4]},
         family_embedding_weights={"deontic": [0.4, 0.8]},
-        family_semantic_slot_embedding_weights={
-            "deontic||slot:condition-present": [0.8, 1.2]
-        },
+        family_semantic_slot_embedding_weights={"deontic||slot:condition-present": [0.8, 1.2]},
         family_semantic_slot_legal_ir_view_embedding_weights={
             "deontic||slot:condition-present||knowledge_graphs.neo4j_compat": [
                 0.4,
@@ -14259,9 +13290,7 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
         },
         legal_ir_view_logits={"deontic.ir": 0.2},
         legal_ir_view_embedding_weights={"knowledge_graphs.neo4j_compat": [0.4, 1.0]},
-        legal_ir_view_family_logits={
-            "knowledge_graphs.neo4j_compat": {"deontic": 0.2}
-        },
+        legal_ir_view_family_logits={"knowledge_graphs.neo4j_compat": {"deontic": 0.2}},
         feature_legal_ir_view_logits={"legal-ir:cue:deontic": {"deontic.ir": 0.4}},
         semantic_slot_legal_ir_view_embedding_weights={
             "slot:condition-present||knowledge_graphs.neo4j_compat": [0.2, 0.4]
@@ -14281,36 +13310,36 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
     assert averaged.compiler_quality_embedding_weights[
         "quality:symbolic:missing-formula"
     ] == pytest.approx([0.3, 0.8])
-    assert averaged.compiler_quality_family_logits[
-        "quality:symbolic:missing-formula"
-    ]["hybrid"] == pytest.approx(0.6)
+    assert averaged.compiler_quality_family_logits["quality:symbolic:missing-formula"][
+        "hybrid"
+    ] == pytest.approx(0.6)
     assert averaged.logic_signature_embedding_weights[
         "signature:role-schema:deontic:clause:arity:0"
     ] == pytest.approx([0.4, 0.7])
-    assert averaged.logic_signature_family_logits[
-        "signature:role-schema:deontic:clause:arity:0"
-    ]["deontic"] == pytest.approx(0.7)
+    assert averaged.logic_signature_family_logits["signature:role-schema:deontic:clause:arity:0"][
+        "deontic"
+    ] == pytest.approx(0.7)
     assert averaged.logic_signature_legal_ir_view_logits[
         "signature:role-schema:deontic:clause:arity:0"
     ]["knowledge_graphs.neo4j_compat"] == pytest.approx(1.0)
     assert averaged.round_trip_signal_embedding_weights[
         "round-trip:modal-family-ambiguous"
     ] == pytest.approx([0.3, 0.8])
-    assert averaged.round_trip_signal_family_logits[
-        "round-trip:modal-family-ambiguous"
-    ]["hybrid"] == pytest.approx(0.6)
-    assert averaged.round_trip_signal_legal_ir_view_logits[
-        "round-trip:modal-family-ambiguous"
-    ]["knowledge_graphs.neo4j_compat"] == pytest.approx(1.0)
+    assert averaged.round_trip_signal_family_logits["round-trip:modal-family-ambiguous"][
+        "hybrid"
+    ] == pytest.approx(0.6)
+    assert averaged.round_trip_signal_legal_ir_view_logits["round-trip:modal-family-ambiguous"][
+        "knowledge_graphs.neo4j_compat"
+    ] == pytest.approx(1.0)
     assert averaged.decompiler_plan_embedding_weights[
         "decompiler-plan:cue:deontic"
     ] == pytest.approx([0.3, 0.7])
-    assert averaged.decompiler_plan_family_logits[
-        "decompiler-plan:cue:deontic"
-    ]["deontic"] == pytest.approx(0.7)
-    assert averaged.decompiler_plan_legal_ir_view_logits[
-        "decompiler-plan:cue:deontic"
-    ]["knowledge_graphs.neo4j_compat"] == pytest.approx(1.0)
+    assert averaged.decompiler_plan_family_logits["decompiler-plan:cue:deontic"][
+        "deontic"
+    ] == pytest.approx(0.7)
+    assert averaged.decompiler_plan_legal_ir_view_logits["decompiler-plan:cue:deontic"][
+        "knowledge_graphs.neo4j_compat"
+    ] == pytest.approx(1.0)
     assert averaged.predicate_argument_embedding_weights[
         "predicate-argument:role-arity:deontic:clause:0"
     ] == pytest.approx([0.4, 0.7])
@@ -14334,33 +13363,32 @@ def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
     assert averaged.legal_ir_view_embedding_weights[
         "knowledge_graphs.neo4j_compat"
     ] == pytest.approx([0.3, 0.8])
-    assert averaged.legal_ir_view_family_logits[
-        "knowledge_graphs.neo4j_compat"
-    ]["deontic"] == pytest.approx(0.4)
+    assert averaged.legal_ir_view_family_logits["knowledge_graphs.neo4j_compat"][
+        "deontic"
+    ] == pytest.approx(0.4)
     assert averaged.semantic_slot_embedding_weights[
         "slot:modal-operator:deontic:d:o"
     ] == pytest.approx([0.2, 0.5])
     assert averaged.feature_family_logits["modal-family:deontic"]["deontic"] == pytest.approx(0.4)
-    assert averaged.semantic_slot_family_logits[
-        "slot:modal-operator:deontic:d:o"
-    ]["deontic"] == pytest.approx(0.6)
-    assert averaged.family_semantic_slot_legal_ir_view_logits[
-        "deontic||slot:condition-present"
-    ]["knowledge_graphs.neo4j_compat"] == pytest.approx(1.0)
+    assert averaged.semantic_slot_family_logits["slot:modal-operator:deontic:d:o"][
+        "deontic"
+    ] == pytest.approx(0.6)
+    assert averaged.family_semantic_slot_legal_ir_view_logits["deontic||slot:condition-present"][
+        "knowledge_graphs.neo4j_compat"
+    ] == pytest.approx(1.0)
     assert averaged.semantic_slot_legal_ir_view_embedding_weights[
         "slot:condition-present||knowledge_graphs.neo4j_compat"
     ] == pytest.approx([0.4, 0.7])
     assert averaged.semantic_slot_legal_ir_view_family_logits[
         "slot:condition-present||knowledge_graphs.neo4j_compat"
     ]["deontic"] == pytest.approx(0.7)
-    assert averaged.semantic_slot_legal_ir_view_logits[
-        "slot:modal-operator:deontic:d:o"
-    ]["knowledge_graphs.neo4j_compat"] == pytest.approx(0.7)
+    assert averaged.semantic_slot_legal_ir_view_logits["slot:modal-operator:deontic:d:o"][
+        "knowledge_graphs.neo4j_compat"
+    ] == pytest.approx(0.7)
     assert averaged.legal_ir_view_logits["deontic.ir"] == pytest.approx(0.4)
-    assert (
-        averaged.feature_legal_ir_view_logits["legal-ir:cue:deontic"]["deontic.ir"]
-        == pytest.approx(0.6)
-    )
+    assert averaged.feature_legal_ir_view_logits["legal-ir:cue:deontic"][
+        "deontic.ir"
+    ] == pytest.approx(0.6)
 
 
 def test_frame_and_symbolic_penalties_for_valid_sample() -> None:
@@ -14372,3 +13400,137 @@ def test_frame_and_symbolic_penalties_for_valid_sample() -> None:
 
     assert frame_ranking_loss(sample) == pytest.approx(0.0)
     assert symbolic_validity_penalty(sample) == pytest.approx(0.0)
+
+
+def _pgir030_deontic_ir() -> dict:
+    return {
+        "family": "deontic",
+        "rules": [
+            {
+                "modality": "obligation",
+                "subject": "agency",
+                "action": "provide_notice",
+            }
+        ],
+    }
+
+
+def test_pgir030_frozen_tokenizer_is_canonical_and_source_separated() -> None:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder import (
+        LEGAL_IR_CANONICAL_VOCABULARY_CID,
+        LEGAL_IR_CANONICAL_VOCABULARY_SIZE,
+        LEGAL_IR_TOKEN_CLASSES,
+        FrozenVocabularyMutationError,
+        LegalIRFrozenTokenizer,
+        LegalIRGrammarDecoder,
+        UnknownFrozenTokenError,
+    )
+
+    tokenizer = LegalIRFrozenTokenizer.canonical()
+    source = "The agency shall provide notice before the hearing and preserve the record."
+    surface = tokenizer.encode_source_surface(source)
+    canonical = tokenizer.encode_canonical(_pgir030_deontic_ir(), source_text=source)
+    decoder = LegalIRGrammarDecoder(tokenizer=tokenizer)
+    encoding = decoder.encode_structured_output(_pgir030_deontic_ir(), family="deontic")
+
+    assert tokenizer.frozen is True
+    assert tokenizer.vocabulary_cid == LEGAL_IR_CANONICAL_VOCABULARY_CID
+    assert tokenizer.vocabulary_size == LEGAL_IR_CANONICAL_VOCABULARY_SIZE
+    assert tuple(tokenizer.to_dict()["token_classes"]) == LEGAL_IR_TOKEN_CLASSES
+    assert source not in tokenizer.decode_ids(surface.token_ids)
+    assert source not in tokenizer.decode_ids(canonical.token_ids)
+    assert surface.source_surface_separated is True
+    assert canonical.source_surface_token_count == 0
+    assert encoding.accepted is True
+    assert encoding.token_class_histogram()["operator"] >= 1
+    with pytest.raises(UnknownFrozenTokenError):
+        tokenizer.encode_canonical(
+            {
+                "family": "tdfol",
+                "formulas": [{"quantifier": "most", "predicate": "Holds", "arguments": ["x"]}],
+            }
+        )
+    with pytest.raises(FrozenVocabularyMutationError):
+        tokenizer.add_token("brand_new_family", "family")
+
+
+@pytest.mark.parametrize("arm", ("shared_latent", "shared_encoder_typed_head"))
+def test_pgir030_compatible_architecture_arms_have_shapes_and_gradients(arm: str) -> None:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder import (
+        COMPATIBLE_ARCHITECTURE_INIT_CHECKPOINT_SCHEMA,
+        CompatibleLearnedArchitecture,
+        build_compatible_learned_architecture,
+    )
+
+    architecture = build_compatible_learned_architecture(arm, seed=7)
+    payload = architecture.forward(
+        _pgir030_deontic_ir(),
+        family="deontic",
+        source_text="The agency shall provide notice.",
+        target_family="deontic",
+        proof_label="unchecked",
+    )
+    gradients = architecture.backward(payload)
+    restored = CompatibleLearnedArchitecture.from_dict(architecture.to_dict())
+    restored_forward = restored.forward(
+        _pgir030_deontic_ir(),
+        family="deontic",
+        source_text="The agency shall provide notice.",
+        target_family="deontic",
+        proof_label="unchecked",
+    )
+    checkpoint = architecture.initialization_checkpoint()
+    estimate = architecture.parameter_resource_estimate()
+
+    assert payload["arm"] == arm
+    assert payload["winner"] is False
+    assert payload["latent_normalized"] is True
+    assert payload["shapes"]["latent"] == [architecture.dim]
+    assert payload["shapes"]["token_ids"] == [architecture.config.max_seq_len]
+    assert set(payload["heads"]) == {"family", "view", "reconstruction", "uncertainty"}
+    assert payload["conditioning"]["proof_label_differentiable"] is False
+    assert payload["conditioning"]["source_surface_separated"] is True
+    assert pytest.approx(math.sqrt(sum(value * value for value in payload["latent"]))) == 1.0
+    assert gradients["gradient_norm"] > 0.0
+    assert gradients["proof_in_gradient_path"] is False
+    assert restored_forward["latent"] == payload["latent"]
+    assert restored_forward["family_logits"] == payload["family_logits"]
+    assert checkpoint["schema"] == COMPATIBLE_ARCHITECTURE_INIT_CHECKPOINT_SCHEMA
+    assert checkpoint["legacy_promoted"] is False
+    assert estimate["gpu_required"] is False
+    assert estimate["parameter_count"] == architecture.parameter_count()
+
+
+def test_pgir030_advisor_extends_into_both_arms_without_choosing_a_winner() -> None:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder import (
+        COMPATIBLE_ARCHITECTURE_ARMS,
+        LEGAL_IR_CANONICAL_VOCABULARY_CID,
+        SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM,
+        SHARED_LATENT_ARCHITECTURE_ARM,
+        extend_existing_advisor_architectures,
+    )
+
+    autoencoder = AdaptiveModalAutoencoder()
+    extended = extend_existing_advisor_architectures(autoencoder, seed=1)
+    shared = extended["instances"][SHARED_LATENT_ARCHITECTURE_ARM].forward(
+        _pgir030_deontic_ir(),
+        family="deontic",
+        target_family="deontic",
+    )
+    typed = extended["instances"][SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM].forward(
+        _pgir030_deontic_ir(),
+        family="deontic",
+        target_family="deontic",
+    )
+
+    assert autoencoder.state.architecture_version == MODAL_AUTOENCODER_ARCHITECTURE_VERSION
+    assert extended["advisor_architecture_version"] == MODAL_AUTOENCODER_ARCHITECTURE_VERSION
+    assert extended["advisor_mutated"] is False
+    assert extended["compatible_with_advisor"] is True
+    assert extended["winner"] is False
+    assert extended["legacy_promoted"] is False
+    assert set(extended["arms"]) == set(COMPATIBLE_ARCHITECTURE_ARMS)
+    assert shared["heads"]["family"]["shared"] is True
+    assert typed["heads"]["family"]["shared"] is False
+    assert extended["tokenizer_vocabulary_cid"] == LEGAL_IR_CANONICAL_VOCABULARY_CID
+    assert autoencoder.state.architecture_version == MODAL_AUTOENCODER_ARCHITECTURE_VERSION

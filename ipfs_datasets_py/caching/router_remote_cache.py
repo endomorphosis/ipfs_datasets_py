@@ -79,7 +79,9 @@ def _run_async_from_sync(async_fn, *args, **kwargs):
     return result[0] if result else None
 
 
-def maybe_start_mapping_cache_networking(mapping_cache: Any, *, enabled: bool | None = None) -> bool:
+def maybe_start_mapping_cache_networking(
+    mapping_cache: Any, *, enabled: bool | None = None
+) -> bool:
     """Start mapping-cache networking if supported and enabled.
 
     This is intentionally best-effort and opt-in to keep tests/benchmarks stable.
@@ -107,6 +109,7 @@ def maybe_start_mapping_cache_networking(mapping_cache: Any, *, enabled: bool | 
         return False
 
     if inspect.isawaitable(res):
+
         async def _await_it(awaitable):
             return await awaitable
 
@@ -132,6 +135,7 @@ def maybe_stop_mapping_cache_networking(mapping_cache: Any) -> bool:
         return False
 
     if inspect.isawaitable(res):
+
         async def _await_it(awaitable):
             return await awaitable
 
@@ -218,6 +222,7 @@ class IPFSBackedRemoteCache:
             return
 
         if inspect.isawaitable(res):
+
             async def _await_it(awaitable):
                 return await awaitable
 
@@ -305,7 +310,9 @@ class P2PTaskRemoteCache:
         try:
             from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import cache_get_sync
 
-            resp = cache_get_sync(remote=self._remote(), key=str(key), timeout_s=float(self.timeout_s))
+            resp = cache_get_sync(
+                remote=self._remote(), key=str(key), timeout_s=float(self.timeout_s)
+            )
             if not isinstance(resp, dict) or not resp.get("ok"):
                 return None
             if not resp.get("hit"):
@@ -350,9 +357,13 @@ class DistributedMappingCache:
     def get(self, key: str) -> Any | None:
         return self._cache.get(key)
 
-    async def set(self, key: str, value: Any, ttl: int | None = None, broadcast: bool = True) -> Any:
+    async def set(
+        self, key: str, value: Any, ttl: int | None = None, broadcast: bool = True
+    ) -> Any:
         ttl_value = int(ttl) if ttl is not None else self._default_ttl
-        return await self._cache.set(key, value, ttl=ttl_value, broadcast=bool(broadcast) and self._broadcast)
+        return await self._cache.set(
+            key, value, ttl=ttl_value, broadcast=bool(broadcast) and self._broadcast
+        )
 
     async def start(self) -> None:
         starter = getattr(self._cache, "start", None)
@@ -384,7 +395,11 @@ def make_distributed_mapping_cache(
     from ipfs_datasets_py.caching.distributed_cache import DistributedGitHubCache
 
     resolved_dir = Path(cache_dir) if cache_dir is not None else None
-    resolved_port = int(listen_port) if listen_port is not None else int(os.getenv("IPFS_DATASETS_PY_REMOTE_CACHE_PORT", "9000"))
+    resolved_port = (
+        int(listen_port)
+        if listen_port is not None
+        else int(os.getenv("IPFS_DATASETS_PY_REMOTE_CACHE_PORT", "9000"))
+    )
     resolved_bootstrap = bootstrap_peers
     if resolved_bootstrap is None:
         env_peers = os.getenv("IPFS_DATASETS_PY_REMOTE_CACHE_BOOTSTRAP", "").strip()
@@ -397,7 +412,9 @@ def make_distributed_mapping_cache(
         default_ttl=int(default_ttl),
         deps=deps,
     )
-    mapping_cache = DistributedMappingCache(cache, default_ttl=int(default_ttl), broadcast=broadcast)
+    mapping_cache = DistributedMappingCache(
+        cache, default_ttl=int(default_ttl), broadcast=broadcast
+    )
     maybe_start_mapping_cache_networking(mapping_cache)
     return mapping_cache
 

@@ -57,9 +57,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
 )
 
 
-FIXTURES = (
-    Path(__file__).resolve().parents[3] / "fixtures" / "legal_ir" / "proof_cache"
-)
+FIXTURES = Path(__file__).resolve().parents[3] / "fixtures" / "legal_ir" / "proof_cache"
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -251,9 +249,7 @@ def test_fixture_manifest_describes_golden_samples() -> None:
     assert manifest["interface"] == LEGAL_PROOF_CACHE_INTERFACE
     assert set(manifest["samples"]) == {"us_code_552", "us_code_553"}
     for name, sample in manifest["samples"].items():
-        record = LegalProofRecord.from_dict(
-            _load_json(FIXTURES / sample["record_path"])
-        )
+        record = LegalProofRecord.from_dict(_load_json(FIXTURES / sample["record_path"]))
         assert record.profile == sample["profile"]
         assert record.source_id == sample["source_id"]
         assert record.source_digest == sample["source_digest"]
@@ -275,9 +271,7 @@ def test_put_get_hit_and_miss(tmp_path: Path) -> None:
         cache.get("bafybeigmissinglegalproofcid000000000000000000000000000000")
     assert cache.misses == 1
     assert cache.hits == 0
-    assert not cache.contains(
-        "bafybeigmissinglegalproofcid000000000000000000000000000000"
-    )
+    assert not cache.contains("bafybeigmissinglegalproofcid000000000000000000000000000000")
 
     record = cache.put(artifact, profile="legal-strict", jurisdiction="us-federal")
     assert cache.contains(record.content_cid)
@@ -310,9 +304,7 @@ def test_cache_and_reload_from_disk_with_indexes(tmp_path: Path) -> None:
     assert by_profile.content_cid == record.content_cid
     by_source = reloaded.get_by_source_digest(record.source_digest)
     assert by_source.content_cid == record.content_cid
-    by_source_profile = reloaded.get_by_source_digest(
-        record.source_digest, profile="legal-strict"
-    )
+    by_source_profile = reloaded.get_by_source_digest(record.source_digest, profile="legal-strict")
     assert by_source_profile.content_cid == record.content_cid
     assert record.source_digest in reloaded.source_digests()
     assert "legal-strict" in reloaded.profiles()
@@ -332,15 +324,11 @@ def test_index_by_source_digest_requires_profile_when_ambiguous(
         cache.get_by_source_digest(first.source_digest)
 
     assert (
-        cache.get_by_source_digest(
-            first.source_digest, profile="legal-default"
-        ).content_cid
+        cache.get_by_source_digest(first.source_digest, profile="legal-default").content_cid
         == first.content_cid
     )
     assert (
-        cache.get_by_source_digest(
-            first.source_digest, profile="legal-strict"
-        ).content_cid
+        cache.get_by_source_digest(first.source_digest, profile="legal-strict").content_cid
         == second.content_cid
     )
     assert cache.get_by_profile("legal-default").content_cid == first.content_cid
@@ -351,9 +339,7 @@ def test_fixture_records_round_trip_through_disk_cache(tmp_path: Path) -> None:
     cache = LegalProofCache(root=tmp_path / "fixture-cache")
     for name in ("us_code_552", "us_code_553"):
         sample = _manifest()["samples"][name]
-        record = LegalProofRecord.from_dict(
-            _load_json(FIXTURES / sample["record_path"])
-        )
+        record = LegalProofRecord.from_dict(_load_json(FIXTURES / sample["record_path"]))
         stored = cache.put(record)
         assert stored.content_cid == sample["content_cid"]
         assert stored.source_digest == sample["source_digest"]
@@ -370,9 +356,7 @@ def test_fixture_records_round_trip_through_disk_cache(tmp_path: Path) -> None:
 
 
 def test_offline_rebuild_from_fixture_dir(tmp_path: Path) -> None:
-    cache = rebuild_offline_from_fixture_dir(
-        FIXTURES, root=tmp_path / "offline-rebuild"
-    )
+    cache = rebuild_offline_from_fixture_dir(FIXTURES, root=tmp_path / "offline-rebuild")
     assert len(cache) == 2
     for sample in _manifest()["samples"].values():
         loaded = cache.get(sample["content_cid"])
@@ -474,9 +458,7 @@ def test_memory_only_cache_put_get_and_reload() -> None:
 
 
 def test_put_finished_record_rejects_conflicting_profile(tmp_path: Path) -> None:
-    record = LegalProofRecord.from_dict(
-        _load_json(FIXTURES / "us_code_552_record.json")
-    )
+    record = LegalProofRecord.from_dict(_load_json(FIXTURES / "us_code_552_record.json"))
     cache = LegalProofCache(root=tmp_path / "conflict")
     with pytest.raises(LegalProofCacheError, match="profile argument"):
         cache.put(record, profile="other-profile")

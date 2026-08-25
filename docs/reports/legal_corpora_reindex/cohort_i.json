@@ -1,0 +1,358 @@
+{
+  "acceptance": {
+    "closed_frontier": true,
+    "exact_source_authority": true,
+    "failed_final_zero": true,
+    "non_placeholder_full_text": true,
+    "reconciled_counts_hashes": true,
+    "replay_evidence": true
+  },
+  "cohort": "I",
+  "goal_id": "LCR-G023",
+  "jurisdiction_receipts": {
+    "NC": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "chapter-1/section-1-1",
+        "last_hierarchy_unit": "chapter-1/section-1-2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:71c46a70aa43fbf4e472ee1cf1b0bc9894f118def35697e5da1997eba7e51cef",
+        "min_full_text_chars": 571,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_1/GS_1-1.html",
+          "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_1/GS_1-2.html"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "nc:1-1",
+          "nc:1-2"
+        ],
+        "derived_keys": [
+          "nc:1-1",
+          "nc:1-2"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "NC",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:71c46a70aa43fbf4e472ee1cf1b0bc9894f118def35697e5da1997eba7e51cef",
+        "first_frontier_digest": "sha256:eb8d26242fda8141b9da0be6addd782dbbf15b08625afc9203f661e33a3e20cc",
+        "second_frontier_digest": "sha256:eb8d26242fda8141b9da0be6addd782dbbf15b08625afc9203f661e33a3e20cc"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "www.ncleg.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "ND": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-1/chapter-1",
+        "last_hierarchy_unit": "title-1/chapter-2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:1f62e160fee0a7adf297f163d8ddd22f8e021784752f0a31a0a71c35d6374a4f",
+        "min_full_text_chars": 1340,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://www.legis.nd.gov/cencode/t01c01.pdf",
+          "https://www.legis.nd.gov/cencode/t01c02.pdf"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "nd:01-01",
+          "nd:01-02"
+        ],
+        "derived_keys": [
+          "nd:01-01",
+          "nd:01-02"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "ND",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:1f62e160fee0a7adf297f163d8ddd22f8e021784752f0a31a0a71c35d6374a4f",
+        "first_frontier_digest": "sha256:f023e84730d5ec4a955c671a2cbee68e3d8cabcb078ff8f8313c92b4a35c8ecf",
+        "second_frontier_digest": "sha256:f023e84730d5ec4a955c671a2cbee68e3d8cabcb078ff8f8313c92b4a35c8ecf"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "www.legis.nd.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "OH": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-1/chapter-101/section-101.01",
+        "last_hierarchy_unit": "title-1/chapter-101/section-101.02",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:2b69c0b87bc3dfd5ab8ff0bfa9a2924d01056fdb8821d606aad1bb81352ed510",
+        "min_full_text_chars": 713,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://codes.ohio.gov/ohio-revised-code/section-101.01",
+          "https://codes.ohio.gov/ohio-revised-code/section-101.02"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "oh:101.01",
+          "oh:101.02"
+        ],
+        "derived_keys": [
+          "oh:101.01",
+          "oh:101.02"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "OH",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:2b69c0b87bc3dfd5ab8ff0bfa9a2924d01056fdb8821d606aad1bb81352ed510",
+        "first_frontier_digest": "sha256:b800f0c992615838b278b130eb0fea6798a34b309a2bde8c6d53da991003af60",
+        "second_frontier_digest": "sha256:b800f0c992615838b278b130eb0fea6798a34b309a2bde8c6d53da991003af60"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "codes.ohio.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "OK": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-12/section-1",
+        "last_hierarchy_unit": "title-12/section-2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:476efc58fdfd2a2b64f9528134b458cc6d27f1a85909abc2c14777592a28318b",
+        "min_full_text_chars": 791,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://www.oscn.net/applications/oscn/DeliverDocument.asp?CiteID=69380",
+          "https://www.oscn.net/applications/oscn/DeliverDocument.asp?CiteID=436720"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "ok:1",
+          "ok:2"
+        ],
+        "derived_keys": [
+          "ok:1",
+          "ok:2"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "OK",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:476efc58fdfd2a2b64f9528134b458cc6d27f1a85909abc2c14777592a28318b",
+        "first_frontier_digest": "sha256:f343f57d5ffcc477b06770e134a41865e054fcaead6fe26891822eb20d2406ba",
+        "second_frontier_digest": "sha256:f343f57d5ffcc477b06770e134a41865e054fcaead6fe26891822eb20d2406ba"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "www.oscn.net",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "official_domains": {
+    "NC": "www.ncleg.gov",
+    "ND": "www.legis.nd.gov",
+    "OH": "codes.ohio.gov",
+    "OK": "www.oscn.net"
+  },
+  "production_upload": false,
+  "program_id": "legal-corpora-reindex-v1",
+  "receipt_schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-receipt@1",
+  "repair_work": [],
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-i-report@1",
+  "shared_combined_write": false,
+  "state_results": {
+    "NC": {
+      "content_digest": "sha256:71c46a70aa43fbf4e472ee1cf1b0bc9894f118def35697e5da1997eba7e51cef",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "www.ncleg.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "ND": {
+      "content_digest": "sha256:1f62e160fee0a7adf297f163d8ddd22f8e021784752f0a31a0a71c35d6374a4f",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "www.legis.nd.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "OH": {
+      "content_digest": "sha256:2b69c0b87bc3dfd5ab8ff0bfa9a2924d01056fdb8821d606aad1bb81352ed510",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "codes.ohio.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "OK": {
+      "content_digest": "sha256:476efc58fdfd2a2b64f9528134b458cc6d27f1a85909abc2c14777592a28318b",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "www.oscn.net",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "states": [
+    "NC",
+    "ND",
+    "OH",
+    "OK"
+  ],
+  "status": "success",
+  "statutes_sample_counts": {
+    "NC": 2,
+    "ND": 2,
+    "OH": 2,
+    "OK": 2
+  },
+  "task_id": "LCR-017"
+}

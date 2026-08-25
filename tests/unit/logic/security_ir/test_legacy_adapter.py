@@ -40,9 +40,7 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.schema import (
 )
 
 
-FIXTURES = (
-    Path(__file__).resolve().parents[3] / "fixtures" / "security_ir" / "v1"
-)
+FIXTURES = Path(__file__).resolve().parents[3] / "fixtures" / "security_ir" / "v1"
 
 
 def _payload(name: str) -> dict[str, Any]:
@@ -130,11 +128,7 @@ def test_typed_records_and_nested_values_are_immutable() -> None:
                 "machine:session",
                 states=("anonymous", "authenticated"),
                 initial_state="anonymous",
-                transitions=(
-                    StateTransition(
-                        "anonymous", "authenticated", "authenticate"
-                    ),
-                ),
+                transitions=(StateTransition("anonymous", "authenticated", "authenticate"),),
             ),
         ),
         assumptions=(
@@ -190,10 +184,7 @@ def test_verification_observations_do_not_change_declaration_identity() -> None:
     assert first.declaration.digest == second.declaration.digest
     assert first.declaration.cid == second.declaration.cid
     assert first.verification_data.to_dict() != second.verification_data.to_dict()
-    assert any(
-        item.code == "security.adapter.verification_detached"
-        for item in first.diagnostics
-    )
+    assert any(item.code == "security.adapter.verification_detached" for item in first.diagnostics)
 
 
 def test_semantic_declaration_mutation_changes_identity() -> None:
@@ -227,8 +218,7 @@ def test_adapter_types_sources_and_reports_incomplete_legacy_grounding() -> None
     assert source.content_sha256 == ""
     assert result.declaration.claims[0].source_ids == (source.source_id,)
     assert any(
-        item.code == "security.adapter.unsupported.source_digest"
-        for item in result.diagnostics
+        item.code == "security.adapter.unsupported.source_digest" for item in result.diagnostics
     )
     assert to_legacy_security_ir(result) == payload
 
@@ -255,9 +245,7 @@ def test_invalid_legacy_input_fails_instead_of_emitting_a_partial_model() -> Non
     payload = _payload("exchange")
     payload["claims"][0]["domain"] = "not-a-known-legacy-domain"
 
-    with pytest.raises(
-        LegacyAdapterError, match="references unknown security domain"
-    ):
+    with pytest.raises(LegacyAdapterError, match="references unknown security domain"):
         adapt_legacy_security_ir(payload)
 
 
@@ -265,9 +253,7 @@ def test_security_ir_serialization_is_strict_and_identity_is_order_stable() -> N
     result = adapt_legacy_security_ir(_payload("xaman"))
     encoded = result.declaration.to_dict()
     decoded = SecurityIR.from_dict(encoded)
-    reversed_claims = SecurityIR.from_dict(
-        {**encoded, "claims": list(reversed(encoded["claims"]))}
-    )
+    reversed_claims = SecurityIR.from_dict({**encoded, "claims": list(reversed(encoded["claims"]))})
 
     assert decoded.to_dict() == encoded
     assert decoded.cid == result.declaration.cid

@@ -145,7 +145,9 @@ def test_hammer_pipeline_fails_closed_when_kernel_rejects_reconstruction() -> No
     assert result.status == HammerStatus.RECONSTRUCTION_FAILED
     assert result.reconstruction is not None
     assert result.reconstruction.error == "type mismatch"
-    assert any(item.startswith("hammer_failed:reconstruction_failed") for item in result.fallback_plan)
+    assert any(
+        item.startswith("hammer_failed:reconstruction_failed") for item in result.fallback_plan
+    )
 
 
 def test_hammer_pipeline_reports_fallback_when_no_backend_proves() -> None:
@@ -238,8 +240,7 @@ def test_typed_legal_ir_conjunct_is_not_lowered_as_an_opaque_goal() -> None:
         [
             HammerPremise(
                 "typed_contract",
-                "temporal_anchor(event:e1, time:t1) "
-                "and event_order(before:e1, after:e2)",
+                "temporal_anchor(event:e1, time:t1) and event_order(before:e1, after:e2)",
             )
         ],
         target_format="smt-lib",

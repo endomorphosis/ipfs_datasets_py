@@ -81,7 +81,7 @@ registry = GitHubIssuesPeerRegistry(
     repo_owner="endomorphosis",
     repo_name="ipfs_datasets_py",
     github_token=os.getenv("GITHUB_TOKEN"),
-    ttl_seconds=3600  # 1 hour
+    ttl_seconds=3600,  # 1 hour
 )
 ```
 
@@ -160,10 +160,7 @@ for peer in peers:
 
 **Capability Filtering:**
 ```python
-peers = await coordinator.discover_peers(
-    capability_filter=["storage", "compute"],
-    max_peers=20
-)
+peers = await coordinator.discover_peers(capability_filter=["storage", "compute"], max_peers=20)
 ```
 
 **Multi-Source Registration:**
@@ -172,7 +169,7 @@ results = await coordinator.register_peer(
     peer_id="QmPeer123...",
     multiaddr="/ip4/192.168.1.100/tcp/4001",
     capabilities=["storage", "relay"],
-    metadata={"region": "us-west", "bandwidth": "1Gbps"}
+    metadata={"region": "us-west", "bandwidth": "1Gbps"},
 )
 # Returns: {"github": True, "local_file": True}
 ```
@@ -180,10 +177,7 @@ results = await coordinator.register_peer(
 **Source-Specific Discovery:**
 ```python
 # Query only local file (skip GitHub)
-peers = await coordinator.discover_peers(
-    sources=["local_file"],
-    max_peers=50
-)
+peers = await coordinator.discover_peers(sources=["local_file"], max_peers=50)
 ```
 
 **Automatic Cleanup:**

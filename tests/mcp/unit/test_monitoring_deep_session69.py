@@ -3,6 +3,7 @@ Session R69 — monitoring.py deep coverage:
   _monitoring_loop, _cleanup_loop, track_request, track_tool_execution,
   get_metrics_summary, _collect_system_metrics (no-psutil path)
 """
+
 import sys
 import asyncio
 from datetime import datetime
@@ -23,6 +24,7 @@ from ipfs_datasets_py.mcp_server.exceptions import MetricsCollectionError, Monit
 # TestMonitoringLoop
 # ---------------------------------------------------------------------------
 
+
 class TestMonitoringLoopPaths:
     """_monitoring_loop() and _cleanup_loop() error-path coverage."""
 
@@ -30,15 +32,19 @@ class TestMonitoringLoopPaths:
     async def test_monitoring_loop_exits_on_cancelled(self):
         """_monitoring_loop exits cleanly when anyio CancelledError raised."""
         mc = EnhancedMetricsCollector()
+
         # Run the loop but cancel it after one iteration
         async def _driver():
             async with anyio.create_task_group() as tg:
                 tg.start_soon(mc._monitoring_loop)
                 await anyio.sleep(0)  # let one iteration start
                 tg.cancel_scope.cancel()
+
         await anyio.sleep(0)  # noop warm-up
         # Just verifying no crash:
-        with patch.object(mc, "_collect_system_metrics", AsyncMock(side_effect=anyio.get_cancelled_exc_class())):
+        with patch.object(
+            mc, "_collect_system_metrics", AsyncMock(side_effect=anyio.get_cancelled_exc_class())
+        ):
             try:
                 await mc._monitoring_loop()
             except Exception:
@@ -55,8 +61,9 @@ class TestMonitoringLoopPaths:
             # Signal the loop to stop by raising CancelledError
             raise anyio.get_cancelled_exc_class()()
 
-        with patch.object(mc, "_collect_system_metrics",
-                          AsyncMock(side_effect=MetricsCollectionError("test"))):
+        with patch.object(
+            mc, "_collect_system_metrics", AsyncMock(side_effect=MetricsCollectionError("test"))
+        ):
             with patch.object(mc, "_check_health", AsyncMock()):
                 with patch.object(mc, "_check_alerts", AsyncMock()):
                     with patch("ipfs_datasets_py.mcp_server.monitoring.anyio.sleep", fake_sleep):
@@ -77,8 +84,9 @@ class TestMonitoringLoopPaths:
             sleep_calls.append(secs)
             raise anyio.get_cancelled_exc_class()()
 
-        with patch.object(mc, "_collect_system_metrics",
-                          AsyncMock(side_effect=OSError("disk read error"))):
+        with patch.object(
+            mc, "_collect_system_metrics", AsyncMock(side_effect=OSError("disk read error"))
+        ):
             with patch("ipfs_datasets_py.mcp_server.monitoring.anyio.sleep", fake_sleep):
                 try:
                     await mc._monitoring_loop()
@@ -90,8 +98,9 @@ class TestMonitoringLoopPaths:
     async def test_cleanup_loop_exits_on_cancelled(self):
         """_cleanup_loop exits cleanly on cancellation."""
         mc = EnhancedMetricsCollector()
-        with patch.object(mc, "_cleanup_old_data", AsyncMock(
-                side_effect=anyio.get_cancelled_exc_class()())):
+        with patch.object(
+            mc, "_cleanup_old_data", AsyncMock(side_effect=anyio.get_cancelled_exc_class()())
+        ):
             try:
                 await mc._cleanup_loop()
             except (Exception, BaseException):
@@ -107,8 +116,7 @@ class TestMonitoringLoopPaths:
             sleep_calls.append(secs)
             raise anyio.get_cancelled_exc_class()()
 
-        with patch.object(mc, "_cleanup_old_data",
-                          AsyncMock(side_effect=IOError("disk error"))):
+        with patch.object(mc, "_cleanup_old_data", AsyncMock(side_effect=IOError("disk error"))):
             with patch("ipfs_datasets_py.mcp_server.monitoring.anyio.sleep", fake_sleep):
                 try:
                     await mc._cleanup_loop()
@@ -120,6 +128,7 @@ class TestMonitoringLoopPaths:
 # ---------------------------------------------------------------------------
 # TestTrackRequest
 # ---------------------------------------------------------------------------
+
 
 class TestTrackRequest:
     """track_request() async context manager."""
@@ -175,6 +184,7 @@ class TestTrackRequest:
 # TestTrackToolExecution
 # ---------------------------------------------------------------------------
 
+
 class TestTrackToolExecution:
     """track_tool_execution() updates tool metrics correctly."""
 
@@ -229,6 +239,7 @@ class TestTrackToolExecution:
 # TestGetMetricsSummary
 # ---------------------------------------------------------------------------
 
+
 class TestGetMetricsSummary:
     """get_metrics_summary() returns correct structure."""
 
@@ -236,8 +247,14 @@ class TestGetMetricsSummary:
         """Summary dict has all required top-level keys."""
         mc = EnhancedMetricsCollector()
         summary = mc.get_metrics_summary()
-        for key in ("uptime_seconds", "system_metrics", "request_metrics",
-                    "tool_metrics", "health_status", "recent_alerts"):
+        for key in (
+            "uptime_seconds",
+            "system_metrics",
+            "request_metrics",
+            "tool_metrics",
+            "health_status",
+            "recent_alerts",
+        ):
             assert key in summary, f"Missing key: {key}"
 
     def test_summary_uptime_non_negative(self):
@@ -249,8 +266,14 @@ class TestGetMetricsSummary:
         """request_metrics has all expected sub-keys."""
         mc = EnhancedMetricsCollector()
         rm = mc.get_metrics_summary()["request_metrics"]
-        for k in ("total_requests", "total_errors", "error_rate",
-                  "avg_response_time_ms", "active_requests", "request_rate_per_second"):
+        for k in (
+            "total_requests",
+            "total_errors",
+            "error_rate",
+            "avg_response_time_ms",
+            "active_requests",
+            "request_rate_per_second",
+        ):
             assert k in rm
 
     def test_summary_includes_tool_after_tracking(self):
@@ -276,6 +299,7 @@ class TestGetMetricsSummary:
 # TestCollectSystemMetricsNoPsutil
 # ---------------------------------------------------------------------------
 
+
 class TestCollectSystemMetricsNoPsutil:
     """_collect_system_metrics() without psutil installed."""
 
@@ -283,6 +307,7 @@ class TestCollectSystemMetricsNoPsutil:
     async def test_no_psutil_appends_zero_snapshot(self):
         """When HAVE_PSUTIL is False, a zero-filled snapshot is appended."""
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
+
         mc = EnhancedMetricsCollector()
         with patch.object(mon_mod, "HAVE_PSUTIL", False):
             await mc._collect_system_metrics()
@@ -295,6 +320,7 @@ class TestCollectSystemMetricsNoPsutil:
     async def test_no_psutil_does_not_update_system_metrics_dict(self):
         """When psutil absent, system_metrics dict is not populated."""
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
+
         mc = EnhancedMetricsCollector()
         initial_keys = set(mc.system_metrics.keys())
         with patch.object(mon_mod, "HAVE_PSUTIL", False):
@@ -306,6 +332,7 @@ class TestCollectSystemMetricsNoPsutil:
 # ---------------------------------------------------------------------------
 # TestStartMonitoring
 # ---------------------------------------------------------------------------
+
 
 class TestStartMonitoring:
     """start_monitoring() behaviour."""

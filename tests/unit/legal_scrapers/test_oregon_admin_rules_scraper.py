@@ -11,7 +11,9 @@ def test_extract_chapter_ids_from_cdx_filters_and_sorts() -> None:
         ["https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=137"],
         ["https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=1"],
         ["https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=137"],
-        ["https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=102.%E2%80%A2"],
+        [
+            "https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=102.%E2%80%A2"
+        ],
         ["https://example.org/not-a-chapter"],
     ]
 

@@ -15,8 +15,9 @@ try:
     from ipfs_datasets_py.logic.fol.converter import FOLConverter
     from ipfs_datasets_py.logic.deontic.converter import DeonticConverter
     from ipfs_datasets_py.logic.integration.domain.symbolic_logic_primitives import (
-        SymbolicLogicPrimitives
+        SymbolicLogicPrimitives,
     )
+
     LOGIC_AVAILABLE = True
 except ImportError:
     LOGIC_AVAILABLE = False
@@ -24,6 +25,7 @@ except ImportError:
 # Check for SymbolicAI availability
 try:
     import symai
+
     SYMBOLICAI_AVAILABLE = True
 except ImportError:
     SYMBOLICAI_AVAILABLE = False
@@ -42,14 +44,14 @@ class TestFallbackIntegration:
         # GIVEN
         formula = "All x (Human(x) implies Mortal(x))"
         converter = FOLConverter()
-        
+
         # WHEN - Convert using available method (with or without SymbolicAI)
         result = converter.to_fol(formula)
-        
+
         # THEN - Result should be valid FOL regardless of SymbolicAI availability
         assert result is not None
         assert "forall" in result.lower() or "∀" in result
-        
+
     def test_fallback_performance_acceptable(self):
         """
         GIVEN a converter using fallback methods
@@ -59,16 +61,16 @@ class TestFallbackIntegration:
         # GIVEN
         converter = FOLConverter()
         simple_formula = "If P then Q"
-        
+
         # WHEN
         start_time = time.time()
         result = converter.to_fol(simple_formula)
         duration = time.time() - start_time
-        
+
         # THEN
         assert result is not None
         assert duration < 1.0, f"Conversion took {duration:.3f}s, expected <1.0s"
-        
+
     def test_fallback_correctness_validation(self):
         """
         GIVEN known test cases with expected FOL outputs
@@ -83,7 +85,7 @@ class TestFallbackIntegration:
             ("P implies Q", ["P", "implies", "Q"]),
         ]
         converter = FOLConverter()
-        
+
         # WHEN/THEN
         for formula, expected_tokens in test_cases:
             result = converter.to_fol(formula)
@@ -94,7 +96,7 @@ class TestFallbackIntegration:
                 assert token.lower() in result_lower or any(
                     symbol in result for symbol in ["∧", "∨", "¬", "→"]
                 )
-                
+
     def test_multiple_fallback_scenarios(self):
         """
         GIVEN multiple optional dependencies that might be missing
@@ -108,7 +110,7 @@ class TestFallbackIntegration:
             "All x P(x)",
             "Exists x (P(x) and Q(x))",
         ]
-        
+
         # WHEN/THEN - Should handle all formulas even if using fallbacks
         results = []
         for formula in test_formulas:
@@ -117,11 +119,11 @@ class TestFallbackIntegration:
                 results.append((formula, result, True))
             except Exception as e:
                 results.append((formula, None, False))
-        
+
         # At least some conversions should succeed
         successful = [r for r in results if r[2]]
         assert len(successful) > 0, "All fallback conversions failed"
-        
+
     def test_fallback_error_handling_graceful(self):
         """
         GIVEN invalid or malformed input
@@ -135,7 +137,7 @@ class TestFallbackIntegration:
             "   ",  # Whitespace only
             "()()(((",  # Unbalanced parentheses
         ]
-        
+
         # WHEN/THEN
         for invalid_input in invalid_inputs:
             try:
@@ -145,7 +147,7 @@ class TestFallbackIntegration:
             except (ValueError, TypeError) as e:
                 # Expected exception types
                 assert str(e)  # Should have error message
-                
+
     def test_fallback_logging_comprehensive(self, caplog):
         """
         GIVEN a converter using fallback methods
@@ -155,10 +157,10 @@ class TestFallbackIntegration:
         # GIVEN
         with caplog.at_level(logging.DEBUG):
             converter = FOLConverter()
-            
+
             # WHEN
             result = converter.to_fol("test formula")
-            
+
             # THEN - Should have some log output (warnings about fallbacks or success messages)
             # This is informational - log presence indicates proper logging setup
             assert len(caplog.records) >= 0  # May or may not log depending on config

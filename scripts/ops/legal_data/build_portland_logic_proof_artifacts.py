@@ -127,7 +127,11 @@ def _section_ref(row: Mapping[str, Any]) -> str:
     identifier = _compact(row.get("identifier"))
     if identifier:
         return identifier
-    return _compact(row.get("source_id")) or _compact(row.get("ipfs_cid")) or "Portland City Code section"
+    return (
+        _compact(row.get("source_id"))
+        or _compact(row.get("ipfs_cid"))
+        or "Portland City Code section"
+    )
 
 
 def _symbol(value: str, *, prefix: str = "section") -> str:
@@ -235,22 +239,36 @@ def _logic_context_for_row(
     section_entity = _entity_summary(source_cid, artifacts)
     context = {
         "source_ipfs_cid": source_cid,
-        "ontology_version": _compact((artifacts.ontology if artifacts else {}).get("ontology_version"))
+        "ontology_version": _compact(
+            (artifacts.ontology if artifacts else {}).get("ontology_version")
+        )
         or "unknown",
         "section_entity": section_entity,
         "relationships": grouped,
         "actors": _unique_preserve(
-            item["target"] for key in ("MENTIONS_ACTOR", "IMPOSES_DUTY_ON", "GRANTS_AUTHORITY_TO") for item in grouped.get(key, [])
+            item["target"]
+            for key in ("MENTIONS_ACTOR", "IMPOSES_DUTY_ON", "GRANTS_AUTHORITY_TO")
+            for item in grouped.get(key, [])
         ),
-        "duty_actors": _unique_preserve(item["target"] for item in grouped.get("IMPOSES_DUTY_ON", [])),
-        "authority_actors": _unique_preserve(item["target"] for item in grouped.get("GRANTS_AUTHORITY_TO", [])),
+        "duty_actors": _unique_preserve(
+            item["target"] for item in grouped.get("IMPOSES_DUTY_ON", [])
+        ),
+        "authority_actors": _unique_preserve(
+            item["target"] for item in grouped.get("GRANTS_AUTHORITY_TO", [])
+        ),
         "subjects": _unique_preserve(
-            item["target"] for key in ("REGULATES_SUBJECT", "GOVERNS_AUTHORIZATION") for item in grouped.get(key, [])
+            item["target"]
+            for key in ("REGULATES_SUBJECT", "GOVERNS_AUTHORIZATION")
+            for item in grouped.get(key, [])
         ),
         "referenced_sections": _unique_preserve(
-            item["target"] for key in ("REFERENCES_SECTION_CID", "REFERENCES_CODE_SECTION") for item in grouped.get(key, [])
+            item["target"]
+            for key in ("REFERENCES_SECTION_CID", "REFERENCES_CODE_SECTION")
+            for item in grouped.get(key, [])
         ),
-        "legal_authorities": _unique_preserve(item["target"] for item in grouped.get("REFERENCES_LEGAL_AUTHORITY", [])),
+        "legal_authorities": _unique_preserve(
+            item["target"] for item in grouped.get("REFERENCES_LEGAL_AUTHORITY", [])
+        ),
         "amendments": _unique_preserve(item["target"] for item in grouped.get("AMENDED_BY", [])),
         "norm_relations": {
             key: [item["target"] for item in grouped.get(key, [])]
@@ -270,9 +288,13 @@ def _logic_context_for_row(
     return context
 
 
-def _relationship_targets(context: Mapping[str, Any], rel_type: str, *, limit: int = 8) -> List[str]:
+def _relationship_targets(
+    context: Mapping[str, Any], rel_type: str, *, limit: int = 8
+) -> List[str]:
     rels = ((context.get("relationships") or {}).get(rel_type) or [])[:limit]
-    return [_compact(item.get("target_symbol")) for item in rels if _compact(item.get("target_symbol"))]
+    return [
+        _compact(item.get("target_symbol")) for item in rels if _compact(item.get("target_symbol"))
+    ]
 
 
 def _norm_operator(text: str) -> str:
@@ -418,7 +440,9 @@ def _llm_assist_tdfol(
         candidate_text = raw
         if raw.startswith(prompt):
             candidate_text = raw[len(prompt) :].strip()
-        formula = _balance_formula_parentheses(_normalize_llm_formula(_extract_llm_formula(candidate_text)))
+        formula = _balance_formula_parentheses(
+            _normalize_llm_formula(_extract_llm_formula(candidate_text))
+        )
         result.update(
             {
                 "raw_response": raw,
@@ -448,25 +472,39 @@ def _make_tdfol(
             clauses.append(f"LegalActor({actor}) ∧ MentionedIn({actor},{section})")
         for actor in [_symbol(item, prefix="actor") for item in context.get("duty_actors", [])[:8]]:
             clauses.append(f"DutyAppliesTo({section},{actor})")
-        for actor in [_symbol(item, prefix="actor") for item in context.get("authority_actors", [])[:8]]:
+        for actor in [
+            _symbol(item, prefix="actor") for item in context.get("authority_actors", [])[:8]
+        ]:
             clauses.append(f"AuthorityGrantedTo({section},{actor})")
-        for subject in [_symbol(item, prefix="subject") for item in context.get("subjects", [])[:8]]:
+        for subject in [
+            _symbol(item, prefix="subject") for item in context.get("subjects", [])[:8]
+        ]:
             clauses.append(f"RegulatesSubject({section},{subject})")
-        for ref in [_symbol(item, prefix="ref") for item in context.get("referenced_sections", [])[:8]]:
+        for ref in [
+            _symbol(item, prefix="ref") for item in context.get("referenced_sections", [])[:8]
+        ]:
             clauses.append(f"DependsOn({section},{ref})")
-        for authority in [_symbol(item, prefix="authority") for item in context.get("legal_authorities", [])[:6]]:
+        for authority in [
+            _symbol(item, prefix="authority") for item in context.get("legal_authorities", [])[:6]
+        ]:
             clauses.append(f"ReferencesAuthority({section},{authority})")
-        for amendment in [_symbol(item, prefix="amendment") for item in context.get("amendments", [])[:6]]:
+        for amendment in [
+            _symbol(item, prefix="amendment") for item in context.get("amendments", [])[:6]
+        ]:
             clauses.append(f"AmendedBy({section},{amendment})")
         for term in (context.get("bm25") or {}).get("top_terms", [])[:10]:
             clauses.append(f"HasBagTerm({section},{_symbol(term.get('term'), prefix='term')})")
 
     if context and context.get("duty_actors"):
-        clauses.append(f"∀a((LegalActor(a) ∧ DutyAppliesTo({section},a)) → O(□ComplyWith(a,{section})))")
+        clauses.append(
+            f"∀a((LegalActor(a) ∧ DutyAppliesTo({section},a)) → O(□ComplyWith(a,{section})))"
+        )
     elif op == "O":
         clauses.append(f"∀a:Agent (SubjectTo(a,{section}) → O(□(ComplyWith(a,{section}))))")
     if context and context.get("authority_actors"):
-        clauses.append(f"∀a((LegalActor(a) ∧ AuthorityGrantedTo({section},a)) → P(◇ExerciseAuthority(a,{section})))")
+        clauses.append(
+            f"∀a((LegalActor(a) ∧ AuthorityGrantedTo({section},a)) → P(◇ExerciseAuthority(a,{section})))"
+        )
     elif op == "P":
         clauses.append(f"∀a:Agent (SubjectTo(a,{section}) → P(□(ComplyWith(a,{section}))))")
     if context and (context.get("norm_relations") or {}).get("PROHIBITS"):
@@ -482,16 +520,26 @@ def _make_dcec(row: Mapping[str, Any], op: str, context: Optional[Mapping[str, A
     if context:
         for actor in [_symbol(item, prefix="actor") for item in context.get("actors", [])[:8]]:
             statements.append(f"(actor_mentioned_in {actor} {section})")
-        for subject in [_symbol(item, prefix="subject") for item in context.get("subjects", [])[:8]]:
+        for subject in [
+            _symbol(item, prefix="subject") for item in context.get("subjects", [])[:8]
+        ]:
             statements.append(f"(regulates_subject {section} {subject})")
-        for ref in [_symbol(item, prefix="ref") for item in context.get("referenced_sections", [])[:8]]:
+        for ref in [
+            _symbol(item, prefix="ref") for item in context.get("referenced_sections", [])[:8]
+        ]:
             statements.append(f"(depends_on {section} {ref})")
         for term in (context.get("bm25") or {}).get("top_terms", [])[:10]:
-            statements.append(f"(salient_term {section} {_symbol(term.get('term'), prefix='term')})")
+            statements.append(
+                f"(salient_term {section} {_symbol(term.get('term'), prefix='term')})"
+            )
         for actor in [_symbol(item, prefix="actor") for item in context.get("duty_actors", [])[:8]]:
             statements.append(f"(O (always (holds_at (duty_to_comply {actor} {section}) t)))")
-        for actor in [_symbol(item, prefix="actor") for item in context.get("authority_actors", [])[:8]]:
-            statements.append(f"(P (eventually (happens (exercise_authority {actor} {section}) t)))")
+        for actor in [
+            _symbol(item, prefix="actor") for item in context.get("authority_actors", [])[:8]
+        ]:
+            statements.append(
+                f"(P (eventually (happens (exercise_authority {actor} {section}) t)))"
+            )
     statements.append(
         f"(forall agent (implies (subject_to agent {section}) ({op} (always (comply_with agent {section})))))"
     )
@@ -509,7 +557,9 @@ def _make_flogic(
     scalar_methods = {
         "identifier": json.dumps(section_ref, ensure_ascii=False),
         "ipfs_cid": json.dumps(_compact(row.get("ipfs_cid")), ensure_ascii=False),
-        "source_url": json.dumps(_compact(row.get("source_url") or row.get("url")), ensure_ascii=False),
+        "source_url": json.dumps(
+            _compact(row.get("source_url") or row.get("url")), ensure_ascii=False
+        ),
         "jurisdiction": '"City of Portland, Oregon"',
         "state_code": '"OR"',
         "gnis": '"2411471"',
@@ -522,7 +572,9 @@ def _make_flogic(
         "LegalNorm": FLogicClass("LegalNorm"),
         "MunicipalLaw": FLogicClass("MunicipalLaw", superclasses=["LegalNorm"]),
         "CityCodeSection": FLogicClass("CityCodeSection", superclasses=["MunicipalLaw"]),
-        "PortlandCityCodeSection": FLogicClass("PortlandCityCodeSection", superclasses=["CityCodeSection"]),
+        "PortlandCityCodeSection": FLogicClass(
+            "PortlandCityCodeSection", superclasses=["CityCodeSection"]
+        ),
     }
     if ontology_payload:
         for cls in ontology_payload.get("classes") or []:
@@ -561,7 +613,9 @@ def _make_flogic(
                     FLogicFrame(
                         object_id=entity_symbol,
                         scalar_methods={
-                            "label": json.dumps(_compact(entity.get("label")) or entity_id, ensure_ascii=False),
+                            "label": json.dumps(
+                                _compact(entity.get("label")) or entity_id, ensure_ascii=False
+                            ),
                             "kg_id": json.dumps(entity_id, ensure_ascii=False),
                         },
                         isa=entity_class,
@@ -696,9 +750,15 @@ def _build_row(
         deontic_payload = {"success": False, "errors": [f"{type(exc).__name__}: {exc}"]}
 
     logic_context = _logic_context_for_row(row, context_artifacts)
-    existing_logic = dict((context_artifacts.existing_logic_by_cid if context_artifacts else {}).get(source_cid) or {})
+    existing_logic = dict(
+        (context_artifacts.existing_logic_by_cid if context_artifacts else {}).get(source_cid) or {}
+    )
     existing_tdfol = _compact(existing_logic.get("deontic_temporal_fol"))
-    tdfol_formula = existing_tdfol if existing_logic.get("llm_assisted_accepted") and existing_tdfol else _make_tdfol(row, op)
+    tdfol_formula = (
+        existing_tdfol
+        if existing_logic.get("llm_assisted_accepted") and existing_tdfol
+        else _make_tdfol(row, op)
+    )
     llm_payload: Dict[str, Any] = {"enabled": False, "accepted": False}
     if existing_logic:
         llm_payload = {
@@ -743,8 +803,12 @@ def _build_row(
         "kg_context": logic_context,
         "ontology": {
             "version": logic_context.get("ontology_version"),
-            "class_count": len((context_artifacts.ontology if context_artifacts else {}).get("classes") or []),
-            "predicate_count": len((context_artifacts.ontology if context_artifacts else {}).get("predicates") or []),
+            "class_count": len(
+                (context_artifacts.ontology if context_artifacts else {}).get("classes") or []
+            ),
+            "predicate_count": len(
+                (context_artifacts.ontology if context_artifacts else {}).get("predicates") or []
+            ),
         },
     }
     logic_bundle_cid = cid_for_obj(logic_bundle)
@@ -793,7 +857,9 @@ def _build_row(
         "ontology_version": logic_context.get("ontology_version", ""),
         "kg_context_json": _json_dumps(logic_context),
         "kg_context_cid": cid_for_obj(logic_context),
-        "bm25_logic_terms_json": _json_dumps((logic_context.get("bm25") or {}).get("top_terms") or []),
+        "bm25_logic_terms_json": _json_dumps(
+            (logic_context.get("bm25") or {}).get("top_terms") or []
+        ),
         "base_deontic_temporal_fol": tdfol_formula,
         "deontic_temporal_fol": enhanced_tdfol_formula,
         "enhanced_tdfol_formula": enhanced_tdfol_formula,
@@ -833,30 +899,88 @@ def _write_parquet(path: Path, rows: List[Dict[str, Any]]) -> None:
 
 def _write_manifest(path: Path, manifest: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(_json_safe(manifest), indent=2, ensure_ascii=False), encoding="utf-8")
+    path.write_text(
+        json.dumps(_json_safe(manifest), indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build Portland City Code logic/proof parquet artifacts.")
+    parser = argparse.ArgumentParser(
+        description="Build Portland City Code logic/proof parquet artifacts."
+    )
     parser.add_argument("--input", required=True, help="Canonical Portland City Code parquet.")
     parser.add_argument("--output-root", required=True, help="Output directory.")
     parser.add_argument("--limit", type=int, default=0, help="Optional row limit for smoke tests.")
-    parser.add_argument("--max-chars", type=int, default=4000, help="Max source text chars sent to NL converters per row.")
-    parser.add_argument("--llm-assisted", action="store_true", help="Attempt LLM-assisted TDFOL conversion and accept only syntax-gated outputs.")
-    parser.add_argument("--llm-provider", default="", help="LLM router provider, e.g. openai, hf_inference_api, local_hf.")
+    parser.add_argument(
+        "--max-chars",
+        type=int,
+        default=4000,
+        help="Max source text chars sent to NL converters per row.",
+    )
+    parser.add_argument(
+        "--llm-assisted",
+        action="store_true",
+        help="Attempt LLM-assisted TDFOL conversion and accept only syntax-gated outputs.",
+    )
+    parser.add_argument(
+        "--llm-provider",
+        default="",
+        help="LLM router provider, e.g. openai, hf_inference_api, local_hf.",
+    )
     parser.add_argument("--llm-model", default="", help="LLM model name for the selected provider.")
-    parser.add_argument("--llm-max-chars", type=int, default=1800, help="Max source text chars sent to the LLM assist prompt.")
-    parser.add_argument("--llm-timeout", type=float, default=30.0, help="LLM assist timeout in seconds.")
-    parser.add_argument("--llm-max-tokens", type=int, default=768, help="Max tokens requested from the LLM assist route.")
-    parser.add_argument("--checkpoint-every", type=int, default=25, help="Write parquet/manifest checkpoints every N completed rows.")
-    parser.add_argument("--no-resume", action="store_true", help="Ignore existing output parquet instead of resuming by ipfs_cid.")
-    parser.add_argument("--zkp-backend", default="simulated", choices=["simulated", "groth16"], help="ZKP backend used for proof certificates.")
-    parser.add_argument("--zkp-circuit-version", type=int, default=1, help="ZKP circuit version for the selected backend.")
-    parser.add_argument("--knowledge-graph-entities", default="", help="Optional municipal KG entities parquet.")
-    parser.add_argument("--knowledge-graph-relationships", default="", help="Optional municipal KG relationships parquet.")
+    parser.add_argument(
+        "--llm-max-chars",
+        type=int,
+        default=1800,
+        help="Max source text chars sent to the LLM assist prompt.",
+    )
+    parser.add_argument(
+        "--llm-timeout", type=float, default=30.0, help="LLM assist timeout in seconds."
+    )
+    parser.add_argument(
+        "--llm-max-tokens",
+        type=int,
+        default=768,
+        help="Max tokens requested from the LLM assist route.",
+    )
+    parser.add_argument(
+        "--checkpoint-every",
+        type=int,
+        default=25,
+        help="Write parquet/manifest checkpoints every N completed rows.",
+    )
+    parser.add_argument(
+        "--no-resume",
+        action="store_true",
+        help="Ignore existing output parquet instead of resuming by ipfs_cid.",
+    )
+    parser.add_argument(
+        "--zkp-backend",
+        default="simulated",
+        choices=["simulated", "groth16"],
+        help="ZKP backend used for proof certificates.",
+    )
+    parser.add_argument(
+        "--zkp-circuit-version",
+        type=int,
+        default=1,
+        help="ZKP circuit version for the selected backend.",
+    )
+    parser.add_argument(
+        "--knowledge-graph-entities", default="", help="Optional municipal KG entities parquet."
+    )
+    parser.add_argument(
+        "--knowledge-graph-relationships",
+        default="",
+        help="Optional municipal KG relationships parquet.",
+    )
     parser.add_argument("--bm25-index", default="", help="Optional BM25 bag-of-words parquet.")
     parser.add_argument("--ontology", default="", help="Optional municipal law ontology JSON.")
-    parser.add_argument("--existing-logic-artifacts", default="", help="Optional existing logic parquet whose accepted LLM formulas should be reused as the base formula.")
+    parser.add_argument(
+        "--existing-logic-artifacts",
+        default="",
+        help="Optional existing logic parquet whose accepted LLM formulas should be reused as the base formula.",
+    )
     parser.add_argument("--json", action="store_true", help="Print manifest JSON.")
     return parser.parse_args()
 
@@ -909,7 +1033,9 @@ def main() -> int:
     if logic_path.exists() and not args.no_resume:
         try:
             out_rows = pq.read_table(logic_path).to_pylist()
-            completed_cids = {_compact(row.get("ipfs_cid")) for row in out_rows if _compact(row.get("ipfs_cid"))}
+            completed_cids = {
+                _compact(row.get("ipfs_cid")) for row in out_rows if _compact(row.get("ipfs_cid"))
+            }
         except Exception:
             out_rows = []
             completed_cids = set()
@@ -931,9 +1057,12 @@ def main() -> int:
             "failure_count": len(failures),
             "failures": failures[:50],
             "formalization_scope": "machine_generated_candidate",
-            "ontology_version": _compact(context_artifacts.ontology.get("ontology_version")) or "unknown",
+            "ontology_version": _compact(context_artifacts.ontology.get("ontology_version"))
+            or "unknown",
             "kg_entity_count": len(context_artifacts.entity_by_id),
-            "kg_relationship_count": sum(len(values) for values in context_artifacts.relationships_by_source.values()),
+            "kg_relationship_count": sum(
+                len(values) for values in context_artifacts.relationships_by_source.values()
+            ),
             "bm25_document_count": len(context_artifacts.bm25_by_cid),
             "existing_logic_artifact_count": len(context_artifacts.existing_logic_by_cid),
             "llm_assisted": bool(args.llm_assisted),

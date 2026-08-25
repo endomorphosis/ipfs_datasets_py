@@ -68,11 +68,12 @@ except (OSError, IOError) as e:
 def __init__(self):
     pass  # No initialization!
 
+
 # AFTER (GOOD):
 def __init__(self, custom_rules: Optional[Dict[str, Any]] = None):
     self.custom_rules = custom_rules or {}
     self.logger = logging.getLogger(__name__)
-    self.supported_index_types = {'BTREE', 'RANGE', 'FULLTEXT', 'VECTOR'}
+    self.supported_index_types = {"BTREE", "RANGE", "FULLTEXT", "VECTOR"}
     # ... proper initialization
 ```
 

@@ -25,7 +25,7 @@ from ipfs_datasets_py.pdf_processing.ocr_engine import (
     SuryaOCR,
     TesseractOCR,
     TrOCREngine,
-    MultiEngineOCR
+    MultiEngineOCR,
 )
 
 from ipfs_datasets_py.pdf_processing.ocr_engine import OCREngine
@@ -34,7 +34,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 from tests.unit_tests.pdf_processing_.ocr_engine_ import REPO_ROOT
@@ -43,8 +43,12 @@ file_path = str(REPO_ROOT / "ipfs_datasets_py" / "pdf_processing" / "ocr_engine.
 md_path = str(REPO_ROOT / "ipfs_datasets_py" / "pdf_processing" / "ocr_engine_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.ocr_engine import (
     EasyOCR,
@@ -52,7 +56,7 @@ from ipfs_datasets_py.pdf_processing.ocr_engine import (
     OCREngine,
     SuryaOCR,
     TesseractOCR,
-    TrOCREngine
+    TrOCREngine,
 )
 
 # Check if each classes methods are accessible:
@@ -86,16 +90,13 @@ except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
 
-
-
-
 class ConcreteOCREngine(OCREngine):
     """Test implementation of OCREngine for testing purposes."""
-    
+
     def __init__(self, name: str, should_fail_init: bool = False):
         self.should_fail_init = should_fail_init
         super().__init__(name)
-    
+
     def _initialize(self):
         """Test implementation of _initialize."""
         if self.should_fail_init:
@@ -103,14 +104,9 @@ class ConcreteOCREngine(OCREngine):
             # The base class will catch this and set available = False
             raise RuntimeError("Simulated initialization failure")
         self.available = True
-    
+
     def extract_text(self, image_data: bytes):
         """Test implementation of extract_text."""
         if not self.available:
             raise RuntimeError("Engine not available")
-        return {
-            'text': 'test text',
-            'confidence': 0.95,
-            'engine': self.name
-        }
-
+        return {"text": "test text", "confidence": 0.95, "engine": self.name}

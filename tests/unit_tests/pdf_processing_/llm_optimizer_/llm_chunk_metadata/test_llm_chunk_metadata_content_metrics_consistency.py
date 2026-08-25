@@ -6,13 +6,14 @@ Test suite for content metrics logical consistency validation.
 Tests logical relationships between character_count, word_count, sentence_count,
 and token_count fields to ensure they maintain realistic proportions.
 """
+
 import pytest
 from pydantic import ValidationError
 from textwrap import dedent
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunkMetadata
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
-    LLMChunkMetadataTestDataFactory as DataFactory
+    LLMChunkMetadataTestDataFactory as DataFactory,
 )
 
 
@@ -28,19 +29,19 @@ class TestLLMChunkMetadataContentMetricsConsistency:
         # Constants
         CHARACTER_COUNT = 100
         WORD_COUNT = 20  # Valid: 20 words in 100 characters is reasonable. TODO According to who?
-        
+
         # Given
         data = DataFactory.create_logically_inconsistent_data(
-            character_count=CHARACTER_COUNT,
-            word_count=WORD_COUNT
+            character_count=CHARACTER_COUNT, word_count=WORD_COUNT
         )
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
-        assert metadata.word_count <= metadata.character_count, \
+        assert metadata.word_count <= metadata.character_count, (
             f"Word count '{metadata.word_count}' exceeds character count '{metadata.character_count}'"
+        )
 
     def test_sentence_count_not_exceeding_word_count(self):
         """
@@ -51,19 +52,19 @@ class TestLLMChunkMetadataContentMetricsConsistency:
         # Constants
         WORD_COUNT = 50
         SENTENCE_COUNT = 5  # Valid: 5 sentences in 50 words is reasonable # TODO According to who?
-        
+
         # Given
         data = DataFactory.create_logically_inconsistent_data(
-            word_count=WORD_COUNT,
-            sentence_count=SENTENCE_COUNT
+            word_count=WORD_COUNT, sentence_count=SENTENCE_COUNT
         )
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
-        assert metadata.sentence_count <= metadata.word_count, \
+        assert metadata.sentence_count <= metadata.word_count, (
             f"Sentence count '{metadata.sentence_count}' exceeds word count '{metadata.word_count}'"
+        )
 
     def test_character_count_non_negative(self):
         """
@@ -74,22 +75,19 @@ class TestLLMChunkMetadataContentMetricsConsistency:
         # Constants
         FIELD_NAME = "character_count"
         BOUNDARY_VALUE = 0
-        COUNT_DICT = {
-            "word_count": 0,
-            "sentence_count": 0,
-            "token_count": 0
-        }
-        
+        COUNT_DICT = {"word_count": 0, "sentence_count": 0, "token_count": 0}
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, BOUNDARY_VALUE)
         data.update(COUNT_DICT)
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
-        assert metadata.character_count >= BOUNDARY_VALUE, \
+        assert metadata.character_count >= BOUNDARY_VALUE, (
             f"Character count must be non-negative, but got '{metadata.character_count}'"
+        )
 
     def test_word_count_non_negative(self):
         """
@@ -100,11 +98,7 @@ class TestLLMChunkMetadataContentMetricsConsistency:
         # Constants
         FIELD_NAME = "word_count"
         BOUNDARY_VALUE = 0
-        COUNT_DICT = {
-            "character_count": 0,
-            "sentence_count": 0,
-            "token_count": 0
-        }
+        COUNT_DICT = {"character_count": 0, "sentence_count": 0, "token_count": 0}
 
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, BOUNDARY_VALUE)
@@ -112,10 +106,11 @@ class TestLLMChunkMetadataContentMetricsConsistency:
 
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
-        assert metadata.word_count >= BOUNDARY_VALUE, \
+        assert metadata.word_count >= BOUNDARY_VALUE, (
             f"Word count must be non-negative, but got '{metadata.word_count}'"
+        )
 
     def test_sentence_count_non_negative(self):
         """
@@ -126,22 +121,19 @@ class TestLLMChunkMetadataContentMetricsConsistency:
         # Constants
         FIELD_NAME = "sentence_count"
         BOUNDARY_VALUE = 0
-        COUNT_DICT = {
-            "character_count": 0,
-            "word_count": 0,
-            "token_count": 0
-        }
+        COUNT_DICT = {"character_count": 0, "word_count": 0, "token_count": 0}
 
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, BOUNDARY_VALUE)
         data.update(COUNT_DICT)
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
-        assert metadata.sentence_count >= BOUNDARY_VALUE, \
+        assert metadata.sentence_count >= BOUNDARY_VALUE, (
             f"Sentence count must be non-negative, but got '{metadata.sentence_count}'"
+        )
 
     def test_token_count_non_negative(self):
         """
@@ -152,16 +144,17 @@ class TestLLMChunkMetadataContentMetricsConsistency:
         # Constants
         FIELD_NAME = "token_count"
         BOUNDARY_VALUE = 0
-        
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, BOUNDARY_VALUE)
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
-        assert metadata.token_count >= BOUNDARY_VALUE, \
+        assert metadata.token_count >= BOUNDARY_VALUE, (
             f"Token count '{metadata.token_count}' is not non-negative"
+        )
 
     def test_zero_character_count_implies_zero_word_count(self):
         """
@@ -175,17 +168,15 @@ class TestLLMChunkMetadataContentMetricsConsistency:
         CHARACTER_COUNT = 0
         WORD_COUNT = 0
         SENTENCE_COUNT = 0
-        
+
         # Given
         data = DataFactory.create_logically_inconsistent_data(
-            character_count=CHARACTER_COUNT,
-            word_count=WORD_COUNT,
-            sentence_count=SENTENCE_COUNT
+            character_count=CHARACTER_COUNT, word_count=WORD_COUNT, sentence_count=SENTENCE_COUNT
         )
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
         assert metadata.character_count == metadata.word_count, dedent(f"""
         When character_count is '{CHARACTER_COUNT}', 
@@ -203,17 +194,15 @@ class TestLLMChunkMetadataContentMetricsConsistency:
         CHARACTER_COUNT = 0
         SENTENCE_COUNT = 0
         WORD_COUNT = 0
-        
+
         # Given
         data = DataFactory.create_logically_inconsistent_data(
-            character_count=CHARACTER_COUNT,
-            sentence_count=SENTENCE_COUNT,
-            word_count=WORD_COUNT
+            character_count=CHARACTER_COUNT, sentence_count=SENTENCE_COUNT, word_count=WORD_COUNT
         )
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
         assert metadata.character_count == metadata.sentence_count, dedent(f"""
         When character_count is '{CHARACTER_COUNT}', 
@@ -230,16 +219,15 @@ class TestLLMChunkMetadataContentMetricsConsistency:
         # Constants
         WORD_COUNT = 0
         SENTENCE_COUNT = 0
-        
+
         # Given
         data = DataFactory.create_logically_inconsistent_data(
-            word_count=WORD_COUNT,
-            sentence_count=SENTENCE_COUNT
+            word_count=WORD_COUNT, sentence_count=SENTENCE_COUNT
         )
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
         assert metadata.word_count == metadata.sentence_count, dedent(f"""
         When word_count is '{WORD_COUNT}',
@@ -258,16 +246,15 @@ class TestLLMChunkMetadataContentMetricsConsistency:
         TOKEN_COUNT = 75
         MIN_RATIO_THRESHOLD = 0.5
         MAX_RATIO_THRESHOLD = 1.5
-        
+
         # Given
         data = DataFactory.create_logically_inconsistent_data(
-            word_count=WORD_COUNT,
-            token_count=TOKEN_COUNT
+            word_count=WORD_COUNT, token_count=TOKEN_COUNT
         )
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
         ratio = metadata.token_count / metadata.word_count
         assert MIN_RATIO_THRESHOLD <= ratio <= MAX_RATIO_THRESHOLD, dedent(f"""
@@ -275,6 +262,7 @@ class TestLLMChunkMetadataContentMetricsConsistency:
             '{MAX_RATIO_THRESHOLD}'. token_count was '{metadata.token_count}', 
             word_count was '{metadata.word_count}'"
         """).strip()
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

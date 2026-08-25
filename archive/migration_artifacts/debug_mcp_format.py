@@ -6,6 +6,7 @@ Check what MCP format VS Code Copilot extension expects
 import json
 from pathlib import Path
 
+
 def show_current_config():
     """Show the current MCP configuration in a clean format"""
 
@@ -17,7 +18,7 @@ def show_current_config():
 
     if user_settings_path.exists():
         try:
-            with open(user_settings_path, 'r') as f:
+            with open(user_settings_path, "r") as f:
                 content = f.read()
 
             print("📋 User Settings Structure:")
@@ -32,7 +33,7 @@ def show_current_config():
                 print("⚠️  Found nested 'copilot-mcp.servers' format")
 
             # Extract the relevant sections
-            lines = content.split('\n')
+            lines = content.split("\n")
             in_mcp = False
             in_copilot_mcp = False
             mcp_lines = []
@@ -43,10 +44,10 @@ def show_current_config():
                     in_mcp = True
                 elif '"copilot-mcp.servers":' in line:
                     in_copilot_mcp = True
-                elif line.strip().startswith('}') and in_mcp:
+                elif line.strip().startswith("}") and in_mcp:
                     mcp_lines.append(line)
                     in_mcp = False
-                elif line.strip().startswith('}') and in_copilot_mcp:
+                elif line.strip().startswith("}") and in_copilot_mcp:
                     copilot_mcp_lines.append(line)
                     in_copilot_mcp = False
                 elif in_mcp:
@@ -72,6 +73,7 @@ def show_current_config():
     print("2. Each server should have 'command', 'args', 'cwd', and 'env'")
     print("3. Make sure there are no port conflicts between servers")
     print("4. Restart VS Code after making changes")
+
 
 if __name__ == "__main__":
     show_current_config()

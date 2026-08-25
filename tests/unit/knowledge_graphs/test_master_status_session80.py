@@ -25,7 +25,9 @@ import pytest
 # ---------------------------------------------------------------------------
 # Path helpers
 # ---------------------------------------------------------------------------
-KG_ROOT = pathlib.Path(__file__).parent.parent.parent.parent / "ipfs_datasets_py" / "knowledge_graphs"
+KG_ROOT = (
+    pathlib.Path(__file__).parent.parent.parent.parent / "ipfs_datasets_py" / "knowledge_graphs"
+)
 _DOCS_KG = pathlib.Path(__file__).parent.parent.parent.parent / "docs" / "knowledge_graphs"
 DEFERRED_PATH = _DOCS_KG / "DEFERRED_FEATURES.md"
 MASTER_STATUS_PATH = _DOCS_KG / "MASTER_STATUS.md"
@@ -43,6 +45,7 @@ def _read(path: pathlib.Path) -> str:
 def _extract_top_version(text: str) -> str:
     """Return the first version number that looks like N.N.N from a version line."""
     import re
+
     m = re.search(r"\*\*Version:\*\*\s*([\d.]+)", text)
     if m:
         return m.group(1)
@@ -62,6 +65,7 @@ def simple_kg():
     Entity types: person/person/person/organization
     """
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
     kg = KnowledgeGraph(name="test_simple")
     alice = kg.add_entity("person", "Alice")
     bob = kg.add_entity("person", "Bob")
@@ -77,6 +81,7 @@ def simple_kg():
 def inverse_kg():
     """A→parent_of→B (no child_of reverse)"""
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
     kg = KnowledgeGraph(name="test_inverse")
     parent = kg.add_entity("person", "Parent")
     child = kg.add_entity("person", "Child")
@@ -88,6 +93,7 @@ def inverse_kg():
 def transitive_kg():
     """A→reports_to→B, B→reports_to→C (same type)"""
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
     kg = KnowledgeGraph(name="test_transitive")
     a = kg.add_entity("employee", "Alice")
     b = kg.add_entity("employee", "Bob")
@@ -100,6 +106,7 @@ def transitive_kg():
 @pytest.fixture
 def empty_kg():
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
     return KnowledgeGraph(name="empty")
 
 
@@ -113,12 +120,14 @@ class TestCompletionBasics:
             CompletionSuggestion,
             CompletionReason,
         )
+
         assert KnowledgeGraphCompleter
         assert CompletionSuggestion
         assert CompletionReason
 
     def test_completion_reason_enum_values(self):
         from ipfs_datasets_py.knowledge_graphs.query.completion import CompletionReason
+
         assert CompletionReason.TRIADIC_CLOSURE.value == "triadic_closure"
         assert CompletionReason.COMMON_NEIGHBOR.value == "common_neighbor"
         assert CompletionReason.SYMMETRIC_RELATION.value == "symmetric_relation"
@@ -129,8 +138,10 @@ class TestCompletionBasics:
     def test_suggestion_to_dict(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.completion import (
-            KnowledgeGraphCompleter, CompletionReason,
+            KnowledgeGraphCompleter,
+            CompletionReason,
         )
+
         c = KnowledgeGraphCompleter(kg)
         sug = c.find_missing_relationships(min_score=0.0)[0]
         d = sug.to_dict()
@@ -143,17 +154,20 @@ class TestCompletionBasics:
 
     def test_empty_graph_returns_no_suggestions(self, empty_kg):
         from ipfs_datasets_py.knowledge_graphs.query.completion import KnowledgeGraphCompleter
+
         c = KnowledgeGraphCompleter(empty_kg)
         assert c.find_missing_relationships() == []
 
     def test_isolated_entities_empty_graph(self, empty_kg):
         from ipfs_datasets_py.knowledge_graphs.query.completion import KnowledgeGraphCompleter
+
         c = KnowledgeGraphCompleter(empty_kg)
         assert c.find_isolated_entities() == []
 
     def test_isolated_entities_detects_unconnected(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.completion import KnowledgeGraphCompleter
+
         kg = KnowledgeGraph(name="t")
         alice = kg.add_entity("person", "Alice")
         loner = kg.add_entity("person", "Loner")
@@ -172,8 +186,10 @@ class TestTriadicClosure:
     def test_triadic_closure_found(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.completion import (
-            KnowledgeGraphCompleter, CompletionReason,
+            KnowledgeGraphCompleter,
+            CompletionReason,
         )
+
         c = KnowledgeGraphCompleter(kg)
         sug = c.find_missing_relationships(
             entity_id=alice.entity_id,
@@ -188,11 +204,14 @@ class TestTriadicClosure:
     def test_triadic_closure_score_in_range(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.completion import (
-            KnowledgeGraphCompleter, CompletionReason,
+            KnowledgeGraphCompleter,
+            CompletionReason,
         )
+
         c = KnowledgeGraphCompleter(kg)
         sug = [
-            s for s in c.find_missing_relationships(min_score=0.0)
+            s
+            for s in c.find_missing_relationships(min_score=0.0)
             if s.reason == CompletionReason.TRIADIC_CLOSURE
         ]
         for s in sug:
@@ -206,17 +225,23 @@ class TestSymmetricRelation:
     def test_symmetric_suggests_reverse(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.completion import (
-            KnowledgeGraphCompleter, CompletionReason,
+            KnowledgeGraphCompleter,
+            CompletionReason,
         )
+
         c = KnowledgeGraphCompleter(kg)
         sug = [
-            s for s in c.find_missing_relationships(min_score=0.0)
+            s
+            for s in c.find_missing_relationships(min_score=0.0)
             if s.reason == CompletionReason.SYMMETRIC_RELATION
         ]
         assert len(sug) >= 1
         # For A→knows→B, should suggest B→knows→A
         pairs = {(s.source_id, s.target_id) for s in sug}
-        assert (bob.entity_id, alice.entity_id) in pairs or (charlie.entity_id, bob.entity_id) in pairs
+        assert (bob.entity_id, alice.entity_id) in pairs or (
+            charlie.entity_id,
+            bob.entity_id,
+        ) in pairs
 
 
 # ===========================================================================
@@ -226,11 +251,14 @@ class TestInverseRelation:
     def test_inverse_suggests_child_of(self, inverse_kg):
         kg, parent, child = inverse_kg
         from ipfs_datasets_py.knowledge_graphs.query.completion import (
-            KnowledgeGraphCompleter, CompletionReason,
+            KnowledgeGraphCompleter,
+            CompletionReason,
         )
+
         c = KnowledgeGraphCompleter(kg)
         sug = [
-            s for s in c.find_missing_relationships(min_score=0.0)
+            s
+            for s in c.find_missing_relationships(min_score=0.0)
             if s.reason == CompletionReason.INVERSE_RELATION
         ]
         assert len(sug) == 1
@@ -242,6 +270,7 @@ class TestInverseRelation:
     def test_inverse_score_in_range(self, inverse_kg):
         kg, parent, child = inverse_kg
         from ipfs_datasets_py.knowledge_graphs.query.completion import KnowledgeGraphCompleter
+
         c = KnowledgeGraphCompleter(kg)
         for s in c.find_missing_relationships(min_score=0.0):
             assert 0.0 <= s.score <= 1.0
@@ -254,14 +283,17 @@ class TestTransitiveRelation:
     def test_transitive_suggests_shortcut(self, transitive_kg):
         kg, a, b, c_ = transitive_kg
         from ipfs_datasets_py.knowledge_graphs.query.completion import (
-            KnowledgeGraphCompleter, CompletionReason,
+            KnowledgeGraphCompleter,
+            CompletionReason,
         )
+
         c = KnowledgeGraphCompleter(kg)
         sug = c.find_missing_relationships(min_score=0.0)
         # A→reports_to→B and B→reports_to→C should produce A→reports_to→C
         # (via triadic_closure or transitive_relation — both are valid)
         shortcut = [
-            s for s in sug
+            s
+            for s in sug
             if s.source_id == a.entity_id
             and s.target_id == c_.entity_id
             and s.rel_type == "reports_to"
@@ -277,6 +309,7 @@ class TestCompletionFilters:
     def test_min_score_filters(self, simple_kg):
         kg, *_ = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.completion import KnowledgeGraphCompleter
+
         c = KnowledgeGraphCompleter(kg)
         all_sug = c.find_missing_relationships(min_score=0.0)
         high_sug = c.find_missing_relationships(min_score=0.9)
@@ -287,6 +320,7 @@ class TestCompletionFilters:
     def test_entity_id_filter(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.completion import KnowledgeGraphCompleter
+
         c = KnowledgeGraphCompleter(kg)
         sug = c.find_missing_relationships(entity_id=alice.entity_id, min_score=0.0)
         for s in sug:
@@ -295,6 +329,7 @@ class TestCompletionFilters:
     def test_rel_type_filter(self, simple_kg):
         kg, *_ = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.completion import KnowledgeGraphCompleter
+
         c = KnowledgeGraphCompleter(kg)
         sug = c.find_missing_relationships(rel_type="knows", min_score=0.0)
         for s in sug:
@@ -303,6 +338,7 @@ class TestCompletionFilters:
     def test_max_suggestions_limit(self, simple_kg):
         kg, *_ = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.completion import KnowledgeGraphCompleter
+
         c = KnowledgeGraphCompleter(kg)
         sug = c.find_missing_relationships(max_suggestions=2, min_score=0.0)
         assert len(sug) <= 2
@@ -310,6 +346,7 @@ class TestCompletionFilters:
     def test_sorted_by_score_desc(self, simple_kg):
         kg, *_ = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.completion import KnowledgeGraphCompleter
+
         c = KnowledgeGraphCompleter(kg)
         sug = c.find_missing_relationships(min_score=0.0)
         scores = [s.score for s in sug]
@@ -318,6 +355,7 @@ class TestCompletionFilters:
     def test_compute_completion_score_unknown_entity(self, simple_kg):
         kg, *_ = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.completion import KnowledgeGraphCompleter
+
         c = KnowledgeGraphCompleter(kg)
         score = c.compute_completion_score("unknown-id", "another-unknown", "knows")
         assert score == 0.0
@@ -325,6 +363,7 @@ class TestCompletionFilters:
     def test_explain_suggestion_returns_string(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.completion import KnowledgeGraphCompleter
+
         c = KnowledgeGraphCompleter(kg)
         sug = c.find_missing_relationships(min_score=0.0)
         assert len(sug) > 0
@@ -345,10 +384,12 @@ class TestExplanationBasics:
             PathExplanation,
             ExplanationDepth,
         )
+
         assert QueryExplainer
 
     def test_explanation_depth_values(self):
         from ipfs_datasets_py.knowledge_graphs.query.explanation import ExplanationDepth
+
         assert ExplanationDepth.SURFACE.value == "surface"
         assert ExplanationDepth.STANDARD.value == "standard"
         assert ExplanationDepth.DEEP.value == "deep"
@@ -356,6 +397,7 @@ class TestExplanationBasics:
     def test_explain_entity_known(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         exp = e.explain_entity(alice.entity_id)
         assert exp.entity_name == "Alice"
@@ -367,6 +409,7 @@ class TestExplanationBasics:
     def test_explain_entity_unknown(self, simple_kg):
         kg, *_ = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         exp = e.explain_entity("nonexistent-id")
         assert exp.entity_type == "unknown"
@@ -375,6 +418,7 @@ class TestExplanationBasics:
     def test_explain_entity_to_dict(self, simple_kg):
         kg, alice, *_ = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         d = e.explain_entity(alice.entity_id).to_dict()
         assert "entity_id" in d
@@ -384,8 +428,10 @@ class TestExplanationBasics:
     def test_explain_entity_surface_no_props(self, simple_kg):
         kg, alice, *_ = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import (
-            QueryExplainer, ExplanationDepth,
+            QueryExplainer,
+            ExplanationDepth,
         )
+
         e = QueryExplainer(kg)
         exp = e.explain_entity(alice.entity_id, depth=ExplanationDepth.SURFACE)
         assert exp.property_summary == ""
@@ -393,8 +439,10 @@ class TestExplanationBasics:
     def test_explain_entity_deep_has_cluster_hint(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import (
-            QueryExplainer, ExplanationDepth,
+            QueryExplainer,
+            ExplanationDepth,
         )
+
         e = QueryExplainer(kg)
         exp = e.explain_entity(bob.entity_id, depth=ExplanationDepth.DEEP)
         # bob has outgoing to person+org; cluster_hint should be non-empty
@@ -408,10 +456,12 @@ class TestExplanationRelationship:
     def test_explain_relationship_known(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         # get the alice→bob relationship id
         rel = [
-            r for r in kg.relationships.values()
+            r
+            for r in kg.relationships.values()
             if r.source_id == alice.entity_id and r.target_id == bob.entity_id
         ][0]
         exp = e.explain_relationship(rel.relationship_id)
@@ -423,6 +473,7 @@ class TestExplanationRelationship:
     def test_explain_relationship_unknown(self, simple_kg):
         kg, *_ = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         exp = e.explain_relationship("bad-id")
         assert "not found" in exp.narrative
@@ -430,9 +481,11 @@ class TestExplanationRelationship:
     def test_explain_relationship_to_dict(self, simple_kg):
         kg, alice, bob, *_ = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         rel = [
-            r for r in kg.relationships.values()
+            r
+            for r in kg.relationships.values()
             if r.source_id == alice.entity_id and r.target_id == bob.entity_id
         ][0]
         d = e.explain_relationship(rel.relationship_id).to_dict()
@@ -447,6 +500,7 @@ class TestExplanationPath:
     def test_path_direct(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         path = e.explain_path(alice.entity_id, bob.entity_id)
         assert path.reachable is True
@@ -456,6 +510,7 @@ class TestExplanationPath:
     def test_path_two_hops(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         path = e.explain_path(alice.entity_id, charlie.entity_id)
         assert path.reachable is True
@@ -464,6 +519,7 @@ class TestExplanationPath:
     def test_path_unreachable(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         path = e.explain_path(orgx.entity_id, alice.entity_id)
         assert path.reachable is False
@@ -472,6 +528,7 @@ class TestExplanationPath:
     def test_path_same_entity(self, simple_kg):
         kg, alice, *_ = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         path = e.explain_path(alice.entity_id, alice.entity_id)
         assert path.reachable is True
@@ -480,6 +537,7 @@ class TestExplanationPath:
     def test_path_to_dict(self, simple_kg):
         kg, alice, bob, *_ = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         d = e.explain_path(alice.entity_id, bob.entity_id).to_dict()
         assert "path_nodes" in d
@@ -489,6 +547,7 @@ class TestExplanationPath:
     def test_path_total_confidence(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         path = e.explain_path(alice.entity_id, charlie.entity_id)
         assert 0.0 <= path.total_confidence <= 1.0
@@ -501,8 +560,10 @@ class TestExplanationBatch:
     def test_explain_query_result_returns_list(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import (
-            QueryExplainer, ExplanationDepth,
+            QueryExplainer,
+            ExplanationDepth,
         )
+
         e = QueryExplainer(kg)
         result = e.explain_query_result(
             [alice.entity_id, bob.entity_id, charlie.entity_id],
@@ -513,6 +574,7 @@ class TestExplanationBatch:
     def test_why_connected_direct(self, simple_kg):
         kg, alice, bob, *_ = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         reason = e.why_connected(alice.entity_id, bob.entity_id)
         assert "directly connected" in reason
@@ -520,6 +582,7 @@ class TestExplanationBatch:
     def test_why_connected_path(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         reason = e.why_connected(alice.entity_id, charlie.entity_id)
         assert "hop" in reason.lower() or "path" in reason.lower()
@@ -527,6 +590,7 @@ class TestExplanationBatch:
     def test_why_connected_disconnected(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         reason = e.why_connected(orgx.entity_id, alice.entity_id)
         assert "not connected" in reason
@@ -534,6 +598,7 @@ class TestExplanationBatch:
     def test_entity_importance_score_higher_for_hub(self, simple_kg):
         kg, alice, bob, charlie, orgx = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         bob_score = e.entity_importance_score(bob.entity_id)
         alice_score = e.entity_importance_score(alice.entity_id)
@@ -543,11 +608,13 @@ class TestExplanationBatch:
     def test_entity_importance_unknown(self, simple_kg):
         kg, *_ = simple_kg
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(kg)
         assert e.entity_importance_score("unknown-id") == 0.0
 
     def test_entity_importance_empty_graph(self, empty_kg):
         from ipfs_datasets_py.knowledge_graphs.query.explanation import QueryExplainer
+
         e = QueryExplainer(empty_kg)
         assert e.entity_importance_score("any-id") == 0.0
 
@@ -562,6 +629,7 @@ class TestQueryModuleExports:
             CompletionSuggestion,
             CompletionReason,
         )
+
         assert KnowledgeGraphCompleter
 
     def test_explanation_importable_from_query_init(self):
@@ -572,10 +640,12 @@ class TestQueryModuleExports:
             PathExplanation,
             ExplanationDepth,
         )
+
         assert QueryExplainer
 
     def test_symbols_in_all(self):
         from ipfs_datasets_py.knowledge_graphs import query
+
         all_syms = set(query.__all__)
         for sym in (
             "KnowledgeGraphCompleter",

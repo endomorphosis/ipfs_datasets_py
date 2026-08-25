@@ -4,6 +4,7 @@ MCP tool for generating audit reports.
 
 This tool handles generating reports based on audit logs.
 """
+
 import anyio
 import datetime
 import json
@@ -28,13 +29,13 @@ from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
 
 
 async def generate_audit_report(
-    report_type: str = "comprehensive", # Changed default to comprehensive
+    report_type: str = "comprehensive",  # Changed default to comprehensive
     start_time: Optional[str] = None,
     end_time: Optional[str] = None,
     filters: Optional[Dict[str, Any]] = None,
     output_format: str = "json",
     output_path: Optional[str] = None,
-    include_details: bool = True # This parameter is not directly used by AuditReportGenerator's public methods
+    include_details: bool = True,  # This parameter is not directly used by AuditReportGenerator's public methods
 ) -> Dict[str, Any]:
     """
     Generate an audit report based on audit logs.
@@ -59,7 +60,12 @@ async def generate_audit_report(
         and output_format == "json"
         and output_path is None
         and include_details is True
-        and (report_type.lstrip().startswith("{") or report_type.lstrip().startswith("[") or any(ch.isspace() for ch in report_type) or not report_type.strip())
+        and (
+            report_type.lstrip().startswith("{")
+            or report_type.lstrip().startswith("[")
+            or any(ch.isspace() for ch in report_type)
+            or not report_type.strip()
+        )
     ):
         data, error = parse_json_object(report_type)
         if error is not None:
@@ -112,9 +118,7 @@ async def generate_audit_report(
         # Export the report if an output path is provided
         if output_path:
             exported_path = reporter.export_report(
-                report=report,
-                format=output_format,
-                output_file=output_path
+                report=report, format=output_format, output_file=output_path
             )
 
             # Return information about the saved report
@@ -124,7 +128,7 @@ async def generate_audit_report(
                 "output_path": exported_path,
                 "output_format": output_format,
                 "report_id": report.get("report_id"),
-                "timestamp": report.get("timestamp")
+                "timestamp": report.get("timestamp"),
             }
         else:
             # Return the report content directly
@@ -132,12 +136,8 @@ async def generate_audit_report(
                 "status": "success",
                 "report_type": report_type,
                 "output_format": output_format,
-                "report": report
+                "report": report,
             }
     except Exception as e:
         logger.error(f"Error generating audit report: {e}")
-        return {
-            "status": "error",
-            "message": str(e),
-            "report_type": report_type
-        }
+        return {"status": "error", "message": str(e), "report_type": report_type}

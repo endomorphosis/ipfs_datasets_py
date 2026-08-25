@@ -1,0 +1,179 @@
+{
+  "acceptance": {
+    "dimensions_and_norms_validated": true,
+    "legacy_positional_vectors_never_promoted": true,
+    "output_keys_exactly_match_admitted_chunks": true,
+    "unknown_mutable_placeholder_model_refs_fail_closed": true
+  },
+  "cases": [
+    {
+      "case_id": "happy-path-key-match-and-norms",
+      "chunks": [
+        {
+          "chunk_cid": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "entry_cid": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "heading": "Inventions patentable",
+          "legal_id": "usc:us:35:101",
+          "section": "101",
+          "text": "Whoever invents or discovers any new and useful process.",
+          "title": "35"
+        },
+        {
+          "chunk_cid": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "entry_cid": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "heading": "Public information",
+          "legal_id": "usc:us:5:552",
+          "section": "552",
+          "text": "Each agency shall make available to the public information.",
+          "title": "5"
+        }
+      ],
+      "expect": {
+        "dimension": 384,
+        "key_match": true,
+        "reproducible": true,
+        "unit_norms": true,
+        "vector_count": 2
+      },
+      "kind": "generate"
+    },
+    {
+      "case_id": "reject-mutable-model-revision",
+      "config_overrides": {
+        "model_revision": "latest"
+      },
+      "expect": {
+        "error": "unpinned_model"
+      },
+      "kind": "config_reject"
+    },
+    {
+      "case_id": "reject-placeholder-model-id",
+      "config_overrides": {
+        "model_id": "unknown",
+        "model_revision": "17e1f347d17fe144873b1201da91788898c639cd"
+      },
+      "expect": {
+        "error": "unpinned_model"
+      },
+      "kind": "config_reject"
+    },
+    {
+      "case_id": "reject-branch-model-revision",
+      "config_overrides": {
+        "model_revision": "main"
+      },
+      "expect": {
+        "error": "unpinned_model"
+      },
+      "kind": "config_reject"
+    },
+    {
+      "case_id": "reject-positional-chunk-cid",
+      "chunks": [
+        {
+          "chunk_cid": "row-12",
+          "text": "positional identity must fail"
+        }
+      ],
+      "expect": {
+        "error": "positional"
+      },
+      "kind": "chunk_reject"
+    },
+    {
+      "case_id": "reject-legacy-promotion",
+      "expect": {
+        "error": "legacy_promotion_forbidden"
+      },
+      "kind": "legacy_reject",
+      "legacy_rows": [
+        {
+          "document_index": 0,
+          "embedding": [
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1,
+            0.1
+          ],
+          "id": "row-0",
+          "model": null,
+          "model_revision": null
+        },
+        {
+          "cid": "row-99",
+          "embedding": [
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "cpu-fallback-when-cuda-unavailable",
+      "chunks": [
+        {
+          "chunk_cid": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "text": "Device fallback must still emit unit vectors."
+        }
+      ],
+      "config_overrides": {
+        "device": "cuda",
+        "device_fallback": "fallback_cpu"
+      },
+      "expect": {
+        "device_fallback_applied": true,
+        "device_selected": "cpu",
+        "key_match": true,
+        "unit_norms": true
+      },
+      "kind": "device_fallback"
+    },
+    {
+      "bad_dimension": 16,
+      "case_id": "dimension-mismatch-from-embedder-fails",
+      "chunks": [
+        {
+          "chunk_cid": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "text": "Wrong dimension must fail closed."
+        }
+      ],
+      "expect": {
+        "error": "dimension_mismatch"
+      },
+      "kind": "dimension_reject"
+    }
+  ],
+  "default_pin": {
+    "backend": "local_deterministic_projection",
+    "dimension": 384,
+    "input_fields": [
+      "text"
+    ],
+    "license": "mit",
+    "max_tokens": 512,
+    "model_id": "thenlper/gte-small",
+    "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "normalization": "l2",
+    "pooling": "mean",
+    "provider": "local",
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+  },
+  "description": "Compact embedding contract recipe for USCIR-017. Cases exercise fail-closed model pins, exact chunk-CID key matching, dimension and L2-norm validation, and permanent rejection of legacy positional vector promotion. Vectors are produced by the sealed deterministic local backend (no model download).",
+  "goal_id": "USCIR-G050",
+  "notes": "Recipe form: generators and case expectations only; no bulk embedding golden dumps. Expand via run_contract_case().",
+  "producer": "uscode_embeddings.py",
+  "release_profile": "publicus-ir-graphrag/v2",
+  "schema_version": "uscode-embedding-contract-v1",
+  "task_id": "USCIR-017"
+}

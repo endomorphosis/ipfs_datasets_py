@@ -90,9 +90,7 @@ class DisproofResult(CoreProofResult):
     def __post_init__(self) -> None:
         super(DisproofResult, self).__post_init__()
         if self.status is not ResultStatus.DISPROVED:
-            raise AuthorityMismatchError(
-                "DisproofResult requires a disproved theorem conclusion"
-            )
+            raise AuthorityMismatchError("DisproofResult requires a disproved theorem conclusion")
         payload = self.payload.to_dict()
         if not any(
             payload.get(field_name)
@@ -104,11 +102,7 @@ class DisproofResult(CoreProofResult):
 
 
 SecurityResult: TypeAlias = (
-    CoreProofResult
-    | MonitorResult
-    | EvidenceGateResult
-    | PolicyDecision
-    | SatisfiabilityResult
+    CoreProofResult | MonitorResult | EvidenceGateResult | PolicyDecision | SatisfiabilityResult
 )
 
 
@@ -143,9 +137,7 @@ class LegacyResultDiagnostic:
         object.__setattr__(
             self,
             "metadata",
-            self.metadata
-            if isinstance(self.metadata, FrozenMap)
-            else FrozenMap(self.metadata),
+            self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -160,9 +152,7 @@ class LegacyResultDiagnostic:
     def from_dict(cls, value: Mapping[str, Any]) -> "LegacyResultDiagnostic":
         if not isinstance(value, Mapping):
             raise SecurityResultValidationError("diagnostic must be a mapping")
-        unknown = sorted(
-            set(value) - {"code", "message", "metadata", "source_field"}
-        )
+        unknown = sorted(set(value) - {"code", "message", "metadata", "source_field"})
         if unknown:
             raise SecurityResultValidationError(
                 f"unknown diagnostic field(s): {', '.join(unknown)}"
@@ -191,27 +181,19 @@ class LegacyResultMapping:
             raise SecurityResultValidationError("result must be a bounded result")
         object.__setattr__(self, "family", SecurityResultFamily(self.family))
         if result_family(self.result) is not self.family:
-            raise SecurityResultValidationError(
-                "mapping family does not match the typed result"
-            )
+            raise SecurityResultValidationError("mapping family does not match the typed result")
         if not isinstance(self.source_schema_version, str):
-            raise SecurityResultValidationError(
-                "source_schema_version must be a string"
-            )
+            raise SecurityResultValidationError("source_schema_version must be a string")
         if (
             not isinstance(self.source_digest, str)
             or len(self.source_digest) != 64
             or any(character not in "0123456789abcdef" for character in self.source_digest)
         ):
-            raise SecurityResultValidationError(
-                "source_digest must be a lowercase SHA-256 digest"
-            )
+            raise SecurityResultValidationError("source_digest must be a lowercase SHA-256 digest")
         if not self.diagnostics or any(
             not isinstance(item, LegacyResultDiagnostic) for item in self.diagnostics
         ):
-            raise SecurityResultValidationError(
-                "legacy mappings require explicit diagnostics"
-            )
+            raise SecurityResultValidationError("legacy mappings require explicit diagnostics")
         if self.schema_version != LEGACY_RESULT_MAPPING_VERSION:
             raise SecurityResultValidationError(
                 f"unsupported legacy mapping version: {self.schema_version}"
@@ -230,9 +212,7 @@ class LegacyResultMapping:
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "LegacyResultMapping":
         if not isinstance(value, Mapping):
-            raise SecurityResultValidationError(
-                "legacy result mapping must be a mapping"
-            )
+            raise SecurityResultValidationError("legacy result mapping must be a mapping")
         allowed = {
             "diagnostics",
             "family",
@@ -259,22 +239,15 @@ class LegacyResultMapping:
         if isinstance(diagnostics_value, (str, bytes, bytearray)) or not isinstance(
             diagnostics_value, Sequence
         ):
-            raise SecurityResultValidationError(
-                "mapping diagnostics must be a sequence"
-            )
+            raise SecurityResultValidationError("mapping diagnostics must be a sequence")
         result_class = _FAMILY_RESULT_CLASS[family]
         return cls(
             result=result_class.from_dict(result_value),
             family=family,
             source_schema_version=value.get("source_schema_version", ""),
             source_digest=value.get("source_digest", ""),
-            diagnostics=tuple(
-                LegacyResultDiagnostic.from_dict(item)
-                for item in diagnostics_value
-            ),
-            schema_version=value.get(
-                "schema_version", LEGACY_RESULT_MAPPING_VERSION
-            ),
+            diagnostics=tuple(LegacyResultDiagnostic.from_dict(item) for item in diagnostics_value),
+            schema_version=value.get("schema_version", LEGACY_RESULT_MAPPING_VERSION),
         )
 
 
@@ -308,9 +281,7 @@ def _legacy_payload(value: Any) -> dict[str, Any]:
             )
         payload = to_dict()
         if not isinstance(payload, Mapping):
-            raise SecurityResultValidationError(
-                "legacy output to_dict() must return a mapping"
-            )
+            raise SecurityResultValidationError("legacy output to_dict() must return a mapping")
         payload = dict(payload)
     try:
         FrozenMap(payload)
@@ -322,9 +293,7 @@ def _legacy_payload(value: Any) -> dict[str, Any]:
 
 
 def _sequence(value: Any) -> tuple[Any, ...] | None:
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return tuple(value)
     return None
 
@@ -431,10 +400,7 @@ def _proof_status(
         diagnostics.append(
             LegacyResultDiagnostic(
                 code="security.result.legacy_status_normalized",
-                message=(
-                    f"Legacy proof status {raw or '<missing>'!r} was normalized "
-                    "to unknown."
-                ),
+                message=(f"Legacy proof status {raw or '<missing>'!r} was normalized to unknown."),
                 source_field="status",
                 metadata={"legacy_status": raw},
             )
@@ -634,9 +600,7 @@ def map_legacy_result(
             selected_family = SecurityResultFamily(family)
         except (TypeError, ValueError) as exc:
             allowed = ", ".join(item.value for item in SecurityResultFamily)
-            raise SecurityResultValidationError(
-                f"family must be one of: {allowed}"
-            ) from exc
+            raise SecurityResultValidationError(f"family must be one of: {allowed}") from exc
         inference_reason = "caller-supplied family"
 
     if request.query_kind is not selected_family.query_kind:
@@ -647,12 +611,9 @@ def map_legacy_result(
         )
 
     status, status_diagnostics = _status_for(payload, selected_family)
-    if (
-        selected_family is SecurityResultFamily.DISPROOF
-        and not any(
-            payload.get(field_name)
-            for field_name in ("counterexample", "witness", "proof_or_trace_cid")
-        )
+    if selected_family is SecurityResultFamily.DISPROOF and not any(
+        payload.get(field_name)
+        for field_name in ("counterexample", "witness", "proof_or_trace_cid")
     ):
         raise SecurityResultValidationError(
             "legacy disproof has no counterexample or witness binding"
@@ -662,8 +623,7 @@ def map_legacy_result(
         LegacyResultDiagnostic(
             code=_FAMILY_DIAGNOSTIC[selected_family],
             message=(
-                f"Legacy output was classified as {selected_family.value} "
-                f"using {inference_reason}."
+                f"Legacy output was classified as {selected_family.value} using {inference_reason}."
             ),
             source_field="result_family" if family is not None else "schema_version",
             metadata={

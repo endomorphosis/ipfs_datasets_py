@@ -38,11 +38,7 @@ def _positive_int(value: str) -> int:
 
 def _xdg_path(environment_name: str, fallback: str) -> Path:
     configured = str(os.environ.get(environment_name) or "").strip()
-    return (
-        Path(configured).expanduser()
-        if configured
-        else Path(fallback).expanduser()
-    )
+    return Path(configured).expanduser() if configured else Path(fallback).expanduser()
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -70,16 +66,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     data_home = _xdg_path("XDG_DATA_HOME", "~/.local/share")
     corpus_dir = args.corpus_dir or (
-        data_home
-        / "ipfs_datasets_py/intent-ir/skillcenter-corpus"
-        / args.revision
-        / "full"
+        data_home / "ipfs_datasets_py/intent-ir/skillcenter-corpus" / args.revision / "full"
     )
     output_dir = args.output_dir or (
-        data_home
-        / "ipfs_datasets_py/intent-ir/skillcenter-bm25"
-        / args.revision
-        / "full-cid"
+        data_home / "ipfs_datasets_py/intent-ir/skillcenter-bm25" / args.revision / "full-cid"
     )
     if args.verify_only:
         index = SkillCenterCorpusBM25Index.load(
@@ -98,17 +88,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             corpus_dir=corpus_dir,
         )
     if summary.indexed_entries != EXPECTED_FULL_RECORDS:
-        raise ValueError(
-            "full BM25 index does not cover every canonical entry_cid"
-        )
+        raise ValueError("full BM25 index does not cover every canonical entry_cid")
     payload: dict[str, object] = {"bm25_index": summary.to_dict()}
     query = str(args.smoke_query or "").strip()
     if query:
         payload["smoke_query"] = {
-            "hits": [
-                hit.to_dict()
-                for hit in index.search(query, k=args.query_k)
-            ],
+            "hits": [hit.to_dict() for hit in index.search(query, k=args.query_k)],
             "query": query,
         }
     print(json.dumps(payload, indent=2, sort_keys=True))

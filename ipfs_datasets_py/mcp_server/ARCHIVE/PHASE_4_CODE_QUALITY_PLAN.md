@@ -67,13 +67,16 @@ Phase 3 achieved production readiness with 93 new tests and 65-70% coverage. Pha
 # Extract helper methods:
 def _initialize_error_reporting(self):
     """Initialize global error reporting if available."""
-    
+
+
 def _initialize_mcp_server(self):
     """Initialize FastMCP server instance."""
-    
+
+
 def _initialize_p2p_services(self):
     """Initialize P2P service manager with configuration."""
-    
+
+
 def _validate_configuration(self):
     """Validate server configuration parameters."""
 ```
@@ -97,13 +100,16 @@ def _validate_configuration(self):
 # Extract helper methods:
 def _should_skip_file(self, file_path: Path) -> bool:
     """Determine if a file should be skipped during discovery."""
-    
+
+
 def _load_tool_from_file(self, file_path: Path) -> Optional[Dict]:
     """Load and parse a single tool file."""
-    
+
+
 def _extract_tool_metadata(self, tool_func) -> Dict:
     """Extract metadata from tool function."""
-    
+
+
 def _register_discovered_tool(self, name: str, metadata: Dict):
     """Register a discovered tool with metadata."""
 ```
@@ -121,13 +127,16 @@ def _register_discovered_tool(self, name: str, metadata: Dict):
 # Extract helper methods:
 def _get_tool_list(self, category: Optional[str] = None) -> List[Dict]:
     """Retrieve tool list from hierarchical manager."""
-    
+
+
 def _prepare_tool_registration(self, tool_info: Dict) -> Dict:
     """Prepare tool information for P2P registration."""
-    
+
+
 def _register_single_tool(self, tool_data: Dict):
     """Register a single tool with P2P registry."""
-    
+
+
 def _handle_registration_error(self, tool_name: str, error: Exception):
     """Handle and log tool registration errors."""
 ```
@@ -145,13 +154,16 @@ def _handle_registration_error(self, tool_name: str, error: Exception):
 # Extract route groups:
 def _setup_health_routes(self):
     """Setup health check and status routes."""
-    
+
+
 def _setup_auth_routes(self):
     """Setup authentication and authorization routes."""
-    
+
+
 def _setup_api_routes(self):
     """Setup main API endpoints."""
-    
+
+
 def _setup_error_handlers(self):
     """Setup custom error handlers."""
 ```
@@ -169,13 +181,16 @@ def _setup_error_handlers(self):
 # Extract helper methods:
 def _detect_tool_runtime(self, tool_info: Dict) -> str:
     """Detect appropriate runtime for tool (fastapi/trio)."""
-    
+
+
 def _requires_p2p_runtime(self, tool_metadata: Dict) -> bool:
     """Check if tool requires P2P/Trio runtime."""
-    
+
+
 def _route_to_fastapi(self, tool: Callable) -> Any:
     """Route tool execution to FastAPI runtime."""
-    
+
+
 def _route_to_trio(self, tool: Callable) -> Any:
     """Route tool execution to Trio runtime."""
 ```
@@ -193,13 +208,16 @@ def _route_to_trio(self, tool: Callable) -> Any:
 # Extract helper methods:
 def _setup_trio_nursery(self):
     """Setup Trio nursery for concurrent tasks."""
-    
+
+
 def _register_trio_tools(self, nursery):
     """Register tools for Trio runtime."""
-    
+
+
 def _start_trio_listeners(self, nursery):
     """Start Trio network listeners."""
-    
+
+
 def _handle_trio_shutdown(self):
     """Handle graceful Trio server shutdown."""
 ```
@@ -217,13 +235,16 @@ def _handle_trio_shutdown(self):
 # Extract helper methods:
 def _extract_auth_token(self, request) -> Optional[str]:
     """Extract authentication token from request."""
-    
+
+
 def _validate_jwt_token(self, token: str) -> Dict:
     """Validate JWT token and return claims."""
-    
+
+
 def _validate_api_key(self, key: str) -> Dict:
     """Validate API key and return user info."""
-    
+
+
 def _check_rate_limits(self, user_id: str) -> bool:
     """Check if user has exceeded rate limits."""
 ```
@@ -241,13 +262,16 @@ def _check_rate_limits(self, user_id: str) -> bool:
 # Extract helper methods:
 def _collect_system_metrics(self) -> Dict:
     """Collect system-level metrics (CPU, memory, disk)."""
-    
+
+
 def _collect_tool_metrics(self) -> Dict:
     """Collect tool execution metrics."""
-    
+
+
 def _collect_performance_metrics(self) -> Dict:
     """Collect performance and latency metrics."""
-    
+
+
 def _aggregate_metrics(self, *metric_dicts) -> Dict:
     """Aggregate metrics from multiple sources."""
 ```
@@ -278,6 +302,7 @@ def _aggregate_metrics(self, *metric_dicts) -> Dict:
 ```python
 try:
     from .p2p_service_manager import P2PServiceManager
+
     self.p2p = P2PServiceManager(...)
 except Exception:  # ❌ Too broad
     self.p2p = None
@@ -287,6 +312,7 @@ except Exception:  # ❌ Too broad
 ```python
 try:
     from .p2p_service_manager import P2PServiceManager
+
     self.p2p = P2PServiceManager(...)
 except ImportError as e:
     logger.warning(f"P2P service unavailable (import failed): {e}")
@@ -327,22 +353,27 @@ except (OSError, IOError) as e:
 ```python
 try:
     from ipfs_accelerate_py import TaskQueue
+
     HAS_TASKQUEUE = True
 except Exception:  # ❌ Too broad
     HAS_TASKQUEUE = False
+
     class TaskQueue:
-        def __init__(self): raise NotImplementedError()
+        def __init__(self):
+            raise NotImplementedError()
 ```
 
 **Improved Pattern:**
 ```python
 try:
     from ipfs_accelerate_py import TaskQueue
+
     HAS_TASKQUEUE = True
 except ImportError:
     # Expected when ipfs_accelerate_py not installed
     logger.debug("TaskQueue not available - P2P features disabled")
     HAS_TASKQUEUE = False
+
     class TaskQueue:
         def __init__(self):
             raise NotImplementedError("TaskQueue requires ipfs_accelerate_py package")
@@ -350,8 +381,10 @@ except Exception as e:
     # Unexpected import error - log for debugging
     logger.warning(f"Unexpected error importing TaskQueue: {e}")
     HAS_TASKQUEUE = False
+
     class TaskQueue:
-        def __init__(self): raise NotImplementedError()
+        def __init__(self):
+            raise NotImplementedError()
 ```
 
 ### Custom Exception Classes
@@ -361,36 +394,52 @@ Create `ipfs_datasets_py/mcp_server/exceptions.py`:
 ```python
 """Custom exceptions for MCP server."""
 
+
 class MCPServerError(Exception):
     """Base exception for MCP server errors."""
+
     pass
+
 
 class ServiceInitializationError(MCPServerError):
     """Raised when a service fails to initialize."""
+
     pass
+
 
 class ToolRegistrationError(MCPServerError):
     """Raised when tool registration fails."""
+
     pass
+
 
 class ToolExecutionError(MCPServerError):
     """Raised when tool execution fails."""
+
     pass
+
 
 class RuntimeRoutingError(MCPServerError):
     """Raised when runtime routing fails."""
+
     pass
+
 
 class ValidationError(MCPServerError):
     """Raised when input validation fails."""
+
     pass
+
 
 class AuthenticationError(MCPServerError):
     """Raised when authentication fails."""
+
     pass
+
 
 class ConfigurationError(MCPServerError):
     """Raised when configuration is invalid."""
+
     pass
 ```
 

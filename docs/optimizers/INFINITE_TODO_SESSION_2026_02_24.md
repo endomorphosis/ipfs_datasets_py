@@ -209,14 +209,16 @@ def __init__(
     enable_semantic_dedup: bool = False,  # NEW!
 ):
     # Feature-flagged initialization
-    self.enable_semantic_dedup = (
-        enable_semantic_dedup or 
-        os.environ.get("ENABLE_SEMANTIC_DEDUP", "").lower() in ("1", "true", "yes")
-    )
-    
+    self.enable_semantic_dedup = enable_semantic_dedup or os.environ.get(
+        "ENABLE_SEMANTIC_DEDUP", ""
+    ).lower() in ("1", "true", "yes")
+
     if self.enable_semantic_dedup:
         try:
-            from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import SemanticEntityDeduplicator
+            from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import (
+                SemanticEntityDeduplicator,
+            )
+
             self._semantic_deduplicator = SemanticEntityDeduplicator()
             self._log.info("Semantic deduplication enabled")
         except ImportError as e:

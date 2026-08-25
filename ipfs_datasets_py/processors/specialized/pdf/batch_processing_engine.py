@@ -4,6 +4,7 @@ PDF Batch Processing Engine
 Canonical engine for batch-processing multiple PDF documents.
 Delegates to processors.specialized.batch.processor.BatchProcessor.
 """
+
 from __future__ import annotations
 
 import logging
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.processors.specialized.batch.processor import BatchProcessor
+
     _BATCH_AVAILABLE = True
 except ImportError:
     BatchProcessor = None  # type: ignore[assignment,misc]
@@ -64,7 +66,10 @@ async def pdf_batch_process(
         return {"status": "error", "message": "pdf_sources must be a list, not a string"}
 
     if not sources:
-        return {"status": "error", "message": "No PDF sources provided (use pdf_sources or pdf_paths)"}
+        return {
+            "status": "error",
+            "message": "No PDF sources provided (use pdf_sources or pdf_paths)",
+        }
 
     if batch_size <= 0:
         return {"status": "error", "message": "batch_size must be greater than 0"}
@@ -74,7 +79,10 @@ async def pdf_batch_process(
 
     valid_formats = ["summary", "detailed", "full"]
     if output_format not in valid_formats:
-        return {"status": "error", "message": f"Invalid output_format. Must be one of: {valid_formats}"}
+        return {
+            "status": "error",
+            "message": f"Invalid output_format. Must be one of: {valid_formats}",
+        }
 
     if not _BATCH_AVAILABLE:
         return {

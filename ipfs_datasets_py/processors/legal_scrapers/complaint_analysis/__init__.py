@@ -46,17 +46,17 @@ from .base import (
 
 # Re-import to maintain existing import paths
 from .legal_patterns import (
-    LEGAL_TERMS_REGISTRY, 
+    LEGAL_TERMS_REGISTRY,
     COMPLAINT_LEGAL_TERMS,
     register_legal_terms,
-    get_legal_terms
+    get_legal_terms,
 )
 
 from .keywords import (
     KeywordRegistry,
     EVIDENCE_KEYWORDS,
     LEGAL_AUTHORITY_KEYWORDS,
-    APPLICABILITY_KEYWORDS
+    APPLICABILITY_KEYWORDS,
 )
 from .risk_scoring import ComplaintRiskScorer
 from .dei_risk_scoring import DEIRiskScorer
@@ -77,20 +77,12 @@ from .complaint_types import (
     register_intellectual_property_complaint,
     register_environmental_law_complaint,
     register_dei_complaint,
-    get_registered_types
+    get_registered_types,
 )
 from .analyzer import ComplaintAnalyzer
 from .seed_generator import SeedGenerator, SeedComplaintTemplate
-from .decision_trees import (
-    DecisionTreeGenerator,
-    DecisionTree,
-    QuestionNode
-)
-from .prompt_templates import (
-    PromptTemplate,
-    PromptLibrary,
-    ReturnFormat
-)
+from .decision_trees import DecisionTreeGenerator, DecisionTree, QuestionNode
+from .prompt_templates import PromptTemplate, PromptLibrary, ReturnFormat
 from .response_parsers import (
     BaseResponseParser,
     JSONResponseParser,
@@ -101,7 +93,7 @@ from .response_parsers import (
     ClaimParser,
     StateFileIngester,
     ResponseParserFactory,
-    ParsedResponse
+    ParsedResponse,
 )
 
 # Aliases for backward compatibility
@@ -110,78 +102,70 @@ ComplaintLegalPatternExtractor = LegalPatternExtractor  # Backward compatibility
 
 __all__ = [
     # Base classes for extension
-    'BaseLegalPatternExtractor',
-    'BaseKeywordRegistry',
-    'BaseRiskScorer',
-    
+    "BaseLegalPatternExtractor",
+    "BaseKeywordRegistry",
+    "BaseRiskScorer",
     # Main classes
-    'LegalPatternExtractor',
-    'ComplaintLegalPatternExtractor',  # Backward compatibility alias
-    'KeywordRegistry',
-    'ComplaintRiskScorer',
-    'DEIRiskScorer',  # DEI-specific risk scorer
-    'DEIProvisionExtractor',  # DEI provision extractor
-    'DEIReportGenerator',  # DEI report generator
-    'RiskScorer',  # Alias
-    'HybridDocumentIndexer',
-    'ComplaintAnalyzer',
-    
+    "LegalPatternExtractor",
+    "ComplaintLegalPatternExtractor",  # Backward compatibility alias
+    "KeywordRegistry",
+    "ComplaintRiskScorer",
+    "DEIRiskScorer",  # DEI-specific risk scorer
+    "DEIProvisionExtractor",  # DEI provision extractor
+    "DEIReportGenerator",  # DEI report generator
+    "RiskScorer",  # Alias
+    "HybridDocumentIndexer",
+    "ComplaintAnalyzer",
     # Seed generation and decision trees
-    'SeedGenerator',
-    'SeedComplaintTemplate',
-    'DecisionTreeGenerator',
-    'DecisionTree',
-    'QuestionNode',
-    
+    "SeedGenerator",
+    "SeedComplaintTemplate",
+    "DecisionTreeGenerator",
+    "DecisionTree",
+    "QuestionNode",
     # Prompt engineering
-    'PromptTemplate',
-    'PromptLibrary',
-    'ReturnFormat',
-    
+    "PromptTemplate",
+    "PromptLibrary",
+    "ReturnFormat",
     # Response parsing
-    'BaseResponseParser',
-    'JSONResponseParser',
-    'StructuredTextParser',
-    'EntityParser',
-    'RelationshipParser',
-    'QuestionParser',
-    'ClaimParser',
-    'StateFileIngester',
-    'ResponseParserFactory',
-    'ParsedResponse',
-    
+    "BaseResponseParser",
+    "JSONResponseParser",
+    "StructuredTextParser",
+    "EntityParser",
+    "RelationshipParser",
+    "QuestionParser",
+    "ClaimParser",
+    "StateFileIngester",
+    "ResponseParserFactory",
+    "ParsedResponse",
     # Functions
-    'get_keywords',
-    'get_type_specific_keywords',
-    'register_keywords',
-    'register_legal_terms',
-    'get_legal_terms',
-    
+    "get_keywords",
+    "get_type_specific_keywords",
+    "register_keywords",
+    "register_legal_terms",
+    "get_legal_terms",
     # Default keyword sets
-    'COMPLAINT_KEYWORDS',
-    'EVIDENCE_KEYWORDS',
-    'LEGAL_AUTHORITY_KEYWORDS',
-    'APPLICABILITY_KEYWORDS',
-    
+    "COMPLAINT_KEYWORDS",
+    "EVIDENCE_KEYWORDS",
+    "LEGAL_AUTHORITY_KEYWORDS",
+    "APPLICABILITY_KEYWORDS",
     # Registry
-    'LEGAL_TERMS_REGISTRY',
-    'COMPLAINT_LEGAL_TERMS',
-    
+    "LEGAL_TERMS_REGISTRY",
+    "COMPLAINT_LEGAL_TERMS",
     # Registration functions
-    'register_housing_complaint',
-    'register_employment_complaint',
-    'register_civil_rights_complaint',
-    'register_consumer_complaint',
-    'register_healthcare_complaint',
-    'register_free_speech_complaint',
-    'register_immigration_complaint',
-    'register_family_law_complaint',
-    'register_criminal_defense_complaint',
-    'register_tax_law_complaint',
-    'register_intellectual_property_complaint',
-    'register_environmental_law_complaint',
-    'register_dei_complaint',
-    'get_registered_types',
+    "register_housing_complaint",
+    "register_employment_complaint",
+    "register_civil_rights_complaint",
+    "register_consumer_complaint",
+    "register_healthcare_complaint",
+    "register_free_speech_complaint",
+    "register_immigration_complaint",
+    "register_family_law_complaint",
+    "register_criminal_defense_complaint",
+    "register_tax_law_complaint",
+    "register_intellectual_property_complaint",
+    "register_environmental_law_complaint",
+    "register_dei_complaint",
+    "get_registered_types",
 ]
 
-__version__ = '2.0.0'
+__version__ = "2.0.0"

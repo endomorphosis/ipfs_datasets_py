@@ -36,21 +36,15 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.schema import (
 )
 
 
-FIXTURES = (
-    Path(__file__).resolve().parents[4] / "fixtures" / "security_ir" / "v1"
-)
+FIXTURES = Path(__file__).resolve().parents[4] / "fixtures" / "security_ir" / "v1"
 
 
 def _payload() -> dict[str, Any]:
-    return json.loads(
-        (FIXTURES / "exchange_model.json").read_text(encoding="utf-8")
-    )
+    return json.loads((FIXTURES / "exchange_model.json").read_text(encoding="utf-8"))
 
 
 def _claim_digest(result: Any, claim_id: str) -> str:
-    claim = next(
-        item for item in result.declaration.claims if item.claim_id == claim_id
-    )
+    claim = next(item for item in result.declaration.claims if item.claim_id == claim_id)
     return str(claim.attributes["semantic_input_sha256"])
 
 
@@ -62,38 +56,26 @@ def test_vocabulary_is_namespaced_versioned_and_self_consistent() -> None:
     assert extension.vocabulary == EXCHANGE_VOCABULARY
     assert extension.version == EXCHANGE_VOCABULARY_VERSION
     assert extension.required is True
-    assert (
-        extension.payload["schema_version"]
-        == EXCHANGE_VOCABULARY_SCHEMA_VERSION
-    )
+    assert extension.payload["schema_version"] == EXCHANGE_VOCABULARY_SCHEMA_VERSION
     assert validate_exchange_extension(extension) is extension
     assert validate_exchange_security_ir(result.declaration) is result.declaration
 
     domain = exchange_term("domain", "withdrawals")
     assert parse_exchange_term(domain, category="domain") == "withdrawals"
     assert result.declaration.claims[0].domain == domain
-    assert result.declaration.policies[0].name == exchange_term(
-        "policy", "authorization_required"
-    )
+    assert result.declaration.policies[0].name == exchange_term("policy", "authorization_required")
     wallet = next(
-        item
-        for item in result.declaration.resources
-        if item.resource_id == "wallet:customer"
+        item for item in result.declaration.resources if item.resource_id == "wallet:customer"
     )
     assert wallet.kind == exchange_term("resource", "wallet")
     assert result.declaration.assumptions[0].statement == EXCHANGE_ASSUMPTIONS["A3"]
-    assert (
-        DEFAULT_EXCHANGE_CLAIMS_BY_ID["no_unauthorized_withdrawal"].domain
-        == "withdrawals"
-    )
+    assert DEFAULT_EXCHANGE_CLAIMS_BY_ID["no_unauthorized_withdrawal"].domain == "withdrawals"
 
 
 def test_vocabulary_validation_rejects_version_and_shape_drift() -> None:
     extension = adapt_exchange_security_ir(_payload()).declaration.extensions[0]
     wrong_version = replace(extension, version="v2")
-    with pytest.raises(
-        ExchangeVocabularyError, match="unsupported exchange vocabulary version"
-    ):
+    with pytest.raises(ExchangeVocabularyError, match="unsupported exchange vocabulary version"):
         validate_exchange_extension(wrong_version)
 
     malformed = SecurityExtension(
@@ -160,10 +142,7 @@ def test_semantic_mutations_change_only_claims_with_matching_inputs() -> None:
     assert baseline.declaration.cid != changed.declaration.cid
     # Metadata is retained and therefore changes declaration identity, but it
     # is not an input to a withdrawal claim.
-    assert (
-        _claim_digest(baseline, claim_id)
-        == _claim_digest(metadata_changed, claim_id)
-    )
+    assert _claim_digest(baseline, claim_id) == _claim_digest(metadata_changed, claim_id)
     assert baseline.declaration.cid != metadata_changed.declaration.cid
 
 
@@ -183,9 +162,7 @@ def test_unknown_extensions_fail_closed_without_declared_adapter() -> None:
     payload = _payload()
     payload["vendor_runtime_hint"] = {"mode": "offline"}
 
-    with pytest.raises(
-        ExchangeAdapterError, match="has no declared adapter"
-    ):
+    with pytest.raises(ExchangeAdapterError, match="has no declared adapter"):
         adapt_exchange_security_ir(payload)
 
 
@@ -197,13 +174,9 @@ def test_declared_extension_adapter_allows_validation_and_round_trip() -> None:
     def validate_vendor(extension: SecurityExtension) -> None:
         seen.append(extension.extension_id)
         assert extension.vocabulary == "legacy.security-model-ir"
-        assert extension.payload["field_name"] == (
-            "unsupported_vendor_runtime_hint"
-        )
+        assert extension.payload["field_name"] == ("unsupported_vendor_runtime_hint")
 
-    adapter = ExchangeSecurityAdapter(
-        extension_adapters={"vendor_runtime_hint": validate_vendor}
-    )
+    adapter = ExchangeSecurityAdapter(extension_adapters={"vendor_runtime_hint": validate_vendor})
     result = adapter.adapt(payload)
 
     assert seen
@@ -212,9 +185,7 @@ def test_declared_extension_adapter_allows_validation_and_round_trip() -> None:
 
 
 def test_exchange_adapter_rejects_non_exchange_golden_model() -> None:
-    xaman = json.loads(
-        (FIXTURES / "xaman_model.json").read_text(encoding="utf-8")
-    )
+    xaman = json.loads((FIXTURES / "xaman_model.json").read_text(encoding="utf-8"))
 
     with pytest.raises(ExchangeAdapterError, match="outside the exchange vocabulary"):
         adapt_exchange_security_ir(xaman)

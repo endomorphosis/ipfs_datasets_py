@@ -134,9 +134,7 @@ def _text(
     if not allow_empty and not value.strip():
         raise InvocationEnvelopeValidationError(f"{name} must be a non-empty string")
     if value != value.strip():
-        raise InvocationEnvelopeValidationError(
-            f"{name} must not have surrounding whitespace"
-        )
+        raise InvocationEnvelopeValidationError(f"{name} must not have surrounding whitespace")
     if len(value) > max_chars:
         raise InvocationEnvelopeValidationError(
             f"{name} exceeds maximum length of {max_chars} characters"
@@ -161,18 +159,14 @@ def _optional_identifier(value: Any, name: str) -> str:
 def _sha256_hex(value: Any, name: str) -> str:
     text = _text(value, name, max_chars=64)
     if not _SHA256_HEX_RE.fullmatch(text):
-        raise InvocationEnvelopeValidationError(
-            f"{name} must be a lowercase SHA-256 hex digest"
-        )
+        raise InvocationEnvelopeValidationError(f"{name} must be a lowercase SHA-256 hex digest")
     return text
 
 
 def _digest(value: Any, name: str) -> str:
     text = _text(value, name, max_chars=80)
     if not _DIGEST_RE.fullmatch(text):
-        raise InvocationEnvelopeValidationError(
-            f"{name} must be a sha256:<64-hex> digest"
-        )
+        raise InvocationEnvelopeValidationError(f"{name} must be a sha256:<64-hex> digest")
     return text
 
 
@@ -189,9 +183,7 @@ def _timestamp(value: Any, name: str, *, allow_empty: bool = False) -> str:
         raise InvocationEnvelopeValidationError(f"{name} must be a non-empty timestamp")
     text = _text(value, name, max_chars=64)
     if not _ISO8601_RE.fullmatch(text):
-        raise InvocationEnvelopeValidationError(
-            f"{name} must be an ISO-8601 UTC/offset timestamp"
-        )
+        raise InvocationEnvelopeValidationError(f"{name} must be an ISO-8601 UTC/offset timestamp")
     return text
 
 
@@ -201,14 +193,10 @@ def _as_mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _known_fields(
-    value: Mapping[str, Any], allowed: frozenset[str], name: str
-) -> None:
+def _known_fields(value: Mapping[str, Any], allowed: frozenset[str], name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise InvocationEnvelopeValidationError(
-            f"unknown {name} field(s): {', '.join(unknown)}"
-        )
+        raise InvocationEnvelopeValidationError(f"unknown {name} field(s): {', '.join(unknown)}")
 
 
 def _enum_value(enum_type: type[Enum], value: Any, name: str) -> Enum:
@@ -231,14 +219,10 @@ def _ids(
 ) -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise InvocationEnvelopeValidationError(f"{name} must be a sequence")
     if len(values) > max_items:
-        raise InvocationEnvelopeValidationError(
-            f"{name} exceeds maximum of {max_items} items"
-        )
+        raise InvocationEnvelopeValidationError(f"{name} exceeds maximum of {max_items} items")
     result = tuple(_identifier(item, name) for item in values)
     if len(result) != len(set(result)):
         raise InvocationEnvelopeValidationError(f"{name} values must be unique")
@@ -299,23 +283,15 @@ def _bound_json(
             )
         for key, item in value.items():
             if not isinstance(key, str):
-                raise InvocationEnvelopeValidationError(
-                    f"{name} keys must be strings"
-                )
-            _bound_json(
-                item, name=f"{name}.{key}", depth=depth + 1, counter=counter
-            )
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+                raise InvocationEnvelopeValidationError(f"{name} keys must be strings")
+            _bound_json(item, name=f"{name}.{key}", depth=depth + 1, counter=counter)
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         if len(value) > MAX_COLLECTION_ITEMS:
             raise InvocationEnvelopeValidationError(
                 f"{name} sequence exceeds maximum of {MAX_COLLECTION_ITEMS} items"
             )
         for index, item in enumerate(value):
-            _bound_json(
-                item, name=f"{name}[{index}]", depth=depth + 1, counter=counter
-            )
+            _bound_json(item, name=f"{name}[{index}]", depth=depth + 1, counter=counter)
 
 
 def _reject_raw_secrets(text: str, name: str) -> None:
@@ -337,18 +313,14 @@ def _reject_secrets_in_json(value: Any, *, path: str) -> None:
         for key, item in value.items():
             child = f"{path}.{key}"
             if isinstance(key, str) and _SENSITIVE_KEY_RE.search(key):
-                if not isinstance(item, str) or not _REDACTED_VALUE_RE.fullmatch(
-                    item
-                ):
+                if not isinstance(item, str) or not _REDACTED_VALUE_RE.fullmatch(item):
                     raise InvocationEnvelopeValidationError(
                         f"{child} must be a redacted token or secret reference, "
                         "not raw secret material"
                     )
             _reject_secrets_in_json(item, path=child)
         return
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for index, item in enumerate(value):
             _reject_secrets_in_json(item, path=f"{path}[{index}]")
 
@@ -360,9 +332,7 @@ def commit_redacted_arguments(redacted_arguments: Mapping[str, Any] | Any) -> st
         "domain": ARGUMENT_COMMITMENT_DOMAIN,
         "redacted_arguments": thaw_json(_payload(redacted_arguments, "redacted_arguments")),
     }
-    digest = hashlib.sha256(
-        canonical_json_bytes(payload)
-    ).hexdigest()
+    digest = hashlib.sha256(canonical_json_bytes(payload)).hexdigest()
     return f"sha256:{digest}"
 
 
@@ -386,12 +356,8 @@ class SourceBinding:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "kind", _enum_value(InvocationKind, self.kind, "source.kind")
-        )
-        object.__setattr__(
-            self, "source_ref", _identifier(self.source_ref, "source.source_ref")
-        )
+        object.__setattr__(self, "kind", _enum_value(InvocationKind, self.kind, "source.kind"))
+        object.__setattr__(self, "source_ref", _identifier(self.source_ref, "source.source_ref"))
         object.__setattr__(
             self,
             "source_id",
@@ -416,9 +382,7 @@ class SourceBinding:
         object.__setattr__(
             self,
             "intent_document_id",
-            _optional_identifier(
-                self.intent_document_id, "source.intent_document_id"
-            ),
+            _optional_identifier(self.intent_document_id, "source.intent_document_id"),
         )
         object.__setattr__(
             self,
@@ -488,9 +452,7 @@ class ActorBinding:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "actor_id", _identifier(self.actor_id, "actor.actor_id")
-        )
+        object.__setattr__(self, "actor_id", _identifier(self.actor_id, "actor.actor_id"))
         object.__setattr__(self, "kind", _text(self.kind, "actor.kind"))
         object.__setattr__(
             self,
@@ -502,9 +464,7 @@ class ActorBinding:
             "trust_domain",
             _optional_identifier(self.trust_domain, "actor.trust_domain"),
         )
-        object.__setattr__(
-            self, "subject_attributes", _attributes(self.subject_attributes)
-        )
+        object.__setattr__(self, "subject_attributes", _attributes(self.subject_attributes))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -556,9 +516,7 @@ class DelegationLink:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "link_id", _identifier(self.link_id, "delegation.link_id")
-        )
+        object.__setattr__(self, "link_id", _identifier(self.link_id, "delegation.link_id"))
         object.__setattr__(
             self,
             "from_actor_id",
@@ -701,9 +659,7 @@ class ToolBinding:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "tool_id", _identifier(self.tool_id, "tool.tool_id")
-        )
+        object.__setattr__(self, "tool_id", _identifier(self.tool_id, "tool.tool_id"))
         object.__setattr__(
             self,
             "tool_name",
@@ -806,19 +762,13 @@ class ArgumentCommitment:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "commitment", _digest(self.commitment, "arguments.commitment")
-        )
-        object.__setattr__(
-            self, "algorithm", _text(self.algorithm, "arguments.algorithm")
-        )
+        object.__setattr__(self, "commitment", _digest(self.commitment, "arguments.commitment"))
+        object.__setattr__(self, "algorithm", _text(self.algorithm, "arguments.algorithm"))
         if self.algorithm != "sha256":
             raise InvocationEnvelopeValidationError(
                 f"unsupported argument commitment algorithm: {self.algorithm!r}"
             )
-        object.__setattr__(
-            self, "domain", _text(self.domain, "arguments.domain")
-        )
+        object.__setattr__(self, "domain", _text(self.domain, "arguments.domain"))
         if self.domain != ARGUMENT_COMMITMENT_DOMAIN:
             raise InvocationEnvelopeValidationError(
                 f"unsupported argument commitment domain: {self.domain!r}"
@@ -831,9 +781,7 @@ class ArgumentCommitment:
                 "argument commitment does not match redacted arguments "
                 "(identity drift or raw-secret stripping required)"
             )
-        object.__setattr__(
-            self, "secret_refs", _ids(self.secret_refs, "arguments.secret_refs")
-        )
+        object.__setattr__(self, "secret_refs", _ids(self.secret_refs, "arguments.secret_refs"))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -905,12 +853,8 @@ class ScopeEntry:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "entry_id", _identifier(self.entry_id, "scope.entry_id")
-        )
-        object.__setattr__(
-            self, "kind", _enum_value(ScopeKind, self.kind, "scope.kind")
-        )
+        object.__setattr__(self, "entry_id", _identifier(self.entry_id, "scope.entry_id"))
+        object.__setattr__(self, "kind", _enum_value(ScopeKind, self.kind, "scope.kind"))
         object.__setattr__(self, "value", _text(self.value, "scope.value"))
         object.__setattr__(
             self,
@@ -992,9 +936,7 @@ class InvocationScope:
         seen_ids: set[str] = set()
         for name in self._FIELDS:
             raw = getattr(self, name)
-            if isinstance(raw, (str, bytes, bytearray)) or not isinstance(
-                raw, Sequence
-            ):
+            if isinstance(raw, (str, bytes, bytearray)) or not isinstance(raw, Sequence):
                 raise InvocationEnvelopeValidationError(f"scope.{name} must be a sequence")
             if len(raw) > MAX_COLLECTION_ITEMS:
                 raise InvocationEnvelopeValidationError(
@@ -1021,10 +963,7 @@ class InvocationScope:
             object.__setattr__(self, name, tuple(converted))
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            name: [item.to_dict() for item in getattr(self, name)]
-            for name in self._FIELDS
-        }
+        return {name: [item.to_dict() for item in getattr(self, name)] for name in self._FIELDS}
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any] | None) -> "InvocationScope":
@@ -1033,9 +972,7 @@ class InvocationScope:
         value = _as_mapping(value, "scope")
         _known_fields(value, frozenset(cls._FIELDS), "scope")
         kwargs = {
-            name: tuple(
-                ScopeEntry.from_dict(item) for item in value.get(name, ())
-            )
+            name: tuple(ScopeEntry.from_dict(item) for item in value.get(name, ()))
             for name in cls._FIELDS
         }
         return cls(**kwargs)
@@ -1069,9 +1006,7 @@ class PurposeContext:
         object.__setattr__(
             self,
             "effective_time",
-            _timestamp(
-                self.effective_time, "purpose.effective_time", allow_empty=True
-            ),
+            _timestamp(self.effective_time, "purpose.effective_time", allow_empty=True),
         )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
@@ -1210,12 +1145,8 @@ class RollbackStep:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "step_id", _identifier(self.step_id, "rollback.step_id")
-        )
-        object.__setattr__(
-            self, "description", _text(self.description, "rollback.description")
-        )
+        object.__setattr__(self, "step_id", _identifier(self.step_id, "rollback.step_id"))
+        object.__setattr__(self, "description", _text(self.description, "rollback.description"))
         object.__setattr__(
             self,
             "action_ref",
@@ -1257,9 +1188,7 @@ class VerificationStep:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "step_id", _identifier(self.step_id, "verification.step_id")
-        )
+        object.__setattr__(self, "step_id", _identifier(self.step_id, "verification.step_id"))
         object.__setattr__(
             self,
             "description",
@@ -1321,20 +1250,14 @@ class PolicyRequirements:
         if isinstance(self.corpus_roots, (str, bytes, bytearray)) or not isinstance(
             self.corpus_roots, Sequence
         ):
-            raise InvocationEnvelopeValidationError(
-                "policy.corpus_roots must be a sequence"
-            )
+            raise InvocationEnvelopeValidationError("policy.corpus_roots must be a sequence")
         if len(self.corpus_roots) > MAX_COLLECTION_ITEMS:
             raise InvocationEnvelopeValidationError(
                 "policy.corpus_roots exceeds maximum collection size"
             )
-        roots = tuple(
-            _text(item, "policy.corpus_roots") for item in self.corpus_roots
-        )
+        roots = tuple(_text(item, "policy.corpus_roots") for item in self.corpus_roots)
         if len(roots) != len(set(roots)):
-            raise InvocationEnvelopeValidationError(
-                "policy.corpus_roots values must be unique"
-            )
+            raise InvocationEnvelopeValidationError("policy.corpus_roots values must be unique")
         object.__setattr__(self, "corpus_roots", roots)
         object.__setattr__(
             self,
@@ -1344,9 +1267,7 @@ class PolicyRequirements:
         object.__setattr__(
             self,
             "coverage_profile",
-            _optional_identifier(
-                self.coverage_profile, "policy.coverage_profile"
-            ),
+            _optional_identifier(self.coverage_profile, "policy.coverage_profile"),
         )
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
@@ -1402,14 +1323,11 @@ class SourceMapEntry:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "map_id", _identifier(self.map_id, "source_map.map_id")
-        )
+        object.__setattr__(self, "map_id", _identifier(self.map_id, "source_map.map_id"))
         path = _text(self.field_path, "source_map.field_path")
         if not path.startswith(("/", "$", ".")):
             raise InvocationEnvelopeValidationError(
-                "source_map.field_path must use JSON Pointer, JSONPath, or "
-                "dotted-path syntax"
+                "source_map.field_path must use JSON Pointer, JSONPath, or dotted-path syntax"
             )
         object.__setattr__(self, "field_path", path)
         object.__setattr__(
@@ -1426,17 +1344,13 @@ class SourceMapEntry:
                     f"source_map.{name} must be an integer or null"
                 )
             if value < 0:
-                raise InvocationEnvelopeValidationError(
-                    f"source_map.{name} must be non-negative"
-                )
+                raise InvocationEnvelopeValidationError(f"source_map.{name} must be non-negative")
         if self.start_char is not None and self.end_char is not None:
             if self.end_char < self.start_char:
                 raise InvocationEnvelopeValidationError(
                     "source_map must satisfy start_char <= end_char"
                 )
-        object.__setattr__(
-            self, "note", _text(self.note, "source_map.note", allow_empty=True)
-        )
+        object.__setattr__(self, "note", _text(self.note, "source_map.note", allow_empty=True))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -1494,9 +1408,7 @@ class InvocationAssumption:
             "assumption_id",
             _identifier(self.assumption_id, "assumption.assumption_id"),
         )
-        object.__setattr__(
-            self, "statement", _text(self.statement, "assumption.statement")
-        )
+        object.__setattr__(self, "statement", _text(self.statement, "assumption.statement"))
         object.__setattr__(
             self,
             "source_ref",
@@ -1517,9 +1429,7 @@ class InvocationAssumption:
         value = _as_mapping(value, "assumption")
         _known_fields(
             value,
-            frozenset(
-                {"assumption_id", "statement", "source_ref", "attributes"}
-            ),
+            frozenset({"assumption_id", "statement", "source_ref", "attributes"}),
             "assumption",
         )
         return cls(
@@ -1541,12 +1451,8 @@ class InvocationDiagnostic:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "code", _text(self.code, "diagnostic.code", max_chars=256)
-        )
-        object.__setattr__(
-            self, "message", _text(self.message, "diagnostic.message")
-        )
+        object.__setattr__(self, "code", _text(self.code, "diagnostic.code", max_chars=256))
+        object.__setattr__(self, "message", _text(self.message, "diagnostic.message"))
         object.__setattr__(
             self,
             "severity",
@@ -1573,9 +1479,7 @@ class InvocationDiagnostic:
         value = _as_mapping(value, "diagnostic")
         _known_fields(
             value,
-            frozenset(
-                {"code", "message", "severity", "field_path", "attributes"}
-            ),
+            frozenset({"code", "message", "severity", "field_path", "attributes"}),
             "diagnostic",
         )
         return cls(
@@ -1603,17 +1507,13 @@ class UnsupportedField:
             "field_path",
             _text(self.field_path, "unsupported.field_path"),
         )
-        object.__setattr__(
-            self, "reason", _text(self.reason, "unsupported.reason")
-        )
+        object.__setattr__(self, "reason", _text(self.reason, "unsupported.reason"))
         object.__setattr__(
             self,
             "source_ref",
             _optional_identifier(self.source_ref, "unsupported.source_ref"),
         )
-        object.__setattr__(
-            self, "raw_kind", _text(self.raw_kind, "unsupported.raw_kind")
-        )
+        object.__setattr__(self, "raw_kind", _text(self.raw_kind, "unsupported.raw_kind"))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -1734,20 +1634,15 @@ class InvocationIntentEnvelope:
     schema_version: str = INVOCATION_ENVELOPE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "envelope_id", _identifier(self.envelope_id, "envelope_id")
-        )
+        object.__setattr__(self, "envelope_id", _identifier(self.envelope_id, "envelope_id"))
         if self.schema_version != INVOCATION_ENVELOPE_SCHEMA_VERSION:
             raise InvocationEnvelopeValidationError(
-                f"unsupported invocation envelope schema version: "
-                f"{self.schema_version!r}"
+                f"unsupported invocation envelope schema version: {self.schema_version!r}"
             )
         object.__setattr__(
             self,
             "invocation_kind",
-            _enum_value(
-                InvocationKind, self.invocation_kind, "invocation_kind"
-            ),
+            _enum_value(InvocationKind, self.invocation_kind, "invocation_kind"),
         )
         if not isinstance(self.source, SourceBinding):
             object.__setattr__(
@@ -1764,9 +1659,7 @@ class InvocationIntentEnvelope:
             raise InvocationEnvelopeValidationError(
                 "invocation_kind must match source.kind unless composite"
             )
-        object.__setattr__(
-            self, "tenant_id", _identifier(self.tenant_id, "tenant_id")
-        )
+        object.__setattr__(self, "tenant_id", _identifier(self.tenant_id, "tenant_id"))
         if not isinstance(self.actor, ActorBinding):
             object.__setattr__(
                 self,
@@ -1777,9 +1670,7 @@ class InvocationIntentEnvelope:
             object.__setattr__(
                 self,
                 "audience",
-                AudienceBinding.from_dict(
-                    _as_mapping(self.audience, "audience")
-                ),
+                AudienceBinding.from_dict(_as_mapping(self.audience, "audience")),
             )
         if not isinstance(self.tool, ToolBinding):
             object.__setattr__(
@@ -1791,9 +1682,7 @@ class InvocationIntentEnvelope:
             object.__setattr__(
                 self,
                 "arguments",
-                ArgumentCommitment.from_dict(
-                    _as_mapping(self.arguments, "arguments")
-                ),
+                ArgumentCommitment.from_dict(_as_mapping(self.arguments, "arguments")),
             )
         object.__setattr__(
             self,
@@ -1819,9 +1708,7 @@ class InvocationIntentEnvelope:
             object.__setattr__(
                 self,
                 "environment",
-                EnvironmentBinding.from_dict(
-                    _as_mapping(self.environment, "environment")
-                ),
+                EnvironmentBinding.from_dict(_as_mapping(self.environment, "environment")),
             )
         object.__setattr__(
             self,
@@ -1852,24 +1739,14 @@ class InvocationIntentEnvelope:
             object.__setattr__(
                 self,
                 "policy",
-                PolicyRequirements.from_dict(
-                    _as_mapping(self.policy, "policy")
-                ),
+                PolicyRequirements.from_dict(_as_mapping(self.policy, "policy")),
             )
         object.__setattr__(self, "nonce", _identifier(self.nonce, "nonce"))
-        object.__setattr__(
-            self, "created_at", _timestamp(self.created_at, "created_at")
-        )
-        object.__setattr__(
-            self, "deadline", _timestamp(self.deadline, "deadline")
-        )
+        object.__setattr__(self, "created_at", _timestamp(self.created_at, "created_at"))
+        object.__setattr__(self, "deadline", _timestamp(self.deadline, "deadline"))
         if self.deadline < self.created_at:
-            raise InvocationEnvelopeValidationError(
-                "deadline must not precede created_at"
-            )
-        object.__setattr__(
-            self, "trace_id", _optional_identifier(self.trace_id, "trace_id")
-        )
+            raise InvocationEnvelopeValidationError("deadline must not precede created_at")
+        object.__setattr__(self, "trace_id", _optional_identifier(self.trace_id, "trace_id"))
         object.__setattr__(
             self,
             "source_maps",
@@ -1878,16 +1755,12 @@ class InvocationIntentEnvelope:
         object.__setattr__(
             self,
             "assumptions",
-            _coerce_records(
-                self.assumptions, InvocationAssumption, "assumptions"
-            ),
+            _coerce_records(self.assumptions, InvocationAssumption, "assumptions"),
         )
         object.__setattr__(
             self,
             "diagnostics",
-            _coerce_records(
-                self.diagnostics, InvocationDiagnostic, "diagnostics"
-            ),
+            _coerce_records(self.diagnostics, InvocationDiagnostic, "diagnostics"),
         )
         object.__setattr__(
             self,
@@ -1905,8 +1778,7 @@ class InvocationIntentEnvelope:
             recorded = _digest(self.content_digest, "content_digest")
             if recorded != identity.digest:
                 raise InvocationEnvelopeValidationError(
-                    "content_digest does not match recomputed envelope identity "
-                    "(identity drift)"
+                    "content_digest does not match recomputed envelope identity (identity drift)"
                 )
             object.__setattr__(self, "content_digest", recorded)
         else:
@@ -1915,8 +1787,7 @@ class InvocationIntentEnvelope:
             recorded_cid = _text(self.content_cid, "content_cid")
             if recorded_cid != identity.cid:
                 raise InvocationEnvelopeValidationError(
-                    "content_cid does not match recomputed envelope identity "
-                    "(identity drift)"
+                    "content_cid does not match recomputed envelope identity (identity drift)"
                 )
             object.__setattr__(self, "content_cid", recorded_cid)
         else:
@@ -1970,9 +1841,7 @@ class InvocationIntentEnvelope:
             "tool": self.tool.to_dict(),
             "trace_id": self.trace_id,
             "trust_domain": self.trust_domain,
-            "unsupported_fields": [
-                item.to_dict() for item in self.unsupported_fields
-            ],
+            "unsupported_fields": [item.to_dict() for item in self.unsupported_fields],
             "verification": [item.to_dict() for item in self.verification],
         }
 
@@ -2023,29 +1892,16 @@ class InvocationIntentEnvelope:
         _known_fields(value, allowed, "InvocationIntentEnvelope")
         return cls(
             envelope_id=value.get("envelope_id", ""),
-            schema_version=value.get(
-                "schema_version", INVOCATION_ENVELOPE_SCHEMA_VERSION
-            ),
-            invocation_kind=value.get(
-                "invocation_kind", InvocationKind.UNSPECIFIED
-            ),
-            source=SourceBinding.from_dict(
-                _as_mapping(value.get("source", {}), "source")
-            ),
+            schema_version=value.get("schema_version", INVOCATION_ENVELOPE_SCHEMA_VERSION),
+            invocation_kind=value.get("invocation_kind", InvocationKind.UNSPECIFIED),
+            source=SourceBinding.from_dict(_as_mapping(value.get("source", {}), "source")),
             tenant_id=value.get("tenant_id", ""),
-            actor=ActorBinding.from_dict(
-                _as_mapping(value.get("actor", {}), "actor")
-            ),
+            actor=ActorBinding.from_dict(_as_mapping(value.get("actor", {}), "actor")),
             delegation=tuple(
-                DelegationLink.from_dict(item)
-                for item in value.get("delegation", ())
+                DelegationLink.from_dict(item) for item in value.get("delegation", ())
             ),
-            audience=AudienceBinding.from_dict(
-                _as_mapping(value.get("audience", {}), "audience")
-            ),
-            tool=ToolBinding.from_dict(
-                _as_mapping(value.get("tool", {}), "tool")
-            ),
+            audience=AudienceBinding.from_dict(_as_mapping(value.get("audience", {}), "audience")),
+            tool=ToolBinding.from_dict(_as_mapping(value.get("tool", {}), "tool")),
             arguments=ArgumentCommitment.from_dict(
                 _as_mapping(value.get("arguments", {}), "arguments")
             ),
@@ -2056,13 +1912,9 @@ class InvocationIntentEnvelope:
             preconditions=tuple(value.get("preconditions", ())),
             postconditions=tuple(value.get("postconditions", ())),
             failure_modes=tuple(value.get("failure_modes", ())),
-            rollback=tuple(
-                RollbackStep.from_dict(item)
-                for item in value.get("rollback", ())
-            ),
+            rollback=tuple(RollbackStep.from_dict(item) for item in value.get("rollback", ())),
             verification=tuple(
-                VerificationStep.from_dict(item)
-                for item in value.get("verification", ())
+                VerificationStep.from_dict(item) for item in value.get("verification", ())
             ),
             policy=PolicyRequirements.from_dict(value.get("policy")),
             nonce=value.get("nonce", ""),
@@ -2070,20 +1922,16 @@ class InvocationIntentEnvelope:
             deadline=value.get("deadline", ""),
             trace_id=value.get("trace_id", ""),
             source_maps=tuple(
-                SourceMapEntry.from_dict(item)
-                for item in value.get("source_maps", ())
+                SourceMapEntry.from_dict(item) for item in value.get("source_maps", ())
             ),
             assumptions=tuple(
-                InvocationAssumption.from_dict(item)
-                for item in value.get("assumptions", ())
+                InvocationAssumption.from_dict(item) for item in value.get("assumptions", ())
             ),
             diagnostics=tuple(
-                InvocationDiagnostic.from_dict(item)
-                for item in value.get("diagnostics", ())
+                InvocationDiagnostic.from_dict(item) for item in value.get("diagnostics", ())
             ),
             unsupported_fields=tuple(
-                UnsupportedField.from_dict(item)
-                for item in value.get("unsupported_fields", ())
+                UnsupportedField.from_dict(item) for item in value.get("unsupported_fields", ())
             ),
             content_digest=value.get("content_digest", ""),
             content_cid=value.get("content_cid", ""),
@@ -2119,18 +1967,14 @@ def _coerce_records(
     record_type: type[Any],
     name: str,
 ) -> tuple[Any, ...]:
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise InvocationEnvelopeValidationError(f"{name} must be a sequence")
     if len(values) > MAX_COLLECTION_ITEMS:
         raise InvocationEnvelopeValidationError(
             f"{name} exceeds maximum of {MAX_COLLECTION_ITEMS} items"
         )
     converted = tuple(
-        item
-        if isinstance(item, record_type)
-        else record_type.from_dict(_as_mapping(item, name))
+        item if isinstance(item, record_type) else record_type.from_dict(_as_mapping(item, name))
         for item in values
     )
     return converted
@@ -2139,9 +1983,7 @@ def _coerce_records(
 def _string_tuple(values: Sequence[str] | None, name: str) -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise InvocationEnvelopeValidationError(f"{name} must be a sequence")
     if len(values) > MAX_COLLECTION_ITEMS:
         raise InvocationEnvelopeValidationError(
@@ -2156,19 +1998,13 @@ def validate_invocation_envelope(
     """Validate a fully constructed envelope (round-trip structural check)."""
 
     if not isinstance(envelope, InvocationIntentEnvelope):
-        raise InvocationEnvelopeValidationError(
-            "envelope must be an InvocationIntentEnvelope"
-        )
+        raise InvocationEnvelopeValidationError("envelope must be an InvocationIntentEnvelope")
     # Re-decode from the detached payload to catch any drift or non-frozen state.
     rebuilt = InvocationIntentEnvelope.from_dict(envelope.to_dict())
     if rebuilt.content_digest != envelope.content_digest:
-        raise InvocationEnvelopeValidationError(
-            "envelope identity drifted under revalidation"
-        )
+        raise InvocationEnvelopeValidationError("envelope identity drifted under revalidation")
     if rebuilt.content_cid != envelope.content_cid:
-        raise InvocationEnvelopeValidationError(
-            "envelope CID drifted under revalidation"
-        )
+        raise InvocationEnvelopeValidationError("envelope CID drifted under revalidation")
     return rebuilt
 
 

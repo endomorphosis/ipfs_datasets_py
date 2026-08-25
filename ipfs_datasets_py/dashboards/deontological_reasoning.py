@@ -11,8 +11,8 @@ import warnings
 from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import *  # noqa: F401,F403
 
 warnings.warn(
-	"ipfs_datasets_py.dashboards.deontological_reasoning is deprecated; "
-	"use ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning instead.",
-	DeprecationWarning,
-	stacklevel=2,
+    "ipfs_datasets_py.dashboards.deontological_reasoning is deprecated; "
+    "use ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning instead.",
+    DeprecationWarning,
+    stacklevel=2,
 )

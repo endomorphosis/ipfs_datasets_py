@@ -10,7 +10,7 @@ from .security_monitor import SecurityMonitor, SecurityResult
 from ._error_monitor import ErrorMonitor
 
 from monitors.security_monitor.specific_checks import (
-    make_archive_security, 
+    make_archive_security,
     make_document_security,
     make_image_security,
     make_video_security,
@@ -49,7 +49,7 @@ def make_resource_monitor(mock_dict: Optional[dict[str, Any]] = None) -> Resourc
     if isinstance(mock_dict, dict):
         resources.update(mock_dict)
 
-    return ResourceMonitor(resources=resources,configs=configs)
+    return ResourceMonitor(resources=resources, configs=configs)
 
 
 def make_error_monitor(mock_dict: Optional[dict[str, Any]] = None) -> ErrorMonitor:

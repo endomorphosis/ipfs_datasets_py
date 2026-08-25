@@ -10,11 +10,13 @@ Methods under test:
   - OntologyGenerator.relationship_min_confidence(result)
   - OntologyPipeline.run_improvement_rate()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -27,14 +29,20 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -42,11 +50,13 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_entity(eid, confidence=0.5):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, confidence=confidence)
 
 
@@ -58,6 +68,7 @@ def _make_rel_mock(confidence=0.8):
 
 def _make_result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -67,11 +78,13 @@ def _make_result(entities=None, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -82,6 +95,7 @@ def _push_run(p, score_val):
 
 
 # ── OntologyOptimizer.history_first ──────────────────────────────────────────
+
 
 class TestHistoryFirst:
     def test_empty_returns_zero(self):
@@ -102,6 +116,7 @@ class TestHistoryFirst:
 
 # ── OntologyOptimizer.history_last ───────────────────────────────────────────
 
+
 class TestHistoryLast:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -120,6 +135,7 @@ class TestHistoryLast:
 
 
 # ── OntologyOptimizer.score_first / score_last (aliases) ─────────────────────
+
 
 class TestScoreFirstLast:
     def test_score_first_matches_history_first(self):
@@ -145,35 +161,61 @@ class TestScoreFirstLast:
 
 # ── OntologyCritic.dimension_below_threshold ─────────────────────────────────
 
+
 class TestDimensionBelowThreshold:
     def test_none_below_returns_zero(self):
         c = _make_critic()
-        s = _make_score(completeness=0.8, consistency=0.8, clarity=0.8,
-                        granularity=0.8, relationship_coherence=0.8, domain_alignment=0.8)
+        s = _make_score(
+            completeness=0.8,
+            consistency=0.8,
+            clarity=0.8,
+            granularity=0.8,
+            relationship_coherence=0.8,
+            domain_alignment=0.8,
+        )
         assert c.dimension_below_threshold(s, threshold=0.5) == 0
 
     def test_all_below_returns_six(self):
         c = _make_critic()
-        s = _make_score(completeness=0.1, consistency=0.1, clarity=0.1,
-                        granularity=0.1, relationship_coherence=0.1, domain_alignment=0.1)
+        s = _make_score(
+            completeness=0.1,
+            consistency=0.1,
+            clarity=0.1,
+            granularity=0.1,
+            relationship_coherence=0.1,
+            domain_alignment=0.1,
+        )
         assert c.dimension_below_threshold(s, threshold=0.5) == 6
 
     def test_partial(self):
         c = _make_critic()
-        s = _make_score(completeness=0.2, consistency=0.8, clarity=0.1,
-                        granularity=0.9, relationship_coherence=0.3, domain_alignment=0.7)
+        s = _make_score(
+            completeness=0.2,
+            consistency=0.8,
+            clarity=0.1,
+            granularity=0.9,
+            relationship_coherence=0.3,
+            domain_alignment=0.7,
+        )
         # below 0.5: completeness(0.2), clarity(0.1), relationship_coherence(0.3) = 3
         assert c.dimension_below_threshold(s, threshold=0.5) == 3
 
     def test_default_threshold(self):
         c = _make_critic()
-        s = _make_score(completeness=0.4, consistency=0.6, clarity=0.3,
-                        granularity=0.7, relationship_coherence=0.2, domain_alignment=0.8)
+        s = _make_score(
+            completeness=0.4,
+            consistency=0.6,
+            clarity=0.3,
+            granularity=0.7,
+            relationship_coherence=0.2,
+            domain_alignment=0.8,
+        )
         # < 0.5: completeness(0.4), clarity(0.3), relationship_coherence(0.2) = 3
         assert c.dimension_below_threshold(s) == 3
 
 
 # ── OntologyGenerator.entity_confidence_range ────────────────────────────────
+
 
 class TestEntityConfidenceRange:
     def test_empty_returns_zero(self):
@@ -188,15 +230,18 @@ class TestEntityConfidenceRange:
 
     def test_range_of_multiple(self):
         g = _make_generator()
-        r = _make_result([
-            _make_entity("e1", 0.2),
-            _make_entity("e2", 0.9),
-            _make_entity("e3", 0.5),
-        ])
+        r = _make_result(
+            [
+                _make_entity("e1", 0.2),
+                _make_entity("e2", 0.9),
+                _make_entity("e3", 0.5),
+            ]
+        )
         assert g.entity_confidence_range(r) == pytest.approx(0.7)
 
 
 # ── OntologyGenerator.relationship_min_confidence ────────────────────────────
+
 
 class TestRelationshipMinConfidence:
     def test_empty_returns_zero(self):
@@ -217,6 +262,7 @@ class TestRelationshipMinConfidence:
 
 
 # ── OntologyPipeline.run_improvement_rate ────────────────────────────────────
+
 
 class TestRunImprovementRate:
     def test_empty_returns_zero(self):

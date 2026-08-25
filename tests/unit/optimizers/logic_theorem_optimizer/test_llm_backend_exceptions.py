@@ -90,7 +90,9 @@ def test_router_backend_rejects_non_codex_effective_provider(
 
 
 def test_adapter_generate_falls_back_to_mock_on_typed_backend_error() -> None:
-    adapter = LLMBackendAdapter(preferred_backend="mock", fallback_to_mock=True, enable_caching=False)
+    adapter = LLMBackendAdapter(
+        preferred_backend="mock", fallback_to_mock=True, enable_caching=False
+    )
     adapter.backends = {
         "accelerate": _BrokenBackend(),
         "mock": MockBackend(),
@@ -106,7 +108,9 @@ def test_adapter_generate_falls_back_to_mock_on_typed_backend_error() -> None:
 
 
 def test_adapter_generate_respects_disabled_mock_fallback() -> None:
-    adapter = LLMBackendAdapter(preferred_backend="mock", fallback_to_mock=False, enable_caching=False)
+    adapter = LLMBackendAdapter(
+        preferred_backend="mock", fallback_to_mock=False, enable_caching=False
+    )
     adapter.backends = {
         "accelerate": _BrokenBackend(),
         "mock": MockBackend(),
@@ -141,8 +145,12 @@ def test_accelerate_backend_redacts_sensitive_error_text_in_logs(
     assert "hunter2" not in messages
 
 
-def test_adapter_generate_uses_common_backend_resilience_wrapper(monkeypatch: pytest.MonkeyPatch) -> None:
-    adapter = LLMBackendAdapter(preferred_backend="mock", fallback_to_mock=True, enable_caching=False)
+def test_adapter_generate_uses_common_backend_resilience_wrapper(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    adapter = LLMBackendAdapter(
+        preferred_backend="mock", fallback_to_mock=True, enable_caching=False
+    )
     adapter.backends = {
         "accelerate": MockBackend(),
         "mock": MockBackend(),
@@ -170,7 +178,9 @@ def test_adapter_generate_uses_common_backend_resilience_wrapper(monkeypatch: py
 def test_adapter_generate_falls_back_to_mock_on_retryable_backend_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    adapter = LLMBackendAdapter(preferred_backend="mock", fallback_to_mock=True, enable_caching=False)
+    adapter = LLMBackendAdapter(
+        preferred_backend="mock", fallback_to_mock=True, enable_caching=False
+    )
     adapter.backends = {
         "accelerate": _BrokenBackend(),
         "mock": MockBackend(),
@@ -192,7 +202,9 @@ def test_adapter_generate_falls_back_to_mock_on_retryable_backend_error(
 
 
 def test_generate_stream_does_not_mutate_request_stream_flag() -> None:
-    adapter = LLMBackendAdapter(preferred_backend="mock", fallback_to_mock=True, enable_caching=False)
+    adapter = LLMBackendAdapter(
+        preferred_backend="mock", fallback_to_mock=True, enable_caching=False
+    )
     request = LLMRequest(prompt="stream test", stream=False)
 
     chunks = list(adapter.generate_stream(request))
@@ -201,8 +213,12 @@ def test_generate_stream_does_not_mutate_request_stream_flag() -> None:
     assert request.stream is False
 
 
-def test_generate_batch_uses_common_backend_resilience_wrapper(monkeypatch: pytest.MonkeyPatch) -> None:
-    adapter = LLMBackendAdapter(preferred_backend="mock", fallback_to_mock=True, enable_caching=False)
+def test_generate_batch_uses_common_backend_resilience_wrapper(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    adapter = LLMBackendAdapter(
+        preferred_backend="mock", fallback_to_mock=True, enable_caching=False
+    )
     adapter.backends = {
         "accelerate": _BatchBackend(),
         "mock": MockBackend(),
@@ -231,7 +247,9 @@ def test_adapter_generate_redacts_sensitive_error_text_in_logs(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    adapter = LLMBackendAdapter(preferred_backend="mock", fallback_to_mock=True, enable_caching=False)
+    adapter = LLMBackendAdapter(
+        preferred_backend="mock", fallback_to_mock=True, enable_caching=False
+    )
     adapter.backends = {
         "accelerate": _BrokenBackend(),
         "mock": MockBackend(),

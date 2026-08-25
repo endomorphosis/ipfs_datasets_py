@@ -22,7 +22,14 @@ from ipfs_datasets_py.logic.zkp.backends.groth16 import Groth16Backend
 
 def _fixture_path() -> Path:
     for parent in Path(__file__).resolve().parents:
-        candidate = parent / "Mcp-Plus-Plus" / "tests-py" / "fixtures" / "valid" / "profile_f_groth16_mpc_ceremony.json"
+        candidate = (
+            parent
+            / "Mcp-Plus-Plus"
+            / "tests-py"
+            / "fixtures"
+            / "valid"
+            / "profile_f_groth16_mpc_ceremony.json"
+        )
         if candidate.is_file():
             return candidate
     raise RuntimeError("shared MCP++ ceremony fixture is unavailable")
@@ -60,7 +67,10 @@ def test_shared_profile_f_fixture_is_production_eligible() -> None:
     assert result.independent_contributors == ("did:key:z6MkhAlice", "did:key:z6MkhBob")
     assert result.reasons == ()
     assert result.ceremony_cid == ceremony_cid(manifest)
-    assert result.ceremony_cid == "sha256:645338f97ee9f1d17529c4be2b88f928b8bc4c19d906172f0ba0d269780f04b8"
+    assert (
+        result.ceremony_cid
+        == "sha256:645338f97ee9f1d17529c4be2b88f928b8bc4c19d906172f0ba0d269780f04b8"
+    )
     assert_production_eligible_groth16_ceremony(manifest)
 
 
@@ -102,7 +112,9 @@ def test_artifact_cid_must_match_its_hash() -> None:
     assert "incomplete_finalization" in result.reasons
 
 
-def test_arkworks_admission_binds_expected_circuit_and_local_verification_key(tmp_path: Path) -> None:
+def test_arkworks_admission_binds_expected_circuit_and_local_verification_key(
+    tmp_path: Path,
+) -> None:
     proving_key = tmp_path / "proving_key.bin"
     verifying_key = tmp_path / "verifying_key.bin"
     proving_key.write_bytes(b"independently-generated-arkworks-proving-key")
@@ -145,7 +157,9 @@ def test_arkworks_admission_rejects_missing_format_or_local_key_mismatch(tmp_pat
         )
 
 
-def test_arkworks_admission_rejects_a_proving_key_that_is_not_in_the_manifest(tmp_path: Path) -> None:
+def test_arkworks_admission_rejects_a_proving_key_that_is_not_in_the_manifest(
+    tmp_path: Path,
+) -> None:
     proving_key = tmp_path / "proving_key.bin"
     verifying_key = tmp_path / "verifying_key.bin"
     proving_key.write_bytes(b"first-proving-key")
@@ -175,7 +189,9 @@ def test_backend_admits_only_the_key_in_an_arkworks_mpc_manifest(
     proving_key.write_bytes(b"arkworks-pk")
     verifying_key.write_bytes(b"arkworks-vk")
     manifest_path = tmp_path / "ceremony.json"
-    manifest_path.write_text(json.dumps(_arkworks_manifest(proving_key, verifying_key)), encoding="utf-8")
+    manifest_path.write_text(
+        json.dumps(_arkworks_manifest(proving_key, verifying_key)), encoding="utf-8"
+    )
 
     monkeypatch.setenv("IPFS_DATASETS_ENABLE_GROTH16", "1")
     monkeypatch.setenv("IPFS_DATASETS_REQUIRE_MPC_CEREMONY", "1")
@@ -217,7 +233,9 @@ def test_mcpplusplus_validator_method_returns_the_shared_contract() -> None:
     assert response["result"]["production_eligible"] is True
 
 
-def test_single_rng_backend_fails_closed_when_mpc_is_required(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_single_rng_backend_fails_closed_when_mpc_is_required(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("IPFS_DATASETS_ENABLE_GROTH16", "1")
     monkeypatch.setenv("IPFS_DATASETS_REQUIRE_MPC_CEREMONY", "1")
 

@@ -16,7 +16,7 @@ from ipfs_datasets_py.mcp_server.tools.functions import execute_python_snippet
 result = await execute_python_snippet(
     code="import math\nprint(math.pi)\nresult = math.sqrt(16)",
     timeout=10,
-    allowed_imports=["math", "json", "datetime"]
+    allowed_imports=["math", "json", "datetime"],
 )
 # Returns: {"stdout": "3.14159...\n", "stderr": "", "return_value": None, "exit_code": 0}
 ```

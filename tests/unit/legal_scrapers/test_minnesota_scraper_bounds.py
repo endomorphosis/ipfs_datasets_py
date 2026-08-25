@@ -130,7 +130,9 @@ async def test_base_fetch_timeout_is_capped_by_bounded_run_env(monkeypatch) -> N
     monkeypatch.setattr(scraper, "_fetch_page_content_with_unified_api", fake_unified_fetch)
     monkeypatch.setattr(scraper, "_cache_successful_page_fetch", fake_store)
 
-    payload = await scraper._fetch_page_content_with_archival_fallback("https://example.test/code", timeout_seconds=30)
+    payload = await scraper._fetch_page_content_with_archival_fallback(
+        "https://example.test/code", timeout_seconds=30
+    )
 
     assert payload == b"<html>ok</html>"
     assert observed["timeout_seconds"] == 3
@@ -142,9 +144,17 @@ async def test_kentucky_scrape_code_honors_max_statutes(monkeypatch) -> None:
     built: list[str] = []
 
     async def fake_discover_chapter_links() -> list[tuple[str, str, str]]:
-        return [("https://apps.legislature.ky.gov/law/statutes/chapter.aspx?id=37024", "CHAPTER 1 BOUNDARIES", "1")]
+        return [
+            (
+                "https://apps.legislature.ky.gov/law/statutes/chapter.aspx?id=37024",
+                "CHAPTER 1 BOUNDARIES",
+                "1",
+            )
+        ]
 
-    async def fake_discover_section_links(chapter_url: str, chapter_label: str, chapter_number: str) -> list[tuple[str, str, str, str]]:
+    async def fake_discover_section_links(
+        chapter_url: str, chapter_label: str, chapter_number: str
+    ) -> list[tuple[str, str, str, str]]:
         assert chapter_number == "1"
         return [
             (
@@ -208,7 +218,11 @@ async def test_kentucky_discovers_official_chapters_and_sections(monkeypatch) ->
     )
 
     assert chapters == [
-        ("https://apps.legislature.ky.gov/law/statutes/chapter.aspx?id=37024", "CHAPTER 1 BOUNDARIES", "1")
+        (
+            "https://apps.legislature.ky.gov/law/statutes/chapter.aspx?id=37024",
+            "CHAPTER 1 BOUNDARIES",
+            "1",
+        )
     ]
     assert [section[2] for section in sections] == ["1.010", "1.020"]
     assert all("/law/statutes/statute.aspx?id=" in section[0] for section in sections)
@@ -431,13 +445,17 @@ async def test_arkansas_scrape_code_honors_max_statutes(monkeypatch) -> None:
     scraper = ArkansasScraper("AR", "Arkansas")
     observed: dict[str, int] = {}
 
-    async def fake_scrape_justia_titles(code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def fake_scrape_justia_titles(
+        code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         observed["max_statutes"] = max_statutes
         statutes = [_statute(index) for index in range(5)]
         for index, statute in enumerate(statutes):
             statute.state_code = "AR"
             statute.state_name = "Arkansas"
-            statute.source_url = f"https://law.justia.com/codes/arkansas/title-1/chapter-1/section-1-1-{index}/"
+            statute.source_url = (
+                f"https://law.justia.com/codes/arkansas/title-1/chapter-1/section-1-1-{index}/"
+            )
         return statutes
 
     monkeypatch.setattr(scraper, "_scrape_justia_titles", fake_scrape_justia_titles)
@@ -456,9 +474,13 @@ async def test_arkansas_scrape_code_honors_max_statutes(monkeypatch) -> None:
 async def test_alabama_graphql_scrape_code_honors_max_statutes(monkeypatch) -> None:
     scraper = AlabamaScraper("AL", "Alabama")
 
-    async def fake_graphql(query: str, variables: dict | None = None, timeout_seconds: int = 15) -> dict:
+    async def fake_graphql(
+        query: str, variables: dict | None = None, timeout_seconds: int = 15
+    ) -> dict:
         if "codeOfAlabamaScaffold" in query:
-            return {"scaffold": "†∫codeId†parentId†displayId∫2∫14512†2∫14515†14512†1-1-1∫14528†14512†1-1-2"}
+            return {
+                "scaffold": "†∫codeId†parentId†displayId∫2∫14512†2∫14515†14512†1-1-1∫14528†14512†1-1-2"
+            }
         assert variables == {"parentId": ["14512"]}
         return {
             "codeItems": {
@@ -494,7 +516,10 @@ async def test_alabama_graphql_scrape_code_honors_max_statutes(monkeypatch) -> N
     assert len(statutes) == 1
     assert statutes[0].section_number == "1-1-1"
     assert statutes[0].official_cite == "Ala. Code § 1-1-1"
-    assert statutes[0].source_url == "https://alison.legislature.state.al.us/code-of-alabama?section=1-1-1"
+    assert (
+        statutes[0].source_url
+        == "https://alison.legislature.state.al.us/code-of-alabama?section=1-1-1"
+    )
     assert statutes[0].structured_data["source_kind"] == "official_alison_graphql"
 
 
@@ -502,15 +527,21 @@ async def test_alabama_graphql_scrape_code_honors_max_statutes(monkeypatch) -> N
 async def test_mississippi_archive_fallback_uses_bounded_attempts(monkeypatch) -> None:
     scraper = MississippiScraper("MS", "Mississippi")
     calls: list[dict[str, object]] = []
-    long_history = (
-        "House Bill 0001\n"
-        "Description: Test education bill.\n"
-        "History of Actions:\n"
-        + ("Action taken by chamber. " * 40)
+    long_history = "House Bill 0001\nDescription: Test education bill.\nHistory of Actions:\n" + (
+        "Action taken by chamber. " * 40
     )
 
-    async def fake_request_text(url: str, headers: dict[str, str], timeout: int, attempts: int = 3) -> str:
-        calls.append({"url": url, "timeout": timeout, "attempts": attempts, "bounded": headers.get("X-Bounded-Scrape")})
+    async def fake_request_text(
+        url: str, headers: dict[str, str], timeout: int, attempts: int = 3
+    ) -> str:
+        calls.append(
+            {
+                "url": url,
+                "timeout": timeout,
+                "attempts": attempts,
+                "bounded": headers.get("X-Bounded-Scrape"),
+            }
+        )
         if "allmsrs" in url:
             return '<a href="../history/HB0001.htm">HB 1</a>'
         return long_history

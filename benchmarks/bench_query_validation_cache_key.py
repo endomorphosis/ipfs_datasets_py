@@ -33,7 +33,11 @@ def _build_nested_payload(width: int, depth: int) -> dict:
                 for i in range(width)
             ],
             "relationships": [
-                {"source": f"e-{d}-{i}", "target": f"e-{d}-{(i + 1) % max(width, 1)}", "type": "rel"}
+                {
+                    "source": f"e-{d}-{i}",
+                    "target": f"e-{d}-{(i + 1) % max(width, 1)}",
+                    "type": "rel",
+                }
                 for i in range(width)
             ],
         }
@@ -72,12 +76,8 @@ def main() -> None:
 
     report = {
         name: {
-            "include_class_name_true": _run_case(
-                mixin, payload, include_class_name=True
-            ),
-            "include_class_name_false": _run_case(
-                mixin, payload, include_class_name=False
-            ),
+            "include_class_name_true": _run_case(mixin, payload, include_class_name=True),
+            "include_class_name_false": _run_case(mixin, payload, include_class_name=False),
         }
         for name, payload in cases.items()
     }

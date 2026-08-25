@@ -132,6 +132,7 @@ Core implementation: ipfs_datasets_py.core_operations.knowledge_graph_manager
 
 from ipfs_datasets_py.core_operations import KnowledgeGraphManager
 
+
 async def tool_function(params):
     """Delegate to core module with error handling."""
     try:

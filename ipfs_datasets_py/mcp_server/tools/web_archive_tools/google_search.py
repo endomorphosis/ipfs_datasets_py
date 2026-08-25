@@ -8,6 +8,7 @@ Business logic has been extracted to the canonical package module:
 
 This file is now a thin re-export shim so existing imports continue to work.
 """
+
 from typing import Any, Dict
 
 try:
@@ -17,6 +18,7 @@ try:
         batch_search_google,
     )
 except (ImportError, ModuleNotFoundError):
+
     async def search_google(*args: Any, **kwargs: Any) -> Dict[str, Any]:
         return {"error": "Google search engine unavailable", "results": []}
 

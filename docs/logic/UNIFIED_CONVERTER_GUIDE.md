@@ -104,12 +104,7 @@ print(stats)  # {'conversions': 1, 'avg_time': 0.05, ...}
 from ipfs_datasets_py.logic.fol import FOLConverter
 
 # Initialize with features
-converter = FOLConverter(
-    use_cache=True,
-    use_ml=True,
-    use_nlp=True,
-    enable_monitoring=True
-)
+converter = FOLConverter(use_cache=True, use_ml=True, use_nlp=True, enable_monitoring=True)
 
 # Single conversion
 result = converter.convert("All humans are mortal")
@@ -122,11 +117,7 @@ if result.success:
 
 ```python
 # Batch conversion (5-8x faster)
-texts = [
-    "All humans are mortal",
-    "Socrates is a human",
-    "Therefore Socrates is mortal"
-]
+texts = ["All humans are mortal", "Socrates is a human", "Therefore Socrates is mortal"]
 
 results = converter.convert_batch(texts, max_workers=4)
 successful = [r for r in results if r.success]
@@ -145,11 +136,7 @@ result = await converter.convert_async("text")
 ```python
 from ipfs_datasets_py.logic.deontic import DeonticConverter
 
-converter = DeonticConverter(
-    jurisdiction="us",
-    document_type="statute",
-    use_cache=True
-)
+converter = DeonticConverter(jurisdiction="us", document_type="statute", use_cache=True)
 
 result = converter.convert("The tenant must pay rent monthly")
 print(f"Operator: {result.output.operator}")  # OBLIGATION
@@ -162,10 +149,12 @@ Legacy async functions still work with deprecation warnings:
 ```python
 # Old way (deprecated)
 from ipfs_datasets_py.logic.fol import convert_text_to_fol
+
 result = await convert_text_to_fol("text")  # DeprecationWarning
 
 # New way (recommended)
 from ipfs_datasets_py.logic.fol import FOLConverter
+
 converter = FOLConverter()
 result = await converter.convert_async("text")
 ```
@@ -194,9 +183,10 @@ Follow this pattern to create additional converters:
 from ipfs_datasets_py.logic.common.converters import LogicConverter
 from ipfs_datasets_py.logic.types import YourFormulaType
 
+
 class YourConverter(LogicConverter[str, YourFormulaType]):
     """Your converter description."""
-    
+
     def __init__(
         self,
         use_cache: bool = True,
@@ -207,7 +197,7 @@ class YourConverter(LogicConverter[str, YourFormulaType]):
         # Initialize your features
         self.use_ml = use_ml
         # ML scorer, monitoring, etc.
-    
+
     def validate_input(self, text: str) -> ValidationResult:
         """Validate input."""
         result = ValidationResult(valid=True)
@@ -215,7 +205,7 @@ class YourConverter(LogicConverter[str, YourFormulaType]):
             result.valid = False
             result.add_error("Input cannot be empty")
         return result
-    
+
     def _convert_impl(self, text: str, options: Dict) -> YourFormulaType:
         """Core conversion logic."""
         # Your conversion implementation
@@ -223,20 +213,18 @@ class YourConverter(LogicConverter[str, YourFormulaType]):
         # Calculate confidence
         # Return formula
         pass
-    
+
     def convert_batch(self, texts: List[str], max_workers: int = 4):
         """Batch conversion."""
         from ..batch_processing import BatchProcessor
+
         # Use batch processor
         pass
-    
+
     async def convert_async(self, text: str, **kwargs):
         """Async wrapper."""
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
-            lambda: self.convert(text, **kwargs)
-        )
+        return await loop.run_in_executor(None, lambda: self.convert(text, **kwargs))
 ```
 
 ## Testing

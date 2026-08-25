@@ -280,12 +280,8 @@ class CorpusSource:
         _require_nonempty_str(self.name, field_name="name", owner="CorpusSource")
         if not isinstance(self.source_itp, ITPKind):
             raise ValueError("CorpusSource.source_itp must be an ITPKind")
-        _require_nonempty_str(
-            self.version_ref, field_name="version_ref", owner="CorpusSource"
-        )
-        _require_nonempty_str(
-            self.license_id, field_name="license_id", owner="CorpusSource"
-        )
+        _require_nonempty_str(self.version_ref, field_name="version_ref", owner="CorpusSource")
+        _require_nonempty_str(self.license_id, field_name="license_id", owner="CorpusSource")
         if self.license_url is not None and not isinstance(self.license_url, str):
             raise ValueError("CorpusSource.license_url must be a string or None")
         if self.homepage is not None and not isinstance(self.homepage, str):
@@ -460,9 +456,7 @@ class TheoremEntry:
                 "TheoremEntry.statement_digest must be a 'sha256:<hex>' digest, got "
                 f"{self.statement_digest!r}"
             )
-        _require_nonempty_str(
-            self.license_id, field_name="license_id", owner="TheoremEntry"
-        )
+        _require_nonempty_str(self.license_id, field_name="license_id", owner="TheoremEntry")
         if self.license_url is not None and not isinstance(self.license_url, str):
             raise ValueError("TheoremEntry.license_url must be a string or None")
         _require_nonempty_str(
@@ -534,8 +528,7 @@ class CorpusManifest:
 
         payload = {
             "sources": {
-                corpus_id: source.to_dict()
-                for corpus_id, source in sorted(self.sources.items())
+                corpus_id: source.to_dict() for corpus_id, source in sorted(self.sources.items())
             },
             "entries": {
                 theorem_id: entry._revision_payload()
@@ -639,9 +632,7 @@ class CorpusManifest:
             )
 
         resolved_license_id = license_id if license_id is not None else source.license_id
-        resolved_license_url = (
-            license_url if license_url is not None else source.license_url
-        )
+        resolved_license_url = license_url if license_url is not None else source.license_url
 
         candidate = TheoremEntry.create(
             theorem_id=theorem_id,
@@ -704,9 +695,7 @@ class CorpusManifest:
 
     def validate(self) -> None:
         _require_schema_version(self.schema_version, owner="CorpusManifest")
-        _require_nonempty_str(
-            self.manifest_id, field_name="manifest_id", owner="CorpusManifest"
-        )
+        _require_nonempty_str(self.manifest_id, field_name="manifest_id", owner="CorpusManifest")
         if not isinstance(self.sources, dict):
             raise ValueError("CorpusManifest.sources must be a dict")
         for corpus_id, source in self.sources.items():
@@ -732,8 +721,7 @@ class CorpusManifest:
             entry.validate()
             if entry.corpus_id not in self.sources:
                 raise ValueError(
-                    f"theorem_id {theorem_id!r} references undeclared corpus_id "
-                    f"{entry.corpus_id!r}"
+                    f"theorem_id {theorem_id!r} references undeclared corpus_id {entry.corpus_id!r}"
                 )
 
         if not isinstance(self.metadata, dict):
@@ -744,12 +732,8 @@ class CorpusManifest:
             "schema_version": self.schema_version,
             "manifest_id": self.manifest_id,
             "revision": self.revision,
-            "sources": {
-                corpus_id: source.to_dict() for corpus_id, source in self.sources.items()
-            },
-            "entries": {
-                theorem_id: entry.to_dict() for theorem_id, entry in self.entries.items()
-            },
+            "sources": {corpus_id: source.to_dict() for corpus_id, source in self.sources.items()},
+            "entries": {theorem_id: entry.to_dict() for theorem_id, entry in self.entries.items()},
             "created_at": _isoformat(self.created_at),
             "metadata": self.metadata,
         }
@@ -765,12 +749,10 @@ class CorpusManifest:
 
         manifest = cls(**data)
         manifest.sources = {
-            corpus_id: CorpusSource.from_dict(source)
-            for corpus_id, source in sources_data.items()
+            corpus_id: CorpusSource.from_dict(source) for corpus_id, source in sources_data.items()
         }
         manifest.entries = {
-            theorem_id: TheoremEntry.from_dict(entry)
-            for theorem_id, entry in entries_data.items()
+            theorem_id: TheoremEntry.from_dict(entry) for theorem_id, entry in entries_data.items()
         }
         manifest.validate()
         return manifest

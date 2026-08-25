@@ -79,7 +79,7 @@ from ipfs_datasets_py.processors.web_archiving import (
     brave_web_search,
     brave_web_search_page,
     brave_search_cache_stats,
-    clear_brave_search_cache
+    clear_brave_search_cache,
 )
 
 # Synchronous search with caching
@@ -89,15 +89,11 @@ results = brave_web_search(
     count=10,
     offset=0,
     country="us",
-    safesearch="moderate"
+    safesearch="moderate",
 )
 
 # Search with pagination
-page = brave_web_search_page(
-    query="artificial intelligence",
-    count=20,
-    offset=0
-)
+page = brave_web_search_page(query="artificial intelligence", count=20, offset=0)
 
 # Cache management
 stats = brave_search_cache_stats()
@@ -115,20 +111,16 @@ from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (
     search_brave_news,
     search_brave_images,
     get_brave_cache_stats,
-    clear_brave_cache
+    clear_brave_cache,
 )
 
 # Async search (uses aiohttp)
-result = await search_brave(
-    query="web development",
-    count=15,
-    safesearch="moderate"
-)
+result = await search_brave(query="web development", count=15, safesearch="moderate")
 
 # Get cache stats via MCP
 stats = await get_brave_cache_stats()
 print(f"Status: {stats['status']}")
-if stats['status'] == 'success':
+if stats["status"] == "success":
     print(f"Cache entries: {stats['entries']}")
 
 # Clear cache via MCP
@@ -144,15 +136,16 @@ The Brave Search client is now available to all web archiving tools:
 # In your custom web scraping tool
 from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
 
+
 class MyWebScraper:
     def __init__(self):
         self.search_client = BraveSearchClient()
-    
+
     def find_related_content(self, topic):
         # Use Brave Search to find related URLs
         results = self.search_client.search(topic, count=20)
-        urls = [r['url'] for r in results]
-        
+        urls = [r["url"] for r in results]
+
         # Then scrape the discovered URLs
         return self.scrape_urls(urls)
 ```

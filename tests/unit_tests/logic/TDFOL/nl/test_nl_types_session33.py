@@ -42,6 +42,7 @@ from ipfs_datasets_py.logic.TDFOL.nl.tdfol_nl_api import (
 # PatternType enum
 # ---------------------------------------------------------------------------
 
+
 class TestPatternTypeEnum:
     """Test PatternType enum values."""
 
@@ -61,6 +62,7 @@ class TestPatternTypeEnum:
 # ---------------------------------------------------------------------------
 # Pattern dataclass
 # ---------------------------------------------------------------------------
+
 
 class TestPatternDataclass:
     """Test Pattern dataclass construction and behaviour."""
@@ -124,6 +126,7 @@ class TestPatternDataclass:
 # PatternMatch dataclass
 # ---------------------------------------------------------------------------
 
+
 class TestPatternMatchDataclass:
     """Test PatternMatch dataclass construction."""
 
@@ -145,9 +148,7 @@ class TestPatternMatchDataclass:
 
     def test_optional_fields_default(self):
         p = self._make_pattern()
-        pm = PatternMatch(
-            pattern=p, span=(0, 5), text="test", entities={}, confidence=0.8
-        )
+        pm = PatternMatch(pattern=p, span=(0, 5), text="test", entities={}, confidence=0.8)
         assert pm.spacy_span is None
         assert pm.metadata == {}
 
@@ -162,6 +163,7 @@ class TestPatternMatchDataclass:
 # ---------------------------------------------------------------------------
 # PatternMatcher non-spaCy methods (via object.__new__ bypass)
 # ---------------------------------------------------------------------------
+
 
 class TestPatternMatcherBypassMethods:
     """Test PatternMatcher methods that don't require spaCy."""
@@ -230,6 +232,7 @@ class TestPatternMatcherBypassMethods:
 # EntityType enum
 # ---------------------------------------------------------------------------
 
+
 class TestEntityTypeEnum:
     """Test EntityType enum values."""
 
@@ -250,6 +253,7 @@ class TestEntityTypeEnum:
 # Entity dataclass
 # ---------------------------------------------------------------------------
 
+
 class TestEntityDataclass:
     """Test Entity dataclass construction and hashing."""
 
@@ -264,8 +268,14 @@ class TestEntityDataclass:
         assert e.metadata == {}
 
     def test_with_lemma_and_metadata(self):
-        e = Entity(text="paying", type=EntityType.ACTION, start=0, end=6,
-                   lemma="pay", metadata={"pos": "VERB"})
+        e = Entity(
+            text="paying",
+            type=EntityType.ACTION,
+            start=0,
+            end=6,
+            lemma="pay",
+            metadata={"pos": "VERB"},
+        )
         assert e.lemma == "pay"
         assert e.metadata["pos"] == "VERB"
 
@@ -288,6 +298,7 @@ class TestEntityDataclass:
 # ---------------------------------------------------------------------------
 # TemporalExpression dataclass
 # ---------------------------------------------------------------------------
+
 
 class TestTemporalExpressionDataclass:
     """Test TemporalExpression construction."""
@@ -313,6 +324,7 @@ class TestTemporalExpressionDataclass:
 # DependencyRelation dataclass
 # ---------------------------------------------------------------------------
 
+
 class TestDependencyRelationDataclass:
     """Test DependencyRelation construction."""
 
@@ -326,6 +338,7 @@ class TestDependencyRelationDataclass:
 # ---------------------------------------------------------------------------
 # ProcessedDocument dataclass
 # ---------------------------------------------------------------------------
+
 
 class TestProcessedDocumentDataclass:
     """Test ProcessedDocument construction."""
@@ -343,7 +356,9 @@ class TestProcessedDocumentDataclass:
         assert doc.modalities == ["must"]
 
     def test_optional_fields(self):
-        doc = ProcessedDocument(text="", sentences=[], entities=[], temporal=[], modalities=[], dependencies=[])
+        doc = ProcessedDocument(
+            text="", sentences=[], entities=[], temporal=[], modalities=[], dependencies=[]
+        )
         assert doc.spacy_doc is None
         assert doc.metadata == {}
 
@@ -352,6 +367,7 @@ class TestProcessedDocumentDataclass:
 # NLPreprocessor._extract_temporal_expressions (via bypass)
 # ---------------------------------------------------------------------------
 
+
 class TestNLPreprocessorTemporalExtraction:
     """Test NLPreprocessor._extract_temporal_expressions without spaCy."""
 
@@ -359,11 +375,11 @@ class TestNLPreprocessorTemporalExtraction:
         """Create NLPreprocessor bypassing spaCy __init__."""
         preprocessor = object.__new__(NLPreprocessor)
         preprocessor.temporal_patterns = [
-            (r'within\s+(\d+)\s+(day|week|month|year)s?', 'deadline'),
-            (r'after\s+(\d+)\s+(day|week|month|year)s?', 'deadline'),
-            (r'before\s+(\d+)\s+(day|week|month|year)s?', 'deadline'),
-            (r'for\s+(\d+)\s+(day|week|month|year)s?', 'duration'),
-            (r'every\s+(\d+)\s+(day|week|month|year)s?', 'frequency'),
+            (r"within\s+(\d+)\s+(day|week|month|year)s?", "deadline"),
+            (r"after\s+(\d+)\s+(day|week|month|year)s?", "deadline"),
+            (r"before\s+(\d+)\s+(day|week|month|year)s?", "deadline"),
+            (r"for\s+(\d+)\s+(day|week|month|year)s?", "duration"),
+            (r"every\s+(\d+)\s+(day|week|month|year)s?", "frequency"),
         ]
         return preprocessor
 
@@ -427,6 +443,7 @@ class TestNLPreprocessorTemporalExtraction:
 # NLPreprocessor.extract_agents_actions_objects (via bypass)
 # ---------------------------------------------------------------------------
 
+
 class TestExtractAgentsActionsObjects:
     """Test extract_agents_actions_objects without spaCy."""
 
@@ -466,7 +483,9 @@ class TestExtractAgentsActionsObjects:
 
     def test_empty_entities(self):
         preprocessor = object.__new__(NLPreprocessor)
-        doc = ProcessedDocument(text="", sentences=[], entities=[], temporal=[], modalities=[], dependencies=[])
+        doc = ProcessedDocument(
+            text="", sentences=[], entities=[], temporal=[], modalities=[], dependencies=[]
+        )
         agents, actions, objects = preprocessor.extract_agents_actions_objects(doc)
         assert agents == []
         assert actions == []
@@ -477,6 +496,7 @@ class TestExtractAgentsActionsObjects:
 # NLPreprocessor.__init__ ImportError
 # ---------------------------------------------------------------------------
 
+
 class TestNLPreprocessorInitError:
     """Test NLPreprocessor raises ImportError when spaCy not available."""
 
@@ -484,6 +504,7 @@ class TestNLPreprocessorInitError:
         """GIVEN spaCy not installed THEN NLPreprocessor() raises ImportError."""
         # In this test environment, spaCy is not installed
         from ipfs_datasets_py.logic.TDFOL.nl.utils import HAVE_SPACY
+
         if not HAVE_SPACY:
             with pytest.raises(ImportError):
                 NLPreprocessor()
@@ -494,6 +515,7 @@ class TestNLPreprocessorInitError:
 # ---------------------------------------------------------------------------
 # ParseOptions dataclass
 # ---------------------------------------------------------------------------
+
 
 class TestParseOptionsDataclass:
     """Test ParseOptions dataclass."""
@@ -516,6 +538,7 @@ class TestParseOptionsDataclass:
 # ---------------------------------------------------------------------------
 # ParseResult dataclass
 # ---------------------------------------------------------------------------
+
 
 class TestParseResultDataclass:
     """Test ParseResult dataclass."""
@@ -542,11 +565,13 @@ class TestParseResultDataclass:
 # NLParser ImportError
 # ---------------------------------------------------------------------------
 
+
 class TestNLParserImportError:
     """Test NLParser raises ImportError when spaCy not available."""
 
     def test_nlparser_raises_import_error(self):
         from ipfs_datasets_py.logic.TDFOL.nl.tdfol_nl_api import DEPENDENCIES_AVAILABLE
+
         if not DEPENDENCIES_AVAILABLE:
             with pytest.raises(ImportError):
                 NLParser()
@@ -555,6 +580,7 @@ class TestNLParserImportError:
 
     def test_parse_natural_language_raises_import_error(self):
         from ipfs_datasets_py.logic.TDFOL.nl.tdfol_nl_api import DEPENDENCIES_AVAILABLE
+
         if not DEPENDENCIES_AVAILABLE:
             with pytest.raises(ImportError):
                 parse_natural_language("All contractors must pay taxes.")
@@ -563,6 +589,7 @@ class TestNLParserImportError:
 
     def test_parse_natural_language_batch_raises_import_error(self):
         from ipfs_datasets_py.logic.TDFOL.nl.tdfol_nl_api import DEPENDENCIES_AVAILABLE
+
         if not DEPENDENCIES_AVAILABLE:
             with pytest.raises(ImportError):
                 parse_natural_language_batch(["All contractors must pay taxes."])

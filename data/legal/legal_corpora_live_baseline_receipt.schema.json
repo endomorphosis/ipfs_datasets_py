@@ -1,0 +1,474 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/legal-corpora-live-baseline-receipt-v2.schema.json",
+  "title": "Legal Corpora Live Baseline Provenance Receipt v2",
+  "description": "LCR-081 fail-closed authenticated live baseline receipt. Production live mode rejects fixtures and mutable revisions. Nested digests and the no-self-field root digest must independently recompute. Constants never satisfy an observation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "schema_file",
+    "task_id",
+    "goal_id",
+    "program_id",
+    "producer",
+    "code_version",
+    "mode",
+    "transport",
+    "network_required",
+    "live_hub_contacted",
+    "fixture_only",
+    "observed_at",
+    "authenticated_identity",
+    "pins",
+    "requests",
+    "state_laws",
+    "federal_register",
+    "local_salvage",
+    "dispositions",
+    "sealed_expectations",
+    "counts_recomputed",
+    "acceptance",
+    "digests",
+    "unsuitable_as_source_of_truth",
+    "evidence_role",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ipfs_datasets_py/legal-corpora-reindex-live-baseline-provenance@2"
+    },
+    "schema_version": { "const": "2" },
+    "schema_file": {
+      "const": "data/legal/legal_corpora_live_baseline_receipt.schema.json"
+    },
+    "task_id": { "const": "LCR-081" },
+    "goal_id": { "const": "LCR-G143" },
+    "program_id": { "const": "legal-corpora-reindex-v1" },
+    "producer": { "const": "audit_legal_corpora_live_baseline.py@2" },
+    "code_version": { "const": "2" },
+    "mode": { "enum": ["live", "dry-run"] },
+    "transport": { "enum": ["urllib_https", "scripted", "dry-run"] },
+    "network_required": { "type": "boolean" },
+    "live_hub_contacted": { "type": "boolean" },
+    "fixture_only": { "const": false },
+    "observed_at": { "$ref": "#/$defs/utcTimestamp" },
+    "authenticated_identity": { "$ref": "#/$defs/identity" },
+    "pins": { "$ref": "#/$defs/pins" },
+    "requests": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/requestRecord" }
+    },
+    "state_laws": { "$ref": "#/$defs/stateObservation" },
+    "federal_register": { "$ref": "#/$defs/federalObservation" },
+    "local_salvage": { "$ref": "#/$defs/salvageObservation" },
+    "dispositions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/disposition" }
+    },
+    "sealed_expectations": { "type": "object" },
+    "counts_recomputed": { "type": "object" },
+    "acceptance": { "type": "object" },
+    "digests": { "$ref": "#/$defs/nestedDigests" },
+    "unsuitable_as_source_of_truth": { "type": "boolean" },
+    "evidence_role": { "type": "string", "minLength": 1 },
+    "dry_run_note": { "type": "string" },
+    "receipt_sha256": { "$ref": "#/$defs/sha256" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "mode": { "const": "live" } }, "required": ["mode"] },
+      "then": {
+        "properties": {
+          "fixture_only": { "const": false }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "commitSha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,6})?Z$"
+    },
+    "hubHttps": {
+      "type": "string",
+      "pattern": "^https://(huggingface\\.co|datasets-server\\.huggingface\\.co)/"
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authenticated",
+        "token_present",
+        "token_source",
+        "whoami_endpoint",
+        "whoami_response_sha256",
+        "name",
+        "type"
+      ],
+      "properties": {
+        "authenticated": { "const": true },
+        "token_present": { "const": true },
+        "token_source": { "type": "string", "minLength": 1 },
+        "whoami_endpoint": {
+          "const": "https://huggingface.co/api/whoami-v2"
+        },
+        "whoami_response_sha256": { "$ref": "#/$defs/sha256" },
+        "name": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1 },
+        "id": { "type": ["string", "null"] },
+        "orgs": { "type": "array" },
+        "auth_type": { "type": ["string", "null"] },
+        "token_role": { "type": ["string", "null"] },
+        "token_display_name": { "type": ["string", "null"] }
+      }
+    },
+    "pins": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state_laws", "federal_register"],
+      "properties": {
+        "state_laws": {
+          "const": "42f0546acc7c6cd55627eaf51fb820d5613b9021"
+        },
+        "federal_register": {
+          "const": "720668ae016cc400916dda884c9005e03618edfa"
+        }
+      }
+    },
+    "requestRecord": {
+      "type": "object",
+      "required": ["endpoint", "method", "status", "response_sha256"],
+      "properties": {
+        "endpoint": { "$ref": "#/$defs/hubHttps" },
+        "method": { "type": "string", "minLength": 1 },
+        "status": { "type": "integer" },
+        "response_sha256": { "$ref": "#/$defs/sha256" },
+        "content_type": { "type": ["string", "null"] },
+        "byte_length": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "inventoryEntry": {
+      "type": "object",
+      "required": ["path", "type"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["file", "directory"] },
+        "size_bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "blob_id": { "type": ["string", "null"] },
+        "lfs_sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] }
+      }
+    },
+    "treePage": {
+      "type": "object",
+      "required": ["endpoint", "status", "response_sha256", "item_count"],
+      "properties": {
+        "endpoint": { "$ref": "#/$defs/hubHttps" },
+        "status": { "type": "integer" },
+        "response_sha256": { "$ref": "#/$defs/sha256" },
+        "item_count": { "type": "integer", "minimum": 1 },
+        "page_index": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "treeBlock": {
+      "type": "object",
+      "required": [
+        "file_count",
+        "directory_count",
+        "page_count",
+        "pages",
+        "inventory_sha256",
+        "pages_sha256",
+        "pagination_exhausted"
+      ],
+      "properties": {
+        "file_count": { "type": "integer", "minimum": 1 },
+        "directory_count": { "type": "integer", "minimum": 0 },
+        "entry_count": { "type": "integer", "minimum": 1 },
+        "page_count": { "type": "integer", "minimum": 1 },
+        "pages": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/treePage" }
+        },
+        "inventory_sha256": { "$ref": "#/$defs/sha256" },
+        "pages_sha256": { "$ref": "#/$defs/sha256" },
+        "pagination_exhausted": { "const": true },
+        "pagination_truncated": { "const": false }
+      }
+    },
+    "viewerEndpoint": {
+      "type": "object",
+      "required": ["endpoint", "status", "response_sha256"],
+      "properties": {
+        "endpoint": { "$ref": "#/$defs/hubHttps" },
+        "status": { "type": "integer" },
+        "response_sha256": { "$ref": "#/$defs/sha256" },
+        "payload": {},
+        "disposition": { "type": "string" }
+      }
+    },
+    "viewerServer": {
+      "type": "object",
+      "required": ["is-valid", "info", "size", "splits"],
+      "properties": {
+        "is-valid": { "$ref": "#/$defs/viewerEndpoint" },
+        "info": { "$ref": "#/$defs/viewerEndpoint" },
+        "size": { "$ref": "#/$defs/viewerEndpoint" },
+        "splits": { "$ref": "#/$defs/viewerEndpoint" }
+      },
+      "additionalProperties": false
+    },
+    "partition": {
+      "type": "object",
+      "required": [
+        "code",
+        "path",
+        "num_rows",
+        "content_sha256",
+        "footer_sha256",
+        "endpoint"
+      ],
+      "properties": {
+        "code": { "type": "string", "minLength": 2, "maxLength": 2 },
+        "path": { "type": "string", "minLength": 1 },
+        "num_rows": { "type": "integer", "minimum": 0 },
+        "size_bytes": { "type": ["integer", "null"] },
+        "blob_id": { "type": ["string", "null"] },
+        "lfs_sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "content_sha256": { "$ref": "#/$defs/sha256" },
+        "footer_sha256": { "$ref": "#/$defs/sha256" },
+        "endpoint": { "$ref": "#/$defs/hubHttps" }
+      }
+    },
+    "stateObservation": {
+      "type": "object",
+      "required": [
+        "repo_id",
+        "revision",
+        "tree",
+        "files",
+        "partitions",
+        "viewer",
+        "counts",
+        "includes_dc",
+        "row_counts_sha256"
+      ],
+      "properties": {
+        "repo_id": { "const": "justicedao/ipfs_state_laws" },
+        "revision": {
+          "const": "42f0546acc7c6cd55627eaf51fb820d5613b9021"
+        },
+        "revision_pinned": { "const": true },
+        "dataset_info": { "type": "object" },
+        "tree": { "$ref": "#/$defs/treeBlock" },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/inventoryEntry" }
+        },
+        "directories": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/inventoryEntry" }
+        },
+        "partitions": {
+          "type": "object",
+          "minProperties": 51,
+          "maxProperties": 51,
+          "additionalProperties": { "$ref": "#/$defs/partition" }
+        },
+        "viewer": {
+          "type": "object",
+          "required": ["canonical_config", "embedding_config", "datasets_server"],
+          "properties": {
+            "canonical_config": { "type": "object" },
+            "embedding_config": { "type": "object" },
+            "datasets_server": { "$ref": "#/$defs/viewerServer" },
+            "dataset_viewer_valid": { "type": "boolean" }
+          }
+        },
+        "cid_overlap": { "type": "object" },
+        "summaries": { "type": "object" },
+        "readme": { "type": "object" },
+        "counts": { "type": "object" },
+        "row_counts_sha256": { "$ref": "#/$defs/sha256" },
+        "truncation_examples": { "type": "object" },
+        "includes_dc": { "const": true }
+      }
+    },
+    "federalObservation": {
+      "type": "object",
+      "required": [
+        "repo_id",
+        "revision",
+        "tree",
+        "files",
+        "parquet",
+        "metadata",
+        "viewer",
+        "counts",
+        "row_count_sha256"
+      ],
+      "properties": {
+        "repo_id": { "const": "justicedao/ipfs_federal_register" },
+        "revision": {
+          "const": "720668ae016cc400916dda884c9005e03618edfa"
+        },
+        "revision_pinned": { "const": true },
+        "dataset_info": { "type": "object" },
+        "tree": { "$ref": "#/$defs/treeBlock" },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/inventoryEntry" }
+        },
+        "directories": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/inventoryEntry" }
+        },
+        "parquet": {
+          "type": "object",
+          "required": ["path", "num_rows", "content_sha256", "footer_sha256", "endpoint"],
+          "properties": {
+            "path": { "const": "federal_register.parquet" },
+            "num_rows": { "type": "integer", "minimum": 0 },
+            "content_sha256": { "$ref": "#/$defs/sha256" },
+            "footer_sha256": { "$ref": "#/$defs/sha256" },
+            "endpoint": { "$ref": "#/$defs/hubHttps" },
+            "size_bytes": { "type": ["integer", "null"] },
+            "lfs_sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+            "byte_length": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "metadata": { "type": "object" },
+        "legacy_layout": { "type": "object" },
+        "viewer": {
+          "type": "object",
+          "required": ["datasets_server"],
+          "properties": {
+            "datasets_server": { "$ref": "#/$defs/viewerServer" },
+            "dataset_viewer_valid": { "type": "boolean" }
+          }
+        },
+        "counts": { "type": "object" },
+        "row_count_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "salvageRoot": {
+      "type": "object",
+      "required": ["root_id", "path_label", "disposition"],
+      "properties": {
+        "root_id": { "type": "string", "minLength": 1 },
+        "path_label": { "type": "string", "minLength": 1 },
+        "path_sha256": { "$ref": "#/$defs/sha256" },
+        "present": { "type": "boolean" },
+        "accessible": { "type": "boolean" },
+        "symlink": { "type": "boolean" },
+        "disposition": { "type": "string", "minLength": 1 },
+        "file_count": { "type": "integer", "minimum": 0 },
+        "directory_count": { "type": "integer", "minimum": 0 },
+        "parquet_count": { "type": "integer", "minimum": 0 },
+        "jsonld_count": { "type": "integer", "minimum": 0 },
+        "skipped_symlinks": { "type": "integer", "minimum": 0 },
+        "skipped_secrets": { "type": "integer", "minimum": 0 },
+        "three_shard_runs": { "type": "array" },
+        "state_partitions": { "type": "object" },
+        "federal_parquet_rows": { "type": ["integer", "null"] },
+        "inventory_sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "sampled": { "type": "boolean" },
+        "truncated": { "type": "boolean" },
+        "walk_complete": { "type": "boolean" },
+        "symlink_escape": { "type": "boolean" },
+        "has_nonempty_inventory": { "type": "boolean" },
+        "error": { "type": "string" }
+      }
+    },
+    "salvageObservation": {
+      "type": "object",
+      "required": [
+        "configured_root_ids",
+        "roots",
+        "inventoried",
+        "secrets_copied",
+        "symlinks_followed",
+        "absolute_paths_persisted",
+        "inventory_sha256"
+      ],
+      "properties": {
+        "configured_root_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "roots": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/salvageRoot" }
+        },
+        "present_root_count": { "type": "integer", "minimum": 0 },
+        "inventoried": { "const": true },
+        "secrets_copied": { "const": false },
+        "symlinks_followed": { "const": false },
+        "absolute_paths_persisted": { "const": false },
+        "sampled": { "const": false },
+        "truncated": { "const": false },
+        "all_missing": { "type": "boolean" },
+        "empty": { "type": "boolean" },
+        "three_shard_run_detected": { "type": "boolean" },
+        "inventory_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "disposition": {
+      "type": "object",
+      "required": ["code", "severity", "typed_explanation", "detail"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "severity": { "type": "string", "minLength": 1 },
+        "typed_explanation": { "const": true },
+        "detail": { "type": "string", "minLength": 1 },
+        "expected": {},
+        "observed": {}
+      }
+    },
+    "nestedDigests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state_inventory_sha256",
+        "state_pages_sha256",
+        "state_row_counts_sha256",
+        "federal_inventory_sha256",
+        "federal_pages_sha256",
+        "federal_row_count_sha256",
+        "salvage_inventory_sha256",
+        "requests_sha256",
+        "identity_sha256",
+        "dispositions_sha256",
+        "viewer_responses_sha256"
+      ],
+      "properties": {
+        "state_inventory_sha256": { "$ref": "#/$defs/sha256" },
+        "state_pages_sha256": { "$ref": "#/$defs/sha256" },
+        "state_row_counts_sha256": { "$ref": "#/$defs/sha256" },
+        "federal_inventory_sha256": { "$ref": "#/$defs/sha256" },
+        "federal_pages_sha256": { "$ref": "#/$defs/sha256" },
+        "federal_row_count_sha256": { "$ref": "#/$defs/sha256" },
+        "salvage_inventory_sha256": { "$ref": "#/$defs/sha256" },
+        "requests_sha256": { "$ref": "#/$defs/sha256" },
+        "identity_sha256": { "$ref": "#/$defs/sha256" },
+        "dispositions_sha256": { "$ref": "#/$defs/sha256" },
+        "viewer_responses_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

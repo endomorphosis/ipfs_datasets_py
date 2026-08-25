@@ -1,0 +1,472 @@
+{
+  "schema": "PGIRDatasetsModuleInventory@1",
+  "interface": "proof-grounded-ir-learning/datasets-module-inventory/v1",
+  "schema_version": "1.0.0",
+  "contract_version": 1,
+  "task_id": "PGIR-002",
+  "goal_id": "PGIR-G010",
+  "objective_revision": "baguqeerac34yqkahhsfvoijyo3hbe3ff2u3o6o754367xnm6tpmzf7iqcmhq",
+  "repository": {
+    "name": "endomorphosis/ipfs_datasets_py",
+    "repository_id": "repository:sha256:4d87e009c221f83df2c5846e6085d4917204de75df8dc438b045c3bbff059dbc",
+    "path_root": "the ipfs_datasets_py repository root; all unqualified paths in this document are relative to this root"
+  },
+  "source_binding": {
+    "base_source_set_id": "SRCSET-1",
+    "ordered_source_ids": [
+      "SRC-DATASETS-AUTH-1",
+      "SRC-ACCEL-AUTH-1"
+    ],
+    "source_set_binding_sha256": "9da856806306b144ba86a02505946d995750fe0d8bbf4ab7bc9fcd287b047220",
+    "datasets_authority": {
+      "source_id": "SRC-DATASETS-AUTH-1",
+      "checkout_commit": "d144be65ffe4c6423e4e1c30cd692812607343eb",
+      "authority_commit": "df93e91e6338c84a17c3208ef68b88de8566f78c",
+      "authority_tree": "37b9cb40644831c85c6fdf07d0228e45061e239a",
+      "live_delta_sha256": "2f93a232612d1b8d1da6b52abfa1639621a86ac82eef2180f163eaa9d6b547f4",
+      "reviewed_comparison_commit": "7f0fe2bbad3c70928234c6e2312ee3182fd7681f",
+      "reviewed_comparison_forward_commit_count": 1717,
+      "reviewed_comparison_range": "d144be65ffe4c6423e4e1c30cd692812607343eb..7f0fe2bbad3c70928234c6e2312ee3182fd7681f",
+      "reviewed_comparison_range_log_sha256": "aaeff6d8976787159e8ec747fc60a5d27b6515773068c06e968cfb3a107dd21e",
+      "reviewed_comparison_is_authority": false,
+      "reviewed_substitution_allowed": false
+    },
+    "compiler_identity": {
+      "id": "COMPILER-CURRENT-1",
+      "owner_ids": [
+        "legal-ir-canonical-compiler",
+        "formalization-intent-compiler",
+        "formalization-legal-adapter",
+        "formalization-security-adapter"
+      ]
+    },
+    "decompiler_identity": {
+      "id": "DECOMPILER-CURRENT-1",
+      "owner_ids": [
+        "legal-ir-canonical-decompiler",
+        "deontic-controlled-decoder",
+        "intent-controlled-decompiler",
+        "modal-controlled-decompiler"
+      ]
+    },
+    "model_checkpoint_identity": "MODEL-LEGACY-1",
+    "data_split_identity": "not-applicable/inventory",
+    "source_dataset_revision": {
+      "id": "JDAO-PINSET-1",
+      "workspace_path": "data/agent_supervisor/proof_grounded_ir_learning/justice_dao_pinset.yaml",
+      "sha256": "8e3a4b1bd81639393ddda35e5dfb3b95f9e7320afa898bde0b3eb9a0317a6b76",
+      "use": "metadata-only",
+      "training_repositories_admitted": 0
+    },
+    "upstream_result": {
+      "task_id": "PGIR-001",
+      "workspace_path": "data/agent_supervisor/proof_grounded_ir_learning/inventory/source_revisions/result.json",
+      "result_identity": "sha256:86f7c07cf7b62847b81315b6529942da7647acf9922f32cf5ccef9d8bb221e9c",
+      "manifest_path": "data/agent_supervisor/proof_grounded_ir_learning/inventory/source_revisions/manifest.json",
+      "manifest_cid": "baguqeerasownoxqyrppw3ft3us3yvd26ghvqnjl74nr2rw5o7sm3sjehip7a"
+    }
+  },
+  "classification_contract": {
+    "requirements_source": "workspace:docs/architecture/proof_grounded_ir_learning.todo.md#PGIR-002",
+    "a1_interpretation": "The seventeen normalized implementation-role nouns in the PGIR-002 objective; no separate A1 appendix or JSON Schema exists in the frozen source.",
+    "method": "Behavior-first static inspection of source, registry declarations, importability, and focused tests at the bound authority tree.",
+    "module_record_rule": "Every module record names one existing repository-relative path, exactly one disposition, and one or more evidence paths. A canonical disposition is scoped to the exact interface stated by authority_scope; it is not a repository-wide promotion claim.",
+    "role_coverage_rule": "Every A1 role occurs exactly once in role_coverage with one scalar disposition and nonempty evidence_paths. Existing components can coexist with an unresolved repository-wide owner.",
+    "unresolved_rule": "An unresolved record has module_path null and records the observed components and evidence; no missing module is fabricated.",
+    "sorting": "modules are bytewise ascending by path; IDs and evidence paths are bytewise unique within their arrays"
+  },
+  "disposition_vocabulary": [
+    "canonical",
+    "component",
+    "generated",
+    "facade",
+    "legacy",
+    "experimental",
+    "artifact",
+    "declaration",
+    "duplicate",
+    "obsolete",
+    "unresolved"
+  ],
+  "disposition_definitions": {
+    "canonical": "The sole owner selected for the exact named interface and authority scope.",
+    "component": "An active subordinate or family-specific implementation that does not own the repository-wide role.",
+    "generated": "A materialized derivative that cannot own source semantics.",
+    "facade": "An import or API delegation surface whose semantics are owned elsewhere.",
+    "legacy": "A supported prior or compatibility meaning that is not promotion authority.",
+    "experimental": "A bounded candidate, research, or advisory implementation that is not semantic or proof authority.",
+    "artifact": "A data, schema, policy, or checkpoint object rather than an executable semantic owner.",
+    "declaration": "A protocol, metadata, registry, or data-boundary declaration with no operational ownership claim.",
+    "duplicate": "A redundant compatibility implementation or re-export with an identified owner elsewhere.",
+    "obsolete": "An explicitly deprecated or replaced surface.",
+    "unresolved": "No single live implementation owns the stated scope at the bound authority tree."
+  },
+  "required_roles": [
+    "ir",
+    "parser",
+    "formalization",
+    "bridge",
+    "compiler",
+    "decompiler",
+    "canonicalization",
+    "source_map",
+    "proof",
+    "counterexample",
+    "trace",
+    "provider",
+    "embedding",
+    "vector",
+    "loss",
+    "checkpoint",
+    "publication"
+  ],
+  "role_coverage": {
+    "role_set_id": "A1",
+    "roles": [
+      {
+        "role": "ir",
+        "disposition": "canonical",
+        "implementation_ids": ["ir-core-protocols", "legal-ir-canonical-contracts", "intent-ir-schema", "security-ir-model"],
+        "decision": "Shared authority/result contracts and domain IR owners are explicit; no claim is made that distinct formula-family ASTs are interchangeable.",
+        "evidence_paths": ["ipfs_datasets_py/logic/ir_core/protocols.py", "tests/integration/logic/test_ir_family_conformance.py"]
+      },
+      {
+        "role": "parser",
+        "disposition": "component",
+        "implementation_ids": ["deontic-deterministic-parser", "tdfol-parser"],
+        "decision": "Parsing is family-specific. The deterministic deontic and TDFOL parsers are scoped owners, not a repository-wide parser substitute.",
+        "evidence_paths": ["ipfs_datasets_py/logic/deontic/utils/deontic_parser.py", "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py"]
+      },
+      {
+        "role": "formalization",
+        "disposition": "declaration",
+        "implementation_ids": ["formalization-compiler-contract", "formalization-views", "formalization-constraint-contracts"],
+        "decision": "The domain-neutral layer owns immutable artifacts, protocols, views, and guards; operational family lowering remains in adapters.",
+        "evidence_paths": ["ipfs_datasets_py/logic/formalization/compiler.py", "tests/unit/logic/formalization/test_contracts.py"]
+      },
+      {
+        "role": "bridge",
+        "disposition": "unresolved",
+        "implementation_ids": ["bridge-types", "bridge-registry", "bridge-cec-dcec", "bridge-deontic-norms", "bridge-external-prover-router", "bridge-fol-tdfol", "bridge-modal-frame-logic", "bridge-zkp-attestation"],
+        "gap_id": "unresolved-repository-wide-typed-bridge",
+        "decision": "Six registered adapters and a legacy bridge envelope exist, but no single rich typed repository-wide bridge owns their semantics.",
+        "evidence_paths": ["ipfs_datasets_py/logic/bridge/registry.py", "tests/unit/logic/test_logic_bridge_layer.py"]
+      },
+      {
+        "role": "compiler",
+        "disposition": "canonical",
+        "implementation_ids": ["legal-ir-canonical-compiler"],
+        "decision": "COMPILER-CURRENT-1 is the deterministic measured Legal compiler plus registered typed family adapters; declaration protocols and parallel family compilers do not replace it.",
+        "evidence_paths": ["ipfs_datasets_py/logic/legal_ir/canonical_compiler.py", "tests/conformance/legal_ir/test_legal_ir_compiler_conformance.py"]
+      },
+      {
+        "role": "decompiler",
+        "disposition": "canonical",
+        "implementation_ids": ["legal-ir-canonical-decompiler", "deontic-controlled-decoder", "intent-controlled-decompiler", "modal-controlled-decompiler"],
+        "decision": "DECOMPILER-CURRENT-1 uses the source-withheld Legal owner and controlled family decoders; there is no domain-neutral formalization decompiler.",
+        "evidence_paths": ["ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py", "ipfs_datasets_py/logic/intent_ir/formalize/decompiler.py"]
+      },
+      {
+        "role": "canonicalization",
+        "disposition": "canonical",
+        "implementation_ids": ["ir-core-canonical", "ir-core-identity", "intent-ir-canonicalize"],
+        "decision": "Shared canonical JSON and identity primitives own encoding; the Intent helper is a domain projection onto that class of behavior.",
+        "evidence_paths": ["ipfs_datasets_py/logic/ir_core/canonical.py", "tests/unit/logic/formalization/test_contracts.py"]
+      },
+      {
+        "role": "source_map",
+        "disposition": "canonical",
+        "implementation_ids": ["legal-ir-source-maps", "legal-ir-canonical-contracts"],
+        "decision": "The typed source-map ledger and CanonicalRoundTripIR SourceMapEntry contract preserve source grounding and cross-reference integrity.",
+        "evidence_paths": ["ipfs_datasets_py/logic/integration/reasoning/legal_ir_source_maps.py", "tests/unit/logic/integration/test_legal_ir_source_maps.py"]
+      },
+      {
+        "role": "proof",
+        "disposition": "component",
+        "implementation_ids": ["ir-core-protocols", "proof-corpus-verifier", "tdfol-prover", "dcec-prover", "external-prover-router"],
+        "decision": "Proof authority is typed and fail-closed, while proving remains a bounded family/backend portfolio; no component may substitute result authority.",
+        "evidence_paths": ["ipfs_datasets_py/logic/ir_core/protocols.py", "ipfs_datasets_py/logic/proof_corpus/verifier.py"]
+      },
+      {
+        "role": "counterexample",
+        "disposition": "component",
+        "implementation_ids": ["tdfol-countermodels"],
+        "decision": "Countermodel extraction exists for the TDFOL family and is not represented as a cross-family proof result.",
+        "evidence_paths": ["ipfs_datasets_py/logic/TDFOL/countermodels.py", "tests/unit_tests/logic/TDFOL/test_countermodels.py"]
+      },
+      {
+        "role": "trace",
+        "disposition": "component",
+        "implementation_ids": ["legal-ir-canonical-contracts", "legal-ir-source-maps", "optimizer-proof-trace"],
+        "decision": "Canonical component/source-map traces coexist with a timestamp-bearing legacy optimizer proof trace; the latter is not content identity.",
+        "evidence_paths": ["ipfs_datasets_py/logic/legal_ir/canonical_contracts.py", "ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_trace.py"]
+      },
+      {
+        "role": "provider",
+        "disposition": "component",
+        "implementation_ids": ["external-prover-router", "leanstral-provider"],
+        "decision": "The external prover router is a bounded execution component; Leanstral only proposes candidates and is explicitly nonauthoritative.",
+        "evidence_paths": ["ipfs_datasets_py/logic/external_provers/prover_router.py", "ipfs_datasets_py/logic/modal/leanstral.py"]
+      },
+      {
+        "role": "embedding",
+        "disposition": "component",
+        "implementation_ids": ["skillcenter-embeddings", "formalization-features"],
+        "decision": "Embeddings and numeric features are source-bound inputs to retrieval or advice, never semantic or proof authority.",
+        "evidence_paths": ["ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_embeddings.py", "tests/unit/logic/intent_ir/graphrag/test_skillcenter_embeddings.py"]
+      },
+      {
+        "role": "vector",
+        "disposition": "component",
+        "implementation_ids": ["skillcenter-cid-vectors"],
+        "decision": "CID-keyed FAISS vectors are verified retrieval artifacts whose hits are context-only and never proof authority.",
+        "evidence_paths": ["ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_cid_vectors.py", "tests/unit/logic/intent_ir/graphrag/test_skillcenter_embeddings.py"]
+      },
+      {
+        "role": "loss",
+        "disposition": "unresolved",
+        "implementation_ids": ["modal-autoencoder", "legal-ir-objective-balancer", "bridge-registry"],
+        "gap_id": "unresolved-versioned-composite-loss",
+        "decision": "Many family metrics and experimental objectives exist, but no fixed repository-wide IRLossConfiguration@1 owns their signs, normalization, and authority exclusions.",
+        "evidence_paths": ["ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_objective_balancer.py", "ipfs_datasets_py/logic/bridge/registry.py"]
+      },
+      {
+        "role": "checkpoint",
+        "disposition": "unresolved",
+        "implementation_ids": ["formalization-checkpoint-manifest", "modal-autoencoder-checkpoint", "model-legacy-1"],
+        "gap_id": "unresolved-unified-semantic-checkpoint",
+        "decision": "Advisor compatibility metadata, modal numeric state, and the external legacy model are three noninterchangeable checkpoint meanings; none is a unified semantic checkpoint owner.",
+        "evidence_paths": ["ipfs_datasets_py/logic/formalization/checkpoints.py", "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_checkpoint.py"]
+      },
+      {
+        "role": "publication",
+        "disposition": "unresolved",
+        "implementation_ids": ["skillcenter-hf-release", "huggingface-release", "huggingface-publisher"],
+        "gap_id": "unresolved-qualified-semantic-publication",
+        "decision": "Packaging and approval-gated publishing components exist, but no publication owner binds compiler, loss, proof, evaluation, promotion, and rollback identities required for PGIR release authority.",
+        "evidence_paths": ["ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_hf_release.py", "ipfs_datasets_py/huggingface/publisher.py"]
+      }
+    ]
+  },
+  "modules": [
+    {"module_id":"huggingface-publisher","path":"ipfs_datasets_py/huggingface/publisher.py","import_path":"ipfs_datasets_py.huggingface.publisher","symbols":["HuggingFaceReleasePublisher"],"roles":["publication"],"disposition":"component","authority":false,"authority_scope":"Approval-gated append-only dataset publication utility, not PGIR semantic release authority.","evidence_paths":["ipfs_datasets_py/huggingface/publisher.py"]},
+    {"module_id":"huggingface-release","path":"ipfs_datasets_py/huggingface/release.py","import_path":"ipfs_datasets_py.huggingface.release","symbols":["FileDescriptor","write_zstd_parquet","validate_zstd_parquet"],"roles":["publication"],"disposition":"component","authority":false,"authority_scope":"Deterministic dataset release helpers without proof-grounded promotion ownership.","evidence_paths":["ipfs_datasets_py/huggingface/release.py"]},
+    {"module_id":"dcec-core","path":"ipfs_datasets_py/logic/CEC/native/dcec_core.py","import_path":"ipfs_datasets_py.logic.CEC.native.dcec_core","symbols":["DCECStatement","DeonticFormula","TemporalFormula","QuantifiedFormula"],"roles":["ir"],"disposition":"canonical","authority":true,"authority_scope":"Canonical DCEC-family AST only; it is distinct from the TDFOL family AST.","evidence_paths":["ipfs_datasets_py/logic/CEC/native/dcec_core.py","tests/unit_tests/logic/CEC/native/test_dcec_core.py"]},
+    {"module_id":"dcec-compat-types","path":"ipfs_datasets_py/logic/CEC/native/dcec_types.py","import_path":"ipfs_datasets_py.logic.CEC.native.dcec_types","symbols":[],"roles":["ir"],"disposition":"duplicate","authority":false,"authority_scope":"Compatibility types duplicate the dcec_core owner.","duplicate_of":"dcec-core","evidence_paths":["ipfs_datasets_py/logic/CEC/native/dcec_types.py","ipfs_datasets_py/logic/CEC/native/dcec_core.py"]},
+    {"module_id":"dcec-event-calculus","path":"ipfs_datasets_py/logic/CEC/native/event_calculus.py","import_path":"ipfs_datasets_py.logic.CEC.native.event_calculus","symbols":["Event","Fluent","TimePoint","EventCalculus"],"roles":["ir","formalization"],"disposition":"component","authority":false,"authority_scope":"DCEC event/state family component.","evidence_paths":["ipfs_datasets_py/logic/CEC/native/event_calculus.py","tests/reasoner/test_dcec_conformance.py"]},
+    {"module_id":"dcec-prover","path":"ipfs_datasets_py/logic/CEC/native/prover_core.py","import_path":"ipfs_datasets_py.logic.CEC.native.prover_core","symbols":["BasicProver","TheoremProver","ProofAttempt","ProofTree"],"roles":["proof","trace"],"disposition":"component","authority":false,"authority_scope":"DCEC-family proving implementation; InferenceEngine remains compatibility-facing.","evidence_paths":["ipfs_datasets_py/logic/CEC/native/prover_core.py","tests/reasoner/test_dcec_conformance.py"]},
+    {"module_id":"tdfol-countermodels","path":"ipfs_datasets_py/logic/TDFOL/countermodels.py","import_path":"ipfs_datasets_py.logic.TDFOL.countermodels","symbols":["CounterModel","CounterModelExtractor","extract_countermodel"],"roles":["counterexample"],"disposition":"component","authority":false,"authority_scope":"TDFOL-family countermodel extraction and rendering.","evidence_paths":["ipfs_datasets_py/logic/TDFOL/countermodels.py","tests/unit_tests/logic/TDFOL/test_countermodels.py"]},
+    {"module_id":"tdfol-converters","path":"ipfs_datasets_py/logic/TDFOL/tdfol_converter.py","import_path":"ipfs_datasets_py.logic.TDFOL.tdfol_converter","symbols":["TDFOLToDCECConverter","DCECToTDFOLConverter","TDFOLToFOLConverter","TDFOLToTPTPConverter"],"roles":["bridge","compiler"],"disposition":"component","authority":false,"authority_scope":"Family conversion component; FOL/TPTP projections are lossy or heuristic and not preservation authority.","evidence_paths":["ipfs_datasets_py/logic/TDFOL/tdfol_converter.py","tests/unit_tests/logic/TDFOL/test_tdfol_dcec_parser.py"]},
+    {"module_id":"tdfol-core","path":"ipfs_datasets_py/logic/TDFOL/tdfol_core.py","import_path":"ipfs_datasets_py.logic.TDFOL.tdfol_core","symbols":["Formula","Predicate","DeonticFormula","TemporalFormula","QuantifiedFormula"],"roles":["ir"],"disposition":"canonical","authority":true,"authority_scope":"Canonical TDFOL-family AST only; it is distinct from DCEC and optimizer ModalIR.","evidence_paths":["ipfs_datasets_py/logic/TDFOL/tdfol_core.py","tests/unit_tests/logic/TDFOL/test_tdfol_parser.py"]},
+    {"module_id":"tdfol-inference-compat","path":"ipfs_datasets_py/logic/TDFOL/tdfol_inference_rules.py","import_path":"ipfs_datasets_py.logic.TDFOL.tdfol_inference_rules","symbols":[],"roles":["proof"],"disposition":"legacy","authority":false,"authority_scope":"Compatibility inference-rule surface; categorized inference_rules modules own active rule loading.","evidence_paths":["ipfs_datasets_py/logic/TDFOL/tdfol_inference_rules.py","ipfs_datasets_py/logic/TDFOL/inference_rules/__init__.py"]},
+    {"module_id":"tdfol-parser","path":"ipfs_datasets_py/logic/TDFOL/tdfol_parser.py","import_path":"ipfs_datasets_py.logic.TDFOL.tdfol_parser","symbols":["TDFOLLexer","TDFOLParser","parse_tdfol","parse_tdfol_safe"],"roles":["parser"],"disposition":"canonical","authority":true,"authority_scope":"Canonical parser for the TDFOL family, not a repository-wide parser.","evidence_paths":["ipfs_datasets_py/logic/TDFOL/tdfol_parser.py","tests/unit_tests/logic/TDFOL/test_tdfol_parser.py"]},
+    {"module_id":"tdfol-prover","path":"ipfs_datasets_py/logic/TDFOL/tdfol_prover.py","import_path":"ipfs_datasets_py.logic.TDFOL.tdfol_prover","symbols":["TDFOLProver"],"roles":["proof","trace"],"disposition":"component","authority":false,"authority_scope":"TDFOL-family prover using categorized inference rules.","evidence_paths":["ipfs_datasets_py/logic/TDFOL/tdfol_prover.py","ipfs_datasets_py/logic/TDFOL/inference_rules/__init__.py"]},
+    {"module_id":"logic-api-facade","path":"ipfs_datasets_py/logic/api.py","import_path":"ipfs_datasets_py.logic.api","symbols":[],"roles":["ir","compiler","decompiler"],"disposition":"facade","authority":false,"authority_scope":"Stable public import surface; re-export does not confer semantic ownership.","evidence_paths":["ipfs_datasets_py/logic/api.py","ipfs_datasets_py/logic/submodule_registry.py"]},
+    {"module_id":"bridge-cec-dcec","path":"ipfs_datasets_py/logic/bridge/cec_dcec.py","import_path":"ipfs_datasets_py.logic.bridge.cec_dcec","symbols":["CecDcecBridgeAdapter"],"roles":["bridge","trace","loss"],"disposition":"component","authority":false,"authority_scope":"Registered CEC/DCEC family adapter.","evidence_paths":["ipfs_datasets_py/logic/bridge/cec_dcec.py","ipfs_datasets_py/logic/bridge/registry.py"]},
+    {"module_id":"bridge-deontic-norms","path":"ipfs_datasets_py/logic/bridge/deontic_norms.py","import_path":"ipfs_datasets_py.logic.bridge.deontic_norms","symbols":["DeonticNormsBridgeAdapter"],"roles":["bridge","formalization","loss"],"disposition":"component","authority":false,"authority_scope":"Registered legal text to deontic family adapter.","evidence_paths":["ipfs_datasets_py/logic/bridge/deontic_norms.py","ipfs_datasets_py/logic/bridge/registry.py"]},
+    {"module_id":"bridge-external-prover-router","path":"ipfs_datasets_py/logic/bridge/external_prover_router.py","import_path":"ipfs_datasets_py.logic.bridge.external_prover_router","symbols":["ExternalProverRouterBridgeAdapter"],"roles":["bridge","provider","proof"],"disposition":"component","authority":false,"authority_scope":"Registered adapter into the lazy external prover router.","evidence_paths":["ipfs_datasets_py/logic/bridge/external_prover_router.py","ipfs_datasets_py/logic/bridge/registry.py"]},
+    {"module_id":"bridge-fol-tdfol","path":"ipfs_datasets_py/logic/bridge/fol_tdfol.py","import_path":"ipfs_datasets_py.logic.bridge.fol_tdfol","symbols":["FolTdfolBridgeAdapter"],"roles":["bridge","formalization","proof"],"disposition":"component","authority":false,"authority_scope":"Registered FOL/TDFOL family adapter with proof gates.","evidence_paths":["ipfs_datasets_py/logic/bridge/fol_tdfol.py","ipfs_datasets_py/logic/bridge/registry.py"]},
+    {"module_id":"bridge-modal-frame-logic","path":"ipfs_datasets_py/logic/bridge/modal_frame_logic.py","import_path":"ipfs_datasets_py.logic.bridge.modal_frame_logic","symbols":["ModalFrameLogicBridgeAdapter"],"roles":["bridge","formalization","loss"],"disposition":"component","authority":false,"authority_scope":"Registered modal/frame-logic family adapter.","evidence_paths":["ipfs_datasets_py/logic/bridge/modal_frame_logic.py","ipfs_datasets_py/logic/bridge/registry.py"]},
+    {"module_id":"bridge-multiview","path":"ipfs_datasets_py/logic/bridge/multiview.py","import_path":"ipfs_datasets_py.logic.bridge.multiview","symbols":["LegalIRTrainingTarget","MultiViewLegalIRReport","evaluate_legal_ir_multiview"],"roles":["bridge","loss"],"disposition":"experimental","authority":false,"authority_scope":"Learning/evaluation orchestration, never semantic authority.","evidence_paths":["ipfs_datasets_py/logic/bridge/multiview.py","tests/unit/logic/test_logic_bridge_layer.py"]},
+    {"module_id":"bridge-registry","path":"ipfs_datasets_py/logic/bridge/registry.py","import_path":"ipfs_datasets_py.logic.bridge.registry","symbols":["LogicBridgeSpec","logic_bridge_manifest","load_logic_bridge_adapter"],"roles":["bridge"],"disposition":"declaration","authority":false,"authority_scope":"Registry metadata for six active adapters; it does not unify their semantic types.","evidence_paths":["ipfs_datasets_py/logic/bridge/registry.py","tests/unit/logic/test_logic_bridge_layer.py"]},
+    {"module_id":"bridge-types","path":"ipfs_datasets_py/logic/bridge/types.py","import_path":"ipfs_datasets_py.logic.bridge.types","symbols":["LogicIRView","LegalIRDocument","RoundTripMetrics","ProofGateResult","GraphProjectionResult","BridgeEvaluationReport"],"roles":["bridge","ir","proof","loss"],"disposition":"canonical","authority":true,"authority_scope":"Owner of the current bridge-layer envelope only; LegalIRDocument is not CanonicalRoundTripIR.","evidence_paths":["ipfs_datasets_py/logic/bridge/types.py","tests/unit/logic/test_logic_bridge_layer.py"]},
+    {"module_id":"bridge-zkp-attestation","path":"ipfs_datasets_py/logic/bridge/zkp_attestation.py","import_path":"ipfs_datasets_py.logic.bridge.zkp_attestation","symbols":["ZkpAttestationBridgeAdapter"],"roles":["bridge","proof","loss"],"disposition":"component","authority":false,"authority_scope":"Registered formal-obligation to ZKP attestation adapter.","evidence_paths":["ipfs_datasets_py/logic/bridge/zkp_attestation.py","ipfs_datasets_py/logic/bridge/registry.py"]},
+    {"module_id":"deontic-converter","path":"ipfs_datasets_py/logic/deontic/converter.py","import_path":"ipfs_datasets_py.logic.deontic.converter","symbols":["DeonticConverter"],"roles":["parser","compiler"],"disposition":"component","authority":false,"authority_scope":"Facade-like component over deterministic deontic parsing, IR, and lowering used by COMPILER-CURRENT-1.","evidence_paths":["ipfs_datasets_py/logic/deontic/converter.py","tests/unit_tests/logic/deontic/test_deontic_converter.py"]},
+    {"module_id":"deontic-controlled-decoder","path":"ipfs_datasets_py/logic/deontic/decoder.py","import_path":"ipfs_datasets_py.logic.deontic.decoder","symbols":["DecodedPhrase","DecodedLegalText","decode_legal_norm_ir"],"roles":["decompiler"],"disposition":"component","authority":false,"authority_scope":"Controlled deontic reconstruction included under DECOMPILER-CURRENT-1.","evidence_paths":["ipfs_datasets_py/logic/deontic/decoder.py","tests/unit_tests/logic/deontic/test_deontic_decoder.py"]},
+    {"module_id":"deontic-formula-builder","path":"ipfs_datasets_py/logic/deontic/formula_builder.py","import_path":"ipfs_datasets_py.logic.deontic.formula_builder","symbols":["build_deontic_formula_from_ir","build_deontic_formula_record_from_ir","build_prover_syntax_records_from_ir"],"roles":["formalization","compiler"],"disposition":"component","authority":false,"authority_scope":"Typed lowering from LegalNormIR into deontic formula records.","evidence_paths":["ipfs_datasets_py/logic/deontic/formula_builder.py","tests/unit_tests/logic/deontic/test_deontic_formula_builder.py"]},
+    {"module_id":"deontic-ir","path":"ipfs_datasets_py/logic/deontic/ir.py","import_path":"ipfs_datasets_py.logic.deontic.ir","symbols":["LegalNormIR","LegalNormQuality","parser_element_to_ir"],"roles":["ir","source_map"],"disposition":"canonical","authority":true,"authority_scope":"Canonical deterministic deontic parser IR with source spans.","evidence_paths":["ipfs_datasets_py/logic/deontic/ir.py","tests/unit_tests/logic/deontic/test_legal_norm_ir.py"]},
+    {"module_id":"deontic-obsolete-wrapper","path":"ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py","import_path":"ipfs_datasets_py.logic.deontic.legal_text_to_deontic","symbols":[],"roles":["parser","compiler"],"disposition":"obsolete","authority":false,"authority_scope":"Deprecated wrapper replaced by DeonticConverter.","replaced_by":"deontic-converter","evidence_paths":["ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py","ipfs_datasets_py/logic/deontic/converter.py"]},
+    {"module_id":"deontic-deterministic-parser","path":"ipfs_datasets_py/logic/deontic/utils/deontic_parser.py","import_path":"ipfs_datasets_py.logic.deontic.utils.deontic_parser","symbols":["extract_normative_elements","segment_legal_text","analyze_normative_sentence","resolve_cross_references"],"roles":["parser","source_map"],"disposition":"canonical","authority":true,"authority_scope":"Canonical deterministic parser for the deontic LegalNormIR family.","evidence_paths":["ipfs_datasets_py/logic/deontic/utils/deontic_parser.py","tests/unit_tests/logic/deontic/test_legal_norm_ir_provenance.py"]},
+    {"module_id":"external-prover-router","path":"ipfs_datasets_py/logic/external_provers/prover_router.py","import_path":"ipfs_datasets_py.logic.external_provers.prover_router","symbols":["ProverRouter","ProverStrategy","RouterProofResult","SyntacticNativeFallbackProver"],"roles":["provider","proof"],"disposition":"component","authority":false,"authority_scope":"Lazy bounded prover portfolio; results remain governed by ir_core authority contracts.","evidence_paths":["ipfs_datasets_py/logic/external_provers/prover_router.py","ipfs_datasets_py/logic/ir_core/protocols.py"]},
+    {"module_id":"formalization-facade","path":"ipfs_datasets_py/logic/formalization/__init__.py","import_path":"ipfs_datasets_py.logic.formalization","symbols":[],"roles":["formalization","compiler"],"disposition":"facade","authority":false,"authority_scope":"Lazy public exports of formalization owners.","evidence_paths":["ipfs_datasets_py/logic/formalization/__init__.py","tests/unit/logic/formalization/test_contracts.py"]},
+    {"module_id":"formalization-advisor","path":"ipfs_datasets_py/logic/formalization/advisor.py","import_path":"ipfs_datasets_py.logic.formalization.advisor","symbols":["BoundedFormalizationAdvisor","FormalizationAdvisorRequest","AdvisorResult","FormulaSuggestion","FormulaRepair"],"roles":["provider","formalization"],"disposition":"experimental","authority":false,"authority_scope":"Bounded candidate-only advisor; output cannot establish semantic or proof authority.","evidence_paths":["ipfs_datasets_py/logic/formalization/advisor.py","tests/unit/logic/formalization/test_advisor.py"]},
+    {"module_id":"formalization-checkpoint-manifest","path":"ipfs_datasets_py/logic/formalization/checkpoints.py","import_path":"ipfs_datasets_py.logic.formalization.checkpoints","symbols":["CheckpointManifest"],"roles":["checkpoint"],"disposition":"declaration","authority":false,"authority_scope":"Advisor-head compatibility and lineage metadata with opaque weights; not operational modal state.","evidence_paths":["ipfs_datasets_py/logic/formalization/checkpoints.py","tests/unit/logic/formalization/test_advisor.py"]},
+    {"module_id":"formalization-compiler-contract","path":"ipfs_datasets_py/logic/formalization/compiler.py","import_path":"ipfs_datasets_py.logic.formalization.compiler","symbols":["FormalizationCompiler","FormalizationCompilerConfig","FormalizationArtifact","UnsupportedSemanticsPolicy"],"roles":["formalization","compiler"],"disposition":"declaration","authority":false,"authority_scope":"Domain-neutral protocol and immutable artifact boundary; invokes no model, solver, or prover and is not COMPILER-CURRENT-1.","evidence_paths":["ipfs_datasets_py/logic/formalization/compiler.py","tests/unit/logic/formalization/test_contracts.py"]},
+    {"module_id":"formalization-constraint-contracts","path":"ipfs_datasets_py/logic/formalization/constraint_contracts.py","import_path":"ipfs_datasets_py.logic.formalization.constraint_contracts","symbols":["ApplicabilityEvidence","ConstraintArtifact","SelectedPremiseSet","TranslationReceipt","ReconstructionReceipt","forbid_silent_logic_concatenation","reject_result_authority_substitution"],"roles":["formalization","proof","trace"],"disposition":"declaration","authority":false,"authority_scope":"Applicability, translation, premise-selection, and authority guard contracts; not a solver or bridge.","evidence_paths":["ipfs_datasets_py/logic/formalization/constraint_contracts.py","tests/unit/logic/formalization/test_constraint_contracts.py"]},
+    {"module_id":"formalization-features","path":"ipfs_datasets_py/logic/formalization/features.py","import_path":"ipfs_datasets_py.logic.formalization.features","symbols":["FormalizationFeatures"],"roles":["embedding"],"disposition":"component","authority":false,"authority_scope":"Source-free bounded numeric feature boundary for advisors.","evidence_paths":["ipfs_datasets_py/logic/formalization/features.py","tests/unit/logic/formalization/test_advisor.py"]},
+    {"module_id":"formalization-samples","path":"ipfs_datasets_py/logic/formalization/samples.py","import_path":"ipfs_datasets_py.logic.formalization.samples","symbols":["FormalizationSample"],"roles":["formalization","source_map"],"disposition":"declaration","authority":false,"authority_scope":"Grounded immutable sample declaration.","evidence_paths":["ipfs_datasets_py/logic/formalization/samples.py","tests/integration/logic/test_ir_family_conformance.py"]},
+    {"module_id":"formalization-views","path":"ipfs_datasets_py/logic/formalization/views.py","import_path":"ipfs_datasets_py.logic.formalization.views","symbols":["FormalizationView","ViewRegistry","FormalSymbol","SymbolTable","FormalFormula","CrossViewLink"],"roles":["formalization","ir"],"disposition":"canonical","authority":true,"authority_scope":"Canonical domain-neutral formal syntax and cross-view registry contract.","evidence_paths":["ipfs_datasets_py/logic/formalization/views.py","tests/unit/logic/formalization/test_contracts.py"]},
+    {"module_id":"hammer-models","path":"ipfs_datasets_py/logic/hammers/models.py","import_path":"ipfs_datasets_py.logic.hammers.models","symbols":["TranslationRecord","ProofCandidateRecord","ReconstructionRecord","HammerResult"],"roles":["proof","trace"],"disposition":"canonical","authority":true,"authority_scope":"Hammer result/trust contract; only independently kernel-accepted reconstruction can be VERIFIED.","evidence_paths":["ipfs_datasets_py/logic/hammers/models.py","tests/unit_tests/logic/hammers/test_models.py"]},
+    {"module_id":"hammer-smtlib-codec","path":"ipfs_datasets_py/logic/hammers/smtlib.py","import_path":"ipfs_datasets_py.logic.hammers.smtlib","symbols":["SMTLIBRenderResult","render_smtlib","parse_smtlib"],"roles":["compiler","parser","bridge"],"disposition":"component","authority":false,"authority_scope":"Typed SMT-LIB target codec under the hammer translation contract.","evidence_paths":["ipfs_datasets_py/logic/hammers/smtlib.py","tests/unit_tests/logic/hammers/test_translation.py"]},
+    {"module_id":"hammer-tptp-codec","path":"ipfs_datasets_py/logic/hammers/tptp.py","import_path":"ipfs_datasets_py.logic.hammers.tptp","symbols":["TPTPRenderResult","render_tff","parse_tff"],"roles":["compiler","parser","bridge"],"disposition":"component","authority":false,"authority_scope":"Typed TPTP target codec under the hammer translation contract.","evidence_paths":["ipfs_datasets_py/logic/hammers/tptp.py","tests/unit_tests/logic/hammers/test_translation.py"]},
+    {"module_id":"hammer-translation","path":"ipfs_datasets_py/logic/hammers/translation.py","import_path":"ipfs_datasets_py.logic.hammers.translation","symbols":["TranslationMap","TranslationContext","infer_type","substitute_term","beta_reduce","normalize_construct"],"roles":["bridge","formalization","source_map"],"disposition":"canonical","authority":true,"authority_scope":"Fail-closed typed proof translation and trace map owner.","evidence_paths":["ipfs_datasets_py/logic/hammers/translation.py","tests/unit_tests/logic/hammers/test_translation.py"]},
+    {"module_id":"tdfol-cec-bridge-component","path":"ipfs_datasets_py/logic/integration/bridges/tdfol_cec_bridge.py","import_path":"ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge","symbols":["TDFOLCECBridge"],"roles":["bridge"],"disposition":"experimental","authority":false,"authority_scope":"Family bridge with placeholder rule-precondition checking; not preservation authority.","evidence_paths":["ipfs_datasets_py/logic/integration/bridges/tdfol_cec_bridge.py","tests/unit_tests/logic/integration/test_tdfol_cec_bridge.py"]},
+    {"module_id":"legacy-hammer-pipeline","path":"ipfs_datasets_py/logic/integration/reasoning/hammer.py","import_path":"ipfs_datasets_py.logic.integration.reasoning.hammer","symbols":["HammerPipeline"],"roles":["proof","provider"],"disposition":"legacy","authority":false,"authority_scope":"Legacy pipeline can report PROVED without verified reconstruction and cannot replace the stricter logic.hammers contract.","replaced_by":"hammer-models","evidence_paths":["ipfs_datasets_py/logic/integration/reasoning/hammer.py","ipfs_datasets_py/logic/hammers/models.py"]},
+    {"module_id":"legal-ir-compiler-api-facade","path":"ipfs_datasets_py/logic/integration/reasoning/legal_ir_compiler_api.py","import_path":"ipfs_datasets_py.logic.integration.reasoning.legal_ir_compiler_api","symbols":["LegalIRCompilerAPI","compile_legal_ir","decompile_legal_ir"],"roles":["compiler","decompiler"],"disposition":"facade","authority":false,"authority_scope":"Parallel incremental compiler API that does not delegate to TypedDeonticCanonicalCompiler and is not COMPILER-CURRENT-1.","evidence_paths":["ipfs_datasets_py/logic/integration/reasoning/legal_ir_compiler_api.py","ipfs_datasets_py/logic/legal_ir/canonical_compiler.py"]},
+    {"module_id":"legal-ir-source-maps","path":"ipfs_datasets_py/logic/integration/reasoning/legal_ir_source_maps.py","import_path":"ipfs_datasets_py.logic.integration.reasoning.legal_ir_source_maps","symbols":["LegalIRSourceMap","LegalIRSourceMapBuilder","build_legal_ir_source_map","validate_legal_ir_source_map","trace_legal_ir_fact"],"roles":["source_map","trace"],"disposition":"canonical","authority":true,"authority_scope":"Typed Legal IR source-map ledger and fact tracing contract.","evidence_paths":["ipfs_datasets_py/logic/integration/reasoning/legal_ir_source_maps.py","tests/unit/logic/integration/test_legal_ir_source_maps.py"]},
+    {"module_id":"tdfol-cec-bridge-compat","path":"ipfs_datasets_py/logic/integration/tdfol_cec_bridge.py","import_path":"ipfs_datasets_py.logic.integration.tdfol_cec_bridge","symbols":[],"roles":["bridge"],"disposition":"duplicate","authority":false,"authority_scope":"Compatibility re-export of the bridges subpackage implementation.","duplicate_of":"tdfol-cec-bridge-component","evidence_paths":["ipfs_datasets_py/logic/integration/tdfol_cec_bridge.py","ipfs_datasets_py/logic/integration/bridges/tdfol_cec_bridge.py"]},
+    {"module_id":"intent-ir-canonicalize","path":"ipfs_datasets_py/logic/intent_ir/canonicalize.py","import_path":"ipfs_datasets_py.logic.intent_ir.canonicalize","symbols":["canonical_intent_ir_json","canonical_intent_ir_bytes","intent_ir_sha256"],"roles":["canonicalization"],"disposition":"canonical","authority":true,"authority_scope":"Canonical serialization and digest projection for IntentIRDocument.","evidence_paths":["ipfs_datasets_py/logic/intent_ir/canonicalize.py","tests/integration/logic/test_intent_ir_pipeline.py"]},
+    {"module_id":"intent-ir-decoder","path":"ipfs_datasets_py/logic/intent_ir/decoder.py","import_path":"ipfs_datasets_py.logic.intent_ir.decoder","symbols":["decode_intent_ir","migrate_intent_ir","decode_intent_ir_with_migration"],"roles":["parser","decompiler"],"disposition":"canonical","authority":true,"authority_scope":"Strict Intent decoding and deterministic receipted v0.1 to v1 migration.","evidence_paths":["ipfs_datasets_py/logic/intent_ir/decoder.py","tests/integration/logic/test_ir_family_conformance.py"]},
+    {"module_id":"intent-checkpoint-policy","path":"ipfs_datasets_py/logic/intent_ir/formalize/checkpoint_policy.py","import_path":"ipfs_datasets_py.logic.intent_ir.formalize.checkpoint_policy","symbols":[],"roles":["checkpoint","provider"],"disposition":"declaration","authority":false,"authority_scope":"Policy admits untrusted model candidates only; it does not load weights or grant authority.","evidence_paths":["ipfs_datasets_py/logic/intent_ir/formalize/checkpoint_policy.py","tests/unit/logic/formalization/test_advisor.py"]},
+    {"module_id":"formalization-intent-compiler","path":"ipfs_datasets_py/logic/intent_ir/formalize/compiler.py","import_path":"ipfs_datasets_py.logic.intent_ir.formalize.compiler","symbols":["IntentFormalizationCompiler"],"roles":["compiler","formalization"],"disposition":"component","authority":false,"authority_scope":"Typed Intent family adapter registered under COMPILER-CURRENT-1.","evidence_paths":["ipfs_datasets_py/logic/intent_ir/formalize/compiler.py","tests/integration/logic/test_ir_family_conformance.py"]},
+    {"module_id":"intent-controlled-decompiler","path":"ipfs_datasets_py/logic/intent_ir/formalize/decompiler.py","import_path":"ipfs_datasets_py.logic.intent_ir.formalize.decompiler","symbols":["IntentDecompiler"],"roles":["decompiler"],"disposition":"component","authority":false,"authority_scope":"Controlled Intent review decoder; not a domain-neutral inverse or source regeneration owner.","evidence_paths":["ipfs_datasets_py/logic/intent_ir/formalize/decompiler.py","ipfs_datasets_py/logic/intent_ir/formalize/compiler.py"]},
+    {"module_id":"intent-proof-obligations","path":"ipfs_datasets_py/logic/intent_ir/formalize/obligations.py","import_path":"ipfs_datasets_py.logic.intent_ir.formalize.obligations","symbols":["IntentProofAuthorityPolicy","IntentProofPacket","IntentProofOutcome","IntentProofObligations"],"roles":["proof","formalization"],"disposition":"canonical","authority":true,"authority_scope":"Intent proof-obligation policy and declaration owner; obligations are not proof results.","evidence_paths":["ipfs_datasets_py/logic/intent_ir/formalize/obligations.py","tests/integration/logic/test_ir_family_conformance.py"]},
+    {"module_id":"skillcenter-cid-vectors","path":"ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_cid_vectors.py","import_path":"ipfs_datasets_py.logic.intent_ir.graphrag.skillcenter_cid_vectors","symbols":[],"roles":["vector","embedding"],"disposition":"component","authority":false,"authority_scope":"Verified CID-keyed vector index; hits are context-only and proof_authority is false.","evidence_paths":["ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_cid_vectors.py","tests/unit/logic/intent_ir/graphrag/test_skillcenter_embeddings.py"]},
+    {"module_id":"skillcenter-embeddings","path":"ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_embeddings.py","import_path":"ipfs_datasets_py.logic.intent_ir.graphrag.skillcenter_embeddings","symbols":[],"roles":["embedding","vector"],"disposition":"component","authority":false,"authority_scope":"Policy-gated resumable embedding pipeline with injected embedder and source bindings.","evidence_paths":["ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_embeddings.py","tests/unit/logic/intent_ir/graphrag/test_skillcenter_embeddings.py"]},
+    {"module_id":"skillcenter-hf-release","path":"ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_hf_release.py","import_path":"ipfs_datasets_py.logic.intent_ir.graphrag.skillcenter_hf_release","symbols":["SkillCenterHFReleaseSummary","build_skillcenter_hf_release","validate_skillcenter_hf_release"],"roles":["publication","vector"],"disposition":"component","authority":false,"authority_scope":"Deterministic local SkillCenter release packaging and validation; it performs no PGIR promotion.","evidence_paths":["ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_hf_release.py","tests/unit/logic/intent_ir/graphrag/test_skillcenter_hf_release.py"]},
+    {"module_id":"intent-ir-protocols","path":"ipfs_datasets_py/logic/intent_ir/protocols.py","import_path":"ipfs_datasets_py.logic.intent_ir.protocols","symbols":[],"roles":["ir","formalization"],"disposition":"declaration","authority":false,"authority_scope":"Intent structural protocol declarations.","evidence_paths":["ipfs_datasets_py/logic/intent_ir/protocols.py","tests/integration/logic/test_ir_family_conformance.py"]},
+    {"module_id":"intent-ir-schema","path":"ipfs_datasets_py/logic/intent_ir/schema.py","import_path":"ipfs_datasets_py.logic.intent_ir.schema","symbols":["IntentStatement","IntentAction","IntentControlEdge","IntentIRDocument","validate_intent_ir"],"roles":["ir","source_map"],"disposition":"canonical","authority":true,"authority_scope":"Canonical immutable Intent IR v1 document and validation owner.","evidence_paths":["ipfs_datasets_py/logic/intent_ir/schema.py","tests/integration/logic/test_ir_family_conformance.py"]},
+    {"module_id":"ir-core-artifacts","path":"ipfs_datasets_py/logic/ir_core/artifacts.py","import_path":"ipfs_datasets_py.logic.ir_core.artifacts","symbols":[],"roles":["ir","publication"],"disposition":"component","authority":false,"authority_scope":"Artifact manifest and integrity component built on shared identities.","evidence_paths":["ipfs_datasets_py/logic/ir_core/artifacts.py","ipfs_datasets_py/logic/submodule_registry.py"]},
+    {"module_id":"ir-core-canonical","path":"ipfs_datasets_py/logic/ir_core/canonical.py","import_path":"ipfs_datasets_py.logic.ir_core.canonical","symbols":["CollectionSemantics","CollectionRule","CollectionSchema","canonical_json_bytes","canonical_json"],"roles":["canonicalization","ir"],"disposition":"canonical","authority":true,"authority_scope":"Shared canonical JSON and collection-semantics owner.","evidence_paths":["ipfs_datasets_py/logic/ir_core/canonical.py","tests/unit/logic/formalization/test_contracts.py"]},
+    {"module_id":"ir-core-claims","path":"ipfs_datasets_py/logic/ir_core/claims.py","import_path":"ipfs_datasets_py.logic.ir_core.claims","symbols":["Assumption","ProofObligation","IRClaim","stable_digest"],"roles":["ir","proof"],"disposition":"canonical","authority":true,"authority_scope":"Shared immutable claim, assumption, and proof-obligation declarations; obligations are never proof outcomes.","evidence_paths":["ipfs_datasets_py/logic/ir_core/claims.py","tests/unit/logic/formalization/test_contracts.py"]},
+    {"module_id":"ir-core-diagnostics","path":"ipfs_datasets_py/logic/ir_core/diagnostics.py","import_path":"ipfs_datasets_py.logic.ir_core.diagnostics","symbols":["Diagnostic","DiagnosticReport","validate_diagnostics","validate_cross_references"],"roles":["ir","trace"],"disposition":"canonical","authority":true,"authority_scope":"Shared diagnostic and cross-reference validation owner.","evidence_paths":["ipfs_datasets_py/logic/ir_core/diagnostics.py","tests/unit/logic/formalization/test_contracts.py"]},
+    {"module_id":"ir-core-evidence","path":"ipfs_datasets_py/logic/ir_core/evidence.py","import_path":"ipfs_datasets_py.logic.ir_core.evidence","symbols":[],"roles":["proof","trace"],"disposition":"declaration","authority":false,"authority_scope":"Evidence declaration contracts; declarations do not establish proof authority.","evidence_paths":["ipfs_datasets_py/logic/ir_core/evidence.py","ipfs_datasets_py/logic/submodule_registry.py"]},
+    {"module_id":"ir-core-identity","path":"ipfs_datasets_py/logic/ir_core/identity.py","import_path":"ipfs_datasets_py.logic.ir_core.identity","symbols":["IdentityProfile","CanonicalIdentity","canonical_identity","identity_preimage","cid_v1"],"roles":["canonicalization","ir"],"disposition":"canonical","authority":true,"authority_scope":"Shared CID and semantic/config/dependency identity owner.","evidence_paths":["ipfs_datasets_py/logic/ir_core/identity.py","tests/unit/logic/formalization/test_contracts.py"]},
+    {"module_id":"ir-core-protocols","path":"ipfs_datasets_py/logic/ir_core/protocols.py","import_path":"ipfs_datasets_py.logic.ir_core.protocols","symbols":["AuthorityKind","BackendAttempt","ResultAuthority","EvidenceGateResult","ProofReceipt","ProofBackend"],"roles":["ir","proof","provider"],"disposition":"canonical","authority":true,"authority_scope":"Shared bounded backend/result/proof authority contract and non-substitution boundary.","evidence_paths":["ipfs_datasets_py/logic/ir_core/protocols.py","tests/integration/logic/test_ir_family_conformance.py"]},
+    {"module_id":"ir-core-provenance","path":"ipfs_datasets_py/logic/ir_core/provenance.py","import_path":"ipfs_datasets_py.logic.ir_core.provenance","symbols":["SourceRef","SourceSpan","ProducerBinding","ConfigBinding","ProvenanceBinding","Provenance"],"roles":["source_map","trace","ir"],"disposition":"canonical","authority":true,"authority_scope":"Shared immutable source, producer, configuration, and dependency provenance owner.","evidence_paths":["ipfs_datasets_py/logic/ir_core/provenance.py","tests/unit/logic/formalization/test_contracts.py"]},
+    {"module_id":"ir-core-schema-registry","path":"ipfs_datasets_py/logic/ir_core/schema_registry.py","import_path":"ipfs_datasets_py.logic.ir_core.schema_registry","symbols":["SchemaSpec","CompatibilityDeclaration","MigrationSpec","MigrationReceipt","IRSchemaRegistry"],"roles":["ir","canonicalization"],"disposition":"canonical","authority":true,"authority_scope":"Shared schema/interface registration and deterministic migration receipt owner.","evidence_paths":["ipfs_datasets_py/logic/ir_core/schema_registry.py","ipfs_datasets_py/logic/submodule_registry.py"]},
+    {"module_id":"legal-ir-facade","path":"ipfs_datasets_py/logic/legal_ir/__init__.py","import_path":"ipfs_datasets_py.logic.legal_ir","symbols":[],"roles":["ir","compiler","decompiler"],"disposition":"facade","authority":false,"authority_scope":"Lazy exports of Legal IR owners.","evidence_paths":["ipfs_datasets_py/logic/legal_ir/__init__.py","ipfs_datasets_py/logic/legal_ir/canonical_contracts.py"]},
+    {"module_id":"formalization-legal-adapter","path":"ipfs_datasets_py/logic/legal_ir/adapter.py","import_path":"ipfs_datasets_py.logic.legal_ir.adapter","symbols":["LegalIRFormalizationAdapter"],"roles":["compiler","formalization"],"disposition":"component","authority":false,"authority_scope":"Structural Legal family adapter satisfying the domain-neutral compiler protocol.","evidence_paths":["ipfs_datasets_py/logic/legal_ir/adapter.py","tests/integration/logic/test_ir_family_conformance.py"]},
+    {"module_id":"legal-ir-canonical-compiler","path":"ipfs_datasets_py/logic/legal_ir/canonical_compiler.py","import_path":"ipfs_datasets_py.logic.legal_ir.canonical_compiler","symbols":["TypedDeonticCanonicalCompiler","CanonicalCompiler","project_legal_norms"],"roles":["compiler","formalization","source_map"],"disposition":"canonical","authority":true,"authority_scope":"COMPILER-CURRENT-1 measured deterministic Legal text compiler; fail-closed with no learned stage.","evidence_paths":["ipfs_datasets_py/logic/legal_ir/canonical_compiler.py","tests/conformance/legal_ir/test_legal_ir_compiler_conformance.py"]},
+    {"module_id":"legal-ir-canonical-contracts","path":"ipfs_datasets_py/logic/legal_ir/canonical_contracts.py","import_path":"ipfs_datasets_py.logic.legal_ir.canonical_contracts","symbols":["CanonicalRoundTripIR","CanonicalRule","SourceMapEntry","ComponentTrace","CompilerRequest","DecompilerRequest","CanonicalStructuredTextCompiler","CanonicalStructuredTextDecompiler"],"roles":["ir","compiler","decompiler","source_map","trace"],"disposition":"canonical","authority":true,"authority_scope":"Dependency-light measured Legal round-trip IR, request/result, source-map, trace, and compiler/decompiler protocol owner.","evidence_paths":["ipfs_datasets_py/logic/legal_ir/canonical_contracts.py","tests/unit/logic/legal_ir/test_canonical_roundtrip_schema.py"]},
+    {"module_id":"legal-ir-canonical-decompiler","path":"ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py","import_path":"ipfs_datasets_py.logic.legal_ir.canonical_decompiler","symbols":["SourceWithheldCanonicalDecompiler","CanonicalDecompiler","SourceWithheldCanonicalParaphraser","decompile_rule"],"roles":["decompiler"],"disposition":"canonical","authority":true,"authority_scope":"DECOMPILER-CURRENT-1 deterministic source-withheld Legal rendering owner with no model.","evidence_paths":["ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py","tests/conformance/legal_ir/test_legal_ir_compiler_conformance.py"]},
+    {"module_id":"legal-ir-canonical-roundtrip","path":"ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py","import_path":"ipfs_datasets_py.logic.legal_ir.canonical_roundtrip","symbols":["CanonicalSemanticRoundTrip","CanonicalRoundTrip","CanonicalSemanticRoundTripResult"],"roles":["compiler","decompiler","trace"],"disposition":"canonical","authority":true,"authority_scope":"Measured compile-decompile-recompile orchestration; success alone is not a semantic-parity claim.","evidence_paths":["ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py","tests/conformance/legal_ir/test_legal_ir_compiler_conformance.py"]},
+    {"module_id":"legal-ir-constraint-query","path":"ipfs_datasets_py/logic/legal_ir/constraint_query.py","import_path":"ipfs_datasets_py.logic.legal_ir.constraint_query","symbols":["LegalConstraintRecord","LegalConstraintQuery","LegalApplicabilityEvidence","select_applicable_legal_constraints"],"roles":["formalization","proof"],"disposition":"canonical","authority":true,"authority_scope":"Legal-family typed constraint applicability and selection semantics.","evidence_paths":["ipfs_datasets_py/logic/legal_ir/constraint_query.py","ipfs_datasets_py/logic/formalization/constraint_contracts.py"]},
+    {"module_id":"modal-compiler","path":"ipfs_datasets_py/logic/modal/compiler.py","import_path":"ipfs_datasets_py.logic.modal.compiler","symbols":["DeterministicModalCompiler"],"roles":["compiler","formalization"],"disposition":"component","authority":false,"authority_scope":"Deterministic ModalIR family compiler; a parallel family meaning, not COMPILER-CURRENT-1.","evidence_paths":["ipfs_datasets_py/logic/modal/compiler.py","tests/integration/logic/test_ir_family_conformance.py"]},
+    {"module_id":"modal-controlled-decompiler","path":"ipfs_datasets_py/logic/modal/decompiler.py","import_path":"ipfs_datasets_py.logic.modal.decompiler","symbols":[],"roles":["decompiler"],"disposition":"component","authority":false,"authority_scope":"Source-bearing ModalIR family reconstruction; distinct from source-withheld canonical Legal decompilation.","evidence_paths":["ipfs_datasets_py/logic/modal/decompiler.py","ipfs_datasets_py/logic/modal/compiler.py"]},
+    {"module_id":"leanstral-provider","path":"ipfs_datasets_py/logic/modal/leanstral.py","import_path":"ipfs_datasets_py.logic.modal.leanstral","symbols":[],"roles":["provider","formalization"],"disposition":"experimental","authority":false,"authority_scope":"Candidate proposal/shadow provider; never semantic or proof authority.","evidence_paths":["ipfs_datasets_py/logic/modal/leanstral.py","ipfs_datasets_py/logic/modal/leanstral_verifier.py"]},
+    {"module_id":"leanstral-verifier","path":"ipfs_datasets_py/logic/modal/leanstral_verifier.py","import_path":"ipfs_datasets_py.logic.modal.leanstral_verifier","symbols":[],"roles":["proof","provider"],"disposition":"component","authority":false,"authority_scope":"Verification component for bounded Leanstral candidates.","evidence_paths":["ipfs_datasets_py/logic/modal/leanstral_verifier.py","ipfs_datasets_py/logic/modal/leanstral.py"]},
+    {"module_id":"proof-corpus-applicability","path":"ipfs_datasets_py/logic/proof_corpus/applicability.py","import_path":"ipfs_datasets_py.logic.proof_corpus.applicability","symbols":["ProofApplicabilityQuery","ProofApplicabilityResult","ProofApplicabilityFilter","select_applicable_proofs"],"roles":["proof","provider"],"disposition":"canonical","authority":true,"authority_scope":"Hard-filter proof applicability owner; ranking is advisory and never authority.","evidence_paths":["ipfs_datasets_py/logic/proof_corpus/applicability.py","tests/unit/logic/proof_corpus/test_applicability_audit.py"]},
+    {"module_id":"proof-corpus-index","path":"ipfs_datasets_py/logic/proof_corpus/index.py","import_path":"ipfs_datasets_py.logic.proof_corpus.index","symbols":[],"roles":["proof","vector"],"disposition":"component","authority":false,"authority_scope":"Rebuildable secondary index over authoritative proof envelopes.","evidence_paths":["ipfs_datasets_py/logic/proof_corpus/index.py","tests/unit/logic/proof_corpus/test_query.py"]},
+    {"module_id":"proof-corpus-migration","path":"ipfs_datasets_py/logic/proof_corpus/migration.py","import_path":"ipfs_datasets_py.logic.proof_corpus.migration","symbols":[],"roles":["proof"],"disposition":"legacy","authority":false,"authority_scope":"Legacy proof-corpus quarantine and migration; never authoritative input.","evidence_paths":["ipfs_datasets_py/logic/proof_corpus/migration.py","tests/unit/logic/proof_corpus/test_verifier_migration.py"]},
+    {"module_id":"proof-corpus-model","path":"ipfs_datasets_py/logic/proof_corpus/model.py","import_path":"ipfs_datasets_py.logic.proof_corpus.model","symbols":["AttestedProofEnvelope","CoverageDeclaration","PipelineIdentity","build_attested_proof_envelope","attestation_kind_is_theorem_authoritative"],"roles":["proof","ir","trace"],"disposition":"canonical","authority":true,"authority_scope":"Attested proof authority envelope and explicit theorem-authority classification.","evidence_paths":["ipfs_datasets_py/logic/proof_corpus/model.py","tests/unit/logic/proof_corpus/test_authority_model_policy.py"]},
+    {"module_id":"proof-corpus-policy","path":"ipfs_datasets_py/logic/proof_corpus/policy.py","import_path":"ipfs_datasets_py.logic.proof_corpus.policy","symbols":["ProofTrustPolicy","TrustEvaluationStatus","default_production_trust_policy"],"roles":["proof","provider"],"disposition":"canonical","authority":true,"authority_scope":"Proof-corpus consumer trust policy owner.","evidence_paths":["ipfs_datasets_py/logic/proof_corpus/policy.py","tests/unit/logic/proof_corpus/test_authority_model_policy.py"]},
+    {"module_id":"proof-corpus-query","path":"ipfs_datasets_py/logic/proof_corpus/query.py","import_path":"ipfs_datasets_py.logic.proof_corpus.query","symbols":["ProofCorpusQuery","query_corpus","get_by_cid","list_constraints_for_obligation"],"roles":["proof","provider"],"disposition":"canonical","authority":true,"authority_scope":"Deterministic proof-corpus query semantics.","evidence_paths":["ipfs_datasets_py/logic/proof_corpus/query.py","tests/unit/logic/proof_corpus/test_query.py"]},
+    {"module_id":"proof-corpus-verifier","path":"ipfs_datasets_py/logic/proof_corpus/verifier.py","import_path":"ipfs_datasets_py.logic.proof_corpus.verifier","symbols":["AttestedProofVerifier","ConsumerVerificationReceipt","verify_selected_item"],"roles":["proof","trace"],"disposition":"canonical","authority":true,"authority_scope":"Consumer verification and receipt owner for selected attested proofs.","evidence_paths":["ipfs_datasets_py/logic/proof_corpus/verifier.py","tests/unit/logic/proof_corpus/test_verifier_migration.py"]},
+    {"module_id":"security-legacy-adapter","path":"ipfs_datasets_py/logic/security_ir/adapter.py","import_path":"ipfs_datasets_py.logic.security_ir.adapter","symbols":["SecurityIRLegacyAdapter"],"roles":["bridge","ir"],"disposition":"legacy","authority":false,"authority_scope":"Legacy Security IR adapter retained for compatibility.","evidence_paths":["ipfs_datasets_py/logic/security_ir/adapter.py","ipfs_datasets_py/logic/security_ir/model.py"]},
+    {"module_id":"security-ir-constraint-query","path":"ipfs_datasets_py/logic/security_ir/constraint_query.py","import_path":"ipfs_datasets_py.logic.security_ir.constraint_query","symbols":["SecurityConstraintRecord","SecurityConstraintQuery","SecurityApplicabilityEvidence","select_applicable_security_constraints"],"roles":["formalization","proof"],"disposition":"canonical","authority":true,"authority_scope":"Security-family typed applicability and constraint selection owner.","evidence_paths":["ipfs_datasets_py/logic/security_ir/constraint_query.py","ipfs_datasets_py/logic/formalization/constraint_contracts.py"]},
+    {"module_id":"formalization-security-adapter","path":"ipfs_datasets_py/logic/security_ir/formalization_adapter.py","import_path":"ipfs_datasets_py.logic.security_ir.formalization_adapter","symbols":["SecurityIRFormalizationAdapter"],"roles":["compiler","formalization"],"disposition":"component","authority":false,"authority_scope":"Typed Security family adapter registered under COMPILER-CURRENT-1.","evidence_paths":["ipfs_datasets_py/logic/security_ir/formalization_adapter.py","tests/integration/logic/test_ir_family_conformance.py"]},
+    {"module_id":"security-ir-model","path":"ipfs_datasets_py/logic/security_ir/model.py","import_path":"ipfs_datasets_py.logic.security_ir.model","symbols":["SecuritySource","Policy","SecurityClaim","SecurityIR","validate_security_ir"],"roles":["ir","source_map"],"disposition":"canonical","authority":true,"authority_scope":"Canonical immutable Security IR and validation owner.","evidence_paths":["ipfs_datasets_py/logic/security_ir/model.py","tests/integration/logic/test_ir_family_conformance.py"]},
+    {"module_id":"security-ir-result-policy","path":"ipfs_datasets_py/logic/security_ir/result_policy.py","import_path":"ipfs_datasets_py.logic.security_ir.result_policy","symbols":[],"roles":["proof"],"disposition":"canonical","authority":true,"authority_scope":"Security-domain result authority policy.","evidence_paths":["ipfs_datasets_py/logic/security_ir/result_policy.py","ipfs_datasets_py/logic/security_ir/results.py"]},
+    {"module_id":"security-ir-results","path":"ipfs_datasets_py/logic/security_ir/results.py","import_path":"ipfs_datasets_py.logic.security_ir.results","symbols":[],"roles":["proof","trace"],"disposition":"canonical","authority":true,"authority_scope":"Security-domain typed result contracts.","evidence_paths":["ipfs_datasets_py/logic/security_ir/results.py","ipfs_datasets_py/logic/security_ir/result_policy.py"]},
+    {"module_id":"logic-submodule-registry","path":"ipfs_datasets_py/logic/submodule_registry.py","import_path":"ipfs_datasets_py.logic.submodule_registry","symbols":["LogicSubmoduleSpec","logic_integration_manifest","logic_submodule_import_report"],"roles":["ir","bridge","compiler","proof"],"disposition":"declaration","authority":false,"authority_scope":"Static discovery and import registry for 32 logic submodules; registration is not semantic ownership.","evidence_paths":["ipfs_datasets_py/logic/submodule_registry.py","tests/unit/logic/test_logic_submodule_registry.py"]},
+    {"module_id":"legal-ir-objective-balancer","path":"ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_objective_balancer.py","import_path":"ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_objective_balancer","symbols":[],"roles":["loss"],"disposition":"experimental","authority":false,"authority_scope":"Training objective balancing experiment; not a fixed IRLossConfiguration@1 owner.","evidence_paths":["ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_objective_balancer.py","tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_objective_balancer.py"]},
+    {"module_id":"optimizer-legal-samples","path":"ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py","import_path":"ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples","symbols":["LegalSample"],"roles":["ir","formalization"],"disposition":"legacy","authority":false,"authority_scope":"Optimizer fixture/input DTO used by conformance tests; not shared IR authority.","evidence_paths":["ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py","tests/integration/logic/test_ir_family_conformance.py"]},
+    {"module_id":"modal-autoencoder","path":"ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py","import_path":"ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder","symbols":["AdaptiveModalAutoencoder"],"roles":["embedding","loss","provider"],"disposition":"experimental","authority":false,"authority_scope":"Large proof-aware training and feature experiment with evolving objectives; never semantic or proof authority.","evidence_paths":["ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py","tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py"]},
+    {"module_id":"modal-autoencoder-checkpoint","path":"ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_checkpoint.py","import_path":"ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_checkpoint","symbols":["CheckpointManifest"],"roles":["checkpoint"],"disposition":"legacy","authority":false,"authority_scope":"Checksummed full/delta operational numeric training state; not advisor compatibility metadata and not MODEL-LEGACY-1.","evidence_paths":["ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_checkpoint.py","tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_checkpoint.py"]},
+    {"module_id":"optimizer-modal-ir","path":"ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py","import_path":"ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir","symbols":["ModalIRDocument","ModalIRFormula","ModalIROperator","ModalIRPredicate","ModalIRProvenance"],"roles":["ir"],"disposition":"legacy","authority":false,"authority_scope":"Optimizer-owned ModalIR family DTO used as a legacy fixture/input; not shared ir_core authority.","evidence_paths":["ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py","tests/integration/logic/test_ir_family_conformance.py"]},
+    {"module_id":"optimizer-proof-trace","path":"ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_trace.py","import_path":"ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_trace","symbols":[],"roles":["trace","proof"],"disposition":"legacy","authority":false,"authority_scope":"Timestamp-bearing optimizer proof trace; wall-clock serialization is not content identity.","evidence_paths":["ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_trace.py","ipfs_datasets_py/logic/legal_ir/canonical_contracts.py"]}
+  ],
+  "artifacts": [
+    {
+      "artifact_id": "model-legacy-1",
+      "path": null,
+      "external_uri": "hf://justicedao/legal-ir-autoencoder-checkpoints@94ca549d102e3e31781370aec1247f91365440eb/legal-ir-autoencoder-canonical-20260630T221836Z",
+      "state_sha256": "7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+      "roles": ["checkpoint"],
+      "disposition": "artifact",
+      "authority": false,
+      "meaning": "Frozen legacy external model artifact; never training, semantic, proof, or promotion authority.",
+      "evidence_references": ["source_binding.model_checkpoint_identity", "source_binding.source_dataset_revision"]
+    },
+    {
+      "artifact_id": "canonical-roundtrip-ir-schema",
+      "path": "ipfs_datasets_py/logic/legal_ir/schemas/canonical_roundtrip_ir.schema.json",
+      "roles": ["ir", "canonicalization"],
+      "disposition": "artifact",
+      "authority": false,
+      "meaning": "Machine-readable schema paired with the canonical_contracts code owner.",
+      "evidence_paths": ["ipfs_datasets_py/logic/legal_ir/schemas/canonical_roundtrip_ir.schema.json", "tests/unit/logic/legal_ir/test_canonical_roundtrip_schema.py"]
+    },
+    {
+      "artifact_id": "semantic-roundtrip-parity-policy",
+      "path": "docs/benchmarks/semantic_roundtrip_canonical_parity_policy.json",
+      "roles": ["compiler", "decompiler"],
+      "disposition": "artifact",
+      "authority": false,
+      "meaning": "Measured parity policy consumed by the canonical Legal round-trip contracts.",
+      "evidence_paths": ["docs/benchmarks/semantic_roundtrip_canonical_parity_policy.json", "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py"]
+    }
+  ],
+  "parallel_meanings": {
+    "compiler": [
+      {"meaning":"current measured Legal compiler identity","implementation_ids":["legal-ir-canonical-compiler"],"identity":"COMPILER-CURRENT-1","substitution_allowed":false},
+      {"meaning":"domain-neutral protocol and artifact declarations","implementation_ids":["formalization-compiler-contract"],"identity":null,"substitution_allowed":false},
+      {"meaning":"typed family adapters","implementation_ids":["formalization-intent-compiler","formalization-legal-adapter","formalization-security-adapter","modal-compiler"],"identity":null,"substitution_allowed":false},
+      {"meaning":"parallel incremental Legal API","implementation_ids":["legal-ir-compiler-api-facade"],"identity":null,"substitution_allowed":false}
+    ],
+    "decompiler": [
+      {"meaning":"current deterministic source-withheld Legal decompiler identity","implementation_ids":["legal-ir-canonical-decompiler"],"identity":"DECOMPILER-CURRENT-1","substitution_allowed":false},
+      {"meaning":"controlled family decoders","implementation_ids":["deontic-controlled-decoder","intent-controlled-decompiler","modal-controlled-decompiler"],"identity":null,"substitution_allowed":false},
+      {"meaning":"domain-neutral formalization decompiler","implementation_ids":[],"identity":null,"gap_id":"unresolved-domain-neutral-formalization-decompiler","substitution_allowed":false}
+    ],
+    "checkpoint": [
+      {"meaning":"advisor compatibility and lineage metadata with opaque weights","implementation_ids":["formalization-checkpoint-manifest"],"identity":null,"substitution_allowed":false},
+      {"meaning":"checksummed modal autoencoder numeric training state","implementation_ids":["modal-autoencoder-checkpoint"],"identity":null,"substitution_allowed":false},
+      {"meaning":"frozen external legacy model artifact","implementation_ids":["model-legacy-1"],"identity":"MODEL-LEGACY-1","substitution_allowed":false}
+    ]
+  },
+  "unresolved_roles": [
+    {"gap_id":"unresolved-repository-wide-typed-bridge","role":"bridge","scope":"one rich typed repository-wide bridge contract","module_path":null,"disposition":"unresolved","observed_implementation_ids":["bridge-types","bridge-registry","hammer-translation"],"reason":"Current bridge envelopes, proof translation, and six adapters have parallel type meanings and no single owner.","evidence_paths":["ipfs_datasets_py/logic/bridge/types.py","ipfs_datasets_py/logic/hammers/translation.py"]},
+    {"gap_id":"unresolved-domain-neutral-formalization-decompiler","role":"decompiler","scope":"domain-neutral inverse of FormalizationCompiler","module_path":null,"disposition":"unresolved","observed_implementation_ids":["legal-ir-canonical-decompiler","deontic-controlled-decoder","intent-controlled-decompiler","modal-controlled-decompiler"],"reason":"No logic/formalization/decompiler.py exists; domain decoders have intentionally different reconstruction guarantees.","evidence_paths":["ipfs_datasets_py/logic/formalization/__init__.py","ipfs_datasets_py/logic/intent_ir/formalize/decompiler.py"]},
+    {"gap_id":"unresolved-versioned-composite-loss","role":"loss","scope":"fixed IRLossConfiguration@1 with signs, normalization, proof gating, and anti-shortcut exclusions","module_path":null,"disposition":"unresolved","observed_implementation_ids":["legal-ir-objective-balancer","modal-autoencoder","bridge-registry"],"reason":"Existing metrics and objectives are family-specific or experimental and do not form one frozen loss contract.","evidence_paths":["ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_objective_balancer.py","ipfs_datasets_py/logic/bridge/registry.py"]},
+    {"gap_id":"unresolved-unified-semantic-checkpoint","role":"checkpoint","scope":"single semantic checkpoint lifecycle and manifest","module_path":null,"disposition":"unresolved","observed_implementation_ids":["formalization-checkpoint-manifest","modal-autoencoder-checkpoint","model-legacy-1"],"reason":"The three checkpoint meanings cover compatibility metadata, operational numeric state, and an external legacy artifact and must remain separate.","evidence_paths":["ipfs_datasets_py/logic/formalization/checkpoints.py","ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_checkpoint.py"]},
+    {"gap_id":"unresolved-qualified-semantic-publication","role":"publication","scope":"proof-grounded publication manifest and remote promotion owner","module_path":null,"disposition":"unresolved","observed_implementation_ids":["skillcenter-hf-release","huggingface-release","huggingface-publisher"],"reason":"Existing packaging and publishing utilities do not bind the required compiler, loss, proof, evaluation, promotion, and rollback identities.","evidence_paths":["ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_hf_release.py","ipfs_datasets_py/huggingface/publisher.py"]}
+  ],
+  "counts": {
+    "required_role_count": 17,
+    "covered_role_count": 17,
+    "missing_role_count": 0,
+    "module_count": 97,
+    "artifact_count": 3,
+    "unresolved_scope_count": 5,
+    "modules_by_disposition": {
+      "canonical": 35,
+      "component": 32,
+      "generated": 0,
+      "facade": 4,
+      "legacy": 8,
+      "experimental": 6,
+      "artifact": 0,
+      "declaration": 9,
+      "duplicate": 2,
+      "obsolete": 1,
+      "unresolved": 0
+    }
+  },
+  "zero_disposition_explanations": {
+    "generated": "No checked-in generated implementation is an ownership candidate in this source-bound semantic inventory; generated release outputs remain derivatives of component builders.",
+    "artifact": "Artifacts are classified in the separate artifacts array, so executable module_count for artifact is zero.",
+    "unresolved": "Unresolved scopes have null module_path and are classified in unresolved_roles, so executable module_count for unresolved is zero."
+  },
+  "evidence_receipt": {
+    "static_reference_scan": {
+      "status": "passed",
+      "roots": ["ipfs_datasets_py/logic", "ipfs_datasets_py/optimizers/logic_theorem_optimizer", "ipfs_datasets_py/huggingface", "tests"],
+      "registries": ["ipfs_datasets_py/logic/submodule_registry.py", "ipfs_datasets_py/logic/bridge/registry.py"],
+      "logic_submodule_registry": {"declared_count":32,"required_count":26,"required_import_passed_count":26,"required_import_failed_count":0,"optional_skipped":["ErgoAI","batch_processing","benchmarks","ml_confidence","monitoring","tools"]},
+      "logic_bridge_registry": {"declared_count":6,"implemented_count":6,"implemented_names":["modal_frame_logic","deontic_norms","fol_tdfol","cec_dcec","external_prover_router","zkp_attestation"]},
+      "record_path_validation": {"status":"passed","missing_module_paths":[]}
+    },
+    "focused_collection": {
+      "command": "python -m pytest -q ipfs_datasets_py/tests/integration/logic/test_ir_family_conformance.py ipfs_datasets_py/tests/unit/logic/formalization",
+      "working_directory": "workspace root",
+      "python": "3.12.3",
+      "pytest": "9.1.1",
+      "collected": 48,
+      "passed": 48,
+      "failed": 0,
+      "exit_code": 0,
+      "status": "passed"
+    }
+  },
+  "explicit_nonclaims": [
+    "The reviewed comparison commit is comparison-only and is not substituted for SRC-DATASETS-AUTH-1.",
+    "A canonical module classification is limited to its authority_scope and does not make every similarly named class interchangeable.",
+    "FormalizationCompiler is a structural protocol and artifact boundary, not a second COMPILER-CURRENT-1 implementation.",
+    "ProofObligation and evidence declarations are not proof results, and no adapter may substitute result authority.",
+    "Bridge LegalIRDocument and canonical Legal CanonicalRoundTripIR are parallel envelopes, not aliases.",
+    "TDFOL, DCEC, Intent, Security, Legal, and optimizer ModalIR retain distinct family identity; there is no repository-wide Formula type.",
+    "Advisor, Leanstral, autoencoder, embedding, vector, and loss outputs are candidate, retrieval, or training signals and never semantic or proof authority.",
+    "MODEL-LEGACY-1 is artifact-only and never training or promotion authority.",
+    "The focused tests establish the stated structural and authority contracts; they do not prove semantic completeness for every logic family.",
+    "No comparison-only module absent from the authority tree is represented as a live implementation.",
+    "No DomainLogicSlice implementation exists at this authority tree; this inventory does not invent one."
+  ],
+  "canonicalization": {
+    "json": "UTF-8, parsed JSON object, sorted keys, compact separators, no NaN, one terminal LF in the checked-in rendering",
+    "identity_projection": "entire parsed document excluding the top-level inventory_sha256 field",
+    "digest": "sha2-256 lowercase hexadecimal"
+  },
+  "inventory_sha256": "532e1c8b60fcf77515e772368f80475d2f62ba1545490826c3baeea1b402920b"
+}

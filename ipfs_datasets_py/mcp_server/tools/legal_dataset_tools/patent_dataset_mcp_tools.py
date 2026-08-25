@@ -5,6 +5,7 @@ Thin standalone function wrappers around the canonical patent-dataset API.
 All business logic lives in ipfs_datasets_py.processors.patent_dataset_api
 (which re-exports from ipfs_datasets_py.processors.domains.patent.patent_dataset_api).
 """
+
 from __future__ import annotations
 
 import logging
@@ -23,6 +24,7 @@ try:
         search_patents_by_assignee_from_parameters,
         build_patent_dataset_from_parameters,
     )
+
     _PATENT_API_AVAILABLE = True
 except ImportError as _e:
     logger.warning("patent_dataset_api not available: %s", _e)
@@ -47,6 +49,7 @@ except ImportError as _e:
 # ---------------------------------------------------------------------------
 # Standalone async MCP functions
 # ---------------------------------------------------------------------------
+
 
 async def scrape_uspto_patents(
     keywords: Optional[List[str]] = None,
@@ -118,14 +121,16 @@ async def build_patent_dataset(
     graphrag_format: bool = True,
 ) -> Dict[str, Any]:
     """Build a structured patent dataset optimised for GraphRAG ingestion."""
-    return await build_patent_dataset_from_parameters({
-        "search_criteria": search_criteria or {},
-        "output_format": output_format,
-        "output_path": output_path,
-        "include_citations": include_citations,
-        "include_classifications": include_classifications,
-        "graphrag_format": graphrag_format,
-    })
+    return await build_patent_dataset_from_parameters(
+        {
+            "search_criteria": search_criteria or {},
+            "output_format": output_format,
+            "output_path": output_path,
+            "include_citations": include_citations,
+            "include_classifications": include_classifications,
+            "graphrag_format": graphrag_format,
+        }
+    )
 
 
 # ---------------------------------------------------------------------------

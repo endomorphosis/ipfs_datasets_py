@@ -6,6 +6,7 @@ Methods under test:
   - OntologyMediator.top_actions(n)
   - OntologyMediator.undo_depth()
 """
+
 import pytest
 
 
@@ -13,8 +14,10 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_config(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
     return ExtractionConfig(**kwargs)
 
 
@@ -31,6 +34,7 @@ def _make_mediator():
 # ---------------------------------------------------------------------------
 # ExtractionConfig.clone
 # ---------------------------------------------------------------------------
+
 
 class TestExtractionConfigClone:
     def test_clone_equals_original(self):
@@ -64,6 +68,7 @@ class TestExtractionConfigClone:
 # OntologyMediator.total_action_count
 # ---------------------------------------------------------------------------
 
+
 class TestTotalActionCount:
     def test_no_actions(self):
         m = _make_mediator()
@@ -84,6 +89,7 @@ class TestTotalActionCount:
 # ---------------------------------------------------------------------------
 # OntologyMediator.top_actions
 # ---------------------------------------------------------------------------
+
 
 class TestTopActions:
     def test_no_actions_returns_empty(self):
@@ -122,6 +128,7 @@ class TestTopActions:
 # ---------------------------------------------------------------------------
 # OntologyMediator.undo_depth
 # ---------------------------------------------------------------------------
+
 
 class TestUndoDepth:
     def test_empty_stack(self):

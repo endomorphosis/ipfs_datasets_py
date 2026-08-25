@@ -160,7 +160,7 @@ converter = DataInterchangeUtils()
 ```python
 from ipfs_datasets_py.jsonnet_utils import jsonnet_to_json
 
-jsonnet_str = '''
+jsonnet_str = """
 {
   name: "Dataset",
   items: [
@@ -168,7 +168,7 @@ jsonnet_str = '''
     { id: 2, value: "second" }  // Note: trailing comma is valid in Jsonnet
   ]
 }
-'''
+"""
 
 json_str = jsonnet_to_json(jsonnet_str)
 ```
@@ -179,15 +179,12 @@ from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
 
 converter = JsonnetConverter()
 
-jsonnet_str = '''
+jsonnet_str = """
 local dept = std.extVar("department");
 [{ id: i, department: dept } for i in std.range(1, 3)]
-'''
+"""
 
-json_str = converter.jsonnet_to_json(
-    jsonnet_str,
-    ext_vars={"department": "Engineering"}
-)
+json_str = converter.jsonnet_to_json(jsonnet_str, ext_vars={"department": "Engineering"})
 ```
 
 #### Example 3: Convert to Parquet
@@ -196,10 +193,7 @@ from ipfs_datasets_py.jsonnet_utils import jsonnet_file_to_parquet
 
 # Convert Jsonnet file to Parquet
 parquet_path = jsonnet_file_to_parquet(
-    "data.jsonnet",
-    "output.parquet",
-    ext_vars={"multiplier": "2.0"},
-    compression="snappy"
+    "data.jsonnet", "output.parquet", ext_vars={"multiplier": "2.0"}, compression="snappy"
 )
 ```
 
@@ -210,10 +204,7 @@ from ipfs_datasets_py.dataset_serialization import DatasetSerializer
 serializer = DatasetSerializer()
 
 # Serialize Jsonnet to IPLD
-cid = serializer.serialize_jsonnet(
-    "config.jsonnet",
-    ext_vars={"environment": "production"}
-)
+cid = serializer.serialize_jsonnet("config.jsonnet", ext_vars={"environment": "production"})
 
 # Deserialize from IPLD
 data = serializer.deserialize_jsonnet(cid)

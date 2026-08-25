@@ -29,10 +29,11 @@ from .. import ZKPError
 class ZKBackend(Protocol):
     """
     Protocol that all ZKP backends must implement.
-    
+
     Enables pluggable backends (simulation vs. real cryptography).
     All backends must implement these methods and properties.
     """
+
     backend_id: str
 
     def generate_proof(self, theorem: str, private_axioms: list[str], metadata: dict) -> ZKPProof:
@@ -85,18 +86,18 @@ _BACKEND_ALIASES = {
 def get_backend(backend: str = "simulated") -> ZKBackend:
     """
     Retrieve and lazily instantiate a backend by ID.
-    
+
     Args:
         backend: Backend identifier (default: "simulated")
                  Recognized: "", "sim", "simulated", "groth16", "g16",
                  "provekit", "pk", "provekit-whir", "whir"
-    
+
     Returns:
         ZKBackend instance (cached for subsequent calls)
-    
+
     Raises:
         ZKPError: If backend is unknown or required dependencies are missing
-    
+
     Example:
         >>> backend = get_backend("simulated")
         >>> proof = backend.generate_proof("P", ["P"], {})
@@ -104,12 +105,12 @@ def get_backend(backend: str = "simulated") -> ZKBackend:
     # Normalize backend name
     backend_raw = (backend or "").strip().lower()
     backend_norm = _BACKEND_ALIASES.get(backend_raw, backend_raw)
-    
+
     # Check cache first
     cache_key = backend_norm if backend_norm else "simulated"
     if cache_key in _backend_cache:
         return _backend_cache[cache_key]
-    
+
     # Load simulated backend (always available)
     if backend_norm == "simulated":
         mod = importlib.import_module(f"{__name__}.simulated")
@@ -140,16 +141,13 @@ def get_backend(backend: str = "simulated") -> ZKBackend:
 
     # Unknown backend
     available = ", ".join(f"'{k}'" for k in _BACKEND_METADATA.keys())
-    raise ZKPError(
-        f"Unknown ZKP backend: {backend!r}. "
-        f"Available backends: {available}"
-    )
+    raise ZKPError(f"Unknown ZKP backend: {backend!r}. Available backends: {available}")
 
 
 def list_backends() -> dict[str, dict[str, Any]]:
     """
     List metadata for all known backends.
-    
+
     Returns:
         Dictionary mapping backend_id to metadata
     """
@@ -159,10 +157,10 @@ def list_backends() -> dict[str, dict[str, Any]]:
 def backend_is_available(backend_id: str) -> bool:
     """
     Check if a backend is available and loadable.
-    
+
     Args:
         backend_id: Backend identifier to check
-    
+
     Returns:
         True if backend can be loaded successfully, False otherwise
     """
@@ -176,7 +174,7 @@ def backend_is_available(backend_id: str) -> bool:
 def clear_backend_cache() -> None:
     """
     Clear the backend cache.
-    
+
     Primarily used for testing. Generally should not be called in production.
     """
     global _backend_cache

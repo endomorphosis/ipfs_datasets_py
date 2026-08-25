@@ -87,21 +87,13 @@ result = await scrape_url_tool("https://example.com")
 
 ### Concurrent Scraping
 ```python
-results = scrape_urls([
-    "https://example.com",
-    "https://example.org",
-    "https://example.net"
-])
+results = scrape_urls(["https://example.com", "https://example.org", "https://example.net"])
 ```
 
 ### Configurable Behavior
 ```python
 config = ScraperConfig(
-    timeout=60,
-    extract_links=True,
-    fallback_enabled=True,
-    max_retries=3,
-    rate_limit_delay=2.0
+    timeout=60, extract_links=True, fallback_enabled=True, max_retries=3, rate_limit_delay=2.0
 )
 ```
 
@@ -213,11 +205,7 @@ python -m ipfs_datasets_py.scraper_cli scrape-multiple \
 ```python
 from ipfs_datasets_py.mcp_server.tools.web_scraping_tools import scrape_url_tool
 
-result = await scrape_url_tool(
-    url="https://example.com",
-    fallback_enabled=True,
-    extract_links=True
-)
+result = await scrape_url_tool(url="https://example.com", fallback_enabled=True, extract_links=True)
 ```
 
 ## Benefits
@@ -253,11 +241,13 @@ result = await scrape_url_tool(
 ```python
 # Old way (picking a specific method)
 from ipfs_datasets_py import WebTextExtractor
+
 extractor = WebTextExtractor()
 result = extractor.extract_text(url, method="beautifulsoup")
 
 # New way (automatic fallback)
 from ipfs_datasets_py import scrape_url
+
 result = scrape_url(url)
 ```
 
@@ -277,8 +267,10 @@ async def scrape_with_beautifulsoup(url): ...
 async def scrape_with_playwright(url): ...
 async def scrape_with_wayback(url): ...
 
+
 # New way (unified tool)
 from ipfs_datasets_py.mcp_server.tools.web_scraping_tools import scrape_url_tool
+
 result = await scrape_url_tool(url)  # Tries all methods automatically
 ```
 

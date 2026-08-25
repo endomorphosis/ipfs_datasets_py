@@ -7,9 +7,7 @@ import pickle
 from ipfs_datasets_py.optimizers.common.caching_layer import CacheL2
 
 
-def test_cache_l2_get_unpickling_error_returns_none_and_counts_miss(
-    tmp_path, monkeypatch
-) -> None:
+def test_cache_l2_get_unpickling_error_returns_none_and_counts_miss(tmp_path, monkeypatch) -> None:
     cache = CacheL2(path=str(tmp_path))
     cache.set("k1", {"value": 1})
 

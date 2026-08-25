@@ -69,17 +69,17 @@ print(rdf_turtle)
 
 # Output example:
 # @prefix schema: <https://schema.org/> .
-# 
+#
 # <#alice> a schema:Person ;
 #     schema:name "Alice Smith" ;
 #     schema:worksFor <#google> .
-# 
+#
 # <#google> a schema:Organization ;
 #     schema:name "Google" .
 
 # Also supports other formats
 rdf_ntriples = serializer.serialize(kg, format="nt")  # N-Triples
-rdf_rdfxml = serializer.serialize(kg, format="xml")   # RDF/XML
+rdf_rdfxml = serializer.serialize(kg, format="xml")  # RDF/XML
 rdf_jsonld = serializer.serialize(kg, format="json-ld")  # JSON-LD
 ```
 
@@ -114,16 +114,12 @@ print(context)
 # }
 
 # Add custom vocabulary
-context_mgr.add_vocabulary(
-    prefix="myapp",
-    namespace="https://myapp.com/vocab/"
-)
+context_mgr.add_vocabulary(prefix="myapp", namespace="https://myapp.com/vocab/")
 
 # Create custom context
-custom_context = context_mgr.create_context({
-    "Person": "myapp:Person",
-    "specialty": "myapp:specialty"
-})
+custom_context = context_mgr.create_context(
+    {"Person": "myapp:Person", "specialty": "myapp:specialty"}
+)
 ```
 
 **Context Features:**
@@ -148,10 +144,7 @@ jsonld_doc = {
     "@context": "https://schema.org/",
     "@type": "Person",
     "name": "Alice Smith",
-    "worksFor": {
-        "@type": "Organization",
-        "name": "Google"
-    }
+    "worksFor": {"@type": "Organization", "name": "Google"},
 }
 
 # Validate structure
@@ -164,10 +157,7 @@ for error in errors:
     print(f"Error: {error.message} at {error.path}")
 
 # Validate against schema
-is_valid = validator.validate_against_schema(
-    jsonld_doc,
-    schema_url="https://schema.org/Person"
-)
+is_valid = validator.validate_against_schema(jsonld_doc, schema_url="https://schema.org/Person")
 ```
 
 **Validation Types:**
@@ -185,19 +175,13 @@ from ipfs_datasets_py.knowledge_graphs.jsonld import (
     JSONLDDocument,
     JSONLDContext,
     JSONLDNode,
-    JSONLDGraph
+    JSONLDGraph,
 )
 
 # JSON-LD document
 doc = JSONLDDocument(
     context="https://schema.org/",
-    graph=[
-        JSONLDNode(
-            id="alice",
-            type="Person",
-            properties={"name": "Alice Smith"}
-        )
-    ]
+    graph=[JSONLDNode(id="alice", type="Person", properties={"name": "Alice Smith"})],
 )
 ```
 
@@ -224,6 +208,7 @@ jsonld = translator.to_jsonld(kg, context="https://schema.org/")
 
 # Save to file
 import json
+
 with open("knowledge_graph.jsonld", "w") as f:
     json.dump(jsonld, f, indent=2)
 
@@ -249,17 +234,11 @@ with open("knowledge_graph.jsonld", "w") as f:
 ### Example 2: Custom Vocabulary
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.jsonld import (
-    JSONLDTranslator,
-    ContextManager
-)
+from ipfs_datasets_py.knowledge_graphs.jsonld import JSONLDTranslator, ContextManager
 
 # Define custom vocabulary
 context_mgr = ContextManager()
-context_mgr.add_vocabulary(
-    prefix="biotech",
-    namespace="https://biotech.example.com/vocab/"
-)
+context_mgr.add_vocabulary(prefix="biotech", namespace="https://biotech.example.com/vocab/")
 
 # Create custom context
 custom_context = {
@@ -267,7 +246,7 @@ custom_context = {
         "@vocab": "https://biotech.example.com/vocab/",
         "Protein": "biotech:Protein",
         "interactsWith": "biotech:interactsWith",
-        "sequence": "biotech:sequence"
+        "sequence": "biotech:sequence",
     }
 }
 
@@ -327,10 +306,7 @@ result = engine.query_graph(kg, "MATCH (n:Person) RETURN n")
 ### Example 5: Validation
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.jsonld import (
-    ValidationEngine,
-    JSONLDTranslator
-)
+from ipfs_datasets_py.knowledge_graphs.jsonld import ValidationEngine, JSONLDTranslator
 
 # Create JSON-LD document
 translator = JSONLDTranslator()
@@ -351,10 +327,7 @@ else:
     print("Document is valid JSON-LD")
 
 # Validate against Schema.org
-is_schema_valid = validator.validate_against_schema(
-    jsonld,
-    schema_url="https://schema.org/"
-)
+is_schema_valid = validator.validate_against_schema(jsonld, schema_url="https://schema.org/")
 print(f"Schema.org valid: {is_schema_valid}")
 ```
 
@@ -376,7 +349,7 @@ entity_mapping = {
     "Organization": "https://schema.org/Organization",
     "Place": "https://schema.org/Place",
     "Event": "https://schema.org/Event",
-    "Product": "https://schema.org/Product"
+    "Product": "https://schema.org/Product",
 }
 
 # Relationship types mapped to Schema.org properties
@@ -384,7 +357,7 @@ relationship_mapping = {
     "WORKS_AT": "worksFor",
     "LOCATED_IN": "location",
     "FOUNDED_BY": "founder",
-    "ATTENDED": "attendee"
+    "ATTENDED": "attendee",
 }
 
 # Serialize with automatic mapping
@@ -402,15 +375,8 @@ person_jsonld = {
     "name": "Alice Smith",
     "jobTitle": "Software Engineer",
     "email": "alice@example.com",
-    "worksFor": {
-        "@type": "Organization",
-        "name": "Google",
-        "url": "https://www.google.com"
-    },
-    "alumniOf": {
-        "@type": "EducationalOrganization",
-        "name": "MIT"
-    }
+    "worksFor": {"@type": "Organization", "name": "Google", "url": "https://www.google.com"},
+    "alumniOf": {"@type": "EducationalOrganization", "name": "MIT"},
 }
 
 # Event with location and attendees
@@ -426,13 +392,13 @@ event_jsonld = {
         "address": {
             "@type": "PostalAddress",
             "addressLocality": "San Francisco",
-            "addressRegion": "CA"
-        }
+            "addressRegion": "CA",
+        },
     },
     "attendee": [
         {"@type": "Person", "name": "Alice Smith"},
-        {"@type": "Person", "name": "Bob Jones"}
-    ]
+        {"@type": "Person", "name": "Bob Jones"},
+    ],
 }
 ```
 
@@ -475,19 +441,16 @@ jsonld = {
     "@graph": [
         {
             "@id": "https://example.com/graphs/people",
-            "@graph": [
-                {"@type": "Person", "name": "Alice"},
-                {"@type": "Person", "name": "Bob"}
-            ]
+            "@graph": [{"@type": "Person", "name": "Alice"}, {"@type": "Person", "name": "Bob"}],
         },
         {
             "@id": "https://example.com/graphs/companies",
             "@graph": [
                 {"@type": "Organization", "name": "Google"},
-                {"@type": "Organization", "name": "Apple"}
-            ]
-        }
-    ]
+                {"@type": "Organization", "name": "Apple"},
+            ],
+        },
+    ],
 }
 ```
 
@@ -498,15 +461,8 @@ jsonld = {
 jsonld = {
     "@context": "https://schema.org/",
     "@type": "Person",
-    "name": {
-        "en": "Alice Smith",
-        "es": "Alicia Smith",
-        "fr": "Alice Smith"
-    },
-    "description": {
-        "@value": "Software Engineer",
-        "@language": "en"
-    }
+    "name": {"en": "Alice Smith", "es": "Alicia Smith", "fr": "Alice Smith"},
+    "description": {"@value": "Software Engineer", "@language": "en"},
 }
 ```
 
@@ -531,10 +487,7 @@ for chunk in translator.to_jsonld_streaming(kg, chunk_size=1000):
 ```python
 # Cache frequently used contexts
 context_mgr = ContextManager(cache_size=100)
-context_mgr.preload_contexts([
-    "https://schema.org/",
-    "https://www.w3.org/ns/prov#"
-])
+context_mgr.preload_contexts(["https://schema.org/", "https://www.w3.org/ns/prov#"])
 ```
 
 ---

@@ -1,0 +1,550 @@
+{
+  "schema": "ipfs_datasets_py/state-laws-completion-receipts@1",
+  "task_id": "LCR-003",
+  "goal_id": "LCR-G010",
+  "program_id": "legal-corpora-reindex-v1",
+  "producer": "state_laws_completeness.py",
+  "notes": "Compact completion and admission oracle recipes. Cases encode subset manifests, opt-in DC, open frontier, failed-final, sample cap, partial checkpoint promotion, stale index keys, and non-exact jurisdiction sets. Nonzero counts and requested-scope success are insufficient.",
+  "jurisdiction_contract": {
+    "required_count": 51,
+    "required_codes": [
+      "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+      "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+      "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+      "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+      "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+      "DC"
+    ],
+    "dc_policy": "required",
+    "opt_in_dc_forbidden": true
+  },
+  "gates": [
+    "exact_set",
+    "opt_in_dc",
+    "subset_manifest",
+    "disposition_reconciliation",
+    "frontier_closure",
+    "source_quality",
+    "no_truncation",
+    "failed_final",
+    "replay",
+    "derived_key_parity",
+    "checkpoint_promotion"
+  ],
+  "cases": [
+    {
+      "case_id": "closed_ok_mn",
+      "kind": "jurisdiction_receipt",
+      "expected_status": "pass",
+      "expected_kinds": [],
+      "receipt": {
+        "jurisdiction": "MN",
+        "status": "success",
+        "source_domain": "www.revisor.mn.gov",
+        "official_source": true,
+        "mode": "full",
+        "runtime_caps": null,
+        "sample_cap": null,
+        "checkpoint": {
+          "partial": false,
+          "promoted_success": false,
+          "completion_basis": "source_frontier"
+        },
+        "frontier": {
+          "closed": true,
+          "enumerator_closed": true,
+          "unvisited_continuation_links": [],
+          "expected_index_units": 3,
+          "visited_index_units": 3
+        },
+        "boundary_probes": {
+          "first_hierarchy_unit": "title-1",
+          "last_hierarchy_unit": "title-3",
+          "pagination_total": 3,
+          "bundle_total": 1
+        },
+        "disposition": {
+          "discovered": 10,
+          "fetched": 8,
+          "excluded": 1,
+          "quarantined": 1,
+          "failed_final": 0,
+          "duplicates": 0
+        },
+        "row_count": 8,
+        "index_keys": {
+          "canonical_keys": ["mn:1", "mn:2", "mn:3"],
+          "derived_keys": ["mn:1", "mn:2", "mn:3"],
+          "stale_keys": [],
+          "parity_ok": true
+        },
+        "replay": {
+          "first_frontier_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "second_frontier_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "closed": true
+        }
+      }
+    },
+    {
+      "case_id": "subset_manifest",
+      "kind": "corpus_manifest",
+      "expected_status": "fail",
+      "expected_kinds": ["subset_manifest", "jurisdiction_set_mismatch"],
+      "receipt": {
+        "status": "success",
+        "jurisdictions": ["AL", "AK", "AZ", "AR", "CA"],
+        "includes_dc": false,
+        "include_dc": false,
+        "dc_policy": "required",
+        "states_token": "cohort",
+        "is_complete": true,
+        "requested_scope_is_complete": true,
+        "jurisdiction_count": 5
+      }
+    },
+    {
+      "case_id": "opt_in_dc_legacy_all",
+      "kind": "jurisdiction_set",
+      "expected_status": "fail",
+      "expected_kinds": ["opt_in_dc", "subset_manifest", "jurisdiction_set_mismatch"],
+      "receipt": {
+        "status": "success",
+        "states_token": "all",
+        "include_dc": false,
+        "includes_dc": false,
+        "dc_policy": "opt_in",
+        "dc_optional": true,
+        "jurisdictions": [
+          "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+          "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+          "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+          "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+          "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
+        ]
+      }
+    },
+    {
+      "case_id": "success_open_frontier",
+      "kind": "jurisdiction_receipt",
+      "expected_status": "fail",
+      "expected_kinds": [
+        "open_frontier",
+        "enumerator_not_closed",
+        "unvisited_continuation_links",
+        "success_without_closure"
+      ],
+      "receipt": {
+        "jurisdiction": "HI",
+        "status": "success",
+        "source_domain": "www.capitol.hawaii.gov",
+        "official_source": true,
+        "mode": "full",
+        "runtime_caps": null,
+        "sample_cap": null,
+        "checkpoint": {
+          "partial": false,
+          "promoted_success": false,
+          "completion_basis": "source_frontier"
+        },
+        "frontier": {
+          "closed": false,
+          "enumerator_closed": false,
+          "unvisited_continuation_links": [
+            "https://www.capitol.hawaii.gov/hrscurrent/Vol01/page2"
+          ],
+          "expected_index_units": 12,
+          "visited_index_units": 4
+        },
+        "boundary_probes": {
+          "first_hierarchy_unit": "title-1",
+          "last_hierarchy_unit": "title-4",
+          "pagination_total": 4,
+          "bundle_total": 1
+        },
+        "disposition": {
+          "discovered": 4,
+          "fetched": 4,
+          "excluded": 0,
+          "quarantined": 0,
+          "failed_final": 0,
+          "duplicates": 0
+        },
+        "row_count": 4,
+        "index_keys": {
+          "canonical_keys": ["hi:1", "hi:2", "hi:3", "hi:4"],
+          "derived_keys": ["hi:1", "hi:2", "hi:3", "hi:4"],
+          "stale_keys": [],
+          "parity_ok": true
+        }
+      }
+    },
+    {
+      "case_id": "success_failed_final",
+      "kind": "jurisdiction_receipt",
+      "expected_status": "fail",
+      "expected_kinds": ["failed_final_nonzero", "success_without_closure"],
+      "receipt": {
+        "jurisdiction": "WV",
+        "status": "success",
+        "source_domain": "code.wvlegislature.gov",
+        "official_source": true,
+        "mode": "full",
+        "runtime_caps": null,
+        "sample_cap": null,
+        "checkpoint": {
+          "partial": false,
+          "promoted_success": false,
+          "completion_basis": "source_frontier"
+        },
+        "frontier": {
+          "closed": true,
+          "enumerator_closed": true,
+          "unvisited_continuation_links": [],
+          "expected_index_units": 2,
+          "visited_index_units": 2
+        },
+        "boundary_probes": {
+          "first_hierarchy_unit": "title-1",
+          "last_hierarchy_unit": "title-2",
+          "pagination_total": 2,
+          "bundle_total": 1
+        },
+        "disposition": {
+          "discovered": 10,
+          "fetched": 7,
+          "excluded": 1,
+          "quarantined": 1,
+          "failed_final": 1,
+          "duplicates": 0
+        },
+        "row_count": 7,
+        "index_keys": {
+          "canonical_keys": ["wv:1", "wv:2"],
+          "derived_keys": ["wv:1", "wv:2"],
+          "stale_keys": [],
+          "parity_ok": true
+        }
+      }
+    },
+    {
+      "case_id": "success_sample_cap",
+      "kind": "jurisdiction_receipt",
+      "expected_status": "fail",
+      "expected_kinds": ["sample_cap_present", "runtime_cap_present"],
+      "receipt": {
+        "jurisdiction": "MS",
+        "status": "success",
+        "source_domain": "www.legislature.ms.gov",
+        "official_source": true,
+        "mode": "full",
+        "runtime_caps": {"max_statutes": 25},
+        "sample_cap": 25,
+        "checkpoint": {
+          "partial": false,
+          "promoted_success": false,
+          "completion_basis": "source_frontier"
+        },
+        "frontier": {
+          "closed": true,
+          "enumerator_closed": true,
+          "unvisited_continuation_links": [],
+          "expected_index_units": 1,
+          "visited_index_units": 1
+        },
+        "boundary_probes": {
+          "first_hierarchy_unit": "title-1",
+          "last_hierarchy_unit": "title-1",
+          "pagination_total": 1,
+          "bundle_total": 1
+        },
+        "disposition": {
+          "discovered": 25,
+          "fetched": 25,
+          "excluded": 0,
+          "quarantined": 0,
+          "failed_final": 0,
+          "duplicates": 0
+        },
+        "row_count": 25,
+        "index_keys": {
+          "canonical_keys": ["ms:1"],
+          "derived_keys": ["ms:1"],
+          "stale_keys": [],
+          "parity_ok": true
+        }
+      }
+    },
+    {
+      "case_id": "partial_checkpoint_promotion",
+      "kind": "jurisdiction_receipt",
+      "expected_status": "fail",
+      "expected_kinds": ["partial_checkpoint_promoted"],
+      "receipt": {
+        "jurisdiction": "GA",
+        "status": "success",
+        "source_domain": "www.legis.ga.gov",
+        "official_source": true,
+        "mode": "full",
+        "runtime_caps": null,
+        "sample_cap": null,
+        "checkpoint": {
+          "partial": true,
+          "promoted_success": true,
+          "completion_basis": "partial_checkpoint"
+        },
+        "frontier": {
+          "closed": true,
+          "enumerator_closed": true,
+          "unvisited_continuation_links": [],
+          "expected_index_units": 1,
+          "visited_index_units": 1
+        },
+        "boundary_probes": {
+          "first_hierarchy_unit": "title-1",
+          "last_hierarchy_unit": "title-1",
+          "pagination_total": 1,
+          "bundle_total": 1
+        },
+        "disposition": {
+          "discovered": 2,
+          "fetched": 2,
+          "excluded": 0,
+          "quarantined": 0,
+          "failed_final": 0,
+          "duplicates": 0
+        },
+        "row_count": 2,
+        "index_keys": {
+          "canonical_keys": ["ga:1", "ga:2"],
+          "derived_keys": ["ga:1", "ga:2"],
+          "stale_keys": [],
+          "parity_ok": true
+        }
+      }
+    },
+    {
+      "case_id": "stale_index_keys",
+      "kind": "jurisdiction_receipt",
+      "expected_status": "fail",
+      "expected_kinds": ["stale_index_keys", "derived_key_parity_mismatch"],
+      "receipt": {
+        "jurisdiction": "IA",
+        "status": "success",
+        "source_domain": "www.legis.iowa.gov",
+        "official_source": true,
+        "mode": "full",
+        "runtime_caps": null,
+        "sample_cap": null,
+        "checkpoint": {
+          "partial": false,
+          "promoted_success": false,
+          "completion_basis": "source_frontier"
+        },
+        "frontier": {
+          "closed": true,
+          "enumerator_closed": true,
+          "unvisited_continuation_links": [],
+          "expected_index_units": 2,
+          "visited_index_units": 2
+        },
+        "boundary_probes": {
+          "first_hierarchy_unit": "title-1",
+          "last_hierarchy_unit": "title-2",
+          "pagination_total": 2,
+          "bundle_total": 1
+        },
+        "disposition": {
+          "discovered": 5,
+          "fetched": 5,
+          "excluded": 0,
+          "quarantined": 0,
+          "failed_final": 0,
+          "duplicates": 0
+        },
+        "row_count": 5,
+        "index_keys": {
+          "canonical_keys": ["ia:current:1", "ia:current:2", "ia:current:3"],
+          "derived_keys": ["ia:current:1", "ia:stale:old", "ia:legacy:viewer"],
+          "stale_keys": ["ia:stale:old", "ia:legacy:viewer"],
+          "parity_ok": false
+        }
+      }
+    },
+    {
+      "case_id": "exact_set_ok_51",
+      "kind": "jurisdiction_set",
+      "expected_status": "pass",
+      "expected_kinds": [],
+      "receipt": {
+        "status": "success",
+        "dc_policy": "required",
+        "include_dc": true,
+        "includes_dc": true,
+        "states_token": "all",
+        "jurisdictions": [
+          "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+          "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+          "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+          "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+          "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+          "DC"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_set_extra_pr",
+      "kind": "jurisdiction_set",
+      "expected_status": "fail",
+      "expected_kinds": ["jurisdiction_set_mismatch"],
+      "receipt": {
+        "status": "success",
+        "dc_policy": "required",
+        "include_dc": true,
+        "includes_dc": true,
+        "jurisdictions": [
+          "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+          "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+          "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+          "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+          "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+          "DC", "PR"
+        ]
+      }
+    },
+    {
+      "case_id": "disposition_arithmetic_mismatch",
+      "kind": "jurisdiction_receipt",
+      "expected_status": "fail",
+      "expected_kinds": ["disposition_arithmetic_mismatch"],
+      "receipt": {
+        "jurisdiction": "WA",
+        "status": "success",
+        "source_domain": "app.leg.wa.gov",
+        "official_source": true,
+        "mode": "full",
+        "runtime_caps": null,
+        "sample_cap": null,
+        "checkpoint": {
+          "partial": false,
+          "promoted_success": false,
+          "completion_basis": "source_frontier"
+        },
+        "frontier": {
+          "closed": true,
+          "enumerator_closed": true,
+          "unvisited_continuation_links": [],
+          "expected_index_units": 2,
+          "visited_index_units": 2
+        },
+        "boundary_probes": {
+          "first_hierarchy_unit": "title-1",
+          "last_hierarchy_unit": "title-2",
+          "pagination_total": 2,
+          "bundle_total": 1
+        },
+        "disposition": {
+          "discovered": 100,
+          "fetched": 50,
+          "excluded": 10,
+          "quarantined": 5,
+          "failed_final": 0,
+          "duplicates": 0
+        },
+        "row_count": 50,
+        "index_keys": {
+          "canonical_keys": ["wa:1"],
+          "derived_keys": ["wa:1"],
+          "stale_keys": [],
+          "parity_ok": true
+        }
+      }
+    },
+    {
+      "case_id": "registry_basis_success",
+      "kind": "jurisdiction_receipt",
+      "expected_status": "fail",
+      "expected_kinds": ["partial_checkpoint_promoted"],
+      "receipt": {
+        "jurisdiction": "NJ",
+        "status": "success",
+        "source_domain": "lis.njleg.state.nj.us",
+        "official_source": true,
+        "mode": "full",
+        "runtime_caps": null,
+        "sample_cap": null,
+        "checkpoint": {
+          "partial": false,
+          "promoted_success": true,
+          "completion_basis": "registry"
+        },
+        "frontier": {
+          "closed": true,
+          "enumerator_closed": true,
+          "unvisited_continuation_links": [],
+          "expected_index_units": 1,
+          "visited_index_units": 1
+        },
+        "boundary_probes": {
+          "first_hierarchy_unit": "title-1",
+          "last_hierarchy_unit": "title-1",
+          "pagination_total": 1,
+          "bundle_total": 1
+        },
+        "disposition": {
+          "discovered": 1,
+          "fetched": 1,
+          "excluded": 0,
+          "quarantined": 0,
+          "failed_final": 0,
+          "duplicates": 0
+        },
+        "row_count": 1,
+        "completion_claim": "registry_success",
+        "index_keys": {
+          "canonical_keys": ["nj:1"],
+          "derived_keys": ["nj:1"],
+          "stale_keys": [],
+          "parity_ok": true
+        }
+      }
+    },
+    {
+      "case_id": "corpus_exact_51_pass",
+      "kind": "corpus_manifest",
+      "expected_status": "pass",
+      "expected_kinds": [],
+      "receipt": {
+        "status": "success",
+        "dc_policy": "required",
+        "include_dc": true,
+        "includes_dc": true,
+        "states_token": "all",
+        "is_complete": true,
+        "requested_scope_is_complete": false,
+        "jurisdiction_count": 51,
+        "jurisdictions": [
+          "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+          "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+          "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+          "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+          "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+          "DC"
+        ],
+        "disposition": {
+          "discovered": 1000,
+          "fetched": 980,
+          "excluded": 10,
+          "quarantined": 10,
+          "failed_final": 0,
+          "duplicates": 5
+        },
+        "index_keys": {
+          "canonical_keys": ["corp:a", "corp:b"],
+          "derived_keys": ["corp:a", "corp:b"],
+          "stale_keys": [],
+          "parity_ok": true
+        }
+      }
+    }
+  ]
+}

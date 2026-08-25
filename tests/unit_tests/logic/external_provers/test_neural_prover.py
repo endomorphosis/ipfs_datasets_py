@@ -9,7 +9,7 @@ from ipfs_datasets_py.logic.external_provers.neural import symbolicai_prover_bri
 
 class TestSymbolicAIProverBridge:
     """Test SymbolicAI prover bridge functionality."""
-    
+
     @pytest.fixture
     def neural_bridge(self):
         """Create SymbolicAI bridge instance."""
@@ -17,15 +17,15 @@ class TestSymbolicAIProverBridge:
             return symbolicai_prover_bridge.SymbolicAIProverBridge()
         except Exception:
             pytest.skip("SymbolicAI not available")
-    
+
     def test_neural_bridge_initialization(self, neural_bridge):
         """GIVEN: SymbolicAIProverBridge class
         WHEN: Initializing instance
         THEN: Should initialize successfully
         """
         assert neural_bridge is not None
-        assert hasattr(neural_bridge, 'prove')
-    
+        assert hasattr(neural_bridge, "prove")
+
     def test_neural_natural_language_input(self, neural_bridge):
         """GIVEN: Natural language query
         WHEN: Processing with neural prover
@@ -38,7 +38,7 @@ class TestSymbolicAIProverBridge:
         except Exception:
             # May not support this format yet
             pytest.skip("Natural language not yet supported")
-    
+
     def test_neural_pattern_matching(self, neural_bridge):
         """GIVEN: Formula with patterns
         WHEN: Using neural pattern matching
@@ -46,7 +46,7 @@ class TestSymbolicAIProverBridge:
         """
         formula1 = "P -> Q"
         formula2 = "R -> S"
-        
+
         try:
             similarity = neural_bridge.compute_similarity(formula1, formula2)
             assert isinstance(similarity, (int, float))
@@ -54,7 +54,7 @@ class TestSymbolicAIProverBridge:
         except AttributeError:
             # Method may not exist yet
             pytest.skip("Similarity computation not implemented")
-    
+
     def test_neural_embedding_generation(self, neural_bridge):
         """GIVEN: Logical formula
         WHEN: Generating embeddings
@@ -71,29 +71,29 @@ class TestSymbolicAIProverBridge:
 
 class TestNeuralSymbolicHybrid:
     """Test hybrid neural-symbolic reasoning."""
-    
+
     def test_hybrid_confidence_scoring(self):
         """GIVEN: Proof from neural and symbolic provers
         WHEN: Combining confidences
         THEN: Should use appropriate weighting
         """
         from ipfs_datasets_py.logic.integration.neurosymbolic import HybridConfidenceScorer
-        
+
         try:
             scorer = HybridConfidenceScorer()
-            
+
             symbolic_conf = 0.9
             neural_conf = 0.7
-            
+
             combined = scorer.combine(symbolic_conf, neural_conf)
-            
+
             # Should be weighted combination
             assert isinstance(combined, float)
             assert 0 <= combined <= 1
         except Exception:
             # May not be fully implemented
             pytest.skip("Hybrid scoring not available")
-    
+
     def test_neural_guided_search(self):
         """GIVEN: Complex proof search space
         WHEN: Using neural guidance
@@ -105,7 +105,7 @@ class TestNeuralSymbolicHybrid:
 
 class TestNeuralProverPerformance:
     """Test neural prover performance characteristics."""
-    
+
     def test_inference_speed(self):
         """GIVEN: Simple formula
         WHEN: Measuring inference time
@@ -113,17 +113,18 @@ class TestNeuralProverPerformance:
         """
         try:
             bridge = symbolicai_prover_bridge.SymbolicAIProverBridge()
-            
+
             import time
+
             start = time.time()
             bridge.prove("P -> P")
             elapsed = time.time() - start
-            
+
             # Should be fast (< 1 second for simple formula)
             assert elapsed < 1.0
         except Exception:
             pytest.skip("Neural prover not available")
-    
+
     def test_batch_processing(self):
         """GIVEN: Multiple formulas
         WHEN: Processing in batch
@@ -135,64 +136,64 @@ class TestNeuralProverPerformance:
 
 class TestProverRouting:
     """Test intelligent routing between provers."""
-    
+
     def test_router_selects_appropriate_prover(self):
         """GIVEN: Different types of formulas
         WHEN: Routing to provers
         THEN: Should select best prover for each
         """
         from ipfs_datasets_py.logic.external_provers import prover_router
-        
+
         router = prover_router.ProverRouter()
-        
+
         # Simple propositional logic -> SMT prover
         formula1 = "P & Q -> P"
         prover1 = router.select_prover(formula1)
         assert prover1 is not None
-        
+
         # Natural language -> Neural prover
         formula2 = "Alice is a person"
         prover2 = router.select_prover(formula2)
         assert prover2 is not None
-    
+
     def test_fallback_mechanism(self):
         """GIVEN: Primary prover fails
         WHEN: Attempting proof
         THEN: Should fallback to secondary prover
         """
         from ipfs_datasets_py.logic.external_provers import prover_router
-        
+
         router = prover_router.ProverRouter()
-        
+
         # Should have fallback logic
-        assert hasattr(router, 'fallback_prover') or hasattr(router, 'backup_provers')
+        assert hasattr(router, "fallback_prover") or hasattr(router, "backup_provers")
 
 
 class TestNeuralProverIntegration:
     """Test integration of neural prover with existing system."""
-    
+
     def test_integration_with_tdfol(self):
         """GIVEN: TDFOL formula
         WHEN: Using neural prover
         THEN: Should handle TDFOL syntax
         """
         from ipfs_datasets_py.logic.TDFOL import parse_tdfol
-        
+
         formula = parse_tdfol("O(action)")  # Obligation (O(P) fails as P is deontic op)
         assert formula is not None
-        
+
         # Neural prover should handle modal operators
         # (test placeholder)
-    
+
     def test_integration_with_graphrag(self):
         """GIVEN: Knowledge graph query
         WHEN: Using neural prover for similarity
         THEN: Should enhance retrieval
         """
         from ipfs_datasets_py.logic.integration.neurosymbolic_graphrag import NeurosymbolicGraphRAG
-        
+
         pipeline = NeurosymbolicGraphRAG(use_neural=True)
         assert pipeline.use_neural == True
-        
+
         # Should use neural components when available
         assert pipeline.reasoning_coordinator is not None or True

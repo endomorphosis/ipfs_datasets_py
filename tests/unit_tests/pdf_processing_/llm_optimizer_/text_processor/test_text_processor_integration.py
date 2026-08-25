@@ -17,7 +17,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -30,15 +30,19 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimize
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     ChunkOptimizer,
     LLMOptimizer,
     TextProcessor,
     LLMChunk,
-    LLMDocument
+    LLMDocument,
 )
 
 
@@ -76,7 +80,6 @@ except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
 
-
 class TestTextProcessorIntegration:
     """Test TextProcessor integration scenarios and method combinations."""
 
@@ -95,25 +98,27 @@ class TestTextProcessorIntegration:
             - Complementary results from both methods
         """
         # Given
-        text = ("Machine learning algorithms enable intelligent systems. "
-                "These algorithms process data efficiently. "
-                "Neural networks are particularly effective for pattern recognition.")
-        
+        text = (
+            "Machine learning algorithms enable intelligent systems. "
+            "These algorithms process data efficiently. "
+            "Neural networks are particularly effective for pattern recognition."
+        )
+
         # When
         sentences = processor.split_sentences(text)
         keywords = processor.extract_keywords(text, top_k=10)
-        
+
         # Process each sentence individually
         sentence_keywords = []
         for sentence in sentences:
             sent_keywords = processor.extract_keywords(sentence, top_k=5)
             sentence_keywords.extend(sent_keywords)
-        
+
         # Then
         assert len(sentences) == 3, "Should split into 3 sentences"
         assert len(keywords) > 0, "Should extract keywords from full text"
         assert len(sentence_keywords) > 0, "Should extract keywords from sentences"
-        
+
         # Keywords from full text should overlap with sentence-level keywords
         full_text_set = set(keywords)
         sentence_set = set(sentence_keywords)
@@ -130,19 +135,19 @@ class TestTextProcessorIntegration:
             - Efficient resource management
         """
         import gc
-        
+
         # Given
         large_text = "machine learning artificial intelligence " * 1000
-        
+
         # When - process multiple times
         for i in range(10):
             sentences = processor.split_sentences(large_text)
             keywords = processor.extract_keywords(large_text, top_k=20)
-            
+
             # Force garbage collection
             del sentences, keywords
             gc.collect()
-        
+
         # Then - should complete without memory issues
         # If we get here without MemoryError, the test passes
         assert True, "Should handle repeated large text processing"
@@ -160,25 +165,25 @@ class TestTextProcessorIntegration:
         text1 = "First document about machine learning algorithms."
         text2 = "Second document discusses neural networks and deep learning."
         text3 = "Third document covers natural language processing."
-        
+
         # When - process in sequence
         sentences1 = processor.split_sentences(text1)
         keywords1 = processor.extract_keywords(text1, top_k=5)
-        
+
         sentences2 = processor.split_sentences(text2)
         keywords2 = processor.extract_keywords(text2, top_k=5)
-        
+
         sentences3 = processor.split_sentences(text3)
         keywords3 = processor.extract_keywords(text3, top_k=5)
-        
+
         # Process text1 again
         sentences1_again = processor.split_sentences(text1)
         keywords1_again = processor.extract_keywords(text1, top_k=5)
-        
+
         # Then
         assert sentences1 == sentences1_again, "Should produce identical results on repeated calls"
         assert keywords1 == keywords1_again, "Should produce identical results on repeated calls"
-        
+
         # Different inputs should produce different outputs
         assert sentences1 != sentences2, "Different inputs should produce different sentence splits"
         assert keywords1 != keywords2, "Different inputs should produce different keywords"

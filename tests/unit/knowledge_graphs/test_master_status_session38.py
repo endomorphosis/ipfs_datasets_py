@@ -90,6 +90,7 @@ class TestExtractorHighStructureTemperature(unittest.TestCase):
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
             KnowledgeGraphExtractor,
         )
+
         self._cls = KnowledgeGraphExtractor
 
     def test_high_structure_temperature_calls_infer_complex_relationships(self):
@@ -101,8 +102,12 @@ class TestExtractorHighStructureTemperature(unittest.TestCase):
         extractor.use_spacy = True
         extractor.nlp = MagicMock(name="spacy_nlp")
         mock_extra = []  # empty list → relationships unchanged
-        with patch.object(extractor, "_infer_complex_relationships", return_value=mock_extra) as mock_infer:
-            kg = extractor.extract_knowledge_graph("Alice studies physics.", structure_temperature=0.9)
+        with patch.object(
+            extractor, "_infer_complex_relationships", return_value=mock_extra
+        ) as mock_infer:
+            kg = extractor.extract_knowledge_graph(
+                "Alice studies physics.", structure_temperature=0.9
+            )
         mock_infer.assert_called_once()
 
     def test_high_structure_temperature_infer_exception_logged(self):
@@ -113,6 +118,7 @@ class TestExtractorHighStructureTemperature(unittest.TestCase):
             KnowledgeGraphExtractor,
             RelationshipExtractionError,
         )
+
         extractor = KnowledgeGraphExtractor(use_spacy=True)
         extractor.nlp = MagicMock(name="spacy_nlp")
         with patch.object(
@@ -120,9 +126,12 @@ class TestExtractorHighStructureTemperature(unittest.TestCase):
             "_infer_complex_relationships",
             side_effect=RelationshipExtractionError("boom"),
         ):
-            kg = extractor.extract_knowledge_graph("Alice studies physics.", structure_temperature=0.9)
+            kg = extractor.extract_knowledge_graph(
+                "Alice studies physics.", structure_temperature=0.9
+            )
         # No exception raised; result is a KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         self.assertIsInstance(kg, KnowledgeGraph)
 
 
@@ -181,7 +190,7 @@ class TestLineageVisualizerGhostNode(unittest.TestCase):
         from ipfs_datasets_py.knowledge_graphs.lineage.types import LineageNode
 
         tracker = LineageTracker()
-        graph = tracker.graph   # LineageTracker.graph is the LineageGraph
+        graph = tracker.graph  # LineageTracker.graph is the LineageGraph
 
         # Add a real node
         real_node = LineageNode(node_id="real1", node_type="dataset")
@@ -201,7 +210,9 @@ class TestLineageVisualizerGhostNode(unittest.TestCase):
 
         visualizer = viz_mod.LineageVisualizer(graph)
 
-        with patch("networkx.spring_layout", return_value={"real1": (0.0, 0.0), "ghost1": (1.0, 1.0)}):
+        with patch(
+            "networkx.spring_layout", return_value={"real1": (0.0, 0.0), "ghost1": (1.0, 1.0)}
+        ):
             try:
                 result = visualizer.render_plotly()
             except Exception:
@@ -237,7 +248,12 @@ class TestFormatsCarLoadWithBlocks(unittest.TestCase):
             import ipfs_datasets_py.knowledge_graphs.migration.formats as fmt_mod
 
             # Patch the builtin import inside the function
-            with patch("builtins.__import__", side_effect=lambda name, *a, **kw: mock_libipld if name == "libipld" else __import__(name, *a, **kw)):
+            with patch(
+                "builtins.__import__",
+                side_effect=lambda name, *a, **kw: (
+                    mock_libipld if name == "libipld" else __import__(name, *a, **kw)
+                ),
+            ):
                 try:
                     result = GraphData._load_from_car(b"fake_car_bytes")
                     # If successful, it should be a GraphData
@@ -328,6 +344,7 @@ class TestSmallMisses(unittest.TestCase):
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
             KnowledgeGraphExtractor,
         )
+
         extractor = KnowledgeGraphExtractor(use_spacy=False)
         extractor.nlp = MagicMock()
         with patch.object(extractor, "_infer_complex_relationships") as mock_infer:
@@ -341,6 +358,7 @@ class TestSmallMisses(unittest.TestCase):
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
             KnowledgeGraphExtractor,
         )
+
         extractor = KnowledgeGraphExtractor(use_spacy=True)
         extractor.nlp = None
         with patch.object(extractor, "_infer_complex_relationships") as mock_infer:
@@ -358,6 +376,7 @@ class TestSmallMisses(unittest.TestCase):
         kg = extractor.build_temporal_graph("Alice sent a report. Then Bob reviewed it.")
         # Should complete without error
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         self.assertIsInstance(kg, KnowledgeGraph)
 
     def test_knowledge_graph_extraction_compat_import(self):

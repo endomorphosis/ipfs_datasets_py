@@ -30,14 +30,13 @@ from ipfs_datasets_py.logic.CEC.native import (
 
 # Skip all tests if caching not available
 pytestmark = pytest.mark.skipif(
-    not CACHING_AVAILABLE,
-    reason="Proof caching dependencies not available"
+    not CACHING_AVAILABLE, reason="Proof caching dependencies not available"
 )
 
 
 class TestBasicCacheOperations:
     """Test suite for basic cache operations."""
-    
+
     def test_cache_hit_on_repeated_proof(self):
         """
         GIVEN a cached prover and a simple proof
@@ -48,22 +47,22 @@ class TestBasicCacheOperations:
         prover = CachedTheoremProver()
         prover.initialize()
         namespace = DCECNamespace()
-        
+
         # Create simple goal: P
         p_pred = namespace.add_predicate("P", [])
         goal = AtomicFormula(p_pred, [])
         axioms = [goal]  # P ⊢ P (trivial)
-        
+
         # WHEN - First proof (cache miss)
         start1 = time.perf_counter()
         result1 = prover.prove_theorem(goal, axioms, timeout=5.0)
         time1 = time.perf_counter() - start1
-        
+
         # WHEN - Second proof (cache hit)
         start2 = time.perf_counter()
         result2 = prover.prove_theorem(goal, axioms, timeout=5.0)
         time2 = time.perf_counter() - start2
-        
+
         # THEN
         assert result1.result == ProofResult.PROVED
         assert result2.result == ProofResult.PROVED
@@ -71,20 +70,22 @@ class TestBasicCacheOperations:
         assert result1.proof_tree is not None
         # Cached results may not include a proof_tree; see cec_proof_cache.py
         # So we don't assert result2.proof_tree is not None
-        
+
         # Cache hit should be faster - use looser threshold for CI compatibility
         # Note: Timing-based assertions can be flaky on constrained runners
         if time2 > 0 and time1 > 0.001:  # Only check if first run took measurable time
             speedup = time1 / time2
             # Use 2x instead of 3x for more reliable CI performance
-            assert speedup >= 2, f"Cache hit not faster: {time1:.6f}s vs {time2:.6f}s (speedup: {speedup:.1f}x)"
-        
+            assert speedup >= 2, (
+                f"Cache hit not faster: {time1:.6f}s vs {time2:.6f}s (speedup: {speedup:.1f}x)"
+            )
+
         # Verify cache statistics - more important than timing
         stats = prover.get_cache_statistics()
-        assert stats['total_lookups'] >= 2
-        assert stats['cache_hits'] >= 1
-        assert stats['cache_misses'] >= 1
-    
+        assert stats["total_lookups"] >= 2
+        assert stats["cache_hits"] >= 1
+        assert stats["cache_misses"] >= 1
+
     def test_cache_miss_on_first_proof(self):
         """
         GIVEN a cached prover with empty cache
@@ -95,19 +96,19 @@ class TestBasicCacheOperations:
         prover = CachedTheoremProver()
         prover.initialize()
         namespace = DCECNamespace()
-        
+
         p_pred = namespace.add_predicate("P", [])
         goal = AtomicFormula(p_pred, [])
         axioms = [goal]
-        
+
         # WHEN
         result = prover.prove_theorem(goal, axioms, timeout=5.0)
-        
+
         # THEN
         assert result.result == ProofResult.PROVED
         stats = prover.get_cache_statistics()
-        assert stats['cache_misses'] >= 1
-    
+        assert stats["cache_misses"] >= 1
+
     def test_cache_statistics(self):
         """
         GIVEN a cached prover
@@ -118,31 +119,31 @@ class TestBasicCacheOperations:
         prover = CachedTheoremProver()
         prover.initialize()
         namespace = DCECNamespace()
-        
+
         p_pred = namespace.add_predicate("P", [])
         q_pred = namespace.add_predicate("Q", [])
         p_goal = AtomicFormula(p_pred, [])
         q_goal = AtomicFormula(q_pred, [])
-        
+
         # WHEN - Perform various proofs
         prover.prove_theorem(p_goal, [p_goal], timeout=5.0)  # P miss
         stats1 = prover.get_cache_statistics()
-        
+
         prover.prove_theorem(p_goal, [p_goal], timeout=5.0)  # P hit
         stats2 = prover.get_cache_statistics()
-        
+
         prover.prove_theorem(q_goal, [q_goal], timeout=5.0)  # Q miss
         stats3 = prover.get_cache_statistics()
-        
+
         prover.prove_theorem(q_goal, [q_goal], timeout=5.0)  # Q hit
         stats4 = prover.get_cache_statistics()
-        
+
         # THEN
-        assert stats2['cache_hits'] > stats1['cache_hits']
-        assert stats3['cache_misses'] > stats2['cache_misses']
-        assert stats4['cache_hits'] > stats3['cache_hits']
-        assert stats4['total_lookups'] >= 4
-    
+        assert stats2["cache_hits"] > stats1["cache_hits"]
+        assert stats3["cache_misses"] > stats2["cache_misses"]
+        assert stats4["cache_hits"] > stats3["cache_hits"]
+        assert stats4["total_lookups"] >= 4
+
     def test_global_cached_prover_singleton(self):
         """
         GIVEN the global cached prover function
@@ -152,7 +153,7 @@ class TestBasicCacheOperations:
         # GIVEN/WHEN
         prover1 = get_global_cached_prover()
         prover2 = get_global_cached_prover()
-        
+
         # THEN
         assert prover1 is prover2
         assert prover1 is not None
@@ -160,7 +161,7 @@ class TestBasicCacheOperations:
 
 class TestCacheCorrectness:
     """Test suite for cache correctness."""
-    
+
     def test_cached_result_equivalence(self):
         """
         GIVEN a proof that can be cached
@@ -171,20 +172,20 @@ class TestCacheCorrectness:
         prover = CachedTheoremProver()
         prover.initialize()
         namespace = DCECNamespace()
-        
+
         p_pred = namespace.add_predicate("P", [])
         goal = AtomicFormula(p_pred, [])
         axioms = [goal]
-        
+
         # WHEN
         result1 = prover.prove_theorem(goal, axioms, timeout=5.0)
         result2 = prover.prove_theorem(goal, axioms, timeout=5.0)
-        
+
         # THEN
         assert result1.result == result2.result
         # Cached results may or may not include proof tree (implementation-dependent)
         assert result2.result == result1.result
-    
+
     def test_different_axioms_different_cache_keys(self):
         """
         GIVEN the same goal with different axiom sets
@@ -195,29 +196,29 @@ class TestCacheCorrectness:
         prover = CachedTheoremProver()
         prover.initialize()
         namespace = DCECNamespace()
-        
+
         p_pred = namespace.add_predicate("P", [])
         q_pred = namespace.add_predicate("Q", [])
         goal = AtomicFormula(p_pred, [])
-        
+
         axioms1 = [goal]
         axioms2 = [goal, AtomicFormula(q_pred, [])]
-        
+
         # WHEN
         result1 = prover.prove_theorem(goal, axioms1, timeout=5.0)
         result2 = prover.prove_theorem(goal, axioms2, timeout=5.0)
         result1_again = prover.prove_theorem(goal, axioms1, timeout=5.0)
         result2_again = prover.prove_theorem(goal, axioms2, timeout=5.0)
-        
+
         # THEN
         assert result1.result == ProofResult.PROVED
         assert result2.result == ProofResult.PROVED
         assert result1_again.result == ProofResult.PROVED
         assert result2_again.result == ProofResult.PROVED
-        
+
         stats = prover.get_cache_statistics()
-        assert stats['cache_hits'] >= 2
-    
+        assert stats["cache_hits"] >= 2
+
     def test_thread_safety_concurrent_access(self):
         """
         GIVEN a cached prover
@@ -228,36 +229,36 @@ class TestCacheCorrectness:
         prover = CachedTheoremProver()
         prover.initialize()
         namespace = DCECNamespace()
-        
+
         p_pred = namespace.add_predicate("P", [])
         goal = AtomicFormula(p_pred, [])
         axioms = [goal]
-        
+
         results = []
         errors = []
-        
+
         def prove_in_thread():
             try:
                 result = prover.prove_theorem(goal, axioms, timeout=5.0)
                 results.append(result)
             except Exception as e:
                 errors.append(e)
-        
+
         # WHEN
         threads = [threading.Thread(target=prove_in_thread) for _ in range(10)]
         for t in threads:
             t.start()
         for t in threads:
             t.join()
-        
+
         # THEN
         assert len(errors) == 0, f"Errors: {errors}"
         assert len(results) == 10
         assert all(r.result == ProofResult.PROVED for r in results)
-        
+
         stats = prover.get_cache_statistics()
-        assert stats['total_lookups'] >= 10
-    
+        assert stats["total_lookups"] >= 10
+
     def test_cache_with_complex_formulas(self):
         """
         GIVEN complex nested DCEC formulas
@@ -268,30 +269,30 @@ class TestCacheCorrectness:
         prover = CachedTheoremProver()
         prover.initialize()
         namespace = DCECNamespace()
-        
+
         p_pred = namespace.add_predicate("P", [])
         q_pred = namespace.add_predicate("Q", [])
-        
+
         # Create nested formula: O(P ∧ Q)
         p_atom = AtomicFormula(p_pred, [])
         q_atom = AtomicFormula(q_pred, [])
         conj = ConnectiveFormula(LogicalConnective.AND, [p_atom, q_atom])
         goal = DeonticFormula(DeonticOperator.OBLIGATION, conj)
-        
+
         axioms = [
             DeonticFormula(DeonticOperator.OBLIGATION, p_atom),
             DeonticFormula(DeonticOperator.OBLIGATION, q_atom),
         ]
-        
+
         # WHEN
         result1 = prover.prove_theorem(goal, axioms, timeout=5.0)
         result2 = prover.prove_theorem(goal, axioms, timeout=5.0)
-        
+
         # THEN
         assert result1.result == result2.result
         stats = prover.get_cache_statistics()
-        assert stats['cache_hits'] >= 1
-    
+        assert stats["cache_hits"] >= 1
+
     def test_cache_handles_failed_proofs(self):
         """
         GIVEN a proof that fails
@@ -302,28 +303,28 @@ class TestCacheCorrectness:
         prover = CachedTheoremProver()
         prover.initialize()
         namespace = DCECNamespace()
-        
+
         p_pred = namespace.add_predicate("P", [])
         q_pred = namespace.add_predicate("Q", [])
-        
+
         goal = AtomicFormula(q_pred, [])  # Q
         axioms = [AtomicFormula(p_pred, [])]  # P
-        
+
         # WHEN
         result1 = prover.prove_theorem(goal, axioms, timeout=5.0)
         result2 = prover.prove_theorem(goal, axioms, timeout=5.0)
-        
+
         # THEN - Both should be unprovable
         assert result1.result in [ProofResult.UNKNOWN, ProofResult.TIMEOUT]
         assert result2.result in [ProofResult.UNKNOWN, ProofResult.TIMEOUT]
-        
+
         stats = prover.get_cache_statistics()
-        assert stats['cache_hits'] >= 1
+        assert stats["cache_hits"] >= 1
 
 
 class TestCachePerformance:
     """Test suite for cache performance."""
-    
+
     def test_cache_speedup_measurement(self):
         """
         GIVEN a cached prover
@@ -334,30 +335,32 @@ class TestCachePerformance:
         prover = CachedTheoremProver()
         prover.initialize()
         namespace = DCECNamespace()
-        
+
         p_pred = namespace.add_predicate("P", [])
         goal = AtomicFormula(p_pred, [])
         axioms = [goal]
-        
+
         # WHEN
         start = time.time()
         result1 = prover.prove_theorem(goal, axioms, timeout=5.0)
         time_miss = time.time() - start
-        
+
         start = time.time()
         result2 = prover.prove_theorem(goal, axioms, timeout=5.0)
         time_hit = time.time() - start
-        
+
         # THEN
         assert result1.result == ProofResult.PROVED
         assert result2.result == ProofResult.PROVED
-        
+
         if time_hit > 0:
             speedup = time_miss / time_hit
             # Only assert speedup if the first proof took measurable time (>0.5ms)
             if time_miss >= 0.0005:
-                assert speedup >= 1.5, f"Speedup only {speedup:.1f}x (first={time_miss*1000:.2f}ms)"
-    
+                assert speedup >= 1.5, (
+                    f"Speedup only {speedup:.1f}x (first={time_miss * 1000:.2f}ms)"
+                )
+
     def test_cache_hit_rate_multiple_proofs(self):
         """
         GIVEN multiple repeated proofs
@@ -368,25 +371,29 @@ class TestCachePerformance:
         prover = CachedTheoremProver()
         prover.initialize()
         namespace = DCECNamespace()
-        
+
         p_pred = namespace.add_predicate("P", [])
         q_pred = namespace.add_predicate("Q", [])
-        
+
         # WHEN - Prove same theorems multiple times
         for _ in range(3):
-            prover.prove_theorem(AtomicFormula(p_pred, []), [AtomicFormula(p_pred, [])], timeout=5.0)
-            prover.prove_theorem(AtomicFormula(q_pred, []), [AtomicFormula(q_pred, [])], timeout=5.0)
-        
+            prover.prove_theorem(
+                AtomicFormula(p_pred, []), [AtomicFormula(p_pred, [])], timeout=5.0
+            )
+            prover.prove_theorem(
+                AtomicFormula(q_pred, []), [AtomicFormula(q_pred, [])], timeout=5.0
+            )
+
         # THEN
         stats = prover.get_cache_statistics()
-        assert stats['total_lookups'] >= 6
-        assert stats['cache_hits'] >= 4
-        assert stats['hit_rate'] >= 0.5
+        assert stats["total_lookups"] >= 6
+        assert stats["cache_hits"] >= 4
+        assert stats["hit_rate"] >= 0.5
 
 
 class TestCacheStatistics:
     """Test suite for cache statistics."""
-    
+
     def test_statistics_initialization(self):
         """
         GIVEN a new cached prover
@@ -395,18 +402,18 @@ class TestCacheStatistics:
         """
         # GIVEN
         prover = CachedTheoremProver()
-        
+
         # WHEN
         stats = prover.get_cache_statistics()
-        
+
         # THEN
-        assert 'total_lookups' in stats
-        assert 'cache_hits' in stats
-        assert 'cache_misses' in stats
-        assert 'hit_rate' in stats
-        assert stats['cache_hits'] >= 0
-        assert stats['cache_misses'] >= 0
-    
+        assert "total_lookups" in stats
+        assert "cache_hits" in stats
+        assert "cache_misses" in stats
+        assert "hit_rate" in stats
+        assert stats["cache_hits"] >= 0
+        assert stats["cache_misses"] >= 0
+
     def test_statistics_accuracy(self):
         """
         GIVEN a series of proofs
@@ -417,24 +424,24 @@ class TestCacheStatistics:
         prover = CachedTheoremProver()
         prover.initialize()
         namespace = DCECNamespace()
-        
+
         p_pred = namespace.add_predicate("P", [])
         q_pred = namespace.add_predicate("Q", [])
-        
+
         initial_stats = prover.get_cache_statistics()
-        
+
         # WHEN
         prover.prove_theorem(AtomicFormula(p_pred, []), [AtomicFormula(p_pred, [])], timeout=5.0)
         prover.prove_theorem(AtomicFormula(p_pred, []), [AtomicFormula(p_pred, [])], timeout=5.0)
         prover.prove_theorem(AtomicFormula(q_pred, []), [AtomicFormula(q_pred, [])], timeout=5.0)
         prover.prove_theorem(AtomicFormula(q_pred, []), [AtomicFormula(q_pred, [])], timeout=5.0)
-        
+
         final_stats = prover.get_cache_statistics()
-        
+
         # THEN
-        assert final_stats['total_lookups'] >= initial_stats['total_lookups'] + 4
-        assert final_stats['cache_hits'] >= initial_stats['cache_hits'] + 2
-        assert final_stats['cache_misses'] >= initial_stats['cache_misses'] + 2
+        assert final_stats["total_lookups"] >= initial_stats["total_lookups"] + 4
+        assert final_stats["cache_hits"] >= initial_stats["cache_hits"] + 2
+        assert final_stats["cache_misses"] >= initial_stats["cache_misses"] + 2
 
 
 if __name__ == "__main__":

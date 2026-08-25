@@ -1,0 +1,213 @@
+{
+  "acceptance": {
+    "advertised_documents": 993703,
+    "all_expected_outputs_accounted": true,
+    "count_mismatch_delta": 5,
+    "count_mismatch_present": true,
+    "date_range_count": 255,
+    "date_range_end": "2026-03-02",
+    "date_range_start": "1994-01-01",
+    "empty_text_rows": 358455,
+    "include_full_text": false,
+    "legacy_layout": true,
+    "materialized_rows": 993708,
+    "missing_dataset_card": true,
+    "missing_full_text": true,
+    "pinned_revision": "720668ae016cc400916dda884c9005e03618edfa",
+    "recovery_placeholder_rows": 5,
+    "repository_files": 555
+  },
+  "baseline_date": "2026-08-10",
+  "blocking_issues": [
+    "advertised 993703 documents vs materialized 993708 rows",
+    "metadata date range is 1994-01-01 through 2026-03-02 across 255 partitions",
+    "include_full_text=false with empty/abstract-only text at scale",
+    "no dataset card declaring a coherent release contract",
+    "legacy layout rather than descriptor-complete v2",
+    "every Parquet source_url is empty",
+    "5 recovery placeholders must be quarantined",
+    "at least 11784 documents after the 2026-03-02 endpoint are missing",
+    "publication path can split artifacts across commits"
+  ],
+  "code_hazards": [
+    {
+      "hazard": "leaves publish_embeddings_files empty and aliases new FAISS output onto legacy filenames",
+      "path": "generic inventory configuration"
+    },
+    {
+      "hazard": "quality gate is state-law-specific and does not fail publication on a degraded Federal Register audit",
+      "path": "generic quality gate"
+    },
+    {
+      "hazard": "can publish individual artifacts in separate commits, which cannot prove that corpus, sparse index, dense index, graph, manifest, and card belong to one immutable candidate",
+      "path": "existing upload path"
+    },
+    {
+      "hazard": "mismatched url and sourceUrl fields leave every Parquet source_url empty",
+      "path": "JSON-LD/Parquet conversion"
+    }
+  ],
+  "code_version": "1",
+  "count_mismatch": {
+    "advertised_documents": 993703,
+    "delta": 5,
+    "detail": "metadata.json advertises 993703 documents but the local canonical Parquet materializes 993708 rows (5 recovery placeholders)",
+    "materialized_rows": 993708,
+    "mismatch_present": true,
+    "recovery_placeholders": 5
+  },
+  "counts": {
+    "advertised_documents": 993703,
+    "canonical_document_rows": 993703,
+    "count_mismatch_delta": 5,
+    "date_ranges": 255,
+    "empty_text_rows": 358455,
+    "materialized_rows": 993708,
+    "post_endpoint_delta_documents_min": 11784,
+    "recovery_placeholder_rows": 5,
+    "repository_files": 555
+  },
+  "dataset": {
+    "dataset_card_declares_release_contract": false,
+    "file_count": 555,
+    "has_dataset_card": false,
+    "has_readme": false,
+    "last_modified": "2026-04-18",
+    "repo_id": "justicedao/ipfs_federal_register",
+    "revision": "720668ae016cc400916dda884c9005e03618edfa",
+    "revision_pinned": true,
+    "unpinned_tokens_forbidden": [
+      "main",
+      "master",
+      "latest",
+      "HEAD"
+    ]
+  },
+  "dataset_card": {
+    "declares_coherent_release_contract": false,
+    "missing": true,
+    "note": "no dataset card declaring a coherent release contract is present on the pinned revision",
+    "present": false
+  },
+  "date_range": {
+    "date_range_count": 255,
+    "end": "2026-03-02",
+    "inclusive": true,
+    "start": "1994-01-01"
+  },
+  "evidence_role": "Existing remote artifacts are evidence inputs only. They may seed differential audits and the post-2026-03-02 delta, but no prior row or advertised count is admitted without the new official inventory, full-text disposition, and completeness gates.",
+  "full_text": {
+    "abstract_cap_characters": 500,
+    "empty_text_rows": 358455,
+    "include_full_text": false,
+    "missing_full_text_contract": true,
+    "most_remaining_text_is_abstract_only": true,
+    "note": "358455 baseline rows have empty text and most remaining text is only an abstract capped near 500 characters; metadata declares include_full_text=false"
+  },
+  "goal_id": "LCR-G100",
+  "identity_anomalies": [
+    {
+      "code": "ADVERTISED_VS_MATERIALIZED_COUNT_MISMATCH",
+      "count": 5,
+      "detail": "advertised 993703 vs materialized 993708 (delta=5 recovery placeholders)",
+      "severity": "blocking"
+    },
+    {
+      "code": "MISSING_FULL_TEXT_CONTRACT",
+      "count": 358455,
+      "detail": "include_full_text=false; 358455 empty-text rows; remaining text mostly abstract-capped near 500 characters",
+      "severity": "blocking"
+    },
+    {
+      "code": "MISSING_DATASET_CARD",
+      "count": 1,
+      "detail": "no dataset card declaring a coherent release contract",
+      "severity": "blocking"
+    },
+    {
+      "code": "LEGACY_LAYOUT",
+      "count": 555,
+      "detail": "legacy root-level JSON-LD/Parquet/raw-JSON/FAISS layout across 555 files; not descriptor-complete v2",
+      "severity": "blocking"
+    },
+    {
+      "code": "EMPTY_SOURCE_URLS",
+      "count": 993708,
+      "detail": "every Parquet source_url is empty due to url/sourceUrl field mismatch in JSON-LD conversion",
+      "severity": "blocking"
+    },
+    {
+      "code": "RECOVERY_PLACEHOLDER_ROWS",
+      "count": 5,
+      "detail": "5 recovery placeholders must be quarantined from publication counts",
+      "severity": "blocking"
+    },
+    {
+      "code": "POST_ENDPOINT_GAP",
+      "count": 11784,
+      "detail": "at least 11784 official documents after the legacy 2026-03-02 endpoint through 2026-08-10",
+      "severity": "blocking"
+    }
+  ],
+  "legacy_layout": {
+    "artifacts": [
+      "metadata.json",
+      "manifest.json",
+      "federal_register.jsonld",
+      "federal_register.parquet",
+      "federal_register_raw/",
+      "federal_register_gte_small.faiss",
+      "federal_register_gte_small_metadata.parquet"
+    ],
+    "descriptor_complete_v2": false,
+    "gte_small_faiss_metadata": true,
+    "note": "legacy root-level JSON-LD, one-row-group Parquet, raw-JSON shards, and GTE-small FAISS/metadata artifacts rather than a descriptor-complete v2 layout",
+    "one_row_group_parquet": true,
+    "present": true,
+    "raw_json_shards": true,
+    "root_level_jsonld": true
+  },
+  "metadata": {
+    "advertised_documents": 993703,
+    "date_range": {
+      "date_range_count": 255,
+      "end": "2026-03-02",
+      "inclusive": true,
+      "start": "1994-01-01"
+    },
+    "include_full_text": false,
+    "note": "metadata.json claims 993703 deduplicated documents observed from 1994-01-01 through 2026-03-02 across 255 date ranges, with include_full_text=false",
+    "path": "metadata.json"
+  },
+  "mode": "fixture",
+  "network_required": false,
+  "post_endpoint_delta": {
+    "delta_start_inclusive": "2026-03-03",
+    "legacy_endpoint": "2026-03-02",
+    "note": "the official API already exposes at least 11784 documents from 2026-03-03 through the planning cutoff on 2026-08-10",
+    "official_api_documents_min": 11784,
+    "planning_cutoff": "2026-08-10"
+  },
+  "producer": "audit_federal_register_hf_baseline.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "recovery": {
+    "must_quarantine": true,
+    "note": "the 5 extra local rows are recovery placeholders rather than Federal Register documents and must be quarantined",
+    "placeholder_rows": 5
+  },
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-federal-baseline@1",
+  "schema_version": "1",
+  "source_of_truth": "Live Hugging Face inventory of justicedao/ipfs_federal_register at the pinned revision, sealed into this offline fixture for network-free checks",
+  "source_urls": {
+    "all_parquet_source_url_empty": true,
+    "cause": "JSON-LD/Parquet conversion mismatched url and sourceUrl",
+    "trusted_for_migration": false
+  },
+  "task_id": "LCR-048",
+  "unsuitable_as_source_of_truth": true,
+  "viewer": {
+    "dataset_viewer_valid": false,
+    "has_explicit_configurations": false,
+    "reason": "legacy layout mixes JSON-LD, one-row-group Parquet, raw JSON shards, and FAISS metadata without a card-declared contract"
+  }
+}

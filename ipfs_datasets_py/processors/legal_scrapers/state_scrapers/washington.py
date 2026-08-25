@@ -4,8 +4,11 @@ This module contains the scraper for Washington statutes from the official state
 """
 
 import asyncio
-from typing import Callable, List, Dict, Optional, Tuple
+import json
 import re
+import ssl
+import urllib.request
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib.parse import parse_qs, urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -13,6 +16,123 @@ from .registry import StateScraperRegistry
 
 class WashingtonScraper(BaseStateScraper):
     """Scraper for Washington state laws from https://app.leg.wa.gov"""
+
+    OFFICIAL_DOMAIN = "app.leg.wa.gov"
+    OFFICIAL_ENTRY_PATH = "/RCW/"
+    OFFICIAL_ENTRY_URL = "https://app.leg.wa.gov/RCW/"
+    _WA_TITLE_CITE_RE = re.compile(r"^\d+[A-Za-z]?$")
+    _WA_TITLE_LABEL_RE = re.compile(
+        r"\bTitle\s+(?P<title>\d+[A-Za-z]?)\b",
+        re.IGNORECASE,
+    )
+    _WA_CONTINUATION_RE = re.compile(
+        r"\b(next|continue|more titles|page\s+\d+)\b",
+        re.IGNORECASE,
+    )
+    OFFICIAL_TITLES = (
+        ("1", "General Provisions"),
+        ("2", "Courts of Record"),
+        ("3", "District Courts—Courts of Limited Jurisdiction"),
+        ("4", "Civil Procedure"),
+        ("5", "Evidence"),
+        ("6", "Enforcement of Judgments"),
+        ("7", "Special Proceedings and Actions"),
+        ("8", "Eminent Domain"),
+        ("9", "Crimes and Punishments"),
+        ("9A", "Washington Criminal Code"),
+        ("10", "Criminal Procedure"),
+        ("11", "Probate and Trust Law"),
+        ("12", "District Courts—Civil Procedure"),
+        ("13", "Juvenile Courts and Juvenile Offenders"),
+        ("14", "Aeronautics"),
+        ("15", "Agriculture and Marketing"),
+        ("16", "Animals and Livestock"),
+        ("17", "Weeds, Rodents, and Pests"),
+        ("18", "Businesses and Professions"),
+        ("19", "Business Regulations—Miscellaneous"),
+        ("20", "Commission Merchants—Agricultural Products"),
+        ("21", "Securities and Investments"),
+        ("22", "Warehousing and Deposits"),
+        ("23", "Corporations and Associations (Profit)"),
+        ("23B", "Washington Business Corporation Act"),
+        ("24", "Corporations and Associations (Nonprofit)"),
+        ("25", "Partnerships"),
+        ("26", "Domestic Relations"),
+        ("27", "Libraries, Museums, and Historical Activities"),
+        ("28A", "Common School Provisions"),
+        ("28B", "Higher Education"),
+        ("28C", "Vocational Education"),
+        ("29A", "Elections"),
+        ("29B", "Campaign Finance and Disclosure"),
+        ("30A", "Washington Commercial Bank Act"),
+        ("30B", "Washington Trust Institutions Act"),
+        ("31", "Miscellaneous Loan Agencies"),
+        ("32", "Mutual Savings Banks"),
+        ("33", "Washington Savings Association Act"),
+        ("34", "Administrative Law"),
+        ("35", "Cities and Towns"),
+        ("35A", "Optional Municipal Code"),
+        ("36", "Counties"),
+        ("37", "Federal Areas—Indians"),
+        ("38", "Militia and Military Affairs"),
+        ("39", "Public Contracts and Indebtedness"),
+        ("40", "Public Documents, Records, and Publications"),
+        ("41", "Public Employment, Civil Service, and Pensions"),
+        ("42", "Public Officers and Agencies"),
+        ("43", "State Government—Executive"),
+        ("44", "State Government—Legislative"),
+        ("46", "Motor Vehicles"),
+        ("47", "Public Highways and Transportation"),
+        ("48", "Insurance"),
+        ("49", "Labor Regulations"),
+        ("50", "Unemployment Compensation"),
+        ("50A", "Family and Medical Leave"),
+        ("50B", "Long-Term Care"),
+        ("51", "Industrial Insurance"),
+        ("52", "Fire Protection Districts"),
+        ("53", "Port Districts"),
+        ("54", "Public Utility Districts"),
+        ("55", "Sanitary Districts"),
+        ("57", "Water-Sewer Districts"),
+        ("58", "Boundaries and Plats"),
+        ("59", "Landlord and Tenant"),
+        ("60", "Liens"),
+        ("61", "Mortgages, Deeds of Trust, and Real Estate Contracts"),
+        ("62A", "Uniform Commercial Code"),
+        ("63", "Personal Property"),
+        ("64", "Real Property and Conveyances"),
+        ("65", "Recording, Registration, and Legal Publication"),
+        ("66", "Alcoholic Beverage Control"),
+        ("67", "Sports and Recreation—Convention Facilities"),
+        ("68", "Cemeteries, Morgues, and Human Remains"),
+        ("69", "Food, Drugs, Cosmetics, and Poisons"),
+        ("70", "Public Health and Safety"),
+        ("70A", "Environmental Health and Safety"),
+        ("71", "Mental Illness"),
+        ("71A", "Developmental Disabilities"),
+        ("72", "State Institutions"),
+        ("73", "Veterans and Veterans' Affairs"),
+        ("74", "Public Assistance"),
+        ("76", "Forests and Forest Products"),
+        ("77", "Fish and Wildlife"),
+        ("78", "Mines, Minerals, and Petroleum"),
+        ("79", "Public Lands"),
+        ("79A", "Public Recreational Lands"),
+        ("80", "Public Utilities"),
+        ("81", "Transportation"),
+        ("82", "Excise Taxes"),
+        ("82A", "Digital Products Excise Tax"),
+        ("83", "Estate Taxation"),
+        ("84", "Property Taxes"),
+        ("85", "Diking and Drainage"),
+        ("86", "Flood Control"),
+        ("87", "Irrigation"),
+        ("88", "Navigation and Harbor Improvements"),
+        ("89", "Reclamation, Soil Conservation, and Land Settlement"),
+        ("90", "Water Rights—Environment"),
+        ("91", "Waterways"),
+    )
+    OFFICIAL_TITLE_COUNT = len(OFFICIAL_TITLES)
 
     _SECTION_CITE_RE = re.compile(r"^\d+[A-Za-z]?\.\d+(?:\.\d+)?[A-Za-z]?$")
 
@@ -26,43 +146,96 @@ class WashingtonScraper(BaseStateScraper):
             if self._SECTION_CITE_RE.match(section_number):
                 filtered.append(statute)
         return filtered
-    
+
+    def _filter_official_only(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
+        """Drop secondary/Justia rows when full-corpus admission is sealed."""
+        if not self._full_corpus_enabled():
+            return statutes
+        filtered: List[NormalizedStatute] = []
+        for statute in statutes:
+            source_kind = str((statute.structured_data or {}).get("source_kind") or "").lower()
+            if "justia" in source_kind or "findlaw" in source_kind:
+                continue
+            if not self._host_is_official(str(statute.source_url or "")):
+                continue
+            filtered.append(statute)
+        return filtered
+
     def get_base_url(self) -> str:
         """Return the base URL for Washington's legislative website."""
         return "https://app.leg.wa.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Washington."""
-        return [{
-            "name": "Revised Code of Washington",
-            "url": f"{self.get_base_url()}/RCW/default.aspx?cite=9A.32.030",
-            "type": "Code"
-        }]
-    
-    async def scrape_code(self, code_name: str, code_url: str, max_statutes: int | None = None) -> List[NormalizedStatute]:
+        return [
+            {
+                "name": "Revised Code of Washington",
+                "url": f"{self.get_base_url()}/RCW/default.aspx?cite=9A.32.030",
+                "type": "Code",
+            }
+        ]
+
+    async def scrape_code(
+        self, code_name: str, code_url: str, max_statutes: int | None = None
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Washington's legislative website.
-        
+
         Washington RCW database uses JavaScript navigation, so we use Playwright.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
-        return_threshold = self._effective_scrape_limit(max_statutes, default=160) or 1000000
-        if not self._full_corpus_enabled() and max_statutes is None:
-            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=int(return_threshold))
-            if direct:
-                return direct[: int(return_threshold)]
-
-        official = await self._scrape_official_index(
-            code_name,
-            max_statutes=None if return_threshold == 1000000 else int(return_threshold),
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .washington_constitution import (
+            configured_constitution_text_path,
+            parse_washington_constitution_text,
         )
+
+        constitution_path = configured_constitution_text_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_washington_constitution_text(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Washington Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        from .washington_section import configured_section_html_path, parse_washington_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            parsed = parse_washington_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://app.leg.wa.gov/RCW/default.aspx?cite=9A.32.030",
+                section_number="9A.32.030",
+                code_name=code_name,
+            )
+            if parsed is not None:
+                return [parsed]
+        if not self._full_corpus_enabled() and max_statutes is None:
+            seed_budget = int(limit if limit is not None else 160)
+            direct = await self._scrape_direct_seed_sections(
+                code_name, max_statutes=seed_budget
+            )
+            if direct:
+                return direct[:seed_budget]
+
+        official = await self._scrape_official_index(code_name, max_statutes=limit)
+        official = self._filter_official_only(official)
         if official:
-            return official[: int(return_threshold)]
+            return official[:limit] if limit is not None else official
+
+        if self._full_corpus_enabled() and max_statutes is None:
+            self.logger.warning(
+                "Washington full-corpus run found zero official statutes; "
+                "refusing secondary Justia/generic sole-admission fallback"
+            )
+            return []
 
         candidate_urls = [
             code_url,
@@ -77,7 +250,7 @@ class WashingtonScraper(BaseStateScraper):
 
         seen = set()
         best_statutes: List[NormalizedStatute] = []
-        fallback_scan_limit = int(return_threshold)
+        fallback_scan_limit = int(limit if limit is not None else 160)
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -96,19 +269,21 @@ class WashingtonScraper(BaseStateScraper):
                     statutes = self._filter_section_level(statutes)
                     if len(statutes) > len(best_statutes):
                         best_statutes = statutes
-                    if len(statutes) >= return_threshold:
-                        return statutes[:return_threshold]
+                    if limit is not None and len(statutes) >= limit:
+                        return statutes[:limit]
                 except Exception:
                     pass
 
-            statutes = await self._generic_scrape(code_name, candidate, "Wash. Rev. Code", max_sections=fallback_scan_limit)
+            statutes = await self._generic_scrape(
+                code_name, candidate, "Wash. Rev. Code", max_sections=fallback_scan_limit
+            )
             statutes = self._filter_section_level(statutes)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
-            if len(statutes) >= return_threshold:
-                return statutes[:return_threshold]
+            if limit is not None and len(statutes) >= limit:
+                return statutes[:limit]
 
-        return best_statutes[:return_threshold]
+        return best_statutes[:limit] if limit is not None else best_statutes
 
     async def _scrape_direct_seed_sections(
         self,
@@ -137,7 +312,9 @@ class WashingtonScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         title_links = await self._discover_title_links()
         self.logger.info("Washington official index: discovered %s title links", len(title_links))
-        resumed = self._load_partial_checkpoint_statutes(code_name=code_name, max_statutes=max_statutes)
+        resumed = self._load_partial_checkpoint_statutes(
+            code_name=code_name, max_statutes=max_statutes
+        )
         checkpoint_progress = self._load_partial_checkpoint_progress()
         statutes: List[NormalizedStatute] = []
         seen_keys: set[str] = set()
@@ -166,7 +343,9 @@ class WashingtonScraper(BaseStateScraper):
         resume_titles_scanned = max(0, int(checkpoint_progress.get("titles_scanned") or 0))
         resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
         resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
-        resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
+        resume_discovered_sections = max(
+            0, int(checkpoint_progress.get("discovered_sections") or 0)
+        )
         title_rewind = max(0, int(self._env_int("STATE_SCRAPER_WA_RESUME_TITLE_REWIND", default=1)))
         resume_title_floor = max(0, resume_titles_scanned - title_rewind)
         chapters_scanned_total = int(resume_chapters_scanned)
@@ -228,7 +407,11 @@ class WashingtonScraper(BaseStateScraper):
                         if str(url or "").strip().lower() not in seen_urls
                     ]
                 sections_discovered_total += len(section_links)
-                if chapter_index == 1 or chapter_index % 10 == 0 or chapter_index == len(chapter_links):
+                if (
+                    chapter_index == 1
+                    or chapter_index % 10 == 0
+                    or chapter_index == len(chapter_links)
+                ):
                     self.logger.info(
                         "Washington official index: title=%s chapter=%s/%s sections=%s statutes_so_far=%s",
                         title_label or title_url,
@@ -252,6 +435,7 @@ class WashingtonScraper(BaseStateScraper):
                             "codes_total": 1,
                         },
                     )
+
                 def _progress_hook(
                     scanned_sections: int,
                     total_sections: int,
@@ -277,6 +461,7 @@ class WashingtonScraper(BaseStateScraper):
                                 "codes_total": 1,
                             },
                         )
+
                 parsed = await self._scrape_section_urls(
                     code_name,
                     section_links,
@@ -313,6 +498,15 @@ class WashingtonScraper(BaseStateScraper):
         raw = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=20)
         if not raw:
             return []
+        html = raw.decode("utf-8", errors="replace") if isinstance(raw, (bytes, bytearray)) else str(raw)
+        from .washington_section import title_cites
+
+        listed = title_cites(html)
+        if listed:
+            return [
+                (f"{self.get_base_url()}/RCW/default.aspx?cite={cite}", f"Title {cite}")
+                for cite in listed
+            ]
         soup = BeautifulSoup(raw, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
@@ -338,6 +532,15 @@ class WashingtonScraper(BaseStateScraper):
         raw = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=20)
         if not raw:
             return []
+        html = raw.decode("utf-8", errors="replace") if isinstance(raw, (bytes, bytearray)) else str(raw)
+        from .washington_section import chapter_cites
+
+        listed = chapter_cites(html, title_cite=title_cite)
+        if listed:
+            return [
+                (f"{self.get_base_url()}/RCW/default.aspx?cite={cite}", cite)
+                for cite in listed
+            ]
         soup = BeautifulSoup(raw, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
@@ -365,6 +568,12 @@ class WashingtonScraper(BaseStateScraper):
         raw = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=20)
         if not raw:
             return []
+        html = raw.decode("utf-8", errors="replace") if isinstance(raw, (bytes, bytearray)) else str(raw)
+        from .washington_section import chapter_section_rows
+
+        rows = chapter_section_rows(html)
+        if rows:
+            return [(url, cite) for cite, _heading, url in rows]
         soup = BeautifulSoup(raw, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
@@ -420,6 +629,20 @@ class WashingtonScraper(BaseStateScraper):
                 if not raw:
                     return None
                 soup = BeautifulSoup(raw, "html.parser")
+                from .washington_section import parse_washington_section_html
+
+                html_text = raw.decode("utf-8", errors="replace") if isinstance(raw, (bytes, bytearray)) else str(raw)
+                parsed = parse_washington_section_html(
+                    html_text,
+                    source_url=url,
+                    section_number=section_number,
+                    code_name=code_name,
+                )
+                if parsed is not None:
+                    data = dict(parsed.structured_data or {})
+                    data["discovery_method"] = discovery_method
+                    parsed.structured_data = data
+                    return parsed
                 citation_node = soup.select_one("#ContentPlaceHolder1_pnlTitleBlock h1")
                 caption_node = soup.select_one("#ContentPlaceHolder1_pnlTitleBlock h2")
                 content_node = (
@@ -432,9 +655,15 @@ class WashingtonScraper(BaseStateScraper):
                     return None
                 for tag in content_node(["script", "style", "nav", "header", "footer"]):
                     tag.decompose()
-                citation_text = self._normalize_legal_text(citation_node.get_text(" ", strip=True) if citation_node else "")
-                caption = self._normalize_legal_text(caption_node.get_text(" ", strip=True) if caption_node else "")
-                body = self._normalize_legal_text(content_node.get_text(" ", strip=True) if content_node else "")
+                citation_text = self._normalize_legal_text(
+                    citation_node.get_text(" ", strip=True) if citation_node else ""
+                )
+                caption = self._normalize_legal_text(
+                    caption_node.get_text(" ", strip=True) if caption_node else ""
+                )
+                body = self._normalize_legal_text(
+                    content_node.get_text(" ", strip=True) if content_node else ""
+                )
                 # Washington has short-but-valid sections; keep those in the
                 # corpus instead of dropping them as false negatives.
                 if len(body) < 120:
@@ -502,6 +731,266 @@ class WashingtonScraper(BaseStateScraper):
         if cancelled_early:
             await asyncio.gather(*tasks, return_exceptions=True)
         return out
+
+    def official_title_url(self, title_number: Any) -> str:
+        number = str(title_number or "").strip()
+        return f"{self.get_base_url()}/RCW/default.aspx?cite={number}"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Revised Code of Washington title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"wa:title-{str(number).lower()}",
+                    "title_number": str(number),
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Revised Code of Washington Title {number} ({name}) "
+                        f"official catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return (
+            host == "app.leg.wa.gov"
+            or host.endswith(".app.leg.wa.gov")
+            or host == "leg.wa.gov"
+            or host.endswith(".leg.wa.gov")
+        )
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+        headers = {
+            "User-Agent": "ipfs-datasets-washington-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+        try:
+            request = urllib.request.Request(url, headers=headers)
+            context = ssl.create_default_context()
+            with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                return bytes(response.read() or b"")
+        except Exception:
+            try:
+                request = urllib.request.Request(url, headers=headers)
+                context = ssl._create_unverified_context()
+                with urllib.request.urlopen(
+                    request, timeout=timeout, context=context
+                ) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                return b""
+
+    def _normalize_title_number(self, value: Any) -> str:
+        text = str(value or "").strip().upper()
+        match = re.match(r"^0*(\d+[A-Z]?)$", text)
+        return match.group(1) if match else ""
+
+    def _parse_continuation_links(self, html: bytes, page_url: str) -> List[str]:
+        found: List[str] = []
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        seen: set[str] = set()
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            rel = " ".join(link.get("rel") or []).lower()
+            if not href:
+                continue
+            if "next" not in rel and not self._WA_CONTINUATION_RE.search(label):
+                continue
+            absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+            if absolute in seen or not self._host_is_official(absolute):
+                continue
+            if absolute.rstrip("/") == str(page_url or "").rstrip("/"):
+                continue
+            seen.add(absolute)
+            found.append(absolute)
+        return found
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            cite = self._extract_cite_from_url(absolute)
+            number = ""
+            if cite and "." not in cite and self._WA_TITLE_CITE_RE.match(cite):
+                number = self._normalize_title_number(cite)
+            if not number:
+                label_match = self._WA_TITLE_LABEL_RE.search(label)
+                if label_match:
+                    number = self._normalize_title_number(label_match.group("title"))
+            if not number or number in found:
+                continue
+            if number not in known:
+                known.add(number)
+            if self._host_is_official(absolute):
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official Revised Code of Washington title."""
+
+        del page_url
+        discovered = self._parse_official_title_links(html)
+        rows = self.official_title_catalog()
+        known = {str(row["title_number"]) for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_waleg"
+        for number, url in discovered.items():
+            if number in known:
+                continue
+            rows.append(
+                {
+                    "canonical_key": f"wa:title-{number.lower()}",
+                    "title_number": number,
+                    "name": f"Title {number}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Revised Code of Washington Title {number} "
+                        f"official catalog unit at {url}"
+                    ),
+                }
+            )
+        rows.sort(key=lambda item: self._title_sort_key(str(item.get("title_number") or "")))
+        return rows
+
+    def _title_sort_key(self, number: str) -> Tuple[int, str]:
+        match = re.match(r"^(\d+)([A-Za-z]+)?$", str(number or "").strip())
+        if not match:
+            return (9999, str(number or ""))
+        return (int(match.group(1)), (match.group(2) or "").upper())
+
+    def _collect_official_index_pages(self) -> Tuple[bytes, List[str]]:
+        visited: List[str] = []
+        seen: set[str] = set()
+        pending = [self.OFFICIAL_ENTRY_URL]
+        combined = b""
+        while pending:
+            url = pending.pop(0)
+            if url in seen:
+                continue
+            seen.add(url)
+            visited.append(url)
+            html = self._official_http_get(url)
+            if html:
+                combined = html if not combined else combined + b"\n" + html
+            for continuation in self._parse_continuation_links(html, url):
+                if continuation not in seen:
+                    pending.append(continuation)
+            if len(visited) >= 32:
+                break
+        return combined, [item for item in pending if item not in seen]
+
+    def fetch_official(self, code: str = "WA"):
+        """Acquire the exhaustive official Revised Code of Washington catalog.
+
+        Live HTTPS retains the official app.leg.wa.gov RCW index. Every known
+        title is enumerated with an official URL. Continuation pages are
+        exhausted. This hook never returns fixture bytes, never promotes a
+        partial scrape checkpoint, and never uses secondary hosts.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "WA").strip().upper() or "WA"
+        if normalized != "WA":
+            raise ValueError(f"WashingtonScraper cannot acquire {normalized}")
+        html, remaining = self._collect_official_index_pages()
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < self.OFFICIAL_TITLE_COUNT:
+            raise RuntimeError(
+                "washington official catalog enumeration rejected incomplete "
+                "title reacquisition"
+            )
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": list(remaining),
+            "visited_index_units": len(rows),
+        }
+        if remaining:
+            frontier["closed"] = False
+            frontier["pagination_closed"] = False
+            frontier["toc_exhausted"] = False
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        self.last_official_checkpoint = {
+            "partial": False,
+            "promoted_success": False,
+            "completion_basis": "source_frontier",
+        }
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry

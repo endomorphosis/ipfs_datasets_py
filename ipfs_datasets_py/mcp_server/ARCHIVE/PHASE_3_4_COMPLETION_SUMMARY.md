@@ -36,14 +36,11 @@ results = await coordinator.register_peer(
     peer_id="QmPeer123...",
     multiaddr="/ip4/192.168.1.100/tcp/4001",
     capabilities=["storage", "relay"],
-    metadata={"region": "us-west"}
+    metadata={"region": "us-west"},
 )
 
 # Discover peers with filtering
-peers = await coordinator.discover_peers(
-    capability_filter=["storage", "compute"],
-    max_peers=10
-)
+peers = await coordinator.discover_peers(capability_filter=["storage", "compute"], max_peers=10)
 ```
 
 ### Task 3.2: Workflow Engine ✅ (100%)
@@ -113,14 +110,11 @@ bootstrap = get_bootstrap_system()
 # Add custom bootstrap server
 bootstrap.add_custom_server(
     multiaddr="/ip4/192.168.1.100/tcp/4001/p2p/QmCustom...",
-    priority=1  # Higher than default
+    priority=1,  # Higher than default
 )
 
 # Perform bootstrap
-result = await bootstrap.bootstrap(
-    max_nodes=5,
-    timeout=30.0
-)
+result = await bootstrap.bootstrap(max_nodes=5, timeout=30.0)
 # {
 #   success: True,
 #   successful_nodes: 3,
@@ -170,26 +164,16 @@ result = await bootstrap.bootstrap(
 collector = get_p2p_metrics_collector()
 
 # Track peer discovery
-collector.track_peer_discovery(
-    source="github_issues",
-    peers_found=5,
-    success=True
-)
+collector.track_peer_discovery(source="github_issues", peers_found=5, success=True)
 
 # Track workflow
 collector.track_workflow_execution(
-    workflow_id="etl_workflow",
-    status="completed",
-    execution_time_ms=5200.0,
-    tasks_count=3
+    workflow_id="etl_workflow", status="completed", execution_time_ms=5200.0, tasks_count=3
 )
 
 # Track bootstrap
 collector.track_bootstrap_attempt(
-    method="ipfs",
-    nodes_tried=5,
-    nodes_successful=3,
-    duration_ms=2500.0
+    method="ipfs", nodes_tried=5, nodes_successful=3, duration_ms=2500.0
 )
 
 # Get dashboard data
@@ -253,6 +237,7 @@ Scanned all 370+ MCP tools and identified 5 candidates >700 lines:
 # tools/test_runner.py
 # All logic embedded in tool file
 
+
 async def run_tests(test_path: str) -> dict:
     # 900+ lines of test execution logic
     # Test discovery
@@ -267,11 +252,8 @@ async def run_tests(test_path: str) -> dict:
 # tools/development_tools/test_runner.py
 from ipfs_datasets_py.testing import TestRunner
 
-@tool_metadata(
-    runtime="fastapi",
-    category="development",
-    priority=7
-)
+
+@tool_metadata(runtime="fastapi", category="development", priority=7)
 async def run_tests(test_path: str) -> dict:
     """Run tests using the TestRunner core module."""
     runner = TestRunner()

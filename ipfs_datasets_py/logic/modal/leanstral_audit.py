@@ -50,9 +50,7 @@ LEANSTRAL_SEMANTIC_CONTEXT_SCHEMA_VERSION = "legal-ir-leanstral-semantic-context
 LEANSTRAL_DRAFTED_LOGIC_MAX_CANDIDATES = 6
 LEANSTRAL_DRAFTED_LOGIC_MAX_TEXT_CHARS = 240
 LEANSTRAL_SUBGOAL_AUDIT_PACKET_SCHEMA_VERSION = "legal-ir-leanstral-subgoal-audit-v1"
-LEANSTRAL_LEGACY_TEMPLATE_CANDIDATE = (
-    "obligation(actor, action) unless exception_condition"
-)
+LEANSTRAL_LEGACY_TEMPLATE_CANDIDATE = "obligation(actor, action) unless exception_condition"
 
 LEANSTRAL_AUDIT_REQUEST_SCHEMA: Dict[str, Any] = {
     "schema_version": LEANSTRAL_AUDIT_REQUEST_SCHEMA_VERSION,
@@ -92,8 +90,7 @@ LEANSTRAL_AUDIT_RESPONSE_SCHEMA: Dict[str, Any] = {
             "evidence-grounded counterexample or witness."
         ),
         "confidence": (
-            "Every non-abstain response requires confidence greater than zero "
-            "and at most one."
+            "Every non-abstain response requires confidence greater than zero and at most one."
         ),
         "proof_obligation_ids": "Use only IDs present in the request.",
         "proposed_compiler_surface": (
@@ -177,7 +174,9 @@ def resolve_leanstral_llm_router(
     ordered: List[str] = []
     if explicit:
         ordered.append(explicit)
-    ordered.extend(str(item) for item in (preferred_modules or LEANSTRAL_LLM_ROUTER_DEFAULT_MODULES))
+    ordered.extend(
+        str(item) for item in (preferred_modules or LEANSTRAL_LLM_ROUTER_DEFAULT_MODULES)
+    )
     seen: set[str] = set()
     attempts: List[Dict[str, str]] = []
     for module_name in ordered:
@@ -225,13 +224,13 @@ def leanstral_llm_router_health(
                 "status": "unavailable",
             }
     module_name = str(getattr(router, "__name__", "") or "")
-    router_name = module_name.rsplit(".", 1)[0] if module_name.endswith(".llm_router") else module_name
+    router_name = (
+        module_name.rsplit(".", 1)[0] if module_name.endswith(".llm_router") else module_name
+    )
     return {
         "attempts": [dict(item) for item in attempts],
         "generate_text_available": callable(getattr(router, "generate_text", None)),
-        "generate_text_batch_available": callable(
-            getattr(router, "generate_text_batch", None)
-        ),
+        "generate_text_batch_available": callable(getattr(router, "generate_text_batch", None)),
         "module": module_name,
         "router": router_name,
         "status": "available",
@@ -265,8 +264,7 @@ def _leanstral_router_trace_reasons(
         allowed = _allowed_effective_provider_identities(provider_name)
         if _canonical_provider_identity(effective_provider) not in allowed:
             raise RuntimeError(
-                "unexpected_effective_provider:"
-                f"{effective_provider}:expected:{provider_name}"
+                f"unexpected_effective_provider:{effective_provider}:expected:{provider_name}"
             )
         return (f"llm_router_effective_provider:{effective_provider}",)
     return ("llm_router_trace:empty",)
@@ -506,11 +504,7 @@ class LeanstralAuditWorkerConfig:
 
     def normalized_evidence_refresh_policy(self) -> str:
         value = str(self.evidence_refresh_policy or "full_manifest").strip().lower()
-        return (
-            value
-            if value in LEANSTRAL_EVIDENCE_REFRESH_POLICIES
-            else "full_manifest"
-        )
+        return value if value in LEANSTRAL_EVIDENCE_REFRESH_POLICIES else "full_manifest"
 
     def timeout(self) -> float:
         value = float(self.request_timeout_seconds or 0.0)
@@ -543,9 +537,7 @@ class LeanstralAuditWorkerConfig:
             validation_repair_retries=self.bounded_validation_repair_retries(),
             prompt_payload_mode=self.normalized_prompt_payload_mode(),
             context_size_per_slot=self.bounded_context_size_per_slot(),
-            context_safety_margin_tokens=(
-                self.bounded_context_safety_margin_tokens()
-            ),
+            context_safety_margin_tokens=(self.bounded_context_safety_margin_tokens()),
             tokenizer_base_url=str(self.tokenizer_base_url or ""),
             require_exact_token_count=bool(self.require_exact_token_count),
         )
@@ -559,16 +551,10 @@ class LeanstralAuditWorkerConfig:
             high_formal_severity=float(self.audit_policy_high_formal_severity),
             high_uncertainty=float(self.audit_policy_high_uncertainty),
             min_heldout_impact=float(self.audit_policy_min_heldout_impact),
-            min_mean_normalized_score=float(
-                self.audit_policy_min_mean_normalized_score
-            ),
+            min_mean_normalized_score=float(self.audit_policy_min_mean_normalized_score),
             min_rank_score=float(self.audit_policy_min_rank_score),
-            max_selected_per_family=max(
-                0, int(self.audit_policy_max_selected_per_family or 0)
-            ),
-            max_total_selected=max(
-                0, int(self.audit_policy_max_total_selected or 0)
-            ),
+            max_selected_per_family=max(0, int(self.audit_policy_max_selected_per_family or 0)),
+            max_total_selected=max(0, int(self.audit_policy_max_total_selected or 0)),
             exhausted_families=tuple(self.audit_policy_exhausted_families or ()),
             exhausted_semantic_signatures=tuple(
                 self.audit_policy_exhausted_semantic_signatures or ()
@@ -635,11 +621,9 @@ class LeanstralAuditRequest:
             rescanned_evidence_body.pop(key, None)
         evidence_receipt_valid = (
             isinstance(evidence_receipt, Mapping)
-            and evidence_receipt.get("schema_version")
-            == LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION
+            and evidence_receipt.get("schema_version") == LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION
             and evidence_receipt.get("artifact_role") == "leanstral_audit_evidence"
-            and evidence_receipt.get("sanitized_sha256")
-            == canonical_sha256(evidence_body)
+            and evidence_receipt.get("sanitized_sha256") == canonical_sha256(evidence_body)
         )
         if evidence_receipt_valid and rescanned_evidence_body == evidence_body:
             # Audit responses and cache repair clients reconstruct requests from
@@ -655,9 +639,7 @@ class LeanstralAuditRequest:
             )
             evidence_security = evidence_security_report.to_dict()
         raw_prompt = (
-            {"prompt": str(prompt)}
-            if isinstance(prompt, str)
-            else _json_ready_mapping(prompt)
+            {"prompt": str(prompt)} if isinstance(prompt, str) else _json_ready_mapping(prompt)
         )
         prompt_receipt = raw_prompt.get("premise_security")
         prompt_body = dict(raw_prompt)
@@ -693,11 +675,9 @@ class LeanstralAuditRequest:
             normalized_prompt_body.pop(key, None)
         prompt_receipt_valid = (
             isinstance(prompt_receipt, Mapping)
-            and prompt_receipt.get("schema_version")
-            == LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION
+            and prompt_receipt.get("schema_version") == LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION
             and prompt_receipt.get("artifact_role") == "leanstral_audit_prompt"
-            and prompt_receipt.get("sanitized_sha256")
-            == canonical_sha256(normalized_prompt_body)
+            and prompt_receipt.get("sanitized_sha256") == canonical_sha256(normalized_prompt_body)
         )
         if prompt_receipt_valid and rescanned_prompt_body == normalized_prompt_body:
             normalized_prompt = raw_prompt
@@ -711,9 +691,7 @@ class LeanstralAuditRequest:
         normalized_prompt["premise_security_evidence"] = evidence_security
         normalized_prompt["premise_security_prompt"] = prompt_security
         normalized_model = (
-            {"model": str(model)}
-            if isinstance(model, str)
-            else _json_ready_mapping(model)
+            {"model": str(model)} if isinstance(model, str) else _json_ready_mapping(model)
         )
         if theorem_registry_hash is None:
             theorem_registry_hash = canonical_sha256(theorem_registry or {})
@@ -777,16 +755,12 @@ class LeanstralAuditRequest:
             for example in self.evidence.get("referenced_examples", []) or []
             if isinstance(example, Mapping)
         ][:8]
-        semantic_context = _prompt_semantic_context(
-            self.evidence.get("semantic_context")
-        )
+        semantic_context = _prompt_semantic_context(self.evidence.get("semantic_context"))
         response_identity = {
             "request_cache_key": self.cache_key,
             "request_id": self.request_id,
             "primary_proof_obligation_id": (
-                str(self.proof_obligation_ids[0])
-                if self.proof_obligation_ids
-                else ""
+                str(self.proof_obligation_ids[0]) if self.proof_obligation_ids else ""
             ),
             "proof_obligation_ids": list(self.proof_obligation_ids),
         }
@@ -829,9 +803,7 @@ class LeanstralAuditRequest:
             ],
             "owned_compiler_surfaces": owned_surfaces,
             "referenced_examples": reference_examples,
-            "drafted_logic_candidate_contract": _drafted_logic_candidate_contract(
-                semantic_context
-            ),
+            "drafted_logic_candidate_contract": _drafted_logic_candidate_contract(semantic_context),
             "request": self.to_dict(),
             "premise_security": {
                 "evidence": self.prompt.get("premise_security_evidence", {}),
@@ -850,9 +822,7 @@ class LeanstralAuditRequest:
                     "expected": "legal semantics should be preserved",
                 },
                 "drafted_logic_candidates": [],
-                "missing_semantic_rule": {
-                    "description": "missing deterministic semantic rule"
-                },
+                "missing_semantic_rule": {"description": "missing deterministic semantic rule"},
                 "proof_obligation_ids": list(self.proof_obligation_ids[:1]),
                 "proposed_compiler_surface": [
                     {
@@ -905,9 +875,7 @@ class LeanstralSubgoalAuditPacket:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "audit_request": self.request.to_dict(),
-            "codex_todo_projection": _json_ready_mapping(
-                self.codex_todo_projection
-            ),
+            "codex_todo_projection": _json_ready_mapping(self.codex_todo_projection),
             "schema_version": self.schema_version,
             "subgoal": self.subgoal.to_dict(),
         }
@@ -967,9 +935,7 @@ def build_leanstral_subgoal_audit_packets(
                 "subgoal_id": subgoal.subgoal_id,
             },
             "failure_decomposition": {
-                "max_subgoals_per_obligation": (
-                    decomposition.max_subgoals_per_obligation
-                ),
+                "max_subgoals_per_obligation": (decomposition.max_subgoals_per_obligation),
                 "schema_version": LEGAL_IR_SUBGOAL_DECOMPOSITION_SCHEMA_VERSION,
             },
             "failure_subgoal": subgoal.to_dict(),
@@ -1012,9 +978,7 @@ def _source_free_subgoal_evidence(value: Any) -> Any:
             lowered = key.lower()
             if lowered in source_keys or lowered.endswith("_source_text"):
                 raw_text = str(child or "")
-                result[f"{key}_sha256"] = hashlib.sha256(
-                    raw_text.encode("utf-8")
-                ).hexdigest()
+                result[f"{key}_sha256"] = hashlib.sha256(raw_text.encode("utf-8")).hexdigest()
                 result[f"{key}_omitted"] = True
             else:
                 result[key] = _source_free_subgoal_evidence(child)
@@ -1121,8 +1085,7 @@ def _leanstral_audit_response_format(
     obligations = [
         dict(obligation)
         for obligation in semantic_context.get("proof_obligations", []) or []
-        if isinstance(obligation, Mapping)
-        and str(obligation.get("obligation_id") or "").strip()
+        if isinstance(obligation, Mapping) and str(obligation.get("obligation_id") or "").strip()
     ]
     trusted_context = semantic_context.get("accepted") is True and bool(obligations)
     primary_obligation = obligations[0] if trusted_context else {}
@@ -1233,25 +1196,19 @@ def _leanstral_audit_response_format(
     response_schema = {
         "additionalProperties": False,
         "properties": {
-            "abstention_reason": {
-                "anyOf": [{"type": "string"}, {"type": "null"}]
-            },
+            "abstention_reason": {"anyOf": [{"type": "string"}, {"type": "null"}]},
             "affected_ir_families": {
                 "items": {"type": "string"},
                 "minItems": 1,
                 "type": "array",
             },
-            "classification": {
-                "enum": sorted(ALLOWED_AUDIT_CLASSIFICATIONS)
-            },
+            "classification": {"enum": sorted(ALLOWED_AUDIT_CLASSIFICATIONS)},
             "confidence": {
                 "maximum": 1.0,
                 "minimum": 0.01 if trusted_context else 0.0,
                 "type": "number",
             },
-            "counterexample": (
-                evidence_schema["anyOf"][1] if trusted_context else evidence_schema
-            ),
+            "counterexample": (evidence_schema["anyOf"][1] if trusted_context else evidence_schema),
             "drafted_logic_candidates": {
                 "items": candidate_schema,
                 "maxItems": 1,
@@ -1279,9 +1236,7 @@ def _leanstral_audit_response_format(
                 "items": {
                     "additionalProperties": False,
                     "properties": {
-                        "component": {
-                            "enum": list(LEANSTRAL_OWNED_COMPILER_SURFACES)
-                        },
+                        "component": {"enum": list(LEANSTRAL_OWNED_COMPILER_SURFACES)},
                         "operation": {"type": "string"},
                     },
                     "required": ["component", "operation"],
@@ -1293,9 +1248,7 @@ def _leanstral_audit_response_format(
             "request_cache_key": string_schema(
                 const=request.cache_key if request is not None else ""
             ),
-            "request_id": string_schema(
-                const=request.request_id if request is not None else ""
-            ),
+            "request_id": string_schema(const=request.request_id if request is not None else ""),
             "schema_version": {"const": LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION},
             "witness": evidence_schema,
         },
@@ -1949,12 +1902,10 @@ class LeanstralAuditRunner:
                 and repair_attempt >= self.config.bounded_validation_repair_retries()
             ):
                 rejected_reasons = validation.reasons
-                response, grounded_repair_applied = (
-                    _repair_response_with_grounded_candidate_seed(
-                        request,
-                        response,
-                        validation,
-                    )
+                response, grounded_repair_applied = _repair_response_with_grounded_candidate_seed(
+                    request,
+                    response,
+                    validation,
                 )
                 if grounded_repair_applied:
                     repair_reasons = _merge_reasons(
@@ -2218,9 +2169,7 @@ class LeanstralAuditWorker:
         provider_pending: List[LeanstralAuditWorkItem] = []
         prompt_tokens_by_work_key: Dict[str, int] = {}
         for item in pending:
-            semantic_context = _json_ready_mapping(
-                item.request.evidence.get("semantic_context")
-            )
+            semantic_context = _json_ready_mapping(item.request.evidence.get("semantic_context"))
             if (
                 self.config.require_trusted_semantic_context
                 and semantic_context.get("accepted") is not True
@@ -2239,9 +2188,7 @@ class LeanstralAuditWorker:
                 item.request,
                 config=self.config.runner_config(),
             )
-            prompt_tokens_by_work_key[item.work_key] = int(
-                context_preflight["prompt_tokens"]
-            )
+            prompt_tokens_by_work_key[item.work_key] = int(context_preflight["prompt_tokens"])
             if not context_preflight["accepted"]:
                 preflight_results.append(
                     _work_result(
@@ -2275,13 +2222,9 @@ class LeanstralAuditWorker:
             )
             cluster_payload = _json_ready_mapping(item.cluster)
             policy_payload = cluster_payload.get("leanstral_audit_policy")
-            policy_mapping = (
-                dict(policy_payload) if isinstance(policy_payload, Mapping) else {}
-            )
+            policy_mapping = dict(policy_payload) if isinstance(policy_payload, Mapping) else {}
             cached_candidate_id = str(
-                policy_mapping.get("candidate_id")
-                or cluster_payload.get("cluster_id")
-                or ""
+                policy_mapping.get("candidate_id") or cluster_payload.get("cluster_id") or ""
             )
             if cached_candidate_id:
                 cached_candidate_ids.append(cached_candidate_id)
@@ -2340,15 +2283,9 @@ class LeanstralAuditWorker:
                 max_batch_size=self.config.bounded_batch_size(),
                 max_queue_items=self.config.bounded_batch_queue_max_items(),
                 max_wait_seconds=self.config.bounded_batch_max_wait_seconds(),
-                token_budget_bucket_size=(
-                    self.config.bounded_batch_token_budget_bucket_size()
-                ),
-                deadline_bucket_seconds=(
-                    self.config.bounded_batch_deadline_bucket_seconds()
-                ),
-                deadline_guard_seconds=(
-                    self.config.bounded_batch_deadline_guard_seconds()
-                ),
+                token_budget_bucket_size=(self.config.bounded_batch_token_budget_bucket_size()),
+                deadline_bucket_seconds=(self.config.bounded_batch_deadline_bucket_seconds()),
+                deadline_guard_seconds=(self.config.bounded_batch_deadline_guard_seconds()),
             )
         )
         with self._cancellation_lock:
@@ -2401,9 +2338,7 @@ class LeanstralAuditWorker:
                     return_exceptions=False,
                 )
                 results.extend(
-                    result
-                    for batch_results in nested_results
-                    for result in batch_results
+                    result for batch_results in nested_results for result in batch_results
                 )
         finally:
             with self._cancellation_lock:
@@ -2430,9 +2365,7 @@ class LeanstralAuditWorker:
             if "batch_response_reassociated_by_request_id" in result.repair_reasons
         )
         scheduler.telemetry.provider_error_count = sum(
-            1
-            for result in results
-            if result.status in {"failed", "timeout", "unavailable"}
+            1 for result in results if result.status in {"failed", "timeout", "unavailable"}
         )
         scheduler.telemetry.verified_audit_count = sum(
             1
@@ -2447,17 +2380,14 @@ class LeanstralAuditWorker:
             if result.llm_called
         )
         scheduler.telemetry.estimated_completion_token_budget = sum(
-            self.config.bounded_max_new_tokens()
-            for result in results
-            if result.llm_called
+            self.config.bounded_max_new_tokens() for result in results if result.llm_called
         )
         scheduler.telemetry.estimated_total_tokens = (
             scheduler.telemetry.estimated_prompt_tokens
             + scheduler.telemetry.estimated_completion_token_budget
         )
         scheduler.telemetry.cache_value_tokens = sum(
-            prompt_tokens_by_work_key.get(result.work_key, 0)
-            + self.config.bounded_max_new_tokens()
+            prompt_tokens_by_work_key.get(result.work_key, 0) + self.config.bounded_max_new_tokens()
             for result in results
             if result.cache_hit
         )
@@ -2468,10 +2398,17 @@ class LeanstralAuditWorker:
             valid_record_count=len(records),
             invalid_record_count=len(schema_failures),
             work_item_count=len(items),
-            completed_count=sum(1 for result in all_results if result.status in {"accepted", "cache_hit"}),
+            completed_count=sum(
+                1 for result in all_results if result.status in {"accepted", "cache_hit"}
+            ),
             cache_hit_count=sum(1 for result in results if result.cache_hit),
             llm_call_count=sum(1 for result in results if result.llm_called),
-            rejected_count=sum(1 for result in all_results if result.status in {"rejected", "provider_disabled", "model_rejected", "queue_backpressure"}),
+            rejected_count=sum(
+                1
+                for result in all_results
+                if result.status
+                in {"rejected", "provider_disabled", "model_rejected", "queue_backpressure"}
+            ),
             failed_count=sum(1 for result in all_results if result.status in {"failed", "timeout"}),
             skipped_checkpoint_count=skipped,
             checkpoint_path=str(self.config.checkpoint_path or ""),
@@ -2483,9 +2420,7 @@ class LeanstralAuditWorker:
             cancelled_count=sum(1 for result in all_results if result.status == "cancelled"),
             batch_telemetry=scheduler.telemetry_snapshot(),
             audit_policy_report=audit_policy_report,
-            family_coverage=_json_ready_mapping(
-                audit_policy_report.get("worker_family_selection")
-            ),
+            family_coverage=_json_ready_mapping(audit_policy_report.get("worker_family_selection")),
             runtime_seconds=runtime,
         )
 
@@ -2517,7 +2452,9 @@ class LeanstralAuditWorker:
                     elapsed=time.monotonic() - started,
                 )
                 continue
-            if self.config.require_leanstral_model and not _is_leanstral_model_identity(item.request.model):
+            if self.config.require_leanstral_model and not _is_leanstral_model_identity(
+                item.request.model
+            ):
                 results_by_key[item.work_key] = _work_result(
                     item,
                     status="model_rejected",
@@ -2616,7 +2553,10 @@ class LeanstralAuditWorker:
                                     audit_result.response,
                                     audit_result.validation,
                                 )
-                            if audit_result.validation.accepted and audit_result.validation.verified:
+                            if (
+                                audit_result.validation.accepted
+                                and audit_result.validation.verified
+                            ):
                                 results_by_key[item.work_key] = _work_result(
                                     item,
                                     status="accepted",
@@ -2635,24 +2575,20 @@ class LeanstralAuditWorker:
                                 results_by_key[item.work_key] = replace(
                                     individual_result,
                                     attempts=(
-                                        attempts_by_key[item.work_key]
-                                        + individual_result.attempts
+                                        attempts_by_key[item.work_key] + individual_result.attempts
                                     ),
                                     generation_attempts=(
                                         audit_result.generation_attempts
                                         + individual_result.generation_attempts
                                     ),
                                     llm_called=(
-                                        audit_result.llm_called
-                                        or individual_result.llm_called
+                                        audit_result.llm_called or individual_result.llm_called
                                     ),
                                     repair_reasons=_merge_reasons(
                                         audit_result.repair_reasons,
                                         individual_result.repair_reasons,
                                     ),
-                                    elapsed_seconds=(
-                                        time.monotonic() - starts[item.work_key]
-                                    ),
+                                    elapsed_seconds=(time.monotonic() - starts[item.work_key]),
                                 )
                         break
                 if handled_batch:
@@ -2691,7 +2627,9 @@ class LeanstralAuditWorker:
                 reasons=("caller_cancelled",),
                 elapsed=time.monotonic() - started,
             )
-        if self.config.require_leanstral_model and not _is_leanstral_model_identity(item.request.model):
+        if self.config.require_leanstral_model and not _is_leanstral_model_identity(
+            item.request.model
+        ):
             return _work_result(
                 item,
                 status="model_rejected",
@@ -2739,7 +2677,11 @@ class LeanstralAuditWorker:
                 except TimeoutError:
                     last_reasons = _merge_reasons(
                         last_reasons,
-                        (_provider_attempt_reason(provider, "leanstral_audit_timeout", len(providers)),),
+                        (
+                            _provider_attempt_reason(
+                                provider, "leanstral_audit_timeout", len(providers)
+                            ),
+                        ),
                     )
                 except Exception as exc:  # provider failures must fail closed
                     reason = _provider_unavailable_reason(exc) or _provider_error_reason(exc)
@@ -2786,7 +2728,11 @@ class LeanstralAuditWorker:
                     )
             if attempt < self.config.bounded_retries() and self.config.backoff() > 0.0:
                 await anyio_runtime.sleep(self.config.backoff() * (2**attempt))
-        failed_status = "timeout" if _all_attempt_reasons_match(last_reasons, "leanstral_audit_timeout") else "failed"
+        failed_status = (
+            "timeout"
+            if _all_attempt_reasons_match(last_reasons, "leanstral_audit_timeout")
+            else "failed"
+        )
         if _all_attempt_reasons_match(last_reasons, "leanstral_labs_model_unavailable"):
             failed_status = "unavailable"
         return _work_result(
@@ -2819,8 +2765,7 @@ class LeanstralAuditWorker:
                 )
                 if len(outputs) != 1:
                     raise RuntimeError(
-                        "Leanstral single-item repair batch returned "
-                        f"{len(outputs)} responses"
+                        f"Leanstral single-item repair batch returned {len(outputs)} responses"
                     )
                 return str(outputs[0] or "")
 
@@ -3059,7 +3004,9 @@ def plan_leanstral_audit_work_items(
         )
         compiler_commit = _records_compiler_commit(request_records)
         semantic_signature = str(cluster.semantic_signature)
-        state_hashes = tuple(sorted({value for record in cluster_records for value in _record_state_hashes(record)}))
+        state_hashes = tuple(
+            sorted({value for record in cluster_records for value in _record_state_hashes(record)})
+        )
         source_record_hashes = tuple(canonical_sha256(record) for record in cluster_records)
         work_key = canonical_sha256(
             {
@@ -3145,9 +3092,7 @@ def _canonical_audit_family(value: Any) -> str:
 
 
 def _work_item_family(item: LeanstralAuditWorkItem) -> str:
-    return _canonical_audit_family(
-        _json_ready_mapping(item.cluster).get("semantic_family")
-    )
+    return _canonical_audit_family(_json_ready_mapping(item.cluster).get("semantic_family"))
 
 
 def _select_family_balanced_work_items(
@@ -3267,7 +3212,9 @@ def load_leanstral_audit_checkpoint(
         checkpoint = LeanstralAuditCheckpoint.from_mapping(payload)
     except (OSError, json.JSONDecodeError, TypeError, ValueError):
         return LeanstralAuditCheckpoint.empty(source_digest=source_digest), True
-    mismatch = bool(checkpoint.source_digest and source_digest and checkpoint.source_digest != source_digest)
+    mismatch = bool(
+        checkpoint.source_digest and source_digest and checkpoint.source_digest != source_digest
+    )
     return checkpoint, mismatch
 
 
@@ -3367,7 +3314,10 @@ def parse_leanstral_audit_response(response: str) -> Optional[LeanstralAuditResp
     if not mappings:
         return None
     for parsed in mappings:
-        if str(parsed.get("schema_version") or "").strip() == LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION:
+        if (
+            str(parsed.get("schema_version") or "").strip()
+            == LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION
+        ):
             return LeanstralAuditResponse.from_mapping(parsed)
     return LeanstralAuditResponse.from_mapping(mappings[0])
 
@@ -3396,13 +3346,10 @@ def normalize_leanstral_audit_response_for_request(
         *[str(value) for value in request.proof_obligation_ids],
     }
     response_request_id = str(response.request_id or "").strip()
-    if (
-        response_request_id != request.request_id
-        and (
-            not response_request_id
-            or response_request_id in known_request_identifiers
-            or _request_id_near_match(response_request_id, request.request_id)
-        )
+    if response_request_id != request.request_id and (
+        not response_request_id
+        or response_request_id in known_request_identifiers
+        or _request_id_near_match(response_request_id, request.request_id)
     ):
         data["request_id"] = request.request_id
         reasons.append("normalized_request_id_from_request_context")
@@ -3452,9 +3399,8 @@ def normalize_leanstral_audit_response_for_request(
             ]
             reasons.append("filled_proposed_compiler_surface_from_request_context")
 
-    if (
-        response.classification in ISSUE_AUDIT_CLASSIFICATIONS
-        and not _mapping_has_content(response.missing_semantic_rule)
+    if response.classification in ISSUE_AUDIT_CLASSIFICATIONS and not _mapping_has_content(
+        response.missing_semantic_rule
     ):
         semantic_rule = _missing_semantic_rule_from_request_cluster(cluster)
         if semantic_rule:
@@ -3587,7 +3533,8 @@ def _leanstral_audit_prompt_payload(
         "previous_response_excerpt": _bounded_text(previous_response_text, 160),
     }
     if any(
-        reason in {
+        reason
+        in {
             "drafted_logic_candidate_copies_obligation",
             "drafted_logic_candidate_copies_shape_template",
             "drafted_logic_candidate_insufficient_grounding",
@@ -3600,9 +3547,7 @@ def _leanstral_audit_prompt_payload(
         }
         for reason in previous_validation.reasons
     ):
-        candidate_contract = _json_ready_mapping(
-            payload.get("drafted_logic_candidate_contract")
-        )
+        candidate_contract = _json_ready_mapping(payload.get("drafted_logic_candidate_contract"))
         obligation_contracts = [
             dict(value)
             for value in candidate_contract.get(
@@ -3615,15 +3560,9 @@ def _leanstral_audit_prompt_payload(
             contract = obligation_contracts[0]
             language = _json_ready_mapping(contract.get("candidate_language"))
             payload["repair_instructions"]["candidate_repair"] = {
-                "allowed_predicate_heads": list(
-                    contract.get("allowed_predicate_heads") or ()
-                ),
-                "grounding_symbols": list(
-                    language.get("grounding_symbols") or ()
-                ),
-                "grounded_candidate_seed": str(
-                    language.get("grounded_candidate_seed") or ""
-                ),
+                "allowed_predicate_heads": list(contract.get("allowed_predicate_heads") or ()),
+                "grounding_symbols": list(language.get("grounding_symbols") or ()),
+                "grounded_candidate_seed": str(language.get("grounded_candidate_seed") or ""),
                 "minimum_distinct_grounding_symbols": int(
                     language.get("minimum_distinct_grounding_symbols") or 0
                 ),
@@ -3633,9 +3572,7 @@ def _leanstral_audit_prompt_payload(
                     "arguments. Do not reuse the obligation, shape example, or "
                     "generic placeholders."
                 ),
-                "shape_example_only": str(
-                    language.get("candidate_shape_example") or ""
-                ),
+                "shape_example_only": str(language.get("candidate_shape_example") or ""),
             }
     return payload
 
@@ -3676,9 +3613,7 @@ def _render_leanstral_audit_prompt_text(payload: Mapping[str, Any]) -> str:
     request_payload = _json_ready_mapping(payload.get("request"))
     response_template = _json_ready_mapping(payload.get("response_template"))
     repair_instructions = _json_ready_mapping(payload.get("repair_instructions"))
-    candidate_contract = _json_ready_mapping(
-        payload.get("drafted_logic_candidate_contract")
-    )
+    candidate_contract = _json_ready_mapping(payload.get("drafted_logic_candidate_contract"))
     candidate_obligation_contracts = [
         dict(value)
         for value in candidate_contract.get("proof_obligation_contracts", []) or []
@@ -3706,14 +3641,10 @@ def _render_leanstral_audit_prompt_text(payload: Mapping[str, Any]) -> str:
         "abstention_reason",
     ]
     request_id = str(
-        response_template.get("request_id")
-        or request_payload.get("request_id")
-        or ""
+        response_template.get("request_id") or request_payload.get("request_id") or ""
     ).strip()
     request_cache_key = str(
-        response_template.get("request_cache_key")
-        or request_payload.get("cache_key")
-        or ""
+        response_template.get("request_cache_key") or request_payload.get("cache_key") or ""
     ).strip()
     obligations = [
         str(value)
@@ -3753,13 +3684,9 @@ def _render_leanstral_audit_prompt_text(payload: Mapping[str, Any]) -> str:
                 "The deterministic proof-obligation statement is the test, not a candidate answer; do not repeat it or one of its clauses.",
                 "Use only candidate_language.allowed_candidate_predicate_heads.",
                 "Candidate shape example only (copying it is invalid): "
-                + str(
-                    candidate_language.get("candidate_shape_example") or ""
-                ),
+                + str(candidate_language.get("candidate_shape_example") or ""),
                 "Compiler-grounded family seed (minimum valid fallback): "
-                + str(
-                    candidate_language.get("grounded_candidate_seed") or ""
-                ),
+                + str(candidate_language.get("grounded_candidate_seed") or ""),
                 "Use at least candidate_language.minimum_distinct_grounding_symbols distinct grounding symbols; do not invent near-match identifiers.",
                 "Candidate confidence must be greater than zero.",
                 "Bind the candidate to this exact contract:",
@@ -3792,8 +3719,7 @@ def _render_leanstral_audit_prompt_text(payload: Mapping[str, Any]) -> str:
     elif payload.get("response_schema_hash") is not None:
         lines.extend(
             [
-                "Response schema hash: "
-                + str(payload.get("response_schema_hash") or "").strip(),
+                "Response schema hash: " + str(payload.get("response_schema_hash") or "").strip(),
             ]
         )
     lines.extend(
@@ -3880,9 +3806,7 @@ def _daemon_leanstral_audit_prompt_payload(
             "schema_version": request.schema_version,
             "semantic_family": semantic_family,
         },
-        "drafted_logic_candidate_contract": _drafted_logic_candidate_contract(
-            semantic_context
-        ),
+        "drafted_logic_candidate_contract": _drafted_logic_candidate_contract(semantic_context),
         "response_schema_version": LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
         "response_template": {
             "abstention_reason": None,
@@ -3896,7 +3820,9 @@ def _daemon_leanstral_audit_prompt_payload(
             },
             "drafted_logic_candidates": [],
             "missing_semantic_rule": {"description": "missing deterministic semantic rule"},
-            "proof_obligation_ids": [primary_proof_obligation_id] if primary_proof_obligation_id else [],
+            "proof_obligation_ids": [primary_proof_obligation_id]
+            if primary_proof_obligation_id
+            else [],
             "proposed_compiler_surface": [
                 {
                     "component": compiler_surface,
@@ -3980,9 +3906,7 @@ def _compact_leanstral_audit_prompt_payload(
         "request_cache_key": request.cache_key,
         "request_id": request.request_id,
         "primary_proof_obligation_id": (
-            str(request.proof_obligation_ids[0])
-            if request.proof_obligation_ids
-            else ""
+            str(request.proof_obligation_ids[0]) if request.proof_obligation_ids else ""
         ),
         "proof_obligation_ids": list(request.proof_obligation_ids),
     }
@@ -4012,9 +3936,7 @@ def _compact_leanstral_audit_prompt_payload(
             "No markdown, prose, XML tags, chat-template tokens, or prompt copies.",
             "Keep every free-text string under 140 characters.",
         ],
-        "drafted_logic_candidate_contract": _drafted_logic_candidate_contract(
-            semantic_context
-        ),
+        "drafted_logic_candidate_contract": _drafted_logic_candidate_contract(semantic_context),
         "request": compact_request,
         "response_schema_hash": request.response_schema_hash,
         "response_template": {
@@ -4028,9 +3950,7 @@ def _compact_leanstral_audit_prompt_payload(
                 "expected": "legal semantics should be preserved",
             },
             "drafted_logic_candidates": [],
-            "missing_semantic_rule": {
-                "description": "missing deterministic semantic rule"
-            },
+            "missing_semantic_rule": {"description": "missing deterministic semantic rule"},
             "proof_obligation_ids": list(request.proof_obligation_ids[:1]),
             "proposed_compiler_surface": [
                 {
@@ -4149,15 +4069,12 @@ def _drafted_logic_candidate_contract(
         candidate_language["grounding_required"] = bool(grounding_symbols)
         candidate_language["grounding_symbols"] = list(grounding_symbols)
         candidate_language["grounding_symbols_by_role"] = {
-            key: list(values)
-            for key, values in grounding_catalog.items()
+            key: list(values) for key, values in grounding_catalog.items()
         }
-        candidate_language["grounded_candidate_seed"] = (
-            _leanstral_grounded_candidate_seed(
-                obligation.get("logic_family"),
-                obligation.get("legal_ir_view"),
-                grounding_catalog,
-            )
+        candidate_language["grounded_candidate_seed"] = _leanstral_grounded_candidate_seed(
+            obligation.get("logic_family"),
+            obligation.get("legal_ir_view"),
+            grounding_catalog,
         )
         candidate_language["minimum_distinct_grounding_symbols"] = min(
             2,
@@ -4177,21 +4094,14 @@ def _drafted_logic_candidate_contract(
         obligations.append(
             {
                 "allowed_predicate_heads": list(allowed_predicate_heads),
-                "compiler_surface": str(
-                    obligation.get("legal_ir_view") or ""
-                ),
+                "compiler_surface": str(obligation.get("legal_ir_view") or ""),
                 "contract_id": str(
-                    _json_ready_mapping(obligation.get("metadata")).get(
-                        "contract_id"
-                    )
-                    or ""
+                    _json_ready_mapping(obligation.get("metadata")).get("contract_id") or ""
                 ),
                 "expected_failure_mode": "hammer_unproved",
                 "logic_family": str(obligation.get("logic_family") or ""),
                 "candidate_language": candidate_language,
-                "premise_hints": list(
-                    _string_tuple(obligation.get("premise_hints"))
-                ),
+                "premise_hints": list(_string_tuple(obligation.get("premise_hints"))),
                 "proof_obligation_ids": [obligation_id],
                 "target_view": str(obligation.get("legal_ir_view") or ""),
             }
@@ -4236,29 +4146,23 @@ def _repair_response_with_grounded_candidate_seed(
 ) -> tuple[LeanstralAuditResponse, bool]:
     """Replace a malformed final draft with its attested compiler witness."""
 
-    if not set(validation.reasons).intersection(
-        LEANSTRAL_GROUNDED_CANDIDATE_REPAIR_REASONS
-    ):
+    if not set(validation.reasons).intersection(LEANSTRAL_GROUNDED_CANDIDATE_REPAIR_REASONS):
         return response, False
-    semantic_context = _json_ready_mapping(
-        request.evidence.get("semantic_context")
-    )
+    semantic_context = _json_ready_mapping(request.evidence.get("semantic_context"))
     if semantic_context.get("accepted") is not True:
         return response, False
     contracts = [
         dict(value)
-        for value in _drafted_logic_candidate_contract(
-            semantic_context
-        ).get("proof_obligation_contracts", ())
+        for value in _drafted_logic_candidate_contract(semantic_context).get(
+            "proof_obligation_contracts", ()
+        )
         if isinstance(value, Mapping)
     ]
     if not contracts:
         return response, False
 
     existing = (
-        dict(response.drafted_logic_candidates[0])
-        if response.drafted_logic_candidates
-        else {}
+        dict(response.drafted_logic_candidates[0]) if response.drafted_logic_candidates else {}
     )
     candidate_obligations = _string_tuple(
         existing.get("proof_obligation_ids")
@@ -4290,9 +4194,7 @@ def _repair_response_with_grounded_candidate_seed(
         candidate_confidence = float(existing.get("confidence"))
     except (TypeError, ValueError):
         candidate_confidence = float("nan")
-    if not math.isfinite(candidate_confidence) or not (
-        0.0 < candidate_confidence <= 1.0
-    ):
+    if not math.isfinite(candidate_confidence) or not (0.0 < candidate_confidence <= 1.0):
         candidate_confidence = (
             float(response.confidence)
             if math.isfinite(response.confidence) and response.confidence > 0.0
@@ -4716,20 +4618,12 @@ def _short_prompt_hash(value: Any, length: int = 16) -> str:
 
 
 def _drop_empty_values(mapping: Mapping[str, Any]) -> Dict[str, Any]:
-    return {
-        key: value
-        for key, value in mapping.items()
-        if value not in (None, "", (), [], {})
-    }
+    return {key: value for key, value in mapping.items() if value not in (None, "", (), [], {})}
 
 
 def _selected_prompt_mapping(value: Any, keys: Sequence[str]) -> Dict[str, Any]:
     mapping = _json_ready_mapping(value)
-    selected = {
-        key: mapping.get(key)
-        for key in keys
-        if mapping.get(key) not in (None, "", (), [])
-    }
+    selected = {key: mapping.get(key) for key in keys if mapping.get(key) not in (None, "", (), [])}
     omitted = {
         key: mapping.get(key)
         for key in sorted(mapping)
@@ -4816,9 +4710,7 @@ def _leanstral_prompt_token_count(
     timeout_seconds: float,
 ) -> tuple[int, bool, str]:
     base_url = str(
-        tokenizer_base_url
-        or os.environ.get("IPFS_ACCELERATE_LLAMA_CPP_BASE_URL")
-        or ""
+        tokenizer_base_url or os.environ.get("IPFS_ACCELERATE_LLAMA_CPP_BASE_URL") or ""
     ).strip()
     if base_url:
         parsed = urllib.parse.urlsplit(base_url.rstrip("/"))
@@ -4848,8 +4740,10 @@ def _leanstral_prompt_token_count(
             tokens = payload.get("tokens") if isinstance(payload, Mapping) else None
             if isinstance(tokens, Sequence) and not isinstance(tokens, (str, bytes)):
                 return len(tokens), True, ""
-            return _conservative_prompt_token_estimate(prompt), False, (
-                "tokenizer_response_missing_tokens"
+            return (
+                _conservative_prompt_token_estimate(prompt),
+                False,
+                ("tokenizer_response_missing_tokens"),
             )
         except (
             OSError,
@@ -4907,9 +4801,7 @@ def validate_leanstral_audit_response(
     if unknown_obligations:
         reasons.append("unknown_proof_obligation_id")
     request_obligations = set(request.proof_obligation_ids)
-    semantic_context = _json_ready_mapping(
-        request.evidence.get("semantic_context")
-    )
+    semantic_context = _json_ready_mapping(request.evidence.get("semantic_context"))
     from .leanstral import _leanstral_candidate_grounding_symbols
 
     candidate_grounding_symbols = _leanstral_candidate_grounding_symbols(
@@ -4919,14 +4811,10 @@ def validate_leanstral_audit_response(
     obligation_contracts = {
         str(obligation.get("obligation_id") or ""): obligation
         for obligation in semantic_context.get("proof_obligations", []) or []
-        if isinstance(obligation, Mapping)
-        and str(obligation.get("obligation_id") or "").strip()
+        if isinstance(obligation, Mapping) and str(obligation.get("obligation_id") or "").strip()
     }
     legal_source = str(
-        _json_ready_mapping(
-            semantic_context.get("legal_text_data")
-        ).get("value")
-        or ""
+        _json_ready_mapping(semantic_context.get("legal_text_data")).get("value") or ""
     )
     if (
         strict_candidate_contract
@@ -4951,8 +4839,7 @@ def validate_leanstral_audit_response(
             )
         )
         if candidate_obligations and any(
-            obligation not in request_obligations
-            for obligation in candidate_obligations
+            obligation not in request_obligations for obligation in candidate_obligations
         ):
             reasons.append("unknown_drafted_logic_proof_obligation_id")
             break
@@ -5085,13 +4972,8 @@ def _strict_drafted_candidate_reasons(
         minimum_matches=minimum_grounding,
     ):
         reasons.append("drafted_logic_candidate_insufficient_grounding")
-    candidate_heads = {
-        head.lower() for head in _logic_predicate_heads(candidate_text)
-    }
-    allowed_heads = {
-        head.lower()
-        for head in _logic_predicate_heads(obligation_statement)
-    }
+    candidate_heads = {head.lower() for head in _logic_predicate_heads(candidate_text)}
+    allowed_heads = {head.lower() for head in _logic_predicate_heads(obligation_statement)}
     allowed_heads.update(
         _leanstral_candidate_predicate_vocabulary(
             obligation.get("logic_family"),
@@ -5115,10 +4997,7 @@ def _strict_drafted_candidate_reasons(
             reasons.append("drafted_logic_target_view_mismatch")
         if str(candidate.get("compiler_surface") or "").strip() != expected_view:
             reasons.append("drafted_logic_compiler_surface_mismatch")
-    if (
-        expected_family
-        and str(candidate.get("logic_family") or "").strip() != expected_family
-    ):
+    if expected_family and str(candidate.get("logic_family") or "").strip() != expected_family:
         reasons.append("drafted_logic_family_mismatch")
     if str(candidate.get("expected_failure_mode") or "") != "hammer_unproved":
         reasons.append("drafted_logic_failure_mode_mismatch")
@@ -5194,14 +5073,11 @@ def _build_worker_audit_request(
     proof_obligations = tuple(
         str(obligation.get("obligation_id") or "")
         for obligation in semantic_context.get("proof_obligations", []) or []
-        if isinstance(obligation, Mapping)
-        and str(obligation.get("obligation_id") or "").strip()
+        if isinstance(obligation, Mapping) and str(obligation.get("obligation_id") or "").strip()
     )
     if not proof_obligations:
         proof_obligations = _worker_proof_obligation_ids(cluster)
-    theorem_registry_hash = str(
-        semantic_context.get("theorem_registry_hash") or ""
-    ).strip()
+    theorem_registry_hash = str(semantic_context.get("theorem_registry_hash") or "").strip()
     if not theorem_registry_hash:
         theorem_registry_hash = canonical_sha256(
             {
@@ -5214,10 +5090,7 @@ def _build_worker_audit_request(
         )
     packet_limit = config.bounded_max_evidence_packets_per_item()
     selected_records = list(records[:packet_limit])
-    snapshot_policy = (
-        config.normalized_evidence_refresh_policy()
-        == "latest_compiler_snapshot"
-    )
+    snapshot_policy = config.normalized_evidence_refresh_policy() == "latest_compiler_snapshot"
     manifest_records = selected_records if snapshot_policy else list(records)
     source_record_hashes = [canonical_sha256(record) for record in manifest_records]
     selected_evidence_ids = {
@@ -5239,11 +5112,7 @@ def _build_worker_audit_request(
         "semantic_signature": str(getattr(cluster, "semantic_signature", "")),
         "source_record_hashes": source_record_hashes,
         "state_hashes": sorted(
-            {
-                value
-                for record in manifest_records
-                for value in _record_state_hashes(record)
-            }
+            {value for record in manifest_records for value in _record_state_hashes(record)}
         ),
     }
     if snapshot_policy:
@@ -5258,9 +5127,7 @@ def _build_worker_audit_request(
         evidence.update(
             {
                 "evidence_packet_selection": "ranked_prefix_with_full_hash_manifest",
-                "omitted_evidence_packet_hashes": source_record_hashes[
-                    len(selected_records) :
-                ],
+                "omitted_evidence_packet_hashes": source_record_hashes[len(selected_records) :],
             }
         )
     prompt = {
@@ -5299,11 +5166,7 @@ def _bounded_worker_cluster_payload(
     detailed_gaps: List[Dict[str, Any]] = []
     omitted_gaps: List[Any] = []
     for gap in raw_gaps:
-        evidence_id = (
-            str(gap.get("evidence_id") or "")
-            if isinstance(gap, Mapping)
-            else ""
-        )
+        evidence_id = str(gap.get("evidence_id") or "") if isinstance(gap, Mapping) else ""
         if evidence_id and evidence_id in selected_evidence_ids:
             detailed_gaps.append(dict(gap))
         else:
@@ -5318,12 +5181,8 @@ def _bounded_worker_cluster_payload(
     payload["gaps"] = detailed_gaps
     if omitted_gaps:
         if include_full_hash_manifest:
-            payload["gap_detail_selection"] = (
-                "selected_evidence_packets_with_hash_manifest"
-            )
-            payload["omitted_gap_hashes"] = [
-                canonical_sha256(gap) for gap in omitted_gaps
-            ]
+            payload["gap_detail_selection"] = "selected_evidence_packets_with_hash_manifest"
+            payload["omitted_gap_hashes"] = [canonical_sha256(gap) for gap in omitted_gaps]
         else:
             payload = {
                 "compiler_surface": str(payload.get("compiler_surface") or ""),
@@ -5344,15 +5203,12 @@ def _bounded_worker_cluster_payload(
                     {
                         str(gap.get("sample_id") or "")
                         for gap in detailed_gaps
-                        if isinstance(gap, Mapping)
-                        and str(gap.get("sample_id") or "")
+                        if isinstance(gap, Mapping) and str(gap.get("sample_id") or "")
                     }
                 ),
                 "schema_version": str(payload.get("schema_version") or ""),
                 "semantic_family": str(payload.get("semantic_family") or ""),
-                "semantic_signature": str(
-                    payload.get("semantic_signature") or ""
-                ),
+                "semantic_signature": str(payload.get("semantic_signature") or ""),
             }
     return payload
 
@@ -5365,10 +5221,7 @@ def _worker_request_records(
     """Select stable evidence for the newest compiler revision in a cluster."""
 
     values = list(records)
-    if (
-        not values
-        or config.normalized_evidence_refresh_policy() != "latest_compiler_snapshot"
-    ):
+    if not values or config.normalized_evidence_refresh_policy() != "latest_compiler_snapshot":
         return values
     indexed = list(enumerate(values))
 
@@ -5382,9 +5235,7 @@ def _worker_request_records(
         return cycle, index
 
     _, newest_record = max(indexed, key=record_order)
-    newest_context = _json_ready_mapping(
-        _root_record(newest_record).get("run_context")
-    )
+    newest_context = _json_ready_mapping(_root_record(newest_record).get("run_context"))
     newest_commit = str(newest_context.get("compiler_commit") or "").strip()
     if not newest_commit:
         return values
@@ -5392,9 +5243,7 @@ def _worker_request_records(
         record
         for record in values
         if str(
-            _json_ready_mapping(_root_record(record).get("run_context")).get(
-                "compiler_commit"
-            )
+            _json_ready_mapping(_root_record(record).get("run_context")).get("compiler_commit")
             or ""
         ).strip()
         == newest_commit
@@ -5424,7 +5273,9 @@ def _worker_request_records(
 def _compact_worker_packet(record: Mapping[str, Any]) -> Dict[str, Any]:
     root = _root_record(record)
     return {
-        "anti_copy_evidence": _json_ready_mapping(root.get("anti_copy_evidence") or root.get("anti_copy")),
+        "anti_copy_evidence": _json_ready_mapping(
+            root.get("anti_copy_evidence") or root.get("anti_copy")
+        ),
         "compiler_decompiler_metrics": _json_ready_mapping(root.get("compiler_decompiler_metrics")),
         "evidence_hashes": _json_ready_mapping(root.get("evidence_hashes")),
         "evidence_id": str(root.get("evidence_id") or ""),
@@ -5449,9 +5300,7 @@ def _worker_reference_examples(records: Sequence[Mapping[str, Any]]) -> List[Dic
         canonical_view = _json_ready_mapping(legal_ir_views.get("canonical"))
         evidence_id = str(root.get("evidence_id") or "").strip()
         sample_id = str(
-            sample_hashes.get("sample_id")
-            or root.get("sample_id")
-            or evidence_id
+            sample_hashes.get("sample_id") or root.get("sample_id") or evidence_id
         ).strip()
         if not evidence_id and not sample_id:
             continue
@@ -5484,10 +5333,7 @@ def _worker_reference_examples(records: Sequence[Mapping[str, Any]]) -> List[Dic
             if value:
                 example[key] = value
         text = str(
-            root.get("source_text")
-            or root.get("text")
-            or root.get("sample_text")
-            or ""
+            root.get("source_text") or root.get("text") or root.get("sample_text") or ""
         ).strip()
         if text:
             example["source_text"] = text
@@ -5520,11 +5366,7 @@ def _build_trusted_semantic_context(
         root = _root_record(record)
         sample_hashes = _json_ready_mapping(root.get("sample_hashes"))
         evidence_hashes = _json_ready_mapping(root.get("evidence_hashes"))
-        sample_id = str(
-            sample_hashes.get("sample_id")
-            or root.get("sample_id")
-            or ""
-        ).strip()
+        sample_id = str(sample_hashes.get("sample_id") or root.get("sample_id") or "").strip()
         if not sample_id or sample_id in seen_sample_ids:
             continue
         seen_sample_ids.add(sample_id)
@@ -5533,18 +5375,13 @@ def _build_trusted_semantic_context(
             rejection_reasons.append(f"{sample_id}:missing_reference_example")
             continue
         text = str(
-            reference.get("source_text")
-            or reference.get("text")
-            or reference.get("source")
-            or ""
+            reference.get("source_text") or reference.get("text") or reference.get("source") or ""
         ).strip()
         if not text:
             rejection_reasons.append(f"{sample_id}:missing_source_text")
             continue
         expected_source_hash = str(
-            sample_hashes.get("source_text_hash")
-            or evidence_hashes.get("source_text_hash")
-            or ""
+            sample_hashes.get("source_text_hash") or evidence_hashes.get("source_text_hash") or ""
         ).strip()
         actual_source_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
         if not expected_source_hash:
@@ -5565,14 +5402,10 @@ def _build_trusted_semantic_context(
                 title=str(reference.get("title") or "0"),
                 section=str(reference.get("section") or sample_id),
                 text=text,
-                citation=str(
-                    reference.get("citation") or f"0 U.S.C. {sample_id}"
-                ),
+                citation=str(reference.get("citation") or f"0 U.S.C. {sample_id}"),
             )
         except Exception as exc:
-            rejection_reasons.append(
-                f"{sample_id}:compiler_error:{type(exc).__name__}"
-            )
+            rejection_reasons.append(f"{sample_id}:compiler_error:{type(exc).__name__}")
             continue
         expected_modal_hash = str(
             sample_hashes.get("modal_ir_hash")
@@ -5666,11 +5499,7 @@ def _select_semantic_context_formulas(
     family = _semantic_family_alias(semantic_family)
 
     def rank(formula: Any) -> tuple[int, str]:
-        mapping = (
-            formula.to_dict()
-            if hasattr(formula, "to_dict")
-            else _json_ready_mapping(formula)
-        )
+        mapping = formula.to_dict() if hasattr(formula, "to_dict") else _json_ready_mapping(formula)
         operator = _json_ready_mapping(mapping.get("operator"))
         formula_family = _semantic_family_alias(operator.get("family"))
         return (
@@ -5711,9 +5540,7 @@ def _select_semantic_context_obligations(
         obligation_family = _semantic_family_alias(mapping.get("logic_family"))
         view = str(mapping.get("legal_ir_view") or "")
         kind_tokens = {
-            token
-            for token in _normalize_token(mapping.get("kind")).split("_")
-            if len(token) > 2
+            token for token in _normalize_token(mapping.get("kind")).split("_") if len(token) > 2
         }
         return (
             0 if family and obligation_family == family else 1,
@@ -5766,11 +5593,7 @@ def _semantic_context_source_window(
     starts: List[int] = []
     ends: List[int] = []
     for formula in formulas:
-        mapping = (
-            formula.to_dict()
-            if hasattr(formula, "to_dict")
-            else _json_ready_mapping(formula)
-        )
+        mapping = formula.to_dict() if hasattr(formula, "to_dict") else _json_ready_mapping(formula)
         provenance = _json_ready_mapping(mapping.get("provenance"))
         try:
             starts.append(max(0, int(provenance.get("start_char") or 0)))
@@ -5815,16 +5638,12 @@ def _records_compiler_commit(records: Sequence[Mapping[str, Any]]) -> str:
     commits = sorted(
         {
             str(
-                _json_ready_mapping(_root_record(record).get("run_context")).get(
-                    "compiler_commit"
-                )
+                _json_ready_mapping(_root_record(record).get("run_context")).get("compiler_commit")
                 or ""
             ).strip()
             for record in records
             if str(
-                _json_ready_mapping(_root_record(record).get("run_context")).get(
-                    "compiler_commit"
-                )
+                _json_ready_mapping(_root_record(record).get("run_context")).get("compiler_commit")
                 or ""
             ).strip()
         }
@@ -6001,11 +5820,7 @@ def _merge_reasons(
     additions: Sequence[str],
 ) -> tuple[str, ...]:
     return tuple(
-        dict.fromkeys(
-            str(reason)
-            for reason in [*existing, *additions]
-            if str(reason).strip()
-        )
+        dict.fromkeys(str(reason) for reason in [*existing, *additions] if str(reason).strip())
     )
 
 
@@ -6036,9 +5851,7 @@ def _attempt_reason_kind(reason: str) -> str:
 
 def _all_attempt_reasons_match(reasons: Sequence[str], kind: str) -> bool:
     values = tuple(str(reason) for reason in reasons if str(reason).strip())
-    return bool(values) and all(
-        _attempt_reason_kind(reason) == kind for reason in values
-    )
+    return bool(values) and all(_attempt_reason_kind(reason) == kind for reason in values)
 
 
 def _provider_unavailable_reason(exc: Exception) -> str:
@@ -6205,18 +6018,11 @@ def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
         if not candidate_text:
             continue
         logic_family = _normalize_token(
-            item.get("logic_family")
-            or item.get("family")
-            or item.get("view")
-            or "legal_ir"
+            item.get("logic_family") or item.get("family") or item.get("view") or "legal_ir"
         )
         proof_obligation_ids = _string_tuple(
             item.get("proof_obligation_ids")
-            or (
-                [item.get("proof_obligation_id")]
-                if item.get("proof_obligation_id")
-                else []
-            )
+            or ([item.get("proof_obligation_id")] if item.get("proof_obligation_id") else [])
         )
         premise_hints = _string_tuple(item.get("premise_hints"))
         target_view = str(
@@ -6227,9 +6033,7 @@ def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
             or logic_family
         ).strip()
         compiler_surface = str(
-            item.get("compiler_surface")
-            or item.get("target_component")
-            or target_view
+            item.get("compiler_surface") or item.get("target_component") or target_view
         ).strip()
         normalized: Dict[str, Any] = {
             "candidate": candidate_text,
@@ -6242,12 +6046,9 @@ def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
             "logic_family": logic_family or "legal_ir",
             "premise_hints": list(premise_hints),
             "proof_obligation_ids": list(proof_obligation_ids),
-            "repair_scope": str(
-                item.get("repair_scope") or "failed_obligation_subtree"
-            ).strip(),
+            "repair_scope": str(item.get("repair_scope") or "failed_obligation_subtree").strip(),
             "schema_version": str(
-                item.get("schema_version")
-                or LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION
+                item.get("schema_version") or LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION
             ).strip(),
             "source_copy_policy": str(
                 item.get("source_copy_policy") or "reject_full_span_copy"

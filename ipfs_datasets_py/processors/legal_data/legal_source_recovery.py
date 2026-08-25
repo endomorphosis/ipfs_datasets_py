@@ -144,7 +144,11 @@ _FETCH_TIMEOUT_SECONDS = max(
 )
 _COMMON_CRAWL_TIMEOUT_SECONDS = max(
     1.0,
-    float(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_TIMEOUT_SECONDS", str(_SEARCH_TIMEOUT_SECONDS))),
+    float(
+        os.getenv(
+            "LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_TIMEOUT_SECONDS", str(_SEARCH_TIMEOUT_SECONDS)
+        )
+    ),
 )
 _MAX_COMMON_CRAWL_DOMAINS = max(
     1,
@@ -190,7 +194,9 @@ def build_missing_citation_recovery_query(
     return citation
 
 
-def infer_recovery_corpus_key(*, corpus_key: Optional[str], metadata: Optional[Dict[str, Any]] = None) -> Optional[str]:
+def infer_recovery_corpus_key(
+    *, corpus_key: Optional[str], metadata: Optional[Dict[str, Any]] = None
+) -> Optional[str]:
     normalized = str(corpus_key or "").strip().lower()
     if normalized:
         return normalized
@@ -216,7 +222,9 @@ def _jurisdiction_type_for_corpus(corpus_key: Optional[str]) -> Optional[str]:
     return None
 
 
-def _score_candidate(result: Dict[str, Any], *, corpus_key: Optional[str], state_code: Optional[str]) -> int:
+def _score_candidate(
+    result: Dict[str, Any], *, corpus_key: Optional[str], state_code: Optional[str]
+) -> int:
     url = str(result.get("url") or "")
     domain = urlparse(url).netloc.lower()
     title = str(result.get("title") or "")
@@ -241,7 +249,11 @@ def _score_candidate(result: Dict[str, Any], *, corpus_key: Optional[str], state
     if corpus_key == "state_laws":
         if "statute" in combined or "statutes" in combined or "code" in combined:
             score += 3
-            if "/statute" in url.lower() or "/statutes" in url.lower() or "/basis/statutes" in url.lower():
+            if (
+                "/statute" in url.lower()
+                or "/statutes" in url.lower()
+                or "/basis/statutes" in url.lower()
+            ):
                 score += 4
         elif "legislature" in combined:
             score -= 2
@@ -250,7 +262,8 @@ def _score_candidate(result: Dict[str, Any], *, corpus_key: Optional[str], state
         if domain.endswith("akleg.gov") or ".akleg.gov" in domain:
             score += 5
         other_state_hits = [
-            name for code, name in STATE_NAMES.items()
+            name
+            for code, name in STATE_NAMES.items()
             if state_code and code != str(state_code).upper() and name.lower() in combined
         ]
         if other_state_hits and not (state_name and state_name.lower() in combined):
@@ -321,7 +334,9 @@ def _blocked_fetch_escalation_worker(
                 import requests
 
                 reader_url = f"https://r.jina.ai/http://{url}"
-                max_attempts = max(1, int(os.getenv("LEGAL_SOURCE_RECOVERY_JINA_READER_RETRIES", "3")))
+                max_attempts = max(
+                    1, int(os.getenv("LEGAL_SOURCE_RECOVERY_JINA_READER_RETRIES", "3"))
+                )
                 for attempt_index in range(max_attempts):
                     lock_file = None
                     try:
@@ -343,7 +358,14 @@ def _blocked_fetch_escalation_worker(
                                 "Accept": "text/markdown,text/plain,*/*;q=0.8",
                             },
                         )
-                        min_interval = max(0.0, float(os.getenv("LEGAL_SOURCE_RECOVERY_JINA_READER_MIN_INTERVAL_SECONDS", "0.25")))
+                        min_interval = max(
+                            0.0,
+                            float(
+                                os.getenv(
+                                    "LEGAL_SOURCE_RECOVERY_JINA_READER_MIN_INTERVAL_SECONDS", "0.25"
+                                )
+                            ),
+                        )
                         if min_interval:
                             time.sleep(min_interval)
                     finally:
@@ -362,9 +384,13 @@ def _blocked_fetch_escalation_worker(
                                     "title": str(title_hint or ""),
                                     "text": str(response.text or ""),
                                     "html": "",
-                                    "content_type": str(response.headers.get("content-type") or "text/markdown"),
+                                    "content_type": str(
+                                        response.headers.get("content-type") or "text/markdown"
+                                    ),
                                     "metadata": {
-                                        "content_type": str(response.headers.get("content-type") or "text/markdown"),
+                                        "content_type": str(
+                                            response.headers.get("content-type") or "text/markdown"
+                                        ),
                                         "reader_url": reader_url,
                                         "source_url": url,
                                     },
@@ -392,7 +418,11 @@ def _blocked_fetch_escalation_worker(
             except Exception as exc:
                 errors.append(f"jina_reader_error: {exc}")
 
-        from ..web_archiving.unified_web_scraper import ScraperConfig, ScraperMethod, UnifiedWebScraper
+        from ..web_archiving.unified_web_scraper import (
+            ScraperConfig,
+            ScraperMethod,
+            UnifiedWebScraper,
+        )
 
         parsed_methods: List[ScraperMethod] = []
         for method_name in list(methods or []):
@@ -403,7 +433,9 @@ def _blocked_fetch_escalation_worker(
             except Exception:
                 continue
         if not parsed_methods:
-            queue.put({"success": False, "errors": errors or ["no blocked fetch methods configured"]})
+            queue.put(
+                {"success": False, "errors": errors or ["no blocked fetch methods configured"]}
+            )
             return
 
         scraper = UnifiedWebScraper(
@@ -449,14 +481,20 @@ def _blocked_fetch_escalation_worker(
                 "success": True,
                 "document": {
                     "title": str(getattr(result, "title", "") or title_hint or ""),
-                    "text": str(getattr(result, "text", "") or getattr(result, "content", "") or ""),
+                    "text": str(
+                        getattr(result, "text", "") or getattr(result, "content", "") or ""
+                    ),
                     "html": str(getattr(result, "html", "") or ""),
                     "content_type": str(metadata.get("content_type") or ""),
                     "metadata": metadata,
                     "extraction_provenance": {
                         "method": "blocked_fetch_escalation",
                         "scraper_method": str(
-                            getattr(getattr(result, "method_used", None), "value", getattr(result, "method_used", ""))
+                            getattr(
+                                getattr(result, "method_used", None),
+                                "value",
+                                getattr(result, "method_used", ""),
+                            )
                             or ""
                         ),
                         "errors": list(getattr(result, "errors", []) or []),
@@ -470,8 +508,7 @@ def _blocked_fetch_escalation_worker(
 
 
 class _LiveSearcher(Protocol):
-    def search(self, query: str, max_results: int = 20, **kwargs: Any) -> Dict[str, Any]:
-        ...
+    def search(self, query: str, max_results: int = 20, **kwargs: Any) -> Dict[str, Any]: ...
 
 
 class _ArchiveSearcher(Protocol):
@@ -481,8 +518,7 @@ class _ArchiveSearcher(Protocol):
         jurisdiction_type: Optional[str] = None,
         state_code: Optional[str] = None,
         max_results: int = 50,
-    ) -> Dict[str, Any]:
-        ...
+    ) -> Dict[str, Any]: ...
 
 
 @dataclass
@@ -558,7 +594,9 @@ class _FallbackPatchManager:
         target = Path(output_path or (self.patches_dir / f"{patch.patch_id}.patch"))
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(str(patch.diff_content or ""), encoding="utf-8")
-        target.with_suffix(".json").write_text(json.dumps(patch.to_dict(), indent=2, sort_keys=True), encoding="utf-8")
+        target.with_suffix(".json").write_text(
+            json.dumps(patch.to_dict(), indent=2, sort_keys=True), encoding="utf-8"
+        )
         return target
 
 
@@ -621,7 +659,9 @@ class LegalSourceRecoveryWorkflow:
     def _searcher(self) -> Any:
         if self._archive_searcher is not None or self._live_searcher is not None:
             return None
-        if str(os.getenv("LEGAL_SOURCE_RECOVERY_USE_LEGACY_SEARCHER") or "").strip().lower() not in {
+        if str(
+            os.getenv("LEGAL_SOURCE_RECOVERY_USE_LEGACY_SEARCHER") or ""
+        ).strip().lower() not in {
             "1",
             "true",
             "yes",
@@ -637,7 +677,9 @@ class LegalSourceRecoveryWorkflow:
             return self._archiver
         from ..legal_scrapers.parallel_web_archiver import ParallelWebArchiver
 
-        enable_warc_pointers = _env_flag("LEGAL_SOURCE_RECOVERY_ENABLE_WARC_POINTERS", default=False)
+        enable_warc_pointers = _env_flag(
+            "LEGAL_SOURCE_RECOVERY_ENABLE_WARC_POINTERS", default=False
+        )
         fallback_priority = ["wayback", "web_archive"]
         if enable_warc_pointers:
             fallback_priority.insert(0, "warc")
@@ -655,10 +697,18 @@ class LegalSourceRecoveryWorkflow:
 
             return publish
         except ModuleNotFoundError as exc:
-            if exc.name not in {"scripts", "scripts.repair", "scripts.repair.publish_parquet_to_hf"}:
+            if exc.name not in {
+                "scripts",
+                "scripts.repair",
+                "scripts.repair.publish_parquet_to_hf",
+            }:
                 raise
-        module_path = Path(__file__).resolve().parents[3] / "scripts" / "repair" / "publish_parquet_to_hf.py"
-        spec = importlib.util.spec_from_file_location("ipfs_datasets_py_publish_parquet_to_hf", module_path)
+        module_path = (
+            Path(__file__).resolve().parents[3] / "scripts" / "repair" / "publish_parquet_to_hf.py"
+        )
+        spec = importlib.util.spec_from_file_location(
+            "ipfs_datasets_py_publish_parquet_to_hf", module_path
+        )
         if spec is None or spec.loader is None:
             raise ModuleNotFoundError(f"Unable to load Hugging Face publisher from {module_path}")
         module = importlib.util.module_from_spec(spec)
@@ -669,7 +719,11 @@ class LegalSourceRecoveryWorkflow:
         if self._fetch_api is not None:
             return self._fetch_api
         from ..web_archiving.unified_api import UnifiedWebArchivingAPI
-        from ..web_archiving.unified_web_scraper import ScraperConfig, ScraperMethod, UnifiedWebScraper
+        from ..web_archiving.unified_web_scraper import (
+            ScraperConfig,
+            ScraperMethod,
+            UnifiedWebScraper,
+        )
 
         scraper = UnifiedWebScraper(
             ScraperConfig(
@@ -764,12 +818,22 @@ class LegalSourceRecoveryWorkflow:
                 "content_type": content_type,
                 "html": html,
                 "links": links,
-                "raw_bytes": raw_bytes if raw_bytes and "text" not in content_type and "html" not in content_type else b"",
+                "raw_bytes": raw_bytes
+                if raw_bytes and "text" not in content_type and "html" not in content_type
+                else b"",
             },
-            extraction_provenance={"method": "requests_lightweight", "status_code": int(response.status_code), "tls_verify": tls_verify},
+            extraction_provenance={
+                "method": "requests_lightweight",
+                "status_code": int(response.status_code),
+                "tls_verify": tls_verify,
+            },
         )
         success = 200 <= int(response.status_code) < 400
-        errors = [] if success else [types.SimpleNamespace(message=f"http_status_{int(response.status_code)}")]
+        errors = (
+            []
+            if success
+            else [types.SimpleNamespace(message=f"http_status_{int(response.status_code)}")]
+        )
         return types.SimpleNamespace(success=success, document=document, errors=errors)
 
     @staticmethod
@@ -826,13 +890,20 @@ class LegalSourceRecoveryWorkflow:
     def _escalated_fetch_url(cls, url: str, *, title_hint: Optional[str] = None) -> Any:
         timeout_seconds = max(
             1.0,
-            float(os.getenv("LEGAL_SOURCE_RECOVERY_BLOCKED_FETCH_TIMEOUT_SECONDS", str(max(12.0, float(_FETCH_TIMEOUT_SECONDS))))),
+            float(
+                os.getenv(
+                    "LEGAL_SOURCE_RECOVERY_BLOCKED_FETCH_TIMEOUT_SECONDS",
+                    str(max(12.0, float(_FETCH_TIMEOUT_SECONDS))),
+                )
+            ),
         )
         methods = cls._blocked_fetch_method_order()
 
         def _payload_to_response(payload: Dict[str, Any]) -> Any:
             if not payload.get("success"):
-                return types.SimpleNamespace(success=False, document=None, errors=list(payload.get("errors") or []))
+                return types.SimpleNamespace(
+                    success=False, document=None, errors=list(payload.get("errors") or [])
+                )
             document_payload = dict(payload.get("document") or {})
             return types.SimpleNamespace(
                 success=True,
@@ -861,7 +932,9 @@ class LegalSourceRecoveryWorkflow:
             except Exception as exc:
                 return types.SimpleNamespace(success=False, document=None, errors=[exc])
 
-        start_method = str(os.getenv("LEGAL_SOURCE_RECOVERY_BLOCKED_FETCH_PROCESS_START_METHOD") or "").strip()
+        start_method = str(
+            os.getenv("LEGAL_SOURCE_RECOVERY_BLOCKED_FETCH_PROCESS_START_METHOD") or ""
+        ).strip()
         if start_method:
             context = mp.get_context(start_method)
         else:
@@ -882,7 +955,9 @@ class LegalSourceRecoveryWorkflow:
         deadline = datetime.now().timestamp() + timeout_seconds
         while datetime.now().timestamp() < deadline:
             try:
-                payload = dict(queue.get(timeout=min(0.2, max(0.01, deadline - datetime.now().timestamp()))))
+                payload = dict(
+                    queue.get(timeout=min(0.2, max(0.01, deadline - datetime.now().timestamp())))
+                )
                 process.join(1)
                 return _payload_to_response(payload)
             except queue_module.Empty:
@@ -898,11 +973,17 @@ class LegalSourceRecoveryWorkflow:
             if process.is_alive():
                 process.kill()
                 process.join(1)
-            return types.SimpleNamespace(success=False, document=None, errors=["blocked_fetch_escalation_timeout"])
+            return types.SimpleNamespace(
+                success=False, document=None, errors=["blocked_fetch_escalation_timeout"]
+            )
         try:
             return _payload_to_response(dict(queue.get_nowait()))
         except Exception:
-            return types.SimpleNamespace(success=False, document=None, errors=[f"blocked_fetch_escalation_exit_{process.exitcode}"])
+            return types.SimpleNamespace(
+                success=False,
+                document=None,
+                errors=[f"blocked_fetch_escalation_exit_{process.exitcode}"],
+            )
 
     def _candidate_fetch_response(self, url: str, *, title_hint: Optional[str] = None) -> Any:
         fetch_factory = getattr(type(self), "_fetch_api_instance", None)
@@ -917,10 +998,9 @@ class LegalSourceRecoveryWorkflow:
                 },
             )
         response = self._lightweight_fetch_url(url, title_hint=title_hint)
-        if (
-            _env_flag("LEGAL_SOURCE_RECOVERY_ESCALATE_BLOCKED_FETCH", default=True)
-            and self._should_escalate_fetch_response(response)
-        ):
+        if _env_flag(
+            "LEGAL_SOURCE_RECOVERY_ESCALATE_BLOCKED_FETCH", default=True
+        ) and self._should_escalate_fetch_response(response):
             escalated = self._escalated_fetch_url(url, title_hint=title_hint)
             if getattr(escalated, "success", False):
                 return escalated
@@ -941,9 +1021,7 @@ class LegalSourceRecoveryWorkflow:
 
     def _search_backend_status(self) -> Dict[str, Any]:
         brave_api_key = str(
-            os.getenv("BRAVE_API_KEY")
-            or os.getenv("BRAVE_SEARCH_API_KEY")
-            or ""
+            os.getenv("BRAVE_API_KEY") or os.getenv("BRAVE_SEARCH_API_KEY") or ""
         ).strip()
         duckduckgo_available = False
         try:
@@ -964,7 +1042,9 @@ class LegalSourceRecoveryWorkflow:
             "duckduckgo_configured": duckduckgo_available,
             "archive_search_available": bool(self._archive_searcher is not None),
             "live_search_available": bool(self._live_searcher is not None),
-            "brave_api_key_env": "BRAVE_API_KEY" if os.getenv("BRAVE_API_KEY") else ("BRAVE_SEARCH_API_KEY" if os.getenv("BRAVE_SEARCH_API_KEY") else ""),
+            "brave_api_key_env": "BRAVE_API_KEY"
+            if os.getenv("BRAVE_API_KEY")
+            else ("BRAVE_SEARCH_API_KEY" if os.getenv("BRAVE_SEARCH_API_KEY") else ""),
             "datasets_available": datasets_available,
         }
 
@@ -985,7 +1065,9 @@ class LegalSourceRecoveryWorkflow:
         )
 
     @staticmethod
-    def _official_hint_domains(*, corpus_key: Optional[str], state_code: Optional[str]) -> List[str]:
+    def _official_hint_domains(
+        *, corpus_key: Optional[str], state_code: Optional[str]
+    ) -> List[str]:
         corpus = str(corpus_key or "").strip().lower()
         state = str(state_code or "").strip().upper()
         if corpus == "us_code":
@@ -1043,9 +1125,16 @@ class LegalSourceRecoveryWorkflow:
         rows: List[Dict[str, Any]] = []
 
         if corpus == "us_code":
-            from ..legal_scrapers.federal_scrapers.us_code_scraper import build_public_law_url, build_uscode_section_url
+            from ..legal_scrapers.federal_scrapers.us_code_scraper import (
+                build_public_law_url,
+                build_uscode_section_url,
+            )
 
-            usc_match = re.search(r"\b([0-9]+)\s+U\.?S\.?C\.?(?:A\.?)?\s+(?:§|section|sec\.?)?\s*([0-9A-Za-z][\w\-]*(?:\([a-z0-9]+\))*)", text, re.IGNORECASE)
+            usc_match = re.search(
+                r"\b([0-9]+)\s+U\.?S\.?C\.?(?:A\.?)?\s+(?:§|section|sec\.?)?\s*([0-9A-Za-z][\w\-]*(?:\([a-z0-9]+\))*)",
+                text,
+                re.IGNORECASE,
+            )
             if usc_match:
                 title, section = usc_match.groups()
                 rows.append(
@@ -1057,7 +1146,11 @@ class LegalSourceRecoveryWorkflow:
                         "snippet": "Citation-derived official U.S. Code section URL.",
                     }
                 )
-            public_law_match = re.search(r"(?:Pub\.?\s+L\.?|P\.L\.?|Public\s+Law)\s+(?:No\.?\s*)?([0-9]+)-([0-9]+)", text, re.IGNORECASE)
+            public_law_match = re.search(
+                r"(?:Pub\.?\s+L\.?|P\.L\.?|Public\s+Law)\s+(?:No\.?\s*)?([0-9]+)-([0-9]+)",
+                text,
+                re.IGNORECASE,
+            )
             if public_law_match:
                 congress, law_number = public_law_match.groups()
                 rows.append(
@@ -1077,7 +1170,11 @@ class LegalSourceRecoveryWorkflow:
                 build_federal_register_citation_url,
             )
 
-            cfr_match = re.search(r"\b([0-9]+)\s+C\.?F\.?R\.?\s+(?:§|section|sec\.?)?\s*([0-9]+(?:\.[\w-]+)*(?:\([a-z0-9]+\))*)", text, re.IGNORECASE)
+            cfr_match = re.search(
+                r"\b([0-9]+)\s+C\.?F\.?R\.?\s+(?:§|section|sec\.?)?\s*([0-9]+(?:\.[\w-]+)*(?:\([a-z0-9]+\))*)",
+                text,
+                re.IGNORECASE,
+            )
             if cfr_match:
                 title, section = cfr_match.groups()
                 rows.append(
@@ -1089,7 +1186,11 @@ class LegalSourceRecoveryWorkflow:
                         "snippet": "Citation-derived official eCFR section URL.",
                     }
                 )
-            fr_match = re.search(r"\b([0-9]+)\s+(?:FR|Fed\.?\s+Reg\.?|Fed\.?\s+Register|Federal\s+Register)\s+([0-9]+)", text, re.IGNORECASE)
+            fr_match = re.search(
+                r"\b([0-9]+)\s+(?:FR|Fed\.?\s+Reg\.?|Fed\.?\s+Register|Federal\s+Register)\s+([0-9]+)",
+                text,
+                re.IGNORECASE,
+            )
             if fr_match:
                 volume, page = fr_match.groups()
                 rows.append(
@@ -1161,7 +1262,9 @@ class LegalSourceRecoveryWorkflow:
                 if state and citation_state and citation_state != state:
                     continue
                 extracted_state = citation_state or state
-                extracted_code_name = str((citation.metadata or {}).get("code_name") or citation.title or "").strip()
+                extracted_code_name = str(
+                    (citation.metadata or {}).get("code_name") or citation.title or ""
+                ).strip()
                 extracted_section = str(citation.section or "").strip().strip(".")
                 break
         except Exception:
@@ -1182,7 +1285,9 @@ class LegalSourceRecoveryWorkflow:
             section = f"{title_part}-{section}" if title_part else section
         from ..legal_scrapers.state_laws_scraper import build_state_law_section_url
 
-        if state == "MN" or re.search(r"\b(?:Minn\.\s+Stat\.|Minnesota\s+Statutes)", text, re.IGNORECASE):
+        if state == "MN" or re.search(
+            r"\b(?:Minn\.\s+Stat\.|Minnesota\s+Statutes)", text, re.IGNORECASE
+        ):
             rows.append(
                 {
                     "url": build_state_law_section_url("MN", section, code_name="Stat."),
@@ -1257,7 +1362,9 @@ class LegalSourceRecoveryWorkflow:
                     "snippet": "Citation-derived official Texas Statutes section URL.",
                 }
             )
-        if state == "FL" or re.search(r"\b(?:Fla\.\s+Stat\.|Florida\s+Statutes)", text, re.IGNORECASE):
+        if state == "FL" or re.search(
+            r"\b(?:Fla\.\s+Stat\.|Florida\s+Statutes)", text, re.IGNORECASE
+        ):
             rows.append(
                 {
                     "url": build_state_law_section_url("FL", section, code_name="Fla. Stat."),
@@ -1272,18 +1379,26 @@ class LegalSourceRecoveryWorkflow:
             il_act = section_match.groupdict().get("il_act") or "5"
             rows.append(
                 {
-                    "url": build_state_law_section_url("IL", section, code_name=f"{il_title} ILCS {il_act}"),
+                    "url": build_state_law_section_url(
+                        "IL", section, code_name=f"{il_title} ILCS {il_act}"
+                    ),
                     "title": f"Illinois Compiled Statutes {il_title} ILCS {il_act}/{section}",
                     "source": "citation_url_hint",
                     "source_type": "current",
                     "snippet": "Citation-derived official Illinois General Assembly ILCS URL.",
                 }
             )
-        if state == "PA" or section_kind == "pa_cs" or re.search(r"\bPa\.?\s*C\.?S\.?", text, re.IGNORECASE):
+        if (
+            state == "PA"
+            or section_kind == "pa_cs"
+            or re.search(r"\bPa\.?\s*C\.?S\.?", text, re.IGNORECASE)
+        ):
             pa_title = section_match.groupdict().get("pa_title") or "23"
             rows.append(
                 {
-                    "url": build_state_law_section_url("PA", section, code_name=f"{pa_title} Pa.C.S."),
+                    "url": build_state_law_section_url(
+                        "PA", section, code_name=f"{pa_title} Pa.C.S."
+                    ),
                     "title": f"Pennsylvania Consolidated Statutes {pa_title} Pa.C.S. section {section}",
                     "source": "citation_url_hint",
                     "source_type": "current",
@@ -1291,7 +1406,9 @@ class LegalSourceRecoveryWorkflow:
                 }
             )
         if not rows and extracted_state:
-            generic_url = build_state_law_section_url(extracted_state, section, code_name=extracted_code_name)
+            generic_url = build_state_law_section_url(
+                extracted_state, section, code_name=extracted_code_name
+            )
             if generic_url:
                 rows.append(
                     {
@@ -1370,7 +1487,9 @@ class LegalSourceRecoveryWorkflow:
             return []
 
         def _search_domain_hard_timeout(domain: str) -> Dict[str, Any]:
-            start_method = str(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_PROCESS_START_METHOD") or "").strip()
+            start_method = str(
+                os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_PROCESS_START_METHOD") or ""
+            ).strip()
             if start_method:
                 context = mp.get_context(start_method)
             else:
@@ -1386,8 +1505,12 @@ class LegalSourceRecoveryWorkflow:
                     "query": query,
                     "jurisdiction_type": _jurisdiction_type_for_corpus(corpus_key),
                     "state_code": state_code,
-                    "mode": str(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MODE") or "local").strip() or "local",
-                    "mcp_endpoint": os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MCP_ENDPOINT") or None,
+                    "mode": str(
+                        os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MODE") or "local"
+                    ).strip()
+                    or "local",
+                    "mcp_endpoint": os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MCP_ENDPOINT")
+                    or None,
                     "timeout_seconds": _COMMON_CRAWL_TIMEOUT_SECONDS,
                 },
             )
@@ -1405,7 +1528,9 @@ class LegalSourceRecoveryWorkflow:
             except Exception:
                 return {"results": [], "error": f"common_crawl_domain_exit_{process.exitcode}"}
 
-        def _normalize_common_crawl_rows(domain: str, rows: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        def _normalize_common_crawl_rows(
+            domain: str, rows: Iterable[Dict[str, Any]]
+        ) -> List[Dict[str, Any]]:
             normalized_rows: List[Dict[str, Any]] = []
             for row in list(rows or []):
                 url = str(
@@ -1424,11 +1549,23 @@ class LegalSourceRecoveryWorkflow:
                         "source": "common_crawl_indexes",
                         "source_type": "archived",
                         "search_domain": domain,
-                        "snippet": str(row.get("snippet") or row.get("mime") or row.get("status") or ""),
+                        "snippet": str(
+                            row.get("snippet") or row.get("mime") or row.get("status") or ""
+                        ),
                         "common_crawl_record": {
                             key: value
                             for key, value in row.items()
-                            if key in {"timestamp", "collection", "mime", "status", "digest", "filename", "offset", "length"}
+                            if key
+                            in {
+                                "timestamp",
+                                "collection",
+                                "mime",
+                                "status",
+                                "digest",
+                                "filename",
+                                "offset",
+                                "length",
+                            }
                         },
                     }
                 )
@@ -1451,8 +1588,12 @@ class LegalSourceRecoveryWorkflow:
 
                 try:
                     engine = CommonCrawlSearchEngine(
-                        mode=str(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MODE") or "local").strip() or "local",
-                        mcp_endpoint=os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MCP_ENDPOINT") or None,
+                        mode=str(
+                            os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MODE") or "local"
+                        ).strip()
+                        or "local",
+                        mcp_endpoint=os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MCP_ENDPOINT")
+                        or None,
                         mcp_timeout=_COMMON_CRAWL_TIMEOUT_SECONDS,
                     )
                     if not engine.is_available():
@@ -1465,8 +1606,12 @@ class LegalSourceRecoveryWorkflow:
                         jurisdiction_type=_jurisdiction_type_for_corpus(corpus_key),
                         state_code=state_code,
                         year=os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_YEAR") or None,
-                        max_parquet_files=int(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MAX_PARQUET_FILES", "8")),
-                        per_parquet_limit=int(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_PER_PARQUET_LIMIT", "200")),
+                        max_parquet_files=int(
+                            os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MAX_PARQUET_FILES", "8")
+                        ),
+                        per_parquet_limit=int(
+                            os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_PER_PARQUET_LIMIT", "200")
+                        ),
                     )
                     results.extend(_normalize_common_crawl_rows(domain, rows))
                 except Exception as exc:
@@ -1602,14 +1747,18 @@ class LegalSourceRecoveryWorkflow:
                             {
                                 "title": str(item.get("title") or ""),
                                 "url": str(item.get("url") or ""),
-                                "source": str(item.get("source") or item.get("engine") or "multi_engine"),
+                                "source": str(
+                                    item.get("source") or item.get("engine") or "multi_engine"
+                                ),
                                 "source_type": "current",
                             }
                             for item in list(multi_engine_payload.get("results") or [])
                             if str(item.get("url") or "").strip()
                         ]
                     else:
-                        backend_status["multi_engine_error"] = str(multi_engine_payload.get("message") or "multi_engine_search_failed")
+                        backend_status["multi_engine_error"] = str(
+                            multi_engine_payload.get("message") or "multi_engine_search_failed"
+                        )
                 else:
                     backend_status["multi_engine_error"] = "no_search_engines_available"
             except asyncio.TimeoutError:
@@ -1620,7 +1769,9 @@ class LegalSourceRecoveryWorkflow:
         effective_archive_searcher = self._archive_searcher or searcher
         if int(archive_top_k or 0) <= 0:
             backend_status["archive_search_error"] = "archive_search_skipped"
-        elif effective_archive_searcher is not None and hasattr(effective_archive_searcher, "search_with_indexes"):
+        elif effective_archive_searcher is not None and hasattr(
+            effective_archive_searcher, "search_with_indexes"
+        ):
             try:
                 archive_payload = await self._run_sync_with_timeout(
                     effective_archive_searcher.search_with_indexes,
@@ -1651,7 +1802,12 @@ class LegalSourceRecoveryWorkflow:
 
         merged_results: List[Dict[str, Any]] = []
         seen_urls: set[str] = set()
-        for source_type, rows in (("current", citation_hint_results), ("current", live_results), ("archived", archived_results), ("common_crawl", common_crawl_results)):
+        for source_type, rows in (
+            ("current", citation_hint_results),
+            ("current", live_results),
+            ("archived", archived_results),
+            ("common_crawl", common_crawl_results),
+        ):
             for row in rows:
                 url = str(row.get("url") or "").strip()
                 if not url or url in seen_urls:
@@ -1697,7 +1853,9 @@ class LegalSourceRecoveryWorkflow:
                         success=bool(getattr(item, "success", False)),
                         source=str(getattr(item, "source", "") or "") or None,
                         error=str(getattr(item, "error", "") or "") or None,
-                        archived_at=getattr(item, "timestamp", None).isoformat() if getattr(item, "timestamp", None) else None,
+                        archived_at=getattr(item, "timestamp", None).isoformat()
+                        if getattr(item, "timestamp", None)
+                        else None,
                     )
                 )
 
@@ -1838,7 +1996,9 @@ class LegalSourceRecoveryWorkflow:
         if cls._content_type_matches_downloadable(content_type):
             return True
         hay = f"{url} {title or ''}".lower()
-        return ("download" in hay or "document" in hay) and any(term in hay for term in LEGAL_FILE_HINT_TERMS)
+        return ("download" in hay or "document" in hay) and any(
+            term in hay for term in LEGAL_FILE_HINT_TERMS
+        )
 
     @staticmethod
     def _candidate_file_score(
@@ -1859,7 +2019,9 @@ class LegalSourceRecoveryWorkflow:
             discovered_parsed = urlparse(discovered)
             if url == discovered:
                 score += 4
-            elif domain == discovered_parsed.netloc.lower() and parsed.path == discovered_parsed.path:
+            elif (
+                domain == discovered_parsed.netloc.lower() and parsed.path == discovered_parsed.path
+            ):
                 score += 2
         if domain.endswith(".gov") or ".gov" in domain:
             score += 4
@@ -1869,7 +2031,9 @@ class LegalSourceRecoveryWorkflow:
             score += 5
         elif ext in {".xml", ".json", ".docx", ".doc", ".rtf", ".zip"}:
             score += 3
-        if content_type and LegalSourceRecoveryWorkflow._content_type_matches_downloadable(content_type):
+        if content_type and LegalSourceRecoveryWorkflow._content_type_matches_downloadable(
+            content_type
+        ):
             score += 3
         if state_code and state_code.lower() in hay:
             score += 2
@@ -1893,7 +2057,9 @@ class LegalSourceRecoveryWorkflow:
         normalized_url = str(url or "").strip()
         if not normalized_url:
             return
-        is_downloadable = cls._is_downloadable_legal_file(url=normalized_url, title=title, content_type=content_type)
+        is_downloadable = cls._is_downloadable_legal_file(
+            url=normalized_url, title=title, content_type=content_type
+        )
         if not is_downloadable and source != "citation_url_hint":
             return
         score = cls._candidate_file_score(
@@ -1968,7 +2134,9 @@ class LegalSourceRecoveryWorkflow:
             )
 
             try:
-                fetch_response = self._candidate_fetch_response(candidate.url, title_hint=candidate.title)
+                fetch_response = self._candidate_fetch_response(
+                    candidate.url, title_hint=candidate.title
+                )
             except Exception:
                 continue
 
@@ -1978,9 +2146,7 @@ class LegalSourceRecoveryWorkflow:
 
             document_metadata = dict(getattr(document, "metadata", {}) or {})
             document_content_type = str(
-                getattr(document, "content_type", "")
-                or document_metadata.get("content_type")
-                or ""
+                getattr(document, "content_type", "") or document_metadata.get("content_type") or ""
             ).strip()
             self._register_candidate_file(
                 storage=discovered,
@@ -2046,7 +2212,9 @@ class LegalSourceRecoveryWorkflow:
         if not isinstance(raw_bytes, (bytes, bytearray)) or not raw_bytes:
             return ""
         max_pages = max(1, int(os.getenv("LEGAL_SOURCE_RECOVERY_PDF_VALIDATION_MAX_PAGES", "64")))
-        max_chars = max(1000, int(os.getenv("LEGAL_SOURCE_RECOVERY_PDF_VALIDATION_MAX_CHARS", "200000")))
+        max_chars = max(
+            1000, int(os.getenv("LEGAL_SOURCE_RECOVERY_PDF_VALIDATION_MAX_CHARS", "200000"))
+        )
         try:
             from pypdf import PdfReader
         except Exception:
@@ -2070,14 +2238,20 @@ class LegalSourceRecoveryWorkflow:
             return ""
 
     @staticmethod
-    def _citation_validation_fragments(*, citation_text: str, normalized_citation: str) -> List[str]:
+    def _citation_validation_fragments(
+        *, citation_text: str, normalized_citation: str
+    ) -> List[str]:
         text = f"{citation_text or ''} {normalized_citation or ''}"
         fragments: List[str] = []
         for value in (citation_text, normalized_citation):
             cleaned = " ".join(str(value or "").split()).strip()
             if cleaned and cleaned not in fragments:
                 fragments.append(cleaned)
-        section_matches = re.findall(r"(?:§|section|sec\.?)\s*([0-9A-Za-z][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)", text, flags=re.IGNORECASE)
+        section_matches = re.findall(
+            r"(?:§|section|sec\.?)\s*([0-9A-Za-z][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)",
+            text,
+            flags=re.IGNORECASE,
+        )
         for section in section_matches:
             cleaned_section = str(section or "").strip().strip(".")
             if cleaned_section and cleaned_section not in fragments:
@@ -2094,9 +2268,17 @@ class LegalSourceRecoveryWorkflow:
             tail = re.split(r"[.:\-]", cleaned_section)[-1]
             if len(tail) >= 3 and tail != cleaned_section and tail not in fragments:
                 fragments.append(tail)
-        usc_match = re.search(r"\b([0-9]+)\s+U\.?S\.?C\.?(?:A\.?)?\s+§?\s*([0-9A-Za-z][\w.\-]*)", text, flags=re.IGNORECASE)
+        usc_match = re.search(
+            r"\b([0-9]+)\s+U\.?S\.?C\.?(?:A\.?)?\s+§?\s*([0-9A-Za-z][\w.\-]*)",
+            text,
+            flags=re.IGNORECASE,
+        )
         if usc_match:
-            for fragment in (usc_match.group(1), usc_match.group(2), f"{usc_match.group(1)} {usc_match.group(2)}"):
+            for fragment in (
+                usc_match.group(1),
+                usc_match.group(2),
+                f"{usc_match.group(1)} {usc_match.group(2)}",
+            ):
                 if fragment and fragment not in fragments:
                     fragments.append(fragment)
         return fragments[:8]
@@ -2148,9 +2330,7 @@ class LegalSourceRecoveryWorkflow:
             normalized_citation=normalized_citation,
         )
         matched_fragments = [
-            fragment
-            for fragment in fragments
-            if fragment and cls._fragment_in_text(fragment, hay)
+            fragment for fragment in fragments if fragment and cls._fragment_in_text(fragment, hay)
         ]
         title_url_matched_fragments = [
             fragment
@@ -2183,7 +2363,9 @@ class LegalSourceRecoveryWorkflow:
         )
         multi_fragment_present = len(set(matched_fragments)) >= 2
         legal_body_signal = cls._has_legal_body_signal(source_text)
-        no_result_detected = bool(no_result_marker_present and not (section_fragment_present and legal_body_signal))
+        no_result_detected = bool(
+            no_result_marker_present and not (section_fragment_present and legal_body_signal)
+        )
         confirmed = bool(
             not no_result_detected
             and (
@@ -2249,7 +2431,13 @@ class LegalSourceRecoveryWorkflow:
         lowered = str(content_type or "").split(";", 1)[0].strip().lower()
         if suffix == ".pdf" or lowered == "application/pdf":
             return "pdf"
-        if suffix in {".xml", ".json", ".csv"} or lowered in {"application/xml", "text/xml", "application/json", "text/json", "text/csv"}:
+        if suffix in {".xml", ".json", ".csv"} or lowered in {
+            "application/xml",
+            "text/xml",
+            "application/json",
+            "text/json",
+            "text/csv",
+        }:
             return suffix.lstrip(".") or lowered
         if "html" in lowered:
             return "html"
@@ -2271,7 +2459,9 @@ class LegalSourceRecoveryWorkflow:
         has_bytes: bool,
     ) -> Dict[str, Any]:
         host = urlparse(str(url or "")).netloc.lower()
-        parser_kind = cls._recommended_parser_kind(url=url, content_type=content_type, has_bytes=has_bytes)
+        parser_kind = cls._recommended_parser_kind(
+            url=url, content_type=content_type, has_bytes=has_bytes
+        )
         source_text = text or html
         return {
             "host": host,
@@ -2279,8 +2469,10 @@ class LegalSourceRecoveryWorkflow:
             "title": title,
             "content_type": content_type,
             "parser_kind": parser_kind,
-            "blocked_signals_detected": cls._looks_like_blocked_page(source_text, content_type=content_type),
-            "preferred_fetch_path": "UnifiedWebArchivingAPI.fetch(url, domain=\"legal\")",
+            "blocked_signals_detected": cls._looks_like_blocked_page(
+                source_text, content_type=content_type
+            ),
+            "preferred_fetch_path": 'UnifiedWebArchivingAPI.fetch(url, domain="legal")',
             "fallback_fetch_paths": [
                 "UnifiedWebScraper.scrape_sync(url)",
                 "CommonCrawlSearchEngine.search_domain(host, query=citation_query)",
@@ -2318,7 +2510,9 @@ class LegalSourceRecoveryWorkflow:
             updated = RecoveredCandidateFile(**asdict(item))
             escalation_errors: List[str] = []
             try:
-                fetch_response = self._candidate_fetch_response(updated.url, title_hint=updated.title)
+                fetch_response = self._candidate_fetch_response(
+                    updated.url, title_hint=updated.title
+                )
             except Exception as exc:
                 updated.fetch_success = False
                 updated.notes = f"fetch_exception: {exc}"
@@ -2329,24 +2523,40 @@ class LegalSourceRecoveryWorkflow:
             if not getattr(fetch_response, "success", False) or document is None:
                 updated.fetch_success = False
                 errors = getattr(fetch_response, "errors", None) or []
-                updated.notes = "; ".join(str(getattr(err, "message", err)) for err in errors) or "fetch_failed"
+                updated.notes = (
+                    "; ".join(str(getattr(err, "message", err)) for err in errors) or "fetch_failed"
+                )
                 materialized.append(updated)
                 continue
 
-            def _unpack_document(candidate_document: Any) -> tuple[Dict[str, Any], Optional[str], Any, bool, str, str]:
+            def _unpack_document(
+                candidate_document: Any,
+            ) -> tuple[Dict[str, Any], Optional[str], Any, bool, str, str]:
                 candidate_metadata = dict(getattr(candidate_document, "metadata", {}) or {})
                 candidate_content_type = (
-                    str(getattr(candidate_document, "content_type", "") or candidate_metadata.get("content_type") or "").strip()
+                    str(
+                        getattr(candidate_document, "content_type", "")
+                        or candidate_metadata.get("content_type")
+                        or ""
+                    ).strip()
                     or None
                 )
                 candidate_raw_bytes = candidate_metadata.get("raw_bytes")
-                candidate_has_bytes = isinstance(candidate_raw_bytes, (bytes, bytearray)) and len(candidate_raw_bytes) > 0
+                candidate_has_bytes = (
+                    isinstance(candidate_raw_bytes, (bytes, bytearray))
+                    and len(candidate_raw_bytes) > 0
+                )
                 candidate_text = str(getattr(candidate_document, "text", "") or "")
-                candidate_html = str(getattr(candidate_document, "html", "") or candidate_metadata.get("html", "") or "")
+                candidate_html = str(
+                    getattr(candidate_document, "html", "")
+                    or candidate_metadata.get("html", "")
+                    or ""
+                )
                 if (
                     candidate_has_bytes
                     and not candidate_text
-                    and str(candidate_content_type or "").split(";", 1)[0].strip().lower() == "application/pdf"
+                    and str(candidate_content_type or "").split(";", 1)[0].strip().lower()
+                    == "application/pdf"
                 ):
                     candidate_text = self._extract_pdf_text(candidate_raw_bytes)
                 return (
@@ -2358,7 +2568,9 @@ class LegalSourceRecoveryWorkflow:
                     candidate_html,
                 )
 
-            metadata, content_type, raw_bytes, has_bytes, document_text, document_html = _unpack_document(document)
+            metadata, content_type, raw_bytes, has_bytes, document_text, document_html = (
+                _unpack_document(document)
+            )
 
             extraction_recipe = self._build_extraction_recipe(
                 url=updated.url,
@@ -2383,7 +2595,9 @@ class LegalSourceRecoveryWorkflow:
                 and _env_flag("LEGAL_SOURCE_RECOVERY_ESCALATE_UNCONFIRMED_FETCH", default=True)
                 and provenance.get("method") != "blocked_fetch_escalation"
             ):
-                escalated_response = self._escalated_fetch_url(updated.url, title_hint=updated.title)
+                escalated_response = self._escalated_fetch_url(
+                    updated.url, title_hint=updated.title
+                )
                 escalated_document = getattr(escalated_response, "document", None)
                 if getattr(escalated_response, "success", False) and escalated_document is not None:
                     (
@@ -2426,7 +2640,9 @@ class LegalSourceRecoveryWorkflow:
                         for error in (getattr(escalated_response, "errors", None) or [])
                     ]
 
-            suffix = self._artifact_suffix(url=updated.url, content_type=content_type, has_bytes=has_bytes)
+            suffix = self._artifact_suffix(
+                url=updated.url, content_type=content_type, has_bytes=has_bytes
+            )
             artifact_base = f"{index:02d}_{_slugify(updated.title or Path(urlparse(updated.url).path).stem or 'candidate-file', limit=48)}"
             artifact_path = artifacts_dir / f"{artifact_base}{suffix}"
 
@@ -2453,7 +2669,9 @@ class LegalSourceRecoveryWorkflow:
                 "candidate_validation": candidate_validation,
                 "escalation_errors": escalation_errors,
             }
-            metadata_path.write_text(json.dumps(metadata_payload, indent=2, sort_keys=True), encoding="utf-8")
+            metadata_path.write_text(
+                json.dumps(metadata_payload, indent=2, sort_keys=True), encoding="utf-8"
+            )
 
             updated.fetch_success = True
             updated.content_type = content_type
@@ -2533,7 +2751,9 @@ class LegalSourceRecoveryWorkflow:
             "patch_intent": "Add host-specific extraction/fetch support for a legal source recovered after a Hugging Face lookup miss.",
             "common_crawl_fallback": "Use CommonCrawlSearchEngine.search_domain(host, query=search_query) when direct fetch is blocked by Cloudflare or similar anti-bot pages.",
         }
-        extraction_recipe_path.write_text(json.dumps(extraction_recipe, indent=2, sort_keys=True), encoding="utf-8")
+        extraction_recipe_path.write_text(
+            json.dumps(extraction_recipe, indent=2, sort_keys=True), encoding="utf-8"
+        )
         patch = Patch(
             patch_id=patch_id,
             agent_id="legal_source_recovery",
@@ -2586,8 +2806,12 @@ class LegalSourceRecoveryWorkflow:
         discovered_from_url: Optional[str],
         host: Optional[str],
     ) -> str:
-        function_name = f"_extract_recovered_{_slugify(host or 'host', limit=32).replace('-', '_')}_text"
-        discovered_line = f"+# discovered_from: {discovered_from_url}\n" if discovered_from_url else ""
+        function_name = (
+            f"_extract_recovered_{_slugify(host or 'host', limit=32).replace('-', '_')}_text"
+        )
+        discovered_line = (
+            f"+# discovered_from: {discovered_from_url}\n" if discovered_from_url else ""
+        )
         return (
             f"diff --git a/{target_file} b/{target_file}\n"
             f"--- a/{target_file}\n"
@@ -2596,38 +2820,38 @@ class LegalSourceRecoveryWorkflow:
             "+from typing import Any\n"
             "+\n"
             f"+def {function_name}(document: Any) -> str:\n"
-            "+    \"\"\"Extract text from a recovered legal source candidate.\n"
+            '+    """Extract text from a recovered legal source candidate.\n'
             "+\n"
             "+    Generated by the Bluebook self-healing recovery workflow after a\n"
             "+    Hugging Face corpus miss. Keep this host-specific and promote it into\n"
             "+    the surrounding scraper once validated against related corpus pages.\n"
-            "+    \"\"\"\n"
-            "+    metadata = dict(getattr(document, \"metadata\", {}) or {})\n"
-            "+    text = str(getattr(document, \"text\", \"\") or \"\").strip()\n"
+            '+    """\n'
+            '+    metadata = dict(getattr(document, "metadata", {}) or {})\n'
+            '+    text = str(getattr(document, "text", "") or "").strip()\n'
             "+    if text:\n"
             "+        return text\n"
-            "+    html = str(getattr(document, \"html\", \"\") or metadata.get(\"html\", \"\") or \"\")\n"
+            '+    html = str(getattr(document, "html", "") or metadata.get("html", "") or "")\n'
             "+    if not html.strip():\n"
-            "+        return \"\"\n"
+            '+        return ""\n'
             "+    try:\n"
             "+        from bs4 import BeautifulSoup\n"
             "+    except Exception:\n"
             "+        return html\n"
-            "+    soup = BeautifulSoup(html, \"html.parser\")\n"
-            "+    for selector in (\"main\", \"article\", \"#content\", \".content\", \".main-content\", \".document\", \".statute\", \".law\", \"pre\"):\n"
+            '+    soup = BeautifulSoup(html, "html.parser")\n'
+            '+    for selector in ("main", "article", "#content", ".content", ".main-content", ".document", ".statute", ".law", "pre"):\n'
             "+        node = soup.select_one(selector)\n"
             "+        if node:\n"
-            "+            extracted = node.get_text(\"\\n\", strip=True)\n"
+            '+            extracted = node.get_text("\\n", strip=True)\n'
             "+            if extracted:\n"
             "+                return extracted\n"
-            "+    return soup.get_text(\"\\n\", strip=True)\n"
+            '+    return soup.get_text("\\n", strip=True)\n'
             "+\n"
             "+# Recovery notes for the scraper maintainer:\n"
             f"+# citation: {citation_text}\n"
             f"+# host: {host or ''}\n"
             f"+# candidate_url: {source_url}\n"
             f"{discovered_line}"
-            "+# preferred_fetch_path: UnifiedWebArchivingAPI.fetch(url, domain=\"legal\")\n"
+            '+# preferred_fetch_path: UnifiedWebArchivingAPI.fetch(url, domain="legal")\n'
             "+# fallback_fetch_path: UnifiedWebScraper.scrape_sync(url)\n"
             "+# blocked_fetch_fallback: CommonCrawlSearchEngine.search_domain(host, query=search_query)\n"
             "+# hf_common_crawl_fallback: Common Crawl integration falls back to Hugging Face indexes when local CC assets are unavailable.\n"
@@ -2699,8 +2923,12 @@ async def recover_missing_legal_citation_source(
     enable_candidate_file_fetch: Optional[bool] = None,
 ) -> Dict[str, Any]:
     if enable_candidate_file_fetch is None:
-        enable_candidate_file_fetch = _env_flag("LEGAL_SOURCE_RECOVERY_ENABLE_CANDIDATE_FILE_FETCH", default=False)
-    workflow = LegalSourceRecoveryWorkflow(enable_candidate_file_fetch=bool(enable_candidate_file_fetch))
+        enable_candidate_file_fetch = _env_flag(
+            "LEGAL_SOURCE_RECOVERY_ENABLE_CANDIDATE_FILE_FETCH", default=False
+        )
+    workflow = LegalSourceRecoveryWorkflow(
+        enable_candidate_file_fetch=bool(enable_candidate_file_fetch)
+    )
     result = await workflow.recover_unresolved_citation(
         citation_text=citation_text,
         normalized_citation=normalized_citation,
@@ -2729,13 +2957,29 @@ def build_recovery_feedback_entries_from_citation_audit(
             metadata = dict(citation.get("metadata") or {})
             entry = {
                 "citation_text": str(citation.get("citation_text") or ""),
-                "normalized_citation": str(citation.get("normalized_citation") or citation.get("citation_text") or ""),
+                "normalized_citation": str(
+                    citation.get("normalized_citation") or citation.get("citation_text") or ""
+                ),
                 "citation_type": str(citation.get("citation_type") or ""),
-                "corpus_key": str(citation.get("corpus_key") or metadata.get("recovery_corpus_key") or ""),
+                "corpus_key": str(
+                    citation.get("corpus_key") or metadata.get("recovery_corpus_key") or ""
+                ),
                 "state_code": str(metadata.get("state_code") or ""),
-                "candidate_corpora": [str(item) for item in list(metadata.get("candidate_corpora") or []) if str(item).strip()],
-                "preferred_dataset_ids": [str(item) for item in list(metadata.get("preferred_dataset_ids") or []) if str(item).strip()],
-                "preferred_parquet_files": [str(item) for item in list(metadata.get("preferred_parquet_files") or []) if str(item).strip()],
+                "candidate_corpora": [
+                    str(item)
+                    for item in list(metadata.get("candidate_corpora") or [])
+                    if str(item).strip()
+                ],
+                "preferred_dataset_ids": [
+                    str(item)
+                    for item in list(metadata.get("preferred_dataset_ids") or [])
+                    if str(item).strip()
+                ],
+                "preferred_parquet_files": [
+                    str(item)
+                    for item in list(metadata.get("preferred_parquet_files") or [])
+                    if str(item).strip()
+                ],
                 "recovery_query": str(metadata.get("recovery_query") or ""),
                 "document_id": document_id,
                 "document_title": document_title,
@@ -2767,7 +3011,9 @@ async def recover_citation_feedback_entries(
     for entry in entries:
         result = await active_workflow.recover_unresolved_citation(
             citation_text=str(entry.get("citation_text") or ""),
-            normalized_citation=str(entry.get("normalized_citation") or entry.get("citation_text") or ""),
+            normalized_citation=str(
+                entry.get("normalized_citation") or entry.get("citation_text") or ""
+            ),
             corpus_key=str(entry.get("corpus_key") or "") or None,
             state_code=str(entry.get("state_code") or "") or None,
             metadata={
@@ -2818,6 +3064,8 @@ async def recover_citation_audit_feedback(
         workflow=workflow,
     )
     result["audit_document_count"] = int(audit_payload.get("document_count") or 0)
-    result["audit_unmatched_citation_count"] = int(audit_payload.get("unmatched_citation_count") or 0)
+    result["audit_unmatched_citation_count"] = int(
+        audit_payload.get("unmatched_citation_count") or 0
+    )
     result["source"] = "citation_audit_feedback_recovery"
     return result

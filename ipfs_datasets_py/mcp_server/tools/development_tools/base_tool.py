@@ -17,12 +17,16 @@ import traceback
 
 # Import audit logging if available
 try:
-    from ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event import record_audit_event as audit_log
+    from ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event import (
+        record_audit_event as audit_log,
+    )
+
     AUDIT_AVAILABLE = True
 except ImportError:
     try:
         # Fallback: try to import from audit_tools module
         from ipfs_datasets_py.mcp_server.tools.audit_tools.audit_tools import audit_log
+
         AUDIT_AVAILABLE = True
     except ImportError:
         AUDIT_AVAILABLE = False
@@ -33,16 +37,19 @@ logger = logging.getLogger(__name__)
 
 class DevelopmentToolError(Exception):
     """Base exception for development tool errors."""
+
     pass
 
 
 class DevelopmentToolValidationError(DevelopmentToolError):
     """Raised when tool input validation fails."""
+
     pass
 
 
 class DevelopmentToolExecutionError(DevelopmentToolError):
     """Raised when tool execution fails."""
+
     pass
 
 
@@ -119,12 +126,14 @@ class BaseDevelopmentTool(ABC):
                     resource_type="development_tool",
                     resource_id=self.name,
                     details=details or {},
-                    tags=["development_tools", self.category]
+                    tags=["development_tools", self.category],
                 )
             except Exception as e:
                 self.logger.warning(f"Failed to log audit event: {e}")
 
-    def _create_success_result(self, result: Any, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def _create_success_result(
+        self, result: Any, metadata: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Create standardized success result.
 
@@ -142,11 +151,13 @@ class BaseDevelopmentTool(ABC):
                 "tool": self.name,
                 "category": self.category,
                 "timestamp": self._get_timestamp(),
-                **(metadata or {})
-            }
+                **(metadata or {}),
+            },
         }
 
-    def _create_error_result(self, error: str, message: str, details: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def _create_error_result(
+        self, error: str, message: str, details: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Create standardized error result.
 
@@ -166,8 +177,8 @@ class BaseDevelopmentTool(ABC):
             "metadata": {
                 "tool": self.name,
                 "category": self.category,
-                "timestamp": self._get_timestamp()
-            }
+                "timestamp": self._get_timestamp(),
+            },
         }
 
     @abstractmethod
@@ -228,10 +239,9 @@ class BaseDevelopmentTool(ABC):
         except Exception as e:
             self.logger.error(f"Unexpected error in {self.name}: {e}")
             self.logger.debug(f"Traceback: {traceback.format_exc()}")
-            await self._audit_log("execute_unexpected_error", {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            })
+            await self._audit_log(
+                "execute_unexpected_error", {"error": str(e), "traceback": traceback.format_exc()}
+            )
             return self._create_error_result("unexpected_error", str(e))
 
 
@@ -253,8 +263,8 @@ def development_tool_mcp_wrapper(tool_class: str) -> Dict[str, Any]:
             "message": f"MCP wrapper created for {tool_class}",
             "metadata": {
                 "tool": "development_tool_mcp_wrapper",
-                "timestamp": datetime.now().isoformat()
-            }
+                "timestamp": datetime.now().isoformat(),
+            },
         }
     except Exception as e:
         return {
@@ -263,8 +273,8 @@ def development_tool_mcp_wrapper(tool_class: str) -> Dict[str, Any]:
             "message": f"Failed to wrap tool class {tool_class}: {e}",
             "metadata": {
                 "tool": "development_tool_mcp_wrapper",
-                "timestamp": datetime.now().isoformat()
-            }
+                "timestamp": datetime.now().isoformat(),
+            },
         }
 
 
@@ -286,9 +296,9 @@ async def base_tool():
         "tool_type": "Base development tool class",
         "features": [
             "Consistent error handling",
-            "Audit logging integration", 
+            "Audit logging integration",
             "Input validation",
             "Standardized result format",
-            "IPFS integration hooks"
-        ]
+            "IPFS integration hooks",
+        ],
     }

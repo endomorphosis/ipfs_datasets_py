@@ -91,15 +91,12 @@ _FORBIDDEN_COMPONENTS = frozenset(
 def _feature_name(value: Any) -> str:
     name = _text(value, "feature_name")
     if not _FEATURE_NAME_RE.fullmatch(name):
-        raise FormalizationValidationError(
-            "feature names must be lowercase stable paths"
-        )
+        raise FormalizationValidationError("feature names must be lowercase stable paths")
     components = frozenset(filter(None, re.split(r"[^a-z0-9]+", name)))
     forbidden = sorted(components & _FORBIDDEN_COMPONENTS)
     if forbidden:
         raise FormalizationValidationError(
-            "feature name contains leakage-prone component(s): "
-            + ", ".join(forbidden)
+            "feature name contains leakage-prone component(s): " + ", ".join(forbidden)
         )
     return name
 
@@ -111,22 +108,16 @@ def _feature_value(value: Any) -> float:
         )
     result = float(value)
     if not math.isfinite(result):
-        raise FormalizationValidationError(
-            "formalization feature values must be finite"
-        )
+        raise FormalizationValidationError("formalization feature values must be finite")
     return result
 
 
 def _snapshot_ids(values: Sequence[str]) -> tuple[str, ...]:
     if isinstance(values, (str, bytes, bytearray)):
-        raise FormalizationValidationError(
-            "context_snapshot_ids must be a sequence"
-        )
+        raise FormalizationValidationError("context_snapshot_ids must be a sequence")
     normalized = tuple(values)
     if len(normalized) != len(set(normalized)):
-        raise FormalizationValidationError(
-            "context_snapshot_ids must be unique"
-        )
+        raise FormalizationValidationError("context_snapshot_ids must be unique")
     for value in normalized:
         if not isinstance(value, str) or not _SNAPSHOT_RE.fullmatch(value):
             raise FormalizationValidationError(
@@ -155,20 +146,15 @@ class FormalizationFeatures:
     schema_version: str = FORMALIZATION_FEATURES_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "sample_id", _identifier(self.sample_id, "sample_id")
-        )
+        object.__setattr__(self, "sample_id", _identifier(self.sample_id, "sample_id"))
         object.__setattr__(self, "domain", _identifier(self.domain, "domain"))
-        if (
-            not isinstance(self.declaration_digest, str)
-            or not _DIGEST_RE.fullmatch(self.declaration_digest)
+        if not isinstance(self.declaration_digest, str) or not _DIGEST_RE.fullmatch(
+            self.declaration_digest
         ):
             raise FormalizationValidationError(
                 "declaration_digest must be a lowercase sha256:<hex> digest"
             )
-        object.__setattr__(
-            self, "extractor_id", _identifier(self.extractor_id, "extractor_id")
-        )
+        object.__setattr__(self, "extractor_id", _identifier(self.extractor_id, "extractor_id"))
         object.__setattr__(
             self,
             "extractor_version",
@@ -183,9 +169,7 @@ class FormalizationFeatures:
             raise FormalizationValidationError(
                 f"unsupported formalization features schema: {self.schema_version!r}"
             )
-        if not isinstance(self.feature_names, tuple) or not isinstance(
-            self.feature_values, tuple
-        ):
+        if not isinstance(self.feature_names, tuple) or not isinstance(self.feature_values, tuple):
             raise FormalizationValidationError(
                 "feature_names and feature_values must be immutable tuples"
             )
@@ -207,9 +191,7 @@ class FormalizationFeatures:
         values = tuple(_feature_value(item) for item in self.feature_values)
         pairs = tuple(sorted(zip(names, values), key=lambda item: item[0]))
         object.__setattr__(self, "feature_names", tuple(name for name, _ in pairs))
-        object.__setattr__(
-            self, "feature_values", tuple(value for _, value in pairs)
-        )
+        object.__setattr__(self, "feature_values", tuple(value for _, value in pairs))
         object.__setattr__(
             self,
             "context_snapshot_ids",
@@ -229,9 +211,7 @@ class FormalizationFeatures:
         """Bind an already-computed numeric vector to a validated sample."""
 
         if not isinstance(sample, FormalizationSample):
-            raise FormalizationValidationError(
-                "sample must be a FormalizationSample"
-            )
+            raise FormalizationValidationError("sample must be a FormalizationSample")
         sample.validate()
         return cls.from_values(
             sample_id=sample.sample_id,
@@ -339,12 +319,8 @@ class FormalizationFeatures:
             sample_id=value.get("sample_id", ""),
             domain=value.get("domain", ""),
             declaration_digest=value.get("declaration_digest", ""),
-            feature_names=tuple(
-                _sequence(value.get("feature_names", ()), "feature_names")
-            ),
-            feature_values=tuple(
-                _sequence(value.get("feature_values", ()), "feature_values")
-            ),
+            feature_names=tuple(_sequence(value.get("feature_names", ()), "feature_names")),
+            feature_values=tuple(_sequence(value.get("feature_values", ()), "feature_values")),
             extractor_id=value.get("extractor_id", ""),
             extractor_version=value.get("extractor_version", ""),
             context_snapshot_ids=tuple(
@@ -353,21 +329,15 @@ class FormalizationFeatures:
                     "context_snapshot_ids",
                 )
             ),
-            schema_version=value.get(
-                "schema_version", FORMALIZATION_FEATURES_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", FORMALIZATION_FEATURES_SCHEMA_VERSION),
         )
 
     @classmethod
-    def from_json(
-        cls, value: str | bytes | bytearray
-    ) -> "FormalizationFeatures":
+    def from_json(cls, value: str | bytes | bytearray) -> "FormalizationFeatures":
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
-            raise FormalizationValidationError(
-                "formalization features must be valid JSON"
-            ) from exc
+            raise FormalizationValidationError("formalization features must be valid JSON") from exc
         return cls.from_dict(_mapping(decoded, "formalization features"))
 
 

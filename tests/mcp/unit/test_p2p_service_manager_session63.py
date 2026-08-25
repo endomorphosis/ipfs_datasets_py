@@ -73,9 +73,7 @@ class TestP2PServiceState:
 
     def test_default_optional_fields(self):
         """GIVEN only required fields WHEN constructed THEN optional fields have defaults."""
-        state = P2PServiceState(
-            running=False, peer_id="", listen_port=None, started_at=0.0
-        )
+        state = P2PServiceState(running=False, peer_id="", listen_port=None, started_at=0.0)
         assert state.last_error == ""
         assert state.workflow_scheduler_available is False
         assert state.peer_registry_available is False
@@ -268,8 +266,11 @@ class TestStart:
         mgr = _mgr(enabled=True)
         with patch.dict(
             sys.modules,
-            {"ipfs_accelerate_py": None, "ipfs_accelerate_py.p2p_tasks": None,
-             "ipfs_accelerate_py.p2p_tasks.runtime": None},
+            {
+                "ipfs_accelerate_py": None,
+                "ipfs_accelerate_py.p2p_tasks": None,
+                "ipfs_accelerate_py.p2p_tasks.runtime": None,
+            },
         ):
             result = mgr.start()
         assert result is False
@@ -277,11 +278,13 @@ class TestStart:
     def test_start_generic_exception_returns_false(self):
         """GIVEN importing TaskQueueP2PServiceRuntime raises non-ImportError WHEN start() THEN False."""
         mgr = _mgr(enabled=True)
+
         # Create a module stub whose attribute access raises a generic Exception
         class _RaisingMod:
             @property
             def TaskQueueP2PServiceRuntime(self):
                 raise RuntimeError("not an ImportError")
+
         fake_mod_instance = _RaisingMod()
         with patch.dict(
             sys.modules,
@@ -296,19 +299,19 @@ class TestStart:
         mock_handle = MagicMock()
         mock_handle.started = MagicMock()
         mock_handle.started.wait = MagicMock(return_value=True)
-        
+
         mock_runtime = MagicMock()
         mock_runtime.running = True
         mock_runtime.start = MagicMock(return_value=mock_handle)
-        
+
         mock_runtime_cls = MagicMock(return_value=mock_runtime)
         fake_mod = MagicMock()
         fake_mod.TaskQueueP2PServiceRuntime = mock_runtime_cls
-        
+
         with patch.dict(sys.modules, {"ipfs_accelerate_py.p2p_tasks.runtime": fake_mod}):
             with patch.object(mgr, "_initialize_mcplusplus_features"):
                 result = mgr.start()
-        
+
         assert result is True
 
 
@@ -375,8 +378,11 @@ class TestState:
         mgr._runtime = None
         with patch.dict(
             sys.modules,
-            {"ipfs_accelerate_py": None, "ipfs_accelerate_py.p2p_tasks": None,
-             "ipfs_accelerate_py.p2p_tasks.service": None},
+            {
+                "ipfs_accelerate_py": None,
+                "ipfs_accelerate_py.p2p_tasks": None,
+                "ipfs_accelerate_py.p2p_tasks.service": None,
+            },
         ):
             result = mgr.state()
         assert isinstance(result, P2PServiceState)
@@ -432,6 +438,7 @@ class TestMCPPlusPlusFeatures:
         mgr = _mgr()
         import importlib
         import ipfs_datasets_py.mcp_server as mcp_server_pkg
+
         fake_mcplusplus = MagicMock()
         fake_mcplusplus.HAVE_MCPLUSPLUS = False
         with patch.dict(
@@ -455,6 +462,7 @@ class TestMCPPlusPlusFeatures:
 
         # Patch reset_scheduler directly so it doesn't raise
         from ipfs_datasets_py.mcp_server import mcplusplus as mcp_mod
+
         with patch.object(mcp_mod, "reset_scheduler", MagicMock()):
             mgr._cleanup_mcplusplus_features()
         assert mgr._workflow_scheduler is None

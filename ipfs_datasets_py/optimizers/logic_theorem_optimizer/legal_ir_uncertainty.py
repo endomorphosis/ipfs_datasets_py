@@ -24,6 +24,10 @@ from .legal_ir_family_evaluator import (
 
 
 LEGAL_IR_UNCERTAINTY_SCHEMA_VERSION: Final = "legal-ir-uncertainty-v1"
+LEGAL_IR_CALIBRATION_INSTRUMENTATION_SCHEMA_VERSION: Final = (
+    "legal-ir-calibration-instrumentation-v1"
+)
+DEFAULT_RELIABILITY_BIN_COUNT: Final = 10
 
 ROUTE_CODEX_TODO: Final = "codex_todo_generation"
 ROUTE_HAMMER_LEANSTRAL_AUDIT: Final = "hammer_leanstral_audit"
@@ -307,24 +311,16 @@ class LegalIRUncertaintyReport:
     @property
     def failed_families(self) -> tuple[str, ...]:
         return tuple(
-            family
-            for family, result in self.family_results.items()
-            if not result.promotion_allowed
+            family for family, result in self.family_results.items() if not result.promotion_allowed
         )
 
     @property
     def audit_count(self) -> int:
-        return sum(
-            result.hammer_leanstral_audit_count
-            for result in self.family_results.values()
-        )
+        return sum(result.hammer_leanstral_audit_count for result in self.family_results.values())
 
     @property
     def codex_todo_generation_count(self) -> int:
-        return sum(
-            result.codex_todo_generation_count
-            for result in self.family_results.values()
-        )
+        return sum(result.codex_todo_generation_count for result in self.family_results.values())
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -337,8 +333,7 @@ class LegalIRUncertaintyReport:
             "failed_families": list(self.failed_families),
             "families": list(self.family_results),
             "family_results": {
-                family: result.to_dict()
-                for family, result in self.family_results.items()
+                family: result.to_dict() for family, result in self.family_results.items()
             },
             "gate_id": self.gate_id,
             "hard_promotion_gate": True,
@@ -460,6 +455,384 @@ def legal_ir_uncertainty_promotion_gate(
     ).to_dict()
 
 
+@dataclass(frozen=True, slots=True)
+class ReliabilityBin:
+    """One equal-width reliability-diagram bin."""
+
+    index: int
+    lower: float
+    upper: float
+    count: int
+    mean_confidence: Optional[float]
+    accuracy: Optional[float]
+    gap: Optional[float]
+    unknown_reason: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "accuracy": None if self.accuracy is None else round(self.accuracy, 12),
+            "count": self.count,
+            "gap": None if self.gap is None else round(self.gap, 12),
+            "index": self.index,
+            "lower": round(self.lower, 12),
+            "mean_confidence": None
+            if self.mean_confidence is None
+            else round(self.mean_confidence, 12),
+            "unknown_reason": self.unknown_reason,
+            "upper": round(self.upper, 12),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CalibrationInstrumentationReport:
+    """ECE, Brier, reliability, and success-conditioned confidence.
+
+    Confidence is a diagnostic, never an authority signal.  Missing labels or
+    confidences stay in ``unknown_denominators`` instead of being coerced to
+    zero.
+    """
+
+    labeled_count: int
+    unlabeled_count: int
+    missing_confidence_count: int
+    bin_count: int
+    brier_score: Optional[float]
+    expected_calibration_error: Optional[float]
+    reliability_bins: tuple[ReliabilityBin, ...]
+    success_conditioned_confidence: Optional[float]
+    failure_conditioned_confidence: Optional[float]
+    mean_confidence: Optional[float]
+    empirical_success_rate: Optional[float]
+    unknown_denominators: tuple[str, ...]
+    strata: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
+    schema_version: str = LEGAL_IR_CALIBRATION_INSTRUMENTATION_SCHEMA_VERSION
+
+    @property
+    def confidence_is_not_authority(self) -> bool:
+        return True
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "authority": "diagnostic_only",
+            "bin_count": self.bin_count,
+            "brier_score": None if self.brier_score is None else round(self.brier_score, 12),
+            "confidence_is_not_authority": True,
+            "empirical_success_rate": None
+            if self.empirical_success_rate is None
+            else round(self.empirical_success_rate, 12),
+            "expected_calibration_error": None
+            if self.expected_calibration_error is None
+            else round(self.expected_calibration_error, 12),
+            "failure_conditioned_confidence": None
+            if self.failure_conditioned_confidence is None
+            else round(self.failure_conditioned_confidence, 12),
+            "labeled_count": self.labeled_count,
+            "mean_confidence": None
+            if self.mean_confidence is None
+            else round(self.mean_confidence, 12),
+            "missing_confidence_count": self.missing_confidence_count,
+            "reliability_bins": [item.to_dict() for item in self.reliability_bins],
+            "schema_version": self.schema_version,
+            "strata": {
+                str(name): {
+                    str(key): (
+                        round(value, 12)
+                        if isinstance(value, float) and math.isfinite(value)
+                        else value
+                    )
+                    for key, value in dict(block).items()
+                }
+                for name, block in self.strata.items()
+            },
+            "success_conditioned_confidence": None
+            if self.success_conditioned_confidence is None
+            else round(self.success_conditioned_confidence, 12),
+            "unlabeled_count": self.unlabeled_count,
+            "unknown_denominators": list(self.unknown_denominators),
+        }
+
+    def metric_vector(self) -> dict[str, float]:
+        values: dict[str, float] = {
+            "calibration_labeled_count": float(self.labeled_count),
+            "calibration_unlabeled_count": float(self.unlabeled_count),
+        }
+        if self.brier_score is not None:
+            values["brier_score"] = round(self.brier_score, 12)
+        if self.expected_calibration_error is not None:
+            values["expected_calibration_error"] = round(self.expected_calibration_error, 12)
+        if self.success_conditioned_confidence is not None:
+            values["success_conditioned_confidence"] = round(
+                self.success_conditioned_confidence, 12
+            )
+        if self.failure_conditioned_confidence is not None:
+            values["failure_conditioned_confidence"] = round(
+                self.failure_conditioned_confidence, 12
+            )
+        return values
+
+
+def evaluate_legal_ir_calibration(
+    records: Any,
+    *,
+    bin_count: int = DEFAULT_RELIABILITY_BIN_COUNT,
+    family_axis: bool = True,
+    ood_axis: bool = True,
+) -> CalibrationInstrumentationReport:
+    """Compute ECE, Brier, reliability bins, and success-conditioned confidence."""
+
+    bins = max(1, int(bin_count))
+    observations = _calibration_observations(records)
+    labeled = [
+        item
+        for item in observations
+        if item["success"] is not None and item["confidence"] is not None
+    ]
+    unlabeled = [item for item in observations if item["success"] is None]
+    missing_confidence = [
+        item for item in observations if item["success"] is not None and item["confidence"] is None
+    ]
+    unknown: list[str] = []
+    if not observations:
+        unknown.append("calibration:no_records")
+    if not labeled:
+        unknown.append("calibration:no_labeled_confidence_pairs")
+    if unlabeled:
+        unknown.append("calibration:unknown_success_labels")
+    if missing_confidence:
+        unknown.append("calibration:missing_confidence")
+
+    brier: Optional[float] = None
+    ece: Optional[float] = None
+    mean_confidence: Optional[float] = None
+    success_rate: Optional[float] = None
+    success_conf: Optional[float] = None
+    failure_conf: Optional[float] = None
+    reliability = _empty_reliability_bins(bins)
+    if labeled:
+        pairs = [(float(item["confidence"]), bool(item["success"])) for item in labeled]
+        brier = _mean([(confidence - float(success)) ** 2 for confidence, success in pairs])
+        mean_confidence = _mean([confidence for confidence, _ in pairs])
+        success_rate = _mean([float(success) for _, success in pairs])
+        successes = [confidence for confidence, success in pairs if success]
+        failures = [confidence for confidence, success in pairs if not success]
+        if successes:
+            success_conf = _mean(successes)
+        else:
+            unknown.append("calibration:success_conditioned_confidence")
+        if failures:
+            failure_conf = _mean(failures)
+        else:
+            unknown.append("calibration:failure_conditioned_confidence")
+        reliability, ece = _reliability_diagram(pairs, bin_count=bins)
+    else:
+        unknown.append("calibration:brier_score")
+        unknown.append("calibration:expected_calibration_error")
+        unknown.append("calibration:success_conditioned_confidence")
+        unknown.append("calibration:failure_conditioned_confidence")
+
+    strata: dict[str, Mapping[str, Any]] = {}
+    if family_axis:
+        strata["family"] = _calibration_strata(observations, "family", bins)
+    if ood_axis:
+        strata["ood"] = _calibration_strata(
+            observations,
+            "ood_label",
+            bins,
+        )
+    return CalibrationInstrumentationReport(
+        labeled_count=len(labeled),
+        unlabeled_count=len(unlabeled),
+        missing_confidence_count=len(missing_confidence),
+        bin_count=bins,
+        brier_score=brier,
+        expected_calibration_error=ece,
+        reliability_bins=tuple(reliability),
+        success_conditioned_confidence=success_conf,
+        failure_conditioned_confidence=failure_conf,
+        mean_confidence=mean_confidence,
+        empirical_success_rate=success_rate,
+        unknown_denominators=tuple(_unique(unknown)),
+        strata=strata,
+    )
+
+
+def _empty_reliability_bins(bin_count: int) -> list[ReliabilityBin]:
+    width = 1.0 / bin_count
+    return [
+        ReliabilityBin(
+            index=index,
+            lower=index * width,
+            upper=1.0 if index == bin_count - 1 else (index + 1) * width,
+            count=0,
+            mean_confidence=None,
+            accuracy=None,
+            gap=None,
+            unknown_reason="empty_bin",
+        )
+        for index in range(bin_count)
+    ]
+
+
+def _reliability_diagram(
+    pairs: Sequence[tuple[float, bool]],
+    *,
+    bin_count: int,
+) -> tuple[list[ReliabilityBin], float]:
+    buckets: list[list[tuple[float, bool]]] = [[] for _ in range(bin_count)]
+    for confidence, success in pairs:
+        clipped = min(1.0, max(0.0, float(confidence)))
+        index = min(bin_count - 1, int(clipped * bin_count))
+        if clipped == 1.0:
+            index = bin_count - 1
+        buckets[index].append((clipped, success))
+    width = 1.0 / bin_count
+    bins: list[ReliabilityBin] = []
+    ece = 0.0
+    for index, items in enumerate(buckets):
+        lower = index * width
+        upper = 1.0 if index == bin_count - 1 else (index + 1) * width
+        if not items:
+            bins.append(
+                ReliabilityBin(
+                    index=index,
+                    lower=lower,
+                    upper=upper,
+                    count=0,
+                    mean_confidence=None,
+                    accuracy=None,
+                    gap=None,
+                    unknown_reason="empty_bin",
+                )
+            )
+            continue
+        mean_confidence = _mean([confidence for confidence, _ in items])
+        accuracy = _mean([float(success) for _, success in items])
+        gap = abs(accuracy - mean_confidence)
+        ece += (len(items) / len(pairs)) * gap
+        bins.append(
+            ReliabilityBin(
+                index=index,
+                lower=lower,
+                upper=upper,
+                count=len(items),
+                mean_confidence=mean_confidence,
+                accuracy=accuracy,
+                gap=gap,
+            )
+        )
+    return bins, ece
+
+
+def _calibration_observations(records: Any) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    for record in _iterate_calibration_records(records):
+        success = record.get("success")
+        if success is None:
+            success = record.get("correct")
+        if isinstance(success, bool):
+            resolved_success: Optional[bool] = success
+        elif success is None:
+            resolved_success = None
+        else:
+            resolved_success = _optional_bool(success)
+        confidence = _first_float(record, _CONFIDENCE_KEYS)
+        if confidence is not None:
+            confidence = max(0.0, min(1.0, confidence))
+        family, _unsupported = _canonical_family(str(record.get("family") or ""))
+        ood_value = _optional_bool(record.get("ood"))
+        items.append(
+            {
+                "confidence": confidence,
+                "family": family if family != "unsupported" else str(record.get("family") or ""),
+                "ood": bool(ood_value) if ood_value is not None else bool(record.get("ood", False)),
+                "ood_label": "ood" if record.get("ood") else "in_distribution",
+                "sample_id": str(record.get("sample_id") or ""),
+                "success": resolved_success,
+            }
+        )
+    return items
+
+
+def _iterate_calibration_records(value: Any) -> list[dict[str, Any]]:
+    if value is None:
+        return []
+    if hasattr(value, "records"):
+        return _iterate_calibration_records(getattr(value, "records"))
+    if isinstance(value, Mapping):
+        if any(
+            key in value
+            for key in ("success", "correct", "confidence", "calibrated_confidence")
+        ):
+            payload = dict(value)
+            if hasattr(value, "to_dict") and callable(value.to_dict):
+                raw = value.to_dict()
+                if isinstance(raw, Mapping):
+                    payload = dict(raw)
+            return [payload]
+        nested = value.get("records") or value.get("samples") or value.get("items")
+        if nested is not None and nested is not value:
+            return _iterate_calibration_records(nested)
+        return []
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        items: list[dict[str, Any]] = []
+        for item in value:
+            items.extend(_iterate_calibration_records(item))
+        return items
+    if hasattr(value, "to_dict") and callable(value.to_dict):
+        raw = value.to_dict()
+        if isinstance(raw, Mapping):
+            return [dict(raw)]
+    payload = {
+        name: getattr(value, name)
+        for name in (
+            "sample_id",
+            "family",
+            "success",
+            "correct",
+            "confidence",
+            "ood",
+        )
+        if hasattr(value, name)
+    }
+    return [payload] if payload else []
+
+
+def _calibration_strata(
+    observations: Sequence[Mapping[str, Any]],
+    axis: str,
+    bin_count: int,
+) -> dict[str, Any]:
+    grouped: dict[str, list[Mapping[str, Any]]] = {}
+    for item in observations:
+        grouped.setdefault(str(item.get(axis) or "unspecified"), []).append(item)
+    report: dict[str, Any] = {}
+    for name, rows in sorted(grouped.items()):
+        labeled = [
+            (float(item["confidence"]), bool(item["success"]))
+            for item in rows
+            if item.get("success") is not None and item.get("confidence") is not None
+        ]
+        if not labeled:
+            report[name] = {
+                "brier_score": None,
+                "expected_calibration_error": None,
+                "labeled_count": 0,
+                "unknown_denominators": ["calibration:no_labeled_confidence_pairs"],
+            }
+            continue
+        _bins, ece = _reliability_diagram(labeled, bin_count=bin_count)
+        report[name] = {
+            "brier_score": round(
+                _mean([(confidence - float(success)) ** 2 for confidence, success in labeled]),
+                12,
+            ),
+            "expected_calibration_error": round(ece, 12),
+            "labeled_count": len(labeled),
+            "unknown_denominators": [],
+        }
+    return report
+
+
 def _family_result(
     family: str,
     rows: Sequence[Mapping[str, Any]],
@@ -467,30 +840,19 @@ def _family_result(
 ) -> LegalIRFamilyUncertaintyResult:
     count = len(rows)
     raw_confidence = _mean([float(row["raw_confidence"]) for row in rows])
-    calibrated_confidence = _mean(
-        [float(row["calibrated_confidence"]) for row in rows]
-    )
+    calibrated_confidence = _mean([float(row["calibrated_confidence"]) for row in rows])
     normalized_entropy = _mean([float(row["normalized_entropy"]) for row in rows])
     calibration_error = _mean([float(row["calibration_error"]) for row in rows])
     abstention_rate = _mean([1.0 if row.get("abstained") else 0.0 for row in rows])
     ood_rate = _mean([1.0 if row.get("ood") else 0.0 for row in rows])
-    unsupported_family_rate = _mean(
-        [1.0 if row.get("unsupported_family") else 0.0 for row in rows]
-    )
+    unsupported_family_rate = _mean([1.0 if row.get("unsupported_family") else 0.0 for row in rows])
     unsupported_abstention_rate = _mean(
-        [
-            1.0
-            if row.get("unsupported_family") and row.get("abstained")
-            else 0.0
-            for row in rows
-        ]
+        [1.0 if row.get("unsupported_family") and row.get("abstained") else 0.0 for row in rows]
     )
     codex_count = sum(1 for row in rows if row.get("route") == ROUTE_CODEX_TODO)
     audit_count = sum(1 for row in rows if row.get("route") != ROUTE_CODEX_TODO)
     evidence_sources = _unique(
-        str(source)
-        for row in rows
-        for source in _sequence(row.get("evidence_sources"))
+        str(source) for row in rows for source in _sequence(row.get("evidence_sources"))
     )
 
     block_reasons: list[str] = []
@@ -512,9 +874,7 @@ def _family_result(
         if ood_rate > max_ood:
             block_reasons.append(f"{family}:out_of_distribution_above_threshold")
         if unsupported_abstention_rate > max_unsupported:
-            block_reasons.append(
-                f"{family}:unsupported_abstention_above_threshold"
-            )
+            block_reasons.append(f"{family}:unsupported_abstention_above_threshold")
 
     return LegalIRFamilyUncertaintyResult(
         family=family,
@@ -612,13 +972,7 @@ def _observation_from_item(
     else:
         below_confidence = True
         high_entropy = False
-    abstained = bool(
-        explicit_abstain
-        or unsupported
-        or ood
-        or below_confidence
-        or high_entropy
-    )
+    abstained = bool(explicit_abstain or unsupported or ood or below_confidence or high_entropy)
     route = ROUTE_HAMMER_LEANSTRAL_AUDIT if abstained else ROUTE_CODEX_TODO
     evidence_sources = _unique(
         [
@@ -797,11 +1151,7 @@ def _calibration_error_from_item(
             min(
                 1.0,
                 sum(
-                    (
-                        float(distribution.get(label, 0.0))
-                        - float(target.get(label, 0.0))
-                    )
-                    ** 2
+                    (float(distribution.get(label, 0.0)) - float(target.get(label, 0.0))) ** 2
                     for label in labels
                 )
                 / max(1, len(labels)),
@@ -920,9 +1270,7 @@ def _ambiguity_observation_from_item(
     index: int,
 ) -> dict[str, Any]:
     family, unsupported = _canonical_family(
-        _first_string(item, _FAMILY_KEYS)
-        or _ambiguity_target_view(item)
-        or "deontic"
+        _first_string(item, _FAMILY_KEYS) or _ambiguity_target_view(item) or "deontic"
     )
     raw_confidence = max(0.0, min(1.0, _finite_float(item.get("confidence"), 0.0)))
     return {
@@ -936,9 +1284,9 @@ def _ambiguity_observation_from_item(
         "ood": True,
         "raw_confidence": raw_confidence,
         "route": ROUTE_HAMMER_LEANSTRAL_AUDIT,
-        "unsupported_family": True if unsupported else bool(
-            item.get("learned_label") or item.get("arbitrary_learned_label")
-        ),
+        "unsupported_family": True
+        if unsupported
+        else bool(item.get("learned_label") or item.get("arbitrary_learned_label")),
     }
 
 
@@ -1052,17 +1400,22 @@ def _hash_json(value: Any) -> str:
 
 
 __all__ = [
+    "CalibrationInstrumentationReport",
     "DEFAULT_MAX_CALIBRATION_ERROR",
     "DEFAULT_MAX_NORMALIZED_ENTROPY",
     "DEFAULT_MAX_OOD_RATE",
     "DEFAULT_MAX_UNSUPPORTED_ABSTENTION_RATE",
     "DEFAULT_MIN_CALIBRATED_CONFIDENCE",
+    "DEFAULT_RELIABILITY_BIN_COUNT",
+    "LEGAL_IR_CALIBRATION_INSTRUMENTATION_SCHEMA_VERSION",
     "LEGAL_IR_UNCERTAINTY_SCHEMA_VERSION",
-    "ROUTE_CODEX_TODO",
-    "ROUTE_HAMMER_LEANSTRAL_AUDIT",
     "LegalIRFamilyUncertaintyResult",
     "LegalIRUncertaintyConfig",
     "LegalIRUncertaintyReport",
+    "ROUTE_CODEX_TODO",
+    "ROUTE_HAMMER_LEANSTRAL_AUDIT",
+    "ReliabilityBin",
+    "evaluate_legal_ir_calibration",
     "evaluate_legal_ir_uncertainty",
     "legal_ir_uncertainty_promotion_gate",
     "route_learned_guidance_by_uncertainty",

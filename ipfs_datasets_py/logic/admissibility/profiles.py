@@ -188,9 +188,7 @@ def _build_registry() -> dict[AdmissibilityProfileId, AdmissibilityProfile]:
     }
 
 
-PROFILE_REGISTRY: Final[Mapping[AdmissibilityProfileId, AdmissibilityProfile]] = (
-    _build_registry()
-)
+PROFILE_REGISTRY: Final[Mapping[AdmissibilityProfileId, AdmissibilityProfile]] = _build_registry()
 
 
 def stable_profile_id_values() -> tuple[str, ...]:
@@ -264,9 +262,7 @@ def resolve_profile(
 
     if value is None:
         if default is None:
-            raise UnknownAdmissibilityProfileError(
-                "admissibility profile is required; fail closed"
-            )
+            raise UnknownAdmissibilityProfileError("admissibility profile is required; fail closed")
         return get_profile(default)
     if isinstance(value, AdmissibilityProfile):
         # Re-fetch from registry so callers cannot inject a loosened policy object
@@ -346,10 +342,7 @@ def resolve_profile_fail_closed(
 def list_profiles() -> tuple[AdmissibilityProfile, ...]:
     """Return all registered profiles in stable profile-id order."""
 
-    return tuple(
-        PROFILE_REGISTRY[AdmissibilityProfileId(wire)]
-        for wire in PROFILE_ID_WIRE_VALUES
-    )
+    return tuple(PROFILE_REGISTRY[AdmissibilityProfileId(wire)] for wire in PROFILE_ID_WIRE_VALUES)
 
 
 # Sanity: enum members must match the pinned wire vocabulary exactly.

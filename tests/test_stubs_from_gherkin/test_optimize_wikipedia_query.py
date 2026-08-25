@@ -526,4 +526,3 @@ def test_optimize_query_without_query_text_result_contains_budget():
         result contains budget
     """
     pass
-

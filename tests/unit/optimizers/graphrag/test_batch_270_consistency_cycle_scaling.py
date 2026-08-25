@@ -9,8 +9,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_critic_consistency import (
 
 def _build_chain_ontology(entity_count: int, *, with_cycle: bool) -> dict:
     entities = [
-        {"id": f"E{i}", "text": f"Entity {i}", "type": "Concept"}
-        for i in range(entity_count)
+        {"id": f"E{i}", "text": f"Entity {i}", "type": "Concept"} for i in range(entity_count)
     ]
 
     relationships = [

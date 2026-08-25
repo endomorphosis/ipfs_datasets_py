@@ -19,22 +19,17 @@ Components:
 
 Usage:
     from ipfs_datasets_py.mcp_server.compat import CompatibilityShim
-    
+
     # Wrap existing tool to ensure compatibility
     shim = CompatibilityShim()
     wrapped_tool = shim.wrap_tool(my_existing_tool)
-    
+
     # Tool will work with both FastAPI and Trio runtimes
     result = await wrapped_tool(params)
 """
 
 __version__ = "1.0.0"
-__all__ = [
-    "CompatibilityShim",
-    "RuntimeDetector",
-    "ConfigMigrator",
-    "APIVersionManager"
-]
+__all__ = ["CompatibilityShim", "RuntimeDetector", "ConfigMigrator", "APIVersionManager"]
 
 try:
     from .shim import CompatibilityShim

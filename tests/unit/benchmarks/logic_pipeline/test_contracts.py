@@ -54,9 +54,7 @@ def _outcome(
     variant: str = "A0",
     status: contracts.OutcomeStatus = contracts.OutcomeStatus.NOT_VERIFIED,
     invalid_control: bool = False,
-    authority: contracts.VerificationAuthority = (
-        contracts.VerificationAuthority.NONE
-    ),
+    authority: contracts.VerificationAuthority = (contracts.VerificationAuthority.NONE),
     kernel_accepted: bool = False,
     receipt: str | None = None,
     failure_code: contracts.FailureCode | None = None,
@@ -82,10 +80,7 @@ def _outcome(
 
 
 def test_objective_evidence_and_public_default_are_stable() -> None:
-    assert (
-        contracts.HSSLEV0103C72()
-        == "preregistered benchmark protocol and safety invariants"
-    )
+    assert contracts.HSSLEV0103C72() == "preregistered benchmark protocol and safety invariants"
     assert contracts.DEFAULT_PROTOCOL.schema == contracts.PROTOCOL_SCHEMA
     assert contracts.DEFAULT_PROTOCOL.protocol_version == 1
     assert contracts.DEFAULT_PROTOCOL.frozen is True
@@ -97,9 +92,7 @@ def test_objective_evidence_and_public_default_are_stable() -> None:
 
 
 def test_normative_readme_binds_the_frozen_protocol_digest() -> None:
-    readme = Path(contracts.__file__).with_name("README.md").read_text(
-        encoding="utf-8"
-    )
+    readme = Path(contracts.__file__).with_name("README.md").read_text(encoding="utf-8")
     assert contracts.DEFAULT_PROTOCOL_SHA256 in readme
     assert "Only an accepted receipt from the independent native kernel" in readme
     assert "tolerance is exactly zero" in readme
@@ -129,20 +122,14 @@ def test_import_remains_dependency_free_and_side_effect_free(
 
 def test_protocol_preregisters_complete_hypotheses_variants_and_metrics() -> None:
     protocol = contracts.DEFAULT_PROTOCOL
-    assert {item.hypothesis_id for item in protocol.hypotheses} == {
-        f"H{i}" for i in range(1, 8)
-    }
+    assert {item.hypothesis_id for item in protocol.hypotheses} == {f"H{i}" for i in range(1, 8)}
     assert all(item.null_statement for item in protocol.hypotheses)
     assert {item.variant_id for item in protocol.variants} == {
         *(f"A{i}" for i in range(13)),
         "S1",
     }
     assert protocol.variant_map["A0"].paired_against is None
-    assert all(
-        item.paired_against == "A0"
-        for item in protocol.variants
-        if item.variant_id != "A0"
-    )
+    assert all(item.paired_against == "A0" for item in protocol.variants if item.variant_id != "A0")
     assert protocol.variant_map["S1"].safety_diagnostic_only
     assert not protocol.variant_map["S1"].primary_candidate
     assert "V00" not in protocol.variant_map
@@ -159,14 +146,8 @@ def test_protocol_preregisters_complete_hypotheses_variants_and_metrics() -> Non
         "deterministic_semantic_equivalence",
         "paired_verified_delta_vs_a0",
     }
-    assert any(
-        item.category is contracts.MetricCategory.RESOURCE
-        for item in protocol.metrics
-    )
-    assert any(
-        item.category is contracts.MetricCategory.ROUTING
-        for item in protocol.metrics
-    )
+    assert any(item.category is contracts.MetricCategory.RESOURCE for item in protocol.metrics)
+    assert any(item.category is contracts.MetricCategory.ROUTING for item in protocol.metrics)
 
 
 def test_thresholds_freeze_all_materiality_decisions() -> None:
@@ -221,9 +202,7 @@ def test_protocol_record_round_trip_and_canonical_digest() -> None:
 
 
 def test_protocol_records_fail_closed_on_schema_unknown_fields_and_tampering() -> None:
-    payload = contracts.ProtocolRecord.create(
-        contracts.DEFAULT_PROTOCOL
-    ).to_dict()
+    payload = contracts.ProtocolRecord.create(contracts.DEFAULT_PROTOCOL).to_dict()
 
     bad_schema = json.loads(json.dumps(payload))
     bad_schema["protocol"]["schema"] = "protocol.v2"
@@ -237,9 +216,7 @@ def test_protocol_records_fail_closed_on_schema_unknown_fields_and_tampering() -
 
     tampered = json.loads(json.dumps(payload))
     tampered["protocol"]["hypotheses"][0]["statement"] = "post-pilot change"
-    with pytest.raises(
-        contracts.ProtocolContractError, match="frozen|digest"
-    ):
+    with pytest.raises(contracts.ProtocolContractError, match="frozen|digest"):
         contracts.ProtocolRecord.from_dict(tampered)
 
 
@@ -266,9 +243,7 @@ def test_only_accepted_native_kernel_receipt_can_set_verified() -> None:
         contracts.VerificationAuthority.EXTERNAL_SOLVER,
         contracts.VerificationAuthority.LEGACY_ROUTER,
     ):
-        with pytest.raises(
-            contracts.ProtocolContractError, match="native-kernel"
-        ):
+        with pytest.raises(contracts.ProtocolContractError, match="native-kernel"):
             _outcome(
                 status=contracts.OutcomeStatus.VERIFIED,
                 authority=authority,
@@ -293,12 +268,8 @@ def test_invalid_control_verification_is_recorded_as_fatal_safety_evidence() -> 
         kernel_accepted=True,
         receipt=SHA_B,
     )
-    assert incident.safety_violations == (
-        contracts.FailureCode.INVALID_CONTROL_VERIFIED,
-    )
-    assert contracts.DEFAULT_PROTOCOL.stop_required(
-        contracts.FailureCode.INVALID_CONTROL_VERIFIED
-    )
+    assert incident.safety_violations == (contracts.FailureCode.INVALID_CONTROL_VERIFIED,)
+    assert contracts.DEFAULT_PROTOCOL.stop_required(contracts.FailureCode.INVALID_CONTROL_VERIFIED)
     with pytest.raises(contracts.ProtocolContractError, match="fatal"):
         contracts.validate_paired_outcomes(
             _outcome(variant="A0"),
@@ -371,10 +342,7 @@ def test_cache_scope_binds_every_isolation_dimension_without_collisions() -> Non
     namespace = contracts.CacheScope(
         "run-1", digest, "A1", contracts.Split.PILOT, contracts.CacheMode.COLD
     ).namespace
-    assert all(
-        part in namespace
-        for part in ("run-1", digest, "A1", "pilot", "cold")
-    )
+    assert all(part in namespace for part in ("run-1", digest, "A1", "pilot", "cold"))
     with pytest.raises(contracts.ProtocolContractError, match="not registered"):
         contracts.CacheScope(
             "run-1",
@@ -442,9 +410,7 @@ def test_holdout_requires_frozen_inputs_audit_and_no_tuning() -> None:
 def test_paired_outcomes_require_same_identity_and_complete_pair() -> None:
     baseline = _outcome(variant="A0")
     candidate = _outcome(variant="A4")
-    contracts.validate_paired_outcomes(
-        baseline, candidate, protocol=contracts.DEFAULT_PROTOCOL
-    )
+    contracts.validate_paired_outcomes(baseline, candidate, protocol=contracts.DEFAULT_PROTOCOL)
 
     with pytest.raises(contracts.ProtocolContractError, match="share run"):
         contracts.validate_paired_outcomes(
@@ -482,9 +448,10 @@ def test_candidate_gate_accepts_quality_or_efficiency_and_rejects_safety() -> No
         unexplained_baseline_regressions=0,
         all_successes_kernel_bound_and_replayable=True,
     )
-    assert contracts.evaluate_candidate_gate(
-        passing, protocol=contracts.DEFAULT_PROTOCOL
-    ).status is contracts.GateStatus.PASSED
+    assert (
+        contracts.evaluate_candidate_gate(passing, protocol=contracts.DEFAULT_PROTOCOL).status
+        is contracts.GateStatus.PASSED
+    )
 
     efficient = replace(
         passing,
@@ -492,14 +459,13 @@ def test_candidate_gate_accepts_quality_or_efficiency_and_rejects_safety() -> No
         quality_gap_from_best=0.01,
         model_usage_reduction=0.20,
     )
-    assert contracts.evaluate_candidate_gate(
-        efficient, protocol=contracts.DEFAULT_PROTOCOL
-    ).status is contracts.GateStatus.PASSED
+    assert (
+        contracts.evaluate_candidate_gate(efficient, protocol=contracts.DEFAULT_PROTOCOL).status
+        is contracts.GateStatus.PASSED
+    )
 
     unsafe = replace(passing, invalid_control_verified_count=1)
-    decision = contracts.evaluate_candidate_gate(
-        unsafe, protocol=contracts.DEFAULT_PROTOCOL
-    )
+    decision = contracts.evaluate_candidate_gate(unsafe, protocol=contracts.DEFAULT_PROTOCOL)
     assert decision.status is contracts.GateStatus.FAILED
     assert any("invalid-control" in reason for reason in decision.reasons)
 
@@ -517,9 +483,7 @@ def test_infrastructure_failure_makes_gate_incomplete_not_failed() -> None:
         all_successes_kernel_bound_and_replayable=True,
         infrastructure_failure_count=1,
     )
-    decision = contracts.evaluate_candidate_gate(
-        observation, protocol=contracts.DEFAULT_PROTOCOL
-    )
+    decision = contracts.evaluate_candidate_gate(observation, protocol=contracts.DEFAULT_PROTOCOL)
     assert decision.status is contracts.GateStatus.INCOMPLETE
 
 
@@ -528,9 +492,7 @@ def test_stop_thresholds_are_explicit_and_bounded() -> None:
     assert not protocol.stop_required(
         contracts.FailureCode.OUT_OF_MEMORY, consecutive_occurrences=1
     )
-    assert protocol.stop_required(
-        contracts.FailureCode.OUT_OF_MEMORY, consecutive_occurrences=2
-    )
+    assert protocol.stop_required(contracts.FailureCode.OUT_OF_MEMORY, consecutive_occurrences=2)
     assert not protocol.stop_required(
         contracts.FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE,
         consecutive_occurrences=2,

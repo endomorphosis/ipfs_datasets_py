@@ -1,0 +1,487 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/open-us-law-full-scrape-receipt.v1.schema.json",
+  "title": "Open US Law Full Scrape Receipt v1",
+  "description": "Fail-closed full-scrape receipt for the exact 50-state-plus-DC completeness oracle (OUL-003 / OUL-G010). A jurisdiction receipt proves official identity, closed bundle or pagination frontiers, zero failed-final units, replayable request/response/body hashes, and no caps or fixture transports. An aggregate receipt proves exact-51 set equality, DC counted once, no PR/federal default members, and aggregate-to-jurisdiction key and digest equality.",
+  "oneOf": [
+    { "$ref": "#/$defs/jurisdictionReceipt" },
+    { "$ref": "#/$defs/aggregateReceipt" }
+  ],
+  "$defs": {
+    "sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "cidV1": {
+      "type": "string",
+      "pattern": "^b[a-z2-7]{20,}$",
+      "minLength": 21,
+      "maxLength": 256
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "postalCode": {
+      "type": "string",
+      "enum": [
+        "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+        "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+        "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+        "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+        "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+        "DC"
+      ]
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "nonNegativeInt": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "stringList": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 4096 }
+    },
+    "rightsBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "attribution_required", "decision"],
+      "properties": {
+        "scope": { "$ref": "#/$defs/nonEmptyString" },
+        "attribution_required": { "type": "boolean" },
+        "decision": {
+          "type": "string",
+          "enum": ["admit", "exclude", "quarantine"]
+        }
+      }
+    },
+    "hashBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_sha256",
+        "response_sha256",
+        "admitted_body_sha256"
+      ],
+      "properties": {
+        "request_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "response_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "admitted_body_sha256": { "$ref": "#/$defs/sha256Hex" }
+      }
+    },
+    "cidBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_cid",
+        "entry_cid",
+        "acquisition_receipt_cid",
+        "rights_receipt_cid"
+      ],
+      "properties": {
+        "source_cid": { "$ref": "#/$defs/cidV1" },
+        "entry_cid": { "$ref": "#/$defs/cidV1" },
+        "acquisition_receipt_cid": { "$ref": "#/$defs/cidV1" },
+        "rights_receipt_cid": { "$ref": "#/$defs/cidV1" }
+      }
+    },
+    "transportBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "fixture", "synthetic"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "live_https",
+            "official_https",
+            "official_bundle",
+            "bundle_https",
+            "https"
+          ]
+        },
+        "fixture": { "const": false },
+        "synthetic": { "const": false }
+      }
+    },
+    "checkpointBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["partial", "promoted_success", "completion_basis"],
+      "properties": {
+        "partial": { "type": "boolean" },
+        "promoted_success": { "type": "boolean" },
+        "completion_basis": {
+          "type": "string",
+          "enum": ["source_frontier", "frontier", "official_frontier"]
+        }
+      }
+    },
+    "frontierBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "closed",
+        "bundle_closed",
+        "pagination_closed",
+        "enumerator_closed",
+        "toc_exhausted",
+        "unvisited_continuation_links",
+        "remaining_bundle_members",
+        "expected_index_units",
+        "visited_index_units",
+        "frontier_digest_sha256"
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["bundle", "pagination", "bundle_and_pagination"]
+        },
+        "closed": { "type": "boolean" },
+        "bundle_closed": { "type": ["boolean", "null"] },
+        "pagination_closed": { "type": ["boolean", "null"] },
+        "enumerator_closed": { "type": "boolean" },
+        "toc_exhausted": { "type": "boolean" },
+        "unvisited_continuation_links": { "$ref": "#/$defs/stringList" },
+        "remaining_bundle_members": { "$ref": "#/$defs/stringList" },
+        "expected_index_units": { "$ref": "#/$defs/nonNegativeInt" },
+        "visited_index_units": { "$ref": "#/$defs/nonNegativeInt" },
+        "bundle_member_count": { "$ref": "#/$defs/nonNegativeInt" },
+        "enumerated_member_count": { "$ref": "#/$defs/nonNegativeInt" },
+        "frontier_digest_sha256": { "$ref": "#/$defs/sha256Hex" }
+      }
+    },
+    "boundaryProbes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "first_hierarchy_unit",
+        "last_hierarchy_unit",
+        "first_probe_ok",
+        "last_probe_ok"
+      ],
+      "properties": {
+        "first_hierarchy_unit": { "$ref": "#/$defs/nonEmptyString" },
+        "last_hierarchy_unit": { "$ref": "#/$defs/nonEmptyString" },
+        "first_probe_ok": { "type": "boolean" },
+        "last_probe_ok": { "type": "boolean" },
+        "pagination_total": { "$ref": "#/$defs/nonNegativeInt" },
+        "bundle_total": { "$ref": "#/$defs/nonNegativeInt" }
+      }
+    },
+    "replayBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_sha256",
+        "response_sha256",
+        "admitted_body_sha256",
+        "frontier_digest_sha256",
+        "closed"
+      ],
+      "properties": {
+        "request_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "response_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "admitted_body_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "frontier_digest_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "closed": { "type": "boolean" },
+        "upstream_change_delta": { "type": "boolean" },
+        "explicit_upstream_change": { "type": "boolean" }
+      }
+    },
+    "dispositionBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "discovered",
+        "fetched",
+        "excluded",
+        "quarantined",
+        "failed_final"
+      ],
+      "properties": {
+        "discovered": { "$ref": "#/$defs/nonNegativeInt" },
+        "fetched": { "$ref": "#/$defs/nonNegativeInt" },
+        "excluded": { "$ref": "#/$defs/nonNegativeInt" },
+        "quarantined": { "$ref": "#/$defs/nonNegativeInt" },
+        "failed_final": { "const": 0 },
+        "duplicates": { "$ref": "#/$defs/nonNegativeInt" }
+      }
+    },
+    "typedUnitEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unit_id", "reason", "evidence_sha256"],
+      "properties": {
+        "unit_id": { "$ref": "#/$defs/nonEmptyString" },
+        "reason": { "$ref": "#/$defs/nonEmptyString" },
+        "evidence_sha256": { "$ref": "#/$defs/sha256Hex" }
+      }
+    },
+    "logicalKeysBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "keys",
+        "unique",
+        "current_count",
+        "historical_count",
+        "current_history_disposition"
+      ],
+      "properties": {
+        "keys": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 4096 },
+          "uniqueItems": true
+        },
+        "unique": { "const": true },
+        "current_count": { "$ref": "#/$defs/nonNegativeInt" },
+        "historical_count": { "$ref": "#/$defs/nonNegativeInt" },
+        "current_history_disposition": {
+          "type": "string",
+          "enum": ["current", "historical", "mixed"]
+        }
+      }
+    },
+    "textQualityBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "min_usable_chars",
+        "navigation_rejected",
+        "footer_rejected",
+        "placeholder_rejected",
+        "rejected_units"
+      ],
+      "properties": {
+        "min_usable_chars": { "type": "integer", "minimum": 1 },
+        "navigation_rejected": { "const": true },
+        "footer_rejected": { "const": true },
+        "placeholder_rejected": { "const": true },
+        "rejected_units": { "$ref": "#/$defs/nonNegativeInt" },
+        "contaminated": { "const": false }
+      }
+    },
+    "indexKeysBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonical_keys", "derived_keys", "stale_keys", "parity_ok"],
+      "properties": {
+        "canonical_keys": { "$ref": "#/$defs/stringList" },
+        "derived_keys": { "$ref": "#/$defs/stringList" },
+        "stale_keys": {
+          "type": "array",
+          "maxItems": 0,
+          "items": { "type": "string" }
+        },
+        "parity_ok": { "const": true }
+      }
+    },
+    "aggregateDigests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key_digest_sha256",
+        "body_digest_sha256",
+        "frontier_digest_sha256"
+      ],
+      "properties": {
+        "key_digest_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "body_digest_sha256": { "$ref": "#/$defs/sha256Hex" },
+        "frontier_digest_sha256": { "$ref": "#/$defs/sha256Hex" }
+      }
+    },
+    "familyParity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "corpus_keys",
+        "bm25_keys",
+        "vector_keys",
+        "graph_keys",
+        "locator_keys",
+        "descriptor_keys"
+      ],
+      "properties": {
+        "corpus_keys": { "$ref": "#/$defs/stringList" },
+        "bm25_keys": { "$ref": "#/$defs/stringList" },
+        "vector_keys": { "$ref": "#/$defs/stringList" },
+        "graph_keys": { "$ref": "#/$defs/stringList" },
+        "locator_keys": { "$ref": "#/$defs/stringList" },
+        "descriptor_keys": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "jurisdictionReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "task_id",
+        "goal_id",
+        "program_id",
+        "producer",
+        "jurisdiction",
+        "code_family",
+        "status",
+        "mode",
+        "official_source",
+        "source_domain",
+        "source_path",
+        "source_authority_class",
+        "rights",
+        "edition",
+        "legal_as_of",
+        "observed_at",
+        "hashes",
+        "cids",
+        "transport",
+        "runtime_caps",
+        "sample_cap",
+        "checkpoint",
+        "frontier",
+        "boundary_probes",
+        "replay",
+        "disposition",
+        "exclusions",
+        "quarantines",
+        "logical_keys",
+        "text_quality",
+        "index_keys"
+      ],
+      "properties": {
+        "schema_version": { "const": "open-us-law-full-scrape-receipt-v1" },
+        "kind": { "const": "jurisdiction" },
+        "task_id": { "const": "OUL-003" },
+        "goal_id": { "const": "OUL-G010" },
+        "program_id": { "const": "open-us-law-reindex-v1" },
+        "producer": { "const": "open_us_law_completeness.py" },
+        "jurisdiction": { "$ref": "#/$defs/postalCode" },
+        "code_family": { "const": "statutes" },
+        "status": {
+          "type": "string",
+          "enum": ["success", "fail", "incomplete"]
+        },
+        "mode": { "const": "full" },
+        "official_source": { "const": true },
+        "source_domain": { "$ref": "#/$defs/nonEmptyString" },
+        "source_path": { "$ref": "#/$defs/nonEmptyString" },
+        "source_authority_class": { "const": "official" },
+        "rights": { "$ref": "#/$defs/rightsBlock" },
+        "edition": { "$ref": "#/$defs/nonEmptyString" },
+        "legal_as_of": { "$ref": "#/$defs/utcTimestamp" },
+        "observed_at": { "$ref": "#/$defs/utcTimestamp" },
+        "hashes": { "$ref": "#/$defs/hashBlock" },
+        "cids": { "$ref": "#/$defs/cidBlock" },
+        "transport": { "$ref": "#/$defs/transportBlock" },
+        "runtime_caps": { "type": "null" },
+        "sample_cap": { "type": "null" },
+        "checkpoint": { "$ref": "#/$defs/checkpointBlock" },
+        "frontier": { "$ref": "#/$defs/frontierBlock" },
+        "boundary_probes": { "$ref": "#/$defs/boundaryProbes" },
+        "replay": { "$ref": "#/$defs/replayBlock" },
+        "disposition": { "$ref": "#/$defs/dispositionBlock" },
+        "exclusions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/typedUnitEvidence" }
+        },
+        "quarantines": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/typedUnitEvidence" }
+        },
+        "logical_keys": { "$ref": "#/$defs/logicalKeysBlock" },
+        "text_quality": { "$ref": "#/$defs/textQualityBlock" },
+        "index_keys": { "$ref": "#/$defs/indexKeysBlock" },
+        "row_count": { "$ref": "#/$defs/nonNegativeInt" },
+        "completion_claim": { "type": "string", "maxLength": 128 },
+        "notes": { "type": "string", "maxLength": 4096 }
+      }
+    },
+    "aggregateReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "task_id",
+        "goal_id",
+        "program_id",
+        "producer",
+        "status",
+        "mode",
+        "jurisdictions",
+        "includes_dc",
+        "dc_count",
+        "dc_policy",
+        "default_configuration",
+        "forbidden_in_default",
+        "is_complete",
+        "requested_scope_is_complete",
+        "jurisdiction_count",
+        "jurisdiction_receipts",
+        "aggregate_keys",
+        "aggregate_digests",
+        "family_parity",
+        "disposition"
+      ],
+      "properties": {
+        "schema_version": { "const": "open-us-law-full-scrape-receipt-v1" },
+        "kind": { "const": "aggregate" },
+        "task_id": { "const": "OUL-003" },
+        "goal_id": { "const": "OUL-G010" },
+        "program_id": { "const": "open-us-law-reindex-v1" },
+        "producer": { "const": "open_us_law_completeness.py" },
+        "status": {
+          "type": "string",
+          "enum": ["success", "fail", "incomplete"]
+        },
+        "mode": { "const": "full" },
+        "jurisdictions": {
+          "type": "array",
+          "minItems": 51,
+          "maxItems": 51,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/postalCode" }
+        },
+        "includes_dc": { "const": true },
+        "dc_count": { "const": 1 },
+        "dc_policy": { "const": "required" },
+        "default_configuration": { "const": "state_statutes_exact_51" },
+        "forbidden_in_default": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "string",
+            "enum": ["PR", "US", "FED", "USA", "FEDERAL", "GU", "VI", "AS", "MP"]
+          }
+        },
+        "is_complete": { "type": "boolean" },
+        "requested_scope_is_complete": { "const": false },
+        "jurisdiction_count": { "const": 51 },
+        "jurisdiction_receipts": {
+          "type": "array",
+          "minItems": 51,
+          "maxItems": 51,
+          "items": { "$ref": "#/$defs/jurisdictionReceipt" }
+        },
+        "aggregate_keys": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1, "maxLength": 4096 },
+          "uniqueItems": true
+        },
+        "aggregate_digests": { "$ref": "#/$defs/aggregateDigests" },
+        "family_parity": { "$ref": "#/$defs/familyParity" },
+        "disposition": { "$ref": "#/$defs/dispositionBlock" },
+        "include_dc": { "const": true },
+        "states_token": { "type": "string", "maxLength": 32 },
+        "notes": { "type": "string", "maxLength": 4096 }
+      }
+    }
+  }
+}

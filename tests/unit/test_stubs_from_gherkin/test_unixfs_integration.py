@@ -4,11 +4,13 @@ Test stubs for unixfs_integration module.
 Feature: UnixFS Integration
   Integration with IPFS UnixFS file system
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_unixfs_directory_cid():
@@ -74,6 +76,7 @@ def file_content():
 
 
 # Test scenarios
+
 
 def test_create_unixfs_file():
     """
@@ -164,6 +167,7 @@ def test_stream_large_unixfs_file():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a UnixFS directory CID")
@@ -327,4 +331,3 @@ def the_file_is_removed_from_directory():
     """Step: Then the file is removed from directory"""
     # TODO: Implement step
     pass
-

@@ -94,8 +94,10 @@ await tools_dispatch("graph_tools", "query_knowledge_graph", {"query": "..."})
 # MCP Tool (thin wrapper)
 async def load_dataset(source, format=None, options=None):
     from ipfs_datasets_py.core_operations import DatasetLoader
+
     loader = DatasetLoader()
     return await loader.load(source, format, options)
+
 
 # Core Module (business logic)
 class DatasetLoader:
@@ -109,14 +111,17 @@ class DatasetLoader:
 ```python
 # MCP Server
 from ipfs_datasets_py.core_operations import DatasetLoader
+
 result = await DatasetLoader().load("squad")
 
 # CLI Command
 from ipfs_datasets_py.core_operations import DatasetLoader
+
 result = DatasetLoader().load_sync("squad")
 
 # Python Script
 from ipfs_datasets_py.core_operations import DatasetLoader
+
 loader = DatasetLoader()
 dataset = await loader.load("squad")
 ```

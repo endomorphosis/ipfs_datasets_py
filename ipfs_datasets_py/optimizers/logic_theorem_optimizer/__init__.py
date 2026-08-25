@@ -27,546 +27,554 @@ from __future__ import annotations
 
 __all__ = [
     # Exceptions
-    'LogicTheoremOptimizerError',
-    'OptimizerError',
-    'ExtractionError',
-    'ValidationError',
-    'ProvingError',
-    'RefinementError',
-    'ConfigurationError',
+    "LogicTheoremOptimizerError",
+    "OptimizerError",
+    "ExtractionError",
+    "ValidationError",
+    "ProvingError",
+    "RefinementError",
+    "ConfigurationError",
     # Unified Optimizer (NEW - BaseOptimizer implementation)
-    'LogicTheoremOptimizer',
+    "LogicTheoremOptimizer",
     # Extractor
-    'LogicExtractor',
-    'LogicExtractionContext',
-    'ExtractionResult',
-    'ExtractionMode',
-    'DataType',
+    "LogicExtractor",
+    "LogicExtractionContext",
+    "ExtractionResult",
+    "ExtractionMode",
+    "DataType",
     # Deterministic modal legal parser
-    'ModalLogicFamily',
-    'ModalSystem',
-    'ModalOperatorSpec',
-    'ModalSemanticsSpec',
-    'ModalParseProfile',
-    'ModalRegistry',
-    'DEFAULT_MODAL_REGISTRY',
-    'ModalIRDocument',
-    'ModalIRFormula',
-    'ModalIRFrame',
-    'ModalIRFrameLogic',
-    'ModalIRFrameLogicTriple',
-    'ModalIROperator',
-    'ModalIRPredicate',
-    'ModalIRProvenance',
-    'LegalModalParser',
-    'LegalSegment',
-    'ModalCueSpan',
-    'BM25FrameSelector',
-    'FrameCandidate',
-    'FrameSelection',
-    'DEFAULT_LEGAL_FRAME_FIXTURE',
-    'LegalSample',
-    'LegalSampleValidationError',
-    'build_us_code_sample',
-    'stable_mock_embedding',
-    'HF_USCODE_DATASET_ID',
-    'USCODE_BM25_PARQUET',
-    'USCODE_EMBEDDINGS_PARQUET',
-    'USCODE_LAWS_PARQUET',
-    'USCODE_LOGIC_PROOF_SAMPLE_PARQUET',
-    'USCODE_PARQUET_DIR',
-    'USCodeParquetRecord',
-    'iter_uscode_records_from_parquet',
-    'load_hf_uscode_samples',
-    'load_uscode_embeddings_from_parquet',
-    'load_uscode_samples_from_parquet',
-    'SpaCyLegalEncoder',
-    'SpaCyLegalEncoding',
-    'SpaCyModalCodec',
-    'SpaCyModalCueFeature',
-    'SpaCyModalDecoder',
-    'SpaCyModalIRCompiler',
-    'SpaCySentenceFeature',
-    'SpaCyTokenFeature',
-    'DecodedModalPhrase',
-    'DecodedModalText',
-    'DeterministicModalCompiler',
-    'DeterministicModalLogicCodec',
-    'ModalCompilationAmbiguity',
-    'ModalCompilationResult',
-    'ModalCompilerConfig',
-    'ModalLogicCodecConfig',
-    'ModalLogicCodecResult',
-    'ModalProgramSynthesisHint',
-    'decode_modal_ir_document',
-    'decode_modal_ir_text',
-    'decoded_modal_phrase_slot_text_map',
-    'flogic_ontology_to_dict',
-    'flogic_triples_to_graph_data',
-    'flogic_triples_to_ontology',
-    'import_graph_data_to_graph_engine',
-    'import_modal_ir_to_graph_engine',
-    'modal_formula_to_text',
-    'modal_text_token_similarity',
-    'modal_ir_to_flogic_triples',
-    'modal_ir_to_neo4j_graph_data',
-    'synthesis_hints_from_autoencoder_introspection',
-    'synthesis_hints_from_autoencoder_introspections',
-    'target_family_distribution_for_modal_ir',
-    'target_family_for_modal_ir',
-    'AdaptiveModalAutoencoder',
-    'AutoencoderFeatureContribution',
-    'ModalAutoencoderBaseline',
-    'ModalAutoencoderTrainingState',
-    'ModalAutoencoderTensorState',
-    'PackedParameterMap',
-    'PackedProofAuxiliaryMap',
-    'SparseOverflowFullError',
-    'StableKeyRegistry',
-    'TensorKeyKind',
-    'TensorParameterTable',
-    'TypedParameterKey',
-    'UnsafeParameterKeyError',
-    'load_and_pack_modal_autoencoder_checkpoint',
-    'pack_modal_autoencoder_state',
-    'unpack_modal_autoencoder_state',
-    'stable_parameter_id',
-    'FeatureCapacityEvidence',
-    'FeatureCapacityFamily',
-    'FeatureCapacityPolicy',
-    'FeatureCapacityResult',
-    'apply_modal_autoencoder_feature_capacity',
-    'select_sparse_tail',
-    'FactorizedHeadConfig',
-    'FactorizedSemanticInteractionHead',
-    'FactorizedSemanticInteractionHeads',
-    'FactorizedHeadQualityGateConfig',
-    'FactorizedHeadQualityReport',
-    'VerifiedResidual',
-    'factorize_interaction_records',
-    'factorized_head_ablation_configs',
-    'evaluate_factorized_head_quality',
-    'require_factorized_head_quality',
-    'FactorizedStateMigrationConfig',
-    'FactorizedStateMigrationReport',
-    'FactorizedStateMigrationResult',
-    'factorize_modal_autoencoder_state',
-    'migrate_modal_autoencoder_factorized_heads',
-    'materialize_legacy_interaction_tables',
-    'load_factorized_head_checkpoint',
-    'BoundedLowRankLegacyAdapter',
-    'DirectBulkEmbeddingTransferError',
-    'LegacyDistillationConfig',
-    'LegacyDistillationLineage',
-    'LegacyDistillationPromotionConfig',
-    'LegacyDistillationResult',
-    'LegacyEmbeddingAdapterBundle',
-    'distill_legacy_embedding_tails',
-    'evaluate_legacy_distillation_promotion',
-    'require_legacy_distillation_promotion',
-    'AutoencoderEvaluation',
-    'AutoencoderIntrospection',
-    'CodexCallCache',
-    'CodexCallDecision',
-    'CodexCallGateConfig',
-    'ProverCompilationSignal',
-    'TrustedHammerLeanstralFeatureBus',
-    'DECOMPILER_STRUCTURAL_LEARNING_TARGET_SCHEMA_VERSION',
-    'build_decompiler_structural_learning_target',
-    'build_trusted_hammer_leanstral_feature_bus',
-    'trusted_hammer_leanstral_feature_bus',
-    'TrustedFeedbackTrainer',
-    'TrustedFeedbackTrainerConfig',
-    'TrustedFeedbackUpdateReport',
-    'apply_trusted_feedback_weight_updates',
-    'train_trusted_feedback',
-    'ProofFeedbackAblationConfig',
-    'ProofFeedbackAblationReport',
-    'ProofFeedbackAblationArmResult',
-    'run_proof_feedback_ablation',
-    'evaluate_proof_feedback_ablation',
-    'run_trusted_feedback_ablation',
-    'measure_trusted_feedback_causal_efficacy',
-    'FamilyObjectiveResult',
-    'LegalIRObjectiveBalanceReport',
-    'LegalIRObjectiveBalancer',
-    'LegalIRObjectiveBalancerConfig',
-    'ObjectiveWeightBounds',
-    'balance_legal_ir_objective',
-    'evaluate_constrained_legal_ir_objective',
-    'SemanticEquivalenceComparisonReport',
-    'SemanticEquivalenceConfig',
-    'SemanticEquivalenceFamilyComparison',
-    'SemanticEquivalenceFamilyResult',
-    'compare_legal_ir_semantic_equivalence',
-    'evaluate_legal_ir_semantic_equivalence',
-    'semantic_equivalence_from_metrics',
-    'semantic_equivalence_promotion_gate',
-    'EXTERNAL_BENCHMARK_HARD_GUARDRAIL',
-    'EXTERNAL_EVALUATION_OPERATION',
-    'LEGAL_IR_EXTERNAL_BENCHMARK_REPORT_SCHEMA_VERSION',
-    'LEGAL_IR_EXTERNAL_BENCHMARK_SCHEMA_VERSION',
-    'DecompilerExpectation',
-    'ExternalBenchmarkCitation',
-    'ExternalBenchmarkPacketResult',
-    'ExternalBenchmarkReport',
-    'ExternalLegalExpertBenchmarkPacket',
-    'LegalIRExternalBenchmarkError',
-    'LegalIRExternalBenchmarkPolicyError',
-    'ProofObligationExpectation',
-    'evaluate_external_legal_expert_benchmark',
-    'external_benchmark_split_manifest',
-    'load_external_expert_benchmark_packets',
-    'require_external_benchmark_evaluation_only',
-    'LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION',
-    'LEGAL_IR_DRIFT_ROLLBACK_DECISION_SCHEMA_VERSION',
-    'LEGAL_IR_DRIFT_ROLLBACK_TODO_SCHEMA_VERSION',
-    'PRODUCTION_DRIFT_AND_ROLLBACK_HARD_GUARDRAIL',
-    'LegalIRDriftEvent',
-    'LegalIRDriftMonitor',
-    'LegalIRDriftMonitorConfig',
-    'LegalIRDriftReport',
-    'LegalIRRollbackDecision',
-    'LegalIRRollbackTodo',
-    'append_rollback_todos',
-    'monitor_legal_ir_production_drift',
-    'persist_legal_ir_drift_report',
-    'LEGAL_IR_UNCERTAINTY_SCHEMA_VERSION',
-    'ROUTE_CODEX_TODO',
-    'ROUTE_HAMMER_LEANSTRAL_AUDIT',
-    'LegalIRFamilyUncertaintyResult',
-    'LegalIRUncertaintyConfig',
-    'LegalIRUncertaintyReport',
-    'evaluate_legal_ir_uncertainty',
-    'legal_ir_uncertainty_promotion_gate',
-    'route_learned_guidance_by_uncertainty',
-    'ConstrainedLegalIRDecode',
-    'LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION',
-    'LEGAL_IR_GRAMMAR_FAMILIES',
-    'LegalIRGrammarDecoder',
-    'LegalIRGrammarRejection',
-    'LegalIRGrammarValidation',
-    'LegalIRProductionSpec',
-    'canonical_legal_ir_grammar_family',
-    'constrained_legal_ir_decode',
-    'default_legal_ir_production_specs',
-    'grammar_metrics_from_validation',
-    'grammar_rejection_reason_names',
-    'infer_legal_ir_grammar_family',
-    'validate_legal_ir_candidate',
-    'LEGAL_IR_FUZZING_SCHEMA_VERSION',
-    'LEGAL_IR_TRUSTED_NEGATIVE_SCHEMA_VERSION',
-    'SEMANTICS_CHANGING',
-    'SEMANTICS_PRESERVING',
-    'TARGET_DECOMPILER',
-    'TARGET_DETERMINISTIC_IR',
-    'TARGET_LEARNED_IR',
-    'TARGET_OBLIGATIONS',
-    'TARGET_TEXT',
-    'FUZZING_TARGETS',
-    'LegalIRFuzzer',
-    'LegalIRFuzzingConfig',
-    'LegalIRFuzzingReport',
-    'LegalIRFuzzingResult',
-    'LegalIRMutation',
-    'LegalIRSurfaceBundle',
-    'TrustedNegativeCandidate',
-    'minimize_legal_ir_counterexample',
-    'run_legal_ir_metamorphic_fuzzing',
-    'DECOMPILER_HALLUCINATION',
-    'DEFAULT_LEGAL_IR_FAMILY_DIFFICULTY',
-    'DEFAULT_NEGATIVE_FAMILY_DIFFICULTY',
-    'HARD_NEGATIVE_FAMILIES',
-    'INVERTED_MODALITY',
-    'LEGAL_IR_HARD_NEGATIVE_EFFECT_SCHEMA_VERSION',
-    'LEGAL_IR_HARD_NEGATIVE_SCHEMA_VERSION',
-    'NEAR_MISS_CLAUSE',
-    'SOURCE_COPY_SPAN',
-    'STALE_AMENDMENT',
-    'SWAPPED_ACTOR',
-    'VERIFIED_COUNTEREXAMPLE',
-    'WRONG_CITATION',
-    'HardNegativeEffectReport',
-    'LegalIRHardNegativeConfig',
-    'LegalIRHardNegativeCurriculum',
-    'LegalIRHardNegativeCurriculumBuilder',
-    'LegalIRHardNegativeCurriculumStage',
-    'LegalIRHardNegativeExample',
-    'RejectedHardNegative',
-    'build_legal_ir_hard_negative_curriculum',
-    'hard_negative_training_effect_gate',
-    'prove_hard_negatives_reduce_false_positive_semantic_equivalence',
-    'cosine_similarity',
-    'cosine_loss',
-    'mse_loss',
-    'cross_entropy_distribution_loss',
-    'cross_entropy_loss',
-    'evaluate_modal_prover_compilation',
-    'frame_ranking_loss',
-    'symbolic_validity_penalty',
-    'ModalProverRouter',
-    'ModalProverRouteResult',
-    'ModalProverStatus',
-    'ModalParserReport',
-    'build_modal_parser_report',
-    'LossSnapshot',
-    'ModalLossTodoGenerator',
-    'ModalOptimizerPolicy',
-    'ModalOptimizationRun',
-    'ModalOptimizationStep',
-    'ModalProgramSynthesisTodoGenerator',
-    'ModalTodo',
-    'ModalTodoQueue',
-    'ModalTodoSupervisor',
-    'build_uscode_modal_daemon_arg_parser',
-    'run_guarded_uscode_modal_daemon',
-    'sample_train_validation_rows',
+    "ModalLogicFamily",
+    "ModalSystem",
+    "ModalOperatorSpec",
+    "ModalSemanticsSpec",
+    "ModalParseProfile",
+    "ModalRegistry",
+    "DEFAULT_MODAL_REGISTRY",
+    "ModalIRDocument",
+    "ModalIRFormula",
+    "ModalIRFrame",
+    "ModalIRFrameLogic",
+    "ModalIRFrameLogicTriple",
+    "ModalIROperator",
+    "ModalIRPredicate",
+    "ModalIRProvenance",
+    "LegalModalParser",
+    "LegalSegment",
+    "ModalCueSpan",
+    "BM25FrameSelector",
+    "FrameCandidate",
+    "FrameSelection",
+    "DEFAULT_LEGAL_FRAME_FIXTURE",
+    "LegalSample",
+    "LegalSampleValidationError",
+    "build_us_code_sample",
+    "stable_mock_embedding",
+    "HF_USCODE_DATASET_ID",
+    "USCODE_BM25_PARQUET",
+    "USCODE_EMBEDDINGS_PARQUET",
+    "USCODE_LAWS_PARQUET",
+    "USCODE_LOGIC_PROOF_SAMPLE_PARQUET",
+    "USCODE_PARQUET_DIR",
+    "USCodeParquetRecord",
+    "iter_uscode_records_from_parquet",
+    "load_hf_uscode_samples",
+    "load_uscode_embeddings_from_parquet",
+    "load_uscode_samples_from_parquet",
+    "SpaCyLegalEncoder",
+    "SpaCyLegalEncoding",
+    "SpaCyModalCodec",
+    "SpaCyModalCueFeature",
+    "SpaCyModalDecoder",
+    "SpaCyModalIRCompiler",
+    "SpaCySentenceFeature",
+    "SpaCyTokenFeature",
+    "DecodedModalPhrase",
+    "DecodedModalText",
+    "DeterministicModalCompiler",
+    "DeterministicModalLogicCodec",
+    "ModalCompilationAmbiguity",
+    "ModalCompilationResult",
+    "ModalCompilerConfig",
+    "ModalLogicCodecConfig",
+    "ModalLogicCodecResult",
+    "ModalProgramSynthesisHint",
+    "decode_modal_ir_document",
+    "decode_modal_ir_text",
+    "decoded_modal_phrase_slot_text_map",
+    "flogic_ontology_to_dict",
+    "flogic_triples_to_graph_data",
+    "flogic_triples_to_ontology",
+    "import_graph_data_to_graph_engine",
+    "import_modal_ir_to_graph_engine",
+    "modal_formula_to_text",
+    "modal_text_token_similarity",
+    "modal_ir_to_flogic_triples",
+    "modal_ir_to_neo4j_graph_data",
+    "synthesis_hints_from_autoencoder_introspection",
+    "synthesis_hints_from_autoencoder_introspections",
+    "target_family_distribution_for_modal_ir",
+    "target_family_for_modal_ir",
+    "AdaptiveModalAutoencoder",
+    "AutoencoderFeatureContribution",
+    "ModalAutoencoderBaseline",
+    "ModalAutoencoderTrainingState",
+    "ModalAutoencoderTensorState",
+    "PackedParameterMap",
+    "PackedProofAuxiliaryMap",
+    "SparseOverflowFullError",
+    "StableKeyRegistry",
+    "TensorKeyKind",
+    "TensorParameterTable",
+    "TypedParameterKey",
+    "UnsafeParameterKeyError",
+    "load_and_pack_modal_autoencoder_checkpoint",
+    "pack_modal_autoencoder_state",
+    "unpack_modal_autoencoder_state",
+    "stable_parameter_id",
+    "FeatureCapacityEvidence",
+    "FeatureCapacityFamily",
+    "FeatureCapacityPolicy",
+    "FeatureCapacityResult",
+    "apply_modal_autoencoder_feature_capacity",
+    "select_sparse_tail",
+    "FactorizedHeadConfig",
+    "FactorizedSemanticInteractionHead",
+    "FactorizedSemanticInteractionHeads",
+    "FactorizedHeadQualityGateConfig",
+    "FactorizedHeadQualityReport",
+    "VerifiedResidual",
+    "factorize_interaction_records",
+    "factorized_head_ablation_configs",
+    "evaluate_factorized_head_quality",
+    "require_factorized_head_quality",
+    "FactorizedStateMigrationConfig",
+    "FactorizedStateMigrationReport",
+    "FactorizedStateMigrationResult",
+    "factorize_modal_autoencoder_state",
+    "migrate_modal_autoencoder_factorized_heads",
+    "materialize_legacy_interaction_tables",
+    "load_factorized_head_checkpoint",
+    "BoundedLowRankLegacyAdapter",
+    "DirectBulkEmbeddingTransferError",
+    "LegacyDistillationConfig",
+    "LegacyDistillationLineage",
+    "LegacyDistillationPromotionConfig",
+    "LegacyDistillationResult",
+    "LegacyEmbeddingAdapterBundle",
+    "distill_legacy_embedding_tails",
+    "evaluate_legacy_distillation_promotion",
+    "require_legacy_distillation_promotion",
+    "AutoencoderEvaluation",
+    "AutoencoderIntrospection",
+    "CodexCallCache",
+    "CodexCallDecision",
+    "CodexCallGateConfig",
+    "ProverCompilationSignal",
+    "TrustedHammerLeanstralFeatureBus",
+    "DECOMPILER_STRUCTURAL_LEARNING_TARGET_SCHEMA_VERSION",
+    "build_decompiler_structural_learning_target",
+    "build_trusted_hammer_leanstral_feature_bus",
+    "trusted_hammer_leanstral_feature_bus",
+    "TrustedFeedbackTrainer",
+    "TrustedFeedbackTrainerConfig",
+    "TrustedFeedbackUpdateReport",
+    "apply_trusted_feedback_weight_updates",
+    "train_trusted_feedback",
+    "ProofFeedbackAblationConfig",
+    "ProofFeedbackAblationReport",
+    "ProofFeedbackAblationArmResult",
+    "run_proof_feedback_ablation",
+    "evaluate_proof_feedback_ablation",
+    "run_trusted_feedback_ablation",
+    "measure_trusted_feedback_causal_efficacy",
+    "FamilyObjectiveResult",
+    "LegalIRObjectiveBalanceReport",
+    "LegalIRObjectiveBalancer",
+    "LegalIRObjectiveBalancerConfig",
+    "ObjectiveWeightBounds",
+    "balance_legal_ir_objective",
+    "evaluate_constrained_legal_ir_objective",
+    "SemanticEquivalenceComparisonReport",
+    "SemanticEquivalenceConfig",
+    "SemanticEquivalenceFamilyComparison",
+    "SemanticEquivalenceFamilyResult",
+    "compare_legal_ir_semantic_equivalence",
+    "evaluate_legal_ir_semantic_equivalence",
+    "semantic_equivalence_from_metrics",
+    "semantic_equivalence_promotion_gate",
+    "EXTERNAL_BENCHMARK_HARD_GUARDRAIL",
+    "EXTERNAL_EVALUATION_OPERATION",
+    "LEGAL_IR_EXTERNAL_BENCHMARK_REPORT_SCHEMA_VERSION",
+    "LEGAL_IR_EXTERNAL_BENCHMARK_SCHEMA_VERSION",
+    "DecompilerExpectation",
+    "ExternalBenchmarkCitation",
+    "ExternalBenchmarkPacketResult",
+    "ExternalBenchmarkReport",
+    "ExternalLegalExpertBenchmarkPacket",
+    "LegalIRExternalBenchmarkError",
+    "LegalIRExternalBenchmarkPolicyError",
+    "ProofObligationExpectation",
+    "evaluate_external_legal_expert_benchmark",
+    "external_benchmark_split_manifest",
+    "load_external_expert_benchmark_packets",
+    "require_external_benchmark_evaluation_only",
+    "LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION",
+    "LEGAL_IR_DRIFT_ROLLBACK_DECISION_SCHEMA_VERSION",
+    "LEGAL_IR_DRIFT_ROLLBACK_TODO_SCHEMA_VERSION",
+    "PRODUCTION_DRIFT_AND_ROLLBACK_HARD_GUARDRAIL",
+    "LegalIRDriftEvent",
+    "LegalIRDriftMonitor",
+    "LegalIRDriftMonitorConfig",
+    "LegalIRDriftReport",
+    "LegalIRRollbackDecision",
+    "LegalIRRollbackTodo",
+    "append_rollback_todos",
+    "monitor_legal_ir_production_drift",
+    "persist_legal_ir_drift_report",
+    "LEGAL_IR_UNCERTAINTY_SCHEMA_VERSION",
+    "ROUTE_CODEX_TODO",
+    "ROUTE_HAMMER_LEANSTRAL_AUDIT",
+    "LegalIRFamilyUncertaintyResult",
+    "LegalIRUncertaintyConfig",
+    "LegalIRUncertaintyReport",
+    "evaluate_legal_ir_uncertainty",
+    "legal_ir_uncertainty_promotion_gate",
+    "route_learned_guidance_by_uncertainty",
+    "ConstrainedLegalIRDecode",
+    "LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION",
+    "LEGAL_IR_GRAMMAR_FAMILIES",
+    "LegalIRGrammarDecoder",
+    "LegalIRGrammarRejection",
+    "LegalIRGrammarValidation",
+    "LegalIRProductionSpec",
+    "canonical_legal_ir_grammar_family",
+    "constrained_legal_ir_decode",
+    "default_legal_ir_production_specs",
+    "grammar_metrics_from_validation",
+    "grammar_rejection_reason_names",
+    "infer_legal_ir_grammar_family",
+    "validate_legal_ir_candidate",
+    "CANONICAL_IR_LOSS_CONFIGURATION_CID",
+    "IR_LOSS_CONFIGURATION_SCHEMA",
+    "IR_LOSS_COMPONENT_NAMES",
+    "IRLossConfiguration",
+    "IRCompositeLossResult",
+    "canonical_ir_loss_configuration",
+    "evaluate_ir_composite_loss",
+    "isolate_ir_loss_component",
+    "LEGAL_IR_FUZZING_SCHEMA_VERSION",
+    "LEGAL_IR_TRUSTED_NEGATIVE_SCHEMA_VERSION",
+    "SEMANTICS_CHANGING",
+    "SEMANTICS_PRESERVING",
+    "TARGET_DECOMPILER",
+    "TARGET_DETERMINISTIC_IR",
+    "TARGET_LEARNED_IR",
+    "TARGET_OBLIGATIONS",
+    "TARGET_TEXT",
+    "FUZZING_TARGETS",
+    "LegalIRFuzzer",
+    "LegalIRFuzzingConfig",
+    "LegalIRFuzzingReport",
+    "LegalIRFuzzingResult",
+    "LegalIRMutation",
+    "LegalIRSurfaceBundle",
+    "TrustedNegativeCandidate",
+    "minimize_legal_ir_counterexample",
+    "run_legal_ir_metamorphic_fuzzing",
+    "DECOMPILER_HALLUCINATION",
+    "DEFAULT_LEGAL_IR_FAMILY_DIFFICULTY",
+    "DEFAULT_NEGATIVE_FAMILY_DIFFICULTY",
+    "HARD_NEGATIVE_FAMILIES",
+    "INVERTED_MODALITY",
+    "LEGAL_IR_HARD_NEGATIVE_EFFECT_SCHEMA_VERSION",
+    "LEGAL_IR_HARD_NEGATIVE_SCHEMA_VERSION",
+    "NEAR_MISS_CLAUSE",
+    "SOURCE_COPY_SPAN",
+    "STALE_AMENDMENT",
+    "SWAPPED_ACTOR",
+    "VERIFIED_COUNTEREXAMPLE",
+    "WRONG_CITATION",
+    "HardNegativeEffectReport",
+    "LegalIRHardNegativeConfig",
+    "LegalIRHardNegativeCurriculum",
+    "LegalIRHardNegativeCurriculumBuilder",
+    "LegalIRHardNegativeCurriculumStage",
+    "LegalIRHardNegativeExample",
+    "RejectedHardNegative",
+    "build_legal_ir_hard_negative_curriculum",
+    "hard_negative_training_effect_gate",
+    "prove_hard_negatives_reduce_false_positive_semantic_equivalence",
+    "cosine_similarity",
+    "cosine_loss",
+    "mse_loss",
+    "cross_entropy_distribution_loss",
+    "cross_entropy_loss",
+    "evaluate_modal_prover_compilation",
+    "frame_ranking_loss",
+    "symbolic_validity_penalty",
+    "ModalProverRouter",
+    "ModalProverRouteResult",
+    "ModalProverStatus",
+    "ModalParserReport",
+    "build_modal_parser_report",
+    "LossSnapshot",
+    "ModalLossTodoGenerator",
+    "ModalOptimizerPolicy",
+    "ModalOptimizationRun",
+    "ModalOptimizationStep",
+    "ModalProgramSynthesisTodoGenerator",
+    "ModalTodo",
+    "ModalTodoQueue",
+    "ModalTodoSupervisor",
+    "build_uscode_modal_daemon_arg_parser",
+    "run_guarded_uscode_modal_daemon",
+    "sample_train_validation_rows",
     # Critic
-    'LogicCritic',
-    'CriticScore',
-    'CriticDimensions',
+    "LogicCritic",
+    "CriticScore",
+    "CriticDimensions",
     # Optimizer
-    'LogicOptimizer',
-    'OptimizationReport',
-    'OptimizationStrategy',
+    "LogicOptimizer",
+    "OptimizationReport",
+    "OptimizationStrategy",
     # Session (DEPRECATED - Use LogicTheoremOptimizer)
-    'TheoremSession',
-    'SessionResult',
-    'SessionConfig',
+    "TheoremSession",
+    "SessionResult",
+    "SessionConfig",
     # Session Contracts (NEW - Formalized, typed, validated)
-    'LogicSessionConfig',
-    'LogicSessionResult',
-    'RoundResult',
-    'ExtractionMetrics',
-    'ConvergenceReason',
+    "LogicSessionConfig",
+    "LogicSessionResult",
+    "RoundResult",
+    "ExtractionMetrics",
+    "ConvergenceReason",
     # Harness (DEPRECATED - Use LogicTheoremOptimizer)
-    'LogicHarness',
-    'LogicPipelineHarness',
-    'HarnessConfig',
-    'HarnessResult',
+    "LogicHarness",
+    "LogicPipelineHarness",
+    "HarnessConfig",
+    "HarnessResult",
     # Ontology
-    'KnowledgeGraphStabilizer',
-    'OntologyConsistencyChecker',
+    "KnowledgeGraphStabilizer",
+    "OntologyConsistencyChecker",
     # Phase 2.1: Prover Integration
-    'ProverIntegrationAdapter',
-    'ProverVerificationResult',
-    'AggregatedProverResult',
+    "ProverIntegrationAdapter",
+    "ProverVerificationResult",
+    "AggregatedProverResult",
     # Phase 2.3: LLM Backend
-    'LLMBackendAdapter',
-    'LLMRequest',
-    'LLMResponse',
-    'RouterBackend',
+    "LLMBackendAdapter",
+    "LLMRequest",
+    "LLMResponse",
+    "RouterBackend",
     # Phase 2.5: RAG Integration
-    'RAGIntegration',
-    'RAGContext',
-    'RAGStatistics',
+    "RAGIntegration",
+    "RAGContext",
+    "RAGStatistics",
     # Future Enhancement 1: Neural-Symbolic Hybrid Prover
-    'NeuralSymbolicHybridProver',
-    'HybridStrategy',
-    'NeuralResult',
-    'SymbolicResult',
-    'HybridProverResult',
+    "NeuralSymbolicHybridProver",
+    "HybridStrategy",
+    "NeuralResult",
+    "SymbolicResult",
+    "HybridProverResult",
     # Future Enhancement 2: Prompt Optimization
-    'PromptOptimizer',
-    'OptimizationStrategy',
-    'PromptMetrics',
-    'PromptTemplate',
-    'OptimizationResult',
+    "PromptOptimizer",
+    "OptimizationStrategy",
+    "PromptMetrics",
+    "PromptTemplate",
+    "OptimizationResult",
     # Future Enhancement 3: Real-time Ontology Evolution
-    'OntologyEvolution',
-    'UpdateStrategy',
-    'EvolutionEvent',
-    'OntologyVersion',
-    'EvolutionMetrics',
-    'UpdateCandidate',
+    "OntologyEvolution",
+    "UpdateStrategy",
+    "EvolutionEvent",
+    "OntologyVersion",
+    "EvolutionMetrics",
+    "UpdateCandidate",
     # Future Enhancement 4: Distributed Processing
-    'DistributedProcessor',
-    'TaskStatus',
-    'WorkerStatus',
-    'Task',
-    'WorkerInfo',
-    'DistributedResult',
+    "DistributedProcessor",
+    "TaskStatus",
+    "WorkerStatus",
+    "Task",
+    "WorkerInfo",
+    "DistributedResult",
     # Future Enhancement 5: Additional Theorem Provers
-    'IsabelleProver',
-    'VampireProver',
-    'EProver',
-    'AdditionalProversRegistry',
-    'ProverResult',
-    'ProverType',
-    'ProofFormat',
+    "IsabelleProver",
+    "VampireProver",
+    "EProver",
+    "AdditionalProversRegistry",
+    "ProverResult",
+    "ProverType",
+    "ProofFormat",
     # Future Enhancement 6: Conflict Resolution
-    'ConflictResolver',
-    'ResolutionStrategy',
-    'ConflictType',
-    'Conflict',
-    'Resolution',
-    'ResolutionMetrics',
+    "ConflictResolver",
+    "ResolutionStrategy",
+    "ConflictType",
+    "Conflict",
+    "Resolution",
+    "ResolutionMetrics",
     # Future Enhancement 7: Automated Prompt Engineering
-    'PromptEngineer',
-    'SelectionMethod',
-    'CrossoverMethod',
-    'MutationMethod',
-    'EvolutionResult',
+    "PromptEngineer",
+    "SelectionMethod",
+    "CrossoverMethod",
+    "MutationMethod",
+    "EvolutionResult",
     # Proof Trace Serialization
-    'serialize_aggregated_proof_trace',
-    'serialize_prover_result_trace',
-    'proof_trace_to_json',
-    'write_proof_trace_json',
-    'serialize_dataclass_like',
+    "serialize_aggregated_proof_trace",
+    "serialize_prover_result_trace",
+    "proof_trace_to_json",
+    "write_proof_trace_json",
+    "serialize_dataclass_like",
     # Global nested-process resource scheduling
-    'ResourceLane',
-    'LaneReservation',
-    'ResourceSchedulerConfig',
-    'ResourceLeaseToken',
-    'ResourceLease',
-    'GlobalResourceScheduler',
-    'get_global_resource_scheduler',
-    'configure_global_resource_scheduler',
-    'acquire_resource_lease',
+    "ResourceLane",
+    "LaneReservation",
+    "ResourceSchedulerConfig",
+    "ResourceLeaseToken",
+    "ResourceLease",
+    "GlobalResourceScheduler",
+    "get_global_resource_scheduler",
+    "configure_global_resource_scheduler",
+    "acquire_resource_lease",
     # Resource-aware explicit LegalIR stage DAG
-    'PipelineStage',
-    'StageStatus',
-    'StageResourceRequest',
-    'PipelineTask',
-    'PipelineSchedulerSignals',
-    'StageConcurrencyLimits',
-    'StageAdmission',
-    'PipelineStageScheduler',
-    'build_canonical_pipeline_dag',
+    "PipelineStage",
+    "StageStatus",
+    "StageResourceRequest",
+    "PipelineTask",
+    "PipelineSchedulerSignals",
+    "StageConcurrencyLimits",
+    "StageAdmission",
+    "PipelineStageScheduler",
+    "build_canonical_pipeline_dag",
     # Asynchronous immutable state evaluation
-    'SnapshotVersions',
-    'EvaluationSnapshot',
-    'SnapshotEvaluationResult',
-    'SnapshotBoundary',
-    'SnapshotEvaluator',
-    'SnapshotBackpressureTimeout',
-    'canonical_holdout_version',
+    "SnapshotVersions",
+    "EvaluationSnapshot",
+    "SnapshotEvaluationResult",
+    "SnapshotBoundary",
+    "SnapshotEvaluator",
+    "SnapshotBackpressureTimeout",
+    "canonical_holdout_version",
     # Semantic-family sharded evaluation
-    'LEGAL_IR_EVALUATION_FAMILIES',
-    'SharedEvaluationArtifacts',
-    'FamilyShardRequest',
-    'FamilyShardResult',
-    'FamilyEvaluationAggregate',
-    'LegalIRFamilyEvaluator',
-    'aggregate_family_results',
+    "LEGAL_IR_EVALUATION_FAMILIES",
+    "SharedEvaluationArtifacts",
+    "FamilyShardRequest",
+    "FamilyShardResult",
+    "FamilyEvaluationAggregate",
+    "LegalIRFamilyEvaluator",
+    "aggregate_family_results",
     # Changed-scope incremental candidate validation
-    'ValidationBoundary',
-    'TypedASTScope',
-    'ValidationScopeCatalog',
-    'ChangedScopeRule',
-    'ChangedScopeValidationPlan',
-    'ChangedScopeValidationPlanner',
-    'FrozenBaselineEvidence',
-    'IncrementalValidationCheck',
-    'IncrementalValidationRequest',
-    'IncrementalValidationResult',
-    'IncrementalValidationReport',
-    'IncrementalCandidateValidator',
-    'IncrementalValidationStage',
-    'IncrementalValidationStageResult',
-    'StagedIncrementalValidationReport',
-    'IncrementalStagedValidationReport',
-    'PreflightFirstIncrementalValidator',
-    'IncrementalValidationPlan',
-    'IncrementalValidationPlanner',
-    'IncrementalValidationRunner',
-    'ImmutableBaselineEvidence',
-    'ASTScope',
-    'TransientValidationError',
-    'plan_incremental_validation',
-    'build_incremental_validation_plan',
-    'map_changed_scope',
-    'plan_changed_scope_validation',
-    'validate_incremental_candidate',
-    'validate_staged_incremental_candidate',
-    'validate_incremental_candidate_staged',
+    "ValidationBoundary",
+    "TypedASTScope",
+    "ValidationScopeCatalog",
+    "ChangedScopeRule",
+    "ChangedScopeValidationPlan",
+    "ChangedScopeValidationPlanner",
+    "FrozenBaselineEvidence",
+    "IncrementalValidationCheck",
+    "IncrementalValidationRequest",
+    "IncrementalValidationResult",
+    "IncrementalValidationReport",
+    "IncrementalCandidateValidator",
+    "IncrementalValidationStage",
+    "IncrementalValidationStageResult",
+    "StagedIncrementalValidationReport",
+    "IncrementalStagedValidationReport",
+    "PreflightFirstIncrementalValidator",
+    "IncrementalValidationPlan",
+    "IncrementalValidationPlanner",
+    "IncrementalValidationRunner",
+    "ImmutableBaselineEvidence",
+    "ASTScope",
+    "TransientValidationError",
+    "plan_incremental_validation",
+    "build_incremental_validation_plan",
+    "map_changed_scope",
+    "plan_changed_scope_validation",
+    "validate_incremental_candidate",
+    "validate_staged_incremental_candidate",
+    "validate_incremental_candidate_staged",
     # Conflict-aware Codex scope scheduling
-    'CodexOwnershipScope',
-    'CodexScopeTask',
-    'PredictedWriteSet',
-    'WriteSetPredictor',
-    'ScopeEvidenceBundle',
-    'ScopeEvidenceBundler',
-    'SchedulerSignals',
-    'SchedulerOutcome',
-    'WorkerDecision',
-    'AdaptiveWorkerController',
-    'ScopeAssignment',
-    'ScopeSchedulePlan',
-    'CodexScopeScheduler',
-    'IsolatedValidationExecutor',
-    'ConflictAwareMergeSerializer',
-    'canonical_codex_scope',
-    'predict_codex_write_set',
-    'bundle_codex_scope_evidence',
-    'schedule_codex_scopes',
+    "CodexOwnershipScope",
+    "CodexScopeTask",
+    "PredictedWriteSet",
+    "WriteSetPredictor",
+    "ScopeEvidenceBundle",
+    "ScopeEvidenceBundler",
+    "SchedulerSignals",
+    "SchedulerOutcome",
+    "WorkerDecision",
+    "AdaptiveWorkerController",
+    "ScopeAssignment",
+    "ScopeSchedulePlan",
+    "CodexScopeScheduler",
+    "IsolatedValidationExecutor",
+    "ConflictAwareMergeSerializer",
+    "canonical_codex_scope",
+    "predict_codex_write_set",
+    "bundle_codex_scope_evidence",
+    "schedule_codex_scopes",
     # Complete parallel-pipeline benchmarking and autotuning
-    'ParallelismProfile',
-    'GlobalResourceBounds',
-    'TrustBounds',
-    'PhaseLatency',
-    'PipelineBenchmarkMetrics',
-    'BenchmarkTrial',
-    'CandidateEvaluation',
-    'AutotuneResult',
-    'ParallelismAutotuner',
-    'autotune_parallelism',
-    'write_reproducible_profile',
-    'BatchAutotuneConfig',
-    'BatchAutotuneDecision',
-    'BatchAutotuner',
-    'BatchCandidateEvaluation',
-    'BatchCandidateMeasurement',
-    'BatchResourceMeasurement',
-    'BatchSizeAutotuner',
-    'BatchSizeMeasurement',
-    'BatchTuningConfig',
-    'BatchTuningResult',
-    'ResourceSafeBatchAutotuner',
-    'autotune_batch_size',
+    "ParallelismProfile",
+    "GlobalResourceBounds",
+    "TrustBounds",
+    "PhaseLatency",
+    "PipelineBenchmarkMetrics",
+    "BenchmarkTrial",
+    "CandidateEvaluation",
+    "AutotuneResult",
+    "ParallelismAutotuner",
+    "autotune_parallelism",
+    "write_reproducible_profile",
+    "BatchAutotuneConfig",
+    "BatchAutotuneDecision",
+    "BatchAutotuner",
+    "BatchCandidateEvaluation",
+    "BatchCandidateMeasurement",
+    "BatchResourceMeasurement",
+    "BatchSizeAutotuner",
+    "BatchSizeMeasurement",
+    "BatchTuningConfig",
+    "BatchTuningResult",
+    "ResourceSafeBatchAutotuner",
+    "autotune_batch_size",
     # Deterministic modal-autoencoder minibatches
-    'BatchCollationConfig',
-    'BatchExecutionResult',
-    'GradientAccumulationPlan',
-    'ModalAutoencoderBatchCollator',
-    'PackedSparseMinibatch',
-    'ResourceSafeBatchRunner',
-    'SparseFeatureExample',
-    'SplitIsolationError',
-    'collate_sparse_minibatch',
-    'iter_collated_minibatches',
-    'plan_gradient_accumulation',
+    "BatchCollationConfig",
+    "BatchExecutionResult",
+    "GradientAccumulationPlan",
+    "ModalAutoencoderBatchCollator",
+    "PackedSparseMinibatch",
+    "ResourceSafeBatchRunner",
+    "SparseFeatureExample",
+    "SplitIsolationError",
+    "collate_sparse_minibatch",
+    "iter_collated_minibatches",
+    "plan_gradient_accumulation",
     # Program-synthesis failure classification and recovery
-    'FailureCategory',
-    'FailureClassification',
-    'FailureEvidenceStore',
-    'FailureObservation',
-    'FailurePolicy',
-    'FailureRateReporter',
-    'ProgramSynthesisFailureClassifier',
-    'ProgramSynthesisFailureRecovery',
-    'RecoveryAction',
-    'RecoveryContext',
-    'RecoveryLedger',
-    'RecoveryOperations',
-    'RecoveryOutcome',
-    'RecoveryStatus',
-    'ValidationRescueStage',
-    'ValidationRescueStatus',
-    'ValidationWorktreeRescueRequest',
-    'ValidationRescueContext',
-    'ValidationRescueOperations',
-    'ValidationRescueAttempt',
-    'ValidationWorktreeRescueOutcome',
-    'ValidationWorktreeEvidenceStore',
-    'ValidationWorktreeRescueCoordinator',
-    'FailedValidationRescueRequest',
-    'ValidationRescueOutcome',
-    'FailedWorktreeRescuer',
-    'BoundedValidationWorktreeRescuer',
+    "FailureCategory",
+    "FailureClassification",
+    "FailureEvidenceStore",
+    "FailureObservation",
+    "FailurePolicy",
+    "FailureRateReporter",
+    "ProgramSynthesisFailureClassifier",
+    "ProgramSynthesisFailureRecovery",
+    "RecoveryAction",
+    "RecoveryContext",
+    "RecoveryLedger",
+    "RecoveryOperations",
+    "RecoveryOutcome",
+    "RecoveryStatus",
+    "ValidationRescueStage",
+    "ValidationRescueStatus",
+    "ValidationWorktreeRescueRequest",
+    "ValidationRescueContext",
+    "ValidationRescueOperations",
+    "ValidationRescueAttempt",
+    "ValidationWorktreeRescueOutcome",
+    "ValidationWorktreeEvidenceStore",
+    "ValidationWorktreeRescueCoordinator",
+    "FailedValidationRescueRequest",
+    "ValidationRescueOutcome",
+    "FailedWorktreeRescuer",
+    "BoundedValidationWorktreeRescuer",
 ]
 
-__version__ = '0.1.0'
+__version__ = "0.1.0"
 
 
 _DEPRECATED_EXPORT_REMOVAL_POLICY = {
@@ -629,29 +637,29 @@ def _enforce_export_version_gate(name: str, current_version: str | None = None) 
 def __getattr__(name):
     """Lazy imports to avoid circular dependencies."""
     if name in (
-        'ParallelismProfile',
-        'GlobalResourceBounds',
-        'TrustBounds',
-        'PhaseLatency',
-        'PipelineBenchmarkMetrics',
-        'BenchmarkTrial',
-        'CandidateEvaluation',
-        'AutotuneResult',
-        'ParallelismAutotuner',
-        'autotune_parallelism',
-        'write_reproducible_profile',
-        'BatchAutotuneConfig',
-        'BatchAutotuneDecision',
-        'BatchAutotuner',
-        'BatchCandidateEvaluation',
-        'BatchCandidateMeasurement',
-        'BatchResourceMeasurement',
-        'BatchSizeAutotuner',
-        'BatchSizeMeasurement',
-        'BatchTuningConfig',
-        'BatchTuningResult',
-        'ResourceSafeBatchAutotuner',
-        'autotune_batch_size',
+        "ParallelismProfile",
+        "GlobalResourceBounds",
+        "TrustBounds",
+        "PhaseLatency",
+        "PipelineBenchmarkMetrics",
+        "BenchmarkTrial",
+        "CandidateEvaluation",
+        "AutotuneResult",
+        "ParallelismAutotuner",
+        "autotune_parallelism",
+        "write_reproducible_profile",
+        "BatchAutotuneConfig",
+        "BatchAutotuneDecision",
+        "BatchAutotuner",
+        "BatchCandidateEvaluation",
+        "BatchCandidateMeasurement",
+        "BatchResourceMeasurement",
+        "BatchSizeAutotuner",
+        "BatchSizeMeasurement",
+        "BatchTuningConfig",
+        "BatchTuningResult",
+        "ResourceSafeBatchAutotuner",
+        "autotune_batch_size",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             parallelism_autotuner,
@@ -659,17 +667,17 @@ def __getattr__(name):
 
         return getattr(parallelism_autotuner, name)
     if name in (
-        'BatchCollationConfig',
-        'BatchExecutionResult',
-        'GradientAccumulationPlan',
-        'ModalAutoencoderBatchCollator',
-        'PackedSparseMinibatch',
-        'ResourceSafeBatchRunner',
-        'SparseFeatureExample',
-        'SplitIsolationError',
-        'collate_sparse_minibatch',
-        'iter_collated_minibatches',
-        'plan_gradient_accumulation',
+        "BatchCollationConfig",
+        "BatchExecutionResult",
+        "GradientAccumulationPlan",
+        "ModalAutoencoderBatchCollator",
+        "PackedSparseMinibatch",
+        "ResourceSafeBatchRunner",
+        "SparseFeatureExample",
+        "SplitIsolationError",
+        "collate_sparse_minibatch",
+        "iter_collated_minibatches",
+        "plan_gradient_accumulation",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             modal_autoencoder_batching,
@@ -677,25 +685,25 @@ def __getattr__(name):
 
         return getattr(modal_autoencoder_batching, name)
     if name in (
-        'CodexOwnershipScope',
-        'CodexScopeTask',
-        'PredictedWriteSet',
-        'WriteSetPredictor',
-        'ScopeEvidenceBundle',
-        'ScopeEvidenceBundler',
-        'SchedulerSignals',
-        'SchedulerOutcome',
-        'WorkerDecision',
-        'AdaptiveWorkerController',
-        'ScopeAssignment',
-        'ScopeSchedulePlan',
-        'CodexScopeScheduler',
-        'IsolatedValidationExecutor',
-        'ConflictAwareMergeSerializer',
-        'canonical_codex_scope',
-        'predict_codex_write_set',
-        'bundle_codex_scope_evidence',
-        'schedule_codex_scopes',
+        "CodexOwnershipScope",
+        "CodexScopeTask",
+        "PredictedWriteSet",
+        "WriteSetPredictor",
+        "ScopeEvidenceBundle",
+        "ScopeEvidenceBundler",
+        "SchedulerSignals",
+        "SchedulerOutcome",
+        "WorkerDecision",
+        "AdaptiveWorkerController",
+        "ScopeAssignment",
+        "ScopeSchedulePlan",
+        "CodexScopeScheduler",
+        "IsolatedValidationExecutor",
+        "ConflictAwareMergeSerializer",
+        "canonical_codex_scope",
+        "predict_codex_write_set",
+        "bundle_codex_scope_evidence",
+        "schedule_codex_scopes",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             codex_scope_scheduler,
@@ -703,33 +711,33 @@ def __getattr__(name):
 
         return getattr(codex_scope_scheduler, name)
     if name in (
-        'FailureCategory',
-        'FailureClassification',
-        'FailureEvidenceStore',
-        'FailureObservation',
-        'FailurePolicy',
-        'FailureRateReporter',
-        'ProgramSynthesisFailureClassifier',
-        'ProgramSynthesisFailureRecovery',
-        'RecoveryAction',
-        'RecoveryContext',
-        'RecoveryLedger',
-        'RecoveryOperations',
-        'RecoveryOutcome',
-        'RecoveryStatus',
-        'ValidationRescueStage',
-        'ValidationRescueStatus',
-        'ValidationWorktreeRescueRequest',
-        'ValidationRescueContext',
-        'ValidationRescueOperations',
-        'ValidationRescueAttempt',
-        'ValidationWorktreeRescueOutcome',
-        'ValidationWorktreeEvidenceStore',
-        'ValidationWorktreeRescueCoordinator',
-        'FailedValidationRescueRequest',
-        'ValidationRescueOutcome',
-        'FailedWorktreeRescuer',
-        'BoundedValidationWorktreeRescuer',
+        "FailureCategory",
+        "FailureClassification",
+        "FailureEvidenceStore",
+        "FailureObservation",
+        "FailurePolicy",
+        "FailureRateReporter",
+        "ProgramSynthesisFailureClassifier",
+        "ProgramSynthesisFailureRecovery",
+        "RecoveryAction",
+        "RecoveryContext",
+        "RecoveryLedger",
+        "RecoveryOperations",
+        "RecoveryOutcome",
+        "RecoveryStatus",
+        "ValidationRescueStage",
+        "ValidationRescueStatus",
+        "ValidationWorktreeRescueRequest",
+        "ValidationRescueContext",
+        "ValidationRescueOperations",
+        "ValidationRescueAttempt",
+        "ValidationWorktreeRescueOutcome",
+        "ValidationWorktreeEvidenceStore",
+        "ValidationWorktreeRescueCoordinator",
+        "FailedValidationRescueRequest",
+        "ValidationRescueOutcome",
+        "FailedWorktreeRescuer",
+        "BoundedValidationWorktreeRescuer",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             program_synthesis_failures,
@@ -737,36 +745,36 @@ def __getattr__(name):
 
         return getattr(program_synthesis_failures, name)
     if name in (
-        'ValidationBoundary',
-        'TypedASTScope',
-        'ValidationScopeCatalog',
-        'ChangedScopeRule',
-        'ChangedScopeValidationPlan',
-        'ChangedScopeValidationPlanner',
-        'FrozenBaselineEvidence',
-        'IncrementalValidationCheck',
-        'IncrementalValidationRequest',
-        'IncrementalValidationResult',
-        'IncrementalValidationReport',
-        'IncrementalCandidateValidator',
-        'IncrementalValidationStage',
-        'IncrementalValidationStageResult',
-        'StagedIncrementalValidationReport',
-        'IncrementalStagedValidationReport',
-        'PreflightFirstIncrementalValidator',
-        'IncrementalValidationPlan',
-        'IncrementalValidationPlanner',
-        'IncrementalValidationRunner',
-        'ImmutableBaselineEvidence',
-        'ASTScope',
-        'TransientValidationError',
-        'plan_incremental_validation',
-        'build_incremental_validation_plan',
-        'map_changed_scope',
-        'plan_changed_scope_validation',
-        'validate_incremental_candidate',
-        'validate_staged_incremental_candidate',
-        'validate_incremental_candidate_staged',
+        "ValidationBoundary",
+        "TypedASTScope",
+        "ValidationScopeCatalog",
+        "ChangedScopeRule",
+        "ChangedScopeValidationPlan",
+        "ChangedScopeValidationPlanner",
+        "FrozenBaselineEvidence",
+        "IncrementalValidationCheck",
+        "IncrementalValidationRequest",
+        "IncrementalValidationResult",
+        "IncrementalValidationReport",
+        "IncrementalCandidateValidator",
+        "IncrementalValidationStage",
+        "IncrementalValidationStageResult",
+        "StagedIncrementalValidationReport",
+        "IncrementalStagedValidationReport",
+        "PreflightFirstIncrementalValidator",
+        "IncrementalValidationPlan",
+        "IncrementalValidationPlanner",
+        "IncrementalValidationRunner",
+        "ImmutableBaselineEvidence",
+        "ASTScope",
+        "TransientValidationError",
+        "plan_incremental_validation",
+        "build_incremental_validation_plan",
+        "map_changed_scope",
+        "plan_changed_scope_validation",
+        "validate_incremental_candidate",
+        "validate_staged_incremental_candidate",
+        "validate_incremental_candidate_staged",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             incremental_validation,
@@ -774,25 +782,25 @@ def __getattr__(name):
 
         return getattr(incremental_validation, name)
     if name in (
-        'SnapshotVersions',
-        'EvaluationSnapshot',
-        'SnapshotEvaluationResult',
-        'SnapshotBoundary',
-        'SnapshotEvaluator',
-        'SnapshotBackpressureTimeout',
-        'canonical_holdout_version',
+        "SnapshotVersions",
+        "EvaluationSnapshot",
+        "SnapshotEvaluationResult",
+        "SnapshotBoundary",
+        "SnapshotEvaluator",
+        "SnapshotBackpressureTimeout",
+        "canonical_holdout_version",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import snapshot_evaluator
 
         return getattr(snapshot_evaluator, name)
     if name in (
-        'LEGAL_IR_EVALUATION_FAMILIES',
-        'SharedEvaluationArtifacts',
-        'FamilyShardRequest',
-        'FamilyShardResult',
-        'FamilyEvaluationAggregate',
-        'LegalIRFamilyEvaluator',
-        'aggregate_family_results',
+        "LEGAL_IR_EVALUATION_FAMILIES",
+        "SharedEvaluationArtifacts",
+        "FamilyShardRequest",
+        "FamilyShardResult",
+        "FamilyEvaluationAggregate",
+        "LegalIRFamilyEvaluator",
+        "aggregate_family_results",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             legal_ir_family_evaluator,
@@ -800,15 +808,15 @@ def __getattr__(name):
 
         return getattr(legal_ir_family_evaluator, name)
     if name in (
-        'PipelineStage',
-        'StageStatus',
-        'StageResourceRequest',
-        'PipelineTask',
-        'PipelineSchedulerSignals',
-        'StageConcurrencyLimits',
-        'StageAdmission',
-        'PipelineStageScheduler',
-        'build_canonical_pipeline_dag',
+        "PipelineStage",
+        "StageStatus",
+        "StageResourceRequest",
+        "PipelineTask",
+        "PipelineSchedulerSignals",
+        "StageConcurrencyLimits",
+        "StageAdmission",
+        "PipelineStageScheduler",
+        "build_canonical_pipeline_dag",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             pipeline_stage_scheduler,
@@ -816,27 +824,27 @@ def __getattr__(name):
 
         return getattr(pipeline_stage_scheduler, name)
     if name in (
-        'ResourceLane',
-        'LaneReservation',
-        'ResourceSchedulerConfig',
-        'ResourceLeaseToken',
-        'ResourceLease',
-        'GlobalResourceScheduler',
-        'get_global_resource_scheduler',
-        'configure_global_resource_scheduler',
-        'acquire_resource_lease',
+        "ResourceLane",
+        "LaneReservation",
+        "ResourceSchedulerConfig",
+        "ResourceLeaseToken",
+        "ResourceLease",
+        "GlobalResourceScheduler",
+        "get_global_resource_scheduler",
+        "configure_global_resource_scheduler",
+        "acquire_resource_lease",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler
 
         return getattr(resource_scheduler, name)
     if name in (
-        'LogicTheoremOptimizerError',
-        'OptimizerError',
-        'ExtractionError',
-        'ValidationError',
-        'ProvingError',
-        'RefinementError',
-        'ConfigurationError',
+        "LogicTheoremOptimizerError",
+        "OptimizerError",
+        "ExtractionError",
+        "ValidationError",
+        "ProvingError",
+        "RefinementError",
+        "ConfigurationError",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.exceptions import (
             LogicTheoremOptimizerError,
@@ -847,43 +855,58 @@ def __getattr__(name):
             RefinementError,
             ConfigurationError,
         )
+
         return {
-            'LogicTheoremOptimizerError': LogicTheoremOptimizerError,
-            'OptimizerError': OptimizerError,
-            'ExtractionError': ExtractionError,
-            'ValidationError': ValidationError,
-            'ProvingError': ProvingError,
-            'RefinementError': RefinementError,
-            'ConfigurationError': ConfigurationError,
+            "LogicTheoremOptimizerError": LogicTheoremOptimizerError,
+            "OptimizerError": OptimizerError,
+            "ExtractionError": ExtractionError,
+            "ValidationError": ValidationError,
+            "ProvingError": ProvingError,
+            "RefinementError": RefinementError,
+            "ConfigurationError": ConfigurationError,
         }[name]
-    elif name == 'LogicTheoremOptimizer':
+    elif name == "LogicTheoremOptimizer":
         # NEW: Unified optimizer using BaseOptimizer
-        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer import LogicTheoremOptimizer
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer import (
+            LogicTheoremOptimizer,
+        )
+
         return LogicTheoremOptimizer
-    elif name in ('LogicExtractor', 'LogicExtractionContext', 'ExtractionResult', 'ExtractionMode', 'DataType'):
-        if name == 'LogicExtractor':
+    elif name in (
+        "LogicExtractor",
+        "LogicExtractionContext",
+        "ExtractionResult",
+        "ExtractionMode",
+        "DataType",
+    ):
+        if name == "LogicExtractor":
             _enforce_export_version_gate(name)
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import (
-            LogicExtractor, LogicExtractionContext, ExtractionResult, ExtractionMode, DataType
+            LogicExtractor,
+            LogicExtractionContext,
+            ExtractionResult,
+            ExtractionMode,
+            DataType,
         )
-        if name == 'LogicExtractor':
+
+        if name == "LogicExtractor":
             return LogicExtractor
-        elif name == 'LogicExtractionContext':
+        elif name == "LogicExtractionContext":
             return LogicExtractionContext
-        elif name == 'ExtractionMode':
+        elif name == "ExtractionMode":
             return ExtractionMode
-        elif name == 'DataType':
+        elif name == "DataType":
             return DataType
         else:
             return ExtractionResult
     elif name in (
-        'ModalLogicFamily',
-        'ModalSystem',
-        'ModalOperatorSpec',
-        'ModalSemanticsSpec',
-        'ModalParseProfile',
-        'ModalRegistry',
-        'DEFAULT_MODAL_REGISTRY',
+        "ModalLogicFamily",
+        "ModalSystem",
+        "ModalOperatorSpec",
+        "ModalSemanticsSpec",
+        "ModalParseProfile",
+        "ModalRegistry",
+        "DEFAULT_MODAL_REGISTRY",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
             DEFAULT_MODAL_REGISTRY,
@@ -894,24 +917,25 @@ def __getattr__(name):
             ModalSemanticsSpec,
             ModalSystem,
         )
+
         return {
-            'DEFAULT_MODAL_REGISTRY': DEFAULT_MODAL_REGISTRY,
-            'ModalLogicFamily': ModalLogicFamily,
-            'ModalOperatorSpec': ModalOperatorSpec,
-            'ModalParseProfile': ModalParseProfile,
-            'ModalRegistry': ModalRegistry,
-            'ModalSemanticsSpec': ModalSemanticsSpec,
-            'ModalSystem': ModalSystem,
+            "DEFAULT_MODAL_REGISTRY": DEFAULT_MODAL_REGISTRY,
+            "ModalLogicFamily": ModalLogicFamily,
+            "ModalOperatorSpec": ModalOperatorSpec,
+            "ModalParseProfile": ModalParseProfile,
+            "ModalRegistry": ModalRegistry,
+            "ModalSemanticsSpec": ModalSemanticsSpec,
+            "ModalSystem": ModalSystem,
         }[name]
     elif name in (
-        'ModalIRDocument',
-        'ModalIRFormula',
-        'ModalIRFrame',
-        'ModalIRFrameLogic',
-        'ModalIRFrameLogicTriple',
-        'ModalIROperator',
-        'ModalIRPredicate',
-        'ModalIRProvenance',
+        "ModalIRDocument",
+        "ModalIRFormula",
+        "ModalIRFrame",
+        "ModalIRFrameLogic",
+        "ModalIRFrameLogicTriple",
+        "ModalIROperator",
+        "ModalIRPredicate",
+        "ModalIRProvenance",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
             ModalIRDocument,
@@ -923,65 +947,79 @@ def __getattr__(name):
             ModalIRPredicate,
             ModalIRProvenance,
         )
+
         return {
-            'ModalIRDocument': ModalIRDocument,
-            'ModalIRFormula': ModalIRFormula,
-            'ModalIRFrame': ModalIRFrame,
-            'ModalIRFrameLogic': ModalIRFrameLogic,
-            'ModalIRFrameLogicTriple': ModalIRFrameLogicTriple,
-            'ModalIROperator': ModalIROperator,
-            'ModalIRPredicate': ModalIRPredicate,
-            'ModalIRProvenance': ModalIRProvenance,
+            "ModalIRDocument": ModalIRDocument,
+            "ModalIRFormula": ModalIRFormula,
+            "ModalIRFrame": ModalIRFrame,
+            "ModalIRFrameLogic": ModalIRFrameLogic,
+            "ModalIRFrameLogicTriple": ModalIRFrameLogicTriple,
+            "ModalIROperator": ModalIROperator,
+            "ModalIRPredicate": ModalIRPredicate,
+            "ModalIRProvenance": ModalIRProvenance,
         }[name]
-    elif name in ('LegalModalParser', 'LegalSegment', 'ModalCueSpan'):
+    elif name in ("LegalModalParser", "LegalSegment", "ModalCueSpan"):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import (
             LegalModalParser,
             LegalSegment,
             ModalCueSpan,
         )
+
         return {
-            'LegalModalParser': LegalModalParser,
-            'LegalSegment': LegalSegment,
-            'ModalCueSpan': ModalCueSpan,
+            "LegalModalParser": LegalModalParser,
+            "LegalSegment": LegalSegment,
+            "ModalCueSpan": ModalCueSpan,
         }[name]
-    elif name in ('BM25FrameSelector', 'FrameCandidate', 'FrameSelection', 'DEFAULT_LEGAL_FRAME_FIXTURE'):
+    elif name in (
+        "BM25FrameSelector",
+        "FrameCandidate",
+        "FrameSelection",
+        "DEFAULT_LEGAL_FRAME_FIXTURE",
+    ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
             BM25FrameSelector,
             DEFAULT_LEGAL_FRAME_FIXTURE,
             FrameCandidate,
             FrameSelection,
         )
+
         return {
-            'BM25FrameSelector': BM25FrameSelector,
-            'DEFAULT_LEGAL_FRAME_FIXTURE': DEFAULT_LEGAL_FRAME_FIXTURE,
-            'FrameCandidate': FrameCandidate,
-            'FrameSelection': FrameSelection,
+            "BM25FrameSelector": BM25FrameSelector,
+            "DEFAULT_LEGAL_FRAME_FIXTURE": DEFAULT_LEGAL_FRAME_FIXTURE,
+            "FrameCandidate": FrameCandidate,
+            "FrameSelection": FrameSelection,
         }[name]
-    elif name in ('LegalSample', 'LegalSampleValidationError', 'build_us_code_sample', 'stable_mock_embedding'):
+    elif name in (
+        "LegalSample",
+        "LegalSampleValidationError",
+        "build_us_code_sample",
+        "stable_mock_embedding",
+    ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
             LegalSample,
             LegalSampleValidationError,
             build_us_code_sample,
             stable_mock_embedding,
         )
+
         return {
-            'LegalSample': LegalSample,
-            'LegalSampleValidationError': LegalSampleValidationError,
-            'build_us_code_sample': build_us_code_sample,
-            'stable_mock_embedding': stable_mock_embedding,
+            "LegalSample": LegalSample,
+            "LegalSampleValidationError": LegalSampleValidationError,
+            "build_us_code_sample": build_us_code_sample,
+            "stable_mock_embedding": stable_mock_embedding,
         }[name]
     elif name in (
-        'HF_USCODE_DATASET_ID',
-        'USCODE_BM25_PARQUET',
-        'USCODE_EMBEDDINGS_PARQUET',
-        'USCODE_LAWS_PARQUET',
-        'USCODE_LOGIC_PROOF_SAMPLE_PARQUET',
-        'USCODE_PARQUET_DIR',
-        'USCodeParquetRecord',
-        'iter_uscode_records_from_parquet',
-        'load_hf_uscode_samples',
-        'load_uscode_embeddings_from_parquet',
-        'load_uscode_samples_from_parquet',
+        "HF_USCODE_DATASET_ID",
+        "USCODE_BM25_PARQUET",
+        "USCODE_EMBEDDINGS_PARQUET",
+        "USCODE_LAWS_PARQUET",
+        "USCODE_LOGIC_PROOF_SAMPLE_PARQUET",
+        "USCODE_PARQUET_DIR",
+        "USCodeParquetRecord",
+        "iter_uscode_records_from_parquet",
+        "load_hf_uscode_samples",
+        "load_uscode_embeddings_from_parquet",
+        "load_uscode_samples_from_parquet",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_dataset import (
             HF_USCODE_DATASET_ID,
@@ -996,28 +1034,29 @@ def __getattr__(name):
             load_uscode_embeddings_from_parquet,
             load_uscode_samples_from_parquet,
         )
+
         return {
-            'HF_USCODE_DATASET_ID': HF_USCODE_DATASET_ID,
-            'USCODE_BM25_PARQUET': USCODE_BM25_PARQUET,
-            'USCODE_EMBEDDINGS_PARQUET': USCODE_EMBEDDINGS_PARQUET,
-            'USCODE_LAWS_PARQUET': USCODE_LAWS_PARQUET,
-            'USCODE_LOGIC_PROOF_SAMPLE_PARQUET': USCODE_LOGIC_PROOF_SAMPLE_PARQUET,
-            'USCODE_PARQUET_DIR': USCODE_PARQUET_DIR,
-            'USCodeParquetRecord': USCodeParquetRecord,
-            'iter_uscode_records_from_parquet': iter_uscode_records_from_parquet,
-            'load_hf_uscode_samples': load_hf_uscode_samples,
-            'load_uscode_embeddings_from_parquet': load_uscode_embeddings_from_parquet,
-            'load_uscode_samples_from_parquet': load_uscode_samples_from_parquet,
+            "HF_USCODE_DATASET_ID": HF_USCODE_DATASET_ID,
+            "USCODE_BM25_PARQUET": USCODE_BM25_PARQUET,
+            "USCODE_EMBEDDINGS_PARQUET": USCODE_EMBEDDINGS_PARQUET,
+            "USCODE_LAWS_PARQUET": USCODE_LAWS_PARQUET,
+            "USCODE_LOGIC_PROOF_SAMPLE_PARQUET": USCODE_LOGIC_PROOF_SAMPLE_PARQUET,
+            "USCODE_PARQUET_DIR": USCODE_PARQUET_DIR,
+            "USCodeParquetRecord": USCodeParquetRecord,
+            "iter_uscode_records_from_parquet": iter_uscode_records_from_parquet,
+            "load_hf_uscode_samples": load_hf_uscode_samples,
+            "load_uscode_embeddings_from_parquet": load_uscode_embeddings_from_parquet,
+            "load_uscode_samples_from_parquet": load_uscode_samples_from_parquet,
         }[name]
     elif name in (
-        'SpaCyLegalEncoder',
-        'SpaCyLegalEncoding',
-        'SpaCyModalCodec',
-        'SpaCyModalCueFeature',
-        'SpaCyModalDecoder',
-        'SpaCyModalIRCompiler',
-        'SpaCySentenceFeature',
-        'SpaCyTokenFeature',
+        "SpaCyLegalEncoder",
+        "SpaCyLegalEncoding",
+        "SpaCyModalCodec",
+        "SpaCyModalCueFeature",
+        "SpaCyModalDecoder",
+        "SpaCyModalIRCompiler",
+        "SpaCySentenceFeature",
+        "SpaCyTokenFeature",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
             SpaCyLegalEncoder,
@@ -1029,43 +1068,44 @@ def __getattr__(name):
             SpaCySentenceFeature,
             SpaCyTokenFeature,
         )
+
         return {
-            'SpaCyLegalEncoder': SpaCyLegalEncoder,
-            'SpaCyLegalEncoding': SpaCyLegalEncoding,
-            'SpaCyModalCodec': SpaCyModalCodec,
-            'SpaCyModalCueFeature': SpaCyModalCueFeature,
-            'SpaCyModalDecoder': SpaCyModalDecoder,
-            'SpaCyModalIRCompiler': SpaCyModalIRCompiler,
-            'SpaCySentenceFeature': SpaCySentenceFeature,
-            'SpaCyTokenFeature': SpaCyTokenFeature,
+            "SpaCyLegalEncoder": SpaCyLegalEncoder,
+            "SpaCyLegalEncoding": SpaCyLegalEncoding,
+            "SpaCyModalCodec": SpaCyModalCodec,
+            "SpaCyModalCueFeature": SpaCyModalCueFeature,
+            "SpaCyModalDecoder": SpaCyModalDecoder,
+            "SpaCyModalIRCompiler": SpaCyModalIRCompiler,
+            "SpaCySentenceFeature": SpaCySentenceFeature,
+            "SpaCyTokenFeature": SpaCyTokenFeature,
         }[name]
     elif name in (
-        'DeterministicModalLogicCodec',
-        'DecodedModalPhrase',
-        'DecodedModalText',
-        'DeterministicModalCompiler',
-        'ModalCompilationAmbiguity',
-        'ModalCompilationResult',
-        'ModalCompilerConfig',
-        'ModalLogicCodecConfig',
-        'ModalLogicCodecResult',
-        'ModalProgramSynthesisHint',
-        'decode_modal_ir_document',
-        'decode_modal_ir_text',
-        'decoded_modal_phrase_slot_text_map',
-        'flogic_ontology_to_dict',
-        'flogic_triples_to_graph_data',
-        'flogic_triples_to_ontology',
-        'import_graph_data_to_graph_engine',
-        'import_modal_ir_to_graph_engine',
-        'modal_formula_to_text',
-        'modal_text_token_similarity',
-        'modal_ir_to_flogic_triples',
-        'modal_ir_to_neo4j_graph_data',
-        'synthesis_hints_from_autoencoder_introspection',
-        'synthesis_hints_from_autoencoder_introspections',
-        'target_family_distribution_for_modal_ir',
-        'target_family_for_modal_ir',
+        "DeterministicModalLogicCodec",
+        "DecodedModalPhrase",
+        "DecodedModalText",
+        "DeterministicModalCompiler",
+        "ModalCompilationAmbiguity",
+        "ModalCompilationResult",
+        "ModalCompilerConfig",
+        "ModalLogicCodecConfig",
+        "ModalLogicCodecResult",
+        "ModalProgramSynthesisHint",
+        "decode_modal_ir_document",
+        "decode_modal_ir_text",
+        "decoded_modal_phrase_slot_text_map",
+        "flogic_ontology_to_dict",
+        "flogic_triples_to_graph_data",
+        "flogic_triples_to_ontology",
+        "import_graph_data_to_graph_engine",
+        "import_modal_ir_to_graph_engine",
+        "modal_formula_to_text",
+        "modal_text_token_similarity",
+        "modal_ir_to_flogic_triples",
+        "modal_ir_to_neo4j_graph_data",
+        "synthesis_hints_from_autoencoder_introspection",
+        "synthesis_hints_from_autoencoder_introspections",
+        "target_family_distribution_for_modal_ir",
+        "target_family_for_modal_ir",
     ):
         from ipfs_datasets_py.logic.modal import (
             DecodedModalPhrase,
@@ -1095,48 +1135,49 @@ def __getattr__(name):
             target_family_distribution_for_modal_ir,
             target_family_for_modal_ir,
         )
+
         return {
-            'DecodedModalPhrase': DecodedModalPhrase,
-            'DecodedModalText': DecodedModalText,
-            'DeterministicModalCompiler': DeterministicModalCompiler,
-            'DeterministicModalLogicCodec': DeterministicModalLogicCodec,
-            'ModalCompilationAmbiguity': ModalCompilationAmbiguity,
-            'ModalCompilationResult': ModalCompilationResult,
-            'ModalCompilerConfig': ModalCompilerConfig,
-            'ModalLogicCodecConfig': ModalLogicCodecConfig,
-            'ModalLogicCodecResult': ModalLogicCodecResult,
-            'ModalProgramSynthesisHint': ModalProgramSynthesisHint,
-            'decode_modal_ir_document': decode_modal_ir_document,
-            'decode_modal_ir_text': decode_modal_ir_text,
-            'decoded_modal_phrase_slot_text_map': decoded_modal_phrase_slot_text_map,
-            'flogic_ontology_to_dict': flogic_ontology_to_dict,
-            'flogic_triples_to_graph_data': flogic_triples_to_graph_data,
-            'flogic_triples_to_ontology': flogic_triples_to_ontology,
-            'import_graph_data_to_graph_engine': import_graph_data_to_graph_engine,
-            'import_modal_ir_to_graph_engine': import_modal_ir_to_graph_engine,
-            'modal_formula_to_text': modal_formula_to_text,
-            'modal_text_token_similarity': modal_text_token_similarity,
-            'modal_ir_to_flogic_triples': modal_ir_to_flogic_triples,
-            'modal_ir_to_neo4j_graph_data': modal_ir_to_neo4j_graph_data,
-            'synthesis_hints_from_autoencoder_introspection': synthesis_hints_from_autoencoder_introspection,
-            'synthesis_hints_from_autoencoder_introspections': synthesis_hints_from_autoencoder_introspections,
-            'target_family_distribution_for_modal_ir': target_family_distribution_for_modal_ir,
-            'target_family_for_modal_ir': target_family_for_modal_ir,
+            "DecodedModalPhrase": DecodedModalPhrase,
+            "DecodedModalText": DecodedModalText,
+            "DeterministicModalCompiler": DeterministicModalCompiler,
+            "DeterministicModalLogicCodec": DeterministicModalLogicCodec,
+            "ModalCompilationAmbiguity": ModalCompilationAmbiguity,
+            "ModalCompilationResult": ModalCompilationResult,
+            "ModalCompilerConfig": ModalCompilerConfig,
+            "ModalLogicCodecConfig": ModalLogicCodecConfig,
+            "ModalLogicCodecResult": ModalLogicCodecResult,
+            "ModalProgramSynthesisHint": ModalProgramSynthesisHint,
+            "decode_modal_ir_document": decode_modal_ir_document,
+            "decode_modal_ir_text": decode_modal_ir_text,
+            "decoded_modal_phrase_slot_text_map": decoded_modal_phrase_slot_text_map,
+            "flogic_ontology_to_dict": flogic_ontology_to_dict,
+            "flogic_triples_to_graph_data": flogic_triples_to_graph_data,
+            "flogic_triples_to_ontology": flogic_triples_to_ontology,
+            "import_graph_data_to_graph_engine": import_graph_data_to_graph_engine,
+            "import_modal_ir_to_graph_engine": import_modal_ir_to_graph_engine,
+            "modal_formula_to_text": modal_formula_to_text,
+            "modal_text_token_similarity": modal_text_token_similarity,
+            "modal_ir_to_flogic_triples": modal_ir_to_flogic_triples,
+            "modal_ir_to_neo4j_graph_data": modal_ir_to_neo4j_graph_data,
+            "synthesis_hints_from_autoencoder_introspection": synthesis_hints_from_autoencoder_introspection,
+            "synthesis_hints_from_autoencoder_introspections": synthesis_hints_from_autoencoder_introspections,
+            "target_family_distribution_for_modal_ir": target_family_distribution_for_modal_ir,
+            "target_family_for_modal_ir": target_family_for_modal_ir,
         }[name]
     elif name in (
-        'ModalAutoencoderTensorState',
-        'PackedParameterMap',
-        'PackedProofAuxiliaryMap',
-        'SparseOverflowFullError',
-        'StableKeyRegistry',
-        'TensorKeyKind',
-        'TensorParameterTable',
-        'TypedParameterKey',
-        'UnsafeParameterKeyError',
-        'load_and_pack_modal_autoencoder_checkpoint',
-        'pack_modal_autoencoder_state',
-        'unpack_modal_autoencoder_state',
-        'stable_parameter_id',
+        "ModalAutoencoderTensorState",
+        "PackedParameterMap",
+        "PackedProofAuxiliaryMap",
+        "SparseOverflowFullError",
+        "StableKeyRegistry",
+        "TensorKeyKind",
+        "TensorParameterTable",
+        "TypedParameterKey",
+        "UnsafeParameterKeyError",
+        "load_and_pack_modal_autoencoder_checkpoint",
+        "pack_modal_autoencoder_state",
+        "unpack_modal_autoencoder_state",
+        "stable_parameter_id",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_state_migration import (
             load_and_pack_modal_autoencoder_checkpoint,
@@ -1155,28 +1196,29 @@ def __getattr__(name):
             UnsafeParameterKeyError,
             stable_parameter_id,
         )
+
         return {
-            'ModalAutoencoderTensorState': ModalAutoencoderTensorState,
-            'PackedParameterMap': PackedParameterMap,
-            'PackedProofAuxiliaryMap': PackedProofAuxiliaryMap,
-            'SparseOverflowFullError': SparseOverflowFullError,
-            'StableKeyRegistry': StableKeyRegistry,
-            'TensorKeyKind': TensorKeyKind,
-            'TensorParameterTable': TensorParameterTable,
-            'TypedParameterKey': TypedParameterKey,
-            'UnsafeParameterKeyError': UnsafeParameterKeyError,
-            'load_and_pack_modal_autoencoder_checkpoint': load_and_pack_modal_autoencoder_checkpoint,
-            'pack_modal_autoencoder_state': pack_modal_autoencoder_state,
-            'unpack_modal_autoencoder_state': unpack_modal_autoencoder_state,
-            'stable_parameter_id': stable_parameter_id,
+            "ModalAutoencoderTensorState": ModalAutoencoderTensorState,
+            "PackedParameterMap": PackedParameterMap,
+            "PackedProofAuxiliaryMap": PackedProofAuxiliaryMap,
+            "SparseOverflowFullError": SparseOverflowFullError,
+            "StableKeyRegistry": StableKeyRegistry,
+            "TensorKeyKind": TensorKeyKind,
+            "TensorParameterTable": TensorParameterTable,
+            "TypedParameterKey": TypedParameterKey,
+            "UnsafeParameterKeyError": UnsafeParameterKeyError,
+            "load_and_pack_modal_autoencoder_checkpoint": load_and_pack_modal_autoencoder_checkpoint,
+            "pack_modal_autoencoder_state": pack_modal_autoencoder_state,
+            "unpack_modal_autoencoder_state": unpack_modal_autoencoder_state,
+            "stable_parameter_id": stable_parameter_id,
         }[name]
     elif name in (
-        'FeatureCapacityEvidence',
-        'FeatureCapacityFamily',
-        'FeatureCapacityPolicy',
-        'FeatureCapacityResult',
-        'apply_modal_autoencoder_feature_capacity',
-        'select_sparse_tail',
+        "FeatureCapacityEvidence",
+        "FeatureCapacityFamily",
+        "FeatureCapacityPolicy",
+        "FeatureCapacityResult",
+        "apply_modal_autoencoder_feature_capacity",
+        "select_sparse_tail",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             modal_autoencoder_feature_capacity,
@@ -1184,23 +1226,23 @@ def __getattr__(name):
 
         return getattr(modal_autoencoder_feature_capacity, name)
     elif name in (
-        'FactorizedHeadConfig',
-        'FactorizedSemanticInteractionHead',
-        'FactorizedSemanticInteractionHeads',
-        'FactorizedHeadQualityGateConfig',
-        'FactorizedHeadQualityReport',
-        'VerifiedResidual',
-        'factorize_interaction_records',
-        'factorized_head_ablation_configs',
-        'evaluate_factorized_head_quality',
-        'require_factorized_head_quality',
-        'FactorizedStateMigrationConfig',
-        'FactorizedStateMigrationReport',
-        'FactorizedStateMigrationResult',
-        'factorize_modal_autoencoder_state',
-        'migrate_modal_autoencoder_factorized_heads',
-        'materialize_legacy_interaction_tables',
-        'load_factorized_head_checkpoint',
+        "FactorizedHeadConfig",
+        "FactorizedSemanticInteractionHead",
+        "FactorizedSemanticInteractionHeads",
+        "FactorizedHeadQualityGateConfig",
+        "FactorizedHeadQualityReport",
+        "VerifiedResidual",
+        "factorize_interaction_records",
+        "factorized_head_ablation_configs",
+        "evaluate_factorized_head_quality",
+        "require_factorized_head_quality",
+        "FactorizedStateMigrationConfig",
+        "FactorizedStateMigrationReport",
+        "FactorizedStateMigrationResult",
+        "factorize_modal_autoencoder_state",
+        "migrate_modal_autoencoder_factorized_heads",
+        "materialize_legacy_interaction_tables",
+        "load_factorized_head_checkpoint",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             modal_autoencoder_factorized_heads,
@@ -1211,16 +1253,16 @@ def __getattr__(name):
             return getattr(modal_autoencoder_factorized_heads, name)
         return getattr(modal_autoencoder_state_migration, name)
     elif name in (
-        'BoundedLowRankLegacyAdapter',
-        'DirectBulkEmbeddingTransferError',
-        'LegacyDistillationConfig',
-        'LegacyDistillationLineage',
-        'LegacyDistillationPromotionConfig',
-        'LegacyDistillationResult',
-        'LegacyEmbeddingAdapterBundle',
-        'distill_legacy_embedding_tails',
-        'evaluate_legacy_distillation_promotion',
-        'require_legacy_distillation_promotion',
+        "BoundedLowRankLegacyAdapter",
+        "DirectBulkEmbeddingTransferError",
+        "LegacyDistillationConfig",
+        "LegacyDistillationLineage",
+        "LegacyDistillationPromotionConfig",
+        "LegacyDistillationResult",
+        "LegacyEmbeddingAdapterBundle",
+        "distill_legacy_embedding_tails",
+        "evaluate_legacy_distillation_promotion",
+        "require_legacy_distillation_promotion",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             modal_autoencoder_legacy_distillation,
@@ -1228,29 +1270,29 @@ def __getattr__(name):
 
         return getattr(modal_autoencoder_legacy_distillation, name)
     elif name in (
-        'AutoencoderEvaluation',
-        'AdaptiveModalAutoencoder',
-        'AutoencoderFeatureContribution',
-        'AutoencoderIntrospection',
-        'CodexCallCache',
-        'CodexCallDecision',
-        'CodexCallGateConfig',
-        'ModalAutoencoderBaseline',
-        'ModalAutoencoderTrainingState',
-        'ProverCompilationSignal',
-        'TrustedHammerLeanstralFeatureBus',
-        'DECOMPILER_STRUCTURAL_LEARNING_TARGET_SCHEMA_VERSION',
-        'build_decompiler_structural_learning_target',
-        'build_trusted_hammer_leanstral_feature_bus',
-        'trusted_hammer_leanstral_feature_bus',
-        'cosine_similarity',
-        'cosine_loss',
-        'mse_loss',
-        'cross_entropy_distribution_loss',
-        'cross_entropy_loss',
-        'evaluate_modal_prover_compilation',
-        'frame_ranking_loss',
-        'symbolic_validity_penalty',
+        "AutoencoderEvaluation",
+        "AdaptiveModalAutoencoder",
+        "AutoencoderFeatureContribution",
+        "AutoencoderIntrospection",
+        "CodexCallCache",
+        "CodexCallDecision",
+        "CodexCallGateConfig",
+        "ModalAutoencoderBaseline",
+        "ModalAutoencoderTrainingState",
+        "ProverCompilationSignal",
+        "TrustedHammerLeanstralFeatureBus",
+        "DECOMPILER_STRUCTURAL_LEARNING_TARGET_SCHEMA_VERSION",
+        "build_decompiler_structural_learning_target",
+        "build_trusted_hammer_leanstral_feature_bus",
+        "trusted_hammer_leanstral_feature_bus",
+        "cosine_similarity",
+        "cosine_loss",
+        "mse_loss",
+        "cross_entropy_distribution_loss",
+        "cross_entropy_loss",
+        "evaluate_modal_prover_compilation",
+        "frame_ranking_loss",
+        "symbolic_validity_penalty",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
             AdaptiveModalAutoencoder,
@@ -1277,37 +1319,38 @@ def __getattr__(name):
             symbolic_validity_penalty,
             trusted_hammer_leanstral_feature_bus,
         )
+
         return {
-            'AdaptiveModalAutoencoder': AdaptiveModalAutoencoder,
-            'AutoencoderFeatureContribution': AutoencoderFeatureContribution,
-            'AutoencoderEvaluation': AutoencoderEvaluation,
-            'AutoencoderIntrospection': AutoencoderIntrospection,
-            'CodexCallCache': CodexCallCache,
-            'CodexCallDecision': CodexCallDecision,
-            'CodexCallGateConfig': CodexCallGateConfig,
-            'ModalAutoencoderBaseline': ModalAutoencoderBaseline,
-            'ModalAutoencoderTrainingState': ModalAutoencoderTrainingState,
-            'ProverCompilationSignal': ProverCompilationSignal,
-            'TrustedHammerLeanstralFeatureBus': TrustedHammerLeanstralFeatureBus,
-            'DECOMPILER_STRUCTURAL_LEARNING_TARGET_SCHEMA_VERSION': DECOMPILER_STRUCTURAL_LEARNING_TARGET_SCHEMA_VERSION,
-            'build_decompiler_structural_learning_target': build_decompiler_structural_learning_target,
-            'build_trusted_hammer_leanstral_feature_bus': build_trusted_hammer_leanstral_feature_bus,
-            'cosine_loss': cosine_loss,
-            'cosine_similarity': cosine_similarity,
-            'cross_entropy_distribution_loss': cross_entropy_distribution_loss,
-            'cross_entropy_loss': cross_entropy_loss,
-            'evaluate_modal_prover_compilation': evaluate_modal_prover_compilation,
-            'frame_ranking_loss': frame_ranking_loss,
-            'mse_loss': mse_loss,
-            'symbolic_validity_penalty': symbolic_validity_penalty,
-            'trusted_hammer_leanstral_feature_bus': trusted_hammer_leanstral_feature_bus,
+            "AdaptiveModalAutoencoder": AdaptiveModalAutoencoder,
+            "AutoencoderFeatureContribution": AutoencoderFeatureContribution,
+            "AutoencoderEvaluation": AutoencoderEvaluation,
+            "AutoencoderIntrospection": AutoencoderIntrospection,
+            "CodexCallCache": CodexCallCache,
+            "CodexCallDecision": CodexCallDecision,
+            "CodexCallGateConfig": CodexCallGateConfig,
+            "ModalAutoencoderBaseline": ModalAutoencoderBaseline,
+            "ModalAutoencoderTrainingState": ModalAutoencoderTrainingState,
+            "ProverCompilationSignal": ProverCompilationSignal,
+            "TrustedHammerLeanstralFeatureBus": TrustedHammerLeanstralFeatureBus,
+            "DECOMPILER_STRUCTURAL_LEARNING_TARGET_SCHEMA_VERSION": DECOMPILER_STRUCTURAL_LEARNING_TARGET_SCHEMA_VERSION,
+            "build_decompiler_structural_learning_target": build_decompiler_structural_learning_target,
+            "build_trusted_hammer_leanstral_feature_bus": build_trusted_hammer_leanstral_feature_bus,
+            "cosine_loss": cosine_loss,
+            "cosine_similarity": cosine_similarity,
+            "cross_entropy_distribution_loss": cross_entropy_distribution_loss,
+            "cross_entropy_loss": cross_entropy_loss,
+            "evaluate_modal_prover_compilation": evaluate_modal_prover_compilation,
+            "frame_ranking_loss": frame_ranking_loss,
+            "mse_loss": mse_loss,
+            "symbolic_validity_penalty": symbolic_validity_penalty,
+            "trusted_hammer_leanstral_feature_bus": trusted_hammer_leanstral_feature_bus,
         }[name]
     elif name in (
-        'TrustedFeedbackTrainer',
-        'TrustedFeedbackTrainerConfig',
-        'TrustedFeedbackUpdateReport',
-        'apply_trusted_feedback_weight_updates',
-        'train_trusted_feedback',
+        "TrustedFeedbackTrainer",
+        "TrustedFeedbackTrainerConfig",
+        "TrustedFeedbackUpdateReport",
+        "apply_trusted_feedback_weight_updates",
+        "train_trusted_feedback",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             trusted_feedback_trainer,
@@ -1315,13 +1358,13 @@ def __getattr__(name):
 
         return getattr(trusted_feedback_trainer, name)
     elif name in (
-        'ProofFeedbackAblationArmResult',
-        'ProofFeedbackAblationConfig',
-        'ProofFeedbackAblationReport',
-        'evaluate_proof_feedback_ablation',
-        'measure_trusted_feedback_causal_efficacy',
-        'run_proof_feedback_ablation',
-        'run_trusted_feedback_ablation',
+        "ProofFeedbackAblationArmResult",
+        "ProofFeedbackAblationConfig",
+        "ProofFeedbackAblationReport",
+        "evaluate_proof_feedback_ablation",
+        "measure_trusted_feedback_causal_efficacy",
+        "run_proof_feedback_ablation",
+        "run_trusted_feedback_ablation",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             proof_feedback_ablation,
@@ -1329,13 +1372,13 @@ def __getattr__(name):
 
         return getattr(proof_feedback_ablation, name)
     elif name in (
-        'FamilyObjectiveResult',
-        'LegalIRObjectiveBalanceReport',
-        'LegalIRObjectiveBalancer',
-        'LegalIRObjectiveBalancerConfig',
-        'ObjectiveWeightBounds',
-        'balance_legal_ir_objective',
-        'evaluate_constrained_legal_ir_objective',
+        "FamilyObjectiveResult",
+        "LegalIRObjectiveBalanceReport",
+        "LegalIRObjectiveBalancer",
+        "LegalIRObjectiveBalancerConfig",
+        "ObjectiveWeightBounds",
+        "balance_legal_ir_objective",
+        "evaluate_constrained_legal_ir_objective",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             legal_ir_objective_balancer,
@@ -1343,14 +1386,14 @@ def __getattr__(name):
 
         return getattr(legal_ir_objective_balancer, name)
     elif name in (
-        'SemanticEquivalenceComparisonReport',
-        'SemanticEquivalenceConfig',
-        'SemanticEquivalenceFamilyComparison',
-        'SemanticEquivalenceFamilyResult',
-        'compare_legal_ir_semantic_equivalence',
-        'evaluate_legal_ir_semantic_equivalence',
-        'semantic_equivalence_from_metrics',
-        'semantic_equivalence_promotion_gate',
+        "SemanticEquivalenceComparisonReport",
+        "SemanticEquivalenceConfig",
+        "SemanticEquivalenceFamilyComparison",
+        "SemanticEquivalenceFamilyResult",
+        "compare_legal_ir_semantic_equivalence",
+        "evaluate_legal_ir_semantic_equivalence",
+        "semantic_equivalence_from_metrics",
+        "semantic_equivalence_promotion_gate",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             legal_ir_semantic_metrics,
@@ -1358,22 +1401,22 @@ def __getattr__(name):
 
         return getattr(legal_ir_semantic_metrics, name)
     elif name in (
-        'EXTERNAL_BENCHMARK_HARD_GUARDRAIL',
-        'EXTERNAL_EVALUATION_OPERATION',
-        'LEGAL_IR_EXTERNAL_BENCHMARK_REPORT_SCHEMA_VERSION',
-        'LEGAL_IR_EXTERNAL_BENCHMARK_SCHEMA_VERSION',
-        'DecompilerExpectation',
-        'ExternalBenchmarkCitation',
-        'ExternalBenchmarkPacketResult',
-        'ExternalBenchmarkReport',
-        'ExternalLegalExpertBenchmarkPacket',
-        'LegalIRExternalBenchmarkError',
-        'LegalIRExternalBenchmarkPolicyError',
-        'ProofObligationExpectation',
-        'evaluate_external_legal_expert_benchmark',
-        'external_benchmark_split_manifest',
-        'load_external_expert_benchmark_packets',
-        'require_external_benchmark_evaluation_only',
+        "EXTERNAL_BENCHMARK_HARD_GUARDRAIL",
+        "EXTERNAL_EVALUATION_OPERATION",
+        "LEGAL_IR_EXTERNAL_BENCHMARK_REPORT_SCHEMA_VERSION",
+        "LEGAL_IR_EXTERNAL_BENCHMARK_SCHEMA_VERSION",
+        "DecompilerExpectation",
+        "ExternalBenchmarkCitation",
+        "ExternalBenchmarkPacketResult",
+        "ExternalBenchmarkReport",
+        "ExternalLegalExpertBenchmarkPacket",
+        "LegalIRExternalBenchmarkError",
+        "LegalIRExternalBenchmarkPolicyError",
+        "ProofObligationExpectation",
+        "evaluate_external_legal_expert_benchmark",
+        "external_benchmark_split_manifest",
+        "load_external_expert_benchmark_packets",
+        "require_external_benchmark_evaluation_only",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             legal_ir_external_benchmark,
@@ -1381,19 +1424,19 @@ def __getattr__(name):
 
         return getattr(legal_ir_external_benchmark, name)
     elif name in (
-        'LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION',
-        'LEGAL_IR_DRIFT_ROLLBACK_DECISION_SCHEMA_VERSION',
-        'LEGAL_IR_DRIFT_ROLLBACK_TODO_SCHEMA_VERSION',
-        'PRODUCTION_DRIFT_AND_ROLLBACK_HARD_GUARDRAIL',
-        'LegalIRDriftEvent',
-        'LegalIRDriftMonitor',
-        'LegalIRDriftMonitorConfig',
-        'LegalIRDriftReport',
-        'LegalIRRollbackDecision',
-        'LegalIRRollbackTodo',
-        'append_rollback_todos',
-        'monitor_legal_ir_production_drift',
-        'persist_legal_ir_drift_report',
+        "LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION",
+        "LEGAL_IR_DRIFT_ROLLBACK_DECISION_SCHEMA_VERSION",
+        "LEGAL_IR_DRIFT_ROLLBACK_TODO_SCHEMA_VERSION",
+        "PRODUCTION_DRIFT_AND_ROLLBACK_HARD_GUARDRAIL",
+        "LegalIRDriftEvent",
+        "LegalIRDriftMonitor",
+        "LegalIRDriftMonitorConfig",
+        "LegalIRDriftReport",
+        "LegalIRRollbackDecision",
+        "LegalIRRollbackTodo",
+        "append_rollback_todos",
+        "monitor_legal_ir_production_drift",
+        "persist_legal_ir_drift_report",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             legal_ir_drift_monitor,
@@ -1401,15 +1444,15 @@ def __getattr__(name):
 
         return getattr(legal_ir_drift_monitor, name)
     elif name in (
-        'LEGAL_IR_UNCERTAINTY_SCHEMA_VERSION',
-        'ROUTE_CODEX_TODO',
-        'ROUTE_HAMMER_LEANSTRAL_AUDIT',
-        'LegalIRFamilyUncertaintyResult',
-        'LegalIRUncertaintyConfig',
-        'LegalIRUncertaintyReport',
-        'evaluate_legal_ir_uncertainty',
-        'legal_ir_uncertainty_promotion_gate',
-        'route_learned_guidance_by_uncertainty',
+        "LEGAL_IR_UNCERTAINTY_SCHEMA_VERSION",
+        "ROUTE_CODEX_TODO",
+        "ROUTE_HAMMER_LEANSTRAL_AUDIT",
+        "LegalIRFamilyUncertaintyResult",
+        "LegalIRUncertaintyConfig",
+        "LegalIRUncertaintyReport",
+        "evaluate_legal_ir_uncertainty",
+        "legal_ir_uncertainty_promotion_gate",
+        "route_learned_guidance_by_uncertainty",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             legal_ir_uncertainty,
@@ -1417,20 +1460,20 @@ def __getattr__(name):
 
         return getattr(legal_ir_uncertainty, name)
     elif name in (
-        'ConstrainedLegalIRDecode',
-        'LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION',
-        'LEGAL_IR_GRAMMAR_FAMILIES',
-        'LegalIRGrammarDecoder',
-        'LegalIRGrammarRejection',
-        'LegalIRGrammarValidation',
-        'LegalIRProductionSpec',
-        'canonical_legal_ir_grammar_family',
-        'constrained_legal_ir_decode',
-        'default_legal_ir_production_specs',
-        'grammar_metrics_from_validation',
-        'grammar_rejection_reason_names',
-        'infer_legal_ir_grammar_family',
-        'validate_legal_ir_candidate',
+        "ConstrainedLegalIRDecode",
+        "LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION",
+        "LEGAL_IR_GRAMMAR_FAMILIES",
+        "LegalIRGrammarDecoder",
+        "LegalIRGrammarRejection",
+        "LegalIRGrammarValidation",
+        "LegalIRProductionSpec",
+        "canonical_legal_ir_grammar_family",
+        "constrained_legal_ir_decode",
+        "default_legal_ir_production_specs",
+        "grammar_metrics_from_validation",
+        "grammar_rejection_reason_names",
+        "infer_legal_ir_grammar_family",
+        "validate_legal_ir_candidate",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             legal_ir_grammar_decoder,
@@ -1438,25 +1481,40 @@ def __getattr__(name):
 
         return getattr(legal_ir_grammar_decoder, name)
     elif name in (
-        'FUZZING_TARGETS',
-        'LEGAL_IR_FUZZING_SCHEMA_VERSION',
-        'LEGAL_IR_TRUSTED_NEGATIVE_SCHEMA_VERSION',
-        'SEMANTICS_CHANGING',
-        'SEMANTICS_PRESERVING',
-        'TARGET_DECOMPILER',
-        'TARGET_DETERMINISTIC_IR',
-        'TARGET_LEARNED_IR',
-        'TARGET_OBLIGATIONS',
-        'TARGET_TEXT',
-        'LegalIRFuzzer',
-        'LegalIRFuzzingConfig',
-        'LegalIRFuzzingReport',
-        'LegalIRFuzzingResult',
-        'LegalIRMutation',
-        'LegalIRSurfaceBundle',
-        'TrustedNegativeCandidate',
-        'minimize_legal_ir_counterexample',
-        'run_legal_ir_metamorphic_fuzzing',
+        "CANONICAL_IR_LOSS_CONFIGURATION_CID",
+        "IR_LOSS_CONFIGURATION_SCHEMA",
+        "IR_LOSS_COMPONENT_NAMES",
+        "IRLossConfiguration",
+        "IRCompositeLossResult",
+        "canonical_ir_loss_configuration",
+        "evaluate_ir_composite_loss",
+        "isolate_ir_loss_component",
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            legal_ir_loss_configuration,
+        )
+
+        return getattr(legal_ir_loss_configuration, name)
+    elif name in (
+        "FUZZING_TARGETS",
+        "LEGAL_IR_FUZZING_SCHEMA_VERSION",
+        "LEGAL_IR_TRUSTED_NEGATIVE_SCHEMA_VERSION",
+        "SEMANTICS_CHANGING",
+        "SEMANTICS_PRESERVING",
+        "TARGET_DECOMPILER",
+        "TARGET_DETERMINISTIC_IR",
+        "TARGET_LEARNED_IR",
+        "TARGET_OBLIGATIONS",
+        "TARGET_TEXT",
+        "LegalIRFuzzer",
+        "LegalIRFuzzingConfig",
+        "LegalIRFuzzingReport",
+        "LegalIRFuzzingResult",
+        "LegalIRMutation",
+        "LegalIRSurfaceBundle",
+        "TrustedNegativeCandidate",
+        "minimize_legal_ir_counterexample",
+        "run_legal_ir_metamorphic_fuzzing",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             legal_ir_fuzzing,
@@ -1464,65 +1522,67 @@ def __getattr__(name):
 
         return getattr(legal_ir_fuzzing, name)
     elif name in (
-        'DECOMPILER_HALLUCINATION',
-        'DEFAULT_LEGAL_IR_FAMILY_DIFFICULTY',
-        'DEFAULT_NEGATIVE_FAMILY_DIFFICULTY',
-        'HARD_NEGATIVE_FAMILIES',
-        'INVERTED_MODALITY',
-        'LEGAL_IR_HARD_NEGATIVE_EFFECT_SCHEMA_VERSION',
-        'LEGAL_IR_HARD_NEGATIVE_SCHEMA_VERSION',
-        'NEAR_MISS_CLAUSE',
-        'SOURCE_COPY_SPAN',
-        'STALE_AMENDMENT',
-        'SWAPPED_ACTOR',
-        'VERIFIED_COUNTEREXAMPLE',
-        'WRONG_CITATION',
-        'HardNegativeEffectReport',
-        'LegalIRHardNegativeConfig',
-        'LegalIRHardNegativeCurriculum',
-        'LegalIRHardNegativeCurriculumBuilder',
-        'LegalIRHardNegativeCurriculumStage',
-        'LegalIRHardNegativeExample',
-        'RejectedHardNegative',
-        'build_legal_ir_hard_negative_curriculum',
-        'hard_negative_training_effect_gate',
-        'prove_hard_negatives_reduce_false_positive_semantic_equivalence',
+        "DECOMPILER_HALLUCINATION",
+        "DEFAULT_LEGAL_IR_FAMILY_DIFFICULTY",
+        "DEFAULT_NEGATIVE_FAMILY_DIFFICULTY",
+        "HARD_NEGATIVE_FAMILIES",
+        "INVERTED_MODALITY",
+        "LEGAL_IR_HARD_NEGATIVE_EFFECT_SCHEMA_VERSION",
+        "LEGAL_IR_HARD_NEGATIVE_SCHEMA_VERSION",
+        "NEAR_MISS_CLAUSE",
+        "SOURCE_COPY_SPAN",
+        "STALE_AMENDMENT",
+        "SWAPPED_ACTOR",
+        "VERIFIED_COUNTEREXAMPLE",
+        "WRONG_CITATION",
+        "HardNegativeEffectReport",
+        "LegalIRHardNegativeConfig",
+        "LegalIRHardNegativeCurriculum",
+        "LegalIRHardNegativeCurriculumBuilder",
+        "LegalIRHardNegativeCurriculumStage",
+        "LegalIRHardNegativeExample",
+        "RejectedHardNegative",
+        "build_legal_ir_hard_negative_curriculum",
+        "hard_negative_training_effect_gate",
+        "prove_hard_negatives_reduce_false_positive_semantic_equivalence",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             legal_ir_hard_negatives,
         )
 
         return getattr(legal_ir_hard_negatives, name)
-    elif name in ('ModalProverRouter', 'ModalProverRouteResult', 'ModalProverStatus'):
+    elif name in ("ModalProverRouter", "ModalProverRouteResult", "ModalProverStatus"):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_prover_router import (
             ModalProverRouteResult,
             ModalProverRouter,
             ModalProverStatus,
         )
+
         return {
-            'ModalProverRouteResult': ModalProverRouteResult,
-            'ModalProverRouter': ModalProverRouter,
-            'ModalProverStatus': ModalProverStatus,
+            "ModalProverRouteResult": ModalProverRouteResult,
+            "ModalProverRouter": ModalProverRouter,
+            "ModalProverStatus": ModalProverStatus,
         }[name]
-    elif name in ('ModalParserReport', 'build_modal_parser_report'):
+    elif name in ("ModalParserReport", "build_modal_parser_report"):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import (
             ModalParserReport,
             build_modal_parser_report,
         )
+
         return {
-            'ModalParserReport': ModalParserReport,
-            'build_modal_parser_report': build_modal_parser_report,
+            "ModalParserReport": ModalParserReport,
+            "build_modal_parser_report": build_modal_parser_report,
         }[name]
     elif name in (
-        'LossSnapshot',
-        'ModalLossTodoGenerator',
-        'ModalOptimizerPolicy',
-        'ModalOptimizationRun',
-        'ModalOptimizationStep',
-        'ModalProgramSynthesisTodoGenerator',
-        'ModalTodo',
-        'ModalTodoQueue',
-        'ModalTodoSupervisor',
+        "LossSnapshot",
+        "ModalLossTodoGenerator",
+        "ModalOptimizerPolicy",
+        "ModalOptimizationRun",
+        "ModalOptimizationStep",
+        "ModalProgramSynthesisTodoGenerator",
+        "ModalTodo",
+        "ModalTodoQueue",
+        "ModalTodoSupervisor",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
             LossSnapshot,
@@ -1535,60 +1595,68 @@ def __getattr__(name):
             ModalTodoQueue,
             ModalTodoSupervisor,
         )
+
         return {
-            'LossSnapshot': LossSnapshot,
-            'ModalLossTodoGenerator': ModalLossTodoGenerator,
-            'ModalOptimizerPolicy': ModalOptimizerPolicy,
-            'ModalOptimizationRun': ModalOptimizationRun,
-            'ModalOptimizationStep': ModalOptimizationStep,
-            'ModalProgramSynthesisTodoGenerator': ModalProgramSynthesisTodoGenerator,
-            'ModalTodo': ModalTodo,
-            'ModalTodoQueue': ModalTodoQueue,
-            'ModalTodoSupervisor': ModalTodoSupervisor,
+            "LossSnapshot": LossSnapshot,
+            "ModalLossTodoGenerator": ModalLossTodoGenerator,
+            "ModalOptimizerPolicy": ModalOptimizerPolicy,
+            "ModalOptimizationRun": ModalOptimizationRun,
+            "ModalOptimizationStep": ModalOptimizationStep,
+            "ModalProgramSynthesisTodoGenerator": ModalProgramSynthesisTodoGenerator,
+            "ModalTodo": ModalTodo,
+            "ModalTodoQueue": ModalTodoQueue,
+            "ModalTodoSupervisor": ModalTodoSupervisor,
         }[name]
     elif name in (
-        'build_uscode_modal_daemon_arg_parser',
-        'run_guarded_uscode_modal_daemon',
-        'sample_train_validation_rows',
+        "build_uscode_modal_daemon_arg_parser",
+        "run_guarded_uscode_modal_daemon",
+        "sample_train_validation_rows",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner import (
             build_uscode_modal_daemon_arg_parser,
             run_guarded_uscode_modal_daemon,
             sample_train_validation_rows,
         )
+
         return {
-            'build_uscode_modal_daemon_arg_parser': build_uscode_modal_daemon_arg_parser,
-            'run_guarded_uscode_modal_daemon': run_guarded_uscode_modal_daemon,
-            'sample_train_validation_rows': sample_train_validation_rows,
+            "build_uscode_modal_daemon_arg_parser": build_uscode_modal_daemon_arg_parser,
+            "run_guarded_uscode_modal_daemon": run_guarded_uscode_modal_daemon,
+            "sample_train_validation_rows": sample_train_validation_rows,
         }[name]
-    elif name == 'LogicCritic' or name == 'CriticScore' or name == 'CriticDimensions':
+    elif name == "LogicCritic" or name == "CriticScore" or name == "CriticDimensions":
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_critic import (
-            LogicCritic, CriticScore, CriticDimensions
+            LogicCritic,
+            CriticScore,
+            CriticDimensions,
         )
-        if name == 'LogicCritic':
+
+        if name == "LogicCritic":
             return LogicCritic
-        elif name == 'CriticScore':
+        elif name == "CriticScore":
             return CriticScore
         else:
             return CriticDimensions
-    elif name == 'LogicOptimizer' or name == 'OptimizationReport':
+    elif name == "LogicOptimizer" or name == "OptimizationReport":
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_optimizer import (
-            LogicOptimizer, OptimizationReport
+            LogicOptimizer,
+            OptimizationReport,
         )
-        if name == 'LogicOptimizer':
+
+        if name == "LogicOptimizer":
             return LogicOptimizer
         else:
             return OptimizationReport
-    elif name == 'OptimizationStrategy':
+    elif name == "OptimizationStrategy":
         # Import from BaseOptimizer (no longer duplicated in logic_optimizer)
         from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationStrategy
+
         return OptimizationStrategy
     elif name in (
-        'serialize_aggregated_proof_trace',
-        'serialize_prover_result_trace',
-        'proof_trace_to_json',
-        'write_proof_trace_json',
-        'serialize_dataclass_like',
+        "serialize_aggregated_proof_trace",
+        "serialize_prover_result_trace",
+        "proof_trace_to_json",
+        "write_proof_trace_json",
+        "serialize_dataclass_like",
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_trace import (
             serialize_aggregated_proof_trace,
@@ -1597,195 +1665,322 @@ def __getattr__(name):
             write_proof_trace_json,
             serialize_dataclass_like,
         )
+
         return {
-            'serialize_aggregated_proof_trace': serialize_aggregated_proof_trace,
-            'serialize_prover_result_trace': serialize_prover_result_trace,
-            'proof_trace_to_json': proof_trace_to_json,
-            'write_proof_trace_json': write_proof_trace_json,
-            'serialize_dataclass_like': serialize_dataclass_like,
+            "serialize_aggregated_proof_trace": serialize_aggregated_proof_trace,
+            "serialize_prover_result_trace": serialize_prover_result_trace,
+            "proof_trace_to_json": proof_trace_to_json,
+            "write_proof_trace_json": write_proof_trace_json,
+            "serialize_dataclass_like": serialize_dataclass_like,
         }[name]
-    elif name == 'TheoremSession' or name == 'SessionResult' or name == 'SessionConfig':
+    elif name == "TheoremSession" or name == "SessionResult" or name == "SessionConfig":
         _enforce_export_version_gate(name)
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.theorem_session import (
-            TheoremSession, SessionResult, SessionConfig
+            TheoremSession,
+            SessionResult,
+            SessionConfig,
         )
-        if name == 'TheoremSession':
+
+        if name == "TheoremSession":
             return TheoremSession
-        elif name == 'SessionResult':
+        elif name == "SessionResult":
             return SessionResult
         else:
             return SessionConfig
-    elif name in ('LogicSessionConfig', 'LogicSessionResult', 'RoundResult', 'ExtractionMetrics', 'ConvergenceReason'):
+    elif name in (
+        "LogicSessionConfig",
+        "LogicSessionResult",
+        "RoundResult",
+        "ExtractionMetrics",
+        "ConvergenceReason",
+    ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_session_contracts import (
-            LogicSessionConfig, LogicSessionResult, RoundResult, ExtractionMetrics, ConvergenceReason
+            LogicSessionConfig,
+            LogicSessionResult,
+            RoundResult,
+            ExtractionMetrics,
+            ConvergenceReason,
         )
-        if name == 'LogicSessionConfig':
+
+        if name == "LogicSessionConfig":
             return LogicSessionConfig
-        elif name == 'LogicSessionResult':
+        elif name == "LogicSessionResult":
             return LogicSessionResult
-        elif name == 'RoundResult':
+        elif name == "RoundResult":
             return RoundResult
-        elif name == 'ExtractionMetrics':
+        elif name == "ExtractionMetrics":
             return ExtractionMetrics
         else:
             return ConvergenceReason
-    elif name == 'LogicHarness' or name == 'LogicPipelineHarness' or name == 'HarnessConfig' or name == 'HarnessResult':
+    elif (
+        name == "LogicHarness"
+        or name == "LogicPipelineHarness"
+        or name == "HarnessConfig"
+        or name == "HarnessResult"
+    ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_harness import (
-            LogicHarness, LogicPipelineHarness, HarnessConfig, HarnessResult
+            LogicHarness,
+            LogicPipelineHarness,
+            HarnessConfig,
+            HarnessResult,
         )
-        if name == 'LogicHarness':
+
+        if name == "LogicHarness":
             return LogicHarness
-        elif name == 'LogicPipelineHarness':
+        elif name == "LogicPipelineHarness":
             return LogicPipelineHarness
-        elif name == 'HarnessConfig':
+        elif name == "HarnessConfig":
             return HarnessConfig
         else:
             return HarnessResult
-    elif name == 'KnowledgeGraphStabilizer' or name == 'OntologyConsistencyChecker':
+    elif name == "KnowledgeGraphStabilizer" or name == "OntologyConsistencyChecker":
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.ontology_stabilizer import (
-            KnowledgeGraphStabilizer, OntologyConsistencyChecker
+            KnowledgeGraphStabilizer,
+            OntologyConsistencyChecker,
         )
-        if name == 'KnowledgeGraphStabilizer':
+
+        if name == "KnowledgeGraphStabilizer":
             return KnowledgeGraphStabilizer
         else:
             return OntologyConsistencyChecker
-    elif name == 'ProverIntegrationAdapter' or name == 'ProverVerificationResult' or name == 'AggregatedProverResult':
+    elif (
+        name == "ProverIntegrationAdapter"
+        or name == "ProverVerificationResult"
+        or name == "AggregatedProverResult"
+    ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prover_integration import (
-            ProverIntegrationAdapter, ProverVerificationResult, AggregatedProverResult
+            ProverIntegrationAdapter,
+            ProverVerificationResult,
+            AggregatedProverResult,
         )
-        if name == 'ProverIntegrationAdapter':
+
+        if name == "ProverIntegrationAdapter":
             return ProverIntegrationAdapter
-        elif name == 'ProverVerificationResult':
+        elif name == "ProverVerificationResult":
             return ProverVerificationResult
         else:
             return AggregatedProverResult
-    elif name in {'LLMBackendAdapter', 'LLMRequest', 'LLMResponse', 'RouterBackend'}:
+    elif name in {"LLMBackendAdapter", "LLMRequest", "LLMResponse", "RouterBackend"}:
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.llm_backend import (
-            LLMBackendAdapter, LLMRequest, LLMResponse, RouterBackend
+            LLMBackendAdapter,
+            LLMRequest,
+            LLMResponse,
+            RouterBackend,
         )
-        if name == 'LLMBackendAdapter':
+
+        if name == "LLMBackendAdapter":
             return LLMBackendAdapter
-        elif name == 'LLMRequest':
+        elif name == "LLMRequest":
             return LLMRequest
-        elif name == 'LLMResponse':
+        elif name == "LLMResponse":
             return LLMResponse
         else:
             return RouterBackend
-    elif name == 'RAGIntegration' or name == 'RAGContext' or name == 'RAGStatistics':
+    elif name == "RAGIntegration" or name == "RAGContext" or name == "RAGStatistics":
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.rag_integration import (
-            RAGIntegration, RAGContext, RAGStatistics
+            RAGIntegration,
+            RAGContext,
+            RAGStatistics,
         )
-        if name == 'RAGIntegration':
+
+        if name == "RAGIntegration":
             return RAGIntegration
-        elif name == 'RAGContext':
+        elif name == "RAGContext":
             return RAGContext
         else:
             return RAGStatistics
-    elif name in ('NeuralSymbolicHybridProver', 'HybridStrategy', 'NeuralResult', 'SymbolicResult', 'HybridProverResult'):
+    elif name in (
+        "NeuralSymbolicHybridProver",
+        "HybridStrategy",
+        "NeuralResult",
+        "SymbolicResult",
+        "HybridProverResult",
+    ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.neural_symbolic_prover import (
-            NeuralSymbolicHybridProver, HybridStrategy, NeuralResult, SymbolicResult, HybridProverResult
+            NeuralSymbolicHybridProver,
+            HybridStrategy,
+            NeuralResult,
+            SymbolicResult,
+            HybridProverResult,
         )
-        if name == 'NeuralSymbolicHybridProver':
+
+        if name == "NeuralSymbolicHybridProver":
             return NeuralSymbolicHybridProver
-        elif name == 'HybridStrategy':
+        elif name == "HybridStrategy":
             return HybridStrategy
-        elif name == 'NeuralResult':
+        elif name == "NeuralResult":
             return NeuralResult
-        elif name == 'SymbolicResult':
+        elif name == "SymbolicResult":
             return SymbolicResult
         else:
             return HybridProverResult
-    elif name in ('PromptOptimizer', 'OptimizationStrategy', 'PromptMetrics', 'PromptTemplate', 'OptimizationResult'):
+    elif name in (
+        "PromptOptimizer",
+        "OptimizationStrategy",
+        "PromptMetrics",
+        "PromptTemplate",
+        "OptimizationResult",
+    ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prompt_optimizer import (
-            PromptOptimizer, OptimizationStrategy, PromptMetrics, PromptTemplate, OptimizationResult
+            PromptOptimizer,
+            OptimizationStrategy,
+            PromptMetrics,
+            PromptTemplate,
+            OptimizationResult,
         )
-        if name == 'PromptOptimizer':
+
+        if name == "PromptOptimizer":
             return PromptOptimizer
-        elif name == 'OptimizationStrategy':
+        elif name == "OptimizationStrategy":
             return OptimizationStrategy
-        elif name == 'PromptMetrics':
+        elif name == "PromptMetrics":
             return PromptMetrics
-        elif name == 'PromptTemplate':
+        elif name == "PromptTemplate":
             return PromptTemplate
         else:
             return OptimizationResult
-    elif name in ('OntologyEvolution', 'UpdateStrategy', 'EvolutionEvent', 'OntologyVersion', 'EvolutionMetrics', 'UpdateCandidate'):
+    elif name in (
+        "OntologyEvolution",
+        "UpdateStrategy",
+        "EvolutionEvent",
+        "OntologyVersion",
+        "EvolutionMetrics",
+        "UpdateCandidate",
+    ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.ontology_evolution import (
-            OntologyEvolution, UpdateStrategy, EvolutionEvent, OntologyVersion, EvolutionMetrics, UpdateCandidate
+            OntologyEvolution,
+            UpdateStrategy,
+            EvolutionEvent,
+            OntologyVersion,
+            EvolutionMetrics,
+            UpdateCandidate,
         )
-        if name == 'OntologyEvolution':
+
+        if name == "OntologyEvolution":
             return OntologyEvolution
-        elif name == 'UpdateStrategy':
+        elif name == "UpdateStrategy":
             return UpdateStrategy
-        elif name == 'EvolutionEvent':
+        elif name == "EvolutionEvent":
             return EvolutionEvent
-        elif name == 'OntologyVersion':
+        elif name == "OntologyVersion":
             return OntologyVersion
-        elif name == 'EvolutionMetrics':
+        elif name == "EvolutionMetrics":
             return EvolutionMetrics
         else:
             return UpdateCandidate
-    elif name in ('DistributedProcessor', 'TaskStatus', 'WorkerStatus', 'Task', 'WorkerInfo', 'DistributedResult'):
+    elif name in (
+        "DistributedProcessor",
+        "TaskStatus",
+        "WorkerStatus",
+        "Task",
+        "WorkerInfo",
+        "DistributedResult",
+    ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.distributed_processor import (
-            DistributedProcessor, TaskStatus, WorkerStatus, Task, WorkerInfo, DistributedResult
+            DistributedProcessor,
+            TaskStatus,
+            WorkerStatus,
+            Task,
+            WorkerInfo,
+            DistributedResult,
         )
-        if name == 'DistributedProcessor':
+
+        if name == "DistributedProcessor":
             return DistributedProcessor
-        elif name == 'TaskStatus':
+        elif name == "TaskStatus":
             return TaskStatus
-        elif name == 'WorkerStatus':
+        elif name == "WorkerStatus":
             return WorkerStatus
-        elif name == 'Task':
+        elif name == "Task":
             return Task
-        elif name == 'WorkerInfo':
+        elif name == "WorkerInfo":
             return WorkerInfo
         else:
             return DistributedResult
-    elif name in ('IsabelleProver', 'VampireProver', 'EProver', 'AdditionalProversRegistry', 'ProverResult', 'ProverType', 'ProofFormat'):
+    elif name in (
+        "IsabelleProver",
+        "VampireProver",
+        "EProver",
+        "AdditionalProversRegistry",
+        "ProverResult",
+        "ProverType",
+        "ProofFormat",
+    ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.additional_provers import (
-            IsabelleProver, VampireProver, EProver, AdditionalProversRegistry, ProverResult, ProverType, ProofFormat
+            IsabelleProver,
+            VampireProver,
+            EProver,
+            AdditionalProversRegistry,
+            ProverResult,
+            ProverType,
+            ProofFormat,
         )
-        if name == 'IsabelleProver':
+
+        if name == "IsabelleProver":
             return IsabelleProver
-        elif name == 'VampireProver':
+        elif name == "VampireProver":
             return VampireProver
-        elif name == 'EProver':
+        elif name == "EProver":
             return EProver
-        elif name == 'AdditionalProversRegistry':
+        elif name == "AdditionalProversRegistry":
             return AdditionalProversRegistry
-        elif name == 'ProverResult':
+        elif name == "ProverResult":
             return ProverResult
-        elif name == 'ProverType':
+        elif name == "ProverType":
             return ProverType
         else:
             return ProofFormat
-    elif name in ('ConflictResolver', 'ResolutionStrategy', 'ConflictType', 'Conflict', 'Resolution', 'ResolutionMetrics'):
+    elif name in (
+        "ConflictResolver",
+        "ResolutionStrategy",
+        "ConflictType",
+        "Conflict",
+        "Resolution",
+        "ResolutionMetrics",
+    ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.conflict_resolver import (
-            ConflictResolver, ResolutionStrategy, ConflictType, Conflict, Resolution, ResolutionMetrics
+            ConflictResolver,
+            ResolutionStrategy,
+            ConflictType,
+            Conflict,
+            Resolution,
+            ResolutionMetrics,
         )
-        if name == 'ConflictResolver':
+
+        if name == "ConflictResolver":
             return ConflictResolver
-        elif name == 'ResolutionStrategy':
+        elif name == "ResolutionStrategy":
             return ResolutionStrategy
-        elif name == 'ConflictType':
+        elif name == "ConflictType":
             return ConflictType
-        elif name == 'Conflict':
+        elif name == "Conflict":
             return Conflict
-        elif name == 'Resolution':
+        elif name == "Resolution":
             return Resolution
         else:
             return ResolutionMetrics
-    elif name in ('PromptEngineer', 'SelectionMethod', 'CrossoverMethod', 'MutationMethod', 'EvolutionResult'):
+    elif name in (
+        "PromptEngineer",
+        "SelectionMethod",
+        "CrossoverMethod",
+        "MutationMethod",
+        "EvolutionResult",
+    ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prompt_engineer import (
-            PromptEngineer, SelectionMethod, CrossoverMethod, MutationMethod, EvolutionResult
+            PromptEngineer,
+            SelectionMethod,
+            CrossoverMethod,
+            MutationMethod,
+            EvolutionResult,
         )
-        if name == 'PromptEngineer':
+
+        if name == "PromptEngineer":
             return PromptEngineer
-        elif name == 'SelectionMethod':
+        elif name == "SelectionMethod":
             return SelectionMethod
-        elif name == 'CrossoverMethod':
+        elif name == "CrossoverMethod":
             return CrossoverMethod
-        elif name == 'MutationMethod':
+        elif name == "MutationMethod":
             return MutationMethod
         else:
             return EvolutionResult

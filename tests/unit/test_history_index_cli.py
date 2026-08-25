@@ -10,7 +10,9 @@ import duckdb
 
 
 def _load_history_index_cli_module():
-    module_path = Path(__file__).resolve().parents[2] / "ipfs_datasets_py" / "cli" / "history_index_cli.py"
+    module_path = (
+        Path(__file__).resolve().parents[2] / "ipfs_datasets_py" / "cli" / "history_index_cli.py"
+    )
     spec = importlib.util.spec_from_file_location("history_index_cli_under_test", module_path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
@@ -154,7 +156,14 @@ def test_ipfs_datasets_cli_dispatches_history_index(tmp_path: Path, monkeypatch)
             monkeypatch.setattr(
                 module.sys,
                 "argv",
-                ["ipfs-datasets", "history-index", "--index-path", str(db_path), "--json", "inspection"],
+                [
+                    "ipfs-datasets",
+                    "history-index",
+                    "--index-path",
+                    str(db_path),
+                    "--json",
+                    "inspection",
+                ],
             )
             module.main()
         except SystemExit as exc:

@@ -18,9 +18,7 @@ from dataclasses import asdict, dataclass, is_dataclass
 from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Sequence
 
 
-MODAL_AUTOENCODER_STATE_IDENTITY_SCHEMA_VERSION = (
-    "modal-autoencoder-incremental-state-identity-v1"
-)
+MODAL_AUTOENCODER_STATE_IDENTITY_SCHEMA_VERSION = "modal-autoencoder-incremental-state-identity-v1"
 
 
 class StaleStateResultError(RuntimeError):
@@ -41,9 +39,7 @@ def _canonical_value(value: Any) -> Any:
             str(key): _canonical_value(item)
             for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
         }
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_canonical_value(item) for item in value]
     if is_dataclass(value):
         return _canonical_value(asdict(value))
@@ -96,10 +92,7 @@ class _TrackedDict(dict):
         )
 
     def __deepcopy__(self, memo: Dict[int, Any]) -> Dict[Any, Any]:
-        return {
-            copy.deepcopy(key, memo): copy.deepcopy(value, memo)
-            for key, value in self.items()
-        }
+        return {copy.deepcopy(key, memo): copy.deepcopy(value, memo) for key, value in self.items()}
 
     def __setitem__(self, key: Any, value: Any) -> None:
         item_path = (*self._path, key)
@@ -338,9 +331,7 @@ def _tracked_value(
     before = before_callback or (lambda _path, _operation: None)
     if isinstance(value, Mapping):
         return _TrackedDict(value, callback, before, path)
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return _TrackedList(value, callback, before, path)
     return value
 
@@ -387,9 +378,7 @@ class IncrementalStateIdentity:
         metric_lineage: Any,
         components: Optional[Mapping[str, Any]] = None,
         component_normalizers: Optional[Mapping[str, Callable[[Any], Any]]] = None,
-        before_mutation: Optional[
-            Callable[[str, tuple[Any, ...], str], None]
-        ] = None,
+        before_mutation: Optional[Callable[[str, tuple[Any, ...], str], None]] = None,
     ) -> None:
         if not str(schema_version or "").strip():
             raise ValueError("schema_version must be non-empty")
@@ -494,18 +483,12 @@ class IncrementalStateIdentity:
         """Restore identity bookkeeping after transactional row restoration."""
 
         with self._lock:
-            self._component_compute_counts = dict(
-                checkpoint["component_compute_counts"]
-            )
+            self._component_compute_counts = dict(checkpoint["component_compute_counts"])
             self._component_digests = dict(checkpoint["component_digests"])
-            self._component_recomputations = int(
-                checkpoint["component_recomputations"]
-            )
+            self._component_recomputations = int(checkpoint["component_recomputations"])
             self._dirty = set(checkpoint["dirty"])
             self._identity_cache = dict(checkpoint["identity_cache"])
-            self._identity_recomputations = int(
-                checkpoint["identity_recomputations"]
-            )
+            self._identity_recomputations = int(checkpoint["identity_recomputations"])
             self._revision = int(checkpoint["revision"])
 
     def set_lineage(self, metric_lineage: Any) -> None:
@@ -585,9 +568,7 @@ class IncrementalStateIdentity:
         current = self.token(metric_lineage=metric_lineage)
         return current == token
 
-    def assert_current(
-        self, token: StateRevisionToken, *, metric_lineage: Any = None
-    ) -> None:
+    def assert_current(self, token: StateRevisionToken, *, metric_lineage: Any = None) -> None:
         if not self.matches(token, metric_lineage=metric_lineage):
             current_revision = self.revision
             raise StaleStateResultError(

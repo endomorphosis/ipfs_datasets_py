@@ -1,0 +1,64 @@
+{
+  "authorizing_for_publication": false,
+  "bridge_task_id": "OUL-049",
+  "checks": {
+    "cohort_complete": false,
+    "declared_cohort_report_consumed": true,
+    "fixture_proves_cohort_completion": false,
+    "placeholders_rejected": true,
+    "raw_bytes_checked_required": true,
+    "samples_rejected": true,
+    "self_asserted_digests_rejected": true,
+    "software_behavior_proven": true,
+    "zero_row_success_rejected": true
+  },
+  "code_version": "1",
+  "cohort": "E",
+  "cohort_complete": false,
+  "cohort_evidence_schema": "open-us-law-cohort-evidence-v1",
+  "cohort_evidence_schema_path": "data/legal/open_us_law/cohort_evidence.schema.json",
+  "failure_kind": "validation",
+  "fixture_execution_proves_cohort_completion": false,
+  "goal_id": "OUL-G021",
+  "jurisdictions": [
+    "KY",
+    "LA",
+    "ME",
+    "MD"
+  ],
+  "producer": "audit_open_us_law_retry_repair.py",
+  "program_id": "open-us-law-reindex-v1",
+  "repair_completed": true,
+  "repairs": [
+    {
+      "detail": "Verify the OUL-049 bridge against cohort E without claiming live acquisition completion.",
+      "id": "bind-bridge-to-cohort"
+    }
+  ],
+  "report_digest_sha256": "94aaf47d293ac114924ab90eaf6de6856f834b2bae3fb51adc7d33452c1bf8d2",
+  "report_schema": "ipfs_datasets_py/open-us-law-retry-repair@1",
+  "schema_version": "open-us-law-retry-repair-v1",
+  "sealed_at": "2026-08-13T00:00:00Z",
+  "software_behavior_proven": true,
+  "source_digests": {
+    "data/legal/open_us_law/cohort_evidence.schema.json": "a5146106b1c1dc76646b83010e3c4bc53e0852e6e4f39dfe0e660fb01c054372",
+    "ipfs_datasets_py/processors/legal_data/open_us_law_acquisition_coordinator.py": "7504261545618df8bd982bfd2c87694795c43ce97390c9f9eb5c15ab21d06c46",
+    "ipfs_datasets_py/processors/legal_data/open_us_law_live_evidence.py": "6ec3e1e64c51544ea935ac0af8b5fbb1c432453b8ad1b2f4e0625c7d821e85e8",
+    "scripts/ops/legal_data/audit_open_us_law_retry_repair.py": "e13636d129e47004dd3eb2f5d25ca12fdc937474be3dd741c0fece54cf1a29c6",
+    "scripts/ops/legal_data/coordinate_open_us_law_scrapes.py": "554f9acac294c27eae6890567bf1682737fc68abe02f36ff5e9f6c8b38716239",
+    "scripts/ops/legal_data/run_open_us_law_scrape_cohort.py": "dbdd2f46f1a819a7aede64ae0da53ea62b68a7f313cdbfa9e9623f18fd9c0eac"
+  },
+  "source_task_id": "OUL-013",
+  "source_task_released_for": "OUL-013",
+  "status": "passed",
+  "task_id": "OUL-053",
+  "validation_commands": [
+    "python scripts/ops/legal_data/audit_open_us_law_retry_repair.py --task OUL-053 --source OUL-013 --cohort E --check"
+  ],
+  "validation_digests": {
+    "tests/unit/processors/legal_data/test_open_us_law_acquisition_coordinator.py": "53a49fa64fe083bc45c052827ec2365d5ea288c5273c4064738621859223c594",
+    "tests/unit/processors/legal_data/test_open_us_law_live_evidence.py": "f324ea0a42d703757816328b729ffe69711c6e95c6b546361e845d3e956455d2",
+    "tests/unit/scripts/test_audit_open_us_law_retry_repair.py": "459d5bd0b82ca11be48f94f0b2eaef373a0a4e4f51b549c6600e968580396267",
+    "tests/unit/scripts/test_run_open_us_law_scrape_cohort.py": "e794fedd598a7b9a371d7a486901fb9c2cd68a637676527beea34c81972141c7"
+  }
+}

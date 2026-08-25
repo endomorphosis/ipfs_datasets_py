@@ -110,14 +110,11 @@ class TestP2PServiceManagerIntegration:
         # GIVEN: Custom bootstrap nodes
         bootstrap_nodes = [
             "/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
-            "/ip4/104.236.179.241/tcp/4001/p2p/QmSoLPppuBtQSGwKDZT2M73ULpjvfd3aZ6ha4oFGL1KrGM"
+            "/ip4/104.236.179.241/tcp/4001/p2p/QmSoLPppuBtQSGwKDZT2M73ULpjvfd3aZ6ha4oFGL1KrGM",
         ]
 
         # WHEN: Creating manager with bootstrap nodes
-        manager = P2PServiceManager(
-            enabled=False,
-            bootstrap_nodes=bootstrap_nodes
-        )
+        manager = P2PServiceManager(enabled=False, bootstrap_nodes=bootstrap_nodes)
 
         # THEN: Bootstrap nodes are stored
         assert manager.bootstrap_nodes == bootstrap_nodes
@@ -178,13 +175,13 @@ class TestP2PRegistryAdapterIntegration:
         """Test registry adapter adds runtime metadata to tools."""
         # GIVEN: Mock server with tools
         server = MagicMock()
-        
+
         def sync_tool(x):
             return x
-        
+
         async def async_tool(x):
             return x
-        
+
         server.tools = {
             "sync_tool": sync_tool,
             "async_tool": async_tool,
@@ -284,10 +281,10 @@ class TestEndToEndP2PIntegration:
         """Test simulated P2P workflow submission."""
         # GIVEN: Service manager with workflow scheduler
         manager = P2PServiceManager(enabled=False)
-        
+
         # WHEN: Attempting to get workflow scheduler
         scheduler = manager.get_workflow_scheduler()
-        
+
         # THEN: Returns None if unavailable (graceful degradation)
         # or scheduler instance if available
         if scheduler is not None:
@@ -301,10 +298,10 @@ class TestEndToEndP2PIntegration:
         """Test simulated P2P peer discovery."""
         # GIVEN: Service manager with peer registry
         manager = P2PServiceManager(enabled=False)
-        
+
         # WHEN: Attempting to get peer registry
         registry = manager.get_peer_registry()
-        
+
         # THEN: Returns None if unavailable or registry instance
         if registry is not None:
             # If MCP++ available, registry should have discovery method
@@ -317,16 +314,16 @@ class TestEndToEndP2PIntegration:
         """Test capability reporting is consistent."""
         # GIVEN: Service manager and capabilities
         manager = P2PServiceManager(enabled=False)
-        
+
         # WHEN: Getting capabilities
         caps = manager.get_capabilities()
         has_advanced = manager.has_advanced_features()
-        
+
         # THEN: Capabilities are consistent
         if has_advanced:
             # If has advanced features, MCP++ should be available
             assert caps["mcplusplus_available"] is True
-        
+
         # Capabilities structure is always valid
         assert isinstance(caps, dict)
         assert "p2p_enabled" in caps
@@ -340,10 +337,7 @@ class TestBackwardCompatibility:
         """Test P2P service manager still works with old usage patterns."""
         # GIVEN: Old usage pattern (no new parameters)
         # WHEN: Creating manager with old parameters only
-        manager = P2PServiceManager(
-            enabled=False,
-            queue_path="/tmp/queue"
-        )
+        manager = P2PServiceManager(enabled=False, queue_path="/tmp/queue")
 
         # THEN: Manager works as before
         assert manager is not None
@@ -396,10 +390,7 @@ class TestErrorHandling:
 
         # WHEN: Creating manager with invalid nodes
         # THEN: Should not raise exception (graceful handling)
-        manager = P2PServiceManager(
-            enabled=False,
-            bootstrap_nodes=invalid_nodes
-        )
+        manager = P2PServiceManager(enabled=False, bootstrap_nodes=invalid_nodes)
         assert manager is not None
 
     def test_registry_adapter_with_non_callable_tools(self):

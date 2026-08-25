@@ -25,7 +25,9 @@ def test_python_conformance_results_record_real_prover_checks() -> None:
     envelope = run_python_reference(_vectors_dir(), limit=12)
 
     assert envelope["engineVersions"]["mode"] == "module-backed-policy-runner"
-    assert all(result["proverId"] != "python-reference-policy-oracle" for result in envelope["results"])
+    assert all(
+        result["proverId"] != "python-reference-policy-oracle" for result in envelope["results"]
+    )
     assert all(
         any(
             check.get("engine") == "tdfol" and check.get("status") == "proved"

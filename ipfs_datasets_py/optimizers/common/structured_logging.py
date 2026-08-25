@@ -8,7 +8,7 @@ Example:
     ...     with_schema, log_event, EventType
     ... )
     >>> import logging
-    >>> 
+    >>>
     >>> logger = logging.getLogger(__name__)
     >>> log_event(logger, EventType.EXTRACTION_STARTED, {"input_length": 1234})
 """
@@ -28,42 +28,42 @@ DEFAULT_SCHEMA_VERSION = 2  # Bumped from 1 to 2 for new event/timestamp fields
 
 class EventType(Enum):
     """Standard event types for optimizer structured logs."""
-    
+
     # Pipeline events
     PIPELINE_RUN_STARTED = "pipeline.run.started"
     PIPELINE_RUN_COMPLETED = "pipeline.run.completed"
     PIPELINE_RUN_FAILED = "pipeline.run.failed"
     PIPELINE_BATCH_STARTED = "pipeline.batch.started"
     PIPELINE_BATCH_COMPLETED = "pipeline.batch.completed"
-    
+
     # Extraction events
     EXTRACTION_STARTED = "extraction.started"
     EXTRACTION_COMPLETED = "extraction.completed"
     EXTRACTION_FAILED = "extraction.failed"
-    
+
     # Critic events
     CRITIC_SCORE_STARTED = "critic.score.started"
     CRITIC_SCORE_COMPLETED = "critic.score.completed"
     CRITIC_SCORE_FAILED = "critic.score.failed"
-    
+
     # Mediator/refinement events
     REFINEMENT_ROUND_STARTED = "refinement.round.started"
     REFINEMENT_ROUND_COMPLETED = "refinement.round.completed"
     REFINEMENT_CONVERGED = "refinement.converged"
     REFINEMENT_FAILED = "refinement.failed"
-    
+
     # Validator events
     VALIDATION_STARTED = "validation.started"
     VALIDATION_COMPLETED = "validation.completed"
     VALIDATION_FAILED = "validation.failed"
-    
+
     # Logic optimizer events
     LOGIC_SESSION_STARTED = "logic.session.started"
     LOGIC_SESSION_COMPLETED = "logic.session.completed"
     LOGIC_SESSION_FAILED = "logic.session.failed"
     PROOF_ATTEMPT_STARTED = "logic.proof.attempt.started"
     PROOF_ATTEMPT_COMPLETED = "logic.proof.attempt.completed"
-    
+
     # Generic events
     OPTIMIZER_STARTED = "optimizer.started"
     OPTIMIZER_COMPLETED = "optimizer.completed"
@@ -163,21 +163,21 @@ def log_event(
         >>> log_event(logger, EventType.EXTRACTION_STARTED, {"entities": 5})
     """
     import json
-    
+
     payload = {
         "event": event.value,
         "optimizer_pipeline": optimizer_pipeline,
     }
-    
+
     if data:
         payload.update(redact_payload(data))
-    
+
     if include_timestamp:
         payload = enrich_with_timestamp(payload)
-    
+
     if include_schema:
         payload = with_schema(payload)
-    
+
     try:
         logger.log(level, json.dumps(payload, default=str))
     except (TypeError, ValueError, RuntimeError, OSError) as exc:

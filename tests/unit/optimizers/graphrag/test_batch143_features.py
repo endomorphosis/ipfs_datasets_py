@@ -6,6 +6,7 @@ Methods under test:
   - OntologyMediator.total_actions_taken()
   - OntologyMediator.unique_action_count()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -14,8 +15,10 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
@@ -27,6 +30,7 @@ def _cs(overall):
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     gen = MagicMock()
     crit = MagicMock()
     return OntologyMediator(gen, crit)
@@ -35,6 +39,7 @@ def _make_mediator():
 # ---------------------------------------------------------------------------
 # OntologyCritic.improvement_over_baseline
 # ---------------------------------------------------------------------------
+
 
 class TestImprovementOverBaseline:
     @pytest.mark.parametrize(
@@ -63,6 +68,7 @@ class TestImprovementOverBaseline:
 # OntologyCritic.score_iqr
 # ---------------------------------------------------------------------------
 
+
 class TestScoreIQR:
     @pytest.mark.parametrize(
         "values,predicate",
@@ -88,6 +94,7 @@ class TestScoreIQR:
 # OntologyMediator.total_actions_taken
 # ---------------------------------------------------------------------------
 
+
 class TestTotalActionsTaken:
     @pytest.mark.parametrize(
         "counts,expected",
@@ -111,6 +118,7 @@ class TestTotalActionsTaken:
 # ---------------------------------------------------------------------------
 # OntologyMediator.unique_action_count
 # ---------------------------------------------------------------------------
+
 
 class TestUniqueActionCount:
     @pytest.mark.parametrize(

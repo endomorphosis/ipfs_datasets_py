@@ -152,40 +152,30 @@ class PairedEvaluationMetrics:
     def to_dict(self) -> Dict[str, float]:
         return {
             "anti_copy_penalty": _stable_float(self.anti_copy_penalty),
-            "autoencoder_cycle_overhead": _stable_float(
-                self.autoencoder_cycle_overhead
-            ),
+            "autoencoder_cycle_overhead": _stable_float(self.autoencoder_cycle_overhead),
             "compiler_ir_cosine": _stable_float(self.compiler_ir_cosine),
             "compiler_ir_cross_entropy": _stable_float(self.compiler_ir_cross_entropy),
             "cycle_time_seconds": _stable_float(self.cycle_time_seconds),
             "graph_validity": _stable_float(self.graph_validity),
             "learned_ir_view_cosine": _stable_float(self.learned_ir_view_cosine),
-            "learned_ir_view_cross_entropy": _stable_float(
-                self.learned_ir_view_cross_entropy
-            ),
+            "learned_ir_view_cross_entropy": _stable_float(self.learned_ir_view_cross_entropy),
             "mutation_validity": _stable_float(self.mutation_validity),
             "proof_validity": _stable_float(self.proof_validity),
             "provenance_validity": _stable_float(self.provenance_validity),
             "state_to_patch_lag": _stable_float(self.state_to_patch_lag),
-            "task_to_accepted_patch_rate": _stable_float(
-                self.task_to_accepted_patch_rate
-            ),
+            "task_to_accepted_patch_rate": _stable_float(self.task_to_accepted_patch_rate),
             "theorem_validity": _stable_float(self.theorem_validity),
             "transient_execution_failure_rate": _stable_float(
                 self.transient_execution_failure_rate
             ),
-            "validation_rejection_rate": _stable_float(
-                self.validation_rejection_rate
-            ),
+            "validation_rejection_rate": _stable_float(self.validation_rejection_rate),
         }
 
     @classmethod
     def from_mapping(cls, data: Mapping[str, Any]) -> "PairedEvaluationMetrics":
         compiler = _mapping(data.get("compiler_ir"))
         learned = _mapping(
-            data.get("learned_ir_view")
-            or data.get("learned_ir")
-            or data.get("legal_ir_view")
+            data.get("learned_ir_view") or data.get("learned_ir") or data.get("legal_ir_view")
         )
         validity = _mapping(data.get("validity"))
         graph = _mapping(data.get("graph"))
@@ -237,9 +227,7 @@ class PairedEvaluationMetrics:
                             validity.get("theorem_valid"),
                             _finite_float(
                                 data.get("proof_validity"),
-                                1.0
-                                if bool(validity.get("proofs_valid", True))
-                                else 0.0,
+                                1.0 if bool(validity.get("proofs_valid", True)) else 0.0,
                             ),
                         ),
                     ),
@@ -250,8 +238,7 @@ class PairedEvaluationMetrics:
                 _finite_float(
                     graph.get("valid"),
                     1.0
-                    if int(_finite_float(graph.get("missing_endpoint_relationships"), 0.0))
-                    == 0
+                    if int(_finite_float(graph.get("missing_endpoint_relationships"), 0.0)) == 0
                     else 0.0,
                 ),
             ),
@@ -368,9 +355,7 @@ class IsolatedImplementationResult:
         return {
             "accepted_patch": bool(self.accepted_patch),
             "arm": self.arm,
-            "autoencoder_cycle_overhead": _stable_float(
-                self.autoencoder_cycle_overhead
-            ),
+            "autoencoder_cycle_overhead": _stable_float(self.autoencoder_cycle_overhead),
             "compiler_or_decompiler_patch": bool(self.compiler_or_decompiler_patch),
             "guardrail_regressions": list(self.guardrail_regressions),
             "isolated": bool(self.isolated),
@@ -378,9 +363,7 @@ class IsolatedImplementationResult:
             "outcome": self.outcome,
             "patch_id": self.patch_id,
             "source": _json_ready(self.source),
-            "state_to_accepted_patch_lag": _stable_float(
-                self.state_to_accepted_patch_lag
-            ),
+            "state_to_accepted_patch_lag": _stable_float(self.state_to_accepted_patch_lag),
             "transient_execution_failure_rate": _stable_float(
                 self.transient_execution_failure_rate
             ),
@@ -486,10 +469,10 @@ class SeedCanaryResult:
             "dry_run_no_mutation": _json_ready(self.dry_run_no_mutation),
             "evidence_provenance_summary": _json_ready(self.evidence_provenance_summary),
             "hard_guardrail_regressions": list(self.hard_guardrail_regressions),
-            "isolated_implementation_summary": _json_ready(
-                self.isolated_implementation_summary
+            "isolated_implementation_summary": _json_ready(self.isolated_implementation_summary),
+            "paired_metrics_provenance_summary": _json_ready(
+                self.paired_metrics_provenance_summary
             ),
-            "paired_metrics_provenance_summary": _json_ready(self.paired_metrics_provenance_summary),
             "promotion_allowed": self.promotion_allowed,
             "promotion_blockers": list(self.promotion_blockers),
             "projected_throughput_improvement": _stable_float(
@@ -579,19 +562,13 @@ def run_seed_canary(
         seeded_count = _append_todo_queue(queue_payloads, cfg.todo_queue_path)
 
     aggregate = _aggregate_comparisons(tasks)
-    regressions = tuple(
-        metric for metric, comparison in aggregate.items() if comparison.regressed
-    )
+    regressions = tuple(metric for metric, comparison in aggregate.items() if comparison.regressed)
     projected_throughput_improvement = _throughput_improvement(aggregate)
-    observed_tasks = [
-        task for task in tasks if _paired_metrics_observed_improvement_eligible(task)
-    ]
+    observed_tasks = [task for task in tasks if _paired_metrics_observed_improvement_eligible(task)]
     observed_aggregate = _aggregate_comparisons(observed_tasks)
-    throughput_improvement = (
-        _throughput_improvement(observed_aggregate) if observed_tasks else 0.0
-    )
-    throughput_materially_improved = (
-        throughput_improvement >= float(cfg.material_throughput_improvement)
+    throughput_improvement = _throughput_improvement(observed_aggregate) if observed_tasks else 0.0
+    throughput_materially_improved = throughput_improvement >= float(
+        cfg.material_throughput_improvement
     )
     evidence_provenance_summary = _evidence_provenance_summary(tasks)
     paired_metrics_provenance_summary = _paired_metrics_provenance_summary(tasks)
@@ -647,9 +624,7 @@ def run_seed_canary(
         shadow_summary={
             "audit_validity": dict(getattr(shadow, "audit_validity", {})),
             "cache_summary": dict(getattr(shadow, "cache_summary", {})),
-            "evidence_provenance_summary": dict(
-                getattr(shadow, "evidence_provenance_summary", {})
-            ),
+            "evidence_provenance_summary": dict(getattr(shadow, "evidence_provenance_summary", {})),
             "promotion_allowed": bool(getattr(shadow, "promotion_allowed", False)),
             "promotion_blockers": list(getattr(shadow, "promotion_blockers", ())),
             "selected_cluster_count": int(
@@ -693,8 +668,7 @@ def render_markdown_report(result: SeedCanaryResult) -> str:
     ]
     if result.promotion_blockers:
         lines.append(
-            "- Promotion blockers: "
-            + ", ".join(f"`{item}`" for item in result.promotion_blockers)
+            "- Promotion blockers: " + ", ".join(f"`{item}`" for item in result.promotion_blockers)
         )
     lines.extend(
         [
@@ -796,9 +770,7 @@ def _paired_task_from_shadow_audit(
 ) -> SeededPairedTask:
     record_evidence_ids = tuple(
         dict.fromkeys(
-            _record_evidence_id(record)
-            for record in records
-            if _record_evidence_id(record)
+            _record_evidence_id(record) for record in records if _record_evidence_id(record)
         )
     )
     evidence_ids = record_evidence_ids or tuple(_extract_evidence_ids_from_audit(audit))
@@ -834,14 +806,17 @@ def _paired_task_from_shadow_audit(
             deadband=config.metric_deadband,
         ).values()
     )
-    pair_id = "leanstral-seed-pair-" + canonical_sha256(
-        {
-            "cluster_id": audit.cluster_id,
-            "evidence_ids": evidence_ids,
-            "rank": rank,
-            "schema_version": SEED_CANARY_SCHEMA_VERSION,
-        }
-    )[:16]
+    pair_id = (
+        "leanstral-seed-pair-"
+        + canonical_sha256(
+            {
+                "cluster_id": audit.cluster_id,
+                "evidence_ids": evidence_ids,
+                "rank": rank,
+                "schema_version": SEED_CANARY_SCHEMA_VERSION,
+            }
+        )[:16]
+    )
     leanstral_task = _build_task_payload(
         audit,
         pair_id=pair_id,
@@ -1181,7 +1156,9 @@ def _first_implementation_record(
             _mapping(_mapping(record.get("paired_implementations")).get(arm)),
             _mapping(_mapping(record.get("implementation_outcomes")).get(arm)),
             _mapping(_mapping(record.get("paired_evaluation")).get(f"{arm}_implementation")),
-            _mapping(_mapping(_mapping(record.get("paired_evaluation")).get(arm)).get("implementation")),
+            _mapping(
+                _mapping(_mapping(record.get("paired_evaluation")).get(arm)).get("implementation")
+            ),
         )
         for candidate in candidates:
             if candidate:
@@ -1295,7 +1272,11 @@ def _verify_seed_task(
             continue
         if not bool(guardrail.get("passed", False)):
             reasons.append(f"{code}_guardrail_not_satisfied")
-    if config.require_verified_audit_for_promotion and not config.dry_run and not audit.audit_verified:
+    if (
+        config.require_verified_audit_for_promotion
+        and not config.dry_run
+        and not audit.audit_verified
+    ):
         reasons.append("leanstral_audit_not_verified")
     if audit.projected_todo.specificity_score < 1.0:
         reasons.append("projected_todo_specificity_incomplete")
@@ -1396,70 +1377,56 @@ def _promotion_decision(
         blockers.append("no_seeded_tasks")
     if int(_finite_float(evidence_provenance_summary.get("real_record_count"), 0.0)) <= 0:
         blockers.append("no_real_evidence_records")
-    if int(_finite_float(evidence_provenance_summary.get("provider_or_verified_cache_task_count"), 0.0)) <= 0:
+    if (
+        int(
+            _finite_float(
+                evidence_provenance_summary.get("provider_or_verified_cache_task_count"), 0.0
+            )
+        )
+        <= 0
+    ):
         blockers.append("no_provider_or_verified_cache_evidence")
     if int(_finite_float(evidence_provenance_summary.get("verifier_passed_task_count"), 0.0)) <= 0:
         blockers.append("no_verifier_evidence")
-    if int(_finite_float(paired_metrics_provenance_summary.get("observed_improvement_task_count"), 0.0)) <= 0:
+    if (
+        int(
+            _finite_float(
+                paired_metrics_provenance_summary.get("observed_improvement_task_count"), 0.0
+            )
+        )
+        <= 0
+    ):
         blockers.append("no_observed_paired_metrics")
     if config.require_actual_isolated_implementations:
         actual_arms = int(
             _finite_float(
-                isolated_implementation_summary.get(
-                    "actual_isolated_implementation_arm_count"
-                ),
+                isolated_implementation_summary.get("actual_isolated_implementation_arm_count"),
                 0.0,
             )
         )
         required_arms = int(
             _finite_float(
-                isolated_implementation_summary.get(
-                    "required_isolated_implementation_arm_count"
-                ),
+                isolated_implementation_summary.get("required_isolated_implementation_arm_count"),
                 0.0,
             )
         )
         if required_arms <= 0 or actual_arms < required_arms:
             blockers.append("actual_isolated_implementations_missing")
     if not bool(
-        rollout_decision_summary.get(
-            "accepted_compiler_decompiler_patch_requirement_met", False
-        )
+        rollout_decision_summary.get("accepted_compiler_decompiler_patch_requirement_met", False)
     ):
         blockers.append("no_accepted_compiler_decompiler_patch")
-    if not bool(
-        rollout_decision_summary.get(
-            "task_to_accepted_patch_rate_requirement_met", False
-        )
-    ):
+    if not bool(rollout_decision_summary.get("task_to_accepted_patch_rate_requirement_met", False)):
         blockers.append("task_to_accepted_patch_rate_improvement_below_20_percent")
-    if not bool(
-        rollout_decision_summary.get(
-            "state_to_accepted_patch_lag_requirement_met", False
-        )
-    ):
+    if not bool(rollout_decision_summary.get("state_to_accepted_patch_lag_requirement_met", False)):
         blockers.append("state_to_accepted_patch_lag_reduction_below_25_percent")
-    if not bool(
-        rollout_decision_summary.get(
-            "frozen_holdout_metrics_non_regressing", False
-        )
-    ):
+    if not bool(rollout_decision_summary.get("frozen_holdout_metrics_non_regressing", False)):
         blockers.append("frozen_holdout_metric_regression")
-    if not bool(
-        rollout_decision_summary.get("non_metric_guardrails_non_regressing", False)
-    ):
+    if not bool(rollout_decision_summary.get("non_metric_guardrails_non_regressing", False)):
         blockers.append("theorem_graph_provenance_anti_copy_or_mutation_regression")
-    if not bool(
-        rollout_decision_summary.get(
-            "autoencoder_cycle_overhead_requirement_met", False
-        )
-    ):
+    if not bool(rollout_decision_summary.get("autoencoder_cycle_overhead_requirement_met", False)):
         blockers.append("autoencoder_cycle_overhead_at_or_above_10_percent")
-    if not bool(
-        rollout_decision_summary.get(
-            "transient_execution_failure_requirement_met", False
-        )
-    ):
+    if not bool(rollout_decision_summary.get("transient_execution_failure_requirement_met", False)):
         blockers.append("transient_execution_failure_rate_at_or_above_5_percent")
     if regressions:
         blockers.extend(f"{metric}_regressed" for metric in regressions)
@@ -1470,11 +1437,7 @@ def _promotion_decision(
     if config.require_verified_audit_for_promotion and not config.dry_run:
         if any(not task.audit_verified for task in tasks):
             blockers.append("leanstral_audit_not_verified")
-    missing = [
-        metric
-        for metric in HARD_GUARDRAIL_METRICS
-        if metric not in aggregate_comparisons
-    ]
+    missing = [metric for metric in HARD_GUARDRAIL_METRICS if metric not in aggregate_comparisons]
     if missing:
         blockers.append("paired_metric_coverage_incomplete")
     return not blockers, sorted(set(blockers))
@@ -1493,7 +1456,9 @@ def _evidence_provenance_summary(tasks: Sequence[SeededPairedTask]) -> Dict[str,
         for kind, count in _mapping(provenance.get("packet_kind_counts")).items():
             kind_counts[str(kind)] += int(_finite_float(count, 0.0))
         real_record_count += int(_finite_float(provenance.get("real_record_count"), 0.0))
-        synthetic_record_count += int(_finite_float(provenance.get("synthetic_fixture_record_count"), 0.0))
+        synthetic_record_count += int(
+            _finite_float(provenance.get("synthetic_fixture_record_count"), 0.0)
+        )
         if bool(provenance.get("provider_or_verified_cache", False)):
             provider_or_verified_cache_count += 1
         verifier = _mapping(task.guardrails.get("verifier"))
@@ -1519,11 +1484,7 @@ def _paired_metrics_provenance_summary(tasks: Sequence[SeededPairedTask]) -> Dic
         str(_mapping(task.paired_metrics_provenance).get("kind") or "unknown_metrics")
         for task in tasks
     )
-    observed_count = sum(
-        1
-        for task in tasks
-        if _paired_metrics_observed_improvement_eligible(task)
-    )
+    observed_count = sum(1 for task in tasks if _paired_metrics_observed_improvement_eligible(task))
     synthetic_projection_count = sum(
         1
         for task in tasks
@@ -1552,24 +1513,18 @@ def _isolated_implementation_summary(tasks: Sequence[SeededPairedTask]) -> Dict[
         }
     )
     missing_count = sum(
-        1
-        for arm in arms
-        if "missing_isolated_implementation" in arm.guardrail_regressions
+        1 for arm in arms if "missing_isolated_implementation" in arm.guardrail_regressions
     )
     return {
         "actual_isolated_implementation_arm_count": sum(
             1 for arm in arms if arm.isolated and arm.locally_verified
         ),
         "accepted_compiler_decompiler_patch_count": sum(
-            1
-            for arm in leanstral_arms
-            if arm.accepted_patch and arm.compiler_or_decompiler_patch
+            1 for arm in leanstral_arms if arm.accepted_patch and arm.compiler_or_decompiler_patch
         ),
         "control_accepted_patch_count": sum(1 for arm in control_arms if arm.accepted_patch),
         "guardrail_regressions": regressions,
-        "leanstral_accepted_patch_count": sum(
-            1 for arm in leanstral_arms if arm.accepted_patch
-        ),
+        "leanstral_accepted_patch_count": sum(1 for arm in leanstral_arms if arm.accepted_patch),
         "max_autoencoder_cycle_overhead": max(
             [arm.autoencoder_cycle_overhead for arm in leanstral_arms] or [0.0]
         ),
@@ -1610,16 +1565,12 @@ def _rollout_decision_summary(
         ),
     )
     transient_execution_failure_rate = (
-        sum(lean_transient_rates) / len(lean_transient_rates)
-        if lean_transient_rates
-        else 0.0
+        sum(lean_transient_rates) / len(lean_transient_rates) if lean_transient_rates else 0.0
     )
     transient_execution_failure_rate = max(
         transient_execution_failure_rate,
         _finite_float(
-            isolated_implementation_summary.get(
-                "max_transient_execution_failure_rate"
-            ),
+            isolated_implementation_summary.get("max_transient_execution_failure_rate"),
             0.0,
         ),
     )
@@ -1648,31 +1599,23 @@ def _rollout_decision_summary(
         if metric in aggregate_comparisons and aggregate_comparisons[metric].regressed
     )
     implementation_regressions = tuple(
-        str(item)
-        for item in isolated_implementation_summary.get("guardrail_regressions", ())
-        or ()
+        str(item) for item in isolated_implementation_summary.get("guardrail_regressions", ()) or ()
     )
     actual_arms = int(
         _finite_float(
-            isolated_implementation_summary.get(
-                "actual_isolated_implementation_arm_count"
-            ),
+            isolated_implementation_summary.get("actual_isolated_implementation_arm_count"),
             0.0,
         )
     )
     required_arms = int(
         _finite_float(
-            isolated_implementation_summary.get(
-                "required_isolated_implementation_arm_count"
-            ),
+            isolated_implementation_summary.get("required_isolated_implementation_arm_count"),
             0.0,
         )
     )
     accepted_patches = int(
         _finite_float(
-            isolated_implementation_summary.get(
-                "accepted_compiler_decompiler_patch_count"
-            ),
+            isolated_implementation_summary.get("accepted_compiler_decompiler_patch_count"),
             0.0,
         )
     )
@@ -1685,9 +1628,7 @@ def _rollout_decision_summary(
         "actual_isolated_implementation_requirement_met": (
             actual_arms >= required_arms and required_arms > 0
         ),
-        "autoencoder_cycle_overhead": _stable_float(
-            autoencoder_cycle_overhead
-        ),
+        "autoencoder_cycle_overhead": _stable_float(autoencoder_cycle_overhead),
         "autoencoder_cycle_overhead_requirement_met": (
             autoencoder_cycle_overhead < float(config.max_autoencoder_cycle_overhead)
         ),
@@ -1695,9 +1636,7 @@ def _rollout_decision_summary(
         "frozen_holdout_metrics_non_regressing": not frozen_regressions,
         "implementation_guardrail_regressions": list(implementation_regressions),
         "max_autoencoder_cycle_overhead": float(config.max_autoencoder_cycle_overhead),
-        "max_transient_execution_failure_rate": float(
-            config.max_transient_execution_failure_rate
-        ),
+        "max_transient_execution_failure_rate": float(config.max_transient_execution_failure_rate),
         "min_accepted_compiler_patches": int(config.min_accepted_compiler_patches),
         "min_state_accepted_patch_lag_reduction": float(
             config.min_state_accepted_patch_lag_reduction
@@ -1725,12 +1664,9 @@ def _rollout_decision_summary(
             (task_rate.relative_improvement if task_rate is not None else 0.0)
             >= float(config.min_task_accepted_patch_rate_improvement)
         ),
-        "transient_execution_failure_rate": _stable_float(
-            transient_execution_failure_rate
-        ),
+        "transient_execution_failure_rate": _stable_float(transient_execution_failure_rate),
         "transient_execution_failure_requirement_met": (
-            transient_execution_failure_rate
-            < float(config.max_transient_execution_failure_rate)
+            transient_execution_failure_rate < float(config.max_transient_execution_failure_rate)
         ),
     }
 
@@ -1770,9 +1706,7 @@ def _packet_index(records: Sequence[Mapping[str, Any]]) -> Dict[str, Mapping[str
 
 def _record_evidence_id(record: Mapping[str, Any]) -> str:
     return str(
-        record.get("evidence_id")
-        or _mapping(record.get("payload")).get("evidence_id")
-        or ""
+        record.get("evidence_id") or _mapping(record.get("payload")).get("evidence_id") or ""
     ).strip()
 
 
@@ -1836,7 +1770,9 @@ def _markdown_guardrails(result: SeedCanaryResult) -> str:
     for task in result.tasks:
         for code in SHADOW_GUARDRAIL_CODES:
             guardrail = _mapping(task.guardrails.get(code))
-            if bool(guardrail.get("passed", False)) or (code == "verifier" and result.config.dry_run):
+            if bool(guardrail.get("passed", False)) or (
+                code == "verifier" and result.config.dry_run
+            ):
                 guardrail_counts[f"{code}_passed"] += 1
             else:
                 guardrail_counts[f"{code}_failed"] += 1
@@ -1926,9 +1862,17 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--cache-dir", default="", help="Leanstral audit cache directory")
     parser.add_argument("--report-path", default=str(DEFAULT_REPORT_PATH))
     parser.add_argument("--todo-queue-path", default=str(DEFAULT_TODO_QUEUE_PATH))
-    parser.add_argument("--dry-run", action="store_true", help="Do not append TODOs or allow production promotion")
-    parser.add_argument("--run-seed", action="store_true", help="Append verified Leanstral TODOs to the bounded queue")
-    parser.add_argument("--require-promotion", action="store_true", help="Exit non-zero when promotion is blocked")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Do not append TODOs or allow production promotion"
+    )
+    parser.add_argument(
+        "--run-seed",
+        action="store_true",
+        help="Append verified Leanstral TODOs to the bounded queue",
+    )
+    parser.add_argument(
+        "--require-promotion", action="store_true", help="Exit non-zero when promotion is blocked"
+    )
     return parser.parse_args(argv)
 
 
@@ -1942,9 +1886,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     explicit_input_requested = bool(args.input)
     records = load_disagreement_records(input_paths) if input_paths else []
     if not records and dry_run and not explicit_input_requested:
-        records = build_dry_run_fixture_records(
-            count=max(1, min(args.max_todos, MAX_SEED_TODOS))
-        )
+        records = build_dry_run_fixture_records(count=max(1, min(args.max_todos, MAX_SEED_TODOS)))
     config = SeedCanaryConfig(
         max_todos=args.max_todos,
         dry_run=dry_run,

@@ -297,11 +297,15 @@ class ProofFeedbackPartitionPolicy:
     def assign(self, group_key: Any) -> ProofFeedbackPartition:
         group_digest = _digest(group_key)
         bucket = int(
-            hashlib.sha256(f"{self.version}:{self.salt}:{group_digest}".encode("utf-8")).hexdigest()[:16],
+            hashlib.sha256(
+                f"{self.version}:{self.salt}:{group_digest}".encode("utf-8")
+            ).hexdigest()[:16],
             16,
         )
         threshold = int(float(self.holdout_fraction) * (1 << 64))
-        return ProofFeedbackPartition.HOLDOUT if bucket < threshold else ProofFeedbackPartition.TRAIN
+        return (
+            ProofFeedbackPartition.HOLDOUT if bucket < threshold else ProofFeedbackPartition.TRAIN
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -313,7 +317,9 @@ class ProofFeedbackPartitionPolicy:
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "ProofFeedbackPartitionPolicy":
         return cls(
-            holdout_fraction=float(value.get("holdout_fraction", DEFAULT_PROOF_FEEDBACK_HOLDOUT_FRACTION)),
+            holdout_fraction=float(
+                value.get("holdout_fraction", DEFAULT_PROOF_FEEDBACK_HOLDOUT_FRACTION)
+            ),
             salt=str(value.get("salt") or DEFAULT_PROOF_FEEDBACK_PARTITION_SALT),
             version=str(value.get("version") or LEGAL_IR_PROOF_FEEDBACK_PARTITION_VERSION),
         )
@@ -325,7 +331,9 @@ def deterministic_proof_feedback_partition(
     holdout_fraction: float = DEFAULT_PROOF_FEEDBACK_HOLDOUT_FRACTION,
     salt: str = DEFAULT_PROOF_FEEDBACK_PARTITION_SALT,
 ) -> ProofFeedbackPartition:
-    return ProofFeedbackPartitionPolicy(holdout_fraction=holdout_fraction, salt=salt).assign(group_key)
+    return ProofFeedbackPartitionPolicy(holdout_fraction=holdout_fraction, salt=salt).assign(
+        group_key
+    )
 
 
 @dataclass(frozen=True)
@@ -341,7 +349,9 @@ class KernelReconstructionFeedback:
     def __post_init__(self) -> None:
         _require_safe_identifier(self.status, "kernel_reconstruction.status")
         _require_safe_identifier(self.checker, "kernel_reconstruction.checker", allow_empty=True)
-        _require_safe_identifier(self.receipt_id, "kernel_reconstruction.receipt_id", allow_empty=True)
+        _require_safe_identifier(
+            self.receipt_id, "kernel_reconstruction.receipt_id", allow_empty=True
+        )
         if self.verified and (not self.attempted or not self.receipt_id):
             raise ProofFeedbackTrustError("verified reconstruction requires an attempted receipt")
 
@@ -360,8 +370,12 @@ class KernelReconstructionFeedback:
             status=_safe_identifier(value.get("status") or "not_attempted"),
             attempted=bool(value.get("attempted")),
             verified=bool(value.get("verified")),
-            checker=_safe_identifier(value.get("checker"), fallback="") if value.get("checker") else "",
-            receipt_id=_safe_identifier(value.get("receipt_id"), fallback="") if value.get("receipt_id") else "",
+            checker=_safe_identifier(value.get("checker"), fallback="")
+            if value.get("checker")
+            else "",
+            receipt_id=_safe_identifier(value.get("receipt_id"), fallback="")
+            if value.get("receipt_id")
+            else "",
         )
 
     @classmethod
@@ -372,13 +386,21 @@ class KernelReconstructionFeedback:
         if receipt is None:
             return cls()
         value = _mapping(receipt)
-        attempted = bool(value.get("native_reconstruction")) or bool(value.get("reconstruction_status"))
+        attempted = bool(value.get("native_reconstruction")) or bool(
+            value.get("reconstruction_status")
+        )
         return cls(
-            status=_safe_identifier(value.get("reconstruction_status") or value.get("outcome") or "not_attempted"),
+            status=_safe_identifier(
+                value.get("reconstruction_status") or value.get("outcome") or "not_attempted"
+            ),
             attempted=attempted,
             verified=bool(value.get("native_reconstruction_verified")),
-            checker=_safe_identifier(value.get("checker"), fallback="") if value.get("checker") else "",
-            receipt_id=_safe_identifier(value.get("receipt_id"), fallback="") if value.get("receipt_id") else "",
+            checker=_safe_identifier(value.get("checker"), fallback="")
+            if value.get("checker")
+            else "",
+            receipt_id=_safe_identifier(value.get("receipt_id"), fallback="")
+            if value.get("receipt_id")
+            else "",
         )
 
 
@@ -399,7 +421,9 @@ class VerifiedCounterexampleFeedback:
         if not _SHA256_RE.fullmatch(self.witness_digest):
             raise ProofFeedbackError("counterexample witness_digest must be a SHA-256 digest")
         if not self.verified:
-            raise ProofFeedbackTrustError("unverified counterexamples cannot enter a training record")
+            raise ProofFeedbackTrustError(
+                "unverified counterexamples cannot enter a training record"
+            )
         for item in (*self.evidence_ids, *self.receipt_ids):
             _require_safe_identifier(item, "counterexample identifier")
 
@@ -426,7 +450,9 @@ class VerifiedCounterexampleFeedback:
                 value.get("counterexample_type") or value.get("kind") or "counterexample"
             ),
             witness_digest=_digest(witness),
-            verifier=_safe_identifier(value.get("verifier") or value.get("checker") or "deterministic_verifier"),
+            verifier=_safe_identifier(
+                value.get("verifier") or value.get("checker") or "deterministic_verifier"
+            ),
             evidence_ids=_identifier_tuple(value.get("evidence_ids") or value.get("evidence_id")),
             receipt_ids=_identifier_tuple(value.get("receipt_ids") or value.get("receipt_id")),
         )
@@ -480,9 +506,15 @@ class MinimalFailingContractFeedback:
             return None
         return cls(
             contract_id=_safe_identifier(value.get("contract_id") or "unknown_contract"),
-            failure_code=_safe_identifier(value.get("failure_code") or value.get("reason") or "contract_failure"),
-            failing_fields=_identifier_tuple(value.get("failing_fields") or value.get("required_field")),
-            contract_digest=_digest(value["contract_digest"]) if value.get("contract_digest") else "",
+            failure_code=_safe_identifier(
+                value.get("failure_code") or value.get("reason") or "contract_failure"
+            ),
+            failing_fields=_identifier_tuple(
+                value.get("failing_fields") or value.get("required_field")
+            ),
+            contract_digest=_digest(value["contract_digest"])
+            if value.get("contract_digest")
+            else "",
             verifier=_safe_identifier(value.get("verifier") or "deterministic_contract_validator"),
             evidence_ids=_identifier_tuple(value.get("evidence_ids") or value.get("evidence_id")),
             receipt_ids=_identifier_tuple(value.get("receipt_ids") or value.get("receipt_id")),
@@ -562,7 +594,13 @@ class LegalIRProofFeedbackRecord:
     def __post_init__(self) -> None:
         if self.schema_version != LEGAL_IR_PROOF_FEEDBACK_SCHEMA_VERSION:
             raise ProofFeedbackError(f"unsupported proof-feedback schema: {self.schema_version!r}")
-        for name in ("obligation_id", "obligation_type", "legal_ir_view", "semantic_family", "repair_label"):
+        for name in (
+            "obligation_id",
+            "obligation_type",
+            "legal_ir_view",
+            "semantic_family",
+            "repair_label",
+        ):
             _require_safe_identifier(str(getattr(self, name)), name)
         for name in ("obligation_digest", "partition_key_digest"):
             if not _SHA256_RE.fullmatch(str(getattr(self, name))):
@@ -573,12 +611,16 @@ class LegalIRProofFeedbackRecord:
                 raise ProofFeedbackError(f"unsupported semantic slot state: {state!r}")
         for values in self.semantic_slot_value_digests.values():
             if any(not _SHA256_RE.fullmatch(value) for value in values):
-                raise ProofFeedbackError("semantic slot values must be represented by SHA-256 digests")
+                raise ProofFeedbackError(
+                    "semantic slot values must be represented by SHA-256 digests"
+                )
         if any(status not in _ROUTE_STATES for status in self.route_statuses.values()):
             raise ProofFeedbackError("route_statuses contains an unsupported status")
         expected_partition = self.partition_policy.assign(self.partition_key_digest)
         if self.partition != expected_partition:
-            raise ProofFeedbackPartitionError("persisted partition does not match its group digest and policy")
+            raise ProofFeedbackPartitionError(
+                "persisted partition does not match its group digest and policy"
+            )
         expected_label = _training_label(
             deterministic_trusted=self.deterministic_trusted,
             kernel=self.kernel_reconstruction,
@@ -607,7 +649,9 @@ class LegalIRProofFeedbackRecord:
             _require_safe_identifier(str(item), "categorical feature or identifier")
         if self.record_id:
             if self.record_id != self.expected_record_id:
-                raise ProofFeedbackIntegrityError("record_id does not match canonical record content")
+                raise ProofFeedbackIntegrityError(
+                    "record_id does not match canonical record content"
+                )
 
     @property
     def eligible_for_training(self) -> bool:
@@ -654,7 +698,8 @@ class LegalIRProofFeedbackRecord:
             "selected_premise_families": list(self.selected_premise_families),
             "semantic_family": self.semantic_family,
             "semantic_slot_value_digests": {
-                key: list(values) for key, values in sorted(self.semantic_slot_value_digests.items())
+                key: list(values)
+                for key, values in sorted(self.semantic_slot_value_digests.items())
             },
             "semantic_slots": dict(sorted(self.semantic_slots.items())),
             "training_label": self.training_label.value,
@@ -691,7 +736,9 @@ class LegalIRProofFeedbackRecord:
         backend_outcomes: Optional[Mapping[str, Any]] = None,
         kernel_reconstruction: Optional[KernelReconstructionFeedback | Mapping[str, Any]] = None,
         counterexample: Optional[VerifiedCounterexampleFeedback | Mapping[str, Any]] = None,
-        minimal_failing_contract: Optional[MinimalFailingContractFeedback | Mapping[str, Any]] = None,
+        minimal_failing_contract: Optional[
+            MinimalFailingContractFeedback | Mapping[str, Any]
+        ] = None,
         deterministic_trusted: bool = False,
         repair_label: Any = "none",
         evidence_ids: Sequence[Any] = (),
@@ -704,15 +751,21 @@ class LegalIRProofFeedbackRecord:
         slots, slot_digests = _slot_features(semantic_slots)
         routes = {
             _safe_identifier(key): bool(value)
-            for key, value in sorted(dict(route_availability or {}).items(), key=lambda item: str(item[0]))
+            for key, value in sorted(
+                dict(route_availability or {}).items(), key=lambda item: str(item[0])
+            )
         }
         statuses = {
             _safe_identifier(key): _safe_identifier(_enum_text(value).lower())
-            for key, value in sorted(dict(route_statuses or {}).items(), key=lambda item: str(item[0]))
+            for key, value in sorted(
+                dict(route_statuses or {}).items(), key=lambda item: str(item[0])
+            )
         }
         backends = {
             _safe_identifier(key): _safe_identifier(_enum_text(value).lower())
-            for key, value in sorted(dict(backend_outcomes or {}).items(), key=lambda item: str(item[0]))
+            for key, value in sorted(
+                dict(backend_outcomes or {}).items(), key=lambda item: str(item[0])
+            )
         }
         kernel = (
             kernel_reconstruction
@@ -797,13 +850,35 @@ class LegalIRProofFeedbackRecord:
         verify_content_address: bool = True,
     ) -> "LegalIRProofFeedbackRecord":
         allowed = {
-            "backend_outcomes", "content_hash", "counterexample", "deterministic_trusted",
-            "eligible_for_training", "evidence_ids", "kernel_reconstruction", "legal_ir_view",
-            "minimal_failing_contract", "obligation_digest", "obligation_id", "obligation_type",
-            "partition", "partition_key_digest", "partition_policy", "receipt_ids", "record_id",
-            "repair_label", "route_availability", "route_statuses", "schema_version",
-            "selected_premise_families", "semantic_family", "semantic_slot_value_digests",
-            "semantic_slots", "training_label", "trust_status", "version_fingerprint", "versions",
+            "backend_outcomes",
+            "content_hash",
+            "counterexample",
+            "deterministic_trusted",
+            "eligible_for_training",
+            "evidence_ids",
+            "kernel_reconstruction",
+            "legal_ir_view",
+            "minimal_failing_contract",
+            "obligation_digest",
+            "obligation_id",
+            "obligation_type",
+            "partition",
+            "partition_key_digest",
+            "partition_policy",
+            "receipt_ids",
+            "record_id",
+            "repair_label",
+            "route_availability",
+            "route_statuses",
+            "schema_version",
+            "selected_premise_families",
+            "semantic_family",
+            "semantic_slot_value_digests",
+            "semantic_slots",
+            "training_label",
+            "trust_status",
+            "version_fingerprint",
+            "versions",
         }
         unknown = set(value) - allowed
         if unknown:
@@ -817,16 +892,28 @@ class LegalIRProofFeedbackRecord:
             obligation_type=str(value.get("obligation_type") or ""),
             legal_ir_view=str(value.get("legal_ir_view") or ""),
             semantic_family=str(value.get("semantic_family") or ""),
-            semantic_slots={str(k): str(v) for k, v in dict(value.get("semantic_slots") or {}).items()},
+            semantic_slots={
+                str(k): str(v) for k, v in dict(value.get("semantic_slots") or {}).items()
+            },
             semantic_slot_value_digests={
                 str(k): tuple(str(item) for item in values)
                 for k, values in dict(value.get("semantic_slot_value_digests") or {}).items()
             },
-            selected_premise_families=tuple(str(item) for item in value.get("selected_premise_families", []) or []),
-            route_availability={str(k): bool(v) for k, v in dict(value.get("route_availability") or {}).items()},
-            route_statuses={str(k): str(v) for k, v in dict(value.get("route_statuses") or {}).items()},
-            backend_outcomes={str(k): str(v) for k, v in dict(value.get("backend_outcomes") or {}).items()},
-            kernel_reconstruction=KernelReconstructionFeedback.from_dict(_mapping(value.get("kernel_reconstruction"))),
+            selected_premise_families=tuple(
+                str(item) for item in value.get("selected_premise_families", []) or []
+            ),
+            route_availability={
+                str(k): bool(v) for k, v in dict(value.get("route_availability") or {}).items()
+            },
+            route_statuses={
+                str(k): str(v) for k, v in dict(value.get("route_statuses") or {}).items()
+            },
+            backend_outcomes={
+                str(k): str(v) for k, v in dict(value.get("backend_outcomes") or {}).items()
+            },
+            kernel_reconstruction=KernelReconstructionFeedback.from_dict(
+                _mapping(value.get("kernel_reconstruction"))
+            ),
             counterexample=(
                 VerifiedCounterexampleFeedback.from_dict(counterexample)
                 if isinstance(counterexample, Mapping)
@@ -845,7 +932,9 @@ class LegalIRProofFeedbackRecord:
             receipt_ids=tuple(str(item) for item in value.get("receipt_ids", []) or []),
             partition_key_digest=str(value.get("partition_key_digest") or ""),
             partition=ProofFeedbackPartition(str(value.get("partition") or "")),
-            partition_policy=ProofFeedbackPartitionPolicy.from_dict(_mapping(value.get("partition_policy"))),
+            partition_policy=ProofFeedbackPartitionPolicy.from_dict(
+                _mapping(value.get("partition_policy"))
+            ),
             versions=ProofFeedbackVersions.from_dict(_mapping(value.get("versions"))),
             schema_version=str(value.get("schema_version") or ""),
         )
@@ -853,14 +942,18 @@ class LegalIRProofFeedbackRecord:
             return cls(**{**record.__dict__, "record_id": record.expected_record_id})
         claimed_hash = str(value.get("content_hash") or record.content_hash)
         if claimed_hash != record.content_hash:
-            raise ProofFeedbackIntegrityError("content_hash does not match canonical record content")
+            raise ProofFeedbackIntegrityError(
+                "content_hash does not match canonical record content"
+            )
         claimed_version = str(value.get("version_fingerprint") or record.version_fingerprint)
         if claimed_version != record.version_fingerprint:
             raise ProofFeedbackIntegrityError("version_fingerprint does not match record versions")
         return record
 
     @classmethod
-    def from_json(cls, value: str | bytes, *, verify_content_address: bool = True) -> "LegalIRProofFeedbackRecord":
+    def from_json(
+        cls, value: str | bytes, *, verify_content_address: bool = True
+    ) -> "LegalIRProofFeedbackRecord":
         """Deserialize and integrity-check canonical or ordinary JSON."""
 
         try:
@@ -884,7 +977,9 @@ def _premise_family(premise: Any) -> str:
     return name.split("_", 1)[0] if "_" in name else name
 
 
-def _route_features(route_result: Optional[LegalIRProofRouteResult]) -> tuple[dict[str, bool], dict[str, str], bool]:
+def _route_features(
+    route_result: Optional[LegalIRProofRouteResult],
+) -> tuple[dict[str, bool], dict[str, str], bool]:
     if route_result is None:
         return {}, {}, False
     availability: dict[str, bool] = {}
@@ -936,7 +1031,9 @@ def build_legal_ir_proof_feedback_record(
     obligation_map = _mapping(obligation)
     metadata = _mapping(_get(obligation, "metadata", obligation_map.get("metadata", {})))
     obligation_id = _get(obligation, "obligation_id", obligation_map.get("obligation_id"))
-    obligation_type = _get(obligation, "kind", obligation_map.get("kind")) or metadata.get("obligation_type")
+    obligation_type = _get(obligation, "kind", obligation_map.get("kind")) or metadata.get(
+        "obligation_type"
+    )
     legal_ir_view = _get(obligation, "legal_ir_view", obligation_map.get("legal_ir_view"))
     semantic_family = (
         metadata.get("semantic_family")
@@ -961,7 +1058,9 @@ def build_legal_ir_proof_feedback_record(
                 extracted_slots[slot_name] = metadata[slot_name]
 
     availability, route_statuses, route_deterministic = _route_features(route_result)
-    hammer_result = getattr(route_result, "hammer_result", None) if route_result is not None else None
+    hammer_result = (
+        getattr(route_result, "hammer_result", None) if route_result is not None else None
+    )
     if not selected_premises and hammer_result is not None:
         selected_premises = tuple(hammer_result.premise_selection.selected)
     backend_outcomes = {
@@ -1005,7 +1104,11 @@ def build_legal_ir_proof_feedback_record(
             "type": str(obligation_type or ""),
         }
     )
-    sample_group = partition_key or _get(obligation, "sample_id", obligation_map.get("sample_id")) or obligation_id
+    sample_group = (
+        partition_key
+        or _get(obligation, "sample_id", obligation_map.get("sample_id"))
+        or obligation_id
+    )
     return LegalIRProofFeedbackRecord.create(
         obligation_id=obligation_id,
         obligation_type=obligation_type,
@@ -1019,8 +1122,13 @@ def build_legal_ir_proof_feedback_record(
         kernel_reconstruction=kernel,
         counterexample=counterexample,
         minimal_failing_contract=minimal_failing_contract,
-        deterministic_trusted=route_deterministic if deterministic_trusted is None else deterministic_trusted,
-        repair_label=repair_label or metadata.get("repair_label") or metadata.get("repair_lane") or "none",
+        deterministic_trusted=route_deterministic
+        if deterministic_trusted is None
+        else deterministic_trusted,
+        repair_label=repair_label
+        or metadata.get("repair_label")
+        or metadata.get("repair_lane")
+        or "none",
         evidence_ids=evidence_ids,
         receipt_ids=resolved_receipts,
         obligation_digest=obligation_hash,
@@ -1094,7 +1202,9 @@ class ProofFeedbackStore:
             if existing != encoded:
                 raise ProofFeedbackIntegrityError(f"content-address collision at {path}")
             return False
-        descriptor, temporary_name = tempfile.mkstemp(prefix=".proof-feedback-", suffix=".tmp", dir=self.records_path)
+        descriptor, temporary_name = tempfile.mkstemp(
+            prefix=".proof-feedback-", suffix=".tmp", dir=self.records_path
+        )
         try:
             with os.fdopen(descriptor, "wb") as handle:
                 handle.write(encoded)
@@ -1130,7 +1240,9 @@ class ProofFeedbackStore:
             value = json.loads(path.read_text(encoding="utf-8"))
             record = LegalIRProofFeedbackRecord.from_dict(value)
             if path.stem != record.record_id:
-                raise ProofFeedbackIntegrityError(f"record filename does not match content at {path}")
+                raise ProofFeedbackIntegrityError(
+                    f"record filename does not match content at {path}"
+                )
             yield record
 
     def replay(
@@ -1190,7 +1302,9 @@ class ProofFeedbackStore:
 LegalIRProofFeedbackStore = ProofFeedbackStore
 
 
-def load_proof_feedback_jsonl(path: str | os.PathLike[str]) -> tuple[LegalIRProofFeedbackRecord, ...]:
+def load_proof_feedback_jsonl(
+    path: str | os.PathLike[str],
+) -> tuple[LegalIRProofFeedbackRecord, ...]:
     records: list[LegalIRProofFeedbackRecord] = []
     seen: set[str] = set()
     with Path(path).open("r", encoding="utf-8") as handle:
@@ -1205,7 +1319,9 @@ def load_proof_feedback_jsonl(path: str | os.PathLike[str]) -> tuple[LegalIRProo
                     f"invalid proof-feedback record at line {line_number}: {exc}"
                 ) from exc
             if record.record_id in seen:
-                raise ProofFeedbackIntegrityError(f"duplicate proof-feedback record at line {line_number}")
+                raise ProofFeedbackIntegrityError(
+                    f"duplicate proof-feedback record at line {line_number}"
+                )
             seen.add(record.record_id)
             records.append(record)
     return tuple(records)

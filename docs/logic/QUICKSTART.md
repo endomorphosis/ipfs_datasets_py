@@ -90,9 +90,9 @@ cec = CECFramework()
 # Define premises and goal
 premises = [
     "∀x (Human(x) → Mortal(x))",  # All humans are mortal
-    "Human(Socrates)"               # Socrates is human
+    "Human(Socrates)",  # Socrates is human
 ]
-goal = "Mortal(Socrates)"          # Therefore, Socrates is mortal
+goal = "Mortal(Socrates)"  # Therefore, Socrates is mortal
 
 # Attempt proof
 result = cec.prove(premises, goal)
@@ -131,14 +131,10 @@ Process multiple statements efficiently:
 from ipfs_datasets_py.logic.batch_processing import BatchProcessor
 
 # Initialize processor
-processor = BatchProcessor(converter_type='fol', workers=4)
+processor = BatchProcessor(converter_type="fol", workers=4)
 
 # Batch convert
-statements = [
-    "All birds can fly",
-    "Penguins are birds",
-    "Some birds cannot fly"
-]
+statements = ["All birds can fly", "Penguins are birds", "Some birds cannot fly"]
 
 results = processor.process_batch(statements)
 
@@ -242,7 +238,7 @@ converter = UnifiedConverter()
 result = converter.convert("If it rains, the ground gets wet")
 
 print(f"Detected format: {result.format}")  # FOL
-print(f"Formula: {result.formula}")         # Rain → WetGround
+print(f"Formula: {result.formula}")  # Rain → WetGround
 ```
 
 ---
@@ -255,10 +251,10 @@ Customize behavior with config:
 from ipfs_datasets_py.logic import LogicConfig
 
 config = LogicConfig(
-    cache_size=1000,              # Max cached formulas
-    timeout_ms=5000,              # Proof timeout
-    use_external_provers=True,    # Enable Z3/CVC5
-    log_level='INFO'              # Logging verbosity
+    cache_size=1000,  # Max cached formulas
+    timeout_ms=5000,  # Proof timeout
+    use_external_provers=True,  # Enable Z3/CVC5
+    log_level="INFO",  # Logging verbosity
 )
 
 converter = FOLConverter(config=config)
@@ -291,6 +287,7 @@ Or use built-in provers:
 ```python
 # Use CEC (built-in, no dependencies)
 from ipfs_datasets_py.logic.CEC import CECFramework
+
 prover = CECFramework()
 ```
 
@@ -339,10 +336,7 @@ from ipfs_datasets_py.logic.CEC import CECFramework
 
 # Convert premises
 converter = FOLConverter()
-premises = [
-    converter.convert("All men are mortal"),
-    converter.convert("Socrates is a man")
-]
+premises = [converter.convert("All men are mortal"), converter.convert("Socrates is a man")]
 
 # Prove conclusion
 cec = CECFramework()
@@ -360,16 +354,10 @@ from ipfs_datasets_py.logic.deontic import DeonticConverter
 converter = DeonticConverter()
 
 # Define regulations
-regulations = [
-    "Employees must clock in before 9 AM",
-    "Overtime requires manager approval"
-]
+regulations = ["Employees must clock in before 9 AM", "Overtime requires manager approval"]
 
 # Check compliance
-actions = [
-    "Employee clocked in at 8:45 AM",
-    "Employee worked overtime without approval"
-]
+actions = ["Employee clocked in at 8:45 AM", "Employee worked overtime without approval"]
 
 for action in actions:
     result = converter.check_compliance(regulations, action)
@@ -404,10 +392,10 @@ print(f"Explanation: {result.explanation}")
 ```python
 # Optimal configuration for high throughput
 processor = BatchProcessor(
-    converter_type='fol',
-    workers=8,              # CPU cores
-    use_cache=True,         # 14x speedup
-    batch_size=100          # Process in chunks
+    converter_type="fol",
+    workers=8,  # CPU cores
+    use_cache=True,  # 14x speedup
+    batch_size=100,  # Process in chunks
 )
 ```
 

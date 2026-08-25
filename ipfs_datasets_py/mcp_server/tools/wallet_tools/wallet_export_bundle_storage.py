@@ -9,7 +9,10 @@ from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata
 from ._helpers import default_blob_dir, default_wallet_dir, load_all
 
 
-@tool_metadata(category="wallet_tools", mcp_description="Verify encrypted blob availability for an export bundle.")
+@tool_metadata(
+    category="wallet_tools",
+    mcp_description="Verify encrypted blob availability for an export bundle.",
+)
 async def wallet_export_bundle_storage(
     path: str,
     wallet_dir: Optional[str] = None,

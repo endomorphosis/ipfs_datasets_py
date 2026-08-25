@@ -172,13 +172,12 @@ from ipfs_datasets_py import (
     coordinate_auto_healing,
     list_software_theorems,
     create_ai_agent_pr,
-    
     # Development Tools
     test_generator,
     run_comprehensive_tests,
     lint_python_codebase,
     documentation_generator,
-    codebase_search
+    codebase_search,
 )
 ```
 
@@ -289,13 +288,17 @@ const result = await mcpClient.executeTool(
 ### CLI Tool Management
 ```python
 # Check GitHub CLI status
-from ipfs_datasets_py.mcp_server.tools.development_tools.github_cli_server_tools import github_cli_status
+from ipfs_datasets_py.mcp_server.tools.development_tools.github_cli_server_tools import (
+    github_cli_status,
+)
 
 status = github_cli_status()
 print(f"Installed: {status['status']['installed']}")
 
 # Install Claude CLI
-from ipfs_datasets_py.mcp_server.tools.development_tools.claude_cli_server_tools import claude_cli_install
+from ipfs_datasets_py.mcp_server.tools.development_tools.claude_cli_server_tools import (
+    claude_cli_install,
+)
 
 result = claude_cli_install(force=False)
 ```
@@ -305,32 +308,26 @@ result = claude_cli_install(force=False)
 ```python
 from ipfs_datasets_py.mcp_server.tools.software_engineering_tools.ai_agent_pr_creator import (
     analyze_code_for_pr,
-    create_ai_agent_pr
+    create_ai_agent_pr,
 )
 from ipfs_datasets_py.mcp_server.tools.development_tools.test_generator import test_generator
 from ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools import lint_python_codebase
 
 # 1. Generate tests for new code
-test_result = test_generator(
-    file_path="new_feature.py",
-    test_framework="pytest"
-)
+test_result = test_generator(file_path="new_feature.py", test_framework="pytest")
 
 # 2. Lint the code
 lint_result = lint_python_codebase(
-    path=".",
-    fix_issues=True,
-    files=["new_feature.py", "test_new_feature.py"]
+    path=".", fix_issues=True, files=["new_feature.py", "test_new_feature.py"]
 )
 
 # 3. Analyze code for PR
 analysis = analyze_code_for_pr(
-    file_paths=["new_feature.py", "test_new_feature.py"],
-    analysis_type="comprehensive"
+    file_paths=["new_feature.py", "test_new_feature.py"], analysis_type="comprehensive"
 )
 
 # 4. Create AI agent PR
-if not analysis['issues']:
+if not analysis["issues"]:
     pr_result = create_ai_agent_pr(
         owner="myorg",
         repo="myrepo",
@@ -339,12 +336,16 @@ if not analysis['issues']:
         description="Implements new feature with comprehensive testing",
         changes_summary=[
             {"file": "new_feature.py", "action": "added", "description": "New feature module"},
-            {"file": "test_new_feature.py", "action": "added", "description": "Comprehensive tests"}
+            {
+                "file": "test_new_feature.py",
+                "action": "added",
+                "description": "Comprehensive tests",
+            },
         ],
         agent_name="GitHub Copilot",
-        labels=["ai-generated", "tested", "enhancement"]
+        labels=["ai-generated", "tested", "enhancement"],
     )
-    
+
     print(f"PR created: {pr_result['pr_url']}")
 ```
 

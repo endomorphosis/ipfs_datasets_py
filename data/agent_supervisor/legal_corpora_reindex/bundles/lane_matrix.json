@@ -1,0 +1,35 @@
+{
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-lane-matrix@1",
+  "board_namespace": "legal-corpora-reindex-v1",
+  "shard_rule": "sha256_full_task_id_first_8_hex_modulo_4",
+  "lanes": [
+    {
+      "index": 0,
+      "task_ids": ["LCR-000", "LCR-002", "LCR-003", "LCR-007", "LCR-010", "LCR-011", "LCR-014", "LCR-015", "LCR-016", "LCR-020", "LCR-023", "LCR-028", "LCR-033", "LCR-035", "LCR-040", "LCR-042", "LCR-048", "LCR-053", "LCR-055", "LCR-059"],
+      "initial_task_ids": ["LCR-002", "LCR-003", "LCR-007", "LCR-048"],
+      "focus": ["state authority/completeness", "cohort runner", "Federal baseline and full text", "corpus and query", "serialized publication"]
+    },
+    {
+      "index": 1,
+      "task_ids": ["LCR-005", "LCR-008", "LCR-012", "LCR-017", "LCR-021", "LCR-024", "LCR-026", "LCR-027", "LCR-029", "LCR-031", "LCR-036", "LCR-038", "LCR-039", "LCR-052", "LCR-060", "LCR-062", "LCR-063", "LCR-068", "LCR-069"],
+      "initial_task_ids": ["LCR-005", "LCR-008"],
+      "focus": ["state frontier/publication policy", "state corpus/index/evaluation", "Federal inventory/interface/package/evaluation", "dual rollback and terminal evidence"]
+    },
+    {
+      "index": 2,
+      "task_ids": ["LCR-001", "LCR-006", "LCR-009", "LCR-018", "LCR-022", "LCR-025", "LCR-034", "LCR-037", "LCR-044", "LCR-045", "LCR-047", "LCR-049", "LCR-057", "LCR-061", "LCR-066"],
+      "initial_task_ids": ["LCR-001", "LCR-006", "LCR-049"],
+      "focus": ["state baseline/identity", "state coverage/query/operations", "Federal completeness/vectors/build/public canary"]
+    },
+    {
+      "index": 3,
+      "task_ids": ["LCR-004", "LCR-013", "LCR-019", "LCR-030", "LCR-032", "LCR-041", "LCR-043", "LCR-046", "LCR-050", "LCR-051", "LCR-054", "LCR-056", "LCR-058", "LCR-064", "LCR-065", "LCR-067"],
+      "initial_task_ids": ["LCR-004", "LCR-050", "LCR-051"],
+      "focus": ["state schema/graph/release verification", "Federal schema/gold/identity/BM25/graph", "Federal staging/publication", "cross-corpus compatibility"]
+    }
+  ],
+  "generated_task_lane_rule_is_authoritative": true,
+  "protected_control_plane": true,
+  "serialized_merge_queue": true,
+  "cross_lane_dependencies_are_authoritative": true
+}

@@ -6,12 +6,14 @@ Methods under test:
   - OntologyPipeline.score_at_percentile(p)
   - LogicValidator.entity_density(ontology)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -26,7 +28,10 @@ def _push_opt(o, avg):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -38,6 +43,7 @@ def _push_feedback(a, score):
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -51,12 +57,14 @@ def _push_run(p, overall):
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.history_mode
 # ---------------------------------------------------------------------------
+
 
 class TestHistoryMode:
     @pytest.mark.parametrize(
@@ -78,6 +86,7 @@ class TestHistoryMode:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_above_mean
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackAboveMean:
     @pytest.mark.parametrize(
@@ -103,6 +112,7 @@ class TestFeedbackAboveMean:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.score_at_percentile
 # ---------------------------------------------------------------------------
+
 
 class TestScoreAtPercentile:
     @pytest.mark.parametrize(
@@ -133,6 +143,7 @@ class TestScoreAtPercentile:
 # LogicValidator.entity_density
 # ---------------------------------------------------------------------------
 
+
 class TestEntityDensity:
     @pytest.mark.parametrize(
         "ontology,expected",
@@ -142,14 +153,20 @@ class TestEntityDensity:
             (
                 {
                     "entities": [{"id": "A"}, {"id": "B"}],
-                    "relationships": [{"subject_id": "A", "object_id": "B"}, {"subject_id": "B", "object_id": "A"}],
+                    "relationships": [
+                        {"subject_id": "A", "object_id": "B"},
+                        {"subject_id": "B", "object_id": "A"},
+                    ],
                 },
                 1.0,
             ),
             (
                 {
                     "entities": [{"id": "A"}],
-                    "relationships": [{"subject_id": "A", "object_id": "A"}, {"subject_id": "A", "object_id": "A"}],
+                    "relationships": [
+                        {"subject_id": "A", "object_id": "A"},
+                        {"subject_id": "A", "object_id": "A"},
+                    ],
                 },
                 2.0,
             ),

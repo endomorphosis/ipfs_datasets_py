@@ -26,6 +26,7 @@ from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _mediator() -> OntologyMediator:
     gen = OntologyGenerator()
     crit = OntologyCritic(use_llm=False)
@@ -51,6 +52,7 @@ def _result(*entities, rels=None) -> EntityExtractionResult:
 # ---------------------------------------------------------------------------
 # OntologyMediator.get_undo_depth
 # ---------------------------------------------------------------------------
+
 
 class TestGetUndoDepth:
     def test_zero_initially(self):
@@ -81,6 +83,7 @@ class TestGetUndoDepth:
 # OntologyMediator.set_max_rounds
 # ---------------------------------------------------------------------------
 
+
 class TestSetMaxRounds:
     def test_updates_max_rounds(self):
         med = _mediator()
@@ -110,6 +113,7 @@ class TestSetMaxRounds:
 # LogicValidator.count_contradictions
 # ---------------------------------------------------------------------------
 
+
 class TestCountContradictions:
     def test_returns_int(self):
         ont = {"entities": [{"id": "e1", "type": "T", "text": "x"}], "relationships": []}
@@ -131,6 +135,7 @@ class TestCountContradictions:
 # ---------------------------------------------------------------------------
 # EntityExtractionResult.to_dict
 # ---------------------------------------------------------------------------
+
 
 class TestEntityExtractionResultToDict:
     def test_returns_dict(self):
@@ -172,6 +177,7 @@ class TestEntityExtractionResultToDict:
 # ---------------------------------------------------------------------------
 # Entity.copy_with
 # ---------------------------------------------------------------------------
+
 
 class TestEntityCopyWith:
     def test_returns_new_entity(self):

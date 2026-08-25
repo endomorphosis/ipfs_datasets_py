@@ -13,18 +13,14 @@ This document provides detailed technical specifications, usage patterns, and in
 All MCP tools follow a consistent architecture:
 
 ```python
-async def tool_function(
-    param1: Type,
-    param2: Optional[Type] = None,
-    **kwargs
-) -> Dict[str, Any]:
+async def tool_function(param1: Type, param2: Optional[Type] = None, **kwargs) -> Dict[str, Any]:
     """
     Tool description with clear purpose and usage context.
-    
+
     Args:
         param1: Description of required parameter
         param2: Description of optional parameter
-        
+
     Returns:
         Standardized response dictionary
     """
@@ -32,17 +28,9 @@ async def tool_function(
         # Input validation
         # Core logic
         # Return structured response
-        return {
-            "status": "success",
-            "data": result_data,
-            "metadata": operation_metadata
-        }
+        return {"status": "success", "data": result_data, "metadata": operation_metadata}
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e),
-            "error_type": type(e).__name__
-        }
+        return {"status": "error", "message": str(e), "error_type": type(e).__name__}
 ```
 
 ### Response Format Standards
@@ -98,12 +86,12 @@ async def load_dataset(
 - `options`: Advanced loading options:
   ```python
   {
-    "split": "train",  # HF dataset split
-    "streaming": True,  # Stream large datasets
-    "cache_dir": "/path/to/cache",
-    "trust_remote_code": True,
-    "verification_mode": "no_checks",
-    "num_proc": 4  # Parallel processing
+      "split": "train",  # HF dataset split
+      "streaming": True,  # Stream large datasets
+      "cache_dir": "/path/to/cache",
+      "trust_remote_code": True,
+      "verification_mode": "no_checks",
+      "num_proc": 4,  # Parallel processing
   }
   ```
 
@@ -144,25 +132,13 @@ dataset_id = result["dataset_id"]
 2. **Loading Local CSV with Options**:
 ```python
 result = await load_dataset(
-    "/data/sales.csv",
-    format="csv",
-    options={
-        "delimiter": ";",
-        "encoding": "utf-8",
-        "skip_rows": 1
-    }
+    "/data/sales.csv", format="csv", options={"delimiter": ";", "encoding": "utf-8", "skip_rows": 1}
 )
 ```
 
 3. **Streaming Large Dataset**:
 ```python
-result = await load_dataset(
-    "large-dataset/full",
-    options={
-        "streaming": True,
-        "split": "train"
-    }
-)
+result = await load_dataset("large-dataset/full", options={"streaming": True, "split": "train"})
 ```
 
 #### `process_dataset`
@@ -180,76 +156,40 @@ async def process_dataset(
 
 1. **Filter Operations**:
 ```python
-{
-  "type": "filter",
-  "column": "score",
-  "condition": "greater_than",
-  "value": 0.8
-}
+{"type": "filter", "column": "score", "condition": "greater_than", "value": 0.8}
 ```
 
 2. **Map/Transform Operations**:
 ```python
-{
-  "type": "map",
-  "function": "lambda x: x.lower()",
-  "column": "text",
-  "output_column": "text_lower"
-}
+{"type": "map", "function": "lambda x: x.lower()", "column": "text", "output_column": "text_lower"}
 ```
 
 3. **Select Operations**:
 ```python
-{
-  "type": "select",
-  "columns": ["id", "text", "label"]
-}
+{"type": "select", "columns": ["id", "text", "label"]}
 ```
 
 4. **Sort Operations**:
 ```python
-{
-  "type": "sort",
-  "column": "timestamp",
-  "ascending": False
-}
+{"type": "sort", "column": "timestamp", "ascending": False}
 ```
 
 5. **Aggregate Operations**:
 ```python
 {
-  "type": "aggregate",
-  "groupby": ["category"],
-  "aggregations": {
-    "count": "size",
-    "avg_score": {"score": "mean"}
-  }
+    "type": "aggregate",
+    "groupby": ["category"],
+    "aggregations": {"count": "size", "avg_score": {"score": "mean"}},
 }
 ```
 
 **Complex Processing Example**:
 ```python
 operations = [
-    {
-        "type": "filter",
-        "column": "quality_score",
-        "condition": "greater_than",
-        "value": 0.7
-    },
-    {
-        "type": "map",
-        "function": "lambda x: x.strip().lower()",
-        "column": "text"
-    },
-    {
-        "type": "select",
-        "columns": ["id", "text", "category", "quality_score"]
-    },
-    {
-        "type": "sort",
-        "column": "quality_score",
-        "ascending": False
-    }
+    {"type": "filter", "column": "quality_score", "condition": "greater_than", "value": 0.7},
+    {"type": "map", "function": "lambda x: x.strip().lower()", "column": "text"},
+    {"type": "select", "columns": ["id", "text", "category", "quality_score"]},
+    {"type": "sort", "column": "quality_score", "ascending": False},
 ]
 
 result = await process_dataset(dataset_id, operations)
@@ -289,9 +229,7 @@ The tool automatically selects the best backend based on:
 ```python
 vectors = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
 result = await create_vector_index(
-    vectors=vectors,
-    metric="cosine",
-    index_name="document_embeddings"
+    vectors=vectors, metric="cosine", index_name="document_embeddings"
 )
 ```
 
@@ -305,7 +243,7 @@ result = await create_vector_index(
     dimension=768,
     metric="cosine",
     metadata=metadata,
-    index_name="large_collection"
+    index_name="large_collection",
 )
 ```
 
@@ -335,7 +273,7 @@ filter_metadata = {"score": {"$gte": 0.8, "$lte": 1.0}}
 filter_metadata = {
     "category": {"$in": ["science", "technology"]},
     "year": {"$gte": 2020},
-    "author": {"$ne": "anonymous"}
+    "author": {"$ne": "anonymous"},
 }
 ```
 
@@ -376,7 +314,7 @@ result = await create_embeddings(
     model="thenlper/gte-base",
     endpoint_type="local",
     device="cuda",
-    batch_size=64
+    batch_size=64,
 )
 
 # TEI server for production
@@ -384,7 +322,7 @@ result = await create_embeddings(
     texts=texts,
     model="thenlper/gte-large",
     endpoint_type="tei",
-    endpoint_url="http://tei-server:8080"
+    endpoint_url="http://tei-server:8080",
 )
 ```
 
@@ -411,36 +349,23 @@ workflow_definition = {
         {
             "id": "load_data",
             "type": "dataset_processing",
-            "parameters": {
-                "source": "documents.json",
-                "format": "json"
-            },
-            "critical": True
+            "parameters": {"source": "documents.json", "format": "json"},
+            "critical": True,
         },
         {
             "id": "generate_embeddings",
             "type": "embedding_generation",
-            "parameters": {
-                "model": "thenlper/gte-base",
-                "batch_size": 32
-            },
-            "depends_on": ["load_data"]
+            "parameters": {"model": "thenlper/gte-base", "batch_size": 32},
+            "depends_on": ["load_data"],
         },
         {
             "id": "create_index",
             "type": "vector_indexing",
-            "parameters": {
-                "metric": "cosine",
-                "index_name": "document_index"
-            },
-            "depends_on": ["generate_embeddings"]
-        }
+            "parameters": {"metric": "cosine", "index_name": "document_index"},
+            "depends_on": ["generate_embeddings"],
+        },
     ],
-    "error_handling": {
-        "retry_attempts": 3,
-        "retry_delay": 5,
-        "continue_on_error": False
-    }
+    "error_handling": {"retry_attempts": 3, "retry_delay": 5, "continue_on_error": False},
 }
 ```
 
@@ -453,8 +378,8 @@ workflow_definition = {
     "parameters": {
         "operation": "load|process|save",
         "source": "data_source",
-        "operations": [...]  # For process operation
-    }
+        "operations": [...],  # For process operation
+    },
 }
 ```
 
@@ -466,8 +391,8 @@ workflow_definition = {
         "model": "model_name",
         "endpoint_type": "local|tei|openvino",
         "batch_size": 32,
-        "text_column": "text"
-    }
+        "text_column": "text",
+    },
 }
 ```
 
@@ -475,11 +400,7 @@ workflow_definition = {
 ```python
 {
     "type": "vector_indexing",
-    "parameters": {
-        "metric": "cosine",
-        "index_name": "index_name",
-        "include_metadata": True
-    }
+    "parameters": {"metric": "cosine", "index_name": "index_name", "include_metadata": True},
 }
 ```
 
@@ -490,8 +411,8 @@ workflow_definition = {
     "parameters": {
         "condition": "context.record_count > 1000",
         "true_steps": ["large_batch_processing"],
-        "false_steps": ["small_batch_processing"]
-    }
+        "false_steps": ["small_batch_processing"],
+    },
 }
 ```
 
@@ -502,10 +423,10 @@ workflow_definition = {
     "parameters": {
         "parallel_steps": [
             {"type": "embedding_generation", "parameters": {...}},
-            {"type": "data_validation", "parameters": {...}}
+            {"type": "data_validation", "parameters": {...}},
         ],
-        "max_concurrency": 3
-    }
+        "max_concurrency": 3,
+    },
 }
 ```
 
@@ -527,39 +448,22 @@ async def cluster_analysis(
 
 1. **K-Means**:
 ```python
-parameters = {
-    "n_clusters": 5,
-    "random_state": 42,
-    "max_iter": 300,
-    "n_init": 10
-}
+parameters = {"n_clusters": 5, "random_state": 42, "max_iter": 300, "n_init": 10}
 ```
 
 2. **DBSCAN**:
 ```python
-parameters = {
-    "eps": 0.5,
-    "min_samples": 5,
-    "metric": "euclidean"
-}
+parameters = {"eps": 0.5, "min_samples": 5, "metric": "euclidean"}
 ```
 
 3. **Hierarchical Clustering**:
 ```python
-parameters = {
-    "linkage": "ward",
-    "distance_threshold": 0.7,
-    "n_clusters": None
-}
+parameters = {"linkage": "ward", "distance_threshold": 0.7, "n_clusters": None}
 ```
 
 4. **Gaussian Mixture**:
 ```python
-parameters = {
-    "n_components": 5,
-    "covariance_type": "full",
-    "random_state": 42
-}
+parameters = {"n_components": 5, "covariance_type": "full", "random_state": 42}
 ```
 
 **Usage Example**:
@@ -569,10 +473,7 @@ result = await cluster_analysis(
     data=embedding_vectors,
     algorithm="kmeans",
     n_clusters=10,
-    parameters={
-        "random_state": 42,
-        "n_init": 20
-    }
+    parameters={"random_state": 42, "n_init": 20},
 )
 
 cluster_labels = result["cluster_labels"]
@@ -603,9 +504,9 @@ async def quality_assessment(
 ```python
 thresholds = {
     "completeness": 0.95,  # 95% non-null
-    "consistency": 0.90,   # 90% format consistency
-    "accuracy": 0.85,      # 85% accuracy score
-    "uniqueness": 0.98     # 98% unique records
+    "consistency": 0.90,  # 90% format consistency
+    "accuracy": 0.85,  # 85% accuracy score
+    "uniqueness": 0.98,  # 98% unique records
 }
 ```
 
@@ -667,38 +568,35 @@ async def complete_data_pipeline(source: str):
     # Step 1: Load dataset
     load_result = await load_dataset(source)
     dataset_id = load_result["dataset_id"]
-    
+
     # Step 2: Process and clean
     process_result = await process_dataset(
         dataset_id,
         operations=[
             {"type": "filter", "column": "quality", "condition": "greater_than", "value": 0.7},
-            {"type": "select", "columns": ["id", "text", "metadata"]}
-        ]
+            {"type": "select", "columns": ["id", "text", "metadata"]},
+        ],
     )
     processed_id = process_result["dataset_id"]
-    
+
     # Step 3: Generate embeddings
     embed_result = await create_embeddings(
-        texts=get_texts_from_dataset(processed_id),
-        model="thenlper/gte-base"
+        texts=get_texts_from_dataset(processed_id), model="thenlper/gte-base"
     )
     embeddings = embed_result["embeddings"]
-    
+
     # Step 4: Create vector index
     index_result = await create_vector_index(
-        vectors=embeddings,
-        metric="cosine",
-        metadata=get_metadata_from_dataset(processed_id)
+        vectors=embeddings, metric="cosine", metadata=get_metadata_from_dataset(processed_id)
     )
-    
+
     # Step 5: Store to IPFS
     ipfs_result = await pin_to_ipfs(processed_id)
-    
+
     return {
         "dataset_id": processed_id,
         "index_id": index_result["index_id"],
-        "ipfs_cid": ipfs_result["cid"]
+        "ipfs_cid": ipfs_result["cid"],
     }
 ```
 
@@ -709,25 +607,17 @@ async def complete_data_pipeline(source: str):
 ```python
 async def semantic_search_system(query: str, index_id: str):
     # Step 1: Generate query embedding
-    query_result = await create_embeddings(
-        texts=[query],
-        model="thenlper/gte-base"
-    )
+    query_result = await create_embeddings(texts=[query], model="thenlper/gte-base")
     query_vector = query_result["embeddings"][0]
-    
+
     # Step 2: Search vector index
     search_result = await search_vector_index(
-        index_id=index_id,
-        query_vector=query_vector,
-        top_k=20,
-        include_metadata=True
+        index_id=index_id, query_vector=query_vector, top_k=20, include_metadata=True
     )
-    
+
     # Step 3: Apply additional filtering/ranking
-    filtered_results = await apply_business_logic_filters(
-        search_result["results"]
-    )
-    
+    filtered_results = await apply_business_logic_filters(search_result["results"])
+
     return filtered_results
 ```
 
@@ -742,18 +632,15 @@ workflow_definition = {
         {
             "id": "load_daily_data",
             "type": "dataset_processing",
-            "parameters": {
-                "source": "daily_uploads/*.json",
-                "format": "json"
-            }
+            "parameters": {"source": "daily_uploads/*.json", "format": "json"},
         },
         {
             "id": "quality_check",
             "type": "quality_assessment",
             "parameters": {
                 "metrics": ["completeness", "validity"],
-                "thresholds": {"completeness": 0.95}
-            }
+                "thresholds": {"completeness": 0.95},
+            },
         },
         {
             "id": "process_if_quality_ok",
@@ -761,10 +648,10 @@ workflow_definition = {
             "parameters": {
                 "condition": "context.quality_score > 0.9",
                 "true_steps": ["embedding_generation", "indexing"],
-                "false_steps": ["quality_report", "alert"]
-            }
-        }
-    ]
+                "false_steps": ["quality_report", "alert"],
+            },
+        },
+    ],
 }
 
 result = await execute_workflow(workflow_definition)
@@ -778,30 +665,23 @@ result = await execute_workflow(workflow_definition)
 async def monitoring_system():
     # Comprehensive health check
     health = await health_check(
-        components=["system", "services", "embeddings"],
-        include_details=True
+        components=["system", "services", "embeddings"], include_details=True
     )
-    
+
     # Performance metrics
-    metrics = await get_performance_metrics(
-        time_range="1h",
-        include_trends=True
-    )
-    
+    metrics = await get_performance_metrics(time_range="1h", include_trends=True)
+
     # Generate alerts if needed
     if health["overall_score"] < 0.8:
         alert_result = await generate_alert(
-            severity="warning",
-            components=health["degraded_components"]
+            severity="warning", components=health["degraded_components"]
         )
-    
+
     # Create monitoring report
     report = await generate_monitoring_report(
-        health_data=health,
-        metrics_data=metrics,
-        format="json"
+        health_data=health, metrics_data=metrics, format="json"
     )
-    
+
     return report
 ```
 
@@ -842,37 +722,33 @@ async def monitoring_system():
 1. **Resource Exhaustion**:
 ```python
 {
-  "status": "error",
-  "error_type": "ResourceError",
-  "message": "Insufficient memory for operation",
-  "suggestions": [
-    "Reduce batch size",
-    "Use streaming mode",
-    "Add more memory"
-  ]
+    "status": "error",
+    "error_type": "ResourceError",
+    "message": "Insufficient memory for operation",
+    "suggestions": ["Reduce batch size", "Use streaming mode", "Add more memory"],
 }
 ```
 
 2. **Invalid Parameters**:
 ```python
 {
-  "status": "error",
-  "error_type": "ValidationError",
-  "message": "Invalid vector dimension",
-  "parameter": "vectors",
-  "expected": "List of equal-length vectors",
-  "received": "Mixed dimensions"
+    "status": "error",
+    "error_type": "ValidationError",
+    "message": "Invalid vector dimension",
+    "parameter": "vectors",
+    "expected": "List of equal-length vectors",
+    "received": "Mixed dimensions",
 }
 ```
 
 3. **Service Unavailable**:
 ```python
 {
-  "status": "error",
-  "error_type": "ServiceError",
-  "message": "Embedding service unreachable",
-  "service": "tei-server",
-  "retry_in": 30
+    "status": "error",
+    "error_type": "ServiceError",
+    "message": "Embedding service unreachable",
+    "service": "tei-server",
+    "retry_in": 30,
 }
 ```
 

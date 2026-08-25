@@ -71,37 +71,24 @@ def test_feature_bus_emits_all_bounded_contract_families_and_repair_labels() -> 
     assert receipt["trusted"] is True
     assert receipt["bounded"] is True
     assert tuple(receipt["feature_families"]) == TRUSTED_HAMMER_FEATURE_FAMILIES
-    assert receipt["feature_families"]["contract_id"] == [
-        "legal-ir-view/deontic/v1"
-    ]
+    assert receipt["feature_families"]["contract_id"] == ["legal-ir-view/deontic/v1"]
     assert receipt["feature_families"]["logic_family"] == ["deontic"]
-    assert receipt["feature_families"]["obligation_family"] == [
-        "exception_scope_precedence"
-    ]
-    assert receipt["feature_families"]["premise_family"] == [
-        "exception_scope_precedence"
-    ]
+    assert receipt["feature_families"]["obligation_family"] == ["exception_scope_precedence"]
+    assert receipt["feature_families"]["premise_family"] == ["exception_scope_precedence"]
     assert receipt["feature_families"]["backend_status"] == [
         "cvc5:unknown",
         "z3:proved",
     ]
     assert receipt["feature_families"]["reconstruction_status"] == ["verified"]
-    assert receipt["feature_families"]["repair_lane"] == [
-        "deontic.ir:deontic.norm_semantics"
-    ]
-    assert receipt["per_view_repair_labels"] == {
-        "deontic.ir": ["deontic.norm_semantics"]
-    }
+    assert receipt["feature_families"]["repair_lane"] == ["deontic.ir:deontic.norm_semantics"]
+    assert receipt["per_view_repair_labels"] == {"deontic.ir": ["deontic.norm_semantics"]}
     assert "hammer:contract-id:legal_ir_view_deontic_v1" in packet.feature_keys
     assert "hammer:logic-family:deontic" in packet.feature_keys
     assert "hammer:obligation-family:exception_scope_precedence" in packet.feature_keys
     assert "hammer:premise-family:exception_scope_precedence" in packet.feature_keys
     assert "hammer:backend-status:z3:proved" in packet.feature_keys
     assert "hammer:reconstruction-status:verified" in packet.feature_keys
-    assert (
-        "hammer:repair-lane:deontic_ir:deontic_norm_semantics"
-        in packet.feature_keys
-    )
+    assert "hammer:repair-lane:deontic_ir:deontic_norm_semantics" in packet.feature_keys
 
 
 @pytest.mark.parametrize(
@@ -122,10 +109,8 @@ def test_feature_bus_preserves_verified_formalism_family_for_learning(
     guidance["drafted_logic_candidates"][0]["target_view"] = target_view
 
     packet = build_trusted_hammer_leanstral_feature_bus(guidance)
-    target_distribution = (
-        AdaptiveModalAutoencoder()._leanstral_guidance_target_distribution(
-            packet.learning_payload
-        )
+    target_distribution = AdaptiveModalAutoencoder()._leanstral_guidance_target_distribution(
+        packet.learning_payload
     )
 
     assert logic_family in packet.feature_families["logic_family"]
@@ -169,13 +154,11 @@ def test_feature_bus_caps_vocabularies_and_collapses_unknown_statuses() -> None:
         f"attacker-premise-{index}" for index in range(100)
     ]
     guidance["backend_statuses"] = {
-        f"attacker-backend-{index}": f"attacker-status-{index}"
-        for index in range(100)
+        f"attacker-backend-{index}": f"attacker-status-{index}" for index in range(100)
     }
     guidance["backend_statuses"]["z3"] = "proved"
     guidance["reconstruction_receipts"] = [
-        {"reconstruction_status": f"attacker-outcome-{index}"}
-        for index in range(100)
+        {"reconstruction_status": f"attacker-outcome-{index}"} for index in range(100)
     ]
 
     receipt = trusted_hammer_leanstral_feature_bus(guidance)
@@ -234,10 +217,7 @@ def test_apply_guidance_learns_only_feature_bus_keys_and_reports_omissions() -> 
     assert report["trusted_feature_bus_item_count"] == 1
     assert report["trusted_feature_bus_feature_count"] > 0
     assert report["trusted_feature_bus_excluded_field_count"] >= 6
-    assert (
-        report["trusted_feature_bus_schema_version"]
-        == TRUSTED_HAMMER_FEATURE_BUS_SCHEMA_VERSION
-    )
+    assert report["trusted_feature_bus_schema_version"] == TRUSTED_HAMMER_FEATURE_BUS_SCHEMA_VERSION
     learned_keys = tuple(autoencoder.state.feature_legal_ir_view_logits)
     assert "hammer:contract-id:legal_ir_view_deontic_v1" in learned_keys
     assert "hammer:obligation-family:exception_scope_precedence" in learned_keys
@@ -253,9 +233,5 @@ def test_failed_trusted_reconstruction_uses_registered_lane_for_each_view() -> N
     guidance.pop("repair_lane")
     packet = build_trusted_hammer_leanstral_feature_bus(guidance)
 
-    assert packet.per_view_repair_labels == {
-        "deontic.ir": ("deontic.norm_semantics",)
-    }
-    assert packet.feature_families["repair_lane"] == (
-        "deontic.ir:deontic.norm_semantics",
-    )
+    assert packet.per_view_repair_labels == {"deontic.ir": ("deontic.norm_semantics",)}
+    assert packet.feature_families["repair_lane"] == ("deontic.ir:deontic.norm_semantics",)

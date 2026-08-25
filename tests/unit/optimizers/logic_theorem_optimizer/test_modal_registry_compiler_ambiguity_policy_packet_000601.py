@@ -29,10 +29,7 @@ _PACKET_000601_FAMILY_PAIRS = (
 
 
 def test_packet_000601_pairs_are_pinned_in_packet_pair_table() -> None:
-    assert (
-        tuple(COMPILER_AMBIGUITY_PACKET_000601_FAMILY_PAIRS)
-        == _PACKET_000601_FAMILY_PAIRS
-    )
+    assert tuple(COMPILER_AMBIGUITY_PACKET_000601_FAMILY_PAIRS) == _PACKET_000601_FAMILY_PAIRS
 
 
 def test_packet_000601_frame_targets_are_exposed_by_policy_helpers() -> None:
@@ -40,16 +37,10 @@ def test_packet_000601_frame_targets_are_exposed_by_policy_helpers() -> None:
         {("frame", target) for target in compiler_ambiguity_policy_targets("frame")}
     )
     assert set(_PACKET_000601_FAMILY_PAIRS).issubset(
-        {
-            ("frame", target)
-            for target in compiler_required_adaptive_ambiguity_targets("frame")
-        }
+        {("frame", target) for target in compiler_required_adaptive_ambiguity_targets("frame")}
     )
     assert set(_PACKET_000601_FAMILY_PAIRS).issubset(
-        {
-            ("frame", target)
-            for target in priority_signal_free_adaptive_ambiguity_targets("frame")
-        }
+        {("frame", target) for target in priority_signal_free_adaptive_ambiguity_targets("frame")}
     )
     assert set(_PACKET_000601_FAMILY_PAIRS).issubset(
         {("frame", target) for target in signal_free_adaptive_ambiguity_targets("frame")}
@@ -72,6 +63,7 @@ def test_packet_000601_pairs_are_supported_across_compiler_ambiguity_policies() 
             target_family,
         )
 
+
 _PACKET_000188_FAMILY_PAIRS = (
     ("frame", "conditional_normative"),
     ("frame", "deontic"),
@@ -80,10 +72,7 @@ _PACKET_000188_FAMILY_PAIRS = (
 
 
 def test_packet_000188_pairs_are_pinned_in_packet_pair_table() -> None:
-    assert (
-        tuple(COMPILER_AMBIGUITY_PACKET_000188_FAMILY_PAIRS)
-        == _PACKET_000188_FAMILY_PAIRS
-    )
+    assert tuple(COMPILER_AMBIGUITY_PACKET_000188_FAMILY_PAIRS) == _PACKET_000188_FAMILY_PAIRS
 
 
 def test_packet_000188_frame_targets_are_exposed_by_policy_helpers() -> None:
@@ -93,16 +82,10 @@ def test_packet_000188_frame_targets_are_exposed_by_policy_helpers() -> None:
         {("frame", target) for target in compiler_ambiguity_policy_targets("frame")}
     )
     assert expected_pairs.issubset(
-        {
-            ("frame", target)
-            for target in compiler_required_adaptive_ambiguity_targets("frame")
-        }
+        {("frame", target) for target in compiler_required_adaptive_ambiguity_targets("frame")}
     )
     assert expected_pairs.issubset(
-        {
-            ("frame", target)
-            for target in priority_signal_free_adaptive_ambiguity_targets("frame")
-        }
+        {("frame", target) for target in priority_signal_free_adaptive_ambiguity_targets("frame")}
     )
     assert expected_pairs.issubset(
         {("frame", target) for target in signal_free_adaptive_ambiguity_targets("frame")}

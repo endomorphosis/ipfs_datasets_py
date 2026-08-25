@@ -17,6 +17,7 @@ Tests cover:
   - OntologyPipeline.run_score_kurtosis()
 )
 """
+
 from __future__ import annotations
 
 import math
@@ -38,6 +39,7 @@ from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _report(score: float) -> OptimizationReport:
     return OptimizationReport(average_score=score, trend="stable")
@@ -102,6 +104,7 @@ def ontology_builder(ontology_dict_factory):
 # OntologyOptimizer.score_entropy
 # ---------------------------------------------------------------------------
 
+
 class TestScoreEntropy:
     def test_empty_history_returns_zero(self):
         opt = OntologyOptimizer()
@@ -140,6 +143,7 @@ class TestScoreEntropy:
 # OntologyOptimizer.history_above_percentile
 # ---------------------------------------------------------------------------
 
+
 class TestHistoryAbovePercentile:
     def test_empty_history_returns_zero(self):
         opt = OntologyOptimizer()
@@ -174,14 +178,19 @@ class TestHistoryAbovePercentile:
 # OntologyCritic.dimensions_above_mean
 # ---------------------------------------------------------------------------
 
+
 class TestDimensionsAboveMean:
     def setup_method(self):
         self.critic = OntologyCritic()
 
     def test_uniform_dims_none_above_mean(self):
         score = _make_critic_score(
-            completeness=0.5, consistency=0.5, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
         )
         assert self.critic.dimensions_above_mean(score) == 0
 
@@ -189,8 +198,12 @@ class TestDimensionsAboveMean:
         # mean = (0.9+0.9+0.9+0.1+0.1+0.1)/6 = 0.5
         # Dims > 0.5: completeness, consistency, clarity (3)
         score = _make_critic_score(
-            completeness=0.9, consistency=0.9, clarity=0.9,
-            granularity=0.1, relationship_coherence=0.1, domain_alignment=0.1,
+            completeness=0.9,
+            consistency=0.9,
+            clarity=0.9,
+            granularity=0.1,
+            relationship_coherence=0.1,
+            domain_alignment=0.1,
         )
         assert self.critic.dimensions_above_mean(score) == 3
 
@@ -216,6 +229,7 @@ class TestDimensionsAboveMean:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_rolling_std
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackRollingStd:
     def test_empty_feedback_returns_empty(self):
@@ -260,6 +274,7 @@ class TestFeedbackRollingStd:
 # OntologyPipeline.consecutive_declines
 # ---------------------------------------------------------------------------
 
+
 class TestConsecutiveDeclines:
     def test_empty_returns_zero(self):
         pipeline = OntologyPipeline()
@@ -301,6 +316,7 @@ class TestConsecutiveDeclines:
 # LogicValidator.avg_degree
 # ---------------------------------------------------------------------------
 
+
 class TestAvgDegree:
     def setup_method(self):
         self.validator = LogicValidator()
@@ -341,6 +357,7 @@ class TestAvgDegree:
 # Smoke tests for already-existing Batch 206 methods
 # ---------------------------------------------------------------------------
 
+
 class TestExistingBatch206Methods:
     """Tests confirming that pre-existing methods still work correctly."""
 
@@ -348,8 +365,12 @@ class TestExistingBatch206Methods:
         # Uniform dimension values → all in one bin → entropy = 0
         critic = OntologyCritic()
         score = _make_critic_score(
-            completeness=0.5, consistency=0.5, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
         )
         result = critic.dimension_entropy(score)
         assert isinstance(result, float)
@@ -361,12 +382,20 @@ class TestExistingBatch206Methods:
         # Varied values → lower entropy (skewed distribution).
         critic = OntologyCritic()
         score_varied = _make_critic_score(
-            completeness=0.9, consistency=0.1, clarity=0.8,
-            granularity=0.2, relationship_coherence=0.7, domain_alignment=0.3,
+            completeness=0.9,
+            consistency=0.1,
+            clarity=0.8,
+            granularity=0.2,
+            relationship_coherence=0.7,
+            domain_alignment=0.3,
         )
         score_uniform = _make_critic_score(
-            completeness=0.5, consistency=0.5, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
         )
         # Uniform distribution is max entropy; varied should be ≤ uniform entropy
         assert critic.dimension_entropy(score_varied) <= critic.dimension_entropy(score_uniform)

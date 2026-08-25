@@ -46,7 +46,9 @@ def _render_manifest_lines(manifest_lines: Sequence[str], output_path: Path) -> 
     output_path.write_text("\n".join(manifest_lines) + "\n", encoding="utf-8")
 
 
-def _find_cover_paths(exhibit_covers_root: Path, family_payload: Mapping[str, Any], label: str) -> tuple[Path, Path]:
+def _find_cover_paths(
+    exhibit_covers_root: Path, family_payload: Mapping[str, Any], label: str
+) -> tuple[Path, Path]:
     slug = slugify_exhibit_label(label)
     tab_paths: list[Path] = []
     cover_paths: list[Path] = []
@@ -69,22 +71,35 @@ def _run_index_command(base_dir: Path, payload: Mapping[str, Any]) -> None:
     command = list(payload.get("index_command") or [])
     if not command:
         return
-    resolved_command = [str(_resolve_path(base_dir, item)) if index == 1 and str(command[0]).endswith("python") else str(item) for index, item in enumerate(command)]
+    resolved_command = [
+        str(_resolve_path(base_dir, item))
+        if index == 1 and str(command[0]).endswith("python")
+        else str(item)
+        for index, item in enumerate(command)
+    ]
     subprocess.run(resolved_command, check=True, cwd=str(base_dir))
 
 
-def build_full_evidence_binder_from_manifest(path: str | Path, *, lean_mode: bool = False) -> dict[str, Any]:
+def build_full_evidence_binder_from_manifest(
+    path: str | Path, *, lean_mode: bool = False
+) -> dict[str, Any]:
     manifest_path = Path(path)
     payload = load_json_manifest(manifest_path)
     base_dir = manifest_path.parent
 
     exhibit_covers_root = _resolve_path(base_dir, payload.get("exhibit_covers_root") or "")
     working_dir = _resolve_path(base_dir, payload.get("working_dir") or "build")
-    generated_dir = _resolve_path(base_dir, payload.get("generated_dir") or (working_dir / "generated_pdfs"))
-    manifest_output = _resolve_path(base_dir, payload.get("build_manifest_output") or (working_dir / "manifest.txt"))
+    generated_dir = _resolve_path(
+        base_dir, payload.get("generated_dir") or (working_dir / "generated_pdfs")
+    )
+    manifest_output = _resolve_path(
+        base_dir, payload.get("build_manifest_output") or (working_dir / "manifest.txt")
+    )
     output_pdf = _resolve_path(
         base_dir,
-        payload.get("lean_output_pdf") if lean_mode and payload.get("lean_output_pdf") else payload.get("output_pdf") or "binder.pdf",
+        payload.get("lean_output_pdf")
+        if lean_mode and payload.get("lean_output_pdf")
+        else payload.get("output_pdf") or "binder.pdf",
     )
 
     if working_dir.exists():
@@ -122,7 +137,9 @@ def build_full_evidence_binder_from_manifest(path: str | Path, *, lean_mode: boo
         family_name = str(family_payload.get("name") or "").strip()
         if not family_name:
             continue
-        labels = [str(label) for label in list(family_payload.get("labels") or []) if str(label).strip()]
+        labels = [
+            str(label) for label in list(family_payload.get("labels") or []) if str(label).strip()
+        ]
         family_inputs[family_name] = []
         divider_pdf = generated_dir / f"{family_slug(family_name)}_divider_page.pdf"
         render_family_divider_pdf(divider_pdf, family_name, labels, caption_config=caption_config)
@@ -131,7 +148,11 @@ def build_full_evidence_binder_from_manifest(path: str | Path, *, lean_mode: boo
         manifest_lines.append(f"## {family_name}")
         manifest_lines.append(f"- divider: {divider_pdf}")
 
-        family_output_value = family_payload.get("lean_output_pdf") if lean_mode and family_payload.get("lean_output_pdf") else family_payload.get("output_pdf")
+        family_output_value = (
+            family_payload.get("lean_output_pdf")
+            if lean_mode and family_payload.get("lean_output_pdf")
+            else family_payload.get("output_pdf")
+        )
         if family_output_value:
             family_output_paths[family_name] = str(_resolve_path(base_dir, family_output_value))
 
@@ -153,7 +174,12 @@ def build_full_evidence_binder_from_manifest(path: str | Path, *, lean_mode: boo
             source = parse_exhibit_cover_source(cover_md)
             source_pdf = source_to_pdf(
                 source,
-                output_path=generated_dir / (f"{slug}_source.pdf" if source and not source.startswith(("Not yet obtained.", "Reserved:")) else f"{slug}_source_note.pdf"),
+                output_path=generated_dir
+                / (
+                    f"{slug}_source.pdf"
+                    if source and not source.startswith(("Not yet obtained.", "Reserved:"))
+                    else f"{slug}_source_note.pdf"
+                ),
                 label=label,
                 family=family_name,
                 lean_mode=lean_mode,

@@ -182,8 +182,7 @@ def _json_ready(value: Any) -> Any:
     if callable(to_dict):
         return _json_ready(to_dict())
     raise ProofQueryAuditError(
-        f"value of type {type(value).__name__} is not JSON-serializable "
-        "for the audit receipt"
+        f"value of type {type(value).__name__} is not JSON-serializable for the audit receipt"
     )
 
 
@@ -195,13 +194,9 @@ def _as_mapping(value: Any, label: str) -> Mapping[str, Any]:
 
 def _require_text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
-        raise ProofQueryAuditError(
-            f"{field_name} must be a non-empty trimmed string"
-        )
+        raise ProofQueryAuditError(f"{field_name} must be a non-empty trimmed string")
     if len(value) > 4_096:
-        raise ProofQueryAuditError(
-            f"{field_name} exceeds maximum safe length"
-        )
+        raise ProofQueryAuditError(f"{field_name} exceeds maximum safe length")
     return value
 
 
@@ -213,20 +208,14 @@ def _optional_text(value: Any, field_name: str) -> str:
 
 def _non_negative_int(value: Any, field_name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise ProofQueryAuditError(
-            f"{field_name} must be a non-negative integer"
-        )
+        raise ProofQueryAuditError(f"{field_name} must be a non-negative integer")
     return value
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise ProofQueryAuditError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise ProofQueryAuditError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
@@ -236,9 +225,7 @@ def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
         return enum_cls(value)
     except (TypeError, ValueError) as exc:
         allowed = ", ".join(item.value for item in enum_cls)
-        raise ProofQueryAuditError(
-            f"{field_name} must be one of: {allowed}"
-        ) from exc
+        raise ProofQueryAuditError(f"{field_name} must be one of: {allowed}") from exc
 
 
 def _key_looks_secret(key: str) -> bool:
@@ -257,12 +244,16 @@ def redaction_placeholder(label: str, value: Any) -> str:
         length = len(raw)
         digest = _sha256_hex_prefix(raw, 32)
     else:
-        text = value if isinstance(value, str) else json.dumps(
-            _json_ready(value),
-            ensure_ascii=False,
-            allow_nan=False,
-            separators=(",", ":"),
-            sort_keys=True,
+        text = (
+            value
+            if isinstance(value, str)
+            else json.dumps(
+                _json_ready(value),
+                ensure_ascii=False,
+                allow_nan=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
         )
         raw = text.encode("utf-8")
         length = len(text)
@@ -289,14 +280,10 @@ class RedactionNote:
     def __post_init__(self) -> None:
         object.__setattr__(self, "path", _require_text(self.path, "path"))
         object.__setattr__(self, "label", _require_text(self.label, "label"))
-        object.__setattr__(
-            self, "length", _non_negative_int(self.length, "length")
-        )
+        object.__setattr__(self, "length", _non_negative_int(self.length, "length"))
         digest = _require_text(self.content_digest, "content_digest")
         if not digest.startswith("sha256:"):
-            raise ProofQueryAuditError(
-                "content_digest must be a sha256:<hex> digest"
-            )
+            raise ProofQueryAuditError("content_digest must be a sha256:<hex> digest")
         object.__setattr__(self, "content_digest", digest)
         object.__setattr__(
             self,
@@ -338,9 +325,7 @@ class RedactionNote:
             label=payload.get("label", ""),
             length=int(payload.get("length", 0)),
             content_digest=payload.get("content_digest", ""),
-            schema_version=payload.get(
-                "schema_version", REDACTION_NOTE_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", REDACTION_NOTE_SCHEMA_VERSION),
         )
 
 
@@ -366,16 +351,13 @@ def redact_value(
                     path=path,
                     label="depth_exceeded",
                     length=len(str(value)),
-                    content_digest="sha256:"
-                    + _sha256_hex_prefix(str(value).encode("utf-8"), 32),
+                    content_digest="sha256:" + _sha256_hex_prefix(str(value).encode("utf-8"), 32),
                 )
             )
         return placeholder
 
     if value is None or isinstance(value, (bool, int, float)):
-        if isinstance(value, float) and (
-            value != value or value in (float("inf"), float("-inf"))
-        ):
+        if isinstance(value, float) and (value != value or value in (float("inf"), float("-inf"))):
             return 0.0
         return value
 
@@ -390,8 +372,7 @@ def redact_value(
                     path=path,
                     label="bytes",
                     length=len(value),
-                    content_digest="sha256:"
-                    + _sha256_hex_prefix(bytes(value), 32),
+                    content_digest="sha256:" + _sha256_hex_prefix(bytes(value), 32),
                 )
             )
         return placeholder
@@ -404,9 +385,7 @@ def redact_value(
             return value
         if re.fullmatch(r"b[a-z2-7]{10,200}", value):
             return value
-        if len(value) <= MAX_LABEL_CHARS and re.fullmatch(
-            r"[a-zA-Z0-9_.:/@+-]+", value
-        ):
+        if len(value) <= MAX_LABEL_CHARS and re.fullmatch(r"[a-zA-Z0-9_.:/@+-]+", value):
             return value
         placeholder = redaction_placeholder("text", value)
         if notes is not None:
@@ -415,8 +394,7 @@ def redact_value(
                     path=path,
                     label="text",
                     length=len(value),
-                    content_digest="sha256:"
-                    + _sha256_hex_prefix(value.encode("utf-8"), 32),
+                    content_digest="sha256:" + _sha256_hex_prefix(value.encode("utf-8"), 32),
                 )
             )
         return placeholder
@@ -452,19 +430,14 @@ def redact_value(
                             path=child_path,
                             label=key_text,
                             length=length,
-                            content_digest="sha256:"
-                            + _sha256_hex_prefix(raw_bytes, 32),
+                            content_digest="sha256:" + _sha256_hex_prefix(raw_bytes, 32),
                         )
                     )
                 continue
-            redacted[key_text] = redact_value(
-                item, path=child_path, notes=notes, depth=depth + 1
-            )
+            redacted[key_text] = redact_value(item, path=child_path, notes=notes, depth=depth + 1)
         return redacted
 
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [
             redact_value(
                 item,
@@ -502,18 +475,12 @@ class AuditTraceEvent:
     schema_version: str = AUDIT_TRACE_EVENT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "ordinal", _non_negative_int(self.ordinal, "ordinal")
-        )
-        object.__setattr__(
-            self, "kind", _parse_enum(self.kind, AuditEventKind, "kind")
-        )
+        object.__setattr__(self, "ordinal", _non_negative_int(self.ordinal, "ordinal"))
+        object.__setattr__(self, "kind", _parse_enum(self.kind, AuditEventKind, "kind"))
         if self.envelope_cid not in ("", None):
             cid = _require_text(self.envelope_cid, "envelope_cid")
             if not re.fullmatch(r"b[a-z2-7]{10,200}", cid):
-                raise ProofQueryAuditError(
-                    "envelope_cid must be a CIDv1 base32 string when set"
-                )
+                raise ProofQueryAuditError("envelope_cid must be a CIDv1 base32 string when set")
             object.__setattr__(self, "envelope_cid", cid)
         else:
             object.__setattr__(self, "envelope_cid", "")
@@ -529,9 +496,7 @@ class AuditTraceEvent:
                 seen.add(label)
                 ordered_reasons.append(label)
         if len(ordered_reasons) > MAX_REASON_LABELS:
-            raise ProofQueryAuditError(
-                f"reasons exceeds {MAX_REASON_LABELS} labels"
-            )
+            raise ProofQueryAuditError(f"reasons exceeds {MAX_REASON_LABELS} labels")
         object.__setattr__(self, "reasons", tuple(ordered_reasons))
 
         attrs = redact_value(
@@ -556,9 +521,7 @@ class AuditTraceEvent:
             _require_text(self.schema_version, "schema_version"),
         )
         if self.schema_version != AUDIT_TRACE_EVENT_SCHEMA_VERSION:
-            raise ProofQueryAuditError(
-                f"unsupported audit event schema: {self.schema_version!r}"
-            )
+            raise ProofQueryAuditError(f"unsupported audit event schema: {self.schema_version!r}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -593,9 +556,7 @@ class AuditTraceEvent:
             envelope_cid=payload.get("envelope_cid", ""),
             reasons=tuple(payload.get("reasons", ()) or ()),
             attributes=dict(payload.get("attributes", {}) or {}),
-            schema_version=payload.get(
-                "schema_version", AUDIT_TRACE_EVENT_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", AUDIT_TRACE_EVENT_SCHEMA_VERSION),
         )
 
 
@@ -635,12 +596,8 @@ class ProofQueryAuditReceipt:
     interface: str = PROOF_QUERY_AUDIT_RECEIPT_INTERFACE
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "receipt_id", _require_text(self.receipt_id, "receipt_id")
-        )
-        object.__setattr__(
-            self, "query_id", _require_text(self.query_id, "query_id")
-        )
+        object.__setattr__(self, "receipt_id", _require_text(self.receipt_id, "receipt_id"))
+        object.__setattr__(self, "query_id", _require_text(self.query_id, "query_id"))
         object.__setattr__(
             self,
             "disposition",
@@ -653,35 +610,23 @@ class ProofQueryAuditReceipt:
             "selected_count",
             "rejected_count",
         ):
-            object.__setattr__(
-                self, name, _non_negative_int(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _non_negative_int(getattr(self, name), name))
 
         reason_counts_raw = dict(_as_mapping(self.reason_counts, "reason_counts"))
         reason_counts: dict[str, int] = {}
-        for key, value in sorted(
-            reason_counts_raw.items(), key=lambda pair: str(pair[0])
-        ):
+        for key, value in sorted(reason_counts_raw.items(), key=lambda pair: str(pair[0])):
             label = _reason_label(str(key))
-            reason_counts[label] = _non_negative_int(
-                value, f"reason_counts[{label}]"
-            )
+            reason_counts[label] = _non_negative_int(value, f"reason_counts[{label}]")
         if len(reason_counts) > MAX_REASON_LABELS:
-            raise ProofQueryAuditError(
-                f"reason_counts exceeds {MAX_REASON_LABELS} labels"
-            )
+            raise ProofQueryAuditError(f"reason_counts exceeds {MAX_REASON_LABELS} labels")
         object.__setattr__(self, "reason_counts", MappingProxyType(reason_counts))
 
         budgets_raw = dict(_as_mapping(self.budgets, "budgets"))
         budgets: dict[str, int] = {}
-        for key, value in sorted(
-            budgets_raw.items(), key=lambda pair: str(pair[0])
-        ):
+        for key, value in sorted(budgets_raw.items(), key=lambda pair: str(pair[0])):
             key_text = _require_text(str(key), "budgets key")
             if _key_looks_secret(key_text):
-                raise ProofQueryAuditError(
-                    f"budgets key must not be private: {key_text!r}"
-                )
+                raise ProofQueryAuditError(f"budgets key must not be private: {key_text!r}")
             budgets[key_text] = _non_negative_int(value, f"budgets[{key_text}]")
         object.__setattr__(self, "budgets", MappingProxyType(budgets))
 
@@ -699,9 +644,7 @@ class ProofQueryAuditReceipt:
         for item in self.selected_cids or ():
             cid = _require_text(str(item), "selected_cids")
             if not re.fullmatch(r"b[a-z2-7]{10,200}", cid):
-                raise ProofQueryAuditError(
-                    "selected_cids must be CIDv1 base32 strings"
-                )
+                raise ProofQueryAuditError("selected_cids must be CIDv1 base32 strings")
             if cid not in seen_sel:
                 seen_sel.add(cid)
                 selected.append(cid)
@@ -714,20 +657,14 @@ class ProofQueryAuditReceipt:
             if label not in seen_rej:
                 seen_rej.add(label)
                 rejected_summary.append(label)
-        object.__setattr__(
-            self, "rejected_reason_summary", tuple(rejected_summary)
-        )
+        object.__setattr__(self, "rejected_reason_summary", tuple(rejected_summary))
 
         events = tuple(self.events)
         if len(events) > MAX_AUDIT_EVENTS:
-            raise ProofQueryAuditError(
-                f"events exceeds {MAX_AUDIT_EVENTS} entries"
-            )
+            raise ProofQueryAuditError(f"events exceeds {MAX_AUDIT_EVENTS} entries")
         for event in events:
             if not isinstance(event, AuditTraceEvent):
-                raise ProofQueryAuditError(
-                    "events must be AuditTraceEvent instances"
-                )
+                raise ProofQueryAuditError("events must be AuditTraceEvent instances")
         object.__setattr__(
             self,
             "events",
@@ -736,14 +673,10 @@ class ProofQueryAuditReceipt:
 
         notes = tuple(self.redaction_notes)
         if len(notes) > MAX_REDACTION_NOTES:
-            raise ProofQueryAuditError(
-                f"redaction_notes exceeds {MAX_REDACTION_NOTES} entries"
-            )
+            raise ProofQueryAuditError(f"redaction_notes exceeds {MAX_REDACTION_NOTES} entries")
         for note in notes:
             if not isinstance(note, RedactionNote):
-                raise ProofQueryAuditError(
-                    "redaction_notes must be RedactionNote instances"
-                )
+                raise ProofQueryAuditError("redaction_notes must be RedactionNote instances")
         object.__setattr__(
             self,
             "redaction_notes",
@@ -751,9 +684,7 @@ class ProofQueryAuditReceipt:
         )
 
         if not isinstance(self.retrieval_rank_used_for_authority, bool):
-            raise ProofQueryAuditError(
-                "retrieval_rank_used_for_authority must be a bool"
-            )
+            raise ProofQueryAuditError("retrieval_rank_used_for_authority must be a bool")
         if self.retrieval_rank_used_for_authority:
             raise ProofQueryAuditError(
                 "audit receipts must not claim ranking establishes authority"
@@ -777,26 +708,18 @@ class ProofQueryAuditReceipt:
         object.__setattr__(
             self,
             "applicability_interface",
-            _require_text(
-                self.applicability_interface, "applicability_interface"
-            ),
+            _require_text(self.applicability_interface, "applicability_interface"),
         )
-        object.__setattr__(
-            self, "producer_id", _optional_text(self.producer_id, "producer_id")
-        )
+        object.__setattr__(self, "producer_id", _optional_text(self.producer_id, "producer_id"))
         object.__setattr__(
             self,
             "schema_version",
             _require_text(self.schema_version, "schema_version"),
         )
         if self.schema_version != PROOF_QUERY_AUDIT_RECEIPT_SCHEMA_VERSION:
-            raise ProofQueryAuditError(
-                f"unsupported audit receipt schema: {self.schema_version!r}"
-            )
+            raise ProofQueryAuditError(f"unsupported audit receipt schema: {self.schema_version!r}")
         if self.interface != PROOF_QUERY_AUDIT_RECEIPT_INTERFACE:
-            raise ProofQueryAuditError(
-                f"unsupported audit receipt interface: {self.interface!r}"
-            )
+            raise ProofQueryAuditError(f"unsupported audit receipt interface: {self.interface!r}")
 
         # Bind content identity when not supplied.
         body = self._identity_payload()
@@ -808,20 +731,14 @@ class ProofQueryAuditReceipt:
 
         cid = cid_v1_from_digest(bytes.fromhex(digest.removeprefix("sha256:")))
         if self.content_digest and self.content_digest != digest:
-            raise ProofQueryAuditError(
-                "content_digest does not match recomputed audit identity"
-            )
+            raise ProofQueryAuditError("content_digest does not match recomputed audit identity")
         if self.content_cid and self.content_cid != cid:
-            raise ProofQueryAuditError(
-                "content_cid does not match recomputed audit identity"
-            )
+            raise ProofQueryAuditError("content_cid does not match recomputed audit identity")
         object.__setattr__(self, "content_digest", digest)
         object.__setattr__(self, "content_cid", cid)
 
         if self.selected_count != len(self.selected_cids):
-            raise ProofQueryAuditError(
-                "selected_count does not match selected_cids"
-            )
+            raise ProofQueryAuditError("selected_count does not match selected_cids")
 
     def _identity_payload(self) -> dict[str, Any]:
         return {
@@ -870,13 +787,9 @@ class ProofQueryAuditReceipt:
 
         cid = cid_v1_from_digest(bytes.fromhex(digest.removeprefix("sha256:")))
         if digest != self.content_digest:
-            raise ProofQueryAuditError(
-                "content_digest does not match recomputed audit identity"
-            )
+            raise ProofQueryAuditError("content_digest does not match recomputed audit identity")
         if cid != self.content_cid:
-            raise ProofQueryAuditError(
-                "content_cid does not match recomputed audit identity"
-            )
+            raise ProofQueryAuditError("content_cid does not match recomputed audit identity")
         return self
 
     def contains_private_payload_keys(self) -> bool:
@@ -900,9 +813,7 @@ class ProofQueryAuditReceipt:
                         "schema_version",
                     }:
                         continue
-                    child_under_notes = under_redaction_notes or (
-                        key_text == "redaction_notes"
-                    )
+                    child_under_notes = under_redaction_notes or (key_text == "redaction_notes")
                     if (
                         not child_under_notes
                         and _key_looks_secret(key_text)
@@ -911,12 +822,9 @@ class ProofQueryAuditReceipt:
                         return True
                     if _walk(value, under_redaction_notes=child_under_notes):
                         return True
-            elif isinstance(node, Sequence) and not isinstance(
-                node, (str, bytes, bytearray)
-            ):
+            elif isinstance(node, Sequence) and not isinstance(node, (str, bytes, bytearray)):
                 return any(
-                    _walk(item, under_redaction_notes=under_redaction_notes)
-                    for item in node
+                    _walk(item, under_redaction_notes=under_redaction_notes) for item in node
                 )
             return False
 
@@ -976,16 +884,10 @@ class ProofQueryAuditReceipt:
             budgets=dict(payload.get("budgets", {}) or {}),
             gaps=tuple(payload.get("gaps", ()) or ()),
             selected_cids=tuple(payload.get("selected_cids", ()) or ()),
-            rejected_reason_summary=tuple(
-                payload.get("rejected_reason_summary", ()) or ()
-            ),
-            events=tuple(
-                AuditTraceEvent.from_dict(item)
-                for item in (payload.get("events") or ())
-            ),
+            rejected_reason_summary=tuple(payload.get("rejected_reason_summary", ()) or ()),
+            events=tuple(AuditTraceEvent.from_dict(item) for item in (payload.get("events") or ())),
             redaction_notes=tuple(
-                RedactionNote.from_dict(item)
-                for item in (payload.get("redaction_notes") or ())
+                RedactionNote.from_dict(item) for item in (payload.get("redaction_notes") or ())
             ),
             retrieval_rank_used_for_authority=False,
             query_digest=payload.get("query_digest", ""),
@@ -997,12 +899,8 @@ class ProofQueryAuditReceipt:
             producer_id=payload.get("producer_id", ""),
             content_digest=payload.get("content_digest", ""),
             content_cid=payload.get("content_cid", ""),
-            schema_version=payload.get(
-                "schema_version", PROOF_QUERY_AUDIT_RECEIPT_SCHEMA_VERSION
-            ),
-            interface=payload.get(
-                "interface", PROOF_QUERY_AUDIT_RECEIPT_INTERFACE
-            ),
+            schema_version=payload.get("schema_version", PROOF_QUERY_AUDIT_RECEIPT_SCHEMA_VERSION),
+            interface=payload.get("interface", PROOF_QUERY_AUDIT_RECEIPT_INTERFACE),
         )
 
 
@@ -1132,13 +1030,9 @@ def build_proof_query_audit_receipt(
     """
 
     if not isinstance(result, ProofApplicabilityResult):
-        raise ProofQueryAuditError(
-            "result must be a ProofApplicabilityResult"
-        )
+        raise ProofQueryAuditError("result must be a ProofApplicabilityResult")
     if result.retrieval_rank_used_for_authority:
-        raise ProofQueryAuditError(
-            "cannot audit a result that claims ranking authority"
-        )
+        raise ProofQueryAuditError("cannot audit a result that claims ranking authority")
     if result.ranking_establishes_applicability:
         raise ProofQueryAuditError(
             "cannot audit a result that claims ranking establishes applicability"
@@ -1178,16 +1072,12 @@ def build_proof_query_audit_receipt(
             "result_digest": result.result_digest(),
             "selected_cids": list(result.selected_cids),
         }
-        receipt_id = "audit:" + _sha256_hex_prefix(
-            _canonical_bytes(seed), 24
-        )
+        receipt_id = "audit:" + _sha256_hex_prefix(_canonical_bytes(seed), 24)
 
     query_digest = result.query_digest
     if query is not None:
         if not isinstance(query, ProofApplicabilityQuery):
-            raise ProofQueryAuditError(
-                "query must be a ProofApplicabilityQuery when provided"
-            )
+            raise ProofQueryAuditError("query must be a ProofApplicabilityQuery when provided")
         query_digest = query.query_digest()
 
     # Cap redaction notes deterministically.

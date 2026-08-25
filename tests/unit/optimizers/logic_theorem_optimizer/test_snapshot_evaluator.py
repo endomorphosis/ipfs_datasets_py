@@ -65,9 +65,7 @@ def test_snapshot_summary_omits_repeated_diagnostics_but_keeps_headlines() -> No
     )
 
     assert compact["metrics"]["aggregate"] == {"complete": True}
-    assert compact["metrics"]["compiler"]["validation"] == {
-        "cross_entropy_loss": 0.2
-    }
+    assert compact["metrics"]["compiler"]["validation"] == {"cross_entropy_loss": 0.2}
     assert compact["metrics"]["proof"] == {"attempted_count": 1}
     assert compact["summary_payload_compacted"] is True
     assert compact["omitted_diagnostics"] == {
@@ -211,9 +209,7 @@ def test_backpressure_pauses_next_training_step_until_evidence_finishes() -> Non
         assert evaluation_started.wait(1.0)
 
         def trainer_gate() -> None:
-            waits.append(
-                evaluator.before_training_step(next_sequence=2, timeout=1.5)
-            )
+            waits.append(evaluator.before_training_step(next_sequence=2, timeout=1.5))
             trainer_released.set()
 
         trainer = threading.Thread(target=trainer_gate)

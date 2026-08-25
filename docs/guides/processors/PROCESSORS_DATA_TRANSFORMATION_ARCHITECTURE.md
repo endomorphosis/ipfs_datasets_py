@@ -199,7 +199,7 @@ from ipfs_datasets_py.data_transformation.ipld import IPLDStorage, KnowledgeGrap
 from ipfs_datasets_py.data_transformation.serialization import (
     DataInterchangeUtils,
     DatasetSerializer,
-    jsonl_to_parquet
+    jsonl_to_parquet,
 )
 ```
 
@@ -235,7 +235,7 @@ from ipfs_datasets_py.data_transformation.serialization import (
 ```python
 from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
     UnifiedGraphRAGProcessor,
-    GraphRAGConfiguration
+    GraphRAGConfiguration,
 )
 
 config = GraphRAGConfiguration(
@@ -244,7 +244,7 @@ config = GraphRAGConfiguration(
     archive_services=["internet_archive", "archive_is"],
     enable_multi_pass_extraction=True,
     content_quality_threshold=0.6,
-    max_depth=2  # Crawl depth
+    max_depth=2,  # Crawl depth
 )
 
 processor = UnifiedGraphRAGProcessor(config=config)
@@ -423,13 +423,10 @@ from ipfs_datasets_py import (
     UnifiedGraphRAGProcessor,
     GraphRAGConfiguration,
     GraphRAGResult,
-    
     # Legacy (deprecated but still work)
     GraphRAGProcessor,  # ⚠️ Deprecated
-    
     # IPLD
     IPLDStorage,
-    
     # Serialization
     DataInterchangeUtils,
     DatasetSerializer,
@@ -443,15 +440,16 @@ All processors in Tier 1 implement `ProcessorProtocol`:
 ```python
 from ipfs_datasets_py.processors.core import ProcessorProtocol
 
+
 class ProcessorProtocol(Protocol):
     def process(self, input_data: Any, **kwargs) -> ProcessingResult:
         """Process input data and return structured result."""
         ...
-    
+
     def supports(self, input_type: str) -> bool:
         """Check if processor supports given input type."""
         ...
-    
+
     @property
     def priority(self) -> int:
         """Priority for processor routing (higher = earlier)."""
@@ -523,10 +521,9 @@ Maintain backward compatibility with deprecation warnings:
 # Old location (deprecated)
 # data_transformation/multimedia/__init__.py
 warnings.warn(
-    "data_transformation.multimedia is deprecated. "
-    "Use processors.multimedia instead.",
+    "data_transformation.multimedia is deprecated. Use processors.multimedia instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 from ipfs_datasets_py.processors.multimedia import *
 ```
@@ -580,6 +577,7 @@ from ipfs_datasets_py.data_transformation.serialization.car_conversion import Da
 **Old (Deprecated):**
 ```python
 from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
+
 processor = GraphRAGProcessor()
 ```
 
@@ -587,8 +585,9 @@ processor = GraphRAGProcessor()
 ```python
 from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
     UnifiedGraphRAGProcessor,
-    GraphRAGConfiguration
+    GraphRAGConfiguration,
 )
+
 config = GraphRAGConfiguration(processing_mode="balanced")
 processor = UnifiedGraphRAGProcessor(config=config)
 ```
@@ -619,10 +618,7 @@ from ipfs_datasets_py.processors.graphrag.unified_graphrag import UnifiedGraphRA
 
 **✅ Recommended:**
 ```python
-config = GraphRAGConfiguration(
-    processing_mode="quality",
-    enable_web_archiving=True
-)
+config = GraphRAGConfiguration(processing_mode="quality", enable_web_archiving=True)
 processor = UnifiedGraphRAGProcessor(config=config)
 ```
 
@@ -630,7 +626,7 @@ processor = UnifiedGraphRAGProcessor(config=config)
 ```python
 processor = UnifiedGraphRAGProcessor(
     mode="quality",
-    archive=True  # Parameter name unclear
+    archive=True,  # Parameter name unclear
 )
 ```
 
@@ -644,6 +640,7 @@ result = await processor.process_website(url)
 **⚠️ Fallback for sync contexts:**
 ```python
 import anyio
+
 result = anyio.run(processor.process_website, url)
 ```
 
@@ -655,9 +652,9 @@ import warnings
 
 # Temporarily suppress while planning migration
 with warnings.catch_warnings():
-    warnings.filterwarnings('ignore', category=DeprecationWarning)
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
     from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
-    
+
 # Plan migration within 6 months
 ```
 
@@ -684,16 +681,17 @@ Benefits:
 ```python
 from ipfs_datasets_py.processors.core import ProcessorProtocol
 
+
 class MyCustomProcessor:
     """Implements ProcessorProtocol."""
-    
+
     def process(self, input_data, **kwargs):
         # Your logic
         return result
-    
+
     def supports(self, input_type: str) -> bool:
         return input_type in ["my_custom_type"]
-    
+
     @property
     def priority(self) -> int:
         return 15  # Priority for routing

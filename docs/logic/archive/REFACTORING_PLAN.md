@@ -219,12 +219,12 @@ grep -r "import.*logic.tools" ipfs_datasets_py/ tests/
 # DEPRECATED: Use direct imports from integration/ or fol/
 import warnings
 
+
 def _deprecated_import(old_path, new_path):
     warnings.warn(
-        f"{old_path} is deprecated. Use {new_path} instead.",
-        DeprecationWarning,
-        stacklevel=2
+        f"{old_path} is deprecated. Use {new_path} instead.", DeprecationWarning, stacklevel=2
     )
+
 
 # Redirect tools.text_to_fol → fol.text_to_fol
 from ipfs_datasets_py.logic.fol import text_to_fol as _text_to_fol
@@ -308,7 +308,7 @@ from ipfs_datasets_py.logic.types import (
     FOLConversionResult,
     LogicOperator,
     Quantifier,
-    ComplexityMetrics
+    ComplexityMetrics,
 )
 from typing import List, Dict, Optional, Union, Tuple, Set
 ```
@@ -353,7 +353,7 @@ from ipfs_datasets_py.logic.types import (
     DeonticOperator,
     DeonticFormula,
     DeonticConflict,
-    ConflictResolution
+    ConflictResolution,
 )
 ```
 
@@ -365,11 +365,7 @@ from ipfs_datasets_py.logic.types import (
 
 **Type imports to add:**
 ```python
-from ipfs_datasets_py.logic.types import (
-    BridgeCapability,
-    ConversionResult,
-    BridgeConfig
-)
+from ipfs_datasets_py.logic.types import BridgeCapability, ConversionResult, BridgeConfig
 ```
 
 #### 4.4 Add Missing Type Definitions
@@ -380,15 +376,18 @@ from ipfs_datasets_py.logic.types import (
 @dataclass
 class FOLParseResult:
     """Result of FOL parsing operation."""
+
     formulas: List[FOLFormula]
     predicates: List[Predicate]
     variables: Set[str]
     complexity: ComplexityMetrics
     parse_time_ms: float
 
+
 @dataclass
 class PredicateExtractionResult:
     """Result of predicate extraction."""
+
     predicates: List[Predicate]
     entities: List[str]
     relations: List[Tuple[str, str, str]]
@@ -438,25 +437,26 @@ from ipfs_datasets_py.logic.integration.proof_cache import get_global_cache
 from functools import lru_cache
 import hashlib
 
+
 class FOLParser:
     def __init__(self, use_cache: bool = True):
         self.use_cache = use_cache
         self.cache = get_global_cache() if use_cache else None
-    
+
     def parse(self, text: str) -> FOLFormula:
         if self.use_cache:
             cache_key = hashlib.sha256(text.encode()).hexdigest()
             cached = self.cache.get(cache_key)
             if cached:
                 return cached
-        
+
         result = self._parse_impl(text)
-        
+
         if self.use_cache:
             self.cache.put(cache_key, result)
-        
+
         return result
-    
+
     @lru_cache(maxsize=1000)
     def _parse_cached(self, text: str) -> FOLFormula:
         """Cached parsing for frequently used formulas."""
@@ -472,11 +472,13 @@ class FOLParser:
 ```python
 from ipfs_datasets_py.logic.integration.proof_cache import get_global_cache
 
+
 class DeonticParser:
     def __init__(self, use_cache: bool = True, use_ipfs: bool = False):
         self.use_cache = use_cache
         if use_ipfs:
             from ipfs_datasets_py.logic.integration.ipfs_proof_cache import get_global_ipfs_cache
+
             self.cache = get_global_ipfs_cache()
         elif use_cache:
             self.cache = get_global_cache()
@@ -496,18 +498,19 @@ class TDFOLProofCache:
         self.use_ipfs = use_ipfs
         if use_ipfs:
             from ipfs_datasets_py.logic.integration.ipfs_proof_cache import IPFSProofCache
+
             self.ipfs_cache = IPFSProofCache()
-    
+
     def get_with_ipfs_fallback(self, key: str):
         # Try local cache first
         result = self.local_cache.get(key)
         if result:
             return result
-        
+
         # Fallback to IPFS
         if self.use_ipfs:
             return self.ipfs_cache.get(key)
-        
+
         return None
 ```
 
@@ -520,32 +523,27 @@ class TDFOLProofCache:
 ```python
 from ipfs_datasets_py.logic.batch_processing import FOLBatchProcessor
 
+
 class FOLConverter:
     def __init__(self):
         self.batch_processor = FOLBatchProcessor()
-    
+
     def convert_batch(
-        self,
-        texts: List[str],
-        max_workers: int = 4,
-        use_cache: bool = True
+        self, texts: List[str], max_workers: int = 4, use_cache: bool = True
     ) -> List[FOLConversionResult]:
         """
         Convert multiple texts to FOL in parallel.
-        
+
         Args:
             texts: List of texts to convert
             max_workers: Number of parallel workers
             use_cache: Whether to use caching
-            
+
         Returns:
             List of conversion results
         """
         return self.batch_processor.process(
-            texts,
-            conversion_func=self.convert,
-            max_workers=max_workers,
-            use_cache=use_cache
+            texts, conversion_func=self.convert, max_workers=max_workers, use_cache=use_cache
         )
 ```
 
@@ -557,17 +555,13 @@ class FOLConverter:
 from ipfs_datasets_py.logic.batch_processing import BatchProcessor
 import asyncio
 
+
 class DeonticConverter:
     async def convert_batch_async(
-        self,
-        texts: List[str],
-        max_workers: int = 4
+        self, texts: List[str], max_workers: int = 4
     ) -> List[DeonticFormula]:
         """Async batch conversion for high throughput."""
-        tasks = [
-            asyncio.create_task(self.convert_async(text))
-            for text in texts
-        ]
+        tasks = [asyncio.create_task(self.convert_async(text)) for text in texts]
         return await asyncio.gather(*tasks)
 ```
 
@@ -583,20 +577,17 @@ class DeonticConverter:
 ```python
 from ipfs_datasets_py.logic.ml_confidence import MLConfidenceScorer
 
+
 class ProofExecutionEngine:
     def __init__(self, use_ml_confidence: bool = True):
         self.use_ml = use_ml_confidence
         if self.use_ml:
             self.ml_scorer = MLConfidenceScorer()
-    
-    def prove_with_confidence(
-        self,
-        theorem: str,
-        axioms: List[str]
-    ) -> ProofResult:
+
+    def prove_with_confidence(self, theorem: str, axioms: List[str]) -> ProofResult:
         """
         Prove theorem and predict confidence.
-        
+
         Returns:
             ProofResult with confidence score
         """
@@ -604,15 +595,15 @@ class ProofExecutionEngine:
         if self.use_ml:
             features = self.ml_scorer.extract_features(theorem, axioms)
             predicted_confidence = self.ml_scorer.predict(features)
-        
+
         # Run proof
         result = self.prove(theorem, axioms)
-        
+
         # Add confidence to result
         if self.use_ml:
             result.ml_confidence = predicted_confidence
             result.confidence_factors = features
-        
+
         return result
 ```
 
@@ -625,11 +616,12 @@ class ProofExecutionEngine:
 from ipfs_datasets_py.logic.ml_confidence import MLConfidenceScorer
 from ipfs_datasets_py.logic.integration.proof_cache import get_global_cache
 
+
 def train_from_cache():
     """Train ML models from cached proof results."""
     cache = get_global_cache()
     entries = cache.get_cached_entries()
-    
+
     # Prepare training data
     X, y = [], []
     for entry in entries:
@@ -637,7 +629,7 @@ def train_from_cache():
         success = 1 if entry.is_proved else 0
         X.append(features)
         y.append(success)
-    
+
     # Train model
     scorer = MLConfidenceScorer()
     scorer.train(X, y)
@@ -653,29 +645,31 @@ def train_from_cache():
 ```python
 from ipfs_datasets_py.logic.fol.utils.nlp_predicate_extractor import extract_predicates_nlp
 
+
 class DeonticConverter:
     def __init__(self, use_nlp: bool = True):
         self.use_nlp = use_nlp
         if use_nlp:
             import spacy
+
             try:
                 self.nlp = spacy.load("en_core_web_sm")
             except OSError:
                 self.use_nlp = False
-    
+
     def convert(self, text: str, use_nlp: Optional[bool] = None) -> DeonticFormula:
         """
         Convert legal text to deontic logic.
-        
+
         Args:
             text: Legal text
             use_nlp: Override NLP usage
-            
+
         Returns:
             Deontic formula
         """
         use_nlp = use_nlp if use_nlp is not None else self.use_nlp
-        
+
         if use_nlp and self.nlp:
             # Use NLP for entity extraction
             predicates = extract_predicates_nlp(text, self.nlp)
@@ -711,29 +705,30 @@ from ipfs_datasets_py.logic.monitoring import Monitor, get_global_monitor
 from ipfs_datasets_py.logic.external_provers.monitoring import Monitor as ProverMonitor
 import time
 
+
 class FOLConverter:
     def __init__(self, enable_monitoring: bool = True):
         self.enable_monitoring = enable_monitoring
         if enable_monitoring:
             self.monitor = get_global_monitor("fol_converter")
-    
+
     def convert(self, text: str) -> FOLConversionResult:
         """Convert text to FOL with monitoring."""
         if self.enable_monitoring:
             self.monitor.record_operation_start("convert")
-        
+
         start_time = time.time()
-        
+
         try:
             result = self._convert_impl(text)
-            
+
             if self.enable_monitoring:
                 duration = time.time() - start_time
                 self.monitor.record_success("convert", duration)
                 self.monitor.record_metric("formula_complexity", result.complexity.total_score)
-            
+
             return result
-            
+
         except Exception as e:
             if self.enable_monitoring:
                 self.monitor.record_error("convert", str(e))
@@ -748,6 +743,7 @@ class FOLConverter:
 
 from ipfs_datasets_py.logic.monitoring import get_global_monitor
 from ipfs_datasets_py.logic.external_provers.monitoring import Monitor
+
 
 def get_system_metrics():
     """Get comprehensive system metrics."""
@@ -867,10 +863,11 @@ from ipfs_datasets_py.logic.CEC import CECFramework
 from ipfs_datasets_py.logic.batch_processing import BatchProcessor
 from ipfs_datasets_py.logic.ml_confidence import MLConfidenceScorer
 
+
 class LogicAPI:
     """
     Unified API for all logic operations.
-    
+
     Features:
     - Text to FOL conversion (with NLP)
     - Legal text to deontic logic
@@ -879,25 +876,25 @@ class LogicAPI:
     - ML confidence scoring
     - IPFS caching
     - Real-time monitoring
-    
+
     Examples:
         >>> api = LogicAPI()
         >>> result = api.convert_to_fol("All humans are mortal")
         >>> proof = api.prove("Q", axioms=["P", "P -> Q"])
         >>> batch_results = api.convert_batch(texts)
     """
-    
+
     def __init__(
         self,
         use_cache: bool = True,
         use_ipfs: bool = False,
         use_ml: bool = True,
         use_nlp: bool = True,
-        enable_monitoring: bool = True
+        enable_monitoring: bool = True,
     ):
         """
         Initialize Logic API.
-        
+
         Args:
             use_cache: Enable proof caching
             use_ipfs: Use IPFS for distributed caching
@@ -910,118 +907,91 @@ class LogicAPI:
         self.use_ml = use_ml
         self.use_nlp = use_nlp
         self.enable_monitoring = enable_monitoring
-        
+
         # Initialize components
         self._init_components()
-    
+
     def _init_components(self):
         """Initialize all logic components."""
         from ipfs_datasets_py.logic.fol import FOLConverter
         from ipfs_datasets_py.logic.deontic import DeonticConverter
-        
+
         self.fol_converter = FOLConverter(
-            use_cache=self.use_cache,
-            use_nlp=self.use_nlp,
-            enable_monitoring=self.enable_monitoring
+            use_cache=self.use_cache, use_nlp=self.use_nlp, enable_monitoring=self.enable_monitoring
         )
-        
+
         self.deontic_converter = DeonticConverter(
-            use_cache=self.use_cache,
-            use_nlp=self.use_nlp,
-            enable_monitoring=self.enable_monitoring
+            use_cache=self.use_cache, use_nlp=self.use_nlp, enable_monitoring=self.enable_monitoring
         )
-        
+
         self.prover = ProofExecutionEngine(
             use_cache=self.use_cache,
             use_ipfs=self.use_ipfs,
             use_ml_confidence=self.use_ml,
-            enable_monitoring=self.enable_monitoring
+            enable_monitoring=self.enable_monitoring,
         )
-        
+
         if self.use_ml:
             self.ml_scorer = MLConfidenceScorer()
-        
+
         self.batch_processor = BatchProcessor()
-    
+
     # FOL Operations
-    def convert_to_fol(
-        self,
-        text: str,
-        use_nlp: Optional[bool] = None
-    ) -> FOLConversionResult:
+    def convert_to_fol(self, text: str, use_nlp: Optional[bool] = None) -> FOLConversionResult:
         """Convert natural language text to FOL."""
         return self.fol_converter.convert(text, use_nlp=use_nlp)
-    
+
     def convert_to_fol_batch(
-        self,
-        texts: List[str],
-        max_workers: int = 4
+        self, texts: List[str], max_workers: int = 4
     ) -> List[FOLConversionResult]:
         """Convert multiple texts to FOL in parallel."""
         return self.fol_converter.convert_batch(texts, max_workers=max_workers)
-    
+
     # Deontic Operations
-    def convert_to_deontic(
-        self,
-        text: str,
-        domain: str = "legal"
-    ) -> DeonticFormula:
+    def convert_to_deontic(self, text: str, domain: str = "legal") -> DeonticFormula:
         """Convert legal/normative text to deontic logic."""
         return self.deontic_converter.convert(text, domain=domain)
-    
-    def detect_conflicts(
-        self,
-        formulas: List[DeonticFormula]
-    ) -> List[DeonticConflict]:
+
+    def detect_conflicts(self, formulas: List[DeonticFormula]) -> List[DeonticConflict]:
         """Detect conflicts in deontic formulas."""
         return self.deontic_converter.detect_conflicts(formulas)
-    
+
     # Proof Operations
-    def prove(
-        self,
-        theorem: str,
-        axioms: List[str],
-        method: str = "auto"
-    ) -> ProofResult:
+    def prove(self, theorem: str, axioms: List[str], method: str = "auto") -> ProofResult:
         """Prove theorem from axioms."""
         return self.prover.prove(theorem, axioms, method=method)
-    
-    def prove_with_confidence(
-        self,
-        theorem: str,
-        axioms: List[str]
-    ) -> ProofResultWithConfidence:
+
+    def prove_with_confidence(self, theorem: str, axioms: List[str]) -> ProofResultWithConfidence:
         """Prove theorem and predict confidence."""
         return self.prover.prove_with_confidence(theorem, axioms)
-    
+
     def prove_batch(
-        self,
-        theorems: List[str],
-        axioms: List[List[str]],
-        max_workers: int = 4
+        self, theorems: List[str], axioms: List[List[str]], max_workers: int = 4
     ) -> List[ProofResult]:
         """Prove multiple theorems in parallel."""
         return self.prover.prove_batch(theorems, axioms, max_workers=max_workers)
-    
+
     # Monitoring
     def get_metrics(self) -> Dict[str, Any]:
         """Get system metrics and statistics."""
         from ipfs_datasets_py.logic.monitoring import get_global_monitor
-        
+
         return {
             "fol_converter": self.fol_converter.get_stats(),
             "deontic_converter": self.deontic_converter.get_stats(),
             "prover": self.prover.get_stats(),
             "cache": self._get_cache_stats(),
         }
-    
+
     def _get_cache_stats(self) -> Dict[str, Any]:
         """Get cache statistics."""
         if self.use_ipfs:
             from ipfs_datasets_py.logic.integration.ipfs_proof_cache import get_global_ipfs_cache
+
             return get_global_ipfs_cache().get_stats()
         elif self.use_cache:
             from ipfs_datasets_py.logic.integration.proof_cache import get_global_cache
+
             return get_global_cache().get_stats()
         return {}
 
@@ -1030,17 +1000,17 @@ class LogicAPI:
 def create_logic_api(**kwargs) -> LogicAPI:
     """
     Create Logic API with configuration.
-    
+
     Args:
         use_cache: Enable caching (default: True)
         use_ipfs: Use IPFS for distributed caching (default: False)
         use_ml: Enable ML confidence (default: True)
         use_nlp: Enable NLP (default: True)
         enable_monitoring: Enable monitoring (default: True)
-    
+
     Returns:
         Configured LogicAPI instance
-    
+
     Examples:
         >>> api = create_logic_api(use_ipfs=True, use_ml=True)
         >>> result = api.prove("Q", axioms=["P", "P -> Q"])
@@ -1066,10 +1036,7 @@ Comprehensive neurosymbolic reasoning system combining:
 """
 
 # Unified API (Recommended)
-from ipfs_datasets_py.logic.integration.api import (
-    LogicAPI,
-    create_logic_api
-)
+from ipfs_datasets_py.logic.integration.api import LogicAPI, create_logic_api
 
 # Core converters
 from ipfs_datasets_py.logic.fol import text_to_fol, FOLConverter
@@ -1084,13 +1051,10 @@ from ipfs_datasets_py.logic.CEC import CECFramework
 from ipfs_datasets_py.logic.batch_processing import (
     BatchProcessor,
     FOLBatchProcessor,
-    ProofBatchProcessor
+    ProofBatchProcessor,
 )
 from ipfs_datasets_py.logic.ml_confidence import MLConfidenceScorer
-from ipfs_datasets_py.logic.integration.caching import (
-    get_global_cache,
-    get_global_ipfs_cache
-)
+from ipfs_datasets_py.logic.integration.caching import get_global_cache, get_global_ipfs_cache
 
 # Types
 from ipfs_datasets_py.logic.types import *
@@ -1101,18 +1065,15 @@ __all__ = [
     # Unified API
     "LogicAPI",
     "create_logic_api",
-    
     # Converters
     "FOLConverter",
     "text_to_fol",
-    "DeonticConverter", 
+    "DeonticConverter",
     "legal_text_to_deontic",
-    
     # Provers
     "ProofExecutionEngine",
     "TDFOLProver",
     "CECFramework",
-    
     # Features
     "BatchProcessor",
     "FOLBatchProcessor",

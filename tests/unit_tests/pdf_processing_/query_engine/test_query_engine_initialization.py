@@ -17,7 +17,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -42,10 +42,12 @@ from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine
 try:
     from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator  # type: ignore
 except Exception:
+
     class GraphRAGIntegrator:  # type: ignore
         """Fallback type for environments without GraphRAG deps."""
 
         initialized = True
+
 
 # Check if each classes methods are accessible:
 assert QueryEngine.query
@@ -83,7 +85,6 @@ import re
 from ipfs_datasets_py.ipld import IPLDStorage
 
 
-
 @pytest.fixture
 def mock_graphrag_integrator():
     """Create a mock GraphRAGIntegrator instance for testing."""
@@ -110,35 +111,40 @@ class TestQueryEngineInitialization:
         """
         # GIVEN
         mock_graphrag = Mock(spec=GraphRAGIntegrator)
-        
+
         # Mock SentenceTransformer to avoid actual model loading
-        with patch('ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer') as mock_st, \
-             patch('ipfs_datasets_py.pdf_processing.query_engine.IPLDStorage') as mock_storage_class:
-            
+        with (
+            patch("ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer") as mock_st,
+            patch("ipfs_datasets_py.pdf_processing.query_engine.IPLDStorage") as mock_storage_class,
+        ):
             mock_embedding_model = Mock()
             mock_st.return_value = mock_embedding_model
             mock_storage_instance = Mock(spec=IPLDStorage)
             mock_storage_class.return_value = mock_storage_instance
-            
+
             # WHEN
             engine = QueryEngine(mock_graphrag)
-            
+
             # THEN
             assert engine.graphrag is mock_graphrag
             assert engine.storage is mock_storage_instance
             assert engine.embedding_model is mock_embedding_model
-            
+
             # Check query processors mapping
             expected_processors = {
-                'entity_search', 'relationship_search', 'semantic_search',
-                'document_search', 'cross_document', 'graph_traversal'
+                "entity_search",
+                "relationship_search",
+                "semantic_search",
+                "document_search",
+                "cross_document",
+                "graph_traversal",
             }
             assert set(engine.query_processors.keys()) == expected_processors
-            
+
             # Check caches are empty
             assert engine.embedding_cache == {}
             assert engine.query_cache == {}
-            
+
             # Verify SentenceTransformer called with default model
             mock_st.assert_called_once_with("sentence-transformers/all-MiniLM-L6-v2")
 
@@ -158,27 +164,31 @@ class TestQueryEngineInitialization:
         # GIVEN
         mock_graphrag = Mock(spec=GraphRAGIntegrator)
         mock_storage = Mock(spec=IPLDStorage)
-        
-        with patch('ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer') as mock_st:
+
+        with patch("ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer") as mock_st:
             mock_embedding_model = Mock()
             mock_st.return_value = mock_embedding_model
-            
+
             # WHEN
             engine = QueryEngine(mock_graphrag, storage=mock_storage)
-            
+
             # THEN
             assert engine.graphrag is mock_graphrag
             assert engine.storage is mock_storage
             assert engine.embedding_model is mock_embedding_model
-            
+
             # Check all processor methods are mapped
-            assert engine.query_processors['entity_search'] == engine._process_entity_query
-            assert engine.query_processors['relationship_search'] == engine._process_relationship_query
-            assert engine.query_processors['semantic_search'] == engine._process_semantic_query
-            assert engine.query_processors['document_search'] == engine._process_document_query
-            assert engine.query_processors['cross_document'] == engine._process_cross_document_query
-            assert engine.query_processors['graph_traversal'] == engine._process_graph_traversal_query
-            
+            assert engine.query_processors["entity_search"] == engine._process_entity_query
+            assert (
+                engine.query_processors["relationship_search"] == engine._process_relationship_query
+            )
+            assert engine.query_processors["semantic_search"] == engine._process_semantic_query
+            assert engine.query_processors["document_search"] == engine._process_document_query
+            assert engine.query_processors["cross_document"] == engine._process_cross_document_query
+            assert (
+                engine.query_processors["graph_traversal"] == engine._process_graph_traversal_query
+            )
+
             assert engine.embedding_cache == {}
             assert engine.query_cache == {}
 
@@ -194,16 +204,17 @@ class TestQueryEngineInitialization:
         # GIVEN
         mock_graphrag = Mock(spec=GraphRAGIntegrator)
         custom_model = "sentence-transformers/paraphrase-MiniLM-L6-v2"
-        
-        with patch('ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer') as mock_st, \
-             patch('ipfs_datasets_py.pdf_processing.query_engine.IPLDStorage'):
-            
+
+        with (
+            patch("ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer") as mock_st,
+            patch("ipfs_datasets_py.pdf_processing.query_engine.IPLDStorage"),
+        ):
             mock_embedding_model = Mock()
             mock_st.return_value = mock_embedding_model
-            
+
             # WHEN
             engine = QueryEngine(mock_graphrag, embedding_model=custom_model)
-            
+
             # THEN
             mock_st.assert_called_once_with(custom_model)
             assert engine.embedding_model is mock_embedding_model
@@ -219,10 +230,11 @@ class TestQueryEngineInitialization:
         mock_graphrag = Mock(spec=GraphRAGIntegrator)
         invalid_model = "nonexistent/model"
         with pytest.raises(ValueError, match=r"not found or invalid"):
-            with patch('ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer') as mock_st:
+            with patch(
+                "ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer"
+            ) as mock_st:
                 mock_st.side_effect = Exception("not a valid model identifier")
                 QueryEngine(mock_graphrag, embedding_model=invalid_model)
-
 
     def test_init_with_none_graphrag_integrator(self):
         """
@@ -242,9 +254,11 @@ class TestQueryEngineInitialization:
         """
         # GIVEN
         invalid_integrator = "not_a_graphrag_integrator"
-        
+
         # WHEN/THEN
-        with pytest.raises(TypeError, match="graphrag_integrator must be a GraphRAGIntegrator instance"):
+        with pytest.raises(
+            TypeError, match="graphrag_integrator must be a GraphRAGIntegrator instance"
+        ):
             QueryEngine(invalid_integrator)
 
     def test_init_with_invalid_storage_type(self):
@@ -257,7 +271,7 @@ class TestQueryEngineInitialization:
         # GIVEN
         mock_graphrag = Mock(spec=GraphRAGIntegrator)
         invalid_storage = "not_a_storage_instance"
-        
+
         # WHEN/THEN
         with pytest.raises(TypeError, match="storage must be an IPLDStorage instance"):
             QueryEngine(mock_graphrag, storage=invalid_storage)
@@ -272,7 +286,7 @@ class TestQueryEngineInitialization:
         # GIVEN
         mock_graphrag = Mock(spec=GraphRAGIntegrator)
         empty_model = ""
-        
+
         # WHEN/THEN
         with pytest.raises(ValueError, match="embedding_model cannot be empty"):
             QueryEngine(mock_graphrag, embedding_model=empty_model)
@@ -292,23 +306,24 @@ class TestQueryEngineInitialization:
         """
         # GIVEN
         mock_graphrag = Mock(spec=GraphRAGIntegrator)
-        
-        with patch('ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer'), \
-             patch('ipfs_datasets_py.pdf_processing.query_engine.IPLDStorage'):
-            
+
+        with (
+            patch("ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer"),
+            patch("ipfs_datasets_py.pdf_processing.query_engine.IPLDStorage"),
+        ):
             # WHEN
             engine = QueryEngine(mock_graphrag)
-            
+
             # THEN
             expected_mapping = {
-                'entity_search': engine._process_entity_query,
-                'relationship_search': engine._process_relationship_query,
-                'semantic_search': engine._process_semantic_query,
-                'document_search': engine._process_document_query,
-                'cross_document': engine._process_cross_document_query,
-                'graph_traversal': engine._process_graph_traversal_query
+                "entity_search": engine._process_entity_query,
+                "relationship_search": engine._process_relationship_query,
+                "semantic_search": engine._process_semantic_query,
+                "document_search": engine._process_document_query,
+                "cross_document": engine._process_cross_document_query,
+                "graph_traversal": engine._process_graph_traversal_query,
             }
-            
+
             assert engine.query_processors == expected_mapping
             assert len(engine.query_processors) == 6
 
@@ -322,13 +337,14 @@ class TestQueryEngineInitialization:
         """
         # GIVEN
         mock_graphrag = Mock(spec=GraphRAGIntegrator)
-        
-        with patch('ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer'), \
-             patch('ipfs_datasets_py.pdf_processing.query_engine.IPLDStorage'):
-            
+
+        with (
+            patch("ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer"),
+            patch("ipfs_datasets_py.pdf_processing.query_engine.IPLDStorage"),
+        ):
             # WHEN
             engine = QueryEngine(mock_graphrag)
-            
+
             # THEN
             assert isinstance(engine.embedding_cache, dict)
             assert len(engine.embedding_cache) == 0
@@ -344,17 +360,17 @@ class TestQueryEngineInitialization:
         """
         # GIVEN
         mock_graphrag = Mock(spec=GraphRAGIntegrator)
-        
-        with patch('ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer') as mock_st, \
-             patch('ipfs_datasets_py.pdf_processing.query_engine.IPLDStorage'), \
-             patch('ipfs_datasets_py.pdf_processing.query_engine.logger') as mock_logger:
 
+        with (
+            patch("ipfs_datasets_py.pdf_processing.query_engine.SentenceTransformer") as mock_st,
+            patch("ipfs_datasets_py.pdf_processing.query_engine.IPLDStorage"),
+            patch("ipfs_datasets_py.pdf_processing.query_engine.logger") as mock_logger,
+        ):
             mock_st.side_effect = ImportError("sentence-transformers not installed")
 
             # WHEN/THEN
             with pytest.raises(ImportError):
                 _ = QueryEngine(mock_graphrag)
-
 
     def test_init_with_uninitialized_graphrag_integrator(self):
         """

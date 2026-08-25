@@ -52,11 +52,7 @@ ipfs_datasets_py/
 from ipfs_datasets_py.dashboards.mcp_dashboard import start_mcp_dashboard, MCPDashboardConfig
 
 # Basic configuration
-config = MCPDashboardConfig(
-    host="localhost",
-    port=8080,
-    enable_tool_execution=True
-)
+config = MCPDashboardConfig(host="localhost", port=8080, enable_tool_execution=True)
 
 # Start dashboard
 dashboard = start_mcp_dashboard(config)
@@ -104,14 +100,14 @@ console.log('Execution result:', result);
 
 ```python
 config = MCPDashboardConfig(
-    host="0.0.0.0",                    # Host to bind to
-    port=8080,                         # Port to listen on
-    mcp_server_host="localhost",       # MCP server host
-    mcp_server_port=8001,             # MCP server port
-    enable_tool_execution=True,        # Allow tool execution
-    tool_timeout=30.0,                # Tool execution timeout
-    max_concurrent_tools=5,           # Max concurrent executions
-    data_dir="/tmp/mcp_dashboard"     # Data storage directory
+    host="0.0.0.0",  # Host to bind to
+    port=8080,  # Port to listen on
+    mcp_server_host="localhost",  # MCP server host
+    mcp_server_port=8001,  # MCP server port
+    enable_tool_execution=True,  # Allow tool execution
+    tool_timeout=30.0,  # Tool execution timeout
+    max_concurrent_tools=5,  # Max concurrent executions
+    data_dir="/tmp/mcp_dashboard",  # Data storage directory
 )
 ```
 
@@ -326,6 +322,7 @@ Enable debug logging:
 
 ```python
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 
 config = MCPDashboardConfig(debug=True)

@@ -1,0 +1,508 @@
+{
+  "schema_version": "hf-graphrag-reference-manifests/v1",
+  "description": "Pinned reference-layout recipes for USCIR-012 shared-substrate compatibility proofs. Compact recipes (not full golden envelopes): each domain lists artifact families, 4,096 physical bounds, immutable Hub pins, vector-space IDs, and graph ontology variations. Digests are derived at test time from content_label.",
+  "task_id": "USCIR-012",
+  "shared_physical_bounds": {
+    "max_adjacency_pointers_per_row": 4096,
+    "max_pointers_per_row": 4096,
+    "max_routing_rows_per_index": 4096,
+    "max_rows_per_physical_shard": 4096,
+    "max_rows_per_vector_centroid": 8192,
+    "max_term_rows_per_shard": 4096,
+    "max_vector_shards_per_centroid": 2
+  },
+  "shared_artifact_families": [
+    "corpus",
+    "bm25_documents",
+    "bm25_postings",
+    "vectors",
+    "centroids",
+    "graph_nodes",
+    "graph_edges",
+    "graph_adjacency_out",
+    "graph_adjacency_in",
+    "locator_index",
+    "routing_index",
+    "manifest",
+    "receipt",
+    "report",
+    "release_metadata"
+  ],
+  "policy": {
+    "dimension_implies_vector_space_compatibility": false,
+    "late_fuse_requires_identical_vector_space_id": true,
+    "primary_key": "entry_cid",
+    "vector_spaces_are_not_interchangeable": true
+  },
+  "reference_releases": [
+    {
+      "domain": "patent",
+      "display_name": "patent-legal-ir-graphrag",
+      "repo_id": "justicedao/patent-legal-ir-graphrag",
+      "revision": "845669408081f1334c54519d2bb7df6bf780ccd5",
+      "schema_version": "publicus-ir-graphrag/v1",
+      "release_profile": "publicus-ir-graphrag/v1",
+      "primary_key": "entry_cid",
+      "reuse": [
+        "publicus-ir artifact family layout",
+        "term-range BM25 with vocabulary exposed to the graph",
+        "dataset-card configurations"
+      ],
+      "do_not_copy": [
+        "single-shard 256-d hashed vector layout as a large-scale clustering template",
+        "patent claim ontology as a legal US Code ontology"
+      ],
+      "vector_space": {
+        "vector_space_id": "patent-hashed-projection@845669408081f1334c54519d2bb7df6bf780ccd5:d256:pool=hash:norm=l2",
+        "model_id": "patent/hashed-projection",
+        "model_revision": "845669408081f1334c54519d2bb7df6bf780ccd5",
+        "dimension": 256,
+        "layout": "single_shard_hashed",
+        "pooling": "hash",
+        "normalization": "l2",
+        "similarity": "cosine",
+        "max_rows_per_chunk": 4096,
+        "max_rows_per_centroid": 8192,
+        "max_shards_per_centroid": 1
+      },
+      "graph": {
+        "ontology_version": "patent-legal-graph-ontology/v1",
+        "node_types": [
+          "application",
+          "claim",
+          "publication",
+          "prior_art",
+          "cpc_symbol"
+        ],
+        "edge_types": [
+          "HAS_CLAIM",
+          "CITES",
+          "CLASSIFIED_AS",
+          "BM25_NEIGHBOR_OF"
+        ],
+        "adjacency_directions": ["out", "in"],
+        "max_adjacency_pointers_per_row": 4096
+      },
+      "physical_bounds": {
+        "max_adjacency_pointers_per_row": 4096,
+        "max_pointers_per_row": 4096,
+        "max_routing_rows_per_index": 4096,
+        "max_rows_per_physical_shard": 4096,
+        "max_rows_per_vector_centroid": 8192,
+        "max_term_rows_per_shard": 4096,
+        "max_vector_shards_per_centroid": 1
+      },
+      "artifacts": [
+        {
+          "family": "corpus",
+          "relative_path": "data/corpus/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-patent-corpus-v1"
+        },
+        {
+          "family": "bm25_documents",
+          "relative_path": "data/bm25/documents/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-patent-bm25-docs-v1"
+        },
+        {
+          "family": "bm25_postings",
+          "relative_path": "data/bm25/postings/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-patent-bm25-postings-v1"
+        },
+        {
+          "family": "vectors",
+          "relative_path": "data/vectors/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-patent-vectors-v1"
+        },
+        {
+          "family": "graph_nodes",
+          "relative_path": "data/graph/nodes/part-000000.parquet",
+          "row_count": 3,
+          "content_label": "ref-patent-graph-nodes-v1"
+        },
+        {
+          "family": "graph_edges",
+          "relative_path": "data/graph/edges/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-patent-graph-edges-v1"
+        },
+        {
+          "family": "graph_adjacency_out",
+          "relative_path": "data/graph/adjacency/out/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-patent-graph-adj-out-v1"
+        },
+        {
+          "family": "graph_adjacency_in",
+          "relative_path": "data/graph/adjacency/in/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-patent-graph-adj-in-v1"
+        },
+        {
+          "family": "routing_index",
+          "relative_path": "indexes/bm25_keyword_shards-000000.parquet",
+          "row_count": 1,
+          "content_label": "ref-patent-routing-v1"
+        },
+        {
+          "family": "manifest",
+          "relative_path": "manifest.json",
+          "row_count": 0,
+          "content_label": "ref-patent-manifest-body"
+        }
+      ]
+    },
+    {
+      "domain": "cvefixes",
+      "display_name": "cvefixes-security-ir-graphrag",
+      "repo_id": "Publicus/cvefixes-security-ir-graphrag",
+      "revision": "6fd5918bed34f8851430e74a149502587a953fe2",
+      "schema_version": "cvefixes-security-ir-hf-release/v1",
+      "release_profile": "cvefixes-security-ir-hf-release/v1",
+      "primary_key": "entry_cid",
+      "reuse": [
+        "deterministic balanced spherical k-means",
+        "pinned model revision",
+        "4,096-row vector shards",
+        "8,192 rows per centroid and at most two shards per centroid",
+        "cosine similarity sort with stable tie-breakers"
+      ],
+      "do_not_copy": [
+        "security-domain graph ontology as a legal ontology",
+        "CVE/CWE node vocabulary for US Code structural edges"
+      ],
+      "vector_space": {
+        "vector_space_id": "all-minilm-l6-v2@c9745ed1d9f207416be6d2e6f19aa49b8566f3e3:d384:pool=mean:norm=l2",
+        "model_id": "sentence-transformers/all-MiniLM-L6-v2",
+        "model_revision": "c9745ed1d9f207416be6d2e6f19aa49b8566f3e3",
+        "dimension": 384,
+        "layout": "semantic_centroid_groups",
+        "assignment": "deterministic_balanced_spherical_kmeans",
+        "pooling": "mean",
+        "normalization": "l2",
+        "similarity": "cosine",
+        "max_rows_per_chunk": 4096,
+        "max_rows_per_centroid": 8192,
+        "max_shards_per_centroid": 2,
+        "default_probe_centroids": 4
+      },
+      "graph": {
+        "ontology_version": "cvefixes-graphrag-ontology/v1",
+        "node_types": [
+          "cve",
+          "cwe",
+          "commit",
+          "file",
+          "function",
+          "repository"
+        ],
+        "edge_types": [
+          "AFFECTS",
+          "HAS_CWE",
+          "FIXES",
+          "TOUCHES_FILE",
+          "DEFINES_FUNCTION"
+        ],
+        "adjacency_directions": ["outgoing", "incoming"],
+        "path_aliases": {
+          "graph_adjacency_out": "data/graph/adjacency/outgoing/part-*.parquet",
+          "graph_adjacency_in": "data/graph/adjacency/incoming/part-*.parquet"
+        },
+        "max_adjacency_pointers_per_row": 4096
+      },
+      "physical_bounds": {
+        "max_adjacency_pointers_per_row": 4096,
+        "max_pointers_per_row": 4096,
+        "max_routing_rows_per_index": 4096,
+        "max_rows_per_physical_shard": 4096,
+        "max_rows_per_vector_centroid": 8192,
+        "max_term_rows_per_shard": 4096,
+        "max_vector_shards_per_centroid": 2
+      },
+      "artifacts": [
+        {
+          "family": "corpus",
+          "relative_path": "data/corpus/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-cvefixes-corpus-v1"
+        },
+        {
+          "family": "bm25_documents",
+          "relative_path": "data/bm25/documents/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-cvefixes-bm25-docs-v1"
+        },
+        {
+          "family": "bm25_postings",
+          "relative_path": "data/bm25/postings/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-cvefixes-bm25-postings-v1"
+        },
+        {
+          "family": "vectors",
+          "relative_path": "data/vectors/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-cvefixes-vectors-v1"
+        },
+        {
+          "family": "centroids",
+          "relative_path": "indexes/vector_chunks.parquet",
+          "row_count": 1,
+          "content_label": "ref-cvefixes-centroids-v1"
+        },
+        {
+          "family": "graph_nodes",
+          "relative_path": "data/graph/nodes/part-000000.parquet",
+          "row_count": 4,
+          "content_label": "ref-cvefixes-graph-nodes-v1"
+        },
+        {
+          "family": "graph_edges",
+          "relative_path": "data/graph/edges/part-000000.parquet",
+          "row_count": 3,
+          "content_label": "ref-cvefixes-graph-edges-v1"
+        },
+        {
+          "family": "graph_adjacency_out",
+          "relative_path": "data/graph/adjacency/outgoing/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-cvefixes-graph-adj-out-v1"
+        },
+        {
+          "family": "graph_adjacency_in",
+          "relative_path": "data/graph/adjacency/incoming/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-cvefixes-graph-adj-in-v1"
+        },
+        {
+          "family": "routing_index",
+          "relative_path": "indexes/bm25_keyword_shards.parquet",
+          "row_count": 1,
+          "content_label": "ref-cvefixes-routing-v1"
+        },
+        {
+          "family": "manifest",
+          "relative_path": "manifest.json",
+          "row_count": 0,
+          "content_label": "ref-cvefixes-manifest-body"
+        }
+      ]
+    },
+    {
+      "domain": "skillcenter",
+      "display_name": "skillcenter-ir",
+      "repo_id": "Publicus/skillcenter-ir",
+      "revision": "2cc11a73403d03c0679ffa909c893ef6a850048a",
+      "schema_version": "skillcenter-huggingface-release/v3",
+      "release_profile": "skillcenter-huggingface-release/v3",
+      "primary_key": "entry_cid",
+      "reuse": [
+        "direct-Hub immutable resolver pattern",
+        "descriptor verification before parse",
+        "compact routing indexes",
+        "recursive centroid clustering",
+        "bounded adjacency and fetch traces",
+        "semantic graph walk client shape"
+      ],
+      "do_not_copy": [
+        "skill/intent ontology as a legal ontology",
+        "thenlper/gte-small vector space without legal-domain evaluation"
+      ],
+      "vector_space": {
+        "vector_space_id": "gte-small@2cc11a73403d03c0679ffa909c893ef6a850048a:d384:pool=mean:norm=l2",
+        "model_id": "thenlper/gte-small",
+        "model_revision": "2cc11a73403d03c0679ffa909c893ef6a850048a",
+        "dimension": 384,
+        "layout": "semantic_centroid_groups",
+        "assignment": "recursive_spherical_kmeans",
+        "pooling": "mean",
+        "normalization": "l2",
+        "similarity": "cosine",
+        "max_rows_per_chunk": 4096,
+        "max_rows_per_centroid": 8192,
+        "max_shards_per_centroid": 2,
+        "default_probe_centroids": 4
+      },
+      "graph": {
+        "ontology_version": "intent-corpus-ontology/v1",
+        "node_types": [
+          "source_document",
+          "skill",
+          "intent",
+          "tool",
+          "effect"
+        ],
+        "edge_types": [
+          "DERIVED_FROM",
+          "INVOKES",
+          "HAS_EFFECT",
+          "CITES",
+          "RELATED_TO"
+        ],
+        "adjacency_directions": ["outgoing", "incoming"],
+        "path_aliases": {
+          "graph_adjacency_out": "data/graph/adjacency/outgoing/part-*.parquet",
+          "graph_adjacency_in": "data/graph/adjacency/incoming/part-*.parquet"
+        },
+        "max_adjacency_pointers_per_row": 4096,
+        "max_remote_walk_depth": 8
+      },
+      "physical_bounds": {
+        "max_adjacency_pointers_per_row": 4096,
+        "max_pointers_per_row": 4096,
+        "max_routing_rows_per_index": 4096,
+        "max_rows_per_physical_shard": 4096,
+        "max_rows_per_vector_centroid": 8192,
+        "max_term_rows_per_shard": 4096,
+        "max_vector_shards_per_centroid": 2
+      },
+      "artifacts": [
+        {
+          "family": "corpus",
+          "relative_path": "data/corpus/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-skillcenter-corpus-v1"
+        },
+        {
+          "family": "bm25_documents",
+          "relative_path": "data/bm25/documents/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-skillcenter-bm25-docs-v1"
+        },
+        {
+          "family": "bm25_postings",
+          "relative_path": "data/bm25/postings/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-skillcenter-bm25-postings-v1"
+        },
+        {
+          "family": "vectors",
+          "relative_path": "data/vectors/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-skillcenter-vectors-v1"
+        },
+        {
+          "family": "centroids",
+          "relative_path": "indexes/vector_chunks.parquet",
+          "row_count": 1,
+          "content_label": "ref-skillcenter-centroids-v1"
+        },
+        {
+          "family": "graph_nodes",
+          "relative_path": "data/graph/nodes/part-000000.parquet",
+          "row_count": 3,
+          "content_label": "ref-skillcenter-graph-nodes-v1"
+        },
+        {
+          "family": "graph_edges",
+          "relative_path": "data/graph/edges/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-skillcenter-graph-edges-v1"
+        },
+        {
+          "family": "graph_adjacency_out",
+          "relative_path": "data/graph/adjacency/outgoing/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-skillcenter-graph-adj-out-v1"
+        },
+        {
+          "family": "graph_adjacency_in",
+          "relative_path": "data/graph/adjacency/incoming/part-000000.parquet",
+          "row_count": 2,
+          "content_label": "ref-skillcenter-graph-adj-in-v1"
+        },
+        {
+          "family": "routing_index",
+          "relative_path": "indexes/bm25_keyword_shards.parquet",
+          "row_count": 1,
+          "content_label": "ref-skillcenter-routing-v1"
+        },
+        {
+          "family": "locator_index",
+          "relative_path": "indexes/corpus_chunks.parquet",
+          "row_count": 1,
+          "content_label": "ref-skillcenter-locator-v1"
+        },
+        {
+          "family": "manifest",
+          "relative_path": "manifest.json",
+          "row_count": 0,
+          "content_label": "ref-skillcenter-manifest-body"
+        }
+      ]
+    }
+  ],
+  "incompatible_assumptions": [
+    {
+      "id": "vector_space_same_dim_different_model",
+      "kind": "vector_space",
+      "left_domain": "cvefixes",
+      "right_domain": "skillcenter",
+      "expect_error": "VectorSpaceIncompatibilityError",
+      "reason": "Both are 384-d but MiniLM and GTE declare distinct vector_space_id values; dimension alone never implies compatibility."
+    },
+    {
+      "id": "vector_space_patent_vs_cvefixes",
+      "kind": "vector_space",
+      "left_domain": "patent",
+      "right_domain": "cvefixes",
+      "expect_error": "VectorSpaceIncompatibilityError",
+      "reason": "256-d hashed patent projection is not interchangeable with 384-d MiniLM."
+    },
+    {
+      "id": "vector_space_patent_vs_skillcenter",
+      "kind": "vector_space",
+      "left_domain": "patent",
+      "right_domain": "skillcenter",
+      "expect_error": "VectorSpaceIncompatibilityError",
+      "reason": "Patent hashed projection cannot late-fuse with SkillCenter GTE vectors."
+    },
+    {
+      "id": "graph_ontology_cvefixes_vs_skillcenter",
+      "kind": "graph_ontology",
+      "left_domain": "cvefixes",
+      "right_domain": "skillcenter",
+      "expect_error": "GraphOntologyIncompatibilityError",
+      "reason": "Security and intent ontologies share adjacency layout families but not node/edge vocabularies."
+    },
+    {
+      "id": "graph_ontology_patent_vs_cvefixes",
+      "kind": "graph_ontology",
+      "left_domain": "patent",
+      "right_domain": "cvefixes",
+      "expect_error": "GraphOntologyIncompatibilityError",
+      "reason": "Patent claim graph vocabulary is not the CVEfixes security vocabulary."
+    },
+    {
+      "id": "mutable_revision_main",
+      "kind": "immutable_resolution",
+      "revision": "main",
+      "expect_error": "MutableRevisionError",
+      "reason": "Branch names are not immutable Hub pins."
+    },
+    {
+      "id": "physical_bound_oversize_rows",
+      "kind": "physical_bound",
+      "row_count": 4097,
+      "expect_error": "PhysicalBoundError",
+      "reason": "Physical shard rows may not exceed 4,096."
+    },
+    {
+      "id": "unknown_artifact_family",
+      "kind": "artifact_family",
+      "family": "skill_blob",
+      "expect_error": "HfGraphragSchemaError",
+      "reason": "Domain-private families are not part of the shared substrate vocabulary."
+    },
+    {
+      "id": "schema_mismatch_unregistered",
+      "kind": "schema_mismatch",
+      "domain": "skillcenter",
+      "expect_error": "SchemaMismatchError",
+      "reason": "Domain release schemas must be explicitly admitted; ambient defaults reject unregistered schemas."
+    }
+  ]
+}

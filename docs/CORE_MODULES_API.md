@@ -52,7 +52,7 @@ extractor = EntityExtractor()
 corpus = {
     "documents": [
         {"title": "Doc 1", "content": "Content here", "date": "2024-01-01"},
-        {"title": "Doc 2", "content": "More content", "date": "2024-01-02"}
+        {"title": "Doc 2", "content": "More content", "date": "2024-01-02"},
     ]
 }
 entities = await extractor.extract_entities_for_mapping(corpus)
@@ -74,9 +74,7 @@ Extract relationships between entities.
 **Example:**
 ```python
 relationships = await extractor.extract_relationships(
-    corpus, 
-    entities, 
-    ["co_occurrence", "citation"]
+    corpus, entities, ["co_occurrence", "citation"]
 )
 for rel in relationships:
     print(f"{rel['source_entity']} → {rel['target_entity']}: {rel['strength']}")
@@ -131,7 +129,9 @@ Detect clusters of highly connected entities.
 ```python
 clusters = analyzer.detect_relationship_clusters(entities, relationships)
 for cluster in clusters:
-    print(f"Cluster {cluster['cluster_id']}: {cluster['entity_count']} entities, density: {cluster['density']}")
+    print(
+        f"Cluster {cluster['cluster_id']}: {cluster['entity_count']} entities, density: {cluster['density']}"
+    )
 ```
 
 ##### `calculate_graph_metrics(entities: List[Dict], relationships: List[Dict]) -> Dict[str, Any]`
@@ -180,11 +180,7 @@ Extract timeline events for a specific entity.
 **Example:**
 ```python
 generator = TimelineGenerator()
-events = await generator.extract_entity_timeline_events(
-    corpus, 
-    "entity_1", 
-    ["mention", "action"]
-)
+events = await generator.extract_entity_timeline_events(corpus, "entity_1", ["mention", "action"])
 for event in events:
     print(f"{event['timestamp']}: {event['description']}")
 ```
@@ -465,9 +461,10 @@ from ipfs_datasets_py.processors.relationships import (
     GraphAnalyzer,
     TimelineGenerator,
     PatternDetector,
-    ProvenanceTracker
+    ProvenanceTracker,
 )
 from ipfs_datasets_py.caching import CacheManager
+
 
 async def analyze_corpus(corpus):
     # Initialize components
@@ -477,26 +474,26 @@ async def analyze_corpus(corpus):
     timeline_gen = TimelineGenerator()
     detector = PatternDetector()
     tracker = ProvenanceTracker()
-    
+
     # Extract entities (with caching)
     cache_key = "entities_" + str(hash(str(corpus)))
     cached = cache.get(cache_key)
-    
+
     if cached["hit"]:
         entities = cached["value"]
     else:
         entities = await extractor.extract_entities_for_mapping(corpus)
         cache.set(cache_key, entities, ttl=3600)
-    
+
     # Extract relationships
     relationships = await extractor.extract_relationships(
         corpus, entities, ["co_occurrence", "citation"]
     )
-    
+
     # Analyze graph
     clusters = analyzer.detect_relationship_clusters(entities, relationships)
     metrics = analyzer.calculate_graph_metrics(entities, relationships)
-    
+
     # Analyze timeline for first entity
     if entities:
         entity_id = entities[0]["id"]
@@ -504,31 +501,32 @@ async def analyze_corpus(corpus):
             corpus, entity_id, ["mention", "action"]
         )
         distribution = timeline_gen.analyze_time_distribution(events, "day")
-    
+
     # Detect patterns
     patterns = await detector.detect_behavioral_patterns(corpus, 0.7)
-    
+
     # Track provenance
     if entities:
         provenance = await tracker.build_provenance_chain(corpus, entity_id, 3)
         trust = tracker.calculate_trust_metrics(
             tracker.extract_source_documents(corpus, entity_id),
-            tracker.build_citation_network(corpus, entity_id)
+            tracker.build_citation_network(corpus, entity_id),
         )
-    
+
     return {
         "entities": entities,
         "relationships": relationships,
         "clusters": clusters,
         "metrics": metrics,
-        "patterns": patterns
+        "patterns": patterns,
     }
+
 
 # Run analysis
 corpus = {
     "documents": [
         {"title": "Doc 1", "content": "Content...", "date": "2024-01-01"},
-        {"title": "Doc 2", "content": "More...", "date": "2024-01-02"}
+        {"title": "Doc 2", "content": "More...", "date": "2024-01-02"},
     ]
 }
 results = asyncio.run(analyze_corpus(corpus))

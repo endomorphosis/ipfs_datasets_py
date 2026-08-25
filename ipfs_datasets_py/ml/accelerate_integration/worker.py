@@ -74,11 +74,16 @@ def run_worker(
                 import sys
                 import traceback
 
-                print(f"ipfs_datasets_py worker: failed to start p2p task service: {exc}", file=sys.stderr)
+                print(
+                    f"ipfs_datasets_py worker: failed to start p2p task service: {exc}",
+                    file=sys.stderr,
+                )
                 traceback.print_exc()
                 return
 
-        t = threading.Thread(target=_run_service, name=f"ipfs_datasets_p2p_task_service[{worker_id}]", daemon=True)
+        t = threading.Thread(
+            target=_run_service, name=f"ipfs_datasets_p2p_task_service[{worker_id}]", daemon=True
+        )
         t.start()
 
     queue = TaskQueue(queue_path)
@@ -93,15 +98,21 @@ def run_worker(
 
         try:
             if task.task_type in {"text-generation", "text_generation", "generation"}:
-                result = _run_text_generation({
-                    "task_id": task.task_id,
-                    "task_type": task.task_type,
-                    "model_name": task.model_name,
-                    "payload": task.payload,
-                })
+                result = _run_text_generation(
+                    {
+                        "task_id": task.task_id,
+                        "task_type": task.task_type,
+                        "model_name": task.model_name,
+                        "payload": task.payload,
+                    }
+                )
                 queue.complete(task_id=task.task_id, status="completed", result=result)
             else:
-                queue.complete(task_id=task.task_id, status="failed", error=f"Unsupported task_type: {task.task_type}")
+                queue.complete(
+                    task_id=task.task_id,
+                    status="failed",
+                    error=f"Unsupported task_type: {task.task_type}",
+                )
         except Exception as exc:
             queue.complete(task_id=task.task_id, status="failed", error=str(exc))
 
@@ -111,12 +122,21 @@ def run_worker(
 
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="ipfs_datasets_py accelerate task worker")
-    parser.add_argument("--queue", dest="queue_path", required=True, help="Path to task queue DuckDB file")
+    parser.add_argument(
+        "--queue", dest="queue_path", required=True, help="Path to task queue DuckDB file"
+    )
     parser.add_argument("--worker-id", dest="worker_id", required=True, help="Worker identifier")
     parser.add_argument("--poll-interval-s", dest="poll_interval_s", type=float, default=0.5)
     parser.add_argument("--once", action="store_true", help="Process at most one task")
-    parser.add_argument("--p2p-service", action="store_true", help="Also start a local libp2p TaskQueue RPC service")
-    parser.add_argument("--p2p-listen-port", type=int, default=None, help="TCP port for libp2p service (default: env or 9710)")
+    parser.add_argument(
+        "--p2p-service", action="store_true", help="Also start a local libp2p TaskQueue RPC service"
+    )
+    parser.add_argument(
+        "--p2p-listen-port",
+        type=int,
+        default=None,
+        help="TCP port for libp2p service (default: env or 9710)",
+    )
     parser.add_argument(
         "--p2p-dht",
         dest="p2p_dht",
@@ -136,7 +156,12 @@ def main(argv: Optional[list[str]] = None) -> int:
         action="store_true",
         help="Enable rendezvous discovery (default: enabled; flag is optional)",
     )
-    parser.add_argument("--no-p2p-rendezvous", dest="p2p_rendezvous", action="store_false", help="Disable rendezvous discovery")
+    parser.add_argument(
+        "--no-p2p-rendezvous",
+        dest="p2p_rendezvous",
+        action="store_false",
+        help="Disable rendezvous discovery",
+    )
     parser.set_defaults(p2p_rendezvous=None)
     parser.add_argument(
         "--p2p-rendezvous-ns",
@@ -150,7 +175,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         action="store_true",
         help="Enable AutoNAT (default: enabled; flag is optional)",
     )
-    parser.add_argument("--no-p2p-autonat", dest="p2p_autonat", action="store_false", help="Disable AutoNAT")
+    parser.add_argument(
+        "--no-p2p-autonat", dest="p2p_autonat", action="store_false", help="Disable AutoNAT"
+    )
     parser.set_defaults(p2p_autonat=None)
 
     args = parser.parse_args(argv)

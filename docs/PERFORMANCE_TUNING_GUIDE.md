@@ -67,7 +67,7 @@ config = ExtractionConfig(
 **3. Reduce Entity/Relationship Limits**
 ```python
 config = ExtractionConfig(
-    max_entities=500,      # Default: 1000
+    max_entities=500,  # Default: 1000
     max_relationships=500,  # Default: 1000
 )
 ```
@@ -239,13 +239,14 @@ def build_position_index(text: str, entities: List[Dict]) -> Dict[str, int]:
             index[entity["text"]] = pos
     return index
 
+
 # Use in relationship inference
 position_index = build_position_index(text, entities)
 
 for e1, e2 in entity_pairs:
     pos1 = position_index.get(e1["text"], -1)
     pos2 = position_index.get(e2["text"], -1)
-    
+
     if pos1 >= 0 and pos2 >= 0:
         distance = abs(pos2 - pos1)
         if distance < window_size:
@@ -289,11 +290,13 @@ Use `functools.lru_cache` for frequently called functions:
 ```python
 from functools import lru_cache
 
+
 @lru_cache(maxsize=10000)
 def compute_entity_similarity(text1: str, text2: str) -> float:
     """Compute similarity with caching."""
     # Expensive computation
     return similarity_score
+
 
 # Clear cache when needed
 compute_entity_similarity.cache_clear()
@@ -310,15 +313,15 @@ def warm_caches(domain: str, entity_count: int):
     pattern_cache = get_pattern_cache()
     for pattern in ["common", "pattern", "strings"]:
         pattern_cache.get_compiled_pattern(f"\\b{pattern}\\b")
-    
+
     # Warm domain patterns
     loader = get_domain_loader()
     loader.get_domain_patterns(domain)
-    
+
     # Warm similarity cache with common pairs
     sim_cache = SimilarityScoreCache()
     for i in range(min(entity_count, 100)):
-        sim_cache.compute_similarity(f"entity_{i}", f"entity_{i+1}")
+        sim_cache.compute_similarity(f"entity_{i}", f"entity_{i + 1}")
 ```
 
 **Impact:** 15-25% speedup on first extraction after cache warming.
@@ -365,9 +368,10 @@ def chunk_document(text: str, chunk_size: int = 10000, overlap: int = 500):
     """Split document into overlapping chunks."""
     chunks = []
     for i in range(0, len(text), chunk_size - overlap):
-        chunk = text[i:i + chunk_size]
+        chunk = text[i : i + chunk_size]
         chunks.append(chunk)
     return chunks
+
 
 # Process chunks separately
 all_entities = []
@@ -409,22 +413,23 @@ Process multiple documents in parallel:
 ```python
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+
 def extract_batch(documents: List[str], config: ExtractionConfig, workers: int = 4):
     """Extract entities from multiple documents in parallel."""
     generator = OntologyGenerator()
     results = []
-    
+
     with ThreadPoolExecutor(max_workers=workers) as executor:
         futures = {
             executor.submit(generator.extract_entities, doc, config): i
             for i, doc in enumerate(documents)
         }
-        
+
         for future in as_completed(futures):
             idx = futures[future]
             result = future.result()
             results.append((idx, result))
-    
+
     # Sort by original order
     results.sort(key=lambda x: x[0])
     return [r for _, r in results]
@@ -640,9 +645,10 @@ from pybreaker import CircuitBreaker
 
 # Protect LLM fallback calls
 llm_breaker = CircuitBreaker(
-    fail_max=5,           # Open after 5 failures
+    fail_max=5,  # Open after 5 failures
     timeout_duration=60,  # Stay open for 60s
 )
+
 
 @llm_breaker
 def extract_with_llm_fallback(text: str, config: ExtractionConfig):
@@ -670,6 +676,7 @@ resource.setrlimit(resource.RLIMIT_CPU, (30, 30))
 
 ```python
 from tenacity import retry, stop_after_attempt, wait_exponential
+
 
 @retry(
     stop=stop_after_attempt(3),

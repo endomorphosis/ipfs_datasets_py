@@ -34,9 +34,7 @@ EXPECTED_VARIANT_IDS = tuple([*(f"A{index}" for index in range(13)), "S1"])
 
 def _pilot_cases(count: int = 2) -> tuple[runner.AblationCase, ...]:
     _manifest, unsealed = load_unsealed_pilot_development()
-    selected = tuple(
-        case for case in unsealed if case.split.value == Split.PILOT.value
-    )[:count]
+    selected = tuple(case for case in unsealed if case.split.value == Split.PILOT.value)[:count]
     return tuple(
         runner.AblationCase.create(
             case.case_id,
@@ -130,9 +128,7 @@ def _plan(
     )
 
 
-def _result_path(
-    output_root: Path, job: runner.ScheduledCase
-) -> Path:
+def _result_path(output_root: Path, job: runner.ScheduledCase) -> Path:
     return (
         output_root
         / "results"
@@ -173,9 +169,7 @@ def test_variant_registry_is_complete_explicit_stage_aware_and_immutable() -> No
         StageName.HAMMER,
     )
     assert variants.VARIANT_REGISTRY["A9"].hammer_policy is variants.HammerPolicy.OFF
-    assert variants.VARIANT_REGISTRY["A11"].premise_ranking is (
-        variants.PremiseRanking.SYMAI_LLM
-    )
+    assert variants.VARIANT_REGISTRY["A11"].premise_ranking is (variants.PremiseRanking.SYMAI_LLM)
     assert variants.VARIANT_REGISTRY["S1"].safety_diagnostic_only
     assert not variants.VARIANT_REGISTRY["S1"].primary_candidate
 
@@ -211,15 +205,16 @@ def test_plan_pairs_identical_inputs_and_records_isolated_contracts() -> None:
 
     by_case_and_mode: dict[tuple[str, CacheMode], list[runner.ScheduledCase]] = {}
     for job in plan.jobs:
-        by_case_and_mode.setdefault(
-            (job.case.case_id, job.cache_mode), []
-        ).append(job)
-        assert job.input_sha256 == runner.AblationCase.create(
-            job.case.case_id,
-            input_data=job.case.to_dict()["input_data"],
-            split=Split.PILOT,
-            case_sha256=job.case.case_sha256,
-        ).input_sha256
+        by_case_and_mode.setdefault((job.case.case_id, job.cache_mode), []).append(job)
+        assert (
+            job.input_sha256
+            == runner.AblationCase.create(
+                job.case.case_id,
+                input_data=job.case.to_dict()["input_data"],
+                split=Split.PILOT,
+                case_sha256=job.case.case_sha256,
+            ).input_sha256
+        )
 
     for jobs in by_case_and_mode.values():
         assert {job.variant_id for job in jobs} == set(EXPECTED_VARIANT_IDS)
@@ -248,9 +243,7 @@ def test_randomized_block_order_is_seeded_reproducible_and_balanced() -> None:
 
     assert first.to_dict() == replay.to_dict()
     assert first.digest == replay.digest
-    assert tuple(job.ordinal for job in first.jobs) == tuple(
-        range(len(first.jobs))
-    )
+    assert tuple(job.ordinal for job in first.jobs) == tuple(range(len(first.jobs)))
     assert tuple(job.variant_id for job in first.jobs) != tuple(
         job.variant_id for job in other.jobs
     )
@@ -258,9 +251,7 @@ def test_randomized_block_order_is_seeded_reproducible_and_balanced() -> None:
     for plan in (first, other):
         blocks: dict[tuple[str, CacheMode], list[runner.ScheduledCase]] = {}
         for job in plan.jobs:
-            blocks.setdefault(
-                (job.case.case_id, job.cache_mode), []
-            ).append(job)
+            blocks.setdefault((job.case.case_id, job.cache_mode), []).append(job)
         assert all(
             {job.variant_id for job in block} == {"A0", "A1", "A4", "S1"}
             for block in blocks.values()
@@ -272,9 +263,7 @@ def test_execute_uses_each_variants_explicit_route_and_requested_identity(
 ) -> None:
     recorder = _RecordingHandlers()
     plan = _plan(variant_ids=EXPECTED_VARIANT_IDS)
-    run = runner.execute_ablation(
-        plan, recorder.adapters(), output_root=tmp_path, resume=False
-    )
+    run = runner.execute_ablation(plan, recorder.adapters(), output_root=tmp_path, resume=False)
     records = run.results
 
     assert run.plan == plan
@@ -283,22 +272,16 @@ def test_execute_uses_each_variants_explicit_route_and_requested_identity(
     assert run.complete
     assert len(records) == len(plan.jobs)
     assert len(run.contracts) == len(plan.variant_ids) * len(plan.cache_modes)
-    assert len({contract.cache_namespace for contract in run.contracts}) == len(
-        run.contracts
-    )
+    assert len({contract.cache_namespace for contract in run.contracts}) == len(run.contracts)
     assert all(
-        contract.requested_variant_id == contract.effective_variant_id
-        for contract in run.contracts
+        contract.requested_variant_id == contract.effective_variant_id for contract in run.contracts
     )
     by_identity = {
-        (record.case_id, record.variant_id, record.cache_mode): record
-        for record in records
+        (record.case_id, record.variant_id, record.cache_mode): record for record in records
     }
     for job in plan.jobs:
         definition = variants.VARIANT_REGISTRY[job.variant_id]
-        record = by_identity[
-            (job.case.case_id, job.variant_id, job.cache_mode)
-        ]
+        record = by_identity[(job.case.case_id, job.variant_id, job.cache_mode)]
         assert tuple(stage.stage for stage in record.stages) == definition.stages
         assert all(stage.variant_id == job.variant_id for stage in record.stages)
         assert all(
@@ -310,13 +293,11 @@ def test_execute_uses_each_variants_explicit_route_and_requested_identity(
             for stage in record.stages
         )
         assert record.status is OutcomeStatus.NOT_VERIFIED
-        envelope = json.loads(
-            _result_path(run.output_root, job).read_text(encoding="utf-8")
-        )
+        envelope = json.loads(_result_path(run.output_root, job).read_text(encoding="utf-8"))
         assert envelope["requested_configuration"] == definition.to_dict()
-        assert [
-            entry["stage"] for entry in envelope["effective_configuration"]
-        ] == [stage.value for stage in definition.stages]
+        assert [entry["stage"] for entry in envelope["effective_configuration"]] == [
+            stage.value for stage in definition.stages
+        ]
 
 
 def test_recorded_resource_ceiling_converts_over_budget_job_to_a_result(
@@ -333,13 +314,9 @@ def test_recorded_resource_ceiling_converts_over_budget_job_to_a_result(
         )
 
     adapters = dict(_RecordingHandlers().adapters())
-    adapters[StageName.SYMAI] = StageAdapter(
-        StageName.SYMAI, handler=model_handler
-    )
+    adapters[StageName.SYMAI] = StageAdapter(StageName.SYMAI, handler=model_handler)
     plan = _plan(variant_ids=("A4",), cases=_pilot_cases(1))
-    run = runner.execute_ablation(
-        plan, adapters, output_root=tmp_path, resume=False
-    )
+    run = runner.execute_ablation(plan, adapters, output_root=tmp_path, resume=False)
 
     assert len(run.results) == 1
     result = run.results[0]
@@ -354,9 +331,7 @@ def test_unavailable_capability_never_substitutes_or_erases_requested_arm(
 ) -> None:
     recorder = _RecordingHandlers(unavailable_stage=StageName.SYMAI)
     plan = _plan(variant_ids=("A4",))
-    run = runner.execute_ablation(
-        plan, recorder.adapters(), output_root=tmp_path, resume=False
-    )
+    run = runner.execute_ablation(plan, recorder.adapters(), output_root=tmp_path, resume=False)
     records = run.results
 
     assert len(records) == len(plan.jobs)
@@ -375,16 +350,12 @@ def test_backend_failure_is_durable_and_does_not_cancel_other_cases(
     cases = _pilot_cases()
     recorder = _RecordingHandlers(fail_case_id=cases[0].case_id)
     plan = _plan(variant_ids=("A1",), cases=cases)
-    run = runner.execute_ablation(
-        plan, recorder.adapters(), output_root=tmp_path, resume=False
-    )
+    run = runner.execute_ablation(plan, recorder.adapters(), output_root=tmp_path, resume=False)
     records = run.results
 
     assert len(records) == 2
     failed = next(record for record in records if record.case_id == cases[0].case_id)
-    succeeded = next(
-        record for record in records if record.case_id == cases[1].case_id
-    )
+    succeeded = next(record for record in records if record.case_id == cases[1].case_id)
     assert failed.status is OutcomeStatus.INFRASTRUCTURE_FAILURE
     assert failed.failure_code is FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
     assert failed.stages[0].status is StageStatus.FAILED
@@ -400,30 +371,20 @@ def test_resume_skips_exact_completed_jobs_without_duplicate_invocations(
 ) -> None:
     recorder = _RecordingHandlers()
     plan = _plan(variant_ids=("A0", "A1"))
-    first = runner.execute_ablation(
-        plan, recorder.adapters(), output_root=tmp_path, resume=False
-    )
+    first = runner.execute_ablation(plan, recorder.adapters(), output_root=tmp_path, resume=False)
     calls_after_first = tuple(recorder.calls)
-    before = {
-        job.job_id: _result_path(first.output_root, job).read_bytes()
-        for job in plan.jobs
-    }
+    before = {job.job_id: _result_path(first.output_root, job).read_bytes() for job in plan.jobs}
 
-    replay = runner.execute_ablation(
-        plan, recorder.adapters(), output_root=tmp_path, resume=True
-    )
+    replay = runner.execute_ablation(plan, recorder.adapters(), output_root=tmp_path, resume=True)
 
     assert not replay.executed_job_ids
     assert len(replay.resumed_job_ids) == len(plan.jobs)
     assert tuple(recorder.calls) == calls_after_first
     assert {
-        job.job_id: _result_path(replay.output_root, job).read_bytes()
-        for job in plan.jobs
+        job.job_id: _result_path(replay.output_root, job).read_bytes() for job in plan.jobs
     } == before
     records = replay.results
-    identities = {
-        (item.case_id, item.variant_id, item.cache_mode) for item in records
-    }
+    identities = {(item.case_id, item.variant_id, item.cache_mode) for item in records}
     assert len(records) == len(identities) == len(plan.jobs)
 
 
@@ -434,9 +395,7 @@ def test_resume_fails_closed_on_nonimmutable_or_conflicting_records(
 ) -> None:
     recorder = _RecordingHandlers()
     plan = _plan(variant_ids=("A0",))
-    first = runner.execute_ablation(
-        plan, recorder.adapters(), output_root=tmp_path, resume=False
-    )
+    first = runner.execute_ablation(plan, recorder.adapters(), output_root=tmp_path, resume=False)
     first_path = _result_path(first.output_root, plan.jobs[0])
 
     if mutation == "tamper":
@@ -459,7 +418,5 @@ def test_resume_fails_closed_on_nonimmutable_or_conflicting_records(
 
     calls_before_resume = tuple(recorder.calls)
     with pytest.raises((runner.AblationValidationError, ProtocolContractError)):
-        runner.execute_ablation(
-            plan, recorder.adapters(), output_root=tmp_path, resume=True
-        )
+        runner.execute_ablation(plan, recorder.adapters(), output_root=tmp_path, resume=True)
     assert tuple(recorder.calls) == calls_before_resume

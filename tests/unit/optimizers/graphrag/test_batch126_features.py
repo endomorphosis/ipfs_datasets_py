@@ -6,6 +6,7 @@ Methods under test:
   - OntologyLearningAdapter.average_feedback_score()
   - OntologyLearningAdapter.feedback_above_fraction(threshold)
 """
+
 import pytest
 
 
@@ -13,8 +14,12 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -25,6 +30,7 @@ def _push(adapter, score):
 # ---------------------------------------------------------------------------
 # best_feedback_score
 # ---------------------------------------------------------------------------
+
 
 class TestBestFeedbackScore:
     def test_empty_returns_zero(self):
@@ -47,6 +53,7 @@ class TestBestFeedbackScore:
 # worst_feedback_score
 # ---------------------------------------------------------------------------
 
+
 class TestWorstFeedbackScore:
     def test_empty_returns_zero(self):
         a = _make_adapter()
@@ -68,6 +75,7 @@ class TestWorstFeedbackScore:
 # average_feedback_score
 # ---------------------------------------------------------------------------
 
+
 class TestAverageFeedbackScore:
     def test_empty_returns_zero(self):
         a = _make_adapter()
@@ -88,6 +96,7 @@ class TestAverageFeedbackScore:
 # ---------------------------------------------------------------------------
 # feedback_above_fraction
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackAboveFraction:
     def test_empty_returns_zero(self):

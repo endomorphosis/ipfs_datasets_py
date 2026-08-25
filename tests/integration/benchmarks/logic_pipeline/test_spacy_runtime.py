@@ -13,10 +13,7 @@ import pytest
 from scripts.benchmarks import provision_hssl_spacy as provisioning
 
 
-LOCK_PATH = (
-    Path(__file__).resolve().parents[4]
-    / "benchmarks/logic_pipeline/runtime_env/spacy.lock"
-)
+LOCK_PATH = Path(__file__).resolve().parents[4] / "benchmarks/logic_pipeline/runtime_env/spacy.lock"
 LOCK_DIGEST = "f45945e4e8a24305b3ade669ed52da2df2b0af63267b9ef28823b9bac442d68d"
 
 
@@ -27,9 +24,7 @@ def _probe(lock: dict[str, object]) -> dict[str, object]:
     assert isinstance(runtime, dict)
     assert isinstance(pipeline, dict)
     assert isinstance(smoke, dict)
-    annotations = {
-        name: True for name in smoke["required_annotations"]
-    }
+    annotations = {name: True for name in smoke["required_annotations"]}
     return {
         "python": {
             "implementation": "CPython",
@@ -91,15 +86,11 @@ def test_objective_symbol_and_lock_pin_the_requested_full_pipeline() -> None:
                     "click-8.3.2-py3-none-any.whl"
                 ),
                 "size_bytes": 108379,
-                "sha256": (
-                    "1924d2c27c5653561cd2cae4548d1406039cb79b858b747cfea24924bbc1616d"
-                ),
+                "sha256": ("1924d2c27c5653561cd2cae4548d1406039cb79b858b747cfea24924bbc1616d"),
             },
         }
     ]
-    assert {
-        item["sha256"] for item in runtime["artifacts"]
-    } == {
+    assert {item["sha256"] for item in runtime["artifacts"]} == {
         "daeb64b048f12c059997281aed53eb8776d26416dd313cf17ad6f63124b2b564",
         "6d45715a24446f23b98ec3f09409a1d4111983d1d64613250ee38c3270e21853",
     }
@@ -171,9 +162,7 @@ def test_runtime_wheel_selection_is_exact_and_normalizes_machine_aliases() -> No
     ("mutate", "message"),
     [
         (
-            lambda lock: lock["pipeline"].__setitem__(
-                "version", "3.8"
-            ),
+            lambda lock: lock["pipeline"].__setitem__("version", "3.8"),
             "exact release",
         ),
         (
@@ -452,15 +441,10 @@ def test_destination_rejects_current_environment_results_and_evidence_paths(
         match="frozen result namespace",
     ):
         provisioning.validate_destination(
-            tmp_path
-            / "hammer-symai-spacy-leanstral"
-            / "results"
-            / "runtime"
+            tmp_path / "hammer-symai-spacy-leanstral" / "results" / "runtime"
         )
     with pytest.raises(
         provisioning.SpacyProvisioningError,
         match="evidence or data",
     ):
-        provisioning.validate_destination(
-            provisioning.REPOSITORY_ROOT / "data/spacy-runtime"
-        )
+        provisioning.validate_destination(provisioning.REPOSITORY_ROOT / "data/spacy-runtime")

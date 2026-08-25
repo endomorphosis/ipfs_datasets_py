@@ -3,6 +3,7 @@ GitHub Actions Analysis Engine — canonical package module.
 
 Business logic extracted from mcp_server/tools/software_engineering_tools/github_actions_analyzer.py.
 """
+
 from __future__ import annotations
 
 import logging
@@ -119,17 +120,21 @@ def analyze_github_actions(
                 result["average_duration"] = round(total_duration / total_runs, 2)
 
             if result["success_rate"] < 70:
-                result["failure_patterns"].append({
-                    "pattern": "High failure rate",
-                    "severity": "high",
-                    "description": f"Success rate is {result['success_rate']}% (below 70% threshold)",
-                })
+                result["failure_patterns"].append(
+                    {
+                        "pattern": "High failure rate",
+                        "severity": "high",
+                        "description": f"Success rate is {result['success_rate']}% (below 70% threshold)",
+                    }
+                )
             if result["average_duration"] > 1800:
-                result["failure_patterns"].append({
-                    "pattern": "Long workflow duration",
-                    "severity": "medium",
-                    "description": f"Average duration is {result['average_duration'] / 60:.1f} minutes",
-                })
+                result["failure_patterns"].append(
+                    {
+                        "pattern": "Long workflow duration",
+                        "severity": "medium",
+                        "description": f"Average duration is {result['average_duration'] / 60:.1f} minutes",
+                    }
+                )
 
             result["resource_usage"] = {
                 "total_workflow_runs": total_runs,
@@ -189,7 +194,9 @@ def parse_workflow_logs(
                 for pattern in error_patterns:
                     m = re.search(pattern, line)
                     if m:
-                        result["errors"].append({"message": m.group(1).strip(), "line": line.strip()})
+                        result["errors"].append(
+                            {"message": m.group(1).strip(), "line": line.strip()}
+                        )
                         result["statistics"]["error_lines"] += 1
                         break
 

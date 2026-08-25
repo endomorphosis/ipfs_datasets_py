@@ -8,6 +8,7 @@ Following GIVEN-WHEN-THEN format as per repository standards.
 """
 
 import pytest
+
 np = pytest.importorskip("numpy")
 from ipfs_datasets_py.knowledge_graphs.cross_document_reasoning import (
     InformationRelationType,
@@ -20,7 +21,7 @@ from ipfs_datasets_py.knowledge_graphs.cross_document_reasoning import (
 
 class TestInformationRelationType:
     """Test InformationRelationType enum."""
-    
+
     def test_enum_values_exist(self):
         """
         GIVEN InformationRelationType enum
@@ -36,7 +37,7 @@ class TestInformationRelationType:
         assert InformationRelationType.CONSEQUENCE.value == "consequence"
         assert InformationRelationType.ALTERNATIVE.value == "alternative"
         assert InformationRelationType.UNCLEAR.value == "unclear"
-    
+
     def test_enum_membership(self):
         """
         GIVEN InformationRelationType enum
@@ -50,7 +51,7 @@ class TestInformationRelationType:
 
 class TestDocumentNode:
     """Test DocumentNode dataclass."""
-    
+
     def test_document_node_creation(self):
         """
         GIVEN document attributes
@@ -61,14 +62,10 @@ class TestDocumentNode:
         doc_id = "doc1"
         content = "Sample document content"
         source = "test_source.txt"
-        
+
         # WHEN
-        doc_node = DocumentNode(
-            id=doc_id,
-            content=content,
-            source=source
-        )
-        
+        doc_node = DocumentNode(id=doc_id, content=content, source=source)
+
         # THEN
         assert doc_node.id == doc_id
         assert doc_node.content == content
@@ -77,7 +74,7 @@ class TestDocumentNode:
         assert doc_node.vector is None
         assert doc_node.relevance_score == 0.0
         assert doc_node.entities == []
-    
+
     def test_document_node_with_all_fields(self):
         """
         GIVEN complete document attributes
@@ -92,7 +89,7 @@ class TestDocumentNode:
         vector = np.array([0.1, 0.2, 0.3])
         relevance_score = 0.85
         entities = ["entity1", "entity2"]
-        
+
         # WHEN
         doc_node = DocumentNode(
             id=doc_id,
@@ -101,9 +98,9 @@ class TestDocumentNode:
             metadata=metadata,
             vector=vector,
             relevance_score=relevance_score,
-            entities=entities
+            entities=entities,
         )
-        
+
         # THEN
         assert doc_node.metadata == metadata
         assert np.array_equal(doc_node.vector, vector)
@@ -113,7 +110,7 @@ class TestDocumentNode:
 
 class TestEntityMediatedConnection:
     """Test EntityMediatedConnection dataclass."""
-    
+
     def test_connection_creation(self):
         """
         GIVEN entity and document information
@@ -128,7 +125,7 @@ class TestEntityMediatedConnection:
         target_doc_id = "doc2"
         relation_type = InformationRelationType.COMPLEMENTARY
         connection_strength = 0.8
-        
+
         # WHEN
         connection = EntityMediatedConnection(
             entity_id=entity_id,
@@ -137,9 +134,9 @@ class TestEntityMediatedConnection:
             source_doc_id=source_doc_id,
             target_doc_id=target_doc_id,
             relation_type=relation_type,
-            connection_strength=connection_strength
+            connection_strength=connection_strength,
         )
-        
+
         # THEN
         assert connection.entity_id == entity_id
         assert connection.entity_name == entity_name
@@ -149,7 +146,7 @@ class TestEntityMediatedConnection:
         assert connection.relation_type == relation_type
         assert connection.connection_strength == connection_strength
         assert connection.context == {}
-    
+
     def test_connection_with_context(self):
         """
         GIVEN connection with context
@@ -158,7 +155,7 @@ class TestEntityMediatedConnection:
         """
         # GIVEN
         context = {"sentence": "Apple was founded in 1976", "confidence": 0.95}
-        
+
         # WHEN
         connection = EntityMediatedConnection(
             entity_id="e1",
@@ -168,16 +165,16 @@ class TestEntityMediatedConnection:
             target_doc_id="doc2",
             relation_type=InformationRelationType.SUPPORTING,
             connection_strength=0.9,
-            context=context
+            context=context,
         )
-        
+
         # THEN
         assert connection.context == context
 
 
 class TestCrossDocReasoning:
     """Test CrossDocReasoning dataclass."""
-    
+
     def test_cross_doc_reasoning_creation(self):
         """
         GIVEN query and reasoning ID
@@ -187,13 +184,10 @@ class TestCrossDocReasoning:
         # GIVEN
         reasoning_id = "r1"
         query = "What is Apple Inc.?"
-        
+
         # WHEN
-        reasoning = CrossDocReasoning(
-            id=reasoning_id,
-            query=query
-        )
-        
+        reasoning = CrossDocReasoning(id=reasoning_id, query=query)
+
         # THEN
         assert reasoning.id == reasoning_id
         assert reasoning.query == query
@@ -205,7 +199,7 @@ class TestCrossDocReasoning:
         assert reasoning.answer is None
         assert reasoning.confidence == 0.0
         assert reasoning.reasoning_trace_id is None
-    
+
     def test_cross_doc_reasoning_with_data(self):
         """
         GIVEN complete reasoning data
@@ -225,13 +219,13 @@ class TestCrossDocReasoning:
                 source_doc_id="d1",
                 target_doc_id="d2",
                 relation_type=InformationRelationType.COMPLEMENTARY,
-                connection_strength=0.7
+                connection_strength=0.7,
             )
         ]
         traversal_paths = [["d1", "d2", "d3"]]
         answer = "Test answer"
         confidence = 0.85
-        
+
         # WHEN
         reasoning = CrossDocReasoning(
             id=reasoning_id,
@@ -242,9 +236,9 @@ class TestCrossDocReasoning:
             traversal_paths=traversal_paths,
             reasoning_depth="deep",
             answer=answer,
-            confidence=confidence
+            confidence=confidence,
         )
-        
+
         # THEN
         assert np.array_equal(reasoning.query_embedding, query_embedding)
         assert reasoning.documents == documents
@@ -257,7 +251,7 @@ class TestCrossDocReasoning:
 
 class TestCrossDocumentReasoner:
     """Test CrossDocumentReasoner class."""
-    
+
     def test_reasoner_initialization(self):
         """
         GIVEN no parameters
@@ -266,7 +260,7 @@ class TestCrossDocumentReasoner:
         """
         # WHEN
         reasoner = CrossDocumentReasoner()
-        
+
         # THEN
         assert reasoner is not None
         assert reasoner.query_optimizer is not None
@@ -278,7 +272,7 @@ class TestCrossDocumentReasoner:
         assert reasoner.entity_match_threshold == 0.85
         assert reasoner.total_queries == 0
         assert reasoner.successful_queries == 0
-    
+
     def test_reasoner_initialization_with_params(self):
         """
         GIVEN custom parameters
@@ -290,21 +284,21 @@ class TestCrossDocumentReasoner:
         max_depth = 5
         enable_contra = False
         entity_threshold = 0.9
-        
+
         # WHEN
         reasoner = CrossDocumentReasoner(
             min_connection_strength=min_strength,
             max_reasoning_depth=max_depth,
             enable_contradictions=enable_contra,
-            entity_match_threshold=entity_threshold
+            entity_match_threshold=entity_threshold,
         )
-        
+
         # THEN
         assert reasoner.min_connection_strength == min_strength
         assert reasoner.max_reasoning_depth == max_depth
         assert reasoner.enable_contradictions == enable_contra
         assert reasoner.entity_match_threshold == entity_threshold
-    
+
     def test_reason_across_documents_method_exists(self):
         """
         GIVEN a CrossDocumentReasoner
@@ -313,11 +307,11 @@ class TestCrossDocumentReasoner:
         """
         # GIVEN
         reasoner = CrossDocumentReasoner()
-        
+
         # THEN
-        assert hasattr(reasoner, 'reason_across_documents')
+        assert hasattr(reasoner, "reason_across_documents")
         assert callable(reasoner.reason_across_documents)
-    
+
     def test_reason_across_documents_basic(self):
         """
         GIVEN a simple query
@@ -327,16 +321,16 @@ class TestCrossDocumentReasoner:
         # GIVEN
         reasoner = CrossDocumentReasoner()
         query = "What is Python?"
-        
+
         # WHEN
         result = reasoner.reason_across_documents(query=query)
-        
+
         # THEN
         assert isinstance(result, dict)
         assert "answer" in result or "documents" in result
         # Should increment query count
         assert reasoner.total_queries >= 1
-    
+
     def test_reason_across_documents_with_documents(self):
         """
         GIVEN a query and input documents
@@ -348,20 +342,18 @@ class TestCrossDocumentReasoner:
         query = "Test query"
         input_docs = [
             {"id": "doc1", "content": "Document 1 content", "metadata": {}},
-            {"id": "doc2", "content": "Document 2 content", "metadata": {}}
+            {"id": "doc2", "content": "Document 2 content", "metadata": {}},
         ]
-        
+
         # WHEN
         result = reasoner.reason_across_documents(
-            query=query,
-            input_documents=input_docs,
-            reasoning_depth="basic"
+            query=query, input_documents=input_docs, reasoning_depth="basic"
         )
-        
+
         # THEN
         assert isinstance(result, dict)
         assert reasoner.total_queries >= 1
-    
+
     def test_statistics_tracking(self):
         """
         GIVEN multiple reasoning calls
@@ -371,11 +363,11 @@ class TestCrossDocumentReasoner:
         # GIVEN
         reasoner = CrossDocumentReasoner()
         initial_count = reasoner.total_queries
-        
+
         # WHEN
         reasoner.reason_across_documents(query="Query 1")
         reasoner.reason_across_documents(query="Query 2")
-        
+
         # THEN
         assert reasoner.total_queries == initial_count + 2
         assert reasoner.total_queries > initial_count
@@ -388,8 +380,12 @@ class TestCrossDocumentReasoner:
         """
         # GIVEN
         reasoner = CrossDocumentReasoner()
-        doc1 = DocumentNode(id="d1", content="Apple was founded in 1976 in California.", source="s1")
-        doc2 = DocumentNode(id="d2", content="Apple was founded in 1976 in California.", source="s2")
+        doc1 = DocumentNode(
+            id="d1", content="Apple was founded in 1976 in California.", source="s1"
+        )
+        doc2 = DocumentNode(
+            id="d2", content="Apple was founded in 1976 in California.", source="s2"
+        )
 
         # WHEN
         relation, strength = reasoner._determine_relation(
@@ -467,7 +463,7 @@ class TestCrossDocumentReasoner:
 # Integration tests
 class TestCrossDocumentReasoningIntegration:
     """Integration tests for cross-document reasoning."""
-    
+
     @pytest.mark.integration
     def test_end_to_end_reasoning(self):
         """
@@ -482,27 +478,24 @@ class TestCrossDocumentReasoningIntegration:
             {
                 "id": "doc1",
                 "content": "Machine learning is a branch of artificial intelligence.",
-                "metadata": {"source": "textbook"}
+                "metadata": {"source": "textbook"},
             },
             {
                 "id": "doc2",
                 "content": "ML algorithms learn patterns from data.",
-                "metadata": {"source": "article"}
-            }
+                "metadata": {"source": "article"},
+            },
         ]
-        
+
         # WHEN
         result = reasoner.reason_across_documents(
-            query=query,
-            input_documents=documents,
-            reasoning_depth="moderate"
+            query=query, input_documents=documents, reasoning_depth="moderate"
         )
-        
+
         # THEN
         assert isinstance(result, dict)
         # Result should have key fields
         assert any(key in result for key in ["answer", "documents", "confidence"])
-
 
 
 class TestConfigurableRelationThresholds:
@@ -566,12 +559,18 @@ class TestConfigurableRelationThresholds:
 
         # WHEN
         strict_rel, _ = strict_reasoner._determine_relation(
-            entity_id="e", source_doc_id="d1", target_doc_id="d2",
-            documents=[doc1, doc2], knowledge_graph=None,
+            entity_id="e",
+            source_doc_id="d1",
+            target_doc_id="d2",
+            documents=[doc1, doc2],
+            knowledge_graph=None,
         )
         lenient_rel, _ = lenient_reasoner._determine_relation(
-            entity_id="e", source_doc_id="d1", target_doc_id="d2",
-            documents=[doc1, doc2], knowledge_graph=None,
+            entity_id="e",
+            source_doc_id="d1",
+            target_doc_id="d2",
+            documents=[doc1, doc2],
+            knowledge_graph=None,
         )
 
         # THEN – strict should fall back to COMPLEMENTARY; lenient should be SUPPORTING
@@ -586,19 +585,26 @@ class TestConfigurableRelationThresholds:
         """
         # GIVEN
         doc1 = DocumentNode(
-            id="d1", content="overview.", source="s1",
+            id="d1",
+            content="overview.",
+            source="s1",
             metadata={"published_date": "2020-01-01"},
         )
         doc2 = DocumentNode(
-            id="d2", content="follow-up.", source="s2",
+            id="d2",
+            content="follow-up.",
+            source="s2",
             metadata={"published_date": "2023-01-01"},
         )
         reasoner = CrossDocumentReasoner(relation_elaborating_strength=0.5)
 
         # WHEN
         rel_type, strength = reasoner._determine_relation(
-            entity_id="e", source_doc_id="d1", target_doc_id="d2",
-            documents=[doc1, doc2], knowledge_graph=None,
+            entity_id="e",
+            source_doc_id="d1",
+            target_doc_id="d2",
+            documents=[doc1, doc2],
+            knowledge_graph=None,
         )
 
         # THEN
@@ -618,8 +624,11 @@ class TestConfigurableRelationThresholds:
 
         # WHEN
         rel_type, strength = reasoner._determine_relation(
-            entity_id="e", source_doc_id="d1", target_doc_id="d2",
-            documents=[doc1, doc2], knowledge_graph=None,
+            entity_id="e",
+            source_doc_id="d1",
+            target_doc_id="d2",
+            documents=[doc1, doc2],
+            knowledge_graph=None,
         )
 
         # THEN

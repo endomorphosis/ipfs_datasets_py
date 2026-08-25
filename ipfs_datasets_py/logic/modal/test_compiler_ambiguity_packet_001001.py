@@ -67,10 +67,7 @@ def _matching_explicit_ambiguity(
             continue
         if metadata.get("target_family") != target_family:
             continue
-        if (
-            abs(float(metadata.get("family_margin_raw", 0.0)) - expected_margin)
-            > 1e-12
-        ):
+        if abs(float(metadata.get("family_margin_raw", 0.0)) - expected_margin) > 1e-12:
             continue
         return ambiguity
     return None
@@ -114,9 +111,7 @@ def test_compiler_emits_packet_001001_explicit_frame_ambiguities() -> None:
             "sample_id": "us-code-11-781-567abfcaee308b66",
             "target_family": ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
             "family_margin": -0.987665742173,
-            "expected_type": (
-                "adaptive_frame_conditional_normative_outvoted_margin_low"
-            ),
+            "expected_type": ("adaptive_frame_conditional_normative_outvoted_margin_low"),
         },
         {
             "sample_id": "us-code-7-4207-7841fcb215fbf21c",
@@ -128,16 +123,12 @@ def test_compiler_emits_packet_001001_explicit_frame_ambiguities() -> None:
             "sample_id": "us-code-42-300jj-f338d43f4efd49a3",
             "target_family": ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
             "family_margin": -0.807318582418,
-            "expected_type": (
-                "adaptive_frame_conditional_normative_outvoted_margin_low"
-            ),
+            "expected_type": ("adaptive_frame_conditional_normative_outvoted_margin_low"),
         },
     )
     predicted_family = ModalLogicFamily.FRAME.value
     for case in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         target_family = str(case["target_family"])
         family_margin = float(case["family_margin"])
         ranking = _adaptive_ranking_for_margin(
@@ -178,7 +169,4 @@ def test_compiler_emits_packet_001001_explicit_frame_ambiguities() -> None:
         assert ambiguity.metadata.get("is_priority_policy_pair") is True
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
-        assert (
-            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12

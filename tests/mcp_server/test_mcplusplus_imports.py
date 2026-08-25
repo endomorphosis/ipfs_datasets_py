@@ -161,10 +161,7 @@ class TestMCPPlusImports:
         from ipfs_datasets_py.mcp_server.mcplusplus import bootstrap
 
         # WHEN: Creating bootstrap config
-        config = bootstrap.BootstrapConfig(
-            timeout=30.0,
-            min_peers=5
-        )
+        config = bootstrap.BootstrapConfig(timeout=30.0, min_peers=5)
 
         # THEN: Config is created with correct values
         assert config is not None
@@ -298,9 +295,7 @@ class TestMCPPlusImports:
     def test_peer_registry_wrapper_attributes(self):
         """Test PeerRegistryWrapper has expected attributes."""
         # GIVEN: Peer registry wrapper
-        from ipfs_datasets_py.mcp_server.mcplusplus.peer_registry import (
-            PeerRegistryWrapper
-        )
+        from ipfs_datasets_py.mcp_server.mcplusplus.peer_registry import PeerRegistryWrapper
 
         registry = PeerRegistryWrapper(bootstrap_nodes=["node1", "node2"])
 

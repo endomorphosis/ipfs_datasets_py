@@ -17,22 +17,28 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
     ExtractionConfig,
     OntologyGenerator,
 )
-from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer, OptimizationReport
+from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
+    OntologyOptimizer,
+    OptimizationReport,
+)
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _opt(scores):
     opt = OntologyOptimizer()
     for i, s in enumerate(scores):
-        opt._history.append(OptimizationReport(
-            average_score=s,
-            trend="stable",
-            improvement_rate=0.5,
-            metadata={"num_sessions": 1},
-        ))
+        opt._history.append(
+            OptimizationReport(
+                average_score=s,
+                trend="stable",
+                improvement_rate=0.5,
+                metadata={"num_sessions": 1},
+            )
+        )
     return opt
 
 
@@ -55,6 +61,7 @@ def _gen() -> OntologyGenerator:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_percentile
 # ---------------------------------------------------------------------------
+
 
 class TestScorePercentile:
     def test_returns_float(self):
@@ -86,6 +93,7 @@ class TestScorePercentile:
 # OntologyOptimizer.format_history_table
 # ---------------------------------------------------------------------------
 
+
 class TestFormatHistoryTable:
     def test_returns_string(self):
         assert isinstance(_opt([0.5]).format_history_table(), str)
@@ -112,6 +120,7 @@ class TestFormatHistoryTable:
 # OntologyOptimizer.average_improvement_per_batch
 # ---------------------------------------------------------------------------
 
+
 class TestAverageImprovementPerBatch:
     def test_returns_float(self):
         assert isinstance(_opt([0.4, 0.6]).average_improvement_per_batch(), float)
@@ -134,6 +143,7 @@ class TestAverageImprovementPerBatch:
 # ---------------------------------------------------------------------------
 # EntityExtractionResult.confidence_histogram
 # ---------------------------------------------------------------------------
+
 
 class TestConfidenceHistogram:
     def test_returns_list(self):
@@ -167,6 +177,7 @@ class TestConfidenceHistogram:
 # ---------------------------------------------------------------------------
 # ExtractionConfig.scale_thresholds
 # ---------------------------------------------------------------------------
+
 
 class TestScaleThresholds:
     def test_returns_new_instance(self):
@@ -207,6 +218,7 @@ class TestScaleThresholds:
 # OntologyGenerator.tag_entities
 # ---------------------------------------------------------------------------
 
+
 class TestTagEntities:
     def test_returns_new_result(self):
         r = _result(_entity())
@@ -238,6 +250,7 @@ class TestTagEntities:
 
     def test_relationships_preserved(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
         e1, e2 = _entity("e1"), _entity("e2", "Bob")
         rel = Relationship(id="r1", source_id="e1", target_id="e2", type="knows")
         r = EntityExtractionResult(entities=[e1, e2], relationships=[rel], confidence=0.8)

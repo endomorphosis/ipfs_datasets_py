@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 # Import visualization libraries if available
 try:
     import matplotlib.pyplot as plt
+
     VISUALIZATION_AVAILABLE = True
 except ImportError:
     logger.warning("Matplotlib not available. Static visualizations will not work.")
@@ -23,6 +24,7 @@ except ImportError:
 try:
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
+
     INTERACTIVE_VISUALIZATION_AVAILABLE = True
 except ImportError:
     logger.warning("Plotly not available. Interactive visualizations will not work.")
@@ -44,9 +46,7 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
     """
     # Store the original generate_integrated_dashboard method
     original_generate_integrated_dashboard: Optional[Callable] = getattr(
-        dashboard_class,
-        'generate_integrated_dashboard',
-        None
+        dashboard_class, "generate_integrated_dashboard", None
     )
 
     # Define the enhanced method
@@ -62,7 +62,7 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
         include_query_audit_timeline: bool = True,
         include_learning_metrics: bool = True,
         interactive: bool = True,
-        theme: str = 'light'
+        theme: str = "light",
     ) -> str:
         """
         Generate an integrated dashboard with learning metrics.
@@ -93,15 +93,15 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
 
         # Create a list of arguments to pass to the original method
         original_kwargs: Dict[str, Any] = {
-            'output_file': output_file,
-            'audit_metrics_aggregator': audit_metrics_aggregator,
-            'title': title,
-            'include_performance': include_performance,
-            'include_security': include_security,
-            'include_security_correlation': include_security_correlation,
-            'include_query_audit_timeline': include_query_audit_timeline,
-            'interactive': interactive,
-            'theme': theme
+            "output_file": output_file,
+            "audit_metrics_aggregator": audit_metrics_aggregator,
+            "title": title,
+            "include_performance": include_performance,
+            "include_security": include_security,
+            "include_security_correlation": include_security_correlation,
+            "include_query_audit_timeline": include_query_audit_timeline,
+            "interactive": interactive,
+            "theme": theme,
         }
 
         # Check if learning metrics should be included
@@ -122,55 +122,59 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
             if interactive and INTERACTIVE_VISUALIZATION_AVAILABLE:
                 try:
                     # Generate interactive visualizations
-                    visualization_html['learning_cycles'] = self._generate_interactive_learning_cycles(
-                        learning_metrics_collector
+                    visualization_html["learning_cycles"] = (
+                        self._generate_interactive_learning_cycles(learning_metrics_collector)
                     )
 
-                    visualization_html['parameter_adaptations'] = self._generate_interactive_parameter_adaptations(
-                        learning_metrics_collector
+                    visualization_html["parameter_adaptations"] = (
+                        self._generate_interactive_parameter_adaptations(learning_metrics_collector)
                     )
 
-                    visualization_html['strategy_effectiveness'] = self._generate_interactive_strategy_effectiveness(
-                        learning_metrics_collector
+                    visualization_html["strategy_effectiveness"] = (
+                        self._generate_interactive_strategy_effectiveness(
+                            learning_metrics_collector
+                        )
                     )
 
-                    visualization_html['learning_performance'] = self._generate_interactive_learning_performance(
-                        learning_metrics_collector
+                    visualization_html["learning_performance"] = (
+                        self._generate_interactive_learning_performance(learning_metrics_collector)
                     )
 
                 except Exception as e:
                     logger.error(f"Error generating interactive learning visualizations: {str(e)}")
 
             # For static visualizations (or as fallback)
-            if (not interactive or not INTERACTIVE_VISUALIZATION_AVAILABLE) and VISUALIZATION_AVAILABLE:
+            if (
+                not interactive or not INTERACTIVE_VISUALIZATION_AVAILABLE
+            ) and VISUALIZATION_AVAILABLE:
                 try:
                     # Generate static visualizations
-                    visualization_files['learning_cycles'] = os.path.join(
+                    visualization_files["learning_cycles"] = os.path.join(
                         output_dir, f"{base_name}_learning_cycles.png"
                     )
                     learning_metrics_collector.visualize_learning_cycles(
-                        output_file=visualization_files['learning_cycles']
+                        output_file=visualization_files["learning_cycles"]
                     )
 
-                    visualization_files['parameter_adaptations'] = os.path.join(
+                    visualization_files["parameter_adaptations"] = os.path.join(
                         output_dir, f"{base_name}_parameter_adaptations.png"
                     )
                     learning_metrics_collector.visualize_parameter_adaptations(
-                        output_file=visualization_files['parameter_adaptations']
+                        output_file=visualization_files["parameter_adaptations"]
                     )
 
-                    visualization_files['strategy_effectiveness'] = os.path.join(
+                    visualization_files["strategy_effectiveness"] = os.path.join(
                         output_dir, f"{base_name}_strategy_effectiveness.png"
                     )
                     learning_metrics_collector.visualize_strategy_effectiveness(
-                        output_file=visualization_files['strategy_effectiveness']
+                        output_file=visualization_files["strategy_effectiveness"]
                     )
 
-                    visualization_files['learning_performance'] = os.path.join(
+                    visualization_files["learning_performance"] = os.path.join(
                         output_dir, f"{base_name}_learning_performance.png"
                     )
                     learning_metrics_collector.visualize_learning_performance(
-                        output_file=visualization_files['learning_performance']
+                        output_file=visualization_files["learning_performance"]
                     )
 
                 except Exception as e:
@@ -189,7 +193,7 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
                 learning_metrics_collector=learning_metrics_collector,
                 visualization_files=visualization_files,
                 visualization_html=visualization_html,
-                interactive=interactive
+                interactive=interactive,
             )
         except Exception as e:
             logger.error(f"Error adding learning metrics to dashboard: {str(e)}")
@@ -197,7 +201,9 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
         return dashboard_file
 
     # Define helper methods for visualization
-    def _generate_interactive_learning_cycles(self, learning_metrics_collector: Any) -> Optional[str]:
+    def _generate_interactive_learning_cycles(
+        self, learning_metrics_collector: Any
+    ) -> Optional[str]:
         """Generate interactive visualization of learning cycles."""
         try:
             if not INTERACTIVE_VISUALIZATION_AVAILABLE:
@@ -210,18 +216,28 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
 
             # Sort cycles by timestamp
             import datetime
-            sorted_cycles: List[Tuple[str, Dict[str, Any]]] = sorted(learning_cycles.items(), key=lambda x: x[1].get("timestamp", 0))
+
+            sorted_cycles: List[Tuple[str, Dict[str, Any]]] = sorted(
+                learning_cycles.items(), key=lambda x: x[1].get("timestamp", 0)
+            )
 
             # Extract data for plotting
-            timestamps: List = [datetime.datetime.fromtimestamp(cycle["timestamp"]) for _, cycle in sorted_cycles]
+            timestamps: List = [
+                datetime.datetime.fromtimestamp(cycle["timestamp"]) for _, cycle in sorted_cycles
+            ]
             analyzed_queries: List[int] = [cycle["analyzed_queries"] for _, cycle in sorted_cycles]
-            patterns_identified: List[int] = [cycle["patterns_identified"] for _, cycle in sorted_cycles]
-            param_counts: List[int] = [len(cycle["parameters_adjusted"]) for _, cycle in sorted_cycles]
+            patterns_identified: List[int] = [
+                cycle["patterns_identified"] for _, cycle in sorted_cycles
+            ]
+            param_counts: List[int] = [
+                len(cycle["parameters_adjusted"]) for _, cycle in sorted_cycles
+            ]
 
             # Create figure
             fig = make_subplots(
-                rows=2, cols=1,
-                subplot_titles=["Queries Analyzed & Patterns Identified", "Parameter Adjustments"]
+                rows=2,
+                cols=1,
+                subplot_titles=["Queries Analyzed & Patterns Identified", "Parameter Adjustments"],
             )
 
             # Add traces for queries and patterns
@@ -229,22 +245,24 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
                 go.Scatter(
                     x=timestamps,
                     y=analyzed_queries,
-                    mode='lines+markers',
-                    name='Queries Analyzed',
-                    line=dict(color='blue')
+                    mode="lines+markers",
+                    name="Queries Analyzed",
+                    line=dict(color="blue"),
                 ),
-                row=1, col=1
+                row=1,
+                col=1,
             )
 
             fig.add_trace(
                 go.Scatter(
                     x=timestamps,
                     y=patterns_identified,
-                    mode='lines+markers',
-                    name='Patterns Identified',
-                    line=dict(color='green')
+                    mode="lines+markers",
+                    name="Patterns Identified",
+                    line=dict(color="green"),
                 ),
-                row=1, col=1
+                row=1,
+                col=1,
             )
 
             # Add trace for parameter counts
@@ -252,28 +270,27 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
                 go.Scatter(
                     x=timestamps,
                     y=param_counts,
-                    mode='lines+markers',
-                    name='Parameters Adjusted',
-                    line=dict(color='red')
+                    mode="lines+markers",
+                    name="Parameters Adjusted",
+                    line=dict(color="red"),
                 ),
-                row=2, col=1
+                row=2,
+                col=1,
             )
 
             # Update layout
-            fig.update_layout(
-                title="Learning Cycles",
-                height=600,
-                showlegend=True
-            )
+            fig.update_layout(title="Learning Cycles", height=600, showlegend=True)
 
             # Convert to HTML
-            return fig.to_html(include_plotlyjs='cdn', full_html=False)
+            return fig.to_html(include_plotlyjs="cdn", full_html=False)
 
         except Exception as e:
             logger.error(f"Error generating interactive learning cycles: {str(e)}")
             return None
 
-    def _generate_interactive_parameter_adaptations(self, learning_metrics_collector: Any) -> Optional[str]:
+    def _generate_interactive_parameter_adaptations(
+        self, learning_metrics_collector: Any
+    ) -> Optional[str]:
         """Generate interactive visualization of parameter adaptations."""
         try:
             if not INTERACTIVE_VISUALIZATION_AVAILABLE:
@@ -293,11 +310,12 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
                         "timestamps": [],
                         "values": [],
                         "confidences": [],
-                        "hover_texts": []
+                        "hover_texts": [],
                     }
 
                 # Add to group
                 import datetime
+
                 param_groups[param_name]["timestamps"].append(
                     datetime.datetime.fromtimestamp(adaptation["timestamp"])
                 )
@@ -306,11 +324,11 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
 
                 # Create hover text
                 hover_text: str = (
-                    f"Parameter: {param_name}<br>" +
-                    f"Old value: {adaptation['old_value']}<br>" +
-                    f"New value: {adaptation['new_value']}<br>" +
-                    f"Reason: {adaptation['adaptation_reason']}<br>" +
-                    f"Confidence: {adaptation['confidence']:.2f}"
+                    f"Parameter: {param_name}<br>"
+                    + f"Old value: {adaptation['old_value']}<br>"
+                    + f"New value: {adaptation['new_value']}<br>"
+                    + f"Reason: {adaptation['adaptation_reason']}<br>"
+                    + f"Confidence: {adaptation['confidence']:.2f}"
                 )
                 param_groups[param_name]["hover_texts"].append(hover_text)
 
@@ -321,9 +339,10 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
 
             # Create figure
             fig = make_subplots(
-                rows=num_params, cols=2,
-                subplot_titles=[f"{param} Value" for param in param_groups.keys()] +
-                              [f"{param} Confidence" for param in param_groups.keys()]
+                rows=num_params,
+                cols=2,
+                subplot_titles=[f"{param} Value" for param in param_groups.keys()]
+                + [f"{param} Confidence" for param in param_groups.keys()],
             )
 
             # Add traces for each parameter
@@ -333,13 +352,14 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
                     go.Scatter(
                         x=param_data["timestamps"],
                         y=param_data["values"],
-                        mode='lines+markers',
-                        name=f'{param_name} Value',
-                        line=dict(color='blue'),
+                        mode="lines+markers",
+                        name=f"{param_name} Value",
+                        line=dict(color="blue"),
                         text=param_data["hover_texts"],
-                        hoverinfo='text'
+                        hoverinfo="text",
                     ),
-                    row=i, col=1
+                    row=i,
+                    col=1,
                 )
 
                 # Confidence trace
@@ -347,20 +367,19 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
                     go.Scatter(
                         x=param_data["timestamps"],
                         y=param_data["confidences"],
-                        mode='lines+markers',
-                        name=f'{param_name} Confidence',
-                        line=dict(color='green'),
+                        mode="lines+markers",
+                        name=f"{param_name} Confidence",
+                        line=dict(color="green"),
                         text=param_data["hover_texts"],
-                        hoverinfo='text'
+                        hoverinfo="text",
                     ),
-                    row=i, col=2
+                    row=i,
+                    col=2,
                 )
 
             # Update layout
             fig.update_layout(
-                title="Parameter Adaptations",
-                height=300 * num_params,
-                showlegend=True
+                title="Parameter Adaptations", height=300 * num_params, showlegend=True
             )
 
             # Add y-axis range for confidence plots
@@ -368,20 +387,24 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
                 fig.update_yaxes(range=[0, 1.05], row=i, col=2)
 
             # Convert to HTML
-            return fig.to_html(include_plotlyjs='cdn', full_html=False)
+            return fig.to_html(include_plotlyjs="cdn", full_html=False)
 
         except Exception as e:
             logger.error(f"Error generating interactive parameter adaptations: {str(e)}")
             return None
 
-    def _generate_interactive_strategy_effectiveness(self, learning_metrics_collector: Any) -> Optional[str]:
+    def _generate_interactive_strategy_effectiveness(
+        self, learning_metrics_collector: Any
+    ) -> Optional[str]:
         """Generate interactive visualization of strategy effectiveness."""
         try:
             if not INTERACTIVE_VISUALIZATION_AVAILABLE:
                 return None
 
             # Get data from collector
-            effectiveness_data: Dict[str, Dict[str, float]] = learning_metrics_collector.get_effectiveness_by_strategy()
+            effectiveness_data: Dict[str, Dict[str, float]] = (
+                learning_metrics_collector.get_effectiveness_by_strategy()
+            )
             if not effectiveness_data:
                 return None
 
@@ -392,8 +415,9 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
 
             # Create figure
             fig = make_subplots(
-                rows=1, cols=2,
-                subplot_titles=["Effectiveness Score by Strategy", "Execution Time by Strategy"]
+                rows=1,
+                cols=2,
+                subplot_titles=["Effectiveness Score by Strategy", "Execution Time by Strategy"],
             )
 
             # Add bar charts
@@ -401,44 +425,44 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
                 go.Bar(
                     x=strategies,
                     y=avg_scores,
-                    name='Effectiveness Score',
-                    marker_color='blue',
+                    name="Effectiveness Score",
+                    marker_color="blue",
                     text=[f"{score:.2f}" for score in avg_scores],
-                    textposition='auto'
+                    textposition="auto",
                 ),
-                row=1, col=1
+                row=1,
+                col=1,
             )
 
             fig.add_trace(
                 go.Bar(
                     x=strategies,
                     y=avg_times,
-                    name='Execution Time (s)',
-                    marker_color='green',
+                    name="Execution Time (s)",
+                    marker_color="green",
                     text=[f"{time:.2f}s" for time in avg_times],
-                    textposition='auto'
+                    textposition="auto",
                 ),
-                row=1, col=2
+                row=1,
+                col=2,
             )
 
             # Update layout
-            fig.update_layout(
-                title="Strategy Effectiveness",
-                height=400,
-                showlegend=True
-            )
+            fig.update_layout(title="Strategy Effectiveness", height=400, showlegend=True)
 
             # Set y-axis range for effectiveness scores
             fig.update_yaxes(range=[0, 1.05], row=1, col=1)
 
             # Convert to HTML
-            return fig.to_html(include_plotlyjs='cdn', full_html=False)
+            return fig.to_html(include_plotlyjs="cdn", full_html=False)
 
         except Exception as e:
             logger.error(f"Error generating interactive strategy effectiveness: {str(e)}")
             return None
 
-    def _generate_interactive_learning_performance(self, learning_metrics_collector: Any) -> Optional[str]:
+    def _generate_interactive_learning_performance(
+        self, learning_metrics_collector: Any
+    ) -> Optional[str]:
         """Generate interactive visualization of learning performance."""
         try:
             if not INTERACTIVE_VISUALIZATION_AVAILABLE:
@@ -451,10 +475,15 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
 
             # Sort cycles by timestamp
             import datetime
-            sorted_cycles: List[Tuple[str, Dict[str, Any]]] = sorted(learning_cycles.items(), key=lambda x: x[1].get("timestamp", 0))
+
+            sorted_cycles: List[Tuple[str, Dict[str, Any]]] = sorted(
+                learning_cycles.items(), key=lambda x: x[1].get("timestamp", 0)
+            )
 
             # Extract data for plotting
-            timestamps: List = [datetime.datetime.fromtimestamp(cycle["timestamp"]) for _, cycle in sorted_cycles]
+            timestamps: List = [
+                datetime.datetime.fromtimestamp(cycle["timestamp"]) for _, cycle in sorted_cycles
+            ]
             execution_times: List[float] = [cycle["execution_time"] for _, cycle in sorted_cycles]
 
             # Calculate patterns per query
@@ -475,13 +504,14 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
 
             # Create figure
             fig = make_subplots(
-                rows=2, cols=2,
+                rows=2,
+                cols=2,
                 subplot_titles=[
                     "Learning Cycle Execution Time",
                     "Patterns per Query",
                     "Cumulative Patterns Identified",
-                    "Parameter Adjustment Trend"
-                ]
+                    "Parameter Adjustment Trend",
+                ],
             )
 
             # Add traces
@@ -489,67 +519,69 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
                 go.Scatter(
                     x=timestamps,
                     y=execution_times,
-                    mode='lines+markers',
-                    name='Execution Time (s)',
-                    line=dict(color='blue')
+                    mode="lines+markers",
+                    name="Execution Time (s)",
+                    line=dict(color="blue"),
                 ),
-                row=1, col=1
+                row=1,
+                col=1,
             )
 
             fig.add_trace(
                 go.Scatter(
                     x=timestamps,
                     y=patterns_per_query,
-                    mode='lines+markers',
-                    name='Patterns per Query',
-                    line=dict(color='green')
+                    mode="lines+markers",
+                    name="Patterns per Query",
+                    line=dict(color="green"),
                 ),
-                row=1, col=2
+                row=1,
+                col=2,
             )
 
             fig.add_trace(
                 go.Scatter(
                     x=timestamps,
                     y=cumulative_patterns,
-                    mode='lines+markers',
-                    name='Cumulative Patterns',
-                    line=dict(color='purple')
+                    mode="lines+markers",
+                    name="Cumulative Patterns",
+                    line=dict(color="purple"),
                 ),
-                row=2, col=1
+                row=2,
+                col=1,
             )
 
             # Get parameter adaptation trend
             adaptations: List[Dict[str, Any]] = learning_metrics_collector.parameter_adaptations
             if adaptations:
-                param_timestamps: List = [datetime.datetime.fromtimestamp(a["timestamp"]) for a in adaptations]
+                param_timestamps: List = [
+                    datetime.datetime.fromtimestamp(a["timestamp"]) for a in adaptations
+                ]
                 param_confidences: List[float] = [a["confidence"] for a in adaptations]
 
                 fig.add_trace(
                     go.Scatter(
                         x=param_timestamps,
                         y=param_confidences,
-                        mode='markers',
-                        name='Adaptation Confidence',
+                        mode="markers",
+                        name="Adaptation Confidence",
                         marker=dict(
                             size=10,
                             color=param_confidences,
-                            colorscale='Viridis',
+                            colorscale="Viridis",
                             showscale=True,
-                            colorbar=dict(title="Confidence")
-                        )
+                            colorbar=dict(title="Confidence"),
+                        ),
                     ),
-                    row=2, col=2
+                    row=2,
+                    col=2,
                 )
 
             # Update layout
-            fig.update_layout(
-                title="Learning Performance Metrics",
-                height=800,
-                showlegend=True
-            )
+            fig.update_layout(title="Learning Performance Metrics", height=800, showlegend=True)
 
             # Convert to HTML
-            return fig.to_html(include_plotlyjs='cdn', full_html=False)
+            return fig.to_html(include_plotlyjs="cdn", full_html=False)
 
         except Exception as e:
             logger.error(f"Error generating interactive learning performance: {str(e)}")
@@ -561,36 +593,34 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
         learning_metrics_collector: Any,
         visualization_files: Dict[str, str],
         visualization_html: Dict[str, Optional[str]],
-        interactive: bool
+        interactive: bool,
     ) -> None:
         """Add learning metrics to an existing dashboard file."""
         try:
             # Read the dashboard file
-            with open(dashboard_file, 'r', encoding='utf-8') as f:
+            with open(dashboard_file, "r", encoding="utf-8") as f:
                 dashboard_html: str = f.read()
 
             # Check if the dashboard already has a body closing tag
-            body_closing_tag: str = '</body>'
+            body_closing_tag: str = "</body>"
             if body_closing_tag in dashboard_html:
                 # Create the learning metrics HTML to insert
                 learning_metrics_html: str = self._create_learning_metrics_html(
-                    learning_metrics_collector,
-                    visualization_files,
-                    visualization_html,
-                    interactive
+                    learning_metrics_collector, visualization_files, visualization_html, interactive
                 )
 
                 # Insert before the body closing tag
                 dashboard_html = dashboard_html.replace(
-                    body_closing_tag,
-                    learning_metrics_html + '\n' + body_closing_tag
+                    body_closing_tag, learning_metrics_html + "\n" + body_closing_tag
                 )
 
                 # Write back to the file
-                with open(dashboard_file, 'w', encoding='utf-8') as f:
+                with open(dashboard_file, "w", encoding="utf-8") as f:
                     f.write(dashboard_html)
             else:
-                logger.warning("Could not find </body> tag in dashboard HTML. Learning metrics not added.")
+                logger.warning(
+                    "Could not find </body> tag in dashboard HTML. Learning metrics not added."
+                )
         except Exception as e:
             logger.error(f"Error adding learning metrics to dashboard: {str(e)}")
 
@@ -599,14 +629,14 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
         learning_metrics_collector: Any,
         visualization_files: Dict[str, str],
         visualization_html: Dict[str, Optional[str]],
-        interactive: bool
+        interactive: bool,
     ) -> str:
         """Create HTML for learning metrics section."""
         # Get learning metrics summary
         metrics: Any = learning_metrics_collector.get_learning_metrics()
 
         # Create HTML
-        html: str = '''
+        html: str = """
         <div class="dashboard-section">
             <h2>Optimizer Learning Metrics</h2>
 
@@ -636,17 +666,17 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
                     <div class="metric-value">{average_cycle_time:.2f}s</div>
                 </div>
             </div>
-        '''.format(
+        """.format(
             total_learning_cycles=metrics.total_learning_cycles,
             total_analyzed_queries=metrics.total_analyzed_queries,
             total_patterns_identified=metrics.total_patterns_identified,
             total_parameters_adjusted=metrics.total_parameters_adjusted,
-            average_cycle_time=metrics.average_cycle_time
+            average_cycle_time=metrics.average_cycle_time,
         )
 
         # Add visualizations
         if interactive and visualization_html:
-            html += '''
+            html += """
             <div class="visualization-container">
                 <div class="visualization-tabs">
                     <div class="tab-buttons">
@@ -673,15 +703,21 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
                     </div>
                 </div>
             </div>
-            '''.format(
-                learning_cycles_html=visualization_html.get('learning_cycles', 'No data available'),
-                parameter_adaptations_html=visualization_html.get('parameter_adaptations', 'No data available'),
-                strategy_effectiveness_html=visualization_html.get('strategy_effectiveness', 'No data available'),
-                learning_performance_html=visualization_html.get('learning_performance', 'No data available')
+            """.format(
+                learning_cycles_html=visualization_html.get("learning_cycles", "No data available"),
+                parameter_adaptations_html=visualization_html.get(
+                    "parameter_adaptations", "No data available"
+                ),
+                strategy_effectiveness_html=visualization_html.get(
+                    "strategy_effectiveness", "No data available"
+                ),
+                learning_performance_html=visualization_html.get(
+                    "learning_performance", "No data available"
+                ),
             )
         elif visualization_files:
             # Static images
-            html += '''
+            html += """
             <div class="visualization-section">
                 <h3>Learning Cycles</h3>
                 <img src="{learning_cycles}" alt="Learning Cycles" class="visualization-image">
@@ -695,18 +731,24 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
                 <h3>Learning Performance</h3>
                 <img src="{learning_performance}" alt="Learning Performance" class="visualization-image">
             </div>
-            '''.format(
-                learning_cycles=os.path.basename(visualization_files.get('learning_cycles', '')),
-                parameter_adaptations=os.path.basename(visualization_files.get('parameter_adaptations', '')),
-                strategy_effectiveness=os.path.basename(visualization_files.get('strategy_effectiveness', '')),
-                learning_performance=os.path.basename(visualization_files.get('learning_performance', ''))
+            """.format(
+                learning_cycles=os.path.basename(visualization_files.get("learning_cycles", "")),
+                parameter_adaptations=os.path.basename(
+                    visualization_files.get("parameter_adaptations", "")
+                ),
+                strategy_effectiveness=os.path.basename(
+                    visualization_files.get("strategy_effectiveness", "")
+                ),
+                learning_performance=os.path.basename(
+                    visualization_files.get("learning_performance", "")
+                ),
             )
         else:
-            html += '<p>No learning metrics visualizations available.</p>'
+            html += "<p>No learning metrics visualizations available.</p>"
 
         # Add tab script if using interactive visualizations
         if interactive and visualization_html:
-            html += '''
+            html += """
             <script>
             function openTab(evt, tabName) {
                 // Declare variables
@@ -729,13 +771,13 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
                 evt.currentTarget.classList.add("active");
             }
             </script>
-            '''
+            """
 
         # Close the section
-        html += '</div>'
+        html += "</div>"
 
         # Add some CSS to ensure proper styling
-        html += '''
+        html += """
         <style>
             .dashboard-section {
                 background-color: #ffffff;
@@ -831,21 +873,41 @@ def enhance_dashboard_with_learning_metrics(dashboard_class: Type) -> Type:
                 box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             }
         </style>
-        '''
+        """
 
         return html
 
     # Replace the original method with our enhanced version
     if original_generate_integrated_dashboard is not None:
-        setattr(dashboard_class, 'generate_integrated_dashboard', enhanced_generate_integrated_dashboard)
+        setattr(
+            dashboard_class, "generate_integrated_dashboard", enhanced_generate_integrated_dashboard
+        )
 
     # Add the helper methods
-    setattr(dashboard_class, '_generate_interactive_learning_cycles', _generate_interactive_learning_cycles)
-    setattr(dashboard_class, '_generate_interactive_parameter_adaptations', _generate_interactive_parameter_adaptations)
-    setattr(dashboard_class, '_generate_interactive_strategy_effectiveness', _generate_interactive_strategy_effectiveness)
-    setattr(dashboard_class, '_generate_interactive_learning_performance', _generate_interactive_learning_performance)
-    setattr(dashboard_class, '_add_learning_metrics_to_dashboard', _add_learning_metrics_to_dashboard)
-    setattr(dashboard_class, '_create_learning_metrics_html', _create_learning_metrics_html)
+    setattr(
+        dashboard_class,
+        "_generate_interactive_learning_cycles",
+        _generate_interactive_learning_cycles,
+    )
+    setattr(
+        dashboard_class,
+        "_generate_interactive_parameter_adaptations",
+        _generate_interactive_parameter_adaptations,
+    )
+    setattr(
+        dashboard_class,
+        "_generate_interactive_strategy_effectiveness",
+        _generate_interactive_strategy_effectiveness,
+    )
+    setattr(
+        dashboard_class,
+        "_generate_interactive_learning_performance",
+        _generate_interactive_learning_performance,
+    )
+    setattr(
+        dashboard_class, "_add_learning_metrics_to_dashboard", _add_learning_metrics_to_dashboard
+    )
+    setattr(dashboard_class, "_create_learning_metrics_html", _create_learning_metrics_html)
 
     # Return the enhanced class
     return dashboard_class

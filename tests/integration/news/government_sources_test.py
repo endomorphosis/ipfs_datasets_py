@@ -8,6 +8,7 @@ Comprehensive test of the News Analysis Dashboard with government websites:
 - congress.gov
 - federalregister.gov
 """
+
 import sys
 import time
 import anyio
@@ -24,17 +25,18 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 class MockGovernmentContent:
     """Generate realistic mock government content for testing."""
-    
+
     # Government topics for realistic content
     GOVERNMENT_TOPICS = [
         "Executive order on artificial intelligence",
         "Congressional hearing on cybersecurity",
-        "Federal register rule on environmental protection", 
+        "Federal register rule on environmental protection",
         "White House briefing on economic policy",
         "Senate committee markup on healthcare legislation",
         "Department of Defense budget appropriations",
@@ -43,9 +45,9 @@ class MockGovernmentContent:
         "Supreme Court decision on constitutional rights",
         "Presidential proclamation on trade policy",
         "Congressional resolution on foreign affairs",
-        "Federal agency guidance on financial regulations"
+        "Federal agency guidance on financial regulations",
     ]
-    
+
     ENTITIES = [
         {"name": "White House", "type": "organization", "confidence": 0.98},
         {"name": "Congress", "type": "organization", "confidence": 0.95},
@@ -66,72 +68,72 @@ class MockGovernmentContent:
         {"name": "Capitol Hill", "type": "location", "confidence": 0.92},
         {"name": "Executive Branch", "type": "government_entity", "confidence": 0.90},
         {"name": "Legislative Branch", "type": "government_entity", "confidence": 0.89},
-        {"name": "Judicial Branch", "type": "government_entity", "confidence": 0.88}
+        {"name": "Judicial Branch", "type": "government_entity", "confidence": 0.88},
     ]
-    
+
     SOURCES = [
         {
             "name": "White House",
             "url": "whitehouse.gov",
-            "description": "Official statements and press releases from the Executive Branch"
+            "description": "Official statements and press releases from the Executive Branch",
         },
         {
             "name": "Congress",
-            "url": "congress.gov", 
-            "description": "Legislative information, bills, and congressional activities"
+            "url": "congress.gov",
+            "description": "Legislative information, bills, and congressional activities",
         },
         {
             "name": "Federal Register",
             "url": "federalregister.gov",
-            "description": "Daily journal of federal government regulations and notices"
-        }
+            "description": "Daily journal of federal government regulations and notices",
+        },
     ]
-    
+
     @classmethod
     def generate_article(cls, source_name: str, article_id: int) -> Dict[str, Any]:
         """Generate a realistic government article."""
         topic = random.choice(cls.GOVERNMENT_TOPICS)
         source = next((s for s in cls.SOURCES if s["name"] == source_name), cls.SOURCES[0])
-        
+
         # Generate realistic government content
         if source_name == "White House":
             content_prefix = "The White House today announced"
             content_templates = [
                 f"{content_prefix} a new executive order addressing {topic.lower()}.",
                 f"President Biden held a press briefing discussing {topic.lower()}.",
-                f"White House officials released a statement on {topic.lower()}."
+                f"White House officials released a statement on {topic.lower()}.",
             ]
         elif source_name == "Congress":
             content_prefix = "Congress today considered"
             content_templates = [
                 f"{content_prefix} legislation related to {topic.lower()}.",
                 f"Congressional committees held hearings on {topic.lower()}.",
-                f"Senate and House leadership discussed {topic.lower()}."
+                f"Senate and House leadership discussed {topic.lower()}.",
             ]
         else:  # Federal Register
             content_prefix = "The Federal Register published"
             content_templates = [
                 f"{content_prefix} new regulations concerning {topic.lower()}.",
                 f"Federal agencies issued guidance on {topic.lower()}.",
-                f"Public comment periods opened for rules on {topic.lower()}."
+                f"Public comment periods opened for rules on {topic.lower()}.",
             ]
-        
+
         content = random.choice(content_templates)
-        
+
         # Add more realistic government content
         additional_content = [
             "The decision follows extensive consultation with stakeholders and federal agencies.",
             "This action is part of broader efforts to modernize government operations.",
             "Officials emphasized the importance of transparency and public accountability.",
             "The implementation timeline includes public comment periods and stakeholder engagement.",
-            "Coordination with state and local governments will be essential for success."
+            "Coordination with state and local governments will be essential for success.",
         ]
-        
+
         content += " " + " ".join(random.sample(additional_content, 2))
-        
+
         # Select relevant entities for this article
         relevant_entities = random.sample(cls.ENTITIES, random.randint(8, 15))
-        
+
         return {
             "id": f"{source_name.lower().replace(' ', '_')}_{article_id}",
             "title": topic,
@@ -146,10 +148,10 @@ class MockGovernmentContent:
                 "credibility_score": 0.95,
                 "government_branch": cls._get_government_branch(source_name),
                 "document_type": cls._get_document_type(source_name),
-                "classification": "public"
-            }
+                "classification": "public",
+            },
         }
-    
+
     @classmethod
     def _get_government_branch(cls, source_name: str) -> str:
         """Get the government branch for a source."""
@@ -159,8 +161,8 @@ class MockGovernmentContent:
             return "legislative"
         else:
             return "regulatory"
-    
-    @classmethod 
+
+    @classmethod
     def _get_document_type(cls, source_name: str) -> str:
         """Get the document type for a source."""
         if source_name == "White House":
@@ -175,29 +177,29 @@ async def test_government_sources_integration():
     """Test the News Analysis Dashboard with government sources."""
     print("🏛️  Government Sources Integration Test")
     print("=" * 70)
-    
+
     try:
         from ipfs_datasets_py.dashboards.news_analysis_dashboard import (
-            NewsAnalysisDashboard, 
+            NewsAnalysisDashboard,
             MCPDashboardConfig,
             UserType,
-            NewsArticle
+            NewsArticle,
         )
     except ImportError as e:
         print(f"❌ Failed to import dashboard: {e}")
         return None
-        
+
     # Initialize dashboard
     config = MCPDashboardConfig(host="localhost", port=8080)
     dashboard = NewsAnalysisDashboard()
-    
+
     try:
         dashboard.configure(config)
         print("✅ Dashboard configured successfully")
     except Exception as e:
         print(f"⚠️  Dashboard configuration issue: {e}")
         print("Proceeding with basic functionality...")
-    
+
     test_results = {
         "sources": ["White House", "Congress", "Federal Register"],
         "articles_processed": 0,
@@ -206,23 +208,23 @@ async def test_government_sources_integration():
         "queries_executed": [],
         "knowledge_graph": {},
         "professional_analysis": {},
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
-    
+
     # Generate mock government content
     print("\n📄 Generating Government Content")
     print("-" * 40)
-    
+
     start_time = time.time()
     articles = []
-    
+
     for source in MockGovernmentContent.SOURCES:
         source_name = source["name"]
         print(f"Processing {source_name}...")
-        
+
         for i in range(25):  # 25 articles per source
             article_data = MockGovernmentContent.generate_article(source_name, i + 1)
-            
+
             # Create NewsArticle object
             try:
                 article = NewsArticle(
@@ -234,94 +236,96 @@ async def test_government_sources_integration():
                     published_date=datetime.fromisoformat(article_data["published_date"]),
                     author=article_data["author"],
                     entities=article_data["entities"],
-                    metadata=article_data["metadata"]
+                    metadata=article_data["metadata"],
                 )
                 articles.append(article)
-                
+
                 # Simulate processing
-                if hasattr(dashboard, 'process_article'):
+                if hasattr(dashboard, "process_article"):
                     await dashboard.process_article(article)
-                
+
                 test_results["articles_processed"] += 1
-                
+
             except Exception as e:
-                print(f"⚠️  Error processing article {i+1} from {source_name}: {e}")
-        
+                print(f"⚠️  Error processing article {i + 1} from {source_name}: {e}")
+
         print(f"✅ Processed 25 articles from {source_name}")
-    
+
     processing_time = time.time() - start_time
     test_results["processing_time"] = processing_time
-    
+
     # Extract all entities
     all_entities = []
     for article in articles:
         all_entities.extend(article.entities)
-    
+
     unique_entities = {}
     for entity in all_entities:
         entity_name = entity["name"]
         if entity_name not in unique_entities:
             unique_entities[entity_name] = entity
-        
+
     test_results["entities_extracted"] = len(unique_entities)
-    
+
     print(f"\n📊 Processing Summary")
     print(f"Articles Processed: {test_results['articles_processed']}")
     print(f"Entities Extracted: {test_results['entities_extracted']}")
     print(f"Processing Time: {processing_time:.2f} seconds")
-    print(f"Processing Rate: {test_results['articles_processed'] / processing_time:.1f} articles/sec")
-    
+    print(
+        f"Processing Rate: {test_results['articles_processed'] / processing_time:.1f} articles/sec"
+    )
+
     # Test GraphRAG queries
     print(f"\n🔍 Testing GraphRAG Queries")
     print("-" * 40)
-    
+
     query_types = [
         ("semantic", "government policy decisions", UserType.DATA_SCIENTIST),
         ("entity", "White House", UserType.HISTORIAN),
-        ("temporal", "last_week", UserType.DATA_SCIENTIST), 
+        ("temporal", "last_week", UserType.DATA_SCIENTIST),
         ("relationship", "President Biden AND Congress", UserType.LAWYER),
-        ("cross_document", "regulatory changes", UserType.HISTORIAN)
+        ("cross_document", "regulatory changes", UserType.HISTORIAN),
     ]
-    
+
     for query_type, query_text, user_type in query_types:
         query_start = time.time()
-        
+
         try:
             # Simulate GraphRAG query execution
             results_count = random.randint(8, 20)  # Simulate realistic results
             query_time = random.uniform(0.5, 1.2)  # Simulate processing time
-            
+
             query_result = {
                 "type": query_type,
                 "query": query_text,
                 "user_type": user_type.value,
                 "results_count": results_count,
                 "processing_time": query_time,
-                "status": "success"
+                "status": "success",
             }
-            
+
             test_results["queries_executed"].append(query_result)
             print(f"✅ {query_type.title()} query: {results_count} results in {query_time:.2f}s")
-            
+
         except Exception as e:
             print(f"⚠️  Error executing {query_type} query: {e}")
             query_result = {
                 "type": query_type,
-                "query": query_text, 
+                "query": query_text,
                 "user_type": user_type.value,
                 "error": str(e),
-                "status": "error"
+                "status": "error",
             }
             test_results["queries_executed"].append(query_result)
-    
+
     # Generate knowledge graph analysis
     print(f"\n🕸️  Knowledge Graph Analysis")
     print("-" * 40)
-    
+
     nodes = len(unique_entities)
     edges = random.randint(int(nodes * 1.5), int(nodes * 2.5))  # Realistic edge count
     communities = random.randint(6, 12)  # Government topic communities
-    
+
     test_results["knowledge_graph"] = {
         "nodes": nodes,
         "edges": edges,
@@ -329,61 +333,71 @@ async def test_government_sources_integration():
         "graph_density": round(edges / (nodes * (nodes - 1)) * 2, 3),
         "modularity_score": round(random.uniform(0.4, 0.7), 3),
         "node_types": {
-            "organizations": len([e for e in unique_entities.values() if e["type"] == "organization"]),
-            "people": len([e for e in unique_entities.values() if e["type"] == "person"]), 
+            "organizations": len(
+                [e for e in unique_entities.values() if e["type"] == "organization"]
+            ),
+            "people": len([e for e in unique_entities.values() if e["type"] == "person"]),
             "locations": len([e for e in unique_entities.values() if e["type"] == "location"]),
-            "government_entities": len([e for e in unique_entities.values() if e["type"] == "government_entity"])
-        }
+            "government_entities": len(
+                [e for e in unique_entities.values() if e["type"] == "government_entity"]
+            ),
+        },
     }
-    
+
     print(f"Graph Nodes: {nodes}")
     print(f"Graph Edges: {edges}")
     print(f"Communities Detected: {communities}")
     print(f"Graph Density: {test_results['knowledge_graph']['graph_density']}")
-    
+
     # Professional analysis for each user type
     print(f"\n👥 Professional Analysis Results")
     print("-" * 40)
-    
+
     # Data Scientists
     test_results["professional_analysis"]["data_scientists"] = {
         "articles_analyzed": test_results["articles_processed"],
         "government_entity_classification": {
-            "executive": len([a for a in articles if a.metadata.get("government_branch") == "executive"]),
-            "legislative": len([a for a in articles if a.metadata.get("government_branch") == "legislative"]),
-            "regulatory": len([a for a in articles if a.metadata.get("government_branch") == "regulatory"])
+            "executive": len(
+                [a for a in articles if a.metadata.get("government_branch") == "executive"]
+            ),
+            "legislative": len(
+                [a for a in articles if a.metadata.get("government_branch") == "legislative"]
+            ),
+            "regulatory": len(
+                [a for a in articles if a.metadata.get("government_branch") == "regulatory"]
+            ),
         },
         "topic_clusters": communities,
         "model_accuracy": round(random.uniform(0.82, 0.95), 2),
-        "dataset_exports": ["CSV", "JSON", "Parquet"]
+        "dataset_exports": ["CSV", "JSON", "Parquet"],
     }
-    
+
     # Historians
     temporal_coverage = 7  # Days covered in mock data
     significant_events = random.randint(8, 15)
     cross_references = random.randint(30, 60)
-    
+
     test_results["professional_analysis"]["historians"] = {
         "temporal_coverage": f"{temporal_coverage} days of government activity",
         "sources_verified": len(MockGovernmentContent.SOURCES),
         "significant_events": significant_events,
         "cross_references": cross_references,
         "citations_generated": test_results["articles_processed"],
-        "archive_quality": "government_standard"
+        "archive_quality": "government_standard",
     }
-    
-    # Legal Professionals  
+
+    # Legal Professionals
     admissible_docs = int(test_results["articles_processed"] * random.uniform(0.88, 0.98))
-    
+
     test_results["professional_analysis"]["legal_professionals"] = {
         "document_portfolio": test_results["articles_processed"],
         "sources_verified": len(MockGovernmentContent.SOURCES),
         "chain_of_custody": "maintained",
         "evidence_integrity": "verified",
         "admissible_documents": admissible_docs,
-        "admissibility_rate": f"{admissible_docs / test_results['articles_processed'] * 100:.1f}%"
+        "admissibility_rate": f"{admissible_docs / test_results['articles_processed'] * 100:.1f}%",
     }
-    
+
     for profession, analysis in test_results["professional_analysis"].items():
         print(f"\n{profession.replace('_', ' ').title()}:")
         for key, value in analysis.items():
@@ -393,7 +407,7 @@ async def test_government_sources_integration():
                     print(f"    {sub_key}: {sub_value}")
             else:
                 print(f"  {key.replace('_', ' ').title()}: {value}")
-    
+
     return test_results
 
 
@@ -401,11 +415,13 @@ def create_government_test_report(results: Dict[str, Any]):
     """Create a comprehensive test report."""
     if not results:
         return
-        
+
     total_queries = len(results["queries_executed"])
     successful_queries = len([q for q in results["queries_executed"] if q["status"] == "success"])
-    total_results = sum(q.get("results_count", 0) for q in results["queries_executed"] if q["status"] == "success")
-    
+    total_results = sum(
+        q.get("results_count", 0) for q in results["queries_executed"] if q["status"] == "success"
+    )
+
     report = f"""# Government Sources Integration Test Report
 
 ## Executive Summary
@@ -433,7 +449,7 @@ The News Analysis Dashboard has been thoroughly tested with mock data representi
 ### 🔍 GraphRAG Query Analysis
 | Query Type | User Type | Results | Status |
 |------------|-----------|---------|---------|"""
-    
+
     for query in results["queries_executed"]:
         if query["status"] == "success":
             report += f"""
@@ -441,7 +457,7 @@ The News Analysis Dashboard has been thoroughly tested with mock data representi
         else:
             report += f"""
 | {query["type"].title()} | {query["user_type"].title()} | Error | ❌ Failed |"""
-    
+
     report += f"""
 
 **Total**: {total_results} results across {successful_queries} successful queries
@@ -530,7 +546,7 @@ The dashboard is **ready for government deployment** with live government source
 - `government_sources_test.py` - Government sources integration script
 - `GOVERNMENT_SOURCES_TEST_REPORT.md` - This comprehensive report
 
-**Test Date**: {datetime.now().strftime('%B %d, %Y')}  
+**Test Date**: {datetime.now().strftime("%B %d, %Y")}  
 **Test Duration**: {results["processing_time"]:.2f} seconds end-to-end execution  
 **Status**: ✅ All government source tests passed successfully"""
 
@@ -542,52 +558,56 @@ async def main():
     print("🏛️  Starting Government Sources Integration Test")
     print("🇺🇸 Testing: White House, Congress, Federal Register")
     print("=" * 70)
-    
+
     # Run the integration test
     results = await test_government_sources_integration()
-    
+
     if results:
         print(f"\n💾 Saving Test Results")
         print("-" * 40)
-        
+
         # Save detailed results
         results_file = Path("government_demo_results.json")
-        with open(results_file, 'w') as f:
+        with open(results_file, "w") as f:
             json.dump(results, f, indent=2, default=str)
         print(f"✅ Detailed results saved to: {results_file}")
-        
+
         # Generate and save report
         report = create_government_test_report(results)
         if report:
             report_file = Path("GOVERNMENT_SOURCES_TEST_REPORT.md")
-            with open(report_file, 'w') as f:
+            with open(report_file, "w") as f:
                 f.write(report)
             print(f"✅ Comprehensive report saved to: {report_file}")
-        
+
         # Create visualization data
         visualization_data = {
             "sources": results["sources"],
             "metrics": {
                 "articles": results["articles_processed"],
                 "entities": results["entities_extracted"],
-                "processing_rate": f"{results['articles_processed'] / results['processing_time']:.1f} docs/sec"
+                "processing_rate": f"{results['articles_processed'] / results['processing_time']:.1f} docs/sec",
             },
             "knowledge_graph": results["knowledge_graph"],
             "queries": len(results["queries_executed"]),
-            "professional_analysis": results["professional_analysis"]
+            "professional_analysis": results["professional_analysis"],
         }
-        
+
         viz_file = Path("government_test_visualization.json")
-        with open(viz_file, 'w') as f:
+        with open(viz_file, "w") as f:
             json.dump(visualization_data, f, indent=2, default=str)
         print(f"✅ Visualization data saved to: {viz_file}")
-        
+
         print(f"\n🎉 Government Sources Integration Test Completed Successfully!")
-        print(f"📊 {results['articles_processed']} documents processed from {len(results['sources'])} government sources")
+        print(
+            f"📊 {results['articles_processed']} documents processed from {len(results['sources'])} government sources"
+        )
         print(f"🔍 {len(results['queries_executed'])} GraphRAG queries executed")
-        print(f"🕸️  Knowledge graph with {results['knowledge_graph']['nodes']} nodes and {results['knowledge_graph']['edges']} edges")
+        print(
+            f"🕸️  Knowledge graph with {results['knowledge_graph']['nodes']} nodes and {results['knowledge_graph']['edges']} edges"
+        )
         print(f"👥 Professional workflows validated for all user types")
-        
+
         return 0
     else:
         print("❌ Government sources integration test failed")
@@ -604,5 +624,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Test failed with exception: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

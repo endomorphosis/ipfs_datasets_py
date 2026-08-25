@@ -94,9 +94,7 @@ def _attach_promoted_snapshot(
     candidate["latest_rollout_baseline_snapshot"] = {
         "validation": baseline["latest_autoencoder_validation"],
         "learned_ir_view_validation": baseline["latest_learned_ir_validation"],
-        "legal_ir_view_family_validation": baseline[
-            "latest_legal_ir_view_family_validation"
-        ],
+        "legal_ir_view_family_validation": baseline["latest_legal_ir_view_family_validation"],
     }
     validation = candidate["latest_autoencoder_validation"]
     learned = candidate["latest_learned_ir_validation"]
@@ -111,11 +109,8 @@ def _attach_promoted_snapshot(
             "cross_entropy_loss": autoencoder["cross_entropy_loss"],
             "embedding_cosine_similarity": autoencoder["cosine_similarity"],
             "legal_ir_losses": {
-                "legal_ir_view_cross_entropy_loss": learned_ir[
-                    "view_cross_entropy_loss"
-                ],
-                "legal_ir_view_family_cosine_gap_loss": 1.0
-                - learned_ir["view_cosine_similarity"],
+                "legal_ir_view_cross_entropy_loss": learned_ir["view_cross_entropy_loss"],
+                "legal_ir_view_family_cosine_gap_loss": 1.0 - learned_ir["view_cosine_similarity"],
             },
         }
 
@@ -143,17 +138,12 @@ def _attach_promoted_snapshot(
                 "cross_entropy_loss": validation["cross_entropy_loss"],
                 "cosine_similarity": validation["cosine_similarity"],
                 "legal_ir_losses": {
-                    "legal_ir_view_cross_entropy_loss": learned[
-                        "view_cross_entropy_loss"
-                    ],
-                    "legal_ir_view_family_cosine_gap_loss": 1.0
-                    - learned["view_cosine_similarity"],
+                    "legal_ir_view_cross_entropy_loss": learned["view_cross_entropy_loss"],
+                    "legal_ir_view_family_cosine_gap_loss": 1.0 - learned["view_cosine_similarity"],
                 },
             },
             "promotion": {
-                "view_family_validation": candidate[
-                    "latest_legal_ir_view_family_validation"
-                ]
+                "view_family_validation": candidate["latest_legal_ir_view_family_validation"]
             },
         },
     }
@@ -212,10 +202,7 @@ def test_scheduler_is_bound_to_measured_baseline_and_exact_budget(tmp_path: Path
 
 def test_seed_confidence_is_conservative_and_baseline_bound() -> None:
     baseline = {name: 0.5 for name in METRIC_NAMES}
-    seeds = [
-        {name: 0.5 + (index * 0.01) for name in METRIC_NAMES}
-        for index in range(3)
-    ]
+    seeds = [{name: 0.5 + (index * 0.01) for name in METRIC_NAMES} for index in range(3)]
     aggregate, confidence = _aggregate_seed_metrics(seeds, baseline)
     assert set(aggregate) == set(METRIC_NAMES)
     assert confidence["ir_cosine_similarity"]["confidence_level"] == 0.95
@@ -272,18 +259,14 @@ def test_fidelity_profiles_are_nested_and_finish_on_full_task117_holdout() -> No
     lengths = (2312, 1078, 2218, 2189, 1271, 504, 1642, 516)
     summary = {
         "latest_compiler_ir_validation": {
-            "sample_metric_records": [
-                {"original_text_length": length} for length in lengths
-            ]
+            "sample_metric_records": [{"original_text_length": length} for length in lengths]
         }
     }
     profiles = build_fidelity_profiles(summary, indices)
     assert DEFAULT_RUNG_BUDGETS == (180, 360, 1350)
     assert profiles[0].validation_canary_indices == (60,)
     assert profiles[1].validation_canary_indices == (60, 80)
-    assert set(profiles[0].validation_canary_indices) < set(
-        profiles[1].validation_canary_indices
-    )
+    assert set(profiles[0].validation_canary_indices) < set(profiles[1].validation_canary_indices)
     assert profiles[2].validation_canary_indices == indices
     assert profiles[2].max_sample_text_chars == 2500
 
@@ -320,12 +303,8 @@ def test_early_rung_estimate_uses_paired_delta_anchored_to_full_baseline(
         expected_validation_canary_indices=(11,),
         fidelity_profile=profile,
     )
-    before_metrics, _before_families = extract_rollout_baseline_metrics(
-        candidate_summary
-    )
-    candidate_metrics, _candidate_families = extract_candidate_metrics(
-        candidate_summary
-    )
+    before_metrics, _before_families = extract_rollout_baseline_metrics(candidate_summary)
+    candidate_metrics, _candidate_families = extract_candidate_metrics(candidate_summary)
     estimated_metrics, estimated_families = _paired_delta_estimate(
         runs=[run],
         baseline_metrics=baseline_metrics,
@@ -336,9 +315,7 @@ def test_early_rung_estimate_uses_paired_delta_anchored_to_full_baseline(
     assert candidate_metrics["ir_cosine_similarity"] == pytest.approx(0.72)
     assert estimated_metrics["ir_cross_entropy_loss"] == pytest.approx(0.78)
     assert estimated_metrics["ir_cosine_similarity"] == pytest.approx(0.72)
-    assert estimated_families["deontic"]["ir_cross_entropy_loss"] == pytest.approx(
-        0.78
-    )
+    assert estimated_families["deontic"]["ir_cross_entropy_loss"] == pytest.approx(0.78)
 
 
 def test_final_rung_keeps_absolute_ir_but_pairs_seed_sensitive_autoencoder_metrics(
@@ -426,9 +403,7 @@ def test_final_rung_keeps_absolute_ir_but_pairs_seed_sensitive_autoencoder_metri
     assert metrics["autoencoder_cross_entropy_loss"] == pytest.approx(0.88)
     assert metrics["autoencoder_cosine_similarity"] == pytest.approx(0.77)
     assert families["deontic"]["ir_cross_entropy_loss"] == pytest.approx(0.77)
-    assert families["deontic"]["autoencoder_cross_entropy_loss"] == pytest.approx(
-        0.88
-    )
+    assert families["deontic"]["autoencoder_cross_entropy_loss"] == pytest.approx(0.88)
 
 
 def test_dry_run_is_non_promotable_and_creates_no_output(

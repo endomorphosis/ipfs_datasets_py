@@ -99,7 +99,9 @@ def enrich_docket_documents_with_routers(
                 flush=True,
             )
 
-    heartbeat_thread = threading.Thread(target=_heartbeat, name="router-enrichment-heartbeat", daemon=True)
+    heartbeat_thread = threading.Thread(
+        target=_heartbeat, name="router-enrichment-heartbeat", daemon=True
+    )
     heartbeat_thread.start()
 
     analyses: Dict[str, RichDocumentAnalysis] = {}
@@ -195,7 +197,9 @@ def enrich_docket_documents_with_routers(
         "document_analyses": {key: value.to_dict() for key, value in analyses.items()},
         "knowledge_graph": {
             "entities": _dedupe_dict_items(aggregate_entities, key_fields=("id", "label", "type")),
-            "relationships": _dedupe_dict_items(aggregate_relationships, key_fields=("id", "source", "target", "type")),
+            "relationships": _dedupe_dict_items(
+                aggregate_relationships, key_fields=("id", "source", "target", "type")
+            ),
         },
         "temporal_fol": {
             "backend": "llm_router_temporal_deontic_first_order_logic",
@@ -228,8 +232,14 @@ def enrich_docket_documents_with_routers(
             "processed_document_count": processed_count,
             "skipped_document_count": skipped_count,
             "mock_provider_count": mock_count,
-            "entity_count": len(_dedupe_dict_items(aggregate_entities, key_fields=("id", "label", "type"))),
-            "relationship_count": len(_dedupe_dict_items(aggregate_relationships, key_fields=("id", "source", "target", "type"))),
+            "entity_count": len(
+                _dedupe_dict_items(aggregate_entities, key_fields=("id", "label", "type"))
+            ),
+            "relationship_count": len(
+                _dedupe_dict_items(
+                    aggregate_relationships, key_fields=("id", "source", "target", "type")
+                )
+            ),
             "temporal_formula_count": len(_dedupe_strings(aggregate_temporal_formulas)),
             "dcec_formula_count": len(_dedupe_strings(aggregate_dcec_formulas)),
             "frame_count": len(aggregate_frames),
@@ -255,10 +265,17 @@ def analyze_document_with_routers(
     model_name: str | None = None,
     return_diagnostics: bool = False,
 ) -> RichDocumentAnalysis | None | tuple[RichDocumentAnalysis | None, Dict[str, Any]]:
-    trace_enabled = str(os.getenv("IPFS_DATASETS_PY_ROUTER_TRACE", "")).strip().lower() in {"1", "true", "yes", "on"}
+    trace_enabled = str(os.getenv("IPFS_DATASETS_PY_ROUTER_TRACE", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
     trace_prefix = f"[router_trace] document_id={document_id}"
     stage_started = time.monotonic()
-    _LAST_ROUTER_PROGRESS.update({"stage": "llm_generate", "document_id": document_id, "detail": "llm_generate start"})
+    _LAST_ROUTER_PROGRESS.update(
+        {"stage": "llm_generate", "document_id": document_id, "detail": "llm_generate start"}
+    )
     prompt = _build_analysis_prompt(
         docket_id=docket_id,
         case_name=case_name,
@@ -287,8 +304,13 @@ def analyze_document_with_routers(
             disable_model_retry=True,
         )
         if trace_enabled:
-            print(f"{trace_prefix} stage=llm_generate done elapsed={time.monotonic() - llm_started:.2f}s", flush=True)
-        _LAST_ROUTER_PROGRESS.update({"stage": "parse_json", "document_id": document_id, "detail": "parse_json start"})
+            print(
+                f"{trace_prefix} stage=llm_generate done elapsed={time.monotonic() - llm_started:.2f}s",
+                flush=True,
+            )
+        _LAST_ROUTER_PROGRESS.update(
+            {"stage": "parse_json", "document_id": document_id, "detail": "parse_json start"}
+        )
         trace = llm_router.get_last_generation_trace()
         provider = str(trace.get("provider_name") or "").strip().lower()
         model_name = str(trace.get("model_name") or "").strip()
@@ -309,7 +331,10 @@ def analyze_document_with_routers(
         parse_started = time.monotonic()
         payload = _parse_json_response(response)
         if trace_enabled:
-            print(f"{trace_prefix} stage=parse_json done elapsed={time.monotonic() - parse_started:.2f}s", flush=True)
+            print(
+                f"{trace_prefix} stage=parse_json done elapsed={time.monotonic() - parse_started:.2f}s",
+                flush=True,
+            )
         if not _payload_has_semantic_content(payload):
             diagnostics["status"] = "no_semantic_payload"
             diagnostics["payload_keys"] = sorted(str(key) for key in dict(payload).keys())
@@ -318,19 +343,37 @@ def analyze_document_with_routers(
         if source_url.lower().endswith(".pdf"):
             if trace_enabled:
                 print(f"{trace_prefix} stage=multimodal_summary start", flush=True)
-            _LAST_ROUTER_PROGRESS.update({"stage": "multimodal_summary", "document_id": document_id, "detail": "multimodal_summary start"})
+            _LAST_ROUTER_PROGRESS.update(
+                {
+                    "stage": "multimodal_summary",
+                    "document_id": document_id,
+                    "detail": "multimodal_summary start",
+                }
+            )
             summary_started = time.monotonic()
-            multimodal_summary = _try_multimodal_summary(title=title, text=text, source_url=source_url)
+            multimodal_summary = _try_multimodal_summary(
+                title=title, text=text, source_url=source_url
+            )
             if trace_enabled:
-                print(f"{trace_prefix} stage=multimodal_summary done elapsed={time.monotonic() - summary_started:.2f}s", flush=True)
+                print(
+                    f"{trace_prefix} stage=multimodal_summary done elapsed={time.monotonic() - summary_started:.2f}s",
+                    flush=True,
+                )
             if multimodal_summary:
                 payload.setdefault("summary", multimodal_summary)
                 payload.setdefault("provenance", {})["multimodal_summary"] = True
         diagnostics["status"] = "ok"
         if trace_enabled:
-            print(f"{trace_prefix} stage=coerce done total_elapsed={time.monotonic() - stage_started:.2f}s", flush=True)
-        _LAST_ROUTER_PROGRESS.update({"stage": "coerce", "document_id": document_id, "detail": "coerce done"})
-        result = _coerce_analysis_payload(payload, provider=provider or "unknown", model_name=model_name)
+            print(
+                f"{trace_prefix} stage=coerce done total_elapsed={time.monotonic() - stage_started:.2f}s",
+                flush=True,
+            )
+        _LAST_ROUTER_PROGRESS.update(
+            {"stage": "coerce", "document_id": document_id, "detail": "coerce done"}
+        )
+        result = _coerce_analysis_payload(
+            payload, provider=provider or "unknown", model_name=model_name
+        )
         return (result, diagnostics) if return_diagnostics else result
     except Exception as exc:
         diagnostics["status"] = "exception"
@@ -391,19 +434,35 @@ def _try_multimodal_summary(*, title: str, text: str, source_url: str) -> str:
         return ""
 
 
-def _coerce_analysis_payload(payload: Mapping[str, Any], *, provider: str, model_name: str) -> RichDocumentAnalysis:
+def _coerce_analysis_payload(
+    payload: Mapping[str, Any], *, provider: str, model_name: str
+) -> RichDocumentAnalysis:
     classification = dict(payload.get("classification") or {})
     classification.setdefault("label", "other")
     classification["backend"] = "llm_router"
 
-    entities = [dict(item) for item in list(payload.get("entities") or []) if isinstance(item, Mapping)]
-    relationships = [dict(item) for item in list(payload.get("relationships") or []) if isinstance(item, Mapping)]
-    deontic_statements = [dict(item) for item in list(payload.get("deontic_statements") or []) if isinstance(item, Mapping)]
+    entities = [
+        dict(item) for item in list(payload.get("entities") or []) if isinstance(item, Mapping)
+    ]
+    relationships = [
+        dict(item) for item in list(payload.get("relationships") or []) if isinstance(item, Mapping)
+    ]
+    deontic_statements = [
+        dict(item)
+        for item in list(payload.get("deontic_statements") or [])
+        if isinstance(item, Mapping)
+    ]
     events = [dict(item) for item in list(payload.get("events") or []) if isinstance(item, Mapping)]
     frames = [dict(item) for item in list(payload.get("frames") or []) if isinstance(item, Mapping)]
-    propositions = [dict(item) for item in list(payload.get("propositions") or []) if isinstance(item, Mapping)]
-    temporal_formulas = [str(item) for item in list(payload.get("temporal_formulas") or []) if str(item).strip()]
-    dcec_formulas = [str(item) for item in list(payload.get("dcec_formulas") or []) if str(item).strip()]
+    propositions = [
+        dict(item) for item in list(payload.get("propositions") or []) if isinstance(item, Mapping)
+    ]
+    temporal_formulas = [
+        str(item) for item in list(payload.get("temporal_formulas") or []) if str(item).strip()
+    ]
+    dcec_formulas = [
+        str(item) for item in list(payload.get("dcec_formulas") or []) if str(item).strip()
+    ]
     summary = str(payload.get("summary") or "").strip()
     return RichDocumentAnalysis(
         classification=classification,
@@ -437,10 +496,20 @@ def _parse_json_response(response: str) -> Dict[str, Any]:
         except Exception:
             return {}
 
+
 def _payload_has_semantic_content(payload: Mapping[str, Any]) -> bool:
     if not payload:
         return False
-    for key in ("entities", "relationships", "deontic_statements", "events", "frames", "propositions", "temporal_formulas", "dcec_formulas"):
+    for key in (
+        "entities",
+        "relationships",
+        "deontic_statements",
+        "events",
+        "frames",
+        "propositions",
+        "temporal_formulas",
+        "dcec_formulas",
+    ):
         value = payload.get(key)
         if isinstance(value, list) and value:
             return True
@@ -454,8 +523,12 @@ def _payload_has_semantic_content(payload: Mapping[str, Any]) -> bool:
 
 
 def _build_proof_object(*, document_id: str, proposition: Mapping[str, Any]) -> ProofObject:
-    statement = str(proposition.get("statement") or "").strip() or f"Derived proposition for {document_id}"
-    assumptions = [str(item) for item in list(proposition.get("assumptions") or []) if str(item).strip()]
+    statement = (
+        str(proposition.get("statement") or "").strip() or f"Derived proposition for {document_id}"
+    )
+    assumptions = [
+        str(item) for item in list(proposition.get("assumptions") or []) if str(item).strip()
+    ]
     step = ProofStep(
         step_id=f"{document_id}:step:1",
         rule_id="router_extracted_proposition",
@@ -474,7 +547,10 @@ def _build_proof_object(*, document_id: str, proposition: Mapping[str, Any]) -> 
         status="proved",
         proof_hash=_stable_id("hash", statement, *assumptions),
         certificates=certificates,
-        certificate_trace_map={certificate.certificate_id: [IRReference(kind="derived", id=document_id)] for certificate in certificates},
+        certificate_trace_map={
+            certificate.certificate_id: [IRReference(kind="derived", id=document_id)]
+            for certificate in certificates
+        },
     )
 
 
@@ -513,7 +589,11 @@ def _proof_to_dict(proof: ProofObject) -> Dict[str, Any]:
                 "conclusion": step.conclusion,
                 "ir_refs": [{"kind": ref.kind, "id": ref.id} for ref in list(step.ir_refs or [])],
                 "provenance": [
-                    {"source_path": prov.source_path, "source_id": prov.source_id, "source_span": prov.source_span}
+                    {
+                        "source_path": prov.source_path,
+                        "source_id": prov.source_id,
+                        "source_span": prov.source_span,
+                    }
                     for prov in list(step.provenance or [])
                 ],
                 "timestamp": step.timestamp,
@@ -539,7 +619,9 @@ def _proof_to_dict(proof: ProofObject) -> Dict[str, Any]:
 def _stable_id(prefix: str, *parts: str) -> str:
     import hashlib
 
-    digest = hashlib.sha256("||".join(str(part or "") for part in parts).encode("utf-8")).hexdigest()
+    digest = hashlib.sha256(
+        "||".join(str(part or "") for part in parts).encode("utf-8")
+    ).hexdigest()
     return f"{prefix}_{digest}"
 
 
@@ -555,7 +637,9 @@ def _dedupe_strings(values: Iterable[str]) -> List[str]:
     return output
 
 
-def _dedupe_dict_items(items: Iterable[Mapping[str, Any]], *, key_fields: Sequence[str]) -> List[Dict[str, Any]]:
+def _dedupe_dict_items(
+    items: Iterable[Mapping[str, Any]], *, key_fields: Sequence[str]
+) -> List[Dict[str, Any]]:
     seen: set[tuple[str, ...]] = set()
     output: List[Dict[str, Any]] = []
     for item in items:
@@ -570,7 +654,11 @@ def _dedupe_dict_items(items: Iterable[Mapping[str, Any]], *, key_fields: Sequen
     return output
 
 
-__all__ = ["RichDocumentAnalysis", "analyze_document_with_routers", "enrich_docket_documents_with_routers"]
+__all__ = [
+    "RichDocumentAnalysis",
+    "analyze_document_with_routers",
+    "enrich_docket_documents_with_routers",
+]
 _LAST_ROUTER_PROGRESS: Dict[str, str] = {
     "stage": "",
     "document_id": "",

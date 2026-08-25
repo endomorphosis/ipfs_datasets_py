@@ -1,0 +1,399 @@
+{
+  "acceptance": {
+    "boundary_terms_route_once": true,
+    "criteria": "Row conservation and exact scoring pass; every admitted chunk has a document record, posting routes are lexicographic, each cell/page is at most 4096, and sample/citation queries span all regions/DC.",
+    "documents_equal_admitted_searchable_chunks": true,
+    "exact_scoring_parity_within_tolerance": true,
+    "hub_upload": false,
+    "physical_bounds_hold": true,
+    "posting_routes_lexicographic": true,
+    "postings_reconcile": true,
+    "row_conservation": true,
+    "sample_queries_span_all_regions_and_dc": true,
+    "scores_match_reference_bm25": true,
+    "secrets_absent": true
+  },
+  "admitted": {
+    "chunk_count": 10,
+    "document_count": 10,
+    "index_root_cid": "sha256:59034426168dd0c854163768cc3183790744541a2db9494ef738b0e31575defb",
+    "posting_count": 249,
+    "term_count": 166,
+    "term_shard_count": 83
+  },
+  "adr_path": "docs/architecture/legal_corpora_reindex_schema.md",
+  "authorizing_for_publication": false,
+  "authorizing_for_release": false,
+  "authorizing_hub_upload": false,
+  "board_namespace": "legal-corpora-reindex-v1",
+  "bounds": {
+    "document_count_ceiling": null,
+    "forbidden_document_ceiling": 250000,
+    "maximum_posting_pointers_per_cell": 4096,
+    "maximum_route_page_rows": 4096,
+    "maximum_rows_per_physical_shard": 4096,
+    "sort_order_documents": "jurisdiction_then_document_index",
+    "sort_order_postings": "term_then_chunk_cid",
+    "sort_order_terms": "lexicographic_term"
+  },
+  "bundle": "sparse-index",
+  "checks": {
+    "admitted_chunk_count": 10,
+    "admitted_documents_equal_chunks": true,
+    "boundary_terms_route_once": true,
+    "build_query_tokenizer_terms_equal": true,
+    "demo_document_count": 10,
+    "demo_document_shard_count": 10,
+    "demo_max_document_shard_rows": 1,
+    "demo_max_posting_cell_pointers": 2,
+    "demo_max_route_page_rows": 2,
+    "demo_max_term_shard_rows": 2,
+    "demo_posting_count": 249,
+    "demo_term_count": 166,
+    "demo_term_shard_count": 83,
+    "documents_externally_sorted": true,
+    "every_admitted_chunk_has_document": true,
+    "hierarchical_term_routes_present": true,
+    "legal_tokenizer_id": "uscode-bm25-tokenizer/v1",
+    "no_document_count_ceiling": true,
+    "no_hub_upload": true,
+    "posting_routes_lexicographic": true,
+    "postings_externally_sorted": true,
+    "production_max_posting_pointers": 4096,
+    "production_max_rows_per_shard": 4096,
+    "query_uses_legal_tokenizer": true,
+    "recovery_excluded_from_bm25": true,
+    "row_conservation": true,
+    "sample_queries_span_all_regions_and_dc": true,
+    "scores_match_reference_bm25": true,
+    "term_range_routing_used": true,
+    "terms_externally_sorted": true,
+    "tokenizer_id": "state-laws-bm25-tokenizer/v1",
+    "tokenizer_shared_by": "build_and_query"
+  },
+  "code_version": "1",
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "dataset_repo_id": "justicedao/ipfs_state_laws",
+  "demo": {
+    "average_document_length": 34.9,
+    "census_regions": [
+      "dc",
+      "midwest",
+      "northeast",
+      "south",
+      "west"
+    ],
+    "chunk_cids": [
+      "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+      "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "sha256:3b64db95cb55c763391c707108489ae18b4112d783300de38e033b4c98c3deaf",
+      "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "sha256:9b7ecc6eeb83abf9ade10fe38865df4499be3568dcc507ae2ec3b44989cb0093",
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+    ],
+    "config_digest": "dee8731e757c355417e183f9f2e13a31d9c9b71587ce36642a32325c51926b82",
+    "corpus_root_cid": "sha256:76ad9f6ad5de239ded5b1561ed8b77359e2865486c44a8c475a43c01bd7f2025",
+    "document_count": 10,
+    "document_route_page_count": 11,
+    "document_shard_count": 10,
+    "index_root_cid": "sha256:59034426168dd0c854163768cc3183790744541a2db9494ef738b0e31575defb",
+    "jurisdictions": [
+      "CA",
+      "DC",
+      "FL",
+      "IL",
+      "MA",
+      "NY",
+      "OH",
+      "OR",
+      "TX",
+      "WA"
+    ],
+    "k1": 1.2,
+    "posting_count": 249,
+    "query_hit_count": 5,
+    "sort_receipts": {
+      "documents": {
+        "externally_sorted": true,
+        "family": "documents",
+        "max_records_in_memory": 3,
+        "peak_resident_records": 3,
+        "records_consumed": 10,
+        "row_count": 10,
+        "run_count": 4,
+        "status": "complete"
+      },
+      "postings": {
+        "externally_sorted": true,
+        "family": "postings",
+        "max_records_in_memory": 3,
+        "peak_resident_records": 3,
+        "records_consumed": 249,
+        "row_count": 249,
+        "run_count": 83,
+        "status": "complete"
+      },
+      "terms": {
+        "externally_sorted": true,
+        "family": "terms",
+        "max_records_in_memory": 3,
+        "peak_resident_records": 3,
+        "records_consumed": 166,
+        "row_count": 166,
+        "run_count": 56,
+        "status": "complete"
+      }
+    },
+    "term_count": 166,
+    "term_route_height": 7,
+    "term_route_page_count": 86,
+    "term_shard_count": 83,
+    "tokenizer_id": "state-laws-bm25-tokenizer/v1"
+  },
+  "depends_on": [
+    "LCR-025",
+    "LCR-026"
+  ],
+  "description": "LCR-027 state-law term-range BM25. Jurisdiction-aware legal tokenization, field-weighted documents, sorted postings, bounded cells/term shards, lexicographic term-range routes, explanations, and differential reference scores. Hermetic fixture evaluation only. Does not authorize Hub upload.",
+  "differential": {
+    "fixtures": [
+      {
+        "chunk_cid": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "idf": 1.992430164690206,
+        "jurisdiction_code": "DC",
+        "reference_score": 2.0476618016990726,
+        "score": 2.0476618016990726,
+        "term": "dcopenmeetings"
+      },
+      {
+        "chunk_cid": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "idf": 1.992430164690206,
+        "jurisdiction_code": "IL",
+        "reference_score": 2.0014275914248834,
+        "score": 2.0014275914248834,
+        "term": "illinoisfia"
+      },
+      {
+        "chunk_cid": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "idf": 1.992430164690206,
+        "jurisdiction_code": "NY",
+        "reference_score": 1.957235127433657,
+        "score": 1.957235127433657,
+        "term": "newyorkfoil"
+      },
+      {
+        "chunk_cid": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "idf": 1.992430164690206,
+        "jurisdiction_code": "OR",
+        "reference_score": 2.0014275914248834,
+        "score": 2.0014275914248834,
+        "term": "oregonconstruction"
+      },
+      {
+        "chunk_cid": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "idf": 1.992430164690206,
+        "jurisdiction_code": "TX",
+        "reference_score": 1.8744573259914443,
+        "score": 1.8744573259914443,
+        "term": "texaspublicinfo"
+      }
+    ],
+    "sample_queries": {
+      "max_score_delta": 0.0,
+      "parity_within_tolerance": true,
+      "query_count": 10,
+      "regions_covered": [
+        "dc",
+        "midwest",
+        "northeast",
+        "south",
+        "west"
+      ],
+      "score_mismatch_count": 0,
+      "spans_all_regions_and_dc": true,
+      "traces": [
+        {
+          "expected_chunk_cid": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "jurisdiction": "NY",
+          "kind": "citation",
+          "query_id": "citation-northeast-ny",
+          "query_text": "NY 5 § 86",
+          "region": "northeast",
+          "score_delta": 0.0,
+          "top_chunk_cid": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "top_score": 50.35491891858903
+        },
+        {
+          "expected_chunk_cid": "sha256:3b64db95cb55c763391c707108489ae18b4112d783300de38e033b4c98c3deaf",
+          "jurisdiction": "MA",
+          "kind": "sample",
+          "query_id": "sample-northeast-ma",
+          "query_text": "masspublicrecords",
+          "region": "northeast",
+          "score_delta": 0.0,
+          "top_chunk_cid": "sha256:3b64db95cb55c763391c707108489ae18b4112d783300de38e033b4c98c3deaf",
+          "top_score": 1.957235127433657
+        },
+        {
+          "expected_chunk_cid": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+          "jurisdiction": "IL",
+          "kind": "citation",
+          "query_id": "citation-midwest-il",
+          "query_text": "IL 5 ILCS 140/1",
+          "region": "midwest",
+          "score_delta": 0.0,
+          "top_chunk_cid": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+          "top_score": 59.45683434967201
+        },
+        {
+          "expected_chunk_cid": "sha256:9b7ecc6eeb83abf9ade10fe38865df4499be3568dcc507ae2ec3b44989cb0093",
+          "jurisdiction": "OH",
+          "kind": "sample",
+          "query_id": "sample-midwest-oh",
+          "query_text": "ohiopublicrecords",
+          "region": "midwest",
+          "score_delta": 0.0,
+          "top_chunk_cid": "sha256:9b7ecc6eeb83abf9ade10fe38865df4499be3568dcc507ae2ec3b44989cb0093",
+          "top_score": 1.957235127433657
+        },
+        {
+          "expected_chunk_cid": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "jurisdiction": "TX",
+          "kind": "citation",
+          "query_id": "citation-south-tx",
+          "query_text": "TX 552 § 001",
+          "region": "south",
+          "score_delta": 0.0,
+          "top_chunk_cid": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "top_score": 61.893495237468734
+        },
+        {
+          "expected_chunk_cid": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+          "jurisdiction": "FL",
+          "kind": "sample",
+          "query_id": "sample-south-fl",
+          "query_text": "floridasunshine",
+          "region": "south",
+          "score_delta": 0.0,
+          "top_chunk_cid": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+          "top_score": 2.0476618016990726
+        },
+        {
+          "expected_chunk_cid": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "jurisdiction": "OR",
+          "kind": "citation",
+          "query_id": "citation-west-or",
+          "query_text": "OR 174 § 010",
+          "region": "west",
+          "score_delta": 0.0,
+          "top_chunk_cid": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "top_score": 45.70161962931403
+        },
+        {
+          "expected_chunk_cid": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "jurisdiction": "CA",
+          "kind": "sample",
+          "query_id": "sample-west-ca",
+          "query_text": "californiaevidence",
+          "region": "west",
+          "score_delta": 0.0,
+          "top_chunk_cid": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "top_score": 2.0476618016990726
+        },
+        {
+          "expected_chunk_cid": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "jurisdiction": "DC",
+          "kind": "citation",
+          "query_id": "citation-dc",
+          "query_text": "DC 2 § 531",
+          "region": "dc",
+          "score_delta": 0.0,
+          "top_chunk_cid": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "top_score": 59.64880894428949
+        },
+        {
+          "expected_chunk_cid": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "jurisdiction": "DC",
+          "kind": "sample",
+          "query_id": "sample-dc",
+          "query_text": "dcopenmeetings",
+          "region": "dc",
+          "score_delta": 0.0,
+          "top_chunk_cid": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "top_score": 2.0476618016990726
+        }
+      ]
+    },
+    "score_abs_tolerance": 1e-12,
+    "scores_match_reference_bm25": true
+  },
+  "family_counts": {
+    "bm25": 10,
+    "bm25_documents": 10,
+    "bm25_postings": 249,
+    "chunks": 10
+  },
+  "field_weights": {
+    "body": 1.0,
+    "citation": 8.0,
+    "heading": 4.0,
+    "hierarchy": 3.0,
+    "jurisdiction": 2.0,
+    "note": 0.5,
+    "title": 5.0
+  },
+  "goal_id": "LCR-G040",
+  "network_required": false,
+  "parameters": {
+    "b": 0.75,
+    "k1": 1.2,
+    "legacy_parameter_delta": {
+      "b": {
+        "changed": false,
+        "delta": 0.0,
+        "evaluation_default": 0.75,
+        "legacy": 0.75
+      },
+      "k1": {
+        "changed": true,
+        "delta": -0.30000000000000004,
+        "evaluation_default": 1.2,
+        "legacy": 1.5
+      },
+      "legacy_field_separation": false,
+      "notes": "Legacy legal BM25 used k1=1.5 with a single unweighted term array. State laws use k1=1.2, explicit multi-field weights including jurisdiction, and the sealed legal tokenizer shared by build and query."
+    },
+    "legal_tokenizer_id": "uscode-bm25-tokenizer/v1",
+    "stopword_policy_id": "uscode-legal-stopwords/v1",
+    "tokenizer_id": "state-laws-bm25-tokenizer/v1",
+    "tokenizer_version": "v1"
+  },
+  "producer": "state_laws_bm25.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "proves_software_contract_only": true,
+  "release_profile": "state-laws-ir-graphrag/v2",
+  "report_digest_sha256": "4fd07ec55c11ba9d0ff283c645dc4bb028836a28d8ca4dafb6323a22cbb7f9ec",
+  "report_kind": "fixture_bm25",
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-bm25@1",
+  "schema_version": "state-laws-bm25-v1",
+  "task_id": "LCR-027",
+  "tokenizer": {
+    "goal_id": "USCIR-G040",
+    "legal_tokenizer_id": "uscode-bm25-tokenizer/v1",
+    "release_profile": "publicus-ir-graphrag/v2",
+    "schema_version": "uscode-tokenizer-v1",
+    "shared_by": "build_and_query",
+    "state_laws_tokenizer_id": "state-laws-bm25-tokenizer/v1",
+    "stopword_policy_id": "uscode-legal-stopwords/v1",
+    "task_id": "USCIR-013",
+    "tokenizer_digest": "cd2e8d52fab9cc7d3a7a1f4d853a84e7a3dce95d6828d8edb916bd1dc8f810d6",
+    "tokenizer_id": "state-laws-bm25-tokenizer/v1",
+    "tokenizer_version": "v1",
+    "used_for_build": true,
+    "used_for_query": true
+  }
+}

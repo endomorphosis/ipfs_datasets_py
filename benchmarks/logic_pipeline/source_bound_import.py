@@ -53,9 +53,7 @@ def _git(repository: Path, *arguments: str) -> str:
     executable_value = os.environ.get("HSSL_G240_GIT_EXECUTABLE_PATH")
     executable_cid_value = os.environ.get("HSSL_G240_GIT_EXECUTABLE_CID")
     if (executable_value is None) != (executable_cid_value is None):
-        raise SourceBoundImportError(
-            "partial pinned Git authority is forbidden"
-        )
+        raise SourceBoundImportError("partial pinned Git authority is forbidden")
     executable = "git"
     if executable_value is not None:
         try:
@@ -70,9 +68,7 @@ def _git(repository: Path, *arguments: str) -> str:
                 codecs=("raw",),
             )
         except (OSError, TypeError, ValueError) as exc:
-            raise SourceBoundImportError(
-                "cannot authenticate the pinned Git executable"
-            ) from exc
+            raise SourceBoundImportError("cannot authenticate the pinned Git executable") from exc
         if (
             stat.S_ISLNK(metadata.st_mode)
             or not stat.S_ISREG(metadata.st_mode)
@@ -80,9 +76,7 @@ def _git(repository: Path, *arguments: str) -> str:
             or not payload
             or cid_for_bytes(payload) != expected_cid
         ):
-            raise SourceBoundImportError(
-                "pinned Git executable differs from its raw CID"
-            )
+            raise SourceBoundImportError("pinned Git executable differs from its raw CID")
         executable = resolved.as_posix()
     try:
         completed = subprocess.run(
@@ -105,9 +99,7 @@ def _git(repository: Path, *arguments: str) -> str:
             "cannot verify the local ipfs_accelerate_py git binding"
         ) from exc
     if completed.returncode != 0:
-        raise SourceBoundImportError(
-            "cannot verify the local ipfs_accelerate_py git binding"
-        )
+        raise SourceBoundImportError("cannot verify the local ipfs_accelerate_py git binding")
     return completed.stdout.strip()
 
 
@@ -117,9 +109,7 @@ def _strict_directory(path: Path, *, field_name: str) -> Path:
     except OSError as exc:
         raise SourceBoundImportError(f"{field_name} is unavailable") from exc
     if not resolved.is_dir() or path.absolute() != resolved:
-        raise SourceBoundImportError(
-            f"{field_name} must be a real, non-symlink directory"
-        )
+        raise SourceBoundImportError(f"{field_name} must be a real, non-symlink directory")
     return resolved
 
 
@@ -145,40 +135,25 @@ def _pinned_package_directory() -> Path:
         field_name="ipfs_accelerate_py package",
     )
     package_initializer = package / "__init__.py"
-    if (
-        not package_initializer.is_file()
-        or package_initializer.is_symlink()
-    ):
-        raise SourceBoundImportError(
-            "local ipfs_accelerate_py package initializer is unavailable"
-        )
+    if not package_initializer.is_file() or package_initializer.is_symlink():
+        raise SourceBoundImportError("local ipfs_accelerate_py package initializer is unavailable")
 
-    bootstrap_package = os.environ.get(
-        "HSSL_G240_SOURCE_BOUND_IPFS_ACCELERATE_PACKAGE_PATH"
-    )
-    bootstrap_gitlink = os.environ.get(
-        "HSSL_G240_SOURCE_BOUND_IPFS_ACCELERATE_GITLINK_COMMIT"
-    )
+    bootstrap_package = os.environ.get("HSSL_G240_SOURCE_BOUND_IPFS_ACCELERATE_PACKAGE_PATH")
+    bootstrap_gitlink = os.environ.get("HSSL_G240_SOURCE_BOUND_IPFS_ACCELERATE_GITLINK_COMMIT")
     if (bootstrap_package is None) != (bootstrap_gitlink is None):
-        raise SourceBoundImportError(
-            "partial bootstrap source-bound authority is forbidden"
-        )
+        raise SourceBoundImportError("partial bootstrap source-bound authority is forbidden")
     if bootstrap_package is not None:
         try:
             observed_package = Path(bootstrap_package).resolve(strict=True)
         except OSError as exc:
-            raise SourceBoundImportError(
-                "bootstrap source-bound package is unavailable"
-            ) from exc
+            raise SourceBoundImportError("bootstrap source-bound package is unavailable") from exc
         if (
             "HSSL_G240_BOOTSTRAP_RECEIPT_JSON" not in os.environ
             or observed_package != package
             or not isinstance(bootstrap_gitlink, str)
             or not _GIT_OBJECT.fullmatch(bootstrap_gitlink)
         ):
-            raise SourceBoundImportError(
-                "bootstrap source-bound package authority changed"
-            )
+            raise SourceBoundImportError("bootstrap source-bound package authority changed")
         # The tracked stage-one bootstrap performed the enclosing ls-tree,
         # submodule HEAD, and clean-package observations before Landlock.  The
         # stage-two process is the same process, so this branch deliberately
@@ -211,9 +186,7 @@ def _pinned_package_directory() -> Path:
         raise SourceBoundImportError(
             "local ipfs_accelerate_py HEAD differs from the pinned gitlink"
         )
-    local_root = Path(_git(submodule, "rev-parse", "--show-toplevel")).resolve(
-        strict=True
-    )
+    local_root = Path(_git(submodule, "rev-parse", "--show-toplevel")).resolve(strict=True)
     if local_root != submodule:
         raise SourceBoundImportError(
             "local ipfs_accelerate_py package belongs to a different worktree"
@@ -236,9 +209,7 @@ def _namespace(name: str, directory: Path) -> ModuleType:
     parent_name, separator, child_name = name.rpartition(".")
     parent = sys.modules.get(parent_name) if separator else None
     if separator and parent is None:
-        raise SourceBoundImportError(
-            "source-bound package namespace parent is unavailable"
-        )
+        raise SourceBoundImportError("source-bound package namespace parent is unavailable")
 
     def attach(module: ModuleType) -> ModuleType:
         if parent is None:
@@ -246,9 +217,7 @@ def _namespace(name: str, directory: Path) -> ModuleType:
         sentinel = object()
         current = getattr(parent, child_name, sentinel)
         if current is not sentinel and current is not module:
-            raise SourceBoundImportError(
-                "source-bound package namespace attribute is inconsistent"
-            )
+            raise SourceBoundImportError("source-bound package namespace attribute is inconsistent")
         setattr(parent, child_name, module)
         return module
 
@@ -258,28 +227,19 @@ def _namespace(name: str, directory: Path) -> ModuleType:
         expected_file = directory / "__init__.py"
         try:
             resolved_file = (
-                Path(actual_file).resolve(strict=True)
-                if actual_file is not None
-                else None
+                Path(actual_file).resolve(strict=True) if actual_file is not None else None
             )
             locations = tuple(
-                Path(item).resolve(strict=True)
-                for item in getattr(existing, "__path__", ())
+                Path(item).resolve(strict=True) for item in getattr(existing, "__path__", ())
             )
         except (OSError, TypeError) as exc:
             raise SourceBoundImportError(
                 "source-bound package namespace has an invalid path"
             ) from exc
-        if (
-            locations != (directory,)
-            or (
-                resolved_file is not None
-                and resolved_file != expected_file.resolve(strict=True)
-            )
+        if locations != (directory,) or (
+            resolved_file is not None and resolved_file != expected_file.resolve(strict=True)
         ):
-            raise SourceBoundImportError(
-                "canonical ipfs_accelerate_py package is not source-bound"
-            )
+            raise SourceBoundImportError("canonical ipfs_accelerate_py package is not source-bound")
         return attach(existing)
 
     module = ModuleType(name)
@@ -308,8 +268,7 @@ def _bind_canonical_root(package: Path) -> ModuleType:
         return _namespace(_CANONICAL_PACKAGE, package)
     try:
         locations = tuple(
-            Path(item).resolve(strict=True)
-            for item in getattr(existing, "__path__", ())
+            Path(item).resolve(strict=True) for item in getattr(existing, "__path__", ())
         )
     except (OSError, TypeError) as exc:
         raise SourceBoundImportError(
@@ -325,11 +284,7 @@ def _bind_canonical_root(package: Path) -> ModuleType:
         raise SourceBoundImportError(
             "canonical ipfs_accelerate_py namespace is not the local submodule"
         )
-    descendants = tuple(
-        name
-        for name in sys.modules
-        if name.startswith(_CANONICAL_PACKAGE + ".")
-    )
+    descendants = tuple(name for name in sys.modules if name.startswith(_CANONICAL_PACKAGE + "."))
     if descendants:
         raise SourceBoundImportError(
             "outer ipfs_accelerate_py namespace already has imported children"
@@ -348,13 +303,9 @@ def _validate_loaded_descendants(package: Path) -> None:
         actual_file = getattr(module, "__file__", None)
         raw_locations = getattr(module, "__path__", ())
         try:
-            locations = tuple(
-                Path(item).resolve(strict=True) for item in raw_locations
-            )
+            locations = tuple(Path(item).resolve(strict=True) for item in raw_locations)
             resolved_file = (
-                Path(actual_file).resolve(strict=True)
-                if actual_file is not None
-                else None
+                Path(actual_file).resolve(strict=True) if actual_file is not None else None
             )
         except (OSError, TypeError) as exc:
             raise SourceBoundImportError(
@@ -362,9 +313,7 @@ def _validate_loaded_descendants(package: Path) -> None:
             ) from exc
         candidates = (*locations, *((resolved_file,) if resolved_file else ()))
         if not candidates:
-            raise SourceBoundImportError(
-                f"preloaded canonical module {name!r} has no source path"
-            )
+            raise SourceBoundImportError(f"preloaded canonical module {name!r} has no source path")
         for candidate in candidates:
             try:
                 candidate.relative_to(package)
@@ -377,13 +326,9 @@ def _validate_loaded_descendants(package: Path) -> None:
 def _relative_module_name(module_name: str) -> tuple[str, ...]:
     prefix = _CANONICAL_PACKAGE + "."
     if not isinstance(module_name, str) or not module_name.startswith(prefix):
-        raise SourceBoundImportError(
-            "source-bound module must be inside ipfs_accelerate_py"
-        )
+        raise SourceBoundImportError("source-bound module must be inside ipfs_accelerate_py")
     components = tuple(module_name[len(prefix) :].split("."))
-    if not components or any(
-        not _MODULE_NAME.fullmatch(component) for component in components
-    ):
+    if not components or any(not _MODULE_NAME.fullmatch(component) for component in components):
         raise SourceBoundImportError("source-bound module name is invalid")
     return components
 
@@ -396,9 +341,7 @@ def _expected_module_path(package: Path, components: tuple[str, ...]) -> Path:
         return module_file.resolve(strict=True)
     if package_file.is_file() and not package_file.is_symlink():
         return package_file.resolve(strict=True)
-    raise SourceBoundImportError(
-        "requested source-bound ipfs_accelerate_py module is unavailable"
-    )
+    raise SourceBoundImportError("requested source-bound ipfs_accelerate_py module is unavailable")
 
 
 def import_source_bound_ipfs_accelerate(module_name: str) -> ModuleType:
@@ -449,8 +392,7 @@ def import_source_bound_ipfs_accelerate(module_name: str) -> ModuleType:
             ) from exc
         if actual != expected:
             raise SourceBoundImportError(
-                f"source-bound module {module_name!r} resolved outside its "
-                "pinned local package"
+                f"source-bound module {module_name!r} resolved outside its pinned local package"
             )
         return module
 

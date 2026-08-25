@@ -67,13 +67,19 @@ class TraversalHeuristics:
         if any(term in query_text_lower for term in ["type", "instance", "is a", "example of"]):
             query_relations.append("instance_of")
 
-        if any(term in query_text_lower for term in ["part", "component", "contain", "within", "inside"]):
+        if any(
+            term in query_text_lower
+            for term in ["part", "component", "contain", "within", "inside"]
+        ):
             query_relations.append("part_of")
 
         if any(term in query_text_lower for term in ["located", "where", "place", "location"]):
             query_relations.append("located_in")
 
-        if any(term in query_text_lower for term in ["created", "made", "developed", "authored", "wrote"]):
+        if any(
+            term in query_text_lower
+            for term in ["created", "made", "developed", "authored", "wrote"]
+        ):
             query_relations.append("created_by")
 
         if any(term in query_text_lower for term in ["similar", "like", "analogous"]):
@@ -95,19 +101,61 @@ class TraversalHeuristics:
         if "query_text" in query:
             query_text = query["query_text"].lower()
             fact_patterns = [
-                "is it true that", "verify if", "check if", "is there a connection between",
-                "are", "is", "did", "was", "were", "do", "does", "has", "have",
-                "connected to", "related to", "linked to", "correct that", "accurate that",
-                "prove", "disprove", "evidence for", "support for", "refute"
+                "is it true that",
+                "verify if",
+                "check if",
+                "is there a connection between",
+                "are",
+                "is",
+                "did",
+                "was",
+                "were",
+                "do",
+                "does",
+                "has",
+                "have",
+                "connected to",
+                "related to",
+                "linked to",
+                "correct that",
+                "accurate that",
+                "prove",
+                "disprove",
+                "evidence for",
+                "support for",
+                "refute",
             ]
 
-            if any(query_text.startswith(word) for word in ["is", "are", "was", "were", "do", "does", "did", "has", "have", "can", "could", "should", "would"]):
+            if any(
+                query_text.startswith(word)
+                for word in [
+                    "is",
+                    "are",
+                    "was",
+                    "were",
+                    "do",
+                    "does",
+                    "did",
+                    "has",
+                    "have",
+                    "can",
+                    "could",
+                    "should",
+                    "would",
+                ]
+            ):
                 return True
 
             if any(pattern in query_text for pattern in fact_patterns):
                 return True
 
-            comparison_patterns = ["same as", "different from", "equivalent to", "similar to", "unlike"]
+            comparison_patterns = [
+                "same as",
+                "different from",
+                "equivalent to",
+                "similar to",
+                "unlike",
+            ]
             if any(pattern in query_text for pattern in comparison_patterns):
                 return True
 
@@ -124,10 +172,26 @@ class TraversalHeuristics:
         if "query_text" in query:
             query_text = query["query_text"].lower()
             exploratory_patterns = [
-                "what are", "tell me about", "explain", "describe", "overview of",
-                "introduction to", "discover", "explore", "information about",
-                "learn about", "show me", "find", "search for", "list", "examples of",
-                "types of", "kinds of", "ways to", "methods of", "approaches to"
+                "what are",
+                "tell me about",
+                "explain",
+                "describe",
+                "overview of",
+                "introduction to",
+                "discover",
+                "explore",
+                "information about",
+                "learn about",
+                "show me",
+                "find",
+                "search for",
+                "list",
+                "examples of",
+                "types of",
+                "kinds of",
+                "ways to",
+                "methods of",
+                "approaches to",
             ]
 
             if any(pattern in query_text for pattern in exploratory_patterns):
@@ -146,7 +210,9 @@ class TraversalHeuristics:
         return False
 
     @staticmethod
-    def detect_entity_types(query_text: str, predefined_types: Optional[List[str]] = None) -> List[str]:
+    def detect_entity_types(
+        query_text: str, predefined_types: Optional[List[str]] = None
+    ) -> List[str]:
         """Detect likely entity types from query text."""
         if predefined_types:
             return predefined_types
@@ -158,40 +224,137 @@ class TraversalHeuristics:
         detected_types: List[str] = []
 
         person_patterns = [
-            "who", "person", "people", "author", "writer", "creator", "founder",
-            "born", "died", "age", "biography", "invented", "discovered",
-            "president", "king", "queen", "actor", "actress", "director",
-            "scientist", "artist", "musician", "politician", "athlete"
+            "who",
+            "person",
+            "people",
+            "author",
+            "writer",
+            "creator",
+            "founder",
+            "born",
+            "died",
+            "age",
+            "biography",
+            "invented",
+            "discovered",
+            "president",
+            "king",
+            "queen",
+            "actor",
+            "actress",
+            "director",
+            "scientist",
+            "artist",
+            "musician",
+            "politician",
+            "athlete",
         ]
 
         organization_patterns = [
-            "company", "organization", "corporation", "business", "firm", "agency",
-            "university", "school", "college", "institution", "government", "team",
-            "founded", "headquarters", "ceo", "employees", "products", "services"
+            "company",
+            "organization",
+            "corporation",
+            "business",
+            "firm",
+            "agency",
+            "university",
+            "school",
+            "college",
+            "institution",
+            "government",
+            "team",
+            "founded",
+            "headquarters",
+            "ceo",
+            "employees",
+            "products",
+            "services",
         ]
 
         location_patterns = [
-            "where", "place", "location", "country", "city", "state", "region",
-            "continent", "area", "located", "capital", "geography", "landmark",
-            "mountain", "river", "ocean", "lake", "island", "territory", "border"
+            "where",
+            "place",
+            "location",
+            "country",
+            "city",
+            "state",
+            "region",
+            "continent",
+            "area",
+            "located",
+            "capital",
+            "geography",
+            "landmark",
+            "mountain",
+            "river",
+            "ocean",
+            "lake",
+            "island",
+            "territory",
+            "border",
         ]
 
         concept_patterns = [
-            "what", "concept", "theory", "idea", "principle", "definition",
-            "meaning", "philosophy", "method", "system", "field", "discipline",
-            "explain", "describe", "define", "understand", "how does", "how is"
+            "what",
+            "concept",
+            "theory",
+            "idea",
+            "principle",
+            "definition",
+            "meaning",
+            "philosophy",
+            "method",
+            "system",
+            "field",
+            "discipline",
+            "explain",
+            "describe",
+            "define",
+            "understand",
+            "how does",
+            "how is",
         ]
 
         event_patterns = [
-            "when", "event", "happened", "occurred", "took place", "date",
-            "history", "war", "battle", "conference", "meeting", "election",
-            "ceremony", "festival", "disaster", "revolution", "movement"
+            "when",
+            "event",
+            "happened",
+            "occurred",
+            "took place",
+            "date",
+            "history",
+            "war",
+            "battle",
+            "conference",
+            "meeting",
+            "election",
+            "ceremony",
+            "festival",
+            "disaster",
+            "revolution",
+            "movement",
         ]
 
         product_patterns = [
-            "product", "device", "technology", "tool", "software", "hardware",
-            "machine", "vehicle", "book", "album", "movie", "film", "game",
-            "service", "brand", "model", "version", "release", "launched"
+            "product",
+            "device",
+            "technology",
+            "tool",
+            "software",
+            "hardware",
+            "machine",
+            "vehicle",
+            "book",
+            "album",
+            "movie",
+            "film",
+            "game",
+            "service",
+            "brand",
+            "model",
+            "version",
+            "release",
+            "launched",
         ]
 
         if any(pattern in text for pattern in person_patterns):

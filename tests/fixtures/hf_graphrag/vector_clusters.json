@@ -1,0 +1,52 @@
+{
+  "schema_version": "hf-graphrag-vector-clusters-fixture/v1",
+  "task_id": "USCIR-018",
+  "goal_id": "USCIR-G050",
+  "assignment": "deterministic_balanced_spherical_kmeans",
+  "description": "Compact deterministic recipes for USCIR-018 centroid-routed vector shard unit tests. Embeddings are regenerated from the recipe; structural expectations are derived deterministically at test time (no bulk golden embedding dumps).",
+  "bounds": {
+    "default_candidate_centroids": 4,
+    "max_rows_per_physical_shard": 4096,
+    "max_rows_per_vector_centroid": 8192,
+    "max_vector_shards_per_centroid": 2
+  },
+  "test_bounds": {
+    "kmeans_iterations": 6,
+    "max_rows_per_centroid": 4,
+    "max_rows_per_shard": 2,
+    "max_shards_per_centroid": 2,
+    "seed": 1431520073,
+    "target_rows_per_centroid": 3
+  },
+  "recipe": {
+    "dimension": 2,
+    "rows": [
+      {"entry_cid": "entry-a1", "direction": 0.0},
+      {"entry_cid": "entry-a2", "direction": 5.0},
+      {"entry_cid": "entry-a3", "direction": 10.0},
+      {"entry_cid": "entry-a4", "direction": 15.0},
+      {"entry_cid": "entry-b1", "direction": 180.0},
+      {"entry_cid": "entry-b2", "direction": 185.0},
+      {"entry_cid": "entry-b3", "direction": 190.0},
+      {"entry_cid": "entry-b4", "direction": 175.0}
+    ]
+  },
+  "expected": {
+    "max_rows_per_centroid": 4,
+    "max_rows_per_shard": 2,
+    "max_shards_per_centroid": 2,
+    "rows_sorted_by": "cosine_similarity_to_shard_centroid_desc",
+    "seed": 1431520073,
+    "total_rows": 8,
+    "unique_entry_cids": [
+      "entry-a1",
+      "entry-a2",
+      "entry-a3",
+      "entry-a4",
+      "entry-b1",
+      "entry-b2",
+      "entry-b3",
+      "entry-b4"
+    ]
+  }
+}

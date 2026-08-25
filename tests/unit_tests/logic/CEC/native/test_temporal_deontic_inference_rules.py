@@ -9,9 +9,17 @@ Validates that after the session-29 bug fixes the rules fire correctly:
 
 import pytest
 from ipfs_datasets_py.logic.CEC.native.dcec_core import (
-    Atom, Conjunction, Disjunction, Implication, Negation,
-    DeonticFormula, ConnectiveFormula, TemporalFormula,
-    DeonticOperator, LogicalConnective, TemporalOperator,
+    Atom,
+    Conjunction,
+    Disjunction,
+    Implication,
+    Negation,
+    DeonticFormula,
+    ConnectiveFormula,
+    TemporalFormula,
+    DeonticOperator,
+    LogicalConnective,
+    TemporalOperator,
 )
 from ipfs_datasets_py.logic.CEC.native.inference_rules.temporal import (
     AlwaysDistribution,
@@ -44,6 +52,7 @@ from ipfs_datasets_py.logic.CEC.native.inference_rules.deontic import (
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def atom(name: str) -> Atom:
     return Atom(name)
@@ -101,6 +110,7 @@ def prohib(f):
 # ── Temporal rules ──────────────────────────────────────────────────────────
 # ===========================================================================
 
+
 class TestAlwaysDistribution:
     """□(P∧Q) ⊢ □P ∧ □Q"""
 
@@ -154,8 +164,9 @@ class TestAlwaysImplication:
         p, q = atom("P"), atom("Q")
         result = AlwaysImplication().apply([always(p), always(impl(p, q))])
         assert len(result) >= 1
-        assert any(isinstance(r, TemporalFormula) and r.operator == TemporalOperator.ALWAYS
-                   for r in result)
+        assert any(
+            isinstance(r, TemporalFormula) and r.operator == TemporalOperator.ALWAYS for r in result
+        )
 
 
 class TestAlwaysTransitive:
@@ -212,8 +223,9 @@ class TestAlwaysInduction:
     def test_apply_produces_always(self):
         p = atom("P")
         result = AlwaysInduction().apply([p, always(impl(p, next_t(p)))])
-        assert any(isinstance(r, TemporalFormula) and r.operator == TemporalOperator.ALWAYS
-                   for r in result)
+        assert any(
+            isinstance(r, TemporalFormula) and r.operator == TemporalOperator.ALWAYS for r in result
+        )
 
 
 class TestEventuallyFromAlways:
@@ -291,8 +303,10 @@ class TestEventuallyImplication:
     def test_apply_produces_eventually_q(self):
         p, q = atom("P"), atom("Q")
         result = EventuallyImplication().apply([eventually(p), always(impl(p, q))])
-        assert any(isinstance(r, TemporalFormula) and r.operator == TemporalOperator.EVENTUALLY
-                   for r in result)
+        assert any(
+            isinstance(r, TemporalFormula) and r.operator == TemporalOperator.EVENTUALLY
+            for r in result
+        )
 
 
 class TestNextDistribution:
@@ -331,8 +345,9 @@ class TestNextImplication:
     def test_apply_derives_next_q(self):
         p, q = atom("P"), atom("Q")
         result = NextImplication().apply([next_t(p), next_t(impl(p, q))])
-        assert any(isinstance(r, TemporalFormula) and r.operator == TemporalOperator.NEXT
-                   for r in result)
+        assert any(
+            isinstance(r, TemporalFormula) and r.operator == TemporalOperator.NEXT for r in result
+        )
 
 
 class TestUntilWeakening:
@@ -348,8 +363,10 @@ class TestUntilWeakening:
     def test_apply_produces_eventually(self):
         p, q = atom("P"), atom("Q")
         result = UntilWeakening().apply([until(p, q)])
-        assert any(isinstance(r, TemporalFormula) and r.operator == TemporalOperator.EVENTUALLY
-                   for r in result)
+        assert any(
+            isinstance(r, TemporalFormula) and r.operator == TemporalOperator.EVENTUALLY
+            for r in result
+        )
 
 
 class TestSinceWeakening:
@@ -412,6 +429,7 @@ class TestTemporalNegation:
 # ── Deontic rules ────────────────────────────────────────────────────────────
 # ===========================================================================
 
+
 class TestObligationDistribution:
     """O(P∧Q) ⊢ O(P) ∧ O(Q)"""
 
@@ -465,8 +483,12 @@ class TestObligationImplication:
         p, q = atom("P"), atom("Q")
         result = ObligationImplication().apply([oblig(p), impl(p, q)])
         assert len(result) >= 1
-        assert any(isinstance(r, DeonticFormula) and r.operator == DeonticOperator.OBLIGATION
-                   and r.formula == q for r in result)
+        assert any(
+            isinstance(r, DeonticFormula)
+            and r.operator == DeonticOperator.OBLIGATION
+            and r.formula == q
+            for r in result
+        )
 
     def test_apply_chained(self):
         """O(P) ∧ (P→Q) ∧ (Q→R) ⊢ includes O(Q) and O(R) after two applications."""
@@ -611,10 +633,10 @@ class TestProhibitionEquivalence:
         p = atom("P")
         result = ProhibitionEquivalence().apply([prohib(p)])
         assert any(
-            isinstance(r, DeonticFormula) and
-            r.operator == DeonticOperator.OBLIGATION and
-            isinstance(r.formula, ConnectiveFormula) and
-            r.formula.connective == LogicalConnective.NOT
+            isinstance(r, DeonticFormula)
+            and r.operator == DeonticOperator.OBLIGATION
+            and isinstance(r.formula, ConnectiveFormula)
+            and r.formula.connective == LogicalConnective.NOT
             for r in result
         )
 
@@ -631,10 +653,16 @@ class TestProhibitionEquivalence:
         """Both F(P) and O(¬P) → two results in one call."""
         p = atom("P")
         result = ProhibitionEquivalence().apply([prohib(p), oblig(Negation(p))])
-        obligations = [r for r in result if isinstance(r, DeonticFormula)
-                       and r.operator == DeonticOperator.OBLIGATION]
-        prohibitions = [r for r in result if isinstance(r, DeonticFormula)
-                        and r.operator == DeonticOperator.PROHIBITION]
+        obligations = [
+            r
+            for r in result
+            if isinstance(r, DeonticFormula) and r.operator == DeonticOperator.OBLIGATION
+        ]
+        prohibitions = [
+            r
+            for r in result
+            if isinstance(r, DeonticFormula) and r.operator == DeonticOperator.PROHIBITION
+        ]
         assert len(obligations) >= 1
         assert len(prohibitions) >= 1
 
@@ -642,6 +670,7 @@ class TestProhibitionEquivalence:
 # ===========================================================================
 # ── Rule chaining (temporal + deontic) ──────────────────────────────────────
 # ===========================================================================
+
 
 class TestRuleChaining:
     """Verify rules can be composed for multi-step derivations."""
@@ -679,16 +708,21 @@ class TestRuleChaining:
 
         # Induction: P, □(P→○P) ⊢ □P
         ind_results = AlwaysInduction().apply([p, always(impl(p, next_t(p)))])
-        assert any(isinstance(r, TemporalFormula) and r.operator == TemporalOperator.ALWAYS
-                   for r in ind_results)
+        assert any(
+            isinstance(r, TemporalFormula) and r.operator == TemporalOperator.ALWAYS
+            for r in ind_results
+        )
 
     def test_deontic_prohibition_equivalence_chain(self):
         """F(P) → O(¬P); O(¬P) ∧ (¬P → Q) ⊢ O(Q)"""
         p, q = atom("P"), atom("Q")
         # Step 1: F(P) → O(¬P)
         step1 = ProhibitionEquivalence().apply([prohib(p)])
-        obn_ps = [r for r in step1 if isinstance(r, DeonticFormula)
-                  and r.operator == DeonticOperator.OBLIGATION]
+        obn_ps = [
+            r
+            for r in step1
+            if isinstance(r, DeonticFormula) and r.operator == DeonticOperator.OBLIGATION
+        ]
         assert obn_ps
         o_neg_p = obn_ps[0]
         neg_p = o_neg_p.formula  # ¬P
@@ -701,35 +735,52 @@ class TestRuleChaining:
 # ── __all__ export checks ────────────────────────────────────────────────────
 # ===========================================================================
 
+
 class TestExports:
     """Verify all expected symbols are importable from both modules."""
 
     def test_temporal_all_exports(self):
         from ipfs_datasets_py.logic.CEC.native.inference_rules import temporal
+
         for name in temporal.__all__:
             assert hasattr(temporal, name)
 
     def test_deontic_all_exports(self):
         from ipfs_datasets_py.logic.CEC.native.inference_rules import deontic
+
         for name in deontic.__all__:
             assert hasattr(deontic, name)
 
     def test_temporal_rule_names_unique(self):
         rules = [
-            AlwaysDistribution(), AlwaysImplication(), AlwaysTransitive(),
-            AlwaysImpliesNext(), AlwaysInduction(), EventuallyFromAlways(),
-            EventuallyDistribution(), EventuallyTransitive(), EventuallyImplication(),
-            NextDistribution(), NextImplication(), UntilWeakening(),
-            SinceWeakening(), TemporalUntilElimination(), TemporalNegation(),
+            AlwaysDistribution(),
+            AlwaysImplication(),
+            AlwaysTransitive(),
+            AlwaysImpliesNext(),
+            AlwaysInduction(),
+            EventuallyFromAlways(),
+            EventuallyDistribution(),
+            EventuallyTransitive(),
+            EventuallyImplication(),
+            NextDistribution(),
+            NextImplication(),
+            UntilWeakening(),
+            SinceWeakening(),
+            TemporalUntilElimination(),
+            TemporalNegation(),
         ]
         names = [r.name() for r in rules]
         assert len(names) == len(set(names)), "Rule names must be unique"
 
     def test_deontic_rule_names_unique(self):
         rules = [
-            ObligationDistribution(), ObligationImplication(), ObligationConjunction(),
-            ObligationConsistency(), PermissionDistribution(),
-            PermissionFromNonObligation(), ProhibitionEquivalence(),
+            ObligationDistribution(),
+            ObligationImplication(),
+            ObligationConjunction(),
+            ObligationConsistency(),
+            PermissionDistribution(),
+            PermissionFromNonObligation(),
+            ProhibitionEquivalence(),
         ]
         names = [r.name() for r in rules]
         assert len(names) == len(set(names)), "Rule names must be unique"

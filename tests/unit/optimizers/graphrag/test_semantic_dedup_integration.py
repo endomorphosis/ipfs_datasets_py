@@ -20,6 +20,7 @@ def _has_semantic_dedup_deps() -> bool:
     """Check if semantic deduplication dependencies are available."""
     try:
         import sentence_transformers
+
         return True
     except ImportError:
         return False
@@ -36,13 +37,18 @@ class TestSemanticDeduplicationIntegration:
 
     def test_ontology_generator_semantic_dedup_enabled_by_flag(self):
         """When enable_semantic_dedup=True, deduplicator should initialize."""
-        with patch.dict("sys.modules", {"ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator": Mock()}):
+        with patch.dict(
+            "sys.modules", {"ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator": Mock()}
+        ):
             mock_dedup_module = Mock()
             mock_instance = Mock()
             mock_dedup_factory = Mock(return_value=mock_instance)
             mock_dedup_module.create_semantic_deduplicator = mock_dedup_factory
 
-            with patch.dict("sys.modules", {"ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator": mock_dedup_module}):
+            with patch.dict(
+                "sys.modules",
+                {"ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator": mock_dedup_module},
+            ):
                 generator = OntologyGenerator(enable_semantic_dedup=True)
 
                 assert generator.enable_semantic_dedup is True
@@ -52,13 +58,17 @@ class TestSemanticDeduplicationIntegration:
     def test_ontology_generator_semantic_dedup_enabled_by_env(self):
         """ENABLE_SEMANTIC_DEDUP env var should enable deduplication."""
         import os
+
         with patch.dict(os.environ, {"ENABLE_SEMANTIC_DEDUP": "true"}):
             mock_dedup_module = Mock()
             mock_instance = Mock()
             mock_dedup_factory = Mock(return_value=mock_instance)
             mock_dedup_module.create_semantic_deduplicator = mock_dedup_factory
 
-            with patch.dict("sys.modules", {"ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator": mock_dedup_module}):
+            with patch.dict(
+                "sys.modules",
+                {"ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator": mock_dedup_module},
+            ):
                 generator = OntologyGenerator()
 
                 assert generator.enable_semantic_dedup is True
@@ -68,9 +78,11 @@ class TestSemanticDeduplicationIntegration:
     def test_ontology_generator_semantic_dedup_graceful_import_failure(self):
         """When dependencies unavailable, dedup should gracefully disable."""
         # Force import error by removing the module
-        with patch.dict("sys.modules", {"ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator": None}):
+        with patch.dict(
+            "sys.modules", {"ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator": None}
+        ):
             generator = OntologyGenerator(enable_semantic_dedup=True)
-            
+
             assert generator.enable_semantic_dedup is False
             assert generator._semantic_deduplicator is None
 
@@ -83,7 +95,9 @@ class TestSemanticDeduplicationIntegration:
         relationships = [
             Relationship(id="r1", source_id="e1", target_id="e2", type="works_for", confidence=0.8)
         ]
-        result = EntityExtractionResult(entities=entities, relationships=relationships, confidence=0.85)
+        result = EntityExtractionResult(
+            entities=entities, relationships=relationships, confidence=0.85
+        )
 
         mock_dedup = Mock()
         mock_dedup.suggest_merges.return_value = []  # No suggestions
@@ -103,9 +117,13 @@ class TestSemanticDeduplicationIntegration:
         ]
         relationships = [
             Relationship(id="r1", source_id="e1", target_id="e3", type="works_for", confidence=0.8),
-            Relationship(id="r2", source_id="e2", target_id="e3", type="works_for", confidence=0.75),
+            Relationship(
+                id="r2", source_id="e2", target_id="e3", type="works_for", confidence=0.75
+            ),
         ]
-        result = EntityExtractionResult(entities=entities, relationships=relationships, confidence=0.85)
+        result = EntityExtractionResult(
+            entities=entities, relationships=relationships, confidence=0.85
+        )
 
         # Mock deduplicator suggesting e1 and e2 should merge
         mock_suggestion = Mock()
@@ -127,7 +145,7 @@ class TestSemanticDeduplicationIntegration:
 
         # Relationships should be remapped
         # Both relationships are kept (deduplicator may filter further or entity merger handles this)
-        assert len(deduped.relationships) == 2  
+        assert len(deduped.relationships) == 2
         assert all(r.source_id == "e1" for r in deduped.relationships)
         assert all(r.target_id == "e3" for r in deduped.relationships)
 
@@ -161,7 +179,9 @@ class TestSemanticDeduplicationIntegration:
         relationships = [
             Relationship(id="r1", source_id="e1", target_id="e2", type="same_as", confidence=0.95),
         ]
-        result = EntityExtractionResult(entities=entities, relationships=relationships, confidence=0.90)
+        result = EntityExtractionResult(
+            entities=entities, relationships=relationships, confidence=0.90
+        )
 
         mock_suggestion = Mock()
         mock_suggestion.entity1_id = "e1"
@@ -183,7 +203,9 @@ class TestSemanticDeduplicationIntegration:
         relationships = [
             Relationship(id="r1", source_id="e1", target_id="e1", type="knows", confidence=0.8),
         ]
-        result = EntityExtractionResult(entities=entities, relationships=relationships, confidence=0.87)
+        result = EntityExtractionResult(
+            entities=entities, relationships=relationships, confidence=0.87
+        )
 
         mock_dedup = Mock()
         mock_dedup.suggest_merges.return_value = []
@@ -193,14 +215,14 @@ class TestSemanticDeduplicationIntegration:
         # Verify deduplicator was called with correct arguments
         call_args = mock_dedup.suggest_merges.call_args
         ontology_dict = call_args[0][0]
-        
+
         assert "entities" in ontology_dict
         assert "relationships" in ontology_dict
         assert len(ontology_dict["entities"]) == 1
         assert ontology_dict["entities"][0]["id"] == "e1"
         assert ontology_dict["entities"][0]["text"] == "Alice"
         assert ontology_dict["entities"][0]["properties"] == {"age": 30}
-        
+
         assert call_args[1]["threshold"] == 0.88
         assert call_args[1]["max_suggestions"] == 10
 
@@ -270,13 +292,14 @@ class TestSemanticDeduplicationE2E:
     """End-to-end tests with real SemanticEntityDeduplicator (if available)."""
 
     @pytest.mark.skipif(
-        not _has_semantic_dedup_deps(),
-        reason="sentence-transformers not available"
+        not _has_semantic_dedup_deps(), reason="sentence-transformers not available"
     )
     def test_e2e_semantic_dedup_integration(self):
         """End-to-end test with real deduplicator."""
-        from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import SemanticEntityDeduplicator
-        
+        from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import (
+            SemanticEntityDeduplicator,
+        )
+
         # Create entities with semantic similarity
         # Use entity pairs that are very obviously similar for robust testing
         entities = [
@@ -286,22 +309,28 @@ class TestSemanticDeduplicationE2E:
             Entity(id="e4", text="AWS", type="Organization", confidence=0.75),
         ]
         relationships = [
-            Relationship(id="r1", source_id="e1", target_id="e3", type="partners_with", confidence=0.8),
-            Relationship(id="r2", source_id="e2", target_id="e4", type="partners_with", confidence=0.75),
+            Relationship(
+                id="r1", source_id="e1", target_id="e3", type="partners_with", confidence=0.8
+            ),
+            Relationship(
+                id="r2", source_id="e2", target_id="e4", type="partners_with", confidence=0.75
+            ),
         ]
-        result = EntityExtractionResult(entities=entities, relationships=relationships, confidence=0.85)
-        
+        result = EntityExtractionResult(
+            entities=entities, relationships=relationships, confidence=0.85
+        )
+
         # Create real deduplicator
         deduplicator = SemanticEntityDeduplicator()
-        
+
         # Apply semantic deduplication with lower threshold for more aggressive merging
         deduped = result.apply_semantic_dedup(deduplicator, threshold=0.75)
-        
+
         # Verify entities were deduplicated
         # Note: The exact number depends on embedding model's similarity scoring
         # We just verify that dedup was applied and metadata is correct
         assert len(deduped.entities) <= len(entities)
-        
+
         # Verify metadata
         assert deduped.metadata["semantic_dedup_applied"] is True
         assert deduped.metadata["semantic_dedup_threshold"] == 0.75

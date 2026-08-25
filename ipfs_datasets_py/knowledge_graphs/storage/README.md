@@ -31,7 +31,7 @@ from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend
 # Initialize backend
 backend = IPLDBackend(
     ipfs_client=ipfs_client,
-    codec="dag-cbor"  # or "dag-json"
+    codec="dag-cbor",  # or "dag-json"
 )
 
 # Store knowledge graph
@@ -46,18 +46,10 @@ retrieved_graph = await backend.retrieve(cid)
 Type definitions for storage operations.
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.storage.types import (
-    StorageFormat,
-    ChunkStrategy,
-    CIDTracker
-)
+from ipfs_datasets_py.knowledge_graphs.storage.types import StorageFormat, ChunkStrategy, CIDTracker
 
 # Define storage format
-format_spec = StorageFormat(
-    codec="dag-cbor",
-    compression=True,
-    chunking=ChunkStrategy.AUTO
-)
+format_spec = StorageFormat(codec="dag-cbor", compression=True, chunking=ChunkStrategy.AUTO)
 ```
 
 ## Usage Examples
@@ -69,26 +61,25 @@ from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend
 from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
 import asyncio
 
+
 async def store_and_retrieve():
     # Create knowledge graph
     graph = KnowledgeGraph()
-    graph.add_entity(Entity(
-        entity_id="e1",
-        entity_type="Person",
-        name="Alice",
-        properties={"age": 30}
-    ))
-    
+    graph.add_entity(
+        Entity(entity_id="e1", entity_type="Person", name="Alice", properties={"age": 30})
+    )
+
     # Initialize storage
     backend = IPLDBackend(ipfs_client=ipfs_client)
-    
+
     # Store graph
     cid = await backend.store(graph)
     print(f"Stored at CID: {cid}")
-    
+
     # Retrieve graph
     retrieved = await backend.retrieve(cid)
     print(f"Retrieved {len(retrieved.entities)} entities")
+
 
 asyncio.run(store_and_retrieve())
 ```
@@ -98,20 +89,22 @@ asyncio.run(store_and_retrieve())
 ```python
 from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend
 
+
 async def codec_comparison():
     backend_cbor = IPLDBackend(codec="dag-cbor")  # Binary, efficient
     backend_json = IPLDBackend(codec="dag-json")  # Human-readable
-    
+
     # Store with different codecs
     cbor_cid = await backend_cbor.store(graph)
     json_cid = await backend_json.store(graph)
-    
+
     print(f"CBOR CID: {cbor_cid}")
     print(f"JSON CID: {json_cid}")
-    
+
     # Both can be retrieved
     graph_from_cbor = await backend_cbor.retrieve(cbor_cid)
     graph_from_json = await backend_json.retrieve(json_cid)
+
 
 asyncio.run(codec_comparison())
 ```
@@ -123,12 +116,13 @@ from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend
 from ipfs_datasets_py.knowledge_graphs.exceptions import (
     IPLDStorageError,
     SerializationError,
-    DeserializationError
+    DeserializationError,
 )
+
 
 async def robust_storage():
     backend = IPLDBackend(ipfs_client=ipfs_client)
-    
+
     try:
         cid = await backend.store(graph)
         print(f"Stored successfully: {cid}")
@@ -139,6 +133,7 @@ async def robust_storage():
         print(f"IPFS connection failed: {e}")
         print(f"Backend: {e.details.get('backend')}")
 
+
 asyncio.run(robust_storage())
 ```
 
@@ -147,23 +142,25 @@ asyncio.run(robust_storage())
 ```python
 from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend
 
+
 async def store_large_graph():
     # Large graph with 100K+ entities
     large_graph = create_large_graph()
-    
+
     # Backend automatically chunks large graphs
     backend = IPLDBackend(
         ipfs_client=ipfs_client,
-        chunk_size=256 * 1024  # 256 KB chunks
+        chunk_size=256 * 1024,  # 256 KB chunks
     )
-    
+
     # Store returns root CID
     root_cid = await backend.store(large_graph)
     print(f"Large graph stored, root CID: {root_cid}")
-    
+
     # Retrieval loads chunks on-demand
     retrieved = await backend.retrieve(root_cid)
     print(f"Retrieved {len(retrieved.entities)} entities")
+
 
 asyncio.run(store_large_graph())
 ```
@@ -269,7 +266,7 @@ For large graphs, use chunking:
 ```python
 backend = IPLDBackend(
     chunk_size=256 * 1024,  # 256 KB chunks
-    chunk_links=True  # Use IPLD links between chunks
+    chunk_links=True,  # Use IPLD links between chunks
 )
 ```
 
@@ -280,7 +277,7 @@ Enable caching for frequently accessed graphs:
 ```python
 backend = IPLDBackend(
     enable_cache=True,
-    cache_size=100  # Cache up to 100 graphs
+    cache_size=100,  # Cache up to 100 graphs
 )
 
 # First retrieval: loads from IPFS
@@ -296,14 +293,10 @@ Store/retrieve multiple graphs in parallel:
 
 ```python
 # Store multiple graphs
-cids = await asyncio.gather(*[
-    backend.store(graph) for graph in graphs
-])
+cids = await asyncio.gather(*[backend.store(graph) for graph in graphs])
 
 # Retrieve multiple graphs
-graphs = await asyncio.gather(*[
-    backend.retrieve(cid) for cid in cids
-])
+graphs = await asyncio.gather(*[backend.retrieve(cid) for cid in cids])
 ```
 
 ## Error Handling
@@ -312,10 +305,10 @@ The storage module uses specific exceptions:
 
 ```python
 from ipfs_datasets_py.knowledge_graphs.exceptions import (
-    StorageError,          # Base storage exception
-    IPLDStorageError,      # IPFS/IPLD specific errors
-    SerializationError,    # Failed to serialize graph
-    DeserializationError   # Failed to deserialize graph
+    StorageError,  # Base storage exception
+    IPLDStorageError,  # IPFS/IPLD specific errors
+    SerializationError,  # Failed to serialize graph
+    DeserializationError,  # Failed to deserialize graph
 )
 
 try:

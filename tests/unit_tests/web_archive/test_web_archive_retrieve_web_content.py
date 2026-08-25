@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import pytest
 
-from ipfs_datasets_py.processors.web_archiving.web_archive import archive_web_content, retrieve_web_content
+from ipfs_datasets_py.processors.web_archiving.web_archive import (
+    archive_web_content,
+    retrieve_web_content,
+)
 
 
 SUCCESS_STATUS = "success"
@@ -67,8 +70,8 @@ def success_mock_data_complete():
             "url": EXAMPLE_URL,
             "timestamp": EXAMPLE_TIMESTAMP,
             "metadata": {},
-            "status": "archived"
-        }
+            "status": "archived",
+        },
     }
 
 
@@ -92,7 +95,9 @@ class TestRetrieveWebContent:
         THEN return dict with status="success"
         """
         result = retrieve_web_content(archived_id)
-        assert result["status"] == SUCCESS_STATUS, f"Expected status {SUCCESS_STATUS}, got {result['status']}"
+        assert result["status"] == SUCCESS_STATUS, (
+            f"Expected status {SUCCESS_STATUS}, got {result['status']}"
+        )
 
     def test_when_nonexistent_id_then_error_status(self):
         """
@@ -101,7 +106,9 @@ class TestRetrieveWebContent:
         THEN return dict with status="error"
         """
         result = retrieve_web_content(NONEXISTENT_ID)
-        assert result["status"] == ERROR_STATUS, f"Expected status {ERROR_STATUS}, got {result['status']}"
+        assert result["status"] == ERROR_STATUS, (
+            f"Expected status {ERROR_STATUS}, got {result['status']}"
+        )
 
     @pytest.mark.parametrize("field", ["status", "data"])
     def test_when_success_then_contains_data(self, field):
@@ -122,7 +129,9 @@ class TestRetrieveWebContent:
         THEN dict contains status, data keys
         """
         result = retrieve_web_content(archived_id)
-        assert field in result["data"], f"Expected '{field}' key in result['data'], got keys: {result['data'].keys()}"
+        assert field in result["data"], (
+            f"Expected '{field}' key in result['data'], got keys: {result['data'].keys()}"
+        )
 
     def test_when_nonexistent_id_then_contains_message(self):
         """
@@ -131,7 +140,9 @@ class TestRetrieveWebContent:
         THEN return dict contains message about not found
         """
         result = retrieve_web_content(NONEXISTENT_ID)
-        assert NOT_FOUND_MSG in result["message"].lower(), f"Expected '{NOT_FOUND_MSG}' in message, got {result['message']}"
+        assert NOT_FOUND_MSG in result["message"].lower(), (
+            f"Expected '{NOT_FOUND_MSG}' in message, got {result['message']}"
+        )
 
     def test_when_nonexistent_id_then_no_data(self):
         """
@@ -140,7 +151,9 @@ class TestRetrieveWebContent:
         THEN no data key in return dict
         """
         result = retrieve_web_content(NONEXISTENT_ID)
-        assert "data" not in result, f"Expected no 'data' key in error result, got keys: {result.keys()}"
+        assert "data" not in result, (
+            f"Expected no 'data' key in error result, got keys: {result.keys()}"
+        )
 
     def test_when_success_then_no_message(self, archived_id):
         """
@@ -149,8 +162,9 @@ class TestRetrieveWebContent:
         THEN does not contain message key
         """
         result = retrieve_web_content(archived_id)
-        assert "message" not in result, f"Expected no 'message' key in success result, got keys: {result.keys()}"
-
+        assert "message" not in result, (
+            f"Expected no 'message' key in success result, got keys: {result.keys()}"
+        )
 
     def test_when_error_then_contains_message(self):
         """
@@ -159,8 +173,9 @@ class TestRetrieveWebContent:
         THEN message string describes error
         """
         result = retrieve_web_content(NONEXISTENT_ID)
-        assert "message" in result, f"Expected 'message' key in error result, got keys: {result.keys()}"
-
+        assert "message" in result, (
+            f"Expected 'message' key in error result, got keys: {result.keys()}"
+        )
 
     def test_when_success_then_data_contains_correct_values(self, archived_id):
         """Given archived content, retrieval echoes key fields."""
@@ -177,7 +192,9 @@ class TestRetrieveWebContent:
         """
         expected_metadata = {"title": EXAMPLE_TITLE}
         result = retrieve_web_content(archived_id)
-        assert result["data"]["metadata"] == expected_metadata, f"Expected metadata {expected_metadata}, got {result['data']['metadata']}"
+        assert result["data"]["metadata"] == expected_metadata, (
+            f"Expected metadata {expected_metadata}, got {result['data']['metadata']}"
+        )
 
 
 if __name__ == "__main__":

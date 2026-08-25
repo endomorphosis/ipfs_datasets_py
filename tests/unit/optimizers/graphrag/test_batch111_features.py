@@ -6,6 +6,7 @@ Methods under test:
   - EntityExtractionResult.entities_of_type(etype)
   - OntologyCritic.percentile_overall(scores, p)
 """
+
 import pytest
 
 
@@ -13,18 +14,22 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _entity(eid, etype="Person", text="Alice", confidence=0.9):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type=etype, text=text, confidence=confidence)
 
 
 def _relationship(rid, src, tgt, rtype="knows"):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
     return Relationship(id=rid, source_id=src, target_id=tgt, type=rtype)
 
 
 def _result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -34,24 +39,28 @@ def _result(entities=None, relationships=None):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_critic_score(overall_approx=0.7):
     """Make a CriticScore where all dims are equal (so overall ≈ each dim)."""
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     return CriticScore(
         completeness=overall_approx,
         consistency=overall_approx,
         clarity=overall_approx,
         granularity=overall_approx,
-        relationship_coherence=overall_approx, domain_alignment=overall_approx,
+        relationship_coherence=overall_approx,
+        domain_alignment=overall_approx,
     )
 
 
 # ---------------------------------------------------------------------------
 # EntityExtractionResult.is_empty
 # ---------------------------------------------------------------------------
+
 
 class TestIsEmpty:
     def test_empty_result(self):
@@ -75,6 +84,7 @@ class TestIsEmpty:
 # EntityExtractionResult.has_relationships
 # ---------------------------------------------------------------------------
 
+
 class TestHasRelationships:
     def test_no_relationships_false(self):
         r = _result([_entity("e1")])
@@ -95,6 +105,7 @@ class TestHasRelationships:
 # ---------------------------------------------------------------------------
 # EntityExtractionResult.entities_of_type
 # ---------------------------------------------------------------------------
+
 
 class TestEntitiesOfType:
     def test_empty_result(self):
@@ -118,11 +129,13 @@ class TestEntitiesOfType:
         assert result == []
 
     def test_multiple_matches(self):
-        r = _result([
-            _entity("e1", "Person"),
-            _entity("e2", "Person"),
-            _entity("e3", "Place"),
-        ])
+        r = _result(
+            [
+                _entity("e1", "Person"),
+                _entity("e2", "Person"),
+                _entity("e3", "Place"),
+            ]
+        )
         result = r.entities_of_type("Person")
         assert len(result) == 2
 
@@ -130,6 +143,7 @@ class TestEntitiesOfType:
 # ---------------------------------------------------------------------------
 # OntologyCritic.percentile_overall  (new method to add)
 # ---------------------------------------------------------------------------
+
 
 class TestPercentileOverall:
     def test_empty_scores_returns_zero(self):

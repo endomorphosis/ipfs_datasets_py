@@ -128,6 +128,7 @@ ModuleNotFoundError: No module named 'ipfs_datasets_py'
 3. **Verify Python path:**
    ```python
    import sys
+
    print(sys.path)
    # Should include package directory
    ```
@@ -245,7 +246,8 @@ DeprecationWarning: ipfs_datasets_py.logic.integrations.phase7_complete_integrat
 2. **Suppress warnings (not recommended):**
    ```python
    import warnings
-   warnings.filterwarnings('ignore', category=DeprecationWarning)
+
+   warnings.filterwarnings("ignore", category=DeprecationWarning)
    ```
 
 ### Problem: "ZKP simulation warning"
@@ -281,7 +283,7 @@ NOT cryptographically secure!
 ```python
 result = converter.convert("complex sentence")
 print(result.success)  # False
-print(result.errors)   # ["Parsing failed", ...]
+print(result.errors)  # ["Parsing failed", ...]
 ```
 
 **Solutions:**
@@ -290,9 +292,10 @@ print(result.errors)   # ["Parsing failed", ...]
    ```python
    # Good inputs:
    "All X are Y"
+
    "P -> Q"
    "If P then Q"
-   
+
    # Bad inputs:
    ""  # Empty
    None  # Not a string
@@ -428,13 +431,13 @@ print(result.output.confidence)  # 0.65 (seems low)
 4. **Profile your code:**
    ```python
    import time
-   
+
    start = time.time()
    result = converter.convert("text")
    elapsed = time.time() - start
-   
-   print(f"Conversion took {elapsed*1000:.2f}ms")
-   
+
+   print(f"Conversion took {elapsed * 1000:.2f}ms")
+
    # If >50ms without cache, check:
    # 1. SymbolicAI installed?
    # 2. Complex input?
@@ -471,7 +474,8 @@ print(result.output.confidence)  # 0.65 (seems low)
        converter = FOLConverter()
        for text in texts:
            yield converter.convert(text)
-   
+
+
    # Memory efficient
    for result in process_stream(large_dataset):
        handle_result(result)
@@ -489,11 +493,12 @@ print(result.output.confidence)  # 0.65 (seems low)
 1. **Ensure enough workers:**
    ```python
    import os
+
    cpu_count = os.cpu_count()
-   
+
    results = converter.convert_batch(
        texts,
-       max_workers=cpu_count  # Use all CPUs
+       max_workers=cpu_count,  # Use all CPUs
    )
    ```
 
@@ -506,12 +511,12 @@ print(result.output.confidence)  # 0.65 (seems low)
 3. **Profile batch size:**
    ```python
    import time
-   
+
    for batch_size in [10, 50, 100, 500]:
        start = time.time()
        results = converter.convert_batch(texts[:batch_size])
        elapsed = time.time() - start
-       print(f"Batch {batch_size}: {elapsed:.2f}s ({elapsed/batch_size*1000:.1f}ms per item)")
+       print(f"Batch {batch_size}: {elapsed:.2f}s ({elapsed / batch_size * 1000:.1f}ms per item)")
    ```
 
 ---
@@ -642,8 +647,10 @@ Missing Features: 5
 3. **Check import manually:**
    ```python
    import sys
+
    try:
        import symbolicai
+
        print("SymbolicAI OK")
    except ImportError as e:
        print(f"SymbolicAI missing: {e}")
@@ -667,6 +674,7 @@ FeatureDetector.has_spacy_model()  # False
 2. **Verify model:**
    ```python
    import spacy
+
    nlp = spacy.load("en_core_web_sm")
    print("Model loaded OK")
    ```
@@ -699,11 +707,9 @@ ImportError: No module named 'symbolicai'
    ```python
    # Good test pattern:
    import pytest
-   
-   @pytest.mark.skipif(
-       not FeatureDetector.has_symbolicai(),
-       reason="SymbolicAI not available"
-   )
+
+
+   @pytest.mark.skipif(not FeatureDetector.has_symbolicai(), reason="SymbolicAI not available")
    def test_symbolic_feature():
        # Test code
        pass
@@ -733,10 +739,7 @@ ImportError: No module named 'symbolicai'
 
 2. **Use feature detection in tests:**
    ```python
-   @pytest.mark.skipif(
-       not FeatureDetector.has_z3(),
-       reason="Z3 not available in CI"
-   )
+   @pytest.mark.skipif(not FeatureDetector.has_z3(), reason="Z3 not available in CI")
    def test_z3_proof():
        # Test code
        pass
@@ -778,7 +781,7 @@ else:
 # Increase cache size or clear periodically
 converter = FOLConverter(
     use_cache=True,
-    cache_size=10000  # Default: 1000
+    cache_size=10000,  # Default: 1000
 )
 ```
 

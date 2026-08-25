@@ -10,6 +10,7 @@ Usage:
     python setup_periodic_updates.py --preset daily_us_code
     python setup_periodic_updates.py --custom
 """
+
 import argparse
 import anyio
 import sys
@@ -21,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
     create_schedule,
     list_schedules,
-    run_schedule_now
+    run_schedule_now,
 )
 
 
@@ -38,8 +39,8 @@ async def setup_daily_us_code():
                 "titles": None,  # All titles
                 "output_format": "json",
                 "include_metadata": True,
-                "rate_limit_delay": 1.0
-            }
+                "rate_limit_delay": 1.0,
+            },
         )
         print(f"✓ Daily US Code schedule created: {result['schedule_id']}")
         return result
@@ -53,11 +54,11 @@ async def setup_daily_federal_register():
     print("Setting up daily Federal Register updates...")
     try:
         from datetime import datetime, timedelta
-        
+
         # Get last 7 days of documents
         end_date = datetime.now()
         start_date = end_date - timedelta(days=7)
-        
+
         result = await create_schedule(
             schedule_id="daily_federal_register",
             schedule_type="federal_register",
@@ -70,8 +71,8 @@ async def setup_daily_federal_register():
                 "document_types": None,
                 "output_format": "json",
                 "include_full_text": False,
-                "rate_limit_delay": 1.0
-            }
+                "rate_limit_delay": 1.0,
+            },
         )
         print(f"✓ Daily Federal Register schedule created: {result['schedule_id']}")
         return result
@@ -94,8 +95,8 @@ async def setup_daily_state_laws():
                 "legal_areas": None,
                 "output_format": "json",
                 "include_metadata": True,
-                "rate_limit_delay": 2.0
-            }
+                "rate_limit_delay": 2.0,
+            },
         )
         print(f"✓ Daily State Laws schedule created: {result['schedule_id']}")
         return result
@@ -118,8 +119,8 @@ async def setup_weekly_all_states():
                 "legal_areas": None,
                 "output_format": "json",
                 "include_metadata": True,
-                "rate_limit_delay": 2.0
-            }
+                "rate_limit_delay": 2.0,
+            },
         )
         print(f"✓ Weekly All States schedule created: {result['schedule_id']}")
         return result
@@ -131,7 +132,7 @@ async def setup_weekly_all_states():
 async def setup_custom_schedule():
     """Interactive setup for custom schedule."""
     print("\n=== Custom Schedule Setup ===")
-    
+
     try:
         # Get schedule type
         print("\nSelect dataset type:")
@@ -139,25 +140,21 @@ async def setup_custom_schedule():
         print("2. Federal Register")
         print("3. State Laws")
         choice = input("Enter choice (1-3): ").strip()
-        
-        schedule_types = {
-            "1": "us_code",
-            "2": "federal_register",
-            "3": "state_laws"
-        }
-        
+
+        schedule_types = {"1": "us_code", "2": "federal_register", "3": "state_laws"}
+
         if choice not in schedule_types:
             print("Invalid choice!")
             return None
-        
+
         schedule_type = schedule_types[choice]
-        
+
         # Get schedule ID
         schedule_id = input("\nEnter schedule ID (e.g., 'my_daily_updates'): ").strip()
         if not schedule_id:
             print("Schedule ID is required!")
             return None
-        
+
         # Get interval
         print("\nHow often should updates run?")
         print("1. Every 6 hours")
@@ -165,13 +162,9 @@ async def setup_custom_schedule():
         print("3. Weekly (168 hours)")
         print("4. Custom interval")
         interval_choice = input("Enter choice (1-4): ").strip()
-        
-        intervals = {
-            "1": 6,
-            "2": 24,
-            "3": 168
-        }
-        
+
+        intervals = {"1": 6, "2": 24, "3": 168}
+
         if interval_choice in intervals:
             interval_hours = intervals[interval_choice]
         elif interval_choice == "4":
@@ -186,22 +179,23 @@ async def setup_custom_schedule():
         else:
             print("Invalid choice!")
             return None
-        
+
         # Build configuration based on type
         config = {}
-        
+
         if schedule_type == "us_code":
             config = {
                 "titles": None,
                 "output_format": "json",
                 "include_metadata": True,
-                "rate_limit_delay": 1.0
+                "rate_limit_delay": 1.0,
             }
         elif schedule_type == "federal_register":
             from datetime import datetime, timedelta
+
             end_date = datetime.now()
             start_date = end_date - timedelta(days=7)
-            
+
             config = {
                 "agencies": None,
                 "start_date": start_date.strftime("%Y-%m-%d"),
@@ -209,32 +203,36 @@ async def setup_custom_schedule():
                 "document_types": None,
                 "output_format": "json",
                 "include_full_text": False,
-                "rate_limit_delay": 1.0
+                "rate_limit_delay": 1.0,
             }
         elif schedule_type == "state_laws":
             states_input = input("\nEnter states (comma-separated, or 'all'): ").strip()
-            states = None if states_input.lower() == "all" else [s.strip() for s in states_input.split(",")]
-            
+            states = (
+                None
+                if states_input.lower() == "all"
+                else [s.strip() for s in states_input.split(",")]
+            )
+
             config = {
                 "states": states,
                 "legal_areas": None,
                 "output_format": "json",
                 "include_metadata": True,
-                "rate_limit_delay": 2.0
+                "rate_limit_delay": 2.0,
             }
-        
+
         # Create schedule
         result = await create_schedule(
             schedule_id=schedule_id,
             schedule_type=schedule_type,
             interval_hours=interval_hours,
             enabled=True,
-            config=config
+            config=config,
         )
-        
+
         print(f"\n✓ Custom schedule created: {result['schedule_id']}")
         return result
-        
+
     except KeyboardInterrupt:
         print("\n\nSetup cancelled by user.")
         return None
@@ -247,14 +245,14 @@ async def list_existing_schedules():
     """List all existing schedules."""
     print("\n=== Existing Schedules ===")
     result = await list_schedules()
-    
-    schedules = result.get('schedules', [])
+
+    schedules = result.get("schedules", [])
     if not schedules:
         print("No schedules configured yet.")
         return
-    
+
     for schedule in schedules:
-        enabled_status = "✓ Enabled" if schedule.get('enabled') else "✗ Disabled"
+        enabled_status = "✓ Enabled" if schedule.get("enabled") else "✗ Disabled"
         print(f"\n{schedule['schedule_id']} ({enabled_status})")
         print(f"  Type: {schedule.get('schedule_type', 'unknown')}")
         print(f"  Interval: {schedule['interval_hours']} hours")
@@ -279,80 +277,75 @@ Examples:
   
   # List existing schedules
   python setup_periodic_updates.py --list
-        """
+        """,
     )
-    
+
     parser.add_argument(
-        '--preset',
-        choices=['daily_us_code', 'daily_federal_register', 'daily_state_laws', 
-                 'weekly_all_states', 'all'],
-        help='Use a preset configuration'
+        "--preset",
+        choices=[
+            "daily_us_code",
+            "daily_federal_register",
+            "daily_state_laws",
+            "weekly_all_states",
+            "all",
+        ],
+        help="Use a preset configuration",
     )
-    
+
+    parser.add_argument("--custom", action="store_true", help="Interactive custom schedule setup")
+
+    parser.add_argument("--list", action="store_true", help="List existing schedules")
+
     parser.add_argument(
-        '--custom',
-        action='store_true',
-        help='Interactive custom schedule setup'
+        "--run-now", metavar="SCHEDULE_ID", help="Run a specific schedule immediately (for testing)"
     )
-    
-    parser.add_argument(
-        '--list',
-        action='store_true',
-        help='List existing schedules'
-    )
-    
-    parser.add_argument(
-        '--run-now',
-        metavar='SCHEDULE_ID',
-        help='Run a specific schedule immediately (for testing)'
-    )
-    
+
     args = parser.parse_args()
-    
+
     # If no arguments, show help
     if not any([args.preset, args.custom, args.list, args.run_now]):
         parser.print_help()
         return
-    
+
     # List existing schedules
     if args.list:
         await list_existing_schedules()
         return
-    
+
     # Run schedule now
     if args.run_now:
         print(f"Running schedule {args.run_now} now...")
         result = await run_schedule_now(args.run_now)
-        if result.get('status') == 'success':
+        if result.get("status") == "success":
             print("✓ Schedule executed successfully!")
             print(f"Results: {result.get('result', {})}")
         else:
             print(f"✗ Schedule execution failed: {result.get('error')}")
         return
-    
+
     # Setup presets
     if args.preset:
-        if args.preset == 'daily_us_code':
+        if args.preset == "daily_us_code":
             await setup_daily_us_code()
-        elif args.preset == 'daily_federal_register':
+        elif args.preset == "daily_federal_register":
             await setup_daily_federal_register()
-        elif args.preset == 'daily_state_laws':
+        elif args.preset == "daily_state_laws":
             await setup_daily_state_laws()
-        elif args.preset == 'weekly_all_states':
+        elif args.preset == "weekly_all_states":
             await setup_weekly_all_states()
-        elif args.preset == 'all':
+        elif args.preset == "all":
             await setup_daily_us_code()
             await setup_daily_federal_register()
             await setup_daily_state_laws()
             await setup_weekly_all_states()
-        
+
         print("\n✓ Setup complete!")
         print("\nTo view your schedules, run:")
         print("  python setup_periodic_updates.py --list")
         print("\nTo test a schedule immediately, run:")
         print("  python setup_periodic_updates.py --run-now <schedule_id>")
         return
-    
+
     # Custom setup
     if args.custom:
         await setup_custom_schedule()

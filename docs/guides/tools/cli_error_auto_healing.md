@@ -71,8 +71,8 @@ except Exception as e:
         command="my-command",
         args=["arg1", "arg2"],
         logs=get_recent_logs(),  # Optional
-        context={'custom': 'data'},  # Optional
-        create_issue=True
+        context={"custom": "data"},  # Optional
+        create_issue=True,
     )
     raise  # Re-raise to exit with error code
 ```
@@ -163,12 +163,14 @@ from ipfs_datasets_py.error_reporting.cli_error_reporter import install_cli_erro
 # Install error handler at the start of your CLI
 install_cli_error_handler()
 
+
 # Rest of your CLI code...
 def main():
     # Your CLI logic
     pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
 ```
 
@@ -292,20 +294,21 @@ def load_dataset(name):
         raise ValueError(f"Invalid dataset name: '{name}'")
     # ... rest of the function
 
+
 # When this error occurs, the system creates:
 {
-    'source': 'cli_tool',
-    'command': 'ipfs-datasets',
-    'args': ['dataset', 'load', 'invalid-name'],
-    'error_type': 'ValueError',
-    'error_message': "Invalid dataset name: 'invalid-name'",
-    'stack_trace': 'Traceback (most recent call last)...',
-    'timestamp': '2024-01-30T23:00:00.000Z',
-    'python_version': '3.12.0 (main, Oct  2 2023, 12:00:00)',
-    'platform': 'linux',
-    'cwd': '/home/user/project',
-    'logs': 'Recent log output...',
-    'logs_truncated': False
+    "source": "cli_tool",
+    "command": "ipfs-datasets",
+    "args": ["dataset", "load", "invalid-name"],
+    "error_type": "ValueError",
+    "error_message": "Invalid dataset name: 'invalid-name'",
+    "stack_trace": "Traceback (most recent call last)...",
+    "timestamp": "2024-01-30T23:00:00.000Z",
+    "python_version": "3.12.0 (main, Oct  2 2023, 12:00:00)",
+    "platform": "linux",
+    "cwd": "/home/user/project",
+    "logs": "Recent log output...",
+    "logs_truncated": False,
 }
 ```
 

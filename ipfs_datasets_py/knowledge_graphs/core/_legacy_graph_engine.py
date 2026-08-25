@@ -46,9 +46,7 @@ class _LegacyGraphEngine:
         logger.debug("GraphEngine initialized (persistence=%s)", self._enable_persistence)
 
     def create_node(
-        self,
-        labels: Optional[List[str]] = None,
-        properties: Optional[Dict[str, Any]] = None
+        self, labels: Optional[List[str]] = None, properties: Optional[Dict[str, Any]] = None
     ) -> Node:
         """
         Create a new node.
@@ -68,21 +66,13 @@ class _LegacyGraphEngine:
         """
         node_id = self._generate_node_id()
 
-        node = Node(
-            node_id=node_id,
-            labels=labels or [],
-            properties=properties or {}
-        )
+        node = Node(node_id=node_id, labels=labels or [], properties=properties or {})
 
         self._node_cache[node_id] = node
 
         if self._enable_persistence and self.storage:
             try:
-                node_data = {
-                    "id": node_id,
-                    "labels": labels or [],
-                    "properties": properties or {}
-                }
+                node_data = {"id": node_id, "labels": labels or [], "properties": properties or {}}
                 cid = self.storage.store(node_data, pin=True, codec="dag-json")
                 self._node_cache[f"cid:{node_id}"] = cid
                 logger.debug("Node %s persisted with CID: %s", node_id, cid)
@@ -115,7 +105,7 @@ class _LegacyGraphEngine:
                     node = Node(
                         node_id=node_data["id"],
                         labels=node_data.get("labels", []),
-                        properties=node_data.get("properties", {})
+                        properties=node_data.get("properties", {}),
                     )
                     self._node_cache[node_id] = node
                     logger.debug("Node %s loaded from IPLD (CID: %s)", node_id, cid)
@@ -126,11 +116,7 @@ class _LegacyGraphEngine:
         logger.debug("Node not found: %s", node_id)
         return None
 
-    def update_node(
-        self,
-        node_id: str,
-        properties: Dict[str, Any]
-    ) -> Optional[Node]:
+    def update_node(self, node_id: str, properties: Dict[str, Any]) -> Optional[Node]:
         """
         Update node properties.
 
@@ -151,11 +137,7 @@ class _LegacyGraphEngine:
 
         if self._enable_persistence and self.storage:
             try:
-                node_data = {
-                    "id": node_id,
-                    "labels": node._labels,
-                    "properties": node._properties
-                }
+                node_data = {"id": node_id, "labels": node._labels, "properties": node._properties}
                 cid = self.storage.store(node_data, pin=True, codec="dag-json")
                 self._node_cache[f"cid:{node_id}"] = cid
                 logger.debug("Node %s updated in storage (CID: %s)", node_id, cid)
@@ -192,7 +174,7 @@ class _LegacyGraphEngine:
         rel_type: str,
         start_node: str,
         end_node: str,
-        properties: Optional[Dict[str, Any]] = None
+        properties: Optional[Dict[str, Any]] = None,
     ) -> Relationship:
         """
         Create a relationship between two nodes.
@@ -213,7 +195,7 @@ class _LegacyGraphEngine:
             rel_type=rel_type,
             start_node=start_node,
             end_node=end_node,
-            properties=properties or {}
+            properties=properties or {},
         )
 
         self._relationship_cache[rel_id] = relationship
@@ -225,7 +207,7 @@ class _LegacyGraphEngine:
                     "type": rel_type,
                     "start_node": start_node,
                     "end_node": end_node,
-                    "properties": properties or {}
+                    "properties": properties or {},
                 }
                 cid = self.storage.store(rel_data, pin=True, codec="dag-json")
                 self._relationship_cache[f"cid:{rel_id}"] = cid
@@ -274,7 +256,7 @@ class _LegacyGraphEngine:
         self,
         labels: Optional[List[str]] = None,
         properties: Optional[Dict[str, Any]] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> List[Node]:
         """
         Find nodes matching criteria.
@@ -315,11 +297,13 @@ class _LegacyGraphEngine:
     def _generate_node_id(self) -> str:
         """Generate a unique node ID."""
         import uuid
+
         return f"node-{uuid.uuid4().hex[:12]}"
 
     def _generate_relationship_id(self) -> str:
         """Generate a unique relationship ID."""
         import uuid
+
         return f"rel-{uuid.uuid4().hex[:12]}"
 
     def save_graph(self) -> Optional[str]:
@@ -337,22 +321,22 @@ class _LegacyGraphEngine:
             nodes = []
             for key, value in self._node_cache.items():
                 if not key.startswith("cid:") and isinstance(value, Node):
-                    nodes.append({
-                        "id": value._id,
-                        "labels": value._labels,
-                        "properties": value._properties
-                    })
+                    nodes.append(
+                        {"id": value._id, "labels": value._labels, "properties": value._properties}
+                    )
 
             relationships = []
             for key, value in self._relationship_cache.items():
                 if not key.startswith("cid:") and isinstance(value, Relationship):
-                    relationships.append({
-                        "id": value._id,
-                        "type": value._type,
-                        "start_node": value._start_node,
-                        "end_node": value._end_node,
-                        "properties": value._properties
-                    })
+                    relationships.append(
+                        {
+                            "id": value._id,
+                            "type": value._type,
+                            "start_node": value._start_node,
+                            "end_node": value._end_node,
+                            "properties": value._properties,
+                        }
+                    )
 
             cid = self.storage.store_graph(
                 nodes=nodes,
@@ -360,13 +344,15 @@ class _LegacyGraphEngine:
                 metadata={
                     "node_count": len(nodes),
                     "relationship_count": len(relationships),
-                    "version": "1.0"
-                }
+                    "version": "1.0",
+                },
             )
 
             logger.info(
                 "Graph saved with CID: %s (%d nodes, %d relationships)",
-                cid, len(nodes), len(relationships)
+                cid,
+                len(nodes),
+                len(relationships),
             )
             return cid
         except StorageError as e:
@@ -397,7 +383,7 @@ class _LegacyGraphEngine:
                 node = Node(
                     node_id=node_data["id"],
                     labels=node_data.get("labels", []),
-                    properties=node_data.get("properties", {})
+                    properties=node_data.get("properties", {}),
                 )
                 self._node_cache[node.id] = node
 
@@ -407,27 +393,28 @@ class _LegacyGraphEngine:
                     rel_type=rel_data["type"],
                     start_node=rel_data["start_node"],
                     end_node=rel_data["end_node"],
-                    properties=rel_data.get("properties", {})
+                    properties=rel_data.get("properties", {}),
                 )
                 self._relationship_cache[rel.id] = rel
 
             logger.info(
                 "Graph loaded from CID: %s (%d nodes, %d relationships)",
-                root_cid, len(self._node_cache), len(self._relationship_cache)
+                root_cid,
+                len(self._node_cache),
+                len(self._relationship_cache),
             )
             return True
         except StorageError as e:
             logger.error(
                 "Failed to load graph from %s (%s): %s",
-                root_cid, type(e).__name__, e,
+                root_cid,
+                type(e).__name__,
+                e,
             )
             return False
 
     def get_relationships(
-        self,
-        node_id: str,
-        direction: str = "out",
-        rel_type: Optional[str] = None
+        self, node_id: str, direction: str = "out", rel_type: Optional[str] = None
     ) -> List[Relationship]:
         """
         Get relationships for a node with optional filtering.
@@ -468,15 +455,15 @@ class _LegacyGraphEngine:
 
         logger.debug(
             "Found %d relationships for node %s (direction=%s, type=%s)",
-            len(results), node_id, direction, rel_type
+            len(results),
+            node_id,
+            direction,
+            rel_type,
         )
         return results
 
     def traverse_pattern(
-        self,
-        start_nodes: List[Node],
-        pattern: List[Dict[str, Any]],
-        limit: Optional[int] = None
+        self, start_nodes: List[Node], pattern: List[Dict[str, Any]], limit: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """
         Traverse a graph pattern starting from given nodes.
@@ -505,7 +492,7 @@ class _LegacyGraphEngine:
                         rels = self.get_relationships(
                             last_node.id,
                             direction=step.get("direction", "out"),
-                            rel_type=step.get("rel_type")
+                            rel_type=step.get("rel_type"),
                         )
 
                         for rel in rels:
@@ -551,7 +538,7 @@ class _LegacyGraphEngine:
         start_node_id: str,
         end_node_id: str,
         max_depth: int = 5,
-        rel_type: Optional[str] = None
+        rel_type: Optional[str] = None,
     ) -> List[List[Relationship]]:
         """
         Find paths between two nodes using BFS with cycle detection.
@@ -591,8 +578,5 @@ class _LegacyGraphEngine:
                 new_visited.add(target_id)
                 queue.append((target_id, path + [rel], new_visited))
 
-        logger.debug(
-            "Found %d paths from %s to %s",
-            len(paths), start_node_id, end_node_id
-        )
+        logger.debug("Found %d paths from %s to %s", len(paths), start_node_id, end_node_id)
         return paths

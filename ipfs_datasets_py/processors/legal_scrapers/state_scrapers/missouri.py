@@ -3,15 +3,38 @@
 This module contains the scraper for Missouri statutes from the official state legislative website.
 """
 
+import json
 import re
-from typing import List, Dict, Optional
+import ssl
+import urllib.request
+from typing import Any, Dict, List, Optional
 from urllib.parse import parse_qs, urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
+_SECONDARY_HOST_MARKERS = (
+    "justia.com",
+    "findlaw.com",
+    "unicourt.github.io",
+    "law.cornell.edu",
+)
+
 
 class MissouriScraper(BaseStateScraper):
     """Scraper for Missouri state laws from http://www.moga.mo.gov"""
+
+    OFFICIAL_DOMAIN = "revisor.mo.gov"
+    OFFICIAL_ENTRY_PATH = "/main/Home.aspx"
+    OFFICIAL_ENTRY_URL = "https://revisor.mo.gov/main/Home.aspx"
+    _MO_CHAPTER_RE = re.compile(
+        r"OneChapter\.aspx\?chapter=(?P<chapter>\d+[A-Za-z]?)\b",
+        re.IGNORECASE,
+    )
+    OFFICIAL_NUMERIC_CHAPTERS = tuple(range(1, 702))
+    OFFICIAL_LETTERED_CHAPTERS = (
+        "1A", "2A", "8A", "9A", "10A", "11A", "67A", "135A", "160A",
+        "208A", "217A", "260A", "376A", "407A", "620A",
+    )
     
     def get_base_url(self) -> str:
         """Return the base URL for Missouri's legislative website."""
@@ -40,23 +63,41 @@ class MissouriScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
-        # Use custom scraper with Missouri-specific patterns
-        fallback = await self._custom_scrape_missouri(
+        from .missouri_constitution import (
+            configured_constitution_html_path,
+            parse_missouri_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_missouri_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Missouri Constitution",
+                    source_url="https://revisor.mo.gov/main/OneSection.aspx?constit=y",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        official = await self._custom_scrape_missouri(
             code_name,
             code_url,
             "Mo. Rev. Stat.",
-            max_sections=limit or 1000000,
+            max_sections=limit,
         )
-        if fallback:
-            if limit is not None:
-                return fallback[:limit]
-            return list(fallback)
+        official = self._filter_official_host_statutes(official)
+        if official:
+            return official if limit is None else official[: int(limit)]
 
-        if not self._full_corpus_enabled():
-            direct = await self._scrape_direct_sections(code_name, max_statutes=limit or 2)
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct = await self._scrape_direct_sections(
+                code_name,
+                max_statutes=max(1, int(limit or 2)),
+            )
+            direct = self._filter_official_host_statutes(direct)
             if direct:
-                return direct
+                return direct if limit is None else direct[: int(limit)]
         return []
 
     async def _scrape_direct_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
@@ -100,13 +141,30 @@ class MissouriScraper(BaseStateScraper):
                 )
             )
         return statutes
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        if any(marker in host for marker in _SECONDARY_HOST_MARKERS):
+            return False
+        return host == "revisor.mo.gov" or host.endswith(".revisor.mo.gov")
+
+    def _filter_official_host_statutes(
+        self, statutes: List[NormalizedStatute]
+    ) -> List[NormalizedStatute]:
+        return [
+            statute
+            for statute in statutes
+            if self._host_is_official(str(statute.source_url or ""))
+        ]
     
     async def _custom_scrape_missouri(
         self,
         code_name: str,
         code_url: str,
         citation_format: str,
-        max_sections: int = 220
+        max_sections: Optional[int] = 220
     ) -> List[NormalizedStatute]:
         """Custom scraper for Missouri's legislative website.
         
@@ -120,6 +178,7 @@ class MissouriScraper(BaseStateScraper):
             return []
         
         statutes = []
+        cap = max(1, int(max_sections)) if max_sections is not None else None
         headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
                           '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
@@ -154,7 +213,7 @@ class MissouriScraper(BaseStateScraper):
         seen_sections = set()
 
         for chapter_url in chapter_urls:
-            if len(statutes) >= max_sections:
+            if cap is not None and len(statutes) >= cap:
                 break
             chapter_vals = parse_qs(urlparse(chapter_url).query).get('chapter') or []
             chapter_number = (chapter_vals[0].strip() if chapter_vals else '')
@@ -169,28 +228,53 @@ class MissouriScraper(BaseStateScraper):
             except Exception:
                 continue
 
-            for link in chap_soup.find_all('a', href=True):
-                if len(statutes) >= max_sections:
-                    break
-                href = link.get('href', '')
-                if 'OneSection.aspx?section=' not in href:
-                    continue
+            from .missouri_chapter import chapter_sections as _mo_chapter_sections
 
-                full_url = urljoin(chapter_url, href)
-                parsed = urlparse(full_url)
-                section_vals = parse_qs(parsed.query).get('section') or []
-                section_number = (section_vals[0].strip() if section_vals else '')
+            chapter_html = (
+                chapter_bytes.decode("utf-8", errors="replace")
+                if isinstance(chapter_bytes, bytes)
+                else str(chapter_bytes)
+            )
+            section_rows = _mo_chapter_sections(chapter_html, chapter_number)
+            if not section_rows:
+                for link in chap_soup.find_all('a', href=True):
+                    href = link.get('href', '')
+                    if 'OneSection.aspx?section=' not in href:
+                        continue
+                    full_url = urljoin(chapter_url, href)
+                    section_vals = parse_qs(urlparse(full_url).query).get('section') or []
+                    section_number = (section_vals[0].strip() if section_vals else '')
+                    if section_number:
+                        section_rows.append((section_number, link.get_text(' ', strip=True)))
+            for section_number, link_text in section_rows:
+                if cap is not None and len(statutes) >= cap:
+                    break
                 if not section_number:
                     continue
                 if section_number in seen_sections:
                     continue
                 seen_sections.add(section_number)
-
-                link_text = link.get_text(' ', strip=True) or f"Section {section_number}"
+                full_url = urljoin(chapter_url, f"OneSection.aspx?section={section_number}")
                 section_payload = await self._fetch_page_content_with_archival_fallback(
                     full_url,
                     timeout_seconds=20,
                 )
+                from .missouri_chapter import statute_from_section_html as _mo_section
+
+                section_html = (
+                    section_payload.decode("utf-8", errors="replace")
+                    if isinstance(section_payload, bytes)
+                    else str(section_payload or "")
+                )
+                parsed = _mo_section(
+                    section_html,
+                    section_number=section_number,
+                    code_name=code_name,
+                    section_title=link_text,
+                )
+                if parsed is not None:
+                    statutes.append(parsed)
+                    continue
                 full_text, extracted_name = self._extract_section_text_and_name(section_payload or b"")
                 section_name = (extracted_name or link_text or f"Section {section_number}")[:200]
                 if not full_text:
@@ -212,15 +296,17 @@ class MissouriScraper(BaseStateScraper):
                     structured_data={
                         "source_kind": "official_missouri_section_html",
                         "discovery_method": "official_chapter_index_sections",
+                        "skip_hydrate": True,
                     },
                 )
                 statutes.append(statute)
 
-        # Missouri sometimes serves heavily collapsed chapter pages where only one
-        # repeated section link is visible. Use chapter links as a bounded fallback.
-        if len(statutes) < 10:
+        # Collapsed chapter pages may expose no section links. Never emit
+        # placeholder chapter rows in full-corpus mode; those are not
+        # section-level official text.
+        if not statutes and not self._full_corpus_enabled():
             for chapter_url in chapter_urls:
-                if len(statutes) >= max_sections:
+                if cap is not None and len(statutes) >= cap:
                     break
                 chapter_vals = parse_qs(urlparse(chapter_url).query).get('chapter') or []
                 chapter_number = (chapter_vals[0].strip() if chapter_vals else '')
@@ -291,6 +377,181 @@ class MissouriScraper(BaseStateScraper):
         if not section_name:
             section_name = "Section"
         return full_text, section_name
+
+    def official_chapter_url(self, chapter: Any) -> str:
+        token = str(chapter or "").strip()
+        return f"{self.get_base_url()}/main/OneChapter.aspx?chapter={token}"
+
+    def official_chapter_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Missouri Revised Statutes chapter catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        seen: set[str] = set()
+        tokens: List[str] = [str(number) for number in self.OFFICIAL_NUMERIC_CHAPTERS]
+        tokens.extend(self.OFFICIAL_LETTERED_CHAPTERS)
+        for token in tokens:
+            key = token.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            url = self.official_chapter_url(token)
+            rows.append(
+                {
+                    "canonical_key": f"mo:chapter-{key}",
+                    "chapter_number": token,
+                    "name": f"Chapter {token}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Missouri Revised Statutes Chapter {token} official "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+        headers = {
+            "User-Agent": "ipfs-datasets-missouri-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(url, headers=headers)
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(url, headers=headers)
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _parse_official_chapter_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._MO_CHAPTER_RE.search(absolute)
+            if not match:
+                continue
+            token = match.group("chapter")
+            if token not in found:
+                found[token] = self.official_chapter_url(token)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official RSMo chapter and repair missing live links."""
+
+        del page_url
+        discovered = self._parse_official_chapter_links(html)
+        rows = self.official_chapter_catalog()
+        seen = {str(row["chapter_number"]).lower() for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["chapter_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_leginfo"
+        for token, url in discovered.items():
+            if token.lower() in seen:
+                continue
+            rows.append(
+                {
+                    "canonical_key": f"mo:chapter-{token.lower()}",
+                    "chapter_number": token,
+                    "name": f"Chapter {token}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Missouri Revised Statutes Chapter {token} official "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def fetch_official(self, code: str = "MO"):
+        """Acquire the exhaustive official Missouri Revised Statutes chapter catalog.
+
+        Live HTTPS retains the official Revisor home page. Every known RSMo
+        chapter is enumerated with an official revisor.mo.gov URL. This hook
+        never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "MO").strip().upper() or "MO"
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < 3:
+            raise RuntimeError("missouri official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry

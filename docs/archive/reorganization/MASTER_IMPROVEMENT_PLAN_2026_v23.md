@@ -75,7 +75,7 @@ Added `PublishAsyncResult(notified, timed_out)` NamedTuple:
 
 ```python
 class PublishAsyncResult(NamedTuple):
-    notified: int   # handlers that completed successfully
+    notified: int  # handlers that completed successfully
     timed_out: int  # handlers cancelled by anyio.move_on_after()
 ```
 
@@ -100,7 +100,7 @@ Atomic backup added:
 bak_path = path + ".bak"
 shutil.copy2(path, bak_path)  # backup before overwriting
 # ... write re-encrypted file ...
-os.unlink(bak_path)           # cleanup on success only
+os.unlink(bak_path)  # cleanup on success only
 ```
 
 - Backup is created via `shutil.copy2()` (preserves timestamps).

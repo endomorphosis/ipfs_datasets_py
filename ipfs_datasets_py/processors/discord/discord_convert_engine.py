@@ -6,6 +6,7 @@ Usage::
 
     from ipfs_datasets_py.processors.discord import discord_convert_export
 """
+
 from __future__ import annotations
 
 import glob
@@ -147,9 +148,7 @@ async def discord_batch_convert_exports(
                 "successful": 0,
                 "failed": 0,
                 "conversions": [],
-                "error": (
-                    f"No files matching pattern '{file_pattern}' found in {input_dir}"
-                ),
+                "error": (f"No files matching pattern '{file_pattern}' found in {input_dir}"),
             }
 
         conversions: list[Dict[str, Any]] = []

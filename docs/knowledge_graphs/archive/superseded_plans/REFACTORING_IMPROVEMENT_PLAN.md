@@ -92,28 +92,29 @@ except (ValueError, KeyError, AttributeError) as e:
 class SchemaChecker:
     def __init__(self):
         pass  # No initialization!
-    
+
     def check_schema(self, graph):
         # Methods try to access self.schema_rules but it was never set!
         pass
+
 
 # AFTER (GOOD):
 class SchemaChecker:
     def __init__(self, schema_rules: Optional[Dict] = None):
         """Initialize schema checker with optional custom rules.
-        
+
         Args:
             schema_rules: Custom schema validation rules. If None, uses defaults.
         """
         self.schema_rules = schema_rules or self._get_default_rules()
         self.validation_cache = {}
         self.logger = logging.getLogger(__name__)
-    
+
     def _get_default_rules(self) -> Dict:
         """Get default schema validation rules."""
         return {
-            'require_entity_types': True,
-            'validate_relationships': True,
+            "require_entity_types": True,
+            "validate_relationships": True,
             # ... more rules
         }
 ```
@@ -190,6 +191,7 @@ DEPRECATED: This module is deprecated. Use extraction package instead.
 Backward compatibility wrapper for legacy imports.
 See docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md for migration instructions.
 """
+
 import warnings
 from ipfs_datasets_py.knowledge_graphs.extraction import (
     Entity,
@@ -204,15 +206,15 @@ warnings.warn(
     "Importing from knowledge_graph_extraction is deprecated. "
     "Use 'from ipfs_datasets_py.knowledge_graphs.extraction import ...' instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 __all__ = [
-    'Entity',
-    'Relationship',
-    'KnowledgeGraph',
-    'KnowledgeGraphExtractor',
-    'KnowledgeGraphExtractorWithValidation',
+    "Entity",
+    "Relationship",
+    "KnowledgeGraph",
+    "KnowledgeGraphExtractor",
+    "KnowledgeGraphExtractorWithValidation",
 ]
 ```
 
@@ -254,10 +256,10 @@ ipfs_datasets_py/knowledge_graphs/
 - **Action:** Add spaCy to `setup.py` as an optional dependency
 ```python
 # setup.py
-extras_require={
-    'knowledge_graphs': [
-        'spacy>=3.0.0',
-        'en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.0.0/en_core_web_sm-3.0.0.tar.gz',
+extras_require = {
+    "knowledge_graphs": [
+        "spacy>=3.0.0",
+        "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.0.0/en_core_web_sm-3.0.0.tar.gz",
     ],
 }
 ```
@@ -359,19 +361,27 @@ except (ConnectionError, TimeoutError) as e:
 # knowledge_graphs/exceptions.py (NEW FILE)
 class KnowledgeGraphError(Exception):
     """Base exception for knowledge graph operations."""
+
     pass
+
 
 class ExtractionError(KnowledgeGraphError):
     """Raised when entity/relationship extraction fails."""
+
     pass
+
 
 class QueryError(KnowledgeGraphError):
     """Raised when query operations fail."""
+
     pass
+
 
 class ValidationError(KnowledgeGraphError):
     """Raised when validation fails."""
+
     pass
+
 
 # ... more specific exceptions
 ```
@@ -414,14 +424,15 @@ class UniqueConstraint:
     def register(self, entity):
         pass  # What should happen here?
 
+
 # AFTER (Option 1 - Implement):
 class UniqueConstraint:
     def register(self, entity):
         """Register a unique constraint on entity property.
-        
+
         Args:
             entity: Entity to apply constraint to
-            
+
         Raises:
             ConstraintViolationError: If constraint is violated
         """
@@ -431,11 +442,12 @@ class UniqueConstraint:
             )
         self._constraint_registry[entity.id] = entity
 
+
 # AFTER (Option 2 - Document Intent):
 class UniqueConstraint:
     def register(self, entity):
         """Register entity with this constraint.
-        
+
         Note: Currently a no-op. Constraint validation happens at query time.
         Future versions may maintain an active constraint registry.
         """
@@ -502,13 +514,14 @@ def _compile_match_clause(self, match_clause):
     result = self._process_patterns(match_clause.patterns)
     return result
 
+
 # AFTER:
 def _compile_match_clause(self, match_clause: MatchClause) -> Dict[str, Any]:
     """Compile MATCH clause to internal representation.
-    
+
     Args:
         match_clause: Parsed MATCH clause AST node
-        
+
     Returns:
         Compiled match operation dictionary
     """
@@ -857,18 +870,19 @@ def extract_entities(
 import pytest
 from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor
 
+
 @pytest.mark.benchmark
 def test_extraction_performance(benchmark):
     """Benchmark entity extraction speed."""
     extractor = KnowledgeGraphExtractor()
     text = generate_test_text(1000)  # 1000 words
-    
+
     result = benchmark(extractor.extract_knowledge_graph, text)
-    
+
     # Assert performance targets
     assert len(result.entities) > 0
     # Should process at least 100 words/second
-    assert benchmark.stats['mean'] < 10.0  # seconds
+    assert benchmark.stats["mean"] < 10.0  # seconds
 ```
 
 **Estimated Effort:** 8-12 hours
@@ -901,12 +915,13 @@ def test_extraction_performance(benchmark):
 ```python
 from functools import lru_cache
 
+
 class KnowledgeGraphExtractor:
     @lru_cache(maxsize=128)
     def _get_entity_patterns(self) -> List[Dict]:
         """Get entity extraction patterns (cached)."""
         return self._load_entity_patterns()
-    
+
     @lru_cache(maxsize=256)
     def _get_sparql_template(self, template_name: str) -> str:
         """Get SPARQL query template (cached)."""

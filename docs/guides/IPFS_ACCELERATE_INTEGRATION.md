@@ -71,21 +71,16 @@ pip install -e .
 ### Basic Usage
 
 ```python
-from ipfs_datasets_py.accelerate_integration import (
-    AccelerateManager,
-    is_accelerate_available
-)
+from ipfs_datasets_py.accelerate_integration import AccelerateManager, is_accelerate_available
 
 # Check if accelerate is available
 if is_accelerate_available():
     print("✅ Hardware acceleration available")
     manager = AccelerateManager()
-    
+
     # Run inference with automatic hardware detection
     result = manager.run_inference(
-        model_name="bert-base-uncased",
-        input_data="Hello world",
-        task_type="embedding"
+        model_name="bert-base-uncased", input_data="Hello world", task_type="embedding"
     )
     print(f"Result: {result}")
 else:
@@ -102,13 +97,13 @@ from ipfs_datasets_py.accelerate_integration import AccelerateManager
 
 manager = AccelerateManager(
     backend="cuda",  # Force CUDA
-    device_id=0      # Use first GPU
+    device_id=0,  # Use first GPU
 )
 
 result = manager.run_inference(
     model_name="distilbert-base-uncased",
     input_data=["Multiple", "inputs", "supported"],
-    task_type="text-classification"
+    task_type="text-classification",
 )
 ```
 
@@ -118,16 +113,11 @@ result = manager.run_inference(
 from ipfs_datasets_py.accelerate_integration import DistributedInference
 
 # Initialize distributed coordinator
-distributor = DistributedInference(
-    peer_list=["peer1", "peer2", "peer3"],
-    load_balance=True
-)
+distributor = DistributedInference(peer_list=["peer1", "peer2", "peer3"], load_balance=True)
 
 # Run across multiple peers
 results = distributor.batch_inference(
-    model_name="gpt2",
-    inputs=[f"Input {i}" for i in range(100)],
-    batch_size=10
+    model_name="gpt2", inputs=[f"Input {i}" for i in range(100)], batch_size=10
 )
 ```
 
@@ -142,14 +132,12 @@ manager = AccelerateManager()
 model = manager.load_model(
     model_path="/path/to/custom/model",
     model_type="pytorch",
-    quantization="int8"  # Optional quantization
+    quantization="int8",  # Optional quantization
 )
 
 # Run inference
 result = manager.run_with_model(
-    model=model,
-    input_data="Custom input",
-    preprocessing_fn=your_preprocessing_function
+    model=model, input_data="Custom input", preprocessing_fn=your_preprocessing_function
 )
 ```
 
@@ -159,16 +147,18 @@ result = manager.run_with_model(
 import asyncio
 from ipfs_datasets_py.accelerate_integration import AccelerateManager
 
+
 async def async_inference():
     manager = AccelerateManager()
-    
+
     # Async inference for better concurrency
     result = await manager.run_inference_async(
         model_name="sentence-transformers/all-MiniLM-L6-v2",
         input_data="Async processing example",
-        task_type="embedding"
+        task_type="embedding",
     )
     return result
+
 
 # Run async
 result = asyncio.run(async_inference())
@@ -185,14 +175,11 @@ from ipfs_datasets_py.pdf_processing import PDFProcessor
 
 processor = PDFProcessor(
     use_accelerate=True,  # Enable hardware acceleration
-    embedding_model="all-MiniLM-L6-v2"
+    embedding_model="all-MiniLM-L6-v2",
 )
 
 # Process PDF with accelerated embeddings
-result = processor.process_document(
-    pdf_path="document.pdf",
-    extract_embeddings=True
-)
+result = processor.process_document(pdf_path="document.pdf", extract_embeddings=True)
 ```
 
 ### 2. Vector Search
@@ -204,7 +191,7 @@ from ipfs_datasets_py.vector_stores import FAISSVectorStore
 
 store = FAISSVectorStore(
     dimension=384,
-    use_accelerate=True  # Use GPU for search if available
+    use_accelerate=True,  # Use GPU for search if available
 )
 
 # Add vectors (accelerated)
@@ -221,10 +208,7 @@ Accelerated entity extraction and relationship detection:
 ```python
 from ipfs_datasets_py.knowledge_graphs import KnowledgeGraphExtractor
 
-extractor = KnowledgeGraphExtractor(
-    use_accelerate=True,
-    model="bert-base-uncased"
-)
+extractor = KnowledgeGraphExtractor(use_accelerate=True, model="bert-base-uncased")
 
 # Extract entities and relationships (accelerated)
 graph = extractor.extract_from_text(document_text)
@@ -237,17 +221,10 @@ Accelerated retrieval and generation:
 ```python
 from ipfs_datasets_py.rag import GraphRAG
 
-rag = GraphRAG(
-    use_accelerate=True,
-    embedding_model="all-MiniLM-L6-v2",
-    generation_model="gpt2"
-)
+rag = GraphRAG(use_accelerate=True, embedding_model="all-MiniLM-L6-v2", generation_model="gpt2")
 
 # Query with hardware acceleration
-answer = rag.query(
-    question="What is the main topic?",
-    context_documents=documents
-)
+answer = rag.query(question="What is the main topic?", context_documents=documents)
 ```
 
 ## Performance Benchmarks
@@ -311,7 +288,7 @@ configure_accelerate(
     device_id=0,
     distributed=True,
     peer_discovery=True,
-    fallback_to_cpu=True
+    fallback_to_cpu=True,
 )
 ```
 
@@ -359,7 +336,7 @@ Enable debug logging:
 import logging
 
 # Set logging level
-logging.getLogger('ipfs_datasets_py.accelerate_integration').setLevel(logging.DEBUG)
+logging.getLogger("ipfs_datasets_py.accelerate_integration").setLevel(logging.DEBUG)
 
 # Now you'll see detailed acceleration info
 manager = AccelerateManager()
@@ -389,7 +366,7 @@ manager = AccelerateManager(batch_size=32)
 results = manager.batch_inference(
     model_name="bert-base-uncased",
     inputs=large_input_list,  # Automatically batched
-    batch_size=32
+    batch_size=32,
 )
 ```
 

@@ -56,36 +56,38 @@ The IPLD Vector Database is a production-ready, decentralized vector storage and
 import asyncio
 from ipfs_datasets_py.vector_stores import IPLDVectorStore, create_ipld_config
 
+
 async def main():
     # 1. Create configuration
     config = create_ipld_config(
         collection_name="my_docs",
         dimension=768,
         use_embeddings_router=True,  # Auto-generate embeddings
-        use_ipfs_router=True          # Auto-store to IPFS
+        use_ipfs_router=True,  # Auto-store to IPFS
     )
-    
+
     # 2. Initialize store
     store = IPLDVectorStore(config)
     await store.create_collection()
-    
+
     # 3. Add documents (embeddings auto-generated)
     texts = [
         "IPFS is a peer-to-peer network",
         "IPLD is the data model for IPFS",
-        "Vector databases enable semantic search"
+        "Vector databases enable semantic search",
     ]
     ids = await store.add_texts(texts)
     print(f"Added {len(ids)} documents")
-    
+
     # 4. Search by text (query auto-embedded)
     results = await store.search_text("What is IPFS?", top_k=2)
     for result in results:
         print(f"Score: {result.score:.3f} - {result.metadata.get('text', '')}")
-    
+
     # 5. Export to IPFS
     root_cid = await store.export_to_ipld()
     print(f"Collection exported: ipfs://{root_cid}")
+
 
 asyncio.run(main())
 ```
@@ -208,30 +210,25 @@ config = UnifiedVectorStoreConfig(
     store_type=VectorStoreType.IPLD,
     collection_name="my_collection",
     dimension=768,
-    
     # Router integration
     use_embeddings_router=True,
     use_ipfs_router=True,
     embeddings_provider="openrouter",  # or "gemini", "hf"
-    ipfs_backend="kubo",                # or "accelerate", "kit"
-    
+    ipfs_backend="kubo",  # or "accelerate", "kit"
     # IPLD-specific
     auto_pin_to_ipfs=False,
     ipld_chunk_size=1000,
     car_export_dir="./exports",
     compression_enabled=True,
-    
     # Performance
     batch_size=100,
     parallel_workers=4,
     cache_size=1000,
-    
     # Search
     distance_metric="cosine",  # or "l2", "ip"
-    
     # Multi-store sync
     sync_enabled=False,
-    sync_stores=["ipld", "faiss"]
+    sync_stores=["ipld", "faiss"],
 )
 ```
 
@@ -241,31 +238,19 @@ config = UnifiedVectorStoreConfig(
 from ipfs_datasets_py.vector_stores.config import (
     create_ipld_config,
     create_faiss_config,
-    create_qdrant_config
+    create_qdrant_config,
 )
 
 # Quick IPLD config
 config = create_ipld_config(
-    "my_docs",
-    dimension=768,
-    use_embeddings_router=True,
-    use_ipfs_router=True
+    "my_docs", dimension=768, use_embeddings_router=True, use_ipfs_router=True
 )
 
 # Quick FAISS config
-config = create_faiss_config(
-    "my_docs",
-    dimension=768,
-    index_type="IVF1024,Flat"
-)
+config = create_faiss_config("my_docs", dimension=768, index_type="IVF1024,Flat")
 
 # Quick Qdrant config
-config = create_qdrant_config(
-    "my_docs",
-    dimension=768,
-    host="localhost",
-    port=6333
-)
+config = create_qdrant_config("my_docs", dimension=768, host="localhost", port=6333)
 ```
 
 ---
@@ -298,12 +283,11 @@ print(f"Collection exists: {exists}")
 import numpy as np
 
 # Generate or load embeddings
-embeddings = np.random.rand(100, 768).astype('float32')
+embeddings = np.random.rand(100, 768).astype("float32")
 
 # Add to store
 ids = await store.add_embeddings(
-    embeddings=embeddings,
-    metadata=[{"text": f"doc_{i}"} for i in range(100)]
+    embeddings=embeddings, metadata=[{"text": f"doc_{i}"} for i in range(100)]
 )
 
 print(f"Added {len(ids)} vectors")
@@ -316,11 +300,7 @@ config = create_ipld_config("docs", 768, use_embeddings_router=True)
 store = IPLDVectorStore(config)
 
 # Add texts (embeddings auto-generated)
-texts = [
-    "The quick brown fox",
-    "jumps over the lazy dog",
-    "Hello world"
-]
+texts = ["The quick brown fox", "jumps over the lazy dog", "Hello world"]
 
 ids = await store.add_texts(texts)
 ```
@@ -330,13 +310,13 @@ ids = await store.add_texts(texts)
 **Option 1: Search by Vector**
 ```python
 # Query vector
-query = np.random.rand(768).astype('float32')
+query = np.random.rand(768).astype("float32")
 
 # Search
 results = await store.search(
     query_vector=query,
     top_k=10,
-    metadata_filter={"category": "tech"}  # Optional filtering
+    metadata_filter={"category": "tech"},  # Optional filtering
 )
 
 for result in results:
@@ -347,10 +327,7 @@ for result in results:
 **Option 2: Search by Text (Router)**
 ```python
 # Search by text (auto-embedded)
-results = await store.search_text(
-    "What is IPFS?",
-    top_k=5
-)
+results = await store.search_text("What is IPFS?", top_k=5)
 
 for result in results:
     print(f"Score: {result.score:.3f}")
@@ -386,10 +363,7 @@ await store.delete_by_metadata({"category": "old"})
 
 ```python
 # Update metadata only (vector unchanged)
-await store.update_metadata(
-    vector_id,
-    {"updated": True, "timestamp": "2024-01-01"}
-)
+await store.update_metadata(vector_id, {"updated": True, "timestamp": "2024-01-01"})
 ```
 
 ---
@@ -412,10 +386,7 @@ print(f"Access via: {url}")
 **Import from IPLD**
 ```python
 # Import from CID
-await store.import_from_ipld(
-    root_cid="bafyreiabc123...",
-    new_collection_name="imported_docs"
-)
+await store.import_from_ipld(root_cid="bafyreiabc123...", new_collection_name="imported_docs")
 ```
 
 ### CAR File Export/Import
@@ -423,18 +394,13 @@ await store.import_from_ipld(
 **Export to CAR**
 ```python
 # Export to Content Addressable aRchive
-await store.export_to_car(
-    output_path="./my_collection.car"
-)
+await store.export_to_car(output_path="./my_collection.car")
 ```
 
 **Import from CAR**
 ```python
 # Import from CAR file
-await store.import_from_car(
-    car_path="./my_collection.car",
-    new_collection_name="restored_docs"
-)
+await store.import_from_car(car_path="./my_collection.car", new_collection_name="restored_docs")
 ```
 
 ### Cross-Store Migration
@@ -452,10 +418,7 @@ manager.register_store("ipld", create_ipld_config("docs", 768))
 
 # Migrate from FAISS to IPLD
 count = await manager.migrate(
-    source_store="faiss",
-    target_store="ipld",
-    collection_name="documents",
-    batch_size=1000
+    source_store="faiss", target_store="ipld", collection_name="documents", batch_size=1000
 )
 
 print(f"Migrated {count} vectors")
@@ -465,11 +428,7 @@ print(f"Migrated {count} vectors")
 
 ```python
 # Search across multiple stores
-results = await manager.search_all(
-    query_vector=query,
-    stores=["ipld", "faiss", "qdrant"],
-    top_k=10
-)
+results = await manager.search_all(query_vector=query, stores=["ipld", "faiss", "qdrant"], top_k=10)
 
 # Results are merged and re-ranked
 for result in results:
@@ -827,10 +786,7 @@ from ipfs_datasets_py.vector_stores import create_bridge
 bridge = create_bridge("faiss", "ipld")
 
 # Migrate
-count = await bridge.migrate_collection(
-    "my_docs",
-    batch_size=1000
-)
+count = await bridge.migrate_collection("my_docs", batch_size=1000)
 ```
 
 ### From Qdrant
@@ -842,10 +798,7 @@ from ipfs_datasets_py.vector_stores import create_bridge
 bridge = create_bridge("qdrant", "ipld")
 
 # Migrate with metadata preservation
-count = await bridge.migrate_collection(
-    "my_docs",
-    preserve_metadata=True
-)
+count = await bridge.migrate_collection("my_docs", preserve_metadata=True)
 ```
 
 ---
@@ -909,6 +862,7 @@ await bridge.migrate_collection(collection, batch_size=500)
 **Enable Debug Logging:**
 ```python
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 ```
 
@@ -963,22 +917,13 @@ print(f"Connected: {status}")
 
 **Small Scale (<100K vectors):**
 ```python
-config = create_ipld_config(
-    "docs", 768,
-    batch_size=100,
-    cache_size=1000,
-    ipld_chunk_size=1000
-)
+config = create_ipld_config("docs", 768, batch_size=100, cache_size=1000, ipld_chunk_size=1000)
 ```
 
 **Medium Scale (100K-10M vectors):**
 ```python
 config = create_ipld_config(
-    "docs", 768,
-    batch_size=1000,
-    cache_size=10000,
-    ipld_chunk_size=10000,
-    parallel_workers=8
+    "docs", 768, batch_size=1000, cache_size=10000, ipld_chunk_size=10000, parallel_workers=8
 )
 ```
 
@@ -986,14 +931,15 @@ config = create_ipld_config(
 ```python
 # Use sharding (v2.1+)
 config = create_ipld_config(
-    "docs", 768,
+    "docs",
+    768,
     batch_size=5000,
     cache_size=50000,
     ipld_chunk_size=100000,
     parallel_workers=16,
     enable_sharding=True,
     shard_size=1000000,
-    replication_factor=3
+    replication_factor=3,
 )
 ```
 

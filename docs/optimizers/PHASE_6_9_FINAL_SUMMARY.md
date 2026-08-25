@@ -248,10 +248,7 @@ if not valid:
 **Usage:**
 ```python
 executor = SandboxExecutor(config)
-success, stdout, stderr = executor.execute_code(
-    code="print('test')",
-    timeout=30
-)
+success, stdout, stderr = executor.execute_code(code="print('test')", timeout=30)
 ```
 
 #### 4. CircuitBreaker
@@ -293,10 +290,7 @@ result = breaker.call(external_api, arg1, arg2)
 **Usage:**
 ```python
 handler = RetryHandler(max_retries=3)
-result = handler.retry(
-    unstable_function,
-    retryable_exceptions=(ConnectionError, TimeoutError)
-)
+result = handler.retry(unstable_function, retryable_exceptions=(ConnectionError, TimeoutError))
 ```
 
 #### 6. ResourceMonitor
@@ -374,6 +368,7 @@ from ipfs_datasets_py.optimizers.agentic.production_hardening import (
 # In validation.py
 from .production_hardening import get_sandbox_executor
 
+
 class PerformanceValidator:
     def benchmark_code(self, code: str) -> Dict:
         executor = get_sandbox_executor()
@@ -386,23 +381,21 @@ class PerformanceValidator:
 # In llm_integration.py
 from .production_hardening import CircuitBreaker, RetryHandler
 
+
 class OptimizerLLMRouter:
     def __init__(self):
         self.breaker = CircuitBreaker(failure_threshold=5)
         self.retry = RetryHandler(max_retries=3)
-    
+
     def generate(self, prompt: str) -> str:
-        return self.breaker.call(
-            self.retry.retry,
-            self._generate_internal,
-            prompt
-        )
+        return self.breaker.call(self.retry.retry, self._generate_internal, prompt)
 ```
 
 ### 3. CLI Integration
 ```python
 # In cli.py
 from .production_hardening import get_input_sanitizer
+
 
 class OptimizerCLI:
     def cmd_optimize(self, args):

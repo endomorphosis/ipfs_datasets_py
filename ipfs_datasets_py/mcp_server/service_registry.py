@@ -44,6 +44,7 @@ SERVICE_TTL = 300.0
 @dataclass
 class ServiceRecord:
     """A service advertisement published to the P2P network."""
+
     service_name: str
     peer_id: str
     multiaddrs: List[str] = field(default_factory=list)
@@ -65,29 +66,28 @@ class ServiceRecord:
 
     def signing_payload(self) -> bytes:
         """Canonical payload for signing/verification."""
-        return json.dumps({
-            "service_name": self.service_name,
-            "peer_id": self.peer_id,
-            "tools": sorted(self.tools),
-            "version": self.version,
-            "timestamp": self.timestamp,
-        }, sort_keys=True).encode()
+        return json.dumps(
+            {
+                "service_name": self.service_name,
+                "peer_id": self.peer_id,
+                "tools": sorted(self.tools),
+                "version": self.version,
+                "timestamp": self.timestamp,
+            },
+            sort_keys=True,
+        ).encode()
 
     def sign(self, key: Optional[bytes] = None) -> None:
         """Sign this record. Uses HMAC-SHA256 with peer_id as default key."""
         signing_key = key or self.peer_id.encode()
-        self.signature = hmac.new(
-            signing_key, self.signing_payload(), hashlib.sha256
-        ).hexdigest()
+        self.signature = hmac.new(signing_key, self.signing_payload(), hashlib.sha256).hexdigest()
 
     def verify_signature(self, key: Optional[bytes] = None) -> bool:
         """Verify signature. Returns True if valid or no signature required."""
         if not self.signature:
             return False
         signing_key = key or self.peer_id.encode()
-        expected = hmac.new(
-            signing_key, self.signing_payload(), hashlib.sha256
-        ).hexdigest()
+        expected = hmac.new(signing_key, self.signing_payload(), hashlib.sha256).hexdigest()
         return hmac.compare_digest(self.signature, expected)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -130,7 +130,9 @@ class ServiceRegistry:
     def __init__(self):
         self._lock = threading.Lock()
         self._local_records: Dict[str, ServiceRecord] = {}  # Our advertised services
-        self._remote_records: Dict[str, Dict[str, ServiceRecord]] = {}  # service_name -> {peer_id -> record}
+        self._remote_records: Dict[
+            str, Dict[str, ServiceRecord]
+        ] = {}  # service_name -> {peer_id -> record}
         self._change_callbacks: Dict[str, Callable] = {}  # id -> callback for service changes
 
     def register_local(self, record: ServiceRecord) -> None:
@@ -256,6 +258,7 @@ class ServiceRegistry:
         the signature before accepting.
         """
         import os
+
         record_data = params.get("record", {})
         if not record_data:
             return {"status": "rejected", "reason": "empty record"}
@@ -266,7 +269,8 @@ class ServiceRegistry:
         if sender_peer_id and record.peer_id != sender_peer_id:
             logger.warning(
                 "Service announce rejected: peer_id mismatch (record=%s, sender=%s)",
-                record.peer_id, sender_peer_id
+                record.peer_id,
+                sender_peer_id,
             )
             return {"status": "rejected", "reason": "peer_id_mismatch"}
 

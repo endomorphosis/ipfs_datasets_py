@@ -149,38 +149,36 @@ class PatchBasedChangeControl:
 ```python
 class AgentCoordinator:
     """Coordinates multiple optimization agents working in parallel."""
-    
+
     def __init__(self):
         self.active_agents: Dict[str, AgentState] = {}
         self.conflict_resolver = ConflictResolver()
         self.ipfs_broadcast = IPFSBroadcast()
-        
+
     def assign_work(self, agent_id: str, task: OptimizationTask) -> str:
         """Assign optimization task to agent with worktree."""
         worktree_path = self.worktree_manager.create(agent_id)
         self.active_agents[agent_id] = AgentState(
-            worktree=worktree_path,
-            task=task,
-            status="working"
+            worktree=worktree_path, task=task, status="working"
         )
         return worktree_path
-        
+
     def submit_patch(self, agent_id: str, patch: Patch) -> str:
         """Submit patch for review and coordination."""
         # Store in IPFS
         cid = self.ipfs_broadcast.store_patch(patch)
-        
+
         # Check for conflicts with other agents
         conflicts = self.conflict_resolver.check(patch, self.active_agents)
-        
+
         if conflicts:
             # Negotiate conflict resolution
             resolved = self.conflict_resolver.resolve(patch, conflicts)
             cid = self.ipfs_broadcast.store_patch(resolved)
-            
+
         # Broadcast to other agents
         self.ipfs_broadcast.notify_agents(cid, exclude=[agent_id])
-        
+
         return cid
 ```
 
@@ -198,31 +196,27 @@ class AgentCoordinator:
 ```python
 class OptimizerLLMRouter:
     """Routes optimization tasks to appropriate LLM providers."""
-    
+
     def __init__(self, llm_router):
         self.router = llm_router
         self.provider_capabilities = {
-            'adversarial': ['gpt-4', 'claude-3-opus'],
-            'actor-critic': ['gpt-4', 'claude-3-sonnet'],
-            'test-driven': ['gpt-4', 'codex'],
-            'chaos': ['gpt-4', 'claude-3-opus']
+            "adversarial": ["gpt-4", "claude-3-opus"],
+            "actor-critic": ["gpt-4", "claude-3-sonnet"],
+            "test-driven": ["gpt-4", "codex"],
+            "chaos": ["gpt-4", "claude-3-opus"],
         }
-        
-    def route_optimization(
-        self, 
-        method: str, 
-        task: OptimizationTask
-    ) -> OptimizationResult:
+
+    def route_optimization(self, method: str, task: OptimizationTask) -> OptimizationResult:
         """Route optimization task to appropriate provider."""
-        providers = self.provider_capabilities.get(method, ['gpt-4'])
-        
+        providers = self.provider_capabilities.get(method, ["gpt-4"])
+
         # Try primary provider
         result = self.router.generate(
             prompt=self._build_prompt(method, task),
             provider=providers[0],
-            fallback_providers=providers[1:]
+            fallback_providers=providers[1:],
         )
-        
+
         return self._parse_result(result, method)
 ```
 
@@ -241,7 +235,7 @@ class OptimizerLLMRouter:
 ```python
 class OptimizationValidator:
     """Validates optimizations before acceptance."""
-    
+
     async def validate(self, patch: Patch) -> ValidationResult:
         """Run comprehensive validation on patch."""
         results = await asyncio.gather(
@@ -251,13 +245,10 @@ class OptimizationValidator:
             self._run_integration_tests(patch),
             self._check_performance(patch),
             self._scan_security(patch),
-            self._check_style(patch)
+            self._check_style(patch),
         )
-        
-        return ValidationResult(
-            passed=all(r.passed for r in results),
-            details=results
-        )
+
+        return ValidationResult(passed=all(r.passed for r in results), details=results)
 ```
 
 ### 7. Rollback Mechanism

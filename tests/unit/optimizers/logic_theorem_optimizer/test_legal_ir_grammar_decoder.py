@@ -121,12 +121,7 @@ def test_typed_grammar_records_family_specific_rejection_reasons() -> None:
     assert "invalid_tdfol_predicate" in names
     assert "missing_tdfol_arguments" in names
     assert result.metrics()["legal_ir_grammar_invalid_production_penalty"] == 1.0
-    assert (
-        result.metrics()[
-            "legal_ir_grammar_rejection_reason_invalid_tdfol_predicate"
-        ]
-        == 1.0
-    )
+    assert result.metrics()["legal_ir_grammar_rejection_reason_invalid_tdfol_predicate"] == 1.0
 
 
 def test_decoder_masks_invalid_high_score_production_before_selection() -> None:
@@ -168,8 +163,7 @@ def test_decoder_masks_invalid_high_score_production_before_selection() -> None:
 
 def test_source_copy_placeholders_are_rejected_with_specific_reason() -> None:
     source_text = (
-        "The agency shall provide notice before the hearing and preserve the "
-        "record for review."
+        "The agency shall provide notice before the hearing and preserve the record for review."
     )
     result = validate_legal_ir_candidate(
         {

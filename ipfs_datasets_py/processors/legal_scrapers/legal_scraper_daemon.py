@@ -27,11 +27,56 @@ from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Seq
 
 
 STATE_CODES_50: List[str] = [
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
 ]
 
 SUPPORTED_CORPORA = ("state_laws", "state_admin_rules", "state_court_rules")
@@ -115,9 +160,13 @@ def _agentic_subprocess_status(*, returncode: Optional[int], summary: Dict[str, 
     summary_status = str((summary or {}).get("status") or "").lower()
     latest_cycle = ((summary or {}).get("latest_cycle") or {}) or {}
     latest_cycle_status = str(latest_cycle.get("status") or "").lower()
-    diagnostics = latest_cycle.get("diagnostics") if isinstance(latest_cycle.get("diagnostics"), dict) else {}
+    diagnostics = (
+        latest_cycle.get("diagnostics") if isinstance(latest_cycle.get("diagnostics"), dict) else {}
+    )
     coverage = diagnostics.get("coverage") if isinstance(diagnostics.get("coverage"), dict) else {}
-    returned = int(coverage.get("states_with_nonzero_statutes") or coverage.get("states_returned") or 0)
+    returned = int(
+        coverage.get("states_with_nonzero_statutes") or coverage.get("states_returned") or 0
+    )
     gaps = [item for item in list(coverage.get("coverage_gap_states") or []) if str(item).strip()]
     if int(returncode or 0) != 0:
         return "error"
@@ -145,7 +194,9 @@ def _load_agentic_latest_summary(output_dir: Path) -> Dict[str, Any]:
             if checkpoint_status in {"success", "partial_success", "error"}:
                 return {
                     "status": checkpoint_payload.get("status"),
-                    "states": checkpoint_payload.get("states") or checkpoint_payload.get("cycle_state_order") or [],
+                    "states": checkpoint_payload.get("states")
+                    or checkpoint_payload.get("cycle_state_order")
+                    or [],
                     "latest_cycle": checkpoint_payload,
                     "recovered_from_checkpoint": True,
                 }
@@ -160,7 +211,9 @@ def _load_agentic_latest_summary(output_dir: Path) -> Dict[str, Any]:
             return {}
         return {
             "status": checkpoint_payload.get("status"),
-            "states": checkpoint_payload.get("states") or checkpoint_payload.get("cycle_state_order") or [],
+            "states": checkpoint_payload.get("states")
+            or checkpoint_payload.get("cycle_state_order")
+            or [],
             "latest_cycle": checkpoint_payload,
             "recovered_from_checkpoint": True,
         }
@@ -353,7 +406,9 @@ class LegalScraperDaemon:
     def build_preflight_payload(self) -> Dict[str, Any]:
         plan = self.build_plan()
         preflight = plan.get("preflight") if isinstance(plan.get("preflight"), dict) else {}
-        target_manifest = plan.get("target_manifest") if isinstance(plan.get("target_manifest"), dict) else {}
+        target_manifest = (
+            plan.get("target_manifest") if isinstance(plan.get("target_manifest"), dict) else {}
+        )
         status = str(preflight.get("status") or "unknown")
         payload = {
             "status": status,
@@ -372,7 +427,9 @@ class LegalScraperDaemon:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         preflight_path = Path(str(payload["preflight_path"]))
         target_manifest_path = Path(str(payload["target_manifest_path"]))
-        preflight_path.write_text(json.dumps(payload, indent=2, sort_keys=True, default=str), encoding="utf-8")
+        preflight_path.write_text(
+            json.dumps(payload, indent=2, sort_keys=True, default=str), encoding="utf-8"
+        )
         target_manifest_path.write_text(
             json.dumps(payload.get("target_manifest") or {}, indent=2, sort_keys=True, default=str),
             encoding="utf-8",
@@ -382,10 +439,16 @@ class LegalScraperDaemon:
     def build_preflight_report(self) -> Dict[str, Any]:
         """Build cheap local checks that predict whether a full-corpus run can cover every target."""
         try:
-            from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import get_canonical_legal_corpus
-            from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import StateScraperRegistry
+            from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import (
+                get_canonical_legal_corpus,
+            )
+            from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import (
+                StateScraperRegistry,
+            )
 
-            registered_states = sorted(str(item).upper() for item in StateScraperRegistry.get_all_registered_states())
+            registered_states = sorted(
+                str(item).upper() for item in StateScraperRegistry.get_all_registered_states()
+            )
             state_registry_error = ""
         except Exception as exc:
             get_canonical_legal_corpus = None  # type: ignore[assignment]
@@ -393,7 +456,9 @@ class LegalScraperDaemon:
             state_registry_error = str(exc)
 
         missing_state_scrapers = [
-            state for state in self.states if registered_states and state not in set(registered_states)
+            state
+            for state in self.states
+            if registered_states and state not in set(registered_states)
         ]
         extra_registered_states = [
             state for state in registered_states if state not in set(self.states)
@@ -407,19 +472,28 @@ class LegalScraperDaemon:
                 except Exception:
                     hf_datasets[corpus] = ""
 
-        hf_dataset_access = self._probe_hf_dataset_access(hf_datasets) if self.config.preflight_probe_hf else {
-            "enabled": False,
-            "all_readable": None,
-            "datasets": {},
-        }
+        hf_dataset_access = (
+            self._probe_hf_dataset_access(hf_datasets)
+            if self.config.preflight_probe_hf
+            else {
+                "enabled": False,
+                "all_readable": None,
+                "datasets": {},
+            }
+        )
         state_laws_guard_audit = (
             self._state_laws_full_corpus_guard_audit()
-            if bool(self.config.full_corpus and self.config.state_refresh.enabled and self.config.state_refresh.scrape)
+            if bool(
+                self.config.full_corpus
+                and self.config.state_refresh.enabled
+                and self.config.state_refresh.scrape
+            )
             else {"enabled": False, "status": "skipped", "reason": "not_full_corpus_state_refresh"}
         )
 
         invariants = {
-            "all_supported_corpora_requested": set(self.config.agentic_corpora.corpora or []) >= set(SUPPORTED_CORPORA)
+            "all_supported_corpora_requested": set(self.config.agentic_corpora.corpora or [])
+            >= set(SUPPORTED_CORPORA)
             and set(self.config.bluebook.corpora or []) >= set(SUPPORTED_CORPORA),
             "state_refresh_scrape_enabled": bool(self.config.state_refresh.scrape),
             "state_refresh_unbounded": int(self.config.state_refresh.max_statutes or 0) == 0,
@@ -491,7 +565,9 @@ class LegalScraperDaemon:
         token_resolved = False
         try:
             from huggingface_hub import HfApi
-            from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion import _resolve_hf_token
+            from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion import (
+                _resolve_hf_token,
+            )
 
             token = _resolve_hf_token(self.config.hf_token)
             token_resolved = bool(token)
@@ -534,14 +610,17 @@ class LegalScraperDaemon:
         return {
             "enabled": True,
             "token_resolved": token_resolved,
-            "all_readable": bool(datasets) and all(bool(item.get("readable")) for item in datasets.values()),
+            "all_readable": bool(datasets)
+            and all(bool(item.get("readable")) for item in datasets.values()),
             "datasets": datasets,
         }
 
     def build_target_manifest(self) -> Dict[str, Any]:
         """Describe every corpus/state artifact a full-corpus run is expected to retrieve."""
         try:
-            from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import get_canonical_legal_corpus
+            from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import (
+                get_canonical_legal_corpus,
+            )
         except Exception as exc:
             return {
                 "status": "error",
@@ -565,9 +644,13 @@ class LegalScraperDaemon:
                 state_shards.append(
                     {
                         "state": state,
-                        "hf_parquet_path": f"{parquet_prefix}/{state_parquet}" if parquet_prefix else state_parquet,
+                        "hf_parquet_path": f"{parquet_prefix}/{state_parquet}"
+                        if parquet_prefix
+                        else state_parquet,
                         "jsonld_filename": f"STATE-{state}.jsonld",
-                        "jsonld_path": f"{jsonld_prefix}/STATE-{state}.jsonld" if jsonld_prefix else f"STATE-{state}.jsonld",
+                        "jsonld_path": f"{jsonld_prefix}/STATE-{state}.jsonld"
+                        if jsonld_prefix
+                        else f"STATE-{state}.jsonld",
                         "parquet_filename": state_parquet,
                     }
                 )
@@ -588,7 +671,9 @@ class LegalScraperDaemon:
             "state_count": len(self.states),
             "corpora": corpora,
             "corpus_count": len(corpora),
-            "state_shard_count": sum(int((entry or {}).get("state_shard_count", 0) or 0) for entry in corpora.values()),
+            "state_shard_count": sum(
+                int((entry or {}).get("state_shard_count", 0) or 0) for entry in corpora.values()
+            ),
             "combined_artifact_count": len(corpora),
         }
 
@@ -621,18 +706,34 @@ class LegalScraperDaemon:
 
         bool_text = lambda value: "1" if value else "0"
         env = {
-            "IPFS_DATASETS_LEGAL_FETCH_CACHE_ENABLED": bool_text(config.enabled and config.fetch_cache_enabled),
-            "LEGAL_SCRAPER_FETCH_CACHE_ENABLED": bool_text(config.enabled and config.fetch_cache_enabled),
+            "IPFS_DATASETS_LEGAL_FETCH_CACHE_ENABLED": bool_text(
+                config.enabled and config.fetch_cache_enabled
+            ),
+            "LEGAL_SCRAPER_FETCH_CACHE_ENABLED": bool_text(
+                config.enabled and config.fetch_cache_enabled
+            ),
             "IPFS_DATASETS_LEGAL_FETCH_CACHE_DIR": str(fetch_dir),
             "LEGAL_SCRAPER_FETCH_CACHE_DIR": str(fetch_dir),
-            "IPFS_DATASETS_LEGAL_FETCH_CACHE_IPFS_MIRROR": bool_text(config.enabled and config.mirror_to_ipfs),
-            "LEGAL_SCRAPER_FETCH_CACHE_IPFS_MIRROR": bool_text(config.enabled and config.mirror_to_ipfs),
-            "IPFS_DATASETS_SEARCH_CACHE_ENABLED": bool_text(config.enabled and config.search_cache_enabled),
-            "LEGAL_SCRAPER_SEARCH_CACHE_ENABLED": bool_text(config.enabled and config.search_cache_enabled),
+            "IPFS_DATASETS_LEGAL_FETCH_CACHE_IPFS_MIRROR": bool_text(
+                config.enabled and config.mirror_to_ipfs
+            ),
+            "LEGAL_SCRAPER_FETCH_CACHE_IPFS_MIRROR": bool_text(
+                config.enabled and config.mirror_to_ipfs
+            ),
+            "IPFS_DATASETS_SEARCH_CACHE_ENABLED": bool_text(
+                config.enabled and config.search_cache_enabled
+            ),
+            "LEGAL_SCRAPER_SEARCH_CACHE_ENABLED": bool_text(
+                config.enabled and config.search_cache_enabled
+            ),
             "IPFS_DATASETS_SEARCH_CACHE_DIR": str(search_dir),
             "LEGAL_SCRAPER_SEARCH_CACHE_DIR": str(search_dir),
-            "IPFS_DATASETS_SEARCH_CACHE_IPFS_MIRROR": bool_text(config.enabled and config.mirror_to_ipfs),
-            "LEGAL_SCRAPER_SEARCH_CACHE_IPFS_MIRROR": bool_text(config.enabled and config.mirror_to_ipfs),
+            "IPFS_DATASETS_SEARCH_CACHE_IPFS_MIRROR": bool_text(
+                config.enabled and config.mirror_to_ipfs
+            ),
+            "LEGAL_SCRAPER_SEARCH_CACHE_IPFS_MIRROR": bool_text(
+                config.enabled and config.mirror_to_ipfs
+            ),
         }
         os.environ.update(env)
         return env
@@ -653,7 +754,9 @@ class LegalScraperDaemon:
                     "target_manifest": preflight_payload.get("target_manifest") or {},
                     "cycles": [],
                 }
-                self.state_path.write_text(json.dumps(summary, indent=2, sort_keys=True, default=str), encoding="utf-8")
+                self.state_path.write_text(
+                    json.dumps(summary, indent=2, sort_keys=True, default=str), encoding="utf-8"
+                )
                 return summary
 
         cycles: List[Dict[str, Any]] = []
@@ -730,8 +833,12 @@ class LegalScraperDaemon:
     def _write_cycle(self, cycle: Dict[str, Any]) -> None:
         cycle_index = int(cycle.get("cycle") or 0)
         cycle_path = self.cycles_dir / f"cycle_{cycle_index:04d}.json"
-        cycle_path.write_text(json.dumps(cycle, indent=2, sort_keys=True, default=str), encoding="utf-8")
-        self.latest_path.write_text(json.dumps(cycle, indent=2, sort_keys=True, default=str), encoding="utf-8")
+        cycle_path.write_text(
+            json.dumps(cycle, indent=2, sort_keys=True, default=str), encoding="utf-8"
+        )
+        self.latest_path.write_text(
+            json.dumps(cycle, indent=2, sort_keys=True, default=str), encoding="utf-8"
+        )
 
     def _phase_path(self, cycle_dir: Path, phase_name: str) -> Path:
         return cycle_dir / f"{phase_name}_phase.json"
@@ -751,7 +858,11 @@ class LegalScraperDaemon:
         status = str(payload.get("status") or "").lower()
         if status in {"", "running", "error"}:
             return None
-        if status == "partial_success" and self.config.full_corpus and not self.config.resume_partial_phases:
+        if (
+            status == "partial_success"
+            and self.config.full_corpus
+            and not self.config.resume_partial_phases
+        ):
             return None
         if payload.get("_resume_context") != self._phase_resume_context(phase_name):
             return None
@@ -764,9 +875,13 @@ class LegalScraperDaemon:
         path.parent.mkdir(parents=True, exist_ok=True)
         payload = dict(result)
         payload["_resume_context"] = self._phase_resume_context(phase_name)
-        path.write_text(json.dumps(payload, indent=2, sort_keys=True, default=str), encoding="utf-8")
+        path.write_text(
+            json.dumps(payload, indent=2, sort_keys=True, default=str), encoding="utf-8"
+        )
 
-    def _write_phase_checkpoint(self, cycle_dir: Path, phase_name: str, payload: Dict[str, Any]) -> None:
+    def _write_phase_checkpoint(
+        self, cycle_dir: Path, phase_name: str, payload: Dict[str, Any]
+    ) -> None:
         checkpoint = dict(payload)
         checkpoint.setdefault("status", "running")
         checkpoint["phase"] = phase_name
@@ -807,7 +922,9 @@ class LegalScraperDaemon:
             phase_name,
             {"status": "running", "started_at": started_at, "heartbeat_count": 0},
         )
-        heartbeat_seconds = max(0.0, float(os.getenv("LEGAL_SCRAPER_DAEMON_HEARTBEAT_SECONDS", "15") or 0.0))
+        heartbeat_seconds = max(
+            0.0, float(os.getenv("LEGAL_SCRAPER_DAEMON_HEARTBEAT_SECONDS", "15") or 0.0)
+        )
         stop_heartbeat = asyncio.Event()
 
         async def _heartbeat() -> None:
@@ -848,19 +965,43 @@ class LegalScraperDaemon:
     def _full_corpus_completeness(self, phases: Dict[str, Any]) -> Dict[str, Any]:
         required_states = list(self.states)
         required_corpora = list(SUPPORTED_CORPORA)
-        state_refresh = phases.get("state_refresh") if isinstance(phases.get("state_refresh"), dict) else {}
-        agentic = phases.get("agentic_corpora") if isinstance(phases.get("agentic_corpora"), dict) else {}
+        state_refresh = (
+            phases.get("state_refresh") if isinstance(phases.get("state_refresh"), dict) else {}
+        )
+        agentic = (
+            phases.get("agentic_corpora") if isinstance(phases.get("agentic_corpora"), dict) else {}
+        )
 
-        scrape_gap_states = sorted(set(str(item).upper() for item in list(state_refresh.get("scrape_gap_states") or []) if str(item).strip()))
-        build_gap_states = sorted(set(str(item).upper() for item in list(state_refresh.get("build_gap_states") or []) if str(item).strip()))
+        scrape_gap_states = sorted(
+            set(
+                str(item).upper()
+                for item in list(state_refresh.get("scrape_gap_states") or [])
+                if str(item).strip()
+            )
+        )
+        build_gap_states = sorted(
+            set(
+                str(item).upper()
+                for item in list(state_refresh.get("build_gap_states") or [])
+                if str(item).strip()
+            )
+        )
         build = state_refresh.get("build") if isinstance(state_refresh.get("build"), dict) else {}
-        missing_jsonld_states = sorted(set(str(item).upper() for item in list(build.get("missing_jsonld_states") or []) if str(item).strip()))
+        missing_jsonld_states = sorted(
+            set(
+                str(item).upper()
+                for item in list(build.get("missing_jsonld_states") or [])
+                if str(item).strip()
+            )
+        )
         built_states = {
-            str(item).upper()
-            for item in list(build.get("states") or [])
-            if str(item).strip()
+            str(item).upper() for item in list(build.get("states") or []) if str(item).strip()
         }
-        missing_built_states = [] if not built_states else [state for state in required_states if state not in built_states]
+        missing_built_states = (
+            []
+            if not built_states
+            else [state for state in required_states if state not in built_states]
+        )
         if not state_refresh:
             missing_built_states = list(required_states)
         state_report_artifact_gaps = []
@@ -876,18 +1017,25 @@ class LegalScraperDaemon:
                 state_report_artifact_gaps.append(state)
         combined_parquet_path = str(build.get("combined_parquet_path") or "").strip()
         combined_row_count = int(build.get("combined_row_count", 0) or 0)
-        missing_state_refresh_combined_artifact = (
-            bool(state_refresh)
-            and (
-                not combined_parquet_path
-                or not Path(combined_parquet_path).exists()
-                or combined_row_count <= 0
+        missing_state_refresh_combined_artifact = bool(state_refresh) and (
+            not combined_parquet_path
+            or not Path(combined_parquet_path).exists()
+            or combined_row_count <= 0
+        )
+        missing_state_refresh_states = sorted(
+            set(
+                scrape_gap_states
+                + build_gap_states
+                + missing_jsonld_states
+                + missing_built_states
+                + state_report_artifact_gaps
             )
         )
-        missing_state_refresh_states = sorted(set(scrape_gap_states + build_gap_states + missing_jsonld_states + missing_built_states + state_report_artifact_gaps))
 
         agentic_results = agentic.get("corpora") if isinstance(agentic.get("corpora"), dict) else {}
-        missing_agentic_corpora = [corpus for corpus in required_corpora if corpus not in agentic_results]
+        missing_agentic_corpora = [
+            corpus for corpus in required_corpora if corpus not in agentic_results
+        ]
         missing_agentic_states_by_corpus: Dict[str, List[str]] = {}
         errored_agentic_corpora = [
             corpus
@@ -900,13 +1048,19 @@ class LegalScraperDaemon:
                 continue
             summary = result.get("summary") if isinstance(result.get("summary"), dict) else {}
             processed_states = {
-                str(item).upper()
-                for item in list(summary.get("states") or [])
-                if str(item).strip()
+                str(item).upper() for item in list(summary.get("states") or []) if str(item).strip()
             }
-            latest_cycle = summary.get("latest_cycle") if isinstance(summary.get("latest_cycle"), dict) else {}
-            diagnostics = latest_cycle.get("diagnostics") if isinstance(latest_cycle.get("diagnostics"), dict) else {}
-            coverage = diagnostics.get("coverage") if isinstance(diagnostics.get("coverage"), dict) else {}
+            latest_cycle = (
+                summary.get("latest_cycle") if isinstance(summary.get("latest_cycle"), dict) else {}
+            )
+            diagnostics = (
+                latest_cycle.get("diagnostics")
+                if isinstance(latest_cycle.get("diagnostics"), dict)
+                else {}
+            )
+            coverage = (
+                diagnostics.get("coverage") if isinstance(diagnostics.get("coverage"), dict) else {}
+            )
             coverage_gap_states = {
                 str(item).upper()
                 for item in list(coverage.get("coverage_gap_states") or [])
@@ -930,7 +1084,10 @@ class LegalScraperDaemon:
             or errored_agentic_corpora
         ):
             status = "incomplete"
-        if str(state_refresh.get("status") or "").lower() == "error" or str(agentic.get("status") or "").lower() == "error":
+        if (
+            str(state_refresh.get("status") or "").lower() == "error"
+            or str(agentic.get("status") or "").lower() == "error"
+        ):
             status = "error"
 
         return {
@@ -950,7 +1107,11 @@ class LegalScraperDaemon:
         }
 
     def _build_full_corpus_retry_manifest(self, cycle: Dict[str, Any]) -> Dict[str, Any]:
-        completeness = cycle.get("corpus_completeness") if isinstance(cycle.get("corpus_completeness"), dict) else {}
+        completeness = (
+            cycle.get("corpus_completeness")
+            if isinstance(cycle.get("corpus_completeness"), dict)
+            else {}
+        )
         required_states = [
             str(item).upper()
             for item in list(completeness.get("required_states") or self.states)
@@ -968,7 +1129,9 @@ class LegalScraperDaemon:
                 if str(item).strip()
             }
         )
-        state_refresh_combined_artifact_missing = bool(completeness.get("missing_state_refresh_combined_artifact"))
+        state_refresh_combined_artifact_missing = bool(
+            completeness.get("missing_state_refresh_combined_artifact")
+        )
         missing_agentic_corpora = [
             str(item)
             for item in list(completeness.get("missing_agentic_corpora") or [])
@@ -981,13 +1144,11 @@ class LegalScraperDaemon:
         ]
         missing_agentic_by_corpus = {
             str(corpus): sorted(
-                {
-                    str(state).upper()
-                    for state in list(states or [])
-                    if str(state).strip()
-                }
+                {str(state).upper() for state in list(states or []) if str(state).strip()}
             )
-            for corpus, states in dict(completeness.get("missing_agentic_states_by_corpus") or {}).items()
+            for corpus, states in dict(
+                completeness.get("missing_agentic_states_by_corpus") or {}
+            ).items()
         }
         for corpus in missing_agentic_corpora + errored_agentic_corpora:
             missing_agentic_by_corpus.setdefault(corpus, list(required_states))
@@ -1067,19 +1228,37 @@ class LegalScraperDaemon:
 
     def _build_merge_handoffs(self, cycle: Dict[str, Any]) -> List[Dict[str, Any]]:
         phases = cycle.get("phases") if isinstance(cycle.get("phases"), dict) else {}
-        agentic = phases.get("agentic_corpora") if isinstance(phases.get("agentic_corpora"), dict) else {}
+        agentic = (
+            phases.get("agentic_corpora") if isinstance(phases.get("agentic_corpora"), dict) else {}
+        )
         corpora = agentic.get("corpora") if isinstance(agentic.get("corpora"), dict) else {}
-        admin_rules = corpora.get("state_admin_rules") if isinstance(corpora.get("state_admin_rules"), dict) else {}
+        admin_rules = (
+            corpora.get("state_admin_rules")
+            if isinstance(corpora.get("state_admin_rules"), dict)
+            else {}
+        )
         summary = admin_rules.get("summary") if isinstance(admin_rules.get("summary"), dict) else {}
-        latest_cycle = summary.get("latest_cycle") if isinstance(summary.get("latest_cycle"), dict) else {}
-        recovered = latest_cycle.get("recovered_row_artifacts") if isinstance(latest_cycle.get("recovered_row_artifacts"), dict) else {}
-        state_artifacts = recovered.get("state_artifacts") if isinstance(recovered.get("state_artifacts"), dict) else {}
+        latest_cycle = (
+            summary.get("latest_cycle") if isinstance(summary.get("latest_cycle"), dict) else {}
+        )
+        recovered = (
+            latest_cycle.get("recovered_row_artifacts")
+            if isinstance(latest_cycle.get("recovered_row_artifacts"), dict)
+            else {}
+        )
+        state_artifacts = (
+            recovered.get("state_artifacts")
+            if isinstance(recovered.get("state_artifacts"), dict)
+            else {}
+        )
         inputs: List[str] = []
         states: List[str] = []
         for state, artifact in sorted(state_artifacts.items()):
             if not isinstance(artifact, dict):
                 continue
-            candidate = str(artifact.get("manifest_path") or artifact.get("statutes_jsonl_path") or "").strip()
+            candidate = str(
+                artifact.get("manifest_path") or artifact.get("statutes_jsonl_path") or ""
+            ).strip()
             if not candidate:
                 continue
             inputs.append(candidate)
@@ -1089,7 +1268,11 @@ class LegalScraperDaemon:
         if not inputs:
             return []
 
-        output_dir = self.output_dir / "state_admin_rules_recovered_rows_merge" / f"cycle_{int(cycle.get('cycle') or 0):04d}"
+        output_dir = (
+            self.output_dir
+            / "state_admin_rules_recovered_rows_merge"
+            / f"cycle_{int(cycle.get('cycle') or 0):04d}"
+        )
         script_path = Path("scripts") / "ops" / "legal_data" / "merge_state_admin_recovered_rows.py"
         command = [
             sys.executable,
@@ -1119,7 +1302,9 @@ class LegalScraperDaemon:
         payload = dict(manifest)
         payload["cycle_retry_path"] = str(cycle_retry_path)
         payload["latest_retry_path"] = str(self.latest_full_corpus_retry_path)
-        cycle_retry_path.write_text(json.dumps(payload, indent=2, sort_keys=True, default=str), encoding="utf-8")
+        cycle_retry_path.write_text(
+            json.dumps(payload, indent=2, sort_keys=True, default=str), encoding="utf-8"
+        )
         if str(payload.get("status") or "") == "needs_retry":
             self.latest_full_corpus_retry_path.write_text(
                 json.dumps(payload, indent=2, sort_keys=True, default=str),
@@ -1136,8 +1321,14 @@ class LegalScraperDaemon:
         }
 
     @staticmethod
-    def _cycle_status(phases: Dict[str, Any], corpus_completeness: Optional[Dict[str, Any]] = None) -> str:
-        statuses = [str((phase or {}).get("status") or "").lower() for phase in phases.values() if isinstance(phase, dict)]
+    def _cycle_status(
+        phases: Dict[str, Any], corpus_completeness: Optional[Dict[str, Any]] = None
+    ) -> str:
+        statuses = [
+            str((phase or {}).get("status") or "").lower()
+            for phase in phases.values()
+            if isinstance(phase, dict)
+        ]
         completeness_status = str((corpus_completeness or {}).get("status") or "").lower()
         if completeness_status == "error":
             return "error"
@@ -1182,7 +1373,9 @@ class LegalScraperDaemon:
                 publish_to_hf=bool(config.publish_to_hf),
                 hf_token=self.config.hf_token,
                 merge_recovered_rows=bool(config.merge_recovered_rows),
-                hydrate_merge_from_hf=bool(config.hydrate_merge_from_hf or config.publish_merged_parquet_to_hf),
+                hydrate_merge_from_hf=bool(
+                    config.hydrate_merge_from_hf or config.publish_merged_parquet_to_hf
+                ),
                 publish_merged_parquet_to_hf=bool(config.publish_merged_parquet_to_hf),
                 seed_from_corpora=bool(config.seed_from_corpora),
                 seed_only=bool(config.seed_only),
@@ -1257,7 +1450,9 @@ class LegalScraperDaemon:
             json=True,
         )
         old_hydrate_timeout = os.environ.get("STATE_SCRAPER_HYDRATE_TIMEOUT_SECONDS")
-        os.environ["STATE_SCRAPER_HYDRATE_TIMEOUT_SECONDS"] = str(max(1.0, float(config.hydrate_timeout_seconds or 25.0)))
+        os.environ["STATE_SCRAPER_HYDRATE_TIMEOUT_SECONDS"] = str(
+            max(1.0, float(config.hydrate_timeout_seconds or 25.0))
+        )
         try:
             result = await runner(args)
             return dict(result)
@@ -1276,9 +1471,17 @@ class LegalScraperDaemon:
         for corpus in corpora:
             results[corpus] = await self._run_agentic_corpus(corpus=corpus, cycle_dir=cycle_dir)
         status = "success"
-        if any(str((value or {}).get("status") or "").lower() == "error" for value in results.values() if isinstance(value, dict)):
+        if any(
+            str((value or {}).get("status") or "").lower() == "error"
+            for value in results.values()
+            if isinstance(value, dict)
+        ):
             status = "error"
-        elif any(str((value or {}).get("status") or "").lower() == "partial_success" for value in results.values() if isinstance(value, dict)):
+        elif any(
+            str((value or {}).get("status") or "").lower() == "partial_success"
+            for value in results.values()
+            if isinstance(value, dict)
+        ):
             status = "partial_success"
         return {"status": status, "corpora": results}
 
@@ -1287,12 +1490,18 @@ class LegalScraperDaemon:
         output_dir = cycle_dir / "agentic_corpora" / corpus
         output_dir.mkdir(parents=True, exist_ok=True)
         if self.agentic_runner is not None:
-            return await self.agentic_runner(corpus=corpus, states=list(self.states), output_dir=str(output_dir))
+            return await self.agentic_runner(
+                corpus=corpus, states=list(self.states), output_dir=str(output_dir)
+            )
         if corpus == "state_admin_rules" and len(self.states) > 1:
             return await self._run_agentic_corpus_by_state(corpus=corpus, output_dir=output_dir)
-        return await self._run_agentic_corpus_subprocess(corpus=corpus, output_dir=output_dir, states=list(self.states))
+        return await self._run_agentic_corpus_subprocess(
+            corpus=corpus, output_dir=output_dir, states=list(self.states)
+        )
 
-    async def _run_agentic_corpus_by_state(self, *, corpus: str, output_dir: Path) -> Dict[str, Any]:
+    async def _run_agentic_corpus_by_state(
+        self, *, corpus: str, output_dir: Path
+    ) -> Dict[str, Any]:
         state_results: Dict[str, Dict[str, Any]] = {}
         semaphore = asyncio.Semaphore(min(4, max(1, len(self.states))))
 
@@ -1319,26 +1528,61 @@ class LegalScraperDaemon:
         latest_cycles: Dict[str, Any] = {}
         for state, result in state_results.items():
             summary = result.get("summary") if isinstance(result.get("summary"), dict) else {}
-            latest_cycle = summary.get("latest_cycle") if isinstance(summary.get("latest_cycle"), dict) else {}
+            latest_cycle = (
+                summary.get("latest_cycle") if isinstance(summary.get("latest_cycle"), dict) else {}
+            )
             latest_cycles[state] = latest_cycle
-            diagnostics = latest_cycle.get("diagnostics") if isinstance(latest_cycle.get("diagnostics"), dict) else {}
-            coverage = diagnostics.get("coverage") if isinstance(diagnostics.get("coverage"), dict) else {}
-            etl = diagnostics.get("etl_readiness") if isinstance(diagnostics.get("etl_readiness"), dict) else {}
-            documents = diagnostics.get("documents") if isinstance(diagnostics.get("documents"), dict) else {}
-            if int(coverage.get("states_with_nonzero_statutes") or coverage.get("states_returned") or 0) > 0:
+            diagnostics = (
+                latest_cycle.get("diagnostics")
+                if isinstance(latest_cycle.get("diagnostics"), dict)
+                else {}
+            )
+            coverage = (
+                diagnostics.get("coverage") if isinstance(diagnostics.get("coverage"), dict) else {}
+            )
+            etl = (
+                diagnostics.get("etl_readiness")
+                if isinstance(diagnostics.get("etl_readiness"), dict)
+                else {}
+            )
+            documents = (
+                diagnostics.get("documents")
+                if isinstance(diagnostics.get("documents"), dict)
+                else {}
+            )
+            if (
+                int(
+                    coverage.get("states_with_nonzero_statutes")
+                    or coverage.get("states_returned")
+                    or 0
+                )
+                > 0
+            ):
                 successful_states.append(state)
                 total_statutes += int(etl.get("total_statutes") or 0)
             else:
                 coverage_gap_states.append(state)
-            recovery = documents.get("per_state_recovery") if isinstance(documents.get("per_state_recovery"), dict) else {}
+            recovery = (
+                documents.get("per_state_recovery")
+                if isinstance(documents.get("per_state_recovery"), dict)
+                else {}
+            )
             if state in recovery:
                 per_state_recovery[state] = recovery[state]
-            candidate_urls = documents.get("candidate_urls_by_state") if isinstance(documents.get("candidate_urls_by_state"), dict) else {}
+            candidate_urls = (
+                documents.get("candidate_urls_by_state")
+                if isinstance(documents.get("candidate_urls_by_state"), dict)
+                else {}
+            )
             if state in candidate_urls:
                 candidate_urls_by_state[state] = candidate_urls[state]
             recovered_row_artifacts = latest_cycle.get("recovered_row_artifacts")
             if not isinstance(recovered_row_artifacts, dict):
-                recovered_row_artifacts = documents.get("recovered_row_artifacts") if isinstance(documents.get("recovered_row_artifacts"), dict) else {}
+                recovered_row_artifacts = (
+                    documents.get("recovered_row_artifacts")
+                    if isinstance(documents.get("recovered_row_artifacts"), dict)
+                    else {}
+                )
             if recovered_row_artifacts:
                 recovered_row_artifacts_by_state[state] = recovered_row_artifacts
                 recovered_row_count += int(recovered_row_artifacts.get("row_count") or 0)
@@ -1387,7 +1631,9 @@ class LegalScraperDaemon:
             "summary": summary,
         }
 
-    async def _run_agentic_corpus_subprocess(self, *, corpus: str, output_dir: Path, states: Sequence[str]) -> Dict[str, Any]:
+    async def _run_agentic_corpus_subprocess(
+        self, *, corpus: str, output_dir: Path, states: Sequence[str]
+    ) -> Dict[str, Any]:
         config = self.config.agentic_corpora
         command = [
             sys.executable,
@@ -1454,7 +1700,9 @@ class LegalScraperDaemon:
             if process.returncode is None:
                 process.terminate()
                 try:
-                    stdout, stderr = await asyncio.wait_for(asyncio.shield(communicate_task), timeout=10.0)
+                    stdout, stderr = await asyncio.wait_for(
+                        asyncio.shield(communicate_task), timeout=10.0
+                    )
                 except asyncio.TimeoutError:
                     process.kill()
                     stdout, stderr = await communicate_task
@@ -1462,7 +1710,9 @@ class LegalScraperDaemon:
                 stdout, stderr = await communicate_task
             return {
                 "status": status,
-                "error": None if status != "error" else f"agentic corpus subprocess ended via recovered checkpoint: {reason}",
+                "error": None
+                if status != "error"
+                else f"agentic corpus subprocess ended via recovered checkpoint: {reason}",
                 "exception_type": None if status != "error" else "RecoveredCheckpointError",
                 "output_dir": str(output_dir),
                 "command": command,
@@ -1471,7 +1721,9 @@ class LegalScraperDaemon:
                 "scrape_timeout_seconds": timeout,
                 "supervisor_timeout_seconds": supervisor_timeout,
                 "recovered_latest_summary_after_timeout": reason == "timeout",
-                "recovered_latest_summary_from_checkpoint": bool(recovered_summary.get("recovered_from_checkpoint")),
+                "recovered_latest_summary_from_checkpoint": bool(
+                    recovered_summary.get("recovered_from_checkpoint")
+                ),
                 "recovered_checkpoint_reason": reason,
                 "stdout_tail": stdout.decode("utf-8", errors="replace")[-4000:],
                 "stderr_tail": stderr.decode("utf-8", errors="replace")[-4000:],
@@ -1479,7 +1731,9 @@ class LegalScraperDaemon:
 
         try:
             if timeout > 0:
-                stdout, stderr = await asyncio.wait_for(asyncio.shield(communicate_task), timeout=supervisor_timeout)
+                stdout, stderr = await asyncio.wait_for(
+                    asyncio.shield(communicate_task), timeout=supervisor_timeout
+                )
             else:
                 while True:
                     try:
@@ -1490,10 +1744,20 @@ class LegalScraperDaemon:
                         break
                     except asyncio.TimeoutError:
                         recovered_summary = _load_agentic_latest_summary(output_dir)
-                        latest_cycle = recovered_summary.get("latest_cycle") if isinstance(recovered_summary, dict) else {}
-                        latest_status = str((latest_cycle or {}).get("status") or recovered_summary.get("status") or "").lower()
+                        latest_cycle = (
+                            recovered_summary.get("latest_cycle")
+                            if isinstance(recovered_summary, dict)
+                            else {}
+                        )
+                        latest_status = str(
+                            (latest_cycle or {}).get("status")
+                            or recovered_summary.get("status")
+                            or ""
+                        ).lower()
                         if latest_status in {"success", "partial_success", "error"}:
-                            recovered = await _terminate_with_recovered_summary("terminal_checkpoint")
+                            recovered = await _terminate_with_recovered_summary(
+                                "terminal_checkpoint"
+                            )
                             if recovered is not None:
                                 return recovered
         except asyncio.TimeoutError:
@@ -1535,9 +1799,17 @@ class LegalScraperDaemon:
         if int(process.returncode or 0) != 0:
             recovered_summary = _load_agentic_latest_summary(output_dir)
             if recovered_summary:
-                recovered_status = _agentic_subprocess_status(returncode=0, summary=recovered_summary)
-                latest_cycle = recovered_summary.get("latest_cycle") if isinstance(recovered_summary.get("latest_cycle"), dict) else {}
-                latest_status = str(latest_cycle.get("status") or recovered_summary.get("status") or "").lower()
+                recovered_status = _agentic_subprocess_status(
+                    returncode=0, summary=recovered_summary
+                )
+                latest_cycle = (
+                    recovered_summary.get("latest_cycle")
+                    if isinstance(recovered_summary.get("latest_cycle"), dict)
+                    else {}
+                )
+                latest_status = str(
+                    latest_cycle.get("status") or recovered_summary.get("status") or ""
+                ).lower()
                 if latest_status in {"success", "partial_success"}:
                     return {
                         "status": recovered_status,
@@ -1561,7 +1833,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the comprehensive legal scraper daemon")
     parser.add_argument("--states", default="all")
     parser.add_argument("--include-dc", action="store_true")
-    parser.add_argument("--output-dir", default=str(Path.home() / ".ipfs_datasets" / "legal_scraper_daemon"))
+    parser.add_argument(
+        "--output-dir", default=str(Path.home() / ".ipfs_datasets" / "legal_scraper_daemon")
+    )
     parser.add_argument("--max-cycles", type=int, default=1)
     parser.add_argument("--cycle-interval-seconds", type=float, default=3600.0)
     parser.add_argument("--dry-run", action="store_true")
@@ -1653,14 +1927,18 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--disable-agentic-admin-parallel-assist", action="store_true")
     parser.add_argument("--agentic-admin-parallel-assist-state-limit", type=int, default=6)
     parser.add_argument("--agentic-admin-parallel-assist-max-urls-per-domain", type=int, default=20)
-    parser.add_argument("--agentic-admin-parallel-assist-timeout-seconds", type=float, default=86400.0)
+    parser.add_argument(
+        "--agentic-admin-parallel-assist-timeout-seconds", type=float, default=86400.0
+    )
     parser.add_argument("--json", action="store_true")
     return parser
 
 
 def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
     full_corpus = bool(getattr(args, "full_corpus", False))
-    states = _normalize_states("all" if full_corpus else args.states, include_dc=bool(args.include_dc or full_corpus))
+    states = _normalize_states(
+        "all" if full_corpus else args.states, include_dc=bool(args.include_dc or full_corpus)
+    )
     bluebook_corpora = _normalize_corpora("all" if full_corpus else args.bluebook_corpora)
     agentic_corpora = _normalize_corpora("all" if full_corpus else args.agentic_corpora)
     return LegalScraperDaemonConfig(
@@ -1695,10 +1973,14 @@ def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
             sampling_shuffle_seed=int(args.bluebook_sampling_shuffle_seed),
             prefer_hf_corpora=bool(args.bluebook_prefer_hf_corpora or full_corpus),
             primary_corpora_only=bool(args.bluebook_primary_corpora_only or full_corpus),
-            exact_state_partitions_only=bool(args.bluebook_exact_state_partitions_only or full_corpus),
+            exact_state_partitions_only=bool(
+                args.bluebook_exact_state_partitions_only or full_corpus
+            ),
             materialize_hf_corpora=bool(args.bluebook_materialize_hf_corpora or full_corpus),
             merge_recovered_rows=bool(args.bluebook_merge_recovered_rows),
-            hydrate_merge_from_hf=bool(args.bluebook_hydrate_merge_from_hf or args.bluebook_publish_merged_parquet_to_hf),
+            hydrate_merge_from_hf=bool(
+                args.bluebook_hydrate_merge_from_hf or args.bluebook_publish_merged_parquet_to_hf
+            ),
             publish_merged_parquet_to_hf=bool(args.bluebook_publish_merged_parquet_to_hf),
             publish_to_hf=bool(args.bluebook_publish_to_hf),
             skip_live_search=not bool(args.bluebook_live_search),
@@ -1706,7 +1988,11 @@ def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
         state_refresh=StateRefreshDaemonConfig(
             enabled=not bool(args.disable_state_refresh),
             scrape=bool(args.state_refresh_scrape or full_corpus),
-            merge_hf_existing=bool(args.state_refresh_merge_hf_existing or args.state_refresh_publish_to_hf or full_corpus),
+            merge_hf_existing=bool(
+                args.state_refresh_merge_hf_existing
+                or args.state_refresh_publish_to_hf
+                or full_corpus
+            ),
             publish_to_hf=bool(args.state_refresh_publish_to_hf),
             verify_publish=bool(args.state_refresh_verify),
             allow_incomplete_publish=bool(args.allow_incomplete_publish),
@@ -1716,9 +2002,13 @@ def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
                 86400.0 if full_corpus else 1.0,
                 float(args.per_state_timeout_seconds),
             ),
-            per_state_retry_attempts=max(2 if full_corpus else 0, int(args.per_state_retry_attempts)),
+            per_state_retry_attempts=max(
+                2 if full_corpus else 0, int(args.per_state_retry_attempts)
+            ),
             hydrate_statute_text=not bool(args.no_hydrate_state_text),
-            hydrate_timeout_seconds=max(60.0 if full_corpus else 1.0, float(args.state_refresh_hydrate_timeout_seconds)),
+            hydrate_timeout_seconds=max(
+                60.0 if full_corpus else 1.0, float(args.state_refresh_hydrate_timeout_seconds)
+            ),
         ),
         agentic_corpora=AgenticCorpusDaemonConfig(
             enabled=bool(args.enable_agentic_corpora or full_corpus),
@@ -1731,25 +2021,37 @@ def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
                 float(args.agentic_per_state_timeout_seconds),
             ),
             scrape_timeout_seconds=max(0.0, float(args.agentic_scrape_timeout_seconds)),
-            admin_agentic_max_candidates_per_state=max(1, int(args.agentic_admin_max_candidates_per_state)),
+            admin_agentic_max_candidates_per_state=max(
+                1, int(args.agentic_admin_max_candidates_per_state)
+            ),
             admin_agentic_max_fetch_per_state=max(1, int(args.agentic_admin_max_fetch_per_state)),
-            admin_agentic_max_results_per_domain=max(1, int(args.agentic_admin_max_results_per_domain)),
+            admin_agentic_max_results_per_domain=max(
+                1, int(args.agentic_admin_max_results_per_domain)
+            ),
             admin_agentic_max_hops=max(0, int(args.agentic_admin_max_hops)),
             admin_agentic_max_pages=max(1, int(args.agentic_admin_max_pages)),
             admin_parallel_assist_enabled=not bool(args.disable_agentic_admin_parallel_assist),
-            admin_parallel_assist_state_limit=max(0, int(args.agentic_admin_parallel_assist_state_limit)),
+            admin_parallel_assist_state_limit=max(
+                0, int(args.agentic_admin_parallel_assist_state_limit)
+            ),
             admin_parallel_assist_max_urls_per_domain=max(
                 1,
                 int(args.agentic_admin_parallel_assist_max_urls_per_domain),
             ),
-            admin_parallel_assist_timeout_seconds=max(1.0, float(args.agentic_admin_parallel_assist_timeout_seconds)),
+            admin_parallel_assist_timeout_seconds=max(
+                1.0, float(args.agentic_admin_parallel_assist_timeout_seconds)
+            ),
         ),
     )
 
 
 async def _main_async(args: argparse.Namespace) -> int:
     daemon = LegalScraperDaemon(config_from_args(args))
-    result = daemon.write_preflight_artifacts() if bool(getattr(args, "preflight_only", False)) else await daemon.run()
+    result = (
+        daemon.write_preflight_artifacts()
+        if bool(getattr(args, "preflight_only", False))
+        else await daemon.run()
+    )
     if args.json:
         print(json.dumps(result, indent=2, ensure_ascii=False, sort_keys=True))
     elif bool(getattr(args, "preflight_only", False)):
@@ -1761,7 +2063,11 @@ async def _main_async(args: argparse.Namespace) -> int:
         print(f"Cycles: {result.get('cycle_count')}")
         print(f"Latest: {result.get('latest_cycle_path')}")
     status = str(result.get("status") or "").lower()
-    if bool(getattr(args, "preflight_only", False)) and bool(getattr(args, "strict_preflight", False)) and status != "ready":
+    if (
+        bool(getattr(args, "preflight_only", False))
+        and bool(getattr(args, "strict_preflight", False))
+        and status != "ready"
+    ):
         return 2
     if bool(getattr(args, "require_preflight_ready", False)) and status == "blocked":
         return 2

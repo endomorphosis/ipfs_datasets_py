@@ -198,12 +198,12 @@ from ipfs_datasets_py.processors.file_converter import FileConverter
 converter = FileConverter()
 
 # Async conversion
-result = await converter.convert('document.pdf')
+result = await converter.convert("document.pdf")
 print(result.text)
 print(result.metadata)
 
 # Sync conversion
-result = converter.convert_sync('document.pdf')
+result = converter.convert_sync("document.pdf")
 ```
 
 ### Format Detection
@@ -212,13 +212,13 @@ result = converter.convert_sync('document.pdf')
 from ipfs_datasets_py.processors.file_converter import detect_file_format, FormatDetector
 
 # Quick detection
-mime_type = detect_file_format('document.pdf')  # 'application/pdf'
+mime_type = detect_file_format("document.pdf")  # 'application/pdf'
 
 # Detailed detection
 detector = FormatDetector()
-mime_type = detector.detect_file('document.pdf')
+mime_type = detector.detect_file("document.pdf")
 category = detector.get_category(mime_type)  # 'document'
-supported = detector.is_supported('document.pdf')  # True
+supported = detector.is_supported("document.pdf")  # True
 ```
 
 ### Text Extraction
@@ -227,7 +227,7 @@ supported = detector.is_supported('document.pdf')  # True
 from ipfs_datasets_py.processors.file_converter import extract_file_text
 
 # Extract with metadata
-result = extract_file_text('document.pdf')
+result = extract_file_text("document.pdf")
 if result.success:
     print(f"Text: {result.text}")
     print(f"Pages: {result.metadata.get('pages')}")
@@ -238,8 +238,11 @@ if result.success:
 
 ```python
 from ipfs_datasets_py.processors.file_converter import (
-    Pipeline, FileUnit,
-    validate_file_exists, detect_format, extract_text
+    Pipeline,
+    FileUnit,
+    validate_file_exists,
+    detect_format,
+    extract_text,
 )
 
 # Build pipeline
@@ -261,23 +264,17 @@ if result.is_ok():
 ### Error Handling
 
 ```python
-from ipfs_datasets_py.processors.file_converter import (
-    with_fallback, retry_with_backoff, ErrorType
-)
+from ipfs_datasets_py.processors.file_converter import with_fallback, retry_with_backoff, ErrorType
 
 # Automatic fallback
 result = await with_fallback(
     primary=lambda: extract_with_pdfplumber(path),
     fallback=lambda: extract_with_pypdf2(path),
-    error_types=[ErrorType.EXTRACTION_FAILED]
+    error_types=[ErrorType.EXTRACTION_FAILED],
 )
 
 # Retry with exponential backoff
-result = await retry_with_backoff(
-    func=lambda: download_file(url),
-    max_retries=3,
-    initial_delay=1.0
-)
+result = await retry_with_backoff(func=lambda: download_file(url), max_retries=3, initial_delay=1.0)
 ```
 
 ---
@@ -294,7 +291,7 @@ from ipfs_datasets_py.rag import GraphRAG
 
 # Convert arbitrary files
 converter = FileConverter()
-text = await converter.convert('document.pdf')
+text = await converter.convert("document.pdf")
 
 # Feed to GraphRAG
 rag = GraphRAG()
@@ -305,7 +302,7 @@ await rag.add_document(text.text, metadata=text.metadata)
 
 ```python
 # Process multiple files
-files = ['doc1.pdf', 'doc2.docx', 'doc3.xlsx']
+files = ["doc1.pdf", "doc2.docx", "doc3.xlsx"]
 results = await converter.convert_batch(files, max_concurrent=5)
 
 for result in results:
@@ -322,7 +319,7 @@ from ipfs_datasets_py import IPFSEmbeddings
 converter = FileConverter()
 ipfs = IPFSEmbeddings()
 
-text = await converter.convert('document.pdf')
+text = await converter.convert("document.pdf")
 cid = await ipfs.add_text(text.text, metadata=text.metadata)
 print(f"Added to IPFS: {cid}")
 ```

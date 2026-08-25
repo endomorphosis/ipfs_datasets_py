@@ -10,6 +10,7 @@ Methods under test:
   - OntologyPipeline.run_score_iqr()
   - OntologyLearningAdapter.feedback_interquartile_range()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -25,14 +26,20 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -40,21 +47,25 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_entity(eid, confidence=0.5):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, confidence=confidence)
 
 
 def _make_relationship(sid, tid, rtype="r"):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
     return Relationship(id=f"{sid}-{tid}", type=rtype, source_id=sid, target_id=tid)
 
 
 def _make_result(entities, rels=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities, relationships=rels or [], confidence=1.0, metadata={}, errors=[]
     )
@@ -62,6 +73,7 @@ def _make_result(entities, rels=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
@@ -79,11 +91,13 @@ class _FakeOntology:
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -94,16 +108,21 @@ def _push_run(p, score):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(adapter, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     adapter._feedback.append(FeedbackRecord(final_score=score))
 
 
 # ── OntologyOptimizer.history_percentile ──────────────────────────────────────
+
 
 class TestHistoryPercentile:
     def test_empty_returns_zero(self):
@@ -136,6 +155,7 @@ class TestHistoryPercentile:
 
 # ── OntologyOptimizer.score_below_percentile_count ────────────────────────────
 
+
 class TestScoreBelowPercentileCount:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -158,6 +178,7 @@ class TestScoreBelowPercentileCount:
 
 # ── OntologyCritic.dimension_coefficient_of_variation ────────────────────────
 
+
 class TestDimensionCoefficientOfVariation:
     def test_all_same_returns_zero(self):
         c = _make_critic()
@@ -165,8 +186,19 @@ class TestDimensionCoefficientOfVariation:
 
     def test_all_zero_returns_zero(self):
         c = _make_critic()
-        score = _make_score(**{d: 0.0 for d in ["completeness", "consistency", "clarity",
-                                                  "granularity", "relationship_coherence", "domain_alignment"]})
+        score = _make_score(
+            **{
+                d: 0.0
+                for d in [
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                ]
+            }
+        )
         assert c.dimension_coefficient_of_variation(score) == pytest.approx(0.0)
 
     def test_nonzero_variation(self):
@@ -181,6 +213,7 @@ class TestDimensionCoefficientOfVariation:
 
 
 # ── OntologyGenerator.relationship_type_frequency ────────────────────────────
+
 
 class TestRelationshipTypeFrequency:
     def test_empty_returns_empty(self):
@@ -207,6 +240,7 @@ class TestRelationshipTypeFrequency:
 
 # ── OntologyGenerator.entity_id_set ──────────────────────────────────────────
 
+
 class TestEntityIdSet:
     def test_empty_returns_empty_set(self):
         gen = _make_generator()
@@ -219,6 +253,7 @@ class TestEntityIdSet:
 
 
 # ── LogicValidator.weakly_connected_count ────────────────────────────────────
+
 
 class TestWeaklyConnectedCount:
     def test_empty_returns_zero(self):
@@ -243,6 +278,7 @@ class TestWeaklyConnectedCount:
 
 # ── OntologyPipeline.run_score_iqr ───────────────────────────────────────────
 
+
 class TestRunScoreIQR:
     def test_too_few_returns_zero(self):
         p = _make_pipeline()
@@ -265,6 +301,7 @@ class TestRunScoreIQR:
 
 
 # ── OntologyLearningAdapter.feedback_interquartile_range ─────────────────────
+
 
 class TestFeedbackInterquartileRange:
     def test_too_few_returns_zero(self):

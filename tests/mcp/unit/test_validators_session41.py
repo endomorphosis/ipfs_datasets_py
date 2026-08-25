@@ -19,6 +19,7 @@ Covers EnhancedParameterValidator:
 - clear_cache
 - Global validator instance
 """
+
 import os
 import tempfile
 
@@ -35,6 +36,7 @@ from ipfs_datasets_py.mcp_server.exceptions import ValidationError
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _v() -> EnhancedParameterValidator:
     """Create a fresh validator instance for each test."""
     return EnhancedParameterValidator()
@@ -44,8 +46,8 @@ def _v() -> EnhancedParameterValidator:
 # __init__ and _cache_key
 # ===========================================================================
 
-class TestInit:
 
+class TestInit:
     def test_initial_metrics(self):
         v = _v()
         m = v.get_performance_metrics()
@@ -70,8 +72,8 @@ class TestInit:
 # validate_text_input
 # ===========================================================================
 
-class TestValidateTextInput:
 
+class TestValidateTextInput:
     def test_valid_text(self):
         v = _v()
         result = v.validate_text_input("  Hello World  ")
@@ -131,8 +133,8 @@ class TestValidateTextInput:
 # validate_model_name
 # ===========================================================================
 
-class TestValidateModelName:
 
+class TestValidateModelName:
     def test_valid_sentence_transformer(self):
         v = _v()
         result = v.validate_model_name("sentence-transformers/all-MiniLM-L6-v2")
@@ -180,8 +182,8 @@ class TestValidateModelName:
 # validate_ipfs_hash
 # ===========================================================================
 
-class TestValidateIpfsHash:
 
+class TestValidateIpfsHash:
     def test_valid_cidv0(self):
         v = _v()
         cid = "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG"
@@ -203,8 +205,8 @@ class TestValidateIpfsHash:
 # validate_numeric_range
 # ===========================================================================
 
-class TestValidateNumericRange:
 
+class TestValidateNumericRange:
     def test_valid_int_in_range(self):
         v = _v()
         result = v.validate_numeric_range(50, "batch_size", min_val=1, max_val=100)
@@ -250,8 +252,8 @@ class TestValidateNumericRange:
 # validate_collection_name
 # ===========================================================================
 
-class TestValidateCollectionName:
 
+class TestValidateCollectionName:
     def test_valid_name(self):
         v = _v()
         assert v.validate_collection_name("my-collection_01") == "my-collection_01"
@@ -286,8 +288,8 @@ class TestValidateCollectionName:
 # validate_search_filters
 # ===========================================================================
 
-class TestValidateSearchFilters:
 
+class TestValidateSearchFilters:
     def test_empty_filters_valid(self):
         v = _v()
         result = v.validate_search_filters({})
@@ -344,8 +346,8 @@ class TestValidateSearchFilters:
 # validate_file_path
 # ===========================================================================
 
-class TestValidateFilePath:
 
+class TestValidateFilePath:
     def test_valid_relative_path(self):
         v = _v()
         result = v.validate_file_path("data/input.txt")
@@ -393,8 +395,8 @@ class TestValidateFilePath:
 # validate_json_schema
 # ===========================================================================
 
-class TestValidateJsonSchema:
 
+class TestValidateJsonSchema:
     def test_valid_schema(self):
         """If jsonschema is available, valid data passes through unchanged."""
         pytest.importorskip("jsonschema")
@@ -408,6 +410,7 @@ class TestValidateJsonSchema:
         """If jsonschema is available, invalid data raises ValidationError."""
         pytest.importorskip("jsonschema")
         import jsonschema as _jss
+
         v = _v()
         schema = {"type": "object", "required": ["name"]}
         with pytest.raises((ValidationError, _jss.ValidationError)):
@@ -416,6 +419,7 @@ class TestValidateJsonSchema:
     def test_graceful_degradation_without_jsonschema(self, monkeypatch):
         """If jsonschema is not available, data is returned unvalidated."""
         import sys
+
         v = _v()
         original = sys.modules.get("jsonschema", None)
         sys.modules["jsonschema"] = None  # type: ignore[assignment]
@@ -433,8 +437,8 @@ class TestValidateJsonSchema:
 # validate_url
 # ===========================================================================
 
-class TestValidateUrl:
 
+class TestValidateUrl:
     def test_valid_https_url(self):
         v = _v()
         result = v.validate_url("https://example.com/path?q=1")
@@ -470,8 +474,8 @@ class TestValidateUrl:
 # _contains_suspicious_patterns
 # ===========================================================================
 
-class TestContainsSuspiciousPatterns:
 
+class TestContainsSuspiciousPatterns:
     def test_normal_text_not_suspicious(self):
         v = _v()
         assert v._contains_suspicious_patterns("Hello, world!") is False
@@ -501,8 +505,8 @@ class TestContainsSuspiciousPatterns:
 # get_performance_metrics
 # ===========================================================================
 
-class TestGetPerformanceMetrics:
 
+class TestGetPerformanceMetrics:
     def test_returns_copy_not_reference(self):
         v = _v()
         m1 = v.get_performance_metrics()
@@ -527,8 +531,8 @@ class TestGetPerformanceMetrics:
 # clear_cache
 # ===========================================================================
 
-class TestClearCache:
 
+class TestClearCache:
     def test_cache_cleared(self):
         v = _v()
         # Prime cache
@@ -548,8 +552,8 @@ class TestClearCache:
 # Global validator instance
 # ===========================================================================
 
-class TestGlobalValidator:
 
+class TestGlobalValidator:
     def test_global_validator_is_instance(self):
         assert isinstance(global_validator, EnhancedParameterValidator)
 
@@ -558,8 +562,8 @@ class TestGlobalValidator:
 # Additional tests for remaining uncovered lines
 # ===========================================================================
 
-class TestValidateSearchFiltersEdgeCases:
 
+class TestValidateSearchFiltersEdgeCases:
     def test_empty_string_key_raises(self):
         """Filter key that is an empty string raises ValidationError."""
         v = _v()
@@ -575,11 +579,11 @@ class TestValidateSearchFiltersEdgeCases:
 
 
 class TestValidateJsonSchemaGenericException:
-
     def test_generic_exception_from_jsonschema_raises_validation_error(self):
         """If jsonschema raises a generic Exception it should be wrapped in ValidationError."""
         import sys
         from unittest.mock import MagicMock
+
         pytest.importorskip("jsonschema")
         import jsonschema
 

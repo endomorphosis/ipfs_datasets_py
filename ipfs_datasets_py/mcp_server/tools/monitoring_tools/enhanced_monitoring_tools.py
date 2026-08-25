@@ -5,6 +5,7 @@ Enhanced monitoring tools — standalone async MCP functions.
 Business logic (MockMonitoringService, HealthStatus, AlertSeverity, etc.)
 lives in ipfs_datasets_py.monitoring_engine.
 """
+
 from __future__ import annotations
 
 import logging
@@ -45,9 +46,15 @@ async def check_health(
         recs: List[str] = []
         overall = health_data["overall_status"]
         if overall == "warning":
-            recs += ["Monitor system resources closely", "Consider scaling resources if issues persist"]
+            recs += [
+                "Monitor system resources closely",
+                "Consider scaling resources if issues persist",
+            ]
         elif overall == "critical":
-            recs += ["Immediate action required to resolve critical issues", "Consider emergency scaling or service restart"]
+            recs += [
+                "Immediate action required to resolve critical issues",
+                "Consider emergency scaling or service restart",
+            ]
         else:
             recs.append("System is healthy, continue monitoring")
         sm = health_data["system_metrics"]
@@ -82,7 +89,11 @@ async def collect_metrics(
     metrics_data = await _DEFAULT_MONITORING_SERVICE.collect_metrics(time_window, aggregation)
     result: Dict[str, Any] = {
         "metrics_collection": metrics_data,
-        "collection_config": {"time_window": time_window, "metrics_requested": metrics or ["cpu", "memory", "disk"], "aggregation": aggregation},
+        "collection_config": {
+            "time_window": time_window,
+            "metrics_requested": metrics or ["cpu", "memory", "disk"],
+            "aggregation": aggregation,
+        },
     }
     if include_trends:
         cpu_v = metrics_data["metrics"]["cpu_usage"]["values"]
@@ -97,8 +108,20 @@ async def collect_metrics(
         result["anomaly_detection"] = {
             "anomalies_found": 2,
             "anomalies": [
-                {"timestamp": (datetime.now() - timedelta(minutes=25)).isoformat(), "metric": "cpu_usage", "value": 89.5, "expected_range": [20, 60], "severity": "warning"},
-                {"timestamp": (datetime.now() - timedelta(minutes=45)).isoformat(), "metric": "memory_usage", "value": 78.2, "expected_range": [30, 70], "severity": "info"},
+                {
+                    "timestamp": (datetime.now() - timedelta(minutes=25)).isoformat(),
+                    "metric": "cpu_usage",
+                    "value": 89.5,
+                    "expected_range": [20, 60],
+                    "severity": "warning",
+                },
+                {
+                    "timestamp": (datetime.now() - timedelta(minutes=45)).isoformat(),
+                    "metric": "memory_usage",
+                    "value": 78.2,
+                    "expected_range": [30, 70],
+                    "severity": "info",
+                },
             ],
         }
     if export_format != "json":
@@ -128,7 +151,11 @@ async def manage_alerts(
             "action": "list",
             "alerts": [asdict(a) for a in alerts],
             "total_count": len(alerts),
-            "filters_applied": {"severity": severity_filter, "resolved": resolved_filter, "time_range": time_range},
+            "filters_applied": {
+                "severity": severity_filter,
+                "resolved": resolved_filter,
+                "time_range": time_range,
+            },
         }
         if include_metrics:
             result["alert_metrics"] = {
@@ -143,31 +170,73 @@ async def manage_alerts(
     if action in ("acknowledge", "resolve"):
         if not alert_id:
             raise ValueError(f"alert_id required for {action} action")
-        return {"action": action, "alert_id": alert_id, "success": True, "timestamp": datetime.now().isoformat(), "message": f"Alert {alert_id} {action}d successfully"}
+        return {
+            "action": action,
+            "alert_id": alert_id,
+            "success": True,
+            "timestamp": datetime.now().isoformat(),
+            "message": f"Alert {alert_id} {action}d successfully",
+        }
     if action == "configure_thresholds":
         if threshold_config:
             _DEFAULT_MONITORING_SERVICE.thresholds.update(threshold_config)
-        return {"action": "configure_thresholds", "updated_thresholds": threshold_config, "current_thresholds": _DEFAULT_MONITORING_SERVICE.thresholds, "restart_required": False}
+        return {
+            "action": "configure_thresholds",
+            "updated_thresholds": threshold_config,
+            "current_thresholds": _DEFAULT_MONITORING_SERVICE.thresholds,
+            "restart_required": False,
+        }
     return {"action": action, "success": True, "message": f"Alert {action} operation completed"}
 
 
 # Backward-compatible class shims
 class EnhancedHealthCheckTool:
     """Backward-compatible shim."""
+
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:  # noqa: D102
-        return await check_health(**{k: v for k, v in parameters.items() if k in ("include_services", "include_metrics", "check_depth", "services", "include_recommendations")})
+        return await check_health(
+            **{
+                k: v
+                for k, v in parameters.items()
+                if k
+                in (
+                    "include_services",
+                    "include_metrics",
+                    "check_depth",
+                    "services",
+                    "include_recommendations",
+                )
+            }
+        )
 
 
 class EnhancedMetricsCollectionTool:
     """Backward-compatible shim."""
+
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:  # noqa: D102
-        return await collect_metrics(parameters.get("time_window", "1h"), parameters.get("metrics"), parameters.get("aggregation", "average"), parameters.get("include_trends", True), parameters.get("include_anomalies", False), parameters.get("export_format", "json"))
+        return await collect_metrics(
+            parameters.get("time_window", "1h"),
+            parameters.get("metrics"),
+            parameters.get("aggregation", "average"),
+            parameters.get("include_trends", True),
+            parameters.get("include_anomalies", False),
+            parameters.get("export_format", "json"),
+        )
 
 
 class EnhancedAlertManagementTool:
     """Backward-compatible shim."""
+
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:  # noqa: D102
-        return await manage_alerts(parameters["action"], parameters.get("severity_filter"), parameters.get("resolved_filter"), parameters.get("time_range", "24h"), parameters.get("include_metrics", True), parameters.get("alert_id"), parameters.get("threshold_config", {}))
+        return await manage_alerts(
+            parameters["action"],
+            parameters.get("severity_filter"),
+            parameters.get("resolved_filter"),
+            parameters.get("time_range", "24h"),
+            parameters.get("include_metrics", True),
+            parameters.get("alert_id"),
+            parameters.get("threshold_config", {}),
+        )
 
 
 __all__ = [

@@ -398,7 +398,9 @@ def classify_artifact_failure_kind(
         return "parse"
     if validation_detector is not None and validation_detector(text):
         return "validation"
-    if any(marker in lower for marker in validation_markers) or ("ts" in lower and "error" in lower):
+    if any(marker in lower for marker in validation_markers) or (
+        "ts" in lower and "error" in lower
+    ):
         return "validation"
     return default_failure_kind
 
@@ -443,7 +445,9 @@ def compact_status_artifact(
         "impact": artifact.get("impact", ""),
         "valid_changed_files": artifact.get("changed_files", []),
         "errors": errors[:max_errors] if isinstance(errors, list) else errors,
-        "failure_kind": classify_failure_kind(artifact) if classify_failure_kind else str(artifact.get("failure_kind") or ""),
+        "failure_kind": classify_failure_kind(artifact)
+        if classify_failure_kind
+        else str(artifact.get("failure_kind") or ""),
         "validation_passed": artifact.get("validation_passed", False),
     }
 
@@ -867,7 +871,9 @@ def quality_failure_counts(
         "consecutive": consecutive,
         "by_task": by_task,
         "by_signature": by_signature,
-        "top_signature": max(by_signature.items(), key=lambda item: item[1])[0] if by_signature else "",
+        "top_signature": max(by_signature.items(), key=lambda item: item[1])[0]
+        if by_signature
+        else "",
         "top_signature_count": max(by_signature.values()) if by_signature else 0,
     }
 
@@ -899,7 +905,10 @@ def rollback_failure_counts(
     for result, artifact in reversed(rows):
         if result.get("valid"):
             break
-        if artifact.get("changed_files") or classify_failure_kind(artifact) not in rollback_failure_kinds:
+        if (
+            artifact.get("changed_files")
+            or classify_failure_kind(artifact) not in rollback_failure_kinds
+        ):
             break
         consecutive += 1
 

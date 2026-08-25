@@ -156,13 +156,13 @@ class LogicExtractor:
 **Theorem Prover Integration**:
 ```python
 class LogicCritic:
-    def __init__(use_provers=['z3', 'cvc5', 'lean']):
+    def __init__(use_provers=["z3", "cvc5", "lean"]):
         self.provers = {
-            'z3': Z3ProverBridge(),
-            'cvc5': CVC5ProverBridge(),
-            'lean': LeanProverBridge()
+            "z3": Z3ProverBridge(),
+            "cvc5": CVC5ProverBridge(),
+            "lean": LeanProverBridge(),
         }
-    
+
     def evaluate_soundness(statements):
         for stmt in statements:
             for prover in self.provers.values():
@@ -187,27 +187,23 @@ class LogicOptimizer:
     def analyze_batch(session_results):
         # 1. Calculate average score
         avg_score = mean(r.critic_score.overall for r in results)
-        
+
         # 2. Analyze trend (improving/stable/declining)
         trend = analyze_trend(score_history)
-        
+
         # 3. Aggregate dimension scores
         dim_metrics = aggregate_dimensions(results)
-        
+
         # 4. Identify patterns (common weaknesses)
         insights = identify_patterns(results)
-        
+
         # 5. Generate recommendations
-        recommendations = generate_recommendations(
-            dim_metrics, insights, avg_score
-        )
-        
+        recommendations = generate_recommendations(dim_metrics, insights, avg_score)
+
         # 6. Check convergence
         convergence = check_convergence(avg_score, trend)
-        
-        return OptimizationReport(
-            avg_score, trend, recommendations, convergence
-        )
+
+        return OptimizationReport(avg_score, trend, recommendations, convergence)
 ```
 
 **Convergence Criteria**:
@@ -260,13 +256,11 @@ class LogicHarness:
             futures = []
             for data in data_samples:
                 session = TheoremSession(extractor, critic)
-                future = executor.submit(
-                    run_with_retry, session, data
-                )
+                future = executor.submit(run_with_retry, session, data)
                 futures.append(future)
-            
+
             results = [f.result() for f in as_completed(futures)]
-        
+
         return HarnessResult(aggregated_metrics)
 ```
 
@@ -443,10 +437,12 @@ Where:
 class ExtractionMode(Enum):
     MY_LOGIC = "my_logic"
 
+
 # 2. Update extractor mode determination
 def _determine_mode(context):
     if context.domain == "my_domain":
         return ExtractionMode.MY_LOGIC
+
 
 # 3. Update prompt building
 def _build_extraction_prompt(context):
@@ -461,11 +457,13 @@ def _build_extraction_prompt(context):
 class CriticDimensions(Enum):
     MY_DIMENSION = "my_dimension"
 
+
 # 2. Add weight
 DIMENSION_WEIGHTS = {
     CriticDimensions.MY_DIMENSION: 0.10,
     # Adjust other weights to sum to 1.0
 }
+
 
 # 3. Implement evaluation method
 def _evaluate_my_dimension(self, result):
@@ -482,10 +480,11 @@ class MyProverBridge:
         # Prover-specific logic
         return result
 
+
 # 2. Register in LogicCritic
 def _init_provers(self):
-    if 'my_prover' in self.use_provers:
-        self.provers['my_prover'] = MyProverBridge()
+    if "my_prover" in self.use_provers:
+        self.provers["my_prover"] = MyProverBridge()
 ```
 
 ## Best Practices

@@ -31,7 +31,9 @@ from ipfs_datasets_py.processors.legal_scrapers.shared_fetch_cache import Shared
 
 
 class _MockResponse:
-    def __init__(self, payload: Dict[str, Any], status_code: int = 200, content: bytes | None = None) -> None:
+    def __init__(
+        self, payload: Dict[str, Any], status_code: int = 200, content: bytes | None = None
+    ) -> None:
         self._payload = payload
         self.status_code = status_code
         self.text = str(payload)
@@ -43,7 +45,10 @@ class _MockResponse:
 
 class _MockThrottleRequests:
     def get(self, url: str, headers=None, timeout: int = 30):  # noqa: ANN001
-        return _MockResponse({"detail": "Request was throttled. Expected available in 2515 seconds."}, status_code=429)
+        return _MockResponse(
+            {"detail": "Request was throttled. Expected available in 2515 seconds."},
+            status_code=429,
+        )
 
 
 class _MockRequests:
@@ -235,15 +240,29 @@ class _MockRandomRequests(_MockRequests):
                     "absolute_url": "/docket/99998/too-small/",
                 }
             )
-        if "docket-entries/?docket=99999" in url or "parties/?docket=99999" in url or "recap-documents/?docket_entry__docket=99999" in url:
+        if (
+            "docket-entries/?docket=99999" in url
+            or "parties/?docket=99999" in url
+            or "recap-documents/?docket_entry__docket=99999" in url
+        ):
             if "docket-entries/?docket=99999" in url:
                 return _MockResponse(
                     {
                         "count": 3,
                         "next": None,
                         "results": [
-                            {"id": 1, "entry_number": "1", "date_filed": "2026-01-02", "description": "Complaint"},
-                            {"id": 2, "entry_number": "2", "date_filed": "2026-01-03", "description": "Motion"},
+                            {
+                                "id": 1,
+                                "entry_number": "1",
+                                "date_filed": "2026-01-02",
+                                "description": "Complaint",
+                            },
+                            {
+                                "id": 2,
+                                "entry_number": "2",
+                                "date_filed": "2026-01-03",
+                                "description": "Motion",
+                            },
                         ],
                     }
                 )
@@ -271,7 +290,10 @@ class _MockRandomRequests(_MockRequests):
 class _MockListingThrottleRequests(_MockRequests):
     def get(self, url: str, headers=None, timeout: int = 30):  # noqa: ANN001
         if "dockets/?page=" in url:
-            return _MockResponse({"detail": "Request was throttled. Expected available in 2515 seconds."}, status_code=429)
+            return _MockResponse(
+                {"detail": "Request was throttled. Expected available in 2515 seconds."},
+                status_code=429,
+            )
         return super().get(url, headers=headers, timeout=timeout)
 
 
@@ -287,14 +309,22 @@ def test_fetch_courtlistener_docket_normalizes_docket_and_recap_documents() -> N
     assert payload["documents"][1]["document_type"] == "courtlistener_docket_entry"
     assert payload["documents"][2]["title"] == "Declaration of Jane Doe"
     assert "penalty of perjury" in payload["documents"][2]["text"]
-    assert payload["documents"][2]["metadata"]["text_extraction"]["source"] == "courtlistener_plain_text"
-    assert payload["documents"][1]["metadata"]["text_extraction"]["source"] == "courtlistener_entry_metadata"
+    assert (
+        payload["documents"][2]["metadata"]["text_extraction"]["source"]
+        == "courtlistener_plain_text"
+    )
+    assert (
+        payload["documents"][1]["metadata"]["text_extraction"]["source"]
+        == "courtlistener_entry_metadata"
+    )
     assert payload["plaintiff_docket"][0]["title"] == "Jane Doe"
     assert payload["defendant_docket"][0]["title"] == "Acme Housing"
 
 
 def test_fetch_courtlistener_docket_prefers_court_id_over_court_url(tmp_path: Path) -> None:
-    fetch_cache = SharedFetchCache(cache_dir=str(tmp_path / "courtlistener_cache"), enable_ipfs_mirroring=False)
+    fetch_cache = SharedFetchCache(
+        cache_dir=str(tmp_path / "courtlistener_cache"), enable_ipfs_mirroring=False
+    )
     payload = fetch_courtlistener_docket(
         "12345",
         requests_module=_MockCourtUrlRequests(),
@@ -370,7 +400,11 @@ def test_fetch_courtlistener_docket_can_attach_rendered_page_summary(monkeypatch
     assert rendered["row_count"] == 2
     assert rendered["contains_pacer_purchase_links"] is True
     assert rendered["rows"][0]["document_number"] == "1"
-    rendered_docs = [item for item in payload["documents"] if item.get("document_type") == "courtlistener_rendered_docket_row"]
+    rendered_docs = [
+        item
+        for item in payload["documents"]
+        if item.get("document_type") == "courtlistener_rendered_docket_row"
+    ]
     assert len(rendered_docs) == 1
     assert rendered_docs[0]["document_number"] == "1"
     assert rendered_docs[0]["metadata"]["acquisition_candidates"][0]["pacer_available"] is True
@@ -378,7 +412,9 @@ def test_fetch_courtlistener_docket_can_attach_rendered_page_summary(monkeypatch
 
 def test_fetch_courtlistener_docket_reuses_shared_fetch_cache(monkeypatch, tmp_path: Path) -> None:
     requests_module = _MockRequestsNoPlainText()
-    fetch_cache = SharedFetchCache(cache_dir=str(tmp_path / "courtlistener_cache"), enable_ipfs_mirroring=False)
+    fetch_cache = SharedFetchCache(
+        cache_dir=str(tmp_path / "courtlistener_cache"), enable_ipfs_mirroring=False
+    )
 
     def _fake_extract_text(_: bytes) -> tuple[str, str]:
         return ("Extracted from PDF fallback text", "pdf_text")
@@ -424,17 +460,23 @@ def test_fetch_random_courtlistener_docket_selects_from_sampled_candidates() -> 
     assert len(payload["documents"]) >= 2
 
 
-def test_resolve_courtlistener_api_token_reads_shared_secrets_file(monkeypatch, tmp_path: Path) -> None:
+def test_resolve_courtlistener_api_token_reads_shared_secrets_file(
+    monkeypatch, tmp_path: Path
+) -> None:
     secrets_dir = tmp_path / ".config" / "ipfs_datasets_py"
     secrets_dir.mkdir(parents=True)
     secrets_path = secrets_dir / "secrets.json"
-    secrets_path.write_text('{"COURTLISTENER_API_TOKEN": "token-from-shared-secrets"}', encoding="utf-8")
+    secrets_path.write_text(
+        '{"COURTLISTENER_API_TOKEN": "token-from-shared-secrets"}', encoding="utf-8"
+    )
 
     monkeypatch.delenv("COURTLISTENER_API_TOKEN", raising=False)
     monkeypatch.delenv("IPFS_DATASETS_SECRETS_FILE", raising=False)
     monkeypatch.setenv("HOME", str(tmp_path))
 
-    from ipfs_datasets_py.processors.legal_data.courtlistener_ingestion import resolve_courtlistener_api_token
+    from ipfs_datasets_py.processors.legal_data.courtlistener_ingestion import (
+        resolve_courtlistener_api_token,
+    )
 
     assert resolve_courtlistener_api_token() == "token-from-shared-secrets"
 
@@ -564,7 +606,9 @@ def test_submit_packaged_docket_recap_fetch_requests_dedupes_docket_jobs(monkeyp
                         "document_number": "2",
                     },
                 ],
-                "package_manifest": {"source_url": "https://www.courtlistener.com/docket/73179548/"},
+                "package_manifest": {
+                    "source_url": "https://www.courtlistener.com/docket/73179548/"
+                },
             }
 
     requests_module = _MockRecapFetchRequests()
@@ -620,7 +664,9 @@ def test_build_packaged_docket_recap_fetch_preflight_summarizes_readiness(monkey
                         "ready_for_fetch": True,
                     }
                 ],
-                "package_manifest": {"source_url": "https://www.courtlistener.com/docket/73179548/"},
+                "package_manifest": {
+                    "source_url": "https://www.courtlistener.com/docket/73179548/"
+                },
             }
 
     monkeypatch.setattr(
@@ -663,13 +709,18 @@ def test_probe_courtlistener_document_acquisition_target_extracts_buy_on_pacer(m
             ],
         }
 
-    monkeypatch.setattr(module, "_probe_courtlistener_document_acquisition_target_async", _fake_probe)
+    monkeypatch.setattr(
+        module, "_probe_courtlistener_document_acquisition_target_async", _fake_probe
+    )
 
     result = probe_courtlistener_document_acquisition_target(
         "https://www.courtlistener.com/docket/73179548/1/miranda-kay-crowder/"
     )
 
-    assert result["pacer_purchase_url"] == "https://ecf.txnb.uscourts.gov/doc1/176051998030?caseid=541209"
+    assert (
+        result["pacer_purchase_url"]
+        == "https://ecf.txnb.uscourts.gov/doc1/176051998030?caseid=541209"
+    )
     assert result["matching_links"][0]["text"] == "Buy on PACER"
 
 
@@ -699,7 +750,7 @@ def test_build_packaged_docket_acquisition_plan_prefers_browser_probe_targets(
                     "pacer_available": True,
                     "text_available": False,
                     "ready_for_fetch": True,
-                    "notes_json": "{\"acquisition_candidates\": [{\"document_number\": \"1\"}]}",
+                    "notes_json": '{"acquisition_candidates": [{"document_number": "1"}]}',
                 }
             ]
         }
@@ -729,7 +780,10 @@ def test_build_packaged_docket_acquisition_plan_prefers_browser_probe_targets(
     )
 
     assert plan["row_count"] == 1
-    assert plan["rows"][0]["direct_target_url"] == "https://ecf.txnb.uscourts.gov/doc1/176051998030?caseid=541209"
+    assert (
+        plan["rows"][0]["direct_target_url"]
+        == "https://ecf.txnb.uscourts.gov/doc1/176051998030?caseid=541209"
+    )
     assert plan["rows"][0]["target_source"] == "courtlistener_document_probe"
 
 
@@ -837,8 +891,14 @@ def test_extract_courtlistener_public_filing_pdf_texts_uses_probe_links(monkeypa
             "url": url,
             "title": "Filing page",
             "pdf_links": [
-                {"text": "Download PDF", "href": "https://storage.courtlistener.com/recap/example.1.0.pdf"},
-                {"text": "Download PDF", "href": "https://storage.courtlistener.com/recap/example.1.1.pdf"},
+                {
+                    "text": "Download PDF",
+                    "href": "https://storage.courtlistener.com/recap/example.1.0.pdf",
+                },
+                {
+                    "text": "Download PDF",
+                    "href": "https://storage.courtlistener.com/recap/example.1.1.pdf",
+                },
             ],
         }
 
@@ -864,7 +924,9 @@ def test_extract_courtlistener_public_filing_pdf_texts_uses_probe_links(monkeypa
     assert result["results"][0]["extraction_method"] == "pdf_ocr"
 
 
-def test_extract_courtlistener_public_filing_pdf_texts_dedupes_duplicate_probe_links(monkeypatch) -> None:
+def test_extract_courtlistener_public_filing_pdf_texts_dedupes_duplicate_probe_links(
+    monkeypatch,
+) -> None:
     from ipfs_datasets_py.processors.legal_data import courtlistener_ingestion as module
 
     def _fake_probe(url: str) -> Dict[str, Any]:
@@ -873,9 +935,18 @@ def test_extract_courtlistener_public_filing_pdf_texts_dedupes_duplicate_probe_l
             "url": url,
             "title": "Example",
             "pdf_links": [
-                {"text": "Download PDF", "href": "https://storage.courtlistener.com/recap/example.1.0.pdf"},
-                {"text": "From CourtListener", "href": "https://storage.courtlistener.com/recap/example.1.0.pdf"},
-                {"text": "Download PDF", "href": "https://storage.courtlistener.com/recap/example.1.1.pdf"},
+                {
+                    "text": "Download PDF",
+                    "href": "https://storage.courtlistener.com/recap/example.1.0.pdf",
+                },
+                {
+                    "text": "From CourtListener",
+                    "href": "https://storage.courtlistener.com/recap/example.1.0.pdf",
+                },
+                {
+                    "text": "Download PDF",
+                    "href": "https://storage.courtlistener.com/recap/example.1.1.pdf",
+                },
             ],
         }
 
@@ -895,7 +966,9 @@ def test_extract_courtlistener_public_filing_pdf_texts_dedupes_duplicate_probe_l
     monkeypatch.setattr(module, "probe_courtlistener_public_filing_pdfs", _fake_probe)
     monkeypatch.setattr(module, "_fetch_public_pdf_text", _fake_fetch)
 
-    result = extract_courtlistener_public_filing_pdf_texts("https://www.courtlistener.com/docket/67658002/example/")
+    result = extract_courtlistener_public_filing_pdf_texts(
+        "https://www.courtlistener.com/docket/67658002/example/"
+    )
 
     assert result["pdf_count"] == 2
     assert calls == [
@@ -904,7 +977,9 @@ def test_extract_courtlistener_public_filing_pdf_texts_dedupes_duplicate_probe_l
     ]
 
 
-def test_attach_public_courtlistener_filing_pdfs_to_docket_appends_text_documents(monkeypatch) -> None:
+def test_attach_public_courtlistener_filing_pdfs_to_docket_appends_text_documents(
+    monkeypatch,
+) -> None:
     from ipfs_datasets_py.processors.legal_data import courtlistener_ingestion as module
 
     def _fake_extract(url: str, **kwargs):  # noqa: ANN001
@@ -941,12 +1016,19 @@ def test_attach_public_courtlistener_filing_pdfs_to_docket_appends_text_document
     assert enriched["documents"][0]["document_type"] == "courtlistener_public_filing_pdf"
     assert enriched["documents"][0]["text"] == "Substantive extracted filing text."
     assert enriched["documents"][0]["document_number"] == "0"
-    assert enriched["documents"][0]["text_extraction"]["source"] == "courtlistener_public_filing_pdf"
+    assert (
+        enriched["documents"][0]["text_extraction"]["source"] == "courtlistener_public_filing_pdf"
+    )
     assert enriched["documents"][0]["text_extraction"]["method"] == "pdf_ocr"
-    assert enriched["documents"][0]["metadata"]["text_extraction"]["source"] == "courtlistener_public_filing_pdf"
+    assert (
+        enriched["documents"][0]["metadata"]["text_extraction"]["source"]
+        == "courtlistener_public_filing_pdf"
+    )
 
 
-def test_attach_available_courtlistener_recap_evidence_to_docket_appends_available_public_recap_documents(monkeypatch) -> None:
+def test_attach_available_courtlistener_recap_evidence_to_docket_appends_available_public_recap_documents(
+    monkeypatch,
+) -> None:
     from ipfs_datasets_py.processors.legal_data import courtlistener_ingestion as module
 
     def _fake_fetch(url: str, **kwargs):  # noqa: ANN001
@@ -996,7 +1078,9 @@ def test_attach_available_courtlistener_recap_evidence_to_docket_appends_availab
     assert attached["text"] == "Recovered PDF text from public RECAP evidence."
     assert attached["text_extraction"]["source"] == "courtlistener_public_recap_document"
     assert attached["metadata"]["public_recap_document"]["recap_document_id"] == "449096434"
-    assert enriched["metadata"]["public_recap_evidence_summary"]["attached_recap_document_count"] == 1
+    assert (
+        enriched["metadata"]["public_recap_evidence_summary"]["attached_recap_document_count"] == 1
+    )
 
 
 def test_fetch_random_courtlistener_docket_surfaces_listing_throttle() -> None:
@@ -1015,11 +1099,17 @@ def test_fetch_random_courtlistener_docket_surfaces_listing_throttle() -> None:
         assert "throttled" in message.lower()
         assert "429" in message or "throttled" in message.lower()
     else:  # pragma: no cover
-        raise AssertionError("Expected throttled CourtListener listing to raise CourtListenerIngestionError")
+        raise AssertionError(
+            "Expected throttled CourtListener listing to raise CourtListenerIngestionError"
+        )
 
 
-def test_fetch_random_courtlistener_docket_uses_fallback_ids_when_listing_is_throttled(tmp_path: Path) -> None:
-    fetch_cache = SharedFetchCache(cache_dir=str(tmp_path / "courtlistener_cache"), enable_ipfs_mirroring=False)
+def test_fetch_random_courtlistener_docket_uses_fallback_ids_when_listing_is_throttled(
+    tmp_path: Path,
+) -> None:
+    fetch_cache = SharedFetchCache(
+        cache_dir=str(tmp_path / "courtlistener_cache"), enable_ipfs_mirroring=False
+    )
 
     payload = fetch_random_courtlistener_docket(
         seed=1,
@@ -1037,7 +1127,9 @@ def test_fetch_random_courtlistener_docket_uses_fallback_ids_when_listing_is_thr
     )
 
     assert payload["docket_id"] == "12345"
-    assert payload["metadata"]["courtlistener_sampling_stage_timings"]["cached_candidate_count"] == 1.0
+    assert (
+        payload["metadata"]["courtlistener_sampling_stage_timings"]["cached_candidate_count"] == 1.0
+    )
 
 
 def test_normalize_recap_document_marks_description_only_text_as_metadata_only() -> None:
@@ -1196,7 +1288,9 @@ def test_sample_random_courtlistener_dockets_batch_collects_parallel_results(mon
     assert failed["seed"] == 2
 
 
-def test_sample_random_courtlistener_dockets_batch_returns_partial_results_on_timeout(monkeypatch) -> None:
+def test_sample_random_courtlistener_dockets_batch_returns_partial_results_on_timeout(
+    monkeypatch,
+) -> None:
     def _fake_random_fetch(**kwargs):  # noqa: ANN001
         seed = int(kwargs.get("seed") or 0)
         if seed == 1:
@@ -1309,7 +1403,9 @@ def test_find_rich_courtlistener_docket_can_allow_partial_fallback(monkeypatch) 
     assert result["docket"]["docket_id"] == "docket-partial"
 
 
-def test_find_rich_courtlistener_docket_partial_fallback_prefilters_before_formal(monkeypatch) -> None:
+def test_find_rich_courtlistener_docket_partial_fallback_prefilters_before_formal(
+    monkeypatch,
+) -> None:
     seen_seeds = []
     formal_calls = []
 
@@ -1325,7 +1421,13 @@ def test_find_rich_courtlistener_docket_partial_fallback_prefilters_before_forma
         return {
             "docket_id": "docket-richer",
             "case_name": "Richer",
-            "documents": [{"id": "doc2", "title": "Body", "text": "A much longer body of substantive text." * 10}],
+            "documents": [
+                {
+                    "id": "doc2",
+                    "title": "Body",
+                    "text": "A much longer body of substantive text." * 10,
+                }
+            ],
         }
 
     def _fake_fast_eval(payload):  # noqa: ANN001

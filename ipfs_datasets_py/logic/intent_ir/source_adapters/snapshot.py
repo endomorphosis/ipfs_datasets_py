@@ -33,9 +33,7 @@ SKILLCENTER_CACHE_ALIAS_SCHEMA_VERSION = "skillcenter-cache-alias/v1"
 # This is the immutable Hub revision inspected while preparing the bounded
 # SkillCenter pilot.  Network access is deliberately not needed to use it or
 # to test the snapshot/cache contract.
-INSPECTED_SKILLCENTER_PILOT_REVISION = (
-    "f9dd4fec3c86d85ebf116c7408ac5ce602c418a1"
-)
+INSPECTED_SKILLCENTER_PILOT_REVISION = "f9dd4fec3c86d85ebf116c7408ac5ce602c418a1"
 DEFAULT_SKILLCENTER_DOWNLOAD_PRODUCER = "producer:huggingface-hub-download"
 
 _MUTABLE_REVISION_NAMES = frozenset(
@@ -90,8 +88,7 @@ class SkillCenterSnapshotFetcher(Protocol):
         self,
         snapshot: "SkillCenterSnapshot",
         destination: Path,
-    ) -> None | str | os.PathLike[str] | bytes | bytearray | memoryview:
-        ...
+    ) -> None | str | os.PathLike[str] | bytes | bytearray | memoryview: ...
 
 
 def _relative_posix_path(value: str, *, label: str) -> str:
@@ -108,9 +105,7 @@ def _relative_posix_path(value: str, *, label: str) -> str:
         )
     normalized = path.as_posix()
     if normalized != value:
-        raise SkillCenterSnapshotValidationError(
-            f"{label} must be normalized POSIX text"
-        )
+        raise SkillCenterSnapshotValidationError(f"{label} must be normalized POSIX text")
     return normalized
 
 
@@ -141,14 +136,9 @@ class SkillCenterSnapshot:
     def __post_init__(self) -> None:
         dataset_id = _require_text(self.dataset_id, label="dataset_id")
         revision = _require_text(self.dataset_revision, label="dataset_revision")
-        repository_file = _relative_posix_path(
-            self.repository_file, label="repository_file"
-        )
+        repository_file = _relative_posix_path(self.repository_file, label="repository_file")
         folded_revision = revision.casefold()
-        if (
-            folded_revision in _MUTABLE_REVISION_NAMES
-            or folded_revision.startswith("refs/heads/")
-        ):
+        if folded_revision in _MUTABLE_REVISION_NAMES or folded_revision.startswith("refs/heads/"):
             raise SkillCenterSnapshotValidationError(
                 "dataset_revision must be an immutable revision, not a mutable ref"
             )
@@ -157,9 +147,11 @@ class SkillCenterSnapshot:
                 "dataset_id must use normalized POSIX separators"
             )
         dataset_path = PurePosixPath(dataset_id)
-        if dataset_path.is_absolute() or any(
-            part in {"", ".", ".."} for part in dataset_path.parts
-        ) or dataset_path.as_posix() != dataset_id:
+        if (
+            dataset_path.is_absolute()
+            or any(part in {"", ".", ".."} for part in dataset_path.parts)
+            or dataset_path.as_posix() != dataset_id
+        ):
             raise SkillCenterSnapshotValidationError(
                 "dataset_id must be normalized and contain no path traversal"
             )
@@ -177,17 +169,14 @@ class SkillCenterSnapshot:
             raise SkillCenterSnapshotValidationError(
                 "expected_size_bytes must be a positive integer"
             )
-        producer = _require_text(
-            self.download_producer, label="download_producer"
-        )
+        producer = _require_text(self.download_producer, label="download_producer")
         if self.schema_version != SKILLCENTER_SNAPSHOT_SCHEMA_VERSION:
             raise SkillCenterSnapshotValidationError(
                 "unsupported SkillCenter snapshot schema_version"
             )
 
         cache_path = self.cache_path or (
-            f"objects/sha256/{self.expected_sha256[:2]}/"
-            f"{self.expected_sha256}"
+            f"objects/sha256/{self.expected_sha256[:2]}/{self.expected_sha256}"
         )
         cache_path = _relative_posix_path(cache_path, label="cache_path")
         if cache_path.casefold().endswith(_PARTIAL_SUFFIXES):
@@ -198,9 +187,7 @@ class SkillCenterSnapshot:
             raise SkillCenterSnapshotValidationError(
                 "cache_path must not use a reserved cache metadata directory"
             )
-        expected_content_cid = cid_v1_from_digest(
-            bytes.fromhex(self.expected_sha256)
-        )
+        expected_content_cid = cid_v1_from_digest(bytes.fromhex(self.expected_sha256))
         content_cid = self.content_cid or expected_content_cid
         _require_text(content_cid, label="content_cid")
         if content_cid != expected_content_cid:
@@ -235,10 +222,7 @@ class SkillCenterSnapshot:
 
     @property
     def logical_source(self) -> str:
-        return (
-            f"hf://datasets/{self.dataset_id}@{self.dataset_revision}/"
-            f"{self.repository_file}"
-        )
+        return f"hf://datasets/{self.dataset_id}@{self.dataset_revision}/{self.repository_file}"
 
     @property
     def snapshot_id(self) -> str:
@@ -267,9 +251,7 @@ class SkillCenterSnapshot:
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "SkillCenterSnapshot":
         if not isinstance(value, Mapping):
-            raise SkillCenterSnapshotValidationError(
-                "snapshot manifest must be a mapping"
-            )
+            raise SkillCenterSnapshotValidationError("snapshot manifest must be a mapping")
         allowed = {
             "cache_path",
             "content_cid",
@@ -292,9 +274,7 @@ class SkillCenterSnapshot:
             )
         for field in allowed - {"expected_size_bytes"}:
             if field in value and not isinstance(value[field], str):
-                raise SkillCenterSnapshotValidationError(
-                    f"{field} must be a string"
-                )
+                raise SkillCenterSnapshotValidationError(f"{field} must be a string")
         try:
             expected_size = value["expected_size_bytes"]
         except KeyError as exc:
@@ -302,14 +282,10 @@ class SkillCenterSnapshot:
                 "snapshot manifest is missing expected_size_bytes"
             ) from exc
         if isinstance(expected_size, bool) or not isinstance(expected_size, int):
-            raise SkillCenterSnapshotValidationError(
-                "expected_size_bytes must be an integer"
-            )
+            raise SkillCenterSnapshotValidationError("expected_size_bytes must be an integer")
         try:
             return cls(
-                dataset_id=str(
-                    value.get("dataset_id") or DEFAULT_SKILLCENTER_DATASET_ID
-                ),
+                dataset_id=str(value.get("dataset_id") or DEFAULT_SKILLCENTER_DATASET_ID),
                 dataset_revision=str(value.get("dataset_revision") or ""),
                 repository_file=str(value.get("repository_file") or ""),
                 expected_sha256=str(value.get("expected_sha256") or ""),
@@ -317,12 +293,10 @@ class SkillCenterSnapshot:
                 content_cid=str(value.get("content_cid") or ""),
                 cache_path=str(value.get("cache_path") or ""),
                 download_producer=str(
-                    value.get("download_producer")
-                    or DEFAULT_SKILLCENTER_DOWNLOAD_PRODUCER
+                    value.get("download_producer") or DEFAULT_SKILLCENTER_DOWNLOAD_PRODUCER
                 ),
                 schema_version=str(
-                    value.get("schema_version")
-                    or SKILLCENTER_SNAPSHOT_SCHEMA_VERSION
+                    value.get("schema_version") or SKILLCENTER_SNAPSHOT_SCHEMA_VERSION
                 ),
             )
         except (TypeError, ValueError) as exc:
@@ -331,36 +305,27 @@ class SkillCenterSnapshot:
             raise SkillCenterSnapshotValidationError(str(exc)) from exc
 
     @classmethod
-    def from_json(
-        cls, value: str | bytes | bytearray
-    ) -> "SkillCenterSnapshot":
+    def from_json(cls, value: str | bytes | bytearray) -> "SkillCenterSnapshot":
         if isinstance(value, (bytes, bytearray)):
             try:
                 value = bytes(value).decode("utf-8")
             except UnicodeDecodeError as exc:
-                raise SkillCenterSnapshotValidationError(
-                    "snapshot JSON must be UTF-8"
-                ) from exc
+                raise SkillCenterSnapshotValidationError("snapshot JSON must be UTF-8") from exc
         if not isinstance(value, str):
             raise TypeError("snapshot JSON must be str or bytes")
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError) as exc:
-            raise SkillCenterSnapshotValidationError(
-                f"invalid snapshot JSON: {exc}"
-            ) from exc
+            raise SkillCenterSnapshotValidationError(f"invalid snapshot JSON: {exc}") from exc
         if not isinstance(decoded, Mapping):
-            raise SkillCenterSnapshotValidationError(
-                "snapshot JSON must contain an object"
-            )
+            raise SkillCenterSnapshotValidationError("snapshot JSON must contain an object")
         return cls.from_dict(decoded)
 
     def to_artifact(self, *, artifact_id: str | None = None) -> Artifact:
         """Project this snapshot into the shared immutable artifact contract."""
 
         return Artifact(
-            artifact_id=artifact_id
-            or f"artifact:skillcenter:{self.expected_sha256}",
+            artifact_id=artifact_id or f"artifact:skillcenter:{self.expected_sha256}",
             role=ArtifactRole.INPUT,
             content_sha256=self.expected_sha256,
             size=self.expected_size_bytes,
@@ -452,13 +417,9 @@ class SkillCenterSnapshotCache:
         try:
             root_path.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
-            raise SkillCenterSnapshotValidationError(
-                "cache root must be a real directory"
-            ) from exc
+            raise SkillCenterSnapshotValidationError("cache root must be a real directory") from exc
         if root_path.is_symlink() or not root_path.is_dir():
-            raise SkillCenterSnapshotValidationError(
-                "cache root must be a real directory"
-            )
+            raise SkillCenterSnapshotValidationError("cache root must be a real directory")
         self.root = root_path.resolve()
         self.fetcher = fetcher
         self._ensure_directory(self.root / "aliases")
@@ -629,9 +590,7 @@ class SkillCenterSnapshotCache:
                     "cache directories must be real directories"
                 ) from exc
             if current.is_symlink() or not current.is_dir():
-                raise SkillCenterSnapshotValidationError(
-                    "cache directories must not be symlinks"
-                )
+                raise SkillCenterSnapshotValidationError("cache directories must not be symlinks")
             if not current.resolve().is_relative_to(self.root):
                 raise SkillCenterSnapshotValidationError(
                     "cache directory escapes the cache root through a symlink"
@@ -639,29 +598,19 @@ class SkillCenterSnapshotCache:
 
     def _read_alias(self, path: Path) -> _CacheAlias:
         if path.is_symlink() or not path.is_file():
-            raise SkillCenterStaleCacheAliasError(
-                "cache alias is not a regular file"
-            )
+            raise SkillCenterStaleCacheAliasError("cache alias is not a regular file")
         if path.stat().st_size > _MAX_ALIAS_BYTES:
             raise SkillCenterStaleCacheAliasError("cache alias is oversized")
         try:
             decoded = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-            raise SkillCenterStaleCacheAliasError(
-                f"cache alias is malformed: {exc}"
-            ) from exc
+            raise SkillCenterStaleCacheAliasError(f"cache alias is malformed: {exc}") from exc
         if not isinstance(decoded, Mapping):
-            raise SkillCenterStaleCacheAliasError(
-                "cache alias must contain a JSON object"
-            )
+            raise SkillCenterStaleCacheAliasError("cache alias must contain a JSON object")
         if set(decoded) != {"schema_version", "snapshot", "snapshot_id"}:
-            raise SkillCenterStaleCacheAliasError(
-                "cache alias has unknown or missing fields"
-            )
+            raise SkillCenterStaleCacheAliasError("cache alias has unknown or missing fields")
         if decoded.get("schema_version") != SKILLCENTER_CACHE_ALIAS_SCHEMA_VERSION:
-            raise SkillCenterStaleCacheAliasError(
-                "cache alias has an unsupported schema version"
-            )
+            raise SkillCenterStaleCacheAliasError("cache alias has an unsupported schema version")
         try:
             snapshot = SkillCenterSnapshot.from_dict(decoded["snapshot"])
         except (KeyError, TypeError, SkillCenterSnapshotValidationError) as exc:
@@ -731,21 +680,15 @@ class SkillCenterSnapshotCache:
             if source.resolve() != destination.resolve():
                 shutil.copyfile(source, destination)
         if destination.is_symlink() or not destination.is_file():
-            raise SkillCenterSnapshotFetchError(
-                "fetcher did not produce a regular temporary file"
-            )
+            raise SkillCenterSnapshotFetchError("fetcher did not produce a regular temporary file")
 
     @contextmanager
-    def _snapshot_lock(
-        self, snapshot: SkillCenterSnapshot
-    ) -> Iterator[None]:
+    def _snapshot_lock(self, snapshot: SkillCenterSnapshot) -> Iterator[None]:
         self._ensure_directory(self.root / "locks")
         key = hashlib.sha256(snapshot.logical_source.encode("utf-8")).hexdigest()
         path = self.root / "locks" / f"{key}.lock"
         if path.is_symlink() or (path.exists() and not path.is_file()):
-            raise SkillCenterSnapshotValidationError(
-                "cache lock must be a regular file"
-            )
+            raise SkillCenterSnapshotValidationError("cache lock must be a regular file")
         with path.open("a+b") as handle:
             try:
                 import fcntl

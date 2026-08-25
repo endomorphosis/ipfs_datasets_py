@@ -61,10 +61,7 @@ GOLDEN_PREIMAGE = (
     + GOLDEN_PAYLOAD_BYTES
     + b',"schema_version":"1.0.0"}'
 )
-GOLDEN_DIGEST = (
-    "sha256:3d0104b4ad4a380413b0582327ee6406"
-    "c353af3620d00c646a3b4631bdcb9a70"
-)
+GOLDEN_DIGEST = "sha256:3d0104b4ad4a380413b0582327ee6406c353af3620d00c646a3b4631bdcb9a70"
 GOLDEN_CID = "bafkreib5aecljlkkhacbhmcyemt64zagynj26nra2aggi2r3iyy33s42oa"
 
 
@@ -100,12 +97,15 @@ def test_golden_canonical_bytes_digest_and_cid() -> None:
     )
 
     assert identity.canonical_bytes == GOLDEN_PREIMAGE
-    assert identity_preimage(
-        GOLDEN_PAYLOAD,
-        domain="intent",
-        schema_version="1.0.0",
-        collection_schema=GOLDEN_SCHEMA,
-    ) == GOLDEN_PREIMAGE
+    assert (
+        identity_preimage(
+            GOLDEN_PAYLOAD,
+            domain="intent",
+            schema_version="1.0.0",
+            collection_schema=GOLDEN_SCHEMA,
+        )
+        == GOLDEN_PREIMAGE
+    )
     assert identity.digest == GOLDEN_DIGEST
     assert identity.hexdigest == GOLDEN_DIGEST.removeprefix("sha256:")
     assert identity.cid == GOLDEN_CID
@@ -122,9 +122,10 @@ def test_golden_canonical_bytes_digest_and_cid() -> None:
 def test_canonical_json_normalizes_text_maps_literals_and_numbers() -> None:
     composed = {"e\u0301": "Cafe\u0301", "null": None, "truth": True}
     assert canonical_json(composed) == '{"null":null,"truth":true,"é":"Café"}'
-    assert canonical_json(
-        [Decimal("-0"), Decimal("100.000"), Decimal("0.0012300"), 1.0]
-    ) == "[0,100,0.00123,1]"
+    assert (
+        canonical_json([Decimal("-0"), Decimal("100.000"), Decimal("0.0012300"), 1.0])
+        == "[0,100,0.00123,1]"
+    )
 
 
 @pytest.mark.parametrize(
@@ -167,9 +168,9 @@ def test_collection_semantics_keyword_is_a_schema_alias() -> None:
     payload = {"items": ["b", "a"]}
     declarations = {"/items": "set-like"}
 
-    assert canonical_json_bytes(
-        payload, collection_semantics=declarations
-    ) == canonical_json_bytes(payload, collection_schema=declarations)
+    assert canonical_json_bytes(payload, collection_semantics=declarations) == canonical_json_bytes(
+        payload, collection_schema=declarations
+    )
     assert canonical_identity(
         payload,
         domain="test",
@@ -275,15 +276,9 @@ def test_collection_declaration_is_bound_into_identity_preimage() -> None:
 
 def test_domain_and_schema_version_separate_otherwise_identical_payloads() -> None:
     payload = {"id": "same"}
-    intent_v1 = canonical_identity(
-        payload, domain="intent", schema_version="v1"
-    )
-    security_v1 = canonical_identity(
-        payload, domain="security", schema_version="v1"
-    )
-    intent_v2 = canonical_identity(
-        payload, domain="intent", schema_version="v2"
-    )
+    intent_v1 = canonical_identity(payload, domain="intent", schema_version="v1")
+    security_v1 = canonical_identity(payload, domain="security", schema_version="v1")
+    intent_v2 = canonical_identity(payload, domain="intent", schema_version="v2")
 
     assert len({intent_v1.cid, security_v1.cid, intent_v2.cid}) == 3
     with pytest.raises(CanonicalizationError, match="domain"):
@@ -299,13 +294,7 @@ def test_fixed_cid_profile_matches_the_multiformat_wire_bytes() -> None:
 
     import base64
 
-    expected = (
-        "b"
-        + base64.b32encode(expected_wire)
-        .decode("ascii")
-        .rstrip("=")
-        .lower()
-    )
+    expected = "b" + base64.b32encode(expected_wire).decode("ascii").rstrip("=").lower()
     assert cid_v1(data) == expected
     assert sha256_digest(data) == f"sha256:{digest.hex()}"
 

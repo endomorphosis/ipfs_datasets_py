@@ -87,7 +87,15 @@ def _safe_to_import_for_collection(path: Path) -> bool:
                 return False
         return True
 
-    allowed_top_level = (ast.Import, ast.ImportFrom, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Assign, ast.AnnAssign)
+    allowed_top_level = (
+        ast.Import,
+        ast.ImportFrom,
+        ast.FunctionDef,
+        ast.AsyncFunctionDef,
+        ast.ClassDef,
+        ast.Assign,
+        ast.AnnAssign,
+    )
 
     for node in tree.body:
         if isinstance(node, allowed_top_level):

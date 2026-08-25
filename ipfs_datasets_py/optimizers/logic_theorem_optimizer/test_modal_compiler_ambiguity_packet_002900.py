@@ -140,8 +140,7 @@ def test_compiler_preserves_packet_002900_explicit_ambiguity_policy_pairs() -> N
             "expected_type": "adaptive_frame_epistemic_outvoted_margin_low",
             "severity": "requires_rule",
             "text": (
-                "The findings under this chapter determine whether the program "
-                "may be continued."
+                "The findings under this chapter determine whether the program may be continued."
             ),
         },
         {
@@ -177,16 +176,13 @@ def test_compiler_preserves_packet_002900_explicit_ambiguity_policy_pairs() -> N
             "severity": "review",
             "runner_up_family": ModalLogicFamily.FRAME.value,
             "text": (
-                "The Administrator shall promulgate regulations under this "
-                "section for the program."
+                "The Administrator shall promulgate regulations under this section for the program."
             ),
         },
     )
 
     for case in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         predicted_family = str(case["predicted_family"])
         target_family = str(case["target_family"])
         family_margin = float(case["family_margin"])
@@ -195,9 +191,7 @@ def test_compiler_preserves_packet_002900_explicit_ambiguity_policy_pairs() -> N
             target_family=target_family,
             family_margin=family_margin,
             runner_up_family=(
-                str(case["runner_up_family"])
-                if case.get("runner_up_family") is not None
-                else None
+                str(case["runner_up_family"]) if case.get("runner_up_family") is not None else None
             ),
         )
 
@@ -221,7 +215,4 @@ def test_compiler_preserves_packet_002900_explicit_ambiguity_policy_pairs() -> N
         assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
-        assert (
-            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12

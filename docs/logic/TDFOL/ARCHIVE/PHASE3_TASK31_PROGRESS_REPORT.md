@@ -79,27 +79,24 @@ Test execution time:
 ```python
 class ProverStrategy(ABC):
     """Abstract base class for proving strategies."""
-    
+
     @abstractmethod
     def can_handle(self, formula: Formula, kb: TDFOLKnowledgeBase) -> bool:
         """Check if this strategy can handle the given formula."""
         pass
-    
+
     @abstractmethod
     def prove(
-        self,
-        formula: Formula,
-        kb: TDFOLKnowledgeBase,
-        timeout_ms: Optional[int] = None
+        self, formula: Formula, kb: TDFOLKnowledgeBase, timeout_ms: Optional[int] = None
     ) -> ProofResult:
         """Attempt to prove the formula using this strategy."""
         pass
-    
+
     @abstractmethod
     def get_priority(self) -> int:
         """Get strategy priority (higher = try first)."""
         pass
-    
+
     def estimate_cost(self, formula: Formula, kb: TDFOLKnowledgeBase) -> float:
         """Estimate computational cost (optional override)."""
         return 1.0
@@ -234,7 +231,7 @@ class TDFOLProver:
     def __init__(self, kb=None, enable_cache=True, strategy=None):
         self.kb = kb or TDFOLKnowledgeBase()
         self.enable_cache = enable_cache
-        
+
         # Initialize strategies
         if strategy is None:
             strategies = [
@@ -245,26 +242,26 @@ class TDFOLProver:
             self.selector = StrategySelector(strategies)
         else:
             self.strategy = strategy
-    
+
     def prove(self, goal: Formula, timeout_ms: int = 5000) -> ProofResult:
         # Check cache (existing code)
         if self.proof_cache:
             cached = self.proof_cache.get(goal, list(self.kb.axioms))
             if cached:
                 return cached
-        
+
         # Select and use strategy
-        if hasattr(self, 'selector'):
+        if hasattr(self, "selector"):
             strategy = self.selector.select_strategy(goal, self.kb)
         else:
             strategy = self.strategy
-        
+
         result = strategy.prove(goal, self.kb, timeout_ms)
-        
+
         # Cache result (existing code)
         if result.is_proved() and self.proof_cache:
             self.proof_cache.set(goal, result, list(self.kb.axioms))
-        
+
         return result
 ```
 

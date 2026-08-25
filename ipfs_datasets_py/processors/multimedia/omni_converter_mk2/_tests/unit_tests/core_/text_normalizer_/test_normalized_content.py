@@ -4,7 +4,6 @@ import copy
 from dataclasses import FrozenInstanceError
 
 
-
 from core.text_normalizer._normalized_content import NormalizedContent
 from core.content_extractor._content import Content
 
@@ -14,25 +13,27 @@ from logger import logger as debug_logger
 
 def make_mock_content():
     """Create a mock Content object for testing."""
+
     def _make_mock():
         mock_content = MagicMock(spec=Content)
         mock_content.text = MagicMock(return_value="This is some sample text content")
-        mock_content.metadata = MagicMock(return_value={
-            "source": "test_file.txt",
-            "count": 42,
-            "format": "txt"
-        })
+        mock_content.metadata = MagicMock(
+            return_value={"source": "test_file.txt", "count": 42, "format": "txt"}
+        )
         return mock_content
+
     return copy.deepcopy(_make_mock())
 
 
 def make_mock_normalized_content():
     """Create a mock NormalizedContent object for testing."""
+
     def _make_mock():
         mock_normalized_content = MagicMock(spec=NormalizedContent)
         mock_normalized_content.content = make_mock_content()
         mock_normalized_content.normalized_by = ["whitespace", "unicode", "linebreaks"]
         return mock_normalized_content
+
     return copy.deepcopy(_make_mock())
 
 
@@ -66,12 +67,11 @@ class TestNormalizedContentInitialization(unittest.TestCase):
             - normalized_by attribute matches provided list
         """
         content = NormalizedContent(
-            content=self.mock_content,
-            normalized_by=self.sample_normalized_by
+            content=self.mock_content, normalized_by=self.sample_normalized_by
         )
 
         self.assertEqual(content.content.text, self.sample_text)
-        self.assertEqual(content.content.metadata, self.sample_metadata) # NOTE should be unchanged
+        self.assertEqual(content.content.metadata, self.sample_metadata)  # NOTE should be unchanged
         self.assertEqual(content.normalized_by, self.sample_normalized_by)
 
     def test_init_with_empty_text(self):
@@ -86,11 +86,8 @@ class TestNormalizedContentInitialization(unittest.TestCase):
         """
         mock_content = make_mock_content()
         mock_content.text = ""  # Set text to empty string
-        content = NormalizedContent(
-            content=mock_content,
-            normalized_by=self.sample_normalized_by
-        )
-        
+        content = NormalizedContent(content=mock_content, normalized_by=self.sample_normalized_by)
+
         self.assertEqual(content.content.text, "")
         self.assertEqual(content.normalized_by, self.sample_normalized_by)
 
@@ -110,10 +107,9 @@ class TestNormalizedContentInitialization(unittest.TestCase):
         mock_content.metadata = {}  # Set text to dict string
 
         norm_content = NormalizedContent(
-            content=mock_content,
-            normalized_by=self.sample_normalized_by
+            content=mock_content, normalized_by=self.sample_normalized_by
         )
-        
+
         self.assertEqual(norm_content.content.text, self.sample_text)
         self.assertEqual(norm_content.content.metadata, {})
         self.assertEqual(norm_content.normalized_by, self.sample_normalized_by)
@@ -132,12 +128,11 @@ class TestNormalizedContentInitialization(unittest.TestCase):
         mock_content.text = self.sample_text  # Set text to sample text
         mock_content.metadata = self.sample_metadata  # Set metadata to sample metadata
 
-
         norm_content = NormalizedContent(
             content=self.mock_content,
-            normalized_by=[]  # Empty list for normalized_by
+            normalized_by=[],  # Empty list for normalized_by
         )
-        
+
         self.assertEqual(norm_content.content.text, self.sample_text)
         self.assertEqual(norm_content.content.metadata, self.sample_metadata)
         self.assertEqual(norm_content.normalized_by, [])
@@ -155,12 +150,11 @@ class TestNormalizedContentToDict(unittest.TestCase):
             "text": self.mock_content.text,
             "metadata": self.mock_content.metadata,
             "source_path": "test_file.txt",
-            "source_format": "txt"
+            "source_format": "txt",
         }
 
         self.content = NormalizedContent(
-            content=self.mock_content,
-            normalized_by=["whitespace", "unicode", "linebreaks"]
+            content=self.mock_content, normalized_by=["whitespace", "unicode", "linebreaks"]
         )
 
     def test_to_dict_returns_all_attributes(self):
@@ -176,13 +170,13 @@ class TestNormalizedContentToDict(unittest.TestCase):
             - "normalized_by" key with matching list value
         """
         result = self.content.to_dict()
-        
+
         expected = {
             "text": self.mock_content.text,
             "metadata": self.mock_content.metadata,
             "source_path": "test_file.txt",
             "source_format": "txt",
-            "normalized_by": ["whitespace", "unicode", "linebreaks"]
+            "normalized_by": ["whitespace", "unicode", "linebreaks"],
         }
         self.assertEqual(result, expected)
         self.assertIn("text", result)
@@ -205,33 +199,33 @@ class TestNormalizedContentToDict(unittest.TestCase):
             "text": mock_content.text,
             "metadata": mock_content.metadata,
             "source_path": "test_file.txt",
-            "source_format": "txt"
+            "source_format": "txt",
         }
 
         norm_content = NormalizedContent(
-            content=mock_content,
-            normalized_by=["whitespace", "unicode", "linebreaks"]
+            content=mock_content, normalized_by=["whitespace", "unicode", "linebreaks"]
         )
         result1 = norm_content.to_dict()
         result2 = norm_content.to_dict()
-        
+
         # # Verify they are different objects
         self.assertIsNot(result1, result2)
-        
+
         # Modify the returned dict
         result1["text"] = "modified text"
         result1["metadata"]["new_key"] = "new_value"
         result1["normalized_by"].append("new_normalizer")
-        
+
         # Verify original object is unchanged
         self.assertEqual(norm_content.content.text, mock_content.text)
         self.assertEqual(norm_content.content.metadata, mock_content.metadata)
         self.assertEqual(norm_content.normalized_by, ["whitespace", "unicode", "linebreaks"])
-        
+
         # Verify second dict call is also unchanged
         self.assertEqual(result2["text"], mock_content.text)
         self.assertEqual(result2["metadata"], mock_content.metadata)
         self.assertEqual(result2["normalized_by"], ["whitespace", "unicode", "linebreaks"])
+
 
 class TestNormalizedContentDataclassBehavior(unittest.TestCase):
     """Test NormalizedContent dataclass-specific behaviors."""
@@ -250,40 +244,30 @@ class TestNormalizedContentDataclassBehavior(unittest.TestCase):
         GIVEN two NormalizedContent instances with identical attributes
         WHEN compared with == operator
         THEN expect True
-        
+
         GIVEN two NormalizedContent instances with different attributes
         WHEN compared with == operator
         THEN expect False
         """
-        content1 = NormalizedContent(
-            content=self.mock_content,
-            normalized_by=self.normalized_by
-        )
-        
-        content2 = NormalizedContent(
-            content=self.mock_content,
-            normalized_by=self.normalized_by
-        )
-        
+        content1 = NormalizedContent(content=self.mock_content, normalized_by=self.normalized_by)
+
+        content2 = NormalizedContent(content=self.mock_content, normalized_by=self.normalized_by)
+
         # Test equality with identical attributes
         self.assertEqual(content1, content2)
         self.assertTrue(content1 == content2)
-        
+
         # Test inequality with different text
         different_content = MagicMock()
         different_content.text = "different text"
 
-        content3 = NormalizedContent(
-            content=different_content,
-            normalized_by=self.normalized_by
-        )
+        content3 = NormalizedContent(content=different_content, normalized_by=self.normalized_by)
         self.assertNotEqual(content1, content3)
         self.assertFalse(content1 == content3)
 
         # Test inequality with different normalized_by
         content5 = NormalizedContent(
-            content=self.mock_content,
-            normalized_by=["different_normalizer"]
+            content=self.mock_content, normalized_by=["different_normalizer"]
         )
         self.assertNotEqual(content1, content5)
 
@@ -297,12 +281,9 @@ class TestNormalizedContentDataclassBehavior(unittest.TestCase):
         mock_content.to_dict.return_value = {
             "text": "test text",
             "source_path": "test.txt",
-            "source_format": "txt"
+            "source_format": "txt",
         }
-        content = NormalizedContent(
-            content=mock_content,
-            normalized_by=["whitespace", "unicode"]
-        )
+        content = NormalizedContent(content=mock_content, normalized_by=["whitespace", "unicode"])
 
         print(content)
         str_repr = str(content)
@@ -314,14 +295,14 @@ class TestNormalizedContentDataclassBehavior(unittest.TestCase):
         self.assertIn("test.txt", str_repr)
         self.assertIn("whitespace", str_repr)
         self.assertIn("unicode", str_repr)
-        
+
         # Check that all attribute values appear in repr
         self.assertIn("test text", repr_repr)
         self.assertIn("source", repr_repr)
         self.assertIn("test.txt", repr_repr)
         self.assertIn("whitespace", repr_repr)
         self.assertIn("unicode", repr_repr)
-        
+
         # Check that class name appears in repr
         self.assertIn("NormalizedContent", repr_repr)
 
@@ -334,8 +315,7 @@ class TestNormalizedContentDataclassBehavior(unittest.TestCase):
             - Attributes of content attribute can be modified, but content attribute itself cannot be modified.
         """
         norm_content = NormalizedContent(
-            content=self.mock_content,
-            normalized_by=self.normalized_by
+            content=self.mock_content, normalized_by=self.normalized_by
         )
         norm_content.content.text = "modified text"
         norm_content.content.metadata = {"modified": "metadata"}
@@ -351,7 +331,7 @@ class TestNormalizedContentDataclassBehavior(unittest.TestCase):
 
             # If we get here, the dataclass is not frozen
             self.assertEqual(norm_content.normalized_by, ["modified_normalizer"])
-            
+
         except Exception as e:
             # If an exception is raised, check if it's FrozenInstanceError
             self.assertIsInstance(e, FrozenInstanceError)
@@ -367,13 +347,14 @@ class TestNormalizedContentDataclassBehavior(unittest.TestCase):
 
             # If we get here, the dataclass is not frozen
             self.assertIsInstance(norm_content.content, SomeClass)
-            
+
         except Exception as e:
             # If an exception is raised, check if it's FrozenInstanceError
             self.assertIsInstance(e, FrozenInstanceError)
 
             # Verify original values are preserved
             self.assertEqual(norm_content.content, self.mock_content)
+
 
 if __name__ == "__main__":
     unittest.main()

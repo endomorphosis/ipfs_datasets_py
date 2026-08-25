@@ -35,11 +35,7 @@ _PACKET_005496_FAMILY_PAIRS = (
 
 def _profile_cues(family: ModalLogicFamily) -> set[str]:
     profile = DEFAULT_MODAL_REGISTRY.get_profile(family)
-    return {
-        cue
-        for operator in profile.operators
-        for cue in operator.cue_terms
-    }
+    return {cue for operator in profile.operators for cue in operator.cue_terms}
 
 
 def test_packet_005496_pairs_are_registered_across_compiler_policies() -> None:
@@ -63,15 +59,9 @@ def test_packet_005496_pairs_are_registered_across_compiler_policies() -> None:
 def test_packet_005496_pairs_are_exposed_by_target_lookup_tables() -> None:
     for predicted_family, target_family in _PACKET_005496_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
 
 
 def test_packet_005496_statutory_cues_route_to_target_families() -> None:

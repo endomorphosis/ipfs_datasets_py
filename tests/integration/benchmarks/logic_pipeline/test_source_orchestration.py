@@ -123,11 +123,7 @@ def _git(
         capture_output=True,
         text=True,
         timeout=20,
-        **(
-            {}
-            if child_umask is None
-            else {"umask": child_umask}
-        ),
+        **({} if child_umask is None else {"umask": child_umask}),
         env={
             "PATH": os.environ.get("PATH", ""),
             "GIT_CONFIG_NOSYSTEM": "1",
@@ -200,9 +196,7 @@ def _pinned_symai_fixture_runtime(
         for value in json.loads(probe.stdout)
         if Path(value).is_dir()
     )
-    selected = tuple(
-        path for path in site_packages if path.is_relative_to(virtualenv)
-    )
+    selected = tuple(path for path in site_packages if path.is_relative_to(virtualenv))
     assert len(selected) == 1
     package = selected[0] / "symai"
     package.mkdir()
@@ -232,10 +226,7 @@ def _pinned_symai_fixture_runtime(
             interpreter.as_posix(),
             "-I",
             "-c",
-            (
-                "from pathlib import Path;import symai;"
-                "print(Path(symai.__file__).resolve())"
-            ),
+            ("from pathlib import Path;import symai;print(Path(symai.__file__).resolve())"),
         ),
         check=True,
         capture_output=True,
@@ -243,9 +234,7 @@ def _pinned_symai_fixture_runtime(
         timeout=20,
     )
     assert Path(resolved.stdout.strip()) == initializer.resolve(strict=True)
-    return interpreter, initializer.resolve(strict=True), lock.resolve(
-        strict=True
-    )
+    return interpreter, initializer.resolve(strict=True), lock.resolve(strict=True)
 
 
 @pytest.mark.parametrize(
@@ -342,12 +331,7 @@ def test_landlock_reviewed_sources_exclude_ignored_python_file(
     prepared = _prepared(tmp_path)
     worktree = prepared[5]
     contract = prepared[7]
-    ignored = (
-        worktree.worktree_root
-        / "benchmarks"
-        / "logic_pipeline"
-        / "ignored_payload.py"
-    )
+    ignored = worktree.worktree_root / "benchmarks" / "logic_pipeline" / "ignored_payload.py"
     exclude = Path(
         _git(
             worktree.worktree_root,
@@ -358,8 +342,7 @@ def test_landlock_reviewed_sources_exclude_ignored_python_file(
         )
     )
     exclude.write_text(
-        exclude.read_text(encoding="utf-8")
-        + "\n/benchmarks/logic_pipeline/ignored_payload.py\n",
+        exclude.read_text(encoding="utf-8") + "\n/benchmarks/logic_pipeline/ignored_payload.py\n",
         encoding="utf-8",
     )
     ignored.write_text(
@@ -409,16 +392,9 @@ def test_landlock_reviewed_sources_reject_tracked_source_drift(
     prepared = _prepared(tmp_path)
     worktree = prepared[5]
     contract = prepared[7]
-    tracked = (
-        worktree.worktree_root
-        / "benchmarks"
-        / "logic_pipeline"
-        / "source_executor.py"
-    )
+    tracked = worktree.worktree_root / "benchmarks" / "logic_pipeline" / "source_executor.py"
     if mutation == "bytes":
-        tracked.write_bytes(
-            tracked.read_bytes() + b"\n# adversarial byte drift\n"
-        )
+        tracked.write_bytes(tracked.read_bytes() + b"\n# adversarial byte drift\n")
     elif mutation == "executable-mode":
         tracked.chmod((tracked.stat().st_mode & 0o777) | 0o111)
     elif mutation == "writable-mode":
@@ -536,9 +512,7 @@ def test_executor_contract_preserves_a_virtualenv_launcher(
     )
 
     assert Path(contract.interpreter_path) == launcher
-    assert Path(contract.interpreter_path).resolve() == Path(
-        sys.executable
-    ).resolve()
+    assert Path(contract.interpreter_path).resolve() == Path(sys.executable).resolve()
 
 
 def _repository(
@@ -572,23 +546,11 @@ def _repository(
     if include_modal_codec_stub:
         modal_root = checkout / "ipfs_datasets_py" / "logic" / "modal"
         modal_root.mkdir(parents=True)
-        hammers_root = (
-            checkout / "ipfs_datasets_py" / "logic" / "hammers"
-        )
+        hammers_root = checkout / "ipfs_datasets_py" / "logic" / "hammers"
         hammers_root.mkdir(parents=True)
-        optimizer_root = (
-            checkout
-            / "ipfs_datasets_py"
-            / "optimizers"
-            / "logic_theorem_optimizer"
-        )
+        optimizer_root = checkout / "ipfs_datasets_py" / "optimizers" / "logic_theorem_optimizer"
         optimizer_root.mkdir(parents=True)
-        extraction_root = (
-            checkout
-            / "ipfs_datasets_py"
-            / "knowledge_graphs"
-            / "extraction"
-        )
+        extraction_root = checkout / "ipfs_datasets_py" / "knowledge_graphs" / "extraction"
         extraction_root.mkdir(parents=True)
         for package in (
             checkout / "ipfs_datasets_py" / "__init__.py",
@@ -597,10 +559,7 @@ def _repository(
             hammers_root / "__init__.py",
             checkout / "ipfs_datasets_py" / "optimizers" / "__init__.py",
             optimizer_root / "__init__.py",
-            checkout
-            / "ipfs_datasets_py"
-            / "knowledge_graphs"
-            / "__init__.py",
+            checkout / "ipfs_datasets_py" / "knowledge_graphs" / "__init__.py",
             extraction_root / "__init__.py",
             checkout / "spacy" / "__init__.py",
             checkout / "en_core_web_sm" / "__init__.py",
@@ -655,11 +614,7 @@ class DeterministicModalLogicCodec:
             encoding="utf-8",
         )
         shutil.copy2(
-            repository_root
-            / "ipfs_datasets_py"
-            / "logic"
-            / "hammers"
-            / "process_lifecycle.py",
+            repository_root / "ipfs_datasets_py" / "logic" / "hammers" / "process_lifecycle.py",
             hammers_root / "process_lifecycle.py",
         )
         (optimizer_root / "spacy_modal_codec.py").write_text(
@@ -827,9 +782,7 @@ class IPFSSyMAINeurosymbolicEngine:
 """.lstrip(),
             encoding="utf-8",
         )
-        (
-            checkout / "ipfs_datasets_py" / "llm_router.py"
-        ).write_text(
+        (checkout / "ipfs_datasets_py" / "llm_router.py").write_text(
             """
 def get_last_generation_trace():
     return {}
@@ -851,20 +804,14 @@ def get_last_generation_trace():
             "user.email",
             "g240-source@example.invalid",
         )
-        accelerate_package = (
-            accelerate_source
-            / "ipfs_accelerate_py"
-            / "agent_supervisor"
-        )
+        accelerate_package = accelerate_source / "ipfs_accelerate_py" / "agent_supervisor"
         accelerate_package.mkdir(parents=True)
         for package in (
             accelerate_source / "ipfs_accelerate_py" / "__init__.py",
             accelerate_package / "__init__.py",
         ):
             package.write_text("", encoding="utf-8")
-        (
-            accelerate_package / "leanstral_proof_provider.py"
-        ).write_text(
+        (accelerate_package / "leanstral_proof_provider.py").write_text(
             """
 class LeanstralProofProviderConfig:
     def __init__(self, **values):
@@ -918,9 +865,7 @@ def create_leanstral_proof_provider(_config=None, **_options):
 def _prepared(
     tmp_path: Path,
 ):
-    plan, manifest, profile, evidence_by_job = _inputs(
-        tmp_path / "synthetic-evidence"
-    )
+    plan, manifest, profile, evidence_by_job = _inputs(tmp_path / "synthetic-evidence")
     runtime = evidence_by_job[plan.jobs[0].job_id]
     checkout, commit = _repository(tmp_path)
     paths = RunPaths.for_run(
@@ -936,9 +881,7 @@ def _prepared(
         worktree.worktree_root,
         worktree.worktree_commit,
     )
-    environment_cid = cid_for_dag_json(
-        {"schema": "synthetic-g240-environment.v1"}
-    )
+    environment_cid = cid_for_dag_json({"schema": "synthetic-g240-environment.v1"})
     executor_contract = build_g240_source_executor_contract_v2(
         (
             "python",
@@ -955,30 +898,22 @@ def _prepared(
         source_commit_cid=g240_source_git_commit_cid(commit),
         recursive_gitlinks_cid=g240_recursive_gitlinks_cid(gitlinks),
         environment_cid=environment_cid,
-        runtime_orchestration_policy_cid=str(
-            executor_contract.contract_cid
-        ),
+        runtime_orchestration_policy_cid=str(executor_contract.contract_cid),
         namespace_authority_cid=_authority("policy"),
     )
     job = plan.jobs[0]
     runtime = evidence_by_job[job.job_id]
-    semantic_result = CaseResultRecord.from_stages(
-        runtime.semantic_frontend
-    )
+    semantic_result = CaseResultRecord.from_stages(runtime.semantic_frontend)
     execution_request = G240ExecutionRequestV2.create(
         execution_mode="source",
         execution_run_id=plan.run_id,
         source_run_id=plan.run_id,
         source_commit=commit,
         policy_cid=str(policy.policy_cid),
-        runtime_orchestration_policy_cid=str(
-            executor_contract.contract_cid
-        ),
+        runtime_orchestration_policy_cid=str(executor_contract.contract_cid),
         plan=plan,
         job=job,
-        coordinate=policy.job_map[
-            (policy.plan_cids[0], job.job_id)
-        ],
+        coordinate=policy.job_map[(policy.plan_cids[0], job.job_id)],
         environment_cid=environment_cid,
         environment_sha256=str(plan.environment_sha256),
         semantic_result=semantic_result,
@@ -986,12 +921,8 @@ def _prepared(
         source_text=runtime.source_text,
         proof_context=runtime.proof_context,
         adapter_factory_id=G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2,
-        adapter_configuration=(
-            build_g240_synthetic_adapter_configuration_v2()
-        ),
-        _test_only_synthetic_capability=(
-            _G240_SYNTHETIC_TEST_CAPABILITY_V2
-        ),
+        adapter_configuration=(build_g240_synthetic_adapter_configuration_v2()),
+        _test_only_synthetic_capability=(_G240_SYNTHETIC_TEST_CAPABILITY_V2),
     )
     return (
         plan,
@@ -1027,16 +958,10 @@ def _execute(tmp_path: Path):
         namespace_root=namespace_root,
         executor_contract=executor_contract,
         execution_request=execution_request,
-        namespace_observer_identity_cid=_authority(
-            "namespace-observer"
-        ),
-        orchestration_observer_identity_cid=_authority(
-            "orchestration-observer"
-        ),
+        namespace_observer_identity_cid=_authority("namespace-observer"),
+        orchestration_observer_identity_cid=_authority("orchestration-observer"),
         timeout_seconds=10,
-        _test_only_synthetic_capability=(
-            _G240_SYNTHETIC_TEST_CAPABILITY_V2
-        ),
+        _test_only_synthetic_capability=(_G240_SYNTHETIC_TEST_CAPABILITY_V2),
     )
     namespace_set = G240RuntimeNamespaceEvidenceSetV2(
         policy=policy,
@@ -1090,9 +1015,7 @@ def test_bootstrap_rejects_submodule_filter_before_status_execution(
     marker = tmp_path / "bootstrap-child-filter-marker"
     driver = tmp_path / "bootstrap-child-clean-filter"
     driver.write_text(
-        "#!/bin/sh\n"
-        f"printf executed > {marker.as_posix()}\n"
-        "cat\n",
+        f"#!/bin/sh\nprintf executed > {marker.as_posix()}\ncat\n",
         encoding="utf-8",
     )
     driver.chmod(0o755)
@@ -1109,9 +1032,7 @@ def test_bootstrap_rejects_submodule_filter_before_status_execution(
         "true",
     )
     monkeypatch.setenv("HSSL_G240_EXPECTED_SOURCE_COMMIT", commit)
-    executable = Path(
-        shutil.which("git", path=os.defpath) or ""
-    ).resolve(strict=True)
+    executable = Path(shutil.which("git", path=os.defpath) or "").resolve(strict=True)
 
     with pytest.raises(
         G240SourceBootstrapError,
@@ -1130,16 +1051,11 @@ def test_live_source_runner_emits_source_recomputed_complete_set(
 ) -> None:
     result, namespace_set, _manifest, _profile = _execute(tmp_path)
 
-    policy, namespace_receipt, orchestration = (
-        validate_g240_private_source_sources_v2(
-            result.validation_sources
-        )
+    policy, namespace_receipt, orchestration = validate_g240_private_source_sources_v2(
+        result.validation_sources
     )
     assert policy.policy_cid == orchestration.policy_cid
-    assert (
-        namespace_receipt.receipt_cid
-        == orchestration.runtime_namespace_receipt_cid
-    )
+    assert namespace_receipt.receipt_cid == orchestration.runtime_namespace_receipt_cid
     assert orchestration.process_group_reaped is True
     assert orchestration.active_process_count_after_reap == 0
     assert orchestration.worktree_clean_after is True
@@ -1155,33 +1071,20 @@ def test_live_source_runner_emits_source_recomputed_complete_set(
         orchestration.interpreter_identity_cid
         == result.validation_sources.executor_contract.interpreter_identity_cid
     )
-    assert (
-        Path(result.process_result.arguments[0])
-        == Path(
-            result.validation_sources.executor_contract.interpreter_path
-        )
+    assert Path(result.process_result.arguments[0]) == Path(
+        result.validation_sources.executor_contract.interpreter_path
     )
     assert (
         orchestration.execution_request_cid
         == result.validation_sources.execution_request.request_cid
     )
-    assert (
-        orchestration.confinement_profile_cid
-        == G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2
-    )
+    assert orchestration.confinement_profile_cid == G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2
     assert orchestration.synthetic_test_only is True
     assert orchestration.landlock_policy_cid is None
     assert orchestration.landlock_receipt_cid is None
     assert orchestration.landlock_receipt_payload_cid is None
-    preflight = json.loads(
-        result.validation_sources.runtime_preflight_payload
-    )
-    assert (
-        preflight["bootstrap_confinement_receipt"][
-            "receipt_channel_one_shot"
-        ]
-        is False
-    )
+    preflight = json.loads(result.validation_sources.runtime_preflight_payload)
+    assert preflight["bootstrap_confinement_receipt"]["receipt_channel_one_shot"] is False
     assert not hasattr(orchestration, "namespace_root")
     assert {
         "execution_request",
@@ -1194,9 +1097,7 @@ def test_live_source_runner_emits_source_recomputed_complete_set(
     evidence_set = build_g240_source_orchestration_evidence_set_v2(
         namespace_set,
         (result.validation_sources,),
-        validator_identity_cid=_authority(
-            "orchestration-validator"
-        ),
+        validator_identity_cid=_authority("orchestration-validator"),
     )
     replayed = validate_g240_source_orchestration_evidence_set_v2(
         evidence_set.to_dict(),
@@ -1227,17 +1128,12 @@ def test_synthetic_source_is_test_schema_and_requires_private_capability(
         executor_contract,
         execution_request,
     ) = _prepared(tmp_path)
-    assert (
-        execution_request.schema
-        == G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2
-    )
+    assert execution_request.schema == G240_SYNTHETIC_TEST_EXECUTION_REQUEST_SCHEMA_V2
     with pytest.raises(
         G240SourceExecutorError,
         match="production validation rejects test-only",
     ):
-        validate_g240_production_execution_request_v2(
-            execution_request
-        )
+        validate_g240_production_execution_request_v2(execution_request)
     with pytest.raises(
         G240SourceExecutorError,
         match="synthetic request creation requires the private test-only",
@@ -1248,28 +1144,18 @@ def test_synthetic_source_is_test_schema_and_requires_private_capability(
             source_run_id=plan.run_id,
             source_commit=execution_request.source_commit,
             policy_cid=str(policy.policy_cid),
-            runtime_orchestration_policy_cid=str(
-                executor_contract.contract_cid
-            ),
+            runtime_orchestration_policy_cid=str(executor_contract.contract_cid),
             plan=plan,
             job=job,
-            coordinate=policy.job_map[
-                (policy.plan_cids[0], job.job_id)
-            ],
+            coordinate=policy.job_map[(policy.plan_cids[0], job.job_id)],
             environment_cid=policy.environment_cid,
             environment_sha256=str(plan.environment_sha256),
             semantic_result=execution_request.typed_semantic_result,
-            compiler_exposure=(
-                execution_request.typed_compiler_exposure
-            ),
+            compiler_exposure=(execution_request.typed_compiler_exposure),
             source_text=execution_request.source_text,
             proof_context=execution_request.proof_context,
-            adapter_factory_id=(
-                G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2
-            ),
-            adapter_configuration=(
-                build_g240_synthetic_adapter_configuration_v2()
-            ),
+            adapter_factory_id=(G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2),
+            adapter_configuration=(build_g240_synthetic_adapter_configuration_v2()),
         )
     namespace_root = worktree.state_root / "synthetic-without-capability"
     with pytest.raises(
@@ -1284,12 +1170,8 @@ def test_synthetic_source_is_test_schema_and_requires_private_capability(
             namespace_root=namespace_root,
             executor_contract=executor_contract,
             execution_request=execution_request,
-            namespace_observer_identity_cid=_authority(
-                "namespace-observer"
-            ),
-            orchestration_observer_identity_cid=_authority(
-                "orchestration-observer"
-            ),
+            namespace_observer_identity_cid=_authority("namespace-observer"),
+            orchestration_observer_identity_cid=_authority("orchestration-observer"),
             timeout_seconds=10,
         )
     assert not namespace_root.exists()
@@ -1327,9 +1209,7 @@ def test_production_non_a0_warm_request_has_no_precomputed_frontend(
         environment_cid=environment_cid,
         environment_sha256=inventory.sha256,
         executor_identity_cid=_authority("production-executor"),
-        runtime_environment_artifacts=(
-            _runtime_environment_artifacts(tmp_path)
-        ),
+        runtime_environment_artifacts=(_runtime_environment_artifacts(tmp_path)),
     )
     policy = build_g240_namespace_policy_v2(
         (plan,),
@@ -1340,10 +1220,7 @@ def test_production_non_a0_warm_request_has_no_precomputed_frontend(
         namespace_authority_cid=_authority("production-policy"),
     )
     job = next(
-        item
-        for item in plan.jobs
-        if item.variant_id == "A1"
-        and item.cache_mode is CacheMode.WARM
+        item for item in plan.jobs if item.variant_id == "A1" and item.cache_mode is CacheMode.WARM
     )
     request = G240ExecutionRequestV2.create(
         execution_mode="source",
@@ -1351,21 +1228,15 @@ def test_production_non_a0_warm_request_has_no_precomputed_frontend(
         source_run_id=plan.run_id,
         source_commit="a" * 40,
         policy_cid=str(policy.policy_cid),
-        runtime_orchestration_policy_cid=(
-            policy.runtime_orchestration_policy_cid
-        ),
+        runtime_orchestration_policy_cid=(policy.runtime_orchestration_policy_cid),
         plan=plan,
         job=job,
-        coordinate=policy.job_map[
-            (policy.plan_cids[0], job.job_id)
-        ],
+        coordinate=policy.job_map[(policy.plan_cids[0], job.job_id)],
         environment_cid=environment_cid,
         environment_sha256=inventory.sha256,
         interpreter_identity_cid=contract.interpreter_identity_cid,
         git_executable_cid=contract.git_executable_cid,
-        runtime_environment_artifacts=(
-            contract.runtime_environment_artifacts
-        ),
+        runtime_environment_artifacts=(contract.runtime_environment_artifacts),
         source_text=source_text,
         proof_context={
             "obligation_id": "production-child-obligation",
@@ -1376,18 +1247,13 @@ def test_production_non_a0_warm_request_has_no_precomputed_frontend(
             },
         },
         adapter_factory_id=G240_LIVE_ADAPTER_FACTORY_ID_V2,
-        adapter_configuration=(
-            build_g240_live_adapter_configuration_v2(inventory)
-        ),
+        adapter_configuration=(build_g240_live_adapter_configuration_v2(inventory)),
     )
 
     assert request.schema == G240_EXECUTION_REQUEST_SCHEMA_V2
     assert request.semantic_result is None
     assert request.compiler_exposure is None
-    assert (
-        validate_g240_production_execution_request_v2(request)
-        == request
-    )
+    assert validate_g240_production_execution_request_v2(request) == request
     with pytest.raises(
         G240SourceExecutorError,
         match="no precomputed semantic result",
@@ -1395,24 +1261,18 @@ def test_production_non_a0_warm_request_has_no_precomputed_frontend(
         _ = request.typed_semantic_result
 
 
-def test_live_factory_uses_and_enforces_the_measured_leanstral_token_cap(
-) -> None:
+def test_live_factory_uses_and_enforces_the_measured_leanstral_token_cap() -> None:
     inventory = _live_inventory()
     configuration = build_g240_live_adapter_configuration_v2(inventory)
 
-    assert (
-        configuration["leanstral_max_new_tokens"]
-        == LEANSTRAL_MEASURED_MAX_NEW_TOKENS
-    )
+    assert configuration["leanstral_max_new_tokens"] == LEANSTRAL_MEASURED_MAX_NEW_TOKENS
     with pytest.raises(
         G240SourceExecutorError,
         match="leanstral_max_new_tokens must be from 1 to",
     ):
         build_g240_live_adapter_configuration_v2(
             inventory,
-            leanstral_max_new_tokens=(
-                LEANSTRAL_MEASURED_MAX_NEW_TOKENS + 1
-            ),
+            leanstral_max_new_tokens=(LEANSTRAL_MEASURED_MAX_NEW_TOKENS + 1),
         )
 
 
@@ -1440,28 +1300,18 @@ def test_production_source_factory_rejects_precomputed_frontend(
             source_run_id=plan.run_id,
             source_commit="a" * 40,
             policy_cid=str(policy.policy_cid),
-            runtime_orchestration_policy_cid=str(
-                executor_contract.contract_cid
-            ),
+            runtime_orchestration_policy_cid=str(executor_contract.contract_cid),
             plan=plan,
             job=job,
-            coordinate=policy.job_map[
-                (policy.plan_cids[0], job.job_id)
-            ],
+            coordinate=policy.job_map[(policy.plan_cids[0], job.job_id)],
             environment_cid=policy.environment_cid,
             environment_sha256=str(plan.environment_sha256),
-            semantic_result=CaseResultRecord.from_stages(
-                runtime.semantic_frontend
-            ),
+            semantic_result=CaseResultRecord.from_stages(runtime.semantic_frontend),
             compiler_exposure=runtime.compiler_exposure,
             source_text=runtime.source_text,
             proof_context=runtime.proof_context,
             adapter_factory_id=G240_LIVE_ADAPTER_FACTORY_ID_V2,
-            adapter_configuration=(
-                build_g240_live_adapter_configuration_v2(
-                    _live_inventory()
-                )
-            ),
+            adapter_configuration=(build_g240_live_adapter_configuration_v2(_live_inventory())),
         )
 
 
@@ -1503,11 +1353,7 @@ def test_full_plan_production_child_executes_non_a0_warm_frontend_and_a0(
             }
         )
     base_inventory = _live_inventory(
-        unavailable=frozenset(
-            kind
-            for kind in CapabilityKind
-            if kind not in available
-        )
+        unavailable=frozenset(kind for kind in CapabilityKind if kind not in available)
     )
     plan_run_id = base_inventory.run_id
     paths = RunPaths.for_run(
@@ -1527,9 +1373,7 @@ def test_full_plan_production_child_executes_non_a0_warm_frontend_and_a0(
         _materialize_recursive_local_gitlinks(
             checkout,
             worktree.worktree_root,
-            tuple(
-                item for item in source_gitlinks if item.depth == 1
-            ),
+            tuple(item for item in source_gitlinks if item.depth == 1),
         )
     assert not (worktree.worktree_root / "symai").exists()
     test_lean = worktree.worktree_root / "test-bin" / "lean"
@@ -1595,9 +1439,7 @@ def test_full_plan_production_child_executes_non_a0_warm_frontend_and_a0(
         entrypoint_kind="python-module",
         environment_cid=environment_cid,
         environment_sha256=inventory.sha256,
-        executor_identity_cid=_authority(
-            "production-child-executor"
-        ),
+        executor_identity_cid=_authority("production-child-executor"),
         interpreter_path=symai_interpreter,
         runtime_environment_artifacts=runtime_artifacts,
     )
@@ -1609,18 +1451,13 @@ def test_full_plan_production_child_executes_non_a0_warm_frontend_and_a0(
         source_commit_cid=g240_source_git_commit_cid(commit),
         recursive_gitlinks_cid=g240_recursive_gitlinks_cid(gitlinks),
         environment_cid=environment_cid,
-        runtime_orchestration_policy_cid=str(
-            executor_contract.contract_cid
-        ),
-        namespace_authority_cid=_authority(
-            "production-child-policy"
-        ),
+        runtime_orchestration_policy_cid=str(executor_contract.contract_cid),
+        namespace_authority_cid=_authority("production-child-policy"),
     )
     job = next(
         item
         for item in plan.jobs
-        if item.variant_id == candidate_variant
-        and item.cache_mode is CacheMode.WARM
+        if item.variant_id == candidate_variant and item.cache_mode is CacheMode.WARM
     )
     request = G240ExecutionRequestV2.create(
         execution_mode="source",
@@ -1628,23 +1465,15 @@ def test_full_plan_production_child_executes_non_a0_warm_frontend_and_a0(
         source_run_id=plan.run_id,
         source_commit=commit,
         policy_cid=str(policy.policy_cid),
-        runtime_orchestration_policy_cid=str(
-            executor_contract.contract_cid
-        ),
+        runtime_orchestration_policy_cid=str(executor_contract.contract_cid),
         plan=plan,
         job=job,
-        coordinate=policy.job_map[
-            (policy.plan_cids[0], job.job_id)
-        ],
+        coordinate=policy.job_map[(policy.plan_cids[0], job.job_id)],
         environment_cid=environment_cid,
         environment_sha256=inventory.sha256,
-        interpreter_identity_cid=(
-            executor_contract.interpreter_identity_cid
-        ),
+        interpreter_identity_cid=(executor_contract.interpreter_identity_cid),
         git_executable_cid=executor_contract.git_executable_cid,
-        runtime_environment_artifacts=(
-            executor_contract.runtime_environment_artifacts
-        ),
+        runtime_environment_artifacts=(executor_contract.runtime_environment_artifacts),
         source_text=source_text,
         proof_context={
             "obligation_id": "production-child-obligation",
@@ -1655,9 +1484,7 @@ def test_full_plan_production_child_executes_non_a0_warm_frontend_and_a0(
             },
         },
         adapter_factory_id=G240_LIVE_ADAPTER_FACTORY_ID_V2,
-        adapter_configuration=(
-            build_g240_live_adapter_configuration_v2(inventory)
-        ),
+        adapter_configuration=(build_g240_live_adapter_configuration_v2(inventory)),
     )
 
     result = run_g240_source_job_v2(
@@ -1668,12 +1495,8 @@ def test_full_plan_production_child_executes_non_a0_warm_frontend_and_a0(
         namespace_root=worktree.state_root / "production-source",
         executor_contract=executor_contract,
         execution_request=request,
-        namespace_observer_identity_cid=_authority(
-            "production-child-namespace-observer"
-        ),
-        orchestration_observer_identity_cid=_authority(
-            "production-child-orchestration-observer"
-        ),
+        namespace_observer_identity_cid=_authority("production-child-namespace-observer"),
+        orchestration_observer_identity_cid=_authority("production-child-orchestration-observer"),
         timeout_seconds=20,
     )
 
@@ -1683,19 +1506,14 @@ def test_full_plan_production_child_executes_non_a0_warm_frontend_and_a0(
     assert request.compiler_exposure is None
     assert runtime.case_result.variant_id == candidate_variant
     assert runtime.case_result.cache_mode is CacheMode.WARM
-    assert {
-        stage.variant_id for stage in runtime.semantic_frontend
-    } == {candidate_variant}
+    assert {stage.variant_id for stage in runtime.semantic_frontend} == {candidate_variant}
     if symai_available:
-        symai = next(
-            stage
-            for stage in runtime.semantic_frontend
-            if stage.stage is StageName.SYMAI
-        )
+        symai = next(stage for stage in runtime.semantic_frontend if stage.stage is StageName.SYMAI)
         assert symai.status is StageStatus.SUCCESS
-        assert symai.data["backend_provenance"]["router_metadata"][
-            "routing_backend"
-        ] == "existing_leanstral_service"
+        assert (
+            symai.data["backend_provenance"]["router_metadata"]["routing_backend"]
+            == "existing_leanstral_service"
+        )
     exposure = runtime.compiler_exposure.compiler_record
     assert exposure.variant_id == "A0"
     assert exposure.case_id == job.case_id
@@ -1709,39 +1527,27 @@ def test_full_plan_production_child_executes_non_a0_warm_frontend_and_a0(
     assert result.orchestration_receipt.synthetic_test_only is False
     assert result.orchestration_receipt.landlock_policy_cid is not None
     assert result.orchestration_receipt.landlock_receipt_cid is not None
-    assert (
-        result.orchestration_receipt.landlock_receipt_payload_cid
-        is not None
-    )
-    assert (
-        result.validation_sources.landlock_transport_observation
-        is not None
-    )
+    assert result.orchestration_receipt.landlock_receipt_payload_cid is not None
+    assert result.validation_sources.landlock_transport_observation is not None
     if symai_available:
         assert symai_initializer is not None
-        preflight = json.loads(
-            result.validation_sources.runtime_preflight_payload
-        )
+        preflight = json.loads(result.validation_sources.runtime_preflight_payload)
         symai_cid = cid_for_bytes(symai_initializer.read_bytes())
         assert preflight["imports"]["symai"] == {
             "module_file_cid": symai_cid,
             "version": "1.14.0",
         }
-        assert preflight["runtime_environment_artifact_cids"][
-            "python-module.symai"
-        ] == symai_cid
-        landlock_transport = (
-            result.validation_sources.landlock_transport_observation
-        )
+        assert preflight["runtime_environment_artifact_cids"]["python-module.symai"] == symai_cid
+        landlock_transport = result.validation_sources.landlock_transport_observation
         assert landlock_transport is not None
         for mutation in ("missing", "mismatched"):
             changed_preflight = json.loads(json.dumps(preflight))
             if mutation == "missing":
                 del changed_preflight["imports"]["symai"]
             else:
-                changed_preflight["imports"]["symai"][
-                    "module_file_cid"
-                ] = cid_for_bytes(b"mismatched SyMAI module")
+                changed_preflight["imports"]["symai"]["module_file_cid"] = cid_for_bytes(
+                    b"mismatched SyMAI module"
+                )
             with pytest.raises(
                 SourceRuntimeOrchestrationError,
                 match="Python-module artifact/import join changed",
@@ -1752,18 +1558,11 @@ def test_full_plan_production_child_executes_non_a0_warm_frontend_and_a0(
                     contract=executor_contract,
                     landlock_sources=landlock_transport.policy_sources,
                     landlock_receipt=landlock_transport.receipt,
-                    expected_gitlink_commit=(
-                        worktree.submodule_commits.get(
-                            "ipfs_accelerate_py"
-                        )
-                    ),
+                    expected_gitlink_commit=(worktree.submodule_commits.get("ipfs_accelerate_py")),
                 )
         assert (
             symai_initializer.is_relative_to(checkout) is False
-            and symai_initializer.is_relative_to(
-                worktree.worktree_root
-            )
-            is False
+            and symai_initializer.is_relative_to(worktree.worktree_root) is False
         )
 
     replay_run_id = f"live-runtime-replay-{candidate_variant.lower()}"
@@ -1775,18 +1574,10 @@ def test_full_plan_production_child_executes_non_a0_warm_frontend_and_a0(
     replay_execution_request = G240ExecutionRequestV2.create_replay(
         request,
         replay_run_id=replay_run_id,
-        replay_process_namespace_cid=str(
-            replay_launch["replay_process_namespace_cid"]
-        ),
-        replay_state_namespace_cid=str(
-            replay_launch["replay_state_namespace_cid"]
-        ),
-        replay_output_namespace_cid=str(
-            replay_launch["replay_output_namespace_cid"]
-        ),
-        replay_cache_namespace_cids=(
-            replay_launch["replay_cache_namespace_cids"]
-        ),
+        replay_process_namespace_cid=str(replay_launch["replay_process_namespace_cid"]),
+        replay_state_namespace_cid=str(replay_launch["replay_state_namespace_cid"]),
+        replay_output_namespace_cid=str(replay_launch["replay_output_namespace_cid"]),
+        replay_cache_namespace_cids=(replay_launch["replay_cache_namespace_cids"]),
         source_runtime_evidence=runtime,
     )
     (
@@ -1807,15 +1598,9 @@ def test_full_plan_production_child_executes_non_a0_warm_frontend_and_a0(
         replay_run_id=replay_run_id,
         executor_contract=executor_contract,
         benchmark_root=tmp_path / "production-replay-state",
-        replay_executor_identity_cid=_authority(
-            "production-replay-executor"
-        ),
-        replay_namespace_observer_identity_cid=_authority(
-            "production-replay-namespace-observer"
-        ),
-        orchestration_observer_identity_cid=_authority(
-            "production-replay-orchestration-observer"
-        ),
+        replay_executor_identity_cid=_authority("production-replay-executor"),
+        replay_namespace_observer_identity_cid=_authority("production-replay-namespace-observer"),
+        orchestration_observer_identity_cid=_authority("production-replay-orchestration-observer"),
         timeout_seconds=20,
     )
     replay_private = G240PrivateReplayValidationSourcesV2(
@@ -1828,9 +1613,7 @@ def test_full_plan_production_child_executes_non_a0_warm_frontend_and_a0(
         replay_request=replay_request,
         replay_receipt=replay_receipt,
         replay_worktree_safety_receipt=replay_worktree,
-        evidence_payload=(
-            canonical_dag_json_bytes(replay_runtime.to_dict()) + b"\n"
-        ),
+        evidence_payload=(canonical_dag_json_bytes(replay_runtime.to_dict()) + b"\n"),
     )
     validate_g240_private_replay_sources_v2(
         replay_private,
@@ -1893,9 +1676,7 @@ def _g240_success_payload(record, data: object):
         record,
         status=StageStatus.SUCCESS,
         data=plain_data,
-        output_sha256=hashlib.sha256(
-            canonical_dag_json_bytes(plain_data)
-        ).hexdigest(),
+        output_sha256=hashlib.sha256(canonical_dag_json_bytes(plain_data)).hexdigest(),
         failure_code=None,
         failure_detail=None,
     )
@@ -2001,11 +1782,7 @@ def test_production_replay_projection_allows_only_run_local_fields(
         ),
     )
     for changed in allowed:
-        accepted_plan_digest = (
-            "e" * 64
-            if changed.provenance.source[2] == "e" * 64
-            else plan.digest
-        )
+        accepted_plan_digest = "e" * 64 if changed.provenance.source[2] == "e" * 64 else plan.digest
         assert (
             _g240_replay_stage_semantic_projection_v2(
                 changed,
@@ -2294,9 +2071,7 @@ def test_available_symai_projection_ignores_only_operational_cache_fields(
         "graph_invoked": True,
     }
     semantic = {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"),
         "candidate_ir": {
             "predicate": "applies",
             "cache": {"semantic_nested_value": "retained"},
@@ -2376,11 +2151,7 @@ def test_available_symai_projection_ignores_only_operational_cache_fields(
 
     missing_route = _g240_success_payload(
         replay_stage,
-        {
-            key: value
-            for key, value in replay_semantic.items()
-            if key != "backend_provenance"
-        },
+        {key: value for key, value in replay_semantic.items() if key != "backend_provenance"},
     )
     with pytest.raises(
         G240SourceExecutorError,
@@ -2482,17 +2253,11 @@ def test_runner_rejects_interpreter_environment_overrides_before_writes(
             namespace_root=namespace_root,
             executor_contract=executor_contract,
             execution_request=execution_request,
-            namespace_observer_identity_cid=_authority(
-                "namespace-observer"
-            ),
-            orchestration_observer_identity_cid=_authority(
-                "orchestration-observer"
-            ),
+            namespace_observer_identity_cid=_authority("namespace-observer"),
+            orchestration_observer_identity_cid=_authority("orchestration-observer"),
             timeout_seconds=10,
             environment={key: "/caller/override"},
-            _test_only_synthetic_capability=(
-                _G240_SYNTHETIC_TEST_CAPABILITY_V2
-            ),
+            _test_only_synthetic_capability=(_G240_SYNTHETIC_TEST_CAPABILITY_V2),
         )
     assert not namespace_root.exists()
 
@@ -2502,14 +2267,10 @@ def test_g211_persists_complete_source_orchestration_evidence(
 ) -> None:
     result, namespace_set, manifest, profile = _execute(tmp_path)
     sources = result.validation_sources
-    orchestration_set = (
-        build_g240_source_orchestration_evidence_set_v2(
-            namespace_set,
-            (sources,),
-            validator_identity_cid=_authority(
-                "orchestration-validator"
-            ),
-        )
+    orchestration_set = build_g240_source_orchestration_evidence_set_v2(
+        namespace_set,
+        (sources,),
+        validator_identity_cid=_authority("orchestration-validator"),
     )
     output_root = tmp_path / "g211-persisted"
     persisted = persist_causal_runtime_batch_v2(
@@ -2523,33 +2284,21 @@ def test_g211_persists_complete_source_orchestration_evidence(
         source_orchestration_validation_sources=(sources,),
     )
 
-    assert (
-        persisted.source_orchestration_evidence_set
-        == orchestration_set
-    )
+    assert persisted.source_orchestration_evidence_set == orchestration_set
     assert (
         persisted.receipt["source_orchestration_evidence_set_cid"]
         == orchestration_set.evidence_set_cid
     )
-    persisted_path = (
-        output_root
-        / "state"
-        / "source-runtime-orchestration-evidence-set.json"
-    )
+    persisted_path = output_root / "state" / "source-runtime-orchestration-evidence-set.json"
     assert persisted_path.is_file()
-    assert str(tmp_path) not in persisted_path.read_text(
-        encoding="utf-8"
-    )
+    assert str(tmp_path) not in persisted_path.read_text(encoding="utf-8")
     replayed = validate_causal_runtime_batch_v2(
         sources.plan,
         manifest,
         profile,
         output_root=output_root,
     )
-    assert (
-        replayed.source_orchestration_evidence_set
-        == orchestration_set
-    )
+    assert replayed.source_orchestration_evidence_set == orchestration_set
 
 
 def test_g211_rejects_public_orchestration_without_private_sources(
@@ -2557,14 +2306,10 @@ def test_g211_rejects_public_orchestration_without_private_sources(
 ) -> None:
     result, namespace_set, manifest, profile = _execute(tmp_path)
     sources = result.validation_sources
-    orchestration_set = (
-        build_g240_source_orchestration_evidence_set_v2(
-            namespace_set,
-            (sources,),
-            validator_identity_cid=_authority(
-                "orchestration-validator"
-            ),
-        )
+    orchestration_set = build_g240_source_orchestration_evidence_set_v2(
+        namespace_set,
+        (sources,),
+        validator_identity_cid=_authority("orchestration-validator"),
     )
     output_root = tmp_path / "unvalidated-public-record"
 
@@ -2612,12 +2357,8 @@ def test_runner_rejects_reserved_environment_before_writes(
             namespace_root=namespace_root,
             executor_contract=executor_contract,
             execution_request=execution_request,
-            namespace_observer_identity_cid=_authority(
-                "namespace-observer"
-            ),
-            orchestration_observer_identity_cid=_authority(
-                "orchestration-observer"
-            ),
+            namespace_observer_identity_cid=_authority("namespace-observer"),
+            orchestration_observer_identity_cid=_authority("orchestration-observer"),
             timeout_seconds=10,
             environment={"HSSL_G240_JOB_ID": "forged"},
         )
@@ -2670,12 +2411,8 @@ def test_executor_contract_rejects_inline_or_postfreeze_command(
             namespace_root=namespace_root,
             executor_contract=copied_after_freeze,
             execution_request=execution_request,
-            namespace_observer_identity_cid=_authority(
-                "namespace-observer"
-            ),
-            orchestration_observer_identity_cid=_authority(
-                "orchestration-observer"
-            ),
+            namespace_observer_identity_cid=_authority("namespace-observer"),
+            orchestration_observer_identity_cid=_authority("orchestration-observer"),
             timeout_seconds=10,
         )
     assert not namespace_root.exists()
@@ -2711,9 +2448,7 @@ def test_runner_rejects_prefrozen_foreign_tracked_executor_before_writes(
         source_commit_cid=policy.source_commit_cid,
         recursive_gitlinks_cid=policy.recursive_gitlinks_cid,
         environment_cid=policy.environment_cid,
-        runtime_orchestration_policy_cid=str(
-            foreign_contract.contract_cid
-        ),
+        runtime_orchestration_policy_cid=str(foreign_contract.contract_cid),
         namespace_authority_cid=policy.namespace_authority_cid,
     )
     namespace_root = worktree.state_root / "foreign-prefrozen-executor"
@@ -2730,12 +2465,8 @@ def test_runner_rejects_prefrozen_foreign_tracked_executor_before_writes(
             namespace_root=namespace_root,
             executor_contract=foreign_contract,
             execution_request=execution_request,
-            namespace_observer_identity_cid=_authority(
-                "namespace-observer"
-            ),
-            orchestration_observer_identity_cid=_authority(
-                "orchestration-observer"
-            ),
+            namespace_observer_identity_cid=_authority("namespace-observer"),
+            orchestration_observer_identity_cid=_authority("orchestration-observer"),
             timeout_seconds=10,
         )
     assert not namespace_root.exists()
@@ -2763,9 +2494,7 @@ def test_runner_rejects_prefrozen_foreign_interpreter_before_writes(
     ):
         replace(
             executor_contract,
-            interpreter_identity_cid=_authority(
-                "foreign-python-interpreter"
-            ),
+            interpreter_identity_cid=_authority("foreign-python-interpreter"),
             contract_cid=None,
         )
     assert not namespace_root.exists()
@@ -2788,11 +2517,7 @@ def test_runner_rejects_unregistered_adapter_factory_before_writes(
     request_value = execution_request.to_dict()
     request_value["adapter_factory_id"] = "unregistered-factory"
     request_value["request_cid"] = cid_for_dag_json(
-        {
-            key: value
-            for key, value in request_value.items()
-            if key != "request_cid"
-        }
+        {key: value for key, value in request_value.items() if key != "request_cid"}
     )
     namespace_root = worktree.state_root / "unregistered-adapter"
 
@@ -2808,12 +2533,8 @@ def test_runner_rejects_unregistered_adapter_factory_before_writes(
             namespace_root=namespace_root,
             executor_contract=executor_contract,
             execution_request=request_value,
-            namespace_observer_identity_cid=_authority(
-                "namespace-observer"
-            ),
-            orchestration_observer_identity_cid=_authority(
-                "orchestration-observer"
-            ),
+            namespace_observer_identity_cid=_authority("namespace-observer"),
+            orchestration_observer_identity_cid=_authority("orchestration-observer"),
             timeout_seconds=10,
         )
     assert not namespace_root.exists()
@@ -2836,11 +2557,7 @@ def test_runner_rejects_request_environment_different_from_plan(
     request_value = execution_request.to_dict()
     request_value["environment_sha256"] = "c" * 64
     request_value["request_cid"] = cid_for_dag_json(
-        {
-            key: value
-            for key, value in request_value.items()
-            if key != "request_cid"
-        }
+        {key: value for key, value in request_value.items() if key != "request_cid"}
     )
 
     with pytest.raises(
@@ -2855,12 +2572,8 @@ def test_runner_rejects_request_environment_different_from_plan(
             namespace_root=worktree.state_root / "environment-mismatch",
             executor_contract=executor_contract,
             execution_request=request_value,
-            namespace_observer_identity_cid=_authority(
-                "namespace-observer"
-            ),
-            orchestration_observer_identity_cid=_authority(
-                "orchestration-observer"
-            ),
+            namespace_observer_identity_cid=_authority("namespace-observer"),
+            orchestration_observer_identity_cid=_authority("orchestration-observer"),
             timeout_seconds=10,
         )
 
@@ -2902,12 +2615,8 @@ def test_runner_rejects_stale_gitlink_receipt_before_writes(
             namespace_root=namespace_root,
             executor_contract=executor_contract,
             execution_request=execution_request,
-            namespace_observer_identity_cid=_authority(
-                "namespace-observer"
-            ),
-            orchestration_observer_identity_cid=_authority(
-                "orchestration-observer"
-            ),
+            namespace_observer_identity_cid=_authority("namespace-observer"),
+            orchestration_observer_identity_cid=_authority("orchestration-observer"),
             timeout_seconds=10,
         )
     assert not namespace_root.exists()
@@ -2969,9 +2678,7 @@ def test_private_validator_rejects_namespace_rebase(
     receipt = result.runtime_namespace_receipt
     rebased = replace(
         receipt,
-        process_namespace_cid=cid_for_dag_json(
-            {"schema": "synthetic-forged-process-namespace.v1"}
-        ),
+        process_namespace_cid=cid_for_dag_json({"schema": "synthetic-forged-process-namespace.v1"}),
         receipt_cid=None,
     )
     sources = replace(
@@ -3001,6 +2708,4 @@ def test_private_validator_rejects_worktree_dirtied_after_execution(
         SourceRuntimeOrchestrationError,
         match="not live, clean, and detached",
     ):
-        validate_g240_private_source_sources_v2(
-            result.validation_sources
-        )
+        validate_g240_private_source_sources_v2(result.validation_sources)

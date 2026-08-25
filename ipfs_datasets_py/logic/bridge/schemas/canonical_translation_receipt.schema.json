@@ -1,0 +1,93 @@
+{
+  "$id": "https://schemas.ipfs-datasets.dev/logic/bridge/canonical-translation-receipt.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Closed translation-preservation receipt. Every translation carries exactly one of lossless, equisatisfiable, over_approximation, under_approximation, heuristic, or unsupported. Style paraphrase cannot claim fidelity without recompilation and semantic comparison. Heuristic translations are not proof.",
+  "required": [
+    "authority_increase",
+    "declared_loss",
+    "details",
+    "direction_id",
+    "equality_criteria",
+    "fidelity_claim",
+    "interface",
+    "preservation_class",
+    "proof_authority",
+    "proof_evidence_cid",
+    "receipt_cid",
+    "receipt_cid_codec",
+    "receipt_cid_scope",
+    "recompilation_cid",
+    "reconstruction_mode",
+    "schema_version",
+    "semantic_comparison_cid",
+    "source_cid",
+    "source_schema",
+    "target_cid",
+    "target_schema"
+  ],
+  "title": "CanonicalTranslationReceipt@1",
+  "type": "object",
+  "x-interface": "CanonicalTranslationReceipt@1",
+  "x-schema-version": "ipfs-datasets.canonical-translation-receipt.v1",
+  "properties": {
+    "authority_increase": { "const": false },
+    "declared_loss": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "details": { "type": "object" },
+    "direction_id": { "type": "string", "minLength": 1 },
+    "equality_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "enum": [
+          "exact_ir_cid",
+          "canonical_rule_set",
+          "ast_identity",
+          "graph_identity",
+          "source_span",
+          "semantic_recompile",
+          "proof",
+          "unsupported"
+        ]
+      }
+    },
+    "fidelity_claim": {
+      "enum": ["none", "candidate", "semantic", "proof"]
+    },
+    "interface": { "const": "CanonicalTranslationReceipt@1" },
+    "preservation_class": {
+      "enum": [
+        "lossless",
+        "equisatisfiable",
+        "over_approximation",
+        "under_approximation",
+        "heuristic",
+        "unsupported"
+      ]
+    },
+    "proof_authority": { "const": false },
+    "proof_evidence_cid": { "type": ["string", "null"] },
+    "receipt_cid": { "type": "string", "minLength": 1 },
+    "receipt_cid_codec": { "const": "dag-json" },
+    "receipt_cid_scope": { "const": "identity_payload" },
+    "recompilation_cid": { "type": ["string", "null"] },
+    "reconstruction_mode": {
+      "enum": [
+        "controlled_semantic_reconstruction",
+        "structural_review",
+        "style_paraphrase"
+      ]
+    },
+    "schema_version": {
+      "const": "ipfs-datasets.canonical-translation-receipt.v1"
+    },
+    "semantic_comparison_cid": { "type": ["string", "null"] },
+    "source_cid": { "type": "string", "minLength": 1 },
+    "source_schema": { "type": "string", "minLength": 1 },
+    "target_cid": { "type": "string", "minLength": 1 },
+    "target_schema": { "type": "string", "minLength": 1 }
+  }
+}

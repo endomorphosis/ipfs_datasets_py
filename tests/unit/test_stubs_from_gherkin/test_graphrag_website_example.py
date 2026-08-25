@@ -4,11 +4,13 @@ Test stubs for graphrag_website_example module.
 Feature: GraphRAG Website Example
   Example implementation of GraphRAG for websites
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def an_example_knowledge_graph():
@@ -83,6 +85,7 @@ def example_with_errors():
 
 
 # Test scenarios
+
 
 def test_run_website_processing_example():
     """
@@ -175,6 +178,7 @@ def test_demonstrate_error_handling():
 
 
 # Step definitions
+
 
 # Given steps
 @given("an example knowledge graph")

@@ -16,13 +16,13 @@ from pathlib import Path
 import importlib.util
 
 # Platform detection
-IS_WINDOWS = platform.system() == 'Windows'
-IS_LINUX = platform.system() == 'Linux'
-IS_MACOS = platform.system() == 'Darwin'
+IS_WINDOWS = platform.system() == "Windows"
+IS_LINUX = platform.system() == "Linux"
+IS_MACOS = platform.system() == "Darwin"
 
 # Enable auto-installation by setting environment variable
-os.environ['IPFS_DATASETS_AUTO_INSTALL'] = 'true'
-os.environ['IPFS_INSTALL_VERBOSE'] = 'true'
+os.environ["IPFS_DATASETS_AUTO_INSTALL"] = "true"
+os.environ["IPFS_INSTALL_VERBOSE"] = "true"
 
 
 def _repo_root() -> Path:
@@ -39,9 +39,9 @@ def _candidate_ipfs_accelerate_roots(repo_root: Path) -> list[Path]:
             roots.append(Path(value).expanduser())
     roots.extend(
         [
-            repo_root / 'ipfs_accelerate_py',
-            repo_root.parent / 'ipfs_accelerate_py',
-            Path.home() / 'ipfs_accelerate_py',
+            repo_root / "ipfs_accelerate_py",
+            repo_root.parent / "ipfs_accelerate_py",
+            Path.home() / "ipfs_accelerate_py",
         ]
     )
     seen: set[str] = set()
@@ -58,29 +58,29 @@ def _candidate_ipfs_accelerate_roots(repo_root: Path) -> list[Path]:
 
 
 def _activate_ipfs_accelerate_checkout(checkout_root: Path) -> bool:
-    package_root = checkout_root / 'ipfs_accelerate_py'
-    package_init = package_root / '__init__.py'
+    package_root = checkout_root / "ipfs_accelerate_py"
+    package_init = package_root / "__init__.py"
     if not package_init.exists():
         return False
-    if not (package_root / 'p2p_tasks').is_dir():
+    if not (package_root / "p2p_tasks").is_dir():
         return False
     checkout_text = str(checkout_root)
     if checkout_text not in sys.path:
         sys.path.insert(0, checkout_text)
-    current_module = sys.modules.get('ipfs_accelerate_py')
-    if current_module is not None and not getattr(current_module, '__file__', None):
-        sys.modules.pop('ipfs_accelerate_py', None)
+    current_module = sys.modules.get("ipfs_accelerate_py")
+    if current_module is not None and not getattr(current_module, "__file__", None):
+        sys.modules.pop("ipfs_accelerate_py", None)
     importlib.invalidate_caches()
     return True
 
 
 def _ipfs_accelerate_service_active() -> bool:
-    systemctl = shutil.which('systemctl')
+    systemctl = shutil.which("systemctl")
     if not systemctl:
         return False
     try:
         result = subprocess.run(
-            [systemctl, '--user', 'is-active', 'ipfs-accelerate-task-worker.service'],
+            [systemctl, "--user", "is-active", "ipfs-accelerate-task-worker.service"],
             check=False,
             capture_output=True,
             text=True,
@@ -88,7 +88,7 @@ def _ipfs_accelerate_service_active() -> bool:
         )
     except Exception:
         return False
-    return result.returncode == 0 and (result.stdout or '').strip() == 'active'
+    return result.returncode == 0 and (result.stdout or "").strip() == "active"
 
 
 def _reexec_in_repo_venv(logger) -> None:
@@ -97,20 +97,20 @@ def _reexec_in_repo_venv(logger) -> None:
     This avoids PEP 668 "externally managed environment" failures when running
     under a system Python that disallows pip installs.
     """
-    if os.environ.get('IPFS_DATASETS_IN_VENV', '').lower() == 'true':
+    if os.environ.get("IPFS_DATASETS_IN_VENV", "").lower() == "true":
         return
-    if os.environ.get('VIRTUAL_ENV'):
+    if os.environ.get("VIRTUAL_ENV"):
         return
-    if getattr(sys, 'base_prefix', sys.prefix) != sys.prefix:
+    if getattr(sys, "base_prefix", sys.prefix) != sys.prefix:
         return
 
     repo_root = _repo_root()
-    venv_dir = repo_root / '.venv'
-    venv_python = venv_dir / 'bin' / 'python'
+    venv_dir = repo_root / ".venv"
+    venv_python = venv_dir / "bin" / "python"
 
     if not venv_python.exists():
         logger.info("Creating repo virtualenv at %s", venv_dir)
-        subprocess.run([sys.executable, '-m', 'venv', str(venv_dir)], check=False, text=True)
+        subprocess.run([sys.executable, "-m", "venv", str(venv_dir)], check=False, text=True)
 
     try:
         in_venv = Path(sys.prefix).resolve() == venv_dir.resolve()
@@ -118,30 +118,29 @@ def _reexec_in_repo_venv(logger) -> None:
         in_venv = False
 
     if venv_python.exists() and not in_venv:
-        os.environ['IPFS_DATASETS_IN_VENV'] = 'true'
+        os.environ["IPFS_DATASETS_IN_VENV"] = "true"
         os.execv(str(venv_python), [str(venv_python), str(Path(__file__).resolve())])
+
 
 def setup_logging():
     """Setup logging"""
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     return logging.getLogger(__name__)
+
 
 def check_pip():
     """Ensure pip is available"""
     try:
-        subprocess.run([sys.executable, '-m', 'pip', '--version'], 
-                      capture_output=True, check=True)
+        subprocess.run([sys.executable, "-m", "pip", "--version"], capture_output=True, check=True)
         return True
     except subprocess.CalledProcessError:
         return False
 
+
 def _is_main_ipfs_kit_py_installed(repo_path: Path) -> bool:
     """Check whether ipfs_kit_py is installed from the main repo path."""
     try:
-        spec = importlib.util.find_spec('ipfs_kit_py')
+        spec = importlib.util.find_spec("ipfs_kit_py")
         if not spec or not spec.origin:
             return False
         origin_path = Path(spec.origin).resolve()
@@ -150,44 +149,53 @@ def _is_main_ipfs_kit_py_installed(repo_path: Path) -> bool:
     except Exception:
         return False
 
+
 def ensure_main_ipfs_kit_py(logger):
     """Ensure ipfs_kit_py is installed from the main branch."""
 
-    if os.environ.get('IPFS_KIT_PY_INSTALLED', '').lower() == 'true':
+    if os.environ.get("IPFS_KIT_PY_INSTALLED", "").lower() == "true":
         return
 
-    os.environ.setdefault('IPFS_KIT_PY_USE_GIT', 'true')
+    os.environ.setdefault("IPFS_KIT_PY_USE_GIT", "true")
     repo_root = _repo_root()
-    repo_path = repo_root / '.tools' / 'ipfs_kit_py'
-    marker_file = repo_path / '.main_installed'
+    repo_path = repo_root / ".tools" / "ipfs_kit_py"
+    marker_file = repo_path / ".main_installed"
 
     if marker_file.exists():
-        os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
+        os.environ["IPFS_KIT_PY_INSTALLED"] = "true"
         return
 
     if _is_main_ipfs_kit_py_installed(repo_path):
-        os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
+        os.environ["IPFS_KIT_PY_INSTALLED"] = "true"
         return
 
     try:
-        subprocess.run(['git', '--version'], check=True, capture_output=True, text=True)
+        subprocess.run(["git", "--version"], check=True, capture_output=True, text=True)
     except Exception as e:
         logger.warning(f"Git not available; skipping main ipfs_kit_py install: {e}")
         return
 
     try:
         repo_path.parent.mkdir(parents=True, exist_ok=True)
-        if not (repo_path / '.git').exists():
-            subprocess.run([
-                'git', 'clone', '--filter=blob:none',
-                'https://github.com/endomorphosis/ipfs_kit_py.git',
-                str(repo_path)
-            ], check=False, text=True)
+        if not (repo_path / ".git").exists():
+            subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    "--filter=blob:none",
+                    "https://github.com/endomorphosis/ipfs_kit_py.git",
+                    str(repo_path),
+                ],
+                check=False,
+                text=True,
+            )
 
-        subprocess.run(['git', '-C', str(repo_path), 'fetch', '--all', '--prune'], check=False, text=True)
+        subprocess.run(
+            ["git", "-C", str(repo_path), "fetch", "--all", "--prune"], check=False, text=True
+        )
 
         checkout = subprocess.run(
-            ['git', '-C', str(repo_path), 'checkout', 'main'],
+            ["git", "-C", str(repo_path), "checkout", "main"],
             check=False,
             text=True,
             capture_output=True,
@@ -196,13 +204,25 @@ def ensure_main_ipfs_kit_py(logger):
             logger.warning("Failed to checkout ipfs_kit_py branch 'main'")
             return
 
-        result = subprocess.run([
-            sys.executable, '-m', 'pip', 'install', '-e', str(repo_path),
-            '--disable-pip-version-check', '--no-input', '--progress-bar', 'off'
-        ], check=False, text=True)
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "-e",
+                str(repo_path),
+                "--disable-pip-version-check",
+                "--no-input",
+                "--progress-bar",
+                "off",
+            ],
+            check=False,
+            text=True,
+        )
         if result.returncode == 0:
-            marker_file.write_text('main', encoding='utf-8')
-            os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
+            marker_file.write_text("main", encoding="utf-8")
+            os.environ["IPFS_KIT_PY_INSTALLED"] = "true"
     except Exception as e:
         logger.warning(f"Failed to install main ipfs_kit_py: {e}")
 
@@ -213,18 +233,18 @@ def ensure_libp2p_main(logger) -> None:
         result = subprocess.run(
             [
                 sys.executable,
-                '-m',
-                'pip',
-                'install',
-                '--upgrade',
-                'protobuf>=5.27.0',
-                'pymultihash>=0.8.2',
-                'dnspython>=2.2.1',
-                'libp2p @ git+https://github.com/libp2p/py-libp2p.git@main',
-                '--disable-pip-version-check',
-                '--no-input',
-                '--progress-bar',
-                'off',
+                "-m",
+                "pip",
+                "install",
+                "--upgrade",
+                "protobuf>=5.27.0",
+                "pymultihash>=0.8.2",
+                "dnspython>=2.2.1",
+                "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main",
+                "--disable-pip-version-check",
+                "--no-input",
+                "--progress-bar",
+                "off",
             ],
             capture_output=True,
             text=True,
@@ -245,7 +265,9 @@ def ensure_ipfs_accelerate_py(logger) -> None:
     repo_root = _repo_root()
     for local_path in _candidate_ipfs_accelerate_roots(repo_root):
         if _activate_ipfs_accelerate_checkout(local_path):
-            service_note = " with running systemd service" if _ipfs_accelerate_service_active() else ""
+            service_note = (
+                " with running systemd service" if _ipfs_accelerate_service_active() else ""
+            )
             logger.info(
                 "✅ ipfs_accelerate_py available from local checkout: %s%s",
                 local_path.resolve(),
@@ -257,15 +279,15 @@ def ensure_ipfs_accelerate_py(logger) -> None:
         result = subprocess.run(
             [
                 sys.executable,
-                '-m',
-                'pip',
-                'install',
-                '--upgrade',
-                'ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main',
-                '--disable-pip-version-check',
-                '--no-input',
-                '--progress-bar',
-                'off',
+                "-m",
+                "pip",
+                "install",
+                "--upgrade",
+                "ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main",
+                "--disable-pip-version-check",
+                "--no-input",
+                "--progress-bar",
+                "off",
             ],
             capture_output=True,
             text=True,
@@ -275,26 +297,42 @@ def ensure_ipfs_accelerate_py(logger) -> None:
             logger.info("✅ Installed ipfs_accelerate_py from git main branch")
         else:
             error_msg = result.stderr or result.stdout or "No error details available"
-            logger.warning("❌ Failed to install ipfs_accelerate_py from git main: %s", error_msg.strip())
+            logger.warning(
+                "❌ Failed to install ipfs_accelerate_py from git main: %s", error_msg.strip()
+            )
     except subprocess.TimeoutExpired:
         logger.error("❌ Installation timed out for ipfs_accelerate_py (git main)")
     except Exception as e:
         logger.error("❌ Error installing ipfs_accelerate_py from git main: %s", e)
 
+
 def install_package(package_name, logger):
     """Install a single package with pip"""
     try:
         logger.info(f"Installing {package_name}...")
-        result = subprocess.run([
-            sys.executable, '-m', 'pip', 'install', package_name, '--upgrade',
-            '--disable-pip-version-check', '--no-input', '--progress-bar', 'off'
-        ], capture_output=True, text=True, timeout=1200)
-        
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                package_name,
+                "--upgrade",
+                "--disable-pip-version-check",
+                "--no-input",
+                "--progress-bar",
+                "off",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=1200,
+        )
+
         if result.returncode == 0:
             logger.info(f"✅ Successfully installed {package_name}")
             return True
         else:
-            if 'externally-managed-environment' in (result.stderr or '').lower():
+            if "externally-managed-environment" in (result.stderr or "").lower():
                 _reexec_in_repo_venv(logger)
             logger.warning(f"❌ Failed to install {package_name}: {result.stderr}")
             return False
@@ -305,125 +343,137 @@ def install_package(package_name, logger):
         logger.error(f"❌ Error installing {package_name}: {e}")
         return False
 
+
 def install_core_dependencies(logger):
     """Install core dependencies needed for CLI functionality"""
-    numpy_spec = 'numpy>=2.0.0' if sys.version_info >= (3, 14) else 'numpy>=1.21.0,<2.0.0'
-    
+    numpy_spec = "numpy>=2.0.0" if sys.version_info >= (3, 14) else "numpy>=1.21.0,<2.0.0"
+
     # Core packages needed for basic CLI functionality (cross-platform)
     core_packages = [
         numpy_spec,
-        'pandas>=1.5.0', 
-        'requests>=2.25.0',
-        'pyyaml>=6.0.0',
-        'tqdm>=4.60.0',
-        'psutil>=5.9.0',
-        'anyio>=4.0.0',
-        'pydantic>=2.0.0',
-        'jsonschema>=4.0.0',
+        "pandas>=1.5.0",
+        "requests>=2.25.0",
+        "pyyaml>=6.0.0",
+        "tqdm>=4.60.0",
+        "psutil>=5.9.0",
+        "anyio>=4.0.0",
+        "pydantic>=2.0.0",
+        "jsonschema>=4.0.0",
     ]
-    
+
     # Platform-specific core packages
     if IS_WINDOWS:
         # Windows may need special handling for some packages
         if sys.version_info < (3, 14):
-            core_packages.extend([
-                'pyarrow>=15.0.0',  # Test on Windows first
-            ])
+            core_packages.extend(
+                [
+                    "pyarrow>=15.0.0",  # Test on Windows first
+                ]
+            )
     else:
         if sys.version_info < (3, 14):
-            core_packages.extend([
-                'pyarrow>=15.0.0',
-            ])
-    
+            core_packages.extend(
+                [
+                    "pyarrow>=15.0.0",
+                ]
+            )
+
     # Additional packages that many tools need
     enhanced_packages = [
-        'datasets>=2.10.0,<3.0.0',
-        'fsspec>=2023.1.0,<=2024.6.1',
-        'huggingface-hub>=0.34.0,<1.0.0',
-        'networkx>=3.1',
-        'duckdb>=0.10.0',
-        'aiohttp>=3.9.0',
-        'faker>=24.0.0',
-        'beautifulsoup4>=4.12.0',
-        'readability-lxml>=0.8.1',
-        'newspaper3k>=0.2.8',
-        'html2text>=2025.4.15',
-        'pillow>=10.0.0,<12.0.0',
-        'pymupdf>=1.24.0',
-        'pdfplumber>=0.11.0',
-        'reportlab>=4.0.0',
-        'PyPDF2>=3.0.0',
-        'multiformats>=0.3.1',
-        'pytesseract>=0.3.10',
-        'cachetools>=5.3.0',
-        'scikit-learn>=1.4.0',
-        'fastapi>=0.110.0',
-        'easyocr>=1.7.1',
-        'opencv-python>=4.9.0.80,<4.12.0.0',
-        'transformers>=4.41.0',
-        'sentence-transformers>=2.7.0',
-        'discord.py>=2.4.0',
-        'surya-ocr>=0.17.0',
-        'magika>=0.5.0',
-        'faiss-cpu>=1.8.0',
-        'mcp',
-        'openai>=1.30.0',
-        'tiktoken>=0.7.0',
-        'PyJWT>=2.8.0',
-        'uvicorn>=0.29.0',
-        'pydantic-settings>=2.2.0',
-        'aiofiles>=23.2.1',
-        'pytest>=8.0.0',
-        'pytest-asyncio>=0.23.0',
-        'pytest-benchmark>=4.0.0',
-        'pyfakefs>=5.4.0',
-        'beartype>=0.16.4',
-        'jsonnet>=0.20.0',
-        'docker>=7.0.0',
-        'playwright>=1.41.0',
+        "datasets>=2.10.0,<3.0.0",
+        "fsspec>=2023.1.0,<=2024.6.1",
+        "huggingface-hub>=0.34.0,<1.0.0",
+        "networkx>=3.1",
+        "duckdb>=0.10.0",
+        "aiohttp>=3.9.0",
+        "faker>=24.0.0",
+        "beautifulsoup4>=4.12.0",
+        "readability-lxml>=0.8.1",
+        "newspaper3k>=0.2.8",
+        "html2text>=2025.4.15",
+        "pillow>=10.0.0,<12.0.0",
+        "pymupdf>=1.24.0",
+        "pdfplumber>=0.11.0",
+        "reportlab>=4.0.0",
+        "PyPDF2>=3.0.0",
+        "multiformats>=0.3.1",
+        "pytesseract>=0.3.10",
+        "cachetools>=5.3.0",
+        "scikit-learn>=1.4.0",
+        "fastapi>=0.110.0",
+        "easyocr>=1.7.1",
+        "opencv-python>=4.9.0.80,<4.12.0.0",
+        "transformers>=4.41.0",
+        "sentence-transformers>=2.7.0",
+        "discord.py>=2.4.0",
+        "surya-ocr>=0.17.0",
+        "magika>=0.5.0",
+        "faiss-cpu>=1.8.0",
+        "mcp",
+        "openai>=1.30.0",
+        "tiktoken>=0.7.0",
+        "PyJWT>=2.8.0",
+        "uvicorn>=0.29.0",
+        "pydantic-settings>=2.2.0",
+        "aiofiles>=23.2.1",
+        "pytest>=8.0.0",
+        "pytest-asyncio>=0.23.0",
+        "pytest-benchmark>=4.0.0",
+        "pyfakefs>=5.4.0",
+        "beartype>=0.16.4",
+        "jsonnet>=0.20.0",
+        "docker>=7.0.0",
+        "playwright>=1.41.0",
     ]
-    
+
     # Add platform-specific packages
     if IS_LINUX:
-        enhanced_packages.append('python-magic>=0.4.27')
+        enhanced_packages.append("python-magic>=0.4.27")
     elif IS_WINDOWS:
-        enhanced_packages.append('python-magic-bin>=0.4.14')  # Windows binary version
-    
+        enhanced_packages.append("python-magic-bin>=0.4.14")  # Windows binary version
+
     # Add NLTK only on non-Windows or if user confirms
-    if not IS_WINDOWS or os.environ.get('INSTALL_NLTK', '').lower() == 'true':
-        enhanced_packages.append('nltk>=3.8.0')
-    
+    if not IS_WINDOWS or os.environ.get("INSTALL_NLTK", "").lower() == "true":
+        enhanced_packages.append("nltk>=3.8.0")
+
     logger.info(f"🚀 Installing core dependencies for {platform.system()}...")
     logger.info(f"   Platform: {platform.system()} {platform.release()}")
     logger.info(f"   Python: {platform.python_version()}")
-    
+
     success_count = 0
     total_packages = core_packages + enhanced_packages
-    
+
     for package in core_packages:
         if install_package(package, logger):
             success_count += 1
-    
-    logger.info(f"\n📊 Core dependencies: {success_count}/{len(core_packages)} installed successfully")
-    
+
+    logger.info(
+        f"\n📊 Core dependencies: {success_count}/{len(core_packages)} installed successfully"
+    )
+
     # Try enhanced packages (non-critical)
     logger.info("\n🔧 Installing enhanced dependencies (optional)...")
     enhanced_success = 0
     for package in enhanced_packages:
         if install_package(package, logger):
             enhanced_success += 1
-    
-    logger.info(f"📊 Enhanced dependencies: {enhanced_success}/{len(enhanced_packages)} installed successfully")
-    
+
+    logger.info(
+        f"📊 Enhanced dependencies: {enhanced_success}/{len(enhanced_packages)} installed successfully"
+    )
+
     total_success = success_count + enhanced_success
-    logger.info(f"\n🎉 Overall: {total_success}/{len(total_packages)} packages installed successfully")
-    
+    logger.info(
+        f"\n🎉 Overall: {total_success}/{len(total_packages)} packages installed successfully"
+    )
+
     return success_count >= len(core_packages) * 0.8  # 80% of core packages must succeed
+
 
 def enable_auto_install_in_config(logger):
     """Create or update configuration to enable auto-install"""
-    
-    config_content = '''# IPFS Datasets Auto-Install Configuration
+
+    config_content = """# IPFS Datasets Auto-Install Configuration
 # This enables automatic dependency installation
 
 import os
@@ -433,13 +483,13 @@ os.environ.setdefault('IPFS_DATASETS_AUTO_INSTALL', 'true')
 os.environ.setdefault('IPFS_INSTALL_VERBOSE', 'false')  # Set to 'true' for verbose output
 
 print("✅ Auto-installation enabled for IPFS Datasets")
-'''
-    
+"""
+
     # Try to create in the project directory
     try:
         config_file = Path("scripts") / "setup" / "ipfs_auto_install_config.py"
         config_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(config_file, 'w', encoding='utf-8') as f:
+        with open(config_file, "w", encoding="utf-8") as f:
             f.write(config_content)
         logger.info(f"📝 Created auto-install configuration: {config_file}")
         return True
@@ -447,9 +497,10 @@ print("✅ Auto-installation enabled for IPFS Datasets")
         logger.warning(f"Could not create config file: {e}")
         return False
 
+
 def create_installation_script(logger):
     """Create a script to install specific dependency profiles"""
-    
+
     script_content = '''#!/usr/bin/env python3
 """
 IPFS Datasets Dependency Installer
@@ -543,17 +594,17 @@ if __name__ == '__main__':
     success = install_profile(profile)
     sys.exit(0 if success else 1)
 '''
-    
+
     try:
         script_file = Path("scripts") / "setup" / "install_deps.py"
         script_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(script_file, 'w', encoding='utf-8') as f:
+        with open(script_file, "w", encoding="utf-8") as f:
             f.write(script_content)
-        
+
         # Make executable on Unix systems
-        if sys.platform != 'win32':
+        if sys.platform != "win32":
             os.chmod(script_file, 0o755)
-            
+
         logger.info(f"📝 Created dependency installer script: {script_file}")
         return True
     except Exception as e:
@@ -562,18 +613,18 @@ if __name__ == '__main__':
 
 
 def _tools_bin_dir() -> Path:
-    tools_dir = Path(__file__).resolve().parent / '.tools' / 'bin'
+    tools_dir = Path(__file__).resolve().parent / ".tools" / "bin"
     tools_dir.mkdir(parents=True, exist_ok=True)
     return tools_dir
 
 
 def ensure_docker_compose(logger):
     """Ensure docker-compose is available on PATH (best effort)."""
-    if shutil.which('docker-compose'):
+    if shutil.which("docker-compose"):
         return
 
     tools_dir = _tools_bin_dir()
-    compose_path = tools_dir / 'docker-compose'
+    compose_path = tools_dir / "docker-compose"
     if compose_path.exists():
         return
 
@@ -603,14 +654,14 @@ echo "docker-compose is not available" >&2
 exit 1
 """
 
-    compose_path.write_text(shim, encoding='utf-8')
+    compose_path.write_text(shim, encoding="utf-8")
     os.chmod(compose_path, 0o755)
     logger.info("✅ docker-compose shim installed to %s", compose_path)
 
 
 def ensure_kubectl(logger):
     """Ensure kubectl is available on PATH (best effort)."""
-    if shutil.which('kubectl'):
+    if shutil.which("kubectl"):
         return
 
     if not (IS_LINUX or IS_MACOS):
@@ -618,25 +669,25 @@ def ensure_kubectl(logger):
         return
 
     tools_dir = _tools_bin_dir()
-    kubectl_path = tools_dir / 'kubectl'
+    kubectl_path = tools_dir / "kubectl"
 
     if kubectl_path.exists():
         return
 
     arch = platform.machine().lower()
-    if arch in {'x86_64', 'amd64'}:
-        arch = 'amd64'
-    elif arch in {'aarch64', 'arm64'}:
-        arch = 'arm64'
+    if arch in {"x86_64", "amd64"}:
+        arch = "amd64"
+    elif arch in {"aarch64", "arm64"}:
+        arch = "arm64"
     else:
         logger.warning("Unsupported architecture for kubectl auto-install: %s", arch)
         return
 
-    system = 'linux' if IS_LINUX else 'darwin'
+    system = "linux" if IS_LINUX else "darwin"
 
     try:
-        with urllib.request.urlopen('https://dl.k8s.io/release/stable.txt', timeout=10) as resp:
-            version = resp.read().decode('utf-8').strip()
+        with urllib.request.urlopen("https://dl.k8s.io/release/stable.txt", timeout=10) as resp:
+            version = resp.read().decode("utf-8").strip()
         download_url = f"https://dl.k8s.io/release/{version}/bin/{system}/{arch}/kubectl"
         logger.info("Downloading kubectl %s...", version)
         with urllib.request.urlopen(download_url, timeout=30) as resp:
@@ -657,7 +708,7 @@ def ensure_playwright_browsers(logger):
             [sys.executable, "-m", "playwright", "install"],
             capture_output=True,
             text=True,
-            timeout=600
+            timeout=600,
         )
         if result.returncode == 0:
             logger.info("✅ Playwright browsers installed")
@@ -666,11 +717,12 @@ def ensure_playwright_browsers(logger):
     except Exception as e:
         logger.warning("Playwright install failed: %s", e)
 
+
 def ensure_nltk_data(logger):
     """Ensure required NLTK data packages are available."""
     try:
         subprocess.run(
-            [sys.executable, '-m', 'nltk.downloader', 'punkt', 'punkt_tab'],
+            [sys.executable, "-m", "nltk.downloader", "punkt", "punkt_tab"],
             check=False,
             capture_output=True,
             text=True,
@@ -678,9 +730,10 @@ def ensure_nltk_data(logger):
     except Exception as e:
         logger.warning(f"NLTK data download failed: {e}")
 
+
 def ensure_kind(logger):
     """Ensure kind is available on PATH (best effort)."""
-    if shutil.which('kind'):
+    if shutil.which("kind"):
         return
 
     if not (IS_LINUX or IS_MACOS):
@@ -688,17 +741,17 @@ def ensure_kind(logger):
         return
 
     tools_dir = _tools_bin_dir()
-    kind_path = tools_dir / 'kind'
+    kind_path = tools_dir / "kind"
 
     if kind_path.exists():
         return
 
-    os_name = 'linux' if IS_LINUX else 'darwin'
+    os_name = "linux" if IS_LINUX else "darwin"
     arch = platform.machine().lower()
-    if arch in {'x86_64', 'amd64'}:
-        arch = 'amd64'
-    elif arch in {'aarch64', 'arm64'}:
-        arch = 'arm64'
+    if arch in {"x86_64", "amd64"}:
+        arch = "amd64"
+    elif arch in {"aarch64", "arm64"}:
+        arch = "arm64"
     else:
         logger.warning("Unsupported architecture for kind: %s", arch)
         return
@@ -706,10 +759,7 @@ def ensure_kind(logger):
     url = f"https://kind.sigs.k8s.io/dl/v0.23.0/kind-{os_name}-{arch}"
     try:
         result = subprocess.run(
-            ["curl", "-fsSL", "-o", str(kind_path), url],
-            capture_output=True,
-            text=True,
-            timeout=60
+            ["curl", "-fsSL", "-o", str(kind_path), url], capture_output=True, text=True, timeout=60
         )
         if result.returncode != 0:
             logger.warning("Failed to download kind: %s", result.stderr.strip())
@@ -722,7 +772,7 @@ def ensure_kind(logger):
 
 def ensure_minikube(logger):
     """Ensure minikube is available on PATH (best effort)."""
-    if shutil.which('minikube'):
+    if shutil.which("minikube"):
         return
 
     if not IS_LINUX:
@@ -730,16 +780,16 @@ def ensure_minikube(logger):
         return
 
     tools_dir = _tools_bin_dir()
-    minikube_path = tools_dir / 'minikube'
+    minikube_path = tools_dir / "minikube"
 
     if minikube_path.exists():
         return
 
     arch = platform.machine().lower()
-    if arch in {'x86_64', 'amd64'}:
-        arch = 'amd64'
-    elif arch in {'aarch64', 'arm64'}:
-        arch = 'arm64'
+    if arch in {"x86_64", "amd64"}:
+        arch = "amd64"
+    elif arch in {"aarch64", "arm64"}:
+        arch = "arm64"
     else:
         logger.warning("Unsupported architecture for minikube: %s", arch)
         return
@@ -750,7 +800,7 @@ def ensure_minikube(logger):
             ["curl", "-fsSL", "-o", str(minikube_path), url],
             capture_output=True,
             text=True,
-            timeout=60
+            timeout=60,
         )
         if result.returncode != 0:
             logger.warning("Failed to download minikube: %s", result.stderr.strip())
@@ -763,18 +813,18 @@ def ensure_minikube(logger):
 
 def ensure_docker(logger):
     """Ensure Docker is available on PATH (best effort)."""
-    if shutil.which('docker'):
+    if shutil.which("docker"):
         return
 
     if not IS_LINUX:
         logger.warning("Docker auto-install not supported on this platform")
         return
 
-    if shutil.which('apt-get') is None:
+    if shutil.which("apt-get") is None:
         logger.warning("apt-get not available; cannot auto-install Docker")
         return
 
-    use_sudo = shutil.which('sudo') is not None
+    use_sudo = shutil.which("sudo") is not None
     if not use_sudo:
         logger.warning("Docker install requires sudo; skipping auto-install")
         return
@@ -783,13 +833,22 @@ def ensure_docker(logger):
     install_cmd = (["sudo", "-n"] if use_sudo else []) + ["apt-get", "update"]
     try:
         subprocess.run(install_cmd, capture_output=True, text=True, timeout=300)
-        install_cmd = (["sudo", "-n"] if use_sudo else []) + ["apt-get", "install", "-y", "docker.io"]
+        install_cmd = (["sudo", "-n"] if use_sudo else []) + [
+            "apt-get",
+            "install",
+            "-y",
+            "docker.io",
+        ]
         result = subprocess.run(install_cmd, capture_output=True, text=True, timeout=600)
         if result.returncode == 0:
             logger.info("✅ Docker installed via apt")
-            if shutil.which('systemctl'):
-                subprocess.run(["sudo", "-n", "systemctl", "enable", "--now", "docker"],
-                               capture_output=True, text=True, timeout=60)
+            if shutil.which("systemctl"):
+                subprocess.run(
+                    ["sudo", "-n", "systemctl", "enable", "--now", "docker"],
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                )
         else:
             logger.warning("Docker install failed: %s", result.stderr.strip())
     except Exception as e:
@@ -801,13 +860,13 @@ def ensure_docker_compose_plugin(logger):
     if not IS_LINUX:
         return
 
-    if shutil.which('docker') is None:
+    if shutil.which("docker") is None:
         return
 
-    if shutil.which('apt-get') is None:
+    if shutil.which("apt-get") is None:
         return
 
-    use_sudo = shutil.which('sudo') is not None
+    use_sudo = shutil.which("sudo") is not None
     if not use_sudo:
         logger.warning("docker compose plugin install requires sudo; skipping")
         return
@@ -817,7 +876,7 @@ def ensure_docker_compose_plugin(logger):
             ["sudo", "-n", "apt-get", "install", "-y", "docker-compose-plugin"],
             capture_output=True,
             text=True,
-            timeout=300
+            timeout=300,
         )
         if result.returncode == 0:
             logger.info("✅ docker compose plugin installed")
@@ -829,16 +888,13 @@ def ensure_docker_compose_plugin(logger):
 
 def ensure_local_k8s_cluster(logger):
     """Best-effort local Kubernetes cluster setup for validation tests."""
-    if not shutil.which('kubectl'):
+    if not shutil.which("kubectl"):
         return
 
     # If there is already a context, assume cluster is configured
     try:
         contexts = subprocess.run(
-            ["kubectl", "config", "get-contexts"],
-            capture_output=True,
-            text=True,
-            timeout=10
+            ["kubectl", "config", "get-contexts"], capture_output=True, text=True, timeout=10
         )
         if contexts.returncode == 0 and "CURRENT" in contexts.stdout:
             return
@@ -846,66 +902,61 @@ def ensure_local_k8s_cluster(logger):
         pass
 
     # Prefer kind when Docker is available
-    docker_ok = shutil.which('docker') is not None
+    docker_ok = shutil.which("docker") is not None
     if docker_ok:
         try:
             docker_info = subprocess.run(
-                ["docker", "info"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                ["docker", "info"], capture_output=True, text=True, timeout=10
             )
             docker_ok = docker_info.returncode == 0
         except Exception:
             docker_ok = False
 
-    if docker_ok and shutil.which('kind'):
+    if docker_ok and shutil.which("kind"):
         try:
             clusters = subprocess.run(
-                ["kind", "get", "clusters"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                ["kind", "get", "clusters"], capture_output=True, text=True, timeout=10
             )
             if "ipfs-datasets" not in clusters.stdout:
                 subprocess.run(
                     ["kind", "create", "cluster", "--name", "ipfs-datasets"],
                     capture_output=True,
                     text=True,
-                    timeout=300
+                    timeout=300,
                 )
             subprocess.run(
                 ["kubectl", "config", "use-context", "kind-ipfs-datasets"],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
             logger.info("✅ kind cluster configured for kubectl")
             return
         except Exception as e:
             logger.warning("Failed to set up kind cluster: %s", e)
 
-    if docker_ok and shutil.which('minikube'):
+    if docker_ok and shutil.which("minikube"):
         try:
             subprocess.run(
                 ["minikube", "start", "--driver=docker"],
                 capture_output=True,
                 text=True,
-                timeout=600
+                timeout=600,
             )
             logger.info("✅ minikube cluster configured for kubectl")
         except Exception as e:
             logger.warning("Failed to set up minikube cluster: %s", e)
 
+
 def test_cli_functionality(logger):
     """Test if CLI tools work after installation"""
     logger.info("\n🧪 Testing CLI functionality...")
-    
+
     tests = [
-        ([sys.executable, 'ipfs_datasets_cli.py', '--help'], "Basic CLI help"),
-        ([sys.executable, 'scripts/cli/enhanced_cli.py', '--help'], "Enhanced CLI help"),
+        ([sys.executable, "ipfs_datasets_cli.py", "--help"], "Basic CLI help"),
+        ([sys.executable, "scripts/cli/enhanced_cli.py", "--help"], "Enhanced CLI help"),
     ]
-    
+
     success_count = 0
     for cmd, description in tests:
         try:
@@ -917,9 +968,10 @@ def test_cli_functionality(logger):
                 logger.warning(f"❌ {description}: {result.stderr}")
         except Exception as e:
             logger.warning(f"❌ {description}: {e}")
-    
+
     logger.info(f"📊 CLI tests: {success_count}/{len(tests)} passed")
     return success_count > 0
+
 
 def main():
     """Main setup function"""
@@ -932,15 +984,15 @@ def main():
     ensure_main_ipfs_kit_py(logger)
     ensure_libp2p_main(logger)
     ensure_ipfs_accelerate_py(logger)
-    
+
     logger.info("🔧 IPFS Datasets Quick Dependency Setup")
     logger.info("=" * 50)
-    
+
     # Check pip
     if not check_pip():
         logger.error("❌ pip is not available. Please install pip first.")
         return 1
-    
+
     # Install core dependencies
     if not install_core_dependencies(logger):
         logger.error("❌ Failed to install core dependencies")
@@ -956,22 +1008,23 @@ def main():
     ensure_local_k8s_cluster(logger)
     ensure_playwright_browsers(logger)
     ensure_nltk_data(logger)
-    
+
     # Create configuration files
     enable_auto_install_in_config(logger)
     create_installation_script(logger)
-    
+
     # Test CLI functionality
     test_cli_functionality(logger)
-    
+
     logger.info("\n🎉 Quick setup complete!")
     logger.info("\nNext steps:")
     logger.info("1. Run 'python dependency_manager.py setup' for interactive setup")
     logger.info("2. Run 'python scripts/setup/install_deps.py <profile>' for specific features")
     logger.info("3. Run CLI tests: 'python comprehensive_cli_test.py'")
     logger.info("\nProfiles available: minimal, cli, pdf, ml, web")
-    
+
     return 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sys.exit(main())

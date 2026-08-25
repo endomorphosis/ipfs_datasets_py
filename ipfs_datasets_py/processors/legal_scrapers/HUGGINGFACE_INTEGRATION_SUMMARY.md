@@ -97,10 +97,7 @@ Return Error: "May still be uploading to HuggingFace"
 ```python
 from ipfs_datasets_py.processors.legal_scrapers import CommonCrawlIndexLoader
 
-loader = CommonCrawlIndexLoader(
-    local_base_dir="/data/indexes",
-    use_hf_fallback=True
-)
+loader = CommonCrawlIndexLoader(local_base_dir="/data/indexes", use_hf_fallback=True)
 
 # Loads from local if available, HF otherwise
 federal_index = loader.load_federal_index()
@@ -111,16 +108,10 @@ ca_index = loader.load_state_index("CA")
 ```python
 from ipfs_datasets_py.processors.legal_scrapers import LegalWebArchiveSearch
 
-searcher = LegalWebArchiveSearch(
-    index_local_dir="/data/indexes",
-    use_hf_indexes=True
-)
+searcher = LegalWebArchiveSearch(index_local_dir="/data/indexes", use_hf_indexes=True)
 
 # Fast search without API calls
-results = searcher.search_with_indexes(
-    "EPA water regulations",
-    jurisdiction_type="federal"
-)
+results = searcher.search_with_indexes("EPA water regulations", jurisdiction_type="federal")
 ```
 
 ### Auto-Detection
@@ -223,13 +214,13 @@ loader.load_municipal_index()
 # Load only what you need
 ca_index = loader.load_state_index("CA")  # Faster
 # vs
-all_states = loader.load_state_index()    # Slower
+all_states = loader.load_state_index()  # Slower
 ```
 
 ### 3. Check Availability
 ```python
 info = searcher.get_index_info()
-if not info['indexes']['federal']['local_available']:
+if not info["indexes"]["federal"]["local_available"]:
     print("Warning: Will download from HuggingFace (may take time)")
 ```
 

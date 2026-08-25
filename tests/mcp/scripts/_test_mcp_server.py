@@ -12,6 +12,7 @@ This script tests:
 Usage:
     python test_mcp_server.py [--host HOST] [--port PORT] [--ipfs-kit-mcp-url URL]
 """
+
 import argparse
 import anyio
 import sys
@@ -130,9 +131,13 @@ class MCPServerTester:
 
         # Expected tool categories
         expected_categories = [
-            "dataset_tools", "ipfs_tools", "vector_tools",
-            "graph_tools", "audit_tools", "security_tools",
-            "provenance_tools"
+            "dataset_tools",
+            "ipfs_tools",
+            "vector_tools",
+            "graph_tools",
+            "audit_tools",
+            "security_tools",
+            "provenance_tools",
         ]
 
         # Check for tools in each category
@@ -163,10 +168,9 @@ class MCPServerTester:
         try:
             # Test load_dataset
             logger.info("Testing load_dataset")
-            load_result = await self.client.call_tool("load_dataset", {
-                "source": str(self.test_data_path),
-                "format": "json"
-            })
+            load_result = await self.client.call_tool(
+                "load_dataset", {"source": str(self.test_data_path), "format": "json"}
+            )
             logger.info(f"Load result: {load_result}")
 
             if load_result.get("status") == "success":
@@ -174,30 +178,31 @@ class MCPServerTester:
 
                 # Test process_dataset
                 logger.info("Testing process_dataset")
-                process_result = await self.client.call_tool("process_dataset", {
-                    "dataset_id": dataset_id,
-                    "operations": [
-                        {"type": "filter", "column": "value", "condition": ">", "value": 20}
-                    ]
-                })
+                process_result = await self.client.call_tool(
+                    "process_dataset",
+                    {
+                        "dataset_id": dataset_id,
+                        "operations": [
+                            {"type": "filter", "column": "value", "condition": ">", "value": 20}
+                        ],
+                    },
+                )
                 logger.info(f"Process result: {process_result}")
 
                 # Test convert_dataset_format
                 logger.info("Testing convert_dataset_format")
-                convert_result = await self.client.call_tool("convert_dataset_format", {
-                    "dataset_id": dataset_id,
-                    "target_format": "csv"
-                })
+                convert_result = await self.client.call_tool(
+                    "convert_dataset_format", {"dataset_id": dataset_id, "target_format": "csv"}
+                )
                 logger.info(f"Convert result: {convert_result}")
 
                 # Test save_dataset
                 output_path = str(self.temp_path / "output_dataset.json")
                 logger.info("Testing save_dataset")
-                save_result = await self.client.call_tool("save_dataset", {
-                    "dataset_id": dataset_id,
-                    "destination": output_path,
-                    "format": "json"
-                })
+                save_result = await self.client.call_tool(
+                    "save_dataset",
+                    {"dataset_id": dataset_id, "destination": output_path, "format": "json"},
+                )
                 logger.info(f"Save result: {save_result}")
 
                 return True
@@ -220,25 +225,26 @@ class MCPServerTester:
             # Test pin_to_ipfs
             logger.info("Testing pin_to_ipfs")
             try:
-                pin_result = await self.client.call_tool("pin_to_ipfs", {
-                    "content_path": str(self.test_data_path),
-                    "recursive": False
-                })
+                pin_result = await self.client.call_tool(
+                    "pin_to_ipfs", {"content_path": str(self.test_data_path), "recursive": False}
+                )
                 logger.info(f"Pin result: {pin_result}")
             except Exception as e:
-                logger.warning(f"IPFS pin test failed (this may be expected if IPFS is not running): {e}")
+                logger.warning(
+                    f"IPFS pin test failed (this may be expected if IPFS is not running): {e}"
+                )
 
             # Continue with get_from_ipfs test even if pin failed
             # In a real test we'd use a known CID that exists on IPFS
             logger.info("Testing get_from_ipfs with a test CID")
             try:
                 test_cid = "QmZ4tDuvesekSs4qM5ZBKpXiZGun7S2CYtEZRB3DYXkjGx"  # Example CID
-                get_result = await self.client.call_tool("get_from_ipfs", {
-                    "cid": test_cid
-                })
+                get_result = await self.client.call_tool("get_from_ipfs", {"cid": test_cid})
                 logger.info(f"Get result: {get_result}")
             except Exception as e:
-                logger.warning(f"IPFS get test failed (this may be expected if IPFS is not running): {e}")
+                logger.warning(
+                    f"IPFS get test failed (this may be expected if IPFS is not running): {e}"
+                )
 
             return True
 
@@ -256,12 +262,10 @@ class MCPServerTester:
             metadata = [{"id": i, "name": f"Item {i}"} for i in range(10)]
 
             logger.info("Testing create_vector_index")
-            create_result = await self.client.call_tool("create_vector_index", {
-                "vectors": vectors,
-                "dimension": 5,
-                "metric": "cosine",
-                "metadata": metadata
-            })
+            create_result = await self.client.call_tool(
+                "create_vector_index",
+                {"vectors": vectors, "dimension": 5, "metric": "cosine", "metadata": metadata},
+            )
             logger.info(f"Create vector index result: {create_result}")
 
             if create_result.get("status") == "success":
@@ -270,11 +274,10 @@ class MCPServerTester:
                 # Test search
                 query_vector = [random.random() for _ in range(5)]
                 logger.info("Testing search_vector_index")
-                search_result = await self.client.call_tool("search_vector_index", {
-                    "index_id": index_id,
-                    "query_vector": query_vector,
-                    "top_k": 3
-                })
+                search_result = await self.client.call_tool(
+                    "search_vector_index",
+                    {"index_id": index_id, "query_vector": query_vector, "top_k": 3},
+                )
                 logger.info(f"Search vector index result: {search_result}")
 
                 return True

@@ -9,7 +9,10 @@ import pytest
 
 from ipfs_datasets_py.processors.legal_scrapers.shared_fetch_cache import SharedFetchCache
 from ipfs_datasets_py.processors.legal_scrapers.url_archive_cache import URLArchiveCache
-from ipfs_datasets_py.processors.web_archiving.contracts import UnifiedDocument, UnifiedFetchResponse
+from ipfs_datasets_py.processors.web_archiving.contracts import (
+    UnifiedDocument,
+    UnifiedFetchResponse,
+)
 from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI
 from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
     ScraperConfig,
@@ -101,7 +104,9 @@ async def test_url_archive_cache_round_trips_binary_metadata(tmp_path) -> None:
 
 
 def test_brave_search_ipfs_cache_serializes_binary_metadata(monkeypatch, tmp_path) -> None:
-    from ipfs_datasets_py.processors.web_archiving import brave_search_ipfs_cache as brave_cache_module
+    from ipfs_datasets_py.processors.web_archiving import (
+        brave_search_ipfs_cache as brave_cache_module,
+    )
 
     store: dict[str, bytes] = {}
 
@@ -345,7 +350,9 @@ async def test_playwright_scraper_captures_binary_download_after_api_fetch_fails
     monkeypatch.setattr(UnifiedWebScraper, "_extract_pdf_text", staticmethod(fake_extract_pdf))
 
     scraper = UnifiedWebScraper(ScraperConfig(timeout=5))
-    result = await scraper._scrape_playwright("https://apps.azsos.gov/public_services/Title_02/2-01.pdf")
+    result = await scraper._scrape_playwright(
+        "https://apps.azsos.gov/public_services/Title_02/2-01.pdf"
+    )
 
     assert result.success is True
     assert result.method_used == ScraperMethod.PLAYWRIGHT
@@ -383,7 +390,9 @@ def test_common_crawl_search_options_autodetect_local_collection_layout(
     collection_dir = parquet_root / "cc_pointers_by_collection" / "2025" / "CC-MAIN-2025-47"
     collection_dir.mkdir(parents=True)
 
-    collection_db = home / "ccindex_storage" / "duckdb" / "cc_pointers_by_collection" / "CC-MAIN-2025-47.duckdb"
+    collection_db = (
+        home / "ccindex_storage" / "duckdb" / "cc_pointers_by_collection" / "CC-MAIN-2025-47.duckdb"
+    )
     collection_db.parent.mkdir(parents=True)
     collection_db.write_text("", encoding="ascii")
 
@@ -391,7 +400,9 @@ def test_common_crawl_search_options_autodetect_local_collection_layout(
 
     scraper = UnifiedWebScraper(ScraperConfig())
 
-    options, meta_mode, hf_fallback_allowed = scraper._resolve_common_crawl_search_options(max_matches=7)
+    options, meta_mode, hf_fallback_allowed = scraper._resolve_common_crawl_search_options(
+        max_matches=7
+    )
 
     assert options["parquet_root"] == parquet_root.resolve()
     assert options["collection_db"] == collection_db.resolve()
@@ -408,7 +419,9 @@ def test_common_crawl_search_options_enable_hf_remote_when_no_local_meta(
 
     scraper = UnifiedWebScraper(ScraperConfig())
 
-    options, meta_mode, hf_fallback_allowed = scraper._resolve_common_crawl_search_options(max_matches=5)
+    options, meta_mode, hf_fallback_allowed = scraper._resolve_common_crawl_search_options(
+        max_matches=5
+    )
 
     assert meta_mode == "none"
     assert hf_fallback_allowed is True
@@ -418,7 +431,9 @@ def test_common_crawl_search_options_enable_hf_remote_when_no_local_meta(
     assert options["hf_revision"] == "main"
 
 
-def test_cloudflare_credential_keyring_lookup_is_subprocess_bounded(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+def test_cloudflare_credential_keyring_lookup_is_subprocess_bounded(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
     token_names = (
         "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
         "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
@@ -443,7 +458,9 @@ def test_cloudflare_credential_keyring_lookup_is_subprocess_bounded(monkeypatch:
         stdout = json.dumps({"value": "cf-secret-token"})
         return SimpleNamespace(returncode=0, stdout=stdout)
 
-    monkeypatch.setattr("ipfs_datasets_py.processors.web_archiving.unified_web_scraper.subprocess.run", _fake_run)
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.web_archiving.unified_web_scraper.subprocess.run", _fake_run
+    )
 
     scraper = object.__new__(UnifiedWebScraper)
     scraper.config = ScraperConfig()
@@ -471,7 +488,9 @@ async def test_common_crawl_exact_url_scrape_rejects_domain_only_match(
         )
     )
     monkeypatch.setitem(sys.modules, "common_crawl_search_engine", SimpleNamespace())
-    monkeypatch.setitem(sys.modules, "common_crawl_search_engine.ccindex", SimpleNamespace(api=fake_api))
+    monkeypatch.setitem(
+        sys.modules, "common_crawl_search_engine.ccindex", SimpleNamespace(api=fake_api)
+    )
     monkeypatch.setitem(sys.modules, "common_crawl_search_engine.ccindex.api", fake_api)
 
     scraper = UnifiedWebScraper(
@@ -481,12 +500,16 @@ async def test_common_crawl_exact_url_scrape_rejects_domain_only_match(
         )
     )
 
-    result = await scraper._scrape_common_crawl("https://apps.azsos.gov/public_services/Title_02/2-01.pdf")
+    result = await scraper._scrape_common_crawl(
+        "https://apps.azsos.gov/public_services/Title_02/2-01.pdf"
+    )
 
     assert result.success is False
     assert result.method_used == ScraperMethod.COMMON_CRAWL
     assert result.errors == ["No exact Common Crawl record for requested URL"]
-    assert result.metadata["candidate_urls"] == ["https://apps.azsos.gov/public_services/unrelated.htm"]
+    assert result.metadata["candidate_urls"] == [
+        "https://apps.azsos.gov/public_services/unrelated.htm"
+    ]
 
 
 @pytest.mark.asyncio
@@ -523,14 +546,18 @@ async def test_common_crawl_exact_url_scrape_preserves_binary_document_body(
             ]
         ),
         fetch_warc_record=lambda **_kwargs: (
-            SimpleNamespace(ok=True, raw_base64=base64.b64encode(b"fake gzip member").decode("ascii")),
+            SimpleNamespace(
+                ok=True, raw_base64=base64.b64encode(b"fake gzip member").decode("ascii")
+            ),
             "range",
             None,
         ),
         extract_http_from_warc_gzip_member=_fake_extract,
     )
     monkeypatch.setitem(sys.modules, "common_crawl_search_engine", SimpleNamespace())
-    monkeypatch.setitem(sys.modules, "common_crawl_search_engine.ccindex", SimpleNamespace(api=fake_api))
+    monkeypatch.setitem(
+        sys.modules, "common_crawl_search_engine.ccindex", SimpleNamespace(api=fake_api)
+    )
     monkeypatch.setitem(sys.modules, "common_crawl_search_engine.ccindex.api", fake_api)
 
     scraper = UnifiedWebScraper(
@@ -540,7 +567,9 @@ async def test_common_crawl_exact_url_scrape_preserves_binary_document_body(
         )
     )
 
-    result = await scraper._scrape_common_crawl("https://apps.azsos.gov/public_services/Title_02/2-01.pdf")
+    result = await scraper._scrape_common_crawl(
+        "https://apps.azsos.gov/public_services/Title_02/2-01.pdf"
+    )
 
     assert result.success is True
     assert result.metadata["body_base64"] == base64.b64encode(pdf_body).decode("ascii")
@@ -569,7 +598,9 @@ async def test_common_crawl_search_timeout_returns_without_waiting_for_worker(
 
     started = time.monotonic()
     with pytest.raises(TimeoutError):
-        await scraper._search_common_crawl_records_bounded(fake_api, "https://example.com/", max_matches=1)
+        await scraper._search_common_crawl_records_bounded(
+            fake_api, "https://example.com/", max_matches=1
+        )
 
     assert time.monotonic() - started < 0.15
 
@@ -584,7 +615,14 @@ def test_parse_method_names_accepts_cloudflare_alias() -> None:
 
 
 class _FakeResponse:
-    def __init__(self, *, content: bytes, headers: dict[str, str] | None = None, status_code: int = 200, text: str | None = None):
+    def __init__(
+        self,
+        *,
+        content: bytes,
+        headers: dict[str, str] | None = None,
+        status_code: int = 200,
+        text: str | None = None,
+    ):
         self.content = content
         self.headers = headers or {}
         self.status_code = status_code
@@ -676,7 +714,9 @@ async def test_beautifulsoup_returns_pdf_bytes_and_text(monkeypatch: pytest.Monk
 
 
 @pytest.mark.anyio
-async def test_cloudflare_browser_rendering_returns_completed_record(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_cloudflare_browser_rendering_returns_completed_record(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     scraper = UnifiedWebScraper(
         ScraperConfig(
             cloudflare_account_id="acct-test",
@@ -721,7 +761,9 @@ async def test_cloudflare_browser_rendering_returns_completed_record(monkeypatch
 
 
 @pytest.mark.anyio
-async def test_cloudflare_browser_rendering_preserves_rate_limit_schedule(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_cloudflare_browser_rendering_preserves_rate_limit_schedule(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     scraper = UnifiedWebScraper(
         ScraperConfig(
             cloudflare_account_id="acct-test",
@@ -766,7 +808,9 @@ async def test_cloudflare_browser_rendering_preserves_rate_limit_schedule(monkey
 
 
 @pytest.mark.anyio
-async def test_cloudflare_browser_rendering_marks_browser_challenge_record(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_cloudflare_browser_rendering_marks_browser_challenge_record(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     scraper = UnifiedWebScraper(
         ScraperConfig(
             cloudflare_account_id="acct-test",
@@ -808,7 +852,9 @@ async def test_cloudflare_browser_rendering_marks_browser_challenge_record(monke
 
 
 @pytest.mark.anyio
-async def test_cloudflare_browser_rendering_rejects_completed_js_shell_record(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_cloudflare_browser_rendering_rejects_completed_js_shell_record(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     scraper = UnifiedWebScraper(
         ScraperConfig(
             cloudflare_account_id="acct-test",
@@ -882,7 +928,9 @@ async def test_binary_pdf_uses_repo_pdf_processor(monkeypatch: pytest.MonkeyPatc
 
 
 @pytest.mark.anyio
-async def test_fallback_submits_archive_is_only_after_snapshot_miss(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_fallback_submits_archive_is_only_after_snapshot_miss(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     scraper = UnifiedWebScraper(
         ScraperConfig(
             preferred_methods=[ScraperMethod.ARCHIVE_IS],

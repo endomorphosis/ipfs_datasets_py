@@ -71,14 +71,9 @@ class ToolMetadataRegistry:
 
 #### 3. @tool_metadata Decorator
 ```python
-@tool_metadata(
-    runtime=RUNTIME_TRIO,
-    requires_p2p=True,
-    category="p2p_workflow",
-    priority=8
-)
+@tool_metadata(runtime=RUNTIME_TRIO, requires_p2p=True, category="p2p_workflow", priority=8)
 async def p2p_workflow_submit(workflow: dict) -> str:
-    '''Submit a P2P workflow.'''
+    """Submit a P2P workflow."""
     ...
 ```
 
@@ -136,12 +131,7 @@ def register_from_metadata(self) -> int:
 #### 3. Metrics Collection
 ```python
 def get_metrics(self) -> Dict[str, Any]:
-    return {
-        "total_detections": ...,
-        "by_runtime": {...},
-        "cache_hits": ...,
-        "cache_misses": ...
-    }
+    return {"total_detections": ..., "by_runtime": {...}, "cache_hits": ..., "cache_misses": ...}
 ```
 
 **Impact:**

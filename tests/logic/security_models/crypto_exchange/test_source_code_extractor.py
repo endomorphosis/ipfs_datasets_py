@@ -9,7 +9,7 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.schema import val
 def test_source_code_extractor_autoformalizes_typescript_into_security_ir() -> None:
     """GIVEN TypeScript security code WHEN autoformalized THEN a seed security IR is emitted."""
 
-    source = '''
+    source = """
 /** Wallets must never sign after they are frozen. */
 export class WalletGuardian {}
 
@@ -27,39 +27,42 @@ export function approveWithdrawal(authorized: boolean, balance: number, wallet: 
   auditLog.emit("withdrawal_approved");
   return true;
 }
-'''
+"""
 
     extractor = SourceCodeExtractor()
     model = validate_ir(
         extractor.extract_ir_from_source(
             source,
-            language='typescript',
-            model_id='typescript-autoformalized-test-model',
-            module_path='exchange/withdrawals.ts',
+            language="typescript",
+            model_id="typescript-autoformalized-test-model",
+            module_path="exchange/withdrawals.ts",
         )
     )
 
-    assert model.model_id == 'typescript-autoformalized-test-model'
-    assert any(entity['name'] == 'WalletGuardian' for entity in model.entities)
-    assert any(policy['name'] == 'authorization_required' for policy in model.policies)
-    assert any(policy['name'] == 'sufficient_balance_required' for policy in model.policies)
-    assert any(policy['name'] == 'wallet_not_frozen_required' for policy in model.policies)
-    assert any(policy['name'] == 'audit_required' for policy in model.policies)
-    assert any(event['event'] == 'approveWithdrawal' for event in model.events)
-    assert any(invariant['description'].startswith('Every withdrawal must be authorized') for invariant in model.invariants)
-    assert model.metadata['autoformalization']['language'] == 'typescript'
-    assert model.metadata['autoformalization']['module_path'] == 'exchange/withdrawals.ts'
-    assert model.metadata['autoformalization']['source_digest']
-    assert model.metadata['autoformalization']['review_status'] == 'heuristic'
-    assert model.metadata['autoformalization']['evidence_refs']
+    assert model.model_id == "typescript-autoformalized-test-model"
+    assert any(entity["name"] == "WalletGuardian" for entity in model.entities)
+    assert any(policy["name"] == "authorization_required" for policy in model.policies)
+    assert any(policy["name"] == "sufficient_balance_required" for policy in model.policies)
+    assert any(policy["name"] == "wallet_not_frozen_required" for policy in model.policies)
+    assert any(policy["name"] == "audit_required" for policy in model.policies)
+    assert any(event["event"] == "approveWithdrawal" for event in model.events)
+    assert any(
+        invariant["description"].startswith("Every withdrawal must be authorized")
+        for invariant in model.invariants
+    )
+    assert model.metadata["autoformalization"]["language"] == "typescript"
+    assert model.metadata["autoformalization"]["module_path"] == "exchange/withdrawals.ts"
+    assert model.metadata["autoformalization"]["source_digest"]
+    assert model.metadata["autoformalization"]["review_status"] == "heuristic"
+    assert model.metadata["autoformalization"]["evidence_refs"]
 
 
 def test_source_code_extractor_aggregates_popular_language_directory_inputs(tmp_path: Path) -> None:
     """GIVEN a mixed-language codebase WHEN autoformalized from disk THEN supported modules aggregate into one IR."""
 
-    first = tmp_path / 'withdrawals.ts'
+    first = tmp_path / "withdrawals.ts"
     first.write_text(
-        '''
+        """
 /** Every withdrawal must be authorized before broadcast. */
 export function approveWithdrawal(authorized: boolean): boolean {
   if (!authorized) {
@@ -67,12 +70,12 @@ export function approveWithdrawal(authorized: boolean): boolean {
   }
   return true;
 }
-''',
-        encoding='utf-8',
+""",
+        encoding="utf-8",
     )
-    second = tmp_path / 'freeze.go'
+    second = tmp_path / "freeze.go"
     second.write_text(
-        '''
+        """
 // Wallets cannot sign after freeze.
 type WalletGuardian struct{}
 
@@ -83,46 +86,55 @@ func FreezeWallet(authorized bool) bool {
     }
     return true
 }
-''',
-        encoding='utf-8',
+""",
+        encoding="utf-8",
     )
 
     extractor = SourceCodeExtractor()
-    model = validate_ir(extractor.extract_ir_from_path(tmp_path, model_id='polyglot-codebase-test-model'))
+    model = validate_ir(
+        extractor.extract_ir_from_path(tmp_path, model_id="polyglot-codebase-test-model")
+    )
 
-    assert model.model_id == 'polyglot-codebase-test-model'
-    assert any(entity['name'] == 'WalletGuardian' for entity in model.entities)
-    assert any(event['event'] == 'approveWithdrawal' for event in model.events)
-    assert any(event['event'] == 'FreezeWallet' for event in model.events)
-    assert any(invariant['description'].startswith('Wallets cannot sign after freeze') for invariant in model.invariants)
-    assert model.metadata['autoformalization']['languages'] == ['go', 'typescript']
-    assert sorted(model.metadata['autoformalization']['source_files']) == sorted([str(first), str(second)])
-    assert sum(1 for policy in model.policies if policy['name'] == 'authorization_required') == 1
-    authorization_policy = next(policy for policy in model.policies if policy['name'] == 'authorization_required')
-    assert sorted(authorization_policy['sources']) == ['FreezeWallet', 'approveWithdrawal']
-    assert authorization_policy['evidence_refs']
+    assert model.model_id == "polyglot-codebase-test-model"
+    assert any(entity["name"] == "WalletGuardian" for entity in model.entities)
+    assert any(event["event"] == "approveWithdrawal" for event in model.events)
+    assert any(event["event"] == "FreezeWallet" for event in model.events)
+    assert any(
+        invariant["description"].startswith("Wallets cannot sign after freeze")
+        for invariant in model.invariants
+    )
+    assert model.metadata["autoformalization"]["languages"] == ["go", "typescript"]
+    assert sorted(model.metadata["autoformalization"]["source_files"]) == sorted(
+        [str(first), str(second)]
+    )
+    assert sum(1 for policy in model.policies if policy["name"] == "authorization_required") == 1
+    authorization_policy = next(
+        policy for policy in model.policies if policy["name"] == "authorization_required"
+    )
+    assert sorted(authorization_policy["sources"]) == ["FreezeWallet", "approveWithdrawal"]
+    assert authorization_policy["evidence_refs"]
 
 
 @pytest.mark.parametrize(
-    ('language', 'module_path', 'source', 'expected_event'),
+    ("language", "module_path", "source", "expected_event"),
     [
         (
-            'javascript',
-            'exchange/withdrawals.js',
-            '''
+            "javascript",
+            "exchange/withdrawals.js",
+            """
 /** Every withdrawal must be authorized before broadcast. */
 export function approveWithdrawal(authorized) {
   if (!authorized) {
     throw new Error("authorization required");
   }
 }
-''',
-            'approveWithdrawal',
+""",
+            "approveWithdrawal",
         ),
         (
-            'typescript',
-            'exchange/withdrawals.ts',
-            '''
+            "typescript",
+            "exchange/withdrawals.ts",
+            """
 /** Every withdrawal must be authorized before broadcast. */
 export function approveWithdrawal(authorized: boolean): boolean {
   if (!authorized) {
@@ -130,13 +142,13 @@ export function approveWithdrawal(authorized: boolean): boolean {
   }
   return true;
 }
-''',
-            'approveWithdrawal',
+""",
+            "approveWithdrawal",
         ),
         (
-            'go',
-            'exchange/withdrawals.go',
-            '''
+            "go",
+            "exchange/withdrawals.go",
+            """
 // Every withdrawal must be authorized before broadcast.
 func ApproveWithdrawal(authorized bool) bool {
     if !authorized {
@@ -144,13 +156,13 @@ func ApproveWithdrawal(authorized bool) bool {
     }
     return true
 }
-''',
-            'ApproveWithdrawal',
+""",
+            "ApproveWithdrawal",
         ),
         (
-            'java',
-            'exchange/Withdrawals.java',
-            '''
+            "java",
+            "exchange/Withdrawals.java",
+            """
 /** Every withdrawal must be authorized before broadcast. */
 public class Withdrawals {
     public boolean approveWithdrawal(boolean authorized) {
@@ -160,13 +172,13 @@ public class Withdrawals {
         return true;
     }
 }
-''',
-            'approveWithdrawal',
+""",
+            "approveWithdrawal",
         ),
         (
-            'rust',
-            'exchange/withdrawals.rs',
-            '''
+            "rust",
+            "exchange/withdrawals.rs",
+            """
 /// Every withdrawal must be authorized before broadcast.
 pub fn approve_withdrawal(authorized: bool) -> bool {
     if !authorized {
@@ -174,8 +186,8 @@ pub fn approve_withdrawal(authorized: bool) -> bool {
     }
     true
 }
-''',
-            'approve_withdrawal',
+""",
+            "approve_withdrawal",
         ),
     ],
 )
@@ -192,12 +204,14 @@ def test_source_code_extractor_detects_authorization_policy_for_supported_langua
         extractor.extract_ir_from_source(
             source,
             language=language,
-            model_id=f'{language}-policy-test-model',
+            model_id=f"{language}-policy-test-model",
             module_path=module_path,
         )
     )
 
-    authorization_policy = next(policy for policy in model.policies if policy['name'] == 'authorization_required')
-    assert authorization_policy['sources'] == [expected_event]
-    assert authorization_policy['evidence_refs']
-    assert any(event['event'] == expected_event for event in model.events)
+    authorization_policy = next(
+        policy for policy in model.policies if policy["name"] == "authorization_required"
+    )
+    assert authorization_policy["sources"] == [expected_event]
+    assert authorization_policy["evidence_refs"]
+    assert any(event["event"] == expected_event for event in model.events)

@@ -193,11 +193,10 @@ Migration Guide:
     Old: from ipfs_datasets_py.utils.old_module import OldClass
     New: from ipfs_datasets_py.utils.new_module import NewClass
 """
+
 import warnings
-warnings.warn(
-    "old_module is deprecated. Use new_module instead.",
-    DeprecationWarning, stacklevel=2
-)
+
+warnings.warn("old_module is deprecated. Use new_module instead.", DeprecationWarning, stacklevel=2)
 
 # Either re-export from new location OR
 # Provide concrete compatibility shim with NotImplementedError methods
@@ -292,9 +291,7 @@ from ipfs_datasets_py.utils.github import GitHubCLI, APICounter, RateLimiter
 
 # Create GitHub CLI with integrated features
 gh = GitHubCLI(
-    cache_dir=".cache/github",
-    counter=APICounter(),
-    rate_limiter=RateLimiter(threshold=100)
+    cache_dir=".cache/github", counter=APICounter(), rate_limiter=RateLimiter(threshold=100)
 )
 
 # Use with automatic caching and tracking

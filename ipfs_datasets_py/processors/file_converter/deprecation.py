@@ -12,6 +12,7 @@ from typing import Optional, Callable, Any
 
 class FileConverterDeprecationWarning(UserWarning):
     """Custom warning for deprecated file converter features."""
+
     pass
 
 
@@ -19,20 +20,20 @@ def deprecated(
     reason: str,
     alternative: Optional[str] = None,
     removal_version: Optional[str] = None,
-    category: type = FileConverterDeprecationWarning
+    category: type = FileConverterDeprecationWarning,
 ) -> Callable:
     """
     Decorator to mark functions/classes as deprecated.
-    
+
     Args:
         reason: Explanation of why it's deprecated
         alternative: Suggested alternative to use
         removal_version: Version when it will be removed
         category: Warning category to use
-    
+
     Returns:
         Decorator function
-    
+
     Example:
         @deprecated(
             reason="Use NativeBackend instead",
@@ -42,34 +43,36 @@ def deprecated(
         def old_function():
             pass
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             message = f"{func.__name__} is deprecated. {reason}"
-            
+
             if alternative:
                 message += f"\nUse {alternative} instead."
-            
+
             if removal_version:
                 message += f"\nWill be removed in version {removal_version}."
-            
+
             warnings.warn(message, category=category, stacklevel=2)
             return func(*args, **kwargs)
-        
+
         # Mark as deprecated
         wrapper.__deprecated__ = True
         wrapper.__deprecation_reason__ = reason
         wrapper.__deprecation_alternative__ = alternative
         wrapper.__deprecation_removal_version__ = removal_version
-        
+
         return wrapper
+
     return decorator
 
 
 def warn_deprecated_backend(backend_name: str, alternative: str = "native") -> None:
     """
     Issue a deprecation warning for a backend.
-    
+
     Args:
         backend_name: Name of the deprecated backend
         alternative: Name of the alternative backend
@@ -90,7 +93,7 @@ def warn_deprecated_backend(backend_name: str, alternative: str = "native") -> N
 def check_deprecated_import(module_name: str) -> None:
     """
     Warn when a deprecated module is imported.
-    
+
     Args:
         module_name: Name of the deprecated module
     """
@@ -108,24 +111,24 @@ DEPRECATION_TIMELINE = {
         "deprecated_in": "0.3.0",
         "removal_in": "0.5.0",
         "alternative": "native",
-        "reason": "Native implementation provides better performance and zero dependencies"
+        "reason": "Native implementation provides better performance and zero dependencies",
     },
     "omni_backend": {
         "deprecated_in": "0.3.0",
         "removal_in": "0.5.0",
         "alternative": "native",
-        "reason": "Native implementation provides better performance and zero dependencies"
-    }
+        "reason": "Native implementation provides better performance and zero dependencies",
+    },
 }
 
 
 def get_deprecation_info(feature: str) -> Optional[dict]:
     """
     Get deprecation information for a feature.
-    
+
     Args:
         feature: Name of the feature
-    
+
     Returns:
         Dictionary with deprecation info, or None if not deprecated
     """
@@ -135,10 +138,10 @@ def get_deprecation_info(feature: str) -> Optional[dict]:
 def is_deprecated(feature: str) -> bool:
     """
     Check if a feature is deprecated.
-    
+
     Args:
         feature: Name of the feature
-    
+
     Returns:
         True if deprecated, False otherwise
     """

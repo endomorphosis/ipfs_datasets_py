@@ -200,16 +200,12 @@ class LegalIRContractValidationResult:
 
     @property
     def valid(self) -> bool:
-        return not any(
-            issue.severity is ValidationSeverity.ERROR for issue in self.issues
-        )
+        return not any(issue.severity is ValidationSeverity.ERROR for issue in self.issues)
 
     @property
     def missing_required_fields(self) -> tuple[str, ...]:
         return tuple(
-            issue.field_path
-            for issue in self.issues
-            if issue.code == "missing_required_field"
+            issue.field_path for issue in self.issues if issue.code == "missing_required_field"
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -263,9 +259,7 @@ class LegalIRViewContract:
 
     @property
     def all_obligation_families(self) -> tuple[str, ...]:
-        return _unique(
-            (*self.obligation_families, *self.cross_view_obligation_families)
-        )
+        return _unique((*self.obligation_families, *self.cross_view_obligation_families))
 
     def repair_lane(self, lane_id: str) -> LegalIRRepairLane:
         for lane in self.repair_lanes:
@@ -273,9 +267,7 @@ class LegalIRViewContract:
                 return lane
         raise KeyError(lane_id)
 
-    def validate(
-        self, payload: Mapping[str, Any] | Any
-    ) -> LegalIRContractValidationResult:
+    def validate(self, payload: Mapping[str, Any] | Any) -> LegalIRContractValidationResult:
         normalized = _payload_mapping(payload)
         issues: list[LegalIRContractValidationIssue] = []
         for hook in self.validation_hooks:
@@ -300,9 +292,7 @@ class LegalIRViewContract:
         """Return bounded categorical feature values; never source content."""
 
         values = [f"contract_id:{self.contract_id}", f"view:{self.view.value}"]
-        values.extend(
-            f"obligation_family:{item}" for item in self.all_obligation_families
-        )
+        values.extend(f"obligation_family:{item}" for item in self.all_obligation_families)
         values.extend(f"metric_family:{item}" for item in self.metric_families)
         values.extend(f"repair_lane:{item}" for item in self.allowed_repair_lanes)
         return tuple(values)
@@ -313,17 +303,13 @@ class LegalIRViewContract:
         lanes = self.repair_lanes if lane_id is None else (self.repair_lane(lane_id),)
         return {
             "allowed_repair_lanes": [lane.lane_id for lane in lanes],
-            "allowed_paths": list(
-                _unique(path for lane in lanes for path in lane.allowed_paths)
-            ),
+            "allowed_paths": list(_unique(path for lane in lanes for path in lane.allowed_paths)),
             "contract_id": self.contract_id,
             "obligation_families": list(self.all_obligation_families),
             "repair_actions": [lane.action for lane in lanes],
             "target_component": self.target_component,
             "validation_commands": list(
-                _unique(
-                    command for lane in lanes for command in lane.validation_commands
-                )
+                _unique(command for lane in lanes for command in lane.validation_commands)
             ),
             "view": self.view.value,
         }
@@ -356,9 +342,7 @@ class LegalIRViewContract:
             "obligation_families": list(self.obligation_families),
             "provenance_requirements": self.provenance_requirements.to_dict(),
             "repair_lanes": [lane.to_dict() for lane in self.repair_lanes],
-            "required_fields": [
-                requirement.to_dict() for requirement in self.required_fields
-            ],
+            "required_fields": [requirement.to_dict() for requirement in self.required_fields],
             "required_field_names": list(self.required_field_names),
             "schema_version": self.schema_version,
             "target_component": self.target_component,
@@ -428,9 +412,7 @@ class LegalIRViewContractRegistry(Mapping[str, LegalIRViewContract]):
             "contract_count": len(self),
             "contract_ids": list(self.contract_ids),
             "contracts": [contract.to_dict() for contract in self._ordered],
-            "consumer_contracts": [
-                contract.consumer_contract() for contract in self._ordered
-            ],
+            "consumer_contracts": [contract.consumer_contract() for contract in self._ordered],
             "registry_version": LEGAL_IR_VIEW_CONTRACT_REGISTRY_VERSION,
         }
 
@@ -495,9 +477,7 @@ _CONTRACTS: tuple[LegalIRViewContract, ...] = (
         target_component="deontic.ir",
         description="Normative force, polarity, scope, conditions, and defeasible exceptions.",
         required_fields=(
-            _field(
-                "formula_id", "string", description="Stable source-scoped formula ID."
-            ),
+            _field("formula_id", "string", description="Stable source-scoped formula ID."),
             _field("operator", "string", description="Deontic operator symbol."),
             _field(
                 "norm_type",
@@ -696,9 +676,7 @@ _CONTRACTS: tuple[LegalIRViewContract, ...] = (
                 description="Bound quantifiers.",
                 allow_empty=True,
             ),
-            _field(
-                "temporal_anchors", "array", description="Explicit event/time anchors."
-            ),
+            _field("temporal_anchors", "array", description="Explicit event/time anchors."),
             _field(
                 "provenance_ids",
                 "array",
@@ -745,9 +723,7 @@ _CONTRACTS: tuple[LegalIRViewContract, ...] = (
         validation_hooks=(
             _REQUIRED_HOOK,
             _PROVENANCE_HOOK,
-            LegalIRValidationHook(
-                "temporal_anchors", "Validate explicit temporal anchors."
-            ),
+            LegalIRValidationHook("temporal_anchors", "Validate explicit temporal anchors."),
         ),
         obligation_families=("tdfol_required_fields", "temporal_anchor"),
         cross_view_obligation_families=("cross_view_temporal_consistency",),
@@ -816,9 +792,7 @@ _CONTRACTS: tuple[LegalIRViewContract, ...] = (
         validation_hooks=(
             _REQUIRED_HOOK,
             _PROVENANCE_HOOK,
-            LegalIRValidationHook(
-                "cec_lifecycle", "Validate typed lifecycle transitions."
-            ),
+            LegalIRValidationHook("cec_lifecycle", "Validate typed lifecycle transitions."),
         ),
         obligation_families=("cec_required_fields", "cec_lifecycle_transition"),
         cross_view_obligation_families=("cross_view_event_consistency",),
@@ -837,9 +811,7 @@ _CONTRACTS: tuple[LegalIRViewContract, ...] = (
         required_fields=(
             _field("graph_id", "string", description="Stable graph projection ID."),
             _field("nodes", "array", description="Nodes with stable IDs and labels."),
-            _field(
-                "relationships", "array", description="Typed directed relationships."
-            ),
+            _field("relationships", "array", description="Typed directed relationships."),
             _field(
                 "provenance_ids",
                 "array",
@@ -908,9 +880,7 @@ _CONTRACTS: tuple[LegalIRViewContract, ...] = (
         target_component="external_provers.router",
         description="Bounded prover route, backend result, and reconstruction receipt.",
         required_fields=(
-            _field(
-                "obligation_id", "string", description="Stable proof obligation ID."
-            ),
+            _field("obligation_id", "string", description="Stable proof obligation ID."),
             _field(
                 "input_formula_id",
                 "string",
@@ -1137,9 +1107,7 @@ def _path_get(payload: Mapping[str, Any], path: str) -> Any:
     return current
 
 
-def _field_value(
-    payload: Mapping[str, Any], requirement: LegalIRFieldRequirement
-) -> Any:
+def _field_value(payload: Mapping[str, Any], requirement: LegalIRFieldRequirement) -> Any:
     for path in (requirement.path, *requirement.aliases):
         value = _path_get(payload, path)
         if value is not _MISSING:
@@ -1230,8 +1198,7 @@ def _validate_required_fields(
         if (
             requirement.allowed_values
             and isinstance(value, str)
-            and value.lower()
-            not in {item.lower() for item in requirement.allowed_values}
+            and value.lower() not in {item.lower() for item in requirement.allowed_values}
         ):
             issues.append(
                 _issue(
@@ -1244,9 +1211,7 @@ def _validate_required_fields(
     return issues
 
 
-def _walk_source_fields(
-    value: Any, forbidden: frozenset[str], path: str = ""
-) -> Iterator[str]:
+def _walk_source_fields(value: Any, forbidden: frozenset[str], path: str = "") -> Iterator[str]:
     if isinstance(value, Mapping):
         for key, child in value.items():
             name = str(key)
@@ -1261,9 +1226,7 @@ def _walk_source_fields(
             yield from _walk_source_fields(child, forbidden, f"{path}[{index}]")
 
 
-def _provenance_values(
-    contract: LegalIRViewContract, payload: Mapping[str, Any]
-) -> list[Any]:
+def _provenance_values(contract: LegalIRViewContract, payload: Mapping[str, Any]) -> list[Any]:
     policy = contract.provenance_requirements
     value = _path_get(payload, policy.identifier_field)
     if value is _MISSING:
@@ -1465,9 +1428,7 @@ def _validate_kg(
                             "knowledge_graph_endpoints",
                         )
                     )
-                elif node_ids and (
-                    str(source) not in node_ids or str(target) not in node_ids
-                ):
+                elif node_ids and (str(source) not in node_ids or str(target) not in node_ids):
                     issues.append(
                         _issue(
                             "unknown_graph_endpoint",
@@ -1498,9 +1459,7 @@ def _validate_external(
 def _validate_decompiler(
     contract: LegalIRViewContract, payload: Mapping[str, Any]
 ) -> Sequence[LegalIRContractValidationIssue]:
-    source_contract_id = str(
-        payload.get("source_contract_id") or payload.get("contract_id") or ""
-    )
+    source_contract_id = str(payload.get("source_contract_id") or payload.get("contract_id") or "")
     if source_contract_id and source_contract_id == contract.contract_id:
         return (
             _issue(
@@ -1513,20 +1472,18 @@ def _validate_decompiler(
     return ()
 
 
-_VALIDATION_HOOK_IMPLEMENTATIONS: Mapping[str, ValidationHookCallable] = (
-    MappingProxyType(
-        {
-            "required_fields": _validate_required_fields,
-            "provenance_identifiers_only": _validate_provenance,
-            "deontic_semantics": _validate_deontic,
-            "frame_relation_typing": _validate_frame_relation,
-            "temporal_anchors": _validate_temporal,
-            "cec_lifecycle": _validate_cec,
-            "knowledge_graph_endpoints": _validate_kg,
-            "external_prover_route": _validate_external,
-            "decompiler_structure": _validate_decompiler,
-        }
-    )
+_VALIDATION_HOOK_IMPLEMENTATIONS: Mapping[str, ValidationHookCallable] = MappingProxyType(
+    {
+        "required_fields": _validate_required_fields,
+        "provenance_identifiers_only": _validate_provenance,
+        "deontic_semantics": _validate_deontic,
+        "frame_relation_typing": _validate_frame_relation,
+        "temporal_anchors": _validate_temporal,
+        "cec_lifecycle": _validate_cec,
+        "knowledge_graph_endpoints": _validate_kg,
+        "external_prover_route": _validate_external,
+        "decompiler_structure": _validate_decompiler,
+    }
 )
 
 
@@ -1565,21 +1522,12 @@ def _validate_registry(contracts: Sequence[LegalIRViewContract]) -> None:
         ):
             raise ValueError(f"Incomplete consumer families for {contract.contract_id}")
         if not contract.repair_lanes or not contract.validation_hooks:
-            raise ValueError(
-                f"Incomplete repair/validation contract for {contract.contract_id}"
-            )
+            raise ValueError(f"Incomplete repair/validation contract for {contract.contract_id}")
         if contract.provenance_requirements.source_text_policy != "identifiers_only":
             raise ValueError(f"Unsafe provenance policy for {contract.contract_id}")
-        if (
-            contract.provenance_requirements.identifier_field
-            not in contract.required_field_names
-        ):
-            raise ValueError(
-                f"Missing provenance required field for {contract.contract_id}"
-            )
-        if len(set(contract.allowed_repair_lanes)) != len(
-            contract.allowed_repair_lanes
-        ):
+        if contract.provenance_requirements.identifier_field not in contract.required_field_names:
+            raise ValueError(f"Missing provenance required field for {contract.contract_id}")
+        if len(set(contract.allowed_repair_lanes)) != len(contract.allowed_repair_lanes):
             raise ValueError(f"Duplicate repair lane in {contract.contract_id}")
         unknown_hooks = {hook.hook_id for hook in contract.validation_hooks} - set(
             _VALIDATION_HOOK_IMPLEMENTATIONS
@@ -1594,9 +1542,7 @@ _validate_registry(_CONTRACTS)
 LEGAL_IR_VIEW_CONTRACTS: Final = LegalIRViewContractRegistry(_CONTRACTS)
 LEGAL_IR_VIEW_CONTRACT_REGISTRY: Final = LEGAL_IR_VIEW_CONTRACTS
 CANONICAL_LEGAL_IR_VIEW_CONTRACTS: Final = _CONTRACTS
-CANONICAL_LEGAL_IR_VIEW_NAMES: Final = tuple(
-    contract.view.value for contract in _CONTRACTS
-)
+CANONICAL_LEGAL_IR_VIEW_NAMES: Final = tuple(contract.view.value for contract in _CONTRACTS)
 LEGAL_IR_VIEW_CONTRACT_IDS: Final = MappingProxyType(
     {contract.view.value: contract.contract_id for contract in _CONTRACTS}
 )

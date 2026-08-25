@@ -38,30 +38,51 @@ class PeerRegistryWrapper:
             bootstrap_nodes: Optional list of bootstrap peer multiaddrs
         """
         self.bootstrap_nodes = bootstrap_nodes or []
-        self.available = HAVE_PEER_REGISTRY
         self._registry = None
+        self._import_ok = bool(HAVE_PEER_REGISTRY and _PeerRegistry is not None)
 
-        if not self.available:
+        if not self._import_ok:
             logger.warning("Peer registry not available - MCP++ module not installed")
         else:
             self._initialize_registry()
+        self.available = bool(self.capability_status()["reachable"])
 
     def _initialize_registry(self) -> None:
         """Initialize the underlying peer registry."""
-        if not self.available or not _PeerRegistry:
+        if not self._import_ok or not _PeerRegistry:
             return
 
         try:
-            # TODO: Initialize actual registry from MCP++
-            logger.info("Peer registry initialized")
+            # Importability does not prove that the datasets adapter knows the
+            # backend constructor, persistence contract, or discovery methods.
+            # Leave the instance unbound until that exact adapter exists.
+            logger.info("Peer registry backend import available but adapter is not bound")
         except Exception as e:
             logger.error(f"Failed to initialize peer registry: {e}")
             self.available = False
 
+    def capability_status(self) -> dict[str, Any]:
+        """Report whether peer discovery has a durable, tested backend."""
+        import_ok = bool(self._import_ok)
+        has_durable_instance = self._registry is not None
+        reason_codes: list[str] = []
+        if not import_ok:
+            reason_codes.append("import_missing")
+        if not has_durable_instance:
+            reason_codes.append("backend_not_bound")
+        reason_codes.append("self_test_missing")
+
+        return {
+            "capability": "peer_registry",
+            "import_ok": import_ok,
+            "has_durable_instance": has_durable_instance,
+            "self_tested": False,
+            "reachable": False,
+            "reason_codes": reason_codes,
+        }
+
     async def discover_peers(
-        self,
-        max_peers: int = 50,
-        timeout: float = 30.0
+        self, max_peers: int = 50, timeout: float = 30.0
     ) -> List[Dict[str, Any]]:
         """Discover peers on the P2P network.
 
@@ -89,11 +110,7 @@ class PeerRegistryWrapper:
             logger.error(f"Failed to discover peers: {e}")
             return []
 
-    async def connect_to_peer(
-        self,
-        peer_id: str,
-        multiaddr: str
-    ) -> bool:
+    async def connect_to_peer(self, peer_id: str, multiaddr: str) -> bool:
         """Connect to a specific peer.
 
         Args:
@@ -193,9 +210,7 @@ class PeerRegistryWrapper:
             logger.info(f"Added bootstrap node: {multiaddr}")
 
 
-def create_peer_registry(
-    bootstrap_nodes: Optional[List[str]] = None
-) -> PeerRegistryWrapper:
+def create_peer_registry(bootstrap_nodes: Optional[List[str]] = None) -> PeerRegistryWrapper:
     """Create a peer registry wrapper instance.
 
     Args:

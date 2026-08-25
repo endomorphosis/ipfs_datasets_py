@@ -32,8 +32,10 @@ Test stubs for {module_name} module.
 Feature: {Feature Name}
   {Feature description}
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
+
 
 # Fixtures for Given steps
 @pytest.fixture
@@ -43,6 +45,7 @@ def fixture_name():
     """
     # TODO: Implement fixture
     pass
+
 
 # Test scenarios
 def test_scenario_name():
@@ -54,6 +57,7 @@ def test_scenario_name():
     """
     # TODO: Implement test
     pass
+
 
 # Step definitions
 @given("{step text}")
@@ -110,12 +114,15 @@ def a_valid_configtoml_file_exists_in_the_default_path(tmp_path):
     config_file.write_text("[section]\nkey = 'value'\n")
     return config_file
 
+
 @when("the configuration is initialized")
 def the_configuration_is_initialized():
     """Step: When the configuration is initialized"""
     from ipfs_datasets_py.config import config
+
     cfg = config()
     return cfg
+
 
 @then("the configuration is loaded")
 def the_configuration_is_loaded():
@@ -131,7 +138,8 @@ Use pytest-bdd's `@scenario` decorator to link tests to Gherkin features:
 ```python
 from pytest_bdd import scenario
 
-@scenario('../gherkin_features/config.feature', 'Load configuration from default location')
+
+@scenario("../gherkin_features/config.feature", "Load configuration from default location")
 def test_load_configuration_from_default_location():
     """Test loading configuration from default location."""
     pass
@@ -266,11 +274,13 @@ Here's an example of what a fully implemented test might look like:
 
 ```python
 """Test stubs for config module."""
+
 import pytest
 from pytest_bdd import scenario, given, when, then
 from ipfs_datasets_py.config import config
 import tempfile
 import os
+
 
 # Fixtures
 @pytest.fixture
@@ -284,11 +294,13 @@ key = "value"
     config_file.write_text(config_content)
     return config_file
 
+
 # Test with pytest-bdd scenario decorator
-@scenario('../gherkin_features/config.feature', 'Load configuration from default location')
+@scenario("../gherkin_features/config.feature", "Load configuration from default location")
 def test_load_configuration_from_default_location():
     """Test loading configuration from default location."""
     pass
+
 
 # Step definitions
 @given("a valid config.toml file exists in the default path")
@@ -297,11 +309,13 @@ def config_exists(temp_config_file, monkeypatch):
     monkeypatch.setattr("os.path.exists", lambda x: True)
     return temp_config_file
 
+
 @when("the configuration is initialized")
 def init_config(config_exists):
     """Initialize configuration."""
     cfg = config()
     return cfg
+
 
 @then("the configuration is loaded")
 def verify_config_loaded(init_config):

@@ -46,9 +46,10 @@ class TestDockerfileSimpleFlaskRemoved:
     def test_cmd_uses_mcp_server_module(self):
         txt = (MCP_ROOT / "Dockerfile.simple").read_text()
         # The CMD must launch the MCP stdio server, not a Flask app
-        assert "python -m ipfs_datasets_py.mcp_server" in txt or \
-               'CMD ["python", "-m", "ipfs_datasets_py.mcp_server"]' in txt, \
-               "Dockerfile.simple CMD should use python -m ipfs_datasets_py.mcp_server"
+        assert (
+            "python -m ipfs_datasets_py.mcp_server" in txt
+            or 'CMD ["python", "-m", "ipfs_datasets_py.mcp_server"]' in txt
+        ), "Dockerfile.simple CMD should use python -m ipfs_datasets_py.mcp_server"
 
     def test_no_flask_reference(self):
         txt = (MCP_ROOT / "Dockerfile.simple").read_text()
@@ -67,20 +68,24 @@ class TestStartSimpleServerShellScript:
     def test_no_flask_simple_server_call(self):
         txt = (MCP_ROOT / "start_simple_server.sh").read_text()
         # The specific Flask invocation must be gone
-        assert "from ipfs_datasets_py.mcp_server.simple_server import start_simple_server" not in txt, \
-               "start_simple_server.sh still contains the Flask invocation"
-        assert "import start_simple_server" not in txt, \
-               "start_simple_server.sh still imports start_simple_server"
+        assert (
+            "from ipfs_datasets_py.mcp_server.simple_server import start_simple_server" not in txt
+        ), "start_simple_server.sh still contains the Flask invocation"
+        assert "import start_simple_server" not in txt, (
+            "start_simple_server.sh still imports start_simple_server"
+        )
 
     def test_uses_mcp_stdio_module(self):
         txt = (MCP_ROOT / "start_simple_server.sh").read_text()
-        assert "python -m ipfs_datasets_py.mcp_server" in txt, \
-               "start_simple_server.sh should use python -m ipfs_datasets_py.mcp_server"
+        assert "python -m ipfs_datasets_py.mcp_server" in txt, (
+            "start_simple_server.sh should use python -m ipfs_datasets_py.mcp_server"
+        )
 
     def test_has_deprecation_notice(self):
         txt = (MCP_ROOT / "start_simple_server.sh").read_text()
-        assert "DEPRECATED" in txt or "deprecated" in txt.lower(), \
-               "start_simple_server.sh should note that Flask mode is deprecated"
+        assert "DEPRECATED" in txt or "deprecated" in txt.lower(), (
+            "start_simple_server.sh should note that Flask mode is deprecated"
+        )
 
 
 class TestSimpleServerTodoComment:
@@ -88,10 +93,12 @@ class TestSimpleServerTodoComment:
 
     def test_todo_remove_comment_present(self):
         txt = (MCP_ROOT / "simple_server.py").read_text()
-        assert "TODO: remove in v2.0" in txt, \
-               "simple_server.py is missing the '# TODO: remove in v2.0' comment"
+        assert "TODO: remove in v2.0" in txt, (
+            "simple_server.py is missing the '# TODO: remove in v2.0' comment"
+        )
 
     def test_deprecation_warning_in_module_docstring(self):
         txt = (MCP_ROOT / "simple_server.py").read_text()
-        assert "deprecated" in txt.lower(), \
-               "simple_server.py module docstring should mention deprecation"
+        assert "deprecated" in txt.lower(), (
+            "simple_server.py module docstring should mention deprecation"
+        )

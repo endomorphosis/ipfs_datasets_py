@@ -50,7 +50,10 @@ from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import EnhancedLin
 
 **Import 2 (Line 5990):**
 ```python
-from ipfs_datasets_py.cross_document_lineage_enhanced import CrossDocumentLineageEnhancer, DetailedLineageIntegrator
+from ipfs_datasets_py.cross_document_lineage_enhanced import (
+    CrossDocumentLineageEnhancer,
+    DetailedLineageIntegrator,
+)
 ```
 
 **New Imports:**
@@ -59,7 +62,10 @@ from ipfs_datasets_py.cross_document_lineage_enhanced import CrossDocumentLineag
 from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker
 
 # Line 5990
-from ipfs_datasets_py.knowledge_graphs.lineage import CrossDocumentLineageEnhancer, DetailedLineageIntegrator
+from ipfs_datasets_py.knowledge_graphs.lineage import (
+    CrossDocumentLineageEnhancer,
+    DetailedLineageIntegrator,
+)
 ```
 
 **Impact:** Medium - Two imports, one is in a try-except block  

@@ -4,11 +4,13 @@ Test stubs for ipfs_parquet_to_car module.
 Feature: Parquet to CAR Conversion
   Convert Parquet files to IPFS CAR format
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def parquet_data():
@@ -65,6 +67,7 @@ def a_large_parquet_file():
 
 
 # Test scenarios
+
 
 def test_convert_parquet_file_to_car():
     """
@@ -144,6 +147,7 @@ def test_verify_data_integrity_after_conversion():
 
 
 # Step definitions
+
 
 # Given steps
 @given("Parquet data")
@@ -286,4 +290,3 @@ def the_schema_is_preserved_in_car_metadata():
     """Step: Then the schema is preserved in CAR metadata"""
     # TODO: Implement step
     pass
-

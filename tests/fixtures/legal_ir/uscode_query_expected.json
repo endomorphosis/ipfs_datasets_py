@@ -1,0 +1,150 @@
+{
+  "acceptance": {
+    "graph_walks_enforce_all_budgets": true,
+    "hybrid_explanations_preserve_component_scores": true,
+    "off_centroid_frontier_vectors_selectively_fetched": true,
+    "similarity_edges_never_legal_authority": true
+  },
+  "bounds": {
+    "budget_dimensions": [
+      "bytes",
+      "shards",
+      "rows",
+      "nodes",
+      "edges",
+      "depth",
+      "time"
+    ],
+    "default_beam_width": 16,
+    "default_bm25_weight": 0.5,
+    "default_rrf_k": 60,
+    "default_top_k": 10,
+    "default_vector_weight": 0.5,
+    "fusion_methods": [
+      "rrf",
+      "weighted"
+    ],
+    "max_top_k": 1000
+  },
+  "cases": [
+    {
+      "expected_component_score_keys": [
+        "bm25",
+        "vector"
+      ],
+      "expected_top_entry_cid": "entry-a",
+      "fusion": {
+        "bm25_weight": 0.5,
+        "method": "weighted",
+        "vector_weight": 0.5
+      },
+      "id": "hybrid_weighted_preserves_component_scores",
+      "mode": "hybrid",
+      "query": "foia agency",
+      "query_vector": [
+        1.0,
+        0.0
+      ],
+      "top_k": 3
+    },
+    {
+      "expected_component_score_keys": [
+        "bm25",
+        "vector"
+      ],
+      "fusion": {
+        "bm25_weight": 1.0,
+        "method": "rrf",
+        "rrf_k": 60,
+        "vector_weight": 1.0
+      },
+      "id": "hybrid_rrf_preserves_component_scores",
+      "mode": "hybrid",
+      "query": "agency privacy",
+      "query_vector": [
+        1.0,
+        0.0
+      ],
+      "top_k": 3
+    },
+    {
+      "expected_stop_reason": "nodes",
+      "id": "graph_walk_enforces_node_budget",
+      "max_depth": 3,
+      "max_nodes": 2,
+      "mode": "graph_walk",
+      "start_node_cid": "node-a"
+    },
+    {
+      "expected_off_centroid_fetch": true,
+      "id": "semantic_beam_off_centroid_frontier_fetch",
+      "max_depth": 2,
+      "mode": "semantic_graph_walk",
+      "query": "foia",
+      "query_vector": [
+        1.0,
+        0.0
+      ],
+      "start_node_cid": "node-a"
+    },
+    {
+      "edge_type": "BM25_NEIGHBOR_OF",
+      "expected_legal_authority": false,
+      "expected_proof_authority": false,
+      "id": "similarity_edge_never_legal_authority",
+      "mode": "authority"
+    },
+    {
+      "filter_title": "5",
+      "id": "legal_title_filter",
+      "mode": "hybrid",
+      "query": "agency",
+      "query_vector": [
+        1.0,
+        0.0
+      ],
+      "top_k": 5
+    }
+  ],
+  "description": "Compact deterministic recipes for USCIR-027 legal hybrid and embedding-guided graph query unit tests. A miniature offline release is regenerated at test time; hybrid component scores, budget enforcement, off-centroid frontier vector fetch, and similarity-never-authority rules are asserted without bulk golden dumps.",
+  "goal_id": "USCIR-G070",
+  "producer": "uscode_query.py",
+  "query_schema_version": "uscode-query-v1",
+  "release_profile": "publicus-ir-graphrag/v2",
+  "route_families": [
+    "bm25_postings",
+    "control_plane",
+    "corpus",
+    "graph_adjacency",
+    "graph_edges",
+    "graph_nodes",
+    "routing_index",
+    "vectors"
+  ],
+  "route_reasons": [
+    "adjacency_range",
+    "centroid_probe",
+    "control_plane",
+    "exact_vector_score",
+    "graph_node",
+    "hydrate_hit",
+    "manifest",
+    "replay",
+    "routing_index",
+    "term_range"
+  ],
+  "schema_version": "uscode-query-expected-v1",
+  "similarity_edge_semantics": {
+    "authority": "non_authoritative",
+    "edge_class": "similarity",
+    "edge_types": [
+      "BM25_NEIGHBOR_OF",
+      "SIMILAR_TO"
+    ],
+    "legal_authority": false,
+    "notes": "Similarity edges (BM25_NEIGHBOR_OF, SIMILAR_TO) are retrieval hints only. They must never be labeled as legal citation, authority, amendment, or proof.",
+    "proof_authority": false,
+    "retrieval_hint": true
+  },
+  "task_id": "USCIR-027"
+}

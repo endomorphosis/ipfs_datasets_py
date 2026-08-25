@@ -21,19 +21,19 @@ Example:
     ...     OntologyGenerator,
     ...     OntologyGenerationContext
     ... )
-    >>> 
+    >>>
     >>> generator = OntologyGenerator(ipfs_accelerate_config={
     ...     'model': 'bert-base-uncased',
     ...     'task': 'ner'
     ... })
-    >>> 
+    >>>
     >>> context = OntologyGenerationContext(
     ...     data_source='document.pdf',
     ...     data_type='pdf',
     ...     domain='legal',
     ...     extraction_strategy='llm_based'
     ... )
-    >>> 
+    >>>
     >>> ontology = generator.generate_ontology(data, context)
 
 References:
@@ -55,12 +55,18 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 
 # Import unified extraction config from common module
-from ipfs_datasets_py.optimizers.common.backend_resilience import BackendCallPolicy, execute_with_resilience
+from ipfs_datasets_py.optimizers.common.backend_resilience import (
+    BackendCallPolicy,
+    execute_with_resilience,
+)
 from ipfs_datasets_py.optimizers.common.extraction_contexts import (
     GraphRAGExtractionConfig,
 )
 from ipfs_datasets_py.optimizers.common.circuit_breaker import CircuitBreaker
-from ipfs_datasets_py.optimizers.common.exceptions import CircuitBreakerOpenError, RetryableBackendError
+from ipfs_datasets_py.optimizers.common.exceptions import (
+    CircuitBreakerOpenError,
+    RetryableBackendError,
+)
 from ipfs_datasets_py.optimizers.common.backend_selection import resolve_backend_settings
 
 logger = logging.getLogger(__name__)
@@ -88,16 +94,16 @@ _BIDIRECTIONAL_RELATIONSHIP_PATTERNS: tuple[tuple[re.Pattern[str], str, float], 
 
 class ExtractionStrategy(Enum):
     """Ontology extraction strategies."""
-    
+
     RULE_BASED = "rule_based"  # Pattern-based extraction
-    LLM_BASED = "llm_based"    # LLM-powered extraction
-    HYBRID = "hybrid"          # Combination of both
-    NEURAL = "neural"          # Neural network models
+    LLM_BASED = "llm_based"  # LLM-powered extraction
+    HYBRID = "hybrid"  # Combination of both
+    NEURAL = "neural"  # Neural network models
 
 
 class DataType(Enum):
     """Supported data types for ontology generation."""
-    
+
     TEXT = "text"
     PDF = "pdf"
     JSON = "json"
@@ -250,20 +256,32 @@ class ExtractionConfig:
             "legal": [
                 (r"\b(?:plaintiff|defendant|claimant|respondent|petitioner)\b", "LegalParty"),
                 (r"\b(?:Article|Section|Clause|Schedule|Appendix)\s+\d+[\w.]*", "LegalReference"),
-                (r"\b(?:indemnif(?:y|ication)|warranty|waiver|covenant|arbitration)\b", "LegalConcept"),
+                (
+                    r"\b(?:indemnif(?:y|ication)|warranty|waiver|covenant|arbitration)\b",
+                    "LegalConcept",
+                ),
             ],
             "medical": [
-                (r"\b(?:diagnosis|prognosis|symptom|syndrome|disorder|disease|condition)\b", "MedicalConcept"),
+                (
+                    r"\b(?:diagnosis|prognosis|symptom|syndrome|disorder|disease|condition)\b",
+                    "MedicalConcept",
+                ),
                 (r"\b\d+\s*(?:mg|mcg|ml|IU|units?)\b", "Dosage"),
                 (r"\b(?:patient|physician|surgeon|nurse|therapist|specialist)\b", "MedicalRole"),
             ],
             "technical": [
                 (r"\b(?:API|REST|HTTP|JSON|XML|SQL|NoSQL|GraphQL)\b", "Protocol"),
-                (r"\b(?:microservice|endpoint|middleware|container|pipeline|daemon)\b", "TechnicalComponent"),
+                (
+                    r"\b(?:microservice|endpoint|middleware|container|pipeline|daemon)\b",
+                    "TechnicalComponent",
+                ),
                 (r"\bv?\d+\.\d+(?:\.\d+)*(?:-\w+)?\b", "Version"),
             ],
             "financial": [
-                (r"\b(?:asset|liability|equity|debit|credit|balance|principal|interest)\b", "FinancialConcept"),
+                (
+                    r"\b(?:asset|liability|equity|debit|credit|balance|principal|interest)\b",
+                    "FinancialConcept",
+                ),
                 (r"\b\d{1,3}(?:,\d{3})*(?:\.\d{2})?\s*(?:USD|EUR|GBP|JPY)?\b", "MonetaryValue"),
                 (r"\b(?:IBAN|SWIFT|BIC|routing\s+number)\b", "BankIdentifier"),
             ],
@@ -288,9 +306,7 @@ class ExtractionConfig:
                 f"confidence_threshold must be in [0, 1]; got {self.confidence_threshold}"
             )
         if not (0.0 < self.max_confidence <= 1.0):
-            raise ValueError(
-                f"max_confidence must be in (0, 1]; got {self.max_confidence}"
-            )
+            raise ValueError(f"max_confidence must be in (0, 1]; got {self.max_confidence}")
         if self.confidence_threshold > self.max_confidence:
             raise ValueError(
                 f"confidence_threshold ({self.confidence_threshold}) must be "
@@ -299,27 +315,19 @@ class ExtractionConfig:
         if self.max_entities < 0:
             raise ValueError(f"max_entities must be >= 0; got {self.max_entities}")
         if self.max_relationships < 0:
-            raise ValueError(
-                f"max_relationships must be >= 0; got {self.max_relationships}"
-            )
+            raise ValueError(f"max_relationships must be >= 0; got {self.max_relationships}")
         if self.window_size < 1:
             raise ValueError(f"window_size must be >= 1; got {self.window_size}")
         if self.sentence_window < 0:
-            raise ValueError(
-                f"sentence_window must be >= 0; got {self.sentence_window}"
-            )
+            raise ValueError(f"sentence_window must be >= 0; got {self.sentence_window}")
         if self.min_entity_length < 1:
-            raise ValueError(
-                f"min_entity_length must be >= 1; got {self.min_entity_length}"
-            )
+            raise ValueError(f"min_entity_length must be >= 1; got {self.min_entity_length}")
         if not (0.0 <= self.llm_fallback_threshold <= 1.0):
             raise ValueError(
                 f"llm_fallback_threshold must be in [0, 1]; got {self.llm_fallback_threshold}"
             )
         if self.max_workers < 1:
-            raise ValueError(
-                f"max_workers must be >= 1; got {self.max_workers}"
-            )
+            raise ValueError(f"max_workers must be >= 1; got {self.max_workers}")
 
     def merge(self, other: "ExtractionConfig") -> "ExtractionConfig":
         """Merge *other* into this config; *other* values take precedence on conflict.
@@ -337,6 +345,7 @@ class ExtractionConfig:
         defaults = ExtractionConfig()
         merged_kwargs: dict = {}
         import dataclasses as _dc
+
         for f in _dc.fields(ExtractionConfig):
             self_val = getattr(self, f.name)
             other_val = getattr(other, f.name)
@@ -387,7 +396,8 @@ class ExtractionConfig:
             True
         """
         import json as _json
-        return _json.dumps(self.to_dict(), separators=(',', ':'), sort_keys=True)
+
+        return _json.dumps(self.to_dict(), separators=(",", ":"), sort_keys=True)
 
     def to_json_pretty(self, indent: int = 2) -> str:
         """Serialise this config to a formatted JSON string.
@@ -410,6 +420,7 @@ class ExtractionConfig:
             }
         """
         import json as _json
+
         return _json.dumps(self.to_dict(), indent=indent, sort_keys=True)
 
     @classmethod
@@ -417,7 +428,7 @@ class ExtractionConfig:
         """Deserialise an :class:`ExtractionConfig` from a JSON string.
 
         Args:
-            json_str: JSON string produced by :meth:`to_json` or 
+            json_str: JSON string produced by :meth:`to_json` or
                 :meth:`to_json_pretty` (or any JSON dict with matching keys).
 
         Returns:
@@ -434,6 +445,7 @@ class ExtractionConfig:
             0.7
         """
         import json as _json
+
         d = _json.loads(json_str)
         return cls.from_dict(d)
 
@@ -485,6 +497,7 @@ class ExtractionConfig:
             {'confidence_threshold': {'self': 0.5, 'other': 0.8}}
         """
         import dataclasses as _dc
+
         result: Dict[str, Any] = {}
         for f in _dc.fields(ExtractionConfig):
             v_self = getattr(self, f.name)
@@ -507,6 +520,7 @@ class ExtractionConfig:
             >>> "[extraction_config]" in toml_str
             True
         """
+
         def _toml_val(v: Any) -> str:
             if isinstance(v, bool):
                 return "true" if v else "false"
@@ -519,7 +533,7 @@ class ExtractionConfig:
                 return f"[{items}]"
             if isinstance(v, dict):
                 # Represent nested dicts as inline tables
-                pairs = ", ".join(f'{k} = {_toml_val(val)}' for k, val in v.items())
+                pairs = ", ".join(f"{k} = {_toml_val(val)}" for k, val in v.items())
                 return "{" + pairs + "}"
             return f'"{v}"'
 
@@ -569,6 +583,7 @@ class ExtractionConfig:
             True
         """
         import json as _json
+
         return _json.dumps(self.to_dict(), sort_keys=True)
 
     def copy(self) -> "ExtractionConfig":
@@ -720,12 +735,14 @@ class ExtractionConfig:
             0.9
         """
         import dataclasses as _dc
+
         return _dc.replace(self, confidence_threshold=threshold)
 
     @staticmethod
     @functools.lru_cache(maxsize=1)
     def _default_values() -> tuple:
         import dataclasses as _dc
+
         default = ExtractionConfig()
         return tuple(getattr(default, f.name) for f in _dc.fields(default))
 
@@ -749,19 +766,13 @@ class ExtractionConfig:
         import dataclasses as _dc
 
         default = cls()
-        return tuple(
-            cls._freeze_for_cache(getattr(default, f.name))
-            for f in _dc.fields(default)
-        )
+        return tuple(cls._freeze_for_cache(getattr(default, f.name)) for f in _dc.fields(default))
 
     def _fingerprint(self) -> tuple[Any, ...]:
         """Return hashable fingerprint of this config's field values."""
         import dataclasses as _dc
 
-        return tuple(
-            self._freeze_for_cache(getattr(self, f.name))
-            for f in _dc.fields(self)
-        )
+        return tuple(self._freeze_for_cache(getattr(self, f.name)) for f in _dc.fields(self))
 
     @classmethod
     @functools.lru_cache(maxsize=1024)
@@ -802,6 +813,7 @@ class ExtractionConfig:
             50
         """
         import dataclasses as _dc
+
         default = ExtractionConfig()
         overrides = {
             f.name: getattr(other, f.name)
@@ -822,6 +834,7 @@ class ExtractionConfig:
             New :class:`ExtractionConfig`.
         """
         import dataclasses as _dc
+
         new_thresh = max(0.0, self.confidence_threshold - delta)
         return _dc.replace(self, confidence_threshold=new_thresh)
 
@@ -837,6 +850,7 @@ class ExtractionConfig:
             New :class:`ExtractionConfig`.
         """
         import dataclasses as _dc
+
         new_thresh = min(1.0, self.confidence_threshold + delta)
         return _dc.replace(self, confidence_threshold=new_thresh)
 
@@ -847,10 +861,8 @@ class ExtractionConfig:
             String like ``"ExtractionConfig(threshold=0.70, max_entities=100, ...)"``
         """
         import dataclasses as _dc
-        pairs = ", ".join(
-            f"{f.name}={getattr(self, f.name)!r}"
-            for f in _dc.fields(self)
-        )
+
+        pairs = ", ".join(f"{f.name}={getattr(self, f.name)!r}" for f in _dc.fields(self))
         return f"ExtractionConfig({pairs})"
 
     def threshold_distance(self, other: "ExtractionConfig") -> float:
@@ -897,6 +909,7 @@ class ExtractionConfig:
             Float in [0.0, 2.0].
         """
         import math
+
         conf_component = self.confidence_threshold  # already in [0, 1]
         max_e = getattr(self, "max_entities", 0) or 0
         entity_component = min(1.0, math.log1p(max_e) / math.log1p(1000))
@@ -982,7 +995,7 @@ class ExtractionConfig:
             See SENTENCE_WINDOW_BENCHMARK_REPORT.md for detailed benchmarks.
         """
         domain_lower = domain.lower().strip()
-        
+
         # Domain-specific sentence_window recommendations from benchmarking
         domain_configs: Dict[str, int] = {
             "legal": 2,
@@ -990,9 +1003,9 @@ class ExtractionConfig:
             "finance": 2,
             "financial": 2,
         }
-        
+
         sentence_window = domain_configs.get(domain_lower, 0)
-        
+
         return cls(
             confidence_threshold=0.5,
             max_entities=0,
@@ -1016,11 +1029,11 @@ class ExtractionConfig:
 class OntologyGenerationContext:
     """
     Context information for ontology generation.
-    
+
     This class holds all necessary context for generating an ontology from
     a data source, including source metadata, domain information, and
     extraction strategy configuration.
-    
+
     Attributes:
         data_source: Identifier or path to the data source
         data_type: Type of data being processed
@@ -1029,7 +1042,7 @@ class OntologyGenerationContext:
         extraction_strategy: Strategy for entity extraction
         config: Additional configuration parameters.  Accepts either an
             :class:`ExtractionConfig` instance or a plain ``dict``.
-        
+
     Example:
         >>> context = OntologyGenerationContext(
         ...     data_source='contract.pdf',
@@ -1039,14 +1052,16 @@ class OntologyGenerationContext:
         ...     config=ExtractionConfig(confidence_threshold=0.6),
         ... )
     """
-    
+
     data_source: str
     data_type: Union[str, DataType]
     domain: str
     base_ontology: Optional[Dict[str, Any]] = None
     extraction_strategy: Union[str, ExtractionStrategy] = ExtractionStrategy.HYBRID
-    config: Union[ExtractionConfig, GraphRAGExtractionConfig, Dict[str, Any]] = field(default_factory=dict)
-    
+    config: Union[ExtractionConfig, GraphRAGExtractionConfig, Dict[str, Any]] = field(
+        default_factory=dict
+    )
+
     def __post_init__(self):
         """Convert string enums to proper enum types and normalise config."""
         if isinstance(self.data_type, str):
@@ -1078,7 +1093,7 @@ class OntologyGenerationContext:
 class Entity:
     """
     Represents an extracted entity.
-    
+
     Attributes:
         id: Unique identifier for the entity
         type: Entity type (e.g., 'Person', 'Organization', 'Obligation')
@@ -1089,7 +1104,7 @@ class Entity:
         last_seen: Optional Unix timestamp of when this entity was last observed
             (used for confidence decay over time)
     """
-    
+
     id: str
     type: str
     text: str
@@ -1171,6 +1186,7 @@ class Entity:
             JSON string representation.
         """
         import json as _json
+
         return _json.dumps(self.to_dict(), **kwargs)
 
     def copy_with(self, **overrides: Any) -> "Entity":
@@ -1192,6 +1208,7 @@ class Entity:
             >>> high_conf = entity.copy_with(confidence=1.0)
         """
         import dataclasses as _dc
+
         valid = {f.name for f in _dc.fields(Entity)}
         unknown = set(overrides) - valid
         if unknown:
@@ -1265,16 +1282,16 @@ class Entity:
 
     def __eq__(self, other: object) -> bool:
         """Test equality based on all fields.
-        
+
         Entities are considered equal if all fields match (id, type, text,
         confidence, properties, source_span, last_seen).
-        
+
         Args:
             other: Object to compare to.
-            
+
         Returns:
             True if all fields are equal, False otherwise.
-            
+
         Example:
             >>> e1 = Entity(id="e1", type="Person", text="Alice")
             >>> e2 = Entity(id="e1", type="Person", text="Alice")
@@ -1295,13 +1312,13 @@ class Entity:
 
     def __hash__(self) -> int:
         """Compute hash based on immutable identifier.
-        
+
         Hash is based only on the entity ID, allowing entities to be used in
         sets/dicts while properties remain mutable.
-        
+
         Returns:
             Hash of entity ID.
-            
+
         Example:
             >>> entities = {Entity(id="e1", type="Person", text="Alice")}
             >>> len(entities)
@@ -1314,7 +1331,7 @@ class Entity:
 class Relationship:
     """
     Represents a relationship between entities.
-    
+
     Attributes:
         id: Unique identifier for the relationship
         source_id: ID of the source entity
@@ -1327,7 +1344,7 @@ class Relationship:
             ``'undirected'`` for co-occurrence-based relationships, or
             ``'unknown'`` when directionality could not be determined.
     """
-    
+
     id: str
     source_id: str
     target_id: str
@@ -1390,20 +1407,21 @@ class Relationship:
             JSON string representation.
         """
         import json as _json
+
         return _json.dumps(self.to_dict(), **kwargs)
 
     def __eq__(self, other: object) -> bool:
         """Test equality based on all fields.
-        
+
         Relationships are considered equal if all fields match (id, source_id,
         target_id, type, confidence, properties, direction).
-        
+
         Args:
             other: Object to compare to.
-            
+
         Returns:
             True if all fields are equal, False otherwise.
-            
+
         Example:
             >>> r1 = Relationship(id="r1", source_id="e1", target_id="e2", type="owns")
             >>> r2 = Relationship(id="r1", source_id="e1", target_id="e2", type="owns")
@@ -1424,13 +1442,13 @@ class Relationship:
 
     def __hash__(self) -> int:
         """Compute hash based on immutable identifier.
-        
+
         Hash is based only on the relationship ID, allowing relationships to be
         used in sets/dicts while properties remain mutable.
-        
+
         Returns:
             Hash of relationship ID.
-            
+
         Example:
             >>> rels = {Relationship(id="r1", source_id="e1", target_id="e2", type="owns")}
             >>> len(rels)
@@ -1443,7 +1461,7 @@ class Relationship:
 class EntityExtractionResult:
     """
     Result of entity extraction from data.
-    
+
     Attributes:
         entities: List of extracted entities
         relationships: List of inferred relationships
@@ -1451,7 +1469,7 @@ class EntityExtractionResult:
         metadata: Additional metadata about the extraction
         errors: Any errors encountered during extraction
     """
-    
+
     entities: List[Entity]
     relationships: List[Relationship]
     confidence: float
@@ -1545,8 +1563,7 @@ class EntityExtractionResult:
         filtered_entities = [e for e in self.entities if e.type == entity_type]
         kept_ids = {e.id for e in filtered_entities}
         filtered_rels = [
-            r for r in self.relationships
-            if r.source_id in kept_ids and r.target_id in kept_ids
+            r for r in self.relationships if r.source_id in kept_ids and r.target_id in kept_ids
         ]
         return EntityExtractionResult(
             entities=filtered_entities,
@@ -1580,8 +1597,7 @@ class EntityExtractionResult:
         filtered_entities = [e for e in self.entities if e.confidence >= threshold]
         kept_ids = {e.id for e in filtered_entities}
         filtered_rels = [
-            r for r in self.relationships
-            if r.source_id in kept_ids and r.target_id in kept_ids
+            r for r in self.relationships if r.source_id in kept_ids and r.target_id in kept_ids
         ]
 
         # Compute stats
@@ -1639,6 +1655,7 @@ class EntityExtractionResult:
         kept_ids = {e.id for e in merged_entities}
         # Keep self relationships as-is; add other relationships with remapped IDs
         import dataclasses as _dc
+
         merged_rels = list(self.relationships)
         for r in other.relationships:
             src = id_map.get(r.source_id, r.source_id)
@@ -1733,6 +1750,7 @@ class EntityExtractionResult:
 
         # Remap relationships
         import dataclasses as _dc
+
         deduped_rels = []
         kept_ids = {e.id for e in kept_entities}
 
@@ -1796,7 +1814,8 @@ class EntityExtractionResult:
 
         kept_ids = {e.id for e in kept_entities}
         kept_relationships = [
-            rel for rel in self.relationships
+            rel
+            for rel in self.relationships
             if rel.source_id in kept_ids and rel.target_id in kept_ids
         ]
 
@@ -1846,7 +1865,9 @@ class EntityExtractionResult:
 
         buf = io.StringIO()
         writer = csv.writer(buf)
-        writer.writerow(["id", "type", "text", "confidence", "source_span_start", "source_span_end"])
+        writer.writerow(
+            ["id", "type", "text", "confidence", "source_span_start", "source_span_end"]
+        )
         for ent in self.entities:
             span_start = ent.source_span[0] if ent.source_span else ""
             span_end = ent.source_span[1] if ent.source_span else ""
@@ -1982,12 +2003,18 @@ class EntityExtractionResult:
             seen_rel_ids.add(rel.id)
 
             if rel.source_id == rel.target_id:
-                errors.append(f"Self-loop relationship: {rel.id} ({rel.source_id} -> {rel.target_id})")
+                errors.append(
+                    f"Self-loop relationship: {rel.id} ({rel.source_id} -> {rel.target_id})"
+                )
 
             if rel.source_id not in seen_entity_ids:
-                errors.append(f"Relationship {rel.id} references missing source entity: {rel.source_id}")
+                errors.append(
+                    f"Relationship {rel.id} references missing source entity: {rel.source_id}"
+                )
             if rel.target_id not in seen_entity_ids:
-                errors.append(f"Relationship {rel.id} references missing target entity: {rel.target_id}")
+                errors.append(
+                    f"Relationship {rel.id} references missing target entity: {rel.target_id}"
+                )
 
             try:
                 rconf = float(rel.confidence)
@@ -2058,17 +2085,16 @@ class EntityExtractionResult:
             True
         """
         filtered = [
-            e for e in self.entities
-            if e.source_span is not None
-            and e.source_span[0] < end
-            and e.source_span[1] > start
+            e
+            for e in self.entities
+            if e.source_span is not None and e.source_span[0] < end and e.source_span[1] > start
         ]
         kept_ids = {e.id for e in filtered}
         kept_rels = [
-            r for r in self.relationships
-            if r.source_id in kept_ids and r.target_id in kept_ids
+            r for r in self.relationships if r.source_id in kept_ids and r.target_id in kept_ids
         ]
         import dataclasses as _dc
+
         return _dc.replace(self, entities=filtered, relationships=kept_rels)
 
     def random_sample(self, n: int) -> "EntityExtractionResult":
@@ -2092,13 +2118,13 @@ class EntityExtractionResult:
         """
         import random as _random
         import dataclasses as _dc
+
         sampled = list(self.entities)
         if n < len(sampled):
             sampled = _random.sample(sampled, n)
         kept_ids = {e.id for e in sampled}
         kept_rels = [
-            r for r in self.relationships
-            if r.source_id in kept_ids and r.target_id in kept_ids
+            r for r in self.relationships if r.source_id in kept_ids and r.target_id in kept_ids
         ]
         return _dc.replace(self, entities=sampled, relationships=kept_rels)
 
@@ -2230,8 +2256,7 @@ class EntityExtractionResult:
             kept = [e for e in self.entities if e.type.lower() == needle]
         kept_ids = {e.id for e in kept}
         pruned_rels = [
-            r for r in self.relationships
-            if r.source_id in kept_ids and r.target_id in kept_ids
+            r for r in self.relationships if r.source_id in kept_ids and r.target_id in kept_ids
         ]
         return EntityExtractionResult(
             entities=kept,
@@ -2258,8 +2283,7 @@ class EntityExtractionResult:
             True
         """
         return [
-            r for r in self.relationships
-            if r.source_id == entity_id or r.target_id == entity_id
+            r for r in self.relationships if r.source_id == entity_id or r.target_id == entity_id
         ]
 
     def merge(self, other: "EntityExtractionResult") -> "EntityExtractionResult":
@@ -2363,6 +2387,7 @@ class EntityExtractionResult:
             True
         """
         import random as _random
+
         pool = list(self.entities)
         _random.shuffle(pool)
         return pool[:n]
@@ -2545,6 +2570,7 @@ class EntityExtractionResult:
             {'count': 3.0, 'mean': 0.8, 'min': 0.7, 'max': 0.9, 'std': ...}
         """
         import math as _math
+
         if not self.entities:
             return {"count": 0.0, "mean": 0.0, "min": 0.0, "max": 0.0, "std": 0.0}
         confs = [e.confidence for e in self.entities]
@@ -2648,48 +2674,48 @@ class EntityExtractionResult:
         # Basic counts
         total_entities = len(self.entities)
         total_relationships = len(self.relationships)
-        
+
         # Confidence statistics
         confidences = [e.confidence for e in self.entities] if self.entities else [0.0]
         avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
         min_confidence = min(confidences) if confidences else 0.0
         max_confidence = max(confidences) if confidences else 0.0
-        
+
         # Type analysis
         type_counts = {}
         for e in self.entities:
             type_counts[e.type] = type_counts.get(e.type, 0) + 1
         unique_types = len(type_counts)
-        
+
         # Relationship types
         rel_types = set()
         entity_ids = {e.id for e in self.entities}
         dangling_count = 0
-        
+
         for r in self.relationships:
             rel_types.add(r.type)
             if r.source_id not in entity_ids or r.target_id not in entity_ids:
                 dangling_count += 1
-        
+
         # Entity properties
         entities_with_props = sum(1 for e in self.entities if e.properties)
-        
+
         # Text length
         text_lengths = [len(e.text) for e in self.entities] if self.entities else [0]
         avg_text_length = sum(text_lengths) / len(text_lengths) if text_lengths else 0.0
-        
+
         return {
-            'total_entities': total_entities,
-            'total_relationships': total_relationships,
-            'unique_types': unique_types,
-            'avg_confidence': round(avg_confidence, 4),
-            'min_confidence': round(min_confidence, 4),
-            'max_confidence': round(max_confidence, 4),
-            'entities_by_type': dict(sorted(type_counts.items())),
-            'relationship_types': sorted(list(rel_types)),
-            'entities_with_properties': entities_with_props,
-            'avg_text_length': round(avg_text_length, 2),
-            'dangling_relationships': dangling_count,
+            "total_entities": total_entities,
+            "total_relationships": total_relationships,
+            "unique_types": unique_types,
+            "avg_confidence": round(avg_confidence, 4),
+            "min_confidence": round(min_confidence, 4),
+            "max_confidence": round(max_confidence, 4),
+            "entities_by_type": dict(sorted(type_counts.items())),
+            "relationship_types": sorted(list(rel_types)),
+            "entities_with_properties": entities_with_props,
+            "avg_text_length": round(avg_text_length, 2),
+            "dangling_relationships": dangling_count,
         }
 
     def relationship_coherence_issues(self) -> Dict[str, Any]:
@@ -2722,56 +2748,55 @@ class EntityExtractionResult:
         self_rels = []
         seen_triples = {}  # (src, tgt, type) -> rel_id for duplicate detection
         degree = {}  # count relationships per entity
-        
+
         for r in self.relationships:
             # Track degree
             degree[r.source_id] = degree.get(r.source_id, 0) + 1
             degree[r.target_id] = degree.get(r.target_id, 0) + 1
-            
+
             # Low confidence check
             if r.confidence < 0.5:
                 low_conf.append((r.id, round(r.confidence, 3)))
-            
+
             # Dangling reference check
             if r.source_id not in entity_ids:
                 dangling.append((r.id, r.source_id))
             if r.target_id not in entity_ids:
                 dangling.append((r.id, r.target_id))
-            
+
             # Self-relationship check
             if r.source_id == r.target_id:
                 self_rels.append((r.id, r.source_id))
-            
+
             # Duplicate check
             triple = (r.source_id, r.target_id, r.type)
             if triple in seen_triples:
                 seen_triples[triple].append(r.id)
             else:
                 seen_triples[triple] = [r.id]
-        
+
         # Extract actual duplicates (groups of size > 1)
         duplicates = [group for group in seen_triples.values() if len(group) > 1]
-        
+
         # High degree entities (hubs with degree >= 5)
         high_degree = sorted(
-            [(eid, cnt) for eid, cnt in degree.items() if cnt >= 5],
-            key=lambda x: -x[1]
+            [(eid, cnt) for eid, cnt in degree.items() if cnt >= 5], key=lambda x: -x[1]
         )
-        
+
         total_issues = (
-            len(low_conf) + 
-            len(dangling) + 
-            len(self_rels) + 
-            sum(len(g) - 1 for g in duplicates)  # Count duplicates past first
+            len(low_conf)
+            + len(dangling)
+            + len(self_rels)
+            + sum(len(g) - 1 for g in duplicates)  # Count duplicates past first
         )
-        
+
         return {
-            'low_confidence_relationships': low_conf,
-            'dangling_relationships': dangling,
-            'self_relationships': self_rels,
-            'duplicate_relationships': duplicates,
-            'high_degree_entities': high_degree,
-            'total_issues': total_issues,
+            "low_confidence_relationships": low_conf,
+            "dangling_relationships": dangling,
+            "self_relationships": self_rels,
+            "duplicate_relationships": duplicates,
+            "high_degree_entities": high_degree,
+            "total_issues": total_issues,
         }
 
     def get_entity_by_id(self, entity_id: str) -> Optional["Entity"]:
@@ -2817,8 +2842,7 @@ class EntityExtractionResult:
             List of Relationship objects involving this entity
         """
         return [
-            r for r in self.relationships
-            if r.source_id == entity_id or r.target_id == entity_id
+            r for r in self.relationships if r.source_id == entity_id or r.target_id == entity_id
         ]
 
     def entities_by_confidence_range(
@@ -2839,10 +2863,7 @@ class EntityExtractionResult:
             >>> high_conf = result.entities_by_confidence_range(min_conf=0.8)
             >>> print(f"Found {len(high_conf)} high-confidence entities")
         """
-        return [
-            e for e in self.entities
-            if min_conf <= e.confidence <= max_conf
-        ]
+        return [e for e in self.entities if min_conf <= e.confidence <= max_conf]
 
     def low_confidence_entities(self, threshold: float = 0.5) -> List["Entity"]:
         """Get all entities below confidence threshold.
@@ -3050,11 +3071,7 @@ class OntologyGenerationResult:
         entity_types = {e.get("type") for e in entities if isinstance(e, dict) and e.get("type")}
 
         def _mean_confidence(items: list) -> float:
-            confs = [
-                float(i.get("confidence", 1.0))
-                for i in items
-                if isinstance(i, dict)
-            ]
+            confs = [float(i.get("confidence", 1.0)) for i in items if isinstance(i, dict)]
             return sum(confs) / len(confs) if confs else 0.0
 
         return cls(
@@ -3073,108 +3090,111 @@ class OntologyGenerationResult:
 class OntologyGenerator:
     """
     Generate knowledge graph ontologies from arbitrary data.
-    
+
     This class provides the core functionality for extracting entities and
     relationships from various data types and generating structured ontologies.
     It integrates with ipfs_accelerate_py for AI model inference and supports
     multiple extraction strategies.
-    
+
     Inspired by the complainant agent from complaint-generator, adapted for
     ontology generation with focus on consistency and logical structure.
-    
+
     Attributes:
         ipfs_accelerate_config: Configuration for ipfs_accelerate_py integration
         use_ipfs_accelerate: Whether to use ipfs_accelerate for inference
-        
+
     Example:
         >>> generator = OntologyGenerator(ipfs_accelerate_config={
         ...     'model': 'bert-base-uncased',
         ...     'task': 'token-classification',
         ...     'device': 'cuda'
         ... })
-        >>> 
+        >>>
         >>> result = generator.extract_entities(data, context)
         >>> ontology = generator.generate_ontology(data, context)
     """
-    
+
     # Lazy-loaded domain-specific rule patterns (class-level caching)
     _verb_patterns_cache = None
     _type_inference_rules_cache = None
-    
+
     @classmethod
     def _get_verb_patterns(cls):
         """
         Get verb-frame patterns for relationship type inference (lazy-loaded).
-        
+
         Patterns are compiled once on first access and cached at class level.
         Each pattern is a tuple of (regex_pattern, relationship_type).
-        
+
         Returns:
             List of tuples: (pattern: str, rel_type: str)
         """
         if cls._verb_patterns_cache is None:
             cls._verb_patterns_cache = [
-                (r'\b(\w+)\s+(?:must|shall|is required to|is obligated to)\s+\w+\s+(\w+)\b', 'obligates'),
-                (r'\b(\w+)\s+owns?\s+(\w+)\b', 'owns'),
-                (r'\b(\w+)\s+causes?\s+(\w+)\b', 'causes'),
-                (r'\b(\w+)\s+(?:is a|is an)\s+(\w+)\b', 'is_a'),
-                (r'\b(\w+)\s+(?:part of|belongs to)\s+(\w+)\b', 'part_of'),
-                (r'\b(\w+)\s+(?:employs?|hired?)\s+(\w+)\b', 'employs'),
-                (r'\b(\w+)\s+(?:manages?|supervises?)\s+(\w+)\b', 'manages'),
+                (
+                    r"\b(\w+)\s+(?:must|shall|is required to|is obligated to)\s+\w+\s+(\w+)\b",
+                    "obligates",
+                ),
+                (r"\b(\w+)\s+owns?\s+(\w+)\b", "owns"),
+                (r"\b(\w+)\s+causes?\s+(\w+)\b", "causes"),
+                (r"\b(\w+)\s+(?:is a|is an)\s+(\w+)\b", "is_a"),
+                (r"\b(\w+)\s+(?:part of|belongs to)\s+(\w+)\b", "part_of"),
+                (r"\b(\w+)\s+(?:employs?|hired?)\s+(\w+)\b", "employs"),
+                (r"\b(\w+)\s+(?:manages?|supervises?)\s+(\w+)\b", "manages"),
             ]
         return cls._verb_patterns_cache
-    
+
     @classmethod
     def _get_type_inference_rules(cls):
         """
         Get entity type-based relationship type inference rules (lazy-loaded).
-        
+
         Rules map entity type pairs to likely relationship types with base confidence.
         Cached at class level for reuse across instances.
-        
+
         Returns:
             List of dicts with 'condition', 'type', and 'base_confidence' keys
         """
         if cls._type_inference_rules_cache is None:
             cls._type_inference_rules_cache = [
                 {
-                    'condition': lambda e1_type, e2_type: (
-                        ('person' in e1_type or 'person' in e2_type) and 
-                        ('organization' in e1_type or 'organization' in e2_type)
+                    "condition": lambda e1_type, e2_type: (
+                        ("person" in e1_type or "person" in e2_type)
+                        and ("organization" in e1_type or "organization" in e2_type)
                     ),
-                    'type': 'works_for',
-                    'base_confidence': 0.65,
-                    'distance_threshold': 100
+                    "type": "works_for",
+                    "base_confidence": 0.65,
+                    "distance_threshold": 100,
                 },
                 {
-                    'condition': lambda e1_type, e2_type: (
-                        ('person' in e1_type or 'person' in e2_type) and 
-                        ('location' in e1_type or 'location' in e2_type)
+                    "condition": lambda e1_type, e2_type: (
+                        ("person" in e1_type or "person" in e2_type)
+                        and ("location" in e1_type or "location" in e2_type)
                     ),
-                    'type': 'located_in',
-                    'base_confidence': 0.60,
-                    'distance_threshold': 80
+                    "type": "located_in",
+                    "base_confidence": 0.60,
+                    "distance_threshold": 80,
                 },
                 {
-                    'condition': lambda e1_type, e2_type: (
-                        ('organization' in e1_type or 'organization' in e2_type) and 
-                        ('product' in e1_type or 'product' in e2_type)
+                    "condition": lambda e1_type, e2_type: (
+                        ("organization" in e1_type or "organization" in e2_type)
+                        and ("product" in e1_type or "product" in e2_type)
                     ),
-                    'type': 'produces',
-                    'base_confidence': 0.65,
-                    'distance_threshold': 100
+                    "type": "produces",
+                    "base_confidence": 0.65,
+                    "distance_threshold": 100,
                 },
                 {
-                    'condition': lambda e1_type, e2_type: (
-                        (e1_type == e2_type) and (e1_type in ['person', 'organization'])
+                    "condition": lambda e1_type, e2_type: (
+                        (e1_type == e2_type) and (e1_type in ["person", "organization"])
                     ),
-                    'type': 'related_to',
-                    'base_confidence': 0.55,
-                    'distance_threshold': 150
+                    "type": "related_to",
+                    "base_confidence": 0.55,
+                    "distance_threshold": 150,
                 },
             ]
         return cls._type_inference_rules_cache
-    
+
     def __init__(
         self,
         ipfs_accelerate_config: Optional[Dict[str, Any]] = None,
@@ -3185,7 +3205,7 @@ class OntologyGenerator:
     ):
         """
         Initialize the ontology generator.
-        
+
         Args:
             ipfs_accelerate_config: Configuration for ipfs_accelerate_py.
                 Should include 'model', 'task', and optionally 'device'.
@@ -3199,12 +3219,13 @@ class OntologyGenerator:
             enable_semantic_dedup: If True, use embedding-based semantic deduplication
                 in addition to text-based deduplication. Requires sentence-transformers.
                 Defaults to False. Can also be enabled via ENABLE_SEMANTIC_DEDUP env var.
-                
+
         Raises:
             ImportError: If ipfs_accelerate is required but not available
         """
         import logging as _logging
         import os as _os
+
         self._log = logger or _logging.getLogger(__name__)
         self.ipfs_accelerate_config = ipfs_accelerate_config or {}
         resolved_backend = resolve_backend_settings(
@@ -3237,19 +3258,26 @@ class OntologyGenerator:
             recovery_timeout=self._llm_call_policy.circuit_recovery_timeout,
             expected_exception=Exception,
         )
-        
+
         # Semantic deduplication support (feature-flagged)
-        self.enable_semantic_dedup = enable_semantic_dedup or _os.environ.get("ENABLE_SEMANTIC_DEDUP", "").lower() in ("1", "true", "yes")
+        self.enable_semantic_dedup = enable_semantic_dedup or _os.environ.get(
+            "ENABLE_SEMANTIC_DEDUP", ""
+        ).lower() in ("1", "true", "yes")
         self._semantic_deduplicator = None
         if self.enable_semantic_dedup:
             try:
-                from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import create_semantic_deduplicator
+                from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import (
+                    create_semantic_deduplicator,
+                )
+
                 self._semantic_deduplicator = create_semantic_deduplicator()
                 self._log.info("Semantic deduplication enabled")
             except ImportError as e:
-                self._log.warning(f"Semantic deduplication requested but dependencies unavailable: {e}")
+                self._log.warning(
+                    f"Semantic deduplication requested but dependencies unavailable: {e}"
+                )
                 self.enable_semantic_dedup = False
-        
+
         if self.use_ipfs_accelerate:
             try:
                 if self._accelerate_client is None:
@@ -3260,14 +3288,13 @@ class OntologyGenerator:
                 self._log.info("ipfs_accelerate_py integration available")
             except ImportError as e:
                 self._log.warning(
-                    f"ipfs_accelerate_py not available: {e}. "
-                    "Falling back to rule-based extraction."
+                    f"ipfs_accelerate_py not available: {e}. Falling back to rule-based extraction."
                 )
                 self._accelerate_available = False
                 self.use_ipfs_accelerate = False
         else:
             self._accelerate_available = False
-        
+
         # OPTIMIZATION: Cache for _resolve_rule_config results
         # Uses id() as key with manual cleanup to avoid id() collisions
         # The cache maps object id to (config_ref, result) tuple to detect GC
@@ -3340,7 +3367,9 @@ class OntologyGenerator:
 
             adjusted_context = OntologyGenerationContext(
                 data_source=context.data_source,
-                data_type=context.data_type.value if hasattr(context.data_type, "value") else str(context.data_type),
+                data_type=context.data_type.value
+                if hasattr(context.data_type, "value")
+                else str(context.data_type),
                 domain=context.domain,
                 base_ontology=context.base_ontology,
                 extraction_strategy=context.extraction_strategy.value
@@ -3358,26 +3387,24 @@ class OntologyGenerator:
         except (AttributeError, KeyError, TypeError, ValueError, RuntimeError) as exc:
             self._log.debug("Language-aware configuration failed; using default context: %s", exc)
             return context, {"language_aware": False, "reason": "detection_failed"}
-    
+
     def extract_entities(
-        self,
-        data: Any,
-        context: OntologyGenerationContext
+        self, data: Any, context: OntologyGenerationContext
     ) -> EntityExtractionResult:
         """
         Extract entities from data using configured strategy.
-        
+
         This method orchestrates entity extraction based on the context's
         extraction strategy. It can use rule-based patterns, LLM inference,
         or a hybrid approach.
-        
+
         Args:
             data: Input data to extract entities from
             context: Context with extraction configuration
-            
+
         Returns:
             EntityExtractionResult containing extracted entities and relationships
-            
+
         Example:
             >>> result = generator.extract_entities(
             ...     "Alice must pay Bob $100 by Friday",
@@ -3391,7 +3418,7 @@ class OntologyGenerator:
             "Extracting entities using %s strategy",
             context_for_run.extraction_strategy.value,
         )
-        
+
         if context_for_run.extraction_strategy == ExtractionStrategy.RULE_BASED:
             result = self._extract_with_llm_fallback(data, context_for_run)
             result = self._apply_semantic_dedup_with_fallback(result)
@@ -3404,7 +3431,11 @@ class OntologyGenerator:
             )
             import json as _json
             from datetime import datetime as _datetime, timezone as _timezone
-            from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
+            from ipfs_datasets_py.optimizers.common.structured_logging import (
+                redact_payload,
+                with_schema,
+            )
+
             _ts = _datetime.now(_timezone.utc)
             payload = {
                 "timestamp": _ts.isoformat(),
@@ -3439,9 +3470,7 @@ class OntologyGenerator:
         elif context_for_run.extraction_strategy == ExtractionStrategy.NEURAL:
             result = self._extract_neural(data, context_for_run)
         else:
-            raise ValueError(
-                f"Unknown extraction strategy: {context_for_run.extraction_strategy}"
-            )
+            raise ValueError(f"Unknown extraction strategy: {context_for_run.extraction_strategy}")
         result = self._apply_semantic_dedup_with_fallback(result)
         result.metadata.setdefault("language_metadata", language_meta)
         self._log.info(
@@ -3452,7 +3481,11 @@ class OntologyGenerator:
         )
         import json as _json
         from datetime import datetime as _datetime, timezone as _timezone
-        from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
+        from ipfs_datasets_py.optimizers.common.structured_logging import (
+            redact_payload,
+            with_schema,
+        )
+
         _ts = _datetime.now(_timezone.utc)
         payload = {
             "timestamp": _ts.isoformat(),
@@ -3558,25 +3591,28 @@ class OntologyGenerator:
                 llm_result = self._extract_llm_based(data, context)
                 if llm_result.confidence >= result.confidence:
                     result = llm_result
-            except (AttributeError, ImportError, KeyError, RuntimeError, TypeError, ValueError) as exc:
+            except (
+                AttributeError,
+                ImportError,
+                KeyError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as exc:
                 self._log.warning("LLM fallback extraction failed: %s", exc)
         return result
-    
+
     def _extract_context_window(
-        self,
-        text: str,
-        pos1: int,
-        pos2: int,
-        window_size: int = 100
+        self, text: str, pos1: int, pos2: int, window_size: int = 100
     ) -> str:
         """Extract text context window around two positions.
-        
+
         Args:
             text: Full text.
             pos1: Position of first entity.
             pos2: Position of second entity.
             window_size: Characters to include on each side.
-            
+
         Returns:
             Context window string containing both positions.
         """
@@ -3611,51 +3647,50 @@ class OntologyGenerator:
             if start <= pos < end:
                 return idx
         return -1
-    
-    
-    
+
     def _is_impossible_type_pair(self, e1_type: str, e2_type: str) -> bool:
         """Check if a type pair is semantically impossible (optimization P1).
-        
+
         Certain entity type combinations can never have meaningful relationships:
         - Date-to-Date: temporal entities don't relate to each other
         - MonetaryAmount-to-Location: measurements don't relate to places
         - Concept-to-Concept: abstract concepts rarely relate
         - MonetaryAmount-to-MonetaryAmount: measurements don't compose
-        
+
         **Performance Impact**: This filter eliminates ~20-30% of unnecessary
         type inference operations (checking impossible pairs contributes to the
         O(n²) bottleneck). By short-circuiting early, we avoid calling
         context window extraction and type confidence scoring.
-        
+
         Args:
             e1_type: Type of first entity (lowercased)
             e2_type: Type of second entity (lowercased)
-            
+
         Returns:
             True if the type pair is impossible and should be skipped
         """
         # Normalize to lowercase for comparison
         e1_type = e1_type.lower() if isinstance(e1_type, str) else str(e1_type).lower()
         e2_type = e2_type.lower() if isinstance(e2_type, str) else str(e2_type).lower()
-        
+
         # Pairs that are semantically impossible or highly unlikely
         impossible_pairs = {
-            ('date', 'date'),
-            ('monetaryamount', 'monetaryamount'),
-            ('time', 'time'),
-            ('duration', 'duration'),
-            ('location', 'location'),
-            ('concept', 'concept'),
+            ("date", "date"),
+            ("monetaryamount", "monetaryamount"),
+            ("time", "time"),
+            ("duration", "duration"),
+            ("location", "location"),
+            ("concept", "concept"),
         }
-        
+
         # Self-relationships should be skipped (already handled in loop, but safe check)
-        if e1_type == e2_type and e1_type in {'date', 'location', 'time', 'concept', 'duration'}:
+        if e1_type == e2_type and e1_type in {"date", "location", "time", "concept", "duration"}:
             return True
-        
+
         # Check if any impossible pair (order-independent)
         pair_sorted = tuple(sorted([e1_type, e2_type]))
         return pair_sorted in impossible_pairs
+
     def _infer_type_from_context(
         self,
         context_window: str,
@@ -3665,14 +3700,14 @@ class OntologyGenerator:
         e2_type: str,
     ) -> tuple[str, float]:
         """Infer relationship type from context window using keyword patterns.
-        
+
         Args:
             context_window: Text window containing both entities.
             e1_text: First entity text.
             e2_text: Second entity text.
             e1_type: First entity type.
             e2_type: Second entity type.
-            
+
         Returns:
             Tuple of (relationship_type, type_confidence)
         """
@@ -3682,41 +3717,38 @@ class OntologyGenerator:
         for pattern, rel_type, confidence in _DIRECTIONAL_RELATIONSHIP_PATTERNS:
             if pattern.search(window_lower):
                 return (rel_type, confidence)
-        
+
         # Check bidirectional patterns
         for pattern, rel_type, confidence in _BIDIRECTIONAL_RELATIONSHIP_PATTERNS:
             if pattern.search(window_lower):
                 return (rel_type, confidence)
-        
+
         # Fall back to entity type-based inference
         type_inference_rules = self._get_type_inference_rules()
         for rule in type_inference_rules:
-            if rule['condition'](e1_type, e2_type):
-                return (rule['type'], rule['base_confidence'] * 0.9)  # Slight discount
-        
+            if rule["condition"](e1_type, e2_type):
+                return (rule["type"], rule["base_confidence"] * 0.9)  # Slight discount
+
         # Default fallback
-        return ('related_to', 0.45)
-    
+        return ("related_to", 0.45)
+
     def infer_relationships(
-        self,
-        entities: List[Entity],
-        context: OntologyGenerationContext,
-        data: Optional[Any] = None
+        self, entities: List[Entity], context: OntologyGenerationContext, data: Optional[Any] = None
     ) -> List[Relationship]:
         """
         Infer relationships between extracted entities.
-        
+
         Uses heuristics and optionally LLM inference to determine relationships
         between entities. Can use source data for context if provided.
-        
+
         Args:
             entities: List of entities to find relationships between
             context: Context with configuration
             data: Optional source data for context
-            
+
         Returns:
             List of inferred relationships
-            
+
         Example:
             >>> relationships = generator.infer_relationships(
             ...     entities,
@@ -3729,7 +3761,9 @@ class OntologyGenerator:
         relationships = []
         text = str(data) if data is not None else ""
         text_lower = text.lower()
-        extraction_config = getattr(context, "extraction_config", None) or getattr(context, "config", None)
+        extraction_config = getattr(context, "extraction_config", None) or getattr(
+            context, "config", None
+        )
         sentence_window = getattr(extraction_config, "sentence_window", 0)
         if not isinstance(sentence_window, (int, float)):
             sentence_window = 0
@@ -3740,6 +3774,7 @@ class OntologyGenerator:
         _VERB_PATTERNS = self._get_verb_patterns()
 
         import re as _re
+
         entity_texts = {e.text.lower(): e for e in entities}
         entity_ids_by_text = {e.text.lower(): e.id for e in entities}
 
@@ -3760,32 +3795,34 @@ class OntologyGenerator:
                     # Calculate type confidence based on pattern specificity and verb matching
                     # More specific patterns (e.g., "obligates") and exact matches get higher scores
                     verb_text = m.group(0)
-                    
+
                     # Type confidence: how certain we are this is the correct relationship type
                     # Based on: pattern match exactness, specificity, and verb phrase clustering
-                    if rel_type == 'obligates':
+                    if rel_type == "obligates":
                         type_confidence = 0.85  # Very specific, legal domain
-                    elif rel_type in ('owns', 'employs', 'manages'):
+                    elif rel_type in ("owns", "employs", "manages"):
                         type_confidence = 0.80  # Clear semantic verbs
-                    elif rel_type in ('causes', 'is_a'):
+                    elif rel_type in ("causes", "is_a"):
                         type_confidence = 0.75  # More general but clear intent
-                    elif rel_type == 'part_of':
+                    elif rel_type == "part_of":
                         type_confidence = 0.72  # Compositional, sometimes ambiguous
                     else:
                         type_confidence = 0.65  # Default fallback
-                    
-                    relationships.append(Relationship(
-                        id=_make_rel_id(),
-                        source_id=src_id,
-                        target_id=tgt_id,
-                        type=rel_type,
-                        confidence=0.65,
-                        direction='subject_to_object',
-                        properties={
-                            'type_confidence': type_confidence,
-                            'type_method': 'verb_frame',
-                        },
-                    ))
+
+                    relationships.append(
+                        Relationship(
+                            id=_make_rel_id(),
+                            source_id=src_id,
+                            target_id=tgt_id,
+                            type=rel_type,
+                            confidence=0.65,
+                            direction="subject_to_object",
+                            properties={
+                                "type_confidence": type_confidence,
+                                "type_method": "verb_frame",
+                            },
+                        )
+                    )
 
         # 2) Sliding-window co-occurrence (window=200 chars) with improved type inference
         # Confidence decay: base 0.6 at distance 0, decays linearly.
@@ -3808,7 +3845,7 @@ class OntologyGenerator:
                 pos1 = text_lower.find(e1.text.lower())
                 if pos1 < 0:
                     continue
-                for e2 in entity_list[i + 1:]:
+                for e2 in entity_list[i + 1 :]:
                     if (e1.id, e2.id) in linked or (e2.id, e1.id) in linked:
                         continue
                     pos2 = text_lower.find(e2.text.lower())
@@ -3837,17 +3874,19 @@ class OntologyGenerator:
                         else:
                             # Extra penalty for distant entities (>100 chars apart)
                             confidence = max(0.2, 0.4 - (distance - 100) / 500.0)
-                        
+
                         # Extract context window for improved type inference
-                        e1_type = getattr(e1, 'type', 'unknown').lower()
-                        e2_type = getattr(e2, 'type', 'unknown').lower()
+                        e1_type = getattr(e1, "type", "unknown").lower()
+                        e2_type = getattr(e2, "type", "unknown").lower()
 
                         # Skip semantically impossible type pairs to reduce O(n^2) cost
                         if self._is_impossible_type_pair(e1_type, e2_type):
                             continue
-                        
+
                         # Use context window to infer relationship type with higher accuracy
-                        context_window = self._extract_context_window(text, pos1, pos2, window_size=100)
+                        context_window = self._extract_context_window(
+                            text, pos1, pos2, window_size=100
+                        )
                         inferred_type, type_confidence = self._infer_type_from_context(
                             context_window,
                             e1.text,
@@ -3855,7 +3894,7 @@ class OntologyGenerator:
                             e1_type,
                             e2_type,
                         )
-                        
+
                         # Discount confidence for very distant co-occurrences
                         if distance > 150:
                             type_confidence *= 0.8
@@ -3865,28 +3904,32 @@ class OntologyGenerator:
                         )
                         type_method = "cooccurrence"
                         if llm_threshold > 0.0 and type_confidence < llm_threshold:
-                            inferred_type, type_confidence, type_method = self._refine_relationship_type_with_llm(
-                                context_window=context_window,
-                                source_text=e1.text,
-                                target_text=e2.text,
-                                heuristic_type=inferred_type,
-                                heuristic_confidence=type_confidence,
+                            inferred_type, type_confidence, type_method = (
+                                self._refine_relationship_type_with_llm(
+                                    context_window=context_window,
+                                    source_text=e1.text,
+                                    target_text=e2.text,
+                                    heuristic_type=inferred_type,
+                                    heuristic_confidence=type_confidence,
+                                )
                             )
-                        
-                        relationships.append(Relationship(
-                            id=_make_rel_id(),
-                            source_id=e1.id,
-                            target_id=e2.id,
-                            type=inferred_type,
-                            confidence=confidence,
-                            direction='undirected',
-                            properties={
-                                'type_confidence': type_confidence,
-                                'type_method': type_method,
-                                'source_entity_type': e1_type,
-                                'target_entity_type': e2_type,
-                            },
-                        ))
+
+                        relationships.append(
+                            Relationship(
+                                id=_make_rel_id(),
+                                source_id=e1.id,
+                                target_id=e2.id,
+                                type=inferred_type,
+                                confidence=confidence,
+                                direction="undirected",
+                                properties={
+                                    "type_confidence": type_confidence,
+                                    "type_method": type_method,
+                                    "source_entity_type": e1_type,
+                                    "target_entity_type": e2_type,
+                                },
+                            )
+                        )
                         linked.add((e1.id, e2.id))
 
         self._log.info(f"Inferred {len(relationships)} relationships")
@@ -3923,6 +3966,7 @@ class OntologyGenerator:
         Returns:
             List of Relationship objects inferred from this batch
         """
+
         def _make_rel_id() -> str:
             with rel_id_lock:
                 rel_id_counter[0] += 1
@@ -3932,7 +3976,7 @@ class OntologyGenerator:
         for i, j in batch:
             e1 = entities[i]
             e2 = entities[j]
-            
+
             if (e1.id, e2.id) in linked or (e2.id, e1.id) in linked:
                 continue
 
@@ -3958,8 +4002,8 @@ class OntologyGenerator:
                 else:
                     confidence = max(0.2, 0.4 - (distance - 100) / 500.0)
 
-                e1_type = getattr(e1, 'type', 'unknown').lower()
-                e2_type = getattr(e2, 'type', 'unknown').lower()
+                e1_type = getattr(e1, "type", "unknown").lower()
+                e2_type = getattr(e2, "type", "unknown").lower()
 
                 if self._is_impossible_type_pair(e1_type, e2_type):
                     continue
@@ -3981,28 +4025,32 @@ class OntologyGenerator:
                 )
                 type_method = "context_window"
                 if llm_threshold > 0.0 and type_confidence < llm_threshold:
-                    inferred_type, type_confidence, type_method = self._refine_relationship_type_with_llm(
-                        context_window=context_window,
-                        source_text=e1.text,
-                        target_text=e2.text,
-                        heuristic_type=inferred_type,
-                        heuristic_confidence=type_confidence,
+                    inferred_type, type_confidence, type_method = (
+                        self._refine_relationship_type_with_llm(
+                            context_window=context_window,
+                            source_text=e1.text,
+                            target_text=e2.text,
+                            heuristic_type=inferred_type,
+                            heuristic_confidence=type_confidence,
+                        )
                     )
 
-                relationships.append(Relationship(
-                    id=_make_rel_id(),
-                    source_id=e1.id,
-                    target_id=e2.id,
-                    type=inferred_type,
-                    confidence=confidence,
-                    direction='undirected',
-                    properties={
-                        'type_confidence': type_confidence,
-                        'type_method': type_method,
-                        'source_entity_type': e1_type,
-                        'target_entity_type': e2_type,
-                    },
-                ))
+                relationships.append(
+                    Relationship(
+                        id=_make_rel_id(),
+                        source_id=e1.id,
+                        target_id=e2.id,
+                        type=inferred_type,
+                        confidence=confidence,
+                        direction="undirected",
+                        properties={
+                            "type_confidence": type_confidence,
+                            "type_method": type_method,
+                            "source_entity_type": e1_type,
+                            "target_entity_type": e2_type,
+                        },
+                    )
+                )
                 linked.add((e1.id, e2.id))
 
         return relationships
@@ -4034,7 +4082,7 @@ class OntologyGenerator:
         """
         sentence_window = getattr(context.extraction_config, "sentence_window", 0)
         sentence_spans = self._get_sentence_spans(text) if sentence_window > 0 else []
-        
+
         # Pre-compute sentence indices for all entities (thread-safe, done once)
         entity_sentence_index: Dict[str, int] = {}
         if sentence_window > 0 and sentence_spans:
@@ -4053,7 +4101,7 @@ class OntologyGenerator:
         # Create entity pair batches
         entity_list = list(entities)
         num_entities = len(entity_list)
-        
+
         # Estimate pairs per worker (divide pairs evenly across workers)
         total_pairs = (num_entities * (num_entities - 1)) // 2
         pairs_per_worker = max(1, (total_pairs + max_workers - 1) // max_workers)
@@ -4152,7 +4200,12 @@ class OntologyGenerator:
         def _extract(idx: int, doc: Any) -> tuple:
             try:
                 return idx, self.extract_entities(doc, context)
-            except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # extraction must never crash the whole batch
+            except (
+                AttributeError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as exc:  # extraction must never crash the whole batch
                 empty = EntityExtractionResult(
                     entities=[],
                     relationships=[],
@@ -4167,10 +4220,10 @@ class OntologyGenerator:
                 idx, result = future.result()
                 # Tag each entity with its source document index (provenance)
                 for ent in result.entities:
-                    if not hasattr(ent, '__dict__'):
+                    if not hasattr(ent, "__dict__"):
                         pass  # frozen dataclass — skip tagging
                     else:
-                        ent.__dict__.setdefault('source_doc_index', idx)
+                        ent.__dict__.setdefault("source_doc_index", idx)
                 results[idx] = result
 
         return results  # type: ignore[return-value]
@@ -4277,8 +4330,7 @@ class OntologyGenerator:
             words = _re.split(r"(\W+)", data)
             last_proper: Optional[str] = None
             resolved_parts = []
-            pronoun_set = {"he", "she", "they", "it", "his", "her", "their", "its",
-                           "him", "them"}
+            pronoun_set = {"he", "she", "they", "it", "his", "her", "their", "its", "him", "them"}
             for token in words:
                 if token.istitle() and len(token) > 2 and token.lower() not in pronoun_set:
                     last_proper = token
@@ -4301,18 +4353,18 @@ class OntologyGenerator:
         dedup_method: str = "highest_confidence",
     ) -> "EntityExtractionResult":
         """Extract entities from large texts using sliding context windows.
-        
+
         Handles texts larger than typical LLM context windows by:
         1. Splitting text into overlapping windows
         2. Extracting entities from each window independently
         3. Deduplicating across windows using configurable strategy
         4. Aggregating results into a single EntityExtractionResult
-        
+
         This is useful for:
         - Large documents that exceed LLM token limits
         - Maintaining contextual coherence across text boundaries
         - Reducing memory consumption for very large texts
-        
+
         Args:
             data: Input text to extract entities from (can be very large)
             context: Extraction context with configuration
@@ -4322,15 +4374,15 @@ class OntologyGenerator:
                 - "highest_confidence": Keep entity with highest confidence
                 - "first_occurrence": Keep first-seen entity
                 - "merge_spans": Merge all occurrences with averaged confidence
-        
+
         Returns:
             EntityExtractionResult with all entities extracted from all windows,
             deduplicated and aggregated. metadata["window_count"] tracks number
             of windows processed.
-        
+
         Raises:
             ValueError: If window_size < 1, overlap >= window_size, or invalid dedup_method
-        
+
         Example:
             >>> large_text = "Alice and Bob..." # Very long document
             >>> result = generator.extract_with_context_windows(
@@ -4342,32 +4394,34 @@ class OntologyGenerator:
             >>> print(f"Found {len(result.entities)} entities across {result.metadata['window_count']} windows")
         """
         import copy as _copy
-        
+
         # Validate parameters
         if window_size < 1:
             raise ValueError(f"window_size must be >= 1, got {window_size}")
         if window_overlap < 0:
             raise ValueError(f"window_overlap must be >= 0, got {window_overlap}")
         if window_overlap >= window_size:
-            raise ValueError(f"window_overlap ({window_overlap}) must be < window_size ({window_size})")
+            raise ValueError(
+                f"window_overlap ({window_overlap}) must be < window_size ({window_size})"
+            )
         if dedup_method not in ("highest_confidence", "first_occurrence", "merge_spans"):
             raise ValueError(
                 f"Invalid dedup_method '{dedup_method}'; must be one of: "
                 "highest_confidence, first_occurrence, merge_spans"
             )
-        
+
         text = str(data) if data is not None else ""
         if not text:
             # Return empty result for empty input
             return EntityExtractionResult(entities=[], relationships=[], confidence=1.0)
-        
+
         # Split text into overlapping windows
         windows = self._split_into_windows(text, window_size, window_overlap)
         self._log.info(
             f"extract_with_context_windows: splitting {len(text)} chars into "
             f"{len(windows)} windows (size={window_size}, overlap={window_overlap})"
         )
-        
+
         # Extract from each window
         window_results: List[EntityExtractionResult] = []
         for i, window_text in enumerate(windows):
@@ -4380,32 +4434,29 @@ class OntologyGenerator:
                 )
                 # Continue with remaining windows
                 continue
-        
+
         if not window_results:
             self._log.warning("No successful extractions from any window")
             return EntityExtractionResult(entities=[], relationships=[], confidence=0.0)
-        
+
         # Merge results with deduplication
-        merged = self._merge_window_results(
-            window_results,
-            dedup_method=dedup_method
-        )
-        
+        merged = self._merge_window_results(window_results, dedup_method=dedup_method)
+
         # Add window metadata
         merged.metadata["window_count"] = len(windows)
         merged.metadata["successful_windows"] = len(window_results)
         merged.metadata["window_size"] = window_size
         merged.metadata["window_overlap"] = window_overlap
         merged.metadata["dedup_method"] = dedup_method
-        
+
         self._log.info(
             f"extract_with_context_windows complete: {len(merged.entities)} entities "
             f"from {len(window_results)}/{len(windows)} windows, "
             f"deduplicated with {dedup_method}"
         )
-        
+
         return merged
-    
+
     def _split_into_windows(
         self,
         text: str,
@@ -4413,74 +4464,74 @@ class OntologyGenerator:
         overlap: int,
     ) -> List[str]:
         """Split text into overlapping windows.
-        
+
         Args:
             text: Input text
             window_size: Size of each window
             overlap: Overlap between consecutive windows
-        
+
         Returns:
             List of window strings
         """
         if len(text) <= window_size:
             return [text]
-        
+
         windows = []
         stride = window_size - overlap  # How much to advance per window
-        
+
         i = 0
         while i < len(text):
-            window = text[i:i + window_size]
+            window = text[i : i + window_size]
             windows.append(window)
             i += stride
-            
+
             # Ensure last window includes end of text
             if i + window_size >= len(text) and i < len(text):
                 windows.append(text[-window_size:] if len(text) >= window_size else text)
                 break
-        
+
         return windows
-    
+
     def _merge_window_results(
         self,
         results: List["EntityExtractionResult"],
         dedup_method: str = "highest_confidence",
     ) -> "EntityExtractionResult":
         """Merge results from multiple windows with deduplication.
-        
+
         Args:
             results: List of EntityExtractionResult from each window
             dedup_method: Deduplication strategy
-        
+
         Returns:
             Merged EntityExtractionResult
         """
         import copy as _copy
-        
+
         if not results:
             return EntityExtractionResult(entities=[], relationships=[], confidence=0.0)
-        
+
         # Collect all entities with separate tracking for merge strategy
         entity_index: Dict[str, Entity] = {}  # Map key -> Entity
         merge_tracking: Dict[str, Dict[str, float]] = {}  # Map key -> {count, total_conf}
-        
+
         for result in results:
             for entity in result.entities:
                 # Build deduplication key
                 key = (entity.type.lower(), entity.text.lower())
-                
+
                 if dedup_method == "highest_confidence":
                     # Keep entity with highest confidence
                     if key not in entity_index:
                         entity_index[key] = _copy.deepcopy(entity)
                     elif entity.confidence > entity_index[key].confidence:
                         entity_index[key] = _copy.deepcopy(entity)
-                
+
                 elif dedup_method == "first_occurrence":
                     # Keep first-seen entity
                     if key not in entity_index:
                         entity_index[key] = _copy.deepcopy(entity)
-                
+
                 elif dedup_method == "merge_spans":
                     # Merge all occurrences with averaged confidence
                     if key not in entity_index:
@@ -4490,45 +4541,42 @@ class OntologyGenerator:
                         # Track for averaging
                         merge_tracking[key]["count"] += 1
                         merge_tracking[key]["sum_conf"] += entity.confidence
-        
+
         # Apply merge_spans averaging if used
         if dedup_method == "merge_spans":
             for key, tracking in merge_tracking.items():
                 if key in entity_index:
-                    entity_index[key].confidence = (
-                        tracking["sum_conf"] / tracking["count"]
-                    )
-        
+                    entity_index[key].confidence = tracking["sum_conf"] / tracking["count"]
+
         # Get final entity list
         deduped_entities = list(entity_index.values())
-        
+
         # Collect all relationships (filter to valid entity IDs)
         valid_entity_ids = {ent.id for ent in deduped_entities}
         all_relationships = []
         seen_rel_keys: set = set()
-        
+
         for result in results:
             for rel in result.relationships:
                 # Only include relationships where both entities exist
-                if (rel.source_id in valid_entity_ids and 
-                    rel.target_id in valid_entity_ids):
+                if rel.source_id in valid_entity_ids and rel.target_id in valid_entity_ids:
                     # De-duplicate relationships
                     rel_key = (rel.source_id, rel.target_id, rel.type.lower())
                     if rel_key not in seen_rel_keys:
                         all_relationships.append(rel)
                         seen_rel_keys.add(rel_key)
-        
+
         # Calculate average confidence
-        avg_confidence = (
-            sum(r.confidence for r in results) / len(results)
-            if results else 0.0
-        )
-        
+        avg_confidence = sum(r.confidence for r in results) / len(results) if results else 0.0
+
         return EntityExtractionResult(
             entities=deduped_entities,
             relationships=all_relationships,
             confidence=avg_confidence,
-            metadata={"deduped_from": sum(len(r.entities) for r in results), "original_windows": len(results)},
+            metadata={
+                "deduped_from": sum(len(r.entities) for r in results),
+                "original_windows": len(results),
+            },
         )
 
     def merge_provenance_report(
@@ -4557,13 +4605,15 @@ class OntologyGenerator:
         for idx, result in enumerate(results):
             label = labels[idx] if idx < len(labels) else f"doc_{idx}"
             for ent in result.entities:
-                report.append({
-                    "entity_id": ent.id,
-                    "entity_text": ent.text,
-                    "entity_type": ent.type,
-                    "source_doc": label,
-                    "source_doc_index": idx,
-                })
+                report.append(
+                    {
+                        "entity_id": ent.id,
+                        "entity_text": ent.text,
+                        "entity_type": ent.type,
+                        "source_doc": label,
+                        "source_doc_index": idx,
+                    }
+                )
         return report
 
     def deduplicate_entities(
@@ -4608,6 +4658,7 @@ class OntologyGenerator:
                 continue  # skip self-loops created by deduplication
             # Create a shallow copy with updated IDs
             import dataclasses as _dc
+
             new_rels.append(_dc.replace(rel, source_id=src, target_id=tgt))
 
         return EntityExtractionResult(
@@ -4656,8 +4707,7 @@ class OntologyGenerator:
 
         # Remove relationships that reference removed entities
         new_rels = [
-            r for r in result.relationships
-            if r.source_id in kept_ids and r.target_id in kept_ids
+            r for r in result.relationships if r.source_id in kept_ids and r.target_id in kept_ids
         ]
 
         return EntityExtractionResult(
@@ -4727,9 +4777,7 @@ class OntologyGenerator:
         removed_entity_count = original_entity_count - filtered_entity_count
         removed_relationship_count = original_relationship_count - filtered_relationship_count
         retention_rate = (
-            filtered_entity_count / original_entity_count
-            if original_entity_count > 0
-            else 0.0
+            filtered_entity_count / original_entity_count if original_entity_count > 0 else 0.0
         )
         avg_confidence_after = (
             sum(e.confidence for e in filtered_result.entities) / filtered_entity_count
@@ -4761,29 +4809,25 @@ class OntologyGenerator:
             "stats": stats,
         }
 
-    def generate_ontology(
-        self,
-        data: Any,
-        context: OntologyGenerationContext
-    ) -> Ontology:
+    def generate_ontology(self, data: Any, context: OntologyGenerationContext) -> Ontology:
         """
         Generate complete ontology from data.
-        
+
         This is the main entry point for ontology generation. It extracts
         entities, infers relationships, and constructs a complete ontology
         structure that can be validated by the logic validator.
-        
+
         Args:
             data: Input data to generate ontology from
             context: Context with generation configuration
-            
+
         Returns:
             Complete ontology as a dictionary with keys:
                 - 'entities': List of entities
                 - 'relationships': List of relationships
                 - 'metadata': Metadata about the ontology
                 - 'domain': Domain of the ontology
-                
+
         Example:
             >>> ontology = generator.generate_ontology(
             ...     "Legal contract text...",
@@ -4792,10 +4836,10 @@ class OntologyGenerator:
             >>> print(f"Generated ontology with {len(ontology['entities'])} entities")
         """
         self._log.info(f"Generating ontology for {context.data_source}")
-        
+
         # Extract entities and relationships
         extraction_result = self.extract_entities(data, context)
-        
+
         # Build ontology structure
         flattened_metadata: Dict[str, Any] = {}
         for key, value in dict(extraction_result.metadata or {}).items():
@@ -4810,29 +4854,33 @@ class OntologyGenerator:
                     else:
                         flattened_metadata[flat_key] = json.dumps(nested_value, sort_keys=True)
                 continue
-            flattened_metadata[key] = json.dumps(value, sort_keys=True) if isinstance(value, (list, tuple)) else str(value)
+            flattened_metadata[key] = (
+                json.dumps(value, sort_keys=True)
+                if isinstance(value, (list, tuple))
+                else str(value)
+            )
 
         ontology = {
-            'entities': [self._entity_to_dict(e) for e in extraction_result.entities],
-            'relationships': [
+            "entities": [self._entity_to_dict(e) for e in extraction_result.entities],
+            "relationships": [
                 self._relationship_to_dict(r) for r in extraction_result.relationships
             ],
-            'metadata': {
-                'source': context.data_source,
-                'data_type': context.data_type.value,
-                'domain': context.domain,
-                'extraction_strategy': context.extraction_strategy.value,
-                'confidence': extraction_result.confidence,
-                **flattened_metadata
+            "metadata": {
+                "source": context.data_source,
+                "data_type": context.data_type.value,
+                "domain": context.domain,
+                "extraction_strategy": context.extraction_strategy.value,
+                "confidence": extraction_result.confidence,
+                **flattened_metadata,
             },
-            'domain': context.domain,
-            'version': '1.0'
+            "domain": context.domain,
+            "version": "1.0",
         }
-        
+
         # Extend base ontology if provided
         if context.base_ontology:
             ontology = self._merge_ontologies(context.base_ontology, ontology)
-        
+
         return ontology
 
     def __call__(
@@ -4880,6 +4928,7 @@ class OntologyGenerator:
         """
         ontology = self.generate_ontology(data, context)
         import time as _time
+
         _t0 = _time.perf_counter()
         result = OntologyGenerationResult.from_ontology(
             ontology,
@@ -5075,11 +5124,7 @@ class OntologyGenerator:
 
             for rel_dict in feedback["relationships_to_add"]:
                 # Ensure required fields
-                if (
-                    rel_dict.get("source_id")
-                    and rel_dict.get("target_id")
-                    and rel_dict.get("type")
-                ):
+                if rel_dict.get("source_id") and rel_dict.get("target_id") and rel_dict.get("type"):
                     # Generate ID if missing
                     if "id" not in rel_dict:
                         rel_dict["id"] = f"rel_{uuid.uuid4().hex[:8]}"
@@ -5095,7 +5140,7 @@ class OntologyGenerator:
         ontology["relationships"] = relationships
 
         return modified
-    
+
     def _promote_person_entities(self, text: str, entities: list["Entity"]) -> list["Entity"]:
         """Upgrade generic Concept entities to Person based on nearby verbs."""
         import re as _re
@@ -5104,8 +5149,17 @@ class OntologyGenerator:
             return entities
 
         verbs = (
-            "works", "met", "lives", "joined", "said", "filed", "visited",
-            "leads", "manages", "hired", "sued",
+            "works",
+            "met",
+            "lives",
+            "joined",
+            "said",
+            "filed",
+            "visited",
+            "leads",
+            "manages",
+            "hired",
+            "sued",
         )
         verb_group = "|".join(verbs)
         text_lower = text.lower()
@@ -5125,26 +5179,24 @@ class OntologyGenerator:
         return entities
 
     def _extract_rule_based(
-        self,
-        data: Any,
-        context: OntologyGenerationContext
+        self, data: Any, context: OntologyGenerationContext
     ) -> EntityExtractionResult:
         """
         Extract entities using rule-based patterns.
-        
+
         Args:
             data: Input data
             context: Extraction context
-            
+
         Returns:
             Extraction result with entities and relationships
         """
         import time
-        
+
         start_time = time.time()
-        domain = getattr(context, 'domain', 'general').lower() if context else 'general'
-        ext_config = getattr(context, 'extraction_config', None) if context else None
-        
+        domain = getattr(context, "domain", "general").lower() if context else "general"
+        ext_config = getattr(context, "extraction_config", None) if context else None
+
         # Timing: Pattern building
         t1 = time.time()
         _PATTERNS = self._build_rule_patterns(domain, ext_config)
@@ -5152,7 +5204,7 @@ class OntologyGenerator:
 
         text = str(data) if data is not None else ""
         min_len, _stop, _allowed, _max_conf = self._resolve_rule_config(ext_config)
-        
+
         # Timing: Entity extraction from patterns
         t2 = time.time()
         entities = self._extract_entities_from_patterns(
@@ -5172,7 +5224,7 @@ class OntologyGenerator:
         relationship_time_ms = (time.time() - t3) * 1000
 
         total_time_ms = (time.time() - start_time) * 1000
-        
+
         self._log.info(
             f"Rule-based extraction: {len(entities)} entities, {len(relationships)} relationships | "
             f"timing: patterns={pattern_time_ms:.1f}ms, extraction={extraction_time_ms:.1f}ms, "
@@ -5183,12 +5235,12 @@ class OntologyGenerator:
             relationships=relationships,
             confidence=0.7,
             metadata={
-                'method': 'rule_based',
-                'entity_count': len(entities),
-                'pattern_time_ms': pattern_time_ms,
-                'extraction_time_ms': extraction_time_ms,
-                'relationship_time_ms': relationship_time_ms,
-                'total_time_ms': total_time_ms,
+                "method": "rule_based",
+                "entity_count": len(entities),
+                "pattern_time_ms": pattern_time_ms,
+                "extraction_time_ms": extraction_time_ms,
+                "relationship_time_ms": relationship_time_ms,
+                "total_time_ms": total_time_ms,
             },
         )
 
@@ -5199,19 +5251,35 @@ class OntologyGenerator:
     ) -> list[tuple[str, str]]:
         # Base patterns (domain-agnostic)
         base_patterns: list[tuple[str, str]] = [
-            (r'\b(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*', 'Person'),
-            (r'\b[A-Z][A-Za-z&]*(?:\s+[A-Z][A-Za-z&]*)*\s+(?:LLC|Ltd|Inc|Corp|GmbH|PLC|Co\.|Corporation)\b', 'Organization'),
-            (r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', 'Date'),
-            (r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b', 'Date'),
-            (r'\b(?:USD|EUR|GBP)\s*[\d,]+(?:\.\d{2})?\b', 'MonetaryAmount'),
-            (r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:Street|Avenue|Road|City|County|State|Country|Region|District)\b', 'Location'),
-            (r'\b(?:the\s+)?(?:obligation|duty|right|liability|breach|claim|penalty)\s+(?:of\s+)?[A-Z][a-z]+\b', 'Obligation'),
-            (r'\b[A-Z][A-Za-z]{3,}\b', 'Concept'),
+            (r"\b(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*", "Person"),
+            (
+                r"\b[A-Z][A-Za-z&]*(?:\s+[A-Z][A-Za-z&]*)*\s+(?:LLC|Ltd|Inc|Corp|GmbH|PLC|Co\.|Corporation)\b",
+                "Organization",
+            ),
+            (r"\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b", "Date"),
+            (
+                r"\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b",
+                "Date",
+            ),
+            (r"\b(?:USD|EUR|GBP)\s*[\d,]+(?:\.\d{2})?\b", "MonetaryAmount"),
+            (
+                r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:Street|Avenue|Road|City|County|State|Country|Region|District)\b",
+                "Location",
+            ),
+            (
+                r"\b(?:the\s+)?(?:obligation|duty|right|liability|breach|claim|penalty)\s+(?:of\s+)?[A-Z][a-z]+\b",
+                "Obligation",
+            ),
+            (r"\b[A-Z][A-Za-z]{3,}\b", "Concept"),
         ]
 
         domain_patterns = list(ExtractionConfig._get_domain_rule_patterns(domain))
         patterns = base_patterns + domain_patterns
-        if ext_config is not None and hasattr(ext_config, 'custom_rules') and ext_config.custom_rules:
+        if (
+            ext_config is not None
+            and hasattr(ext_config, "custom_rules")
+            and ext_config.custom_rules
+        ):
             patterns = patterns[:-1] + list(ext_config.custom_rules) + [patterns[-1]]
         return patterns
 
@@ -5223,10 +5291,10 @@ class OntologyGenerator:
         # This avoids recomputing stopwords.lower(), allowed_types, etc. when
         # the same ext_config object is used multiple times in a session.
         # Uses weakref to detect when objects are GC'd and avoid id() collisions
-        
+
         if ext_config is not None:
             config_id = id(ext_config)
-            
+
             # Check if we have a cached result for this config object
             if config_id in self._resolve_rule_config_cache:
                 # Verify the weakref is still valid (object not GC'd)
@@ -5236,29 +5304,41 @@ class OntologyGenerator:
                 # Object was GC'd and replaced, invalidate cache
                 del self._resolve_rule_config_cache[config_id]
                 del self._resolve_rule_config_refs[config_id]
-        
+
         try:
-            min_len = int(getattr(ext_config, "min_entity_length", 2)) if ext_config is not None else 2
+            min_len = (
+                int(getattr(ext_config, "min_entity_length", 2)) if ext_config is not None else 2
+            )
         except (TypeError, ValueError):
             min_len = 2
 
         try:
-            stopwords = {w.lower() for w in (getattr(ext_config, "stopwords", []) or [])} if ext_config is not None else set()
+            stopwords = (
+                {w.lower() for w in (getattr(ext_config, "stopwords", []) or [])}
+                if ext_config is not None
+                else set()
+            )
         except (TypeError, AttributeError):
             stopwords = set()
 
         try:
-            allowed_types = set(getattr(ext_config, "allowed_entity_types", []) or []) if ext_config is not None else set()
+            allowed_types = (
+                set(getattr(ext_config, "allowed_entity_types", []) or [])
+                if ext_config is not None
+                else set()
+            )
         except (TypeError, AttributeError):
             allowed_types = set()
 
         try:
-            max_confidence = float(getattr(ext_config, "max_confidence", 1.0)) if ext_config is not None else 1.0
+            max_confidence = (
+                float(getattr(ext_config, "max_confidence", 1.0)) if ext_config is not None else 1.0
+            )
         except (TypeError, ValueError, AttributeError):
             max_confidence = 1.0
 
         result = (min_len, stopwords, allowed_types, max_confidence)
-        
+
         # Cache the result with a weakref for GC detection
         if ext_config is not None:
             config_id = id(ext_config)
@@ -5269,7 +5349,7 @@ class OntologyGenerator:
             except TypeError:
                 # Some objects can't be weakly referenced, skip caching
                 pass
-        
+
         return result
 
     @staticmethod
@@ -5279,18 +5359,19 @@ class OntologyGenerator:
     ) -> tuple[tuple[Any, str], ...]:
         """
         Compile entity extraction patterns to regex objects (cached).
-        
+
         OPTIMIZATION: Pre-compile regex patterns once and cache with LRU.
-        This avoids re-compiling patterns on every extraction call, which 
+        This avoids re-compiling patterns on every extraction call, which
         can save 5-10% of total extraction time.
-        
+
         Args:
             patterns: Tuple of (pattern_string, entity_type) tuples
-            
+
         Returns:
             Tuple of (compiled_regex, entity_type) tuples
         """
         import re as _re
+
         return tuple((_re.compile(pattern), ent_type) for pattern, ent_type in patterns)
 
     def _extract_entities_from_patterns(
@@ -5313,7 +5394,7 @@ class OntologyGenerator:
         for compiled_pattern, ent_type in compiled_patterns:
             if allowed_types and ent_type not in allowed_types:
                 continue
-            confidence = 0.5 if ent_type == 'Concept' else 0.75
+            confidence = 0.5 if ent_type == "Concept" else 0.75
             confidence = min(confidence, max_confidence)
             for m in compiled_pattern.finditer(text):
                 raw = m.group(0).strip()
@@ -5321,29 +5402,29 @@ class OntologyGenerator:
                 if key in seen_texts or len(raw) < min_len or key in stopwords:
                     continue
                 seen_texts.add(key)
-                entities.append(Entity(
-                    id=f"e_{_uuid.uuid4().hex[:8]}",
-                    type=ent_type,
-                    text=raw,
-                    confidence=confidence,
-                    source_span=(m.start(), m.end()),
-                    last_seen=_time.time(),
-                ))
+                entities.append(
+                    Entity(
+                        id=f"e_{_uuid.uuid4().hex[:8]}",
+                        type=ent_type,
+                        text=raw,
+                        confidence=confidence,
+                        source_span=(m.start(), m.end()),
+                        last_seen=_time.time(),
+                    )
+                )
 
         return entities
-    
+
     def _extract_llm_based(
-        self,
-        data: Any,
-        context: OntologyGenerationContext
+        self, data: Any, context: OntologyGenerationContext
     ) -> EntityExtractionResult:
         """
         Extract entities using LLM inference.
-        
+
         Args:
             data: Input data
             context: Extraction context
-            
+
         Returns:
             Extraction result with entities and relationships
         """
@@ -5493,7 +5574,7 @@ class OntologyGenerator:
 
         prompt = (
             "Classify relationship type between SOURCE and TARGET from CONTEXT. "
-            "Return strict JSON: {\"relationship_type\": str, \"confidence\": float}.\n"
+            'Return strict JSON: {"relationship_type": str, "confidence": float}.\n'
             f"SOURCE: {source_text}\n"
             f"TARGET: {target_text}\n"
             f"HEURISTIC_TYPE: {heuristic_type}\n"
@@ -5513,7 +5594,9 @@ class OntologyGenerator:
             if not isinstance(payload, dict):
                 return heuristic_type, heuristic_confidence, "context_window"
 
-            llm_type = str(payload.get("relationship_type") or payload.get("type") or heuristic_type)
+            llm_type = str(
+                payload.get("relationship_type") or payload.get("type") or heuristic_type
+            )
             llm_conf = float(payload.get("confidence", 0.0))
             llm_conf = max(0.0, min(1.0, llm_conf))
 
@@ -5532,11 +5615,9 @@ class OntologyGenerator:
             self._log.debug("LLM relationship refinement failed: %s", exc)
 
         return heuristic_type, heuristic_confidence, "context_window"
-    
+
     def _extract_hybrid(
-        self,
-        data: Any,
-        context: OntologyGenerationContext
+        self, data: Any, context: OntologyGenerationContext
     ) -> EntityExtractionResult:
         """Extract entities using hybrid approach (rules + LLM).
 
@@ -5547,7 +5628,9 @@ class OntologyGenerator:
         rule_result = self._extract_rule_based(data, context)
 
         # Augment with LLM if available
-        if self.llm_backend is not None or (self.use_ipfs_accelerate and self._accelerate_available):
+        if self.llm_backend is not None or (
+            self.use_ipfs_accelerate and self._accelerate_available
+        ):
             llm_result = self._extract_llm_based(data, context)
         else:
             # No LLM — augment rule-based with relationship inference.
@@ -5573,9 +5656,7 @@ class OntologyGenerator:
                 seen_entity_ids.add(ent.id)
 
         # Dedup relationships by (source_id, target_id, type)
-        seen_rel_keys: set = {
-            (r.source_id, r.target_id, r.type) for r in rule_result.relationships
-        }
+        seen_rel_keys: set = {(r.source_id, r.target_id, r.type) for r in rule_result.relationships}
         merged_rels = list(rule_result.relationships)
         for rel in llm_result.relationships:
             key = (rel.source_id, rel.target_id, rel.type)
@@ -5588,14 +5669,15 @@ class OntologyGenerator:
             entities=merged_entities,
             relationships=merged_rels,
             confidence=avg_conf,
-            metadata={"method": "hybrid", "rule_entities": len(rule_result.entities),
-                      "llm_entities": len(llm_result.entities)},
+            metadata={
+                "method": "hybrid",
+                "rule_entities": len(rule_result.entities),
+                "llm_entities": len(llm_result.entities),
+            },
         )
 
     def _extract_neural(
-        self,
-        data: Any,
-        context: OntologyGenerationContext
+        self, data: Any, context: OntologyGenerationContext
     ) -> EntityExtractionResult:
         """Extract entities using neural network models.
 
@@ -5634,42 +5716,38 @@ class OntologyGenerator:
                 "inferred_relationships": len(extra_rels),
             },
         )
-    
+
     def _entity_to_dict(self, entity: Entity) -> Dict[str, Any]:
         """Convert Entity to dictionary representation."""
         return {
-            'id': entity.id,
-            'type': entity.type,
-            'text': entity.text,
-            'properties': entity.properties,
-            'confidence': entity.confidence,
-            'source_span': entity.source_span
+            "id": entity.id,
+            "type": entity.type,
+            "text": entity.text,
+            "properties": entity.properties,
+            "confidence": entity.confidence,
+            "source_span": entity.source_span,
         }
-    
+
     def _relationship_to_dict(self, relationship: Relationship) -> Dict[str, Any]:
         """Convert Relationship to dictionary representation."""
         return {
-            'id': relationship.id,
-            'source_id': relationship.source_id,
-            'target_id': relationship.target_id,
-            'type': relationship.type,
-            'properties': relationship.properties,
-            'confidence': relationship.confidence,
-            'direction': relationship.direction,
+            "id": relationship.id,
+            "source_id": relationship.source_id,
+            "target_id": relationship.target_id,
+            "type": relationship.type,
+            "properties": relationship.properties,
+            "confidence": relationship.confidence,
+            "direction": relationship.direction,
         }
-    
-    def _merge_ontologies(
-        self,
-        base: Dict[str, Any],
-        extension: Dict[str, Any]
-    ) -> Dict[str, Any]:
+
+    def _merge_ontologies(self, base: Dict[str, Any], extension: Dict[str, Any]) -> Dict[str, Any]:
         """
         Merge two ontologies together.
-        
+
         Args:
             base: Base ontology to extend
             extension: New ontology to add
-            
+
         Returns:
             Merged ontology
         """
@@ -5678,32 +5756,34 @@ class OntologyGenerator:
         import time as _time
 
         merged = _copy.deepcopy(base)
-        merged.setdefault('entities', [])
-        merged.setdefault('relationships', [])
-        merged.setdefault('metadata', {})
+        merged.setdefault("entities", [])
+        merged.setdefault("relationships", [])
+        merged.setdefault("metadata", {})
 
         # Confidence decay: entities not re-observed in the extension decay over time.
         # Use an overridable current_time from extension metadata to support deterministic tests.
-        meta = extension.get('metadata', {}) if isinstance(extension.get('metadata', {}), dict) else {}
-        current_time = meta.get('current_time')
+        meta = (
+            extension.get("metadata", {}) if isinstance(extension.get("metadata", {}), dict) else {}
+        )
+        current_time = meta.get("current_time")
         try:
             current_time = float(current_time) if current_time is not None else _time.time()
         except (TypeError, ValueError):
             current_time = _time.time()
 
         ext_entity_ids: set[str] = {
-            e.get('id')
-            for e in extension.get('entities', [])
-            if isinstance(e, dict) and isinstance(e.get('id'), str) and e.get('id')
+            e.get("id")
+            for e in extension.get("entities", [])
+            if isinstance(e, dict) and isinstance(e.get("id"), str) and e.get("id")
         }
-        for ent in merged.get('entities', []):
+        for ent in merged.get("entities", []):
             if not isinstance(ent, dict):
                 continue
-            eid = ent.get('id')
+            eid = ent.get("id")
             if not isinstance(eid, str) or not eid or eid in ext_entity_ids:
                 continue
-            last_seen = ent.get('last_seen')
-            confidence = ent.get('confidence')
+            last_seen = ent.get("last_seen")
+            confidence = ent.get("confidence")
             if last_seen is None or confidence is None:
                 continue
             try:
@@ -5716,65 +5796,74 @@ class OntologyGenerator:
             half_life_days = 30.0
             min_confidence = 0.1
             decay_factor = 0.5 ** (elapsed_days / half_life_days)
-            ent['confidence'] = max(min_confidence, confidence_f * decay_factor)
+            ent["confidence"] = max(min_confidence, confidence_f * decay_factor)
 
         # --- entity merge ---
         existing_entity_ids: dict[str, dict] = {
-            e['id']: e for e in merged['entities'] if isinstance(e, dict) and 'id' in e
+            e["id"]: e for e in merged["entities"] if isinstance(e, dict) and "id" in e
         }
-        for ent in extension.get('entities', []):
-            if not isinstance(ent, dict) or 'id' not in ent:
-                merged['entities'].append(ent)
+        for ent in extension.get("entities", []):
+            if not isinstance(ent, dict) or "id" not in ent:
+                merged["entities"].append(ent)
                 continue
-            eid = ent['id']
+            eid = ent["id"]
             if eid not in existing_entity_ids:
                 new_ent = _copy.deepcopy(ent)
-                new_ent.setdefault('provenance', [])
-                new_ent['provenance'].append(extension.get('metadata', {}).get('source', 'extension'))
-                new_ent['last_seen'] = float(current_time)
-                merged['entities'].append(new_ent)
+                new_ent.setdefault("provenance", [])
+                new_ent["provenance"].append(
+                    extension.get("metadata", {}).get("source", "extension")
+                )
+                new_ent["last_seen"] = float(current_time)
+                merged["entities"].append(new_ent)
                 existing_entity_ids[eid] = new_ent
             else:
                 # Emit warning when entity types conflict; prefer higher-confidence version
                 base_ent = existing_entity_ids[eid]
-                base_type = base_ent.get('type')
-                ext_type = ent.get('type')
+                base_type = base_ent.get("type")
+                ext_type = ent.get("type")
                 if base_type and ext_type and base_type != ext_type:
                     self._log.warning(
                         f"Entity type conflict for id='{eid}': "
                         f"base={base_type!r}, extension={ext_type!r}. "
                         f"Keeping higher-confidence type."
                     )
-                ext_conf = ent.get('confidence', 0.0)
-                base_conf = base_ent.get('confidence', 0.0)
-                merged_props = {**ent.get('properties', {}), **base_ent.get('properties', {})}
-                base_ent['properties'] = merged_props
+                ext_conf = ent.get("confidence", 0.0)
+                base_conf = base_ent.get("confidence", 0.0)
+                merged_props = {**ent.get("properties", {}), **base_ent.get("properties", {})}
+                base_ent["properties"] = merged_props
                 if ext_conf > base_conf:
-                    base_ent['confidence'] = ext_conf
-                    base_ent['type'] = ext_type  # adopt extension's type when more confident
-                base_ent['last_seen'] = float(current_time)
-                base_ent.setdefault('provenance', [])
-                base_ent['provenance'].append(extension.get('metadata', {}).get('source', 'extension'))
+                    base_ent["confidence"] = ext_conf
+                    base_ent["type"] = ext_type  # adopt extension's type when more confident
+                base_ent["last_seen"] = float(current_time)
+                base_ent.setdefault("provenance", [])
+                base_ent["provenance"].append(
+                    extension.get("metadata", {}).get("source", "extension")
+                )
 
         # --- relationship merge (dedup by source+target+type) ---
         existing_rel_keys: set[tuple] = {
-            (r.get('source_id'), r.get('target_id'), r.get('type'))
-            for r in merged['relationships'] if isinstance(r, dict)
+            (r.get("source_id"), r.get("target_id"), r.get("type"))
+            for r in merged["relationships"]
+            if isinstance(r, dict)
         }
-        for rel in extension.get('relationships', []):
+        for rel in extension.get("relationships", []):
             if not isinstance(rel, dict):
-                merged['relationships'].append(rel)
+                merged["relationships"].append(rel)
                 continue
-            key = (rel.get('source_id'), rel.get('target_id'), rel.get('type'))
+            key = (rel.get("source_id"), rel.get("target_id"), rel.get("type"))
             if key not in existing_rel_keys:
                 new_rel = _copy.deepcopy(rel)
-                new_rel.setdefault('provenance', [extension.get('metadata', {}).get('source', 'extension')])
-                merged['relationships'].append(new_rel)
+                new_rel.setdefault(
+                    "provenance", [extension.get("metadata", {}).get("source", "extension")]
+                )
+                merged["relationships"].append(new_rel)
                 existing_rel_keys.add(key)
 
         # Update metadata
-        merged['metadata']['merged_from'] = merged['metadata'].get('merged_from', [])
-        merged['metadata']['merged_from'].append(extension.get('metadata', {}).get('source', 'extension'))
+        merged["metadata"]["merged_from"] = merged["metadata"].get("merged_from", [])
+        merged["metadata"]["merged_from"].append(
+            extension.get("metadata", {}).get("source", "extension")
+        )
 
         self._log.info(
             f"Merged ontologies: {len(merged['entities'])} entities, "
@@ -5782,10 +5871,7 @@ class OntologyGenerator:
         )
         return merged
 
-    def generate_merge_provenance_report(
-        self,
-        ontology: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def generate_merge_provenance_report(self, ontology: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generate a detailed provenance report for a merged ontology.
 
@@ -5816,80 +5902,84 @@ class OntologyGenerator:
             ...     print(f"  {source}: {len(entities)} entities")
         """
         report: Dict[str, Any] = {
-            'merged_from': ontology.get('metadata', {}).get('merged_from', []),
-            'entity_counts_by_source': {},
-            'relationship_counts_by_source': {},
-            'entities_by_source': {},
-            'relationships_by_source': {},
-            'total_entities': 0,
-            'total_relationships': 0,
-            'unique_sources': set(),
-            'integration_stats': {
-                'merged_entities': 0,
-                'new_entities': 0,
-                'total_entities': 0,
-                'merged_relationships': 0,
-                'new_relationships': 0,
-                'total_relationships': 0,
-            }
+            "merged_from": ontology.get("metadata", {}).get("merged_from", []),
+            "entity_counts_by_source": {},
+            "relationship_counts_by_source": {},
+            "entities_by_source": {},
+            "relationships_by_source": {},
+            "total_entities": 0,
+            "total_relationships": 0,
+            "unique_sources": set(),
+            "integration_stats": {
+                "merged_entities": 0,
+                "new_entities": 0,
+                "total_entities": 0,
+                "merged_relationships": 0,
+                "new_relationships": 0,
+                "total_relationships": 0,
+            },
         }
 
         # Process entities
-        for entity in ontology.get('entities', []):
+        for entity in ontology.get("entities", []):
             if not isinstance(entity, dict):
                 continue
 
-            report['total_entities'] += 1
-            report['integration_stats']['total_entities'] += 1
+            report["total_entities"] += 1
+            report["integration_stats"]["total_entities"] += 1
 
-            provenance = entity.get('provenance', [])
+            provenance = entity.get("provenance", [])
             if not provenance:
-                provenance = ['base']  # Implicit provenance for original entities
+                provenance = ["base"]  # Implicit provenance for original entities
 
             for source in provenance:
-                report['unique_sources'].add(source)
-                report['entity_counts_by_source'][source] = report['entity_counts_by_source'].get(source, 0) + 1
-                if source not in report['entities_by_source']:
-                    report['entities_by_source'][source] = []
-                entity_id = entity.get('id', f"unnamed_{len(report['entities_by_source'][source])}")
-                if entity_id not in report['entities_by_source'][source]:
-                    report['entities_by_source'][source].append(entity_id)
+                report["unique_sources"].add(source)
+                report["entity_counts_by_source"][source] = (
+                    report["entity_counts_by_source"].get(source, 0) + 1
+                )
+                if source not in report["entities_by_source"]:
+                    report["entities_by_source"][source] = []
+                entity_id = entity.get("id", f"unnamed_{len(report['entities_by_source'][source])}")
+                if entity_id not in report["entities_by_source"][source]:
+                    report["entities_by_source"][source].append(entity_id)
 
             # Count merged vs new
             if len(provenance) > 1:
-                report['integration_stats']['merged_entities'] += 1
+                report["integration_stats"]["merged_entities"] += 1
             else:
-                report['integration_stats']['new_entities'] += 1
+                report["integration_stats"]["new_entities"] += 1
 
         # Process relationships
-        for rel in ontology.get('relationships', []):
+        for rel in ontology.get("relationships", []):
             if not isinstance(rel, dict):
                 continue
 
-            report['total_relationships'] += 1
-            report['integration_stats']['total_relationships'] += 1
+            report["total_relationships"] += 1
+            report["integration_stats"]["total_relationships"] += 1
 
-            provenance = rel.get('provenance', [])
+            provenance = rel.get("provenance", [])
             if not provenance:
-                provenance = ['base']  # Implicit provenance for original relationships
+                provenance = ["base"]  # Implicit provenance for original relationships
 
             for source in provenance:
-                report['unique_sources'].add(source)
-                report['relationship_counts_by_source'][source] = report['relationship_counts_by_source'].get(source, 0) + 1
-                if source not in report['relationships_by_source']:
-                    report['relationships_by_source'][source] = []
-                rel_id = rel.get('id', f"unnamed_{len(report['relationships_by_source'][source])}")
-                if rel_id not in report['relationships_by_source'][source]:
-                    report['relationships_by_source'][source].append(rel_id)
+                report["unique_sources"].add(source)
+                report["relationship_counts_by_source"][source] = (
+                    report["relationship_counts_by_source"].get(source, 0) + 1
+                )
+                if source not in report["relationships_by_source"]:
+                    report["relationships_by_source"][source] = []
+                rel_id = rel.get("id", f"unnamed_{len(report['relationships_by_source'][source])}")
+                if rel_id not in report["relationships_by_source"][source]:
+                    report["relationships_by_source"][source].append(rel_id)
 
             # Count merged vs new
             if len(provenance) > 1:
-                report['integration_stats']['merged_relationships'] += 1
+                report["integration_stats"]["merged_relationships"] += 1
             else:
-                report['integration_stats']['new_relationships'] += 1
+                report["integration_stats"]["new_relationships"] += 1
 
         # Convert set to sorted list for serialization
-        report['unique_sources'] = sorted(list(report['unique_sources']))
+        report["unique_sources"] = sorted(list(report["unique_sources"]))
 
         self._log.info(
             f"Generated merge provenance report: {len(report['unique_sources'])} sources, "
@@ -5926,28 +6016,33 @@ class OntologyGenerator:
         }
         entity_types = _DOMAIN_TYPES.get(domain.lower(), _DOMAIN_TYPES["general"])
         import time as _time
+
         current_time = _time.time()
         entities = []
         for i in range(n_entities):
             etype = entity_types[i % len(entity_types)]
-            entities.append({
-                "id": f"syn_{domain}_{i}",
-                "type": etype,
-                "text": f"{etype}_{i}",
-                "properties": {"synthetic": True, "index": i},
-                "confidence": 0.9,
-                "last_seen": current_time,
-            })
+            entities.append(
+                {
+                    "id": f"syn_{domain}_{i}",
+                    "type": etype,
+                    "text": f"{etype}_{i}",
+                    "properties": {"synthetic": True, "index": i},
+                    "confidence": 0.9,
+                    "last_seen": current_time,
+                }
+            )
 
         relationships = []
         for i in range(min(n_entities - 1, 3)):
-            relationships.append({
-                "id": f"syn_rel_{i}",
-                "source_id": entities[i]["id"],
-                "target_id": entities[i + 1]["id"],
-                "type": "related_to",
-                "confidence": 0.8,
-            })
+            relationships.append(
+                {
+                    "id": f"syn_rel_{i}",
+                    "source_id": entities[i]["id"],
+                    "target_id": entities[i + 1]["id"],
+                    "type": "related_to",
+                    "confidence": 0.8,
+                }
+            )
 
         return {
             "entities": entities,
@@ -6020,6 +6115,7 @@ class OntologyGenerator:
             tgt = id_map.get(r.target_id, r.target_id)
             if src in kept_ids and tgt in kept_ids and src != tgt:
                 import dataclasses as _dc
+
                 kept_rels.append(_dc.replace(r, source_id=src, target_id=tgt))
 
         updated_metadata = dict(result.metadata)
@@ -6091,8 +6187,7 @@ class OntologyGenerator:
         import dataclasses as _dc
 
         tagged_entities = [
-            _dc.replace(e, properties={**e.properties, **tags})
-            for e in result.entities
+            _dc.replace(e, properties={**e.properties, **tags}) for e in result.entities
         ]
         return EntityExtractionResult(
             entities=tagged_entities,
@@ -6209,14 +6304,55 @@ class OntologyGenerator:
             >>> kp[0]
             'cat'
         """
-        _STOPWORDS = frozenset([
-            "the", "a", "an", "and", "or", "but", "in", "on", "at", "to",
-            "for", "of", "with", "by", "from", "is", "are", "was", "were",
-            "be", "been", "being", "have", "has", "had", "do", "does", "did",
-            "will", "would", "could", "should", "may", "might", "shall",
-            "not", "no", "it", "its", "this", "that", "these", "those",
-        ])
+        _STOPWORDS = frozenset(
+            [
+                "the",
+                "a",
+                "an",
+                "and",
+                "or",
+                "but",
+                "in",
+                "on",
+                "at",
+                "to",
+                "for",
+                "of",
+                "with",
+                "by",
+                "from",
+                "is",
+                "are",
+                "was",
+                "were",
+                "be",
+                "been",
+                "being",
+                "have",
+                "has",
+                "had",
+                "do",
+                "does",
+                "did",
+                "will",
+                "would",
+                "could",
+                "should",
+                "may",
+                "might",
+                "shall",
+                "not",
+                "no",
+                "it",
+                "its",
+                "this",
+                "that",
+                "these",
+                "those",
+            ]
+        )
         import re as _re
+
         tokens = _re.findall(r"[A-Za-z][A-Za-z0-9'-]*", text.lower())
         freq: Dict[str, int] = {}
         for tok in tokens:
@@ -6243,11 +6379,31 @@ class OntologyGenerator:
             True
         """
         import re as _re
-        _ARTICLES = frozenset(["a", "an", "the", "this", "that", "these", "those", "my", "your", "its"])
-        _ADJS = frozenset([
-            "quick", "brown", "big", "small", "large", "old", "new", "good", "bad",
-            "high", "low", "long", "short", "first", "last", "great", "little",
-        ])
+
+        _ARTICLES = frozenset(
+            ["a", "an", "the", "this", "that", "these", "those", "my", "your", "its"]
+        )
+        _ADJS = frozenset(
+            [
+                "quick",
+                "brown",
+                "big",
+                "small",
+                "large",
+                "old",
+                "new",
+                "good",
+                "bad",
+                "high",
+                "low",
+                "long",
+                "short",
+                "first",
+                "last",
+                "great",
+                "little",
+            ]
+        )
         tokens = _re.findall(r"[A-Za-z][A-Za-z0-9'-]*", text)
         phrases: List[str] = []
         i = 0
@@ -6259,7 +6415,11 @@ class OntologyGenerator:
                 j = i + 1
                 while j < len(tokens):
                     next_tok = tokens[j].lower()
-                    if next_tok in _ADJS or (tokens[j].istitle() and len(tokens[j]) > 1) or (len(tokens[j]) > 3 and tokens[j][0].islower()):
+                    if (
+                        next_tok in _ADJS
+                        or (tokens[j].istitle() and len(tokens[j]) > 1)
+                        or (len(tokens[j]) > 3 and tokens[j][0].islower())
+                    ):
                         phrase_toks.append(tokens[j])
                         j += 1
                     else:
@@ -6319,8 +6479,6 @@ class OntologyGenerator:
             errors=all_errors,
         )
 
-
-
     def dedup_by_text_prefix(
         self,
         result: "EntityExtractionResult",
@@ -6353,12 +6511,11 @@ class OntologyGenerator:
         deduped = list(seen.values())
         kept_ids = {e.id for e in deduped}
         kept_rels = [
-            r for r in result.relationships
-            if r.source_id in kept_ids and r.target_id in kept_ids
+            r for r in result.relationships if r.source_id in kept_ids and r.target_id in kept_ids
         ]
         import dataclasses as _dc
-        return _dc.replace(result, entities=deduped, relationships=kept_rels)
 
+        return _dc.replace(result, entities=deduped, relationships=kept_rels)
 
     def count_entities_by_type(
         self,
@@ -6479,12 +6636,13 @@ class OntologyGenerator:
 
         for idx in range(chunk_count):
             size = base + (1 if idx < remainder else 0)
-            entities_slice = result.entities[cursor:cursor + size]
+            entities_slice = result.entities[cursor : cursor + size]
             cursor += size
 
             entity_ids = {e.id for e in entities_slice}
             relationships_slice = [
-                rel for rel in result.relationships
+                rel
+                for rel in result.relationships
                 if rel.source_id in entity_ids and rel.target_id in entity_ids
             ]
 
@@ -6621,6 +6779,7 @@ class OntologyGenerator:
             >>> r2 = gen.rename_entity(result, "e1", "Alice Smith")
         """
         import dataclasses as _dc
+
         found = False
         new_entities = []
         for e in result.entities:
@@ -6632,7 +6791,6 @@ class OntologyGenerator:
         if not found:
             raise KeyError(f"No entity with id={entity_id!r} in result")
         return _dc.replace(result, entities=new_entities)
-
 
     def strip_low_confidence(
         self,
@@ -6658,12 +6816,11 @@ class OntologyGenerator:
         filtered = [e for e in result.entities if e.confidence >= threshold]
         kept_ids = {e.id for e in filtered}
         kept_rels = [
-            r for r in result.relationships
-            if r.source_id in kept_ids and r.target_id in kept_ids
+            r for r in result.relationships if r.source_id in kept_ids and r.target_id in kept_ids
         ]
         import dataclasses as _dc
-        return _dc.replace(result, entities=filtered, relationships=kept_rels)
 
+        return _dc.replace(result, entities=filtered, relationships=kept_rels)
 
     def top_entities(
         self,
@@ -6739,7 +6896,7 @@ class OntologyGenerator:
             buckets["all"] = list(result.entities)
             return buckets
         labels = [f"<{thresholds[0]:g}"]
-        labels += [f"[{thresholds[i]:g},{thresholds[i+1]:g})" for i in range(len(thresholds) - 1)]
+        labels += [f"[{thresholds[i]:g},{thresholds[i + 1]:g})" for i in range(len(thresholds) - 1)]
         labels += [f">={thresholds[-1]:g}"]
         for label in labels:
             buckets[label] = []
@@ -6781,8 +6938,7 @@ class OntologyGenerator:
             >>> rels = gen.relationships_for_entity(result, "e1")
         """
         return [
-            r for r in result.relationships
-            if r.source_id == entity_id or r.target_id == entity_id
+            r for r in result.relationships if r.source_id == entity_id or r.target_id == entity_id
         ]
 
     def validate_result(self, result: "EntityExtractionResult") -> List[str]:
@@ -6806,18 +6962,12 @@ class OntologyGenerator:
             if not e.text or not e.text.strip():
                 issues.append(f"Entity {e.id!r} has empty text")
             if not 0.0 <= e.confidence <= 1.0:
-                issues.append(
-                    f"Entity {e.id!r} has out-of-range confidence: {e.confidence}"
-                )
+                issues.append(f"Entity {e.id!r} has out-of-range confidence: {e.confidence}")
         for r in result.relationships:
             if r.source_id not in entity_ids:
-                issues.append(
-                    f"Relationship {r.id!r} references unknown source_id {r.source_id!r}"
-                )
+                issues.append(f"Relationship {r.id!r} references unknown source_id {r.source_id!r}")
             if r.target_id not in entity_ids:
-                issues.append(
-                    f"Relationship {r.id!r} references unknown target_id {r.target_id!r}"
-                )
+                issues.append(f"Relationship {r.id!r} references unknown target_id {r.target_id!r}")
         return issues
 
     def confidence_stats(self, result: "EntityExtractionResult") -> Dict[str, float]:
@@ -6831,6 +6981,7 @@ class OntologyGenerator:
             All values are ``0.0`` when there are no entities.
         """
         import math as _math
+
         if not result.entities:
             return {"count": 0.0, "mean": 0.0, "min": 0.0, "max": 0.0, "std": 0.0}
         confs = [e.confidence for e in result.entities]
@@ -6857,6 +7008,7 @@ class OntologyGenerator:
             New :class:`EntityExtractionResult` with copied data.
         """
         import copy as _copy
+
         return _copy.deepcopy(result)
 
     def add_entity(
@@ -6874,6 +7026,7 @@ class OntologyGenerator:
             New :class:`EntityExtractionResult` with *entity* added.
         """
         import dataclasses as _dc
+
         new_entities = list(result.entities) + [entity]
         return _dc.replace(result, entities=new_entities)
 
@@ -6894,10 +7047,10 @@ class OntologyGenerator:
             associated relationships.
         """
         import dataclasses as _dc
+
         new_entities = [e for e in result.entities if e.id != entity_id]
         new_rels = [
-            r for r in result.relationships
-            if r.source_id != entity_id and r.target_id != entity_id
+            r for r in result.relationships if r.source_id != entity_id and r.target_id != entity_id
         ]
         return _dc.replace(result, entities=new_entities, relationships=new_rels)
 
@@ -6912,9 +7065,7 @@ class OntologyGenerator:
         """
         return len({e.type for e in result.entities})
 
-    def normalize_confidence(
-        self, result: "EntityExtractionResult"
-    ) -> "EntityExtractionResult":
+    def normalize_confidence(self, result: "EntityExtractionResult") -> "EntityExtractionResult":
         """Return a new result with entity confidences scaled to [0, 1].
 
         If all entities already have confidence in [0, 1] and the range
@@ -6929,6 +7080,7 @@ class OntologyGenerator:
             confidences.  Relationships are copied unchanged.
         """
         import dataclasses as _dc
+
         if not result.entities:
             return result
         confs = [e.confidence for e in result.entities]
@@ -6936,8 +7088,7 @@ class OntologyGenerator:
         if hi == lo:
             return result
         new_entities = [
-            _dc.replace(e, confidence=(e.confidence - lo) / (hi - lo))
-            for e in result.entities
+            _dc.replace(e, confidence=(e.confidence - lo) / (hi - lo)) for e in result.entities
         ]
         return _dc.replace(result, entities=new_entities)
 
@@ -7018,6 +7169,7 @@ class OntologyGenerator:
             New :class:`EntityExtractionResult` with unique entity ids.
         """
         import dataclasses as _dc
+
         seen: dict = {}
         for e in result.entities:
             if e.id not in seen or e.confidence > seen[e.id].confidence:
@@ -7058,6 +7210,7 @@ class OntologyGenerator:
             ``confidence >= threshold``.
         """
         import dataclasses as _dc
+
         kept = [e for e in result.entities if e.confidence >= threshold]
         return _dc.replace(result, entities=kept)
 
@@ -7083,11 +7236,13 @@ class OntologyGenerator:
             their relationships) that satisfy the config threshold.
         """
         import dataclasses as _dc
+
         threshold = getattr(config, "confidence_threshold", 0.0)
         kept_entities = [e for e in result.entities if e.confidence >= threshold]
         kept_ids = {getattr(e, "id", None) for e in kept_entities}
         kept_rels = [
-            r for r in result.relationships
+            r
+            for r in result.relationships
             if getattr(r, "source_id", None) in kept_ids
             and getattr(r, "target_id", None) in kept_ids
         ]
@@ -7111,14 +7266,10 @@ class OntologyGenerator:
             lo = round(i * width, 6)
             hi = round((i + 1) * width, 6)
             label = f"{lo:.2f}-{hi:.2f}"
-            buckets[label] = sum(
-                1 for e in result.entities if lo <= e.confidence < hi
-            )
+            buckets[label] = sum(1 for e in result.entities if lo <= e.confidence < hi)
         # Clamp exactly-1.0 confidence into the last bucket
         last_label = list(buckets.keys())[-1]
-        buckets[last_label] += sum(
-            1 for e in result.entities if e.confidence == 1.0
-        )
+        buckets[last_label] += sum(1 for e in result.entities if e.confidence == 1.0)
         return buckets
 
     def mean_confidence(self, result) -> float:
@@ -7148,7 +7299,7 @@ class OntologyGenerator:
         scores = [e.confidence for e in result.entities]
         mean = sum(scores) / len(scores)
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return variance ** 0.5
+        return variance**0.5
 
     def entity_type_distribution(self, result) -> dict:
         """Return a dict mapping each entity type to its relative frequency.
@@ -7216,7 +7367,6 @@ class OntologyGenerator:
             counts[e.type] = counts.get(e.type, 0) + 1
         return counts
 
-
     def entity_count_per_type(self, result) -> dict:
         """Return a count of entities per entity type.
 
@@ -7229,13 +7379,13 @@ class OntologyGenerator:
         Returns:
             Dict of {type_str: int}.
         """
-        entities = getattr(result, 'entities', None) or []
+        entities = getattr(result, "entities", None) or []
         if not entities:
             return {}
         counts: dict = {}
         for e in entities:
-            t = getattr(e, 'type', None)
-            t = str(t) if t else 'Unknown'
+            t = getattr(e, "type", None)
+            t = str(t) if t else "Unknown"
             counts[t] = counts.get(t, 0) + 1
         return counts
 
@@ -7346,7 +7496,7 @@ class OntologyGenerator:
             summary = generator.describe_extraction_pipeline(config, result)
             print(summary)
             # Output:
-            # ExtractionConfig: threshold=0.7, max_entities=100, ... 
+            # ExtractionConfig: threshold=0.7, max_entities=100, ...
             # Extraction Result: 45 entities, 32 relationships, avg_conf=0.78
         """
         lines = [config.describe()]
@@ -7405,7 +7555,7 @@ class OntologyGenerator:
         vals = [e.confidence for e in result.entities]
         mean = sum(vals) / len(vals)
         variance = sum((v - mean) ** 2 for v in vals) / len(vals)
-        return variance ** 0.5
+        return variance**0.5
 
     def entities_with_properties(self, result) -> list:
         """Return entities that have at least one non-empty property.
@@ -7416,7 +7566,7 @@ class OntologyGenerator:
         Returns:
             List of ``Entity`` objects whose ``properties`` dict is non-empty.
         """
-        return [e for e in result.entities if getattr(e, 'properties', None)]
+        return [e for e in result.entities if getattr(e, "properties", None)]
 
     def top_confidence_fraction(self, result, frac: float = 0.5) -> list:
         """Return the top fraction of entities sorted by confidence.
@@ -7431,6 +7581,7 @@ class OntologyGenerator:
             ``ceil(len * frac)`` entries.
         """
         import math
+
         if not result.entities:
             return []
         sorted_entities = sorted(result.entities, key=lambda e: e.confidence, reverse=True)
@@ -7594,10 +7745,12 @@ class OntologyGenerator:
             Float entropy in bits; 0.0 when no entities or all same type.
         """
         import math
+
         entities = result.entities or []
         if not entities:
             return 0.0
         from collections import Counter
+
         counts = Counter(e.type for e in entities)
         total = len(entities)
         entropy = 0.0
@@ -7653,34 +7806,30 @@ class OntologyGenerator:
         # Collect all confidence scores from all results
         all_scores = []
         for result in results:
-            entities = getattr(result, 'entities', []) or []
+            entities = getattr(result, "entities", []) or []
             all_scores.extend(e.confidence for e in entities)
-        
+
         # Need at least 4 values for meaningful kurtosis
         if len(all_scores) < 4:
             return 0.0
-        
+
         n = len(all_scores)
         mean = sum(all_scores) / n
-        
+
         # Calculate standard deviation
         variance = sum((s - mean) ** 2 for s in all_scores) / n
-        std = variance ** 0.5
-        
+        std = variance**0.5
+
         if std == 0.0:
             return 0.0
-        
+
         # Calculate fourth moment (kurtosis)
         # Excess kurtosis = (fourth_moment / variance^2) - 3
         fourth_moment = sum(((s - mean) / std) ** 4 for s in all_scores) / n
-        
+
         return fourth_moment - 3.0  # Excess kurtosis
 
-    def score_ewma(
-        self,
-        results: List[Any],
-        alpha: float = 0.3
-    ) -> float:
+    def score_ewma(self, results: List[Any], alpha: float = 0.3) -> float:
         """Calculate exponentially weighted moving average of confidence scores.
 
         The EWMA gives more weight to recent results while incorporating historical
@@ -7718,7 +7867,7 @@ class OntologyGenerator:
         # Calculate mean confidence for each result
         scores = []
         for result in results:
-            entities = getattr(result, 'entities', []) or []
+            entities = getattr(result, "entities", []) or []
             if entities:
                 mean_conf = sum(e.confidence for e in entities) / len(entities)
                 scores.append(mean_conf)
@@ -7733,11 +7882,7 @@ class OntologyGenerator:
 
         return ewma
 
-    def score_ewma_series(
-        self,
-        results: List[Any],
-        alpha: float = 0.3
-    ) -> List[float]:
+    def score_ewma_series(self, results: List[Any], alpha: float = 0.3) -> List[float]:
         """Calculate EWMA series showing trend over time.
 
         Returns the full EWMA series, one value per result, showing how the
@@ -7770,14 +7915,14 @@ class OntologyGenerator:
         # Calculate mean confidence for each result
         scores = []
         for result in results:
-            entities = getattr(result, 'entities', []) or []
+            entities = getattr(result, "entities", []) or []
             if entities:
                 mean_conf = sum(e.confidence for e in entities) / len(entities)
                 scores.append(mean_conf)
             else:
                 # No entities in this result, use previous EWMA or 0.0
                 if scores:
-                    scores.append(scores[-1] if hasattr(scores[-1], '__float__') else 0.0)
+                    scores.append(scores[-1] if hasattr(scores[-1], "__float__") else 0.0)
                 else:
                     scores.append(0.0)
 
@@ -7811,9 +7956,9 @@ class OntologyGenerator:
         """
         all_scores = []
         for result in results:
-            entities = getattr(result, 'entities', []) or []
+            entities = getattr(result, "entities", []) or []
             all_scores.extend(e.confidence for e in entities)
-        
+
         return min(all_scores) if all_scores else 0.0
 
     def confidence_max(self, results: List[Any]) -> float:
@@ -7834,9 +7979,9 @@ class OntologyGenerator:
         """
         all_scores = []
         for result in results:
-            entities = getattr(result, 'entities', []) or []
+            entities = getattr(result, "entities", []) or []
             all_scores.extend(e.confidence for e in entities)
-        
+
         return max(all_scores) if all_scores else 0.0
 
     def confidence_range(self, results: List[Any]) -> float:
@@ -7861,19 +8006,15 @@ class OntologyGenerator:
         """
         all_scores = []
         for result in results:
-            entities = getattr(result, 'entities', []) or []
+            entities = getattr(result, "entities", []) or []
             all_scores.extend(e.confidence for e in entities)
-        
+
         if not all_scores:
             return 0.0
-        
+
         return max(all_scores) - min(all_scores)
 
-    def confidence_percentile(
-        self,
-        results: List[Any],
-        percentile: float = 50.0
-    ) -> float:
+    def confidence_percentile(self, results: List[Any], percentile: float = 50.0) -> float:
         """Return the specified percentile of confidence scores.
 
         Percentiles provide robust measures of distribution characteristics.
@@ -7895,24 +8036,24 @@ class OntologyGenerator:
         """
         all_scores = []
         for result in results:
-            entities = getattr(result, 'entities', []) or []
+            entities = getattr(result, "entities", []) or []
             all_scores.extend(e.confidence for e in entities)
-        
+
         if not all_scores:
             return 0.0
-        
+
         # Clamp percentile to valid range
         percentile = max(0.0, min(100.0, percentile))
-        
+
         # Sort scores
         sorted_scores = sorted(all_scores)
         n = len(sorted_scores)
-        
+
         # Calculate percentile index
         k = (n - 1) * percentile / 100.0
         f = int(k)
         c = k - f
-        
+
         if f + 1 < n:
             return sorted_scores[f] + c * (sorted_scores[f + 1] - sorted_scores[f])
         else:
@@ -7971,20 +8112,20 @@ class OntologyGenerator:
         """
         scores = []
         for result in results:
-            entities = result.entities if hasattr(result, 'entities') else []
+            entities = result.entities if hasattr(result, "entities") else []
             if entities:
-                scores.extend(e.confidence for e in entities if hasattr(e, 'confidence'))
-        
+                scores.extend(e.confidence for e in entities if hasattr(e, "confidence"))
+
         if not scores or len(scores) < 2:
             return 0.0
-        
+
         mean = sum(scores) / len(scores)
         if mean == 0.0:
             return 0.0
-        
+
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        std_dev = variance ** 0.5
-        
+        std_dev = variance**0.5
+
         return std_dev / mean
 
     def entity_relation_ratio(self, result: Any) -> float:
@@ -8017,7 +8158,7 @@ class OntologyGenerator:
         confs = [getattr(r, "confidence", 1.0) for r in rels]
         mean = sum(confs) / len(confs)
         variance = sum((c - mean) ** 2 for c in confs) / len(confs)
-        return variance ** 0.5
+        return variance**0.5
 
     def entity_confidence_percentile(self, result: Any, p: float = 50.0) -> float:
         """Return the *p*-th percentile of entity confidence scores.
@@ -8052,6 +8193,7 @@ class OntologyGenerator:
             Dict ``{type_str: count_int}``; empty when no relationships.
         """
         from collections import Counter
+
         rels = result.relationships or []
         return dict(Counter(getattr(r, "type", "") for r in rels))
 
@@ -8078,7 +8220,9 @@ class OntologyGenerator:
         entities = result.entities or []
         if not entities:
             return 0.0
-        return sum(1 for e in entities if getattr(e, "source_span", None) is not None) / len(entities)
+        return sum(1 for e in entities if getattr(e, "source_span", None) is not None) / len(
+            entities
+        )
 
     def relationship_density(self, result: Any) -> float:
         """Return edges / nodes ratio (density proxy).
@@ -8145,10 +8289,7 @@ class OntologyGenerator:
         Returns:
             Integer; 0 when no entities or no properties.
         """
-        return sum(
-            len(getattr(e, "properties", {}) or {})
-            for e in (result.entities or [])
-        )
+        return sum(len(getattr(e, "properties", {}) or {}) for e in (result.entities or []))
 
     def entity_types_set(self, result: Any) -> set:
         """Return the set of distinct entity type strings in *result*.
@@ -8382,7 +8523,9 @@ class OntologyGenerator:
         weights = [getattr(r, "weight", 0.0) or 0.0 for r in rels]
         return max(weights)
 
-    def entity_count_with_confidence_above(self, result: "EntityExtractionResult", threshold: float = 0.7) -> int:
+    def entity_count_with_confidence_above(
+        self, result: "EntityExtractionResult", threshold: float = 0.7
+    ) -> int:
         """Return count of entities whose confidence exceeds *threshold*.
 
         Args:
@@ -8477,7 +8620,7 @@ class OntologyGenerator:
             Set of string property key names; empty set when no entities.
         """
         keys: set = set()
-        for e in (result.entities or []):
+        for e in result.entities or []:
             keys.update((getattr(e, "properties", {}) or {}).keys())
         return keys
 
@@ -8542,7 +8685,11 @@ class OntologyGenerator:
         Returns:
             Set of source ID strings.
         """
-        return {getattr(r, "source_id", None) for r in (result.relationships or []) if getattr(r, "source_id", None)}
+        return {
+            getattr(r, "source_id", None)
+            for r in (result.relationships or [])
+            if getattr(r, "source_id", None)
+        }
 
     def relationship_target_ids(self, result: "EntityExtractionResult") -> set:
         """Return the set of target entity IDs from all relationships.
@@ -8553,7 +8700,11 @@ class OntologyGenerator:
         Returns:
             Set of target ID strings.
         """
-        return {getattr(r, "target_id", None) for r in (result.relationships or []) if getattr(r, "target_id", None)}
+        return {
+            getattr(r, "target_id", None)
+            for r in (result.relationships or [])
+            if getattr(r, "target_id", None)
+        }
 
     def entity_confidence_histogram(self, result: "EntityExtractionResult", bins: int = 5) -> list:
         """Bucket entity confidence values into *bins* equal-width buckets and return counts.
@@ -8602,6 +8753,7 @@ class OntologyGenerator:
             Set of isolated entity ID strings.
         """
         from collections import Counter
+
         degree: Counter = Counter()
         for r in result.relationships or []:
             src = getattr(r, "source_id", None)
@@ -8735,6 +8887,7 @@ class OntologyGenerator:
             Float entropy in nats; 0.0 when no entities.
         """
         import math
+
         entities = result.entities or []
         if not entities:
             return 0.0
@@ -8796,7 +8949,6 @@ class OntologyGenerator:
                 total_diff += abs(i - j)
         return total_diff / (2.0 * n * n * mean)
 
-
     def entity_with_longest_text(self, result: "EntityExtractionResult"):
         """Return the entity with the longest text field.
 
@@ -8821,6 +8973,7 @@ class OntologyGenerator:
             Float entropy in nats; 0.0 when no relationships.
         """
         import math as _math
+
         rels = result.relationships or []
         if not rels:
             return 0.0
@@ -8880,7 +9033,6 @@ class OntologyGenerator:
         unique_types = len({e.type for e in entities if e.type})
         return unique_types / len(entities)
 
-
     def entity_type_diversity_index(self, result: "EntityExtractionResult") -> float:
         """Return the Simpson diversity index over entity types.
 
@@ -8932,7 +9084,9 @@ class OntologyGenerator:
             counts[t] = counts.get(t, 0) + 1
         return {t: c / n for t, c in counts.items()}
 
-    def entity_id_prefix_groups(self, result: "EntityExtractionResult", prefix_len: int = 1) -> dict:
+    def entity_id_prefix_groups(
+        self, result: "EntityExtractionResult", prefix_len: int = 1
+    ) -> dict:
         """Group entities by the first *prefix_len* characters of their ID.
 
         Args:
@@ -8980,9 +9134,7 @@ class OntologyGenerator:
             Integer count; 0 when no entities or no multi-property entities.
         """
         return sum(
-            1
-            for e in (result.entities or [])
-            if len(getattr(e, "properties", None) or {}) > 1
+            1 for e in (result.entities or []) if len(getattr(e, "properties", None) or {}) > 1
         )
 
     def relationship_avg_id_pair_length(self, result: "EntityExtractionResult") -> float:
@@ -8998,7 +9150,8 @@ class OntologyGenerator:
         if not rels:
             return 0.0
         lengths = [
-            len(str(getattr(r, "source_id", "") or "")) + len(str(getattr(r, "target_id", "") or ""))
+            len(str(getattr(r, "source_id", "") or ""))
+            + len(str(getattr(r, "target_id", "") or ""))
             for r in rels
         ]
         return sum(lengths) / len(lengths)
@@ -9020,7 +9173,7 @@ class OntologyGenerator:
         if mean == 0:
             return 0.0
         var = sum((v - mean) ** 2 for v in vals) / len(vals)
-        return (var ** 0.5) / mean
+        return (var**0.5) / mean
 
     def relationship_unique_endpoints(self, result: "EntityExtractionResult") -> int:
         """Return the count of unique node IDs that appear in any relationship.
@@ -9129,6 +9282,7 @@ class OntologyGenerator:
             Float >= 0.0; 0.0 when fewer than 2 relationships.
         """
         import math
+
         if len(result.relationships) < 2:
             return 0.0
         counts: dict = {}
@@ -9145,13 +9299,13 @@ class OntologyGenerator:
 
     def describe_result(self, result: Any) -> str:
         """Return a one-line English summary of the extraction result.
-        
+
         Args:
             result: EntityExtractionResult instance.
-        
+
         Returns:
             Human-readable summary string.
-            
+
         Example:
             >>> print(generator.describe_result(result))
             "42 entities (5 types), 68 relationships, confidence 0.87"
@@ -9160,7 +9314,7 @@ class OntologyGenerator:
         relationships = result.relationships or []
         types = {getattr(e, "type", None) for e in entities if getattr(e, "type", None)}
         confidence = getattr(result, "confidence", 0.0)
-        
+
         return (
             f"{len(entities)} entities ({len(types)} types), "
             f"{len(relationships)} relationships, "
@@ -9169,13 +9323,13 @@ class OntologyGenerator:
 
     def relationship_confidence_bounds(self, result: Any) -> tuple:
         """Return (min, max) confidence scores across all relationships.
-        
+
         Args:
             result: EntityExtractionResult instance.
-        
+
         Returns:
             Tuple of (min_confidence, max_confidence); (0.0, 0.0) when no relationships.
-            
+
         Example:
             >>> min_conf, max_conf = generator.relationship_confidence_bounds(result)
             >>> print(f"Relationship confidence range: {min_conf:.2f} to {max_conf:.2f}")
@@ -9183,19 +9337,19 @@ class OntologyGenerator:
         rels = result.relationships or []
         if not rels:
             return (0.0, 0.0)
-        
+
         confidences = [getattr(r, "confidence", 0.0) for r in rels]
         return (min(confidences), max(confidences))
 
     def is_result_empty(self, result: Any) -> bool:
         """Check if result contains no entities and no relationships.
-        
+
         Args:
             result: EntityExtractionResult instance.
-        
+
         Returns:
             True if both entities and relationships are empty.
-            
+
         Example:
             >>> if generator.is_result_empty(result):
             ...     print("No information extracted")
@@ -9206,14 +9360,14 @@ class OntologyGenerator:
 
     def result_summary_dict(self, result: Any) -> dict:
         """Return a structured dictionary summarizing the extraction result.
-        
+
         Args:
             result: EntityExtractionResult instance.
-        
+
         Returns:
-            Dictionary with keys: entity_count, relationship_count, unique_types, 
+            Dictionary with keys: entity_count, relationship_count, unique_types,
             mean_confidence, min_confidence, max_confidence, has_errors.
-            
+
         Example:
             >>> summary = generator.result_summary_dict(result)
             >>> print(summary)
@@ -9222,10 +9376,10 @@ class OntologyGenerator:
         entities = result.entities or []
         relationships = result.relationships or []
         errors = getattr(result, "errors", []) or []
-        
+
         entity_confs = [getattr(e, "confidence", 0.0) for e in entities]
         types = {getattr(e, "type", None) for e in entities if getattr(e, "type", None)}
-        
+
         return {
             "entity_count": len(entities),
             "relationship_count": len(relationships),
@@ -9242,23 +9396,21 @@ class OntologyGenerator:
     # -------------------------------------------------------------------------
 
     async def extract_entities_async(
-        self,
-        data: Any,
-        context: OntologyGenerationContext
+        self, data: Any, context: OntologyGenerationContext
     ) -> EntityExtractionResult:
         """
         Asynchronously extract entities from data using configured strategy.
-        
+
         This is the async version of :meth:`extract_entities`. It runs the
         extraction in a thread pool to avoid blocking the event loop.
-        
+
         Args:
             data: Input data to extract entities from
             context: Context with extraction configuration
-            
+
         Returns:
             EntityExtractionResult containing extracted entities and relationships
-            
+
         Example:
             >>> result = await generator.extract_entities_async(
             ...     "Alice must pay Bob $100 by Friday",
@@ -9267,13 +9419,9 @@ class OntologyGenerator:
             >>> print(f"Found {len(result.entities)} entities")
         """
         from ipfs_datasets_py.utils import anyio_compat as asyncio
+
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
-            self.extract_entities,
-            data,
-            context
-        )
+        return await loop.run_in_executor(None, self.extract_entities, data, context)
 
     async def extract_batch_async(
         self,
@@ -9284,19 +9432,19 @@ class OntologyGenerator:
     ) -> List[EntityExtractionResult]:
         """
         Asynchronously extract entities from multiple data items concurrently.
-        
+
         Uses semaphore-controlled concurrency to process multiple items in parallel
         without overwhelming system resources.
-        
+
         Args:
             data_items: List of data items to process
             contexts: Single context for all items or list of per-item contexts
             max_concurrent: Maximum number of concurrent extractions (default: 5)
             timeout_per_item: Optional timeout in seconds for each extraction
-            
+
         Returns:
             List of EntityExtractionResult, one per input data item
-            
+
         Example:
             >>> documents = ["doc1 text", "doc2 text", "doc3 text"]
             >>> results = await generator.extract_batch_async(
@@ -9307,54 +9455,47 @@ class OntologyGenerator:
             >>> total_entities = sum(len(r.entities) for r in results)
         """
         from ipfs_datasets_py.utils import anyio_compat as asyncio
-        
+
         # Handle single context for all items
         if isinstance(contexts, OntologyGenerationContext):
             contexts = [contexts] * len(data_items)
-        
+
         if len(contexts) != len(data_items):
             raise ValueError(
-                f"Length mismatch: {len(data_items)} data items but "
-                f"{len(contexts)} contexts"
+                f"Length mismatch: {len(data_items)} data items but {len(contexts)} contexts"
             )
-        
+
         semaphore = asyncio.Semaphore(max_concurrent)
-        
+
         async def extract_with_semaphore(data, ctx):
             async with semaphore:
                 if timeout_per_item:
                     return await asyncio.wait_for(
-                        self.extract_entities_async(data, ctx),
-                        timeout=timeout_per_item
+                        self.extract_entities_async(data, ctx), timeout=timeout_per_item
                     )
                 else:
                     return await self.extract_entities_async(data, ctx)
-        
-        tasks = [
-            extract_with_semaphore(data, ctx)
-            for data, ctx in zip(data_items, contexts)
-        ]
-        
+
+        tasks = [extract_with_semaphore(data, ctx) for data, ctx in zip(data_items, contexts)]
+
         return await asyncio.gather(*tasks)
 
     async def infer_relationships_async(
-        self,
-        entities: List[Entity],
-        context: OntologyGenerationContext
+        self, entities: List[Entity], context: OntologyGenerationContext
     ) -> List[Relationship]:
         """
         Asynchronously infer relationships between entities.
-        
+
         This is the async version of relationship inference. It runs the
         inference in a thread pool to avoid blocking the event loop.
-        
+
         Args:
             entities: List of entities to infer relationships between
             context: Context with extraction configuration
-            
+
         Returns:
             List of inferred Relationship objects
-            
+
         Example:
             >>> entities = [entity1, entity2, entity3]
             >>> relationships = await generator.infer_relationships_async(
@@ -9364,34 +9505,27 @@ class OntologyGenerator:
             >>> print(f"Found {len(relationships)} relationships")
         """
         from ipfs_datasets_py.utils import anyio_compat as asyncio
+
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
-            self.infer_relationships,
-            entities,
-            context
-        )
+        return await loop.run_in_executor(None, self.infer_relationships, entities, context)
 
     async def extract_with_streaming_async(
-        self,
-        data: Any,
-        context: OntologyGenerationContext,
-        chunk_size: int = 1000
+        self, data: Any, context: OntologyGenerationContext, chunk_size: int = 1000
     ):
         """
         Asynchronously extract entities with streaming results.
-        
+
         Yields EntityExtractionResult chunks as they become available,
         useful for processing large documents without waiting for complete results.
-        
+
         Args:
             data: Input data to extract entities from
             context: Context with extraction configuration
             chunk_size: Number of entities per yielded chunk
-            
+
         Yields:
             EntityExtractionResult objects with partial results
-            
+
         Example:
             >>> async for chunk in generator.extract_with_streaming_async(
             ...     large_document,
@@ -9402,17 +9536,17 @@ class OntologyGenerator:
             ...     # Process chunk immediately
         """
         from ipfs_datasets_py.utils import anyio_compat as asyncio
-        
+
         # For now, delegate to sync streaming and wrap in async
         # Future enhancement: true async streaming with backpressure
         loop = asyncio.get_event_loop()
-        
+
         def sync_stream():
             return list(self.extract_entities_streaming(data, context))
-        
+
         # Run in executor to avoid blocking
         chunks = await loop.run_in_executor(None, sync_stream)
-        
+
         # Yield chunks asynchronously
         for chunk in chunks:
             yield chunk
@@ -9497,7 +9631,7 @@ class OntologyGenerator:
         variance = sum((c - mean) ** 2 for c in confs) / n
         if variance == 0.0:
             return 0.0
-        std4 = variance ** 2
+        std4 = variance**2
         return sum((c - mean) ** 4 for c in confs) / (n * std4) - 3.0
 
     def entity_text_length_std(self, result: "EntityExtractionResult") -> float:
@@ -9516,7 +9650,7 @@ class OntologyGenerator:
         n = len(lengths)
         mean = sum(lengths) / n
         variance = sum((l - mean) ** 2 for l in lengths) / n
-        return variance ** 0.5
+        return variance**0.5
 
     def entity_confidence_gini(self, result: "EntityExtractionResult") -> float:
         """Return the Gini coefficient of entity confidence scores.
@@ -9675,7 +9809,7 @@ class OntologyGenerator:
         confidences = sorted(getattr(e, "confidence", 0.0) for e in entities)
         n = len(confidences)
         k = int(n * trim_pct / 100.0)
-        trimmed = confidences[k: n - k] if (k < n and n - 2 * k > 0) else confidences
+        trimmed = confidences[k : n - k] if (k < n and n - 2 * k > 0) else confidences
         if not trimmed:
             return 0.0
         return sum(trimmed) / len(trimmed)
@@ -9803,11 +9937,11 @@ class OntologyGenerator:
 
 
 __all__ = [
-    'OntologyGenerator',
-    'OntologyGenerationContext',
-    'Entity',
-    'Relationship',
-    'EntityExtractionResult',
-    'ExtractionStrategy',
-    'DataType',
+    "OntologyGenerator",
+    "OntologyGenerationContext",
+    "Entity",
+    "Relationship",
+    "EntityExtractionResult",
+    "ExtractionStrategy",
+    "DataType",
 ]

@@ -74,6 +74,7 @@ _INJECTION_PATTERN = re.compile(
 # Validators
 # ---------------------------------------------------------------------------
 
+
 def validate_formula_string(
     formula: str,
     *,
@@ -204,8 +205,7 @@ def validate_logic_system(
         )
     if logic.lower() not in supported:
         raise ValidationError(
-            f"Unsupported logic system: '{logic}'. "
-            f"Supported: {sorted(supported)}",
+            f"Unsupported logic system: '{logic}'. Supported: {sorted(supported)}",
             context={"logic": logic, "supported": sorted(supported)},
         )
 

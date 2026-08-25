@@ -4,11 +4,13 @@ Test stubs for website_graphrag_processor module.
 Feature: Website GraphRAG Processor
   Process websites for GraphRAG system
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_processed_website():
@@ -74,6 +76,7 @@ def website_content():
 
 
 # Test scenarios
+
 
 def test_extract_content_from_website():
     """
@@ -166,6 +169,7 @@ def test_update_website_graph_incrementally():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a processed website")

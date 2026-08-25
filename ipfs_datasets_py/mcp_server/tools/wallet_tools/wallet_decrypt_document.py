@@ -9,7 +9,10 @@ from ipfs_datasets_py.wallet.ucan import invocation_from_token
 from ._helpers import default_blob_dir, default_wallet_dir, key_from_optional_hex, load, save
 
 
-@tool_metadata(category="wallet_tools", mcp_description="Decrypt a document with owner, grant, or invocation access.")
+@tool_metadata(
+    category="wallet_tools",
+    mcp_description="Decrypt a document with owner, grant, or invocation access.",
+)
 async def wallet_decrypt_document(
     wallet_id: str,
     record_id: str,

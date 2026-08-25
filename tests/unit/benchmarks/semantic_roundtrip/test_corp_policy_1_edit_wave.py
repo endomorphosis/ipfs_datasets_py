@@ -95,9 +95,7 @@ def test_mean_pilot_forward_not_worse_than_sealed_plateau() -> None:
     losses: list[float] = []
     for case in load_pilot_matrix_cases():
         l1 = construct_baseline_l1(case)
-        losses.append(
-            float(compare_semantic_ir(case.gold_ir, l1)["semantic_loss"])
-        )
+        losses.append(float(compare_semantic_ir(case.gold_ir, l1)["semantic_loss"]))
     mean_forward = sum(losses) / len(losses)
     assert mean_forward <= BASELINE_E2E_MEAN + 1e-9
     assert mean_forward < 0.05
@@ -110,10 +108,7 @@ def test_annual_frequency_stem_and_local_qualifier_harvest() -> None:
     # Short -ly forms must not collapse (daily → dai would be unusable).
     assert _token_stem_variants("daily") == frozenset({"daily"})
     assert _token_stem_variants("only") == frozenset({"only"})
-    evidence = (
-        "Managers are required to complete annual ethics training "
-        "and certifications"
-    )
+    evidence = "Managers are required to complete annual ethics training and certifications"
     assert _qualifier_fully_grounded(evidence, "annually")
 
     vocabulary = AllowedAtomVocabulary(
@@ -155,8 +150,7 @@ def test_annual_frequency_stem_and_local_qualifier_harvest() -> None:
                 "exceptions": [],
                 "temporal_constraints": [],
                 "source_text": (
-                    "Managers are required to complete annual ethics "
-                    "training and certifications"
+                    "Managers are required to complete annual ethics training and certifications"
                 ),
             }
         ),
@@ -165,17 +159,14 @@ def test_annual_frequency_stem_and_local_qualifier_harvest() -> None:
                 "modality": "F",
                 "norm_type": "prohibition",
                 "actor": "Employees",
-                "action": (
-                    "accept gifts valued over $25 from clients or vendors"
-                ),
+                "action": ("accept gifts valued over $25 from clients or vendors"),
                 "action_verb": "accept",
                 "action_object": "gifts valued over from clients or vendors",
                 "conditions": [],
                 "exceptions": [],
                 "temporal_constraints": [],
                 "source_text": (
-                    "Employees cannot accept gifts valued over $25 from "
-                    "clients or vendors"
+                    "Employees cannot accept gifts valued over $25 from clients or vendors"
                 ),
             }
         ),
@@ -209,10 +200,7 @@ def test_edit_wave_receipt_cites_packet_and_forbids_optional_promotion() -> None
 
     packet_cids = receipt["packet_cids"]
     assert isinstance(packet_cids, list) and packet_cids
-    assert all(
-        isinstance(item, str) and item.startswith("baguqeera")
-        for item in packet_cids
-    )
+    assert all(isinstance(item, str) and item.startswith("baguqeera") for item in packet_cids)
     packet_ids = receipt["packet_ids"]
     assert isinstance(packet_ids, list) and packet_ids
     assert any("corp-policy" in str(item) for item in packet_ids)
@@ -229,12 +217,11 @@ def test_edit_wave_receipt_cites_packet_and_forbids_optional_promotion() -> None
 
     post = receipt["post_scores"]
     assert isinstance(post, dict)
-    assert float(post["corp_policy_1_forward_loss"]) <= float(
-        prior["corp_policy_1_forward_loss"]
-    ) + 1e-9
-    assert float(post["corp_policy_1_forward_loss"]) == pytest.approx(
-        0.0, abs=1e-9
+    assert (
+        float(post["corp_policy_1_forward_loss"])
+        <= float(prior["corp_policy_1_forward_loss"]) + 1e-9
     )
+    assert float(post["corp_policy_1_forward_loss"]) == pytest.approx(0.0, abs=1e-9)
     assert float(post["mean_pilot_forward_loss"]) <= BASELINE_E2E_MEAN + 1e-9
 
     assert receipt["optional_runtimes_promoted"] == []
@@ -277,9 +264,9 @@ def test_constructor_identity_unchanged_and_no_llm_dependency() -> None:
     constructor = TypedDeonticCanonicalConstructor()
     assert constructor.identity == TYPED_DEONTIC_CANONICAL_CONSTRUCTOR_INTERFACE
     # Module surface stays deterministic: no teacher runtime hooks on construct.
-    source = (
-        ROOT / "benchmarks/semantic_roundtrip/constructors/typed_deontic.py"
-    ).read_text(encoding="utf-8")
+    source = (ROOT / "benchmarks/semantic_roundtrip/constructors/typed_deontic.py").read_text(
+        encoding="utf-8"
+    )
     lowered = source.lower()
     for banned in (
         "openai",
@@ -290,15 +277,11 @@ def test_constructor_identity_unchanged_and_no_llm_dependency() -> None:
         "autoencoder_guided",
     ):
         assert banned not in lowered, banned
-    case = next(
-        c for c in load_pilot_matrix_cases() if c.case_id == "corp_policy_1"
-    )
+    case = next(c for c in load_pilot_matrix_cases() if c.case_id == "corp_policy_1")
     result = constructor.construct(
         ConstructorRequest(case.source_text, case.allowed_atom_vocabulary, {})
     )
     assert result.status is ComponentStatus.SUCCESS
     assert result.canonical_ir is not None
     assert not result.canonical_ir.is_empty
-    assert any(
-        rule.temporal == ("annually",) for rule in result.canonical_ir.rules
-    )
+    assert any(rule.temporal == ("annually",) for rule in result.canonical_ir.rules)

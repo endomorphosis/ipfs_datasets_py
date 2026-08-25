@@ -56,23 +56,25 @@ MCP tools are thin wrappers around core operations:
 # MCP Tool (thin wrapper)
 async def mcp_tool(**params):
     from ipfs_datasets_py.core_operations import CoreModule
-    
+
     # 1. Validate inputs
     # 2. Call core operation
     # 3. Add MCP metadata
     # 4. Return result
-    
+
     core = CoreModule()
     result = await core.operation(**params)
     return result
 
+
 # CLI Command (uses same core)
 def cli_command(**params):
     from ipfs_datasets_py.core_operations import CoreModule
-    
+
     core = CoreModule()
     result = asyncio.run(core.operation(**params))
     print_result(result)
+
 
 # Python API (direct import)
 from ipfs_datasets_py.core_operations import CoreModule
@@ -97,23 +99,13 @@ from ipfs_datasets_py.core_operations import DatasetLoader
 loader = DatasetLoader()
 
 # Load from Hugging Face
-result = await loader.load_dataset(
-    source="squad",
-    split="train",
-    streaming=False
-)
+result = await loader.load_dataset(source="squad", split="train", streaming=False)
 
 # Load from local file
-result = await loader.load_dataset(
-    source="local",
-    path="/path/to/dataset.json"
-)
+result = await loader.load_dataset(source="local", path="/path/to/dataset.json")
 
 # Load from IPFS
-result = await loader.load_dataset(
-    source="ipfs",
-    cid="QmHash..."
-)
+result = await loader.load_dataset(source="ipfs", cid="QmHash...")
 ```
 
 **Returns**:
@@ -125,7 +117,7 @@ result = await loader.load_dataset(
     "num_columns": 4,
     "splits": ["train"],
     "features": {...},
-    "metadata": {...}
+    "metadata": {...},
 }
 ```
 
@@ -144,17 +136,12 @@ saver = DatasetSaver()
 
 # Save to file
 result = await saver.save_dataset(
-    dataset_id="dataset_123",
-    format="parquet",
-    output_path="/path/to/output.parquet"
+    dataset_id="dataset_123", format="parquet", output_path="/path/to/output.parquet"
 )
 
 # Save to IPFS
 result = await saver.save_dataset(
-    dataset_id="dataset_123",
-    format="json",
-    destination="ipfs",
-    pin=True
+    dataset_id="dataset_123", format="json", destination="ipfs", pin=True
 )
 ```
 
@@ -179,22 +166,18 @@ result = await processor.chunk_text(
     strategy="fixed_size",
     chunk_size=1000,
     overlap=100,
-    max_chunks=100
+    max_chunks=100,
 )
 
 # Chunk by sentences
 result = await processor.chunk_text(
     text="Document text...",
     strategy="sentence",
-    chunk_size=5  # sentences per chunk
+    chunk_size=5,  # sentences per chunk
 )
 
 # Semantic chunking
-result = await processor.chunk_text(
-    text="Document text...",
-    strategy="semantic",
-    chunk_size=1000
-)
+result = await processor.chunk_text(text="Document text...", strategy="semantic", chunk_size=1000)
 ```
 
 **Chunking Strategies**:
@@ -208,8 +191,7 @@ result = await processor.chunk_text(
 ```python
 # Transform data
 result = await processor.transform_data(
-    data=[{"text": "  Test  ", "value": 100}],
-    transformation="normalize_text"
+    data=[{"text": "  Test  ", "value": 100}], transformation="normalize_text"
 )
 
 # Supported transformations:
@@ -226,9 +208,7 @@ result = await processor.transform_data(
 ```python
 # Convert between formats
 result = await processor.convert_format(
-    data=[{"name": "test", "value": 100}],
-    source_format="json",
-    target_format="csv"
+    data=[{"name": "test", "value": 100}], source_format="json", target_format="csv"
 )
 
 # Supported formats:
@@ -252,7 +232,7 @@ pinner = IPFSPinner()
 result = await pinner.pin_to_ipfs(
     data="Content to pin",
     pin_name="my-dataset",
-    pin_service="local"  # or "pinata", "web3.storage"
+    pin_service="local",  # or "pinata", "web3.storage"
 )
 
 # Returns:
@@ -279,11 +259,7 @@ from ipfs_datasets_py.core_operations import IPFSGetter
 getter = IPFSGetter()
 
 # Get by CID
-result = await getter.get_from_ipfs(
-    cid="QmHash...",
-    output_format="json",
-    cache_locally=True
-)
+result = await getter.get_from_ipfs(cid="QmHash...", output_format="json", cache_locally=True)
 ```
 
 ### 6. KnowledgeGraphManager
@@ -302,36 +278,25 @@ manager = KnowledgeGraphManager()
 # Create graph
 result = await manager.create_graph(
     graph_id="my_graph",
-    backend="neo4j"  # or "networkx", "rdflib"
+    backend="neo4j",  # or "networkx", "rdflib"
 )
 
 # Add entity
 result = await manager.add_entity(
-    graph_id="my_graph",
-    entity_type="Person",
-    properties={"name": "Alice", "age": 30}
+    graph_id="my_graph", entity_type="Person", properties={"name": "Alice", "age": 30}
 )
 
 # Add relationship
 result = await manager.add_relationship(
-    graph_id="my_graph",
-    from_entity="person_1",
-    to_entity="person_2",
-    relationship_type="KNOWS"
+    graph_id="my_graph", from_entity="person_1", to_entity="person_2", relationship_type="KNOWS"
 )
 
 # Query graph
-result = await manager.query_cypher(
-    graph_id="my_graph",
-    query="MATCH (p:Person) RETURN p"
-)
+result = await manager.query_cypher(graph_id="my_graph", query="MATCH (p:Person) RETURN p")
 
 # Hybrid search
 result = await manager.search_hybrid(
-    graph_id="my_graph",
-    query="Find person named Alice",
-    search_type="semantic",
-    top_k=10
+    graph_id="my_graph", query="Find person named Alice", search_type="semantic", top_k=10
 )
 ```
 
@@ -350,9 +315,7 @@ converter = DatasetConverter()
 
 # Convert dataset
 result = await converter.convert_dataset(
-    dataset_id="dataset_123",
-    target_format="parquet",
-    compression="snappy"
+    dataset_id="dataset_123", target_format="parquet", compression="snappy"
 )
 ```
 
@@ -385,6 +348,7 @@ result = await processor.chunk_text(text="...")
 
 # In sync context (CLI, scripts)
 import asyncio
+
 result = asyncio.run(processor.chunk_text(text="..."))
 ```
 
@@ -396,7 +360,7 @@ Core modules validate inputs:
 # Invalid input returns error
 result = await processor.chunk_text(
     text="",  # Empty text
-    chunk_size=-100  # Negative size
+    chunk_size=-100,  # Negative size
 )
 
 # Returns:
@@ -445,26 +409,22 @@ logger = logging.getLogger(__name__)
 class NewModule:
     """
     Brief description.
-    
+
     This class provides reusable business logic for [functionality].
     """
-    
+
     def __init__(self):
         # Initialize module
         pass
-    
-    async def operation(
-        self, 
-        param1: str,
-        param2: Optional[int] = None
-    ) -> Dict[str, Any]:
+
+    async def operation(self, param1: str, param2: Optional[int] = None) -> Dict[str, Any]:
         """
         Operation description.
-        
+
         Args:
             param1: Description
             param2: Description (optional)
-            
+
         Returns:
             Dictionary containing:
             - status: "success" or "error"
@@ -474,27 +434,21 @@ class NewModule:
         try:
             # Validate inputs
             if not param1:
-                return {
-                    "status": "error",
-                    "message": "param1 is required"
-                }
-            
+                return {"status": "error", "message": "param1 is required"}
+
             # Perform operation
             result = self._internal_operation(param1, param2)
-            
+
             return {
                 "status": "success",
                 "result": result,
-                "message": "Operation completed successfully"
+                "message": "Operation completed successfully",
             }
-            
+
         except Exception as e:
             logger.error(f"Operation failed: {e}")
-            return {
-                "status": "error",
-                "message": str(e)
-            }
-    
+            return {"status": "error", "message": str(e)}
+
     def _internal_operation(self, param1, param2):
         """Internal implementation"""
         # Implementation details

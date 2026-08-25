@@ -23,6 +23,7 @@ import pytest
 # Helpers — build mock spaCy token / span objects
 # ---------------------------------------------------------------------------
 
+
 def _make_child(dep: str, text: str, pos_: str = "NOUN"):
     """Create a minimal mock spaCy token acting as a dependency child."""
     child = MagicMock()
@@ -78,14 +79,21 @@ from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
     SRLFrame,
     RoleArgument,
     _extract_spacy_frames,
-    ROLE_AGENT, ROLE_PATIENT, ROLE_RECIPIENT,
-    ROLE_INSTRUMENT, ROLE_LOCATION, ROLE_TIME, ROLE_CAUSE, ROLE_THEME,
+    ROLE_AGENT,
+    ROLE_PATIENT,
+    ROLE_RECIPIENT,
+    ROLE_INSTRUMENT,
+    ROLE_LOCATION,
+    ROLE_TIME,
+    ROLE_CAUSE,
+    ROLE_THEME,
 )
 
 
 # ===========================================================================
 # _extract_spacy_frames — line coverage for every dependency branch
 # ===========================================================================
+
 
 class TestExtractSpacyFramesSkips:
     """GIVEN tokens with non-VERB/AUX pos — WHEN _extract_spacy_frames is called
@@ -376,6 +384,7 @@ class TestExtractWithSpacyMethod:
 # build_temporal_graph NLP fallback (lines 613-619)
 # ===========================================================================
 
+
 class TestBuildTemporalGraphNLPFallback:
     """GIVEN an SRLExtractor with nlp set WHEN build_temporal_graph is called
     with a sentence not found in the pre-extracted frame map
@@ -444,6 +453,7 @@ class TestBuildTemporalGraphNLPFallback:
 # query/knowledge_graph.py — IR path with mocked search modules
 # ===========================================================================
 
+
 class TestQueryKnowledgeGraphIRPath:
     """GIVEN mocked ipfs_datasets_py.search.graph_query modules
     WHEN query_knowledge_graph is called with query_type='ir' and manifest_cid
@@ -507,6 +517,7 @@ class TestQueryKnowledgeGraphIRPath:
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import (
             query_knowledge_graph,
         )
+
         with patch.dict(sys.modules, mock_modules):
             # WHEN calling query_knowledge_graph with ir_ops (skips parse_ir_ops_from_query)
             result = query_knowledge_graph(
@@ -526,6 +537,7 @@ class TestQueryKnowledgeGraphIRPath:
             query_knowledge_graph,
         )
         import json
+
         ops_json = json.dumps([{"op": "SeedEntities", "entity_ids": ["e1"]}])
         with patch.dict(sys.modules, mock_modules):
             # WHEN ir_ops is None — parse_ir_ops_from_query is called first
@@ -539,12 +551,14 @@ class TestQueryKnowledgeGraphIRPath:
     def test_non_ir_query_type_without_graph_id_raises(self):
         # GIVEN query_type that is not ir or legacy
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import query_knowledge_graph
+
         with pytest.raises(ValueError, match="graph_id is required"):
             query_knowledge_graph(query="MATCH (n) RETURN n", query_type="cypher")
 
     def test_ir_without_manifest_cid_raises_valueerror(self):
         # GIVEN query_type='ir' with no manifest_cid
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import query_knowledge_graph
+
         with pytest.raises(ValueError, match="manifest_cid is required"):
             query_knowledge_graph(
                 query='[{"op":"SeedEntities","entity_ids":["e1"]}]',
@@ -579,6 +593,7 @@ class TestQueryKnowledgeGraphLegacyUnifiedPath:
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import (
             query_knowledge_graph,
         )
+
         extra_mods = {
             "ipfs_datasets_py.processors.graphrag_processor": mock_fallback_mod,
         }
@@ -607,6 +622,7 @@ class TestQueryKnowledgeGraphLegacyUnifiedPath:
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import (
             query_knowledge_graph,
         )
+
         extra_mods = {
             "ipfs_datasets_py.processors.graphrag_processor": mock_fallback_mod,
         }

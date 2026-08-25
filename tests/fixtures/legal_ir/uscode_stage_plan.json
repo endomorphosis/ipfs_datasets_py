@@ -1,0 +1,70 @@
+{
+  "acceptance": {
+    "add_only": true,
+    "credentials_environment_only": true,
+    "deletion_impossible": true,
+    "force_push_impossible": true,
+    "manifest_explicit": true,
+    "mutation_requires_authorization": true,
+    "production_target_rejected_without_seal": true,
+    "revision_explicit": true,
+    "target_explicit": true,
+    "visibility_change_impossible": true
+  },
+  "base_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+  "code_version": "1",
+  "digest_sealed": false,
+  "fixture_id": "uscode-stage-plan-v1",
+  "forbidden_operations": [
+    "change_visibility",
+    "delete",
+    "delete_file",
+    "delete_folder",
+    "direct_main_upload",
+    "force",
+    "force-push",
+    "force_push",
+    "make_private",
+    "make_unlisted",
+    "overwrite_history",
+    "promote_production",
+    "rotate_credentials",
+    "set_private",
+    "set_unlisted",
+    "visibility_change"
+  ],
+  "generators": {
+    "candidate": "build_uscode_hf_release(fixture_family_rows())",
+    "include_legacy": true,
+    "include_recovery": true,
+    "planner": "plan_stage_from_release"
+  },
+  "goal_id": "USCIR-G080",
+  "legacy_files_deleted": false,
+  "network_required": false,
+  "notes": "Compact sealed recipe for safe US Code candidate staging dry-run packaging (USCIR-032). Expand via build_fixture_stage_plan(). Target/revision/manifest are explicit; deletion/force/visibility changes are impossible; credentials remain environment-only; mutation requires opt-in authorization.",
+  "operations": [
+    "add_only_upload"
+  ],
+  "package_version": "2",
+  "producer": "stage_uscode_sparse_graphrag.py",
+  "production_revision": "75cfc5982dc3a6808614cd4eb9b4238f8f9308b8",
+  "program_id": "uscode-sparse-graphrag-v1",
+  "release_point": "us/pl/118/45",
+  "release_profile": "publicus-ir-graphrag/v2",
+  "required_artifact_path_prefixes": [
+    "data/",
+    "indexes/",
+    "manifest.json",
+    "README.md",
+    "recovery/",
+    "reports/",
+    "uscode_parquet/"
+  ],
+  "schema": "ipfs_datasets_py/uscode-sparse-graphrag-stage-plan@1",
+  "staging_branch": "stage/uscode-sparse-graphrag-v2",
+  "task_id": "USCIR-032",
+  "target_repo": "justicedao/ipfs_uscode",
+  "visibility": "public",
+  "visibility_change_allowed": false
+}

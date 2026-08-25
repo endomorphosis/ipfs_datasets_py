@@ -14,6 +14,7 @@ set, which makes omission and reordering fail closed.
 
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import math
@@ -21,9 +22,26 @@ import os
 import struct
 import threading
 import zlib
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, Iterator, List, Mapping, Optional, Sequence, Tuple
+
+from ipfs_datasets_py.logic.formalization.checkpoints import (
+    IR_CHECKPOINT_ID_PREFIX,
+    IR_CHECKPOINT_MANIFEST_SCHEMA,
+    IR_CHECKPOINT_POINTER_SCHEMA,
+    IRCheckpointLifecycleError,
+    IRCheckpointManifest,
+    IRCheckpointPointer,
+    IRCheckpointPromotionError,
+    IRCheckpointSideOutcome,
+    IRCheckpointValidationError,
+    IRPromotionManifest,
+    MODAL_STATE_LEGACY_KIND,
+    verify_ir_checkpoint_manifest,
+    verify_lifecycle_transition,
+)
 
 from .modal_autoencoder_state_version import canonical_digest
 
@@ -63,6 +81,22 @@ class UnsupportedCheckpointError(ModalAutoencoderCheckpointError):
     """Raised for a well-framed but unsupported checkpoint version."""
 
 
+class CheckpointQuarantineError(ModalAutoencoderCheckpointError):
+    """Raised when torn, corrupt, stale, or mismatched state is isolated."""
+
+
+class AmbiguousCurrentPointerError(ModalAutoencoderCheckpointError):
+    """Raised when more than one current pointer is observed."""
+
+
+class IncompatibleManifestAliasError(ModalAutoencoderCheckpointError):
+    """Raised when a legacy manifest is treated as IRCheckpointManifest@1."""
+
+
+class ExclusiveCheckpointKeyError(ModalAutoencoderCheckpointError):
+    """Raised when an exclusive checkpoint-write or promotion key is busy."""
+
+
 def _json_bytes(value: Any) -> bytes:
     return json.dumps(
         value,
@@ -91,9 +125,7 @@ def _canonical_copy(value: Any) -> Any:
             str(key): _canonical_copy(item)
             for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
         }
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_canonical_copy(item) for item in value]
     raise TypeError(f"unsupported checkpoint value: {type(value).__name__}")
 
@@ -135,7 +167,9 @@ def _numeric_shape(value: Any) -> str:
     if all(
         isinstance(item, Sequence)
         and not isinstance(item, (str, bytes, bytearray))
-        and all(isinstance(number, (int, float)) and not isinstance(number, bool) for number in item)
+        and all(
+            isinstance(number, (int, float)) and not isinstance(number, bool) for number in item
+        )
         for item in values
     ):
         return "keyed_vectors"
@@ -219,9 +253,7 @@ def _encode_state_payload(
         else:
             leaves = list(_mapping_numeric_leaves(value))
             descriptor["paths"] = [list(path) for path, _number in leaves]
-            descriptor["empty_paths"] = [
-                list(path) for path in _mapping_empty_paths(value)
-            ]
+            descriptor["empty_paths"] = [list(path) for path in _mapping_empty_paths(value)]
             values = [number for _path, number in leaves]
 
         packed = bytearray()
@@ -264,12 +296,19 @@ def _decode_state_payload(
         index = json.loads(raw[index_start : index_start + index_length])
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise CheckpointCorruptionError("checkpoint table index is invalid JSON") from exc
-    if not isinstance(index, Mapping) or index.get("schema_version") != MODAL_AUTOENCODER_TABLE_SCHEMA_VERSION:
+    if (
+        not isinstance(index, Mapping)
+        or index.get("schema_version") != MODAL_AUTOENCODER_TABLE_SCHEMA_VERSION
+    ):
         raise UnsupportedCheckpointError("unsupported checkpoint table schema")
     metadata = index.get("metadata")
     tables = index.get("tables")
     component_digests = index.get("component_digests")
-    if not isinstance(metadata, Mapping) or not isinstance(tables, list) or not isinstance(component_digests, Mapping):
+    if (
+        not isinstance(metadata, Mapping)
+        or not isinstance(tables, list)
+        or not isinstance(component_digests, Mapping)
+    ):
         raise CheckpointCorruptionError("checkpoint table index has invalid fields")
     result = _canonical_copy(metadata)
     numeric_start = index_start + index_length
@@ -303,7 +342,11 @@ def _decode_state_payload(
         elif encoding == "keyed_vectors":
             keys = descriptor.get("keys")
             lengths = descriptor.get("row_lengths")
-            if not isinstance(keys, list) or not isinstance(lengths, list) or len(keys) != len(lengths):
+            if (
+                not isinstance(keys, list)
+                or not isinstance(lengths, list)
+                or len(keys) != len(lengths)
+            ):
                 raise CheckpointCorruptionError(f"invalid rows for {field_name}")
             rows: Dict[str, List[float]] = {}
             position = 0
@@ -397,7 +440,9 @@ def _parse_container(
 ) -> tuple[Dict[str, Any], bytes, int]:
     if offset < 0 or len(data) - offset < _HEADER.size:
         raise CheckpointCorruptionError("checkpoint container header is truncated")
-    magic, version, flags, manifest_length, payload_length, manifest_hash, payload_hash = _HEADER.unpack_from(data, offset)
+    magic, version, flags, manifest_length, payload_length, manifest_hash, payload_hash = (
+        _HEADER.unpack_from(data, offset)
+    )
     if expected_magic is not None and magic != expected_magic:
         raise UnsupportedCheckpointError("unexpected checkpoint container kind")
     if magic not in (CHECKPOINT_MAGIC, DELTA_MAGIC):
@@ -606,8 +651,8 @@ def serialize_checkpoint(
     """Serialize a full state into the safe compact binary format."""
 
     source_data = _state_data(state)
-    _source_digest, source_revision, _source_lineage, _source_components, _source_schema = _identity_record(
-        state, metric_lineage
+    _source_digest, source_revision, _source_lineage, _source_components, _source_schema = (
+        _identity_record(state, metric_lineage)
     )
     effective_revision = source_revision if revision is None else int(revision)
     data = _quantized_copy(source_data, float_precision)
@@ -622,15 +667,18 @@ def serialize_checkpoint(
         component_digests=component_digests,
     )
     payload_checksum = _sha256(payload)
-    checkpoint_id = "lir-mae-checkpoint-" + canonical_digest(
-        {
-            "metric_lineage_digest": lineage_digest,
-            "payload_checksum": payload_checksum,
-            "revision": effective_revision,
-            "state_digest": digest,
-            "state_schema_version": state_schema,
-        }
-    )[:32]
+    checkpoint_id = (
+        "lir-mae-checkpoint-"
+        + canonical_digest(
+            {
+                "metric_lineage_digest": lineage_digest,
+                "payload_checksum": payload_checksum,
+                "revision": effective_revision,
+                "state_digest": digest,
+                "state_schema_version": state_schema,
+            }
+        )[:32]
+    )
     manifest = CheckpointManifest(
         schema_version=MODAL_AUTOENCODER_CHECKPOINT_SCHEMA_VERSION,
         kind="full",
@@ -661,11 +709,15 @@ def serialize_delta(
 ) -> bytes:
     """Serialize whole replacements for only the components that changed."""
 
-    _source_base_digest, source_base_revision, _source_base_lineage, _source_base_components, _source_base_schema = _identity_record(
-        base_state, metric_lineage
-    )
-    _source_digest, source_revision, _source_lineage, _source_components, _source_schema = _identity_record(
-        state, metric_lineage
+    (
+        _source_base_digest,
+        source_base_revision,
+        _source_base_lineage,
+        _source_base_components,
+        _source_base_schema,
+    ) = _identity_record(base_state, metric_lineage)
+    _source_digest, source_revision, _source_lineage, _source_components, _source_schema = (
+        _identity_record(state, metric_lineage)
     )
     base_data = _quantized_copy(_state_data(base_state), float_precision)
     data = _quantized_copy(_state_data(state), float_precision)
@@ -704,15 +756,18 @@ def serialize_delta(
         include_components=changed,
     )
     payload_checksum = _sha256(payload)
-    delta_id = "lir-mae-delta-" + canonical_digest(
-        {
-            "base_revision": effective_base_revision,
-            "base_state_digest": base_digest,
-            "payload_checksum": payload_checksum,
-            "revision": effective_revision,
-            "state_digest": digest,
-        }
-    )[:32]
+    delta_id = (
+        "lir-mae-delta-"
+        + canonical_digest(
+            {
+                "base_revision": effective_base_revision,
+                "base_state_digest": base_digest,
+                "payload_checksum": payload_checksum,
+                "revision": effective_revision,
+                "state_digest": digest,
+            }
+        )[:32]
+    )
     manifest = CheckpointManifest(
         schema_version=MODAL_AUTOENCODER_DELTA_SCHEMA_VERSION,
         kind="delta",
@@ -739,7 +794,11 @@ def _validate_manifest_payload(manifest: CheckpointManifest, payload: bytes, *, 
         raise CheckpointCorruptionError(f"invalid {kind} checkpoint manifest")
     if manifest.payload_checksum != _sha256(payload):
         raise CheckpointCorruptionError("manifest payload checksum mismatch")
-    if not manifest.state_schema_version or not manifest.state_digest or not manifest.metric_lineage_digest:
+    if (
+        not manifest.state_schema_version
+        or not manifest.state_digest
+        or not manifest.metric_lineage_digest
+    ):
         raise CheckpointCorruptionError("checkpoint lineage fields are incomplete")
 
 
@@ -789,7 +848,10 @@ def _verify_loaded_state(
     expected_metric_lineage: Any,
     expected_revision: Optional[int],
 ) -> None:
-    if expected_state_schema_version is not None and manifest.state_schema_version != expected_state_schema_version:
+    if (
+        expected_state_schema_version is not None
+        and manifest.state_schema_version != expected_state_schema_version
+    ):
         raise CheckpointLineageError(
             f"state schema mismatch: expected {expected_state_schema_version!r}, got {manifest.state_schema_version!r}"
         )
@@ -798,9 +860,7 @@ def _verify_loaded_state(
             f"state revision mismatch: expected {expected_revision}, got {manifest.revision}"
         )
     effective_metric_lineage = (
-        manifest.metric_lineage
-        if expected_metric_lineage is None
-        else expected_metric_lineage
+        manifest.metric_lineage if expected_metric_lineage is None else expected_metric_lineage
     )
     digest, revision, lineage_digest, components, schema = _identity_record(
         state, effective_metric_lineage
@@ -832,7 +892,9 @@ def _json_load_result(
     if not isinstance(value, Mapping):
         raise CheckpointCorruptionError("legacy JSON state must be an object")
     state = _state_from_data(value, state_factory)
-    digest, revision, lineage_digest, components, schema = _identity_record(state, expected_metric_lineage)
+    digest, revision, lineage_digest, components, schema = _identity_record(
+        state, expected_metric_lineage
+    )
     if expected_state_schema_version is not None and schema != expected_state_schema_version:
         raise CheckpointLineageError("legacy JSON state schema mismatch")
     if expected_revision is not None and revision != int(expected_revision):
@@ -856,7 +918,9 @@ def _json_load_result(
     return CheckpointLoadResult(state=state, manifest=manifest, format="json")
 
 
-def iter_delta_segments(data: bytes, *, recover_truncated_tail: bool = True) -> tuple[List[tuple[CheckpointManifest, bytes]], int, int]:
+def iter_delta_segments(
+    data: bytes, *, recover_truncated_tail: bool = True
+) -> tuple[List[tuple[CheckpointManifest, bytes]], int, int]:
     """Decode complete delta frames and report valid offset/recovered bytes."""
 
     segments: List[tuple[CheckpointManifest, bytes]] = []
@@ -919,7 +983,10 @@ def _apply_delta(
         expected_metric_lineage=metric_lineage,
         expected_revision=delta_manifest.revision,
     )
-    if not delta_manifest.changed_components and delta_manifest.state_digest != current_manifest.state_digest:
+    if (
+        not delta_manifest.changed_components
+        and delta_manifest.state_digest != current_manifest.state_digest
+    ):
         raise CheckpointCorruptionError("metadata-only delta changes state identity")
     return next_state
 
@@ -1104,18 +1171,782 @@ load_state_checkpoint = load_checkpoint
 serialize_full_checkpoint = serialize_checkpoint
 
 
+CHECKPOINT_WRITE_KEY = "checkpoint-write"
+PROMOTION_KEY = "promotion"
+_POINTER_NAME = "CURRENT.json"
+_QUARANTINE_REASONS = frozenset({"torn", "corrupt", "stale", "mismatched"})
+
+
+def _safe_checkpoint_filename(checkpoint_id: str) -> str:
+    if not checkpoint_id.startswith(IR_CHECKPOINT_ID_PREFIX) or "/" in checkpoint_id:
+        raise CheckpointCorruptionError(f"unsafe checkpoint id: {checkpoint_id!r}")
+    return checkpoint_id.replace(":", "_") + ".json"
+
+
+def _json_dump(value: Mapping[str, Any]) -> bytes:
+    return json.dumps(
+        value,
+        allow_nan=False,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8") + b"\n"
+
+
+def _atomic_write_bytes(path: Path, payload: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(
+        f".{path.name}.tmp-{os.getpid()}-{threading.get_ident()}"
+    )
+    try:
+        with temporary.open("wb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+        if os.name != "nt":
+            fd = os.open(str(path.parent), os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+            try:
+                os.fsync(fd)
+            finally:
+                os.close(fd)
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def reject_incompatible_manifest_alias(value: Mapping[str, Any] | CheckpointManifest) -> None:
+    """Fail closed if a compact/legacy modal manifest is treated as semantic."""
+
+    if isinstance(value, CheckpointManifest):
+        schema = value.schema_version
+    else:
+        schema = str(value.get("schema_version") or "")
+    if schema == IR_CHECKPOINT_MANIFEST_SCHEMA:
+        raise IncompatibleManifestAliasError(
+            "IRCheckpointManifest@1 is not a modal autoencoder state manifest"
+        )
+    if schema in {MODAL_AUTOENCODER_CHECKPOINT_SCHEMA_VERSION, MODAL_AUTOENCODER_DELTA_SCHEMA_VERSION}:
+        return
+    if schema in {IR_CHECKPOINT_POINTER_SCHEMA, "formalization-checkpoint-manifest/v1"}:
+        raise IncompatibleManifestAliasError(
+            f"incompatible manifest aliasing: {schema!r} is not a modal state manifest"
+        )
+
+
+def adapt_modal_state_manifest(
+    manifest: CheckpointManifest | Mapping[str, Any],
+    *,
+    identities: Mapping[str, Any],
+    checkpoint_id: str,
+    parent_checkpoint_id: str = "",
+    lifecycle_state: str = "created",
+) -> IRCheckpointManifest:
+    """Project a compact modal-state manifest into IRCheckpointManifest@1.
+
+    The operational numeric container remains a distinct document.  This
+    adapter never aliases that container as the semantic checkpoint schema.
+    """
+
+    if isinstance(manifest, Mapping):
+        reject_incompatible_manifest_alias(manifest)
+        legacy = CheckpointManifest.from_dict(manifest)
+    else:
+        legacy = manifest
+        reject_incompatible_manifest_alias(legacy)
+    if legacy.schema_version not in {
+        MODAL_AUTOENCODER_CHECKPOINT_SCHEMA_VERSION,
+        MODAL_AUTOENCODER_DELTA_SCHEMA_VERSION,
+    }:
+        raise IncompatibleManifestAliasError(
+            f"unsupported modal state schema for adapter: {legacy.schema_version!r}"
+        )
+    supplied = dict(identities)
+    supplied.setdefault("state_digest", legacy.state_digest)
+    supplied.setdefault("metric_lineage_digest", legacy.metric_lineage_digest)
+    supplied["legacy_manifest_digest"] = (
+        "sha256:" + hashlib.sha256(_json_dump(legacy.to_dict())).hexdigest()
+    )
+    supplied.setdefault("weights_digest", supplied["legacy_manifest_digest"])
+    outcome = IRCheckpointSideOutcome(
+        kind="compatibility_adapter_receipt",
+        subject_checkpoint_id=checkpoint_id,
+        reason="adapted modal autoencoder state manifest without schema aliasing",
+        metadata={
+            "legacy_checkpoint_id": legacy.checkpoint_id,
+            "legacy_kind": legacy.kind,
+            "legacy_schema": legacy.schema_version,
+            "legacy_revision": legacy.revision,
+        },
+    )
+    return IRCheckpointManifest(
+        checkpoint_id=checkpoint_id,
+        parent_checkpoint_id=parent_checkpoint_id,
+        lifecycle_state=lifecycle_state,
+        source_kind="adapted_modal_state",
+        feature_schema_version=str(
+            supplied.get("feature_schema_version") or "modal-autoencoder-features/v1"
+        ),
+        state_schema_version=legacy.state_schema_version,
+        revision=legacy.revision,
+        authority=False,
+        legacy_manifest_kind=MODAL_STATE_LEGACY_KIND,
+        architecture_identity=supplied["architecture_identity"],
+        tokenizer_identity=supplied["tokenizer_identity"],
+        vocabulary_identity=supplied["vocabulary_identity"],
+        corpus_root=supplied["corpus_root"],
+        split_root=supplied["split_root"],
+        curriculum_identity=supplied["curriculum_identity"],
+        loss_configuration_identity=supplied["loss_configuration_identity"],
+        optimizer_identity=supplied["optimizer_identity"],
+        scheduler_identity=supplied["scheduler_identity"],
+        data_cursor=supplied["data_cursor"],
+        random_state=supplied["random_state"],
+        environment_identity=supplied["environment_identity"],
+        code_identity=supplied["code_identity"],
+        compiler_identity=supplied["compiler_identity"],
+        decompiler_identity=supplied["decompiler_identity"],
+        campaign_identity=supplied["campaign_identity"],
+        training_config_identity=supplied["training_config_identity"],
+        ontology_identity=supplied["ontology_identity"],
+        view_registry_identity=supplied["view_registry_identity"],
+        state_digest=supplied["state_digest"],
+        weights_digest=supplied["weights_digest"],
+        metric_lineage_digest=supplied["metric_lineage_digest"],
+        legacy_manifest_digest=supplied["legacy_manifest_digest"],
+        side_outcomes=(outcome,),
+    )
+
+
+@dataclass(frozen=True)
+class CheckpointLifecycleResult:
+    """Result of one exclusive lifecycle mutation."""
+
+    manifest: IRCheckpointManifest
+    pointer: Optional[IRCheckpointPointer] = None
+    quarantined: bool = False
+    recovered_tmp_files: int = 0
+    outcomes: Tuple[IRCheckpointSideOutcome, ...] = ()
+
+
+class CheckpointLifecycleStore:
+    """Closed created-to-promoted lifecycle with a single CAS current pointer.
+
+    Exclusive keys ``checkpoint-write`` and ``promotion`` serialize durable
+    mutations.  Torn, corrupt, stale, and mismatched records are quarantined
+    and never become the current pointer.
+    """
+
+    def __init__(self, root: str | Path) -> None:
+        self.root = Path(root)
+        self.manifests_dir = self.root / "manifests"
+        self.outcomes_dir = self.root / "outcomes"
+        self.quarantine_dir = self.root / "quarantine"
+        self.pointer_dir = self.root / "pointer"
+        self.keys_dir = self.root / "keys"
+        for path in (
+            self.manifests_dir,
+            self.outcomes_dir,
+            self.quarantine_dir,
+            self.pointer_dir,
+            self.keys_dir,
+        ):
+            path.mkdir(parents=True, exist_ok=True)
+
+    @contextmanager
+    def exclusive_key(self, name: str) -> Iterator[None]:
+        if name not in {CHECKPOINT_WRITE_KEY, PROMOTION_KEY}:
+            raise ExclusiveCheckpointKeyError(f"unknown exclusive key: {name!r}")
+        lock_path = self.keys_dir / f"{name}.lock"
+        fd = os.open(str(lock_path), os.O_CREAT | os.O_RDWR, 0o644)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+            yield
+        finally:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
+
+    def _manifest_path(self, checkpoint_id: str) -> Path:
+        return self.manifests_dir / _safe_checkpoint_filename(checkpoint_id)
+
+    def _quarantine_path(self, checkpoint_id: str) -> Path:
+        return self.quarantine_dir / _safe_checkpoint_filename(checkpoint_id)
+
+    def _pointer_path(self) -> Path:
+        return self.pointer_dir / _POINTER_NAME
+
+    def _write_manifest(self, manifest: IRCheckpointManifest) -> None:
+        verify_ir_checkpoint_manifest(manifest)
+        _atomic_write_bytes(self._manifest_path(manifest.checkpoint_id), _json_dump(manifest.to_dict()))
+
+    def _write_outcome(self, outcome: IRCheckpointSideOutcome) -> None:
+        name = outcome.kind + "-" + outcome.digest.removeprefix("sha256:")[:32] + ".json"
+        _atomic_write_bytes(self.outcomes_dir / name, _json_dump(outcome.to_dict()))
+
+    def _load_manifest_bytes(self, path: Path) -> IRCheckpointManifest:
+        raw = path.read_bytes()
+        try:
+            payload = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise CheckpointCorruptionError("checkpoint lifecycle record is invalid JSON") from exc
+        if not isinstance(payload, Mapping):
+            raise CheckpointCorruptionError("checkpoint lifecycle record must be an object")
+        if payload.get("schema_version") != IR_CHECKPOINT_MANIFEST_SCHEMA:
+            raise IncompatibleManifestAliasError(
+                "lifecycle store rejects incompatible manifest aliasing"
+            )
+        return verify_ir_checkpoint_manifest(payload)
+
+    def get(self, checkpoint_id: str) -> IRCheckpointManifest:
+        path = self._manifest_path(checkpoint_id)
+        if not path.exists():
+            raise CheckpointCorruptionError(f"missing checkpoint {checkpoint_id}")
+        return self._load_manifest_bytes(path)
+
+    def current_pointer(self) -> Optional[IRCheckpointPointer]:
+        aliases = list(self.pointer_dir.glob("CURRENT*"))
+        durable = [path for path in aliases if path.name == _POINTER_NAME]
+        extras = [
+            path
+            for path in aliases
+            if path.name != _POINTER_NAME and ".tmp-" not in path.name
+        ]
+        if len(durable) > 1 or extras:
+            raise AmbiguousCurrentPointerError("ambiguous current pointer")
+        path = self._pointer_path()
+        if not path.exists():
+            return None
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise CheckpointCorruptionError("current pointer is corrupt") from exc
+        if not isinstance(payload, Mapping):
+            raise CheckpointCorruptionError("current pointer must be an object")
+        return IRCheckpointPointer.from_dict(payload)
+
+    def create(self, manifest: IRCheckpointManifest) -> CheckpointLifecycleResult:
+        verified = verify_ir_checkpoint_manifest(manifest)
+        if verified.lifecycle_state != "created":
+            raise IRCheckpointLifecycleError(
+                "new checkpoints must enter the store in the created state"
+            )
+        if verified.authority:
+            raise IRCheckpointPromotionError("a created checkpoint cannot carry authority")
+        with self.exclusive_key(CHECKPOINT_WRITE_KEY):
+            path = self._manifest_path(verified.checkpoint_id)
+            if path.exists():
+                existing = self._load_manifest_bytes(path)
+                if existing.digest != verified.digest:
+                    raise CheckpointLineageError(
+                        "checkpoint id already binds a different artifact identity"
+                    )
+                return CheckpointLifecycleResult(manifest=existing)
+            self._write_manifest(verified)
+            for outcome in verified.side_outcomes:
+                self._write_outcome(outcome)
+        return CheckpointLifecycleResult(manifest=verified, outcomes=verified.side_outcomes)
+
+    def transition(
+        self,
+        checkpoint_id: str,
+        next_state: str,
+        *,
+        reason: str,
+        extra_outcomes: Sequence[IRCheckpointSideOutcome] = (),
+        authority: bool | None = None,
+    ) -> CheckpointLifecycleResult:
+        with self.exclusive_key(CHECKPOINT_WRITE_KEY):
+            current = self.get(checkpoint_id)
+            verify_lifecycle_transition(current.lifecycle_state, next_state)
+            if next_state == "promoted":
+                raise IRCheckpointPromotionError(
+                    "promotion must go through compare-and-swap promotion"
+                )
+            outcomes = list(extra_outcomes)
+            if next_state == "rejected":
+                outcomes.append(
+                    IRCheckpointSideOutcome(
+                        kind="rejection_receipt",
+                        subject_checkpoint_id=checkpoint_id,
+                        reason=reason,
+                    )
+                )
+            updated = current.with_lifecycle(
+                next_state,
+                authority=False if authority is None else authority,
+                side_outcomes=outcomes,
+            )
+            self._write_manifest(updated)
+            for outcome in updated.side_outcomes:
+                self._write_outcome(outcome)
+            return CheckpointLifecycleResult(manifest=updated, outcomes=tuple(outcomes))
+
+    def quarantine(
+        self,
+        checkpoint_id: str,
+        *,
+        reason: str,
+        kind: str,
+        raw: bytes | None = None,
+    ) -> CheckpointLifecycleResult:
+        if kind not in _QUARANTINE_REASONS:
+            raise CheckpointQuarantineError(f"unsupported quarantine kind: {kind!r}")
+        with self.exclusive_key(CHECKPOINT_WRITE_KEY):
+            return self._quarantine_locked(
+                checkpoint_id, reason=reason, kind=kind, raw=raw
+            )
+
+    def _quarantine_locked(
+        self,
+        checkpoint_id: str,
+        *,
+        reason: str,
+        kind: str,
+        raw: bytes | None = None,
+    ) -> CheckpointLifecycleResult:
+        path = self._manifest_path(checkpoint_id)
+        payload: Dict[str, Any]
+        try:
+            current = self.get(checkpoint_id)
+            if current.lifecycle_state != "quarantined":
+                current = current.with_lifecycle(
+                    "quarantined",
+                    authority=False,
+                    side_outcomes=(
+                        IRCheckpointSideOutcome(
+                            kind="quarantine_receipt",
+                            subject_checkpoint_id=checkpoint_id,
+                            reason=f"{kind}: {reason}",
+                            metadata={"kind": kind},
+                        ),
+                    ),
+                )
+            payload = current.to_dict()
+        except (
+            CheckpointCorruptionError,
+            IncompatibleManifestAliasError,
+            IRCheckpointValidationError,
+            FileNotFoundError,
+        ):
+            payload = {
+                "checkpoint_id": checkpoint_id,
+                "kind": kind,
+                "reason": reason,
+                "schema_version": "IRCheckpointQuarantine@1",
+            }
+            current = None
+        if raw is not None:
+            payload["raw_sha256"] = "sha256:" + hashlib.sha256(raw).hexdigest()
+        _atomic_write_bytes(self._quarantine_path(checkpoint_id), _json_dump(payload))
+        if path.exists():
+            path.unlink()
+        pointer = None
+        try:
+            pointer = self.current_pointer()
+        except (AmbiguousCurrentPointerError, CheckpointCorruptionError):
+            pointer = None
+        if pointer is not None and pointer.checkpoint_id == checkpoint_id:
+            try:
+                self._pointer_path().unlink()
+            except FileNotFoundError:
+                pass
+            pointer = None
+        if current is not None:
+            for outcome in current.side_outcomes:
+                self._write_outcome(outcome)
+            return CheckpointLifecycleResult(
+                manifest=current,
+                pointer=pointer,
+                quarantined=True,
+                outcomes=current.side_outcomes,
+            )
+        raise CheckpointQuarantineError(f"{kind} checkpoint quarantined: {reason}")
+
+    def _cas_pointer(
+        self,
+        expected: Optional[IRCheckpointPointer],
+        nxt: IRCheckpointPointer,
+    ) -> IRCheckpointPointer:
+        try:
+            current = self.current_pointer()
+        except AmbiguousCurrentPointerError as exc:
+            raise AmbiguousCurrentPointerError("ambiguous current pointer") from exc
+        expected_id = expected.checkpoint_id if expected is not None else ""
+        current_id = current.checkpoint_id if current is not None else ""
+        expected_fence = expected.fence if expected is not None else -1
+        current_fence = current.fence if current is not None else -1
+        if current_id != expected_id or (
+            current is not None and current.fence != expected_fence
+        ):
+            raise IRCheckpointPromotionError(
+                "stale compare-and-swap current pointer "
+                f"(expected {expected_id!r}/{expected_fence}, observed {current_id!r}/{current_fence})"
+            )
+        _atomic_write_bytes(self._pointer_path(), _json_dump(nxt.to_dict()))
+        return nxt
+
+    def promote(self, promotion: IRPromotionManifest) -> CheckpointLifecycleResult:
+        decision = IRPromotionManifest.from_dict(promotion.to_dict())
+        if decision.decision != "promote":
+            raise IRCheckpointPromotionError(
+                f"promotion manifest decision is {decision.decision!r}"
+            )
+        if decision.loss_only:
+            raise IRCheckpointPromotionError("loss-only promotion is prohibited")
+        if decision.self_promotion:
+            raise IRCheckpointPromotionError("self-promotion is prohibited")
+        with self.exclusive_key(PROMOTION_KEY):
+            with self.exclusive_key(CHECKPOINT_WRITE_KEY):
+                candidate = self.get(decision.candidate_checkpoint_id)
+                baseline = self.get(decision.baseline_checkpoint_id)
+                if candidate.digest == baseline.digest:
+                    raise IRCheckpointPromotionError("self-promotion is prohibited")
+                if candidate.lifecycle_state != "admitted":
+                    raise IRCheckpointLifecycleError(
+                        "only an admitted checkpoint may be promoted"
+                    )
+                if candidate.authority:
+                    raise IRCheckpointPromotionError(
+                        "candidate already records authority; refuse self-promotion"
+                    )
+                expected = None
+                if decision.expected_current_pointer:
+                    current = self.current_pointer()
+                    if current is None or current.checkpoint_id != decision.expected_current_pointer:
+                        raise IRCheckpointPromotionError(
+                            "promotion expected_current_pointer does not match store"
+                        )
+                    if current.checkpoint_id == candidate.checkpoint_id:
+                        raise IRCheckpointPromotionError("self-promotion is prohibited")
+                    expected = current
+                elif self.current_pointer() is not None:
+                    raise IRCheckpointPromotionError(
+                        "promotion must name the expected current pointer"
+                    )
+                outcomes = [
+                    IRCheckpointSideOutcome(
+                        kind="promotion_receipt",
+                        subject_checkpoint_id=candidate.checkpoint_id,
+                        related_checkpoint_id=baseline.checkpoint_id,
+                        reason=decision.reason,
+                        metadata={
+                            "admitted_gates": list(decision.admitted_gates),
+                            "promotion_id": decision.promotion_id,
+                            "promotion_digest": decision.digest,
+                        },
+                    )
+                ]
+                fence = (expected.fence + 1) if expected is not None else 0
+                if expected is not None:
+                    previous = self.get(expected.checkpoint_id)
+                    superseded = previous.with_lifecycle(
+                        "superseded",
+                        authority=False,
+                        side_outcomes=(
+                            IRCheckpointSideOutcome(
+                                kind="supersession_receipt",
+                                subject_checkpoint_id=previous.checkpoint_id,
+                                related_checkpoint_id=candidate.checkpoint_id,
+                                reason="replaced by admitted promotion",
+                            ),
+                        ),
+                    )
+                    self._write_manifest(superseded)
+                    for outcome in superseded.side_outcomes:
+                        self._write_outcome(outcome)
+                pointer_outcome = IRCheckpointSideOutcome(
+                    kind="current_pointer",
+                    subject_checkpoint_id=candidate.checkpoint_id,
+                    related_checkpoint_id=baseline.checkpoint_id,
+                    reason="compare-and-swap current pointer",
+                    metadata={"fence": fence},
+                )
+                promoted = candidate.with_lifecycle(
+                    "promoted",
+                    authority=True,
+                    side_outcomes=tuple(outcomes) + (pointer_outcome,),
+                )
+                self._write_manifest(promoted)
+                for outcome in promoted.side_outcomes:
+                    self._write_outcome(outcome)
+                pointer = self._cas_pointer(
+                    expected,
+                    IRCheckpointPointer.from_manifest(promoted, fence=fence),
+                )
+                return CheckpointLifecycleResult(
+                    manifest=promoted,
+                    pointer=pointer,
+                    outcomes=tuple(outcomes) + (pointer_outcome,),
+                )
+
+    def reject(self, promotion: IRPromotionManifest) -> CheckpointLifecycleResult:
+        decision = IRPromotionManifest.from_dict(promotion.to_dict())
+        if decision.decision == "promote":
+            raise IRCheckpointPromotionError("reject requires a non-promote decision")
+        return self.transition(
+            decision.candidate_checkpoint_id,
+            "rejected",
+            reason=decision.reason,
+            extra_outcomes=(
+                IRCheckpointSideOutcome(
+                    kind="rejection_receipt",
+                    subject_checkpoint_id=decision.candidate_checkpoint_id,
+                    related_checkpoint_id=decision.baseline_checkpoint_id,
+                    reason=decision.reason,
+                    metadata={"decision": decision.decision},
+                ),
+            ),
+        )
+
+    def rollback(
+        self,
+        *,
+        expected_current: str,
+        prior_checkpoint_id: str,
+        reason: str,
+    ) -> CheckpointLifecycleResult:
+        with self.exclusive_key(PROMOTION_KEY):
+            with self.exclusive_key(CHECKPOINT_WRITE_KEY):
+                current = self.current_pointer()
+                if current is None or current.checkpoint_id != expected_current:
+                    raise IRCheckpointPromotionError(
+                        "rollback compare-and-swap lost: current pointer mismatch"
+                    )
+                promoted = self.get(expected_current)
+                prior = self.get(prior_checkpoint_id)
+                if prior.lifecycle_state not in {"superseded", "promoted", "admitted"}:
+                    raise IRCheckpointLifecycleError(
+                        "rollback target is not an admitted prior pointer"
+                    )
+                fence = current.fence + 1
+                rollback_outcome = IRCheckpointSideOutcome(
+                    kind="rollback_receipt",
+                    subject_checkpoint_id=promoted.checkpoint_id,
+                    related_checkpoint_id=prior.checkpoint_id,
+                    reason=reason,
+                )
+                rolled = promoted.with_lifecycle(
+                    "rolled_back",
+                    authority=False,
+                    side_outcomes=(rollback_outcome,),
+                )
+                pointer_outcome = IRCheckpointSideOutcome(
+                    kind="current_pointer",
+                    subject_checkpoint_id=prior.checkpoint_id,
+                    related_checkpoint_id=promoted.checkpoint_id,
+                    reason="rollback restored prior pointer",
+                    metadata={"fence": fence},
+                )
+                restored = IRCheckpointManifest.from_dict(
+                    {
+                        **prior.to_dict(),
+                        "authority": True,
+                        "lifecycle_state": "promoted",
+                        "side_outcomes": [
+                            item.to_dict()
+                            for item in (*prior.side_outcomes, pointer_outcome)
+                        ],
+                    }
+                )
+                self._write_manifest(rolled)
+                self._write_manifest(restored)
+                for outcome in (*rolled.side_outcomes, *restored.side_outcomes):
+                    self._write_outcome(outcome)
+                pointer = self._cas_pointer(
+                    current,
+                    IRCheckpointPointer.from_manifest(restored, fence=fence),
+                )
+                return CheckpointLifecycleResult(
+                    manifest=restored,
+                    pointer=pointer,
+                    outcomes=(rollback_outcome, pointer_outcome),
+                )
+
+    def restart(self) -> CheckpointLifecycleResult | None:
+        """Reconcile the store after a crash.  Never invent a current pointer."""
+
+        recovered = 0
+        with self.exclusive_key(CHECKPOINT_WRITE_KEY):
+            for directory in (
+                self.manifests_dir,
+                self.pointer_dir,
+                self.outcomes_dir,
+                self.quarantine_dir,
+            ):
+                for leftover in directory.glob(".*.tmp-*"):
+                    leftover.unlink()
+                    recovered += 1
+            for path in sorted(self.manifests_dir.glob("*.json")):
+                try:
+                    manifest = self._load_manifest_bytes(path)
+                    expected_name = _safe_checkpoint_filename(manifest.checkpoint_id)
+                    if path.name != expected_name:
+                        raise CheckpointCorruptionError("mismatched checkpoint filename")
+                    if manifest.digest != verify_ir_checkpoint_manifest(manifest).digest:
+                        raise CheckpointCorruptionError("mismatched artifact identity")
+                except (
+                    CheckpointCorruptionError,
+                    IncompatibleManifestAliasError,
+                    IRCheckpointValidationError,
+                    OSError,
+                ) as exc:
+                    checkpoint_id = path.stem.replace("_", ":", 2)
+                    if not checkpoint_id.startswith(IR_CHECKPOINT_ID_PREFIX):
+                        checkpoint_id = IR_CHECKPOINT_ID_PREFIX + path.stem
+                    try:
+                        kind = (
+                            "corrupt"
+                            if any(
+                                token in str(exc).lower()
+                                for token in ("corrupt", "invalid", "json")
+                            )
+                            else "mismatched"
+                        )
+                        self._quarantine_locked(
+                            checkpoint_id,
+                            reason=str(exc),
+                            kind=kind,
+                            raw=path.read_bytes() if path.exists() else None,
+                        )
+                    except CheckpointQuarantineError:
+                        continue
+            pointer: Optional[IRCheckpointPointer]
+            try:
+                pointer = self.current_pointer()
+            except AmbiguousCurrentPointerError:
+                for path in self.pointer_dir.glob("CURRENT*"):
+                    if ".tmp-" in path.name:
+                        continue
+                    quarantined = self.quarantine_dir / f"pointer-{path.name}"
+                    _atomic_write_bytes(quarantined, path.read_bytes())
+                    path.unlink()
+                raise
+            except CheckpointCorruptionError as exc:
+                path = self._pointer_path()
+                if path.exists():
+                    _atomic_write_bytes(
+                        self.quarantine_dir / "pointer-CURRENT.json",
+                        _json_dump({"kind": "corrupt", "reason": str(exc)}),
+                    )
+                    path.unlink()
+                return self._empty_restart_result(recovered, str(exc))
+            if pointer is None:
+                return None
+            try:
+                manifest = self.get(pointer.checkpoint_id)
+            except CheckpointCorruptionError:
+                path = self._pointer_path()
+                if path.exists():
+                    path.unlink()
+                return None
+            if manifest.digest != pointer.artifact_digest:
+                self._quarantine_locked(
+                    pointer.checkpoint_id,
+                    reason="current pointer artifact digest is mismatched",
+                    kind="mismatched",
+                )
+                return None
+            if manifest.lifecycle_state != "promoted":
+                self._quarantine_locked(
+                    pointer.checkpoint_id,
+                    reason="current pointer is stale",
+                    kind="stale",
+                )
+                return None
+            if manifest.record_digest != pointer.record_digest:
+                refreshed = IRCheckpointPointer.from_manifest(
+                    manifest, fence=pointer.fence
+                )
+                _atomic_write_bytes(self._pointer_path(), _json_dump(refreshed.to_dict()))
+                pointer = refreshed
+            return CheckpointLifecycleResult(
+                manifest=manifest,
+                pointer=pointer,
+                recovered_tmp_files=recovered,
+            )
+
+    def _empty_restart_result(
+        self, recovered: int, reason: str
+    ) -> CheckpointLifecycleResult:
+        return CheckpointLifecycleResult(
+            manifest=_unpromotable_placeholder(reason),
+            quarantined=True,
+            recovered_tmp_files=recovered,
+        )
+
+
+def _unpromotable_placeholder(reason: str) -> IRCheckpointManifest:
+    digest = "sha256:" + hashlib.sha256(reason.encode("utf-8")).hexdigest()
+    identities = {
+        name: digest
+        for name in (
+            "architecture_identity",
+            "tokenizer_identity",
+            "vocabulary_identity",
+            "corpus_root",
+            "split_root",
+            "curriculum_identity",
+            "loss_configuration_identity",
+            "optimizer_identity",
+            "scheduler_identity",
+            "data_cursor",
+            "random_state",
+            "environment_identity",
+            "code_identity",
+            "compiler_identity",
+            "decompiler_identity",
+            "campaign_identity",
+            "training_config_identity",
+            "ontology_identity",
+            "view_registry_identity",
+            "state_digest",
+            "weights_digest",
+            "metric_lineage_digest",
+            "legacy_manifest_digest",
+        )
+    }
+    return IRCheckpointManifest(
+        checkpoint_id="ir:checkpoint:quarantine-placeholder",
+        lifecycle_state="quarantined",
+        source_kind="semantic",
+        feature_schema_version="ir-checkpoint-quarantine/v1",
+        state_schema_version="ir-checkpoint-quarantine/v1",
+        authority=False,
+        **identities,
+        side_outcomes=(
+            IRCheckpointSideOutcome(
+                kind="quarantine_receipt",
+                subject_checkpoint_id="ir:checkpoint:quarantine-placeholder",
+                reason=reason,
+                metadata={"kind": "corrupt"},
+            ),
+        ),
+    )
+
+
 __all__ = [
     "CHECKPOINT_MAGIC",
+    "CHECKPOINT_WRITE_KEY",
     "DELTA_MAGIC",
     "MODAL_AUTOENCODER_CHECKPOINT_SCHEMA_VERSION",
     "MODAL_AUTOENCODER_DELTA_SCHEMA_VERSION",
     "MODAL_AUTOENCODER_TABLE_SCHEMA_VERSION",
+    "PROMOTION_KEY",
+    "AmbiguousCurrentPointerError",
     "CheckpointCorruptionError",
+    "CheckpointLifecycleResult",
+    "CheckpointLifecycleStore",
     "CheckpointLineageError",
     "CheckpointLoadResult",
     "CheckpointManifest",
+    "CheckpointQuarantineError",
+    "ExclusiveCheckpointKeyError",
+    "IncompatibleManifestAliasError",
     "ModalAutoencoderCheckpointError",
     "UnsupportedCheckpointError",
+    "adapt_modal_state_manifest",
     "append_delta_segment",
     "append_state_delta",
     "deserialize_checkpoint",
@@ -1123,6 +1954,7 @@ __all__ = [
     "load_checkpoint",
     "load_state_checkpoint",
     "quantize_float",
+    "reject_incompatible_manifest_alias",
     "save_checkpoint",
     "serialize_checkpoint",
     "serialize_delta",

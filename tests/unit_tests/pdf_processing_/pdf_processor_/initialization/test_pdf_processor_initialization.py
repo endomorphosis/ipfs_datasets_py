@@ -11,12 +11,16 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
-home_dir = os.path.expanduser('~')
-file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor.py")
-md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor_stubs.md")
+home_dir = os.path.expanduser("~")
+file_path = os.path.join(
+    home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor.py"
+)
+md_path = os.path.join(
+    home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor_stubs.md"
+)
 
 # Make sure the input file and documentation file exist.
 if not os.path.exists(file_path):
@@ -76,79 +80,74 @@ from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator
 
 
-
-
 class TestPDFProcessorInitialization:
     """Test PDFProcessor initialization and configuration."""
 
-
-    def test_when_no_parameters_provided_then_creates_instance(
-        self, default_pdf_processor):
+    def test_when_no_parameters_provided_then_creates_instance(self, default_pdf_processor):
         """
         GIVEN no parameters provided to PDFProcessor constructor
         WHEN PDFProcessor is instantiated
         THEN expect instance created successfully
         """
-        assert isinstance(default_pdf_processor, PDFProcessor), \
+        assert isinstance(default_pdf_processor, PDFProcessor), (
             f"Expected PDFProcessor instance, got {type(default_pdf_processor).__name__}"
+        )
 
-
-    @pytest.mark.parametrize("attribute", [
-        "storage",
-        "monitoring", 
-        "audit_logger",
-        "processing_stats"
-    ])
+    @pytest.mark.parametrize(
+        "attribute", ["storage", "monitoring", "audit_logger", "processing_stats"]
+    )
     def test_when_no_parameters_provided_then_has_expected_attribute(
-        self, default_pdf_processor, attribute):
+        self, default_pdf_processor, attribute
+    ):
         """
         GIVEN no parameters provided to PDFProcessor constructor
         WHEN PDFProcessor is instantiated
         THEN expect instance has expected attribute
         """
-        assert hasattr(default_pdf_processor, attribute), \
+        assert hasattr(default_pdf_processor, attribute), (
             f"Expected attribute '{attribute}' not found"
+        )
 
-
-    @pytest.mark.parametrize("attribute,expected_type", [
-        ("storage", IPLDStorage),
-        ("monitoring", type(None)),
-        ("audit_logger", AuditLogger),
-        ("processing_stats", dict)
-    ])
+    @pytest.mark.parametrize(
+        "attribute,expected_type",
+        [
+            ("storage", IPLDStorage),
+            ("monitoring", type(None)),
+            ("audit_logger", AuditLogger),
+            ("processing_stats", dict),
+        ],
+    )
     def test_when_no_parameters_provided_then_attribute_has_expected_type(
-        self, default_pdf_processor, attribute, expected_type):
+        self, default_pdf_processor, attribute, expected_type
+    ):
         """
         GIVEN no parameters provided to PDFProcessor constructor
         WHEN PDFProcessor is instantiated
         THEN expect attribute has expected type
         """
         actual_value = getattr(default_pdf_processor, attribute)
-        assert isinstance(actual_value, expected_type), \
+        assert isinstance(actual_value, expected_type), (
             f"Expected {attribute} to be {expected_type.__name__}, got {type(actual_value).__name__}"
+        )
 
 
-
-@pytest.mark.parametrize("key", [
-    "start_time",
-    "end_time", 
-    "pages_processed",
-    "entities_extracted"
-])
+@pytest.mark.parametrize("key", ["start_time", "end_time", "pages_processed", "entities_extracted"])
 class TestPDFProcessorDefaultProcessingStats:
-
     def test_when_no_parameters_provided_then_processing_stats_has_expected_key(
-            self, default_pdf_processor, key):
+        self, default_pdf_processor, key
+    ):
         """
         GIVEN no parameters provided to PDFProcessor constructor
         WHEN PDFProcessor is instantiated
         THEN expect processing_stats has expected key
         """
-        assert key in default_pdf_processor.processing_stats, \
+        assert key in default_pdf_processor.processing_stats, (
             f"Expected processing_stats to contain key '{key}'"
+        )
 
-
-    def test_when_no_parameters_provided_then_processing_stats_has_expected_value(self, default_pdf_processor, expected_processing_stats_values, key):
+    def test_when_no_parameters_provided_then_processing_stats_has_expected_value(
+        self, default_pdf_processor, expected_processing_stats_values, key
+    ):
         """
         GIVEN no parameters provided to PDFProcessor constructor
         WHEN PDFProcessor is instantiated
@@ -156,16 +155,17 @@ class TestPDFProcessorDefaultProcessingStats:
         """
         expected_value = expected_processing_stats_values[key]
         actual_value = default_pdf_processor.processing_stats[key]
-        assert actual_value == expected_value, \
+        assert actual_value == expected_value, (
             f"Expected processing_stats['{key}'] to be {expected_value}, got {actual_value}"
+        )
 
 
 class TestPDFProcessorInitializationOptions:
     """Test PDFProcessor initialization with various options."""
 
-
     def test_when_custom_storage_provided_then_uses_provided_storage(
-            self, processors, real_ipld_storage):
+        self, processors, real_ipld_storage
+    ):
         """
         GIVEN custom IPLDStorage instance
         WHEN PDFProcessor is instantiated with custom storage
@@ -174,18 +174,22 @@ class TestPDFProcessorInitializationOptions:
         processor = processors["custom_storage"]
         actual_value = processor.storage
 
-        assert actual_value is real_ipld_storage, \
+        assert actual_value is real_ipld_storage, (
             f"Expected storage attribute to be the Mock IPLDStorage, got {actual_value}"
+        )
 
-
-    @pytest.mark.parametrize("processor_key,attribute", [
-        ("monitoring_disabled", "monitoring"),
-        ("audit_disabled", "audit_logger"),
-        ("all_options_disabled", "monitoring"),
-        ("all_options_disabled", "audit_logger")
-    ])
+    @pytest.mark.parametrize(
+        "processor_key,attribute",
+        [
+            ("monitoring_disabled", "monitoring"),
+            ("audit_disabled", "audit_logger"),
+            ("all_options_disabled", "monitoring"),
+            ("all_options_disabled", "audit_logger"),
+        ],
+    )
     def test_when_feature_disabled_then_attribute_is_none(
-        self, processors, test_constants, processor_key, attribute):
+        self, processors, test_constants, processor_key, attribute
+    ):
         """
         GIVEN feature is disabled
         WHEN PDFProcessor is instantiated
@@ -194,21 +198,25 @@ class TestPDFProcessorInitializationOptions:
         processor = processors[processor_key]
         actual_value = getattr(processor, attribute)
 
-        assert actual_value is test_constants['NONE_VALUE'], \
+        assert actual_value is test_constants["NONE_VALUE"], (
             f"Expected {attribute} attribute to be None, got {type(actual_value).__name__}"
+        )
 
-
-    @pytest.mark.parametrize("processor_key,attribute,expected_type", [
-        ("monitoring_enabled", "monitoring", MonitoringSystem),
-        ("audit_enabled", "audit_logger", AuditLogger),
-        ("all_options_enabled", "storage", IPLDStorage),
-        ("all_options_enabled", "monitoring", MonitoringSystem),
-        ("all_options_enabled", "audit_logger", AuditLogger),
-        ("default", "processing_stats", dict),
-        ("all_options_disabled", "storage", IPLDStorage)
-    ])
+    @pytest.mark.parametrize(
+        "processor_key,attribute,expected_type",
+        [
+            ("monitoring_enabled", "monitoring", MonitoringSystem),
+            ("audit_enabled", "audit_logger", AuditLogger),
+            ("all_options_enabled", "storage", IPLDStorage),
+            ("all_options_enabled", "monitoring", MonitoringSystem),
+            ("all_options_enabled", "audit_logger", AuditLogger),
+            ("default", "processing_stats", dict),
+            ("all_options_disabled", "storage", IPLDStorage),
+        ],
+    )
     def test_when_feature_enabled_then_creates_expected_instance(
-            self, processors, processor_key, attribute, expected_type):
+        self, processors, processor_key, attribute, expected_type
+    ):
         """
         GIVEN feature is enabled or default configuration
         WHEN PDFProcessor is instantiated
@@ -217,47 +225,54 @@ class TestPDFProcessorInitializationOptions:
         processor = processors[processor_key]
         actual_value = getattr(processor, attribute)
 
-        assert isinstance(actual_value, expected_type), \
+        assert isinstance(actual_value, expected_type), (
             f"Expected {attribute} to be {expected_type.__name__} instance, got {type(actual_value).__name__}"
+        )
 
-    @pytest.mark.parametrize("processor_key", [
-        "all_options_disabled",
-        "all_options_enabled",
-        "audit_enabled",
-        "default",
-        "monitoring_enabled",
-    ])
+    @pytest.mark.parametrize(
+        "processor_key",
+        [
+            "all_options_disabled",
+            "all_options_enabled",
+            "audit_enabled",
+            "default",
+            "monitoring_enabled",
+        ],
+    )
     def test_when_any_pdf_processor_initialized_then_processing_stats_has_expected_values(
-            self, processor_key, processors, expected_processing_stats_values):
+        self, processor_key, processors, expected_processing_stats_values
+    ):
         """
         GIVEN newly instantiated PDFProcessor
         WHEN PDFProcessor is instantiated
         THEN expect processing_stats has expected default values
         """
         processor = processors[processor_key]
-        actual_value = getattr(processor, 'processing_stats')
+        actual_value = getattr(processor, "processing_stats")
 
-        assert actual_value == expected_processing_stats_values, \
+        assert actual_value == expected_processing_stats_values, (
             f"Expected processing_stats to be {expected_processing_stats_values}, got {actual_value}"
-
+        )
 
     def test_when_key_added_to_processing_stats_then_stores_value(
-        self, default_pdf_processor, test_constants):
+        self, default_pdf_processor, test_constants
+    ):
         """
         GIVEN newly instantiated PDFProcessor
         WHEN adding key-value pair to processing_stats
         THEN expect dictionary stores the value
         """
-        test_key = test_constants['TEST_KEY']
-        test_value = test_constants['TEST_VALUE']
-        
-        default_pdf_processor.processing_stats[test_key] = test_value
-        assert default_pdf_processor.processing_stats[test_key] == test_value, \
-            f"Expected processing_stats['{test_key}'] to be '{test_value}', got '{default_pdf_processor.processing_stats[test_key]}'"
+        test_key = test_constants["TEST_KEY"]
+        test_value = test_constants["TEST_VALUE"]
 
+        default_pdf_processor.processing_stats[test_key] = test_value
+        assert default_pdf_processor.processing_stats[test_key] == test_value, (
+            f"Expected processing_stats['{test_key}'] to be '{test_value}', got '{default_pdf_processor.processing_stats[test_key]}'"
+        )
 
     def test_when_custom_storage_provided_then_preserves_storage_identity(
-        self, pdf_processor_with_custom_storage, real_ipld_storage):
+        self, pdf_processor_with_custom_storage, real_ipld_storage
+    ):
         """
         GIVEN custom IPLDStorage instance
         WHEN PDFProcessor is instantiated with custom storage
@@ -265,8 +280,9 @@ class TestPDFProcessorInitializationOptions:
         """
         original_id = id(real_ipld_storage)
         storage_id = id(pdf_processor_with_custom_storage.storage)
-        assert storage_id == original_id, \
+        assert storage_id == original_id, (
             f"Expected storage attribute id '{storage_id}' to be the original id '{original_id}', but it wasn't."
+        )
 
 
 if __name__ == "__main__":

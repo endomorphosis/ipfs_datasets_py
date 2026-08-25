@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/open-us-law-publication-policy-v1.schema.json",
+  "title": "Open US Law additive Dataset and Bucket publication policy",
+  "description": "OUL-007 fail-closed publication authority. Only justicedao/open-us-law-sparse-graphrag dataset creation or additive commits and justicedao/open-us-law-bucket writes under releases/<manifest_sha256>/ are authorized. Root overwrite, delete, force-push, history rewrite, visibility change, mutable query pins, and pre-seal writes are structurally forbidden and must fail before any upload callback.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "task_id",
+    "goal_id",
+    "program_id",
+    "producer",
+    "release_mode",
+    "authorized_dataset",
+    "authorized_bucket",
+    "dataset_creation_authorized",
+    "dataset_additive_commits_authorized",
+    "bucket_release_prefix_writes_authorized",
+    "bucket_prefix_template",
+    "bucket_pointer_updated_last",
+    "bucket_pointer_path",
+    "bucket_raw_root_overwrite_allowed",
+    "deletion_allowed",
+    "force_push_allowed",
+    "history_rewrite_allowed",
+    "visibility_change_allowed",
+    "mutable_query_pins_allowed",
+    "pre_seal_writes_allowed",
+    "dataset_query_identity",
+    "bucket_query_identity",
+    "prepublication_seal_required_for_public",
+    "staging_does_not_require_public_seal",
+    "callback_requires_authorization",
+    "credentials_environment_only",
+    "secret_redaction_required",
+    "authorized_operations",
+    "query_operations",
+    "forbidden_operations",
+    "required_gates",
+    "generated_work_guard",
+    "protected_raw_root_globs"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ipfs_datasets_py/open-us-law-publication-policy@1"
+    },
+    "schema_version": {
+      "const": "open-us-law-publication-policy-v1"
+    },
+    "task_id": {
+      "const": "OUL-007"
+    },
+    "goal_id": {
+      "const": "OUL-G010"
+    },
+    "program_id": {
+      "const": "open-us-law-reindex-v1"
+    },
+    "producer": {
+      "const": "open_us_law_publication_gate.py"
+    },
+    "release_mode": {
+      "const": "additive"
+    },
+    "authorized_dataset": {
+      "const": "justicedao/open-us-law-sparse-graphrag"
+    },
+    "authorized_bucket": {
+      "const": "justicedao/open-us-law-bucket"
+    },
+    "dataset_creation_authorized": {
+      "const": true
+    },
+    "dataset_additive_commits_authorized": {
+      "const": true
+    },
+    "bucket_release_prefix_writes_authorized": {
+      "const": true
+    },
+    "bucket_prefix_template": {
+      "const": "releases/<manifest_sha256>/"
+    },
+    "bucket_pointer_updated_last": {
+      "const": true
+    },
+    "bucket_pointer_path": {
+      "const": "LATEST.json"
+    },
+    "bucket_raw_root_overwrite_allowed": {
+      "const": false
+    },
+    "deletion_allowed": {
+      "const": false
+    },
+    "force_push_allowed": {
+      "const": false
+    },
+    "history_rewrite_allowed": {
+      "const": false
+    },
+    "visibility_change_allowed": {
+      "const": false
+    },
+    "mutable_query_pins_allowed": {
+      "const": false
+    },
+    "pre_seal_writes_allowed": {
+      "const": false
+    },
+    "dataset_query_identity": {
+      "const": "exact_40_hex_commit"
+    },
+    "bucket_query_identity": {
+      "const": "releases/<manifest_sha256>/"
+    },
+    "prepublication_seal_required_for_public": {
+      "const": true
+    },
+    "staging_does_not_require_public_seal": {
+      "const": true
+    },
+    "callback_requires_authorization": {
+      "const": true
+    },
+    "credentials_environment_only": {
+      "const": true
+    },
+    "secret_redaction_required": {
+      "const": true
+    },
+    "authorized_operations": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "bucket_pointer_update_last",
+          "bucket_release_prefix_write",
+          "dataset_additive_commit",
+          "dataset_create"
+        ]
+      },
+      "allOf": [
+        { "contains": { "const": "dataset_create" } },
+        { "contains": { "const": "dataset_additive_commit" } },
+        { "contains": { "const": "bucket_release_prefix_write" } },
+        { "contains": { "const": "bucket_pointer_update_last" } }
+      ]
+    },
+    "query_operations": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["bucket_query", "dataset_query"]
+      },
+      "allOf": [
+        { "contains": { "const": "dataset_query" } },
+        { "contains": { "const": "bucket_query" } }
+      ]
+    },
+    "forbidden_operations": {
+      "type": "array",
+      "minItems": 12,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nonEmptyString" },
+      "allOf": [
+        { "contains": { "const": "delete" } },
+        { "contains": { "const": "force_push" } },
+        { "contains": { "const": "history_rewrite" } },
+        { "contains": { "const": "visibility_change" } },
+        { "contains": { "const": "root_overwrite" } },
+        { "contains": { "const": "sync_delete" } }
+      ]
+    },
+    "required_gates": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "prefixItems": [
+        { "const": "target_authority" },
+        { "const": "operation_authority" },
+        { "const": "bucket_path" },
+        { "const": "query_pin" },
+        { "const": "prepublication_seal" },
+        { "const": "root_preservation" },
+        { "const": "destructive_ops" },
+        { "const": "generated_work_guard" }
+      ],
+      "items": false
+    },
+    "generated_work_guard": {
+      "$ref": "#/$defs/generatedWorkGuard"
+    },
+    "protected_raw_root_globs": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nonEmptyString" },
+      "allOf": [
+        { "contains": { "const": "*.parquet" } },
+        { "contains": { "const": "SHA256SUMS.json" } },
+        { "contains": { "const": "README.md" } }
+      ]
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "generatedWorkGuard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_number_floor",
+        "deny_nonterminal_generated_work",
+        "unscoped_or_unknown_goal_lineage_denies",
+        "review_only_exemption_allowed",
+        "terminal_statuses"
+      ],
+      "properties": {
+        "task_number_floor": {
+          "const": 49
+        },
+        "deny_nonterminal_generated_work": {
+          "const": true
+        },
+        "unscoped_or_unknown_goal_lineage_denies": {
+          "const": true
+        },
+        "review_only_exemption_allowed": {
+          "const": false
+        },
+        "terminal_statuses": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "const": "completed" }
+        }
+      }
+    }
+  }
+}

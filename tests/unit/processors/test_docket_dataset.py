@@ -162,9 +162,17 @@ def test_docket_dataset_builder_creates_dataset_with_kg_bm25_and_vector_index():
     assert payload["deontic_graph"]["rules"]
     assert payload["deontic_triggers"]["summary"]["pending_analysis_count"] >= 1
     assert payload["proof_assistant"]["summary"]["work_item_count"] >= 3
-    assert payload["proof_assistant"]["extractors"]["deontic_temporal_first_order_logic"]["status"] == "ready"
+    assert (
+        payload["proof_assistant"]["extractors"]["deontic_temporal_first_order_logic"]["status"]
+        == "ready"
+    )
     assert payload["proof_assistant"]["extractors"]["knowledge_graph"]["entity_count"] >= 1
-    assert payload["proof_assistant"]["extractors"]["deontic_cognitive_event_calculus"]["formula_count"] >= 1
+    assert (
+        payload["proof_assistant"]["extractors"]["deontic_cognitive_event_calculus"][
+            "formula_count"
+        ]
+        >= 1
+    )
     assert payload["proof_assistant"]["extractors"]["frame_logic"]["frame_count"] >= 1
     assert payload["proof_assistant"]["temporal_fol"]["formulas"]
     assert payload["proof_assistant"]["deontic_temporal_first_order_logic"]["formulas"]
@@ -210,7 +218,11 @@ def test_docket_dataset_search_helpers_return_ranked_results():
         "docket_id": "1:24-cv-1001",
         "case_name": "Doe v. Acme",
         "documents": [
-            {"id": "doc_1", "title": "Complaint", "text": "Breach of contract allegations and damages."},
+            {
+                "id": "doc_1",
+                "title": "Complaint",
+                "text": "Breach of contract allegations and damages.",
+            },
             {"id": "doc_2", "title": "Answer", "text": "Defendant denies liability."},
         ],
     }
@@ -247,7 +259,9 @@ def test_docket_dataset_preserves_document_metadata_and_adds_classification():
 
     assert document["metadata"]["text_extraction"]["source"] == "pdf_ocr"
     assert document["metadata"]["classification"]["label"] == "declaration"
-    assert document["metadata"]["classification"]["backend"] == "heuristic_legal_document_classifier"
+    assert (
+        document["metadata"]["classification"]["backend"] == "heuristic_legal_document_classifier"
+    )
 
 
 def test_docket_dataset_links_bluebook_citations_into_authorities():
@@ -353,13 +367,25 @@ def test_docket_dataset_citation_audit_reports_retrieval_coverage_from_local_res
     assert payload["metadata"]["linked_authorities"]["matched_linked_authority_count"] == 2
     assert payload["metadata"]["linked_authorities"]["unmatched_linked_authority_count"] == 1
     assert payload["metadata"]["linked_authorities"]["fully_resolved_document_count"] == 1
-    assert payload["metadata"]["linked_authorities"]["citation_resolution_ratio"] == audit["citation_resolution_ratio"]
-    assert payload["documents"][0]["metadata"]["citation_resolution_summary"]["all_citations_resolved"] is True
-    assert payload["documents"][1]["metadata"]["citation_resolution_summary"]["all_citations_resolved"] is False
+    assert (
+        payload["metadata"]["linked_authorities"]["citation_resolution_ratio"]
+        == audit["citation_resolution_ratio"]
+    )
+    assert (
+        payload["documents"][0]["metadata"]["citation_resolution_summary"]["all_citations_resolved"]
+        is True
+    )
+    assert (
+        payload["documents"][1]["metadata"]["citation_resolution_summary"]["all_citations_resolved"]
+        is False
+    )
     assert audit["matched_citation_count"] == 2
     assert audit["unmatched_citation_count"] == 1
     assert audit["unresolved_documents"][0]["document_id"] == "doc_2"
-    assert audit["unresolved_documents"][0]["unmatched_citations"][0]["metadata"]["recovery_supported"] is True
+    assert (
+        audit["unresolved_documents"][0]["unmatched_citations"][0]["metadata"]["recovery_supported"]
+        is True
+    )
 
 
 def test_audit_docket_dataset_citation_sources_includes_eu_audit():
@@ -381,7 +407,9 @@ def test_audit_docket_dataset_citation_sources_includes_eu_audit():
     }
 
     dataset = DocketDatasetBuilder().build_from_docket(docket)
-    audit = audit_docket_dataset_citation_sources(dataset, include_eu_audit=True, eu_language="en", eu_max_documents=10)
+    audit = audit_docket_dataset_citation_sources(
+        dataset, include_eu_audit=True, eu_language="en", eu_max_documents=10
+    )
 
     assert "eu_citation_audit" in audit
     eu_audit = dict(audit["eu_citation_audit"])
@@ -437,14 +465,18 @@ def test_tactician_uses_linked_authority_corpus_metadata():
         source for source in plan["candidate_sources"] if source["source_type"] == "authority_list"
     )
     parser_source = next(
-        source for source in plan["candidate_sources"] if source["source_type"] == "legal_dataset_parser"
+        source
+        for source in plan["candidate_sources"]
+        if source["source_type"] == "legal_dataset_parser"
     )
 
     assert authority_source["metadata"]["linked_citation_count"] >= 1
     assert authority_source["metadata"]["parser_backed"] is True
     assert "us_code" in authority_source["metadata"]["linked_corpus_keys"]
     assert authority_source["metadata"]["linked_corpus_priority"][0] == "us_code"
-    assert authority_source["metadata"]["routing_evidence"][0]["citation_text"] == "42 U.S.C. § 1983"
+    assert (
+        authority_source["metadata"]["routing_evidence"][0]["citation_text"] == "42 U.S.C. § 1983"
+    )
     assert parser_source["metadata"]["authority_backed"] is True
     assert "us_code" in parser_source["metadata"]["preferred_corpus_keys"]
     assert parser_source["metadata"]["preferred_corpus_priority"][0] == "us_code"
@@ -540,7 +572,10 @@ def test_packaged_parser_follow_up_job_preserves_state_corpus_and_state_code(tmp
     assert parser_execution["dispatch"]["preferred_corpus_keys"][0] == "state_laws"
     assert parser_execution["dispatch"]["preferred_state_codes"] == ["MN"]
     assert parser_execution["dispatch"]["adapter"]["parameters"]["state"] == "MN"
-    assert parser_execution["dispatch"]["adapter"]["parameters"]["hf_parquet_file"] == "STATE-MN.parquet"
+    assert (
+        parser_execution["dispatch"]["adapter"]["parameters"]["hf_parquet_file"]
+        == "STATE-MN.parquet"
+    )
     assert "Minn. Stat. § 518.17" in parser_execution["dispatch"]["routing_reason"]
 
 
@@ -728,7 +763,9 @@ def test_resolved_linked_authority_surfaces_source_reference_in_routing_reason(t
     payload = dataset.to_dict()
     plan = payload["proof_assistant"]["tactician"]["plans"][0]
     parser_source = next(
-        source for source in plan["candidate_sources"] if source["source_type"] == "legal_dataset_parser"
+        source
+        for source in plan["candidate_sources"]
+        if source["source_type"] == "legal_dataset_parser"
     )
 
     assert parser_source["metadata"]["routing_evidence"][0]["matched"] is True
@@ -829,7 +866,12 @@ def test_proof_artifacts_preserve_routing_explanation(tmp_path):
     )
     assert "42 U.S.C. § 1983" in packet["routing_explanation"]["routing_reason"]
     assert "uscode.house.gov" in packet["routing_explanation"]["routing_reason"]
-    assert packet["proof_store"]["proofs"][packet["proof_id"]]["routing_explanation"]["routing_evidence"][0]["matched"] is True
+    assert (
+        packet["proof_store"]["proofs"][packet["proof_id"]]["routing_explanation"][
+            "routing_evidence"
+        ][0]["matched"]
+        is True
+    )
 
 
 def test_attached_package_view_surfaces_latest_packet_routing_explanation(tmp_path):
@@ -893,7 +935,10 @@ def test_attached_package_view_surfaces_latest_packet_routing_explanation(tmp_pa
     assert "uscode.house.gov" in latest_routing["routing_reason"]
     assert latest_routing["routing_evidence"][0]["matched"] is True
     assert "uscode.house.gov" in latest_routing["routing_evidence"][0]["source_url"]
-    assert attached_view["proof_packet_refresh"]["routing_explanation"]["routing_reason"] == latest_routing["routing_reason"]
+    assert (
+        attached_view["proof_packet_refresh"]["routing_explanation"]["routing_reason"]
+        == latest_routing["routing_reason"]
+    )
 
 
 def test_package_manifest_and_provenance_piece_surface_latest_routing_explanation(tmp_path):
@@ -1023,10 +1068,17 @@ def test_packaged_inspection_prefers_archived_report_piece(tmp_path):
     archived_payload = json.loads(rows[0]["report_json"])
     archived_payload["latest_routing_reason"] = "Archived routing reason from packaged report"
     rows[0]["report_json"] = json.dumps(archived_payload, ensure_ascii=False)
-    rows[0]["report_text"] = "Packaged Docket Provenance Report\nLatest Routing Reason: Archived routing reason from packaged report\n"
-    rows[0]["report_markdown"] = "# Packaged Docket Provenance Report\n\n- Latest Routing Reason: Archived routing reason from packaged report\n"
+    rows[0]["report_text"] = (
+        "Packaged Docket Provenance Report\nLatest Routing Reason: Archived routing reason from packaged report\n"
+    )
+    rows[0]["report_markdown"] = (
+        "# Packaged Docket Provenance Report\n\n- Latest Routing Reason: Archived routing reason from packaged report\n"
+    )
     inspection_piece = next(
-        piece for piece in json.loads(Path(package["manifest_json_path"]).read_text(encoding="utf-8"))["pieces"]
+        piece
+        for piece in json.loads(Path(package["manifest_json_path"]).read_text(encoding="utf-8"))[
+            "pieces"
+        ]
         if piece["piece_id"] == "inspection_report"
     )
     inspection_path = Path(package["manifest_json_path"]).parent / inspection_piece["parquet_path"]
@@ -1123,7 +1175,11 @@ def test_load_packaged_docket_inspection_report_skips_minimal_document_view(tmp_
             "case_name": "Doe v. Lightweight Report",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -1143,7 +1199,9 @@ def test_load_packaged_docket_inspection_report_skips_minimal_document_view(tmp_
     packager = DocketDatasetPackager()
 
     def fail_load_minimal_dataset_view(manifest_path):
-        raise AssertionError("load_minimal_dataset_view should not be used for archived report loading")
+        raise AssertionError(
+            "load_minimal_dataset_view should not be used for archived report loading"
+        )
 
     packager.load_minimal_dataset_view = fail_load_minimal_dataset_view  # type: ignore[method-assign]
     report = packager.load_inspection_report(package["manifest_json_path"], report_format="parsed")
@@ -1230,11 +1288,16 @@ def test_docket_dataset_builds_formal_logic_artifacts():
     document = payload["documents"][0]
 
     assert payload["metadata"]["artifact_status"]["formal_logic"] is True
-    assert payload["metadata"]["artifact_provenance"]["formal_logic"]["processed_document_count"] >= 1
+    assert (
+        payload["metadata"]["artifact_provenance"]["formal_logic"]["processed_document_count"] >= 1
+    )
     assert document["metadata"]["rich_analysis"]["provenance"]["backend"] == "formal_logic_pipeline"
     assert document["metadata"]["rich_analysis"]["deontic_statements"]
     assert payload["proof_assistant"]["temporal_fol"]["formulas"]
-    assert payload["proof_assistant"]["deontic_cognitive_event_calculus"]["formulas"] or payload["documents"][0]["metadata"]["rich_analysis"]["dcec_formulas"] == []
+    assert (
+        payload["proof_assistant"]["deontic_cognitive_event_calculus"]["formulas"]
+        or payload["documents"][0]["metadata"]["rich_analysis"]["dcec_formulas"] == []
+    )
 
 
 def test_docket_dataset_builder_can_skip_formal_and_router_enrichment(monkeypatch):
@@ -1248,7 +1311,9 @@ def test_docket_dataset_builder_can_skip_formal_and_router_enrichment(monkeypatc
         calls["router"] += 1
         return {"summary": {"processed_document_count": 1}}
 
-    monkeypatch.setattr(docket_dataset_module, "enrich_docket_documents_with_formal_logic", _fake_formal)
+    monkeypatch.setattr(
+        docket_dataset_module, "enrich_docket_documents_with_formal_logic", _fake_formal
+    )
     monkeypatch.setattr(docket_dataset_module, "enrich_docket_documents_with_routers", _fake_router)
 
     dataset = DocketDatasetBuilder().build_from_docket(
@@ -1465,12 +1530,25 @@ def test_docket_dataset_extracts_structured_order_language():
     assert formal_summary["temporal_formula_count"] >= 1
     assert formal_summary["frame_count"] >= 2
     assert formal_summary["proof_count"] >= 2
-    assert payload["proof_assistant"]["summary"]["substantive_proof_knowledge_graph_entity_count"] >= 1
-    assert payload["proof_assistant"]["summary"]["substantive_proof_knowledge_graph_relationship_count"] >= 1
+    assert (
+        payload["proof_assistant"]["summary"]["substantive_proof_knowledge_graph_entity_count"] >= 1
+    )
+    assert (
+        payload["proof_assistant"]["summary"][
+            "substantive_proof_knowledge_graph_relationship_count"
+        ]
+        >= 1
+    )
     assert analysis["deontic_statements"]
     assert analysis["frames"]
-    assert "doc_order_1:actor:parties" in payload["proof_assistant"]["metadata"]["substantive_views"]["knowledge_graph_entity_ids"]
-    assert any("shall" in formula or " O(" in formula or "O_t(" in formula for formula in payload["proof_assistant"]["temporal_fol"]["formulas"])
+    assert (
+        "doc_order_1:actor:parties"
+        in payload["proof_assistant"]["metadata"]["substantive_views"]["knowledge_graph_entity_ids"]
+    )
+    assert any(
+        "shall" in formula or " O(" in formula or "O_t(" in formula
+        for formula in payload["proof_assistant"]["temporal_fol"]["formulas"]
+    )
 
 
 def test_docket_dataset_normalizes_temporal_prefix_out_of_actor():
@@ -1491,7 +1569,10 @@ def test_docket_dataset_normalizes_temporal_prefix_out_of_actor():
     payload = dataset.to_dict()
     analysis = payload["documents"][0]["metadata"]["rich_analysis"]
     statements = list(analysis["deontic_statements"] or [])
-    substantive_entities = list(payload["proof_assistant"]["metadata"]["substantive_views"]["knowledge_graph_entity_ids"] or [])
+    substantive_entities = list(
+        payload["proof_assistant"]["metadata"]["substantive_views"]["knowledge_graph_entity_ids"]
+        or []
+    )
 
     assert statements
     assert statements[0]["entity"].lower() == "plaintiff"
@@ -1519,14 +1600,32 @@ def test_docket_dataset_creates_canonical_deadline_entities():
     )
 
     proof = dataset.to_dict()["proof_assistant"]
-    substantive_entities = list(proof["metadata"]["substantive_views"]["knowledge_graph_entity_ids"] or [])
-    substantive_relationships = list(proof["metadata"]["substantive_views"]["knowledge_graph_relationship_ids"] or [])
+    substantive_entities = list(
+        proof["metadata"]["substantive_views"]["knowledge_graph_entity_ids"] or []
+    )
+    substantive_relationships = list(
+        proof["metadata"]["substantive_views"]["knowledge_graph_relationship_ids"] or []
+    )
     deadline_ids = [item for item in substantive_entities if item.startswith("deadline:")]
 
     assert "deadline:defendant:file_an_answer:2026_04_07" in deadline_ids
-    assert len([item for item in deadline_ids if item == "deadline:defendant:file_an_answer:2026_04_07"]) == 1
-    assert any("2026_04_07" in item and ":rel:deadline_for:" in item for item in substantive_relationships)
-    assert any("2026_04_07" in item and ":rel:imposes_deadline:" in item for item in substantive_relationships)
+    assert (
+        len(
+            [
+                item
+                for item in deadline_ids
+                if item == "deadline:defendant:file_an_answer:2026_04_07"
+            ]
+        )
+        == 1
+    )
+    assert any(
+        "2026_04_07" in item and ":rel:deadline_for:" in item for item in substantive_relationships
+    )
+    assert any(
+        "2026_04_07" in item and ":rel:imposes_deadline:" in item
+        for item in substantive_relationships
+    )
 
 
 def test_docket_dataset_splits_compound_deadline_clause():
@@ -1549,10 +1648,18 @@ def test_docket_dataset_splits_compound_deadline_clause():
     )
 
     proof = dataset.to_dict()["proof_assistant"]
-    deadline_ids = [item for item in (proof["metadata"]["substantive_views"]["knowledge_graph_entity_ids"] or []) if item.startswith("deadline:")]
+    deadline_ids = [
+        item
+        for item in (proof["metadata"]["substantive_views"]["knowledge_graph_entity_ids"] or [])
+        if item.startswith("deadline:")
+    ]
 
     assert "deadline:parties:exchange_initial_disclosures:2026_07_03" in deadline_ids
-    assert any(item.startswith("deadline:parties:file_amended_pleadings_and_join") and item.endswith(":2026_08_15") for item in deadline_ids)
+    assert any(
+        item.startswith("deadline:parties:file_amended_pleadings_and_join")
+        and item.endswith(":2026_08_15")
+        for item in deadline_ids
+    )
     assert "deadline:parties:complete_discovery:2026_10_20" in deadline_ids
     assert "deadline:parties:file_dispositive_motions:2027_01_08" in deadline_ids
 
@@ -1578,15 +1685,29 @@ def test_docket_dataset_creates_canonical_norm_entities():
     )
 
     proof = dataset.to_dict()["proof_assistant"]
-    substantive_entities = list(proof["metadata"]["substantive_views"]["knowledge_graph_entity_ids"] or [])
-    substantive_relationships = list(proof["metadata"]["substantive_views"]["knowledge_graph_relationship_ids"] or [])
+    substantive_entities = list(
+        proof["metadata"]["substantive_views"]["knowledge_graph_entity_ids"] or []
+    )
+    substantive_relationships = list(
+        proof["metadata"]["substantive_views"]["knowledge_graph_relationship_ids"] or []
+    )
     norm_ids = [item for item in substantive_entities if item.startswith("norm:")]
 
     assert "norm:defendant:obligation:file_an_answer" in norm_ids
-    assert len([item for item in norm_ids if item == "norm:defendant:obligation:file_an_answer"]) == 1
-    assert any(":rel:imposes_norm:" in item and "file_an_answer" in item for item in substantive_relationships)
-    assert any(":rel:norm_subject:" in item and "file_an_answer" in item for item in substantive_relationships)
-    assert any(":rel:norm_deadline:" in item and "2026_04_07" in item for item in substantive_relationships)
+    assert (
+        len([item for item in norm_ids if item == "norm:defendant:obligation:file_an_answer"]) == 1
+    )
+    assert any(
+        ":rel:imposes_norm:" in item and "file_an_answer" in item
+        for item in substantive_relationships
+    )
+    assert any(
+        ":rel:norm_subject:" in item and "file_an_answer" in item
+        for item in substantive_relationships
+    )
+    assert any(
+        ":rel:norm_deadline:" in item and "2026_04_07" in item for item in substantive_relationships
+    )
 
 
 def test_docket_dataset_stamps_synthesized_courtlistener_provenance():
@@ -1612,8 +1733,14 @@ def test_docket_dataset_stamps_synthesized_courtlistener_provenance():
     )
     payload = dataset.to_dict()
 
-    assert payload["documents"][0]["metadata"]["text_extraction"]["source"] == "synthesized_docket_summary"
-    assert payload["documents"][1]["metadata"]["text_extraction"]["source"] == "synthesized_docket_entry"
+    assert (
+        payload["documents"][0]["metadata"]["text_extraction"]["source"]
+        == "synthesized_docket_summary"
+    )
+    assert (
+        payload["documents"][1]["metadata"]["text_extraction"]["source"]
+        == "synthesized_docket_entry"
+    )
 
 
 def test_docket_dataset_merges_router_enrichment(monkeypatch):
@@ -1623,30 +1750,72 @@ def test_docket_dataset_merges_router_enrichment(monkeypatch):
             "document_analyses": {
                 doc_id: {
                     "classification": {"label": "motion", "backend": "llm_router"},
-                    "entities": [{"id": f"{doc_id}:entity:1", "label": "Jane Doe", "type": "person"}],
-                    "relationships": [{"id": f"{doc_id}:rel:1", "source": f"{doc_id}:entity:1", "target": f"{doc_id}:entity:1", "type": "MENTIONED_WITH"}],
+                    "entities": [
+                        {"id": f"{doc_id}:entity:1", "label": "Jane Doe", "type": "person"}
+                    ],
+                    "relationships": [
+                        {
+                            "id": f"{doc_id}:rel:1",
+                            "source": f"{doc_id}:entity:1",
+                            "target": f"{doc_id}:entity:1",
+                            "type": "MENTIONED_WITH",
+                        }
+                    ],
                     "deontic_statements": [],
                     "events": [],
-                    "frames": [{"frame_id": f"{doc_id}:frame:1", "label": "MotionFrame", "slots": {"party": "plaintiff"}}],
-                    "propositions": [{"statement": "Plaintiff filed a motion.", "assumptions": ["The filing text says motion."]}],
+                    "frames": [
+                        {
+                            "frame_id": f"{doc_id}:frame:1",
+                            "label": "MotionFrame",
+                            "slots": {"party": "plaintiff"},
+                        }
+                    ],
+                    "propositions": [
+                        {
+                            "statement": "Plaintiff filed a motion.",
+                            "assumptions": ["The filing text says motion."],
+                        }
+                    ],
                     "temporal_formulas": ["Filed(doc_1, t1)."],
                     "dcec_formulas": ["Happens(DocumentFiled(doc_1), t1)."],
                     "summary": "Router summary",
-                    "provenance": {"backend": "llm_router", "provider": "openai", "model_name": "gpt"},
+                    "provenance": {
+                        "backend": "llm_router",
+                        "provider": "openai",
+                        "model_name": "gpt",
+                    },
                 }
             },
             "knowledge_graph": {
                 "entities": [{"id": f"{doc_id}:entity:1", "label": "Jane Doe", "type": "person"}],
-                "relationships": [{"id": f"{doc_id}:rel:1", "source": f"{doc_id}:entity:1", "target": f"{doc_id}:entity:1", "type": "MENTIONED_WITH"}],
+                "relationships": [
+                    {
+                        "id": f"{doc_id}:rel:1",
+                        "source": f"{doc_id}:entity:1",
+                        "target": f"{doc_id}:entity:1",
+                        "type": "MENTIONED_WITH",
+                    }
+                ],
             },
             "temporal_fol": {"formulas": ["Filed(doc_1, t1)."]},
-            "deontic_cognitive_event_calculus": {"formulas": ["Happens(DocumentFiled(doc_1), t1)."]},
-            "frame_logic": {f"{doc_id}:frame:1": {"frame_id": f"{doc_id}:frame:1", "label": "MotionFrame", "slots": {"party": "plaintiff"}}},
+            "deontic_cognitive_event_calculus": {
+                "formulas": ["Happens(DocumentFiled(doc_1), t1)."]
+            },
+            "frame_logic": {
+                f"{doc_id}:frame:1": {
+                    "frame_id": f"{doc_id}:frame:1",
+                    "label": "MotionFrame",
+                    "slots": {"party": "plaintiff"},
+                }
+            },
             "proof_store": {
                 "proofs": {"proof_1": {"proof_id": "proof_1"}},
                 "certificates": [{"certificate_id": "cert_1"}],
                 "summary": {"proof_count": 1},
-                "metadata": {"backend": "router_enriched_proof_store", "zkp_status": "not_implemented"},
+                "metadata": {
+                    "backend": "router_enriched_proof_store",
+                    "zkp_status": "not_implemented",
+                },
             },
             "summary": {
                 "processed_document_count": 1,
@@ -1665,7 +1834,11 @@ def test_docket_dataset_merges_router_enrichment(monkeypatch):
             "docket_id": "1:24-cv-1004",
             "case_name": "Doe v. Acme",
             "documents": [
-                {"id": "doc_1", "title": "Motion to Compel", "text": "Plaintiff files motion to compel."},
+                {
+                    "id": "doc_1",
+                    "title": "Motion to Compel",
+                    "text": "Plaintiff files motion to compel.",
+                },
             ],
         }
     )
@@ -1675,22 +1848,38 @@ def test_docket_dataset_merges_router_enrichment(monkeypatch):
     assert payload["proof_assistant"]["proof_store"]["summary"]["proof_count"] == 1
     assert "Filed(doc_1, t1)." in payload["proof_assistant"]["temporal_fol"]["formulas"]
     assert payload["metadata"]["artifact_status"]["router_enrichment"] is True
-    assert payload["proof_assistant"]["metadata"]["substantive_views"]["temporal_formulas"] == ["Filed(doc_1, t1)."]
+    assert payload["proof_assistant"]["metadata"]["substantive_views"]["temporal_formulas"] == [
+        "Filed(doc_1, t1)."
+    ]
     assert payload["proof_assistant"]["summary"]["substantive_temporal_formula_count"] == 1
     assert payload["proof_assistant"]["summary"]["substantive_frame_count"] == 1
     assert payload["proof_assistant"]["summary"]["substantive_dcec_formula_count"] == 0
-    assert "Happens(DocumentFiled(doc_1), t1)." in payload["proof_assistant"]["metadata"]["generic_views"]["dcec_formulas"]
-    assert payload["proof_assistant"]["summary"]["substantive_proof_knowledge_graph_entity_count"] == 0
-    assert payload["proof_assistant"]["summary"]["substantive_proof_knowledge_graph_relationship_count"] == 0
+    assert (
+        "Happens(DocumentFiled(doc_1), t1)."
+        in payload["proof_assistant"]["metadata"]["generic_views"]["dcec_formulas"]
+    )
+    assert (
+        payload["proof_assistant"]["summary"]["substantive_proof_knowledge_graph_entity_count"] == 0
+    )
+    assert (
+        payload["proof_assistant"]["summary"][
+            "substantive_proof_knowledge_graph_relationship_count"
+        ]
+        == 0
+    )
 
 
 def test_docket_dataset_prefers_normative_dcec_in_substantive_view(monkeypatch):
     def _fake_enrichment(documents, **kwargs):  # noqa: ANN001
         doc_id = documents[0].document_id
         return {
-            "document_analyses": {doc_id: {"classification": {"label": "order", "backend": "llm_router"}}},
+            "document_analyses": {
+                doc_id: {"classification": {"label": "order", "backend": "llm_router"}}
+            },
             "knowledge_graph": {"entities": [], "relationships": []},
-            "temporal_fol": {"formulas": ["forall t (true and By(t,2026-03-20) and not(false) -> O(frm:1,t))"]},
+            "temporal_fol": {
+                "formulas": ["forall t (true and By(t,2026-03-20) and not(false) -> O(frm:1,t))"]
+            },
             "deontic_cognitive_event_calculus": {
                 "formulas": [
                     "forall t (true and By(t,2026-03-20) and not(false) -> O(frm:1))",
@@ -1698,8 +1887,18 @@ def test_docket_dataset_prefers_normative_dcec_in_substantive_view(monkeypatch):
                     "raw_title_text(agent:Agent)",
                 ]
             },
-            "frame_logic": {"frm:1": {"frame_id": "frm:1", "label": "NormFrame", "slots": {"party": "plaintiff"}}},
-            "proof_store": {"proofs": {}, "summary": {"proof_count": 0}, "metadata": {"backend": "router"}},
+            "frame_logic": {
+                "frm:1": {
+                    "frame_id": "frm:1",
+                    "label": "NormFrame",
+                    "slots": {"party": "plaintiff"},
+                }
+            },
+            "proof_store": {
+                "proofs": {},
+                "summary": {"proof_count": 0},
+                "metadata": {"backend": "router"},
+            },
             "summary": {"processed_document_count": 1, "proof_count": 0},
         }
 
@@ -1712,14 +1911,25 @@ def test_docket_dataset_prefers_normative_dcec_in_substantive_view(monkeypatch):
         {
             "docket_id": "1:24-cv-4004",
             "case_name": "Doe v. Normative DCEC",
-            "documents": [{"id": "doc_1", "title": "Order", "text": "Plaintiff shall serve defendant by 2026-03-20."}],
+            "documents": [
+                {
+                    "id": "doc_1",
+                    "title": "Order",
+                    "text": "Plaintiff shall serve defendant by 2026-03-20.",
+                }
+            ],
         }
     )
     proof = dataset.to_dict()["proof_assistant"]
 
     assert proof["summary"]["substantive_dcec_formula_count"] >= 1
-    assert "forall t (true and By(t,2026-03-20) and not(false) -> O(frm:1))" in proof["metadata"]["substantive_views"]["dcec_formulas"]
-    assert "Happens(DocumentFiled(doc_1), t1)." in proof["metadata"]["generic_views"]["dcec_formulas"]
+    assert (
+        "forall t (true and By(t,2026-03-20) and not(false) -> O(frm:1))"
+        in proof["metadata"]["substantive_views"]["dcec_formulas"]
+    )
+    assert (
+        "Happens(DocumentFiled(doc_1), t1)." in proof["metadata"]["generic_views"]["dcec_formulas"]
+    )
     assert "raw_title_text(agent:Agent)" in proof["metadata"]["generic_views"]["dcec_formulas"]
 
 
@@ -1727,22 +1937,46 @@ def test_docket_dataset_tracks_substantive_knowledge_graph_views(monkeypatch):
     def _fake_enrichment(documents, **kwargs):  # noqa: ANN001
         doc_id = documents[0].document_id
         return {
-            "document_analyses": {doc_id: {"classification": {"label": "order", "backend": "router"}}},
+            "document_analyses": {
+                doc_id: {"classification": {"label": "order", "backend": "router"}}
+            },
             "knowledge_graph": {
                 "entities": [
-                    {"id": f"{doc_id}:actor:plaintiff", "label": "Plaintiff", "type": "legal_actor"},
-                    {"id": "event:conference:undated", "label": "Scheduling Conference", "type": "court_event"},
+                    {
+                        "id": f"{doc_id}:actor:plaintiff",
+                        "label": "Plaintiff",
+                        "type": "legal_actor",
+                    },
+                    {
+                        "id": "event:conference:undated",
+                        "label": "Scheduling Conference",
+                        "type": "court_event",
+                    },
                     {"id": f"{doc_id}:entity:generic", "label": "Generic", "type": "person"},
                 ],
                 "relationships": [
-                    {"id": f"{doc_id}:rel:1", "source": f"{doc_id}:actor:plaintiff", "target": doc_id, "type": "SUBJECT_OF"},
-                    {"id": f"{doc_id}:rel:2", "source": doc_id, "target": f"{doc_id}:entity:generic", "type": "MENTIONED_WITH"},
+                    {
+                        "id": f"{doc_id}:rel:1",
+                        "source": f"{doc_id}:actor:plaintiff",
+                        "target": doc_id,
+                        "type": "SUBJECT_OF",
+                    },
+                    {
+                        "id": f"{doc_id}:rel:2",
+                        "source": doc_id,
+                        "target": f"{doc_id}:entity:generic",
+                        "type": "MENTIONED_WITH",
+                    },
                 ],
             },
             "temporal_fol": {"formulas": []},
             "deontic_cognitive_event_calculus": {"formulas": []},
             "frame_logic": {},
-            "proof_store": {"proofs": {}, "summary": {"proof_count": 0}, "metadata": {"backend": "router"}},
+            "proof_store": {
+                "proofs": {},
+                "summary": {"proof_count": 0},
+                "metadata": {"backend": "router"},
+            },
             "summary": {"processed_document_count": 1, "proof_count": 0},
         }
 
@@ -1751,20 +1985,36 @@ def test_docket_dataset_tracks_substantive_knowledge_graph_views(monkeypatch):
         _fake_enrichment,
     )
 
-    proof = DocketDatasetBuilder().build_from_docket(
-        {
-            "docket_id": "1:24-cv-5005",
-            "case_name": "Doe v. KG Split",
-            "documents": [{"id": "doc_1", "title": "Order", "text": "Plaintiff is directed to appear."}],
-        }
-    ).to_dict()["proof_assistant"]
+    proof = (
+        DocketDatasetBuilder()
+        .build_from_docket(
+            {
+                "docket_id": "1:24-cv-5005",
+                "case_name": "Doe v. KG Split",
+                "documents": [
+                    {"id": "doc_1", "title": "Order", "text": "Plaintiff is directed to appear."}
+                ],
+            }
+        )
+        .to_dict()["proof_assistant"]
+    )
 
     assert proof["summary"]["substantive_proof_knowledge_graph_entity_count"] >= 2
     assert proof["summary"]["substantive_proof_knowledge_graph_relationship_count"] >= 1
-    assert "doc_1:actor:plaintiff" in proof["metadata"]["substantive_views"]["knowledge_graph_entity_ids"]
-    assert "event:conference:undated" in proof["metadata"]["substantive_views"]["knowledge_graph_entity_ids"]
-    assert "doc_1:rel:1" in proof["metadata"]["substantive_views"]["knowledge_graph_relationship_ids"]
-    assert "doc_1:entity:generic" in proof["metadata"]["generic_views"]["knowledge_graph_entity_ids"]
+    assert (
+        "doc_1:actor:plaintiff"
+        in proof["metadata"]["substantive_views"]["knowledge_graph_entity_ids"]
+    )
+    assert (
+        "event:conference:undated"
+        in proof["metadata"]["substantive_views"]["knowledge_graph_entity_ids"]
+    )
+    assert (
+        "doc_1:rel:1" in proof["metadata"]["substantive_views"]["knowledge_graph_relationship_ids"]
+    )
+    assert (
+        "doc_1:entity:generic" in proof["metadata"]["generic_views"]["knowledge_graph_entity_ids"]
+    )
     assert "doc_1:rel:2" in proof["metadata"]["generic_views"]["knowledge_graph_relationship_ids"]
 
 
@@ -1808,8 +2058,12 @@ def test_docket_dataset_builder_supports_json_file_and_directory_import(tmp_path
 
     directory = tmp_path / "docket_dir"
     directory.mkdir()
-    (directory / "001_complaint.txt").write_text("Complaint text with allegations and timeline.", encoding="utf-8")
-    (directory / "002_motion.md").write_text("## Motion\nMotion to dismiss for lack of jurisdiction.", encoding="utf-8")
+    (directory / "001_complaint.txt").write_text(
+        "Complaint text with allegations and timeline.", encoding="utf-8"
+    )
+    (directory / "002_motion.md").write_text(
+        "## Motion\nMotion to dismiss for lack of jurisdiction.", encoding="utf-8"
+    )
     (directory / "003_notice.json").write_text(
         '{"id":"doc3","title":"Notice of Hearing","text":"Hearing set for May 1, 2024.","date_filed":"2024-04-15"}',
         encoding="utf-8",
@@ -1817,7 +2071,9 @@ def test_docket_dataset_builder_supports_json_file_and_directory_import(tmp_path
 
     builder = DocketDatasetBuilder()
     json_dataset = builder.build_from_json_file(docket_json)
-    dir_dataset = builder.build_from_directory(directory, docket_id="dir-1", case_name="Directory Docket")
+    dir_dataset = builder.build_from_directory(
+        directory, docket_id="dir-1", case_name="Directory Docket"
+    )
 
     assert json_dataset.docket_id == "2:24-cv-2001"
     assert json_dataset.metadata["source_type"] == "json_file"
@@ -1826,7 +2082,9 @@ def test_docket_dataset_builder_supports_json_file_and_directory_import(tmp_path
     assert dir_dataset.bm25_index["document_count"] == 3
 
 
-def test_docket_dataset_builder_supports_pdf_directory_import_with_case_number_detection(tmp_path, monkeypatch):
+def test_docket_dataset_builder_supports_pdf_directory_import_with_case_number_detection(
+    tmp_path, monkeypatch
+):
     directory = tmp_path / "pdf_docket_dir"
     directory.mkdir()
     pdf_path = directory / "001_complaint.pdf"
@@ -1856,7 +2114,9 @@ def test_docket_dataset_builder_supports_pdf_directory_import_with_case_number_d
 def test_ingest_docket_dataset_dispatches_directory_import(tmp_path, monkeypatch):
     directory = tmp_path / "ingest_dir"
     directory.mkdir()
-    (directory / "complaint.txt").write_text("Case No. 2:24-cv-4444\nComplaint text.", encoding="utf-8")
+    (directory / "complaint.txt").write_text(
+        "Case No. 2:24-cv-4444\nComplaint text.", encoding="utf-8"
+    )
 
     captured: dict[str, object] = {}
 
@@ -1888,7 +2148,12 @@ def test_ingest_docket_dataset_dispatches_directory_import(tmp_path, monkeypatch
 
 
 def test_ingest_docket_dataset_loads_normalized_pacer_fixture() -> None:
-    fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "normalized_pacer_export.json"
+    fixture_path = (
+        Path(__file__).resolve().parents[2]
+        / "fixtures"
+        / "legal_data"
+        / "normalized_pacer_export.json"
+    )
 
     dataset = ingest_docket_dataset(
         str(fixture_path),
@@ -1904,7 +2169,12 @@ def test_ingest_docket_dataset_loads_normalized_pacer_fixture() -> None:
 
 
 def test_ingest_docket_dataset_loads_wrapped_pacer_fixture() -> None:
-    fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "pacer_wrapped_export.json"
+    fixture_path = (
+        Path(__file__).resolve().parents[2]
+        / "fixtures"
+        / "legal_data"
+        / "pacer_wrapped_export.json"
+    )
 
     dataset = ingest_docket_dataset(
         str(fixture_path),
@@ -1923,7 +2193,12 @@ def test_ingest_docket_dataset_loads_wrapped_pacer_fixture() -> None:
 
 
 def test_builder_loads_normalized_tyler_host_fixture() -> None:
-    fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "normalized_tyler_host_export.json"
+    fixture_path = (
+        Path(__file__).resolve().parents[2]
+        / "fixtures"
+        / "legal_data"
+        / "normalized_tyler_host_export.json"
+    )
 
     dataset = DocketDatasetBuilder().build_from_json_file(
         fixture_path,
@@ -1939,7 +2214,12 @@ def test_builder_loads_normalized_tyler_host_fixture() -> None:
 
 
 def test_builder_loads_tyler_host_camel_case_fixture() -> None:
-    fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "tyler_host_camel_case_export.json"
+    fixture_path = (
+        Path(__file__).resolve().parents[2]
+        / "fixtures"
+        / "legal_data"
+        / "tyler_host_camel_case_export.json"
+    )
 
     dataset = DocketDatasetBuilder().build_from_json_file(
         fixture_path,
@@ -1961,7 +2241,12 @@ def test_builder_loads_tyler_host_camel_case_fixture() -> None:
 
 
 def test_builder_loads_wrapped_tyler_host_fixture() -> None:
-    fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "tyler_host_wrapped_export.json"
+    fixture_path = (
+        Path(__file__).resolve().parents[2]
+        / "fixtures"
+        / "legal_data"
+        / "tyler_host_wrapped_export.json"
+    )
 
     dataset = DocketDatasetBuilder().build_from_json_file(
         fixture_path,
@@ -1981,7 +2266,9 @@ def test_builder_loads_wrapped_tyler_host_fixture() -> None:
 
 
 def test_ingest_docket_dataset_loads_pacer_html_fixture() -> None:
-    fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "pacer_docket_sample.html"
+    fixture_path = (
+        Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "pacer_docket_sample.html"
+    )
 
     dataset = ingest_docket_dataset(
         str(fixture_path),
@@ -1999,7 +2286,12 @@ def test_ingest_docket_dataset_loads_pacer_html_fixture() -> None:
 
 
 def test_ingest_docket_dataset_loads_complex_pacer_html_fixture() -> None:
-    fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "pacer_docket_complex_sample.html"
+    fixture_path = (
+        Path(__file__).resolve().parents[2]
+        / "fixtures"
+        / "legal_data"
+        / "pacer_docket_complex_sample.html"
+    )
 
     dataset = ingest_docket_dataset(
         str(fixture_path),
@@ -2025,21 +2317,41 @@ def test_docket_dataset_can_be_packaged_as_linked_parquet_and_car_bundle(tmp_pat
             "docket_id": "1:24-cv-2222",
             "case_name": "Doe v. Chained Records",
             "court": "D. Example",
-            "plaintiff_docket": [{"id": "pl_1", "title": "Motion", "text": "Plaintiff must produce records."}],
-            "authorities": [{"id": "auth_1", "title": "Rule 34", "text": "Parties shall produce documents."}],
+            "plaintiff_docket": [
+                {"id": "pl_1", "title": "Motion", "text": "Plaintiff must produce records."}
+            ],
+            "authorities": [
+                {"id": "auth_1", "title": "Rule 34", "text": "Parties shall produce documents."}
+            ],
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Complaint text.", "date_filed": "2024-01-01"},
-                {"id": "doc_2", "title": "Exhibit A", "text": "Attached exhibit text.", "date_filed": "2024-01-02"},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Complaint text.",
+                    "date_filed": "2024-01-01",
+                },
+                {
+                    "id": "doc_2",
+                    "title": "Exhibit A",
+                    "text": "Attached exhibit text.",
+                    "date_filed": "2024-01-02",
+                },
             ],
         }
     )
 
     package_info = dataset.write_package(tmp_path / "bundle", include_car=True)
     restored = DocketDatasetObject.from_package(package_info["manifest_json_path"])
-    package_manifest = load_packaged_docket_dataset(package_info["manifest_json_path"])["package_manifest"]
-    packaged_again = package_docket_dataset(dataset.to_dict(), tmp_path / "bundle_copy", include_car=True)
+    package_manifest = load_packaged_docket_dataset(package_info["manifest_json_path"])[
+        "package_manifest"
+    ]
+    packaged_again = package_docket_dataset(
+        dataset.to_dict(), tmp_path / "bundle_copy", include_car=True
+    )
     explicit_packager = DocketDatasetPackager().load_package(packaged_again["manifest_json_path"])
-    minimal_view = DocketDatasetPackager().load_minimal_dataset_view(package_info["manifest_json_path"])
+    minimal_view = DocketDatasetPackager().load_minimal_dataset_view(
+        package_info["manifest_json_path"]
+    )
 
     assert (tmp_path / "bundle" / "manifest.parquet").exists()
     assert (tmp_path / "bundle" / "manifest.car").exists()
@@ -2064,10 +2376,22 @@ def test_packaged_docket_dataset_supports_component_and_chain_loading(tmp_path, 
             "docket_id": "1:24-cv-3333",
             "case_name": "Doe v. Incremental Loader",
             "court": "D. Example",
-            "plaintiff_docket": [{"id": "pl_1", "title": "Notice", "text": "Plaintiff must provide notice."}],
+            "plaintiff_docket": [
+                {"id": "pl_1", "title": "Notice", "text": "Plaintiff must provide notice."}
+            ],
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Complaint text.", "date_filed": "2024-03-01"},
-                {"id": "doc_2", "title": "Order", "text": "Court order text.", "date_filed": "2024-03-02"},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Complaint text.",
+                    "date_filed": "2024-03-01",
+                },
+                {
+                    "id": "doc_2",
+                    "title": "Order",
+                    "text": "Court order text.",
+                    "date_filed": "2024-03-02",
+                },
             ],
         }
     )
@@ -2102,10 +2426,24 @@ def test_packaged_docket_dataset_supports_lazy_search_without_full_rebuild(tmp_p
             "docket_id": "1:24-cv-4444",
             "case_name": "Doe v. Lazy Search",
             "court": "D. Example",
-            "plaintiff_docket": [{"id": "pl_1", "title": "Discovery Motion", "text": "Plaintiff must answer discovery."}],
+            "plaintiff_docket": [
+                {
+                    "id": "pl_1",
+                    "title": "Discovery Motion",
+                    "text": "Plaintiff must answer discovery.",
+                }
+            ],
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Breach of contract allegations and damages."},
-                {"id": "doc_2", "title": "Answer", "text": "Defendant denies liability and raises defenses."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Breach of contract allegations and damages.",
+                },
+                {
+                    "id": "doc_2",
+                    "title": "Answer",
+                    "text": "Defendant denies liability and raises defenses.",
+                },
             ],
         }
     )
@@ -2113,7 +2451,9 @@ def test_packaged_docket_dataset_supports_lazy_search_without_full_rebuild(tmp_p
     manifest_path = package_info["manifest_json_path"]
 
     bm25_results = search_packaged_docket_dataset_bm25(manifest_path, "breach contract", top_k=2)
-    vector_results = search_packaged_docket_dataset_vector(manifest_path, "breach contract", top_k=2)
+    vector_results = search_packaged_docket_dataset_vector(
+        manifest_path, "breach contract", top_k=2
+    )
     proof_results = search_packaged_docket_proof_tasks(manifest_path, "discovery answer", top_k=5)
 
     assert bm25_results["result_count"] >= 1
@@ -2126,7 +2466,9 @@ def test_packaged_docket_dataset_supports_lazy_search_without_full_rebuild(tmp_p
     assert "Discovery Motion" in {result["title"] for result in proof_results["results"]}
 
 
-def test_packaged_docket_proof_revalidation_queue_surfaces_review_needed_work_items(tmp_path, monkeypatch):
+def test_packaged_docket_proof_revalidation_queue_surfaces_review_needed_work_items(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("IPFS_DATASETS_SAFE_ROOT", str(tmp_path))
     dataset = {
         "docket_id": "1:24-cv-7777",
@@ -2219,7 +2561,10 @@ def test_packaged_docket_proof_revalidation_queue_surfaces_review_needed_work_it
     assert queue["results"][0]["current_proof_packet_review_trigger"]["severity"] == "high"
     assert queue["results"][0]["revalidation_query"]
     assert queue["results"][0]["recommended_revalidation_action"]["source_type"] != "proof_packet"
-    assert queue["results"][0]["recommended_revalidation_execution_hint"]["source_type"] != "proof_packet"
+    assert (
+        queue["results"][0]["recommended_revalidation_execution_hint"]["source_type"]
+        != "proof_packet"
+    )
     queue_execution = execute_packaged_docket_proof_revalidation_queue(
         repackaged["manifest_json_path"],
         top_k=5,
@@ -2232,7 +2577,10 @@ def test_packaged_docket_proof_revalidation_queue_surfaces_review_needed_work_it
     assert queue_execution["executed_count"] == 1
     assert queue_execution["queue_limit"] == 1
     assert queue_execution["execution_summaries"][0]["work_item_id"] == "work_1"
-    assert queue_execution["execution_summaries"][0]["terminal_source_type"] in {"authority_list", "legal_dataset_parser"}
+    assert queue_execution["execution_summaries"][0]["terminal_source_type"] in {
+        "authority_list",
+        "legal_dataset_parser",
+    }
 
 
 def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_path, monkeypatch):
@@ -2256,7 +2604,9 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
         }
 
     class _FakeLegalDatasetApiModule:
-        search_state_law_corpus_from_parameters = staticmethod(fake_search_state_law_corpus_from_parameters)
+        search_state_law_corpus_from_parameters = staticmethod(
+            fake_search_state_law_corpus_from_parameters
+        )
 
     real_import_module = docket_packaging_module.importlib.import_module
 
@@ -2271,11 +2621,31 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
             "docket_id": "1:24-cv-5555",
             "case_name": "Doe v. Planned Search",
             "court": "D. Example",
-            "plaintiff_docket": [{"id": "pl_1", "title": "Discovery Motion", "text": "Plaintiff must answer discovery."}],
-            "authorities": [{"id": "auth_1", "title": "Scheduling Order", "text": "The parties shall exchange disclosures."}],
+            "plaintiff_docket": [
+                {
+                    "id": "pl_1",
+                    "title": "Discovery Motion",
+                    "text": "Plaintiff must answer discovery.",
+                }
+            ],
+            "authorities": [
+                {
+                    "id": "auth_1",
+                    "title": "Scheduling Order",
+                    "text": "The parties shall exchange disclosures.",
+                }
+            ],
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Breach of contract allegations and damages."},
-                {"id": "doc_2", "title": "Order", "text": "Court order concerning disclosures and deadlines."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Breach of contract allegations and damages.",
+                },
+                {
+                    "id": "doc_2",
+                    "title": "Order",
+                    "text": "Court order concerning disclosures and deadlines.",
+                },
             ],
         }
     )
@@ -2287,9 +2657,15 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     kg_plan = plan_packaged_docket_query(manifest_path, "show me the knowledge graph entities")
 
     lexical_result = execute_packaged_docket_query(manifest_path, "find complaint damages", top_k=2)
-    proof_result = execute_packaged_docket_query(manifest_path, "what obligations and proof tasks exist", top_k=5)
-    kg_result = execute_packaged_docket_query(manifest_path, "show me the knowledge graph entities", top_k=2)
-    proof_gap_result = execute_packaged_docket_query(manifest_path, "proof prohibition sanctions", top_k=5)
+    proof_result = execute_packaged_docket_query(
+        manifest_path, "what obligations and proof tasks exist", top_k=5
+    )
+    kg_result = execute_packaged_docket_query(
+        manifest_path, "show me the knowledge graph entities", top_k=2
+    )
+    proof_gap_result = execute_packaged_docket_query(
+        manifest_path, "proof prohibition sanctions", top_k=5
+    )
     proof_gap_result_with_candidate_comparison = execute_packaged_docket_query(
         manifest_path,
         "proof prohibition sanctions",
@@ -2377,9 +2753,13 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
         tmp_path / "planned_bundle_with_packets",
         include_car=True,
     )
-    restored_attached_view = load_packaged_docket_dataset(repackaged_attached_view["manifest_json_path"])
+    restored_attached_view = load_packaged_docket_dataset(
+        repackaged_attached_view["manifest_json_path"]
+    )
     materially_changed_execution = dict(chained_follow_up_execution)
-    materially_changed_results = [dict(item) for item in list(chained_follow_up_execution["results"] or [])]
+    materially_changed_results = [
+        dict(item) for item in list(chained_follow_up_execution["results"] or [])
+    ]
     materially_changed_results.append(
         {
             "id": "state_law_hit_2",
@@ -2405,7 +2785,9 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
         tmp_path / "planned_bundle_with_packets_v2",
         include_car=True,
     )
-    restored_refreshed_view = load_packaged_docket_dataset(repackaged_refreshed_view["manifest_json_path"])
+    restored_refreshed_view = load_packaged_docket_dataset(
+        repackaged_refreshed_view["manifest_json_path"]
+    )
     reused_packet_view = attach_packaged_docket_proof_assistant_packet(
         repackaged_refreshed_view["manifest_json_path"],
         "proof prohibition sanctions",
@@ -2452,11 +2834,14 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
         "proof prohibition sanctions",
         top_k=5,
     )
-    changed_preference_view = load_packaged_docket_dataset(repackaged_refreshed_view["manifest_json_path"])
+    changed_preference_view = load_packaged_docket_dataset(
+        repackaged_refreshed_view["manifest_json_path"]
+    )
     changed_preference_packet_row = next(
         item
         for item in changed_preference_view["proof_assistant"]["evidence_packets"]
-        if item["proof_id"] == refreshed_attached_package_view["attached_proof_assistant_packet"]["proof_id"]
+        if item["proof_id"]
+        == refreshed_attached_package_view["attached_proof_assistant_packet"]["proof_id"]
     )
     changed_preference_packet_row["preference_history"] = [
         {
@@ -2466,7 +2851,9 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
             "best_terminal_support_strength": "moderate",
         },
         {
-            "proof_id": refreshed_attached_package_view["attached_proof_assistant_packet"]["proof_id"],
+            "proof_id": refreshed_attached_package_view["attached_proof_assistant_packet"][
+                "proof_id"
+            ],
             "packet_version": 2,
             "best_terminal_source_type": "legal_dataset_parser",
             "best_terminal_support_strength": "strong",
@@ -2475,7 +2862,9 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     changed_preference_proof = changed_preference_view["proof_assistant"]["proof_store"]["proofs"][
         refreshed_attached_package_view["attached_proof_assistant_packet"]["proof_id"]
     ]
-    changed_preference_proof["preference_history"] = list(changed_preference_packet_row["preference_history"])
+    changed_preference_proof["preference_history"] = list(
+        changed_preference_packet_row["preference_history"]
+    )
     changed_preference_proof["metadata"]["preference_history_count"] = 2
     changed_preference_packaged_view = package_docket_dataset(
         changed_preference_view,
@@ -2503,7 +2892,12 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     changed_preference_proof_search = PackagedDocketQueryAdapter(
         repackaged_changed_preference_attached_view["manifest_json_path"]
     ).search_proof_tasks(
-        str(changed_preference_attached_view["attached_proof_assistant_packet"]["matched_work_item"].get("title") or ""),
+        str(
+            changed_preference_attached_view["attached_proof_assistant_packet"][
+                "matched_work_item"
+            ].get("title")
+            or ""
+        ),
         top_k=10,
         piece_ids=["proof_agenda"],
     )
@@ -2512,8 +2906,12 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
         query_result=refreshed_proof_result,
         top_k=5,
     )
-    refreshed_packet_for_competitor = refreshed_attached_package_view["attached_proof_assistant_packet"]
-    competing_packet_view = load_packaged_docket_dataset(repackaged_refreshed_view["manifest_json_path"])
+    refreshed_packet_for_competitor = refreshed_attached_package_view[
+        "attached_proof_assistant_packet"
+    ]
+    competing_packet_view = load_packaged_docket_dataset(
+        repackaged_refreshed_view["manifest_json_path"]
+    )
     weak_packet = dict(refreshed_packet_for_competitor)
     weak_packet["proof_id"] = f"{refreshed_packet_for_competitor['proof_id']}:weak_competitor"
     weak_packet["work_item_id"] = "weak_work_item"
@@ -2539,7 +2937,9 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
         "retrieval_trace": [],
     }
     weak_proof = dict(
-        restored_refreshed_view["proof_assistant"]["proof_store"]["proofs"][refreshed_packet_for_competitor["proof_id"]]
+        restored_refreshed_view["proof_assistant"]["proof_store"]["proofs"][
+            refreshed_packet_for_competitor["proof_id"]
+        ]
     )
     weak_proof["proof_id"] = weak_packet["proof_id"]
     weak_proof["work_item_id"] = "weak_work_item"
@@ -2551,10 +2951,14 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     weak_proof["evidence_bundle"] = dict(weak_packet["evidence_bundle"])
     weak_proof["metadata"] = dict(weak_proof.get("metadata") or {})
     weak_proof["metadata"]["support_strength"] = "weak"
-    weak_proof["metadata"]["proof_lineage"] = dict(weak_proof["metadata"].get("proof_lineage") or {})
+    weak_proof["metadata"]["proof_lineage"] = dict(
+        weak_proof["metadata"].get("proof_lineage") or {}
+    )
     weak_proof["metadata"]["proof_lineage"]["packet_version"] = int(weak_packet["packet_version"])
     strong_shallow_packet = dict(refreshed_packet_for_competitor)
-    strong_shallow_packet["proof_id"] = f"{refreshed_packet_for_competitor['proof_id']}:strong_shallow"
+    strong_shallow_packet["proof_id"] = (
+        f"{refreshed_packet_for_competitor['proof_id']}:strong_shallow"
+    )
     strong_shallow_packet["work_item_id"] = "strong_shallow_work_item"
     strong_shallow_packet["query"] = "proof prohibition sanctions"
     strong_shallow_packet["matched_work_item"] = {
@@ -2611,16 +3015,23 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
         "retrieval_trace": [{"source_type": "authority_list", "satisfied": True}],
     }
     strong_shallow_proof = dict(
-        restored_refreshed_view["proof_assistant"]["proof_store"]["proofs"][refreshed_packet_for_competitor["proof_id"]]
+        restored_refreshed_view["proof_assistant"]["proof_store"]["proofs"][
+            refreshed_packet_for_competitor["proof_id"]
+        ]
     )
     strong_shallow_proof["proof_id"] = strong_shallow_packet["proof_id"]
     strong_shallow_proof["work_item_id"] = "strong_shallow_work_item"
     strong_shallow_proof["title"] = "Strong Shallow Packet"
     strong_shallow_proof["support_strength"] = "strong"
     strong_shallow_proof["evidence_ids"] = ["strong_shallow_auth_1", "strong_shallow_auth_2"]
-    strong_shallow_proof["matched_plan"] = {"plan_id": "strong_shallow_plan", "work_item_id": "strong_shallow_work_item"}
+    strong_shallow_proof["matched_plan"] = {
+        "plan_id": "strong_shallow_plan",
+        "work_item_id": "strong_shallow_work_item",
+    }
     strong_shallow_proof["evidence_bundle"] = dict(strong_shallow_packet["evidence_bundle"])
-    strong_shallow_proof["action_candidate_history"] = dict(strong_shallow_packet["action_candidate_history"])
+    strong_shallow_proof["action_candidate_history"] = dict(
+        strong_shallow_packet["action_candidate_history"]
+    )
     strong_shallow_proof["metadata"] = dict(strong_shallow_proof.get("metadata") or {})
     strong_shallow_proof["metadata"]["support_strength"] = "strong"
     strong_shallow_proof["metadata"]["action_candidate_history_summary"] = {
@@ -2631,8 +3042,12 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
         "best_terminal_source_type": "authority_list",
         "best_terminal_support_strength": "moderate",
     }
-    strong_shallow_proof["metadata"]["proof_lineage"] = dict(strong_shallow_proof["metadata"].get("proof_lineage") or {})
-    strong_shallow_proof["metadata"]["proof_lineage"]["packet_version"] = int(strong_shallow_packet["packet_version"])
+    strong_shallow_proof["metadata"]["proof_lineage"] = dict(
+        strong_shallow_proof["metadata"].get("proof_lineage") or {}
+    )
+    strong_shallow_proof["metadata"]["proof_lineage"]["packet_version"] = int(
+        strong_shallow_packet["packet_version"]
+    )
     competing_packet_view["proof_assistant"]["evidence_packets"].append(
         {
             "proof_id": weak_packet["proof_id"],
@@ -2669,8 +3084,12 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
             "best_terminal_support_strength": "moderate",
         }
     )
-    competing_packet_view["proof_assistant"]["proof_store"]["proofs"][weak_packet["proof_id"]] = weak_proof
-    competing_packet_view["proof_assistant"]["proof_store"]["proofs"][strong_shallow_packet["proof_id"]] = strong_shallow_proof
+    competing_packet_view["proof_assistant"]["proof_store"]["proofs"][weak_packet["proof_id"]] = (
+        weak_proof
+    )
+    competing_packet_view["proof_assistant"]["proof_store"]["proofs"][
+        strong_shallow_packet["proof_id"]
+    ] = strong_shallow_proof
     competing_packaged_view = package_docket_dataset(
         competing_packet_view,
         tmp_path / "planned_bundle_with_packets_competing",
@@ -2822,45 +3241,173 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
         "legal_dataset_parser",
         "search_engine",
     ]
-    assert proof_gap_result["escalation"]["next_action_summary"]["action_type"] == "refresh_local_support"
+    assert (
+        proof_gap_result["escalation"]["next_action_summary"]["action_type"]
+        == "refresh_local_support"
+    )
     assert proof_gap_result["escalation"]["next_action_summary"]["source_type"] == "authority_list"
     assert proof_gap_result["proof_preference_summary"]["preferred_source_type"] == "authority_list"
-    assert proof_gap_result["proof_preference_summary"]["preferred_action_type"] == "refresh_local_support"
+    assert (
+        proof_gap_result["proof_preference_summary"]["preferred_action_type"]
+        == "refresh_local_support"
+    )
     assert proof_gap_result["proof_preference_summary"]["should_escalate"] is True
-    assert proof_gap_result["escalation"]["next_action_summary"]["execution_hint"]["job_kind"] == "proof_retrieval_follow_up"
-    assert proof_gap_result["escalation"]["next_action_summary"]["execution_hint"]["source_type"] == "authority_list"
-    assert proof_gap_result["escalation"]["next_action_summary"]["execution_hint"]["action_type"] == "refresh_local_support"
+    assert (
+        proof_gap_result["escalation"]["next_action_summary"]["execution_hint"]["job_kind"]
+        == "proof_retrieval_follow_up"
+    )
+    assert (
+        proof_gap_result["escalation"]["next_action_summary"]["execution_hint"]["source_type"]
+        == "authority_list"
+    )
+    assert (
+        proof_gap_result["escalation"]["next_action_summary"]["execution_hint"]["action_type"]
+        == "refresh_local_support"
+    )
     assert proof_gap_result["escalation"]["action_candidates"][0]["source_type"] == "authority_list"
-    assert proof_gap_result["escalation"]["action_candidates"][0]["execution_hint"]["source_type"] == "authority_list"
-    assert proof_gap_result["escalation"]["action_candidates"][0]["execution_hint"]["action_type"] == "refresh_local_support"
-    assert proof_gap_result["escalation"]["action_candidates"][1]["source_type"] == "legal_dataset_parser"
-    assert proof_gap_result["escalation"]["action_candidates"][1]["execution_hint"]["source_type"] == "legal_dataset_parser"
+    assert (
+        proof_gap_result["escalation"]["action_candidates"][0]["execution_hint"]["source_type"]
+        == "authority_list"
+    )
+    assert (
+        proof_gap_result["escalation"]["action_candidates"][0]["execution_hint"]["action_type"]
+        == "refresh_local_support"
+    )
+    assert (
+        proof_gap_result["escalation"]["action_candidates"][1]["source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        proof_gap_result["escalation"]["action_candidates"][1]["execution_hint"]["source_type"]
+        == "legal_dataset_parser"
+    )
     assert proof_gap_result["escalation"]["action_candidates"][2]["source_type"] == "search_engine"
-    assert proof_gap_result["escalation"]["action_candidates"][2]["execution_hint"]["source_type"] == "search_engine"
-    assert proof_gap_result["escalation"]["recommended_sources"][0]["source_type"] == "authority_list"
+    assert (
+        proof_gap_result["escalation"]["action_candidates"][2]["execution_hint"]["source_type"]
+        == "search_engine"
+    )
+    assert (
+        proof_gap_result["escalation"]["recommended_sources"][0]["source_type"] == "authority_list"
+    )
     assert proof_gap_result["escalation"]["follow_up_plan"]["step_count"] == 3
-    assert proof_gap_result["escalation"]["follow_up_plan"]["steps"][0]["source_type"] == "authority_list"
-    assert proof_gap_result["escalation"]["follow_up_plan"]["steps"][0]["action_type"] == "refresh_local_support"
-    assert "proof prohibition sanctions" in proof_gap_result["escalation"]["follow_up_plan"]["steps"][0]["retrieval_query"]
-    assert proof_gap_result["escalation"]["follow_up_plan"]["steps"][1]["source_type"] == "legal_dataset_parser"
-    assert proof_gap_result["escalation"]["follow_up_plan"]["steps"][1]["action_type"] == "refresh_local_support"
-    assert proof_gap_result["escalation"]["follow_up_plan"]["steps"][2]["source_type"] == "search_engine"
-    assert proof_gap_result["escalation"]["follow_up_plan"]["steps"][2]["action_type"] == "escalate_outward"
-    assert proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"]["candidate_count"] == 3
-    assert proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"]["executed_candidate_count"] == 2
-    assert proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"]["comparison_mode"] == "single_step"
-    assert proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"]["candidate_comparison"][0]["candidate_source_type"] == "authority_list"
-    assert proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"]["candidate_comparison"][1]["candidate_source_type"] == "legal_dataset_parser"
-    assert proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"]["candidate_comparison"][2]["candidate_source_type"] == "search_engine"
-    assert proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"]["best_candidate_summary"]["candidate_source_type"] == "legal_dataset_parser"
-    assert proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"]["best_candidate_summary"]["terminal_support_strength"] == "strong"
-    assert proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"]["best_terminal_candidate_summary"]["candidate_source_type"] == "legal_dataset_parser"
-    assert proof_gap_result_with_chained_candidate_comparison["escalation"]["executed_action_candidates"]["comparison_mode"] == "chain_until_satisfied"
-    assert proof_gap_result_with_chained_candidate_comparison["escalation"]["executed_action_candidates"]["candidate_comparison"][0]["candidate_source_type"] == "authority_list"
-    assert proof_gap_result_with_chained_candidate_comparison["escalation"]["executed_action_candidates"]["candidate_comparison"][0]["resolution_status"] == "redirected"
-    assert proof_gap_result_with_chained_candidate_comparison["escalation"]["executed_action_candidates"]["candidate_comparison"][0]["terminal_source_type"] == "legal_dataset_parser"
-    assert proof_gap_result_with_chained_candidate_comparison["escalation"]["executed_action_candidates"]["best_terminal_candidate_summary"]["candidate_source_type"] == "legal_dataset_parser"
-    assert proof_gap_result_with_chained_candidate_comparison["escalation"]["executed_action_candidates"]["best_terminal_candidate_summary"]["terminal_support_strength"] == "strong"
+    assert (
+        proof_gap_result["escalation"]["follow_up_plan"]["steps"][0]["source_type"]
+        == "authority_list"
+    )
+    assert (
+        proof_gap_result["escalation"]["follow_up_plan"]["steps"][0]["action_type"]
+        == "refresh_local_support"
+    )
+    assert (
+        "proof prohibition sanctions"
+        in proof_gap_result["escalation"]["follow_up_plan"]["steps"][0]["retrieval_query"]
+    )
+    assert (
+        proof_gap_result["escalation"]["follow_up_plan"]["steps"][1]["source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        proof_gap_result["escalation"]["follow_up_plan"]["steps"][1]["action_type"]
+        == "refresh_local_support"
+    )
+    assert (
+        proof_gap_result["escalation"]["follow_up_plan"]["steps"][2]["source_type"]
+        == "search_engine"
+    )
+    assert (
+        proof_gap_result["escalation"]["follow_up_plan"]["steps"][2]["action_type"]
+        == "escalate_outward"
+    )
+    assert (
+        proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"][
+            "candidate_count"
+        ]
+        == 3
+    )
+    assert (
+        proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"][
+            "executed_candidate_count"
+        ]
+        == 2
+    )
+    assert (
+        proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"][
+            "comparison_mode"
+        ]
+        == "single_step"
+    )
+    assert (
+        proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"][
+            "candidate_comparison"
+        ][0]["candidate_source_type"]
+        == "authority_list"
+    )
+    assert (
+        proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"][
+            "candidate_comparison"
+        ][1]["candidate_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"][
+            "candidate_comparison"
+        ][2]["candidate_source_type"]
+        == "search_engine"
+    )
+    assert (
+        proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"][
+            "best_candidate_summary"
+        ]["candidate_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"][
+            "best_candidate_summary"
+        ]["terminal_support_strength"]
+        == "strong"
+    )
+    assert (
+        proof_gap_result_with_candidate_comparison["escalation"]["executed_action_candidates"][
+            "best_terminal_candidate_summary"
+        ]["candidate_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        proof_gap_result_with_chained_candidate_comparison["escalation"][
+            "executed_action_candidates"
+        ]["comparison_mode"]
+        == "chain_until_satisfied"
+    )
+    assert (
+        proof_gap_result_with_chained_candidate_comparison["escalation"][
+            "executed_action_candidates"
+        ]["candidate_comparison"][0]["candidate_source_type"]
+        == "authority_list"
+    )
+    assert (
+        proof_gap_result_with_chained_candidate_comparison["escalation"][
+            "executed_action_candidates"
+        ]["candidate_comparison"][0]["resolution_status"]
+        == "redirected"
+    )
+    assert (
+        proof_gap_result_with_chained_candidate_comparison["escalation"][
+            "executed_action_candidates"
+        ]["candidate_comparison"][0]["terminal_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        proof_gap_result_with_chained_candidate_comparison["escalation"][
+            "executed_action_candidates"
+        ]["best_terminal_candidate_summary"]["candidate_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        proof_gap_result_with_chained_candidate_comparison["escalation"][
+            "executed_action_candidates"
+        ]["best_terminal_candidate_summary"]["terminal_support_strength"]
+        == "strong"
+    )
     assert proof_job["job_ready"] is True
     assert proof_job["source_type"] == "authority_list"
     assert proof_job["action_type"] == "refresh_local_support"
@@ -2889,56 +3436,172 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert proof_gap_candidate_execution["action_type"] == "refresh_local_support"
     assert proof_gap_candidate_execution["source"] == "packaged_authorities"
     assert proof_gap_candidate_execution["action_candidate"]["source_type"] == "authority_list"
-    assert proof_gap_candidate_execution["candidate_execution_summary"]["candidate_source_type"] == "authority_list"
+    assert (
+        proof_gap_candidate_execution["candidate_execution_summary"]["candidate_source_type"]
+        == "authority_list"
+    )
     assert proof_gap_candidate_execution["candidate_execution_summary"]["auto_chained"] is False
-    assert proof_gap_candidate_execution["candidate_execution_summary"]["resolution_status"] == "direct"
+    assert (
+        proof_gap_candidate_execution["candidate_execution_summary"]["resolution_status"]
+        == "direct"
+    )
     assert proof_gap_candidate_execution["candidate_execution_summary"]["resolved_directly"] is True
-    assert proof_gap_candidate_execution["candidate_execution_summary"]["terminal_source_type"] == "authority_list"
-    assert proof_gap_candidate_execution["candidate_execution_summary"]["terminal_support_strength"] == "weak"
-    assert proof_gap_candidate_execution["candidate_execution_summary"]["successful_action_summary"]["source_type"] == "authority_list"
+    assert (
+        proof_gap_candidate_execution["candidate_execution_summary"]["terminal_source_type"]
+        == "authority_list"
+    )
+    assert (
+        proof_gap_candidate_execution["candidate_execution_summary"]["terminal_support_strength"]
+        == "weak"
+    )
+    assert (
+        proof_gap_candidate_execution["candidate_execution_summary"]["successful_action_summary"][
+            "source_type"
+        ]
+        == "authority_list"
+    )
     assert proof_gap_candidate_execution["auto_chained"] is False
     assert proof_gap_candidate_chained_execution["executed"] is True
-    assert proof_gap_candidate_chained_execution["action_candidate"]["source_type"] == "authority_list"
-    assert proof_gap_candidate_chained_execution["candidate_execution_summary"]["candidate_source_type"] == "authority_list"
-    assert proof_gap_candidate_chained_execution["candidate_execution_summary"]["auto_chained"] is True
-    assert proof_gap_candidate_chained_execution["candidate_execution_summary"]["resolution_status"] == "redirected"
-    assert proof_gap_candidate_chained_execution["candidate_execution_summary"]["resolved_directly"] is False
-    assert proof_gap_candidate_chained_execution["candidate_execution_summary"]["terminal_source_type"] == "legal_dataset_parser"
-    assert proof_gap_candidate_chained_execution["candidate_execution_summary"]["terminal_support_strength"] == "strong"
-    assert proof_gap_candidate_chained_execution["candidate_execution_summary"]["successful_action_summary"]["source_type"] == "legal_dataset_parser"
+    assert (
+        proof_gap_candidate_chained_execution["action_candidate"]["source_type"] == "authority_list"
+    )
+    assert (
+        proof_gap_candidate_chained_execution["candidate_execution_summary"][
+            "candidate_source_type"
+        ]
+        == "authority_list"
+    )
+    assert (
+        proof_gap_candidate_chained_execution["candidate_execution_summary"]["auto_chained"] is True
+    )
+    assert (
+        proof_gap_candidate_chained_execution["candidate_execution_summary"]["resolution_status"]
+        == "redirected"
+    )
+    assert (
+        proof_gap_candidate_chained_execution["candidate_execution_summary"]["resolved_directly"]
+        is False
+    )
+    assert (
+        proof_gap_candidate_chained_execution["candidate_execution_summary"]["terminal_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        proof_gap_candidate_chained_execution["candidate_execution_summary"][
+            "terminal_support_strength"
+        ]
+        == "strong"
+    )
+    assert (
+        proof_gap_candidate_chained_execution["candidate_execution_summary"][
+            "successful_action_summary"
+        ]["source_type"]
+        == "legal_dataset_parser"
+    )
     assert proof_gap_candidate_chained_execution["auto_chained"] is True
     assert proof_gap_candidate_chained_execution["chained_execution"]["satisfied"] is True
-    assert proof_gap_candidate_chained_execution["successful_action_summary"]["source_type"] == "legal_dataset_parser"
+    assert (
+        proof_gap_candidate_chained_execution["successful_action_summary"]["source_type"]
+        == "legal_dataset_parser"
+    )
     assert proof_gap_candidate_comparison["candidate_count"] == 3
     assert proof_gap_candidate_comparison["executed_candidate_count"] == 2
-    assert proof_gap_candidate_comparison["candidate_comparison"][0]["candidate_source_type"] == "authority_list"
-    assert proof_gap_candidate_comparison["candidate_comparison"][0]["resolution_status"] == "direct"
-    assert proof_gap_candidate_comparison["candidate_comparison"][0]["terminal_support_strength"] == "weak"
-    assert proof_gap_candidate_comparison["candidate_comparison"][1]["candidate_source_type"] == "legal_dataset_parser"
-    assert proof_gap_candidate_comparison["candidate_comparison"][1]["terminal_source_type"] == "legal_dataset_parser"
-    assert proof_gap_candidate_comparison["candidate_comparison"][1]["terminal_support_strength"] == "strong"
-    assert proof_gap_candidate_comparison["candidate_comparison"][2]["candidate_source_type"] == "search_engine"
+    assert (
+        proof_gap_candidate_comparison["candidate_comparison"][0]["candidate_source_type"]
+        == "authority_list"
+    )
+    assert (
+        proof_gap_candidate_comparison["candidate_comparison"][0]["resolution_status"] == "direct"
+    )
+    assert (
+        proof_gap_candidate_comparison["candidate_comparison"][0]["terminal_support_strength"]
+        == "weak"
+    )
+    assert (
+        proof_gap_candidate_comparison["candidate_comparison"][1]["candidate_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        proof_gap_candidate_comparison["candidate_comparison"][1]["terminal_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        proof_gap_candidate_comparison["candidate_comparison"][1]["terminal_support_strength"]
+        == "strong"
+    )
+    assert (
+        proof_gap_candidate_comparison["candidate_comparison"][2]["candidate_source_type"]
+        == "search_engine"
+    )
     assert proof_gap_candidate_comparison["candidate_comparison"][2]["executed"] is False
-    assert proof_gap_candidate_comparison["candidate_comparison"][2]["resolution_status"] == "not_executed"
-    assert proof_gap_candidate_comparison["best_candidate_summary"]["candidate_source_type"] == "legal_dataset_parser"
-    assert proof_gap_candidate_comparison["best_candidate_summary"]["terminal_support_strength"] == "strong"
+    assert (
+        proof_gap_candidate_comparison["candidate_comparison"][2]["resolution_status"]
+        == "not_executed"
+    )
+    assert (
+        proof_gap_candidate_comparison["best_candidate_summary"]["candidate_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        proof_gap_candidate_comparison["best_candidate_summary"]["terminal_support_strength"]
+        == "strong"
+    )
     assert proof_gap_next_action_execution["auto_chained"] is False
-    assert proof_gap_next_action_execution["successful_action_summary"]["source_type"] == "authority_list"
-    assert proof_gap_next_action_execution["successful_action_summary"]["action_type"] == "refresh_local_support"
-    assert proof_gap_next_action_execution["successful_action_summary"]["support_strength"] == "weak"
-    assert proof_gap_next_action_execution["successful_action_summary"]["evidence_preview"]["kind"] == "result_row"
-    assert proof_gap_next_action_execution["successful_action_summary"]["evidence_preview"]["title"] == "Scheduling Order"
+    assert (
+        proof_gap_next_action_execution["successful_action_summary"]["source_type"]
+        == "authority_list"
+    )
+    assert (
+        proof_gap_next_action_execution["successful_action_summary"]["action_type"]
+        == "refresh_local_support"
+    )
+    assert (
+        proof_gap_next_action_execution["successful_action_summary"]["support_strength"] == "weak"
+    )
+    assert (
+        proof_gap_next_action_execution["successful_action_summary"]["evidence_preview"]["kind"]
+        == "result_row"
+    )
+    assert (
+        proof_gap_next_action_execution["successful_action_summary"]["evidence_preview"]["title"]
+        == "Scheduling Order"
+    )
     assert proof_gap_chained_next_action_execution["executed"] is True
     assert proof_gap_chained_next_action_execution["auto_chained"] is True
     assert proof_gap_chained_next_action_execution["chained_execution"]["satisfied"] is True
     assert proof_gap_chained_next_action_execution["chained_execution"]["stopped_on_step"] == 2
-    assert proof_gap_chained_next_action_execution["chained_execution"]["final_execution"]["source"] == "legal_dataset_parser_execution"
-    assert proof_gap_chained_next_action_execution["successful_action_summary"]["source"] == "legal_dataset_parser_execution"
-    assert proof_gap_chained_next_action_execution["successful_action_summary"]["source_type"] == "legal_dataset_parser"
-    assert proof_gap_chained_next_action_execution["successful_action_summary"]["action_type"] == "refresh_local_support"
-    assert proof_gap_chained_next_action_execution["successful_action_summary"]["support_strength"] == "strong"
-    assert proof_gap_chained_next_action_execution["successful_action_summary"]["evidence_preview"]["kind"] == "result_row"
-    assert proof_gap_chained_next_action_execution["successful_action_summary"]["evidence_preview"]["id"] == "state_law_hit_1"
+    assert (
+        proof_gap_chained_next_action_execution["chained_execution"]["final_execution"]["source"]
+        == "legal_dataset_parser_execution"
+    )
+    assert (
+        proof_gap_chained_next_action_execution["successful_action_summary"]["source"]
+        == "legal_dataset_parser_execution"
+    )
+    assert (
+        proof_gap_chained_next_action_execution["successful_action_summary"]["source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        proof_gap_chained_next_action_execution["successful_action_summary"]["action_type"]
+        == "refresh_local_support"
+    )
+    assert (
+        proof_gap_chained_next_action_execution["successful_action_summary"]["support_strength"]
+        == "strong"
+    )
+    assert (
+        proof_gap_chained_next_action_execution["successful_action_summary"]["evidence_preview"][
+            "kind"
+        ]
+        == "result_row"
+    )
+    assert (
+        proof_gap_chained_next_action_execution["successful_action_summary"]["evidence_preview"][
+            "id"
+        ]
+        == "state_law_hit_1"
+    )
     assert parser_job_execution["executed"] is True
     assert parser_job_execution["dispatched"] is True
     assert parser_job_execution["source_type"] == "legal_dataset_parser"
@@ -2947,9 +3610,14 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert "proof prohibition sanctions" in parser_job_execution["dispatch"]["retrieval_query"]
     assert parser_job_execution["source"] == "legal_dataset_parser_execution"
     assert parser_job_execution["adapter"]["adapter_ready"] is True
-    assert parser_job_execution["adapter"]["callable_name"] == "search_state_law_corpus_from_parameters"
+    assert (
+        parser_job_execution["adapter"]["callable_name"]
+        == "search_state_law_corpus_from_parameters"
+    )
     assert parser_job_execution["adapter"]["capability"] == "state_law_corpus_search"
-    assert "proof prohibition sanctions" in parser_job_execution["adapter"]["parameters"]["query_text"]
+    assert (
+        "proof prohibition sanctions" in parser_job_execution["adapter"]["parameters"]["query_text"]
+    )
     assert parser_job_execution["adapter"]["parameters"]["top_k"] == 5
     assert parser_job_execution["result_count"] == 1
     assert parser_job_execution["results"][0]["id"] == "state_law_hit_1"
@@ -2967,18 +3635,26 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert chained_follow_up_execution["steps_attempted"][0]["result_count"] == 1
     assert chained_follow_up_execution["steps_attempted"][0]["cumulative_result_count"] == 1
     assert chained_follow_up_execution["steps_attempted"][0]["satisfied"] is False
-    assert chained_follow_up_execution["steps_attempted"][1]["source_type"] == "legal_dataset_parser"
+    assert (
+        chained_follow_up_execution["steps_attempted"][1]["source_type"] == "legal_dataset_parser"
+    )
     assert chained_follow_up_execution["steps_attempted"][1]["result_count"] == 1
     assert chained_follow_up_execution["steps_attempted"][1]["cumulative_result_count"] == 2
     assert chained_follow_up_execution["steps_attempted"][1]["satisfied"] is True
-    assert chained_follow_up_execution["final_execution"]["source"] == "legal_dataset_parser_execution"
+    assert (
+        chained_follow_up_execution["final_execution"]["source"] == "legal_dataset_parser_execution"
+    )
     assert chained_follow_up_execution["results"][0]["id"] == "state_law_hit_1"
     assert chained_follow_up_execution["results"][1]["id"] == "auth_1"
     returned_ids = {item["id"] for item in chained_follow_up_execution["results"]}
     assert "state_law_hit_1" in returned_ids
     assert "auth_1" in returned_ids
-    parser_row = next(item for item in chained_follow_up_execution["results"] if item["id"] == "state_law_hit_1")
-    authority_row = next(item for item in chained_follow_up_execution["results"] if item["id"] == "auth_1")
+    parser_row = next(
+        item for item in chained_follow_up_execution["results"] if item["id"] == "state_law_hit_1"
+    )
+    authority_row = next(
+        item for item in chained_follow_up_execution["results"] if item["id"] == "auth_1"
+    )
     assert parser_row["best_support_source"] == "legal_dataset_parser"
     assert authority_row["best_support_source"] == "authority_list"
     assert parser_row["supporting_sources"] == ["legal_dataset_parser"]
@@ -2986,14 +3662,27 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert authority_row["supporting_sources"] == ["authority_list"]
     assert authority_row["supporting_steps"] == [1]
     assert chained_follow_up_execution["final_results"][0]["id"] == "state_law_hit_1"
-    assert chained_follow_up_execution["proof_evidence_bundle"]["bundle_kind"] == "packaged_docket_proof_evidence"
-    assert chained_follow_up_execution["proof_evidence_bundle"]["summary"]["evidence_item_count"] == 2
-    assert chained_follow_up_execution["proof_evidence_bundle"]["summary"]["best_support_sources"] == [
+    assert (
+        chained_follow_up_execution["proof_evidence_bundle"]["bundle_kind"]
+        == "packaged_docket_proof_evidence"
+    )
+    assert (
+        chained_follow_up_execution["proof_evidence_bundle"]["summary"]["evidence_item_count"] == 2
+    )
+    assert chained_follow_up_execution["proof_evidence_bundle"]["summary"][
+        "best_support_sources"
+    ] == [
         "legal_dataset_parser",
         "authority_list",
     ]
-    assert chained_follow_up_execution["proof_evidence_bundle"]["evidence_items"][0]["evidence_id"] == "state_law_hit_1"
-    assert chained_follow_up_execution["proof_evidence_bundle"]["retrieval_trace"][1]["source_type"] == "legal_dataset_parser"
+    assert (
+        chained_follow_up_execution["proof_evidence_bundle"]["evidence_items"][0]["evidence_id"]
+        == "state_law_hit_1"
+    )
+    assert (
+        chained_follow_up_execution["proof_evidence_bundle"]["retrieval_trace"][1]["source_type"]
+        == "legal_dataset_parser"
+    )
     assert proof_evidence_bundle["dataset_id"] == dataset.dataset_id
     assert proof_evidence_bundle["docket_id"] == dataset.docket_id
     assert proof_evidence_bundle["summary"]["steps_executed"] == 2
@@ -3009,52 +3698,131 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert proof_assistant_packet["superseded"] is False
     assert proof_assistant_packet["supersedes_proof_ids"] == []
     assert proof_assistant_packet["support_strength"] == "strong"
-    assert proof_assistant_packet["action_candidate_history"]["comparison_mode"] == "chain_until_satisfied"
-    assert proof_assistant_packet["action_candidate_history"]["best_terminal_candidate_summary"]["candidate_source_type"] == "legal_dataset_parser"
-    assert proof_assistant_packet["best_action_candidate_summary"]["terminal_source_type"] == "legal_dataset_parser"
-    assert proof_assistant_packet["best_action_candidate_summary"]["terminal_support_strength"] == "strong"
-    assert proof_assistant_packet["packet_preference_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
-    assert proof_assistant_packet["packet_preference_summary"]["best_terminal_support_strength"] == "strong"
+    assert (
+        proof_assistant_packet["action_candidate_history"]["comparison_mode"]
+        == "chain_until_satisfied"
+    )
+    assert (
+        proof_assistant_packet["action_candidate_history"]["best_terminal_candidate_summary"][
+            "candidate_source_type"
+        ]
+        == "legal_dataset_parser"
+    )
+    assert (
+        proof_assistant_packet["best_action_candidate_summary"]["terminal_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        proof_assistant_packet["best_action_candidate_summary"]["terminal_support_strength"]
+        == "strong"
+    )
+    assert (
+        proof_assistant_packet["packet_preference_summary"]["best_terminal_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        proof_assistant_packet["packet_preference_summary"]["best_terminal_support_strength"]
+        == "strong"
+    )
     assert proof_assistant_packet["packet_preference_summary"]["is_current"] is True
     assert len(proof_assistant_packet["preference_history"]) == 1
     assert proof_assistant_packet["preference_history"][0]["packet_version"] == 1
     assert proof_assistant_packet["preference_review_trigger"]["review_required"] is False
     assert proof_assistant_packet["proof_store"]["summary"]["proof_count"] == 1
     assert proof_assistant_packet["proof_store"]["summary"]["evidence_item_count"] == 2
-    assert proof_assistant_packet["proof_store"]["metadata"]["backend"] == "packaged_docket_follow_up_proof_packet"
-    stored_proof = proof_assistant_packet["proof_store"]["proofs"][proof_assistant_packet["proof_id"]]
-    assert stored_proof["work_item_id"] == proof_assistant_packet["matched_work_item"]["work_item_id"]
+    assert (
+        proof_assistant_packet["proof_store"]["metadata"]["backend"]
+        == "packaged_docket_follow_up_proof_packet"
+    )
+    stored_proof = proof_assistant_packet["proof_store"]["proofs"][
+        proof_assistant_packet["proof_id"]
+    ]
+    assert (
+        stored_proof["work_item_id"] == proof_assistant_packet["matched_work_item"]["work_item_id"]
+    )
     assert stored_proof["packet_version"] == 1
     assert stored_proof["is_current"] is True
     assert stored_proof["superseded"] is False
     assert stored_proof["support_strength"] == "strong"
     assert stored_proof["evidence_ids"] == ["state_law_hit_1", "auth_1"]
-    assert stored_proof["matched_plan"]["work_item_id"] == proof_assistant_packet["matched_work_item"]["work_item_id"]
+    assert (
+        stored_proof["matched_plan"]["work_item_id"]
+        == proof_assistant_packet["matched_work_item"]["work_item_id"]
+    )
     assert stored_proof["evidence_bundle"]["bundle_kind"] == "packaged_docket_proof_evidence"
     assert stored_proof["action_candidate_history"]["comparison_mode"] == "chain_until_satisfied"
-    assert stored_proof["metadata"]["action_candidate_history_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
-    assert stored_proof["metadata"]["action_candidate_history_summary"]["best_terminal_support_strength"] == "strong"
-    assert stored_proof["packet_preference_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
-    assert stored_proof["metadata"]["packet_preference_summary"]["best_terminal_support_strength"] == "strong"
+    assert (
+        stored_proof["metadata"]["action_candidate_history_summary"]["best_terminal_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        stored_proof["metadata"]["action_candidate_history_summary"][
+            "best_terminal_support_strength"
+        ]
+        == "strong"
+    )
+    assert (
+        stored_proof["packet_preference_summary"]["best_terminal_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        stored_proof["metadata"]["packet_preference_summary"]["best_terminal_support_strength"]
+        == "strong"
+    )
     assert len(stored_proof["preference_history"]) == 1
     assert stored_proof["metadata"]["preference_history_count"] == 1
     assert attached_package_view["metadata"]["proof_packet_attached"] is True
-    assert attached_package_view["attached_proof_assistant_packet"]["proof_id"] == proof_assistant_packet["proof_id"]
+    assert (
+        attached_package_view["attached_proof_assistant_packet"]["proof_id"]
+        == proof_assistant_packet["proof_id"]
+    )
     assert attached_package_view["metadata"]["latest_proof_packet_version"] == 1
-    assert attached_package_view["proof_assistant"]["summary"]["latest_proof_packet_support_strength"] == "strong"
-    assert attached_package_view["proof_assistant"]["summary"]["latest_proof_packet_comparison_mode"] == "chain_until_satisfied"
-    assert attached_package_view["proof_assistant"]["summary"]["latest_proof_packet_best_terminal_source_type"] == "legal_dataset_parser"
-    assert attached_package_view["proof_assistant"]["summary"]["latest_proof_packet_best_terminal_support_strength"] == "strong"
-    assert attached_package_view["proof_assistant"]["summary"]["latest_proof_packet_preference_history_count"] == 1
-    assert attached_package_view["proof_assistant"]["summary"]["latest_proof_packet_review_required"] is False
+    assert (
+        attached_package_view["proof_assistant"]["summary"]["latest_proof_packet_support_strength"]
+        == "strong"
+    )
+    assert (
+        attached_package_view["proof_assistant"]["summary"]["latest_proof_packet_comparison_mode"]
+        == "chain_until_satisfied"
+    )
+    assert (
+        attached_package_view["proof_assistant"]["summary"][
+            "latest_proof_packet_best_terminal_source_type"
+        ]
+        == "legal_dataset_parser"
+    )
+    assert (
+        attached_package_view["proof_assistant"]["summary"][
+            "latest_proof_packet_best_terminal_support_strength"
+        ]
+        == "strong"
+    )
+    assert (
+        attached_package_view["proof_assistant"]["summary"][
+            "latest_proof_packet_preference_history_count"
+        ]
+        == 1
+    )
+    assert (
+        attached_package_view["proof_assistant"]["summary"]["latest_proof_packet_review_required"]
+        is False
+    )
     assert attached_package_view["proof_assistant"]["summary"]["proof_packet_count"] == 1
     assert attached_package_view["proof_assistant"]["summary"]["current_proof_packet_count"] == 1
     assert attached_package_view["proof_assistant"]["summary"]["superseded_proof_packet_count"] == 0
     assert attached_package_view["proof_assistant"]["summary"]["proof_count"] == 1
     assert attached_package_view["proof_assistant"]["summary"]["evidence_item_count"] == 2
     assert attached_package_view["proof_assistant"]["proof_store"]["summary"]["packet_count"] == 1
-    assert attached_package_view["proof_assistant"]["proof_store"]["summary"]["current_packet_count"] == 1
-    assert attached_package_view["proof_assistant"]["proof_store"]["summary"]["superseded_packet_count"] == 0
+    assert (
+        attached_package_view["proof_assistant"]["proof_store"]["summary"]["current_packet_count"]
+        == 1
+    )
+    assert (
+        attached_package_view["proof_assistant"]["proof_store"]["summary"][
+            "superseded_packet_count"
+        ]
+        == 0
+    )
     attached_agenda_item = next(
         item
         for item in attached_package_view["proof_assistant"]["agenda"]
@@ -3073,26 +3841,66 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert proof_assistant_packet["proof_id"] in attached_agenda_item["evidence_packet_ids"]
     assert restored_attached_view["proof_assistant"]["summary"]["proof_packet_count"] == 1
     assert restored_attached_view["proof_assistant"]["summary"]["current_proof_packet_count"] == 1
-    assert restored_attached_view["proof_assistant"]["summary"]["superseded_proof_packet_count"] == 0
+    assert (
+        restored_attached_view["proof_assistant"]["summary"]["superseded_proof_packet_count"] == 0
+    )
     assert restored_attached_view["proof_assistant"]["summary"]["proof_count"] == 1
-    assert restored_attached_view["proof_assistant"]["evidence_packets"][0]["proof_id"] == proof_assistant_packet["proof_id"]
+    assert (
+        restored_attached_view["proof_assistant"]["evidence_packets"][0]["proof_id"]
+        == proof_assistant_packet["proof_id"]
+    )
     assert restored_attached_view["proof_assistant"]["evidence_packets"][0]["packet_version"] == 1
     assert restored_attached_view["proof_assistant"]["evidence_packets"][0]["is_current"] is True
-    assert restored_attached_view["proof_assistant"]["evidence_packets"][0]["support_strength"] == "strong"
-    assert restored_attached_view["proof_assistant"]["evidence_packets"][0]["comparison_mode"] == "chain_until_satisfied"
-    assert restored_attached_view["proof_assistant"]["evidence_packets"][0]["best_terminal_source_type"] == "legal_dataset_parser"
-    assert restored_attached_view["proof_assistant"]["evidence_packets"][0]["best_terminal_support_strength"] == "strong"
-    assert restored_attached_view["proof_assistant"]["evidence_packets"][0]["packet_preference_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
-    assert len(restored_attached_view["proof_assistant"]["evidence_packets"][0]["preference_history"]) == 1
-    assert proof_assistant_packet["proof_id"] in restored_attached_view["proof_assistant"]["proof_store"]["proofs"]
-    restored_proof = restored_attached_view["proof_assistant"]["proof_store"]["proofs"][proof_assistant_packet["proof_id"]]
+    assert (
+        restored_attached_view["proof_assistant"]["evidence_packets"][0]["support_strength"]
+        == "strong"
+    )
+    assert (
+        restored_attached_view["proof_assistant"]["evidence_packets"][0]["comparison_mode"]
+        == "chain_until_satisfied"
+    )
+    assert (
+        restored_attached_view["proof_assistant"]["evidence_packets"][0][
+            "best_terminal_source_type"
+        ]
+        == "legal_dataset_parser"
+    )
+    assert (
+        restored_attached_view["proof_assistant"]["evidence_packets"][0][
+            "best_terminal_support_strength"
+        ]
+        == "strong"
+    )
+    assert (
+        restored_attached_view["proof_assistant"]["evidence_packets"][0][
+            "packet_preference_summary"
+        ]["best_terminal_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        len(restored_attached_view["proof_assistant"]["evidence_packets"][0]["preference_history"])
+        == 1
+    )
+    assert (
+        proof_assistant_packet["proof_id"]
+        in restored_attached_view["proof_assistant"]["proof_store"]["proofs"]
+    )
+    restored_proof = restored_attached_view["proof_assistant"]["proof_store"]["proofs"][
+        proof_assistant_packet["proof_id"]
+    ]
     assert restored_proof["evidence_ids"] == ["state_law_hit_1", "auth_1"]
     assert restored_proof["packet_version"] == 1
     assert restored_proof["is_current"] is True
     assert restored_proof["support_strength"] == "strong"
     assert restored_proof["action_candidate_history"]["comparison_mode"] == "chain_until_satisfied"
-    assert restored_proof["metadata"]["action_candidate_history_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
-    assert restored_proof["packet_preference_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
+    assert (
+        restored_proof["metadata"]["action_candidate_history_summary"]["best_terminal_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        restored_proof["packet_preference_summary"]["best_terminal_source_type"]
+        == "legal_dataset_parser"
+    )
     assert len(restored_proof["preference_history"]) == 1
     restored_agenda_item = next(
         item
@@ -3123,7 +3931,10 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert persisted_proof_result["results"][0]["plan"]
     assert persisted_proof_result["results"][0]["authority_backed"] is True
     assert persisted_proof_result["proof_preference_history_summary"]["history_count"] == 1
-    assert persisted_proof_result["proof_preference_history_summary"]["has_previous_preference"] is False
+    assert (
+        persisted_proof_result["proof_preference_history_summary"]["has_previous_preference"]
+        is False
+    )
     assert persisted_proof_result["proof_preference_review_trigger"]["review_required"] is False
     assert persisted_proof_result["escalation"]["should_escalate"] is False
     assert persisted_follow_up_execution["executed"] is True
@@ -3131,24 +3942,41 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert persisted_follow_up_execution["action_type"] == "reuse_current_packet"
     assert persisted_follow_up_execution["source"] == "packaged_proof_packet"
     assert persisted_follow_up_execution["result_count"] == 2
-    assert persisted_follow_up_execution["proof_packet"]["proof_id"] == proof_assistant_packet["proof_id"]
+    assert (
+        persisted_follow_up_execution["proof_packet"]["proof_id"]
+        == proof_assistant_packet["proof_id"]
+    )
     assert persisted_follow_up_execution["proof_packet"]["packet_version"] == 1
     assert persisted_follow_up_execution["proof_packet"]["is_current"] is True
-    assert persisted_follow_up_execution["proof_packet"]["matched_plan"]["work_item_id"] == proof_assistant_packet["matched_work_item"]["work_item_id"]
+    assert (
+        persisted_follow_up_execution["proof_packet"]["matched_plan"]["work_item_id"]
+        == proof_assistant_packet["matched_work_item"]["work_item_id"]
+    )
     refreshed_packet = refreshed_attached_package_view["attached_proof_assistant_packet"]
     assert refreshed_packet["proof_id"] != proof_assistant_packet["proof_id"]
     assert refreshed_packet["packet_version"] == 2
     assert refreshed_packet["is_current"] is True
     assert refreshed_packet["supersedes_proof_ids"] == [proof_assistant_packet["proof_id"]]
     assert refreshed_packet["support_strength"] == "strong"
-    assert refreshed_packet["action_candidate_history"]["comparison_mode"] == "chain_until_satisfied"
-    assert refreshed_packet["best_action_candidate_summary"]["terminal_source_type"] == "legal_dataset_parser"
+    assert (
+        refreshed_packet["action_candidate_history"]["comparison_mode"] == "chain_until_satisfied"
+    )
+    assert (
+        refreshed_packet["best_action_candidate_summary"]["terminal_source_type"]
+        == "legal_dataset_parser"
+    )
     assert len(refreshed_packet["preference_history"]) == 2
     assert [item["packet_version"] for item in refreshed_packet["preference_history"]] == [1, 2]
     refreshed_packet_rows = restored_refreshed_view["proof_assistant"]["evidence_packets"]
     assert len(refreshed_packet_rows) == 2
-    old_packet_row = next(item for item in refreshed_packet_rows if item["proof_id"] == proof_assistant_packet["proof_id"])
-    new_packet_row = next(item for item in refreshed_packet_rows if item["proof_id"] == refreshed_packet["proof_id"])
+    old_packet_row = next(
+        item
+        for item in refreshed_packet_rows
+        if item["proof_id"] == proof_assistant_packet["proof_id"]
+    )
+    new_packet_row = next(
+        item for item in refreshed_packet_rows if item["proof_id"] == refreshed_packet["proof_id"]
+    )
     assert old_packet_row["is_current"] is False
     assert old_packet_row["superseded"] is True
     assert old_packet_row["superseded_by_proof_id"] == refreshed_packet["proof_id"]
@@ -3160,10 +3988,20 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert len(new_packet_row["preference_history"]) == 2
     assert restored_refreshed_view["proof_assistant"]["summary"]["proof_packet_count"] == 2
     assert restored_refreshed_view["proof_assistant"]["summary"]["current_proof_packet_count"] == 1
-    assert restored_refreshed_view["proof_assistant"]["summary"]["superseded_proof_packet_count"] == 1
+    assert (
+        restored_refreshed_view["proof_assistant"]["summary"]["superseded_proof_packet_count"] == 1
+    )
     assert restored_refreshed_view["proof_assistant"]["proof_store"]["summary"]["packet_count"] == 2
-    assert restored_refreshed_view["proof_assistant"]["proof_store"]["summary"]["current_packet_count"] == 1
-    assert restored_refreshed_view["proof_assistant"]["proof_store"]["summary"]["superseded_packet_count"] == 1
+    assert (
+        restored_refreshed_view["proof_assistant"]["proof_store"]["summary"]["current_packet_count"]
+        == 1
+    )
+    assert (
+        restored_refreshed_view["proof_assistant"]["proof_store"]["summary"][
+            "superseded_packet_count"
+        ]
+        == 1
+    )
     refreshed_agenda_item = next(
         item
         for item in restored_refreshed_view["proof_assistant"]["agenda"]
@@ -3179,8 +4017,12 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert refreshed_agenda_item["proof_revalidation_priority"] == "none"
     assert proof_assistant_packet["proof_id"] in refreshed_agenda_item["evidence_packet_ids"]
     assert refreshed_packet["proof_id"] in refreshed_agenda_item["evidence_packet_ids"]
-    refreshed_old_proof = restored_refreshed_view["proof_assistant"]["proof_store"]["proofs"][proof_assistant_packet["proof_id"]]
-    refreshed_new_proof = restored_refreshed_view["proof_assistant"]["proof_store"]["proofs"][refreshed_packet["proof_id"]]
+    refreshed_old_proof = restored_refreshed_view["proof_assistant"]["proof_store"]["proofs"][
+        proof_assistant_packet["proof_id"]
+    ]
+    refreshed_new_proof = restored_refreshed_view["proof_assistant"]["proof_store"]["proofs"][
+        refreshed_packet["proof_id"]
+    ]
     assert refreshed_old_proof["is_current"] is False
     assert refreshed_old_proof["superseded"] is True
     assert refreshed_old_proof["superseded_by_proof_id"] == refreshed_packet["proof_id"]
@@ -3194,77 +4036,229 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert refreshed_proof_result["results"][0]["proof_id"] == refreshed_packet["proof_id"]
     assert refreshed_proof_result["results"][0]["packet_version"] == 2
     assert refreshed_proof_result["results"][0]["is_current"] is True
-    assert refreshed_proof_result["escalation"]["next_action_summary"]["action_type"] == "reuse_current_packet"
-    assert refreshed_proof_result["escalation"]["next_action_summary"]["source_type"] == "proof_packet"
-    assert refreshed_proof_result["escalation"]["next_action_summary"]["source_id"] == refreshed_packet["proof_id"]
-    assert refreshed_proof_result["proof_preference_summary"]["preferred_source_type"] == "proof_packet"
-    assert refreshed_proof_result["proof_preference_summary"]["preferred_source_id"] == refreshed_packet["proof_id"]
-    assert refreshed_proof_result["proof_preference_summary"]["preferred_action_type"] == "reuse_current_packet"
-    assert refreshed_proof_result["proof_preference_summary"]["packet_preference_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
+    assert (
+        refreshed_proof_result["escalation"]["next_action_summary"]["action_type"]
+        == "reuse_current_packet"
+    )
+    assert (
+        refreshed_proof_result["escalation"]["next_action_summary"]["source_type"] == "proof_packet"
+    )
+    assert (
+        refreshed_proof_result["escalation"]["next_action_summary"]["source_id"]
+        == refreshed_packet["proof_id"]
+    )
+    assert (
+        refreshed_proof_result["proof_preference_summary"]["preferred_source_type"]
+        == "proof_packet"
+    )
+    assert (
+        refreshed_proof_result["proof_preference_summary"]["preferred_source_id"]
+        == refreshed_packet["proof_id"]
+    )
+    assert (
+        refreshed_proof_result["proof_preference_summary"]["preferred_action_type"]
+        == "reuse_current_packet"
+    )
+    assert (
+        refreshed_proof_result["proof_preference_summary"]["packet_preference_summary"][
+            "best_terminal_source_type"
+        ]
+        == "legal_dataset_parser"
+    )
     assert refreshed_proof_result["proof_preference_history_summary"]["history_count"] == 2
-    assert refreshed_proof_result["proof_preference_history_summary"]["has_previous_preference"] is True
+    assert (
+        refreshed_proof_result["proof_preference_history_summary"]["has_previous_preference"]
+        is True
+    )
     assert refreshed_proof_result["proof_preference_history_summary"]["stable_preference"] is True
-    assert refreshed_proof_result["proof_preference_history_summary"]["changed_since_previous"] is False
-    assert refreshed_proof_result["proof_preference_history_summary"]["change_summary"]["changed"] is False
+    assert (
+        refreshed_proof_result["proof_preference_history_summary"]["changed_since_previous"]
+        is False
+    )
+    assert (
+        refreshed_proof_result["proof_preference_history_summary"]["change_summary"]["changed"]
+        is False
+    )
     assert refreshed_proof_result["proof_preference_review_trigger"]["review_required"] is False
     assert refreshed_proof_result["proof_preference_review_trigger"]["severity"] == "none"
-    assert "current" in refreshed_proof_result["escalation"]["next_action_summary"]["selection_rationale"]
-    assert "strong support" in refreshed_proof_result["escalation"]["next_action_summary"]["selection_rationale"]
-    assert refreshed_proof_result["escalation"]["next_action_summary"]["execution_hint"]["job_kind"] == "proof_retrieval_follow_up"
-    assert refreshed_proof_result["escalation"]["next_action_summary"]["execution_hint"]["source_type"] == "proof_packet"
-    assert refreshed_proof_result["escalation"]["next_action_summary"]["execution_hint"]["action_type"] == "reuse_current_packet"
-    assert refreshed_proof_result["escalation"]["next_action_summary"]["execution_hint"]["source_id"] == refreshed_packet["proof_id"]
-    assert refreshed_proof_result["escalation"]["next_action_summary"]["packet_preference_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
-    assert refreshed_proof_result["escalation"]["next_action_summary"]["packet_preference_summary"]["best_terminal_support_strength"] == "strong"
+    assert (
+        "current"
+        in refreshed_proof_result["escalation"]["next_action_summary"]["selection_rationale"]
+    )
+    assert (
+        "strong support"
+        in refreshed_proof_result["escalation"]["next_action_summary"]["selection_rationale"]
+    )
+    assert (
+        refreshed_proof_result["escalation"]["next_action_summary"]["execution_hint"]["job_kind"]
+        == "proof_retrieval_follow_up"
+    )
+    assert (
+        refreshed_proof_result["escalation"]["next_action_summary"]["execution_hint"]["source_type"]
+        == "proof_packet"
+    )
+    assert (
+        refreshed_proof_result["escalation"]["next_action_summary"]["execution_hint"]["action_type"]
+        == "reuse_current_packet"
+    )
+    assert (
+        refreshed_proof_result["escalation"]["next_action_summary"]["execution_hint"]["source_id"]
+        == refreshed_packet["proof_id"]
+    )
+    assert (
+        refreshed_proof_result["escalation"]["next_action_summary"]["packet_preference_summary"][
+            "best_terminal_source_type"
+        ]
+        == "legal_dataset_parser"
+    )
+    assert (
+        refreshed_proof_result["escalation"]["next_action_summary"]["packet_preference_summary"][
+            "best_terminal_support_strength"
+        ]
+        == "strong"
+    )
     assert refreshed_next_action_execution["executed"] is True
     assert refreshed_next_action_execution["action_type"] == "reuse_current_packet"
     assert refreshed_next_action_execution["source_type"] == "proof_packet"
-    assert refreshed_next_action_execution["proof_packet"]["proof_id"] == refreshed_packet["proof_id"]
-    assert refreshed_next_action_execution["successful_action_summary"]["source_type"] == "proof_packet"
-    assert refreshed_next_action_execution["successful_action_summary"]["action_type"] == "reuse_current_packet"
-    assert refreshed_next_action_execution["successful_action_summary"]["source_id"] == refreshed_packet["proof_id"]
-    assert refreshed_next_action_execution["successful_action_summary"]["support_strength"] == "strong"
-    assert refreshed_next_action_execution["successful_action_summary"]["evidence_preview"]["kind"] == "proof_evidence_item"
-    assert refreshed_next_action_execution["successful_action_summary"]["evidence_preview"]["id"] == "state_law_hit_1"
+    assert (
+        refreshed_next_action_execution["proof_packet"]["proof_id"] == refreshed_packet["proof_id"]
+    )
+    assert (
+        refreshed_next_action_execution["successful_action_summary"]["source_type"]
+        == "proof_packet"
+    )
+    assert (
+        refreshed_next_action_execution["successful_action_summary"]["action_type"]
+        == "reuse_current_packet"
+    )
+    assert (
+        refreshed_next_action_execution["successful_action_summary"]["source_id"]
+        == refreshed_packet["proof_id"]
+    )
+    assert (
+        refreshed_next_action_execution["successful_action_summary"]["support_strength"] == "strong"
+    )
+    assert (
+        refreshed_next_action_execution["successful_action_summary"]["evidence_preview"]["kind"]
+        == "proof_evidence_item"
+    )
+    assert (
+        refreshed_next_action_execution["successful_action_summary"]["evidence_preview"]["id"]
+        == "state_law_hit_1"
+    )
     assert changed_preference_result["proof_preference_history_summary"]["history_count"] == 2
-    assert changed_preference_result["proof_preference_history_summary"]["has_previous_preference"] is True
-    assert changed_preference_result["proof_preference_history_summary"]["stable_preference"] is False
-    assert changed_preference_result["proof_preference_history_summary"]["changed_since_previous"] is True
-    assert changed_preference_result["proof_preference_history_summary"]["change_summary"]["changed"] is True
-    assert changed_preference_result["proof_preference_history_summary"]["change_summary"]["previous_terminal_source_type"] == "authority_list"
-    assert changed_preference_result["proof_preference_history_summary"]["change_summary"]["latest_terminal_source_type"] == "legal_dataset_parser"
-    assert changed_preference_result["proof_preference_history_summary"]["change_summary"]["previous_terminal_support_strength"] == "moderate"
-    assert changed_preference_result["proof_preference_history_summary"]["change_summary"]["latest_terminal_support_strength"] == "strong"
+    assert (
+        changed_preference_result["proof_preference_history_summary"]["has_previous_preference"]
+        is True
+    )
+    assert (
+        changed_preference_result["proof_preference_history_summary"]["stable_preference"] is False
+    )
+    assert (
+        changed_preference_result["proof_preference_history_summary"]["changed_since_previous"]
+        is True
+    )
+    assert (
+        changed_preference_result["proof_preference_history_summary"]["change_summary"]["changed"]
+        is True
+    )
+    assert (
+        changed_preference_result["proof_preference_history_summary"]["change_summary"][
+            "previous_terminal_source_type"
+        ]
+        == "authority_list"
+    )
+    assert (
+        changed_preference_result["proof_preference_history_summary"]["change_summary"][
+            "latest_terminal_source_type"
+        ]
+        == "legal_dataset_parser"
+    )
+    assert (
+        changed_preference_result["proof_preference_history_summary"]["change_summary"][
+            "previous_terminal_support_strength"
+        ]
+        == "moderate"
+    )
+    assert (
+        changed_preference_result["proof_preference_history_summary"]["change_summary"][
+            "latest_terminal_support_strength"
+        ]
+        == "strong"
+    )
     assert changed_preference_result["proof_preference_review_trigger"]["review_required"] is True
     assert changed_preference_result["proof_preference_review_trigger"]["severity"] == "high"
     assert changed_preference_result["proof_preference_review_trigger"]["source_changed"] is True
-    assert changed_preference_result["proof_preference_review_trigger"]["support_strength_changed"] is True
+    assert (
+        changed_preference_result["proof_preference_review_trigger"]["support_strength_changed"]
+        is True
+    )
     changed_preference_agenda_item = next(
         item
         for item in changed_preference_attached_view["proof_assistant"]["agenda"]
         if item["work_item_id"] == refreshed_packet["matched_work_item"]["work_item_id"]
     )
     assert changed_preference_agenda_item["current_proof_packet_review_required"] is True
-    assert changed_preference_agenda_item["current_proof_packet_review_trigger"]["review_required"] is True
-    assert changed_preference_agenda_item["current_proof_packet_review_trigger"]["severity"] == "high"
-    assert changed_preference_agenda_item["current_proof_packet_review_trigger"]["source_changed"] is True
-    assert changed_preference_agenda_item["current_proof_packet_review_trigger"]["support_strength_changed"] is True
+    assert (
+        changed_preference_agenda_item["current_proof_packet_review_trigger"]["review_required"]
+        is True
+    )
+    assert (
+        changed_preference_agenda_item["current_proof_packet_review_trigger"]["severity"] == "high"
+    )
+    assert (
+        changed_preference_agenda_item["current_proof_packet_review_trigger"]["source_changed"]
+        is True
+    )
+    assert (
+        changed_preference_agenda_item["current_proof_packet_review_trigger"][
+            "support_strength_changed"
+        ]
+        is True
+    )
     assert changed_preference_agenda_item["proof_revalidation_status"] == "needs_revalidation"
     assert changed_preference_agenda_item["proof_revalidation_priority"] == "high"
-    assert changed_preference_attached_view["proof_assistant"]["summary"]["review_required_work_item_count"] == 1
-    assert changed_preference_attached_view["proof_assistant"]["summary"]["high_priority_revalidation_count"] == 1
-    assert changed_preference_attached_view["proof_assistant"]["agenda"][0]["work_item_id"] == changed_preference_agenda_item["work_item_id"]
+    assert (
+        changed_preference_attached_view["proof_assistant"]["summary"][
+            "review_required_work_item_count"
+        ]
+        == 1
+    )
+    assert (
+        changed_preference_attached_view["proof_assistant"]["summary"][
+            "high_priority_revalidation_count"
+        ]
+        == 1
+    )
+    assert (
+        changed_preference_attached_view["proof_assistant"]["agenda"][0]["work_item_id"]
+        == changed_preference_agenda_item["work_item_id"]
+    )
     changed_preference_queue = get_packaged_docket_proof_revalidation_queue(
         repackaged_changed_preference_attached_view["manifest_json_path"],
         top_k=5,
         min_priority="low",
     )
     assert changed_preference_queue["result_count"] == 1
-    assert changed_preference_queue["results"][0]["work_item_id"] == changed_preference_agenda_item["work_item_id"]
+    assert (
+        changed_preference_queue["results"][0]["work_item_id"]
+        == changed_preference_agenda_item["work_item_id"]
+    )
     assert changed_preference_queue["results"][0]["proof_revalidation_priority"] == "high"
-    assert changed_preference_queue["results"][0]["current_proof_packet_review_trigger"]["severity"] == "high"
-    assert changed_preference_queue["results"][0]["recommended_revalidation_action"]["source_type"] != "proof_packet"
-    assert changed_preference_queue["results"][0]["recommended_revalidation_execution_hint"]["source_type"] != "proof_packet"
+    assert (
+        changed_preference_queue["results"][0]["current_proof_packet_review_trigger"]["severity"]
+        == "high"
+    )
+    assert (
+        changed_preference_queue["results"][0]["recommended_revalidation_action"]["source_type"]
+        != "proof_packet"
+    )
+    assert (
+        changed_preference_queue["results"][0]["recommended_revalidation_execution_hint"][
+            "source_type"
+        ]
+        != "proof_packet"
+    )
     changed_preference_queue_execution = execute_packaged_docket_action_candidate(
         repackaged_changed_preference_attached_view["manifest_json_path"],
         changed_preference_queue["results"][0]["recommended_revalidation_action"],
@@ -3273,9 +4267,18 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
         chain_until_satisfied=True,
     )
     assert changed_preference_queue_execution["executed"] is True
-    assert changed_preference_queue_execution["candidate_execution_summary"]["candidate_source_type"] != "proof_packet"
-    assert changed_preference_queue_execution["successful_action_summary"]["source_type"] == "legal_dataset_parser"
-    assert changed_preference_queue_execution["successful_action_summary"]["support_strength"] == "strong"
+    assert (
+        changed_preference_queue_execution["candidate_execution_summary"]["candidate_source_type"]
+        != "proof_packet"
+    )
+    assert (
+        changed_preference_queue_execution["successful_action_summary"]["source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        changed_preference_queue_execution["successful_action_summary"]["support_strength"]
+        == "strong"
+    )
     changed_preference_queue_batch_execution = execute_packaged_docket_proof_revalidation_queue(
         repackaged_changed_preference_attached_view["manifest_json_path"],
         top_k=5,
@@ -3285,11 +4288,28 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
         chain_until_satisfied=True,
     )
     assert changed_preference_queue_batch_execution["executed_count"] == 1
-    assert changed_preference_queue_batch_execution["execution_summaries"][0]["work_item_id"] == changed_preference_agenda_item["work_item_id"]
-    assert changed_preference_queue_batch_execution["execution_summaries"][0]["terminal_source_type"] == "legal_dataset_parser"
-    assert changed_preference_queue_batch_execution["execution_summaries"][0]["terminal_support_strength"] == "strong"
-    assert changed_preference_queue_batch_execution["best_execution_summary"]["work_item_id"] == changed_preference_agenda_item["work_item_id"]
-    assert changed_preference_queue_batch_execution["best_execution_summary"]["terminal_source_type"] == "legal_dataset_parser"
+    assert (
+        changed_preference_queue_batch_execution["execution_summaries"][0]["work_item_id"]
+        == changed_preference_agenda_item["work_item_id"]
+    )
+    assert (
+        changed_preference_queue_batch_execution["execution_summaries"][0]["terminal_source_type"]
+        == "legal_dataset_parser"
+    )
+    assert (
+        changed_preference_queue_batch_execution["execution_summaries"][0][
+            "terminal_support_strength"
+        ]
+        == "strong"
+    )
+    assert (
+        changed_preference_queue_batch_execution["best_execution_summary"]["work_item_id"]
+        == changed_preference_agenda_item["work_item_id"]
+    )
+    assert (
+        changed_preference_queue_batch_execution["best_execution_summary"]["terminal_source_type"]
+        == "legal_dataset_parser"
+    )
     changed_preference_queue_attached_execution = execute_packaged_docket_proof_revalidation_queue(
         repackaged_changed_preference_attached_view["manifest_json_path"],
         top_k=5,
@@ -3302,17 +4322,32 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert changed_preference_queue_attached_execution["attach_refreshed_packets"] is True
     assert changed_preference_queue_attached_execution["attached_packet_count"] == 1
     assert changed_preference_queue_attached_execution["attached_packets"][0]["packet_version"] == 3
-    assert changed_preference_queue_attached_execution["attachment_summaries"][0]["refresh_decision"] == "created_new_packet"
-    assert changed_preference_queue_attached_execution["attached_packets"][0]["preference_review_trigger"]["review_required"] is False
+    assert (
+        changed_preference_queue_attached_execution["attachment_summaries"][0]["refresh_decision"]
+        == "created_new_packet"
+    )
+    assert (
+        changed_preference_queue_attached_execution["attached_packets"][0][
+            "preference_review_trigger"
+        ]["review_required"]
+        is False
+    )
     attached_revalidated_agenda_item = next(
         item
-        for item in changed_preference_queue_attached_execution["attached_package_view"]["proof_assistant"]["agenda"]
+        for item in changed_preference_queue_attached_execution["attached_package_view"][
+            "proof_assistant"
+        ]["agenda"]
         if item["work_item_id"] == changed_preference_agenda_item["work_item_id"]
     )
     assert attached_revalidated_agenda_item["current_proof_packet_version"] == 3
     assert attached_revalidated_agenda_item["current_proof_packet_review_required"] is False
     assert attached_revalidated_agenda_item["proof_revalidation_status"] == "current_support_stable"
-    assert changed_preference_queue_attached_execution["attached_package_view"]["proof_assistant"]["summary"]["review_required_work_item_count"] == 0
+    assert (
+        changed_preference_queue_attached_execution["attached_package_view"]["proof_assistant"][
+            "summary"
+        ]["review_required_work_item_count"]
+        == 0
+    )
     persisted_revalidation_package = persist_packaged_docket_proof_revalidation_queue(
         repackaged_changed_preference_attached_view["manifest_json_path"],
         tmp_path / "planned_bundle_with_packets_revalidated",
@@ -3326,7 +4361,10 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert persisted_revalidation_package["persisted"] is True
     assert persisted_revalidation_package["manifest_json_path"]
     assert persisted_revalidation_package["revalidation_run"]["attached_packet_count"] == 1
-    assert persisted_revalidation_package["revalidation_run"]["best_terminal_source_type"] == "legal_dataset_parser"
+    assert (
+        persisted_revalidation_package["revalidation_run"]["best_terminal_source_type"]
+        == "legal_dataset_parser"
+    )
     reloaded_revalidated_view = load_packaged_docket_dataset(
         persisted_revalidation_package["manifest_json_path"]
     )
@@ -3338,31 +4376,69 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert reloaded_revalidated_agenda_item["current_proof_packet_version"] == 3
     assert reloaded_revalidated_agenda_item["current_proof_packet_review_required"] is False
     assert reloaded_revalidated_agenda_item["proof_revalidation_status"] == "current_support_stable"
-    assert reloaded_revalidated_view["proof_assistant"]["summary"]["review_required_work_item_count"] == 0
+    assert (
+        reloaded_revalidated_view["proof_assistant"]["summary"]["review_required_work_item_count"]
+        == 0
+    )
     assert reloaded_revalidated_view["proof_assistant"]["summary"]["revalidation_run_count"] == 1
-    assert reloaded_revalidated_view["proof_assistant"]["summary"]["latest_revalidation_attached_packet_count"] == 1
+    assert (
+        reloaded_revalidated_view["proof_assistant"]["summary"][
+            "latest_revalidation_attached_packet_count"
+        ]
+        == 1
+    )
     assert len(reloaded_revalidated_view["proof_assistant"]["revalidation_runs"]) == 1
-    assert reloaded_revalidated_view["proof_assistant"]["revalidation_runs"][0]["attached_packet_count"] == 1
-    assert reloaded_revalidated_view["proof_assistant"]["revalidation_runs"][0]["best_terminal_source_type"] == "legal_dataset_parser"
-    assert reloaded_revalidated_view["proof_assistant"]["metadata"]["latest_revalidation_run"]["attached_packet_count"] == 1
-    assert "Pending Review Count: 0" in reloaded_revalidated_view["proof_revalidation_report"]["report_text"]
-    assert "Packaged Docket Operator Dashboard" in reloaded_revalidated_view["operator_dashboard_report"]["report_text"]
+    assert (
+        reloaded_revalidated_view["proof_assistant"]["revalidation_runs"][0][
+            "attached_packet_count"
+        ]
+        == 1
+    )
+    assert (
+        reloaded_revalidated_view["proof_assistant"]["revalidation_runs"][0][
+            "best_terminal_source_type"
+        ]
+        == "legal_dataset_parser"
+    )
+    assert (
+        reloaded_revalidated_view["proof_assistant"]["metadata"]["latest_revalidation_run"][
+            "attached_packet_count"
+        ]
+        == 1
+    )
+    assert (
+        "Pending Review Count: 0"
+        in reloaded_revalidated_view["proof_revalidation_report"]["report_text"]
+    )
+    assert (
+        "Packaged Docket Operator Dashboard"
+        in reloaded_revalidated_view["operator_dashboard_report"]["report_text"]
+    )
     persisted_revalidation_runs = get_packaged_docket_proof_revalidation_runs(
         persisted_revalidation_package["manifest_json_path"],
         top_k=5,
     )
     assert persisted_revalidation_runs["source"] == "packaged_proof_revalidation_runs"
     assert persisted_revalidation_runs["result_count"] == 1
-    assert persisted_revalidation_runs["summary"]["latest_run_id"] == persisted_revalidation_runs["results"][0]["run_id"]
+    assert (
+        persisted_revalidation_runs["summary"]["latest_run_id"]
+        == persisted_revalidation_runs["results"][0]["run_id"]
+    )
     assert persisted_revalidation_runs["results"][0]["attached_packet_count"] == 1
-    assert persisted_revalidation_runs["results"][0]["best_terminal_source_type"] == "legal_dataset_parser"
+    assert (
+        persisted_revalidation_runs["results"][0]["best_terminal_source_type"]
+        == "legal_dataset_parser"
+    )
     filtered_revalidation_runs = get_packaged_docket_proof_revalidation_runs(
         persisted_revalidation_package["manifest_json_path"],
         top_k=5,
         work_item_id=changed_preference_agenda_item["work_item_id"],
     )
     assert filtered_revalidation_runs["result_count"] == 1
-    assert filtered_revalidation_runs["results"][0]["best_work_item_id"] == changed_preference_agenda_item["work_item_id"]
+    assert (
+        filtered_revalidation_runs["results"][0]["best_work_item_id"]
+        == changed_preference_agenda_item["work_item_id"]
+    )
     revalidation_snapshot = get_packaged_docket_proof_revalidation_snapshot(
         persisted_revalidation_package["manifest_json_path"],
         queue_top_k=5,
@@ -3373,7 +4449,10 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert revalidation_snapshot["current_status"]["review_required_work_item_count"] == 0
     assert revalidation_snapshot["current_status"]["queue_count"] == 0
     assert revalidation_snapshot["current_status"]["latest_run_available"] is True
-    assert revalidation_snapshot["latest_run_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
+    assert (
+        revalidation_snapshot["latest_run_summary"]["best_terminal_source_type"]
+        == "legal_dataset_parser"
+    )
     assert revalidation_snapshot["latest_run_summary"]["attached_packet_count"] == 1
     assert revalidation_snapshot["next_queue_item_summary"]["work_item_id"] == ""
     revalidation_report_markdown = render_packaged_docket_proof_revalidation_report(
@@ -3399,7 +4478,12 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert operator_dashboard["summary"]["review_required_work_item_count"] == 0
     assert operator_dashboard["summary"]["revalidation_run_count"] == 1
     assert operator_dashboard["inspection"]["proof_revalidation_report"]["report_text"]
-    assert operator_dashboard["proof_revalidation_snapshot"]["latest_run_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
+    assert (
+        operator_dashboard["proof_revalidation_snapshot"]["latest_run_summary"][
+            "best_terminal_source_type"
+        ]
+        == "legal_dataset_parser"
+    )
     operator_dashboard_report = render_packaged_docket_operator_dashboard(
         persisted_revalidation_package["manifest_json_path"],
         report_format="text",
@@ -3417,9 +4501,22 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
         for item in restored_changed_preference_attached_view["proof_assistant"]["agenda"]
         if item["work_item_id"] == refreshed_packet["matched_work_item"]["work_item_id"]
     )
-    assert restored_changed_preference_attached_view["proof_assistant"]["summary"]["review_required_work_item_count"] == 1
-    assert restored_changed_preference_attached_view["proof_assistant"]["summary"]["high_priority_revalidation_count"] == 1
-    assert restored_changed_preference_attached_view["proof_assistant"]["agenda"][0]["work_item_id"] == restored_changed_preference_agenda_item["work_item_id"]
+    assert (
+        restored_changed_preference_attached_view["proof_assistant"]["summary"][
+            "review_required_work_item_count"
+        ]
+        == 1
+    )
+    assert (
+        restored_changed_preference_attached_view["proof_assistant"]["summary"][
+            "high_priority_revalidation_count"
+        ]
+        == 1
+    )
+    assert (
+        restored_changed_preference_attached_view["proof_assistant"]["agenda"][0]["work_item_id"]
+        == restored_changed_preference_agenda_item["work_item_id"]
+    )
     changed_preference_agenda_search_row = next(
         item
         for item in changed_preference_proof_search["results"]
@@ -3428,51 +4525,167 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert changed_preference_agenda_search_row["current_proof_packet_review_required"] is True
     assert changed_preference_agenda_search_row["proof_revalidation_status"] == "needs_revalidation"
     assert changed_preference_agenda_search_row["proof_revalidation_priority"] == "high"
-    assert changed_preference_agenda_search_row["current_proof_packet_review_trigger"]["severity"] == "high"
+    assert (
+        changed_preference_agenda_search_row["current_proof_packet_review_trigger"]["severity"]
+        == "high"
+    )
     assert "revalidation" in changed_preference_agenda_search_row["selection_rationale"]
     assert competing_proof_result["results"][0]["proof_id"] == refreshed_packet["proof_id"]
     assert competing_proof_result["results"][0]["support_strength"] == "strong"
-    assert competing_proof_result["results"][0]["action_candidate_history_summary"]["comparison_mode"] == "chain_until_satisfied"
-    assert competing_proof_result["results"][0]["packet_preference_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
+    assert (
+        competing_proof_result["results"][0]["action_candidate_history_summary"]["comparison_mode"]
+        == "chain_until_satisfied"
+    )
+    assert (
+        competing_proof_result["results"][0]["packet_preference_summary"][
+            "best_terminal_source_type"
+        ]
+        == "legal_dataset_parser"
+    )
     assert "strong support" in competing_proof_result["results"][0]["selection_rationale"]
-    assert "chained retrieval history ending in legal_dataset_parser" in competing_proof_result["results"][0]["selection_rationale"]
+    assert (
+        "chained retrieval history ending in legal_dataset_parser"
+        in competing_proof_result["results"][0]["selection_rationale"]
+    )
     assert competing_proof_result["results"][1]["proof_id"] == strong_shallow_packet["proof_id"]
     assert competing_proof_result["results"][1]["support_strength"] == "strong"
-    assert competing_proof_result["results"][1]["action_candidate_history_summary"]["comparison_mode"] == "single_step"
-    assert competing_proof_result["results"][1]["packet_preference_summary"]["best_terminal_source_type"] == "authority_list"
-    assert competing_proof_result["results"][1]["packet_preference_summary"]["best_terminal_support_strength"] == "moderate"
+    assert (
+        competing_proof_result["results"][1]["action_candidate_history_summary"]["comparison_mode"]
+        == "single_step"
+    )
+    assert (
+        competing_proof_result["results"][1]["packet_preference_summary"][
+            "best_terminal_source_type"
+        ]
+        == "authority_list"
+    )
+    assert (
+        competing_proof_result["results"][1]["packet_preference_summary"][
+            "best_terminal_support_strength"
+        ]
+        == "moderate"
+    )
     assert "strong support" in competing_proof_result["results"][1]["selection_rationale"]
-    assert "retrieval history ending in authority_list" in competing_proof_result["results"][1]["selection_rationale"]
-    assert competing_proof_result["escalation"]["packet_candidates"][0]["proof_id"] == refreshed_packet["proof_id"]
-    assert competing_proof_result["escalation"]["packet_candidates"][0]["support_strength"] == "strong"
-    assert competing_proof_result["escalation"]["packet_candidates"][0]["packet_preference_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
-    assert "strong support" in competing_proof_result["escalation"]["packet_candidates"][0]["selection_rationale"]
-    assert competing_proof_result["escalation"]["packet_candidates"][1]["proof_id"] == strong_shallow_packet["proof_id"]
-    assert competing_proof_result["escalation"]["packet_candidates"][1]["support_strength"] == "strong"
-    assert competing_proof_result["escalation"]["packet_candidates"][1]["packet_preference_summary"]["best_terminal_source_type"] == "authority_list"
-    assert competing_proof_result["escalation"]["action_candidates"][0]["source_type"] == "proof_packet"
-    assert competing_proof_result["escalation"]["action_candidates"][0]["source_id"] == refreshed_packet["proof_id"]
-    assert competing_proof_result["escalation"]["action_candidates"][0]["support_strength"] == "strong"
-    assert competing_proof_result["escalation"]["action_candidates"][0]["packet_preference_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
-    assert competing_proof_result["escalation"]["action_candidates"][0]["execution_hint"]["source_type"] == "proof_packet"
-    assert competing_proof_result["escalation"]["action_candidates"][0]["execution_hint"]["source_id"] == refreshed_packet["proof_id"]
-    assert competing_proof_result["escalation"]["action_candidates"][0]["execution_hint"]["action_type"] == "reuse_current_packet"
-    assert competing_proof_result["escalation"]["action_candidates"][1]["source_id"] == strong_shallow_packet["proof_id"]
-    assert competing_proof_result["escalation"]["action_candidates"][1]["execution_hint"]["source_id"] == strong_shallow_packet["proof_id"]
-    assert competing_proof_result["escalation"]["next_action_summary"]["source_id"] == refreshed_packet["proof_id"]
-    assert competing_proof_result["escalation"]["next_action_summary"]["packet_preference_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
-    assert "strong support" in competing_proof_result["escalation"]["next_action_summary"]["selection_rationale"]
-    assert "chained retrieval history ending in legal_dataset_parser" in competing_proof_result["escalation"]["next_action_summary"]["selection_rationale"]
+    assert (
+        "retrieval history ending in authority_list"
+        in competing_proof_result["results"][1]["selection_rationale"]
+    )
+    assert (
+        competing_proof_result["escalation"]["packet_candidates"][0]["proof_id"]
+        == refreshed_packet["proof_id"]
+    )
+    assert (
+        competing_proof_result["escalation"]["packet_candidates"][0]["support_strength"] == "strong"
+    )
+    assert (
+        competing_proof_result["escalation"]["packet_candidates"][0]["packet_preference_summary"][
+            "best_terminal_source_type"
+        ]
+        == "legal_dataset_parser"
+    )
+    assert (
+        "strong support"
+        in competing_proof_result["escalation"]["packet_candidates"][0]["selection_rationale"]
+    )
+    assert (
+        competing_proof_result["escalation"]["packet_candidates"][1]["proof_id"]
+        == strong_shallow_packet["proof_id"]
+    )
+    assert (
+        competing_proof_result["escalation"]["packet_candidates"][1]["support_strength"] == "strong"
+    )
+    assert (
+        competing_proof_result["escalation"]["packet_candidates"][1]["packet_preference_summary"][
+            "best_terminal_source_type"
+        ]
+        == "authority_list"
+    )
+    assert (
+        competing_proof_result["escalation"]["action_candidates"][0]["source_type"]
+        == "proof_packet"
+    )
+    assert (
+        competing_proof_result["escalation"]["action_candidates"][0]["source_id"]
+        == refreshed_packet["proof_id"]
+    )
+    assert (
+        competing_proof_result["escalation"]["action_candidates"][0]["support_strength"] == "strong"
+    )
+    assert (
+        competing_proof_result["escalation"]["action_candidates"][0]["packet_preference_summary"][
+            "best_terminal_source_type"
+        ]
+        == "legal_dataset_parser"
+    )
+    assert (
+        competing_proof_result["escalation"]["action_candidates"][0]["execution_hint"][
+            "source_type"
+        ]
+        == "proof_packet"
+    )
+    assert (
+        competing_proof_result["escalation"]["action_candidates"][0]["execution_hint"]["source_id"]
+        == refreshed_packet["proof_id"]
+    )
+    assert (
+        competing_proof_result["escalation"]["action_candidates"][0]["execution_hint"][
+            "action_type"
+        ]
+        == "reuse_current_packet"
+    )
+    assert (
+        competing_proof_result["escalation"]["action_candidates"][1]["source_id"]
+        == strong_shallow_packet["proof_id"]
+    )
+    assert (
+        competing_proof_result["escalation"]["action_candidates"][1]["execution_hint"]["source_id"]
+        == strong_shallow_packet["proof_id"]
+    )
+    assert (
+        competing_proof_result["escalation"]["next_action_summary"]["source_id"]
+        == refreshed_packet["proof_id"]
+    )
+    assert (
+        competing_proof_result["escalation"]["next_action_summary"]["packet_preference_summary"][
+            "best_terminal_source_type"
+        ]
+        == "legal_dataset_parser"
+    )
+    assert (
+        "strong support"
+        in competing_proof_result["escalation"]["next_action_summary"]["selection_rationale"]
+    )
+    assert (
+        "chained retrieval history ending in legal_dataset_parser"
+        in competing_proof_result["escalation"]["next_action_summary"]["selection_rationale"]
+    )
     assert competing_candidate_execution["executed"] is True
     assert competing_candidate_execution["source_type"] == "proof_packet"
     assert competing_candidate_execution["action_type"] == "reuse_current_packet"
     assert competing_candidate_execution["proof_packet"]["proof_id"] == refreshed_packet["proof_id"]
-    assert competing_candidate_execution["candidate_execution_summary"]["candidate_source_type"] == "proof_packet"
-    assert competing_candidate_execution["candidate_execution_summary"]["resolution_status"] == "direct"
+    assert (
+        competing_candidate_execution["candidate_execution_summary"]["candidate_source_type"]
+        == "proof_packet"
+    )
+    assert (
+        competing_candidate_execution["candidate_execution_summary"]["resolution_status"]
+        == "direct"
+    )
     assert competing_candidate_execution["candidate_execution_summary"]["resolved_directly"] is True
-    assert competing_candidate_execution["candidate_execution_summary"]["terminal_source_id"] == refreshed_packet["proof_id"]
-    assert competing_candidate_execution["candidate_execution_summary"]["terminal_support_strength"] == "strong"
-    assert competing_candidate_execution["candidate_execution_summary"]["successful_action_summary"]["source_type"] == "proof_packet"
+    assert (
+        competing_candidate_execution["candidate_execution_summary"]["terminal_source_id"]
+        == refreshed_packet["proof_id"]
+    )
+    assert (
+        competing_candidate_execution["candidate_execution_summary"]["terminal_support_strength"]
+        == "strong"
+    )
+    assert (
+        competing_candidate_execution["candidate_execution_summary"]["successful_action_summary"][
+            "source_type"
+        ]
+        == "proof_packet"
+    )
     assert competing_reuse_job["job"]["source_id"] == refreshed_packet["proof_id"]
     assert competing_reuse_job["action_type"] == "reuse_current_packet"
     assert persisted_reuse_job["job_ready"] is True
@@ -3493,7 +4706,10 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert reused_packet["refresh_decision"] == "reused_current_packet"
     assert reused_packet["material_change_detected"] is False
     assert reused_packet["action_candidate_history"]["comparison_mode"] == "chain_until_satisfied"
-    assert reused_packet["best_action_candidate_summary"]["terminal_source_type"] == "legal_dataset_parser"
+    assert (
+        reused_packet["best_action_candidate_summary"]["terminal_source_type"]
+        == "legal_dataset_parser"
+    )
     assert len(reused_packet["preference_history"]) == 2
     assert reused_packet["preference_review_trigger"]["review_required"] is False
     assert len(reused_packet_view["proof_assistant"]["evidence_packets"]) == 2
@@ -3527,9 +4743,15 @@ def test_docket_deontic_artifacts_capture_party_and_authority_triggers():
     graph, triggers = build_docket_deontic_artifacts(
         dataset_id="dataset_x",
         docket_id="1:24-cv-1001",
-        plaintiff_docket=[{"id": "pl_1", "title": "Notice", "text": "Plaintiff must serve notice."}],
-        defendant_docket=[{"id": "df_1", "title": "Order", "text": "Defendant is ordered to produce records."}],
-        authorities=[{"id": "auth_1", "title": "Rule 26", "text": "Parties shall disclose witnesses."}],
+        plaintiff_docket=[
+            {"id": "pl_1", "title": "Notice", "text": "Plaintiff must serve notice."}
+        ],
+        defendant_docket=[
+            {"id": "df_1", "title": "Order", "text": "Defendant is ordered to produce records."}
+        ],
+        authorities=[
+            {"id": "auth_1", "title": "Rule 26", "text": "Parties shall disclose witnesses."}
+        ],
     )
 
     assert graph.summary()["total_rules"] >= 3
@@ -3558,10 +4780,18 @@ def test_docket_dataset_refreshes_deontic_triggers_when_new_items_are_added():
 
     dataset.append_party_docket_item(
         "plaintiff",
-        {"id": "pl_new", "title": "Motion for Discovery", "text": "Plaintiff must respond to discovery deadlines."},
+        {
+            "id": "pl_new",
+            "title": "Motion for Discovery",
+            "text": "Plaintiff must respond to discovery deadlines.",
+        },
     )
     dataset.append_authority(
-        {"id": "auth_new", "title": "Case Management Order", "text": "The parties shall meet and confer."}
+        {
+            "id": "auth_new",
+            "title": "Case Management Order",
+            "text": "The parties shall meet and confer.",
+        }
     )
 
     refreshed_summary = summarize_docket_dataset(dataset)
@@ -3602,7 +4832,11 @@ def test_docket_dataset_can_be_packaged_into_parquet_and_car_bundle(tmp_path, mo
                 {"id": "pl_1", "title": "Motion", "text": "Plaintiff must provide disclosures."}
             ],
             "authorities": [
-                {"id": "auth_1", "title": "Scheduling Order", "text": "The parties shall exchange disclosures."}
+                {
+                    "id": "auth_1",
+                    "title": "Scheduling Order",
+                    "text": "The parties shall exchange disclosures.",
+                }
             ],
             "documents": [
                 {
@@ -3645,7 +4879,10 @@ def test_docket_dataset_can_be_packaged_into_parquet_and_car_bundle(tmp_path, mo
     assert bundle_manifest["root_piece_id"] == "dataset_core"
     assert bundle_manifest["chain_load_order"][0] == "dataset_core"
     assert any(piece["car_path"] for piece in bundle_manifest["pieces"])
-    assert all((tmp_path / "bundles" / "test_bundle" / piece["parquet_path"]).exists() for piece in bundle_manifest["pieces"])
+    assert all(
+        (tmp_path / "bundles" / "test_bundle" / piece["parquet_path"]).exists()
+        for piece in bundle_manifest["pieces"]
+    )
 
     loaded = load_packaged_docket_dataset(manifest_path)
     restored = DocketDatasetObject.from_package(manifest_path)
@@ -3698,11 +4935,19 @@ def test_packaged_docket_extracts_courtlistener_acquisition_candidates_as_attach
         package_name="courtlistener_attachment_bundle",
         include_car=False,
     )
-    manifest_path = tmp_path / "bundles" / "courtlistener_attachment_bundle" / "bundle_manifest.json"
+    manifest_path = (
+        tmp_path / "bundles" / "courtlistener_attachment_bundle" / "bundle_manifest.json"
+    )
     bundle_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    attachment_piece = next(piece for piece in bundle_manifest["pieces"] if piece["piece_id"] == "attachments")
-    filing_piece = next(piece for piece in bundle_manifest["pieces"] if piece["piece_id"] == "filings")
-    acquisition_piece = next(piece for piece in bundle_manifest["pieces"] if piece["piece_id"] == "acquisition_queue")
+    attachment_piece = next(
+        piece for piece in bundle_manifest["pieces"] if piece["piece_id"] == "attachments"
+    )
+    filing_piece = next(
+        piece for piece in bundle_manifest["pieces"] if piece["piece_id"] == "filings"
+    )
+    acquisition_piece = next(
+        piece for piece in bundle_manifest["pieces"] if piece["piece_id"] == "acquisition_queue"
+    )
 
     assert attachment_piece["row_count"] >= 1
     assert filing_piece["row_count"] >= 1
@@ -3783,7 +5028,8 @@ def test_courtlistener_public_filing_pdf_documents_are_selected_for_retrieval_in
                 {
                     "id": "public_pdf_1",
                     "title": "Example Filing PDF part 1",
-                    "text": "This is substantive extracted filing text discussing equal protection, injunction relief, and constitutional claims." * 4,
+                    "text": "This is substantive extracted filing text discussing equal protection, injunction relief, and constitutional claims."
+                    * 4,
                     "document_number": "1",
                     "source_url": "https://storage.courtlistener.com/recap/example.1.0.pdf",
                     "document_type": "courtlistener_public_filing_pdf",
@@ -3804,7 +5050,9 @@ def test_courtlistener_public_filing_pdf_documents_are_selected_for_retrieval_in
         include_router_enrichment=False,
     )
 
-    assert dataset.metadata["artifact_provenance"]["retrieval_index"]["selected_document_count"] == 1
+    assert (
+        dataset.metadata["artifact_provenance"]["retrieval_index"]["selected_document_count"] == 1
+    )
     assert [item["document_id"] for item in dataset.bm25_index["documents"]] == ["public_pdf_1"]
     assert [item["document_id"] for item in dataset.vector_index["items"]] == ["public_pdf_1"]
 
@@ -3827,7 +5075,8 @@ def test_preview_retrieval_index_reports_public_filing_pdf_documents() -> None:
                 {
                     "id": "public_pdf_1",
                     "title": "Example Filing PDF part 1",
-                    "text": "This is substantive extracted filing text discussing equal protection, injunction relief, and constitutional claims." * 4,
+                    "text": "This is substantive extracted filing text discussing equal protection, injunction relief, and constitutional claims."
+                    * 4,
                     "document_number": "1",
                     "source_url": "https://storage.courtlistener.com/recap/example.1.0.pdf",
                     "document_type": "courtlistener_public_filing_pdf",
@@ -3848,8 +5097,14 @@ def test_preview_retrieval_index_reports_public_filing_pdf_documents() -> None:
 
     assert preview["selected_document_count"] == 1
     assert preview["documents"][0]["document_id"] == "public_pdf_1"
-    assert preview["documents"][0]["metadata"]["retrieval_index"]["source_kind"] == "courtlistener_public_filing_pdf"
-    assert preview["documents"][0]["metadata"]["retrieval_index"]["evidence_quality"] == "extracted_pdf"
+    assert (
+        preview["documents"][0]["metadata"]["retrieval_index"]["source_kind"]
+        == "courtlistener_public_filing_pdf"
+    )
+    assert (
+        preview["documents"][0]["metadata"]["retrieval_index"]["evidence_quality"]
+        == "extracted_pdf"
+    )
     assert preview["evidence_quality_counts"]["extracted_pdf"] == 1
 
 
@@ -3880,7 +5135,8 @@ def test_preview_retrieval_index_excludes_generic_courtlistener_metadata_only_ro
                 {
                     "id": "public_pdf_1",
                     "title": "Complaint for Injunctive Relief PDF part 1",
-                    "text": "This is substantive extracted filing text discussing equal protection, injunction relief, and constitutional claims." * 4,
+                    "text": "This is substantive extracted filing text discussing equal protection, injunction relief, and constitutional claims."
+                    * 4,
                     "document_number": "1",
                     "source_url": "https://storage.courtlistener.com/recap/example.1.0.pdf",
                     "document_type": "courtlistener_public_filing_pdf",
@@ -3962,8 +5218,13 @@ def test_preview_retrieval_index_prefers_rendered_row_kind_when_title_is_generic
     )
 
     assert preview["selected_document_count"] == 1
-    assert preview["documents"][0]["title"] == "Submission of Motion for Temporary Restraining Order"
-    assert preview["documents"][0]["metadata"]["retrieval_index"]["source_kind"] == "courtlistener_rendered_docket"
+    assert (
+        preview["documents"][0]["title"] == "Submission of Motion for Temporary Restraining Order"
+    )
+    assert (
+        preview["documents"][0]["metadata"]["retrieval_index"]["source_kind"]
+        == "courtlistener_rendered_docket"
+    )
     assert preview["documents"][0]["metadata"]["retrieval_index"]["evidence_quality"] == "rendered"
 
 
@@ -4001,7 +5262,8 @@ def test_preview_retrieval_index_can_filter_by_min_evidence_quality() -> None:
                 {
                     "id": "public_pdf_1",
                     "title": "Complaint PDF",
-                    "text": "This is substantive extracted filing text discussing equal protection." * 3,
+                    "text": "This is substantive extracted filing text discussing equal protection."
+                    * 3,
                     "document_number": "1",
                     "text_extraction": {
                         "source": "courtlistener_public_filing_pdf",
@@ -4047,7 +5309,9 @@ def test_docket_dataset_can_roundtrip_from_json_parquet_car_and_zip_bundle(tmp_p
         }
     )
 
-    package_result = dataset.write_package(tmp_path / "bundle_formats", package_name="roundtrip_bundle")
+    package_result = dataset.write_package(
+        tmp_path / "bundle_formats", package_name="roundtrip_bundle"
+    )
     bundle_dir = Path(package_result["bundle_dir"])
     manifest_json_path = Path(package_result["manifest_json_path"])
     manifest_parquet_path = Path(package_result["manifest_parquet_path"])
@@ -4216,7 +5480,9 @@ def test_packaged_docket_bundle_can_include_pdf_export(tmp_path) -> None:
     assert manifest["pdf_artifacts"][0]["page_count"] >= 2
 
 
-def test_packaged_docket_logic_artifact_queries_execute_via_direct_and_planned_paths(tmp_path, monkeypatch):
+def test_packaged_docket_logic_artifact_queries_execute_via_direct_and_planned_paths(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("IPFS_DATASETS_SAFE_ROOT", str(tmp_path))
 
     def _fake_enrichment(documents, **kwargs):  # noqa: ANN001
@@ -4273,7 +5539,9 @@ def test_packaged_docket_logic_artifact_queries_execute_via_direct_and_planned_p
         manifest_path,
         piece_ids=["temporal_formulas", "dcec_formulas", "frame_logic_frames"],
     )
-    direct_result = search_packaged_docket_logic_artifacts(manifest_path, "filed document motionframe", top_k=5)
+    direct_result = search_packaged_docket_logic_artifacts(
+        manifest_path, "filed document motionframe", top_k=5
+    )
     adapter_result = adapter.execute_plan(
         adapter.plan_query("temporal formulas filed document motionframe"),
         top_k=5,
@@ -4288,10 +5556,18 @@ def test_packaged_docket_logic_artifact_queries_execute_via_direct_and_planned_p
     assert logic_components["dcec_formulas"][0]["formula"] == "Happens(DocumentFiled(doc_1), t1)."
     assert logic_components["frame_logic_frames"][0]["label"] == "MotionFrame"
     assert direct_result["result_count"] >= 1
-    assert any(result.get("artifact_type") == "temporal_formula" for result in direct_result["results"])
+    assert any(
+        result.get("artifact_type") == "temporal_formula" for result in direct_result["results"]
+    )
     assert adapter_result["execution_plan"]["target"] == "logic_artifacts"
     assert adapter_result["result_count"] >= 1
-    assert any(result.get("artifact_type") in {"temporal_formula", "dcec_formula", "frame_logic_frame"} for result in adapter_result["results"])
+    assert any(
+        result.get("artifact_type") in {"temporal_formula", "dcec_formula", "frame_logic_frame"}
+        for result in adapter_result["results"]
+    )
     assert planned_result["execution_plan"]["target"] == "logic_artifacts"
     assert planned_result["result_count"] >= 1
-    assert any(result.get("artifact_type") in {"temporal_formula", "dcec_formula", "frame_logic_frame"} for result in planned_result["results"])
+    assert any(
+        result.get("artifact_type") in {"temporal_formula", "dcec_formula", "frame_logic_frame"}
+        for result in planned_result["results"]
+    )

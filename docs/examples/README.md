@@ -54,10 +54,12 @@ graph.add_document(content)
 import asyncio
 from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper
 
+
 async def main():
-	dl = YtDlpWrapper()
-	result = await dl.download_video("https://youtube.com/watch?v=...")
-	print(result.get("title"))
+    dl = YtDlpWrapper()
+    result = await dl.download_video("https://youtube.com/watch?v=...")
+    print(result.get("title"))
+
 
 asyncio.run(main())
 ```

@@ -7,6 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 
 from ipfs_datasets_py.mcp_server import IPFSDatasetsMCPServer
+
 try:
     from modelcontextprotocol.client import MCPClient  # type: ignore[import-not-found]
 except ImportError:
@@ -45,10 +46,9 @@ async def test_mcp_server():
             # This is a mock test that doesn't actually create a dataset,
             # but tests if the server returns a response
             try:
-                result = await client.call_tool("load_dataset", {
-                    "source": "test_data",
-                    "format": "json"
-                })
+                result = await client.call_tool(
+                    "load_dataset", {"source": "test_data", "format": "json"}
+                )
                 print(f"Got response from server: {result}")
             except Exception as e:
                 print(f"Error calling load_dataset: {e}")

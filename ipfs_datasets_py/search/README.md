@@ -34,21 +34,15 @@ from ipfs_datasets_py.search import SearchEmbeddings
 
 # Initialize search engine
 search_engine = SearchEmbeddings(
-    vector_store="qdrant",
-    embedding_model="sentence-transformers/all-MiniLM-L6-v2"
+    vector_store="qdrant", embedding_model="sentence-transformers/all-MiniLM-L6-v2"
 )
 
 # Index documents
-await search_engine.index_documents(
-    documents=document_collection,
-    metadata=document_metadata
-)
+await search_engine.index_documents(documents=document_collection, metadata=document_metadata)
 
 # Perform semantic search
 results = await search_engine.search(
-    query="machine learning algorithms",
-    limit=10,
-    filters={"category": "research"}
+    query="machine learning algorithms", limit=10, filters={"category": "research"}
 )
 
 for result in results:
@@ -64,10 +58,10 @@ results = await search_engine.search(
     filters={
         "date_range": {"start": "2020-01-01", "end": "2024-12-31"},
         "authors": ["Smith", "Johnson"],
-        "min_score": 0.7
+        "min_score": 0.7,
     },
     sort_by="relevance",
-    include_metadata=True
+    include_metadata=True,
 )
 ```
 
@@ -79,7 +73,7 @@ hybrid_results = await search_engine.hybrid_search(
     vector_query=query_embedding,
     text_weight=0.3,
     vector_weight=0.7,
-    limit=15
+    limit=15,
 )
 ```
 
@@ -92,18 +86,14 @@ search_config = {
         "type": "qdrant",
         "host": "localhost",
         "port": 6333,
-        "collection": "documents"
+        "collection": "documents",
     },
     "embedding": {
         "model": "sentence-transformers/all-MiniLM-L6-v2",
         "device": "cuda",
-        "batch_size": 32
+        "batch_size": 32,
     },
-    "search": {
-        "default_limit": 10,
-        "max_limit": 100,
-        "similarity_threshold": 0.5
-    }
+    "search": {"default_limit": 10, "max_limit": 100, "similarity_threshold": 0.5},
 }
 ```
 
@@ -114,7 +104,7 @@ index_config = {
     "overlap": 50,
     "metadata_fields": ["title", "author", "category", "date"],
     "enable_real_time": True,
-    "compression": True
+    "compression": True,
 }
 ```
 
