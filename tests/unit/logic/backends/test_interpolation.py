@@ -283,6 +283,48 @@ def test_installed_provider_without_interpolation_api_is_unavailable(
     assert "no interpolation API" in receipt.reason
 
 
+def test_noncallable_provider_interpolation_attribute_is_not_support(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake = SimpleNamespace(
+        __version__="1.0.0",
+        Solver=type("Solver", (), {"getInterpolant": object()}),
+    )
+    real_load = probe_interpolation_support.__globals__["_load_module"]
+
+    def _load(name: str) -> object | None:
+        if name == "cvc5":
+            return fake
+        return real_load(name)
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.backends.smt.interpolation._load_module",
+        _load,
+    )
+    capability = probe_interpolation_support(provider="cvc5", theory="QF_LIA")
+    assert capability.provider_installed is True
+    assert capability.interpolation_api is False
+    assert capability.qualified is False
+
+
+def test_non_linear_terms_are_rejected_outside_qualified_qf_lia() -> None:
+    x = term_symbol("x")
+    y = term_symbol("y")
+    nonlinear_a = SmtTerm(
+        SmtTermKind.LE,
+        arguments=(
+            SmtTerm(SmtTermKind.MUL, arguments=(x, y)),
+            term_int(1),
+        ),
+    )
+    receipt = compute_and_validate_interpolant(nonlinear_a, _le("x", 0))
+    assert receipt.status is InterpolationStatus.INVALID
+    assert receipt.interpolant is None
+    assert receipt.bounds_ok is False
+    assert "outside the qualified QF_LIA fragment" in receipt.reason
+    assert "non-linear multiplication" in receipt.reason
+
+
 def test_jointly_satisfiable_partitions_do_not_admit_an_interpolant() -> None:
     receipt = compute_and_validate_interpolant(_range("x", 0, 1), _range("y", 2, 3), provider="z3")
     assert receipt.interpolant is None

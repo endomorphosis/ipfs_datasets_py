@@ -399,7 +399,12 @@ def _term_nodes(term: SmtTerm) -> int:
 def _load_module(name: str) -> Any | None:
     try:
         return importlib.import_module(name)
-    except ImportError:
+    # An optional native solver can fail while its extension is loaded (for
+    # example, because a linked shared library is unavailable).  Treat that
+    # exactly like an absent optional provider; capability discovery must not
+    # turn an environmental dependency failure into an exception or a claim
+    # of usable interpolation support.
+    except (ImportError, OSError):
         return None
 
 
@@ -412,12 +417,12 @@ def _module_version(module: Any, provider: str) -> str:
 def _interpolation_api(module: Any, provider: str) -> tuple[bool, str]:
     if provider == QUALIFIED_INTERPOLATION_PROVIDER:
         solver = getattr(module, "Solver", None)
-        if solver is not None and hasattr(solver, "getInterpolant"):
+        if solver is not None and callable(getattr(solver, "getInterpolant", None)):
             return True, "Solver.getInterpolant"
         return False, ""
-    if hasattr(module, "interpolate"):
+    if callable(getattr(module, "interpolate", None)):
         return True, "interpolate"
-    if hasattr(module, "Interpolant"):
+    if callable(getattr(module, "Interpolant", None)):
         return True, "Interpolant"
     return False, ""
 
@@ -590,6 +595,14 @@ def _evaluate_bounds(
         return False, f"request theory {theory!r} is outside bounds theory {bounds.theory!r}"
     if theory != QUALIFIED_INTERPOLATION_THEORY:
         return False, "initial adapter is qualified only for QF_LIA"
+    for label, term in (("partition_a", partition_a), ("partition_b", partition_b)):
+        fragment_error = _qf_lia_term_error(term)
+        if fragment_error:
+            return False, f"{label} is outside the qualified QF_LIA fragment: {fragment_error}"
+    if interpolant is not None:
+        fragment_error = _qf_lia_term_error(interpolant)
+        if fragment_error:
+            return False, f"interpolant is outside the qualified QF_LIA fragment: {fragment_error}"
     symbols = _symbols(partition_a) | _symbols(partition_b)
     if interpolant is not None:
         symbols |= _symbols(interpolant)
@@ -604,6 +617,53 @@ def _evaluate_bounds(
         if size > bounds.max_term_nodes:
             return False, f"interpolant has {size} nodes exceeding max_term_nodes {bounds.max_term_nodes}"
     return True, ""
+
+
+def _qf_lia_term_error(term: SmtTerm) -> str:
+    """Return why ``term`` is outside the structured QF_LIA subset, if any.
+
+    The shared structured-term IR is deliberately broader than QF_LIA.  In
+    particular, accepting ``(* x y)`` merely because cvc5 happens to parse it
+    would make the QF_LIA qualification misleading.  Restrict multiplication
+    to a constant coefficient and reject constructs that this adapter cannot
+    translate faithfully before provider invocation.
+    """
+
+    allowed = {
+        SmtTermKind.TRUE,
+        SmtTermKind.FALSE,
+        SmtTermKind.INT,
+        SmtTermKind.SYMBOL,
+        SmtTermKind.NOT,
+        SmtTermKind.AND,
+        SmtTermKind.OR,
+        SmtTermKind.IMPLIES,
+        SmtTermKind.IFF,
+        SmtTermKind.EQ,
+        SmtTermKind.DISTINCT,
+        SmtTermKind.ITE,
+        SmtTermKind.LT,
+        SmtTermKind.LE,
+        SmtTermKind.GT,
+        SmtTermKind.GE,
+        SmtTermKind.ADD,
+        SmtTermKind.SUB,
+        SmtTermKind.MUL,
+        SmtTermKind.NEG,
+    }
+    if term.kind not in allowed:
+        return f"unsupported term kind {term.kind.value}"
+    if term.kind is SmtTermKind.MUL:
+        non_constant_factors = sum(
+            item.kind is not SmtTermKind.INT for item in term.arguments
+        )
+        if non_constant_factors > 1:
+            return "non-linear multiplication"
+    for item in term.arguments:
+        nested_error = _qf_lia_term_error(item)
+        if nested_error:
+            return nested_error
+    return ""
 
 
 def _identity_holds(
