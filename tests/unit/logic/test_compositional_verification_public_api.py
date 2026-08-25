@@ -37,6 +37,8 @@ from ipfs_datasets_py.logic.backends.smt.incremental import (
     IncrementalSmtUnavailable,
     SmtCheckStatus,
 )
+from ipfs_datasets_py.logic.backends.smt import differential as differential_module
+from ipfs_datasets_py.logic.backends.smt import incremental as incremental_module
 from ipfs_datasets_py.logic.backends.smt.interpolation import InterpolationStatus
 from ipfs_datasets_py.logic.backends.z3.compiler import Z3SoftwareVerificationBackend
 from ipfs_datasets_py.logic.ir_core.protocols import ExecutionBounds
@@ -475,6 +477,45 @@ def test_public_unqualified_provider_stays_typed_unavailable() -> None:
         )
 
 
+def test_public_session_adapter_requires_declaration_and_freshness_operations(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class IncompleteSession:
+        interface = COMPOSITIONAL_INCREMENTAL_SMT_INTERFACE
+
+        class fingerprint:
+            schema = COMPOSITIONAL_INCREMENTAL_SMT_SCHEMA
+
+        def add_named_assertion(self):
+            pass
+
+        def push(self):
+            pass
+
+        def pop(self):
+            pass
+
+        def check(self):
+            pass
+
+        def cancel(self):
+            pass
+
+        def close(self):
+            pass
+
+        def snapshot_or_replay_manifest(self):
+            pass
+
+    monkeypatch.setattr(
+        incremental_module,
+        "open_incremental_smt_session",
+        lambda **_kwargs: IncompleteSession(),
+    )
+    with pytest.raises(VerificationAPIError, match="assert_fresh"):
+        open_incremental_smt_session(session_id="incomplete-session")
+
+
 def test_public_differential_agreement_receipt_is_checked() -> None:
     report = run_z3_cvc5_differential(
         _arith_vc_obligation(),
@@ -525,6 +566,32 @@ def test_public_differential_disagreement_returns_typed_discrepancy() -> None:
     assert evidence["right"]["verdict"] == "sat"
     assert evidence["script_digest"] == report.script_digest
     assert report.report_id
+
+
+def test_public_differential_adapter_rejects_tampered_shared_compilation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    report = run_z3_cvc5_differential(
+        _arith_vc_obligation(),
+        bounds=_bounds(),
+        z3_backend=Z3SoftwareVerificationBackend(
+            runner=_fixed_runner("unsat\n", solver_version="z3-mock"),
+            availability_probe=lambda: True,
+        ),
+        cvc5_backend=CVC5SoftwareVerificationBackend(
+            runner=_fixed_runner("unsat\n", solver_version="cvc5-mock"),
+            availability_probe=lambda: True,
+        ),
+    )
+    object.__setattr__(report, "script_digest", "tampered-script-digest")
+    monkeypatch.setattr(
+        differential_module,
+        "run_z3_cvc5_differential",
+        lambda _obligation, **_kwargs: report,
+    )
+
+    with pytest.raises(VerificationAPIError, match="script_digest"):
+        run_z3_cvc5_differential(_arith_vc_obligation(), bounds=_bounds())
 
 
 def test_public_differential_unavailable_solvers_stay_typed() -> None:

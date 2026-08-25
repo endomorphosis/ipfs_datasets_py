@@ -210,6 +210,8 @@ COMPOSITIONAL_INTERPOLATION_RECEIPT_SCHEMA: Final = "validated-craig-interpolant
 COMPOSITIONAL_SMT_DIFFERENTIAL_INTERFACE: Final = "SmtDifferentialVerification@1"
 COMPOSITIONAL_SMT_DIFFERENTIAL_SCHEMA: Final = "smt-differential-verification/v1"
 _COMPOSITIONAL_SESSION_METHODS: Final[tuple[str, ...]] = (
+    "assert_fresh",
+    "declare_symbol",
     "add_named_assertion",
     "push",
     "pop",
@@ -498,7 +500,83 @@ def _check_incremental_smt_session(result: Any) -> Any:
     return result
 
 
+def _check_incremental_verification_plan(result: Any) -> None:
+    """Require the public invalidation receipt to bind its computed frontier."""
+
+    payload_method = getattr(result, "identity_payload", None)
+    payload = payload_method() if callable(payload_method) else None
+    if not isinstance(payload, Mapping):
+        raise VerificationAPIError(
+            "plan_incremental_verification: result missing identity payload"
+        )
+    if payload.get("interface") != COMPOSITIONAL_INCREMENTAL_VERIFICATION_INTERFACE:
+        raise VerificationAPIError(
+            "plan_incremental_verification: identity payload has the wrong interface"
+        )
+    for field_name in (
+        "previous_state_cid",
+        "current_state_cid",
+        "semantic_delta_cid",
+        "invalidation_plan_cid",
+        "composition_graph_cid",
+        "contract_root",
+    ):
+        value = payload.get(field_name)
+        if not isinstance(value, str) or not value:
+            raise VerificationAPIError(
+                "plan_incremental_verification: identity payload missing "
+                f"{field_name}"
+            )
+
+
+def _check_interpolant_receipt(result: Any) -> None:
+    """Ensure only independently admitted interpolants reach the public API."""
+
+    status = getattr(result, "status", None)
+    status_value = status.value if hasattr(status, "value") else status
+    if status_value not in {
+        "validated",
+        "fallback",
+        "invalid",
+        "unavailable",
+        "unsupported",
+        "unknown",
+    }:
+        raise VerificationAPIError(
+            "compute_and_validate_interpolant: missing typed interpolation status"
+        )
+    if status_value == "validated":
+        if getattr(result, "interpolant", None) is None or getattr(
+            result, "admission_checks_passed", False
+        ) is not True:
+            raise VerificationAPIError(
+                "compute_and_validate_interpolant: validated result lacks independent admission"
+            )
+        for field_name in ("a_implies_i_receipt", "i_and_b_unsat_receipt"):
+            value = getattr(result, field_name, None)
+            if not isinstance(value, str) or not value:
+                raise VerificationAPIError(
+                    "compute_and_validate_interpolant: validated result missing "
+                    f"{field_name}"
+                )
+    elif status_value == "fallback":
+        if getattr(result, "interpolant", None) is not None or getattr(
+            result, "fallback_validated", False
+        ) is not True:
+            raise VerificationAPIError(
+                "compute_and_validate_interpolant: fallback must remain non-interpolant evidence"
+            )
+
+
 def _check_differential_report(result: Any) -> None:
+    """Reject a report whose public fields disagree with its typed outcomes.
+
+    The differential implementation already creates these relationships.  The
+    facade repeats only the inexpensive boundary checks so an alternate
+    backend, monkeypatched integration, or future implementation cannot turn a
+    mismatched pair into a public agreement receipt.
+    """
+
     classification = getattr(result, "classification", None)
     classification_value = (
         classification.value if hasattr(classification, "value") else classification
@@ -512,16 +590,117 @@ def _check_differential_report(result: Any) -> None:
             "run_z3_cvc5_differential: unknown classification "
             f"{classification_value!r}"
         )
-    agreement = getattr(result, "agreement", None)
-    if classification_value in _AGREEING_DIFFERENTIAL_CLASSIFICATIONS:
-        if agreement is not True:
-            raise VerificationAPIError(
-                "run_z3_cvc5_differential: agreeing classification must set agreement=True"
-            )
-        return
-    if agreement is not False:
+    left = getattr(result, "left", None)
+    right = getattr(result, "right", None)
+    compilation = getattr(result, "compilation", None)
+    if left is None or right is None or compilation is None:
         raise VerificationAPIError(
-            "run_z3_cvc5_differential: non-agreeing classification must set agreement=False"
+            "run_z3_cvc5_differential: report must retain both outcomes and compilation"
+        )
+
+    def value_of(value: Any) -> Any:
+        return value.value if hasattr(value, "value") else value
+
+    obligation_id = getattr(result, "obligation_id", None)
+    query_mode = value_of(getattr(result, "query_mode", None))
+    if not isinstance(obligation_id, str) or not obligation_id:
+        raise VerificationAPIError(
+            "run_z3_cvc5_differential: report missing obligation identity"
+        )
+    if query_mode not in {"theorem_by_negation", "satisfiability", "fixed_point"}:
+        raise VerificationAPIError(
+            "run_z3_cvc5_differential: report has an unsupported query mode"
+        )
+    for label, outcome, expected_backend in (
+        ("left", left, "z3"),
+        ("right", right, "cvc5"),
+    ):
+        if getattr(outcome, "backend_id", None) != expected_backend:
+            raise VerificationAPIError(
+                "run_z3_cvc5_differential: "
+                f"{label} outcome must be the {expected_backend} backend"
+            )
+        if getattr(outcome, "obligation_id", None) != obligation_id:
+            raise VerificationAPIError(
+                "run_z3_cvc5_differential: "
+                f"{label} outcome does not bind the report obligation"
+            )
+        if value_of(getattr(outcome, "query_mode", None)) != query_mode:
+            raise VerificationAPIError(
+                "run_z3_cvc5_differential: "
+                f"{label} outcome does not bind the report query mode"
+            )
+
+    script = getattr(compilation, "script", None)
+    script_digest = getattr(script, "digest", None)
+    if not isinstance(script_digest, str) or not script_digest:
+        raise VerificationAPIError(
+            "run_z3_cvc5_differential: compilation is missing a script digest"
+        )
+    if getattr(compilation, "obligation_id", None) != obligation_id:
+        raise VerificationAPIError(
+            "run_z3_cvc5_differential: compilation does not bind the report obligation"
+        )
+    if value_of(getattr(compilation, "query_mode", None)) != query_mode:
+        raise VerificationAPIError(
+            "run_z3_cvc5_differential: compilation does not bind the report query mode"
+        )
+    if getattr(result, "script_digest", None) != script_digest:
+        raise VerificationAPIError(
+            "run_z3_cvc5_differential: report script_digest does not match compilation"
+        )
+    for label, outcome in (("left", left), ("right", right)):
+        outcome_compilation = getattr(outcome, "compilation", None)
+        outcome_digest = getattr(getattr(outcome_compilation, "script", None), "digest", None)
+        if outcome_digest != script_digest:
+            raise VerificationAPIError(
+                "run_z3_cvc5_differential: "
+                f"{label} outcome did not execute the shared compilation"
+            )
+
+    left_verdict = value_of(getattr(left, "verdict", None))
+    right_verdict = value_of(getattr(right, "verdict", None))
+    if left_verdict not in {
+        "sat", "unsat", "unknown", "timeout", "unavailable", "malformed", "error", "unsupported"
+    } or right_verdict not in {
+        "sat", "unsat", "unknown", "timeout", "unavailable", "malformed", "error", "unsupported"
+    }:
+        raise VerificationAPIError(
+            "run_z3_cvc5_differential: outcomes must expose typed solver verdicts"
+        )
+    if "malformed" in {left_verdict, right_verdict}:
+        expected_classification = "malformed"
+    elif "error" in {left_verdict, right_verdict}:
+        expected_classification = "error"
+    elif left_verdict == right_verdict == "unavailable":
+        expected_classification = "both_unavailable"
+    elif "unavailable" in {left_verdict, right_verdict}:
+        expected_classification = "partial_unavailable"
+    elif {left_verdict, right_verdict} == {"sat", "unsat"}:
+        expected_classification = "disagree"
+    elif left_verdict == right_verdict == "unsat":
+        expected_classification = (
+            "agree_proved"
+            if query_mode == "theorem_by_negation"
+            else "agree_unsatisfiable"
+        )
+    elif left_verdict == right_verdict == "sat":
+        expected_classification = (
+            "agree_disproved"
+            if query_mode == "theorem_by_negation"
+            else "agree_satisfiable"
+        )
+    else:
+        expected_classification = "agree_unknown"
+    if classification_value != expected_classification:
+        raise VerificationAPIError(
+            "run_z3_cvc5_differential: classification does not match typed outcomes"
+        )
+
+    agreement = getattr(result, "agreement", None)
+    if agreement is not (classification_value in _AGREEING_DIFFERENTIAL_CLASSIFICATIONS):
+        raise VerificationAPIError(
+            "run_z3_cvc5_differential: agreement does not match classification"
         )
     if classification_value != "disagree":
         return
@@ -530,6 +709,20 @@ def _check_differential_report(result: Any) -> None:
     if not isinstance(payload, Mapping) or payload.get("preserved") is not True:
         raise VerificationAPIError(
             "run_z3_cvc5_differential: disagreement must preserve typed evidence"
+        )
+    for label, outcome in (("left", left), ("right", right)):
+        observed = payload.get(label)
+        if not isinstance(observed, Mapping) or (
+            observed.get("backend_id") != getattr(outcome, "backend_id", None)
+            or observed.get("verdict") != value_of(getattr(outcome, "verdict", None))
+        ):
+            raise VerificationAPIError(
+                "run_z3_cvc5_differential: disagreement evidence does not match "
+                f"the {label} outcome"
+            )
+    if payload.get("script_digest") != script_digest:
+        raise VerificationAPIError(
+            "run_z3_cvc5_differential: disagreement evidence has the wrong script digest"
         )
 
 
@@ -566,6 +759,10 @@ def _check_compositional_result(operation: str, result: Any) -> Any:
             )
     if operation == "run_z3_cvc5_differential":
         _check_differential_report(result)
+    elif operation == "plan_incremental_verification":
+        _check_incremental_verification_plan(result)
+    elif operation == "compute_and_validate_interpolant":
+        _check_interpolant_receipt(result)
     return result
 
 
