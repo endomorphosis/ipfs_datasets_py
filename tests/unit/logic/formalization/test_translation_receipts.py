@@ -632,6 +632,55 @@ def test_stale_proof_is_rejected_when_inputs_compiler_or_obligations_change() ->
         )
 
 
+@pytest.mark.parametrize(
+    ("field", "replacement", "expected_code"),
+    [
+        (
+            "losses",
+            (_loss(handling=UnsupportedHandling.REJECTED),),
+            StageReceiptIssueCode.LOSS_MISMATCH,
+        ),
+        (
+            "assumptions",
+            (
+                replace(
+                    _assumption(),
+                    statement="The alias analysis permits no additional heap aliases.",
+                ),
+            ),
+            StageReceiptIssueCode.ASSUMPTION_MISMATCH,
+        ),
+        (
+            "obligations",
+            (
+                replace(
+                    _obligation(),
+                    statement="The postcondition holds after every normal return.",
+                ),
+            ),
+            StageReceiptIssueCode.OBLIGATION_MISMATCH,
+        ),
+    ],
+)
+def test_currentness_binds_full_loss_assumption_and_obligation_records(
+    field: str,
+    replacement: tuple[object, ...],
+    expected_code: StageReceiptIssueCode,
+) -> None:
+    """Stable record IDs must not let altered translation semantics replay."""
+
+    receipt = _stage_receipt()
+    expectation = replace(
+        StageReceiptExpectation.from_receipt(receipt),
+        **{field: replacement},
+    )
+    validation = validate_stage_receipt(receipt, expectation)
+
+    assert not validation.current
+    assert validation.issues[0].code is expected_code
+    assert validation.effective_authority_ceiling is EvidenceAuthority.NONE
+
+
 def test_reconstruction_round_trips_stage_and_pipeline_payloads() -> None:
     stages = _pipeline_stages()
     pipeline = compose_pipeline_receipts(stages, pipeline_id="pipeline:full")
