@@ -1,0 +1,38 @@
+{
+  "acceptance": {
+    "current_input_qualified_r1_cid": null,
+    "historical_baseline_retired": true,
+    "satisfied": true
+  },
+  "decision": {
+    "code": "retired_no_current_eligible_rows",
+    "effect": "The historical R1 fixture result is ineligible for current successor baseline, model-selection, or promotion claims.",
+    "status": "retired",
+    "supersession_rule": "A later task may create a new R1 result only from a new rights-admitted, materialized corpus and a successor split with nonzero declared non-hidden denominators. It must not reuse historical fixture scores as current evidence."
+  },
+  "denominators": {
+    "current_eligible_rows": 0,
+    "declared_non_hidden_strata": 15,
+    "historical_fixture_cases_not_current_denominator": 13,
+    "metrics": "not_run; null values are used rather than substituting zero"
+  },
+  "historical_baseline": {
+    "experiment_id": "R1",
+    "manifest_cid": "baguqeeraf3mevd4zrpkcy6hmsamfyszkq5zeisq2ipu6bvupquprtfqi53ta",
+    "report_cid": "baguqeerau73uowpiy22d7rohi7gvbtfkwivyldlivxnxqw4zzc7zeyzavasq",
+    "task_id": "PGIR-023"
+  },
+  "interface": "IRDeterministicBaselineRetirementReceipt@1",
+  "rationale": {
+    "admitted_source_rows": 0,
+    "all_declared_non_hidden_strata_permanent_no_go": true,
+    "materialized_source_rows": 0,
+    "reason_code": "no_rights_admitted_materialized_rows",
+    "source_rights_training_eligible": false
+  },
+  "retirement_cid_derivation": "CIDv1 dag-json sha2-256 of this receipt after omitting retirement_cid.",
+  "result_identity": "RESULT(PGIR-204)",
+  "retirement_cid": "baguqeeraw4nh2c7xxamku4juzt5257krzlzuaxe64vl5cuz4h4c4iwm6xdjq",
+  "schema": "proof-grounded-ir-learning/successor-r1-baseline-retirement-receipt/v1",
+  "task_id": "PGIR-204"
+}

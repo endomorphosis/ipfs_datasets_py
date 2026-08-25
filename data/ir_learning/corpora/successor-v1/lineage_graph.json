@@ -1,0 +1,40 @@
+{
+  "admitted_lineage_groups": [],
+  "candidate_populations_excluded_by_rights": [
+    {
+      "candidate_source_rows": 2174,
+      "citation_id": "hf-api:justicedao/patent-legal-ir-graphrag@845669408081f1334c54519d2bb7df6bf780ccd5",
+      "lineage_group_id_format": "grp:patent:%04d",
+      "population_id": "patent",
+      "record_id_format": "src:patent:%04d",
+      "record_id_range": {
+        "first": 0,
+        "last": 2173
+      },
+      "source_release_id": "justicedao/patent-legal-ir-graphrag"
+    },
+    {
+      "candidate_source_rows": 4999,
+      "citation_id": "hf-api:justicedao/wetwijzer_netherlands_legal_corpus@827e9412f55cbe332f18824ff669bdbbae39005d",
+      "lineage_group_id_format": "grp:dutch-law:%04d",
+      "population_id": "dutch-law",
+      "record_id_format": "src:dutch-law:%04d",
+      "record_id_range": {
+        "first": 0,
+        "last": 4998
+      },
+      "source_release_id": "justicedao/wetwijzer_netherlands_legal_corpus"
+    }
+  ],
+  "edges": [],
+  "graph_id": "lin:successor-v1:jdao-pinset-1:admitted",
+  "kind": "successor_admitted_lineage_graph",
+  "materialized_row_lineage": [],
+  "pinset_id": "JDAO-PINSET-1",
+  "schema": "proof-grounded-ir-learning/successor-admitted-lineage-graph/v1",
+  "validation": {
+    "every_materialized_row_has_admitted_rights": true,
+    "every_materialized_row_has_lineage_group": true,
+    "materialized_row_count": 0
+  }
+}
