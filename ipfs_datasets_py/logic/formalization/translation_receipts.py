@@ -408,6 +408,19 @@ def _bound_payloads(bounds: Sequence[TranslationBound]) -> tuple[bytes, ...]:
     return tuple(canonical_json_bytes(item.to_dict()) for item in bounds)
 
 
+def _record_payloads(records: Sequence[Any]) -> tuple[bytes, ...]:
+    """Return canonical payloads for records whose identifiers may be reused.
+
+    Receipt freshness cannot rely on stable human-facing identifiers alone:
+    an assumption, obligation, or unsupported-construct record may retain its
+    identifier while its statement, handling, provenance, or metadata changes.
+    Comparing the complete canonical payload makes those semantic changes
+    stale and prevents an old receipt from retaining authority.
+    """
+
+    return tuple(canonical_json_bytes(item.to_dict()) for item in records)
+
+
 @dataclass(frozen=True, slots=True)
 class StageArtifactRef:
     """Content-addressed artifact sitting at one compilation stage."""
@@ -2007,20 +2020,20 @@ def validate_stage_receipt(
         "supported subset",
     )
     compare(
-        _loss_ids(receipt.losses),
-        _loss_ids(expectation.losses),
+        _record_payloads(receipt.losses),
+        _record_payloads(expectation.losses),
         StageReceiptIssueCode.LOSS_MISMATCH,
         "losses",
     )
     compare(
-        _assumption_ids(receipt.assumptions),
-        _assumption_ids(expectation.assumptions),
+        _record_payloads(receipt.assumptions),
+        _record_payloads(expectation.assumptions),
         StageReceiptIssueCode.ASSUMPTION_MISMATCH,
         "assumptions",
     )
     compare(
-        _obligation_ids(receipt.obligations),
-        _obligation_ids(expectation.obligations),
+        _record_payloads(receipt.obligations),
+        _record_payloads(expectation.obligations),
         StageReceiptIssueCode.OBLIGATION_MISMATCH,
         "obligations",
     )
