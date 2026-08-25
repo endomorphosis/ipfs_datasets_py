@@ -1,0 +1,22 @@
+{
+  "deterministic_replay": {
+    "algorithm": "Read the sealed successor corpus root and manifest; require materialized=false, admitted_source_rows=0, and both materialized ID lists empty. Reconstruct the empty assignment map and verify the LegalIR leakage guard returns passed=true. Verify the inherited hidden-test commitment byte-for-byte against the predecessor split root without reading or enumerating hidden-test membership.",
+    "expected_assignment_count": 0,
+    "expected_leakage_passed": true,
+    "expected_materialized_source_rows": 0
+  },
+  "hidden_test_commitment": {
+    "commitment": "sha256:6a801b51b980e666b4010da9a679ad8e11a233078f988165565481b98d4b9ded",
+    "predecessor_split_root_path": "ipfs_datasets_py/data/ir_learning/splits/split_root.json",
+    "status": "unchanged_inherited",
+    "verification": "Compare the public commitment string only; do not inspect hidden-test examples or select replacements."
+  },
+  "input_corpus": {
+    "corpus_manifest_path": "ipfs_datasets_py/data/ir_learning/corpora/successor-v1/corpus_manifest.json",
+    "corpus_root_path": "ipfs_datasets_py/data/ir_learning/corpora/successor-v1/corpus_root.json",
+    "result_identity": "RESULT(PGIR-201)"
+  },
+  "kind": "successor_split_replay_receipt",
+  "result_identity": "RESULT(PGIR-202)",
+  "schema": "proof-grounded-ir-learning/successor-split-replay-receipt/v1"
+}
