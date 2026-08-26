@@ -16,6 +16,7 @@ from ipfs_datasets_py.logic.backends.smt.compiler import (
 )
 from ipfs_datasets_py.logic.backends.smt.incremental import IncrementalSmtUnavailable
 from ipfs_datasets_py.logic.backends.smt.interpolation import (
+    FRAGMENT_CHECKER,
     INTERPOLATION_INTERFACE,
     INTERPOLATION_RECEIPT_SCHEMA,
     InterpolationBounds,
@@ -79,7 +80,34 @@ def test_exact_provider_theory_support_is_probed() -> None:
 
 def test_live_qf_lia_interpolant_is_independently_validated() -> None:
     partition_a, partition_b = _disjoint_unsat()
+    capability = probe_interpolation_support(provider="cvc5", theory="QF_LIA")
     receipt = compute_and_validate_interpolant(partition_a, partition_b)
+    producer_ready = (
+        capability.provider_installed
+        and capability.provider_qualified
+        and capability.interpolation_api
+        and capability.theory_qualified
+    )
+    if not producer_ready:
+        assert receipt.interpolant is None
+        assert receipt.status in {
+            InterpolationStatus.FALLBACK,
+            InterpolationStatus.UNAVAILABLE,
+        }
+        assert receipt.schema == INTERPOLATION_RECEIPT_SCHEMA
+        assert receipt.interface == INTERPOLATION_INTERFACE
+        assert receipt.receipt_cid.startswith("b")
+        if receipt.status is InterpolationStatus.FALLBACK:
+            assert receipt.fallback_kind == "validated_unsat_core"
+            assert receipt.fallback_validated is True
+            assert receipt.fallback_receipt.startswith("b")
+            assert set(receipt.fallback_core) <= {"partition-a", "partition-b"}
+            assert receipt.fallback_core
+        else:
+            assert receipt.fallback_validated is False
+            assert receipt.fallback_kind == ""
+        return
+
     assert receipt.status is InterpolationStatus.VALIDATED
     assert receipt.interpolant is not None
     assert set(receipt.interpolant_vocabulary) <= {"x"}
@@ -211,6 +239,7 @@ def test_unqualified_theory_is_typed_unsupported() -> None:
 def test_solver_availability_is_not_interpolation_support() -> None:
     capability = probe_interpolation_support(provider="z3", theory="QF_LIA")
     assert capability.qualified is False
+    assert capability.provider_qualified is False
     receipt = compute_and_validate_interpolant(*_disjoint_unsat(), provider="z3")
     assert receipt.interpolant is None
     assert receipt.status is InterpolationStatus.FALLBACK
@@ -219,7 +248,10 @@ def test_solver_availability_is_not_interpolation_support() -> None:
     assert receipt.fallback_receipt.startswith("b")
     assert set(receipt.fallback_core) <= {"partition-a", "partition-b"}
     assert receipt.fallback_core
-    assert "not qualified interpolation support" in receipt.reason
+    if capability.provider_installed:
+        assert "not qualified interpolation support" in receipt.reason
+    else:
+        assert "not installed" in receipt.reason
 
 
 def test_unavailable_interpolation_uses_validated_unsat_core_fallback() -> None:
@@ -247,6 +279,34 @@ def test_unavailable_providers_without_validator_stay_typed(
     monkeypatch.setattr(
         "ipfs_datasets_py.logic.backends.smt.interpolation.open_incremental_smt_session",
         _blocked,
+    )
+    receipt = compute_and_validate_interpolant(*_disjoint_unsat(), provider="absent")
+    # Z3 may be absent while the local QF_LIA fragment checker can still
+    # validate an unsat-core fallback.  That is typed fallback authority, not
+    # an interpolant.
+    assert receipt.interpolant is None
+    assert "not installed" in receipt.reason
+    assert receipt.status is InterpolationStatus.FALLBACK
+    assert receipt.fallback_kind == "validated_unsat_core"
+    assert receipt.fallback_validated is True
+    assert receipt.fallback_receipt.startswith("b")
+    assert set(receipt.fallback_core) <= {"partition-a", "partition-b"}
+    assert receipt.independent_validator in {"z3", FRAGMENT_CHECKER}
+
+
+def test_unavailable_providers_without_any_checker_stay_typed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _blocked(**_kwargs: object) -> object:
+        raise IncrementalSmtUnavailable("blocked independent validator")
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.backends.smt.interpolation.open_incremental_smt_session",
+        _blocked,
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.backends.smt.interpolation._qf_lia_sat",
+        lambda *_args, **_kwargs: None,
     )
     receipt = compute_and_validate_interpolant(*_disjoint_unsat(), provider="absent")
     assert receipt.status is InterpolationStatus.UNAVAILABLE
@@ -425,6 +485,32 @@ def test_import_keeps_optional_solver_cold() -> None:
         [sys.executable, "-c", command], capture_output=True, text=True, check=False
     )
     assert completed.returncode == 0, completed.stderr
+
+
+def test_fragment_checker_admits_interpolant_when_z3_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _blocked(**_kwargs: object) -> object:
+        raise IncrementalSmtUnavailable("blocked independent validator")
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.backends.smt.interpolation.open_incremental_smt_session",
+        _blocked,
+    )
+    receipt = admit_interpolant(*_disjoint_unsat(), _le("x", 15))
+    assert receipt.status is InterpolationStatus.VALIDATED
+    assert receipt.independent_validator == FRAGMENT_CHECKER
+    assert receipt.a_implies_i is True
+    assert receipt.i_and_b_unsat is True
+    assert receipt.shared_vocabulary_ok is True
+    assert receipt.identity_ok is True
+    assert receipt.bounds_ok is True
+    assert receipt.a_implies_i_receipt.startswith("b")
+    assert receipt.i_and_b_unsat_receipt.startswith("b")
+    rejected = admit_interpolant(*_disjoint_unsat(), _le("x", 5))
+    assert rejected.status is InterpolationStatus.INVALID
+    assert rejected.a_implies_i is False
+    assert rejected.reason == "A does not imply I"
 
 
 def test_constant_false_interpolant_is_admitted_when_a_is_unsat() -> None:
