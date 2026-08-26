@@ -826,3 +826,213 @@ def test_compiler_stage_must_match_output_stage() -> None:
             replay=_replay(compiler, source, ast),
             evidence_class=EvidenceClass.SYNTAX_CHECKED,
         )
+
+
+def test_lossy_source_map_without_losses_is_rejected() -> None:
+    with pytest.raises(StageReceiptError, match="lossy source-map dispositions require explicit"):
+        _stage_receipt(
+            source_map=_source_map("node:eval", disposition=StageMapDisposition.DROPPED)
+        )
+    with pytest.raises(StageReceiptError, match="lossy source-map dispositions require explicit"):
+        _stage_receipt(
+            source_map=_source_map(
+                "node:eval", disposition=StageMapDisposition.APPROXIMATED
+            )
+        )
+
+
+def test_dropped_source_map_requires_omitted_or_rejected_losses() -> None:
+    mutation = SemanticMutation(
+        mutation_id="mutation:eval-opaque",
+        kind=SemanticMutationKind.ABSTRACTION,
+        description="eval is replaced by an opaque uninterpreted effect.",
+        source_construct_ids=("construct:eval",),
+        target_construct_ids=("construct:opaque-effect",),
+    )
+    with pytest.raises(StageReceiptError, match="dropped source-map entries require omitted"):
+        _stage_receipt(
+            source_map=_source_map("node:eval", disposition=StageMapDisposition.DROPPED),
+            losses=(_loss(),),
+            semantic_mutations=(mutation,),
+            preservation_claim=PreservationClaim(PreservationKind.APPROXIMATE),
+            authority_ceiling=EvidenceAuthority.ADVISORY,
+            evidence_class=EvidenceClass.CANDIDATE,
+        )
+
+
+def test_dropped_source_map_with_omitted_losses_caps_downstream_to_none() -> None:
+    omitted = _loss(handling=UnsupportedHandling.OMITTED)
+    mutation = SemanticMutation(
+        mutation_id="mutation:eval-dropped",
+        kind=SemanticMutationKind.CONSTRUCT_DROPPED,
+        description="eval is omitted from the target.",
+        source_construct_ids=(omitted.construct_id,),
+        target_construct_ids=("construct:absent",),
+    )
+    first = _stage_receipt(
+        CompilationStage.SOURCE,
+        CompilationStage.AST,
+        source_map=_source_map("node:eval", disposition=StageMapDisposition.DROPPED),
+        losses=(omitted,),
+        semantic_mutations=(mutation,),
+        preservation_claim=PreservationClaim(PreservationKind.HEURISTIC),
+        authority_ceiling=EvidenceAuthority.NONE,
+        evidence_class=EvidenceClass.NONE,
+        validation=_validation(
+            status=StageValidationStatus.UNSUPPORTED,
+            identity="validated:dropped",
+        ),
+    )
+    later = _stage_receipt(
+        CompilationStage.AST,
+        CompilationStage.NORMALIZED_AST,
+        authority_ceiling=EvidenceAuthority.NONE,
+        evidence_class=EvidenceClass.NONE,
+        validation=_validation(
+            status=StageValidationStatus.UNSUPPORTED,
+            identity="validated:downstream-dropped",
+        ),
+        preservation_claim=PreservationClaim(PreservationKind.HEURISTIC),
+    )
+    pipeline = compose_pipeline_receipts((first, later))
+    assert first.authority_ceiling is EvidenceAuthority.NONE
+    assert pipeline.authority_ceiling is EvidenceAuthority.NONE
+    assert effective_downstream_authority((first, later)) is EvidenceAuthority.NONE
+    overclaiming = _stage_receipt(
+        CompilationStage.AST,
+        CompilationStage.NORMALIZED_AST,
+        authority_ceiling=EvidenceAuthority.ADVISORY,
+        evidence_class=EvidenceClass.CANDIDATE,
+    )
+    with pytest.raises(StageReceiptError, match="cap downstream authority"):
+        compose_pipeline_receipts((first, overclaiming))
+
+
+def test_approximated_source_map_is_backed_by_losses_and_caps_authority() -> None:
+    loss = _loss()
+    mutation = SemanticMutation(
+        mutation_id="mutation:eval-opaque",
+        kind=SemanticMutationKind.ABSTRACTION,
+        description="eval is approximated by an opaque effect.",
+        source_construct_ids=(loss.construct_id,),
+        target_construct_ids=("construct:opaque-effect",),
+    )
+    receipt = _stage_receipt(
+        source_map=_source_map("node:eval", disposition=StageMapDisposition.APPROXIMATED),
+        losses=(loss,),
+        semantic_mutations=(mutation,),
+        preservation_claim=PreservationClaim(PreservationKind.APPROXIMATE),
+        authority_ceiling=EvidenceAuthority.ADVISORY,
+        evidence_class=EvidenceClass.CANDIDATE,
+    )
+    assert receipt.authority_ceiling is EvidenceAuthority.ADVISORY
+    assert authority_capped_by_losses(
+        (loss,),
+        preservation=receipt.preservation_claim,
+        evidence_class=EvidenceClass.KERNEL_VERIFIED,
+        declared=EvidenceAuthority.AUTHORITATIVE,
+        source_map=receipt.source_map,
+    ) is EvidenceAuthority.ADVISORY
+
+
+def test_abstracted_losses_cap_stage_authority_at_advisory() -> None:
+    loss = _loss(handling=UnsupportedHandling.ABSTRACTED)
+    mutation = SemanticMutation(
+        mutation_id="mutation:eval-abstracted",
+        kind=SemanticMutationKind.ABSTRACTION,
+        description="eval is abstracted to an uninterpreted effect.",
+        source_construct_ids=(loss.construct_id,),
+        target_construct_ids=("construct:opaque-effect",),
+    )
+    receipt = _stage_receipt(
+        losses=(loss,),
+        semantic_mutations=(mutation,),
+        preservation_claim=PreservationClaim(PreservationKind.APPROXIMATE),
+        authority_ceiling=EvidenceAuthority.ADVISORY,
+        evidence_class=EvidenceClass.CANDIDATE,
+    )
+    assert receipt.authority_ceiling is EvidenceAuthority.ADVISORY
+    with pytest.raises(StageReceiptError, match="cap stage authority at advisory"):
+        _stage_receipt(
+            losses=(loss,),
+            semantic_mutations=(mutation,),
+            preservation_claim=PreservationClaim(PreservationKind.APPROXIMATE),
+            authority_ceiling=EvidenceAuthority.BOUNDED,
+            evidence_class=EvidenceClass.BOUNDED_MODEL_CHECKED,
+        )
+
+
+def test_assumption_statement_change_is_stale_proof() -> None:
+    receipt = _stage_receipt()
+    current = StageReceiptExpectation.from_receipt(receipt)
+    with pytest.raises(StaleProofError, match="stale proof"):
+        require_current_stage_receipt(
+            receipt,
+            replace(
+                current,
+                assumptions=(
+                    replace(
+                        _assumption(),
+                        statement="The alias analysis permits no additional heap aliases.",
+                    ),
+                ),
+            ),
+        )
+
+
+def test_replay_configuration_must_match_compiler() -> None:
+    compiler = _compiler(CompilationStage.AST)
+    source = _artifact(CompilationStage.SOURCE)
+    ast = _artifact(CompilationStage.AST)
+    replay = replace(
+        _replay(compiler, source, ast),
+        configuration_identity=_identity("other-cfg"),
+    )
+    with pytest.raises(StageReceiptError, match="replay configuration_identity must match"):
+        emit_stage_receipt(
+            input=source,
+            output=ast,
+            compiler=compiler,
+            source_map=_source_map(),
+            supported_subset=_subset(),
+            validation=_validation(),
+            replay=replay,
+            evidence_class=EvidenceClass.TRANSLATION_VALIDATED,
+        )
+
+
+def test_synthesized_source_map_requires_introduced_mutations() -> None:
+    source_map = StageSourceMap(
+        map_id="map:synth",
+        entries=(
+            StageSourceMapEntry(
+                entry_id="entry:1",
+                source_node_id="node:synth",
+                disposition=StageMapDisposition.SYNTHESIZED,
+                target_node_ids=("target:synth",),
+                source_ref_ids=("source:fixture",),
+                span_ids=("span:1",),
+                reason="compiler-introduced witness predicate",
+            ),
+        ),
+        required_source_node_ids=("node:synth",),
+    )
+    with pytest.raises(StageReceiptError, match="construct_introduced"):
+        _stage_receipt(source_map=source_map)
+
+    mutation = SemanticMutation(
+        mutation_id="mutation:witness",
+        kind=SemanticMutationKind.CONSTRUCT_INTRODUCED,
+        description="A witness predicate is synthesized.",
+        source_construct_ids=("node:synth",),
+        target_construct_ids=("target:synth",),
+    )
+    receipt = _stage_receipt(
+        source_map=source_map,
+        semantic_mutations=(mutation,),
+        preservation_claim=PreservationClaim(PreservationKind.APPROXIMATE),
+        authority_ceiling=EvidenceAuthority.ADVISORY,
+        evidence_class=EvidenceClass.CANDIDATE,
+    )
+    assert receipt.source_map.entries[0].disposition is StageMapDisposition.SYNTHESIZED
+    assert receipt.semantic_mutations[0].kind is SemanticMutationKind.CONSTRUCT_INTRODUCED

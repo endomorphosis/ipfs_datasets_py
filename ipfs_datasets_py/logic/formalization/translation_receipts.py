@@ -43,6 +43,7 @@ from ipfs_datasets_py.logic.software_verification.translations import (
     PreservationClaim,
     PreservationKind,
     SemanticMutation,
+    SemanticMutationKind,
     TranslationBound,
     UnsupportedConstruct,
     UnsupportedHandling,
@@ -228,6 +229,25 @@ _MAXIMUM_AUTHORITY_FOR_EVIDENCE_CLASS: Final[dict[EvidenceClass, EvidenceAuthori
 _INCOMPLETE_HANDLING: Final[frozenset[UnsupportedHandling]] = frozenset(
     {UnsupportedHandling.REJECTED, UnsupportedHandling.OMITTED}
 )
+_LOSSY_DISPOSITIONS: Final[frozenset[StageMapDisposition]] = frozenset(
+    {
+        StageMapDisposition.DROPPED,
+        StageMapDisposition.UNSUPPORTED,
+        StageMapDisposition.APPROXIMATED,
+    }
+)
+_STALE_PROOF_ISSUE_CODES: Final[frozenset[StageReceiptIssueCode]] = frozenset(
+    {
+        StageReceiptIssueCode.INPUT_IDENTITY_MISMATCH,
+        StageReceiptIssueCode.OUTPUT_IDENTITY_MISMATCH,
+        StageReceiptIssueCode.COMPILER_MISMATCH,
+        StageReceiptIssueCode.SOURCE_MAP_MISMATCH,
+        StageReceiptIssueCode.LOSS_MISMATCH,
+        StageReceiptIssueCode.ASSUMPTION_MISMATCH,
+        StageReceiptIssueCode.OBLIGATION_MISMATCH,
+        StageReceiptIssueCode.BOUND_MISMATCH,
+    }
+)
 
 
 def _text(value: object, label: str, *, optional: bool = False) -> str:
@@ -364,19 +384,36 @@ def maximum_authority_for_evidence_class(
     return _MAXIMUM_AUTHORITY_FOR_EVIDENCE_CLASS[_enum(evidence_class, EvidenceClass, "evidence_class")]
 
 
+def _source_map_authority_cap(source_map: StageSourceMap | None) -> EvidenceAuthority:
+    """Return the authority ceiling implied by explicit source-map dispositions."""
+
+    if source_map is None:
+        return EvidenceAuthority.AUTHORITATIVE
+    dispositions = {entry.disposition for entry in source_map.entries}
+    if StageMapDisposition.DROPPED in dispositions:
+        return EvidenceAuthority.NONE
+    if StageMapDisposition.UNSUPPORTED in dispositions:
+        return EvidenceAuthority.ADVISORY
+    if StageMapDisposition.APPROXIMATED in dispositions:
+        return EvidenceAuthority.ADVISORY
+    return EvidenceAuthority.AUTHORITATIVE
+
+
 def authority_capped_by_losses(
     losses: Sequence[UnsupportedConstruct],
     *,
     preservation: PreservationClaim,
     evidence_class: EvidenceClass | str,
     declared: EvidenceAuthority | str,
+    source_map: StageSourceMap | None = None,
 ) -> EvidenceAuthority:
     """Compute the strongest authority a stage may claim.
 
     Rejected or omitted constructs force ``none``.  Any remaining unsupported
-    construct caps the stage at ``advisory``.  Preservation class and evidence
-    class apply independent ceilings.  The declared ceiling cannot exceed any
-    of those caps.
+    construct caps the stage at ``advisory``.  Dropped source-map entries also
+    force ``none``; approximated or unsupported mappings cap at ``advisory``.
+    Preservation class and evidence class apply independent ceilings.  The
+    declared ceiling cannot exceed any of those caps.
     """
 
     selected = _enum(declared, EvidenceAuthority, "declared")
@@ -385,6 +422,7 @@ def authority_capped_by_losses(
         ceiling,
         maximum_authority_for_evidence_class(evidence_class),
     )
+    ceiling = _weaker_authority(ceiling, _source_map_authority_cap(source_map))
     if any(item.handling in _INCOMPLETE_HANDLING for item in losses):
         return _weaker_authority(ceiling, EvidenceAuthority.NONE)
     if losses:
@@ -1086,6 +1124,10 @@ class StageTranslationReceipt:
             raise StageReceiptError("replay output identity must match the stage output")
         if self.replay.compiler.binding_id != self.compiler.binding_id:
             raise StageReceiptError("replay compiler must match the pinned compiler")
+        if self.replay.configuration_identity != self.compiler.configuration_identity:
+            raise StageReceiptError(
+                "replay configuration_identity must match the pinned compiler"
+            )
         object.__setattr__(
             self,
             "bounds",
@@ -1182,6 +1224,34 @@ class StageTranslationReceipt:
                 f"{claim.kind.value} translations cannot introduce bounds"
             )
 
+        lossy_entries = tuple(
+            entry
+            for entry in self.source_map.entries
+            if entry.disposition in _LOSSY_DISPOSITIONS
+        )
+        if lossy_entries and not self.losses:
+            raise StageReceiptError(
+                "lossy source-map dispositions require explicit unsupported losses; "
+                "silent drops cannot retain downstream authority"
+            )
+        if any(
+            entry.disposition is StageMapDisposition.DROPPED for entry in lossy_entries
+        ) and not any(item.handling in _INCOMPLETE_HANDLING for item in self.losses):
+            raise StageReceiptError(
+                "dropped source-map entries require omitted or rejected losses"
+            )
+        if any(
+            entry.disposition is StageMapDisposition.SYNTHESIZED
+            for entry in self.source_map.entries
+        ) and not any(
+            mutation.kind is SemanticMutationKind.CONSTRUCT_INTRODUCED
+            for mutation in self.semantic_mutations
+        ):
+            raise StageReceiptError(
+                "synthesized source-map entries require construct_introduced "
+                "semantic mutations"
+            )
+
         known_assumptions = set(_assumption_ids(self.assumptions))
         known_bounds = {item.bound_id for item in self.bounds}
         known_losses = set(_loss_ids(self.losses))
@@ -1211,6 +1281,7 @@ class StageTranslationReceipt:
             preservation=self.preservation_claim,
             evidence_class=self.evidence_class,
             declared=self.authority_ceiling,
+            source_map=self.source_map,
         )
         if self.authority_ceiling is not capped:
             raise StageReceiptError(
@@ -1734,6 +1805,7 @@ class CompilationPipelineReceipt:
             preservation=first.preservation_claim,
             evidence_class=first.evidence_class,
             declared=first.authority_ceiling,
+            source_map=first.source_map,
         )
         for index, stage in enumerate(self.stages[1:], start=1):
             previous = self.stages[index - 1]
@@ -1759,6 +1831,7 @@ class CompilationPipelineReceipt:
                     preservation=stage.preservation_claim,
                     evidence_class=stage.evidence_class,
                     declared=stage.authority_ceiling,
+                    source_map=stage.source_map,
                 ),
             )
             running_authority = _weaker_authority(running_authority, stage.authority_ceiling)
@@ -1916,6 +1989,7 @@ def emit_stage_receipt(
             preservation=claim,
             evidence_class=selected_class,
             declared=maximum_authority_for(claim.kind),
+            source_map=source_map,
         )
         if validation.status is not StageValidationStatus.VALID:
             declared = EvidenceAuthority.NONE
@@ -2093,17 +2167,7 @@ def require_current_stage_receipt(
         raise MissingStageReceiptError("stage translation receipt is required")
     if not validation.current:
         codes = ", ".join(issue.code.value for issue in validation.issues)
-        if any(
-            issue.code
-            in {
-                StageReceiptIssueCode.INPUT_IDENTITY_MISMATCH,
-                StageReceiptIssueCode.COMPILER_MISMATCH,
-                StageReceiptIssueCode.SOURCE_MAP_MISMATCH,
-                StageReceiptIssueCode.LOSS_MISMATCH,
-                StageReceiptIssueCode.OBLIGATION_MISMATCH,
-            }
-            for issue in validation.issues
-        ):
+        if any(issue.code in _STALE_PROOF_ISSUE_CODES for issue in validation.issues):
             raise StaleProofError(f"stage receipt is stale proof: {codes}")
         raise StaleStageReceiptError(f"stage translation receipt is stale: {codes}")
     return receipt
@@ -2250,6 +2314,7 @@ def effective_downstream_authority(
                 preservation=receipt.preservation_claim,
                 evidence_class=receipt.evidence_class,
                 declared=receipt.authority_ceiling,
+                source_map=receipt.source_map,
             ),
         )
     return ceiling
