@@ -1,20 +1,22 @@
 """Capability-negotiated Craig interpolation with independent validation.
 
 The qualified producer is cvc5 on the declared QF_LIA fragment.  Solver
-availability is not interpolation support: Z3 is used only as an independent
-validator and as a typed unsat-core fallback.  No interpolant is admitted
-merely because a provider returned a term.  Admission requires:
+availability is not interpolation support: Z3 is the preferred independent
+validator and unsat-core fallback.  When Z3 is absent, a sound unary QF_LIA
+fragment checker admits or rejects candidates and cores without inventing an
+interpolant.  No interpolant is admitted merely because a provider returned a
+term.  Admission requires:
 
-* ``A => I`` on a fresh Z3 session;
-* ``I & B`` unsatisfiable on a second fresh Z3 session;
+* ``A => I`` on a fresh Z3 session, or the local fragment checker;
+* ``I & B`` unsatisfiable on a second fresh Z3 session, or the fragment checker;
 * interpolant vocabulary is contained in the structural shared vocabulary;
 * partition, interpolant, and receipt identities; and
 * explicit bounds on theory, symbols, term size, timeout, and memory.
 
-An unsupported theory, absent interpolation API, provider error, failed
-check, or missing independent validator yields a typed non-success.  When
-interpolation itself is unavailable, a validated unsat core of ``A & B`` is
-reported as fallback authority and is never rewritten into an interpolant.
+An unsupported theory, absent interpolation API, provider error, or failed
+check yields a typed non-success.  When interpolation itself is unavailable, a
+validated unsat core of ``A & B`` is reported as fallback authority and is
+never rewritten into an interpolant.
 """
 
 from __future__ import annotations
@@ -28,7 +30,9 @@ from ipfs_datasets_py.logic.backends.smt.compiler import (
     INT_SORT,
     SmtTerm,
     SmtTermKind,
+    term_and,
     term_not,
+    term_or,
 )
 from ipfs_datasets_py.logic.backends.smt.incremental import (
     IncrementalSmtError,
@@ -45,8 +49,10 @@ INTERPOLATION_BOUNDS_SCHEMA: Final = "interpolation-bounds/v1"
 QUALIFIED_INTERPOLATION_PROVIDER: Final = "cvc5"
 QUALIFIED_INTERPOLATION_THEORY: Final = "QF_LIA"
 INDEPENDENT_VALIDATOR: Final = "z3"
+FRAGMENT_CHECKER: Final = "qf-lia-fragment-checker@1"
 VALIDATOR_ENVIRONMENT: Final = "local-independent-z3-validator@1"
 FALLBACK_ENVIRONMENT: Final = "local-unsat-core-fallback@1"
+FRAGMENT_ENVIRONMENT: Final = "local-qf-lia-fragment-checker@1"
 TRANSLATOR_IDENTITY: Final = "cvc5-interpolant-to-structured-smt-term@1"
 THEORY_FINGERPRINT: Final = "QF_LIA@1"
 DEFAULT_TIMEOUT_MS: Final = 5_000
@@ -666,6 +672,402 @@ def _qf_lia_term_error(term: SmtTerm) -> str:
     return ""
 
 
+def _linear_coeffs(term: SmtTerm) -> tuple[dict[str, int], int] | None:
+    """Return ``(symbol coefficients, constant)`` for a linear integer term."""
+
+    if term.kind is SmtTermKind.INT:
+        return {}, int(term.value)
+    if term.kind is SmtTermKind.SYMBOL:
+        return {str(term.value): 1}, 0
+    if term.kind is SmtTermKind.NEG and term.arguments:
+        inner = _linear_coeffs(term.arguments[0])
+        if inner is None:
+            return None
+        coeffs, constant = inner
+        return {name: -coeff for name, coeff in coeffs.items()}, -constant
+    if term.kind is SmtTermKind.ADD:
+        coeffs: dict[str, int] = {}
+        constant = 0
+        for item in term.arguments:
+            part = _linear_coeffs(item)
+            if part is None:
+                return None
+            part_coeffs, part_constant = part
+            constant += part_constant
+            for name, coeff in part_coeffs.items():
+                coeffs[name] = coeffs.get(name, 0) + coeff
+        return {name: coeff for name, coeff in coeffs.items() if coeff}, constant
+    if term.kind is SmtTermKind.SUB and len(term.arguments) == 2:
+        left = _linear_coeffs(term.arguments[0])
+        right = _linear_coeffs(term.arguments[1])
+        if left is None or right is None:
+            return None
+        coeffs = dict(left[0])
+        for name, coeff in right[0].items():
+            coeffs[name] = coeffs.get(name, 0) - coeff
+        return {name: coeff for name, coeff in coeffs.items() if coeff}, left[1] - right[1]
+    if term.kind is SmtTermKind.MUL:
+        acc_coeffs: dict[str, int] = {}
+        acc_constant = 1
+        started = False
+        for item in term.arguments:
+            part = _linear_coeffs(item)
+            if part is None:
+                return None
+            part_coeffs, part_constant = part
+            if not started:
+                acc_coeffs, acc_constant = dict(part_coeffs), part_constant
+                started = True
+                continue
+            if acc_coeffs and part_coeffs:
+                return None
+            if part_coeffs:
+                acc_coeffs = {
+                    name: coeff * acc_constant
+                    for name, coeff in part_coeffs.items()
+                    if coeff * acc_constant
+                }
+                acc_constant *= part_constant
+            else:
+                acc_coeffs = {
+                    name: coeff * part_constant
+                    for name, coeff in acc_coeffs.items()
+                    if coeff * part_constant
+                }
+                acc_constant *= part_constant
+        if not started:
+            return None
+        return acc_coeffs, acc_constant
+    return None
+
+
+def _floor_div(numerator: int, denominator: int) -> int:
+    return numerator // denominator
+
+
+def _ceil_div(numerator: int, denominator: int) -> int:
+    return -(-numerator // denominator)
+
+
+def _meet_bound(
+    env: dict[str, tuple[int | None, int | None]],
+    symbol: str,
+    *,
+    low: int | None = None,
+    high: int | None = None,
+) -> bool:
+    current_low, current_high = env.get(symbol, (None, None))
+    if low is not None:
+        current_low = low if current_low is None else max(current_low, low)
+    if high is not None:
+        current_high = high if current_high is None else min(current_high, high)
+    if current_low is not None and current_high is not None and current_low > current_high:
+        return False
+    env[symbol] = (current_low, current_high)
+    return True
+
+
+def _apply_comparison(
+    term: SmtTerm,
+    env: dict[str, tuple[int | None, int | None]],
+) -> bool | None:
+    """Apply a unary linear comparison to ``env``.  ``None`` means unsupported."""
+
+    relations = {
+        SmtTermKind.LE: "le",
+        SmtTermKind.LT: "lt",
+        SmtTermKind.GE: "ge",
+        SmtTermKind.GT: "gt",
+        SmtTermKind.EQ: "eq",
+    }
+    relation = relations.get(term.kind)
+    if relation is None or len(term.arguments) != 2:
+        return None
+    left = _linear_coeffs(term.arguments[0])
+    right = _linear_coeffs(term.arguments[1])
+    if left is None or right is None:
+        return None
+    coeffs = dict(left[0])
+    for name, coeff in right[0].items():
+        coeffs[name] = coeffs.get(name, 0) - coeff
+    coeffs = {name: coeff for name, coeff in coeffs.items() if coeff}
+    constant = left[1] - right[1]
+    if not coeffs:
+        if relation == "le":
+            return constant <= 0
+        if relation == "lt":
+            return constant < 0
+        if relation == "ge":
+            return constant >= 0
+        if relation == "gt":
+            return constant > 0
+        return constant == 0
+    if len(coeffs) != 1:
+        return None
+    symbol, coeff = next(iter(coeffs.items()))
+    # ``coeff * x + constant ⋈ 0``.
+    if relation == "eq":
+        if constant % coeff != 0:
+            return False
+        value = -constant // coeff
+        return _meet_bound(env, symbol, low=value, high=value)
+    if relation == "lt":
+        upper_or_lower = -constant - 1
+        relation = "le"
+        rhs = upper_or_lower
+    elif relation == "gt":
+        upper_or_lower = -constant + 1
+        relation = "ge"
+        rhs = upper_or_lower
+    else:
+        rhs = -constant
+    if relation == "le":
+        if coeff > 0:
+            return _meet_bound(env, symbol, high=_floor_div(rhs, coeff))
+        return _meet_bound(env, symbol, low=_ceil_div(rhs, coeff))
+    if coeff > 0:
+        return _meet_bound(env, symbol, low=_ceil_div(rhs, coeff))
+    return _meet_bound(env, symbol, high=_floor_div(rhs, coeff))
+
+
+def _flip_comparison(term: SmtTerm) -> SmtTerm | None:
+    flipped = {
+        SmtTermKind.LE: SmtTermKind.GT,
+        SmtTermKind.LT: SmtTermKind.GE,
+        SmtTermKind.GE: SmtTermKind.LT,
+        SmtTermKind.GT: SmtTermKind.LE,
+    }.get(term.kind)
+    if flipped is None or len(term.arguments) != 2:
+        return None
+    return SmtTerm(flipped, arguments=term.arguments)
+
+
+_DNF_CUBE_LIMIT: Final = 64
+
+
+def _nnf(term: SmtTerm, *, negated: bool = False) -> SmtTerm | None:
+    """Rewrite ``term`` into negation-normal form, or ``None`` if unsupported."""
+
+    kind = term.kind
+    if kind is SmtTermKind.TRUE:
+        return SmtTerm(SmtTermKind.FALSE if negated else SmtTermKind.TRUE)
+    if kind is SmtTermKind.FALSE:
+        return SmtTerm(SmtTermKind.TRUE if negated else SmtTermKind.FALSE)
+    if kind is SmtTermKind.NOT and term.arguments:
+        return _nnf(term.arguments[0], negated=not negated)
+    if kind is SmtTermKind.AND:
+        parts = [_nnf(item, negated=negated) for item in term.arguments]
+        rewritten = [item for item in parts if item is not None]
+        if len(rewritten) != len(parts):
+            return None
+        return (term_or if negated else term_and)(*rewritten)
+    if kind is SmtTermKind.OR:
+        parts = [_nnf(item, negated=negated) for item in term.arguments]
+        rewritten = [item for item in parts if item is not None]
+        if len(rewritten) != len(parts):
+            return None
+        return (term_and if negated else term_or)(*rewritten)
+    if kind is SmtTermKind.IMPLIES and len(term.arguments) == 2:
+        return _nnf(
+            term_or(term_not(term.arguments[0]), term.arguments[1]),
+            negated=negated,
+        )
+    if kind is SmtTermKind.IFF and len(term.arguments) == 2:
+        left, right = term.arguments
+        return _nnf(
+            term_or(
+                term_and(left, right),
+                term_and(term_not(left), term_not(right)),
+            ),
+            negated=negated,
+        )
+    if kind is SmtTermKind.ITE and len(term.arguments) == 3:
+        condition, then_term, else_term = term.arguments
+        return _nnf(
+            term_or(
+                term_and(condition, then_term),
+                term_and(term_not(condition), else_term),
+            ),
+            negated=negated,
+        )
+    if kind is SmtTermKind.EQ and len(term.arguments) == 2:
+        if negated:
+            return term_or(
+                SmtTerm(SmtTermKind.LT, arguments=term.arguments),
+                SmtTerm(SmtTermKind.GT, arguments=term.arguments),
+            )
+        return term
+    if kind in {
+        SmtTermKind.LE,
+        SmtTermKind.LT,
+        SmtTermKind.GE,
+        SmtTermKind.GT,
+    }:
+        if negated:
+            return _flip_comparison(term)
+        return term
+    return None
+
+
+def _flatten_connective(term: SmtTerm, kind: SmtTermKind) -> tuple[SmtTerm, ...]:
+    if term.kind is kind:
+        flattened: list[SmtTerm] = []
+        for item in term.arguments:
+            flattened.extend(_flatten_connective(item, kind))
+        return tuple(flattened)
+    return (term,)
+
+
+def _dnf(term: SmtTerm) -> list[tuple[SmtTerm, ...]] | None:
+    """Distribute AND over OR, returning cubes of atoms.  ``None`` if too large."""
+
+    if term.kind is SmtTermKind.OR:
+        cubes: list[tuple[SmtTerm, ...]] = []
+        for item in _flatten_connective(term, SmtTermKind.OR):
+            part = _dnf(item)
+            if part is None:
+                return None
+            cubes.extend(part)
+            if len(cubes) > _DNF_CUBE_LIMIT:
+                return None
+        return cubes
+    if term.kind is SmtTermKind.AND:
+        parts = [_dnf(item) for item in _flatten_connective(term, SmtTermKind.AND)]
+        if any(item is None for item in parts):
+            return None
+        cubes = [()]
+        for options in parts:
+            next_cubes: list[tuple[SmtTerm, ...]] = []
+            for prefix in cubes:
+                for option in options:
+                    next_cubes.append(prefix + option)
+                    if len(next_cubes) > _DNF_CUBE_LIMIT:
+                        return None
+            cubes = next_cubes
+        return cubes
+    return [(term,)]
+
+
+def _qf_lia_sat(term: SmtTerm, env: dict[str, tuple[int | None, int | None]] | None = None) -> bool | None:
+    """Sound SAT for the unary QF_LIA fragment; ``None`` if undecided.
+
+    Satisfiable answers come from a consistent cube of unary linear bounds.
+    Unsatisfiable answers require every cube to be empty.  Multi-variable or
+    unsupported atoms make the checker return ``None`` rather than guess.
+    """
+
+    del env
+    nnf = _nnf(term)
+    if nnf is None:
+        return None
+    cubes = _dnf(nnf)
+    if cubes is None:
+        return None
+    unknown = False
+    for cube in cubes:
+        state: dict[str, tuple[int | None, int | None]] = {}
+        consistent = True
+        for atom in cube:
+            if atom.kind is SmtTermKind.TRUE:
+                continue
+            if atom.kind is SmtTermKind.FALSE:
+                consistent = False
+                break
+            applied = _apply_comparison(atom, state)
+            if applied is None:
+                unknown = True
+                consistent = False
+                break
+            if applied is False:
+                consistent = False
+                break
+        if consistent:
+            return True
+    if unknown:
+        return None
+    return False
+
+
+def _fragment_check_receipt(label: str, terms: tuple[SmtTerm, ...], result: str) -> str:
+    return canonical_identity(
+        {
+            "checker": FRAGMENT_CHECKER,
+            "environment": FRAGMENT_ENVIRONMENT,
+            "label": label,
+            "result": result,
+            "terms": [item.to_dict() for item in terms],
+        },
+        domain="logic.backends.smt.interpolation-fragment-check",
+        schema_version="interpolation-fragment-check/v1",
+    ).cid
+
+
+def _validate_with_fragment(
+    *,
+    partition_a: SmtTerm,
+    partition_b: SmtTerm,
+    interpolant: SmtTerm,
+) -> tuple[bool, bool, str, str, str]:
+    a_and_not_i = _qf_lia_sat(term_and(partition_a, term_not(interpolant)))
+    i_and_b = _qf_lia_sat(term_and(interpolant, partition_b))
+    if a_and_not_i is None or i_and_b is None:
+        return (
+            False,
+            False,
+            "",
+            "",
+            "independent validator unavailable: fragment checker could not decide QF_LIA query",
+        )
+    a_implies_i = a_and_not_i is False
+    i_and_b_unsat = i_and_b is False
+    first_receipt = _fragment_check_receipt(
+        "a-implies-i",
+        (partition_a, interpolant),
+        "unsat" if a_implies_i else "sat",
+    )
+    second_receipt = _fragment_check_receipt(
+        "i-and-b",
+        (interpolant, partition_b),
+        "unsat" if i_and_b_unsat else "sat",
+    )
+    reason = ""
+    if not a_implies_i:
+        reason = "A does not imply I"
+    elif not i_and_b_unsat:
+        reason = "I and B is not unsatisfiable"
+    return a_implies_i, i_and_b_unsat, first_receipt, second_receipt, reason
+
+
+def _unsat_core_with_fragment(
+    partition_a: SmtTerm,
+    partition_b: SmtTerm,
+) -> tuple[bool, str, tuple[str, ...], str]:
+    a_sat = _qf_lia_sat(partition_a)
+    b_sat = _qf_lia_sat(partition_b)
+    both = _qf_lia_sat(term_and(partition_a, partition_b))
+    if both is True:
+        receipt = _fragment_check_receipt("core-fallback", (partition_a, partition_b), "sat")
+        return False, receipt, (), "A and B are jointly satisfiable"
+    if a_sat is False:
+        core = ("partition-a",)
+        receipt = _fragment_check_receipt("core-fallback", (partition_a,), "unsat")
+        return True, receipt, core, ""
+    if b_sat is False:
+        core = ("partition-b",)
+        receipt = _fragment_check_receipt("core-fallback", (partition_b,), "unsat")
+        return True, receipt, core, ""
+    if both is False:
+        core = ("partition-a", "partition-b")
+        receipt = _fragment_check_receipt("core-fallback", (partition_a, partition_b), "unsat")
+        return True, receipt, core, ""
+    return (
+        False,
+        "",
+        (),
+        "unsat-core fallback unavailable: fragment checker could not decide QF_LIA query",
+    )
+
+
 def _identity_holds(
     *,
     partition_a: SmtTerm,
@@ -700,7 +1102,7 @@ def _validate_with_z3(
     symbols: tuple[str, ...],
     request_root: str,
     bounds: InterpolationBounds,
-) -> tuple[bool, bool, str, str, str]:
+) -> tuple[bool, bool, str, str, str, str]:
     first = None
     second = None
     try:
@@ -734,10 +1136,14 @@ def _validate_with_z3(
             obligation_id="i-and-b",
         )
         second_result = second.check()
-    except IncrementalSmtUnavailable as error:
-        return False, False, "", "", f"independent validator unavailable: {error}"
+    except IncrementalSmtUnavailable:
+        return (*_validate_with_fragment(
+            partition_a=partition_a,
+            partition_b=partition_b,
+            interpolant=interpolant,
+        ), FRAGMENT_CHECKER)
     except IncrementalSmtError as error:
-        return False, False, "", "", f"independent validator rejected the candidate: {error}"
+        return False, False, "", "", f"independent validator rejected the candidate: {error}", INDEPENDENT_VALIDATOR
     finally:
         if first is not None:
             first.close()
@@ -764,6 +1170,7 @@ def _validate_with_z3(
         first_result.receipt_id,
         second_result.receipt_id,
         reason,
+        INDEPENDENT_VALIDATOR,
     )
 
 
@@ -797,8 +1204,8 @@ def _unsat_core_fallback(
             obligation_id="core-fallback",
         )
         result = session.check()
-    except IncrementalSmtUnavailable as error:
-        return False, "", (), f"unsat-core fallback unavailable: {error}"
+    except IncrementalSmtUnavailable:
+        return _unsat_core_with_fragment(partition_a, partition_b)
     except IncrementalSmtError as error:
         return False, "", (), f"unsat-core fallback rejected the partitions: {error}"
     finally:
@@ -954,7 +1361,14 @@ def admit_interpolant(
             **common,
         )
     request_root = _request_root(a_cid, b_cid, provider_version, theory)
-    a_implies_i, i_and_b_unsat, first_receipt, second_receipt, check_reason = _validate_with_z3(
+    (
+        a_implies_i,
+        i_and_b_unsat,
+        first_receipt,
+        second_receipt,
+        check_reason,
+        validator,
+    ) = _validate_with_z3(
         partition_a=partition_a,
         partition_b=partition_b,
         interpolant=interpolant,
@@ -968,6 +1382,12 @@ def admit_interpolant(
             "i_and_b_unsat": i_and_b_unsat,
             "a_implies_i_receipt": first_receipt,
             "i_and_b_unsat_receipt": second_receipt,
+            "independent_validator": validator,
+            "independent_validator_version": (
+                common["independent_validator_version"]
+                if validator == INDEPENDENT_VALIDATOR
+                else "1"
+            ),
         }
     )
     if not first_receipt and not second_receipt and check_reason.startswith(
@@ -1054,6 +1474,12 @@ def compute_and_validate_interpolant(
         shared_vocabulary=shared,
         interpolant_vocabulary=(),
     )
+    producer_ready = (
+        capability.provider_installed
+        and capability.provider_qualified
+        and capability.interpolation_api
+        and capability.theory_qualified
+    )
     if not capability.theory_qualified:
         return ValidatedInterpolantReceipt(
             status=InterpolationStatus.UNSUPPORTED,
@@ -1116,9 +1542,12 @@ def compute_and_validate_interpolant(
             **base,
         )
 
-    if not capability.qualified:
+    if not producer_ready:
         # An installed SAT solver is still interpolation-unavailable.  Fallback
-        # may attach a validated unsat core, but never an interpolant.
+        # may attach a validated unsat core, but never an interpolant.  Z3
+        # absence does not by itself block a cvc5 producer: admission can use
+        # the local QF_LIA fragment checker when the independent validator is
+        # not installed.
         return _fallback(capability.reason, InterpolationStatus.UNAVAILABLE)
 
     try:
@@ -1153,6 +1582,7 @@ __all__ = [
     "INTERPOLATION_CAPABILITY_SCHEMA",
     "INTERPOLATION_INTERFACE",
     "INTERPOLATION_RECEIPT_SCHEMA",
+    "FRAGMENT_CHECKER",
     "QUALIFIED_INTERPOLATION_PROVIDER",
     "QUALIFIED_INTERPOLATION_THEORY",
     "InterpolationBounds",
