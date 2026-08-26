@@ -1,0 +1,30 @@
+{
+  "artifact_paths": [
+    "rights_manifest.json",
+    "quarantine_manifest.json",
+    "source_releases.json",
+    "replay_receipt.json"
+  ],
+  "citation_replay": {
+    "expected_exact_revision_count": 21,
+    "method": "For each source_releases.json release, GET citation.url without resolving a branch; require the response revision to equal citation.observed_revision, then compare SHA-256 of the raw response bytes to citation.response_sha256.",
+    "network_execution_required": false,
+    "purpose": "Replays the metadata citation only. It must never execute repository code, download a corpus, or infer source rights from a successful response."
+  },
+  "decision_replay": {
+    "algorithm": "Expand every inclusive record_id_range using record_id_format; require contiguous coverage from src:patent:0000 through src:patent:2173 and src:dutch-law:0000 through src:dutch-law:4998; require every expanded row to cite a permanently_quarantined release; require training_admitted_rows to remain zero.",
+    "expected_source_rows": 7173,
+    "expected_training_admitted_rows": 0
+  },
+  "fresh_reviewed_at": "2026-08-25T00:00:00Z",
+  "input_inventory": {
+    "canonical_inventory_sha256": "f58457d29289d5140bfc63596f28a4648e2bad1ea6222e7b62d22e8cf9b95bb6",
+    "path": "ipfs_datasets_py/data/ir_learning/source_inventory/release_inventory.json",
+    "pinset_id": "JDAO-PINSET-1",
+    "source_revision_rule": "Every source release must use the exact 40-hex revision recorded in the inventory; repository visibility, default branches, and card declarations do not admit rights."
+  },
+  "kind": "successor_rights_replay_receipt",
+  "result_identity": "RESULT(PGIR-200)",
+  "schema": "proof-grounded-ir-learning/successor-rights-replay-receipt/v1",
+  "training_admitted_rows": 0
+}

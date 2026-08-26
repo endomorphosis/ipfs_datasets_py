@@ -1,0 +1,19 @@
+{
+  "execution": {
+    "compiler_or_decompiler_invoked": false,
+    "reason": "The current eligible denominator is zero; invoking a compiler or decompiler on historical fixtures would not be a current-input R1 measurement."
+  },
+  "interface": "IRDeterministicBaselineRetirementToolVersions@1",
+  "platform": {
+    "machine": "aarch64",
+    "release": "6.17.0-1014-nvidia",
+    "system": "Linux"
+  },
+  "python": {
+    "canonical_validation_executable": "/usr/bin/python3.12",
+    "version": "Python 3.12.3"
+  },
+  "result_identity": "RESULT(PGIR-204)",
+  "schema": "proof-grounded-ir-learning/successor-r1-retirement-tool-versions/v1",
+  "validation_path": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
+}
