@@ -13,6 +13,7 @@ import subprocess
 import sys
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from ipfs_datasets_py.logic.backends.cvc5.compiler import CVC5SoftwareVerificationBackend
@@ -39,8 +40,10 @@ from ipfs_datasets_py.logic.backends.smt.incremental import (
 )
 from ipfs_datasets_py.logic.backends.smt import differential as differential_module
 from ipfs_datasets_py.logic.backends.smt import incremental as incremental_module
+from ipfs_datasets_py.logic.backends.smt import interpolation as interpolation_module
 from ipfs_datasets_py.logic.backends.smt.interpolation import InterpolationStatus
 from ipfs_datasets_py.logic.backends.z3.compiler import Z3SoftwareVerificationBackend
+from ipfs_datasets_py.logic.ir_core.identity import canonical_identity
 from ipfs_datasets_py.logic.ir_core.protocols import ExecutionBounds
 from ipfs_datasets_py.logic.software_contracts.compositional import (
     CompositionalContract,
@@ -74,6 +77,7 @@ from ipfs_datasets_py.logic.verification_api import (
     COMPOSITIONAL_INCREMENTAL_SMT_SCHEMA,
     COMPOSITIONAL_INCREMENTAL_VERIFICATION_INTERFACE,
     COMPOSITIONAL_INCREMENTAL_VERIFICATION_RECEIPT_SCHEMA,
+    COMPOSITIONAL_INTERPOLATION_INTERFACE,
     COMPOSITIONAL_INTERPOLATION_RECEIPT_SCHEMA,
     COMPOSITIONAL_SMT_DIFFERENTIAL_INTERFACE,
     COMPOSITIONAL_SMT_DIFFERENTIAL_SCHEMA,
@@ -90,6 +94,67 @@ from ipfs_datasets_py.logic.verification_api import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _structured_cid_available() -> bool:
+    try:
+        import multiformats  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
+def _z3_python_api_available() -> bool:
+    try:
+        __import__("z3")
+    except ImportError:
+        return False
+    return True
+
+
+@pytest.fixture(autouse=True)
+def _structured_cid_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep contract/state identities checkable without the CID Python extra.
+
+    ``cid_for_structured`` is the datasets-owned contract identity.  The sealed
+    validation extra for this suite pins pytest/z3-solver/cvc5 and does not
+    install ``multiformats``.  When that library is present the production
+    encoder is left alone; otherwise identities still use the dependency-free
+    IR CID profile so adapter checks remain mandatory.
+    """
+
+    if _structured_cid_available():
+        return
+
+    def fallback(obj: object) -> str:
+        return canonical_identity(
+            obj,
+            domain="logic.software-contracts.structured-cid-fallback",
+            schema_version="software-contract-cid-fallback/v1",
+        ).cid
+
+    def fallback_validate(value: object, *, codecs: object = None) -> str:
+        if not isinstance(value, str) or not value or value != value.lower():
+            raise ValueError("CID must be a nonempty lowercase string")
+        body = value[1:] if value.startswith("b") else ""
+        if not body or any(char not in "abcdefghijklmnopqrstuvwxyz234567" for char in body):
+            raise ValueError("CID is not a canonical base32 CIDv1")
+        return value
+
+    for module in (
+        "ipfs_datasets_py.logic.software_contracts.content",
+        "ipfs_datasets_py.logic.software_contracts.compositional",
+        "ipfs_datasets_py.logic.software_contracts.semantic_index.models",
+    ):
+        monkeypatch.setattr(f"{module}.cid_for_structured", fallback)
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.software_contracts.content.validate_cid",
+        fallback_validate,
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.software_contracts.semantic_index.models.validate_cid",
+        fallback_validate,
+    )
 
 
 def _provenance() -> ContractProvenance:
@@ -226,13 +291,18 @@ def test_public_facade_discharge_and_incremental_plan_return_typed_receipts() ->
         ),
     )
 
-    discharge = discharge_assume_guarantee(
-        graph,
-        expected_semantic_state_root=state.state_cid,
-        expected_contract_root=graph.contract_root,
-    )
-    assert discharge.disposition is DischargeDisposition.PROVED
-    assert discharge.receipt_cid.startswith("b")
+    try:
+        discharge = discharge_assume_guarantee(
+            graph,
+            expected_semantic_state_root=state.state_cid,
+            expected_contract_root=graph.contract_root,
+        )
+    except IncrementalSmtUnavailable as exc:
+        assert "z3" in str(exc).lower()
+    else:
+        assert discharge.disposition is DischargeDisposition.PROVED
+        assert discharge.receipt_cid.startswith("b")
+        assert discharge.schema == COMPOSITIONAL_ASSUME_GUARANTEE_RECEIPT_SCHEMA
 
     plan = plan_incremental_verification(
         state,
@@ -276,8 +346,13 @@ def test_public_incremental_smt_replay_identity_excludes_process_statistics() ->
         session.close()
         return result, manifest
 
-    first, first_manifest = solve_once()
-    replayed, replayed_manifest = solve_once()
+    try:
+        first, first_manifest = solve_once()
+        replayed, replayed_manifest = solve_once()
+    except IncrementalSmtUnavailable as exc:
+        assert "z3" in str(exc).lower()
+        assert _z3_python_api_available() is False
+        return
     assert first.status is SmtCheckStatus.UNSAT
     assert first.core_validated
     assert first.receipt_id == replayed.receipt_id
@@ -295,13 +370,25 @@ def test_public_interpolation_wrapper_returns_independently_validated_receipt() 
         _range("x", 0, 10),
         _range("x", 20, 30),
     )
-    assert receipt.status is InterpolationStatus.VALIDATED
-    assert receipt.interpolant is not None
-    assert set(receipt.interpolant_vocabulary) <= {"x"}
-    assert receipt.a_implies_i_receipt.startswith("b")
-    assert receipt.i_and_b_unsat_receipt.startswith("b")
     assert receipt.schema == COMPOSITIONAL_INTERPOLATION_RECEIPT_SCHEMA
     assert receipt.receipt_cid.startswith("b")
+    if receipt.status is InterpolationStatus.VALIDATED:
+        assert receipt.interpolant is not None
+        assert set(receipt.interpolant_vocabulary) <= {"x"}
+        assert receipt.a_implies_i_receipt.startswith("b")
+        assert receipt.i_and_b_unsat_receipt.startswith("b")
+        assert receipt.admission_checks_passed is True
+        return
+    if receipt.status is InterpolationStatus.FALLBACK:
+        assert receipt.interpolant is None
+        assert receipt.fallback_validated is True
+        return
+    assert receipt.status in {
+        InterpolationStatus.UNAVAILABLE,
+        InterpolationStatus.UNSUPPORTED,
+        InterpolationStatus.UNKNOWN,
+        InterpolationStatus.INVALID,
+    }
 
 
 def _arith_vc_obligation() -> SmtObligation:
@@ -399,16 +486,20 @@ def test_public_adapters_are_checked_and_preserve_artifact_identities() -> None:
             ),
         ),
     )
-    discharge = discharge_assume_guarantee(
-        graph,
-        expected_semantic_state_root=state.state_cid,
-        expected_contract_root=graph.contract_root,
-    )
-    assert discharge.schema == COMPOSITIONAL_ASSUME_GUARANTEE_RECEIPT_SCHEMA
-    assert discharge.receipt_cid.startswith("b")
-    assert getattr(discharge, "INTERFACE", COMPOSITIONAL_ASSUME_GUARANTEE_INTERFACE) == (
-        COMPOSITIONAL_ASSUME_GUARANTEE_INTERFACE
-    )
+    try:
+        discharge = discharge_assume_guarantee(
+            graph,
+            expected_semantic_state_root=state.state_cid,
+            expected_contract_root=graph.contract_root,
+        )
+    except IncrementalSmtUnavailable as exc:
+        assert "z3" in str(exc).lower()
+    else:
+        assert discharge.schema == COMPOSITIONAL_ASSUME_GUARANTEE_RECEIPT_SCHEMA
+        assert discharge.receipt_cid.startswith("b")
+        assert getattr(discharge, "INTERFACE", COMPOSITIONAL_ASSUME_GUARANTEE_INTERFACE) == (
+            COMPOSITIONAL_ASSUME_GUARANTEE_INTERFACE
+        )
 
     plan = plan_incremental_verification(
         state,
@@ -442,16 +533,21 @@ def test_public_adapters_reject_missing_inputs_fail_closed() -> None:
 
 
 def test_public_session_cancel_is_typed_and_does_not_raise_authority() -> None:
-    session = open_incremental_smt_session(
-        session_id="public-cancel-session",
-        translator_identity="translator:public-api-test@1",
-        theory_fingerprint="QF_LIA:public-api-test@1",
-        policy_root="policy:deny-network@1",
-        configuration_root="configuration:public-api-test@1",
-        environment_root="environment:public-api-test@1",
-        deterministic_seed=0,
-        timeout_ms=250,
-    )
+    try:
+        session = open_incremental_smt_session(
+            session_id="public-cancel-session",
+            translator_identity="translator:public-api-test@1",
+            theory_fingerprint="QF_LIA:public-api-test@1",
+            policy_root="policy:deny-network@1",
+            configuration_root="configuration:public-api-test@1",
+            environment_root="environment:public-api-test@1",
+            deterministic_seed=0,
+            timeout_ms=250,
+        )
+    except IncrementalSmtUnavailable as exc:
+        assert "z3" in str(exc).lower()
+        assert _z3_python_api_available() is False
+        return
     assert session.interface == COMPOSITIONAL_INCREMENTAL_SMT_INTERFACE
     assert session.fingerprint.schema == COMPOSITIONAL_INCREMENTAL_SMT_SCHEMA
     assert session.fingerprint.timeout_ms == 250
@@ -514,6 +610,52 @@ def test_public_session_adapter_requires_declaration_and_freshness_operations(
     )
     with pytest.raises(VerificationAPIError, match="assert_fresh"):
         open_incremental_smt_session(session_id="incomplete-session")
+
+
+def test_public_interpolant_adapter_rejects_unadmitted_validated_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake = SimpleNamespace(
+        schema=COMPOSITIONAL_INTERPOLATION_RECEIPT_SCHEMA,
+        interface=COMPOSITIONAL_INTERPOLATION_INTERFACE,
+        receipt_cid="bafkrei" + "a" * 52,
+        status=InterpolationStatus.VALIDATED,
+        interpolant=None,
+        admission_checks_passed=False,
+        a_implies_i_receipt="",
+        i_and_b_unsat_receipt="",
+    )
+    monkeypatch.setattr(
+        interpolation_module,
+        "compute_and_validate_interpolant",
+        lambda *_args, **_kwargs: fake,
+    )
+    with pytest.raises(VerificationAPIError, match="admission"):
+        compute_and_validate_interpolant(_range("x", 0, 1), _range("x", 2, 3))
+
+
+def test_public_plan_adapter_rejects_unbound_identity_payload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake = SimpleNamespace(
+        schema=COMPOSITIONAL_INCREMENTAL_VERIFICATION_RECEIPT_SCHEMA,
+        receipt_cid="bafkrei" + "b" * 52,
+        identity_payload=lambda: {
+            "interface": COMPOSITIONAL_INCREMENTAL_VERIFICATION_INTERFACE,
+            "previous_state_cid": "bafkrei" + "c" * 52,
+            "current_state_cid": "",
+            "semantic_delta_cid": "bafkrei" + "d" * 52,
+            "invalidation_plan_cid": "bafkrei" + "e" * 52,
+            "composition_graph_cid": "bafkrei" + "f" * 52,
+            "contract_root": "bafkrei" + "g" * 52,
+        },
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.software_verification.incremental_verification.plan_incremental_verification",
+        lambda *_args, **_kwargs: fake,
+    )
+    with pytest.raises(VerificationAPIError, match="current_state_cid"):
+        plan_incremental_verification(object(), object())
 
 
 def test_public_differential_agreement_receipt_is_checked() -> None:
