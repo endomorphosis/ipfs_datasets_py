@@ -93,14 +93,14 @@ target = "tests/unit/logic/test_compositional_verification_public_api.py"
 validation-command-sha256 = "9bf558edafef4c76615e61fe3ca1f7353c9c36d1e75e221feec88840e371c14e"
 requirements = ["pytest>=9.0.3,<10.0.0", "z3-solver>=4.12.0,<5.0.0", "cvc5==1.3.3"]
 task = { board-namespace = "logic-governed-compositional-verification-fabric-v1", canonical-task-cid = "baguqeera5akr2w56xcy6mus4td2ghwaita5k52lnqkh54tgooqq35fai72nq", declared-output = "ipfs_datasets_py/tests/unit/logic/test_compositional_verification_public_api.py" }
-baseline = { state = "present", sha256 = "ba35600a11a8d11e2a9c28bb03f0c258eedffdd0e7cfea011bbde166c62bf00e" }
+baseline = { state = "present", sha256 = "6c93b34d1b10b5c7e311a87a7aa901a2502858ed8d8601e910e1aec62417b86e" }
 
 [[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
 target = "tests/unit/logic/backends/test_interpolation.py"
 validation-command-sha256 = "46fe6b0635f0591d2af7a39c4f26213ff1e34df7b89f63140719edb0e8f5b4e6"
 requirements = ["pytest>=9.0.3,<10.0.0", "z3-solver>=4.12.0,<5.0.0", "cvc5==1.3.3"]
 task = { board-namespace = "logic-governed-compositional-verification-fabric-v1", canonical-task-cid = "baguqeeratlqqozbenktvzhzzk36ewsti3mzegge2ynft24s3mznewzgswfoq", declared-output = "ipfs_datasets_py/tests/unit/logic/backends/test_interpolation.py" }
-baseline = { state = "present", sha256 = "67ad17496543a9731c5f91a2298986be5389e6597a82073c1e1151b41277648d" }
+baseline = { state = "present", sha256 = "8116954ee49c645ab1b7903521d02f4d3bfd0d659365c2ec66e5f18a3ce6d038" }
 
 [[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
 target = "tests/unit/logic/software_verification/test_cegar.py"
@@ -114,7 +114,7 @@ target = "tests/unit/logic/formalization/test_translation_receipts.py"
 validation-command-sha256 = "c56346b0625122e5726c632306c674dcf958da388d9e11aa239b959dc27a4317"
 requirements = ["pytest>=9.0.3,<10.0.0"]
 task = { board-namespace = "logic-governed-compositional-verification-fabric-v1", canonical-task-cid = "baguqeeraej2zz7zlrd2l5p6adjnzinnitzuqmxx4agfhfzekixdqm2mnqyda", declared-output = "ipfs_datasets_py/tests/unit/logic/formalization/test_translation_receipts.py" }
-baseline = { state = "present", sha256 = "1a321b9bced0237ee9dd28b796947d6a5e68ca419dad8e81a934b380f06e7548" }
+baseline = { state = "present", sha256 = "378b354559efa3fda676343313f1d9a6f14e5fcef4ced675aced58c6a5f6d885" }
 
 [[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
 target = "tests/unit/logic/software_verification/test_obligation_slicing.py"
