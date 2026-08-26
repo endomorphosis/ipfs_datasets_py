@@ -207,6 +207,9 @@ def test_safe_cfg_is_proved_without_refinement() -> None:
     assert receipt.interface == CEGAR_INTERFACE
     assert receipt.receipt_cid.startswith("b")
     assert receipt.source_identities["program_cid"] == "bprogramsafe"
+    assert receipt.iterations
+    assert receipt.iterations[-1].search_complete is True
+    assert receipt.iterations[-1].trace is None
 
 
 def test_spurious_trace_refines_with_validated_interpolant() -> None:
@@ -220,6 +223,7 @@ def test_spurious_trace_refines_with_validated_interpolant() -> None:
     assert receipt.spurious_traces
     assert all(item.classification is TraceClassification.SPURIOUS for item in receipt.spurious_traces)
     assert receipt.counterexamples == ()
+    assert receipt.iterations[-1].search_complete is True
     assert receipt.refinements
     refinement = receipt.refinements[0]
     assert refinement.authority is RefinementAuthority.VALIDATED_INTERPOLANT
@@ -387,6 +391,23 @@ def test_iteration_budget_exhausts_on_remaining_spurious_trace() -> None:
     assert receipt.spurious_traces
     assert receipt.counterexamples == ()
     assert "max_iterations" in receipt.reason
+    truncated = run_cegar(
+        _real_system(),
+        solver=LocalConjunctionSolver(),
+        budget=CegarBudget(max_trace_length=1),
+    )
+    assert truncated.disposition is CegarDisposition.BUDGET_EXHAUSTED
+    assert truncated.counterexamples == ()
+    assert truncated.spurious_traces == ()
+    assert "max_trace_length" in truncated.reason
+    states = run_cegar(
+        _real_system(),
+        solver=LocalConjunctionSolver(),
+        budget=CegarBudget(max_abstract_states=1),
+    )
+    assert states.disposition is CegarDisposition.BUDGET_EXHAUSTED
+    assert states.counterexamples == ()
+    assert "abstract state" in states.reason
 
 
 def test_predicate_budget_exhausts_when_refinement_cannot_grow() -> None:
@@ -409,7 +430,7 @@ def test_timeout_terminates() -> None:
 
     def _clock() -> float:
         ticks["n"] += 1
-        return 0.0 if ticks["n"] == 1 else 10.0
+        return 0.0 if ticks["n"] <= 2 else 10.0
 
     receipt = run_cegar(
         _spurious_system(),
@@ -419,6 +440,7 @@ def test_timeout_terminates() -> None:
     )
     assert receipt.disposition is CegarDisposition.TIMEOUT
     assert receipt.counterexamples == ()
+    assert "timeout" in receipt.reason
 
 
 def test_path_timeout_terminates() -> None:
@@ -583,6 +605,21 @@ def test_disproved_receipt_requires_a_real_counterexample() -> None:
     with pytest.raises(CegarError, match="real counterexample"):
         CegarRunReceipt(
             disposition=CegarDisposition.DISPROVED,
+            system_cid="bsystem",
+            theory="QF_LIA",
+            provider="local",
+            provider_version="1",
+            bounds=CegarBudget(),
+            source_identities={"program_cid": "bprogram"},
+            predicates=(),
+            refinements=(),
+            counterexamples=(),
+            spurious_traces=(),
+            iterations=(),
+        )
+    with pytest.raises(CegarError, match="incomplete search"):
+        CegarRunReceipt(
+            disposition=CegarDisposition.PROVED,
             system_cid="bsystem",
             theory="QF_LIA",
             provider="local",

@@ -1031,10 +1031,23 @@ class CegarRunReceipt:
             raise CegarError("counterexamples may contain only real traces")
         if any(item.classification is not TraceClassification.SPURIOUS for item in self.spurious_traces):
             raise CegarError("spurious_traces may contain only spurious traces")
-        if disposition is CegarDisposition.DISPROVED and not self.counterexamples:
-            raise CegarError("disproved receipt requires a real counterexample")
-        if disposition is CegarDisposition.PROVED and self.counterexamples:
-            raise CegarError("proved receipt cannot retain a real counterexample")
+        if disposition is CegarDisposition.DISPROVED:
+            if not self.counterexamples:
+                raise CegarError("disproved receipt requires a real counterexample")
+            if self.iterations:
+                last = self.iterations[-1]
+                if last.trace is None or last.trace.classification is not TraceClassification.REAL:
+                    raise CegarError("disproved receipt requires the last iteration to retain a real trace")
+        if disposition is CegarDisposition.PROVED:
+            if self.counterexamples:
+                raise CegarError("proved receipt cannot retain a real counterexample")
+            if not self.iterations:
+                raise CegarError("incomplete search never upgrades to proved")
+            last = self.iterations[-1]
+            if not last.search_complete:
+                raise CegarError("incomplete search never upgrades to proved")
+            if last.trace is not None and last.trace.classification is TraceClassification.REAL:
+                raise CegarError("proved receipt cannot retain a real counterexample")
 
     @property
     def receipt_cid(self) -> str:
@@ -1734,6 +1747,7 @@ class _CegarEngine:
         parent: dict[tuple[str, tuple[bool, ...]], tuple[tuple[str, tuple[bool, ...]], CegarTransition] | None] = {}
         explored = 0
         last_observation: CegarSolverObservation | None = None
+        truncated = False
         for valuation in valuations:
             if self.timed_out():
                 return _SearchOutcome(None, explored, False, last_observation, "timeout")
@@ -1752,22 +1766,31 @@ class _CegarEngine:
             parent[state] = None
             queue.append(state)
             explored += 1
+            if self.system.initial_location in self.system.error_locations:
+                return _SearchOutcome(
+                    self._rebuild(parent, state),
+                    explored,
+                    True,
+                    observation,
+                    "abstract error path",
+                )
+            if explored >= self.budget.max_abstract_states:
+                return _SearchOutcome(
+                    None,
+                    explored,
+                    False,
+                    observation,
+                    "abstract state budget exhausted",
+                )
         if not queue:
             return _SearchOutcome(None, explored, True, last_observation, "no abstract initial state")
         while queue:
             if self.timed_out():
                 return _SearchOutcome(None, explored, False, last_observation, "timeout")
             location, valuation = queue.popleft()
-            if location in self.system.error_locations:
-                return _SearchOutcome(
-                    self._rebuild(parent, (location, valuation)),
-                    explored,
-                    True,
-                    last_observation,
-                    "abstract error path",
-                )
             depth = self._depth(parent, (location, valuation))
             if depth >= self.budget.max_trace_length:
+                truncated = True
                 continue
             for transition in self.system.outgoing(location):
                 for nxt in valuations:
@@ -1801,6 +1824,14 @@ class _CegarEngine:
                     parent[successor] = ((location, valuation), transition)
                     queue.append(successor)
                     explored += 1
+                    if transition.target in self.system.error_locations:
+                        return _SearchOutcome(
+                            self._rebuild(parent, successor),
+                            explored,
+                            True,
+                            observation,
+                            "abstract error path",
+                        )
                     if explored >= self.budget.max_abstract_states:
                         return _SearchOutcome(
                             None,
@@ -1809,6 +1840,14 @@ class _CegarEngine:
                             observation,
                             "abstract state budget exhausted",
                         )
+        if truncated:
+            return _SearchOutcome(
+                None,
+                explored,
+                False,
+                last_observation,
+                "max_trace_length truncated remaining abstract successors",
+            )
         return _SearchOutcome(None, explored, True, last_observation, "abstract error unreachable")
 
     def _depth(
@@ -1995,7 +2034,16 @@ class _CegarEngine:
                     bounds=bounds,
                     theory=self.system.theory,
                 )
-            except (InterpolationError, IncrementalSmtError, TypeError, ValueError, RuntimeError):
+            except (
+                InterpolationError,
+                IncrementalSmtError,
+                ImportError,
+                OSError,
+                AttributeError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+            ):
                 self.limitations.append("interpolator_raised")
                 interpolant_receipt = None
             if interpolant_receipt is not None and interpolant_receipt.status is InterpolationStatus.VALIDATED:
@@ -2193,7 +2241,10 @@ class _CegarEngine:
             if self.timed_out():
                 return self.finish(CegarDisposition.TIMEOUT, "CEGAR budget timeout_ms elapsed")
             search = self.search()
-            if search.observation is not None and search.observation.status is SmtCheckStatus.TIMEOUT:
+            search_timeout = search.reason == "timeout" or (
+                search.observation is not None and search.observation.status is SmtCheckStatus.TIMEOUT
+            )
+            if search_timeout:
                 self.iterations.append(
                     CegarIteration(
                         iteration=iteration,
@@ -2201,7 +2252,11 @@ class _CegarEngine:
                         search_complete=False,
                         trace=None,
                         refinement=None,
-                        solver_receipt_ids=((search.observation.receipt_id,) if search.observation.receipt_id else ()),
+                        solver_receipt_ids=(
+                            (search.observation.receipt_id,)
+                            if search.observation is not None and search.observation.receipt_id
+                            else ()
+                        ),
                         reason=search.reason,
                     )
                 )
@@ -2359,6 +2414,8 @@ class _CegarEngine:
                         CegarDisposition.UNKNOWN,
                         "no validated interpolant, core, weakest precondition, or reviewed predicate refined the spurious trace",
                     )
+                if refined is CegarDisposition.TIMEOUT:
+                    return self.finish(CegarDisposition.TIMEOUT, "CEGAR budget timeout_ms elapsed")
                 return self.finish(refined, "refinement terminated without new predicates")
             if isinstance(refined, CegarSolverObservation):
                 if refined.status is SmtCheckStatus.TIMEOUT:
