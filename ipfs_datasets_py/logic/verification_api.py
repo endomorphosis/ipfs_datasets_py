@@ -470,10 +470,15 @@ def _compositional_artifact_interface(value: Any) -> Any:
 
 
 def _compositional_identity(value: Any, attr: str) -> Any:
-    identity = getattr(value, attr, None)
-    if callable(identity):
-        return identity()
-    return identity
+    try:
+        identity = getattr(value, attr, None)
+        if callable(identity):
+            return identity()
+        return identity
+    except ModuleNotFoundError as exc:
+        raise VerificationAPIError(
+            f"result {attr} identity requires {exc.name}"
+        ) from exc
 
 
 def _check_incremental_smt_session(result: Any) -> Any:
@@ -527,6 +532,39 @@ def _check_incremental_verification_plan(result: Any) -> None:
                 "plan_incremental_verification: identity payload missing "
                 f"{field_name}"
             )
+
+
+def _check_assume_guarantee_receipt(result: Any) -> None:
+    """Require a closed discharge disposition on the public receipt."""
+
+    disposition = getattr(result, "disposition", None)
+    disposition_value = disposition.value if hasattr(disposition, "value") else disposition
+    if disposition_value not in {
+        "proved",
+        "disproved",
+        "unknown",
+        "stale",
+        "rejected_cycle",
+        "unavailable",
+    }:
+        raise VerificationAPIError(
+            "discharge_assume_guarantee: missing typed discharge disposition"
+        )
+    obligations = getattr(result, "obligations", None)
+    if obligations is None or isinstance(obligations, (str, bytes, bytearray)):
+        raise VerificationAPIError(
+            "discharge_assume_guarantee: receipt missing obligation vector"
+        )
+    semantic_state_root = getattr(result, "semantic_state_root", None)
+    contract_root = getattr(result, "contract_root", None)
+    if not isinstance(semantic_state_root, str) or not semantic_state_root:
+        raise VerificationAPIError(
+            "discharge_assume_guarantee: receipt missing semantic_state_root"
+        )
+    if not isinstance(contract_root, str) or not contract_root:
+        raise VerificationAPIError(
+            "discharge_assume_guarantee: receipt missing contract_root"
+        )
 
 
 def _check_interpolant_receipt(result: Any) -> None:
@@ -763,6 +801,8 @@ def _check_compositional_result(operation: str, result: Any) -> Any:
         _check_incremental_verification_plan(result)
     elif operation == "compute_and_validate_interpolant":
         _check_interpolant_receipt(result)
+    elif operation == "discharge_assume_guarantee":
+        _check_assume_guarantee_receipt(result)
     return result
 
 
