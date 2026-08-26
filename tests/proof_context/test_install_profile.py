@@ -56,6 +56,10 @@ CANONICAL_EXTRAS = {
     "wallets-xrpl",
 }
 _EXTRA_MARKER_COMPARISON = re.compile(r'(\bextra\s*(?:==|!=)\s*")([^"]+)(")')
+CURRENT_HEAD_RECEIPT_SCHEMA = (
+    "lift_coding.proof-carrying-semantic-minification."
+    "datasets-package-current-head@1"
+)
 
 
 @dataclass(frozen=True)
@@ -303,18 +307,41 @@ def _source_egg_info_snapshot(
 
 
 def _outer_receipt() -> Path | None:
-    # A standalone datasets checkout has no PCCE task receipt. In the composed
-    # workspace, bind the completed outer receipt to these exact build bytes.
+    # A standalone datasets checkout has no outer package receipt. In a
+    # composed workspace, prefer the exact-current-tree PCSM qualification
+    # receipt. The historical PCCE-050 receipt remains immutable release
+    # evidence and is only the compatibility fallback for its original tree.
     if PROJECT_ROOT.parent.name != "external":
         return None
-    receipt = (
-        PROJECT_ROOT.parents[1]
+    workspace_root = PROJECT_ROOT.parents[1]
+    current = (
+        workspace_root
+        / "artifacts"
+        / "proof_carrying_semantic_minification"
+        / "handoff"
+        / "datasets-proof-context-current-head.json"
+    )
+    if current.is_file():
+        return current
+    historical = (
+        workspace_root
         / "artifacts"
         / "proof_carrying_context_engine"
         / "receipts"
         / "PCCE-050.json"
     )
-    return receipt if receipt.is_file() else None
+    return historical if historical.is_file() else None
+
+
+def _source_git_identity() -> tuple[str, str]:
+    completed = _run(
+        ["git", "rev-parse", "HEAD", "HEAD^{tree}"],
+        cwd=PROJECT_ROOT,
+    )
+    lines = completed.stdout.splitlines()
+    assert len(lines) == 2
+    assert all(re.fullmatch(r"[0-9a-f]{40}", value) for value in lines)
+    return lines[0], lines[1]
 
 
 def _digest_value(value: object) -> str:
@@ -354,8 +381,16 @@ def _assert_receipt_binding(pair: ArtifactPair) -> None:
     if receipt_path is None:
         return
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-    assert receipt["task_id"] == "PCCE-050"
-    assert receipt["status"] == "completed"
+    if receipt.get("schema") == CURRENT_HEAD_RECEIPT_SCHEMA:
+        assert receipt["status"] == "qualified_current_head"
+        source_binding = receipt["source_binding"]
+        commit, tree = _source_git_identity()
+        assert source_binding["repository"] == "ipfs_datasets_py"
+        assert source_binding["commit"] == commit
+        assert source_binding["tree"] == tree
+    else:
+        assert receipt["task_id"] == "PCCE-050"
+        assert receipt["status"] == "completed"
     artifacts = receipt.get("artifacts") or receipt["evidence"]["artifacts"]
     reproducibility = receipt["evidence"]["reproducibility"]
     assert str(reproducibility["source_date_epoch"]) == SOURCE_DATE_EPOCH
