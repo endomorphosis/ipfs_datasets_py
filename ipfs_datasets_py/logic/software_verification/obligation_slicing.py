@@ -31,8 +31,10 @@ from ipfs_datasets_py.logic.common.canonical_cache_key import (
     CanonicalCacheKeyError,
     CanonicalProofCacheKey,
     CrossEnvironmentHitError,
+    InvalidCidError,
     admit_cache_hit,
     admit_canonical_cache_key,
+    require_valid_cid,
 )
 from ipfs_datasets_py.logic.families.models import EvidenceAuthority
 from ipfs_datasets_py.logic.formalization.translation_receipts import (
@@ -47,7 +49,6 @@ from ipfs_datasets_py.logic.formalization.translation_receipts import (
     stage_successor,
 )
 from ipfs_datasets_py.logic.ir_core.identity import canonical_identity
-from ipfs_datasets_py.logic.software_contracts.content import validate_cid
 from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
     AnalysisConfidence,
 )
@@ -126,8 +127,8 @@ def _optional_text(value: object, label: str) -> str:
 
 def _cid(value: object, label: str) -> str:
     try:
-        return validate_cid(value)
-    except (TypeError, ValueError) as error:
+        return require_valid_cid(value, label)
+    except (TypeError, ValueError, InvalidCidError) as error:
         raise ObligationSlicingError(f"{label} must be a valid CID") from error
 
 
@@ -1356,10 +1357,6 @@ def classify_translation_stages(
         if current is not None and previous_receipt is not None and current_receipt is not None:
             if previous_receipt.receipt_id != current_receipt.receipt_id:
                 reasons.add("stage_receipt_changed")
-            if previous_receipt.output.content_identity != current_receipt.input.content_identity:
-                # Adjacent identity is checked by the pipeline constructor; this
-                # records an output/input shift against the previous receipt.
-                pass
             if (
                 previous_receipt.input.content_identity != current_receipt.input.content_identity
                 or previous_receipt.output.content_identity != current_receipt.output.content_identity

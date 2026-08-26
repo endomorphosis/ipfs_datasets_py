@@ -12,6 +12,8 @@ Acceptance:
 
 from __future__ import annotations
 
+import inspect
+
 from dataclasses import FrozenInstanceError, replace
 
 import pytest
@@ -41,7 +43,8 @@ from ipfs_datasets_py.logic.ir_core.axes import (
     LogicEvidenceKind,
 )
 from ipfs_datasets_py.logic.ir_core.claims import Assumption, ProofObligation
-from ipfs_datasets_py.logic.software_contracts.content import cid_for_structured
+from ipfs_datasets_py.logic.ir_core.identity import cid_v1
+from ipfs_datasets_py.logic.software_verification import obligation_slicing as obligation_slicing_module
 from ipfs_datasets_py.logic.software_verification.obligation_slicing import (
     OBLIGATION_SLICING_INTERFACE,
     LocalMutation,
@@ -72,6 +75,10 @@ LOGICAL_NODES: tuple[str, ...] = ("a", "b", "main", "unrelated")
 
 def _identity(tag: str) -> str:
     return f"sha256:{tag.encode('utf-8').hex().ljust(64, '0')[:64]}"
+
+
+def _artifact_cid(label: str) -> str:
+    return cid_v1(f"obligation-slice-artifact:{label}".encode("utf-8"))
 
 
 def _artifact(
@@ -373,7 +380,7 @@ def _evidence(
         binding_id=binding_id,
         kind=kind,
         subject_ids=subject_ids,
-        artifact_cid=cid_for_structured({"artifact": binding_id}),
+        artifact_cid=_artifact_cid(binding_id),
         cache_key=key,
         current_cache_key=current_key or key,
         dependency_ids=dependency_ids,
@@ -894,3 +901,166 @@ def test_full_p7_spine_is_classified() -> None:
         stage.value for stage in STAGE_ORDER if stage is not CompilationStage.SOURCE
     )
     assert receipt.authority_ceiling == previous.authority_ceiling.value
+
+
+def test_module_admits_cids_without_optional_multiformats() -> None:
+    source = inspect.getsource(obligation_slicing_module)
+    assert "software_contracts.content" not in source
+    assert "multiformats" not in source
+    assert "require_valid_cid" in source
+    assert "admit_cache_hit" in source
+    assert "replay_stage_receipt" in source
+
+
+def test_invalid_artifact_cid_fails_closed() -> None:
+    with pytest.raises(ObligationSlicingError, match="valid CID"):
+        ObligationEvidenceRequest(
+            binding_id="proof:bad-cid",
+            kind=SliceSubjectKind.THEOREM,
+            subject_ids=("theorem_unrelated",),
+            artifact_cid="not-a-cid",
+            cache_key=_cache_key("proof:bad-cid"),
+            current_cache_key=_cache_key("proof:bad-cid"),
+            producing_stage=CompilationStage.AST,
+        )
+
+
+def test_obligation_mutation_invalidates_exactly_that_obligation() -> None:
+    receipt = slice_and_replay_obligations(
+        _pipeline(),
+        mutation=LocalMutation(
+            mutation_id="mutation:obligation-main",
+            changed_obligation_ids=("obligation:main",),
+        ),
+        theorem_graph=_graph(),
+        obligations=_bindings(),
+        current_pipeline=_pipeline(),
+        evidence_requests=(
+            _evidence(
+                "proof:main-obligation",
+                SliceSubjectKind.OBLIGATION,
+                ("obligation:main",),
+                producing_stage=CompilationStage.VC,
+            ),
+            _evidence(
+                "proof:unrelated-obligation",
+                SliceSubjectKind.OBLIGATION,
+                ("obligation:unrelated",),
+                producing_stage=CompilationStage.AST,
+            ),
+        ),
+    )
+    assert receipt.invalidated_obligation_ids == ("obligation:main",)
+    assert "obligation:lemma_a" in receipt.reused_obligation_ids
+    assert "obligation:unrelated" in receipt.reused_obligation_ids
+    assert receipt.invalidated_theorem_ids == ()
+    assert "theorem_main" in receipt.reused_theorem_ids
+    assert receipt.invalidated_stage_ids == ()
+    decisions = {item.binding_id: item for item in receipt.evidence_decisions}
+    assert decisions["proof:main-obligation"].disposition is SliceDisposition.INVALIDATED
+    assert "mutated_obligation" in decisions["proof:main-obligation"].reason_codes
+    assert decisions["proof:unrelated-obligation"].disposition is SliceDisposition.REUSED
+
+
+def test_deleted_obligation_named_in_mutation_is_invalidated() -> None:
+    receipt = slice_and_replay_obligations(
+        _pipeline(),
+        mutation=LocalMutation(
+            mutation_id="mutation:retired-obligation",
+            changed_obligation_ids=("obligation:retired",),
+        ),
+        theorem_graph=_graph(),
+        obligations=_bindings(),
+        current_pipeline=_pipeline(),
+    )
+    assert "obligation:retired" in receipt.invalidated_obligation_ids
+    assert "obligation:unrelated" in receipt.reused_obligation_ids
+
+
+def test_cross_environment_cache_hit_is_rejected() -> None:
+    stored = _cache_key("proof:unrelated")
+    current = CanonicalProofCacheKey.build(
+        source={"source": "proof:unrelated"},
+        expression={"expression": "proof:unrelated"},
+        formalization={"formalization": "hoare-vc"},
+        slice={"slice": "proof:unrelated"},
+        obligation={"obligation": "proof:unrelated"},
+        assumptions=(),
+        bounds={"steps": 8},
+        translation={"translator": "fixture-v1"},
+        provider="provider.z3",
+        environment={"python": "3.11", "z3": "4.15"},
+        policy={"network": "deny"},
+        schema={"obligation-slice": "v1"},
+        checker="checker.obligation-slice-fixture",
+        network_policy={"allow": False},
+        evidence_kind=LogicEvidenceKind.SOLVER_RESULT,
+        authority_ceiling=LogicEvidenceAuthority.BOUNDED,
+    )
+    receipt = slice_and_replay_obligations(
+        _pipeline(),
+        mutation=LocalMutation(mutation_id="mutation:none"),
+        theorem_graph=_graph(),
+        obligations=_bindings(),
+        current_pipeline=_pipeline(),
+        evidence_requests=(
+            ObligationEvidenceRequest(
+                binding_id="proof:cross-env",
+                kind=SliceSubjectKind.THEOREM,
+                subject_ids=("theorem_unrelated",),
+                artifact_cid=_artifact_cid("proof:cross-env"),
+                cache_key=stored,
+                current_cache_key=current,
+                producing_stage=CompilationStage.AST,
+            ),
+        ),
+    )
+    assert receipt.reused_evidence_binding_ids == ()
+    assert receipt.evidence_decisions[0].disposition is SliceDisposition.INVALIDATED
+    assert "cross_environment_hit" in receipt.evidence_decisions[0].reason_codes
+
+
+def test_malformed_evidence_request_and_duplicate_bindings_fail_closed() -> None:
+    with pytest.raises(ObligationSlicingError, match="ObligationEvidenceRequest"):
+        slice_and_replay_obligations(
+            _pipeline(),
+            mutation=LocalMutation(mutation_id="mutation:x"),
+            theorem_graph=_graph(),
+            current_pipeline=_pipeline(),
+            evidence_requests=("not-a-request",),  # type: ignore[arg-type]
+        )
+    request = _evidence(
+        "proof:dup",
+        SliceSubjectKind.THEOREM,
+        ("theorem_unrelated",),
+        producing_stage=CompilationStage.AST,
+    )
+    with pytest.raises(ObligationSlicingError, match="unique"):
+        slice_and_replay_obligations(
+            _pipeline(),
+            mutation=LocalMutation(mutation_id="mutation:x"),
+            theorem_graph=_graph(),
+            current_pipeline=_pipeline(),
+            evidence_requests=(request, request),
+        )
+
+
+def test_content_identity_mutation_invalidates_matching_theorems() -> None:
+    receipt = slice_and_replay_obligations(
+        _pipeline(),
+        mutation=LocalMutation(
+            mutation_id="mutation:content",
+            changed_content_identities=("content:lemma_a",),
+        ),
+        theorem_graph=_graph(),
+        obligations=_bindings(),
+        current_pipeline=_pipeline(),
+    )
+    assert "lemma_a" in receipt.invalidated_theorem_ids
+    assert "lemma_b" in receipt.invalidated_theorem_ids
+    assert "theorem_main" in receipt.invalidated_theorem_ids
+    assert "theorem_unrelated" in receipt.reused_theorem_ids
+    assert receipt.invalidated_stage_ids == ()
+    decisions = {item.theorem_id: item for item in receipt.theorem_decisions}
+    assert "mutated_content_identity" in decisions["lemma_a"].reason_codes
+    assert "theorem_dependency_invalidated" in decisions["lemma_b"].reason_codes
