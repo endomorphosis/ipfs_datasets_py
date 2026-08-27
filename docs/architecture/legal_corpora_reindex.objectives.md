@@ -21,9 +21,16 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: state_laws federal_register scraper canonical corpus hf_graphrag build upload canary
 - Parallel lane: 0,1,2,3
 - Conflict policy: Root evidence is assembled only by the terminal task after all child goals have proof; child tasks own disjoint outputs.
+- Goal completion schema version: 1
+- Completion confidence: 0.083333
+- Uncovered criteria: ["Every acceptance gate in LEGAL_CORPORA_REINDEX_PLAN.md passes against both immutable public revisions","no missing jurisdiction, Federal Register partition/document/text disposition, semantic family, or publication mismatch remains."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## LCR-G010 Freeze the baseline, authority, identity, and completeness contracts
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G000
 - Depends on:
 - Fib priority: 1
@@ -41,6 +48,16 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: state_laws_scraper US_STATES completed_states refresh_state_laws_corpus publish
 - Parallel lane: 0,1,2,3
 - Conflict policy: Foundation tasks use separate modules/reports; shared registry integration waits for downstream tasks.
+- Goal completion schema version: 1
+- Completion confidence: 0.083333
+- Uncovered criteria: ["All foundation tasks pass offline fixtures","the exact jurisdiction set includes DC","changed remote revisions force a fresh inventory rather than inheriting conclusions."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: All foundation tasks pass offline fixtures; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Every descendant must remain verified with all proof requirements fresh, conclusive, uncontradicted, and satisfied.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G020 Acquire a complete official corpus for all 51 jurisdictions
 - Status: active
@@ -61,9 +78,16 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: state_scrapers registry scrape_state_laws partial_checkpoint completion callback
 - Parallel lane: 0,1,2,3
 - Conflict policy: Cohorts use isolated output/checkpoint roots and disjoint state modules; aggregation is serialized.
+- Goal completion schema version: 1
+- Completion confidence: 0.083333
+- Uncovered criteria: ["Each jurisdiction independently passes the authority, frontier, reconciliation, quality, no-truncation, replay, and safety contract","aggregate proof contains exactly 51 codes."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## LCR-G021 Complete acquisition cohorts A through D
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G020
 - Depends on: LCR-G010
 - Fib priority: 1
@@ -81,9 +105,19 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: state_scrapers alabama alaska arizona arkansas california colorado connecticut delaware florida georgia hawaii idaho illinois indiana iowa kansas
 - Parallel lane: 0,1,2,3
 - Conflict policy: Each cohort owns only its listed state adapters, tests, and receipt.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["All sixteen jurisdictions pass without sample caps, fallback admission, or unresolved failed-final items."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: All sixteen jurisdictions pass without sample caps, fallback admission, or unresolved failed-final items.; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G022 Complete acquisition cohorts E through H
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G020
 - Depends on: LCR-G010
 - Fib priority: 1
@@ -101,9 +135,19 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: state_scrapers kentucky louisiana maine maryland massachusetts michigan minnesota mississippi missouri montana nebraska nevada new_hampshire new_jersey new_mexico new_york
 - Parallel lane: 0,1,2,3
 - Conflict policy: Each cohort owns only its listed state adapters, tests, and receipt.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["All sixteen jurisdictions pass","especially low prior counts for LA, MA, MT, NJ, and NY cannot be inherited as success."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: All sixteen jurisdictions pass; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G023 Complete acquisition cohorts I through M including DC
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G020
 - Depends on: LCR-G010
 - Fib priority: 1
@@ -121,9 +165,19 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: state_scrapers north_carolina north_dakota ohio oklahoma oregon pennsylvania rhode_island south_carolina south_dakota tennessee texas utah vermont virginia washington west_virginia wisconsin wyoming district_of_columbia
 - Parallel lane: 0,1,2,3
 - Conflict policy: Each cohort owns only its listed state adapters, tests, and receipt.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["All nineteen jurisdictions pass","DC is a required first-class jurisdiction and prior OR-only legacy artifacts do not substitute for the full cohort."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: All nineteen jurisdictions pass; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G024 Reconcile cohort evidence and refill every acquisition gap
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G020
 - Depends on: LCR-G021, LCR-G022, LCR-G023
 - Fib priority: 1
@@ -141,9 +195,19 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: certify_state_laws_full_scrape coverage admission ledger objective refill
 - Parallel lane: 2,3
 - Conflict policy: One serialized aggregator owns aggregate reports; repair tasks own new jurisdiction evidence and depend on the failed cohort.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Jurisdiction set, discovered/fetched/disposition arithmetic, source authority, checksums, full-text metrics, and frontier closure reconcile","refill has no unresolved finding."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: Jurisdiction set, discovered/fetched/disposition arithmetic, source authority, checksums, full-text metrics, and frontier closure reconcile; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G030 Build a canonical, provenance-rich, bounded state-law corpus
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G000
 - Depends on: LCR-G010, LCR-G020
 - Fib priority: 2
@@ -161,9 +225,19 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: canonical_legal_corpora state_laws identity chunker hf_graphrag artifacts
 - Parallel lane: 0,1,2
 - Conflict policy: Identity, chunking, and artifact-adapter tasks own separate modules; corpus assembly follows acquisition.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["All admitted rows have entry_cid/legal_id/source_cid and official provenance","no duplicate primary keys, sample/navigation rows, unsafe paths, or unaccounted inputs remain."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: All admitted rows have entry_cid/legal_id/source_cid and official provenance; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G040 Produce complete sparse, dense, and graph retrieval families
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G000
 - Depends on: LCR-G030
 - Fib priority: 2
@@ -181,9 +255,19 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: retrieval/hf_graphrag bm25 vectors graph adjacency manifest state_laws
 - Parallel lane: 0,1,2,3
 - Conflict policy: Each artifact family has one producer; manifest assembly depends on all producers.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Every admitted chunk routes through each required family as declared","4,096 and centroid bounds hold physically","no required semantic family is missing."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: Every admitted chunk routes through each required family as declared; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G050 Query the immutable Hub release without cloning it
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G000
 - Depends on: LCR-G040
 - Fib priority: 3
@@ -201,9 +285,19 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: state_laws query hf resolver remote engine CLI
 - Parallel lane: 1,2
 - Conflict policy: Engine and CLI have separate owners; public exports integrate after both.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Query results and explanations are stable by CID","only justified control-plane and routed shards are fetched within explicit budgets."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: Query results and explanations are stable by CID; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G060 Prove legal quality, security, reproducibility, and local end to end behavior
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G000
 - Depends on: LCR-G030, LCR-G040, LCR-G050
 - Fib priority: 3
@@ -221,6 +315,16 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: evaluate_state_laws build_state_laws tamper reproducibility e2e
 - Parallel lane: 0,1,2,3
 - Conflict policy: Gold labels are frozen before tuning; evaluation and build receipts are regenerated from final artifacts.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Sealed thresholds pass across jurisdiction sizes and source shapes","no fixture-only result is labeled as live full-corpus proof."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: Sealed thresholds pass across jurisdiction sizes and source shapes; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G070 Stage and canary the exact release candidate
 - Status: active
@@ -241,6 +345,13 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: build_state_laws_hf_release stage_state_laws canary huggingface
 - Parallel lane: 0,1,2
 - Conflict policy: Candidate assembly precedes one serialized uploader; canary is read-only against the resulting SHA.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["The staged revision exactly matches the final local manifest and all 51 jurisdictions","no fixture baseline is accepted as the staging canary."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## LCR-G080 Publish and verify the authorized public revision
 - Status: active
@@ -261,6 +372,13 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: publish_state_laws hf api upload_folder commit canary public
 - Parallel lane: 0,2,3
 - Conflict policy: One uploader owns mutation; verification tasks are read-only and depend on its exact receipt.
+- Goal completion schema version: 1
+- Completion confidence: 0.083333
+- Uncovered criteria: ["Public files match the staged manifest","all 51 jurisdictions and semantic families pass remotely","credentials are absent from all evidence."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## LCR-G090 Preserve compatibility, rehearse rollback, and seal final operations evidence
 - Status: active
@@ -281,9 +399,16 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: state_laws runbook rollback public release status refill
 - Parallel lane: 0,1,3
 - Conflict policy: Compatibility and rollback precede the single terminal evidence assembler.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Operators can reproduce queries at new and previous pins, resume incremental updates, detect stalls, and roll back advertisement without deleting history."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## LCR-G100 Freeze Federal Register baseline, completeness, schema, and gold contracts
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G000
 - Depends on:
 - Fib priority: 1
@@ -301,9 +426,19 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: federal_register inventory scraper metadata jsonld parquet embeddings upload quality
 - Parallel lane: 0,2,3
 - Conflict policy: Four foundation tasks own disjoint report/policy/schema/gold outputs and can run with state foundation work.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["The old 993703/993708 contradiction, 2026-03-02 endpoint, missing full-text/card contract, immutable cutoff, official page closure, body dispositions, and release identities are explicit and fail closed."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: The old 993703/993708 contradiction, 2026-03-02 endpoint, missing full-text/card contract, immutable cutoff, official page closure, body dispositions, and release identities are explicit and fail closed.; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G110 Acquire and materialize the cutoff-bound Federal Register corpus
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G000
 - Depends on: LCR-G100
 - Fib priority: 1
@@ -321,9 +456,19 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: federal_register acquisition pagination checkpoint fulltext identity corpus
 - Parallel lane: 0,1,3
 - Conflict policy: Inventory, full-text, identity, and materialization are dependency-ordered; checkpoint roots never overlap state acquisition.
+- Goal completion schema version: 1
+- Completion confidence: 0.083333
+- Uncovered criteria: ["Cutoff-relative enumeration, fetch, disposition, duplicate, text, admission, and recovery arithmetic reconciles with zero unresolved page or failed-final item."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: Cutoff-relative enumeration, fetch, disposition, duplicate, text, admission, and recovery arithmetic reconciles with zero unresolved page or failed-final item.; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Every descendant must remain verified with all proof requirements fresh, conclusive, uncontradicted, and satisfied.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G120 Build and query Federal Register sparse, dense, and graph families
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G000
 - Depends on: LCR-G110
 - Fib priority: 2
@@ -341,6 +486,16 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: federal_register bm25 vectors graph sparse_query query_federal_register_hf
 - Parallel lane: 0,1,2,3
 - Conflict policy: BM25/vector/graph producers are parallel and file-disjoint; query integration follows all three.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Every searchable chunk reconciles across declared families, physical routes and bounds are true, and all query modes use justified sparse immutable-revision fetches."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: Every searchable chunk reconciles across declared families, physical routes and bounds are true, and all query modes use justified sparse immutable-revision fetches.; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G130 Build, evaluate, stage, and canary the exact Federal Register release
 - Status: active
@@ -361,6 +516,13 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: build_federal_register_hf_release evaluate stage canary manifest viewer
 - Parallel lane: 1,2,3
 - Conflict policy: Build/package/evaluation/staging are serialized by dependencies; staging mutation has one owner.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Candidate is complete and deterministic","staging exactly matches it","semantic families, Viewer, cutoff/body coverage, tamper/resource gates, and real remote queries pass."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## LCR-G140 Publish Federal Register and seal dual-release operations evidence
 - Status: active
@@ -381,9 +543,16 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: publish_federal_register check_public legal_corpora rollback status objective refill
 - Parallel lane: 1,2,3
 - Conflict policy: Federal publication has one mutation owner; all later composition, verification, rollback, and terminal work is dependency-ordered and read-only.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Both exact authorized targets have manifest-bound verified public revisions","prior pins remain usable","no generated task, goal, gap, block, or active worker remains","root acceptance is content-addressed."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## LCR-G141 Prove source rights and redistribution admissibility before publication
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G010
 - Fib priority: 1
 - Track: source-rights-assurance
@@ -400,9 +569,19 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: legal_source_rights publication_gate release_schema dataset_card manifest compliance receipt
 - Parallel lane: 1,2
 - Conflict policy: Contract, live evidence, and release integration are dependency ordered; source-specific research may run in parallel but one receipt assembler owns the final catalog.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Both target candidates contain only source/content scopes with current allowed evidence, required attribution/notices, and receipt-bound card/manifest metadata","unknown, prohibited, stale, or unreviewed proprietary material is quarantined and every staging/main mutation fails closed without the exact receipt."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: Both target candidates contain only source/content scopes with current allowed evidence, required attribution/notices, and receipt-bound card/manifest metadata; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G142 Bind legal-corpora publication authority to canonical live evidence
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G080
 - Depends on: LCR-G141
 - Fib priority: 1
@@ -420,9 +599,19 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: legal_corpora_publication_gate authorize_and_mutate taskboard release_policy receipt manifest credential seal uploader
 - Parallel lane: 1
 - Conflict policy: Ordered repair of the shared publication gate; it owns the canonical runtime adapter and tests, performs no Hub mutation, and leaves downstream uploader scripts and protected control-plane files to their existing owners.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["State and Federal staging and main authorization can only be constructed from one clean exact Git HEAD and fixed repository-relative control and evidence paths","caller-supplied status, ancestry, receipt, digest, commit, credential, or seal assertions cannot authorize. Every required receipt and manifest is schema-validated and independently rehashed, the environment token's verified principal has write authority for the exact target, main seals explicitly predate mutation and bind every authority input, and one callback-owning runtime rechecks evidence immediately before invoking the upload exactly once."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: State and Federal staging and main authorization can only be constructed from one clean exact Git HEAD and fixed repository-relative control and evidence paths; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G143 Prove complete authenticated live baseline provenance
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G010
 - Fib priority: 1
 - Track: foundation-baseline-provenance-hardening
@@ -439,9 +628,19 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: audit_legal_corpora_live_baseline list_repo_tree datasets_server parquet salvage validate receipt_sha256
 - Parallel lane: 3
 - Conflict policy: Strict ordered successor to LCR-070 and sole owner of its verifier, schema, tests, and receipt while hardening; no overlap with LCR-070 or any other receipt writer.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["No constant, fixture, injected transport, inventory sample, missing or read-failed file, unavailable or unhashed Viewer response, all-missing salvage set, unchecked mismatch, stale receipt, or syntactic-only digest can authorize","the on-disk receipt exists and exactly binds independently recomputed current evidence at both pins."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: No constant, fixture, injected transport, inventory sample, missing or read-failed file, unavailable or unhashed Viewer response, all-missing salvage set, unchecked mismatch, stale receipt, or syntactic-only digest can authorize; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G144 Make source-rights admission evaluator-complete and time-trusted
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G010
 - Depends on: LCR-G141
 - Fib priority: 1
@@ -459,9 +658,19 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: legal_source_rights_policy normalize_spdx LicenseRef robots evaluate_scope_rights admitted_records sealed_at reviewed_at
 - Parallel lane: 2
 - Conflict policy: Strict ordered successor to LCR-077 and sole owner of the rights contract, schema, audit, and fixtures during hardening; live catalog generation remains ordered after it.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["No invented, deprecated, aliased, or canonical-registry-omitted license, undefined or unregistered LicenseRef, denied, unknown, or unavailable robots disposition, missing derivative or archive permission, bare caller-asserted condition string, unsafe bare-record or admitted-subset selector, missing, extra, or self-declared source-scope frontier record, missing or defaulted identity, arbitrary producer, missing or bypassed policy, schema, SPDX-registry, or evidence digest, caller-widened freshness policy, self-chosen future seal, stale evidence or review, or impossible review chronology can admit or authorize a scope. Authorizing evaluation requires schema `legal-source-rights-catalog-v2`, producer `audit_legal_source_rights.py@2`, program `legal-corpora-reindex-v1`, exact fixture identity `LCR-082`, `LCR-G144`, `fixture` or live identity `LCR-078`, `LCR-G141`, `live`, an expected source and content-scope frontier independently derived from canonical LCR-002 and LCR-048 evidence, every expected record, and independently rehashed policy-module, schema, complete SPDX-registry, LicenseRef, terms, robots, frontier, and conditional-evidence artifacts in both fixture and live modes. Conditional admission requires `legal-source-rights-condition-evidence-v1` content-addressed proof for every acquisition requirement. One verifier-owned clock enforces an immutable 90-day maximum evidence and review age and zero future skew","no public helper can override those limits, and fixture mode cannot authorize."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: No invented, deprecated, aliased, or canonical-registry-omitted license, undefined or unregistered LicenseRef, denied, unknown, or unavailable robots disposition, missing derivative or archive permission, bare caller-asserted condition string, unsafe bare-record or admitted-subset selector, missing, extra, or self-declared source-scope frontier record, missing or defaulted identity, arbitrary producer, missing or bypassed policy, schema, SPDX-registry, or evidence digest, caller-widened freshness policy, self-chosen future seal, stale evidence or review, or impossible review chronology can admit or authorize a scope. Authorizing evaluation requires schema `legal-source-rights-catalog-v2`, producer `audit_legal_source_rights.py@2`, program `legal-corpora-reindex-v1`, exact fixture identity `LCR-082`, `LCR-G144`, `fixture` or live identity `LCR-078`, `LCR-G141`, `live`, an expected source and content-scope frontier independently derived from canonical LCR-002 and LCR-048 evidence, every expected record, and independently rehashed policy-module, schema, complete SPDX-registry, LicenseRef, terms, robots, frontier, and conditional-evidence artifacts in both fixture and live modes. Conditional admission requires `legal-source-rights-condition-evidence-v1` content-addressed proof for every acquisition requirement. One verifier-owned clock enforces an immutable 90-day maximum evidence and review age and zero future skew; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G145 Reseal live source rights and publication authority after hardening
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G080
 - Depends on: LCR-G142, LCR-G143, LCR-G144
 - Fib priority: 1
@@ -479,6 +688,16 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: audit_legal_source_rights release_schema legal_corpora_publication_gate legal_corpora_publication_runtime
 - Parallel lane: 1
 - Conflict policy: Final ordered successor of the rights evidence, rights integration, authority runtime, and hardening tasks; one task owns the resealed cross-corpus receipt and gate bindings.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Every pre-hardening receipt and decision is invalidated","both corpus manifests and cards bind the fresh evaluator-admitted receipt","and every staging or main mutation remains denied until the exact current receipt, task closure, manifest, principal, and phase-correct seal pass immediately before callback."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: Every pre-hardening receipt and decision is invalidated; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G146 Prove exact-51 live state-scrape completeness is candidate-bound
 - Status: active
@@ -499,9 +718,16 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: certify_state_laws_full_scrape full_scrape_acceptance release_candidate publication_gate
 - Parallel lane: 1
 - Conflict policy: Ordered successor of LCR-023, LCR-039, LCR-081, and LCR-083; it is the final writer of the state full-scrape receipt, state candidate binding, shared gate and runtime, and protected-repository mutation inventory before publication and performs no Hub mutation.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["No fixture, injected transport, static test HTML, sample count, caller-declared frontier, or status and digest-only receipt can authorize. Success freshly exhausts every official frontier, reconciles all 51 source items, rows, logical keys, content hashes, attempts, checkpoints, exclusions, quarantines, and failures, and binds the exact admitted shard counts, keys, digests, and deduped union to the exact release manifest","unexplained underfill against either observed official inventory or the authenticated live baseline fails, including the two-row cohort F and I evidence. No direct or indirect Hugging Face writer, daemon flag, CLI, API, MCP path, injected callback, or repository-generic target override can mutate justicedao/ipfs_state_laws or justicedao/ipfs_federal_register unless the one canonical post-LCR-084 runtime revalidates that exact completeness, candidate, task, goal, principal, phase, seal, mutation kind, revision, parent, remote paths, and local byte digests immediately before each individual network mutation","one authorization can never cover a different payload or later write."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## LCR-G147 Make Federal full-text exhaustion complete, content-bound, and verifier-time-trusted
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G110
 - Depends on: LCR-G100
 - Fib priority: 1
@@ -519,6 +745,16 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: federal_register_fulltext_gate attempt proves_no_usable_body assert_fulltext_admission content_sha256 verifier_now
 - Parallel lane: 1
 - Conflict policy: Strict ordered successor and exclusive writer for every LCR-075 output; downstream acquisition and Federal staging and publication remain blocked until repaired evidence is regenerated, and this task performs no Hub mutation.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["No failed, skipped, transport-blocked, anti-bot, navigation, error-page, unsupported-format, parse-failed, hashless, partial- or extra-frontier, response-only, content-only, authority-host-or-format-mismatched, identity-omitted-or-defaulted, self-timed, caller-skewed, future-timed, declared-hash-only, or admitted-body-digest-mismatched attempt can prove exhaustion or admission. Every public selector has exact evaluator parity, requires a verifier-owned UTC instant with fixed zero future skew, and exposes no authorizing tolerance override. Only a complete exact LCR-049-derived frontier whose authority-bound usable official body is fetched, response- and content-hash verified, parsed, and byte-bound through a digest independently recomputed from the admitted bytes or immutable artifact-byte stream, or whose every applicable alternative has a source-policy-authorized absence backed by immutable request and response bytes whose hashes are independently recomputed, can pass. Every authorizing identity field must be explicitly present and exactly equal to schema `federal-register-fulltext-gate-v2`, producer `federal_register_fulltext_gate.py@2`, program `legal-corpora-reindex-v1`, task `LCR-085`, goal `LCR-G147`, and mode `live`","no default, alias, coercion, v1 value, or v2 fixture mode can authorize."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: No failed, skipped, transport-blocked, anti-bot, navigation, error-page, unsupported-format, parse-failed, hashless, partial- or extra-frontier, response-only, content-only, authority-host-or-format-mismatched, identity-omitted-or-defaulted, self-timed, caller-skewed, future-timed, declared-hash-only, or admitted-body-digest-mismatched attempt can prove exhaustion or admission. Every public selector has exact evaluator parity, requires a verifier-owned UTC instant with fixed zero future skew, and exposes no authorizing tolerance override. Only a complete exact LCR-049-derived frontier whose authority-bound usable official body is fetched, response- and content-hash verified, parsed, and byte-bound through a digest independently recomputed from the admitted bytes or immutable artifact-byte stream, or whose every applicable alternative has a source-policy-authorized absence backed by immutable request and response bytes whose hashes are independently recomputed, can pass. Every authorizing identity field must be explicitly present and exactly equal to schema `federal-register-fulltext-gate-v2`, producer `federal_register_fulltext_gate.py@2`, program `legal-corpora-reindex-v1`, task `LCR-085`, goal `LCR-G147`, and mode `live`; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G148 Close remaining exact-51 residuals with the sealed current-bundle playbook
 - Status: active
@@ -539,9 +775,16 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: seed_state_laws_retained_evidence retained_replay_isolated_worker common_crawl_search wayback_machine_engine refresh_state_laws_corpus
 - Parallel lane: 0,1,2,3
 - Conflict policy: Campaign owner of the playbook report only; child goals own disjoint residual evidence and tests.
+- Goal completion schema version: 1
+- Completion confidence: 0.083333
+- Uncovered criteria: ["Every remaining jurisdiction either has a sealed current-bundle pair matching the playbook or a typed residual report naming the exact next URL set","no static list, sample cap, per-page archive loop, Docker evidence copy, or Hub publish is admitted","PA v7 remains the host-replay canary and is not reused as a fenced root."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## LCR-G149 Repair shared seed, grouped archive, and host replay substrate
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G148
 - Fib priority: 1
 - Track: exact51-residual-substrate
@@ -558,6 +801,16 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: seed_retained_evidence_generation trusted_pdftotext_executable build_host_retained_replay_command
 - Parallel lane: 0,1,3
 - Conflict policy: Owns shared seed, host-worker, and archive-batching modules and tests; residual goals depend on it and must not rewrite those files.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["A mixed ledger with failing Wayback receipts still seeds the exact direct projection with hardlinks and zero copies","basename `pdftotext` is denied","host workers reuse `HOME` and `~/.ipfs_datasets` and never invoke Docker","archive retries never repeat grouped inventory."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: A mixed ledger with failing Wayback receipts still seeds the exact direct projection with hardlinks and zero copies; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G150 Acquire bounded GO residuals for Montana and Kentucky
 - Status: active
@@ -578,9 +831,16 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: montana.py kentucky.py seed_state_laws_retained_evidence refresh_state_laws_corpus
 - Parallel lane: 1,3
 - Conflict policy: Owns only MT and KY residual reports and tests; disjoint from other residual waves.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Each jurisdiction closes source-derived operative/terminal algebra with host zero-network replay against existing `~/.ipfs_datasets` trees","MT Title 0 constitution identity cannot drift","KY duplicate exact-request groups are preserved and never double-counted."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## LCR-G151 Acquire large leaf residuals for Minnesota, Missouri, and Washington
-- Status: active
+- Status: provisionally_complete
 - Parent: LCR-G148
 - Depends on: LCR-G149
 - Fib priority: 1
@@ -598,6 +858,16 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: minnesota.py missouri.py washington.py
 - Parallel lane: 0,2
 - Conflict policy: Owns only MN MO WA residual reports and tests.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["Historical archive editions are rejected rather than stamped current","MO seeds only strict v13","WA submits exactly the 50,500-URL difference","each host replay is zero-network and reuses local caches."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
+- State transitioned at: 2026-08-27T19:31:45.303750+00:00
+- State transition reason: Produce completion evidence for: Historical archive editions are rejected rather than stamped current; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G152 Acquire catalog-then-leaf and fresh-root residuals
 - Status: active
@@ -618,6 +888,13 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: louisiana.py rhode_island.py new_hampshire.py vermont.py west_virginia.py
 - Parallel lane: 1,3
 - Conflict policy: Owns only LA RI NH VT WV residual reports and tests.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["NH v4 2025 Wayback roots are not reused as exact-current","RI nested catalogs are fetched before the leaf union","VT/WV start from absent staging roots","LA uses the ASP.NET retained parser","no Hub mutation."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
 ## LCR-G153 Close proof, delegated, and no-ledger residuals
 - Status: active
@@ -638,4 +915,50 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - AST query: arkansas.py georgia.py michigan.py mississippi_lexis.py new_york.py tennessee_lexis.py wisconsin.py
 - Parallel lane: 1,2,3
 - Conflict policy: Owns only AR GA MI MS NY TN WI residual reports and tests.
+- Goal completion schema version: 1
+- Completion confidence: 0.166667
+- Uncovered criteria: ["No unbounded locator hunt","AR remains fail-closed without Act 283 proof inputs","MI does not repeat CDX for already selected captures","NY unresolved decisions stay unresolved until official proof bytes exist","WI does not admit the receiptless historical cache."]
+- Stale evidence: []
+- Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
+- Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
+- Reopen reasons: []
 
+## LCR-G154 Prove Playbook receipt for Close remaining exact-51 residuals with the sealed current-bundle playbook
+
+- Status: active
+- Parent: LCR-G148
+- Fib priority: 8000
+- Track: exact51-residual-replay
+- Priority: P0
+- Bundle: exact51-residual-replay
+- Goal: Create concrete implementation, tests, docs, or interface descriptors proving `Playbook receipt`.
+- Evidence: Playbook receipt
+- Outputs: docs/reports/legal_corpora_reindex/exact51_residual_replay_playbook_v1.md
+- Validation: python scripts/validate_legal_corpora_reindex_board.py --check-all
+- Acceptance: Every remaining jurisdiction either has a sealed current-bundle pair matching the playbook or a typed residual report naming the exact next URL set ; no static list ; sample cap ; per-page archive loop ; Docker evidence copy ; or Hub publish is admitted ; PA v7 remains the host-replay canary and is not reused as a fenced root.
+- Refinement depth: 3
+- Embedding query: Playbook receipt
+- AST query: Playbook receipt
+- Parallel lane: 0,1,2,3
+- Conflict policy: Campaign owner of the playbook report only; child goals own disjoint residual evidence and tests.
+- Gap task: Close the missing objective evidence `Playbook receipt` with a narrow, verifiable change.
+
+## LCR-G155 Prove shared substrate tests for Close remaining exact-51 residuals with the sealed current-bundle playbook
+
+- Status: active
+- Parent: LCR-G148
+- Fib priority: 8001
+- Track: exact51-residual-replay
+- Priority: P0
+- Bundle: exact51-residual-replay
+- Goal: Create concrete implementation, tests, docs, or interface descriptors proving `shared substrate tests`.
+- Evidence: shared substrate tests
+- Outputs: docs/reports/legal_corpora_reindex/exact51_residual_replay_playbook_v1.md
+- Validation: python scripts/validate_legal_corpora_reindex_board.py --check-all
+- Acceptance: Every remaining jurisdiction either has a sealed current-bundle pair matching the playbook or a typed residual report naming the exact next URL set ; no static list ; sample cap ; per-page archive loop ; Docker evidence copy ; or Hub publish is admitted ; PA v7 remains the host-replay canary and is not reused as a fenced root.
+- Refinement depth: 3
+- Embedding query: shared substrate tests
+- AST query: shared substrate tests
+- Parallel lane: 0,1,2,3
+- Conflict policy: Campaign owner of the playbook report only; child goals own disjoint residual evidence and tests.
+- Gap task: Close the missing objective evidence `shared substrate tests` with a narrow, verifiable change.
