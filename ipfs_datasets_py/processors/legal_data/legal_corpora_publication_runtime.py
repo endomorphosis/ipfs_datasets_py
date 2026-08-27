@@ -71,7 +71,12 @@ LIVE_SOURCE_RIGHTS_REPORT_SCHEMA: Final = (
     "ipfs_datasets_py/legal-source-rights-compliance@2"
 )
 ALLOWED_RECEIPT_SCHEMAS: Final = frozenset(
-    {RECEIPT_SCHEMA_V1, MANIFEST_SCHEMA_V1, SEAL_SCHEMA_V1}
+    {
+        RECEIPT_SCHEMA_V1,
+        MANIFEST_SCHEMA_V1,
+        SEAL_SCHEMA_V1,
+        LIVE_SOURCE_RIGHTS_REPORT_SCHEMA,
+    }
 )
 
 RELEASE_POLICY_RELPATH: Final = (
@@ -1323,6 +1328,7 @@ def evaluate_canonical_publication(
                 "head": snapshot["head"],
                 "token_env": snapshot["token_env"],
                 "principal": snapshot["principal"],
+                "operation": snapshot["operation"],
                 "mutation_start": snapshot["mutation_start"],
                 "control_digest_count": len(snapshot["control_digests"]),
                 "snapshot_fingerprint": _snapshot_fingerprint(snapshot),
@@ -1336,7 +1342,15 @@ def evaluate_canonical_publication(
                     "expected_policy_proof_digest"
                 ),
                 "source_rights_binding_required": True,
+                "source_rights_receipt_digest": snapshot["receipts"][
+                    RIGHTS_RECEIPT_RELPATH
+                ]["content_digest"],
+                "required_task_ids": list(
+                    phase_requirements(snapshot["phase"])["required_task_ids"]
+                ),
                 "required_gates": list(REQUIRED_PUBLICATION_GATES),
+                "prepublication_seal_bound": snapshot.get("prepublication_seal")
+                is not None,
             }
         )
         bound = PublicationGateDecision(
@@ -1465,6 +1479,8 @@ def authorize_and_mutate_canonical(
         {
             "runtime_task_id": TASK_ID,
             "head": first["head"],
+            "principal": first["principal"],
+            "operation": first["operation"],
             "snapshot_fingerprint": _snapshot_fingerprint(first),
             "candidate_release_manifest_digest": first.get(
                 "candidate_release_manifest_digest"
@@ -1475,6 +1491,14 @@ def authorize_and_mutate_canonical(
             ),
             "revalidated_before_callback": True,
             "source_rights_binding_required": True,
+            "source_rights_task_id": PREDECESSOR_RIGHTS_TASK_ID,
+            "source_rights_receipt_digest": first["receipts"][RIGHTS_RECEIPT_RELPATH][
+                "content_digest"
+            ],
+            "required_task_ids": list(
+                phase_requirements(first["phase"])["required_task_ids"]
+            ),
+            "prepublication_seal_bound": first.get("prepublication_seal") is not None,
         }
     )
     bound = PublicationGateDecision(
@@ -1519,14 +1543,23 @@ class _CanonicalPublicationRuntimeExecutable:
 
     @staticmethod
     def _function_sha256(target):
-        from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
-            _loaded_function_projection,
-        )
-
-        projection = _loaded_function_projection(
-            target,
-            _include_global_bindings=False,
-        )
+        code = getattr(target, "__code__", None)
+        if code is None:
+            raise PublicationRuntimeError(
+                "canonical runtime target is not a loaded function"
+            )
+        projection = {
+            "co_code": list(code.co_code),
+            "co_consts": [repr(item) for item in code.co_consts],
+            "co_flags": int(code.co_flags),
+            "co_names": list(code.co_names),
+            "co_nlocals": int(code.co_nlocals),
+            "co_stacksize": int(code.co_stacksize),
+            "co_varnames": list(code.co_varnames),
+            "defaults": repr(getattr(target, "__defaults__", None)),
+            "kwdefaults": repr(getattr(target, "__kwdefaults__", None)),
+            "qualname": str(getattr(target, "__qualname__", target.__name__)),
+        }
         return hashlib.sha256(
             json.dumps(
                 projection,

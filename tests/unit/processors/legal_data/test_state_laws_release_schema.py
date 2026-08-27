@@ -948,7 +948,11 @@ def test_adjacency_normalizes_direction_aliases():
 
 def test_require_source_rights_binding_matches_receipt_digest():
     from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
+        SOURCE_RIGHTS_CATALOG_SCHEMA,
+        SOURCE_RIGHTS_GOAL_ID,
+        SOURCE_RIGHTS_PRODUCER,
         SOURCE_RIGHTS_RECEIPT_RELPATH,
+        SOURCE_RIGHTS_TASK_ID,
         SourceRightsBindingError,
         require_source_rights_binding,
     )
@@ -959,15 +963,51 @@ def test_require_source_rights_binding_matches_receipt_digest():
         "source_rights_receipt_path": SOURCE_RIGHTS_RECEIPT_RELPATH,
         "source_rights_receipt_digest": digest,
         "source_rights_catalog_digest": catalog,
+        "admitted_source_ids": ["al-alison-code-statutory_text"],
     }
     require_source_rights_binding(
         manifest,
         receipt_digest=digest,
         catalog_digest=catalog,
         dataset_card_text=f"digest {digest}",
+        admitted_record_ids=["al-alison-code-statutory_text"],
     )
+    assert SOURCE_RIGHTS_TASK_ID == "LCR-083"
+    assert SOURCE_RIGHTS_GOAL_ID == "LCR-G145"
+    assert SOURCE_RIGHTS_PRODUCER == "audit_legal_source_rights.py@2"
+    assert SOURCE_RIGHTS_CATALOG_SCHEMA == "legal-source-rights-catalog-v2"
     with pytest.raises(SourceRightsBindingError):
         require_source_rights_binding(
             {"source_rights_receipt_digest": _digest("other")},
             receipt_digest=digest,
+        )
+    with pytest.raises(SourceRightsBindingError):
+        require_source_rights_binding(
+            {
+                "source_rights_receipt_digest": digest,
+                "source_rights_catalog_digest": catalog,
+                "producer": "audit_legal_source_rights.py@1",
+            },
+            receipt_digest=digest,
+            catalog_digest=catalog,
+        )
+    with pytest.raises(SourceRightsBindingError):
+        require_source_rights_binding(
+            {
+                "source_rights_receipt_path": SOURCE_RIGHTS_RECEIPT_RELPATH,
+                "source_rights_receipt_digest": digest,
+            },
+            receipt_digest=digest,
+            catalog_digest=catalog,
+        )
+    with pytest.raises(SourceRightsBindingError):
+        require_source_rights_binding(
+            {
+                "source_rights_receipt_digest": digest,
+                "source_rights_catalog_digest": catalog,
+                "admitted_source_ids": ["unknown-prohibited-source"],
+            },
+            receipt_digest=digest,
+            catalog_digest=catalog,
+            admitted_record_ids=["al-alison-code-statutory_text"],
         )

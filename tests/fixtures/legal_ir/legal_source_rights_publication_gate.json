@@ -6,7 +6,27 @@
   "producer": "legal_corpora_publication_gate.py",
   "rights_receipt_path": "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
   "required_gate": "source_rights_binding",
-  "notes": "LCR-083 reseals the live source-rights compliance receipt into candidate manifests, dataset cards, and all four mutation phases after LCR-082 hardening. Missing, stale, unknown, prohibited, target-mismatched, source-mismatched, or digest-mismatched rights evidence must fail before the first network callback.",
+  "required_task_ids": [
+    "LCR-081",
+    "LCR-082",
+    "LCR-083"
+  ],
+  "hardened_identity": {
+    "catalog_schema_version": "legal-source-rights-catalog-v2",
+    "code_version": "2",
+    "live_goal_id": "LCR-G141",
+    "live_task_id": "LCR-078",
+    "policy_schema_version": "legal-source-rights-policy-v2",
+    "pre_hardening_markers": [
+      "audit_legal_source_rights.py@1",
+      "ipfs_datasets_py/legal-source-rights-compliance@1",
+      "legal-source-rights-catalog-v1",
+      "legal-source-rights-policy-v1"
+    ],
+    "producer": "audit_legal_source_rights.py@2",
+    "report_schema": "ipfs_datasets_py/legal-source-rights-compliance@2"
+  },
+  "notes": "LCR-083 reseals the live source-rights compliance receipt into candidate manifests, dataset cards, and all four mutation phases after LCR-082 hardening. Missing, stale, unknown, prohibited, target-mismatched, source-mismatched, digest-mismatched, or time-invalid rights evidence must fail before the first network callback.",
   "phases": [
     "state_staging",
     "state_main",
@@ -19,10 +39,161 @@
     "not_authorizing",
     "prohibited",
     "unknown_status",
+    "stale",
+    "time_invalid",
     "digest_mismatch",
     "catalog_mismatch",
     "target_mismatch",
     "source_not_admitted",
-    "dataset_card_unbound"
-  ]
+    "dataset_card_unbound",
+    "pre_lcr082_identity"
+  ],
+  "denial_cases": [
+    {
+      "id": "absent_receipt",
+      "mutator": {
+        "receipts": {
+          "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json": null
+        }
+      },
+      "condition": "absent_receipt"
+    },
+    {
+      "id": "fixture_only",
+      "mutator": {
+        "receipts": {
+          "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json": {
+            "fixture_only": true
+          }
+        }
+      },
+      "condition": "fixture_only"
+    },
+    {
+      "id": "not_authorizing",
+      "mutator": {
+        "receipts": {
+          "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json": {
+            "authorizing_for_publication": false
+          }
+        }
+      },
+      "condition": "not_authorizing"
+    },
+    {
+      "id": "prohibited",
+      "mutator": {
+        "receipts": {
+          "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json": {
+            "prohibited": true
+          }
+        }
+      },
+      "condition": "prohibited"
+    },
+    {
+      "id": "unknown_status",
+      "mutator": {
+        "receipts": {
+          "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json": {
+            "rights_disposition": "unknown"
+          }
+        }
+      },
+      "condition": "unknown_status"
+    },
+    {
+      "id": "stale",
+      "mutator": {
+        "receipts": {
+          "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json": {
+            "verified_at": "2020-01-01T00:00:00Z"
+          }
+        }
+      },
+      "condition": "stale"
+    },
+    {
+      "id": "time_invalid",
+      "mutator": {
+        "receipts": {
+          "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json": {
+            "verified_at": "2099-01-01T00:00:00Z"
+          }
+        }
+      },
+      "condition": "time_invalid"
+    },
+    {
+      "id": "digest_mismatch",
+      "mutator": {
+        "payload": {
+          "candidate_manifest": {
+            "source_rights_receipt_digest": "0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        }
+      },
+      "condition": "digest_mismatch"
+    },
+    {
+      "id": "catalog_mismatch",
+      "mutator": {
+        "payload": {
+          "candidate_manifest": {
+            "source_rights_catalog_digest": "0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        }
+      },
+      "condition": "catalog_mismatch"
+    },
+    {
+      "id": "target_mismatch",
+      "mutator": {
+        "receipts": {
+          "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json": {
+            "dataset_repo_id": "evil/other-dataset",
+            "target_dataset_repo_ids": [
+              "evil/other-dataset"
+            ]
+          }
+        }
+      },
+      "condition": "target_mismatch"
+    },
+    {
+      "id": "source_not_admitted",
+      "mutator": {
+        "payload": {
+          "candidate_manifest": {
+            "admitted_source_ids": [
+              "unknown-prohibited-source"
+            ]
+          }
+        }
+      },
+      "condition": "source_not_admitted"
+    },
+    {
+      "id": "dataset_card_unbound",
+      "mutator": {
+        "payload": {
+          "dataset_card": "# card without rights digest\n"
+        }
+      },
+      "condition": "dataset_card_unbound"
+    },
+    {
+      "id": "pre_lcr082_identity",
+      "mutator": {
+        "receipts": {
+          "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json": {
+            "catalog_schema_version": "legal-source-rights-catalog-v1",
+            "producer": "audit_legal_source_rights.py@1"
+          }
+        }
+      },
+      "condition": "pre_lcr082_identity"
+    }
+  ],
+  "example_builder": "example_authorized_request"
 }

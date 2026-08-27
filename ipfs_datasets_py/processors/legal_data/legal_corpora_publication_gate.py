@@ -43,6 +43,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
@@ -57,6 +58,23 @@ from typing import (
     Sequence,
     TypeVar,
     Union,
+)
+
+from ipfs_datasets_py.processors.legal_data.legal_release_validation import (
+    HARDENED_RIGHTS_CATALOG_SCHEMA,
+    HARDENED_RIGHTS_CODE_VERSION,
+    HARDENED_RIGHTS_COMPLIANCE_SCHEMA,
+    HARDENED_RIGHTS_LIVE_GOAL_ID,
+    HARDENED_RIGHTS_LIVE_TASK_ID,
+    HARDENED_RIGHTS_POLICY_SCHEMA,
+    HARDENED_RIGHTS_PRODUCER,
+    PRE_HARDENING_RIGHTS_IDENTITY_MARKERS,
+    reject_pre_hardening_rights_identity,
+)
+from ipfs_datasets_py.processors.legal_data.legal_source_rights_policy import (
+    MAX_EVIDENCE_AGE,
+    compute_artifact_digests,
+    parse_utc_timestamp,
 )
 
 # ---------------------------------------------------------------------------
@@ -132,6 +150,9 @@ NONTERMINAL_TASK_STATUSES: Final = frozenset(
 
 DEFAULT_FIXTURE_RELATIVE_PATH: Final = Path(
     "tests/fixtures/legal_ir/legal_corpora_publication_gate.json"
+)
+DEFAULT_SOURCE_RIGHTS_FIXTURE_RELATIVE_PATH: Final = Path(
+    "tests/fixtures/legal_ir/legal_source_rights_publication_gate.json"
 )
 DEFAULT_RELEASE_POLICY_RELATIVE_PATH: Final = Path(
     "data/agent_supervisor/legal_corpora_reindex/bundles/release_policy.json"
@@ -574,6 +595,10 @@ def repository_root() -> Path:
 
 def default_fixture_path() -> Path:
     return repository_root() / DEFAULT_FIXTURE_RELATIVE_PATH
+
+
+def default_source_rights_fixture_path() -> Path:
+    return repository_root() / DEFAULT_SOURCE_RIGHTS_FIXTURE_RELATIVE_PATH
 
 
 def default_release_policy_path() -> Path:
@@ -1193,6 +1218,25 @@ RIGHTS_RECEIPT_RELPATH: Final = (
 )
 SUCCESSOR_TASK_ID: Final = "LCR-083"
 SUCCESSOR_GOAL_ID: Final = "LCR-G145"
+SOURCE_RIGHTS_GATE_SCHEMA: Final = (
+    "ipfs_datasets_py/legal-source-rights-publication-gate@1"
+)
+REQUIRED_RIGHTS_CLOSURE_TASK_IDS: Final = ("LCR-081", "LCR-082", "LCR-083")
+INADMISSIBLE_RIGHTS_CONDITIONS: Final = (
+    "absent_receipt",
+    "fixture_only",
+    "not_authorizing",
+    "prohibited",
+    "unknown_status",
+    "stale",
+    "time_invalid",
+    "digest_mismatch",
+    "catalog_mismatch",
+    "target_mismatch",
+    "source_not_admitted",
+    "dataset_card_unbound",
+    "pre_lcr082_identity",
+)
 
 REQUIRED_PUBLICATION_GATES: Final = (
     "phase_target_operation",
@@ -1546,12 +1590,47 @@ def _card_text(card: Any) -> str:
     return str(card)
 
 
+def _require_current_rights_timestamp(value: Any, *, name: str) -> None:
+    try:
+        timestamp = parse_utc_timestamp(value, name=name)
+    except Exception as exc:
+        raise SourceRightsInadmissibleError(
+            f"source-rights {name} is time-invalid"
+        ) from exc
+    now = datetime.now(timezone.utc)
+    if timestamp > now:
+        raise SourceRightsInadmissibleError(
+            f"source-rights {name} is in the future"
+        )
+    if timestamp < now - MAX_EVIDENCE_AGE:
+        raise SourceRightsInadmissibleError(
+            f"source-rights {name} is older than the immutable 90-day maximum"
+        )
+
+
+def _hardened_rights_receipt_identity() -> dict[str, Any]:
+    return {
+        "audit_producer": HARDENED_RIGHTS_PRODUCER,
+        "catalog_schema_version": HARDENED_RIGHTS_CATALOG_SCHEMA,
+        "code_version": HARDENED_RIGHTS_CODE_VERSION,
+        "evidence_mode": "live",
+        "fixture_only_non_authorizing": False,
+        "goal_id": HARDENED_RIGHTS_LIVE_GOAL_ID,
+        "producer": HARDENED_RIGHTS_PRODUCER,
+        "program_id": PROGRAM_ID,
+        "report_schema": HARDENED_RIGHTS_COMPLIANCE_SCHEMA,
+        "schema_version": HARDENED_RIGHTS_POLICY_SCHEMA,
+        "task_id": HARDENED_RIGHTS_LIVE_TASK_ID,
+        "verified_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+
+
 def check_source_rights_binding(request: PublicationGateRequest) -> None:
     """Refuse mutation unless the candidate binds a current authorizing rights receipt.
 
-    LCR-083: missing, stale, unknown, prohibited, target-mismatched,
-    source-mismatched, or digest-mismatched rights evidence must fail
-    before the first network callback.
+    LCR-083: missing, stale, unknown, prohibited, digest-mismatched,
+    target-mismatched, time-invalid, or pre-LCR-082 rights evidence must
+    fail before the first network callback.
     """
 
     receipt = request.receipts.get(RIGHTS_RECEIPT_RELPATH)
@@ -1559,9 +1638,21 @@ def check_source_rights_binding(request: PublicationGateRequest) -> None:
         raise SourceRightsInadmissibleError(
             "source-rights compliance receipt is absent"
         )
-    if receipt.get("fixture_only") is True:
+    reject_pre_hardening_rights_identity(
+        receipt,
+        binding_error=SourceRightsInadmissibleError,
+        label="source-rights receipt",
+    )
+    if receipt.get("fixture_only") is True or receipt.get(
+        "fixture_only_non_authorizing"
+    ) is True:
         raise SourceRightsInadmissibleError(
             "fixture-only source-rights receipt cannot authorize publication"
+        )
+    evidence_mode = str(receipt.get("evidence_mode") or "").strip().lower()
+    if evidence_mode == "fixture":
+        raise SourceRightsInadmissibleError(
+            "fixture source-rights evidence cannot authorize publication"
         )
     if receipt.get("authorizing_for_publication") is not True:
         raise SourceRightsInadmissibleError(
@@ -1571,18 +1662,83 @@ def check_source_rights_binding(request: PublicationGateRequest) -> None:
         raise SourceRightsInadmissibleError(
             "source-rights receipt marks the candidate as prohibited"
         )
-    if str(receipt.get("status") or "").strip().lower() in {
-        "unknown",
-        "denied",
-        "rejected",
-        "stale",
-    }:
+    disposition = str(receipt.get("rights_disposition") or "").strip().lower()
+    if disposition in {"prohibited", "unknown", "unsupported", "quarantined"}:
+        raise SourceRightsInadmissibleError(
+            "source-rights receipt disposition is inadmissible"
+        )
+    status = str(receipt.get("status") or "").strip().lower()
+    if status in {"unknown", "denied", "rejected", "stale"}:
         raise SourceRightsInadmissibleError(
             "source-rights receipt status is inadmissible"
         )
 
+    catalog_schema = str(receipt.get("catalog_schema_version") or "").strip()
+    if catalog_schema and catalog_schema != HARDENED_RIGHTS_CATALOG_SCHEMA:
+        raise SourceRightsInadmissibleError(
+            "source-rights catalog schema is not the hardened v2 contract"
+        )
+    policy_schema = str(
+        receipt.get("policy_schema_version") or receipt.get("schema_version") or ""
+    ).strip()
+    if policy_schema and policy_schema != HARDENED_RIGHTS_POLICY_SCHEMA:
+        raise SourceRightsInadmissibleError(
+            "source-rights policy schema is not the hardened v2 contract"
+        )
+    producer = str(
+        receipt.get("producer") or receipt.get("audit_producer") or ""
+    ).strip()
+    if producer and producer != HARDENED_RIGHTS_PRODUCER:
+        raise SourceRightsInadmissibleError(
+            "source-rights producer is not the hardened auditor identity"
+        )
+    report_schema = str(receipt.get("report_schema") or "").strip()
+    if report_schema and report_schema != HARDENED_RIGHTS_COMPLIANCE_SCHEMA:
+        raise SourceRightsInadmissibleError(
+            "source-rights compliance schema is not the hardened v2 receipt"
+        )
+    code_version = str(receipt.get("code_version") or "").strip()
+    if code_version and code_version != HARDENED_RIGHTS_CODE_VERSION:
+        raise SourceRightsInadmissibleError(
+            "source-rights code_version is not the hardened evaluator"
+        )
+    task_id = str(receipt.get("task_id") or "").strip()
+    if task_id and task_id not in {HARDENED_RIGHTS_LIVE_TASK_ID, SUCCESSOR_TASK_ID}:
+        raise SourceRightsInadmissibleError(
+            "source-rights task identity is not the live hardened tuple"
+        )
+
+    for field_name in ("verified_at", "reviewed_at", "sealed_at"):
+        if field_name in receipt and receipt.get(field_name) not in (None, ""):
+            _require_current_rights_timestamp(
+                receipt.get(field_name), name=field_name
+            )
+
+    declared_artifacts = receipt.get("artifact_digests")
+    if isinstance(declared_artifacts, Mapping) and declared_artifacts:
+        try:
+            expected_artifacts = compute_artifact_digests()
+        except Exception as exc:
+            raise SourceRightsInadmissibleError(
+                "source-rights artifact digests could not be independently recomputed"
+            ) from exc
+        if set(declared_artifacts) != set(expected_artifacts):
+            raise SourceRightsInadmissibleError(
+                "source-rights artifact digest set is not the current hardened set"
+            )
+        for key, digest in declared_artifacts.items():
+            actual = str(digest or "").strip()
+            want = str(expected_artifacts.get(key) or "").strip()
+            if not actual or actual != want:
+                raise SourceRightsInadmissibleError(
+                    f"source-rights {key} is not the current hardened artifact digest"
+                )
+
     actual_digest = str(
-        receipt.get("content_digest") or receipt.get("digest") or ""
+        receipt.get("content_digest")
+        or receipt.get("digest")
+        or receipt.get("report_digest_sha256")
+        or ""
     ).strip()
     if not actual_digest:
         raise SourceRightsInadmissibleError(
@@ -1598,6 +1754,11 @@ def check_source_rights_binding(request: PublicationGateRequest) -> None:
         raise SourceRightsInadmissibleError(
             "candidate manifest is missing source-rights binding"
         )
+    reject_pre_hardening_rights_identity(
+        manifest,
+        binding_error=SourceRightsInadmissibleError,
+        label="candidate source-rights binding",
+    )
     bound = str(
         manifest.get("source_rights_receipt_digest")
         or manifest.get("source_rights_compliance_digest")
@@ -1615,17 +1776,37 @@ def check_source_rights_binding(request: PublicationGateRequest) -> None:
 
     catalog_bound = str(manifest.get("source_rights_catalog_digest") or "").strip()
     catalog_actual = str(receipt.get("catalog_digest_sha256") or "").strip()
-    if catalog_bound and catalog_actual and catalog_bound != catalog_actual:
-        raise SourceRightsInadmissibleError(
-            "source-rights catalog digest mismatch between candidate and receipt"
-        )
+    if catalog_actual:
+        if not catalog_bound:
+            raise SourceRightsInadmissibleError(
+                "candidate manifest does not bind the source-rights catalog digest"
+            )
+        if catalog_bound != catalog_actual:
+            raise SourceRightsInadmissibleError(
+                "source-rights catalog digest mismatch between candidate and receipt"
+            )
 
+    targets = {
+        str(item).strip()
+        for item in (
+            (receipt.get("target_dataset_repo_ids") or ())
+            if isinstance(receipt.get("target_dataset_repo_ids"), (list, tuple, set, frozenset))
+            else ()
+        )
+        if str(item).strip()
+    }
     receipt_target = str(
         receipt.get("dataset_repo_id")
         or receipt.get("target_dataset_repo_id")
         or ""
     ).strip()
-    if receipt_target and receipt_target != request.dataset_repo_id:
+    if receipt_target:
+        targets.add(receipt_target)
+    if not targets:
+        raise SourceRightsInadmissibleError(
+            "source-rights receipt does not bind an authorized dataset target"
+        )
+    if request.dataset_repo_id not in targets:
         raise SourceRightsInadmissibleError(
             "source-rights receipt target does not match the mutation dataset"
         )
@@ -1887,6 +2068,7 @@ def _receipts_for_phase(
                 if state_phase
                 else ("fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa-federal_government_text",)
             )
+            receipts[path].update(_hardened_rights_receipt_identity())
             receipts[path].update(
                 {
                     "authorizing_for_publication": True,
@@ -1895,6 +2077,7 @@ def _receipts_for_phase(
                     ),
                     "admitted_record_ids": list(admitted_ids),
                     "dataset_repo_id": contract["dataset_repo_id"],
+                    "target_dataset_repo_ids": sorted(AUTHORIZED_DATASET_REPO_IDS),
                 }
             )
     return receipts
@@ -2287,6 +2470,187 @@ def sealed_gate_fixture_payload(*, include_examples: bool = True) -> dict[str, A
     return payload
 
 
+def sealed_source_rights_gate_fixture_payload() -> dict[str, Any]:
+    """Return the compact LCR-083 source-rights publication-gate recipe."""
+
+    denial_cases = [
+        {
+            "id": "absent_receipt",
+            "mutator": {"receipts": {RIGHTS_RECEIPT_RELPATH: None}},
+            "condition": "absent_receipt",
+        },
+        {
+            "id": "fixture_only",
+            "mutator": {
+                "receipts": {RIGHTS_RECEIPT_RELPATH: {"fixture_only": True}}
+            },
+            "condition": "fixture_only",
+        },
+        {
+            "id": "not_authorizing",
+            "mutator": {
+                "receipts": {
+                    RIGHTS_RECEIPT_RELPATH: {"authorizing_for_publication": False}
+                }
+            },
+            "condition": "not_authorizing",
+        },
+        {
+            "id": "prohibited",
+            "mutator": {
+                "receipts": {RIGHTS_RECEIPT_RELPATH: {"prohibited": True}}
+            },
+            "condition": "prohibited",
+        },
+        {
+            "id": "unknown_status",
+            "mutator": {
+                "receipts": {
+                    RIGHTS_RECEIPT_RELPATH: {"rights_disposition": "unknown"}
+                }
+            },
+            "condition": "unknown_status",
+        },
+        {
+            "id": "stale",
+            "mutator": {
+                "receipts": {
+                    RIGHTS_RECEIPT_RELPATH: {"verified_at": "2020-01-01T00:00:00Z"}
+                }
+            },
+            "condition": "stale",
+        },
+        {
+            "id": "time_invalid",
+            "mutator": {
+                "receipts": {
+                    RIGHTS_RECEIPT_RELPATH: {"verified_at": "2099-01-01T00:00:00Z"}
+                }
+            },
+            "condition": "time_invalid",
+        },
+        {
+            "id": "digest_mismatch",
+            "mutator": {
+                "payload": {
+                    "candidate_manifest": {
+                        "source_rights_receipt_digest": "0" * 64
+                    }
+                }
+            },
+            "condition": "digest_mismatch",
+        },
+        {
+            "id": "catalog_mismatch",
+            "mutator": {
+                "payload": {
+                    "candidate_manifest": {
+                        "source_rights_catalog_digest": "0" * 64
+                    }
+                }
+            },
+            "condition": "catalog_mismatch",
+        },
+        {
+            "id": "target_mismatch",
+            "mutator": {
+                "receipts": {
+                    RIGHTS_RECEIPT_RELPATH: {
+                        "dataset_repo_id": "evil/other-dataset",
+                        "target_dataset_repo_ids": ["evil/other-dataset"],
+                    }
+                }
+            },
+            "condition": "target_mismatch",
+        },
+        {
+            "id": "source_not_admitted",
+            "mutator": {
+                "payload": {
+                    "candidate_manifest": {
+                        "admitted_source_ids": ["unknown-prohibited-source"]
+                    }
+                }
+            },
+            "condition": "source_not_admitted",
+        },
+        {
+            "id": "dataset_card_unbound",
+            "mutator": {
+                "payload": {"dataset_card": "# card without rights digest\n"}
+            },
+            "condition": "dataset_card_unbound",
+        },
+        {
+            "id": "pre_lcr082_identity",
+            "mutator": {
+                "receipts": {
+                    RIGHTS_RECEIPT_RELPATH: {
+                        "catalog_schema_version": "legal-source-rights-catalog-v1",
+                        "producer": "audit_legal_source_rights.py@1",
+                    }
+                }
+            },
+            "condition": "pre_lcr082_identity",
+        },
+    ]
+    return {
+        "schema": SOURCE_RIGHTS_GATE_SCHEMA,
+        "task_id": SUCCESSOR_TASK_ID,
+        "goal_id": SUCCESSOR_GOAL_ID,
+        "program_id": PROGRAM_ID,
+        "producer": PRODUCER,
+        "rights_receipt_path": RIGHTS_RECEIPT_RELPATH,
+        "required_gate": "source_rights_binding",
+        "required_task_ids": list(REQUIRED_RIGHTS_CLOSURE_TASK_IDS),
+        "hardened_identity": {
+            "catalog_schema_version": HARDENED_RIGHTS_CATALOG_SCHEMA,
+            "policy_schema_version": HARDENED_RIGHTS_POLICY_SCHEMA,
+            "producer": HARDENED_RIGHTS_PRODUCER,
+            "report_schema": HARDENED_RIGHTS_COMPLIANCE_SCHEMA,
+            "code_version": HARDENED_RIGHTS_CODE_VERSION,
+            "live_task_id": HARDENED_RIGHTS_LIVE_TASK_ID,
+            "live_goal_id": HARDENED_RIGHTS_LIVE_GOAL_ID,
+            "pre_hardening_markers": sorted(PRE_HARDENING_RIGHTS_IDENTITY_MARKERS),
+        },
+        "notes": (
+            "LCR-083 reseals the live source-rights compliance receipt into "
+            "candidate manifests, dataset cards, and all four mutation phases "
+            "after LCR-082 hardening. Missing, stale, unknown, prohibited, "
+            "target-mismatched, source-mismatched, digest-mismatched, or "
+            "time-invalid rights evidence must fail before the first network "
+            "callback."
+        ),
+        "phases": list(PHASE_REQUIREMENTS),
+        "inadmissible_conditions": list(INADMISSIBLE_RIGHTS_CONDITIONS),
+        "denial_cases": denial_cases,
+        "example_builder": "example_authorized_request",
+    }
+
+
+def load_source_rights_gate_fixture(
+    path: Optional[PathLike] = None,
+) -> Mapping[str, Any]:
+    """Load and validate the sealed LCR-083 source-rights gate fixture."""
+
+    fixture_path = (
+        Path(path) if path is not None else default_source_rights_fixture_path()
+    )
+    raw = json.loads(fixture_path.read_text(encoding="utf-8"))
+    if not isinstance(raw, Mapping):
+        raise PublicationGateError("source-rights gate fixture must be a JSON object")
+    if raw.get("schema") != SOURCE_RIGHTS_GATE_SCHEMA:
+        raise PublicationGateError(
+            f"source-rights gate fixture schema must be {SOURCE_RIGHTS_GATE_SCHEMA!r}"
+        )
+    if raw.get("task_id") != SUCCESSOR_TASK_ID:
+        raise PublicationGateError(
+            f"source-rights gate fixture task_id must be {SUCCESSOR_TASK_ID!r}"
+        )
+    reject_credentials_in_payload(raw, label="source_rights_gate_fixture")
+    return MappingProxyType(dict(raw))
+
+
 @lru_cache(maxsize=1)
 def load_gate_fixture(
     path: Optional[PathLike] = None,
@@ -2382,6 +2746,7 @@ __all__ = [
     "GENERATED_WORK_GUARD",
     "GENERATED_WORK_TASK_NUMBER_FLOOR",
     "GOAL_ID",
+    "INADMISSIBLE_RIGHTS_CONDITIONS",
     "GeneratedWorkGuardError",
     "OperationForbiddenError",
     "PHASE_REQUIREMENTS",
@@ -2396,6 +2761,7 @@ __all__ = [
     "PublicationOperation",
     "PublicationPhase",
     "REQUIRED_PUBLICATION_GATES",
+    "REQUIRED_RIGHTS_CLOSURE_TASK_IDS",
     "RIGHTS_RECEIPT_RELPATH",
     "RUNTIME_GOAL_ID",
     "RUNTIME_MODULE",
@@ -2406,6 +2772,7 @@ __all__ = [
     "SourceRightsInadmissibleError",
     "SCHEMA_VERSION",
     "SECRET_ENV_NAMES",
+    "SOURCE_RIGHTS_GATE_SCHEMA",
     "STATE_DATASET_REPO_ID",
     "STATE_PREVIOUS_PUBLIC_PIN",
     "StagingSealSubstitutionError",
@@ -2427,6 +2794,7 @@ __all__ = [
     "collect_task_ancestor_closure",
     "credentials_scope_for",
     "default_fixture_path",
+    "default_source_rights_fixture_path",
     "default_release_policy_path",
     "digest_mapping",
     "evaluate_publication_gate",
@@ -2435,6 +2803,8 @@ __all__ = [
     "find_publication_blocking_generated_work",
     "goal_parent_lineage_intersects",
     "load_gate_fixture",
+    "load_source_rights_gate_fixture",
+    "sealed_source_rights_gate_fixture_payload",
     "normalize_dataset_repo_id",
     "normalize_operation",
     "normalize_sha256",
