@@ -587,6 +587,7 @@ class StateLawMultiFetchAcquisitionLedger:
         parser_name: str,
         load_existing: bool = True,
         retained_replay_only: bool = False,
+        allowed_source_transports: Sequence[str] | None = None,
     ) -> None:
         if not isinstance(retained_replay_only, bool):
             raise TypeError("retained_replay_only must be a boolean")
@@ -596,6 +597,9 @@ class StateLawMultiFetchAcquisitionLedger:
             raise StateLawMultiFetchAcquisitionError(
                 "parser_name must be a non-empty string"
             )
+        self._allowed_source_transports = (
+            self._normalize_allowed_source_transports(allowed_source_transports)
+        )
         unresolved_root = Path(root).expanduser()
         if unresolved_root.is_symlink():
             raise StateLawMultiFetchAcquisitionError(
@@ -626,8 +630,44 @@ class StateLawMultiFetchAcquisitionLedger:
         self._entries: dict[str, RetainedStateLawParserInput] = {}
         self._request_index: dict[tuple[str, bytes], list[str]] = {}
         self.retained_replay_only = retained_replay_only
+        self.skipped_disallowed_transport_count = 0
         if load_existing:
             self._load_existing_entries()
+
+    @staticmethod
+    def _normalize_allowed_source_transports(
+        allowed_source_transports: Sequence[str] | None,
+    ) -> frozenset[str] | None:
+        if allowed_source_transports is None:
+            return None
+        if isinstance(allowed_source_transports, (str, bytes, bytearray)):
+            raise StateLawMultiFetchAcquisitionError(
+                "allowed_source_transports must be a sequence of transport names"
+            )
+        transports = frozenset(
+            str(value or "").strip()
+            for value in allowed_source_transports
+            if str(value or "").strip()
+        )
+        if not transports:
+            raise StateLawMultiFetchAcquisitionError(
+                "at least one source transport must be allowed"
+            )
+        return transports
+
+    @staticmethod
+    def _declared_source_transport(transport_receipt: Mapping[str, Any]) -> str:
+        return str(transport_receipt.get("source_transport") or "").strip()
+
+    def _is_disallowed_declared_transport(
+        self,
+        transport_receipt: Mapping[str, Any],
+    ) -> bool:
+        allowed = self._allowed_source_transports
+        if allowed is None:
+            return False
+        declared = self._declared_source_transport(transport_receipt)
+        return bool(declared) and declared not in allowed
 
     @property
     def entries(self) -> tuple[RetainedStateLawParserInput, ...]:
@@ -1058,6 +1098,15 @@ class StateLawMultiFetchAcquisitionLedger:
                 raise StateLawMultiFetchAcquisitionError(
                     f"retained fetch evidence {evidence_path.name} changed jurisdiction"
                 )
+            transport_raw = payload.get("transport_receipt")
+            if not isinstance(transport_raw, Mapping):
+                raise StateLawMultiFetchAcquisitionError(
+                    f"retained transport receipt is missing for {evidence_path.name}"
+                )
+            if self._is_disallowed_declared_transport(transport_raw):
+                with self._lock:
+                    self.skipped_disallowed_transport_count += 1
+                continue
             body_path = _resolve_retained_path(
                 self.jurisdiction_root,
                 payload.get("body_relative_path"),
@@ -1108,11 +1157,6 @@ class StateLawMultiFetchAcquisitionLedger:
                 raise StateLawMultiFetchAcquisitionError(
                     f"retained parser envelope belongs to {envelope.parser_name!r}, "
                     f"not {self.parser_name!r}"
-                )
-            transport_raw = payload.get("transport_receipt")
-            if not isinstance(transport_raw, Mapping):
-                raise StateLawMultiFetchAcquisitionError(
-                    f"retained transport receipt is missing for {evidence_path.name}"
                 )
             content = envelope.content_address
             if content is None:
