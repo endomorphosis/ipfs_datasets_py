@@ -105,7 +105,7 @@ def parse_new_mexico_chapter_text(
                 chapter_number=parts[0] if parts else None,
                 section_number=number,
                 section_name=heading[:200],
-                full_text=body[:14000],
+                full_text=body,
                 source_url=source_url or BASE,
                 official_cite=f"N.M. Stat. Ann. § {number}",
                 metadata=StatuteMetadata(),

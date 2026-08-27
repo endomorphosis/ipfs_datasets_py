@@ -60,6 +60,11 @@ GRAPH_FIXTURE_SCHEMA_VERSION: Final = "hf-graphrag-graph-adjacency-fixture/v1"
 TASK_ID: Final = "USCIR-022"
 GOAL_ID: Final = "USCIR-G060"
 
+# ``write_graph_layout`` materialises the complete graph, adjacency copies,
+# and validation sets.  Preserve it for fixtures and small compatibility
+# consumers, but never treat its result as a production-scale release source.
+MATERIALIZED_GRAPH_WRITER_PRODUCTION_READY: Final = False
+
 # SkillCenter / release policy: 4,096 pointers per page, 8,192 per shard file.
 MAX_ADJACENCY_POINTERS_PER_SHARD: Final = 8192
 NODES_SORTED_BY: Final = "node_cid_asc"
@@ -690,6 +695,12 @@ class GraphLayoutWriteResult:
     index_descriptors: Mapping[str, Any]
     output_root: str
 
+    @property
+    def production_ready(self) -> bool:
+        """The materialised compatibility writer is never production-ready."""
+
+        return MATERIALIZED_GRAPH_WRITER_PRODUCTION_READY
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "data_descriptors": [
@@ -706,6 +717,7 @@ class GraphLayoutWriteResult:
             },
             "layout": self.layout.to_dict(),
             "output_root": self.output_root,
+            "production_ready": self.production_ready,
             "routing_rows": {
                 key: [dict(row) for row in rows]
                 for key, rows in self.routing_rows.items()
@@ -1514,7 +1526,7 @@ def write_graph_layout(
     max_pointers_per_shard: int = MAX_ADJACENCY_POINTERS_PER_SHARD,
     write_indexes: bool = True,
 ) -> GraphLayoutWriteResult:
-    """Build the layout and write ZSTD Parquet shards + optional routing indexes."""
+    """Write a materialised fixture/compatibility layout (non-production)."""
 
     layout = build_graph_layout(
         nodes,
@@ -1911,6 +1923,7 @@ __all__ = [
     "GRAPH_NODES_DIR",
     "GRAPH_OUT_ADJACENCY_INDEX_PATH",
     "GRAPH_ROUTING_SCHEMA_VERSION",
+    "MATERIALIZED_GRAPH_WRITER_PRODUCTION_READY",
     "MAX_ADJACENCY_POINTERS_PER_ROW",
     "MAX_ADJACENCY_POINTERS_PER_SHARD",
     "MAX_ROWS_PER_PHYSICAL_SHARD",

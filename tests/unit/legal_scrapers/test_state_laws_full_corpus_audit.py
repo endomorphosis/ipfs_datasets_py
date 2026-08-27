@@ -97,6 +97,35 @@ def test_closed_ok_receipt_passes(audit, fixture_payload) -> None:
     assert result.kinds == []
 
 
+@pytest.mark.parametrize(
+    "authority",
+    [None, "recovery", "unverified", "cache", "direct_insecure_tls"],
+    ids=["missing", "recovery", "unverified", "cache", "direct-insecure-tls"],
+)
+def test_live_audit_requires_explicit_official_authority(
+    audit, fixture_payload, authority
+) -> None:
+    original = next(
+        item for item in fixture_payload["cases"] if item["case_id"] == "closed_ok_mn"
+    )
+    case = json.loads(json.dumps(original))
+    case["case_id"] = f"authority-{authority or 'missing'}"
+    case["receipt"]["official_source"] = True
+    if authority is None:
+        case["receipt"].pop("source_authority_class", None)
+    else:
+        case["receipt"]["source_authority_class"] = authority
+
+    result = audit.audit_live_receipt_case(case)
+
+    assert result.status == "fail"
+    assert "unofficial_source_domain" in result.kinds
+    assert any(
+        "explicit official source authority" in finding.detail
+        for finding in result.findings
+    )
+
+
 def test_open_frontier_and_continuation_links_fail(audit, fixture_payload) -> None:
     case = next(item for item in fixture_payload["cases"] if item["case_id"] == "open_frontier_hi")
     result = audit.audit_live_receipt_case(case)

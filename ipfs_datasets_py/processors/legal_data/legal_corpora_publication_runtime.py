@@ -19,6 +19,7 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -28,7 +29,6 @@ from typing import Any, Callable, Final, Mapping, Optional, Sequence, TypeVar, U
 from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate import (
     AUTHORIZED_DATASET_REPO_IDS,
     BASELINE_REVISIONS,
-    FEDERAL_DATASET_REPO_ID,
     PROGRAM_ID as GATE_PROGRAM_ID,
     PublicationGateDecision,
     PublicationGateDeniedError,
@@ -67,6 +67,9 @@ TOKEN_ENV_ALLOWLIST: Final = SECRET_ENV_NAMES
 RECEIPT_SCHEMA_V1: Final = "ipfs_datasets_py/legal-corpora-publication-receipt@1"
 MANIFEST_SCHEMA_V1: Final = "ipfs_datasets_py/legal-corpora-candidate-manifest@1"
 SEAL_SCHEMA_V1: Final = "ipfs_datasets_py/legal-corpora-prepublication-seal@1"
+LIVE_SOURCE_RIGHTS_REPORT_SCHEMA: Final = (
+    "ipfs_datasets_py/legal-source-rights-compliance@2"
+)
 ALLOWED_RECEIPT_SCHEMAS: Final = frozenset(
     {RECEIPT_SCHEMA_V1, MANIFEST_SCHEMA_V1, SEAL_SCHEMA_V1}
 )
@@ -283,6 +286,23 @@ def canonical_no_self_field_digest(payload: Mapping[str, Any]) -> str:
         raise IndependentDigestError("canonical digest requires a JSON object")
     body = {key: value for key, value in payload.items() if key not in SELF_DIGEST_FIELDS}
     return hashlib.sha256(canonical_json_bytes(body)).hexdigest()
+
+
+def _candidate_release_manifest_digest(payload: Mapping[str, Any]) -> str:
+    """Return the artifact-manifest digest bound by a candidate receipt.
+
+    ``final_manifest_digest`` is the no-self-field digest of the candidate
+    control receipt itself.  The State candidate binds the release artifact
+    manifest at top level, while the Federal candidate nests that binding.
+    Keep both identities so a mutation callback cannot confuse those layers.
+    """
+
+    candidate = payload.get("candidate")
+    nested = candidate if isinstance(candidate, Mapping) else {}
+    value = payload.get("manifest_digest") or nested.get("manifest_digest")
+    if value in (None, ""):
+        return ""
+    return normalize_sha256(value, name="candidate.manifest_digest")
 
 
 def _posix_relpath(path: str) -> str:
@@ -693,9 +713,32 @@ def load_receipt(root: Path, relpath: str) -> dict[str, Any]:
     payload = json.loads(raw.decode("utf-8"))
     if not isinstance(payload, dict):
         raise PublicationRuntimeError(f"receipt must be a JSON object: {relpath}")
-    _require_receipt_schema(payload, relpath)
     status = _require_receipt_status(payload, relpath)
-    digests = verify_independent_digests(relpath=relpath, raw=raw, payload=payload)
+    if (
+        relpath == RIGHTS_RECEIPT_RELPATH
+        and payload.get("report_schema") == LIVE_SOURCE_RIGHTS_REPORT_SCHEMA
+    ):
+        declared = _declared_digest(payload, "report_digest_sha256")
+        body = dict(payload)
+        body.pop("report_digest_sha256", None)
+        computed = hashlib.sha256(canonical_json_bytes(body)).hexdigest()
+        if declared is None or declared != computed:
+            raise IndependentDigestError(
+                "live source-rights report digest does not match its canonical "
+                "body"
+            )
+        digests = {
+            "raw_sha256": raw_file_digest(raw),
+            "canonical_digest": computed,
+            "content_digest": computed,
+        }
+    else:
+        _require_receipt_schema(payload, relpath)
+        digests = verify_independent_digests(
+            relpath=relpath,
+            raw=raw,
+            payload=payload,
+        )
     receipt = dict(payload)
     receipt["path"] = relpath
     receipt["status"] = status
@@ -887,6 +930,10 @@ class CanonicalPublicationRequest:
     authorize_mutation: bool = True
     environ: Mapping[str, str] | None = None
     principal_probe: PrincipalProbe | None = None
+    expected_dataset_repo_id: str | None = None
+    expected_release_manifest_digest: str | None = None
+    expected_plan_digest: str | None = None
+    expected_policy_proof_digest: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "phase", PublicationPhase.coerce(self.phase).value)
@@ -897,6 +944,29 @@ class CanonicalPublicationRequest:
             raise PublicationRuntimeError("environ must be a mapping")
         if self.principal_probe is not None and not callable(self.principal_probe):
             raise PublicationRuntimeError("principal_probe must be callable")
+        if self.expected_dataset_repo_id is not None:
+            expected_repo = _require_non_empty_str(
+                self.expected_dataset_repo_id,
+                "expected_dataset_repo_id",
+                maximum=512,
+            )
+            object.__setattr__(
+                self,
+                "expected_dataset_repo_id",
+                expected_repo,
+            )
+        for attribute in (
+            "expected_release_manifest_digest",
+            "expected_plan_digest",
+            "expected_policy_proof_digest",
+        ):
+            value = getattr(self, attribute)
+            if value is not None:
+                object.__setattr__(
+                    self,
+                    attribute,
+                    normalize_sha256(value, name=attribute),
+                )
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> "CanonicalPublicationRequest":
@@ -928,6 +998,16 @@ class CanonicalPublicationRequest:
             authorize_mutation=bool(value.get("authorize_mutation", True)),
             environ=value.get("environ"),
             principal_probe=value.get("principal_probe"),
+            expected_dataset_repo_id=value.get(
+                "expected_dataset_repo_id"
+            ),
+            expected_release_manifest_digest=value.get(
+                "expected_release_manifest_digest"
+            ),
+            expected_plan_digest=value.get("expected_plan_digest"),
+            expected_policy_proof_digest=value.get(
+                "expected_policy_proof_digest"
+            ),
         )
 
 
@@ -997,10 +1077,31 @@ def capture_canonical_snapshot(
                 "candidate final_manifest_digest does not match no-self-field recompute"
             )
     final_manifest_digest = recomputed_manifest
+    candidate_release_manifest_digest = _candidate_release_manifest_digest(
+        manifest
+    )
 
     dataset_repo_id = contract["dataset_repo_id"]
     if dataset_repo_id not in AUTHORIZED_DATASET_REPO_IDS:
         raise PublicationRuntimeError("phase dataset is not an authorized legal-corpora target")
+    if (
+        request.expected_dataset_repo_id is not None
+        and request.expected_dataset_repo_id != dataset_repo_id
+    ):
+        raise ManifestBindingError(
+            "canonical phase repository differs from the caller's fail-closed "
+            "expected repository constraint"
+        )
+    if request.expected_release_manifest_digest is not None:
+        if (
+            not candidate_release_manifest_digest
+            or candidate_release_manifest_digest
+            != request.expected_release_manifest_digest
+        ):
+            raise ManifestBindingError(
+                "canonical candidate release-manifest binding differs from "
+                "the exact publication plan constraint"
+            )
 
     token_name, token = obtain_token(environ)
     if request.principal_probe is None:
@@ -1048,6 +1149,9 @@ def capture_canonical_snapshot(
         },
         "dataset_card": card_text,
         "final_manifest_digest": final_manifest_digest,
+        "candidate_release_manifest_digest": (
+            candidate_release_manifest_digest
+        ),
         "dataset_repo_id": dataset_repo_id,
         "operation": contract["authorized_operation"],
         "previous_public_pin": contract["previous_public_pin"],
@@ -1058,6 +1162,10 @@ def capture_canonical_snapshot(
         "principal": identity["principal"],
         "token_env": token_name,
         "authorize_mutation": bool(request.authorize_mutation),
+        "expected_plan_digest": request.expected_plan_digest,
+        "expected_policy_proof_digest": (
+            request.expected_policy_proof_digest
+        ),
     }
     _assert_secret_free(snapshot, label="canonical_snapshot", environ=environ)
     return snapshot
@@ -1124,6 +1232,13 @@ def _snapshot_fingerprint(snapshot: Mapping[str, Any]) -> str:
         "control_digests": snapshot.get("control_digests"),
         "expected_receipt_digests": snapshot.get("expected_receipt_digests"),
         "final_manifest_digest": snapshot.get("final_manifest_digest"),
+        "candidate_release_manifest_digest": snapshot.get(
+            "candidate_release_manifest_digest"
+        ),
+        "expected_plan_digest": snapshot.get("expected_plan_digest"),
+        "expected_policy_proof_digest": snapshot.get(
+            "expected_policy_proof_digest"
+        ),
         "task_statuses": snapshot.get("task_statuses"),
     }
     return hashlib.sha256(canonical_json_bytes(material)).hexdigest()
@@ -1211,6 +1326,15 @@ def evaluate_canonical_publication(
                 "mutation_start": snapshot["mutation_start"],
                 "control_digest_count": len(snapshot["control_digests"]),
                 "snapshot_fingerprint": _snapshot_fingerprint(snapshot),
+                "candidate_release_manifest_digest": snapshot.get(
+                    "candidate_release_manifest_digest"
+                ),
+                "expected_plan_digest": snapshot.get(
+                    "expected_plan_digest"
+                ),
+                "expected_policy_proof_digest": snapshot.get(
+                    "expected_policy_proof_digest"
+                ),
                 "source_rights_binding_required": True,
                 "required_gates": list(REQUIRED_PUBLICATION_GATES),
             }
@@ -1260,6 +1384,8 @@ def authorize_and_mutate_canonical(
     The callback is never invoked on any denial path and runs exactly once after
     a fully canonical authorized request.
     """
+
+    _CanonicalPublicationRuntimeExecutable.assert_current()
 
     environ: dict[str, str] = {}
     phase = "unknown"
@@ -1340,6 +1466,13 @@ def authorize_and_mutate_canonical(
             "runtime_task_id": TASK_ID,
             "head": first["head"],
             "snapshot_fingerprint": _snapshot_fingerprint(first),
+            "candidate_release_manifest_digest": first.get(
+                "candidate_release_manifest_digest"
+            ),
+            "expected_plan_digest": first.get("expected_plan_digest"),
+            "expected_policy_proof_digest": first.get(
+                "expected_policy_proof_digest"
+            ),
             "revalidated_before_callback": True,
             "source_rights_binding_required": True,
         }
@@ -1365,7 +1498,76 @@ def authorize_and_mutate_canonical(
             reason_codes=("network_mutation.denied",),
             decision=bound,
         )
-    return upload_callback(bound)
+    from ipfs_datasets_py.huggingface.protected_repo_guard import (
+        _canonical_runtime_authorization,
+    )
+
+    with _canonical_runtime_authorization(
+        repository_id=bound.dataset_repo_id,
+        phase=bound.phase,
+        operation=bound.operation,
+        final_manifest_digest=bound.final_manifest_digest,
+    ):
+        return upload_callback(bound)
+
+
+class _CanonicalPublicationRuntimeExecutable:
+    """Stable loaded-executable allowlist for the mutation-owning runtime."""
+
+    EXECUTABLE_IMPORT_SHA256 = {}
+    AUTHORIZE_AND_MUTATE_CODE = authorize_and_mutate_canonical.__code__
+
+    @staticmethod
+    def _function_sha256(target):
+        from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
+            _loaded_function_projection,
+        )
+
+        projection = _loaded_function_projection(
+            target,
+            _include_global_bindings=False,
+        )
+        return hashlib.sha256(
+            json.dumps(
+                projection,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+
+    @classmethod
+    def current_executable_identities(cls):
+        module = sys.modules[__name__]
+        names = (
+            "_candidate_release_manifest_digest",
+            "_snapshot_fingerprint",
+            "authorize_and_mutate_canonical",
+            "build_gate_request",
+            "capture_canonical_snapshot",
+            "evaluate_publication_gate",
+            "inspect_clean_head",
+            "load_main_seal",
+            "load_receipt",
+        )
+        return {
+            name: cls._function_sha256(getattr(module, name))
+            for name in names
+        }
+
+    @classmethod
+    def assert_current(cls):
+        if cls.current_executable_identities() != dict(
+            cls.EXECUTABLE_IMPORT_SHA256
+        ):
+            raise PublicationRuntimeError(
+                "canonical runtime executable identity drifted"
+            )
+
+
+_CanonicalPublicationRuntimeExecutable.EXECUTABLE_IMPORT_SHA256 = MappingProxyType(
+    _CanonicalPublicationRuntimeExecutable.current_executable_identities()
+)
 
 
 __all__ = [

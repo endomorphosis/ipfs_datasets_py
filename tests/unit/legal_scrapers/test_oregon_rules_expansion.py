@@ -83,6 +83,21 @@ def test_oregon_code_list_includes_procedural_and_local_rules() -> None:
     assert "Oregon Local Court Rules" in names
 
 
+def test_oregon_full_corpus_code_list_excludes_separate_rule_corpora(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    scraper = OregonScraper("OR", "Oregon")
+
+    assert scraper.get_code_list() == [
+        {
+            "name": "Oregon Revised Statutes",
+            "url": scraper.OFFICIAL_ENTRY_URL,
+            "type": "Code",
+        }
+    ]
+
+
 def test_extract_orcp_rules_from_html_parses_rule_headings() -> None:
     scraper = OregonScraper("OR", "Oregon")
     html = """

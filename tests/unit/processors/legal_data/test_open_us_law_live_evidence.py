@@ -41,6 +41,7 @@ from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
     is_placeholder_cid,
     is_placeholder_digest,
     prove_fixture_behavior,
+    recorded_fetch_from_root,
     validate_cohort_evidence,
     validate_cohort_evidence_schema_file,
     write_retained_artifacts,
@@ -350,3 +351,15 @@ def test_receipt_from_artifacts_embeds_recomputed_hashes(tmp_path: Path) -> None
     assert receipt["hashes"]["admitted_body_sha256"] == sha256_bytes(fetch.body_bytes)
     assert receipt["row_count"] == 6
     assert receipt["transport"]["fixture"] is False
+    assert receipt["transport"]["kind"] == fetch.transport_kind
+    assert receipt["edition"] == fetch.edition
+    assert receipt["legal_as_of"] == fetch.legal_as_of
+    assert receipt["observed_at"] == fetch.observed_at
+
+    replayed = recorded_fetch_from_root(root, "GA")
+    assert replayed.transport_kind == fetch.transport_kind
+    assert replayed.source_domain == fetch.source_domain
+    assert replayed.source_path == fetch.source_path
+    assert replayed.edition == fetch.edition
+    assert replayed.legal_as_of == fetch.legal_as_of
+    assert replayed.observed_at == fetch.observed_at

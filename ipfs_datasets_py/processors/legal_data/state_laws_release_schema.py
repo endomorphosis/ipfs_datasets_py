@@ -36,9 +36,91 @@ import json
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import PurePosixPath
 from types import MappingProxyType
-from typing import Any, Final, Iterable, Mapping, Optional, Sequence, Union
+from typing import Any, Final, Iterable, Mapping, Optional
+
+from ipfs_datasets_py.processors.legal_data.legal_release_validation import (
+    AMBIGUOUS_4096_FIELD_NAMES,
+    PHYSICAL_BOUND_FIELD_NAMES,
+    BoundKind,
+    coerce_family_set as _shared_coerce_family_set,
+    physical_bounds_policy as _shared_physical_bounds_policy,
+    require_source_rights_binding as _shared_require_source_rights_binding,
+    validate_bound_declaration as _shared_validate_bound_declaration,
+    validate_semantic_family_closure as _shared_validate_semantic_family_closure,
+)
+from ipfs_datasets_py.processors.legal_data.open_us_law_schema import (
+    InvalidDigestError as _SharedInvalidDigestError,
+)
+from ipfs_datasets_py.processors.legal_data.open_us_law_schema import (
+    MutableReferenceError as _SharedMutableReferenceError,
+)
+from ipfs_datasets_py.processors.legal_data.open_us_law_schema import (
+    PositionalIdentityError as _SharedPositionalIdentityError,
+)
+from ipfs_datasets_py.processors.legal_data.open_us_law_schema import (
+    is_immutable_revision as _shared_is_immutable_revision,
+)
+from ipfs_datasets_py.processors.legal_data.open_us_law_schema import (
+    reject_positional_durable_identity as _shared_reject_positional_identity,
+)
+from ipfs_datasets_py.processors.legal_data.open_us_law_schema import (
+    require_immutable_revision as _shared_require_immutable_revision,
+)
+from ipfs_datasets_py.processors.legal_data.open_us_law_schema import (
+    validate_entry_cid as _shared_validate_entry_cid,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    ArtifactPathError as _SharedArtifactPathError,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    DEFAULT_CANDIDATE_CENTROIDS as _SHARED_DEFAULT_CANDIDATE_CENTROIDS,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    MAX_ADJACENCY_POINTERS_PER_ROW as _SHARED_MAX_ADJACENCY_POINTERS_PER_ROW,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    MAX_POINTERS_PER_ROW as _SHARED_MAX_POINTERS_PER_ROW,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    MAX_ROUTING_ROWS_PER_INDEX as _SHARED_MAX_ROUTING_ROWS_PER_INDEX,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    MAX_ROWS_PER_PHYSICAL_SHARD as _SHARED_MAX_ROWS_PER_PHYSICAL_SHARD,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    MAX_ROWS_PER_VECTOR_CENTROID as _SHARED_MAX_ROWS_PER_VECTOR_CENTROID,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    MAX_TERM_ROWS_PER_SHARD as _SHARED_MAX_TERM_ROWS_PER_SHARD,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    MAX_VECTOR_SHARDS_PER_CENTROID as _SHARED_MAX_VECTOR_SHARDS_PER_CENTROID,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    InvalidDigestError as _SharedArtifactInvalidDigestError,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    PhysicalBoundError as _SharedPhysicalBoundError,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    normalize_relative_artifact_path as _shared_normalize_artifact_path,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    normalize_sha256 as _shared_normalize_sha256,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    validate_centroid_capacity as _shared_validate_centroid_capacity,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    validate_digest as _shared_validate_digest,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    validate_physical_pointer_count as _shared_validate_physical_pointer_count,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
+    validate_physical_row_count as _shared_validate_physical_row_count,
+)
 
 # ---------------------------------------------------------------------------
 # Schema identity
@@ -121,70 +203,19 @@ EXPECTED_JURISDICTION_COUNT: Final = 51
 # Physical bounds (authoritative; never reuse as token ceilings)
 # ---------------------------------------------------------------------------
 
-MAX_ROWS_PER_PHYSICAL_SHARD: Final = 4096
-MAX_POSTING_POINTERS_PER_ROW: Final = 4096
-MAX_ADJACENCY_POINTERS_PER_ROW: Final = 4096
-MAX_TERM_ROWS_PER_SHARD: Final = 4096
-MAX_ROUTING_ROWS_PER_INDEX: Final = 4096
-MAX_ROWS_PER_VECTOR_CENTROID: Final = 8192
-MAX_VECTOR_SHARDS_PER_CENTROID: Final = 2
-DEFAULT_CANDIDATE_CENTROIDS: Final = 4
-
-PHYSICAL_BOUND_FIELD_NAMES: Final = frozenset(
-    {
-        "max_rows_per_physical_shard",
-        "maximum_rows_per_physical_shard",
-        "max_posting_pointers_per_row",
-        "maximum_posting_pointers_per_row",
-        "max_adjacency_pointers_per_row",
-        "maximum_adjacency_pointers_per_row",
-        "max_term_rows_per_shard",
-        "maximum_term_rows_per_shard",
-        "max_routing_rows_per_index",
-        "maximum_routing_rows_per_index",
-        "max_rows_per_vector_centroid",
-        "maximum_rows_per_vector_centroid",
-        "max_vector_shards_per_centroid",
-        "maximum_vector_shards_per_centroid",
-        "rows_per_shard",
-        "pointers_per_row",
-        "physical_row_bound",
-        "physical_pointer_bound",
-    }
-)
-
-AMBIGUOUS_4096_FIELD_NAMES: Final = frozenset(
-    {
-        "chunk_size",
-        "chunks",
-        "max_chunks",
-        "max_tokens",
-        "max_token_window",
-        "model_token_ceiling",
-        "token_limit",
-        "token_window",
-        "window_size",
-        "context_window",
-        "max_context",
-        "embedding_window",
-        "text_window",
-        "n_ctx",
-        "seq_len",
-        "sequence_length",
-    }
-)
+MAX_ROWS_PER_PHYSICAL_SHARD: Final = _SHARED_MAX_ROWS_PER_PHYSICAL_SHARD
+MAX_POSTING_POINTERS_PER_ROW: Final = _SHARED_MAX_POINTERS_PER_ROW
+MAX_ADJACENCY_POINTERS_PER_ROW: Final = _SHARED_MAX_ADJACENCY_POINTERS_PER_ROW
+MAX_TERM_ROWS_PER_SHARD: Final = _SHARED_MAX_TERM_ROWS_PER_SHARD
+MAX_ROUTING_ROWS_PER_INDEX: Final = _SHARED_MAX_ROUTING_ROWS_PER_INDEX
+MAX_ROWS_PER_VECTOR_CENTROID: Final = _SHARED_MAX_ROWS_PER_VECTOR_CENTROID
+MAX_VECTOR_SHARDS_PER_CENTROID: Final = _SHARED_MAX_VECTOR_SHARDS_PER_CENTROID
+DEFAULT_CANDIDATE_CENTROIDS: Final = _SHARED_DEFAULT_CANDIDATE_CENTROIDS
 
 # ---------------------------------------------------------------------------
 # Regular expressions
 # ---------------------------------------------------------------------------
 
-_SHA256_HEX_RE = re.compile(r"^[0-9a-f]{64}$")
-_SHA256_PREFIXED_RE = re.compile(r"^sha256:([0-9a-f]{64})$")
-_GIT_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
-_CID_V1_RE = re.compile(r"^b[a-z2-7]{20,}$")
-_ENTRY_CID_RE = re.compile(
-    r"^(?:b[a-z2-7]{20,}|sha256:[0-9a-f]{64}|[0-9a-f]{64})$"
-)
 # state:<jurisdiction>:<code_family>:<path...>
 _LEGAL_ID_RE = re.compile(
     r"^state:([a-z]{2}):([a-z0-9][a-z0-9._-]{0,63}):.+$",
@@ -208,12 +239,7 @@ _DATASET_ID_RE = re.compile(
     r"^[A-Za-z0-9][A-Za-z0-9._-]{0,95}/[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
 )
 
-_CACHE_PATH_PARTS: Final = frozenset(
-    {"__pycache__", ".cache", ".git", ".pytest_cache", ".mypy_cache"}
-)
-
 JsonMapping = Mapping[str, Any]
-PathLike = Union[str, PurePosixPath]
 
 # ---------------------------------------------------------------------------
 # Errors
@@ -405,16 +431,6 @@ class VerificationResult(str, Enum):
         raise StateLawsReleaseSchemaError(f"unknown verification result: {value!r}")
 
 
-class BoundKind(str, Enum):
-    """Disambiguates physical storage bounds from model-token ceilings."""
-
-    PHYSICAL_ROWS = "physical_rows"
-    PHYSICAL_POINTERS = "physical_pointers"
-    MODEL_TOKENS = "model_tokens"
-    CENTROID_ROWS = "centroid_rows"
-    CENTROID_SHARDS = "centroid_shards"
-
-
 class SourceAuthorityClass(str, Enum):
     """Whether the acquisition source is official authority or quarantine."""
 
@@ -497,6 +513,26 @@ def _optional_str(value: Any, name: str = "value") -> Optional[str]:
     return _require_non_empty_str(value, name)
 
 
+def _relation_array(value: Any, name: str) -> tuple[str, ...]:
+    """Validate one ordered explicit legal-relation evidence array.
+
+    Empty defaults keep older canonical rows readable.  Present values must be
+    arrays rather than scalar strings or mappings so a malformed source cannot
+    silently turn into characters or mapping keys during graph projection.
+    Ordering and repeated evidence are retained exactly after canonical string
+    validation; relation semantics remain owned by ``StateLawsGraphProjector``.
+    """
+
+    if value in (None, ""):
+        return ()
+    if not isinstance(value, (list, tuple)):
+        raise StateLawsReleaseSchemaError(f"{name} must be an array of strings")
+    return tuple(
+        _require_non_empty_str(item, f"{name}[{index}]", maximum=2048)
+        for index, item in enumerate(value)
+    )
+
+
 def _require_non_negative_int(value: Any, name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         raise StateLawsReleaseSchemaError(f"{name} must be an integer")
@@ -542,52 +578,36 @@ def digest_mapping(payload: Mapping[str, Any]) -> str:
 
 
 def normalize_sha256(value: Any, *, name: str = "sha256") -> str:
-    """Normalize a SHA-256 digest to lowercase 64-char hex (no prefix)."""
+    """Normalize SHA-256 through the shared retrieval-schema gate."""
 
-    text = _require_non_empty_str(value, name).lower()
-    if text.startswith("sha256:"):
-        text = text[7:]
-    if not _SHA256_HEX_RE.fullmatch(text):
-        raise InvalidDigestError(
-            f"{name} must be a lowercase 64-char hex SHA-256 "
-            f"(optionally prefixed with 'sha256:'), got {value!r}"
-        )
-    return text
+    _require_non_empty_str(value, name)
+    try:
+        return _shared_normalize_sha256(value, name=name)
+    except _SharedArtifactInvalidDigestError as exc:
+        raise InvalidDigestError(str(exc)) from exc
 
 
 def validate_digest(value: Any, *, name: str = "digest") -> str:
-    """Accept SHA-256 (raw or ``sha256:``) or CIDv1 base32; return normalized form."""
+    """Validate a digest through the shared retrieval-schema gate."""
 
-    text = _require_non_empty_str(value, name).lower()
-    if text.startswith("sha256:"):
-        return f"sha256:{normalize_sha256(text, name=name)}"
-    if _SHA256_HEX_RE.fullmatch(text):
-        return text
-    if _CID_V1_RE.fullmatch(text):
-        return text
-    raise InvalidDigestError(
-        f"{name} must be SHA-256 hex, sha256:<hex>, or CIDv1 base32; got {value!r}"
-    )
+    _require_non_empty_str(value, name)
+    try:
+        return _shared_validate_digest(value, name=name)
+    except _SharedArtifactInvalidDigestError as exc:
+        raise InvalidDigestError(str(exc)) from exc
 
 
 def validate_entry_cid(value: Any, *, name: str = "entry_cid") -> str:
-    """Validate a retrieval primary key (CID or content digest)."""
+    """Validate a retrieval key through the shared legal identity gate."""
 
-    text = _require_non_empty_str(value, name)
-    if _POSITIONAL_ID_RE.fullmatch(text):
-        raise PositionalIdentityError(
-            f"{name} must not be a positional identity token: {value!r}"
-        )
-    lowered = text.lower()
-    if not _ENTRY_CID_RE.fullmatch(lowered):
-        if _MUTABLE_REVISION_RE.fullmatch(text):
-            raise MutableReferenceError(
-                f"{name} must not use a mutable reference: {value!r}"
-            )
-        raise InvalidDigestError(
-            f"{name} must be a CIDv1, sha256:<hex>, or 64-hex digest; got {value!r}"
-        )
-    return lowered
+    try:
+        return _shared_validate_entry_cid(value, name=name)
+    except _SharedPositionalIdentityError as exc:
+        raise PositionalIdentityError(str(exc)) from exc
+    except _SharedMutableReferenceError as exc:
+        raise MutableReferenceError(str(exc)) from exc
+    except _SharedInvalidDigestError as exc:
+        raise InvalidDigestError(str(exc)) from exc
 
 
 def validate_jurisdiction(value: Any, *, name: str = "jurisdiction") -> str:
@@ -657,23 +677,9 @@ def validate_legal_id(value: Any, *, name: str = "legal_id") -> str:
 
 
 def is_immutable_revision(value: Any) -> bool:
-    """Return True when *value* looks like an immutable revision pin."""
+    """Return the shared legal-schema immutable-revision decision."""
 
-    if not isinstance(value, str) or not value.strip():
-        return False
-    text = value.strip()
-    if _MUTABLE_REVISION_RE.fullmatch(text):
-        return False
-    lowered = text.lower()
-    if lowered.startswith("sha256:"):
-        return bool(_SHA256_HEX_RE.fullmatch(lowered[7:]))
-    if _GIT_SHA_RE.fullmatch(lowered):
-        return True
-    if _SHA256_HEX_RE.fullmatch(lowered):
-        return True
-    if _CID_V1_RE.fullmatch(lowered):
-        return True
-    return False
+    return _shared_is_immutable_revision(value)
 
 
 def require_immutable_revision(
@@ -692,11 +698,10 @@ def require_immutable_revision(
         raise MutableReferenceError(
             f"{name} embeds a mutable token and is not an immutable pin: {value!r}"
         )
-    if not is_immutable_revision(text):
-        raise MutableReferenceError(
-            f"{name} must be a git SHA, SHA-256 digest, or CID; got {value!r}"
-        )
-    return text.strip()
+    try:
+        return _shared_require_immutable_revision(text, name=name)
+    except _SharedMutableReferenceError as exc:
+        raise MutableReferenceError(str(exc)) from exc
 
 
 def require_immutable_model_ref(
@@ -727,35 +732,15 @@ def require_immutable_model_ref(
 
 
 def normalize_relative_artifact_path(value: Any, *, name: str = "relative_path") -> str:
-    """Normalize and validate a release-relative artifact path."""
+    """Delegate path policy to the shared HF GraphRAG artifact schema."""
 
+    # Keep the state schema's base error for empty/non-string values while all
+    # actual path-policy decisions come from the already shared retrieval core.
     text = _require_non_empty_str(value, name, maximum=512)
-    if "\\" in text:
-        raise ArtifactPathError(f"{name} must use POSIX separators, got {value!r}")
-    if text.startswith("/") or text.startswith("~"):
-        raise ArtifactPathError(f"{name} must be relative, not absolute: {value!r}")
-    if len(text) >= 2 and text[1] == ":":
-        raise ArtifactPathError(f"{name} must not include a drive letter: {value!r}")
-    if text.startswith("//") or text.startswith("\\\\"):
-        raise ArtifactPathError(f"{name} must not be a UNC path: {value!r}")
-
-    parsed = PurePosixPath(text)
-    if parsed.is_absolute():
-        raise ArtifactPathError(f"{name} must be relative, not absolute: {value!r}")
-    if text != parsed.as_posix():
-        raise ArtifactPathError(
-            f"{name} must be a normalized POSIX path without redundant segments: "
-            f"{value!r}"
-        )
-    if any(part in {"", ".", ".."} for part in parsed.parts):
-        raise ArtifactPathError(
-            f"{name} must not contain empty, '.', or '..' segments: {value!r}"
-        )
-    if any(part.casefold() in _CACHE_PATH_PARTS for part in parsed.parts):
-        raise ArtifactPathError(
-            f"{name} must not include cache/VCS path components: {value!r}"
-        )
-    return parsed.as_posix()
+    try:
+        return _shared_normalize_artifact_path(text, name=name)
+    except _SharedArtifactPathError as exc:
+        raise ArtifactPathError(str(exc)) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -769,12 +754,17 @@ def validate_physical_row_count(
     name: str = "row_count",
     maximum: int = MAX_ROWS_PER_PHYSICAL_SHARD,
 ) -> int:
-    """Require a non-negative row count within the physical shard bound."""
+    """Validate a row count through the shared retrieval-schema gate."""
 
     count = _require_non_negative_int(value, name)
-    if count > maximum:
-        raise PhysicalBoundError(f"{name}={count} exceeds physical bound {maximum}")
-    return count
+    try:
+        return _shared_validate_physical_row_count(
+            count,
+            name=name,
+            maximum=maximum,
+        )
+    except _SharedPhysicalBoundError as exc:
+        raise PhysicalBoundError(str(exc)) from exc
 
 
 def validate_physical_pointer_count(
@@ -783,14 +773,17 @@ def validate_physical_pointer_count(
     name: str = "pointer_count",
     maximum: int = MAX_POSTING_POINTERS_PER_ROW,
 ) -> int:
-    """Require a non-negative pointer count within the physical pointer bound."""
+    """Validate a pointer count through the shared retrieval-schema gate."""
 
     count = _require_non_negative_int(value, name)
-    if count > maximum:
-        raise PhysicalBoundError(
-            f"{name}={count} exceeds physical pointer bound {maximum}"
+    try:
+        return _shared_validate_physical_pointer_count(
+            count,
+            name=name,
+            maximum=maximum,
         )
-    return count
+    except _SharedPhysicalBoundError as exc:
+        raise PhysicalBoundError(str(exc)) from exc
 
 
 def validate_bound_declaration(
@@ -799,89 +792,17 @@ def validate_bound_declaration(
     value: Any,
     bound_kind: Any = None,
 ) -> tuple[str, int, BoundKind]:
-    """Validate a named bound so 4,096 cannot attach to a token-window field."""
+    """Validate a named bound through the shared legal-release policy."""
 
-    name = _require_non_empty_str(field_name, "field_name", maximum=128).lower()
-    number = _require_non_negative_int(value, name)
-
-    kind: Optional[BoundKind]
-    if bound_kind is None:
-        kind = None
-    elif isinstance(bound_kind, BoundKind):
-        kind = bound_kind
-    else:
-        kind = BoundKind(str(bound_kind).strip().lower())
-
-    if name in AMBIGUOUS_4096_FIELD_NAMES:
-        if number == MAX_ROWS_PER_PHYSICAL_SHARD and kind is not BoundKind.MODEL_TOKENS:
-            raise AmbiguousBoundError(
-                f"field {name!r} with value {number} is ambiguous: "
-                f"4,096 is the physical row/pointer bound. Use an explicit "
-                f"physical field name or declare bound_kind="
-                f"{BoundKind.MODEL_TOKENS.value!r}."
-            )
-        if kind is None:
-            raise AmbiguousBoundError(
-                f"field {name!r} is ambiguous without bound_kind; "
-                f"declare model_tokens vs physical_rows explicitly"
-            )
-        if kind is not BoundKind.MODEL_TOKENS:
-            raise AmbiguousBoundError(
-                f"field {name!r} names a token/window concept but bound_kind "
-                f"is {kind.value!r}"
-            )
-        return name, number, kind
-
-    if name in PHYSICAL_BOUND_FIELD_NAMES:
-        if kind is None:
-            if "centroid" in name and "shard" in name:
-                kind = BoundKind.CENTROID_SHARDS
-            elif "centroid" in name:
-                kind = BoundKind.CENTROID_ROWS
-            elif "pointer" in name:
-                kind = BoundKind.PHYSICAL_POINTERS
-            else:
-                kind = BoundKind.PHYSICAL_ROWS
-        resolved = kind
-        if resolved is BoundKind.MODEL_TOKENS:
-            raise AmbiguousBoundError(
-                f"field {name!r} is a physical bound and cannot use "
-                f"bound_kind={BoundKind.MODEL_TOKENS.value!r}"
-            )
-        if resolved is BoundKind.PHYSICAL_POINTERS:
-            if number > MAX_POSTING_POINTERS_PER_ROW:
-                raise PhysicalBoundError(
-                    f"{name}={number} exceeds pointer bound "
-                    f"{MAX_POSTING_POINTERS_PER_ROW}"
-                )
-        elif resolved is BoundKind.CENTROID_ROWS:
-            if number > MAX_ROWS_PER_VECTOR_CENTROID:
-                raise PhysicalBoundError(
-                    f"{name}={number} exceeds centroid row bound "
-                    f"{MAX_ROWS_PER_VECTOR_CENTROID}"
-                )
-        elif resolved is BoundKind.CENTROID_SHARDS:
-            if number > MAX_VECTOR_SHARDS_PER_CENTROID:
-                raise PhysicalBoundError(
-                    f"{name}={number} exceeds centroid shard bound "
-                    f"{MAX_VECTOR_SHARDS_PER_CENTROID}"
-                )
-        else:
-            if number > MAX_ROWS_PER_PHYSICAL_SHARD:
-                raise PhysicalBoundError(
-                    f"{name}={number} exceeds physical row bound "
-                    f"{MAX_ROWS_PER_PHYSICAL_SHARD}"
-                )
-        return name, number, resolved
-
-    if number == MAX_ROWS_PER_PHYSICAL_SHARD and kind is None:
-        raise AmbiguousBoundError(
-            f"field {name!r} with value 4096 is ambiguous without bound_kind; "
-            f"name a physical bound field or declare model_tokens"
-        )
-    if kind is None:
-        kind = BoundKind.PHYSICAL_ROWS
-    return name, number, kind
+    return _shared_validate_bound_declaration(
+        field_name=field_name,
+        value=value,
+        bound_kind=bound_kind,
+        require_non_empty_str=_require_non_empty_str,
+        require_non_negative_int=_require_non_negative_int,
+        ambiguous_error=AmbiguousBoundError,
+        physical_error=PhysicalBoundError,
+    )
 
 
 def validate_centroid_capacity(
@@ -889,27 +810,17 @@ def validate_centroid_capacity(
     row_count: Any,
     shard_count: Any,
 ) -> tuple[int, int]:
-    """Enforce centroid capacity: ≤8192 rows and ≤2 physical shards."""
+    """Validate centroid capacity through the shared retrieval-schema gate."""
 
     rows = _require_non_negative_int(row_count, "row_count")
     shards = _require_non_negative_int(shard_count, "shard_count")
-    if rows > MAX_ROWS_PER_VECTOR_CENTROID:
-        raise PhysicalBoundError(
-            f"centroid row_count={rows} exceeds {MAX_ROWS_PER_VECTOR_CENTROID}"
+    try:
+        return _shared_validate_centroid_capacity(
+            row_count=rows,
+            shard_count=shards,
         )
-    if shards > MAX_VECTOR_SHARDS_PER_CENTROID:
-        raise PhysicalBoundError(
-            f"centroid shard_count={shards} exceeds "
-            f"{MAX_VECTOR_SHARDS_PER_CENTROID}"
-        )
-    if shards > 0:
-        max_via_shards = shards * MAX_ROWS_PER_PHYSICAL_SHARD
-        if rows > max_via_shards:
-            raise PhysicalBoundError(
-                f"centroid row_count={rows} exceeds capacity of "
-                f"{shards} shard(s) × {MAX_ROWS_PER_PHYSICAL_SHARD}"
-            )
-    return rows, shards
+    except _SharedPhysicalBoundError as exc:
+        raise PhysicalBoundError(str(exc)) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -924,20 +835,10 @@ def reject_positional_durable_identity(
 ) -> None:
     """Fail closed when *value* is a positional durable-identity token."""
 
-    if value is None:
-        return
-    text = str(value).strip()
-    if not text:
-        return
-    if _POSITIONAL_ID_RE.fullmatch(text):
-        raise PositionalIdentityError(
-            f"{name} must not use positional durable identity: {value!r}"
-        )
-    lowered = text.lower()
-    if lowered.startswith("row-") and re.fullmatch(r"row-\d+", lowered):
-        raise PositionalIdentityError(
-            f"{name} must not use positional durable identity: {value!r}"
-        )
+    try:
+        _shared_reject_positional_identity(value, name=name)
+    except _SharedPositionalIdentityError as exc:
+        raise PositionalIdentityError(str(exc)) from exc
 
 
 def validate_document_index(
@@ -1126,9 +1027,9 @@ def validate_admission_provenance_fields(
 
 
 def coerce_family_set(values: Iterable[Any]) -> frozenset[ArtifactFamily]:
-    """Coerce an iterable of family names/enums into a frozenset."""
+    """Coerce family values through the shared legal-release helper."""
 
-    return frozenset(ArtifactFamily.coerce(item) for item in values)
+    return _shared_coerce_family_set(values, family_coerce=ArtifactFamily.coerce)
 
 
 def validate_semantic_family_closure(
@@ -1136,29 +1037,15 @@ def validate_semantic_family_closure(
     *,
     required: Optional[Iterable[Any]] = None,
 ) -> dict[str, Any]:
-    """Require every default semantic family to be present (closure).
+    """Require closure through the shared record-agnostic legal policy."""
 
-    Recovery is intentionally *not* part of the required default set; it may
-    exist as a separate quarantine configuration.
-    """
-
-    present = coerce_family_set(present_families)
-    need = (
-        coerce_family_set(required)
-        if required is not None
-        else REQUIRED_SEMANTIC_FAMILIES
+    return _shared_validate_semantic_family_closure(
+        present_families,
+        required=required,
+        family_coerce=ArtifactFamily.coerce,
+        required_families=REQUIRED_SEMANTIC_FAMILIES,
+        closure_error=SemanticFamilyClosureError,
     )
-    missing = sorted(family.value for family in (need - present))
-    if missing:
-        raise SemanticFamilyClosureError(
-            f"release missing required semantic families: {missing}"
-        )
-    return {
-        "closed": True,
-        "present": sorted(family.value for family in present),
-        "required": sorted(family.value for family in need),
-        "missing": [],
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -1330,6 +1217,11 @@ class CorpusRecord:
     effective_date: Optional[str] = None
     observed_at: Optional[str] = None
     parent_path: Optional[str] = None
+    public_laws: tuple[str, ...] = ()
+    cites: tuple[str, ...] = ()
+    amends: tuple[str, ...] = ()
+    repeals: tuple[str, ...] = ()
+    transfers: tuple[str, ...] = ()
     schema_version: str = SCHEMA_VERSION
 
     def __post_init__(self) -> None:
@@ -1423,6 +1315,18 @@ class CorpusRecord:
         )
         if not isinstance(self.text, str):
             raise StateLawsReleaseSchemaError("text must be a string")
+        for relation_name in (
+            "public_laws",
+            "cites",
+            "amends",
+            "repeals",
+            "transfers",
+        ):
+            object.__setattr__(
+                self,
+                relation_name,
+                _relation_array(getattr(self, relation_name), relation_name),
+            )
         # Legal_id jurisdiction must match the jurisdiction field.
         legal_jurisdiction = self.legal_id.split(":", 2)[1]
         if legal_jurisdiction != self.jurisdiction:
@@ -1447,7 +1351,9 @@ class CorpusRecord:
             "acquisition_time": self.acquisition_time,
             "admission_reason": self.admission_reason,
             "admission_status": self.admission_status.value,
+            "amends": list(self.amends),
             "chapter": self.chapter,
+            "cites": list(self.cites),
             "code_family": self.code_family,
             "document_index": self.document_index,
             "edition_as_of": self.edition_as_of,
@@ -1459,7 +1365,9 @@ class CorpusRecord:
             "official_source_url": self.official_source_url,
             "parent_path": self.parent_path,
             "parser_version": self.parser_version,
+            "public_laws": list(self.public_laws),
             "release_point": self.release_point,
+            "repeals": list(self.repeals),
             "schema_version": self.schema_version,
             "section": self.section,
             "source_authority_class": self.source_authority_class.value,
@@ -1468,6 +1376,7 @@ class CorpusRecord:
             "subsection": self.subsection,
             "text": self.text,
             "title": self.title,
+            "transfers": list(self.transfers),
             "verification_result": self.verification_result.value,
         }
 
@@ -1503,6 +1412,11 @@ class CorpusRecord:
             effective_date=value.get("effective_date"),
             observed_at=value.get("observed_at"),
             parent_path=value.get("parent_path"),
+            public_laws=value.get("public_laws") or (),
+            cites=value.get("cites") or (),
+            amends=value.get("amends") or (),
+            repeals=value.get("repeals") or (),
+            transfers=value.get("transfers") or (),
             schema_version=value.get("schema_version", SCHEMA_VERSION),
         )
 
@@ -3019,30 +2933,15 @@ def require_source_rights_binding(
         if isinstance(manifest, ReleaseManifest)
         else dict(manifest)
     )
-    bound = str(payload.get("source_rights_receipt_digest") or "").strip()
-    expected = validate_digest(receipt_digest, name="source_rights_receipt_digest")
-    if not bound:
-        raise SourceRightsBindingError(
-            "candidate manifest does not bind source_rights_receipt_digest"
-        )
-    if validate_digest(bound, name="manifest.source_rights_receipt_digest") != expected:
-        raise SourceRightsBindingError(
-            "candidate manifest source-rights digest does not match the receipt"
-        )
-    path = str(payload.get("source_rights_receipt_path") or "").strip()
-    if path and path != SOURCE_RIGHTS_RECEIPT_RELPATH:
-        raise SourceRightsBindingError(
-            f"source-rights receipt path must be {SOURCE_RIGHTS_RECEIPT_RELPATH}"
-        )
-    catalog_bound = str(payload.get("source_rights_catalog_digest") or "").strip()
-    if catalog_digest and catalog_bound and catalog_bound != catalog_digest:
-        raise SourceRightsBindingError(
-            "candidate catalog digest does not match the source-rights receipt"
-        )
-    if dataset_card_text and expected not in dataset_card_text:
-        raise SourceRightsBindingError(
-            "dataset card does not bind the source-rights receipt digest"
-        )
+    _shared_require_source_rights_binding(
+        payload,
+        receipt_digest=receipt_digest,
+        expected_receipt_path=SOURCE_RIGHTS_RECEIPT_RELPATH,
+        validate_digest=validate_digest,
+        binding_error=SourceRightsBindingError,
+        catalog_digest=catalog_digest,
+        dataset_card_text=dataset_card_text,
+    )
 
 
 def validate_release_record(
@@ -3078,18 +2977,9 @@ def validate_release_record(
 
 
 def physical_bounds_policy() -> dict[str, int]:
-    """Return the sealed physical-bound constants as a plain dict."""
+    """Return the shared legal-release view of physical capacities."""
 
-    return {
-        "max_adjacency_pointers_per_row": MAX_ADJACENCY_POINTERS_PER_ROW,
-        "max_posting_pointers_per_row": MAX_POSTING_POINTERS_PER_ROW,
-        "max_rows_per_physical_shard": MAX_ROWS_PER_PHYSICAL_SHARD,
-        "max_rows_per_vector_centroid": MAX_ROWS_PER_VECTOR_CENTROID,
-        "max_routing_rows_per_index": MAX_ROUTING_ROWS_PER_INDEX,
-        "max_term_rows_per_shard": MAX_TERM_ROWS_PER_SHARD,
-        "max_vector_shards_per_centroid": MAX_VECTOR_SHARDS_PER_CENTROID,
-        "default_candidate_centroids": DEFAULT_CANDIDATE_CENTROIDS,
-    }
+    return _shared_physical_bounds_policy()
 
 
 def required_semantic_families() -> tuple[str, ...]:

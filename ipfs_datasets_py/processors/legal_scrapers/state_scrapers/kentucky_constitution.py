@@ -94,7 +94,7 @@ def parse_kentucky_constitution_section_html(
         title_number="I",
         section_number=number,
         section_name=heading or f"Section {number}",
-        full_text=body[:14000],
+        full_text=body,
         source_url=source_url or KY_CONST_TOC,
         official_cite=f"Ky. Const. § {number}",
         metadata=StatuteMetadata(),

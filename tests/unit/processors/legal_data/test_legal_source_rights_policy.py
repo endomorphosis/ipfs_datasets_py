@@ -103,6 +103,7 @@ def test_public_authorizing_surfaces_have_no_override_parameters() -> None:
         policy.require_scope_rights: ("value", "record_id"),
         policy.admitted_records: ("value",),
         policy.require_live_source_evidence: (),
+        policy.require_live_source_rights_receipt: ("value",),
         policy.load_catalog_payload: (),
         policy.load_source_rights_catalog: (),
         policy.frontier_digest_sha256: (),
@@ -311,7 +312,8 @@ def test_fixture_has_one_fully_bound_conditional_positive(
         "ak-akleg-basis-statutory_text"
     ]
     record = conditional[0]
-    assert record.rights_disposition.value == "conditional"
+    # The crawl delay governs acquisition transport, not the public-law rights.
+    assert record.rights_disposition.value == "allowed"
     assert record.robots_access_disposition.value == "conditional"
     assert len(record.condition_evidence) == 1
     receipt = record.condition_evidence[0]
@@ -362,6 +364,49 @@ def test_typed_excluded_scopes_remain_present_and_noncontributing(
     assert set(denied) == excluded
     assert all("out_of_release_scope" in denied[record_id]["reason_codes"] for record_id in excluded)
     assert all(record.content_scope in ADMISSIBLE_CONTENT_SCOPES for record in admitted_records(fixture_catalog))
+
+
+def test_release_rights_basis_names_only_exact_state_statutory_text() -> None:
+    assert (
+        policy.STATE_STATUTORY_TEXT_RIGHTS_BASIS
+        == "public_law_no_state_copyright"
+    )
+    assert policy.DEFAULT_QUARANTINED_CONTENT_SCOPES == {
+        ContentScope.SITE_PRESENTATION,
+        ContentScope.ANNOTATIONS,
+        ContentScope.EDITORIAL_ENHANCEMENTS,
+        ContentScope.DATABASE_CONTENT,
+    }
+
+
+def test_live_receipt_gate_rejects_fabricated_exact_51_ids_before_catalog_use(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    canonical_path = tmp_path / "canonical-rights.json"
+    canonical_path.write_text('{"canonical":true}\n', encoding="utf-8")
+    monkeypatch.setattr(policy, "require_live_source_evidence", dict)
+    monkeypatch.setattr(
+        policy, "default_live_compliance_path", lambda: canonical_path
+    )
+    fabricated = {
+        "admitted_record_ids": [
+            f"{position:02d}-invented-statutory_text" for position in range(51)
+        ]
+    }
+    with pytest.raises(policy.LiveEvidenceRequiredError, match="not the canonical"):
+        policy.require_live_source_rights_receipt(fabricated)
+
+
+def test_live_receipt_gate_checks_current_policy_digest_before_receipt_shape(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def stale_policy():
+        raise policy.DigestMismatchError("policy_module_sha256 mismatch")
+
+    monkeypatch.setattr(policy, "require_live_source_evidence", stale_policy)
+    with pytest.raises(policy.DigestMismatchError, match="policy_module_sha256"):
+        policy.require_live_source_rights_receipt({})
 
 
 def test_fixture_success_is_structural_and_never_authorizing(

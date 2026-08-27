@@ -9,6 +9,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
+from ipfs_datasets_py.huggingface.protected_repo_guard import (
+    require_unprotected_or_runtime,
+)
+
 from .paths import (
     BM25_INDEX_DATASET_NAME,
     DEFAULT_HF_NAMESPACE,
@@ -194,6 +198,8 @@ def upload_dataset(
             "dry_run": True,
         }
 
+    require_unprotected_or_runtime(target.repo_id, method="create_repo")
+    require_unprotected_or_runtime(target.repo_id, method="upload_folder")
     from huggingface_hub import HfApi
 
     api = HfApi(token=token)

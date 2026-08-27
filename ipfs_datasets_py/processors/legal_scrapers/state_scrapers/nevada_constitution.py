@@ -71,7 +71,7 @@ def parse_nevada_constitution_html(
                     title_number=str(article_id),
                     section_number=number,
                     section_name=heading,
-                    full_text=raw[:14000],
+                    full_text=raw,
                     source_url=NV_CONST_URL,
                     official_cite=f"Nev. Const. art. {article_id}, § {number}",
                     metadata=StatuteMetadata(),

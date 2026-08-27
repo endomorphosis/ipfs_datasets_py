@@ -64,7 +64,7 @@ def parse_florida_constitution_html(
             if history_div is not None:
                 body_text = f"{body_text} {history_div.get_text(' ', strip=True)}"
             body_text = _WS.sub(" ", body_text).strip()
-            if len(body_text) < 40:
+            if not body_text:
                 continue
             if _RESERVED.search(catchline) or _RESERVED.search(body_text[:160]):
                 continue
@@ -79,7 +79,7 @@ def parse_florida_constitution_html(
                     title_number=art_id,
                     section_number=number,
                     section_name=heading[:200],
-                    full_text=body_text[:14000],
+                    full_text=body_text,
                     source_url=FL_CONST_URL,
                     official_cite=cite,
                     metadata=StatuteMetadata(),

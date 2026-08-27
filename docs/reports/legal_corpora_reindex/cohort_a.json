@@ -23,8 +23,8 @@
         "promoted_success": false
       },
       "content": {
-        "content_digest": "sha256:713a6a246428390f57aedc22518eaf200b3fdaaa0d776a78c242fb00b37cc68a",
-        "min_full_text_chars": 565,
+        "content_digest": "sha256:fd91d06247f56312ecd7bbd46924065f356b705f4afc0a189970bcae06f6f0b4",
+        "min_full_text_chars": 539,
         "non_placeholder_full_text": true,
         "official_urls": [
           "https://www.akleg.gov/basis/statutes.asp#01.05.006",
@@ -65,7 +65,7 @@
       "partial_checkpoint_promoted": false,
       "replay": {
         "closed": true,
-        "content_digest": "sha256:713a6a246428390f57aedc22518eaf200b3fdaaa0d776a78c242fb00b37cc68a",
+        "content_digest": "sha256:fd91d06247f56312ecd7bbd46924065f356b705f4afc0a189970bcae06f6f0b4",
         "first_frontier_digest": "sha256:bd0ebcd5b3bed29ff1e52ab0dd366dea5896b20a8f6ddca1a3f98516d1cbcc8c",
         "second_frontier_digest": "sha256:bd0ebcd5b3bed29ff1e52ab0dd366dea5896b20a8f6ddca1a3f98516d1cbcc8c"
       },
@@ -91,7 +91,7 @@
         "promoted_success": false
       },
       "content": {
-        "content_digest": "sha256:a7c2487b5cfdaf192212665aa593990510b6732046b541d83a262696e4c6df3e",
+        "content_digest": "sha256:8a555485f3ba9d66be4d6dbe3b6e0fa1e0dcdd673554cca814e29a8060deca6d",
         "min_full_text_chars": 591,
         "non_placeholder_full_text": true,
         "official_urls": [
@@ -133,7 +133,7 @@
       "partial_checkpoint_promoted": false,
       "replay": {
         "closed": true,
-        "content_digest": "sha256:a7c2487b5cfdaf192212665aa593990510b6732046b541d83a262696e4c6df3e",
+        "content_digest": "sha256:8a555485f3ba9d66be4d6dbe3b6e0fa1e0dcdd673554cca814e29a8060deca6d",
         "first_frontier_digest": "sha256:f7f145d05c3a529a3680aa5c98a95379fd70f75a9a0b9e2dace7099ce924e147",
         "second_frontier_digest": "sha256:f7f145d05c3a529a3680aa5c98a95379fd70f75a9a0b9e2dace7099ce924e147"
       },
@@ -297,7 +297,7 @@
   "shared_combined_write": false,
   "state_results": {
     "AK": {
-      "content_digest": "sha256:713a6a246428390f57aedc22518eaf200b3fdaaa0d776a78c242fb00b37cc68a",
+      "content_digest": "sha256:fd91d06247f56312ecd7bbd46924065f356b705f4afc0a189970bcae06f6f0b4",
       "failed_final": 0,
       "frontier_closed": true,
       "partial_checkpoint_promoted": false,
@@ -308,7 +308,7 @@
       "timeout_promoted_to_success": false
     },
     "AL": {
-      "content_digest": "sha256:a7c2487b5cfdaf192212665aa593990510b6732046b541d83a262696e4c6df3e",
+      "content_digest": "sha256:8a555485f3ba9d66be4d6dbe3b6e0fa1e0dcdd673554cca814e29a8060deca6d",
       "failed_final": 0,
       "frontier_closed": true,
       "partial_checkpoint_promoted": false,

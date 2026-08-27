@@ -3,11 +3,12 @@
 This module contains the scraper for South Carolina statutes from the official state legislative website.
 """
 
+import hashlib
 import json
 import re
 import ssl
 import urllib.request
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 from urllib.parse import urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -89,6 +90,492 @@ class SouthCarolinaScraper(BaseStateScraper):
         ("62", "South Carolina Probate Code"),
         ("63", "South Carolina Children's Code"),
     )
+    last_south_carolina_full_corpus_report: Dict[str, Any] = {}
+
+    async def scrape_all(
+        self,
+        legal_areas: Optional[List[str]] = None,
+        max_statutes: Optional[int] = None,
+        rate_limit_delay: float = 2.0,
+        hydrate_statute_text: bool = True,
+    ) -> List[NormalizedStatute]:
+        full_mode = self._full_corpus_enabled()
+        if full_mode and (max_statutes is not None or legal_areas):
+            raise RuntimeError(
+                "South Carolina strict full-corpus route refuses caps or "
+                "legal-area filters"
+            )
+        self.last_south_carolina_full_corpus_report = {}
+        rows = await super().scrape_all(
+            legal_areas=legal_areas,
+            max_statutes=max_statutes,
+            rate_limit_delay=rate_limit_delay,
+            hydrate_statute_text=hydrate_statute_text,
+        )
+        if full_mode and not self.last_south_carolina_full_corpus_report.get(
+            "closed"
+        ):
+            raise RuntimeError(
+                "South Carolina strict full-corpus route did not emit a closed report"
+            )
+        return rows
+
+    def _south_carolina_frontier_concurrency(self) -> int:
+        return max(
+            1,
+            min(
+                64,
+                self._env_int("STATE_SCRAPER_SC_FRONTIER_CONCURRENCY", default=16),
+            ),
+        )
+
+    def _south_carolina_residual_retry_attempts(self) -> int:
+        return max(
+            0,
+            min(
+                3,
+                self._env_int(
+                    "STATE_SCRAPER_SC_RESIDUAL_RETRY_ATTEMPTS",
+                    default=self._env_int(
+                        "STATE_SCRAPER_FRONTIER_RESIDUAL_RETRY_ATTEMPTS",
+                        default=1,
+                    ),
+                ),
+            ),
+        )
+
+    @staticmethod
+    def _is_valid_south_carolina_html(payload: bytes) -> bool:
+        lowered = bytes(payload or b"").lower()
+        return bool(
+            lowered
+            and b"<html" in lowered
+            and b"cloudflare" not in lowered[:12000]
+            and b"access denied" not in lowered[:12000]
+        )
+
+    def _south_carolina_evidence_context(
+        self,
+        *,
+        source_url: str,
+        payload: bytes,
+        transport_receipt: Any,
+        parser_input_envelope: Any,
+    ) -> Dict[str, Any]:
+        from ipfs_datasets_py.processors.legal_data.state_laws_source_provenance import (
+            canonicalize_state_law_transport_receipt,
+        )
+
+        digest = hashlib.sha256(bytes(payload)).hexdigest()
+        if not isinstance(transport_receipt, Mapping):
+            raise RuntimeError(
+                f"South Carolina acquisition omitted transport receipt: {source_url}"
+            )
+        receipt = canonicalize_state_law_transport_receipt(
+            transport_receipt,
+            official_url=source_url,
+            content_sha256=digest,
+        )
+        envelope = parser_input_envelope
+        envelope_body = getattr(envelope, "body", None)
+        if envelope_body is not None and bytes(envelope_body) != bytes(payload):
+            raise RuntimeError(
+                f"South Carolina parser envelope changed exact bytes: {source_url}"
+            )
+        if not isinstance(envelope, Mapping):
+            to_dict = getattr(envelope, "to_dict", None)
+            if callable(to_dict):
+                envelope = to_dict()
+        if isinstance(envelope, Mapping) and isinstance(
+            envelope.get("parser_input_envelope"), Mapping
+        ):
+            envelope = envelope["parser_input_envelope"]
+        parser_receipt_sha256 = ""
+        if isinstance(envelope, Mapping):
+            acquisition = envelope.get("acquisition")
+            acquisition_receipt = (
+                acquisition.get("receipt")
+                if isinstance(acquisition, Mapping)
+                else None
+            )
+            content = (
+                acquisition_receipt.get("content")
+                if isinstance(acquisition_receipt, Mapping)
+                else None
+            )
+            if (
+                not isinstance(acquisition, Mapping)
+                or str(acquisition.get("body_sha256") or "").lower() != digest
+                or not isinstance(acquisition_receipt, Mapping)
+                or str(acquisition_receipt.get("endpoint") or "").rstrip("/")
+                != source_url.rstrip("/")
+                or not isinstance(content, Mapping)
+                or str(content.get("sha256") or "").lower() != digest
+            ):
+                raise RuntimeError(
+                    "South Carolina parser envelope does not replay exact bytes: "
+                    f"{source_url}"
+                )
+            parser_receipt_sha256 = str(
+                acquisition_receipt.get("receipt_sha256") or ""
+            ).strip()
+        elif self._state_law_acquisition_ledger is not None:
+            raise RuntimeError(
+                f"South Carolina strict evidence omitted parser envelope: {source_url}"
+            )
+        return {
+            "content_sha256": digest,
+            "parser_input_receipt_sha256": parser_receipt_sha256,
+            "source_transport": str(receipt.get("source_transport") or ""),
+            "transport_receipt": receipt,
+        }
+
+    async def _fetch_south_carolina_frontier_batch(
+        self,
+        urls: Sequence[str],
+        *,
+        frontier_name: str,
+    ):
+        requested = list(urls)
+        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+            requested,
+            residual_retry_attempts=self._south_carolina_residual_retry_attempts(),
+            timeout_seconds=35,
+            headers={
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5",
+                "User-Agent": "ipfs-datasets-south-carolina-statutes/2.0",
+            },
+            content_validator=self._is_valid_south_carolina_html,
+            media_type="text/html",
+            max_concurrency=self._south_carolina_frontier_concurrency(),
+            prefer_direct=True,
+            common_crawl_domain_terms=(self.OFFICIAL_DOMAIN,),
+            common_crawl_url_terms=("/code/",),
+            common_crawl_mime_terms=("html",),
+            wayback_prefix_inventory=True,
+        )
+        vectors = (
+            batch.urls,
+            batch.payloads,
+            batch.errors,
+            batch.transport_receipts,
+            batch.parser_input_envelopes,
+        )
+        if any(len(vector) != len(requested) for vector in vectors):
+            raise RuntimeError(
+                f"South Carolina {frontier_name} returned unaligned acquisition rows"
+            )
+        if list(batch.urls) != requested:
+            raise RuntimeError(
+                f"South Carolina {frontier_name} changed URL order or identity"
+            )
+        failures = [
+            {"url": url, "error": error or "invalid HTML parser input"}
+            for url, payload, error in zip(
+                batch.urls,
+                batch.payloads,
+                batch.errors,
+                strict=True,
+            )
+            if error is not None or not self._is_valid_south_carolina_html(payload)
+        ]
+        if failures:
+            raise RuntimeError(
+                f"South Carolina {frontier_name} is incomplete after residual-only "
+                f"retries: {failures}"
+            )
+        batch.payloads = [bytes(payload) for payload in batch.payloads]
+        return batch
+
+    def _strict_title_links_from_master(self, payload: bytes) -> Dict[str, str]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError as exc:  # pragma: no cover
+            raise RuntimeError("BeautifulSoup is required") from exc
+        soup = BeautifulSoup(payload, "html.parser")
+        found: Dict[str, str] = {}
+        for anchor in soup.find_all("a", href=True):
+            absolute = urljoin(
+                self.OFFICIAL_ENTRY_URL,
+                str(anchor.get("href") or "").strip(),
+            ).rstrip("/")
+            match = self._TITLE_URL_RE.search(absolute)
+            if match is None or not self._host_is_official(absolute):
+                continue
+            number = str(int(match.group(1)))
+            expected_url = self.official_title_url(number)
+            if number in found and found[number] != expected_url:
+                raise RuntimeError(
+                    f"South Carolina master exposed conflicting title {number} URLs"
+                )
+            found[number] = expected_url
+        return found
+
+    def _strict_chapter_links_from_title(
+        self,
+        payload: bytes,
+        *,
+        title_number: str,
+    ) -> List[tuple[str, str]]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError as exc:  # pragma: no cover
+            raise RuntimeError("BeautifulSoup is required") from exc
+        expected_title = str(int(title_number))
+        soup = BeautifulSoup(payload, "html.parser")
+        page_text = self._normalize_legal_text(soup.get_text(" ", strip=True))
+        if re.search(
+            rf"\bTITLE\s+0*{re.escape(expected_title)}\b",
+            page_text[:800],
+            re.IGNORECASE,
+        ) is None:
+            raise RuntimeError(
+                f"South Carolina title page identity mismatch for title {expected_title}"
+            )
+        found: Dict[str, str] = {}
+        for anchor in soup.find_all("a", href=True):
+            absolute = urljoin(
+                f"{self.get_base_url()}/",
+                str(anchor.get("href") or "").strip(),
+            ).rstrip("/")
+            match = self._CHAPTER_URL_RE.search(absolute)
+            if match is None or not self._host_is_official(absolute):
+                continue
+            linked_title = str(int(match.group(1)))
+            if linked_title != expected_title:
+                raise RuntimeError(
+                    "South Carolina title page linked a foreign chapter identity: "
+                    f"title={expected_title} url={absolute}"
+                )
+            chapter = str(int(match.group(2)))
+            expected_url = (
+                f"{self.get_base_url()}/code/"
+                f"t{int(expected_title):02d}c{int(chapter):03d}.php"
+            )
+            if chapter in found and found[chapter] != expected_url:
+                raise RuntimeError(
+                    "South Carolina title page exposed conflicting chapter URLs: "
+                    f"title={expected_title} chapter={chapter}"
+                )
+            found[chapter] = expected_url
+        if not found:
+            raise RuntimeError(
+                f"South Carolina title {expected_title} exposed no chapter frontier"
+            )
+        return list(found.items())
+
+    async def _scrape_official_code_tree_strict(
+        self,
+        code_name: str,
+    ) -> List[NormalizedStatute]:
+        from .south_carolina_chapter import (
+            parse_south_carolina_chapter_html_strict,
+        )
+
+        title_urls = [self.official_title_url(number) for number, _ in self.OFFICIAL_TITLES]
+        catalog_urls = [self.OFFICIAL_ENTRY_URL, *title_urls]
+        catalog_batch = await self._fetch_south_carolina_frontier_batch(
+            catalog_urls,
+            frontier_name="master-and-title",
+        )
+        expected_titles = [str(int(number)) for number, _ in self.OFFICIAL_TITLES]
+        master_links = self._strict_title_links_from_master(catalog_batch.payloads[0])
+        if list(master_links) != expected_titles or list(master_links.values()) != title_urls:
+            raise RuntimeError(
+                "South Carolina master did not prove the exact ordered 63-title catalog"
+            )
+
+        catalog_evidence: List[Dict[str, Any]] = []
+        chapter_frontier: List[tuple[str, str, str, str]] = []
+        title_names = dict(self.OFFICIAL_TITLES)
+        for index, (url, payload, receipt, envelope) in enumerate(
+            zip(
+                catalog_batch.urls,
+                catalog_batch.payloads,
+                catalog_batch.transport_receipts,
+                catalog_batch.parser_input_envelopes,
+                strict=True,
+            )
+        ):
+            evidence = self._south_carolina_evidence_context(
+                source_url=url,
+                payload=payload,
+                transport_receipt=receipt,
+                parser_input_envelope=envelope,
+            )
+            catalog_evidence.append(
+                {
+                    "content_sha256": evidence["content_sha256"],
+                    "parser_input_receipt_sha256": evidence[
+                        "parser_input_receipt_sha256"
+                    ],
+                    "url": url,
+                }
+            )
+            if index == 0:
+                continue
+            title_number = expected_titles[index - 1]
+            for chapter_number, chapter_url in self._strict_chapter_links_from_title(
+                payload,
+                title_number=title_number,
+            ):
+                chapter_frontier.append(
+                    (
+                        title_number,
+                        title_names[title_number],
+                        chapter_number,
+                        chapter_url,
+                    )
+                )
+
+        chapter_identities = [
+            (title, chapter) for title, _name, chapter, _url in chapter_frontier
+        ]
+        chapter_urls = [url for _title, _name, _chapter, url in chapter_frontier]
+        if (
+            not chapter_urls
+            or len(chapter_identities) != len(set(chapter_identities))
+            or len(chapter_urls) != len(set(chapter_urls))
+        ):
+            raise RuntimeError(
+                "South Carolina exact chapter frontier is empty or duplicated"
+            )
+
+        chapter_batch = await self._fetch_south_carolina_frontier_batch(
+            chapter_urls,
+            frontier_name="chapter-leaf",
+        )
+        statutes: List[NormalizedStatute] = []
+        chapter_reports: List[Dict[str, Any]] = []
+        for (
+            (title_number, _title_name, chapter_number, chapter_url),
+            payload,
+            receipt,
+            envelope,
+        ) in zip(
+            chapter_frontier,
+            chapter_batch.payloads,
+            chapter_batch.transport_receipts,
+            chapter_batch.parser_input_envelopes,
+            strict=True,
+        ):
+            evidence = self._south_carolina_evidence_context(
+                source_url=chapter_url,
+                payload=payload,
+                transport_receipt=receipt,
+                parser_input_envelope=envelope,
+            )
+            chapter_rows, chapter_report = parse_south_carolina_chapter_html_strict(
+                payload.decode("utf-8", errors="strict"),
+                source_url=chapter_url,
+                code_name=code_name,
+                title_number=title_number,
+                chapter_number=chapter_number,
+            )
+            if chapter_report.get("closed") is not True:
+                raise RuntimeError(
+                    "South Carolina strict chapter parser left residuals: "
+                    f"url={chapter_url} report={chapter_report}"
+                )
+            for statute in chapter_rows:
+                statute.structured_data = {
+                    **dict(statute.structured_data or {}),
+                    "content_sha256": evidence["content_sha256"],
+                    "parser_input_receipt_sha256": evidence[
+                        "parser_input_receipt_sha256"
+                    ],
+                    "source_transport": evidence["source_transport"],
+                    "transport_receipt": dict(evidence["transport_receipt"]),
+                }
+                statutes.append(statute)
+            chapter_reports.append(
+                {
+                    **chapter_report,
+                    "content_sha256": evidence["content_sha256"],
+                    "source_url": chapter_url,
+                }
+            )
+
+        candidate_sections = sum(
+            int(report["candidate_sections"]) for report in chapter_reports
+        )
+        operative_sections = sum(
+            int(report["operative_sections"]) for report in chapter_reports
+        )
+        terminal_sections = sum(
+            int(report["terminal_sections"]) for report in chapter_reports
+        )
+        terminal_chapters = sum(
+            bool(report.get("chapter_disposition")) for report in chapter_reports
+        )
+        section_bearing_chapters = sum(
+            int(report["candidate_sections"]) > 0 for report in chapter_reports
+        )
+        canonical_keys = [
+            str((row.structured_data or {}).get("canonical_section_key") or "")
+            for row in statutes
+        ]
+        statute_ids = [str(row.statute_id or "") for row in statutes]
+        if (
+            len(chapter_reports)
+            != section_bearing_chapters + terminal_chapters
+            or candidate_sections != operative_sections + terminal_sections
+            or len(statutes) != operative_sections
+            or any(not key for key in canonical_keys)
+            or len(canonical_keys) != len(set(canonical_keys))
+            or len(statute_ids) != len(set(statute_ids))
+        ):
+            raise RuntimeError(
+                "South Carolina strict catalog/chapter/section completion algebra failed"
+            )
+
+        report = {
+            "candidate_sections": candidate_sections,
+            "catalog_batch_stats": dict(catalog_batch.stats or {}),
+            "catalog_evidence": catalog_evidence,
+            "chapter_batch_stats": dict(chapter_batch.stats or {}),
+            "chapter_count": len(chapter_reports),
+            "closed": True,
+            "expected_title_count": self.OFFICIAL_TITLE_COUNT,
+            "operative_sections": operative_sections,
+            "parser_residual_count": 0,
+            "schema_version": "south-carolina-strict-html-frontier-v1",
+            "section_bearing_chapter_count": section_bearing_chapters,
+            "terminal_chapter_count": terminal_chapters,
+            "terminal_sections": terminal_sections,
+            "title_count": len(expected_titles),
+        }
+        self.last_south_carolina_full_corpus_report = report
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="south-carolina:strict-frontier-complete",
+            force=True,
+            replace_existing_rows=True,
+            extra={
+                "codes_completed": 1,
+                "codes_total": 1,
+                "discovered_chapters": len(chapter_reports),
+                "discovered_sections": candidate_sections,
+                "operative_sections": operative_sections,
+                "south_carolina_closure_report": report,
+                "terminal_chapters_classified": terminal_chapters,
+                "terminal_sections_classified": terminal_sections,
+            },
+        )
+        return statutes
+
+    def _is_source_bound_operative_statute_record(
+        self,
+        statute: NormalizedStatute,
+    ) -> bool:
+        structured = dict(statute.structured_data or {})
+        return (
+            structured.get("source_kind")
+            == "official_south_carolina_code_html"
+            and structured.get("strict_source_closure") is True
+            and bool(str(structured.get("canonical_section_key") or "").strip())
+        )
     
     def get_base_url(self) -> str:
         """Return the base URL for South Carolina's legislative website."""
@@ -119,6 +606,13 @@ class SouthCarolinaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        if self._full_corpus_enabled():
+            if max_statutes is not None:
+                raise RuntimeError(
+                    "South Carolina strict full-corpus route refuses a statute cap"
+                )
+            return await self._scrape_official_code_tree_strict(code_name)
+
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
         probe_threshold = limit if limit is not None else 160
@@ -342,7 +836,7 @@ class SouthCarolinaScraper(BaseStateScraper):
                     chapter_number=chapter_number,
                     section_number=section_number,
                     section_name=section_name[:220],
-                    full_text=segment[:14000],
+                    full_text=segment,
                     legal_area=self._identify_legal_area(section_name or segment[:1000]),
                     source_url=f"{chapter_url}#{section_number}",
                     official_cite=f"S.C. Code Ann. § {section_number}",
@@ -531,6 +1025,18 @@ class SouthCarolinaScraper(BaseStateScraper):
         if normalized != "SC":
             raise ValueError(f"SouthCarolinaScraper cannot acquire {normalized}")
         html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        if self._full_corpus_enabled():
+            discovered = self._strict_title_links_from_master(html)
+            expected = [str(int(number)) for number, _name in self.OFFICIAL_TITLES]
+            if list(discovered) != expected or list(discovered.values()) != [
+                self.official_title_url(number) for number in expected
+            ]:
+                missing = sorted(set(expected).difference(discovered), key=int)
+                unexpected = sorted(set(discovered).difference(expected), key=int)
+                raise RuntimeError(
+                    "south carolina official master did not prove the exact "
+                    f"63-title catalog; missing={missing} unexpected={unexpected}"
+                )
         rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
         if len(rows) != self.OFFICIAL_TITLE_COUNT:
             raise RuntimeError(

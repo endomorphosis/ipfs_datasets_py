@@ -7,9 +7,43 @@ optional PDF, LLM, graph, vector, or proof dependencies.  Keep package import
 cheap by resolving public names from their owner module on first access.
 """
 
+import hashlib
 from importlib import import_module
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
+
+
+def _snapshot_state_law_producer_sources_at_package_import() -> dict[str, str]:
+    """Capture shared state-law producer bytes before lazy submodule imports."""
+
+    package_root = Path(__file__).resolve().parent
+    producer_names = (
+        "open_us_law_acquisition_coordinator.py",
+        "state_laws_completeness.py",
+        "state_laws_current_source_software.py",
+        "state_laws_legacy_v2_adapter.py",
+        "state_laws_multifetch_acquisition.py",
+        "state_laws_run_seal.py",
+        "state_laws_source_policy.py",
+        "state_laws_source_provenance.py",
+    )
+    snapshots: dict[str, str] = {}
+    for name in producer_names:
+        path = package_root / name
+        resolved = path.resolve()
+        if path.is_symlink() or not resolved.is_file():
+            continue
+        snapshots[str(resolved)] = hashlib.sha256(resolved.read_bytes()).hexdigest()
+    return snapshots
+
+
+# Package initialization necessarily precedes every normal submodule import,
+# so this immutable table binds the exact bytes available when those producer
+# modules were loaded rather than a later point-in-time disk observation.
+STATE_LAWS_PRODUCER_IMPORT_SOURCE_SHA256 = MappingProxyType(
+    _snapshot_state_law_producer_sources_at_package_import()
+)
 
 _LAZY_EXPORTS = {
     "BinderCourtConfig": (".exhibit_binder_templates", "BinderCourtConfig"),

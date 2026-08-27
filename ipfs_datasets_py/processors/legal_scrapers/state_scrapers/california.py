@@ -5,11 +5,14 @@ Scrapes laws from the California Legislative Information website
 """
 
 from typing import Any, List, Dict, Mapping, Optional, Sequence, Tuple
+import hashlib
+import inspect
 import json
 import os
 import re
 import ssl
 import urllib.request
+from pathlib import Path
 from urllib.parse import urljoin, urlparse, parse_qs
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -49,6 +52,7 @@ class CaliforniaScraper(BaseStateScraper):
         "Vehicle Code": "VEH",
         "Water Code": "WAT",
         "Welfare and Institutions Code": "WIC",
+        "California Constitution": "CONS",
     }
 
     _SECTION_DISPLAY_RE = re.compile(r"codes_displayText\.xhtml", re.IGNORECASE)
@@ -57,6 +61,19 @@ class CaliforniaScraper(BaseStateScraper):
     OFFICIAL_CODES_PATH = "/faces/codes.xhtml"
     OFFICIAL_ENTRY_URL = "https://leginfo.legislature.ca.gov/faces/codes.xhtml"
     MISSING_LINK_QUARANTINE_REASON = "missing_official_source_link"
+
+    def __init__(self, state_code: str, state_name: str):
+        super().__init__(state_code, state_name)
+        self._bulk_zip_cache_key: Optional[Tuple[str, int, int, str]] = None
+        self._bulk_zip_cache_loaded = False
+        self._bulk_zip_cache_limit: Optional[int] = None
+        self._bulk_zip_rows_by_code: Dict[str, List[NormalizedStatute]] = {}
+        self._bulk_zip_cache_error: Optional[Exception] = None
+        self._bulk_zip_provenance_cache_key: Optional[
+            Tuple[str, int, int, str, int, int, str]
+        ] = None
+        self._bulk_zip_provenance: Dict[str, Any] = {}
+        self._california_first_bulk_inventory_observation: Dict[str, Any] = {}
 
     def get_base_url(self) -> str:
         """Get base URL for California Legislative Information."""
@@ -121,27 +138,15 @@ class CaliforniaScraper(BaseStateScraper):
         official TOC/section tree.
         """
         limit = self._effective_scrape_limit(max_statutes, default=250)
-        from .california_constitution import (
-            configured_constitution_html_path,
-            parse_california_constitution_html,
-        )
-
-        constitution_path = configured_constitution_html_path()
-        if constitution_path is not None or "constitution" in str(code_name or "").lower():
-            if constitution_path is not None:
-                constitution_rows = parse_california_constitution_html(
-                    constitution_path.read_text(encoding="utf-8", errors="replace"),
-                    article_id="I",
-                    code_name=code_name or "California Constitution",
-                    max_statutes=limit,
-                )
-                if constitution_rows:
-                    return constitution_rows if limit is None else constitution_rows[: int(limit)]
         code_type = self.CODE_TYPE_MAP.get(code_name)
         if not code_type:
             self.logger.warning("No code type mapping for %s", code_name)
             return []
 
+        # A configured official pubinfo bundle is the single prospective
+        # source frontier for every family, including CONS.  Constitution HTML
+        # remains a scoped fallback only when that bundle yields no CONS row;
+        # it must never pre-empt the retained archive or leak into other codes.
         bulk = self._scrape_official_bulk_zip(
             code_name=code_name,
             code_type=code_type,
@@ -150,6 +155,30 @@ class CaliforniaScraper(BaseStateScraper):
         if bulk:
             admitted = bulk if limit is None else bulk[: int(limit)]
             return self._repair_or_type_missing_source_links(admitted)
+
+        if code_type == "CONS":
+            from .california_constitution import (
+                configured_constitution_html_path,
+                parse_california_constitution_html,
+            )
+
+            constitution_path = configured_constitution_html_path()
+            if constitution_path is not None:
+                constitution_rows = parse_california_constitution_html(
+                    constitution_path.read_text(
+                        encoding="utf-8",
+                        errors="replace",
+                    ),
+                    article_id="I",
+                    code_name=code_name or "California Constitution",
+                    max_statutes=limit,
+                )
+                if constitution_rows:
+                    return (
+                        constitution_rows
+                        if limit is None
+                        else constitution_rows[: int(limit)]
+                    )
 
         seeds: List[NormalizedStatute] = []
         # Seed path is for bounded probes only — never sole full-corpus path.
@@ -191,21 +220,623 @@ class CaliforniaScraper(BaseStateScraper):
         at a local copy from downloads.leginfo.legislature.ca.gov.
         """
 
-        from .california_bulk import configured_bulk_zip_path, parse_california_bulk_zip
+        from .california_bulk import (
+            configured_bulk_zip_path,
+            parse_california_bulk_zip_codes,
+        )
 
         zip_path = configured_bulk_zip_path()
         if zip_path is None:
             return []
+
+        requested_limit = (
+            None if max_statutes is None else max(0, int(max_statutes))
+        )
+        cache_key: Optional[Tuple[str, int, int, str]] = None
         try:
-            return parse_california_bulk_zip(
-                zip_path,
-                code_type=code_type,
-                max_statutes=max_statutes,
-                code_name=code_name,
+            stat = zip_path.stat()
+            bundle_provenance = self._retain_official_bulk_zip_parser_input(zip_path)
+            bundle_digest = str(
+                bundle_provenance.get("content_sha256") or ""
+            ).strip().lower()
+            parser_zip_path = zip_path
+            retained_body_path = str(
+                bundle_provenance.get("retained_body_path") or ""
+            ).strip()
+            if retained_body_path:
+                parser_zip_path = Path(retained_body_path)
+            cache_key = (
+                str(zip_path.resolve()),
+                int(stat.st_size),
+                int(stat.st_mtime_ns),
+                bundle_digest,
             )
+            cache_satisfies_limit = self._bulk_zip_cache_limit is None or (
+                requested_limit is not None
+                and requested_limit <= self._bulk_zip_cache_limit
+            )
+            if not (
+                self._bulk_zip_cache_loaded
+                and self._bulk_zip_cache_key == cache_key
+                and cache_satisfies_limit
+            ):
+                code_names = {
+                    code_type: name for name, code_type in self.CODE_TYPE_MAP.items()
+                }
+                inventory_observer = None
+                if (
+                    requested_limit is None
+                    and getattr(self, "_state_law_acquisition_ledger", None)
+                    is not None
+                ):
+                    inventory_observer = (
+                        self._retain_california_bulk_inventory_observation
+                    )
+                self._bulk_zip_rows_by_code = parse_california_bulk_zip_codes(
+                    parser_zip_path,
+                    code_types=tuple(code_names),
+                    max_statutes=requested_limit,
+                    code_names=code_names,
+                    bundle_provenance=bundle_provenance or None,
+                    inventory_observer=inventory_observer,
+                    fail_on_unusable=inventory_observer is not None,
+                )
+                self._bulk_zip_cache_key = cache_key
+                self._bulk_zip_cache_limit = requested_limit
+                self._bulk_zip_cache_loaded = True
+                self._bulk_zip_cache_error = None
+                self.logger.info(
+                    "California official bulk zip cached %s code families from one table pass",
+                    len(self._bulk_zip_rows_by_code),
+                )
+            elif self._bulk_zip_cache_error is not None:
+                raise self._bulk_zip_cache_error
+            rows = list(
+                self._bulk_zip_rows_by_code.get(str(code_type or "").upper(), ())
+            )
+            return rows if requested_limit is None else rows[:requested_limit]
         except Exception as exc:
+            # Cache a deterministic failure for this exact local archive so a
+            # 30-code crawl does not repeat the same expensive parse.  A file
+            # size or mtime change produces a new key and retries normally.
+            try:
+                if cache_key is None:
+                    stat = zip_path.stat()
+                    cache_key = (
+                        str(zip_path.resolve()),
+                        int(stat.st_size),
+                        int(stat.st_mtime_ns),
+                        "",
+                    )
+                self._bulk_zip_cache_key = cache_key
+                self._bulk_zip_cache_limit = requested_limit
+                self._bulk_zip_cache_loaded = True
+                self._bulk_zip_rows_by_code = {}
+                self._bulk_zip_cache_error = exc
+            except OSError:
+                pass
             self.logger.warning("California official bulk zip failed: %s", exc)
+            if getattr(self, "_state_law_acquisition_ledger", None) is not None:
+                raise
             return []
+
+    def _retain_official_bulk_zip_parser_input(
+        self,
+        zip_path: Any,
+    ) -> Dict[str, Any]:
+        """Stream one verified official pubinfo ZIP into the shared ledger.
+
+        The cache key includes both archive and sidecar metadata plus the
+        evidence root.  A 30-family run therefore retains the 1+ GB archive
+        once, while a changed file, receipt, or ledger is independently
+        revalidated before parser admission.
+        """
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            return {}
+
+        from .california_bulk import (
+            configured_bulk_zip_receipt_path,
+            load_california_bulk_transport_receipt,
+        )
+
+        archive_path = Path(zip_path).expanduser()
+        receipt_path = configured_bulk_zip_receipt_path(archive_path)
+        archive_stat = archive_path.stat()
+        receipt_stat = receipt_path.stat()
+        cache_key = (
+            str(archive_path.resolve()),
+            int(archive_stat.st_size),
+            int(archive_stat.st_mtime_ns),
+            str(receipt_path.resolve()),
+            int(receipt_stat.st_size),
+            int(receipt_stat.st_mtime_ns),
+            str(getattr(ledger, "jurisdiction_root", "")),
+        )
+        if (
+            self._bulk_zip_provenance_cache_key == cache_key
+            and self._bulk_zip_provenance
+        ):
+            return dict(self._bulk_zip_provenance)
+
+        receipt = load_california_bulk_transport_receipt(
+            archive_path,
+            receipt_path=receipt_path,
+        )
+        official_url = str(receipt["official_url"])
+        retained = ledger.retain_parser_input_file(
+            official_url=official_url,
+            source_path=archive_path,
+            transport_receipt=receipt,
+            retrieved_at=str(receipt["retrieved_at"]),
+            response_status=int(receipt["response_status"]),
+            media_type=str(receipt["media_type"]),
+            sanitized_request={"method": "GET", "url": official_url},
+        )
+        content = retained.receipt.content
+        if content is None:
+            raise RuntimeError(
+                "California bulk ZIP retention omitted its content address"
+            )
+        provenance = {
+            "byte_size": int(content.byte_size),
+            "content_sha256": str(content.sha256),
+            "media_type": str(receipt["media_type"]),
+            "official_url": official_url,
+            "retrieved_at": str(receipt["retrieved_at"]),
+            # Parser reads the immutable retained object, not the mutable
+            # operator download path that was just verified.
+            "retained_body_path": str(retained.body_path),
+            "transport_receipt": dict(retained.transport_receipt),
+        }
+        self._bulk_zip_provenance_cache_key = cache_key
+        self._bulk_zip_provenance = provenance
+        return dict(provenance)
+
+    @staticmethod
+    def _validate_california_bulk_inventory(
+        value: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        """Replay the deterministic inventory digest and core source binding."""
+
+        from .california_bulk import CALIFORNIA_BULK_INVENTORY_SCHEMA
+
+        inventory = dict(value)
+        if inventory.get("schema_version") != CALIFORNIA_BULK_INVENTORY_SCHEMA:
+            raise RuntimeError("California bulk inventory has the wrong schema")
+        if str(inventory.get("jurisdiction") or "").strip().upper() != "CA":
+            raise RuntimeError("California bulk inventory changed jurisdiction")
+        declared = str(inventory.pop("inventory_sha256", "") or "").strip().lower()
+        if re.fullmatch(r"[a-f0-9]{64}", declared) is None:
+            raise RuntimeError("California bulk inventory lacks an exact digest")
+        from .california_bulk import _canonical_json_sha256
+
+        computed = _canonical_json_sha256(inventory)
+        if declared != computed:
+            raise RuntimeError("California bulk inventory digest does not replay")
+        inventory["inventory_sha256"] = declared
+        source_ids = inventory.get("source_record_ids")
+        if not isinstance(source_ids, list) or any(
+            not isinstance(item, str) or not item.strip() for item in source_ids
+        ):
+            raise RuntimeError(
+                "California bulk inventory source_record_ids must be exact strings"
+            )
+        try:
+            source_record_count = int(inventory.get("source_record_count"))
+        except (TypeError, ValueError) as exc:
+            raise RuntimeError(
+                "California bulk inventory source-record count is invalid"
+            ) from exc
+        if source_record_count != len(source_ids):
+            raise RuntimeError(
+                "California bulk inventory source-record count does not replay"
+            )
+        return inventory
+
+    def _retain_california_bulk_inventory_observation(
+        self,
+        inventory: Mapping[str, Any],
+    ) -> None:
+        """Immutably seal the first complete table observation before output."""
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError(
+                "California bulk inventory requires an attached acquisition ledger"
+            )
+        verified = self._validate_california_bulk_inventory(inventory)
+        bundle = verified.get("bundle")
+        if not isinstance(bundle, Mapping):
+            raise RuntimeError("California bulk inventory lacks its bundle binding")
+        expected_digest = str(
+            self._bulk_zip_provenance.get("content_sha256") or ""
+        ).strip().lower()
+        if str(bundle.get("content_sha256") or "").strip().lower() != expected_digest:
+            raise RuntimeError(
+                "California bulk inventory changed the retained bundle digest"
+            )
+
+        from ...legal_data.open_us_law_acquisition_coordinator import (
+            canonical_json_bytes,
+        )
+        from ....retrieval.hf_graphrag.artifacts import atomic_write_bytes
+
+        payload = canonical_json_bytes(verified)
+        digest = str(verified["inventory_sha256"])
+        observation_dir = (
+            Path(ledger.frontiers_dir)
+            / "california-pubinfo"
+            / "first"
+            / digest
+        )
+        observation_dir.mkdir(parents=True, exist_ok=True)
+        observation_path = observation_dir / "inventory.json"
+        if observation_path.exists():
+            if (
+                observation_path.is_symlink()
+                or not observation_path.is_file()
+                or observation_path.read_bytes() != payload
+            ):
+                raise RuntimeError(
+                    "immutable California bulk inventory observation conflicts"
+                )
+        else:
+            atomic_write_bytes(observation_path, payload)
+        relative_path = observation_path.resolve().relative_to(
+            Path(ledger.jurisdiction_root).resolve()
+        )
+        self._california_first_bulk_inventory_observation = {
+            "inventory_sha256": digest,
+            "relative_path": relative_path.as_posix(),
+        }
+
+    def _load_california_first_bulk_inventory(self) -> Dict[str, Any]:
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        observation = self._california_first_bulk_inventory_observation
+        if ledger is None or not observation:
+            raise RuntimeError(
+                "California first bulk inventory was not retained before parsing"
+            )
+        relative_path = str(observation.get("relative_path") or "").strip()
+        path = Path(ledger.jurisdiction_root) / relative_path
+        if path.is_symlink() or not path.is_file():
+            raise RuntimeError("California first bulk inventory cannot be replayed")
+        try:
+            path.resolve().relative_to(Path(ledger.jurisdiction_root).resolve())
+            payload = json.loads(path.read_text(encoding="utf-8", errors="strict"))
+        except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+            raise RuntimeError(
+                "California first bulk inventory cannot be replayed"
+            ) from exc
+        if not isinstance(payload, Mapping):
+            raise RuntimeError("California first bulk inventory is not an object")
+        verified = self._validate_california_bulk_inventory(payload)
+        if str(verified["inventory_sha256"]) != str(
+            observation.get("inventory_sha256") or ""
+        ):
+            raise RuntimeError("California first bulk inventory identity changed")
+        return verified
+
+    @staticmethod
+    def _california_inventory_frontier(
+        inventory: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        """Project a compact exact frontier without repeating all source IDs."""
+
+        frontier = inventory.get("frontier")
+        table_member = inventory.get("table_member")
+        bundle = inventory.get("bundle")
+        disposition = inventory.get("disposition")
+        if not all(
+            isinstance(item, Mapping)
+            for item in (frontier, table_member, bundle, disposition)
+        ):
+            raise RuntimeError("California bulk inventory lacks closure material")
+        return {
+            "admitted_source_record_count": int(
+                inventory.get("admitted_source_record_count") or 0
+            ),
+            "admitted_source_record_ids_sha256": str(
+                inventory.get("admitted_source_record_ids_sha256") or ""
+            ),
+            "bundle_byte_size": int(bundle.get("byte_size") or 0),
+            "bundle_closed": frontier.get("bundle_closed") is True,
+            "bundle_content_sha256": str(bundle.get("content_sha256") or ""),
+            "closed": frontier.get("closed") is True,
+            "disposition": dict(disposition),
+            "enumerator_closed": frontier.get("enumerator_closed") is True,
+            "expected_index_units": int(
+                frontier.get("expected_index_units") or 0
+            ),
+            "inventory_sha256": str(inventory.get("inventory_sha256") or ""),
+            "scope_closed": frontier.get("scope_closed") is True,
+            "source_record_count": int(inventory.get("source_record_count") or 0),
+            "source_record_ids_sha256": str(
+                inventory.get("source_record_ids_sha256") or ""
+            ),
+            "table_member_byte_size": int(table_member.get("byte_size") or 0),
+            "table_member_content_sha256": str(
+                table_member.get("content_sha256") or ""
+            ),
+            "table_member_path": str(table_member.get("path") or ""),
+            "table_row_count": int(inventory.get("table_row_count") or 0),
+            "unusable_row_count": int(inventory.get("unusable_row_count") or 0),
+            "unvisited_continuation_links": [],
+            "visited_index_units": int(
+                frontier.get("visited_index_units") or 0
+            ),
+        }
+
+    async def produce_state_law_frontier_closure(
+        self,
+        *,
+        canonical_output_projection: Mapping[str, Any],
+    ) -> Optional[Path]:
+        """Replay the retained ZIP and prove exact source-ID/output parity."""
+
+        from ...legal_data.open_us_law_acquisition_coordinator import (
+            canonical_json_bytes,
+        )
+        from ...legal_data.state_laws_completeness import (
+            closed_jurisdiction_receipt,
+        )
+        from .california_bulk import inventory_california_bulk_zip
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError(
+                "California frontier closure requires an attached acquisition ledger"
+            )
+        first = self._load_california_first_bulk_inventory()
+        first_frontier_raw = first.get("frontier")
+        first_disposition = first.get("disposition")
+        if (
+            not isinstance(first_frontier_raw, Mapping)
+            or first_frontier_raw.get("closed") is not True
+            or first_frontier_raw.get("bundle_closed") is not True
+            or not isinstance(first_disposition, Mapping)
+            or int(first.get("unusable_row_count") or 0) != 0
+            or int(first_disposition.get("failed_final") or 0) != 0
+            or int(first_disposition.get("quarantined") or 0) != 0
+        ):
+            raise RuntimeError(
+                "California first bulk inventory has unresolved source records"
+            )
+
+        retained_body_path = str(
+            self._bulk_zip_provenance.get("retained_body_path") or ""
+        ).strip()
+        if not retained_body_path:
+            raise RuntimeError("California retained bulk object path is missing")
+        official_source_url = str(
+            self._bulk_zip_provenance.get("official_url") or ""
+        ).strip()
+        replayed_input = ledger.replay_retained_parser_input_file(
+            official_url=official_source_url,
+            sanitized_request={"method": "GET", "url": official_source_url},
+        )
+        if replayed_input is None or replayed_input.receipt.content is None:
+            raise RuntimeError(
+                "California retained bulk object cannot be independently replayed"
+            )
+        if str(replayed_input.receipt.content.sha256) != str(
+            self._bulk_zip_provenance.get("content_sha256") or ""
+        ):
+            raise RuntimeError("California retained bundle digest changed on replay")
+        replayed = await asyncio.to_thread(
+            inventory_california_bulk_zip,
+            Path(replayed_input.body_path),
+            bundle_provenance=dict(self._bulk_zip_provenance),
+        )
+        replayed = self._validate_california_bulk_inventory(replayed)
+        if canonical_json_bytes(first) != canonical_json_bytes(replayed):
+            raise RuntimeError(
+                "California first and replayed LAW_SECTION_TBL inventories differ"
+            )
+
+        raw_canonical_keys = canonical_output_projection.get("canonical_keys")
+        if not isinstance(raw_canonical_keys, Sequence) or isinstance(
+            raw_canonical_keys, (str, bytes, bytearray)
+        ):
+            raise RuntimeError(
+                "California canonical output projection lacks exact identities"
+            )
+        canonical_keys = [str(item).strip() for item in raw_canonical_keys]
+        if not canonical_keys or any(not item for item in canonical_keys):
+            raise RuntimeError("California canonical output projection is empty")
+        if len(canonical_keys) != len(set(canonical_keys)):
+            raise RuntimeError(
+                "California canonical output projection collapses source identities"
+            )
+        source_record_ids = [
+            str(item) for item in first.get("source_record_ids") or []
+        ]
+        if len(source_record_ids) != len(set(source_record_ids)):
+            raise RuntimeError("California official source IDs are not unique")
+        expected_canonical_keys = [
+            f"urn:state:ca:statute:CA:{source_record_id}"
+            for source_record_id in source_record_ids
+        ]
+        missing = sorted(set(expected_canonical_keys) - set(canonical_keys))
+        extra = sorted(set(canonical_keys) - set(expected_canonical_keys))
+        if (
+            len(canonical_keys) != len(expected_canonical_keys)
+            or missing
+            or extra
+        ):
+            raise RuntimeError(
+                "California canonical identities do not exactly match admitted "
+                "LAW_SECTION_TBL source IDs: "
+                f"expected={len(expected_canonical_keys)} "
+                f"actual={len(canonical_keys)} "
+                f"missing={missing[:3]} extra={extra[:3]}"
+            )
+
+        compact_frontier = self._california_inventory_frontier(first)
+        replayed_frontier = self._california_inventory_frontier(replayed)
+        row_count = len(canonical_keys)
+        disposition = dict(first_disposition)
+        completion = closed_jurisdiction_receipt(
+            "CA",
+            discovered=int(disposition["discovered"]),
+            fetched=int(disposition["fetched"]),
+            excluded=int(disposition["excluded"]),
+            quarantined=int(disposition["quarantined"]),
+            failed_final=int(disposition["failed_final"]),
+            duplicates=int(disposition.get("duplicates") or 0),
+            source_domain="downloads.leginfo.legislature.ca.gov",
+            canonical_keys=canonical_keys,
+            derived_keys=canonical_keys,
+        )
+        boundaries = first.get("boundary_probes")
+        if not isinstance(boundaries, Mapping):
+            raise RuntimeError("California bulk inventory lacks boundary probes")
+        completion.update(
+            {
+                "boundary_probes": {
+                    "bundle_total": 1,
+                    "first_hierarchy_unit": expected_canonical_keys[0],
+                    "first_table_row_sha256": boundaries.get(
+                        "first_table_row_sha256"
+                    ),
+                    "last_hierarchy_unit": expected_canonical_keys[-1],
+                    "last_table_row_sha256": boundaries.get(
+                        "last_table_row_sha256"
+                    ),
+                    "pagination_total": int(first.get("table_row_count") or 0),
+                },
+                "canonical_row_count": row_count,
+                "frontier": compact_frontier,
+                "legal_as_of": str(
+                    self._bulk_zip_provenance.get("retrieved_at") or ""
+                ),
+                "observed_at": str(
+                    self._bulk_zip_provenance.get("retrieved_at") or ""
+                ),
+                "replay": {
+                    "closed": True,
+                    "first_frontier_digest": str(first["inventory_sha256"]),
+                    "second_frontier_digest": str(replayed["inventory_sha256"]),
+                },
+                "rights": {
+                    "basis": "public_law_no_state_copyright",
+                    "decision": "admit",
+                    "scope": "statutory_text",
+                },
+                "source_frontier_inventory": {
+                    "inventory_relative_path": str(
+                        self._california_first_bulk_inventory_observation.get(
+                            "relative_path"
+                        )
+                        or ""
+                    ),
+                    "inventory_sha256": str(first["inventory_sha256"]),
+                    "source_record_count": len(source_record_ids),
+                    "source_record_ids_sha256": str(
+                        first.get("source_record_ids_sha256") or ""
+                    ),
+                },
+                "transport": {
+                    "fixture": False,
+                    "kind": "retained_official_pubinfo_zip",
+                    "synthetic": False,
+                },
+            }
+        )
+        bundle_digest = str(
+            self._bulk_zip_provenance.get("content_sha256") or ""
+        ).strip().lower()
+        acquisition_path_ids = self._catalog_acquisition_path_ids_for_source(
+            official_source_url
+        )
+        source_file = inspect.getsourcefile(type(self))
+        source_version_digest = hashlib.sha256(
+            Path(source_file).read_bytes()
+            if source_file and Path(source_file).is_file()
+            else (
+                f"{type(self).__module__}.{type(self).__qualname__}"
+            ).encode("utf-8")
+        ).hexdigest()
+        return self.retain_state_law_frontier_closure_projection(
+            completion,
+            replayed_frontier=replayed_frontier,
+            canonical_output_projection=canonical_output_projection,
+            release_point=f"sha256:{bundle_digest}",
+            official_source_url=official_source_url,
+            acquisition_path_ids=acquisition_path_ids,
+            observation_time=str(
+                self._bulk_zip_provenance.get("retrieved_at") or ""
+            ),
+            source_software_version=(
+                f"{type(self).__module__}.{type(self).__qualname__}"
+                f"@sha256:{source_version_digest}"
+            ),
+        )
+
+    def _enrich_statute_structure(
+        self,
+        statute: NormalizedStatute,
+    ) -> NormalizedStatute:
+        """Carry exact pubinfo bundle/member provenance into canonical JSON-LD."""
+
+        enriched = super()._enrich_statute_structure(statute)
+        structured = dict(enriched.structured_data or {})
+        if str(structured.get("source_kind") or "").strip() != (
+            "official_california_bulk_caml"
+        ):
+            return enriched
+
+        digest = str(structured.get("content_sha256") or "").strip().lower()
+        source_record_id = str(
+            structured.get("source_record_id") or ""
+        ).strip()
+        receipt = structured.get("transport_receipt")
+        source_bundle = structured.get("source_bundle")
+        table_member = structured.get("source_table_member")
+        body_member = structured.get("source_body_member")
+        jsonld = structured.get("jsonld")
+        provenance_complete = bool(
+            re.fullmatch(r"[a-f0-9]{64}", digest)
+            and source_record_id
+            and isinstance(receipt, Mapping)
+            and isinstance(source_bundle, Mapping)
+            and isinstance(table_member, Mapping)
+            and isinstance(body_member, Mapping)
+            and isinstance(jsonld, Mapping)
+        )
+        if not provenance_complete:
+            if getattr(self, "_state_law_acquisition_ledger", None) is not None:
+                raise RuntimeError(
+                    "California bulk row lacks retained bundle/member provenance"
+                )
+            return enriched
+
+        jsonld_payload = dict(jsonld)
+        prior_provenance = jsonld_payload.get("provenance")
+        provenance = (
+            dict(prior_provenance)
+            if isinstance(prior_provenance, Mapping)
+            else {}
+        )
+        provenance.update(
+            {
+                "content_sha256": digest,
+                "source_body_member": dict(body_member),
+                "source_bundle": dict(source_bundle),
+                "source_record_id": source_record_id,
+                "source_table_member": dict(table_member),
+                "source_table_row_number": int(
+                    structured.get("source_table_row_number") or 0
+                ),
+                "transport_receipt": dict(receipt),
+            }
+        )
+        jsonld_payload["provenance"] = provenance
+        structured["jsonld"] = jsonld_payload
+        enriched.structured_data = structured
+        return enriched
 
     def official_code_toc_url(self, code_type: str) -> str:
         """Return the official LegInfo TOC URL for one California code family."""
@@ -604,7 +1235,7 @@ class CaliforniaScraper(BaseStateScraper):
             code_name=code_name,
             section_number=section_number,
             section_name=section_name,
-            full_text=body[:24000],
+            full_text=body,
             source_url=section_url,
             legal_area=legal_area,
             official_cite=f"Cal. {code_name} § {section_number}",
@@ -712,54 +1343,17 @@ class CaliforniaScraper(BaseStateScraper):
         pages are first-party HTML, so a direct bounded request plus the
         shared persistent cache is safer for long daemon runs.
         """
-        cached = await self._load_page_bytes_from_any_cache(url)
-        if cached:
-            return cached
-
         timeout = max(5, int(timeout_seconds or 45))
-
-        def _request() -> bytes:
-            try:
-                import requests
-
-                response = requests.get(
-                    url,
-                    headers={
-                        "User-Agent": "ipfs-datasets-california-code-scraper/2.0",
-                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-                    },
-                    timeout=(min(10, timeout), timeout),
-                )
-                if int(response.status_code or 0) != 200:
-                    return b""
-                return bytes(response.content or b"")
-            except Exception:
-                return b""
-
-        try:
-            payload = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
-        except TimeoutError:
-            self._record_fetch_event(
-                provider="requests_direct",
-                success=False,
-                error="california_direct_timeout",
-            )
-            return b""
-
-        self._record_fetch_event(provider="requests_direct", success=bool(payload))
-        if payload:
-            await self._cache_successful_page_fetch(
-                url=url,
-                payload=payload,
-                provider="requests_direct",
-            )
-            return payload
-
-        # Keep the generic recovery hook available for tests and for real
-        # blocked/archived California pages; direct is merely the first try.
-        return await self._fetch_page_content_with_archival_fallback(
+        return await self._fetch_parser_input_with_transport(
             url,
             timeout_seconds=timeout,
+            headers={
+                "User-Agent": "ipfs-datasets-california-code-scraper/2.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            },
+            allow_archival_fallback=True,
+            media_type="text/html",
+            provider="requests_direct",
         )
 
 

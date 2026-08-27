@@ -67,7 +67,7 @@ def parse_vermont_constitution_html(
                     title_number=str(chapter_id),
                     section_number=number,
                     section_name=heading,
-                    full_text=raw[:14000],
+                    full_text=raw,
                     source_url=VT_CONST_URL,
                     official_cite=cite,
                     metadata=StatuteMetadata(),

@@ -28,15 +28,15 @@
     "admitted_section_count": 102,
     "bm25_document_count": 102,
     "bm25_document_shard_count": 51,
-    "bm25_index_root_cid": "sha256:1aee7d5e9cae8f8f82af0b43ed4eafe56e41c0ec3dc8d5327824e0e7160c85fc",
-    "bm25_posting_count": 3462,
-    "bm25_term_count": 297,
+    "bm25_index_root_cid": "sha256:42e17b423b4657910f128ecac204e64038642bf78ed07194aec75648ff8b1197",
+    "bm25_posting_count": 3457,
+    "bm25_term_count": 296,
     "bm25_term_shard_count": 1,
     "checkpoint_path_kind": "atomic_json",
     "config_digest": "b8a7999c47c7114efd35c15ba656fd09117943e94a2a04725921420dce906f39",
-    "corpus_root_cid": "sha256:3dfbc3d874658904bafedb3fd5225fce3b04fcda292fa1a68b23665b10e73049",
+    "corpus_root_cid": "sha256:e955645bf6e3314b743df668b7f91a8a09964deb9086a6938cb4a25ab3ef08aa",
     "embedder_kind": "local_deterministic_projection",
-    "graph_cid": "sha256:a2627e7a3927e33e337cc7f9a6e86deeb7395701af68d71d556f1c144fb7ce1f",
+    "graph_cid": "sha256:22786431ddb482fe0ce795157da701d642a3290a9492f93ae41e3b1be780b257",
     "graph_edge_count": 1124,
     "graph_node_count": 842,
     "graph_unresolved_citation_count": 1,
@@ -97,8 +97,8 @@
     "mode": "full",
     "real_inference": false,
     "vector_cluster_count": 1,
-    "vector_membership_hash": "sha256:4b52813d5f3fb51c63c5d87d00d84b989322db952aa0d7a3078ac678045ff05e",
-    "vector_root_cid": "sha256:e8dc56ac65bf017fb47103e2e7ebed6b666816acdc54ee11d258abb199004574",
+    "vector_membership_hash": "sha256:5256a0f9cb1dcb1b490149ec466d7b7480c031ab042712df08551b4ba6767eac",
+    "vector_root_cid": "sha256:f535e8a16c054a66b6157416030ffa52894253feb2d45cb8fa841f8a0460f81a",
     "vector_row_count": 102,
     "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
   },
@@ -131,14 +131,14 @@
   "dataset_repo_id": "justicedao/ipfs_state_laws",
   "dependencies": {
     "LCR-023": {
-      "byte_count": 24550,
-      "digest_sha256": "b3d0ce8118b41292a684a1c2935a2b5dddd5122cd260b6e80ef19eb44f528de3",
+      "byte_count": 180428,
+      "digest_sha256": "59725b41295173a3441c5f9d8b3ae94fbc54e0ac9c612b473beca532b3b4b047",
       "path": "docs/reports/legal_corpora_reindex/full_scrape_acceptance.json",
       "task_id": "LCR-023"
     },
     "LCR-024": {
-      "byte_count": 18474,
-      "digest_sha256": "dcf4dc89843c69c89eb612ad2983eeccc873003c2feb1670f36b2c608d62f3ff",
+      "byte_count": 18422,
+      "digest_sha256": "4389211f2812a27edaad1bbbf5d43837ea067f0b62ece165a848f3077bd486c3",
       "path": "docs/reports/legal_corpora_reindex/admission.json",
       "task_id": "LCR-024"
     },
@@ -296,18 +296,18 @@
   },
   "live_evidence": {
     "cohort_receipt_sha256": {
-      "A": "63baabdf2cb5e26f2365b706ad7d0a19c8dea5f82ec3e819097f52155fbf5b06",
-      "B": "f5fe77089031c2636f213de7554f09438885b23e4ab33b9f1d68a53c552975cf",
-      "C": "b5fa54683e5a2e84ec44b4e851e0625bc9a71c140f793b066789a391fcbffc8b",
+      "A": "12398402e2723757fd109f7d98721c3c3e0dc0b01744fd1de054b9c938745682",
+      "B": "66a57c062be94f4a6dbe56df85bd210c5f7b053757099e1eaeda71ef9d926b76",
+      "C": "eee372b1ed1b50283dd681e67fc1b9bba3b558837a54b798ef7e75212daccfd5",
       "D": "ca67cad6b91a5f5e3c43eb7f04cf3a33118fda8d81746c32d9e222e3c64bba15",
-      "E": "8b11b6f6f67b99f018e7b543943ebfd5ca663396cd3e58492f759f0bb1f5a459",
+      "E": "ea410c4f4b54152b6147e552018a2f6348df2c64dafc6fd8737b30af2e6930ab",
       "F": "4f7b16384c97e1e002b809d37fdf209f2c1489045086c39d4f3e25fc5106c8d8",
-      "G": "18a29f4598bb7c955f097261ea5a85e47caa1329db0a4fe3a02de2c485d311b3",
+      "G": "e429fd98827043e0f7284f4c7563b7557516fa763ceadd92c8cda89ccbb1fb97",
       "H": "7ecdbe5259db410419f47ff5254f24eaf563460b699a6d47d2a33077d1a40835",
       "I": "7382e249788530459941f4f7fb3934c1dc2385972a6ba69bbeee5e8fc9c88621",
-      "J": "04c66d51fd57108d1adc04bdb2be634c0d13d901bac433f00c97865d3bc78364",
-      "K": "bd6bb0f672f34248b05b4dbbb73a4a97adfe357bc231aeb8380d824f344b9362",
-      "L": "4aa2066c4029f8073adac1ea97e899732982c325d5b35d87f2dfdb674a79793c",
+      "J": "3b855d24ccb825a9a17efd1b64213ce10c249f12c7e627f1d3861e3acbf959e6",
+      "K": "502e5eb243b0016003e28c96d78ca1852c5b629e20fd77db63e287a16bff4118",
+      "L": "e4dd3540a9ad831e68ee94098c529d81180363067d837324647e2f771cbdaaf7",
       "M": "c919dbaef6128efa30611c96398c45fbd4be5a98e76d3531a0e6e0e6e8027a04"
     },
     "failed_cohorts": [],
@@ -332,7 +332,9 @@
     "missing": [],
     "require_live_evidence": false,
     "software_contract_ok": true,
-    "unresolved": []
+    "unresolved": [
+      "full_scrape_acceptance.unresolved"
+    ]
   },
   "no_partial_output": true,
   "previous_public_pin": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
@@ -340,7 +342,7 @@
   "program_id": "legal-corpora-reindex-v1",
   "proves_software_contract_only": true,
   "release_profile": "state-laws-ir-graphrag/v2",
-  "report_digest_sha256": "a6a9db1370098da9f4ddb185c806bf7debc3c3e7f66878ef9d324cfd3f5650a8",
+  "report_digest_sha256": "f7ad898ba497b740e18a5a65afe1dbb56bba4a6f51353f519e24d3928a21e650",
   "required_coverage_node_types": [
     "jurisdiction",
     "code",
@@ -357,15 +359,15 @@
   ],
   "resources": {
     "measured": {
-      "elapsed_wall_seconds": 6.362821,
-      "max_rss_bytes": 74461184.0,
+      "elapsed_wall_seconds": 2.742428,
+      "max_rss_bytes": 74743808.0,
       "rss_delta_bytes": 17039360.0,
-      "system_cpu_seconds": 0.026353,
-      "user_cpu_seconds": 3.394753
+      "system_cpu_seconds": 0.027152,
+      "user_cpu_seconds": 3.179009
     },
     "synthetic": {
       "build_rows_per_second_model": 2500.0,
-      "estimated_peak_bytes": 9596288,
+      "estimated_peak_bytes": 9595968,
       "resource_class": "gpu-large",
       "streaming": true
     }
@@ -388,7 +390,7 @@
       "max_adjacency_outgoing_shard_rows": 516,
       "max_bm25_document_shard_rows": 2,
       "max_bm25_posting_cell_pointers": 102,
-      "max_bm25_term_shard_rows": 297,
+      "max_bm25_term_shard_rows": 296,
       "max_vector_centroid_rows": 102,
       "max_vector_shard_rows": 102,
       "max_vector_shards_per_centroid": 1

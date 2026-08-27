@@ -159,8 +159,8 @@
         "promoted_success": false
       },
       "content": {
-        "content_digest": "sha256:cb54b8a64b6e9c37391682857442753561c474cfa1ab8daba6b473bd759cbedf",
-        "min_full_text_chars": 600,
+        "content_digest": "sha256:6147b071a7dd88aaf00c93ca6cdc25d5d575387b4680b127f863d4602a7b05aa",
+        "min_full_text_chars": 515,
         "non_placeholder_full_text": true,
         "official_urls": [
           "https://webserver.rilegislature.gov/Statutes/TITLE1/1-1/1-1-1.htm",
@@ -201,7 +201,7 @@
       "partial_checkpoint_promoted": false,
       "replay": {
         "closed": true,
-        "content_digest": "sha256:cb54b8a64b6e9c37391682857442753561c474cfa1ab8daba6b473bd759cbedf",
+        "content_digest": "sha256:6147b071a7dd88aaf00c93ca6cdc25d5d575387b4680b127f863d4602a7b05aa",
         "first_frontier_digest": "sha256:2dd4d8ca0e7a800f9b8bf90ff26ffc8a7ca3e5ee194119db994e747dcdbed882",
         "second_frontier_digest": "sha256:2dd4d8ca0e7a800f9b8bf90ff26ffc8a7ca3e5ee194119db994e747dcdbed882"
       },
@@ -227,8 +227,8 @@
         "promoted_success": false
       },
       "content": {
-        "content_digest": "sha256:da4a1daf72b807a8072cc483eedee254af780fc625b7f2c9921f28299273aec3",
-        "min_full_text_chars": 179,
+        "content_digest": "sha256:936d61c0406dad541c3b64c9902951412cb577f0d331e6352fc0683c92086998",
+        "min_full_text_chars": 127,
         "non_placeholder_full_text": true,
         "official_urls": [
           "https://www.scstatehouse.gov/code/t16c003.php#16-3-10",
@@ -269,7 +269,7 @@
       "partial_checkpoint_promoted": false,
       "replay": {
         "closed": true,
-        "content_digest": "sha256:da4a1daf72b807a8072cc483eedee254af780fc625b7f2c9921f28299273aec3",
+        "content_digest": "sha256:936d61c0406dad541c3b64c9902951412cb577f0d331e6352fc0683c92086998",
         "first_frontier_digest": "sha256:8bdac56e8bf42181f0140f36776aa7518a5f8f22d5c2eea9727f2aa5651110cc",
         "second_frontier_digest": "sha256:8bdac56e8bf42181f0140f36776aa7518a5f8f22d5c2eea9727f2aa5651110cc"
       },
@@ -319,7 +319,7 @@
       "timeout_promoted_to_success": false
     },
     "RI": {
-      "content_digest": "sha256:cb54b8a64b6e9c37391682857442753561c474cfa1ab8daba6b473bd759cbedf",
+      "content_digest": "sha256:6147b071a7dd88aaf00c93ca6cdc25d5d575387b4680b127f863d4602a7b05aa",
       "failed_final": 0,
       "frontier_closed": true,
       "partial_checkpoint_promoted": false,
@@ -330,7 +330,7 @@
       "timeout_promoted_to_success": false
     },
     "SC": {
-      "content_digest": "sha256:da4a1daf72b807a8072cc483eedee254af780fc625b7f2c9921f28299273aec3",
+      "content_digest": "sha256:936d61c0406dad541c3b64c9902951412cb577f0d331e6352fc0683c92086998",
       "failed_final": 0,
       "frontier_closed": true,
       "partial_checkpoint_promoted": false,

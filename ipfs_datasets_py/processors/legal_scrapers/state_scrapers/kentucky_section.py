@@ -68,7 +68,7 @@ def parse_kentucky_section_text(
         chapter_number=number.split(".", 1)[0],
         section_number=number,
         section_name=heading[:200] or f"Section {number}",
-        full_text=full[:14000],
+        full_text=full,
         source_url=source_url or f"{BASE}/",
         official_cite=f"KRS § {number}",
         metadata=StatuteMetadata(),

@@ -10,29 +10,36 @@ import subprocess
 import tempfile
 import urllib.request
 from typing import Any, Dict, List, Optional
-from urllib.parse import urljoin, unquote
+from urllib.parse import unquote, urljoin, urlparse
 
-from ipfs_datasets_py.utils import anyio_compat as asyncio
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
+from .retained_replay_network_guard import trusted_pdftotext_executable
 
 
 class ColoradoScraper(BaseStateScraper):
     """Scraper for Colorado state laws from https://leg.colorado.gov"""
 
-    _CO_SECTION_NUMBER_RE = re.compile(r"\b(\d{1,2}-\d{1,3}-\d{1,4})\b")
+    _CO_SECTION_NUMBER_RE = re.compile(
+        r"\b(\d{1,2}(?:\.\d+)?-\d{1,3}-\d{1,4}(?:\.\d+)?)\b"
+    )
     OFFICIAL_DOMAIN = "leg.colorado.gov"
     CONTENT_DOMAIN = "content.leg.colorado.gov"
-    OFFICIAL_ENTRY_PATH = "/publication-search"
-    OFFICIAL_ENTRY_URL = (
-        "https://content.leg.colorado.gov/publication-search?search_api_fulltext=crs"
+    OLLS_DOMAIN = "olls.info"
+    OFFICIAL_CRS_TITLES_DOWNLOAD_URL = (
+        "https://content.leg.colorado.gov/agencies/office-legislative-legal-services/"
+        "2026-crs-titles-download"
     )
+    OFFICIAL_ENTRY_PATH = (
+        "/agencies/office-legislative-legal-services/2026-crs-titles-download"
+    )
+    OFFICIAL_ENTRY_URL = OFFICIAL_CRS_TITLES_DOWNLOAD_URL
     OFFICIAL_CRS_TITLES = (
-        (1, "General Provisions"),
-        (2, "Local Government"),
-        (3, "Agriculture"),
+        (1, "Elections"),
+        (2, "Legislative"),
+        (3, "United States"),
         (4, "Uniform Commercial Code"),
-        (5, "Consumer and Commercial Transactions"),
+        (5, "Consumer Credit Code"),
         (6, "Consumer and Commercial Affairs"),
         (7, "Corporations and Associations"),
         (8, "Labor and Industry"),
@@ -70,10 +77,10 @@ class ColoradoScraper(BaseStateScraper):
         (38, "Property - Real and Personal"),
         (39, "Taxation"),
         (40, "Utilities"),
-        (41, "Aeronautics"),
+        (41, "Aeronautics: Aircraft and Airports"),
         (42, "Vehicles and Traffic"),
         (43, "Transportation"),
-        (44, "Natural Resources"),
+        (44, "Revenue - Regulation of Activities"),
     )
     
     def get_base_url(self) -> str:
@@ -84,7 +91,7 @@ class ColoradoScraper(BaseStateScraper):
         """Return list of available codes/statutes for Colorado."""
         return [{
             "name": "Colorado Revised Statutes",
-            "url": "https://content.leg.colorado.gov/publication-search?search_api_fulltext=crs",
+            "url": self.OFFICIAL_CRS_TITLES_DOWNLOAD_URL,
             "type": "Code"
         }]
     
@@ -96,10 +103,10 @@ class ColoradoScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Colorado's legislative website.
 
-        Full-corpus mode with ``max_statutes=None`` remains uncapped against the
-        official CRS publication search (content.leg.colorado.gov). Secondary
-        generic recovery is intentionally skipped so partial/secondary sources
-        cannot sole-admit a sealed full-corpus run.
+        Full-corpus mode with ``max_statutes=None`` closes the exact title-file
+        frontier referred by the official Office of Legislative Legal Services
+        page. Secondary generic recovery is intentionally skipped so a partial
+        publication-search result cannot sole-admit a sealed full-corpus run.
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
         from .colorado_constitution import (
@@ -120,8 +127,34 @@ class ColoradoScraper(BaseStateScraper):
 
         local_rows = parse_configured_colorado_crs(code_name=code_name, max_statutes=limit)
         if local_rows:
+            if limit is None:
+                self._assert_full_title_coverage(
+                    local_rows,
+                    context="configured Colorado CRS input",
+                )
             return local_rows if limit is None else local_rows[: int(limit)]
-        statutes = await self._scrape_crs_pdfs(code_name, max_statutes=limit)
+        # Keep the former official publication-search adapter available for
+        # explicitly bounded probes that still pass its legacy URL.  It is not
+        # a full-corpus source and is never consulted for an unbounded run.
+        legacy_bounded = limit is not None and "publication-search" in str(code_url or "")
+        if legacy_bounded:
+            statutes = await self._scrape_crs_pdfs(code_name, max_statutes=limit)
+            if statutes:
+                return statutes[: int(limit)]
+        statutes = await self._scrape_crs_title_downloads(
+            code_name,
+            max_statutes=limit,
+        )
+        if statutes:
+            return statutes if limit is None else statutes[: int(limit)]
+        if limit is None:
+            raise RuntimeError(
+                "Colorado full-corpus acquisition did not enumerate the official CRS title files"
+            )
+        statutes = [] if legacy_bounded else await self._scrape_crs_pdfs(
+            code_name,
+            max_statutes=limit,
+        )
         if statutes:
             return statutes if limit is None else statutes[: int(limit)]
         self.logger.warning(
@@ -129,6 +162,183 @@ class ColoradoScraper(BaseStateScraper):
             "skipping generic recovery fallback"
         )
         return []
+
+    def _expected_title_numbers(self) -> set[str]:
+        return {str(number) for number, _name in self.OFFICIAL_CRS_TITLES}
+
+    def _assert_full_title_coverage(
+        self,
+        statutes: List[NormalizedStatute],
+        *,
+        context: str,
+    ) -> None:
+        expected = self._expected_title_numbers()
+        observed = {str(row.title_number or "").lstrip("0") or "0" for row in statutes}
+        missing = sorted(expected - observed, key=lambda value: float(value))
+        unexpected = sorted(observed - expected, key=lambda value: float(value))
+        if missing or unexpected:
+            raise RuntimeError(
+                f"{context} did not close the official title frontier: "
+                f"missing_titles={missing} unexpected_titles={unexpected} rows={len(statutes)}"
+            )
+
+    async def _scrape_crs_title_downloads(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        """Acquire each whole-title HTM referred by the official OLLS page."""
+
+        from .colorado_title import parse_colorado_title_html, title_download_rows
+
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        page_payload = await self._request_bytes_direct(
+            self.OFFICIAL_CRS_TITLES_DOWNLOAD_URL,
+            timeout_seconds=60,
+        )
+        if not page_payload:
+            if limit is None:
+                raise RuntimeError("Colorado official CRS title-download page was unavailable")
+            return []
+        page_html = page_payload.decode("utf-8", errors="replace")
+        downloads = title_download_rows(
+            page_html,
+            page_url=self.OFFICIAL_CRS_TITLES_DOWNLOAD_URL,
+        )
+        if limit is None:
+            expected = self._expected_title_numbers()
+            discovered = {number for number, _name, _url, _edition in downloads}
+            editions = {edition for _number, _name, _url, edition in downloads}
+            missing = sorted(expected - discovered, key=lambda value: float(value))
+            unexpected = sorted(discovered - expected, key=lambda value: float(value))
+            if missing or unexpected or len(editions) != 1:
+                raise RuntimeError(
+                    "Colorado official CRS title enumeration is partial or inconsistent: "
+                    f"missing_titles={missing} unexpected_titles={unexpected} "
+                    f"editions={sorted(editions)}"
+                )
+
+        statutes: List[NormalizedStatute] = []
+        seen_sections: set[str] = set()
+        completed_titles: set[str] = set()
+        title_payload_by_url: Dict[str, bytes] = {}
+        if limit is None:
+            title_urls = [title_url for _number, _name, title_url, _edition in downloads]
+            if len(set(title_urls)) != len(title_urls):
+                raise RuntimeError("Colorado official title frontier contains duplicate URLs")
+            batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+                title_urls,
+                residual_retry_attempts=1,
+                timeout_seconds=180,
+                headers={
+                    "User-Agent": "ipfs-datasets-colorado-code-scraper/2.0",
+                    "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                },
+                content_validator=lambda payload: (
+                    b"<" in payload[:8192] and b">" in payload[:8192]
+                ),
+                media_type="text/html",
+                max_concurrency=8,
+                prefer_direct=True,
+                wayback_prefix_inventory=True,
+            )
+            if list(batch.urls) != title_urls or any(
+                len(vector) != len(title_urls)
+                for vector in (
+                    batch.payloads,
+                    batch.errors,
+                    batch.transport_receipts,
+                    batch.parser_input_envelopes,
+                )
+            ):
+                raise RuntimeError(
+                    "Colorado official title frontier returned unaligned acquisition rows"
+                )
+            failures = [
+                {"url": url, "error": error or "empty parser input"}
+                for url, payload, error in zip(
+                    batch.urls, batch.payloads, batch.errors, strict=True
+                )
+                if error is not None or not payload
+            ]
+            if failures:
+                raise RuntimeError(
+                    "Colorado official title frontier is incomplete; "
+                    f"unresolved exact URLs: {failures}"
+                )
+            title_payload_by_url = {
+                url: bytes(payload)
+                for url, payload in zip(batch.urls, batch.payloads, strict=True)
+            }
+        for title_number, _title_name, title_url, edition in downloads:
+            if limit is not None and len(statutes) >= int(limit):
+                break
+            payload = title_payload_by_url.get(title_url)
+            if payload is None:
+                payload = await self._request_bytes_direct(title_url, timeout_seconds=180)
+            if not payload:
+                if limit is None:
+                    raise RuntimeError(
+                        f"Colorado official CRS Title {title_number} HTM was unavailable"
+                    )
+                continue
+            remaining = None if limit is None else max(0, int(limit) - len(statutes))
+            title_rows = parse_colorado_title_html(
+                payload.decode("cp1252", errors="replace"),
+                code_name=code_name,
+                source_url=title_url,
+                max_statutes=remaining,
+            )
+            valid_title_rows = [
+                row
+                for row in title_rows
+                if (str(row.title_number or "").lstrip("0") or "0") == title_number
+            ]
+            if limit is None and not valid_title_rows:
+                raise RuntimeError(
+                    f"Colorado official CRS Title {title_number} HTM yielded no active statutes"
+                )
+            for row in valid_title_rows:
+                section_number = str(row.section_number or "")
+                if section_number in seen_sections:
+                    if limit is None:
+                        raise RuntimeError(
+                            f"Colorado duplicate section {section_number} across title downloads"
+                        )
+                    continue
+                seen_sections.add(section_number)
+                structured = dict(row.structured_data or {})
+                structured.update(
+                    {
+                        "source_authority_class": "official",
+                        "official_referral_url": self.OFFICIAL_CRS_TITLES_DOWNLOAD_URL,
+                        "delegated_download_host": self.OLLS_DOMAIN,
+                        "edition": edition,
+                    }
+                )
+                row.structured_data = structured
+                statutes.append(row)
+            if valid_title_rows:
+                completed_titles.add(title_number)
+
+        if limit is None:
+            expected = self._expected_title_numbers()
+            missing_downloads = sorted(expected - completed_titles, key=lambda value: float(value))
+            if missing_downloads:
+                raise RuntimeError(
+                    "Colorado full-corpus HTM parsing left title downloads incomplete: "
+                    f"missing_titles={missing_downloads}"
+                )
+            self._assert_full_title_coverage(
+                statutes,
+                context="Colorado official CRS HTM acquisition",
+            )
+        self.logger.info(
+            "Scraped %s Colorado CRS statutes from %s official title HTM files",
+            len(statutes),
+            len(completed_titles),
+        )
+        return statutes
 
     async def _scrape_crs_pdfs(
         self,
@@ -262,7 +472,11 @@ class ColoradoScraper(BaseStateScraper):
                     return out
         return out
 
-    async def _extract_publication_detail_text(self, detail_url: str, max_chars: int = 16000) -> str:
+    async def _extract_publication_detail_text(
+        self,
+        detail_url: str,
+        max_chars: Optional[int] = None,
+    ) -> str:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -278,7 +492,9 @@ class ColoradoScraper(BaseStateScraper):
             return ""
         text = " ".join(article.get_text(" ", strip=True).split())
         text = re.sub(r"\bShare:\b.*$", "", text, flags=re.IGNORECASE).strip()
-        return text[:max_chars]
+        if max_chars is not None:
+            return text[: max(1, int(max_chars))]
+        return text
 
     def _extract_section_number(self, text: str) -> str:
         match = self._CO_SECTION_NUMBER_RE.search(str(text or ""))
@@ -300,8 +516,12 @@ class ColoradoScraper(BaseStateScraper):
         file_name = re.sub(r"[^A-Za-z0-9._-]+", "-", file_name).strip("-")
         return file_name[:80]
 
-    async def _extract_pdf_text_summary(self, pdf_url: str, max_chars: int = 8000) -> str:
-        """Download a PDF and extract a normalized text summary using pdftotext."""
+    async def _extract_pdf_text_summary(
+        self,
+        pdf_url: str,
+        max_chars: Optional[int] = None,
+    ) -> str:
+        """Download a PDF and extract its complete normalized text using pdftotext."""
         try:
             self.logger.info("Colorado CRS: fetching PDF %s", pdf_url)
             payload = await self._request_bytes_direct(
@@ -323,7 +543,7 @@ class ColoradoScraper(BaseStateScraper):
                 pdf_path.write_bytes(payload)
 
                 result = subprocess.run(
-                    ["pdftotext", "-f", "1", "-l", "3", str(pdf_path), str(txt_path)],
+                    [trusted_pdftotext_executable(), str(pdf_path), str(txt_path)],
                     capture_output=True,
                     text=True,
                     timeout=30,
@@ -334,46 +554,34 @@ class ColoradoScraper(BaseStateScraper):
 
                 text = txt_path.read_text(encoding="utf-8", errors="ignore")
                 text = re.sub(r"\s+", " ", text).strip()
-                return text[:max_chars]
+                if max_chars is not None:
+                    return text[: max(1, int(max_chars))]
+                return text
         except Exception as exc:
             self.logger.debug(f"Colorado PDF text extraction failed for {pdf_url}: {exc}")
             return ""
 
     async def _request_bytes_direct(self, url: str, timeout_seconds: int = 45) -> bytes:
-        cached = await self._load_page_bytes_from_any_cache(url)
-        if cached:
-            return cached
-
         timeout = max(5, int(timeout_seconds or 45))
-
-        def _request() -> bytes:
-            try:
-                import requests
-
-                response = requests.get(
-                    url,
-                    headers={
-                        "User-Agent": "ipfs-datasets-colorado-code-scraper/2.0",
-                        "Accept": "text/html,application/pdf;q=0.9,*/*;q=0.8",
-                    },
-                    timeout=(min(10, timeout), timeout),
-                )
-                if int(response.status_code or 0) != 200:
-                    return b""
-                return bytes(response.content or b"")
-            except Exception:
-                return b""
-
-        try:
-            payload = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
-        except TimeoutError:
-            self._record_fetch_event(provider="requests_direct", success=False, error="colorado_direct_timeout")
-            return b""
-
-        self._record_fetch_event(provider="requests_direct", success=bool(payload))
-        if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
-        return payload
+        is_pdf = urlparse(str(url or "")).path.lower().endswith(".pdf")
+        return await self._fetch_parser_input_with_transport(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-colorado-code-scraper/2.0",
+                "Accept": "application/pdf,*/*;q=0.8"
+                if is_pdf
+                else "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            },
+            timeout_seconds=timeout,
+            content_validator=(
+                (lambda payload: payload.startswith(b"%PDF"))
+                if is_pdf
+                else (lambda payload: b"<" in payload[:8192] and b">" in payload[:8192])
+            ),
+            allow_archival_fallback=True,
+            media_type="application/pdf" if is_pdf else "text/html",
+            provider="requests_direct",
+        )
 
     def official_title_url(self, title_number: Any) -> str:
         title = str(title_number).replace(".", "-")
@@ -440,9 +648,10 @@ class ColoradoScraper(BaseStateScraper):
     def fetch_official(self, code: str = "CO"):
         """Acquire the exhaustive official Colorado CRS title catalog.
 
-        Live HTTPS retains the official publication-search landing page. Every
-        official CRS title is enumerated with an official General Assembly URL.
-        This hook never returns fixture bytes.
+        Live HTTPS retains and parses the exact General Assembly referral page
+        used by the body scraper.  Its delegated ``olls.info`` HTM links form
+        the closed 2026 title-file frontier; a static or publication-search
+        approximation is never promoted as that observation.
         """
 
         from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
@@ -451,29 +660,52 @@ class ColoradoScraper(BaseStateScraper):
         )
 
         normalized = str(code or "CO").strip().upper() or "CO"
-        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
-        rows = self.official_crs_catalog()
-        if len(rows) < 3:
-            raise RuntimeError("colorado official catalog enumeration is incomplete")
+        from .colorado_title import title_download_rows
+
+        html = self._official_http_get(self.OFFICIAL_CRS_TITLES_DOWNLOAD_URL)
+        if not html:
+            raise RuntimeError("colorado official title-download page is unavailable")
+        downloads = title_download_rows(
+            html.decode("utf-8", errors="replace"),
+            page_url=self.OFFICIAL_CRS_TITLES_DOWNLOAD_URL,
+        )
+        expected = self._expected_title_numbers()
+        discovered = {number for number, _name, _url, _edition in downloads}
+        editions = {edition for _number, _name, _url, edition in downloads}
+        if discovered != expected or len(downloads) != len(expected) or len(editions) != 1:
+            raise RuntimeError(
+                "colorado official title-download frontier is incomplete or inconsistent: "
+                f"missing={sorted(expected - discovered)} "
+                f"unexpected={sorted(discovered - expected)} "
+                f"editions={sorted(editions)}"
+            )
+        rows = tuple(
+            {
+                "canonical_key": f"co:title-{number.replace('.', '-')}",
+                "title_number": number,
+                "name": name,
+                "source_url": title_url,
+                "edition": edition,
+                "source_link_disposition": "official_delegated",
+                "text": (
+                    f"Colorado Revised Statutes Title {number} ({name}) "
+                    f"official HTM download at {title_url}"
+                ),
+            }
+            for number, name, title_url, edition in downloads
+        )
         request = (
-            f"GET {self.OFFICIAL_ENTRY_PATH}?search_api_fulltext=crs HTTP/1.1\n"
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
             f"host: {self.CONTENT_DOMAIN}\n"
         ).encode("utf-8")
-        catalog = {
-            "jurisdiction": normalized,
-            "official_domain": self.CONTENT_DOMAIN,
-            "entry_url": self.OFFICIAL_ENTRY_URL,
-            "units": rows,
-        }
-        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
-        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        edition = next(iter(editions))
         frontier = {
-            "bundle_closed": False,
+            "bundle_closed": True,
             "closed": True,
             "enumerator_closed": True,
             "expected_index_units": len(rows),
-            "method": "pagination",
-            "pagination_closed": True,
+            "method": "bundle",
+            "pagination_closed": False,
             "remaining_bundle_members": [],
             "toc_exhausted": True,
             "unvisited_continuation_links": [],
@@ -483,14 +715,15 @@ class ColoradoScraper(BaseStateScraper):
         return OfficialFetch(
             jurisdiction_code=normalized,
             request_bytes=request,
-            response_bytes=response,
-            body_bytes=body,
+            response_bytes=html,
+            body_bytes=html,
             source_domain=self.CONTENT_DOMAIN,
             source_path=self.OFFICIAL_ENTRY_PATH,
             frontier=frontier,
             rows=tuple(rows),
             transport_kind="live_https",
             fixture=False,
+            edition=edition,
             first_hierarchy_unit=str(rows[0]["canonical_key"]),
             last_hierarchy_unit=str(rows[-1]["canonical_key"]),
         )

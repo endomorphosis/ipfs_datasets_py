@@ -163,6 +163,7 @@ def test_mississippi_synthetic_two_row_success_is_rejected() -> None:
     rows = scraper.enumerate_official_catalog(b"")
     assert len(rows) > 2
     assert len(rows) == MississippiScraper.OFFICIAL_TITLE_COUNT
+    assert [int(row["title_number"]) for row in rows] == list(range(1, 100, 2))
     for row in rows:
         assert _host_allowed(str(row["source_url"]), "MS")
         assert "justia.com" not in str(row["source_url"]).lower()
@@ -178,15 +179,19 @@ def test_fetch_official_is_live_and_exhaustive(monkeypatch: pytest.MonkeyPatch, 
         "_official_http_get",
         lambda url, timeout_seconds=30: _compact_official_html(state),
     )
+    if state == "MS":
+        with pytest.raises(
+            RuntimeError,
+            match="async delegated Lexis 51-root inventory",
+        ):
+            scraper.fetch_official(state)
+        return
     fetch = scraper.fetch_official(state)
     assert isinstance(fetch, OfficialFetch)
     assert fetch.fixture is False
     assert fetch.transport_kind == "live_https"
     assert fetch.jurisdiction_code == state
     assert len(fetch.rows) >= 3
-    if state == "MS":
-        assert len(fetch.rows) > 2
-        assert len(fetch.rows) == MississippiScraper.OFFICIAL_TITLE_COUNT
     assert fetch.frontier.get("closed") is True
     assert int(fetch.frontier.get("expected_index_units") or 0) == len(fetch.rows)
     assert fetch.source_domain
@@ -244,7 +249,13 @@ def test_declared_cohort_f_report_is_live_certified() -> None:
             assert "unicourt" not in lowered
         if state == "MS":
             assert int(receipt["row_count"]) > 2
-            assert len(units) == MississippiScraper.OFFICIAL_TITLE_COUNT
+            # This is historical cohort evidence, not the current source
+            # frontier.  Its repaired 99-title body is retained so the false
+            # catalog remains visible; the current scraper rejects it and uses
+            # the delegated 51-root Lexis inventory instead.
+            assert len(units) == 99
+            assert any(int(unit["title_number"]) % 2 == 0 for unit in units)
+            assert receipt["frontier"]["bundle_closed"] is False
 
     serialized = json.dumps(payload)
     assert "hf_" not in serialized

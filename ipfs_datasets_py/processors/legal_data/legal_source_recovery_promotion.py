@@ -224,6 +224,16 @@ def _upload_huggingface_parquet(
     hf_token: str | None = None,
     commit_message: str | None = None,
 ) -> Dict[str, Any]:
+    from ipfs_datasets_py.huggingface.protected_repo_guard import (
+        require_unprotected_or_runtime,
+    )
+
+    # Recovery promotion is a legacy partial-file writer.  Protected legal
+    # corpora must be published only as an exact, sealed release package via
+    # the canonical publication runtime; this helper intentionally has no
+    # caller-selectable escape hatch.
+    require_unprotected_or_runtime(repo_id, method="upload_file")
+
     from huggingface_hub import HfApi
 
     local_path_obj = Path(local_path).expanduser().resolve()

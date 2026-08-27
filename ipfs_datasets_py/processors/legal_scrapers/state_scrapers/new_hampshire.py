@@ -3,21 +3,29 @@
 This module contains the scraper for New Hampshire statutes from the official state legislative website.
 """
 
-import asyncio
+import hashlib
 import inspect
-import os
-import time
-from dataclasses import fields as dataclass_fields
-from datetime import datetime
-from pathlib import PurePosixPath
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 import json
+import os
 import re
-import urllib.request
 import ssl
+import time
+import urllib.request
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import fields as dataclass_fields
+from datetime import datetime, timezone
+from pathlib import Path, PurePosixPath
+from typing import Any, Dict, List, Optional
 from urllib.parse import quote, urljoin, urlparse
-from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
+
+from ipfs_datasets_py.utils import anyio_compat
+
+from .base_scraper import (
+    BaseStateScraper,
+    NormalizedStatute,
+    StatuteMetadata,
+    current_partial_checkpoint_run_directory,
+)
 from .registry import StateScraperRegistry
 
 
@@ -41,19 +49,28 @@ class NewHampshireScraper(BaseStateScraper):
         r"/rsa/html/(?!nhtoc/)(?:[ivxlcdm0-9a-z-]+/){2,}[0-9a-z:.-]+\.htm$",
         re.IGNORECASE,
     )
-    OFFICIAL_DOMAIN = "www.gencourt.state.nh.us"
+    OFFICIAL_DOMAIN = "gc.nh.gov"
     OFFICIAL_ENTRY_PATH = "/rsa/html/NHTOC.htm"
+    # The legacy root is already retained with exact acquisition evidence and
+    # remains the stable catalog bootstrap.  The General Court migrated its
+    # live RSA tree to gc.nh.gov; every descendant locator is canonicalized to
+    # that current official host below instead of equating the two request
+    # identities.
     OFFICIAL_ENTRY_URL = "https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm"
+    CURRENT_OFFICIAL_ENTRY_URL = "https://gc.nh.gov/rsa/html/NHTOC.htm"
     _NH_TITLE_HREF_RE = re.compile(
-        r"/rsa/html/NHTOC/NHTOC-([IVXLCDM]+)\.htm$",
+        r"/rsa/html/NHTOC/NHTOC-([IVXLCDM]+(?:-[A-Z]+)?)\.htm$",
         re.IGNORECASE,
     )
-    _NH_TITLE_LABEL_RE = re.compile(r"\bTITLE\s+([IVXLCDM]+)\b", re.IGNORECASE)
+    _NH_TITLE_LABEL_RE = re.compile(
+        r"\bTITLE\s+([IVXLCDM]+(?:-[A-Z]+)?)\b",
+        re.IGNORECASE,
+    )
     OFFICIAL_TITLES = (
         ("I", "The State and Its Government"),
         ("II", "Counties"),
         ("III", "Towns, Cities, Village Districts, and Unincorporated Places"),
-        ("IV", "Elections and Elective Officials"),
+        ("IV", "Elections"),
         ("V", "Taxation"),
         ("VI", "Public Officers and Employees"),
         ("VII", "Sheriffs, Constables, and Police Officers"),
@@ -69,6 +86,7 @@ class NewHampshireScraper(BaseStateScraper):
         ("XVII", "Housing and Redevelopment"),
         ("XVIII", "Fish and Game"),
         ("XIX", "Public Recreation"),
+        ("XIX-A", "Forestry"),
         ("XX", "Transportation"),
         ("XXI", "Motor Vehicles"),
         ("XXII", "Navigation; Harbors; Coast Survey"),
@@ -81,9 +99,11 @@ class NewHampshireScraper(BaseStateScraper):
         ("XXIX", "Religious Societies"),
         ("XXX", "Occupations and Professions"),
         ("XXXI", "Trade and Commerce"),
-        ("XXXII", "Fireworks"),
-        ("XXXIII", "Veterans: Aid; Bonus; Memorials"),
+        ("XXXII", "Chattel Mortgages"),
+        ("XXXIII", "Conditional Sales"),
+        ("XXXIII-A", "Retail Installment Sales"),
         ("XXXIV", "Public Utilities"),
+        ("XXXIV-A", "Uniform Commercial Code"),
         ("XXXV", "Banks and Banking; Loan Associations; Credit Unions"),
         ("XXXVI", "Pawnbrokers and Moneylenders"),
         ("XXXVII", "Insurance"),
@@ -116,10 +136,26 @@ class NewHampshireScraper(BaseStateScraper):
         ("LXIV", "Planning and Zoning"),
     )
     OFFICIAL_TITLE_COUNT = len(OFFICIAL_TITLES)
+    # The retained official root classifies Title IV itself, rather than a
+    # fetched child document, as terminal.  Keep this projection explicit so
+    # loss or broadening of the source label cannot silently change the 66-page
+    # active title frontier.
+    OFFICIAL_TERMINAL_TITLES = (("IV", "repealed"),)
+    OFFICIAL_TERMINAL_TITLE_COUNT = len(OFFICIAL_TERMINAL_TITLES)
+    OFFICIAL_ACTIVE_TITLE_COUNT = (
+        OFFICIAL_TITLE_COUNT - OFFICIAL_TERMINAL_TITLE_COUNT
+    )
+
+    def state_law_frontier_source_dependencies(self) -> tuple[object, ...]:
+        """Bind the exact RSA hierarchy parser into closure identity."""
+
+        from . import new_hampshire_section
+
+        return (new_hampshire_section,)
     
     def get_base_url(self) -> str:
         """Return the base URL for New Hampshire's legislative website."""
-        return "https://www.gencourt.state.nh.us"
+        return "https://gc.nh.gov"
     
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for New Hampshire."""
@@ -202,6 +238,12 @@ class NewHampshireScraper(BaseStateScraper):
         ]
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        full_corpus_unbounded = self._full_corpus_enabled() and max_statutes is None
+        if full_corpus_unbounded:
+            return await self._scrape_official_rsa_tree_batched(
+                code_name=code_name,
+                checkpoint=_NewHampshireCheckpoint(self.state_code),
+            )
         official = await self._scrape_official_rsa_tree(code_name, max_statutes=limit)
         if official:
             return official if limit is None else official[: int(limit)]
@@ -381,6 +423,998 @@ class NewHampshireScraper(BaseStateScraper):
         )
         return merged
 
+    def _new_hampshire_frontier_batch_size(self) -> int:
+        return max(
+            1,
+            min(
+                1024,
+                int(
+                    self._env_int(
+                        "STATE_SCRAPER_NH_FRONTIER_BATCH_SIZE",
+                        default=512,
+                    )
+                    or 512
+                ),
+            ),
+        )
+
+    def _new_hampshire_frontier_concurrency(self) -> int:
+        return max(
+            1,
+            min(
+                64,
+                int(
+                    self._env_int(
+                        "STATE_SCRAPER_NH_FRONTIER_CONCURRENCY",
+                        default=12,
+                    )
+                    or 12
+                ),
+            ),
+        )
+
+    def _record_new_hampshire_frontier_inputs(
+        self,
+        *,
+        source_role: str,
+        urls: Sequence[str],
+        payloads: Sequence[bytes],
+    ) -> None:
+        """Retain the ordered URL/body projection used by one exact traversal."""
+
+        requested = [self._canonical_fetch_url(url) for url in urls]
+        if len(requested) != len(payloads):
+            raise RuntimeError(
+                "New Hampshire frontier input projection is not aligned"
+            )
+        reports = list(
+            getattr(self, "_new_hampshire_frontier_input_reports", [])
+        )
+        seen = {str(row.get("source_url") or "") for row in reports}
+        for url, payload in zip(requested, payloads, strict=True):
+            if not url or url in seen:
+                raise RuntimeError(
+                    "New Hampshire frontier input projection repeated a URL: "
+                    f"{url}"
+                )
+            raw = bytes(payload or b"")
+            if not raw:
+                raise RuntimeError(
+                    f"New Hampshire frontier input projection is empty: {url}"
+                )
+            seen.add(url)
+            reports.append(
+                {
+                    "content_sha256": hashlib.sha256(raw).hexdigest(),
+                    "source_role": str(source_role or "").strip(),
+                    "source_url": url,
+                }
+            )
+        self._new_hampshire_frontier_input_reports = reports
+
+    @staticmethod
+    def _new_hampshire_root_payload(payload: bytes) -> bool:
+        sample = bytes(payload or b"")[:500_000].lower()
+        return (
+            b"new hampshire statutes" in sample
+            and b"table of contents" in sample
+            and b"nhtoc/nhtoc-" in sample
+        )
+
+    @staticmethod
+    def _new_hampshire_title_payload(payload: bytes) -> bool:
+        sample = bytes(payload or b"")[:500_000].lower()
+        return (
+            b"new hampshire statutes" in sample
+            and b"table of contents" in sample
+            and (b"chapter" in sample or b"entire title was repealed" in sample)
+        )
+
+    @staticmethod
+    def _new_hampshire_chapter_payload(payload: bytes) -> bool:
+        sample = bytes(payload or b"")[:500_000].lower()
+        return (
+            b"new hampshire statutes" in sample
+            and b"chapter" in sample
+            and (
+                b"section" in sample
+                or b"repealed" in sample
+                or b"reserved" in sample
+                or b"omitted" in sample
+            )
+        )
+
+    @staticmethod
+    def _new_hampshire_section_payload(payload: bytes) -> bool:
+        sample = bytes(payload or b"")[:500_000].lower()
+        return b"<codesect" in sample and b"section" in sample
+
+    def _validate_new_hampshire_aligned_evidence(
+        self,
+        *,
+        url: str,
+        payload: bytes,
+        transport_receipt: Optional[Dict[str, Any]],
+        parser_input_envelope: Any,
+        frontier_name: str,
+    ) -> None:
+        """Bind optional transport evidence to its exact aligned NH payload."""
+
+        canonical_url = self._canonical_fetch_url(url)
+        digest = hashlib.sha256(payload).hexdigest()
+        ledger_attached = getattr(self, "_state_law_acquisition_ledger", None) is not None
+        if ledger_attached and (
+            not isinstance(transport_receipt, Mapping)
+            or not transport_receipt
+            or parser_input_envelope is None
+        ):
+            raise RuntimeError(
+                f"New Hampshire {frontier_name} frontier lacks retained receipt/envelope evidence: {url}"
+            )
+        if isinstance(transport_receipt, Mapping):
+            observed_url = str(
+                transport_receipt.get("official_url")
+                or transport_receipt.get("endpoint")
+                or ""
+            ).strip()
+            observed_digest = str(
+                transport_receipt.get("content_sha256") or ""
+            ).strip().lower()
+            if ledger_attached and (not observed_url or not observed_digest):
+                raise RuntimeError(
+                    f"New Hampshire {frontier_name} receipt lacks exact URL/digest evidence: {url}"
+                )
+            if observed_url and self._canonical_fetch_url(observed_url) != canonical_url:
+                raise RuntimeError(
+                    f"New Hampshire {frontier_name} receipt changed URL identity: {url}"
+                )
+            if observed_digest and observed_digest != digest:
+                raise RuntimeError(
+                    f"New Hampshire {frontier_name} receipt changed payload identity: {url}"
+                )
+        if parser_input_envelope is not None:
+            envelope_body = getattr(parser_input_envelope, "body", None)
+            if ledger_attached and envelope_body is None:
+                raise RuntimeError(
+                    f"New Hampshire {frontier_name} envelope lacks exact body evidence: {url}"
+                )
+            if envelope_body is not None and bytes(envelope_body) != payload:
+                raise RuntimeError(
+                    f"New Hampshire {frontier_name} envelope changed payload identity: {url}"
+                )
+
+    async def _fetch_new_hampshire_frontier_batch(
+        self,
+        urls: Sequence[str],
+        *,
+        frontier_name: str,
+        content_validator: Callable[[bytes], bool],
+    ) -> List[bytes]:
+        """Fetch one exact NH frontier through the shared grouped-WARC seam."""
+
+        requested = [self._canonical_fetch_url(url) for url in urls]
+        if any(not url for url in requested):
+            raise RuntimeError(
+                f"New Hampshire {frontier_name} frontier contains an invalid URL"
+            )
+        if len(set(requested)) != len(requested):
+            raise RuntimeError(
+                f"New Hampshire {frontier_name} frontier contains duplicate URLs"
+            )
+        if not requested:
+            return []
+        if bool(getattr(self, "_new_hampshire_retained_replay", False)):
+            from .strict_frontier_closure import (
+                replay_exact_retained_state_records,
+            )
+
+            retained_rows = replay_exact_retained_state_records(
+                self,
+                requests=[
+                    (url, {"method": "GET", "url": url}) for url in requested
+                ],
+                frontier_name=f"New Hampshire {frontier_name} frontier",
+                refresh=False,
+            )
+            payloads: List[bytes] = []
+            for url, retained in zip(requested, retained_rows, strict=True):
+                raw = bytes(getattr(retained.envelope, "body", b"") or b"")
+                if not content_validator(raw):
+                    raise RuntimeError(
+                        "New Hampshire retained frontier input is no longer valid: "
+                        f"{url}"
+                    )
+                payloads.append(raw)
+            stats_rows = list(
+                getattr(self, "_new_hampshire_frontier_batch_stats", [])
+            )
+            stats_rows.append(
+                {
+                    "frontier_name": frontier_name,
+                    "network_requested_pages": 0,
+                    "requested_pages": len(requested),
+                    "retained_replay_pages": len(requested),
+                }
+            )
+            self._new_hampshire_frontier_batch_stats = stats_rows
+            return payloads
+        retry_attempts = max(
+            0,
+            min(
+                3,
+                self._env_int(
+                    "STATE_SCRAPER_FRONTIER_RESIDUAL_RETRY_ATTEMPTS",
+                    default=1,
+                ),
+            ),
+        )
+        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+            requested,
+            residual_retry_attempts=retry_attempts,
+            # One grouped archive inventory is authoritative for this logical
+            # frontier wave.  Residual retries may repeat the plural direct
+            # attempt, but must not fan back out into CC/CDX/archive lookups.
+            repeat_grouped_archive_inventory_on_residual=False,
+            timeout_seconds=20,
+            content_validator=content_validator,
+            media_type="text/html",
+            max_concurrency=self._new_hampshire_frontier_concurrency(),
+            prefer_direct=True,
+            common_crawl_domain_terms=(
+                "gc.nh.gov",
+                "www.gencourt.state.nh.us",
+            ),
+            common_crawl_url_terms=("/rsa/html/",),
+            common_crawl_mime_terms=("html",),
+            wayback_prefix_inventory=True,
+        )
+        aligned_lengths = {
+            len(batch.urls),
+            len(batch.payloads),
+            len(batch.errors),
+            len(batch.transport_receipts),
+            len(batch.parser_input_envelopes),
+        }
+        if aligned_lengths != {len(requested)}:
+            raise RuntimeError(
+                f"New Hampshire {frontier_name} frontier returned unaligned acquisition rows"
+            )
+        if list(batch.urls) != requested:
+            raise RuntimeError(
+                f"New Hampshire {frontier_name} frontier changed URL order or identity"
+            )
+        failures: List[Dict[str, str]] = []
+        for url, payload, error, receipt, envelope in zip(
+            batch.urls,
+            batch.payloads,
+            batch.errors,
+            batch.transport_receipts,
+            batch.parser_input_envelopes,
+            strict=True,
+        ):
+            raw = bytes(payload or b"")
+            if error is not None or not raw or not content_validator(raw):
+                failures.append(
+                    {"url": url, "error": str(error or "empty or invalid parser input")}
+                )
+                continue
+            self._validate_new_hampshire_aligned_evidence(
+                url=url,
+                payload=raw,
+                transport_receipt=receipt,
+                parser_input_envelope=envelope,
+                frontier_name=frontier_name,
+            )
+        if failures:
+            raise RuntimeError(
+                f"New Hampshire {frontier_name} frontier is incomplete; unresolved exact URLs: "
+                f"{failures[:10]}"
+            )
+        stats_rows = list(getattr(self, "_new_hampshire_frontier_batch_stats", []))
+        stats_rows.append(
+            {
+                "frontier_name": frontier_name,
+                "requested_pages": len(requested),
+                **dict(batch.stats or {}),
+            }
+        )
+        self._new_hampshire_frontier_batch_stats = stats_rows
+        return [bytes(payload) for payload in batch.payloads]
+
+    async def _fetch_new_hampshire_frontier_in_chunks(
+        self,
+        urls: Sequence[str],
+        *,
+        frontier_name: str,
+        content_validator: Callable[[bytes], bool],
+    ) -> List[bytes]:
+        payloads: List[bytes] = []
+        requested = list(urls)
+        batch_size = self._new_hampshire_frontier_batch_size()
+        for batch_start in range(0, len(requested), batch_size):
+            batch_urls = requested[batch_start : batch_start + batch_size]
+            payloads.extend(
+                await self._fetch_new_hampshire_frontier_batch(
+                    batch_urls,
+                    frontier_name=(
+                        f"{frontier_name}-{batch_start + 1}-"
+                        f"{batch_start + len(batch_urls)}"
+                    ),
+                    content_validator=content_validator,
+                )
+            )
+        return payloads
+
+    async def _scrape_official_rsa_tree_batched(
+        self,
+        *,
+        code_name: str,
+        checkpoint: "_NewHampshireCheckpoint",
+    ) -> List[NormalizedStatute]:
+        """Close the exact RSA title/chapter/section tree breadth-first."""
+
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError as exc:
+            raise RuntimeError(
+                "New Hampshire full-corpus acquisition requires BeautifulSoup"
+            ) from exc
+        from .new_hampshire_section import (
+            new_hampshire_section_page_identity,
+            nhtoc_chapter_units,
+            nhtoc_section_units,
+            nhtoc_title_units,
+            parse_new_hampshire_section_html,
+            source_bound_terminal_disposition_from_section_html,
+            terminal_disposition_from_label,
+        )
+
+        self._new_hampshire_frontier_batch_stats = []
+        self._new_hampshire_frontier_input_reports = []
+        root_payloads = await self._fetch_new_hampshire_frontier_batch(
+            [self.OFFICIAL_ENTRY_URL],
+            frontier_name="root",
+            content_validator=self._new_hampshire_root_payload,
+        )
+        self._record_new_hampshire_frontier_inputs(
+            source_role="root_catalog",
+            urls=[self.OFFICIAL_ENTRY_URL],
+            payloads=root_payloads,
+        )
+        root_html = root_payloads[0].decode("utf-8", errors="replace")
+        title_units = nhtoc_title_units(
+            root_html,
+            base_url=self.CURRENT_OFFICIAL_ENTRY_URL,
+        )
+        expected_titles = [number for number, _name in self.OFFICIAL_TITLES]
+        expected_title_names = dict(self.OFFICIAL_TITLES)
+        observed_titles = [str(unit["title_number"]) for unit in title_units]
+        if observed_titles != expected_titles:
+            missing = [number for number in expected_titles if number not in observed_titles]
+            unexpected = [number for number in observed_titles if number not in expected_titles]
+            raise RuntimeError(
+                "New Hampshire root title frontier does not match the exact official "
+                f"catalog: observed={len(observed_titles)} expected={len(expected_titles)} "
+                f"missing={missing} unexpected={unexpected}"
+            )
+        for unit in title_units:
+            title_number = str(unit["title_number"])
+            expected_url = self.official_title_url(title_number)
+            observed_name = self._normalize_legal_text(str(unit["title_name"]))
+            expected_name = self._normalize_legal_text(
+                expected_title_names[title_number]
+            )
+            if (
+                str(unit["source_url"]) != expected_url
+                or not self._host_is_official(expected_url)
+                or observed_name.casefold() != expected_name.casefold()
+            ):
+                raise RuntimeError(
+                    f"New Hampshire root changed title identity: {title_number}"
+                )
+
+        terminal_titles: List[Dict[str, str]] = []
+        active_title_units: List[Dict[str, str]] = []
+        for unit in title_units:
+            disposition = str(unit.get("terminal_disposition") or "")
+            if disposition:
+                terminal_titles.append(
+                    {
+                        "title_number": str(unit["title_number"]),
+                        "disposition": disposition,
+                        "source_url": str(unit["source_url"]),
+                        "source_label": str(unit.get("catalog_note") or ""),
+                    }
+                )
+            else:
+                active_title_units.append(unit)
+        expected_terminal_titles = [
+            (number, disposition)
+            for number, disposition in self.OFFICIAL_TERMINAL_TITLES
+            if number in expected_titles
+        ]
+        observed_terminal_titles = [
+            (str(unit["title_number"]), str(unit["terminal_disposition"]))
+            for unit in title_units
+            if str(unit.get("terminal_disposition") or "")
+        ]
+        if observed_terminal_titles != expected_terminal_titles:
+            raise RuntimeError(
+                "New Hampshire root changed its exact terminal title projection: "
+                f"observed={observed_terminal_titles} "
+                f"expected={expected_terminal_titles}"
+            )
+        if len(active_title_units) != len(expected_titles) - len(
+            expected_terminal_titles
+        ):
+            raise RuntimeError(
+                "New Hampshire root changed its exact active title count: "
+                f"observed={len(active_title_units)} "
+                f"expected={len(expected_titles) - len(expected_terminal_titles)}"
+            )
+        if not active_title_units:
+            raise RuntimeError("New Hampshire root contains no active title frontier")
+
+        title_payloads = await self._fetch_new_hampshire_frontier_in_chunks(
+            [str(unit["source_url"]) for unit in active_title_units],
+            frontier_name="titles",
+            content_validator=self._new_hampshire_title_payload,
+        )
+        self._record_new_hampshire_frontier_inputs(
+            source_role="title_catalog",
+            urls=[str(unit["source_url"]) for unit in active_title_units],
+            payloads=title_payloads,
+        )
+        chapter_frontier: List[Dict[str, str]] = []
+        terminal_chapters: List[Dict[str, str]] = []
+        seen_chapter_urls: set[str] = set()
+        seen_chapter_identities: set[tuple[str, str]] = set()
+        for unit, payload in zip(active_title_units, title_payloads, strict=True):
+            title_number = str(unit["title_number"])
+            title_url = str(unit["source_url"])
+            html = payload.decode("utf-8", errors="replace")
+            title_soup = BeautifulSoup(html, "html.parser")
+            page_identities = []
+            for heading in title_soup.find_all("h2"):
+                heading_text = self._normalize_legal_text(heading.get_text(" ", strip=True))
+                match = re.fullmatch(
+                    r"([IVXLCDM]+(?:-[A-Z]+)?)\s*:\s*.+",
+                    heading_text,
+                    flags=re.IGNORECASE,
+                )
+                if match:
+                    page_identities.append(match.group(1).upper())
+            if page_identities != [title_number]:
+                raise RuntimeError(
+                    "New Hampshire retained title page failed requested identity: "
+                    f"{title_url}"
+                )
+            chapters = nhtoc_chapter_units(
+                html,
+                title_number=title_number,
+                base_url=title_url,
+            )
+            if not chapters:
+                codesect = title_soup.find("codesect")
+                body_text = self._normalize_legal_text(
+                    codesect.get_text(" ", strip=True) if codesect is not None else ""
+                )
+                if not re.fullmatch(
+                    r"Entire\s+Title\s+was\s+repealed\.?",
+                    body_text,
+                    flags=re.IGNORECASE,
+                ):
+                    raise RuntimeError(
+                        "New Hampshire active title produced no chapter frontier and no "
+                        f"source-bound terminal disposition: {title_url}"
+                    )
+                terminal_titles.append(
+                    {
+                        "title_number": title_number,
+                        "disposition": "repealed",
+                        "source_url": title_url,
+                        "source_label": body_text,
+                    }
+                )
+                continue
+            for chapter in chapters:
+                chapter_url = str(chapter["source_url"])
+                chapter_identity = (
+                    title_number.casefold(),
+                    str(chapter["chapter_number"]).casefold(),
+                )
+                if (
+                    chapter_url.casefold() in seen_chapter_urls
+                    or chapter_identity in seen_chapter_identities
+                    or not self._host_is_official(chapter_url)
+                ):
+                    raise RuntimeError(
+                        f"New Hampshire chapter frontier has a duplicate or invalid identity: {chapter_url}"
+                    )
+                seen_chapter_urls.add(chapter_url.casefold())
+                seen_chapter_identities.add(chapter_identity)
+                disposition = str(chapter.get("terminal_disposition") or "")
+                if disposition:
+                    terminal_chapters.append(
+                        {
+                            "title_number": title_number,
+                            "chapter_number": str(chapter["chapter_number"]),
+                            "disposition": disposition,
+                            "source_url": chapter_url,
+                            "source_label": str(chapter.get("label") or ""),
+                        }
+                    )
+                else:
+                    chapter_frontier.append(chapter)
+        if not chapter_frontier:
+            raise RuntimeError("New Hampshire title frontier produced no active chapters")
+
+        catalog_terminal_chapter_count = len(terminal_chapters)
+        chapter_payloads = await self._fetch_new_hampshire_frontier_in_chunks(
+            [str(unit["source_url"]) for unit in chapter_frontier],
+            frontier_name="chapters",
+            content_validator=self._new_hampshire_chapter_payload,
+        )
+        self._record_new_hampshire_frontier_inputs(
+            source_role="chapter_catalog",
+            urls=[str(unit["source_url"]) for unit in chapter_frontier],
+            payloads=chapter_payloads,
+        )
+        section_frontier: List[Dict[str, str]] = []
+        terminal_sections: List[Dict[str, str]] = []
+        seen_section_urls: set[str] = set()
+        seen_section_identities: set[str] = set()
+        for chapter, payload in zip(chapter_frontier, chapter_payloads, strict=True):
+            title_number = str(chapter["title_number"])
+            chapter_number = str(chapter["chapter_number"])
+            chapter_url = str(chapter["source_url"])
+            html = payload.decode("utf-8", errors="replace")
+            chapter_soup = BeautifulSoup(html, "html.parser")
+            chapter_page_ids: List[str] = []
+            for heading in chapter_soup.find_all("h2"):
+                heading_text = self._normalize_legal_text(heading.get_text(" ", strip=True))
+                match = re.match(
+                    r"^CHAPTER\s+([0-9]+(?:-[A-Z0-9]+)*)\b",
+                    heading_text,
+                    flags=re.IGNORECASE,
+                )
+                if match:
+                    chapter_page_ids.append(match.group(1).upper())
+            if chapter_page_ids != [chapter_number]:
+                raise RuntimeError(
+                    "New Hampshire retained chapter page failed requested identity: "
+                    f"{chapter_url}"
+                )
+            sections = nhtoc_section_units(
+                html,
+                title_number=title_number,
+                chapter_number=chapter_number,
+                base_url=chapter_url,
+            )
+            if not sections:
+                codesect = chapter_soup.find("codesect")
+                body_text = self._normalize_legal_text(
+                    codesect.get_text(" ", strip=True) if codesect is not None else ""
+                )
+                disposition = terminal_disposition_from_label(body_text)
+                if disposition is None:
+                    raise RuntimeError(
+                        "New Hampshire chapter produced no section frontier and no "
+                        f"source-bound terminal disposition: {chapter_url}"
+                    )
+                terminal_chapters.append(
+                    {
+                        "title_number": title_number,
+                        "chapter_number": chapter_number,
+                        "disposition": disposition,
+                        "source_url": chapter_url,
+                        "source_label": body_text,
+                    }
+                )
+                continue
+            for section in sections:
+                section_url = str(section["source_url"])
+                section_number = str(section["section_number"])
+                if (
+                    section_url.casefold() in seen_section_urls
+                    or section_number.casefold() in seen_section_identities
+                    or not self._host_is_official(section_url)
+                ):
+                    raise RuntimeError(
+                        f"New Hampshire section frontier has a duplicate or invalid identity: {section_url}"
+                    )
+                seen_section_urls.add(section_url.casefold())
+                seen_section_identities.add(section_number.casefold())
+                disposition = str(section.get("terminal_disposition") or "")
+                if disposition:
+                    terminal_sections.append(
+                        {
+                            "title_number": title_number,
+                            "chapter_number": chapter_number,
+                            "section_number": section_number,
+                            "disposition": disposition,
+                            "source_url": section_url,
+                            "source_label": str(section.get("label") or ""),
+                            "classification_source": "chapter_catalog",
+                        }
+                    )
+                else:
+                    section_frontier.append(section)
+        if not section_frontier:
+            raise RuntimeError("New Hampshire chapter frontier produced no active sections")
+
+        total_section_locators = len(section_frontier) + len(terminal_sections)
+        catalog_terminal_section_count = len(terminal_sections)
+        total_chapter_units = len(chapter_frontier) + catalog_terminal_chapter_count
+        checkpoint.write(
+            [],
+            code_name=code_name,
+            stage_label="new-hampshire:section-discovery",
+            progress={
+                "titles_scanned": len(title_units),
+                "discovered_titles": len(title_units),
+                "title_pages_fetched": len(active_title_units),
+                "terminal_titles_classified": len(terminal_titles),
+                "terminal_title_dispositions": terminal_titles,
+                "chapters_scanned": total_chapter_units,
+                "discovered_chapters": total_chapter_units,
+                "chapter_pages_fetched": len(chapter_frontier),
+                "terminal_chapters_classified": len(terminal_chapters),
+                "terminal_chapter_dispositions": terminal_chapters,
+                "sections_scanned": len(terminal_sections),
+                "discovered_sections": total_section_locators,
+                "terminal_sections_classified": len(terminal_sections),
+                "terminal_section_dispositions": terminal_sections,
+                "codes_completed": 0,
+                "codes_total": 1,
+            },
+        )
+
+        statutes: List[NormalizedStatute] = []
+        batch_size = self._new_hampshire_frontier_batch_size()
+        for batch_start in range(0, len(section_frontier), batch_size):
+            batch_units = section_frontier[batch_start : batch_start + batch_size]
+            batch_urls = [str(unit["source_url"]) for unit in batch_units]
+            payloads = await self._fetch_new_hampshire_frontier_batch(
+                batch_urls,
+                frontier_name=(
+                    f"sections-{batch_start + 1}-{batch_start + len(batch_units)}"
+                ),
+                content_validator=self._new_hampshire_section_payload,
+            )
+            self._record_new_hampshire_frontier_inputs(
+                source_role="section",
+                urls=batch_urls,
+                payloads=payloads,
+            )
+            for unit, payload in zip(batch_units, payloads, strict=True):
+                section_url = str(unit["source_url"])
+                section_number = str(unit["section_number"])
+                html = payload.decode("utf-8", errors="replace")
+                identity = new_hampshire_section_page_identity(html)
+                if not identity or identity.casefold() != section_number.casefold():
+                    raise RuntimeError(
+                        "New Hampshire retained section page failed requested identity: "
+                        f"{section_url}"
+                    )
+                statute = parse_new_hampshire_section_html(
+                    html,
+                    source_url=section_url,
+                    code_name=code_name,
+                )
+                if statute is None:
+                    disposition = source_bound_terminal_disposition_from_section_html(
+                        html,
+                        source_url=section_url,
+                        section_number=section_number,
+                    )
+                    if disposition is None:
+                        raise RuntimeError(
+                            "New Hampshire retained section failed official parsing and "
+                            f"has no source-bound terminal disposition: {section_url}"
+                        )
+                    terminal_sections.append(
+                        {
+                            "title_number": str(unit["title_number"]),
+                            "chapter_number": str(unit["chapter_number"]),
+                            "section_number": section_number,
+                            "disposition": str(disposition["disposition"]),
+                            "source_url": section_url,
+                            "source_label": "",
+                            "classification_source": "section_body",
+                            "content_sha256": hashlib.sha256(payload).hexdigest(),
+                        }
+                    )
+                    continue
+                if (
+                    str(statute.section_number or "").casefold()
+                    != section_number.casefold()
+                    or str(statute.source_url or "") != section_url
+                ):
+                    raise RuntimeError(
+                        f"New Hampshire normalized section changed source identity: {section_url}"
+                    )
+                # The locator/TOC spelling is the canonical frontier identity;
+                # official body headings occasionally vary only in letter case.
+                statute.section_number = section_number
+                statute.chapter_number = str(unit["chapter_number"])
+                statute.statute_id = f"{code_name} § {section_number}"
+                statute.official_cite = f"N.H. Rev. Stat. § {section_number}"
+                statute.structured_data = {
+                    **dict(statute.structured_data or {}),
+                    "discovery_method": "official_batched_title_chapter_section_frontier",
+                    "title_number": str(unit["title_number"]),
+                    "chapter_number": str(unit["chapter_number"]),
+                    "content_sha256": hashlib.sha256(payload).hexdigest(),
+                }
+                statutes.append(statute)
+
+            scanned_active = batch_start + len(batch_units)
+            sections_scanned = catalog_terminal_section_count + scanned_active
+            self.logger.info(
+                "New Hampshire aligned section progress: scanned_active=%s/%s statutes=%s terminal=%s",
+                scanned_active,
+                len(section_frontier),
+                len(statutes),
+                len(terminal_sections),
+            )
+            checkpoint.maybe_write(
+                statutes,
+                code_name=code_name,
+                stage_label="new-hampshire:section-batch",
+                progress={
+                    "titles_scanned": len(title_units),
+                    "discovered_titles": len(title_units),
+                    "title_pages_fetched": len(active_title_units),
+                    "terminal_titles_classified": len(terminal_titles),
+                    "chapters_scanned": total_chapter_units,
+                    "discovered_chapters": total_chapter_units,
+                    "chapter_pages_fetched": len(chapter_frontier),
+                    "terminal_chapters_classified": len(terminal_chapters),
+                    "sections_scanned": sections_scanned,
+                    "discovered_sections": total_section_locators,
+                    "terminal_sections_classified": len(terminal_sections),
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                },
+            )
+
+        statute_ids = [str(row.statute_id or "") for row in statutes]
+        source_urls = [str(row.source_url or "") for row in statutes]
+        if (
+            not statutes
+            or len(set(statute_ids)) != len(statute_ids)
+            or len(set(source_urls)) != len(source_urls)
+            or len(statutes) + len(terminal_sections) != total_section_locators
+        ):
+            raise RuntimeError(
+                "New Hampshire final statute identities do not exactly close the section frontier"
+            )
+        from ...legal_data.open_us_law_acquisition_coordinator import (
+            canonical_json_bytes,
+        )
+        from ...legal_data.open_us_law_live_evidence import (
+            compute_frontier_digest,
+        )
+
+        input_reports = list(self._new_hampshire_frontier_input_reports)
+        terminal_projection = {
+            "chapters": terminal_chapters,
+            "sections": terminal_sections,
+            "titles": terminal_titles,
+        }
+        excluded_count = (
+            len(terminal_titles) + len(terminal_chapters) + len(terminal_sections)
+        )
+        exact_frontier: Dict[str, Any] = {
+            "algebra_closed": True,
+            "chapter_document_count": total_chapter_units,
+            "closed": True,
+            "disposition": {
+                "discovered": len(statutes) + excluded_count,
+                "duplicates": 0,
+                "excluded": excluded_count,
+                "failed_final": 0,
+                "fetched": len(statutes),
+                "quarantined": 0,
+            },
+            "enumerator_closed": True,
+            "input_projection_sha256": hashlib.sha256(
+                canonical_json_bytes(input_reports)
+            ).hexdigest(),
+            "operative_identity_sha256": hashlib.sha256(
+                canonical_json_bytes(
+                    [str(row.section_number or "") for row in statutes]
+                )
+            ).hexdigest(),
+            "schema": "new-hampshire-source-derived-strict-frontier-v1",
+            "scope_closed": True,
+            "source_input_count": len(input_reports),
+            "source_section_count": total_section_locators,
+            "statutes_emitted": len(statutes),
+            "terminal_chapter_count": len(terminal_chapters),
+            "terminal_projection_sha256": hashlib.sha256(
+                canonical_json_bytes(terminal_projection)
+            ).hexdigest(),
+            "terminal_section_count": len(terminal_sections),
+            "terminal_title_count": len(terminal_titles),
+            "title_document_count": len(title_units),
+        }
+        exact_frontier["frontier_digest_sha256"] = compute_frontier_digest(
+            exact_frontier
+        )
+        observed_at = datetime.now(timezone.utc).isoformat()
+        observation = {
+            "closed": True,
+            "boundary_first": str(statutes[0].source_url or ""),
+            "boundary_last": str(statutes[-1].source_url or ""),
+            "code_name": code_name,
+            "frontier": exact_frontier,
+            "input_reports": input_reports,
+            "legal_as_of": observed_at[:10],
+            "observed_at": observed_at,
+            "titles_discovered": len(title_units),
+            "title_pages_fetched": len(active_title_units),
+            "terminal_titles": terminal_titles,
+            "chapters_discovered": total_chapter_units,
+            "chapter_pages_fetched": len(chapter_frontier),
+            "terminal_chapters": terminal_chapters,
+            "section_locators_discovered": total_section_locators,
+            "active_section_pages_fetched": len(section_frontier),
+            "terminal_sections": terminal_sections,
+            "statutes_emitted": len(statutes),
+            "batch_calls": list(self._new_hampshire_frontier_batch_stats),
+        }
+        if bool(getattr(self, "_new_hampshire_retained_replay", False)):
+            self._last_new_hampshire_replayed_frontier = observation
+        else:
+            self._last_new_hampshire_full_frontier = observation
+        checkpoint.write(
+            statutes,
+            code_name=code_name,
+            stage_label="new-hampshire:complete",
+            replace_statutes=True,
+            progress={
+                "titles_scanned": len(title_units),
+                "discovered_titles": len(title_units),
+                "title_pages_fetched": len(active_title_units),
+                "terminal_titles_classified": len(terminal_titles),
+                "terminal_title_dispositions": terminal_titles,
+                "chapters_scanned": total_chapter_units,
+                "discovered_chapters": total_chapter_units,
+                "chapter_pages_fetched": len(chapter_frontier),
+                "terminal_chapters_classified": len(terminal_chapters),
+                "terminal_chapter_dispositions": terminal_chapters,
+                "sections_scanned": total_section_locators,
+                "discovered_sections": total_section_locators,
+                "terminal_sections_classified": len(terminal_sections),
+                "terminal_section_dispositions": terminal_sections,
+                "disposition": dict(exact_frontier["disposition"]),
+                "frontier_digest_sha256": str(
+                    exact_frontier["frontier_digest_sha256"]
+                ),
+                "codes_completed": 1,
+                "codes_total": 1,
+            },
+        )
+        return statutes
+
+    async def produce_state_law_frontier_closure(
+        self,
+        *,
+        canonical_output_projection: Mapping[str, Any],
+    ) -> Optional[Path]:
+        """Replay every retained RSA hierarchy input and seal exact row parity."""
+
+        first = getattr(self, "_last_new_hampshire_full_frontier", None)
+        if not isinstance(first, Mapping):
+            raise RuntimeError(
+                "New Hampshire strict source frontier was not closed before output"
+            )
+        first_frontier = first.get("frontier")
+        first_reports = first.get("input_reports")
+        if (
+            not isinstance(first_frontier, Mapping)
+            or not isinstance(first_reports, Sequence)
+            or isinstance(first_reports, (str, bytes, bytearray))
+            or not first_reports
+            or any(not isinstance(row, Mapping) for row in first_reports)
+        ):
+            raise RuntimeError(
+                "New Hampshire first exact frontier observation is incomplete"
+            )
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError(
+                "New Hampshire frontier closure requires an attached ledger"
+            )
+        refresh = getattr(ledger, "refresh_existing_entries", None)
+        if callable(refresh):
+            refresh()
+
+        class _NoopCheckpoint:
+            def write(self, *_args: Any, **_kwargs: Any) -> None:
+                return None
+
+            def maybe_write(self, *_args: Any, **_kwargs: Any) -> None:
+                return None
+
+        prior_replay = bool(
+            getattr(self, "_new_hampshire_retained_replay", False)
+        )
+        self._new_hampshire_retained_replay = True
+        try:
+            replay_rows = await self._scrape_official_rsa_tree_batched(
+                code_name=str(
+                    first.get("code_name") or "New Hampshire Revised Statutes"
+                ),
+                checkpoint=_NoopCheckpoint(),  # type: ignore[arg-type]
+            )
+        finally:
+            self._new_hampshire_retained_replay = prior_replay
+        replay = getattr(self, "_last_new_hampshire_replayed_frontier", None)
+        if not isinstance(replay, Mapping):
+            raise RuntimeError(
+                "New Hampshire retained strict frontier replay was not observed"
+            )
+        replayed_frontier = replay.get("frontier")
+        replay_reports = replay.get("input_reports")
+        if (
+            not isinstance(replayed_frontier, Mapping)
+            or list(replay_reports or []) != list(first_reports)
+        ):
+            raise RuntimeError(
+                "New Hampshire retained hierarchy inputs changed on replay"
+            )
+
+        from .strict_frontier_closure import (
+            retain_exact_state_frontier_closure,
+        )
+
+        batch_stats = [
+            row
+            for row in list(first.get("batch_calls") or [])
+            if isinstance(row, Mapping)
+        ]
+        disposition = first_frontier.get("disposition")
+        if not isinstance(disposition, Mapping):
+            raise RuntimeError(
+                "New Hampshire strict frontier lacks disposition algebra"
+            )
+        return retain_exact_state_frontier_closure(
+            self,
+            canonical_output_projection=canonical_output_projection,
+            first_frontier=first_frontier,
+            replayed_frontier=replayed_frontier,
+            replay_rows=replay_rows,
+            jurisdiction="NH",
+            source_domain=str(urlparse(self.OFFICIAL_ENTRY_URL).hostname or ""),
+            official_source_url=self.OFFICIAL_ENTRY_URL,
+            observed_at=str(first.get("observed_at") or ""),
+            legal_as_of=str(first.get("legal_as_of") or ""),
+            boundary_first=str(first.get("boundary_first") or ""),
+            boundary_last=str(first.get("boundary_last") or ""),
+            bundle_total=int(disposition.get("discovered") or 0),
+            pagination_total=(
+                1
+                + int(first.get("title_pages_fetched") or 0)
+                + int(first.get("chapter_pages_fetched") or 0)
+            ),
+            transport={
+                "current_official_domain": self.OFFICIAL_DOMAIN,
+                "fixture": False,
+                "first_pass_request_batches": len(batch_stats),
+                "first_pass_requested_pages": sum(
+                    int(row.get("requested_pages") or 0) for row in batch_stats
+                ),
+                "grouped_warc_recovery": True,
+                "kind": "archived_root_plus_shared_archive_aware_plural_html",
+                "per_page_archive_loop": False,
+                "retained_replay_network_requests": 0,
+                "synthetic": False,
+            },
+        )
+
     async def _scrape_official_rsa_tree(
         self,
         code_name: str,
@@ -401,7 +1435,11 @@ class NewHampshireScraper(BaseStateScraper):
         soup = BeautifulSoup(html, "html.parser")
         title_urls: List[str] = []
         seen_titles = set()
-        from .new_hampshire_section import nhtoc_chapter_links, nhtoc_section_links, nhtoc_title_links
+        from .new_hampshire_section import (
+            nhtoc_chapter_links,
+            nhtoc_section_links,
+            nhtoc_title_links,
+        )
 
         for href, _roman in nhtoc_title_links(html, base_url=root_url):
             abs_url = self._normalize_wayback_like_url(href)
@@ -569,7 +1607,7 @@ class NewHampshireScraper(BaseStateScraper):
             code_name=code_name,
             section_number=section_number,
             section_name=section_name[:200],
-            full_text=text[:14000],
+            full_text=text,
             legal_area=self._identify_legal_area(section_name),
             source_url=section_url,
             official_cite=f"N.H. Rev. Stat. § {section_number}",
@@ -618,7 +1656,7 @@ class NewHampshireScraper(BaseStateScraper):
                     code_name=code_name,
                     section_number=section_number,
                     section_name=section_name[:200],
-                    full_text=text[:14000],
+                    full_text=text,
                     legal_area=self._identify_legal_area(section_name),
                     source_url=source_url,
                     official_cite=f"N.H. Rev. Stat. § {section_number}",
@@ -635,16 +1673,25 @@ class NewHampshireScraper(BaseStateScraper):
     async def _request_text_direct(self, url: str, timeout: int = 20) -> str:
         canonical = self._normalize_wayback_like_url(url)
 
-        def _request() -> str:
-            try:
-                req = urllib.request.Request(canonical, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    return resp.read().decode("utf-8", errors="replace")
-            except Exception:
-                return ""
-
         try:
-            direct_text = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
+            host = (urlparse(canonical).hostname or "").lower()
+            if host in {"www.gencourt.state.nh.us", "gencourt.state.nh.us", "gc.nh.gov"}:
+                payload = await self._fetch_parser_input_with_transport(
+                    canonical,
+                    headers={"User-Agent": "Mozilla/5.0"},
+                    timeout_seconds=max(1, int(timeout)),
+                    allow_archival_fallback=False,
+                    media_type="text/html",
+                    provider="new_hampshire_official_direct",
+                )
+                direct_text = payload.decode("utf-8", errors="replace") if payload else ""
+            else:
+                # Direct replay/CDX requests remain a distinct archive source
+                # hop until the shared adapter can express that provenance.
+                direct_text = await self._request_archival_source_text_direct(
+                    canonical,
+                    timeout=timeout,
+                )
             if direct_text:
                 return direct_text
         except Exception:
@@ -668,6 +1715,28 @@ class NewHampshireScraper(BaseStateScraper):
             except Exception:
                 return ""
         return ""
+
+    async def _request_archival_source_text_direct(
+        self,
+        url: str,
+        *,
+        timeout: int,
+    ) -> str:
+        normalized = str(url or "").strip()
+        if "web.archive.org/cdx/search/cdx" in normalized.lower():
+            rows = await self._fetch_wayback_cdx_rows(
+                normalized,
+                timeout_seconds=timeout,
+            )
+            return json.dumps(rows) if rows else ""
+        if "web.archive.org/web/" not in normalized.lower():
+            return ""
+        payload = await self._fetch_wayback_replay_parser_input(
+            normalized,
+            timeout_seconds=timeout,
+            media_type="text/html",
+        )
+        return payload.decode("utf-8", errors="replace") if payload else ""
 
     async def _fetch_known_rsa_page(self, url: str, timeout_seconds: int = 35) -> bytes:
         # Known official/Wayback RSA pages should be fetched directly before invoking
@@ -1022,7 +2091,7 @@ class NewHampshireScraper(BaseStateScraper):
             1,
             int(os.getenv("STATE_SCRAPER_NH_SECTION_CONCURRENCY", "6") or "6"),
         )
-        section_sem = asyncio.Semaphore(section_concurrency)
+        section_sem = anyio_compat.Semaphore(section_concurrency)
 
         async def _fetch_chapter_sections(chapter_id: str, chapter_name: str, chapter_url: str) -> List[NormalizedStatute]:
             try:
@@ -1105,14 +2174,17 @@ class NewHampshireScraper(BaseStateScraper):
                         metadata=StatuteMetadata(),
                     )
 
-            tasks = [
-                asyncio.create_task(_fetch_section(section_number, section_title, section_url))
-                for section_number, section_title, section_url in section_links
-            ]
+            section_results = await anyio_compat.gather(
+                *[
+                    _fetch_section(section_number, section_title, section_url)
+                    for section_number, section_title, section_url in section_links
+                ],
+                return_exceptions=True,
+            )
             scanned_sections = 0
-            for task in asyncio.as_completed(tasks):
+            for result in section_results:
                 scanned_sections += 1
-                statute = await task
+                statute = result if isinstance(result, NormalizedStatute) else None
                 if statute is None:
                     continue
                 local_key = str(statute.statute_id or statute.source_url or "").strip().lower()
@@ -1153,11 +2225,6 @@ class NewHampshireScraper(BaseStateScraper):
                     )
                 if _limit_reached(len(section_statutes)):
                     break
-            for pending in tasks:
-                if not pending.done():
-                    pending.cancel()
-            if tasks:
-                await asyncio.gather(*tasks, return_exceptions=True)
             if section_links:
                 self.logger.info(
                     "New Hampshire archived index: chapter=%s scanned_sections=%s/%s statutes_so_far=%s",
@@ -1168,7 +2235,7 @@ class NewHampshireScraper(BaseStateScraper):
                 )
             return section_statutes
 
-        sem = asyncio.Semaphore(4)
+        sem = anyio_compat.Semaphore(4)
 
         async def _bounded_fetch(chapter_id: str, chapter_name: str, chapter_url: str) -> List[NormalizedStatute]:
             async with sem:
@@ -1209,13 +2276,18 @@ class NewHampshireScraper(BaseStateScraper):
             except Exception as exc:  # pragma: no cover - defensive guard
                 return chapter_id, [], exc
 
-        chapter_tasks = [
-            asyncio.create_task(_bounded_fetch_with_meta(chapter_id, chapter_name, chapter_url))
-            for chapter_id, chapter_name, chapter_url in chapters_to_fetch
-        ]
+        chapter_results = await anyio_compat.gather(
+            *[
+                _bounded_fetch_with_meta(chapter_id, chapter_name, chapter_url)
+                for chapter_id, chapter_name, chapter_url in chapters_to_fetch
+            ],
+            return_exceptions=True,
+        )
         completed_chapters = 0
-        for completed_task in asyncio.as_completed(chapter_tasks):
-            chapter_id, section_batch, section_error = await completed_task
+        for completed_result in chapter_results:
+            if not isinstance(completed_result, tuple):
+                continue
+            chapter_id, section_batch, section_error = completed_result
             completed_chapters += 1
             chapter_index = completed_chapters
             if section_error is not None:
@@ -1613,7 +2685,7 @@ class _NewHampshireCheckpoint:
     """Best-effort partial progress checkpoint for New Hampshire archive crawls."""
 
     def __init__(self, state_code: str) -> None:
-        raw_dir = str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
+        raw_dir = current_partial_checkpoint_run_directory()
         if not raw_dir:
             self.path: Optional[Path] = None
         else:
@@ -1696,12 +2768,13 @@ class _NewHampshireCheckpoint:
         code_name: str,
         stage_label: str,
         progress: Optional[Dict[str, Any]] = None,
+        replace_statutes: bool = False,
     ) -> None:
         if not self.path:
             return
         existing_rows: List[Dict[str, Any]] = []
         existing_progress: Dict[str, Any] = {}
-        if self.path.exists():
+        if self.path.exists() and not replace_statutes:
             try:
                 existing_payload = json.loads(self.path.read_text(encoding="utf-8"))
             except Exception:

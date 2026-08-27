@@ -20,8 +20,16 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, MutableMapping, Optional, Sequence
-
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Sequence,
+)
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 if str(REPOSITORY_ROOT) not in sys.path:
@@ -30,7 +38,9 @@ if str(REPOSITORY_ROOT) not in sys.path:
 from ipfs_datasets_py.processors.legal_data.state_laws_completeness import (
     canonical_jurisdiction_codes,
     evaluate_jurisdiction_receipt,
+    has_explicit_official_source_authority,
     reconcile_disposition,
+    source_authority_class,
 )
 
 TASK_ID = "LCR-022"
@@ -39,6 +49,7 @@ PROGRAM_ID = "legal-corpora-reindex-v1"
 PRODUCER = "certify_state_laws_full_scrape.py"
 REPORT_SCHEMA = "ipfs_datasets_py/legal-corpora-reindex-full-scrape-coverage@1"
 EXPECTED_JURISDICTION_COUNT = 51
+LIVE_FULL_CORPUS_EVIDENCE_MODE = "live_full_corpus"
 COHORT_LETTERS: tuple[str, ...] = tuple("ABCDEFGHIJKLM")
 DEFAULT_RECEIPT_DIR = Path("docs/reports/legal_corpora_reindex")
 DEFAULT_REPORT_RELPATH = Path("docs/reports/legal_corpora_reindex/full_scrape_coverage.json")
@@ -50,6 +61,7 @@ API_KEY_ASSIGN_RE = re.compile(
     r"(api[_-]?key|hf_token|authorization)\s*[\"']?\s*[:=]\s*[\"']?(?!\[REDACTED\])[A-Za-z0-9_\-]{8,}",
     re.IGNORECASE,
 )
+SHA256_RE = re.compile(r"^(?:sha256:)?[0-9a-f]{64}$")
 
 
 class FullScrapeCertifyError(RuntimeError):
@@ -303,12 +315,17 @@ def _cell_from_entry(
     if non_placeholder is False:
         _append_finding(findings, f"{code}: placeholder or missing full text")
 
-    authority = str(
-        entry.get("source_authority_class") or entry.get("authority_class") or ""
-    ).strip().lower()
-    official = entry.get("official_source")
-    if official is False or authority in {"secondary", "unofficial", "mirror"}:
-        _append_finding(findings, f"{code}: secondary-only or unofficial source")
+    authority = source_authority_class(entry)
+    explicit_official = has_explicit_official_source_authority(entry)
+    if not explicit_official:
+        _append_finding(
+            findings,
+            (
+                f"{code}: secondary-only or unofficial source; explicit official "
+                f"authority required (official_source={entry.get('official_source')!r}, "
+                f"source_authority_class={authority or '<missing>'})"
+            ),
+        )
 
     index_keys = entry.get("index_keys") if isinstance(entry.get("index_keys"), Mapping) else {}
     stale_keys = list(index_keys.get("stale_keys") or [])
@@ -351,6 +368,37 @@ def _cell_from_entry(
             f"{code}: internally contradictory row_count={row_count} fetched={fetched}",
         )
 
+    evidence_mode = str(entry.get("evidence_mode") or "").strip().lower()
+    source_artifact = (
+        entry.get("source_artifact")
+        if isinstance(entry.get("source_artifact"), Mapping)
+        else {}
+    )
+    source_artifact_sha256 = str(source_artifact.get("sha256") or "").strip().lower()
+    source_artifact_row_count = _as_int(source_artifact.get("row_count"))
+    live_full_corpus_evidence = bool(
+        evidence_mode == LIVE_FULL_CORPUS_EVIDENCE_MODE
+        and SHA256_RE.fullmatch(source_artifact_sha256)
+        and row_count is not None
+        and row_count > 0
+        and source_artifact_row_count == row_count
+    )
+    if evidence_mode != LIVE_FULL_CORPUS_EVIDENCE_MODE:
+        _append_finding(
+            findings,
+            f"{code}: evidence_mode={evidence_mode or '<missing>'} is not live_full_corpus",
+        )
+    if not SHA256_RE.fullmatch(source_artifact_sha256):
+        _append_finding(findings, f"{code}: source artifact SHA-256 binding missing")
+    if row_count is None or row_count <= 0 or source_artifact_row_count != row_count:
+        _append_finding(
+            findings,
+            (
+                f"{code}: source artifact row-count binding mismatch "
+                f"artifact={source_artifact_row_count!r} receipt={row_count!r}"
+            ),
+        )
+
     if isinstance(entry, Mapping) and (
         entry.get("jurisdiction") or entry.get("disposition") or entry.get("frontier")
     ):
@@ -367,8 +415,8 @@ def _cell_from_entry(
         and failed_final_out == 0
         and frontier_closed
         and not stale_keys
-        and official is not False
-        and authority not in {"secondary", "unofficial", "mirror"},
+        and explicit_official
+        and live_full_corpus_evidence,
         "failed_final": failed_final_out,
         "discovered": discovered,
         "fetched": fetched,
@@ -378,7 +426,7 @@ def _cell_from_entry(
         "row_count": row_count,
         "statutes_count": statutes_count,
         "frontier_closed": frontier_closed,
-        "official_source": official is True,
+        "official_source": explicit_official,
         "source_authority_class": authority or None,
         "source_domain": str(entry.get("source_domain") or "") or None,
         "content_digest": content_digest or None,
@@ -391,6 +439,10 @@ def _cell_from_entry(
         "partial_checkpoint_promoted": _boolish(entry.get("partial_checkpoint_promoted")),
         "timeout_promoted_to_success": _boolish(entry.get("timeout_promoted_to_success")),
         "production_upload": _boolish(entry.get("production_upload")),
+        "evidence_mode": evidence_mode or None,
+        "source_artifact_sha256": source_artifact_sha256 or None,
+        "source_artifact_row_count": source_artifact_row_count,
+        "live_full_corpus_evidence": live_full_corpus_evidence,
     }
 
 
@@ -464,6 +516,7 @@ def aggregate_full_scrape(
     cohort_summaries: List[Dict[str, Any]] = []
     production_upload = False
     shared_combined_write = False
+    cohort_live_evidence: Dict[str, bool] = {}
 
     for letter in COHORT_LETTERS:
         payload = loaded.get(letter)
@@ -492,6 +545,33 @@ def aggregate_full_scrape(
             _append_finding(
                 findings,
                 f"cohort {letter}: status={payload.get('status')} (not success)",
+            )
+
+        evidence_mode = str(payload.get("evidence_mode") or "").strip().lower()
+        software_contract_only = payload.get("proves_software_contract_only")
+        has_sample_counts = "statutes_sample_counts" in payload
+        cohort_live_evidence[letter] = bool(
+            evidence_mode == LIVE_FULL_CORPUS_EVIDENCE_MODE
+            and software_contract_only is False
+            and not has_sample_counts
+        )
+        if evidence_mode != LIVE_FULL_CORPUS_EVIDENCE_MODE:
+            _append_finding(
+                findings,
+                (
+                    f"cohort {letter}: evidence_mode={evidence_mode or '<missing>'} "
+                    "is not live_full_corpus"
+                ),
+            )
+        if software_contract_only is not False:
+            _append_finding(
+                findings,
+                f"cohort {letter}: proves_software_contract_only must be explicitly false",
+            )
+        if has_sample_counts:
+            _append_finding(
+                findings,
+                f"cohort {letter}: compact statutes_sample_counts receipt cannot certify a full corpus",
             )
 
         cert_result = cert.certify_cohort_receipt(payload, cohort=letter, runner=mod)
@@ -532,6 +612,9 @@ def aggregate_full_scrape(
                 "observed_states": observed_codes,
                 "production_upload": _boolish(payload.get("production_upload")),
                 "shared_combined_write": _boolish(payload.get("shared_combined_write")),
+                "evidence_mode": evidence_mode or None,
+                "proves_software_contract_only": software_contract_only,
+                "live_full_corpus_evidence": cohort_live_evidence[letter],
             }
         )
 
@@ -542,7 +625,6 @@ def aggregate_full_scrape(
             f"{code}: duplicate across cohorts {owners[code]}",
         )
 
-    observed = [code for code in expected if code in matrix]
     extras = sorted(code for code in matrix if code not in set(expected))
     missing = [code for code in expected if code not in matrix]
     for code in missing:
@@ -599,6 +681,9 @@ def aggregate_full_scrape(
         and cell.get("runtime_caps") in (None, False, 0, "", [], {})
         for cell in cells
     ) and not missing
+    live_full_corpus_evidence = bool(cells) and all(
+        cell.get("live_full_corpus_evidence") is True for cell in cells
+    ) and all(cohort_live_evidence.get(letter) is True for letter in COHORT_LETTERS)
     no_home_or_tokens = not any(
         " /home/" in item or item.endswith("/home/ path") or "token" in item or "api_key" in item
         for item in findings
@@ -619,6 +704,10 @@ def aggregate_full_scrape(
         "no_stale_keys": no_stale,
         "official_source_only": official_only,
         "non_placeholder_full_text": no_placeholder,
+        "live_full_corpus_evidence": live_full_corpus_evidence,
+        "no_software_contract_receipts": all(
+            cohort_live_evidence.get(letter) is True for letter in COHORT_LETTERS
+        ),
         "disposition_reconciled": not any("discovered=" in item for item in findings),
         "no_absolute_home_paths": not any("/home/" in item for item in findings),
         "no_token_material": no_home_or_tokens

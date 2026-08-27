@@ -57,6 +57,7 @@ from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
     SemanticFamilyClosureError,
     SourceAuthorityClass,
     SourceReceiptRecord,
+    StateLawsReleaseSchemaError,
     VectorRecord,
     content_sha256,
     example_corpus_payload,
@@ -156,6 +157,56 @@ def test_example_corpus_round_trips():
     assert again.admission_status.value == "admitted"
     assert again.source_authority_class is SourceAuthorityClass.OFFICIAL
     assert again.document_index == 0
+
+
+def test_corpus_explicit_relation_arrays_round_trip_exactly_and_default_empty():
+    legacy = CorpusRecord.from_mapping(example_corpus_payload())
+    assert (
+        legacy.public_laws,
+        legacy.cites,
+        legacy.amends,
+        legacy.repeals,
+        legacy.transfers,
+    ) == ((), (), (), (), ())
+
+    payload = example_corpus_payload()
+    payload.update(
+        {
+            "public_laws": ["Pub. L. 117-58", "Pub. L. 112-29"],
+            "cites": ["state:OR:ors:123:457"],
+            "amends": ["state:OR:ors:123:458"],
+            "repeals": ["state:OR:ors:123:459"],
+            "transfers": ["state:OR:ors:123:460", "state:OR:ors:123:460"],
+        }
+    )
+
+    record = CorpusRecord.from_mapping(payload)
+    encoded = record.to_dict()
+
+    assert encoded["public_laws"] == payload["public_laws"]
+    assert encoded["cites"] == payload["cites"]
+    assert encoded["amends"] == payload["amends"]
+    assert encoded["repeals"] == payload["repeals"]
+    assert encoded["transfers"] == payload["transfers"]
+    assert CorpusRecord.from_mapping(encoded) == record
+
+
+@pytest.mark.parametrize(
+    ("field_name", "invalid"),
+    (
+        ("public_laws", "Pub. L. 117-58"),
+        ("cites", {"target": "state:OR:ors:123:457"}),
+        ("amends", [""]),
+    ),
+)
+def test_corpus_relation_evidence_must_be_an_array_of_non_empty_strings(
+    field_name: str,
+    invalid: object,
+) -> None:
+    payload = example_corpus_payload()
+    payload[field_name] = invalid
+    with pytest.raises(StateLawsReleaseSchemaError, match=field_name):
+        CorpusRecord.from_mapping(payload)
 
 
 def test_example_manifest_round_trips_with_family_closure():

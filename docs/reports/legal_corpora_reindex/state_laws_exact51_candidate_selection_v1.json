@@ -1,0 +1,29 @@
+{
+  "schema_version": "state-laws-production-input-map-candidate-selection/v1",
+  "states": {
+    "CT": {
+      "canonical_jsonld_sha256": "6293dcfc4284b91899dca0bc3a8cf1a10f7423617bed85d3a3b3d79ca85628eb",
+      "normalized_source_receipt_sha256": "0eee8649893dda8e8871564fb08fd5057713957a98e678731013f431b6c88a43"
+    },
+    "ND": {
+      "canonical_jsonld_sha256": "ce227e4f8b1c19413e4904f0d2ba03063f5b4663c25e9c4d4ee5ba275791d0d5",
+      "normalized_source_receipt_sha256": "40f6342e7b1e6d460607bea388b71f45d3e59121d562aa0a358d86d2d516c219"
+    },
+    "OR": {
+      "canonical_jsonld_sha256": "25efec0acb64b2adbcda5448dd84b57823e9575f371587017a8a2dd403dea3e6",
+      "normalized_source_receipt_sha256": "ab8a213f0798a2865088170c003beb0532a66ea945000eec8393cd1d30b3f911"
+    },
+    "SC": {
+      "canonical_jsonld_sha256": "55946b062e92e5ccf85dcff01d0cc54feedba2e7abb0170ca00cec97b75519b1",
+      "normalized_source_receipt_sha256": "8fe8a4b22d465f1e01269c821888e88ca8aab2b37148c9fbe275a5a0633420a3"
+    },
+    "SD": {
+      "canonical_jsonld_sha256": "da4317a0d7aae80f5b025c2b661dc54ffc923b2eacdea9bd0585204350d4f53d",
+      "normalized_source_receipt_sha256": "8ff9086ab514282afcb7e4f8c4d05122429da0b603cca2b5e184e0f73f03baab"
+    },
+    "VA": {
+      "canonical_jsonld_sha256": "472a9e7f7268bb45fdb0f7bfc0454f01558d6ce571df22655727341b4a6e2f04",
+      "normalized_source_receipt_sha256": "2c83d28a3c483f9cf729331ab49fa6f6f0851263180d81893c3d73026dfef358"
+    }
+  }
+}

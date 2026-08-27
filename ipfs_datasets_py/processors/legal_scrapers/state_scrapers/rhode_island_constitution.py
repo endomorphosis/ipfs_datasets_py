@@ -69,7 +69,7 @@ def parse_rhode_island_constitution_html(
                     title_number=cur_art,
                     section_number=cur_sec,
                     section_name=(cur_sec_title or raw.split(".", 1)[0])[:200],
-                    full_text=raw[:14000],
+                    full_text=raw,
                     source_url=RI_CONST_URL,
                     official_cite=cite,
                     metadata=StatuteMetadata(),

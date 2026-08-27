@@ -574,7 +574,7 @@ async def test_kentucky_full_corpus_is_uncapped_when_max_statutes_omitted(
 
 
 @pytest.mark.anyio
-async def test_louisiana_full_corpus_is_uncapped_when_max_statutes_omitted(
+async def test_louisiana_full_corpus_refuses_live_seed_sole_admission(
     monkeypatch: pytest.MonkeyPatch,
 ):
     requested: Dict[str, Any] = {}
@@ -610,8 +610,8 @@ async def test_louisiana_full_corpus_is_uncapped_when_max_statutes_omitted(
         "https://www.legis.la.gov/legis/Laws.aspx",
         max_statutes=None,
     )
-    assert requested["max_statutes"] is None
-    assert len(statutes) == 1
+    assert "max_statutes" not in requested
+    assert statutes == []
 
 
 @pytest.mark.anyio

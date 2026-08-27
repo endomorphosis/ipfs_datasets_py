@@ -12,8 +12,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 
@@ -26,14 +26,19 @@ def _bootstrap_pythonpath() -> None:
 
 _bootstrap_pythonpath()
 
+from ipfs_datasets_py.huggingface.protected_repo_guard import (  # noqa: E402
+    require_unprotected_or_runtime,
+)
 from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import (  # noqa: E402
     get_canonical_legal_corpus,
 )
 from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion import (  # noqa: E402
     _resolve_hf_token,
 )
-from ipfs_datasets_py.utils.cid_utils import canonical_json_bytes, cid_for_obj  # noqa: E402
-
+from ipfs_datasets_py.utils.cid_utils import (  # noqa: E402
+    canonical_json_bytes,
+    cid_for_obj,
+)
 
 _CORPUS = get_canonical_legal_corpus("state_admin_rules")
 
@@ -301,6 +306,7 @@ def _publish_parquet_dir(
     token: Optional[str],
     commit_message: str,
 ) -> Dict[str, Any]:
+    require_unprotected_or_runtime(repo_id, method="upload_folder")
     from huggingface_hub import HfApi
 
     api = HfApi(token=token)

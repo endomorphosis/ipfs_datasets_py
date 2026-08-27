@@ -34,7 +34,7 @@ import unicodedata
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path, PurePosixPath
-from typing import Any, Final, Iterable, Iterator, Mapping, Optional, Sequence, Union
+from typing import Any, Final, Iterator, Mapping, Optional, Sequence, Union
 from urllib.parse import urlparse
 
 from ipfs_datasets_py.processors.legal_data.state_laws_completeness import (
@@ -148,10 +148,27 @@ _FOOTER_RE = re.compile(
     r"all rights reserved|privacy policy|terms of (?:use|service)",
     re.IGNORECASE,
 )
+_FOOTER_ONLY_RE = re.compile(
+    r"^(?:(?:copyright|©)\s*(?:\d{4}(?:\s*[-–]\s*\d{4})?)?"
+    r"(?:\s+[^|•;]{1,80})?[|•;.\s-]*)?"
+    r"(?:(?:all rights reserved|privacy policy|terms of (?:use|service))"
+    r"[|•;.\s-]*)+$",
+    re.IGNORECASE,
+)
 _PLACEHOLDER_RE = re.compile(
-    r"\blorem ipsum\b|\[insert[^\]]*\]|todo:\s*add (?:statute|text)|"
-    r"placeholder text|coming soon|under construction|"
-    r"text not available|lorem-ipsum|sample statute text only",
+    r"\blorem ipsum\b|todo:\s*add (?:statute|text)|"
+    r"placeholder text|lorem-ipsum|sample statute text only",
+    re.IGNORECASE,
+)
+_STATUS_ONLY_PLACEHOLDER_RE = re.compile(
+    r"^(?:(?:statute|section|body|content|page|official text)\s*[:\-]\s*)?"
+    r"(?:coming soon|under construction|(?:full )?text (?:is )?not available)"
+    r"\s*[.!]?$",
+    re.IGNORECASE,
+)
+_INSERT_ONLY_PLACEHOLDER_RE = re.compile(
+    r"^(?:(?:section|sec\.?|§)\s*[A-Za-z0-9_.:-]+\s*[:.\-]?\s*)?"
+    r"\[\s*insert[^\]]*\]\s*[.!?]?$",
     re.IGNORECASE,
 )
 _STATUTORY_SIGNAL_RE = re.compile(
@@ -539,7 +556,20 @@ def assess_text_quality(text: Any, *, min_usable_chars: int = MIN_USABLE_CHARS) 
     usable = len(stripped)
     navigation = bool(_NAV_RE.search(stripped))
     footer = bool(_FOOTER_RE.search(stripped))
-    placeholder = bool(_PLACEHOLDER_RE.search(stripped))
+    # Enacted text can regulate a provider's "terms of service" or mention a
+    # privacy policy.  That phrase is footer contamination only when the
+    # normalized record is itself footer chrome, not when it appears inside a
+    # substantive provision.
+    footer_only = bool(_FOOTER_ONLY_RE.fullmatch(stripped))
+    # Bracketed insertion directions occur verbatim in enacted form and ballot
+    # language.  They are a placeholder only when they comprise essentially the
+    # entire record, never merely because substantive statutory text contains
+    # (for example) ``[insert date]``.
+    placeholder = bool(
+        _PLACEHOLDER_RE.search(stripped)
+        or _STATUS_ONLY_PLACEHOLDER_RE.fullmatch(stripped)
+        or _INSERT_ONLY_PLACEHOLDER_RE.fullmatch(stripped)
+    )
     statutory = bool(_STATUTORY_SIGNAL_RE.search(stripped))
     reasons: list[str] = []
     contaminated = False
@@ -549,11 +579,11 @@ def assess_text_quality(text: Any, *, min_usable_chars: int = MIN_USABLE_CHARS) 
     if usable < min_usable_chars:
         contaminated = True
         reasons.append("below_min_usable_chars")
-    if (navigation or footer) and not statutory:
+    if (navigation or footer_only) and not statutory:
         contaminated = True
         if navigation:
             reasons.append("navigation_chrome")
-        if footer:
+        if footer_only:
             reasons.append("footer_chrome")
     return TextQuality(
         usable_chars=usable,

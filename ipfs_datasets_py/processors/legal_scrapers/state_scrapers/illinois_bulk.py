@@ -8,14 +8,17 @@ point ``ILLINOIS_BULK_ZIP`` at a local copy.
 
 from __future__ import annotations
 
-import os
 import re
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from .base_scraper import NormalizedStatute, StatuteMetadata
+from .base_scraper import (
+    NormalizedStatute,
+    StatuteMetadata,
+    current_state_law_run_environment_value,
+)
 
 FTP_BASE = "https://www.ilga.gov/ftp/ILCS"
 SECTION_VIEW = "https://www.ilga.gov/legislation/ilcs/ilcs.asp"
@@ -137,7 +140,7 @@ def parse_illinois_bulk_zip(
                     chapter_number=entry.act,
                     section_number=f"{entry.act}/{entry.section}",
                     section_name=f"Section {entry.section}",
-                    full_text=text[:14000],
+                    full_text=text,
                     source_url=section_url(entry.raw),
                     official_cite=entry.citation(),
                     metadata=StatuteMetadata(),
@@ -153,7 +156,7 @@ def parse_illinois_bulk_zip(
 
 
 def configured_bulk_zip_path() -> Optional[Path]:
-    raw = str(os.environ.get("ILLINOIS_BULK_ZIP") or "").strip()
+    raw = current_state_law_run_environment_value("ILLINOIS_BULK_ZIP").strip()
     if not raw:
         return None
     path = Path(raw).expanduser()
@@ -161,7 +164,7 @@ def configured_bulk_zip_path() -> Optional[Path]:
 
 
 def configured_manifest_path() -> Optional[Path]:
-    raw = str(os.environ.get("ILLINOIS_MANIFEST_TEXT") or "").strip()
+    raw = current_state_law_run_environment_value("ILLINOIS_MANIFEST_TEXT").strip()
     if not raw:
         return None
     path = Path(raw).expanduser()

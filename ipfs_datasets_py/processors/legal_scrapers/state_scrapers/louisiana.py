@@ -4,13 +4,15 @@ This module contains the scraper for Louisiana statutes from the official state 
 """
 
 import re
-import json
+import hashlib
 import os
 import time
 import urllib.request
 import urllib.parse
+from datetime import datetime, timezone
 from html import unescape
-from typing import List, Dict, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -21,7 +23,9 @@ class LouisianaScraper(BaseStateScraper):
     """Scraper for Louisiana state laws from http://www.legis.la.gov"""
 
     _TOC_TITLE_POSTBACK_RE = re.compile(
-        r"__doPostBack\('([^']*ListViewTOC1\$ctrl\d+\$LinkButton1a)'",
+        r"^\s*javascript:\s*__doPostBack\(\s*'"
+        r"(?P<target>[^']*ListViewTOC1\$ctrl\d+\$LinkButton1a)'"
+        r"\s*,\s*''\s*\)\s*;?\s*$",
         re.IGNORECASE,
     )
     _LAW_LINK_RE = re.compile(r"Law\.aspx\?d=\d+", re.IGNORECASE)
@@ -36,6 +40,25 @@ class LouisianaScraper(BaseStateScraper):
         "http://web.archive.org/web/20250501064333/https://legis.la.gov/Legis/Law.aspx?d=100124",
         "http://web.archive.org/web/20240809002954/https://legis.la.gov/Legis/Law.aspx?d=100148",
     ]
+
+    def state_law_frontier_source_dependencies(self) -> Sequence[Any]:
+        """Bind parsing, closure, and exact plural acquisition code."""
+
+        from ...web_archiving import wayback_machine_engine
+        from . import (
+            base_scraper,
+            louisiana_law,
+            state_archival_fetch,
+            strict_frontier_closure,
+        )
+
+        return (
+            base_scraper,
+            state_archival_fetch,
+            strict_frontier_closure,
+            louisiana_law,
+            wayback_machine_engine,
+        )
 
     def get_base_url(self) -> str:
         """Return the base URL for Louisiana's legislative website."""
@@ -88,7 +111,7 @@ class LouisianaScraper(BaseStateScraper):
         if local_rows:
             return local_rows if limit is None else local_rows[: int(limit)]
         skip_live_toc = str(
-            os.getenv("STATE_SCRAPER_LA_SKIP_LIVE_TOC", "1") or "1"
+            os.getenv("STATE_SCRAPER_LA_SKIP_LIVE_TOC", "0") or "0"
         ).strip().lower() in {
             "1",
             "true",
@@ -107,10 +130,14 @@ class LouisianaScraper(BaseStateScraper):
         if toc:
             return toc if limit is None else toc[: int(limit)]
 
-        live = await self._scrape_live_law_pages(
-            code_name=code_name, max_statutes=limit
-        )
-        if live:
+        live: List[NormalizedStatute] = []
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            live = await self._scrape_live_law_pages(
+                code_name=code_name, max_statutes=limit
+            )
+        if live and (
+            not self._full_corpus_enabled() or max_statutes is not None
+        ):
             return live if limit is None else live[: int(limit)]
 
         # Full-corpus runs must not sole-admit Wayback/Justia/generic sources.
@@ -121,7 +148,9 @@ class LouisianaScraper(BaseStateScraper):
         archival = await self._scrape_archived_law_pages(
             code_name=code_name, max_statutes=max(10, fallback_cap)
         )
-        if archival:
+        if archival and (
+            not self._full_corpus_enabled() or max_statutes is not None
+        ):
             self.logger.info(f"Louisiana archival fallback: Scraped {len(archival)} sections")
             return archival if limit is None else archival[: int(limit)]
 
@@ -293,6 +322,307 @@ class LouisianaScraper(BaseStateScraper):
         )
         return statutes
 
+    def _fail_louisiana_full_frontier(
+        self,
+        message: str,
+        **evidence: Any,
+    ) -> None:
+        frontier = dict(
+            getattr(self, "_last_louisiana_full_frontier", {}) or {}
+        )
+        frontier["closed"] = False
+        frontier.update(evidence)
+        errors = list(frontier.get("errors") or [])
+        errors.append(str(message))
+        frontier["errors"] = errors
+        self._last_louisiana_full_frontier = frontier
+        self._last_full_corpus_frontier = frontier
+        details = " ".join(
+            f"{key}={value}" for key, value in sorted(evidence.items())
+        )
+        raise RuntimeError(f"{message}{': ' + details if details else ''}")
+
+    def _canonical_louisiana_law_receipt(
+        self,
+        *,
+        law_url: str,
+        payload: bytes,
+        receipt: Optional[Mapping[str, Any]],
+    ) -> Dict[str, Any]:
+        """Verify and minimize one aligned law-page byte receipt."""
+
+        from ...legal_data.state_laws_source_provenance import (
+            StateLawTransportReceiptError,
+            canonicalize_state_law_transport_receipt,
+        )
+
+        digest = hashlib.sha256(payload).hexdigest()
+        if not isinstance(receipt, Mapping):
+            raise RuntimeError("aligned transport receipt is missing")
+        try:
+            return canonicalize_state_law_transport_receipt(
+                receipt,
+                official_url=law_url,
+                content_sha256=digest,
+            )
+        except StateLawTransportReceiptError as exc:
+            raise RuntimeError(
+                f"aligned transport receipt was rejected: {exc.code}"
+            ) from exc
+
+    def _retained_louisiana_toc_reports(
+        self,
+    ) -> tuple[List[Dict[str, Any]], List[str]]:
+        """Reconstruct the complete ASP.NET TOC solely from retained inputs."""
+
+        from ...legal_data.open_us_law_acquisition_coordinator import (
+            canonical_json_bytes,
+        )
+        from .strict_frontier_closure import replay_exact_retained_state_input
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError("Louisiana TOC replay requires an attached ledger")
+        refresh = getattr(ledger, "refresh_existing_entries", None)
+        if callable(refresh):
+            refresh()
+        toc_url = self._canonical_fetch_url(
+            f"{self.get_base_url()}/legis/Laws_Toc.aspx?folder=75&level=Parent"
+        )
+        candidates: List[tuple[int, Mapping[str, Any], Any]] = []
+        for retained in ledger.entries:
+            receipt = retained.receipt
+            if self._canonical_fetch_url(str(receipt.endpoint or "")) != toc_url:
+                continue
+            request = dict(receipt.sanitized_request or {})
+            method = str(request.get("method") or "").upper()
+            pagination = dict(receipt.pagination or {})
+            if method == "GET" and pagination.get("step") == "root":
+                order = 0
+            elif method == "POST" and pagination.get("kind") == "aspnet_postback":
+                order = int(pagination.get("page_index") or 0)
+                if order <= 0:
+                    raise RuntimeError(
+                        "Louisiana retained TOC postback lacks a positive page index"
+                    )
+            else:
+                continue
+            candidates.append((order, request, receipt))
+        candidates.sort(key=lambda row: row[0])
+        if not candidates or candidates[0][0] != 0:
+            raise RuntimeError("Louisiana retained TOC root input is missing")
+        page_orders = [order for order, _request, _receipt in candidates]
+        if page_orders != list(range(len(candidates))):
+            raise RuntimeError("Louisiana retained TOC pagination is ambiguous")
+
+        reports: List[Dict[str, Any]] = []
+        law_urls: List[str] = []
+        seen_laws: set[str] = set()
+        expected_postbacks = 0
+        declared_page_counts: set[int] = set()
+        for order, request, receipt in candidates:
+            body = replay_exact_retained_state_input(
+                self,
+                official_url=toc_url,
+                sanitized_request=request,
+                frontier_name=f"Louisiana TOC page {order}",
+                refresh=False,
+            )
+            html = body.decode("utf-8", errors="replace")
+            if order == 0:
+                expected_postbacks = len(self._title_postback_targets(html))
+            pagination = dict(receipt.pagination or {})
+            if order > 0:
+                declared_page_count = int(pagination.get("page_count") or 0)
+                if declared_page_count <= 0:
+                    raise RuntimeError(
+                        "Louisiana retained TOC postback lacks a positive page count"
+                    )
+                declared_page_counts.add(declared_page_count)
+            page_members: List[str] = []
+            try:
+                from bs4 import BeautifulSoup
+            except ImportError as exc:
+                raise RuntimeError(
+                    "BeautifulSoup is required for Louisiana retained TOC replay"
+                ) from exc
+            page = BeautifulSoup(html, "html.parser")
+            for anchor in page.find_all("a", href=True):
+                href = str(anchor.get("href") or "").strip()
+                if not self._LAW_LINK_RE.search(href):
+                    continue
+                source_url = self._canonical_fetch_url(
+                    urllib.parse.urljoin(toc_url, href)
+                )
+                if not source_url:
+                    continue
+                if source_url in seen_laws:
+                    # The official title views render the same Law.aspx anchor
+                    # in two parallel presentation blocks.  Live discovery
+                    # admits the first source-order occurrence only; retained
+                    # replay must reproduce that exact source-derived union.
+                    continue
+                seen_laws.add(source_url)
+                page_members.append(source_url)
+                law_urls.append(source_url)
+            reports.append(
+                {
+                    "content_sha256": hashlib.sha256(body).hexdigest(),
+                    "law_member_count": len(page_members),
+                    "law_members_sha256": hashlib.sha256(
+                        canonical_json_bytes(page_members)
+                    ).hexdigest(),
+                    "method": str(request.get("method") or "").upper(),
+                    "page_index": order,
+                    "request_sha256": hashlib.sha256(
+                        canonical_json_bytes(request)
+                    ).hexdigest(),
+                }
+            )
+        postback_count = len(candidates) - 1
+        if (
+            expected_postbacks <= 0
+            or postback_count != expected_postbacks
+            or declared_page_counts != {expected_postbacks}
+            or not law_urls
+        ):
+            raise RuntimeError(
+                "Louisiana retained TOC hierarchy is incomplete: "
+                f"root_targets={expected_postbacks} retained_posts={postback_count} "
+                f"declared_posts={sorted(declared_page_counts)} laws={len(law_urls)}"
+            )
+        return reports, law_urls
+
+    def _louisiana_exact_frontier(
+        self,
+        *,
+        toc_reports: Sequence[Mapping[str, Any]],
+        leaf_reports: Sequence[Mapping[str, Any]],
+    ) -> Dict[str, Any]:
+        """Build the deterministic root/hierarchy/leaf disposition algebra."""
+
+        from ...legal_data.open_us_law_acquisition_coordinator import (
+            canonical_json_bytes,
+        )
+        from ...legal_data.open_us_law_live_evidence import compute_frontier_digest
+
+        leaves = [dict(row) for row in leaf_reports]
+        toc = [dict(row) for row in toc_reports]
+        operative = sum(row.get("disposition") == "operative" for row in leaves)
+        excluded = len(leaves) - operative
+        disposition = {
+            "discovered": len(leaves),
+            "duplicates": 0,
+            "excluded": excluded,
+            "failed_final": 0,
+            "fetched": operative,
+            "quarantined": 0,
+        }
+        frontier: Dict[str, Any] = {
+            "algebra_closed": True,
+            "bundle_closed": False,
+            "closed": True,
+            "disposition": disposition,
+            "enumerator_closed": True,
+            "leaf_input_count": len(leaves),
+            "leaf_inputs_sha256": hashlib.sha256(
+                canonical_json_bytes(leaves)
+            ).hexdigest(),
+            "method": "source_derived_aspnet_toc_and_law_pages",
+            "pagination_closed": bool(toc),
+            "remaining_bundle_members": [],
+            "scope_closed": True,
+            "source_membership_sha256": hashlib.sha256(
+                canonical_json_bytes(
+                    [str(row.get("source_url") or "") for row in leaves]
+                )
+            ).hexdigest(),
+            "toc_exhausted": bool(toc),
+            "toc_input_count": len(toc),
+            "toc_inputs_sha256": hashlib.sha256(
+                canonical_json_bytes(toc)
+            ).hexdigest(),
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(leaves),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return frontier
+
+    async def _fetch_louisiana_law_frontier(
+        self,
+        law_urls: Sequence[str],
+        *,
+        max_concurrency: int,
+    ):
+        """Acquire the complete ordered Law.aspx frontier as one plural wave.
+
+        The ASP.NET TOC emits law locators in parent-page/source order.  Exact
+        production preserves that cross-parent union in a single archive-aware
+        request so Wayback prefix inventory and Common Crawl WARC grouping are
+        shared across the whole Louisiana frontier.  Only unresolved rows are
+        eligible for bounded retries; those retries do not repeat archive
+        inventory discovery.
+        """
+
+        requested = list(law_urls)
+        canonical = [self._canonical_fetch_url(url) for url in requested]
+        if not requested or any(not url for url in canonical):
+            raise RuntimeError(
+                "Louisiana law-page frontier contains an empty or invalid exact URL"
+            )
+        if len(set(canonical)) != len(canonical):
+            raise RuntimeError(
+                "Louisiana law-page frontier contains duplicate exact URLs"
+            )
+
+        residual_retry_attempts = max(
+            0,
+            min(
+                3,
+                self._env_int(
+                    "STATE_SCRAPER_LA_FRONTIER_RESIDUAL_RETRY_ATTEMPTS",
+                    default=self._env_int(
+                        "STATE_SCRAPER_FRONTIER_RESIDUAL_RETRY_ATTEMPTS",
+                        default=1,
+                    ),
+                ),
+            ),
+        )
+        result = (
+            await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+                requested,
+                residual_retry_attempts=residual_retry_attempts,
+                repeat_grouped_archive_inventory_on_residual=False,
+                timeout_seconds=45,
+                media_type="text/html",
+                max_concurrency=max(1, min(32, int(max_concurrency or 1))),
+                prefer_direct=True,
+                common_crawl_domain_terms=("legis.la.gov",),
+                common_crawl_url_terms=("/legis/Law.aspx",),
+                common_crawl_mime_terms=("html",),
+                wayback_prefix_inventory=True,
+            )
+        )
+        aligned_lengths = {
+            len(result.urls),
+            len(result.payloads),
+            len(result.errors),
+            len(result.transport_receipts),
+            len(result.parser_input_envelopes),
+        }
+        if aligned_lengths != {len(requested)}:
+            raise RuntimeError(
+                "Louisiana law-page frontier returned unaligned acquisition rows"
+            )
+        result_canonical = [
+            self._canonical_fetch_url(url) for url in result.urls
+        ]
+        if result_canonical != canonical:
+            raise RuntimeError(
+                "Louisiana law-page frontier changed URL order or identity"
+            )
+        return result
+
     async def _scrape_law_page_urls(
         self,
         *,
@@ -321,88 +651,488 @@ class LouisianaScraper(BaseStateScraper):
         heartbeat_every = max(25, min(2000, heartbeat_every))
         discovered_total = len(law_urls)
 
-        for law_index, law_url in enumerate(law_urls, start=1):
+        exact_full_frontier = self._full_corpus_enabled() and max_statutes is None
+        strict_frontier: Optional[Dict[str, Any]] = None
+        terminal_dispositions: List[Dict[str, Any]] = []
+        leaf_reports: List[Dict[str, Any]] = []
+        seen_legal_identities: Dict[str, str] = {}
+        if exact_full_frontier:
+            from .louisiana_law import (
+                source_bound_terminal_disposition_from_law_html,
+                statute_from_law_html,
+                terminal_disposition_from_law_html,
+            )
+
+            strict_frontier = {
+                "closed": False,
+                "source_kind": source_kind,
+                "discovery_method": discovery_method,
+                "law_pages_discovered": discovered_total,
+                "law_pages_requested": 0,
+                "law_pages_fetched": 0,
+                "law_pages_classified": 0,
+                "statutes_emitted": 0,
+                "terminal_pages_excluded": 0,
+                "terminal_disposition_counts": {},
+                "terminal_dispositions": terminal_dispositions,
+                "leaf_reports": leaf_reports,
+                "unresolved_law_pages": [],
+                "errors": [],
+            }
+            self._last_louisiana_full_frontier = strict_frontier
+            self._last_full_corpus_frontier = strict_frontier
+            if discovered_total == 0:
+                self._fail_louisiana_full_frontier(
+                    "Louisiana strict law-page frontier is empty"
+                )
+            seen_urls: set[str] = set()
+            duplicate_urls: List[str] = []
+            invalid_urls: List[str] = []
+            for law_url in law_urls:
+                canonical_url = self._canonical_fetch_url(law_url)
+                if not canonical_url or not self._LAW_LINK_RE.search(canonical_url):
+                    invalid_urls.append(str(law_url or ""))
+                    continue
+                if canonical_url in seen_urls:
+                    duplicate_urls.append(canonical_url)
+                seen_urls.add(canonical_url)
+            if invalid_urls or duplicate_urls:
+                self._fail_louisiana_full_frontier(
+                    "Louisiana strict law-page discovery did not enumerate a unique official frontier",
+                    invalid_law_urls=invalid_urls,
+                    duplicate_law_urls=duplicate_urls,
+                )
+        batch_size_raw = str(
+            os.getenv("STATE_SCRAPER_LA_FRONTIER_BATCH_SIZE", "") or ""
+        ).strip()
+        concurrency_raw = str(
+            os.getenv("STATE_SCRAPER_LA_FRONTIER_CONCURRENCY", "") or ""
+        ).strip()
+        try:
+            frontier_batch_size = int(batch_size_raw) if batch_size_raw else 64
+        except Exception:
+            frontier_batch_size = 64
+        try:
+            frontier_concurrency = int(concurrency_raw) if concurrency_raw else 8
+        except Exception:
+            frontier_concurrency = 8
+        frontier_batch_size = (
+            max(2, min(512, frontier_batch_size)) if exact_full_frontier else 1
+        )
+        frontier_concurrency = max(1, min(32, frontier_concurrency))
+        acquisition_stats = {
+            "frontier_batches": 0,
+            "frontier_pages": 0,
+            "leaf_acquisition_wave_count": 0,
+            "residual_retry_rounds_executed": 0,
+            "residual_retry_requested_pages": 0,
+            "direct_initial_successes": 0,
+            "warc_range_fetch_calls": 0,
+            "warc_naive_range_fetches": 0,
+            "warc_range_fetches_avoided": 0,
+        }
+        self.logger.info(
+            "Louisiana law-page acquisition: batch_size=%s max_concurrency=%s direct_first=%s",
+            frontier_batch_size,
+            frontier_concurrency,
+            exact_full_frontier,
+        )
+
+        exact_payloads: List[bytes] = []
+        exact_errors: List[Optional[str]] = []
+        exact_receipts: List[Optional[Dict[str, Any]]] = []
+        if exact_full_frontier:
+            try:
+                exact_result = await self._fetch_louisiana_law_frontier(
+                    law_urls,
+                    max_concurrency=frontier_concurrency,
+                )
+            except Exception as exc:
+                self._fail_louisiana_full_frontier(
+                    "Louisiana strict law-page acquisition wave failed",
+                    failed_batch_start=0,
+                    failed_batch_size=discovered_total,
+                    batch_error=f"{type(exc).__name__}: {exc}",
+                )
+            exact_payloads = [bytes(payload or b"") for payload in exact_result.payloads]
+            exact_errors = list(exact_result.errors or [])
+            exact_receipts = list(exact_result.transport_receipts or [])
+            assert strict_frontier is not None
+            strict_frontier["law_pages_requested"] = discovered_total
+            stats = dict(exact_result.stats or {})
+            common_crawl = dict(stats.get("common_crawl") or {})
+            acquisition_stats.update(
+                {
+                    "frontier_batches": 1,
+                    "frontier_pages": discovered_total,
+                    "leaf_acquisition_wave_count": 1,
+                    "residual_retry_rounds_executed": int(
+                        stats.get("residual_retry_rounds_executed") or 0
+                    ),
+                    "residual_retry_requested_pages": int(
+                        stats.get("residual_retry_requested_pages") or 0
+                    ),
+                    "direct_initial_successes": int(
+                        stats.get("direct_initial_successes") or 0
+                    ),
+                    "warc_range_fetch_calls": int(
+                        common_crawl.get("range_fetch_calls") or 0
+                    ),
+                    "warc_naive_range_fetches": int(
+                        common_crawl.get("naive_range_fetches") or 0
+                    ),
+                    "warc_range_fetches_avoided": int(
+                        common_crawl.get("range_fetches_avoided") or 0
+                    ),
+                }
+            )
+
+        stop_requested = False
+        for batch_start in range(0, discovered_total, frontier_batch_size):
             if max_statutes is not None and len(statutes) >= int(max_statutes):
                 break
+            frontier_urls = law_urls[
+                batch_start : batch_start + frontier_batch_size
+            ]
+            if exact_full_frontier:
+                batch_stop = batch_start + len(frontier_urls)
+                frontier_payloads = exact_payloads[batch_start:batch_stop]
+                frontier_errors = exact_errors[batch_start:batch_stop]
+                frontier_receipts = exact_receipts[batch_start:batch_stop]
+                frontier_html = [
+                    payload.decode("utf-8", errors="replace") if payload else ""
+                    for payload in frontier_payloads
+                ]
+            else:
+                frontier_payloads = []
+                frontier_errors = []
+                frontier_receipts = []
+                frontier_html = [
+                    await self._request_text(
+                        law_url=url,
+                        headers=headers,
+                        timeout=45,
+                    )
+                    for url in frontier_urls
+                ]
 
-            if law_index == 1 or law_index % heartbeat_every == 0:
-                self.logger.info(
-                    "Louisiana law-page crawl: scanned_laws=%s/%s statutes_so_far=%s",
-                    law_index,
-                    discovered_total,
-                    len(statutes),
+            for offset, (law_url, law_html) in enumerate(
+                zip(frontier_urls, frontier_html),
+                start=1,
+            ):
+                law_index = batch_start + offset
+                if max_statutes is not None and len(statutes) >= int(max_statutes):
+                    stop_requested = True
+                    break
+
+                if law_index == 1 or law_index % heartbeat_every == 0:
+                    self.logger.info(
+                        "Louisiana law-page crawl: scanned_laws=%s/%s statutes_so_far=%s",
+                        law_index,
+                        discovered_total,
+                        len(statutes),
+                    )
+                    self._write_partial_checkpoint(
+                        statutes,
+                        code_name=code_name,
+                        stage_label="louisiana-law-page-scan",
+                        extra={
+                            "scanned_laws": int(law_index),
+                            "discovered_laws": int(discovered_total),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                            "source_kind": source_kind,
+                            "discovery_method": discovery_method,
+                            **(
+                                {
+                                    "law_pages_fetched": int(
+                                        strict_frontier["law_pages_fetched"]
+                                    ),
+                                    "law_pages_classified": int(
+                                        strict_frontier["law_pages_classified"]
+                                    ),
+                                    "terminal_pages_excluded": int(
+                                        strict_frontier["terminal_pages_excluded"]
+                                    ),
+                                    "frontier_closed": False,
+                                }
+                                if strict_frontier is not None
+                                else {}
+                            ),
+                            **acquisition_stats,
+                        },
+                    )
+
+                if exact_full_frontier:
+                    payload = bytes(frontier_payloads[offset - 1] or b"")
+                    fetch_error = frontier_errors[offset - 1]
+                    if fetch_error or not payload:
+                        self._fail_louisiana_full_frontier(
+                            "Louisiana strict law-page fetch left an official locator unresolved",
+                            unresolved_law_pages=[
+                                {
+                                    "source_url": law_url,
+                                    "error": str(fetch_error or "empty parser input"),
+                                }
+                            ],
+                        )
+                    try:
+                        transport_receipt = self._canonical_louisiana_law_receipt(
+                            law_url=law_url,
+                            payload=payload,
+                            receipt=frontier_receipts[offset - 1],
+                        )
+                    except RuntimeError as exc:
+                        self._fail_louisiana_full_frontier(
+                            "Louisiana strict law-page fetch lacked exact byte provenance",
+                            unresolved_law_pages=[
+                                {
+                                    "source_url": law_url,
+                                    "error": str(exc),
+                                }
+                            ],
+                        )
+
+                    assert strict_frontier is not None
+                    strict_frontier["law_pages_fetched"] = int(
+                        strict_frontier["law_pages_fetched"]
+                    ) + 1
+                    digest = hashlib.sha256(payload).hexdigest()
+                    parsed = statute_from_law_html(
+                        law_html,
+                        source_url=law_url,
+                        code_name=code_name,
+                        content_sha256=digest,
+                    )
+                    if parsed is not None:
+                        body_prefix = str(
+                            (parsed.structured_data or {}).get("body_prefix") or ""
+                        ).strip()
+                        legal_identity = "|".join(
+                            (
+                                body_prefix,
+                                str(parsed.title_number or "").strip(),
+                                str(parsed.section_number or "").strip(),
+                            )
+                        )
+                        first_source = seen_legal_identities.get(legal_identity)
+                        if not legal_identity.strip("|") or first_source is not None:
+                            self._fail_louisiana_full_frontier(
+                                "Louisiana strict law-page parser emitted a duplicate or empty legal identity",
+                                duplicate_legal_identity=legal_identity,
+                                first_source_url=first_source,
+                                second_source_url=law_url,
+                            )
+                        seen_legal_identities[legal_identity] = law_url
+                        structured_data = dict(parsed.structured_data or {})
+                        structured_data.update(
+                            {
+                                "source_kind": source_kind,
+                                "discovery_method": discovery_method,
+                                "content_sha256": digest,
+                                "transport_receipt": transport_receipt,
+                                "official_frontier_closed": False,
+                                "skip_hydrate": True,
+                            }
+                        )
+                        parsed.structured_data = structured_data
+                        parsed.legal_area = self._identify_legal_area(parsed.full_text)
+                        statutes.append(parsed)
+                        leaf_reports.append(
+                            {
+                                "canonical_identity": legal_identity,
+                                "content_sha256": digest,
+                                "disposition": "operative",
+                                "source_url": law_url,
+                            }
+                        )
+                        strict_frontier["statutes_emitted"] = len(statutes)
+                        strict_frontier["law_pages_classified"] = int(
+                            strict_frontier["law_pages_classified"]
+                        ) + 1
+                    else:
+                        # Preserve the most specific retained-evidence
+                        # disposition when an exact URL/body contract exists;
+                        # use the grammar classifier for the remaining
+                        # official pages in the same terminal family.
+                        disposition = source_bound_terminal_disposition_from_law_html(
+                            law_html,
+                            source_url=law_url,
+                            content_sha256=digest,
+                        )
+                        if not disposition:
+                            disposition = terminal_disposition_from_law_html(law_html)
+                        if not disposition:
+                            unresolved = {
+                                "source_url": law_url,
+                                "content_sha256": digest,
+                                "label": self._extract_section_number(law_html),
+                                "error": "untyped parser miss",
+                            }
+                            strict_frontier["unresolved_law_pages"] = [unresolved]
+                            self._fail_louisiana_full_frontier(
+                                "Louisiana strict law-page parser left an official locator untyped",
+                                unresolved_law_pages=[unresolved],
+                            )
+                        terminal_entry = {
+                            "source_url": law_url,
+                            "content_sha256": digest,
+                            "disposition": disposition,
+                            "transport_receipt": transport_receipt,
+                        }
+                        terminal_dispositions.append(terminal_entry)
+                        leaf_reports.append(
+                            {
+                                "canonical_identity": "",
+                                "content_sha256": digest,
+                                "disposition": disposition,
+                                "source_url": law_url,
+                            }
+                        )
+                        counts = dict(
+                            strict_frontier.get("terminal_disposition_counts") or {}
+                        )
+                        counts[disposition] = int(counts.get(disposition) or 0) + 1
+                        strict_frontier["terminal_disposition_counts"] = counts
+                        strict_frontier["terminal_pages_excluded"] = len(
+                            terminal_dispositions
+                        )
+                        strict_frontier["law_pages_classified"] = int(
+                            strict_frontier["law_pages_classified"]
+                        ) + 1
+                    continue
+
+                if not law_html:
+                    continue
+
+                section_number = self._extract_section_number(law_html)
+                if not section_number or section_number in seen_sections:
+                    continue
+
+                body_html = self._extract_law_body_html(law_html)
+                if not body_html:
+                    continue
+
+                full_text = self._clean_html_text(body_html)
+                if len(full_text) < 280:
+                    continue
+
+                statutes.append(
+                    NormalizedStatute(
+                        state_code=self.state_code,
+                        state_name=self.state_name,
+                        statute_id=f"{code_name} § {section_number}",
+                        code_name=code_name,
+                        section_number=section_number,
+                        section_name=f"RS {section_number}",
+                        full_text=full_text,
+                        legal_area=self._identify_legal_area(full_text),
+                        source_url=law_url,
+                        official_cite=f"La. Rev. Stat. {section_number}",
+                        metadata=StatuteMetadata(),
+                        structured_data={
+                            "source_kind": source_kind,
+                            "discovery_method": discovery_method,
+                            "skip_hydrate": True,
+                        },
+                    )
                 )
-                self._write_partial_checkpoint(
-                    statutes,
-                    code_name=code_name,
-                    stage_label="louisiana-law-page-scan",
-                    extra={
-                        "scanned_laws": int(law_index),
-                        "discovered_laws": int(discovered_total),
-                        "codes_completed": 0,
-                        "codes_total": 1,
-                        "source_kind": source_kind,
-                        "discovery_method": discovery_method,
-                    },
-                )
+                seen_sections.add(section_number)
+                if len(statutes) == 1 or len(statutes) % 50 == 0:
+                    self.logger.info(
+                        "Louisiana law-page crawl: scanned_laws=%s/%s statutes_so_far=%s",
+                        law_index,
+                        len(law_urls),
+                        len(statutes),
+                    )
+                    self._write_partial_checkpoint(
+                        statutes,
+                        code_name=code_name,
+                        stage_label="louisiana-law-page-progress",
+                        extra={
+                            "scanned_laws": int(law_index),
+                            "discovered_laws": int(discovered_total),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                            "source_kind": source_kind,
+                            "discovery_method": discovery_method,
+                            **acquisition_stats,
+                        },
+                    )
+            if stop_requested:
+                break
 
-            law_html = await self._request_text(law_url=law_url, headers=headers, timeout=45)
-            if not law_html:
-                continue
-
-            section_number = self._extract_section_number(law_html)
-            if not section_number or section_number in seen_sections:
-                continue
-
-            body_html = self._extract_law_body_html(law_html)
-            if not body_html:
-                continue
-
-            full_text = self._clean_html_text(body_html)
-            if len(full_text) < 280:
-                continue
-
-            statutes.append(
-                NormalizedStatute(
-                    state_code=self.state_code,
-                    state_name=self.state_name,
-                    statute_id=f"{code_name} § {section_number}",
-                    code_name=code_name,
-                    section_number=section_number,
-                    section_name=f"RS {section_number}",
-                    full_text=full_text,
-                    legal_area=self._identify_legal_area(full_text),
-                    source_url=law_url,
-                    official_cite=f"La. Rev. Stat. {section_number}",
-                    metadata=StatuteMetadata(),
-                    structured_data={
-                        "source_kind": source_kind,
-                        "discovery_method": discovery_method,
-                        "skip_hydrate": True,
-                    },
-                )
+        if exact_full_frontier:
+            assert strict_frontier is not None
+            strict_frontier.update(acquisition_stats)
+            strict_frontier["statutes_emitted"] = len(statutes)
+            strict_frontier["terminal_pages_excluded"] = len(
+                terminal_dispositions
             )
-            seen_sections.add(section_number)
-            if len(statutes) == 1 or len(statutes) % 50 == 0:
-                self.logger.info(
-                    "Louisiana law-page crawl: scanned_laws=%s/%s statutes_so_far=%s",
-                    law_index,
-                    len(law_urls),
-                    len(statutes),
+            unresolved = list(strict_frontier.get("unresolved_law_pages") or [])
+            reconciled = bool(
+                not unresolved
+                and discovered_total
+                == int(strict_frontier["law_pages_requested"])
+                == int(strict_frontier["law_pages_fetched"])
+                == int(strict_frontier["law_pages_classified"])
+                == len(statutes) + len(terminal_dispositions)
+            )
+            if not reconciled:
+                self._fail_louisiana_full_frontier(
+                    "Louisiana strict law-page frontier did not reconcile",
+                    law_pages_discovered=discovered_total,
+                    law_pages_requested=int(
+                        strict_frontier["law_pages_requested"]
+                    ),
+                    law_pages_fetched=int(strict_frontier["law_pages_fetched"]),
+                    law_pages_classified=int(
+                        strict_frontier["law_pages_classified"]
+                    ),
+                    statutes_emitted=len(statutes),
+                    terminal_pages_excluded=len(terminal_dispositions),
+                    unresolved_law_pages=unresolved,
                 )
-                self._write_partial_checkpoint(
-                    statutes,
-                    code_name=code_name,
-                    stage_label="louisiana-law-page-progress",
-                    extra={
-                        "scanned_laws": int(law_index),
-                        "discovered_laws": int(discovered_total),
-                        "codes_completed": 1,
-                        "codes_total": 1,
-                        "source_kind": source_kind,
-                        "discovery_method": discovery_method,
-                    },
+            ledger = getattr(self, "_state_law_acquisition_ledger", None)
+            toc_reports: List[Dict[str, Any]] = []
+            toc_law_urls: List[str] = []
+            if callable(getattr(ledger, "replay_retained_parser_input", None)):
+                toc_reports, toc_law_urls = self._retained_louisiana_toc_reports()
+                report_urls = [
+                    str(row.get("source_url") or "") for row in leaf_reports
+                ]
+                if toc_law_urls != report_urls:
+                    raise RuntimeError(
+                        "Louisiana retained TOC membership changed before closure"
+                    )
+            exact_frontier = self._louisiana_exact_frontier(
+                toc_reports=toc_reports,
+                leaf_reports=leaf_reports,
+            )
+            strict_frontier["closed"] = True
+            strict_frontier["frontier"] = exact_frontier
+            strict_frontier["toc_reports"] = toc_reports
+            strict_frontier["code_name"] = code_name
+            strict_frontier["boundary_first"] = law_urls[0]
+            strict_frontier["boundary_last"] = law_urls[-1]
+            strict_frontier["observed_at"] = datetime.now(timezone.utc).isoformat()
+            self._last_louisiana_full_frontier = strict_frontier
+            self._last_full_corpus_frontier = strict_frontier
+            for statute in statutes:
+                structured_data = dict(statute.structured_data or {})
+                structured_data.update(
+                    {
+                        "official_frontier_closed": True,
+                        "official_law_pages_discovered": discovered_total,
+                        "official_law_pages_fetched": int(
+                            strict_frontier["law_pages_fetched"]
+                        ),
+                        "official_terminal_pages_excluded": len(
+                            terminal_dispositions
+                        ),
+                    }
                 )
+                statute.structured_data = structured_data
 
         self._write_partial_checkpoint(
             statutes,
@@ -416,13 +1146,190 @@ class LouisianaScraper(BaseStateScraper):
                 "codes_total": 1,
                 "source_kind": source_kind,
                 "discovery_method": discovery_method,
+                **(
+                    {
+                        "frontier_closed": True,
+                        "law_pages_fetched": int(
+                            strict_frontier["law_pages_fetched"]
+                        ),
+                        "law_pages_classified": int(
+                            strict_frontier["law_pages_classified"]
+                        ),
+                        "terminal_pages_excluded": len(terminal_dispositions),
+                        "terminal_disposition_counts": dict(
+                            strict_frontier["terminal_disposition_counts"]
+                        ),
+                    }
+                    if strict_frontier is not None
+                    else {}
+                ),
+                **acquisition_stats,
             },
         )
         return statutes
 
+    async def produce_state_law_frontier_closure(
+        self,
+        *,
+        canonical_output_projection: Mapping[str, Any],
+    ) -> Optional[Path]:
+        """Reparse the retained ASP.NET TOC and every retained law page."""
+
+        first = getattr(self, "_last_louisiana_full_frontier", None)
+        if not isinstance(first, Mapping) or first.get("closed") is not True:
+            raise RuntimeError(
+                "Louisiana strict source frontier was not closed before output"
+            )
+        first_frontier = first.get("frontier")
+        first_toc_raw = first.get("toc_reports")
+        first_leaf_raw = first.get("leaf_reports")
+        if (
+            not isinstance(first_frontier, Mapping)
+            or not isinstance(first_toc_raw, Sequence)
+            or isinstance(first_toc_raw, (str, bytes, bytearray))
+            or not first_toc_raw
+            or any(not isinstance(row, Mapping) for row in first_toc_raw)
+            or not isinstance(first_leaf_raw, Sequence)
+            or isinstance(first_leaf_raw, (str, bytes, bytearray))
+            or not first_leaf_raw
+            or any(not isinstance(row, Mapping) for row in first_leaf_raw)
+        ):
+            raise RuntimeError("Louisiana first exact frontier is incomplete")
+        first_toc = [dict(row) for row in first_toc_raw]
+        first_leaves = [dict(row) for row in first_leaf_raw]
+
+        replay_toc, replay_urls = self._retained_louisiana_toc_reports()
+        if replay_toc != first_toc:
+            raise RuntimeError("Louisiana retained TOC inputs changed on replay")
+        expected_urls = [str(row.get("source_url") or "") for row in first_leaves]
+        if replay_urls != expected_urls:
+            raise RuntimeError("Louisiana retained TOC law membership changed on replay")
+
+        from .louisiana_law import (
+            source_bound_terminal_disposition_from_law_html,
+            statute_from_law_html,
+            terminal_disposition_from_law_html,
+        )
+        from .strict_frontier_closure import (
+            replay_exact_retained_state_input,
+            retain_exact_state_frontier_closure,
+        )
+
+        code_name = str(first.get("code_name") or "Louisiana Revised Statutes")
+        replay_rows: List[NormalizedStatute] = []
+        replay_leaves: List[Dict[str, Any]] = []
+        identities: set[str] = set()
+        for source_url, expected in zip(replay_urls, first_leaves, strict=True):
+            body = replay_exact_retained_state_input(
+                self,
+                official_url=source_url,
+                sanitized_request={"method": "GET", "url": source_url},
+                frontier_name="Louisiana law-page frontier",
+                refresh=False,
+            )
+            digest = hashlib.sha256(body).hexdigest()
+            html = body.decode("utf-8", errors="replace")
+            statute = statute_from_law_html(
+                html,
+                source_url=source_url,
+                code_name=code_name,
+                content_sha256=digest,
+            )
+            if statute is not None:
+                body_prefix = str(
+                    (statute.structured_data or {}).get("body_prefix") or ""
+                ).strip()
+                identity = "|".join(
+                    (
+                        body_prefix,
+                        str(statute.title_number or "").strip(),
+                        str(statute.section_number or "").strip(),
+                    )
+                )
+                if not identity.strip("|") or identity in identities:
+                    raise RuntimeError(
+                        "Louisiana retained replay repeated or lost a legal identity: "
+                        f"{identity}"
+                    )
+                identities.add(identity)
+                disposition = "operative"
+                replay_rows.append(statute)
+            else:
+                identity = ""
+                disposition = source_bound_terminal_disposition_from_law_html(
+                    html,
+                    source_url=source_url,
+                    content_sha256=digest,
+                ) or terminal_disposition_from_law_html(html)
+                if not disposition:
+                    raise RuntimeError(
+                        "Louisiana retained replay left a law page unclassified: "
+                        f"{source_url}"
+                    )
+            report = {
+                "canonical_identity": identity,
+                "content_sha256": digest,
+                "disposition": disposition,
+                "source_url": source_url,
+            }
+            if report != expected:
+                raise RuntimeError(
+                    "Louisiana retained law-page report changed on replay: "
+                    f"{source_url}"
+                )
+            replay_leaves.append(report)
+
+        replayed_frontier = self._louisiana_exact_frontier(
+            toc_reports=replay_toc,
+            leaf_reports=replay_leaves,
+        )
+        observed_at = str(first.get("observed_at") or "")
+        return retain_exact_state_frontier_closure(
+            self,
+            canonical_output_projection=canonical_output_projection,
+            first_frontier=first_frontier,
+            replayed_frontier=replayed_frontier,
+            replay_rows=replay_rows,
+            jurisdiction="LA",
+            source_domain="legis.la.gov",
+            official_source_url=(
+                f"{self.get_base_url()}/legis/Laws_Toc.aspx?folder=75&level=Parent"
+            ),
+            observed_at=observed_at,
+            legal_as_of=observed_at[:10],
+            boundary_first=str(first.get("boundary_first") or ""),
+            boundary_last=str(first.get("boundary_last") or ""),
+            bundle_total=len(first_leaves),
+            pagination_total=len(first_toc),
+            transport={
+                "fixture": False,
+                "first_pass_request_batches": int(
+                    first.get("frontier_batches") or 0
+                ),
+                "first_pass_requested_pages": len(first_leaves),
+                "grouped_warc_recovery": True,
+                "kind": "stateful_toc_plus_shared_archive_aware_plural_html",
+                "leaf_acquisition_wave_count": int(
+                    first.get("leaf_acquisition_wave_count") or 0
+                ),
+                "per_page_archive_loop": False,
+                "repeat_grouped_archive_inventory_on_residual": False,
+                "residual_only_retries": True,
+                "residual_retry_requested_pages": int(
+                    first.get("residual_retry_requested_pages") or 0
+                ),
+                "retained_replay_network_requests": 0,
+                "source_ordered_cross_parent_union": True,
+                "synthetic": False,
+                "warc_range_fetches_avoided": int(
+                    first.get("warc_range_fetches_avoided") or 0
+                ),
+                "wayback_prefix_inventory": True,
+            },
+        )
+
     async def _discover_live_toc_title_pages(self, limit: Optional[int] = None) -> List[str]:
         try:
-            import requests
             from bs4 import BeautifulSoup
         except ImportError:
             return []
@@ -447,30 +1354,39 @@ class LouisianaScraper(BaseStateScraper):
             discovery_timeout_seconds = 600.0
         discovery_timeout_seconds = max(30.0, min(7200.0, discovery_timeout_seconds))
 
-        def _crawl() -> List[str]:
-            session = requests.Session()
-            response = session.get(root_url, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, "html.parser")
+        session = self._new_stateful_parser_input_session(verify_tls=True)
 
-            base_payload = {}
+        async def _crawl() -> List[str]:
+            root_body = await self._fetch_parser_input_with_transport(
+                root_url,
+                headers={
+                    "User-Agent": "Mozilla/5.0",
+                    "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                },
+                timeout_seconds=30,
+                allow_archival_fallback=False,
+                verify_tls=True,
+                media_type="text/html",
+                provider="louisiana_stateful_toc_direct",
+                pagination={"kind": "aspnet_toc", "step": "root"},
+                stateful_session=session,
+            )
+            if not root_body:
+                return []
+            soup = BeautifulSoup(
+                root_body.decode("utf-8", errors="replace"),
+                "html.parser",
+            )
+
+            base_payload: Dict[str, str] = {}
             for inp in soup.select("input[name]"):
                 name = inp.get("name")
                 if name:
-                    base_payload[name] = inp.get("value") or ""
+                    base_payload[str(name)] = str(inp.get("value") or "")
 
-            event_targets: List[str] = []
-            seen_targets = set()
-            for anchor in soup.find_all("a", href=True):
-                href = str(anchor.get("href") or "")
-                match = self._TOC_TITLE_POSTBACK_RE.search(href)
-                if not match:
-                    continue
-                target = match.group(1)
-                if target in seen_targets:
-                    continue
-                seen_targets.add(target)
-                event_targets.append(target)
+            event_targets = self._title_postback_targets(
+                root_body.decode("utf-8", errors="replace")
+            )
 
             law_urls: List[str] = []
             seen_laws = set()
@@ -493,20 +1409,37 @@ class LouisianaScraper(BaseStateScraper):
                             "codes_total": 1,
                         },
                     )
-                payload = dict(base_payload)
-                payload["__EVENTTARGET"] = target
-                payload["__EVENTARGUMENT"] = ""
-                post = session.post(
+                post_payload = dict(base_payload)
+                post_payload["__EVENTTARGET"] = target
+                post_payload["__EVENTARGUMENT"] = ""
+                encoded = urllib.parse.urlencode(post_payload).encode("utf-8")
+                post_body = await self._fetch_parser_input_with_transport(
                     root_url,
-                    data=payload,
-                    timeout=45,
+                    method="POST",
                     headers={
                         "User-Agent": "Mozilla/5.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
                         "Content-Type": "application/x-www-form-urlencoded",
                     },
+                    request_body=encoded,
+                    timeout_seconds=45,
+                    allow_archival_fallback=False,
+                    verify_tls=True,
+                    media_type="text/html",
+                    provider="louisiana_stateful_toc_direct",
+                    pagination={
+                        "kind": "aspnet_postback",
+                        "page_index": title_index,
+                        "page_count": title_limit,
+                    },
+                    stateful_session=session,
                 )
-                post.raise_for_status()
-                page = BeautifulSoup(post.text, "html.parser")
+                if not post_body:
+                    continue
+                page = BeautifulSoup(
+                    post_body.decode("utf-8", errors="replace"),
+                    "html.parser",
+                )
                 for anchor in page.find_all("a", href=True):
                     href = str(anchor.get("href") or "").strip()
                     if not self._LAW_LINK_RE.search(href):
@@ -521,7 +1454,7 @@ class LouisianaScraper(BaseStateScraper):
         try:
             started_at = time.time()
             law_urls = await asyncio.wait_for(
-                asyncio.to_thread(_crawl),
+                _crawl(),
                 timeout=discovery_timeout_seconds,
             )
             elapsed = max(0.0, time.time() - started_at)
@@ -547,6 +1480,8 @@ class LouisianaScraper(BaseStateScraper):
                 },
             )
             return []
+        finally:
+            await self._close_stateful_parser_input_session(session)
 
         self.logger.info(
             "Louisiana live TOC: discovered %s law pages in %.1fs",
@@ -579,11 +1514,11 @@ class LouisianaScraper(BaseStateScraper):
         )
 
         try:
-            req = urllib.request.Request(cdx_url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=45) as resp:
-                payload = resp.read().decode("utf-8", errors="ignore")
-            rows = json.loads(payload)
-            if not isinstance(rows, list) or len(rows) < 2:
+            rows = await self._fetch_wayback_cdx_rows(
+                cdx_url,
+                timeout_seconds=45,
+            )
+            if len(rows) < 2:
                 return []
 
             discovered: List[str] = []
@@ -622,7 +1557,11 @@ class LouisianaScraper(BaseStateScraper):
         text = re.sub(r"\s+", " ", text).strip()
         return text
 
-    def _clean_html_text(self, html: str, max_chars: int = 12000) -> str:
+    def _clean_html_text(
+        self,
+        html: str,
+        max_chars: Optional[int] = None,
+    ) -> str:
         value = str(html or "")
         value = re.sub(r"(?is)<script[^>]*>.*?</script>", " ", value)
         value = re.sub(r"(?is)<style[^>]*>.*?</style>", " ", value)
@@ -635,7 +1574,10 @@ class LouisianaScraper(BaseStateScraper):
         text = re.sub(r"[ \t]+", " ", text)
         text = re.sub(r"\s*\n\s*", "\n", text)
         text = re.sub(r"\n{3,}", "\n\n", text)
-        return text.strip()[:max_chars]
+        text = text.strip()
+        if max_chars is not None:
+            return text[: max(1, int(max_chars))]
+        return text
 
     async def _request_text(self, law_url: str, headers: Dict[str, str], timeout: int) -> str:
         candidates = [str(law_url or "")]
@@ -647,9 +1589,16 @@ class LouisianaScraper(BaseStateScraper):
         for candidate in candidates:
             try:
                 if "web.archive.org/web/" in candidate:
-                    req = urllib.request.Request(candidate, headers=headers)
-                    with urllib.request.urlopen(req, timeout=max(1, int(timeout))) as resp:
-                        payload = resp.read()
+                    payload = await self._fetch_parser_input_with_transport(
+                        candidate,
+                        headers=headers,
+                        timeout_seconds=max(1, int(timeout)),
+                        # This locator is already an archive replay.  A second
+                        # archive-discovery pass would not preserve semantics.
+                        allow_archival_fallback=False,
+                        media_type="text/html",
+                        provider="louisiana_wayback_direct",
+                    )
                     if payload:
                         return payload.decode("utf-8", errors="replace")
                 payload = await self._fetch_page_content_with_archival_fallback(
@@ -914,10 +1863,20 @@ class LouisianaScraper(BaseStateScraper):
         return payload
 
     def _title_postback_targets(self, html: str) -> List[str]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
         targets: List[str] = []
         seen: set[str] = set()
-        for match in self._TOC_TITLE_POSTBACK_RE.finditer(html):
-            target = match.group(1)
+        page = BeautifulSoup(str(html or ""), "html.parser")
+        for anchor in page.find_all("a", href=True):
+            href = str(anchor.get("href") or "").strip()
+            match = self._TOC_TITLE_POSTBACK_RE.fullmatch(href)
+            if not match:
+                continue
+            target = match.group("target")
             if target in seen:
                 continue
             seen.add(target)

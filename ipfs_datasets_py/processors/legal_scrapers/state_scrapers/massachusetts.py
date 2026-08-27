@@ -418,20 +418,15 @@ class MassachusettsScraper(BaseStateScraper):
         return out
 
     async def _request_text_direct(self, url: str, timeout: int = 18) -> str:
-        def _request() -> str:
-            try:
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    return resp.read().decode("utf-8", errors="replace")
-            except Exception:
-                return ""
-
-        try:
-            import asyncio
-
-            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
-        except Exception:
-            return ""
+        payload = await self._fetch_parser_input_with_transport(
+            url,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout_seconds=max(1, int(timeout or 18)),
+            allow_archival_fallback=False,
+            media_type="text/html",
+            provider="massachusetts_direct",
+        )
+        return payload.decode("utf-8", errors="replace") if payload else ""
 
     def official_title_url(self, part: str, title: str) -> str:
         return (

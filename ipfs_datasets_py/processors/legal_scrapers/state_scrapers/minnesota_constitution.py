@@ -46,7 +46,7 @@ def _row(
         title_number=article_id,
         section_number=number,
         section_name=heading[:200] or f"Section {number}",
-        full_text=body[:14000],
+        full_text=body,
         source_url=MN_CONST_URL,
         official_cite=cite,
         metadata=StatuteMetadata(),

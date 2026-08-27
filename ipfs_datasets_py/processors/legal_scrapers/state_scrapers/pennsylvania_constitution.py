@@ -85,7 +85,7 @@ def parse_pennsylvania_constitution_html(
                 title_number=article,
                 section_number=number,
                 section_name=(heading or f"Section {number}")[:200],
-                full_text=body[:14000],
+                full_text=body,
                 source_url=source,
                 official_cite=f"Pa. Const. art. {article}, § {number}",
                 metadata=StatuteMetadata(),

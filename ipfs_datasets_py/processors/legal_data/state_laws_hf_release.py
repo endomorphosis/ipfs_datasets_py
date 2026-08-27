@@ -130,6 +130,10 @@ PRODUCER: Final = "state_laws_hf_release.py"
 HF_RELEASE_PRODUCER: Final = "producer:state-laws-hf-release"
 HF_RELEASE_CONFIG: Final = "config:state-laws-hf-release/v1"
 PROGRAM_ID: Final = "legal-corpora-reindex-v1"
+AUTHORIZES_PUBLICATION: Final = False
+AUTHORIZES_RELEASE: Final = False
+AUTHORIZES_HUB_UPLOAD: Final = False
+PROVES_SOFTWARE_CONTRACT_ONLY: Final = True
 
 MANIFEST_FILENAME: Final = "manifest.json"
 RELEASE_METADATA_FILENAME: Final = "release_metadata.json"
@@ -3105,6 +3109,9 @@ def _assert_no_upload_shortcut() -> None:
 
 __all__ = [
     "ADMISSION_REPORT_PATH",
+    "AUTHORIZES_HUB_UPLOAD",
+    "AUTHORIZES_PUBLICATION",
+    "AUTHORIZES_RELEASE",
     "CONTROL_PLANE_PATHS",
     "DATASET_CONFIGS_FILENAME",
     "DATASET_INFOS_FILENAME",
@@ -3116,6 +3123,7 @@ __all__ = [
     "LINEAGE_REPORT_PATH",
     "MANIFEST_FILENAME",
     "PRODUCER",
+    "PROVES_SOFTWARE_CONTRACT_ONLY",
     "QUALITY_REPORT_PATH",
     "QUARANTINE_CONFIG_NAME",
     "README_FILENAME",

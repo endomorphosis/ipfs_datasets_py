@@ -101,7 +101,7 @@ def parse_idaho_constitution_html(
             title_number=art_id,
             section_number=number,
             section_name=(catchline or f"Section {number}")[:200],
-            full_text=body[:14000],
+            full_text=body,
             source_url=source_url or ID_CONST_INDEX,
             official_cite=cite,
             metadata=StatuteMetadata(),

@@ -25,16 +25,16 @@ This module does not authorize publication or Hub upload.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
-from importlib import import_module
-from pathlib import Path
-from types import MappingProxyType
-from typing import Any, Final, Literal, Union
 import hashlib
 import json
 import os
 import re
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass, field
+from importlib import import_module
+from pathlib import Path, PurePosixPath
+from types import MappingProxyType
+from typing import Any, Final, Literal, Union
 
 # ---------------------------------------------------------------------------
 # Identity / pins (stdlib only)
@@ -54,6 +54,8 @@ RELEASE_SCHEMA_VERSION: Final = "state-laws-sparse-graphrag-release-schema-v2"
 DEFAULT_DATASET_REPO_ID: Final = "justicedao/ipfs_state_laws"
 DEFAULT_REVISION: Final = "42f0546acc7c6cd55627eaf51fb820d5613b9021"
 DEFAULT_MANIFEST_NAME: Final = "manifest.json"
+DEFAULT_RELEASE_POINTER_PATH: Final = "runtime/state_laws_release_pointer.json"
+STATE_LAWS_RELEASE_PREFIX_ROOT: Final = "data/state_laws"
 PRIMARY_KEY: Final = "entry_cid"
 CORPUS_ID: Final = "state-laws"
 
@@ -141,6 +143,7 @@ DEFAULT_RRF_K: Final = 60
 SUPPORTED_RELEASE_SCHEMAS: Final = frozenset(
     {
         RELEASE_PROFILE,
+        RELEASE_SCHEMA_VERSION,
         "hf-graphrag-release/v1",
         "publicus-ir-graphrag/v2",
         "state-laws-hf-release/v1",
@@ -162,6 +165,7 @@ MUTABLE_PIN_NAMES: Final = frozenset(
 )
 
 _GIT_SHA_RE: Final = re.compile(r"^[0-9a-f]{40}$")
+_STATE_LAWS_RELEASE_ID_RE: Final = re.compile(r"^sha256-[0-9a-f]{64}$")
 _SECRET_KEY_RE: Final = re.compile(
     r"(hf[_-]?token|authorization|bearer|api[_-]?key|secret|password)",
     re.IGNORECASE,
@@ -225,6 +229,10 @@ _LAZY_EXPORTS: Final[Mapping[str, tuple[str, str]]] = MappingProxyType(
             "ipfs_datasets_py.retrieval.hf_graphrag.resolver",
             "ResolverError",
         ),
+        "RuntimeReleasePointer": (
+            "ipfs_datasets_py.huggingface.publisher",
+            "RuntimeReleasePointer",
+        ),
     }
 )
 
@@ -254,6 +262,12 @@ class ImmutablePinError(StateLawsSparseGraphragError):
     """Raised when a Hub pin is missing, empty, or mutable."""
 
     code = "immutable_pin_invalid"
+
+
+class ReleasePointerError(StateLawsSparseGraphragError):
+    """Raised when the published State Laws release pointer is unusable."""
+
+    code = "release_pointer_invalid"
 
 
 class QueryModeError(StateLawsSparseGraphragError):
@@ -308,6 +322,29 @@ def _require_non_negative_int(value: Any, name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise ResourceBudgetError(f"{name} must be a non-negative integer")
     return value
+
+
+def _safe_relative_posix_path(value: Any, name: str) -> str:
+    """Require one normalized, repository-relative POSIX path."""
+
+    if isinstance(value, os.PathLike):
+        value = os.fspath(value)
+    if not isinstance(value, str) or not value:
+        raise ReleasePointerError(f"{name} must be a non-empty relative POSIX path")
+    if value.strip() != value or "\x00" in value:
+        raise ReleasePointerError(
+            f"{name} must not contain surrounding whitespace or NUL"
+        )
+    if "\\" in value or value.startswith(("/", "~", "//")):
+        raise ReleasePointerError(f"{name} must be repository-relative POSIX")
+    if len(value) >= 2 and value[1] == ":":
+        raise ReleasePointerError(f"{name} must not contain a drive prefix")
+    path = PurePosixPath(value)
+    if path.is_absolute() or path.as_posix() != value:
+        raise ReleasePointerError(f"{name} must be a normalized POSIX path")
+    if any(part in {"", ".", ".."} for part in path.parts):
+        raise ReleasePointerError(f"{name} must not escape its repository root")
+    return path.as_posix()
 
 
 def canonical_json_bytes(value: Any) -> bytes:
@@ -501,6 +538,131 @@ class ImmutableQueryPin:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class StateLawsReleasePointer:
+    """State Laws constraints around the shared runtime-pointer contract."""
+
+    runtime_pointer: Any = field(repr=False)
+    pointer_revision: str
+
+    @classmethod
+    def from_mapping(
+        cls,
+        value: Mapping[str, Any],
+        *,
+        expected_repository_id: str,
+        expected_pointer_path: str,
+        pointer_revision: str,
+    ) -> StateLawsReleasePointer:
+        if not isinstance(value, Mapping):
+            raise ReleasePointerError("release pointer must be a JSON object")
+        required = {
+            "canary_percent",
+            "commit_sha",
+            "pointer_path",
+            "release_id",
+            "release_prefix",
+            "repository_id",
+            "runtime_release_pointer",
+        }
+        missing = sorted(required.difference(value))
+        if missing:
+            raise ReleasePointerError(
+                "release pointer is missing required fields: " + ", ".join(missing)
+            )
+        if value.get("runtime_release_pointer") is not True:
+            raise ReleasePointerError("runtime_release_pointer must be true")
+
+        # The generic publisher owns pointer field validation. The consumer
+        # adds stricter path handling before construction so normalization can
+        # never turn an escaping or platform-specific input into acceptance.
+        pointer_path = _safe_relative_posix_path(
+            value.get("pointer_path"), "release pointer pointer_path"
+        )
+        release_prefix = _safe_relative_posix_path(
+            value.get("release_prefix"), "release_prefix"
+        )
+        try:
+            pointer_cls = resolve_export("RuntimeReleasePointer")
+            runtime_pointer = pointer_cls(
+                repository_id=value.get("repository_id"),
+                release_id=value.get("release_id"),
+                commit_sha=value.get("commit_sha"),
+                release_prefix=release_prefix,
+                pointer_path=pointer_path,
+                previous_commit_sha=value.get("previous_commit_sha") or "",
+                previous_release_id=value.get("previous_release_id") or "",
+                canary_percent=value.get("canary_percent"),
+            )
+        except Exception as exc:
+            raise ReleasePointerError(
+                "release pointer violates the shared runtime-pointer contract"
+            ) from exc
+
+        expected_repo = _require_non_empty_str(
+            expected_repository_id, "expected_repository_id", maximum=200
+        )
+        if runtime_pointer.repository_id != expected_repo:
+            raise ReleasePointerError(
+                "release pointer repository_id does not match the pinned repository"
+            )
+        if _STATE_LAWS_RELEASE_ID_RE.fullmatch(runtime_pointer.release_id) is None:
+            raise ReleasePointerError(
+                "release_id must be sha256- followed by 64 lowercase hex characters"
+            )
+        require_immutable_pin(
+            runtime_pointer.commit_sha, name="release pointer commit_sha"
+        )
+        pinned_pointer_revision = require_immutable_pin(
+            pointer_revision, name="pointer_revision"
+        )
+        expected_path = _safe_relative_posix_path(expected_pointer_path, "pointer_path")
+        if runtime_pointer.pointer_path != expected_path:
+            raise ReleasePointerError(
+                "release pointer pointer_path does not match the requested pointer"
+            )
+        expected_prefix = (
+            f"{STATE_LAWS_RELEASE_PREFIX_ROOT}/{runtime_pointer.release_id}"
+        )
+        if runtime_pointer.release_prefix != expected_prefix:
+            raise ReleasePointerError(
+                "release_prefix must equal data/state_laws/{release_id}"
+            )
+        return cls(
+            runtime_pointer=runtime_pointer,
+            pointer_revision=pinned_pointer_revision,
+        )
+
+    @property
+    def repository_id(self) -> str:
+        return str(self.runtime_pointer.repository_id)
+
+    @property
+    def release_id(self) -> str:
+        return str(self.runtime_pointer.release_id)
+
+    @property
+    def commit_sha(self) -> str:
+        return str(self.runtime_pointer.commit_sha)
+
+    @property
+    def release_prefix(self) -> str:
+        return str(self.runtime_pointer.release_prefix)
+
+    @property
+    def pointer_path(self) -> str:
+        return str(self.runtime_pointer.pointer_path)
+
+    @property
+    def canary_percent(self) -> int:
+        return int(self.runtime_pointer.canary_percent)
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = dict(self.runtime_pointer.to_dict())
+        payload["pointer_revision"] = self.pointer_revision
+        return payload
+
+
 def coerce_query_pin(
     pin: ImmutableQueryPin | Mapping[str, Any] | str | None = None,
     *,
@@ -660,6 +822,12 @@ def query_surface() -> dict[str, Any]:
         "profile": RELEASE_PROFILE,
         "program_id": PROGRAM_ID,
         "redacted_traces": True,
+        "release_resolution": {
+            "direct_manifest_supported": True,
+            "published_prefix": f"{STATE_LAWS_RELEASE_PREFIX_ROOT}/{{release_id}}",
+            "remote_default_pointer_path": DEFAULT_RELEASE_POINTER_PATH,
+            "pointer_commit_pinned": True,
+        },
         "resource_budgets": True,
         "schema_version": SCHEMA_VERSION,
         "task_id": TASK_ID,
@@ -882,7 +1050,9 @@ def package_query_result(
     payload["goal_id"] = payload.get("goal_id") or GOAL_ID
     resolved_pin = pin
     if resolved_pin is None and client is not None:
-        resolved_pin = getattr(client, "pin", None)
+        resolved_pin = getattr(client, "effective_pin", None)
+        if resolved_pin is None:
+            resolved_pin = getattr(client, "pin", None)
     if resolved_pin is not None:
         pin_payload = (
             resolved_pin.to_dict()
@@ -910,6 +1080,10 @@ def package_query_result(
             "repo_id": getattr(resolver, "repo_id", None),
             "revision": getattr(resolver, "revision", None),
         }
+    if client is not None:
+        release_pointer = getattr(client, "_release_pointer", None)
+        if release_pointer is not None and hasattr(release_pointer, "to_dict"):
+            payload["release_pointer"] = redact_payload(release_pointer.to_dict())
     explain = payload.get("explain")
     if explain:
         payload["explain"] = redact_payload(explain)
@@ -984,6 +1158,7 @@ def _build_hub_resolver(
     *,
     local_root: Path | None,
     cache_dir: Path | str | None,
+    path_prefix: str = "",
 ) -> Any:
     """Build the ImmutableHubResolver the query client consumes."""
 
@@ -992,6 +1167,7 @@ def _build_hub_resolver(
         "repo_id": pin.dataset_repo_id,
         "revision": pin.revision,
         "cache_dir": cache_dir,
+        "path_prefix": path_prefix,
         "supported_schemas": set(SUPPORTED_RELEASE_SCHEMAS),
     }
     if local_root is not None:
@@ -1006,6 +1182,64 @@ def _build_hub_resolver(
     return resolver_cls(**kwargs)
 
 
+def _resolve_release_pointer(
+    resolver: Any,
+    *,
+    pointer_path: str,
+    pin: ImmutableQueryPin,
+) -> StateLawsReleasePointer:
+    """Read and validate a pointer at the caller's immutable pointer pin."""
+
+    try:
+        payload = resolver.resolve_json(pointer_path, expect_object=True)
+    except Exception as exc:
+        raise ReleasePointerError(
+            "failed to resolve the requested State Laws release pointer at its "
+            "immutable revision"
+        ) from exc
+    try:
+        return StateLawsReleasePointer.from_mapping(
+            payload,
+            expected_repository_id=pin.dataset_repo_id,
+            expected_pointer_path=pointer_path,
+            pointer_revision=pin.revision,
+        )
+    except ReleasePointerError:
+        raise
+    except Exception as exc:
+        raise ReleasePointerError("State Laws release pointer is malformed") from exc
+
+
+def _require_pointer_manifest_identity(
+    client: Any,
+    release_pointer: StateLawsReleasePointer,
+) -> None:
+    """Bind a runtime pointer to the canonical digest of its target manifest.
+
+    A syntactically valid content-addressed prefix is not proof that the
+    manifest stored below that prefix has the same identity.  Resolve the
+    immutable target manifest through the query engine's control plane and
+    compare its canonical JSON digest before any BM25, vector, graph, or meta
+    route can be accepted.
+    """
+
+    try:
+        manifest = client.search.load_manifest()
+    except Exception as exc:
+        raise ReleasePointerError(
+            "release pointer target manifest could not be loaded at its "
+            "immutable data-plane commit"
+        ) from exc
+    if not isinstance(manifest, Mapping):
+        raise ReleasePointerError("release pointer target manifest must be an object")
+    observed_release_id = f"sha256-{content_sha256(manifest)}"
+    if release_pointer.release_id != observed_release_id:
+        raise ReleasePointerError(
+            "release pointer release_id does not match the canonical target "
+            "manifest digest"
+        )
+
+
 def _build_query_client(
     pin: ImmutableQueryPin,
     *,
@@ -1014,9 +1248,39 @@ def _build_query_client(
     budgets: ResourceBudgets,
     query_embedder: Callable[..., Any] | None,
     fusion: Mapping[str, Any] | None,
-) -> Any:
+    manifest_path: str | None,
+    pointer_path: str | None,
+) -> tuple[Any, StateLawsReleasePointer | None, Mapping[str, Any]]:
+    release_pointer: StateLawsReleasePointer | None = None
+    pointer_trace: Mapping[str, Any] = MappingProxyType({})
+    effective_pin = pin
+    path_prefix = ""
+    effective_manifest_path = manifest_path or DEFAULT_MANIFEST_NAME
+    if pointer_path is not None:
+        pointer_resolver = _build_hub_resolver(
+            pin,
+            local_root=local_root,
+            cache_dir=cache_dir,
+        )
+        release_pointer = _resolve_release_pointer(
+            pointer_resolver,
+            pointer_path=pointer_path,
+            pin=pin,
+        )
+        pointer_trace = MappingProxyType(dict(pointer_resolver.fetch_trace()))
+        effective_pin = ImmutableQueryPin(
+            revision=release_pointer.commit_sha,
+            dataset_repo_id=release_pointer.repository_id,
+            transport=pin.transport,
+        )
+        path_prefix = release_pointer.release_prefix
+        effective_manifest_path = DEFAULT_MANIFEST_NAME
+
     resolver = _build_hub_resolver(
-        pin, local_root=local_root, cache_dir=cache_dir
+        effective_pin,
+        local_root=local_root,
+        cache_dir=cache_dir,
+        path_prefix=path_prefix,
     )
     client_cls = resolve_export("StateLawsQueryClient")
     fusion_cfg = None
@@ -1027,12 +1291,16 @@ def _build_query_client(
             if type(fusion).__name__ == "FusionConfig"
             else fusion_cls.from_mapping(fusion)
         )
-    return client_cls(
+    client = client_cls(
         resolver,
         limits=budgets.to_query_limits(),
         query_embedder=query_embedder,
         fusion=fusion_cfg,
+        manifest_path=effective_manifest_path,
     )
+    if release_pointer is not None:
+        _require_pointer_manifest_identity(client, release_pointer)
+    return client, release_pointer, pointer_trace
 
 
 # ---------------------------------------------------------------------------
@@ -1053,12 +1321,20 @@ class StateLawsSparseGraphragClient:
     pin: ImmutableQueryPin
     local_root: Path | None = None
     cache_dir: Path | str | None = None
+    manifest_path: str | None = None
+    pointer_path: str | None = None
     budgets: ResourceBudgets = field(default_factory=ResourceBudgets)
     query_embedder: Callable[..., Any] | None = field(
         default=None, repr=False
     )
     fusion: Mapping[str, Any] | None = None
     _inner: Any = field(default=None, init=False, repr=False)
+    _release_pointer: StateLawsReleasePointer | None = field(
+        default=None, init=False, repr=False
+    )
+    _pointer_fetch_trace: Mapping[str, Any] = field(
+        default_factory=lambda: MappingProxyType({}), init=False, repr=False
+    )
     _last_result: Any = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
@@ -1072,23 +1348,77 @@ class StateLawsSparseGraphragClient:
             object.__setattr__(
                 self, "local_root", Path(self.local_root).expanduser().resolve()
             )
+        manifest_path = self.manifest_path
+        pointer_path = self.pointer_path
+        if manifest_path is not None and pointer_path is not None:
+            raise ReleasePointerError(
+                "manifest_path and pointer_path are mutually exclusive"
+            )
+        if manifest_path is None and pointer_path is None:
+            if self.local_root is None:
+                pointer_path = DEFAULT_RELEASE_POINTER_PATH
+            else:
+                manifest_path = DEFAULT_MANIFEST_NAME
+        if manifest_path is not None:
+            manifest_path = _safe_relative_posix_path(manifest_path, "manifest_path")
+        if pointer_path is not None:
+            pointer_path = _safe_relative_posix_path(pointer_path, "pointer_path")
+        object.__setattr__(self, "manifest_path", manifest_path)
+        object.__setattr__(self, "pointer_path", pointer_path)
 
     @property
     def inner(self) -> Any:
         if self._inner is None:
-            self._inner = _build_query_client(
+            inner, pointer, pointer_trace = _build_query_client(
                 self.pin,
                 local_root=self.local_root,
                 cache_dir=self.cache_dir,
                 budgets=self.budgets,
                 query_embedder=self.query_embedder,
                 fusion=self.fusion,
+                manifest_path=self.manifest_path,
+                pointer_path=self.pointer_path,
             )
+            self._inner = inner
+            self._release_pointer = pointer
+            self._pointer_fetch_trace = pointer_trace
         return self._inner
 
     @property
     def resolver(self) -> Any:
         return self.inner.resolver
+
+    @property
+    def uses_release_pointer(self) -> bool:
+        return self.pointer_path is not None
+
+    @property
+    def release_pointer(self) -> StateLawsReleasePointer | None:
+        """Return the validated pointer, resolving it lazily when requested."""
+
+        if self.pointer_path is not None and self._inner is None:
+            _ = self.inner
+        return self._release_pointer
+
+    @property
+    def pointer_fetch_trace(self) -> Mapping[str, Any]:
+        """Return the isolated control-plane trace for pointer resolution."""
+
+        if self.pointer_path is not None and self._inner is None:
+            _ = self.inner
+        return MappingProxyType(dict(self._pointer_fetch_trace))
+
+    @property
+    def effective_pin(self) -> ImmutableQueryPin:
+        """Return the data-plane commit selected by the validated pointer."""
+
+        if self._inner is None:
+            return self.pin
+        return ImmutableQueryPin(
+            revision=self.resolver.revision,
+            dataset_repo_id=self.resolver.repo_id,
+            transport=self.pin.transport,
+        )
 
     @property
     def last_result(self) -> Any:
@@ -1396,6 +1726,8 @@ def open_query_client(
     repo_id: str = DEFAULT_DATASET_REPO_ID,
     local_root: PathLike | None = None,
     cache_dir: PathLike | None = None,
+    manifest_path: PathLike | None = None,
+    pointer_path: PathLike | None = None,
     budgets: ResourceBudgets | Mapping[str, Any] | None = None,
     limits: ResourceBudgets | Mapping[str, Any] | None = None,
     query_embedder: Callable[..., Any] | None = None,
@@ -1404,7 +1736,14 @@ def open_query_client(
     no_cache: bool = False,
     reset_cache: bool = False,
 ) -> StateLawsSparseGraphragClient:
-    """Open a pinned, budgeted query client (no I/O until the first query)."""
+    """Open a pinned, budgeted query client (no I/O until the first query).
+
+    Remote clients default to the canonical runtime release pointer.  Offline
+    ``local_root`` clients retain the explicit root ``manifest.json`` layout;
+    pass ``pointer_path`` to exercise a materialized publication repository.
+    Supplying ``manifest_path`` always selects direct-manifest mode, and it is
+    mutually exclusive with ``pointer_path``.
+    """
 
     resolved = coerce_query_pin(
         pin,
@@ -1440,6 +1779,8 @@ def open_query_client(
         pin=resolved,
         local_root=Path(local_root) if local_root is not None else None,
         cache_dir=resolved_cache,
+        manifest_path=(os.fspath(manifest_path) if manifest_path is not None else None),
+        pointer_path=os.fspath(pointer_path) if pointer_path is not None else None,
         budgets=resolved_budgets,
         query_embedder=query_embedder,
         fusion=fusion,
@@ -1624,6 +1965,7 @@ __all__ = [
     "DEFAULT_MAX_ROWS",
     "DEFAULT_MAX_SHARDS",
     "DEFAULT_MAX_TIME_MS",
+    "DEFAULT_RELEASE_POINTER_PATH",
     "DEFAULT_REVISION",
     "DEFAULT_RRF_K",
     "DEFAULT_TOP_K",
@@ -1650,15 +1992,18 @@ __all__ = [
     "RELEASE_SCHEMA_VERSION",
     "SCHEMA_VERSION",
     "SECRET_ENV_NAMES",
+    "STATE_LAWS_RELEASE_PREFIX_ROOT",
     "SUPPORTED_RELEASE_SCHEMAS",
     "TASK_ID",
     "ImmutablePinError",
     "ImmutableQueryPin",
     "LazyImportError",
     "QueryModeError",
+    "ReleasePointerError",
     "ResourceBudgetError",
     "ResourceBudgets",
     "SecretLeakageError",
+    "StateLawsReleasePointer",
     "StateLawsSparseGraphragAPI",
     "StateLawsSparseGraphragClient",
     "StateLawsSparseGraphragError",

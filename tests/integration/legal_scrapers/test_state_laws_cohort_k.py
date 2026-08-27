@@ -599,12 +599,12 @@ async def test_tennessee_full_corpus_refuses_justia_sole_admission(monkeypatch: 
     monkeypatch.setattr(TennesseeScraper, "_scrape_direct_seed_sections", _empty_seed)
 
     scraper = TennesseeScraper("TN", "Tennessee")
-    statutes = await scraper.scrape_code(
-        "Tennessee Code Annotated",
-        "https://www.tn.gov/tga/statutes.html",
-        max_statutes=None,
-    )
-    assert statutes == []
+    with pytest.raises(RuntimeError, match="General Assembly-delegated Lexis"):
+        await scraper.scrape_code(
+            "Tennessee Code Annotated",
+            "https://www.tn.gov/tga/statutes.html",
+            max_statutes=None,
+        )
 
 
 @pytest.mark.anyio

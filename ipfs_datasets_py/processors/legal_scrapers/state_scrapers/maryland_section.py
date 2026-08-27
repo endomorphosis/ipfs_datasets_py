@@ -19,9 +19,13 @@ BASE = "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText"
 TOC_URL = "https://mgaleg.maryland.gov/mgawebsite/Laws/Statutes"
 NEXT_API_URL = "https://mgaleg.maryland.gov/mgawebsite/api/Laws/GetNext"
 PREV_API_URL = "https://mgaleg.maryland.gov/mgawebsite/api/Laws/GetPrevious"
-_RESERVED = re.compile(r"\b(repealed|expired|reserved|renumbered|transferred)\b", re.IGNORECASE)
-_HEAD_RE = re.compile(r"§\s*(?P<num>[\w.–\-]+)\.\s*(?P<head>.*)?")
 _WS = re.compile(r"\s+")
+_SECTION_ID_RE = re.compile(r"^[0-9A-Za-z]+(?:[-.][0-9A-Za-z]+)*$")
+_TERMINAL_MARKER_RE = re.compile(
+    r"^[\[(]?\s*(repealed|expired|reserved|renumbered|transferred)"
+    r"\s*[\])]?[.!;:]?\s*$",
+    re.IGNORECASE,
+)
 # Vaquill scrapeMD: statute articles are lowercase g-codes; constitution is c*.
 _STATUTE_CODE_RE = re.compile(r"^g[a-z]{2,3}$")
 _ARTICLES_SELECT_RE = re.compile(
@@ -45,12 +49,40 @@ def _clean(text: str) -> str:
     return _WS.sub(" ", (text or "").replace("\xa0", " ")).strip()
 
 
-def parse_maryland_section_html(
+def _normalize_section_identity(value: str) -> str:
+    normalized = str(value or "").strip()
+    for dash in ("\u2010", "\u2011", "\u2012", "\u2013", "\u2014", "\u2015", "\u2212"):
+        normalized = normalized.replace(dash, "-")
+    return re.sub(r"\s+", "", normalized).rstrip(".")
+
+
+def _source_bound_components(
     html: str,
     *,
-    source_url: str = "",
-    code_name: str = "Maryland Code",
-) -> Optional[NormalizedStatute]:
+    source_url: str,
+    expected_article_code: str = "",
+) -> Optional[Tuple[str, str, str, str, str]]:
+    """Return article, section, heading, headnote, and body for one exact page.
+
+    Maryland's decimal sections omit a second punctuation delimiter (for
+    example ``§15–1628.2``).  The URL section selected by the official API is
+    therefore the authority for the identity; the displayed citation must
+    match that complete identity rather than being reparsed at its first dot.
+    """
+
+    query = parse_qs(urlparse(source_url).query)
+    article = str((query.get("article") or [""])[0] or "").strip().upper()
+    section = _normalize_section_identity(
+        str((query.get("section") or [""])[0] or "")
+    )
+    expected_article = str(expected_article_code or "").strip().upper()
+    if not article or not _STATUTE_CODE_RE.fullmatch(article.lower()):
+        return None
+    if expected_article and expected_article != article:
+        return None
+    if not section or not _SECTION_ID_RE.fullmatch(section):
+        return None
+
     try:
         from bs4 import BeautifulSoup
     except ImportError:
@@ -59,51 +91,122 @@ def parse_maryland_section_html(
     stat = soup.find(id="StatuteText")
     if stat is None:
         return None
-    raw = stat.get_text("\n")
-    if "File Not Found" in raw:
-        return None
-    if _RESERVED.search(raw[:400]):
-        return None
     for tag in stat.find_all("div", class_="row"):
         tag.decompose()
-    for tag in stat.find_all("div", style=re.compile(r"text-align\s*:\s*center", re.I)):
+    for tag in stat.find_all(
+        "div",
+        style=re.compile(r"text-align\s*:\s*center", re.IGNORECASE),
+    ):
         tag.decompose()
     paras = [_clean(part) for part in stat.get_text("\n").split("\n")]
     paras = [part for part in paras if part]
-    heading = ""
-    number = ""
-    name = ""
-    if paras:
-        match = _HEAD_RE.search(paras[0])
-        if match:
-            heading = paras[0]
-            number = match.group("num").replace("–", "-").replace("—", "-")
-            name = _clean(match.group("head") or "")
-            paras = paras[1:]
-    body = _clean(" ".join(paras))
-    if len(body) < 40:
+    if not paras or "File Not Found" in " ".join(paras):
         return None
-    query = parse_qs(urlparse(source_url).query)
-    article = (query.get("article") or [""])[0]
-    number = number or (query.get("section") or [""])[0]
-    if not number:
+
+    heading = paras[0]
+    normalized_heading = heading
+    for dash in ("\u2010", "\u2011", "\u2012", "\u2013", "\u2014", "\u2015", "\u2212"):
+        normalized_heading = normalized_heading.replace(dash, "-")
+    normalized_heading = _clean(normalized_heading)
+    if not normalized_heading.startswith("§"):
+        return None
+    locator_and_headnote = normalized_heading[1:].strip()
+    headnote = ""
+    if locator_and_headnote in {section, f"{section}."}:
+        pass
+    elif locator_and_headnote.startswith(f"{section}. "):
+        headnote = _clean(locator_and_headnote[len(section) + 2 :])
+    elif locator_and_headnote.startswith(f"{section} "):
+        headnote = _clean(locator_and_headnote[len(section) + 1 :])
+    else:
+        return None
+
+    body = _clean(" ".join(paras[1:]))
+    return article, section, heading, headnote, body
+
+
+def maryland_section_page_identity(
+    html: str,
+    *,
+    source_url: str,
+    expected_article_code: str = "",
+) -> Optional[Tuple[str, str]]:
+    """Return the exact official article/section identity, or fail closed."""
+
+    components = _source_bound_components(
+        html,
+        source_url=source_url,
+        expected_article_code=expected_article_code,
+    )
+    if components is None:
+        return None
+    return components[0], components[1]
+
+
+def source_bound_maryland_terminal_disposition(
+    html: str,
+    *,
+    source_url: str,
+    expected_article_code: str = "",
+) -> Optional[str]:
+    """Classify only identity-bound bare-heading or exact status-marker stubs."""
+
+    components = _source_bound_components(
+        html,
+        source_url=source_url,
+        expected_article_code=expected_article_code,
+    )
+    if components is None:
+        return None
+    _article, _section, _heading, headnote, body = components
+    if not headnote and not body:
+        return "heading_only"
+    if headnote and not body:
+        marker_text = headnote
+    elif body and not headnote:
+        marker_text = body
+    else:
+        marker_text = ""
+    marker = _TERMINAL_MARKER_RE.fullmatch(marker_text)
+    return marker.group(1).lower() if marker is not None else None
+
+
+def parse_maryland_section_html(
+    html: str,
+    *,
+    source_url: str = "",
+    code_name: str = "Maryland Code",
+    expected_article_code: str = "",
+) -> Optional[NormalizedStatute]:
+    components = _source_bound_components(
+        html,
+        source_url=source_url,
+        expected_article_code=expected_article_code,
+    )
+    if components is None:
+        return None
+    article, number, heading, name, body = components
+    if not body:
+        return None
+    if not name and _TERMINAL_MARKER_RE.fullmatch(body) is not None:
         return None
     return NormalizedStatute(
         state_code="MD",
         state_name="Maryland",
-        statute_id=f"{code_name} § {number}",
+        statute_id=f"{code_name} [{article}] § {number}",
         code_name=code_name,
         section_number=number,
         section_name=(name or heading or f"Section {number}")[:200],
-        full_text=body[:14000],
+        full_text=body,
         source_url=source_url or f"{BASE}?article={article}&section={number}&enactments=false",
         official_cite=f"Md. Code § {number}",
         metadata=StatuteMetadata(),
         structured_data={
+            "record_type": "maryland_api_section",
             "source_kind": "official_maryland_statute_text",
             "source_authority_class": "official",
             "discovery_method": "mgaleg_statute_text",
-            "article_code": article.upper() if article else None,
+            "article_code": article,
             "skip_hydrate": True,
         },
     )

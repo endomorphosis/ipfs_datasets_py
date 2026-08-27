@@ -82,7 +82,7 @@ def parse_arkansas_constitution_text(
                     title_number=art_id,
                     section_number=number,
                     section_name=(raw.split(".", 1)[0] or f"Section {number}")[:200],
-                    full_text=raw[:14000],
+                    full_text=raw,
                     source_url=AR_CONST_PDF,
                     official_cite=cite,
                     metadata=StatuteMetadata(),

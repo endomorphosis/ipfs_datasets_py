@@ -17,13 +17,14 @@ import ssl
 import urllib.request
 import uuid
 from collections.abc import Callable, Mapping, Sequence
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import (
     Any,
     Dict,
     List,
     Literal,
     Optional,
+    NotRequired,
     Tuple,
     TypedDict,
 )
@@ -31,7 +32,11 @@ from urllib.parse import urljoin, urlparse
 
 from ipfs_datasets_py.utils import anyio_compat
 
-from .base_scraper import BaseStateScraper, NormalizedStatute
+from .base_scraper import (
+    BaseStateScraper,
+    NormalizedStatute,
+    StateLawPageMultiFetchResult,
+)
 from .registry import StateScraperRegistry
 
 NorthCarolinaByChapterDisposition = Literal[
@@ -63,6 +68,9 @@ NorthCarolinaByChapterDisposition = Literal[
     "section_frontier_empty",
     "section_frontier_underfill",
     "section_frontier_mismatch",
+    "section_residual_reconciliation_failed",
+    "official_reconciled",
+    "official_terminal",
     "not_attempted_chapter_cap",
     "not_attempted",
 ]
@@ -119,6 +127,7 @@ class NorthCarolinaByChapterEvidence(TypedDict):
     section_inactive_count: int
     active_section_numbers: List[str]
     inactive_section_numbers: List[str]
+    terminal_section_dispositions: NotRequired[List[Dict[str, str]]]
     parsed_section_numbers: List[str]
     parsed_statutes: int
     admitted_statutes: int
@@ -204,7 +213,7 @@ class NorthCarolinaScraper(BaseStateScraper):
     OFFICIAL_ENTRY_URL = "https://www.ncleg.gov/Laws/GeneralStatutes"
     OFFICIAL_TOC_URL = "https://www.ncleg.gov/Laws/GeneralStatutesTOC"
     BYCHAPTER_COMPLETION_SCHEMA = (
-        "ipfs_datasets_py/north-carolina-bychapter-completion@2"
+        "ipfs_datasets_py/north-carolina-bychapter-completion@4"
     )
     BYCHAPTER_FRESH_PROVIDER = "fresh_live_https"
     FIRST_BYCHAPTER_STATUTE_LIMIT = 1
@@ -464,6 +473,279 @@ class NorthCarolinaScraper(BaseStateScraper):
             "source_url": "",
         },
     )
+
+    def state_law_frontier_source_dependencies(self) -> tuple[object, ...]:
+        """Bind the sibling NC frontier/parser rules into closure identity."""
+
+        from . import north_carolina_chapter
+
+        return (north_carolina_chapter,)
+
+    def _north_carolina_residual_concurrency(self) -> int:
+        return max(
+            1,
+            min(
+                64,
+                self._env_int(
+                    "STATE_SCRAPER_NC_RESIDUAL_CONCURRENCY",
+                    default=16,
+                ),
+            ),
+        )
+
+    def _north_carolina_residual_batch_size(self) -> int:
+        return max(
+            2,
+            min(
+                1024,
+                self._env_int(
+                    "STATE_SCRAPER_NC_RESIDUAL_BATCH_SIZE",
+                    default=256,
+                ),
+            ),
+        )
+
+    @staticmethod
+    def _is_valid_north_carolina_section_payload(payload: bytes) -> bool:
+        """Reject empty/interstitial bodies before residual evidence retention."""
+
+        if not payload:
+            return False
+        lowered = bytes(payload).lower()
+        rejected_markers = (
+            b"access denied",
+            b"captcha",
+            b"request blocked",
+            b"server error in '/' application",
+        )
+        if any(marker in lowered for marker in rejected_markers):
+            return False
+        return (
+            b"<title" in lowered
+            and b"</html>" in lowered
+            and (
+                b"&sect;" in lowered
+                or b"&#167;" in lowered
+                or "§".encode() in lowered
+            )
+        )
+
+    @staticmethod
+    def _north_carolina_section_evidence_context(
+        *,
+        source_url: str,
+        payload: bytes,
+        transport_receipt: Optional[Dict[str, Any]],
+        parser_input_envelope: Any,
+    ) -> Dict[str, Any]:
+        """Resolve an exact residual's legal as-of date from retained evidence."""
+
+        envelope = parser_input_envelope
+        if not isinstance(envelope, dict):
+            to_dict = getattr(envelope, "to_dict", None)
+            if callable(to_dict):
+                envelope = to_dict()
+        if isinstance(envelope, dict) and isinstance(
+            envelope.get("parser_input_envelope"),
+            dict,
+        ):
+            envelope = envelope["parser_input_envelope"]
+        receipt = (
+            envelope.get("acquisition", {}).get("receipt", {})
+            if isinstance(envelope, dict)
+            else {}
+        )
+        if not isinstance(receipt, dict) or receipt.get("endpoint") != source_url:
+            raise RuntimeError(
+                "North Carolina section acquisition receipt does not match "
+                f"requested URL: {source_url}"
+            )
+        content_sha256 = hashlib.sha256(bytes(payload)).hexdigest()
+        retained_sha256 = str(
+            receipt.get("content", {}).get("sha256") or ""
+        ).strip().lower()
+        envelope_sha256 = str(
+            envelope.get("acquisition", {}).get("body_sha256") or ""
+        ).strip().lower()
+        if (
+            not retained_sha256
+            or retained_sha256 != content_sha256
+            or envelope_sha256 != content_sha256
+        ):
+            raise RuntimeError(
+                "North Carolina section acquisition evidence changed parser bytes: "
+                f"{source_url}"
+            )
+
+        retained_transport = receipt.get("metadata", {}).get(
+            "transport_receipt",
+            {},
+        )
+        if not isinstance(retained_transport, dict):
+            retained_transport = {}
+        aligned_transport = (
+            dict(transport_receipt) if isinstance(transport_receipt, dict) else {}
+        )
+        source_transport = str(
+            retained_transport.get("source_transport")
+            or aligned_transport.get("source_transport")
+            or ""
+        ).strip()
+        official_url = str(
+            retained_transport.get("official_url")
+            or aligned_transport.get("official_url")
+            or ""
+        ).strip()
+        transport_sha256 = str(
+            retained_transport.get("content_sha256")
+            or aligned_transport.get("content_sha256")
+            or ""
+        ).strip().lower()
+        if (
+            not source_transport
+            or official_url != source_url
+            or transport_sha256 != content_sha256
+        ):
+            raise RuntimeError(
+                "North Carolina section acquisition transport identity is "
+                f"incomplete: {source_url}"
+            )
+
+        retrieved_at = str(receipt.get("retrieved_at") or "").strip()
+        try:
+            retrieved_date = datetime.fromisoformat(
+                retrieved_at.replace("Z", "+00:00")
+            ).date()
+        except (TypeError, ValueError) as exc:
+            raise RuntimeError(
+                "North Carolina section receipt lacks a valid retrieval date: "
+                f"{source_url}"
+            ) from exc
+
+        archive_timestamp = str(
+            retained_transport.get("archive_timestamp")
+            or retained_transport.get("capture_timestamp")
+            or aligned_transport.get("archive_timestamp")
+            or aligned_transport.get("capture_timestamp")
+            or ""
+        ).strip()
+        if source_transport == "direct":
+            as_of_date = retrieved_date
+        else:
+            archive_match = re.fullmatch(
+                r"(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})\d{0,6}",
+                archive_timestamp,
+            )
+            try:
+                if archive_match is None:
+                    raise ValueError("invalid archive timestamp")
+                as_of_date = date(
+                    int(archive_match.group("year")),
+                    int(archive_match.group("month")),
+                    int(archive_match.group("day")),
+                )
+            except (TypeError, ValueError) as exc:
+                raise RuntimeError(
+                    "North Carolina archived section receipt lacks a provenance "
+                    f"snapshot date: {source_url}"
+                ) from exc
+        return {
+            "as_of_date": as_of_date,
+            "archive_timestamp": archive_timestamp,
+            "content_sha256": content_sha256,
+            "receipt_sha256": str(receipt.get("receipt_sha256") or "").strip(),
+            "retrieved_at": retrieved_at,
+            "source_transport": source_transport,
+        }
+
+    async def _fetch_north_carolina_section_frontier_batch(
+        self,
+        urls: List[str],
+        *,
+        frontier_name: str,
+    ) -> StateLawPageMultiFetchResult:
+        """Acquire exact active BySection residuals through grouped WARC fetch."""
+
+        if not urls:
+            return StateLawPageMultiFetchResult([], [], [], [], [], {})
+        requested = list(urls)
+        if len(set(requested)) != len(requested):
+            raise RuntimeError(
+                f"North Carolina {frontier_name} frontier repeats an exact URL"
+            )
+        for url in requested:
+            parsed = urlparse(url)
+            if (
+                parsed.scheme.lower() != "https"
+                or parsed.hostname != self.OFFICIAL_DOMAIN
+                or self._NC_SECTION_URL_RE.fullmatch(parsed.path) is None
+                or parsed.query
+                or parsed.fragment
+            ):
+                raise RuntimeError(
+                    "North Carolina residual frontier contains a noncanonical "
+                    f"BySection URL: {url}"
+                )
+
+        generic_attempts = self._env_int(
+            "STATE_SCRAPER_FRONTIER_RESIDUAL_RETRY_ATTEMPTS",
+            default=1,
+        )
+        retry_attempts = max(
+            0,
+            min(
+                3,
+                self._env_int(
+                    "STATE_SCRAPER_NC_RESIDUAL_RETRY_ATTEMPTS",
+                    default=generic_attempts,
+                ),
+            ),
+        )
+        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+            requested,
+            residual_retry_attempts=retry_attempts,
+            timeout_seconds=25,
+            media_type="text/html",
+            max_concurrency=self._north_carolina_residual_concurrency(),
+            prefer_direct=True,
+            common_crawl_domain_terms=(self.OFFICIAL_DOMAIN,),
+            common_crawl_url_terms=(
+                "/EnactedLegislation/Statutes/HTML/BySection/",
+            ),
+            common_crawl_mime_terms=("html",),
+            content_validator=self._is_valid_north_carolina_section_payload,
+        )
+        aligned_lengths = {
+            len(batch.urls),
+            len(batch.payloads),
+            len(batch.errors),
+            len(batch.transport_receipts),
+            len(batch.parser_input_envelopes),
+        }
+        if aligned_lengths != {len(requested)}:
+            raise RuntimeError(
+                f"North Carolina {frontier_name} returned unaligned acquisition rows"
+            )
+        if list(batch.urls) != requested:
+            raise RuntimeError(
+                f"North Carolina {frontier_name} changed URL order or identity"
+            )
+        failures = [
+            {"url": url, "error": error or "empty parser input"}
+            for url, payload, error in zip(
+                batch.urls,
+                batch.payloads,
+                batch.errors,
+                strict=True,
+            )
+            if error is not None or not payload
+        ]
+        if failures:
+            raise RuntimeError(
+                f"North Carolina {frontier_name} is incomplete; "
+                f"unresolved exact URLs: {failures}"
+            )
+        return batch
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -737,12 +1019,13 @@ class NorthCarolinaScraper(BaseStateScraper):
         ).encode("utf-8")
         return hashlib.sha256(payload).hexdigest()
 
-    @staticmethod
-    def _bychapter_checkpoint_hmac_key() -> Optional[bytes]:
+    def _bychapter_checkpoint_hmac_key(self) -> Optional[bytes]:
         """Return an opt-in checkpoint authentication key without persisting it."""
 
-        raw = os.getenv("NORTH_CAROLINA_BYCHAPTER_CHECKPOINT_HMAC_KEY")
-        if raw is None:
+        raw = self.state_law_run_environment_value(
+            "NORTH_CAROLINA_BYCHAPTER_CHECKPOINT_HMAC_KEY"
+        )
+        if not raw:
             return None
         key = str(raw).encode("utf-8")
         # A short operator typo must not silently authorize resume skipping.
@@ -835,7 +1118,20 @@ class NorthCarolinaScraper(BaseStateScraper):
         *,
         timeout: int = 40,
     ) -> NorthCarolinaByChapterFetchReceipt:
-        """Fetch one official URL over verified HTTPS without fallback/cache."""
+        """Replay or fetch one current official URL over verified HTTPS.
+
+        North Carolina's exhaustive path predates the shared plural fetcher and
+        therefore builds a richer HTTP receipt than the ordinary byte adapter.
+        It must still honor the same prospective acquisition ledger.  Reusing
+        an exact retained direct observation here prevents restarts from
+        issuing another GET (and another immutable observation) for every TOC,
+        ByChapter, and chapter-section-frontier parser input.
+
+        A replay keeps the original retrieval time and direct-transport proof;
+        it is never restamped as a new observation.  Stale retained evidence
+        falls through to the existing live path, while malformed, non-direct,
+        or identity-drifted retained evidence fails closed.
+        """
 
         source_url = str(source_url or "").strip()
         parsed_source = urlparse(source_url)
@@ -854,45 +1150,89 @@ class NorthCarolinaScraper(BaseStateScraper):
                 error_message="fresh fetch requires an official ncleg.gov HTTPS URL",
             )
 
-        def _request() -> Tuple[int, str, bytes]:
-            request = urllib.request.Request(
-                source_url,
-                headers={
-                    "User-Agent": "ipfs-datasets-north-carolina-full-corpus/1.0",
-                    "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-                    "Cache-Control": "no-cache",
-                    "Pragma": "no-cache",
-                    "Connection": "close",
-                },
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is not None:
+            if (
+                getattr(self, "_north_carolina_replay_ledger", None)
+                is not ledger
+            ):
+                ledger.refresh_existing_entries()
+                self._north_carolina_replay_ledger = ledger
+            retained = ledger.replay_retained_parser_input(
+                official_url=source_url,
+                sanitized_request={"method": "GET", "url": source_url},
             )
-            context = ssl.create_default_context()
-            with urllib.request.urlopen(
-                request,
-                timeout=max(5, int(timeout)),
-                context=context,
-            ) as response:
-                status = int(getattr(response, "status", 200) or 200)
-                final_url = str(response.geturl() or source_url)
-                payload = bytes(response.read() or b"")
-            return status, final_url, payload
+            if retained is not None:
+                payload = bytes(retained.envelope.body or b"")
+                retained_receipt = retained.receipt
+                retained_content = retained_receipt.content
+                payload_sha256 = hashlib.sha256(payload).hexdigest()
+                if (
+                    not payload
+                    or retained_content is None
+                    or retained_content.sha256 != payload_sha256
+                    or retained_content.byte_size != len(payload)
+                    or retained_receipt.endpoint != source_url
+                    or int(retained_receipt.response_status or 0) != 200
+                    or str(retained_receipt.media_type or "").lower()
+                    != "text/html"
+                    or retained_receipt.cache_hit
+                    or not retained.envelope.acquisition.network_used
+                    or retained.envelope.acquisition.kind.value != "fetched"
+                    or retained.transport.official_url != source_url
+                    or retained.transport.content_sha256 != payload_sha256
+                    or retained.transport.transport_chain != ("direct",)
+                ):
+                    raise RuntimeError(
+                        "North Carolina retained official parser input failed "
+                        f"the direct HTTPS identity contract: {source_url}"
+                    )
+                observed_at = retained_receipt.retrieved_at.isoformat()
+                if self._bychapter_observed_at_valid(observed_at):
+                    html = payload.decode("utf-8", errors="replace")
+                    decoded_bytes = html.encode("utf-8", errors="replace")
+                    self._last_page_fetch_transport_evidence = dict(
+                        retained.transport_receipt
+                    )
+                    self._last_page_parser_input_envelope = retained.envelope
+                    self._record_fetch_event(
+                        provider="retained_acquisition_replay",
+                        success=True,
+                    )
+                    return NorthCarolinaByChapterFetchReceipt(
+                        html=html,
+                        # This is the original still-current live observation
+                        # class, not a claim that replay performed a new GET.
+                        provider=self.BYCHAPTER_FRESH_PROVIDER,
+                        http_status=200,
+                        final_url=source_url,
+                        final_host=(parsed_source.hostname or "").lower(),
+                        observed_at=observed_at,
+                        response_sha256=payload_sha256,
+                        decoded_sha256=hashlib.sha256(decoded_bytes).hexdigest(),
+                        error_type="",
+                        error_message="",
+                    )
 
-        status = 0
-        final_url = source_url
-        payload = b""
-        error_type = ""
-        error_message = ""
-        try:
-            status, final_url, payload = await anyio_compat.wait_for(
-                anyio_compat.to_thread(_request),
-                max(7, int(timeout) + 2),
-            )
-        except Exception as exc:
-            status = int(getattr(exc, "code", 0) or 0)
-            final_url = str(getattr(exc, "url", "") or source_url)
-            error_type = type(exc).__name__
-            error_message = str(exc)
-
-        observed_at = datetime.now(timezone.utc).isoformat()
+        receipt = await self._fetch_fresh_official_response_receipt(
+            source_url,
+            headers={
+                "User-Agent": "ipfs-datasets-north-carolina-full-corpus/1.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                "Cache-Control": "no-cache",
+                "Pragma": "no-cache",
+                "Connection": "close",
+            },
+            timeout_seconds=max(5, int(timeout)),
+            verify_tls=True,
+            admit_success_body=True,
+            media_type="text/html",
+            provider=self.BYCHAPTER_FRESH_PROVIDER,
+        )
+        status = int(receipt.get("status_code") or 0)
+        final_url = str(receipt.get("final_url") or source_url)
+        payload = bytes(receipt.get("body") or b"")
+        observed_at = str(receipt.get("observed_at") or "")
         html = payload.decode("utf-8", errors="replace") if payload else ""
         decoded_bytes = html.encode("utf-8", errors="replace")
         return NorthCarolinaByChapterFetchReceipt(
@@ -904,8 +1244,8 @@ class NorthCarolinaScraper(BaseStateScraper):
             observed_at=observed_at,
             response_sha256=hashlib.sha256(payload).hexdigest(),
             decoded_sha256=hashlib.sha256(decoded_bytes).hexdigest(),
-            error_type=error_type,
-            error_message=error_message,
+            error_type=str(receipt.get("error_type") or ""),
+            error_message=str(receipt.get("error_message") or ""),
         )
 
     async def _fetch_official_bychapter_page_fresh(
@@ -964,6 +1304,10 @@ class NorthCarolinaScraper(BaseStateScraper):
             configured_toc_html_path,
             merge_discovered_chapters,
             parse_north_carolina_chapter_html,
+            parse_north_carolina_section_html,
+            section_url,
+            source_bound_empty_chapter_disposition,
+            source_bound_terminal_disposition_from_section_html,
             toc_chapter_frontier,
             toc_chapter_links,
         )
@@ -1207,7 +1551,14 @@ class NorthCarolinaScraper(BaseStateScraper):
                 )
                 == "official"
                 and self.is_official_nc_url(str(row.source_url or ""))
-                and bool(self._NC_CHAPTER_BYCHAPTER_RE.search(str(row.source_url or "")))
+                and str(row.source_url or "")
+                in {
+                    chapter_url(str(row.chapter_number or "").strip()),
+                    section_url(
+                        str(row.chapter_number or "").strip(),
+                        str(row.section_number or "").strip(),
+                    ),
+                }
             ]
         if limit is not None and len(statutes) >= limit:
             return statutes[: int(limit)]
@@ -1265,6 +1616,9 @@ class NorthCarolinaScraper(BaseStateScraper):
                     "section_frontier_empty",
                     "section_frontier_underfill",
                     "section_frontier_mismatch",
+                    "section_residual_reconciliation_failed",
+                    "official_reconciled",
+                    "official_terminal",
                     "not_attempted_chapter_cap",
                     "not_attempted",
                 }:
@@ -1355,6 +1709,24 @@ class NorthCarolinaScraper(BaseStateScraper):
                 active_section_numbers = list(raw["active_section_numbers"])
                 inactive_section_numbers = list(raw["inactive_section_numbers"])
                 parsed_section_numbers = list(raw["parsed_section_numbers"])
+                terminal_section_dispositions = raw.get(
+                    "terminal_section_dispositions",
+                    [],
+                )
+                if (
+                    not isinstance(terminal_section_dispositions, list)
+                    or any(
+                        not isinstance(value, dict)
+                        or not str(value.get("section_number") or "").strip()
+                        or not str(value.get("disposition") or "").strip()
+                        for value in terminal_section_dispositions
+                    )
+                ):
+                    continue
+                terminal_section_numbers = [
+                    str(value["section_number"])
+                    for value in terminal_section_dispositions
+                ]
                 if (
                     re.fullmatch(r"[0-9a-f]{64}", response_sha256) is None
                     or re.fullmatch(r"[0-9a-f]{64}", decoded_sha256) is None
@@ -1398,6 +1770,11 @@ class NorthCarolinaScraper(BaseStateScraper):
                     or len(set(inactive_section_numbers))
                     != len(inactive_section_numbers)
                     or set(active_section_numbers) & set(inactive_section_numbers)
+                    or len(set(terminal_section_numbers))
+                    != len(terminal_section_numbers)
+                    or not set(terminal_section_numbers).issubset(
+                        set(active_section_numbers)
+                    )
                     or section_frontier_sha256
                     != self._bychapter_section_frontier_sha256(
                         active_section_numbers,
@@ -1453,6 +1830,13 @@ class NorthCarolinaScraper(BaseStateScraper):
                     section_inactive_count=raw["section_inactive_count"],
                     active_section_numbers=active_section_numbers,
                     inactive_section_numbers=inactive_section_numbers,
+                    terminal_section_dispositions=[
+                        {
+                            "section_number": str(value["section_number"]),
+                            "disposition": str(value["disposition"]),
+                        }
+                        for value in terminal_section_dispositions
+                    ],
                     parsed_section_numbers=parsed_section_numbers,
                     parsed_statutes=raw["parsed_statutes"],
                     admitted_statutes=raw["admitted_statutes"],
@@ -1486,7 +1870,7 @@ class NorthCarolinaScraper(BaseStateScraper):
         }
         checkpoint_rows_sha256 = {
             number: self._bychapter_checkpoint_rows_sha256(statutes, number)
-            for number in official_checkpoint_chapters
+            for number in frontier_numbers
         }
         checkpoint_row_section_numbers = {
             number: {
@@ -1495,7 +1879,7 @@ class NorthCarolinaScraper(BaseStateScraper):
                 if str(row.chapter_number or "").strip() == number
                 and str(row.section_number or "").strip()
             }
-            for number in official_checkpoint_chapters
+            for number in frontier_numbers
         }
         if full_corpus_run:
             # Bare checkpoint digests are integrity checks, not authentication.
@@ -1505,7 +1889,8 @@ class NorthCarolinaScraper(BaseStateScraper):
                 number
                 for number, item in evidence_by_number.items()
                 if number in authenticated_evidence_numbers
-                and item["disposition"] == "official_parsed"
+                and item["disposition"]
+                in {"official_parsed", "official_reconciled", "official_terminal"}
                 and item["resolved"]
                 and item["state_code"] == "NC"
                 and item["code_name"] == str(code_name)
@@ -1540,11 +1925,17 @@ class NorthCarolinaScraper(BaseStateScraper):
                 and len(item["section_frontier_response_sha256"]) == 64
                 and len(item["section_frontier_decoded_sha256"]) == 64
                 and item["section_frontier_document_complete"]
-                and item["parsed_statutes"] > 0
-                and item["section_active_count"] == item["parsed_statutes"]
+                and item["section_active_count"]
+                == item["parsed_statutes"]
+                + len(item.get("terminal_section_dispositions", []))
+                and item["admitted_statutes"] == item["parsed_statutes"]
                 and item["section_frontier_count"]
                 == item["section_active_count"] + item["section_inactive_count"]
                 and set(item["active_section_numbers"])
+                - {
+                    str(value.get("section_number") or "")
+                    for value in item.get("terminal_section_dispositions", [])
+                }
                 == set(item["parsed_section_numbers"])
                 == checkpoint_row_section_numbers.get(number, set())
                 and item["section_frontier_sha256"]
@@ -1554,7 +1945,19 @@ class NorthCarolinaScraper(BaseStateScraper):
                 )
                 and item["chapter_rows_sha256"]
                 == checkpoint_rows_sha256.get(number)
-                and number in official_checkpoint_chapters
+                and (
+                    (
+                        item["disposition"] == "official_terminal"
+                        and item["parsed_statutes"] == 0
+                        and item["section_active_count"] == 0
+                    )
+                    or (
+                        item["disposition"]
+                        in {"official_parsed", "official_reconciled"}
+                        and item["parsed_statutes"] > 0
+                        and number in official_checkpoint_chapters
+                    )
+                )
             }
         else:
             done = legacy_done | {
@@ -1586,6 +1989,19 @@ class NorthCarolinaScraper(BaseStateScraper):
         concurrency = self._bychapter_concurrency()
         total = len(catalog)
         frontier_total = len(frontier_catalog)
+        reconciliation_rows_by_number: Dict[
+            str,
+            Dict[str, NormalizedStatute],
+        ] = {}
+        residual_frontier: List[Tuple[str, str, str, str]] = []
+        residual_failures: Dict[str, str] = {}
+        residual_sections_scanned = 0
+        residual_sections_parsed = 0
+        residual_batches_scanned = 0
+        residual_terminal_dispositions_by_number: Dict[
+            str,
+            Dict[str, str],
+        ] = {}
 
         def _evidence(
             number: str,
@@ -1620,6 +2036,7 @@ class NorthCarolinaScraper(BaseStateScraper):
             active_section_numbers: Sequence[str] = (),
             inactive_section_numbers: Sequence[str] = (),
             parsed_section_numbers: Sequence[str] = (),
+            terminal_section_dispositions: Sequence[Mapping[str, str]] = (),
         ) -> NorthCarolinaByChapterEvidence:
             if error is not None:
                 error_type = type(error).__name__
@@ -1690,6 +2107,13 @@ class NorthCarolinaScraper(BaseStateScraper):
                 section_inactive_count=len(inactive_sections),
                 active_section_numbers=active_sections,
                 inactive_section_numbers=inactive_sections,
+                terminal_section_dispositions=[
+                    {
+                        "section_number": str(value.get("section_number") or ""),
+                        "disposition": str(value.get("disposition") or ""),
+                    }
+                    for value in terminal_section_dispositions
+                ],
                 parsed_section_numbers=parsed_sections,
                 parsed_statutes=max(0, int(parsed_statutes)),
                 admitted_statutes=max(0, int(admitted_statutes)),
@@ -1777,6 +2201,27 @@ class NorthCarolinaScraper(BaseStateScraper):
                 "bychapter_chapter_evidence": evidence,
                 "bychapter_unresolved_dispositions": unresolved,
                 "bychapter_unresolved_frontier_dispositions": unresolved_frontier,
+                "bychapter_residual_section_frontier_count": len(residual_frontier),
+                "bychapter_residual_sections_scanned": residual_sections_scanned,
+                "bychapter_residual_sections_parsed": residual_sections_parsed,
+                "bychapter_residual_terminal_sections": [
+                    {
+                        "chapter_number": number,
+                        "section_number": section,
+                        "disposition": disposition,
+                    }
+                    for number in frontier_numbers
+                    for section, disposition in sorted(
+                        residual_terminal_dispositions_by_number.get(
+                            number,
+                            {},
+                        ).items()
+                    )
+                ],
+                "bychapter_residual_batches_scanned": residual_batches_scanned,
+                "bychapter_terminal_chapter_count": sum(
+                    item["disposition"] == "official_terminal" for item in evidence
+                ),
                 "codes_completed": int(codes_completed),
                 "codes_total": 1,
             }
@@ -2056,8 +2501,18 @@ class NorthCarolinaScraper(BaseStateScraper):
                     done.discard(number)
                     continue
                 authority, _source_kind = self._classify_html_transport(provider)
+                chapter_as_of_date: Optional[date] = None
+                if observed_at:
+                    try:
+                        chapter_as_of_date = datetime.fromisoformat(
+                            observed_at.replace("Z", "+00:00")
+                        ).date()
+                    except ValueError:
+                        chapter_as_of_date = None
                 active_section_numbers: List[str] = []
                 inactive_section_numbers: List[str] = []
+                active_section_records_by_number: Dict[str, Dict[str, str]] = {}
+                active_section_names_by_number: Dict[str, str] = {}
                 if full_corpus_run:
                     section_fetch_error = section_fetch_errors.get(number)
                     if section_fetch_error is not None:
@@ -2269,7 +2724,46 @@ class NorthCarolinaScraper(BaseStateScraper):
                         for record in section_records
                         if record["disposition"] == "inactive"
                     ]
-                    if not section_records or not active_section_numbers:
+                    active_section_records_by_number = {
+                        record["section_number"].casefold(): dict(record)
+                        for record in section_records
+                        if record["disposition"] == "active"
+                    }
+                    active_section_names_by_number = {
+                        record["section_number"]: record["section_name"]
+                        for record in section_records
+                        if record["disposition"] == "active"
+                    }
+                    if not section_records:
+                        terminal_disposition = (
+                            source_bound_empty_chapter_disposition(
+                                html,
+                                section_html,
+                                chapter=number,
+                                chapter_source_url=chapter_url(number),
+                                section_index_source_url=chapter_sections_url(number),
+                            )
+                        )
+                        if terminal_disposition is not None:
+                            evidence_by_number[number] = _evidence(
+                                number,
+                                _name,
+                                "official_terminal",
+                                resolved=True,
+                                html=html,
+                                authority="official",
+                                chapter_rows_sha256=(
+                                    self._bychapter_checkpoint_rows_sha256(
+                                        statutes,
+                                        number,
+                                    )
+                                ),
+                                active_section_numbers=active_section_numbers,
+                                inactive_section_numbers=inactive_section_numbers,
+                                **evidence_kwargs,
+                            )
+                            done.add(number)
+                            continue
                         evidence_by_number[number] = _evidence(
                             number,
                             _name,
@@ -2282,6 +2776,26 @@ class NorthCarolinaScraper(BaseStateScraper):
                             **evidence_kwargs,
                         )
                         done.discard(number)
+                        continue
+                    if not active_section_numbers:
+                        evidence_by_number[number] = _evidence(
+                            number,
+                            _name,
+                            "official_terminal",
+                            resolved=True,
+                            html=html,
+                            authority="official",
+                            chapter_rows_sha256=(
+                                self._bychapter_checkpoint_rows_sha256(
+                                    statutes,
+                                    number,
+                                )
+                            ),
+                            active_section_numbers=active_section_numbers,
+                            inactive_section_numbers=inactive_section_numbers,
+                            **evidence_kwargs,
+                        )
+                        done.add(number)
                         continue
                 remaining = None if limit is None else max(0, int(limit) - len(statutes))
                 if remaining is not None and remaining <= 0:
@@ -2301,6 +2815,10 @@ class NorthCarolinaScraper(BaseStateScraper):
                             chapter=number,
                             code_name=code_name,
                             max_statutes=remaining,
+                            as_of_date=chapter_as_of_date,
+                            section_frontier_names=(
+                                active_section_names_by_number
+                            ),
                         )
                 except Exception as exc:
                     evidence_by_number[number] = _evidence(
@@ -2322,7 +2840,7 @@ class NorthCarolinaScraper(BaseStateScraper):
                         exc,
                     )
                     continue
-                if not rows:
+                if not rows and not full_corpus_run:
                     evidence_by_number[number] = _evidence(
                         number,
                         _name,
@@ -2336,34 +2854,17 @@ class NorthCarolinaScraper(BaseStateScraper):
                     )
                     done.discard(number)
                     continue
-                if full_corpus_run and not active_section_numbers:
-                    evidence_by_number[number] = _evidence(
-                        number,
-                        _name,
-                        "section_frontier_empty",
-                        resolved=False,
-                        html=html,
-                        authority=authority,
-                        parsed_statutes=len(rows),
-                        parsed_section_numbers=[
-                            str(row.section_number or "").strip() for row in rows
-                        ],
-                        active_section_numbers=active_section_numbers,
-                        inactive_section_numbers=inactive_section_numbers,
-                        **evidence_kwargs,
-                    )
-                    done.discard(number)
-                    continue
                 parsed_section_numbers = [
                     str(row.section_number or "").strip() for row in rows
                 ]
                 expected_section_prefix = f"{number}-".upper()
-                if any(
+                chapter_identity_mismatch = any(
                     not str(row.section_number or "").strip().upper().startswith(
                         expected_section_prefix
                     )
                     for row in rows
-                ):
+                )
+                if chapter_identity_mismatch and not full_corpus_run:
                     evidence_by_number[number] = _evidence(
                         number,
                         _name,
@@ -2379,11 +2880,79 @@ class NorthCarolinaScraper(BaseStateScraper):
                     )
                     done.discard(number)
                     continue
+                reconciled_without_residual = False
                 if full_corpus_run:
-                    active_set = set(active_section_numbers)
-                    parsed_set = set(parsed_section_numbers)
-                    missing_active_sections = active_set - parsed_set
-                    if missing_active_sections:
+                    raw_parsed_section_numbers = list(parsed_section_numbers)
+                    active_by_key = {
+                        section.casefold(): section
+                        for section in active_section_numbers
+                    }
+                    eligible_by_key: Dict[str, List[NormalizedStatute]] = {}
+                    for row in rows:
+                        row_chapter = str(row.chapter_number or "").strip()
+                        row_section = str(row.section_number or "").strip()
+                        row_key = row_section.casefold()
+                        if (
+                            row_chapter != str(number)
+                            or row_key not in active_by_key
+                            or row_section != active_by_key[row_key]
+                            or not row_section.upper().startswith(
+                                expected_section_prefix
+                            )
+                        ):
+                            continue
+                        eligible_by_key.setdefault(row_key, []).append(row)
+                    candidate_rows = {
+                        active_by_key[key]: matching[0]
+                        for key, matching in eligible_by_key.items()
+                        if len(matching) == 1
+                    }
+                    missing_records = [
+                        active_section_records_by_number[section.casefold()]
+                        for section in active_section_numbers
+                        if section not in candidate_rows
+                    ]
+                    noncanonical_residuals = [
+                        record
+                        for record in missing_records
+                        if record["source_url"]
+                        != section_url(number, record["section_number"])
+                    ]
+                    if noncanonical_residuals:
+                        evidence_by_number[number] = _evidence(
+                            number,
+                            _name,
+                            "section_residual_reconciliation_failed",
+                            resolved=False,
+                            html=html,
+                            authority=authority,
+                            parsed_statutes=len(candidate_rows),
+                            active_section_numbers=active_section_numbers,
+                            inactive_section_numbers=inactive_section_numbers,
+                            parsed_section_numbers=list(candidate_rows),
+                            error_type="NoncanonicalResidualSectionUrl",
+                            error_message=(
+                                "official section inventory changed exact BySection "
+                                f"identity: {noncanonical_residuals}"
+                            ),
+                            **evidence_kwargs,
+                        )
+                        residual_failures[number] = (
+                            "official section inventory changed exact BySection identity"
+                        )
+                        done.discard(number)
+                        continue
+                    if missing_records:
+                        reconciliation_rows_by_number[number] = candidate_rows
+                        residual_frontier.extend(
+                            (
+                                number,
+                                record["section_number"],
+                                record["section_name"],
+                                record["source_url"],
+                            )
+                            for record in missing_records
+                        )
                         evidence_by_number[number] = _evidence(
                             number,
                             _name,
@@ -2391,33 +2960,32 @@ class NorthCarolinaScraper(BaseStateScraper):
                             resolved=False,
                             html=html,
                             authority=authority,
-                            parsed_statutes=len(rows),
+                            parsed_statutes=len(candidate_rows),
                             active_section_numbers=active_section_numbers,
                             inactive_section_numbers=inactive_section_numbers,
-                            parsed_section_numbers=parsed_section_numbers,
+                            parsed_section_numbers=list(candidate_rows),
                             **evidence_kwargs,
                         )
                         done.discard(number)
                         continue
-                    if (
-                        parsed_set != active_set
-                        or len(parsed_section_numbers) != len(parsed_set)
-                    ):
-                        evidence_by_number[number] = _evidence(
-                            number,
-                            _name,
-                            "section_frontier_mismatch",
-                            resolved=False,
-                            html=html,
-                            authority=authority,
-                            parsed_statutes=len(rows),
-                            active_section_numbers=active_section_numbers,
-                            inactive_section_numbers=inactive_section_numbers,
-                            parsed_section_numbers=parsed_section_numbers,
-                            **evidence_kwargs,
+                    rows = [
+                        candidate_rows[section] for section in active_section_numbers
+                    ]
+                    parsed_section_numbers = list(active_section_numbers)
+                    reconciled_without_residual = not (
+                        not chapter_identity_mismatch
+                        and len(raw_parsed_section_numbers)
+                        == len(active_section_numbers)
+                        and {
+                            section.casefold()
+                            for section in raw_parsed_section_numbers
+                        }
+                        == set(active_by_key)
+                        and all(
+                            len(matching) == 1
+                            for matching in eligible_by_key.values()
                         )
-                        done.discard(number)
-                        continue
+                    )
                 added = 0
                 admit_rows = authority != "recovery" or not full_corpus_run
                 if admit_rows:
@@ -2432,7 +3000,11 @@ class NorthCarolinaScraper(BaseStateScraper):
                             break
                 resolved = authority == "official" or not full_corpus_run
                 disposition: NorthCarolinaByChapterDisposition = (
-                    "official_parsed"
+                    (
+                        "official_reconciled"
+                        if reconciled_without_residual
+                        else "official_parsed"
+                    )
                     if authority == "official"
                     else (
                         "unverified_cache_provenance"
@@ -2481,6 +3053,344 @@ class NorthCarolinaScraper(BaseStateScraper):
                 force=batch_unresolved,
                 extra=_progress_extra("in_progress", codes_completed=0),
                 replace_existing_rows=full_corpus_run,
+            )
+
+        def _reseal_chapter_evidence(
+            number: str,
+            *,
+            disposition: NorthCarolinaByChapterDisposition,
+            resolved: bool,
+            parsed_rows: Sequence[NormalizedStatute],
+            error_type: str = "",
+            error_message: str = "",
+            terminal_section_dispositions: Sequence[Mapping[str, str]] = (),
+        ) -> None:
+            prior = evidence_by_number[number]
+            active_numbers = list(prior["active_section_numbers"])
+            parsed_by_key = {
+                str(row.section_number or "").strip().casefold(): row
+                for row in parsed_rows
+            }
+            parsed_numbers = [
+                section
+                for section in active_numbers
+                if section.casefold() in parsed_by_key
+            ]
+            item = NorthCarolinaByChapterEvidence(
+                **{
+                    **dict(prior),
+                    "disposition": disposition,
+                    "resolved": bool(resolved),
+                    "parsed_section_numbers": parsed_numbers,
+                    "parsed_statutes": len(parsed_numbers),
+                    "admitted_statutes": len(parsed_numbers) if resolved else 0,
+                    "terminal_section_dispositions": [
+                        {
+                            "section_number": str(
+                                value.get("section_number") or ""
+                            ),
+                            "disposition": str(value.get("disposition") or ""),
+                        }
+                        for value in terminal_section_dispositions
+                    ],
+                    "chapter_rows_sha256": (
+                        self._bychapter_checkpoint_rows_sha256(statutes, number)
+                        if resolved
+                        else ""
+                    ),
+                    "error_type": str(error_type or ""),
+                    "error_message": str(error_message or ""),
+                    "evidence_sha256": "",
+                    "checkpoint_hmac_sha256": "",
+                }
+            )
+            item["evidence_sha256"] = self._bychapter_evidence_sha256(item)
+            if checkpoint_hmac_key is not None:
+                item["checkpoint_hmac_sha256"] = (
+                    self._bychapter_checkpoint_hmac_sha256(
+                        item,
+                        checkpoint_hmac_key,
+                    )
+                )
+            evidence_by_number[number] = item
+
+        if full_corpus_run and residual_frontier:
+            residual_batch_size = self._north_carolina_residual_batch_size()
+            for start in range(0, len(residual_frontier), residual_batch_size):
+                frontier_batch = residual_frontier[
+                    start : start + residual_batch_size
+                ]
+                batch_chapters = list(
+                    dict.fromkeys(
+                        number
+                        for number, _section, _name, _url in frontier_batch
+                    )
+                )
+                urls = [
+                    url
+                    for _number, _section, _name, url in frontier_batch
+                ]
+                try:
+                    residual_batch = (
+                        await self._fetch_north_carolina_section_frontier_batch(
+                            urls,
+                            frontier_name=(
+                                "active-section-residuals-"
+                                f"{start + 1}-{start + len(frontier_batch)}"
+                            ),
+                        )
+                    )
+                except Exception as exc:
+                    for number in batch_chapters:
+                        residual_failures[number] = str(exc)
+                    residual_sections_scanned += len(frontier_batch)
+                    residual_batches_scanned += 1
+                    for number in batch_chapters:
+                        _reseal_chapter_evidence(
+                            number,
+                            disposition="section_residual_reconciliation_failed",
+                            resolved=False,
+                            parsed_rows=list(
+                                reconciliation_rows_by_number.get(number, {}).values()
+                            ),
+                            error_type=type(exc).__name__,
+                            error_message=str(exc),
+                        )
+                    self._write_partial_checkpoint(
+                        statutes,
+                        code_name=code_name,
+                        stage_label=(
+                            "north-carolina:section-residual-reconciliation"
+                        ),
+                        force=True,
+                        extra=_progress_extra("in_progress", codes_completed=0),
+                        replace_existing_rows=True,
+                    )
+                    continue
+
+                residual_sections_scanned += len(frontier_batch)
+                residual_batches_scanned += 1
+                for (
+                    (number, section, section_name, url),
+                    payload,
+                    transport_receipt,
+                    parser_input_envelope,
+                ) in zip(
+                    frontier_batch,
+                    residual_batch.payloads,
+                    residual_batch.transport_receipts,
+                    residual_batch.parser_input_envelopes,
+                    strict=True,
+                ):
+                    if number in residual_failures:
+                        continue
+                    try:
+                        evidence_context = (
+                            self._north_carolina_section_evidence_context(
+                                source_url=url,
+                                payload=payload,
+                                transport_receipt=transport_receipt,
+                                parser_input_envelope=parser_input_envelope,
+                            )
+                        )
+                        parsed = parse_north_carolina_section_html(
+                            payload.decode("utf-8", errors="replace"),
+                            chapter=number,
+                            section=section,
+                            source_url=url,
+                            code_name=code_name,
+                            as_of_date=evidence_context["as_of_date"],
+                            frontier_section_name=section_name,
+                        )
+                    except Exception as exc:
+                        residual_failures[number] = str(exc)
+                        continue
+                    if parsed is None:
+                        terminal_disposition = (
+                            source_bound_terminal_disposition_from_section_html(
+                                payload.decode("utf-8", errors="replace"),
+                                chapter=number,
+                                section=section,
+                                source_url=url,
+                            )
+                        )
+                        if terminal_disposition is not None:
+                            residual_terminal_dispositions_by_number.setdefault(
+                                number,
+                                {},
+                            )[section] = terminal_disposition
+                            continue
+                        residual_failures[number] = (
+                            "retained BySection body failed exact chapter, section, "
+                            f"or statutory identity: {url}"
+                        )
+                        continue
+                    parsed.structured_data = {
+                        **dict(parsed.structured_data or {}),
+                        "source_transport": evidence_context["source_transport"],
+                        "source_observed_date": evidence_context[
+                            "as_of_date"
+                        ].isoformat(),
+                        "archive_timestamp": evidence_context[
+                            "archive_timestamp"
+                        ],
+                        "content_sha256": evidence_context["content_sha256"],
+                        "parser_input_receipt_sha256": evidence_context[
+                            "receipt_sha256"
+                        ],
+                    }
+                    chapter_rows = reconciliation_rows_by_number.setdefault(
+                        number,
+                        {},
+                    )
+                    if section in chapter_rows:
+                        residual_failures[number] = (
+                            "residual frontier repeated an already parsed active "
+                            f"identity: {url}"
+                        )
+                        continue
+                    chapter_rows[section] = parsed
+                    residual_sections_parsed += 1
+
+                for number in batch_chapters:
+                    if number not in residual_failures:
+                        continue
+                    message = residual_failures[number]
+                    _reseal_chapter_evidence(
+                        number,
+                        disposition="section_residual_reconciliation_failed",
+                        resolved=False,
+                        parsed_rows=list(
+                            reconciliation_rows_by_number.get(number, {}).values()
+                        ),
+                        error_type="ResidualSectionIdentityError",
+                        error_message=message,
+                    )
+                self._write_partial_checkpoint(
+                    statutes,
+                    code_name=code_name,
+                    stage_label="north-carolina:section-residual-reconciliation",
+                    force=True,
+                    extra=_progress_extra("in_progress", codes_completed=0),
+                    replace_existing_rows=True,
+                )
+
+            for number, chapter_rows in reconciliation_rows_by_number.items():
+                if number in residual_failures:
+                    done.discard(number)
+                    continue
+                prior = evidence_by_number[number]
+                terminal_dispositions = dict(
+                    residual_terminal_dispositions_by_number.get(number, {})
+                )
+                raw_active_numbers = list(prior["active_section_numbers"])
+                if not set(terminal_dispositions).issubset(
+                    set(raw_active_numbers)
+                ):
+                    message = (
+                        "source-bound terminal residual is outside the active "
+                        f"frontier: chapter={number}"
+                    )
+                    residual_failures[number] = message
+                    _reseal_chapter_evidence(
+                        number,
+                        disposition="section_residual_reconciliation_failed",
+                        resolved=False,
+                        parsed_rows=list(chapter_rows.values()),
+                        error_type="ResidualTerminalIdentityError",
+                        error_message=message,
+                    )
+                    done.discard(number)
+                    continue
+                active_numbers = [
+                    section
+                    for section in raw_active_numbers
+                    if section not in terminal_dispositions
+                ]
+                if (
+                    set(chapter_rows) != set(active_numbers)
+                    or len(chapter_rows) != len(active_numbers)
+                ):
+                    message = (
+                        "residual reconciliation did not produce one row for every "
+                        f"active identity: chapter={number} "
+                        f"expected={len(active_numbers)} actual={len(chapter_rows)}"
+                    )
+                    residual_failures[number] = message
+                    _reseal_chapter_evidence(
+                        number,
+                        disposition="section_residual_reconciliation_failed",
+                        resolved=False,
+                        parsed_rows=list(chapter_rows.values()),
+                        error_type="ResidualSectionUnderfill",
+                        error_message=message,
+                    )
+                    done.discard(number)
+                    continue
+                ordered_rows = [chapter_rows[section] for section in active_numbers]
+                row_keys = [
+                    str(row.section_number or "").strip().casefold()
+                    for row in ordered_rows
+                ]
+                colliding = [key for key in row_keys if not key or key in seen]
+                if colliding or len(set(row_keys)) != len(row_keys):
+                    message = (
+                        "residual reconciliation collided with another retained "
+                        f"identity: chapter={number} identities={colliding}"
+                    )
+                    residual_failures[number] = message
+                    _reseal_chapter_evidence(
+                        number,
+                        disposition="section_residual_reconciliation_failed",
+                        resolved=False,
+                        parsed_rows=ordered_rows,
+                        error_type="ResidualSectionIdentityCollision",
+                        error_message=message,
+                    )
+                    done.discard(number)
+                    continue
+                statutes.extend(ordered_rows)
+                seen.update(row_keys)
+                _reseal_chapter_evidence(
+                    number,
+                    disposition="official_reconciled",
+                    resolved=True,
+                    parsed_rows=ordered_rows,
+                    terminal_section_dispositions=[
+                        {
+                            "section_number": section,
+                            "disposition": terminal_dispositions[section],
+                        }
+                        for section in raw_active_numbers
+                        if section in terminal_dispositions
+                    ],
+                )
+                done.add(number)
+
+            chapter_order = {
+                number: index for index, number in enumerate(frontier_numbers)
+            }
+            section_order = {
+                number: {
+                    section.casefold(): index
+                    for index, section in enumerate(
+                        evidence_by_number.get(number, {}).get(
+                            "active_section_numbers",
+                            [],
+                        )
+                    )
+                }
+                for number in frontier_numbers
+            }
+            statutes.sort(
+                key=lambda row: (
+                    chapter_order.get(str(row.chapter_number or "").strip(), total),
+                    section_order.get(
+                        str(row.chapter_number or "").strip(),
+                        {},
+                    ).get(str(row.section_number or "").strip().casefold(), 10**9),
+                    str(row.section_number or "").casefold(),
+                )
             )
 
         if full_corpus_run:
@@ -2773,7 +3683,7 @@ class NorthCarolinaScraper(BaseStateScraper):
                 code_name=code_name,
                 section_number=section_number,
                 section_name=section_name[:200],
-                full_text=text[:14000],
+                full_text=text,
                 legal_area=self._identify_legal_area(section_name or text[:800]),
                 source_url=source_url,
                 official_cite=f"N.C. Gen. Stat. § {section_number}",
@@ -2846,7 +3756,7 @@ class NorthCarolinaScraper(BaseStateScraper):
                     code_name=code_name,
                     section_number=section_number,
                     section_name=section_name[:200],
-                    full_text=text[:14000],
+                    full_text=text,
                     legal_area=self._identify_legal_area(section_name),
                     source_url=source_url,
                     official_cite=f"N.C. Gen. Stat. § {section_number}",
@@ -2878,21 +3788,38 @@ class NorthCarolinaScraper(BaseStateScraper):
                     return ""
             await anyio_compat.sleep(0.2)
 
-        def _request() -> str:
-            try:
-                req = urllib.request.Request(canonical, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    return resp.read().decode("utf-8", errors="replace")
-            except Exception:
-                return ""
-
         try:
-            return await anyio_compat.wait_for(
-                anyio_compat.to_thread(_request),
-                timeout + 2,
+            if self.is_official_nc_url(canonical):
+                payload = await self._fetch_parser_input_with_transport(
+                    canonical,
+                    headers={"User-Agent": "Mozilla/5.0"},
+                    timeout_seconds=max(1, int(timeout)),
+                    allow_archival_fallback=False,
+                    media_type="text/html",
+                    provider="north_carolina_official_direct",
+                )
+                return payload.decode("utf-8", errors="replace") if payload else ""
+            return await self._request_secondary_source_text_direct(
+                canonical,
+                timeout=timeout,
             )
         except Exception:
             return ""
+
+    async def _request_secondary_source_text_direct(
+        self,
+        url: str,
+        *,
+        timeout: int,
+    ) -> str:
+        """Fetch a declared secondary source without relabeling it official."""
+
+        payload = await self._fetch_non_authoritative_reference_bytes(
+            url,
+            timeout_seconds=timeout,
+            enable_common_crawl=True,
+        )
+        return payload.decode("utf-8", errors="replace") if payload else ""
 
     def official_chapter_url(self, chapter_number: object) -> str:
         number = str(chapter_number or "").strip()

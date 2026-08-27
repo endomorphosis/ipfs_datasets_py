@@ -177,14 +177,14 @@ def test_live_builder_seals_exact_identity_and_frontier(audit) -> None:
         assert record["card_label_is_not_authority"] is True
         in_scope = ContentScope(record["content_scope"]) in ADMISSIBLE_CONTENT_SCOPES
         if in_scope:
-            assert record["rights_disposition"] in {"allowed", "conditional"}
+            assert record["rights_disposition"] == "allowed"
             assert record["record_id"] in payload["admitted_record_ids"]
         else:
             assert record["rights_disposition"] in {"prohibited", "quarantined"}
             assert record["record_id"] not in payload["admitted_record_ids"]
 
 
-def test_live_builder_quarantines_denied_in_scope_robots(audit) -> None:
+def test_live_builder_separates_public_law_rights_from_denied_access(audit) -> None:
     frontier = derive_expected_scope_frontier()
     denied_url = next(
         entry.source_url
@@ -210,7 +210,13 @@ def test_live_builder_quarantines_denied_in_scope_robots(audit) -> None:
     ]
     assert len(denied) == 1
     assert denied[0]["robots_access_disposition"] == "denied"
-    assert denied[0]["rights_disposition"] == "prohibited"
+    assert denied[0]["rights_disposition"] == "allowed"
+    assert denied[0]["legal_basis"] == "government_edicts_doctrine"
+    assert denied[0]["permissions"] == {
+        "redistribution": True,
+        "derivatives": True,
+        "archive": True,
+    }
     assert denied[0]["record_id"] not in payload["admitted_record_ids"]
     assert payload["authorizing_for_publication"] is False
 
@@ -268,6 +274,7 @@ def test_mocked_live_seal_authorizes_through_evaluator(
     catalog_path = tmp_path / "legal_source_rights_catalog.json"
     receipt_path = tmp_path / "legal_source_rights_compliance.json"
     monkeypatch.setattr(policy, "default_live_catalog_path", lambda: catalog_path)
+    monkeypatch.setattr(policy, "default_live_compliance_path", lambda: receipt_path)
     monkeypatch.setattr(audit, "default_live_catalog_path", lambda: catalog_path)
     monkeypatch.setattr(audit, "default_compliance_path", lambda: receipt_path)
     monkeypatch.setattr(audit, "fetch_live_url", _allowing_fetch(audit))
@@ -287,6 +294,17 @@ def test_mocked_live_seal_authorizes_through_evaluator(
     checked = audit.run_live_check()
     assert checked["status"] == "passed"
     assert checked["receipt_digest_sha256"] == receipt["report_digest_sha256"]
+
+    forged = json.loads(json.dumps(receipt))
+    forged["admitted_record_ids"][0] = "ak-invented-statutory_text"
+    forged.pop("report_digest_sha256")
+    forged["report_digest_sha256"] = policy.sha256_json(forged)
+    audit._write_pretty_json(receipt_path, forged)
+    with pytest.raises(
+        policy.LiveEvidenceRequiredError,
+        match="current authoritative evaluation|exact-51",
+    ):
+        policy.require_live_source_rights_receipt(forged)
 
 
 def test_challenge_html_direct_200_uses_archive_fallback(
@@ -409,6 +427,7 @@ def test_live_check_without_receipt_fails_closed(
     catalog_path = tmp_path / "legal_source_rights_catalog.json"
     receipt_path = tmp_path / "missing_receipt.json"
     monkeypatch.setattr(policy, "default_live_catalog_path", lambda: catalog_path)
+    monkeypatch.setattr(policy, "default_live_compliance_path", lambda: receipt_path)
     monkeypatch.setattr(audit, "default_live_catalog_path", lambda: catalog_path)
     monkeypatch.setattr(audit, "default_compliance_path", lambda: receipt_path)
     payload = audit.build_live_catalog_payload(fetch_url=_allowing_fetch(audit))

@@ -4001,8 +4001,6 @@ def publish_canonical_corpus_semantic_index(
     faiss_metadata_repo_path: Optional[str] = None,
     commit_message: Optional[str] = None,
 ) -> CanonicalCorpusIndexPublishResult:
-    from huggingface_hub import HfApi
-
     payload = (
         asdict(index_result)
         if isinstance(index_result, CanonicalCorpusIndexBuildResult)
@@ -4014,6 +4012,16 @@ def publish_canonical_corpus_semantic_index(
     config = _CANONICAL_QUERY_DATASETS[corpus_key]
     dataset_id = str(repo_id or payload.get("dataset_id") or config["dataset_id"])
     state_code = _normalize_state_code(payload.get("state_code"))
+
+    from ipfs_datasets_py.huggingface.protected_repo_guard import (
+        require_unprotected_or_runtime,
+    )
+
+    # This function writes individual mutable artifacts and therefore cannot
+    # satisfy the exact-package publication contract of a protected corpus.
+    require_unprotected_or_runtime(dataset_id, method="upload_file")
+
+    from huggingface_hub import HfApi
 
     api = HfApi(token=hf_token) if hf_token else HfApi()
     effective_commit_message = commit_message or f"Update semantic index artifacts for {corpus_key}"
@@ -4381,6 +4389,16 @@ def build_canonical_corpus_artifacts(
 
     config = _CANONICAL_QUERY_DATASETS[normalized_corpus]
     dataset_id = str(repo_id or config["dataset_id"])
+
+    if publish_to_hf:
+        from ipfs_datasets_py.huggingface.protected_repo_guard import (
+            require_unprotected_or_runtime,
+        )
+
+        # Refuse before artifact work or API construction.  Protected corpora
+        # are published only by the sealed append-only package publisher.
+        require_unprotected_or_runtime(dataset_id, method="upload_file")
+
     normalized_state = _normalize_state_code(state_code)
     join_field = str(config["join_field"])
     title_fields = list(config["title_fields"])

@@ -364,6 +364,43 @@ def test_parses_nested_title_chapter_and_zero_price_section_leaf() -> None:
     assert document_urls_from_nodes(verified_nodes) == [f"{ADVANCE_ORIGIN}{leaf_path}"]
 
 
+def test_parses_expandable_chapter_below_an_official_grouping_layer() -> None:
+    node = _toc_node(
+        "ABKAAFAAB",
+        "CHAPTER 80 General Provisions (§§ 36-80-1 — 36-80-31)",
+        level=3,
+        node_path="/ROOT/ABK/ABKAAF/ABKAAFAAB",
+        can_expand=True,
+        has_children=True,
+    )
+
+    parsed = parse_toc_payload(node)
+
+    assert len(parsed) == 1
+    assert parsed[0].chapter_number == "80"
+    assert parsed[0].link_href == ""
+
+
+def test_redesignated_section_range_is_structural_not_a_duplicate_section() -> None:
+    node = _toc_node(
+        "AAMAAFAAZ",
+        "12-3-710 through 12-3-715. Redesignated.",
+        level=3,
+        node_path="/ROOT/AAM/AAMAAF/AAMAAFAAZ",
+        can_expand=False,
+        has_children=False,
+        link_href=(
+            "/shared/document/statutes-legislation/"
+            "urn:contentItem:6JT3-CVH3-S4WF-31V1-00008-00"
+        ),
+    )
+
+    parsed = parse_toc_payload(node)
+
+    assert len(parsed) == 1
+    assert parsed[0].section_number is None
+
+
 def test_public_document_availability_requires_complete_explicit_zero_pricing() -> None:
     leaf_path = (
         "/shared/document/statutes-legislation/"

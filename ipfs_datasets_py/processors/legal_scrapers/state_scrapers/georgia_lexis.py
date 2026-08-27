@@ -30,10 +30,14 @@ import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass, field, replace
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlencode, urljoin, urlparse
 
-from .base_scraper import NormalizedStatute
+from .base_scraper import (
+    NormalizedStatute,
+    current_state_law_run_environment_value,
+)
 
 ENABLE_ENV = "GEORGIA_LEXIS_PUBLIC_ACCESS_ENABLE"
 HEADLESS_ENV = "GEORGIA_LEXIS_PUBLIC_ACCESS_HEADLESS"
@@ -62,6 +66,7 @@ TOC_SEARCH_FILTER = "MTA5MTIwMw"
 EXPECTED_TITLE_NUMBERS: tuple[str, ...] = tuple(str(number) for number in range(1, 54))
 MAX_LIVE_EXPANSIONS = 24
 MAX_DOCUMENT_LINKS = 100
+MAX_EXHAUSTIVE_TOC_LEVEL = 12
 
 OFFICIAL_DELEGATED_METADATA: dict[str, Any] = {
     "source_kind": "official_delegated_georgia_lexis_public_access",
@@ -171,9 +176,12 @@ class GeorgiaLexisTocNode:
 
     @property
     def section_number(self) -> str | None:
+        title = self.title.strip()
         match = re.match(
-            rf"^(?P<number>{_SECTION_NUMBER})(?:\.|\s|$)", self.title.strip()
+            rf"^(?P<number>{_SECTION_NUMBER})(?:\.|\s|$)", title
         )
+        if match and re.match(r"^\s+through\b", title[match.end("number") :], re.IGNORECASE):
+            return None
         return match.group("number") if match else None
 
     @property
@@ -233,6 +241,8 @@ class GeorgiaLexisDiscoveryResult:
     observed_at: str = ""
     root_rendered_sha256: str = ""
     patch_response_sha256: tuple[tuple[str, str], ...] = ()
+    root_rendered_path: str = ""
+    patch_response_paths: tuple[tuple[str, str], ...] = ()
 
     @property
     def frontier(self) -> dict[str, Any]:
@@ -258,6 +268,8 @@ class GeorgiaLexisDiscoveryResult:
             "observed_at": self.observed_at,
             "root_rendered_sha256": self.root_rendered_sha256,
             "patch_response_sha256": dict(self.patch_response_sha256),
+            "root_rendered_path": self.root_rendered_path,
+            "patch_response_paths": dict(self.patch_response_paths),
             "delegation_verified": self.delegation_verified,
             "nodes": [node.to_dict() for node in self.nodes],
             "expanded_node_ids": list(self.expanded_node_ids),
@@ -378,7 +390,11 @@ class GeorgiaLexisSearchResult:
 
 
 def _env_enabled(name: str, default: bool = False) -> bool:
-    value = os.getenv(name)
+    value = (
+        current_state_law_run_environment_value(name)
+        if name == ENABLE_ENV
+        else os.getenv(name)
+    )
     if value is None:
         return default
     return value.strip().lower() in {"1", "true", "yes", "on"}
@@ -507,6 +523,48 @@ def toc_expand_request(node_id: object) -> tuple[str, dict[str, Any]]:
     )
 
 
+def toc_open_to_request(
+    node_id: object,
+    *,
+    target_level: object,
+) -> tuple[str, dict[str, Any]]:
+    """Return one source-native request for a complete title subtree.
+
+    The public TOC advertises its deepest supported ``open-to`` level in the
+    rendered title menu.  Requesting that exact level lets Lexis return the
+    nested title hierarchy in one response instead of issuing one request for
+    every chapter, article, part, and subpart.
+    """
+
+    normalized = str(node_id or "").strip()
+    if not _NODE_ID_RE.fullmatch(normalized):
+        raise ValueError(f"invalid Lexis TOC node id: {node_id!r}")
+    if isinstance(target_level, bool):
+        raise ValueError("target_level must be an integer")
+    try:
+        level = int(target_level)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("target_level must be an integer") from exc
+    if level < 2 or level > MAX_EXHAUSTIVE_TOC_LEVEL:
+        raise ValueError(
+            "target_level must be between 2 and "
+            f"{MAX_EXHAUSTIVE_TOC_LEVEL}"
+        )
+    return (
+        urljoin(ADVANCE_ORIGIN, TOC_ENDPOINT_PATH),
+        {
+            "id": TOC_ROOT_ID,
+            "props": {
+                "action": "open-to",
+                "items": [
+                    {"fieldName": "nodeId", "value": normalized},
+                    {"fieldName": "targetLevel", "value": level},
+                ],
+            },
+        },
+    )
+
+
 def classify_lexis_page(text_or_html: str, *, final_url: str = "") -> str:
     """Classify the rendered page before any body is trusted."""
 
@@ -586,9 +644,12 @@ def _toc_node_shape_valid(node: GeorgiaLexisTocNode) -> bool:
         return False
     if node.title_number is not None and node.level != 1:
         return False
-    if node.chapter_number is not None and not (
-        node.level == 2 or ((node.level or 0) >= 3 and bool(node.link_href))
-    ):
+    # Some titles insert an official grouping layer above their chapters (for
+    # example, Title 36 groups Chapters 80-92).  Those chapter nodes are
+    # expandable, non-link nodes at level 3; requiring a document link there
+    # silently drops a real branch and makes a deepest-level response appear
+    # incomplete.
+    if node.chapter_number is not None and (node.level or 0) < 2:
         return False
     if node.section_number is not None and (node.level or 0) < 3:
         return False
@@ -867,9 +928,13 @@ def is_lexis_document_url(value: object) -> bool:
 
 
 def document_urls_from_nodes(
-    nodes: Iterable[GeorgiaLexisTocNode], *, limit: int = MAX_DOCUMENT_LINKS
+    nodes: Iterable[GeorgiaLexisTocNode], *, limit: int | None = MAX_DOCUMENT_LINKS
 ) -> list[str]:
-    limit_n = max(1, min(int(limit), MAX_DOCUMENT_LINKS))
+    limit_n = (
+        None
+        if limit is None
+        else max(1, min(int(limit), MAX_DOCUMENT_LINKS))
+    )
     out: list[str] = []
     seen: set[str] = set()
     for node in nodes:
@@ -885,7 +950,7 @@ def document_urls_from_nodes(
             continue
         seen.add(url)
         out.append(url)
-        if len(out) >= limit_n:
+        if limit_n is not None and len(out) >= limit_n:
             break
     return out
 
@@ -1029,7 +1094,7 @@ def georgia_lexis_frontier(
         for node in normalized
         if (node.can_expand or node.has_children) and node.node_id not in expanded
     )
-    document_urls = document_urls_from_nodes(normalized)
+    document_urls = document_urls_from_nodes(normalized, limit=None)
     title_inventory_closed = bool(
         delegation_verified
         and discovered == expected
@@ -1080,16 +1145,75 @@ def parse_georgia_lexis_document_html(
     return None
 
 
+async def _live_toc_patch(
+    page: Any,
+    *,
+    endpoint: str,
+    patch_body: Mapping[str, Any],
+) -> Mapping[str, Any] | None:
+    result = await page.evaluate(
+        """
+        async ({endpoint, patchBody}) => {
+          const headers = {
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          };
+          const requestId = new URL(window.location.href).searchParams.get('crid');
+          if (requestId) headers['X-LN-CurrentRequestId'] = requestId;
+          const response = await fetch(endpoint, {
+            method: 'PATCH',
+            credentials: 'same-origin',
+            headers,
+            body: JSON.stringify(patchBody)
+          });
+          return {
+            status: response.status,
+            contentType: response.headers.get('content-type') || '',
+            text: await response.text()
+          };
+        }
+        """,
+        {"endpoint": endpoint, "patchBody": dict(patch_body)},
+    )
+    return result if isinstance(result, Mapping) else None
+
+
+def _retained_live_evidence_path(
+    evidence_dir: Path | None,
+    *,
+    relative: str,
+    payload: bytes,
+) -> str:
+    if evidence_dir is None:
+        return ""
+    target = (evidence_dir / relative).resolve()
+    target.relative_to(evidence_dir)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.exists():
+        if target.read_bytes() != payload:
+            raise RuntimeError(f"retained Georgia evidence collision: {target}")
+    else:
+        target.write_bytes(payload)
+    return target.relative_to(evidence_dir).as_posix()
+
+
 async def discover_live_georgia_lexis_toc(
     *,
     expand_node_ids: Sequence[str] = (),
     timeout_ms: int = 60000,
+    exhaustive: bool = False,
+    evidence_dir: str | Path | None = None,
 ) -> GeorgiaLexisDiscoveryResult:
-    """Discover a bounded live TOC branch with an ephemeral browser session.
+    """Discover a bounded branch or the exact live title/section TOC.
 
     The function never clicks consent, CAPTCHA, sign-in, or document links.
     Explicit node expansion uses the public container's same-origin TOC
-    service and is capped at :data:`MAX_LIVE_EXPANSIONS`.
+    service and is capped at :data:`MAX_LIVE_EXPANSIONS`.  ``exhaustive`` is
+    a separate fail-closed mode: it reads the deepest source-advertised level
+    for each of the exact 53 title roots and uses one nested ``open-to``
+    response per title.  Exact response bytes can be retained in
+    ``evidence_dir``.
     """
 
     observed_at = datetime.now(UTC).isoformat()
@@ -1104,6 +1228,8 @@ async def discover_live_georgia_lexis_toc(
             observed_at=observed_at,
         )
     requested = [str(value or "").strip() for value in expand_node_ids]
+    if exhaustive and requested:
+        raise ValueError("exhaustive discovery cannot mix explicit node expansions")
     if len(requested) > MAX_LIVE_EXPANSIONS:
         raise ValueError(
             f"Georgia Lexis expansion limit is {MAX_LIVE_EXPANSIONS}, got {len(requested)}"
@@ -1134,6 +1260,15 @@ async def discover_live_georgia_lexis_toc(
     status = "unavailable"
     root_rendered_sha256 = ""
     patch_response_sha256: list[tuple[str, str]] = []
+    patch_response_paths: list[tuple[str, str]] = []
+    root_rendered_path = ""
+    evidence_root = (
+        Path(evidence_dir).expanduser().resolve()
+        if evidence_dir is not None
+        else None
+    )
+    if evidence_root is not None:
+        evidence_root.mkdir(parents=True, exist_ok=True)
     timeout = max(5000, min(int(timeout_ms), 120000))
     user_agent = (
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
@@ -1171,9 +1306,13 @@ async def discover_live_georgia_lexis_toc(
                 final_url = str(page.url or "")
                 body_text = str(await page.locator("body").inner_text() or "")
                 page_html = str(await page.content() or "")
-                root_rendered_sha256 = hashlib.sha256(
-                    page_html.encode("utf-8")
-                ).hexdigest()
+                root_rendered_bytes = page_html.encode("utf-8")
+                root_rendered_sha256 = hashlib.sha256(root_rendered_bytes).hexdigest()
+                root_rendered_path = _retained_live_evidence_path(
+                    evidence_root,
+                    relative=f"root-rendered-{root_rendered_sha256}.html",
+                    payload=root_rendered_bytes,
+                )
                 status = classify_lexis_page(body_text, final_url=final_url)
                 if status == "unexpected":
                     status = classify_lexis_page(page_html, final_url=final_url)
@@ -1211,7 +1350,12 @@ async def discover_live_georgia_lexis_toc(
                       populated: el.getAttribute('data-populated') || '',
                       docfullpath: el.getAttribute('data-docfullpath') || '',
                       subscribed: el.getAttribute('data-subscribed') || '',
-                      expanded: el.getAttribute('aria-expanded') || ''
+                      expanded: el.getAttribute('aria-expanded') || '',
+                      targetlevels: Array.from(
+                        el.querySelectorAll(
+                          ':scope > .js-node-header [data-command="open-to"]'
+                        )
+                      ).map(item => item.getAttribute('data-targetlevel') || '')
                     }))
                     """
                 )
@@ -1246,37 +1390,214 @@ async def discover_live_georgia_lexis_toc(
                 nodes.extend(bound_root_nodes)
                 known_nodes = {node.node_id: node for node in nodes}
 
-                for node_id in requested:
+                if exhaustive:
+                    target_levels_by_id: dict[str, list[int]] = {}
+                    for row in dom_rows:
+                        if not isinstance(row, Mapping):
+                            continue
+                        node_id = str(row.get("nodeid") or "").strip()
+                        raw_levels = row.get("targetlevels")
+                        if not isinstance(raw_levels, Sequence) or isinstance(
+                            raw_levels, (str, bytes, bytearray)
+                        ):
+                            continue
+                        levels: list[int] = []
+                        for raw_level in raw_levels:
+                            try:
+                                level = int(raw_level)
+                            except (TypeError, ValueError):
+                                continue
+                            if 2 <= level <= MAX_EXHAUSTIVE_TOC_LEVEL:
+                                levels.append(level)
+                        target_levels_by_id[node_id] = sorted(set(levels))
+
+                    title_nodes = sorted(
+                        (
+                            node
+                            for node in bound_root_nodes
+                            if node.title_number is not None
+                            and node.level == 1
+                            and node.node_path == f"/ROOT/{node.node_id}"
+                        ),
+                        key=lambda node: int(node.title_number or 0),
+                    )
+                    if [node.title_number for node in title_nodes] != list(
+                        EXPECTED_TITLE_NUMBERS
+                    ):
+                        diagnostics.append(
+                            "exhaustive TOC discovery requires the exact Title 1-53 roots"
+                        )
+                        status = "invalid_toc"
+
+                    for parent in title_nodes if status == "official_toc" else ():
+                        levels = target_levels_by_id.get(parent.node_id, [])
+                        if not levels:
+                            diagnostics.append(
+                                f"title {parent.title_number} did not advertise a deepest TOC level"
+                            )
+                            status = "partial_toc"
+                            break
+                        target_level = max(levels)
+                        endpoint, patch_body = toc_open_to_request(
+                            parent.node_id,
+                            target_level=target_level,
+                        )
+                        result = await _live_toc_patch(
+                            page,
+                            endpoint=endpoint,
+                            patch_body=patch_body,
+                        )
+                        if result is None:
+                            diagnostics.append(
+                                f"TOC open-to {parent.node_id} returned no receipt"
+                            )
+                            status = "partial_toc"
+                            break
+                        if int(result.get("status") or 0) != 200:
+                            diagnostics.append(
+                                f"TOC open-to {parent.node_id} returned HTTP "
+                                f"{result.get('status')}"
+                            )
+                            status = "partial_toc"
+                            break
+                        content_type = str(result.get("contentType") or "").lower()
+                        if "json" not in content_type:
+                            diagnostics.append(
+                                f"TOC open-to {parent.node_id} was not JSON"
+                            )
+                            status = "partial_toc"
+                            break
+                        response_text = str(result.get("text") or "")
+                        response_bytes = response_text.encode("utf-8")
+                        response_sha256 = hashlib.sha256(response_bytes).hexdigest()
+                        retained_path = _retained_live_evidence_path(
+                            evidence_root,
+                            relative=(
+                                "title-open-to/"
+                                f"{parent.node_id}-level-{target_level}-"
+                                f"{response_sha256}.json"
+                            ),
+                            payload=response_bytes,
+                        )
+                        try:
+                            payload = json.loads(response_text)
+                        except (TypeError, ValueError):
+                            diagnostics.append(
+                                f"TOC open-to {parent.node_id} had invalid JSON"
+                            )
+                            status = "partial_toc"
+                            break
+                        parsed_nodes = parse_toc_payload(payload)
+                        prefix = f"{parent.node_path}/"
+                        descendant_nodes = [
+                            node
+                            for node in parsed_nodes
+                            if node.node_path.startswith(prefix)
+                            and (node.level or 0) > (parent.level or 0)
+                        ]
+                        if (
+                            not descendant_nodes
+                            or len(descendant_nodes) != len(parsed_nodes)
+                            or len({node.node_id for node in descendant_nodes})
+                            != len(descendant_nodes)
+                            or len({node.node_path for node in descendant_nodes})
+                            != len(descendant_nodes)
+                            or any(
+                                (node.level or 0) > target_level
+                                for node in descendant_nodes
+                            )
+                        ):
+                            diagnostics.append(
+                                f"TOC open-to {parent.node_id} returned an invalid subtree"
+                            )
+                            status = "partial_toc"
+                            break
+                        bound_descendants = _bind_live_toc_nodes(
+                            descendant_nodes,
+                            source_url=final_url,
+                            observed_at=observed_at,
+                            receipt_sha256=response_sha256,
+                        )
+                        if len(bound_descendants) != len(descendant_nodes):
+                            diagnostics.append(
+                                f"TOC open-to {parent.node_id} failed provenance binding"
+                            )
+                            status = "partial_toc"
+                            break
+
+                        branch_nodes = [parent, *bound_descendants]
+                        branch_paths = {node.node_path for node in branch_nodes}
+                        expandable_nodes = [
+                            node
+                            for node in branch_nodes
+                            if node.can_expand or node.has_children
+                        ]
+                        missing_children = [
+                            node.node_id
+                            for node in expandable_nodes
+                            if not any(
+                                candidate.startswith(f"{node.node_path}/")
+                                and candidate.count("/")
+                                == node.node_path.count("/") + 1
+                                for candidate in branch_paths
+                            )
+                        ]
+                        if missing_children:
+                            diagnostics.append(
+                                f"TOC open-to {parent.node_id} left expandable nodes unresolved: "
+                                + ",".join(missing_children[:10])
+                            )
+                            status = "partial_toc"
+                            break
+
+                        closed_by_id: dict[str, GeorgiaLexisTocNode] = {}
+                        for expandable_node in expandable_nodes:
+                            closed = _mark_live_expansion_closed(expandable_node)
+                            if closed is None:
+                                diagnostics.append(
+                                    f"TOC open-to {parent.node_id} could not close "
+                                    f"{expandable_node.node_id}"
+                                )
+                                status = "partial_toc"
+                                break
+                            closed_by_id[closed.node_id] = closed
+                        if status != "official_toc":
+                            break
+
+                        nodes = [
+                            closed_by_id.get(node.node_id, node)
+                            for node in nodes
+                        ]
+                        bound_descendants = [
+                            closed_by_id.get(node.node_id, node)
+                            for node in bound_descendants
+                        ]
+                        nodes.extend(bound_descendants)
+                        for expandable_node in expandable_nodes:
+                            expanded.append(expandable_node.node_id)
+                            patch_response_sha256.append(
+                                (expandable_node.node_id, response_sha256)
+                            )
+                            if retained_path:
+                                patch_response_paths.append(
+                                    (expandable_node.node_id, retained_path)
+                                )
+                        known_nodes.update(
+                            {node.node_id: node for node in bound_descendants}
+                        )
+                        known_nodes[parent.node_id] = closed_by_id[parent.node_id]
+
+                for node_id in (() if exhaustive else requested):
                     parent = known_nodes.get(node_id)
                     if parent is None:
                         diagnostics.append(f"refused unknown TOC node id {node_id}")
                         status = "partial_toc"
                         break
                     endpoint, patch_body = toc_expand_request(node_id)
-                    result = await page.evaluate(
-                        """
-                        async ({endpoint, patchBody}) => {
-                          const headers = {
-                            'Accept': 'application/json, text/javascript, */*; q=0.01',
-                            'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                          };
-                          const requestId = new URL(window.location.href).searchParams.get('crid');
-                          if (requestId) headers['X-LN-CurrentRequestId'] = requestId;
-                          const response = await fetch(endpoint, {
-                            method: 'PATCH',
-                            credentials: 'same-origin',
-                            headers,
-                            body: JSON.stringify(patchBody)
-                          });
-                          return {
-                            status: response.status,
-                            contentType: response.headers.get('content-type') || '',
-                            text: await response.text()
-                          };
-                        }
-                        """,
-                        {"endpoint": endpoint, "patchBody": patch_body},
+                    result = await _live_toc_patch(
+                        page,
+                        endpoint=endpoint,
+                        patch_body=patch_body,
                     )
                     if not isinstance(result, Mapping):
                         diagnostics.append(
@@ -1300,6 +1621,16 @@ async def discover_live_georgia_lexis_toc(
                         response_text.encode("utf-8")
                     ).hexdigest()
                     patch_response_sha256.append((node_id, response_sha256))
+                    retained_path = _retained_live_evidence_path(
+                        evidence_root,
+                        relative=(
+                            "bounded-expansions/"
+                            f"{node_id}-{response_sha256}.json"
+                        ),
+                        payload=response_text.encode("utf-8"),
+                    )
+                    if retained_path:
+                        patch_response_paths.append((node_id, retained_path))
                     try:
                         payload = json.loads(response_text)
                     except (TypeError, ValueError):
@@ -1357,6 +1688,8 @@ async def discover_live_georgia_lexis_toc(
         observed_at=observed_at,
         root_rendered_sha256=root_rendered_sha256,
         patch_response_sha256=tuple(patch_response_sha256),
+        root_rendered_path=root_rendered_path,
+        patch_response_paths=tuple(patch_response_paths),
     )
 
 

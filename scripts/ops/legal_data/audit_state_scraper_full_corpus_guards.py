@@ -17,7 +17,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-
 STATE_MODULES = {
     "AL": "alabama",
     "AK": "alaska",
@@ -221,6 +220,50 @@ def _line_has_full_corpus_branch(line: str) -> bool:
     )
 
 
+def _is_full_text_target(node: ast.AST) -> bool:
+    if isinstance(node, ast.Name):
+        return node.id == "full_text"
+    if isinstance(node, ast.Attribute):
+        return node.attr == "full_text"
+    if isinstance(node, (ast.List, ast.Tuple)):
+        return any(_is_full_text_target(item) for item in node.elts)
+    return False
+
+
+def _numeric_slice_nodes(node: ast.AST) -> Iterable[ast.Subscript]:
+    """Yield hard numeric slices nested in an expression.
+
+    Source statute bodies must remain lossless. Preview/display fields may still
+    use bounded slices, so this check is deliberately tied to ``full_text``
+    assignments and constructor keywords rather than every slice in a scraper.
+    """
+    for child in ast.walk(node):
+        if not isinstance(child, ast.Subscript) or not isinstance(child.slice, ast.Slice):
+            continue
+        upper = child.slice.upper
+        if isinstance(upper, ast.Constant) and isinstance(upper.value, int):
+            yield child
+
+
+def _statutory_text_truncations(tree: ast.AST) -> Iterable[tuple[ast.AST, ast.AST]]:
+    """Yield ``(owner, slice)`` pairs that truncate a ``full_text`` value."""
+    for node in ast.walk(tree):
+        value: ast.AST | None = None
+        if isinstance(node, ast.Assign) and any(
+            _is_full_text_target(target) for target in node.targets
+        ):
+            value = node.value
+        elif isinstance(node, ast.AnnAssign) and _is_full_text_target(node.target):
+            value = node.value
+        elif isinstance(node, ast.NamedExpr) and _is_full_text_target(node.target):
+            value = node.value
+        elif isinstance(node, ast.keyword) and node.arg == "full_text":
+            value = node.value
+        if value is not None:
+            for sliced in _numeric_slice_nodes(value):
+                yield node, sliced
+
+
 def audit_file(*, state: str, path: Path, repo_root: Path) -> list[Finding]:
     source = path.read_text(encoding="utf-8")
     rel = str(path.relative_to(repo_root))
@@ -240,6 +283,26 @@ def audit_file(*, state: str, path: Path, repo_root: Path) -> list[Finding]:
 
     ParentAnnotator().visit(tree)
     findings: list[Finding] = []
+    seen_truncations: set[tuple[int, int]] = set()
+    for owner, sliced in _statutory_text_truncations(tree):
+        location = (
+            int(getattr(sliced, "lineno", getattr(owner, "lineno", 1)) or 1),
+            int(getattr(sliced, "col_offset", 0) or 0),
+        )
+        if location in seen_truncations:
+            continue
+        seen_truncations.add(location)
+        findings.append(
+            Finding(
+                state=state,
+                path=rel,
+                line=location[0],
+                kind="statutory_text_truncation",
+                severity="error",
+                detail=_expr_text(source, owner).strip(),
+            )
+        )
+
     for ret in _iter_scrape_code_returns(tree):
         if ret.value is None or not _mentions_suspicious_seed(ret.value):
             continue

@@ -63,7 +63,7 @@ def parse_colorado_constitution_text(
                     title_number=art_id,
                     section_number=number,
                     section_name=(raw.split(".", 1)[0] or f"Section {number}")[:200],
-                    full_text=raw[:14000],
+                    full_text=raw,
                     source_url="https://leg.colorado.gov/",
                     official_cite=cite,
                     metadata=StatuteMetadata(),

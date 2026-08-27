@@ -156,6 +156,7 @@ AUTHORIZES_PUBLICATION: Final = False
 AUTHORIZES_HUB_UPLOAD: Final = False
 AUTHORIZES_RELEASE: Final = False
 AUTHORIZES_NETWORK: Final = False
+PROVES_SOFTWARE_CONTRACT_ONLY: Final = True
 
 REPORT_RELATIVE_PATH: Final = (
     "docs/reports/legal_corpora_reindex/substrate_compatibility.json"
@@ -2031,6 +2032,7 @@ __all__ = [
     "FILTER_FIELDS",
     "GOAL_ID",
     "PRODUCER",
+    "PROVES_SOFTWARE_CONTRACT_ONLY",
     "REPORT_RELATIVE_PATH",
     "REQUIRED_CENTROID_ASSIGNMENT",
     "SCHEMA_VERSION",

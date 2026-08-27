@@ -3,14 +3,13 @@
 This module contains the scraper for Alaska statutes from the official state legislative website.
 """
 
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+import hashlib
 import json
 import re
 import ssl
 import urllib.request
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 from urllib.parse import parse_qs, urljoin, urlparse
-
-from ipfs_datasets_py.utils import anyio_compat as asyncio
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -24,6 +23,10 @@ class AlaskaScraper(BaseStateScraper):
     OFFICIAL_ENTRY_PATH = "/basis/statutes.asp"
     OFFICIAL_ENTRY_URL = "https://www.akleg.gov/basis/statutes.asp"
     MISSING_LINK_QUARANTINE_REASON = "missing_official_source_link"
+    _AK_ANCHORED_SECTION_RE = re.compile(
+        r'name\s*=\s*["\'](\d{2}\.\d{2}\.\d{3}[A-Za-z]?)["\']',
+        re.IGNORECASE,
+    )
     _AK_TITLE_QUERY_RE = re.compile(r"[?&#]title=(\d{1,2})\b", re.IGNORECASE)
     _AK_TITLE_HASH_RE = re.compile(r"#(\d{1,2})(?:\.|$)", re.IGNORECASE)
     _AK_TITLE_LABEL_RE = re.compile(r"\bTitle\s+(\d{1,2})\b", re.IGNORECASE)
@@ -89,44 +92,162 @@ class AlaskaScraper(BaseStateScraper):
     
     async def _fetch_statute_chunk(self, sec_start: str, timeout_seconds: int = 8) -> Tuple[str, str]:
         cache_url = f"https://www.akleg.gov/basis/statutes.asp?media=print&type=fetch&secStart={sec_start}"
-        cached = await self._load_page_bytes_from_any_cache(cache_url)
-        if cached:
-            cached_html = cached.decode("cp1252", errors="replace")
-            section_numbers = re.findall(r'name=["\'](\d{2}\.\d{2}\.\d{3})["\']', cached_html)
-            return cached_html, (section_numbers[-1] if section_numbers else "")
         timeout = max(1, int(timeout_seconds or 8))
-
-        def _request() -> Tuple[str, str]:
-            try:
-                import requests
-
-                response = requests.get(
-                    "https://www.akleg.gov/basis/statutes.asp",
-                    params={"media": "print", "type": "fetch", "secStart": sec_start},
+        cursor_title = str(sec_start or "").split(".", 1)[0].lstrip("0") or "0"
+        final_title = max(
+            (str(number) for number, _name in self.OFFICIAL_TITLES),
+            key=int,
+        )
+        final_title_probe = cursor_title == final_title
+        self._last_alaska_terminal_probe = {}
+        payload = await self._fetch_parser_input_with_transport(
+            cache_url,
+            headers={
+                "User-Agent": "ipfs-datasets-alaska-statutes-scraper/2.0",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            timeout_seconds=timeout,
+            # A successful Alaska terminal request is HTTP 200 with an empty
+            # body.  The shared byte adapter quite correctly rejects empty
+            # parser input, but treating that expected sentinel as a transport
+            # failure launches an unnecessary archive/WARC hunt.  First make a
+            # direct-only attempt in the final official title; retained inputs
+            # are still replayed before the direct request.
+            allow_archival_fallback=not final_title_probe,
+            media_type="text/html",
+            provider="requests_direct",
+        )
+        if not payload and final_title_probe:
+            terminal_receipt = await self._fetch_fresh_official_response_receipt(
+                cache_url,
+                headers={
+                    "User-Agent": "ipfs-datasets-alaska-statutes-scraper/2.0",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                timeout_seconds=timeout,
+                admit_success_body=True,
+                media_type="text/html",
+                provider="alaska_basis_terminal_probe",
+            )
+            requested_url = self._canonical_fetch_url(cache_url)
+            final_url = self._canonical_fetch_url(
+                str(terminal_receipt.get("final_url") or "")
+            )
+            status_code = int(terminal_receipt.get("status_code") or 0)
+            terminal_body = bytes(terminal_receipt.get("body") or b"")
+            terminal_digest = hashlib.sha256(terminal_body).hexdigest()
+            if (
+                status_code == 200
+                and final_url == requested_url
+                and str(terminal_receipt.get("content_sha256") or "").strip().lower()
+                == terminal_digest
+            ):
+                payload = terminal_body
+                if not terminal_body:
+                    self._last_alaska_terminal_probe = {
+                        "closed": True,
+                        "content_sha256": terminal_digest,
+                        "empty": True,
+                        "final_url": final_url,
+                        "observed_at": str(
+                            terminal_receipt.get("observed_at") or ""
+                        ),
+                        "requested_url": requested_url,
+                        "sec_start": str(sec_start or "").strip(),
+                        "status_code": status_code,
+                    }
+            else:
+                # A timeout, non-200 response, or redirect is not frontier
+                # closure.  Preserve the standard direct/archive fallback for
+                # a real transport failure.
+                payload = await self._fetch_parser_input_with_transport(
+                    cache_url,
                     headers={
                         "User-Agent": "ipfs-datasets-alaska-statutes-scraper/2.0",
                         "X-Requested-With": "XMLHttpRequest",
                     },
-                    timeout=timeout,
+                    timeout_seconds=timeout,
+                    allow_archival_fallback=True,
+                    media_type="text/html",
+                    provider="requests_direct",
                 )
-                if int(response.status_code or 0) != 200:
-                    return "", ""
-                return bytes(response.content or b"").decode("cp1252", errors="replace"), str(response.headers.get("LastSec") or "")
-            except Exception:
-                return "", ""
-
-        try:
-            html, last_sec = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 1)
-        except asyncio.TimeoutError:
-            html, last_sec = "", ""
-        self._record_fetch_event(provider="requests_direct", success=bool(html))
-        if html:
-            await self._cache_successful_page_fetch(
-                url=cache_url,
-                payload=html.encode("cp1252", errors="replace"),
-                provider="requests_direct",
-            )
+        html = payload.decode("cp1252", errors="replace") if payload else ""
+        # The shared adapter deliberately exposes exact response bytes rather
+        # than unretained response headers.  The Alaska body carries the same
+        # continuation cursor as its final anchored section, which is also how
+        # cached and archived responses have historically been resumed.
+        section_numbers = self._AK_ANCHORED_SECTION_RE.findall(html)
+        last_sec = section_numbers[-1] if section_numbers else ""
         return html, last_sec
+
+    def _bind_statute_chunk_provenance(
+        self,
+        statutes: List[NormalizedStatute],
+    ) -> List[NormalizedStatute]:
+        """Bind every AJAX-derived row to its exact retained response bytes."""
+
+        if not statutes:
+            return statutes
+        provenance = self._last_parser_input_row_provenance()
+        if self._state_law_acquisition_ledger is not None and not provenance:
+            raise RuntimeError(
+                "Alaska AJAX rows lack exact retained parser-input provenance"
+            )
+        if not provenance:
+            return statutes
+        for statute in statutes:
+            structured = dict(statute.structured_data or {})
+            structured.update(provenance)
+            statute.structured_data = structured
+        return statutes
+
+    def _enrich_statute_structure(
+        self,
+        statute: NormalizedStatute,
+    ) -> NormalizedStatute:
+        """Carry exact AJAX response provenance into canonical JSON-LD."""
+
+        enriched = super()._enrich_statute_structure(statute)
+        structured = dict(enriched.structured_data or {})
+        if str(structured.get("source_kind") or "").strip() != (
+            "official_alaska_statutes_ajax_html"
+        ):
+            return enriched
+
+        digest = str(structured.get("content_sha256") or "").strip().lower()
+        receipt = structured.get("transport_receipt")
+        jsonld = structured.get("jsonld")
+        receipt_digest = (
+            str(receipt.get("content_sha256") or "").strip().lower()
+            if isinstance(receipt, Mapping)
+            else ""
+        )
+        provenance_complete = bool(
+            re.fullmatch(r"[a-f0-9]{64}", digest)
+            and receipt_digest == digest
+            and isinstance(receipt, Mapping)
+            and isinstance(jsonld, Mapping)
+        )
+        if not provenance_complete:
+            if self._state_law_acquisition_ledger is not None:
+                raise RuntimeError(
+                    "Alaska AJAX row lacks canonical retained parser-input provenance"
+                )
+            return enriched
+
+        jsonld_payload = dict(jsonld)
+        prior = jsonld_payload.get("provenance")
+        provenance = dict(prior) if isinstance(prior, Mapping) else {}
+        provenance.update(
+            {
+                "content_sha256": digest,
+                "transport_receipt": dict(receipt),
+            }
+        )
+        jsonld_payload["provenance"] = provenance
+        structured["jsonld"] = jsonld_payload
+        enriched.structured_data = structured
+        return enriched
 
     def _parse_statute_chunk(self, *, code_name: str, html: str) -> List[NormalizedStatute]:
         try:
@@ -189,11 +310,16 @@ class AlaskaScraper(BaseStateScraper):
         return statutes
 
     def _next_sec_start(self, last_sec: str) -> Optional[str]:
-        match = re.match(r"^(\d+)\.(\d+)\.(\d+)$", str(last_sec or "").strip())
+        match = re.match(
+            r"^(\d+)\.(\d+)\.(\d+)(?:[A-Za-z])?$",
+            str(last_sec or "").strip(),
+        )
         if not match:
             return None
-        title, chapter, _section = (int(part) for part in match.groups())
-        return f"{title}.{chapter + 1:02d}"
+        # BASIS treats secStart as an exclusive cursor.  Passing LastSec returns
+        # the next section.  Incrementing its chapter (the prior behavior)
+        # silently skipped the remainder of every boundary chapter.
+        return str(last_sec or "").strip()
 
     async def scrape_code(
         self,
@@ -225,7 +351,10 @@ class AlaskaScraper(BaseStateScraper):
                     max_statutes=limit,
                 )
                 return constitution_rows if limit is None else constitution_rows[: int(limit)]
-        from .alaska_section import configured_section_html_path, parse_alaska_statute_html
+        from .alaska_section import (
+            configured_section_html_path,
+            parse_alaska_statute_html,
+        )
 
         local_section = configured_section_html_path()
         if local_section is not None:
@@ -235,30 +364,126 @@ class AlaskaScraper(BaseStateScraper):
                 max_statutes=limit,
             )
             if local_rows:
+                if limit is None:
+                    expected = {str(number) for number, _name in self.OFFICIAL_TITLES}
+                    observed = {
+                        str(int(str(row.title_number or "0"))) for row in local_rows
+                    }
+                    missing = sorted(expected - observed, key=int)
+                    if missing:
+                        raise RuntimeError(
+                            "Configured Alaska section HTML is not a full official corpus: "
+                            f"missing_titles={missing} rows={len(local_rows)}"
+                        )
                 return local_rows if limit is None else local_rows[: int(limit)]
         statutes: List[NormalizedStatute] = []
         seen_sections: set[str] = set()
         sec_start: Optional[str] = "1"
+        seen_cursors: set[str] = set()
+        observed_titles: set[str] = set()
+        expected_titles = {str(number) for number, _name in self.OFFICIAL_TITLES}
+        final_title = max(expected_titles, key=int)
+        last_nonempty_cursor = ""
+        frontier_closed = False
+        page_count = 0
 
-        for _ in range(80):
+        while True:
             if not sec_start or (limit is not None and len(statutes) >= limit):
                 break
+            if sec_start in seen_cursors:
+                message = f"Alaska BASIS traversal cursor cycle at {sec_start}"
+                if limit is None:
+                    raise RuntimeError(message)
+                self.logger.warning(message)
+                break
+            if page_count >= 4096:
+                message = "Alaska BASIS traversal exceeded the 4096-page safety frontier"
+                if limit is None:
+                    raise RuntimeError(message)
+                self.logger.warning(message)
+                break
+            seen_cursors.add(sec_start)
+            page_count += 1
             html, last_sec = await self._fetch_statute_chunk(sec_start)
             if not html:
+                last_title = str(last_nonempty_cursor).split(".", 1)[0].lstrip("0") or "0"
+                terminal_probe = dict(
+                    getattr(self, "_last_alaska_terminal_probe", {}) or {}
+                )
+                terminal_url = (
+                    "https://www.akleg.gov/basis/statutes.asp"
+                    f"?media=print&type=fetch&secStart={sec_start}"
+                )
+                exact_terminal_empty = bool(
+                    terminal_probe.get("closed") is True
+                    and terminal_probe.get("empty") is True
+                    and int(terminal_probe.get("status_code") or 0) == 200
+                    and str(terminal_probe.get("content_sha256") or "")
+                    == hashlib.sha256(b"").hexdigest()
+                    and str(terminal_probe.get("sec_start") or "").strip()
+                    == str(sec_start or "").strip()
+                    and self._canonical_fetch_url(
+                        str(terminal_probe.get("requested_url") or "")
+                    )
+                    == self._canonical_fetch_url(terminal_url)
+                    and self._canonical_fetch_url(
+                        str(terminal_probe.get("final_url") or "")
+                    )
+                    == self._canonical_fetch_url(terminal_url)
+                )
+                if last_title == final_title and (
+                    exact_terminal_empty
+                    # Preserve bounded/local fixture compatibility.  A strict
+                    # publication crawl always has the ledger attached and
+                    # therefore always requires the exact terminal receipt.
+                    or self._state_law_acquisition_ledger is None
+                ):
+                    frontier_closed = True
+                elif limit is None:
+                    raise RuntimeError(
+                        "Alaska BASIS traversal ended without an exact terminal "
+                        "HTTP 200 empty response: "
+                        f"last_cursor={last_nonempty_cursor or 'missing'} "
+                        f"terminal_probe={terminal_probe or 'missing'}"
+                    )
                 break
-            for statute in self._parse_statute_chunk(code_name=code_name, html=html):
+            chunk_statutes = self._bind_statute_chunk_provenance(
+                self._parse_statute_chunk(code_name=code_name, html=html)
+            )
+            for statute in chunk_statutes:
                 key = str(statute.section_number or "")
                 if key in seen_sections:
                     continue
                 seen_sections.add(key)
+                title = str(statute.title_number or "").lstrip("0") or "0"
+                observed_titles.add(title)
                 statutes.append(statute)
                 if limit is not None and len(statutes) >= limit:
                     break
             next_start = self._next_sec_start(last_sec)
-            if not next_start or next_start == sec_start:
+            if not next_start:
+                if limit is None:
+                    raise RuntimeError(
+                        f"Alaska BASIS response at {sec_start} omitted a usable LastSec cursor"
+                    )
                 break
+            if next_start == sec_start:
+                message = f"Alaska BASIS LastSec did not advance from {sec_start}"
+                if limit is None:
+                    raise RuntimeError(message)
+                self.logger.warning(message)
+                break
+            last_nonempty_cursor = next_start
             sec_start = next_start
 
+        if limit is None:
+            missing_titles = sorted(expected_titles - observed_titles, key=int)
+            if not frontier_closed or missing_titles:
+                raise RuntimeError(
+                    "Alaska full-corpus traversal did not close the official frontier: "
+                    f"frontier_closed={frontier_closed} missing_titles={missing_titles} "
+                    f"rows={len(statutes)}"
+                )
         return statutes[:limit] if limit is not None else statutes
 
     def official_title_url(self, title_number: object) -> str:

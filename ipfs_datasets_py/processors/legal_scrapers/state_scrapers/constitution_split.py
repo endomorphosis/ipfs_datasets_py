@@ -74,7 +74,7 @@ def parse_article_section_html(
                     title_number=str(art_id),
                     section_number=number,
                     section_name=(raw.split(".", 1)[0] or f"Section {number}")[:200],
-                    full_text=raw[:14000],
+                    full_text=raw,
                     source_url=source_url,
                     official_cite=cite,
                     metadata=StatuteMetadata(),

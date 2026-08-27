@@ -161,7 +161,7 @@ def parse_pennsylvania_title_text(
                 title_number=str(title_number),
                 section_number=num,
                 section_name=(heading or f"Section {num}")[:200],
-                full_text=text[:14000],
+                full_text=text,
                 source_url=title_html_url(title_number),
                 official_cite=f"{title_number} Pa.C.S. § {num}",
                 metadata=StatuteMetadata(),

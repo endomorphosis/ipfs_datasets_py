@@ -95,7 +95,7 @@ def parse_massachusetts_constitution_html(
                 title_number=art_id,
                 section_number=number,
                 section_name=(raw.split(".", 1)[0] or cite)[:200],
-                full_text=raw[:14000],
+                full_text=raw,
                 source_url=MA_CONST_URL,
                 official_cite=cite,
                 metadata=StatuteMetadata(),

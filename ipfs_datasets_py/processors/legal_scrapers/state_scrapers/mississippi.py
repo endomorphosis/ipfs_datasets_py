@@ -4,6 +4,7 @@ This module contains the scraper for Mississippi statutes from the official stat
 """
 
 import asyncio
+import hashlib
 import inspect
 import json
 import os
@@ -14,14 +15,30 @@ from dataclasses import fields as dataclass_fields
 from datetime import datetime
 from html import unescape
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-from urllib.parse import urlencode, urljoin
+from typing import Any, Dict, List, Mapping, Optional, Sequence
+from urllib.parse import urlencode, urljoin, urlparse
 import urllib.request
 
 from bs4 import BeautifulSoup
 
-from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
+from ipfs_datasets_py.utils import anyio_compat
+
+from .base_scraper import (
+    BaseStateScraper,
+    NormalizedStatute,
+    StatuteMetadata,
+    current_partial_checkpoint_run_directory,
+)
 from .registry import StateScraperRegistry
+
+
+class MississippiDelegatedCorpusBlockedError(RuntimeError):
+    """The official delegated catalog lacks retained, reconciled body bytes."""
+
+    def __init__(self, reason: str, *, evidence: Mapping[str, Any]) -> None:
+        self.reason = str(reason)
+        self.evidence = dict(evidence)
+        super().__init__(f"Mississippi delegated corpus is blocked: {self.reason}")
 
 
 class MississippiScraper(BaseStateScraper):
@@ -93,10 +110,22 @@ class MississippiScraper(BaseStateScraper):
     OFFICIAL_ENTRY_PATH = "/legislation/"
     OFFICIAL_ENTRY_URL = "https://www.legislature.ms.gov/legislation/"
     OFFICIAL_CODE_INDEX_URL = "https://www.legislature.ms.gov/legislation/ms-code/"
+    OFFICIAL_HELP_URL = "https://www.legislature.ms.gov/help/"
+    OFFICIAL_DELEGATED_ENTRY_URL = (
+        "http://www.lexisnexis.com/hottopics/mscode/"
+    )
+    OFFICIAL_DELEGATED_CONTAINER_URL = (
+        "https://advance.lexis.com/container?config="
+        "00JAAzNzhjOTYxNC0wZjRkLTQzNzAtYjJlYS1jNjExZWYxZGFhMGYK"
+        "AFBvZENhdGFsb2cMlW40w5iIH7toHnTBIEP0"
+    )
+    # This 2024 bill-status path is retained only for backward-compatible
+    # parser fixtures.  It returned HTTP 404 on 2026-08-26 and cannot prove a
+    # current Mississippi Code frontier.
     OFFICIAL_BILLSTATUS_CODE_ROOT = (
         "https://billstatus.ls.state.ms.us/documents/2024/html/code_sections/"
     )
-    OFFICIAL_TITLE_COUNT = 99
+    OFFICIAL_TITLE_COUNT = 50
     OFFICIAL_TITLE_NAMES = {
         1: "Laws and Statutes",
         3: "State Sovereignty, Jurisdiction and Holidays",
@@ -149,6 +178,556 @@ class MississippiScraper(BaseStateScraper):
         97: "Crimes",
         99: "Criminal Procedure",
     }
+    last_mississippi_full_corpus_report: Dict[str, Any] = {}
+
+    def state_law_frontier_source_dependencies(self) -> Sequence[Any]:
+        """Bind both the delegated inventory and exact body parser."""
+
+        from . import mississippi_lexis, mississippi_section
+
+        return (mississippi_lexis, mississippi_section)
+
+    async def scrape_all(
+        self,
+        legal_areas: Optional[List[str]] = None,
+        max_statutes: Optional[int] = None,
+        rate_limit_delay: float = 2.0,
+        hydrate_statute_text: bool = True,
+    ) -> List[NormalizedStatute]:
+        full_mode = self._full_corpus_enabled()
+        if full_mode and (max_statutes is not None or legal_areas):
+            raise RuntimeError(
+                "Mississippi strict full-corpus route refuses caps or legal-area filters"
+            )
+        self.last_mississippi_full_corpus_report = {}
+        rows = await super().scrape_all(
+            legal_areas=legal_areas,
+            max_statutes=max_statutes,
+            rate_limit_delay=rate_limit_delay,
+            hydrate_statute_text=hydrate_statute_text,
+        )
+        if full_mode and not self.last_mississippi_full_corpus_report.get("closed"):
+            raise RuntimeError(
+                "Mississippi strict full-corpus route did not emit a closed report"
+            )
+        return rows
+
+    def _mississippi_frontier_concurrency(self) -> int:
+        return max(
+            1,
+            min(
+                64,
+                self._env_int("STATE_SCRAPER_MS_FRONTIER_CONCURRENCY", default=16),
+            ),
+        )
+
+    def _mississippi_residual_retry_attempts(self) -> int:
+        return max(
+            0,
+            min(
+                3,
+                self._env_int(
+                    "STATE_SCRAPER_MS_RESIDUAL_RETRY_ATTEMPTS",
+                    default=self._env_int(
+                        "STATE_SCRAPER_FRONTIER_RESIDUAL_RETRY_ATTEMPTS",
+                        default=1,
+                    ),
+                ),
+            ),
+        )
+
+    @staticmethod
+    def _is_valid_mississippi_code_html(payload: bytes) -> bool:
+        lowered = bytes(payload or b"").lower()
+        return bool(
+            lowered
+            and b"<html" in lowered
+            and b"access denied" not in lowered[:12000]
+            and b"cloudflare" not in lowered[:12000]
+        )
+
+    @staticmethod
+    def _decode_mississippi_code_html(payload: bytes) -> str:
+        for encoding in ("utf-8-sig", "windows-1252"):
+            try:
+                return bytes(payload).decode(encoding, errors="strict")
+            except UnicodeDecodeError:
+                continue
+        raise RuntimeError("Mississippi official HTML has no supported exact encoding")
+
+    def _mississippi_evidence_context(
+        self,
+        *,
+        source_url: str,
+        payload: bytes,
+        transport_receipt: Any,
+        parser_input_envelope: Any,
+    ) -> Dict[str, Any]:
+        from ipfs_datasets_py.processors.legal_data.state_laws_source_provenance import (
+            canonicalize_state_law_transport_receipt,
+        )
+
+        digest = hashlib.sha256(bytes(payload)).hexdigest()
+        if not isinstance(transport_receipt, Mapping):
+            raise RuntimeError(
+                f"Mississippi acquisition omitted transport receipt: {source_url}"
+            )
+        receipt = canonicalize_state_law_transport_receipt(
+            transport_receipt,
+            official_url=source_url,
+            content_sha256=digest,
+        )
+        envelope = parser_input_envelope
+        if getattr(envelope, "body", None) is not None and bytes(envelope.body) != bytes(
+            payload
+        ):
+            raise RuntimeError(
+                f"Mississippi parser envelope changed exact bytes: {source_url}"
+            )
+        if not isinstance(envelope, Mapping):
+            to_dict = getattr(envelope, "to_dict", None)
+            if callable(to_dict):
+                envelope = to_dict()
+        if isinstance(envelope, Mapping) and isinstance(
+            envelope.get("parser_input_envelope"), Mapping
+        ):
+            envelope = envelope["parser_input_envelope"]
+        parser_receipt_sha256 = ""
+        if isinstance(envelope, Mapping):
+            acquisition = envelope.get("acquisition")
+            acquisition_receipt = (
+                acquisition.get("receipt")
+                if isinstance(acquisition, Mapping)
+                else None
+            )
+            content = (
+                acquisition_receipt.get("content")
+                if isinstance(acquisition_receipt, Mapping)
+                else None
+            )
+            if (
+                not isinstance(acquisition, Mapping)
+                or str(acquisition.get("body_sha256") or "").lower() != digest
+                or not isinstance(acquisition_receipt, Mapping)
+                or str(acquisition_receipt.get("endpoint") or "").rstrip("/")
+                != source_url.rstrip("/")
+                or not isinstance(content, Mapping)
+                or str(content.get("sha256") or "").lower() != digest
+            ):
+                raise RuntimeError(
+                    f"Mississippi parser envelope does not replay exact bytes: {source_url}"
+                )
+            parser_receipt_sha256 = str(
+                acquisition_receipt.get("receipt_sha256") or ""
+            ).strip()
+        elif self._state_law_acquisition_ledger is not None:
+            raise RuntimeError(
+                f"Mississippi strict evidence omitted parser envelope: {source_url}"
+            )
+        return {
+            "content_sha256": digest,
+            "parser_input_receipt_sha256": parser_receipt_sha256,
+            "source_transport": str(receipt.get("source_transport") or ""),
+            "transport_receipt": receipt,
+        }
+
+    async def _fetch_mississippi_frontier_batch(
+        self,
+        urls: Sequence[str],
+        *,
+        frontier_name: str,
+    ):
+        requested = list(urls)
+        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+            requested,
+            residual_retry_attempts=self._mississippi_residual_retry_attempts(),
+            timeout_seconds=45,
+            headers={
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5",
+                "User-Agent": "ipfs-datasets-mississippi-code/2.0",
+            },
+            content_validator=self._is_valid_mississippi_code_html,
+            media_type="text/html",
+            max_concurrency=self._mississippi_frontier_concurrency(),
+            prefer_direct=True,
+            common_crawl_domain_terms=("billstatus.ls.state.ms.us",),
+            common_crawl_url_terms=("/code_sections/",),
+            common_crawl_mime_terms=("html",),
+            wayback_prefix_inventory=True,
+        )
+        vectors = (
+            batch.urls,
+            batch.payloads,
+            batch.errors,
+            batch.transport_receipts,
+            batch.parser_input_envelopes,
+        )
+        if any(len(vector) != len(requested) for vector in vectors):
+            raise RuntimeError(
+                f"Mississippi {frontier_name} returned unaligned acquisition rows"
+            )
+        if list(batch.urls) != requested:
+            raise RuntimeError(
+                f"Mississippi {frontier_name} changed URL order or identity"
+            )
+        failures = [
+            {"url": url, "error": error or "invalid HTML parser input"}
+            for url, payload, error in zip(
+                batch.urls,
+                batch.payloads,
+                batch.errors,
+                strict=True,
+            )
+            if error is not None or not self._is_valid_mississippi_code_html(payload)
+        ]
+        if failures:
+            raise RuntimeError(
+                f"Mississippi {frontier_name} is incomplete after residual-only "
+                f"retries: {failures}"
+            )
+        batch.payloads = [bytes(payload) for payload in batch.payloads]
+        return batch
+
+    def _strict_mississippi_title_links(self, payload: bytes) -> Dict[str, str]:
+        soup = BeautifulSoup(payload, "html.parser")
+        found: Dict[str, str] = {}
+        for anchor in soup.find_all("a", href=True):
+            absolute = urljoin(
+                self.OFFICIAL_BILLSTATUS_CODE_ROOT,
+                str(anchor.get("href") or "").strip(),
+            )
+            match = self._MS_CODE_SECTION_TITLE_RE.search(absolute)
+            if match is None:
+                continue
+            number = str(int(match.group("title")))
+            expected_url = self.official_title_url(number)
+            if number in found and found[number] != expected_url:
+                raise RuntimeError(
+                    f"Mississippi catalog exposed conflicting title {number} URLs"
+                )
+            found[number] = expected_url
+        return found
+
+    def _strict_mississippi_section_links(
+        self,
+        html: str,
+        *,
+        title_url: str,
+    ) -> List[tuple[str, str]]:
+        from .mississippi_section import section_number_from_url
+
+        soup = BeautifulSoup(html, "html.parser")
+        found_urls: set[str] = set()
+        found_identities: Dict[str, str] = {}
+        rows: List[tuple[str, str]] = []
+        for anchor in soup.find_all("a", href=True):
+            absolute = urljoin(
+                title_url.rstrip("/") + "/",
+                str(anchor.get("href") or "").strip(),
+            )
+            section_number = section_number_from_url(absolute)
+            if not section_number or absolute in found_urls:
+                continue
+            prior_url = found_identities.get(section_number)
+            if prior_url is not None and prior_url != absolute:
+                raise RuntimeError(
+                    "Mississippi title exposed multiple unclassified leaves for "
+                    f"section {section_number}: {prior_url}, {absolute}"
+                )
+            found_urls.add(absolute)
+            found_identities[section_number] = absolute
+            rows.append((section_number, absolute))
+        return rows
+
+    @staticmethod
+    def _source_bound_empty_mississippi_title_disposition(
+        html: str,
+        *,
+        title_number: str,
+    ) -> str:
+        text = re.sub(r"\s+", " ", BeautifulSoup(html, "html.parser").get_text(" "))
+        marker = re.search(
+            rf"\bTITLE\s+0*{re.escape(str(int(title_number)))}\b(?P<tail>.{{0,240}})",
+            text,
+            re.IGNORECASE,
+        )
+        if marker is None:
+            return ""
+        tail = str(marker.group("tail") or "")
+        if re.search(r"\bREPEALED\b", tail, re.IGNORECASE):
+            return "repealed_title"
+        if re.search(r"\bRESERVED\b", tail, re.IGNORECASE):
+            return "reserved_title"
+        return ""
+
+    async def _probe_delegated_mississippi_code(
+        self,
+        *,
+        code_name: str,
+    ) -> Dict[str, Any]:
+        """Inventory the designated current TOC without fetching code bodies."""
+
+        from .mississippi_lexis import discover_live_inventory
+
+        raw_evidence_dir = self.state_law_run_environment_value(
+            "STATE_SCRAPER_MS_LEXIS_EVIDENCE_DIR"
+        )
+        inventory = await discover_live_inventory(
+            retries=max(
+                1,
+                min(
+                    5,
+                    self._env_int("MISSISSIPPI_LEXIS_PROBE_RETRIES", default=2),
+                ),
+            ),
+            request_delay_seconds=0.05,
+            timeout_ms=max(
+                15_000,
+                self._env_int(
+                    "MISSISSIPPI_LEXIS_PROBE_TIMEOUT_MS", default=60_000
+                ),
+            ),
+            require_enabled=False,
+            evidence_dir=raw_evidence_dir or None,
+        )
+        frontier = dict(inventory.frontier)
+        evidence: Dict[str, Any] = {
+            "schema_version": "mississippi-delegated-catalog-probe/v1",
+            "status": inventory.status,
+            "observed_at": inventory.observed_at,
+            "final_url": inventory.final_url,
+            "delegation_verified": inventory.delegation_verified,
+            "root_rendered_sha256": inventory.root_rendered_sha256,
+            "subtree_response_sha256": [
+                list(item) for item in inventory.subtree_response_sha256
+            ],
+            "frontier": frontier,
+            "diagnostics": list(inventory.diagnostics),
+            "body_acquisition_contract": {
+                "source_domain": "advance.lexis.com",
+                "common_crawl_inventory_query_upper_bound": 1,
+                "wayback_prefix_inventory": True,
+                "group_warc_ranges_by_warc_filename": True,
+                "per_page_archive_inventory_loop": False,
+                "retry_residual_urls_only": True,
+            },
+            "secondary_recovery_admitted": False,
+            "full_corpus_admissible": False,
+        }
+        evidence["disposition"] = (
+            "delegated_toc_closed_body_frontier_unacquired"
+            if frontier.get("toc_frontier_closed") is True
+            else "delegated_locator_frontier_unavailable"
+        )
+        return evidence
+
+    async def _scrape_strict_official_code_tree(
+        self,
+        *,
+        code_name: str,
+    ) -> List[NormalizedStatute]:
+        from .mississippi_section import parse_mississippi_section_html_strict
+
+        expected_titles = [str(number) for number in sorted(self.OFFICIAL_TITLE_NAMES)]
+        title_urls = [self.official_title_url(number) for number in expected_titles]
+        catalog_urls = [self.OFFICIAL_BILLSTATUS_CODE_ROOT, *title_urls]
+        catalog_batch = await self._fetch_mississippi_frontier_batch(
+            catalog_urls,
+            frontier_name="catalog-and-title",
+        )
+        discovered_titles = self._strict_mississippi_title_links(
+            catalog_batch.payloads[0]
+        )
+        if list(discovered_titles) != expected_titles or list(
+            discovered_titles.values()
+        ) != title_urls:
+            raise RuntimeError(
+                "Mississippi official root did not prove the exact ordered "
+                "50-title catalog"
+            )
+
+        catalog_evidence: List[Dict[str, Any]] = []
+        section_frontier: List[tuple[str, str, str]] = []
+        terminal_titles: List[Dict[str, str]] = []
+        for index, (url, payload, receipt, envelope) in enumerate(
+            zip(
+                catalog_batch.urls,
+                catalog_batch.payloads,
+                catalog_batch.transport_receipts,
+                catalog_batch.parser_input_envelopes,
+                strict=True,
+            )
+        ):
+            evidence = self._mississippi_evidence_context(
+                source_url=url,
+                payload=payload,
+                transport_receipt=receipt,
+                parser_input_envelope=envelope,
+            )
+            catalog_evidence.append(
+                {
+                    "content_sha256": evidence["content_sha256"],
+                    "parser_input_receipt_sha256": evidence[
+                        "parser_input_receipt_sha256"
+                    ],
+                    "url": url,
+                }
+            )
+            if index == 0:
+                continue
+            title_number = expected_titles[index - 1]
+            html = self._decode_mississippi_code_html(payload)
+            links = self._strict_mississippi_section_links(html, title_url=url)
+            if not links:
+                disposition = self._source_bound_empty_mississippi_title_disposition(
+                    html,
+                    title_number=title_number,
+                )
+                if not disposition:
+                    raise RuntimeError(
+                        "Mississippi title exposed neither sections nor a source-bound "
+                        f"terminal: title={title_number}"
+                    )
+                terminal_titles.append(
+                    {"disposition": disposition, "title_number": title_number, "url": url}
+                )
+                continue
+            for section_number, section_url in links:
+                if not section_number.startswith(f"{title_number}-"):
+                    raise RuntimeError(
+                        "Mississippi title index linked a foreign section identity: "
+                        f"title={title_number} section={section_number}"
+                    )
+                section_frontier.append(
+                    (title_number, section_number, section_url)
+                )
+
+        section_ids = [section for _title, section, _url in section_frontier]
+        section_urls = [url for _title, _section, url in section_frontier]
+        if (
+            not section_urls
+            or len(section_ids) != len(set(section_ids))
+            or len(section_urls) != len(set(section_urls))
+            or self.OFFICIAL_TITLE_COUNT != len(expected_titles)
+        ):
+            raise RuntimeError(
+                "Mississippi exact title/section frontier is empty or duplicated"
+            )
+
+        section_batch = await self._fetch_mississippi_frontier_batch(
+            section_urls,
+            frontier_name="section-leaf",
+        )
+        statutes: List[NormalizedStatute] = []
+        terminal_sections: List[Dict[str, Any]] = []
+        for (
+            (_title_number, section_number, section_url),
+            payload,
+            receipt,
+            envelope,
+        ) in zip(
+            section_frontier,
+            section_batch.payloads,
+            section_batch.transport_receipts,
+            section_batch.parser_input_envelopes,
+            strict=True,
+        ):
+            evidence = self._mississippi_evidence_context(
+                source_url=section_url,
+                payload=payload,
+                transport_receipt=receipt,
+                parser_input_envelope=envelope,
+            )
+            leaf_rows, leaf_report = parse_mississippi_section_html_strict(
+                self._decode_mississippi_code_html(payload),
+                source_url=section_url,
+                code_name=code_name,
+            )
+            if (
+                leaf_report.get("closed") is not True
+                or leaf_report.get("section_number") != section_number
+            ):
+                raise RuntimeError(
+                    "Mississippi strict section parser left a residual or changed "
+                    f"identity: url={section_url} report={leaf_report}"
+                )
+            for terminal in leaf_report["terminal_dispositions"]:
+                terminal_sections.append(
+                    {**terminal, "source_url": section_url}
+                )
+            for statute in leaf_rows:
+                statute.structured_data = {
+                    **dict(statute.structured_data or {}),
+                    "content_sha256": evidence["content_sha256"],
+                    "parser_input_receipt_sha256": evidence[
+                        "parser_input_receipt_sha256"
+                    ],
+                    "source_transport": evidence["source_transport"],
+                    "transport_receipt": dict(evidence["transport_receipt"]),
+                }
+                statutes.append(statute)
+
+        candidate_leaves = len(section_frontier)
+        canonical_keys = [
+            str((row.structured_data or {}).get("canonical_section_key") or "")
+            for row in statutes
+        ]
+        statute_ids = [str(row.statute_id or "") for row in statutes]
+        if (
+            candidate_leaves != len(statutes) + len(terminal_sections)
+            or any(not key for key in canonical_keys)
+            or len(canonical_keys) != len(set(canonical_keys))
+            or len(statute_ids) != len(set(statute_ids))
+        ):
+            raise RuntimeError(
+                "Mississippi strict catalog/title/section completion algebra failed"
+            )
+
+        report = {
+            "candidate_section_leaves": candidate_leaves,
+            "catalog_batch_stats": dict(catalog_batch.stats or {}),
+            "catalog_evidence": catalog_evidence,
+            "closed": True,
+            "expected_title_count": self.OFFICIAL_TITLE_COUNT,
+            "operative_sections": len(statutes),
+            "parser_residual_count": 0,
+            "schema_version": "mississippi-strict-code-sections-v1",
+            "section_batch_stats": dict(section_batch.stats or {}),
+            "terminal_section_count": len(terminal_sections),
+            "terminal_title_count": len(terminal_titles),
+            "title_count": len(expected_titles),
+        }
+        self.last_mississippi_full_corpus_report = report
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="mississippi:strict-frontier-complete",
+            force=True,
+            replace_existing_rows=True,
+            extra={
+                "codes_completed": 1,
+                "codes_total": 1,
+                "discovered_sections": candidate_leaves,
+                "mississippi_closure_report": report,
+                "operative_sections": len(statutes),
+                "terminal_sections_classified": len(terminal_sections),
+                "terminal_titles_classified": len(terminal_titles),
+                "titles_scanned": len(expected_titles),
+            },
+        )
+        return statutes
+
+    def _is_source_bound_operative_statute_record(
+        self,
+        statute: NormalizedStatute,
+    ) -> bool:
+        structured = dict(statute.structured_data or {})
+        return (
+            structured.get("source_kind")
+            == "official_mississippi_code_section_html"
+            and structured.get("strict_source_closure") is True
+            and bool(str(structured.get("canonical_section_key") or "").strip())
+        )
 
     def get_base_url(self) -> str:
         """Return the base URL for Mississippi's legislative website."""
@@ -177,6 +756,30 @@ class MississippiScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        if self._full_corpus_enabled():
+            if max_statutes is not None:
+                raise RuntimeError(
+                    "Mississippi strict full-corpus route refuses a statute cap"
+                )
+            evidence = await self._probe_delegated_mississippi_code(
+                code_name=code_name,
+            )
+            self.last_mississippi_full_corpus_report = {
+                "closed": False,
+                **evidence,
+            }
+            self._write_partial_checkpoint(
+                [],
+                code_name=code_name,
+                stage_label="mississippi:delegated-body-frontier-blocked",
+                force=True,
+                extra={"mississippi_delegated_frontier": evidence},
+            )
+            raise MississippiDelegatedCorpusBlockedError(
+                str(evidence.get("disposition") or "delegated source unavailable"),
+                evidence=evidence,
+            )
+
         limit = self._effective_scrape_limit(max_statutes, default=160)
         from .mississippi_constitution import (
             configured_constitution_html_path,
@@ -833,7 +1436,6 @@ class MississippiScraper(BaseStateScraper):
             if not html:
                 continue
             soup = BeautifulSoup(html, "html.parser")
-            title_label = f"Title {title_number}"
             section_nodes = list(soup.find_all("h3"))
             discovered_sections = 0
 
@@ -887,7 +1489,7 @@ class MississippiScraper(BaseStateScraper):
                         title_number=str(title_number),
                         section_number=section_number,
                         section_name=section_name[:200],
-                        full_text=full_text[:14000],
+                        full_text=full_text,
                         legal_area=self._identify_legal_area(f"{section_name} {full_text[:1200]}"),
                         source_url=source_url,
                         official_cite=f"Miss. Code Ann. § {section_number}",
@@ -1144,7 +1746,7 @@ class MississippiScraper(BaseStateScraper):
                 code_name=code_name,
                 section_number=section_number,
                 section_name=section_name[:200],
-                full_text=text[:14000],
+                full_text=text,
                 legal_area=self._identify_legal_area(f"{section_name} {text[:800]}"),
                 source_url=section_url,
                 official_cite=f"Miss. Code Ann. § {section_number}",
@@ -1672,7 +2274,7 @@ class MississippiScraper(BaseStateScraper):
                 code_name=code_name,
                 section_number=section_number,
                 section_name=section_name[:200],
-                full_text=text[:14000],
+                full_text=text,
                 legal_area=self._identify_legal_area(f"{section_name} {text[:800]}"),
                 source_url=source_url,
                 official_cite=f"Miss. Code Ann. § {section_number}",
@@ -1829,7 +2431,7 @@ class MississippiScraper(BaseStateScraper):
                     code_name=code_name,
                     section_number=section_number,
                     section_name=section_name[:200],
-                    full_text=text[:14000],
+                    full_text=text,
                     legal_area=self._identify_legal_area(section_name or text[:600]),
                     source_url=source_url,
                     official_cite=f"Miss. Code Ann. § {section_number}",
@@ -1866,7 +2468,7 @@ class MississippiScraper(BaseStateScraper):
                     code_name=code_name,
                     section_number=section_number,
                     section_name=section_name[:200],
-                    full_text=text[:14000],
+                    full_text=text,
                     legal_area=self._identify_legal_area(section_name),
                     source_url=source_page,
                     official_cite=f"Miss. Code Ann. § {section_number}",
@@ -2012,7 +2614,7 @@ class MississippiScraper(BaseStateScraper):
                 code_name=code_name,
                 section_number=section_number,
                 section_name=section_name[:200],
-                full_text=cleaned[:14000],
+                full_text=cleaned,
                 legal_area=self._identify_legal_area(f"{section_name} {cleaned[:900]}"),
                 source_url=section_url,
                 official_cite=f"Miss. Code Ann. § {section_number}",
@@ -2191,16 +2793,25 @@ class MississippiScraper(BaseStateScraper):
         if not target_url:
             return ""
 
-        def _request() -> str:
-            try:
-                req = urllib.request.Request(target_url, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    return resp.read().decode("utf-8", errors="replace")
-            except Exception:
-                return ""
-
         try:
-            direct_text = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
+            if self._is_official_direct_transport_url(target_url):
+                payload = await self._fetch_parser_input_with_transport(
+                    target_url,
+                    headers={"User-Agent": "Mozilla/5.0"},
+                    timeout_seconds=max(1, int(timeout)),
+                    allow_archival_fallback=False,
+                    media_type="text/html",
+                    provider="mississippi_official_direct",
+                )
+                direct_text = payload.decode("utf-8", errors="replace") if payload else ""
+            else:
+                # Jina, Wayback, Justia, and UniCourt are separate source
+                # authorities.  Until the shared adapter can bind that source
+                # hop explicitly, keep it visible to the strict bypass audit.
+                direct_text = await self._request_external_source_text_direct(
+                    target_url,
+                    timeout=timeout,
+                )
             if direct_text:
                 return direct_text
         except Exception:
@@ -2224,6 +2835,31 @@ class MississippiScraper(BaseStateScraper):
         except Exception:
             pass
         return ""
+
+    def _is_official_direct_transport_url(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        return bool(
+            host
+            and (
+                host == "legislature.ms.gov"
+                or host.endswith(".legislature.ms.gov")
+                or host == "ls.state.ms.us"
+                or host.endswith(".ls.state.ms.us")
+            )
+        )
+
+    async def _request_external_source_text_direct(
+        self,
+        url: str,
+        *,
+        timeout: int,
+    ) -> str:
+        payload = await self._fetch_non_authoritative_reference_bytes(
+            url,
+            timeout_seconds=timeout,
+            enable_common_crawl=True,
+        )
+        return payload.decode("utf-8", errors="replace") if payload else ""
 
     async def _scrape_archived_bill_history(
         self,
@@ -2293,8 +2929,8 @@ class MississippiScraper(BaseStateScraper):
             html = await self._request_text(
                 index_url,
                 headers=headers,
-                timeout=30 if max_statutes <= 10 else 60,
-                attempts=2 if max_statutes <= 10 else 3,
+                timeout=15 if bounded_scrape else 60,
+                attempts=1 if bounded_scrape else 3,
             )
             if not html:
                 continue
@@ -2323,7 +2959,7 @@ class MississippiScraper(BaseStateScraper):
             if not candidate_history_urls:
                 continue
 
-            sem = asyncio.Semaphore(history_concurrency)
+            sem = anyio_compat.Semaphore(history_concurrency)
 
             async def _fetch_history(history_url: str) -> Optional[NormalizedStatute]:
                 async with sem:
@@ -2340,10 +2976,13 @@ class MississippiScraper(BaseStateScraper):
                     cancelled_early = True
                     break
                 batch_urls = candidate_history_urls[batch_start : batch_start + history_batch_size]
-                tasks = [asyncio.create_task(_fetch_history(history_url)) for history_url in batch_urls]
-                for task in asyncio.as_completed(tasks):
+                results = await anyio_compat.gather(
+                    *(_fetch_history(history_url) for history_url in batch_urls),
+                    return_exceptions=True,
+                )
+                for result in results:
                     scanned_from_index += 1
-                    statute = await task
+                    statute = None if isinstance(result, BaseException) else result
                     if statute is None:
                         if scanned_from_index == 1 or scanned_from_index % 100 == 0:
                             self.logger.info(
@@ -2375,12 +3014,8 @@ class MississippiScraper(BaseStateScraper):
                         )
                     if len(statutes) >= max_statutes:
                         cancelled_early = True
-                        for pending in tasks:
-                            if not pending.done():
-                                pending.cancel()
                         break
                 if cancelled_early:
-                    await asyncio.gather(*tasks, return_exceptions=True)
                     break
 
             # In bounded probes, stop as soon as one index yields usable statutes.
@@ -2429,7 +3064,7 @@ class MississippiScraper(BaseStateScraper):
                     code_name=code_name,
                     section_number=section_number,
                     section_name=section_name[:200],
-                    full_text=text[:14000],
+                    full_text=text,
                     legal_area=self._identify_legal_area(section_name or text[:600]),
                     source_url=source_url,
                     official_cite=f"Miss. Code Ann. § {section_number}",
@@ -2488,8 +3123,8 @@ class MississippiScraper(BaseStateScraper):
         html = await self._request_text(
             history_url,
             headers=headers,
-            timeout=30 if headers.get("X-Bounded-Scrape") == "1" else 60,
-            attempts=2 if headers.get("X-Bounded-Scrape") == "1" else 3,
+            timeout=15 if headers.get("X-Bounded-Scrape") == "1" else 60,
+            attempts=1 if headers.get("X-Bounded-Scrape") == "1" else 3,
         )
         if not html:
             return None
@@ -2517,7 +3152,7 @@ class MississippiScraper(BaseStateScraper):
             code_name=code_name,
             section_number=section_number,
             section_name=section_name[:200],
-            full_text=text[:14000],
+            full_text=text,
             legal_area=self._identify_legal_area(f"{description} {text[:1200]}"),
             source_url=history_url,
             official_cite=official_cite,
@@ -2619,28 +3254,28 @@ class MississippiScraper(BaseStateScraper):
         if not self._needs_insecure_tls_retry(url):
             return ""
 
-        def _request_insecure() -> str:
-            req_headers = {"User-Agent": "Mozilla/5.0"}
-            req_headers.update(dict(headers or {}))
-            request = urllib.request.Request(url, headers=req_headers)
-            ssl_context = ssl.create_default_context()
-            ssl_context.check_hostname = False
-            ssl_context.verify_mode = ssl.CERT_NONE
-            with urllib.request.urlopen(
-                request,
-                timeout=max(1, int(timeout or 30)),
-                context=ssl_context,
-            ) as response:
-                payload = response.read()
-            return payload.decode("utf-8", errors="replace")
-
         try:
-            text = await asyncio.wait_for(
-                asyncio.to_thread(_request_insecure),
-                timeout=max(2, int(timeout or 30)) + 3,
+            payload = await self._fetch_parser_input_with_transport(
+                url,
+                headers={
+                    "User-Agent": str(
+                        (headers or {}).get("User-Agent") or "Mozilla/5.0"
+                    ),
+                    **{
+                        str(key): str(value)
+                        for key, value in dict(headers or {}).items()
+                        if str(key).lower() != "user-agent"
+                    },
+                },
+                timeout_seconds=max(1, int(timeout or 30)),
+                allow_archival_fallback=False,
+                verify_tls=False,
+                media_type="text/html",
+                provider="mississippi_official_insecure_tls",
             )
         except Exception:
             return ""
+        text = payload.decode("utf-8", errors="replace") if payload else ""
         if text:
             self.logger.info(
                 "Mississippi TLS fallback succeeded for host with invalid cert: %s",
@@ -2656,7 +3291,7 @@ class MississippiScraper(BaseStateScraper):
         """Return the exhaustive official Mississippi Code title catalog."""
 
         rows: List[Dict[str, Any]] = []
-        for number in range(1, self.OFFICIAL_TITLE_COUNT + 1):
+        for number in sorted(self.OFFICIAL_TITLE_NAMES):
             url = self.official_title_url(number)
             name = self.OFFICIAL_TITLE_NAMES.get(number, f"Title {number}")
             rows.append(
@@ -2748,68 +3383,22 @@ class MississippiScraper(BaseStateScraper):
         return rows
 
     def fetch_official(self, code: str = "MS"):
-        """Reacquire the exhaustive official Mississippi Code title catalog.
+        """Reject the old synchronous synthetic/dead-root catalog path.
 
-        Live HTTPS retains the official legislature legislation landing page
-        and enumerates every Mississippi Code title on billstatus.ls.state.ms.us.
-        Justia, Unicourt, and synthetic two-row success are never admitted.
+        The authoritative current catalog is a rendered delegated Lexis TOC.
+        It must be acquired by :meth:`_probe_delegated_mississippi_code`, where
+        all 51 root requests and their byte receipts can be retained together.
+        A legislature landing page or the dead 2024 ``code_sections`` URL does
+        not authorize a repaired list of titles.
         """
 
-        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
-            OfficialFetch,
-            compute_frontier_digest,
-        )
-
         normalized = str(code or "MS").strip().upper() or "MS"
-        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
-        if not html:
-            html = self._official_http_get(self.OFFICIAL_CODE_INDEX_URL)
-        if not html:
-            html = self._official_http_get(self.OFFICIAL_BILLSTATUS_CODE_ROOT)
-        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
-        if len(rows) <= 2:
-            raise RuntimeError(
-                "mississippi official catalog enumeration rejected synthetic "
-                "two-row success"
-            )
-        request = (
-            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
-            f"host: {self.OFFICIAL_DOMAIN}\n"
-        ).encode("utf-8")
-        catalog = {
-            "jurisdiction": normalized,
-            "official_domain": self.OFFICIAL_DOMAIN,
-            "entry_url": self.OFFICIAL_ENTRY_URL,
-            "units": rows,
-        }
-        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
-        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
-        frontier = {
-            "bundle_closed": False,
-            "closed": True,
-            "enumerator_closed": True,
-            "expected_index_units": len(rows),
-            "method": "pagination",
-            "pagination_closed": True,
-            "remaining_bundle_members": [],
-            "toc_exhausted": True,
-            "unvisited_continuation_links": [],
-            "visited_index_units": len(rows),
-        }
-        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
-        return OfficialFetch(
-            jurisdiction_code=normalized,
-            request_bytes=request,
-            response_bytes=response,
-            body_bytes=body,
-            source_domain=self.OFFICIAL_DOMAIN,
-            source_path=self.OFFICIAL_ENTRY_PATH,
-            frontier=frontier,
-            rows=tuple(rows),
-            transport_kind="live_https",
-            fixture=False,
-            first_hierarchy_unit=str(rows[0]["canonical_key"]),
-            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        if normalized != "MS":
+            raise ValueError(f"MississippiScraper cannot acquire {normalized}")
+        raise RuntimeError(
+            "Mississippi current official catalog requires the async delegated "
+            "Lexis 51-root inventory; synchronous repaired-title acquisition is "
+            "non-authorizing"
         )
 
 
@@ -2877,7 +3466,7 @@ class _MississippiCheckpoint:
     """Best-effort partial progress checkpoint for Mississippi archive crawls."""
 
     def __init__(self, state_code: str) -> None:
-        raw_dir = str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
+        raw_dir = current_partial_checkpoint_run_directory()
         if not raw_dir:
             self.path: Optional[Path] = None
         else:

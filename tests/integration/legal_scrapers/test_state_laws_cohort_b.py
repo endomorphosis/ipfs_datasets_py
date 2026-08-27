@@ -604,7 +604,7 @@ async def test_colorado_full_corpus_is_uncapped_when_max_statutes_omitted(
         ]
 
     monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
-    monkeypatch.setattr(ColoradoScraper, "_scrape_crs_pdfs", _fake_crs)
+    monkeypatch.setattr(ColoradoScraper, "_scrape_crs_title_downloads", _fake_crs)
     scraper = ColoradoScraper("CO", "Colorado")
     statutes = await scraper.scrape_code(
         "Colorado Revised Statutes",
@@ -662,13 +662,22 @@ async def test_connecticut_full_corpus_refuses_justia_sole_admission(
 async def test_delaware_full_corpus_is_uncapped_when_max_statutes_omitted(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    requested: Dict[str, Any] = {}
+    requested: Dict[str, Any] = {"max_statutes": []}
 
     async def _fake_titles(self):
-        return [("https://delcode.delaware.gov/title1/index.html", "Title 1")]
+        return [
+            (f"https://delcode.delaware.gov/title{number}/index.html", f"Title {number}")
+            for number in range(1, self.OFFICIAL_TITLE_COUNT + 1)
+        ]
 
     async def _fake_chapters(self, title_url: str):
-        return [("https://delcode.delaware.gov/title1/c01/index.html", "Chapter 1")]
+        title_number = self._title_number_from_url(title_url)
+        return [
+            (
+                f"https://delcode.delaware.gov/title{title_number}/c001/index.html",
+                "Chapter 1",
+            )
+        ]
 
     async def _fake_parse(
         self,
@@ -678,13 +687,15 @@ async def test_delaware_full_corpus_is_uncapped_when_max_statutes_omitted(
         chapter_label: str,
         max_statutes: Optional[int] = None,
     ):
-        requested["max_statutes"] = max_statutes
+        requested["max_statutes"].append(max_statutes)
+        title_number = self._title_number_from_url(chapter_url)
         return [
             NormalizedStatute(
                 state_code="DE",
                 state_name="Delaware",
-                statute_id="DE-1-101",
+                statute_id=f"DE-{title_number}-101",
                 code_name=code_name,
+                title_number=title_number,
                 section_number="101",
                 section_name="Definitions",
                 full_text=("Delaware full corpus official section text. " * 20),
@@ -709,8 +720,9 @@ async def test_delaware_full_corpus_is_uncapped_when_max_statutes_omitted(
         "https://delcode.delaware.gov/index.html",
         max_statutes=None,
     )
-    assert requested["max_statutes"] is None
-    assert len(statutes) == 1
+    assert requested["max_statutes"] == [None] * DelawareScraper.OFFICIAL_TITLE_COUNT
+    assert len(statutes) == DelawareScraper.OFFICIAL_TITLE_COUNT
+    assert scraper._last_full_corpus_frontier["closed"] is True
 
 
 @pytest.mark.anyio

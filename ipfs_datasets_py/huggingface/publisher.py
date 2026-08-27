@@ -20,18 +20,21 @@ rows, manifests, logs, receipts, or source control.
 
 from __future__ import annotations
 
+import inspect
 import json
 import math
 import os
 import re
 import shutil
+import stat
 import tempfile
 from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import ExitStack
 from dataclasses import dataclass, field
 from hashlib import sha256
 from pathlib import Path
-from typing import Any, Final
+from typing import Any, BinaryIO, Final
 
 from .publication_profile import (
     ABBY_VOICE_CANONICAL_RELEASE_SCHEMA,
@@ -50,6 +53,11 @@ from .publication_profile import (
     is_known_plan_schema,
     is_known_receipt_schema,
     patent_legal_publication_profile,
+)
+from .protected_repo_guard import (
+    PROTECTED_REPOS,
+    is_protected_repo,
+    require_unprotected_or_runtime,
 )
 from .release import (
     canonical_json_bytes,
@@ -113,6 +121,16 @@ _TOKEN_KEY_RE = re.compile(
     re.IGNORECASE,
 )
 _PROHIBITED_OPS = frozenset(BASE_PROHIBITED_OPERATIONS)
+_STATE_LAWS_PROFILE_ID: Final = "state-laws"
+_STATE_LAWS_PROGRAM_ID: Final = "state-laws-sparse-graphrag"
+_STATE_LAWS_GOAL_ID: Final = "LCR-G010"
+_STATE_LAWS_PLAN_SCHEMA: Final = "state-laws-hf-publication-plan/v1"
+_STATE_LAWS_RELEASE_PREFIX: Final = "data/state_laws/"
+_STATE_LAWS_PROTECTED_REPOSITORIES: Final = frozenset(
+    repository_id
+    for repository_id in PROTECTED_REPOS
+    if repository_id.rsplit("/", 1)[-1] == "ipfs_state_laws"
+)
 _WRITE_API_METHODS: Final[frozenset[str]] = frozenset(
     {
         "create_commit",
@@ -884,6 +902,196 @@ def _canonical_release_manifest_entry(
     }
 
 
+class _StateLawsLivePolicyBoundary:
+    """Stable, source-attested dispatch for the State Laws live policy."""
+
+    @staticmethod
+    def recognizes(
+        *,
+        profile: HuggingFacePublicationProfile,
+        plan: PublicationPlan,
+        repository_id: str,
+        release_prefix_template: str,
+    ) -> bool:
+        metadata = plan.metadata
+        return any(
+            (
+                profile.profile_id == _STATE_LAWS_PROFILE_ID,
+                profile.program_id == _STATE_LAWS_PROGRAM_ID,
+                plan.schema_version == _STATE_LAWS_PLAN_SCHEMA,
+                metadata.get("profile_id") == _STATE_LAWS_PROFILE_ID,
+                metadata.get("program_id") == _STATE_LAWS_PROGRAM_ID,
+                metadata.get("goal_id") == _STATE_LAWS_GOAL_ID,
+                (
+                    is_protected_repo(repository_id)
+                    and repository_id.casefold()
+                    in _STATE_LAWS_PROTECTED_REPOSITORIES
+                ),
+                (
+                    is_protected_repo(plan.repository_id)
+                    and plan.repository_id.casefold()
+                    in _STATE_LAWS_PROTECTED_REPOSITORIES
+                ),
+                release_prefix_template.startswith(_STATE_LAWS_RELEASE_PREFIX),
+                plan.release_prefix.startswith(_STATE_LAWS_RELEASE_PREFIX),
+            )
+        )
+
+    @staticmethod
+    def attest_target(
+        target: Any,
+        *,
+        label: str,
+        source_relative_path: str = "",
+    ) -> dict[str, Any]:
+        """Reuse the shared loaded/current engine for one executable target."""
+
+        from ..processors.legal_scrapers.state_scrapers.base_scraper import (
+            _assert_loaded_executables_match_current_source,
+            _loaded_executable_sha256,
+        )
+
+        source_name = inspect.getsourcefile(target)
+        if not source_name:
+            raise HuggingFacePublicationError(
+                f"{label} has no inspectable source file"
+            )
+        source_path = Path(source_name)
+
+        def read_source() -> bytes:
+            return _read_regular_file_nofollow_components(
+                source_path,
+                label=f"{label} source",
+                maximum_bytes=8 * 1024 * 1024,
+            )
+
+        source_before = read_source()
+        source_sha256 = sha256(source_before).hexdigest()
+        loaded_sha256 = _loaded_executable_sha256(target)
+        record = {
+            "loaded_executable_sha256": loaded_sha256,
+            "source_file_sha256": source_sha256,
+            "source_path": str(
+                Path(os.path.abspath(os.fspath(source_path)))
+            ),
+            "target": target,
+        }
+        try:
+            _assert_loaded_executables_match_current_source({label: record})
+        except Exception as exc:
+            raise HuggingFacePublicationError(
+                f"{label} failed loaded/current source correspondence: {exc}"
+            ) from exc
+        if read_source() != source_before:
+            raise HuggingFacePublicationError(
+                f"{label} source changed during attestation"
+            )
+        identity = {
+            "label": label,
+            "loaded_executable_sha256": loaded_sha256,
+            "module": (
+                target.__name__
+                if inspect.ismodule(target)
+                else target.__module__
+            ),
+            "qualname": "" if inspect.ismodule(target) else target.__qualname__,
+            "source_sha256": source_sha256,
+            "source_size_bytes": len(source_before),
+        }
+        if source_relative_path:
+            identity["source_relative_path"] = _normalize_relative_path(
+                source_relative_path
+            )
+        return identity
+
+    @classmethod
+    def current_identities(
+        cls,
+        *,
+        dispatch_identity: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        from ..processors.legal_data import (
+            legal_corpora_publication_runtime as runtime_module,
+            state_laws_publication_package as package_module,
+        )
+
+        dispatch = (
+            dict(dispatch_identity)
+            if dispatch_identity is not None
+            else cls.attest_target(
+                cls,
+                label="state_laws_generic_live_policy_dispatch",
+            )
+        )
+        package_identity = cls.attest_target(
+            package_module._StateLawsLivePolicyProofVerifier,
+            label="state_laws_publication_package_verifier",
+            source_relative_path=(
+                "ipfs_datasets_py/processors/legal_data/"
+                "state_laws_publication_package.py"
+            ),
+        )
+        package_executables = (
+            package_module._StateLawsLivePolicyProofVerifier
+            .current_executable_identities()
+        )
+        if package_executables != dict(
+            package_module._StateLawsLivePolicyProofVerifier
+            .EXECUTABLE_IMPORT_SHA256
+        ):
+            raise HuggingFacePublicationError(
+                "State Laws package verifier executable identity drifted"
+            )
+        package_identity["executables"] = package_executables
+        runtime_identity = cls.attest_target(
+            runtime_module._CanonicalPublicationRuntimeExecutable,
+            label="legal_corpora_canonical_publication_runtime",
+            source_relative_path=(
+                "ipfs_datasets_py/processors/legal_data/"
+                "legal_corpora_publication_runtime.py"
+            ),
+        )
+        runtime_executables = (
+            runtime_module._CanonicalPublicationRuntimeExecutable
+            .current_executable_identities()
+        )
+        if runtime_executables != dict(
+            runtime_module._CanonicalPublicationRuntimeExecutable
+            .EXECUTABLE_IMPORT_SHA256
+        ):
+            raise HuggingFacePublicationError(
+                "canonical publication runtime executable identity drifted"
+            )
+        runtime_identity["executables"] = runtime_executables
+        return {
+            "canonical_runtime": runtime_identity,
+            "dispatch": dispatch,
+            "package_verifier": package_identity,
+        }
+
+    @classmethod
+    def verify(
+        cls,
+        proof: Mapping[str, Any] | Any,
+        *,
+        plan: PublicationPlan,
+        profile: HuggingFacePublicationProfile,
+        local_root: str | Path,
+        boundary_identities: Mapping[str, Any],
+    ) -> None:
+        from ..processors.legal_data import (
+            state_laws_publication_package as package_module,
+        )
+
+        package_module._StateLawsLivePolicyProofVerifier.verify(
+            proof,
+            plan=plan,
+            profile=profile,
+            local_root=local_root,
+            final_boundary_identity=boundary_identities,
+        )
+
+
 class HuggingFaceReleasePublisher:
     """Digest-aware append-only publisher with fail-closed promotion.
 
@@ -995,6 +1203,66 @@ class HuggingFaceReleasePublisher:
         return _normalize_relative_path(
             self.release_prefix_template.format(release_id=safe)
         )
+
+    def _assert_live_plan_matches_publisher(
+        self,
+        plan: PublicationPlan,
+    ) -> int:
+        """Bind a caller-supplied plan to this exact live publisher instance."""
+
+        mismatches: list[str] = []
+        if plan.repository_id != self.repository_id:
+            mismatches.append("repository_id")
+        if plan.repository_type != self.repository_type:
+            mismatches.append("repository_type")
+        if plan.schema_version != self.profile.plan_schema_version:
+            mismatches.append("plan schema")
+        if plan.target_revision != self.profile.target_revision:
+            mismatches.append("target revision")
+        if plan.release_prefix != self.release_prefix_for(plan.release_id):
+            mismatches.append("release prefix")
+        expected_prohibited = tuple(
+            sorted(self.profile.prohibited_operations | _PROHIBITED_OPS)
+        )
+        if plan.prohibited_operations != expected_prohibited:
+            mismatches.append("prohibited operations")
+        if plan.metadata.get("goal_id") != self.profile.goal_id:
+            mismatches.append("goal_id")
+        if self.profile.profile_id == ABBY_VOICE_PROFILE_ID:
+            for key, expected in (
+                ("profile_id", self.profile.profile_id),
+                ("program_id", self.profile.program_id),
+            ):
+                if key in plan.metadata and plan.metadata.get(key) != expected:
+                    mismatches.append(key)
+        else:
+            if plan.metadata.get("profile_id") != self.profile.profile_id:
+                mismatches.append("profile_id")
+            if plan.metadata.get("program_id") != self.profile.program_id:
+                mismatches.append("program_id")
+        if plan.skipped_exact_matches:
+            mismatches.append("skipped exact matches")
+        if mismatches:
+            raise HuggingFacePublicationError(
+                "live publication plan is not bound to the exact publisher/profile: "
+                + ", ".join(sorted(set(mismatches)))
+            )
+
+        upload_bytes = sum(item.size_bytes for item in plan.operations)
+        expected_cost = estimate_publication_cost(
+            upload_bytes=upload_bytes,
+            retained_release_bytes=upload_bytes,
+            transfer_rate_usd_per_gib=self.transfer_rate_usd_per_gib,
+            storage_rate_usd_per_gib_month=(
+                self.storage_rate_usd_per_gib_month
+            ),
+        )
+        if dict(plan.cost_receipt) != expected_cost:
+            raise HuggingFacePublicationError(
+                "live publication cost receipt does not match operation byte totals "
+                "and publisher rates"
+            )
+        return upload_bytes
 
     def _assert_dry_run_has_no_write_contact(self) -> None:
         """Fail closed if a dry-run path ever sees a write-capable API surface.
@@ -1280,16 +1548,43 @@ class HuggingFaceReleasePublisher:
         approval: PublicationApproval,
         local_root: str | Path,
         commit_message: str | None = None,
+        live_policy_proof: Mapping[str, Any] | Any | None = None,
     ) -> PublicationCommitReceipt:
         """Execute an approved append-only ``create_commit`` transaction.
 
         Requires an injected API client with ``create_commit``.  Refuses any
         delete/move/overwrite operation and refuses plans that do not match the
-        approval digest and cost bound.
+        approval digest and cost bound. State Laws plans additionally require
+        a freshly revalidated, plan-bound ``live_policy_proof``.
         """
 
         if not isinstance(plan, PublicationPlan):
             raise HuggingFacePublicationError("plan must be a PublicationPlan")
+        state_laws_marked = any(
+            (
+                self.profile.profile_id == _STATE_LAWS_PROFILE_ID,
+                self.profile.program_id == _STATE_LAWS_PROGRAM_ID,
+                plan.schema_version == _STATE_LAWS_PLAN_SCHEMA,
+                plan.metadata.get("profile_id") == _STATE_LAWS_PROFILE_ID,
+                plan.metadata.get("program_id") == _STATE_LAWS_PROGRAM_ID,
+                plan.metadata.get("goal_id") == _STATE_LAWS_GOAL_ID,
+                (
+                    is_protected_repo(self.repository_id)
+                    and self.repository_id.casefold()
+                    in _STATE_LAWS_PROTECTED_REPOSITORIES
+                ),
+                (
+                    is_protected_repo(plan.repository_id)
+                    and plan.repository_id.casefold()
+                    in _STATE_LAWS_PROTECTED_REPOSITORIES
+                ),
+                self.release_prefix_template.startswith(
+                    _STATE_LAWS_RELEASE_PREFIX
+                ),
+                plan.release_prefix.startswith(_STATE_LAWS_RELEASE_PREFIX),
+            )
+        )
+        upload_bytes = self._assert_live_plan_matches_publisher(plan)
         if plan.plan_digest != approval.plan_digest:
             raise HuggingFacePublicationError(
                 "approval plan_digest does not match the dry-run plan"
@@ -1303,7 +1598,6 @@ class HuggingFaceReleasePublisher:
                 f"expected {expected_scope}"
             )
         estimated = float(plan.cost_receipt.get("estimated_cost_usd", 0.0))
-        upload_bytes = int(plan.cost_receipt.get("upload_bytes", 0))
         if estimated > float(approval.max_cost_usd):
             raise HuggingFacePublicationError(
                 "plan estimated cost exceeds approved max_cost_usd bound"
@@ -1312,58 +1606,325 @@ class HuggingFaceReleasePublisher:
             raise HuggingFacePublicationError(
                 "plan upload_bytes exceeds approved max_upload_bytes bound"
             )
-        create_commit = self._require_api_method("create_commit")
-        parent_commit = self.assert_audited_parent_is_current_and_prefix_empty(plan)
+        if is_protected_repo(self.repository_id) and not state_laws_marked:
+            raise HuggingFacePublicationError(
+                "protected repository publication requires its canonical runtime"
+            )
+        _assert_anonymous_snapshot_capacity(upload_bytes)
 
-        root = Path(local_root).expanduser().resolve()
-        if not root.is_dir():
-            raise HuggingFacePublicationError(f"local_root is not a directory: {root}")
-
-        operations_payload: list[Any] = []
         uploaded_paths: list[str] = []
-        for item in plan.operations:
-            local = root.joinpath(*Path(item.relative_path).parts)
-            if not local.is_file() or local.is_symlink():
-                raise HuggingFacePublicationError(
-                    f"missing local file for upload: {item.relative_path}"
+        # CommitOperationAdd consumes file-like objects lazily inside the
+        # synchronous create_commit call. Snapshot every reviewed file into an
+        # anonymous tempfile and retain all handles until that call finishes.
+        # Mutable source paths are never handed to the API.
+        with ExitStack() as snapshots:
+            root, root_fd = _open_local_root_directory_nofollow(
+                local_root,
+                snapshots=snapshots,
+            )
+            operations_payload: list[Any] = []
+            for item in plan.operations:
+                op = _snapshot_commit_add_operation(
+                    root_fd=root_fd,
+                    item=item,
+                    snapshots=snapshots,
                 )
-            size_bytes, digest_bytes = _file_digest(local)
-            if size_bytes != item.size_bytes or digest_bytes.hex() != item.sha256:
+                operations_payload.append(op)
+                uploaded_paths.append(item.remote_path)
+
+            if not operations_payload:
                 raise HuggingFacePublicationError(
-                    f"local file digest mismatch before upload: {item.relative_path}"
+                    "no upload operations remain; refusing empty commit"
                 )
-            op = _build_commit_add_operation(
-                path_in_repo=item.remote_path,
-                local_path=local,
-            )
-            operations_payload.append(op)
-            uploaded_paths.append(item.remote_path)
 
-        if not operations_payload:
-            raise HuggingFacePublicationError(
-                "no upload operations remain; refusing empty commit"
-            )
+            def verify_state_laws_policy() -> None:
+                """Attest and invoke the fixed State Laws verifier allowlist."""
 
-        message = (
-            commit_message
-            if commit_message is not None
-            else self.profile.commit_message
-        )
-        try:
-            result = create_commit(
-                repo_id=self.repository_id,
-                repo_type=self.repository_type,
-                operations=operations_payload,
-                commit_message=_text(message, label="commit_message"),
-                revision=plan.target_revision,
-                parent_commit=parent_commit,
+                try:
+                    from ..processors.legal_scrapers.state_scrapers.base_scraper import (
+                        _assert_loaded_executables_match_current_source,
+                        _loaded_executable_sha256,
+                    )
+
+                    dispatch_source_name = inspect.getsourcefile(
+                        _StateLawsLivePolicyBoundary
+                    )
+                    if not dispatch_source_name:
+                        raise HuggingFacePublicationError(
+                            "State Laws generic dispatch has no inspectable source"
+                        )
+                    dispatch_loaded_sha256 = _loaded_executable_sha256(
+                        _StateLawsLivePolicyBoundary
+                    )
+                    dispatch_record = {
+                        "loaded_executable_sha256": dispatch_loaded_sha256,
+                        "source_file_sha256": _PUBLISHER_IMPORT_SOURCE_SHA256,
+                        "source_path": str(Path(dispatch_source_name).resolve()),
+                        "target": _StateLawsLivePolicyBoundary,
+                    }
+                    _assert_loaded_executables_match_current_source(
+                        {"state_laws_generic_live_policy_dispatch": dispatch_record}
+                    )
+                    dispatch_identity = (
+                        _StateLawsLivePolicyBoundary.attest_target(
+                            _StateLawsLivePolicyBoundary,
+                            label=(
+                                "state_laws_generic_live_policy_dispatch"
+                            ),
+                        )
+                    )
+                    if (
+                        dispatch_identity.get("loaded_executable_sha256")
+                        != dispatch_loaded_sha256
+                        or dispatch_identity.get("source_sha256")
+                        != _PUBLISHER_IMPORT_SOURCE_SHA256
+                    ):
+                        raise HuggingFacePublicationError(
+                            "State Laws generic dispatch identity changed during "
+                            "final attestation"
+                        )
+                    boundary_identities = (
+                        _StateLawsLivePolicyBoundary.current_identities(
+                            dispatch_identity=dispatch_identity,
+                        )
+                    )
+                    if not _StateLawsLivePolicyBoundary.recognizes(
+                        profile=self.profile,
+                        plan=plan,
+                        repository_id=self.repository_id,
+                        release_prefix_template=self.release_prefix_template,
+                    ):
+                        raise HuggingFacePublicationError(
+                            "State Laws marker recognition changed during final "
+                            "dispatch"
+                        )
+                    _StateLawsLivePolicyBoundary.verify(
+                        live_policy_proof,
+                        plan=plan,
+                        profile=self.profile,
+                        local_root=root,
+                        boundary_identities=boundary_identities,
+                    )
+                except HuggingFacePublicationError:
+                    raise
+                except Exception as exc:
+                    raise HuggingFacePublicationError(
+                        "State Laws live policy proof refused publication: "
+                        f"{exc}"
+                    ) from exc
+
+            message = (
+                commit_message
+                if commit_message is not None
+                else self.profile.commit_message
             )
-        except HuggingFacePublicationError:
-            raise
-        except Exception as exc:  # pragma: no cover - transport failures
-            raise HuggingFacePublicationError(
-                f"HfApi create_commit failed: {exc}"
-            ) from exc
+            canonical_message = _text(message, label="commit_message")
+
+            def execute_commit(
+                *,
+                canonical_candidate_digest: str | None = None,
+            ) -> tuple[str, Any]:
+                create_commit = self._require_api_method("create_commit")
+                parent = (
+                    self.assert_audited_parent_is_current_and_prefix_empty(plan)
+                )
+                if state_laws_marked:
+                    # The first proof check precedes all Hub access. Repeat it
+                    # inside the canonical callback after read-only preflight
+                    # and immediately before the sole remote mutation.
+                    verify_state_laws_policy()
+                    if canonical_candidate_digest is None:
+                        raise HuggingFacePublicationError(
+                            "State Laws commit is outside canonical runtime "
+                            "authority"
+                        )
+                    require_unprotected_or_runtime(
+                        self.repository_id,
+                        method="create_commit",
+                        expected_phase="state_main",
+                        expected_operation="additive_main_upload",
+                        expected_manifest_digest=(
+                            canonical_candidate_digest
+                        ),
+                    )
+                try:
+                    committed = create_commit(
+                        repo_id=self.repository_id,
+                        repo_type=self.repository_type,
+                        operations=operations_payload,
+                        commit_message=canonical_message,
+                        revision=plan.target_revision,
+                        parent_commit=parent,
+                    )
+                except HuggingFacePublicationError:
+                    raise
+                except Exception as exc:  # pragma: no cover - transport failures
+                    raise HuggingFacePublicationError(
+                        f"HfApi create_commit failed: {exc}"
+                    ) from exc
+                return parent, committed
+
+            if state_laws_marked:
+                if live_policy_proof is None:
+                    raise HuggingFacePublicationError(
+                        "State Laws live publication requires a sealed policy proof"
+                    )
+                # Re-evaluate after potentially long snapshotting and before
+                # any API attribute resolution or call.
+                verify_state_laws_policy()
+                from ..processors.legal_data import (
+                    legal_corpora_publication_runtime as canonical_runtime,
+                )
+
+                def principal_probe(
+                    token: str,
+                    repository_id: str,
+                ) -> Mapping[str, Any]:
+                    auth_check = self._require_api_method("auth_check")
+                    whoami = self._require_api_method("whoami")
+                    auth_check(
+                        repo_id=repository_id,
+                        repo_type=self.repository_type,
+                        token=token,
+                    )
+                    identity = whoami(token=token)
+                    principal = str(
+                        _record_value(identity, "name")
+                        or _record_value(identity, "fullname")
+                        or ""
+                    ).strip()
+                    return {
+                        "dataset_repo_id": repository_id,
+                        "has_write_access": True,
+                        "identity": f"huggingface:{principal}",
+                        "principal": principal,
+                        "scopes": [
+                            f"{self.repository_type}:write:{repository_id}"
+                        ],
+                        "write_targets": [repository_id],
+                    }
+
+                runtime_request = canonical_runtime.CanonicalPublicationRequest(
+                    phase="state_main",
+                    repository_root=Path(__file__).resolve().parents[2],
+                    authorize_mutation=True,
+                    environ=os.environ,
+                    principal_probe=principal_probe,
+                    expected_dataset_repo_id=plan.repository_id,
+                    expected_release_manifest_digest=plan.release_sha256,
+                    expected_plan_digest=plan.plan_digest,
+                    expected_policy_proof_digest=_digest(
+                        _record_value(live_policy_proof, "proof_digest"),
+                        label="State Laws policy proof digest",
+                    ),
+                )
+
+                def authorized_commit(decision: Any) -> tuple[str, Any]:
+                    decision_details = _record_value(decision, "details")
+                    if not isinstance(decision_details, Mapping):
+                        raise HuggingFacePublicationError(
+                            "canonical State Laws runtime decision omits its "
+                            "candidate-manifest binding"
+                        )
+                    canonical_candidate_digest = _digest(
+                        _record_value(decision, "final_manifest_digest"),
+                        label="canonical runtime candidate manifest digest",
+                    )
+                    candidate_release_digest = _digest(
+                        decision_details.get(
+                            "candidate_release_manifest_digest"
+                        ),
+                        label="canonical candidate release manifest digest",
+                    )
+                    if (
+                        _record_value(decision, "authorized") is not True
+                        or _record_value(
+                            decision,
+                            "network_mutation_permitted",
+                        )
+                        is not True
+                        or _record_value(decision, "dataset_repo_id")
+                        != plan.repository_id
+                        or candidate_release_digest != plan.release_sha256
+                        or decision_details.get("expected_plan_digest")
+                        != plan.plan_digest
+                        or decision_details.get(
+                            "expected_policy_proof_digest"
+                        )
+                        != _record_value(live_policy_proof, "proof_digest")
+                        or _record_value(decision, "operation")
+                        != "additive_main_upload"
+                        or _record_value(decision, "phase") != "state_main"
+                    ):
+                        raise HuggingFacePublicationError(
+                            "canonical State Laws runtime decision is not bound "
+                            "to the exact publisher plan and policy proof"
+                        )
+                    proof_manifest_digest = _record_value(
+                        live_policy_proof,
+                        "manifest_digest",
+                    )
+                    if proof_manifest_digest != plan.release_sha256:
+                        raise HuggingFacePublicationError(
+                            "State Laws proof manifest is not bound to the "
+                            "canonical runtime decision"
+                        )
+                    runtime_binding = {
+                        "candidate_manifest_digest": (
+                            canonical_candidate_digest
+                        ),
+                        "candidate_release_manifest_digest": (
+                            candidate_release_digest
+                        ),
+                        "dataset_repo_id": plan.repository_id,
+                        "operation": "additive_main_upload",
+                        "phase": "state_main",
+                        "plan_digest": plan.plan_digest,
+                        "policy_proof_digest": _record_value(
+                            live_policy_proof,
+                            "proof_digest",
+                        ),
+                    }
+                    runtime_binding_digest = sha256(
+                        canonical_json_bytes(runtime_binding)
+                    ).hexdigest()
+                    if not _HASH_RE.fullmatch(runtime_binding_digest):
+                        raise HuggingFacePublicationError(
+                            "canonical State Laws runtime binding is invalid"
+                        )
+                    # Refuse a monkeypatched runtime adapter before resolving
+                    # or calling even read-only Hub methods. The same scoped
+                    # capability is checked again immediately before commit.
+                    require_unprotected_or_runtime(
+                        self.repository_id,
+                        method="create_commit",
+                        expected_phase="state_main",
+                        expected_operation="additive_main_upload",
+                        expected_manifest_digest=(
+                            canonical_candidate_digest
+                        ),
+                    )
+                    return execute_commit(
+                        canonical_candidate_digest=(
+                            canonical_candidate_digest
+                        )
+                    )
+
+                try:
+                    parent_commit, result = (
+                        canonical_runtime.authorize_and_mutate_canonical(
+                            runtime_request,
+                            authorized_commit,
+                        )
+                    )
+                except HuggingFacePublicationError:
+                    raise
+                except Exception as exc:
+                    raise HuggingFacePublicationError(
+                        f"canonical State Laws runtime refused publication: {exc}"
+                    ) from exc
+            else:
+                parent_commit, result = execute_commit()
 
         commit_sha = _extract_commit_sha(result)
         return PublicationCommitReceipt(
@@ -2005,7 +2566,13 @@ def _extract_repo_commit_sha(info: Any) -> str:
     )
 
 
-def _build_commit_add_operation(*, path_in_repo: str, local_path: Path) -> Any:
+def _build_commit_add_operation(
+    *,
+    path_in_repo: str,
+    fileobj: BinaryIO,
+    size_bytes: int,
+    sha256_digest: bytes,
+) -> Any:
     """Build a CommitOperationAdd-compatible object without importing hf_hub at import time."""
 
     try:
@@ -2015,12 +2582,308 @@ def _build_commit_add_operation(*, path_in_repo: str, local_path: Path) -> Any:
         return {
             "operation": "add",
             "path_in_repo": path_in_repo,
-            "path_or_fileobj": str(local_path),
+            "path_or_fileobj": fileobj,
+            "upload_info": {
+                "sha256": sha256_digest,
+                "size": size_bytes,
+            },
         }
     return CommitOperationAdd(
         path_in_repo=path_in_repo,
-        path_or_fileobj=str(local_path),
+        path_or_fileobj=fileobj,
     )
+
+
+def _assert_anonymous_snapshot_capacity(required_bytes: int) -> None:
+    """Fail before any API contact if the tempfile filesystem is undersized."""
+
+    try:
+        temporary_root = Path(tempfile.gettempdir())
+        available_bytes = int(shutil.disk_usage(temporary_root).free)
+    except (OSError, TypeError, ValueError) as exc:
+        raise HuggingFacePublicationError(
+            f"cannot preflight anonymous snapshot filesystem capacity: {exc}"
+        ) from exc
+    if available_bytes < required_bytes:
+        raise HuggingFacePublicationError(
+            "anonymous snapshot filesystem has insufficient free capacity: "
+            f"required={required_bytes}, available={available_bytes}"
+        )
+
+
+def _open_absolute_path_nofollow_components(
+    path: str | Path,
+    *,
+    label: str,
+    require_directory: bool,
+) -> tuple[Path, int]:
+    """Open an absolute lexical path using no-follow ``openat`` traversal."""
+
+    nofollow = getattr(os, "O_NOFOLLOW", None)
+    directory = getattr(os, "O_DIRECTORY", None)
+    if (
+        nofollow is None
+        or directory is None
+        or os.open not in getattr(os, "supports_dir_fd", set())
+    ):
+        raise HuggingFacePublicationError(
+            "live publication requires component-wise openat/O_NOFOLLOW support"
+        )
+    absolute_path = Path(
+        os.path.abspath(os.fspath(Path(path).expanduser()))
+    )
+    directory_flags = (
+        os.O_RDONLY | nofollow | directory | getattr(os, "O_CLOEXEC", 0)
+    )
+    file_flags = os.O_RDONLY | nofollow | getattr(os, "O_CLOEXEC", 0)
+    try:
+        current_fd = os.open(os.path.sep, directory_flags)
+    except OSError as exc:
+        raise HuggingFacePublicationError(
+            f"cannot open filesystem root while validating {label}: {exc}"
+        ) from exc
+    try:
+        components = absolute_path.parts[1:]
+        for index, component in enumerate(components):
+            if component in {"", ".", ".."} or "/" in component:
+                raise HuggingFacePublicationError(
+                    f"{label} has an unsafe path component: {component!r}"
+                )
+            final_component = index == len(components) - 1
+            flags = (
+                directory_flags
+                if not final_component or require_directory
+                else file_flags
+            )
+            try:
+                next_fd = os.open(component, flags, dir_fd=current_fd)
+            except OSError as exc:
+                raise HuggingFacePublicationError(
+                    f"cannot open {label} without following symlinks: "
+                    f"{absolute_path}: {exc}"
+                ) from exc
+            os.close(current_fd)
+            current_fd = next_fd
+        opened_stat = os.fstat(current_fd)
+        expected_mode = (
+            stat.S_ISDIR(opened_stat.st_mode)
+            if require_directory
+            else stat.S_ISREG(opened_stat.st_mode)
+        )
+        if not expected_mode:
+            raise HuggingFacePublicationError(
+                f"{label} is not a regular "
+                f"{'directory' if require_directory else 'file'}: {absolute_path}"
+            )
+    except Exception:
+        os.close(current_fd)
+        raise
+    return absolute_path, current_fd
+
+
+def _read_regular_file_nofollow_components(
+    path: str | Path,
+    *,
+    label: str,
+    maximum_bytes: int,
+) -> bytes:
+    """Read one bounded regular file from the same component-safe descriptor."""
+
+    _, descriptor = _open_absolute_path_nofollow_components(
+        path,
+        label=label,
+        require_directory=False,
+    )
+    try:
+        with os.fdopen(descriptor, "rb", closefd=True) as handle:
+            metadata = os.fstat(handle.fileno())
+            if metadata.st_size < 0 or metadata.st_size > maximum_bytes:
+                raise HuggingFacePublicationError(
+                    f"{label} exceeds its bounded size"
+                )
+            encoded = handle.read(maximum_bytes + 1)
+            if len(encoded) > maximum_bytes:
+                raise HuggingFacePublicationError(
+                    f"{label} exceeds its bounded size"
+                )
+            return encoded
+    except HuggingFacePublicationError:
+        raise
+    except OSError as exc:
+        raise HuggingFacePublicationError(
+            f"cannot read {label}: {exc}"
+        ) from exc
+
+
+_PUBLISHER_IMPORT_SOURCE_SHA256: Final = sha256(
+    _read_regular_file_nofollow_components(
+        __file__,
+        label="generic publisher import source",
+        maximum_bytes=8 * 1024 * 1024,
+    )
+).hexdigest()
+
+
+def _open_local_root_directory_nofollow(
+    local_root: str | Path,
+    *,
+    snapshots: ExitStack,
+) -> tuple[Path, int]:
+    """Open every component of ``local_root`` without following symlinks."""
+
+    root_path, current_fd = _open_absolute_path_nofollow_components(
+        local_root,
+        label="local_root",
+        require_directory=True,
+    )
+    snapshots.callback(os.close, current_fd)
+    return root_path, current_fd
+
+
+def _open_planned_file_nofollow(
+    *,
+    root_fd: int,
+    relative_path: str,
+) -> int:
+    """Open a planned regular file through no-follow directory descriptors."""
+
+    nofollow = getattr(os, "O_NOFOLLOW", None)
+    directory = getattr(os, "O_DIRECTORY", None)
+    if nofollow is None or directory is None:
+        raise HuggingFacePublicationError(
+            "live publication requires component-wise O_NOFOLLOW support"
+        )
+    normalized = _normalize_relative_path(relative_path)
+    parts = normalized.split("/")
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        raise HuggingFacePublicationError(
+            f"planned upload has an unsafe relative path: {relative_path!r}"
+        )
+    directory_flags = (
+        os.O_RDONLY | nofollow | directory | getattr(os, "O_CLOEXEC", 0)
+    )
+    file_flags = os.O_RDONLY | nofollow | getattr(os, "O_CLOEXEC", 0)
+    current_fd = os.dup(root_fd)
+    try:
+        for component in parts[:-1]:
+            try:
+                next_fd = os.open(
+                    component,
+                    directory_flags,
+                    dir_fd=current_fd,
+                )
+            except OSError as exc:
+                raise HuggingFacePublicationError(
+                    "cannot open planned parent directory without following "
+                    f"symlinks: {relative_path}: {exc}"
+                ) from exc
+            os.close(current_fd)
+            current_fd = next_fd
+        try:
+            descriptor = os.open(parts[-1], file_flags, dir_fd=current_fd)
+        except OSError as exc:
+            raise HuggingFacePublicationError(
+                "cannot open planned local file without following symlinks: "
+                f"{relative_path}: {exc}"
+            ) from exc
+    finally:
+        os.close(current_fd)
+    return descriptor
+
+
+def _snapshot_commit_add_operation(
+    *,
+    root_fd: int,
+    item: PublicationFilePlan,
+    snapshots: ExitStack,
+) -> Any:
+    """Snapshot one planned path into an anonymous tempfile for upload."""
+
+    descriptor = _open_planned_file_nofollow(
+        root_fd=root_fd,
+        relative_path=item.relative_path,
+    )
+
+    digest = sha256()
+    size_bytes = 0
+    try:
+        try:
+            source_handle = os.fdopen(descriptor, "rb", closefd=True)
+        except Exception:
+            os.close(descriptor)
+            raise
+        with source_handle as source:
+            source_stat = os.fstat(source.fileno())
+            if not stat.S_ISREG(source_stat.st_mode):
+                raise HuggingFacePublicationError(
+                    "planned local upload is not a regular file: "
+                    f"{item.relative_path}"
+                )
+            snapshot = snapshots.enter_context(tempfile.TemporaryFile(mode="w+b"))
+            while True:
+                chunk = source.read(8 * 1024 * 1024)
+                if not chunk:
+                    break
+                written = snapshot.write(chunk)
+                if written != len(chunk):
+                    raise HuggingFacePublicationError(
+                        "short anonymous snapshot write for: "
+                        f"{item.relative_path}"
+                    )
+                size_bytes += len(chunk)
+                digest.update(chunk)
+            snapshot.flush()
+            snapshot.seek(0)
+    except HuggingFacePublicationError:
+        raise
+    except (OSError, ValueError) as exc:
+        raise HuggingFacePublicationError(
+            f"cannot snapshot planned local file: {item.relative_path}: {exc}"
+        ) from exc
+
+    digest_bytes = digest.digest()
+    if size_bytes != item.size_bytes or digest_bytes.hex() != item.sha256:
+        raise HuggingFacePublicationError(
+            f"local file digest mismatch before upload: {item.relative_path}"
+        )
+    try:
+        op = _build_commit_add_operation(
+            path_in_repo=item.remote_path,
+            fileobj=snapshot,
+            size_bytes=size_bytes,
+            sha256_digest=digest_bytes,
+        )
+    except (OSError, TypeError, ValueError) as exc:
+        raise HuggingFacePublicationError(
+            "cannot build immutable upload operation for "
+            f"{item.relative_path}: {exc}"
+        ) from exc
+
+    try:
+        upload_info = _record_value(op, "upload_info")
+        info_size = _record_value(upload_info, "size")
+        info_digest = _record_value(upload_info, "sha256")
+        if isinstance(info_digest, bytes):
+            info_digest_text = info_digest.hex()
+        else:
+            info_digest_text = str(info_digest or "").casefold()
+    except (OSError, TypeError, ValueError) as exc:
+        raise HuggingFacePublicationError(
+            "cannot verify CommitOperationAdd upload_info for "
+            f"{item.relative_path}: {exc}"
+        ) from exc
+    if info_size != size_bytes or info_digest_text != digest_bytes.hex():
+        raise HuggingFacePublicationError(
+            "CommitOperationAdd upload_info does not match the reviewed plan: "
+            f"{item.relative_path}"
+        )
+    try:
+        snapshot.seek(0)
+    except (OSError, ValueError) as exc:
+        raise HuggingFacePublicationError(
+            f"cannot rewind anonymous upload snapshot for {item.relative_path}: {exc}"
+        ) from exc
+    return op
 
 
 def _extract_commit_sha(result: Any) -> str:
@@ -2076,6 +2939,7 @@ def publish_huggingface_release(
     run_post_publication_verification: bool = True,
     run_pinned_redownload_validation: bool = True,
     commit_message: str | None = None,
+    live_policy_proof: Mapping[str, Any] | Any | None = None,
 ) -> dict[str, Any]:
     """Plan (and optionally publish) a profile-bound Hugging Face release.
 
@@ -2184,6 +3048,7 @@ def publish_huggingface_release(
         approval=approval,
         local_root=local_root,
         commit_message=commit_message,
+        live_policy_proof=live_policy_proof,
     )
 
     post_publication: PostPublicationVerification | None = None

@@ -32,6 +32,11 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
+from ipfs_datasets_py.processors.legal_data.state_laws_completeness import (
+    has_explicit_official_source_authority,
+    source_authority_class,
+)
+
 TASK_ID = "LCR-005"
 GOAL_ID = "LCR-G010"
 PROGRAM_ID = "legal-corpora-reindex-v1"
@@ -448,8 +453,8 @@ def audit_jurisdiction_receipt(
 
     # Source domain / authority.
     source_domain = str(receipt.get("source_domain") or "").strip().lower()
-    official_source = receipt.get("official_source")
-    if official_source is False or any(
+    authority = source_authority_class(receipt)
+    if not has_explicit_official_source_authority(receipt) or any(
         marker in source_domain for marker in SECONDARY_SOURCE_DOMAIN_MARKERS
     ):
         findings.append(
@@ -457,7 +462,12 @@ def audit_jurisdiction_receipt(
                 section="live_receipts",
                 case_id=case_id,
                 kind="unofficial_source_domain",
-                detail=f"non-official source domain for admission: {source_domain or '<missing>'}",
+                detail=(
+                    "explicit official source authority/domain required for admission: "
+                    f"official_source={receipt.get('official_source')!r}, "
+                    f"source_authority_class={authority or '<missing>'}, "
+                    f"domain={source_domain or '<missing>'}"
+                ),
                 jurisdiction=jurisdiction_code,
             )
         )

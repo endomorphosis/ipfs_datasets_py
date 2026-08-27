@@ -1,6 +1,5 @@
 """Scraper for Tennessee state laws."""
 
-import asyncio
 import hashlib
 import json
 import os
@@ -9,10 +8,18 @@ import ssl
 import time
 import urllib.request
 import warnings
+from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Set
 from urllib.parse import urljoin, urlparse
 
-from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
+from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+from .base_scraper import (
+    BaseStateScraper,
+    NormalizedStatute,
+    StateLawPageMultiFetchResult,
+    StatuteMetadata,
+)
 from .registry import StateScraperRegistry
 
 # Suppress SSL warnings for tn.gov
@@ -55,7 +62,20 @@ class TennesseeScraper(BaseStateScraper):
     )
     OFFICIAL_DOMAIN = "www.tn.gov"
     OFFICIAL_ENTRY_PATH = "/tga/statutes.html"
+    # Legacy compatibility locator only.  It returned HTTP 404 on 2026-08-26
+    # and cannot authorize a current Tennessee Code frontier.
     OFFICIAL_ENTRY_URL = "https://www.tn.gov/tga/statutes.html"
+    CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL = (
+        "https://wapp.capitol.tn.gov/apps/WebPublications/"
+    )
+    AUTHORIZED_CODE_ENTRY_URL = "https://www.lexisnexis.com/hottopics/tncode"
+    AUTHORIZED_CODE_CONTAINER_URL = (
+        "https://advance.lexis.com/container?config="
+        "014CJAA5ZGVhZjA3NS02MmMzLTRlZWQtOGJjNC00YzQ1MmZlNzc2YWYK"
+        "AFBvZENhdGFsb2e9zYpNUjTRaIWVfyrur9ud"
+    )
+    AUTHORIZED_TOC_ROOT_ID = "6gf5kkk"
+    AUTHORIZED_TOC_ENDPOINT = "/r/tocprovider/6gf5kkk/toc/6gf5kkk"
     LINKLESS_QUARANTINE_REASON = "missing_official_source_link"
     last_official_quarantines: List[Dict[str, str]] = []
     _TN_TITLE_HREF_RE = re.compile(
@@ -83,12 +103,12 @@ class TennesseeScraper(BaseStateScraper):
         ("11", "Natural Areas and Recreation"),
         ("12", "Public Property, Printing and Contracts"),
         ("13", "Public Planning and Housing"),
-        ("14", "Reserved"),
-        ("15", "Reserved"),
+        ("14", "COVID-19"),
+        ("15", "Holidays and Days of Special Observance"),
         ("16", "Courts"),
         ("17", "Judges and Chancellors"),
         ("18", "Clerks of Courts"),
-        ("19", "Contempts of Court"),
+        ("19", "[Reserved]"),
         ("20", "Civil Procedure"),
         ("21", "Proceedings in Chancery"),
         ("22", "Juries and Jurors"),
@@ -102,7 +122,10 @@ class TennesseeScraper(BaseStateScraper):
         ("30", "Administration of Estates"),
         ("31", "Descent and Distribution"),
         ("32", "Wills"),
-        ("33", "Mental Health, Substance Abuse and Intellectual and Developmental Disabilities"),
+        (
+            "33",
+            "Mental Health and Substance Abuse and Intellectual and Developmental Disabilities",
+        ),
         ("34", "Guardianship"),
         ("35", "Fiduciaries and Trust Estates"),
         ("36", "Domestic Relations"),
@@ -117,11 +140,11 @@ class TennesseeScraper(BaseStateScraper):
         ("45", "Banks and Financial Institutions"),
         ("46", "Cemeteries"),
         ("47", "Commercial Instruments and Transactions"),
-        ("48", "Corporations and Associations"),
+        ("48", "Securities, Corporations And Associations"),
         ("49", "Education"),
         ("50", "Employer and Employee"),
-        ("51", "Environment"),
-        ("52", "Reserved"),
+        ("51", "[Reserved]"),
+        ("52", "Department of Disability and Aging"),
         ("53", "Food, Drugs and Cosmetics"),
         ("54", "Highways, Bridges and Ferries"),
         ("55", "Motor and Other Vehicles"),
@@ -133,7 +156,7 @@ class TennesseeScraper(BaseStateScraper):
         ("61", "Partnerships"),
         ("62", "Professions, Businesses and Trades"),
         ("63", "Professions of the Healing Arts"),
-        ("64", "Regional Authorities and Special Purpose Governmental Entities"),
+        ("64", "Regional Authorities"),
         ("65", "Public Utilities and Carriers"),
         ("66", "Property"),
         ("67", "Taxes and Licenses"),
@@ -143,6 +166,19 @@ class TennesseeScraper(BaseStateScraper):
         ("71", "Welfare"),
     )
     OFFICIAL_TITLE_COUNT = len(OFFICIAL_TITLES)
+    OBSERVED_STRICT_INPUT_COUNT = 36_118
+    OBSERVED_BODY_LEAF_COUNT = 36_046
+    OBSERVED_SUBTREE_RESPONSE_COUNT = 69
+    # Source drift requires an explicit reviewed code update.  Tests may
+    # replace this class attribute for a deliberately smaller exact fixture.
+    ENFORCE_OBSERVED_TN_FRONTIER = True
+    STRICT_FULL_BLOCKER = (
+        "Tennessee strict full-corpus acquisition requires a retained-replay-only "
+        "ledger containing the current General Assembly-delegated Lexis chain: "
+        "publisher entry, exact root, all 69 deepest TOC responses, and every "
+        "source-derived document body must be ledger-replayed; synthetic tn.gov, "
+        "Justia, and Jina rows cannot prove this source frontier"
+    )
     DEFAULT_LINKLESS_SEED_ROWS = (
         {
             "statute_id": "Tenn. Code Ann. § 39-17-402",
@@ -162,6 +198,795 @@ class TennesseeScraper(BaseStateScraper):
         },
     )
 
+    async def scrape_all(
+        self,
+        legal_areas: Optional[List[str]] = None,
+        max_statutes: Optional[int] = None,
+        rate_limit_delay: float = 2.0,
+        hydrate_statute_text: bool = True,
+    ) -> List[NormalizedStatute]:
+        full_mode = self._full_corpus_enabled()
+        if full_mode and (max_statutes is not None or legal_areas):
+            raise RuntimeError(
+                "Tennessee strict full-corpus route refuses caps or legal-area filters"
+            )
+        self.last_tennessee_full_corpus_report: Dict[str, Any] = {}
+        rows = await super().scrape_all(
+            legal_areas=legal_areas,
+            max_statutes=max_statutes,
+            rate_limit_delay=rate_limit_delay,
+            hydrate_statute_text=hydrate_statute_text,
+        )
+        if full_mode and not self.last_tennessee_full_corpus_report.get("closed"):
+            raise RuntimeError(
+                "Tennessee strict full-corpus route did not emit a closed report"
+            )
+        return rows
+
+    def state_law_frontier_source_dependencies(self) -> tuple[object, ...]:
+        """Bind the exact parser, replay, closure, and plural archive code."""
+
+        from ...web_archiving import wayback_machine_engine
+        from . import (
+            base_scraper,
+            state_archival_fetch,
+            strict_frontier_closure,
+            tennessee_lexis,
+            tennessee_section,
+        )
+
+        return (
+            base_scraper,
+            state_archival_fetch,
+            strict_frontier_closure,
+            tennessee_lexis,
+            tennessee_section,
+            wayback_machine_engine,
+        )
+
+    def _tennessee_frontier_concurrency(self) -> int:
+        return max(
+            1,
+            min(
+                64,
+                self._env_int("STATE_SCRAPER_TN_FRONTIER_CONCURRENCY", default=16),
+            ),
+        )
+
+    def _tennessee_residual_retry_attempts(self) -> int:
+        return max(
+            0,
+            min(
+                3,
+                self._env_int(
+                    "STATE_SCRAPER_TN_RESIDUAL_RETRY_ATTEMPTS",
+                    default=self._env_int(
+                        "STATE_SCRAPER_FRONTIER_RESIDUAL_RETRY_ATTEMPTS",
+                        default=1,
+                    ),
+                ),
+            ),
+        )
+
+    async def _fetch_tennessee_lexis_get_wave(
+        self,
+        urls: Sequence[str],
+        *,
+        frontier_name: str,
+        content_validator: Any,
+    ) -> StateLawPageMultiFetchResult:
+        """Use one shared plural inventory for an ordered same-domain GET wave.
+
+        This is the future acquisition seam for authority and document GETs.
+        The current strict route below never invokes it: offline certification
+        reads only exact retained ledger identities.  Lexis TOC ``PATCH``
+        requests are deliberately absent because a GET archive cannot bind
+        their request bodies.
+        """
+
+        from .tennessee_lexis import grouped_get_acquisition_contract
+
+        requested = list(urls)
+        if not requested:
+            return StateLawPageMultiFetchResult([], [], [], [], [], {})
+        contract = grouped_get_acquisition_contract(requested)
+        domain = str(contract["source_domain"])
+        if domain == "advance.lexis.com":
+            url_terms = ("/shared/document/statutes-legislation/", "/container")
+        elif domain == "wapp.capitol.tn.gov":
+            url_terms = ("/apps/WebPublications/",)
+        elif domain == "www.lexisnexis.com":
+            url_terms = ("/hottopics/tncode",)
+        else:
+            raise RuntimeError(
+                f"Tennessee {frontier_name} crossed an unbound source domain: {domain}"
+            )
+        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+            requested,
+            residual_retry_attempts=self._tennessee_residual_retry_attempts(),
+            timeout_seconds=45,
+            headers={
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5",
+                "User-Agent": "ipfs-datasets-tennessee-code/3.0",
+            },
+            content_validator=content_validator,
+            media_type="text/html",
+            max_concurrency=self._tennessee_frontier_concurrency(),
+            prefer_direct=True,
+            common_crawl_domain_terms=(domain,),
+            common_crawl_url_terms=url_terms,
+            common_crawl_mime_terms=("html",),
+            wayback_prefix_inventory=True,
+        )
+        vectors = (
+            batch.urls,
+            batch.payloads,
+            batch.errors,
+            batch.transport_receipts,
+            batch.parser_input_envelopes,
+        )
+        if any(len(vector) != len(requested) for vector in vectors):
+            raise RuntimeError(
+                f"Tennessee {frontier_name} returned unaligned acquisition rows"
+            )
+        if list(batch.urls) != requested:
+            raise RuntimeError(
+                f"Tennessee {frontier_name} changed source URL order or identity"
+            )
+        failures = [
+            {"error": error or "invalid parser input", "url": url}
+            for url, payload, error in zip(
+                batch.urls,
+                batch.payloads,
+                batch.errors,
+                strict=True,
+            )
+            if error is not None or not content_validator(bytes(payload or b""))
+        ]
+        if failures:
+            raise RuntimeError(
+                f"Tennessee {frontier_name} is incomplete after residual-only "
+                f"plural retries: {failures}"
+            )
+        if int((batch.stats or {}).get("common_crawl_inventory_queries", 0) or 0) > 1:
+            raise RuntimeError(
+                f"Tennessee {frontier_name} repeated a same-domain Common Crawl inventory"
+            )
+        batch.payloads = [bytes(payload) for payload in batch.payloads]
+        return batch
+
+    @staticmethod
+    def _tennessee_get_request(url: str) -> Dict[str, Any]:
+        return {"method": "GET", "url": str(url)}
+
+    @staticmethod
+    def _tennessee_envelope_receipt_sha256(envelope: Any) -> str:
+        value = envelope
+        if not isinstance(value, Mapping):
+            to_dict = getattr(value, "to_dict", None)
+            if callable(to_dict):
+                value = to_dict()
+        if isinstance(value, Mapping) and isinstance(
+            value.get("parser_input_envelope"), Mapping
+        ):
+            value = value["parser_input_envelope"]
+        if not isinstance(value, Mapping):
+            return ""
+        acquisition = value.get("acquisition")
+        receipt = acquisition.get("receipt") if isinstance(acquisition, Mapping) else None
+        return (
+            str(receipt.get("receipt_sha256") or "").strip()
+            if isinstance(receipt, Mapping)
+            else ""
+        )
+
+    @staticmethod
+    def _tennessee_observed_at_from_receipt(receipt: Mapping[str, Any]) -> str:
+        for key in ("retrieved_at", "observed_at", "timestamp"):
+            value = str(receipt.get(key) or "").strip()
+            if value:
+                return value
+        origin = receipt.get("origin_transport_receipt")
+        if isinstance(origin, Mapping):
+            return TennesseeScraper._tennessee_observed_at_from_receipt(origin)
+        return ""
+
+    def _record_tennessee_retained_input(
+        self,
+        *,
+        source_role: str,
+        official_url: str,
+        sanitized_request: Mapping[str, Any],
+        retained: Any,
+    ) -> bytes:
+        """Bind one exact request identity, body, receipt, and source position."""
+
+        from .tennessee_lexis import canonical_digest
+
+        body = bytes(getattr(retained.envelope, "body", b"") or b"")
+        transport_receipt = dict(
+            getattr(retained, "transport_receipt", {}) or {}
+        )
+        body_sha256 = hashlib.sha256(body).hexdigest()
+        parser_input_receipt_sha256 = self._tennessee_envelope_receipt_sha256(
+            retained.envelope
+        )
+        if (
+            not transport_receipt
+            or str(transport_receipt.get("official_url") or "").rstrip("/")
+            != str(official_url).rstrip("/")
+            or str(transport_receipt.get("content_sha256") or "").lower()
+            != body_sha256
+            or not str(
+                transport_receipt.get("source_transport") or ""
+            ).strip()
+            or not re.fullmatch(r"[a-f0-9]{64}", parser_input_receipt_sha256)
+        ):
+            raise RuntimeError(
+                "Tennessee retained parser input omitted exact byte/transport "
+                f"evidence: {official_url}"
+            )
+        reports = list(getattr(self, "_tennessee_frontier_input_reports", []))
+        report = {
+            "content_sha256": body_sha256,
+            "parser_input_receipt_sha256": parser_input_receipt_sha256,
+            "request_identity_sha256": canonical_digest(dict(sanitized_request)),
+            "source_order": len(reports),
+            "source_role": str(source_role),
+            "source_transport": str(
+                transport_receipt.get("source_transport") or ""
+            ),
+            "source_url": str(official_url),
+            "transport_receipt_sha256": canonical_digest(transport_receipt),
+        }
+        request_identity = str(report["request_identity_sha256"])
+        if any(
+            str(item.get("request_identity_sha256") or "") == request_identity
+            for item in reports
+        ):
+            raise RuntimeError(
+                "Tennessee retained frontier repeated an exact request identity"
+            )
+        reports.append(report)
+        self._tennessee_frontier_input_reports = reports
+        if not getattr(self, "_tennessee_frontier_observed_at", ""):
+            self._tennessee_frontier_observed_at = (
+                self._tennessee_observed_at_from_receipt(transport_receipt)
+            )
+        return body
+
+    def _replay_tennessee_retained_wave(
+        self,
+        requests: Sequence[tuple[str, Mapping[str, Any]]],
+        *,
+        frontier_name: str,
+        source_role: str,
+    ) -> tuple[bytes, ...]:
+        """Replay one whole ordered hierarchy/body wave with zero I/O."""
+
+        from .strict_frontier_closure import replay_exact_retained_state_records
+
+        requested = [(str(url), dict(request)) for url, request in requests]
+        retained_rows = replay_exact_retained_state_records(
+            self,
+            requests=requested,
+            frontier_name=f"Tennessee {frontier_name}",
+            refresh=False,
+        )
+        payloads: List[bytes] = []
+        for (official_url, sanitized_request), retained in zip(
+            requested,
+            retained_rows,
+            strict=True,
+        ):
+            payloads.append(
+                self._record_tennessee_retained_input(
+                    source_role=source_role,
+                    official_url=official_url,
+                    sanitized_request=sanitized_request,
+                    retained=retained,
+                )
+            )
+        return tuple(payloads)
+
+    @staticmethod
+    def _tennessee_decode(payload: bytes, *, source_role: str) -> str:
+        for encoding in ("utf-8-sig", "windows-1252"):
+            try:
+                return bytes(payload).decode(encoding, errors="strict")
+            except UnicodeDecodeError:
+                continue
+        raise RuntimeError(
+            f"Tennessee retained {source_role} input has no supported exact encoding"
+        )
+
+    @staticmethod
+    def _tennessee_publisher_receipt_proves_container(
+        retained: Any,
+        payload: bytes,
+    ) -> bool:
+        from .tennessee_lexis import (
+            PUBLIC_CONTAINER_CONFIG,
+            publisher_container_delegation_present,
+        )
+
+        if publisher_container_delegation_present(
+            payload.decode("utf-8", errors="replace")
+        ):
+            return True
+        receipt = dict(getattr(retained, "transport_receipt", {}) or {})
+        return PUBLIC_CONTAINER_CONFIG in json.dumps(
+            receipt,
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+
+    async def _scrape_strict_tennessee_retained_frontier(
+        self,
+        *,
+        code_name: str,
+    ) -> List[NormalizedStatute]:
+        """Reconstruct all Tennessee rows from exact retained inputs only."""
+
+        from .strict_frontier_closure import replay_exact_retained_state_records
+        from .tennessee_lexis import (
+            OBSERVED_TOTAL_RESIDUAL_COUNT,
+            canonical_digest,
+            canonical_toc_patch_request,
+            derive_exact_metadata_frontier,
+            document_url,
+            general_assembly_delegation_present,
+            observed_metadata_drift,
+            parse_root_html,
+            parse_tennessee_lexis_document_html,
+            parse_title_subtree_payload,
+            unresolved_temporal_variant_groups,
+            valid_document_payload,
+        )
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError("Tennessee strict retained route requires an attached ledger")
+        refresh = getattr(ledger, "refresh_existing_entries", None)
+        if callable(refresh):
+            refresh()
+        self._tennessee_frontier_input_reports = []
+        self._tennessee_frontier_observed_at = ""
+
+        authority_request = self._tennessee_get_request(
+            self.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL
+        )
+        authority_payload = self._replay_tennessee_retained_wave(
+            [(self.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL, authority_request)],
+            frontier_name="General Assembly delegation",
+            source_role="state_delegation",
+        )[0]
+        if not general_assembly_delegation_present(
+            self._tennessee_decode(authority_payload, source_role="state delegation")
+        ):
+            raise RuntimeError(
+                "Tennessee retained General Assembly page does not prove the exact Code delegation"
+            )
+
+        publisher_request = self._tennessee_get_request(self.AUTHORIZED_CODE_ENTRY_URL)
+        publisher_retained = replay_exact_retained_state_records(
+            self,
+            requests=[(self.AUTHORIZED_CODE_ENTRY_URL, publisher_request)],
+            frontier_name="Tennessee publisher entry",
+            refresh=False,
+        )[0]
+        publisher_payload = self._record_tennessee_retained_input(
+            source_role="publisher_entry",
+            official_url=self.AUTHORIZED_CODE_ENTRY_URL,
+            sanitized_request=publisher_request,
+            retained=publisher_retained,
+        )
+        if not self._tennessee_publisher_receipt_proves_container(
+            publisher_retained,
+            publisher_payload,
+        ):
+            raise RuntimeError(
+                "Tennessee retained publisher entry does not prove the exact Lexis container"
+            )
+
+        root_request = self._tennessee_get_request(self.AUTHORIZED_CODE_CONTAINER_URL)
+        root_payload = self._replay_tennessee_retained_wave(
+            [(self.AUTHORIZED_CODE_CONTAINER_URL, root_request)],
+            frontier_name="rendered Lexis root",
+            source_role="rendered_container_root",
+        )[0]
+        title_roots, tables_root = parse_root_html(
+            self._tennessee_decode(root_payload, source_role="rendered Lexis root"),
+            expected_titles=self.OFFICIAL_TITLES,
+        )
+
+        expandable_roots = [
+            node for node in title_roots if node.can_expand or node.has_children
+        ]
+        patch_specs = [canonical_toc_patch_request(node) for node in expandable_roots]
+        patch_requests = [
+            (endpoint, sanitized_request)
+            for endpoint, _request_body, sanitized_request in patch_specs
+        ]
+        patch_payloads = self._replay_tennessee_retained_wave(
+            patch_requests,
+            frontier_name="deepest title TOC wave",
+            source_role="title_open_to_response",
+        )
+        subtrees: Dict[str, Sequence[Any]] = {}
+        subtree_manifest: List[Dict[str, Any]] = []
+        for parent, spec, payload in zip(
+            expandable_roots,
+            patch_specs,
+            patch_payloads,
+            strict=True,
+        ):
+            _endpoint, request_body, _sanitized = spec
+            try:
+                decoded = payload.decode("utf-8-sig", errors="strict")
+                response = json.loads(decoded)
+            except (UnicodeDecodeError, ValueError, json.JSONDecodeError) as exc:
+                raise RuntimeError(
+                    f"Tennessee Title {parent.title_number} retained TOC response is invalid JSON"
+                ) from exc
+            descendants, closed_expandable_ids, error = parse_title_subtree_payload(
+                response,
+                parent=parent,
+                target_level=max(parent.open_to_levels),
+            )
+            if error:
+                raise RuntimeError(
+                    f"Tennessee Title {parent.title_number} TOC did not close: {error}"
+                )
+            subtrees[parent.node_id] = descendants
+            subtree_manifest.append(
+                {
+                    "closed_expandable_node_count": len(closed_expandable_ids),
+                    "parent_node_id": parent.node_id,
+                    "request_body_sha256": hashlib.sha256(request_body).hexdigest(),
+                    "response_sha256": hashlib.sha256(payload).hexdigest(),
+                    "target_level": max(parent.open_to_levels),
+                }
+            )
+
+        metadata = derive_exact_metadata_frontier(
+            title_roots,
+            subtrees_by_root_id=subtrees,
+        )
+        document_nodes = list(metadata.pop("document_nodes"))
+        drift = observed_metadata_drift(metadata)
+        if self.ENFORCE_OBSERVED_TN_FRONTIER and drift:
+            raise RuntimeError(
+                "Tennessee retained Lexis hierarchy drifted from the reviewed exact "
+                f"frontier: {drift}"
+            )
+
+        body_urls = [document_url(node.link_href) for node in document_nodes]
+        body_payloads = self._replay_tennessee_retained_wave(
+            [(url, self._tennessee_get_request(url)) for url in body_urls],
+            frontier_name="document body wave",
+            source_role="statute_document_body",
+        )
+        rows: List[NormalizedStatute] = []
+        body_reports: List[Dict[str, Any]] = []
+        terminals: List[Dict[str, Any]] = []
+        parser_residuals: List[Dict[str, Any]] = []
+        for source_order, (node, url, payload) in enumerate(
+            zip(document_nodes, body_urls, body_payloads, strict=True)
+        ):
+            if not valid_document_payload(payload):
+                parser_residuals.append(
+                    {
+                        "content_item_id": node.content_item_id,
+                        "reason": "invalid_or_blocked_document_payload",
+                        "source_order": source_order,
+                        "source_url": url,
+                    }
+                )
+                continue
+            parsed_rows, report = parse_tennessee_lexis_document_html(
+                self._tennessee_decode(payload, source_role="document body"),
+                source_url=url,
+                node=node,
+                source_order=source_order,
+                code_name=code_name,
+            )
+            body_input_report = self._tennessee_frontier_input_reports[
+                3 + len(expandable_roots) + source_order
+            ]
+            for row in parsed_rows:
+                row.structured_data.update(
+                    {
+                        "parser_input_receipt_sha256": str(
+                            body_input_report["parser_input_receipt_sha256"]
+                        ),
+                        "source_content_sha256": str(
+                            body_input_report["content_sha256"]
+                        ),
+                        "source_request_identity_sha256": str(
+                            body_input_report["request_identity_sha256"]
+                        ),
+                        "source_transport": str(
+                            body_input_report["source_transport"]
+                        ),
+                        "transport_receipt_sha256": str(
+                            body_input_report["transport_receipt_sha256"]
+                        ),
+                    }
+                )
+            for terminal in report.get("terminal_dispositions") or []:
+                terminal.update(
+                    {
+                        "parser_input_receipt_sha256": str(
+                            body_input_report["parser_input_receipt_sha256"]
+                        ),
+                        "source_content_sha256": str(
+                            body_input_report["content_sha256"]
+                        ),
+                        "source_request_identity_sha256": str(
+                            body_input_report["request_identity_sha256"]
+                        ),
+                        "source_transport": str(
+                            body_input_report["source_transport"]
+                        ),
+                        "transport_receipt_sha256": str(
+                            body_input_report["transport_receipt_sha256"]
+                        ),
+                    }
+                )
+            body_reports.append(report)
+            rows.extend(parsed_rows)
+            terminals.extend(report.get("terminal_dispositions") or [])
+            parser_residuals.extend(report.get("parser_residuals") or [])
+        if parser_residuals:
+            raise RuntimeError(
+                "Tennessee retained body frontier has parser residuals: "
+                f"{parser_residuals[:10]} (total={len(parser_residuals)})"
+            )
+
+        temporal_residuals = unresolved_temporal_variant_groups(rows)
+        if temporal_residuals:
+            self.last_tennessee_full_corpus_report = {
+                **metadata,
+                "body_input_count": len(document_nodes),
+                "closed": False,
+                "disposition": "source_bound_temporal_reconciliation_required",
+                "network_requested_pages": 0,
+                "parser_residual_count": len(temporal_residuals),
+                "retained_replay_only": True,
+                "temporal_variant_residual_identity_count": len(
+                    temporal_residuals
+                ),
+                "temporal_variant_residual_locator_count": sum(
+                    int(item["candidate_count"]) for item in temporal_residuals
+                ),
+                "temporal_variant_residuals": temporal_residuals,
+            }
+            raise RuntimeError(
+                "Tennessee retained body frontier requires source-bound temporal "
+                f"reconciliation for {len(temporal_residuals)} repeated citation "
+                "identities"
+            )
+
+        canonical_keys = [
+            str((row.structured_data or {}).get("canonical_section_key") or "")
+            for row in rows
+        ]
+        if (
+            any(not key for key in canonical_keys)
+            or len(canonical_keys) != len(set(canonical_keys))
+            or len(rows) + len(terminals) != len(document_nodes)
+        ):
+            raise RuntimeError(
+                "Tennessee body/terminal output does not close the content-item algebra"
+            )
+
+        input_reports = list(self._tennessee_frontier_input_reports)
+        expected_inputs = 3 + len(expandable_roots) + len(document_nodes)
+        if len(input_reports) != expected_inputs:
+            raise RuntimeError("Tennessee strict input report count is not exact")
+        if (
+            self.ENFORCE_OBSERVED_TN_FRONTIER
+            and expected_inputs != OBSERVED_TOTAL_RESIDUAL_COUNT
+        ):
+            raise RuntimeError(
+                "Tennessee exact source input algebra changed without review"
+            )
+
+        disposition = {
+            "discovered": len(document_nodes),
+            "duplicates": 0,
+            "excluded": len(terminals),
+            "failed_final": 0,
+            "fetched": len(rows),
+            "quarantined": 0,
+        }
+        observed_at = str(self._tennessee_frontier_observed_at or "")
+        frontier: Dict[str, Any] = {
+            **metadata,
+            "algebra_closed": True,
+            "authority_catalog_input_count": 3 + len(expandable_roots),
+            "body_input_count": len(document_nodes),
+            "body_parser_report_count": len(body_reports),
+            "closed": True,
+            "diagnostic_baseline_drift": drift,
+            "disposition": disposition,
+            "enumerator_closed": True,
+            "excluded_root_count": 1,
+            "excluded_root_label": tables_root.title,
+            "input_report_digest_sha256": canonical_digest(input_reports),
+            "method": "official_delegated_tennessee_lexis_retained_replay",
+            "network_requested_pages": 0,
+            "ordered_request_wave_counts": [1, 1, 1, len(expandable_roots), len(document_nodes)],
+            "parser_residual_count": 0,
+            "per_page_archive_inventory_loop": False,
+            "retained_replay_only": True,
+            "row_binding_digest_sha256": canonical_digest(
+                [
+                    [
+                        key,
+                        row.source_url,
+                        str((row.structured_data or {}).get("content_item_id") or ""),
+                        str(
+                            (row.structured_data or {}).get(
+                                "source_content_sha256"
+                            )
+                            or ""
+                        ),
+                    ]
+                    for key, row in zip(canonical_keys, rows, strict=True)
+                ]
+            ),
+            "scope_closed": True,
+            "source_input_count": len(input_reports),
+            "source_request_order_digest_sha256": canonical_digest(
+                [
+                    [
+                        item["source_order"],
+                        item["source_role"],
+                        item["source_url"],
+                        item["request_identity_sha256"],
+                    ]
+                    for item in input_reports
+                ]
+            ),
+            "source_order_preserved": True,
+            "source_parser_body_order_digest_sha256": canonical_digest(
+                [
+                    [
+                        item["source_order"],
+                        item["source_url"],
+                        item["content_sha256"],
+                    ]
+                    for item in input_reports
+                ]
+            ),
+            "subtree_manifest_sha256": canonical_digest(subtree_manifest),
+            "terminal_binding_digest_sha256": canonical_digest(
+                [
+                    [
+                        item.get("source_order"),
+                        item.get("content_item_id"),
+                        item.get("disposition"),
+                        item.get("source_url"),
+                        item.get("source_content_sha256"),
+                        item.get("source_request_identity_sha256"),
+                        item.get("parser_input_receipt_sha256"),
+                        item.get("transport_receipt_sha256"),
+                    ]
+                    for item in terminals
+                ]
+            ),
+            "terminal_document_count": len(terminals),
+            "terminal_disposition_counts": {
+                disposition_name: sum(
+                    str(item.get("disposition") or "") == disposition_name
+                    for item in terminals
+                )
+                for disposition_name in sorted(
+                    {str(item.get("disposition") or "") for item in terminals}
+                )
+                if disposition_name
+            },
+            "toc_patch_archive_substitution_allowed": False,
+            "unresolved_input_count": 0,
+        }
+        frontier["frontier_digest_sha256"] = canonical_digest(frontier)
+        observation = {
+            "boundary_first": body_urls[0] if body_urls else "",
+            "boundary_last": body_urls[-1] if body_urls else "",
+            "code_name": code_name,
+            "frontier": frontier,
+            "input_reports": input_reports,
+            "legal_as_of": observed_at[:10] if observed_at else "",
+            "observed_at": observed_at,
+        }
+        replaying = bool(getattr(self, "_tennessee_retained_replay", False))
+        if replaying:
+            self._last_tennessee_replayed_frontier = observation
+        else:
+            self._last_tennessee_full_frontier = observation
+        self.last_tennessee_full_corpus_report = dict(frontier)
+        return rows
+
+    async def produce_state_law_frontier_closure(
+        self,
+        *,
+        canonical_output_projection: Mapping[str, Any],
+    ) -> Optional[Path]:
+        """Repeat every exact Tennessee input by ordered ledger-only waves."""
+
+        first = getattr(self, "_last_tennessee_full_frontier", None)
+        if not isinstance(first, Mapping):
+            raise RuntimeError(
+                "Tennessee strict source frontier was not closed before output"
+            )
+        first_frontier = first.get("frontier")
+        first_reports = first.get("input_reports")
+        if not isinstance(first_frontier, Mapping) or not isinstance(
+            first_reports, Sequence
+        ):
+            raise RuntimeError("Tennessee first exact frontier observation is incomplete")
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError("Tennessee closure requires an attached acquisition ledger")
+        refresh = getattr(ledger, "refresh_existing_entries", None)
+        if callable(refresh):
+            refresh()
+
+        prior = bool(getattr(self, "_tennessee_retained_replay", False))
+        self._tennessee_retained_replay = True
+        try:
+            replay_rows = await self._scrape_strict_tennessee_retained_frontier(
+                code_name=str(first.get("code_name") or "Tennessee Code Annotated")
+            )
+        finally:
+            self._tennessee_retained_replay = prior
+        replay = getattr(self, "_last_tennessee_replayed_frontier", None)
+        if not isinstance(replay, Mapping):
+            raise RuntimeError("Tennessee retained replay observation is missing")
+        replayed_frontier = replay.get("frontier")
+        if (
+            not isinstance(replayed_frontier, Mapping)
+            or list(replay.get("input_reports") or []) != list(first_reports)
+        ):
+            raise RuntimeError("Tennessee retained request/body identities changed on replay")
+
+        from .strict_frontier_closure import retain_exact_state_frontier_closure
+
+        disposition = first_frontier.get("disposition")
+        if not isinstance(disposition, Mapping):
+            raise RuntimeError("Tennessee frontier lacks disposition algebra")
+        return retain_exact_state_frontier_closure(
+            self,
+            canonical_output_projection=canonical_output_projection,
+            first_frontier=first_frontier,
+            replayed_frontier=replayed_frontier,
+            replay_rows=replay_rows,
+            jurisdiction="TN",
+            source_domain="advance.lexis.com",
+            official_source_url=self.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL,
+            observed_at=str(first.get("observed_at") or ""),
+            legal_as_of=str(first.get("legal_as_of") or ""),
+            boundary_first=str(first.get("boundary_first") or ""),
+            boundary_last=str(first.get("boundary_last") or ""),
+            bundle_total=int(disposition.get("discovered") or 0),
+            pagination_total=int(first_frontier.get("subtree_response_count") or 0),
+            transport={
+                "fixture": False,
+                "first_pass_requested_pages": int(
+                    first_frontier.get("source_input_count") or 0
+                ),
+                "get_acquisition_contract": "shared_archive_aware_plural_residual",
+                "grouped_warc_recovery": True,
+                "kind": "delegated_lexis_patch_ledger_plus_plural_get",
+                "per_page_archive_loop": False,
+                "retained_replay_network_requests": 0,
+                "synthetic": False,
+                "toc_patch_archive_substitution_allowed": False,
+            },
+        )
+
     def get_base_url(self) -> str:
         """Return the base URL for Tennessee's legislative website."""
         return "https://www.capitol.tn.gov"
@@ -171,7 +996,7 @@ class TennesseeScraper(BaseStateScraper):
         return [
             {
                 "name": "Tennessee Code Annotated",
-                "url": "https://www.tn.gov/tga/statutes.html",
+                "url": self.AUTHORIZED_CODE_ENTRY_URL,
                 "type": "Code",
             }
         ]
@@ -212,6 +1037,17 @@ class TennesseeScraper(BaseStateScraper):
         Justia TCA mirrors are secondary and cannot authorize full-corpus
         admission unless ``STATE_SCRAPER_TN_ALLOW_JUSTIA_FALLBACK`` is set.
         """
+        if self._full_corpus_enabled():
+            if max_statutes is not None:
+                raise RuntimeError(
+                    "Tennessee strict full-corpus route refuses a statute cap"
+                )
+            if self._retained_replay_only_enabled():
+                return await self._scrape_strict_tennessee_retained_frontier(
+                    code_name=code_name or "Tennessee Code Annotated"
+                )
+            raise RuntimeError(self.STRICT_FULL_BLOCKER)
+
         limit = self._effective_scrape_limit(max_statutes, default=160)
         from .tennessee_constitution import (
             configured_constitution_text_path,
@@ -463,7 +1299,7 @@ class TennesseeScraper(BaseStateScraper):
             title_number=title_number,
             section_number=section_number,
             section_name=section_name[:200],
-            full_text=text[:14000],
+            full_text=text,
             legal_area=self._identify_legal_area(text[:1200]),
             source_url=section_url,
             official_cite=f"Tenn. Code Ann. § {section_number}",
@@ -533,7 +1369,7 @@ class TennesseeScraper(BaseStateScraper):
                     title_number=section_number.split("-", 1)[0],
                     section_number=section_number,
                     section_name=section_name,
-                    full_text=text[:14000],
+                    full_text=text,
                     legal_area=self._identify_legal_area(text[:1200]),
                     source_url=source_url,
                     official_cite=f"Tenn. Code Ann. § {section_number}",
@@ -777,88 +1613,38 @@ class TennesseeScraper(BaseStateScraper):
         return statutes
 
     async def _fetch_justia_listing_html(self, url: str, timeout_seconds: int = 30) -> bytes:
-        cached = await self._load_page_bytes_from_any_cache(url)
-        if cached:
-            return cached
-
         timeout = max(5, int(timeout_seconds or 30))
-        try:
-            from playwright.async_api import async_playwright
-        except Exception as exc:
-            self._record_fetch_event(provider="playwright_tn_justia", success=False, error=f"playwright_unavailable: {exc}")
-            return b""
-
-        try:
-            async with async_playwright() as playwright:
-                browser = await playwright.chromium.launch(headless=True)
-                try:
-                    page = await browser.new_page(
-                        user_agent=(
-                            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                            "Chrome/122.0.0.0 Safari/537.36"
-                        )
-                    )
-                    await page.goto(url, wait_until="networkidle", timeout=timeout * 1000)
-                    content = await page.content()
-                finally:
-                    await browser.close()
-        except Exception as exc:
-            self._record_fetch_event(provider="playwright_tn_justia", success=False, error=str(exc))
-            return b""
-
-        payload = content.encode("utf-8", errors="ignore")
-        sample = payload[:12000].decode("utf-8", errors="ignore")
-        if self._TN_CLOUDFLARE_CHALLENGE_RE.search(sample):
-            self._record_fetch_event(provider="playwright_tn_justia", success=False, error="cloudflare_challenge")
-            return b""
-
-        self._record_fetch_event(provider="playwright_tn_justia", success=bool(payload))
+        payload = await self._fetch_non_authoritative_reference_bytes(
+            url,
+            timeout_seconds=timeout,
+            content_validator=lambda body: bool(body)
+            and self._TN_CLOUDFLARE_CHALLENGE_RE.search(
+                body[:12000].decode("utf-8", errors="ignore")
+            )
+            is None,
+            enable_common_crawl=True,
+        )
+        self._record_fetch_event(
+            provider="shared_secondary_tennessee_recovery",
+            success=bool(payload),
+        )
         if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="playwright_tn_justia")
+            await self._cache_successful_page_fetch(
+                url=url,
+                payload=payload,
+                provider="shared_secondary_tennessee_recovery",
+            )
         return payload
 
     async def _fetch_justia_section_markdown(self, url: str, timeout_seconds: int = 25) -> str:
         reader_url = f"https://r.jina.ai/http://{url}"
-        cached = await self._load_page_bytes_from_any_cache(reader_url)
-        if cached:
-            try:
-                return cached.decode("utf-8", errors="replace")
-            except Exception:
-                return ""
-
         timeout = max(5, int(timeout_seconds or 25))
-
-        def _request() -> str:
-            try:
-                import requests
-
-                response = requests.get(
-                    reader_url,
-                    headers={
-                        "User-Agent": "ipfs-datasets-tennessee-code-scraper/2.0",
-                        "Accept": "text/plain,text/markdown;q=0.9,*/*;q=0.8",
-                    },
-                    timeout=timeout,
-                )
-                if int(response.status_code or 0) != 200:
-                    return ""
-                return str(response.text or "")
-            except Exception:
-                return ""
-
-        try:
-            text = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 1)
-        except asyncio.TimeoutError:
-            text = ""
-
-        self._record_fetch_event(provider="requests_direct_rjina", success=bool(text))
-        if text:
-            await self._cache_successful_page_fetch(
-                url=reader_url,
-                payload=text.encode("utf-8", errors="ignore"),
-                provider="requests_direct_rjina",
-            )
-        return text
+        payload = await self._fetch_non_authoritative_reference_bytes(
+            reader_url,
+            timeout_seconds=timeout,
+            enable_common_crawl=False,
+        )
+        return payload.decode("utf-8", errors="replace") if payload else ""
 
     async def _build_justia_statute(
         self,
@@ -886,7 +1672,7 @@ class TennesseeScraper(BaseStateScraper):
             title_number=section_number.split("-", 1)[0],
             section_number=section_number,
             section_name=section_name[:200],
-            full_text=body[:14000],
+            full_text=body,
             legal_area=self._identify_legal_area(body[:1200]),
             source_url=section_url,
             official_cite=f"Tenn. Code Ann. § {section_number}",
@@ -928,7 +1714,7 @@ class TennesseeScraper(BaseStateScraper):
                     title_number=section_number.split("-", 1)[0],
                     section_number=section_number,
                     section_name=section_name,
-                    full_text=body[:14000],
+                    full_text=body,
                     legal_area=self._identify_legal_area(body[:1200]),
                     source_url=source_url,
                     official_cite=f"Tenn. Code Ann. § {section_number}",
@@ -1309,6 +2095,18 @@ class TennesseeScraper(BaseStateScraper):
             raise ValueError(f"TennesseeScraper cannot acquire {normalized}")
         self.last_official_quarantines = []
         html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        if self._full_corpus_enabled():
+            discovered = self._parse_official_title_links(html)
+            expected = [str(int(number)) for number, _name in self.OFFICIAL_TITLES]
+            if list(discovered) != expected or list(discovered.values()) != [
+                self.official_title_url(number) for number in expected
+            ]:
+                missing = sorted(set(expected).difference(discovered), key=int)
+                unexpected = sorted(set(discovered).difference(expected), key=int)
+                raise RuntimeError(
+                    "tennessee official entry did not prove the exact 71-title "
+                    f"catalog; missing={missing} unexpected={unexpected}"
+                )
         rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
         quarantines = list(getattr(self, "last_official_quarantines", []) or [])
         if len(rows) != self.OFFICIAL_TITLE_COUNT:

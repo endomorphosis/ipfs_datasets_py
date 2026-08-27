@@ -8,6 +8,10 @@ from typing import Any, Dict
 
 import pytest
 
+from ipfs_datasets_py.processors.legal_data.state_laws_source_policy import (
+    get_official_source_catalog,
+)
+from scripts.ops.legal_data.certify_state_laws_full_scrape import aggregate_full_scrape
 from scripts.ops.legal_data.state_laws_acquisition_gap_refill import (
     COHORT_LETTERS,
     EXPECTED_JURISDICTION_COUNT,
@@ -24,15 +28,11 @@ from scripts.ops.legal_data.state_laws_acquisition_gap_refill import (
     classify_kind,
     default_coverage_path,
     default_receipt_dir,
-    default_report_path,
     load_acceptance_report,
     load_json_object,
     main,
     map_gaps_to_work,
     write_acceptance_report,
-)
-from ipfs_datasets_py.processors.legal_data.state_laws_source_policy import (
-    get_official_source_catalog,
 )
 
 
@@ -40,17 +40,46 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[3]
 
 
-def _committed_coverage() -> Dict[str, Any]:
+def _raw_committed_coverage() -> Dict[str, Any]:
     return load_json_object(default_coverage_path(_repo_root()))
 
 
-def _committed_receipts() -> Dict[str, Dict[str, Any]]:
+def _raw_committed_receipts() -> Dict[str, Dict[str, Any]]:
     receipt_dir = default_receipt_dir(_repo_root())
     loaded: Dict[str, Dict[str, Any]] = {}
     for letter in COHORT_LETTERS:
         path = receipt_dir / f"cohort_{letter.lower()}.json"
         loaded[letter] = load_json_object(path)
     return loaded
+
+
+def _committed_receipts() -> Dict[str, Dict[str, Any]]:
+    """Promote compact fixtures into explicit synthetic live evidence."""
+
+    receipts = _raw_committed_receipts()
+    for payload in receipts.values():
+        payload["evidence_mode"] = "live_full_corpus"
+        payload["proves_software_contract_only"] = False
+        payload.pop("statutes_sample_counts", None)
+        for entry in (payload.get("jurisdiction_receipts") or {}).values():
+            row_count = int(entry.get("row_count") or 0)
+            content = entry.get("content") or {}
+            entry["evidence_mode"] = "live_full_corpus"
+            entry["source_artifact"] = {
+                "row_count": row_count,
+                "sha256": content.get("content_digest"),
+            }
+    return receipts
+
+
+def _committed_coverage() -> Dict[str, Any]:
+    """Build a passing synthetic coverage matrix for focused unit cases."""
+
+    return aggregate_full_scrape(
+        receipts=_committed_receipts(),
+        require_jurisdictions=EXPECTED_JURISDICTION_COUNT,
+        repo_root=_repo_root(),
+    )
 
 
 def _write_receipts(tmp_path: Path, receipts: Dict[str, Dict[str, Any]]) -> Path:
@@ -73,12 +102,11 @@ def _write_coverage(tmp_path: Path, coverage: Dict[str, Any]) -> Path:
     return path
 
 
-def test_committed_coverage_closes_with_51_passing_and_zero_work() -> None:
+def test_synthetic_live_coverage_closes_with_51_passing_and_zero_work() -> None:
     coverage = _committed_coverage()
     report = build_acceptance_report(
         coverage,
-        coverage_path=default_coverage_path(_repo_root()),
-        receipt_dir=default_receipt_dir(_repo_root()),
+        receipts=_committed_receipts(),
         repo_root=_repo_root(),
     )
     assert report["status"] == "pass"
@@ -104,11 +132,27 @@ def test_committed_coverage_closes_with_51_passing_and_zero_work() -> None:
     assert "hf_" not in serialized or "hf_token" not in serialized.lower()
 
 
-def test_committed_report_names_content_ids_of_all_inputs() -> None:
+def test_committed_compact_coverage_remains_blocked() -> None:
     report = build_acceptance_report(
-        _committed_coverage(),
+        _raw_committed_coverage(),
         coverage_path=default_coverage_path(_repo_root()),
         receipt_dir=default_receipt_dir(_repo_root()),
+        repo_root=_repo_root(),
+    )
+
+    assert report["status"] == "fail"
+    assert report["passing_receipt_count"] == 0
+    assert report["remaining_gap_count"] > 0
+    assert report["ready_work_count"] > 0
+    assert report["downstream_admission_blocked"] is True
+    with pytest.raises(AcquisitionGapRefillError):
+        check_acceptance_report(report)
+
+
+def test_synthetic_report_names_content_ids_of_all_inputs() -> None:
+    report = build_acceptance_report(
+        _committed_coverage(),
+        receipts=_committed_receipts(),
         repo_root=_repo_root(),
     )
     inputs = report["inputs"]
@@ -255,8 +299,7 @@ def test_absence_of_ready_work_with_gaps_fails_closed() -> None:
 def test_absence_of_ready_work_with_zero_gaps_is_success() -> None:
     report = build_acceptance_report(
         _committed_coverage(),
-        coverage_path=default_coverage_path(_repo_root()),
-        receipt_dir=default_receipt_dir(_repo_root()),
+        receipts=_committed_receipts(),
         repo_root=_repo_root(),
         ready_work=[],
         gaps=[],
@@ -289,8 +332,7 @@ def test_home_path_and_token_material_fail(tmp_path: Path) -> None:
 def test_write_refuses_home_paths(tmp_path: Path) -> None:
     report = build_acceptance_report(
         _committed_coverage(),
-        coverage_path=default_coverage_path(_repo_root()),
-        receipt_dir=default_receipt_dir(_repo_root()),
+        receipts=_committed_receipts(),
         repo_root=_repo_root(),
     )
     poisoned = dict(report)
@@ -393,11 +435,9 @@ def test_write_and_cli_check_on_tmp_passing_coverage(
 def test_cli_check_against_committed(capsys: pytest.CaptureFixture[str]) -> None:
     code = main(["--check"])
     captured = capsys.readouterr()
-    assert code == 0
-    assert "RESULT: PASS" in captured.out
-    assert "passing_receipts: 51" in captured.out
-    assert "remaining_gaps: 0" in captured.out
-    assert "ready_work: 0" in captured.out
+    assert code == 1
+    assert "RESULT: FAIL" in captured.err
+    assert '"passing_receipt_count": 0' in captured.out
 
 
 def test_script_does_not_upload_or_contact_hub() -> None:
@@ -440,6 +480,40 @@ def test_secondary_source_is_jurisdiction_work() -> None:
         coverage,
         receipts=_committed_receipts(),
         repo_root=_repo_root(),
+    )
+    assert any(
+        item["jurisdiction"] == "MA" and item["kind"] == WORK_KIND_JURISDICTION
+        for item in report["ready_work"]
+    )
+
+
+@pytest.mark.parametrize(
+    "authority",
+    [None, "recovery", "unverified", "cache", "direct_insecure_tls"],
+    ids=["missing", "recovery", "unverified", "cache", "direct-insecure-tls"],
+)
+def test_non_official_authority_is_jurisdiction_work(
+    authority: str | None,
+) -> None:
+    coverage = _committed_coverage()
+    cell = coverage["matrix"]["MA"]
+    cell["official_source"] = True
+    cell["complete"] = True
+    if authority is None:
+        cell.pop("source_authority_class", None)
+    else:
+        cell["source_authority_class"] = authority
+
+    report = build_acceptance_report(
+        coverage,
+        receipts=_committed_receipts(),
+        repo_root=_repo_root(),
+    )
+
+    assert report["status"] == "fail"
+    assert report["downstream_admission_blocked"] is True
+    assert not any(
+        row["jurisdiction"] == "MA" for row in report["passing_current_receipts"]
     )
     assert any(
         item["jurisdiction"] == "MA" and item["kind"] == WORK_KIND_JURISDICTION

@@ -23,7 +23,7 @@
         "promoted_success": false
       },
       "content": {
-        "content_digest": "sha256:8a8a8300ea8964f10e60d319b8dfa5fa79586be9a7aa1753ec35d19f93081758",
+        "content_digest": "sha256:6901879d7b995383822c3b6d36dc5d80cfae6b93a068c6f4829655ff06820812",
         "min_full_text_chars": 781,
         "non_placeholder_full_text": true,
         "official_urls": [
@@ -65,7 +65,7 @@
       "partial_checkpoint_promoted": false,
       "replay": {
         "closed": true,
-        "content_digest": "sha256:8a8a8300ea8964f10e60d319b8dfa5fa79586be9a7aa1753ec35d19f93081758",
+        "content_digest": "sha256:6901879d7b995383822c3b6d36dc5d80cfae6b93a068c6f4829655ff06820812",
         "first_frontier_digest": "sha256:416eb97668e7a6bceaef0e705ae85ecf7e6c19a816c11833a32564fe52f95e83",
         "second_frontier_digest": "sha256:416eb97668e7a6bceaef0e705ae85ecf7e6c19a816c11833a32564fe52f95e83"
       },
@@ -91,7 +91,7 @@
         "promoted_success": false
       },
       "content": {
-        "content_digest": "sha256:eb81e8006f9414e608971c1ae0273ca7fbf775419013fedfadfb232acaf15b0f",
+        "content_digest": "sha256:ee9bbb33872d81bb86027e5ca4a888ee37e56e63039ba09f2ced0fb05ad9e833",
         "min_full_text_chars": 827,
         "non_placeholder_full_text": true,
         "official_urls": [
@@ -117,12 +117,12 @@
       },
       "index_keys": {
         "canonical_keys": [
-          "la:RS 1:1",
-          "la:RS 1:2"
+          "la:1",
+          "la:2"
         ],
         "derived_keys": [
-          "la:RS 1:1",
-          "la:RS 1:2"
+          "la:1",
+          "la:2"
         ],
         "parity_ok": true,
         "stale_keys": []
@@ -133,7 +133,7 @@
       "partial_checkpoint_promoted": false,
       "replay": {
         "closed": true,
-        "content_digest": "sha256:eb81e8006f9414e608971c1ae0273ca7fbf775419013fedfadfb232acaf15b0f",
+        "content_digest": "sha256:ee9bbb33872d81bb86027e5ca4a888ee37e56e63039ba09f2ced0fb05ad9e833",
         "first_frontier_digest": "sha256:125c03c53c24b9764edf15de54455046d203d792d8d438cf8d5c14b2ae4467fc",
         "second_frontier_digest": "sha256:125c03c53c24b9764edf15de54455046d203d792d8d438cf8d5c14b2ae4467fc"
       },
@@ -227,8 +227,8 @@
         "promoted_success": false
       },
       "content": {
-        "content_digest": "sha256:a664580ff1d82f218b1c347bc20895db5e7e6144dc2ce636c9cc452b7bf8d975",
-        "min_full_text_chars": 959,
+        "content_digest": "sha256:b5e8247d606cedc019b043b32e08fd6f9dd41668e70a8c3d9cd273dc97b01300",
+        "min_full_text_chars": 520,
         "non_placeholder_full_text": true,
         "official_urls": [
           "https://legislature.maine.gov/statutes/1/title1sec1.html",
@@ -269,7 +269,7 @@
       "partial_checkpoint_promoted": false,
       "replay": {
         "closed": true,
-        "content_digest": "sha256:a664580ff1d82f218b1c347bc20895db5e7e6144dc2ce636c9cc452b7bf8d975",
+        "content_digest": "sha256:b5e8247d606cedc019b043b32e08fd6f9dd41668e70a8c3d9cd273dc97b01300",
         "first_frontier_digest": "sha256:4c64677f2dc41ad5a4dfdcfed56c92826a61596934d787bc1a178d9ea8ab9f85",
         "second_frontier_digest": "sha256:4c64677f2dc41ad5a4dfdcfed56c92826a61596934d787bc1a178d9ea8ab9f85"
       },
@@ -297,7 +297,7 @@
   "shared_combined_write": false,
   "state_results": {
     "KY": {
-      "content_digest": "sha256:8a8a8300ea8964f10e60d319b8dfa5fa79586be9a7aa1753ec35d19f93081758",
+      "content_digest": "sha256:6901879d7b995383822c3b6d36dc5d80cfae6b93a068c6f4829655ff06820812",
       "failed_final": 0,
       "frontier_closed": true,
       "partial_checkpoint_promoted": false,
@@ -308,7 +308,7 @@
       "timeout_promoted_to_success": false
     },
     "LA": {
-      "content_digest": "sha256:eb81e8006f9414e608971c1ae0273ca7fbf775419013fedfadfb232acaf15b0f",
+      "content_digest": "sha256:ee9bbb33872d81bb86027e5ca4a888ee37e56e63039ba09f2ced0fb05ad9e833",
       "failed_final": 0,
       "frontier_closed": true,
       "partial_checkpoint_promoted": false,
@@ -330,7 +330,7 @@
       "timeout_promoted_to_success": false
     },
     "ME": {
-      "content_digest": "sha256:a664580ff1d82f218b1c347bc20895db5e7e6144dc2ce636c9cc452b7bf8d975",
+      "content_digest": "sha256:b5e8247d606cedc019b043b32e08fd6f9dd41668e70a8c3d9cd273dc97b01300",
       "failed_final": 0,
       "frontier_closed": true,
       "partial_checkpoint_promoted": false,

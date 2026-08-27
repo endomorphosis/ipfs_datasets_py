@@ -77,7 +77,7 @@ def parse_west_virginia_constitution_html(
                     title_number=roman,
                     section_number=number,
                     section_name=heading,
-                    full_text=raw[:14000],
+                    full_text=raw,
                     source_url=WV_CONST_URL,
                     official_cite=f"W. Va. Const. art. {roman}, § {number}",
                     metadata=StatuteMetadata(),

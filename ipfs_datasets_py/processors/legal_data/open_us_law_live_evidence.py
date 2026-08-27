@@ -393,6 +393,71 @@ def compute_frontier_digest(frontier: Mapping[str, Any]) -> str:
     return sha256_json(material)
 
 
+def _acquisition_metadata(fetch: OfficialFetch) -> dict[str, Any]:
+    """Return provenance that must survive retained-artifact replay.
+
+    This metadata lives inside the hashed frontier ledger.  Keeping it only on
+    ``OfficialFetch`` would make replay silently relabel archived acquisition as
+    live HTTPS and replace the observed edition/date with process defaults.
+    """
+
+    values = {
+        "edition": str(fetch.edition or "").strip(),
+        "legal_as_of": str(fetch.legal_as_of or "").strip(),
+        "observed_at": str(fetch.observed_at or "").strip(),
+        "source_domain": str(fetch.source_domain or "").strip().lower().strip("."),
+        "source_path": str(fetch.source_path or "").strip(),
+        "transport_kind": str(fetch.transport_kind or "").strip().lower(),
+    }
+    missing = sorted(name for name, value in values.items() if not value)
+    if missing:
+        raise LiveEvidenceError(
+            "retained acquisition metadata is incomplete: " + ",".join(missing)
+        )
+    fixture_transport = values["transport_kind"] in {"fixture", "mock", "synthetic"}
+    if bool(fetch.fixture) != fixture_transport:
+        raise LiveEvidenceError(
+            "fetch.fixture conflicts with retained transport_kind"
+        )
+    values["fixture"] = bool(fetch.fixture)
+    return values
+
+
+def _load_acquisition_metadata(
+    frontier: Mapping[str, Any],
+    *,
+    fixture: bool,
+) -> dict[str, Any]:
+    """Load exact hash-bound acquisition provenance from a frontier ledger."""
+
+    raw = frontier.get("acquisition_metadata")
+    if not isinstance(raw, Mapping):
+        raise MissingRetainedArtifactsError(
+            "frontier ledger lacks hash-bound acquisition_metadata"
+        )
+    metadata = {
+        "edition": str(raw.get("edition") or "").strip(),
+        "legal_as_of": str(raw.get("legal_as_of") or "").strip(),
+        "observed_at": str(raw.get("observed_at") or "").strip(),
+        "source_domain": str(raw.get("source_domain") or "").strip().lower().strip("."),
+        "source_path": str(raw.get("source_path") or "").strip(),
+        "transport_kind": str(raw.get("transport_kind") or "").strip().lower(),
+    }
+    missing = sorted(name for name, value in metadata.items() if not value)
+    if missing:
+        raise MissingRetainedArtifactsError(
+            "frontier acquisition_metadata is incomplete: " + ",".join(missing)
+        )
+    recorded_fixture = raw.get("fixture") is True
+    fixture_transport = metadata["transport_kind"] in {"fixture", "mock", "synthetic"}
+    if recorded_fixture != bool(fixture) or fixture_transport != bool(fixture):
+        raise LiveEvidenceError(
+            "retained acquisition metadata conflicts with checkpoint fixture status"
+        )
+    metadata["fixture"] = recorded_fixture
+    return metadata
+
+
 def cid_for_bytes(payload: bytes, label: str) -> str:
     return fake_cid(f"{label}:{sha256_bytes(payload)}")
 
@@ -460,8 +525,17 @@ def write_retained_artifacts(
     response_h = sha256_bytes(fetch.response_bytes)
     body_h = sha256_bytes(fetch.body_bytes)
     frontier = dict(fetch.frontier)
-    if "frontier_digest_sha256" not in frontier:
-        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+    metadata = _acquisition_metadata(fetch)
+    existing_metadata = frontier.get("acquisition_metadata")
+    if existing_metadata is not None and existing_metadata != metadata:
+        raise LiveEvidenceError(
+            "frontier acquisition_metadata conflicts with OfficialFetch provenance"
+        )
+    frontier["acquisition_metadata"] = metadata
+    # Metadata is part of the durable frontier identity, so a digest supplied
+    # before it was attached must never be retained as if it covered these
+    # fields.
+    frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
     keys = canonical_keys_from_rows(code, fetch.rows)
     _atomic_write_bytes(paths["request"], fetch.request_bytes)
     _atomic_write_bytes(paths["response"], fetch.response_bytes)
@@ -646,18 +720,27 @@ def recorded_fetch_from_root(evidence_root: PathLike, code: str) -> OfficialFetc
     frontier = dict(load_frontier_ledger(evidence_root, code))
     rows = tuple(load_rows(evidence_root, code))
     checkpoint = load_checkpoint(evidence_root, code)
-    domains = official_domains_for(code)
+    if checkpoint is None or not checkpoint.completed:
+        raise MissingRetainedArtifactsError(
+            f"{code} lacks a completed retained-artifact checkpoint"
+        )
+    metadata = _load_acquisition_metadata(frontier, fixture=checkpoint.fixture)
     return OfficialFetch(
         jurisdiction_code=str(code).strip().upper(),
         request_bytes=retained["request"] or b"",
         response_bytes=retained["response"] or b"",
         body_bytes=retained["body"] or b"",
-        source_domain=domains[0] if domains else "",
-        source_path="/statutes",
+        source_domain=str(metadata["source_domain"]),
+        source_path=str(metadata["source_path"]),
         frontier=frontier,
         rows=rows,
-        transport_kind="live_https" if not (checkpoint and checkpoint.fixture) else "fixture",
-        fixture=bool(checkpoint and checkpoint.fixture),
+        transport_kind=str(metadata["transport_kind"]),
+        fixture=bool(checkpoint.fixture),
+        observed_at=str(metadata["observed_at"]),
+        edition=str(metadata["edition"]),
+        legal_as_of=str(metadata["legal_as_of"]),
+        first_hierarchy_unit=str(rows[0].get("canonical_key") or "") if rows else "",
+        last_hierarchy_unit=str(rows[-1].get("canonical_key") or "") if rows else "",
     )
 
 
@@ -739,15 +822,39 @@ def build_receipt_from_artifacts(
     body_h = sha256_bytes(body_b)
     frontier = dict(load_frontier_ledger(evidence_root, normalized))
     recomputed_frontier = compute_frontier_digest(frontier)
+    declared_frontier = normalize_sha256(frontier.get("frontier_digest_sha256"))
+    if not declared_frontier or declared_frontier != recomputed_frontier:
+        raise OpenFrontierError(
+            f"{normalized} retained frontier digest does not match its ledger"
+        )
     frontier["frontier_digest_sha256"] = recomputed_frontier
     keys = load_canonical_keys(evidence_root, normalized)
     rows = load_rows(evidence_root, normalized)
     if not keys:
         keys = canonical_keys_from_rows(normalized, rows)
     checkpoint = load_checkpoint(evidence_root, normalized)
-    fixture = bool(checkpoint and checkpoint.fixture)
+    if checkpoint is None or not checkpoint.completed:
+        raise MissingRetainedArtifactsError(
+            f"{normalized} lacks a completed retained-artifact checkpoint"
+        )
+    if (
+        checkpoint.row_count != len(rows)
+        or checkpoint.request_sha256 != request_h
+        or checkpoint.response_sha256 != response_h
+        or checkpoint.admitted_body_sha256 != body_h
+        or checkpoint.frontier_digest_sha256 != recomputed_frontier
+    ):
+        raise SelfAssertedDigestError(
+            f"{normalized} retained checkpoint does not bind its artifacts"
+        )
+    fixture = bool(checkpoint.fixture)
+    metadata = _load_acquisition_metadata(frontier, fixture=fixture)
     domains = official_domains_for(normalized, admission_row=admission_row)
-    source_domain = domains[0] if domains else ""
+    source_domain = str(metadata["source_domain"])
+    if not domain_is_official(source_domain, domains):
+        raise LiveEvidenceError(
+            f"{normalized} retained source domain is outside the official allowlist"
+        )
     fetched = len(rows)
     receipt = {
         "schema_version": "open-us-law-full-scrape-receipt-v1",
@@ -762,16 +869,16 @@ def build_receipt_from_artifacts(
         "mode": "full",
         "official_source": True,
         "source_domain": source_domain,
-        "source_path": "/statutes",
+        "source_path": str(metadata["source_path"]),
         "source_authority_class": "official",
         "rights": {
             "scope": "statutory_text",
             "attribution_required": True,
             "decision": "admit",
         },
-        "edition": "2026",
-        "legal_as_of": "2026-07-01T00:00:00Z",
-        "observed_at": SEALED_AT,
+        "edition": str(metadata["edition"]),
+        "legal_as_of": str(metadata["legal_as_of"]),
+        "observed_at": str(metadata["observed_at"]),
         "hashes": {
             "request_sha256": request_h,
             "response_sha256": response_h,
@@ -784,7 +891,7 @@ def build_receipt_from_artifacts(
             "rights_receipt_cid": cid_for_bytes(body_b, f"rights:{normalized}"),
         },
         "transport": {
-            "kind": "fixture" if fixture else "live_https",
+            "kind": str(metadata["transport_kind"]),
             "fixture": fixture,
             "synthetic": fixture,
         },

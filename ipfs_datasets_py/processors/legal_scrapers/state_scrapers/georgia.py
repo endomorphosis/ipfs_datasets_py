@@ -15,13 +15,13 @@ import ssl
 import subprocess
 import tempfile
 import urllib.request
+from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import urljoin, urlparse
 
-from ipfs_datasets_py.utils import anyio_compat as asyncio
-
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
+from .retained_replay_network_guard import trusted_pdftotext_executable
 
 
 class GeorgiaFullCorpusIncompleteError(RuntimeError):
@@ -165,6 +165,23 @@ class GeorgiaScraper(BaseStateScraper):
         },
     )
 
+    def state_law_frontier_source_dependencies(self) -> Sequence[Any]:
+        """Bind the archived body parser and strict closure implementation."""
+
+        from . import (
+            georgia_archive,
+            georgia_archived_official,
+            georgia_lexis,
+            strict_frontier_closure,
+        )
+
+        return (
+            georgia_archive,
+            georgia_archived_official,
+            georgia_lexis,
+            strict_frontier_closure,
+        )
+
     def get_base_url(self) -> str:
         """Return the base URL for Georgia's legislative website."""
         return "https://www.legis.ga.gov"
@@ -178,6 +195,244 @@ class GeorgiaScraper(BaseStateScraper):
                 "type": "Code",
             }
         ]
+
+    @staticmethod
+    def _georgia_archived_exact_frontier(corpus: Any) -> Dict[str, Any]:
+        """Project a verified manifest onto the shared exact-leaf contract."""
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            compute_frontier_digest,
+        )
+
+        receipt = corpus.receipt
+        source_frontier = receipt.get("frontier")
+        inventory = receipt.get("inventory")
+        if not isinstance(source_frontier, Mapping) or not isinstance(
+            inventory, Mapping
+        ):
+            raise GeorgiaFullCorpusIncompleteError(
+                "the archived-official manifest lacks a verified frontier",
+                evidence={"full_corpus_admissible": False},
+            )
+        disposition = {
+            field: int(source_frontier.get(field) or 0)
+            for field in (
+                "discovered",
+                "fetched",
+                "excluded",
+                "quarantined",
+                "failed_final",
+                "duplicates",
+            )
+        }
+        algebra_closed = disposition["discovered"] == sum(
+            disposition[field]
+            for field in (
+                "fetched",
+                "excluded",
+                "quarantined",
+                "failed_final",
+                "duplicates",
+            )
+        )
+        if (
+            source_frontier.get("closed") is not True
+            or source_frontier.get("frontier_closed") is not True
+            or not algebra_closed
+            or disposition["fetched"] != len(corpus.statutes)
+            or disposition["quarantined"]
+            or disposition["failed_final"]
+            or disposition["duplicates"]
+        ):
+            raise GeorgiaFullCorpusIncompleteError(
+                "the archived-official source disposition does not close",
+                evidence={
+                    "disposition": disposition,
+                    "full_corpus_admissible": False,
+                },
+            )
+        inventory_frontier = inventory.get("frontier")
+        if not isinstance(inventory_frontier, Mapping):
+            raise GeorgiaFullCorpusIncompleteError(
+                "the delegated locator inventory is missing",
+                evidence={"full_corpus_admissible": False},
+            )
+        title_numbers = [
+            str(value) for value in inventory_frontier.get("title_numbers") or []
+        ]
+        if title_numbers != [str(number) for number in range(1, 54)]:
+            raise GeorgiaFullCorpusIncompleteError(
+                "the delegated locator inventory is not the exact Title 1-53 set",
+                evidence={
+                    "full_corpus_admissible": False,
+                    "title_numbers": title_numbers,
+                },
+            )
+        frontier: Dict[str, Any] = {
+            "algebra_closed": True,
+            "archived_body_frontier_sha256": str(
+                source_frontier.get("frontier_digest_sha256") or ""
+            ),
+            "bundle_closed": True,
+            "closed": True,
+            "disposition": disposition,
+            "enumerator_closed": True,
+            "expected_index_units": disposition["discovered"],
+            "inventory_sha256": str(receipt.get("inventory_sha256") or ""),
+            "manifest_sha256": str(corpus.manifest_sha256 or ""),
+            "pagination_closed": True,
+            "request_batch_count": 1,
+            "schema_version": "georgia-archived-official-strict-frontier-v1",
+            "scope_closed": True,
+            "section_numbers_sha256": str(
+                source_frontier.get("section_numbers_sha256") or ""
+            ),
+            "title_count": len(title_numbers),
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": disposition["discovered"],
+        }
+        required_digests = (
+            frontier["archived_body_frontier_sha256"],
+            frontier["inventory_sha256"],
+            frontier["manifest_sha256"],
+            frontier["section_numbers_sha256"],
+        )
+        if any(not re.fullmatch(r"[a-f0-9]{64}", value) for value in required_digests):
+            raise GeorgiaFullCorpusIncompleteError(
+                "the archived-official closure lacks an exact digest",
+                evidence={"full_corpus_admissible": False},
+            )
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return frontier
+
+    def _bind_georgia_archived_inputs_to_ledger(
+        self,
+        corpus: Any,
+        *,
+        allow_retention: bool,
+    ) -> None:
+        """Bind or replay every verified body object under this scraper ledger."""
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            if allow_retention:
+                return
+            raise RuntimeError("Georgia retained replay requires an attached ledger")
+        artifacts = corpus.receipt.get("artifacts")
+        if not isinstance(artifacts, Sequence) or isinstance(
+            artifacts, (str, bytes, bytearray)
+        ):
+            raise RuntimeError("Georgia verified manifest lacks body artifacts")
+        manifest_root = Path(corpus.manifest_path).resolve().parent
+        for position, artifact in enumerate(artifacts):
+            if not isinstance(artifact, Mapping):
+                raise RuntimeError(
+                    f"Georgia archived artifact {position} is not an object"
+                )
+            official_url = self._canonical_fetch_url(
+                str(artifact.get("official_url") or "")
+            )
+            digest = str(artifact.get("sha256") or "").strip().lower()
+            relative_path = str(artifact.get("path") or "").strip()
+            if (
+                not official_url
+                or not re.fullmatch(r"[a-f0-9]{64}", digest)
+                or not relative_path
+            ):
+                raise RuntimeError(
+                    f"Georgia archived artifact {position} lacks exact identity"
+                )
+            source_path = (manifest_root / relative_path).resolve()
+            try:
+                source_path.relative_to(manifest_root)
+            except ValueError as exc:
+                raise RuntimeError(
+                    "Georgia archived body path escaped its manifest"
+                ) from exc
+            request = {"method": "GET", "url": official_url}
+            retained = ledger.replay_retained_parser_input_file(
+                official_url=official_url,
+                sanitized_request=request,
+            )
+            if retained is None:
+                retained = ledger.replay_retained_parser_input(
+                    official_url=official_url,
+                    sanitized_request=request,
+                )
+            if retained is None and allow_retention:
+                from ipfs_datasets_py.processors.legal_data.state_laws_source_provenance import (
+                    canonicalize_state_law_transport_receipt,
+                )
+
+                transport = canonicalize_state_law_transport_receipt(
+                    artifact,
+                    official_url=official_url,
+                    content_sha256=digest,
+                )
+                retained = ledger.retain_parser_input_file(
+                    official_url=official_url,
+                    source_path=source_path,
+                    transport_receipt=transport,
+                    retrieved_at=str(artifact.get("fetched_at") or ""),
+                    response_status=int(artifact.get("status_code") or 200),
+                    media_type="text/html",
+                    sanitized_request=request,
+                )
+            if retained is None:
+                raise RuntimeError(
+                    "Georgia retained replay is missing an exact body input: "
+                    f"{official_url}"
+                )
+            content = retained.receipt.content
+            if content is None or str(content.sha256).lower() != digest:
+                raise RuntimeError(
+                    "Georgia retained body digest changed on replay: "
+                    f"{official_url}"
+                )
+
+    def _record_georgia_archived_observation(
+        self,
+        corpus: Any,
+        *,
+        code_name: str,
+        record_primary: bool,
+    ) -> Dict[str, Any]:
+        frontier = self._georgia_archived_exact_frontier(corpus)
+        inventory = corpus.receipt.get("inventory") or {}
+        artifacts = list(corpus.receipt.get("artifacts") or [])
+        official_urls = [
+            str(row.get("official_url") or "")
+            for row in artifacts
+            if isinstance(row, Mapping)
+        ]
+        if not official_urls or any(not value for value in official_urls):
+            raise RuntimeError("Georgia archived frontier lacks boundary locators")
+        for statute in corpus.statutes:
+            structured = dict(statute.structured_data or {})
+            structured["content_sha256"] = str(
+                structured.get("body_sha256") or ""
+            )
+            statute.structured_data = structured
+        observation = {
+            "boundary_first": official_urls[0],
+            "boundary_last": official_urls[-1],
+            "code_name": code_name,
+            "frontier": frontier,
+            "legal_as_of": str(inventory.get("edition_as_of") or ""),
+            "manifest_path": str(corpus.manifest_path),
+            "observed_at": str(inventory.get("observed_at") or ""),
+        }
+        setattr(
+            self,
+            (
+                "_last_georgia_strict_observation"
+                if record_primary
+                else "_last_georgia_replayed_observation"
+            ),
+            observation,
+        )
+        return observation
 
     async def scrape_code(
         self,
@@ -204,6 +459,50 @@ class GeorgiaScraper(BaseStateScraper):
                 max_statutes=limit,
             )
             return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        from .georgia_archived_official import (
+            GeorgiaArchivedOfficialCorpusError,
+            configured_georgia_archived_official_manifest_path,
+            load_georgia_archived_official_corpus,
+        )
+
+        archived_official_manifest = configured_georgia_archived_official_manifest_path()
+        if archived_official_manifest is not None:
+            try:
+                archived = load_georgia_archived_official_corpus(
+                    archived_official_manifest,
+                    code_name=code_name or "Official Code of Georgia Annotated",
+                )
+            except GeorgiaArchivedOfficialCorpusError as exc:
+                if require_live_full_frontier:
+                    raise GeorgiaFullCorpusIncompleteError(
+                        "the configured archived-official body receipt failed verification",
+                        evidence={
+                            "archived_official_manifest": str(archived_official_manifest),
+                            "archived_official_reason": exc.reason,
+                            "full_corpus_admissible": False,
+                            **exc.evidence,
+                        },
+                    ) from exc
+                raise
+            self._bind_georgia_archived_inputs_to_ledger(
+                archived,
+                allow_retention=True,
+            )
+            self._record_georgia_archived_observation(
+                archived,
+                code_name=code_name or "Official Code of Georgia Annotated",
+                record_primary=True,
+            )
+            rows = list(archived.statutes)
+            self._last_full_corpus_frontier = dict(archived.receipt.get("frontier") or {})
+            self._last_full_corpus_frontier.update(
+                {
+                    "acquisition_method": "hash_bound_archived_official",
+                    "inventory_sha256": archived.receipt.get("inventory_sha256"),
+                    "manifest_sha256": archived.manifest_sha256,
+                }
+            )
+            return rows if limit is None else rows[: int(limit)]
         from .georgia_title import (
             configured_title_text_paths,
             parse_configured_georgia_title,
@@ -280,7 +579,10 @@ class GeorgiaScraper(BaseStateScraper):
             justia = await self._scrape_justia_year(
                 code_name,
                 year="2024",
-                max_statutes=max(10, limit or 40),
+                max_statutes=max(
+                    10,
+                    limit or self._bounded_return_threshold(160),
+                ),
             )
             justia = self._filter_non_code_results(justia)
             if justia:
@@ -332,6 +634,10 @@ class GeorgiaScraper(BaseStateScraper):
         "common_crawl",
         "archival_fallback",
         "common_crawl_insecure_tls",
+        "fetch_cache",
+        "ipfs_page_cache",
+        "durable_cache",
+        "unified_api",
     )
 
     def _classify_html_transport(self, provider: str) -> Tuple[str, str]:
@@ -341,50 +647,24 @@ class GeorgiaScraper(BaseStateScraper):
         return "official", "official_georgia_code_html"
 
     async def _fetch_official_ga_html(self, url: str, timeout_seconds: int = 18) -> str:
-        cached = await self._load_page_bytes_from_any_cache(url)
-        if cached:
-            return cached.decode("utf-8", errors="replace")
+        from .georgia_archive import looks_like_georgia_spa_shell
 
         timeout = max(1, int(timeout_seconds or 18))
-
-        def _request() -> bytes:
-            try:
-                import requests
-
-                response = requests.get(
-                    url,
-                    headers={
-                        "User-Agent": "ipfs-datasets-georgia-code-scraper/3.0",
-                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-                    },
-                    timeout=(min(5, timeout), timeout),
-                )
-                if int(response.status_code or 0) != 200:
-                    return b""
-                return bytes(response.content or b"")
-            except Exception:
-                return b""
-
-        try:
-            payload = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
-        except TimeoutError:
-            payload = b""
-
-        self._record_fetch_event(provider="requests_direct", success=bool(payload))
-        if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
-            return payload.decode("utf-8", errors="replace")
-
-        try:
-            recovered = await self._fetch_page_content_with_archival_fallback(
-                url,
-                timeout_seconds=timeout,
-            )
-        except Exception:
-            recovered = b""
-        if recovered:
-            return recovered.decode("utf-8", errors="replace")
-        return ""
+        payload = await self._fetch_parser_input_with_transport(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-georgia-code-scraper/3.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            },
+            timeout_seconds=timeout,
+            content_validator=lambda body: not looks_like_georgia_spa_shell(
+                body.decode("utf-8", errors="replace")
+            ),
+            allow_archival_fallback=True,
+            media_type="text/html",
+            provider="requests_direct",
+        )
+        return payload.decode("utf-8", errors="replace") if payload else ""
 
     async def _scrape_official_georgia_code(
         self,
@@ -483,19 +763,27 @@ class GeorgiaScraper(BaseStateScraper):
         from .georgia_archive import parse_georgia_archive_html
 
         recovered_rows = parse_georgia_archive_html(
-            html, source_url=section_url, code_name=code_name, max_statutes=8
+            html, source_url=section_url, code_name=code_name, max_statutes=None
         )
         if recovered_rows:
-            wanted = str(section_label or "").strip()
+            url_match = self._GA_SECTION_RE.search(section_url.rstrip("/"))
+            wanted = str(url_match.group(1) if url_match else "").strip()
+            if not wanted:
+                label_match = re.search(
+                    r"\b(\d+[A-Za-z]?-\d+[A-Za-z0-9.-]*)\b",
+                    str(section_label or ""),
+                )
+                wanted = str(label_match.group(1) if label_match else "").strip()
             row = next(
                 (
                     candidate
                     for candidate in recovered_rows
-                    if candidate.section_number == wanted
-                    or str(candidate.section_number or "") in section_url
+                    if str(candidate.section_number or "").strip() == wanted
                 ),
-                recovered_rows[0],
+                None,
             )
+            if row is None:
+                return None
             if authority == "official":
                 data = dict(row.structured_data or {})
                 data["source_authority_class"] = "official"
@@ -519,7 +807,11 @@ class GeorgiaScraper(BaseStateScraper):
         )
         if main is None:
             return None
-        full_text = self._normalize_legal_text(main.get_text(" ", strip=True))
+        from .georgia_archive import strip_georgia_editorial_tail
+
+        full_text = self._normalize_legal_text(
+            strip_georgia_editorial_tail(main.get_text("\n", strip=True))
+        )
         if len(full_text) < 80:
             return None
         if self._looks_contaminated(full_text):
@@ -555,7 +847,7 @@ class GeorgiaScraper(BaseStateScraper):
             section_number=section_number,
             section_name=section_name[:200],
             short_title=section_name[:200],
-            full_text=full_text[:14000],
+            full_text=full_text,
             legal_area=self._identify_legal_area(section_name or chapter_label or title_label),
             source_url=section_url.rstrip("/") + "/",
             official_cite=f"Ga. Code Ann. § {section_number}",
@@ -651,7 +943,7 @@ class GeorgiaScraper(BaseStateScraper):
             code_name=code_name,
             section_number=section_number,
             section_name=(heading or f"Georgia Code {section_number}")[:200],
-            full_text=full_text[:14000],
+            full_text=full_text,
             source_url=section_url,
             legal_area=self._identify_legal_area(heading),
             official_cite=f"Ga. Code Ann. § {section_number}",
@@ -724,7 +1016,7 @@ class GeorgiaScraper(BaseStateScraper):
                 pdf_path.write_bytes(payload)
 
                 result = subprocess.run(
-                    ["pdftotext", "-f", "1", "-l", "12", str(pdf_path), str(txt_path)],
+                    [trusted_pdftotext_executable(), "-f", "1", "-l", "12", str(pdf_path), str(txt_path)],
                     capture_output=True,
                     text=True,
                     timeout=40,
@@ -741,42 +1033,19 @@ class GeorgiaScraper(BaseStateScraper):
             return ""
 
     async def _fetch_pdf_bytes_direct(self, url: str, timeout_seconds: int = 45) -> bytes:
-        cached = await self._load_page_bytes_from_any_cache(url)
-        if cached:
-            return cached
-
         timeout = max(5, int(timeout_seconds or 45))
-
-        def _request() -> bytes:
-            try:
-                import requests
-
-                response = requests.get(
-                    url,
-                    headers={
-                        "User-Agent": "ipfs-datasets-georgia-code-scraper/3.0",
-                        "Accept": "application/pdf,*/*;q=0.8",
-                    },
-                    timeout=(min(10, timeout), timeout),
-                )
-                if int(response.status_code or 0) != 200:
-                    return b""
-                payload = bytes(response.content or b"")
-                if not payload.startswith(b"%PDF"):
-                    return b""
-                return payload
-            except Exception:
-                return b""
-
-        try:
-            payload = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
-        except TimeoutError:
-            payload = b""
-
-        self._record_fetch_event(provider="requests_direct", success=bool(payload))
-        if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
-        return payload
+        return await self._fetch_parser_input_with_transport(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-georgia-code-scraper/3.0",
+                "Accept": "application/pdf,*/*;q=0.8",
+            },
+            timeout_seconds=timeout,
+            content_validator=lambda payload: payload.startswith(b"%PDF"),
+            allow_archival_fallback=True,
+            media_type="application/pdf",
+            provider="requests_direct",
+        )
 
     def official_title_url(self, title_number: object) -> str:
         number = str(title_number or "").strip()
@@ -800,9 +1069,12 @@ class GeorgiaScraper(BaseStateScraper):
             url = self.official_title_url(number)
             rows.append(
                 {
+                    "body_admissible": False,
                     "canonical_key": f"ga:title-{number}",
+                    "full_corpus_admissible": False,
                     "title_number": number,
                     "name": name,
+                    "source_scope": "title_inventory",
                     "source_url": url,
                     "source_link_disposition": "official",
                     "text": (
@@ -864,9 +1136,10 @@ class GeorgiaScraper(BaseStateScraper):
         if section_number:
             repaired = self.official_section_url(section_number)
             statute.source_url = repaired
-            structured["source_kind"] = (
-                structured.get("source_kind") or "official_georgia_code_html"
-            )
+            structured["source_kind"] = "unverified_georgia_body_with_repaired_locator"
+            structured["source_authority_class"] = "unverified"
+            structured["full_corpus_admissible"] = False
+            structured["official_source"] = False
             structured["source_link_disposition"] = "repaired_official_galeg"
             structured["previous_source_url"] = source_url or None
             statute.structured_data = structured
@@ -896,7 +1169,8 @@ class GeorgiaScraper(BaseStateScraper):
         """Replace the absent contaminated GA bucket object with official clean text.
 
         Recoverable title numbers are rewritten to official legis.ga.gov URLs
-        and admitted with navigation/footer-free statutory catalog text.
+        and retained as navigation/footer-free title inventory, not statute
+        bodies.
         Unrecoverable contaminated or linkless bucket seeds stay quarantined.
         """
 
@@ -920,9 +1194,12 @@ class GeorgiaScraper(BaseStateScraper):
             name = names.get(number, f"Title {number}")
             replaced.append(
                 {
+                    "body_admissible": False,
                     "canonical_key": f"ga:title-{number}",
+                    "full_corpus_admissible": False,
                     "title_number": number,
                     "name": name,
+                    "source_scope": "title_inventory",
                     "source_url": official_url,
                     "source_link_disposition": source,
                     "repair_source": source,
@@ -1168,12 +1445,97 @@ class GeorgiaScraper(BaseStateScraper):
                     by_title[number]["source_link_disposition"] = "official_replacement"
         return rows
 
-    def fetch_official(self, code: str = "GA"):
-        """Acquire the exhaustive official Code of Georgia title catalog.
+    async def produce_state_law_frontier_closure(
+        self,
+        *,
+        canonical_output_projection: Mapping[str, Any],
+    ) -> Optional[Path]:
+        """Reload retained official bodies and seal exact output parity."""
 
-        The withdrawn v2026.07 contaminated GA bucket object is replaced from
-        official clean statutory catalog text. Navigation and footer markers
-        are never admitted. This hook never returns fixture bytes.
+        first = getattr(self, "_last_georgia_strict_observation", None)
+        if not isinstance(first, Mapping):
+            raise RuntimeError(
+                "Georgia verified body frontier was not observed before output"
+            )
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError(
+                "Georgia frontier closure requires an attached acquisition ledger"
+            )
+        refresh = getattr(ledger, "refresh_existing_entries", None)
+        if callable(refresh):
+            refresh()
+
+        from .georgia_archived_official import (
+            GeorgiaArchivedOfficialCorpusError,
+            load_georgia_archived_official_corpus,
+        )
+
+        manifest_path = str(first.get("manifest_path") or "").strip()
+        if not manifest_path:
+            raise RuntimeError("Georgia strict observation lacks its manifest path")
+        try:
+            replayed = load_georgia_archived_official_corpus(
+                manifest_path,
+                code_name=str(
+                    first.get("code_name")
+                    or "Official Code of Georgia Annotated"
+                ),
+            )
+        except GeorgiaArchivedOfficialCorpusError as exc:
+            raise RuntimeError(
+                f"Georgia retained archived-official replay failed: {exc.reason}"
+            ) from exc
+        self._bind_georgia_archived_inputs_to_ledger(
+            replayed,
+            allow_retention=False,
+        )
+        replay = self._record_georgia_archived_observation(
+            replayed,
+            code_name=str(
+                first.get("code_name") or "Official Code of Georgia Annotated"
+            ),
+            record_primary=False,
+        )
+        first_frontier = first.get("frontier")
+        replayed_frontier = replay.get("frontier")
+        if not isinstance(first_frontier, Mapping) or not isinstance(
+            replayed_frontier, Mapping
+        ):
+            raise RuntimeError("Georgia exact frontier observations are incomplete")
+
+        from .strict_frontier_closure import retain_exact_state_frontier_closure
+
+        return retain_exact_state_frontier_closure(
+            self,
+            canonical_output_projection=canonical_output_projection,
+            first_frontier=first_frontier,
+            replayed_frontier=replayed_frontier,
+            replay_rows=list(replayed.statutes),
+            jurisdiction="GA",
+            source_domain=self.OFFICIAL_DOMAIN,
+            official_source_url=self.OFFICIAL_ENTRY_URL,
+            observed_at=str(first.get("observed_at") or ""),
+            legal_as_of=str(first.get("legal_as_of") or ""),
+            boundary_first=str(first.get("boundary_first") or ""),
+            boundary_last=str(first.get("boundary_last") or ""),
+            bundle_total=int(first_frontier.get("request_batch_count") or 0),
+            pagination_total=int(first_frontier.get("title_count") or 0),
+            transport={
+                "fixture": False,
+                "kind": "shared_archive_aware_plural_archived_html",
+                "retained_replay_network_requests": 0,
+                "synthetic": False,
+            },
+        )
+
+    def fetch_official(self, code: str = "GA"):
+        """Acquire verified Georgia statute bodies, never title-catalog labels.
+
+        ``enumerate_official_catalog`` remains available for inventory repair,
+        but its short title labels are not statutory text.  This full-corpus
+        hook therefore requires a closed, hash-bound archived-official body
+        manifest and fails closed when one is not configured.
         """
 
         from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
@@ -1184,43 +1546,83 @@ class GeorgiaScraper(BaseStateScraper):
         normalized = str(code or "GA").strip().upper() or "GA"
         if normalized != "GA":
             raise ValueError(f"GeorgiaScraper cannot acquire {normalized}")
-        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
-        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
-        quarantines = list(getattr(self, "last_official_quarantines", []) or [])
-        replacements = list(getattr(self, "last_official_replacements", []) or [])
-        if len(rows) < 3:
-            raise RuntimeError("georgia official catalog enumeration is incomplete")
-        request = (
-            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
-            f"host: {self.OFFICIAL_DOMAIN}\n"
+        from .georgia_archived_official import (
+            GeorgiaArchivedOfficialCorpusError,
+            configured_georgia_archived_official_manifest_path,
+            load_georgia_archived_official_corpus,
+        )
+
+        manifest_path = configured_georgia_archived_official_manifest_path()
+        if manifest_path is None:
+            raise GeorgiaFullCorpusIncompleteError(
+                "the title catalog is inventory-only; a verified archived-official "
+                "statutory-body manifest is required",
+                evidence={
+                    "body_frontier_closed": False,
+                    "full_corpus_admissible": False,
+                    "title_catalog_body_admissible": False,
+                },
+            )
+        try:
+            corpus = load_georgia_archived_official_corpus(manifest_path)
+        except GeorgiaArchivedOfficialCorpusError as exc:
+            raise GeorgiaFullCorpusIncompleteError(
+                "the configured archived-official body receipt failed verification",
+                evidence={
+                    "archived_official_manifest": str(manifest_path),
+                    "archived_official_reason": exc.reason,
+                    "full_corpus_admissible": False,
+                    **exc.evidence,
+                },
+            ) from exc
+        rows: List[Dict[str, Any]] = []
+        for statute in corpus.statutes:
+            row = statute.to_dict()
+            section = str(statute.section_number or "").strip()
+            row.update(
+                {
+                    "canonical_key": f"ga:section-{section}",
+                    "logical_key": f"ga:section-{section}",
+                    "text": statute.full_text,
+                    "url": statute.source_url,
+                }
+            )
+            rows.append(row)
+        if not rows:
+            raise GeorgiaFullCorpusIncompleteError(
+                "the verified body manifest contains no admitted statutes",
+                evidence={"full_corpus_admissible": False},
+            )
+
+        request = json.dumps(
+            {
+                "inventory_sha256": corpus.receipt.get("inventory_sha256"),
+                "manifest_sha256": corpus.manifest_sha256,
+                "official_section_urls": [row["source_url"] for row in rows],
+            },
+            ensure_ascii=False,
+            sort_keys=True,
         ).encode("utf-8")
-        catalog = {
-            "contaminated_bucket_replaced": True,
-            "entry_url": self.OFFICIAL_ENTRY_URL,
-            "jurisdiction": normalized,
-            "official_domain": self.OFFICIAL_DOMAIN,
-            "quarantines": quarantines,
-            "replacement_source": "official_clean_text",
-            "replacements": replacements,
-            "units": rows,
-        }
-        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
-        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
-        frontier = {
-            "bundle_closed": False,
-            "closed": True,
-            "enumerator_closed": True,
-            "expected_index_units": len(rows),
-            "ga_contaminated_bucket_replaced": True,
-            "ga_contaminated_bucket_quarantines": quarantines,
-            "method": "pagination",
-            "pagination_closed": True,
-            "remaining_bundle_members": [],
-            "toc_exhausted": True,
-            "unvisited_continuation_links": [],
-            "visited_index_units": len(rows),
-        }
+        response = corpus.manifest_path.read_bytes()
+        body = json.dumps(rows, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        frontier = dict(corpus.receipt.get("frontier") or {})
+        frontier.update(
+            {
+                "bundle_closed": True,
+                "closed": True,
+                "enumerator_closed": True,
+                "expected_index_units": len(rows),
+                "method": "official_bundle",
+                "pagination_closed": False,
+                "remaining_bundle_members": [],
+                "toc_exhausted": True,
+                "unvisited_continuation_links": [],
+                "visited_index_units": len(rows),
+            }
+        )
         frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        inventory = corpus.receipt.get("inventory") or {}
+        edition_as_of = str(inventory.get("edition_as_of") or "")
         return OfficialFetch(
             jurisdiction_code=normalized,
             request_bytes=request,
@@ -1230,10 +1632,13 @@ class GeorgiaScraper(BaseStateScraper):
             source_path=self.OFFICIAL_ENTRY_PATH,
             frontier=frontier,
             rows=tuple(rows),
-            transport_kind="live_https",
+            transport_kind="archived_https",
             fixture=False,
             first_hierarchy_unit=str(rows[0]["canonical_key"]),
             last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+            observed_at=str(inventory.get("observed_at") or ""),
+            edition=str(inventory.get("edition_identifier") or ""),
+            legal_as_of=f"{edition_as_of}T00:00:00Z",
         )
 
 

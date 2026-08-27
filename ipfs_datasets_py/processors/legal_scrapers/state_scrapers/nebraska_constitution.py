@@ -114,7 +114,7 @@ def parse_nebraska_constitution_html(
             title_number=art_id,
             section_number=number,
             section_name=(title_text or f"Section {number}")[:200],
-            full_text=body[:14000],
+            full_text=body,
             source_url=source_url or NE_ARTICLE_URL_TMPL.format(code=code or f"{art_id}-{number}"),
             official_cite=cite,
             metadata=StatuteMetadata(),

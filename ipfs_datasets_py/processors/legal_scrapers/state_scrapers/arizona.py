@@ -3,11 +3,13 @@
 This module contains the scraper for Arizona statutes from the official state legislative website.
 """
 
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+import hashlib
 import json
 import re
 import ssl
 import urllib.request
+from datetime import UTC, datetime
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 from urllib.parse import parse_qs, urljoin, urlparse
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
@@ -32,6 +34,10 @@ class ArizonaScraper(BaseStateScraper):
     )
     _AZ_TITLE_QUERY_RE = re.compile(r"[?&]title=(\d{1,2})\b", re.IGNORECASE)
     _AZ_TITLE_LABEL_RE = re.compile(r"\bTitle\s+(\d{1,2})\b", re.IGNORECASE)
+    _AZ_REPEALED_TITLE_HEADING_RE = re.compile(
+        r"^Title\s+(?P<title>\d{1,2})\s*-\s*THIS\s+TITLE\s+HAS\s+BEEN\s+REPEALED$",
+        re.IGNORECASE,
+    )
     OFFICIAL_TITLES = (
         ("1", "General Provisions"),
         ("2", "Aeronautics"),
@@ -103,41 +109,147 @@ class ArizonaScraper(BaseStateScraper):
         ]
     
     async def _fetch_official_az_html(self, url: str, timeout_seconds: int = 8) -> str:
-        cached = await self._load_page_bytes_from_any_cache(url)
-        if cached:
-            return cached.decode("utf-8", errors="replace")
         timeout = max(1, int(timeout_seconds or 8))
+        payload = await self._fetch_parser_input_with_transport(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-arizona-ars-scraper/2.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            },
+            timeout_seconds=timeout,
+            allow_archival_fallback=False,
+            media_type="text/html",
+            provider="requests_direct",
+        )
+        return payload.decode("utf-8", errors="replace") if payload else ""
 
-        def _request() -> str:
-            try:
-                import requests
+    async def _fetch_fresh_official_title_receipt(
+        self,
+        url: str,
+        timeout_seconds: int = 12,
+    ) -> Dict[str, Any]:
+        """Fetch one title page without cache and retain exact live evidence."""
 
-                response = requests.get(
-                    url,
-                    headers={
-                        "User-Agent": "ipfs-datasets-arizona-ars-scraper/2.0",
-                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-                    },
-                    timeout=timeout,
-                )
-                if int(response.status_code or 0) != 200:
-                    return ""
-                return bytes(response.content or b"").decode("utf-8", errors="replace")
-            except Exception:
-                return ""
+        timeout = max(1, int(timeout_seconds or 12))
+        return await self._fetch_fresh_official_response_receipt(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-arizona-frontier/1.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                "Cache-Control": "no-cache",
+                "Pragma": "no-cache",
+            },
+            timeout_seconds=timeout,
+            verify_tls=True,
+            admit_success_body=False,
+            media_type="text/html",
+            provider="requests_direct_frontier",
+        )
 
+    def _exact_official_title_locator(self, url: object, title_number: str) -> bool:
         try:
-            html = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 1)
-        except asyncio.TimeoutError:
-            html = ""
-        self._record_fetch_event(provider="requests_direct", success=bool(html))
-        if html:
-            await self._cache_successful_page_fetch(
-                url=url,
-                payload=html.encode("utf-8", errors="replace"),
-                provider="requests_direct",
-            )
-        return html
+            parsed = urlparse(str(url or "").strip())
+            query = parse_qs(parsed.query, keep_blank_values=True)
+            port = parsed.port
+        except ValueError:
+            return False
+        return bool(
+            parsed.scheme.lower() == "https"
+            and (parsed.hostname or "").lower() == self.OFFICIAL_DOMAIN
+            and parsed.username is None
+            and parsed.password is None
+            and port is None
+            and parsed.path.rstrip("/").lower() == "/arsdetail"
+            and query == {"title": [str(title_number)]}
+            and not parsed.params
+            and not parsed.fragment
+        )
+
+    def _official_repealed_title_exclusion(
+        self,
+        *,
+        code_name: str,
+        code_url: str,
+        receipt: Mapping[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        """Verify an exact official no-statute frontier for one repealed title."""
+
+        requested_url = str(receipt.get("requested_url") or "").strip()
+        final_url = str(receipt.get("final_url") or "").strip()
+        title_match = self._AZ_TITLE_QUERY_RE.search(code_url)
+        if title_match is None:
+            return None
+        title_number = str(int(title_match.group(1)))
+        if not (
+            int(receipt.get("status_code") or 0) == 200
+            and requested_url == code_url
+            and self._exact_official_title_locator(requested_url, title_number)
+            and self._exact_official_title_locator(final_url, title_number)
+        ):
+            return None
+
+        payload = receipt.get("body")
+        if not isinstance(payload, bytes) or not payload:
+            return None
+        digest = hashlib.sha256(payload).hexdigest()
+        if str(receipt.get("content_sha256") or "").lower() != digest:
+            return None
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return None
+        # The live WordPress shell currently contains malformed legacy markup
+        # that Python's built-in parser stops before the ARS title body.  The
+        # lxml recovery parser still exposes the exact official heading.
+        soup = BeautifulSoup(payload, "lxml")
+        headings = [
+            re.sub(r"\s+", " ", node.get_text(" ", strip=True) or "").strip()
+            for node in soup.select("h1.topTitle")
+        ]
+        matches = [
+            match
+            for heading in headings
+            if (match := self._AZ_REPEALED_TITLE_HEADING_RE.fullmatch(heading))
+        ]
+        if len(matches) != 1 or str(int(matches[0].group("title"))) != title_number:
+            return None
+        if soup.select("a.stat") or self._AZ_DETAIL_SECTION_LINK_RE.search(
+            payload.decode("utf-8", errors="replace")
+        ):
+            return None
+        observed_at = str(receipt.get("observed_at") or "").strip()
+        try:
+            observed = datetime.fromisoformat(observed_at)
+        except ValueError:
+            return None
+        if observed.tzinfo is None or observed.utcoffset() is None:
+            return None
+        return {
+            "schema_version": "state-code-zero-frontier/v1",
+            "jurisdiction_code": self.state_code,
+            "code_name": code_name,
+            "title_number": title_number,
+            "disposition": "repealed",
+            "official_source": True,
+            "source_url": code_url,
+            "final_url": final_url,
+            "http_status": 200,
+            "official_heading": headings[0],
+            "expected_statute_count": 0,
+            "frontier_closed": True,
+            "content_sha256": digest,
+            "observed_at": observed_at,
+        }
+
+    def _closed_zero_result_code_exclusion(
+        self,
+        code_info: Dict[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        exclusions = getattr(self, "_official_zero_result_exclusions", {})
+        if not isinstance(exclusions, dict):
+            return None
+        value = exclusions.get(str(code_info.get("url") or "").strip())
+        return dict(value) if isinstance(value, dict) else None
 
     def _raw_doc_url_from_href(self, href: str, base_url: str) -> str:
         value = urljoin(base_url, str(href or "").strip())
@@ -261,7 +373,10 @@ class ArizonaScraper(BaseStateScraper):
                     max_statutes=limit,
                 )
                 return constitution_rows if limit is None else constitution_rows[: int(limit)]
-        from .arizona_section import configured_section_html_path, parse_arizona_section_html
+        from .arizona_section import (
+            configured_section_html_path,
+            parse_arizona_section_html,
+        )
 
         local_section = configured_section_html_path()
         if local_section is not None:
@@ -272,8 +387,9 @@ class ArizonaScraper(BaseStateScraper):
             )
             if parsed is not None:
                 return [parsed]
+        statute_links = await self._discover_section_links(code_url)
         statutes: List[NormalizedStatute] = []
-        for section_url, section_number, section_title in await self._discover_section_links(code_url):
+        for section_url, section_number, section_title in statute_links:
             if limit is not None and len(statutes) >= limit:
                 break
             statute = await self._build_statute_from_section_page(
@@ -284,6 +400,20 @@ class ArizonaScraper(BaseStateScraper):
             )
             if statute is not None:
                 statutes.append(statute)
+        if not statutes and limit is None and self._full_corpus_enabled():
+            exclusions = getattr(self, "_official_zero_result_exclusions", None)
+            if not isinstance(exclusions, dict):
+                exclusions = {}
+                self._official_zero_result_exclusions = exclusions
+            exclusions.pop(str(code_url or "").strip(), None)
+            receipt = await self._fetch_fresh_official_title_receipt(code_url)
+            exclusion = self._official_repealed_title_exclusion(
+                code_name=code_name,
+                code_url=code_url,
+                receipt=receipt,
+            )
+            if exclusion is not None:
+                exclusions[str(code_url or "").strip()] = exclusion
         return statutes[:limit] if limit is not None else statutes
 
     def official_title_url(self, title_number: object) -> str:

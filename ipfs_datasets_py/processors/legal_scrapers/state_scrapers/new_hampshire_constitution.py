@@ -66,7 +66,7 @@ def parse_new_hampshire_constitution_html(
                     title_number=str(part_id),
                     section_number=number,
                     section_name=(raw.split(".", 1)[0] or f"Article {number}")[:200],
-                    full_text=raw[:14000],
+                    full_text=raw,
                     source_url=NH_CONST_URL,
                     official_cite=cite,
                     metadata=StatuteMetadata(),

@@ -159,8 +159,8 @@
         "promoted_success": false
       },
       "content": {
-        "content_digest": "sha256:d572f2b27184edbfa5ee6b2566c982d683ab8e0f587ff6a5f2a14b9a2b5b8cea",
-        "min_full_text_chars": 776,
+        "content_digest": "sha256:5c016eaa7660f95ffe822d67767f5d55ea8d0d8a20d0d3a0f137d31872485b6b",
+        "min_full_text_chars": 750,
         "non_placeholder_full_text": true,
         "official_urls": [
           "https://www.cga.ct.gov/current/pub/chap_001.htm#sec_1-1",
@@ -201,7 +201,7 @@
       "partial_checkpoint_promoted": false,
       "replay": {
         "closed": true,
-        "content_digest": "sha256:d572f2b27184edbfa5ee6b2566c982d683ab8e0f587ff6a5f2a14b9a2b5b8cea",
+        "content_digest": "sha256:5c016eaa7660f95ffe822d67767f5d55ea8d0d8a20d0d3a0f137d31872485b6b",
         "first_frontier_digest": "sha256:5a15c1924b0f9dad224989e048295b20712fe24685de73a086a7a0e0ccbe4377",
         "second_frontier_digest": "sha256:5a15c1924b0f9dad224989e048295b20712fe24685de73a086a7a0e0ccbe4377"
       },
@@ -227,8 +227,8 @@
         "promoted_success": false
       },
       "content": {
-        "content_digest": "sha256:7d02792d5fb2e1977baa0514e0d9686b4df54c201dd9163d329ca85dfaece131",
-        "min_full_text_chars": 764,
+        "content_digest": "sha256:94629e882afafac2d10226cca082143c5f78ecc013222b11ae7f802068f1e0a6",
+        "min_full_text_chars": 743,
         "non_placeholder_full_text": true,
         "official_urls": [
           "https://delcode.delaware.gov/title1/c01/index.html#101",
@@ -269,7 +269,7 @@
       "partial_checkpoint_promoted": false,
       "replay": {
         "closed": true,
-        "content_digest": "sha256:7d02792d5fb2e1977baa0514e0d9686b4df54c201dd9163d329ca85dfaece131",
+        "content_digest": "sha256:94629e882afafac2d10226cca082143c5f78ecc013222b11ae7f802068f1e0a6",
         "first_frontier_digest": "sha256:ce223aa0b318122de49c309433bc40d6b6cba5540613c62eb03f083dae07ecee",
         "second_frontier_digest": "sha256:ce223aa0b318122de49c309433bc40d6b6cba5540613c62eb03f083dae07ecee"
       },
@@ -319,7 +319,7 @@
       "timeout_promoted_to_success": false
     },
     "CT": {
-      "content_digest": "sha256:d572f2b27184edbfa5ee6b2566c982d683ab8e0f587ff6a5f2a14b9a2b5b8cea",
+      "content_digest": "sha256:5c016eaa7660f95ffe822d67767f5d55ea8d0d8a20d0d3a0f137d31872485b6b",
       "failed_final": 0,
       "frontier_closed": true,
       "partial_checkpoint_promoted": false,
@@ -330,7 +330,7 @@
       "timeout_promoted_to_success": false
     },
     "DE": {
-      "content_digest": "sha256:7d02792d5fb2e1977baa0514e0d9686b4df54c201dd9163d329ca85dfaece131",
+      "content_digest": "sha256:94629e882afafac2d10226cca082143c5f78ecc013222b11ae7f802068f1e0a6",
       "failed_final": 0,
       "frontier_closed": true,
       "partial_checkpoint_promoted": false,

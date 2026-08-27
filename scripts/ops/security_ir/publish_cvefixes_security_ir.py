@@ -16,21 +16,24 @@ from __future__ import annotations
 
 import argparse
 import base64
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import hashlib
 import json
 import os
-from pathlib import Path, PurePosixPath
 import re
 import sys
 import time
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path, PurePosixPath
 from typing import Any, Final, Protocol
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
+from ipfs_datasets_py.huggingface.protected_repo_guard import (
+    require_unprotected_or_runtime,
+)
 
 DEFAULT_TARGET_REPO: Final = "Publicus/cvefixes-security-ir-graphrag"
 PUBLICATION_RECEIPT_VERSION: Final = (
@@ -2265,6 +2268,10 @@ class HuggingFaceHubGateway:
         commit_message: str,
         commit_description: str,
     ) -> str:
+        require_unprotected_or_runtime(
+            release.dataset_id,
+            method="upload_folder",
+        )
         patterns = [item.path for item in release.artifacts] + ["manifest.json"]
         try:
             result = self._api().upload_folder(

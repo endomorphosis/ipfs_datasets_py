@@ -34,6 +34,9 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Final
 
+from ipfs_datasets_py.huggingface.protected_repo_guard import (
+    require_unprotected_or_runtime,
+)
 from ipfs_datasets_py.huggingface.release import (
     canonical_json_bytes,
     file_digest,
@@ -1547,6 +1550,7 @@ class LiveHubApiAdapter:
         token: str | None = None,
         **_: Any,
     ) -> Any:
+        require_unprotected_or_runtime(repo_id, method="create_repo")
         return self._api.create_repo(
             repo_id=repo_id,
             repo_type=repo_type,
@@ -1566,6 +1570,7 @@ class LiveHubApiAdapter:
         exist_ok: bool = True,
         **_: Any,
     ) -> None:
+        require_unprotected_or_runtime(repo_id, method="create_branch")
         try:
             self._api.create_branch(
                 repo_id=repo_id,
@@ -1597,6 +1602,7 @@ class LiveHubApiAdapter:
         create_pr: bool = False,
         **_: Any,
     ) -> dict[str, Any]:
+        require_unprotected_or_runtime(repo_id, method="create_commit")
         import importlib
 
         hub_mod = importlib.import_module("huggingface_hub")
@@ -1710,6 +1716,7 @@ class LiveHubApiAdapter:
         parent_commit: str | None = None,
         **_: Any,
     ) -> dict[str, Any]:
+        require_unprotected_or_runtime(repo_id, method="merge_pull_request")
         # Optional race check against main.
         if parent_commit is not None:
             info = self.repo_info(
@@ -2124,13 +2131,17 @@ class PatentHFPublisherV2:
         # Race check: main must still equal audited bases.
         self.assert_bases_current(plan)
 
-        merge = self._require_method("merge_pull_request")
         token = self._auth_token(required=True)
 
         promoted: list[RepositoryPromotionResult] = []
         completed: list[str] = []
         try:
             for repo_result in staged.repositories:
+                require_unprotected_or_runtime(
+                    repo_result.dataset_id,
+                    method="merge_pull_request",
+                )
+                merge = self._require_method("merge_pull_request")
                 pr_number = repo_result.pull_request_number
                 if pr_number is None:
                     raise PatentHFPublisherV2Error(

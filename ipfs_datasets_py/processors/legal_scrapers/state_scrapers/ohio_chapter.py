@@ -117,7 +117,7 @@ def parse_ohio_chapter_html(
                 chapter_name=chap_name or None,
                 section_number=section_num,
                 section_name=f"§ {section_num}. {heading}"[:220],
-                full_text=body[:14000],
+                full_text=body,
                 source_url=section_url(section_num),
                 official_cite=f"Ohio Rev. Code Ann. § {section_num}",
                 metadata=StatuteMetadata(),

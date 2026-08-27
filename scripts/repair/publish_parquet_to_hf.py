@@ -14,8 +14,12 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from huggingface_hub import HfApi, hf_hub_url, list_repo_files
 import requests
+from huggingface_hub import HfApi, hf_hub_url, list_repo_files
+
+from ipfs_datasets_py.huggingface.protected_repo_guard import (
+    require_unprotected_or_runtime,
+)
 
 
 def _resolve_token(token: Optional[str]) -> Optional[str]:
@@ -107,6 +111,8 @@ def publish(
     cid_column: str,
 ) -> Dict[str, Any]:
     token = _resolve_token(token)
+    require_unprotected_or_runtime(repo_id, method="upload_folder")
+    require_unprotected_or_runtime(repo_id, method="create_repo")
     api = HfApi(token=token)
 
     if create_repo:

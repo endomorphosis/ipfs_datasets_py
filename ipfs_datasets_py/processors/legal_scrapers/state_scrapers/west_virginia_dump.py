@@ -148,7 +148,7 @@ def parse_west_virginia_code_html(
                 chapter_number=parts[0] if parts else None,
                 section_number=number,
                 section_name=heading[:200],
-                full_text=body[:14000],
+                full_text=body,
                 source_url=section_url(number),
                 official_cite=f"W. Va. Code § {number}",
                 metadata=StatuteMetadata(),

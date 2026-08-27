@@ -28,17 +28,19 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Sequence
 
-
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
+from ipfs_datasets_py.processors.legal_data.state_laws_completeness import (
+    has_explicit_official_source_authority,
+    source_authority_class,
+)
 from ipfs_datasets_py.processors.legal_data.state_laws_source_policy import (
     DEFAULT_CATALOG_RELATIVE_PATH,
     get_official_source_catalog,
     load_official_source_catalog,
 )
-
 
 TASK_ID = "LCR-023"
 GOAL_ID = "LCR-G024"
@@ -290,8 +292,19 @@ def _cell_issue_messages(code: str, cell: Mapping[str, Any]) -> List[tuple[str, 
         issues.append((WORK_KIND_CODE_FAMILY, f"{code}: stale or drifted index keys"))
     if not _empty_cap(cell.get("sample_cap")) or not _empty_cap(cell.get("runtime_caps")):
         issues.append((WORK_KIND_FRONTIER, f"{code}: truncated by sample/runtime cap"))
-    if cell.get("official_source") is False:
-        issues.append((WORK_KIND_JURISDICTION, f"{code}: secondary-only or unofficial source"))
+    if not has_explicit_official_source_authority(cell):
+        issues.append(
+            (
+                WORK_KIND_JURISDICTION,
+                (
+                    f"{code}: secondary-only or unofficial source; explicit official "
+                    "authority required "
+                    f"(official_source={cell.get('official_source')!r}, "
+                    "source_authority_class="
+                    f"{source_authority_class(cell) or '<missing>'})"
+                ),
+            )
+        )
     if cell.get("non_placeholder_full_text") is False:
         issues.append((WORK_KIND_JURISDICTION, f"{code}: placeholder or missing full text"))
     if _boolish(cell.get("production_upload")):
@@ -371,7 +384,7 @@ def classify_gaps(
 
     findings = coverage.get("findings") or []
     if not isinstance(findings, Sequence) or isinstance(findings, (str, bytes)):
-        findings = [f"coverage: findings is not a list"]
+        findings = ["coverage: findings is not a list"]
     for raw in findings:
         finding = str(raw).strip()
         if not finding:
@@ -513,7 +526,7 @@ def _passing_cell(cell: Mapping[str, Any]) -> bool:
         and cell.get("complete") is True
         and _as_int(cell.get("failed_final")) == 0
         and cell.get("frontier_closed") is True
-        and cell.get("official_source") is True
+        and has_explicit_official_source_authority(cell)
         and cell.get("non_placeholder_full_text") is True
         and not list(cell.get("stale_keys") or [])
         and cell.get("index_parity_ok") is not False

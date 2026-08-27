@@ -4,7 +4,6 @@ This module contains the scraper for Pennsylvania statutes from the
 official Pennsylvania General Assembly statutes portal.
 """
 
-from ipfs_datasets_py.utils import anyio_compat as asyncio
 import json
 import re
 import ssl
@@ -15,6 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
+from .retained_replay_network_guard import trusted_pdftotext_executable
 
 
 class PennsylvaniaScraper(BaseStateScraper):
@@ -226,19 +226,77 @@ class PennsylvaniaScraper(BaseStateScraper):
         discover_limit = max(4, int(limit)) if limit is not None else None
         discovered = await self._discover_consolidated_title_pdfs(limit=discover_limit)
         if not discovered:
+            if limit is None:
+                raise RuntimeError(
+                    "Pennsylvania consolidated-title PDF catalog did not close"
+                )
             return []
 
         statutes: List[NormalizedStatute] = []
         seen_sections: set[Tuple[str, str]] = set()
+        pdf_payload_by_url: Dict[str, bytes] = {}
+        if limit is None:
+            pdf_urls = [pdf_url for _number, _name, pdf_url in discovered]
+            if len(set(pdf_urls)) != len(pdf_urls):
+                raise RuntimeError(
+                    "Pennsylvania consolidated-title PDF frontier contains duplicate URLs"
+                )
+            batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+                pdf_urls,
+                residual_retry_attempts=1,
+                timeout_seconds=60,
+                headers={
+                    "User-Agent": "Mozilla/5.0",
+                    "Accept": "application/pdf,*/*;q=0.8",
+                },
+                content_validator=lambda payload: payload.startswith(b"%PDF"),
+                media_type="application/pdf",
+                max_concurrency=8,
+                prefer_direct=True,
+                wayback_prefix_inventory=True,
+            )
+            if list(batch.urls) != pdf_urls or any(
+                len(vector) != len(pdf_urls)
+                for vector in (
+                    batch.payloads,
+                    batch.errors,
+                    batch.transport_receipts,
+                    batch.parser_input_envelopes,
+                )
+            ):
+                raise RuntimeError(
+                    "Pennsylvania consolidated-title PDF frontier returned unaligned rows"
+                )
+            failures = [
+                {"url": url, "error": error or "empty parser input"}
+                for url, payload, error in zip(
+                    batch.urls, batch.payloads, batch.errors, strict=True
+                )
+                if error is not None or not payload
+            ]
+            if failures:
+                raise RuntimeError(
+                    "Pennsylvania consolidated-title PDF frontier is incomplete; "
+                    f"unresolved exact URLs: {failures}"
+                )
+            pdf_payload_by_url = {
+                url: bytes(payload)
+                for url, payload in zip(batch.urls, batch.payloads, strict=True)
+            }
         for title_number, title_name, pdf_url in discovered:
             if limit is not None and len(statutes) >= limit:
                 break
             if pdf_url and not self._host_is_official(pdf_url):
                 continue
-            pdf_bytes = await self._request_pdf_bytes(pdf_url, timeout=60)
+            pdf_bytes = pdf_payload_by_url.get(pdf_url)
+            if pdf_bytes is None:
+                pdf_bytes = await self._request_pdf_bytes(pdf_url, timeout=60)
             if not pdf_bytes:
                 continue
-            title_text = self._extract_pdf_text_preserve_layout(pdf_bytes=pdf_bytes, max_chars=900000)
+            title_text = self._extract_pdf_text_preserve_layout(
+                pdf_bytes=pdf_bytes,
+                max_chars=None,
+            )
             if len(title_text) < 500:
                 continue
             split_sections = self._split_title_pdf_into_sections(
@@ -257,6 +315,10 @@ class PennsylvaniaScraper(BaseStateScraper):
                 statutes.append(statute)
                 if limit is not None and len(statutes) >= limit:
                     break
+        if limit is None and not statutes:
+            raise RuntimeError(
+                "Pennsylvania consolidated-title PDF frontier produced no statutes"
+            )
         return statutes if limit is None else statutes[:limit]
 
     async def _discover_consolidated_title_pdfs(
@@ -303,31 +365,32 @@ class PennsylvaniaScraper(BaseStateScraper):
         return discovered
 
     async def _request_pdf_bytes(self, url: str, timeout: int = 45) -> bytes:
-        def _request() -> bytes:
-            try:
-                req = urllib.request.Request(
-                    url,
-                    headers={
-                        "User-Agent": "Mozilla/5.0",
-                        "Accept": "application/pdf,*/*;q=0.8",
-                    },
-                )
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    return bytes(resp.read() or b"")
-            except Exception:
-                return b""
-
         try:
-            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 5)
+            return await self._fetch_parser_input_with_transport(
+                url,
+                headers={
+                    "User-Agent": "Mozilla/5.0",
+                    "Accept": "application/pdf,*/*;q=0.8",
+                },
+                timeout_seconds=max(1, int(timeout)),
+                content_validator=lambda payload: payload.startswith(b"%PDF"),
+                allow_archival_fallback=True,
+                media_type="application/pdf",
+                provider="pennsylvania_direct_pdf",
+            )
         except Exception:
             return b""
 
-    def _extract_pdf_text_preserve_layout(self, pdf_bytes: bytes, max_chars: int) -> str:
+    def _extract_pdf_text_preserve_layout(
+        self,
+        pdf_bytes: bytes,
+        max_chars: Optional[int] = None,
+    ) -> str:
         if not pdf_bytes:
             return ""
         try:
             proc = subprocess.run(
-                ["pdftotext", "-layout", "-q", "-", "-"],
+                [trusted_pdftotext_executable(), "-layout", "-q", "-", "-"],
                 input=pdf_bytes,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -338,7 +401,10 @@ class PennsylvaniaScraper(BaseStateScraper):
 
         if proc.returncode != 0 or not proc.stdout:
             return ""
-        return proc.stdout.decode("utf-8", errors="ignore")[:max_chars]
+        text = proc.stdout.decode("utf-8", errors="ignore")
+        if max_chars is not None:
+            return text[: max(1, int(max_chars))]
+        return text
 
     def _split_title_pdf_into_sections(
         self,
@@ -387,7 +453,7 @@ class PennsylvaniaScraper(BaseStateScraper):
                     code_name=code_name,
                     section_number=section_number,
                     section_name=section_name[:240] or f"Section {section_number}",
-                    full_text=normalized[:24000],
+                    full_text=normalized,
                     source_url=source_url,
                     legal_area=self._identify_legal_area(f"{title_name} {section_name}"),
                     official_cite=f"Pa. Cons. Stat. tit. {title_number} § {section_number}",
@@ -405,7 +471,7 @@ class PennsylvaniaScraper(BaseStateScraper):
 
     async def _scrape_direct_titles(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         try:
-            from bs4 import BeautifulSoup
+            from bs4 import BeautifulSoup  # noqa: F401
         except ImportError:
             return []
 
@@ -416,7 +482,7 @@ class PennsylvaniaScraper(BaseStateScraper):
         out: List[NormalizedStatute] = []
         for source_url in urls[: max(1, int(max_statutes or 1))]:
             payload = await self._request_pdf_bytes(source_url, timeout=18)
-            text = self._extract_pdf_text_preserve_layout(payload, max_chars=22000)
+            text = self._extract_pdf_text_preserve_layout(payload, max_chars=None)
             text = self._normalize_legal_text(text)
             if len(text) < 280:
                 continue
@@ -430,7 +496,7 @@ class PennsylvaniaScraper(BaseStateScraper):
                     code_name=code_name,
                     section_number=f"Title {title_number}",
                     section_name=f"Title {title_number}",
-                    full_text=text[:14000],
+                    full_text=text,
                     source_url=source_url,
                     legal_area=self._identify_legal_area(text[:1200]),
                     official_cite=f"Pa. Cons. Stat. tit. {title_number}",

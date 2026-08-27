@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+import io
 import json
+from dataclasses import replace
 from hashlib import sha256
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+
+from ipfs_datasets_py.huggingface import publisher as publisher_module
 
 from ipfs_datasets_py.huggingface.publication_profile import (
     ABBY_VOICE_GOAL_ID,
@@ -39,7 +44,8 @@ class _WriteTrackingApi:
         self.commit_sha = commit_sha
         self.head_sha = parent_sha
         self.calls: list[str] = []
-        self.remote_files: dict[str, Path] = {}
+        self.remote_files: dict[str, bytes] = {}
+        self.operation_handles: list[object] = []
 
     def repo_info(self, **kwargs):
         self.calls.append("repo_info")
@@ -59,7 +65,11 @@ class _WriteTrackingApi:
             if path_or_fileobj is None and isinstance(op, dict):
                 path_or_fileobj = op.get("path_or_fileobj")
             if path_in_repo and path_or_fileobj:
-                self.remote_files[str(path_in_repo)] = Path(str(path_or_fileobj))
+                self.operation_handles.append(path_or_fileobj)
+                position = path_or_fileobj.tell()
+                path_or_fileobj.seek(0)
+                self.remote_files[str(path_in_repo)] = path_or_fileobj.read()
+                path_or_fileobj.seek(position)
         return {"commit_sha": self.commit_sha}
 
     def upload_file(self, **kwargs):
@@ -473,3 +483,370 @@ def test_plan_digest_is_deterministic_for_patent_profile(tmp_path: Path) -> None
     )
     assert first.plan_digest == second.plan_digest
     assert len(first.plan_digest) == 64
+
+
+@pytest.mark.parametrize("mutation", ["rewrite", "delete", "replace"])
+def test_publish_uses_anonymous_snapshots_after_source_path_mutation(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    manifest = _manifest(release_id=f"snapshot-{mutation}-v1")
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize(root, manifest)
+    expected = {
+        entry["path"]: (root / entry["path"]).read_bytes()
+        for entry in manifest["files"]
+    }
+
+    class _MutatingApi(_WriteTrackingApi):
+        def create_commit(self, **kwargs):
+            for entry in manifest["files"]:
+                source = root / entry["path"]
+                if mutation == "rewrite":
+                    source.write_bytes(b"mutated-in-place")
+                elif mutation == "delete":
+                    source.unlink()
+                else:
+                    source.unlink()
+                    source.write_bytes(b"replacement-inode")
+            return super().create_commit(**kwargs)
+
+    api = _MutatingApi()
+    profile = patent_legal_publication_profile()
+    publisher = HuggingFaceReleasePublisher(profile=profile, api=api)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    publisher.publish_append_only(
+        plan,
+        approval=_approval(plan, repository_id=profile.repository_id),
+        local_root=root,
+    )
+    assert api.remote_files == {
+        f"{plan.release_prefix}/{path}": body
+        for path, body in expected.items()
+    }
+    assert api.operation_handles
+    assert all(handle.closed for handle in api.operation_handles)
+
+
+def test_publish_closes_snapshot_handles_when_create_commit_raises(
+    tmp_path: Path,
+) -> None:
+    manifest = _manifest(release_id="snapshot-error-v1")
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize(root, manifest)
+
+    class _FailingApi(_WriteTrackingApi):
+        def create_commit(self, **kwargs):
+            self.calls.append("create_commit")
+            self.operation_handles = [
+                getattr(op, "path_or_fileobj", None)
+                for op in kwargs["operations"]
+            ]
+            assert all(not handle.closed for handle in self.operation_handles)
+            raise OSError("simulated transport failure")
+
+    api = _FailingApi()
+    profile = patent_legal_publication_profile()
+    publisher = HuggingFaceReleasePublisher(profile=profile, api=api)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    with pytest.raises(HuggingFacePublicationError, match="create_commit failed"):
+        publisher.publish_append_only(
+            plan,
+            approval=_approval(plan, repository_id=profile.repository_id),
+            local_root=root,
+        )
+    assert api.operation_handles
+    assert all(handle.closed for handle in api.operation_handles)
+
+
+def test_short_anonymous_snapshot_write_never_calls_create_commit(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest = _manifest(release_id="snapshot-short-write-v1")
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize(root, manifest)
+
+    class _ShortWriteBuffer(io.BytesIO):
+        def write(self, body: bytes) -> int:
+            if not body:
+                return 0
+            super().write(body[:-1])
+            return len(body) - 1
+
+    monkeypatch.setattr(
+        publisher_module.tempfile,
+        "TemporaryFile",
+        lambda **kwargs: _ShortWriteBuffer(),
+    )
+    api = _WriteTrackingApi()
+    profile = patent_legal_publication_profile()
+    publisher = HuggingFaceReleasePublisher(profile=profile, api=api)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    with pytest.raises(HuggingFacePublicationError, match="short anonymous"):
+        publisher.publish_append_only(
+            plan,
+            approval=_approval(plan, repository_id=profile.repository_id),
+            local_root=root,
+        )
+    assert "create_commit" not in api.calls
+
+
+def test_commit_operation_upload_info_mismatch_never_calls_create_commit(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest = _manifest(release_id="snapshot-upload-info-v1")
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize(root, manifest)
+
+    def forged_operation(**kwargs):
+        return {
+            "operation": "add",
+            "path_in_repo": kwargs["path_in_repo"],
+            "path_or_fileobj": kwargs["fileobj"],
+            "upload_info": {"size": 0, "sha256": b"\x00" * 32},
+        }
+
+    monkeypatch.setattr(
+        publisher_module,
+        "_build_commit_add_operation",
+        forged_operation,
+    )
+    api = _WriteTrackingApi()
+    profile = patent_legal_publication_profile()
+    publisher = HuggingFaceReleasePublisher(profile=profile, api=api)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    with pytest.raises(HuggingFacePublicationError, match="upload_info"):
+        publisher.publish_append_only(
+            plan,
+            approval=_approval(plan, repository_id=profile.repository_id),
+            local_root=root,
+        )
+    assert "create_commit" not in api.calls
+
+
+def test_publish_refuses_symlink_even_when_target_bytes_match_plan(
+    tmp_path: Path,
+) -> None:
+    manifest = _manifest(release_id="snapshot-nofollow-v1")
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize(root, manifest)
+    entry = manifest["files"][0]
+    local = root / entry["path"]
+    same_bytes = tmp_path / "same-bytes"
+    same_bytes.write_bytes(local.read_bytes())
+    local.unlink()
+    local.symlink_to(same_bytes)
+
+    api = _WriteTrackingApi()
+    profile = patent_legal_publication_profile()
+    publisher = HuggingFaceReleasePublisher(profile=profile, api=api)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    with pytest.raises(HuggingFacePublicationError, match="without following symlinks"):
+        publisher.publish_append_only(
+            plan,
+            approval=_approval(plan, repository_id=profile.repository_id),
+            local_root=root,
+        )
+    assert "create_commit" not in api.calls
+
+
+def test_publish_refuses_intermediate_parent_symlink_before_any_api(
+    tmp_path: Path,
+) -> None:
+    manifest = _manifest(release_id="snapshot-parent-nofollow-v1")
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize(root, manifest)
+    profile = patent_legal_publication_profile()
+    publisher = HuggingFaceReleasePublisher(profile=profile)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+
+    outside = tmp_path / "outside-manifests"
+    (root / "manifests").rename(outside)
+    (root / "manifests").symlink_to(outside, target_is_directory=True)
+    api = _WriteTrackingApi()
+    publisher.api = api
+    with pytest.raises(HuggingFacePublicationError, match="parent directory"):
+        publisher.publish_append_only(
+            plan,
+            approval=_approval(plan, repository_id=profile.repository_id),
+            local_root=root,
+        )
+    assert api.calls == []
+
+
+def test_publish_refuses_symlinked_local_root_before_any_api(
+    tmp_path: Path,
+) -> None:
+    manifest = _manifest(release_id="snapshot-root-nofollow-v1")
+    real_root = tmp_path / "real-release"
+    real_root.mkdir()
+    _materialize(real_root, manifest)
+    alias_root = tmp_path / "release-alias"
+    alias_root.symlink_to(real_root, target_is_directory=True)
+    profile = patent_legal_publication_profile()
+    api = _WriteTrackingApi()
+    publisher = HuggingFaceReleasePublisher(profile=profile, api=api)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=real_root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    with pytest.raises(HuggingFacePublicationError, match="local_root.*symlink"):
+        publisher.publish_append_only(
+            plan,
+            approval=_approval(plan, repository_id=profile.repository_id),
+            local_root=alias_root,
+        )
+    assert api.calls == []
+
+
+def test_publish_recomputes_cost_receipt_from_operation_sizes(
+    tmp_path: Path,
+) -> None:
+    manifest = _manifest(release_id="forged-cost-v1")
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize(root, manifest)
+    profile = patent_legal_publication_profile()
+    api = _WriteTrackingApi()
+    publisher = HuggingFaceReleasePublisher(profile=profile, api=api)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    forged = replace(
+        plan,
+        cost_receipt={
+            **plan.cost_receipt,
+            "estimated_cost_usd": 0.0,
+            "retained_release_bytes": 0,
+            "storage_component_usd": 0.0,
+            "transfer_component_usd": 0.0,
+            "upload_bytes": 0,
+        },
+    )
+    with pytest.raises(HuggingFacePublicationError, match="cost receipt"):
+        publisher.publish_append_only(
+            forged,
+            approval=_approval(forged, repository_id=profile.repository_id),
+            local_root=root,
+        )
+    assert api.calls == []
+
+
+def test_publish_fails_closed_when_snapshot_filesystem_is_too_small(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest = _manifest(release_id="snapshot-capacity-v1")
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize(root, manifest)
+    profile = patent_legal_publication_profile()
+    api = _WriteTrackingApi()
+    publisher = HuggingFaceReleasePublisher(profile=profile, api=api)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    monkeypatch.setattr(
+        publisher_module.shutil,
+        "disk_usage",
+        lambda path: SimpleNamespace(total=1, used=1, free=0),
+    )
+    with pytest.raises(HuggingFacePublicationError, match="insufficient free"):
+        publisher.publish_append_only(
+            plan,
+            approval=_approval(plan, repository_id=profile.repository_id),
+            local_root=root,
+        )
+    assert api.calls == []
+
+
+def test_case_alias_of_state_laws_repo_requires_official_proof(
+    tmp_path: Path,
+) -> None:
+    manifest = _manifest(release_id="state-repo-case-alias-v1")
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize(root, manifest)
+    profile = patent_legal_publication_profile(
+        repository_id="JusticeDAO/ipfs_state_laws"
+    )
+    api = _WriteTrackingApi()
+    publisher = HuggingFaceReleasePublisher(profile=profile, api=api)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    with pytest.raises(HuggingFacePublicationError, match="sealed policy proof"):
+        publisher.publish_append_only(
+            plan,
+            approval=_approval(plan, repository_id=profile.repository_id),
+            local_root=root,
+        )
+    assert api.calls == []
+
+
+def test_top_level_state_repo_relabel_cannot_bypass_policy(
+    tmp_path: Path,
+) -> None:
+    manifest = _manifest(release_id="state-repo-top-level-relabel-v1")
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize(root, manifest)
+    profile = patent_legal_publication_profile(
+        repository_id="justicedao/ipfs_state_laws"
+    )
+    plan = HuggingFaceReleasePublisher(profile=profile).plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    api = _WriteTrackingApi()
+    with pytest.raises(HuggingFacePublicationError, match="sealed policy proof"):
+        publish_huggingface_release(
+            profile=profile,
+            manifest=manifest,
+            dry_run=False,
+            local_root=root,
+            approval=_approval(plan, repository_id=profile.repository_id),
+            api=api,
+            audited_parent_commit=AUDITED_PARENT,
+        )
+    assert api.calls == []

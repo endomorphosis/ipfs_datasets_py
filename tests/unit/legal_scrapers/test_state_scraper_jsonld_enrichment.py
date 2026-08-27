@@ -1,6 +1,8 @@
 import json
 import asyncio
 from pathlib import Path
+
+import pytest
 import ipfs_datasets_py.ipfs_backend_router as ipfs_router
 
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
@@ -53,6 +55,39 @@ class _CountingStateScraper(BaseStateScraper):
                 source_url=f"https://example.gov/code/{idx}",
             )
             for idx in range(1, 4)
+        ]
+
+
+class _PartialFrontierStateScraper(BaseStateScraper):
+    def __init__(self, *args, empty_code: str = "", slow_code: str = "", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.empty_code = empty_code
+        self.slow_code = slow_code
+
+    def get_base_url(self) -> str:
+        return "https://example.gov"
+
+    def get_code_list(self):
+        return [
+            {"name": "Code One", "url": "https://example.gov/one"},
+            {"name": "Code Two", "url": "https://example.gov/two"},
+        ]
+
+    async def scrape_code(self, code_name: str, code_url: str):
+        if code_name == self.slow_code:
+            await asyncio.sleep(0.05)
+        if code_name == self.empty_code:
+            return []
+        return [
+            NormalizedStatute(
+                state_code="XY",
+                state_name="Example State",
+                statute_id=code_name,
+                section_number="1",
+                section_name=code_name,
+                full_text=f"{code_name} section text",
+                source_url=code_url,
+            )
         ]
 
 
@@ -118,6 +153,92 @@ def test_scrape_all_limits_hydration_to_max_statutes(monkeypatch):
 
     assert len(rows) == 1
     assert hydrate_calls == ["Code § 1"]
+
+
+def test_full_corpus_rejects_zero_result_from_any_declared_code(monkeypatch):
+    scraper = _PartialFrontierStateScraper(
+        "XY", "Example State", empty_code="Code Two"
+    )
+    checkpoints = []
+
+    monkeypatch.setattr(scraper, "_is_low_quality_statute_record", lambda _row: False)
+    monkeypatch.setattr(scraper, "_enrich_statute_structure", lambda row: row)
+    monkeypatch.setattr(
+        scraper,
+        "_write_partial_checkpoint",
+        lambda rows, **kwargs: checkpoints.append((list(rows), kwargs)) or True,
+    )
+
+    with pytest.raises(RuntimeError, match="full-corpus frontier is incomplete"):
+        asyncio.run(
+            scraper.scrape_all(rate_limit_delay=0.0, hydrate_statute_text=False)
+        )
+
+    assert checkpoints[-1][1]["stage_label"] == "scrape_all:incomplete"
+    assert checkpoints[-1][1]["extra"]["codes_total"] == 2
+    assert checkpoints[-1][1]["extra"]["codes_completed"] == 1
+    assert "Code Two returned zero admissible statutes" in checkpoints[-1][1]["extra"][
+        "code_failures"
+    ][0]
+    assert not any(
+        item[1]["stage_label"] == "scrape_all:complete" for item in checkpoints
+    )
+
+
+def test_full_corpus_rejects_empty_declared_code_frontier(monkeypatch):
+    scraper = _DummyStateScraper("XY", "Example State")
+    checkpoints = []
+
+    monkeypatch.setattr(
+        scraper,
+        "_write_partial_checkpoint",
+        lambda rows, **kwargs: checkpoints.append((list(rows), kwargs)) or True,
+    )
+
+    with pytest.raises(RuntimeError, match="no declared codes"):
+        asyncio.run(
+            scraper.scrape_all(rate_limit_delay=0.0, hydrate_statute_text=False)
+        )
+
+    assert checkpoints[-1][1]["stage_label"] == "scrape_all:incomplete"
+    assert checkpoints[-1][1]["extra"]["codes_total"] == 0
+    assert checkpoints[-1][1]["extra"]["codes_completed"] == 0
+    assert not any(
+        item[1]["stage_label"] == "scrape_all:complete" for item in checkpoints
+    )
+
+
+def test_full_corpus_timeout_cannot_overwrite_incomplete_checkpoint(
+    monkeypatch,
+):
+    scraper = _PartialFrontierStateScraper(
+        "XY", "Example State", slow_code="Code Two"
+    )
+    checkpoints = []
+
+    monkeypatch.setenv("STATE_SCRAPER_CODE_TIMEOUT_SECONDS", "0.01")
+    monkeypatch.setattr(scraper, "_is_low_quality_statute_record", lambda _row: False)
+    monkeypatch.setattr(scraper, "_enrich_statute_structure", lambda row: row)
+    monkeypatch.setattr(
+        scraper,
+        "_write_partial_checkpoint",
+        lambda rows, **kwargs: checkpoints.append((list(rows), kwargs)) or True,
+    )
+
+    with pytest.raises(RuntimeError, match="full-corpus frontier is incomplete"):
+        asyncio.run(
+            scraper.scrape_all(rate_limit_delay=0.0, hydrate_statute_text=False)
+        )
+
+    assert any(
+        item[1]["stage_label"] == "scrape_all:timeout:2" for item in checkpoints
+    )
+    assert checkpoints[-1][1]["stage_label"] == "scrape_all:incomplete"
+    assert checkpoints[-1][1]["extra"]["codes_completed"] == 1
+    assert "timed out" in checkpoints[-1][1]["extra"]["code_failures"][0]
+    assert not any(
+        item[1]["stage_label"] == "scrape_all:complete" for item in checkpoints
+    )
 
 
 def test_hydrate_statute_text_uses_pdf_processor(monkeypatch):
@@ -324,6 +445,65 @@ def test_archival_fetch_skips_common_crawl_unless_enabled(monkeypatch):
     assert result.content == b"<html><body>direct statute page</body></html>"
 
 
+def test_archival_fetch_allows_explicit_common_crawl_for_pointer_tools(monkeypatch):
+    client = ArchivalFetchClient(
+        request_timeout_seconds=1,
+        enable_common_crawl=True,
+    )
+    target_url = "https://example.gov/code/10-1"
+
+    def _common_crawl_fetch(url):
+        return FetchResult(
+            url=url,
+            content=b"<html><body>archived statute page</body></html>",
+            source="common_crawl",
+            fetched_at="2026-08-24T00:00:00+00:00",
+            status_code=200,
+        )
+
+    def _unexpected_direct(_url):
+        raise AssertionError("explicit Common Crawl recovery should run first")
+
+    monkeypatch.delenv("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", raising=False)
+    monkeypatch.setattr(client, "_fetch_from_common_crawl", _common_crawl_fetch)
+    monkeypatch.setattr(client, "_fetch_direct", _unexpected_direct)
+
+    result = asyncio.run(client.fetch_with_fallback(target_url))
+
+    assert result.source == "common_crawl"
+    assert result.content == b"<html><body>archived statute page</body></html>"
+
+
+def test_archival_fetch_can_skip_a_direct_request_already_attempted_by_caller(
+    monkeypatch,
+):
+    client = ArchivalFetchClient(
+        request_timeout_seconds=1,
+        enable_common_crawl=False,
+        enable_direct=False,
+    )
+    target_url = "https://example.gov/code/10-1"
+
+    def _unexpected_direct(_url):
+        raise AssertionError("the caller already performed the direct request")
+
+    async def _wayback_fetch(url):
+        return FetchResult(
+            url=url,
+            content=b"<html><body>Wayback statute page</body></html>",
+            source="wayback",
+            fetched_at="2026-08-24T00:00:00+00:00",
+            status_code=200,
+        )
+
+    monkeypatch.setattr(client, "_fetch_direct", _unexpected_direct)
+    monkeypatch.setattr(client, "_fetch_from_wayback", _wayback_fetch)
+
+    result = asyncio.run(client.fetch_with_fallback(target_url))
+
+    assert result.source == "wayback"
+
+
 def test_write_state_jsonld_files_emits_per_state_jsonld(tmp_path: Path):
     payload = {
         "@context": {"@vocab": "https://schema.org/"},
@@ -351,9 +531,155 @@ def test_write_state_jsonld_files_emits_per_state_jsonld(tmp_path: Path):
 
     lines = out_path.read_text(encoding="utf-8").strip().splitlines()
     assert len(lines) == 1
+    assert lines[0] == json.dumps(payload, ensure_ascii=False, sort_keys=True)
     doc = json.loads(lines[0])
     assert doc.get("@type") == "Legislation"
     assert doc.get("@id") == payload["@id"]
+
+    reordered_dir = tmp_path / "reordered"
+    reordered_dir.mkdir()
+    reordered_payload = {
+        key: (
+            dict(reversed(list(value.items())))
+            if isinstance(value, dict)
+            else value
+        )
+        for key, value in reversed(list(payload.items()))
+    }
+    _write_state_jsonld_files(
+        [
+            {
+                "state_code": "XY",
+                "statutes": [
+                    {
+                        "statute_id": "Code § 10-1",
+                        "structured_data": {"jsonld": reordered_payload},
+                    }
+                ],
+            }
+        ],
+        reordered_dir,
+    )
+    assert (reordered_dir / "STATE-XY.jsonld").read_bytes() == out_path.read_bytes()
+
+
+def test_write_state_jsonld_files_retains_exact_row_transport_provenance(
+    tmp_path: Path,
+) -> None:
+    content_sha256 = "ab" * 32
+    source_record_id = "delaware-html-" + ("cd" * 32)
+    transport_receipt = {
+        "content_sha256": content_sha256,
+        "official_url": "https://example.gov/code/chapter-10",
+        "source_transport": "direct",
+    }
+    payload = {
+        "@context": "https://schema.org",
+        "@id": "urn:state:xy:statute:10-1",
+        "@type": "Legislation",
+        "name": "Producer-owned name",
+        "structuredData": {"producer_field": {"retained": True}},
+    }
+    scraped_statutes = [
+        {
+            "state_code": "XY",
+            "statutes": [
+                {
+                    "structured_data": {
+                        "content_sha256": content_sha256,
+                        "jsonld": payload,
+                        "source_record_id": source_record_id,
+                        "transport_receipt": transport_receipt,
+                    }
+                }
+            ],
+        }
+    ]
+
+    [written] = _write_state_jsonld_files(scraped_statutes, tmp_path)
+    serialized = Path(written).read_text(encoding="utf-8").strip()
+    row = json.loads(serialized)
+
+    assert row["name"] == "Producer-owned name"
+    assert row["structuredData"] == {
+        "content_sha256": content_sha256,
+        "producer_field": {"retained": True},
+        "source_record_id": source_record_id,
+        "transport_receipt": transport_receipt,
+    }
+    assert serialized == json.dumps(row, ensure_ascii=False, sort_keys=True)
+    assert payload["structuredData"] == {"producer_field": {"retained": True}}
+
+
+def test_write_state_jsonld_files_rejects_conflicting_row_provenance(
+    tmp_path: Path,
+) -> None:
+    payload = {
+        "@type": "Legislation",
+        "structuredData": {"content_sha256": "11" * 32},
+    }
+
+    with pytest.raises(ValueError, match="conflicting JSON-LD row provenance field"):
+        _write_state_jsonld_files(
+            [
+                {
+                    "state_code": "XY",
+                    "statutes": [
+                        {
+                            "structured_data": {
+                                "content_sha256": "22" * 32,
+                                "jsonld": payload,
+                            }
+                        }
+                    ],
+                }
+            ],
+            tmp_path,
+        )
+
+
+def test_write_state_jsonld_files_does_not_duplicate_existing_provenance(
+    tmp_path: Path,
+) -> None:
+    content_sha256 = "cd" * 32
+    transport_receipt = {
+        "content_sha256": content_sha256,
+        "official_url": "https://example.gov/code/chapter-11.xml",
+        "source_transport": "direct",
+    }
+    payload = {
+        "@type": "Legislation",
+        "@id": "urn:state:xy:statute:11-1",
+        "provenance": {
+            "content_sha256": content_sha256,
+            "transport_receipt": transport_receipt,
+        },
+    }
+
+    [written] = _write_state_jsonld_files(
+        [
+            {
+                "state_code": "XY",
+                "statutes": [
+                    {
+                        "structured_data": {
+                            "content_sha256": content_sha256,
+                            "jsonld": payload,
+                            "transport_receipt": transport_receipt,
+                        }
+                    }
+                ],
+            }
+        ],
+        tmp_path,
+    )
+
+    assert Path(written).read_text(encoding="utf-8") == (
+        json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n"
+    )
+    assert "structuredData" not in json.loads(
+        Path(written).read_text(encoding="utf-8")
+    )
 
 
 def test_filter_strict_full_text_statutes_removes_short_records():
@@ -399,6 +725,32 @@ def test_filter_strict_full_text_statutes_removes_scaffold_navigation_records():
     assert removed == 1
     assert len(kept) == 1
     assert kept[0]["section_number"] == "9A.32.030"
+
+
+def test_filter_strict_full_text_preserves_colon_cited_calendar_law():
+    operative = {
+        "section_number": "14A:2-5",
+        "section_name": "Renewal of registered name",
+        "full_text": (
+            "A corporation may renew its registration for the following "
+            "calendar year by filing the required application."
+        ),
+        "source_url": "https://www.njleg.state.nj.us/legislative-activity/statutes",
+    }
+    navigation = {
+        "section_number": "Section-23",
+        "section_name": "Calendar",
+        "full_text": "Skip navigation and return to the calendar.",
+        "source_url": "https://legislature.example/calendar",
+    }
+
+    kept, removed = _filter_strict_full_text_statutes(
+        [operative, navigation],
+        min_full_text_chars=1,
+    )
+
+    assert kept == [operative]
+    assert removed == 1
 
 
 def test_compute_state_quality_metrics_tracks_scaffold_ratio():

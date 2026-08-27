@@ -68,7 +68,7 @@ def parse_arizona_section_html(
         title_number=title or None,
         section_number=number,
         section_name=name[:200],
-        full_text=body[:14000],
+        full_text=body,
         source_url=source_url or f"{BASE}/arsOverview/",
         official_cite=f"Ariz. Rev. Stat. § {number}",
         metadata=StatuteMetadata(),

@@ -4,6 +4,7 @@ This module contains the scraper for Iowa statutes from the official state legis
 """
 
 import asyncio
+import hashlib
 import json
 import os
 import re
@@ -11,7 +12,7 @@ import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import List, Dict, Optional, Tuple
+from typing import Dict, List, Mapping, Optional, Tuple
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -43,6 +44,13 @@ class IowaScraper(BaseStateScraper):
     )
     _TITLE_QUERY_RE = re.compile(r"(?:[?&]title=|/title/)([IVXLCDM]+|\d+)", re.IGNORECASE)
 
+    def state_law_frontier_source_dependencies(self) -> tuple[object, ...]:
+        """Bind the chapter-XML parser bytes into prospective evidence."""
+
+        from . import iowa_chapter_xml
+
+        return (iowa_chapter_xml,)
+
     def get_base_url(self) -> str:
         """Return the base URL for Iowa's legislative website."""
         return "https://www.legis.iowa.gov"
@@ -54,6 +62,110 @@ class IowaScraper(BaseStateScraper):
             "url": f"{self.get_base_url()}/",
             "type": "Code"
         }]
+
+    @staticmethod
+    def _has_exact_parser_input_provenance(statute: NormalizedStatute) -> bool:
+        structured = dict(statute.structured_data or {})
+        digest = str(structured.get("content_sha256") or "").strip().lower()
+        receipt = structured.get("transport_receipt")
+        receipt_digest = (
+            str(receipt.get("content_sha256") or "").strip().lower()
+            if isinstance(receipt, Mapping)
+            else ""
+        )
+        return bool(
+            re.fullmatch(r"[a-f0-9]{64}", digest)
+            and receipt_digest == digest
+        )
+
+    def _bind_parser_input_provenance(
+        self,
+        statutes: List[NormalizedStatute],
+        *,
+        parser_input_url: str,
+    ) -> List[NormalizedStatute]:
+        """Bind rows from one XML/document response to its retained bytes."""
+
+        if not statutes:
+            return statutes
+        provenance = self._last_parser_input_row_provenance()
+        receipt = provenance.get("transport_receipt")
+        retained_url = (
+            str(receipt.get("official_url") or "").strip()
+            if isinstance(receipt, Mapping)
+            else ""
+        )
+        exact_input = bool(
+            provenance
+            and parser_input_url
+            and retained_url
+            and self._canonical_fetch_url(retained_url)
+            == self._canonical_fetch_url(parser_input_url)
+        )
+        if not exact_input:
+            if self._state_law_acquisition_ledger is not None:
+                raise RuntimeError(
+                    "Iowa rows lack exact retained parser-input provenance"
+                )
+            return statutes
+        for statute in statutes:
+            structured = dict(statute.structured_data or {})
+            structured.update(provenance)
+            statute.structured_data = structured
+        return statutes
+
+    def _enrich_statute_structure(
+        self,
+        statute: NormalizedStatute,
+    ) -> NormalizedStatute:
+        """Carry retained Iowa XML/document provenance into JSON-LD."""
+
+        enriched = super()._enrich_statute_structure(statute)
+        structured = dict(enriched.structured_data or {})
+        if str(structured.get("source_kind") or "").strip() not in {
+            "official_iowa_chapter_slim_xml",
+            "official_iowa_code_section_document",
+        }:
+            return enriched
+        if not self._has_exact_parser_input_provenance(enriched):
+            if self._state_law_acquisition_ledger is not None:
+                raise RuntimeError(
+                    "Iowa row lacks canonical retained parser-input provenance"
+                )
+            return enriched
+
+        digest = str(structured.get("content_sha256") or "").strip().lower()
+        receipt = structured["transport_receipt"]
+        jsonld = structured.get("jsonld")
+        if not isinstance(jsonld, Mapping):
+            if self._state_law_acquisition_ledger is not None:
+                raise RuntimeError(
+                    "Iowa row lacks canonical retained parser-input provenance"
+                )
+            return enriched
+        jsonld_payload = dict(jsonld)
+        prior = jsonld_payload.get("provenance")
+        provenance = dict(prior) if isinstance(prior, Mapping) else {}
+        provenance.update(
+            {
+                "content_sha256": digest,
+                "transport_receipt": dict(receipt),
+            }
+        )
+        jsonld_payload["provenance"] = provenance
+        structured["jsonld"] = jsonld_payload
+        enriched.structured_data = structured
+        return enriched
+
+    @staticmethod
+    def _is_exact_reserved_section_text(text: str, section_number: str) -> bool:
+        normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+        section = str(section_number or "").strip()
+        return bool(
+            section
+            and normalized.casefold()
+            in {"reserved.", f"{section} reserved.".casefold()}
+        )
     
     async def scrape_code(
         self,
@@ -109,10 +221,11 @@ class IowaScraper(BaseStateScraper):
                 )
                 return official_sections
             self.logger.warning(
-                "Iowa official section crawl returned %s rows (min=%s); falling back to legacy discovery",
+                "Iowa official section crawl returned %s rows (min=%s); refusing capped legacy recovery in full-corpus mode",
                 len(official_sections),
                 accept_min,
             )
+            return []
 
         return_threshold = self._bounded_return_threshold(160)
         if max_statutes is not None:
@@ -160,7 +273,7 @@ class IowaScraper(BaseStateScraper):
         if len(merged) >= return_threshold:
             return merged
 
-        if not full_corpus:
+        if not self._full_corpus_enabled():
             direct_sections = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
             if direct_sections:
                 return direct_sections[:return_threshold]
@@ -254,6 +367,27 @@ class IowaScraper(BaseStateScraper):
         resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
         resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
         resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
+        if (
+            self._state_law_acquisition_ledger is not None
+            and resumed
+            and any(
+                not self._has_exact_parser_input_provenance(statute)
+                for statute in resumed
+            )
+        ):
+            # A legacy checkpoint predating prospective row provenance cannot
+            # be promoted or partially resumed.  Reparse the immutable ledger
+            # inputs so every retained row receives its exact XML/document
+            # digest; this does not require reacquiring already retained bytes.
+            self.logger.warning(
+                "Iowa is ignoring %s unbound checkpoint rows and replaying retained inputs",
+                len(resumed),
+            )
+            resumed = []
+            checkpoint_progress = {}
+            resume_chapters_scanned = 0
+            resume_sections_scanned = 0
+            resume_discovered_sections = 0
         chapter_rewind = max(
             0,
             int(os.getenv("STATE_SCRAPER_IA_RESUME_CHAPTER_REWIND", "8") or "8"),
@@ -262,6 +396,8 @@ class IowaScraper(BaseStateScraper):
 
         official_rows: List[NormalizedStatute] = []
         seen_section_keys = set()
+        terminal_section_dispositions: Dict[str, Dict[str, object]] = {}
+        self._last_iowa_terminal_dispositions = []
         for statute in resumed:
             section_number = str(getattr(statute, "section_number", "") or "").strip()
             source_url = str(getattr(statute, "source_url", "") or "").strip()
@@ -272,6 +408,7 @@ class IowaScraper(BaseStateScraper):
             official_rows.append(statute)
 
         chapter_urls: List[str] = []
+        chapter_frontier: Dict[str, Dict[str, object]] = {}
         seen_chapters = set()
 
         chapter_page_timeout = max(
@@ -291,12 +428,11 @@ class IowaScraper(BaseStateScraper):
                 f"{self.get_base_url()}/law/iowaCode/chapters"
                 f"?title={title_token}&year={year}"
             )
-            payload = await self._request_bytes_direct(title_url, timeout=chapter_page_timeout)
-            if not payload and official_archival_fallback:
-                payload = await self._fetch_page_content_with_archival_fallback(
-                    title_url,
-                    timeout_seconds=chapter_page_timeout,
-                )
+            payload = await self._request_bytes(
+                title_url,
+                timeout=chapter_page_timeout,
+                allow_archival_fallback=official_archival_fallback,
+            )
             if not payload:
                 continue
             try:
@@ -314,6 +450,39 @@ class IowaScraper(BaseStateScraper):
                     continue
                 seen_chapters.add(chapter_url)
                 chapter_urls.append(chapter_url)
+                parent_row = anchor.find_parent("tr")
+                row_text = (
+                    self._normalize_legal_text(
+                        parent_row.get_text(" ", strip=True) or ""
+                    )
+                    if parent_row is not None
+                    else ""
+                )
+                row_links = (
+                    [
+                        urljoin(
+                            title_url,
+                            str(link.get("href") or "").strip(),
+                        )
+                        for link in parent_row.find_all("a", href=True)
+                    ]
+                    if parent_row is not None
+                    else []
+                )
+                chapter_frontier[chapter_url] = {
+                    "label": row_text,
+                    "reserved": bool(
+                        re.search(r"\bRESERVED\b", row_text, re.IGNORECASE)
+                    ),
+                    "xml_url": next(
+                        (
+                            candidate
+                            for candidate in row_links
+                            if candidate.lower().endswith("_slim.xml")
+                        ),
+                        "",
+                    ),
+                }
 
         chapter_limit = int(os.getenv("IOWA_OFFICIAL_CHAPTER_LIMIT", "0") or "0")
         if chapter_limit > 0:
@@ -353,6 +522,72 @@ class IowaScraper(BaseStateScraper):
                 "resume_chapter_floor": int(max(0, resume_chapter_floor)),
             }
 
+        def _append_xml_rows(
+            xml_payload: bytes,
+            *,
+            chapter_number: str,
+            xml_url: str,
+        ) -> int:
+            nonlocal sections_discovered_total, sections_scanned_total
+            from .iowa_chapter_xml import (
+                parse_iowa_chapter_xml,
+                reserved_section_numbers,
+            )
+
+            provenance = self._last_parser_input_row_provenance()
+            receipt = provenance.get("transport_receipt")
+            digest = str(provenance.get("content_sha256") or "").strip().lower()
+            if not re.fullmatch(r"[a-f0-9]{64}", digest):
+                digest = hashlib.sha256(xml_payload).hexdigest()
+            for section_number in reserved_section_numbers(xml_payload):
+                key = section_number.casefold()
+                terminal_section_dispositions[key] = {
+                    "chapter_number": chapter_number,
+                    "content_sha256": digest,
+                    "disposition": "reserved",
+                    "section_number": section_number,
+                    "source_url": xml_url,
+                    **(
+                        {"transport_receipt": dict(receipt)}
+                        if isinstance(receipt, Mapping)
+                        else {}
+                    ),
+                }
+            self._last_iowa_terminal_dispositions = list(
+                terminal_section_dispositions.values()
+            )
+
+            remaining = (
+                None
+                if section_limit <= 0
+                else max(0, section_limit - len(official_rows))
+            )
+            xml_rows = parse_iowa_chapter_xml(
+                xml_payload,
+                chapter=chapter_number,
+                year=year,
+                code_name=code_name,
+                max_statutes=remaining,
+            )
+            xml_rows = self._bind_parser_input_provenance(
+                xml_rows,
+                parser_input_url=xml_url,
+            )
+            sections_discovered_total += len(xml_rows)
+            sections_scanned_total += len(xml_rows)
+            added = 0
+            for row in xml_rows:
+                section_key = (
+                    str(row.section_number or "").lower(),
+                    str(row.source_url or "").lower(),
+                )
+                if section_key in seen_section_keys:
+                    continue
+                seen_section_keys.add(section_key)
+                official_rows.append(row)
+                added += 1
+            return added
+
         self._write_partial_checkpoint(
             official_rows,
             code_name=code_name,
@@ -373,6 +608,11 @@ class IowaScraper(BaseStateScraper):
             )
 
         for chapter_index, chapter_url in enumerate(chapter_urls, start=1):
+            frontier_entry = dict(chapter_frontier.get(chapter_url) or {})
+            if frontier_entry.get("reserved") is True:
+                # The exact retained title row is the terminal disposition for
+                # a reserved chapter (e.g. current Iowa Code chapter 763).
+                continue
             if official_rows and chapter_index <= resume_chapter_floor:
                 if chapter_index % checkpoint_every_chapters == 0:
                     self._write_partial_checkpoint(
@@ -382,21 +622,54 @@ class IowaScraper(BaseStateScraper):
                         extra=_progress_payload(chapters_scanned=chapter_index, codes_completed=0),
                     )
                 continue
-            chapter_payload = await self._request_bytes_direct(chapter_url, timeout=chapter_page_timeout)
-            if not chapter_payload and official_archival_fallback:
-                chapter_payload = await self._fetch_page_content_with_archival_fallback(
-                    chapter_url,
-                    timeout_seconds=chapter_page_timeout,
+            chapter_query = parse_qs(urlparse(chapter_url).query or "")
+            chapter_number = str(
+                (chapter_query.get("codeChapter") or [""])[0]
+            ).strip()
+            xml_url = str(frontier_entry.get("xml_url") or "").strip()
+            if not xml_url and chapter_number:
+                xml_url = (
+                    f"{self.get_base_url()}/docs/publications/ICC/{year}"
+                    f"/attachments/{chapter_number}_slim.xml"
                 )
+
+            chapter_payload = await self._request_bytes(
+                chapter_url,
+                timeout=chapter_page_timeout,
+                allow_archival_fallback=official_archival_fallback,
+            )
             if not chapter_payload:
-                if chapter_index % checkpoint_every_chapters == 0:
-                    self._write_partial_checkpoint(
-                        official_rows,
-                        code_name=code_name,
-                        stage_label="iowa:chapter-fetch-miss",
-                        extra=_progress_payload(chapters_scanned=chapter_index, codes_completed=0),
+                # The exact title frontier also exposes a chapter-level slim
+                # XML locator.  It is the narrow official fallback when the
+                # interactive section index is unavailable (203A in the
+                # retained 2026 frontier).  The shared byte adapter retains a
+                # direct/archive/cache body before it reaches this parser.
+                xml_payload = (
+                    await self._request_bytes(
+                        xml_url,
+                        timeout=section_doc_timeout,
+                        allow_archival_fallback=official_archival_fallback,
                     )
-                continue
+                    if xml_url
+                    else b""
+                )
+                if (
+                    xml_payload
+                    and chapter_number
+                    and _append_xml_rows(
+                        xml_payload,
+                        chapter_number=chapter_number,
+                        xml_url=xml_url,
+                    )
+                    > 0
+                ):
+                    continue
+                raise RuntimeError(
+                    "Iowa active official chapter lacked a retained chapter or "
+                    "slim-XML parser input: "
+                    f"chapter_url={chapter_url} xml_url={xml_url or 'missing'} "
+                    f"label={frontier_entry.get('label') or 'missing'}"
+                )
             try:
                 chapter_html = chapter_payload.decode("utf-8", errors="replace")
             except Exception:
@@ -410,35 +683,19 @@ class IowaScraper(BaseStateScraper):
                 continue
 
             chapter_soup = BeautifulSoup(chapter_html, "html.parser")
-            chapter_query = parse_qs(urlparse(chapter_url).query or "")
-            chapter_number = str((chapter_query.get("codeChapter") or [""])[0]).strip() or None
             if chapter_number:
-                xml_url = (
-                    f"{self.get_base_url()}/docs/publications/ICC/{year}"
-                    f"/attachments/{chapter_number}_slim.xml"
+                xml_payload = await self._request_bytes(
+                    xml_url,
+                    timeout=section_doc_timeout,
+                    allow_archival_fallback=official_archival_fallback,
                 )
-                xml_payload = await self._request_bytes_direct(xml_url, timeout=section_doc_timeout)
                 if xml_payload:
-                    from .iowa_chapter_xml import parse_iowa_chapter_xml
-
-                    remaining = None if section_limit <= 0 else max(0, section_limit - len(official_rows))
-                    xml_rows = parse_iowa_chapter_xml(
+                    added = _append_xml_rows(
                         xml_payload,
-                        chapter=chapter_number,
-                        year=year,
-                        code_name=code_name,
-                        max_statutes=remaining,
+                        chapter_number=chapter_number,
+                        xml_url=xml_url,
                     )
-                    for row in xml_rows:
-                        section_key = (
-                            str(row.section_number or "").lower(),
-                            str(row.source_url or "").lower(),
-                        )
-                        if section_key in seen_section_keys:
-                            continue
-                        seen_section_keys.add(section_key)
-                        official_rows.append(row)
-                    if xml_rows:
+                    if added:
                         continue
 
             for row in chapter_soup.find_all("tr"):
@@ -486,6 +743,10 @@ class IowaScraper(BaseStateScraper):
                 if not section_number:
                     continue
 
+                if section_number.casefold() in terminal_section_dispositions:
+                    sections_scanned_total += 1
+                    continue
+
                 section_name = re.sub(
                     rf"^§\s*{re.escape(section_number)}\s*[-–—:]?\s*",
                     "",
@@ -500,18 +761,15 @@ class IowaScraper(BaseStateScraper):
                 seen_section_keys.add(section_key)
 
                 section_text = ""
+                parser_input_url = ""
                 for candidate_url in [rtf_url, pdf_url]:
                     if not candidate_url:
                         continue
-                    raw_bytes = await self._request_bytes_direct(
+                    raw_bytes = await self._request_bytes(
                         candidate_url,
                         timeout=section_doc_timeout,
+                        allow_archival_fallback=official_archival_fallback,
                     )
-                    if not raw_bytes and official_archival_fallback:
-                        raw_bytes = await self._fetch_page_content_with_archival_fallback(
-                            candidate_url,
-                            timeout_seconds=section_doc_timeout,
-                        )
                     if not raw_bytes:
                         continue
 
@@ -541,15 +799,51 @@ class IowaScraper(BaseStateScraper):
                             )
                         except Exception:
                             candidate_text = ""
+                    if self._is_exact_reserved_section_text(
+                        candidate_text,
+                        section_number,
+                    ):
+                        provenance = self._last_parser_input_row_provenance()
+                        receipt = provenance.get("transport_receipt")
+                        digest = str(
+                            provenance.get("content_sha256") or ""
+                        ).strip().lower()
+                        if not re.fullmatch(r"[a-f0-9]{64}", digest):
+                            digest = hashlib.sha256(raw_bytes).hexdigest()
+                        terminal_section_dispositions[section_number.casefold()] = {
+                            "chapter_number": chapter_number,
+                            "content_sha256": digest,
+                            "disposition": "reserved",
+                            "section_number": section_number,
+                            "source_url": candidate_url,
+                            **(
+                                {"transport_receipt": dict(receipt)}
+                                if isinstance(receipt, Mapping)
+                                else {}
+                            ),
+                        }
+                        self._last_iowa_terminal_dispositions = list(
+                            terminal_section_dispositions.values()
+                        )
+                        parser_input_url = candidate_url
+                        break
                     if len(candidate_text) >= section_text_min_chars:
                         section_text = candidate_text
+                        parser_input_url = candidate_url
                         break
 
+                if section_number.casefold() in terminal_section_dispositions:
+                    continue
+
                 if not section_text:
+                    if self._state_law_acquisition_ledger is not None:
+                        raise RuntimeError(
+                            "Iowa section lacked a retained substantive parser input: "
+                            f"section={section_number} chapter={chapter_number}"
+                        )
                     section_text = f"{section_label}. Source: {preferred_source}"
 
-                official_rows.append(
-                    NormalizedStatute(
+                statute = NormalizedStatute(
                         state_code=self.state_code,
                         state_name=self.state_name,
                         statute_id=f"{code_name} § {section_number}",
@@ -558,7 +852,7 @@ class IowaScraper(BaseStateScraper):
                         section_number=section_number,
                         section_name=section_name[:200],
                         full_text=section_text,
-                        source_url=preferred_source,
+                        source_url=parser_input_url or preferred_source,
                         legal_area=self._identify_legal_area(section_name or section_text),
                         official_cite=f"Iowa Code § {section_number}",
                         metadata=StatuteMetadata(),
@@ -570,7 +864,11 @@ class IowaScraper(BaseStateScraper):
                             "skip_hydrate": len(section_text) >= section_text_min_chars,
                         },
                     )
+                self._bind_parser_input_provenance(
+                    [statute],
+                    parser_input_url=parser_input_url,
                 )
+                official_rows.append(statute)
 
                 if len(official_rows) == 1 or len(official_rows) % checkpoint_every_statutes == 0:
                     self.logger.info(
@@ -648,32 +946,40 @@ class IowaScraper(BaseStateScraper):
         return out
 
     async def _request_text_direct(self, url: str, timeout: int = 18) -> str:
-        def _request() -> str:
-            try:
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    return resp.read().decode("utf-8", errors="replace")
-            except Exception:
-                return ""
-
-        try:
-            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
-        except Exception:
-            return ""
+        payload = await self._fetch_parser_input_with_transport(
+            url,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout_seconds=max(1, int(timeout or 18)),
+            # Full-corpus callers preserve the existing opt-in archival policy.
+            allow_archival_fallback=False,
+            media_type="text/html",
+            provider="iowa_direct",
+        )
+        return payload.decode("utf-8", errors="replace") if payload else ""
 
     async def _request_bytes_direct(self, url: str, timeout: int = 25) -> bytes:
-        def _request() -> bytes:
-            try:
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=max(3, int(timeout or 25))) as resp:
-                    return bytes(resp.read() or b"")
-            except Exception:
-                return b""
+        return await self._request_bytes(
+            url,
+            timeout=timeout,
+            allow_archival_fallback=False,
+        )
 
-        try:
-            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=max(4, int(timeout or 25) + 2))
-        except Exception:
-            return b""
+    async def _request_bytes(
+        self,
+        url: str,
+        *,
+        timeout: int = 25,
+        allow_archival_fallback: bool = False,
+    ) -> bytes:
+        return await self._fetch_parser_input_with_transport(
+            url,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout_seconds=max(3, int(timeout or 25)),
+            # The caller controls opt-in archival recovery for official HTML,
+            # XML, RTF, and PDF locators.
+            allow_archival_fallback=allow_archival_fallback,
+            provider="iowa_direct",
+        )
 
     async def _scrape_live_code_stubs(self, code_name: str, max_statutes: int = 160) -> List[NormalizedStatute]:
         try:
@@ -800,37 +1106,10 @@ class IowaScraper(BaseStateScraper):
         return out
 
     async def _fetch_cdx_rows(self, cdx_url: str, timeout: int = 45) -> List[List[object]]:
-        # Prefer the shared archival/unified fetch chain so archive discovery
-        # participates in provider fallback and fetch analytics.
-        try:
-            payload = await self._fetch_page_content_with_archival_fallback(
-                cdx_url,
-                timeout_seconds=timeout,
-            )
-            if payload:
-                rows = json.loads(payload.decode("utf-8", errors="ignore"))
-                if isinstance(rows, list):
-                    return rows
-        except Exception:
-            pass
-
-        # Direct HTTP fallback for environments where unified fetch cannot initialize.
-        candidates = [str(cdx_url or "")]
-        if candidates[0].startswith("https://"):
-            candidates.append("http://" + candidates[0][8:])
-        elif candidates[0].startswith("http://"):
-            candidates.append("https://" + candidates[0][7:])
-
-        for candidate in candidates:
-            try:
-                req = urllib.request.Request(candidate, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=max(1, int(timeout))) as resp:
-                    rows = json.loads(resp.read().decode("utf-8", errors="ignore"))
-                if isinstance(rows, list):
-                    return rows
-            except Exception:
-                continue
-        return []
+        return await self._fetch_wayback_cdx_rows(
+            cdx_url,
+            timeout_seconds=timeout,
+        )
 
     def official_title_url(self, title_token: str, year: str | None = None) -> str:
         code_year = str(year or self.OFFICIAL_CODE_YEAR).strip() or self.OFFICIAL_CODE_YEAR

@@ -74,7 +74,7 @@ def parse_virginia_constitution_html(
             title_number=art_id,
             section_number=number,
             section_name=(sec_title or f"Section {number}")[:200],
-            full_text=body[:14000],
+            full_text=body,
             source_url=source_url or f"{VA_CONST_BASE}/",
             official_cite=cite,
             metadata=StatuteMetadata(),

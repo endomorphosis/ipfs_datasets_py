@@ -197,7 +197,7 @@ def parse_massachusetts_section_html(
         chapter_number=chapter or None,
         section_number=section,
         section_name=name[:200],
-        full_text=full[:14000],
+        full_text=full,
         source_url=source_url or f"{BASE}/Laws/GeneralLaws",
         official_cite=f"Mass. Gen. Laws ch. {chapter}, § {section}",
         metadata=StatuteMetadata(),

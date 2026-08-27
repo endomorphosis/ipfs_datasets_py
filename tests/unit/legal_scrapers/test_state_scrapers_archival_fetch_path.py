@@ -1,7 +1,7 @@
 import io
+import hashlib
 import json
 import zipfile
-import urllib.request
 
 import pytest
 
@@ -10,6 +10,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arkansas import A
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
     BaseStateScraper,
     NormalizedStatute,
+    StateLawPageMultiFetchResult,
     StatuteMetadata,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.california import CaliforniaScraper
@@ -183,26 +184,26 @@ async def test_new_hampshire_fetch_known_rsa_page_prefers_direct_wayback(
 async def test_new_hampshire_request_text_direct_avoids_archival_fallback_for_wayback(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    class _FakeUrlopenResponse:
-        def __init__(self, payload: bytes):
-            self._payload = payload
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc, tb):
-            return False
-
-        def read(self):
-            return self._payload
-
-    def _fake_urlopen(request_obj, timeout=20):
-        return _FakeUrlopenResponse(b"<html><body>nh-direct-only</body></html>")
+    async def _fake_replay(
+        self,
+        archive_url: str,
+        *,
+        timeout_seconds: int,
+        media_type: str,
+    ) -> bytes:
+        assert "web.archive.org/web/20250124114611/" in archive_url
+        assert timeout_seconds == 12
+        assert media_type == "text/html"
+        return b"<html><body>nh-direct-only</body></html>"
 
     async def _fake_fallback(self, url: str, timeout_seconds: int = 25) -> bytes:
         raise AssertionError("archival fallback should not run for direct NH wayback fetch")
 
-    monkeypatch.setattr(urllib.request, "urlopen", _fake_urlopen)
+    monkeypatch.setattr(
+        BaseStateScraper,
+        "_fetch_wayback_replay_parser_input",
+        _fake_replay,
+    )
     monkeypatch.setattr(
         BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fallback
     )
@@ -364,8 +365,8 @@ async def test_indiana_download_bundle_scrape_parses_section_rows(
     assert len(statutes) == 2
     assert statutes[0].section_number == "1-1-1-1"
     assert statutes[1].section_number == "1-1-1-2"
-    assert statutes[0].structured_data.get("source_kind") == "official_indiana_code_download_bundle"
-    assert statutes[0].structured_data.get("code_year") == 2024
+    assert statutes[0].structured_data.get("source_kind") == "official_indiana_code_html_zip"
+    assert statutes[0].structured_data.get("code_year") == "2024"
     assert statutes[0].structured_data.get("skip_hydrate") is True
 
 
@@ -422,7 +423,7 @@ async def test_indiana_scrape_code_prefers_download_bundle_rows(monkeypatch: pyt
 
 
 @pytest.mark.anyio
-async def test_iowa_bounded_probe_prefers_live_or_archival_rows_over_direct_seed(
+async def test_iowa_bounded_probe_prefers_full_text_direct_seed_over_live_stub(
     monkeypatch: pytest.MonkeyPatch,
 ):
     async def _fake_live(self, code_name: str, max_statutes: int = 160):
@@ -478,7 +479,7 @@ async def test_iowa_bounded_probe_prefers_live_or_archival_rows_over_direct_seed
     statutes = await scraper.scrape_code("Iowa Code", "https://www.legis.iowa.gov/", max_statutes=1)
 
     assert len(statutes) == 1
-    assert statutes[0].structured_data["discovery_method"] == "official_live_index"
+    assert statutes[0].structured_data["discovery_method"] == "official_seed_section"
 
 
 @pytest.mark.anyio
@@ -849,28 +850,29 @@ async def test_indiana_link_graph_skips_wayback_wildcard_children(monkeypatch: p
 
 
 @pytest.mark.anyio
-async def test_georgia_custom_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
-    async def _fake_unified_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
-        return b""
-
-    def _fake_get(url: str, *args, **kwargs):
-        html = (
-            "<html><body><a href='/law/title1'>Title 1 General Provisions</a></body></html>"
-        ).encode("utf-8")
-        return _FakeResponse(html)
+async def test_georgia_official_fetch_records_fetch_analytics(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    async def _fake_transport(self, url: str, **kwargs) -> bytes:
+        del url, kwargs
+        self._record_fetch_event(provider="test_fake", success=True)
+        return (
+            b"<html><body><a href='/legislation/georgia-code/title-1'>"
+            b"Title 1 General Provisions</a></body></html>"
+        )
 
     monkeypatch.setattr(
         BaseStateScraper,
-        "_fetch_page_content_with_archival_fallback",
-        _make_fake_archival_fetch(_fake_get),
+        "_fetch_parser_input_with_transport",
+        _fake_transport,
     )
 
     scraper = GeorgiaScraper("GA", "Georgia")
-    statutes = await scraper._custom_scrape_georgia(
-        "Official Code of Georgia", "http://example.ga/laws", "Ga. Code Ann."
+    html = await scraper._fetch_official_ga_html(
+        "https://www.legis.ga.gov/legislation/georgia-code"
     )
 
-    assert len(statutes) >= 1
+    assert "Title 1 General Provisions" in html
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0
 
@@ -905,6 +907,7 @@ async def test_louisiana_archival_request_records_fetch_analytics(monkeypatch: p
 
 @pytest.mark.anyio
 async def test_louisiana_live_toc_discovers_law_pages(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("STATE_SCRAPER_LA_SKIP_LIVE_TOC", "0")
     toc_html = (
         "<html><body><form action='./Laws_Toc.aspx?folder=75&level=Parent'>"
         "<input type='hidden' name='__VIEWSTATE' value='abc' />"
@@ -923,16 +926,22 @@ async def test_louisiana_live_toc_discovers_law_pages(monkeypatch: pytest.Monkey
         def __init__(self, text: str):
             self.status_code = 200
             self.text = text
+            self.content = text.encode("utf-8")
+            self.headers = {"Content-Type": "text/html; charset=utf-8"}
+            self.url = "https://legis.la.gov/legis/Laws_Toc.aspx?folder=75&level=Parent"
 
         def raise_for_status(self):
             return None
 
     class _Session:
-        def get(self, url, timeout=30, headers=None):
-            return _Resp(toc_html)
-
-        def post(self, url, data=None, timeout=45, headers=None):
+        def request(self, method, url, **_kwargs):
+            if method == "GET":
+                return _Resp(toc_html)
+            assert method == "POST"
             return _Resp(title_response_html)
+
+        def close(self):
+            return None
 
     async def _fake_request_text(self, law_url: str, headers, timeout: int) -> str:
         if law_url.endswith("74079"):
@@ -962,6 +971,80 @@ async def test_louisiana_live_toc_discovers_law_pages(monkeypatch: pytest.Monkey
     assert [row.section_number for row in statutes] == ["RS 1:1", "RS 1:2"]
     assert statutes[0].structured_data["discovery_method"] == "live_toc_postback"
     assert "Louisiana statute text one." in statutes[0].full_text
+
+
+@pytest.mark.anyio
+async def test_louisiana_exact_frontier_unions_pages_in_one_archive_aware_wave(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    urls = [f"https://legis.la.gov/Legis/Law.aspx?d={value}" for value in range(101, 106)]
+    observed: list[tuple[list[str], dict[str, object]]] = []
+
+    async def _frontier(self, requested, **kwargs):
+        requested = list(requested)
+        observed.append((requested, dict(kwargs)))
+        payloads = [
+            (
+                "<html><body>"
+                f"<span id='ctl00_PageBody_LabelName'>RS 1:{urls.index(url) + 1}</span>"
+                "<span id='ctl00_PageBody_LabelDocument'>"
+                + (f"Louisiana exact statute {urls.index(url) + 1}. " * 20)
+                + "</span></body></html>"
+            ).encode()
+            for url in requested
+        ]
+        return StateLawPageMultiFetchResult(
+            urls=requested,
+            payloads=payloads,
+            errors=[None] * len(requested),
+            transport_receipts=[
+                {
+                    "official_url": url,
+                    "content_sha256": hashlib.sha256(payload).hexdigest(),
+                    "source_transport": "direct",
+                }
+                for url, payload in zip(requested, payloads)
+            ],
+            parser_input_envelopes=[None] * len(requested),
+            stats={
+                "direct_initial_successes": len(requested),
+                "common_crawl": {
+                    "range_fetch_calls": 0,
+                    "naive_range_fetches": 0,
+                    "range_fetches_avoided": 0,
+                },
+            },
+        )
+
+    async def _single_must_not_run(*_args, **_kwargs):
+        raise AssertionError("exact Louisiana frontier must use the plural fetch seam")
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setenv("STATE_SCRAPER_LA_FRONTIER_BATCH_SIZE", "3")
+    monkeypatch.setenv("STATE_SCRAPER_LA_FRONTIER_CONCURRENCY", "3")
+    monkeypatch.setattr(
+        LouisianaScraper,
+        "_fetch_page_contents_with_archival_fallback",
+        _frontier,
+    )
+    monkeypatch.setattr(LouisianaScraper, "_request_text", _single_must_not_run)
+
+    scraper = LouisianaScraper("LA", "Louisiana")
+    rows = await scraper._scrape_law_page_urls(
+        code_name="Louisiana Revised Statutes",
+        law_urls=urls,
+        max_statutes=None,
+    )
+
+    assert [batch for batch, _kwargs in observed] == [urls]
+    assert all(kwargs["prefer_direct"] is True for _batch, kwargs in observed)
+    assert all(kwargs["max_concurrency"] == 3 for _batch, kwargs in observed)
+    assert observed[0][1]["common_crawl_domain_terms"] == ("legis.la.gov",)
+    assert observed[0][1]["common_crawl_url_terms"] == ("/legis/Law.aspx",)
+    assert observed[0][1]["wayback_prefix_inventory"] is True
+    assert len(rows) == len(urls)
+    assert [row.source_url for row in rows] == urls
+    assert scraper._last_louisiana_full_frontier["closed"] is True
 
 
 @pytest.mark.anyio
@@ -1000,11 +1083,23 @@ async def test_louisiana_default_run_uses_realistic_official_limit(monkeypatch: 
 async def test_georgia_default_run_uses_realistic_justia_limit(monkeypatch: pytest.MonkeyPatch):
     requested = {}
 
+    async def _fake_official(self, **kwargs):
+        return []
+
+    async def _fake_summary(self, code_name: str):
+        return []
+
     async def _fake_justia(self, code_name: str, year: str, max_statutes: int):
         requested["justia_max_statutes"] = max_statutes
         return []
 
     monkeypatch.setenv("GEORGIA_JUSTIA_ENABLE", "1")
+    monkeypatch.setattr(GeorgiaScraper, "_scrape_official_georgia_code", _fake_official)
+    monkeypatch.setattr(
+        GeorgiaScraper,
+        "_scrape_general_statute_summary_pdfs",
+        _fake_summary,
+    )
     monkeypatch.setattr(GeorgiaScraper, "_scrape_justia_year", _fake_justia)
     monkeypatch.setattr(GeorgiaScraper, "has_playwright", lambda self: False)
 
@@ -1467,33 +1562,30 @@ async def test_new_hampshire_bounded_probe_prefers_archived_title_stubs_over_dir
 
 
 @pytest.mark.anyio
-async def test_new_hampshire_full_corpus_caps_discovery_and_stops_after_stagnation(
+async def test_new_hampshire_full_corpus_uses_strict_batched_tree_without_candidate_sweep(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    captured = {"discover_limit": None, "generic_calls": 0}
+    captured = {"strict_calls": 0}
 
-    async def _fake_discover(self, limit: int = 180):
-        captured["discover_limit"] = limit
-        return [
-            f"https://web.archive.org/web/20250101000000/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-{i}.htm"
-            for i in range(1, 80)
-        ]
-
-    async def _fake_archived_titles(self, code_name: str, max_statutes=None, checkpoint=None):
+    async def _fake_strict(self, *, code_name: str, checkpoint):
+        del self, code_name
+        assert checkpoint.state_code == "NH"
+        captured["strict_calls"] += 1
         return []
 
-    async def _fake_generic(
-        self, code_name: str, candidate: str, citation_format: str, max_sections: int = 100
-    ):
-        captured["generic_calls"] += 1
-        return []
+    async def _forbid_legacy(*_args, **_kwargs):
+        raise AssertionError("unbounded NH must not enter the sequential candidate sweep")
 
     monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
-    monkeypatch.setenv("STATE_SCRAPER_NH_ARCHIVE_DISCOVERY_LIMIT", "999999")
-    monkeypatch.setenv("STATE_SCRAPER_NH_MAX_STAGNANT_CANDIDATES", "3")
-    monkeypatch.setattr(NewHampshireScraper, "_discover_archived_rsa_urls", _fake_discover)
-    monkeypatch.setattr(NewHampshireScraper, "_scrape_archived_title_stubs", _fake_archived_titles)
-    monkeypatch.setattr(NewHampshireScraper, "_generic_scrape", _fake_generic)
+    monkeypatch.setattr(
+        NewHampshireScraper,
+        "_scrape_official_rsa_tree_batched",
+        _fake_strict,
+    )
+    monkeypatch.setattr(NewHampshireScraper, "_scrape_official_rsa_tree", _forbid_legacy)
+    monkeypatch.setattr(NewHampshireScraper, "_discover_archived_rsa_urls", _forbid_legacy)
+    monkeypatch.setattr(NewHampshireScraper, "_scrape_archived_title_stubs", _forbid_legacy)
+    monkeypatch.setattr(NewHampshireScraper, "_generic_scrape", _forbid_legacy)
 
     scraper = NewHampshireScraper("NH", "New Hampshire")
     statutes = await scraper.scrape_code(
@@ -1502,9 +1594,7 @@ async def test_new_hampshire_full_corpus_caps_discovery_and_stops_after_stagnati
     )
 
     assert statutes == []
-    assert captured["discover_limit"] == 2500
-    # Runtime guard enforces a minimum stagnation window of 4 candidates.
-    assert captured["generic_calls"] == 4
+    assert captured["strict_calls"] == 1
 
 
 @pytest.mark.anyio
@@ -2342,7 +2432,24 @@ async def test_maine_official_hierarchy_uses_title_chapter_section_tree(
         self._record_fetch_event(provider="test_fake", success=True)
         return pages.get(url, b"")
 
+    async def _fake_frontier(self, urls, **_kwargs) -> StateLawPageMultiFetchResult:
+        requested = list(urls)
+        payloads = [pages.get(url, b"") for url in requested]
+        return StateLawPageMultiFetchResult(
+            urls=requested,
+            payloads=payloads,
+            errors=[None if payload else "test miss" for payload in payloads],
+            transport_receipts=[None] * len(requested),
+            parser_input_envelopes=[None] * len(requested),
+            stats={"requested_pages": len(requested)},
+        )
+
     monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+    monkeypatch.setattr(
+        BaseStateScraper,
+        "_fetch_page_contents_with_archival_fallback",
+        _fake_frontier,
+    )
 
     scraper = MaineScraper("ME", "Maine")
     statutes = await scraper._scrape_official_title_chapter_section_tree(
@@ -3090,7 +3197,33 @@ async def test_connecticut_custom_scrape_extracts_real_chapter_sections(
             return b"<html><body></body></html>"
         return b""
 
+    async def _fake_frontier(
+        self,
+        urls,
+        *,
+        purpose: str,
+        timeout_seconds: int = 35,
+    ):
+        records = []
+        for url in urls:
+            payload = await _fake_fetch(self, url, timeout_seconds)
+            records.append(
+                {
+                    "url": url,
+                    "payload": payload,
+                    "error": "" if payload else "test miss",
+                    "transport_receipt": {},
+                    "content_sha256": "",
+                }
+            )
+        return records
+
     monkeypatch.setattr(ConnecticutScraper, "_fetch_connecticut_page", _fake_fetch)
+    monkeypatch.setattr(
+        ConnecticutScraper,
+        "_fetch_connecticut_frontier_pages",
+        _fake_frontier,
+    )
     monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
 
     scraper = ConnecticutScraper("CT", "Connecticut")
@@ -3256,6 +3389,87 @@ async def test_maryland_section_identity_includes_article_context(monkeypatch: p
     assert statute.official_cite == "Md. Code, State Government § 1-101"
     assert statute.structured_data["article_name"] == "State Government"
     assert statute.structured_data["article_code"] == "GSG"
+
+    drifted = await scraper._build_statute_from_section_page(
+        code_name="Maryland Code",
+        article_label="State Government (GSG)",
+        section_label="1-101",
+        section_number="1-101",
+        section_url="https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=GCR&section=1-101&enactments=false",
+    )
+    assert drifted is None
+
+
+def test_maryland_primary_section_ids_distinguish_same_section_across_articles():
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maryland_section import (
+        parse_maryland_section_html,
+    )
+
+    html_payload = (
+        "<html><body><div id='StatuteText'>"
+        "<p>§ 1-101. Maryland section text.</p><p>"
+        + ("Substantive text. " * 20)
+        + "</p></div></body></html>"
+    )
+    urls = [
+        "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=GAG&section=1-101&enactments=false",
+        "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=GSG&section=1-101&enactments=false",
+    ]
+    rows = [
+        parse_maryland_section_html(
+            html_payload,
+            source_url=url,
+            code_name="Maryland Code",
+        )
+        for url in urls
+    ]
+
+    assert all(row is not None for row in rows)
+    assert [row.statute_id for row in rows if row is not None] == [
+        "Maryland Code [GAG] § 1-101",
+        "Maryland Code [GSG] § 1-101",
+    ]
+    assert [row.source_url for row in rows if row is not None] == urls
+    assert len({row.full_text for row in rows if row is not None}) == 1
+
+
+@pytest.mark.parametrize(
+    ("source_url", "expected_article_code"),
+    [
+        (
+            "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?section=1-101&enactments=false",
+            "",
+        ),
+        (
+            "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=GCR&section=1-101&enactments=false",
+            "GSG",
+        ),
+    ],
+)
+def test_maryland_primary_section_identity_fails_closed_without_matching_article(
+    source_url: str,
+    expected_article_code: str,
+):
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maryland_section import (
+        parse_maryland_section_html,
+    )
+
+    html_payload = (
+        "<html><body><div id='StatuteText'>"
+        "§ 1-101. Maryland section text. "
+        + ("Substantive text. " * 20)
+        + "</div></body></html>"
+    )
+
+    assert (
+        parse_maryland_section_html(
+            html_payload,
+            source_url=source_url,
+            code_name="Maryland Code",
+            expected_article_code=expected_article_code,
+        )
+        is None
+    )
 
 
 @pytest.mark.anyio
@@ -3555,7 +3769,7 @@ async def test_south_dakota_default_run_uses_realistic_api_limit(monkeypatch: py
 
 
 @pytest.mark.anyio
-async def test_south_carolina_full_corpus_uses_official_title_and_chapter_pages(
+async def test_south_carolina_bounded_probe_uses_official_title_and_chapter_pages(
     monkeypatch: pytest.MonkeyPatch,
 ):
     pages = {
@@ -3587,7 +3801,7 @@ async def test_south_carolina_full_corpus_uses_official_title_and_chapter_pages(
         self._record_fetch_event(provider="test_fake", success=True)
         return pages.get(url, b"")
 
-    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.delenv("STATE_SCRAPER_FULL_CORPUS", raising=False)
     monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
 
     scraper = SouthCarolinaScraper("SC", "South Carolina")
@@ -3786,7 +4000,12 @@ async def test_california_scrape_records_fetch_analytics(monkeypatch: pytest.Mon
         "</body></html>"
     ).encode("utf-8")
 
-    async def _fake_fetch_with_archival(self, url: str, timeout_seconds: int = 25) -> bytes:
+    async def _fake_fetch_with_archival(
+        self,
+        url: str,
+        timeout_seconds: int = 25,
+        content_validator=None,
+    ) -> bytes:
         self._record_fetch_event(provider="test_fake", success=True)
         return html
 
@@ -4966,6 +5185,9 @@ async def test_mississippi_default_run_uses_realistic_recovery_limit(
 
 
 @pytest.mark.anyio
+@pytest.mark.skip(
+    reason="superseded: strict Mississippi now rejects secondary Justia corpus rows"
+)
 async def test_mississippi_full_corpus_prefers_justia_crawl_before_archive(
     monkeypatch: pytest.MonkeyPatch,
 ):
@@ -5019,6 +5241,9 @@ async def test_mississippi_full_corpus_prefers_justia_crawl_before_archive(
 
 
 @pytest.mark.anyio
+@pytest.mark.skip(
+    reason="superseded: strict Mississippi now rejects secondary Wayback-Justia rows"
+)
 async def test_mississippi_full_corpus_prefers_wayback_justia_before_archive_when_direct_blocked(
     monkeypatch: pytest.MonkeyPatch,
 ):
@@ -5077,6 +5302,9 @@ async def test_mississippi_full_corpus_prefers_wayback_justia_before_archive_whe
 
 
 @pytest.mark.anyio
+@pytest.mark.skip(
+    reason="superseded: strict Mississippi now rejects secondary reader rows"
+)
 async def test_mississippi_full_corpus_prefers_reader_before_archive_by_default(
     monkeypatch: pytest.MonkeyPatch,
 ):
@@ -5143,6 +5371,9 @@ async def test_mississippi_full_corpus_prefers_reader_before_archive_by_default(
 
 
 @pytest.mark.anyio
+@pytest.mark.skip(
+    reason="superseded: strict Mississippi now rejects secondary UniCourt rows"
+)
 async def test_mississippi_full_corpus_prefers_unicourt_before_archive_by_default(
     monkeypatch: pytest.MonkeyPatch,
 ):
@@ -5214,6 +5445,9 @@ async def test_mississippi_full_corpus_prefers_unicourt_before_archive_by_defaul
 
 
 @pytest.mark.anyio
+@pytest.mark.skip(
+    reason="superseded: 1997 bill histories are outside the current Code frontier"
+)
 async def test_mississippi_full_corpus_archive_fallback_can_be_reenabled(
     monkeypatch: pytest.MonkeyPatch,
 ):

@@ -12,33 +12,37 @@ Domain-neutral orchestration that:
 * emits typed partial results on budget exhaustion (never silent truncation);
 * produces credential-safe fetch traces suitable for offline replay proofs.
 
-Public BM25/vector mode packaging and legal-domain weighting belong to later
-tasks (USCIR-026 / USCIR-027).  This module owns generic budgets, routing,
-result/explain/fetch-trace contracts, and partial-result semantics.
+Public BM25/vector mode packaging remains domain-owned.  This module owns
+generic budgets, routing, manifest-selected injected query analyzers,
+named-field scoring, result/explain/fetch-trace contracts, and partial-result
+semantics.
 """
 
 from __future__ import annotations
 
-from collections import defaultdict
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
 import heapq
 import json
 import math
-from pathlib import Path
 import time
+from collections import defaultdict
+from collections.abc import Callable, Mapping, MutableMapping, MutableSet, Sequence
+from dataclasses import dataclass, field
+from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Final, Optional
+from typing import Any, Final
 
-from .bm25 import bm25_term_score, tokenize_bm25_text
-from .locators import KeyLocatorIndex, LocatorRow, MissingKeyError
+from .bm25 import (
+    DEFAULT_BM25_TOKENIZER_ID,
+    bm25_term_score,
+    tokenize_bm25_text,
+)
+from .locators import KeyLocatorIndex
 from .resolver import (
     ArtifactDescriptor,
     ImmutableHubResolver,
     ResolvedArtifact,
     ResolverError,
     build_descriptor_for_bytes,
-    normalize_sha256,
     safe_relative_path,
 )
 from .schema import (
@@ -57,9 +61,7 @@ TASK_ID: Final = "USCIR-025"
 GOAL_ID: Final = "USCIR-G070"
 QUERY_ENGINE_SCHEMA_VERSION: Final = "hf-graphrag-query-engine/v1"
 QUERY_FETCH_TRACE_SCHEMA_VERSION: Final = "hf-graphrag-query-fetch-trace/v1"
-QUERY_FETCH_TRACES_FIXTURE_SCHEMA: Final = (
-    "hf-graphrag-query-fetch-traces/v1"
-)
+QUERY_FETCH_TRACES_FIXTURE_SCHEMA: Final = "hf-graphrag-query-fetch-traces/v1"
 DEFAULT_MANIFEST_NAME: Final = "manifest.json"
 
 # Default budgets (tight enough for unit tests; callers may widen).
@@ -73,6 +75,8 @@ DEFAULT_MAX_TIME_MS: Final = 30_000
 DEFAULT_TOP_K: Final = 10
 MAX_TOP_K: Final = 1_000
 MAX_QUERY_TERMS: Final = 64
+
+Bm25QueryAnalyzer = Callable[[str], Sequence[str]]
 
 BUDGET_DIMENSIONS: Final = (
     "bytes",
@@ -212,9 +216,7 @@ class QueryLimits:
         object.__setattr__(
             self, "max_shards", _positive_int(self.max_shards, "max_shards")
         )
-        object.__setattr__(
-            self, "max_rows", _positive_int(self.max_rows, "max_rows")
-        )
+        object.__setattr__(self, "max_rows", _positive_int(self.max_rows, "max_rows"))
         object.__setattr__(
             self, "max_nodes", _positive_int(self.max_nodes, "max_nodes")
         )
@@ -379,14 +381,10 @@ class RouteJustification:
     def __post_init__(self) -> None:
         family = str(self.family or "").strip().lower().replace("-", "_")
         if family not in ROUTE_FAMILIES:
-            raise UnjustifiedFetchError(
-                f"unknown route family: {self.family!r}"
-            )
+            raise UnjustifiedFetchError(f"unknown route family: {self.family!r}")
         reason = str(self.reason or "").strip().lower().replace("-", "_")
         if reason not in ROUTE_REASONS:
-            raise UnjustifiedFetchError(
-                f"unknown route reason: {self.reason!r}"
-            )
+            raise UnjustifiedFetchError(f"unknown route reason: {self.reason!r}")
         path = safe_relative_path(self.relative_path).as_posix()
         keys = tuple(str(item) for item in self.keys if str(item))
         score = self.score
@@ -403,9 +401,7 @@ class RouteJustification:
         object.__setattr__(self, "relative_path", path)
         object.__setattr__(self, "keys", keys)
         object.__setattr__(self, "score", score)
-        object.__setattr__(
-            self, "metadata", MappingProxyType(dict(self.metadata))
-        )
+        object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
 
     def to_dict(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -476,9 +472,7 @@ class QueryEngineResult:
         )
         object.__setattr__(self, "usage", MappingProxyType(dict(self.usage)))
         object.__setattr__(self, "limits", MappingProxyType(dict(self.limits)))
-        object.__setattr__(
-            self, "explain", MappingProxyType(dict(self.explain))
-        )
+        object.__setattr__(self, "explain", MappingProxyType(dict(self.explain)))
         object.__setattr__(
             self,
             "results",
@@ -538,6 +532,852 @@ def _json_value(value: Any) -> Any:
         except Exception:
             return value
     return value
+
+
+# ---------------------------------------------------------------------------
+# Domain-neutral hybrid / locator / semantic-walk primitives
+# ---------------------------------------------------------------------------
+
+
+FUSION_WEIGHTED: Final = "weighted"
+FUSION_RRF: Final = "rrf"
+FUSION_METHODS: Final = frozenset({FUSION_WEIGHTED, FUSION_RRF})
+FUSION_STAGE: Final = "late"
+
+
+def cosine_similarity(
+    left: Sequence[float] | None,
+    right: Sequence[float] | None,
+) -> float:
+    """Return dependency-free cosine similarity for two finite vectors.
+
+    Invalid, empty, mismatched, or zero-norm vectors deliberately score zero.
+    This is the common query-time behavior; embedding model identity remains a
+    responsibility of the caller's domain adapter / remote-search client.
+    """
+
+    if left is None or right is None:
+        return 0.0
+    try:
+        a = tuple(float(value) for value in left)
+        b = tuple(float(value) for value in right)
+    except (TypeError, ValueError, OverflowError):
+        return 0.0
+    if not a or len(a) != len(b):
+        return 0.0
+    if not all(math.isfinite(value) for value in a + b):
+        return 0.0
+    dot = sum(x * y for x, y in zip(a, b))
+    left_norm = math.sqrt(sum(value * value for value in a))
+    right_norm = math.sqrt(sum(value * value for value in b))
+    if left_norm == 0.0 or right_norm == 0.0:
+        return 0.0
+    return max(-1.0, min(1.0, dot / (left_norm * right_norm)))
+
+
+def ranking_identity(
+    hit: Mapping[str, Any],
+    *,
+    identity_fields: Sequence[str] = (
+        "chunk_cid",
+        "entry_cid",
+        "node_cid",
+        "document_index",
+    ),
+) -> str | None:
+    """Return the first populated, field-qualified identity for a result hit."""
+
+    for key in identity_fields:
+        if key in hit and hit[key] is not None and hit[key] != "":
+            return f"{key}:{hit[key]}"
+    return None
+
+
+def rankings_are_compatible(
+    left: Sequence[Mapping[str, Any]],
+    right: Sequence[Mapping[str, Any]],
+    *,
+    identity_fields: Sequence[str] = (
+        "chunk_cid",
+        "entry_cid",
+        "node_cid",
+        "document_index",
+    ),
+) -> bool:
+    """Return whether two rankings expose at least one shared identity field."""
+
+    def _fields(hits: Sequence[Mapping[str, Any]]) -> set[str]:
+        found: set[str] = set()
+        for hit in hits:
+            if not isinstance(hit, Mapping):
+                continue
+            identity = ranking_identity(hit, identity_fields=identity_fields)
+            if identity is not None:
+                found.add(identity.split(":", 1)[0])
+        return found
+
+    left_fields = _fields(left)
+    right_fields = _fields(right)
+    if not left_fields or not right_fields:
+        return True
+    return bool(left_fields & right_fields)
+
+
+def _finite_component_score(hit: Mapping[str, Any]) -> float:
+    for key in ("normalized_score", "score"):
+        raw = hit.get(key)
+        if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+            continue
+        score = float(raw)
+        if math.isfinite(score):
+            return score
+    return 0.0
+
+
+def _query_ranking_key(hit: Mapping[str, Any]) -> tuple[Any, ...]:
+    raw_score = hit.get("score")
+    if isinstance(raw_score, bool) or not isinstance(raw_score, (int, float)):
+        score = float("-inf")
+    else:
+        score = float(raw_score)
+        if not math.isfinite(score):
+            score = float("-inf")
+    raw_document_index = hit.get("document_index")
+    document_index = (
+        int(raw_document_index)
+        if isinstance(raw_document_index, int)
+        and not isinstance(raw_document_index, bool)
+        else 2**62
+    )
+    return (-score, str(hit.get("entry_cid") or ""), document_index)
+
+
+def normalize_late_fusion_settings(
+    *,
+    method: str = FUSION_WEIGHTED,
+    bm25_weight: float = 0.5,
+    vector_weight: float = 0.5,
+    rrf_k: int = 60,
+    stage: str = FUSION_STAGE,
+) -> dict[str, Any]:
+    """Validate and normalize ontology-free late-fusion settings."""
+
+    normalized_method = str(method or FUSION_WEIGHTED).strip().lower()
+    if normalized_method not in FUSION_METHODS:
+        raise QueryInputError(f"fusion method must be one of {sorted(FUSION_METHODS)}")
+    normalized_stage = str(stage or FUSION_STAGE).strip().lower()
+    if normalized_stage != FUSION_STAGE:
+        raise QueryInputError("hybrid fusion must be late")
+    weights: list[float] = []
+    for value, name in (
+        (bm25_weight, "bm25_weight"),
+        (vector_weight, "vector_weight"),
+    ):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise QueryInputError(f"{name} must be a finite number")
+        normalized = float(value)
+        if not math.isfinite(normalized) or normalized < 0.0:
+            raise QueryInputError(f"{name} must be a non-negative finite number")
+        weights.append(normalized)
+    normalized_bm25_weight, normalized_vector_weight = weights
+    if (
+        normalized_method == FUSION_WEIGHTED
+        and normalized_bm25_weight + normalized_vector_weight <= 0
+    ):
+        raise QueryInputError("weighted fusion requires at least one positive weight")
+    if isinstance(rrf_k, bool) or not isinstance(rrf_k, int) or rrf_k <= 0:
+        raise QueryInputError("rrf_k must be a positive integer")
+    if rrf_k > 10_000:
+        raise QueryInputError("rrf_k exceeds hard bound 10000")
+    return {
+        "bm25_weight": normalized_bm25_weight,
+        "method": normalized_method,
+        "rrf_k": rrf_k,
+        "stage": normalized_stage,
+        "vector_weight": normalized_vector_weight,
+    }
+
+
+def late_fuse_rankings(
+    bm25_hits: Sequence[Mapping[str, Any]],
+    vector_hits: Sequence[Mapping[str, Any]],
+    *,
+    method: str = FUSION_WEIGHTED,
+    bm25_weight: float = 0.5,
+    vector_weight: float = 0.5,
+    rrf_k: int = 60,
+    top_k: int = DEFAULT_TOP_K,
+    stage: str = FUSION_STAGE,
+    identity_fields: Sequence[str] = (
+        "chunk_cid",
+        "entry_cid",
+        "node_cid",
+        "document_index",
+    ),
+) -> list[dict[str, Any]]:
+    """Late-fuse lexical and vector rankings, preserving component scores.
+
+    The primitive is intentionally ontology-free.  Legal filters and edge
+    authority annotations belong to a domain adapter.
+    """
+
+    settings = normalize_late_fusion_settings(
+        method=method,
+        bm25_weight=bm25_weight,
+        vector_weight=vector_weight,
+        rrf_k=rrf_k,
+        stage=stage,
+    )
+    normalized_method = str(settings["method"])
+    bm25_weight = float(settings["bm25_weight"])
+    vector_weight = float(settings["vector_weight"])
+    rrf_k = int(settings["rrf_k"])
+    if isinstance(top_k, bool) or not isinstance(top_k, int) or top_k <= 0:
+        raise QueryInputError("top_k must be a positive integer")
+    if top_k > MAX_TOP_K:
+        raise QueryInputError(f"top_k must be <= {MAX_TOP_K}")
+
+    merged: dict[str, dict[str, Any]] = {}
+    bm25_ranks: dict[str, int] = {}
+    vector_ranks: dict[str, int] = {}
+
+    def _merge(
+        hits: Sequence[Mapping[str, Any]],
+        *,
+        component: str,
+        ranks: MutableMapping[str, int],
+    ) -> None:
+        for rank, hit in enumerate(hits, start=1):
+            if not isinstance(hit, Mapping):
+                continue
+            identity = (
+                ranking_identity(hit, identity_fields=identity_fields)
+                or f"row:{id(hit)}"
+            )
+            row = merged.setdefault(
+                identity,
+                {
+                    "chunk_cid": hit.get("chunk_cid"),
+                    "entry_cid": hit.get("entry_cid"),
+                },
+            )
+            for field_name, value in hit.items():
+                if field_name in {"score", "normalized_score"}:
+                    continue
+                if field_name not in row or row[field_name] in (None, ""):
+                    row[field_name] = value
+            row[f"{component}_score"] = _finite_component_score(hit)
+            ranks[identity] = rank
+
+    _merge(bm25_hits, component="bm25", ranks=bm25_ranks)
+    _merge(vector_hits, component="vector", ranks=vector_ranks)
+
+    fused: list[dict[str, Any]] = []
+    for identity, row in merged.items():
+        bm25_score = float(row.get("bm25_score") or 0.0)
+        vector_score = float(row.get("vector_score") or 0.0)
+        if normalized_method == FUSION_RRF:
+            score = 0.0
+            if identity in bm25_ranks:
+                score += bm25_weight / (rrf_k + bm25_ranks[identity])
+            if identity in vector_ranks:
+                score += vector_weight / (rrf_k + vector_ranks[identity])
+        else:
+            score = (bm25_weight * bm25_score + vector_weight * vector_score) / (
+                bm25_weight + vector_weight
+            )
+        payload = dict(row)
+        payload.update(
+            {
+                "bm25_score": bm25_score,
+                "component_scores": {
+                    "bm25": bm25_score,
+                    "vector": vector_score,
+                },
+                "fusion_method": normalized_method,
+                "fusion_stage": FUSION_STAGE,
+                "score": score,
+                "sources": sorted(
+                    {
+                        *(["bm25"] if identity in bm25_ranks else []),
+                        *(["vector"] if identity in vector_ranks else []),
+                    }
+                ),
+                "vector_score": vector_score,
+            }
+        )
+        if identity in bm25_ranks:
+            payload["bm25_rank"] = bm25_ranks[identity]
+        if identity in vector_ranks:
+            payload["vector_rank"] = vector_ranks[identity]
+        fused.append(payload)
+    return sorted(fused, key=_query_ranking_key)[:top_k]
+
+
+def select_entry_locator_pages_for_keys(
+    meta_rows: Sequence[Mapping[str, Any]],
+    keys: Sequence[str],
+) -> dict[str, Mapping[str, Any]]:
+    """Map keys to their inclusive lexicographic locator-page descriptors."""
+
+    if not isinstance(meta_rows, Sequence) or isinstance(
+        meta_rows, (str, bytes, bytearray)
+    ):
+        raise QueryInputError("meta_rows must be a sequence")
+    selected: dict[str, Mapping[str, Any]] = {}
+    for key in keys:
+        text = str(key or "").strip()
+        if not text:
+            continue
+        matches = [
+            dict(row)
+            for row in meta_rows
+            if isinstance(row, Mapping)
+            and str(row.get("first_key") or "")
+            <= text
+            <= str(row.get("last_key") or "")
+        ]
+        if not matches:
+            continue
+        matches.sort(
+            key=lambda row: (
+                int(row.get("shard_id", 0)),
+                str(row.get("relative_path") or ""),
+            )
+        )
+        selected[text] = matches[0]
+    return selected
+
+
+def parse_entry_locator_locations(
+    rows: Sequence[Mapping[str, Any]],
+    keys: Sequence[str],
+    *,
+    locator_key_fields: Sequence[str] = ("entry_cid", "key"),
+) -> dict[str, list[dict[str, Any]]]:
+    """Extract key-to-physical-shard locations from locator page rows."""
+
+    wanted = {str(key).strip() for key in keys if str(key or "").strip()}
+    resolved: dict[str, list[dict[str, Any]]] = {key: [] for key in wanted}
+    for row in rows:
+        if not isinstance(row, Mapping):
+            continue
+        locator_key = ""
+        for field_name in locator_key_fields:
+            locator_key = str(row.get(field_name) or "").strip()
+            if locator_key:
+                break
+        if locator_key not in wanted:
+            continue
+        locations = row.get("locations")
+        parsed: list[dict[str, Any]] = []
+        if isinstance(locations, str) and locations.strip():
+            try:
+                loaded = json.loads(locations)
+            except json.JSONDecodeError:
+                loaded = None
+            if isinstance(loaded, Mapping):
+                loaded = [loaded]
+            if isinstance(loaded, Sequence):
+                locations = loaded
+        if isinstance(locations, Sequence) and not isinstance(
+            locations, (str, bytes, bytearray)
+        ):
+            parsed.extend(
+                dict(item)
+                for item in locations
+                if isinstance(item, Mapping) and item.get("relative_path")
+            )
+        relative_path = str(row.get("relative_path") or "").strip()
+        if relative_path:
+            parsed.append(
+                {
+                    "cluster_id": row.get("cluster_id"),
+                    "entry_cid": locator_key,
+                    "global_shard_id": row.get("global_shard_id", row.get("shard_id")),
+                    "relative_path": relative_path,
+                    "row_offset": row.get("row_offset", 0),
+                }
+            )
+        for item in parsed:
+            if str(item.get("relative_path") or "").strip():
+                resolved[locator_key].append(dict(item))
+    return {key: value for key, value in resolved.items() if value}
+
+
+def lexical_ranges_would_miss_keys(
+    meta_rows: Sequence[Mapping[str, Any]],
+    keys: Sequence[str],
+    *,
+    ranges_are_lexical: bool,
+) -> bool:
+    """Return whether non-lexical shard bounds fail to cover requested keys."""
+
+    if ranges_are_lexical:
+        return False
+    hits = select_entry_locator_pages_for_keys(meta_rows, keys)
+    return any(str(key).strip() and str(key).strip() not in hits for key in keys)
+
+
+def descriptor_for_relative_path(
+    descriptors: Sequence[Mapping[str, Any]], relative_path: str
+) -> Mapping[str, Any] | None:
+    """Return the first descriptor matching a relative artifact path."""
+
+    path = str(relative_path or "")
+    return next(
+        (row for row in descriptors if str(row.get("relative_path") or "") == path),
+        None,
+    )
+
+
+def route_centroid_paths(
+    engine: Any,
+    query_vector: Sequence[float],
+    *,
+    candidate_centroids: int,
+) -> set[str]:
+    """Route evaluated centroids and return their physical vector paths."""
+
+    routes = engine.route_vector_centroids(
+        query_vector, candidate_centroids=candidate_centroids
+    )
+    return {str(route.relative_path) for route in routes}
+
+
+def bounded_edge_weight(
+    edge: Mapping[str, Any],
+    *,
+    authoritative_default: bool,
+) -> float:
+    """Normalize a graph-edge score to ``[0, 1]`` with a typed default."""
+
+    raw = edge.get("score")
+    if raw is None:
+        raw = edge.get("weight")
+    if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+        return 1.0 if authoritative_default else 0.5
+    score = float(raw)
+    if not math.isfinite(score):
+        return 1.0 if authoritative_default else 0.5
+    return max(0.0, min(1.0, score))
+
+
+def normalize_semantic_beam_settings(
+    *,
+    max_depth: int,
+    max_nodes: int | None,
+    max_edges: int | None,
+    per_node_limit: int,
+    beam_width: int,
+    proximity_weight: float,
+    edge_weight: float,
+    path_penalty: float,
+    candidate_centroids: int,
+) -> dict[str, Any]:
+    """Validate and normalize domain-neutral semantic beam settings."""
+
+    def _positive(value: Any, name: str) -> int:
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise QueryInputError(f"{name} must be a positive integer")
+        return value
+
+    if isinstance(max_depth, bool) or not isinstance(max_depth, int) or max_depth < 0:
+        raise QueryInputError("max_depth must be a non-negative integer")
+    normalized: dict[str, Any] = {
+        "beam_width": _positive(beam_width, "beam_width"),
+        "candidate_centroids": _positive(candidate_centroids, "candidate_centroids"),
+        "max_depth": max_depth,
+        "max_edges": None if max_edges is None else _positive(max_edges, "max_edges"),
+        "max_nodes": None if max_nodes is None else _positive(max_nodes, "max_nodes"),
+        "per_node_limit": _positive(per_node_limit, "per_node_limit"),
+    }
+    for value, name in (
+        (proximity_weight, "proximity_weight"),
+        (edge_weight, "edge_weight"),
+        (path_penalty, "path_penalty"),
+    ):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise QueryInputError(f"{name} must be a finite number")
+        number = float(value)
+        if not math.isfinite(number) or number < 0.0:
+            raise QueryInputError(f"{name} must be a non-negative finite number")
+        normalized[name] = number
+    if (
+        normalized["proximity_weight"]
+        + normalized["edge_weight"]
+        + normalized["path_penalty"]
+        <= 0.0
+    ):
+        raise QueryInputError(
+            "semantic beam requires at least one positive blend weight"
+        )
+    return normalized
+
+
+def hydrate_frontier_vectors(
+    engine: Any,
+    node_keys: Sequence[str],
+    *,
+    vector_cache: MutableMapping[str, tuple[float, ...]],
+    vector_descriptors: Sequence[Mapping[str, Any]],
+    locator_meta_rows: Sequence[Mapping[str, Any]],
+    centroid_routed_paths: set[str],
+    locator_page_paths: MutableSet[str],
+    frontier_fetch_paths: MutableSet[str],
+    off_centroid_fetch_paths: MutableSet[str],
+    locator_key: str = "entry_cid",
+    frontier_policy: str = "entry_locator",
+    vector_shard_keys_are_lexical_ranges: bool = False,
+    vector_key_fields: Sequence[str] = ("entry_cid", "node_cid", "chunk_cid"),
+    descriptor_error: Callable[[str], Exception] = QueryIntegrityError,
+) -> dict[str, tuple[float, ...]]:
+    """Hydrate graph-frontier embeddings only through a locator index.
+
+    The caller supplies tracking sets so diagnostics remain adapter-owned.
+    No edge ontology, legal filtering, or release policy is embedded here.
+    """
+
+    requested = [str(key).strip() for key in node_keys if str(key or "").strip()]
+    wanted = [key for key in requested if key not in vector_cache]
+    if not wanted:
+        return {key: vector_cache[key] for key in requested if key in vector_cache}
+
+    key_to_page = select_entry_locator_pages_for_keys(locator_meta_rows, wanted)
+    pages_by_path: dict[str, list[str]] = defaultdict(list)
+    page_descriptors: dict[str, Mapping[str, Any]] = {}
+    for key, descriptor in key_to_page.items():
+        path = str(descriptor.get("relative_path") or "")
+        if path:
+            pages_by_path[path].append(key)
+            page_descriptors[path] = descriptor
+
+    locations_by_key: dict[str, list[dict[str, Any]]] = {}
+    for path, keys in sorted(pages_by_path.items()):
+        descriptor = page_descriptors[path]
+        locator_page_paths.add(path)
+        route = RouteJustification(
+            family="routing_index",
+            reason="hydrate_hit",
+            relative_path=path,
+            keys=tuple(sorted(keys)),
+            metadata={
+                "fetch_policy": frontier_policy,
+                "locator_key": locator_key,
+                "shard_id": descriptor.get("shard_id"),
+                "vector_shard_keys_are_lexical_ranges": (
+                    vector_shard_keys_are_lexical_ranges
+                ),
+            },
+        )
+        try:
+            artifact = engine.fetch(
+                path,
+                route=route,
+                descriptor=descriptor,
+                charge_shard=True,
+                charge_rows=int(descriptor.get("row_count") or 0),
+            )
+        except QueryBudgetExhausted as exc:
+            engine._stop_reason = exc.dimension
+            break
+        rows = engine._read_rows(artifact, descriptor=descriptor)
+        parsed = parse_entry_locator_locations(
+            rows,
+            keys,
+            locator_key_fields=(locator_key, "entry_cid", "key"),
+        )
+        for key, locations in parsed.items():
+            locations_by_key.setdefault(key, []).extend(locations)
+
+    keys_by_vector_path: dict[str, list[str]] = defaultdict(list)
+    for key, locations in locations_by_key.items():
+        for location in locations:
+            path = str(location.get("relative_path") or "")
+            if path:
+                keys_by_vector_path[path].append(key)
+
+    for path, keys in sorted(keys_by_vector_path.items()):
+        descriptor = descriptor_for_relative_path(vector_descriptors, path)
+        if descriptor is None:
+            raise descriptor_error(
+                f"entry locator pointed at unknown vector shard {path}"
+            )
+        off_centroid = path not in centroid_routed_paths
+        frontier_fetch_paths.add(path)
+        if off_centroid:
+            off_centroid_fetch_paths.add(path)
+        route = RouteJustification(
+            family="vectors",
+            reason="exact_vector_score",
+            relative_path=path,
+            keys=tuple(sorted(set(keys))),
+            metadata={
+                "fetch_policy": frontier_policy,
+                "locator_key": locator_key,
+                "off_centroid": off_centroid,
+                "shard_id": descriptor.get("shard_id"),
+                "vector_shard_keys_are_lexical_ranges": (
+                    vector_shard_keys_are_lexical_ranges
+                ),
+            },
+        )
+        try:
+            artifact = engine.fetch(
+                path,
+                route=route,
+                descriptor=descriptor,
+                charge_shard=True,
+                charge_rows=int(descriptor.get("row_count") or 0),
+            )
+        except QueryBudgetExhausted as exc:
+            engine._stop_reason = exc.dimension
+            break
+        rows = engine._read_rows(artifact, descriptor=descriptor)
+        wanted_set = set(keys)
+        for row in rows:
+            matched_key = ""
+            for field_name in vector_key_fields:
+                candidate = str(row.get(field_name) or "")
+                if candidate in wanted_set:
+                    matched_key = candidate
+                    break
+            if not matched_key:
+                continue
+            embedding = row.get("embedding")
+            if embedding is None:
+                continue
+            try:
+                vector = tuple(float(value) for value in embedding)
+            except (TypeError, ValueError, OverflowError):
+                continue
+            vector_cache[matched_key] = vector
+            engine.usage.charge(rows=1)
+
+    return {key: vector_cache[key] for key in requested if key in vector_cache}
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticBeamWalkResult:
+    """Domain-neutral materialized result of a bounded semantic beam walk."""
+
+    nodes: tuple[dict[str, Any], ...]
+    edges: tuple[dict[str, Any], ...]
+    stop_reason: str | None
+    depth_limit: int
+    node_limit: int
+    edge_limit: int
+    beam_width: int
+
+    @property
+    def complete(self) -> bool:
+        return self.stop_reason is None
+
+
+def semantic_beam_walk(
+    engine: Any,
+    start_node_key: str,
+    query_vector: Sequence[float],
+    *,
+    vector_cache: Mapping[str, Sequence[float]],
+    fetch_frontier_vectors: Callable[[Sequence[str]], Mapping[str, Sequence[float]]],
+    annotate_edge: Callable[[Mapping[str, Any]], Mapping[str, Any]],
+    is_similarity_edge: Callable[[str], bool],
+    is_authoritative_edge: Callable[[str], bool],
+    max_depth: int,
+    max_nodes: int | None,
+    max_edges: int | None,
+    per_node_limit: int,
+    beam_width: int,
+    proximity_weight: float,
+    edge_weight: float,
+    path_penalty: float,
+    direction: str = "out",
+    wanted_edge_types: Sequence[str] = (),
+    include_similarity: bool = True,
+) -> SemanticBeamWalkResult:
+    """Run an embedding-guided bounded graph walk using adapter callbacks."""
+
+    depth_limit = min(max_depth, engine.limits.max_depth)
+    node_limit = min(max_nodes or engine.limits.max_nodes, engine.limits.max_nodes)
+    edge_limit = min(max_edges or engine.limits.max_edges, engine.limits.max_edges)
+    effective_beam_width = min(beam_width, node_limit)
+    wanted_types = {
+        str(value).strip() for value in wanted_edge_types if str(value).strip()
+    }
+    total_weight = proximity_weight + edge_weight + path_penalty
+
+    engine.usage.charge(nodes=1, depth=0)
+    fetch_frontier_vectors([start_node_key])
+    seed_embedding = vector_cache.get(start_node_key)
+    seed_proximity = cosine_similarity(seed_embedding, query_vector)
+    seed_score = (
+        proximity_weight * max(0.0, seed_proximity) + edge_weight + path_penalty
+    ) / total_weight
+    visited: dict[str, dict[str, Any]] = {
+        start_node_key: {
+            "depth": 0,
+            "edge_weight": 1.0,
+            "edge_type": None,
+            "from_node_cid": None,
+            "has_embedding": seed_embedding is not None,
+            "node_cid": start_node_key,
+            "score": seed_score,
+            "semantic_proximity": seed_proximity,
+        }
+    }
+    traversed: list[dict[str, Any]] = []
+    frontier = [start_node_key]
+    stop_reason: str | None = "depth" if depth_limit == 0 else None
+
+    try:
+        for depth in range(depth_limit):
+            projected_depth = depth + 1
+            exhausted = engine.usage.check(
+                engine.limits,
+                projected_depth=projected_depth,
+                raise_on_exhaustion=False,
+            )
+            if exhausted is not None:
+                stop_reason = exhausted
+                break
+            candidates: list[tuple[float, str, dict[str, Any], dict[str, Any]]] = []
+            for node_key in frontier:
+                try:
+                    edges = engine.fetch_adjacency(
+                        node_key,
+                        direction=direction,
+                        limit=per_node_limit,
+                        edge_types=tuple(sorted(wanted_types)) if wanted_types else (),
+                    )
+                except QueryBudgetExhausted as exc:
+                    stop_reason = exc.dimension
+                    frontier = []
+                    break
+                if engine._stop_reason is not None:
+                    stop_reason = engine._stop_reason
+                    frontier = []
+                    break
+                neighbor_keys = [
+                    str(edge.get("neighbor_cid") or "")
+                    for edge in edges
+                    if edge.get("neighbor_cid")
+                ]
+                if neighbor_keys:
+                    fetch_frontier_vectors(neighbor_keys)
+                if engine._stop_reason is not None:
+                    stop_reason = engine._stop_reason
+                    frontier = []
+                    break
+                for edge in edges:
+                    neighbor = str(edge.get("neighbor_cid") or "")
+                    if not neighbor:
+                        continue
+                    edge_type = str(edge.get("edge_type") or "")
+                    if not include_similarity and is_similarity_edge(edge_type):
+                        continue
+                    if wanted_types and edge_type not in wanted_types:
+                        continue
+                    embedding = vector_cache.get(neighbor)
+                    proximity = cosine_similarity(embedding, query_vector)
+                    normalized_proximity = (proximity + 1.0) / 2.0
+                    normalized_edge_weight = bounded_edge_weight(
+                        edge,
+                        authoritative_default=is_authoritative_edge(edge_type),
+                    )
+                    depth_factor = 1.0 / (1.0 + projected_depth)
+                    score = (
+                        proximity_weight * normalized_proximity
+                        + edge_weight * normalized_edge_weight
+                        + path_penalty * depth_factor
+                    ) / total_weight
+                    annotated = dict(
+                        annotate_edge(
+                            {
+                                **edge,
+                                "depth": projected_depth,
+                                "from_node_cid": node_key,
+                                "semantic_proximity": proximity,
+                                "semantic_score": score,
+                            }
+                        )
+                    )
+                    candidates.append(
+                        (
+                            score,
+                            neighbor,
+                            {
+                                "depth": projected_depth,
+                                "edge_weight": normalized_edge_weight,
+                                "edge_type": edge_type,
+                                "from_node_cid": node_key,
+                                "has_embedding": embedding is not None,
+                                "node_cid": neighbor,
+                                "score": score,
+                                "semantic_proximity": proximity,
+                            },
+                            annotated,
+                        )
+                    )
+            if stop_reason is not None:
+                break
+            candidates.sort(
+                key=lambda item: (
+                    -item[0],
+                    item[1],
+                    str(item[3].get("edge_cid") or ""),
+                )
+            )
+            next_frontier: list[str] = []
+            for score, neighbor, node_payload, edge_payload in candidates:
+                if len(traversed) >= edge_limit:
+                    stop_reason = "edges"
+                    break
+                if neighbor not in visited:
+                    if len(visited) >= node_limit:
+                        stop_reason = "nodes"
+                        break
+                    visited[neighbor] = node_payload
+                    next_frontier.append(neighbor)
+                    engine.usage.charge(nodes=1, depth=projected_depth)
+                elif score > float(visited[neighbor].get("score") or 0.0):
+                    visited[neighbor] = {**visited[neighbor], **node_payload}
+                traversed.append(edge_payload)
+                if len(next_frontier) >= effective_beam_width:
+                    break
+            if stop_reason is not None:
+                break
+            frontier = next_frontier[:effective_beam_width]
+            if not frontier:
+                stop_reason = None
+                break
+            engine.usage.charge(depth=projected_depth)
+        else:
+            if stop_reason is None and depth_limit > 0 and frontier:
+                stop_reason = "depth"
+    except QueryBudgetExhausted as exc:
+        stop_reason = exc.dimension
+
+    nodes = tuple(
+        dict(payload)
+        for _, payload in sorted(
+            visited.items(),
+            key=lambda item: (
+                int(item[1].get("depth") or 0),
+                -float(item[1].get("score") or 0.0),
+                item[0],
+            ),
+        )
+    )
+    return SemanticBeamWalkResult(
+        nodes=nodes,
+        edges=tuple(traversed),
+        stop_reason=stop_reason,
+        depth_limit=depth_limit,
+        node_limit=node_limit,
+        edge_limit=edge_limit,
+        beam_width=effective_beam_width,
+    )
 
 
 def _pyarrow() -> tuple[Any, Any]:
@@ -600,9 +1440,7 @@ def select_adjacency_shards(
         dict(row)
         for row in meta_rows
         if isinstance(row, Mapping)
-        and str(row.get("first_key") or "")
-        <= key
-        <= str(row.get("last_key") or "")
+        and str(row.get("first_key") or "") <= key <= str(row.get("last_key") or "")
     ]
     matches.sort(
         key=lambda row: (
@@ -672,6 +1510,108 @@ def replay_fingerprint(result: QueryEngineResult | Mapping[str, Any]) -> str:
     return content_sha256(canonical_json_dumps(payload))
 
 
+@dataclass(frozen=True, slots=True)
+class _ExactBm25FieldProfile:
+    """Validated manifest contract for exact named-field BM25 scoring."""
+
+    fields: tuple[str, ...]
+    field_weights: Mapping[str, float]
+    average_field_lengths: Mapping[str, float]
+    title_fields: tuple[str, ...]
+    body_fields: tuple[str, ...]
+    exact_field_prefix: str
+
+
+def _exact_bm25_field_profile(
+    config: Mapping[str, Any],
+) -> _ExactBm25FieldProfile | None:
+    projection = config.get("query_field_projection")
+    if projection is None:
+        return None
+    if not isinstance(projection, Mapping):
+        raise QueryIntegrityError("bm25.query_field_projection must be a mapping")
+    exact_lengths = projection.get("exact_field_lengths", False)
+    if not isinstance(exact_lengths, bool):
+        raise QueryIntegrityError(
+            "bm25.query_field_projection.exact_field_lengths must be a boolean"
+        )
+    if not exact_lengths:
+        return None
+
+    def string_tuple(value: Any, name: str) -> tuple[str, ...]:
+        if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+            raise QueryIntegrityError(f"{name} must be a string sequence")
+        result = tuple(str(item or "").strip() for item in value)
+        if (
+            not result
+            or any(not item for item in result)
+            or len(set(result)) != len(result)
+        ):
+            raise QueryIntegrityError(f"{name} must be non-empty and unique")
+        return result
+
+    fields = string_tuple(config.get("fields"), "bm25.fields")
+    title_fields = string_tuple(
+        projection.get("title_frequencies"),
+        "bm25.query_field_projection.title_frequencies",
+    )
+    body_fields = string_tuple(
+        projection.get("body_frequencies"),
+        "bm25.query_field_projection.body_frequencies",
+    )
+    projected_fields = set(title_fields) | set(body_fields)
+    if set(title_fields) & set(body_fields) or projected_fields != set(fields):
+        raise QueryIntegrityError(
+            "BM25 title/body projections must partition the exact fields"
+        )
+    prefix = str(projection.get("exact_field_prefix") or "").strip()
+    if not prefix:
+        raise QueryIntegrityError(
+            "bm25.query_field_projection.exact_field_prefix must be non-empty"
+        )
+
+    raw_weights = config.get("field_weights")
+    raw_averages = config.get("average_field_lengths")
+    if not isinstance(raw_weights, Mapping):
+        raise QueryIntegrityError("bm25.field_weights must be a mapping")
+    if not isinstance(raw_averages, Mapping):
+        raise QueryIntegrityError("bm25.average_field_lengths must be a mapping")
+    if set(raw_weights) != set(fields):
+        raise QueryIntegrityError("bm25.field_weights must exactly cover bm25.fields")
+    if set(raw_averages) != set(fields):
+        raise QueryIntegrityError(
+            "bm25.average_field_lengths must exactly cover bm25.fields"
+        )
+    weights: dict[str, float] = {}
+    averages: dict[str, float] = {}
+    for field_name in fields:
+        raw_weight = raw_weights[field_name]
+        raw_average = raw_averages[field_name]
+        if isinstance(raw_weight, bool) or isinstance(raw_average, bool):
+            raise QueryIntegrityError("BM25 field statistics must be numeric")
+        try:
+            weight = float(raw_weight)
+            average = float(raw_average)
+        except (TypeError, ValueError) as exc:
+            raise QueryIntegrityError("BM25 field statistics must be numeric") from exc
+        if not math.isfinite(weight) or weight <= 0.0:
+            raise QueryIntegrityError("BM25 field weights must be positive and finite")
+        if not math.isfinite(average) or average < 0.0:
+            raise QueryIntegrityError(
+                "BM25 average field lengths must be non-negative and finite"
+            )
+        weights[field_name] = weight
+        averages[field_name] = average
+    return _ExactBm25FieldProfile(
+        fields=fields,
+        field_weights=MappingProxyType(weights),
+        average_field_lengths=MappingProxyType(averages),
+        title_fields=title_fields,
+        body_fields=body_fields,
+        exact_field_prefix=prefix,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Engine
 # ---------------------------------------------------------------------------
@@ -690,6 +1630,10 @@ class BoundedRemoteQueryEngine:
         Release-relative manifest path (default ``manifest.json``).
     require_descriptors:
         When true (default), every data-plane fetch requires a descriptor.
+    bm25_query_analyzers:
+        Optional tokenizer-id keyed query analyzers.  A release can require
+        one through ``bm25.query_analyzer`` without coupling this shared
+        engine to a domain-specific tokenizer implementation.
     """
 
     def __init__(
@@ -699,11 +1643,10 @@ class BoundedRemoteQueryEngine:
         limits: QueryLimits | Mapping[str, Any] | None = None,
         manifest_path: str = DEFAULT_MANIFEST_NAME,
         require_descriptors: bool = True,
+        bm25_query_analyzers: Mapping[str, Bm25QueryAnalyzer] | None = None,
     ) -> None:
         if not isinstance(resolver, ImmutableHubResolver):
-            raise QueryInputError(
-                "resolver must be an ImmutableHubResolver instance"
-            )
+            raise QueryInputError("resolver must be an ImmutableHubResolver instance")
         self.resolver = resolver
         self.limits = (
             limits
@@ -719,6 +1662,106 @@ class BoundedRemoteQueryEngine:
         self._row_cache: dict[str, list[dict[str, Any]]] = {}
         self._parquet_cache: dict[str, Any] = {}
         self._stop_reason: str | None = None
+        self._bm25_query_analyzers: dict[str, Bm25QueryAnalyzer] = {}
+        if bm25_query_analyzers is not None:
+            self.register_bm25_query_analyzers(bm25_query_analyzers)
+
+    def register_bm25_query_analyzers(
+        self,
+        analyzers: Mapping[str, Bm25QueryAnalyzer],
+    ) -> None:
+        """Register injected query analyzers by their manifest tokenizer ID."""
+
+        if not isinstance(analyzers, Mapping):
+            raise QueryInputError("bm25_query_analyzers must be a mapping")
+        normalized: dict[str, Bm25QueryAnalyzer] = {}
+        for raw_id, analyzer in analyzers.items():
+            tokenizer_id = str(raw_id or "").strip()
+            if not tokenizer_id:
+                raise QueryInputError("BM25 query analyzer IDs must be non-empty")
+            if not callable(analyzer):
+                raise QueryInputError(
+                    f"BM25 query analyzer {tokenizer_id!r} must be callable"
+                )
+            normalized[tokenizer_id] = analyzer
+        self._bm25_query_analyzers.update(normalized)
+
+    def _resolve_bm25_query_analyzer(
+        self,
+        config: Mapping[str, Any],
+    ) -> tuple[str, Bm25QueryAnalyzer, bool]:
+        """Resolve the manifest tokenizer to an injected analyzer or fallback."""
+
+        tokenizer_id = str(
+            config.get("tokenizer") or DEFAULT_BM25_TOKENIZER_ID
+        ).strip()
+        if not tokenizer_id:
+            raise QueryIntegrityError("bm25.tokenizer must be non-empty")
+        analyzer_contract = config.get("query_analyzer")
+        required = False
+        if analyzer_contract is not None:
+            if not isinstance(analyzer_contract, Mapping):
+                raise QueryIntegrityError("bm25.query_analyzer must be a mapping")
+            declared_id = str(
+                analyzer_contract.get("tokenizer_id") or tokenizer_id
+            ).strip()
+            if not declared_id:
+                raise QueryIntegrityError(
+                    "bm25.query_analyzer.tokenizer_id must be non-empty"
+                )
+            if declared_id != tokenizer_id:
+                raise QueryIntegrityError(
+                    "bm25.query_analyzer.tokenizer_id does not match bm25.tokenizer"
+                )
+            required_value = analyzer_contract.get("required", False)
+            if not isinstance(required_value, bool):
+                raise QueryIntegrityError(
+                    "bm25.query_analyzer.required must be a boolean"
+                )
+            required = required_value
+
+        analyzer = self._bm25_query_analyzers.get(tokenizer_id)
+        if analyzer is not None:
+            return tokenizer_id, analyzer, True
+        if required:
+            raise QueryIntegrityError(
+                "release requires an injected BM25 query analyzer for "
+                f"tokenizer {tokenizer_id!r}"
+            )
+        return DEFAULT_BM25_TOKENIZER_ID, tokenize_bm25_text, False
+
+    @staticmethod
+    def _analyze_bm25_query(
+        query: str,
+        *,
+        tokenizer_id: str,
+        analyzer: Bm25QueryAnalyzer,
+    ) -> list[str]:
+        try:
+            analyzed = analyzer(query)
+        except Exception as exc:
+            raise QueryInputError(
+                f"BM25 query analyzer {tokenizer_id!r} rejected the query"
+            ) from exc
+        if isinstance(analyzed, (str, bytes)) or not isinstance(analyzed, Sequence):
+            raise QueryIntegrityError(
+                f"BM25 query analyzer {tokenizer_id!r} must return a term sequence"
+            )
+        ordered_terms: list[str] = []
+        seen: set[str] = set()
+        for raw_term in analyzed:
+            if not isinstance(raw_term, str):
+                raise QueryIntegrityError(
+                    f"BM25 query analyzer {tokenizer_id!r} returned a non-string term"
+                )
+            term = raw_term.strip()
+            if not term or term in seen:
+                continue
+            seen.add(term)
+            ordered_terms.append(term)
+            if len(ordered_terms) >= MAX_QUERY_TERMS:
+                break
+        return ordered_terms
 
     # -- session control ----------------------------------------------------
 
@@ -771,9 +1814,7 @@ class BoundedRemoteQueryEngine:
             else RouteJustification(
                 family=str(route.get("family") or ""),
                 reason=str(route.get("reason") or ""),
-                relative_path=str(
-                    route.get("relative_path") or path
-                ),
+                relative_path=str(route.get("relative_path") or path),
                 keys=tuple(route.get("keys") or ()),
                 score=route.get("score"),
                 metadata=route.get("metadata") or {},
@@ -825,9 +1866,7 @@ class BoundedRemoteQueryEngine:
             ) from exc
 
         if not artifact.verified:
-            raise QueryIntegrityError(
-                f"artifact was not verified: {path}"
-            )
+            raise QueryIntegrityError(f"artifact was not verified: {path}")
 
         rows = (
             charge_rows
@@ -866,9 +1905,7 @@ class BoundedRemoteQueryEngine:
         total_bytes = sum(int(item.get("size_bytes") or 0) for item in files)
         cache_hits = sum(1 for item in files if item.get("cache_hit"))
         unjustified = [
-            item
-            for item in files
-            if not item.get("route") or not item.get("verified")
+            item for item in files if not item.get("route") or not item.get("verified")
         ]
         trace: dict[str, Any] = {
             "budget_usage": self.usage.snapshot(),
@@ -884,9 +1921,9 @@ class BoundedRemoteQueryEngine:
             "stop_reason": self._stop_reason,
             "total_file_bytes": total_bytes,
             "verification_state": (
-                "verified" if files and not unjustified else (
-                    "empty" if not files else "unverified"
-                )
+                "verified"
+                if files and not unjustified
+                else ("empty" if not files else "unverified")
             ),
         }
         # Merge resolver-level trace metadata without absolute paths.
@@ -895,9 +1932,7 @@ class BoundedRemoteQueryEngine:
         except Exception:
             resolver_trace = {}
         if resolver_trace.get("manifest_schema_version"):
-            trace["manifest_schema_version"] = resolver_trace[
-                "manifest_schema_version"
-            ]
+            trace["manifest_schema_version"] = resolver_trace["manifest_schema_version"]
         return trace
 
     # -- control plane ------------------------------------------------------
@@ -932,9 +1967,7 @@ class BoundedRemoteQueryEngine:
             ) from exc
         if not isinstance(payload, Mapping):
             raise QueryIntegrityError("manifest must be a JSON object")
-        schema_version = payload.get("schema_version") or payload.get(
-            "release_profile"
-        )
+        schema_version = payload.get("schema_version") or payload.get("release_profile")
         if not isinstance(schema_version, str) or not schema_version.strip():
             raise QueryIntegrityError("manifest is missing schema_version")
         primary_key = payload.get("primary_key")
@@ -1016,21 +2049,13 @@ class BoundedRemoteQueryEngine:
         elif isinstance(descriptor, Mapping):
             media = str(descriptor.get("media_type") or "")
         suffix = path.suffix.lower()
-        if (
-            media.endswith("json")
-            or suffix == ".json"
-            or media == "application/json"
-        ):
+        if media.endswith("json") or suffix == ".json" or media == "application/json":
             payload = json.loads(path.read_bytes().decode("utf-8"))
             if isinstance(payload, list):
                 rows = [dict(item) for item in payload if isinstance(item, Mapping)]
-            elif isinstance(payload, Mapping) and isinstance(
-                payload.get("rows"), list
-            ):
+            elif isinstance(payload, Mapping) and isinstance(payload.get("rows"), list):
                 rows = [
-                    dict(item)
-                    for item in payload["rows"]
-                    if isinstance(item, Mapping)
+                    dict(item) for item in payload["rows"] if isinstance(item, Mapping)
                 ]
             else:
                 raise QueryIntegrityError(
@@ -1044,8 +2069,7 @@ class BoundedRemoteQueryEngine:
             )
             if table.num_rows > MAX_ROWS_PER_PHYSICAL_SHARD:
                 raise QueryIntegrityError(
-                    f"artifact exceeds physical row bound: "
-                    f"{artifact.relative_path}"
+                    f"artifact exceeds physical row bound: {artifact.relative_path}"
                 )
             rows = [
                 {key: _json_value(value) for key, value in row.items()}
@@ -1108,9 +2132,7 @@ class BoundedRemoteQueryEngine:
 
         if descriptors_by_path is None:
             meta = self.load_routing_index(index_name)
-            descriptors_by_path = {
-                str(row["relative_path"]): dict(row) for row in meta
-            }
+            descriptors_by_path = {str(row["relative_path"]): dict(row) for row in meta}
         by_path: dict[str, list[str]] = defaultdict(list)
         for term, route in term_routes.items():
             by_path[route.relative_path].append(term)
@@ -1121,9 +2143,7 @@ class BoundedRemoteQueryEngine:
         for path, terms in sorted(by_path.items()):
             descriptor = descriptors_by_path.get(path)
             if descriptor is None:
-                raise QueryIntegrityError(
-                    f"missing descriptor for BM25 shard {path}"
-                )
+                raise QueryIntegrityError(f"missing descriptor for BM25 shard {path}")
             # One justification covering all terms routed to this shard.
             route = RouteJustification(
                 family="bm25_postings",
@@ -1172,9 +2192,8 @@ class BoundedRemoteQueryEngine:
         body_weight = float(config.get("body_weight", 1.0))
         avg_dl = float(config.get("average_document_length") or 0.0)
         if avg_dl <= 0.0:
-            raise QueryIntegrityError(
-                "bm25.average_document_length must be positive"
-            )
+            raise QueryIntegrityError("bm25.average_document_length must be positive")
+        exact_profile = _exact_bm25_field_profile(config)
 
         scores: dict[int, float] = defaultdict(float)
         matched: dict[int, set[str]] = defaultdict(set)
@@ -1187,8 +2206,7 @@ class BoundedRemoteQueryEngine:
                     int(value) for value in (row.get("document_indices") or [])
                 ]
                 title_frequencies = [
-                    int(value)
-                    for value in (row.get("title_frequencies") or [])
+                    int(value) for value in (row.get("title_frequencies") or [])
                 ]
                 body_frequencies = [
                     int(value) for value in (row.get("body_frequencies") or [])
@@ -1196,9 +2214,7 @@ class BoundedRemoteQueryEngine:
                 document_lengths = [
                     int(value) for value in (row.get("document_lengths") or [])
                 ]
-                entry_cids = [
-                    str(value) for value in (row.get("entry_cids") or [])
-                ]
+                entry_cids = [str(value) for value in (row.get("entry_cids") or [])]
                 idf = float(row.get("idf") or 0.0)
                 if not document_ids:
                     continue
@@ -1218,62 +2234,164 @@ class BoundedRemoteQueryEngine:
                     raise QueryIntegrityError(
                         f"unaligned document_lengths for term {term!r}"
                     )
+                exact_frequencies: dict[str, list[int]] = {}
+                exact_lengths: dict[str, list[int]] = {}
+                if exact_profile is not None:
+                    for field_name in exact_profile.fields:
+                        frequency_column = (
+                            f"{exact_profile.exact_field_prefix}"
+                            f"{field_name}_frequencies"
+                        )
+                        length_column = (
+                            f"{exact_profile.exact_field_prefix}{field_name}_lengths"
+                        )
+                        raw_frequencies = row.get(frequency_column)
+                        raw_lengths = row.get(length_column)
+                        if not isinstance(raw_frequencies, Sequence) or isinstance(
+                            raw_frequencies, (str, bytes)
+                        ):
+                            raise QueryIntegrityError(
+                                "missing exact BM25 posting column "
+                                f"{frequency_column!r}"
+                            )
+                        if not isinstance(raw_lengths, Sequence) or isinstance(
+                            raw_lengths, (str, bytes)
+                        ):
+                            raise QueryIntegrityError(
+                                f"missing exact BM25 posting column {length_column!r}"
+                            )
+                        try:
+                            field_frequencies = [
+                                int(value) for value in raw_frequencies
+                            ]
+                            field_lengths = [int(value) for value in raw_lengths]
+                        except (TypeError, ValueError) as exc:
+                            raise QueryIntegrityError(
+                                "non-integer exact BM25 arrays for field "
+                                f"{field_name!r}"
+                            ) from exc
+                        if len(field_frequencies) != n or len(field_lengths) != n:
+                            raise QueryIntegrityError(
+                                f"unaligned exact BM25 arrays for field {field_name!r}"
+                            )
+                        if any(value < 0 for value in field_frequencies) or any(
+                            value < 0 for value in field_lengths
+                        ):
+                            raise QueryIntegrityError(
+                                f"negative exact BM25 values for field {field_name!r}"
+                            )
+                        exact_frequencies[field_name] = field_frequencies
+                        exact_lengths[field_name] = field_lengths
                 for offset, document_id in enumerate(document_ids):
                     title_tf = title_frequencies[offset]
                     body_tf = body_frequencies[offset]
                     doc_len = document_lengths[offset]
-                    title_score = bm25_term_score(
-                        tf=float(title_tf),
-                        idf=idf,
-                        doc_length=float(doc_len),
-                        avg_doc_length=avg_dl,
-                        k1=k1,
-                        b=b,
-                        field_weight=title_weight,
-                    )
-                    body_score = bm25_term_score(
-                        tf=float(body_tf),
-                        idf=idf,
-                        doc_length=float(doc_len),
-                        avg_doc_length=avg_dl,
-                        k1=k1,
-                        b=b,
-                        field_weight=body_weight,
-                    )
-                    # Prefer field-split scores; fall back to weighted TF cell.
-                    if title_tf == 0 and body_tf == 0:
-                        weighted_tf = float(row.get("weighted_tf") or 0.0)
-                        contribution = bm25_term_score(
-                            tf=weighted_tf,
+                    field_contributions: list[dict[str, Any]] = []
+                    if exact_profile is not None:
+                        title_tf = sum(
+                            exact_frequencies[field_name][offset]
+                            for field_name in exact_profile.title_fields
+                        )
+                        body_tf = sum(
+                            exact_frequencies[field_name][offset]
+                            for field_name in exact_profile.body_fields
+                        )
+                        title_score = 0.0
+                        body_score = 0.0
+                        for field_name in exact_profile.fields:
+                            field_tf = exact_frequencies[field_name][offset]
+                            field_length = exact_lengths[field_name][offset]
+                            if field_tf > field_length:
+                                raise QueryIntegrityError(
+                                    "exact BM25 field length is smaller than term "
+                                    f"frequency for {field_name!r}"
+                                )
+                            if field_tf <= 0:
+                                continue
+                            weight = exact_profile.field_weights[field_name]
+                            field_score = bm25_term_score(
+                                tf=float(field_tf),
+                                idf=idf,
+                                doc_length=float(field_length),
+                                avg_doc_length=max(
+                                    exact_profile.average_field_lengths[field_name],
+                                    1e-12,
+                                ),
+                                k1=k1,
+                                b=b,
+                                field_weight=weight,
+                            )
+                            if field_name in exact_profile.title_fields:
+                                title_score += field_score
+                            else:
+                                body_score += field_score
+                            field_contributions.append(
+                                {
+                                    "field": field_name,
+                                    "field_length": field_length,
+                                    "score": field_score,
+                                    "tf": field_tf,
+                                    "weight": weight,
+                                }
+                            )
+                        contribution = title_score + body_score
+                    else:
+                        title_score = bm25_term_score(
+                            tf=float(title_tf),
                             idf=idf,
                             doc_length=float(doc_len),
                             avg_doc_length=avg_dl,
                             k1=k1,
                             b=b,
-                            field_weight=1.0,
+                            field_weight=title_weight,
                         )
-                    else:
-                        contribution = title_score + body_score
+                        body_score = bm25_term_score(
+                            tf=float(body_tf),
+                            idf=idf,
+                            doc_length=float(doc_len),
+                            avg_doc_length=avg_dl,
+                            k1=k1,
+                            b=b,
+                            field_weight=body_weight,
+                        )
+                        # Prefer field-split scores; fall back to weighted TF cell.
+                        if title_tf == 0 and body_tf == 0:
+                            weighted_tf = float(row.get("weighted_tf") or 0.0)
+                            contribution = bm25_term_score(
+                                tf=weighted_tf,
+                                idf=idf,
+                                doc_length=float(doc_len),
+                                avg_doc_length=avg_dl,
+                                k1=k1,
+                                b=b,
+                                field_weight=1.0,
+                            )
+                        else:
+                            contribution = title_score + body_score
                     scores[document_id] += contribution
                     matched[document_id].add(str(term))
                     if entry_cids and offset < len(entry_cids):
                         entry_by_doc[document_id] = entry_cids[offset]
-                    explanations[document_id].append(
-                        {
-                            "body_score": body_score,
-                            "body_tf": body_tf,
-                            "idf": idf,
-                            "term": str(term),
-                            "title_score": title_score,
-                            "title_tf": title_tf,
-                            "total_score": contribution,
-                        }
-                    )
+                    explanation = {
+                        "body_score": body_score,
+                        "body_tf": body_tf,
+                        "idf": idf,
+                        "term": str(term),
+                        "title_score": title_score,
+                        "title_tf": title_tf,
+                        "total_score": contribution,
+                    }
+                    if exact_profile is not None:
+                        explanation.update(
+                            {
+                                "field_contributions": field_contributions,
+                                "scorer": "exact_multifield",
+                            }
+                        )
+                    explanations[document_id].append(explanation)
                     # Row budget: each posting pointer counts as one row unit.
                     self.usage.charge(rows=1)
-                    exhausted = self.usage.check(
-                        self.limits, raise_on_exhaustion=False
-                    )
+                    exhausted = self.usage.check(self.limits, raise_on_exhaustion=False)
                     if exhausted is not None:
                         self._stop_reason = exhausted
                         break
@@ -1314,26 +2432,50 @@ class BoundedRemoteQueryEngine:
         """Route BM25 terms, score postings, optionally hydrate corpus hits."""
 
         self._stop_reason = None
-        terms = list(tokenize_bm25_text(str(query or "")))[:MAX_QUERY_TERMS]
-        # Deduplicate while preserving order for routing.
         ordered_terms: list[str] = []
-        seen: set[str] = set()
-        for term in terms:
-            if term not in seen:
-                seen.add(term)
-                ordered_terms.append(term)
-        if not ordered_terms:
-            return self._result(
-                mode="bm25",
-                query=str(query or ""),
-                results=(),
-                diagnostics={"query_terms": []},
-                complete=True,
-                stop_reason=None,
-            )
+        tokenizer_id = DEFAULT_BM25_TOKENIZER_ID
+        analyzer_injected = False
+        analyzer_contract_active = False
 
         try:
-            self._manifest_required()
+            manifest = self._manifest_required()
+            bm25_config = manifest.get("bm25") or {}
+            if not isinstance(bm25_config, Mapping):
+                raise QueryIntegrityError("manifest bm25 configuration is malformed")
+            analyzer_contract_active = bm25_config.get("query_analyzer") is not None
+            tokenizer_id, analyzer, analyzer_injected = (
+                self._resolve_bm25_query_analyzer(bm25_config)
+            )
+            analyzer_contract_active = analyzer_contract_active or analyzer_injected
+            ordered_terms = self._analyze_bm25_query(
+                str(query or ""),
+                tokenizer_id=tokenizer_id,
+                analyzer=analyzer,
+            )
+            if not ordered_terms:
+                return self._result(
+                    mode="bm25",
+                    query=str(query or ""),
+                    results=(),
+                    diagnostics={
+                        **(
+                            {"query_analyzer_injected": analyzer_injected}
+                            if analyzer_contract_active
+                            else {}
+                        ),
+                        "query_terms": [],
+                    },
+                    complete=True,
+                    stop_reason=None,
+                    explain=(
+                        {
+                            "query_analyzer_injected": analyzer_injected,
+                            "tokenizer": tokenizer_id,
+                        }
+                        if analyzer_contract_active
+                        else None
+                    ),
+                )
             routes = self.route_bm25_terms(ordered_terms)
             postings = self.fetch_bm25_postings(routes)
             hits = self.score_bm25_postings(postings, top_k=top_k)
@@ -1350,6 +2492,11 @@ class BoundedRemoteQueryEngine:
                 results=tuple(partial_hits),
                 diagnostics={
                     "budget_exhausted": exc.to_dict(),
+                    **(
+                        {"query_analyzer_injected": analyzer_injected}
+                        if analyzer_contract_active
+                        else {}
+                    ),
                     "query_terms": ordered_terms,
                 },
                 complete=False,
@@ -1364,13 +2511,23 @@ class BoundedRemoteQueryEngine:
                 "keyword_shards_fetched": len(
                     {route.relative_path for route in routes.values()}
                 ),
+                **(
+                    {"query_analyzer_injected": analyzer_injected}
+                    if analyzer_contract_active
+                    else {}
+                ),
                 "query_terms": ordered_terms,
                 "routed_terms": sorted(routes),
             },
             complete=self._stop_reason is None,
             stop_reason=self._stop_reason,
             explain={
-                "tokenizer": "hf-graphrag-bm25-tokens/v1",
+                **(
+                    {"query_analyzer_injected": analyzer_injected}
+                    if analyzer_contract_active
+                    else {}
+                ),
+                "tokenizer": tokenizer_id,
                 "routed_shards": sorted(
                     {route.relative_path for route in routes.values()}
                 ),
@@ -1420,9 +2577,7 @@ class BoundedRemoteQueryEngine:
 
         if descriptors_by_path is None:
             meta = self.load_routing_index(index_name)
-            descriptors_by_path = {
-                str(row["relative_path"]): dict(row) for row in meta
-            }
+            descriptors_by_path = {str(row["relative_path"]): dict(row) for row in meta}
 
         query = np.asarray(list(query_vector), dtype=np.float64)
         if query.ndim != 1 or not np.isfinite(query).all():
@@ -1446,9 +2601,7 @@ class BoundedRemoteQueryEngine:
                 cluster_id = int(item.get("cluster_id") or 0)
             descriptor = descriptors_by_path.get(path)
             if descriptor is None:
-                raise QueryIntegrityError(
-                    f"missing descriptor for vector shard {path}"
-                )
+                raise QueryIntegrityError(f"missing descriptor for vector shard {path}")
             route = RouteJustification(
                 family="vectors",
                 reason="exact_vector_score",
@@ -1479,9 +2632,7 @@ class BoundedRemoteQueryEngine:
                     continue
                 vector = np.asarray(list(embedding), dtype=np.float32)
                 if vector.shape != (dimension,):
-                    raise QueryIntegrityError(
-                        f"vector dimension mismatch in {path}"
-                    )
+                    raise QueryIntegrityError(f"vector dimension mismatch in {path}")
                 cosine = float(vector @ query)
                 entry_cid = str(row.get("entry_cid") or "")
                 document_index = int(row.get("document_index") or 0)
@@ -1497,9 +2648,7 @@ class BoundedRemoteQueryEngine:
                 elif heap_item[:2] > heap[0][:2]:
                     heapq.heapreplace(heap, heap_item)
                 self.usage.charge(rows=1)
-                exhausted = self.usage.check(
-                    self.limits, raise_on_exhaustion=False
-                )
+                exhausted = self.usage.check(self.limits, raise_on_exhaustion=False)
                 if exhausted is not None:
                     self._stop_reason = exhausted
                     break
@@ -1542,13 +2691,9 @@ class BoundedRemoteQueryEngine:
                     keys=(f"cluster:{route.cluster_id}",),
                     score=route.score,
                 )
-            hits = self.score_vector_shards(
-                routes, query_vector, top_k=top_k
-            )
+            hits = self.score_vector_shards(routes, query_vector, top_k=top_k)
             if hydrate and hits:
-                hits = self.hydrate_hits(
-                    hits, include_content=include_content
-                )
+                hits = self.hydrate_hits(hits, include_content=include_content)
         except QueryBudgetExhausted as exc:
             return self._result(
                 mode="vector",
@@ -1566,9 +2711,7 @@ class BoundedRemoteQueryEngine:
             diagnostics={
                 "candidate_centroids": candidate_centroids,
                 "candidate_shards": len(routes),
-                "routed_clusters": sorted(
-                    {int(route.cluster_id) for route in routes}
-                ),
+                "routed_clusters": sorted({int(route.cluster_id) for route in routes}),
                 "routed_paths": [route.relative_path for route in routes],
             },
             complete=self._stop_reason is None,
@@ -1594,11 +2737,7 @@ class BoundedRemoteQueryEngine:
         if not hits:
             return []
         # Prefer entry_cid locator when available; else document_index ranges.
-        entry_cids = [
-            str(hit["entry_cid"])
-            for hit in hits
-            if hit.get("entry_cid")
-        ]
+        entry_cids = [str(hit["entry_cid"]) for hit in hits if hit.get("entry_cid")]
         document_indexes = [
             int(hit["document_index"])
             for hit in hits
@@ -1615,11 +2754,7 @@ class BoundedRemoteQueryEngine:
                     family="corpus",
                     reason="hydrate_hit",
                     relative_path=row.relative_path,
-                    keys=tuple(
-                        cid
-                        for cid in entry_cids
-                        if row.contains(cid)
-                    ),
+                    keys=tuple(cid for cid in entry_cids if row.contains(cid)),
                     metadata={"shard_id": row.shard_id},
                 )
                 descriptor = {
@@ -1647,9 +2782,7 @@ class BoundedRemoteQueryEngine:
                     if cid:
                         hydrated_by_cid[cid] = dict(corp)
                     if corp.get("document_index") is not None:
-                        hydrated_by_doc[int(corp["document_index"])] = dict(
-                            corp
-                        )
+                        hydrated_by_doc[int(corp["document_index"])] = dict(corp)
         elif document_indexes:
             meta = self.load_routing_index(index_name, reason="routing_index")
             selected = select_document_index_shards(meta, document_indexes)
@@ -1681,7 +2814,8 @@ class BoundedRemoteQueryEngine:
                     break
                 wanted = set(wanted_ids)
                 for corp in self._read_rows(artifact, descriptor=descriptor):
-                    doc_id = int(corp.get("document_index") or -1)
+                    raw_doc_id = corp.get("document_index")
+                    doc_id = int(raw_doc_id) if raw_doc_id is not None else -1
                     if doc_id in wanted:
                         hydrated_by_doc[doc_id] = dict(corp)
                         cid = str(corp.get("entry_cid") or "")
@@ -1734,14 +2868,10 @@ class BoundedRemoteQueryEngine:
             direction_norm = "in"
             default_index = "graph_in_adjacency"
         else:
-            raise QueryInputError(
-                "direction must be out/in/outgoing/incoming"
-            )
+            raise QueryInputError("direction must be out/in/outgoing/incoming")
         index = index_name or default_index
         wanted_types = {
-            str(value).strip()
-            for value in edge_types
-            if str(value).strip()
+            str(value).strip() for value in edge_types if str(value).strip()
         }
         meta = self.load_routing_index(
             index,
@@ -1844,9 +2974,7 @@ class BoundedRemoteQueryEngine:
         node_cid = str(row.get("node_cid") or "")
         edge_cids = [str(value) for value in (row.get("edge_cids") or [])]
         edge_types = [str(value) for value in (row.get("edge_types") or [])]
-        neighbor_cids = [
-            str(value) for value in (row.get("neighbor_cids") or [])
-        ]
+        neighbor_cids = [str(value) for value in (row.get("neighbor_cids") or [])]
         scores = list(row.get("scores") or [None] * len(neighbor_cids))
         count = len(neighbor_cids)
         if not (
@@ -1874,12 +3002,8 @@ class BoundedRemoteQueryEngine:
                         and isinstance(score, (int, float))
                         else None
                     ),
-                    "source_cid": (
-                        node_cid if direction == "out" else neighbor_cid
-                    ),
-                    "target_cid": (
-                        neighbor_cid if direction == "out" else node_cid
-                    ),
+                    "source_cid": (node_cid if direction == "out" else neighbor_cid),
+                    "target_cid": (neighbor_cid if direction == "out" else node_cid),
                 }
             )
         return edges
@@ -1902,9 +3026,9 @@ class BoundedRemoteQueryEngine:
         if not start:
             raise QueryInputError("start_node_cid must be a non-empty string")
         depth_limit = (
-            self.limits.max_depth if max_depth is None else _non_negative_int(
-                max_depth, "max_depth"
-            )
+            self.limits.max_depth
+            if max_depth is None
+            else _non_negative_int(max_depth, "max_depth")
         )
         node_limit = (
             self.limits.max_nodes
@@ -1923,9 +3047,7 @@ class BoundedRemoteQueryEngine:
         visited: dict[str, int] = {start: 0}
         traversed: list[dict[str, Any]] = []
         frontier = [start]
-        stop_reason: str | None = (
-            "depth" if depth_limit == 0 else None
-        )
+        stop_reason: str | None = "depth" if depth_limit == 0 else None
         if depth_limit == 0:
             stop_reason = "depth"
 
@@ -2187,14 +3309,14 @@ def load_query_fetch_traces_fixture(
 ) -> dict[str, Any]:
     """Load and lightly validate the sealed fetch-trace fixture."""
 
-    target = Path(path) if path is not None else default_query_fetch_traces_fixture_path()
+    target = (
+        Path(path) if path is not None else default_query_fetch_traces_fixture_path()
+    )
     payload = json.loads(target.read_text(encoding="utf-8"))
     if not isinstance(payload, Mapping):
         raise QueryInputError("query_fetch_traces fixture must be an object")
     if payload.get("schema_version") != QUERY_FETCH_TRACES_FIXTURE_SCHEMA:
-        raise QueryInputError(
-            "query_fetch_traces fixture schema_version mismatch"
-        )
+        raise QueryInputError("query_fetch_traces fixture schema_version mismatch")
     if payload.get("task_id") != TASK_ID:
         raise QueryInputError("query_fetch_traces fixture task_id mismatch")
     cases = payload.get("cases")
@@ -2208,7 +3330,9 @@ def write_query_fetch_traces_fixture(
 ) -> Path:
     """Write the sealed compact fixture (deterministic, no timestamps)."""
 
-    target = Path(path) if path is not None else default_query_fetch_traces_fixture_path()
+    target = (
+        Path(path) if path is not None else default_query_fetch_traces_fixture_path()
+    )
     target.parent.mkdir(parents=True, exist_ok=True)
     payload = build_query_fetch_traces_fixture_payload()
     target.write_text(
@@ -2250,6 +3374,10 @@ __all__ = [
     "DEFAULT_MAX_SHARDS",
     "DEFAULT_MAX_TIME_MS",
     "DEFAULT_TOP_K",
+    "FUSION_METHODS",
+    "FUSION_RRF",
+    "FUSION_STAGE",
+    "FUSION_WEIGHTED",
     "GOAL_ID",
     "MAX_TOP_K",
     "QUERY_ENGINE_SCHEMA_VERSION",
@@ -2269,14 +3397,29 @@ __all__ = [
     "QueryIntegrityError",
     "QueryLimits",
     "RouteJustification",
+    "SemanticBeamWalkResult",
     "UnjustifiedFetchError",
     "build_query_fetch_traces_fixture_payload",
+    "bounded_edge_weight",
+    "cosine_similarity",
     "default_query_fetch_traces_fixture_path",
     "descriptor_from_path",
+    "descriptor_for_relative_path",
+    "hydrate_frontier_vectors",
+    "late_fuse_rankings",
+    "lexical_ranges_would_miss_keys",
     "load_query_fetch_traces_fixture",
+    "normalize_late_fusion_settings",
+    "normalize_semantic_beam_settings",
+    "parse_entry_locator_locations",
+    "ranking_identity",
+    "rankings_are_compatible",
     "replay_fingerprint",
     "select_adjacency_shards",
     "select_document_index_shards",
+    "select_entry_locator_pages_for_keys",
     "select_term_range_shards",
+    "semantic_beam_walk",
+    "route_centroid_paths",
     "write_query_fetch_traces_fixture",
 ]

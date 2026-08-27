@@ -627,17 +627,19 @@ def _evaluate_source_quality(
     collector: _FindingCollector,
     receipt: Mapping[str, Any],
 ) -> None:
-    official = receipt.get("official_source")
     source_domain = str(receipt.get("source_domain") or "").strip().lower()
-    authority = str(
-        receipt.get("source_authority_class") or receipt.get("authority_class") or ""
-    ).strip().lower()
+    authority = source_authority_class(receipt)
 
-    if official is False or authority in {"secondary", "unofficial", "mirror"}:
+    if not has_explicit_official_source_authority(receipt):
         collector.add(
             FindingKind.UNOFFICIAL_SOURCE,
             GATE_SOURCE_QUALITY,
-            f"non-official source cannot admit success: domain={source_domain or '<missing>'}",
+            (
+                "explicit official source authority is required for admission: "
+                f"official_source={receipt.get('official_source')!r}, "
+                f"source_authority_class={authority or '<missing>'}, "
+                f"domain={source_domain or '<missing>'}"
+            ),
         )
         return
     if source_domain and _host_looks_secondary(source_domain):
@@ -646,6 +648,30 @@ def _evaluate_source_quality(
             GATE_SOURCE_QUALITY,
             f"source domain is secondary/mirror: {source_domain}",
         )
+
+
+def source_authority_class(receipt: Mapping[str, Any]) -> str:
+    """Return the normalized explicit authority class from a receipt."""
+
+    return str(
+        receipt.get("source_authority_class") or receipt.get("authority_class") or ""
+    ).strip().lower()
+
+
+def has_explicit_official_source_authority(receipt: Mapping[str, Any]) -> bool:
+    """Whether a live/full receipt explicitly claims verified official authority.
+
+    ``official_source`` and the authority class are independent assertions. A
+    source URL may point at an official locator while its acquired bytes came
+    from recovery, an unverified cache, or an insecure transport. Full-corpus
+    admission therefore requires both fields and never infers authority from a
+    URL or from the absence of a negative marker.
+    """
+
+    return (
+        receipt.get("official_source") is True
+        and source_authority_class(receipt) == "official"
+    )
 
 
 def _evaluate_no_truncation(
@@ -1547,6 +1573,7 @@ def closed_jurisdiction_receipt(
     failed_final: int = 0,
     duplicates: int = 0,
     official_source: bool = True,
+    source_authority_class: str = "official",
     source_domain: str = "www.revisor.mn.gov",
     sample_cap: Any = None,
     runtime_caps: Any = None,
@@ -1570,6 +1597,7 @@ def closed_jurisdiction_receipt(
         "status": status,
         "source_domain": source_domain,
         "official_source": official_source,
+        "source_authority_class": source_authority_class,
         "mode": "full",
         "runtime_caps": runtime_caps,
         "sample_cap": sample_cap,
@@ -1684,6 +1712,8 @@ __all__ = [
     "validate_jurisdiction_set",
     "is_opt_in_dc_policy",
     "reconcile_disposition",
+    "source_authority_class",
+    "has_explicit_official_source_authority",
     "evaluate_jurisdiction_receipt",
     "evaluate_jurisdiction_set_receipt",
     "evaluate_corpus_manifest",

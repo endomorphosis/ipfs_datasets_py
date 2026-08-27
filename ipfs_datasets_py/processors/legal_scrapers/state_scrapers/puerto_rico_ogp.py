@@ -186,7 +186,7 @@ def parse_ogp_text(
                 code_name=code_name,
                 section_number=number,
                 section_name=heading[:200] or f"{unit} {number}",
-                full_text=body[:14000],
+                full_text=body,
                 source_url=official,
                 official_cite=f"{citation_prefix} {unit} {number}",
                 metadata=StatuteMetadata(),

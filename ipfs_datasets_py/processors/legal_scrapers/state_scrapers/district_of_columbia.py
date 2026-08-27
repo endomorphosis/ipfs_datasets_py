@@ -180,8 +180,15 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
         official = await self._scrape_official_index(code_name, max_statutes=limit)
         if official:
             return official if limit is None else official[: int(limit)]
+        if limit is None and self._full_corpus_enabled():
+            raise RuntimeError(
+                "District of Columbia official hierarchy did not close; "
+                "refusing legacy per-page/generic full-corpus recovery"
+            )
 
-        if seed_statutes:
+        if seed_statutes and (
+            not self._full_corpus_enabled() or max_statutes is not None
+        ):
             return seed_statutes if limit is None else seed_statutes[: int(limit)]
 
         candidate_urls = [
@@ -263,6 +270,45 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
         )
         statutes: List[NormalizedStatute] = []
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        if limit is None:
+            title_urls = [url for url, _label in title_links]
+            title_payloads = await self._fetch_dc_html_frontier(
+                title_urls,
+                frontier_name="title catalog",
+            )
+            chapter_links: List[Tuple[str, str]] = []
+            for title_url, _title_label in title_links:
+                chapter_links.extend(
+                    await self._discover_chapter_links(
+                        title_url,
+                        _payload=title_payloads[title_url],
+                    )
+                )
+            chapter_links = list(dict.fromkeys(chapter_links))
+            chapter_payloads = await self._fetch_dc_html_frontier(
+                [url for url, _label in chapter_links],
+                frontier_name="chapter catalog",
+            )
+            section_links: List[Tuple[str, str]] = []
+            for chapter_url, _chapter_label in chapter_links:
+                section_links.extend(
+                    await self._discover_section_links(
+                        chapter_url,
+                        _payload=chapter_payloads[chapter_url],
+                    )
+                )
+            section_links = list(dict.fromkeys(section_links))
+            section_payloads = await self._fetch_dc_html_frontier(
+                [url for _number, url in section_links],
+                frontier_name="section body",
+            )
+            return await self._scrape_section_urls(
+                code_name,
+                section_links,
+                max_statutes=None,
+                discovery_method="official_title_chapter_section_index",
+                _payload_by_url=section_payloads,
+            )
         for title_index, (title_url, title_label) in enumerate(title_links, start=1):
             if limit is not None and len(statutes) >= limit:
                 break
@@ -329,16 +375,23 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
             out.append((normalized, self._normalize_legal_text(anchor.get_text(" ", strip=True))))
         return out
 
-    async def _discover_chapter_links(self, title_url: str) -> List[Tuple[str, str]]:
+    async def _discover_chapter_links(
+        self,
+        title_url: str,
+        *,
+        _payload: Optional[bytes] = None,
+    ) -> List[Tuple[str, str]]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
 
-        payload = await self._fetch_page_content_with_archival_fallback(
-            title_url,
-            timeout_seconds=self._probe_timeout_seconds(),
-        )
+        payload = _payload
+        if payload is None:
+            payload = await self._fetch_page_content_with_archival_fallback(
+                title_url,
+                timeout_seconds=self._probe_timeout_seconds(),
+            )
         if not payload:
             return []
         soup = BeautifulSoup(payload, "html.parser")
@@ -355,16 +408,23 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
             out.append((normalized, self._normalize_legal_text(anchor.get_text(" ", strip=True))))
         return out
 
-    async def _discover_section_links(self, chapter_url: str) -> List[Tuple[str, str]]:
+    async def _discover_section_links(
+        self,
+        chapter_url: str,
+        *,
+        _payload: Optional[bytes] = None,
+    ) -> List[Tuple[str, str]]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
 
-        payload = await self._fetch_page_content_with_archival_fallback(
-            chapter_url,
-            timeout_seconds=self._probe_timeout_seconds(),
-        )
+        payload = _payload
+        if payload is None:
+            payload = await self._fetch_page_content_with_archival_fallback(
+                chapter_url,
+                timeout_seconds=self._probe_timeout_seconds(),
+            )
         if not payload:
             return []
         soup = BeautifulSoup(payload, "html.parser")
@@ -389,6 +449,7 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
         section_urls: List[Tuple[str, str]],
         max_statutes: Optional[int] = None,
         discovery_method: str = "official_seed_section",
+        _payload_by_url: Optional[Dict[str, bytes]] = None,
     ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
@@ -412,10 +473,16 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
             if not section_number:
                 continue
 
-            payload = await self._fetch_page_content_with_archival_fallback(
-                str(source_url),
-                timeout_seconds=self._probe_timeout_seconds(),
+            payload = (
+                _payload_by_url.get(str(source_url))
+                if _payload_by_url is not None
+                else None
             )
+            if payload is None:
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    str(source_url),
+                    timeout_seconds=self._probe_timeout_seconds(),
+                )
             if not payload:
                 continue
             soup = BeautifulSoup(payload, "html.parser")
@@ -463,6 +530,57 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
                 )
             )
         return statutes
+
+    async def _fetch_dc_html_frontier(
+        self,
+        urls: List[str],
+        *,
+        frontier_name: str,
+    ) -> Dict[str, bytes]:
+        """Fetch one exact D.C. Code hierarchy wave through the plural seam."""
+
+        requested = list(urls)
+        if not requested:
+            return {}
+        if len(set(requested)) != len(requested):
+            raise RuntimeError(f"D.C. {frontier_name} frontier contains duplicate URLs")
+        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+            requested,
+            residual_retry_attempts=1,
+            timeout_seconds=self._probe_timeout_seconds(),
+            headers={"User-Agent": "Mozilla/5.0"},
+            content_validator=lambda payload: b"<" in payload[:8192] and b">" in payload[:8192],
+            media_type="text/html",
+            max_concurrency=8,
+            prefer_direct=True,
+            wayback_prefix_inventory=True,
+        )
+        if list(batch.urls) != requested or any(
+            len(vector) != len(requested)
+            for vector in (
+                batch.payloads,
+                batch.errors,
+                batch.transport_receipts,
+                batch.parser_input_envelopes,
+            )
+        ):
+            raise RuntimeError(f"D.C. {frontier_name} frontier returned unaligned rows")
+        failures = [
+            {"url": url, "error": error or "empty parser input"}
+            for url, payload, error in zip(
+                batch.urls, batch.payloads, batch.errors, strict=True
+            )
+            if error is not None or not payload
+        ]
+        if failures:
+            raise RuntimeError(
+                f"D.C. {frontier_name} frontier is incomplete; "
+                f"unresolved exact URLs: {failures}"
+            )
+        return {
+            url: bytes(payload)
+            for url, payload in zip(batch.urls, batch.payloads, strict=True)
+        }
 
     def official_title_url(self, title_number: str) -> str:
         return f"{self.get_base_url()}/us/dc/council/code/titles/{str(title_number).strip()}"

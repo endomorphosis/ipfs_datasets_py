@@ -46,6 +46,8 @@ from ipfs_datasets_py.processors.legal_data.legal_source_rights_policy import (
     EXPECTED_FRONTIER_SIZE,
     FIXTURE_GOAL_ID,
     FIXTURE_TASK_ID,
+    LIVE_COMPLIANCE_CODE_VERSION,
+    LIVE_COMPLIANCE_REPORT_SCHEMA,
     LIVE_GOAL_ID,
     LIVE_TASK_ID,
     PROGRAM_ID,
@@ -58,20 +60,21 @@ from ipfs_datasets_py.processors.legal_data.legal_source_rights_policy import (
     audit_fixture_catalog,
     compute_artifact_digests,
     default_live_catalog_path,
+    default_live_compliance_path,
     derive_expected_scope_frontier,
     format_utc_timestamp,
     frontier_digest_sha256,
     load_catalog_snapshot,
     load_spdx_registry,
     require_live_source_evidence,
+    require_live_source_rights_receipt,
     sha256_json,
 )
 
 
-REPORT_SCHEMA = "ipfs_datasets_py/legal-source-rights-compliance@2"
-CODE_VERSION = "2"
+REPORT_SCHEMA = LIVE_COMPLIANCE_REPORT_SCHEMA
+CODE_VERSION = LIVE_COMPLIANCE_CODE_VERSION
 LIVE_CATALOG_RELATIVE = Path("data/legal/legal_source_rights_catalog.json")
-COMPLIANCE_RELATIVE = Path("docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json")
 LIVE_USER_AGENT = "legal-corpora-reindex-v1-source-rights-auditor/2"
 LIVE_FETCH_TIMEOUT_SECONDS = 20.0
 LIVE_ARCHIVE_FETCH_TIMEOUT_SECONDS = 45.0
@@ -129,7 +132,7 @@ def _identity_fields(mode: str) -> dict[str, str]:
 
 
 def default_compliance_path() -> Path:
-    return REPOSITORY_ROOT / COMPLIANCE_RELATIVE
+    return default_live_compliance_path()
 
 
 def _evidence(
@@ -629,20 +632,21 @@ def _observation_bytes(kind: str, fetch: LiveFetchResult, source_url: str) -> by
 
 def _rights_for_scope(
     scope: ContentScope,
-    *,
-    robots_disposition: str,
 ) -> tuple[str, bool]:
+    """Return release rights independently from transport/access controls.
+
+    Enacted statutory text is governed by the government-edicts doctrine.  A
+    portal's robots policy, WAF, or current availability can constrain how the
+    crawler reaches that text, but it cannot turn public law into copyrighted
+    material or revoke the right to redistribute it.  Acquisition admission is
+    therefore evaluated separately below.
+    """
+
     in_scope = scope in ADMISSIBLE_CONTENT_SCOPES
     if not in_scope:
         if scope is ContentScope.DATABASE_CONTENT:
             return "quarantined", False
         return "prohibited", False
-    if robots_disposition == "denied":
-        return "prohibited", False
-    if robots_disposition in {"unknown", "unavailable"}:
-        return "unknown", False
-    if robots_disposition == "conditional":
-        return "conditional", True
     return "allowed", True
 
 
@@ -728,9 +732,8 @@ def build_live_catalog_payload(
             http_status=robots_fetch.status,
             error=robots_fetch.error,
         )
-        rights_disposition, may_admit = _rights_for_scope(
-            scope, robots_disposition=robots_disposition
-        )
+        rights_disposition, release_operations_permitted = _rights_for_scope(scope)
+        acquisition_admissible = robots_disposition in {"allowed", "conditional"}
         conditions: list[str] = []
         receipts: list[dict[str, Any]] = []
         if robots_disposition == "conditional" and crawl_delay is not None:
@@ -781,9 +784,7 @@ def build_live_catalog_payload(
                     break
             if archive_hits is not None:
                 robots_disposition = "conditional"
-                rights_disposition, may_admit = _rights_for_scope(
-                    scope, robots_disposition=robots_disposition
-                )
+                acquisition_admissible = True
                 condition_id = "archival-fallback-only"
                 conditions = [condition_id]
                 receipts = [
@@ -798,7 +799,8 @@ def build_live_catalog_payload(
                     )
                 ]
         if not in_scope:
-            may_admit = False
+            release_operations_permitted = False
+            acquisition_admissible = False
         record_id = f"{entry.source_id}-{entry.content_scope}"
         terms = _evidence(
             kind="terms",
@@ -834,9 +836,9 @@ def build_live_catalog_payload(
             "access_conditions": conditions,
             "condition_evidence": receipts,
             "permissions": {
-                "redistribution": may_admit,
-                "derivatives": may_admit,
-                "archive": may_admit,
+                "redistribution": release_operations_permitted,
+                "derivatives": release_operations_permitted,
+                "archive": release_operations_permitted,
             },
             "attribution_notice": (
                 f"Source {entry.source_id} ({entry.jurisdiction_or_authority}); "
@@ -863,7 +865,7 @@ def build_live_catalog_payload(
             ),
         }
         records.append(record)
-        if may_admit:
+        if release_operations_permitted and acquisition_admissible:
             admitted_ids.append(record_id)
 
     now = _utc_now()
@@ -975,7 +977,9 @@ def seal_live_catalog_and_receipt(
     wrapped["status"] = "passed"
     receipt = build_live_compliance_receipt(wrapped)
     write_live_compliance_receipt(receipt)
-    return receipt
+    # Do not report a successful seal until the same fixed-path verifier used
+    # by production, local release, and publication packaging accepts it.
+    return require_live_source_rights_receipt(receipt)
 
 
 def _load_json_object(path: Path, *, context: str) -> dict[str, Any]:
@@ -1030,7 +1034,10 @@ def _verify_live_compliance_receipt(report: Mapping[str, Any]) -> dict[str, Any]
         raise AuditError("live compliance receipt does not cover both target datasets")
     if int(receipt.get("record_count") or 0) != EXPECTED_FRONTIER_SIZE:
         raise AuditError("live compliance receipt does not cover the complete frontier")
-    return receipt
+    try:
+        return require_live_source_rights_receipt(receipt)
+    except LegalSourceRightsPolicyError as exc:
+        raise AuditError(str(exc)) from exc
 
 
 def build_fixture_catalog_payload() -> dict[str, Any]:
@@ -1088,7 +1095,6 @@ def build_fixture_catalog_payload() -> dict[str, Any]:
             condition_id = "respect-crawl-delay-10-seconds"
             conditions = [condition_id]
             robots_disposition = "conditional"
-            rights_disposition = "conditional"
             receipts = [
                 _condition_receipt(
                     condition_id=condition_id,

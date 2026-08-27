@@ -20,7 +20,33 @@ New Features:
 - Intelligent search term generation from queries
 """
 
+import hashlib
 from importlib import import_module
+from pathlib import Path
+from types import MappingProxyType
+
+
+def _snapshot_state_law_producer_sources_at_package_import() -> dict[str, str]:
+    """Capture exact producer bytes before this package imports any of them."""
+
+    package_root = Path(__file__).resolve().parent
+    candidates = [package_root / "state_laws_scraper.py"]
+    candidates.extend(sorted((package_root / "state_scrapers").glob("*.py")))
+    snapshots: dict[str, str] = {}
+    for path in candidates:
+        resolved = path.resolve()
+        if path.is_symlink() or not resolved.is_file():
+            continue
+        snapshots[str(resolved)] = hashlib.sha256(resolved.read_bytes()).hexdigest()
+    return snapshots
+
+
+# This table is populated before ``state_laws_scraper`` or any registered
+# state adapter is imported below.  The acquisition run gate compares these
+# exact import-time bytes with disk at both run boundaries.
+STATE_LAWS_PRODUCER_IMPORT_SOURCE_SHA256 = MappingProxyType(
+    _snapshot_state_law_producer_sources_at_package_import()
+)
 
 # Import main scraper modules using relative imports.
 # Federal modules were moved under federal_scrapers/ in some layouts, so

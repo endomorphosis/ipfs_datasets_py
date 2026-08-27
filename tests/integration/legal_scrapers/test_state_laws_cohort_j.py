@@ -689,10 +689,13 @@ async def test_rhode_island_full_corpus_is_uncapped_when_max_statutes_omitted(
 async def test_rhode_island_full_corpus_refuses_justia_sole_admission(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    async def _empty_fetch(self, url: str, timeout_seconds: int = 30) -> bytes:
-        return b""
+    async def _empty_official_frontier(self, urls, *, frontier_name: str):
+        del self, frontier_name
+        return [b"<html><body>No official title frontier.</body></html>" for _url in urls]
 
+    requested = {"justia": False}
     async def _justia_generic(self, code_name, candidate, citation_format, max_sections):
+        requested["justia"] = True
         return [
             NormalizedStatute(
                 state_code="RI",
@@ -712,18 +715,19 @@ async def test_rhode_island_full_corpus_refuses_justia_sole_admission(
     monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
     monkeypatch.setattr(
         RhodeIslandScraper,
-        "_fetch_page_content_with_archival_fallback",
-        _empty_fetch,
+        "_fetch_rhode_island_frontier_batch",
+        _empty_official_frontier,
     )
     monkeypatch.setattr(RhodeIslandScraper, "_generic_scrape", _justia_generic)
 
     scraper = RhodeIslandScraper("RI", "Rhode Island")
-    statutes = await scraper.scrape_code(
-        "Rhode Island General Laws",
-        "https://webserver.rilegislature.gov/Statutes/TITLE1/INDEX.HTM",
-        max_statutes=None,
-    )
-    assert statutes == []
+    with pytest.raises(RuntimeError, match="official root exposed no title frontier"):
+        await scraper.scrape_code(
+            "Rhode Island General Laws",
+            "https://webserver.rilegislature.gov/Statutes/TITLE1/INDEX.HTM",
+            max_statutes=None,
+        )
+    assert requested["justia"] is False
 
 
 @pytest.mark.anyio
@@ -751,7 +755,11 @@ async def test_south_carolina_full_corpus_refuses_justia_sole_admission(
         ]
 
     monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
-    monkeypatch.setattr(SouthCarolinaScraper, "_scrape_official_code_tree", _empty_official)
+    monkeypatch.setattr(
+        SouthCarolinaScraper,
+        "_scrape_official_code_tree_strict",
+        _empty_official,
+    )
     monkeypatch.setattr(SouthCarolinaScraper, "_generic_scrape", _justia_generic)
 
     scraper = SouthCarolinaScraper("SC", "South Carolina")

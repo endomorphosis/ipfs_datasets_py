@@ -38,7 +38,7 @@
     "nv-leg-nrs-statutory_text",
     "ny-senate-laws-statutory_text",
     "oh-codes-orc-statutory_text",
-    "ok-oscn-statutes-statutory_text",
+    "ok-legislature-complete-title-pdfs-statutory_text",
     "or-legislature-ors-statutory_text",
     "pa-palegis-statutes-statutory_text",
     "ri-webserver-statutes-statutory_text",
@@ -55,17 +55,17 @@
     "wy-wyoleg-statutes-statutory_text"
   ],
   "artifact_digests": {
-    "expected_scope_frontier_sha256": "2ca232e0670e3fe7126cacdb217efd4e7e3fe6f85ae0003ad10afa5d1921889f",
-    "lcr002_source_catalog_sha256": "c6cef251435bfa5185543c402e24d14b79acd409f5ec904da058ff805e74499c",
+    "expected_scope_frontier_sha256": "9d484934e1a5bab3f180fa8705de54aeb360aea76abb893305938f940c3ca24e",
+    "lcr002_source_catalog_sha256": "93ff3fde3653fd6fe7a25eeb6b524c31f5bd5a23427c41ce203add300b4a5ed2",
     "lcr048_federal_baseline_sha256": "9d23788763ee7258487c8b01e341837c3743d7edb051e1bbb63f39111c06e596",
-    "policy_module_sha256": "3140fabf917ce18169ed8dcbf11c9784658419b8baf08752248614760d8c7019",
+    "policy_module_sha256": "242e81b6c2e012b6e33e2b4e7a581d74fda539f3b6de0cc4077bd8aa3d6816f1",
     "schema_sha256": "fe2bf68d0c8501f8454533d633cba535542d4e0dcb15b0b969f8c7b25412d8b0",
     "spdx_registry_sha256": "52a539270e3722a612d6a4bf962a9855de6ce0c36bd7d70f85ab2a813da18247"
   },
   "audit_producer": "audit_legal_source_rights.py@2",
   "authority_suppressed": false,
   "authorizing_for_publication": true,
-  "catalog_digest_sha256": "3ba1d10b30598c2145ee0dfa62db42d69d2d664578fce90d5c4ed756ac742a4b",
+  "catalog_digest_sha256": "965edf55cbffe12cfc8d1ab6fddf182c6f72a8d2492cc9e38bdf886e1fa6bcb1",
   "catalog_path": "data/legal/legal_source_rights_catalog.json",
   "catalog_schema_version": "legal-source-rights-catalog-v2",
   "code_version": "2",
@@ -125,7 +125,7 @@
         "conditional_evidence_verified"
       ],
       "record_id": "az-azleg-ars-statutory_text",
-      "rights_disposition": "conditional",
+      "rights_disposition": "allowed",
       "source_id": "az-azleg-ars"
     },
     {
@@ -140,7 +140,7 @@
         "conditional_evidence_verified"
       ],
       "record_id": "ca-leginfo-statutory_text",
-      "rights_disposition": "conditional",
+      "rights_disposition": "allowed",
       "source_id": "ca-leginfo"
     },
     {
@@ -544,7 +544,7 @@
         "conditional_evidence_verified"
       ],
       "record_id": "ne-legislature-statutes-statutory_text",
-      "rights_disposition": "conditional",
+      "rights_disposition": "allowed",
       "source_id": "ne-legislature-statutes"
     },
     {
@@ -555,11 +555,10 @@
       "reason_codes": [
         "admitted",
         "all_operations_permitted",
-        "evidence_current",
-        "conditional_evidence_verified"
+        "evidence_current"
       ],
       "record_id": "nh-gencourt-rsa-statutory_text",
-      "rights_disposition": "conditional",
+      "rights_disposition": "allowed",
       "source_id": "nh-gencourt-rsa"
     },
     {
@@ -642,9 +641,9 @@
         "all_operations_permitted",
         "evidence_current"
       ],
-      "record_id": "ok-oscn-statutes-statutory_text",
+      "record_id": "ok-legislature-complete-title-pdfs-statutory_text",
       "rights_disposition": "allowed",
-      "source_id": "ok-oscn-statutes"
+      "source_id": "ok-legislature-complete-title-pdfs"
     },
     {
       "admitted": false,
@@ -782,7 +781,7 @@
         "conditional_evidence_verified"
       ],
       "record_id": "ut-le-code-statutory_text",
-      "rights_disposition": "conditional",
+      "rights_disposition": "allowed",
       "source_id": "ut-le-code"
     },
     {
@@ -811,7 +810,7 @@
         "conditional_evidence_verified"
       ],
       "record_id": "vt-legislature-statutory_text",
-      "rights_disposition": "conditional",
+      "rights_disposition": "allowed",
       "source_id": "vt-legislature"
     },
     {
@@ -882,14 +881,14 @@
   ],
   "evidence_mode": "live",
   "expected_frontier_count": 57,
-  "expected_scope_frontier_sha256": "2ca232e0670e3fe7126cacdb217efd4e7e3fe6f85ae0003ad10afa5d1921889f",
+  "expected_scope_frontier_sha256": "9d484934e1a5bab3f180fa8705de54aeb360aea76abb893305938f940c3ca24e",
   "fixture_only_non_authorizing": false,
   "goal_id": "LCR-G141",
   "mode": "live",
   "producer": "audit_legal_source_rights.py@2",
   "program_id": "legal-corpora-reindex-v1",
   "record_count": 57,
-  "report_digest_sha256": "46ef76257b938dc532311207bcbe97f12bc5b9fdf587b370b4273e1b912969ee",
+  "report_digest_sha256": "231f26c7d5c23f0347e2d3d953544a618f9fda8dc9ef0605c822d600d36218db",
   "report_schema": "ipfs_datasets_py/legal-source-rights-compliance@2",
   "schema_version": "legal-source-rights-policy-v2",
   "secret_free": true,
@@ -899,5 +898,5 @@
     "justicedao/ipfs_federal_register"
   ],
   "task_id": "LCR-078",
-  "verified_at": "2026-08-22T05:37:47.830725Z"
+  "verified_at": "2026-08-26T18:14:42.152098Z"
 }

@@ -57,7 +57,7 @@ def parse_new_york_constitution_tree(
                 title_number=art_id,
                 section_number=number,
                 section_name=(leaf.get("title") or cite)[:200],
-                full_text=text[:14000],
+                full_text=text,
                 source_url=NY_CONST_LAW_URL,
                 official_cite=cite,
                 metadata=StatuteMetadata(),

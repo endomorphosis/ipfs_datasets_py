@@ -101,7 +101,7 @@ def parse_california_constitution_html(
                 title_number=article,
                 section_number=number,
                 section_name=heading or f"Section {number}",
-                full_text=text[:14000],
+                full_text=text,
                 source_url=source,
                 official_cite=f"Cal. Const. art. {article}, § {number}",
                 metadata=StatuteMetadata(),

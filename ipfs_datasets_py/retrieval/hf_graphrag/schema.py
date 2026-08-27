@@ -339,6 +339,34 @@ def validate_physical_pointer_count(
     return count
 
 
+def validate_centroid_capacity(
+    *,
+    row_count: Any,
+    shard_count: Any,
+) -> tuple[int, int]:
+    """Enforce centroid capacity: ≤8192 rows and ≤2 physical shards."""
+
+    rows = _require_non_negative_int(row_count, "row_count")
+    shards = _require_non_negative_int(shard_count, "shard_count")
+    if rows > MAX_ROWS_PER_VECTOR_CENTROID:
+        raise PhysicalBoundError(
+            f"centroid row_count={rows} exceeds {MAX_ROWS_PER_VECTOR_CENTROID}"
+        )
+    if shards > MAX_VECTOR_SHARDS_PER_CENTROID:
+        raise PhysicalBoundError(
+            f"centroid shard_count={shards} exceeds "
+            f"{MAX_VECTOR_SHARDS_PER_CENTROID}"
+        )
+    if shards > 0:
+        max_via_shards = shards * MAX_ROWS_PER_PHYSICAL_SHARD
+        if rows > max_via_shards:
+            raise PhysicalBoundError(
+                f"centroid row_count={rows} exceeds capacity of "
+                f"{shards} shard(s) × {MAX_ROWS_PER_PHYSICAL_SHARD}"
+            )
+    return rows, shards
+
+
 def physical_bounds_policy() -> dict[str, int]:
     """Return the sealed physical-bound policy as a plain dict."""
 
@@ -893,6 +921,7 @@ __all__ = [
     "row_sort_key",
     "shard_sequence",
     "stable_sort_rows",
+    "validate_centroid_capacity",
     "validate_digest",
     "validate_physical_pointer_count",
     "validate_physical_row_count",

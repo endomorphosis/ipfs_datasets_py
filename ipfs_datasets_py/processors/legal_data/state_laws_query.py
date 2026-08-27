@@ -57,26 +57,38 @@ or publication.
 
 from __future__ import annotations
 
-from collections import defaultdict
+import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-import json
-import math
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Final, Optional
+from typing import Any, Final
 
+from ipfs_datasets_py.processors.legal_data import (
+    legal_query_authority_core as _authority_core,
+)
 from ipfs_datasets_py.processors.legal_data.state_laws_adjacency import (
     EDGE_AUTHORITY as ADJACENCY_EDGE_AUTHORITY,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_adjacency import (
     EDGE_PROOF_AUTHORITY as ADJACENCY_EDGE_PROOF_AUTHORITY,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_adjacency import (
     EDGE_TYPE_BM25_NEIGHBOR,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_adjacency import (
     TASK_ID as ADJACENCY_TASK_ID,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_bm25 import (
     PRIMARY_KEY as BM25_PRIMARY_KEY,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_bm25 import (
     TASK_ID as BM25_TASK_ID,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_bm25 import (
     TOKENIZER_ID as BM25_TOKENIZER_ID,
 )
+from ipfs_datasets_py.processors.legal_data.state_laws_bm25 import tokenize_query
 from ipfs_datasets_py.processors.legal_data.state_laws_corpus import (
     assert_no_secrets_or_home_paths,
 )
@@ -84,47 +96,82 @@ from ipfs_datasets_py.processors.legal_data.state_laws_graph import (
     DEFAULT_EDGE_CLASS,
     LEGAL_EDGE_TYPES,
     SIMILARITY_EDGE_TYPES,
-    TASK_ID as GRAPH_TASK_ID,
     GraphEdgeClass,
     GraphEdgeType,
     GraphOntologyError,
     write_json_atomic,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_graph import (
+    TASK_ID as GRAPH_TASK_ID,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_hf_release import (
     TASK_ID as HF_RELEASE_TASK_ID,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
     ADR_PATH,
-    DEFAULT_CANDIDATE_CENTROIDS as SCHEMA_DEFAULT_CANDIDATE_CENTROIDS,
     DEFAULT_DATASET_REPO_ID,
     PREVIOUS_PUBLIC_PIN,
     RELEASE_PROFILE,
     digest_mapping,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
+    DEFAULT_CANDIDATE_CENTROIDS as SCHEMA_DEFAULT_CANDIDATE_CENTROIDS,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_source_policy import (
     CURRENTNESS_DISCLAIMER,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_vectors import (
     PARENT_KEY as VECTOR_PARENT_KEY,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_vectors import (
     PINNED_MODEL_ID,
     PINNED_MODEL_REVISION,
-    PRIMARY_KEY as VECTOR_PRIMARY_KEY,
-    TASK_ID as VECTORS_TASK_ID,
     VECTOR_ENTRY_LOCATOR_DIR,
 )
-
+from ipfs_datasets_py.processors.legal_data.state_laws_vectors import (
+    PRIMARY_KEY as VECTOR_PRIMARY_KEY,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_vectors import (
+    TASK_ID as VECTORS_TASK_ID,
+)
 from ipfs_datasets_py.retrieval.hf_graphrag.query import (
     BUDGET_DIMENSIONS,
     DEFAULT_TOP_K,
     MAX_TOP_K,
-    BoundedRemoteQueryEngine,
-    QueryBudgetExhausted,
-    QueryEngineResult,
-    QueryLimits,
     ROUTE_FAMILIES,
     ROUTE_REASONS,
-    RouteJustification,
+    BoundedRemoteQueryEngine,
+    QueryBudgetExhausted,
+    QueryLimits,
+    cosine_similarity,
+    parse_entry_locator_locations,
+    rankings_are_compatible,
+    select_entry_locator_pages_for_keys,
     select_term_range_shards,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.query import (
+    QueryInputError as _SharedQueryInputError,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.query import (
+    hydrate_frontier_vectors as _hydrate_frontier_vectors,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.query import (
+    late_fuse_rankings as _late_fuse_rankings,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.query import (
+    lexical_ranges_would_miss_keys as _lexical_ranges_would_miss_keys,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.query import (
+    normalize_late_fusion_settings as _normalize_late_fusion_settings,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.query import (
+    normalize_semantic_beam_settings as _normalize_semantic_beam_settings,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.query import (
+    route_centroid_paths as _route_centroid_paths,
+)
+from ipfs_datasets_py.retrieval.hf_graphrag.query import (
+    semantic_beam_walk as _semantic_beam_walk,
 )
 from ipfs_datasets_py.retrieval.hf_graphrag.remote_search import (
     DEFAULT_CANDIDATE_CENTROIDS,
@@ -187,9 +234,7 @@ IMMUTABLE_PIN_REQUIRED: Final = True
 NO_MUTABLE_MAIN_DEFAULT: Final = True
 SECRETS_ABSENT: Final = True
 
-REPORT_RELATIVE_PATH: Final = (
-    "docs/reports/legal_corpora_reindex/query_contract.json"
-)
+REPORT_RELATIVE_PATH: Final = "docs/reports/legal_corpora_reindex/query_contract.json"
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_REPORT_PATH: Final = _REPO_ROOT / REPORT_RELATIVE_PATH
 
@@ -282,9 +327,7 @@ class StateLawsQueryError(RemoteSearchError):
         return {"code": self.code, "kind": "error", "message": str(self)}
 
 
-class StateLawsQueryInputError(
-    StateLawsQueryError, RemoteSearchInputError
-):
+class StateLawsQueryInputError(StateLawsQueryError, RemoteSearchInputError):
     """Raised when state-law query inputs are malformed."""
 
     code = "query_input_invalid"
@@ -294,6 +337,27 @@ class LegalAuthorityCollisionError(StateLawsQueryError):
     """Raised when a similarity edge is labeled as legal authority."""
 
     code = "legal_authority_collision"
+
+
+_EDGE_AUTHORITY_BINDINGS: Final = _authority_core.LegalQueryAuthorityBindings(
+    edge_type=GraphEdgeType,
+    edge_class=GraphEdgeClass,
+    default_edge_class=DEFAULT_EDGE_CLASS,
+    legal_edge_types=LEGAL_EDGE_TYPES,
+    similarity_edge_types=SIMILARITY_EDGE_TYPES,
+    legal_edge_type_names=LEGAL_EDGE_TYPE_NAMES,
+    similarity_edge_type_names=SIMILARITY_EDGE_TYPE_NAMES,
+    input_error=StateLawsQueryInputError,
+    collision_error=LegalAuthorityCollisionError,
+    coerce_errors=(GraphOntologyError,),
+    authority_legal=AUTHORITY_LEGAL,
+    authority_non_authoritative=AUTHORITY_NON_AUTHORITATIVE,
+    similarity_proof_authority=bool(ADJACENCY_EDGE_PROOF_AUTHORITY),
+    similarity_notes=(
+        _authority_core.SIMILARITY_NOTES_BM25_EMBEDDING_CORRECTION
+    ),
+    overlay_edge_type=EDGE_TYPE_BM25_NEIGHBOR,
+)
 
 
 class FusionConfigError(StateLawsQueryError):
@@ -312,7 +376,6 @@ class ImmutablePinError(StateLawsQueryError, MutableRevisionError):
     """Raised when a mutable Hub revision is supplied to the query engine."""
 
     code = "immutable_pin_required"
-
 
 
 def assert_no_secrets(
@@ -339,9 +402,7 @@ def _require_non_empty_str(value: Any, name: str, *, maximum: int = 512) -> str:
     if "\x00" in text:
         raise StateLawsQueryInputError(f"{name} must not contain NUL")
     if len(text) > maximum:
-        raise StateLawsQueryInputError(
-            f"{name} exceeds maximum length {maximum}"
-        )
+        raise StateLawsQueryInputError(f"{name} exceeds maximum length {maximum}")
     return text
 
 
@@ -349,43 +410,6 @@ def _require_positive_int(value: Any, name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
         raise StateLawsQueryInputError(f"{name} must be a positive integer")
     return value
-
-
-def _require_non_negative_int(value: Any, name: str) -> int:
-    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise StateLawsQueryInputError(
-            f"{name} must be a non-negative integer"
-        )
-    return value
-
-
-def _require_weight(value: Any, name: str) -> float:
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise FusionConfigError(f"{name} must be a finite number")
-    number = float(value)
-    if not math.isfinite(number) or number < 0.0:
-        raise FusionConfigError(f"{name} must be a non-negative finite number")
-    return number
-
-
-def _finite_score(value: Any) -> float | None:
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        return None
-    number = float(value)
-    if not math.isfinite(number):
-        return None
-    return number
-
-
-def _iso_date_prefix(value: Any) -> str | None:
-    if value is None or value == "":
-        return None
-    text = str(value).strip()
-    if not text:
-        return None
-    if len(text) >= 10 and text[4] == "-" and text[7] == "-":
-        return text[:10]
-    return text
 
 
 def require_immutable_revision(value: Any, *, name: str = "revision") -> str:
@@ -397,33 +421,6 @@ def require_immutable_revision(value: Any, *, name: str = "revision") -> str:
         raise ImmutablePinError(str(exc)) from exc
 
 
-def cosine_similarity(
-    left: Sequence[float] | None,
-    right: Sequence[float] | None,
-) -> float:
-    """Cosine similarity without a NumPy dependency."""
-
-    if left is None or right is None:
-        return 0.0
-    try:
-        a = tuple(float(x) for x in left)
-        b = tuple(float(x) for x in right)
-    except (TypeError, ValueError, OverflowError):
-        return 0.0
-    if not a or len(a) != len(b):
-        return 0.0
-    if not all(math.isfinite(x) for x in a) or not all(
-        math.isfinite(x) for x in b
-    ):
-        return 0.0
-    dot = sum(x * y for x, y in zip(a, b))
-    na = math.sqrt(sum(x * x for x in a))
-    nb = math.sqrt(sum(x * x for x in b))
-    if na == 0.0 or nb == 0.0:
-        return 0.0
-    return max(-1.0, min(1.0, dot / (na * nb)))
-
-
 # ---------------------------------------------------------------------------
 # Edge authority (similarity never legal authority)
 # ---------------------------------------------------------------------------
@@ -432,41 +429,28 @@ def cosine_similarity(
 def edge_class_for_type(edge_type: str | GraphEdgeType) -> GraphEdgeClass:
     """Return the sealed edge class for a legal/similarity edge type."""
 
-    if isinstance(edge_type, GraphEdgeType):
-        edge = edge_type
-    else:
-        text = str(edge_type or "").strip().upper().replace("-", "_")
-        try:
-            edge = GraphEdgeType.coerce(text)
-        except GraphOntologyError:
-            return GraphEdgeClass.SIMILARITY
-    return DEFAULT_EDGE_CLASS.get(edge, GraphEdgeClass.SIMILARITY)
+    return _authority_core.edge_class_for_type(
+        edge_type,
+        bindings=_EDGE_AUTHORITY_BINDINGS,
+    )
 
 
 def is_similarity_edge_type(edge_type: str | GraphEdgeType | None) -> bool:
     """Return True when *edge_type* is a non-authoritative similarity edge."""
 
-    if edge_type is None:
-        return False
-    if isinstance(edge_type, GraphEdgeType):
-        return edge_type in SIMILARITY_EDGE_TYPES
-    text = str(edge_type).strip().upper().replace("-", "_")
-    return text in SIMILARITY_EDGE_TYPE_NAMES or text in {
-        item.name for item in SIMILARITY_EDGE_TYPES
-    }
+    return _authority_core.is_similarity_edge_type(
+        edge_type,
+        bindings=_EDGE_AUTHORITY_BINDINGS,
+    )
 
 
 def is_legal_edge_type(edge_type: str | GraphEdgeType | None) -> bool:
     """Return True when *edge_type* is a legal/structural/provenance edge."""
 
-    if edge_type is None:
-        return False
-    if isinstance(edge_type, GraphEdgeType):
-        return edge_type in LEGAL_EDGE_TYPES
-    text = str(edge_type).strip().upper().replace("-", "_")
-    return text in LEGAL_EDGE_TYPE_NAMES or text in {
-        item.name for item in LEGAL_EDGE_TYPES
-    }
+    return _authority_core.is_legal_edge_type(
+        edge_type,
+        bindings=_EDGE_AUTHORITY_BINDINGS,
+    )
 
 
 def classify_edge_authority(edge_type: str | GraphEdgeType | None) -> dict[str, Any]:
@@ -477,47 +461,10 @@ def classify_edge_authority(edge_type: str | GraphEdgeType | None) -> dict[str, 
     retrieval noise cannot claim legal force.
     """
 
-    if is_similarity_edge_type(edge_type):
-        edge_class = GraphEdgeClass.SIMILARITY
-        return {
-            "authority": AUTHORITY_NON_AUTHORITATIVE,
-            "edge_class": edge_class.value,
-            "edge_type": (
-                edge_type.value
-                if isinstance(edge_type, GraphEdgeType)
-                else str(edge_type or "")
-            ),
-            "legal_authority": False,
-            "proof_authority": bool(ADJACENCY_EDGE_PROOF_AUTHORITY),
-            "retrieval_hint": True,
-        }
-    if is_legal_edge_type(edge_type):
-        edge_class = edge_class_for_type(edge_type)  # type: ignore[arg-type]
-        return {
-            "authority": AUTHORITY_LEGAL,
-            "edge_class": edge_class.value,
-            "edge_type": (
-                edge_type.value
-                if isinstance(edge_type, GraphEdgeType)
-                else str(edge_type or "")
-            ),
-            "legal_authority": True,
-            "proof_authority": edge_class
-            in {
-                GraphEdgeClass.AUTHORITY,
-                GraphEdgeClass.CITATION,
-                GraphEdgeClass.STRUCTURAL,
-            },
-            "retrieval_hint": False,
-        }
-    return {
-        "authority": AUTHORITY_NON_AUTHORITATIVE,
-        "edge_class": GraphEdgeClass.SIMILARITY.value,
-        "edge_type": str(edge_type or ""),
-        "legal_authority": False,
-        "proof_authority": False,
-        "retrieval_hint": True,
-    }
+    return _authority_core.classify_edge_authority(
+        edge_type,
+        bindings=_EDGE_AUTHORITY_BINDINGS,
+    )
 
 
 def annotate_edge_authority(edge: Mapping[str, Any]) -> dict[str, Any]:
@@ -527,42 +474,10 @@ def annotate_edge_authority(edge: Mapping[str, Any]) -> dict[str, Any]:
     claims legal authority.
     """
 
-    if not isinstance(edge, Mapping):
-        raise StateLawsQueryInputError("edge must be a mapping")
-    row = dict(edge)
-    edge_type = row.get("edge_type") or row.get("relationship_type") or ""
-    classification = classify_edge_authority(str(edge_type))
-    if is_similarity_edge_type(str(edge_type)):
-        claimed_legal = row.get("legal_authority")
-        claimed_authority = str(row.get("authority") or "").strip().lower()
-        claimed_proof = row.get("proof_authority")
-        if claimed_legal is True or claimed_proof is True:
-            raise LegalAuthorityCollisionError(
-                f"similarity edge {edge_type!r} cannot claim legal/proof "
-                f"authority"
-            )
-        if claimed_authority in {
-            "legal",
-            "authority",
-            "citation",
-            "authoritative",
-        }:
-            raise LegalAuthorityCollisionError(
-                f"similarity edge {edge_type!r} cannot use authority="
-                f"{claimed_authority!r}"
-            )
-        if str(row.get("edge_class") or "").strip().lower() in {
-            "authority",
-            "citation",
-            "structural",
-            "provenance",
-        }:
-            raise LegalAuthorityCollisionError(
-                f"similarity edge {edge_type!r} cannot use legal edge_class="
-                f"{row.get('edge_class')!r}"
-            )
-    row.update(classification)
-    return row
+    return _authority_core.annotate_edge_authority(
+        edge,
+        bindings=_EDGE_AUTHORITY_BINDINGS,
+    )
 
 
 def assert_no_similarity_as_legal_authority(
@@ -570,43 +485,18 @@ def assert_no_similarity_as_legal_authority(
 ) -> None:
     """Fail closed when any edge packages similarity as legal authority."""
 
-    for edge in edges:
-        if not isinstance(edge, Mapping):
-            continue
-        annotated = annotate_edge_authority(edge)
-        if is_similarity_edge_type(str(annotated.get("edge_type") or "")):
-            if annotated.get("legal_authority") is not False:
-                raise LegalAuthorityCollisionError(
-                    "similarity edge presented as legal authority"
-                )
-            if annotated.get("proof_authority") is not False:
-                raise LegalAuthorityCollisionError(
-                    "similarity edge presented as proof authority"
-                )
-            if annotated.get("authority") != AUTHORITY_NON_AUTHORITATIVE:
-                raise LegalAuthorityCollisionError(
-                    "similarity edge must be non_authoritative"
-                )
+    _authority_core.assert_no_similarity_as_legal_authority(
+        edges,
+        bindings=_EDGE_AUTHORITY_BINDINGS,
+    )
 
 
 def similarity_edge_semantics() -> dict[str, Any]:
     """Sealed non-authoritative semantics for similarity edges in queries."""
 
-    return {
-        "authority": AUTHORITY_NON_AUTHORITATIVE,
-        "edge_class": GraphEdgeClass.SIMILARITY.value,
-        "edge_types": sorted(SIMILARITY_EDGE_TYPE_NAMES),
-        "legal_authority": False,
-        "notes": (
-            "Similarity edges (BM25_NEIGHBOR_OF, SIMILAR_TO, "
-            "EMBEDDING_NEIGHBOR_OF) are retrieval hints only. They must "
-            "never be labeled as legal citation, authority, correction, or "
-            "proof. BM25 neighbors are not legal authority."
-        ),
-        "overlay_edge_type": EDGE_TYPE_BM25_NEIGHBOR,
-        "proof_authority": False,
-        "retrieval_hint": True,
-    }
+    return _authority_core.similarity_edge_semantics(
+        bindings=_EDGE_AUTHORITY_BINDINGS,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -648,9 +538,7 @@ class LegalFilters:
         )
         object.__setattr__(self, "code", _opt(self.code, "code"))
         object.__setattr__(self, "citation", _opt(self.citation, "citation"))
-        object.__setattr__(
-            self, "code_family", _opt(self.code_family, "code_family")
-        )
+        object.__setattr__(self, "code_family", _opt(self.code_family, "code_family"))
         object.__setattr__(self, "title", _opt(self.title, "title"))
         object.__setattr__(self, "chapter", _opt(self.chapter, "chapter"))
         object.__setattr__(self, "section", _opt(self.section, "section"))
@@ -677,9 +565,7 @@ class LegalFilters:
         indexes: list[int] = []
         for item in self.document_indexes or ():
             if isinstance(item, bool) or not isinstance(item, int):
-                raise StateLawsQueryInputError(
-                    "document_indexes must contain integers"
-                )
+                raise StateLawsQueryInputError("document_indexes must contain integers")
             indexes.append(item)
         object.__setattr__(self, "document_indexes", tuple(indexes))
         object.__setattr__(
@@ -997,31 +883,18 @@ class FusionConfig:
     stage: str = FUSION_STAGE
 
     def __post_init__(self) -> None:
-        method = str(self.method or FUSION_WEIGHTED).strip().lower()
-        if method not in FUSION_METHODS:
-            raise FusionConfigError(
-                f"fusion method must be one of {sorted(FUSION_METHODS)}, "
-                f"got {self.method!r}"
+        try:
+            settings = _normalize_late_fusion_settings(
+                method=self.method,
+                bm25_weight=self.bm25_weight,
+                vector_weight=self.vector_weight,
+                rrf_k=self.rrf_k,
+                stage=self.stage,
             )
-        stage = str(self.stage or FUSION_STAGE).strip().lower()
-        if stage != FUSION_STAGE:
-            raise FusionConfigError(
-                f"hybrid fusion must be late; got stage={self.stage!r}"
-            )
-        bm25_w = _require_weight(self.bm25_weight, "bm25_weight")
-        vector_w = _require_weight(self.vector_weight, "vector_weight")
-        if method == FUSION_WEIGHTED and bm25_w + vector_w <= 0.0:
-            raise FusionConfigError(
-                "weighted fusion requires at least one positive weight"
-            )
-        rrf_k = _require_positive_int(self.rrf_k, "rrf_k")
-        if rrf_k > 10_000:
-            raise FusionConfigError("rrf_k exceeds hard bound 10000")
-        object.__setattr__(self, "method", method)
-        object.__setattr__(self, "bm25_weight", bm25_w)
-        object.__setattr__(self, "vector_weight", vector_w)
-        object.__setattr__(self, "rrf_k", rrf_k)
-        object.__setattr__(self, "stage", stage)
+        except _SharedQueryInputError as exc:
+            raise FusionConfigError(str(exc)) from exc
+        for key, value in settings.items():
+            object.__setattr__(self, key, value)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1033,9 +906,7 @@ class FusionConfig:
         }
 
     @classmethod
-    def from_mapping(
-        cls, value: Mapping[str, Any] | None = None
-    ) -> "FusionConfig":
+    def from_mapping(cls, value: Mapping[str, Any] | None = None) -> "FusionConfig":
         if value is None:
             return cls()
         if isinstance(value, FusionConfig):
@@ -1047,45 +918,6 @@ class FusionConfig:
             if key in value:
                 kwargs[key] = value[key]
         return cls(**kwargs)
-
-
-def _hit_identity(hit: Mapping[str, Any]) -> str | None:
-    for key in ("chunk_cid", "entry_cid", "node_cid", "document_index"):
-        if key in hit and hit[key] is not None and hit[key] != "":
-            return f"{key}:{hit[key]}"
-    return None
-
-
-def rankings_are_compatible(
-    left: Sequence[Mapping[str, Any]],
-    right: Sequence[Mapping[str, Any]],
-) -> bool:
-    """Return True when both rankings expose a shared identity key space."""
-
-    def _keys(hits: Sequence[Mapping[str, Any]]) -> set[str]:
-        found: set[str] = set()
-        for hit in hits:
-            if not isinstance(hit, Mapping):
-                continue
-            identity = _hit_identity(hit)
-            if identity is None:
-                continue
-            found.add(identity.split(":", 1)[0])
-        return found
-
-    left_keys = _keys(left)
-    right_keys = _keys(right)
-    if not left_keys or not right_keys:
-        return True
-    return bool(left_keys & right_keys)
-
-
-def _component_score(hit: Mapping[str, Any]) -> float:
-    for key in ("normalized_score", "score"):
-        score = _finite_score(hit.get(key))
-        if score is not None:
-            return score
-    return 0.0
 
 
 def fuse_hybrid_results(
@@ -1102,93 +934,19 @@ def fuse_hybrid_results(
         if isinstance(config, FusionConfig)
         else FusionConfig.from_mapping(config)
     )
-    top_k = _require_positive_int(top_k, "top_k")
-    if top_k > MAX_TOP_K:
-        raise StateLawsQueryInputError(f"top_k must be <= {MAX_TOP_K}")
-
-    merged: dict[str, dict[str, Any]] = {}
-    bm25_rank: dict[str, int] = {}
-    vector_rank: dict[str, int] = {}
-
-    for rank, hit in enumerate(bm25_hits, start=1):
-        if not isinstance(hit, Mapping):
-            continue
-        identity = _hit_identity(hit) or f"row:{id(hit)}"
-        row = merged.setdefault(
-            identity,
-            {
-                "chunk_cid": hit.get("chunk_cid"),
-                "entry_cid": hit.get("entry_cid"),
-            },
+    try:
+        return _late_fuse_rankings(
+            bm25_hits,
+            vector_hits,
+            method=fusion.method,
+            bm25_weight=fusion.bm25_weight,
+            vector_weight=fusion.vector_weight,
+            rrf_k=fusion.rrf_k,
+            top_k=top_k,
+            stage=fusion.stage,
         )
-        for field_name, value in hit.items():
-            if field_name in {"score", "normalized_score"}:
-                continue
-            if field_name not in row or row[field_name] in (None, ""):
-                row[field_name] = value
-        row["bm25_score"] = _component_score(hit)
-        bm25_rank[identity] = rank
-
-    for rank, hit in enumerate(vector_hits, start=1):
-        if not isinstance(hit, Mapping):
-            continue
-        identity = _hit_identity(hit) or f"row:{id(hit)}"
-        row = merged.setdefault(
-            identity,
-            {
-                "chunk_cid": hit.get("chunk_cid"),
-                "entry_cid": hit.get("entry_cid"),
-            },
-        )
-        for field_name, value in hit.items():
-            if field_name in {"score", "normalized_score"}:
-                continue
-            if field_name not in row or row[field_name] in (None, ""):
-                row[field_name] = value
-        row["vector_score"] = _component_score(hit)
-        vector_rank[identity] = rank
-
-    fused: list[dict[str, Any]] = []
-    for identity, row in merged.items():
-        bm25_score = float(row.get("bm25_score") or 0.0)
-        vector_score = float(row.get("vector_score") or 0.0)
-        if fusion.method == FUSION_RRF:
-            score = 0.0
-            if identity in bm25_rank:
-                score += fusion.bm25_weight / (fusion.rrf_k + bm25_rank[identity])
-            if identity in vector_rank:
-                score += fusion.vector_weight / (
-                    fusion.rrf_k + vector_rank[identity]
-                )
-        else:
-            total_w = fusion.bm25_weight + fusion.vector_weight
-            score = (
-                fusion.bm25_weight * bm25_score
-                + fusion.vector_weight * vector_score
-            ) / total_w
-        payload = dict(row)
-        payload["bm25_score"] = bm25_score
-        payload["vector_score"] = vector_score
-        payload["component_scores"] = {
-            "bm25": bm25_score,
-            "vector": vector_score,
-        }
-        payload["score"] = score
-        payload["fusion_method"] = fusion.method
-        payload["fusion_stage"] = fusion.stage
-        payload["sources"] = sorted(
-            {
-                *(["bm25"] if identity in bm25_rank else []),
-                *(["vector"] if identity in vector_rank else []),
-            }
-        )
-        if identity in bm25_rank:
-            payload["bm25_rank"] = bm25_rank[identity]
-        if identity in vector_rank:
-            payload["vector_rank"] = vector_rank[identity]
-        fused.append(payload)
-
-    return stable_rank(fused, top_k=top_k)
+    except _SharedQueryInputError as exc:
+        raise StateLawsQueryInputError(str(exc)) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -1227,24 +985,14 @@ class StateLawsQueryResult:
         )
         object.__setattr__(self, "usage", MappingProxyType(dict(self.usage)))
         object.__setattr__(self, "limits", MappingProxyType(dict(self.limits)))
-        object.__setattr__(
-            self, "explain", MappingProxyType(dict(self.explain))
-        )
-        object.__setattr__(
-            self, "filters", MappingProxyType(dict(self.filters))
-        )
+        object.__setattr__(self, "explain", MappingProxyType(dict(self.explain)))
+        object.__setattr__(self, "filters", MappingProxyType(dict(self.filters)))
         object.__setattr__(
             self, "model_space", MappingProxyType(dict(self.model_space))
         )
-        object.__setattr__(
-            self, "sparse_io", MappingProxyType(dict(self.sparse_io))
-        )
-        object.__setattr__(
-            self, "results", tuple(dict(item) for item in self.results)
-        )
-        object.__setattr__(
-            self, "edges", tuple(dict(item) for item in self.edges)
-        )
+        object.__setattr__(self, "sparse_io", MappingProxyType(dict(self.sparse_io)))
+        object.__setattr__(self, "results", tuple(dict(item) for item in self.results))
+        object.__setattr__(self, "edges", tuple(dict(item) for item in self.edges))
         assert_no_similarity_as_legal_authority(self.edges)
 
     @property
@@ -1337,60 +1085,24 @@ class SemanticBeamConfig:
     candidate_centroids: int = DEFAULT_CANDIDATE_CENTROIDS
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self,
-            "max_depth",
-            _require_non_negative_int(self.max_depth, "max_depth"),
-        )
-        if self.max_nodes is not None:
-            object.__setattr__(
-                self,
-                "max_nodes",
-                _require_positive_int(self.max_nodes, "max_nodes"),
+        try:
+            settings = _normalize_semantic_beam_settings(
+                max_depth=self.max_depth,
+                max_nodes=self.max_nodes,
+                max_edges=self.max_edges,
+                per_node_limit=self.per_node_limit,
+                beam_width=self.beam_width,
+                proximity_weight=self.proximity_weight,
+                edge_weight=self.edge_weight,
+                path_penalty=self.path_penalty,
+                candidate_centroids=self.candidate_centroids,
             )
-        if self.max_edges is not None:
-            object.__setattr__(
-                self,
-                "max_edges",
-                _require_positive_int(self.max_edges, "max_edges"),
-            )
-        object.__setattr__(
-            self,
-            "per_node_limit",
-            _require_positive_int(self.per_node_limit, "per_node_limit"),
-        )
-        object.__setattr__(
-            self,
-            "beam_width",
-            _require_positive_int(self.beam_width, "beam_width"),
-        )
-        object.__setattr__(
-            self,
-            "proximity_weight",
-            _require_weight(self.proximity_weight, "proximity_weight"),
-        )
-        object.__setattr__(
-            self,
-            "edge_weight",
-            _require_weight(self.edge_weight, "edge_weight"),
-        )
-        object.__setattr__(
-            self,
-            "path_penalty",
-            _require_weight(self.path_penalty, "path_penalty"),
-        )
-        object.__setattr__(
-            self,
-            "candidate_centroids",
-            _require_positive_int(
-                self.candidate_centroids, "candidate_centroids"
-            ),
-        )
-        total = self.proximity_weight + self.edge_weight + self.path_penalty
-        if total <= 0.0:
-            raise StateLawsQueryInputError(
-                "semantic beam requires at least one positive blend weight"
-            )
+        except _SharedQueryInputError as exc:
+            # Preserve the adapter's public error family while sharing all
+            # validation behavior with the retrieval substrate.
+            raise StateLawsQueryInputError(str(exc)) from exc
+        for key, value in settings.items():
+            object.__setattr__(self, key, value)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1406,120 +1118,17 @@ class SemanticBeamConfig:
         }
 
 
-def _edge_weight_score(edge: Mapping[str, Any]) -> float:
-    raw = edge.get("score")
-    if raw is None:
-        raw = edge.get("weight")
-    score = _finite_score(raw)
-    if score is None:
-        return 1.0 if is_legal_edge_type(str(edge.get("edge_type") or "")) else 0.5
-    if score < 0.0:
-        return 0.0
-    if score > 1.0:
-        return 1.0
-    return score
-
-
-def select_entry_locator_pages_for_keys(
-    meta_rows: Sequence[Mapping[str, Any]],
-    keys: Sequence[str],
-) -> dict[str, Mapping[str, Any]]:
-    """Map each ``entry_cid`` to its inclusive locator-page descriptor."""
-
-    if not isinstance(meta_rows, Sequence) or isinstance(
-        meta_rows, (str, bytes, bytearray)
-    ):
-        raise StateLawsQueryInputError("meta_rows must be a sequence")
-    selected: dict[str, Mapping[str, Any]] = {}
-    for key in keys:
-        text = str(key or "").strip()
-        if not text:
-            continue
-        matches = [
-            dict(row)
-            for row in meta_rows
-            if isinstance(row, Mapping)
-            and str(row.get("first_key") or "")
-            <= text
-            <= str(row.get("last_key") or "")
-        ]
-        if not matches:
-            continue
-        matches.sort(
-            key=lambda row: (
-                int(row.get("shard_id", 0)),
-                str(row.get("relative_path") or ""),
-            )
-        )
-        selected[text] = matches[0]
-    return selected
-
-
-def parse_entry_locator_locations(
-    rows: Sequence[Mapping[str, Any]],
-    keys: Sequence[str],
-) -> dict[str, list[dict[str, Any]]]:
-    """Extract ``entry_cid -> shard locations`` from locator-page rows."""
-
-    wanted = {str(key).strip() for key in keys if str(key or "").strip()}
-    resolved: dict[str, list[dict[str, Any]]] = {key: [] for key in wanted}
-    for row in rows:
-        if not isinstance(row, Mapping):
-            continue
-        entry_cid = str(
-            row.get("entry_cid")
-            or row.get(ENTRY_LOCATOR_KEY)
-            or row.get("key")
-            or ""
-        ).strip()
-        if entry_cid not in wanted:
-            continue
-        locations = row.get("locations")
-        parsed: list[dict[str, Any]] = []
-        if isinstance(locations, str) and locations.strip():
-            try:
-                loaded = json.loads(locations)
-            except json.JSONDecodeError:
-                loaded = None
-            if isinstance(loaded, Mapping):
-                loaded = [loaded]
-            if isinstance(loaded, Sequence):
-                locations = loaded
-        if isinstance(locations, Sequence) and not isinstance(
-            locations, (str, bytes, bytearray)
-        ):
-            for item in locations:
-                if isinstance(item, Mapping) and item.get("relative_path"):
-                    parsed.append(dict(item))
-        path = str(row.get("relative_path") or "").strip()
-        if path:
-            parsed.append(
-                {
-                    "cluster_id": row.get("cluster_id"),
-                    "entry_cid": entry_cid,
-                    "global_shard_id": row.get("global_shard_id", row.get("shard_id")),
-                    "relative_path": path,
-                    "row_offset": row.get("row_offset", 0),
-                }
-            )
-        for item in parsed:
-            path = str(item.get("relative_path") or "").strip()
-            if not path:
-                continue
-            resolved[entry_cid].append(dict(item))
-    return {key: value for key, value in resolved.items() if value}
-
-
 def vector_shard_lexical_range_would_miss(
     meta_rows: Sequence[Mapping[str, Any]],
     keys: Sequence[str],
 ) -> bool:
     """Return True when cosine-sorted shard keys cannot locate *keys*."""
 
-    if VECTOR_SHARD_KEYS_ARE_LEXICAL_RANGES:
-        return False
-    hits = select_entry_locator_pages_for_keys(meta_rows, keys)
-    return any(str(key).strip() and str(key).strip() not in hits for key in keys)
+    return _lexical_ranges_would_miss_keys(
+        meta_rows,
+        keys,
+        ranges_are_lexical=VECTOR_SHARD_KEYS_ARE_LEXICAL_RANGES,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1578,6 +1187,9 @@ class StateLawsQueryClient:
                 score_normalization=score_normalization,
                 manifest_path=manifest_path,
             )
+        self.search.engine.register_bm25_query_analyzers(
+            {BM25_TOKENIZER_ID: tokenize_query}
+        )
         require_immutable_revision(self.search.engine.resolver.revision)
         self.engine = self.search.engine
         self.fusion = (
@@ -1658,8 +1270,7 @@ class StateLawsQueryClient:
             filters=(filters or LegalFilters()).to_dict(),
             model_space=dict(remote.model_space),
             edges=annotated_edges,
-            sparse_io=dict(remote.sparse_io)
-            or sparse_io_summary(remote.fetch_trace),
+            sparse_io=dict(remote.sparse_io) or sparse_io_summary(remote.fetch_trace),
         )
 
     def bm25_search(
@@ -1774,9 +1385,7 @@ class StateLawsQueryClient:
         if top_k > MAX_TOP_K:
             raise StateLawsQueryInputError(f"top_k must be <= {MAX_TOP_K}")
 
-        window = (
-            top_k if filt.is_empty else min(MAX_TOP_K, max(top_k * 4, top_k))
-        )
+        window = top_k if filt.is_empty else min(MAX_TOP_K, max(top_k * 4, top_k))
 
         bm25_result = self.search.bm25_search(
             query,
@@ -1801,9 +1410,7 @@ class StateLawsQueryClient:
             enforce_sparse_io=False,
         )
 
-        compatible = rankings_are_compatible(
-            bm25_result.results, vector_result.results
-        )
+        compatible = rankings_are_compatible(bm25_result.results, vector_result.results)
         fused = fuse_hybrid_results(
             bm25_result.results,
             vector_result.results,
@@ -1907,9 +1514,7 @@ class StateLawsQueryClient:
             self.reset_session(keep_manifest=True)
         start = _require_non_empty_str(node_cid, "node_cid")
         limit = _require_positive_int(limit, "limit")
-        wanted = tuple(
-            str(value).strip() for value in edge_types if str(value).strip()
-        )
+        wanted = tuple(str(value).strip() for value in edge_types if str(value).strip())
         if not include_similarity and not wanted:
             wanted = tuple(sorted(LEGAL_EDGE_TYPE_NAMES))
 
@@ -2007,9 +1612,7 @@ class StateLawsQueryClient:
         if reset_session:
             self.reset_session(keep_manifest=True)
         start = _require_non_empty_str(start_node_cid, "start_node_cid")
-        wanted = [
-            str(value).strip() for value in edge_types if str(value).strip()
-        ]
+        wanted = [str(value).strip() for value in edge_types if str(value).strip()]
         if not include_similarity and not wanted:
             wanted = sorted(LEGAL_EDGE_TYPE_NAMES)
 
@@ -2085,9 +1688,7 @@ class StateLawsQueryClient:
     def _load_vector_meta(self) -> list[dict[str, Any]]:
         if self._vector_meta is not None:
             return self._vector_meta
-        meta = self.engine.load_routing_index(
-            VECTOR_INDEX_NAME, reason="routing_index"
-        )
+        meta = self.engine.load_routing_index(VECTOR_INDEX_NAME, reason="routing_index")
         self._vector_meta = [dict(row) for row in meta]
         return self._vector_meta
 
@@ -2100,12 +1701,6 @@ class StateLawsQueryClient:
         self._locator_meta = [dict(row) for row in meta]
         return self._locator_meta
 
-    def _vector_descriptor_for_path(self, path: str) -> Mapping[str, Any] | None:
-        for row in self._load_vector_meta():
-            if str(row.get("relative_path") or "") == path:
-                return row
-        return None
-
     def _probe_centroid_paths(
         self,
         query_vector: Sequence[float],
@@ -2114,21 +1709,12 @@ class StateLawsQueryClient:
     ) -> set[str]:
         """Record centroid-selected paths without downloading vector data."""
 
-        routes = self.engine.route_vector_centroids(
+        paths = _route_centroid_paths(
+            self.engine,
             query_vector,
             candidate_centroids=candidate_centroids,
         )
-        paths = {route.relative_path for route in routes}
         self._centroid_routed_paths = set(paths)
-        for route in routes:
-            _ = RouteJustification(
-                family="vectors",
-                reason="centroid_probe",
-                relative_path=route.relative_path,
-                keys=(f"cluster:{route.cluster_id}",),
-                score=route.score,
-                metadata={"fetch_policy": "centroid_probe_only"},
-            )
         return paths
 
     def fetch_frontier_vectors(
@@ -2140,138 +1726,25 @@ class StateLawsQueryClient:
     ) -> dict[str, tuple[float, ...]]:
         """Hydrate frontier embeddings through the dedicated entry locator."""
 
-        wanted = [
-            str(cid).strip()
-            for cid in node_cids
-            if str(cid or "").strip() and str(cid).strip() not in self._vector_cache
-        ]
-        if not wanted:
-            return {
-                cid: self._vector_cache[cid]
-                for cid in node_cids
-                if str(cid).strip() in self._vector_cache
-            }
-
         if query_vector is not None and not self._centroid_routed_paths:
             self._probe_centroid_paths(
                 query_vector, candidate_centroids=candidate_centroids
             )
-
-        locator_meta = self._load_locator_meta()
-        key_to_page = select_entry_locator_pages_for_keys(locator_meta, wanted)
-        pages_by_path: dict[str, list[str]] = defaultdict(list)
-        page_descriptors: dict[str, Mapping[str, Any]] = {}
-        for key, descriptor in key_to_page.items():
-            path = str(descriptor.get("relative_path") or "")
-            if not path:
-                continue
-            pages_by_path[path].append(key)
-            page_descriptors[path] = descriptor
-
-        locations_by_key: dict[str, list[dict[str, Any]]] = {}
-        for path, keys in sorted(pages_by_path.items()):
-            descriptor = page_descriptors[path]
-            self._locator_page_paths.add(path)
-            route = RouteJustification(
-                family="routing_index",
-                reason="hydrate_hit",
-                relative_path=path,
-                keys=tuple(sorted(keys)),
-                metadata={
-                    "fetch_policy": FRONTIER_HYDRATION_POLICY,
-                    "locator_key": ENTRY_LOCATOR_KEY,
-                    "shard_id": descriptor.get("shard_id"),
-                    "vector_shard_keys_are_lexical_ranges": (
-                        VECTOR_SHARD_KEYS_ARE_LEXICAL_RANGES
-                    ),
-                },
-            )
-            try:
-                artifact = self.engine.fetch(
-                    path,
-                    route=route,
-                    descriptor=descriptor,
-                    charge_shard=True,
-                    charge_rows=int(descriptor.get("row_count") or 0),
-                )
-            except QueryBudgetExhausted as exc:
-                self.engine._stop_reason = exc.dimension
-                break
-            rows = self.engine._read_rows(artifact, descriptor=descriptor)
-            parsed = parse_entry_locator_locations(rows, keys)
-            for key, locations in parsed.items():
-                locations_by_key.setdefault(key, []).extend(locations)
-
-        by_path: dict[str, list[str]] = defaultdict(list)
-        for key, locations in locations_by_key.items():
-            for location in locations:
-                path = str(location.get("relative_path") or "")
-                if path:
-                    by_path[path].append(key)
-
-        for path, keys in sorted(by_path.items()):
-            descriptor = self._vector_descriptor_for_path(path)
-            if descriptor is None:
-                raise EntryLocatorError(
-                    f"entry locator pointed at unknown vector shard {path}"
-                )
-            off_centroid = path not in self._centroid_routed_paths
-            self._frontier_fetch_paths.add(path)
-            if off_centroid:
-                self._off_centroid_fetch_paths.add(path)
-            route = RouteJustification(
-                family="vectors",
-                reason="exact_vector_score",
-                relative_path=path,
-                keys=tuple(sorted(set(keys))),
-                metadata={
-                    "fetch_policy": FRONTIER_HYDRATION_POLICY,
-                    "locator_key": ENTRY_LOCATOR_KEY,
-                    "off_centroid": off_centroid,
-                    "shard_id": descriptor.get("shard_id"),
-                    "vector_shard_keys_are_lexical_ranges": (
-                        VECTOR_SHARD_KEYS_ARE_LEXICAL_RANGES
-                    ),
-                },
-            )
-            try:
-                artifact = self.engine.fetch(
-                    path,
-                    route=route,
-                    descriptor=descriptor,
-                    charge_shard=True,
-                    charge_rows=int(descriptor.get("row_count") or 0),
-                )
-            except QueryBudgetExhausted as exc:
-                self.engine._stop_reason = exc.dimension
-                break
-            rows = self.engine._read_rows(artifact, descriptor=descriptor)
-            wanted_set = set(keys)
-            for row in rows:
-                entry_cid = str(row.get("entry_cid") or "")
-                if entry_cid not in wanted_set:
-                    for candidate_key in ("node_cid", "chunk_cid"):
-                        value = str(row.get(candidate_key) or "")
-                        if value in wanted_set:
-                            entry_cid = value
-                            break
-                if entry_cid not in wanted_set:
-                    continue
-                embedding = row.get("embedding")
-                if embedding is None:
-                    continue
-                try:
-                    vector = tuple(float(x) for x in embedding)
-                except (TypeError, ValueError):
-                    continue
-                self._vector_cache[entry_cid] = vector
-                self.engine.usage.charge(rows=1)
-
-        return {
-            cid: self._vector_cache[cid]
-            for cid in node_cids
-            if str(cid).strip() in self._vector_cache
-        }
+        return _hydrate_frontier_vectors(
+            self.engine,
+            node_cids,
+            vector_cache=self._vector_cache,
+            vector_descriptors=self._load_vector_meta(),
+            locator_meta_rows=self._load_locator_meta(),
+            centroid_routed_paths=self._centroid_routed_paths,
+            locator_page_paths=self._locator_page_paths,
+            frontier_fetch_paths=self._frontier_fetch_paths,
+            off_centroid_fetch_paths=self._off_centroid_fetch_paths,
+            locator_key=ENTRY_LOCATOR_KEY,
+            frontier_policy=FRONTIER_HYDRATION_POLICY,
+            vector_shard_keys_are_lexical_ranges=(VECTOR_SHARD_KEYS_ARE_LEXICAL_RANGES),
+            descriptor_error=EntryLocatorError,
+        )
 
     def semantic_graph_walk(
         self,
@@ -2298,9 +1771,7 @@ class StateLawsQueryClient:
             beam_cfg = SemanticBeamConfig()
         else:
             if not isinstance(beam, Mapping):
-                raise StateLawsQueryInputError(
-                    "beam config must be a mapping"
-                )
+                raise StateLawsQueryInputError("beam config must be a mapping")
             beam_cfg = SemanticBeamConfig(
                 **{
                     key: beam[key]
@@ -2325,15 +1796,6 @@ class StateLawsQueryClient:
             model_space=model_space,
             query_embedder=query_embedder,
         )
-
-        depth_limit = beam_cfg.max_depth
-        if depth_limit > self.engine.limits.max_depth:
-            depth_limit = self.engine.limits.max_depth
-        node_limit = beam_cfg.max_nodes or self.engine.limits.max_nodes
-        edge_limit = beam_cfg.max_edges or self.engine.limits.max_edges
-        node_limit = min(node_limit, self.engine.limits.max_nodes)
-        edge_limit = min(edge_limit, self.engine.limits.max_edges)
-        beam_width = min(beam_cfg.beam_width, node_limit)
 
         wanted_types = {
             str(value).strip() for value in edge_types if str(value).strip()
@@ -2364,203 +1826,40 @@ class StateLawsQueryClient:
                 sparse_io=sparse_io_summary(self.engine.fetch_trace()),
             )
 
-        self.engine.usage.charge(nodes=1, depth=0)
-        self.fetch_frontier_vectors(
-            [start],
-            query_vector=vector,
-            candidate_centroids=beam_cfg.candidate_centroids,
+        walk = _semantic_beam_walk(
+            self.engine,
+            start,
+            vector,
+            vector_cache=self._vector_cache,
+            fetch_frontier_vectors=lambda keys: self.fetch_frontier_vectors(
+                keys,
+                query_vector=vector,
+                candidate_centroids=beam_cfg.candidate_centroids,
+            ),
+            annotate_edge=annotate_edge_authority,
+            is_similarity_edge=is_similarity_edge_type,
+            is_authoritative_edge=is_legal_edge_type,
+            max_depth=beam_cfg.max_depth,
+            max_nodes=beam_cfg.max_nodes,
+            max_edges=beam_cfg.max_edges,
+            per_node_limit=beam_cfg.per_node_limit,
+            beam_width=beam_cfg.beam_width,
+            proximity_weight=beam_cfg.proximity_weight,
+            edge_weight=beam_cfg.edge_weight,
+            path_penalty=beam_cfg.path_penalty,
+            direction=direction,
+            wanted_edge_types=tuple(sorted(wanted_types)),
+            include_similarity=include_similarity,
         )
-        seed_embedding = self._vector_cache.get(start)
-        seed_proximity = cosine_similarity(seed_embedding, vector)
-
-        total_w = (
-            beam_cfg.proximity_weight
-            + beam_cfg.edge_weight
-            + beam_cfg.path_penalty
-        )
-        seed_score = (
-            beam_cfg.proximity_weight * max(0.0, seed_proximity)
-            + beam_cfg.edge_weight * 1.0
-            + beam_cfg.path_penalty * 1.0
-        ) / total_w
-
-        visited: dict[str, dict[str, Any]] = {
-            start: {
-                "depth": 0,
-                "edge_weight": 1.0,
-                "edge_type": None,
-                "from_node_cid": None,
-                "has_embedding": seed_embedding is not None,
-                "node_cid": start,
-                "score": seed_score,
-                "semantic_proximity": seed_proximity,
-            }
-        }
-        traversed: list[dict[str, Any]] = []
-        frontier: list[str] = [start]
-        stop_reason: str | None = "depth" if depth_limit == 0 else None
-
-        try:
-            for depth in range(depth_limit):
-                projected = depth + 1
-                exhausted = self.engine.usage.check(
-                    self.engine.limits,
-                    projected_depth=projected,
-                    raise_on_exhaustion=False,
-                )
-                if exhausted is not None:
-                    stop_reason = exhausted
-                    break
-
-                candidates: list[
-                    tuple[float, str, dict[str, Any], dict[str, Any]]
-                ] = []
-                for node_cid in frontier:
-                    try:
-                        edges = self.engine.fetch_adjacency(
-                            node_cid,
-                            direction=direction,
-                            limit=beam_cfg.per_node_limit,
-                            edge_types=tuple(sorted(wanted_types))
-                            if wanted_types
-                            else (),
-                        )
-                    except QueryBudgetExhausted as exc:
-                        stop_reason = exc.dimension
-                        frontier = []
-                        break
-                    if self.engine._stop_reason is not None:
-                        stop_reason = self.engine._stop_reason
-                        frontier = []
-                        break
-
-                    neighbor_ids = [
-                        str(edge.get("neighbor_cid") or "")
-                        for edge in edges
-                        if edge.get("neighbor_cid")
-                    ]
-                    if neighbor_ids:
-                        self.fetch_frontier_vectors(
-                            neighbor_ids,
-                            query_vector=vector,
-                            candidate_centroids=beam_cfg.candidate_centroids,
-                        )
-                    if self.engine._stop_reason is not None:
-                        stop_reason = self.engine._stop_reason
-                        frontier = []
-                        break
-
-                    for edge in edges:
-                        neighbor = str(edge.get("neighbor_cid") or "")
-                        if not neighbor:
-                            continue
-                        edge_type = str(edge.get("edge_type") or "")
-                        if (
-                            not include_similarity
-                            and is_similarity_edge_type(edge_type)
-                        ):
-                            continue
-                        if wanted_types and edge_type not in wanted_types:
-                            continue
-                        emb = self._vector_cache.get(neighbor)
-                        proximity = cosine_similarity(emb, vector)
-                        proximity_unit = (proximity + 1.0) / 2.0
-                        e_weight = _edge_weight_score(edge)
-                        depth_factor = 1.0 / (1.0 + projected)
-                        score = (
-                            beam_cfg.proximity_weight * proximity_unit
-                            + beam_cfg.edge_weight * e_weight
-                            + beam_cfg.path_penalty * depth_factor
-                        ) / total_w
-                        annotated = annotate_edge_authority(
-                            {
-                                **edge,
-                                "depth": projected,
-                                "from_node_cid": node_cid,
-                                "semantic_proximity": proximity,
-                                "semantic_score": score,
-                            }
-                        )
-                        candidates.append(
-                            (
-                                score,
-                                neighbor,
-                                {
-                                    "depth": projected,
-                                    "edge_weight": e_weight,
-                                    "edge_type": edge_type,
-                                    "from_node_cid": node_cid,
-                                    "has_embedding": emb is not None,
-                                    "node_cid": neighbor,
-                                    "score": score,
-                                    "semantic_proximity": proximity,
-                                },
-                                annotated,
-                            )
-                        )
-
-                if stop_reason is not None:
-                    break
-
-                candidates.sort(
-                    key=lambda item: (
-                        -item[0],
-                        item[1],
-                        str(item[3].get("edge_cid") or ""),
-                    )
-                )
-                next_frontier: list[str] = []
-                for score, neighbor, node_payload, edge_payload in candidates:
-                    if len(traversed) >= edge_limit:
-                        stop_reason = "edges"
-                        break
-                    if neighbor not in visited:
-                        if len(visited) >= node_limit:
-                            stop_reason = "nodes"
-                            break
-                        visited[neighbor] = node_payload
-                        next_frontier.append(neighbor)
-                        self.engine.usage.charge(nodes=1, depth=projected)
-                    elif score > float(visited[neighbor].get("score") or 0.0):
-                        visited[neighbor] = {
-                            **visited[neighbor],
-                            **node_payload,
-                        }
-                    traversed.append(edge_payload)
-                    if len(next_frontier) >= beam_width:
-                        break
-
-                if stop_reason is not None:
-                    break
-                frontier = next_frontier[:beam_width]
-                if not frontier:
-                    stop_reason = None
-                    break
-                self.engine.usage.charge(depth=projected)
-            else:
-                if stop_reason is None and depth_limit > 0 and frontier:
-                    stop_reason = "depth"
-        except QueryBudgetExhausted as exc:
-            stop_reason = exc.dimension
-
+        nodes = list(walk.nodes)
+        traversed = list(walk.edges)
+        stop_reason = walk.stop_reason
         assert_no_similarity_as_legal_authority(traversed)
-
-        nodes = [
-            dict(payload)
-            for _, payload in sorted(
-                visited.items(),
-                key=lambda item: (
-                    int(item[1].get("depth") or 0),
-                    -float(item[1].get("score") or 0.0),
-                    item[0],
-                ),
-            )
-        ]
-        complete = stop_reason is None
+        complete = walk.complete
         usage = self.engine.usage.snapshot()
         limits = self.engine.limits.to_dict()
         diagnostics = {
-            "beam_width": beam_width,
+            "beam_width": walk.beam_width,
             "budgets_enforced": list(BUDGET_DIMENSIONS),
             "candidate_centroids": beam_cfg.candidate_centroids,
             "centroid_routed_paths": sorted(self._centroid_routed_paths),
@@ -2571,10 +1870,10 @@ class StateLawsQueryClient:
             "frontier_fetch_paths": sorted(self._frontier_fetch_paths),
             "frontier_hydration_policy": FRONTIER_HYDRATION_POLICY,
             "include_similarity": include_similarity,
-            "max_depth": depth_limit,
-            "max_edges": edge_limit,
-            "max_nodes": node_limit,
-            "node_count": len(visited),
+            "max_depth": walk.depth_limit,
+            "max_edges": walk.edge_limit,
+            "max_nodes": walk.node_limit,
+            "node_count": len(nodes),
             "off_centroid_fetch_paths": sorted(self._off_centroid_fetch_paths),
             "off_centroid_frontier_vectors_fetched": bool(
                 self._off_centroid_fetch_paths
@@ -2833,9 +2132,7 @@ def load_query_contract(path: str | Path | None = None) -> dict[str, Any]:
     if not isinstance(payload, Mapping):
         raise StateLawsQueryInputError("query contract must be an object")
     if payload.get("schema_version") != CONTRACT_SCHEMA_VERSION:
-        raise StateLawsQueryInputError(
-            "query contract schema_version mismatch"
-        )
+        raise StateLawsQueryInputError("query contract schema_version mismatch")
     if payload.get("task_id") != TASK_ID:
         raise StateLawsQueryInputError("query contract task_id mismatch")
     if payload.get("goal_id") != GOAL_ID:
@@ -2847,17 +2144,13 @@ def load_query_contract(path: str | Path | None = None) -> dict[str, Any]:
             "query contract authorizing_for_publication must be false"
         )
     if payload.get("immutable_pin_required") is not True:
-        raise StateLawsQueryInputError(
-            "query contract must require an immutable pin"
-        )
+        raise StateLawsQueryInputError("query contract must require an immutable pin")
     if payload.get("no_mutable_main_default") is not True:
         raise StateLawsQueryInputError(
             "query contract must reject mutable main defaults"
         )
     if payload.get("secrets_absent") is not True:
-        raise StateLawsQueryInputError(
-            "query contract secrets_absent must be true"
-        )
+        raise StateLawsQueryInputError("query contract secrets_absent must be true")
     assert_no_secrets(payload, context="query_contract")
     acceptance = payload.get("acceptance")
     if not isinstance(acceptance, Mapping):

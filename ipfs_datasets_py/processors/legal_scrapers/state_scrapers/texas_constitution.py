@@ -77,7 +77,7 @@ def parse_texas_constitution_html(
                 title_number=article,
                 section_number=number,
                 section_name=heading,
-                full_text=text[:14000],
+                full_text=text,
                 source_url=source,
                 official_cite=f"Tex. Const. art. {article}, § {number}",
                 metadata=StatuteMetadata(),

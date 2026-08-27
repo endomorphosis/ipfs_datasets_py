@@ -44,7 +44,6 @@ from ipfs_datasets_py.huggingface.publisher import (  # noqa: E402
     PublicationApproval,
     PublicationCommitReceipt,
     RuntimeReleasePointer,
-    publish_huggingface_release,
 )
 
 AUDITED_PARENT = "0" * 40
@@ -96,7 +95,7 @@ class FakeHubApi:
         self.head_sha = parent_sha
         self.calls: list[str] = []
         self.create_commit_calls: list[dict[str, Any]] = []
-        self.remote_files: dict[str, Path] = {}
+        self.remote_files: dict[str, bytes] = {}
         self.read_calls: list[tuple[str, str]] = []
 
     def repo_info(self, **kwargs: Any) -> dict[str, str]:
@@ -112,8 +111,7 @@ class FakeHubApi:
         for requested in kwargs.get("paths") or []:
             path = str(requested)
             if path in self.remote_files:
-                source = self.remote_files[path]
-                body = source.read_bytes()
+                body = self.remote_files[path]
                 result.append(
                     {
                         "path": path,
@@ -141,7 +139,10 @@ class FakeHubApi:
             if source is None and isinstance(op, Mapping):
                 source = op.get("path_or_fileobj")
             if path and source is not None:
-                self.remote_files[str(path)] = Path(str(source))
+                position = source.tell()
+                source.seek(0)
+                self.remote_files[str(path)] = source.read()
+                source.seek(position)
         self.head_sha = self.commit_sha
         return {"commit_sha": self.commit_sha}
 
@@ -165,8 +166,7 @@ class FakeHubApi:
         local_dir = Path(kwargs["local_dir"])
         target = local_dir / remote_path
         target.parent.mkdir(parents=True, exist_ok=True)
-        source = self.remote_files[remote_path]
-        target.write_bytes(source.read_bytes())
+        target.write_bytes(self.remote_files[remote_path])
         return str(target)
 
 

@@ -1,17 +1,18 @@
 """Integration certification for Open US Law scrape cohort C (FL, GA, HI, ID).
 
-OUL-011: official adapters emit live ``fetch_official`` results, Florida,
-Hawaii, and Idaho missing-link rows are repaired or typed, the absent
-contaminated Georgia bucket object is replaced from official clean text,
-and the declared cohort report is fail-closed live evidence. Fixture
-transports never complete the cohort.
+OUL-011: official adapters emit live ``fetch_official`` results where an exact
+body frontier exists. Florida, Hawaii, and Idaho missing-link rows are repaired
+or typed. Georgia title-catalog repair remains inventory-only and its body hook
+fails closed without a verified archived-official manifest. Fixture transports
+never complete the cohort.
 """
 
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Dict, Mapping
+from typing import Any, Dict
 from urllib.parse import urlparse
 
 import pytest
@@ -38,7 +39,11 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.florida import (
     FloridaScraper,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia import (
+    GeorgiaFullCorpusIncompleteError,
     GeorgiaScraper,
+)
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia_archived_official import (
+    MANIFEST_ENV as GEORGIA_ARCHIVED_OFFICIAL_MANIFEST_ENV,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.hawaii import (
     HawaiiScraper,
@@ -49,7 +54,6 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.idaho import (
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.registry import (
     StateScraperRegistry,
 )
-
 
 COHORT = "C"
 TASK_ID = "OUL-011"
@@ -359,6 +363,9 @@ def test_georgia_contaminated_bucket_is_replaced_from_official_clean_text() -> N
         assert not any(marker in lowered for marker in NAVIGATION_FOOTER_MARKERS)
         assert item["source_link_disposition"] in {"official", "official_replacement"}
         assert item["contaminated_replaced"] is True
+        assert item["body_admissible"] is False
+        assert item["full_corpus_admissible"] is False
+        assert item["source_scope"] == "title_inventory"
 
     quarantines = classified["quarantines"]
     assert quarantines
@@ -389,6 +396,14 @@ def test_georgia_contaminated_bucket_is_replaced_from_official_clean_text() -> N
 def test_fetch_official_is_live_and_exhaustive(monkeypatch: pytest.MonkeyPatch, state: str) -> None:
     scraper_cls = SCRAPER_TYPES[state]
     scraper = scraper_cls(state, state)
+    if state == "GA":
+        monkeypatch.delenv(GEORGIA_ARCHIVED_OFFICIAL_MANIFEST_ENV, raising=False)
+        with pytest.raises(
+            GeorgiaFullCorpusIncompleteError,
+            match="title catalog is inventory-only",
+        ):
+            scraper.fetch_official(state)
+        return
     monkeypatch.setattr(
         scraper,
         "_official_http_get",
@@ -406,14 +421,6 @@ def test_fetch_official_is_live_and_exhaustive(monkeypatch: pytest.MonkeyPatch, 
     assert _host_allowed(f"https://{fetch.source_domain}{fetch.source_path}", state)
     if state == "FL":
         assert len(fetch.rows) == len(FloridaScraper.OFFICIAL_TITLES)
-    if state == "GA":
-        assert len(fetch.rows) == len(GeorgiaScraper.OFFICIAL_TITLES)
-        assert fetch.frontier.get("ga_contaminated_bucket_replaced") is True
-        assert getattr(scraper, "last_official_quarantines", None)
-        assert any(
-            item["reason"] == GeorgiaScraper.CONTAMINATED_BUCKET_REPLACEMENT_REASON
-            for item in scraper.last_official_quarantines
-        )
     if state == "HI":
         assert len(fetch.rows) == len(HawaiiScraper.OFFICIAL_TITLES)
     if state == "ID":

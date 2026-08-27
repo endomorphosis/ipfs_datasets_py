@@ -137,7 +137,7 @@ def parse_arkansas_section_html(
                 chapter_number=parts[1] if len(parts) > 1 else None,
                 section_number=number,
                 section_name=heading[:200],
-                full_text=body[:14000],
+                full_text=body,
                 source_url=source_url or f"{BASE}/ArkansasCode/{number}/",
                 official_cite=f"Ark. Code Ann. § {number}",
                 metadata=StatuteMetadata(),

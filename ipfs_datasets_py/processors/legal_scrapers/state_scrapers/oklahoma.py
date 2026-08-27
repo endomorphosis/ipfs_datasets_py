@@ -1,36 +1,41 @@
 """Scraper for Oklahoma state laws.
 
-This module contains the scraper for Oklahoma statutes using OSCN's
-DeliverDocument statute pages.
+The primary corpus is the Legislature's complete-title PDF frontier.  Legacy
+OSCN document methods remain available only as bounded recovery probes.
 """
 
+import hashlib
 import json
-from ipfs_datasets_py.utils import anyio_compat as asyncio
 import os
 import re
 import ssl
 import time
 import urllib.request
 from dataclasses import fields as dataclass_fields
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
-from urllib.parse import quote, urljoin, urlparse
+from typing import Any, Dict, List, Mapping, Optional, Set
+from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup
 
-from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
+from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+from .base_scraper import (
+    BaseStateScraper,
+    NormalizedStatute,
+    StatuteMetadata,
+    current_partial_checkpoint_run_directory,
+)
 from .registry import StateScraperRegistry
 
 
 class OklahomaScraper(BaseStateScraper):
-    """Scraper for Oklahoma state laws from http://www.oklegislature.gov"""
+    """Scraper for Oklahoma laws from the HTTPS Legislature PDF frontier."""
 
-    OFFICIAL_DOMAIN = "www.oscn.net"
-    OFFICIAL_ENTRY_PATH = "/applications/oscn/index.asp"
-    OFFICIAL_ENTRY_URL = "https://www.oscn.net/applications/oscn/index.asp?level=1&ftdb=STOKST"
-    _OK_TITLE_QUERY_RE = re.compile(r"[?&]ftdb=STOKST(?P<title>\d{1,2}[A-Z]?)\b", re.IGNORECASE)
-    _OK_TITLE_LABEL_RE = re.compile(r"\bTitle\s+(?P<title>\d{1,2}[A-Z]?)\b", re.IGNORECASE)
+    OFFICIAL_DOMAIN = "www.oklegislature.gov"
+    OFFICIAL_ENTRY_PATH = "/osstatuestitle.html"
+    OFFICIAL_ENTRY_URL = "https://www.oklegislature.gov/osstatuestitle.html"
     OFFICIAL_TITLES = (
         ("1", "Abstracting"),
         ("2", "Agriculture"),
@@ -41,6 +46,7 @@ class OklahomaScraper(BaseStateScraper):
         ("6", "Banks and Trust Companies"),
         ("7", "Blind Persons"),
         ("8", "Cemeteries"),
+        ("9", "Census"),
         ("10", "Children"),
         ("10A", "Children and Juvenile Code"),
         ("11", "Cities and Towns"),
@@ -67,9 +73,14 @@ class OklahomaScraper(BaseStateScraper):
         ("29", "Game and Fish"),
         ("30", "Guardian and Ward"),
         ("31", "Homestead and Exemptions"),
+        ("32", "Husband and Wife"),
+        ("33", "Inebriates"),
+        ("34", "Initiative and Referendum"),
         ("36", "Insurance"),
+        ("37", "Intoxicating Liquors"),
         ("37A", "Alcoholic Beverages"),
         ("38", "Jurors"),
+        ("39", "Justices and Constables"),
         ("40", "Labor"),
         ("41", "Landlord and Tenant"),
         ("42", "Liens"),
@@ -104,12 +115,16 @@ class OklahomaScraper(BaseStateScraper):
         ("72", "Soldiers and Sailors"),
         ("73", "State Capital and Capitol Building"),
         ("74", "State Government"),
+        ("74E", "Ethics Rules"),
         ("75", "Statutes and Reports"),
         ("76", "Torts"),
         ("78", "Trademarks and Labels"),
+        ("79", "Trusts and Pools"),
         ("80", "United States"),
         ("82", "Waters and Water Rights"),
+        ("83", "Weights and Measures"),
         ("84", "Wills and Succession"),
+        ("85", "Workers' Compensation"),
         ("85A", "Administrative Workers' Compensation System"),
     )
     OFFICIAL_TITLE_COUNT = len(OFFICIAL_TITLES)
@@ -142,11 +157,20 @@ class OklahomaScraper(BaseStateScraper):
 
     def get_base_url(self) -> str:
         """Return the base URL for Oklahoma's legislative website."""
-        return "http://www.oklegislature.gov"
+        return "https://www.oklegislature.gov"
 
     def get_code_list(self) -> List[Dict[str, str]]:
-        """Return list of available codes/statutes for Oklahoma."""
-        return [{"name": "Oklahoma Statutes", "url": f"{self.get_base_url()}/", "type": "Code"}]
+        """Return all 89 official complete-title PDF frontier members."""
+
+        return [
+            {
+                "name": f"Oklahoma Statutes Title {number} — {name}",
+                "url": self.official_title_url(number),
+                "type": "Code",
+                "title_number": number,
+            }
+            for number, name in self.OFFICIAL_TITLES
+        ]
 
     async def scrape_code(
         self,
@@ -190,13 +214,25 @@ class OklahomaScraper(BaseStateScraper):
                     max_statutes=None if unbounded_full else return_threshold,
                 )
                 return constitution_rows if unbounded_full else constitution_rows[:return_threshold]
-        from .oklahoma_title import parse_configured_oklahoma_title
+        from .oklahoma_title import (
+            parse_configured_oklahoma_title,
+            title_number_from_pdf_url,
+        )
 
         local_rows = parse_configured_oklahoma_title(
             code_name=code_name, max_statutes=return_threshold
         )
         if local_rows:
             return local_rows[: int(return_threshold)]
+
+        title_number = title_number_from_pdf_url(code_url)
+        if title_number:
+            return await self._scrape_complete_title_pdf(
+                declared_code_name=code_name,
+                title_number=title_number,
+                source_url=code_url,
+                max_statutes=None if unbounded_full else return_threshold,
+            )
 
         # Seed recovery is for bounded probes only — never sole full-corpus path.
         if not self._full_corpus_enabled() and max_statutes is None:
@@ -296,6 +332,352 @@ class OklahomaScraper(BaseStateScraper):
                 best = statutes
         return best
 
+    @staticmethod
+    def _looks_like_official_pdf(payload: bytes) -> bool:
+        value = bytes(payload or b"")
+        return len(value) >= 256 and value.lstrip().startswith(b"%PDF-")
+
+    @staticmethod
+    def _looks_like_official_titles_html(payload: bytes) -> bool:
+        sample = bytes(payload or b"")
+        lowered = sample.lower()
+        return bool(
+            b"<html" in lowered
+            and b"ok_statutes/completetitles/os" in lowered
+            and b"turnstile" not in lowered
+            and b"captcha" not in lowered
+        )
+
+    def _canonical_last_transport_receipt(
+        self,
+        *,
+        source_url: str,
+        payload: bytes,
+    ) -> Dict[str, Any]:
+        raw = dict(getattr(self, "_last_page_fetch_transport_evidence", {}) or {})
+        return self._canonical_transport_receipt(
+            source_url=source_url,
+            payload=payload,
+            raw_receipt=raw,
+        )
+
+    def _canonical_transport_receipt(
+        self,
+        *,
+        source_url: str,
+        payload: bytes,
+        raw_receipt: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        from ipfs_datasets_py.processors.legal_data.state_laws_source_provenance import (
+            StateLawTransportReceiptError,
+            canonicalize_state_law_transport_receipt,
+        )
+
+        digest = hashlib.sha256(payload).hexdigest()
+        raw = dict(raw_receipt or {})
+        transport = str(raw.get("source_transport") or "").strip().lower()
+        if transport.startswith("common_crawl"):
+            indexed_url = str(raw.get("common_crawl_indexed_url") or "").strip()
+            if indexed_url != source_url:
+                raise RuntimeError(
+                    "Oklahoma Common Crawl receipt does not bind the exact official URL"
+                )
+        try:
+            return canonicalize_state_law_transport_receipt(
+                raw,
+                official_url=source_url,
+                content_sha256=digest,
+            )
+        except StateLawTransportReceiptError as exc:
+            raise RuntimeError(
+                f"Oklahoma official byte transport rejected: {exc.code}"
+            ) from exc
+
+    async def _fetch_official_bytes_with_receipt(
+        self,
+        *,
+        source_url: str,
+        content_validator,
+        timeout_seconds: int,
+    ) -> tuple[bytes, Dict[str, Any]]:
+        payload = await self._fetch_page_content_with_archival_fallback(
+            source_url,
+            timeout_seconds=timeout_seconds,
+            content_validator=content_validator,
+            # UnifiedWebScraper is reused below for PDF extraction.  Its fetch
+            # API does not expose the immutable archive locator needed for a
+            # state-law transport receipt, so acquisition stays on the shared
+            # direct/cache/ArchivalFetchClient path.
+            enable_unified=False,
+        )
+        if not payload or not content_validator(payload):
+            raise RuntimeError(f"Oklahoma official bytes unavailable: {source_url}")
+        receipt = self._canonical_last_transport_receipt(
+            source_url=source_url,
+            payload=payload,
+        )
+        return payload, receipt
+
+    async def _ensure_complete_title_frontier(self) -> Dict[str, Any]:
+        cached = getattr(self, "_oklahoma_complete_title_frontier", None)
+        if isinstance(cached, dict):
+            return cached
+
+        from .oklahoma_title import EXPECTED_TITLE_COUNT, title_pdf_links
+
+        payload, transport_receipt = await self._fetch_official_bytes_with_receipt(
+            source_url=self.OFFICIAL_ENTRY_URL,
+            content_validator=self._looks_like_official_titles_html,
+            timeout_seconds=30,
+        )
+        links = title_pdf_links(payload.decode("utf-8", errors="replace"))
+        expected_numbers = {number for number, _name in self.OFFICIAL_TITLES}
+        discovered_numbers = {number for number, _name, _url in links}
+        if (
+            len(links) != EXPECTED_TITLE_COUNT
+            or EXPECTED_TITLE_COUNT != self.OFFICIAL_TITLE_COUNT
+            or discovered_numbers != expected_numbers
+        ):
+            raise RuntimeError(
+                "Oklahoma complete-title frontier rejected: expected exactly "
+                f"{EXPECTED_TITLE_COUNT} official PDF members, found {len(links)}"
+            )
+
+        member_urls = {number: url for number, _name, url in links}
+        member_digest = hashlib.sha256(
+            json.dumps(
+                [(number, member_urls[number]) for number, _name in self.OFFICIAL_TITLES],
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        frontier = {
+            "schema_version": "oklahoma-complete-title-frontier/v1",
+            "source_url": self.OFFICIAL_ENTRY_URL,
+            "official_source": True,
+            "frontier_closed": True,
+            "expected_title_count": EXPECTED_TITLE_COUNT,
+            "discovered_title_count": len(links),
+            "title_numbers": [number for number, _name in self.OFFICIAL_TITLES],
+            "member_urls": member_urls,
+            "member_digest_sha256": member_digest,
+            "content_sha256": hashlib.sha256(payload).hexdigest(),
+            "observed_at": datetime.now(UTC).isoformat(),
+            "transport_receipt": transport_receipt,
+        }
+        self._oklahoma_complete_title_frontier = frontier
+        return frontier
+
+    async def _ensure_complete_title_payloads(
+        self,
+        frontier: Mapping[str, Any],
+    ) -> Dict[str, tuple[bytes, Dict[str, Any]]]:
+        cached = getattr(self, "_oklahoma_complete_title_payloads", None)
+        if isinstance(cached, dict) and len(cached) == self.OFFICIAL_TITLE_COUNT:
+            return cached
+
+        member_urls = dict(frontier.get("member_urls") or {})
+        requested = [
+            str(member_urls.get(number) or "").strip()
+            for number, _name in self.OFFICIAL_TITLES
+        ]
+        if any(not url for url in requested) or len(set(requested)) != len(requested):
+            raise RuntimeError(
+                "Oklahoma complete-title PDF frontier lacks unique exact member URLs"
+            )
+        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+            requested,
+            residual_retry_attempts=1,
+            timeout_seconds=90,
+            headers={
+                "User-Agent": "ipfs-datasets-oklahoma-code-scraper/2.0",
+            },
+            content_validator=self._looks_like_official_pdf,
+            media_type="application/pdf",
+            max_concurrency=8,
+            prefer_direct=True,
+            wayback_prefix_inventory=True,
+        )
+        if list(batch.urls) != requested or any(
+            len(vector) != len(requested)
+            for vector in (
+                batch.payloads,
+                batch.errors,
+                batch.transport_receipts,
+                batch.parser_input_envelopes,
+            )
+        ):
+            raise RuntimeError(
+                "Oklahoma complete-title PDF frontier returned unaligned acquisition rows"
+            )
+        failures = [
+            {"url": url, "error": error or "empty parser input"}
+            for url, payload, error in zip(
+                batch.urls, batch.payloads, batch.errors, strict=True
+            )
+            if error is not None or not self._looks_like_official_pdf(bytes(payload or b""))
+        ]
+        if failures:
+            raise RuntimeError(
+                "Oklahoma complete-title PDF frontier is incomplete; "
+                f"unresolved exact URLs: {failures}"
+            )
+        resolved: Dict[str, tuple[bytes, Dict[str, Any]]] = {}
+        for url, payload, receipt in zip(
+            batch.urls,
+            batch.payloads,
+            batch.transport_receipts,
+            strict=True,
+        ):
+            body = bytes(payload)
+            if not isinstance(receipt, Mapping):
+                raise RuntimeError(
+                    f"Oklahoma aligned title PDF lacks a transport receipt: {url}"
+                )
+            resolved[url] = (
+                body,
+                self._canonical_transport_receipt(
+                    source_url=url,
+                    payload=body,
+                    raw_receipt=receipt,
+                ),
+            )
+        self._oklahoma_complete_title_payloads = resolved
+        return resolved
+
+    async def _scrape_complete_title_pdf(
+        self,
+        *,
+        declared_code_name: str,
+        title_number: str,
+        source_url: str,
+        max_statutes: Optional[int],
+    ) -> List[NormalizedStatute]:
+        from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
+            UnifiedWebScraper,
+        )
+
+        from .oklahoma_title import (
+            extract_oklahoma_title_pdf_text,
+            inactive_title_frontier_from_text,
+            parse_oklahoma_title_text,
+        )
+
+        frontier = await self._ensure_complete_title_frontier()
+        live_url = str((frontier.get("member_urls") or {}).get(title_number) or source_url)
+        if live_url != source_url:
+            # The declared code frontier and fetched member must stay identical;
+            # otherwise BaseStateScraper could not bind a zero-title exclusion.
+            source_url = live_url
+        if max_statutes is None:
+            prefetched = await self._ensure_complete_title_payloads(frontier)
+            payload, transport_receipt = prefetched[source_url]
+        else:
+            payload, transport_receipt = await self._fetch_official_bytes_with_receipt(
+                source_url=source_url,
+                content_validator=self._looks_like_official_pdf,
+                timeout_seconds=90,
+            )
+        extraction_method = "oklahoma_title.extract_oklahoma_title_pdf_text"
+        try:
+            extracted_text = extract_oklahoma_title_pdf_text(payload)
+        except Exception:
+            # Compatibility for bounded synthetic fixtures and installations
+            # without pdfplumber.  Valid production PDFs use the page-aware
+            # path above so TOC candidates cannot collide with operative law.
+            extraction_method = "UnifiedWebScraper._extract_pdf_text"
+            extracted_text = str(
+                await UnifiedWebScraper._extract_pdf_text(payload) or ""
+            ).strip()
+        if not extracted_text:
+            raise RuntimeError(
+                f"Oklahoma Title {title_number} PDF contained no extractable official text"
+            )
+
+        rows = parse_oklahoma_title_text(
+            extracted_text,
+            title_number=title_number,
+            code_name=declared_code_name,
+            source_url=source_url,
+            max_statutes=max_statutes,
+        )
+        payload_digest = hashlib.sha256(payload).hexdigest()
+        frontier_digest = str(frontier.get("member_digest_sha256") or "")
+        for row in rows:
+            structured = dict(row.structured_data or {})
+            structured.update(
+                {
+                    "source_kind": "official_oklahoma_complete_title_pdf",
+                    "source_authority_class": "official",
+                    "discovery_method": "oklegislature_89_complete_title_frontier",
+                    "extraction_method": extraction_method,
+                    "source_document_sha256": payload_digest,
+                    "source_frontier_url": str(frontier.get("source_url") or ""),
+                    "source_frontier_content_sha256": str(
+                        frontier.get("content_sha256") or ""
+                    ),
+                    "source_frontier_sha256": frontier_digest,
+                    "source_frontier_expected_titles": self.OFFICIAL_TITLE_COUNT,
+                    "source_frontier_transport_receipt": dict(
+                        frontier.get("transport_receipt") or {}
+                    ),
+                    "transport_receipt": transport_receipt,
+                    "full_corpus_admissible": True,
+                    "skip_hydrate": True,
+                }
+            )
+            row.structured_data = structured
+            row.legal_area = self._identify_legal_area(
+                f"{row.section_name} {declared_code_name}"
+            )
+        if rows:
+            return rows
+
+        observed_at = datetime.now(UTC).isoformat()
+        exclusion = inactive_title_frontier_from_text(
+            extracted_text,
+            title_number=title_number,
+            code_name=declared_code_name,
+            source_url=source_url,
+            content_sha256=payload_digest,
+            observed_at=observed_at,
+            transport_receipt=transport_receipt,
+        )
+        if exclusion is None:
+            raise RuntimeError(
+                f"Oklahoma Title {title_number} returned zero statutes without "
+                "a closed official inactive-title frontier"
+            )
+        exclusions = getattr(self, "_oklahoma_zero_title_exclusions", None)
+        if not isinstance(exclusions, dict):
+            exclusions = {}
+            self._oklahoma_zero_title_exclusions = exclusions
+        exclusion_evidence = exclusion.to_dict()
+        exclusion_evidence.update(
+            {
+                "source_frontier_url": str(frontier.get("source_url") or ""),
+                "source_frontier_content_sha256": str(
+                    frontier.get("content_sha256") or ""
+                ),
+                "source_frontier_sha256": frontier_digest,
+                "source_frontier_expected_titles": self.OFFICIAL_TITLE_COUNT,
+                "source_frontier_transport_receipt": dict(
+                    frontier.get("transport_receipt") or {}
+                ),
+            }
+        )
+        exclusions[declared_code_name] = exclusion_evidence
+        return []
+
+    def _closed_zero_result_code_exclusion(
+        self,
+        code_info: Dict[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        exclusions = getattr(self, "_oklahoma_zero_title_exclusions", None)
+        if not isinstance(exclusions, dict):
+            return None
+        evidence = exclusions.get(str(code_info.get("name") or ""))
+        return dict(evidence) if isinstance(evidence, dict) else None
+
     async def _scrape_direct_seed_sections(
         self,
         code_name: str,
@@ -336,21 +718,12 @@ class OklahomaScraper(BaseStateScraper):
         document_url: str,
     ) -> NormalizedStatute | None:
         reader_url = f"https://r.jina.ai/http://{document_url}"
-
-        def _fetch() -> str:
-            try:
-                import urllib.request
-
-                request = urllib.request.Request(reader_url, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(request, timeout=20) as response:
-                    return response.read().decode("utf-8", errors="replace")
-            except Exception:
-                return ""
-
-        try:
-            markdown = await asyncio.wait_for(asyncio.to_thread(_fetch), timeout=24)
-        except Exception:
-            return None
+        payload = await self._fetch_non_authoritative_reference_bytes(
+            reader_url,
+            timeout_seconds=20,
+            enable_common_crawl=False,
+        )
+        markdown = payload.decode("utf-8", errors="replace") if payload else ""
         if not markdown:
             return None
 
@@ -400,7 +773,7 @@ class OklahomaScraper(BaseStateScraper):
             code_name=code_name,
             section_number=section_number,
             section_name=section_name,
-            full_text=body[:14000],
+            full_text=body,
             legal_area=self._identify_legal_area(body),
             source_url=document_url,
             official_cite=official_cite,
@@ -987,7 +1360,7 @@ class OklahomaScraper(BaseStateScraper):
             code_name=code_name,
             section_number=section_number,
             section_name=section_name,
-            full_text=text[:14000],
+            full_text=text,
             legal_area=self._identify_legal_area(text),
             source_url=document_url,
             official_cite=official_cite,
@@ -1048,31 +1421,19 @@ class OklahomaScraper(BaseStateScraper):
         if not candidates:
             return ""
 
-        request_headers = {
-            "User-Agent": str(headers.get("User-Agent") or "Mozilla/5.0"),
-            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-        }
-
-        def _fetch(candidate_url: str) -> str:
-            try:
-                import urllib.request
-
-                request = urllib.request.Request(candidate_url, headers=request_headers)
-                with urllib.request.urlopen(
-                    request, timeout=max(5, min(int(timeout or 25), 25))
-                ) as response:
-                    return response.read().decode("utf-8", errors="replace")
-            except Exception:
-                return ""
-
         for candidate in candidates:
-            try:
-                text = await asyncio.wait_for(
-                    asyncio.to_thread(_fetch, candidate),
-                    timeout=max(8, min(int(timeout or 25) + 2, 32)),
+            payload = await self._fetch_wayback_replay_parser_input(
+                candidate,
+                timeout_seconds=max(5, min(int(timeout or 25), 25)),
+                content_validator=lambda body: bool(body)
+                and b"object moved" not in body.lower()
+                and self._ANTI_BOT_RE.search(
+                    body.decode("utf-8", errors="replace")
                 )
-            except Exception:
-                text = ""
+                is None,
+                media_type="text/html",
+            )
+            text = payload.decode("utf-8", errors="replace") if payload else ""
             if not text:
                 continue
             if "object moved" in text.lower():
@@ -1101,41 +1462,36 @@ class OklahomaScraper(BaseStateScraper):
         ):
             return ""
 
-        def _fetch() -> str:
-            try:
-                import requests
+        request_timeout = max(1, min(int(timeout or 12), 12))
 
-                request_headers = {
-                    "User-Agent": str(headers.get("User-Agent") or "Mozilla/5.0"),
-                    "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-                }
-                response = requests.get(
-                    normalized_url,
-                    headers=request_headers,
-                    timeout=max(1, min(int(timeout or 12), 12)),
-                )
-                if int(getattr(response, "status_code", 0) or 0) != 200:
-                    return ""
-                return str(getattr(response, "text", "") or "")
-            except Exception:
-                return ""
+        def _valid_oscn_html(payload: bytes) -> bool:
+            if not payload:
+                return False
+            return not bool(
+                self._ANTI_BOT_RE.search(payload.decode("utf-8", errors="replace"))
+            )
 
         try:
-            text = await asyncio.wait_for(
-                asyncio.to_thread(_fetch),
-                timeout=max(2, min(int(timeout or 12) + 1, 14)),
+            payload = await self._fetch_parser_input_with_transport(
+                normalized_url,
+                headers={
+                    "User-Agent": str(headers.get("User-Agent") or "Mozilla/5.0"),
+                    "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                },
+                timeout_seconds=request_timeout,
+                content_validator=_valid_oscn_html,
+                allow_archival_fallback=False,
+                media_type="text/html",
+                provider="requests_oscn_direct",
             )
         except Exception:
             return ""
-
-        if not text or self._ANTI_BOT_RE.search(text):
-            return ""
-        self._record_fetch_event(provider="requests_oscn_direct", success=True)
-        return text
+        return payload.decode("utf-8", errors="replace") if payload else ""
 
     def official_title_url(self, title_number: Any) -> str:
-        number = str(title_number or "").strip().upper()
-        return f"https://www.oscn.net/applications/oscn/Index.asp?ftdb=STOKST{number}"
+        from .oklahoma_title import title_pdf_url
+
+        return title_pdf_url(str(title_number or ""))
 
     def official_title_catalog(self) -> List[Dict[str, Any]]:
         """Return the exhaustive official Oklahoma Statutes title catalog."""
@@ -1183,36 +1539,20 @@ class OklahomaScraper(BaseStateScraper):
         except Exception:
             return b""
 
-    def _normalize_title_number(self, value: Any) -> str:
-        text = str(value or "").strip().upper()
-        match = re.match(r"0*(\d{1,2}[A-Z]?)$", text)
-        return match.group(1) if match else ""
-
     def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
-        found: Dict[str, str] = {}
         if not html:
-            return found
-        try:
-            from bs4 import BeautifulSoup
-        except ImportError:
-            return found
-        soup = BeautifulSoup(html, "html.parser")
+            return {}
+
+        from .oklahoma_title import title_pdf_links
+
         known = {number for number, _name in self.OFFICIAL_TITLES}
-        for link in soup.find_all("a", href=True):
-            href = str(link.get("href") or "").strip()
-            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
-            if not href:
-                continue
-            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
-            match = self._OK_TITLE_QUERY_RE.search(absolute) or self._OK_TITLE_LABEL_RE.search(label)
-            if not match:
-                continue
-            number = self._normalize_title_number(match.group("title"))
-            if number not in known or number in found:
-                continue
-            if self._host_is_official(absolute):
-                found[number] = self.official_title_url(number)
-        return found
+        return {
+            number: url
+            for number, _name, url in title_pdf_links(
+                html.decode("utf-8", errors="replace")
+            )
+            if number in known and self._host_is_official(url)
+        }
 
     def enumerate_official_catalog(
         self,
@@ -1231,15 +1571,23 @@ class OklahomaScraper(BaseStateScraper):
                 row["source_url"] = live_url
                 row["source_link_disposition"] = "official"
             else:
-                row["source_link_disposition"] = "repaired_official_oscn"
+                # The static URL is an official declared frontier member, but
+                # callers can distinguish it from a member observed in these
+                # particular TOC bytes.  ``fetch_official`` rejects an
+                # incomplete live TOC rather than treating this declaration as
+                # reacquisition evidence.
+                row["source_link_disposition"] = "official"
+                row["frontier_member_observed"] = False
+                continue
+            row["frontier_member_observed"] = True
         return rows
 
     def fetch_official(self, code: str = "OK"):
         """Acquire the exhaustive official Oklahoma Statutes catalog.
 
-        Live HTTPS retains the official OSCN title index. Every known
-        Oklahoma Statutes title is enumerated with an official URL. This
-        hook never returns fixture bytes or secondary-mirror hosts.
+        Live HTTPS retains the Legislature's complete-title PDF TOC.  The hook
+        fails closed unless all 89 exact title members are present, and never
+        returns fixture bytes or a synthetic response.
         """
 
         from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
@@ -1251,8 +1599,22 @@ class OklahomaScraper(BaseStateScraper):
         if normalized != "OK":
             raise ValueError(f"OklahomaScraper cannot acquire {normalized}")
         html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        if not self._looks_like_official_titles_html(html):
+            raise RuntimeError(
+                "oklahoma official catalog fetch returned no valid Legislature TOC"
+            )
+        discovered = self._parse_official_title_links(html)
+        expected_numbers = {number for number, _name in self.OFFICIAL_TITLES}
+        if len(discovered) != self.OFFICIAL_TITLE_COUNT or set(discovered) != expected_numbers:
+            raise RuntimeError(
+                "oklahoma official catalog enumeration rejected incomplete "
+                f"89-PDF frontier ({len(discovered)} observed)"
+            )
         rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
-        if len(rows) != self.OFFICIAL_TITLE_COUNT:
+        if (
+            len(rows) != self.OFFICIAL_TITLE_COUNT
+            or any(row.get("frontier_member_observed") is not True for row in rows)
+        ):
             raise RuntimeError(
                 "oklahoma official catalog enumeration rejected incomplete "
                 "title reacquisition"
@@ -1268,24 +1630,23 @@ class OklahomaScraper(BaseStateScraper):
             "units": rows,
         }
         body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
-        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
         frontier = {
-            "bundle_closed": False,
+            "bundle_closed": True,
             "closed": True,
             "enumerator_closed": True,
-            "expected_index_units": len(rows),
-            "method": "pagination",
-            "pagination_closed": True,
+            "expected_index_units": self.OFFICIAL_TITLE_COUNT,
+            "method": "complete_title_pdf_toc",
+            "pagination_closed": False,
             "remaining_bundle_members": [],
             "toc_exhausted": True,
             "unvisited_continuation_links": [],
-            "visited_index_units": len(rows),
+            "visited_index_units": self.OFFICIAL_TITLE_COUNT,
         }
         frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
         return OfficialFetch(
             jurisdiction_code=normalized,
             request_bytes=request,
-            response_bytes=response,
+            response_bytes=html,
             body_bytes=body,
             source_domain=self.OFFICIAL_DOMAIN,
             source_path=self.OFFICIAL_ENTRY_PATH,
@@ -1366,7 +1727,7 @@ class _OklahomaCheckpoint:
     """Best-effort partial progress checkpoint for Oklahoma's long crawl."""
 
     def __init__(self, state_code: str) -> None:
-        raw_dir = str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
+        raw_dir = current_partial_checkpoint_run_directory()
         if not raw_dir:
             self.path: Optional[Path] = None
         else:

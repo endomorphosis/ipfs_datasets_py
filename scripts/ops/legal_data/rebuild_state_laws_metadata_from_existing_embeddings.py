@@ -318,6 +318,16 @@ def _rebuild_state(
     upload: bool,
     artifact_output_root: str,
 ) -> StateRebuildResult:
+    if upload:
+        from ipfs_datasets_py.huggingface.protected_repo_guard import (
+            require_unprotected_or_runtime,
+        )
+
+        # This legacy utility emits a partial mutable commit, not an exact-51
+        # sealed release package.  It is retained for unprotected development
+        # repositories only.
+        require_unprotected_or_runtime(repo_id, method="create_commit")
+
     from huggingface_hub import CommitOperationAdd, HfApi
     import pyarrow as pa  # type: ignore
     import pyarrow.parquet as pq  # type: ignore
@@ -463,9 +473,15 @@ def _state_artifacts_exist(repo_files: set[str], state: str) -> bool:
 
 
 def main() -> int:
-    from huggingface_hub import list_repo_files
-
     args = _parse_args()
+    if not bool(args.no_upload):
+        from ipfs_datasets_py.huggingface.protected_repo_guard import (
+            require_unprotected_or_runtime,
+        )
+
+        require_unprotected_or_runtime(args.repo_id, method="create_commit")
+
+    from huggingface_hub import list_repo_files
     states = [str(item).strip().upper() for item in (args.states or []) if str(item).strip()]
     if not states:
         states = list(DEFAULT_STATE_CODES)

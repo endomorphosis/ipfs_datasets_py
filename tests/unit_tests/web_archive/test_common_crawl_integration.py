@@ -21,6 +21,32 @@ def test_normalize_cc_jurisdiction_preserves_explicit_federal_hosts() -> None:
     assert state_code == "VA"
 
 
+def test_common_crawl_normalization_never_fabricates_or_retains_wayback_locators() -> None:
+    official_url = "https://codes.example.gov/title/1"
+    normalized = CommonCrawlSearchEngine._normalize_records(
+        [
+            {
+                "url": official_url,
+                "timestamp": "20260824010203",
+                "archive_url": (
+                    "https://web.archive.org/web/20260824010203/" + official_url
+                ),
+                "wayback_url": (
+                    "https://web.archive.org/web/20260824010203/" + official_url
+                ),
+                "filename": "crawl-data/CC-MAIN-2026-30/warc/example.warc.gz",
+                "offset": "10",
+                "length": "20",
+            }
+        ]
+    )
+
+    assert len(normalized) == 1
+    assert "archive_url" not in normalized[0]
+    assert "wayback_url" not in normalized[0]
+    assert normalized[0]["warc_filename"].endswith("example.warc.gz")
+
+
 def test_search_domain_hf_redirects_stateish_domains_before_hf_lookup() -> None:
     engine = CommonCrawlSearchEngine.__new__(CommonCrawlSearchEngine)
     observed = {}
@@ -81,6 +107,46 @@ def test_search_domain_local_uses_hf_remote_meta_when_local_assets_missing(
     assert observed["master_db"] is None
     assert observed["hf_meta_index_dataset"] == "Publicus/common_crawl_pointer_indices"
     assert observed["hf_pointer_dataset"] == "Publicus/common_crawl_pointers_by_collection"
+
+
+def test_search_domain_local_forwards_exact_collection_and_url_prefixes(
+    tmp_path,
+) -> None:
+    engine = CommonCrawlSearchEngine.__new__(CommonCrawlSearchEngine)
+    observed = {}
+
+    class _Result:
+        records = []
+
+    class _FakeApi:
+        @staticmethod
+        def search_domain_via_meta_indexes(domain, **kwargs):
+            observed["domain"] = domain
+            observed.update(kwargs)
+            return _Result()
+
+    engine.api = _FakeApi()
+    engine.master_db_path = tmp_path / "missing-master.duckdb"
+    engine._normalize_records = CommonCrawlSearchEngine._normalize_records
+
+    engine._search_domain_local(
+        "www.legis.ga.gov",
+        50_000,
+        "CC-MAIN-2026-34",
+        parquet_root=tmp_path / "missing-parquet",
+        url_prefixes=(
+            "https://www.legis.ga.gov/legislation/georgia-code/",
+            "http://www.legis.ga.gov/legislation/georgia-code/",
+        ),
+    )
+
+    assert observed["domain"] == "www.legis.ga.gov"
+    assert observed["collection"] == "CC-MAIN-2026-34"
+    assert observed["year"] == "2026"
+    assert observed["url_prefixes"] == (
+        "https://www.legis.ga.gov/legislation/georgia-code/",
+        "http://www.legis.ga.gov/legislation/georgia-code/",
+    )
 
 
 def test_search_domain_local_caches_hf_remote_meta_results(monkeypatch, tmp_path) -> None:

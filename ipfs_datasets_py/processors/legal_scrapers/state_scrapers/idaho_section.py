@@ -69,7 +69,7 @@ def statute_from_section_html(
         chapter_number=chapter_number,
         section_number=section_number,
         section_name=heading[:200],
-        full_text=body[:14000],
+        full_text=body,
         source_url=source_url,
         official_cite=f"Idaho Code § {section_number}",
         metadata=StatuteMetadata(),

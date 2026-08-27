@@ -68,7 +68,7 @@ def parse_wyoming_title_text(
                 chapter_number=parts[1] if len(parts) > 1 else None,
                 section_number=number,
                 section_name=heading[:200],
-                full_text=body[:14000],
+                full_text=body,
                 source_url=source_url or f"{COMPRESS}/title{parts[0] if parts else '1'}.pdf",
                 official_cite=f"Wyo. Stat. § {number}",
                 metadata=StatuteMetadata(),

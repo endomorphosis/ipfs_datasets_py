@@ -140,13 +140,15 @@ def _compact_official_html(state: str) -> bytes:
             "<a href='/ohio-revised-code/title-45'>Title 45 Motor Vehicles</a>"
             "</body></html>"
         ).encode("utf-8")
-    return (
-        "<html><body>"
-        "<a href='/applications/oscn/Index.asp?ftdb=STOKST12'>Title 12 Civil Procedure</a>"
-        "<a href='/applications/oscn/Index.asp?ftdb=STOKST21'>Title 21 Crimes and Punishments</a>"
-        "<a href='/applications/oscn/Index.asp?ftdb=STOKST74'>Title 74 State Government</a>"
-        "</body></html>"
-    ).encode("utf-8")
+    anchors = "".join(
+        (
+            "<a href='/OK_Statutes/CompleteTitles/"
+            f"os{'37a' if number == '37A' else number}.pdf'>"
+            f"Title {number} {name}</a>"
+        )
+        for number, name in OklahomaScraper.OFFICIAL_TITLES
+    )
+    return f"<html><body>{anchors}</body></html>".encode("utf-8")
 
 
 def test_cohort_i_jurisdiction_set_is_exact() -> None:

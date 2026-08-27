@@ -69,7 +69,7 @@ def parse_alaska_constitution_html(
                     title_number=art_id,
                     section_number=number,
                     section_name=(raw.split(".", 1)[0] or f"Section {number}")[:200],
-                    full_text=raw[:14000],
+                    full_text=raw,
                     source_url=AK_CONST_URL,
                     official_cite=cite,
                     metadata=StatuteMetadata(),

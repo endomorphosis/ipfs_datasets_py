@@ -297,6 +297,36 @@ def test_live_evidence_is_not_claimed(builder: ModuleType) -> None:
     assert inspected["software_contract_ok"] is True
 
 
+def test_unfinished_live_evidence_does_not_fail_software_contract(
+    builder: ModuleType,
+    tmp_path: Path,
+) -> None:
+    report_dir = tmp_path / "docs" / "reports" / "legal_corpora_reindex"
+    report_dir.mkdir(parents=True)
+    cohort_acceptance = {
+        "closed_frontier": True,
+        "exact_source_authority": True,
+        "failed_final_zero": True,
+        "non_placeholder_full_text": True,
+    }
+    for letter in builder.COHORT_LETTERS:
+        (report_dir / f"cohort_{letter.lower()}.json").write_text(
+            json.dumps({"acceptance": cohort_acceptance}),
+            encoding="utf-8",
+        )
+    (report_dir / "full_scrape_acceptance.json").write_text(
+        json.dumps({"acceptance": {"zero_unresolved_findings": False}}),
+        encoding="utf-8",
+    )
+
+    inspected = builder.inspect_live_evidence(repo_root=tmp_path, require=False)
+
+    assert inspected["software_contract_ok"] is True
+    assert inspected["live_scrape_complete"] is False
+    assert inspected["live_ok"] is False
+    assert inspected["unresolved"] == ["full_scrape_acceptance.unresolved"]
+
+
 def test_full_build_covers_exact_51_jurisdictions(build_result: Any) -> None:
     codes = list(build_result.jurisdiction_codes)
     assert len(codes) == EXPECTED_JURISDICTION_COUNT

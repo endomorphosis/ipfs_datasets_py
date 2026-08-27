@@ -5,15 +5,26 @@ legislative website.
 """
 
 import asyncio
+import hashlib
 import json
 import os
 import re
-from typing import Dict, List, Optional
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 import urllib.parse
 import urllib.request
 
-from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
+from .base_scraper import (
+    BaseStateScraper,
+    NormalizedStatute,
+    StateLawPageMultiFetchResult,
+    StatuteMetadata,
+)
 from .registry import StateScraperRegistry
+
+
+_MARYLAND_UNFETCHED = object()
 
 
 class MarylandScraper(BaseStateScraper):
@@ -22,6 +33,25 @@ class MarylandScraper(BaseStateScraper):
     _MD_ARTICLE_CODE_RE = re.compile(r"\(([A-Za-z0-9]+)\)\s*$")
     _MD_NEXT_TRAIL_RE = re.compile(r"\s+Next\s*$", re.IGNORECASE)
     _MD_SECTION_CITE_RE = re.compile(r"§\s*([0-9A-Za-z\-\u2010-\u2015\.]+)")
+
+    def state_law_frontier_source_dependencies(self) -> Sequence[Any]:
+        """Bind parsing, closure, and exact plural acquisition code."""
+
+        from ...web_archiving import wayback_machine_engine
+        from . import (
+            base_scraper,
+            maryland_section,
+            state_archival_fetch,
+            strict_frontier_closure,
+        )
+
+        return (
+            base_scraper,
+            state_archival_fetch,
+            strict_frontier_closure,
+            maryland_section,
+            wayback_machine_engine,
+        )
 
     def get_base_url(self) -> str:
         """Return the base URL for Maryland's legislative website."""
@@ -56,25 +86,372 @@ class MarylandScraper(BaseStateScraper):
         structured = getattr(statute, "structured_data", {}) or {}
         return str(structured.get("record_type") or "").strip().lower() == "maryland_api_section"
 
-    async def _fetch_json(self, url: str) -> object:
-        text = ""
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=45) as resp:
-                text = resp.read().decode("utf-8", errors="ignore")
-        except Exception:
-            payload = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=35)
-            if isinstance(payload, bytes):
-                text = payload.decode("utf-8", errors="ignore")
-            elif payload:
-                text = str(payload)
+    def _statute_article_rows(self, payload: object) -> List[Dict[str, str]]:
+        """Normalize the exact statutory subset of GetArticles in source order."""
 
-        if not text:
+        if not isinstance(payload, list):
+            return []
+        from .maryland_section import is_statute_article_code
+
+        rows: List[Dict[str, str]] = []
+        seen: set[str] = set()
+        for article in payload:
+            if not isinstance(article, dict):
+                continue
+            value = str(article.get("Value") or "").strip()
+            display = str(article.get("DisplayText") or "").strip()
+            code = self._extract_article_code(display, value)
+            normalized = code.casefold()
+            if (
+                not is_statute_article_code(normalized)
+                or not normalized
+            ):
+                continue
+            if normalized in seen:
+                raise RuntimeError(
+                    "Maryland GetArticles repeated a statutory article identity"
+                )
+            seen.add(normalized)
+            rows.append(
+                {
+                    "article_code": code,
+                    "display_text": display,
+                    "value": value,
+                }
+            )
+        return rows
+
+    def _section_rows_from_payload(self, payload: object) -> List[tuple[str, str]]:
+        """Normalize one complete GetSections response in source order."""
+
+        if not isinstance(payload, list):
+            return []
+        rows: List[tuple[str, str]] = []
+        seen: set[str] = set()
+        for section in payload:
+            if not isinstance(section, dict):
+                continue
+            label = str(section.get("DisplayText") or "").strip()
+            code = self._normalize_section_code(
+                label or str(section.get("Value") or "")
+            )
+            normalized = code.casefold()
+            if not normalized or normalized in seen:
+                raise RuntimeError(
+                    "Maryland GetSections exposed an empty or duplicate identity"
+                )
+            seen.add(normalized)
+            rows.append((label or code, code))
+        return rows
+
+    def _retained_maryland_catalog_reports(
+        self,
+    ) -> tuple[List[Dict[str, Any]], List[Dict[str, str]]]:
+        """Replay GetArticles/GetSections and derive the exact leaf membership."""
+
+        from ...legal_data.open_us_law_acquisition_coordinator import (
+            canonical_json_bytes,
+        )
+        from .strict_frontier_closure import replay_exact_retained_state_input
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError("Maryland catalog replay requires an attached ledger")
+        refresh = getattr(ledger, "refresh_existing_entries", None)
+        if callable(refresh):
+            refresh()
+        articles_url = self._canonical_fetch_url(
+            f"{self.get_base_url()}/mgawebsite/api/Laws/GetArticles?enactments=false"
+        )
+        articles_raw = replay_exact_retained_state_input(
+            self,
+            official_url=articles_url,
+            sanitized_request={"method": "GET", "url": articles_url},
+            frontier_name="Maryland article catalog",
+            refresh=False,
+        )
+        try:
+            articles_payload = json.loads(articles_raw.decode("utf-8"))
+        except (UnicodeError, json.JSONDecodeError) as exc:
+            raise RuntimeError("Maryland retained article catalog is not JSON") from exc
+        articles = self._statute_article_rows(articles_payload)
+        if not articles:
+            raise RuntimeError("Maryland retained statutory article catalog is empty")
+        reports: List[Dict[str, Any]] = [
+            {
+                "article_count": len(articles),
+                "content_sha256": hashlib.sha256(articles_raw).hexdigest(),
+                "kind": "articles",
+                "membership_sha256": hashlib.sha256(
+                    canonical_json_bytes(articles)
+                ).hexdigest(),
+                "source_url": articles_url,
+            }
+        ]
+        units: List[Dict[str, str]] = []
+        seen_urls: set[str] = set()
+        for article in articles:
+            article_code = article["article_code"]
+            article_value = article["value"] or article_code.lower()
+            sections_url = self._canonical_fetch_url(
+                f"{self.get_base_url()}/mgawebsite/api/Laws/GetSections"
+                f"?articleCode={article_value}&enactments=false"
+            )
+            sections_raw = replay_exact_retained_state_input(
+                self,
+                official_url=sections_url,
+                sanitized_request={"method": "GET", "url": sections_url},
+                frontier_name=f"Maryland {article_code} section catalog",
+                refresh=False,
+            )
+            try:
+                sections_payload = json.loads(sections_raw.decode("utf-8"))
+            except (UnicodeError, json.JSONDecodeError) as exc:
+                raise RuntimeError(
+                    f"Maryland retained {article_code} section catalog is not JSON"
+                ) from exc
+            section_rows = self._section_rows_from_payload(sections_payload)
+            if not section_rows:
+                raise RuntimeError(
+                    f"Maryland retained {article_code} section catalog is empty"
+                )
+            article_units: List[Dict[str, str]] = []
+            for section_label, section_number in section_rows:
+                source_url = self._canonical_fetch_url(
+                    f"{self.get_base_url()}/mgawebsite/Laws/StatuteText"
+                    f"?article={article_code}&section={section_number}"
+                    "&enactments=false"
+                )
+                if source_url in seen_urls:
+                    raise RuntimeError(
+                        "Maryland retained hierarchy repeated a section URL: "
+                        f"{source_url}"
+                    )
+                seen_urls.add(source_url)
+                unit = {
+                    "article_code": article_code,
+                    "article_display": article["display_text"],
+                    "section_label": section_label,
+                    "section_number": section_number,
+                    "source_url": source_url,
+                }
+                article_units.append(unit)
+                units.append(unit)
+            reports.append(
+                {
+                    "article_code": article_code,
+                    "content_sha256": hashlib.sha256(sections_raw).hexdigest(),
+                    "kind": "sections",
+                    "membership_sha256": hashlib.sha256(
+                        canonical_json_bytes(article_units)
+                    ).hexdigest(),
+                    "section_count": len(article_units),
+                    "source_url": sections_url,
+                }
+            )
+        return reports, units
+
+    def _maryland_exact_frontier(
+        self,
+        *,
+        catalog_reports: Sequence[Mapping[str, Any]],
+        section_reports: Sequence[Mapping[str, Any]],
+    ) -> Dict[str, Any]:
+        """Build Maryland's deterministic hierarchy/leaf disposition closure."""
+
+        from ...legal_data.open_us_law_acquisition_coordinator import (
+            canonical_json_bytes,
+        )
+        from ...legal_data.open_us_law_live_evidence import compute_frontier_digest
+
+        catalogs = [dict(row) for row in catalog_reports]
+        sections = [dict(row) for row in section_reports]
+        operative = sum(row.get("disposition") == "operative" for row in sections)
+        disposition = {
+            "discovered": len(sections),
+            "duplicates": 0,
+            "excluded": len(sections) - operative,
+            "failed_final": 0,
+            "fetched": operative,
+            "quarantined": 0,
+        }
+        frontier: Dict[str, Any] = {
+            "algebra_closed": True,
+            "bundle_closed": False,
+            "catalog_input_count": len(catalogs),
+            "catalog_inputs_sha256": hashlib.sha256(
+                canonical_json_bytes(catalogs)
+            ).hexdigest(),
+            "closed": True,
+            "disposition": disposition,
+            "enumerator_closed": True,
+            "leaf_input_count": len(sections),
+            "leaf_inputs_sha256": hashlib.sha256(
+                canonical_json_bytes(sections)
+            ).hexdigest(),
+            "method": "source_derived_articles_sections_api",
+            "pagination_closed": bool(catalogs),
+            "remaining_bundle_members": [],
+            "scope_closed": True,
+            "source_membership_sha256": hashlib.sha256(
+                canonical_json_bytes(
+                    [str(row.get("source_url") or "") for row in sections]
+                )
+            ).hexdigest(),
+            "toc_exhausted": bool(catalogs),
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(sections),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return frontier
+
+    async def _fetch_json(self, url: str) -> object:
+        def _is_json_payload(payload: bytes) -> bool:
+            try:
+                json.loads(payload.decode("utf-8", errors="ignore"))
+            except Exception:
+                return False
+            return True
+
+        payload = await self._fetch_parser_input_with_transport(
+            url,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout_seconds=45,
+            content_validator=_is_json_payload,
+            allow_archival_fallback=True,
+            media_type="application/json",
+            provider="maryland_api_direct",
+        )
+        if not payload:
             return None
         try:
-            return json.loads(text)
+            return json.loads(payload.decode("utf-8", errors="ignore"))
         except Exception:
             return None
+
+    def _maryland_section_catalog_url(
+        self,
+        *,
+        article_value: str,
+        article_code: str,
+    ) -> str:
+        article_token = str(article_value or article_code.lower()).strip()
+        return self._canonical_fetch_url(
+            f"{self.get_base_url()}/mgawebsite/api/Laws/GetSections"
+            f"?articleCode={article_token}&enactments=false"
+        )
+
+    async def _fetch_maryland_section_catalog_frontier(
+        self,
+        urls: Sequence[str],
+        *,
+        residual_retry_attempts: int,
+    ) -> Dict[str, object]:
+        """Acquire every deterministic GetSections catalog as one JSON wave."""
+
+        requested = [self._canonical_fetch_url(url) for url in urls]
+        if len(requested) != len(set(requested)):
+            raise RuntimeError(
+                "Maryland GetSections frontier contains duplicate exact URLs"
+            )
+        if not requested:
+            return {}
+
+        def _is_json_payload(payload: bytes) -> bool:
+            try:
+                json.loads(payload.decode("utf-8", errors="ignore"))
+            except Exception:
+                return False
+            return True
+
+        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+            requested,
+            residual_retry_attempts=residual_retry_attempts,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout_seconds=45,
+            content_validator=_is_json_payload,
+            media_type="application/json",
+            max_concurrency=min(32, len(requested)),
+            prefer_direct=True,
+            common_crawl_domain_terms=("mgaleg.maryland.gov",),
+            common_crawl_url_terms=("/mgawebsite/api/Laws/GetSections",),
+            common_crawl_mime_terms=("json",),
+        )
+        aligned_lengths = {
+            len(batch.urls),
+            len(batch.payloads),
+            len(batch.errors),
+            len(batch.transport_receipts),
+            len(batch.parser_input_envelopes),
+        }
+        if aligned_lengths != {len(requested)}:
+            raise RuntimeError(
+                "Maryland GetSections frontier returned unaligned acquisition rows"
+            )
+        if list(batch.urls) != requested:
+            raise RuntimeError(
+                "Maryland GetSections frontier changed URL order or identity"
+            )
+        failures = [
+            {"url": url, "error": str(error or "empty parser input")}
+            for url, payload, error in zip(
+                batch.urls,
+                batch.payloads,
+                batch.errors,
+                strict=True,
+            )
+            if error is not None or not payload
+        ]
+        if failures:
+            raise RuntimeError(
+                "Maryland GetSections frontier is incomplete; unresolved exact "
+                f"URLs: {failures}"
+            )
+
+        strict_evidence = getattr(self, "_state_law_acquisition_ledger", None) is not None
+        parsed_by_url: Dict[str, object] = {}
+        for url, payload, receipt, envelope in zip(
+            batch.urls,
+            batch.payloads,
+            batch.transport_receipts,
+            batch.parser_input_envelopes,
+            strict=True,
+        ):
+            body = bytes(payload)
+            if strict_evidence:
+                from ...legal_data.state_laws_source_provenance import (
+                    StateLawTransportReceiptError,
+                    canonicalize_state_law_transport_receipt,
+                )
+
+                try:
+                    canonicalize_state_law_transport_receipt(
+                        receipt,
+                        official_url=url,
+                        content_sha256=hashlib.sha256(body).hexdigest(),
+                    )
+                except StateLawTransportReceiptError as exc:
+                    raise RuntimeError(
+                        "Maryland GetSections frontier returned an unbound "
+                        "transport receipt"
+                    ) from exc
+                if (
+                    envelope is None
+                    or bytes(getattr(envelope, "body", b"") or b"") != body
+                ):
+                    raise RuntimeError(
+                        "Maryland GetSections frontier returned an unbound "
+                        "parser-input envelope"
+                    )
+            try:
+                parsed_by_url[url] = json.loads(
+                    body.decode("utf-8", errors="ignore")
+                )
+            except (UnicodeError, json.JSONDecodeError) as exc:
+                raise RuntimeError(
+                    f"Maryland GetSections frontier returned invalid JSON: {url}"
+                ) from exc
+        return parsed_by_url
 
     async def _fetch_api_section_code(self, url: str) -> Optional[str]:
         """Parse GetNext/GetPrevious JSON or the .NET XML ``<string>`` envelope."""
@@ -96,19 +473,15 @@ class MarylandScraper(BaseStateScraper):
         return out
 
     async def _fetch_text_direct(self, url: str, timeout: int = 45) -> str:
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                return resp.read().decode("utf-8", errors="ignore")
-        except Exception:
-            payload = await self._fetch_page_content_with_archival_fallback(
-                url, timeout_seconds=timeout
-            )
-            if isinstance(payload, bytes):
-                return payload.decode("utf-8", errors="ignore")
-            if payload:
-                return str(payload)
-            return ""
+        payload = await self._fetch_parser_input_with_transport(
+            url,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout_seconds=max(1, int(timeout or 45)),
+            allow_archival_fallback=True,
+            media_type="text/html",
+            provider="maryland_direct",
+        )
+        return payload.decode("utf-8", errors="ignore") if payload else ""
 
     async def _list_article_payload(self) -> List[Dict[str, str]]:
         from .maryland_section import TOC_URL, configured_toc_html_path
@@ -121,17 +494,13 @@ class MarylandScraper(BaseStateScraper):
         articles_url = f"{self.get_base_url()}/mgawebsite/api/Laws/GetArticles?enactments=false"
         articles_payload = await self._fetch_json(articles_url)
         if isinstance(articles_payload, list) and articles_payload:
-            from .maryland_section import is_statute_article_code
-
-            filtered: List[Dict[str, str]] = []
-            for article in articles_payload:
-                if not isinstance(article, dict):
-                    continue
-                value = str(article.get("Value") or "").strip()
-                display = str(article.get("DisplayText") or "").strip()
-                code = value or self._extract_article_code(display, value)
-                if is_statute_article_code(code.lower()):
-                    filtered.append(article)
+            filtered = [
+                {
+                    "DisplayText": row["display_text"],
+                    "Value": row["value"],
+                }
+                for row in self._statute_article_rows(articles_payload)
+            ]
             if filtered:
                 return filtered
         toc_html = await self._fetch_text_direct(TOC_URL, timeout=45)
@@ -144,28 +513,31 @@ class MarylandScraper(BaseStateScraper):
         *,
         article_value: str,
         article_code: str,
-        budget: int,
+        budget: Optional[int],
+        sections_payload: object = _MARYLAND_UNFETCHED,
     ) -> List[tuple[str, str]]:
         """Return ``(label, section_code)`` from GetSections JSON or GetNext XML."""
 
-        from .maryland_section import first_section_seeds, get_next_url, get_previous_url
-
-        sections_url = (
-            f"{self.get_base_url()}/mgawebsite/api/Laws/GetSections"
-            f"?articleCode={article_value or article_code.lower()}&enactments=false"
+        from .maryland_section import (
+            first_section_seeds,
+            get_next_url,
+            get_previous_url,
         )
-        sections_payload = await self._fetch_json(sections_url)
+
+        sections_url = self._maryland_section_catalog_url(
+            article_value=article_value,
+            article_code=article_code,
+        )
+        if sections_payload is _MARYLAND_UNFETCHED:
+            sections_payload = await self._fetch_json(sections_url)
         out: List[tuple[str, str]] = []
         if isinstance(sections_payload, list):
-            for section in sections_payload[: max(0, int(budget))]:
-                if not isinstance(section, dict):
-                    continue
-                section_label = str(section.get("DisplayText") or "").strip()
-                section_code = self._normalize_section_code(
-                    section_label or str(section.get("Value") or "")
-                )
-                if section_code:
-                    out.append((section_label or section_code, section_code))
+            normalized_rows = self._section_rows_from_payload(sections_payload)
+            out = (
+                normalized_rows
+                if budget is None
+                else normalized_rows[: max(0, int(budget))]
+            )
             if out:
                 return out
 
@@ -183,13 +555,20 @@ class MarylandScraper(BaseStateScraper):
         if seed is None:
             return []
         current = seed
-        for _ in range(5000):
+        previous_seen: set[str] = set()
+        while current not in previous_seen:
+            previous_seen.add(current)
             prev = await self._fetch_api_section_code(get_previous_url(article_token, current))
             if not prev:
                 break
             current = prev
         seen: set[str] = set()
-        while current and current not in seen and len(out) < max(0, int(budget)):
+        requested_limit = None if budget is None else max(0, int(budget))
+        while (
+            current
+            and current not in seen
+            and (requested_limit is None or len(out) < requested_limit)
+        ):
             seen.add(current)
             out.append((current, current))
             current = await self._fetch_api_section_code(get_next_url(article_token, current))
@@ -211,9 +590,89 @@ class MarylandScraper(BaseStateScraper):
 
         statutes: List[NormalizedStatute] = []
         seen_urls = set()
-        sem = asyncio.Semaphore(8)
+        section_concurrency = max(
+            1,
+            min(
+                64,
+                int(
+                    self._env_int(
+                        "STATE_SCRAPER_MD_SECTION_CONCURRENCY",
+                        default=8,
+                    )
+                    or 8
+                ),
+            ),
+        )
+        sem = asyncio.Semaphore(section_concurrency)
+        residual_retry_attempts = max(
+            0,
+            min(
+                3,
+                self._env_int(
+                    "STATE_SCRAPER_MD_FRONTIER_RESIDUAL_RETRY_ATTEMPTS",
+                    default=self._env_int(
+                        "STATE_SCRAPER_FRONTIER_RESIDUAL_RETRY_ATTEMPTS",
+                        default=0,
+                    ),
+                ),
+            ),
+        )
+        section_batch_size = self._env_int(
+            "STATE_SCRAPER_MD_SECTION_BATCH_SIZE",
+            default=40,
+        )
+        section_batch_size = max(8, min(256, int(section_batch_size or 40)))
+        strict_catalog_payloads: Dict[str, object] = {}
+        if limit is None:
+            catalog_urls: List[str] = []
+            for article in articles_payload:
+                if not isinstance(article, dict):
+                    continue
+                article_display = str(article.get("DisplayText") or "").strip()
+                article_value = str(article.get("Value") or "").strip()
+                article_code = self._extract_article_code(
+                    article_display,
+                    article_value,
+                )
+                if not article_code:
+                    continue
+                catalog_urls.append(
+                    self._maryland_section_catalog_url(
+                        article_value=article_value,
+                        article_code=article_code,
+                    )
+                )
+            strict_catalog_payloads = (
+                await self._fetch_maryland_section_catalog_frontier(
+                    catalog_urls,
+                    residual_retry_attempts=residual_retry_attempts,
+                )
+            )
+
         discovered_candidates = 0
         scanned_candidates = 0
+        terminal_sections: List[Dict[str, str]] = []
+        section_reports: List[Dict[str, Any]] = []
+
+        def _closure_checkpoint_fields(
+            unresolved: Optional[List[Dict[str, str]]] = None,
+        ) -> Dict[str, object]:
+            disposition_counts: Dict[str, int] = {}
+            for record in terminal_sections:
+                disposition = str(record.get("disposition") or "").strip()
+                if disposition:
+                    disposition_counts[disposition] = (
+                        disposition_counts.get(disposition, 0) + 1
+                    )
+            unresolved_rows = list(unresolved or [])
+            return {
+                "terminal_sections_classified": len(terminal_sections),
+                "terminal_disposition_counts": dict(sorted(disposition_counts.items())),
+                "terminal_section_dispositions": list(terminal_sections),
+                "unresolved_sections_count": len(unresolved_rows),
+                "unresolved_section_dispositions": unresolved_rows,
+            }
+
         self._write_partial_checkpoint(
             statutes,
             code_name=code_name,
@@ -225,8 +684,130 @@ class MarylandScraper(BaseStateScraper):
                 "discovered_candidates": 0,
                 "codes_completed": 0,
                 "codes_total": 1,
+                **_closure_checkpoint_fields(),
             },
         )
+
+        # Exact production first derives the complete ordered leaf union from
+        # every article catalog, then submits that union through one plural
+        # archive-aware call.  Keeping one logical same-domain wave allows the
+        # shared transport to perform Common Crawl/CDX discovery once and to
+        # coalesce pointers that share a WARC object across article boundaries.
+        # Parsing/checkpoint work below remains bounded by ``section_batch_size``
+        # and direct/archive replay concurrency remains bounded by
+        # ``section_concurrency``.
+        strict_section_codes_by_url: Dict[str, List[tuple[str, str]]] = {}
+        strict_leaf_rows_by_url: Dict[str, tuple[bytes, Optional[str], Any, Any]] = {}
+        strict_leaf_batch_stats: Dict[str, Any] = {}
+        if limit is None:
+            strict_leaf_urls: List[str] = []
+            strict_leaf_seen: set[str] = set()
+            discovered_before_leaf_wave = 0
+            for article_index, article in enumerate(articles_payload, start=1):
+                if not isinstance(article, dict):
+                    continue
+                article_display = str(article.get("DisplayText") or "").strip()
+                article_value = str(article.get("Value") or "").strip()
+                article_code = self._extract_article_code(
+                    article_display,
+                    article_value,
+                )
+                if not article_code:
+                    continue
+                sections_url = self._maryland_section_catalog_url(
+                    article_value=article_value,
+                    article_code=article_code,
+                )
+                if sections_url not in strict_catalog_payloads:
+                    raise RuntimeError(
+                        "Maryland strict GetSections frontier omitted an article: "
+                        f"{article_code}"
+                    )
+                section_codes = await self._list_section_codes(
+                    article_value=article_value,
+                    article_code=article_code,
+                    budget=None,
+                    sections_payload=strict_catalog_payloads[sections_url],
+                )
+                strict_section_codes_by_url[sections_url] = list(section_codes)
+                if not section_codes:
+                    self._write_partial_checkpoint(
+                        statutes,
+                        code_name=code_name,
+                        stage_label="maryland:empty-section-frontier",
+                        force=True,
+                        extra={
+                            "titles_scanned": int(article_index),
+                            "discovered_titles": int(len(articles_payload)),
+                            "scanned_candidates": 0,
+                            "discovered_candidates": int(
+                                discovered_before_leaf_wave
+                            ),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                            **_closure_checkpoint_fields(),
+                        },
+                    )
+                    raise RuntimeError(
+                        "Maryland exact article exposed no section frontier: "
+                        f"article={article_code}"
+                    )
+                discovered_before_leaf_wave += len(section_codes)
+                for _section_label, section_code in section_codes:
+                    if not section_code:
+                        continue
+                    section_url = self._canonical_fetch_url(
+                        f"{self.get_base_url()}/mgawebsite/Laws/StatuteText"
+                        f"?article={article_code}&section={section_code}"
+                        "&enactments=false"
+                    )
+                    if section_url in strict_leaf_seen:
+                        continue
+                    strict_leaf_seen.add(section_url)
+                    strict_leaf_urls.append(section_url)
+
+            if strict_leaf_urls:
+                strict_leaf_batch = (
+                    await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+                        strict_leaf_urls,
+                        residual_retry_attempts=residual_retry_attempts,
+                        timeout_seconds=35,
+                        media_type="text/html",
+                        max_concurrency=section_concurrency,
+                        prefer_direct=True,
+                        common_crawl_domain_terms=("mgaleg.maryland.gov",),
+                        common_crawl_url_terms=("/mgawebsite/Laws/StatuteText",),
+                        common_crawl_mime_terms=("html",),
+                        wayback_prefix_inventory=True,
+                    )
+                )
+                aligned_lengths = {
+                    len(strict_leaf_batch.urls),
+                    len(strict_leaf_batch.payloads),
+                    len(strict_leaf_batch.errors),
+                    len(strict_leaf_batch.transport_receipts),
+                    len(strict_leaf_batch.parser_input_envelopes),
+                }
+                if aligned_lengths != {len(strict_leaf_urls)}:
+                    raise RuntimeError(
+                        "Maryland section frontier returned unaligned acquisition rows"
+                    )
+                if list(strict_leaf_batch.urls) != strict_leaf_urls:
+                    raise RuntimeError(
+                        "Maryland section frontier changed URL order or identity"
+                    )
+                strict_leaf_batch_stats = dict(strict_leaf_batch.stats or {})
+                strict_leaf_rows_by_url = {
+                    url: (payload, error, receipt, envelope)
+                    for url, payload, error, receipt, envelope in zip(
+                        strict_leaf_batch.urls,
+                        strict_leaf_batch.payloads,
+                        strict_leaf_batch.errors,
+                        strict_leaf_batch.transport_receipts,
+                        strict_leaf_batch.parser_input_envelopes,
+                        strict=True,
+                    )
+                }
 
         async def _build_one(
             *,
@@ -257,7 +838,7 @@ class MarylandScraper(BaseStateScraper):
                 continue
 
             if limit is None:
-                budget = 2000
+                budget = None
             else:
                 remaining = max(0, int(limit) - len(statutes))
                 section_budget_cap = self._env_int(
@@ -266,20 +847,53 @@ class MarylandScraper(BaseStateScraper):
                 )
                 section_budget_cap = max(40, min(2000, int(section_budget_cap or 240)))
                 budget = min(max(remaining * 3, 40), section_budget_cap)
-            section_codes = await self._list_section_codes(
-                article_value=article_value,
-                article_code=article_code,
-                budget=budget,
-            )
+            if limit is None:
+                sections_url = self._maryland_section_catalog_url(
+                    article_value=article_value,
+                    article_code=article_code,
+                )
+                if sections_url not in strict_section_codes_by_url:
+                    raise RuntimeError(
+                        "Maryland strict GetSections frontier omitted an article: "
+                        f"{article_code}"
+                    )
+                section_codes = list(strict_section_codes_by_url[sections_url])
+            else:
+                section_codes = await self._list_section_codes(
+                    article_value=article_value,
+                    article_code=article_code,
+                    budget=budget,
+                )
+            if limit is None and not section_codes:
+                self._write_partial_checkpoint(
+                    statutes,
+                    code_name=code_name,
+                    stage_label="maryland:empty-section-frontier",
+                    force=True,
+                    extra={
+                        "titles_scanned": int(article_index),
+                        "discovered_titles": int(len(articles_payload)),
+                        "scanned_candidates": int(scanned_candidates),
+                        "discovered_candidates": int(discovered_candidates),
+                        "codes_completed": 0,
+                        "codes_total": 1,
+                        **_closure_checkpoint_fields(),
+                    },
+                )
+                raise RuntimeError(
+                    "Maryland exact article exposed no section frontier: "
+                    f"article={article_code}"
+                )
             discovered_candidates += int(len(section_codes))
             section_inputs: List[tuple[str, str, str, str]] = []
             for section_label, section_code in section_codes:
                 if not section_code:
                     continue
 
-                section_url = (
+                section_url = self._canonical_fetch_url(
                     f"{self.get_base_url()}/mgawebsite/Laws/StatuteText"
-                    f"?article={article_code}&section={section_code}&enactments=false"
+                    f"?article={article_code}&section={section_code}"
+                    "&enactments=false"
                 )
                 if section_url in seen_urls:
                     continue
@@ -311,11 +925,10 @@ class MarylandScraper(BaseStateScraper):
                     "discovered_candidates": int(discovered_candidates),
                     "codes_completed": 0,
                     "codes_total": 1,
+                    **_closure_checkpoint_fields(),
                 },
             )
 
-            section_batch_size = self._env_int("STATE_SCRAPER_MD_SECTION_BATCH_SIZE", default=40)
-            section_batch_size = max(8, min(256, int(section_batch_size or 40)))
             try:
                 asyncio.get_running_loop()
                 parallel = True
@@ -325,7 +938,183 @@ class MarylandScraper(BaseStateScraper):
                 if limit is not None and len(statutes) >= limit:
                     break
                 batch_inputs = section_inputs[batch_start : batch_start + section_batch_size]
-                if parallel:
+                if limit is None:
+                    batch_urls = [item[3] for item in batch_inputs]
+                    try:
+                        retained_rows = [
+                            strict_leaf_rows_by_url[url] for url in batch_urls
+                        ]
+                    except KeyError as exc:
+                        raise RuntimeError(
+                            "Maryland unioned section frontier omitted an exact URL"
+                        ) from exc
+                    batch = StateLawPageMultiFetchResult(
+                        urls=list(batch_urls),
+                        payloads=[row[0] for row in retained_rows],
+                        errors=[row[1] for row in retained_rows],
+                        transport_receipts=[row[2] for row in retained_rows],
+                        parser_input_envelopes=[row[3] for row in retained_rows],
+                        stats=dict(strict_leaf_batch_stats),
+                    )
+                    aligned_lengths = {
+                        len(batch.urls),
+                        len(batch.payloads),
+                        len(batch.errors),
+                        len(batch.transport_receipts),
+                        len(batch.parser_input_envelopes),
+                    }
+                    if aligned_lengths != {len(batch_inputs)}:
+                        raise RuntimeError(
+                            "Maryland section frontier returned unaligned acquisition rows"
+                        )
+                    if list(batch.urls) != batch_urls:
+                        raise RuntimeError(
+                            "Maryland section frontier changed URL order or identity"
+                        )
+                    batch_results = []
+                    batch_unresolved: List[Dict[str, str]] = []
+                    strict_evidence = (
+                        getattr(self, "_state_law_acquisition_ledger", None)
+                        is not None
+                    )
+                    for item, payload, error, receipt, envelope in zip(
+                        batch_inputs,
+                        batch.payloads,
+                        batch.errors,
+                        batch.transport_receipts,
+                        batch.parser_input_envelopes,
+                        strict=True,
+                    ):
+                        if error is not None or not payload:
+                            batch_results.append(None)
+                            batch_unresolved.append(
+                                {
+                                    "article_code": article_code,
+                                    "error": str(error or "empty parser input"),
+                                    "section_number": item[2],
+                                    "source_url": item[3],
+                                }
+                            )
+                            continue
+                        body = bytes(payload)
+                        if strict_evidence:
+                            from ...legal_data.state_laws_source_provenance import (
+                                StateLawTransportReceiptError,
+                                canonicalize_state_law_transport_receipt,
+                            )
+
+                            try:
+                                canonicalize_state_law_transport_receipt(
+                                    receipt,
+                                    official_url=item[3],
+                                    content_sha256=hashlib.sha256(body).hexdigest(),
+                                )
+                            except StateLawTransportReceiptError as exc:
+                                raise RuntimeError(
+                                    "Maryland section frontier returned an "
+                                    "unbound transport receipt"
+                                ) from exc
+                            if (
+                                envelope is None
+                                or bytes(getattr(envelope, "body", b"") or b"")
+                                != body
+                            ):
+                                raise RuntimeError(
+                                    "Maryland section frontier returned an "
+                                    "unbound parser-input envelope"
+                                )
+                        try:
+                            html_text = body.decode("utf-8", errors="ignore")
+                            parsed = self._build_statute_from_section_html(
+                                code_name=code_name,
+                                article_label=item[0],
+                                section_label=item[1],
+                                section_number=item[2],
+                                section_url=item[3],
+                                html_text=html_text,
+                            )
+                            if parsed is not None:
+                                normalized_identity = self._normalize_section_code(
+                                    str(parsed.section_number or "")
+                                )
+                                expected_identity = self._normalize_section_code(item[2])
+                                if normalized_identity != expected_identity:
+                                    raise RuntimeError(
+                                        "Maryland retained body changed its API-selected "
+                                        f"identity: expected={expected_identity} "
+                                        f"observed={normalized_identity}"
+                                    )
+                                section_reports.append(
+                                    {
+                                        "article_code": article_code,
+                                        "canonical_identity": (
+                                            f"{article_code}|{normalized_identity}"
+                                        ),
+                                        "content_sha256": hashlib.sha256(body).hexdigest(),
+                                        "disposition": "operative",
+                                        "section_label": item[1],
+                                        "section_number": item[2],
+                                        "source_url": item[3],
+                                    }
+                                )
+                                batch_results.append(parsed)
+                                continue
+
+                            from .maryland_section import (
+                                source_bound_maryland_terminal_disposition,
+                            )
+
+                            disposition = source_bound_maryland_terminal_disposition(
+                                html_text,
+                                source_url=item[3],
+                                expected_article_code=article_code,
+                            )
+                            if disposition is not None:
+                                terminal_sections.append(
+                                    {
+                                        "article_code": article_code,
+                                        "content_sha256": hashlib.sha256(body).hexdigest(),
+                                        "disposition": disposition,
+                                        "section_number": item[2],
+                                        "source_url": item[3],
+                                    }
+                                )
+                                section_reports.append(
+                                    {
+                                        "article_code": article_code,
+                                        "canonical_identity": "",
+                                        "content_sha256": hashlib.sha256(body).hexdigest(),
+                                        "disposition": disposition,
+                                        "section_label": item[1],
+                                        "section_number": item[2],
+                                        "source_url": item[3],
+                                    }
+                                )
+                                batch_results.append(None)
+                                continue
+                            batch_results.append(None)
+                            batch_unresolved.append(
+                                {
+                                    "article_code": article_code,
+                                    "error": (
+                                        "retained body produced neither an operative "
+                                        "row nor a source-bound terminal disposition"
+                                    ),
+                                    "section_number": item[2],
+                                    "source_url": item[3],
+                                }
+                            )
+                        except Exception as exc:
+                            batch_results.append(exc)
+                            batch_unresolved.append(
+                                {
+                                    "article_code": article_code,
+                                    "error": f"{type(exc).__name__}: {exc}",
+                                    "section_number": item[2],
+                                    "source_url": item[3],
+                                }
+                            )
+                elif parallel:
                     batch_jobs = [
                         _build_one(
                             article_display=item[0],
@@ -382,10 +1171,99 @@ class MarylandScraper(BaseStateScraper):
                         "discovered_candidates": int(discovered_candidates),
                         "codes_completed": 0,
                         "codes_total": 1,
+                        **_closure_checkpoint_fields(
+                            batch_unresolved if limit is None else None
+                        ),
                     },
                 )
+                if limit is None and batch_unresolved:
+                    first = batch_unresolved[0]
+                    self._write_partial_checkpoint(
+                        statutes,
+                        code_name=code_name,
+                        stage_label="maryland:unresolved-section",
+                        force=True,
+                        extra={
+                            "titles_scanned": int(article_index),
+                            "discovered_titles": int(len(articles_payload)),
+                            "scanned_candidates": int(scanned_candidates),
+                            "discovered_candidates": int(discovered_candidates),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                            **_closure_checkpoint_fields(batch_unresolved),
+                        },
+                    )
+                    raise RuntimeError(
+                        "Maryland exact section frontier has unresolved retained "
+                        f"outcome: {first['source_url']}: {first['error']}"
+                    )
                 if limit is not None and len(statutes) >= limit:
                     break
+
+        if limit is None:
+            classified_candidates = len(statutes) + len(terminal_sections)
+            if scanned_candidates != discovered_candidates:
+                raise RuntimeError(
+                    "Maryland exact frontier closure mismatch: "
+                    f"discovered={discovered_candidates} scanned={scanned_candidates}"
+                )
+            if classified_candidates != scanned_candidates:
+                raise RuntimeError(
+                    "Maryland exact outcome closure mismatch: "
+                    f"scanned={scanned_candidates} operative={len(statutes)} "
+                    f"terminal={len(terminal_sections)}"
+                )
+            if len(section_reports) != scanned_candidates:
+                raise RuntimeError(
+                    "Maryland exact input-report closure mismatch: "
+                    f"reports={len(section_reports)} scanned={scanned_candidates}"
+                )
+            catalog_reports: List[Dict[str, Any]] = []
+            catalog_units: List[Dict[str, str]] = []
+            ledger = getattr(self, "_state_law_acquisition_ledger", None)
+            if callable(getattr(ledger, "replay_retained_parser_input", None)):
+                catalog_reports, catalog_units = (
+                    self._retained_maryland_catalog_reports()
+                )
+                expected_units = [
+                    {
+                        "article_code": str(row.get("article_code") or ""),
+                        "article_display": next(
+                            (
+                                str(article.get("DisplayText") or "")
+                                for article in articles_payload
+                                if self._extract_article_code(
+                                    str(article.get("DisplayText") or ""),
+                                    str(article.get("Value") or ""),
+                                )
+                                == str(row.get("article_code") or "")
+                            ),
+                            "",
+                        ),
+                        "section_label": str(row.get("section_label") or ""),
+                        "section_number": str(row.get("section_number") or ""),
+                        "source_url": str(row.get("source_url") or ""),
+                    }
+                    for row in section_reports
+                ]
+                if catalog_units != expected_units:
+                    raise RuntimeError(
+                        "Maryland retained API catalog membership changed before closure"
+                    )
+            exact_frontier = self._maryland_exact_frontier(
+                catalog_reports=catalog_reports,
+                section_reports=section_reports,
+            )
+            observed_at = datetime.now(timezone.utc).isoformat()
+            self._last_maryland_full_frontier = {
+                "boundary_first": str(section_reports[0]["source_url"]),
+                "boundary_last": str(section_reports[-1]["source_url"]),
+                "catalog_reports": catalog_reports,
+                "code_name": code_name,
+                "frontier": exact_frontier,
+                "observed_at": observed_at,
+                "section_reports": section_reports,
+            }
 
         self._write_partial_checkpoint(
             statutes,
@@ -397,6 +1275,7 @@ class MarylandScraper(BaseStateScraper):
                 "discovered_candidates": int(discovered_candidates),
                 "codes_completed": 1,
                 "codes_total": 1,
+                **_closure_checkpoint_fields(),
             },
         )
         return statutes
@@ -411,25 +1290,71 @@ class MarylandScraper(BaseStateScraper):
         section_url: str,
     ) -> NormalizedStatute | None:
         try:
-            from bs4 import BeautifulSoup
-        except ImportError:
-            return None
-
-        try:
             html_text = await self._fetch_text_direct(section_url, timeout=35)
         except Exception:
             return None
         if not html_text:
             return None
+        return self._build_statute_from_section_html(
+            code_name=code_name,
+            article_label=article_label,
+            section_label=section_label,
+            section_number=section_number,
+            section_url=section_url,
+            html_text=html_text,
+        )
+
+    def _build_statute_from_section_html(
+        self,
+        *,
+        code_name: str,
+        article_label: str,
+        section_label: str,
+        section_number: str,
+        section_url: str,
+        html_text: str,
+    ) -> NormalizedStatute | None:
+        """Parse one already-retained, exactly aligned official section body."""
+
+        from .maryland_section import (
+            is_statute_article_code,
+            maryland_section_page_identity,
+            parse_maryland_section_html,
+        )
+
+        section_query = urllib.parse.parse_qs(
+            urllib.parse.urlparse(section_url).query
+        )
+        source_article_code = str(
+            (section_query.get("article") or [""])[0] or ""
+        ).strip().upper()
+        caller_article_code = self._extract_article_code(article_label, "")
+        if not is_statute_article_code(source_article_code.lower()):
+            return None
+        if caller_article_code and caller_article_code != source_article_code:
+            return None
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return None
+        if not html_text:
+            return None
 
         soup = BeautifulSoup(html_text, "html.parser")
-        from .maryland_section import parse_maryland_section_html
-
         parsed = parse_maryland_section_html(
-            html_text, source_url=section_url, code_name=code_name
+            html_text,
+            source_url=section_url,
+            code_name=code_name,
+            expected_article_code=source_article_code,
         )
         if parsed is not None:
             return parsed
+        if maryland_section_page_identity(
+            html_text,
+            source_url=section_url,
+            expected_article_code=source_article_code,
+        ) != (source_article_code, self._normalize_section_code(section_number)):
+            return None
         text_node = soup.select_one("#StatuteText") or soup.select_one("#mainBody")
         if text_node is None:
             return None
@@ -447,14 +1372,7 @@ class MarylandScraper(BaseStateScraper):
             return None
         article_name = str(article_label or "").split(" - ", 1)[0].strip() or "Maryland Code"
         article_name = re.sub(r"\s*\([A-Za-z0-9]+\)\s*$", "", article_name).strip() or article_name
-        article_code = ""
-        article_match = re.search(r"\(([A-Za-z0-9]+)\)\s*$", str(article_label or ""))
-        if article_match:
-            article_code = article_match.group(1).upper()
-        if not article_code:
-            query = urllib.parse.urlparse(section_url).query
-            article_param = urllib.parse.parse_qs(query).get("article", [""])
-            article_code = str(article_param[0] or "").strip().upper()
+        article_code = source_article_code
         display_label = str(section_label or normalized_section).strip()
         section_name = f"{article_name} § {display_label}"
         statute_id = f"{code_name} [{article_code or article_name}] § {normalized_section}"
@@ -471,7 +1389,7 @@ class MarylandScraper(BaseStateScraper):
             code_name=code_name,
             section_number=normalized_section,
             section_name=section_name[:200],
-            full_text=text[:14000],
+            full_text=text,
             source_url=section_url,
             legal_area=self._identify_legal_area(article_name),
             official_cite=official_cite,
@@ -483,6 +1401,179 @@ class MarylandScraper(BaseStateScraper):
                 "discovery_method": "official_articles_sections_api",
                 "article_name": article_name,
                 "article_code": article_code,
+            },
+        )
+
+    async def produce_state_law_frontier_closure(
+        self,
+        *,
+        canonical_output_projection: Mapping[str, Any],
+    ) -> Optional[Path]:
+        """Replay retained article/section catalogs and every exact leaf."""
+
+        first = getattr(self, "_last_maryland_full_frontier", None)
+        if not isinstance(first, Mapping):
+            raise RuntimeError(
+                "Maryland strict API frontier was not closed before output"
+            )
+        first_frontier = first.get("frontier")
+        first_catalog_raw = first.get("catalog_reports")
+        first_section_raw = first.get("section_reports")
+        if (
+            not isinstance(first_frontier, Mapping)
+            or not isinstance(first_catalog_raw, Sequence)
+            or isinstance(first_catalog_raw, (str, bytes, bytearray))
+            or not first_catalog_raw
+            or any(not isinstance(row, Mapping) for row in first_catalog_raw)
+            or not isinstance(first_section_raw, Sequence)
+            or isinstance(first_section_raw, (str, bytes, bytearray))
+            or not first_section_raw
+            or any(not isinstance(row, Mapping) for row in first_section_raw)
+        ):
+            raise RuntimeError("Maryland first exact frontier is incomplete")
+        first_catalogs = [dict(row) for row in first_catalog_raw]
+        first_sections = [dict(row) for row in first_section_raw]
+
+        replay_catalogs, replay_units = self._retained_maryland_catalog_reports()
+        if replay_catalogs != first_catalogs:
+            raise RuntimeError("Maryland retained API catalogs changed on replay")
+        expected_membership = [
+            (
+                str(row.get("article_code") or ""),
+                str(row.get("section_label") or ""),
+                str(row.get("section_number") or ""),
+                str(row.get("source_url") or ""),
+            )
+            for row in first_sections
+        ]
+        replay_membership = [
+            (
+                row["article_code"],
+                row["section_label"],
+                row["section_number"],
+                row["source_url"],
+            )
+            for row in replay_units
+        ]
+        if replay_membership != expected_membership:
+            raise RuntimeError(
+                "Maryland retained section-catalog membership changed on replay"
+            )
+
+        from .maryland_section import source_bound_maryland_terminal_disposition
+        from .strict_frontier_closure import (
+            replay_exact_retained_state_input,
+            retain_exact_state_frontier_closure,
+        )
+
+        code_name = str(first.get("code_name") or "Maryland Code")
+        replay_rows: List[NormalizedStatute] = []
+        replay_sections: List[Dict[str, Any]] = []
+        seen_identities: set[str] = set()
+        for unit, expected in zip(replay_units, first_sections, strict=True):
+            source_url = unit["source_url"]
+            body = replay_exact_retained_state_input(
+                self,
+                official_url=source_url,
+                sanitized_request={"method": "GET", "url": source_url},
+                frontier_name="Maryland section frontier",
+                refresh=False,
+            )
+            digest = hashlib.sha256(body).hexdigest()
+            html = body.decode("utf-8", errors="ignore")
+            statute = self._build_statute_from_section_html(
+                code_name=code_name,
+                article_label=unit["article_display"],
+                section_label=unit["section_label"],
+                section_number=unit["section_number"],
+                section_url=source_url,
+                html_text=html,
+            )
+            if statute is not None:
+                normalized = self._normalize_section_code(
+                    str(statute.section_number or "")
+                )
+                if normalized != self._normalize_section_code(unit["section_number"]):
+                    raise RuntimeError(
+                        "Maryland retained section changed its API-selected identity: "
+                        f"{source_url}"
+                    )
+                identity = f"{unit['article_code']}|{normalized}"
+                if identity in seen_identities:
+                    raise RuntimeError(
+                        "Maryland retained replay repeated an identity: "
+                        f"{identity}"
+                    )
+                seen_identities.add(identity)
+                disposition = "operative"
+                replay_rows.append(statute)
+            else:
+                identity = ""
+                disposition = source_bound_maryland_terminal_disposition(
+                    html,
+                    source_url=source_url,
+                    expected_article_code=unit["article_code"],
+                )
+                if not disposition:
+                    raise RuntimeError(
+                        "Maryland retained replay left a section unclassified: "
+                        f"{source_url}"
+                    )
+            report = {
+                "article_code": unit["article_code"],
+                "canonical_identity": identity,
+                "content_sha256": digest,
+                "disposition": disposition,
+                "section_label": unit["section_label"],
+                "section_number": unit["section_number"],
+                "source_url": source_url,
+            }
+            if report != expected:
+                raise RuntimeError(
+                    "Maryland retained section report changed on replay: "
+                    f"{source_url}"
+                )
+            replay_sections.append(report)
+
+        replayed_frontier = self._maryland_exact_frontier(
+            catalog_reports=replay_catalogs,
+            section_reports=replay_sections,
+        )
+        observed_at = str(first.get("observed_at") or "")
+        return retain_exact_state_frontier_closure(
+            self,
+            canonical_output_projection=canonical_output_projection,
+            first_frontier=first_frontier,
+            replayed_frontier=replayed_frontier,
+            replay_rows=replay_rows,
+            jurisdiction="MD",
+            source_domain="mgaleg.maryland.gov",
+            official_source_url=(
+                f"{self.get_base_url()}/mgawebsite/api/Laws/GetArticles"
+                "?enactments=false"
+            ),
+            observed_at=observed_at,
+            legal_as_of=observed_at[:10],
+            boundary_first=str(first.get("boundary_first") or ""),
+            boundary_last=str(first.get("boundary_last") or ""),
+            bundle_total=len(first_sections),
+            pagination_total=len(first_catalogs),
+            transport={
+                "fixture": False,
+                "catalog_frontier_requested_pages": max(
+                    0,
+                    len(first_catalogs) - 1,
+                ),
+                "first_pass_requested_pages": (
+                    len(first_sections) + len(first_catalogs)
+                ),
+                "grouped_warc_recovery": True,
+                "kind": "shared_archive_aware_plural_json_and_html",
+                "leaf_frontier_requested_pages": len(first_sections),
+                "per_page_archive_loop": False,
+                "retained_replay_network_requests": 0,
+                "root_catalog_requested_pages": 1,
+                "synthetic": False,
             },
         )
 
@@ -535,7 +1626,10 @@ class MarylandScraper(BaseStateScraper):
 
         api_statutes = await self._scrape_api_sections(code_name, max_statutes=limit)
         if api_statutes:
-            return api_statutes if limit is None else api_statutes[: int(limit)]
+            if limit is None:
+                return api_statutes
+            else:
+                return api_statutes[: int(limit)]
 
         if not self._full_corpus_enabled() or max_statutes is not None:
             direct_statutes = await self._scrape_direct_seed_sections(

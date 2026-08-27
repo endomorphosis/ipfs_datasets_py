@@ -31,13 +31,32 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[3]
 
 
-def _committed_receipts() -> Dict[str, Dict[str, Any]]:
+def _raw_committed_receipts() -> Dict[str, Dict[str, Any]]:
     receipt_dir = default_receipt_dir(_repo_root())
     loaded: Dict[str, Dict[str, Any]] = {}
     for letter in COHORT_LETTERS:
         path = receipt_dir / f"cohort_{letter.lower()}.json"
         loaded[letter] = load_json_object(path)
     return loaded
+
+
+def _committed_receipts() -> Dict[str, Dict[str, Any]]:
+    """Promote compact fixtures into synthetic live evidence for unit cases."""
+
+    receipts = _raw_committed_receipts()
+    for payload in receipts.values():
+        payload["evidence_mode"] = "live_full_corpus"
+        payload["proves_software_contract_only"] = False
+        payload.pop("statutes_sample_counts", None)
+        for entry in (payload.get("jurisdiction_receipts") or {}).values():
+            row_count = int(entry.get("row_count") or 0)
+            content = entry.get("content") or {}
+            entry["evidence_mode"] = "live_full_corpus"
+            entry["source_artifact"] = {
+                "row_count": row_count,
+                "sha256": content.get("content_digest"),
+            }
+    return receipts
 
 
 def _write_receipts(tmp_path: Path, receipts: Dict[str, Dict[str, Any]]) -> Path:
@@ -60,8 +79,12 @@ def test_canonical_set_is_exact_51_including_dc() -> None:
         assert code in codes
 
 
-def test_committed_receipts_aggregate_to_pass() -> None:
-    report = aggregate_full_scrape(require_jurisdictions=51, repo_root=_repo_root())
+def test_synthetic_live_receipts_aggregate_to_pass() -> None:
+    report = aggregate_full_scrape(
+        receipts=_committed_receipts(),
+        require_jurisdictions=51,
+        repo_root=_repo_root(),
+    )
     assert report["status"] == "pass"
     assert report["schema"] == REPORT_SCHEMA
     assert report["task_id"] == TASK_ID
@@ -82,17 +105,31 @@ def test_committed_receipts_aggregate_to_pass() -> None:
     assert "hf_" not in serialized or "hf_token" not in serialized.lower()
 
 
-def test_committed_report_round_trip_matches_acceptance() -> None:
+def test_committed_compact_receipts_cannot_certify_full_corpus() -> None:
+    report = aggregate_full_scrape(require_jurisdictions=51, repo_root=_repo_root())
+
+    assert report["status"] == "fail"
+    assert report["totals"]["row_count"] == 101
+    assert report["totals"]["complete_count"] == 0
+    assert report["acceptance"]["live_full_corpus_evidence"] is False
+    assert report["acceptance"]["no_software_contract_receipts"] is False
+    assert any("statutes_sample_counts" in item for item in report["findings"])
+    with pytest.raises(FullScrapeCertifyError):
+        check_coverage_report(report)
+
+
+def test_committed_report_records_the_open_live_evidence_gap() -> None:
     path = default_report_path(_repo_root())
     assert path.is_file(), f"frozen coverage report missing: {path}"
     on_disk = load_coverage_report(path)
     live = aggregate_full_scrape(require_jurisdictions=51, repo_root=_repo_root())
-    check_coverage_report(on_disk)
-    check_coverage_report(live)
     assert acceptance_projection(on_disk) == acceptance_projection(live)
     assert on_disk["canonical_jurisdictions"] == live["canonical_jurisdictions"]
     assert on_disk["observed_jurisdiction_count"] == 51
     assert "DC" in on_disk["matrix"]
+    assert on_disk["status"] == live["status"] == "fail"
+    with pytest.raises(FullScrapeCertifyError):
+        check_coverage_report(on_disk)
 
 
 def test_missing_jurisdiction_fails() -> None:
@@ -174,6 +211,31 @@ def test_secondary_source_fails() -> None:
     assert report["status"] == "fail"
     assert report["acceptance"]["official_source_only"] is False
     assert any("secondary" in item or "unofficial" in item for item in report["findings"])
+
+
+@pytest.mark.parametrize(
+    "authority",
+    [None, "recovery", "unverified", "cache", "direct_insecure_tls"],
+    ids=["missing", "recovery", "unverified", "cache", "direct-insecure-tls"],
+)
+def test_explicit_official_authority_is_required(
+    authority: str | None,
+) -> None:
+    receipts = _committed_receipts()
+    receipt = receipts["F"]["jurisdiction_receipts"]["MA"]
+    receipt["official_source"] = True
+    if authority is None:
+        receipt.pop("source_authority_class", None)
+    else:
+        receipt["source_authority_class"] = authority
+
+    report = aggregate_full_scrape(receipts=receipts, require_jurisdictions=51)
+
+    assert report["status"] == "fail"
+    assert report["acceptance"]["official_source_only"] is False
+    assert report["matrix"]["MA"]["complete"] is False
+    assert report["matrix"]["MA"]["official_source"] is False
+    assert any("explicit official authority required" in item for item in report["findings"])
 
 
 def test_stale_keys_and_truncation_fail() -> None:
@@ -284,9 +346,9 @@ def test_cli_require_51_check_against_committed(
 ) -> None:
     code = main(["--require-jurisdictions", "51", "--check"])
     captured = capsys.readouterr()
-    assert code == 0
-    assert "RESULT: PASS" in captured.out
-    assert "jurisdictions: 51" in captured.out
+    assert code == 1
+    assert "RESULT: FAIL" in captured.err
+    assert '"live_full_corpus_evidence": false' in captured.out
 
 
 def test_script_does_not_upload_or_contact_hub() -> None:

@@ -55,3 +55,31 @@ class UnsafeScraper:
     assert len(findings) == 1
     assert findings[0].kind == "unguarded_seed_or_recovery_return"
     assert findings[0].severity == "error"
+
+
+def test_full_corpus_guard_audit_flags_statutory_text_truncation(tmp_path):
+    audit = _load_audit_module()
+    scraper = tmp_path / "truncated_state.py"
+    scraper.write_text(
+        """
+class TruncatedScraper:
+    def normalize(self, body, row):
+        first = NormalizedStatute(
+            section_name=body[:200],
+            full_text=body[:14000],
+        )
+        row.full_text = body.strip()[:24000]
+        return first
+""",
+        encoding="utf-8",
+    )
+
+    findings = audit.audit_file(state="ZZ", path=scraper, repo_root=tmp_path)
+
+    truncations = [
+        finding for finding in findings if finding.kind == "statutory_text_truncation"
+    ]
+    assert len(truncations) == 2
+    assert all(finding.severity == "error" for finding in truncations)
+    assert {finding.line for finding in truncations} == {6, 8}
+    assert not any("section_name" in finding.detail for finding in findings)

@@ -119,7 +119,8 @@ def test_ohio_chapter_inline_skips_repealed_and_strips_trailers() -> None:
     assert "prior calculation" in rows[0].full_text
     assert "Effective:" not in rows[0].full_text
     assert "Download Authenticated PDF" not in rows[0].full_text
-    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert rows[0].structured_data["source_authority_class"] == "unverified"
+    assert rows[0].structured_data["official_source"] is False
     assert "codes.ohio.gov" in rows[0].source_url
     assert "justia" not in rows[0].source_url
 
@@ -526,7 +527,7 @@ def test_missouri_all_tables_and_norm_body() -> None:
     <div>
       <div>
         <div class="norm">
-          <p class="norm">The offense of murder in the first degree is committed when a person knowingly causes the death of another.</p>
+          <p class="norm">565.020. The offense of murder in the first degree is committed when a person knowingly causes the death of another.</p>
           <div class="foot">---- (L. 1983 S.B. 276)</div>
         </div>
       </div>
@@ -537,6 +538,7 @@ def test_missouri_all_tables_and_norm_body() -> None:
     assert row is not None
     assert "knowingly causes the death" in row.full_text
     assert "L. 1983" not in row.full_text
+    assert statute_from_section_html(section_html, section_number="1.010") is None
 
 
 def test_michigan_mcl_xml_inner_body(tmp_path: Path, monkeypatch) -> None:
@@ -1644,8 +1646,43 @@ def test_maine_mrssection_drops_history(tmp_path: Path, monkeypatch) -> None:
     )
     assert len(rows) == 1
     assert rows[0].section_number == "201"
+    assert rows[0].statute_id == (
+        "Maine Revised Statutes Me. Rev. Stat. tit. 17-A, § 201"
+    )
     assert "intentionally or knowingly" in rows[0].full_text
     assert "PL 1975" not in rows[0].full_text
+
+
+def test_maine_mrssection_identity_is_title_qualified() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maine_section import (
+        parse_maine_section_html,
+    )
+
+    html = """
+    <html><body>
+    <div class="MRSSection">
+      <div class="heading_section">§1. Scope.</div>
+      <p>This provision supplies enough official statutory body text to be a valid Maine section.</p>
+    </div>
+    </body></html>
+    """
+    title_one = parse_maine_section_html(
+        html,
+        source_url="https://legislature.maine.gov/statutes/1/title1sec1.html",
+    )
+    title_seventeen_a = parse_maine_section_html(
+        html,
+        source_url="https://legislature.maine.gov/statutes/17-A/title17-Asec1.html",
+    )
+
+    assert title_one is not None
+    assert title_seventeen_a is not None
+    assert title_one.section_number == title_seventeen_a.section_number == "1"
+    assert title_one.title_number == "1"
+    assert title_seventeen_a.title_number == "17-A"
+    assert title_one.statute_id != title_seventeen_a.statute_id
+    assert title_one.statute_id.endswith("tit. 1, § 1")
+    assert title_seventeen_a.statute_id.endswith("tit. 17-A, § 1")
 
 
 def test_maine_title_toc_chapter_links() -> None:
@@ -1788,7 +1825,7 @@ def test_new_hampshire_nhtoc_listings_and_chapter_toc_dump(
     )
     assert len(rows) == 1
     assert "purposely causes the death" in rows[0].full_text
-    assert "gencourt.state.nh.us" in rows[0].source_url
+    assert rows[0].source_url.startswith("https://gc.nh.gov/rsa/html/")
     assert rows[0].structured_data["source_authority_class"] == "official"
 
 
@@ -1844,7 +1881,10 @@ def test_georgia_archive_strips_nav_and_stays_recovery(tmp_path: Path, monkeypat
     assert "legis.ga.gov" in rows[0].source_url
 
 
-def test_georgia_title_text_dump_is_official(tmp_path: Path, monkeypatch) -> None:
+def test_georgia_title_text_dump_is_unverified_without_origin_receipt(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
     from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia import GeorgiaScraper
     from ipfs_datasets_py.utils import anyio_compat as asyncio
 
@@ -1867,8 +1907,10 @@ Repealed text must not be admitted.
     assert "malice aforethought" in rows[0].full_text
     assert "Repealed text" not in rows[0].full_text
     assert "skip to main" not in rows[0].full_text.lower()
-    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert rows[0].structured_data["source_authority_class"] == "unverified"
     assert rows[0].structured_data["source_kind"] == "official_georgia_title_text"
+    assert rows[0].structured_data["official_source"] is False
+    assert rows[0].structured_data["full_corpus_admissible"] is False
     assert "legis.ga.gov" in rows[0].source_url
     assert "justia" not in rows[0].source_url
 
@@ -1900,7 +1942,8 @@ A person commits the offense of simple assault when he or she attempts to commit
     assert [row.section_number for row in rows] == ["16-5-1", "16-5-20"]
     assert "malice aforethought" in rows[0].full_text
     assert "violent injury" in rows[1].full_text
-    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert rows[0].structured_data["source_authority_class"] == "unverified"
+    assert rows[0].structured_data["official_source"] is False
     urls = common_crawl_cdx_query_urls()
     assert len(urls) == len(COMMON_CRAWL_INDEXES)
     assert "CC-MAIN-2025-33" in urls[0]
@@ -2431,9 +2474,9 @@ async def _north_carolina_fresh_toc(self, url: str, *, timeout: int = 30):
         ("exception", "fetch_exception"),
         ("empty", "fetch_empty"),
         ("short", "fetch_short_response"),
-        ("zero", "parse_zero_statutes"),
+        ("zero", "section_residual_reconciliation_failed"),
         ("truncated", "incomplete_html_document"),
-        ("mismatch", "chapter_identity_mismatch"),
+        ("mismatch", "section_residual_reconciliation_failed"),
     ),
 )
 def test_north_carolina_full_bychapter_fails_closed_with_typed_checkpoint_evidence(
@@ -2484,6 +2527,14 @@ def test_north_carolina_full_bychapter_fails_closed_with_typed_checkpoint_eviden
         "_fetch_official_https_fresh",
         _north_carolina_fresh_toc,
     )
+    async def _unavailable_residual(self, urls, *, frontier_name: str):
+        raise RuntimeError("test residual unavailable")
+
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_north_carolina_section_frontier_batch",
+        _unavailable_residual,
+    )
     monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
     monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(tmp_path))
 
@@ -2499,7 +2550,7 @@ def test_north_carolina_full_bychapter_fails_closed_with_typed_checkpoint_eviden
     assert checkpoint["stage_label"] == "north-carolina:bychapter-incomplete"
     assert checkpoint["statutes_count"] == 0
     assert progress["bychapter_completion_status"] == "incomplete"
-    assert progress["bychapter_completion_schema"].endswith("@2")
+    assert progress["bychapter_completion_schema"].endswith("@3")
     assert progress["bychapter_done"] == []
     assert progress["bychapter_attempted_count"] == 1
     assert progress["bychapter_resolved_count"] == 0
@@ -3001,6 +3052,9 @@ def test_north_carolina_full_bychapter_rejects_independent_section_underfill(
             _north_carolina_completion_test_html(number)
         )
 
+    async def _unavailable_residual(self, urls, *, frontier_name: str):
+        raise RuntimeError("test residual unavailable")
+
     monkeypatch.setattr(NorthCarolinaScraper, "OFFICIAL_CHAPTERS", (("1", "Civil"),))
     monkeypatch.setattr(
         NorthCarolinaScraper,
@@ -3011,6 +3065,11 @@ def test_north_carolina_full_bychapter_rejects_independent_section_underfill(
         NorthCarolinaScraper,
         "_fetch_official_bychapter_page_fresh",
         _one_section_fetch,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_north_carolina_section_frontier_batch",
+        _unavailable_residual,
     )
     monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
     monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(tmp_path))
@@ -3025,7 +3084,7 @@ def test_north_carolina_full_bychapter_rejects_independent_section_underfill(
     checkpoint = json.loads((tmp_path / "STATE-NC-partial.json").read_text())
     evidence = checkpoint["progress"]["bychapter_unresolved_dispositions"][0]
     assert checkpoint["statutes_count"] == 0
-    assert evidence["disposition"] == "section_frontier_underfill"
+    assert evidence["disposition"] == "section_residual_reconciliation_failed"
     assert evidence["section_frontier_source_url"].endswith(
         "/Laws/GeneralStatuteSections/Chapter1"
     )
@@ -3101,32 +3160,27 @@ def test_north_carolina_fresh_fetch_bypasses_shared_fallback_and_records_receipt
     payload = html.encode("utf-8")
     calls: list[str] = []
 
-    class _Response:
-        status = 200
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc, traceback):
-            return False
-
-        def geturl(self) -> str:
-            return (
-                "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/ByChapter/"
-                "Chapter_1.html"
-            )
-
-        def read(self) -> bytes:
-            return payload
-
-    def _urlopen(request, *, timeout: int, context):
-        calls.append(request.full_url)
-        return _Response()
+    async def _fresh_receipt(self, url: str, **kwargs):
+        calls.append(url)
+        assert kwargs["admit_success_body"] is True
+        assert kwargs["verify_tls"] is True
+        return {
+            "status_code": 200,
+            "final_url": url,
+            "body": payload,
+            "observed_at": datetime.now(timezone.utc).isoformat(),
+            "error_type": "",
+            "error_message": "",
+        }
 
     async def _forbidden_fallback(self, url: str, timeout: int = 18) -> str:
         raise AssertionError("fresh full-corpus fetch must bypass shared fallback")
 
-    monkeypatch.setattr("urllib.request.urlopen", _urlopen)
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_fresh_official_response_receipt",
+        _fresh_receipt,
+    )
     monkeypatch.setattr(
         NorthCarolinaScraper,
         "_request_text_direct",
@@ -6048,7 +6102,7 @@ def test_oklahoma_and_wyoming_title_pdf_listings() -> None:
         title_pdf_url as wyoming_title_pdf_url,
     )
 
-    assert TITLES_HTML_URL.endswith("osStatuesTitle.html")
+    assert TITLES_HTML_URL.endswith("osstatuestitle.html")
     assert oklahoma_title_pdf_url("21").endswith("/os21.pdf")
     ok_rows = oklahoma_title_pdf_links(
         '<a href="/OK_Statutes/CompleteTitles/os21.pdf">Title 21 Crimes and Punishments</a>'

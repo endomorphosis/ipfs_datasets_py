@@ -3,7 +3,7 @@
 This module contains the scraper for Idaho statutes from the official state legislative website.
 """
 
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import re
 import os
 import ssl
@@ -13,8 +13,11 @@ import urllib.request
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
-from ipfs_datasets_py.utils import anyio_compat as asyncio
-from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
+from .base_scraper import (
+    BaseStateScraper,
+    NormalizedStatute,
+    current_partial_checkpoint_run_directory,
+)
 from .registry import StateScraperRegistry
 
 
@@ -202,39 +205,19 @@ class IdahoScraper(BaseStateScraper):
         return []
 
     async def _fetch_official_id_html(self, url: str, timeout_seconds: int = 15) -> str:
-        cached = await self._load_page_bytes_from_any_cache(url)
-        if cached:
-            return cached.decode("utf-8", errors="replace")
-
         timeout = max(1, int(timeout_seconds or 15))
-
-        def _request() -> bytes:
-            try:
-                import requests
-
-                response = requests.get(
-                    url,
-                    headers={
-                        "User-Agent": "ipfs-datasets-idaho-statutes-scraper/2.0",
-                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-                    },
-                    timeout=(min(5, timeout), timeout),
-                )
-                if int(response.status_code or 0) != 200:
-                    return b""
-                return bytes(response.content or b"")
-            except Exception:
-                return b""
-
-        try:
-            payload = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
-        except TimeoutError:
-            payload = b""
-        self._record_fetch_event(provider="requests_direct", success=bool(payload))
-        if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
-            return payload.decode("utf-8", errors="replace")
-        return ""
+        payload = await self._fetch_parser_input_with_transport(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-idaho-statutes-scraper/2.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            },
+            timeout_seconds=timeout,
+            allow_archival_fallback=False,
+            media_type="text/html",
+            provider="requests_direct",
+        )
+        return payload.decode("utf-8", errors="replace") if payload else ""
 
     async def _discover_title_links(self, code_url: str) -> List[Tuple[str, str]]:
         try:
@@ -409,7 +392,7 @@ class IdahoScraper(BaseStateScraper):
             section_number=section_number,
             section_name=section_name[:200],
             short_title=section_name[:200],
-            full_text=full_text[:14000],
+            full_text=full_text,
             legal_area=self._identify_legal_area(section_name or chapter_label or title_label),
             source_url=section_url,
             official_cite=f"Idaho Code § {section_number}",
@@ -661,7 +644,7 @@ class _IdahoCheckpoint:
     """Best-effort partial progress checkpoint for Idaho's large corpus crawl."""
 
     def __init__(self, state_code: str) -> None:
-        raw_dir = str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
+        raw_dir = current_partial_checkpoint_run_directory()
         if not raw_dir:
             self.path: Optional[Path] = None
         else:

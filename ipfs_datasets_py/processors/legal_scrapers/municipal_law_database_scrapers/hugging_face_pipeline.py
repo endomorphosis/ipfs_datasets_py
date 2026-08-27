@@ -1,14 +1,17 @@
 import concurrent.futures as cf
 import logging
-from pathlib import Path
 import re
-import time
 import threading
+import time
+from pathlib import Path
 from typing import Any, Optional
 
+from ipfs_datasets_py.huggingface.protected_repo_guard import (
+    require_unprotected_or_runtime,
+)
 
 try:
-    from huggingface_hub import login, HfApi, CommitInfo  # type: ignore
+    from huggingface_hub import CommitInfo, HfApi, login  # type: ignore
     from huggingface_hub.errors import HfHubHTTPError  # type: ignore
 except Exception:  # pragma: no cover
     # Optional dependency: tests mock the API layer, so we only need import safety.
@@ -357,6 +360,7 @@ class UploadToHuggingFaceInParallel:
 
     def _upload_file(self, *, file_path: Path, path_in_repo: str) -> cf.Future:
         """Upload a single file to HuggingFace."""
+        require_unprotected_or_runtime(self.repo_id, method="upload_file")
         _path_in_repo = Path(path_in_repo) / file_path.name
         return self.api.upload_file(  # type: ignore[call-arg]
             path_or_fileobj=file_path,
@@ -374,6 +378,7 @@ class UploadToHuggingFaceInParallel:
         delete_patterns: str,
     ) -> cf.Future:
         """Upload a single folder to HuggingFace."""
+        require_unprotected_or_runtime(self.repo_id, method="upload_folder")
         return self.api.upload_folder(
             folder_path=folder_path,
             path_in_repo=path_in_repo,

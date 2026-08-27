@@ -13,6 +13,10 @@ from typing import Any, Callable, Mapping
 
 import pytest
 
+from ipfs_datasets_py.huggingface.protected_repo_guard import (
+    ProtectedRepoGuardError,
+    require_unprotected_or_runtime,
+)
 from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate import (
     AUTHORIZED_DATASET_REPO_IDS,
     BASELINE_REVISIONS,
@@ -433,6 +437,57 @@ def test_canonical_authorized_request_invokes_callback_once(
     require_canonical_publication(payload)
 
 
+def test_canonical_runtime_context_is_scoped_and_manifest_bound(
+    tmp_path: Path,
+) -> None:
+    repo = _seed_repo(tmp_path, "state_main")
+    payload = _request(repo, "state_main")
+    observed: list[str] = []
+
+    def upload(decision: Any) -> str:
+        require_unprotected_or_runtime(
+            decision.dataset_repo_id,
+            method="create_commit",
+            expected_phase=decision.phase,
+            expected_operation=decision.operation,
+            expected_manifest_digest=decision.final_manifest_digest,
+        )
+        observed.append(decision.final_manifest_digest)
+        return "mutated"
+
+    assert authorize_and_mutate_canonical(payload, upload) == "mutated"
+    assert len(observed) == 1
+    with pytest.raises(ProtectedRepoGuardError):
+        require_unprotected_or_runtime(
+            "justicedao/ipfs_state_laws",
+            method="create_commit",
+            expected_phase="state_main",
+            expected_operation="additive_main_upload",
+            expected_manifest_digest=observed[0],
+        )
+
+
+def test_expected_plan_constraints_fail_closed_before_callback(
+    tmp_path: Path,
+) -> None:
+    repo = _seed_repo(tmp_path, "state_main")
+    _assert_denied(
+        _request(
+            repo,
+            "state_main",
+            extra={
+                "expected_dataset_repo_id": (
+                    "justicedao/ipfs_state_laws"
+                ),
+                "expected_plan_digest": "a" * 64,
+                "expected_policy_proof_digest": "b" * 64,
+                "expected_release_manifest_digest": "c" * 64,
+            },
+        ),
+        fragment="manifest_binding",
+    )
+
+
 def test_staging_does_not_need_later_main_seal(tmp_path: Path) -> None:
     for phase in ("state_staging", "federal_staging"):
         repo = _seed_repo(tmp_path / phase, phase)
@@ -622,37 +677,25 @@ def test_missing_seal_bindings_deny(tmp_path: Path) -> None:
 
 def test_evidence_race_denies_before_callback(tmp_path: Path) -> None:
     repo = _seed_repo(tmp_path, "state_staging")
-    payload = _request(repo, "state_staging")
     calls, upload = _callback_tracker()
     target = repo / RIGHTS_RECEIPT_RELPATH
-    original = evaluate_canonical_publication
-
-    def racing(request: Any, *, mutation_start: Any = None) -> Any:
-        decision = original(request, mutation_start=mutation_start)
-        target.write_text(target.read_text(encoding="utf-8") + "\n", encoding="utf-8")
-        return decision
-
-    import ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime as runtime
-
-    wrapped = runtime.capture_canonical_snapshot
     seen = {"n": 0}
+    base_probe = _probe(phase_requirements("state_staging")["dataset_repo_id"])
 
-    def flaky(request: Any, *, mutation_start: Any = None) -> Any:
-        snap = wrapped(request, mutation_start=mutation_start)
+    def racing_probe(token: str, repo_id: str) -> Mapping[str, Any]:
         seen["n"] += 1
-        if seen["n"] == 1:
-            target.write_text(target.read_text(encoding="utf-8") + "#race\n", encoding="utf-8")
-        return snap
+        if seen["n"] == 2:
+            target.write_text(
+                target.read_text(encoding="utf-8") + "\n",
+                encoding="utf-8",
+            )
+        return base_probe(token, repo_id)
 
-    runtime.capture_canonical_snapshot = flaky  # type: ignore[method-assign]
-    try:
-        with pytest.raises(PublicationGateDeniedError) as exc:
-            authorize_and_mutate_canonical(payload, upload)
-        assert any("evidence_race" in code for code in exc.value.reason_codes)
-        assert calls == []
-    finally:
-        runtime.capture_canonical_snapshot = wrapped  # type: ignore[method-assign]
-    del racing
+    payload = _request(repo, "state_staging", probe=racing_probe)
+    with pytest.raises(PublicationGateDeniedError) as exc:
+        authorize_and_mutate_canonical(payload, upload)
+    assert any("evidence_race" in code for code in exc.value.reason_codes)
+    assert calls == []
 
 
 def test_path_override_keys_cannot_authorize(tmp_path: Path) -> None:

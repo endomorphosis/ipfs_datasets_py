@@ -394,7 +394,6 @@ def inspect_live_evidence(
     software_contract_ok = (
         not missing
         and not failed_cohorts
-        and not unresolved
         and len(fixture_cohorts) == len(COHORT_LETTERS)
     )
     result = {

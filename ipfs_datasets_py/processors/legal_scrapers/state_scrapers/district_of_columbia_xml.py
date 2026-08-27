@@ -8,13 +8,16 @@ Local path: ``DC_CODE_SECTION_XML`` or ``DC_CODE_XML_DIR``.
 
 from __future__ import annotations
 
-import os
 import re
 from pathlib import Path
 from typing import Dict, List, Optional
 from xml.etree import ElementTree as ET
 
-from .base_scraper import NormalizedStatute, StatuteMetadata
+from .base_scraper import (
+    NormalizedStatute,
+    StatuteMetadata,
+    current_state_law_run_environment_value,
+)
 
 _CONTAINER_TAGS = {"para", "container"}
 _LEAF_TEXT_TAGS = {"text", "aftertext"}
@@ -199,7 +202,7 @@ def parse_dc_section_xml(
         chapter_number=chapter_number or None,
         section_number=num,
         section_name=(heading or f"Section {num}")[:200],
-        full_text=body[:14000],
+        full_text=body,
         source_url=f"https://code.dccouncil.gov/us/dc/council/code/sections/{num}",
         official_cite=f"D.C. Code § {num}",
         metadata=StatuteMetadata(),
@@ -241,7 +244,7 @@ def parse_dc_xml_dir(
 
 
 def configured_section_xml_path() -> Optional[Path]:
-    raw = str(os.environ.get("DC_CODE_SECTION_XML") or "").strip()
+    raw = current_state_law_run_environment_value("DC_CODE_SECTION_XML").strip()
     if not raw:
         return None
     path = Path(raw).expanduser()
@@ -249,7 +252,7 @@ def configured_section_xml_path() -> Optional[Path]:
 
 
 def configured_xml_dir() -> Optional[Path]:
-    raw = str(os.environ.get("DC_CODE_XML_DIR") or "").strip()
+    raw = current_state_law_run_environment_value("DC_CODE_XML_DIR").strip()
     if not raw:
         return None
     path = Path(raw).expanduser()

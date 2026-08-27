@@ -16,22 +16,22 @@
   },
   "adr_path": "docs/architecture/legal_corpora_reindex_schema.md",
   "combined": {
-    "admitted_row_count": 102,
-    "deduped_union": 102,
+    "admitted_row_count": 101,
+    "deduped_union": 101,
     "duplicate_row_count": 0,
     "excluded_row_count": 0,
     "history_row_count": 0,
     "jurisdiction_count": 51,
     "quarantine_row_count": 0,
     "recovery_row_count": 0,
-    "shard_sum_before_dedup": 102,
-    "source_item_count": 102
+    "shard_sum_before_dedup": 101,
+    "source_item_count": 101
   },
-  "content_id": "sha256:8395f80b8f383cdfe2d1f0f81a63c809949ba2ca0b9c02d21dc6c6375cbc750d",
+  "content_id": "sha256:0da23ed6db45371f07c18d89b6ece40017ae57cb0584705f617c6e9768a1ee16",
   "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
   "dataset_repo_id": "justicedao/ipfs_state_laws",
   "disposition_counts": {
-    "admitted": 102,
+    "admitted": 101,
     "duplicate": 0,
     "excluded": 0,
     "failed_final": 0,
@@ -40,12 +40,12 @@
     "recovery": 0
   },
   "family_counts": {
-    "bm25": 102,
-    "corpus": 102,
-    "graph": 102,
+    "bm25": 101,
+    "corpus": 101,
+    "graph": 101,
     "quarantine": 0,
     "recovery": 0,
-    "vector": 102
+    "vector": 101
   },
   "goal_id": "LCR-G030",
   "includes_dc": true,
@@ -53,19 +53,19 @@
     "cohort_receipts": [
       {
         "cohort": "A",
-        "content_id": "sha256:63baabdf2cb5e26f2365b706ad7d0a19c8dea5f82ec3e819097f52155fbf5b06",
+        "content_id": "sha256:71712bfcdaab8eb9184593407ee775c01e81bad0f14216d759fa2a3feb05ae2a",
         "path": "docs/reports/legal_corpora_reindex/cohort_a.json",
         "source": "file"
       },
       {
         "cohort": "B",
-        "content_id": "sha256:f5fe77089031c2636f213de7554f09438885b23e4ab33b9f1d68a53c552975cf",
+        "content_id": "sha256:66a57c062be94f4a6dbe56df85bd210c5f7b053757099e1eaeda71ef9d926b76",
         "path": "docs/reports/legal_corpora_reindex/cohort_b.json",
         "source": "file"
       },
       {
         "cohort": "C",
-        "content_id": "sha256:b5fa54683e5a2e84ec44b4e851e0625bc9a71c140f793b066789a391fcbffc8b",
+        "content_id": "sha256:eee372b1ed1b50283dd681e67fc1b9bba3b558837a54b798ef7e75212daccfd5",
         "path": "docs/reports/legal_corpora_reindex/cohort_c.json",
         "source": "file"
       },
@@ -77,7 +77,7 @@
       },
       {
         "cohort": "E",
-        "content_id": "sha256:8b11b6f6f67b99f018e7b543943ebfd5ca663396cd3e58492f759f0bb1f5a459",
+        "content_id": "sha256:0b29d222d3e0583a9a1bff1e72b4b00f50d4ad78cfe8ad29f13c0b36e65cc23f",
         "path": "docs/reports/legal_corpora_reindex/cohort_e.json",
         "source": "file"
       },
@@ -89,7 +89,7 @@
       },
       {
         "cohort": "G",
-        "content_id": "sha256:18a29f4598bb7c955f097261ea5a85e47caa1329db0a4fe3a02de2c485d311b3",
+        "content_id": "sha256:f728a3f3be824973ca69ca9695d9c22cef29add548632fac511e0ea9ac54b0ac",
         "path": "docs/reports/legal_corpora_reindex/cohort_g.json",
         "source": "file"
       },
@@ -113,13 +113,13 @@
       },
       {
         "cohort": "K",
-        "content_id": "sha256:bd6bb0f672f34248b05b4dbbb73a4a97adfe357bc231aeb8380d824f344b9362",
+        "content_id": "sha256:502e5eb243b0016003e28c96d78ca1852c5b629e20fd77db63e287a16bff4118",
         "path": "docs/reports/legal_corpora_reindex/cohort_k.json",
         "source": "file"
       },
       {
         "cohort": "L",
-        "content_id": "sha256:4aa2066c4029f8073adac1ea97e899732982c325d5b35d87f2dfdb674a79793c",
+        "content_id": "sha256:a3cc04b9e39f82064bdbf1bb5774ef5db01f133f54989f3bd18a0e3cf5027c70",
         "path": "docs/reports/legal_corpora_reindex/cohort_l.json",
         "source": "file"
       },
@@ -476,13 +476,12 @@
       "shard_count_before_dedup": 2
     },
     {
-      "admitted_count": 2,
+      "admitted_count": 1,
       "jurisdiction": "NV",
       "legal_ids": [
-        "state:NV:nevada-revised-statutes:1:1.010",
-        "state:NV:nevada-revised-statutes:1:1.020"
+        "state:NV:nevada-revised-statutes:1:1.010"
       ],
-      "shard_count_before_dedup": 2
+      "shard_count_before_dedup": 1
     },
     {
       "admitted_count": 2,
@@ -671,7 +670,7 @@
     "duplicate": 0,
     "excluded": 0,
     "failed_final": 0,
-    "fetched": 102,
+    "fetched": 101,
     "quarantined": 0
   },
   "status": "pass",

@@ -23,6 +23,7 @@ from ipfs_datasets_py.retrieval.hf_graphrag.artifacts import (
     confine_path,
     describe_file,
     file_digest,
+    manifest_descriptor,
     verify_descriptor,
     write_bounded_shards,
     write_fixture_release,
@@ -56,7 +57,6 @@ from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
     validate_physical_row_count,
 )
 
-
 # ---------------------------------------------------------------------------
 # Schema constants and descriptors
 # ---------------------------------------------------------------------------
@@ -87,6 +87,17 @@ def test_example_descriptor_and_compact_index_round_trip():
     assert CompactIndexRow.from_mapping(index_row.to_dict()).to_dict()[
         "relative_path"
     ] == index_row.relative_path
+
+
+def test_manifest_descriptor_adds_shared_resolver_cid_alias():
+    payload = example_descriptor_payload()
+    payload["content_cid"] = f"sha256:{payload['sha256']}"
+    descriptor = ArtifactDescriptor.from_mapping(payload)
+
+    manifest = manifest_descriptor(descriptor)
+
+    assert manifest["content_cid"] == descriptor.content_cid
+    assert manifest["cid"] == descriptor.content_cid
 
 
 def test_descriptor_rejects_oversize_row_count():

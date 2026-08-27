@@ -9,18 +9,61 @@ Adapted from Vaquill-AI/open-us-law ``wi_bulk.parse`` (Apache-2.0).
 from __future__ import annotations
 
 import copy
+import hashlib
 import os
 import re
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Mapping, Optional, Sequence, Set, Tuple
+from urllib.parse import urljoin
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
 BASE = "https://docs.legis.wisconsin.gov"
 _WS_RE = re.compile(r"\s+")
 _SEC_ANCHOR_RE = re.compile(r"/document/statutes/(\d+\.\d+\w*)(?:[/#?]|$)")
+_TOC_LEAD_SECTION_RE = re.compile(r"^(\d+\.\d+\w*)\b")
 _HIST_LEAD_RE = re.compile(r"^\s*[\d.]+\w*\s+History\s+History:\s*", re.IGNORECASE)
 _RESERVED_KEYWORDS = ("[repealed]", "[reserved]", "[expired]", "(repealed)", "(reserved)")
+
+
+@dataclass(frozen=True)
+class WisconsinChapterFrontierWindow:
+    """One retained viewer window while the chapter TOC is being exhausted."""
+
+    chapter_number: str
+    section_rows: Tuple[Tuple[str, str, str], ...]
+    body_started: bool
+    next_url: str
+    terminal_disposition: str
+    residuals: Tuple[Mapping[str, str], ...]
+
+
+@dataclass(frozen=True)
+class WisconsinSectionWindow:
+    """Source-bound blocks for one requested section in one viewer window."""
+
+    section_number: str
+    encountered_sections: Tuple[str, ...]
+    blocks: Tuple[Tuple[str, str], ...]
+    title: str
+    terminal_disposition: str
+    next_url: str
+    target_seen: bool
+    target_complete: bool
+    residuals: Tuple[Mapping[str, str], ...]
+
+
+@dataclass(frozen=True)
+class WisconsinSectionParseResult:
+    """Exact one-candidate parser algebra for a section viewer traversal."""
+
+    section_number: str
+    statute: Optional[NormalizedStatute]
+    terminal_section: Optional[Mapping[str, str]]
+    residuals: Tuple[Mapping[str, str], ...]
+    source_block_count: int
+    closed: bool
 
 
 def chapter_of(section_number: str) -> str:
@@ -39,6 +82,339 @@ def _clean(raw: str) -> str:
 
 def _is_qsatxt(cls_list) -> bool:
     return any(str(item).startswith("qsatxt_") for item in (cls_list or []))
+
+
+def _terminal_disposition(text: str) -> str:
+    folded = _clean(text).casefold()
+    if "[repealed]" in folded or "(repealed)" in folded:
+        return "repealed"
+    if "[reserved]" in folded or "(reserved)" in folded:
+        return "reserved"
+    if "[expired]" in folded or "(expired)" in folded:
+        return "expired"
+    if "[renumbered]" in folded or "(renumbered)" in folded:
+        return "renumbered"
+    return ""
+
+
+def _viewer_down_url(soup, *, page_url: str) -> str:
+    for anchor in soup.select(".navigation a[href]"):
+        href = str(anchor.get("href") or "").strip()
+        label = _clean(anchor.get_text(" ")).casefold()
+        if label == "down" or re.search(r"(?:[?&])down=1(?:&|$)", href):
+            return urljoin(page_url or BASE, href)
+    return ""
+
+
+def parse_wisconsin_chapter_frontier_window(
+    html: str,
+    *,
+    chapter: str,
+    page_url: str,
+) -> WisconsinChapterFrontierWindow:
+    """Parse only the official chapter TOC run from one retained viewer window.
+
+    The viewer is a bounded sliding window.  Large chapter TOCs therefore
+    require following its source-derived ``Down`` links until statutory body
+    blocks begin.  Ordinary citations in body text are deliberately excluded;
+    only ``qstoc_entry`` links are frontier members.
+    """
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return WisconsinChapterFrontierWindow(
+            str(chapter), (), False, "", "", ({"reason": "beautifulsoup_unavailable"},)
+        )
+    soup = BeautifulSoup(html or "", "html.parser")
+    doc = soup.find(id="document") or soup
+    chapter_token = str(chapter or "").strip()
+    rows: List[Tuple[str, str, str]] = []
+    seen: Set[str] = set()
+    residuals: List[Mapping[str, str]] = []
+    for node in doc.find_all("div"):
+        classes = {str(item) for item in (node.get("class") or [])}
+        if "qstoc_entry" not in classes:
+            continue
+        label = _clean(node.get_text(" "))
+        lead_match = _TOC_LEAD_SECTION_RE.match(label)
+        lead_section = lead_match.group(1) if lead_match else ""
+        if lead_section and chapter_of(lead_section) != chapter_token:
+            lead_section = ""
+        candidates: List[str] = []
+        for anchor in node.find_all("a", href=True):
+            match = _SEC_ANCHOR_RE.search(str(anchor.get("href") or ""))
+            if match and chapter_of(match.group(1)) == chapter_token:
+                candidates.append(match.group(1))
+        candidate_sections = list(dict.fromkeys(candidates))
+        if lead_section:
+            # The leading TOC token is the source identity.  Later links in a
+            # title are ordinary cross-references, and some operative source
+            # rows (for example s. 854.30 in the retained 2023-24 viewer) omit
+            # the self-link while still exposing an exact section identity.
+            if candidate_sections and lead_section not in candidate_sections:
+                residuals.append(
+                    {
+                        "reason": "toc_entry_leading_section_link_mismatch",
+                        "chapter_number": chapter_token,
+                        "section_number": lead_section,
+                        "source_url": str(page_url or ""),
+                    }
+                )
+                continue
+            section = lead_section
+        elif len(candidate_sections) == 1:
+            section = candidate_sections[0]
+        else:
+            residuals.append(
+                {
+                    "reason": "toc_entry_without_exact_section_link",
+                    "chapter_number": chapter_token,
+                    "source_url": str(page_url or ""),
+                }
+            )
+            continue
+        if section in seen:
+            residuals.append(
+                {
+                    "reason": "duplicate_section_in_toc_window",
+                    "section_number": section,
+                    "source_url": str(page_url or ""),
+                }
+            )
+            continue
+        seen.add(section)
+        rows.append((section, label, section_url(section)))
+
+    body_nodes = [
+        node
+        for node in doc.find_all("div")
+        if _is_qsatxt(node.get("class") or [])
+        and chapter_of(str(node.get("data-section") or "")) == chapter_token
+    ]
+    if rows and body_nodes:
+        first_body = min(getattr(node, "sourceline", 0) or 0 for node in body_nodes)
+        toc_lines = [
+            getattr(node, "sourceline", 0) or 0
+            for node in doc.find_all("div", class_="qstoc_entry")
+        ]
+        if first_body and any(line and line > first_body for line in toc_lines):
+            residuals.append(
+                {
+                    "reason": "toc_entry_after_statutory_body_started",
+                    "chapter_number": chapter_token,
+                    "source_url": str(page_url or ""),
+                }
+            )
+
+    page_text = _clean(doc.get_text(" "))
+    terminal = ""
+    if not rows and not body_nodes:
+        terminal = _terminal_disposition(page_text)
+    return WisconsinChapterFrontierWindow(
+        chapter_number=chapter_token,
+        section_rows=tuple(rows),
+        body_started=bool(body_nodes),
+        next_url=_viewer_down_url(soup, page_url=page_url),
+        terminal_disposition=terminal,
+        residuals=tuple(residuals),
+    )
+
+
+def parse_wisconsin_section_window(
+    html: str,
+    *,
+    section_number: str,
+    page_url: str,
+) -> WisconsinSectionWindow:
+    """Project one requested section from one official sliding viewer window."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return WisconsinSectionWindow(
+            str(section_number), (), (), "", "", "", False, False,
+            ({"reason": "beautifulsoup_unavailable"},),
+        )
+    soup = BeautifulSoup(html or "", "html.parser")
+    doc = soup.find(id="document") or soup
+    target = str(section_number or "").strip()
+    encountered: List[str] = []
+    blocks: List[Tuple[str, str]] = []
+    title = ""
+    residuals: List[Mapping[str, str]] = []
+    target_index = -1
+    later_other = False
+    seen_block_ids: Dict[str, str] = {}
+    for node in doc.find_all("div"):
+        if not _is_qsatxt(node.get("class") or []):
+            continue
+        section = str(node.get("data-section") or "").strip()
+        if section and section not in encountered:
+            encountered.append(section)
+        if section != target:
+            if target_index >= 0:
+                later_other = True
+            continue
+        if target_index < 0:
+            target_index = len(encountered) - 1
+        node_copy = copy.copy(node)
+        title_span = node_copy.find("span", class_="qstitle_sect")
+        if title_span is not None:
+            candidate_title = _clean(title_span.get_text(" "))
+            if candidate_title and title and candidate_title != title:
+                residuals.append(
+                    {
+                        "reason": "conflicting_section_titles_in_window",
+                        "section_number": target,
+                        "source_url": str(page_url or ""),
+                    }
+                )
+            elif candidate_title:
+                title = candidate_title
+        for span in node_copy.find_all("span", class_="qsnum_sect"):
+            span.decompose()
+        for span in node_copy.find_all("span", class_="qstitle_sect"):
+            span.decompose()
+        for anchor in node_copy.find_all("a", class_="reference"):
+            anchor.decompose()
+        text = _clean(node_copy.get_text(" "))
+        identity = str(node.get("data-path") or "").strip()
+        if not identity:
+            identity = "sha256:" + hashlib.sha256(
+                f"{target}\0{text}".encode("utf-8")
+            ).hexdigest()
+        previous = seen_block_ids.get(identity)
+        if previous is not None:
+            if previous != text:
+                residuals.append(
+                    {
+                        "reason": "conflicting_repeated_section_block",
+                        "section_number": target,
+                        "block_identity": identity,
+                    }
+                )
+            continue
+        seen_block_ids[identity] = text
+        if text:
+            blocks.append((identity, text))
+
+    next_url = _viewer_down_url(soup, page_url=page_url)
+    target_seen = target_index >= 0
+    terminal = _terminal_disposition(f"{title} {' '.join(text for _, text in blocks)}")
+    target_complete = bool(
+        target_seen and (terminal or later_other or not next_url)
+    )
+    return WisconsinSectionWindow(
+        section_number=target,
+        encountered_sections=tuple(encountered),
+        blocks=tuple(blocks),
+        title=title,
+        terminal_disposition=terminal,
+        next_url=next_url,
+        target_seen=target_seen,
+        target_complete=target_complete,
+        residuals=tuple(residuals),
+    )
+
+
+def close_wisconsin_section_windows(
+    windows: Sequence[WisconsinSectionWindow],
+    *,
+    section_number: str,
+    code_name: str = "Wisconsin Statutes",
+    source_url: str = "",
+    traversal_closed: bool,
+) -> WisconsinSectionParseResult:
+    """Reconcile one source candidate as operative, terminal, or residual."""
+
+    target = str(section_number or "").strip()
+    residuals: List[Mapping[str, str]] = []
+    blocks: Dict[str, str] = {}
+    title = ""
+    terminal = ""
+    for window in windows:
+        if window.section_number != target:
+            residuals.append(
+                {"reason": "window_changed_section_identity", "section_number": target}
+            )
+            continue
+        residuals.extend(window.residuals)
+        if window.title:
+            if title and title != window.title:
+                residuals.append(
+                    {"reason": "conflicting_section_titles", "section_number": target}
+                )
+            else:
+                title = window.title
+        if window.terminal_disposition:
+            if terminal and terminal != window.terminal_disposition:
+                residuals.append(
+                    {"reason": "conflicting_terminal_dispositions", "section_number": target}
+                )
+            terminal = window.terminal_disposition
+        for identity, text in window.blocks:
+            previous = blocks.get(identity)
+            if previous is not None and previous != text:
+                residuals.append(
+                    {
+                        "reason": "conflicting_replayed_section_block",
+                        "section_number": target,
+                        "block_identity": identity,
+                    }
+                )
+            else:
+                blocks.setdefault(identity, text)
+    if not windows or not windows[0].target_seen:
+        residuals.append({"reason": "requested_section_not_rendered", "section_number": target})
+    if not traversal_closed:
+        residuals.append({"reason": "section_viewer_traversal_not_closed", "section_number": target})
+    if residuals:
+        return WisconsinSectionParseResult(target, None, None, tuple(residuals), len(blocks), False)
+    if terminal:
+        return WisconsinSectionParseResult(
+            target,
+            None,
+            {
+                "section_number": target,
+                "disposition": terminal,
+                "source_url": source_url or section_url(target),
+            },
+            (),
+            len(blocks),
+            True,
+        )
+    body = _clean(" ".join(blocks.values()))
+    if not body:
+        return WisconsinSectionParseResult(
+            target,
+            None,
+            None,
+            ({"reason": "operative_section_body_missing", "section_number": target},),
+            len(blocks),
+            False,
+        )
+    chapter = chapter_of(target)
+    statute = NormalizedStatute(
+        state_code="WI",
+        state_name="Wisconsin",
+        statute_id=f"{code_name} § {target}",
+        code_name=code_name,
+        chapter_number=chapter,
+        section_number=target,
+        section_name=(title or f"Section {target}")[:200],
+        full_text=body,
+        source_url=source_url or section_url(target),
+        official_cite=f"Wis. Stat. § {target}",
+        metadata=StatuteMetadata(),
+        structured_data={
+            "source_kind": "official_wisconsin_qsatxt",
+            "source_authority_class": "official",
+            "discovery_method": "official_chapter_toc_plural_viewer_frontier",
+            "skip_hydrate": True,
+        },
+    )
+    return WisconsinSectionParseResult(target, statute, None, (), len(blocks), True)
 
 
 def section_anchors(html: str, chapter: Optional[str] = None) -> Set[str]:
@@ -154,7 +530,7 @@ def statutes_from_page(
                 chapter_number=chapter,
                 section_number=sec,
                 section_name=(data.get("title") or f"Section {sec}")[:200],
-                full_text=body[:14000],
+                full_text=body,
                 source_url=section_url(sec),
                 official_cite=f"Wis. Stat. § {sec}",
                 metadata=StatuteMetadata(),

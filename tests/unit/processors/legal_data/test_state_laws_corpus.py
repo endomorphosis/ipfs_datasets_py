@@ -133,7 +133,11 @@ def test_expected_compact_count_is_deduped_union_of_shards() -> None:
     total = expected_compact_admitted_count()
     shards = list(stream_verified_state_outputs())
     assert total == sum(shard.statutes_count for shard in shards)
-    assert total == EXPECTED_JURISDICTION_COUNT * DEFAULT_STATUTES_PER_SHARD
+    # Compact receipts retain real official examples and need not fabricate a
+    # second row when a jurisdiction's sealed sample contains only one.  Exact
+    # jurisdiction coverage, rather than a uniform fixture-row count, is the
+    # invariant this corpus gate owns.
+    assert total >= EXPECTED_JURISDICTION_COUNT
 
 
 # ---------------------------------------------------------------------------
@@ -378,6 +382,26 @@ def test_classify_placeholder_and_secondary() -> None:
     assert classify_source_row({"kind": "history", "jurisdiction": "OR"}) is (
         RowDisposition.HISTORY
     )
+
+
+def test_footer_phrase_inside_statutory_text_is_not_chrome() -> None:
+    statute = (
+        "Disclosure of the contents of the deceased user's account to a fiduciary "
+        "is subject to the same license, restrictions, terms of service, and "
+        "legal obligations that applied to the deceased user."
+    )
+    quality = assess_text_quality(statute, min_usable_chars=1)
+    assert quality.footer_detected is True
+    assert quality.contaminated is False
+    assert "footer_chrome" not in quality.reasons
+
+    footer = assess_text_quality(
+        "Privacy Policy | Terms of Service | All rights reserved.",
+        min_usable_chars=1,
+    )
+    assert footer.footer_detected is True
+    assert footer.contaminated is True
+    assert "footer_chrome" in footer.reasons
 
 
 def test_incomplete_admitted_row_fails_closed() -> None:

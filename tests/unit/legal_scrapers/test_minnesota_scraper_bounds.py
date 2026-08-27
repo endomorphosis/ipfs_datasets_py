@@ -482,6 +482,11 @@ async def test_alabama_graphql_scrape_code_honors_max_statutes(monkeypatch) -> N
                 "scaffold": "†∫codeId†parentId†displayId∫2∫14512†2∫14515†14512†1-1-1∫14528†14512†1-1-2"
             }
         assert variables == {"parentId": ["14512"]}
+        scraper._last_page_fetch_transport_evidence = {
+            "content_sha256": "c" * 64,
+            "official_url": scraper.GRAPHQL_URL,
+            "source_transport": "direct",
+        }
         return {
             "codeItems": {
                 "data": [
@@ -521,6 +526,49 @@ async def test_alabama_graphql_scrape_code_honors_max_statutes(monkeypatch) -> N
         == "https://alison.legislature.state.al.us/code-of-alabama?section=1-1-1"
     )
     assert statutes[0].structured_data["source_kind"] == "official_alison_graphql"
+    assert statutes[0].structured_data["content_sha256"] == "c" * 64
+    assert statutes[0].structured_data["transport_receipt"] == {
+        "content_sha256": "c" * 64,
+        "official_url": scraper.GRAPHQL_URL,
+        "source_transport": "direct",
+    }
+
+
+def test_alabama_keeps_distinct_official_nodes_with_same_printed_citation() -> None:
+    scraper = AlabamaScraper("AL", "Alabama")
+    rows = [
+        NormalizedStatute(
+            state_code="AL",
+            state_name="Alabama",
+            statute_id="Alabama Code § 45-2-21 [ALISON:33503]",
+            code_name="Alabama Code",
+            section_number="45-2-21",
+            full_text="This subpart applies only to Baldwin County.",
+            official_cite="Ala. Code § 45-2-21",
+            structured_data={"code_id": "33503", "parent_id": "32586"},
+        ),
+        NormalizedStatute(
+            state_code="AL",
+            state_name="Alabama",
+            statute_id="Alabama Code § 45-2-21 [ALISON:33987]",
+            code_name="Alabama Code",
+            section_number="45-2-21",
+            full_text="The board may grant draft or keg beer permits in Barbour County.",
+            official_cite="Ala. Code § 45-2-21",
+            structured_data={"code_id": "33987", "parent_id": "32719"},
+        ),
+    ]
+
+    retained = scraper._disambiguate_alison_citation_collisions(rows)
+
+    assert [row.statute_id for row in retained] == [
+        "Alabama Code § 45-2-21 [ALISON:33503]",
+        "Alabama Code § 45-2-21 [ALISON:33987]",
+    ]
+    assert {row.section_number for row in retained} == {"45-2-21"}
+    assert {row.official_cite for row in retained} == {"Ala. Code § 45-2-21"}
+    assert all(row.structured_data["citation_collision"] is True for row in retained)
+    assert all(row.structured_data["citation_collision_count"] == 2 for row in retained)
 
 
 @pytest.mark.anyio

@@ -10,7 +10,6 @@ Covers the G021 acceptance subset:
 from __future__ import annotations
 
 import json
-import shutil
 from hashlib import sha256
 from pathlib import Path
 from threading import Barrier, Lock
@@ -113,7 +112,11 @@ class _FakeHfApi:
         self.regular_git_paths = set(regular_git_paths)
         self.calls: list[dict] = []
         self.read_calls: list[tuple[str, str]] = []
-        self.remote_files: dict[str, Path] = {}
+        self.remote_files: dict[str, Path | bytes] = {}
+
+    @staticmethod
+    def _remote_bytes(source: Path | bytes) -> bytes:
+        return source if isinstance(source, bytes) else source.read_bytes()
 
     def repo_info(self, **kwargs):
         self.read_calls.append(("repo_info", str(kwargs.get("revision"))))
@@ -126,15 +129,16 @@ class _FakeHfApi:
         for requested in kwargs.get("paths") or []:
             if requested in self.remote_files:
                 source = self.remote_files[requested]
-                body_sha = sha256(source.read_bytes()).hexdigest()
+                body = self._remote_bytes(source)
+                body_sha = sha256(body).hexdigest()
                 result.append(
                     {
                         "path": requested,
-                        "size": source.stat().st_size,
+                        "size": len(body),
                         "lfs": (
                             None
                             if requested in self.regular_git_paths
-                            else {"sha256": body_sha, "size": source.stat().st_size}
+                            else {"sha256": body_sha, "size": len(body)}
                         ),
                     }
                 )
@@ -150,7 +154,7 @@ class _FakeHfApi:
         local_dir = Path(kwargs["local_dir"])
         target = local_dir / remote_path
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(self.remote_files[remote_path], target)
+        target.write_bytes(self._remote_bytes(self.remote_files[remote_path]))
         return str(target)
 
     def create_commit(self, **kwargs):
@@ -167,7 +171,10 @@ class _FakeHfApi:
                 "path_or_fileobj"
             )
             assert not isinstance(source, (bytes, bytearray))
-            self.remote_files[path] = Path(source)
+            position = source.tell()
+            source.seek(0)
+            self.remote_files[path] = source.read()
+            source.seek(position)
         self.head_sha = self.commit_sha
         return {"commit_sha": self.commit_sha}
 

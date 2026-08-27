@@ -43,7 +43,7 @@ import unicodedata
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Final, Optional, Union
 
 from ipfs_datasets_py.processors.legal_data.open_us_law_schema import (
@@ -51,10 +51,10 @@ from ipfs_datasets_py.processors.legal_data.open_us_law_schema import (
     DEFAULT_EMBEDDING_MODEL_ID,
     DEFAULT_EMBEDDING_MODEL_REVISION,
     DEFAULT_MODEL_TOKEN_CEILING,
+    RELEASE_PROFILE,
     InvalidDigestError,
     MutableReferenceError,
     PositionalIdentityError,
-    RELEASE_PROFILE,
     reject_positional_durable_identity,
     require_immutable_revision,
     validate_entry_cid,
@@ -82,6 +82,10 @@ PINNED_MAX_TOKENS: Final = DEFAULT_MODEL_TOKEN_CEILING
 PINNED_POOLING: Final = "mean"
 PINNED_NORMALIZATION: Final = "l2"
 PINNED_INPUT_FIELDS: Final = ("text",)
+PINNED_TOKEN_COUNTER_ID: Final = (
+    f"huggingface-auto-tokenizer:{PINNED_MODEL_ID}@{PINNED_MODEL_REVISION}:"
+    "special-tokens/v1"
+)
 
 PRODUCTION_BACKEND: Final = "sentence_transformers"
 PRODUCTION_PROVIDER: Final = "huggingface"
@@ -256,6 +260,14 @@ def _sha256_hex(data: bytes | str) -> str:
     if isinstance(data, str):
         data = data.encode("utf-8")
     return hashlib.sha256(data).hexdigest()
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
 
 def canonical_json_bytes(payload: Any) -> bytes:
@@ -595,29 +607,66 @@ def collect_runtime_evidence(device: str) -> dict[str, Any]:
 
 
 def collect_model_file_evidence(model: Any) -> dict[str, Any]:
-    """Best-effort model-file/revision evidence from a loaded model object."""
+    """Hash the locally loaded immutable model snapshot when it is discoverable."""
 
     files: list[dict[str, str]] = []
     candidates: list[Path] = []
-    for attr in ("cache_folder", "name_or_path", "model_name_or_path"):
-        value = getattr(model, attr, None)
-        if isinstance(value, str) and value.strip():
-            path = Path(value)
-            if path.exists():
-                candidates.append(path)
-    config = getattr(model, "_first_module", None) or getattr(model, "auto_model", None)
-    for owner in (model, config):
+    owners: list[Any] = [model]
+    first_module = getattr(model, "_first_module", None)
+    if callable(first_module):
+        try:
+            first_module = first_module()
+        except Exception:  # noqa: BLE001 - optional model adapter boundary
+            first_module = None
+    if first_module is not None:
+        owners.append(first_module)
+        auto_model = getattr(first_module, "auto_model", None)
+        if auto_model is not None:
+            owners.extend((auto_model, getattr(auto_model, "config", None)))
+    auto_model = getattr(model, "auto_model", None)
+    if auto_model is not None:
+        owners.extend((auto_model, getattr(auto_model, "config", None)))
+    tokenizer = getattr(model, "tokenizer", None)
+    if tokenizer is not None:
+        owners.append(tokenizer)
+
+    pinned_identity_seen = False
+    for owner in owners:
         if owner is None:
             continue
-        for attr in ("name_or_path", "model_name_or_path"):
+        for attr in (
+            "cache_folder",
+            "name_or_path",
+            "model_name_or_path",
+            "_name_or_path",
+        ):
             raw = getattr(owner, attr, None)
             if isinstance(raw, str) and raw.strip():
+                pinned_identity_seen |= raw.strip() == PINNED_MODEL_ID
                 path = Path(raw)
                 if path.exists():
                     candidates.append(path)
+
+    # SentenceTransformers 5 exposes the repository identity on its nested
+    # transformers config, but not the resolved snapshot directory. Resolve
+    # only already-cached bytes at the exact immutable revision; never fetch
+    # new or mutable model state while collecting evidence.
+    if pinned_identity_seen and not candidates:
+        try:
+            from huggingface_hub import snapshot_download
+
+            snapshot = snapshot_download(
+                repo_id=PINNED_MODEL_ID,
+                revision=PINNED_MODEL_REVISION,
+                local_files_only=True,
+            )
+            candidates.append(Path(snapshot))
+        except Exception:  # noqa: BLE001 - absent local cache is valid evidence
+            snapshot = None
+
     seen: set[str] = set()
     for candidate in candidates:
-        resolved = str(candidate)
+        resolved = str(candidate.resolve())
         if resolved in seen:
             continue
         seen.add(resolved)
@@ -625,11 +674,11 @@ def collect_model_file_evidence(model: Any) -> dict[str, Any]:
             files.append(
                 {
                     "path": candidate.name,
-                    "sha256": _sha256_hex(candidate.read_bytes()),
+                    "sha256": _sha256_file(candidate),
                 }
             )
         elif candidate.is_dir():
-            for child in sorted(candidate.iterdir()):
+            for child in sorted(candidate.rglob("*")):
                 if child.is_file() and child.suffix in {
                     ".bin",
                     ".safetensors",
@@ -638,10 +687,11 @@ def collect_model_file_evidence(model: Any) -> dict[str, Any]:
                 }:
                     files.append(
                         {
-                            "path": child.name,
-                            "sha256": _sha256_hex(child.read_bytes()),
+                            "path": child.relative_to(candidate).as_posix(),
+                            "sha256": _sha256_file(child),
                         }
                     )
+    files.sort(key=lambda item: (item["path"], item["sha256"]))
     return {
         "file_count": len(files),
         "files": files[:32],
@@ -1342,6 +1392,94 @@ def release_authorization_reasons(
     return tuple(reasons)
 
 
+def production_inference_evidence_reasons(
+    evidence: Mapping[str, Any] | Any,
+) -> tuple[str, ...]:
+    """Validate durable evidence for pinned real GTE-small inference.
+
+    This predicate is intentionally independent of a dataset adapter.  A
+    checkpoint boolean is not evidence by itself: production consumers must
+    also see the exact immutable model revision, hashed local model files,
+    live runtime provenance, and the concrete 512-token truncation settings.
+    """
+
+    if not isinstance(evidence, Mapping):
+        return ("inference_evidence_missing",)
+    reasons: list[str] = []
+    if evidence.get("real_inference") is not True:
+        reasons.append("real_inference_required")
+    if evidence.get("embedder_kind") != PRODUCTION_BACKEND:
+        reasons.append("backend_not_sentence_transformers")
+
+    truncation = evidence.get("truncation")
+    if not isinstance(truncation, Mapping) or (
+        truncation.get("applied") is not True
+        or truncation.get("max_tokens") != PINNED_MAX_TOKENS
+        or truncation.get("max_seq_length") != PINNED_MAX_TOKENS
+        or evidence.get("truncation_satisfies_contract") is not True
+    ):
+        reasons.append("real_512_token_truncation_missing")
+
+    model_files = evidence.get("model_file_evidence")
+    if not isinstance(model_files, Mapping):
+        reasons.append("model_file_evidence_missing")
+    else:
+        files = model_files.get("files")
+        file_count = model_files.get("file_count")
+        if model_files.get("revision") != PINNED_MODEL_REVISION:
+            reasons.append("model_revision_evidence_mismatch")
+        if (
+            isinstance(file_count, bool)
+            or not isinstance(file_count, int)
+            or file_count < 1
+            or not isinstance(files, Sequence)
+            or isinstance(files, (str, bytes, bytearray))
+            or not files
+            or len(files) > file_count
+        ):
+            reasons.append("model_file_hashes_missing")
+        else:
+            observed_paths: set[str] = set()
+            malformed = False
+            for item in files:
+                if not isinstance(item, Mapping):
+                    malformed = True
+                    break
+                path = str(item.get("path") or "")
+                digest = str(item.get("sha256") or "")
+                pure_path = PurePosixPath(path)
+                if (
+                    not path
+                    or pure_path.is_absolute()
+                    or ".." in pure_path.parts
+                    or path in observed_paths
+                    or re.fullmatch(r"[0-9a-f]{64}", digest) is None
+                ):
+                    malformed = True
+                    break
+                observed_paths.add(path)
+            if malformed:
+                reasons.append("model_file_hashes_malformed")
+
+    device = evidence.get("device")
+    runtime = device.get("runtime") if isinstance(device, Mapping) else None
+    if not isinstance(runtime, Mapping) or (
+        runtime.get("sentence_transformers_available") is not True
+        or not str(runtime.get("sentence_transformers_version") or "").strip()
+        or not str(runtime.get("torch_version") or "").strip()
+    ):
+        reasons.append("runtime_evidence_missing")
+    return tuple(reasons)
+
+
+def production_inference_evidence_satisfies_contract(
+    evidence: Mapping[str, Any] | Any,
+) -> bool:
+    """Return whether *evidence* proves the shared pinned inference contract."""
+
+    return not production_inference_evidence_reasons(evidence)
+
+
 def authorize_embedding_release(result: EmbeddingGenerationResult) -> None:
     """Fail closed unless *result* is real pinned sentence-transformers output."""
 
@@ -1455,6 +1593,77 @@ def load_sentence_transformer_model(
         revision=config.model_revision,
         device=device,
     )
+
+
+def build_pinned_model_token_counter(
+    config: OpenUsLawEmbeddingConfig | None = None,
+    *,
+    tokenizer: Any | None = None,
+    local_files_only: bool = False,
+) -> tuple[Callable[[str], int], str]:
+    """Build the exact GTE-small token counter used before chunk persistence.
+
+    Chunkers may use structure-aware or whitespace planning internally, but a
+    production chunk store must validate the final embedding text against the
+    model's real WordPiece tokenizer.  Counting includes model special tokens
+    and explicitly disables truncation, so a value above 512 cannot be hidden
+    by the sentence-transformers inference ceiling.
+    """
+
+    selected = config or default_embedding_config()
+    if not isinstance(selected, OpenUsLawEmbeddingConfig):
+        raise EmbeddingConfigError("config must be an OpenUsLawEmbeddingConfig")
+    require_pinned_gte_small(
+        model_id=selected.model_id,
+        model_revision=selected.model_revision,
+    )
+    resolved = tokenizer
+    if resolved is None:
+        try:
+            from transformers import AutoTokenizer
+        except ImportError as exc:
+            raise InferenceBackendError(
+                "transformers is required for exact GTE-small token counting"
+            ) from exc
+        try:
+            resolved = AutoTokenizer.from_pretrained(
+                selected.model_id,
+                revision=selected.model_revision,
+                local_files_only=bool(local_files_only),
+            )
+        except Exception as exc:
+            raise InferenceBackendError(
+                "failed to load the pinned GTE-small tokenizer at its exact revision"
+            ) from exc
+    if not callable(resolved):
+        raise InferenceBackendError("pinned model tokenizer must be callable")
+
+    def count_model_tokens(text: str) -> int:
+        try:
+            encoded = resolved(
+                str(text if text is not None else ""),
+                add_special_tokens=True,
+                truncation=False,
+                return_attention_mask=False,
+                return_token_type_ids=False,
+            )
+            token_ids = encoded["input_ids"]
+            count = len(token_ids)
+        except Exception as exc:
+            raise TruncationContractError(
+                "failed to count untruncated pinned-model input tokens"
+            ) from exc
+        if count < 0:
+            raise TruncationContractError("pinned-model token count is negative")
+        return count
+
+    # Exercise the contract immediately instead of deferring a broken
+    # tokenizer surface until a multi-hour corpus build.
+    if count_model_tokens("") < 1:
+        raise TruncationContractError(
+            "pinned tokenizer did not account for required special tokens"
+        )
+    return count_model_tokens, PINNED_TOKEN_COUNTER_ID
 
 
 def build_sentence_transformers_embedder(
@@ -2282,6 +2491,7 @@ __all__ = [
     "PINNED_MODEL_REVISION",
     "PINNED_NORMALIZATION",
     "PINNED_POOLING",
+    "PINNED_TOKEN_COUNTER_ID",
     "PRODUCTION_BACKEND",
     "PROGRAM_ID",
     "PROJECTION_BACKEND",
@@ -2320,6 +2530,7 @@ __all__ = [
     "assert_output_keys_match_admitted",
     "authorize_embedding_release",
     "build_embedding_receipt",
+    "build_pinned_model_token_counter",
     "build_sentence_transformers_embedder",
     "build_vector_space_id",
     "coerce_admitted_chunks",
@@ -2339,6 +2550,8 @@ __all__ = [
     "l2_normalize",
     "load_checkpoint",
     "load_embedding_receipt",
+    "production_inference_evidence_reasons",
+    "production_inference_evidence_satisfies_contract",
     "projection_cannot_authorize_release",
     "release_authorization_reasons",
     "require_pinned_gte_small",

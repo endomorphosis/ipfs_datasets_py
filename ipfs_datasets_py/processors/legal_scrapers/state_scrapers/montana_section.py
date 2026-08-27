@@ -79,7 +79,7 @@ def parse_montana_section_html(
         chapter_number=parts[1] if len(parts) > 1 else None,
         section_number=number,
         section_name=name[:200] or f"Section {number}",
-        full_text=body[:14000],
+        full_text=body,
         source_url=source_url or f"{BASE}/",
         official_cite=f"Mont. Code Ann. § {number}",
         metadata=StatuteMetadata(),

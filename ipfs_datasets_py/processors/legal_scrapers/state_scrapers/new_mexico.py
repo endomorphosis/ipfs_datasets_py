@@ -17,6 +17,7 @@ from urllib.parse import urljoin, urlparse
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
+from .retained_replay_network_guard import trusted_pdftotext_executable
 
 
 class NewMexicoScraper(BaseStateScraper):
@@ -207,11 +208,17 @@ class NewMexicoScraper(BaseStateScraper):
 
         bounded = limit if limit is not None else 1000000
         chapter_sections = await self._scrape_live_chapter_document_pdfs(
-            code_name=code_name, max_statutes=bounded
+            code_name=code_name,
+            max_statutes=limit,
         )
         if chapter_sections:
             self.logger.info("New Mexico chapter PDF extraction: Scraped %s section(s)", len(chapter_sections))
             return chapter_sections if limit is None else chapter_sections[: int(limit)]
+        if limit is None and self._full_corpus_enabled():
+            raise RuntimeError(
+                "New Mexico official NMOneSource PDF frontier did not close; "
+                "refusing legacy per-page full-corpus recovery"
+            )
 
         fallback_candidates: List[NormalizedStatute] = []
         nav_sections = await self._scrape_nmonesource_nav_sections(code_name=code_name, max_statutes=bounded)
@@ -303,20 +310,28 @@ class NewMexicoScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         seen_sections: set[str] = set()
         section_href_re = re.compile(r"\b([0-9]+(?:-[0-9A-Za-z]+)+)\b")
+        chapter_payload_by_url: Dict[str, bytes] = {}
+        if limit is None:
+            chapter_payload_by_url = await self._fetch_nm_html_frontier(
+                [url for _number, url in chapter_urls],
+                frontier_name="chapter catalog",
+            )
+
+        section_candidates: List[tuple[str, str, str, str]] = []
         for chapter_no, chapter_url in chapter_urls:
             if limit is not None and len(statutes) >= limit:
                 break
-            chapter_payload = await self._fetch_page_content_with_archival_fallback(
-                chapter_url, timeout_seconds=18
-            )
-            if not chapter_payload:
-                chapter_payload = await self._request_bytes_direct(chapter_url, timeout=18)
+            chapter_payload = chapter_payload_by_url.get(chapter_url)
+            if chapter_payload is None:
+                chapter_payload = await self._fetch_page_content_with_archival_fallback(
+                    chapter_url, timeout_seconds=18
+                )
+                if not chapter_payload:
+                    chapter_payload = await self._request_bytes_direct(chapter_url, timeout=18)
             if not chapter_payload:
                 continue
             chapter_soup = BeautifulSoup(chapter_payload, "html.parser")
             for anchor in chapter_soup.find_all("a", href=True):
-                if limit is not None and len(statutes) >= limit:
-                    break
                 href = str(anchor.get("href") or "").strip()
                 text = re.sub(r"\s+", " ", anchor.get_text(" ", strip=True) or "").strip()
                 section_url = urljoin(chapter_url, href)
@@ -329,16 +344,220 @@ class NewMexicoScraper(BaseStateScraper):
                 if section_number.lower() in seen_sections:
                     continue
                 seen_sections.add(section_number.lower())
-                statute = await self._build_official_nmonesource_section(
-                    code_name,
-                    section_number=section_number,
-                    section_label=text,
-                    section_url=section_url,
-                    chapter_number=chapter_no,
+                section_candidates.append(
+                    (chapter_no, section_number, text, section_url)
                 )
-                if statute is not None:
-                    statutes.append(statute)
+
+        section_payload_by_url: Dict[str, bytes] = {}
+        if limit is None:
+            section_payload_by_url = await self._fetch_nm_html_frontier(
+                [url for _chapter, _number, _label, url in section_candidates],
+                frontier_name="section body",
+            )
+        for chapter_no, section_number, section_label, section_url in section_candidates:
+            if limit is not None and len(statutes) >= limit:
+                break
+            statute = await self._build_official_nmonesource_section(
+                code_name,
+                section_number=section_number,
+                section_label=section_label,
+                section_url=section_url,
+                chapter_number=chapter_no,
+                _payload=section_payload_by_url.get(section_url),
+            )
+            if statute is not None:
+                statutes.append(statute)
         return statutes
+
+    async def _fetch_nm_html_frontier(
+        self,
+        urls: List[str],
+        *,
+        frontier_name: str,
+        require_complete: bool = True,
+    ) -> Dict[str, bytes]:
+        """Fetch one exact NMOneSource wave through the grouped archive seam."""
+
+        return await self._fetch_nm_frontier(
+            urls,
+            frontier_name=frontier_name,
+            content_validator=self._is_valid_nm_html,
+            media_type="text/html",
+            timeout_seconds=35,
+            require_complete=require_complete,
+        )
+
+    async def _fetch_nm_pdf_frontier(
+        self,
+        urls: List[str],
+        *,
+        frontier_name: str,
+        require_complete: bool = True,
+    ) -> Dict[str, bytes]:
+        """Fetch one exact official PDF wave without changing request identity."""
+
+        return await self._fetch_nm_frontier(
+            urls,
+            frontier_name=frontier_name,
+            content_validator=self._is_valid_nm_pdf,
+            media_type="application/pdf",
+            timeout_seconds=50,
+            require_complete=require_complete,
+        )
+
+    @staticmethod
+    def _is_valid_nm_html(payload: bytes) -> bool:
+        sample = bytes(payload or b"")[:8192].lower()
+        return b"<" in sample and b">" in sample and b"html" in sample
+
+    @staticmethod
+    def _is_valid_nm_pdf(payload: bytes) -> bool:
+        return bytes(payload or b"").lstrip().startswith(b"%PDF")
+
+    def _validate_nm_aligned_evidence(
+        self,
+        *,
+        url: str,
+        payload: bytes,
+        transport_receipt: Any,
+        parser_input_envelope: Any,
+        frontier_name: str,
+    ) -> None:
+        """Require every retained row to remain bound to its exact URL and bytes."""
+
+        canonical_url = self._canonical_fetch_url(url)
+        payload_sha256 = hashlib.sha256(payload).hexdigest()
+        ledger_attached = getattr(self, "_state_law_acquisition_ledger", None) is not None
+        if ledger_attached and (
+            not isinstance(transport_receipt, Mapping)
+            or not transport_receipt
+            or parser_input_envelope is None
+        ):
+            raise RuntimeError(
+                f"New Mexico {frontier_name} frontier lacks retained evidence: {url}"
+            )
+        if isinstance(transport_receipt, Mapping):
+            observed_url = str(
+                transport_receipt.get("official_url")
+                or transport_receipt.get("endpoint")
+                or ""
+            ).strip()
+            observed_sha256 = str(
+                transport_receipt.get("content_sha256") or ""
+            ).strip().lower()
+            if ledger_attached and (not observed_url or not observed_sha256):
+                raise RuntimeError(
+                    f"New Mexico {frontier_name} receipt lacks URL/digest evidence: {url}"
+                )
+            if observed_url and self._canonical_fetch_url(observed_url) != canonical_url:
+                raise RuntimeError(
+                    f"New Mexico {frontier_name} receipt changed URL identity: {url}"
+                )
+            if observed_sha256 and observed_sha256 != payload_sha256:
+                raise RuntimeError(
+                    f"New Mexico {frontier_name} receipt changed payload identity: {url}"
+                )
+        if parser_input_envelope is not None:
+            envelope_body = getattr(parser_input_envelope, "body", None)
+            if ledger_attached and envelope_body is None:
+                raise RuntimeError(
+                    f"New Mexico {frontier_name} envelope lacks body evidence: {url}"
+                )
+            if envelope_body is not None and bytes(envelope_body) != payload:
+                raise RuntimeError(
+                    f"New Mexico {frontier_name} envelope changed payload identity: {url}"
+                )
+
+    async def _fetch_nm_frontier(
+        self,
+        urls: Sequence[str],
+        *,
+        frontier_name: str,
+        content_validator: Any,
+        media_type: str,
+        timeout_seconds: int,
+        require_complete: bool,
+    ) -> Dict[str, bytes]:
+        """Fetch and verify one aligned NMOneSource source frontier."""
+
+        requested = [self._canonical_fetch_url(url) for url in urls]
+        if not requested:
+            return {}
+        if (
+            any(not url or not self._host_is_official(url) for url in requested)
+            or len(set(requested)) != len(requested)
+        ):
+            raise RuntimeError(
+                f"New Mexico {frontier_name} frontier has invalid or duplicate URLs"
+            )
+        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+            requested,
+            residual_retry_attempts=1,
+            timeout_seconds=timeout_seconds,
+            # User-Agent is deliberately the only header.  Accept is part of the
+            # retained sanitized-request identity and the current NM evidence was
+            # acquired without it.
+            headers={"User-Agent": "Mozilla/5.0"},
+            content_validator=content_validator,
+            media_type=media_type,
+            max_concurrency=8,
+            prefer_direct=True,
+            common_crawl_domain_terms=(self.OFFICIAL_DOMAIN,),
+            common_crawl_url_terms=("/nmos/nmsa/en/",),
+            common_crawl_mime_terms=("pdf",) if media_type == "application/pdf" else ("html",),
+            wayback_prefix_inventory=True,
+        )
+        aligned_lengths = {
+            len(batch.urls),
+            len(batch.payloads),
+            len(batch.errors),
+            len(batch.transport_receipts),
+            len(batch.parser_input_envelopes),
+        }
+        if list(batch.urls) != requested or aligned_lengths != {len(requested)}:
+            raise RuntimeError(
+                f"New Mexico {frontier_name} frontier changed exact URL alignment"
+            )
+        payload_by_url: Dict[str, bytes] = {}
+        failures: List[Dict[str, str]] = []
+        for url, payload, error, receipt, envelope in zip(
+            batch.urls,
+            batch.payloads,
+            batch.errors,
+            batch.transport_receipts,
+            batch.parser_input_envelopes,
+            strict=True,
+        ):
+            raw = bytes(payload or b"")
+            if error is not None or not raw or not content_validator(raw):
+                failures.append(
+                    {"url": url, "error": str(error or "empty or invalid parser input")}
+                )
+                continue
+            self._validate_nm_aligned_evidence(
+                url=url,
+                payload=raw,
+                transport_receipt=receipt,
+                parser_input_envelope=envelope,
+                frontier_name=frontier_name,
+            )
+            payload_by_url[url] = raw
+        if failures and require_complete:
+            raise RuntimeError(
+                f"New Mexico {frontier_name} frontier is incomplete; "
+                f"unresolved exact URLs: {failures[:10]}"
+            )
+        batch_stats = list(getattr(self, "_new_mexico_frontier_batch_stats", []))
+        batch_stats.append(
+            {
+                "frontier_name": frontier_name,
+                "requested_pages": len(requested),
+                "successful_pages": len(payload_by_url),
+                **dict(batch.stats or {}),
+            }
+        )
+        self._new_mexico_frontier_batch_stats = batch_stats
+        return payload_by_url
 
     async def _build_official_nmonesource_section(
         self,
@@ -348,15 +567,18 @@ class NewMexicoScraper(BaseStateScraper):
         section_label: str,
         section_url: str,
         chapter_number: str,
+        _payload: Optional[bytes] = None,
     ) -> Optional[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return None
 
-        payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=18)
-        if not payload:
-            payload = await self._request_bytes_direct(section_url, timeout=18)
+        payload = _payload
+        if payload is None:
+            payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=18)
+            if not payload:
+                payload = await self._request_bytes_direct(section_url, timeout=18)
         if not payload:
             return None
         soup = BeautifulSoup(payload, "html.parser")
@@ -379,7 +601,7 @@ class NewMexicoScraper(BaseStateScraper):
             chapter_number=chapter_number,
             section_number=section_number,
             section_name=section_name[:220],
-            full_text=text[:14000],
+            full_text=text,
             legal_area=self._identify_legal_area(f"{chapter_number} {section_name}"),
             source_url=section_url,
             official_cite=f"N.M. Stat. Ann. § {section_number}",
@@ -391,24 +613,62 @@ class NewMexicoScraper(BaseStateScraper):
             },
         )
 
-    async def _scrape_live_chapter_document_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
-        headers = {"User-Agent": "Mozilla/5.0"}
-        discovered = await self._discover_live_document_urls(limit=max(8, int(max_statutes or 1) * 8))
+    async def _scrape_live_chapter_document_pdfs(
+        self,
+        code_name: str,
+        max_statutes: Optional[int],
+    ) -> List[NormalizedStatute]:
+        """Close the official nav-date catalog over its exact chapter PDFs."""
+
+        strict = max_statutes is None and self._full_corpus_enabled()
+        discovery_limit = (
+            None
+            if strict
+            else max(8, int(max_statutes or 1) * 8)
+        )
+        self._new_mexico_frontier_batch_stats = []
+        discovered = await self._discover_live_document_urls(limit=discovery_limit)
         if not discovered:
+            if strict:
+                raise RuntimeError(
+                    "New Mexico official PDF document frontier is empty"
+                )
             return []
+
+        pdf_urls = [pdf_url for _chapter_label, pdf_url in discovered]
+        if len(pdf_urls) != len(set(pdf_urls)):
+            raise RuntimeError("New Mexico official PDF frontier repeated a source URL")
+        pdf_payload_by_url = await self._fetch_nm_pdf_frontier(
+            pdf_urls,
+            frontier_name="chapter document PDFs",
+            require_complete=strict,
+        )
 
         statutes: List[NormalizedStatute] = []
         seen_sections: set[str] = set()
+        raw_section_occurrences = 0
+        duplicate_section_occurrences = 0
+        empty_document_urls: List[str] = []
+        short_document_urls: List[str] = []
 
         for chapter_label, pdf_url in discovered:
-            if len(statutes) >= max_statutes:
+            if max_statutes is not None and len(statutes) >= max_statutes:
                 break
-            pdf_bytes = await self._request_bytes(pdf_url=pdf_url, headers=headers, timeout=50)
+            pdf_bytes = pdf_payload_by_url.get(pdf_url, b"")
             if not pdf_bytes:
                 continue
 
-            chapter_text = self._extract_pdf_text_preserve_layout(pdf_bytes=pdf_bytes, max_chars=250000)
+            chapter_text = self._extract_pdf_text_preserve_layout(
+                pdf_bytes=pdf_bytes,
+                max_chars=None,
+            )
             if len(chapter_text) < 280:
+                short_document_urls.append(pdf_url)
+                if strict:
+                    raise RuntimeError(
+                        "New Mexico official PDF produced no complete parser text: "
+                        f"{pdf_url}"
+                    )
                 continue
 
             split_sections = self._split_chapter_pdf_into_sections(
@@ -417,16 +677,69 @@ class NewMexicoScraper(BaseStateScraper):
                 chapter_text=chapter_text,
                 source_url=pdf_url,
             )
+            raw_section_occurrences += len(split_sections)
+            if not split_sections:
+                if strict and not self._is_explicitly_nonoperative_nm_pdf(
+                    chapter_text
+                ):
+                    raise RuntimeError(
+                        "New Mexico official PDF failed parser closure: "
+                        f"{pdf_url}"
+                    )
+                # Chapter 22A in the retained official frontier contains only
+                # recompiled locators. It is still a complete, valid source PDF
+                # even though it contributes no operative normalized row.
+                empty_document_urls.append(pdf_url)
             for statute in split_sections:
                 section_number = str(statute.section_number or "").strip()
-                if not section_number or section_number in seen_sections:
+                normalized_section = section_number.casefold()
+                if not normalized_section:
                     continue
-                seen_sections.add(section_number)
+                if normalized_section in seen_sections:
+                    duplicate_section_occurrences += 1
+                    continue
+                seen_sections.add(normalized_section)
                 statutes.append(statute)
-                if len(statutes) >= max_statutes:
+                if max_statutes is not None and len(statutes) >= max_statutes:
                     break
 
+        if strict and not statutes:
+            raise RuntimeError(
+                "New Mexico official PDF frontier produced no normalized statutes"
+            )
+        nav_urls = list(getattr(self, "_new_mexico_nav_frontier_urls", []))
+        self._new_mexico_pdf_frontier_report = {
+            "closed": bool(
+                strict
+                and len(pdf_payload_by_url) == len(pdf_urls)
+                and not short_document_urls
+                and bool(statutes)
+            ),
+            "nav_page_count": len(nav_urls),
+            "nav_urls": nav_urls,
+            "document_count": len(pdf_urls),
+            "document_urls": list(pdf_urls),
+            "fetched_document_count": len(pdf_payload_by_url),
+            "raw_section_occurrences": raw_section_occurrences,
+            "duplicate_section_occurrences": duplicate_section_occurrences,
+            "normalized_row_count": len(statutes),
+            "empty_document_urls": empty_document_urls,
+            "short_document_urls": short_document_urls,
+        }
         return statutes
+
+    @staticmethod
+    def _is_explicitly_nonoperative_nm_pdf(chapter_text: str) -> bool:
+        """Recognize source-proved terminal-only chapter PDFs."""
+
+        markers = re.findall(
+            r"(?im)^\s*[0-9]+[A-Za-z]?(?:-[0-9A-Za-z]+)+(?:\.[0-9A-Za-z]+)*\.\s+([^\n]+)$",
+            str(chapter_text or ""),
+        )
+        return bool(markers) and all(
+            re.search(r"\b(?:recompiled|repealed|reserved)\b", marker, re.IGNORECASE)
+            for marker in markers
+        )
 
     async def _scrape_direct_document_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         seeds = [
@@ -436,7 +749,7 @@ class NewMexicoScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         for section_number, pdf_url in seeds[: max(1, int(max_statutes or 1))]:
             pdf_bytes = await self._request_bytes_direct(pdf_url, timeout=24)
-            text = self._extract_pdf_text(pdf_bytes=pdf_bytes, max_chars=14000)
+            text = self._extract_pdf_text(pdf_bytes=pdf_bytes, max_chars=None)
             if len(text) < 280:
                 continue
             statutes.append(
@@ -461,34 +774,99 @@ class NewMexicoScraper(BaseStateScraper):
             )
         return statutes
 
-    async def _discover_live_document_urls(self, limit: int = 120) -> List[tuple[str, str]]:
+    async def _discover_live_document_urls(
+        self,
+        limit: Optional[int] = 120,
+    ) -> List[tuple[str, str]]:
+        """Derive and close the exact official nav-date source membership."""
+
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
 
         seed = "https://nmonesource.com/nmos/nmsa/en/nav_date.do?iframe=true"
+        strict = limit is None and self._full_corpus_enabled()
         payload = await self._fetch_page_content_with_archival_fallback(seed, timeout_seconds=35)
         if not payload:
+            if strict:
+                raise RuntimeError("New Mexico official nav-date seed is unavailable")
+            return []
+        if not self._is_valid_nm_html(payload):
+            if strict:
+                raise RuntimeError("New Mexico official nav-date seed is invalid HTML")
             return []
 
         soup = BeautifulSoup(payload, "html.parser")
-        page_urls = [seed]
+        page_by_number: Dict[int, str] = {}
         for link in soup.find_all("a", href=True):
             href = str(link.get("href", "")).strip()
             if "nav_date.do?page=" not in href:
                 continue
-            full = urljoin(seed, href)
-            if full not in page_urls:
-                page_urls.append(full)
+            full = self._canonical_fetch_url(urljoin(seed, href))
+            parsed = urlparse(full)
+            query = urllib.parse.parse_qs(
+                parsed.query,
+                keep_blank_values=True,
+                strict_parsing=False,
+            )
+            raw_pages = query.get("page", [])
+            if (
+                not self._host_is_official(full)
+                or parsed.path != self.OFFICIAL_ENTRY_PATH
+                or set(query) != {"page"}
+                or len(raw_pages) != 1
+                or not str(raw_pages[0]).isdigit()
+            ):
+                if strict:
+                    raise RuntimeError(
+                        "New Mexico official nav-date pagination changed source identity: "
+                        f"{full}"
+                    )
+                continue
+            page_number = int(raw_pages[0])
+            if page_number < 2:
+                if strict:
+                    raise RuntimeError(
+                        "New Mexico official nav-date pagination contains an invalid page: "
+                        f"{full}"
+                    )
+                continue
+            expected_url = f"{self.OFFICIAL_ENTRY_URL}?page={page_number}"
+            prior_url = page_by_number.setdefault(page_number, expected_url)
+            if prior_url != expected_url:
+                raise RuntimeError(
+                    "New Mexico official nav-date pagination repeated a page identity"
+                )
+
+        if page_by_number:
+            expected_pages = set(range(2, max(page_by_number) + 1))
+            missing_pages = sorted(expected_pages - set(page_by_number))
+            if missing_pages and strict:
+                raise RuntimeError(
+                    "New Mexico official nav-date pagination is incomplete; "
+                    f"missing pages: {missing_pages}"
+                )
+        page_urls = [seed] + [page_by_number[number] for number in sorted(page_by_number)]
+        pages_to_scan = page_urls if strict else page_urls[:8]
+        page_payload_by_url = {seed: bytes(payload)}
+        pagination_urls = pages_to_scan[1:]
+        if pagination_urls:
+            page_payload_by_url.update(
+                await self._fetch_nm_html_frontier(
+                    pagination_urls,
+                    frontier_name="nav-date pagination pages",
+                    require_complete=strict,
+                )
+            )
+        self._new_mexico_nav_frontier_urls = list(pages_to_scan)
 
         discovered: List[tuple[str, str]] = []
         seen: set[str] = set()
-        pages_to_scan = page_urls if self._full_corpus_enabled() else page_urls[:8]
         for page_url in pages_to_scan:
-            if len(discovered) >= limit:
+            if limit is not None and len(discovered) >= limit:
                 break
-            page_bytes = await self._fetch_page_content_with_archival_fallback(page_url, timeout_seconds=35)
+            page_bytes = page_payload_by_url.get(page_url, b"")
             if not page_bytes:
                 continue
             page_soup = BeautifulSoup(page_bytes, "html.parser")
@@ -501,28 +879,52 @@ class NewMexicoScraper(BaseStateScraper):
                     continue
                 if "/document.do" not in href:
                     continue
-                full_url = urljoin(page_url, href)
+                full_url = self._canonical_fetch_url(urljoin(page_url, href))
+                parsed = urlparse(full_url)
+                if (
+                    not self._host_is_official(full_url)
+                    or not re.fullmatch(
+                        r"/nmos/nmsa/en/[0-9]+/1/document\.do",
+                        parsed.path,
+                        flags=re.IGNORECASE,
+                    )
+                    or parsed.query
+                ):
+                    if strict:
+                        raise RuntimeError(
+                            "New Mexico official PDF catalog changed source identity: "
+                            f"{full_url}"
+                        )
+                    continue
                 if full_url in seen:
                     continue
+                if not pending_label and strict:
+                    raise RuntimeError(
+                        "New Mexico official PDF catalog lost a chapter label: "
+                        f"{full_url}"
+                    )
                 seen.add(full_url)
                 discovered.append((pending_label or f"Chapter {len(discovered)+1}", full_url))
                 pending_label = ""
-                if len(discovered) >= limit:
+                if limit is not None and len(discovered) >= limit:
                     break
 
+        if strict and not discovered:
+            raise RuntimeError("New Mexico official PDF document frontier is empty")
         return discovered
 
     async def _request_bytes_direct(self, url: str, timeout: int = 24) -> bytes:
-        def _request() -> bytes:
-            try:
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    return bytes(resp.read() or b"")
-            except Exception:
-                return b""
-
         try:
-            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
+            return await self._fetch_parser_input_with_transport(
+                url,
+                headers={
+                    "User-Agent": "Mozilla/5.0",
+                    "Accept": "application/pdf,text/html;q=0.9,*/*;q=0.8",
+                },
+                timeout_seconds=max(1, int(timeout)),
+                allow_archival_fallback=True,
+                provider="new_mexico_direct_nmonesource",
+            )
         except Exception:
             return b""
 
@@ -665,7 +1067,7 @@ class NewMexicoScraper(BaseStateScraper):
             if not pdf_bytes:
                 continue
 
-            full_text = self._extract_pdf_text(pdf_bytes=pdf_bytes, max_chars=14000)
+            full_text = self._extract_pdf_text(pdf_bytes=pdf_bytes, max_chars=None)
             if len(full_text) < 280:
                 continue
 
@@ -695,11 +1097,11 @@ class NewMexicoScraper(BaseStateScraper):
         )
 
         try:
-            req = urllib.request.Request(cdx_url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=45) as resp:
-                payload = resp.read().decode("utf-8", errors="ignore")
-            rows = json.loads(payload)
-            if not isinstance(rows, list) or len(rows) < 2:
+            rows = await self._fetch_wayback_cdx_rows(
+                cdx_url,
+                timeout_seconds=45,
+            )
+            if len(rows) < 2:
                 return []
 
             discovered: List[str] = []
@@ -765,15 +1167,25 @@ class NewMexicoScraper(BaseStateScraper):
 
         return b""
 
-    def _extract_pdf_text(self, pdf_bytes: bytes, max_chars: int) -> str:
+    def _extract_pdf_text(
+        self,
+        pdf_bytes: bytes,
+        max_chars: Optional[int] = None,
+    ) -> str:
         text = self._extract_pdf_text_preserve_layout(pdf_bytes=pdf_bytes, max_chars=max_chars)
         text = re.sub(r"\s+", " ", text).strip()
-        return text[:max_chars]
+        if max_chars is not None:
+            return text[: max(1, int(max_chars))]
+        return text
 
-    def _extract_pdf_text_preserve_layout(self, pdf_bytes: bytes, max_chars: int) -> str:
+    def _extract_pdf_text_preserve_layout(
+        self,
+        pdf_bytes: bytes,
+        max_chars: Optional[int] = None,
+    ) -> str:
         try:
             proc = subprocess.run(
-                ["pdftotext", "-layout", "-q", "-", "-"],
+                [trusted_pdftotext_executable(), "-layout", "-q", "-", "-"],
                 input=pdf_bytes,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -789,7 +1201,9 @@ class NewMexicoScraper(BaseStateScraper):
         text = text.replace("\r\n", "\n").replace("\r", "\n").replace("\x0c", "\n")
         text = re.sub(r"[ \t]+\n", "\n", text)
         text = re.sub(r"\n{3,}", "\n\n", text)
-        return text[:max_chars]
+        if max_chars is not None:
+            return text[: max(1, int(max_chars))]
+        return text
 
     def _split_chapter_pdf_into_sections(
         self,

@@ -25,13 +25,17 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
+from ipfs_datasets_py.huggingface.protected_repo_guard import (
+    require_unprotected_or_runtime,
+)
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # HuggingFace Hub imports (with lightweight fallback stubs)
 # ---------------------------------------------------------------------------
 try:
-    from huggingface_hub import HfApi, CommitInfo, login  # type: ignore
+    from huggingface_hub import CommitInfo, HfApi, login  # type: ignore
     from huggingface_hub.errors import HfHubHTTPError  # type: ignore
 except (ImportError, ModuleNotFoundError):
 
@@ -302,6 +306,7 @@ class UploadToHuggingFaceInParallel:
 
     def _upload_file(self, *, file_path: Path, path_in_repo: str) -> cf.Future:
         """Upload a single file to HuggingFace."""
+        require_unprotected_or_runtime(self.repo_id, method="upload_file")
         _path_in_repo = Path(path_in_repo) / file_path.name
         return self.api.upload_file(  # type: ignore[call-arg]
             path_or_fileobj=file_path,
@@ -312,6 +317,7 @@ class UploadToHuggingFaceInParallel:
 
     def _upload_folder(self, *, folder_path: Path, path_in_repo: str) -> cf.Future:
         """Upload an entire folder to HuggingFace."""
+        require_unprotected_or_runtime(self.repo_id, method="upload_folder")
         return self.api.upload_folder(  # type: ignore[call-arg]
             folder_path=str(folder_path),
             path_in_repo=path_in_repo,

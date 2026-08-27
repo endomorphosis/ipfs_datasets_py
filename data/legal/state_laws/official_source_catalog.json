@@ -72,7 +72,7 @@
           "display_name": "Arkansas Code",
           "citation_prefix": "Ark. Code Ann.",
           "hierarchy": ["title", "chapter", "section"],
-          "bundle_discovery": "html_toc"
+          "bundle_discovery": "official_delegated_lexis_toc_inventory"
         }
       ],
       "acquisition_paths": [
@@ -85,7 +85,21 @@
           "entry_url": "https://www.arkleg.state.ar.us/",
           "allowed_domains": ["www.arkleg.state.ar.us", "arkleg.state.ar.us"],
           "discovery_mode": "hierarchy",
-          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"],
+          "notes": "The Arkansas Law page is the official delegating authority. Its Lexis public-access TOC is inventory/locator evidence only and does not admit document bodies.",
+          "delegated_inventory": {
+            "path_id": "ar-lexis-public-toc-inventory",
+            "provider": "lexisnexis_public_access",
+            "delegating_authority_url": "https://www.arkleg.state.ar.us/ArkansasLaw/",
+            "public_entry_url": "https://www.lexisnexis.com/hottopics/arcode/",
+            "container_url": "https://advance.lexis.com/container?config=00JAA3ZTU0NTIzYy0zZDEyLTRhYmQtYmRmMS1iMWIxNDgxYWMxZTQKAFBvZENhdGFsb2cubRW4ifTiwi5vLw6cI1uX",
+            "allowed_domains": ["www.lexisnexis.com", "advance.lexis.com"],
+            "discovery_mode": "hierarchy",
+            "authority_scope": "toc_inventory_only",
+            "body_admissible": false,
+            "full_corpus_admissible": false,
+            "notes": "Exact state-delegated Arkansas Code public TOC. Section locators require source-scoped live receipts; bodies and publisher annotations are outside this path's authority scope."
+          }
         }
       ],
       "domain_constraints": {"forbid_secondary_hosts": true},
@@ -128,7 +142,7 @@
           "display_name": "California Codes",
           "citation_prefix": "Cal.",
           "hierarchy": ["code", "title", "division", "part", "chapter", "article", "section"],
-          "bundle_discovery": "leginfo_code_toc"
+          "bundle_discovery": "official_pubinfo_zip"
         }
       ],
       "acquisition_paths": [
@@ -139,10 +153,13 @@
           "provider": "california_legislative_information",
           "base_url": "https://leginfo.legislature.ca.gov",
           "entry_url": "https://leginfo.legislature.ca.gov/faces/codes.xhtml",
-          "allowed_domains": ["leginfo.legislature.ca.gov"],
-          "discovery_mode": "hierarchy",
+          "allowed_domains": [
+            "leginfo.legislature.ca.gov",
+            "downloads.leginfo.legislature.ca.gov"
+          ],
+          "discovery_mode": "mixed",
           "as_of_fields": ["edition", "publication_date", "retrieval_time"],
-          "notes": "California Legislative Information multi-code corpus"
+          "notes": "California Legislative Information publishes the code catalog on leginfo.legislature.ca.gov and the section-level CAML database as the official session-pinned pubinfo ZIP on downloads.leginfo.legislature.ca.gov."
         }
       ],
       "domain_constraints": {"forbid_secondary_hosts": true},
@@ -157,7 +174,7 @@
           "display_name": "Colorado Revised Statutes",
           "citation_prefix": "Colo. Rev. Stat.",
           "hierarchy": ["title", "article", "section"],
-          "bundle_discovery": "publication_search_pdf"
+          "bundle_discovery": "official_referral_title_htm"
         }
       ],
       "acquisition_paths": [
@@ -167,10 +184,11 @@
           "authority_class": "official",
           "provider": "colorado_general_assembly",
           "base_url": "https://leg.colorado.gov",
-          "entry_url": "https://content.leg.colorado.gov/publication-search?search_api_fulltext=crs",
-          "allowed_domains": ["leg.colorado.gov", "content.leg.colorado.gov"],
+          "entry_url": "https://content.leg.colorado.gov/agencies/office-legislative-legal-services/2026-crs-titles-download",
+          "allowed_domains": ["leg.colorado.gov", "content.leg.colorado.gov", "olls.info", "www.olls.info"],
           "discovery_mode": "bundle",
-          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"],
+          "notes": "The official Colorado General Assembly OLLS page enumerates the current whole-title HTM files on the delegated olls.info download host; only links discovered from that official referral page are authoritative."
         }
       ],
       "domain_constraints": {"forbid_secondary_hosts": true},
@@ -339,9 +357,14 @@
           "provider": "hawaii_state_legislature",
           "base_url": "https://www.capitol.hawaii.gov",
           "entry_url": "https://www.capitol.hawaii.gov/hrscurrent/",
-          "allowed_domains": ["www.capitol.hawaii.gov", "capitol.hawaii.gov"],
+          "allowed_domains": [
+            "www.capitol.hawaii.gov",
+            "capitol.hawaii.gov",
+            "data.capitol.hawaii.gov"
+          ],
           "discovery_mode": "hierarchy",
-          "as_of_fields": ["edition", "publication_date", "retrieval_time"]
+          "as_of_fields": ["edition", "publication_date", "retrieval_time"],
+          "notes": "The Hawaii State Legislature serves the same official HRS hierarchy from data.capitol.hawaii.gov when the public www hostname presents its Cloudflare interstitial."
         }
       ],
       "domain_constraints": {"forbid_secondary_hosts": true},
@@ -905,7 +928,7 @@
           "provider": "new_jersey_legislature",
           "base_url": "https://www.njleg.state.nj.us",
           "entry_url": "https://lis.njleg.state.nj.us/nxt/gateway.dll/statutes/1?f=templates&fn=default.htm&vid=Publish:10.1048/Enu",
-          "allowed_domains": ["www.njleg.state.nj.us", "njleg.state.nj.us", "lis.njleg.state.nj.us"],
+          "allowed_domains": ["www.njleg.state.nj.us", "njleg.state.nj.us", "lis.njleg.state.nj.us", "pub.njleg.state.nj.us"],
           "discovery_mode": "hierarchy",
           "as_of_fields": ["edition", "publication_date", "retrieval_time"]
         }
@@ -1035,21 +1058,21 @@
           "display_name": "Oklahoma Statutes",
           "citation_prefix": "Okla. Stat.",
           "hierarchy": ["title", "section"],
-          "bundle_discovery": "oscn_deliver_document"
+          "bundle_discovery": "complete_title_pdf_toc"
         }
       ],
       "acquisition_paths": [
         {
-          "path_id": "ok-oscn-statutes",
+          "path_id": "ok-legislature-complete-title-pdfs",
           "role": "official_code_publisher",
           "authority_class": "official",
-          "provider": "oklahoma_state_courts_network",
-          "base_url": "https://www.oscn.net",
-          "entry_url": "https://www.oscn.net/applications/oscn/index.asp?level=1&ftdb=STOKST",
-          "allowed_domains": ["www.oscn.net", "oscn.net", "www.oklegislature.gov", "oklegislature.gov"],
-          "discovery_mode": "hierarchy",
+          "provider": "oklahoma_state_legislature",
+          "base_url": "https://www.oklegislature.gov",
+          "entry_url": "https://www.oklegislature.gov/osstatuestitle.html",
+          "allowed_domains": ["www.oklegislature.gov", "oklegislature.gov"],
+          "discovery_mode": "bundle",
           "as_of_fields": ["edition", "publication_date", "retrieval_time"],
-          "notes": "OSCN publishes the official Oklahoma Statutes database"
+          "notes": "The Legislature TOC enumerates the exact current 89-member CompleteTitles PDF frontier; OSCN is retained only as a bounded legacy recovery probe because its live endpoint presents a Turnstile access gate."
         }
       ],
       "domain_constraints": {"forbid_secondary_hosts": true},

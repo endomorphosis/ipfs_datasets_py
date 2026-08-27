@@ -564,14 +564,22 @@ async def test_alabama_full_corpus_is_uncapped_when_max_statutes_omitted(
 async def test_alaska_full_corpus_is_uncapped_when_max_statutes_omitted(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    requested: Dict[str, Any] = {}
+    full_page = "".join(
+        (
+            f'<b><a name="{int(title):02d}.01.001"> </a>'
+            f"Sec. {int(title):02d}.01.001. Official title {title} section.</b>"
+            + (f"Official Alaska title {title} statutory body text. " * 5)
+        )
+        for title, _name in AlaskaScraper.OFFICIAL_TITLES
+    )
     call_count = {"n": 0}
 
     async def _fake_fetch(self, sec_start: str, timeout_seconds: int = 8) -> Tuple[str, str]:
         call_count["n"] += 1
-        requested["sec_start"] = sec_start
         if call_count["n"] == 1:
-            return _ak_chunk_html(), "1.05.011"
+            assert sec_start == "1"
+            return full_page, "47.01.001"
+        assert sec_start == "47.01.001"
         return "", ""
 
     monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
@@ -582,7 +590,7 @@ async def test_alaska_full_corpus_is_uncapped_when_max_statutes_omitted(
         "https://www.akleg.gov/basis/statutes.asp",
         max_statutes=None,
     )
-    assert len(statutes) == 2
+    assert len(statutes) == len(AlaskaScraper.OFFICIAL_TITLES)
     assert all(
         str((s.structured_data or {}).get("source_kind") or "").startswith("official_")
         for s in statutes
@@ -611,7 +619,7 @@ async def test_arizona_full_corpus_is_uncapped_when_max_statutes_omitted(
 
 
 @pytest.mark.anyio
-async def test_arkansas_full_corpus_refuses_justia_sole_admission(
+async def test_arkansas_full_corpus_collects_justia_as_recovery_without_admitting_it(
     monkeypatch: pytest.MonkeyPatch,
 ):
     async def _empty_official(self, code_name: str, code_url: str, max_statutes=None):
@@ -627,7 +635,10 @@ async def test_arkansas_full_corpus_refuses_justia_sole_admission(
                 section_number="justia",
                 section_name="Secondary",
                 full_text=("Justia secondary mirror text that must not sole-admit. " * 10),
-                source_url="https://law.justia.com/codes/arkansas/fixture",
+                source_url=(
+                    "https://law.justia.com/codes/arkansas/title-1/chapter-1/"
+                    "section-1-1-101/"
+                ),
                 official_cite="Ark. Code Ann. § justia",
                 metadata=StatuteMetadata(),
                 structured_data={"source_kind": "secondary_justia_arkansas_html"},
@@ -643,7 +654,51 @@ async def test_arkansas_full_corpus_refuses_justia_sole_admission(
         "https://www.arkleg.state.ar.us/ArkansasCode/",
         max_statutes=None,
     )
-    assert statutes == []
+    assert len(statutes) == 1
+    assert statutes[0].source_url.startswith("https://law.justia.com/")
+    assert statutes[0].structured_data["source_kind"] == "secondary_justia_arkansas_html"
+
+
+@pytest.mark.anyio
+async def test_arkansas_justia_recovery_keeps_enacted_text_and_strips_editorial_history(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    html = b"""
+    <html><body>
+      <h1>2025 Arkansas Code<br>Title 1<br>Chapter 1<br>
+          \xc2\xa7 1-1-101. Extension of western boundary line</h1>
+      <div id="codes-content">
+        <p>The western boundary line of the State of Arkansas is extended as follows,
+        and this sentence is enacted section text that must remain in the corpus.</p>
+        <h2 class="SS_Banner">History</h2>
+        <p>Acts 1905, No. 41, \xc2\xa7 1, p. 124.</p>
+      </div>
+    </body></html>
+    """
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 18):
+        self._record_fetch_event(provider="web_archiving_fixture", success=True)
+        return html
+
+    monkeypatch.setattr(ArkansasScraper, "_fetch_justia_html", _fake_fetch)
+    scraper = ArkansasScraper("AR", "Arkansas")
+    statute = await scraper._build_justia_statute(
+        code_name="Arkansas Code",
+        section_url=(
+            "https://law.justia.com/codes/arkansas/title-1/chapter-1/"
+            "section-1-1-101/"
+        ),
+        fallback_number="1",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "1-1-101"
+    assert statute.section_name == "Extension of western boundary line"
+    assert "western boundary line" in statute.full_text
+    assert "Acts 1905" not in statute.full_text
+    assert statute.structured_data["editorial_material_removed"] is True
+    assert statute.structured_data["recovery_only"] is True
+    assert statute.structured_data["full_corpus_admissible"] is False
 
 
 @pytest.mark.anyio
@@ -674,8 +729,13 @@ async def test_arkansas_full_corpus_is_uncapped_when_max_statutes_omitted(
             )
         ]
 
+    async def _empty_recovery(self, code_name: str, max_statutes=None):
+        requested["recovery_max_statutes"] = max_statutes
+        return []
+
     monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
     monkeypatch.setattr(ArkansasScraper, "_scrape_official_arkansas_code", _fake_official)
+    monkeypatch.setattr(ArkansasScraper, "_scrape_justia_titles", _empty_recovery)
     scraper = ArkansasScraper("AR", "Arkansas")
     statutes = await scraper.scrape_code(
         "Arkansas Code",
@@ -683,6 +743,7 @@ async def test_arkansas_full_corpus_is_uncapped_when_max_statutes_omitted(
         max_statutes=None,
     )
     assert requested["max_statutes"] is None
+    assert requested["recovery_max_statutes"] is None
     assert len(statutes) == 1
 
 

@@ -1,6 +1,5 @@
 """Scraper for Alabama state laws."""
 
-import asyncio
 import hashlib
 import json
 import re
@@ -145,52 +144,46 @@ class AlabamaScraper(BaseStateScraper):
             separators=(",", ":"),
         )
         cache_key = hashlib.sha256(cache_payload.encode("utf-8")).hexdigest()
-        cache_url = f"{self.GRAPHQL_URL}#graphql={cache_key}"
-        cached_bytes = await self._load_page_bytes_from_any_cache(cache_url)
-        if cached_bytes:
-            try:
-                cached_payload = json.loads(cached_bytes.decode("utf-8", errors="ignore") or "{}")
-                data = cached_payload.get("data") or {}
-                if isinstance(data, dict):
-                    return data
-            except Exception:
-                pass
+        cache_url = f"{self.GRAPHQL_URL}?state_law_graphql_sha256={cache_key}"
 
-        def _request() -> Dict[str, Any]:
+        def _valid_graphql_response(raw: bytes) -> bool:
             try:
-                import requests
-
-                response = requests.post(
-                    self.GRAPHQL_URL,
-                    json={"query": query, "variables": variables or {}},
-                    headers={
-                        "User-Agent": "ipfs-datasets-alabama-code-scraper/2.0",
-                        "Content-Type": "application/json",
-                        "Accept": "application/json",
-                    },
-                    timeout=timeout,
+                response_payload = json.loads(
+                    raw.decode("utf-8", errors="strict") or "{}"
                 )
-                if int(response.status_code or 0) != 200:
-                    return {}
-                payload = response.json()
-                if payload.get("errors"):
-                    return {}
-                return payload.get("data") or {}
             except Exception:
-                return {}
-
-        try:
-            data = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 1)
-        except asyncio.TimeoutError:
-            data = {}
-        self._record_fetch_event(provider="alison_graphql", success=bool(data))
-        if data:
-            await self._cache_successful_page_fetch(
-                url=cache_url,
-                payload=json.dumps({"data": data}, sort_keys=True).encode("utf-8"),
-                provider="alison_graphql",
+                return False
+            return bool(
+                isinstance(response_payload, dict)
+                and not response_payload.get("errors")
+                and isinstance(response_payload.get("data"), dict)
+                and response_payload.get("data")
             )
-        return data
+
+        response_bytes = await self._fetch_parser_input_with_transport(
+            self.GRAPHQL_URL,
+            method="POST",
+            headers={
+                "User-Agent": "ipfs-datasets-alabama-code-scraper/2.0",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            request_body=cache_payload.encode("utf-8"),
+            timeout_seconds=timeout,
+            cache_url=cache_url,
+            content_validator=_valid_graphql_response,
+            allow_archival_fallback=False,
+            media_type="application/json",
+            provider="alison_graphql",
+        )
+        if not response_bytes:
+            return {}
+        try:
+            response_payload = json.loads(response_bytes.decode("utf-8", errors="strict"))
+        except Exception:
+            return {}
+        data = response_payload.get("data") or {}
+        return data if isinstance(data, dict) else {}
 
     def _parse_scaffold_section_parent_ids(
         self, scaffold: str, limit: Optional[int]
@@ -246,6 +239,10 @@ class AlabamaScraper(BaseStateScraper):
               parentId
               displayId
               title
+              catchLine
+              effectiveDate
+              supersessionDate
+              sectionRange
               content
               history
               type
@@ -264,10 +261,11 @@ class AlabamaScraper(BaseStateScraper):
             data = await self._graphql(
                 query, {"parentId": parent_ids[offset : offset + batch_size]}
             )
+            parser_input_provenance = self._last_parser_input_row_provenance()
             rows = ((data.get("codeItems") or {}).get("data") or [])
             for row in rows:
                 if max_statutes is not None and len(statutes) >= max_statutes:
-                    return statutes
+                    return self._disambiguate_alison_citation_collisions(statutes)
                 if not row.get("isContentNode") or str(row.get("type") or "").lower() != "section":
                     continue
                 display_id = str(row.get("displayId") or "").strip()
@@ -290,24 +288,71 @@ class AlabamaScraper(BaseStateScraper):
                 title = re.sub(
                     r"\s+", " ", str(row.get("title") or f"Section {display_id}")
                 ).strip()
+                effective_date = str(row.get("effectiveDate") or "").strip() or None
+                supersession_date = (
+                    str(row.get("supersessionDate") or "").strip() or None
+                )
+                code_id = str(row.get("codeId") or "").strip()
+                if not code_id:
+                    if self._full_corpus_enabled():
+                        raise RuntimeError(
+                            f"Alabama ALISON section {display_id!r} lacks a source codeId"
+                        )
+                    continue
+                repeal_marker = bool(
+                    re.match(
+                        r"^\s*(?:\[?repealed\]?\b|this\s+section\s+was\s+repealed\b)",
+                        full_text,
+                        flags=re.IGNORECASE,
+                    )
+                    or re.search(r"\b(?:repealed|reserved)\b", title, flags=re.IGNORECASE)
+                )
+                conditional_version = bool(
+                    re.search(r"\beffective\s+(?:upon|on|if)\b", title, flags=re.IGNORECASE)
+                )
                 statute = NormalizedStatute(
                     state_code=self.state_code,
                     state_name=self.state_name,
-                    statute_id=f"{code_name} § {display_id}",
+                    statute_id=f"{code_name} § {display_id} [ALISON:{code_id}]",
                     code_name=code_name,
                     section_number=display_id,
                     section_name=title[:200],
-                    full_text=full_text[:14000],
+                    full_text=full_text,
                     legal_area=self._identify_legal_area(title),
                     source_url=f"{self.CODE_URL}?section={display_id}",
                     official_cite=f"Ala. Code § {display_id}",
-                    metadata=StatuteMetadata(),
+                    metadata=StatuteMetadata(
+                        effective_date=effective_date,
+                        repealed=repeal_marker,
+                    ),
                     structured_data={
                         "source_kind": "official_alison_graphql",
                         "discovery_method": "official_alison_scaffold_parent_batch",
                         "skip_hydrate": True,
-                        "code_id": row.get("codeId"),
+                        "code_id": code_id,
+                        "source_record_id": f"alison:code:{code_id}",
                         "parent_id": row.get("parentId"),
+                        "catch_line": row.get("catchLine"),
+                        "section_range": row.get("sectionRange"),
+                        "effective_date": effective_date,
+                        "supersession_date": supersession_date,
+                        "law_status": (
+                            "repealed"
+                            if repeal_marker
+                            else "unknown"
+                            if conditional_version
+                            else "current"
+                        ),
+                        "is_current": False if repeal_marker else None if conditional_version else True,
+                        "status_source": (
+                            "official_text_marker"
+                            if repeal_marker
+                            else "official_conditional_heading"
+                            if conditional_version
+                            else "official_current_api_projection"
+                        ),
+                        "conditional_version": conditional_version,
+                        **parser_input_provenance,
                     },
                 )
                 statutes.append(statute)
@@ -322,7 +367,115 @@ class AlabamaScraper(BaseStateScraper):
                 )
                 last_heartbeat = now
         self.logger.info("Alabama GraphQL: completed with %d statutes", len(statutes))
-        return statutes
+        return self._disambiguate_alison_citation_collisions(statutes)
+
+    def _disambiguate_alison_citation_collisions(
+        self,
+        statutes: Sequence[NormalizedStatute],
+    ) -> List[NormalizedStatute]:
+        """Keep distinct ALISON records that share one printed citation.
+
+        ALISON currently exposes a small number of materially different code
+        nodes under the same ``displayId`` (including effective-condition
+        alternatives and local-law nodes under different parents).  Dropping
+        one would lose official law; leaving their human citation as the sole
+        identity would corrupt the canonical index.  Only colliding identities
+        receive the stable official ``codeId`` disambiguator.  Their printed
+        section number and official citation remain unchanged for retrieval.
+        """
+
+        retained = list(statutes)
+        by_identity: Dict[str, List[NormalizedStatute]] = {}
+        for statute in retained:
+            code_name = str(statute.code_name or "Alabama Code").strip()
+            section_number = str(statute.section_number or "").strip()
+            identity = f"{code_name} § {section_number}" if section_number else ""
+            if not identity:
+                raise RuntimeError("Alabama ALISON row lacks a canonical identity")
+            by_identity.setdefault(identity, []).append(statute)
+
+        for identity, collision_rows in by_identity.items():
+            if len(collision_rows) < 2:
+                continue
+            code_ids = [
+                str((statute.structured_data or {}).get("code_id") or "").strip()
+                for statute in collision_rows
+            ]
+            if any(not code_id for code_id in code_ids) or len(set(code_ids)) != len(
+                code_ids
+            ):
+                raise RuntimeError(
+                    "Alabama ALISON citation collision lacks unique official codeIds: "
+                    f"identity={identity!r} code_ids={code_ids!r}"
+                )
+            for statute, code_id in zip(collision_rows, code_ids):
+                expected_source_identity = f"{identity} [ALISON:{code_id}]"
+                if str(statute.statute_id or "").strip() != expected_source_identity:
+                    raise RuntimeError(
+                        "Alabama ALISON row is not keyed by its official source record: "
+                        f"expected={expected_source_identity!r} "
+                        f"observed={statute.statute_id!r}"
+                    )
+                structured = dict(statute.structured_data or {})
+                structured.update(
+                    {
+                        "citation_collision": True,
+                        "citation_collision_count": len(collision_rows),
+                        "citation_collision_identity": identity,
+                        "identity_disambiguator": f"alison:code:{code_id}",
+                    }
+                )
+                statute.structured_data = structured
+        return retained
+
+    def _enrich_statute_structure(
+        self,
+        statute: NormalizedStatute,
+    ) -> NormalizedStatute:
+        """Carry ALISON batch provenance into the canonical JSON-LD row.
+
+        The ALISON GraphQL endpoint supplies many human-facing section rows
+        from one retained response.  The outer ``structured_data`` mapping is
+        present while the normalized rows are audited, but publication writes
+        only its ``jsonld`` child.  Repeat the exact retained batch digest and
+        transport receipt in that child so the canonical JSON-LD artifact can
+        be reconciled against the same prospective parser-input ledger.
+        """
+
+        enriched = super()._enrich_statute_structure(statute)
+        structured = dict(enriched.structured_data or {})
+        source_kind = str(structured.get("source_kind") or "").strip()
+        if source_kind != "official_alison_graphql":
+            return enriched
+
+        digest = str(structured.get("content_sha256") or "").strip().lower()
+        receipt = structured.get("transport_receipt")
+        jsonld = structured.get("jsonld")
+        if (
+            re.fullmatch(r"[a-f0-9]{64}", digest) is None
+            or not isinstance(receipt, Mapping)
+            or not isinstance(jsonld, Mapping)
+        ):
+            return enriched
+
+        jsonld_payload = dict(jsonld)
+        provenance = jsonld_payload.get("provenance")
+        provenance_payload = (
+            dict(provenance) if isinstance(provenance, Mapping) else {}
+        )
+        provenance_payload.update(
+            {
+                "content_sha256": digest,
+                "source_record_id": str(
+                    structured.get("source_record_id") or ""
+                ).strip(),
+                "transport_receipt": dict(receipt),
+            }
+        )
+        jsonld_payload["provenance"] = provenance_payload
+        structured["jsonld"] = jsonld_payload
+        enriched.structured_data = structured
+        return enriched
     
     async def _custom_scrape_alabama(
         self,

@@ -243,6 +243,17 @@ def test_official_catalogs_are_exhaustive() -> None:
     assert {row["title_number"] for row in vt_rows} == {
         number for number, _name in VermontScraper.OFFICIAL_TITLES
     }
+    assert {
+        "3APPENDIX",
+        "10APPENDIX",
+        "16APPENDIX",
+        "24APPENDIX",
+    }.issubset({row["title_number"] for row in vt_rows})
+    assert not {"10A", "16A", "24A"}.intersection(
+        {row["title_number"] for row in vt_rows}
+    )
+    assert vermont.official_title_slug("3APPENDIX") == "03APPENDIX"
+    assert vermont._normalize_title_number("03APPENDIX") == "3APPENDIX"
     for row in vt_rows:
         assert _host_allowed(str(row["source_url"]), "VT")
         assert row["source_link_disposition"] in ALLOWED_DISPOSITIONS
@@ -267,6 +278,8 @@ def test_official_catalogs_are_exhaustive() -> None:
     assert {row["chapter_number"] for row in wv_rows} == {
         number for number, _name in WestVirginiaScraper.OFFICIAL_CHAPTERS
     }
+    assert WestVirginiaScraper.OFFICIAL_CHAPTER_COUNT == 139
+    assert "48A" not in {row["chapter_number"] for row in wv_rows}
     for row in wv_rows:
         assert _host_allowed(str(row["source_url"]), "WV")
         assert row["source_link_disposition"] in ALLOWED_DISPOSITIONS

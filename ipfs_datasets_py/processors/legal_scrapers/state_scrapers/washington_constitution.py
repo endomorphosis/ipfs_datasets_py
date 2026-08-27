@@ -89,7 +89,7 @@ def parse_washington_constitution_text(
                     title_number=str(art_id),
                     section_number=number,
                     section_name=heading,
-                    full_text=raw[:14000],
+                    full_text=raw,
                     source_url=WA_CONST_PDF,
                     official_cite=f"Wash. Const. art. {art_id}, § {number}",
                     metadata=StatuteMetadata(),

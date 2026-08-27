@@ -143,7 +143,7 @@ def parse_maryland_constitution_section_html(
         title_number=resolved_id,
         section_number=section,
         section_name=(body.split(".", 1)[0] or f"Section {section}")[:200],
-        full_text=body[:14000],
+        full_text=body,
         source_url=source_url
         or f"{MD_SECTION_URL}?article={article or 'c1'}&section={section}&enactments=false",
         official_cite=cite,

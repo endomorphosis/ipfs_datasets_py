@@ -19,6 +19,7 @@ from .base_scraper import NormalizedStatute, StatuteMetadata
 SITE = "https://www.legis.iowa.gov"
 _WS = re.compile(r"\s+")
 _SKIP_CLASS = {"history", "heading"}
+_RESERVED_ONLY_RE = re.compile(r"^reserved\.?$", re.IGNORECASE)
 
 
 def chapter_xml_url(chapter: str, year: str | int = 2026) -> str:
@@ -65,6 +66,50 @@ def _collect_body(el: ET.Element, parts: List[str]) -> None:
         _collect_body(child, parts)
 
 
+def reserved_section_numbers(xml_bytes: bytes | str) -> List[str]:
+    """Return exact section-level ``Reserved.`` terminals in source order."""
+
+    raw = xml_bytes.encode("utf-8") if isinstance(xml_bytes, str) else xml_bytes
+    if not raw:
+        return []
+    try:
+        root = ET.fromstring(raw)
+    except ET.ParseError:
+        return []
+
+    reserved: List[str] = []
+    seen: set[str] = set()
+    for sec in root.iter():
+        if _local(sec.tag) != "Section":
+            continue
+        heading = next(
+            (
+                child
+                for child in sec
+                if _local(child.tag) == "div" and child.get("class") == "heading"
+            ),
+            None,
+        )
+        identifier, headnote = ("", "")
+        if heading is not None:
+            identifier, headnote = _identifier_and_headnote(heading)
+        secnum = (identifier or (sec.get("id") or "").replace("sec", "", 1)).strip()
+        if not secnum or secnum in seen:
+            continue
+        parts: List[str] = []
+        for child in sec:
+            if child is heading:
+                continue
+            _collect_body(child, parts)
+        body = " ".join(parts).strip()
+        headnote_is_reserved = bool(_RESERVED_ONLY_RE.fullmatch(headnote.strip()))
+        body_is_reserved = bool(_RESERVED_ONLY_RE.fullmatch(body))
+        if (headnote_is_reserved and not body) or (body_is_reserved and not headnote):
+            seen.add(secnum)
+            reserved.append(secnum)
+    return reserved
+
+
 def parse_iowa_chapter_xml(
     xml_bytes: bytes | str,
     *,
@@ -98,7 +143,7 @@ def parse_iowa_chapter_xml(
         if not secnum:
             continue
         low = headnote.lower()
-        if "repealed" in low or "reserved" in low:
+        if "repealed" in low or _RESERVED_ONLY_RE.fullmatch(headnote.strip()):
             continue
         parts: List[str] = []
         for child in sec:
@@ -118,7 +163,7 @@ def parse_iowa_chapter_xml(
                 chapter_number=str(chapter or "") or None,
                 section_number=secnum,
                 section_name=(headnote or f"Section {secnum}")[:220],
-                full_text=body[:14000],
+                full_text=body,
                 source_url=section_rtf_url(secnum, year),
                 official_cite=f"Iowa Code § {secnum}",
                 metadata=StatuteMetadata(),

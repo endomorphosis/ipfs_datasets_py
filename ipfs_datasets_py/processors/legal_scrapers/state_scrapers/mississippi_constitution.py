@@ -83,7 +83,7 @@ def parse_mississippi_constitution_html(
                     title_number=art_id,
                     section_number=number,
                     section_name=heading,
-                    full_text=raw[:14000],
+                    full_text=raw,
                     source_url=MS_CONST_URL,
                     official_cite=cite,
                     metadata=StatuteMetadata(),

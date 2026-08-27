@@ -11,16 +11,136 @@ from __future__ import annotations
 
 import os
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
+from urllib.parse import quote, unquote
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
 BASE = "https://www.oregonlegislature.gov"
 ORS_LINK_RE = re.compile(r"ors(\d{3}[a-z]?)\.html$", re.IGNORECASE)
+ORS_LIST_GUID = "{77CEA715-9752-4B71-90C7-0417BB45D7BB}"
+ORS_GROUP_VIEW_GUID = "{D854F19F-B98E-4414-8559-316FAEC4CA86}"
+ORS_GROUP_ENDPOINT = f"{BASE}/bills_laws/_layouts/15/inplview.aspx"
+_TITLE_GROUP_ID_RE = re.compile(
+    r"^titl\d+-(?P<volume>\d+)_(?P<title_index>\d+)_$",
+    re.IGNORECASE,
+)
+_DECLARED_COUNT_RE = re.compile(r"\((?P<count>\d+)\)\s*$")
 _RESERVED = re.compile(r"\b(repealed|reserved|expired|renumbered)\b", re.IGNORECASE)
 _HISTORY_RE = re.compile(r"^\s*(History|Note|Or\.?\s+Laws)\b", re.IGNORECASE)
 _WS = re.compile(r"\s+")
+
+
+@dataclass(frozen=True)
+class OregonTitleGroup:
+    """One exact title leaf declared by the official collapsed ORS view."""
+
+    volume_index: int
+    title_index: int
+    label: str
+    declared_chapter_count: int
+    group_string: str
+    inventory_url: str
+
+
+def _group_inventory_url(group_string: str) -> str:
+    """Build a stable anonymous SharePoint group expansion URL.
+
+    ``ViewCount`` is presentation-only and changes between page renders.  The
+    server accepts a fixed value, which gives acquisition replay and archive
+    lookup one stable identity.  ``DrillDown=1`` is required by SharePoint;
+    without it the endpoint returns status 601 instead of the chapter rows.
+    """
+
+    raw_group = unquote(str(group_string or "").strip())
+    if not raw_group:
+        return ""
+    query = (
+        f"List={quote(ORS_LIST_GUID, safe='')}"
+        f"&View={quote(ORS_GROUP_VIEW_GUID, safe='')}"
+        "&ViewCount=1"
+        "&IsXslView=TRUE"
+        "&IsGroupRender=TRUE"
+        "&DrillDown=1"
+        f"&GroupString={quote(raw_group, safe='')}"
+    )
+    return f"{ORS_GROUP_ENDPOINT}?{query}"
+
+
+def ors_sharepoint_title_groups(html: str) -> List[OregonTitleGroup]:
+    """Parse the complete title-leaf inventory embedded in ``ORS.aspx``.
+
+    The visible page contains only collapsed volume/title rows.  Each title
+    row carries both its exact group selector and the server-declared chapter
+    count.  The expansion endpoint is therefore authoritative discovery, not
+    a guessed numeric chapter sweep.
+    """
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+
+    soup = BeautifulSoup(html or "", "html.parser")
+    groups: List[OregonTitleGroup] = []
+    seen_keys: set[tuple[int, int]] = set()
+    seen_group_strings: set[str] = set()
+    for tbody in soup.find_all("tbody", id=True):
+        match = _TITLE_GROUP_ID_RE.fullmatch(str(tbody.get("id") or ""))
+        if match is None:
+            continue
+        encoded_group = str(tbody.get("groupstring") or "").strip()
+        if not encoded_group:
+            return []
+        text = _clean(tbody.get_text(" ", strip=True))
+        count_match = _DECLARED_COUNT_RE.search(text)
+        if count_match is None:
+            return []
+        declared_count = int(count_match.group("count"))
+        if declared_count <= 0:
+            return []
+        volume_index = int(match.group("volume"))
+        title_index = int(match.group("title_index"))
+        key = (volume_index, title_index)
+        raw_group = unquote(encoded_group)
+        if key in seen_keys or raw_group in seen_group_strings:
+            return []
+        inventory_url = _group_inventory_url(raw_group)
+        if not inventory_url:
+            return []
+        label = _DECLARED_COUNT_RE.sub("", text).strip()
+        groups.append(
+            OregonTitleGroup(
+                volume_index=volume_index,
+                title_index=title_index,
+                label=label,
+                declared_chapter_count=declared_count,
+                group_string=raw_group,
+                inventory_url=inventory_url,
+            )
+        )
+        seen_keys.add(key)
+        seen_group_strings.add(raw_group)
+
+    groups.sort(key=lambda row: (row.volume_index, row.title_index))
+    return groups
+
+
+def decode_oregon_html(payload: bytes) -> str:
+    """Decode official ORS bytes using their declared Windows-1252 charset."""
+
+    raw = bytes(payload or b"")
+    if not raw:
+        return ""
+    head = raw[:4096].lower()
+    if b"charset=windows-1252" in head or b"charset=cp1252" in head:
+        return raw.decode("windows-1252", errors="strict")
+    try:
+        return raw.decode("utf-8", errors="strict")
+    except UnicodeDecodeError:
+        return raw.decode("windows-1252", errors="replace")
 
 
 def _clean(text: str) -> str:
@@ -110,7 +230,7 @@ def parse_oregon_chapter_html(
                 chapter_number=chapter_display,
                 section_number=number,
                 section_name=(current_title or f"ORS {number}")[:200],
-                full_text=body[:14000],
+                full_text=body,
                 source_url=f"{link.split('#')[0]}#section-{number}",
                 official_cite=f"Or. Rev. Stat. § {number}",
                 metadata=StatuteMetadata(),

@@ -18,11 +18,11 @@ this module owns no domain ontology or model-pin policy.
 
 from __future__ import annotations
 
+import heapq
+import math
 from collections import deque
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-import heapq
-import math
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Final
@@ -692,7 +692,7 @@ def _seeded_training_positions(
 ) -> Any:
     """Deterministically sample training rows under *seed*."""
 
-    count = int(len(positions))
+    count = len(positions)
     if count <= max_training_rows:
         return positions
     rng = np.random.default_rng(int(seed) & 0x7FFFFFFF)
@@ -842,7 +842,7 @@ def _spherical_kmeans_groups(
     """Partition *positions* into *cluster_count* balanced spherical groups."""
 
     position_array = np.asarray(list(positions), dtype=np.int64)
-    row_count = int(len(position_array))
+    row_count = len(position_array)
     if row_count < 1:
         return []
     cluster_count = min(int(cluster_count), row_count)
@@ -1046,6 +1046,8 @@ def build_centroid_routed_vector_layout(
     rows: Sequence[Mapping[str, Any] | VectorRecord],
     *,
     seed: int = DEFAULT_VECTOR_KMEANS_SEED,
+    cluster_id_offset: int = 0,
+    global_shard_id_offset: int = 0,
     max_rows_per_shard: int = MAX_ROWS_PER_PHYSICAL_SHARD,
     max_shards_per_centroid: int = MAX_VECTOR_SHARDS_PER_CENTROID,
     max_rows_per_centroid: int | None = None,
@@ -1080,6 +1082,12 @@ def build_centroid_routed_vector_layout(
     kmeans_iterations = _positive_int(kmeans_iterations, "kmeans_iterations")
     max_training_rows = _positive_int(max_training_rows, "max_training_rows")
     seed = _non_negative_int(seed, "seed")
+    cluster_id_offset = _non_negative_int(
+        cluster_id_offset, "cluster_id_offset"
+    )
+    global_shard_id_offset = _non_negative_int(
+        global_shard_id_offset, "global_shard_id_offset"
+    )
 
     if max_rows_per_shard > MAX_ROWS_PER_PHYSICAL_SHARD:
         raise PhysicalBoundError(
@@ -1147,8 +1155,9 @@ def build_centroid_routed_vector_layout(
     )
 
     cluster_groups: list[VectorClusterGroup] = []
-    global_shard_id = 0
-    for cluster_id, group_positions in enumerate(groups):
+    global_shard_id = global_shard_id_offset
+    for local_cluster_id, group_positions in enumerate(groups):
+        cluster_id = cluster_id_offset + local_cluster_id
         if len(group_positions) > max_rows_per_centroid:
             raise VectorCoverageError(
                 f"cluster {cluster_id} has {len(group_positions)} rows; "
@@ -1160,7 +1169,7 @@ def build_centroid_routed_vector_layout(
             group_positions,
             max_rows_per_shard=max_rows_per_shard,
             max_shards_per_centroid=max_shards_per_centroid,
-            seed=seed + 1_000_000 + cluster_id * 97,
+            seed=seed + 1_000_000 + local_cluster_id * 97,
             iterations=kmeans_iterations,
             max_training_rows=max_training_rows,
             np=np,
@@ -1310,8 +1319,8 @@ def validate_vector_layout(
                         f"shard {shard.relative_path} is not cosine-sorted"
                     )
             # Score bounds.
-            if shard.row_count:
-                if not math.isclose(
+            if shard.row_count and (
+                not math.isclose(
                     shard.min_score,
                     min(shard.scores),
                     abs_tol=SCORE_TOLERANCE,
@@ -1321,10 +1330,11 @@ def validate_vector_layout(
                     max(shard.scores),
                     abs_tol=SCORE_TOLERANCE,
                     rel_tol=0.0,
-                ):
-                    raise VectorCoverageError(
-                        f"shard {shard.relative_path} score bounds differ"
-                    )
+                )
+            ):
+                raise VectorCoverageError(
+                    f"shard {shard.relative_path} score bounds differ"
+                )
             # Unit-norm checks on centroids.
             for label, vector in (
                 ("routing_centroid", shard.routing_centroid),
@@ -1351,6 +1361,105 @@ def validate_vector_layout(
             )
         if len(expected) != len(set(expected)):
             raise VectorCoverageError("expected entry_cids are not unique")
+
+
+def compact_centroid_rows_from_routing(
+    routing_rows: Sequence[Mapping[str, Any]],
+    *,
+    assignment: str,
+    schema_version: str,
+    context_fields: Sequence[str] = (),
+) -> tuple[dict[str, Any], ...]:
+    """Collapse shard routes into one validated row per semantic centroid.
+
+    Dataset adapters may request invariant context columns (for example a
+    jurisdiction or source-part identifier), but centroid grouping, dimension,
+    normalization, shard numbering, and row-count conservation stay shared.
+    """
+
+    if not routing_rows:
+        raise VectorRoutingError("routing metadata is empty")
+    assignment = str(assignment or "").strip()
+    schema_version = str(schema_version or "").strip()
+    if not assignment or not schema_version:
+        raise VectorRoutingError("assignment and schema_version must be non-empty")
+    fields = tuple(str(field or "").strip() for field in context_fields)
+    if any(not field for field in fields) or len(fields) != len(set(fields)):
+        raise VectorRoutingError("context_fields must be unique non-empty names")
+
+    by_cluster: dict[int, list[Mapping[str, Any]]] = {}
+    for route in routing_rows:
+        if not isinstance(route, Mapping):
+            raise VectorRoutingError("routing row must be a mapping")
+        by_cluster.setdefault(int(route["cluster_id"]), []).append(route)
+
+    rows: list[dict[str, Any]] = []
+    for cluster_id in sorted(by_cluster):
+        routes = sorted(
+            by_cluster[cluster_id], key=lambda item: int(item["chunk_in_cluster"])
+        )
+        if [int(route["chunk_in_cluster"]) for route in routes] != list(
+            range(len(routes))
+        ):
+            raise VectorRoutingError(
+                f"cluster {cluster_id} chunk numbering differs"
+            )
+        if any(
+            int(route["centroid_shard_count"]) != len(routes) for route in routes
+        ):
+            raise VectorRoutingError(
+                f"cluster {cluster_id} shard count differs"
+            )
+        dimensions = {int(route["dimension"]) for route in routes}
+        if len(dimensions) != 1 or next(iter(dimensions)) < 1:
+            raise VectorRoutingError(
+                f"cluster {cluster_id} embedding dimension differs"
+            )
+        dimension = next(iter(dimensions))
+        centroid = tuple(float(value) for value in routes[0]["centroid"])
+        if len(centroid) != dimension or any(not math.isfinite(v) for v in centroid):
+            raise VectorRoutingError(
+                f"cluster {cluster_id} centroid dimension/values differ"
+            )
+        if not math.isclose(
+            math.sqrt(sum(value * value for value in centroid)),
+            1.0,
+            abs_tol=NORM_TOLERANCE,
+            rel_tol=0.0,
+        ):
+            raise VectorRoutingError(
+                f"cluster {cluster_id} routing centroid is not normalized"
+            )
+        if any(
+            tuple(float(value) for value in route["centroid"]) != centroid
+            for route in routes[1:]
+        ):
+            raise VectorRoutingError(
+                f"cluster {cluster_id} routing centroid differs across shards"
+            )
+        row_count = sum(int(route["row_count"]) for route in routes)
+        if row_count < 1:
+            raise VectorRoutingError(f"cluster {cluster_id} has no vector rows")
+        row: dict[str, Any] = {
+            "assignment": assignment,
+            "centroid": list(centroid),
+            "cluster_id": cluster_id,
+            "dimension": dimension,
+            "row_count": row_count,
+            "schema_version": schema_version,
+            "shard_count": len(routes),
+        }
+        for context_field in fields:
+            values = {
+                canonical_json_dumps(route.get(context_field)) for route in routes
+            }
+            if len(values) != 1:
+                raise VectorRoutingError(
+                    f"cluster {cluster_id} crosses context field {context_field!r}"
+                )
+            row[context_field] = routes[0].get(context_field)
+        rows.append(row)
+    return tuple(rows)
 
 
 # ---------------------------------------------------------------------------
@@ -1486,6 +1595,8 @@ def write_centroid_routed_vectors(
     output_root: str | Path,
     *,
     seed: int = DEFAULT_VECTOR_KMEANS_SEED,
+    cluster_id_offset: int = 0,
+    global_shard_id_offset: int = 0,
     max_rows_per_shard: int = MAX_ROWS_PER_PHYSICAL_SHARD,
     max_shards_per_centroid: int = MAX_VECTOR_SHARDS_PER_CENTROID,
     max_rows_per_centroid: int | None = None,
@@ -1502,6 +1613,8 @@ def write_centroid_routed_vectors(
     layout = build_centroid_routed_vector_layout(
         rows,
         seed=seed,
+        cluster_id_offset=cluster_id_offset,
+        global_shard_id_offset=global_shard_id_offset,
         max_rows_per_shard=max_rows_per_shard,
         max_shards_per_centroid=max_shards_per_centroid,
         max_rows_per_centroid=max_rows_per_centroid,
@@ -1843,6 +1956,7 @@ __all__ = [
     "build_vector_clusters_fixture_payload",
     "centroid_part_filename",
     "coerce_vector_records",
+    "compact_centroid_rows_from_routing",
     "default_vector_clusters_fixture_path",
     "layout_from_fixture",
     "load_vector_clusters_fixture",

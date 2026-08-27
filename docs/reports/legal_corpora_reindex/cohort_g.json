@@ -159,8 +159,8 @@
         "promoted_success": false
       },
       "content": {
-        "content_digest": "sha256:a244c76f27455f7b4375954a2d857040c1f910f5b77bdf68fea9271a1afa00bf",
-        "min_full_text_chars": 301,
+        "content_digest": "sha256:8c0091a1b152d04536bb45e557eb0cb56fa2bc5748522ef2dfc5e4278738576b",
+        "min_full_text_chars": 272,
         "non_placeholder_full_text": true,
         "official_urls": [
           "https://nebraskalegislature.gov/laws/statutes.php?statute=1-101",
@@ -201,7 +201,7 @@
       "partial_checkpoint_promoted": false,
       "replay": {
         "closed": true,
-        "content_digest": "sha256:a244c76f27455f7b4375954a2d857040c1f910f5b77bdf68fea9271a1afa00bf",
+        "content_digest": "sha256:8c0091a1b152d04536bb45e557eb0cb56fa2bc5748522ef2dfc5e4278738576b",
         "first_frontier_digest": "sha256:fae79296c568dfdf39337ec0a3c249d1e9a047df02442f7873d392f3938e3879",
         "second_frontier_digest": "sha256:fae79296c568dfdf39337ec0a3c249d1e9a047df02442f7873d392f3938e3879"
       },
@@ -227,8 +227,8 @@
         "promoted_success": false
       },
       "content": {
-        "content_digest": "sha256:08224c71f3406987a32cbbdcc8ae349a291f3de90d472ca77a665ff30654122f",
-        "min_full_text_chars": 308,
+        "content_digest": "sha256:1f0a5e2a7fb198c98c01465653b796b07038f02693a04204b1f943c8f4d89ce6",
+        "min_full_text_chars": 280,
         "non_placeholder_full_text": true,
         "official_urls": [
           "https://www.leg.state.nv.us/NRS/NRS-001.html#NRS001Sec010",
@@ -269,7 +269,7 @@
       "partial_checkpoint_promoted": false,
       "replay": {
         "closed": true,
-        "content_digest": "sha256:08224c71f3406987a32cbbdcc8ae349a291f3de90d472ca77a665ff30654122f",
+        "content_digest": "sha256:1f0a5e2a7fb198c98c01465653b796b07038f02693a04204b1f943c8f4d89ce6",
         "first_frontier_digest": "sha256:27e5f984c25f80fecee96818c3be45115066a08eb4d332ccbce7bf3b99a99037",
         "second_frontier_digest": "sha256:27e5f984c25f80fecee96818c3be45115066a08eb4d332ccbce7bf3b99a99037"
       },
@@ -319,7 +319,7 @@
       "timeout_promoted_to_success": false
     },
     "NE": {
-      "content_digest": "sha256:a244c76f27455f7b4375954a2d857040c1f910f5b77bdf68fea9271a1afa00bf",
+      "content_digest": "sha256:8c0091a1b152d04536bb45e557eb0cb56fa2bc5748522ef2dfc5e4278738576b",
       "failed_final": 0,
       "frontier_closed": true,
       "partial_checkpoint_promoted": false,
@@ -330,7 +330,7 @@
       "timeout_promoted_to_success": false
     },
     "NV": {
-      "content_digest": "sha256:08224c71f3406987a32cbbdcc8ae349a291f3de90d472ca77a665ff30654122f",
+      "content_digest": "sha256:1f0a5e2a7fb198c98c01465653b796b07038f02693a04204b1f943c8f4d89ce6",
       "failed_final": 0,
       "frontier_closed": true,
       "partial_checkpoint_promoted": false,

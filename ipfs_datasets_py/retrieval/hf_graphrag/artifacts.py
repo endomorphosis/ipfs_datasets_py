@@ -17,14 +17,14 @@ module owns no domain ontology.
 
 from __future__ import annotations
 
+import os
+import shutil
+import tempfile
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from hashlib import sha256
-import os
 from pathlib import Path, PurePosixPath
-import shutil
-import tempfile
 from typing import Any, Final, Optional
 
 from ipfs_datasets_py.logic.ir_core.identity import cid_v1_from_digest
@@ -33,8 +33,8 @@ from .schema import (
     COMPACT_INDEX_SCHEMA_VERSION,
     DESCRIPTOR_SCHEMA_VERSION,
     MAX_POINTERS_PER_ROW,
-    MAX_ROWS_PER_PHYSICAL_SHARD,
     MAX_ROUTING_ROWS_PER_INDEX,
+    MAX_ROWS_PER_PHYSICAL_SHARD,
     PARQUET_COMPRESSION,
     PARQUET_COMPRESSION_LEVEL,
     PARQUET_MAGIC,
@@ -245,6 +245,15 @@ def file_digest(path: str | Path) -> tuple[int, bytes]:
             size += len(chunk)
             digest.update(chunk)
     return size, digest.digest()
+
+
+def manifest_descriptor(descriptor: ArtifactDescriptor) -> dict[str, Any]:
+    """Return the shared manifest form, including the resolver's CID alias."""
+
+    payload = descriptor.to_dict()
+    if descriptor.content_cid is not None:
+        payload["cid"] = descriptor.content_cid
+    return payload
 
 
 def describe_file(
@@ -980,6 +989,7 @@ __all__ = [
     "confine_path",
     "describe_file",
     "file_digest",
+    "manifest_descriptor",
     "physical_bounds_policy",
     "resolve_release_root",
     "shard_sequence",

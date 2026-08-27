@@ -25,6 +25,18 @@ from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
+_MODULE_SOURCE_PATH = Path(__file__).resolve()
+MODULE_IMPORT_SOURCE_SHA256 = hashlib.sha256(_MODULE_SOURCE_PATH.read_bytes()).hexdigest()
+
+
+def assert_module_source_unchanged() -> str:
+    """Fail if this producer's source bytes changed after module import."""
+
+    current = hashlib.sha256(_MODULE_SOURCE_PATH.read_bytes()).hexdigest()
+    if current != MODULE_IMPORT_SOURCE_SHA256:
+        raise RuntimeError(f"loaded module source drifted on disk: {_MODULE_SOURCE_PATH}")
+    return current
+
 STATE_HOST_CODES = {
     "AL",
     "AK",
@@ -627,11 +639,21 @@ class CommonCrawlSearchEngine:
             "master_db": master_db_arg,
             "year_db": year_db_arg,
             "collection_db": collection_db_arg,
+            "collection": str(collection) if collection else None,
             "year": str(year) if year else None,
             "max_parquet_files": max_parquet_files,
             "max_matches": int(max_matches),
             "per_parquet_limit": per_parquet_limit,
         }
+        url_prefixes = tuple(
+            dict.fromkeys(
+                str(value or "").strip().rstrip("%*")
+                for value in (kwargs.get("url_prefixes") or ())
+                if str(value or "").strip().rstrip("%*")
+            )
+        )
+        if url_prefixes:
+            options["url_prefixes"] = url_prefixes
         if hf_remote_meta and not has_local_meta:
             options.update(
                 {
@@ -841,11 +863,12 @@ class CommonCrawlSearchEngine:
             if "warc_length" not in rec and "length" in rec:
                 rec["warc_length"] = rec.get("length")
 
-            timestamp = str(rec.get("timestamp") or "").strip()
-            if url and timestamp and "archive_url" not in rec and "wayback_url" not in rec:
-                wb = f"https://web.archive.org/web/{timestamp}/{url}"
-                rec["wayback_url"] = wb
-                rec["archive_url"] = wb
+            # A Common Crawl index row authorizes only its exact WARC object
+            # pointer.  Never synthesize (or retain provider-supplied) Wayback
+            # replay locators under a Common Crawl label: that loses the WARC
+            # object/range identity and permits cross-provider laundering.
+            rec.pop("wayback_url", None)
+            rec.pop("archive_url", None)
 
             out.append(rec)
 
@@ -938,6 +961,143 @@ class CommonCrawlSearchEngine:
         except Exception as e:
             logger.error(f"Error fetching WARC record: {e}")
             raise
+
+    def fetch_warc_record_ranges_sliced(
+        self,
+        warc_filename: str,
+        ranges: List[tuple[int, int]],
+        **kwargs,
+    ) -> tuple[Dict[tuple[int, int], bytes], Dict[tuple[int, int], str]]:
+        """Fetch several exact members while sharing bounded WARC range reads.
+
+        Local mode delegates to the same range-slice implementation used by
+        :class:`UnifiedWebScraper`: nearby members in one WARC object are
+        coalesced under explicit gap/span limits, fetched once, and then split
+        back into their exact pointer ranges.  Remote and CLI modes retain a
+        correctness-first per-member fallback until their protocols expose the
+        shared batch operation.
+
+        ``stats_out`` may be supplied in ``kwargs`` as a dictionary.  It is
+        populated with logical range-call and request-reduction counters; it
+        never changes the returned per-member byte/error maps.
+        """
+
+        if not self._available:
+            raise RuntimeError("Common Crawl Search Engine is not available")
+
+        normalized: List[tuple[int, int]] = []
+        for offset, length in ranges or []:
+            offset_i = int(offset)
+            length_i = int(length)
+            if offset_i < 0 or length_i <= 0:
+                continue
+            normalized.append((offset_i, length_i))
+
+        stats_out = kwargs.get("stats_out")
+        if stats_out is not None and not isinstance(stats_out, dict):
+            raise TypeError("stats_out must be a dictionary or None")
+        if not normalized:
+            if stats_out is not None:
+                stats_out.clear()
+                stats_out.update(
+                    {
+                        "warc_objects": 0,
+                        "requested_ranges": 0,
+                        "unique_ranges": 0,
+                        "range_fetch_calls": 0,
+                        "records_succeeded": 0,
+                        "records_failed": 0,
+                    }
+                )
+            return {}, {}
+
+        def _integer_option(name: str, default: int) -> int:
+            value = kwargs.get(name)
+            return int(default if value is None else value)
+
+        def _float_option(name: str, default: float) -> float:
+            value = kwargs.get(name)
+            return float(default if value is None else value)
+
+        batch_fn = (
+            getattr(self.api, "fetch_warc_record_ranges_sliced", None)
+            if self.mode == "local"
+            else None
+        )
+        if callable(batch_fn):
+            return batch_fn(
+                warc_filename=str(warc_filename),
+                ranges=list(normalized),
+                prefix=str(kwargs.get("prefix") or "https://data.commoncrawl.org/"),
+                timeout_s=_float_option("timeout_s", 30.0),
+                max_slice_bytes=_integer_option("max_slice_bytes", 25_000_000),
+                max_gap_bytes=_integer_option("max_gap_bytes", 256_000),
+                min_slice_bytes=_integer_option("min_slice_bytes", 0),
+                max_workers=_integer_option("max_workers", 1),
+                cache_dir=(
+                    Path(str(kwargs.get("cache_dir")))
+                    if kwargs.get("cache_dir")
+                    else None
+                ),
+                cache_max_bytes=_integer_option("cache_max_bytes", 2_000_000_000),
+                cache_max_item_bytes=_integer_option(
+                    "cache_max_item_bytes", 25_000_000
+                ),
+                stats_out=stats_out,
+            )
+
+        data_by: Dict[tuple[int, int], bytes] = {}
+        error_by: Dict[tuple[int, int], str] = {}
+        unique = sorted(set(normalized), key=lambda item: (item[0], item[1]))
+        for offset, length in unique:
+            key = (int(offset), int(length))
+            try:
+                payload = self.fetch_warc_record(
+                    str(warc_filename),
+                    int(offset),
+                    int(length),
+                    prefix=str(kwargs.get("prefix") or "https://data.commoncrawl.org/"),
+                    timeout_s=_float_option("timeout_s", 30.0),
+                    max_bytes=int(length),
+                )
+                if len(payload) != int(length):
+                    raise RuntimeError(
+                        "WARC member length mismatch "
+                        f"expected={int(length)} got={len(payload)}"
+                    )
+                data_by[key] = bytes(payload)
+            except Exception as exc:
+                error_by[key] = f"{type(exc).__name__}: {exc}"
+
+        if stats_out is not None:
+            stats_out.clear()
+            stats_out.update(
+                {
+                    "warc_objects": 1,
+                    "requested_ranges": len(normalized),
+                    "unique_ranges": len(unique),
+                    "duplicate_ranges": len(normalized) - len(unique),
+                    "planned_range_fetches": len(unique),
+                    "range_fetch_calls": len(unique),
+                    # Without the compatibility batch, every valid aligned
+                    # request would issue its own range fetch.  This path does
+                    # de-duplicate exact pointers before calling the single-
+                    # record transport, so duplicate savings must remain
+                    # visible even though nearby non-identical ranges cannot
+                    # be coalesced outside local mode.
+                    "naive_range_fetches": len(normalized),
+                    "planned_range_fetches_avoided": max(
+                        0, len(normalized) - len(unique)
+                    ),
+                    "effective_range_fetches_avoided": max(
+                        0, len(normalized) - len(unique)
+                    ),
+                    "records_succeeded": len(data_by),
+                    "records_failed": len(error_by),
+                    "batch_transport_available": False,
+                }
+            )
+        return data_by, error_by
 
     def list_collections(self, **kwargs) -> List[str]:
         """

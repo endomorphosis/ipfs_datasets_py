@@ -25,15 +25,14 @@ Design invariants
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
-import unicodedata
 from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence, Union
 
+from ipfs_datasets_py.processors.legal_data import legal_chunking_core as _chunking_core
 from ipfs_datasets_py.processors.legal_data.uscode_identity import (
     LegalIdentity,
     build_chunk_parent_id,
@@ -55,8 +54,6 @@ DEFAULT_JURISDICTION = "US"
 # Parenthetical statutory markers: (a), (1), (A), (i), (iv), (I), ...
 _SUBSEC_MARKER_RE = re.compile(r"\(([0-9A-Za-z]{1,6})\)")
 _ROMAN_LOWER_RE = re.compile(r"^[ivxlcdm]+$", re.IGNORECASE)
-_SENTENCE_BOUNDARY_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z(\"'])")
-_TOKEN_RE = re.compile(r"\S+")
 
 _COMMON_ROMAN_LOWER = frozenset(
     {"i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii"}
@@ -65,6 +62,25 @@ _COMMON_ROMAN_UPPER = frozenset(s.upper() for s in _COMMON_ROMAN_LOWER)
 
 PathLike = Union[str, Path]
 JsonMapping = Mapping[str, Any]
+
+# Preserve the existing module-level API while binding all corpus-neutral
+# mechanics to one implementation shared with the state-law chunker.
+_assert_chunks_within_limit = _chunking_core.assert_chunks_within_limit
+_assert_exact_reconstruction = _chunking_core.assert_exact_reconstruction
+_normalize_chunk_text = _chunking_core.normalize_chunk_text
+_pack_pieces = _chunking_core.pack_pieces
+_piece_token_count = _chunking_core.token_count_in_span
+_sentence_spans = _chunking_core.sentence_spans
+_validate_model_token_limit = _chunking_core.validate_model_token_limit
+build_chunk_cid_seed = _chunking_core.build_chunk_cid_seed
+canonical_json_bytes = _chunking_core.canonical_json_bytes
+chunk_cid_for_payload = _chunking_core.chunk_cid_for_payload
+content_sha256 = _chunking_core.content_sha256
+hard_token_windows = _chunking_core.hard_token_windows
+reconstruct_text = _chunking_core.reconstruct_text
+repair_coverage = _chunking_core.repair_coverage
+token_index_covering_char = _chunking_core.token_index_covering_char
+whitespace_token_rows = _chunking_core.whitespace_token_rows
 
 
 # ---------------------------------------------------------------------------
@@ -133,11 +149,7 @@ def normalize_chunk_text(text: str) -> str:
     reconstruct against. The chunker always normalizes once at entry.
     """
 
-    if not isinstance(text, str):
-        raise UscodeChunkerError("text must be a string")
-    if "\x00" in text:
-        raise UscodeChunkerError("text must not contain NUL")
-    return unicodedata.normalize("NFKC", text)
+    return _normalize_chunk_text(text, error_type=UscodeChunkerError)
 
 
 def tokenize(text: str) -> list[TokenSpan]:
@@ -148,47 +160,19 @@ def tokenize(text: str) -> list[TokenSpan]:
     yields an empty list.
     """
 
-    if not isinstance(text, str):
-        raise UscodeChunkerError("text must be a string")
-    spans: list[TokenSpan] = []
-    for index, match in enumerate(_TOKEN_RE.finditer(text)):
-        spans.append(
-            TokenSpan(
-                index=index,
-                char_start=match.start(),
-                char_end=match.end(),
-                text=match.group(0),
-            )
+    return [
+        TokenSpan(index=index, char_start=start, char_end=end, text=token_text)
+        for index, start, end, token_text in whitespace_token_rows(
+            text,
+            error_type=UscodeChunkerError,
         )
-    return spans
+    ]
 
 
 def count_tokens(text: str) -> int:
     """Return the deterministic token count for *text*."""
 
     return len(tokenize(text))
-
-
-def token_index_covering_char(tokens: Sequence[TokenSpan], char_pos: int) -> int:
-    """Return the token index whose span contains *char_pos*, or insertion point."""
-
-    if not tokens:
-        return 0
-    if char_pos <= tokens[0].char_start:
-        return 0
-    if char_pos >= tokens[-1].char_end:
-        return len(tokens)
-    lo, hi = 0, len(tokens) - 1
-    while lo <= hi:
-        mid = (lo + hi) // 2
-        tok = tokens[mid]
-        if char_pos < tok.char_start:
-            hi = mid - 1
-        elif char_pos >= tok.char_end:
-            lo = mid + 1
-        else:
-            return mid
-    return lo
 
 
 # ---------------------------------------------------------------------------
@@ -473,40 +457,6 @@ class ChunkingResult:
 # ---------------------------------------------------------------------------
 
 
-def canonical_json_bytes(payload: Mapping[str, Any]) -> bytes:
-    return json.dumps(
-        payload,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-        allow_nan=False,
-    ).encode("utf-8")
-
-
-def content_sha256(data: bytes | str) -> str:
-    if isinstance(data, str):
-        data = data.encode("utf-8")
-    return hashlib.sha256(data).hexdigest()
-
-
-def chunk_cid_for_payload(payload: Mapping[str, Any]) -> str:
-    """Deterministic content address for a chunk payload.
-
-    Prefers multiformat CIDs when ``cid_utils`` is available; otherwise
-    falls back to ``sha256:<hex>`` so sealed validation environments without
-    multiformats still produce stable addresses.
-    """
-
-    raw = canonical_json_bytes(payload)
-    digest = content_sha256(raw)
-    try:
-        from ipfs_datasets_py.utils.cid_utils import cid_for_bytes
-
-        return str(cid_for_bytes(raw))
-    except Exception:  # noqa: BLE001 — fail soft to sha256 address
-        return f"sha256:{digest}"
-
-
 def _cid_seed(
     *,
     parent_legal_id: str,
@@ -520,19 +470,19 @@ def _cid_seed(
     split_mode: str,
     tokenizer_id: str,
 ) -> dict[str, Any]:
-    return {
-        "char_end": char_end,
-        "char_start": char_start,
-        "chunk_index": chunk_index,
-        "exclusive_text": exclusive_text,
-        "parent_legal_id": parent_legal_id,
-        "parent_path": list(parent_path),
-        "schema_version": SCHEMA_VERSION,
-        "split_mode": split_mode,
-        "token_end": token_end,
-        "token_start": token_start,
-        "tokenizer_id": tokenizer_id,
-    }
+    return build_chunk_cid_seed(
+        parent_legal_id=parent_legal_id,
+        chunk_index=chunk_index,
+        exclusive_text=exclusive_text,
+        char_start=char_start,
+        char_end=char_end,
+        token_start=token_start,
+        token_end=token_end,
+        parent_path=parent_path,
+        split_mode=split_mode,
+        tokenizer_id=tokenizer_id,
+        schema_version=SCHEMA_VERSION,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -551,36 +501,6 @@ class _Piece:
     limit_exempt: bool = False
 
 
-def _sentence_spans(text: str, abs_start: int) -> list[tuple[int, int]]:
-    """Return absolute ``[start, end)`` spans for sentences inside *text*."""
-
-    if not text:
-        return []
-    boundaries = list(_SENTENCE_BOUNDARY_RE.finditer(text))
-    if not boundaries:
-        if "\n" in text:
-            spans: list[tuple[int, int]] = []
-            cursor = 0
-            for line in text.splitlines(keepends=True):
-                spans.append((abs_start + cursor, abs_start + cursor + len(line)))
-                cursor += len(line)
-            return spans or [(abs_start, abs_start + len(text))]
-        return [(abs_start, abs_start + len(text))]
-
-    spans: list[tuple[int, int]] = []
-    last = 0
-    for match in boundaries:
-        # Include inter-sentence whitespace with the left-hand sentence so
-        # exclusive spans remain contiguous.
-        end = match.end()
-        if end > last:
-            spans.append((abs_start + last, abs_start + end))
-        last = match.end()
-    if last < len(text):
-        spans.append((abs_start + last, abs_start + len(text)))
-    return spans
-
-
 def _hard_token_windows(
     tokens: Sequence[TokenSpan],
     *,
@@ -591,41 +511,16 @@ def _hard_token_windows(
 ) -> list[_Piece]:
     """Hard-split the token range covering ``[char_start, char_end)``."""
 
-    if model_token_limit < 1:
-        raise ChunkerConfigError("model_token_limit must be >= 1")
-
-    selected = [
-        t
-        for t in tokens
-        if t.char_end > char_start and t.char_start < char_end
-    ]
-    if not selected:
-        return [
-            _Piece(
-                char_start=char_start,
-                char_end=char_end,
-                parent_path=parent_path,
-                split_mode=SplitMode.HARD.value,
-            )
-        ]
-
-    pieces: list[_Piece] = []
-    i = 0
-    while i < len(selected):
-        j = min(i + model_token_limit, len(selected))
-        w_start = char_start if i == 0 else selected[i].char_start
-        w_end = char_end if j >= len(selected) else selected[j].char_start
-        pieces.append(
-            _Piece(
-                char_start=w_start,
-                char_end=w_end,
-                parent_path=parent_path,
-                split_mode=SplitMode.HARD.value,
-                limit_exempt=False,
-            )
-        )
-        i = j
-    return pieces
+    return hard_token_windows(
+        tokens,
+        char_start=char_start,
+        char_end=char_end,
+        model_token_limit=model_token_limit,
+        parent_path=parent_path,
+        piece_factory=_Piece,
+        hard_split_mode=SplitMode.HARD.value,
+        error_type=ChunkerConfigError,
+    )
 
 
 def _subdivide_unit(
@@ -766,44 +661,6 @@ def _subdivide_unit(
     )
 
 
-def _piece_token_count(
-    tokens: Sequence[TokenSpan], char_start: int, char_end: int
-) -> int:
-    return sum(1 for t in tokens if t.char_end > char_start and t.char_start < char_end)
-
-
-def _pack_pieces(
-    pieces: Sequence[_Piece],
-    *,
-    tokens: Sequence[TokenSpan],
-    model_token_limit: int,
-) -> list[list[_Piece]]:
-    """Greedily pack exclusive pieces into groups under the token limit."""
-
-    groups: list[list[_Piece]] = []
-    current: list[_Piece] = []
-    current_tokens = 0
-    for piece in pieces:
-        n = _piece_token_count(tokens, piece.char_start, piece.char_end)
-        # Oversized single piece should already be subdivided; if not, alone.
-        if n > model_token_limit:
-            if current:
-                groups.append(current)
-                current = []
-                current_tokens = 0
-            groups.append([piece])
-            continue
-        if current and current_tokens + n > model_token_limit:
-            groups.append(current)
-            current = []
-            current_tokens = 0
-        current.append(piece)
-        current_tokens += n
-    if current:
-        groups.append(current)
-    return groups
-
-
 # ---------------------------------------------------------------------------
 # Public chunker
 # ---------------------------------------------------------------------------
@@ -816,44 +673,11 @@ def validate_model_token_limit(model_token_limit: Any) -> int:
     storage bound as a token limit without the caller opting in.
     """
 
-    if model_token_limit is None:
-        raise ChunkerConfigError(
-            "model_token_limit is required; pass the selected embedding "
-            "model's maximum input tokens explicitly (do not reuse the "
-            f"{PHYSICAL_ROW_LIMIT}-row storage bound as an implicit token limit)"
-        )
-    try:
-        value = int(model_token_limit)
-    except (TypeError, ValueError) as exc:
-        raise ChunkerConfigError(
-            f"model_token_limit must be a positive integer, got {model_token_limit!r}"
-        ) from exc
-    if value < 1:
-        raise ChunkerConfigError(
-            f"model_token_limit must be >= 1, got {value}"
-        )
-    return value
-
-
-def reconstruct_text(chunks: Sequence[LegalTextChunk | Mapping[str, Any]]) -> str:
-    """Exact reconstruction from exclusive chunk spans (sorted by char_start)."""
-
-    if not chunks:
-        return ""
-    records: list[tuple[int, int, str]] = []
-    for chunk in chunks:
-        if isinstance(chunk, LegalTextChunk):
-            records.append((chunk.char_start, chunk.char_end, chunk.exclusive_text))
-        else:
-            records.append(
-                (
-                    int(chunk["char_start"]),
-                    int(chunk["char_end"]),
-                    str(chunk["exclusive_text"]),
-                )
-            )
-    records.sort(key=lambda item: item[0])
-    return "".join(text for _, _, text in records)
+    return _validate_model_token_limit(
+        model_token_limit,
+        error_type=ChunkerConfigError,
+        physical_row_limit=PHYSICAL_ROW_LIMIT,
+    )
 
 
 def assert_exact_reconstruction(
@@ -861,13 +685,11 @@ def assert_exact_reconstruction(
 ) -> str:
     """Fail closed when exclusive spans do not reconstruct *source_text*."""
 
-    rebuilt = reconstruct_text(chunks)
-    if rebuilt != source_text:
-        raise UscodeChunkerError(
-            "exact text reconstruction failed: "
-            f"source_len={len(source_text)} rebuilt_len={len(rebuilt)}"
-        )
-    return rebuilt
+    return _assert_exact_reconstruction(
+        source_text,
+        chunks,
+        error_type=UscodeChunkerError,
+    )
 
 
 def assert_chunks_within_limit(
@@ -876,26 +698,14 @@ def assert_chunks_within_limit(
 ) -> None:
     """Fail closed when any non-exempt chunk exceeds the model token limit."""
 
-    limit = validate_model_token_limit(model_token_limit)
-    for chunk in chunks:
-        if isinstance(chunk, LegalTextChunk):
-            exempt = chunk.limit_exempt
-            token_count = chunk.token_count
-            # Prefer counting the embeddable text (includes overlap).
-            embed_count = count_tokens(chunk.text)
-            idx = chunk.chunk_index
-        else:
-            exempt = bool(chunk.get("limit_exempt", False))
-            token_count = int(chunk.get("token_count") or 0)
-            embed_count = count_tokens(str(chunk.get("text") or ""))
-            idx = chunk.get("chunk_index")
-        if exempt:
-            continue
-        if embed_count > limit or token_count > limit:
-            raise UscodeChunkerError(
-                f"non-exempt chunk {idx} exceeds model_token_limit={limit}: "
-                f"embed_tokens={embed_count} exclusive_tokens={token_count}"
-            )
+    _assert_chunks_within_limit(
+        chunks,
+        model_token_limit,
+        validate_limit=validate_model_token_limit,
+        count_tokens=count_tokens,
+        chunk_type=LegalTextChunk,
+        error_type=UscodeChunkerError,
+    )
 
 
 class UscodeChunker:
@@ -1259,57 +1069,14 @@ def _repair_coverage(
     coverage is checked over ``[abs_offset, abs_offset + text_len)``.
     """
 
-    if text_len == 0:
-        return []
-    region_start = abs_offset
-    region_end = abs_offset + text_len
-    ordered = sorted(pieces, key=lambda p: (p.char_start, p.char_end))
-    repaired: list[_Piece] = []
-    cursor = region_start
-    for piece in ordered:
-        if piece.char_end <= cursor:
-            continue
-        # Clamp pieces that extend outside the region.
-        p_start = max(piece.char_start, region_start)
-        p_end = min(piece.char_end, region_end)
-        if p_end <= cursor or p_start >= region_end:
-            continue
-        if p_start > cursor:
-            repaired.append(
-                _Piece(
-                    char_start=cursor,
-                    char_end=p_start,
-                    parent_path=tuple(base_path) + ("gap",),
-                    split_mode=SplitMode.HARD.value,
-                )
-            )
-        start = max(p_start, cursor)
-        if start < p_end:
-            if start != piece.char_start or p_end != piece.char_end:
-                repaired.append(
-                    _Piece(
-                        char_start=start,
-                        char_end=p_end,
-                        parent_path=piece.parent_path,
-                        split_mode=piece.split_mode,
-                        limit_exempt=piece.limit_exempt,
-                    )
-                )
-            else:
-                repaired.append(piece)
-            cursor = p_end
-        else:
-            cursor = max(cursor, p_end)
-    if cursor < region_end:
-        repaired.append(
-            _Piece(
-                char_start=cursor,
-                char_end=region_end,
-                parent_path=tuple(base_path) + ("tail",),
-                split_mode=SplitMode.HARD.value,
-            )
-        )
-    return repaired
+    return repair_coverage(
+        pieces,
+        text_len=text_len,
+        base_path=base_path,
+        abs_offset=abs_offset,
+        piece_factory=_Piece,
+        hard_split_mode=SplitMode.HARD.value,
+    )
 
 
 def chunk_uscode_section(

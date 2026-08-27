@@ -59,6 +59,7 @@ from ipfs_datasets_py.processors.legal_data.state_laws_sparse_graphrag import ( 
     DEFAULT_MAX_ROWS,
     DEFAULT_MAX_SHARDS,
     DEFAULT_MAX_TIME_MS,
+    DEFAULT_RELEASE_POINTER_PATH,
     DEFAULT_REVISION,
     DEFAULT_RRF_K,
     DEFAULT_TOP_K,
@@ -231,6 +232,8 @@ def open_query_client(
     revision: str = DEFAULT_REVISION,
     local_root: Path | str | None = None,
     cache_dir: Path | str | None = None,
+    manifest_path: Path | str | None = None,
+    pointer_path: Path | str | None = None,
     limits: ResourceBudgets | Mapping[str, Any] | None = None,
     budgets: ResourceBudgets | Mapping[str, Any] | None = None,
     query_embedder: Any = None,
@@ -253,6 +256,8 @@ def open_query_client(
             repo_id=repo_id,
             local_root=root,
             cache_dir=cache_dir,
+            manifest_path=manifest_path,
+            pointer_path=pointer_path,
             budgets=budgets if budgets is not None else limits,
             query_embedder=query_embedder,
             fusion=fusion,
@@ -311,6 +316,8 @@ def _build_client(args: argparse.Namespace) -> StateLawsSparseGraphragClient:
         revision=str(args.revision),
         local_root=args.local_root,
         cache_dir=_resolve_cache_dir(args),
+        manifest_path=args.manifest_path,
+        pointer_path=args.pointer_path,
         limits=_build_limits(args),
         query_embedder=embedder,
         fusion=fusion,
@@ -418,7 +425,7 @@ def package_query_result(
         return package_api_query_result(
             result,
             client=client,
-            pin=None if client is None else client.pin,
+            pin=None if client is None else client.effective_pin,
             include_trace=include_trace,
             offline_replay=offline_replay,
             expected_fingerprint=expected_fingerprint,
@@ -575,6 +582,25 @@ def build_parser() -> argparse.ArgumentParser:
         "--local-root",
         default=None,
         help="Offline release root (LocalRootTransport; no network)",
+    )
+    release_source = parser.add_mutually_exclusive_group()
+    release_source.add_argument(
+        "--manifest-path",
+        default=None,
+        help=(
+            "Explicit repository-relative manifest path; selects direct-manifest "
+            "mode (local roots otherwise default to manifest.json)"
+        ),
+    )
+    release_source.add_argument(
+        "--release-pointer-path",
+        "--pointer-path",
+        dest="pointer_path",
+        default=None,
+        help=(
+            "Pinned runtime release pointer path; remote queries default to "
+            f"{DEFAULT_RELEASE_POINTER_PATH}"
+        ),
     )
     parser.add_argument(
         "--fixture-mode",

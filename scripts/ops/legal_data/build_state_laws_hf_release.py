@@ -50,7 +50,6 @@ from ipfs_datasets_py.processors.legal_data.state_laws_embeddings import (  # no
 from ipfs_datasets_py.processors.legal_data.state_laws_hf_release import (  # noqa: E402
     DEFAULT_CONFIG_NAME,
     DEFAULT_DATASET_REPO_ID,
-    GOAL_ID as ASSEMBLER_GOAL_ID,
     LEGACY_CONFIG_NAME,
     LINEAGE_REPORT_PATH,
     PREVIOUS_PUBLIC_PIN,
@@ -58,14 +57,21 @@ from ipfs_datasets_py.processors.legal_data.state_laws_hf_release import (  # no
     RECOVERY_CONFIG_NAME,
     RELEASE_PROFILE,
     REQUIRED_MANIFEST_BINDINGS,
-    SCHEMA_VERSION as ASSEMBLER_SCHEMA_VERSION,
     SOURCE_RIGHTS_RECEIPT_RELPATH,
-    TASK_ID as ASSEMBLER_TASK_ID,
     assemble_state_laws_hf_release,
     fixture_legacy_files,
     fixture_source_receipts,
     load_source_rights_receipt,
     validate_state_laws_hf_release,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_hf_release import (  # noqa: E402
+    GOAL_ID as ASSEMBLER_GOAL_ID,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_hf_release import (  # noqa: E402
+    SCHEMA_VERSION as ASSEMBLER_SCHEMA_VERSION,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_hf_release import (  # noqa: E402
+    TASK_ID as ASSEMBLER_TASK_ID,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (  # noqa: E402
     DEFAULT_EMBEDDING_DIMENSION,
@@ -74,7 +80,6 @@ from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (  
     content_sha256,
     example_corpus_payload,
 )
-
 
 SCHEMA_VERSION: Final = "state-laws-release-candidate-v1"
 REPORT_SCHEMA: Final = "ipfs_datasets_py/legal-corpora-reindex-release-candidate@1"
@@ -85,6 +90,10 @@ PRODUCER: Final = "build_state_laws_hf_release.py"
 BOARD_NAMESPACE: Final = "legal-corpora-reindex-v1"
 BUNDLE: Final = "release-candidate"
 CODE_VERSION: Final = "1"
+PROVES_SOFTWARE_CONTRACT_ONLY: Final = True
+AUTHORIZES_PUBLICATION: Final = False
+AUTHORIZES_RELEASE: Final = False
+AUTHORIZES_HUB_UPLOAD: Final = False
 DEFAULT_REPORT_RELPATH: Final = Path(
     "docs/reports/legal_corpora_reindex/release_candidate.json"
 )

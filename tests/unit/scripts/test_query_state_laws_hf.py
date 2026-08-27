@@ -33,6 +33,8 @@ from ipfs_datasets_py.processors.legal_data.state_laws_sparse_graphrag import (
 REPO = Path(__file__).resolve().parents[3]
 SCRIPT = REPO / "scripts" / "ops" / "legal_data" / "query_state_laws_hf.py"
 PINNED_REVISION = "42f0546acc7c6cd55627eaf51fb820d5613b9021"
+POINTER_REVISION = "b" * 40
+PUBLISHED_RELEASE_COMMIT = "c" * 40
 REPO_ID = "justicedao/ipfs_state_laws"
 
 
@@ -63,6 +65,56 @@ def mini_release(tmp_path: Path) -> Path:
     release.mkdir()
     build_mini_release(release)
     return release
+
+
+@pytest.fixture
+def published_release_repository(tmp_path: Path) -> dict[str, object]:
+    """Materialize the append-only publication-plan tree plus runtime pointer."""
+
+    from ipfs_datasets_py.processors.legal_data.state_laws_publication_package import (
+        STATE_LAWS_POINTER_PATH,
+        STATE_LAWS_RELEASE_PREFIX_TEMPLATE,
+    )
+    from tests.unit.processors.legal_data.test_state_laws_sparse_query import (
+        build_mini_release,
+    )
+
+    repository = tmp_path / "published-repository"
+    staged_release = tmp_path / "staged-release"
+    staged_release.mkdir()
+    manifest = build_mini_release(staged_release)
+    release_id = f"sha256-{api.content_sha256(manifest)}"
+    release_prefix = STATE_LAWS_RELEASE_PREFIX_TEMPLATE.format(release_id=release_id)
+    assert api.DEFAULT_RELEASE_POINTER_PATH == STATE_LAWS_POINTER_PATH
+    published_root = repository / release_prefix
+    published_root.parent.mkdir(parents=True)
+    staged_release.rename(published_root)
+
+    # A stale root manifest is deliberately present. Pointer mode must never
+    # consult or fall back to it.
+    (repository / "manifest.json").write_text("{}\n", encoding="utf-8")
+    pointer_path = repository / api.DEFAULT_RELEASE_POINTER_PATH
+    pointer_path.parent.mkdir(parents=True)
+    pointer = {
+        "canary_percent": 100,
+        "commit_sha": PUBLISHED_RELEASE_COMMIT,
+        "pointer_path": api.DEFAULT_RELEASE_POINTER_PATH,
+        "release_id": release_id,
+        "release_prefix": release_prefix,
+        "repository_id": REPO_ID,
+        "runtime_release_pointer": True,
+    }
+    pointer_path.write_text(
+        json.dumps(pointer, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    return {
+        "pointer": pointer,
+        "pointer_path": pointer_path,
+        "published_root": published_root,
+        "release_prefix": release_prefix,
+        "repository": repository,
+    }
 
 
 def _common_cli_args(release: Path, cache: Path | None = None) -> list[str]:
@@ -158,6 +210,13 @@ def test_default_revision_is_immutable_not_main(cli) -> None:
     assert args.revision.casefold() not in cli.MUTABLE_REFS
     assert args.repo_id == REPO_ID
     assert require_immutable_pin(args.revision) == PINNED_REVISION
+
+
+def test_standard_remote_client_defaults_to_canonical_release_pointer() -> None:
+    client = api.open_query_client(revision=PINNED_REVISION, repo_id=REPO_ID)
+    assert client.uses_release_pointer is True
+    assert client.pointer_path == api.DEFAULT_RELEASE_POINTER_PATH
+    assert client.manifest_path is None
 
 
 def test_cli_import_does_not_contact_network(monkeypatch) -> None:
@@ -258,6 +317,7 @@ def test_help_documents_acceptance_surface(cli, capsys) -> None:
         "max-bytes",
         "cache-dir",
         "offline-replay",
+        "pointer",
         "fixture",
     ):
         assert token in text
@@ -549,6 +609,328 @@ def test_dc_jurisdiction_code_and_citation_filters(
         for hit in neighbors["results"]
     }
     assert "entry-c" in neighbor_ids
+
+
+def test_published_pointer_tree_serves_all_package_query_modes_without_root_fallback(
+    published_release_repository: dict[str, object], tmp_path: Path
+) -> None:
+    repository = Path(str(published_release_repository["repository"]))
+    client = api.open_query_client(
+        revision=POINTER_REVISION,
+        repo_id=REPO_ID,
+        local_root=repository,
+        cache_dir=tmp_path / "published-api-cache",
+        pointer_path=api.DEFAULT_RELEASE_POINTER_PATH,
+        query_embedder=lambda text: [1.0, 0.0],
+        budgets=api.ResourceBudgets(max_bytes=10_000_000, max_shards=32),
+    )
+
+    results = [
+        client.query("bm25", query="agency", top_k=2),
+        client.query(
+            "vector",
+            query="records",
+            query_vector=[-0.8, 0.2],
+            top_k=3,
+        ),
+        client.query(
+            "hybrid",
+            query="agency",
+            query_vector=[1.0, 0.0],
+            top_k=2,
+        ),
+        client.query("neighbors", node_cid="entry-a", limit=4),
+        client.query("graph_walk", start_node_cid="entry-a", max_depth=1, max_nodes=4),
+        client.query(
+            "semantic_graph_walk",
+            start_node_cid="entry-a",
+            query="agency",
+            query_vector=[1.0, 0.0],
+            max_depth=1,
+            max_nodes=4,
+        ),
+    ]
+
+    assert [result.mode for result in results] == list(api.QUERY_MODES)
+    assert client.uses_release_pointer is True
+    assert client.manifest_path is None
+    assert client.resolver.revision == PUBLISHED_RELEASE_COMMIT
+    assert client.resolver.path_prefix == published_release_repository["release_prefix"]
+    assert client.effective_pin.revision == PUBLISHED_RELEASE_COMMIT
+    assert client.release_pointer is not None
+    assert client.release_pointer.runtime_pointer.__class__.__name__ == (
+        "RuntimeReleasePointer"
+    )
+    assert client.release_pointer.pointer_revision == POINTER_REVISION
+    assert client.release_pointer.commit_sha == PUBLISHED_RELEASE_COMMIT
+    pointer_paths = {
+        item["relative_path"] for item in client.pointer_fetch_trace.get("files", ())
+    }
+    assert pointer_paths == {api.DEFAULT_RELEASE_POINTER_PATH}
+    for result in results:
+        assert result.fetch_trace["revision"] == PUBLISHED_RELEASE_COMMIT
+        assert result.fetch_trace["file_count"] > 0
+
+
+def test_cli_serves_all_modes_from_published_pointer_tree_without_network(
+    cli,
+    published_release_repository: dict[str, object],
+    tmp_path: Path,
+    capsys,
+) -> None:
+    common = [
+        "--local-root",
+        str(published_release_repository["repository"]),
+        "--revision",
+        POINTER_REVISION,
+        "--repo-id",
+        REPO_ID,
+        "--pointer-path",
+        api.DEFAULT_RELEASE_POINTER_PATH,
+        "--cache-dir",
+        str(tmp_path / "published-cli-cache"),
+        "--fixture-mode",
+        "--json",
+        "--trace",
+    ]
+    commands = (
+        ("bm25", ["bm25", "agency", "--top-k", "2"]),
+        (
+            "vector",
+            ["vector", "records", "--embedding=-0.8,0.2", "--top-k", "2"],
+        ),
+        (
+            "hybrid",
+            ["hybrid", "agency", "--embedding=1.0,0.0", "--top-k", "2"],
+        ),
+        ("neighbors", ["neighbors", "entry-a", "--limit", "4"]),
+        (
+            "graph_walk",
+            ["graph-walk", "entry-a", "--walk-depth", "1", "--walk-nodes", "4"],
+        ),
+        (
+            "semantic_graph_walk",
+            [
+                "semantic-graph-walk",
+                "entry-a",
+                "--query",
+                "agency",
+                "--embedding=1.0,0.0",
+                "--walk-depth",
+                "1",
+                "--walk-nodes",
+                "4",
+            ],
+        ),
+    )
+    for expected_mode, command in commands:
+        assert cli.main([*common, *command]) == 0
+        payload = json.loads(capsys.readouterr().out)
+        assert payload["mode"] == expected_mode
+        assert payload["pin"]["revision"] == PUBLISHED_RELEASE_COMMIT
+        assert payload["fetch_trace"]["revision"] == PUBLISHED_RELEASE_COMMIT
+        assert payload["release_pointer"]["pointer_revision"] == POINTER_REVISION
+        assert (
+            payload["release_pointer"]["release_prefix"]
+            == published_release_repository["release_prefix"]
+        )
+
+
+def test_pointer_mode_fails_closed_instead_of_using_stale_root_manifest(
+    published_release_repository: dict[str, object], tmp_path: Path
+) -> None:
+    pointer_path = Path(str(published_release_repository["pointer_path"]))
+    pointer_path.unlink()
+    client = api.open_query_client(
+        revision=POINTER_REVISION,
+        repo_id=REPO_ID,
+        local_root=Path(str(published_release_repository["repository"])),
+        cache_dir=tmp_path / "missing-pointer-cache",
+        pointer_path=api.DEFAULT_RELEASE_POINTER_PATH,
+    )
+    with pytest.raises(api.ReleasePointerError, match="requested State Laws"):
+        client.bm25_search("agency", top_k=1)
+
+
+def test_pointer_mode_rejects_malformed_json(
+    published_release_repository: dict[str, object], tmp_path: Path
+) -> None:
+    Path(str(published_release_repository["pointer_path"])).write_text(
+        "{not-json", encoding="utf-8"
+    )
+    client = api.open_query_client(
+        revision=POINTER_REVISION,
+        repo_id=REPO_ID,
+        local_root=Path(str(published_release_repository["repository"])),
+        cache_dir=tmp_path / "malformed-json-pointer-cache",
+        pointer_path=api.DEFAULT_RELEASE_POINTER_PATH,
+    )
+    with pytest.raises(api.ReleasePointerError, match="requested State Laws"):
+        client.bm25_search("agency", top_k=1)
+
+
+@pytest.mark.parametrize(
+    ("mode", "query_kwargs"),
+    (
+        ("bm25", {"query": "agency", "top_k": 1}),
+        (
+            "vector",
+            {"query": "records", "query_vector": [-0.8, 0.2], "top_k": 1},
+        ),
+        (
+            "hybrid",
+            {"query": "agency", "query_vector": [1.0, 0.0], "top_k": 1},
+        ),
+        ("neighbors", {"node_cid": "entry-a", "limit": 1}),
+        (
+            "graph_walk",
+            {"start_node_cid": "entry-a", "max_depth": 1, "max_nodes": 2},
+        ),
+        (
+            "semantic_graph_walk",
+            {
+                "start_node_cid": "entry-a",
+                "query": "agency",
+                "query_vector": [1.0, 0.0],
+                "max_depth": 1,
+                "max_nodes": 2,
+            },
+        ),
+    ),
+)
+def test_pointer_mode_rejects_valid_wrong_release_id_before_every_query_route(
+    published_release_repository: dict[str, object],
+    mode: str,
+    query_kwargs: dict[str, object],
+    tmp_path: Path,
+) -> None:
+    repository = Path(str(published_release_repository["repository"]))
+    published_root = Path(str(published_release_repository["published_root"]))
+    pointer = dict(published_release_repository["pointer"])  # type: ignore[arg-type]
+    wrong_release_id = "sha256-" + "d" * 64
+    assert wrong_release_id != pointer["release_id"]
+    wrong_prefix = f"{api.STATE_LAWS_RELEASE_PREFIX_ROOT}/{wrong_release_id}"
+    published_root.rename(repository / wrong_prefix)
+    pointer["release_id"] = wrong_release_id
+    pointer["release_prefix"] = wrong_prefix
+    Path(str(published_release_repository["pointer_path"])).write_text(
+        json.dumps(pointer, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+
+    client = api.open_query_client(
+        revision=POINTER_REVISION,
+        repo_id=REPO_ID,
+        local_root=repository,
+        cache_dir=tmp_path / f"wrong-release-id-{mode}",
+        pointer_path=api.DEFAULT_RELEASE_POINTER_PATH,
+    )
+    with pytest.raises(
+        api.ReleasePointerError,
+        match="release_id does not match.*manifest digest",
+    ):
+        client.query(mode, **query_kwargs)
+
+
+def test_pointer_mode_rejects_manifest_path_swap_under_valid_release_prefix(
+    published_release_repository: dict[str, object], tmp_path: Path
+) -> None:
+    from tests.unit.processors.legal_data.test_state_laws_sparse_query import (
+        build_mini_release,
+    )
+
+    repository = Path(str(published_release_repository["repository"]))
+    published_root = Path(str(published_release_repository["published_root"]))
+    swapped_root = tmp_path / "swapped-release"
+    swapped_root.mkdir()
+    swapped_manifest = build_mini_release(swapped_root)
+    swapped_manifest["release_point"] = "adversarial-path-swap"
+    (swapped_root / api.DEFAULT_MANIFEST_NAME).write_text(
+        json.dumps(swapped_manifest, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    pointer = published_release_repository["pointer"]
+    assert isinstance(pointer, dict)
+    assert f"sha256-{api.content_sha256(swapped_manifest)}" != pointer["release_id"]
+
+    published_root.rename(tmp_path / "displaced-original-release")
+    swapped_root.rename(published_root)
+    client = api.open_query_client(
+        revision=POINTER_REVISION,
+        repo_id=REPO_ID,
+        local_root=repository,
+        cache_dir=tmp_path / "path-swap-cache",
+        pointer_path=api.DEFAULT_RELEASE_POINTER_PATH,
+    )
+    with pytest.raises(
+        api.ReleasePointerError,
+        match="release_id does not match.*manifest digest",
+    ):
+        client.bm25_search("agency", top_k=1)
+
+
+@pytest.mark.parametrize(
+    "pointer_update",
+    (
+        {"runtime_release_pointer": False},
+        {"commit_sha": "main"},
+        {"pointer_path": "runtime/../manifest.json"},
+        {"release_prefix": "data/state_laws/../manifest.json"},
+        {"release_prefix": "data/state_laws/sha256-" + "d" * 64},
+        {"repository_id": "other/state_laws"},
+    ),
+)
+def test_pointer_mode_rejects_malformed_or_escaping_bindings(
+    published_release_repository: dict[str, object],
+    pointer_update: dict[str, object],
+    tmp_path: Path,
+) -> None:
+    pointer = dict(published_release_repository["pointer"])  # type: ignore[arg-type]
+    pointer.update(pointer_update)
+    Path(str(published_release_repository["pointer_path"])).write_text(
+        json.dumps(pointer, sort_keys=True), encoding="utf-8"
+    )
+    client = api.open_query_client(
+        revision=POINTER_REVISION,
+        repo_id=REPO_ID,
+        local_root=Path(str(published_release_repository["repository"])),
+        cache_dir=tmp_path / "malformed-pointer-cache",
+        pointer_path=api.DEFAULT_RELEASE_POINTER_PATH,
+    )
+    with pytest.raises(api.ReleasePointerError):
+        client.bm25_search("agency", top_k=1)
+
+
+def test_manifest_and_pointer_seams_are_explicit_and_path_safe(
+    mini_release: Path,
+) -> None:
+    direct = api.open_query_client(
+        revision=PINNED_REVISION,
+        local_root=mini_release,
+        manifest_path="manifest.json",
+    )
+    assert direct.uses_release_pointer is False
+    assert direct.bm25_search("foia", top_k=1).mode == "bm25"
+
+    with pytest.raises(api.ReleasePointerError, match="mutually exclusive"):
+        api.open_query_client(
+            revision=PINNED_REVISION,
+            local_root=mini_release,
+            manifest_path="manifest.json",
+            pointer_path=api.DEFAULT_RELEASE_POINTER_PATH,
+        )
+    with pytest.raises(api.ReleasePointerError):
+        api.open_query_client(
+            revision=PINNED_REVISION,
+            local_root=mini_release,
+            pointer_path="../runtime/state_laws_release_pointer.json",
+        )
+    with pytest.raises(api.ReleasePointerError):
+        api.open_query_client(
+            revision=PINNED_REVISION,
+            local_root=mini_release,
+            manifest_path="../manifest.json",
+        )
 
 
 def test_package_all_modes_including_dc(mini_release: Path) -> None:

@@ -7,15 +7,30 @@ Local dump: ``NY_OPENLEG_LAW_JSON``. Live API still needs OPENLEG_API_KEY.
 from __future__ import annotations
 
 import json
-import os
 import re
 from pathlib import Path
 from typing import Dict, Iterator, List, Optional, Tuple
 
-from .base_scraper import NormalizedStatute, StatuteMetadata
+from .base_scraper import (
+    NormalizedStatute,
+    StatuteMetadata,
+    current_state_law_run_environment_value,
+)
 
 _LAW_HREF_RE = re.compile(r"/legislation/laws/([A-Z][A-Z0-9]{1,5})(?:/|\?|#|$)")
-_SKIP_LAW_SLUGS = {"CONSOLIDATED", "UNCONSOLIDATED", "COURT", "ACTS", "RULES", "MISC"}
+_SKIP_LAW_SLUGS = {
+    "CONSOLIDATED",
+    "UNCONSOLIDATED",
+    "COURT",
+    "ACTS",
+    "RULES",
+    "MISC",
+    # The constitution and administrative regulations are separately scoped
+    # corpora.  They must never become full-law PDF members merely because a
+    # navigation link appears beside the consolidated statutory catalog.
+    "CNS",
+    "NYCRR",
+}
 SENATE_BASE = "https://www.nysenate.gov"
 _LEAF_TYPES = {"SECTION", "RULE"}
 _CLS = {
@@ -85,7 +100,7 @@ def parse_new_york_law_tree(
                 title_name=sec["law_name"] or None,
                 section_number=number,
                 section_name=(sec["title"] or f"Section {number}")[:200],
-                full_text=sec["text"][:14000],
+                full_text=sec["text"],
                 source_url=f"https://www.nysenate.gov/legislation/laws/{law_id}/{sec['location_id'] or number}",
                 official_cite=f"N.Y. {law_id} Law § {number}",
                 metadata=StatuteMetadata(),
@@ -129,7 +144,7 @@ def category_law_links(
 
 
 def configured_law_json_path() -> Optional[Path]:
-    raw = str(os.environ.get("NY_OPENLEG_LAW_JSON") or "").strip()
+    raw = current_state_law_run_environment_value("NY_OPENLEG_LAW_JSON").strip()
     if not raw:
         return None
     path = Path(raw).expanduser()
@@ -137,7 +152,7 @@ def configured_law_json_path() -> Optional[Path]:
 
 
 def configured_category_html_path() -> Optional[Path]:
-    raw = str(os.environ.get("NY_CATEGORY_HTML") or "").strip()
+    raw = current_state_law_run_environment_value("NY_CATEGORY_HTML").strip()
     if not raw:
         return None
     path = Path(raw).expanduser()

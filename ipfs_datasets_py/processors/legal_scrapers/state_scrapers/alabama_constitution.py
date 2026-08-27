@@ -127,7 +127,7 @@ def parse_alabama_constitution(
                     title_number=art_id,
                     section_number=number,
                     section_name=(catchline or f"Section {number}")[:200],
-                    full_text=body[:14000],
+                    full_text=body,
                     source_url=f"{ORIGIN}/constitution-of-alabama?article={art_id}&section={number}",
                     official_cite=cite,
                     metadata=StatuteMetadata(),

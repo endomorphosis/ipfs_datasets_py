@@ -15,14 +15,22 @@ import re
 import zipfile
 from pathlib import Path
 from typing import List, Optional, Tuple
+from urllib.parse import urljoin, urlparse
 from xml.etree import ElementTree as ET
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
 CONTENT_BASE = "https://content.leg.colorado.gov"
-_SECTION_NUM_RE = re.compile(r"\b(\d{1,2}-\d{1,3}-\d{1,4}(?:\.\d+)?)\b")
+OLLS_BASE = "https://olls.info"
+_SECTION_NUM_RE = re.compile(
+    r"\b(\d{1,2}(?:\.\d+)?-\d{1,3}-\d{1,4}(?:\.\d+)?)\b"
+)
 _HEADING_RE = re.compile(
-    r"(?m)^\s*(?P<num>\d{1,2}-\d{1,3}-\d{1,4}(?:\.\d+)?)\.\s*(?P<head>[^\n]+)"
+    r"(?m)^\s*(?P<num>\d{1,2}(?:\.\d+)?-\d{1,3}-\d{1,4}(?:\.\d+)?)\.\s*(?P<head>[^\n]+)"
+)
+_TITLE_DOWNLOAD_RE = re.compile(
+    r"/crs/crs(?P<edition>\d{4})-title-(?P<title>\d{2}(?:\.\d+)?)\.htm$",
+    re.IGNORECASE,
 )
 _RESERVED = re.compile(
     r"\b(repealed|reserved|expired|renumbered|transferred)\b",
@@ -40,6 +48,47 @@ def _clean(text: str) -> str:
 def title_search_url(number: str) -> str:
     token = str(number or "").strip().replace(".", "-")
     return f"{CONTENT_BASE}/publication-search?search_api_fulltext=crs%20title%20{token}"
+
+
+def title_download_rows(
+    html: str,
+    *,
+    page_url: str = CONTENT_BASE,
+) -> List[Tuple[str, str, str, str]]:
+    """Discover OLLS HTM title files referred by an official Assembly page.
+
+    ``olls.info`` is the Office of Legislative Legal Services download host.
+    Authority comes from the official ``content.leg.colorado.gov`` page that
+    enumerates these links; arbitrary OLLS-looking URLs are never synthesized.
+    Returned tuples are ``(title_number, display_name, url, edition)``.
+    """
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str, str]] = []
+    seen: set[str] = set()
+    for link in soup.select("a[href]"):
+        absolute = urljoin(page_url, str(link.get("href") or "").strip())
+        parsed = urlparse(absolute)
+        if (parsed.hostname or "").lower() not in {"olls.info", "www.olls.info"}:
+            continue
+        match = _TITLE_DOWNLOAD_RE.search(parsed.path or "")
+        if not match:
+            continue
+        raw_number = match.group("title")
+        number = raw_number.lstrip("0") or "0"
+        if number == "0" or number in seen:
+            continue
+        seen.add(number)
+        row = link.find_parent("tr")
+        label_node = row.find("th") if row is not None else None
+        label = _clean(label_node.get_text(" ") if label_node is not None else "")
+        label = re.sub(rf"^Title\s+{re.escape(number)}\s*[—-]?\s*", "", label).strip()
+        out.append((number, label or f"Title {number}", absolute, match.group("edition")))
+    return out
 
 
 def publication_rows(html: str) -> List[Tuple[str, str, str]]:
@@ -133,7 +182,7 @@ def _statute(
         chapter_number=parts[1] if len(parts) > 1 else None,
         section_number=number,
         section_name=heading[:200] or f"Section {number}",
-        full_text=body[:14000],
+        full_text=body,
         source_url=source_url,
         official_cite=f"Colo. Rev. Stat. § {number}",
         metadata=StatuteMetadata(),
@@ -226,17 +275,92 @@ def parse_colorado_title_html(
     source_url: str = CONTENT_BASE,
     max_statutes: Optional[int] = None,
 ) -> List[NormalizedStatute]:
-    """Parse OLLS personal-use title HTM (``N-N-N. heading`` then body)."""
+    """Parse OLLS personal-use title HTM without admitting its TOC copy.
+
+    The Word-exported HTM repeats every section in a table of contents.  The
+    actual body occurrence has a bold section number and is followed by body
+    paragraphs, then a ``Source:`` paragraph.  DOM parsing uses those markers,
+    keeps the complete statutory body, and excludes source notes/annotations.
+    Plain-text parsing remains as a compatibility path for configured exports.
+    """
 
     try:
         from bs4 import BeautifulSoup
     except ImportError:
-        text = html or ""
+        soup = None
     else:
         soup = BeautifulSoup(html or "", "html.parser")
         for tag in soup(["script", "style", "nav", "header", "footer"]):
             tag.decompose()
-        text = soup.get_text("\n", strip=True)
+
+    if soup is not None:
+        paragraphs = list(soup.find_all("p"))
+        headings: List[Tuple[int, str, str]] = []
+        for index, paragraph in enumerate(paragraphs):
+            paragraph_text = _clean(paragraph.get_text(" "))
+            number_match = re.match(
+                r"^(?P<num>\d{1,2}(?:\.\d+)?-\d{1,3}-\d{1,4}(?:\.\d+)?)\.",
+                paragraph_text,
+            )
+            if not number_match:
+                continue
+            number = number_match.group("num")
+            bold_nodes = paragraph.find_all("b")
+            if not bold_nodes:
+                # TOC rows have the same visible citation but no bold body
+                # marker in the official Word-exported HTM.
+                continue
+            first_bold = _clean(bold_nodes[0].get_text(" "))
+            if not re.match(rf"^{re.escape(number)}\.", first_bold):
+                continue
+            heading_parts = [_clean(node.get_text(" ")) for node in bold_nodes[1:]]
+            heading = _clean(" ".join(part for part in heading_parts if part))
+            if not heading:
+                heading = re.sub(rf"^{re.escape(number)}\.\s*", "", first_bold).strip()
+            if not heading:
+                remainder = paragraph_text[number_match.end() :]
+                heading = re.sub(r"^[^A-Za-z0-9\[(\"']+", "", remainder).strip()
+            headings.append((index, number, heading or f"Section {number}"))
+
+        if headings:
+            statutes: List[NormalizedStatute] = []
+            seen_numbers: set[str] = set()
+            for heading_index, (paragraph_index, number, heading) in enumerate(headings):
+                if max_statutes is not None and len(statutes) >= int(max_statutes):
+                    break
+                next_index = (
+                    headings[heading_index + 1][0]
+                    if heading_index + 1 < len(headings)
+                    else len(paragraphs)
+                )
+                body_parts: List[str] = []
+                for paragraph in paragraphs[paragraph_index + 1 : next_index]:
+                    value = _clean(paragraph.get_text(" "))
+                    if not value:
+                        continue
+                    if _SOURCE_RE.match(value) or re.match(
+                        r"^(?:editor(?:'s|s) note|annotation(?:s)?|law reviews?)\b",
+                        value,
+                        re.IGNORECASE,
+                    ):
+                        break
+                    body_parts.append(value)
+                if number in seen_numbers:
+                    continue
+                seen_numbers.add(number)
+                row = _statute(
+                    number=number,
+                    heading=heading,
+                    body=_clean(" ".join(body_parts)),
+                    code_name=code_name,
+                    source_kind="official_colorado_title_htm",
+                    source_url=source_url,
+                )
+                if row is not None:
+                    statutes.append(row)
+            return statutes
+
+    text = soup.get_text("\n", strip=True) if soup is not None else (html or "")
     matches = list(_HEADING_RE.finditer(text))
     statutes: List[NormalizedStatute] = []
     for index, match in enumerate(matches):
@@ -250,8 +374,10 @@ def parse_colorado_title_html(
         paras = []
         for line in chunk.splitlines():
             line = line.strip()
-            if not line or _SOURCE_RE.match(line):
+            if not line:
                 continue
+            if _SOURCE_RE.match(line):
+                break
             paras.append(line)
         body = _clean(" ".join(paras))
         row = _statute(

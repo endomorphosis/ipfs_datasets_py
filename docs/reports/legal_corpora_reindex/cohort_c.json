@@ -159,8 +159,8 @@
         "promoted_success": false
       },
       "content": {
-        "content_digest": "sha256:f0536a80b004752f0aecd465c4e20ade0a76a8d4f0ba3818dadfb98ca4285446",
-        "min_full_text_chars": 566,
+        "content_digest": "sha256:5bdc8b8fae0a888b48f73e27f25f7f85e98da4f377c954bfcebdb50c9f8ca861",
+        "min_full_text_chars": 483,
         "non_placeholder_full_text": true,
         "official_urls": [
           "https://www.capitol.hawaii.gov/hrscurrent/Vol01_Ch0001-0042F/HRS0001/HRS_0001-0001.HTM",
@@ -201,7 +201,7 @@
       "partial_checkpoint_promoted": false,
       "replay": {
         "closed": true,
-        "content_digest": "sha256:f0536a80b004752f0aecd465c4e20ade0a76a8d4f0ba3818dadfb98ca4285446",
+        "content_digest": "sha256:5bdc8b8fae0a888b48f73e27f25f7f85e98da4f377c954bfcebdb50c9f8ca861",
         "first_frontier_digest": "sha256:22500aea1b622dd1c2a631e9871e9d7cfc6d403e2ef7ecef11ce029adb93d888",
         "second_frontier_digest": "sha256:22500aea1b622dd1c2a631e9871e9d7cfc6d403e2ef7ecef11ce029adb93d888"
       },
@@ -319,7 +319,7 @@
       "timeout_promoted_to_success": false
     },
     "HI": {
-      "content_digest": "sha256:f0536a80b004752f0aecd465c4e20ade0a76a8d4f0ba3818dadfb98ca4285446",
+      "content_digest": "sha256:5bdc8b8fae0a888b48f73e27f25f7f85e98da4f377c954bfcebdb50c9f8ca861",
       "failed_final": 0,
       "frontier_closed": true,
       "partial_checkpoint_promoted": false,

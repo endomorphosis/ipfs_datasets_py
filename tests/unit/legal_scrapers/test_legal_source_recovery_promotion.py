@@ -323,7 +323,9 @@ def test_hf_parquet_hydration_uses_known_repo_path_aliases(monkeypatch, tmp_path
     assert downloaded_paths == ["uscode_parquet/uscode.parquet", "uscode_parquet/laws.parquet"]
 
 
-def test_hf_upload_uses_environment_token_alias(monkeypatch, tmp_path):
+def test_hf_upload_uses_environment_token_alias_for_unprotected_repo(
+    monkeypatch, tmp_path
+):
     from ipfs_datasets_py.processors.legal_scrapers import (
         legal_source_recovery_promotion as promotion,
     )
@@ -347,7 +349,7 @@ def test_hf_upload_uses_environment_token_alias(monkeypatch, tmp_path):
 
     report = _upload_huggingface_parquet(
         local_path=local_path,
-        repo_id="justicedao/ipfs_state_laws",
+        repo_id="example/state-laws-development",
         repo_path="state_laws_parquet_cid/STATE-MN.parquet",
     )
 
@@ -355,6 +357,37 @@ def test_hf_upload_uses_environment_token_alias(monkeypatch, tmp_path):
     assert captured["token"] == "env-write-token"
     assert captured["upload"]["repo_type"] == "dataset"
     assert captured["upload"]["path_in_repo"] == "state_laws_parquet_cid/STATE-MN.parquet"
+
+
+def test_hf_upload_rejects_protected_partial_writer_before_api_construction(
+    monkeypatch, tmp_path
+):
+    from ipfs_datasets_py.huggingface.protected_repo_guard import (
+        ProtectedRepoGuardError,
+    )
+
+    local_path = tmp_path / "STATE-MN.parquet"
+    local_path.write_bytes(b"PAR1")
+    constructed = {"count": 0}
+
+    class _ForbiddenHfApi:
+        def __init__(self, *_args, **_kwargs):
+            constructed["count"] += 1
+
+    monkeypatch.setitem(
+        sys.modules,
+        "huggingface_hub",
+        types.SimpleNamespace(HfApi=_ForbiddenHfApi),
+    )
+
+    with pytest.raises(ProtectedRepoGuardError):
+        _upload_huggingface_parquet(
+            local_path=local_path,
+            repo_id="justicedao/ipfs_state_laws",
+            repo_path="state_laws_parquet_cid/STATE-MN.parquet",
+        )
+
+    assert constructed["count"] == 0
 
 
 def test_hf_token_resolver_uses_secret_keyring(monkeypatch):
@@ -409,14 +442,14 @@ def test_hf_folder_publisher_uses_shared_keyring_resolver(monkeypatch, tmp_path)
 
         def upload_folder(self, **kwargs):
             captured["upload"] = dict(kwargs)
-            return "https://huggingface.co/datasets/justicedao/ipfs_state_laws/commit/keyring"
+            return "https://huggingface.co/datasets/example/recovery/commit/keyring"
 
     monkeypatch.setattr(promotion, "_resolve_hf_token", lambda token=None: "shared-keyring-token")
     monkeypatch.setattr(publish_parquet_to_hf, "HfApi", _FakeHfApi)
 
     report = publish_parquet_to_hf.publish(
         local_dir=local_dir,
-        repo_id="justicedao/ipfs_state_laws",
+        repo_id="example/recovery",
         commit_message="Track missing legal source",
         create_repo=False,
         token=None,
@@ -426,7 +459,7 @@ def test_hf_folder_publisher_uses_shared_keyring_resolver(monkeypatch, tmp_path)
         cid_column="cid",
     )
 
-    assert report["repo_id"] == "justicedao/ipfs_state_laws"
+    assert report["repo_id"] == "example/recovery"
     assert captured["token"] == "shared-keyring-token"
     assert captured["upload"]["path_in_repo"] == "source_recovery/test"
 

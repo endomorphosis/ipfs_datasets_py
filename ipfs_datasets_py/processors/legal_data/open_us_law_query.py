@@ -53,6 +53,9 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Final, Optional
 
+from ipfs_datasets_py.processors.legal_data import (
+    legal_query_authority_core as _authority_core,
+)
 from ipfs_datasets_py.processors.legal_data.open_us_law_graph import (
     DEFAULT_EDGE_CLASS,
     LEGAL_EDGE_TYPES,
@@ -213,6 +216,26 @@ class LegalAuthorityCollisionError(OpenUsLawQueryError):
     code = "legal_authority_collision"
 
 
+_EDGE_AUTHORITY_BINDINGS: Final = _authority_core.LegalQueryAuthorityBindings(
+    edge_type=GraphEdgeType,
+    edge_class=GraphEdgeClass,
+    default_edge_class=DEFAULT_EDGE_CLASS,
+    legal_edge_types=LEGAL_EDGE_TYPES,
+    similarity_edge_types=SIMILARITY_EDGE_TYPES,
+    legal_edge_type_names=LEGAL_EDGE_TYPE_NAMES,
+    similarity_edge_type_names=SIMILARITY_EDGE_TYPE_NAMES,
+    input_error=OpenUsLawQueryInputError,
+    collision_error=LegalAuthorityCollisionError,
+    coerce_errors=(Exception,),
+    authority_legal=AUTHORITY_LEGAL,
+    authority_non_authoritative=AUTHORITY_NON_AUTHORITATIVE,
+    similarity_proof_authority=False,
+    similarity_notes=(
+        _authority_core.SIMILARITY_NOTES_BM25_EMBEDDING_AMENDMENT
+    ),
+)
+
+
 class FusionConfigError(OpenUsLawQueryError):
     """Raised when hybrid fusion configuration is invalid."""
 
@@ -306,41 +329,28 @@ def cosine_similarity(
 def edge_class_for_type(edge_type: str | GraphEdgeType) -> GraphEdgeClass:
     """Return the sealed edge class for a legal/similarity edge type."""
 
-    if isinstance(edge_type, GraphEdgeType):
-        edge = edge_type
-    else:
-        text = str(edge_type or "").strip().upper().replace("-", "_")
-        try:
-            edge = GraphEdgeType.coerce(text)
-        except Exception:
-            return GraphEdgeClass.SIMILARITY
-    return DEFAULT_EDGE_CLASS.get(edge, GraphEdgeClass.SIMILARITY)
+    return _authority_core.edge_class_for_type(
+        edge_type,
+        bindings=_EDGE_AUTHORITY_BINDINGS,
+    )
 
 
 def is_similarity_edge_type(edge_type: str | GraphEdgeType | None) -> bool:
     """Return True when *edge_type* is a non-authoritative similarity edge."""
 
-    if edge_type is None:
-        return False
-    if isinstance(edge_type, GraphEdgeType):
-        return edge_type in SIMILARITY_EDGE_TYPES
-    text = str(edge_type).strip().upper().replace("-", "_")
-    return text in SIMILARITY_EDGE_TYPE_NAMES or text in {
-        item.name for item in SIMILARITY_EDGE_TYPES
-    }
+    return _authority_core.is_similarity_edge_type(
+        edge_type,
+        bindings=_EDGE_AUTHORITY_BINDINGS,
+    )
 
 
 def is_legal_edge_type(edge_type: str | GraphEdgeType | None) -> bool:
     """Return True when *edge_type* is a legal/structural/provenance edge."""
 
-    if edge_type is None:
-        return False
-    if isinstance(edge_type, GraphEdgeType):
-        return edge_type in LEGAL_EDGE_TYPES
-    text = str(edge_type).strip().upper().replace("-", "_")
-    return text in LEGAL_EDGE_TYPE_NAMES or text in {
-        item.name for item in LEGAL_EDGE_TYPES
-    }
+    return _authority_core.is_legal_edge_type(
+        edge_type,
+        bindings=_EDGE_AUTHORITY_BINDINGS,
+    )
 
 
 def classify_edge_authority(edge_type: str | GraphEdgeType | None) -> dict[str, Any]:
@@ -350,47 +360,10 @@ def classify_edge_authority(edge_type: str | GraphEdgeType | None) -> dict[str, 
     toward non-authoritative so retrieval noise cannot claim legal force.
     """
 
-    if is_similarity_edge_type(edge_type):
-        edge_class = GraphEdgeClass.SIMILARITY
-        return {
-            "authority": AUTHORITY_NON_AUTHORITATIVE,
-            "edge_class": edge_class.value,
-            "edge_type": (
-                edge_type.value
-                if isinstance(edge_type, GraphEdgeType)
-                else str(edge_type or "")
-            ),
-            "legal_authority": False,
-            "proof_authority": False,
-            "retrieval_hint": True,
-        }
-    if is_legal_edge_type(edge_type):
-        edge_class = edge_class_for_type(edge_type)  # type: ignore[arg-type]
-        return {
-            "authority": AUTHORITY_LEGAL,
-            "edge_class": edge_class.value,
-            "edge_type": (
-                edge_type.value
-                if isinstance(edge_type, GraphEdgeType)
-                else str(edge_type or "")
-            ),
-            "legal_authority": True,
-            "proof_authority": edge_class
-            in {
-                GraphEdgeClass.AUTHORITY,
-                GraphEdgeClass.CITATION,
-                GraphEdgeClass.STRUCTURAL,
-            },
-            "retrieval_hint": False,
-        }
-    return {
-        "authority": AUTHORITY_NON_AUTHORITATIVE,
-        "edge_class": GraphEdgeClass.SIMILARITY.value,
-        "edge_type": str(edge_type or ""),
-        "legal_authority": False,
-        "proof_authority": False,
-        "retrieval_hint": True,
-    }
+    return _authority_core.classify_edge_authority(
+        edge_type,
+        bindings=_EDGE_AUTHORITY_BINDINGS,
+    )
 
 
 def annotate_edge_authority(edge: Mapping[str, Any]) -> dict[str, Any]:
@@ -400,42 +373,10 @@ def annotate_edge_authority(edge: Mapping[str, Any]) -> dict[str, Any]:
     claims legal authority.
     """
 
-    if not isinstance(edge, Mapping):
-        raise OpenUsLawQueryInputError("edge must be a mapping")
-    row = dict(edge)
-    edge_type = row.get("edge_type") or row.get("relationship_type") or ""
-    classification = classify_edge_authority(str(edge_type))
-    if is_similarity_edge_type(str(edge_type)):
-        claimed_legal = row.get("legal_authority")
-        claimed_authority = str(row.get("authority") or "").strip().lower()
-        claimed_proof = row.get("proof_authority")
-        if claimed_legal is True or claimed_proof is True:
-            raise LegalAuthorityCollisionError(
-                f"similarity edge {edge_type!r} cannot claim legal/proof "
-                f"authority"
-            )
-        if claimed_authority in {
-            "legal",
-            "authority",
-            "citation",
-            "authoritative",
-        }:
-            raise LegalAuthorityCollisionError(
-                f"similarity edge {edge_type!r} cannot use authority="
-                f"{claimed_authority!r}"
-            )
-        if str(row.get("edge_class") or "").strip().lower() in {
-            "authority",
-            "citation",
-            "structural",
-            "provenance",
-        }:
-            raise LegalAuthorityCollisionError(
-                f"similarity edge {edge_type!r} cannot use legal edge_class="
-                f"{row.get('edge_class')!r}"
-            )
-    row.update(classification)
-    return row
+    return _authority_core.annotate_edge_authority(
+        edge,
+        bindings=_EDGE_AUTHORITY_BINDINGS,
+    )
 
 
 def assert_no_similarity_as_legal_authority(
@@ -443,42 +384,18 @@ def assert_no_similarity_as_legal_authority(
 ) -> None:
     """Fail closed when any edge packages similarity as legal authority."""
 
-    for edge in edges:
-        if not isinstance(edge, Mapping):
-            continue
-        annotated = annotate_edge_authority(edge)
-        if is_similarity_edge_type(str(annotated.get("edge_type") or "")):
-            if annotated.get("legal_authority") is not False:
-                raise LegalAuthorityCollisionError(
-                    "similarity edge presented as legal authority"
-                )
-            if annotated.get("proof_authority") is not False:
-                raise LegalAuthorityCollisionError(
-                    "similarity edge presented as proof authority"
-                )
-            if annotated.get("authority") != AUTHORITY_NON_AUTHORITATIVE:
-                raise LegalAuthorityCollisionError(
-                    "similarity edge must be non_authoritative"
-                )
+    _authority_core.assert_no_similarity_as_legal_authority(
+        edges,
+        bindings=_EDGE_AUTHORITY_BINDINGS,
+    )
 
 
 def similarity_edge_semantics() -> dict[str, Any]:
     """Sealed non-authoritative semantics for similarity edges in queries."""
 
-    return {
-        "authority": AUTHORITY_NON_AUTHORITATIVE,
-        "edge_class": GraphEdgeClass.SIMILARITY.value,
-        "edge_types": sorted(SIMILARITY_EDGE_TYPE_NAMES),
-        "legal_authority": False,
-        "notes": (
-            "Similarity edges (BM25_NEIGHBOR_OF, SIMILAR_TO, "
-            "EMBEDDING_NEIGHBOR_OF) are retrieval hints only. They must "
-            "never be labeled as legal citation, authority, amendment, or "
-            "proof."
-        ),
-        "proof_authority": False,
-        "retrieval_hint": True,
-    }
+    return _authority_core.similarity_edge_semantics(
+        bindings=_EDGE_AUTHORITY_BINDINGS,
+    )
 
 
 # ---------------------------------------------------------------------------

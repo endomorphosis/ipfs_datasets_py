@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import List, Optional
 from urllib.parse import parse_qs, urlparse
 
-from .base_scraper import NormalizedStatute, StatuteMetadata
+from .base_scraper import NormalizedStatute
 
 SITE = "https://www.leg.state.fl.us/Statutes"
 INDEX = f"{SITE}/index.cfm"
@@ -41,17 +41,32 @@ _SENATE_CHAPTER_RE = re.compile(
 SENATE_BASE = "https://www.flsenate.gov"
 
 
+def normalize_chapter_number(chapter: object) -> str:
+    """Return the numeric token from a Florida chapter number or heading.
+
+    Online Sunshine labels the chapter heading as ``CHAPTER 1`` while its URL
+    builders require ``1``.  Treating the visible heading as an integer was the
+    source of the live full-corpus crash.
+    """
+
+    value = _clean(str(chapter or ""))
+    match = re.search(r"(?:\bchapter\s+)?0*(\d{1,4})\b", value, re.IGNORECASE)
+    if not match:
+        raise ValueError(f"invalid Florida chapter number: {chapter!r}")
+    return str(int(match.group(1)))
+
+
 def band_for(chapter: str) -> str:
     """``782`` -> ``0700-0799`` (Online Sunshine directory band)."""
 
-    lo = (int(chapter) // 100) * 100
+    lo = (int(normalize_chapter_number(chapter)) // 100) * 100
     return f"{lo:04d}-{lo + 99:04d}"
 
 
 def padded(chapter: str) -> str:
     """``782`` -> ``0782``."""
 
-    return f"{int(chapter):04d}"
+    return f"{int(normalize_chapter_number(chapter)):04d}"
 
 
 def chapter_page_url(chapter: str) -> str:
@@ -116,9 +131,24 @@ def _roman(label: str) -> Optional[str]:
     return match.group(1).upper() if match else None
 
 
-def _has_reserved_marker(text: str) -> bool:
+def source_bound_florida_section_disposition(text: str) -> Optional[str]:
+    """Return the exact terminal marker used by the chapter parser.
+
+    Florida has many operative catchlines containing ordinary words such as
+    ``former``, ``reserved``, and ``repealed``.  Online Sunshine marks a truly
+    terminal section with a leading bracketed marker (for example,
+    ``[Repealed.]``), so a bare keyword is not a lawful exclusion signal.
+    """
+
     low = (text or "").lower()
-    return any(keyword in low for keyword in _RESERVED_KEYWORDS)
+    for keyword in _RESERVED_KEYWORDS:
+        if keyword in low:
+            return keyword[1:]
+    return None
+
+
+def _has_reserved_marker(text: str) -> bool:
+    return source_bound_florida_section_disposition(text) is not None
 
 
 def parse_florida_chapter_html(
@@ -142,7 +172,10 @@ def parse_florida_chapter_html(
     if isinstance(html, bytes):
         html = html.decode("utf-8", errors="replace")
     soup = BeautifulSoup(html, "html.parser")
-    chapter_token = str(chapter or "").strip() or chapter_number_from_url("")
+    try:
+        chapter_token = normalize_chapter_number(chapter)
+    except ValueError:
+        chapter_token = ""
     statutes: List[NormalizedStatute] = []
     seen = set()
 
@@ -180,7 +213,10 @@ def parse_florida_chapter_html(
                 if text and text not in {number, catchline}:
                     paragraphs.append(text)
         full_text = " ".join(paragraphs).strip()
-        if len(full_text) < 40:
+        # A section's structured SectionBody/paragraph boundary is the
+        # admission signal.  Enacted sections can legitimately be only a few
+        # words long, so a character threshold silently loses law.
+        if not full_text:
             continue
         hist_el = section_div.find(class_="History")
         history = ""
@@ -208,7 +244,7 @@ def parse_florida_chapter_html(
                 section_number=number,
                 section_name=(catchline[:200] if catchline else f"Section {number}"),
                 short_title=catchline[:200] if catchline else None,
-                full_text=full_text[:14000],
+                full_text=full_text,
                 source_url=source,
                 official_cite=f"Fla. Stat. § {number}",
                 structured_data={
@@ -299,11 +335,11 @@ def parse_florida_senate_all_html(
                     parts.append(text)
             sibling = sibling.next_sibling
         full_text = " ".join(parts).strip()
-        if len(full_text) < 40:
+        if not full_text:
             rest = _clean(parent.get_text(" "))
             rest = rest.replace(number, "", 1).replace(catchline, "", 1).strip()
             full_text = rest
-        if len(full_text) < 40 or _has_reserved_marker(full_text[:160]):
+        if not full_text or _has_reserved_marker(full_text[:160]):
             continue
         seen.add(number)
         link = source_url or (senate_chapter_url(chapter_token or number.split(".", 1)[0], year))
@@ -317,7 +353,7 @@ def parse_florida_senate_all_html(
                 section_number=number,
                 section_name=(catchline[:200] if catchline else f"Section {number}"),
                 short_title=catchline[:200] if catchline else None,
-                full_text=full_text[:14000],
+                full_text=full_text,
                 source_url=f"{link}#{number}",
                 official_cite=f"Fla. Stat. § {number}",
                 structured_data={

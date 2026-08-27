@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-import requests
 
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
     NormalizedStatute,
@@ -86,10 +85,11 @@ async def test_north_carolina_full_mode_never_falls_through_empty_exhaustive_pat
 async def test_georgia_live_miss_uses_archival_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     scraper = GeorgiaScraper("GA", "Georgia")
 
-    async def _no_cache(url: str):
-        return b""
-
-    async def _recover(url: str, timeout_seconds: int = 18):
+    async def _recover(url: str, **kwargs):
+        validator = kwargs["content_validator"]
+        assert validator(
+            b'<html><title>Georgia General Assembly</title><base href="/" /></html>'
+        ) is False
         scraper._record_fetch_event(provider="wayback", success=True)
         return (
             b"<html><body><main><h1>16-1-1</h1><p>"
@@ -97,11 +97,7 @@ async def test_georgia_live_miss_uses_archival_fallback(monkeypatch: pytest.Monk
             b"</p></main></body></html>"
         )
 
-    monkeypatch.setattr(scraper, "_load_page_bytes_from_any_cache", _no_cache)
-    monkeypatch.setattr(scraper, "_fetch_page_content_with_archival_fallback", _recover)
-    monkeypatch.setattr(
-        requests, "get", lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("blocked"))
-    )
+    monkeypatch.setattr(scraper, "_fetch_parser_input_with_transport", _recover)
 
     html = await scraper._fetch_official_ga_html(
         "https://www.legis.ga.gov/legislation/georgia-code/title-16/chapter-1/section-16-1-1/"
@@ -122,13 +118,33 @@ async def test_georgia_live_miss_uses_archival_fallback(monkeypatch: pytest.Monk
 
 
 @pytest.mark.anyio
+async def test_georgia_shared_transport_rejects_live_spa_shell(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scraper = GeorgiaScraper("GA", "Georgia")
+    observed_validator = None
+
+    async def _adapter(url: str, **kwargs):
+        nonlocal observed_validator
+        observed_validator = kwargs["content_validator"]
+        return b""
+
+    monkeypatch.setattr(scraper, "_fetch_parser_input_with_transport", _adapter)
+    assert await scraper._fetch_official_ga_html(scraper.OFFICIAL_ENTRY_URL) == ""
+    assert observed_validator is not None
+    shell = (
+        b'<!DOCTYPE html><html><head><title>Georgia General Assembly</title>'
+        b'<base href="/" /></head><body><app-root></app-root></body></html>'
+    )
+    assert observed_validator(shell) is False
+    assert observed_validator(b"<html><body>Official Code of Georgia</body></html>") is True
+
+
+@pytest.mark.anyio
 async def test_georgia_rejects_contaminated_archive_html(monkeypatch: pytest.MonkeyPatch) -> None:
     scraper = GeorgiaScraper("GA", "Georgia")
 
-    async def _no_cache(url: str):
-        return b""
-
-    async def _recover(url: str, timeout_seconds: int = 18):
+    async def _recover(url: str, **kwargs):
         scraper._record_fetch_event(provider="wayback", success=True)
         return (
             b"<html><body><main>"
@@ -136,11 +152,7 @@ async def test_georgia_rejects_contaminated_archive_html(monkeypatch: pytest.Mon
             b"</main></body></html>"
         )
 
-    monkeypatch.setattr(scraper, "_load_page_bytes_from_any_cache", _no_cache)
-    monkeypatch.setattr(scraper, "_fetch_page_content_with_archival_fallback", _recover)
-    monkeypatch.setattr(
-        requests, "get", lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("blocked"))
-    )
+    monkeypatch.setattr(scraper, "_fetch_parser_input_with_transport", _recover)
 
     statute = await scraper._parse_section_page(
         code_name="Official Code of Georgia Annotated",

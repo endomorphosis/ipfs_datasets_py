@@ -34,6 +34,7 @@ from ipfs_datasets_py.processors.legal_data.open_us_law_embeddings import (
     PINNED_MODEL_REVISION,
     PINNED_NORMALIZATION,
     PINNED_POOLING,
+    PINNED_TOKEN_COUNTER_ID,
     PRODUCTION_BACKEND,
     PROGRAM_ID,
     PROJECTION_BACKEND,
@@ -65,9 +66,11 @@ from ipfs_datasets_py.processors.legal_data.open_us_law_embeddings import (
     assert_output_keys_match_admitted,
     authorize_embedding_release,
     build_embedding_receipt,
+    build_pinned_model_token_counter,
     build_sentence_transformers_embedder,
     build_vector_space_id,
     coerce_admitted_chunks,
+    collect_model_file_evidence,
     default_embedding_config,
     default_embedding_receipt_path,
     default_vector_space_id,
@@ -419,6 +422,24 @@ def test_sentence_transformers_factory_sets_max_seq_length() -> None:
     assert len(vectors[0]) == 384
 
 
+def test_model_file_evidence_hashes_nested_snapshot_files(tmp_path: Path) -> None:
+    (tmp_path / "model.safetensors").write_bytes(b"model bytes")
+    module = tmp_path / "1_Pooling"
+    module.mkdir()
+    (module / "config.json").write_text('{"pooling":"mean"}', encoding="utf-8")
+    model = types.SimpleNamespace(cache_folder=str(tmp_path))
+
+    evidence = collect_model_file_evidence(model)
+
+    assert evidence["revision"] == PINNED_MODEL_REVISION
+    assert evidence["file_count"] == 2
+    assert [item["path"] for item in evidence["files"]] == [
+        "1_Pooling/config.json",
+        "model.safetensors",
+    ]
+    assert all(len(item["sha256"]) == 64 for item in evidence["files"])
+
+
 def test_sentence_transformers_loader_source_assigns_max_seq_length() -> None:
     source = inspect.getsource(apply_real_512_token_truncation)
     assert "max_seq_length" in source
@@ -434,6 +455,24 @@ def test_sentence_transformers_loader_source_assigns_max_seq_length() -> None:
     )
     assert "SentenceTransformer" in loader_source
     assert "revision=config.model_revision" in loader_source
+
+
+def test_pinned_model_token_counter_counts_untruncated_special_tokens() -> None:
+    calls: list[dict[str, object]] = []
+
+    class ExpandingTokenizer:
+        def __call__(self, text: str, **kwargs):
+            calls.append(dict(kwargs))
+            return {"input_ids": [101, *(200 for _ in text.split() for _ in range(3)), 102]}
+
+    counter, identity = build_pinned_model_token_counter(
+        tokenizer=ExpandingTokenizer()
+    )
+
+    assert identity == PINNED_TOKEN_COUNTER_ID
+    assert counter("one two") == 8
+    assert calls[-1]["add_special_tokens"] is True
+    assert calls[-1]["truncation"] is False
 
 
 def test_generate_with_model_factory_records_truncation_evidence() -> None:

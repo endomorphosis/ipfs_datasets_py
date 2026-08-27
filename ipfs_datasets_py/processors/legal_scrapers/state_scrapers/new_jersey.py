@@ -4,17 +4,21 @@ This module contains the scraper for New Jersey statutes from the official state
 legislative website.
 """
 
+import asyncio
 import hashlib
 import json
+import os
 import re
 import ssl
 import subprocess
 import urllib.request
+from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 from urllib.parse import quote, urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .base_scraper import StatuteMetadata
 from .registry import StateScraperRegistry
+from .retained_replay_network_guard import trusted_pdftotext_executable
 
 
 class NewJerseyScraper(BaseStateScraper):
@@ -37,6 +41,8 @@ class NewJerseyScraper(BaseStateScraper):
     )
     MISSING_LINK_DISPOSITION = "missing_official_source_link"
     LINK_GAP_QUARANTINE_REASON = "source_link_gap_pending_official_replacement"
+    BULK_ACCEPT = "application/zip,application/octet-stream,*/*;q=0.8"
+    BULK_RETAINED_SHA256_ENV = "NEW_JERSEY_BULK_RETAINED_SHA256"
     _NJ_TITLE_HREF_RE = re.compile(
         r"/statutes/1/(?P<title>[0-9]+[A-Za-z]?)\b",
         re.IGNORECASE,
@@ -127,6 +133,11 @@ class NewJerseyScraper(BaseStateScraper):
             "source_url": "https://law.justia.com/codes/new-jersey/",
         },
     )
+
+    def __init__(self, state_code: str, state_name: str):
+        super().__init__(state_code, state_name)
+        self._new_jersey_bulk_provenance: Dict[str, Any] = {}
+        self._new_jersey_first_bulk_inventory_observation: Dict[str, Any] = {}
     
     def get_base_url(self) -> str:
         """Return the base URL for New Jersey's legislative website."""
@@ -171,9 +182,18 @@ class NewJerseyScraper(BaseStateScraper):
                     max_statutes=limit,
                 )
                 return constitution_rows if limit is None else constitution_rows[: int(limit)]
-        bulk = self._scrape_official_bulk_zip(code_name=code_name, max_statutes=limit)
+        bulk = await self._scrape_official_bulk_zip(
+            code_name=code_name,
+            max_statutes=limit,
+        )
         if bulk:
             return bulk if limit is None else bulk[: int(limit)]
+        if self._full_corpus_enabled() and max_statutes is None:
+            self.logger.warning(
+                "NJ full-corpus run could not close the official bulk ZIP; "
+                "refusing the partial LIS gateway walk"
+            )
+            return []
         official = await self._scrape_official_index(code_name, max_statutes=limit)
         if official:
             return official if limit is None else official[: int(limit)]
@@ -211,28 +231,708 @@ class NewJerseyScraper(BaseStateScraper):
             statutes.append(statute)
         return statutes
 
-    def _scrape_official_bulk_zip(
+    async def _scrape_official_bulk_zip(
         self,
         *,
         code_name: str,
         max_statutes: Optional[int],
     ) -> List[NormalizedStatute]:
-        """Read the official STATUTES-TEXT.zip when NEW_JERSEY_BULK_ZIP is set."""
+        """Acquire or read the one official STATUTES-TEXT.zip parser input."""
 
-        from .new_jersey_bulk import configured_bulk_zip_path, parse_new_jersey_bulk_zip
+        from .new_jersey_bulk import (
+            NewJerseyBulkFrontierError,
+            OFFICIAL_ZIP_URL,
+            configured_bulk_zip_path,
+            looks_like_zip_bytes,
+            parse_new_jersey_bulk_zip,
+            parse_new_jersey_bulk_zip_bytes,
+        )
 
         zip_path = configured_bulk_zip_path()
-        if zip_path is None:
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if zip_path is not None and ledger is None:
+            try:
+                return await asyncio.to_thread(
+                    parse_new_jersey_bulk_zip,
+                    zip_path,
+                    code_name=code_name,
+                    max_statutes=max_statutes,
+                )
+            except Exception as exc:
+                self.logger.warning("New Jersey official bulk zip failed: %s", exc)
+                return []
+        if (
+            zip_path is None
+            and ledger is None
+            and not (self._full_corpus_enabled() and max_statutes is None)
+        ):
             return []
+
         try:
-            return parse_new_jersey_bulk_zip(
-                zip_path,
+            request_headers = {
+                "User-Agent": "ipfs-datasets-new-jersey-bulk/1.0",
+                "Accept": self.BULK_ACCEPT,
+            }
+            retained_digest = str(
+                self.state_law_run_environment_value(
+                    self.BULK_RETAINED_SHA256_ENV
+                )
+                or ""
+            ).strip().lower()
+            if retained_digest:
+                if re.fullmatch(r"[a-f0-9]{64}", retained_digest) is None:
+                    raise NewJerseyBulkFrontierError(
+                        f"{self.BULK_RETAINED_SHA256_ENV} must be an exact SHA-256"
+                    )
+                if ledger is None:
+                    raise NewJerseyBulkFrontierError(
+                        f"{self.BULK_RETAINED_SHA256_ENV} requires an attached acquisition ledger"
+                    )
+                retained = ledger.replay_retained_parser_input(
+                    official_url=OFFICIAL_ZIP_URL,
+                    sanitized_request={
+                        "headers": {"Accept": self.BULK_ACCEPT},
+                        "method": "GET",
+                        "url": OFFICIAL_ZIP_URL,
+                    },
+                )
+                if retained is None or retained.envelope.body is None:
+                    raise NewJerseyBulkFrontierError(
+                        "digest-pinned New Jersey retained ZIP is unavailable; refusing HTTP"
+                    )
+                payload = bytes(retained.envelope.body)
+                if hashlib.sha256(payload).hexdigest() != retained_digest:
+                    raise NewJerseyBulkFrontierError(
+                        "digest-pinned New Jersey retained ZIP changed; refusing HTTP"
+                    )
+                if not looks_like_zip_bytes(payload):
+                    raise NewJerseyBulkFrontierError(
+                        "digest-pinned New Jersey retained ZIP failed validation"
+                    )
+                self._last_page_fetch_transport_evidence = dict(
+                    retained.transport_receipt
+                )
+                self._last_page_parser_input_envelope = retained.envelope
+                self._record_fetch_event(
+                    provider="retained_acquisition_replay_pinned",
+                    success=True,
+                )
+            else:
+                timeout_seconds = max(
+                    10,
+                    int(
+                        os.getenv("NEW_JERSEY_BULK_TIMEOUT_SECONDS", "180")
+                        or "180"
+                    ),
+                )
+                payload = await self._fetch_parser_input_with_transport(
+                    OFFICIAL_ZIP_URL,
+                    headers=request_headers,
+                    timeout_seconds=timeout_seconds,
+                    content_validator=looks_like_zip_bytes,
+                    allow_archival_fallback=True,
+                    media_type="application/zip",
+                    provider="requests_direct_new_jersey_statutes_zip",
+                )
+            if not payload:
+                if ledger is not None:
+                    raise NewJerseyBulkFrontierError(
+                        "official New Jersey statutes ZIP is unavailable from direct and archive transports"
+                    )
+                return []
+            self._new_jersey_bulk_provenance = (
+                self._new_jersey_bulk_provenance_from_last_input(
+                    payload,
+                    official_url=OFFICIAL_ZIP_URL,
+                )
+            )
+            inventory_observer = None
+            if max_statutes is None and ledger is not None:
+                inventory_observer = (
+                    self._retain_new_jersey_bulk_inventory_observation
+                )
+            return await asyncio.to_thread(
+                parse_new_jersey_bulk_zip_bytes,
+                payload,
                 code_name=code_name,
                 max_statutes=max_statutes,
+                bundle_provenance=self._new_jersey_bulk_provenance or None,
+                inventory_observer=inventory_observer,
+                fail_on_unusable=inventory_observer is not None,
             )
         except Exception as exc:
             self.logger.warning("New Jersey official bulk zip failed: %s", exc)
+            if ledger is not None:
+                raise
             return []
+
+    def _new_jersey_bulk_provenance_from_last_input(
+        self,
+        payload: bytes,
+        *,
+        official_url: str,
+    ) -> Dict[str, Any]:
+        """Bind every derived row to the prospective ZIP transport receipt."""
+
+        body = bytes(payload)
+        digest = hashlib.sha256(body).hexdigest()
+        evidence = getattr(self, "_last_page_fetch_transport_evidence", None)
+        envelope = getattr(self, "_last_page_parser_input_envelope", None)
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is not None and (
+            not isinstance(evidence, Mapping) or not evidence or envelope is None
+        ):
+            raise RuntimeError(
+                "New Jersey bulk ZIP lacks prospective transport evidence"
+            )
+        retrieved_at = ""
+        byte_size = len(body)
+        sanitized_request: Dict[str, Any] = {
+            "method": "GET",
+            "url": official_url,
+        }
+        if envelope is not None:
+            source_receipt = envelope.acquisition.receipt
+            retrieved_at = str(source_receipt.retrieved_at or "")
+            sanitized_request = dict(source_receipt.sanitized_request)
+            content = source_receipt.content
+            if content is not None:
+                if str(content.sha256) != digest:
+                    raise RuntimeError(
+                        "New Jersey retained ZIP digest changed before parsing"
+                    )
+                byte_size = int(content.byte_size)
+        return {
+            "byte_size": byte_size,
+            "content_sha256": digest,
+            "media_type": "application/zip",
+            "official_url": official_url,
+            "retrieved_at": retrieved_at,
+            "sanitized_request": sanitized_request,
+            "transport_receipt": dict(evidence or {}),
+        }
+
+    def state_law_frontier_source_dependencies(self) -> Sequence[Any]:
+        """Bind strict frontier evidence to both scraper and RTF parser code."""
+
+        from . import new_jersey_bulk
+
+        return (new_jersey_bulk,)
+
+    @staticmethod
+    def _validate_new_jersey_bulk_inventory(
+        value: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        from .new_jersey_bulk import (
+            NEW_JERSEY_BULK_INVENTORY_SCHEMA,
+            _canonical_json_sha256,
+        )
+
+        inventory = dict(value)
+        if inventory.get("schema_version") != NEW_JERSEY_BULK_INVENTORY_SCHEMA:
+            raise RuntimeError("New Jersey bulk inventory has the wrong schema")
+        if str(inventory.get("jurisdiction") or "").strip().upper() != "NJ":
+            raise RuntimeError("New Jersey bulk inventory changed jurisdiction")
+        declared = str(inventory.pop("inventory_sha256", "") or "").strip().lower()
+        if re.fullmatch(r"[a-f0-9]{64}", declared) is None:
+            raise RuntimeError("New Jersey bulk inventory lacks an exact digest")
+        if declared != _canonical_json_sha256(inventory):
+            raise RuntimeError("New Jersey bulk inventory digest does not replay")
+        inventory["inventory_sha256"] = declared
+
+        for prefix in (
+            "source_observation",
+            "source_record",
+            "admitted_source_record",
+            "excluded_source_record",
+        ):
+            raw_ids = inventory.get(f"{prefix}_ids")
+            if not isinstance(raw_ids, list) or any(
+                not isinstance(item, str) or not item.strip() for item in raw_ids
+            ):
+                raise RuntimeError(
+                    f"New Jersey bulk inventory {prefix}_ids must be exact strings"
+                )
+            if int(inventory.get(f"{prefix}_count") or -1) != len(raw_ids):
+                raise RuntimeError(
+                    f"New Jersey bulk inventory {prefix} count does not replay"
+                )
+
+        member_paths = inventory.get("archive_member_paths")
+        if not isinstance(member_paths, list) or any(
+            not isinstance(item, str) or not item for item in member_paths
+        ):
+            raise RuntimeError("New Jersey bulk inventory lacks member identities")
+        if int(inventory.get("archive_member_count") or -1) != len(member_paths):
+            raise RuntimeError("New Jersey bulk archive member count does not replay")
+        rtf_member = inventory.get("rtf_member")
+        if not isinstance(rtf_member, Mapping):
+            raise RuntimeError("New Jersey bulk inventory lacks RTF member identity")
+        if (
+            not str(rtf_member.get("path") or "").upper().endswith("STATUTES.RTF")
+            or re.fullmatch(
+                r"[a-f0-9]{64}",
+                str(rtf_member.get("content_sha256") or "").strip().lower(),
+            )
+            is None
+            or int(rtf_member.get("byte_size") or 0) <= 0
+        ):
+            raise RuntimeError("New Jersey RTF member identity is incomplete")
+
+        disposition = inventory.get("disposition")
+        if not isinstance(disposition, Mapping):
+            raise RuntimeError("New Jersey bulk inventory lacks dispositions")
+        accounted = sum(
+            int(disposition.get(key) or 0)
+            for key in (
+                "excluded",
+                "failed_final",
+                "fetched",
+                "quarantined",
+            )
+        )
+        if accounted != int(disposition.get("discovered") or -1):
+            raise RuntimeError("New Jersey bulk disposition algebra does not close")
+        if int(inventory.get("source_observation_count") or -1) != int(
+            disposition.get("discovered") or -1
+        ):
+            raise RuntimeError(
+                "New Jersey source observations do not match discovery"
+            )
+
+        duplicate_classification = inventory.get("duplicate_classification")
+        if not isinstance(duplicate_classification, Mapping):
+            raise RuntimeError(
+                "New Jersey bulk inventory lacks duplicate classification"
+            )
+        classified_duplicates = sum(
+            int(duplicate_classification.get(key) or 0)
+            for key in (
+                "divergent_source_record_variants",
+                "exact_duplicate_source_records",
+            )
+        )
+        if classified_duplicates != int(disposition.get("duplicates") or 0):
+            raise RuntimeError(
+                "New Jersey duplicate classification does not replay"
+            )
+
+        admitted_kinds = inventory.get("admitted_record_kind_counts")
+        excluded_reasons = inventory.get("excluded_reason_counts")
+        if not isinstance(admitted_kinds, Mapping) or sum(
+            int(value or 0) for value in admitted_kinds.values()
+        ) != int(disposition.get("fetched") or 0):
+            raise RuntimeError(
+                "New Jersey admitted record classifications do not replay"
+            )
+        if not isinstance(excluded_reasons, Mapping) or sum(
+            int(value or 0) for value in excluded_reasons.values()
+        ) != int(disposition.get("excluded") or 0):
+            raise RuntimeError(
+                "New Jersey excluded record classifications do not replay"
+            )
+
+        identity_rows = inventory.get("identity_resolution_rows")
+        if not isinstance(identity_rows, list) or int(
+            inventory.get("identity_resolution_row_count") or -1
+        ) != len(identity_rows):
+            raise RuntimeError(
+                "New Jersey identity-resolution observations do not replay"
+            )
+        return inventory
+
+    def _retain_new_jersey_bulk_inventory_observation(
+        self,
+        inventory: Mapping[str, Any],
+    ) -> None:
+        """Seal the first exact member/section inventory before rows escape."""
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError(
+                "New Jersey bulk inventory requires an attached acquisition ledger"
+            )
+        verified = self._validate_new_jersey_bulk_inventory(inventory)
+        bundle = verified.get("bundle")
+        if not isinstance(bundle, Mapping):
+            raise RuntimeError("New Jersey bulk inventory lacks its bundle binding")
+        if str(bundle.get("content_sha256") or "").strip().lower() != str(
+            self._new_jersey_bulk_provenance.get("content_sha256") or ""
+        ).strip().lower():
+            raise RuntimeError(
+                "New Jersey bulk inventory changed the retained bundle digest"
+            )
+
+        from ....retrieval.hf_graphrag.artifacts import atomic_write_bytes
+        from ...legal_data.open_us_law_acquisition_coordinator import (
+            canonical_json_bytes,
+        )
+
+        payload = canonical_json_bytes(verified)
+        digest = str(verified["inventory_sha256"])
+        observation_dir = (
+            Path(ledger.frontiers_dir)
+            / "new-jersey-statutes-rtf"
+            / "first"
+            / digest
+        )
+        observation_dir.mkdir(parents=True, exist_ok=True)
+        observation_path = observation_dir / "inventory.json"
+        if observation_path.exists():
+            if observation_path.is_symlink() or not observation_path.is_file():
+                raise RuntimeError(
+                    "immutable New Jersey bulk inventory observation conflicts"
+                )
+            with observation_path.open("rb") as existing:
+                if existing.read() != payload:
+                    raise RuntimeError(
+                        "immutable New Jersey bulk inventory observation conflicts"
+                    )
+        else:
+            atomic_write_bytes(observation_path, payload)
+        relative_path = observation_path.resolve().relative_to(
+            Path(ledger.jurisdiction_root).resolve()
+        )
+        self._new_jersey_first_bulk_inventory_observation = {
+            "inventory_sha256": digest,
+            "relative_path": relative_path.as_posix(),
+        }
+
+    def _load_new_jersey_first_bulk_inventory(self) -> Dict[str, Any]:
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        observation = self._new_jersey_first_bulk_inventory_observation
+        if ledger is None or not observation:
+            raise RuntimeError(
+                "New Jersey first bulk inventory was not retained before parsing"
+            )
+        relative_path = str(observation.get("relative_path") or "").strip()
+        path = Path(ledger.jurisdiction_root) / relative_path
+        if path.is_symlink() or not path.is_file():
+            raise RuntimeError("New Jersey first bulk inventory cannot be replayed")
+        try:
+            path.resolve().relative_to(Path(ledger.jurisdiction_root).resolve())
+            payload = json.loads(path.read_text(encoding="utf-8", errors="strict"))
+        except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+            raise RuntimeError(
+                "New Jersey first bulk inventory cannot be replayed"
+            ) from exc
+        if not isinstance(payload, Mapping):
+            raise RuntimeError("New Jersey first bulk inventory is not an object")
+        verified = self._validate_new_jersey_bulk_inventory(payload)
+        if str(verified["inventory_sha256"]) != str(
+            observation.get("inventory_sha256") or ""
+        ):
+            raise RuntimeError("New Jersey first bulk inventory identity changed")
+        return verified
+
+    @staticmethod
+    def _new_jersey_inventory_frontier(
+        inventory: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        frontier = inventory.get("frontier")
+        disposition = inventory.get("disposition")
+        bundle = inventory.get("bundle")
+        member = inventory.get("rtf_member")
+        if not all(
+            isinstance(item, Mapping)
+            for item in (frontier, disposition, bundle, member)
+        ):
+            raise RuntimeError("New Jersey bulk inventory lacks closure material")
+        return {
+            "admitted_source_record_count": int(
+                inventory.get("admitted_source_record_count") or 0
+            ),
+            "admitted_source_record_ids_sha256": str(
+                inventory.get("admitted_source_record_ids_sha256") or ""
+            ),
+            "algebra_closed": frontier.get("algebra_closed") is True,
+            "bundle_bound": frontier.get("bundle_bound") is True,
+            "bundle_byte_size": int(bundle.get("byte_size") or 0),
+            "bundle_closed": frontier.get("bundle_closed") is True,
+            "bundle_content_sha256": str(bundle.get("content_sha256") or ""),
+            "closed": frontier.get("closed") is True,
+            "disposition": dict(disposition),
+            "duplicate_classification": dict(
+                inventory.get("duplicate_classification") or {}
+            ),
+            "enumerator_closed": frontier.get("enumerator_closed") is True,
+            "expected_index_units": int(
+                frontier.get("expected_index_units") or 0
+            ),
+            "inventory_sha256": str(inventory.get("inventory_sha256") or ""),
+            "rtf_member_byte_size": int(member.get("byte_size") or 0),
+            "rtf_member_content_sha256": str(
+                member.get("content_sha256") or ""
+            ),
+            "rtf_member_path": str(member.get("path") or ""),
+            "scope_closed": frontier.get("scope_closed") is True,
+            "source_record_count": int(
+                inventory.get("source_record_count") or 0
+            ),
+            "source_record_ids_sha256": str(
+                inventory.get("source_record_ids_sha256") or ""
+            ),
+            "source_observation_count": int(
+                inventory.get("source_observation_count") or 0
+            ),
+            "source_observation_ids_sha256": str(
+                inventory.get("source_observation_ids_sha256") or ""
+            ),
+            "unusable_row_count": int(inventory.get("unusable_row_count") or 0),
+            "unvisited_continuation_links": [],
+            "visited_index_units": int(
+                frontier.get("visited_index_units") or 0
+            ),
+        }
+
+    async def produce_state_law_frontier_closure(
+        self,
+        *,
+        canonical_output_projection: Mapping[str, Any],
+    ) -> Optional[Path]:
+        """Replay the retained ZIP and prove member plus section identity parity."""
+
+        from ...legal_data.open_us_law_acquisition_coordinator import (
+            canonical_json_bytes,
+        )
+        from ...legal_data.state_laws_completeness import (
+            closed_jurisdiction_receipt,
+        )
+        from .new_jersey_bulk import (
+            OFFICIAL_ZIP_URL,
+            inventory_new_jersey_bulk_zip_bytes,
+        )
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError(
+                "New Jersey frontier closure requires an attached acquisition ledger"
+            )
+        first = self._load_new_jersey_first_bulk_inventory()
+        first_frontier = first.get("frontier")
+        disposition = first.get("disposition")
+        if (
+            not isinstance(first_frontier, Mapping)
+            or first_frontier.get("closed") is not True
+            or first_frontier.get("bundle_closed") is not True
+            or first_frontier.get("algebra_closed") is not True
+            or first_frontier.get("bundle_bound") is not True
+            or not isinstance(disposition, Mapping)
+            or int(disposition.get("failed_final") or 0) != 0
+            or int(disposition.get("quarantined") or 0) != 0
+            or int(
+                dict(first.get("duplicate_classification") or {}).get(
+                    "divergent_source_record_variants"
+                )
+                or 0
+            )
+            != 0
+        ):
+            raise RuntimeError(
+                "New Jersey first bulk inventory has unresolved source records"
+            )
+
+        official_source_url = str(
+            self._new_jersey_bulk_provenance.get("official_url")
+            or OFFICIAL_ZIP_URL
+        ).strip()
+        replayed_input = ledger.replay_retained_parser_input(
+            official_url=official_source_url,
+            sanitized_request=dict(
+                self._new_jersey_bulk_provenance.get("sanitized_request")
+                or {"method": "GET", "url": official_source_url}
+            ),
+        )
+        if replayed_input is None or replayed_input.envelope.body is None:
+            raise RuntimeError(
+                "New Jersey retained bulk object cannot be independently replayed"
+            )
+        replayed_body = bytes(replayed_input.envelope.body)
+        if hashlib.sha256(replayed_body).hexdigest() != str(
+            self._new_jersey_bulk_provenance.get("content_sha256") or ""
+        ):
+            raise RuntimeError("New Jersey retained bundle digest changed on replay")
+        replayed = await asyncio.to_thread(
+            inventory_new_jersey_bulk_zip_bytes,
+            replayed_body,
+            code_name=str(first.get("code_name") or "New Jersey Statutes"),
+            bundle_provenance=dict(self._new_jersey_bulk_provenance),
+        )
+        replayed = self._validate_new_jersey_bulk_inventory(replayed)
+        if canonical_json_bytes(first) != canonical_json_bytes(replayed):
+            raise RuntimeError(
+                "New Jersey first and replayed ZIP inventories differ"
+            )
+
+        raw_keys = canonical_output_projection.get("canonical_keys")
+        if not isinstance(raw_keys, Sequence) or isinstance(
+            raw_keys, (str, bytes, bytearray)
+        ):
+            raise RuntimeError(
+                "New Jersey canonical output projection lacks exact identities"
+            )
+        canonical_keys = [str(item).strip() for item in raw_keys]
+        expected_keys = [
+            str(item) for item in first.get("admitted_canonical_keys") or []
+        ]
+        if (
+            not canonical_keys
+            or any(not item for item in canonical_keys)
+            or len(canonical_keys) != len(set(canonical_keys))
+            or canonical_keys != expected_keys
+        ):
+            missing = sorted(set(expected_keys) - set(canonical_keys))
+            extra = sorted(set(canonical_keys) - set(expected_keys))
+            raise RuntimeError(
+                "New Jersey canonical identities do not exactly match the ZIP "
+                "source records: "
+                f"expected={len(expected_keys)} actual={len(canonical_keys)} "
+                f"missing={missing[:3]} extra={extra[:3]}"
+            )
+
+        compact_frontier = self._new_jersey_inventory_frontier(first)
+        replayed_frontier = self._new_jersey_inventory_frontier(replayed)
+        completion = closed_jurisdiction_receipt(
+            "NJ",
+            discovered=int(disposition["discovered"]),
+            fetched=int(disposition["fetched"]),
+            excluded=int(disposition["excluded"]),
+            quarantined=int(disposition["quarantined"]),
+            failed_final=int(disposition["failed_final"]),
+            duplicates=int(disposition.get("duplicates") or 0),
+            source_domain="pub.njleg.state.nj.us",
+            canonical_keys=canonical_keys,
+            derived_keys=canonical_keys,
+        )
+        boundaries = first.get("boundary_probes")
+        if not isinstance(boundaries, Mapping):
+            raise RuntimeError("New Jersey bulk inventory lacks boundary probes")
+        observed_at = str(
+            self._new_jersey_bulk_provenance.get("retrieved_at") or ""
+        )
+        completion.update(
+            {
+                "boundary_probes": {
+                    "bundle_total": 1,
+                    "first_hierarchy_unit": str(
+                        boundaries.get("first_source_record_id") or ""
+                    ),
+                    "last_hierarchy_unit": str(
+                        boundaries.get("last_source_record_id") or ""
+                    ),
+                    "pagination_total": 1,
+                },
+                "canonical_row_count": len(canonical_keys),
+                "frontier": compact_frontier,
+                "legal_as_of": observed_at,
+                "observed_at": observed_at,
+                "replay": {
+                    "closed": True,
+                    "first_frontier_digest": str(first["inventory_sha256"]),
+                    "second_frontier_digest": str(replayed["inventory_sha256"]),
+                },
+                "rights": {
+                    "basis": "public_law_no_state_copyright",
+                    "decision": "admit",
+                    "scope": "statutory_text",
+                },
+                "source_frontier_inventory": {
+                    "inventory_relative_path": str(
+                        self._new_jersey_first_bulk_inventory_observation.get(
+                            "relative_path"
+                        )
+                        or ""
+                    ),
+                    "inventory_sha256": str(first["inventory_sha256"]),
+                    "rtf_member_content_sha256": str(
+                        first["rtf_member"]["content_sha256"]
+                    ),
+                    "source_record_count": int(
+                        first.get("source_record_count") or 0
+                    ),
+                    "source_record_ids_sha256": str(
+                        first.get("source_record_ids_sha256") or ""
+                    ),
+                    "source_observation_count": int(
+                        first.get("source_observation_count") or 0
+                    ),
+                    "source_observation_ids_sha256": str(
+                        first.get("source_observation_ids_sha256") or ""
+                    ),
+                },
+                "transport": {
+                    "fixture": False,
+                    "kind": "retained_official_new_jersey_statutes_zip",
+                    "synthetic": False,
+                },
+            }
+        )
+        bundle_digest = str(
+            self._new_jersey_bulk_provenance.get("content_sha256") or ""
+        ).strip().lower()
+        return self.retain_state_law_frontier_closure_projection(
+            completion,
+            replayed_frontier=replayed_frontier,
+            canonical_output_projection=canonical_output_projection,
+            release_point=f"sha256:{bundle_digest}",
+            official_source_url=official_source_url,
+            acquisition_path_ids=self._catalog_acquisition_path_ids_for_source(
+                official_source_url
+            ),
+            observation_time=observed_at,
+            source_software_version=(
+                self._state_law_frontier_source_software_version()
+            ),
+        )
+
+    def _enrich_statute_structure(
+        self,
+        statute: NormalizedStatute,
+    ) -> NormalizedStatute:
+        """Carry retained ZIP/member identities into canonical JSON-LD."""
+
+        enriched = super()._enrich_statute_structure(statute)
+        structured = dict(enriched.structured_data or {})
+        if str(structured.get("source_kind") or "").strip() != (
+            "official_new_jersey_statutes_rtf"
+        ):
+            return enriched
+        digest = str(structured.get("content_sha256") or "").strip().lower()
+        source_record_id = str(structured.get("source_record_id") or "").strip()
+        receipt = structured.get("transport_receipt")
+        source_bundle = structured.get("source_bundle")
+        source_member = structured.get("source_member")
+        jsonld = structured.get("jsonld")
+        provenance_complete = bool(
+            re.fullmatch(r"[a-f0-9]{64}", digest)
+            and source_record_id
+            and isinstance(receipt, Mapping)
+            and isinstance(source_bundle, Mapping)
+            and isinstance(source_member, Mapping)
+            and isinstance(jsonld, Mapping)
+        )
+        if not provenance_complete:
+            if getattr(self, "_state_law_acquisition_ledger", None) is not None:
+                raise RuntimeError(
+                    "New Jersey bulk row lacks retained bundle/member provenance"
+                )
+            return enriched
+        jsonld_payload = dict(jsonld)
+        prior = jsonld_payload.get("provenance")
+        provenance = dict(prior) if isinstance(prior, Mapping) else {}
+        provenance.update(
+            {
+                "content_sha256": digest,
+                "source_bundle": dict(source_bundle),
+                "source_member": dict(source_member),
+                "source_record_id": source_record_id,
+                "transport_receipt": dict(receipt),
+            }
+        )
+        jsonld_payload["provenance"] = provenance
+        structured["jsonld"] = jsonld_payload
+        enriched.structured_data = structured
+        return enriched
 
     async def _scrape_official_index(
         self,
@@ -399,7 +1099,7 @@ class NewJerseyScraper(BaseStateScraper):
                     code_name=code_name,
                     section_number=section_number or str(node.get("n") or node_id),
                     section_name=section_name[:220],
-                    full_text=full_text[:14000],
+                    full_text=full_text,
                     legal_area=self._identify_legal_area(title_label or section_name),
                     source_url=source_url,
                     official_cite=(section_number or section_label),
@@ -423,7 +1123,7 @@ class NewJerseyScraper(BaseStateScraper):
         out: List[NormalizedStatute] = []
         for cite, pdf_url in seeds[: max(1, int(max_statutes or 1))]:
             pdf_bytes = await self._request_bytes_direct(pdf_url, timeout=20)
-            text = self._extract_pdf_text(pdf_bytes, max_chars=14000)
+            text = self._extract_pdf_text(pdf_bytes, max_chars=None)
             if len(text) < 280:
                 continue
             out.append(
@@ -449,27 +1149,41 @@ class NewJerseyScraper(BaseStateScraper):
         return out
 
     async def _request_bytes_direct(self, url: str, timeout: int = 20) -> bytes:
-        def _request() -> bytes:
-            try:
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    return bytes(resp.read() or b"")
-            except Exception:
-                return b""
-
+        is_pdf = urlparse(str(url or "")).path.lower().endswith(".pdf")
         try:
-            import asyncio
-
-            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
+            return await self._fetch_parser_input_with_transport(
+                url,
+                headers={
+                    "User-Agent": "Mozilla/5.0",
+                    "Accept": (
+                        "application/pdf,*/*;q=0.8"
+                        if is_pdf
+                        else "text/html,application/xml;q=0.9,*/*;q=0.8"
+                    ),
+                },
+                timeout_seconds=max(1, int(timeout)),
+                content_validator=(
+                    (lambda payload: payload.startswith(b"%PDF"))
+                    if is_pdf
+                    else None
+                ),
+                allow_archival_fallback=True,
+                media_type="application/pdf" if is_pdf else None,
+                provider="new_jersey_direct_gateway",
+            )
         except Exception:
             return b""
 
-    def _extract_pdf_text(self, pdf_bytes: bytes, max_chars: int) -> str:
+    def _extract_pdf_text(
+        self,
+        pdf_bytes: bytes,
+        max_chars: Optional[int] = None,
+    ) -> str:
         if not pdf_bytes:
             return ""
         try:
             proc = subprocess.run(
-                ["pdftotext", "-layout", "-q", "-", "-"],
+                [trusted_pdftotext_executable(), "-layout", "-q", "-", "-"],
                 input=pdf_bytes,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -480,7 +1194,10 @@ class NewJerseyScraper(BaseStateScraper):
         if proc.returncode != 0 or not proc.stdout:
             return ""
         text = proc.stdout.decode("utf-8", errors="ignore")
-        return re.sub(r"\s+", " ", text).strip()[:max_chars]
+        text = re.sub(r"\s+", " ", text).strip()
+        if max_chars is not None:
+            return text[: max(1, int(max_chars))]
+        return text
 
     async def _scrape_via_xhitlist(self, code_name: str, max_sections: int = 120) -> List[NormalizedStatute]:
         """Collect NJ statutes from LIS query result pages.

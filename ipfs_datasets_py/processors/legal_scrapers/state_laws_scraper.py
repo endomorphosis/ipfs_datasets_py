@@ -3,8 +3,8 @@
 This tool scrapes state statutes and regulations from various state
 legislative websites and legal databases.
 """
+import ast
 import logging
-import asyncio
 import threading
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 import inspect
@@ -36,6 +36,10 @@ except ImportError:  # pragma: no cover - file-based test imports
 
 logger = logging.getLogger(__name__)
 
+# Enacted provisions can be very short.  Length is not a validity rule; the
+# structural/navigation/placeholder checks below own source-text admission.
+DEFAULT_MIN_FULL_TEXT_CHARS = 1
+
 _QUALITY_NAV_RE = re.compile(
     r"skip navigation|skip to content|all rights reserved|bill status|meeting schedule|calendar|login|contact us|docs options help|home documents",
     re.IGNORECASE,
@@ -45,8 +49,14 @@ _QUALITY_SECTION_SIGNAL_RE = re.compile(
     r"(?:\b\d{1,4}[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)+\b|§\s*\d+[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)+|\b(?:section|sec\.?|s\.)\s*\d+[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)*\b)",
     re.IGNORECASE,
 )
+_QUALITY_SECTION_NUMBER_COMPONENT = (
+    r"(?:\d+[A-Za-z0-9]*|\.\d+)"
+    r"(?:[.:\-][A-Za-z0-9]+)*"
+    r"(?:\([^()/]{1,80}\))?"
+)
 _QUALITY_SECTION_NUMBER_RE = re.compile(
-    r"^\d+[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)*$",
+    rf"^{_QUALITY_SECTION_NUMBER_COMPONENT}"
+    rf"(?:/{_QUALITY_SECTION_NUMBER_COMPONENT})*$",
     re.IGNORECASE,
 )
 _QUALITY_SCAFFOLD_TEXT_RE = re.compile(r"^\s*Section\s+Section-\d+\s*:", re.IGNORECASE)
@@ -70,6 +80,544 @@ _CHECKPOINT_STAGE_LABEL_RE = re.compile(r'"stage_label"\s*:\s*"([^"]*)"')
 _CHECKPOINT_UPDATED_AT_STR_RE = re.compile(r'"updated_at"\s*:\s*"([^"]*)"')
 _CHECKPOINT_UPDATED_AT_NUM_RE = re.compile(r'"updated_at"\s*:\s*([0-9]+(?:\.[0-9]+)?)')
 _CHECKPOINT_STATUTES_COUNT_RE = re.compile(r'"statutes_count"\s*:\s*(-?[0-9]+)')
+
+MULTIFETCH_EVIDENCE_ROOT_ENV = "STATE_LAWS_MULTIFETCH_EVIDENCE_ROOT"
+STRICT_MULTIFETCH_EVIDENCE_ENV = "STATE_LAWS_STRICT_MULTIFETCH_EVIDENCE"
+RETAINED_REPLAY_ONLY_ENV = "STATE_LAWS_RETAINED_REPLAY_ONLY"
+_IMMUTABLE_STATE_RUN_PATH_ENV_KEYS = (
+    "ARKANSAS_CURRENT_VARIANT_EVIDENCE_ROOT",
+    "ARKANSAS_LEXIS_INVENTORY_PATH",
+    "CALIFORNIA_BULK_ZIP",
+    "CALIFORNIA_BULK_ZIP_RECEIPT",
+    "DC_CODE_SECTION_XML",
+    "DC_CODE_XML_DIR",
+    "GEORGIA_ARCHIVED_OFFICIAL_MANIFEST",
+    "ILLINOIS_BULK_ZIP",
+    "ILLINOIS_MANIFEST_TEXT",
+    "INDIANA_BULK_ZIP",
+    "INDIANA_BULK_ZIP_RECEIPT",
+    "INDIANA_CODE_ZIP_RECEIPT",
+    "INDIANA_CODE_ZIP_CACHE_DIR",
+    "MICHIGAN_CHAPTER_INDEX_HTML",
+    "MICHIGAN_CHAPTER_XML",
+    "NEW_JERSEY_BULK_ZIP",
+    "NY_CATEGORY_HTML",
+    "NY_OPENLEG_LAW_JSON",
+    "STATE_SCRAPER_MS_LEXIS_EVIDENCE_DIR",
+    "UTAH_TITLE_XML",
+    "UTAH_TOC_HTML",
+)
+_IMMUTABLE_STATE_RUN_BOOLEAN_ENV_KEYS = (
+    "ARKANSAS_LEXIS_PUBLIC_ACCESS_ENABLE",
+    "GEORGIA_LEXIS_PUBLIC_ACCESS_ENABLE",
+    "MISSISSIPPI_LEXIS_PUBLIC_ACCESS_ENABLE",
+    "STATE_SCRAPER_FULL_CORPUS",
+)
+_IMMUTABLE_STATE_RUN_DIGEST_ENV_KEYS = (
+    "NEW_JERSEY_BULK_RETAINED_SHA256",
+)
+_IMMUTABLE_STATE_RUN_SECRET_ENV_KEYS = (
+    "NORTH_CAROLINA_BYCHAPTER_CHECKPOINT_HMAC_KEY",
+)
+_IMMUTABLE_STATE_RUN_CACHE_PATH_ENV_KEYS = (
+    "IPFS_DATASETS_LEGAL_FETCH_CACHE_DIR",
+    "LEGAL_SCRAPER_FETCH_CACHE_DIR",
+    "LEGAL_SCRAPER_IPFS_PAGE_CACHE_DIR",
+)
+_PARSER_TRANSPORT_ENTRYPOINTS = ("scrape_all", "get_code_list", "scrape_code")
+_SHARED_PARSER_FETCH_METHODS = frozenset(
+    {
+        "_fetch_page_content_with_archival_fallback",
+        "_fetch_page_contents_with_archival_fallback",
+        "_fetch_parser_input_with_transport",
+    }
+)
+_DIRECT_HTTP_MODULES = frozenset({"aiohttp", "httpx", "requests", "urllib"})
+_DIRECT_HTTP_CALLS = frozenset(
+    {"get", "post", "put", "patch", "delete", "request", "urlopen", "goto"}
+)
+_CUSTOM_HTTP_OWNER_HINTS = frozenset(
+    {"api", "browser", "client", "driver", "http", "page", "session", "transport"}
+)
+_BOUNDED_ENV_KEYS = (
+    "STATE_SCRAPER_CODE_TIMEOUT_SECONDS",
+    "STATE_SCRAPER_FETCH_TIMEOUT_SECONDS",
+    "STATE_SCRAPER_MAX_STATUTES",
+    "STATE_SCRAPER_BOUNDED_DIRECT_ONLY",
+)
+_BOUNDED_ENV_LEASE_LOCK = threading.Lock()
+_BOUNDED_ENV_LEASE_OWNER: object | None = None
+
+
+def _capture_state_law_run_environment() -> Dict[str, str]:
+    """Capture supported selectors once with type-appropriate normalization."""
+
+    binding: Dict[str, str] = {}
+    for name in _IMMUTABLE_STATE_RUN_PATH_ENV_KEYS:
+        raw_value = str(os.environ.get(name) or "").strip()
+        binding[name] = (
+            str(Path(raw_value).expanduser().resolve()) if raw_value else ""
+        )
+    for name in _IMMUTABLE_STATE_RUN_BOOLEAN_ENV_KEYS:
+        binding[name] = (
+            "1"
+            if str(os.environ.get(name) or "").strip().lower()
+            in {"1", "true", "yes", "on"}
+            else "0"
+        )
+    for name in _IMMUTABLE_STATE_RUN_DIGEST_ENV_KEYS:
+        binding[name] = str(os.environ.get(name) or "").strip().lower()
+    for name in _IMMUTABLE_STATE_RUN_SECRET_ENV_KEYS:
+        # Opaque authentication material is neither path-normalized nor logged.
+        binding[name] = str(os.environ.get(name, ""))
+    strict_evidence = str(
+        os.environ.get(STRICT_MULTIFETCH_EVIDENCE_ENV) or ""
+    ).strip().lower() in {"1", "true", "yes", "on"}
+    retained_replay_only = str(
+        os.environ.get(RETAINED_REPLAY_ONLY_ENV) or ""
+    ).strip().lower() in {"1", "true", "yes", "on"}
+    for name in _IMMUTABLE_STATE_RUN_CACHE_PATH_ENV_KEYS:
+        raw_value = str(os.environ.get(name) or "").strip()
+        binding[name] = (
+            str(Path(raw_value).expanduser().resolve()) if raw_value else ""
+        )
+    if strict_evidence or retained_replay_only:
+        binding.update(
+            {
+                "LEGAL_SCRAPER_FETCH_CACHE_ENABLED": "0",
+                "LEGAL_SCRAPER_IPFS_PAGE_CACHE_ENABLED": "0",
+                "LEGAL_SCRAPER_IPFS_PAGE_CACHE_PIN": "0",
+            }
+        )
+        for name in _IMMUTABLE_STATE_RUN_CACHE_PATH_ENV_KEYS:
+            binding[name] = ""
+    else:
+        binding["LEGAL_SCRAPER_FETCH_CACHE_ENABLED"] = (
+            "1"
+            if str(
+                os.environ.get("LEGAL_SCRAPER_FETCH_CACHE_ENABLED") or ""
+            ).strip().lower()
+            in {"1", "true", "yes", "on"}
+            else "0"
+        )
+        ipfs_enabled = str(
+            os.environ.get("LEGAL_SCRAPER_IPFS_PAGE_CACHE_ENABLED") or ""
+        ).strip().lower()
+        binding["LEGAL_SCRAPER_IPFS_PAGE_CACHE_ENABLED"] = (
+            "0" if ipfs_enabled in {"0", "false", "no", "off"} else "1"
+        )
+        binding["LEGAL_SCRAPER_IPFS_PAGE_CACHE_PIN"] = (
+            "1"
+            if str(
+                os.environ.get("LEGAL_SCRAPER_IPFS_PAGE_CACHE_PIN") or ""
+            ).strip().lower()
+            in {"1", "true", "yes", "on"}
+            else "0"
+        )
+    return binding
+
+
+class StateScraperNonQuiescentTimeout(TimeoutError):
+    """A supervised timeout returned while its daemon worker was still live."""
+
+    def __init__(self, state_code: str, worker_name: str, timeout_seconds: float):
+        self.state_code = str(state_code or "").strip().upper()
+        self.worker_name = str(worker_name or "")
+        self.timeout_seconds = float(timeout_seconds)
+        super().__init__(
+            f"state scrape timed out after {timeout_seconds} seconds while "
+            f"daemon worker {self.worker_name!r} remained nonquiescent"
+        )
+
+
+def _call_dotted_name(node: ast.AST) -> str:
+    parts: List[str] = []
+    cursor: ast.AST = node
+    while isinstance(cursor, ast.Attribute):
+        parts.append(cursor.attr)
+        cursor = cursor.value
+    if isinstance(cursor, ast.Name):
+        parts.append(cursor.id)
+    return ".".join(reversed(parts))
+
+
+def _transport_call_kind(call: ast.Call) -> str:
+    dotted = _call_dotted_name(call.func)
+    if not dotted:
+        return ""
+    original_leaf = dotted.rsplit(".", 1)[-1]
+    parts = dotted.lower().split(".")
+    leaf = parts[-1]
+    if dotted.lower() in {
+        f"self.{name.lower()}" for name in _SHARED_PARSER_FETCH_METHODS
+    }:
+        return "shared_base_fetch"
+    if leaf == "urlopen":
+        return "urllib_urlopen"
+    if original_leaf == "Request" and "urllib" in parts[:-1]:
+        return ""
+    if any(part in _DIRECT_HTTP_MODULES for part in parts[:-1]) and (
+        leaf in _DIRECT_HTTP_CALLS or leaf in {"client", "clientsession", "session"}
+    ):
+        return next(
+            (part for part in parts if part in _DIRECT_HTTP_MODULES),
+            "direct_http",
+        )
+    if leaf in _DIRECT_HTTP_CALLS and any(
+        hint in parts[:-1] for hint in _CUSTOM_HTTP_OWNER_HINTS
+    ):
+        return "custom_http_client"
+    if leaf.startswith(("fetch_", "download_")):
+        return "custom_fetch_helper"
+    return ""
+
+
+def inventory_state_scraper_transport_bypasses(scraper: Any) -> Dict[str, Any]:
+    """Return machine-readable potential fetches outside the Base shared path.
+
+    This is a conservative static inventory, not proof that a branch executed.
+    Strict prospective evidence treats every candidate as an eligibility gap
+    until the state implementation routes it through the shared ledger or its
+    completion proof explicitly binds the bulk response to derived rows.
+    """
+
+    scraper_type = scraper if inspect.isclass(scraper) else type(scraper)
+    source_path_raw = inspect.getsourcefile(scraper_type)
+    if not source_path_raw:
+        return {
+            "complete": False,
+            "candidate_count": 1,
+            "candidates": [
+                {
+                    "kind": "source_uninspectable",
+                    "line": None,
+                    "source": getattr(scraper_type, "__name__", str(scraper_type)),
+                }
+            ],
+            "schema_version": "state-laws-transport-bypass-inventory-v1",
+        }
+    source_path = Path(source_path_raw).resolve()
+    try:
+        source_text = source_path.read_text(encoding="utf-8", errors="strict")
+        tree = ast.parse(source_text, filename=str(source_path))
+    except (OSError, UnicodeError, SyntaxError):
+        return {
+            "complete": False,
+            "candidate_count": 1,
+            "candidates": [
+                {
+                    "kind": "source_unreadable",
+                    "line": None,
+                    "source": source_path.name,
+                }
+            ],
+            "schema_version": "state-laws-transport-bypass-inventory-v1",
+        }
+
+    class_node = next(
+        (
+            node
+            for node in tree.body
+            if isinstance(node, ast.ClassDef)
+            and node.name == getattr(scraper_type, "__name__", "")
+        ),
+        None,
+    )
+    if class_node is None:
+        return {
+            "complete": False,
+            "candidate_count": 1,
+            "candidates": [
+                {
+                    "kind": "class_source_uninspectable",
+                    "line": None,
+                    "source": source_path.name,
+                }
+            ],
+            "schema_version": "state-laws-transport-bypass-inventory-v1",
+            "source": source_path.name,
+        }
+
+    method_nodes = {
+        node.name: node
+        for node in class_node.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    module_function_nodes = {
+        node.name: node
+        for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    entrypoints = [
+        name for name in _PARSER_TRANSPORT_ENTRYPOINTS if name in method_nodes
+    ]
+    if not entrypoints:
+        return {
+            "complete": False,
+            "candidate_count": 1,
+            "candidates": [
+                {
+                    "kind": "parser_entrypoint_uninspectable",
+                    "line": None,
+                    "source": source_path.name,
+                }
+            ],
+            "parser_entrypoints": [],
+            "schema_version": "state-laws-transport-bypass-inventory-v1",
+            "source": source_path.name,
+        }
+
+    candidates: List[Dict[str, Any]] = []
+    reachable_labels: List[str] = []
+    shared_fetch_call_count = 0
+    shared_custom_transport_adapter_call_count = 0
+    closure_projection_producer_call_count = 0
+    work: List[tuple[str, str]] = [("method", name) for name in entrypoints]
+    visited: set[tuple[str, str]] = set()
+    while work:
+        scope, name = work.pop()
+        key = (scope, name)
+        if key in visited:
+            continue
+        visited.add(key)
+        node = method_nodes.get(name) if scope == "method" else module_function_nodes.get(name)
+        if node is None:
+            continue
+        reachable_labels.append(f"{scope}:{name}")
+        for child in ast.walk(node):
+            if not isinstance(child, ast.Call):
+                continue
+            dotted = _call_dotted_name(child.func)
+            leaf = dotted.rsplit(".", 1)[-1] if dotted else ""
+            if leaf == "retain_state_law_frontier_closure_projection":
+                closure_projection_producer_call_count += 1
+            if dotted.startswith("self.") and leaf in method_nodes:
+                work.append(("method", leaf))
+            elif isinstance(child.func, ast.Name) and leaf in module_function_nodes:
+                work.append(("module", leaf))
+
+            kind = _transport_call_kind(child)
+            if kind == "shared_base_fetch":
+                if leaf in method_nodes:
+                    candidates.append(
+                        {
+                            "call": dotted,
+                            "kind": "shared_base_fetch_overridden",
+                            "line": int(getattr(child, "lineno", 0) or 0) or None,
+                            "parser_scope": f"{scope}:{name}",
+                            "source": source_path.name,
+                        }
+                    )
+                    continue
+                shared_fetch_call_count += 1
+                if leaf == "_fetch_parser_input_with_transport":
+                    shared_custom_transport_adapter_call_count += 1
+                continue
+            if not kind:
+                continue
+            # A local helper is traversed to its implementation; only report
+            # the call itself when its implementation is opaque to this file.
+            if kind == "custom_fetch_helper" and (
+                leaf in method_nodes or leaf in module_function_nodes
+            ):
+                continue
+            candidates.append(
+                {
+                    "call": dotted,
+                    "kind": kind,
+                    "line": int(getattr(child, "lineno", 0) or 0) or None,
+                    "parser_scope": f"{scope}:{name}",
+                    "source": source_path.name,
+                }
+            )
+
+    candidates = sorted(
+        {
+            (item["kind"], item["line"], item.get("call"), item["parser_scope"]): item
+            for item in candidates
+        }.values(),
+        key=lambda item: (
+            int(item.get("line") or 0),
+            str(item.get("kind") or ""),
+            str(item.get("call") or ""),
+        ),
+    )
+    shared_frontier_bridge = bool(
+        "fetch_official" in method_nodes
+        and callable(
+            getattr(
+                scraper_type,
+                "_supports_shared_official_frontier_bridge",
+                None,
+            )
+        )
+    )
+    if shared_frontier_bridge and closure_projection_producer_call_count == 0:
+        closure_projection_producer_call_count = 1
+    shared_frontier_live_transport_candidates: List[Dict[str, Any]] = []
+    if shared_frontier_bridge:
+        live_work: List[tuple[str, str]] = [("method", "fetch_official")]
+        live_visited: set[tuple[str, str]] = set()
+        while live_work:
+            live_scope, live_name = live_work.pop()
+            live_key = (live_scope, live_name)
+            if live_key in live_visited:
+                continue
+            live_visited.add(live_key)
+            live_node = (
+                method_nodes.get(live_name)
+                if live_scope == "method"
+                else module_function_nodes.get(live_name)
+            )
+            if live_node is None:
+                continue
+            for child in ast.walk(live_node):
+                if not isinstance(child, ast.Call):
+                    continue
+                dotted = _call_dotted_name(child.func)
+                leaf = dotted.rsplit(".", 1)[-1] if dotted else ""
+                if dotted.startswith("self.") and leaf in method_nodes:
+                    live_work.append(("method", leaf))
+                elif isinstance(child.func, ast.Name) and leaf in module_function_nodes:
+                    live_work.append(("module", leaf))
+                kind = _transport_call_kind(child)
+                if not kind or kind == "shared_base_fetch":
+                    continue
+                if kind == "custom_fetch_helper" and (
+                    leaf in method_nodes or leaf in module_function_nodes
+                ):
+                    continue
+                shared_frontier_live_transport_candidates.append(
+                    {
+                        "call": dotted,
+                        "kind": kind,
+                        "line": int(getattr(child, "lineno", 0) or 0) or None,
+                        "parser_scope": f"{live_scope}:{live_name}",
+                        "source": source_path.name,
+                    }
+                )
+        shared_frontier_live_transport_candidates = sorted(
+            {
+                (
+                    item["kind"],
+                    item["line"],
+                    item.get("call"),
+                    item["parser_scope"],
+                ): item
+                for item in shared_frontier_live_transport_candidates
+            }.values(),
+            key=lambda item: (
+                int(item.get("line") or 0),
+                str(item.get("kind") or ""),
+                str(item.get("call") or ""),
+            ),
+        )
+    return {
+        "complete": not candidates,
+        "candidate_count": len(candidates),
+        "candidates": candidates,
+        "closure_projection_producer_call_count": (
+            closure_projection_producer_call_count
+        ),
+        "closure_projection_producer_present": bool(
+            closure_projection_producer_call_count
+        ),
+        "closure_projection_producer_kind": (
+            "state_specific"
+            if not shared_frontier_bridge
+            else "shared_base_state_owned_official_catalog_bridge"
+        ),
+        "inventory_scope": "parser_reachable_static_call_graph",
+        "parser_entrypoints": entrypoints,
+        "reachable_scopes": sorted(reachable_labels),
+        "schema_version": "state-laws-transport-bypass-inventory-v1",
+        "shared_frontier_live_transport_candidate_count": len(
+            shared_frontier_live_transport_candidates
+        ),
+        "shared_frontier_live_transport_candidates": (
+            shared_frontier_live_transport_candidates
+        ),
+        "shared_frontier_retained_replay_guard": (
+            "exact_ledger_input_reparse_with_process_global_network_deny"
+            if shared_frontier_bridge
+            else None
+        ),
+        "shared_custom_transport_adapter_call_count": (
+            shared_custom_transport_adapter_call_count
+        ),
+        "shared_fetch_call_count": shared_fetch_call_count,
+        "source": source_path.name,
+    }
+
+
+def inventory_registered_state_scraper_transport_bypasses(
+    states: Optional[Sequence[str]] = None,
+) -> Dict[str, Any]:
+    """Inventory parser-reachable transport gaps for registered scrapers."""
+
+    from .state_scrapers import StateScraperRegistry
+
+    requested = [
+        str(code or "").strip().upper()
+        for code in (states or tuple(US_STATES))
+        if str(code or "").strip().upper() in US_STATES
+    ]
+    jurisdictions: Dict[str, Any] = {}
+    for state_code in dict.fromkeys(requested):
+        scraper_type = StateScraperRegistry.get_scraper_class(state_code)
+        if scraper_type is None:
+            jurisdictions[state_code] = {
+                "candidate_count": 1,
+                "candidates": [
+                    {
+                        "kind": "scraper_unregistered",
+                        "line": None,
+                        "source": None,
+                    }
+                ],
+                "complete": False,
+                "schema_version": "state-laws-transport-bypass-inventory-v1",
+            }
+        else:
+            jurisdictions[state_code] = inventory_state_scraper_transport_bypasses(
+                scraper_type
+            )
+    gap_jurisdictions = [
+        code
+        for code in requested
+        if not bool((jurisdictions.get(code) or {}).get("complete"))
+    ]
+    closure_projection_missing_jurisdictions = [
+        code
+        for code in requested
+        if not bool(
+            (jurisdictions.get(code) or {}).get(
+                "closure_projection_producer_present"
+            )
+        )
+    ]
+    return {
+        "candidate_count": sum(
+            int((row or {}).get("candidate_count") or 0)
+            for row in jurisdictions.values()
+        ),
+        "complete": not gap_jurisdictions and len(jurisdictions) == len(set(requested)),
+        "closure_projection_missing_jurisdictions": (
+            closure_projection_missing_jurisdictions
+        ),
+        "closure_projection_producer_count": (
+            len(requested) - len(closure_projection_missing_jurisdictions)
+        ),
+        "gap_jurisdictions": gap_jurisdictions,
+        "jurisdiction_count": len(jurisdictions),
+        "jurisdictions": jurisdictions,
+        "publication_evidence_complete": bool(
+            not gap_jurisdictions
+            and not closure_projection_missing_jurisdictions
+            and len(jurisdictions) == len(set(requested))
+        ),
+        "schema_version": "state-laws-registered-transport-bypass-inventory-v1",
+    }
 
 
 def _env_float(name: str, default: float) -> float:
@@ -155,8 +703,16 @@ def _checkpoint_updated_at_to_timestamp(value: Any) -> float:
         return 0.0
 
 
-def _partial_checkpoint_path_for_state(state_code: str) -> Optional[Path]:
-    checkpoint_dir = str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
+def _partial_checkpoint_path_for_state(
+    state_code: str,
+    *,
+    checkpoint_dir: Optional[str] = None,
+) -> Optional[Path]:
+    checkpoint_dir = (
+        str(checkpoint_dir).strip()
+        if checkpoint_dir is not None
+        else str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
+    )
     if not checkpoint_dir:
         return None
     try:
@@ -187,6 +743,48 @@ def _partial_checkpoint_progress_signature(payload: Mapping[str, Any]) -> tuple[
         _safe_int(progress.get("codes_total"), _safe_int(payload.get("codes_total"), 0)),
     )
     return counters
+
+
+def _checkpoint_has_explicit_noncompletion(payload: Mapping[str, Any]) -> bool:
+    """Return whether a checkpoint explicitly says its frontier is incomplete.
+
+    Equal scan counters are only a heuristic.  State scrapers can finish
+    visiting every discovered parent unit and still reject the resulting
+    frontier after typed reconciliation.  Those explicit failure signals must
+    fence checkpoint promotion even when the generic counters are equal.
+    """
+
+    progress = payload.get("progress") if isinstance(payload.get("progress"), Mapping) else {}
+    stage = str(payload.get("stage_label") or "").strip().lower()
+    if stage == "incomplete" or stage.endswith(":incomplete"):
+        return True
+
+    for container in (payload, progress):
+        for key, value in container.items():
+            normalized_key = str(key or "").strip().lower()
+            if normalized_key == "completion_status" or normalized_key.endswith(
+                "_completion_status"
+            ):
+                status = str(value or "").strip().lower()
+                if status == "incomplete" or status.endswith(":incomplete"):
+                    return True
+            if normalized_key == "unresolved_count" or normalized_key.endswith(
+                "_unresolved_count"
+            ):
+                if _safe_int(value, 0) > 0:
+                    return True
+
+        code_failures = container.get("code_failures")
+        if isinstance(code_failures, Mapping):
+            if code_failures:
+                return True
+        elif isinstance(code_failures, (list, tuple, set, frozenset)):
+            if len(code_failures) > 0:
+                return True
+        elif str(code_failures or "").strip():
+            return True
+
+    return False
 
 
 def _checkpoint_progress_signal(payload: Mapping[str, Any]) -> Dict[str, Any]:
@@ -246,6 +844,7 @@ def _checkpoint_progress_signal(payload: Mapping[str, Any]) -> Dict[str, Any]:
     signal_kind = ""
     scanned = 0
     discovered = 0
+    populated_signals: List[tuple[str, int, int]] = []
     best_with_scanned: Optional[tuple[str, int, int]] = None
     best_any: Optional[tuple[str, int, int]] = None
     for kind, scanned_value, discovered_value in (
@@ -255,11 +854,11 @@ def _checkpoint_progress_signal(payload: Mapping[str, Any]) -> Dict[str, Any]:
         ("title_scan", titles_scanned, discovered_titles),
         ("chapter_scan", chapters_scanned, discovered_chapters),
         ("section_scan", sections_scanned, discovered_sections),
-        ("codes_progress", codes_completed, codes_total),
     ):
         if discovered_value <= 0:
             continue
         candidate = (kind, max(0, int(scanned_value)), int(discovered_value))
+        populated_signals.append(candidate)
         if (
             best_any is None
             or candidate[2] > best_any[2]
@@ -272,6 +871,16 @@ def _checkpoint_progress_signal(payload: Mapping[str, Any]) -> Dict[str, Any]:
             or (candidate[2] == best_with_scanned[2] and candidate[1] > best_with_scanned[1])
         ):
             best_with_scanned = candidate
+    # ``codes_completed`` is a coarse lifecycle counter: many scrapers leave
+    # it at 0 until the synchronous call returns even after their concrete URL
+    # frontier is closed.  Use it only when no concrete scan dimension exists;
+    # otherwise it would prevent legitimate retained-checkpoint promotion.
+    # Parent title/chapter dimensions remain part of ``populated_signals`` and
+    # therefore cannot be masked by a locally complete section scan.
+    if not populated_signals and codes_total > 0:
+        populated_signals.append(("codes_progress", max(0, codes_completed), codes_total))
+        best_any = populated_signals[0]
+        best_with_scanned = best_any if codes_completed > 0 else None
     selected = best_with_scanned or best_any
     if selected is not None:
         signal_kind, scanned, discovered = selected
@@ -279,7 +888,18 @@ def _checkpoint_progress_signal(payload: Mapping[str, Any]) -> Dict[str, Any]:
     signal_found = bool(signal_kind)
     work_remaining: Optional[bool] = None
     if signal_found:
-        work_remaining = int(scanned) < int(discovered)
+        # A nested scraper can finish every section discovered so far while
+        # still having unvisited parent titles or chapters.  Keep the largest
+        # populated dimension as the primary diagnostic signal, but only call
+        # the checkpoint complete when *every* populated frontier dimension is
+        # closed.  Otherwise a locally complete child scan can detach a live
+        # daemon and promote an incomplete checkpoint.
+        work_remaining = any(
+            int(scanned_value) < int(discovered_value)
+            for _kind, scanned_value, discovered_value in populated_signals
+        )
+    if _checkpoint_has_explicit_noncompletion(payload):
+        work_remaining = True
 
     return {
         "signal_found": signal_found,
@@ -391,8 +1011,15 @@ def _quick_read_partial_checkpoint_meta(path: Path) -> Dict[str, Any]:
     }
 
 
-def _read_partial_checkpoint_activity(state_code: str) -> Dict[str, Any]:
-    path = _partial_checkpoint_path_for_state(state_code)
+def _read_partial_checkpoint_activity(
+    state_code: str,
+    *,
+    checkpoint_dir: Optional[str] = None,
+) -> Dict[str, Any]:
+    path = _partial_checkpoint_path_for_state(
+        state_code,
+        checkpoint_dir=checkpoint_dir,
+    )
     if path is None or not path.exists():
         return {
             "path": str(path) if path else "",
@@ -586,6 +1213,24 @@ def _extract_statute_quality_fields(statute: Any) -> Dict[str, str]:
     }
 
 
+def _is_source_bound_hawaii_operative_record(statute: Any) -> bool:
+    structured_data = (
+        statute.get("structured_data")
+        if isinstance(statute, dict)
+        else getattr(statute, "structured_data", None)
+    )
+    if (
+        not isinstance(structured_data, Mapping)
+        or structured_data.get("source_kind") != "official_hawaii_hrs_html"
+    ):
+        return False
+    from .state_scrapers.hawaii_section import (
+        is_source_bound_operative_hawaii_statute,
+    )
+
+    return is_source_bound_operative_hawaii_statute(statute)
+
+
 def _is_scaffold_or_navigation_record(statute: Any) -> bool:
     fields = _extract_statute_quality_fields(statute)
     text = fields["full_text"].strip()
@@ -604,6 +1249,9 @@ def _is_scaffold_or_navigation_record(statute: Any) -> bool:
 
     if _QUALITY_SCAFFOLD_TEXT_RE.match(text):
         return True
+
+    if _is_source_bound_hawaii_operative_record(statute):
+        return False
 
     if fallback_section and nav_like_text and not has_statute_signal:
         return True
@@ -737,7 +1385,7 @@ async def scrape_state_laws(
     output_dir: Optional[str] = None,
     write_jsonld: bool = True,
     strict_full_text: bool = False,
-    min_full_text_chars: int = 300,
+    min_full_text_chars: int = DEFAULT_MIN_FULL_TEXT_CHARS,
     hydrate_statute_text: bool = True,
     parallel_workers: int = 6,
     per_state_retry_attempts: int = 1,
@@ -808,6 +1456,7 @@ async def scrape_state_laws(
         quality_by_state: Dict[str, Dict[str, Any]] = {}
         low_quality_states: List[str] = []
         fetch_analytics_by_state: Dict[str, Dict[str, Any]] = {}
+        state_run_environment_binding = _capture_state_law_run_environment()
 
         parallel_workers = max(1, int(parallel_workers or 1))
         per_state_retry_attempts = max(0, int(per_state_retry_attempts or 0))
@@ -864,6 +1513,7 @@ async def scrape_state_laws(
                         retry_attempts=per_state_retry_attempts,
                         retry_zero_statute_states=retry_zero_statute_states,
                         per_state_timeout_seconds=per_state_timeout_seconds,
+                        bound_state_run_environment=state_run_environment_binding,
                     )
                     if state_completion_callback is not None:
                         callback_result = state_completion_callback(result)
@@ -1490,7 +2140,100 @@ def _format_quality_warning(state_code: str, quality_metrics: Dict[str, Any]) ->
     )
 
 
-def _scrape_state_once_sync(
+def _run_state_law_frontier_producer_lifecycle(
+    *,
+    scraper: Any,
+    ledger: Any,
+    final_rows: Sequence[Mapping[str, Any]],
+) -> tuple[Dict[str, Any], Optional[str]]:
+    """Run one state-owned independent frontier replay after final filtering."""
+
+    from ..legal_data.state_laws_multifetch_acquisition import (
+        build_canonical_state_law_output_projection,
+    )
+    from .state_scrapers.base_scraper import BaseStateScraper
+
+    lifecycle: Dict[str, Any] = {
+        "hook": "BaseStateScraper.produce_state_law_frontier_closure",
+        "invoked": False,
+        "status": "pending",
+    }
+    try:
+        output_projection = build_canonical_state_law_output_projection(
+            final_rows,
+            jurisdiction=str(getattr(scraper, "state_code", "") or ""),
+        )
+    except Exception as exc:
+        lifecycle.update(
+            {
+                "error": str(exc),
+                "status": "failed",
+            }
+        )
+        return lifecycle, "source_frontier_producer_failed"
+
+    lifecycle["canonical_output_projection"] = {
+        key: value
+        for key, value in output_projection.items()
+        if key != "canonical_keys"
+    }
+    producer = getattr(scraper, "produce_state_law_frontier_closure", None)
+    producer_impl = getattr(producer, "__func__", producer)
+    base_impl = BaseStateScraper.produce_state_law_frontier_closure
+    shared_bridge_support = getattr(
+        scraper,
+        "_supports_shared_official_frontier_bridge",
+        None,
+    )
+    shared_bridge_ready = bool(
+        producer_impl is base_impl
+        and callable(shared_bridge_support)
+        and shared_bridge_support()
+    )
+    if not callable(producer) or (
+        producer_impl is base_impl and not shared_bridge_ready
+    ):
+        lifecycle["status"] = "missing"
+        return lifecycle, "source_frontier_producer_missing"
+
+    lifecycle["invoked"] = True
+    try:
+        retained_path_raw = asyncio.run(
+            producer(canonical_output_projection=output_projection)
+        )
+        if retained_path_raw is None:
+            raise RuntimeError(
+                "state frontier producer returned without retaining closure evidence"
+            )
+        retained_path = ledger.resolve_frontier_closure_projection_path(
+            retained_path_raw
+        )
+        verified = ledger.verify_retained_frontier_closure_projection(
+            output_projection,
+            closure_input_path=retained_path,
+        )
+    except Exception as exc:
+        lifecycle.update(
+            {
+                "error": str(exc),
+                "status": "failed",
+            }
+        )
+        return lifecycle, "source_frontier_producer_failed"
+
+    lifecycle.update(
+        {
+            "canonical_output_projection": {
+                key: value for key, value in verified.items() if key != "canonical_keys"
+            },
+            "closure_input_path": str(retained_path),
+            "status": "retained_and_verified",
+        }
+    )
+    return lifecycle, None
+
+
+def _scrape_state_once_sync_unguarded(
     *,
     state_code: str,
     legal_areas: Optional[List[str]],
@@ -1500,6 +2243,12 @@ def _scrape_state_once_sync(
     min_full_text_chars: int,
     hydrate_statute_text: bool,
     per_state_timeout_seconds: float = 0.0,
+    checkpoint_generation_key: str = "",
+    checkpoint_generation: int = 0,
+    bound_evidence_root: Optional[str] = None,
+    bound_strict_evidence: Optional[bool] = None,
+    bound_retained_replay_only: Optional[bool] = None,
+    bound_state_run_environment: Optional[Mapping[str, Optional[str]]] = None,
 ) -> Dict[str, Any]:
     from .state_scrapers import get_scraper_for_state, GenericStateScraper
 
@@ -1508,22 +2257,132 @@ def _scrape_state_once_sync(
     if not scraper:
         logger.info(f"No specific scraper for {state_code}, using generic scraper")
         scraper = GenericStateScraper(state_code, state_name)
-
-    normalized_statutes = asyncio.run(
-        scraper.scrape_all(
-            legal_areas=legal_areas,
-            max_statutes=max_statutes,
-            rate_limit_delay=rate_limit_delay,
-            hydrate_statute_text=hydrate_statute_text,
-        )
+    state_run_environment = (
+        dict(bound_state_run_environment)
+        if bound_state_run_environment is not None
+        else _capture_state_law_run_environment()
     )
+    bind_run_environment = getattr(
+        scraper,
+        "bind_state_law_run_environment",
+        None,
+    )
+    if not callable(bind_run_environment):
+        raise RuntimeError(
+            f"{type(scraper).__name__} cannot bind immutable run selectors"
+        )
+    bind_run_environment(state_run_environment)
+    bind_checkpoint_generation = getattr(
+        scraper,
+        "bind_partial_checkpoint_generation",
+        None,
+    )
+    if callable(bind_checkpoint_generation):
+        bind_checkpoint_generation(
+            key=checkpoint_generation_key,
+            generation=checkpoint_generation,
+        )
+
+    evidence_root_raw = (
+        str(bound_evidence_root).strip()
+        if bound_evidence_root is not None
+        else str(os.getenv(MULTIFETCH_EVIDENCE_ROOT_ENV) or "").strip()
+    )
+    strict_evidence = (
+        bool(bound_strict_evidence)
+        if bound_strict_evidence is not None
+        else str(os.getenv(STRICT_MULTIFETCH_EVIDENCE_ENV) or "").strip().lower()
+        in {"1", "true", "yes", "on"}
+    )
+    retained_replay_only = (
+        bool(bound_retained_replay_only)
+        if bound_retained_replay_only is not None
+        else str(os.getenv(RETAINED_REPLAY_ONLY_ENV) or "").strip().lower()
+        in {"1", "true", "yes", "on"}
+    )
+    ledger = None
+    bypass_inventory = inventory_state_scraper_transport_bypasses(scraper)
+    evidence_root = ""
+    if strict_evidence and not evidence_root_raw:
+        raise RuntimeError(
+            f"{STRICT_MULTIFETCH_EVIDENCE_ENV}=1 requires "
+            f"{MULTIFETCH_EVIDENCE_ROOT_ENV} before scraper construction"
+        )
+    if retained_replay_only and not strict_evidence:
+        raise RuntimeError(
+            f"{RETAINED_REPLAY_ONLY_ENV}=1 requires "
+            f"{STRICT_MULTIFETCH_EVIDENCE_ENV}=1"
+        )
+    if retained_replay_only and not evidence_root_raw:
+        raise RuntimeError(
+            f"{RETAINED_REPLAY_ONLY_ENV}=1 requires "
+            f"{MULTIFETCH_EVIDENCE_ROOT_ENV} before scraper construction"
+        )
+    if retained_replay_only and not bypass_inventory.get("complete"):
+        raise RuntimeError(
+            f"{state_code} retained-replay-only mode rejected parser-reachable "
+            "transport bypass candidates before scrape_all"
+        )
+    if evidence_root_raw:
+        from ..legal_data.state_laws_multifetch_acquisition import (
+            StateLawMultiFetchAcquisitionLedger,
+        )
+
+        evidence_root = str(Path(evidence_root_raw).expanduser().resolve())
+        ledger = StateLawMultiFetchAcquisitionLedger(
+            evidence_root,
+            jurisdiction=state_code,
+            parser_name=type(scraper).__name__,
+            retained_replay_only=retained_replay_only,
+        )
+        attach = getattr(scraper, "attach_state_law_acquisition_ledger", None)
+        if not callable(attach):
+            raise RuntimeError(
+                f"{type(scraper).__name__} cannot attach prospective acquisition evidence"
+            )
+        # This is intentionally before scrape_all: a strict production run can
+        # never parse a shared-path response and attach provenance afterward.
+        attach(ledger)
+
+    if retained_replay_only:
+        from .state_scrapers.retained_replay_network_guard import (
+            retained_replay_network_guard,
+        )
+
+        with retained_replay_network_guard(
+            ledger=ledger,
+            state_code=state_code,
+        ):
+            normalized_statutes = asyncio.run(
+                scraper.scrape_all(
+                    legal_areas=legal_areas,
+                    max_statutes=max_statutes,
+                    rate_limit_delay=rate_limit_delay,
+                    hydrate_statute_text=hydrate_statute_text,
+                )
+            )
+    else:
+        normalized_statutes = asyncio.run(
+            scraper.scrape_all(
+                legal_areas=legal_areas,
+                max_statutes=max_statutes,
+                rate_limit_delay=rate_limit_delay,
+                hydrate_statute_text=hydrate_statute_text,
+            )
+        )
 
     strict_removed_count = 0
     if strict_full_text:
         normalized_statutes, strict_removed_count = _filter_strict_full_text_statutes(
             normalized_statutes,
             min_full_text_chars=min_full_text_chars,
+            source_bound_operative_checker=getattr(
+                scraper,
+                "_is_source_bound_operative_statute_record",
+                None,
+            ),
         )
+    output_rows = [statute.to_dict() for statute in normalized_statutes]
 
     statute_data = {
         "state_code": state_code,
@@ -1533,7 +2392,7 @@ def _scrape_state_once_sync(
         "source_url": scraper.get_base_url(),
         "official_url": scraper.get_base_url(),
         "scraped_at": datetime.now().isoformat(),
-        "statutes": [statute.to_dict() for statute in normalized_statutes],
+        "statutes": output_rows,
         "schema_version": "1.0",
         "normalized": True,
         "strict_full_text": strict_full_text,
@@ -1558,22 +2417,253 @@ def _scrape_state_once_sync(
     if len(normalized_statutes) == 0:
         warnings.append(f"{state_code} returned zero statutes")
 
+    acquisition_evidence: Dict[str, Any] = {
+        "aggregate": {
+            "authorizing_for_publication": False,
+            "status": "disabled" if ledger is None else "pending_canonical_materialization",
+        },
+        "aggregate_eligible": False,
+        "all_fetch_coverage_claimed": False,
+        "attached_before_scrape_all": ledger is not None,
+        "enabled": ledger is not None,
+        "evidence_root": evidence_root or None,
+        "jurisdiction": state_code,
+        "parser_name": type(scraper).__name__,
+        "required_frontier_producer_api": (
+            "BaseStateScraper.produce_state_law_frontier_closure"
+        ),
+        "required_frontier_retention_api": (
+            "BaseStateScraper.retain_state_law_frontier_closure_projection"
+        ),
+        "schema_version": "state-laws-scraper-multifetch-evidence-v1",
+        "strict": strict_evidence,
+        "retained_replay_only": retained_replay_only,
+        "transport_bypass_inventory": bypass_inventory,
+    }
+    evidence_blockers: List[str] = []
+    if ledger is not None:
+        full_scope = max_statutes is None and not legal_areas
+        if full_scope:
+            if retained_replay_only:
+                from .state_scrapers.retained_replay_network_guard import (
+                    retained_replay_network_guard,
+                )
+
+                with retained_replay_network_guard(
+                    ledger=ledger,
+                    state_code=state_code,
+                ):
+                    frontier_lifecycle, frontier_blocker = (
+                        _run_state_law_frontier_producer_lifecycle(
+                            scraper=scraper,
+                            ledger=ledger,
+                            final_rows=output_rows,
+                        )
+                    )
+            else:
+                frontier_lifecycle, frontier_blocker = (
+                    _run_state_law_frontier_producer_lifecycle(
+                        scraper=scraper,
+                        ledger=ledger,
+                        final_rows=output_rows,
+                    )
+                )
+            if frontier_blocker:
+                evidence_blockers.append(frontier_blocker)
+        else:
+            frontier_lifecycle = {
+                "hook": "BaseStateScraper.produce_state_law_frontier_closure",
+                "invoked": False,
+                "status": "not_invoked_non_full_scope",
+            }
+        parser_output_coverage = ledger.audit_parser_output_coverage(output_rows)
+        lifecycle_closure_path = str(
+            frontier_lifecycle.get("closure_input_path") or ""
+        ).strip()
+        acquisition_evidence.update(
+            {
+                "jurisdiction_root": str(ledger.jurisdiction_root),
+                "source_frontier_lifecycle": frontier_lifecycle,
+                "parser_output_coverage": parser_output_coverage,
+                "retained_parser_input_count": len(ledger.entries),
+            }
+        )
+        if lifecycle_closure_path:
+            acquisition_evidence["closure_input_path"] = lifecycle_closure_path
+        if not parser_output_coverage.get("complete"):
+            evidence_blockers.append("parser_output_units_without_retained_input")
+        if not bypass_inventory.get("complete"):
+            evidence_blockers.append("parser_reachable_transport_bypass_candidates")
+        if max_statutes is not None:
+            evidence_blockers.append("bounded_scrape_cannot_close_full_frontier")
+        elif legal_areas:
+            evidence_blockers.append("filtered_scope_cannot_close_full_frontier")
+        acquisition_evidence["aggregate_eligible"] = not evidence_blockers
+        if evidence_blockers:
+            acquisition_evidence["aggregate"]["status"] = "blocked_before_materialization"
+    elif strict_evidence:
+        evidence_blockers.append("strict_evidence_ledger_unattached")
+    acquisition_evidence["eligibility_blockers"] = evidence_blockers
+    statute_data["acquisition_evidence"] = acquisition_evidence
+
+    lifecycle = acquisition_evidence.get("source_frontier_lifecycle")
+    if isinstance(lifecycle, Mapping) and lifecycle.get("status") in {
+        "failed",
+        "missing",
+    }:
+        warnings.append(
+            f"{state_code} source frontier producer {lifecycle.get('status')}: "
+            f"{lifecycle.get('error') or 'no state-specific producer is implemented'}"
+        )
+
+    evidence_error = ""
+    if strict_evidence and evidence_blockers:
+        evidence_error = (
+            f"{state_code} strict acquisition evidence blocked: "
+            + ",".join(evidence_blockers)
+        )
+        warnings.append(evidence_error)
+
     return {
         "state_code": state_code,
         "state_name": state_name,
-        "error": None,
+        "error": evidence_error or None,
         "statutes_count": len(normalized_statutes),
         "zero_statute": len(normalized_statutes) == 0,
         "low_quality": quality_flag,
         "quality_metrics": quality_metrics,
         "fetch_analytics": fetch_analytics,
         "warnings": warnings,
+        "acquisition_evidence": acquisition_evidence,
         "statute_data": statute_data,
     }
 
 
-def _load_partial_checkpoint_state_result(state_code: str, error_msg: str) -> Optional[Dict[str, Any]]:
-    checkpoint_dir = str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
+def _scrape_state_once_sync(
+    *,
+    state_code: str,
+    legal_areas: Optional[List[str]],
+    rate_limit_delay: float,
+    max_statutes: Optional[int],
+    strict_full_text: bool,
+    min_full_text_chars: int,
+    hydrate_statute_text: bool,
+    per_state_timeout_seconds: float = 0.0,
+    checkpoint_generation_key: str = "",
+    checkpoint_generation: int = 0,
+    bound_evidence_root: Optional[str] = None,
+    bound_strict_evidence: Optional[bool] = None,
+    bound_retained_replay_only: Optional[bool] = None,
+    bound_state_run_environment: Optional[Mapping[str, Optional[str]]] = None,
+) -> Dict[str, Any]:
+    """Run one state under a whole-worker retained-replay deny lease.
+
+    The outer lease starts before scraper or ledger construction and remains
+    active through normalization, analytics, quality checks, frontier closure,
+    ledger coverage, and result construction.  Inner parser/frontier guards are
+    intentionally retained as defense in depth and are safe to nest.
+    """
+
+    retained_replay_only = (
+        bool(bound_retained_replay_only)
+        if bound_retained_replay_only is not None
+        else str(os.getenv(RETAINED_REPLAY_ONLY_ENV) or "").strip().lower()
+        in {"1", "true", "yes", "on"}
+    )
+    if not retained_replay_only:
+        return _scrape_state_once_sync_unguarded(
+            state_code=state_code,
+            legal_areas=legal_areas,
+            rate_limit_delay=rate_limit_delay,
+            max_statutes=max_statutes,
+            strict_full_text=strict_full_text,
+            min_full_text_chars=min_full_text_chars,
+            hydrate_statute_text=hydrate_statute_text,
+            per_state_timeout_seconds=per_state_timeout_seconds,
+            checkpoint_generation_key=checkpoint_generation_key,
+            checkpoint_generation=checkpoint_generation,
+            bound_evidence_root=bound_evidence_root,
+            bound_strict_evidence=bound_strict_evidence,
+            bound_retained_replay_only=False,
+            bound_state_run_environment=bound_state_run_environment,
+        )
+
+    strict_evidence = (
+        bool(bound_strict_evidence)
+        if bound_strict_evidence is not None
+        else str(os.getenv(STRICT_MULTIFETCH_EVIDENCE_ENV) or "").strip().lower()
+        in {"1", "true", "yes", "on"}
+    )
+    if not strict_evidence:
+        raise RuntimeError(
+            f"{RETAINED_REPLAY_ONLY_ENV}=1 requires "
+            f"{STRICT_MULTIFETCH_EVIDENCE_ENV}=1"
+        )
+    evidence_root_raw = (
+        str(bound_evidence_root).strip()
+        if bound_evidence_root is not None
+        else str(os.getenv(MULTIFETCH_EVIDENCE_ROOT_ENV) or "").strip()
+    )
+    if not evidence_root_raw:
+        raise RuntimeError(
+            f"{RETAINED_REPLAY_ONLY_ENV}=1 requires "
+            f"{MULTIFETCH_EVIDENCE_ROOT_ENV} before scraper construction"
+        )
+
+    from types import SimpleNamespace
+
+    from .state_scrapers.retained_replay_network_guard import (
+        retained_replay_network_guard,
+    )
+
+    evidence_root_path = Path(evidence_root_raw).expanduser()
+    if evidence_root_path.is_symlink():
+        raise RuntimeError("acquisition evidence root must not be a symlink")
+    # The guard must be able to install a permanent poison marker even if a
+    # scraper constructor violates the deny policy before the real ledger is
+    # constructed.  The ledger creates this same directory during an ordinary
+    # strict run and repeats the symlink checks below.
+    evidence_root_path.mkdir(parents=True, exist_ok=True)
+    if evidence_root_path.is_symlink() or not evidence_root_path.is_dir():
+        raise RuntimeError("acquisition evidence root must be a regular directory")
+    evidence_root = str(evidence_root_path.resolve())
+    root_binding = SimpleNamespace(
+        retained_replay_only=True,
+        root=evidence_root,
+    )
+    with retained_replay_network_guard(
+        ledger=root_binding,
+        state_code=state_code,
+    ):
+        return _scrape_state_once_sync_unguarded(
+            state_code=state_code,
+            legal_areas=legal_areas,
+            rate_limit_delay=rate_limit_delay,
+            max_statutes=max_statutes,
+            strict_full_text=strict_full_text,
+            min_full_text_chars=min_full_text_chars,
+            hydrate_statute_text=hydrate_statute_text,
+            per_state_timeout_seconds=per_state_timeout_seconds,
+            checkpoint_generation_key=checkpoint_generation_key,
+            checkpoint_generation=checkpoint_generation,
+            bound_evidence_root=evidence_root,
+            bound_strict_evidence=True,
+            bound_retained_replay_only=True,
+            bound_state_run_environment=bound_state_run_environment,
+        )
+
+
+def _load_partial_checkpoint_state_result(
+    state_code: str,
+    error_msg: str,
+    *,
+    checkpoint_dir: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    checkpoint_dir = (
+        str(checkpoint_dir).strip()
+        if checkpoint_dir is not None
+        else str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
+    )
     if not checkpoint_dir:
         return None
     path = Path(checkpoint_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
@@ -1658,12 +2748,32 @@ def _load_partial_checkpoint_state_success_result(
     *,
     reason: str = "checkpoint_complete_promotion",
     require_no_remaining_work: bool = False,
+    checkpoint_dir: Optional[str] = None,
+    strict_evidence: Optional[bool] = None,
 ) -> Optional[Dict[str, Any]]:
+    strict_evidence = (
+        bool(strict_evidence)
+        if strict_evidence is not None
+        else str(os.getenv(STRICT_MULTIFETCH_EVIDENCE_ENV, "") or "")
+        .strip()
+        .lower()
+        in {"1", "true", "yes", "on"}
+    )
+    if strict_evidence:
+        # A parser checkpoint cannot prove that the separately retained source
+        # frontier replay and closure projection completed.  Strict acquisition
+        # runs must return the worker result (or its original failure) instead
+        # of manufacturing success from parser rows alone.
+        return None
     state = str(state_code or "").strip().upper()
     if not state:
         return None
     synthetic_error = f"{reason}: promote checkpoint-complete state"
-    recovered = _load_partial_checkpoint_state_result(state, synthetic_error)
+    recovered = _load_partial_checkpoint_state_result(
+        state,
+        synthetic_error,
+        checkpoint_dir=checkpoint_dir,
+    )
     if recovered is None:
         return None
     statutes_count = _safe_int(recovered.get("statutes_count"), 0)
@@ -1699,6 +2809,8 @@ def _promote_timeout_checkpoint_result_if_no_remaining_work(
     checkpoint_result: Optional[Dict[str, Any]],
     *,
     reason: str,
+    checkpoint_dir: Optional[str] = None,
+    strict_evidence: Optional[bool] = None,
 ) -> Optional[Dict[str, Any]]:
     if checkpoint_result is None:
         return None
@@ -1712,6 +2824,8 @@ def _promote_timeout_checkpoint_result_if_no_remaining_work(
         state_code,
         reason=reason,
         require_no_remaining_work=True,
+        checkpoint_dir=checkpoint_dir,
+        strict_evidence=strict_evidence,
     )
     if promoted is not None:
         return promoted
@@ -1728,9 +2842,132 @@ async def _run_sync_scrape_on_daemon_thread(
     min_full_text_chars: int,
     hydrate_statute_text: bool,
     timeout_seconds: float,
+    bound_checkpoint_dir: Optional[str] = None,
+    bound_strict_evidence: Optional[bool] = None,
+    bound_evidence_root: Optional[str] = None,
+    bound_retained_replay_only: Optional[bool] = None,
+    bound_state_run_environment: Optional[Mapping[str, Optional[str]]] = None,
 ) -> Dict[str, Any]:
+    from .state_scrapers.base_scraper import (
+        bind_partial_checkpoint_run_directory,
+        bind_state_law_worker_environment,
+        claim_partial_checkpoint_generation,
+        restore_partial_checkpoint_run_directory,
+        restore_state_law_worker_environment,
+    )
+
     loop = asyncio.get_running_loop()
     result_future: asyncio.Future[Dict[str, Any]] = loop.create_future()
+    checkpoint_dir_binding = (
+        str(bound_checkpoint_dir).strip()
+        if bound_checkpoint_dir is not None
+        else str(
+            os.environ.get("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or ""
+        ).strip()
+    )
+    if checkpoint_dir_binding:
+        checkpoint_dir_binding = str(
+            Path(checkpoint_dir_binding).expanduser().resolve()
+        )
+    evidence_root_binding = (
+        str(bound_evidence_root).strip()
+        if bound_evidence_root is not None
+        else str(os.environ.get(MULTIFETCH_EVIDENCE_ROOT_ENV) or "").strip()
+    )
+    if evidence_root_binding:
+        evidence_root_binding = str(
+            Path(evidence_root_binding).expanduser().resolve()
+        )
+    strict_evidence_binding = (
+        bool(bound_strict_evidence)
+        if bound_strict_evidence is not None
+        else str(os.environ.get(STRICT_MULTIFETCH_EVIDENCE_ENV) or "")
+        .strip()
+        .lower()
+        in {"1", "true", "yes", "on"}
+    )
+    retained_replay_only_binding = (
+        bool(bound_retained_replay_only)
+        if bound_retained_replay_only is not None
+        else str(os.environ.get(RETAINED_REPLAY_ONLY_ENV) or "")
+        .strip()
+        .lower()
+        in {"1", "true", "yes", "on"}
+    )
+    if bound_state_run_environment is not None:
+        state_run_environment_binding = {
+            str(name): (
+                str(value if value is not None else "")
+                if str(name) in _IMMUTABLE_STATE_RUN_SECRET_ENV_KEYS
+                else str(value or "").strip()
+            )
+            for name, value in bound_state_run_environment.items()
+        }
+    else:
+        state_run_environment_binding = _capture_state_law_run_environment()
+    checkpoint_generation_key, checkpoint_generation = (
+        claim_partial_checkpoint_generation(
+            state_code=state_code,
+            checkpoint_dir=checkpoint_dir_binding,
+        )
+    )
+    bounded_env_lease_token = object()
+    bounded_env_lease_state = {"status": "pending"}
+    bounded_env_prior: Dict[str, Optional[str]] = {}
+    bounded_env_applied: Dict[str, Optional[str]] = {}
+    worker_finished = threading.Event()
+
+    def _acquire_bounded_env_lease(values: Mapping[str, Optional[str]]) -> None:
+        """Apply process-global bounded settings under an owned, revocable lease."""
+
+        global _BOUNDED_ENV_LEASE_OWNER
+        with _BOUNDED_ENV_LEASE_LOCK:
+            if bounded_env_lease_state["status"] == "revoked":
+                raise RuntimeError(
+                    "bounded scraper environment lease was revoked before worker start"
+                )
+            if _BOUNDED_ENV_LEASE_OWNER is not None:
+                raise RuntimeError(
+                    "another bounded scraper worker owns the process environment lease"
+                )
+            _BOUNDED_ENV_LEASE_OWNER = bounded_env_lease_token
+            bounded_env_prior.update(
+                {key: os.environ.get(key) for key in _BOUNDED_ENV_KEYS}
+            )
+            for key, value in values.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
+            bounded_env_applied.update(
+                {key: os.environ.get(key) for key in _BOUNDED_ENV_KEYS}
+            )
+            bounded_env_lease_state["status"] = "active"
+
+    def _release_bounded_env_lease(*, revoke: bool) -> None:
+        """Restore only values still owned by this worker and prevent late writes."""
+
+        global _BOUNDED_ENV_LEASE_OWNER
+        with _BOUNDED_ENV_LEASE_LOCK:
+            if revoke and bounded_env_lease_state["status"] == "pending":
+                bounded_env_lease_state["status"] = "revoked"
+                return
+            if _BOUNDED_ENV_LEASE_OWNER is not bounded_env_lease_token:
+                if revoke:
+                    bounded_env_lease_state["status"] = "revoked"
+                return
+            for key in _BOUNDED_ENV_KEYS:
+                # A later caller may have deliberately changed a value.  The
+                # lease must never overwrite a value it no longer owns.
+                if os.environ.get(key) != bounded_env_applied.get(key):
+                    continue
+                prior_value = bounded_env_prior.get(key)
+                if prior_value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = prior_value
+            _BOUNDED_ENV_LEASE_OWNER = None
+            bounded_env_lease_state["status"] = "revoked" if revoke else "released"
 
     def _publish_result(result: Dict[str, Any]) -> None:
         if not result_future.done():
@@ -1741,37 +2978,62 @@ async def _run_sync_scrape_on_daemon_thread(
             result_future.set_exception(exc)
 
     def _worker() -> None:
+        prior_checkpoint_binding = bind_partial_checkpoint_run_directory(
+            checkpoint_dir_binding
+        )
+        prior_state_run_environment = bind_state_law_worker_environment(
+            state_run_environment_binding
+        )
         global_bounded_env = str(os.environ.get("STATE_SCRAPER_GLOBAL_BOUNDED_ENV") or "").strip().lower() in {
             "1",
             "true",
             "yes",
             "on",
         }
-        prior_code_timeout = os.environ.get("STATE_SCRAPER_CODE_TIMEOUT_SECONDS")
-        prior_fetch_timeout = os.environ.get("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS")
-        prior_max_statutes = os.environ.get("STATE_SCRAPER_MAX_STATUTES")
-        prior_direct_only = os.environ.get("STATE_SCRAPER_BOUNDED_DIRECT_ONLY")
         bounded_timeout = max(0.0, float(timeout_seconds or 0.0))
-        if not global_bounded_env and max_statutes and int(max_statutes) > 0 and bounded_timeout > 0:
-            timeouts = _derive_bounded_scraper_timeouts(bounded_timeout)
-            code_timeout = max(0.1, float(timeouts.get("code_timeout_seconds") or 0.0))
-            fetch_timeout = max(0.1, float(timeouts.get("fetch_timeout_seconds") or 0.0))
-            disable_code_timeout_with_checkpoint = str(
-                os.environ.get("STATE_SCRAPER_DISABLE_CODE_TIMEOUT_WITH_CHECKPOINT", "1") or "1"
-            ).strip().lower() in {"1", "true", "yes", "on"}
-            checkpoint_dir_configured = bool(
-                str(os.environ.get("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", "") or "").strip()
-            )
-            if disable_code_timeout_with_checkpoint and checkpoint_dir_configured:
-                code_timeout = 0.0
-            if code_timeout > 0:
-                os.environ["STATE_SCRAPER_CODE_TIMEOUT_SECONDS"] = f"{code_timeout:.3f}"
-            else:
-                os.environ.pop("STATE_SCRAPER_CODE_TIMEOUT_SECONDS", None)
-            os.environ["STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"] = f"{fetch_timeout:.3f}"
-            os.environ["STATE_SCRAPER_MAX_STATUTES"] = str(int(max_statutes))
-            os.environ["STATE_SCRAPER_BOUNDED_DIRECT_ONLY"] = "1"
+        worker_exception: BaseException | None = None
+        result: Dict[str, Any] = {}
         try:
+            if (
+                not global_bounded_env
+                and max_statutes
+                and int(max_statutes) > 0
+                and bounded_timeout > 0
+            ):
+                timeouts = _derive_bounded_scraper_timeouts(bounded_timeout)
+                code_timeout = max(
+                    0.1,
+                    float(timeouts.get("code_timeout_seconds") or 0.0),
+                )
+                fetch_timeout = max(
+                    0.1,
+                    float(timeouts.get("fetch_timeout_seconds") or 0.0),
+                )
+                disable_code_timeout_with_checkpoint = str(
+                    os.environ.get(
+                        "STATE_SCRAPER_DISABLE_CODE_TIMEOUT_WITH_CHECKPOINT",
+                        "1",
+                    )
+                    or "1"
+                ).strip().lower() in {"1", "true", "yes", "on"}
+                checkpoint_dir_configured = bool(
+                    str(
+                        os.environ.get("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", "")
+                        or ""
+                    ).strip()
+                )
+                if disable_code_timeout_with_checkpoint and checkpoint_dir_configured:
+                    code_timeout = 0.0
+                _acquire_bounded_env_lease(
+                    {
+                        "STATE_SCRAPER_CODE_TIMEOUT_SECONDS": (
+                            f"{code_timeout:.3f}" if code_timeout > 0 else None
+                        ),
+                        "STATE_SCRAPER_FETCH_TIMEOUT_SECONDS": f"{fetch_timeout:.3f}",
+                        "STATE_SCRAPER_MAX_STATUTES": str(int(max_statutes)),
+                        "STATE_SCRAPER_BOUNDED_DIRECT_ONLY": "1",
+                    }
+                )
             result = _scrape_state_once_sync(
                 state_code=state_code,
                 legal_areas=legal_areas,
@@ -1781,34 +3043,34 @@ async def _run_sync_scrape_on_daemon_thread(
                 min_full_text_chars=min_full_text_chars,
                 hydrate_statute_text=hydrate_statute_text,
                 per_state_timeout_seconds=timeout_seconds,
+                checkpoint_generation_key=checkpoint_generation_key,
+                checkpoint_generation=checkpoint_generation,
+                bound_evidence_root=evidence_root_binding,
+                bound_strict_evidence=strict_evidence_binding,
+                bound_retained_replay_only=retained_replay_only_binding,
+                bound_state_run_environment=state_run_environment_binding,
             )
         except BaseException as exc:
-            try:
-                loop.call_soon_threadsafe(_publish_exception, exc)
-            except RuntimeError:
-                pass  # event loop already closed (e.g. outer timeout fired)
-            return
+            worker_exception = exc
         finally:
             if not global_bounded_env:
-                if prior_code_timeout is None:
-                    os.environ.pop("STATE_SCRAPER_CODE_TIMEOUT_SECONDS", None)
-                else:
-                    os.environ["STATE_SCRAPER_CODE_TIMEOUT_SECONDS"] = prior_code_timeout
-                if prior_fetch_timeout is None:
-                    os.environ.pop("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS", None)
-                else:
-                    os.environ["STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"] = prior_fetch_timeout
-                if prior_max_statutes is None:
-                    os.environ.pop("STATE_SCRAPER_MAX_STATUTES", None)
-                else:
-                    os.environ["STATE_SCRAPER_MAX_STATUTES"] = prior_max_statutes
-                if prior_direct_only is None:
-                    os.environ.pop("STATE_SCRAPER_BOUNDED_DIRECT_ONLY", None)
-                else:
-                    os.environ["STATE_SCRAPER_BOUNDED_DIRECT_ONLY"] = prior_direct_only
+                _release_bounded_env_lease(revoke=False)
+            restore_state_law_worker_environment(prior_state_run_environment)
+            restore_partial_checkpoint_run_directory(prior_checkpoint_binding)
+            worker_finished.set()
 
         try:
-            loop.call_soon_threadsafe(_publish_result, result)
+            if worker_exception is not None:
+                loop.call_soon_threadsafe(_publish_exception, worker_exception)
+                return
+            completed_result = dict(result or {})
+            completed_result["worker_quiescence"] = {
+                "attested": True,
+                "quiescent": True,
+                "worker_name": threading.current_thread().name,
+                "completion_mode": "worker_returned",
+            }
+            loop.call_soon_threadsafe(_publish_result, completed_result)
         except RuntimeError:
             pass  # event loop already closed (e.g. outer timeout fired)
 
@@ -1818,8 +3080,10 @@ async def _run_sync_scrape_on_daemon_thread(
         daemon=True,
     )
     worker.start()
+    try:
+        if timeout_seconds <= 0:
+            return await result_future
 
-    if timeout_seconds > 0:
         poll_seconds_raw = str(os.getenv("STATE_SCRAPER_TIMEOUT_POLL_SECONDS", "") or "").strip()
         try:
             if poll_seconds_raw:
@@ -1870,7 +3134,10 @@ async def _run_sync_scrape_on_daemon_thread(
             hard_timeout_seconds = float(timeout_seconds) + progress_grace_seconds
 
         start_ts = time.time()
-        checkpoint_activity = _read_partial_checkpoint_activity(state_code)
+        checkpoint_activity = _read_partial_checkpoint_activity(
+            state_code,
+            checkpoint_dir=checkpoint_dir_binding,
+        )
         last_signature = checkpoint_activity.get("signature", tuple())
         last_signature_mode = str(checkpoint_activity.get("signature_mode") or "")
         last_progress_ts = start_ts
@@ -1891,7 +3158,10 @@ async def _run_sync_scrape_on_daemon_thread(
             if result_future.done():
                 return result_future.result()
 
-            activity = _read_partial_checkpoint_activity(state_code)
+            activity = _read_partial_checkpoint_activity(
+                state_code,
+                checkpoint_dir=checkpoint_dir_binding,
+            )
             signature = activity.get("signature", tuple())
             signature_mode = str(activity.get("signature_mode") or "")
             signature_reliable = signature_mode == "full"
@@ -1940,30 +3210,36 @@ async def _run_sync_scrape_on_daemon_thread(
                             else "checkpoint_complete_settled"
                         ),
                         require_no_remaining_work=checkpoint_signal_complete,
+                        checkpoint_dir=checkpoint_dir_binding,
+                        strict_evidence=strict_evidence_binding,
                     )
+                    # A complete checkpoint is diagnostic while the producing
+                    # daemon is still live.  It cannot stand in for worker
+                    # lifecycle completion or authorize a retry/final seal.
                     if promoted is not None:
-                        diagnostics = dict(promoted.get("timeout_diagnostics") or {})
-                        diagnostics["checkpoint_complete_age_seconds"] = round(checkpoint_age_seconds, 3)
-                        diagnostics["checkpoint_signal_stability_age_seconds"] = round(
-                            signal_stability_age_seconds,
-                            3,
-                        )
-                        diagnostics["checkpoint_settle_age_seconds"] = round(settle_age_seconds, 3)
-                        promoted["timeout_diagnostics"] = diagnostics
-                        statute_data = dict(promoted.get("statute_data") or {})
-                        statute_data["timeout_diagnostics"] = diagnostics
-                        promoted["statute_data"] = statute_data
-                        return promoted
+                        last_progress_ts = max(last_progress_ts, now_ts)
 
             elapsed = now_ts - start_ts
             since_progress = now_ts - last_progress_ts
             if elapsed >= float(timeout_seconds) and since_progress >= progress_grace_seconds:
                 break
 
-        raise asyncio.TimeoutError(
-            f"state scrape timed out after {timeout_seconds} seconds"
+        # Revoke the worker's process-global environment lease before control
+        # returns.  Its eventual ``finally`` observes the revoked token and
+        # cannot overwrite settings from a later test or acquisition run.
+        _release_bounded_env_lease(revoke=True)
+        raise StateScraperNonQuiescentTimeout(
+            state_code,
+            str(getattr(worker, "name", f"state-scrape-{state_code.lower()}")),
+            timeout_seconds,
         )
-    return await result_future
+    finally:
+        # Backend-neutral cancellation/abandonment cleanup: any exit while the
+        # daemon remains live revokes its process-global environment lease.
+        # The late worker's own ``finally`` then observes that revocation and
+        # cannot overwrite values installed by a later supervisor.
+        if not worker_finished.is_set():
+            _release_bounded_env_lease(revoke=True)
 
 
 async def _scrape_state_with_retries(
@@ -1978,10 +3254,45 @@ async def _scrape_state_with_retries(
     retry_attempts: int,
     retry_zero_statute_states: bool,
     per_state_timeout_seconds: float,
+    bound_state_run_environment: Optional[
+        Mapping[str, Optional[str]]
+    ] = None,
 ) -> Dict[str, Any]:
     attempts = 1 + max(0, int(retry_attempts or 0))
     best: Optional[Dict[str, Any]] = None
     full_corpus_mode = bool(max_statutes is None and _env_full_corpus_enabled())
+    checkpoint_dir_binding = str(
+        os.environ.get("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or ""
+    ).strip()
+    if checkpoint_dir_binding:
+        checkpoint_dir_binding = str(
+            Path(checkpoint_dir_binding).expanduser().resolve()
+        )
+    evidence_root_binding = str(
+        os.environ.get(MULTIFETCH_EVIDENCE_ROOT_ENV) or ""
+    ).strip()
+    if evidence_root_binding:
+        evidence_root_binding = str(
+            Path(evidence_root_binding).expanduser().resolve()
+        )
+    strict_evidence_binding = str(
+        os.environ.get(STRICT_MULTIFETCH_EVIDENCE_ENV) or ""
+    ).strip().lower() in {"1", "true", "yes", "on"}
+    retained_replay_only_binding = str(
+        os.environ.get(RETAINED_REPLAY_ONLY_ENV) or ""
+    ).strip().lower() in {"1", "true", "yes", "on"}
+    state_run_environment_binding = (
+        {
+            str(name): (
+                str(value if value is not None else "")
+                if str(name) in _IMMUTABLE_STATE_RUN_SECRET_ENV_KEYS
+                else str(value or "").strip()
+            )
+            for name, value in bound_state_run_environment.items()
+        }
+        if bound_state_run_environment is not None
+        else _capture_state_law_run_environment()
+    )
 
     for attempt_idx in range(attempts):
         try:
@@ -1995,7 +3306,69 @@ async def _scrape_state_with_retries(
                 min_full_text_chars=min_full_text_chars,
                 hydrate_statute_text=hydrate_statute_text,
                 timeout_seconds=timeout_seconds,
+                bound_checkpoint_dir=checkpoint_dir_binding,
+                bound_strict_evidence=strict_evidence_binding,
+                bound_evidence_root=evidence_root_binding,
+                bound_retained_replay_only=retained_replay_only_binding,
+                bound_state_run_environment=state_run_environment_binding,
             )
+        except StateScraperNonQuiescentTimeout as exc:
+            state_name = US_STATES[state_code]
+            error_msg = (
+                f"Failed to scrape {state_name} using state-specific scraper: "
+                f"{exc}"
+            )
+            logger.error(error_msg)
+            checkpoint_result = _load_partial_checkpoint_state_result(
+                state_code,
+                error_msg,
+                checkpoint_dir=checkpoint_dir_binding,
+            )
+            result = dict(checkpoint_result or {})
+            result.update(
+                {
+                    "state_code": state_code,
+                    "state_name": state_name,
+                    "error": error_msg,
+                    "zero_statute": int(result.get("statutes_count") or 0) <= 0,
+                    "worker_quiescence": {
+                        "attested": True,
+                        "quiescent": False,
+                        "worker_name": exc.worker_name,
+                        "completion_mode": "supervisor_timeout_worker_still_live",
+                    },
+                }
+            )
+            diagnostics = dict(result.get("timeout_diagnostics") or {})
+            diagnostics.update(
+                {
+                    "timed_out": True,
+                    "classification": "timeout_nonquiescent_worker",
+                    "worker_quiescent": False,
+                    "retry_authorized": False,
+                    "publication_authorized": False,
+                }
+            )
+            result["timeout_diagnostics"] = diagnostics
+            statute_data = dict(result.get("statute_data") or {})
+            statute_data.update(
+                {
+                    "state_code": state_code,
+                    "state_name": state_name,
+                    "error": error_msg,
+                    "timeout_diagnostics": diagnostics,
+                }
+            )
+            statute_data.setdefault("statutes", [])
+            result["statute_data"] = statute_data
+            warnings = list(result.get("warnings") or [])
+            warnings.append(
+                f"{state_code} retry suppressed because timed-out worker is nonquiescent"
+            )
+            result["warnings"] = warnings
+            # A new attempt could overlap the still-running writer and can
+            # never repair this run's lifecycle proof.
+            return result
         except asyncio.TimeoutError:
             state_name = US_STATES[state_code]
             error_msg = (
@@ -2003,12 +3376,18 @@ async def _scrape_state_with_retries(
                 f"timed out after {per_state_timeout_seconds} seconds"
             )
             logger.error(error_msg)
-            checkpoint_result = _load_partial_checkpoint_state_result(state_code, error_msg)
+            checkpoint_result = _load_partial_checkpoint_state_result(
+                state_code,
+                error_msg,
+                checkpoint_dir=checkpoint_dir_binding,
+            )
             if checkpoint_result is not None:
                 result = _promote_timeout_checkpoint_result_if_no_remaining_work(
                     state_code,
                     checkpoint_result,
                     reason="checkpoint_timeout_no_remaining_work",
+                    checkpoint_dir=checkpoint_dir_binding,
+                    strict_evidence=strict_evidence_binding,
                 ) or checkpoint_result
             else:
                 timeout_diagnostics = {
@@ -2052,12 +3431,18 @@ async def _scrape_state_with_retries(
             state_name = US_STATES[state_code]
             error_msg = f"Failed to scrape {state_name} using state-specific scraper: {str(e)}"
             logger.error(error_msg)
-            checkpoint_result = _load_partial_checkpoint_state_result(state_code, error_msg)
+            checkpoint_result = _load_partial_checkpoint_state_result(
+                state_code,
+                error_msg,
+                checkpoint_dir=checkpoint_dir_binding,
+            )
             if checkpoint_result is not None:
                 result = _promote_timeout_checkpoint_result_if_no_remaining_work(
                     state_code,
                     checkpoint_result,
                     reason="checkpoint_error_no_remaining_work",
+                    checkpoint_dir=checkpoint_dir_binding,
+                    strict_evidence=strict_evidence_binding,
                 ) or checkpoint_result
             else:
                 timeout_diagnostics = {
@@ -2098,6 +3483,16 @@ async def _scrape_state_with_retries(
                     },
                 }
 
+        result = dict(result or {})
+        result.setdefault(
+            "worker_quiescence",
+            {
+                "attested": True,
+                "quiescent": True,
+                "worker_name": f"state-scrape-{state_code.lower()}",
+                "completion_mode": "worker_future_resolved",
+            },
+        )
         low_quality = bool(result.get("low_quality"))
         statutes_count = int(result.get("statutes_count") or 0)
         if full_corpus_mode and low_quality and statutes_count > 0 and not result.get("error"):
@@ -2459,7 +3854,13 @@ def _write_state_jsonld_files(scraped_statutes: List[Dict[str, Any]], jsonld_dir
                     )
                 if not isinstance(payload, dict):
                     continue
-                handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
+                payload = _jsonld_payload_with_row_provenance(
+                    payload,
+                    structured_data=structured_data,
+                )
+                handle.write(
+                    json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n"
+                )
                 lines_written += 1
 
         if lines_written > 0:
@@ -2477,6 +3878,72 @@ def _write_state_jsonld_files(scraped_statutes: List[Dict[str, Any]], jsonld_dir
                 written.append(str(out_path))
 
     return written
+
+
+_JSONLD_ROW_PROVENANCE_FIELDS = (
+    "body_sha256",
+    "content_digest",
+    "content_sha256",
+    "raw_sha256",
+    "source_record_id",
+    "source_checksum",
+    "transport_receipt",
+    "transport_receipts",
+    "web_archiving_transport_receipt",
+    "web_archiving_transport_receipts",
+)
+
+
+def _jsonld_payload_with_row_provenance(
+    payload: Mapping[str, Any],
+    *,
+    structured_data: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Retain exact row transport evidence in the canonical JSON-LD projection.
+
+    Scrapers keep byte-level acquisition evidence beside their JSON-LD while
+    they are running.  The release adapter consumes JSON-LD, so dropping that
+    evidence would sever an otherwise verified official-byte binding.  Copy
+    only the release-critical provenance fields into ``structuredData`` and
+    fail closed if the producer already declared a different value.  The
+    source payload and its nested mappings are never mutated.
+    """
+
+    result = dict(payload)
+    existing_nested = result.get("structuredData")
+    if existing_nested is None:
+        retained: Dict[str, Any] = {}
+    elif isinstance(existing_nested, Mapping):
+        retained = dict(existing_nested)
+    else:
+        raise ValueError("JSON-LD structuredData must be a mapping")
+
+    existing_provenance = [result]
+    for container_key in ("provenance", "structured_data", "structuredData"):
+        container = result.get(container_key)
+        if isinstance(container, Mapping):
+            existing_provenance.append(container)
+
+    for key in _JSONLD_ROW_PROVENANCE_FIELDS:
+        if key not in structured_data:
+            continue
+        value = structured_data[key]
+        if value is None or value == "":
+            continue
+        already_retained = False
+        for container in existing_provenance:
+            if key not in container:
+                continue
+            if container[key] != value:
+                raise ValueError(f"conflicting JSON-LD row provenance field: {key}")
+            already_retained = True
+        if already_retained:
+            continue
+        retained[key] = value
+
+    if retained:
+        result["structuredData"] = retained
+    return result
 
 
 def _build_fallback_jsonld_payload(*, state_code: str, state_name: str, statute: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -2514,14 +3981,31 @@ def _build_fallback_jsonld_payload(*, state_code: str, state_name: str, statute:
     return payload
 
 
-def _has_sufficient_full_text(statute: Any, *, min_full_text_chars: int) -> bool:
-    if _is_scaffold_or_navigation_record(statute):
-        return False
-
+def _has_sufficient_full_text(
+    statute: Any,
+    *,
+    min_full_text_chars: int,
+    source_bound_operative_checker: Optional[Callable[[Any], bool]] = None,
+) -> bool:
     fields = _extract_statute_quality_fields(statute)
     full_text = fields["full_text"]
 
     if len(full_text.strip()) < int(min_full_text_chars):
+        return False
+    if _QUALITY_SCAFFOLD_TEXT_RE.match(full_text):
+        return False
+
+    # State-owned strict parsers may prove that operative text which happens
+    # to contain generic navigation words (for example, "calendar" or
+    # "meetings") belongs to an exact closed source frontier.  Keep the
+    # explicit placeholder and length checks above authoritative, then allow
+    # that existing state-specific proof seam to outrank only the heuristic.
+    if callable(source_bound_operative_checker) and bool(
+        source_bound_operative_checker(statute)
+    ):
+        return True
+
+    if _is_scaffold_or_navigation_record(statute):
         return False
 
     structured_data = getattr(statute, "structured_data", None)
@@ -2544,11 +4028,20 @@ def _has_sufficient_full_text(statute: Any, *, min_full_text_chars: int) -> bool
     return True
 
 
-def _filter_strict_full_text_statutes(statutes: List[Any], *, min_full_text_chars: int) -> tuple[List[Any], int]:
+def _filter_strict_full_text_statutes(
+    statutes: List[Any],
+    *,
+    min_full_text_chars: int,
+    source_bound_operative_checker: Optional[Callable[[Any], bool]] = None,
+) -> tuple[List[Any], int]:
     kept: List[Any] = []
     removed = 0
     for statute in statutes:
-        if _has_sufficient_full_text(statute, min_full_text_chars=min_full_text_chars):
+        if _has_sufficient_full_text(
+            statute,
+            min_full_text_chars=min_full_text_chars,
+            source_bound_operative_checker=source_bound_operative_checker,
+        ):
             kept.append(statute)
         else:
             removed += 1
@@ -2589,6 +4082,7 @@ def _identify_legal_area(text: str, legal_areas: Optional[List[str]] = None) -> 
 
 
 __all__ = [
+    "DEFAULT_MIN_FULL_TEXT_CHARS",
     "build_state_law_section_url",
     "list_state_jurisdictions",
     "scrape_state_laws",

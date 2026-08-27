@@ -1,7 +1,9 @@
 """Georgia OCGA archive-recovery harvest of official legis.ga.gov locators.
 
-Georgia has no free official bulk dump (commercial exclusive). Vaquill withdrew
-GA because navigation/footer leaked into section bodies. This module:
+Georgia does not currently expose a free official bulk body dump. Its public
+TOC is state-delegated to a commercial maintainer, while enacted statutory text
+remains public law. Vaquill withdrew GA because navigation/footer leaked into
+section bodies. This module:
 
 * keeps official ``legis.ga.gov`` locators as the citation source
 * fetches those locators through web_archiving transports (Wayback ``id_``,
@@ -67,6 +69,20 @@ _SECTION_RE = re.compile(
 )
 _RESERVED = re.compile(r"\b(repealed|reserved|expired|renumbered)\b", re.IGNORECASE)
 _WS = re.compile(r"\s+")
+_EDITORIAL_HEADING_RE = re.compile(
+    r"(?im)^\s*(?:"
+    r"annotations?|"
+    r"case\s+notes?|"
+    r"code\s+commission\s+notes?|"
+    r"cross\s+references?|"
+    r"editor(?:'|’)?s\s+notes?|"
+    r"history|"
+    r"judicial\s+decisions?|"
+    r"law\s+reviews?|"
+    r"notes?\s+to\s+decisions?|"
+    r"research\s+references?"
+    r")\s*[:.]?\s*$"
+)
 
 
 def official_title_url(title_number: str) -> str:
@@ -164,6 +180,21 @@ def _clean(text: str) -> str:
     return _WS.sub(" ", (text or "").replace("\xa0", " ")).strip()
 
 
+def strip_georgia_editorial_tail(text: str) -> str:
+    """Keep enacted text and remove a publisher/editorial notes tail.
+
+    OCGA is an annotated code.  Public statutory text may be retained, but
+    publisher headnotes, case notes, research references, and other editorial
+    additions are outside this corpus.  Matching is deliberately restricted to
+    standalone headings so a statute that merely uses one of these phrases is
+    not truncated.
+    """
+
+    value = str(text or "")
+    match = _EDITORIAL_HEADING_RE.search(value)
+    return value[: match.start()] if match is not None else value
+
+
 def strip_georgia_chrome(html: str) -> str:
     """Drop nav/header/footer and short chrome nodes (Vaquill contamination)."""
 
@@ -211,7 +242,7 @@ def parse_georgia_archive_html(
             continue
         start = match.end()
         end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
-        body = _clean(text[start:end])
+        body = _clean(strip_georgia_editorial_tail(text[start:end]))
         lowered = body.lower()
         if any(marker in lowered for marker in NAV_MARKERS):
             continue
@@ -229,7 +260,7 @@ def parse_georgia_archive_html(
                 chapter_number=parts[1] if len(parts) > 1 else None,
                 section_number=number,
                 section_name=heading[:200],
-                full_text=body[:14000],
+                full_text=body,
                 source_url=official,
                 official_cite=f"Ga. Code Ann. § {number}",
                 metadata=StatuteMetadata(),

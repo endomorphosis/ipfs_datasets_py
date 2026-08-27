@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
@@ -26,6 +26,11 @@ _URL_RE = re.compile(
     re.IGNORECASE,
 )
 _RESERVED = re.compile(r"\b(repealed|reserved|expired|renumbered)\b", re.IGNORECASE)
+_EXACT_TERMINAL = re.compile(
+    r"^[\[(]?\s*(repealed|reserved|expired|renumbered|transferred|"
+    r"omitted|deleted|recodified)\b",
+    re.IGNORECASE,
+)
 _WS = re.compile(r"\s+")
 
 
@@ -111,7 +116,7 @@ def parse_mississippi_section_html(
                 chapter_number=parts[1] if len(parts) > 1 else None,
                 section_number=number,
                 section_name=heading[:200],
-                full_text=body[:14000],
+                full_text=body,
                 source_url=official,
                 official_cite=f"Miss. Code Ann. § {number}",
                 metadata=StatuteMetadata(),
@@ -142,7 +147,7 @@ def parse_mississippi_section_html(
             chapter_number=parts[1] if len(parts) > 1 else None,
             section_number=number,
             section_name=f"Section {number}",
-            full_text=body[:14000],
+            full_text=body,
             source_url=source_url or f"{BILLSTATUS}/{parts[0].zfill(3)}/",
             official_cite=f"Miss. Code Ann. § {number}",
             metadata=StatuteMetadata(),
@@ -154,6 +159,142 @@ def parse_mississippi_section_html(
             },
         )
     ]
+
+
+def parse_mississippi_section_html_strict(
+    html: str,
+    *,
+    source_url: str,
+    code_name: str = "Mississippi Code",
+) -> Tuple[List[NormalizedStatute], Dict[str, Any]]:
+    """Classify one exact official code-section leaf without silent drops."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError as exc:  # pragma: no cover - production dependency
+        raise RuntimeError(
+            "BeautifulSoup is required for strict Mississippi parsing"
+        ) from exc
+
+    expected_number = section_number_from_url(source_url)
+    residuals: List[Dict[str, Any]] = []
+    terminals: List[Dict[str, Any]] = []
+    statutes: List[NormalizedStatute] = []
+    if not expected_number:
+        residuals.append(
+            {
+                "reason": "unrecognized_official_section_url_identity",
+                "source_url": source_url,
+            }
+        )
+    else:
+        soup = BeautifulSoup(html or "", "html.parser")
+        for tag in soup(
+            ["script", "style", "nav", "header", "footer", "noscript", "form"]
+        ):
+            tag.decompose()
+        text = soup.get_text("\n", strip=True)
+        matches = list(_HEAD_RE.finditer(text))
+        foreign_numbers = sorted(
+            {
+                str(match.group("section") or "")
+                for match in matches
+                if str(match.group("section") or "") != expected_number
+            }
+        )
+        matching = [
+            match
+            for match in matches
+            if str(match.group("section") or "") == expected_number
+        ]
+        if foreign_numbers or len(matching) > 1:
+            residuals.append(
+                {
+                    "expected_section_number": expected_number,
+                    "foreign_section_numbers": foreign_numbers,
+                    "matching_heading_count": len(matching),
+                    "reason": "section_leaf_identity_conflict",
+                }
+            )
+        else:
+            if matching:
+                match = matching[0]
+                heading = _clean(match.group("title"))
+                body = _clean(text[match.end() :])
+            else:
+                heading = f"Section {expected_number}"
+                body = _clean(text)
+                if expected_number not in body[:1200]:
+                    residuals.append(
+                        {
+                            "expected_section_number": expected_number,
+                            "reason": "section_body_omitted_requested_identity",
+                        }
+                    )
+            if not residuals:
+                disposition_match = _EXACT_TERMINAL.match(
+                    _clean(heading).strip(" .")
+                ) or _EXACT_TERMINAL.match(_clean(body[:240]).strip(" ."))
+                if disposition_match is not None:
+                    terminals.append(
+                        {
+                            "disposition": str(
+                                disposition_match.group(1) or ""
+                            ).lower(),
+                            "section_number": expected_number,
+                        }
+                    )
+                elif not body:
+                    residuals.append(
+                        {
+                            "expected_section_number": expected_number,
+                            "reason": "empty_unclassified_section_body",
+                        }
+                    )
+                else:
+                    parts = expected_number.split("-")
+                    statutes.append(
+                        NormalizedStatute(
+                            state_code="MS",
+                            state_name="Mississippi",
+                            statute_id=f"{code_name} § {expected_number}",
+                            code_name=code_name,
+                            title_number=parts[0],
+                            chapter_number=parts[1] if len(parts) > 1 else None,
+                            section_number=expected_number,
+                            section_name=heading[:200],
+                            full_text=body,
+                            source_url=source_url,
+                            official_cite=f"Miss. Code Ann. § {expected_number}",
+                            metadata=StatuteMetadata(),
+                            structured_data={
+                                "canonical_section_key": (
+                                    f"ms:{expected_number.casefold()}"
+                                ),
+                                "discovery_method": (
+                                    "strict_official_billstatus_section_leaf"
+                                ),
+                                "skip_hydrate": True,
+                                "source_authority_class": "official",
+                                "source_kind": (
+                                    "official_mississippi_code_section_html"
+                                ),
+                                "strict_source_closure": True,
+                            },
+                        )
+                    )
+
+    report: Dict[str, Any] = {
+        "candidate_leaves": 1,
+        "closed": 1 == len(statutes) + len(terminals) + len(residuals)
+        and not residuals,
+        "operative_sections": len(statutes),
+        "parser_residuals": residuals,
+        "section_number": expected_number,
+        "terminal_dispositions": terminals,
+        "terminal_sections": len(terminals),
+    }
+    return statutes, report
 
 
 def configured_section_html_path() -> Optional[Path]:

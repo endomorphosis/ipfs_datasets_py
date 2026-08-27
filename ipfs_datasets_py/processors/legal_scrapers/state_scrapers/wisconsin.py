@@ -4,13 +4,24 @@ Official path: chapter/section HTML hierarchy on https://docs.legis.wisconsin.go
 (statutes index → chapter → section). Playwright/generic remain fallbacks only.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+import hashlib
 import json
 import re
 import ssl
 import urllib.request
-from urllib.parse import urljoin
-from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+from urllib.parse import urljoin, urlparse
+
+from .base_scraper import (
+    BaseStateScraper,
+    NormalizedStatute,
+    StateLawPageMultiFetchResult,
+    StatuteMetadata,
+    _sanitized_multifetch_headers,
+    _sanitized_multifetch_request,
+)
 from .registry import StateScraperRegistry
 
 
@@ -25,6 +36,7 @@ class WisconsinScraper(BaseStateScraper):
     OFFICIAL_DOMAIN = "docs.legis.wisconsin.gov"
     OFFICIAL_ENTRY_PATH = "/statutes/statutes"
     OFFICIAL_ENTRY_URL = "https://docs.legis.wisconsin.gov/statutes/statutes"
+    STRICT_MINIMUM_CHAPTERS = 450
     OFFICIAL_CHAPTERS = (
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
         21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 38, 39,
@@ -60,6 +72,764 @@ class WisconsinScraper(BaseStateScraper):
         948, 949, 950, 951, 961, 967, 968, 969, 970, 971, 972, 973, 974, 975,
         976, 977, 978, 979, 980, 985, 990, 991, 992, 995,
     )
+
+    def state_law_frontier_source_dependencies(self) -> Sequence[Any]:
+        """Bind parsing, closure, and exact plural acquisition code."""
+
+        from ...web_archiving import wayback_machine_engine
+        from . import (
+            base_scraper,
+            state_archival_fetch,
+            strict_frontier_closure,
+            wisconsin_chapter,
+        )
+
+        return (
+            base_scraper,
+            state_archival_fetch,
+            strict_frontier_closure,
+            wisconsin_chapter,
+            wayback_machine_engine,
+        )
+
+    @staticmethod
+    def _wisconsin_frontier_headers() -> Dict[str, str]:
+        return {
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.7",
+            "User-Agent": "ipfs-datasets-wisconsin-laws/2.0",
+        }
+
+    def _wisconsin_frontier_concurrency(self) -> int:
+        return max(
+            1,
+            min(
+                32,
+                self._env_int("STATE_SCRAPER_WI_FRONTIER_CONCURRENCY", default=12),
+            ),
+        )
+
+    @staticmethod
+    def _is_valid_wisconsin_index(payload: bytes) -> bool:
+        sample = bytes(payload or b"").lower()
+        return bool(
+            len(sample) > 1_000
+            and b"wisconsin" in sample
+            and b"/document/statutes/" in sample
+            and b"</html>" in sample[-4_000:]
+        )
+
+    @staticmethod
+    def _is_valid_wisconsin_viewer(payload: bytes) -> bool:
+        sample = bytes(payload or b"").lower()
+        return bool(
+            len(sample) > 1_000
+            and b"wisconsin legislature" in sample
+            and (b'id="document"' in sample or b"id='document'" in sample)
+            and b"</html>" in sample[-4_000:]
+        )
+
+    def _validate_wisconsin_aligned_evidence(
+        self,
+        *,
+        url: str,
+        payload: bytes,
+        transport_receipt: Any,
+        parser_input_envelope: Any,
+        frontier_name: str,
+    ) -> None:
+        canonical_url = self._canonical_fetch_url(url)
+        digest = hashlib.sha256(payload).hexdigest()
+        ledger_attached = getattr(self, "_state_law_acquisition_ledger", None) is not None
+        if ledger_attached and (
+            not isinstance(transport_receipt, Mapping)
+            or not transport_receipt
+            or parser_input_envelope is None
+        ):
+            raise RuntimeError(
+                f"Wisconsin {frontier_name} frontier lacks retained evidence: {url}"
+            )
+        if isinstance(transport_receipt, Mapping):
+            observed_url = str(
+                transport_receipt.get("official_url")
+                or transport_receipt.get("endpoint")
+                or ""
+            ).strip()
+            observed_digest = str(
+                transport_receipt.get("content_sha256") or ""
+            ).strip().lower()
+            if ledger_attached and (not observed_url or not observed_digest):
+                raise RuntimeError(
+                    f"Wisconsin {frontier_name} receipt lacks URL/digest: {url}"
+                )
+            if observed_url and self._canonical_fetch_url(observed_url) != canonical_url:
+                raise RuntimeError(
+                    f"Wisconsin {frontier_name} receipt changed URL identity: {url}"
+                )
+            if observed_digest and observed_digest != digest:
+                raise RuntimeError(
+                    f"Wisconsin {frontier_name} receipt changed content identity: {url}"
+                )
+        if parser_input_envelope is not None:
+            body = getattr(parser_input_envelope, "body", None)
+            if ledger_attached and body is None:
+                raise RuntimeError(
+                    f"Wisconsin {frontier_name} envelope lacks retained body: {url}"
+                )
+            if body is not None and bytes(body) != payload:
+                raise RuntimeError(
+                    f"Wisconsin {frontier_name} envelope changed content: {url}"
+                )
+
+    async def _fetch_wisconsin_frontier_batch(
+        self,
+        urls: Sequence[str],
+        *,
+        frontier_name: str,
+        content_validator: Callable[[bytes], bool],
+        prefer_direct: bool,
+    ) -> StateLawPageMultiFetchResult:
+        """Fetch an exact HTML wave through grouped WARC/residual-only transport."""
+
+        requested = [self._canonical_fetch_url(url) for url in urls]
+        if not requested:
+            return StateLawPageMultiFetchResult([], [], [], [], [], {})
+        if (
+            any(not url for url in requested)
+            or any(
+                (urlparse(url).hostname or "").casefold()
+                != self.OFFICIAL_DOMAIN.casefold()
+                for url in requested
+            )
+            or len(set(requested)) != len(requested)
+        ):
+            raise RuntimeError(
+                f"Wisconsin {frontier_name} frontier has invalid, off-domain, "
+                "or duplicate URLs"
+            )
+        retry_attempts = max(
+            0,
+            min(
+                3,
+                self._env_int(
+                    "STATE_SCRAPER_WI_FRONTIER_RESIDUAL_RETRY_ATTEMPTS",
+                    default=self._env_int(
+                        "STATE_SCRAPER_FRONTIER_RESIDUAL_RETRY_ATTEMPTS",
+                        default=1,
+                    ),
+                ),
+            ),
+        )
+        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+            requested,
+            residual_retry_attempts=retry_attempts,
+            repeat_grouped_archive_inventory_on_residual=False,
+            timeout_seconds=10 if prefer_direct else 35,
+            headers=self._wisconsin_frontier_headers(),
+            content_validator=content_validator,
+            media_type="text/html",
+            max_concurrency=self._wisconsin_frontier_concurrency(),
+            prefer_direct=prefer_direct,
+            common_crawl_domain_terms=(self.OFFICIAL_DOMAIN,),
+            common_crawl_url_terms=("/statutes/statutes", "/document/statutes/"),
+            common_crawl_mime_terms=("html",),
+            wayback_prefix_inventory=True,
+        )
+        aligned = {
+            len(batch.urls),
+            len(batch.payloads),
+            len(batch.errors),
+            len(batch.transport_receipts),
+            len(batch.parser_input_envelopes),
+        }
+        if aligned != {len(requested)} or list(batch.urls) != requested:
+            raise RuntimeError(
+                f"Wisconsin {frontier_name} frontier changed exact URL alignment"
+            )
+        failures: List[Dict[str, str]] = []
+        for url, payload, error, receipt, envelope in zip(
+            batch.urls,
+            batch.payloads,
+            batch.errors,
+            batch.transport_receipts,
+            batch.parser_input_envelopes,
+            strict=True,
+        ):
+            raw = bytes(payload or b"")
+            if error is not None or not raw or not content_validator(raw):
+                failures.append(
+                    {"url": url, "error": str(error or "invalid parser input")}
+                )
+                continue
+            self._validate_wisconsin_aligned_evidence(
+                url=url,
+                payload=raw,
+                transport_receipt=receipt,
+                parser_input_envelope=envelope,
+                frontier_name=frontier_name,
+            )
+        if failures:
+            raise RuntimeError(
+                f"Wisconsin {frontier_name} frontier is incomplete after "
+                f"residual-only retries; unresolved exact URLs: {failures[:10]}"
+            )
+        stats = list(getattr(self, "_wisconsin_frontier_batch_stats", []))
+        stats.append(
+            {
+                "frontier_name": frontier_name,
+                "requested_pages": len(requested),
+                **dict(batch.stats or {}),
+            }
+        )
+        self._wisconsin_frontier_batch_stats = stats
+        batch.payloads = [bytes(payload) for payload in batch.payloads]
+        return batch
+
+    def _replay_wisconsin_retained_input(
+        self,
+        url: str,
+        *,
+        content_validator: Callable[[bytes], bool],
+        frontier_name: str,
+    ) -> bytes:
+        """Replay an exact retained page without falling through to network."""
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError("Wisconsin retained replay requires an attached ledger")
+        canonical_url = self._canonical_fetch_url(url)
+        sanitized_headers = _sanitized_multifetch_headers(
+            self._wisconsin_frontier_headers()
+        )
+        retained = ledger.replay_retained_parser_input(
+            official_url=canonical_url,
+            sanitized_request=_sanitized_multifetch_request(
+                canonical_url,
+                sanitized_headers=sanitized_headers,
+            ),
+        )
+        if retained is None:
+            raise RuntimeError(
+                f"Wisconsin retained replay is missing exact input: {canonical_url}"
+            )
+        envelope = getattr(retained, "envelope", None)
+        raw = bytes(getattr(envelope, "body", None) or b"")
+        if not raw or not content_validator(raw):
+            raise RuntimeError(
+                f"Wisconsin retained replay input is invalid: {canonical_url}"
+            )
+        self._validate_wisconsin_aligned_evidence(
+            url=canonical_url,
+            payload=raw,
+            transport_receipt=getattr(retained, "transport_receipt", None),
+            parser_input_envelope=envelope,
+            frontier_name=frontier_name,
+        )
+        return raw
+
+    async def _wisconsin_frontier_payloads(
+        self,
+        urls: Sequence[str],
+        *,
+        frontier_name: str,
+        content_validator: Callable[[bytes], bool],
+        network: bool,
+        prefer_direct: bool,
+    ) -> Tuple[List[str], List[bytes], List[Mapping[str, Any]]]:
+        canonical = [self._canonical_fetch_url(url) for url in urls]
+        if network:
+            batch = await self._fetch_wisconsin_frontier_batch(
+                canonical,
+                frontier_name=frontier_name,
+                content_validator=content_validator,
+                prefer_direct=prefer_direct,
+            )
+            return (
+                list(batch.urls),
+                [bytes(item) for item in batch.payloads],
+                [dict(item or {}) for item in batch.transport_receipts],
+            )
+        payloads = [
+            self._replay_wisconsin_retained_input(
+                url,
+                content_validator=content_validator,
+                frontier_name=frontier_name,
+            )
+            for url in canonical
+        ]
+        return canonical, payloads, [{} for _ in canonical]
+
+    @staticmethod
+    def _wisconsin_values_sha256(values: Sequence[Any]) -> str:
+        return hashlib.sha256(
+            json.dumps(list(values), sort_keys=True, separators=(",", ":")).encode(
+                "utf-8"
+            )
+        ).hexdigest()
+
+    def _wisconsin_exact_frontier(
+        self,
+        *,
+        catalog_content_sha256: str,
+        chapter_reports: Sequence[Mapping[str, Any]],
+        section_reports: Sequence[Mapping[str, Any]],
+        chapter_terminals: Sequence[Mapping[str, Any]],
+        terminal_dispositions: Mapping[str, int],
+    ) -> Dict[str, Any]:
+        from ...legal_data.open_us_law_live_evidence import compute_frontier_digest
+
+        operative = sum(int(row.get("operative_sections") or 0) for row in section_reports)
+        section_terminals = sum(
+            int(row.get("terminal_sections") or 0) for row in section_reports
+        )
+        excluded = section_terminals + len(chapter_terminals)
+        discovered = len(section_reports) + len(chapter_terminals)
+        disposition = {
+            "discovered": discovered,
+            "fetched": operative,
+            "excluded": excluded,
+            "quarantined": 0,
+            "failed_final": 0,
+            "duplicates": 0,
+        }
+        if discovered != operative + excluded:
+            raise RuntimeError("Wisconsin exact source disposition did not close")
+        chapter_page_rows = [
+            {
+                "chapter_number": str(report.get("chapter_number") or ""),
+                "source_url": str(page_row.get("source_url") or ""),
+                "content_sha256": str(page_row.get("content_sha256") or ""),
+            }
+            for report in chapter_reports
+            for page_row in list(report.get("pages") or [])
+        ]
+        section_page_rows = [
+            {
+                "section_number": str(report.get("section_number") or ""),
+                "source_url": str(page_row.get("source_url") or ""),
+                "content_sha256": str(page_row.get("content_sha256") or ""),
+            }
+            for report in section_reports
+            for page_row in list(report.get("pages") or [])
+        ]
+        section_urls = [str(report.get("source_url") or "") for report in section_reports]
+        frontier: Dict[str, Any] = {
+            "algebra_closed": True,
+            "bundle_closed": False,
+            "catalog_chapter_count": len(chapter_reports),
+            "catalog_content_sha256": str(catalog_content_sha256),
+            "chapter_terminal_count": len(chapter_terminals),
+            "chapter_viewer_page_count": len(
+                {row["source_url"] for row in chapter_page_rows}
+            ),
+            "chapter_viewer_pages_sha256": self._wisconsin_values_sha256(
+                chapter_page_rows
+            ),
+            "closed": True,
+            "disposition": disposition,
+            "enumerator_closed": True,
+            "expected_index_units": discovered,
+            "pagination_closed": True,
+            "schema_version": "wisconsin-source-derived-viewer-frontier-v1",
+            "scope_closed": True,
+            "section_locator_count": len(section_reports),
+            "section_locators_sha256": self._wisconsin_values_sha256(section_urls),
+            "section_viewer_page_count": len(
+                {row["source_url"] for row in section_page_rows}
+            ),
+            "section_viewer_pages_sha256": self._wisconsin_values_sha256(
+                section_page_rows
+            ),
+            "terminal_dispositions": {
+                str(key): int(value)
+                for key, value in sorted(terminal_dispositions.items())
+            },
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": discovered,
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return frontier
+
+    async def _scrape_wisconsin_strict_frontier(
+        self,
+        code_name: str,
+        *,
+        network: bool,
+        record_primary: bool,
+    ) -> List[NormalizedStatute]:
+        """Close the source-derived chapter/section viewer graph exactly."""
+
+        from .wisconsin_chapter import (
+            close_wisconsin_section_windows,
+            parse_wisconsin_chapter_frontier_window,
+            parse_wisconsin_section_window,
+            toc_chapter_links,
+        )
+
+        if network:
+            self._wisconsin_frontier_batch_stats = []
+        root_urls, root_payloads, root_receipts = await self._wisconsin_frontier_payloads(
+            [self.OFFICIAL_ENTRY_URL],
+            frontier_name="statutes-index",
+            content_validator=self._is_valid_wisconsin_index,
+            network=network,
+            prefer_direct=True,
+        )
+        del root_urls
+        root_payload = root_payloads[0]
+        root_transport = str(
+            (root_receipts[0] if root_receipts else {}).get("source_transport")
+            or (root_receipts[0] if root_receipts else {}).get("transport_kind")
+            or ""
+        ).casefold()
+        follow_live_direct = bool(network and root_transport.startswith("direct"))
+        catalog_rows = toc_chapter_links(
+            root_payload.decode("utf-8", errors="replace"),
+            base_url=self.get_base_url(),
+        )
+        chapter_numbers = [str(row[0]).strip() for row in catalog_rows]
+        if (
+            len(catalog_rows) < int(self.STRICT_MINIMUM_CHAPTERS)
+            or len(chapter_numbers) != len(set(chapter_numbers))
+            or any(not re.fullmatch(r"\d+", number) for number in chapter_numbers)
+            or chapter_numbers != sorted(chapter_numbers, key=int)
+        ):
+            raise RuntimeError(
+                "Wisconsin official index did not expose a closed ordered numeric "
+                f"chapter frontier: observed={len(catalog_rows)} "
+                f"minimum={self.STRICT_MINIMUM_CHAPTERS}"
+            )
+
+        chapter_states: Dict[str, Dict[str, Any]] = {
+            number: {
+                "chapter_number": number,
+                "name": str(name),
+                "sections": [],
+                "section_set": set(),
+                "pages": [],
+                "visited": set(),
+                "terminal": None,
+                "closed": False,
+            }
+            for number, name, _url in catalog_rows
+        }
+        pending: List[Tuple[str, str]] = [
+            (self._canonical_fetch_url(url), str(number))
+            for number, _name, url in catalog_rows
+        ]
+        chapter_wave = 0
+        while pending:
+            chapter_wave += 1
+            if chapter_wave > 128:
+                raise RuntimeError("Wisconsin chapter TOC continuation frontier did not terminate")
+            urls = [url for url, _chapter in pending]
+            if len(urls) != len(set(urls)):
+                raise RuntimeError("Wisconsin chapter continuation wave repeated a URL")
+            fetched_urls, payloads, _receipts = await self._wisconsin_frontier_payloads(
+                urls,
+                frontier_name=f"chapter-toc-wave-{chapter_wave}",
+                content_validator=self._is_valid_wisconsin_viewer,
+                network=network,
+                prefer_direct=follow_live_direct,
+            )
+            next_pending: List[Tuple[str, str]] = []
+            for (_requested_url, chapter), source_url, payload in zip(
+                pending, fetched_urls, payloads, strict=True
+            ):
+                state = chapter_states[chapter]
+                if source_url in state["visited"]:
+                    raise RuntimeError(
+                        f"Wisconsin chapter TOC continuation cycled: {source_url}"
+                    )
+                state["visited"].add(source_url)
+                window = parse_wisconsin_chapter_frontier_window(
+                    payload.decode("utf-8", errors="replace"),
+                    chapter=chapter,
+                    page_url=source_url,
+                )
+                if window.residuals:
+                    raise RuntimeError(
+                        "Wisconsin chapter TOC parser left residuals: "
+                        f"chapter={chapter} residuals={list(window.residuals)[:5]}"
+                    )
+                for section, label, section_source_url in window.section_rows:
+                    if section in state["section_set"]:
+                        raise RuntimeError(
+                            "Wisconsin chapter TOC repeated section identity: "
+                            f"chapter={chapter} section={section}"
+                        )
+                    state["section_set"].add(section)
+                    state["sections"].append(
+                        {
+                            "chapter_number": chapter,
+                            "section_number": section,
+                            "source_label": label,
+                            "source_url": self._canonical_fetch_url(section_source_url),
+                        }
+                    )
+                state["pages"].append(
+                    {
+                        "source_url": source_url,
+                        "content_sha256": hashlib.sha256(payload).hexdigest(),
+                        "section_rows": len(window.section_rows),
+                        "body_started": bool(window.body_started),
+                        "next_url": str(window.next_url or ""),
+                    }
+                )
+                if window.body_started:
+                    if not state["sections"]:
+                        raise RuntimeError(
+                            f"Wisconsin chapter body began without a source TOC: {chapter}"
+                        )
+                    state["closed"] = True
+                    continue
+                if window.terminal_disposition:
+                    if state["sections"]:
+                        raise RuntimeError(
+                            f"Wisconsin chapter mixed terminal and section frontier: {chapter}"
+                        )
+                    state["terminal"] = {
+                        "chapter_number": chapter,
+                        "disposition": window.terminal_disposition,
+                        "source_url": source_url,
+                    }
+                    state["closed"] = True
+                    continue
+                if not window.next_url:
+                    raise RuntimeError(
+                        "Wisconsin chapter TOC ended without body or a source-bound "
+                        f"terminal disposition: chapter={chapter} url={source_url}"
+                    )
+                next_url = self._canonical_fetch_url(window.next_url)
+                if next_url in state["visited"]:
+                    raise RuntimeError(
+                        f"Wisconsin chapter TOC next link cycled: {next_url}"
+                    )
+                next_pending.append((next_url, chapter))
+            pending = next_pending
+
+        if any(not state["closed"] for state in chapter_states.values()):
+            raise RuntimeError("Wisconsin chapter TOC frontier did not close every chapter")
+        chapter_reports: List[Dict[str, Any]] = []
+        chapter_terminals: List[Mapping[str, Any]] = []
+        section_units: List[Dict[str, str]] = []
+        seen_sections: set[str] = set()
+        for chapter in chapter_numbers:
+            state = chapter_states[chapter]
+            if state["terminal"] is not None:
+                chapter_terminals.append(dict(state["terminal"]))
+            for unit in state["sections"]:
+                section = str(unit["section_number"])
+                if section in seen_sections:
+                    raise RuntimeError(
+                        f"Wisconsin source frontier repeated section: {section}"
+                    )
+                seen_sections.add(section)
+                section_units.append(dict(unit))
+            chapter_reports.append(
+                {
+                    "chapter_number": chapter,
+                    "name": str(state["name"]),
+                    "source_url": str(catalog_rows[chapter_numbers.index(chapter)][2]),
+                    "source_sections": len(state["sections"]),
+                    "terminal_chapter": bool(state["terminal"]),
+                    "pages": list(state["pages"]),
+                    "closed": True,
+                }
+            )
+        if not section_units:
+            raise RuntimeError("Wisconsin source-derived chapter frontier has no sections")
+
+        section_states: Dict[str, Dict[str, Any]] = {
+            unit["section_number"]: {
+                "unit": unit,
+                "windows": [],
+                "pages": [],
+                "visited": set(),
+                "closed": False,
+            }
+            for unit in section_units
+        }
+        pending_by_url: Dict[str, List[str]] = {}
+        for unit in section_units:
+            pending_by_url.setdefault(unit["source_url"], []).append(
+                unit["section_number"]
+            )
+        section_wave = 0
+        while pending_by_url:
+            section_wave += 1
+            if section_wave > 256:
+                raise RuntimeError("Wisconsin section viewer continuation frontier did not terminate")
+            urls = list(pending_by_url)
+            fetched_urls, payloads, receipts = await self._wisconsin_frontier_payloads(
+                urls,
+                frontier_name=f"section-body-wave-{section_wave}",
+                content_validator=self._is_valid_wisconsin_viewer,
+                network=network,
+                prefer_direct=follow_live_direct,
+            )
+            next_by_url: Dict[str, List[str]] = {}
+            for source_url, payload, receipt in zip(
+                fetched_urls, payloads, receipts, strict=True
+            ):
+                targets = pending_by_url[source_url]
+                for target in targets:
+                    state = section_states[target]
+                    if source_url in state["visited"]:
+                        raise RuntimeError(
+                            f"Wisconsin section continuation cycled: {target} {source_url}"
+                        )
+                    state["visited"].add(source_url)
+                    initial = not state["windows"]
+                    window = parse_wisconsin_section_window(
+                        payload.decode("utf-8", errors="replace"),
+                        section_number=target,
+                        page_url=source_url,
+                    )
+                    if window.residuals:
+                        raise RuntimeError(
+                            "Wisconsin section parser left window residuals: "
+                            f"section={target} residuals={list(window.residuals)[:5]}"
+                        )
+                    if initial and not window.target_seen:
+                        raise RuntimeError(
+                            "Wisconsin requested section page did not render its exact "
+                            f"target: section={target} url={source_url}"
+                        )
+                    state["windows"].append(window)
+                    state["pages"].append(
+                        {
+                            "source_url": source_url,
+                            "content_sha256": hashlib.sha256(payload).hexdigest(),
+                            "target_seen": bool(window.target_seen),
+                            "target_complete": bool(window.target_complete),
+                        }
+                    )
+                    if window.target_complete:
+                        state["closed"] = True
+                        continue
+                    if not window.target_seen and (
+                        window.encountered_sections or not window.next_url
+                    ):
+                        state["closed"] = True
+                        continue
+                    if not window.next_url:
+                        raise RuntimeError(
+                            "Wisconsin section traversal ended without exact closure: "
+                            f"section={target} url={source_url}"
+                        )
+                    next_url = self._canonical_fetch_url(window.next_url)
+                    if next_url in state["visited"]:
+                        raise RuntimeError(
+                            f"Wisconsin section next link cycled: {target} {next_url}"
+                        )
+                    next_by_url.setdefault(next_url, []).append(target)
+                    if network and receipt:
+                        state["transport_receipt"] = dict(receipt)
+            pending_by_url = next_by_url
+
+        statutes: List[NormalizedStatute] = []
+        section_reports: List[Dict[str, Any]] = []
+        terminal_counts: Dict[str, int] = {}
+        seen_statute_ids: set[str] = set()
+        for unit in section_units:
+            target = unit["section_number"]
+            state = section_states[target]
+            parsed = close_wisconsin_section_windows(
+                state["windows"],
+                section_number=target,
+                code_name=code_name,
+                source_url=unit["source_url"],
+                traversal_closed=bool(state["closed"]),
+            )
+            if not parsed.closed or parsed.residuals:
+                raise RuntimeError(
+                    "Wisconsin exact section parser did not close: "
+                    f"section={target} residuals={list(parsed.residuals)[:5]}"
+                )
+            terminal_count = 1 if parsed.terminal_section is not None else 0
+            operative_count = 1 if parsed.statute is not None else 0
+            if operative_count + terminal_count != 1:
+                raise RuntimeError(
+                    f"Wisconsin section disposition is not exact: {target}"
+                )
+            if parsed.terminal_section is not None:
+                disposition = str(parsed.terminal_section.get("disposition") or "")
+                terminal_counts[disposition] = terminal_counts.get(disposition, 0) + 1
+            else:
+                statute = parsed.statute
+                assert statute is not None
+                identity = str(statute.statute_id or "").strip().casefold()
+                if not identity or identity in seen_statute_ids:
+                    raise RuntimeError(
+                        f"Wisconsin normalized statute identity repeated: {statute.statute_id}"
+                    )
+                seen_statute_ids.add(identity)
+                page_digests = [str(page["content_sha256"]) for page in state["pages"]]
+                statute.structured_data = {
+                    **dict(statute.structured_data or {}),
+                    "source_viewer_page_count": len(state["pages"]),
+                    "source_viewer_pages_sha256": self._wisconsin_values_sha256(
+                        page_digests
+                    ),
+                }
+                statutes.append(statute)
+            section_reports.append(
+                {
+                    "chapter_number": unit["chapter_number"],
+                    "section_number": target,
+                    "source_url": unit["source_url"],
+                    "source_blocks": parsed.source_block_count,
+                    "operative_sections": operative_count,
+                    "terminal_sections": terminal_count,
+                    "pages": list(state["pages"]),
+                    "closed": True,
+                }
+            )
+        for terminal in chapter_terminals:
+            disposition = str(terminal.get("disposition") or "")
+            terminal_counts[disposition] = terminal_counts.get(disposition, 0) + 1
+
+        frontier = self._wisconsin_exact_frontier(
+            catalog_content_sha256=hashlib.sha256(root_payload).hexdigest(),
+            chapter_reports=chapter_reports,
+            section_reports=section_reports,
+            chapter_terminals=chapter_terminals,
+            terminal_dispositions=terminal_counts,
+        )
+        observed_at = datetime.now(timezone.utc).isoformat()
+        observation = {
+            "boundary_first": str(section_units[0]["source_url"]),
+            "boundary_last": str(section_units[-1]["source_url"]),
+            "chapter_reports": chapter_reports,
+            "chapter_terminals": list(chapter_terminals),
+            "code_name": code_name,
+            "frontier": frontier,
+            "observed_at": observed_at,
+            "section_reports": section_reports,
+            "transport_batch_stats": list(
+                getattr(self, "_wisconsin_frontier_batch_stats", [])
+            ),
+        }
+        if record_primary:
+            self._last_wisconsin_full_frontier = observation
+            self._last_wisconsin_strict_closure = {
+                "schema": "wisconsin-strict-viewer-closure-v1",
+                "closed": True,
+                "catalog_chapters": len(chapter_reports),
+                "source_sections": len(section_reports) + len(chapter_terminals),
+                "operative_sections": len(statutes),
+                "terminal_sections": sum(terminal_counts.values()),
+                "terminal_dispositions": dict(sorted(terminal_counts.items())),
+                "unclassified_sections": 0,
+                "frontier": frontier,
+                "batch_stats": list(
+                    getattr(self, "_wisconsin_frontier_batch_stats", [])
+                ),
+            }
+        else:
+            self._last_wisconsin_replayed_frontier = observation
+        return statutes
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -111,6 +881,12 @@ class WisconsinScraper(BaseStateScraper):
                     max_statutes=limit,
                 )
                 return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        if self._full_corpus_enabled() and max_statutes is None:
+            return await self._scrape_wisconsin_strict_frontier(
+                code_name,
+                network=True,
+                record_primary=True,
+            )
         official = await self._scrape_official_index(code_name, max_statutes=limit)
         if official:
             return official[:limit] if limit is not None else official
@@ -173,11 +949,6 @@ class WisconsinScraper(BaseStateScraper):
         code_name: str,
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
-        try:
-            from bs4 import BeautifulSoup
-        except ImportError:
-            return []
-
         section_urls = [
             ("939.50", f"{self.get_base_url()}/document/statutes/939.50"),
             ("940.01", f"{self.get_base_url()}/document/statutes/940.01"),
@@ -224,7 +995,10 @@ class WisconsinScraper(BaseStateScraper):
                     statutes.append(row)
                     if limit is not None and len(statutes) >= limit:
                         break
-            section_links = await self._discover_section_links(chapter_url)
+            section_links = self._section_links_from_payload(
+                chapter_url,
+                chapter_payload,
+            )
             if chapter_index == 1 or chapter_index % 25 == 0 or chapter_index == len(chapter_links):
                 self.logger.info(
                     "Wisconsin official index: chapter=%s index=%s/%s sections=%s statutes_so_far=%s",
@@ -277,6 +1051,18 @@ class WisconsinScraper(BaseStateScraper):
         return out
 
     async def _discover_section_links(self, chapter_url: str) -> List[Tuple[str, str]]:
+        payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=20)
+        return self._section_links_from_payload(chapter_url, payload)
+
+    def _section_links_from_payload(
+        self,
+        chapter_url: str,
+        payload: Any,
+    ) -> List[Tuple[str, str]]:
+        """Parse section links from an already-receipted chapter response."""
+
+        if not payload:
+            return []
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -284,9 +1070,6 @@ class WisconsinScraper(BaseStateScraper):
 
         chapter_match = re.search(r"/document/statutes/([0-9]+)/?$", chapter_url, re.IGNORECASE)
         chapter_number = chapter_match.group(1) if chapter_match else ""
-        payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=20)
-        if not payload:
-            return []
         soup = BeautifulSoup(payload, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
@@ -386,6 +1169,94 @@ class WisconsinScraper(BaseStateScraper):
                 )
             )
         return statutes
+
+    async def produce_state_law_frontier_closure(
+        self,
+        *,
+        canonical_output_projection: Mapping[str, Any],
+    ) -> Optional[Path]:
+        """Replay the exact retained WI viewer graph and seal output parity."""
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError("Wisconsin frontier closure requires an attached ledger")
+        first = getattr(self, "_last_wisconsin_full_frontier", None)
+        if not isinstance(first, Mapping):
+            raise RuntimeError(
+                "Wisconsin source-derived strict frontier was not retained before output"
+            )
+        refresh = getattr(ledger, "refresh_existing_entries", None)
+        if callable(refresh):
+            refresh()
+        replay_rows = await self._scrape_wisconsin_strict_frontier(
+            str(first.get("code_name") or "Wisconsin Statutes"),
+            network=False,
+            record_primary=False,
+        )
+        replay = getattr(self, "_last_wisconsin_replayed_frontier", None)
+        if not isinstance(replay, Mapping):
+            raise RuntimeError("Wisconsin retained source replay did not close")
+        first_frontier = first.get("frontier")
+        replayed_frontier = replay.get("frontier")
+        if not isinstance(first_frontier, Mapping) or not isinstance(
+            replayed_frontier, Mapping
+        ):
+            raise RuntimeError("Wisconsin exact frontier observations are incomplete")
+
+        from .strict_frontier_closure import retain_exact_state_frontier_closure
+
+        observed_at = str(first.get("observed_at") or "")
+        batch_stats = list(first.get("transport_batch_stats") or [])
+
+        def _wave_count(prefix: str) -> int:
+            return sum(
+                str(row.get("frontier_name") or "").startswith(prefix)
+                for row in batch_stats
+                if isinstance(row, Mapping)
+            )
+
+        return retain_exact_state_frontier_closure(
+            self,
+            canonical_output_projection=canonical_output_projection,
+            first_frontier=first_frontier,
+            replayed_frontier=replayed_frontier,
+            replay_rows=replay_rows,
+            jurisdiction="WI",
+            source_domain=self.OFFICIAL_DOMAIN,
+            official_source_url=self.OFFICIAL_ENTRY_URL,
+            observed_at=observed_at,
+            legal_as_of=observed_at[:10],
+            boundary_first=str(first.get("boundary_first") or ""),
+            boundary_last=str(first.get("boundary_last") or ""),
+            bundle_total=len(list(first.get("chapter_reports") or [])),
+            pagination_total=len(list(first.get("section_reports") or [])),
+            transport={
+                "fixture": False,
+                "chapter_acquisition_wave_count": _wave_count(
+                    "chapter-toc-wave-"
+                ),
+                "first_pass_request_batches": len(batch_stats),
+                "first_pass_requested_pages": sum(
+                    int(row.get("requested_pages") or 0)
+                    for row in batch_stats
+                    if isinstance(row, Mapping)
+                ),
+                "first_pass_batch_stats": batch_stats,
+                "grouped_warc_recovery": True,
+                "kind": "shared_archive_aware_plural_html_viewer",
+                "leaf_acquisition_wave_count": _wave_count(
+                    "section-body-wave-"
+                ),
+                "per_page_archive_loop": False,
+                "repeat_grouped_archive_inventory_on_residual": False,
+                "residual_only_retries": True,
+                "retained_replay_network_requests": 0,
+                "root_acquisition_wave_count": _wave_count("statutes-index"),
+                "source_ordered_cross_parent_union": True,
+                "synthetic": False,
+                "wayback_prefix_inventory": True,
+            },
+        )
 
     def official_chapter_url(self, chapter_number: Any) -> str:
         return f"{self.get_base_url()}/document/statutes/{int(chapter_number)}"

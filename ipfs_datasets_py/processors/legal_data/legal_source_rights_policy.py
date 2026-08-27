@@ -56,6 +56,12 @@ TARGET_DATASET_REPO_IDS: Final = (
     FEDERAL_DATASET_REPO_ID,
 )
 
+LIVE_COMPLIANCE_REPORT_SCHEMA: Final = (
+    "ipfs_datasets_py/legal-source-rights-compliance@2"
+)
+LIVE_COMPLIANCE_CODE_VERSION: Final = "2"
+STATE_STATUTORY_TEXT_RIGHTS_BASIS: Final = "public_law_no_state_copyright"
+
 FIXTURE_VERIFIER_CLOCK_UTC: Final = "2026-08-10T12:00:00Z"
 MAX_EVIDENCE_AGE: Final = timedelta(days=90)
 MAX_FUTURE_SKEW: Final = timedelta(0)
@@ -63,7 +69,7 @@ DEFAULT_MAX_EVIDENCE_AGE: Final = MAX_EVIDENCE_AGE
 DEFAULT_MAX_FUTURE_SKEW: Final = MAX_FUTURE_SKEW
 
 CANONICAL_LCR002_SHA256: Final = (
-    "c6cef251435bfa5185543c402e24d14b79acd409f5ec904da058ff805e74499c"
+    "93ff3fde3653fd6fe7a25eeb6b524c31f5bd5a23427c41ce203add300b4a5ed2"
 )
 CANONICAL_LCR048_SHA256: Final = (
     "9d23788763ee7258487c8b01e341837c3743d7edb051e1bbb63f39111c06e596"
@@ -105,6 +111,9 @@ _SCHEMA_RELATIVE_PATH: Final = Path("data/legal/legal_source_rights_catalog.sche
 _SPDX_RELATIVE_PATH: Final = Path("data/legal/spdx_license_registry.json")
 _FIXTURE_RELATIVE_PATH: Final = Path("tests/fixtures/legal_ir/legal_source_rights_catalog.json")
 _LIVE_RELATIVE_PATH: Final = Path("data/legal/legal_source_rights_catalog.json")
+_LIVE_COMPLIANCE_RELATIVE_PATH: Final = Path(
+    "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json"
+)
 _POLICY_RELATIVE_PATH: Final = Path(
     "ipfs_datasets_py/processors/legal_data/legal_source_rights_policy.py"
 )
@@ -204,6 +213,10 @@ def default_fixture_catalog_path() -> Path:
 
 def default_live_catalog_path() -> Path:
     return repository_root() / _LIVE_RELATIVE_PATH
+
+
+def default_live_compliance_path() -> Path:
+    return repository_root() / _LIVE_COMPLIANCE_RELATIVE_PATH
 
 
 def default_policy_module_path() -> Path:
@@ -2594,6 +2607,206 @@ def require_live_source_evidence() -> dict[str, Any]:
     return report
 
 
+def _require_live_source_rights_receipt_against(
+    value: Any,
+    *,
+    report: Mapping[str, Any],
+    catalog: SourceRightsCatalog,
+) -> dict[str, Any]:
+    """Validate one canonical receipt against a freshly evaluated live catalog."""
+
+    receipt = dict(_strict_mapping(value, "live source-rights compliance receipt"))
+    digest = _strict_sha256(
+        receipt.get("report_digest_sha256"),
+        "live source-rights compliance receipt.report_digest_sha256",
+    )
+    body = dict(receipt)
+    body.pop("report_digest_sha256", None)
+    computed = sha256_json(body)
+    if digest != computed:
+        raise LiveEvidenceRequiredError(
+            "live source-rights compliance receipt digest does not match its body"
+        )
+
+    wrapper = {
+        "report_schema": LIVE_COMPLIANCE_REPORT_SCHEMA,
+        "code_version": LIVE_COMPLIANCE_CODE_VERSION,
+        "audit_producer": CATALOG_PRODUCER,
+        "producer": CATALOG_PRODUCER,
+        "program_id": PROGRAM_ID,
+        "task_id": LIVE_TASK_ID,
+        "goal_id": LIVE_GOAL_ID,
+        "evidence_mode": EvidenceMode.LIVE.value,
+        "mode": "live",
+        "status": "passed",
+        "secret_free": True,
+        "catalog_path": _LIVE_RELATIVE_PATH.as_posix(),
+        "target_dataset_repo_ids": list(TARGET_DATASET_REPO_IDS),
+    }
+    expected_keys = set(report) | set(wrapper) | {"report_digest_sha256"}
+    actual_keys = set(receipt)
+    if actual_keys != expected_keys:
+        raise LiveEvidenceRequiredError(
+            "live source-rights compliance receipt keys are not exact; "
+            f"missing={sorted(expected_keys - actual_keys)!r} "
+            f"extra={sorted(actual_keys - expected_keys)!r}"
+        )
+    for key, expected in wrapper.items():
+        if receipt.get(key) != expected:
+            raise LiveEvidenceRequiredError(
+                f"live source-rights compliance receipt {key} is not exact {expected!r}"
+            )
+    for key, expected in report.items():
+        # The evaluator owns a new clock on every invocation.  The sealed
+        # receipt's timestamp is validated below; all material evaluation,
+        # frontier, decision, and digest fields must be byte-semantically exact.
+        if key == "verified_at":
+            continue
+        if receipt.get(key) != expected:
+            raise LiveEvidenceRequiredError(
+                "live source-rights compliance receipt does not bind the current "
+                f"authoritative evaluation field {key!r}"
+            )
+    receipt_verified_at = parse_utc_timestamp(
+        receipt.get("verified_at"),
+        name="live source-rights compliance receipt.verified_at",
+    )
+    if receipt_verified_at > datetime.now(timezone.utc):
+        raise LiveEvidenceRequiredError(
+            "live source-rights compliance receipt verified_at is in the future"
+        )
+
+    if catalog.catalog_digest_sha256() != receipt.get("catalog_digest_sha256"):
+        raise LiveEvidenceRequiredError(
+            "live source-rights compliance receipt does not bind the canonical catalog"
+        )
+    decisions_raw = _strict_list(
+        receipt.get("decisions"), "live source-rights compliance receipt.decisions"
+    )
+    decisions: dict[str, Mapping[str, Any]] = {}
+    for position, item in enumerate(decisions_raw):
+        decision = _strict_mapping(
+            item, f"live source-rights compliance receipt.decisions[{position}]"
+        )
+        record_id = _strict_identifier(
+            decision.get("record_id"),
+            f"live source-rights compliance receipt.decisions[{position}].record_id",
+        )
+        if record_id in decisions:
+            raise LiveEvidenceRequiredError(
+                f"live source-rights compliance receipt duplicates {record_id!r}"
+            )
+        decisions[record_id] = decision
+
+    state_records = tuple(
+        record
+        for record in catalog.records
+        if record.corpus_family is CorpusFamily.STATE_LAWS
+        and record.content_scope is ContentScope.STATUTORY_TEXT
+    )
+    if len(state_records) != EXPECTED_STATE_SOURCE_COUNT:
+        raise LiveEvidenceRequiredError(
+            "canonical live rights catalog does not contain exact-51 statutory text"
+        )
+    state_record_ids = {record.record_id for record in state_records}
+    admitted_ids = {
+        _strict_identifier(
+            item,
+            f"live source-rights compliance receipt.admitted_record_ids[{position}]",
+        )
+        for position, item in enumerate(
+            _strict_list(
+                receipt.get("admitted_record_ids"),
+                "live source-rights compliance receipt.admitted_record_ids",
+            )
+        )
+    }
+    if not state_record_ids.issubset(admitted_ids):
+        raise LiveEvidenceRequiredError(
+            "live source-rights compliance receipt does not admit the exact-51 "
+            "canonical statutory-text record IDs"
+        )
+    for record in state_records:
+        decision = decisions.get(record.record_id)
+        if decision is None or (
+            decision.get("source_id") != record.source_id
+            or decision.get("content_scope") != ContentScope.STATUTORY_TEXT.value
+            or decision.get("rights_disposition") != RightsDisposition.ALLOWED.value
+            or decision.get("admitted") is not True
+            or decision.get("authorizing") is not True
+        ):
+            raise LiveEvidenceRequiredError(
+                f"canonical state statutory-text decision is not authorizing: {record.record_id!r}"
+            )
+        if (
+            record.legal_basis is not LegalBasis.GOVERNMENT_EDICTS_DOCTRINE
+            or record.license_spdx != "LicenseRef-US-State-Statutory-Text"
+            or not record.permissions.all_required_granted()
+        ):
+            raise LiveEvidenceRequiredError(
+                "canonical state statutory text is not bound to the public-law "
+                f"rights contract: {record.record_id!r}"
+            )
+
+    excluded_records = tuple(
+        record
+        for record in catalog.records
+        if record.content_scope in DEFAULT_QUARANTINED_CONTENT_SCOPES
+    )
+    if not excluded_records:
+        raise LiveEvidenceRequiredError(
+            "canonical live rights catalog lacks excluded editorial/database/presentation scopes"
+        )
+    for record in excluded_records:
+        decision = decisions.get(record.record_id)
+        if (
+            record.record_id in admitted_ids
+            or decision is None
+            or decision.get("admitted") is not False
+            or decision.get("authorizing") is not False
+        ):
+            raise LiveEvidenceRequiredError(
+                "editorial, database, annotation, or presentation material escaped "
+                f"the default exclusion gate: {record.record_id!r}"
+            )
+    return receipt
+
+
+def require_live_source_rights_receipt(value: Mapping[str, Any]) -> dict[str, Any]:
+    """Require the fixed live receipt and independently replay all rights gates.
+
+    The caller-supplied mapping must be exactly the canonical compliance file;
+    a structurally plausible set of 51 invented identifiers is never authority.
+    The live catalog is re-evaluated first, so stale policy/schema/frontier/SPDX
+    digests or stale observation evidence fail before a release can proceed.
+    """
+
+    report = require_live_source_evidence()
+    raw_bytes = _read_regular_file_once(
+        default_live_compliance_path(),
+        context="canonical live source-rights compliance receipt",
+    )
+    canonical = _strict_json_loads(
+        raw_bytes, context="canonical live source-rights compliance receipt"
+    )
+    canonical_mapping = dict(
+        _strict_mapping(canonical, "canonical live source-rights compliance receipt")
+    )
+    supplied = dict(_strict_mapping(value, "supplied live source-rights receipt"))
+    if canonical_json(supplied) != canonical_json(canonical_mapping):
+        raise LiveEvidenceRequiredError(
+            "supplied source-rights receipt is not the canonical live compliance receipt"
+        )
+    catalog = SourceRightsCatalog.from_mapping(
+        _load_catalog_payload(default_live_catalog_path())
+    )
+    return _require_live_source_rights_receipt_against(
+        canonical_mapping,
+        report=report,
+        catalog=catalog,
+    )
+
+
 __all__ = [
     "ADMISSIBLE_CONTENT_SCOPES",
     "CATALOG_PRODUCER",
@@ -2617,6 +2830,8 @@ __all__ = [
     "FIXTURE_TASK_ID",
     "FIXTURE_VERIFIER_CLOCK_UTC",
     "GOAL_ID",
+    "LIVE_COMPLIANCE_CODE_VERSION",
+    "LIVE_COMPLIANCE_REPORT_SCHEMA",
     "LIVE_GOAL_ID",
     "LIVE_TASK_ID",
     "MAX_EVIDENCE_AGE",
@@ -2626,6 +2841,7 @@ __all__ = [
     "SCHEMA_VERSION",
     "SPDX_REGISTRY_SCHEMA_VERSION",
     "STATE_DATASET_REPO_ID",
+    "STATE_STATUTORY_TEXT_RIGHTS_BASIS",
     "TARGET_DATASET_REPO_IDS",
     "TASK_ID",
     "VERIFIER_ID",
@@ -2669,6 +2885,7 @@ __all__ = [
     "default_federal_baseline_path",
     "default_fixture_catalog_path",
     "default_live_catalog_path",
+    "default_live_compliance_path",
     "default_policy_module_path",
     "default_schema_path",
     "default_spdx_registry_path",
@@ -2692,6 +2909,7 @@ __all__ = [
     "repository_root",
     "require_artifact_digests",
     "require_live_source_evidence",
+    "require_live_source_rights_receipt",
     "require_scope_rights",
     "sha256_bytes",
     "sha256_file",

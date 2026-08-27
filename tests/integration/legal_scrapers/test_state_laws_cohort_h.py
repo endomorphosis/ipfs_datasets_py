@@ -550,8 +550,8 @@ async def test_new_hampshire_full_corpus_is_uncapped_when_max_statutes_omitted(
     """Regression: full-corpus mode must not silently clamp the official tree."""
     requested: Dict[str, Any] = {}
 
-    async def _fake_official(self, code_name: str, max_statutes: Optional[int] = None):
-        requested["max_statutes"] = max_statutes
+    async def _fake_official(self, *, code_name: str, checkpoint):
+        requested["checkpoint_state"] = checkpoint.state_code
         return [
             NormalizedStatute(
                 state_code="NH",
@@ -573,14 +573,18 @@ async def test_new_hampshire_full_corpus_is_uncapped_when_max_statutes_omitted(
         ]
 
     monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
-    monkeypatch.setattr(NewHampshireScraper, "_scrape_official_rsa_tree", _fake_official)
+    monkeypatch.setattr(
+        NewHampshireScraper,
+        "_scrape_official_rsa_tree_batched",
+        _fake_official,
+    )
     scraper = NewHampshireScraper("NH", "New Hampshire")
     statutes = await scraper.scrape_code(
         "New Hampshire Revised Statutes",
         "https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm",
         max_statutes=None,
     )
-    assert requested["max_statutes"] is None
+    assert requested["checkpoint_state"] == "NH"
     assert len(statutes) == 1
 
 
@@ -590,7 +594,12 @@ async def test_new_jersey_full_corpus_is_uncapped_when_max_statutes_omitted(
 ):
     requested: Dict[str, Any] = {}
 
-    async def _fake_official(self, code_name: str, max_statutes: Optional[int] = None):
+    async def _fake_bulk(
+        self,
+        *,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ):
         requested["max_statutes"] = max_statutes
         return [
             NormalizedStatute(
@@ -601,19 +610,27 @@ async def test_new_jersey_full_corpus_is_uncapped_when_max_statutes_omitted(
                 section_number="1:1-1",
                 section_name="General rules of construction",
                 full_text=("New Jersey full corpus official section text. " * 20),
-                source_url="https://lis.njleg.state.nj.us/nxt/gateway.dll/statutes/1/2/3",
+                source_url="https://www.njleg.state.nj.us/legislative-activity/statutes",
                 official_cite="N.J. Stat. Ann. § 1:1-1",
                 metadata=StatuteMetadata(),
                 structured_data={
-                    "source_kind": "official_new_jersey_gateway_html",
-                    "discovery_method": "official_xmlcontents_toc",
+                    "source_kind": "official_new_jersey_statutes_rtf",
+                    "discovery_method": "njleg_statutes_text_zip",
                     "skip_hydrate": True,
                 },
             )
         ]
 
+    async def _partial_index_must_not_run(*_args, **_kwargs):
+        raise AssertionError("full-corpus NJ must use the exact official ZIP frontier")
+
     monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
-    monkeypatch.setattr(NewJerseyScraper, "_scrape_official_index", _fake_official)
+    monkeypatch.setattr(NewJerseyScraper, "_scrape_official_bulk_zip", _fake_bulk)
+    monkeypatch.setattr(
+        NewJerseyScraper,
+        "_scrape_official_index",
+        _partial_index_must_not_run,
+    )
     scraper = NewJerseyScraper("NJ", "New Jersey")
     statutes = await scraper.scrape_code(
         "New Jersey Statutes",

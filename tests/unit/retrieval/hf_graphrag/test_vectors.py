@@ -216,6 +216,40 @@ def test_row_conservation_and_uniqueness():
     validate_vector_layout(layout, expected_entry_cids=expected)
 
 
+def test_cluster_and_shard_offsets_namespace_partitioned_builds():
+    rows = _semantic_lobes(per_lobe=3)
+    baseline = build_centroid_routed_vector_layout(
+        rows,
+        max_rows_per_shard=2,
+        max_shards_per_centroid=2,
+        max_rows_per_centroid=4,
+        target_rows_per_centroid=3,
+    )
+    namespaced = build_centroid_routed_vector_layout(
+        rows,
+        cluster_id_offset=100,
+        global_shard_id_offset=500,
+        max_rows_per_shard=2,
+        max_shards_per_centroid=2,
+        max_rows_per_centroid=4,
+        target_rows_per_centroid=3,
+    )
+
+    assert namespaced.all_entry_cids() == baseline.all_entry_cids()
+    assert [group.cluster_id for group in namespaced.clusters] == [
+        group.cluster_id + 100 for group in baseline.clusters
+    ]
+    assert [shard.global_shard_id for shard in namespaced.shards] == [
+        shard.global_shard_id + 500 for shard in baseline.shards
+    ]
+    assert all("centroid-0001" in shard.relative_path for shard in namespaced.shards)
+
+    with pytest.raises(VectorInputError, match="cluster_id_offset"):
+        build_centroid_routed_vector_layout(rows, cluster_id_offset=-1)
+    with pytest.raises(VectorInputError, match="global_shard_id_offset"):
+        build_centroid_routed_vector_layout(rows, global_shard_id_offset=-1)
+
+
 def test_centroid_and_shard_bounds_hold():
     # 12 vectors with max_rows_per_centroid=4 and max_rows_per_shard=2
     # forces multi-centroid multi-shard layout.

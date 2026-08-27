@@ -105,13 +105,34 @@ def _compact_official_html(state: str) -> bytes:
             "</div></body></html>"
         ).encode("utf-8")
     if state == "CT":
+        scraper = ConnecticutScraper("CT", "Connecticut")
+        reserved = set(scraper.OFFICIAL_RESERVED_TITLE_NUMBERS)
+        inactive = set(scraper.OFFICIAL_INACTIVE_TITLE_NUMBERS)
+        rows = []
+        for token in scraper.OFFICIAL_TITLE_NUMBERS:
+            designation = f"<span class='toc_ttl_desig'>Title {token}</span>"
+            if token in reserved:
+                linked = designation
+                name = "Reserved for future use"
+            else:
+                filename = scraper.official_title_url(token).rsplit("/", 1)[-1]
+                linked = f"<a href='{filename}'>{designation}</a>"
+                name = (
+                    "All sections transferred or repealed"
+                    if token in inactive
+                    else "Current statutory provisions"
+                )
+            rows.append(
+                f"<tr><td>{linked}</td>"
+                f"<td><span class='toc_ttl_name'>{name}</span></td></tr>"
+            )
         return (
-            "<html><body>"
-            "<a href='title_1.htm'>Title 1</a>"
-            "<a href='title_2.htm'>Title 2</a>"
-            "<a href='title_53a.htm'>Title 53a</a>"
-            "</body></html>"
-        ).encode("utf-8")
+            "<html><body><h2>Revised to January 1, 2025</h2>"
+            "<a href='/2026/sup/titles.htm'>Readers should refer to the "
+            "2026 Supplement</a><table>"
+            + "".join(rows)
+            + "</table></body></html>"
+        ).encode()
     return (
         "<html><body>"
         "<a href='/title1/index.html'>Title 1</a>"
@@ -119,6 +140,26 @@ def _compact_official_html(state: str) -> bytes:
         "<a href='/title11/index.html'>Title 11</a>"
         "</body></html>"
     ).encode("utf-8")
+
+
+def _compact_connecticut_supplement_html() -> bytes:
+    scraper = ConnecticutScraper("CT", "Connecticut")
+    rows = []
+    for token in scraper.OFFICIAL_SUPPLEMENT_TITLE_NUMBERS:
+        filename = scraper.official_supplement_title_url(token).rsplit("/", 1)[-1]
+        rows.append(
+            "<tr><td>"
+            f"<a href='{filename}'><span class='toc_ttl_desig'>"
+            f"Title {token}</span></a></td>"
+            "<td><span class='toc_ttl_name'>Supplement changes</span></td></tr>"
+        )
+    return (
+        "<html><body><h1>2026 Supplement to the General Statutes of "
+        "Connecticut</h1><h2>Revised to January 1, 2026</h2>"
+        "<a href='/current/pub/titles.htm'>This 2026 Supplement is intended "
+        "to be used in conjunction with the General Statutes of Connecticut</a>"
+        "<table>" + "".join(rows) + "</table></body></html>"
+    ).encode()
 
 
 def test_cohort_b_jurisdiction_set_is_exact() -> None:
@@ -200,7 +241,11 @@ def test_fetch_official_is_live_and_exhaustive(monkeypatch: pytest.MonkeyPatch, 
     monkeypatch.setattr(
         scraper,
         "_official_http_get",
-        lambda url, timeout_seconds=30: _compact_official_html(state),
+        lambda url, timeout_seconds=30: (
+            _compact_connecticut_supplement_html()
+            if state == "CT" and "/2026/sup/" in url
+            else _compact_official_html(state)
+        ),
     )
     fetch = scraper.fetch_official(state)
     assert isinstance(fetch, OfficialFetch)

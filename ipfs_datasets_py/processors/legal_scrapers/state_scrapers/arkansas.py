@@ -11,19 +11,37 @@ import ssl
 import time
 import urllib.request
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
-from urllib.parse import parse_qs, urljoin, urlparse
+from urllib.parse import urljoin, urlparse
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
+class ArkansasDelegatedCorpusBlockedError(RuntimeError):
+    """The official/delegated locator frontier lacks admissible body bytes."""
+
+    def __init__(self, reason: str, *, evidence: Mapping[str, Any]) -> None:
+        self.reason = str(reason)
+        self.evidence = dict(evidence)
+        super().__init__(f"Arkansas delegated corpus is blocked: {self.reason}")
+
+
 class ArkansasScraper(BaseStateScraper):
     """Scraper for Arkansas state laws from https://www.arkleg.state.ar.us"""
 
-    OFFICIAL_CODE_INDEX = "https://www.arkleg.state.ar.us/ArkansasCode/"
+    # The legislature's public-law landing page delegates Arkansas Code access
+    # to the free Lexis public-access container.  ``/ArkansasCode/`` was a
+    # historical route and now returns no code inventory.
+    OFFICIAL_CODE_INDEX = "https://www.arkleg.state.ar.us/ArkansasLaw/"
     OFFICIAL_DOMAIN = "www.arkleg.state.ar.us"
-    OFFICIAL_ENTRY_PATH = "/ArkansasCode/"
-    OFFICIAL_ENTRY_URL = "https://www.arkleg.state.ar.us/ArkansasCode/"
+    OFFICIAL_ENTRY_PATH = "/ArkansasLaw/"
+    OFFICIAL_ENTRY_URL = "https://www.arkleg.state.ar.us/ArkansasLaw/"
+    OFFICIAL_DELEGATED_ENTRY_URL = "https://www.lexisnexis.com/hottopics/arcode/"
+    OFFICIAL_DELEGATED_CONTAINER_URL = (
+        "https://advance.lexis.com/container?config="
+        "00JAA3ZTU0NTIzYy0zZDEyLTRhYmQtYmRmMS1iMWIxNDgxYWMxZTQK"
+        "AFBvZENhdGFsb2cubRW4ifTiwi5vLw6cI1uX"
+    )
     BUCKET_SEED_QUARANTINE_REASON = "bucket_seed_pending_official_replacement"
     _AR_TITLE_QUERY_RE = re.compile(r"[?&](?:title|codeTitle)=(\d{1,2})\b", re.IGNORECASE)
     _AR_TITLE_LABEL_RE = re.compile(r"\bTitle\s+(\d{1,2})\b", re.IGNORECASE)
@@ -57,6 +75,68 @@ class ArkansasScraper(BaseStateScraper):
         ("27", "Transportation"),
         ("28", "Wills, Estates, and Fiduciary Relationships"),
     )
+
+    def state_law_frontier_source_dependencies(self) -> Sequence[Any]:
+        """Bind the delegated TOC/current-variant parser into certification."""
+
+        from . import arkansas_lexis
+
+        return (arkansas_lexis,)
+
+    def attach_arkansas_current_variant_resolution_ledger(
+        self,
+        ledger: Any,
+    ) -> None:
+        """Attach the separate proof ledger without replacing the body ledger."""
+
+        if ledger is None:
+            self._arkansas_current_variant_ledger = None
+            return
+        from ...legal_data.state_laws_multifetch_acquisition import (
+            StateLawMultiFetchAcquisitionLedger,
+        )
+
+        from .arkansas_lexis import CURRENT_VARIANT_RESOLVER_PARSER_NAME
+
+        if not isinstance(ledger, StateLawMultiFetchAcquisitionLedger):
+            raise TypeError(
+                "Arkansas current-variant ledger must be a multi-fetch ledger"
+            )
+        if str(ledger.jurisdiction).upper() != "AR":
+            raise ValueError("Arkansas current-variant ledger jurisdiction drifted")
+        if str(ledger.parser_name) != CURRENT_VARIANT_RESOLVER_PARSER_NAME:
+            raise ValueError("Arkansas current-variant ledger parser drifted")
+        self._arkansas_current_variant_ledger = ledger
+
+    def _get_arkansas_current_variant_resolution_ledger(self) -> Any:
+        from .arkansas_lexis import CURRENT_VARIANT_RESOLVER_PARSER_NAME
+
+        explicit = getattr(self, "_arkansas_current_variant_ledger", None)
+        if explicit is not None:
+            return explicit
+        attached = getattr(self, "_state_law_acquisition_ledger", None)
+        if str(getattr(attached, "parser_name", "") or "") == (
+            CURRENT_VARIANT_RESOLVER_PARSER_NAME
+        ):
+            return attached
+        root = self.state_law_run_environment_value(
+            "ARKANSAS_CURRENT_VARIANT_EVIDENCE_ROOT"
+        )
+        if not root:
+            return None
+        from ...legal_data.state_laws_multifetch_acquisition import (
+            StateLawMultiFetchAcquisitionLedger,
+        )
+
+        ledger = StateLawMultiFetchAcquisitionLedger(
+            root,
+            jurisdiction="AR",
+            parser_name=CURRENT_VARIANT_RESOLVER_PARSER_NAME,
+            retained_replay_only=True,
+        )
+        self._arkansas_current_variant_ledger = ledger
+        return ledger
+
     DEFAULT_BUCKET_SEED_ROWS = (
         {
             "canonical_key": "ar:bucket-title-1",
@@ -97,6 +177,18 @@ class ArkansasScraper(BaseStateScraper):
         r"(cf-mitigated|challenge-platform|enable javascript and cookies|just a moment)",
         re.IGNORECASE,
     )
+    _AR_LEXIS_BODY_BLOCKED_RE = re.compile(
+        r"(robot\s*validation|captcha\s+validation|PawFirstDocAccess|"
+        r"confirm\s+you\s+are\s+human|sign\s+in\s+to\s+continue|"
+        r"cookies\s+required|unexpected\s+error|page\s+not\s+found)",
+        re.IGNORECASE,
+    )
+    _AR_JUSTIA_EDITORIAL_HEADING_RE = re.compile(
+        r"^(?:history|historical and statutory notes|notes?|annotations?|case notes?|"
+        r"law reviews?|research references?|cross references?|amendments?|effective dates?|"
+        r"compiler(?:'s|s)? notes?|publisher(?:'s|s)? notes?|credits?)\s*$",
+        re.IGNORECASE,
+    )
 
     def _filter_non_code_results(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         out: List[NormalizedStatute] = []
@@ -122,77 +214,78 @@ class ArkansasScraper(BaseStateScraper):
         return bool(self._AR_CLOUDFLARE_CHALLENGE_RE.search(sample))
 
     async def _fetch_direct_html(self, url: str, timeout_seconds: int = 8) -> bytes:
-        cached = await self._load_page_bytes_from_any_cache(url)
-        if cached:
-            return cached
         timeout = max(1, int(timeout_seconds or 8))
-
-        def _request() -> bytes:
-            try:
-                import requests
-
-                response = requests.get(
-                    url,
-                    headers={
-                        "User-Agent": "ipfs-datasets-arkansas-code-scraper/2.0",
-                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-                    },
-                    timeout=timeout,
-                )
-                if int(response.status_code or 0) != 200:
-                    return b""
-                return bytes(response.content or b"")
-            except Exception:
-                return b""
-
-        try:
-            payload = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 1)
-        except asyncio.TimeoutError:
-            payload = b""
-        if self._looks_like_challenge_page(payload):
-            self._record_fetch_event(provider="requests_direct", success=False, error="cloudflare_challenge")
-            return b""
-        self._record_fetch_event(provider="requests_direct", success=bool(payload))
-        if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
-        return payload
+        return await self._fetch_parser_input_with_transport(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-arkansas-code-scraper/2.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            },
+            timeout_seconds=timeout,
+            content_validator=lambda payload: not self._looks_like_challenge_page(
+                payload
+            ),
+            allow_archival_fallback=False,
+            media_type="text/html",
+            provider="requests_direct",
+        )
 
     async def _fetch_justia_html(self, url: str, timeout_seconds: int = 18) -> bytes:
-        payload = await self._fetch_direct_html(url, timeout_seconds=min(8, max(1, int(timeout_seconds or 18))))
-        if payload:
-            return payload
-
         timeout = max(5, int(timeout_seconds or 18))
-        try:
-            from playwright.async_api import async_playwright
-        except Exception as exc:
-            self._record_fetch_event(provider="playwright_justia", success=False, error=f"playwright_unavailable: {exc}")
-            return b""
-
-        try:
-            async with async_playwright() as playwright:
-                browser = await playwright.chromium.launch(headless=True)
-                try:
-                    page = await browser.new_page(
-                        user_agent=(
-                            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                            "Chrome/122.0.0.0 Safari/537.36"
-                        )
-                    )
-                    await page.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-                    content = await page.content()
-                finally:
-                    await browser.close()
-        except Exception as exc:
-            self._record_fetch_event(provider="playwright_justia", success=False, error=str(exc))
-            return b""
-
-        payload = content.encode("utf-8", errors="ignore")
-        if self._looks_like_challenge_page(payload):
-            self._record_fetch_event(provider="playwright_justia", success=False, error="cloudflare_challenge")
-            return b""
-        self._record_fetch_event(provider="playwright_justia", success=bool(payload))
+        payload = await self._fetch_non_authoritative_reference_bytes(
+            url,
+            timeout_seconds=timeout,
+            content_validator=lambda body: bool(body)
+            and not self._looks_like_challenge_page(body),
+            enable_common_crawl=True,
+        )
+        self._record_fetch_event(
+            provider="shared_secondary_justia_recovery",
+            success=bool(payload),
+        )
+        if payload:
+            await self._cache_successful_page_fetch(
+                url=url,
+                payload=payload,
+                provider="shared_secondary_justia_recovery",
+            )
         return payload
+
+    async def _fetch_justia_from_web_archiving(
+        self,
+        url: str,
+        timeout_seconds: int,
+    ) -> bytes:
+        """Use the shared archival stack only after live browser retrieval fails."""
+
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(
+                url,
+                timeout_seconds=max(5, int(timeout_seconds or 18)),
+            )
+        except Exception:
+            return b""
+        return b"" if self._looks_like_challenge_page(payload) else payload
+
+    async def _close_justia_browser(self) -> None:
+        """Close the scraper-scoped browser used by a multi-page recovery crawl."""
+
+        context = getattr(self, "_justia_browser_context", None)
+        browser = getattr(self, "_justia_browser", None)
+        manager = getattr(self, "_justia_playwright_manager", None)
+        self._justia_browser_context = None
+        self._justia_browser = None
+        self._justia_playwright_manager = None
+        try:
+            if context is not None:
+                await context.close()
+        finally:
+            try:
+                if browser is not None:
+                    await browser.close()
+            finally:
+                if manager is not None:
+                    await manager.stop()
     
     def get_base_url(self) -> str:
         """Return the base URL for Arkansas's legislative website."""
@@ -299,7 +392,7 @@ class ArkansasScraper(BaseStateScraper):
             section_number=section_number,
             section_name=title,
             short_title=title,
-            full_text=full_text[:14000],
+            full_text=full_text,
             legal_area=self._identify_legal_area(title),
             source_url=section_url,
             official_cite=f"Ark. Code Ann. § {section_number}",
@@ -322,7 +415,7 @@ class ArkansasScraper(BaseStateScraper):
         for candidate in (
             code_url,
             self.OFFICIAL_CODE_INDEX,
-            f"{self.get_base_url()}/ArkansasCode/",
+            self.OFFICIAL_ENTRY_URL,
             f"{self.get_base_url()}/",
         ):
             value = str(candidate or "").strip()
@@ -355,6 +448,1072 @@ class ArkansasScraper(BaseStateScraper):
             if statute is not None:
                 statutes.append(statute)
         return statutes[:max_statutes] if max_statutes is not None else statutes
+
+    def _delegated_lexis_body_text(
+        self,
+        payload: bytes,
+        *,
+        section_number: str,
+    ) -> str:
+        """Extract enacted text only from an exact delegated document page."""
+
+        if not payload:
+            return ""
+        html = payload.decode("utf-8", errors="replace")
+        if self._AR_LEXIS_BODY_BLOCKED_RE.search(html):
+            return ""
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return ""
+        soup = BeautifulSoup(payload, "lxml")
+        for node in soup.select(
+            "script, style, nav, footer, header.global-nav, .global-nav, "
+            ".document-toolbar, .delivery-toolbar"
+        ):
+            node.decompose()
+        candidates = [
+            soup.select_one("#document-content"),
+            soup.select_one("#document"),
+            soup.select_one("[data-document-content]"),
+            soup.select_one(".document-content"),
+            soup.select_one(".bodytext"),
+            soup.select_one("article"),
+        ]
+        section_re = re.compile(
+            rf"(?<![\d-])(?:§\s*)?{re.escape(section_number)}(?:\.|\s|$)",
+            re.IGNORECASE,
+        )
+        for content_node in candidates:
+            if content_node is None:
+                continue
+            for marker in list(
+                content_node.find_all(["h1", "h2", "h3", "h4", "h5", "h6", "strong"])
+            ):
+                marker_text = self._normalize_legal_text(
+                    marker.get_text(" ", strip=True)
+                )
+                if not self._AR_JUSTIA_EDITORIAL_HEADING_RE.fullmatch(marker_text):
+                    continue
+                sibling = marker.next_sibling
+                while sibling is not None:
+                    following = sibling.next_sibling
+                    sibling.extract()
+                    sibling = following
+                marker.extract()
+                break
+            full_text = self._normalize_legal_text(
+                content_node.get_text(" ", strip=True)
+            )
+            if len(full_text) >= 80 and section_re.search(full_text):
+                return full_text
+        return ""
+
+    @staticmethod
+    def _validated_common_crawl_transport_evidence(
+        fetched: Any,
+        *,
+        source_url: str,
+        content_sha256: str,
+    ) -> Tuple[Optional[Dict[str, Any]], str]:
+        """Bind Common Crawl bytes to one exact delegated Lexis locator."""
+
+        indexed_url = str(
+            getattr(fetched, "common_crawl_indexed_url", "") or ""
+        ).strip()
+        if indexed_url != source_url:
+            return None, "common_crawl_indexed_url_mismatch"
+
+        fetched_digest = str(getattr(fetched, "content_sha256", "") or "").strip().lower()
+        if fetched_digest != content_sha256:
+            return None, "common_crawl_content_sha256_mismatch"
+
+        warc_filename = str(
+            getattr(fetched, "common_crawl_warc_filename", "") or ""
+        ).strip().lstrip("/")
+        archive_url = str(getattr(fetched, "archive_url", "") or "").strip()
+        if not warc_filename or archive_url != (
+            f"https://data.commoncrawl.org/{warc_filename}"
+        ):
+            return None, "common_crawl_warc_locator_mismatch"
+
+        try:
+            warc_offset = int(getattr(fetched, "common_crawl_warc_offset", None))
+            warc_length = int(getattr(fetched, "common_crawl_warc_length", None))
+            status_code = int(getattr(fetched, "status_code", 0) or 0)
+        except (TypeError, ValueError):
+            return None, "common_crawl_warc_range_invalid"
+        if warc_offset < 0 or warc_length <= 0:
+            return None, "common_crawl_warc_range_invalid"
+        if status_code != 206:
+            return None, "common_crawl_warc_range_unconfirmed"
+
+        collection = str(
+            getattr(fetched, "common_crawl_collection", "") or ""
+        ).strip()
+        path_parts = warc_filename.split("/")
+        if (
+            len(path_parts) < 3
+            or path_parts[0] != "crawl-data"
+            or not collection
+            or path_parts[1] != collection
+        ):
+            return None, "common_crawl_collection_mismatch"
+
+        timestamp = str(getattr(fetched, "archive_timestamp", "") or "").strip()
+        evidence = {
+            "indexed_url": indexed_url,
+            "warc_filename": warc_filename,
+            "warc_offset": warc_offset,
+            "warc_length": warc_length,
+            "archive_timestamp": timestamp,
+            "collection": collection,
+            "content_sha256": fetched_digest,
+        }
+        return evidence, ""
+
+    def _delegated_lexis_statute_from_retained_payload(
+        self,
+        *,
+        code_name: str,
+        node: Any,
+        source_url: str,
+        payload: bytes,
+        transport_receipt: Mapping[str, Any],
+    ) -> NormalizedStatute:
+        """Bind one aligned retained response to its exact delegated locator."""
+
+        from ipfs_datasets_py.processors.legal_data.state_laws_source_provenance import (
+            canonicalize_state_law_transport_receipt,
+            verify_state_law_transport_receipt,
+        )
+
+        from .arkansas_lexis import document_page_url
+
+        expected_url = document_page_url(node)
+        canonical_url = self._canonical_fetch_url(source_url)
+        if canonical_url != expected_url:
+            raise ValueError("delegated Lexis response URL changed locator identity")
+        section_number = str(getattr(node, "section_number", "") or "").strip()
+        full_text = self._delegated_lexis_body_text(
+            bytes(payload),
+            section_number=section_number,
+        )
+        if not full_text:
+            raise ValueError(
+                "delegated Lexis response did not contain the exact citation body"
+            )
+        digest = hashlib.sha256(bytes(payload)).hexdigest()
+        canonical_receipt = canonicalize_state_law_transport_receipt(
+            transport_receipt,
+            official_url=expected_url,
+            content_sha256=digest,
+        )
+        verify_state_law_transport_receipt(
+            canonical_receipt,
+            official_url=expected_url,
+            content_sha256=digest,
+        )
+
+        title = str(getattr(node, "title", "") or "").strip()
+        title_text = re.sub(
+            rf"^(?:§\s*)?{re.escape(section_number)}\.\s*",
+            "",
+            title,
+            flags=re.IGNORECASE,
+        ).strip()
+        return NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=f"AR-{section_number}",
+            code_name=code_name,
+            title_number=section_number.split("-", 1)[0],
+            section_number=section_number,
+            section_name=(title_text or section_number)[:200],
+            short_title=(title_text or section_number)[:200],
+            full_text=full_text,
+            legal_area=self._identify_legal_area(title_text),
+            source_url=expected_url,
+            official_cite=f"Ark. Code Ann. § {section_number}",
+            metadata=StatuteMetadata(repealed="[repealed]" in title.lower()),
+            structured_data={
+                "source_kind": "official_delegated_arkansas_lexis_html",
+                "source_authority_class": "official",
+                "discovery_method": "verified_arkansas_lexis_toc",
+                "delegated_locator_node_id": str(
+                    getattr(node, "node_id", "") or ""
+                ),
+                "delegated_locator_evidence_sha256": str(
+                    getattr(node, "evidence_sha256", "") or ""
+                ),
+                "transport_receipt": canonical_receipt,
+                "content_sha256": digest,
+                "delegated_inventory_scope_only": True,
+                "recovery_only": True,
+                "full_corpus_admissible": False,
+                "skip_hydrate": True,
+            },
+        )
+
+    async def _fetch_verified_delegated_lexis_statute(
+        self,
+        *,
+        code_name: str,
+        node: Any,
+    ) -> Tuple[Optional[NormalizedStatute], Dict[str, Any]]:
+        """Try exact live then Wayback transport for one verified Lexis locator."""
+
+        from ipfs_datasets_py.processors.legal_data.state_laws_source_provenance import (
+            StateLawTransportReceiptError,
+            canonicalize_state_law_transport_receipt,
+        )
+
+        from .arkansas_lexis import document_page_url
+
+        section_number = str(getattr(node, "section_number", "") or "").strip()
+        diagnostic: Dict[str, Any] = {
+            "node_id": str(getattr(node, "node_id", "") or ""),
+            "section_number": section_number,
+            "source_url": "",
+            "disposition": "unavailable",
+        }
+        try:
+            source_url = document_page_url(node)
+        except ValueError as exc:
+            diagnostic["error"] = str(exc)
+            return None, diagnostic
+        diagnostic["source_url"] = source_url
+
+        try:
+            fetched = await self._fetch_non_authoritative_reference_result(
+                source_url,
+                timeout_seconds=max(
+                    5,
+                    self._env_int("ARKANSAS_LEXIS_BODY_TIMEOUT_SECONDS", default=20),
+                ),
+                content_validator=lambda body: bool(
+                self._delegated_lexis_body_text(
+                    body,
+                    section_number=section_number,
+                )
+                ),
+                enable_common_crawl=False,
+            )
+        except RuntimeError as exc:
+            diagnostic["error"] = "live body rejected and no exact Wayback body was found"
+            diagnostic["transport_error"] = str(exc)
+            return None, diagnostic
+        if fetched is None:
+            diagnostic["error"] = (
+                "delegated inventory-only body is unavailable or quarantined"
+            )
+            return None, diagnostic
+        transport = str(getattr(fetched, "source", "") or "").strip().lower()
+        if transport not in {
+            "direct",
+            "wayback",
+            "common_crawl",
+            "common_crawl_insecure_tls",
+        }:
+            diagnostic["error"] = f"unsupported or unbound transport {transport!r}"
+            return None, diagnostic
+
+        payload = bytes(getattr(fetched, "content", b"") or b"")
+        full_text = self._delegated_lexis_body_text(
+            payload,
+            section_number=section_number,
+        )
+        if not full_text:
+            diagnostic["error"] = "transport bytes did not contain the exact statute body"
+            return None, diagnostic
+        digest = hashlib.sha256(payload).hexdigest()
+        common_crawl_evidence: Optional[Dict[str, Any]] = None
+        if transport.startswith("common_crawl"):
+            common_crawl_evidence, evidence_error = (
+                self._validated_common_crawl_transport_evidence(
+                    fetched,
+                    source_url=source_url,
+                    content_sha256=digest,
+                )
+            )
+            if common_crawl_evidence is None:
+                diagnostic["error"] = evidence_error
+                return None, diagnostic
+        raw_receipt: Dict[str, Any] = {
+            "official_url": source_url,
+            "content_sha256": digest,
+            "source_transport": transport,
+        }
+        if transport == "wayback" or transport.startswith("common_crawl"):
+            raw_receipt.update(
+                {
+                    "archive_url": str(getattr(fetched, "archive_url", "") or ""),
+                    "archive_timestamp": str(
+                        getattr(fetched, "archive_timestamp", "") or ""
+                    ),
+                }
+            )
+        try:
+            transport_receipt = canonicalize_state_law_transport_receipt(
+                raw_receipt,
+                official_url=source_url,
+                content_sha256=digest,
+            )
+        except StateLawTransportReceiptError as exc:
+            diagnostic["error"] = f"transport receipt rejected: {exc.code}"
+            return None, diagnostic
+
+        try:
+            statute = self._delegated_lexis_statute_from_retained_payload(
+                code_name=code_name,
+                node=node,
+                source_url=source_url,
+                payload=payload,
+                transport_receipt=transport_receipt,
+            )
+        except (TypeError, ValueError) as exc:
+            diagnostic["error"] = f"retained delegated body rejected: {exc}"
+            return None, diagnostic
+        if common_crawl_evidence is not None:
+            statute.structured_data["common_crawl_transport_evidence"] = (
+                common_crawl_evidence
+            )
+        diagnostic.update(
+            {
+                "disposition": "verified_body_probe",
+                "content_sha256": digest,
+                "transport": transport,
+                "transport_receipt": transport_receipt,
+            }
+        )
+        if common_crawl_evidence is not None:
+            diagnostic["common_crawl_transport_evidence"] = common_crawl_evidence
+        return statute, diagnostic
+
+    async def _fetch_verified_delegated_lexis_statutes(
+        self,
+        *,
+        code_name: str,
+        nodes: Sequence[Any],
+        require_exact_unresolved_frontier: bool = False,
+        require_exact_identity_frontier: bool = False,
+    ) -> tuple[
+        list[NormalizedStatute | None],
+        list[dict[str, Any]],
+        dict[str, Any],
+    ]:
+        """Fetch delegated document pages through one shared archive batch.
+
+        The base multi-fetch seam owns Common Crawl discovery, WARC grouping,
+        range coalescing, direct/Wayback fallback, exact-request replay, and
+        prospective ledger retention.  Arkansas contributes only its stable
+        locator frontier and a citation-aware body validator.
+        """
+
+        from .arkansas_lexis import (
+            document_page_url,
+            exact_unresolved_variant_document_nodes,
+            exact_unresolved_variant_identity_document_nodes,
+        )
+
+        requested_nodes = list(nodes)
+        if require_exact_unresolved_frontier and require_exact_identity_frontier:
+            raise ValueError("Arkansas delegated frontier mode is ambiguous")
+        if require_exact_unresolved_frontier:
+            requested_nodes = list(
+                exact_unresolved_variant_document_nodes(requested_nodes)
+            )
+        elif require_exact_identity_frontier:
+            requested_nodes = list(
+                exact_unresolved_variant_identity_document_nodes(requested_nodes)
+            )
+        if not requested_nodes:
+            return [], [], {
+                "requested_pages": 0,
+                "unique_pages": 0,
+                "common_crawl_inventory_queries": 0,
+            }
+
+        urls: list[str] = []
+        section_numbers: list[str] = []
+        for node in requested_nodes:
+            source_url = document_page_url(node)
+            parsed = urlparse(source_url)
+            if not (
+                parsed.scheme == "https"
+                and parsed.hostname == "advance.lexis.com"
+                and parsed.path == "/documentpage/"
+                and parsed.username is None
+                and parsed.password is None
+                and parsed.fragment == ""
+            ):
+                raise ValueError("Arkansas delegated document-page URL drifted")
+            section_number = str(
+                getattr(node, "section_number", "") or ""
+            ).strip()
+            if not section_number:
+                raise ValueError("Arkansas delegated locator lacks a citation")
+            urls.append(source_url)
+            section_numbers.append(section_number)
+        if len(urls) != len(set(urls)):
+            raise ValueError("Arkansas delegated document-page frontier repeats a URL")
+
+        def _any_requested_citation(payload: bytes) -> bool:
+            return any(
+                bool(
+                    self._delegated_lexis_body_text(
+                        payload,
+                        section_number=section_number,
+                    )
+                )
+                for section_number in dict.fromkeys(section_numbers)
+            )
+
+        retry_attempts = max(
+            0,
+            min(
+                3,
+                self._env_int(
+                    "STATE_SCRAPER_FRONTIER_RESIDUAL_RETRY_ATTEMPTS",
+                    default=1,
+                ),
+            ),
+        )
+        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+            urls,
+            residual_retry_attempts=retry_attempts,
+            repeat_grouped_archive_inventory_on_residual=False,
+            timeout_seconds=max(
+                5,
+                self._env_int("ARKANSAS_LEXIS_BODY_TIMEOUT_SECONDS", default=20),
+            ),
+            content_validator=_any_requested_citation,
+            media_type="text/html",
+            max_concurrency=max(
+                1,
+                self._env_int("ARKANSAS_LEXIS_BODY_BATCH_CONCURRENCY", default=8),
+            ),
+            prefer_direct=True,
+            common_crawl_domain_terms=("advance.lexis.com",),
+            common_crawl_url_terms=("/documentpage/",),
+            common_crawl_mime_terms=("html",),
+            wayback_prefix_inventory=True,
+        )
+        vectors = (
+            list(getattr(batch, "urls", []) or []),
+            list(getattr(batch, "payloads", []) or []),
+            list(getattr(batch, "errors", []) or []),
+            list(getattr(batch, "transport_receipts", []) or []),
+            list(getattr(batch, "parser_input_envelopes", []) or []),
+        )
+        if any(len(values) != len(requested_nodes) for values in vectors):
+            raise RuntimeError(
+                "Arkansas delegated multi-fetch result lost frontier alignment"
+            )
+        batch_urls, payloads, errors, receipts, _envelopes = vectors
+        if batch_urls != urls:
+            raise RuntimeError(
+                "Arkansas delegated multi-fetch changed locator order or identity"
+            )
+        stats = dict(getattr(batch, "stats", {}) or {})
+        if int(stats.get("common_crawl_inventory_queries") or 0) > 1:
+            raise RuntimeError(
+                "Arkansas delegated frontier repeated Common Crawl inventory lookup"
+            )
+        if (
+            int(stats.get("network_requested_pages") or 0) > 0
+            and (
+                stats.get("per_page_archive_fallback_disabled") is not True
+                or int(stats.get("fallback_requests") or 0) != 0
+            )
+        ):
+            raise RuntimeError(
+                "Arkansas delegated frontier enabled legacy per-page archive fallback"
+            )
+        stats.update(
+            {
+                "arkansas_delegated_document_prefix": "/documentpage/",
+                "arkansas_exact_citation_validator": True,
+                "arkansas_exact_unresolved_frontier": bool(
+                    require_exact_unresolved_frontier
+                ),
+                "arkansas_exact_identity_frontier": bool(
+                    require_exact_identity_frontier
+                ),
+            }
+        )
+
+        statutes: list[NormalizedStatute | None] = []
+        diagnostics: list[dict[str, Any]] = []
+        for node, source_url, payload, error, receipt in zip(
+            requested_nodes,
+            urls,
+            payloads,
+            errors,
+            receipts,
+            strict=True,
+        ):
+            section_number = str(
+                getattr(node, "section_number", "") or ""
+            ).strip()
+            diagnostic: dict[str, Any] = {
+                "node_id": str(getattr(node, "node_id", "") or ""),
+                "section_number": section_number,
+                "source_url": source_url,
+                "disposition": "unavailable",
+            }
+            if not payload or not isinstance(receipt, Mapping):
+                diagnostic["error"] = str(
+                    error or "all shared direct/archive transports missed"
+                )
+                statutes.append(None)
+                diagnostics.append(diagnostic)
+                continue
+            try:
+                statute = self._delegated_lexis_statute_from_retained_payload(
+                    code_name=code_name,
+                    node=node,
+                    source_url=source_url,
+                    payload=bytes(payload),
+                    transport_receipt=receipt,
+                )
+            except Exception as exc:  # noqa: BLE001 - aligned failure evidence
+                diagnostic["error"] = (
+                    f"{type(exc).__name__}: exact delegated body rejected: {exc}"
+                )
+                statutes.append(None)
+                diagnostics.append(diagnostic)
+                continue
+            diagnostic.update(
+                {
+                    "content_sha256": statute.structured_data["content_sha256"],
+                    "disposition": "verified_body_probe",
+                    "transport": str(receipt.get("source_transport") or ""),
+                    "transport_receipt": dict(receipt),
+                }
+            )
+            statutes.append(statute)
+            diagnostics.append(diagnostic)
+        return statutes, diagnostics, stats
+
+    async def _fetch_exact_unresolved_delegated_lexis_variants(
+        self,
+        *,
+        code_name: str,
+        nodes: Sequence[Any],
+    ) -> tuple[
+        list[NormalizedStatute | None],
+        list[dict[str, Any]],
+        dict[str, Any],
+    ]:
+        """Batch the fixed sixteen unresolved variant locators exactly once."""
+
+        return await self._fetch_verified_delegated_lexis_statutes(
+            code_name=code_name,
+            nodes=nodes,
+            require_exact_unresolved_frontier=True,
+        )
+
+    async def _fetch_exact_unresolved_delegated_lexis_variant_identities(
+        self,
+        *,
+        code_name: str,
+        nodes: Sequence[Any],
+    ) -> tuple[
+        list[NormalizedStatute | None],
+        list[dict[str, Any]],
+        dict[str, Any],
+    ]:
+        """Submit the exact four identity-gap URNs as one shared body wave."""
+
+        return await self._fetch_verified_delegated_lexis_statutes(
+            code_name=code_name,
+            nodes=nodes,
+            require_exact_identity_frontier=True,
+        )
+
+    async def _resolve_enactment_toc_current_variants(
+        self,
+        *,
+        nodes: Sequence[Any],
+        inventory_sha256: str,
+    ) -> tuple[tuple[Any, ...], dict[str, Any]]:
+        """Replay the fixed 29-decision enactment/TOC proof bundle."""
+
+        from .arkansas_lexis import (
+            ARKANSAS_ENACTMENT_TOC_SOURCE_INPUT_CONTRACT,
+            CURRENT_VARIANT_RESOLVER_PARSER_NAME,
+            resolve_enactment_toc_source_bound_variants,
+        )
+
+        diagnostic: dict[str, Any] = {
+            "schema_version": "arkansas-enactment-toc-current-variant-v1",
+            "inventory_sha256": inventory_sha256,
+            "source_input_count": len(
+                ARKANSAS_ENACTMENT_TOC_SOURCE_INPUT_CONTRACT
+            ),
+            "disposition": "unresolved",
+        }
+        ledger = self._get_arkansas_current_variant_resolution_ledger()
+        if ledger is None:
+            diagnostic["error"] = (
+                "source-bound resolution requires the Arkansas proof ledger"
+            )
+            return (), diagnostic
+        if str(getattr(ledger, "parser_name", "") or "") != (
+            CURRENT_VARIANT_RESOLVER_PARSER_NAME
+        ):
+            diagnostic["error"] = "source-bound resolution ledger identity drifted"
+            return (), diagnostic
+        ordered_inputs = sorted(ARKANSAS_ENACTMENT_TOC_SOURCE_INPUT_CONTRACT)
+        requests = tuple(
+            (
+                ARKANSAS_ENACTMENT_TOC_SOURCE_INPUT_CONTRACT[key][0],
+                {
+                    "method": "GET",
+                    "url": ARKANSAS_ENACTMENT_TOC_SOURCE_INPUT_CONTRACT[key][0],
+                },
+            )
+            for key in ordered_inputs
+        )
+        try:
+            retained = tuple(
+                ledger.replay_retained_parser_inputs(requests=requests)
+            )
+        except Exception as exc:  # noqa: BLE001 - retained proof boundary
+            diagnostic["error"] = (
+                f"{type(exc).__name__}: exact enactment/TOC replay failed: {exc}"
+            )
+            return (), diagnostic
+        if len(retained) != len(ordered_inputs):
+            diagnostic["error"] = (
+                "exact enactment/TOC retained proof bundle is incomplete"
+            )
+            return (), diagnostic
+        try:
+            resolutions = resolve_enactment_toc_source_bound_variants(
+                nodes,
+                inventory_sha256=inventory_sha256,
+                retained_inputs=dict(zip(ordered_inputs, retained, strict=True)),
+            )
+        except Exception as exc:  # noqa: BLE001 - fail-closed proof boundary
+            diagnostic["error"] = f"{type(exc).__name__}: {exc}"
+            return (), diagnostic
+        diagnostic.update(
+            {
+                "disposition": "selected_current_locators",
+                "resolution_count": len(resolutions),
+                "resolutions": [item.to_dict() for item in resolutions],
+            }
+        )
+        return resolutions, diagnostic
+
+    async def _resolve_act283_current_variants(
+        self,
+        *,
+        nodes: Sequence[Any],
+    ) -> tuple[tuple[Any, ...], dict[str, Any]]:
+        """Replay, never invent, the exact three-input Act 283 proof bundle."""
+
+        from .arkansas_lexis import (
+            ACT283_CRC_NONOCCURRENCE_URL,
+            ACT283_DWS_CURRENT_FORM_URL,
+            ACT283_URL,
+            CURRENT_VARIANT_RESOLVER_PARSER_NAME,
+            resolve_act283_source_bound_variants,
+        )
+
+        diagnostic: dict[str, Any] = {
+            "schema_version": "arkansas-act283-current-variant-resolution-v1",
+            "section_numbers": ["11-10-803", "26-51-905"],
+            "source_urls": [
+                ACT283_URL,
+                ACT283_CRC_NONOCCURRENCE_URL,
+                ACT283_DWS_CURRENT_FORM_URL,
+            ],
+            "disposition": "unresolved",
+        }
+        ledger = self._get_arkansas_current_variant_resolution_ledger()
+        if ledger is None:
+            diagnostic["error"] = "source-bound resolution requires an attached ledger"
+            return (), diagnostic
+        if str(getattr(ledger, "parser_name", "") or "") != (
+            CURRENT_VARIANT_RESOLVER_PARSER_NAME
+        ):
+            diagnostic["error"] = "source-bound resolution ledger identity drifted"
+            return (), diagnostic
+        requests = tuple(
+            (url, {"method": "GET", "url": url})
+            for url in (
+                ACT283_URL,
+                ACT283_CRC_NONOCCURRENCE_URL,
+                ACT283_DWS_CURRENT_FORM_URL,
+            )
+        )
+        try:
+            retained = tuple(
+                ledger.replay_retained_parser_inputs(requests=requests)
+            )
+        except Exception as exc:  # noqa: BLE001 - retained ledger boundary
+            retained_urls = {
+                str(getattr(entry.receipt, "endpoint", "") or "")
+                for entry in getattr(ledger, "entries", ())
+            }
+            diagnostic["missing_source_urls"] = [
+                url for url, _request in requests if url not in retained_urls
+            ]
+            diagnostic["error"] = (
+                f"{type(exc).__name__}: exact Act 283 retained replay failed: {exc}"
+            )
+            return (), diagnostic
+        if len(retained) != 3:
+            diagnostic["error"] = "exact Act 283 retained proof bundle is incomplete"
+            return (), diagnostic
+        try:
+            resolutions = resolve_act283_source_bound_variants(
+                nodes,
+                trigger_act_retained_input=retained[0],
+                crc_nonoccurrence_retained_input=retained[1],
+                current_dws_form_retained_input=retained[2],
+            )
+        except Exception as exc:  # noqa: BLE001 - fail-closed evidence boundary
+            diagnostic["error"] = f"{type(exc).__name__}: {exc}"
+            return (), diagnostic
+        diagnostic.update(
+            {
+                "disposition": "selected_current_locators",
+                "resolutions": [item.to_dict() for item in resolutions],
+                "retained_body_paths": [
+                    str(item.body_path) for item in retained
+                ],
+                "retained_evidence_paths": [
+                    str(item.evidence_path) for item in retained
+                ],
+            }
+        )
+        return resolutions, diagnostic
+
+    async def _resolve_hr5330_current_variant(
+        self,
+        *,
+        nodes: Sequence[Any],
+    ) -> tuple[Any | None, dict[str, Any]]:
+        """Acquire and retain exact official evidence for Ark. Code 16-56-106."""
+
+        from .arkansas_lexis import (
+            ACT1032_URL,
+            CURRENT_VARIANT_RESOLVER_PARSER_NAME,
+            HR5330_BILLSTATUS_URL,
+            resolve_hr5330_source_bound_variant,
+        )
+
+        diagnostic: dict[str, Any] = {
+            "schema_version": "arkansas-hr5330-current-variant-resolution-v1",
+            "section_number": "16-56-106",
+            "source_url": HR5330_BILLSTATUS_URL,
+            "disposition": "unresolved",
+        }
+        ledger = self._get_arkansas_current_variant_resolution_ledger()
+        if ledger is None:
+            diagnostic["error"] = "source-bound resolution requires an attached ledger"
+            return None, diagnostic
+        if str(getattr(ledger, "parser_name", "") or "") != (
+            CURRENT_VARIANT_RESOLVER_PARSER_NAME
+        ):
+            diagnostic["error"] = "source-bound resolution ledger identity drifted"
+            return None, diagnostic
+        try:
+            trigger_act_retained = ledger.replay_retained_parser_input(
+                official_url=ACT1032_URL,
+                sanitized_request={"method": "GET", "url": ACT1032_URL},
+            )
+        except Exception as exc:  # noqa: BLE001 - fail-closed retained evidence
+            diagnostic["error"] = (
+                f"{type(exc).__name__}: Act 1032 retained replay failed: {exc}"
+            )
+            return None, diagnostic
+        if trigger_act_retained is None:
+            diagnostic["error"] = "exact retained Arkansas Act 1032 input is missing"
+            return None, diagnostic
+
+        try:
+            retained = ledger.replay_retained_parser_input(
+                official_url=HR5330_BILLSTATUS_URL,
+                sanitized_request={
+                    "method": "GET",
+                    "url": HR5330_BILLSTATUS_URL,
+                },
+            )
+        except Exception as exc:  # noqa: BLE001 - retained proof boundary
+            diagnostic["error"] = (
+                f"{type(exc).__name__}: GovInfo retained replay failed: {exc}"
+            )
+            return None, diagnostic
+        if retained is None:
+            diagnostic["error"] = "exact retained GovInfo input is missing"
+            return None, diagnostic
+        diagnostic["transport_batch"] = {
+            "requested_pages": 1,
+            "retained_replay_hits": 1,
+            "network_requested_pages": 0,
+            "common_crawl_inventory_queries": 0,
+        }
+        try:
+            resolution = resolve_hr5330_source_bound_variant(
+                nodes,
+                billstatus_xml=bytes(retained.envelope.body or b""),
+                source_url=HR5330_BILLSTATUS_URL,
+                transport_receipt=retained.transport_receipt,
+                parser_input_envelope=retained.envelope,
+                trigger_act_retained_input=trigger_act_retained,
+            )
+        except Exception as exc:  # noqa: BLE001 - fail-closed evidence boundary
+            diagnostic["error"] = f"{type(exc).__name__}: {exc}"
+            return None, diagnostic
+        if (
+            str(retained.receipt.receipt_sha256)
+            != resolution.parser_input_receipt_sha256
+        ):
+            diagnostic["error"] = "resolved GovInfo bytes are absent from the ledger"
+            return None, diagnostic
+        diagnostic.update(
+            {
+                "disposition": "selected_current_locator",
+                "resolution": resolution.to_dict(),
+                "retained_body_path": str(retained.body_path),
+                "retained_evidence_path": str(retained.evidence_path),
+                "trigger_act_retained_body_path": str(
+                    trigger_act_retained.body_path
+                ),
+                "trigger_act_retained_evidence_path": str(
+                    trigger_act_retained.evidence_path
+                ),
+            }
+        )
+        return resolution, diagnostic
+
+    async def _resolve_exact_current_variant_frontier(
+        self,
+        *,
+        nodes: Sequence[Any],
+        observed_at: str,
+        inventory_sha256: str,
+    ) -> dict[str, Any]:
+        """Invoke every executable Arkansas current-variant proof atomically."""
+
+        from .arkansas_lexis import (
+            reconcile_current_statute_variants,
+            variant_decision_sha256,
+        )
+
+        baseline = reconcile_current_statute_variants(
+            nodes,
+            observed_at=observed_at,
+        )
+        baseline_unresolved = {
+            item.section_number
+            for item in baseline
+            if item.disposition == "unresolved"
+        }
+        enactment, enactment_diagnostic = (
+            await self._resolve_enactment_toc_current_variants(
+                nodes=nodes,
+                inventory_sha256=inventory_sha256,
+            )
+        )
+        hr5330, hr5330_diagnostic = await self._resolve_hr5330_current_variant(
+            nodes=nodes,
+        )
+        act283, act283_diagnostic = await self._resolve_act283_current_variants(
+            nodes=nodes,
+        )
+        source_bound = [*enactment, *act283]
+        if hr5330 is not None:
+            source_bound.append(hr5330)
+        decisions = reconcile_current_statute_variants(
+            nodes,
+            observed_at=observed_at,
+            source_bound_resolutions=source_bound,
+        )
+
+        def _counts(items: Sequence[Any]) -> dict[str, int]:
+            return {
+                disposition: sum(
+                    item.disposition == disposition for item in items
+                )
+                for disposition in (
+                    "selected_current_locator",
+                    "no_current_locator",
+                    "unresolved",
+                )
+            }
+
+        baseline_counts = _counts(baseline)
+        current_counts = _counts(decisions)
+        original_conflicts = tuple(
+            item
+            for item in decisions
+            if item.section_number in baseline_unresolved
+        )
+        original_conflict_counts = _counts(original_conflicts)
+        unresolved = tuple(
+            item.section_number
+            for item in decisions
+            if item.disposition == "unresolved"
+        )
+        return {
+            "schema_version": "arkansas-exact-current-variant-frontier-v1",
+            "inventory_sha256": inventory_sha256,
+            "observed_at": observed_at,
+            "baseline_counts": baseline_counts,
+            "baseline_unresolved_section_numbers": sorted(
+                baseline_unresolved
+            ),
+            "current_counts": current_counts,
+            "original_conflict_counts": original_conflict_counts,
+            "unresolved_section_numbers": list(unresolved),
+            "decision_sha256": variant_decision_sha256(decisions),
+            "enactment_toc": enactment_diagnostic,
+            "hr5330": hr5330_diagnostic,
+            "act283": act283_diagnostic,
+            "authorizing_for_materialization": not unresolved,
+            "disposition": (
+                "current_variant_frontier_closed"
+                if not unresolved
+                else "current_variant_frontier_unresolved"
+            ),
+        }
+
+    async def _configured_retained_current_variant_preflight(
+        self,
+    ) -> dict[str, Any] | None:
+        """Replay the configured fixed inventory and proof ledger offline."""
+
+        inventory_path = self.state_law_run_environment_value(
+            "ARKANSAS_LEXIS_INVENTORY_PATH"
+        )
+        if not inventory_path:
+            return None
+        from .arkansas_lexis import load_exact_retained_inventory
+
+        try:
+            inventory, inventory_sha256 = load_exact_retained_inventory(
+                inventory_path
+            )
+            resolution = await self._resolve_exact_current_variant_frontier(
+                nodes=inventory.nodes,
+                observed_at=inventory.observed_at,
+                inventory_sha256=inventory_sha256,
+            )
+        except Exception as exc:  # noqa: BLE001 - retained preflight boundary
+            return {
+                "schema_version": "arkansas-retained-current-preflight-v1",
+                "disposition": "retained_current_preflight_rejected",
+                "authorizing_for_materialization": False,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+        return {
+            "schema_version": "arkansas-retained-current-preflight-v1",
+            "disposition": str(resolution["disposition"]),
+            "authorizing_for_materialization": resolution[
+                "authorizing_for_materialization"
+            ],
+            "inventory": dict(inventory.frontier),
+            "current_variants": resolution,
+            "secondary_recovery_admitted": False,
+        }
+
+    async def _probe_delegated_arkansas_code(
+        self,
+        *,
+        code_name: str,
+    ) -> Dict[str, Any]:
+        """Inventory the delegated TOC and test exact body transports."""
+
+        from .arkansas_lexis import discover_live_inventory
+
+        max_expansions = max(
+            40,
+            min(
+                self._env_int(
+                    "ARKANSAS_LEXIS_PROBE_MAX_EXPANSIONS",
+                    default=48,
+                ),
+                256,
+            ),
+        )
+        inventory = await discover_live_inventory(
+            max_expansions=max_expansions,
+            retries=2,
+            request_delay_seconds=0.05,
+            timeout_ms=max(
+                15_000,
+                self._env_int("ARKANSAS_LEXIS_PROBE_TIMEOUT_MS", default=45_000),
+            ),
+            require_enabled=False,
+        )
+        frontier = dict(inventory.frontier)
+        evidence: Dict[str, Any] = {
+            "schema_version": "arkansas-delegated-body-probe/v1",
+            "status": inventory.status,
+            "observed_at": inventory.observed_at,
+            "final_url": inventory.final_url,
+            "delegation_verified": inventory.delegation_verified,
+            "root_rendered_sha256": inventory.root_rendered_sha256,
+            "frontier": frontier,
+            "diagnostics": list(inventory.diagnostics),
+            "body_probes": [],
+            "secondary_recovery_admitted": False,
+        }
+        locators = [node for node in inventory.nodes if node.is_statute_locator]
+        if not (
+            inventory.delegation_verified
+            and frontier.get("title_inventory_closed") is True
+            and locators
+        ):
+            evidence["disposition"] = "delegated_locator_frontier_unavailable"
+            return evidence
+
+        selected: List[Any] = []
+        selected_titles: set[str] = set()
+        max_probes = max(
+            1,
+            min(self._env_int("ARKANSAS_LEXIS_BODY_PROBE_COUNT", default=3), 5),
+        )
+        for node in locators:
+            section_number = str(node.section_number or "")
+            title_number = section_number.split("-", 1)[0]
+            if title_number in selected_titles:
+                continue
+            selected_titles.add(title_number)
+            selected.append(node)
+            if len(selected) >= max_probes:
+                break
+        if len(selected) < max_probes:
+            for node in locators:
+                if node in selected:
+                    continue
+                selected.append(node)
+                if len(selected) >= max_probes:
+                    break
+
+        statutes, diagnostics, batch_stats = (
+            await self._fetch_verified_delegated_lexis_statutes(
+                code_name=code_name,
+                nodes=selected,
+            )
+        )
+        evidence["body_probes"] = diagnostics
+        evidence["body_transport_batch"] = batch_stats
+        verified_body_probe_count = sum(statute is not None for statute in statutes)
+        evidence["verified_body_probe_count"] = verified_body_probe_count
+        evidence["probed_locator_count"] = len(selected)
+        evidence["disposition"] = (
+            "body_transport_verified_but_policy_or_frontier_unreconciled"
+            if verified_body_probe_count
+            else "delegated_body_access_blocked"
+        )
+        return evidence
     
     async def scrape_code(
         self,
@@ -386,7 +1545,10 @@ class ArkansasScraper(BaseStateScraper):
                     max_statutes=limit,
                 )
                 return constitution_rows if limit is None else constitution_rows[: int(limit)]
-        from .arkansas_section import configured_section_html_path, parse_arkansas_section_html
+        from .arkansas_section import (
+            configured_section_html_path,
+            parse_arkansas_section_html,
+        )
 
         local_section = configured_section_html_path()
         if local_section is not None:
@@ -402,17 +1564,31 @@ class ArkansasScraper(BaseStateScraper):
             code_name, code_url or self.OFFICIAL_CODE_INDEX, max_statutes=limit
         )
         official = self._filter_non_code_results(official)
-        if official and (limit is None or len(official) >= limit):
-            return official[:limit] if limit is not None else official
+        if official and limit is not None and len(official) >= limit:
+            return official[:limit]
 
-        # Full-corpus mode must not sole-admit secondary Justia mirrors.
+        # Full-corpus mode must bind every body to the official/delegated
+        # locator.  The Lexis TOC is authoritative inventory; Justia remains a
+        # secondary recovery source and is never promoted merely because the
+        # designated document route is CAPTCHA-gated.
         if limit is None and self._full_corpus_enabled():
-            if official:
-                return official
-            self.logger.warning(
-                "Arkansas full-corpus: official arkleg path empty; refusing Justia sole admission"
+            evidence = await self._configured_retained_current_variant_preflight()
+            if evidence is None:
+                evidence = await self._probe_delegated_arkansas_code(
+                    code_name=code_name,
+                )
+            self._last_full_corpus_frontier = dict(evidence)
+            self._write_partial_checkpoint(
+                official,
+                code_name=code_name,
+                stage_label="arkansas:delegated_body_blocked",
+                force=True,
+                extra={"arkansas_delegated_frontier": evidence},
             )
-            return []
+            raise ArkansasDelegatedCorpusBlockedError(
+                str(evidence.get("disposition") or "delegated source unavailable"),
+                evidence=evidence,
+            )
 
         justia_statutes = await self._scrape_justia_titles(code_name, max_statutes=limit)
         justia_statutes = self._filter_non_code_results(justia_statutes)
@@ -422,8 +1598,11 @@ class ArkansasScraper(BaseStateScraper):
         candidate_urls = [
             code_url,
             "https://www.arkleg.state.ar.us/",
-            "https://www.arkleg.state.ar.us/ArkansasCode/",
-            "https://web.archive.org/web/20240101000000/https://www.arkleg.state.ar.us/ArkansasCode/",
+            self.OFFICIAL_ENTRY_URL,
+            (
+                "https://web.archive.org/web/20240101000000/"
+                "https://www.arkleg.state.ar.us/ArkansasLaw/"
+            ),
             "https://law.justia.com/codes/arkansas/",
             "https://web.archive.org/web/20231201000000/https://law.justia.com/codes/arkansas/",
         ]
@@ -469,8 +1648,10 @@ class ArkansasScraper(BaseStateScraper):
         try:
             payload = await self._fetch_justia_html(index_url, timeout_seconds=18)
         except Exception:
+            await self._close_justia_browser()
             return []
         if not payload:
+            await self._close_justia_browser()
             return []
 
         soup = BeautifulSoup(payload, "html.parser")
@@ -599,6 +1780,7 @@ class ArkansasScraper(BaseStateScraper):
                     continue
                 statutes.append(result)
                 if max_statutes is not None and len(statutes) >= max_statutes:
+                    await self._close_justia_browser()
                     return statutes
             now = time.monotonic()
             if now - last_heartbeat >= heartbeat_seconds:
@@ -610,6 +1792,7 @@ class ArkansasScraper(BaseStateScraper):
                 )
                 last_heartbeat = now
 
+        await self._close_justia_browser()
         return statutes
 
     async def _build_justia_statute(self, *, code_name: str, section_url: str, fallback_number: str) -> NormalizedStatute | None:
@@ -628,7 +1811,8 @@ class ArkansasScraper(BaseStateScraper):
         html = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else str(payload)
         soup = BeautifulSoup(html, "html.parser")
         content_node = (
-            soup.select_one("div.wrapper")
+            soup.select_one("#codes-content")
+            or soup.select_one("div.wrapper")
             or soup.select_one(".primary-content")
             or soup.select_one("#main-content")
             or soup.select_one("main")
@@ -638,7 +1822,29 @@ class ArkansasScraper(BaseStateScraper):
         if content_node is None:
             return None
 
-        full_text = self._extract_best_content_text(str(content_node))
+        # ``#codes-content`` contains enacted section text followed by
+        # publisher-supplied history/annotations.  Preserve the law and remove
+        # editorial additions without relying on the portal's copyright banner.
+        editorial_removed = False
+        for marker in list(content_node.find_all(["h1", "h2", "h3", "h4", "h5", "h6", "strong"])):
+            marker_text = re.sub(r"\s+", " ", marker.get_text(" ", strip=True) or "").strip()
+            if not self._AR_JUSTIA_EDITORIAL_HEADING_RE.fullmatch(marker_text):
+                continue
+            editorial_removed = True
+            sibling = marker.next_sibling
+            while sibling is not None:
+                following = sibling.next_sibling
+                try:
+                    sibling.extract()
+                except Exception:
+                    pass
+                sibling = following
+            marker.extract()
+            break
+
+        full_text = self._normalize_legal_text(content_node.get_text(" ", strip=True))
+        if not full_text:
+            full_text = self._extract_best_content_text(str(content_node))
         full_text = re.split(r"\bDisclaimer\s*:", full_text, maxsplit=1)[0].strip()
         full_text = re.split(r"\bAsk a Lawyer\b", full_text, maxsplit=1)[0].strip()
         full_text = re.sub(
@@ -650,13 +1856,21 @@ class ArkansasScraper(BaseStateScraper):
         )
         full_text = re.sub(r"\s*(?:Previous\s+)?Next\s*$", "", full_text, flags=re.IGNORECASE)
         full_text = re.sub(r"\s+", " ", full_text).strip()
-        if len(full_text) < 280:
+        if len(full_text) < 40:
             return None
 
         heading_node = soup.select_one("h1") or soup.select_one("title")
         heading = " ".join((heading_node.get_text(" ", strip=True) if heading_node else "").split())
         match = self._AR_SECTION_NUMBER_RE.search(section_url)
         section_number = match.group(1) if match else fallback_number
+        heading_match = re.search(
+            rf"(?:§\s*)?{re.escape(section_number)}\.\s*(?P<title>.+)$",
+            heading,
+            flags=re.IGNORECASE,
+        )
+        section_title = (
+            heading_match.group("title").strip() if heading_match else heading
+        )
 
         return NormalizedStatute(
             state_code=self.state_code,
@@ -664,21 +1878,33 @@ class ArkansasScraper(BaseStateScraper):
             statute_id=f"{code_name} § {section_number}",
             code_name=code_name,
             section_number=section_number,
-            section_name=(heading or f"Arkansas Code {section_number}")[:200],
-            full_text=full_text[:14000],
+            section_name=(section_title or f"Arkansas Code {section_number}")[:200],
+            short_title=(section_title or f"Arkansas Code {section_number}")[:200],
+            full_text=full_text,
             source_url=section_url,
             legal_area=self._identify_legal_area(heading),
             official_cite=f"Ark. Code Ann. § {section_number}",
             metadata=StatuteMetadata(),
             structured_data={
                 "source_kind": "secondary_justia_arkansas_html",
-                "discovery_method": "justia_title_section_crawl",
+                "source_authority_class": "secondary",
+                "discovery_method": "justia_title_section_crawl_with_web_archiving",
+                "retrieval_provider": self._current_fetch_provider(),
+                "recovery_only": True,
+                "full_corpus_admissible": False,
+                "official_delegating_authority": "Arkansas Bureau of Legislative Research",
+                "official_delegated_entry_url": self.OFFICIAL_DELEGATED_ENTRY_URL,
+                "official_delegated_container_url": self.OFFICIAL_DELEGATED_CONTAINER_URL,
+                "editorial_material_removed": editorial_removed,
                 "skip_hydrate": True,
             },
         )
 
     def official_title_url(self, title_number: object) -> str:
-        return f"{self.OFFICIAL_CODE_INDEX}?title={title_number}"
+        # The legislature exposes one referral landing page rather than stable
+        # per-title arkleg URLs.  Title identity remains in ``canonical_key``
+        # and ``title_number``; do not manufacture dead query URLs.
+        return self.OFFICIAL_ENTRY_URL
 
     def official_title_catalog(self) -> List[Dict[str, Any]]:
         """Return the exhaustive official Arkansas Code title catalog."""
@@ -763,7 +1989,6 @@ class ArkansasScraper(BaseStateScraper):
             seen_titles.add(number)
             official_url = source_url if source_url and self.is_official_arkleg_url(source_url) else self.official_title_url(number)
             name = dict(self.OFFICIAL_TITLES).get(number, f"Title {number}")
-            cleaned = re.sub(r"\s+", " ", str(label or "")).strip() or name
             repaired.append(
                 {
                     "canonical_key": f"ar:title-{number}",

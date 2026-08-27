@@ -591,20 +591,50 @@ async def test_cohort_c_scrapers_emit_official_non_placeholder_text(monkeypatch:
 async def test_florida_full_corpus_is_uncapped_when_max_statutes_omitted(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    requested: Dict[str, Any] = {}
-    pages = _fl_pages()
+    requested: Dict[str, Any] = {"max_statutes": []}
 
-    async def _fake_html(self, url: str, timeout_seconds: int = 12) -> str:
-        return _page_match(url, pages)
+    async def _fake_titles(self, code_url: str):
+        return [
+            (self.official_title_url(number), f"Title {roman}")
+            for number, roman, _name in self.OFFICIAL_TITLES
+        ]
 
-    original_parse = FloridaScraper._parse_chapter_sections
+    async def _fake_chapters(self, title_url: str):
+        title_number = self._title_number_from_link(title_url)
+        return [
+            (
+                f"https://www.leg.state.fl.us/Statutes/title-{title_number}/chapter.html",
+                f"Chapter {title_number}",
+            )
+        ]
 
     async def _counting_parse(self, **kwargs):
-        requested["max_statutes"] = kwargs.get("max_statutes")
-        return await original_parse(self, **kwargs)
+        requested["max_statutes"].append(kwargs.get("max_statutes"))
+        chapter_label = str(kwargs["chapter_label"])
+        chapter_number = chapter_label.rsplit(" ", 1)[-1]
+        return [
+            NormalizedStatute(
+                state_code="FL",
+                state_name="Florida",
+                statute_id=f"FL-{chapter_number}.1",
+                code_name=kwargs["code_name"],
+                title_number=chapter_number,
+                chapter_number=chapter_number,
+                section_number=f"{chapter_number}.1",
+                section_name="Official section",
+                full_text="Official Florida section text.",
+                source_url=kwargs["chapter_url"],
+                official_cite=f"Fla. Stat. § {chapter_number}.1",
+                structured_data={
+                    "source_kind": "official_florida_chapter_html",
+                    "source_authority_class": "official",
+                },
+            )
+        ]
 
     monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
-    monkeypatch.setattr(FloridaScraper, "_fetch_official_fl_html", _fake_html)
+    monkeypatch.setattr(FloridaScraper, "_discover_title_links", _fake_titles)
+    monkeypatch.setattr(FloridaScraper, "_discover_chapter_links", _fake_chapters)
     monkeypatch.setattr(FloridaScraper, "_parse_chapter_sections", _counting_parse)
     scraper = FloridaScraper("FL", "Florida")
     statutes = await scraper.scrape_code(
@@ -612,8 +642,9 @@ async def test_florida_full_corpus_is_uncapped_when_max_statutes_omitted(
         "https://www.leg.state.fl.us/Statutes/",
         max_statutes=None,
     )
-    assert requested.get("max_statutes") is None
-    assert len(statutes) >= 1
+    assert requested["max_statutes"] == [None] * len(FloridaScraper.OFFICIAL_TITLES)
+    assert len(statutes) == len(FloridaScraper.OFFICIAL_TITLES)
+    assert scraper._last_full_corpus_frontier["closed"] is True
 
 
 @pytest.mark.anyio

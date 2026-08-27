@@ -1,11 +1,11 @@
 """Official Georgia OCGA title-text dump parser.
 
 Georgia's live HTML tree is an Angular SPA with no free official bulk zip.
-An operator-supplied local dump of official title text (PDF extract or
-saved statute bodies) can be admitted as official: no nav/footer SPA chrome,
-no archive transport. Even exact Title 1-53 filename coverage is only a local
-inventory check; it cannot certify freshness or an exhaustive live section
-frontier. This does not auto-download the commercial OCGA.
+An operator-supplied local dump of title text (PDF extract or saved statute
+bodies) can be parsed as a bounded candidate without nav/footer SPA chrome.
+Even exact Title 1-53 filename coverage is only a local inventory check; it
+cannot certify provenance, freshness, or an exhaustive section frontier. Full
+admission requires the separate hash-bound archived-official manifest path.
 
 Local dumps: ``GEORGIA_TITLE_TEXT``, ``GEORGIA_TITLE_TEXT_DIR``,
 ``GEORGIA_TITLE_PDF``, ``GEORGIA_TITLE_PDF_DIR``. PDFs are never auto-downloaded.
@@ -19,13 +19,14 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
+from .base_scraper import NormalizedStatute, StatuteMetadata
 from .georgia_archive import (
     NAV_MARKERS,
     TITLE_NUMBERS,
     official_section_url,
     official_title_url,
+    strip_georgia_editorial_tail,
 )
-from .base_scraper import NormalizedStatute, StatuteMetadata
 
 _SECTION_RE = re.compile(
     r"(?m)^(?:(?:O\.C\.G\.A\.|OCGA)\s+)?"
@@ -93,7 +94,7 @@ def parse_georgia_title_text(
             continue
         start = match.end()
         end = matches[index + 1].start() if index + 1 < len(matches) else len(cleaned)
-        section_body = _clean(cleaned[start:end])
+        section_body = _clean(strip_georgia_editorial_tail(cleaned[start:end]))
         if any(marker in section_body.lower() for marker in NAV_MARKERS):
             continue
         if len(section_body) < 40:
@@ -110,14 +111,16 @@ def parse_georgia_title_text(
                 chapter_number=parts[1] if len(parts) > 1 else None,
                 section_number=number,
                 section_name=heading[:200],
-                full_text=section_body[:14000],
+                full_text=section_body,
                 source_url=source_url or official,
                 official_cite=f"Ga. Code Ann. § {number}",
                 metadata=StatuteMetadata(),
                 structured_data={
                     "source_kind": "official_georgia_title_text",
-                    "source_authority_class": "official",
+                    "source_authority_class": "unverified",
                     "discovery_method": "georgia_title_text_dump",
+                    "full_corpus_admissible": False,
+                    "official_source": False,
                     "official_title_url": official_title_url(parts[0]) if parts else None,
                     "skip_hydrate": True,
                 },

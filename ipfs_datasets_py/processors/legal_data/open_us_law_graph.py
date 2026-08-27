@@ -26,16 +26,80 @@ atomic writers / shared layout primitives).
 from __future__ import annotations
 
 import json
-import re
-import unicodedata
 from collections import defaultdict, deque
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Final, Optional, Union
+from typing import Any, ClassVar, Final, Optional, Union
 
+from ipfs_datasets_py.processors.legal_data.legal_graph_core import (
+    CITATION_CODE_ALIASES as SHARED_CITATION_CODE_ALIASES,
+)
+from ipfs_datasets_py.processors.legal_data.legal_graph_core import (
+    CitationResolverBindings,
+    GraphProjectionBindings,
+    GraphRecordBindings,
+    LegalGraphOntologyBindings,
+    LegalGraphProjectorBindings,
+    LegalGraphProjectorCore,
+    assert_graph_projection_coverage,
+    assert_graph_projection_semantics_disjoint,
+    assert_legal_similarity_disjoint as assert_legal_similarity_disjoint_core,
+    bind_source_span,
+    citation_alias_key,
+    citation_mention_to_dict,
+    coerce_graph_enum,
+    drop_contained_mentions,
+    graph_edge_is_legal,
+    graph_edge_is_similarity,
+    graph_edge_to_dict,
+    graph_node_to_dict,
+    graph_ontology_edge_class_for,
+    graph_ontology_is_legal_edge,
+    graph_ontology_is_similarity_edge,
+    graph_ontology_to_dict,
+    graph_projection_coverage_node_types,
+    graph_projection_legal_edges,
+    graph_projection_missing_coverage_node_types,
+    graph_projection_node_by_cid,
+    graph_projection_node_by_key,
+    graph_projection_similarity_edges,
+    graph_projection_to_dict,
+    legal_edge_direction_allowed,
+    lookup_citation_locator,
+    resolved_citation_to_dict,
+    source_span_from_mapping,
+    source_span_from_occurrence,
+    source_span_to_dict,
+    unresolved_citation_node_key,
+    validate_citation_mention_record,
+    validate_graph_edge_record,
+    validate_graph_node_record,
+    validate_graph_ontology,
+    validate_graph_ontology_edge,
+    validate_graph_projection,
+    validate_source_span_record,
+)
+from ipfs_datasets_py.processors.legal_data.legal_graph_core import (
+    extract_citation_mentions as extract_citation_mentions_core,
+)
+from ipfs_datasets_py.processors.legal_data.legal_graph_core import (
+    optional_str as optional_str_core,
+)
+from ipfs_datasets_py.processors.legal_data.legal_graph_core import (
+    require_non_empty_str as require_non_empty_str_core,
+)
+from ipfs_datasets_py.processors.legal_data.legal_graph_core import (
+    require_non_negative_int as require_non_negative_int_core,
+)
+from ipfs_datasets_py.processors.legal_data.legal_graph_core import (
+    resolve_citations as resolve_citations_core,
+)
+from ipfs_datasets_py.processors.legal_data.legal_graph_core import (
+    sha256_cid as sha256_cid_core,
+)
 from ipfs_datasets_py.processors.legal_data.open_us_law_schema import (
     ADR_PATH,
     DEFAULT_CONFIGURATION,
@@ -145,9 +209,6 @@ class GraphNodeType(str, Enum):
 
     @classmethod
     def coerce(cls, value: Any) -> "GraphNodeType":
-        if isinstance(value, GraphNodeType):
-            return value
-        text = str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
         aliases = {
             "state": cls.JURISDICTION,
             "statute_code": cls.CODE,
@@ -162,12 +223,13 @@ class GraphNodeType(str, Enum):
             "acquisition": cls.PROVENANCE,
             "pub_law": cls.PUBLIC_LAW,
         }
-        if text in aliases:
-            return aliases[text]
-        for item in cls:
-            if item.value == text or item.name.lower() == text:
-                return item
-        raise GraphOntologyError(f"unsupported graph node type: {value!r}")
+        return coerce_graph_enum(
+            cls,
+            value,
+            aliases=aliases,
+            error_type=GraphOntologyError,
+            label="graph node type",
+        )
 
 
 class GraphEdgeType(str, Enum):
@@ -192,9 +254,6 @@ class GraphEdgeType(str, Enum):
 
     @classmethod
     def coerce(cls, value: Any) -> "GraphEdgeType":
-        if isinstance(value, GraphEdgeType):
-            return value
-        text = str(value or "").strip().upper().replace("-", "_").replace(" ", "_")
         aliases = {
             "CONTAIN": cls.CONTAINS,
             "CITE": cls.CITES,
@@ -214,12 +273,14 @@ class GraphEdgeType(str, Enum):
             "COSINE": cls.EMBEDDING_NEIGHBOR_OF,
             "LEXICAL": cls.BM25_NEIGHBOR_OF,
         }
-        if text in aliases:
-            return aliases[text]
-        for item in cls:
-            if item.value == text or item.name == text:
-                return item
-        raise GraphOntologyError(f"unsupported graph edge type: {value!r}")
+        return coerce_graph_enum(
+            cls,
+            value,
+            aliases=aliases,
+            error_type=GraphOntologyError,
+            label="graph edge type",
+            uppercase=True,
+        )
 
 
 class GraphEdgeClass(str, Enum):
@@ -234,13 +295,13 @@ class GraphEdgeClass(str, Enum):
 
     @classmethod
     def coerce(cls, value: Any) -> "GraphEdgeClass":
-        if isinstance(value, GraphEdgeClass):
-            return value
-        text = str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
-        for item in cls:
-            if item.value == text or item.name.lower() == text:
-                return item
-        raise GraphOntologyError(f"unsupported graph edge class: {value!r}")
+        return coerce_graph_enum(
+            cls,
+            value,
+            aliases={},
+            error_type=GraphOntologyError,
+            label="graph edge class",
+        )
 
 
 class ResolutionStatus(str, Enum):
@@ -252,13 +313,14 @@ class ResolutionStatus(str, Enum):
 
     @classmethod
     def coerce(cls, value: Any) -> "ResolutionStatus":
-        if isinstance(value, ResolutionStatus):
-            return value
-        text = str(value or "").strip().lower().replace("-", "_")
-        for item in cls:
-            if item.value == text or item.name.lower() == text:
-                return item
-        raise GraphOntologyError(f"unsupported resolution status: {value!r}")
+        return coerce_graph_enum(
+            cls,
+            value,
+            aliases={},
+            error_type=GraphOntologyError,
+            label="resolution status",
+            replace_spaces=False,
+        )
 
 
 LEGAL_EDGE_TYPES: Final[frozenset[GraphEdgeType]] = frozenset(
@@ -400,59 +462,49 @@ class GraphReleaseAuthorizationError(OpenUsLawGraphError):
 
 
 def _require_non_empty_str(value: Any, name: str, *, maximum: int = 4096) -> str:
-    if not isinstance(value, str) or not value.strip():
-        raise OpenUsLawGraphError(f"{name} must be a non-empty string")
-    text = value.strip()
-    if "\x00" in text:
-        raise OpenUsLawGraphError(f"{name} must not contain NUL")
-    if len(text) > maximum:
-        raise OpenUsLawGraphError(f"{name} exceeds max length {maximum}")
-    return text
+    return require_non_empty_str_core(
+        value,
+        name,
+        error_type=OpenUsLawGraphError,
+        maximum=maximum,
+    )
 
 
 def _optional_str(value: Any, name: str = "value", *, maximum: int = 4096) -> Optional[str]:
-    if value is None or value == "":
-        return None
-    return _require_non_empty_str(value, name, maximum=maximum)
+    return optional_str_core(
+        value,
+        name,
+        error_type=OpenUsLawGraphError,
+        maximum=maximum,
+    )
 
 
 def _require_non_negative_int(value: Any, name: str) -> int:
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise OpenUsLawGraphError(f"{name} must be an integer")
-    if value < 0:
-        raise OpenUsLawGraphError(f"{name} must be >= 0")
-    return value
+    return require_non_negative_int_core(
+        value,
+        name,
+        error_type=OpenUsLawGraphError,
+    )
 
 
 def sha256_cid(payload: Mapping[str, Any]) -> str:
     """Return a deterministic ``sha256:<hex>`` content address."""
 
-    return f"sha256:{digest_mapping(dict(payload))}"
+    return sha256_cid_core(payload, digest_mapping=digest_mapping)
 
 
 def assert_legal_similarity_disjoint() -> None:
     """Fail closed if legal and similarity edge vocabularies overlap."""
 
-    overlap = LEGAL_EDGE_TYPES & SIMILARITY_EDGE_TYPES
-    if overlap:
-        names = sorted(item.value for item in overlap)
-        raise LegalSimilarityCollisionError(
-            f"legal and similarity edge types must be disjoint; overlap={names}"
-        )
-    for edge_type in GraphEdgeType:
-        if edge_type not in LEGAL_EDGE_TYPES and edge_type not in SIMILARITY_EDGE_TYPES:
-            raise GraphOntologyError(
-                f"edge type {edge_type.value} is neither legal nor similarity"
-            )
-    for edge_type, edge_class in DEFAULT_EDGE_CLASS.items():
-        if edge_type in SIMILARITY_EDGE_TYPES and edge_class is not GraphEdgeClass.SIMILARITY:
-            raise LegalSimilarityCollisionError(
-                f"similarity edge {edge_type.value} must use class similarity"
-            )
-        if edge_type in LEGAL_EDGE_TYPES and edge_class is GraphEdgeClass.SIMILARITY:
-            raise LegalSimilarityCollisionError(
-                f"legal edge {edge_type.value} must not use class similarity"
-            )
+    assert_legal_similarity_disjoint_core(
+        edge_type=GraphEdgeType,
+        edge_class=GraphEdgeClass,
+        legal_edge_types=LEGAL_EDGE_TYPES,
+        similarity_edge_types=SIMILARITY_EDGE_TYPES,
+        default_edge_class=DEFAULT_EDGE_CLASS,
+        ontology_error_type=GraphOntologyError,
+        collision_error_type=LegalSimilarityCollisionError,
+    )
 
 
 def software_contract_flags() -> dict[str, Any]:
@@ -497,112 +549,14 @@ class SourceSpan:
     entry_cid: Optional[str] = None
     field: str = "text"
 
-    def __post_init__(self) -> None:
-        start = _require_non_negative_int(self.start, "start")
-        end = _require_non_negative_int(self.end, "end")
-        if end < start:
-            raise SourceSpanError(f"span end {end} must be >= start {start}")
-        text = self.text if isinstance(self.text, str) else ""
-        if "\x00" in text:
-            raise SourceSpanError("span text must not contain NUL")
-        if len(text) != end - start:
-            raise SourceSpanError(
-                f"span text length {len(text)} must equal end-start ({end - start})"
-            )
-        object.__setattr__(self, "start", start)
-        object.__setattr__(self, "end", end)
-        object.__setattr__(self, "text", text)
-        if self.source_cid is not None:
-            object.__setattr__(
-                self,
-                "source_cid",
-                _require_non_empty_str(self.source_cid, "source_cid", maximum=256),
-            )
-        if self.entry_cid is not None:
-            object.__setattr__(
-                self,
-                "entry_cid",
-                _require_non_empty_str(self.entry_cid, "entry_cid", maximum=256),
-            )
-        object.__setattr__(
-            self,
-            "field",
-            _require_non_empty_str(self.field or "text", "field", maximum=64),
-        )
+    _graph_error_type: ClassVar[type[Exception]] = OpenUsLawGraphError
+    _source_span_error_type: ClassVar[type[Exception]] = SourceSpanError
 
-    def bind_to_source(self, source_text: str) -> "SourceSpan":
-        if not isinstance(source_text, str):
-            raise SourceSpanError("source_text must be a string")
-        if self.end > len(source_text):
-            raise SourceSpanError(
-                f"span end {self.end} exceeds source length {len(source_text)}"
-            )
-        excerpt = source_text[self.start : self.end]
-        if excerpt != self.text:
-            raise SourceSpanError(
-                "span text does not match source_text[start:end]; "
-                f"expected {excerpt!r}, got {self.text!r}"
-            )
-        return self
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "end": self.end,
-            "entry_cid": self.entry_cid,
-            "field": self.field,
-            "source_cid": self.source_cid,
-            "start": self.start,
-            "text": self.text,
-        }
-
-    @classmethod
-    def from_mapping(cls, value: Mapping[str, Any]) -> "SourceSpan":
-        if not isinstance(value, Mapping):
-            raise SourceSpanError("source span must be a mapping")
-        return cls(
-            start=int(value.get("start", 0)),
-            end=int(value.get("end", 0)),
-            text=str(value.get("text") or ""),
-            source_cid=value.get("source_cid"),
-            entry_cid=value.get("entry_cid"),
-            field=str(value.get("field") or "text"),
-        )
-
-    @classmethod
-    def from_occurrence(
-        cls,
-        source_text: str,
-        mention: str,
-        *,
-        source_cid: Optional[str] = None,
-        entry_cid: Optional[str] = None,
-        field: str = "text",
-        start_hint: Optional[int] = None,
-    ) -> "SourceSpan":
-        if not isinstance(source_text, str):
-            raise SourceSpanError("source_text must be a string")
-        if not isinstance(mention, str) or not mention:
-            raise SourceSpanError("mention must be a non-empty string")
-        if start_hint is not None:
-            start = int(start_hint)
-            end = start + len(mention)
-            if source_text[start:end] != mention:
-                raise SourceSpanError(
-                    f"mention {mention!r} not found at start_hint={start}"
-                )
-        else:
-            start = source_text.find(mention)
-            if start < 0:
-                raise SourceSpanError(f"mention {mention!r} not found in source_text")
-            end = start + len(mention)
-        return cls(
-            start=start,
-            end=end,
-            text=mention,
-            source_cid=source_cid,
-            entry_cid=entry_cid,
-            field=field,
-        ).bind_to_source(source_text)
+    __post_init__ = validate_source_span_record
+    bind_to_source = bind_source_span
+    to_dict = source_span_to_dict
+    from_mapping = classmethod(source_span_from_mapping)
+    from_occurrence = classmethod(source_span_from_occurrence)
 
 
 # ---------------------------------------------------------------------------
@@ -630,91 +584,14 @@ class GraphOntology:
         )
     )
 
-    def __post_init__(self) -> None:
-        if self.version != ONTOLOGY_VERSION:
-            raise GraphOntologyError(
-                f"unsupported ontology version: {self.version!r}; "
-                f"expected {ONTOLOGY_VERSION!r}"
-            )
-        expected_nodes = tuple(item.value for item in GraphNodeType)
-        expected_edges = tuple(item.value for item in GraphEdgeType)
-        if self.node_types != expected_nodes:
-            raise GraphOntologyError("node_types must exactly match the versioned vocabulary")
-        if self.edge_types != expected_edges:
-            raise GraphOntologyError("edge_types must exactly match the versioned vocabulary")
-        assert_legal_similarity_disjoint()
-        legal_set = set(self.legal_edge_types)
-        sim_set = set(self.similarity_edge_types)
-        if legal_set & sim_set:
-            raise LegalSimilarityCollisionError(
-                "ontology legal_edge_types and similarity_edge_types overlap"
-            )
-        missing = [name for name in REQUIRED_COVERAGE_NODE_TYPES if name not in expected_nodes]
-        if missing:
-            raise GraphOntologyError(
-                f"ontology is missing required coverage node types: {missing}"
-            )
+    _ontology_bindings: ClassVar[LegalGraphOntologyBindings]
 
-    def edge_class_for(self, edge_type: GraphEdgeType | str) -> GraphEdgeClass:
-        edge = GraphEdgeType.coerce(edge_type)
-        raw = self.edge_class_by_type.get(edge.value)
-        if raw is None:
-            raise GraphOntologyError(f"no edge class for {edge.value}")
-        return GraphEdgeClass.coerce(raw)
-
-    def is_legal_edge(self, edge_type: GraphEdgeType | str) -> bool:
-        return GraphEdgeType.coerce(edge_type) in LEGAL_EDGE_TYPES
-
-    def is_similarity_edge(self, edge_type: GraphEdgeType | str) -> bool:
-        return GraphEdgeType.coerce(edge_type) in SIMILARITY_EDGE_TYPES
-
-    def validate_edge(
-        self,
-        edge_type: GraphEdgeType | str,
-        source_type: GraphNodeType | str,
-        target_type: GraphNodeType | str,
-        *,
-        edge_class: GraphEdgeClass | str | None = None,
-    ) -> GraphEdgeClass:
-        edge = GraphEdgeType.coerce(edge_type)
-        source = GraphNodeType.coerce(source_type)
-        target = GraphNodeType.coerce(target_type)
-        expected = self.edge_class_for(edge)
-        if edge_class is not None:
-            provided = GraphEdgeClass.coerce(edge_class)
-            if provided is not expected:
-                raise GraphOntologyError(
-                    f"{edge.value} must be classified as {expected.value}, "
-                    f"got {provided.value}"
-                )
-            category = provided
-        else:
-            category = expected
-
-        if edge in SIMILARITY_EDGE_TYPES and category is not GraphEdgeClass.SIMILARITY:
-            raise LegalSimilarityCollisionError(
-                f"similarity edge {edge.value} cannot use class {category.value}"
-            )
-        if edge in LEGAL_EDGE_TYPES and category is GraphEdgeClass.SIMILARITY:
-            raise LegalSimilarityCollisionError(
-                f"legal edge {edge.value} cannot use class similarity"
-            )
-        if not _edge_direction_allowed(edge, source, target):
-            raise GraphOntologyError(
-                f"{edge.value} does not permit {source.value} -> {target.value}"
-            )
-        return category
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "edge_class_by_type": dict(self.edge_class_by_type),
-            "edge_types": list(self.edge_types),
-            "legal_edge_types": list(self.legal_edge_types),
-            "node_types": list(self.node_types),
-            "required_coverage_node_types": list(self.required_coverage_node_types),
-            "similarity_edge_types": list(self.similarity_edge_types),
-            "version": self.version,
-        }
+    __post_init__ = validate_graph_ontology
+    edge_class_for = graph_ontology_edge_class_for
+    is_legal_edge = graph_ontology_is_legal_edge
+    is_similarity_edge = graph_ontology_is_similarity_edge
+    validate_edge = validate_graph_ontology_edge
+    to_dict = graph_ontology_to_dict
 
 
 def _edge_direction_allowed(
@@ -722,54 +599,34 @@ def _edge_direction_allowed(
     source: GraphNodeType,
     target: GraphNodeType,
 ) -> bool:
-    if edge is GraphEdgeType.CONTAINS:
-        allowed = {
-            (GraphNodeType.JURISDICTION, GraphNodeType.CODE),
-            (GraphNodeType.CODE, GraphNodeType.TITLE),
-            (GraphNodeType.CODE, GraphNodeType.CHAPTER),
-            (GraphNodeType.CODE, GraphNodeType.SECTION),
-            (GraphNodeType.TITLE, GraphNodeType.CHAPTER),
-            (GraphNodeType.TITLE, GraphNodeType.SECTION),
-            (GraphNodeType.CHAPTER, GraphNodeType.SECTION),
-            (GraphNodeType.SECTION, GraphNodeType.SUBSECTION),
-        }
-        return (source, target) in allowed
-    if edge is GraphEdgeType.CITES:
-        return source in SECTION_LIKE and target in SECTION_LIKE
-    if edge is GraphEdgeType.CITES_UNRESOLVED:
-        return source in SECTION_LIKE and target is GraphNodeType.UNRESOLVED_CITATION
-    if edge is GraphEdgeType.HAS_CITATION:
-        return source in SECTION_LIKE and target is GraphNodeType.CITATION
-    if edge in {GraphEdgeType.AMENDS, GraphEdgeType.REPEALS, GraphEdgeType.TRANSFERS}:
-        return source in SECTION_LIKE | {GraphNodeType.AMENDMENT, GraphNodeType.PUBLIC_LAW} and (
-            target in SECTION_LIKE
-        )
-    if edge is GraphEdgeType.HAS_AMENDMENT:
-        return source in SECTION_LIKE and target is GraphNodeType.AMENDMENT
-    if edge is GraphEdgeType.HAS_SOURCE:
-        return source in SECTION_LIKE and target is GraphNodeType.SOURCE
-    if edge is GraphEdgeType.HAS_EDITION:
-        return source in {
-            GraphNodeType.JURISDICTION,
-            GraphNodeType.CODE,
-            GraphNodeType.TITLE,
-            GraphNodeType.CHAPTER,
-            GraphNodeType.SECTION,
-            GraphNodeType.SUBSECTION,
-        } and target is GraphNodeType.EDITION
-    if edge is GraphEdgeType.HAS_PROVENANCE:
-        return source in SECTION_LIKE and target is GraphNodeType.PROVENANCE
-    if edge is GraphEdgeType.DERIVED_FROM:
-        return source in SECTION_LIKE and target in {
-            GraphNodeType.PUBLIC_LAW,
-            GraphNodeType.SOURCE,
-            GraphNodeType.PROVENANCE,
-        }
-    if edge is GraphEdgeType.CODIFIES:
-        return source is GraphNodeType.PUBLIC_LAW and target in SECTION_LIKE
-    if edge in SIMILARITY_EDGE_TYPES:
-        return source in SECTION_LIKE and target in SECTION_LIKE
-    return False
+    return legal_edge_direction_allowed(
+        edge,
+        source,
+        target,
+        node_type=GraphNodeType,
+        edge_type=GraphEdgeType,
+        section_like=SECTION_LIKE,
+        similarity_edge_types=SIMILARITY_EDGE_TYPES,
+        act_node_type=GraphNodeType.PUBLIC_LAW,
+        edition_edge_types=frozenset({GraphEdgeType.HAS_EDITION}),
+    )
+
+
+_ONTOLOGY_BINDINGS = LegalGraphOntologyBindings(
+    version=ONTOLOGY_VERSION,
+    node_type=GraphNodeType,
+    edge_type=GraphEdgeType,
+    edge_class=GraphEdgeClass,
+    legal_edge_types=LEGAL_EDGE_TYPES,
+    similarity_edge_types=SIMILARITY_EDGE_TYPES,
+    required_coverage_node_types=REQUIRED_COVERAGE_NODE_TYPES,
+    default_edge_class=DEFAULT_EDGE_CLASS,
+    direction_allowed=_edge_direction_allowed,
+    assert_disjoint=assert_legal_similarity_disjoint,
+    ontology_error_type=GraphOntologyError,
+    collision_error_type=LegalSimilarityCollisionError,
+)
+GraphOntology._ontology_bindings = _ONTOLOGY_BINDINGS
 
 
 GRAPH_ONTOLOGY: Final = GraphOntology()
@@ -779,128 +636,8 @@ GRAPH_ONTOLOGY: Final = GraphOntology()
 # Citation extraction / resolution
 # ---------------------------------------------------------------------------
 
-_USC_CITATION_RE = re.compile(
-    r"""
-    (?P<mention>
-        (?P<title>\d+[A-Za-z]?)\s*
-        U\.?\s*S\.?\s*C\.?(?:A\.?)?\s*
-        (?:§+\s*|sec(?:tion)?\.?\s*)?
-        (?P<section>\d+[A-Za-z0-9\-]*(?:\.[A-Za-z0-9\-]+)*(?:\([a-zA-Z0-9]+\))*)
-    )
-    """,
-    re.IGNORECASE | re.VERBOSE,
-)
-
-_PUBLIC_LAW_RE = re.compile(
-    r"""
-    (?P<mention>
-        (?:Pub(?:lic)?\.?\s*L(?:aw)?\.?|P\.?\s*L\.?)\s*
-        (?:No\.?\s*)?
-        (?P<congress>\d+)\s*[-–—]\s*(?P<number>\d+)
-    )
-    """,
-    re.IGNORECASE | re.VERBOSE,
-)
-
-_SHORT_CODE_RE = re.compile(
-    r"""
-    (?P<mention>
-        (?P<code>
-            ORS|RCW|NRS|CRS|ARS|C\.R\.S\.|A\.R\.S\.|USC|
-            D\.C\.\s*Code|DC\s+Code
-        )
-        \s+
-        (?:§+\s*)?
-        (?P<section>\d+[A-Za-z0-9.\-]*(?:\([a-zA-Z0-9]+\))*)
-    )
-    """,
-    re.IGNORECASE | re.VERBOSE,
-)
-
-_BLUEBOOK_RE = re.compile(
-    r"""
-    (?P<mention>
-        (?P<prefix>
-            Cal\.|Calif\.|California|
-            N\.Y\.|NY|New\s+York|
-            Or\.|Ore\.|Oregon|
-            Tex\.|Texas|
-            Wash\.|Washington|
-            D\.C\.|DC
-        )
-        \s+
-        (?P<code>
-            Penal\s+Code|Penal\s+Law|Rev\.\s*Stat\.|Rev\.\s*Code|
-            Revised\s+Statutes|Revised\s+Code|Code
-        )
-        \s*
-        (?:§+\s*)
-        (?P<section>\d+[A-Za-z0-9.\-]*(?:\([a-zA-Z0-9]+\))*)
-    )
-    """,
-    re.IGNORECASE | re.VERBOSE,
-)
-
-_INTERNAL_SECTION_RE = re.compile(
-    r"(?P<mention>§+\s*(?P<section>\d+[A-Za-z0-9.\-]*(?:\([a-zA-Z0-9]+\))*))"
-)
-
-CITATION_CODE_ALIASES: Final[Mapping[str, tuple[str, str]]] = MappingProxyType(
-    {
-        "ors": ("OR", "ors"),
-        "or rev stat": ("OR", "ors"),
-        "or. rev. stat": ("OR", "ors"),
-        "ore rev stat": ("OR", "ors"),
-        "oregon revised statutes": ("OR", "ors"),
-        "or. revised statutes": ("OR", "ors"),
-        "rcw": ("WA", "rcw"),
-        "wash rev code": ("WA", "rcw"),
-        "wash. rev. code": ("WA", "rcw"),
-        "washington revised code": ("WA", "rcw"),
-        "cal penal code": ("CA", "penal-code"),
-        "cal. penal code": ("CA", "penal-code"),
-        "calif penal code": ("CA", "penal-code"),
-        "california penal code": ("CA", "penal-code"),
-        "n.y. penal law": ("NY", "penal-law"),
-        "ny penal law": ("NY", "penal-law"),
-        "new york penal law": ("NY", "penal-law"),
-        "d.c. code": ("DC", "code"),
-        "dc code": ("DC", "code"),
-        "usc": ("US", "usc"),
-        "u.s.c": ("US", "usc"),
-        "u.s.c.a": ("US", "usc"),
-        "united states code": ("US", "usc"),
-    }
-)
-
-
-def _alias_key(text: str) -> str:
-    normalized = unicodedata.normalize("NFKC", text).lower()
-    normalized = normalized.replace("§", " ")
-    normalized = re.sub(r"\s+", " ", normalized)
-    normalized = re.sub(r"\s+\.", ".", normalized)
-    return normalized.strip(" .")
-
-
-def lookup_citation_locator(
-    code_text: str,
-    *,
-    prefix: Optional[str] = None,
-) -> Optional[tuple[str, str]]:
-    """Map a citation code phrase onto ``(jurisdiction_code, code_family)``."""
-
-    candidates = [code_text]
-    if prefix:
-        candidates.append(f"{prefix} {code_text}")
-    for raw in candidates:
-        key = _alias_key(raw)
-        if key in CITATION_CODE_ALIASES:
-            return CITATION_CODE_ALIASES[key]
-        dotted = key.replace(" ", "")
-        for alias, locator in CITATION_CODE_ALIASES.items():
-            if alias.replace(" ", "") == dotted or alias.replace(".", "") == key.replace(".", ""):
-                return locator
-    return None
+_alias_key = citation_alias_key
+CITATION_CODE_ALIASES: Final = SHARED_CITATION_CODE_ALIASES
 
 
 @dataclass(frozen=True, slots=True)
@@ -919,37 +656,11 @@ class CitationMention:
     number: Optional[str] = None
     parser_version: str = CITATION_PARSER_VERSION
 
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "kind", _require_non_empty_str(self.kind, "kind", maximum=64))
-        object.__setattr__(
-            self,
-            "mention_text",
-            _require_non_empty_str(self.mention_text, "mention_text", maximum=512),
-        )
-        object.__setattr__(self, "start", _require_non_negative_int(self.start, "start"))
-        object.__setattr__(self, "end", _require_non_negative_int(self.end, "end"))
-        if self.end < self.start:
-            raise CitationResolutionError("citation end must be >= start")
-        object.__setattr__(
-            self,
-            "parser_version",
-            _require_non_empty_str(self.parser_version, "parser_version", maximum=128),
-        )
+    _graph_error_type: ClassVar[type[Exception]] = OpenUsLawGraphError
+    _citation_error_type: ClassVar[type[Exception]] = CitationResolutionError
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "code_family": self.code_family,
-            "congress": self.congress,
-            "end": self.end,
-            "jurisdiction_code": self.jurisdiction_code,
-            "kind": self.kind,
-            "mention_text": self.mention_text,
-            "number": self.number,
-            "parser_version": self.parser_version,
-            "section": self.section,
-            "start": self.start,
-            "title": self.title,
-        }
+    __post_init__ = validate_citation_mention_record
+    to_dict = citation_mention_to_dict
 
 
 @dataclass(frozen=True, slots=True)
@@ -963,33 +674,10 @@ class ResolvedCitation:
     target_public_law_id: Optional[str] = None
     target_node_key: Optional[str] = None
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "mention": self.mention.to_dict(),
-            "resolution_status": self.resolution_status.value,
-            "span": self.span.to_dict(),
-            "target_legal_id": self.target_legal_id,
-            "target_node_key": self.target_node_key,
-            "target_public_law_id": self.target_public_law_id,
-        }
+    to_dict = resolved_citation_to_dict
 
 
-def _drop_contained_mentions(mentions: list[CitationMention]) -> list[CitationMention]:
-    kept: list[CitationMention] = []
-    for candidate in sorted(mentions, key=lambda item: (item.start, -(item.end - item.start))):
-        contained = False
-        for existing in kept:
-            if existing.start <= candidate.start and candidate.end <= existing.end:
-                if (existing.start, existing.end) != (candidate.start, candidate.end):
-                    contained = True
-                    break
-                if existing.kind != "internal" and candidate.kind == "internal":
-                    contained = True
-                    break
-        if not contained:
-            kept.append(candidate)
-    kept.sort(key=lambda item: (item.start, item.end, item.kind))
-    return kept
+_drop_contained_mentions = drop_contained_mentions
 
 
 def _normalize_extracted_section(value: Optional[str]) -> Optional[str]:
@@ -1007,93 +695,21 @@ def extract_citation_mentions(
     default_jurisdiction: Optional[str] = None,
     default_code_family: Optional[str] = None,
 ) -> list[CitationMention]:
-    """Extract USC, state-code, public-law, and internal section mentions."""
+    """Extract citations through the shared grammar with dataset versioning."""
 
-    if not isinstance(text, str):
-        raise CitationResolutionError("text must be a string")
-    mentions: list[CitationMention] = []
-
-    for match in _USC_CITATION_RE.finditer(text):
-        mentions.append(
-            CitationMention(
-                kind="usc",
-                mention_text=match.group("mention"),
-                start=match.start(),
-                end=match.end(),
-                jurisdiction_code="US",
-                code_family="usc",
-                title=match.group("title"),
-                section=_normalize_extracted_section(match.group("section")),
-            )
-        )
-
-    for match in _PUBLIC_LAW_RE.finditer(text):
-        mentions.append(
-            CitationMention(
-                kind="public_law",
-                mention_text=match.group("mention"),
-                start=match.start(),
-                end=match.end(),
-                congress=str(int(match.group("congress"))),
-                number=str(int(match.group("number"))),
-            )
-        )
-
-    for match in _SHORT_CODE_RE.finditer(text):
-        locator = lookup_citation_locator(match.group("code"))
-        jurisdiction, family = locator if locator else (None, None)
-        mentions.append(
-            CitationMention(
-                kind="state_code",
-                mention_text=match.group("mention"),
-                start=match.start(),
-                end=match.end(),
-                jurisdiction_code=jurisdiction,
-                code_family=family,
-                section=_normalize_extracted_section(match.group("section")),
-            )
-        )
-
-    for match in _BLUEBOOK_RE.finditer(text):
-        locator = lookup_citation_locator(
-            match.group("code"),
-            prefix=match.group("prefix"),
-        )
-        jurisdiction, family = locator if locator else (None, None)
-        mentions.append(
-            CitationMention(
-                kind="bluebook",
-                mention_text=match.group("mention"),
-                start=match.start(),
-                end=match.end(),
-                jurisdiction_code=jurisdiction,
-                code_family=family,
-                section=_normalize_extracted_section(match.group("section")),
-            )
-        )
-
-    for match in _INTERNAL_SECTION_RE.finditer(text):
-        mentions.append(
-            CitationMention(
-                kind="internal",
-                mention_text=match.group("mention"),
-                start=match.start(),
-                end=match.end(),
-                jurisdiction_code=default_jurisdiction,
-                code_family=default_code_family,
-                section=_normalize_extracted_section(match.group("section")),
-            )
-        )
-
-    return _drop_contained_mentions(mentions)
+    return extract_citation_mentions_core(
+        text,
+        mention_type=CitationMention,
+        parser_version=CITATION_PARSER_VERSION,
+        normalize_section_token=normalize_section_token,
+        citation_error_type=CitationResolutionError,
+        default_jurisdiction=default_jurisdiction,
+        default_code_family=default_code_family,
+    )
 
 
 def _unresolved_node_key(mention: CitationMention) -> str:
-    digest = content_sha256(mention.mention_text)[:16]
-    jurisdiction = mention.jurisdiction_code or "?"
-    family = mention.code_family or "?"
-    section = mention.section or "?"
-    return f"unresolved:{mention.kind}:{jurisdiction}:{family}:{section}:{digest}"
+    return unresolved_citation_node_key(mention, content_sha256=content_sha256)
 
 
 def resolve_citations(
@@ -1108,114 +724,20 @@ def resolve_citations(
     host_legal_id: Optional[str] = None,
     host_section: Optional[str] = None,
 ) -> list[ResolvedCitation]:
-    """Resolve extracted citations against known legal identities.
+    """Resolve citations through the shared algorithm and identity callbacks."""
 
-    Unknown targets become ``unresolved`` rather than invented nodes with
-    guessed legal identities. Ambiguous locator matches are also unresolved.
-    """
-
-    known = {str(item) for item in (known_legal_ids or []) if item}
-    locators = locator_index or {}
-    resolved: list[ResolvedCitation] = []
-    for mention in extract_citation_mentions(
+    return resolve_citations_core(
         text,
+        bindings=_CITATION_RESOLVER_BINDINGS,
+        known_legal_ids=known_legal_ids,
+        locator_index=locator_index,
+        source_cid=source_cid,
+        entry_cid=entry_cid,
         default_jurisdiction=default_jurisdiction,
         default_code_family=default_code_family,
-    ):
-        span = SourceSpan(
-            start=mention.start,
-            end=mention.end,
-            text=text[mention.start : mention.end],
-            source_cid=source_cid,
-            entry_cid=entry_cid,
-            field="text",
-        ).bind_to_source(text)
-
-        if mention.kind == "public_law":
-            if mention.congress and mention.number:
-                pl_id = f"pl:us:{int(mention.congress)}:{int(mention.number)}"
-                resolved.append(
-                    ResolvedCitation(
-                        mention=mention,
-                        resolution_status=ResolutionStatus.RESOLVED,
-                        span=span,
-                        target_public_law_id=pl_id,
-                        target_node_key=f"public_law:{pl_id}",
-                    )
-                )
-            continue
-
-        if mention.kind == "internal" and host_section and mention.section == host_section:
-            continue
-
-        jurisdiction = mention.jurisdiction_code or default_jurisdiction
-        family = mention.code_family or default_code_family
-        section = mention.section
-        matches: list[str] = []
-        if jurisdiction and family and section:
-            matches = list(locators.get((jurisdiction, family, section), ()))
-        if not matches and mention.kind == "usc" and mention.title and mention.section:
-            usc_candidate = None
-            try:
-                usc_candidate = build_legal_id(
-                    document_kind=DocumentKind.FEDERAL,
-                    jurisdiction_code="US",
-                    code_family="usc",
-                    hierarchy={"title": mention.title, "section": mention.section},
-                    edition="unspecified",
-                )
-            except Exception:
-                usc_candidate = None
-            if usc_candidate and usc_candidate in known:
-                matches = [usc_candidate]
-            else:
-                matches = [
-                    item
-                    for item in known
-                    if ":usc:" in item
-                    and f":{mention.title}:" in item
-                    and item.rsplit(":", 1)[-1].split(";", 1)[0] == mention.section
-                ]
-
-        unique = []
-        seen: set[str] = set()
-        for item in matches:
-            if item in known and item not in seen:
-                unique.append(item)
-                seen.add(item)
-        if host_legal_id and unique and all(item == host_legal_id for item in unique):
-            continue
-        unique = [item for item in unique if item != host_legal_id]
-
-        if len(unique) == 1:
-            target = unique[0]
-            resolved.append(
-                ResolvedCitation(
-                    mention=mention,
-                    resolution_status=ResolutionStatus.RESOLVED,
-                    span=span,
-                    target_legal_id=target,
-                    target_node_key=_section_or_subsection_key(target),
-                )
-            )
-        else:
-            status = (
-                ResolutionStatus.AMBIGUOUS
-                if len(unique) > 1
-                else ResolutionStatus.UNRESOLVED
-            )
-            resolved.append(
-                ResolvedCitation(
-                    mention=mention,
-                    resolution_status=status
-                    if status is ResolutionStatus.AMBIGUOUS
-                    else ResolutionStatus.UNRESOLVED,
-                    span=span,
-                    target_legal_id=None,
-                    target_node_key=_unresolved_node_key(mention),
-                )
-            )
-    return resolved
+        host_legal_id=host_legal_id,
+        host_section=host_section,
+    )
 
 
 def _section_or_subsection_key(legal_id: str) -> str:
@@ -1226,6 +748,48 @@ def _section_or_subsection_key(legal_id: str) -> str:
     if parsed.get("subsection"):
         return f"subsection:{legal_id}"
     return f"section:{legal_id}"
+
+
+def _resolve_usc_candidates(
+    mention: CitationMention,
+    known: set[str],
+) -> Sequence[str]:
+    usc_candidate = None
+    try:
+        usc_candidate = build_legal_id(
+            document_kind=DocumentKind.FEDERAL,
+            jurisdiction_code="US",
+            code_family="usc",
+            hierarchy={"title": mention.title, "section": mention.section},
+            edition="unspecified",
+        )
+    except Exception:
+        usc_candidate = None
+    if usc_candidate and usc_candidate in known:
+        return [usc_candidate]
+    return [
+        item
+        for item in known
+        if ":usc:" in item
+        and f":{mention.title}:" in item
+        and item.rsplit(":", 1)[-1].split(";", 1)[0] == mention.section
+    ]
+
+
+def _public_law_node_key(public_law_id: str) -> str:
+    return f"public_law:{public_law_id}"
+
+
+_CITATION_RESOLVER_BINDINGS = CitationResolverBindings(
+    extract_mentions=extract_citation_mentions,
+    source_span_type=SourceSpan,
+    resolved_citation_type=ResolvedCitation,
+    resolution_status=ResolutionStatus,
+    public_law_node_key=_public_law_node_key,
+    resolve_usc_candidates=_resolve_usc_candidates,
+    section_or_subsection_key=_section_or_subsection_key,
+    unresolved_node_key=_unresolved_node_key,
+)
 
 
 def strip_subsection_qualifier(legal_id: str) -> str:
@@ -1261,6 +825,33 @@ def strip_subsection_qualifier(legal_id: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+_GRAPH_RECORD_BINDINGS = GraphRecordBindings(
+    node_type=GraphNodeType,
+    edge_type=GraphEdgeType,
+    edge_class=GraphEdgeClass,
+    resolution_status=ResolutionStatus,
+    source_span_type=SourceSpan,
+    legal_edge_types=LEGAL_EDGE_TYPES,
+    similarity_edge_types=SIMILARITY_EDGE_TYPES,
+    span_required_edge_types=SPAN_REQUIRED_EDGE_TYPES,
+    non_authoritative_authority=NON_AUTHORITATIVE_AUTHORITY,
+    node_identity_kind="open_us_law_graph_node",
+    edge_identity_kind="open_us_law_graph_edge",
+    sha256_cid=sha256_cid,
+    graph_error_type=OpenUsLawGraphError,
+    projection_error_type=GraphProjectionError,
+    source_span_error_type=SourceSpanError,
+    citation_error_type=CitationResolutionError,
+    collision_error_type=LegalSimilarityCollisionError,
+)
+
+_GRAPH_PROJECTION_BINDINGS = GraphProjectionBindings(
+    record_bindings=_GRAPH_RECORD_BINDINGS,
+    required_coverage_node_types=REQUIRED_COVERAGE_NODE_TYPES,
+    require_non_negative_int=_require_non_negative_int,
+)
+
+
 @dataclass(frozen=True, slots=True)
 class OpenUsLawGraphNode:
     """One projected legal graph node with a deterministic node CID."""
@@ -1275,69 +866,10 @@ class OpenUsLawGraphNode:
     schema_version: str = SCHEMA_VERSION
     node_cid: str = ""
 
-    def __post_init__(self) -> None:
-        node_type = GraphNodeType.coerce(self.node_type)
-        object.__setattr__(self, "node_type", node_type)
-        key = _require_non_empty_str(self.node_key, "node_key", maximum=768)
-        object.__setattr__(self, "node_key", key)
-        object.__setattr__(
-            self, "label", _require_non_empty_str(self.label, "label", maximum=1024)
-        )
-        if self.legal_id is not None:
-            object.__setattr__(
-                self,
-                "legal_id",
-                _require_non_empty_str(self.legal_id, "legal_id", maximum=768),
-            )
-            if node_type is GraphNodeType.UNRESOLVED_CITATION:
-                raise CitationResolutionError(
-                    "unresolved citation nodes must not carry an invented legal_id"
-                )
-        if self.entry_cid is not None:
-            object.__setattr__(
-                self,
-                "entry_cid",
-                _require_non_empty_str(self.entry_cid, "entry_cid", maximum=256),
-            )
-        if not isinstance(self.payload, Mapping):
-            raise GraphProjectionError("node payload must be a mapping")
-        payload = dict(self.payload)
-        object.__setattr__(self, "payload", MappingProxyType(payload))
-        object.__setattr__(
-            self,
-            "ontology_version",
-            _require_non_empty_str(self.ontology_version, "ontology_version"),
-        )
-        object.__setattr__(
-            self,
-            "schema_version",
-            _require_non_empty_str(self.schema_version, "schema_version"),
-        )
-        identity = {
-            "entry_cid": self.entry_cid,
-            "label": self.label,
-            "legal_id": self.legal_id,
-            "node_key": self.node_key,
-            "node_type": self.node_type.value,
-            "ontology_version": self.ontology_version,
-            "payload": payload,
-            "schema_version": self.schema_version,
-        }
-        cid = self.node_cid or sha256_cid({"kind": "open_us_law_graph_node", **identity})
-        object.__setattr__(self, "node_cid", cid)
+    _record_bindings: ClassVar[GraphRecordBindings] = _GRAPH_RECORD_BINDINGS
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "entry_cid": self.entry_cid,
-            "label": self.label,
-            "legal_id": self.legal_id,
-            "node_cid": self.node_cid,
-            "node_key": self.node_key,
-            "node_type": self.node_type.value,
-            "ontology_version": self.ontology_version,
-            "payload": dict(self.payload),
-            "schema_version": self.schema_version,
-        }
+    __post_init__ = validate_graph_node_record
+    to_dict = graph_node_to_dict
 
 
 @dataclass(frozen=True, slots=True)
@@ -1356,122 +888,12 @@ class OpenUsLawGraphEdge:
     schema_version: str = SCHEMA_VERSION
     edge_cid: str = ""
 
-    def __post_init__(self) -> None:
-        edge_type = GraphEdgeType.coerce(self.edge_type)
-        edge_class = GraphEdgeClass.coerce(self.edge_class)
-        object.__setattr__(self, "edge_type", edge_type)
-        object.__setattr__(self, "edge_class", edge_class)
+    _record_bindings: ClassVar[GraphRecordBindings] = _GRAPH_RECORD_BINDINGS
 
-        if edge_type in SIMILARITY_EDGE_TYPES and edge_class is not GraphEdgeClass.SIMILARITY:
-            raise LegalSimilarityCollisionError(
-                f"{edge_type.value} must use edge_class=similarity"
-            )
-        if edge_type in LEGAL_EDGE_TYPES and edge_class is GraphEdgeClass.SIMILARITY:
-            raise LegalSimilarityCollisionError(
-                f"{edge_type.value} is a legal edge and cannot use similarity class"
-            )
-        if edge_type in SIMILARITY_EDGE_TYPES:
-            authority = None
-            if isinstance(self.payload, Mapping):
-                authority = self.payload.get("authority")
-            if authority not in {None, NON_AUTHORITATIVE_AUTHORITY}:
-                raise LegalSimilarityCollisionError(
-                    f"{edge_type.value} cannot claim legal authority={authority!r}"
-                )
-
-        object.__setattr__(
-            self,
-            "source_node_cid",
-            _require_non_empty_str(self.source_node_cid, "source_node_cid", maximum=256),
-        )
-        object.__setattr__(
-            self,
-            "target_node_cid",
-            _require_non_empty_str(self.target_node_cid, "target_node_cid", maximum=256),
-        )
-        if self.source_span is not None and not isinstance(self.source_span, SourceSpan):
-            raise SourceSpanError("source_span must be a SourceSpan")
-        if edge_type in SPAN_REQUIRED_EDGE_TYPES and self.source_span is None:
-            raise SourceSpanError(f"{edge_type.value} requires a bound source_span")
-        if self.resolution_status is not None:
-            object.__setattr__(
-                self,
-                "resolution_status",
-                ResolutionStatus.coerce(self.resolution_status),
-            )
-        if edge_type is GraphEdgeType.CITES_UNRESOLVED:
-            if self.resolution_status not in {
-                ResolutionStatus.UNRESOLVED,
-                ResolutionStatus.AMBIGUOUS,
-            }:
-                raise CitationResolutionError(
-                    "CITES_UNRESOLVED requires unresolved or ambiguous status"
-                )
-        if self.weight is not None:
-            if isinstance(self.weight, bool) or not isinstance(self.weight, (int, float)):
-                raise GraphProjectionError("weight must be a number")
-            object.__setattr__(self, "weight", float(self.weight))
-        if not isinstance(self.payload, Mapping):
-            raise GraphProjectionError("edge payload must be a mapping")
-        payload = dict(self.payload)
-        if edge_type in SIMILARITY_EDGE_TYPES:
-            payload.setdefault("authority", NON_AUTHORITATIVE_AUTHORITY)
-            if payload.get("authority") != NON_AUTHORITATIVE_AUTHORITY:
-                raise LegalSimilarityCollisionError(
-                    f"{edge_type.value} payload.authority must be {NON_AUTHORITATIVE_AUTHORITY}"
-                )
-        object.__setattr__(self, "payload", MappingProxyType(payload))
-        object.__setattr__(
-            self,
-            "ontology_version",
-            _require_non_empty_str(self.ontology_version, "ontology_version"),
-        )
-        object.__setattr__(
-            self,
-            "schema_version",
-            _require_non_empty_str(self.schema_version, "schema_version"),
-        )
-        identity = {
-            "edge_class": self.edge_class.value,
-            "edge_type": self.edge_type.value,
-            "ontology_version": self.ontology_version,
-            "payload": payload,
-            "resolution_status": (
-                self.resolution_status.value if self.resolution_status else None
-            ),
-            "schema_version": self.schema_version,
-            "source_node_cid": self.source_node_cid,
-            "source_span": self.source_span.to_dict() if self.source_span else None,
-            "target_node_cid": self.target_node_cid,
-            "weight": self.weight,
-        }
-        cid = self.edge_cid or sha256_cid({"kind": "open_us_law_graph_edge", **identity})
-        object.__setattr__(self, "edge_cid", cid)
-
-    @property
-    def is_legal(self) -> bool:
-        return self.edge_type in LEGAL_EDGE_TYPES
-
-    @property
-    def is_similarity(self) -> bool:
-        return self.edge_type in SIMILARITY_EDGE_TYPES
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "edge_cid": self.edge_cid,
-            "edge_class": self.edge_class.value,
-            "edge_type": self.edge_type.value,
-            "ontology_version": self.ontology_version,
-            "payload": dict(self.payload),
-            "resolution_status": (
-                self.resolution_status.value if self.resolution_status else None
-            ),
-            "schema_version": self.schema_version,
-            "source_node_cid": self.source_node_cid,
-            "source_span": self.source_span.to_dict() if self.source_span else None,
-            "target_node_cid": self.target_node_cid,
-            "weight": self.weight,
-        }
+    __post_init__ = validate_graph_edge_record
+    is_legal = property(graph_edge_is_legal)
+    is_similarity = property(graph_edge_is_similarity)
+    to_dict = graph_edge_to_dict
 
 
 # ---------------------------------------------------------------------------
@@ -1516,117 +938,20 @@ class OpenUsLawGraphProjection:
     skipped_row_count: int = 0
     graph_cid: str = ""
 
-    def __post_init__(self) -> None:
-        nodes = tuple(
-            sorted(self.nodes, key=lambda item: (item.node_type.value, item.node_key, item.node_cid))
-        )
-        edges = tuple(
-            sorted(
-                self.edges,
-                key=lambda item: (
-                    item.edge_type.value,
-                    item.source_node_cid,
-                    item.target_node_cid,
-                    item.edge_cid,
-                ),
-            )
-        )
-        if len({item.node_cid for item in nodes}) != len(nodes):
-            raise GraphProjectionError("duplicate node_cid in projection")
-        if len({item.edge_cid for item in edges}) != len(edges):
-            raise GraphProjectionError("duplicate edge_cid in projection")
-        node_cids = {item.node_cid for item in nodes}
-        for edge in edges:
-            if edge.source_node_cid not in node_cids or edge.target_node_cid not in node_cids:
-                raise GraphProjectionError(
-                    f"dangling edge {edge.edge_cid}: missing endpoint"
-                )
-        legal_count = sum(1 for item in edges if item.is_legal)
-        sim_count = sum(1 for item in edges if item.is_similarity)
-        unresolved = sum(
-            1
-            for item in edges
-            if item.edge_type is GraphEdgeType.CITES_UNRESOLVED
-            or item.resolution_status
-            in {ResolutionStatus.UNRESOLVED, ResolutionStatus.AMBIGUOUS}
-        )
-        object.__setattr__(self, "nodes", nodes)
-        object.__setattr__(self, "edges", edges)
-        object.__setattr__(self, "legal_edge_count", legal_count)
-        object.__setattr__(self, "similarity_edge_count", sim_count)
-        object.__setattr__(self, "unresolved_count", unresolved)
-        object.__setattr__(
-            self, "skipped_row_count", _require_non_negative_int(self.skipped_row_count, "skipped_row_count")
-        )
-        root = {
-            "citation_parser_version": self.citation_parser_version,
-            "edge_cids": [item.edge_cid for item in edges],
-            "node_cids": [item.node_cid for item in nodes],
-            "ontology_version": self.ontology_version,
-            "schema_version": self.schema_version,
-            "skipped_row_count": self.skipped_row_count,
-        }
-        object.__setattr__(self, "graph_cid", self.graph_cid or sha256_cid(root))
+    _projection_bindings: ClassVar[GraphProjectionBindings] = (
+        _GRAPH_PROJECTION_BINDINGS
+    )
 
-    def node_by_key(self) -> dict[str, OpenUsLawGraphNode]:
-        return {item.node_key: item for item in self.nodes}
-
-    def node_by_cid(self) -> dict[str, OpenUsLawGraphNode]:
-        return {item.node_cid: item for item in self.nodes}
-
-    def legal_edges(self) -> tuple[OpenUsLawGraphEdge, ...]:
-        return tuple(item for item in self.edges if item.is_legal)
-
-    def similarity_edges(self) -> tuple[OpenUsLawGraphEdge, ...]:
-        return tuple(item for item in self.edges if item.is_similarity)
-
-    def coverage_node_types(self) -> set[str]:
-        return {item.node_type.value for item in self.nodes}
-
-    def missing_coverage_node_types(self) -> list[str]:
-        present = self.coverage_node_types()
-        return [name for name in REQUIRED_COVERAGE_NODE_TYPES if name not in present]
-
-    def assert_semantics_disjoint(self) -> None:
-        for edge in self.edges:
-            if edge.is_legal and edge.is_similarity:
-                raise LegalSimilarityCollisionError(
-                    f"edge {edge.edge_cid} is both legal and similarity"
-                )
-            if edge.is_legal and edge.edge_class is GraphEdgeClass.SIMILARITY:
-                raise LegalSimilarityCollisionError(
-                    f"legal edge {edge.edge_type.value} classified as similarity"
-                )
-            if edge.is_similarity and edge.edge_class is not GraphEdgeClass.SIMILARITY:
-                raise LegalSimilarityCollisionError(
-                    f"similarity edge {edge.edge_type.value} not classified as similarity"
-                )
-            if edge.is_similarity and edge.payload.get("authority") != NON_AUTHORITATIVE_AUTHORITY:
-                raise LegalSimilarityCollisionError(
-                    f"similarity edge {edge.edge_type.value} missing non-authoritative label"
-                )
-
-    def assert_coverage(self) -> None:
-        missing = self.missing_coverage_node_types()
-        if missing:
-            raise GraphProjectionError(
-                "projection is missing required coverage node types: "
-                f"{missing}"
-            )
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "citation_parser_version": self.citation_parser_version,
-            "edges": [item.to_dict() for item in self.edges],
-            "graph_cid": self.graph_cid,
-            "legal_edge_count": self.legal_edge_count,
-            "nodes": [item.to_dict() for item in self.nodes],
-            "ontology_version": self.ontology_version,
-            "schema_version": self.schema_version,
-            "similarity_edge_count": self.similarity_edge_count,
-            "skipped_row_count": self.skipped_row_count,
-            "unresolved_count": self.unresolved_count,
-        }
+    __post_init__ = validate_graph_projection
+    node_by_key = graph_projection_node_by_key
+    node_by_cid = graph_projection_node_by_cid
+    legal_edges = graph_projection_legal_edges
+    similarity_edges = graph_projection_similarity_edges
+    coverage_node_types = graph_projection_coverage_node_types
+    missing_coverage_node_types = graph_projection_missing_coverage_node_types
+    assert_semantics_disjoint = assert_graph_projection_semantics_disjoint
+    assert_coverage = assert_graph_projection_coverage
+    to_dict = graph_projection_to_dict
 
 
 def find_graph_paths(
@@ -1974,8 +1299,31 @@ class SimilarityNeighbor:
         )
 
 
-class OpenUsLawGraphProjector:
+_PROJECTOR_BINDINGS = LegalGraphProjectorBindings(
+    node_type=GraphNodeType,
+    edge_type=GraphEdgeType,
+    resolution_status=ResolutionStatus,
+    source_span_type=SourceSpan,
+    node_factory=OpenUsLawGraphNode,
+    edge_factory=OpenUsLawGraphEdge,
+    jurisdiction_names=JURISDICTION_NAMES,
+    public_law_node_type=GraphNodeType.PUBLIC_LAW,
+    public_law_key_prefix="public_law",
+    version_edge_type=None,
+    canonical_json_dumps=canonical_json_dumps,
+    content_sha256=content_sha256,
+    strip_subsection_qualifier=strip_subsection_qualifier,
+    section_or_subsection_key=_section_or_subsection_key,
+    unresolved_node_key=_unresolved_node_key,
+    resolve_citations=resolve_citations,
+    projection_error_type=GraphProjectionError,
+)
+
+
+class OpenUsLawGraphProjector(LegalGraphProjectorCore):
     """Project admitted multi-jurisdiction rows into the legal ontology graph."""
+
+    _projector_bindings = _PROJECTOR_BINDINGS
 
     def __init__(self, ontology: GraphOntology | None = None) -> None:
         self.ontology = ontology or GRAPH_ONTOLOGY
@@ -2066,487 +1414,6 @@ class OpenUsLawGraphProjector:
         projection.assert_semantics_disjoint()
         return projection
 
-    def _project_structure(
-        self,
-        nodes: dict[str, OpenUsLawGraphNode],
-        edges: list[OpenUsLawGraphEdge],
-        row: GraphCorpusRow,
-    ) -> None:
-        jurisdiction_key = f"jurisdiction:{row.jurisdiction_code}"
-        jurisdiction_label = JURISDICTION_NAMES.get(
-            row.jurisdiction_code, row.jurisdiction_code
-        )
-        self._ensure_node(
-            nodes,
-            node_type=GraphNodeType.JURISDICTION,
-            node_key=jurisdiction_key,
-            label=jurisdiction_label,
-            payload={
-                "jurisdiction_code": row.jurisdiction_code,
-                "jurisdiction_name": jurisdiction_label,
-            },
-        )
-
-        code_key = f"code:{row.jurisdiction_code}:{row.code_family}"
-        self._ensure_node(
-            nodes,
-            node_type=GraphNodeType.CODE,
-            node_key=code_key,
-            label=f"{row.jurisdiction_code} {row.code_family}",
-            payload={
-                "code_family": row.code_family,
-                "jurisdiction_code": row.jurisdiction_code,
-            },
-        )
-        edges.append(
-            self._edge(GraphEdgeType.CONTAINS, nodes[jurisdiction_key], nodes[code_key])
-        )
-
-        parent_key = code_key
-        if row.title:
-            title_key = f"title:{row.jurisdiction_code}:{row.code_family}:{row.title}"
-            self._ensure_node(
-                nodes,
-                node_type=GraphNodeType.TITLE,
-                node_key=title_key,
-                label=f"Title {row.title}",
-                payload={
-                    "code_family": row.code_family,
-                    "jurisdiction_code": row.jurisdiction_code,
-                    "title": row.title,
-                },
-            )
-            edges.append(
-                self._edge(GraphEdgeType.CONTAINS, nodes[parent_key], nodes[title_key])
-            )
-            parent_key = title_key
-
-        if row.chapter:
-            chapter_key = (
-                f"chapter:{row.jurisdiction_code}:{row.code_family}:"
-                f"{row.title or '_'}:{row.chapter}"
-            )
-            self._ensure_node(
-                nodes,
-                node_type=GraphNodeType.CHAPTER,
-                node_key=chapter_key,
-                label=f"Chapter {row.chapter}",
-                payload={
-                    "chapter": row.chapter,
-                    "code_family": row.code_family,
-                    "jurisdiction_code": row.jurisdiction_code,
-                    "title": row.title,
-                },
-            )
-            edges.append(
-                self._edge(GraphEdgeType.CONTAINS, nodes[parent_key], nodes[chapter_key])
-            )
-            parent_key = chapter_key
-
-        section_legal_id = strip_subsection_qualifier(row.legal_id)
-        section_key = f"section:{section_legal_id}"
-        self._ensure_node(
-            nodes,
-            node_type=GraphNodeType.SECTION,
-            node_key=section_key,
-            label=row.heading or section_legal_id,
-            legal_id=section_legal_id,
-            entry_cid=row.entry_cid if not row.subsection else None,
-            payload={
-                "chapter": row.chapter,
-                "code_family": row.code_family,
-                "configuration": row.configuration,
-                "jurisdiction_code": row.jurisdiction_code,
-                "section": row.section,
-                "title": row.title,
-            },
-        )
-        edges.append(
-            self._edge(GraphEdgeType.CONTAINS, nodes[parent_key], nodes[section_key])
-        )
-
-        leaf_key = section_key
-        if row.subsection:
-            subsection_key = f"subsection:{row.legal_id}"
-            self._ensure_node(
-                nodes,
-                node_type=GraphNodeType.SUBSECTION,
-                node_key=subsection_key,
-                label=f"{row.heading or row.section}({row.subsection})",
-                legal_id=row.legal_id,
-                entry_cid=row.entry_cid,
-                payload={
-                    "chapter": row.chapter,
-                    "code_family": row.code_family,
-                    "configuration": row.configuration,
-                    "jurisdiction_code": row.jurisdiction_code,
-                    "section": row.section,
-                    "subsection": row.subsection,
-                    "title": row.title,
-                },
-            )
-            edges.append(
-                self._edge(
-                    GraphEdgeType.CONTAINS, nodes[section_key], nodes[subsection_key]
-                )
-            )
-            leaf_key = subsection_key
-
-        if row.source_cid:
-            source_key = f"source:{row.source_cid}"
-            self._ensure_node(
-                nodes,
-                node_type=GraphNodeType.SOURCE,
-                node_key=source_key,
-                label=row.official_source_url or row.source_cid,
-                payload={
-                    "official_source_url": row.official_source_url,
-                    "source_cid": row.source_cid,
-                },
-            )
-            edges.append(
-                self._edge(GraphEdgeType.HAS_SOURCE, nodes[leaf_key], nodes[source_key])
-            )
-
-        edition_key = f"edition:{row.edition}"
-        self._ensure_node(
-            nodes,
-            node_type=GraphNodeType.EDITION,
-            node_key=edition_key,
-            label=row.edition,
-            payload={"edition": row.edition},
-        )
-        edges.append(
-            self._edge(GraphEdgeType.HAS_EDITION, nodes[leaf_key], nodes[edition_key])
-        )
-
-        provenance_digest = content_sha256(
-            canonical_json_dumps(
-                {
-                    "acquisition_receipt_cid": row.acquisition_receipt_cid,
-                    "entry_cid": row.entry_cid,
-                    "observed_at": row.observed_at,
-                    "rights_receipt_cid": row.rights_receipt_cid,
-                    "source_cid": row.source_cid,
-                }
-            )
-        )
-        provenance_key = f"provenance:{provenance_digest}"
-        self._ensure_node(
-            nodes,
-            node_type=GraphNodeType.PROVENANCE,
-            node_key=provenance_key,
-            label=row.acquisition_receipt_cid or row.entry_cid,
-            payload={
-                "acquisition_receipt_cid": row.acquisition_receipt_cid,
-                "entry_cid": row.entry_cid,
-                "observed_at": row.observed_at,
-                "rights_receipt_cid": row.rights_receipt_cid,
-                "source_cid": row.source_cid,
-            },
-        )
-        edges.append(
-            self._edge(
-                GraphEdgeType.HAS_PROVENANCE, nodes[leaf_key], nodes[provenance_key]
-            )
-        )
-
-    def _project_citations(
-        self,
-        nodes: dict[str, OpenUsLawGraphNode],
-        edges: list[OpenUsLawGraphEdge],
-        row: GraphCorpusRow,
-        *,
-        known_legal_ids: set[str],
-        locator_index: Mapping[tuple[str, str, str], Sequence[str]],
-    ) -> None:
-        leaf_key = (
-            f"subsection:{row.legal_id}"
-            if row.subsection
-            else f"section:{strip_subsection_qualifier(row.legal_id)}"
-        )
-        source_node = nodes[leaf_key]
-        citations = resolve_citations(
-            row.text,
-            known_legal_ids=known_legal_ids,
-            locator_index=locator_index,
-            source_cid=row.source_cid,
-            entry_cid=row.entry_cid,
-            default_jurisdiction=row.jurisdiction_code,
-            default_code_family=row.code_family,
-            host_legal_id=row.legal_id,
-            host_section=row.section,
-        )
-        for citation in citations:
-            if citation.mention.kind == "public_law":
-                pl_id = citation.target_public_law_id
-                if not pl_id:
-                    continue
-                pl_key = f"public_law:{pl_id}"
-                self._ensure_node(
-                    nodes,
-                    node_type=GraphNodeType.PUBLIC_LAW,
-                    node_key=pl_key,
-                    label=citation.mention.mention_text,
-                    payload={
-                        "congress": citation.mention.congress,
-                        "number": citation.mention.number,
-                        "public_law_id": pl_id,
-                    },
-                )
-                edges.append(
-                    self._edge(
-                        GraphEdgeType.CODIFIES,
-                        nodes[pl_key],
-                        source_node,
-                        source_span=citation.span,
-                        resolution_status=ResolutionStatus.RESOLVED,
-                        payload={
-                            "mention": citation.mention.mention_text,
-                            "parser_version": citation.mention.parser_version,
-                        },
-                    )
-                )
-                edges.append(
-                    self._edge(
-                        GraphEdgeType.DERIVED_FROM,
-                        source_node,
-                        nodes[pl_key],
-                        source_span=citation.span,
-                        payload={
-                            "mention": citation.mention.mention_text,
-                            "parser_version": citation.mention.parser_version,
-                        },
-                    )
-                )
-                continue
-
-            if (
-                citation.resolution_status is ResolutionStatus.RESOLVED
-                and citation.target_legal_id
-            ):
-                target_key = citation.target_node_key or _section_or_subsection_key(
-                    citation.target_legal_id
-                )
-                if target_key not in nodes:
-                    target_key = f"section:{citation.target_legal_id}"
-                if target_key not in nodes:
-                    continue
-                citation_key = (
-                    "citation:"
-                    + content_sha256(
-                        canonical_json_dumps(
-                            {
-                                "end": citation.span.end,
-                                "mention": citation.mention.mention_text,
-                                "source": row.legal_id,
-                                "start": citation.span.start,
-                                "target": citation.target_legal_id,
-                            }
-                        )
-                    )[:32]
-                )
-                self._ensure_node(
-                    nodes,
-                    node_type=GraphNodeType.CITATION,
-                    node_key=citation_key,
-                    label=citation.mention.mention_text,
-                    payload={
-                        "mention_text": citation.mention.mention_text,
-                        "parser_version": citation.mention.parser_version,
-                        "resolution_status": ResolutionStatus.RESOLVED.value,
-                        "target_legal_id": citation.target_legal_id,
-                    },
-                )
-                edges.append(
-                    self._edge(
-                        GraphEdgeType.HAS_CITATION,
-                        source_node,
-                        nodes[citation_key],
-                        source_span=citation.span,
-                        resolution_status=ResolutionStatus.RESOLVED,
-                        payload={
-                            "mention": citation.mention.mention_text,
-                            "parser_version": citation.mention.parser_version,
-                        },
-                    )
-                )
-                edges.append(
-                    self._edge(
-                        GraphEdgeType.CITES,
-                        source_node,
-                        nodes[target_key],
-                        source_span=citation.span,
-                        resolution_status=ResolutionStatus.RESOLVED,
-                        payload={
-                            "mention": citation.mention.mention_text,
-                            "parser_version": citation.mention.parser_version,
-                        },
-                    )
-                )
-            else:
-                unresolved_key = citation.target_node_key or _unresolved_node_key(
-                    citation.mention
-                )
-                self._ensure_node(
-                    nodes,
-                    node_type=GraphNodeType.UNRESOLVED_CITATION,
-                    node_key=unresolved_key,
-                    label=citation.mention.mention_text,
-                    payload={
-                        "code_family": citation.mention.code_family,
-                        "jurisdiction_code": citation.mention.jurisdiction_code,
-                        "mention_text": citation.mention.mention_text,
-                        "parser_version": citation.mention.parser_version,
-                        "resolution_status": ResolutionStatus.UNRESOLVED.value,
-                        "section": citation.mention.section,
-                        "title": citation.mention.title,
-                    },
-                )
-                edges.append(
-                    self._edge(
-                        GraphEdgeType.CITES_UNRESOLVED,
-                        source_node,
-                        nodes[unresolved_key],
-                        source_span=citation.span,
-                        resolution_status=citation.resolution_status
-                        if citation.resolution_status
-                        is not ResolutionStatus.RESOLVED
-                        else ResolutionStatus.UNRESOLVED,
-                        payload={
-                            "mention": citation.mention.mention_text,
-                            "parser_version": citation.mention.parser_version,
-                            "resolution_status": (
-                                citation.resolution_status.value
-                                if citation.resolution_status
-                                else ResolutionStatus.UNRESOLVED.value
-                            ),
-                        },
-                    )
-                )
-
-        for raw in row.cites:
-            target = self._coerce_target_legal_id(raw, row=row)
-            if not target or target == row.legal_id:
-                continue
-            target_key = _section_or_subsection_key(target)
-            if target_key not in nodes:
-                target_key = f"section:{target}"
-            if target_key not in nodes:
-                continue
-            span = self._synthetic_field_span(row, field_name="cites", mention=str(raw))
-            edges.append(
-                self._edge(
-                    GraphEdgeType.CITES,
-                    source_node,
-                    nodes[target_key],
-                    source_span=span,
-                    resolution_status=ResolutionStatus.RESOLVED,
-                    payload={"origin": "explicit_field", "target": target},
-                )
-            )
-
-        for pl_raw in row.public_laws:
-            pl_id = self._normalize_public_law_id(pl_raw)
-            pl_key = f"public_law:{pl_id}"
-            self._ensure_node(
-                nodes,
-                node_type=GraphNodeType.PUBLIC_LAW,
-                node_key=pl_key,
-                label=str(pl_raw),
-                payload={"public_law_id": pl_id},
-            )
-            span = self._synthetic_field_span(
-                row, field_name="public_laws", mention=str(pl_raw)
-            )
-            edges.append(
-                self._edge(
-                    GraphEdgeType.CODIFIES,
-                    nodes[pl_key],
-                    source_node,
-                    source_span=span,
-                    payload={"origin": "explicit_field", "public_law_id": pl_id},
-                )
-            )
-
-    def _project_amendments(
-        self,
-        nodes: dict[str, OpenUsLawGraphNode],
-        edges: list[OpenUsLawGraphEdge],
-        row: GraphCorpusRow,
-    ) -> None:
-        leaf_key = (
-            f"subsection:{row.legal_id}"
-            if row.subsection
-            else f"section:{strip_subsection_qualifier(row.legal_id)}"
-        )
-        source_node = nodes[leaf_key]
-        for target_raw, edge_type in (
-            *((item, GraphEdgeType.AMENDS) for item in row.amends),
-            *((item, GraphEdgeType.REPEALS) for item in row.repeals),
-            *((item, GraphEdgeType.TRANSFERS) for item in row.transfers),
-        ):
-            target = self._coerce_target_legal_id(target_raw, row=row)
-            if not target:
-                continue
-            target_key = _section_or_subsection_key(target)
-            if target_key not in nodes:
-                target_key = f"section:{target}"
-            if target_key not in nodes:
-                self._ensure_node(
-                    nodes,
-                    node_type=GraphNodeType.SECTION,
-                    node_key=target_key,
-                    label=target,
-                    legal_id=target,
-                    payload={"placeholder": True, "target": target},
-                )
-            span = self._synthetic_field_span(
-                row, field_name=edge_type.value.lower(), mention=str(target_raw)
-            )
-            if edge_type is GraphEdgeType.AMENDS:
-                amendment_key = f"amendment:{row.legal_id}:{target}"
-                self._ensure_node(
-                    nodes,
-                    node_type=GraphNodeType.AMENDMENT,
-                    node_key=amendment_key,
-                    label=f"{row.legal_id} amends {target}",
-                    payload={
-                        "source_legal_id": row.legal_id,
-                        "target_legal_id": target,
-                    },
-                )
-                edges.append(
-                    self._edge(
-                        GraphEdgeType.HAS_AMENDMENT,
-                        source_node,
-                        nodes[amendment_key],
-                        source_span=span,
-                        resolution_status=ResolutionStatus.RESOLVED,
-                        payload={"origin": "explicit_field", "target": target},
-                    )
-                )
-                edges.append(
-                    self._edge(
-                        GraphEdgeType.AMENDS,
-                        nodes[amendment_key],
-                        nodes[target_key],
-                        source_span=span,
-                        resolution_status=ResolutionStatus.RESOLVED,
-                        payload={"origin": "explicit_field", "target": target},
-                    )
-                )
-            edges.append(
-                self._edge(
-                    edge_type,
-                    source_node,
-                    nodes[target_key],
-                    source_span=span,
-                    resolution_status=ResolutionStatus.RESOLVED,
-                    payload={"origin": "explicit_field", "target": target},
-                )
-            )
-
     def _coerce_row(self, value: GraphCorpusRow | Mapping[str, Any]) -> GraphCorpusRow:
         if isinstance(value, GraphCorpusRow):
             return value
@@ -2574,68 +1441,6 @@ class OpenUsLawGraphProjector:
             "similarity neighbor must be mapping or SimilarityNeighbor"
         )
 
-    def _ensure_node(
-        self,
-        nodes: dict[str, OpenUsLawGraphNode],
-        *,
-        node_type: GraphNodeType,
-        node_key: str,
-        label: str,
-        legal_id: Optional[str] = None,
-        entry_cid: Optional[str] = None,
-        payload: Optional[Mapping[str, Any]] = None,
-    ) -> OpenUsLawGraphNode:
-        existing = nodes.get(node_key)
-        if existing is not None:
-            return existing
-        node = OpenUsLawGraphNode(
-            node_type=node_type,
-            node_key=node_key,
-            label=label,
-            legal_id=legal_id,
-            entry_cid=entry_cid,
-            payload=dict(payload or {}),
-        )
-        nodes[node_key] = node
-        return node
-
-    def _edge(
-        self,
-        edge_type: GraphEdgeType,
-        source: OpenUsLawGraphNode,
-        target: OpenUsLawGraphNode,
-        *,
-        source_span: Optional[SourceSpan] = None,
-        resolution_status: Optional[ResolutionStatus] = None,
-        weight: Optional[float] = None,
-        payload: Optional[Mapping[str, Any]] = None,
-    ) -> OpenUsLawGraphEdge:
-        edge_class = self.ontology.validate_edge(
-            edge_type,
-            source.node_type,
-            target.node_type,
-        )
-        return OpenUsLawGraphEdge(
-            edge_type=edge_type,
-            source_node_cid=source.node_cid,
-            target_node_cid=target.node_cid,
-            edge_class=edge_class,
-            source_span=source_span,
-            resolution_status=resolution_status,
-            weight=weight,
-            payload=dict(payload or {}),
-        )
-
-    @staticmethod
-    def _normalize_public_law_id(value: str) -> str:
-        text = str(value).strip()
-        if text.startswith("pl:us:"):
-            return text
-        match = re.search(r"(\d+)\s*[-–—]\s*(\d+)", text)
-        if match:
-            return f"pl:us:{int(match.group(1))}:{int(match.group(2))}"
-        raise GraphProjectionError(f"cannot normalize public law id: {value!r}")
-
     def _coerce_target_legal_id(self, value: str, *, row: GraphCorpusRow) -> Optional[str]:
         text = str(value).strip()
         if not text:
@@ -2661,32 +1466,6 @@ class OpenUsLawGraphProjector:
                 except Exception:
                     return None
         return None
-
-    @staticmethod
-    def _synthetic_field_span(
-        row: GraphCorpusRow,
-        *,
-        field_name: str,
-        mention: str,
-    ) -> SourceSpan:
-        if mention and mention in row.text:
-            return SourceSpan.from_occurrence(
-                row.text,
-                mention,
-                source_cid=row.source_cid,
-                entry_cid=row.entry_cid,
-                field="text",
-            )
-        virtual = mention
-        return SourceSpan(
-            start=0,
-            end=len(virtual),
-            text=virtual,
-            source_cid=row.source_cid,
-            entry_cid=row.entry_cid,
-            field=field_name,
-        )
-
 
 def project_open_us_law_graph(
     rows: Sequence[GraphCorpusRow | Mapping[str, Any]],

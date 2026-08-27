@@ -136,7 +136,7 @@ def statutes_from_section_detail(
         code_name=code_name,
         section_number=section_number,
         section_name=(heading or f"Section {section_number}")[:200],
-        full_text=text[:14000],
+        full_text=text,
         source_url=vacode_url(section_number),
         official_cite=f"Va. Code Ann. § {section_number}",
         metadata=StatuteMetadata(),

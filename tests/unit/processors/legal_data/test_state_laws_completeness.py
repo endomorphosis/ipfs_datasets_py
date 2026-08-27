@@ -408,6 +408,33 @@ def test_unofficial_source_rejected() -> None:
     assert "unofficial_source" in verdict.kinds
 
 
+@pytest.mark.parametrize(
+    "authority",
+    [None, "recovery", "unverified", "cache", "direct_insecure_tls"],
+    ids=["missing", "recovery", "unverified", "cache", "direct-insecure-tls"],
+)
+def test_full_receipt_requires_explicit_official_authority(
+    authority: str | None,
+) -> None:
+    receipt = closed_jurisdiction_receipt(
+        "MN",
+        official_source=True,
+        source_authority_class=authority or "official",
+    )
+    if authority is None:
+        receipt.pop("source_authority_class")
+
+    verdict = evaluate_jurisdiction_receipt(receipt)
+
+    assert verdict.complete is False
+    assert verdict.admitted is False
+    assert "unofficial_source" in verdict.kinds
+    assert any(
+        "explicit official source authority" in finding.detail
+        for finding in verdict.findings
+    )
+
+
 def test_replay_mismatch_rejected() -> None:
     receipt = closed_jurisdiction_receipt(
         "NY",

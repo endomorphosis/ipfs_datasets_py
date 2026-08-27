@@ -79,7 +79,7 @@ def parse_new_mexico_constitution_text(
                     title_number=article_id,
                     section_number=number,
                     section_name=heading,
-                    full_text=raw[:14000],
+                    full_text=raw,
                     source_url=NM_CONST_PDF,
                     official_cite=f"N.M. Const. art. {article_id}, § {number}",
                     metadata=StatuteMetadata(),

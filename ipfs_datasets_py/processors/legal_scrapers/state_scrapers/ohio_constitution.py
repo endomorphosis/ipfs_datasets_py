@@ -100,7 +100,7 @@ def parse_ohio_constitution_html(
                 title_number=art_id,
                 section_number=number,
                 section_name=(sec_title or art_title or f"Section {number}")[:200],
-                full_text=body[:14000],
+                full_text=body,
                 source_url=url,
                 official_cite=cite,
                 metadata=StatuteMetadata(),

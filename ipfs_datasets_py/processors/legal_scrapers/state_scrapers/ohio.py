@@ -1,8 +1,9 @@
+import hashlib
 import json
 import re
 import ssl
 import urllib.request
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 from urllib.parse import urljoin, urlparse
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -123,6 +124,11 @@ class OhioScraper(BaseStateScraper):
         )
         if official:
             return official if limit is None else official[: int(limit)]
+        if limit is None and self._full_corpus_enabled():
+            raise RuntimeError(
+                "Ohio official title/chapter hierarchy did not close; "
+                "refusing legacy generic full-corpus recovery"
+            )
 
         if merged:
             return merged if limit is None else merged[: int(limit)]
@@ -168,12 +174,22 @@ class OhioScraper(BaseStateScraper):
 
         statutes: List[NormalizedStatute] = []
         seen_sections = set()
-        # Bound section-link exploration when sampling; unbounded in full-corpus mode.
         max_section_links = (limit * 5) if limit is not None else None
+
+        title_inputs: Dict[str, tuple[bytes, Dict[str, Any]]] = {}
+        if limit is None:
+            title_inputs = await self._fetch_oh_html_frontier(
+                title_urls,
+                frontier_name="title catalog",
+            )
+        chapter_urls_by_title: Dict[str, List[str]] = {}
         for title_url in title_urls:
-            if limit is not None and len(statutes) >= limit:
-                break
-            title_payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=20)
+            title_record = title_inputs.get(title_url)
+            title_payload = title_record[0] if title_record is not None else None
+            if title_payload is None:
+                title_payload = await self._fetch_page_content_with_archival_fallback(
+                    title_url, timeout_seconds=20
+                )
             if not title_payload:
                 continue
             title_soup = BeautifulSoup(title_payload, "html.parser")
@@ -188,17 +204,50 @@ class OhioScraper(BaseStateScraper):
                     continue
                 seen_chapters.add(abs_url)
                 chapter_urls.append(abs_url)
+            chapter_urls_by_title[title_url] = chapter_urls
 
+        chapter_inputs: Dict[str, tuple[bytes, Dict[str, Any]]] = {}
+        if limit is None:
+            chapter_frontier = list(
+                dict.fromkeys(
+                    url
+                    for title_url in title_urls
+                    for url in chapter_urls_by_title.get(title_url, [])
+                )
+            )
+            chapter_inputs = await self._fetch_oh_html_frontier(
+                chapter_frontier,
+                frontier_name="chapter catalog",
+            )
+
+        deferred_sections: List[str] = []
+        for title_url in title_urls:
+            if limit is not None and len(statutes) >= limit:
+                break
             title_match = self._OH_TITLE_URL_RE.search(title_url)
             title_num = title_match.group(1) if title_match else ""
-            for chapter_url in chapter_urls:
+            for chapter_url in chapter_urls_by_title.get(title_url, []):
                 if limit is not None and len(statutes) >= limit:
                     break
                 if max_section_links is not None and len(seen_sections) >= max_section_links:
                     break
-                chapter_payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=20)
+                chapter_record = chapter_inputs.get(chapter_url)
+                chapter_payload = chapter_record[0] if chapter_record is not None else None
+                if chapter_payload is None:
+                    chapter_payload = await self._fetch_page_content_with_archival_fallback(
+                        chapter_url, timeout_seconds=20
+                    )
                 if not chapter_payload:
                     continue
+                provenance = (
+                    chapter_record[1]
+                    if chapter_record is not None
+                    else self._last_parser_input_row_provenance()
+                )
+                chapter_provenance = self._validated_inline_chapter_provenance(
+                    chapter_url=chapter_url,
+                    provenance=provenance,
+                )
                 chapter_match = self._OH_CHAPTER_URL_RE.search(chapter_url)
                 chapter_num = chapter_match.group(1) if chapter_match else ""
                 remaining = None if limit is None else max(0, int(limit) - len(statutes))
@@ -210,6 +259,11 @@ class OhioScraper(BaseStateScraper):
                     max_statutes=remaining,
                 )
                 if inline:
+                    inline = self._bind_inline_chapter_provenance(
+                        inline,
+                        chapter_url=chapter_url,
+                        provenance=chapter_provenance,
+                    )
                     for row in inline:
                         key = str(row.source_url or row.statute_id or "").strip().lower()
                         if not key or key in seen_sections:
@@ -228,11 +282,176 @@ class OhioScraper(BaseStateScraper):
                     if abs_url in seen_sections:
                         continue
                     seen_sections.add(abs_url)
+                    if limit is None:
+                        deferred_sections.append(abs_url)
+                        continue
                     statute = await self._build_official_section_statute(code_name, abs_url)
                     if statute is not None:
                         statutes.append(statute)
-                        if limit is not None and len(statutes) >= limit:
+                        if len(statutes) >= limit:
                             break
+
+        if deferred_sections:
+            section_inputs = await self._fetch_oh_html_frontier(
+                deferred_sections,
+                frontier_name="section body",
+            )
+            for section_url in deferred_sections:
+                statute = await self._build_official_section_statute(
+                    code_name,
+                    section_url,
+                    _payload=section_inputs[section_url][0],
+                )
+                if statute is not None:
+                    statutes.append(statute)
+        return statutes
+
+    async def _fetch_oh_html_frontier(
+        self,
+        urls: List[str],
+        *,
+        frontier_name: str,
+    ) -> Dict[str, tuple[bytes, Dict[str, Any]]]:
+        """Fetch one ordered Ohio HTML wave through grouped archive recovery."""
+
+        requested = list(urls)
+        if not requested:
+            return {}
+        if len(set(requested)) != len(requested):
+            raise RuntimeError(f"Ohio {frontier_name} frontier contains duplicate URLs")
+        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+            requested,
+            residual_retry_attempts=1,
+            timeout_seconds=20,
+            headers={"User-Agent": "Mozilla/5.0"},
+            content_validator=lambda payload: b"<" in payload[:8192] and b">" in payload[:8192],
+            media_type="text/html",
+            max_concurrency=8,
+            prefer_direct=True,
+            wayback_prefix_inventory=True,
+        )
+        if list(batch.urls) != requested or any(
+            len(vector) != len(requested)
+            for vector in (
+                batch.payloads,
+                batch.errors,
+                batch.transport_receipts,
+                batch.parser_input_envelopes,
+            )
+        ):
+            raise RuntimeError(f"Ohio {frontier_name} frontier returned unaligned rows")
+        failures = [
+            {"url": url, "error": error or "empty parser input"}
+            for url, payload, error in zip(
+                batch.urls, batch.payloads, batch.errors, strict=True
+            )
+            if error is not None or not payload
+        ]
+        if failures:
+            raise RuntimeError(
+                f"Ohio {frontier_name} frontier is incomplete; "
+                f"unresolved exact URLs: {failures}"
+            )
+        out: Dict[str, tuple[bytes, Dict[str, Any]]] = {}
+        for url, payload, receipt in zip(
+            batch.urls,
+            batch.payloads,
+            batch.transport_receipts,
+            strict=True,
+        ):
+            body = bytes(payload)
+            out[url] = (
+                body,
+                {
+                    "content_sha256": hashlib.sha256(body).hexdigest(),
+                    "transport_receipt": (
+                        dict(receipt) if isinstance(receipt, Mapping) else {}
+                    ),
+                },
+            )
+        return out
+
+    def _validated_inline_chapter_provenance(
+        self,
+        *,
+        chapter_url: str,
+        provenance: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        """Validate the exact retained chapter bytes used by inline rows."""
+
+        strict = self._state_law_acquisition_ledger is not None
+        try:
+            digest = str(provenance.get("content_sha256") or "").strip().lower()
+            receipt = provenance.get("transport_receipt")
+            if not re.fullmatch(r"[a-f0-9]{64}", digest):
+                raise ValueError("missing or malformed chapter content digest")
+            if not isinstance(receipt, Mapping):
+                raise ValueError("missing or malformed chapter transport receipt")
+
+            from ...legal_data.state_laws_source_provenance import (
+                canonicalize_state_law_transport_receipt,
+            )
+
+            canonical_receipt = canonicalize_state_law_transport_receipt(
+                receipt,
+                official_url=chapter_url,
+                content_sha256=digest,
+            )
+            retained_url = str(canonical_receipt.get("official_url") or "").strip()
+            if (
+                not retained_url
+                or self._canonical_fetch_url(retained_url)
+                != self._canonical_fetch_url(chapter_url)
+            ):
+                raise ValueError("chapter transport receipt official URL drifted")
+        except Exception as exc:
+            if strict:
+                raise RuntimeError(
+                    "Ohio inline chapter rows lack exact retained parser-input provenance"
+                ) from exc
+            return {}
+
+        return {
+            "content_sha256": digest,
+            "transport_receipt": canonical_receipt,
+        }
+
+    def _bind_inline_chapter_provenance(
+        self,
+        statutes: List[NormalizedStatute],
+        *,
+        chapter_url: str,
+        provenance: Mapping[str, Any],
+    ) -> List[NormalizedStatute]:
+        """Copy one chapter response binding onto every inline section row."""
+
+        if not statutes or not provenance:
+            return statutes
+        digest = str(provenance["content_sha256"])
+        receipt = dict(provenance["transport_receipt"])
+        strict = self._state_law_acquisition_ledger is not None
+        for statute in statutes:
+            structured = dict(statute.structured_data or {})
+            prior_digest = structured.get("content_sha256")
+            prior_receipt = structured.get("transport_receipt")
+            conflict = (
+                ("content_sha256" in structured and prior_digest != digest)
+                or ("transport_receipt" in structured and prior_receipt != receipt)
+            )
+            if conflict:
+                if strict:
+                    raise RuntimeError(
+                        "Ohio inline chapter row has conflicting retained "
+                        f"parser-input provenance: chapter_url={chapter_url}"
+                    )
+                continue
+            structured.update(
+                {
+                    "content_sha256": digest,
+                    "transport_receipt": dict(receipt),
+                }
+            )
+            statute.structured_data = structured
         return statutes
 
     def _parse_official_chapter_inline(
@@ -263,13 +482,16 @@ class OhioScraper(BaseStateScraper):
         self,
         code_name: str,
         source_url: str,
+        _payload: Optional[bytes] = None,
     ) -> Optional[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return None
 
-        payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=20)
+        payload = _payload
+        if payload is None:
+            payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=20)
         if not payload:
             return None
         soup = BeautifulSoup(payload, "html.parser")

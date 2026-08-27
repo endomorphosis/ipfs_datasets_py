@@ -493,6 +493,133 @@ def default_catalog_path() -> Path:
 
 
 @dataclass(frozen=True)
+class DelegatedInventoryPath:
+    """State-delegated inventory authority that cannot admit document bodies."""
+
+    path_id: str
+    provider: str
+    delegating_authority_url: str
+    public_entry_url: str
+    container_url: str
+    allowed_domains: tuple[str, ...]
+    discovery_mode: DiscoveryMode
+    authority_scope: str = "toc_inventory_only"
+    body_admissible: bool = False
+    full_corpus_admissible: bool = False
+    notes: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "path_id": self.path_id,
+            "provider": self.provider,
+            "delegating_authority_url": self.delegating_authority_url,
+            "public_entry_url": self.public_entry_url,
+            "container_url": self.container_url,
+            "allowed_domains": list(self.allowed_domains),
+            "discovery_mode": self.discovery_mode.value,
+            "authority_scope": self.authority_scope,
+            "body_admissible": self.body_admissible,
+            "full_corpus_admissible": self.full_corpus_admissible,
+        }
+        if self.notes:
+            payload["notes"] = self.notes
+        return payload
+
+    @classmethod
+    def from_mapping(
+        cls,
+        value: JsonMapping,
+        *,
+        context: str,
+        delegating_domains: Sequence[str],
+    ) -> DelegatedInventoryPath:
+        if not isinstance(value, Mapping):
+            raise CatalogSchemaError(f"{context} must be a mapping")
+        authority_scope = _require_non_empty_str(
+            value.get("authority_scope"), f"{context}.authority_scope", maximum=64
+        )
+        if authority_scope != "toc_inventory_only":
+            raise CatalogSchemaError(
+                f"{context}.authority_scope must be 'toc_inventory_only'"
+            )
+        if value.get("body_admissible") is not False:
+            raise CatalogSchemaError(f"{context}.body_admissible must be false")
+        if value.get("full_corpus_admissible") is not False:
+            raise CatalogSchemaError(f"{context}.full_corpus_admissible must be false")
+
+        delegating_url = _require_http_url(
+            value.get("delegating_authority_url"),
+            f"{context}.delegating_authority_url",
+        )
+        public_entry_url = _require_http_url(
+            value.get("public_entry_url"), f"{context}.public_entry_url"
+        )
+        container_url = _require_http_url(
+            value.get("container_url"), f"{context}.container_url"
+        )
+        for name, url in (
+            ("delegating_authority_url", delegating_url),
+            ("public_entry_url", public_entry_url),
+            ("container_url", container_url),
+        ):
+            if urlparse(url).scheme != "https":
+                raise CatalogSchemaError(f"{context}.{name} must use https")
+
+        raw_domains = value.get("allowed_domains") or []
+        if not isinstance(raw_domains, Sequence) or isinstance(
+            raw_domains, (str, bytes)
+        ):
+            raise CatalogSchemaError(
+                f"{context}.allowed_domains must be a list of hostnames"
+            )
+        domains = tuple(
+            _normalize_domain(item, f"{context}.allowed_domains")
+            for item in raw_domains
+        )
+        if not domains:
+            raise CatalogSchemaError(f"{context}.allowed_domains must be non-empty")
+
+        delegating_host = _host_of(delegating_url)
+        if is_secondary_host(delegating_host) or not any(
+            delegating_host == domain or delegating_host.endswith("." + domain)
+            for domain in delegating_domains
+        ):
+            raise DomainConstraintError(
+                f"{context}.delegating_authority_url is outside the parent official path"
+            )
+        for name, url in (
+            ("public_entry_url", public_entry_url),
+            ("container_url", container_url),
+        ):
+            host = _host_of(url)
+            if not any(
+                host == domain or host.endswith("." + domain) for domain in domains
+            ):
+                raise DomainConstraintError(
+                    f"{context}.{name} host {host!r} is outside "
+                    f"allowed_domains={list(domains)!r}"
+                )
+
+        return cls(
+            path_id=_require_non_empty_str(
+                value.get("path_id"), f"{context}.path_id", maximum=128
+            ),
+            provider=_require_non_empty_str(
+                value.get("provider"), f"{context}.provider", maximum=128
+            ),
+            delegating_authority_url=delegating_url,
+            public_entry_url=public_entry_url,
+            container_url=container_url,
+            allowed_domains=domains,
+            discovery_mode=DiscoveryMode.coerce(value.get("discovery_mode")),
+            authority_scope=authority_scope,
+            body_admissible=False,
+            full_corpus_admissible=False,
+            notes=str(value.get("notes") or "").strip(),
+        )
+
+
+@dataclass(frozen=True)
 class AcquisitionPath:
     """One cataloged acquisition path for a jurisdiction."""
 
@@ -508,6 +635,7 @@ class AcquisitionPath:
     notes: str = ""
     exception_id: Optional[str] = None
     exception_rationale: Optional[str] = None
+    delegated_inventory: Optional[DelegatedInventoryPath] = None
 
     def is_authoritative(self) -> bool:
         """Return True when this path may authorize corpus admission."""
@@ -538,6 +666,8 @@ class AcquisitionPath:
             payload["exception_id"] = self.exception_id
         if self.exception_rationale:
             payload["exception_rationale"] = self.exception_rationale
+        if self.delegated_inventory is not None:
+            payload["delegated_inventory"] = self.delegated_inventory.to_dict()
         return payload
 
     @classmethod
@@ -580,6 +710,16 @@ class AcquisitionPath:
             exception_rationale = _require_non_empty_str(
                 exception_rationale, f"{context}.exception_rationale", maximum=2048
             )
+        delegated_raw = value.get("delegated_inventory")
+        delegated_inventory = (
+            None
+            if delegated_raw is None
+            else DelegatedInventoryPath.from_mapping(
+                delegated_raw,
+                context=f"{context}.delegated_inventory",
+                delegating_domains=domains,
+            )
+        )
 
         # Domain constraints: entry host must be allowed; secondary hosts cannot be official.
         entry_host = _host_of(entry_url)
@@ -625,6 +765,7 @@ class AcquisitionPath:
             notes=notes,
             exception_id=exception_id,
             exception_rationale=exception_rationale,
+            delegated_inventory=delegated_inventory,
         )
 
 
@@ -1144,6 +1285,7 @@ __all__ = [
     "SourceRole",
     "AuthorityClass",
     "DiscoveryMode",
+    "DelegatedInventoryPath",
     "AcquisitionPath",
     "CodeFamily",
     "JurisdictionSourceRecord",
