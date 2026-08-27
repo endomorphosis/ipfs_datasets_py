@@ -114,6 +114,10 @@ async def test_strict_ledger_forces_one_grouped_inventory_and_direct_only_residu
     assert all(not payload for payload in result.payloads)
     attempts = result.stats["residual_retry_attempt_batches"]
     assert attempts[0]["archive_recovery_enabled"] is True
+    assert attempts[0]["common_crawl_inventory_queries"] == 1
     assert attempts[1]["archive_recovery_enabled"] is False
+    assert attempts[1]["common_crawl_inventory_queries"] == 0
+    assert attempts[1]["requested_urls"] == urls
     assert result.stats["residual_retry_rounds_executed"] == 1
     assert result.stats["per_page_archive_fallback_disabled"] is True
+    assert result.stats["fallback_requests"] == 0
