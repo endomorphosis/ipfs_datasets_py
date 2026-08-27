@@ -644,7 +644,7 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G150 Acquire bounded GO residuals for Montana and Kentucky
-- Status: provisionally_complete
+- Status: active
 - Parent: LCR-G148
 - Depends on: LCR-G149
 - Fib priority: 1
@@ -701,7 +701,7 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - Provisional at: 2026-08-27T19:31:45.303750+00:00
 
 ## LCR-G152 Acquire catalog-then-leaf and fresh-root residuals
-- Status: provisionally_complete
+- Status: active
 - Parent: LCR-G148
 - Depends on: LCR-G149
 - Fib priority: 1
@@ -754,42 +754,3 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
 - Reopen reasons: []
 
-## LCR-G154 Prove Playbook receipt for Close remaining exact-51 residuals with the sealed current-bundle playbook
-
-- Status: active
-- Parent: LCR-G148
-- Fib priority: 8000
-- Track: exact51-residual-replay
-- Priority: P0
-- Bundle: exact51-residual-replay
-- Goal: Create concrete implementation, tests, docs, or interface descriptors proving `Playbook receipt`.
-- Evidence: Playbook receipt
-- Outputs: docs/reports/legal_corpora_reindex/exact51_residual_replay_playbook_v1.md
-- Validation: python scripts/validate_legal_corpora_reindex_board.py --check-all
-- Acceptance: Every remaining jurisdiction either has a sealed current-bundle pair matching the playbook or a typed residual report naming the exact next URL set ; no static list ; sample cap ; per-page archive loop ; Docker evidence copy ; or Hub publish is admitted ; PA v7 remains the host-replay canary and is not reused as a fenced root.
-- Refinement depth: 3
-- Embedding query: Playbook receipt
-- AST query: Playbook receipt
-- Parallel lane: 0,1,2,3
-- Conflict policy: Campaign owner of the playbook report only; child goals own disjoint residual evidence and tests.
-- Gap task: Close the missing objective evidence `Playbook receipt` with a narrow, verifiable change.
-
-## LCR-G155 Prove shared substrate tests for Close remaining exact-51 residuals with the sealed current-bundle playbook
-
-- Status: active
-- Parent: LCR-G148
-- Fib priority: 8001
-- Track: exact51-residual-replay
-- Priority: P0
-- Bundle: exact51-residual-replay
-- Goal: Create concrete implementation, tests, docs, or interface descriptors proving `shared substrate tests`.
-- Evidence: shared substrate tests
-- Outputs: docs/reports/legal_corpora_reindex/exact51_residual_replay_playbook_v1.md
-- Validation: python scripts/validate_legal_corpora_reindex_board.py --check-all
-- Acceptance: Every remaining jurisdiction either has a sealed current-bundle pair matching the playbook or a typed residual report naming the exact next URL set ; no static list ; sample cap ; per-page archive loop ; Docker evidence copy ; or Hub publish is admitted ; PA v7 remains the host-replay canary and is not reused as a fenced root.
-- Refinement depth: 3
-- Embedding query: shared substrate tests
-- AST query: shared substrate tests
-- Parallel lane: 0,1,2,3
-- Conflict policy: Campaign owner of the playbook report only; child goals own disjoint residual evidence and tests.
-- Gap task: Close the missing objective evidence `shared substrate tests` with a narrow, verifiable change.
