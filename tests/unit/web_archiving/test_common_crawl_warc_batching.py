@@ -1984,3 +1984,100 @@ async def test_page_multifetch_direct_successes_skip_archive_inventory(
     assert result.stats["direct_initial_successes"] == 2
     assert result.stats["common_crawl_inventory_queries"] == 0
     assert result.stats["common_crawl_matched_pointers"] == 0
+
+
+@pytest.mark.anyio
+async def test_residual_retry_does_not_repeat_common_crawl_inventory(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from ipfs_datasets_py.processors.web_archiving import wayback_machine_engine
+
+    urls = [
+        "https://codes.example.gov/title/1",
+        "https://codes.example.gov/title/2",
+    ]
+    direct_calls: list[str] = []
+    inventory_queries: list[dict[str, object]] = []
+    wayback_inventory_calls: list[tuple[str, ...]] = []
+    legacy_wayback_calls: list[str] = []
+    archive_is_calls: list[str] = []
+
+    def _direct(_self, url: str, *, headers=None):
+        del headers
+        direct_calls.append(url)
+        return None
+
+    async def _inventory(**kwargs):
+        inventory_queries.append(dict(kwargs))
+        return []
+
+    async def _wayback_inventory(requested, **_kwargs):
+        wayback_inventory_calls.append(tuple(requested))
+        return {
+            "status": "success",
+            "captures_by_url": {},
+            "receipts": [],
+            "errors": [],
+            "stats": {
+                "requested_pages": len(requested),
+                "unique_pages": len(set(requested)),
+                "prefix_queries_planned": 1,
+                "prefix_queries_attempted": 1,
+                "prefix_queries_succeeded": 1,
+                "matched_pages": 0,
+                "unmatched_pages": len(set(requested)),
+            },
+        }
+
+    async def _forbid_wayback(_self, url: str):
+        legacy_wayback_calls.append(url)
+        raise AssertionError("residual retry must not use per-page Wayback")
+
+    async def _forbid_archive_is(_self, url: str):
+        archive_is_calls.append(url)
+        raise AssertionError("residual retry must not use per-page archive.is")
+
+    async def _no_cache(**_kwargs):
+        return None
+
+    monkeypatch.setattr(ArchivalFetchClient, "_fetch_direct", _direct)
+    monkeypatch.setattr(ArchivalFetchClient, "_fetch_from_wayback", _forbid_wayback)
+    monkeypatch.setattr(
+        ArchivalFetchClient,
+        "_fetch_from_archive_is",
+        _forbid_archive_is,
+    )
+    monkeypatch.setattr(
+        wayback_machine_engine,
+        "fetch_wayback_capture_inventory",
+        _wayback_inventory,
+    )
+
+    scraper = _StateFrontierScraper("WI", "Wisconsin")
+    monkeypatch.setattr(scraper, "_search_state_common_crawl_records", _inventory)
+    monkeypatch.setattr(scraper, "_cache_successful_page_fetch", _no_cache)
+
+    result = await scraper._fetch_page_contents_with_archival_fallback_retrying_residuals(
+        urls,
+        residual_retry_attempts=1,
+        content_validator=lambda payload: bool(payload),
+        prefer_direct=True,
+        wayback_prefix_inventory=True,
+    )
+
+    assert len(inventory_queries) == 1
+    assert inventory_queries[0]["domain_terms"] == ["codes.example.gov"]
+    assert inventory_queries[0]["url_terms"] == ["/title/1", "/title/2"]
+    assert wayback_inventory_calls == [tuple(urls)]
+    assert legacy_wayback_calls == []
+    assert archive_is_calls == []
+    assert sorted(direct_calls) == sorted([*urls, *urls])
+    assert all(not payload for payload in result.payloads)
+    attempts = result.stats["residual_retry_attempt_batches"]
+    assert attempts[0]["archive_recovery_enabled"] is True
+    assert attempts[0]["common_crawl_inventory_queries"] == 1
+    assert attempts[1]["archive_recovery_enabled"] is False
+    assert attempts[1]["common_crawl_inventory_queries"] == 0
+    assert attempts[1]["requested_urls"] == urls
+    assert result.stats["fallback_requests"] == 0
+    assert result.stats["per_page_archive_fallback_disabled"] is True

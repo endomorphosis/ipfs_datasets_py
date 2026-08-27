@@ -6109,21 +6109,14 @@ class BaseStateScraper(ABC):
         initial_unresolved_urls: List[str] = []
         initial_stats: Dict[str, Any] = {}
 
-        grouped_archive_inventory_enabled = bool(
-            fetch_kwargs.get("wayback_prefix_inventory")
-            or getattr(self, "_state_law_acquisition_ledger", None) is not None
-        )
         for attempt_index in range(retry_attempts + 1):
             attempt_fetch_kwargs = dict(fetch_kwargs)
-            if (
-                attempt_index > 0
-                and grouped_archive_inventory_enabled
-                and not repeat_grouped_archive_inventory_on_residual
-            ):
-                # The initial grouped inventory is authoritative for this
-                # retry cycle.  Retained rows are replayed by the plural fetcher
-                # first; only unresolved rows receive another bounded direct
-                # attempt, with no repeated CC/CDX/archive.is discovery.
+            if attempt_index > 0 and not repeat_grouped_archive_inventory_on_residual:
+                # The initial grouped Common Crawl / Wayback inventory is
+                # authoritative for this retry cycle.  Retained rows are
+                # replayed by the plural fetcher first; only unresolved rows
+                # receive another bounded direct attempt, with no repeated
+                # CC/CDX/archive.is discovery and no per-page archive loop.
                 attempt_fetch_kwargs["archive_recovery_enabled"] = False
             batch = await self._fetch_page_contents_with_archival_fallback(
                 attempt_urls,
