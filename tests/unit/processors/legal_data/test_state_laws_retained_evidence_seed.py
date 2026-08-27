@@ -6,15 +6,24 @@ from pathlib import Path
 
 import pytest
 
+from ipfs_datasets_py.processors.legal_data.patent_authority_contracts_v2 import (
+    canonical_json_bytes,
+)
 from ipfs_datasets_py.processors.legal_data.state_laws_multifetch_acquisition import (
+    SCHEMA_VERSION as MULTIFETCH_SCHEMA_VERSION,
     StateLawMultiFetchAcquisitionLedger,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_retained_evidence_seed import (
     RetainedEvidenceSeedSource,
     StateLawsRetainedEvidenceSeedError,
+    _selected_projection,
     seed_retained_evidence_generation,
     seed_retained_evidence_union,
 )
+from ipfs_datasets_py.processors.legal_data.state_laws_source_provenance import (
+    StateLawTransportReceiptError,
+)
+from ipfs_datasets_py.processors.web_archiving import wayback_machine_engine
 from ipfs_datasets_py.processors.web_archiving.wayback_machine_engine import (
     _wayback_inventory_query_url,
 )
@@ -331,6 +340,164 @@ def test_multi_source_seed_rebinds_exact_selected_proof_only(
         2,
         1,
     ]
+
+
+def _forbid_network(*_args: object, **_kwargs: object) -> None:
+    raise AssertionError("network must not be used during retained seeding")
+
+
+def _corrupt_wayback_cdx_query(
+    ledger: StateLawMultiFetchAcquisitionLedger,
+) -> str:
+    wayback_entry = next(
+        entry
+        for entry in ledger.entries
+        if entry.transport_receipt["source_transport"] == "wayback"
+    )
+    payload = json.loads(wayback_entry.evidence_path.read_text(encoding="utf-8"))
+    payload["transport_receipt"]["wayback_cdx_query_url"] = (
+        "https://web.archive.org/cdx/search/cdx?url="
+        f"{ARCHIVED_TWO}&output=json"
+    )
+    wayback_entry.evidence_path.write_text(
+        json.dumps(payload, sort_keys=True),
+        encoding="utf-8",
+    )
+    return wayback_entry.evidence_path.name
+
+
+def _plant_junk_wayback_fetch(
+    ledger: StateLawMultiFetchAcquisitionLedger,
+) -> str:
+    junk_name = f"{'b' * 64}.json"
+    (ledger.fetches_dir / junk_name).write_text(
+        json.dumps(
+            {
+                "jurisdiction": "VA",
+                "parser_input_envelope": {"invalid": True},
+                "schema_version": MULTIFETCH_SCHEMA_VERSION,
+                "transport_receipt": {
+                    "official_url": ARCHIVED_TWO,
+                    "source_transport": "wayback",
+                    "wayback_cdx_query_url": (
+                        "https://web.archive.org/cdx/search/cdx?url="
+                        "https://example.invalid/&output=json"
+                    ),
+                },
+            },
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    return junk_name
+
+
+def test_direct_only_seed_skips_unverifiable_wayback_without_network(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        wayback_machine_engine,
+        "fetch_wayback_cdx_rows",
+        _forbid_network,
+    )
+    monkeypatch.setattr(
+        wayback_machine_engine,
+        "fetch_wayback_capture_inventory",
+        _forbid_network,
+    )
+    monkeypatch.setattr("socket.create_connection", _forbid_network)
+    monkeypatch.setattr("urllib.request.urlopen", _forbid_network)
+
+    source = _source_ledger(tmp_path)
+    expected_direct = [
+        entry
+        for entry in source.entries
+        if entry.transport_receipt["source_transport"] == "direct"
+    ]
+    grouped: dict[tuple[str, bytes], list] = {}
+    for entry in expected_direct:
+        identity = (
+            entry.receipt.endpoint,
+            canonical_json_bytes(entry.receipt.sanitized_request),
+        )
+        grouped.setdefault(identity, []).append(entry)
+    chosen_direct = [
+        min(observations, key=lambda item: item.receipt.receipt_sha256)
+        for observations in grouped.values()
+    ]
+    expected_projection = _selected_projection(chosen_direct)
+    expected_projection_sha256 = hashlib.sha256(
+        canonical_json_bytes(expected_projection)
+    ).hexdigest()
+    wayback_fetch_name = _corrupt_wayback_cdx_query(source)
+
+    with pytest.raises(StateLawTransportReceiptError):
+        StateLawMultiFetchAcquisitionLedger(
+            tmp_path / "source",
+            jurisdiction="VA",
+            parser_name="VirginiaScraper",
+        )
+
+    wayback_destination = tmp_path / "wayback-destination"
+    with pytest.raises(StateLawTransportReceiptError):
+        seed_retained_evidence_generation(
+            source_root=tmp_path / "source",
+            destination_root=wayback_destination,
+            jurisdiction="VA",
+            parser_name="VirginiaScraper",
+            allowed_source_transports=("wayback",),
+            include_urls=(ARCHIVED_TWO,),
+        )
+    assert not (wayback_destination / "VA").exists()
+
+    junk_fetch_name = _plant_junk_wayback_fetch(source)
+    destination = tmp_path / "destination"
+    report = seed_retained_evidence_generation(
+        source_root=tmp_path / "source",
+        destination_root=destination,
+        jurisdiction="VA",
+        parser_name="VirginiaScraper",
+    )
+
+    assert report.selected_parser_input_count == 2
+    assert report.duplicate_request_observations_avoided == 1
+    assert report.skipped_disallowed_transport_count == 2
+    assert report.unique_content_object_count == 2
+    assert report.hardlinked_file_count == 4
+    assert report.copied_file_count == 0
+    assert report.network_io_performed is False
+    assert report.selected_projection_sha256 == expected_projection_sha256
+
+    replay = StateLawMultiFetchAcquisitionLedger(
+        destination,
+        jurisdiction="VA",
+        parser_name="VirginiaScraper",
+    )
+    assert _selected_projection(replay.entries) == expected_projection
+    assert all(
+        entry.transport_receipt["source_transport"] == "direct"
+        for entry in replay.entries
+    )
+    destination_root = destination / "VA"
+    assert not (destination_root / "fetches" / wayback_fetch_name).exists()
+    assert not (destination_root / "fetches" / junk_fetch_name).exists()
+    assert all(
+        json.loads(path.read_text(encoding="utf-8"))["transport_receipt"][
+            "source_transport"
+        ]
+        == "direct"
+        for path in (destination_root / "fetches").glob("*.json")
+    )
+    archive_digest = hashlib.sha256(
+        b"older archive body excluded from the direct-current seed"
+    ).hexdigest()
+    assert not (destination_root / "objects" / f"{archive_digest}.bin").exists()
+
+    migration = json.loads(Path(report.migration_receipt_path).read_text())
+    assert migration["network_io_performed"] is False
+    assert migration["skipped_disallowed_transport_count"] == 2
+    assert migration["selected_projection"] == expected_projection
 
 
 def test_multi_source_seed_rejects_cross_source_request_conflict(
