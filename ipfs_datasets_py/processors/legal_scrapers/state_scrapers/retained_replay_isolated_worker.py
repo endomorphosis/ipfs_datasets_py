@@ -1,15 +1,13 @@
-"""OS-isolated worker for retained state-law replay.
+"""Host-local worker for retained state-law replay.
 
-A Python audit hook cannot prove zero network against pre-import sockets,
-inherited descriptors, AF_UNIX delegation, or mutated runtime constants.
-Authorization for retained replay therefore requires a fresh worker whose
-network namespace is closed by the kernel.
+Retained replay must reuse the existing on-disk evidence and caches under
+``$HOME/.ipfs_datasets`` (state-law ledgers and the page cache).  It must
+not Docker-copy those trees.  Seeds hardlink content objects; the process-wide
+network guard plus ``--retained-replay-only`` fail closed on a ledger miss
+before cache or network.
 
-On this host that isolation is Docker ``--network none``.  Rootless Docker
-maps container uid 0 to the invoking user, so the worker must not pass
-``--user``; that flag remaps away from the host uid and cannot read
-``$HOME``.  ``unshare --net`` and ``bwrap --unshare-net`` are unavailable
-here without additional privileges.
+A Docker ``--network none`` helper remains in this module as a non-default
+diagnostic.  Production remaining-state work uses the host runner.
 """
 
 from __future__ import annotations
@@ -57,6 +55,70 @@ def docker_is_rootless(
             )
     lowered = text.lower()
     return any(marker in lowered for marker in _DOCKER_INFO_ROOTLESS_MARKERS)
+
+
+def local_state_laws_root(home: Path | None = None) -> Path:
+    """Return the host evidence root that remaining-state work must reuse."""
+
+    return Path(home or Path.home()).expanduser().resolve() / ".ipfs_datasets" / "state_laws"
+
+
+def build_host_retained_replay_command(
+    *,
+    argv: Sequence[str],
+    workdir: Path,
+    python_executable: str | None = None,
+) -> list[str]:
+    """Return a host Python argv that does not copy local evidence or caches."""
+
+    if not argv:
+        raise IsolatedRetainedReplayWorkerError(
+            "host retained-replay worker requires a command"
+        )
+    workdir = Path(workdir).expanduser().resolve()
+    if workdir.is_symlink() or not workdir.is_dir():
+        raise IsolatedRetainedReplayWorkerError(
+            "host retained-replay workdir must be a regular directory"
+        )
+    python_path = Path(python_executable or sys.executable).resolve()
+    command = [str(python_path), *[str(part) for part in argv]]
+    if "docker" in command:
+        raise IsolatedRetainedReplayWorkerError(
+            "host retained-replay worker must not invoke docker"
+        )
+    if "--network" in command:
+        raise IsolatedRetainedReplayWorkerError(
+            "host retained-replay worker must not change network namespaces"
+        )
+    return command
+
+
+def run_host_retained_replay_worker(
+    argv: Sequence[str],
+    *,
+    workdir: Path,
+    extra_environment: Mapping[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Run ``argv`` on the host, inheriting HOME and existing cache directories."""
+
+    command = build_host_retained_replay_command(argv=argv, workdir=workdir)
+    environment = dict(os.environ)
+    environment.update(extra_environment or {})
+    environment.setdefault("HOME", str(Path.home()))
+    completed = subprocess.run(
+        command,
+        cwd=str(Path(workdir).expanduser().resolve()),
+        env=environment,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise IsolatedRetainedReplayWorkerError(
+            "host retained-replay worker exited "
+            f"{completed.returncode}: {(completed.stderr or completed.stdout)[-2000:]}"
+        )
+    return completed
 
 
 def assert_kernel_network_namespace_is_closed() -> None:
@@ -171,36 +233,23 @@ def run_isolated_retained_replay_worker(
     workdir: Path,
     extra_environment: Mapping[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    """Launch ``argv`` inside a closed network namespace and return the result."""
+    """Launch ``argv`` on the host so local evidence and caches are reused."""
 
-    command = build_isolated_retained_replay_docker_command(
-        argv=argv,
+    return run_host_retained_replay_worker(
+        argv,
         workdir=workdir,
         extra_environment=extra_environment,
     )
-    completed = subprocess.run(
-        command,
-        cwd=str(workdir),
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    if completed.returncode != 0:
-        raise IsolatedRetainedReplayWorkerError(
-            "isolated retained-replay worker exited "
-            f"{completed.returncode}: {(completed.stderr or completed.stdout)[-2000:]}"
-        )
-    return completed
 
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run a retained-replay command in Docker --network none.",
+        description="Run a retained-replay command on the host using existing caches.",
     )
     parser.add_argument(
         "--workdir",
         default=os.getcwd(),
-        help="Repository workdir mounted into the isolated worker",
+        help="Repository workdir for the host worker",
     )
     parser.add_argument(
         "command",

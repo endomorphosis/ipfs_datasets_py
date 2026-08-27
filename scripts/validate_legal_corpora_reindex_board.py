@@ -29,7 +29,7 @@ LANE_MATRIX_RELATIVE = "data/agent_supervisor/legal_corpora_reindex/bundles/lane
 RELEASE_POLICY_RELATIVE = "data/agent_supervisor/legal_corpora_reindex/bundles/release_policy.json"
 SEALED_VALIDATION_CONTROL_SHA256 = {
     "pyproject.toml": (
-        "bc5bdfd7528d55c56e991bb440e630d9e5047873ad0db940002a8ffb786e8b43"
+        "8d5061e68d12dbf7d66907a664fa8a0085352c1c396ded5cd3b746c6ebbf4685"
     ),
     "pytest.ini": (
         "01737eaafcd2b7e7e1a8db2368a93d4a28053ba44e611a10b1c87d2155dc65ff"

@@ -528,11 +528,11 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - Track: exact51-residual-replay
 - Priority: P0
 - Bundle: exact51-residual-replay
-- Goal: Apply the closed-state seed, grouped-archive residual, isolated retained-replay, and normalize-and-seal playbook to the 17 jurisdictions that still lack an authorizing current-bundle pair, without Hub mutation.
-- Evidence: Playbook receipt, shared substrate tests, per-jurisdiction residual reports, isolated zero-network replay seals, and an empty unexplained-gap set among AR GA KY LA MI MN MO MS MT NH NY RI TN VT WA WI WV.
+- Goal: Apply the closed-state seed, grouped-archive residual, host retained-replay, and normalize-and-seal playbook to the 17 jurisdictions that still lack an authorizing current-bundle pair, without Hub mutation or Docker copies of `~/.ipfs_datasets`.
+- Evidence: Playbook receipt, shared substrate tests, per-jurisdiction residual reports, host zero-network replay seals against existing local caches, and an empty unexplained-gap set among AR GA KY LA MI MN MO MS MT NH NY RI TN VT WA WI WV.
 - Outputs: docs/reports/legal_corpora_reindex/exact51_residual_replay_playbook_v1.md
 - Validation: python scripts/validate_legal_corpora_reindex_board.py --check-all
-- Acceptance: Every remaining jurisdiction either has a sealed current-bundle pair matching the playbook or a typed residual report naming the exact next URL set; no static list, sample cap, per-page archive loop, or Hub publish is admitted; PA v7 remains the isolated-replay canary and is not reused as a fenced root.
+- Acceptance: Every remaining jurisdiction either has a sealed current-bundle pair matching the playbook or a typed residual report naming the exact next URL set; no static list, sample cap, per-page archive loop, Docker evidence copy, or Hub publish is admitted; PA v7 remains the host-replay canary and is not reused as a fenced root.
 - Gap task: LCR-106
 - Refinement: Split by shared substrate versus four residual waves; further split one jurisdiction per child when a wave fails; never lower the exact-51 or no-publish contracts.
 - Embedding query: remaining state statute residual replay isolated worker common crawl warc wayback seed direct only
@@ -540,24 +540,24 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - Parallel lane: 0,1,2,3
 - Conflict policy: Campaign owner of the playbook report only; child goals own disjoint residual evidence and tests.
 
-## LCR-G149 Repair shared seed, grouped archive, and isolated replay substrate
+## LCR-G149 Repair shared seed, grouped archive, and host replay substrate
 - Status: active
 - Parent: LCR-G148
 - Fib priority: 1
 - Track: exact51-residual-substrate
 - Priority: P0
 - Bundle: exact51-residual-substrate
-- Goal: Make direct-only seeding skip unverifiable disallowed transports, bind OS-isolated `--network none` replay as the zero-network authority, and require grouped Common Crawl/WARC/Wayback residual policy in remaining adapters.
-- Evidence: Seed regressions for mixed Wayback/direct ledgers, isolated-worker command and live `--network none` smoke, and archive batching tests proving one inventory per domain/wave and residual-only retry without reinventory.
+- Goal: Make direct-only seeding skip unverifiable disallowed transports, run retained replay on the host against existing `~/.ipfs_datasets` trees without Docker copies, and require grouped Common Crawl/WARC/Wayback residual policy in remaining adapters.
+- Evidence: Seed regressions for mixed Wayback/direct ledgers, host-local worker argv tests that never invoke Docker, and archive batching tests proving one inventory per domain/wave and residual-only retry without reinventory.
 - Outputs: ipfs_datasets_py/processors/legal_data/state_laws_retained_evidence_seed.py, ipfs_datasets_py/processors/legal_scrapers/state_scrapers/retained_replay_isolated_worker.py, tests/unit/web_archiving/test_common_crawl_warc_batching.py
 - Validation: python -m pytest tests/unit/processors/legal_data/test_state_laws_retained_evidence_seed.py tests/unit/legal_scrapers/test_retained_replay_isolated_worker.py tests/unit/legal_scrapers/test_state_laws_retained_replay_only.py tests/unit/web_archiving/test_common_crawl_warc_batching.py tests/unit/web_archiving/test_wayback_prefix_inventory_batching.py -q
-- Acceptance: A mixed ledger with failing Wayback receipts still seeds the exact direct projection; basename `pdftotext` is denied; isolated workers use `--network none` only; archive retries never repeat grouped inventory.
+- Acceptance: A mixed ledger with failing Wayback receipts still seeds the exact direct projection with hardlinks and zero copies; basename `pdftotext` is denied; host workers reuse `HOME` and `~/.ipfs_datasets` and never invoke Docker; archive retries never repeat grouped inventory.
 - Gap task: LCR-086
-- Refinement: Split seed, isolation, and archive-contract defects only; do not fold jurisdiction residuals into this goal.
-- Embedding query: direct only retained seed wayback mismatch isolated docker network none grouped warc
-- AST query: seed_retained_evidence_generation trusted_pdftotext_executable build_isolated_retained_replay_docker_command
+- Refinement: Split seed, host-replay, and archive-contract defects only; do not fold jurisdiction residuals into this goal.
+- Embedding query: direct only retained seed wayback mismatch host local cache hardlink grouped warc
+- AST query: seed_retained_evidence_generation trusted_pdftotext_executable build_host_retained_replay_command
 - Parallel lane: 0,1,3
-- Conflict policy: Owns shared seed, isolated-worker, and archive-batching modules and tests; residual goals depend on it and must not rewrite those files.
+- Conflict policy: Owns shared seed, host-worker, and archive-batching modules and tests; residual goals depend on it and must not rewrite those files.
 
 ## LCR-G150 Acquire bounded GO residuals for Montana and Kentucky
 - Status: active
@@ -567,11 +567,11 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - Track: exact51-residual-wave-a
 - Priority: P0
 - Bundle: exact51-residual-wave-a
-- Goal: Seed Montana's verified direct projection and acquire its five missing catalogs plus 6,652 active leaves; acquire Kentucky's exact 11,641-leaf residual; then hard isolated replay and seal each.
-- Evidence: Direct-only MT seed projection `6b8d0baca081…` or a newly hashed equal count, KY ordered residual SHA `c96072a16cc6…`, isolated replay seals, and zero Hub mutation.
+- Goal: Seed Montana's verified direct projection and acquire its five missing catalogs plus 6,652 active leaves; acquire Kentucky's exact 11,641-leaf residual; then hard host retained replay and seal each.
+- Evidence: Direct-only MT seed projection `6b8d0baca081…` or a newly hashed equal count, KY ordered residual SHA `c96072a16cc6…`, host replay seals, and zero Hub mutation.
 - Outputs: docs/reports/legal_corpora_reindex/montana_residual_closure_v1.md, docs/reports/legal_corpora_reindex/kentucky_residual_closure_v1.md
 - Validation: python -m pytest tests/unit/legal_scrapers/test_montana_residual_closure.py tests/unit/legal_scrapers/test_kentucky_residual_closure.py -q
-- Acceptance: Each jurisdiction closes source-derived operative/terminal algebra with isolated zero-network replay; MT Title 0 constitution identity cannot drift; KY duplicate exact-request groups are preserved and never double-counted.
+- Acceptance: Each jurisdiction closes source-derived operative/terminal algebra with host zero-network replay against existing `~/.ipfs_datasets` trees; MT Title 0 constitution identity cannot drift; KY duplicate exact-request groups are preserved and never double-counted.
 - Gap task: LCR-089
 - Refinement: One child per jurisdiction if either residual fails; do not resume fenced staging-mt-v11 or mixed historical KY request identities as current.
 - Embedding query: Montana Kentucky residual catalogs leaves isolated retained replay
@@ -587,11 +587,11 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - Track: exact51-residual-wave-b
 - Priority: P0
 - Bundle: exact51-residual-wave-b
-- Goal: Seed each verified direct projection and submit one global source-ordered leaf residual wave for MN 16,798, MO 26,587, and WA 50,500, then isolated replay and seal.
-- Evidence: Direct-only seed receipts, exact residual URL SHAs, isolated replay seals, and edition/currentness guards.
+- Goal: Seed each verified direct projection and submit one global source-ordered leaf residual wave for MN 16,798, MO 26,587, and WA 50,500, then host retained replay and seal.
+- Evidence: Direct-only seed receipts, exact residual URL SHAs, host replay seals, and edition/currentness guards.
 - Outputs: docs/reports/legal_corpora_reindex/minnesota_residual_closure_v1.md, docs/reports/legal_corpora_reindex/missouri_residual_closure_v1.md, docs/reports/legal_corpora_reindex/washington_residual_closure_v1.md
 - Validation: python -m pytest tests/unit/legal_scrapers/test_minnesota_residual_closure.py tests/unit/legal_scrapers/test_missouri_residual_closure.py tests/unit/legal_scrapers/test_washington_residual_closure.py -q
-- Acceptance: Historical archive editions are rejected rather than stamped current; MO seeds only strict v13; WA submits exactly the 50,500-URL difference; each isolated replay is zero-network.
+- Acceptance: Historical archive editions are rejected rather than stamped current; MO seeds only strict v13; WA submits exactly the 50,500-URL difference; each host replay is zero-network and reuses local caches.
 - Gap task: LCR-091
 - Refinement: One child per jurisdiction; do not merge residuals across states.
 - Embedding query: Minnesota Missouri Washington residual leaf wave current edition
@@ -607,8 +607,8 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - Track: exact51-residual-wave-c
 - Priority: P0
 - Bundle: exact51-residual-wave-c
-- Goal: Close LA 21,531 residual, RI 29 nested catalogs then leaves, and fresh current roots for NH, VT, and WV using the shared plural archive path and isolated replay.
-- Evidence: Exact catalog-first then leaf residuals, fresh NH/VT/WV root bytes, isolated replay seals.
+- Goal: Close LA 21,531 residual, RI 29 nested catalogs then leaves, and fresh current roots for NH, VT, and WV using the shared plural archive path and host retained replay.
+- Evidence: Exact catalog-first then leaf residuals, fresh NH/VT/WV root bytes, host replay seals.
 - Outputs: docs/reports/legal_corpora_reindex/louisiana_residual_closure_v1.md, docs/reports/legal_corpora_reindex/rhode_island_residual_closure_v1.md, docs/reports/legal_corpora_reindex/new_hampshire_residual_closure_v1.md, docs/reports/legal_corpora_reindex/vermont_residual_closure_v1.md, docs/reports/legal_corpora_reindex/west_virginia_residual_closure_v1.md
 - Validation: python -m pytest tests/unit/legal_scrapers/test_louisiana_residual_closure.py tests/unit/legal_scrapers/test_rhode_island_residual_closure.py tests/unit/legal_scrapers/test_new_hampshire_residual_closure.py tests/unit/legal_scrapers/test_vermont_residual_closure.py tests/unit/legal_scrapers/test_west_virginia_residual_closure.py -q
 - Acceptance: NH v4 2025 Wayback roots are not reused as exact-current; RI nested catalogs are fetched before the leaf union; VT/WV start from absent staging roots; LA uses the ASP.NET retained parser; no Hub mutation.
@@ -628,7 +628,7 @@ This heap is consumed by the `ipfs_accelerate_py` objective scanner. Parent link
 - Priority: P0
 - Bundle: exact51-residual-wave-d
 - Goal: Advance AR proof URNs, GA catalog-plus-bodies, MI XML replay, MS/TN Lexis frontiers, NY 30-URL plus resolver proofs, and WI viewer continuations without unbounded hunts.
-- Evidence: Exact URL or proof residuals, delegated-container receipts where required, isolated replay where a complete frontier exists.
+- Evidence: Exact URL or proof residuals, delegated-container receipts where required, host retained replay where a complete frontier exists.
 - Outputs: docs/reports/legal_corpora_reindex/arkansas_residual_closure_v1.md, docs/reports/legal_corpora_reindex/georgia_residual_closure_v1.md, docs/reports/legal_corpora_reindex/michigan_residual_closure_v1.md, docs/reports/legal_corpora_reindex/mississippi_residual_closure_v1.md, docs/reports/legal_corpora_reindex/new_york_residual_closure_v1.md, docs/reports/legal_corpora_reindex/tennessee_residual_closure_v1.md, docs/reports/legal_corpora_reindex/wisconsin_residual_closure_v1.md
 - Validation: python -m pytest tests/unit/legal_scrapers/test_arkansas_residual_closure.py tests/unit/legal_scrapers/test_georgia_residual_closure.py tests/unit/legal_scrapers/test_michigan_residual_closure.py tests/unit/legal_scrapers/test_mississippi_residual_closure.py tests/unit/legal_scrapers/test_new_york_residual_closure.py tests/unit/legal_scrapers/test_tennessee_residual_closure.py tests/unit/legal_scrapers/test_wisconsin_residual_closure.py -q
 - Acceptance: No unbounded locator hunt; AR remains fail-closed without Act 283 proof inputs; MI does not repeat CDX for already selected captures; NY unresolved decisions stay unresolved until official proof bytes exist; WI does not admit the receiptless historical cache.

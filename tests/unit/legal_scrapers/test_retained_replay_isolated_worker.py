@@ -1,4 +1,4 @@
-"""OS isolation contract for retained-replay workers."""
+"""Host retained-replay worker contract: reuse local caches, never Docker-copy."""
 
 from __future__ import annotations
 
@@ -11,10 +11,40 @@ import pytest
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.retained_replay_isolated_worker import (
     IsolatedRetainedReplayWorkerError,
     assert_kernel_network_namespace_is_closed,
+    build_host_retained_replay_command,
     build_isolated_retained_replay_docker_command,
     docker_is_rootless,
+    local_state_laws_root,
     run_isolated_retained_replay_worker,
 )
+
+
+def test_host_worker_reuses_local_python_and_does_not_invoke_docker(
+    tmp_path: Path,
+) -> None:
+    workdir = tmp_path / "work"
+    workdir.mkdir()
+    command = build_host_retained_replay_command(
+        argv=["-c", "print(123)"],
+        workdir=workdir,
+        python_executable="/usr/bin/python3",
+    )
+
+    assert Path(command[0]).resolve() == Path("/usr/bin/python3").resolve()
+    assert "docker" not in command
+    assert "--network" not in command
+    assert local_state_laws_root() == Path.home().resolve() / ".ipfs_datasets" / "state_laws"
+
+
+def test_host_worker_rejects_docker_argv(tmp_path: Path) -> None:
+    workdir = tmp_path / "work"
+    workdir.mkdir()
+    with pytest.raises(IsolatedRetainedReplayWorkerError, match="must not invoke docker"):
+        build_host_retained_replay_command(
+            argv=["docker", "run", "--network", "none"],
+            workdir=workdir,
+            python_executable="/usr/bin/python3",
+        )
 
 
 def test_docker_rootless_detection_reads_daemon_info() -> None:

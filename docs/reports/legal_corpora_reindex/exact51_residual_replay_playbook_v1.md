@@ -25,9 +25,11 @@ Every closed current-bundle pair used the same six steps:
    plural fetches. One Common Crawl inventory per domain/wave. Grouped/coalesced
    WARC reuse. Plural Wayback prefix inventory. Residual-only retries **without**
    archive reinventory. No per-page archive loop. No archive.is.
-5. **Hard retained replay.** `--retained-replay-only` in an OS-isolated
-   `--network none` worker. Kernel isolation authorizes zero-network; the Python
-   audit hook and `strace` are defense/evidence only.
+5. **Hard retained replay on the host.** `--retained-replay-only` against the
+   existing local evidence root. The process-wide network guard authorizes
+   zero-network. Do **not** Docker-copy `~/.ipfs_datasets` (about 80 GiB of
+   state-law ledgers plus the page cache). Seeds hardlink objects; they never
+   duplicate bytes.
 6. **Normalize and seal.** Canonical JSON-LD, parquet, normalized receipt, and
    run seal with `public_law_no_state_copyright`. Start/end producer identities
    must match. No Hub mutation.
@@ -40,7 +42,7 @@ annotations, database arrangement, and site chrome stay excluded.
 | Mechanism | Module / command | Closed-state lesson |
 |---|---|---|
 | Direct-only seed | `scripts/ops/legal_data/seed_state_laws_retained_evidence.py` | PA v7 seeded 75 direct inputs, 150 hardlinks, projection `425927…fd07`, zero copies |
-| Isolated replay | `retained_replay_isolated_worker.py` + Docker `--network none --cap-drop ALL` | PA v7 sealed 14,620 rows, 75/75 retained replay, authorizing run seal `fa3225e…` |
+| Host retained replay | `retained_replay_isolated_worker.py` host runner + `retained_replay_network_guard.py` | Same `HOME`, `~/.ipfs_datasets/state_laws`, and `legal_page_cache`; PA v7 sealed 14,620 rows, 75/75 retained replay |
 | Network deny | `retained_replay_network_guard.py` | Process-wide audit hook, liveness proof, trusted absolute `pdftotext` |
 | Archive fallback | `web_archiving` Common Crawl prefix/WARC batching + Wayback CDX/prefix inventory | One inventory per domain/wave; coalesced WARC ranges; residual-only retry |
 | Normalization | `refresh_state_laws_corpus.py --strict-acquisition-evidence` | Identity projection must exclude mutable deny-lease state |
@@ -54,14 +56,14 @@ Assembler-selected / closed pairs stay untouched. Remaining open set:
 
 | Wave | Goal | Jurisdictions | Why this grouping | First action |
 |---|---|---|---|---|
-| Shared substrate | LCR-G149 | all remaining | Unblocks every residual | Direct-only seed must skip unverifiable disallowed transports (MT v4 Wayback mismatch); isolated worker; grouped archive contract |
+| Shared substrate | LCR-G149 | all remaining | Unblocks every residual | Direct-only seed must skip unverifiable disallowed transports (MT v4 Wayback mismatch); host-local replay using existing caches; grouped archive contract |
 | Wave A | LCR-G150 | MT, KY | Bounded, GO or exact residual | Seed MT direct-only 40,132; acquire 5 missing catalogs + 6,652 leaves. KY: 11,641 unique leaf residual |
 | Wave B | LCR-G151 | MN, MO, WA | Large leaf residuals, retained catalogs exist | Seed verified direct projection; one global leaf wave |
 | Wave C | LCR-G152 | LA, RI, NH, VT, WV | Catalog-then-leaf or fresh current root | LA 21,531 residual; RI 29 nested catalogs first; NH/VT/WV start fresh current roots |
 | Wave D | LCR-G153 | AR, GA, MI, MS, NY, TN, WI | Proof, delegated Lexis, or no authorizing ledger | Exact URL/proof residuals only; do not hunt unbounded |
 
-Pennsylvania isolated replay is already sealed and is the canary for waves A–D.
-Do not reuse fenced PA v2–v6 roots.
+Pennsylvania host retained replay is already sealed and is the canary for waves A–D.
+Do not reuse fenced PA v2–v6 roots. Do not copy evidence into a container.
 
 ## Web-archiving rules for residuals
 
@@ -76,13 +78,23 @@ Do not reuse fenced PA v2–v6 roots.
 - Media-aware inventory is required when the frontier is XML/PDF (MI lesson).
 - `pdftotext` is only the import-time trusted absolute converter.
 
+## Local disk and cache contract
+
+- Evidence and caches live on the host at `~/.ipfs_datasets/state_laws` (~80 GiB)
+  and `~/.ipfs_datasets/legal_page_cache`.
+- New generations are **hardlinked** from existing objects (`copied_file_count=0`).
+- Host workers inherit `HOME`, `LEGAL_SCRAPER_*` cache dirs, and the same Python
+  environment. They must not bind-mount or copy those trees into Docker.
+- Residual acquisition may use the existing page/fetch caches. Retained-replay-only
+  still fails closed on a ledger miss before cache or network.
+- Output roots stay under `~/.ipfs_datasets/state_laws/legal-corpora-reindex-*`.
+
 ## Normalization and seal rules
 
 - Produce `STATE-XX.jsonld`, parquet, raw and normalized receipts, frontier
   closure projection, and a run seal.
 - Producer identity at run start equals identity at seal.
-- Isolated worker identity must bind inside rootless Docker (host-root
-  `pdftotext` appears as uid 65534; still the same `/usr/bin/pdftotext` bytes).
+- Host `pdftotext` is the trusted absolute `/usr/bin/pdftotext`.
 - One-state `partial_success` is expected and is not exact-51 success.
 - No `--publish-to-hf`, no incremental Hub publish, no assembler input-map write
   until all 51 digest-bound pairs exist.
@@ -92,8 +104,10 @@ Do not reuse fenced PA v2–v6 roots.
 Four strict SHA-256 lanes. Shared substrate tasks have no dependencies so lanes
 0/1/2/3 can start immediately (`LCR-086`, `LCR-087`, `LCR-106`, `LCR-088`).
 Residual tasks depend on `LCR-086` and `LCR-088` (seed + archive contract) and
-`LCR-087` (isolated replay helper). Each residual task owns only its report and
+`LCR-087` (host retained-replay helper). Each residual task owns only its report and
 focused tests; adapters may be edited only for that jurisdiction.
+Workers run in Git worktrees but must read and write the shared host
+`~/.ipfs_datasets` trees; they must not create a second copy of those files.
 
 Publication tasks `LCR-040+` remain blocked on exact-51 live acceptance
 (`LCR-084` / `LCR-G146`). This campaign does not weaken that gate.
