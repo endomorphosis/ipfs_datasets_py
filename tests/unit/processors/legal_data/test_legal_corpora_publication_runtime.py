@@ -8,15 +8,12 @@ from __future__ import annotations
 
 import json
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
 import pytest
 
-from ipfs_datasets_py.huggingface.protected_repo_guard import (
-    ProtectedRepoGuardError,
-    require_unprotected_or_runtime,
-)
 from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate import (
     AUTHORIZED_DATASET_REPO_IDS,
     BASELINE_REVISIONS,
@@ -29,6 +26,14 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate impor
     TASK_ID as GATE_TASK_ID,
     credentials_scope_for,
     phase_requirements,
+)
+from ipfs_datasets_py.processors.legal_data.legal_release_validation import (
+    HARDENED_RIGHTS_CATALOG_SCHEMA,
+    HARDENED_RIGHTS_CODE_VERSION,
+    HARDENED_RIGHTS_LIVE_GOAL_ID,
+    HARDENED_RIGHTS_LIVE_TASK_ID,
+    HARDENED_RIGHTS_POLICY_SCHEMA,
+    HARDENED_RIGHTS_PRODUCER,
 )
 from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime import (
     AUTHORITATIVE_OVERRIDE_KEYS,
@@ -257,8 +262,20 @@ def _seed_repo(
         "catalog_digest_sha256": catalog_digest,
         "admitted_record_ids": list(admitted),
         "dataset_repo_id": dataset_repo_id,
+        "target_dataset_repo_ids": sorted(AUTHORIZED_DATASET_REPO_IDS),
         "fixture_only": False,
+        "fixture_only_non_authorizing": False,
         "dirty": False,
+        "catalog_schema_version": HARDENED_RIGHTS_CATALOG_SCHEMA,
+        "schema_version": HARDENED_RIGHTS_POLICY_SCHEMA,
+        "producer": HARDENED_RIGHTS_PRODUCER,
+        "audit_producer": HARDENED_RIGHTS_PRODUCER,
+        "code_version": HARDENED_RIGHTS_CODE_VERSION,
+        "evidence_mode": "live",
+        "task_id": HARDENED_RIGHTS_LIVE_TASK_ID,
+        "goal_id": HARDENED_RIGHTS_LIVE_GOAL_ID,
+        "program_id": "legal-corpora-reindex-v1",
+        "verified_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
     rights_digest = _finalize(RIGHTS_RECEIPT_RELPATH, rights_payload, RECEIPT_SCHEMA_V1)
 
@@ -429,11 +446,25 @@ def test_canonical_authorized_request_invokes_callback_once(
     assert set(decision.passed_gates) == set(REQUIRED_PUBLICATION_GATES)
     assert decision.details["head"] == head
     assert decision.details["runtime_task_id"] == "LCR-080"
+    assert decision.details["principal"] == "fixture-bot"
+    assert decision.details["operation"] == phase_requirements(phase)["authorized_operation"]
+    assert {"LCR-081", "LCR-082", "LCR-083"}.issubset(
+        decision.details["required_task_ids"]
+    )
+    assert decision.details["source_rights_task_id"] == "LCR-083"
+    assert len(decision.details["source_rights_receipt_digest"]) == 64
+    assert decision.final_manifest_digest
+    if phase.endswith("_main"):
+        assert decision.details["prepublication_seal_bound"] is True
     dumped = json.dumps(decision.to_dict())
     assert TOKEN not in dumped
     result = authorize_and_mutate_canonical(payload, upload)
     assert result == "mutated"
     assert len(calls) == 1
+    bound = calls[0]
+    assert bound.details["head"] == head
+    assert bound.details["principal"] == "fixture-bot"
+    assert {"LCR-081", "LCR-082", "LCR-083"}.issubset(bound.details["required_task_ids"])
     require_canonical_publication(payload)
 
 
@@ -442,6 +473,11 @@ def test_canonical_runtime_context_is_scoped_and_manifest_bound(
 ) -> None:
     repo = _seed_repo(tmp_path, "state_main")
     payload = _request(repo, "state_main")
+    from ipfs_datasets_py.huggingface.protected_repo_guard import (
+        ProtectedRepoGuardError,
+        require_unprotected_or_runtime,
+    )
+
     observed: list[str] = []
 
     def upload(decision: Any) -> str:
@@ -728,3 +764,90 @@ def test_raw_and_canonical_digests_are_independent() -> None:
     raw = json.dumps(with_digest, sort_keys=True).encode("utf-8")
     assert raw_file_digest(raw) != canonical or True
     assert len(raw_file_digest(raw)) == 64
+
+
+@pytest.mark.parametrize(
+    "phase",
+    ["state_staging", "state_main", "federal_staging", "federal_main"],
+)
+def test_lcr083_stale_rights_verified_at_denies_before_callback(
+    tmp_path: Path, phase: str
+) -> None:
+    def mutator(relpath: str, payload: dict[str, Any]) -> dict[str, Any]:
+        if relpath == RIGHTS_RECEIPT_RELPATH:
+            payload = dict(payload)
+            payload["verified_at"] = "2020-01-01T00:00:00Z"
+        return payload
+
+    repo = _seed_repo(tmp_path, phase, receipt_mutator=mutator)
+    _assert_denied(_request(repo, phase), fragment="source_rights_binding")
+
+
+@pytest.mark.parametrize(
+    "phase",
+    ["state_staging", "state_main", "federal_staging", "federal_main"],
+)
+def test_lcr083_future_rights_verified_at_denies_before_callback(
+    tmp_path: Path, phase: str
+) -> None:
+    def mutator(relpath: str, payload: dict[str, Any]) -> dict[str, Any]:
+        if relpath == RIGHTS_RECEIPT_RELPATH:
+            payload = dict(payload)
+            payload["verified_at"] = "2099-01-01T00:00:00Z"
+        return payload
+
+    repo = _seed_repo(tmp_path, phase, receipt_mutator=mutator)
+    _assert_denied(_request(repo, phase), fragment="source_rights_binding")
+
+
+@pytest.mark.parametrize(
+    "phase",
+    ["state_staging", "state_main", "federal_staging", "federal_main"],
+)
+def test_lcr083_pre_hardening_producer_denies_before_callback(
+    tmp_path: Path, phase: str
+) -> None:
+    def mutator(relpath: str, payload: dict[str, Any]) -> dict[str, Any]:
+        if relpath == RIGHTS_RECEIPT_RELPATH:
+            payload = dict(payload)
+            payload["producer"] = "audit_legal_source_rights.py@1"
+        return payload
+
+    repo = _seed_repo(tmp_path, phase, receipt_mutator=mutator)
+    _assert_denied(_request(repo, phase), fragment="source_rights_binding")
+
+
+@pytest.mark.parametrize(
+    "phase",
+    ["state_staging", "state_main", "federal_staging", "federal_main"],
+)
+def test_lcr083_target_mismatched_rights_denies_before_callback(
+    tmp_path: Path, phase: str
+) -> None:
+    def mutator(relpath: str, payload: dict[str, Any]) -> dict[str, Any]:
+        if relpath == RIGHTS_RECEIPT_RELPATH:
+            payload = dict(payload)
+            payload["dataset_repo_id"] = "evil/other-dataset"
+            payload["target_dataset_repo_ids"] = ["evil/other-dataset"]
+        return payload
+
+    repo = _seed_repo(tmp_path, phase, receipt_mutator=mutator)
+    _assert_denied(_request(repo, phase), fragment="source_rights_binding")
+
+
+@pytest.mark.parametrize(
+    "phase",
+    ["state_staging", "state_main", "federal_staging", "federal_main"],
+)
+def test_lcr083_prohibited_or_unknown_rights_deny_before_callback(
+    tmp_path: Path, phase: str
+) -> None:
+    def mutator(relpath: str, payload: dict[str, Any]) -> dict[str, Any]:
+        if relpath == RIGHTS_RECEIPT_RELPATH:
+            payload = dict(payload)
+            payload["prohibited"] = True
+            payload["rights_disposition"] = "unknown"
+        return payload
+
+    repo = _seed_repo(tmp_path, phase, receipt_mutator=mutator)
+    _assert_denied(_request(repo, phase), fragment="source_rights_binding")

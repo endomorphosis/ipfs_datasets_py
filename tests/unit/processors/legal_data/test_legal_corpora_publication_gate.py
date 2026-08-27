@@ -28,6 +28,7 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate impor
     GENERATED_WORK_GUARD,
     GENERATED_WORK_TASK_NUMBER_FLOOR,
     GOAL_ID,
+    INADMISSIBLE_RIGHTS_CONDITIONS,
     PHASE_REQUIREMENTS,
     PROGRAM_ID,
     PublicationGateDeniedError,
@@ -35,11 +36,13 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate impor
     PublicationOperation,
     PublicationPhase,
     REQUIRED_PUBLICATION_GATES,
+    REQUIRED_RIGHTS_CLOSURE_TASK_IDS,
     RIGHTS_RECEIPT_RELPATH,
     RUNTIME_GOAL_ID,
     RUNTIME_MODULE,
     RUNTIME_TASK_ID,
     SCHEMA_VERSION,
+    SOURCE_RIGHTS_GATE_SCHEMA,
     STATE_DATASET_REPO_ID,
     STATE_PREVIOUS_PUBLIC_PIN,
     SUCCESSOR_GOAL_ID,
@@ -50,14 +53,17 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate impor
     clear_gate_fixture_cache,
     credentials_scope_for,
     default_fixture_path,
+    default_source_rights_fixture_path,
     evaluate_publication_gate,
     example_authorized_request,
     find_publication_blocking_generated_work,
     load_gate_fixture,
+    load_source_rights_gate_fixture,
     phase_requirements,
     prepublication_seal_required,
     require_publication_gate,
     sealed_gate_fixture_payload,
+    sealed_source_rights_gate_fixture_payload,
 )
 
 
@@ -630,3 +636,85 @@ def test_lcr079_stale_or_unknown_rights_deny() -> None:
     assert decision.authorized is False
     assert any("source_rights_binding" in code for code in decision.reason_codes)
     assert decision.network_mutation_permitted is False
+
+
+def test_lcr083_source_rights_fixture_matches_generator() -> None:
+    path = default_source_rights_fixture_path()
+    assert path.is_file()
+    on_disk = json.loads(path.read_text(encoding="utf-8"))
+    generated = sealed_source_rights_gate_fixture_payload()
+    assert on_disk == generated
+    loaded = load_source_rights_gate_fixture()
+    assert loaded["schema"] == SOURCE_RIGHTS_GATE_SCHEMA
+    assert loaded["task_id"] == SUCCESSOR_TASK_ID
+    assert loaded["goal_id"] == SUCCESSOR_GOAL_ID
+    assert set(loaded["phases"]) == set(PHASE_REQUIREMENTS)
+    assert set(INADMISSIBLE_RIGHTS_CONDITIONS) == set(loaded["inadmissible_conditions"])
+    assert list(REQUIRED_RIGHTS_CLOSURE_TASK_IDS) == loaded["required_task_ids"]
+
+
+@pytest.mark.parametrize(
+    "phase",
+    ["state_staging", "state_main", "federal_staging", "federal_main"],
+)
+def test_lcr083_authorized_decision_binds_rights_closure(phase: str) -> None:
+    payload = example_authorized_request(phase)
+    decision = evaluate_publication_gate(payload)
+    assert decision.authorized is True
+    assert "source_rights_binding" in decision.passed_gates
+    assert set(REQUIRED_RIGHTS_CLOSURE_TASK_IDS).issubset(
+        decision.details["required_task_ids"]
+    )
+    receipt = payload["receipts"][RIGHTS_RECEIPT_RELPATH]
+    assert receipt["producer"] == "audit_legal_source_rights.py@2"
+    assert receipt["catalog_schema_version"] == "legal-source-rights-catalog-v2"
+    assert payload["dataset_repo_id"] in receipt["target_dataset_repo_ids"]
+    assert payload["payload"]["candidate_manifest"]["source_rights_receipt_digest"] == (
+        receipt["content_digest"]
+    )
+    if phase.endswith("_main"):
+        assert payload.get("prepublication_seal") is not None
+    else:
+        assert payload.get("prepublication_seal") is None
+
+
+@pytest.mark.parametrize(
+    "phase",
+    ["state_staging", "state_main", "federal_staging", "federal_main"],
+)
+@pytest.mark.parametrize(
+    "case",
+    sealed_source_rights_gate_fixture_payload()["denial_cases"],
+    ids=lambda case: case["id"],
+)
+def test_lcr083_inadmissible_rights_fail_before_callback(
+    phase: str, case: dict[str, Any]
+) -> None:
+    payload = apply_denial_mutator(
+        example_authorized_request(phase), case["mutator"]
+    )
+    _assert_denied(payload, reason_fragment="source_rights_binding")
+
+
+@pytest.mark.parametrize(
+    "phase",
+    ["state_staging", "state_main", "federal_staging", "federal_main"],
+)
+def test_lcr083_pre_hardening_policy_schema_denies(phase: str) -> None:
+    payload = example_authorized_request(phase)
+    payload["receipts"][RIGHTS_RECEIPT_RELPATH][
+        "schema_version"
+    ] = "legal-source-rights-policy-v1"
+    _assert_denied(payload, reason_fragment="source_rights_binding")
+
+
+@pytest.mark.parametrize(
+    "phase",
+    ["state_staging", "state_main", "federal_staging", "federal_main"],
+)
+def test_lcr083_pre_hardening_compliance_schema_denies(phase: str) -> None:
+    payload = example_authorized_request(phase)
+    payload["receipts"][RIGHTS_RECEIPT_RELPATH][
+        "report_schema"
+    ] = "ipfs_datasets_py/legal-source-rights-compliance@1"
+    _assert_denied(payload, reason_fragment="source_rights_binding")

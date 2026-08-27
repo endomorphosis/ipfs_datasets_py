@@ -216,6 +216,54 @@ def validate_semantic_family_closure(
     }
 
 
+PRE_HARDENING_RIGHTS_IDENTITY_MARKERS: Final = frozenset(
+    {
+        "audit_legal_source_rights.py@1",
+        "ipfs_datasets_py/legal-source-rights-compliance@1",
+        "legal-source-rights-catalog-v1",
+        "legal-source-rights-policy-v1",
+    }
+)
+HARDENED_RIGHTS_CATALOG_SCHEMA: Final = "legal-source-rights-catalog-v2"
+HARDENED_RIGHTS_POLICY_SCHEMA: Final = "legal-source-rights-policy-v2"
+HARDENED_RIGHTS_PRODUCER: Final = "audit_legal_source_rights.py@2"
+HARDENED_RIGHTS_COMPLIANCE_SCHEMA: Final = (
+    "ipfs_datasets_py/legal-source-rights-compliance@2"
+)
+HARDENED_RIGHTS_CODE_VERSION: Final = "2"
+HARDENED_RIGHTS_LIVE_TASK_ID: Final = "LCR-078"
+HARDENED_RIGHTS_LIVE_GOAL_ID: Final = "LCR-G141"
+SOURCE_RIGHTS_SUCCESSOR_TASK_ID: Final = "LCR-083"
+SOURCE_RIGHTS_SUCCESSOR_GOAL_ID: Final = "LCR-G145"
+
+
+def _identity_strings(payload: Mapping[str, Any]) -> tuple[str, ...]:
+    values: list[str] = []
+    for value in payload.values():
+        if isinstance(value, str) and value.strip():
+            values.append(value.strip())
+        elif isinstance(value, Mapping):
+            for inner in value.values():
+                if isinstance(inner, str) and inner.strip():
+                    values.append(inner.strip())
+    return tuple(values)
+
+
+def reject_pre_hardening_rights_identity(
+    payload: Mapping[str, Any],
+    *,
+    binding_error: ErrorType,
+    label: str = "source-rights payload",
+) -> None:
+    """Refuse any remaining pre-LCR-082 catalog, policy, producer, or receipt identity."""
+
+    for text in _identity_strings(payload):
+        if text in PRE_HARDENING_RIGHTS_IDENTITY_MARKERS:
+            raise binding_error(
+                f"{label} still binds pre-LCR-082 identity {text!r}"
+            )
+
+
 def require_source_rights_binding(
     manifest: Mapping[str, Any],
     *,
@@ -225,9 +273,15 @@ def require_source_rights_binding(
     binding_error: ErrorType,
     catalog_digest: str = "",
     dataset_card_text: str = "",
+    admitted_record_ids: Optional[Iterable[Any]] = None,
 ) -> None:
     """Fail closed unless release metadata binds current source-rights evidence."""
 
+    reject_pre_hardening_rights_identity(
+        manifest,
+        binding_error=binding_error,
+        label="candidate source-rights binding",
+    )
     bound = str(manifest.get("source_rights_receipt_digest") or "").strip()
     expected = validate_digest(receipt_digest, name="source_rights_receipt_digest")
     if not bound:
@@ -244,14 +298,42 @@ def require_source_rights_binding(
             f"source-rights receipt path must be {expected_receipt_path}"
         )
     catalog_bound = str(manifest.get("source_rights_catalog_digest") or "").strip()
-    if catalog_digest and catalog_bound and catalog_bound != catalog_digest:
-        raise binding_error(
-            "candidate catalog digest does not match the source-rights receipt"
+    if catalog_digest:
+        expected_catalog = validate_digest(
+            catalog_digest, name="source_rights_catalog_digest"
         )
+        if not catalog_bound:
+            raise binding_error(
+                "candidate manifest does not bind source_rights_catalog_digest"
+            )
+        if (
+            validate_digest(
+                catalog_bound, name="manifest.source_rights_catalog_digest"
+            )
+            != expected_catalog
+        ):
+            raise binding_error(
+                "candidate catalog digest does not match the source-rights receipt"
+            )
     if dataset_card_text and expected not in dataset_card_text:
         raise binding_error(
             "dataset card does not bind the source-rights receipt digest"
         )
+    if admitted_record_ids is not None:
+        admitted = {
+            str(item).strip()
+            for item in admitted_record_ids
+            if str(item).strip()
+        }
+        candidate_sources = {
+            str(item).strip()
+            for item in (manifest.get("admitted_source_ids") or ())
+            if str(item).strip()
+        }
+        if candidate_sources and admitted and not candidate_sources.issubset(admitted):
+            raise binding_error(
+                "candidate admitted sources are not covered by the source-rights receipt"
+            )
 
 
 def physical_bounds_policy() -> dict[str, int]:
@@ -272,9 +354,20 @@ def physical_bounds_policy() -> dict[str, int]:
 __all__ = [
     "AMBIGUOUS_4096_FIELD_NAMES",
     "BoundKind",
+    "HARDENED_RIGHTS_CATALOG_SCHEMA",
+    "HARDENED_RIGHTS_CODE_VERSION",
+    "HARDENED_RIGHTS_COMPLIANCE_SCHEMA",
+    "HARDENED_RIGHTS_LIVE_GOAL_ID",
+    "HARDENED_RIGHTS_LIVE_TASK_ID",
+    "HARDENED_RIGHTS_POLICY_SCHEMA",
+    "HARDENED_RIGHTS_PRODUCER",
     "PHYSICAL_BOUND_FIELD_NAMES",
+    "PRE_HARDENING_RIGHTS_IDENTITY_MARKERS",
+    "SOURCE_RIGHTS_SUCCESSOR_GOAL_ID",
+    "SOURCE_RIGHTS_SUCCESSOR_TASK_ID",
     "coerce_family_set",
     "physical_bounds_policy",
+    "reject_pre_hardening_rights_identity",
     "require_source_rights_binding",
     "validate_bound_declaration",
     "validate_semantic_family_closure",

@@ -47,7 +47,14 @@ from typing import Any, Final, Iterable, Mapping, Optional
 
 from ipfs_datasets_py.processors.legal_data.legal_release_validation import (
     AMBIGUOUS_4096_FIELD_NAMES,
+    HARDENED_RIGHTS_CATALOG_SCHEMA,
+    HARDENED_RIGHTS_CODE_VERSION,
+    HARDENED_RIGHTS_COMPLIANCE_SCHEMA,
+    HARDENED_RIGHTS_POLICY_SCHEMA,
+    HARDENED_RIGHTS_PRODUCER,
     PHYSICAL_BOUND_FIELD_NAMES,
+    SOURCE_RIGHTS_SUCCESSOR_GOAL_ID,
+    SOURCE_RIGHTS_SUCCESSOR_TASK_ID,
     BoundKind,
     coerce_family_set as _shared_coerce_family_set,
     physical_bounds_policy as _shared_physical_bounds_policy,
@@ -91,6 +98,13 @@ TASK_ID: Final = "LCR-050"
 SOURCE_RIGHTS_RECEIPT_RELPATH: Final = (
     "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json"
 )
+SOURCE_RIGHTS_TASK_ID: Final = SOURCE_RIGHTS_SUCCESSOR_TASK_ID
+SOURCE_RIGHTS_GOAL_ID: Final = SOURCE_RIGHTS_SUCCESSOR_GOAL_ID
+SOURCE_RIGHTS_CATALOG_SCHEMA: Final = HARDENED_RIGHTS_CATALOG_SCHEMA
+SOURCE_RIGHTS_POLICY_SCHEMA: Final = HARDENED_RIGHTS_POLICY_SCHEMA
+SOURCE_RIGHTS_PRODUCER: Final = HARDENED_RIGHTS_PRODUCER
+SOURCE_RIGHTS_COMPLIANCE_SCHEMA: Final = HARDENED_RIGHTS_COMPLIANCE_SCHEMA
+SOURCE_RIGHTS_CODE_VERSION: Final = HARDENED_RIGHTS_CODE_VERSION
 DEFAULT_OBSERVATION_CUTOFF: Final = "2026-08-10T00:00:00Z"
 
 # ---------------------------------------------------------------------------
@@ -3428,6 +3442,7 @@ def require_source_rights_binding(
     receipt_digest: str,
     catalog_digest: str = "",
     dataset_card_text: str = "",
+    admitted_record_ids: Optional[Iterable[Any]] = None,
 ) -> None:
     """Fail closed when a Federal candidate does not bind the current rights receipt."""
 
@@ -3444,6 +3459,7 @@ def require_source_rights_binding(
         binding_error=SourceRightsBindingError,
         catalog_digest=catalog_digest,
         dataset_card_text=dataset_card_text,
+        admitted_record_ids=admitted_record_ids,
     )
 
 
@@ -3784,10 +3800,19 @@ __all__ = [
     "ReleaseManifest",
     "RollbackRecord",
     "SCHEMA_VERSION",
+    "SOURCE_RIGHTS_CATALOG_SCHEMA",
+    "SOURCE_RIGHTS_CODE_VERSION",
+    "SOURCE_RIGHTS_COMPLIANCE_SCHEMA",
+    "SOURCE_RIGHTS_GOAL_ID",
+    "SOURCE_RIGHTS_POLICY_SCHEMA",
+    "SOURCE_RIGHTS_PRODUCER",
+    "SOURCE_RIGHTS_RECEIPT_RELPATH",
+    "SOURCE_RIGHTS_TASK_ID",
     "SchemaVersionError",
     "SemanticFamilyClosureError",
     "SourceAuthorityClass",
     "SourceReceiptRecord",
+    "SourceRightsBindingError",
     "TASK_ID",
     "TextAvailability",
     "TextAvailabilityError",
@@ -3810,6 +3835,7 @@ __all__ = [
     "reject_positional_durable_identity",
     "require_immutable_model_ref",
     "require_immutable_revision",
+    "require_source_rights_binding",
     "required_semantic_families",
     "validate_admission_provenance_fields",
     "validate_bound_declaration",
