@@ -69,11 +69,12 @@ class HawaiiScraper(BaseStateScraper):
         ("repealed", 362),
         ("reserved", 10),
     )
-    # Same exact 373 source-bound observations as the preceding inventory;
-    # the publisher's lone literal ``[OLD]`` path is represented by its
-    # transport-stable ``%5BOLD%5D`` URL identity.
+    # Same exact 373 source-bound observations as the preceding inventory.
+    # The publisher's lone literal ``[OLD]`` path is represented by its
+    # transport-stable ``%5BOLD%5D`` URL identity and the fresh direct body
+    # observed after that repair (content SHA-256 ``2dbf6893...263b``).
     EXPECTED_NONOPERATIVE_SECTION_INVENTORY_SHA256 = (
-        "64b3446e0b029e554f1ef5461be9e150cdbef940a3f71a61ce57c88066252906"
+        "701e4943a299bb77e485128d5f606994688158e67df05b7de5e5f323be12683f"
     )
     MISSING_LINK_QUARANTINE_REASON = "missing_official_source_link"
     OFFICIAL_TITLES = (
