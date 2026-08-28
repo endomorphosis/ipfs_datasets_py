@@ -111,6 +111,7 @@ Interface constants:
 ```text
 SemanticStateProducer@1
 SemanticStateView@1
+IndexedSemanticStateView@1
 SemanticStateBlockReader@1
 ipfs-datasets.software-contracts.semantic-state-api@1
 ```
@@ -131,9 +132,11 @@ Unknown fields, unsupported schema versions, forged CIDs, missing blocks, or
 incompatible confidence values fail closed with typed results.  There is no
 private or simulated fallback that raises confidence or invents edges.
 
-## SemanticStateView and get_block
+## SemanticStateView, IndexedSemanticStateView, and get_block
 
-`SemanticStateView` is a verified read-only protocol:
+`SemanticStateView@1` remains the legacy verified read-only protocol.
+`IndexedSemanticStateView@1` extends it additively with typed root-index
+selectors:
 
 ```python
 class SemanticStateBlockReader(Protocol):
@@ -144,6 +147,15 @@ class SemanticStateView(Protocol):
     def get_block(self, cid: str) -> bytes: ...
     def symbol_node(self, stable_symbol_id: str) -> SymbolMerkleNode: ...
     def capsule(self, stable_symbol_id: str) -> SemanticCapsule: ...
+
+class IndexedSemanticStateView(SemanticStateView, Protocol):
+    def symbol_fact(self, stable_symbol_id: str) -> SymbolFactNode: ...
+    def artifact_fact(self, artifact_id: str) -> ArtifactFactNode: ...
+    def semantic_link(self, edge_id: str) -> SemanticLinkNode: ...
+    def analysis_limitation(self, limitation_cid: str) -> AnalysisLimitation: ...
+    def semantic_links_for_symbol(
+        self, stable_symbol_id: str, direction: str = "both"
+    ) -> tuple[SemanticLinkNode, ...]: ...
 ```
 
 Implemented as `VerifiedSemanticStateView`:
@@ -153,6 +165,12 @@ Implemented as `VerifiedSemanticStateView`:
   bundle map), then rehashes against the claimed CIDv1.  Missing blocks raise
   `MissingBlockError`; corrupt/schema-mismatched blocks raise
   `CorruptBlockError`.
+- Fact, link, and limitation selectors resolve only through the corresponding
+  root-bound sorted-pair index, reverify each selected block, and reject any
+  logical-key or CID mismatch. Link reads also rebind source and resolved target
+  fact/version claims to the root fact indexes. `semantic_links_for_symbol`
+  additionally checks incoming/outgoing node fact/version agreement and returns
+  self-links only once.
 - `symbol_node` / `capsule` resolve through root-bound sorted pair indexes and
   reverify each durable record before return.  Unknown stable IDs raise
   `UnknownSymbolError`.

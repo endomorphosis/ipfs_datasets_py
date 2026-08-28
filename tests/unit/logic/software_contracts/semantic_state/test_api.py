@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import ast
 import inspect
+from dataclasses import replace
+from types import SimpleNamespace
 from typing import Any, Mapping
 
 import pytest
@@ -19,6 +21,7 @@ from ipfs_datasets_py.logic.software_contracts.semantic_index.identity import (
 )
 from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
     AnalysisConfidence,
+    ArtifactRecord,
     DependencyEdge,
     RelationType,
     RepositoryState,
@@ -27,11 +30,20 @@ from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
     SymbolRecord,
 )
 from ipfs_datasets_py.logic.software_contracts.semantic_state import (
+    AnalysisLimitation,
+    ArtifactFactNode,
     CorruptBlockError,
+    IndexedSemanticStateView,
     MissingBlockError,
+    SemanticLinkNode,
     SemanticStateApiError,
     SemanticStateBundle,
     SemanticStateRoot,
+    SemanticStateView,
+    SymbolFactNode,
+    UnknownAnalysisLimitationError,
+    UnknownArtifactError,
+    UnknownSemanticLinkError,
     UnknownSymbolError,
     VerifiedSemanticStateView,
     assess_capsule_freshness,
@@ -46,6 +58,7 @@ from ipfs_datasets_py.logic.software_contracts.semantic_state import (
     view_semantic_state_bundle,
 )
 from ipfs_datasets_py.logic.software_contracts.semantic_state.api import (
+    INDEXED_SEMANTIC_STATE_VIEW_INTERFACE,
     SEMANTIC_STATE_BLOCK_READER_INTERFACE,
     SEMANTIC_STATE_PRODUCER_INTERFACE,
     SEMANTIC_STATE_VIEW_INTERFACE,
@@ -56,6 +69,7 @@ from ipfs_datasets_py.logic.software_contracts.semantic_state.models import (
     BindingScope,
     EnvironmentBinding,
     SemanticStateProducer,
+    SortedPairIndex,
 )
 
 
@@ -132,12 +146,13 @@ def _edge(
 def _state(
     symbols: list[SymbolRecord],
     *,
+    artifacts: list[ArtifactRecord] | None = None,
     edges: list[DependencyEdge] | None = None,
 ) -> RepositoryState:
     return RepositoryState(
         REPO,
         symbols=tuple(symbols),
-        artifacts=(),
+        artifacts=tuple(artifacts or ()),
         edges=tuple(edges or ()),
     )
 
@@ -161,6 +176,7 @@ def _binding(binding_id: str = "toolchain:python") -> EnvironmentBinding:
 def test_interface_constants() -> None:
     assert SEMANTIC_STATE_PRODUCER_INTERFACE == "SemanticStateProducer@1"
     assert SEMANTIC_STATE_VIEW_INTERFACE == "SemanticStateView@1"
+    assert INDEXED_SEMANTIC_STATE_VIEW_INTERFACE == "IndexedSemanticStateView@1"
     assert SEMANTIC_STATE_BLOCK_READER_INTERFACE == "SemanticStateBlockReader@1"
 
 
@@ -208,11 +224,46 @@ def test_package_exports_closed_facade() -> None:
         "select_tests_and_proofs",
         "compare_test_selection_oracle",
         "SemanticStateView",
+        "IndexedSemanticStateView",
         "SemanticStateBlockReader",
         "SemanticStateBundle",
+        "SymbolFactNode",
+        "ArtifactFactNode",
+        "SemanticLinkNode",
+        "AnalysisLimitation",
+        "UnknownArtifactError",
+        "UnknownSemanticLinkError",
+        "UnknownAnalysisLimitationError",
+        "INDEXED_SEMANTIC_STATE_VIEW_INTERFACE",
     ):
         assert name in pkg.__all__
         assert hasattr(pkg, name)
+
+
+def test_indexed_view_protocol_is_additive_to_legacy_view_contract() -> None:
+    alpha = _make_symbol("pkg.mod.alpha")
+    bundle = build_semantic_state(_state([alpha]))
+
+    class LegacySemanticStateView:
+        def __init__(self) -> None:
+            self.root = bundle.root
+
+        def get_block(self, cid: str) -> bytes:
+            return bundle.get_block(cid)
+
+        def symbol_node(self, stable_symbol_id: str):
+            raise UnknownSymbolError(stable_symbol_id)
+
+        def capsule(self, stable_symbol_id: str):
+            raise UnknownSymbolError(stable_symbol_id)
+
+    legacy = LegacySemanticStateView()
+    assert isinstance(legacy, SemanticStateView)
+    assert not isinstance(legacy, IndexedSemanticStateView)
+
+    indexed = view_semantic_state_bundle(bundle)
+    assert isinstance(indexed, SemanticStateView)
+    assert isinstance(indexed, IndexedSemanticStateView)
 
 
 # ---------------------------------------------------------------------------
@@ -341,6 +392,250 @@ def test_bundle_view_and_injected_reader_yield_identical_views() -> None:
     # Every block read through both views is byte-identical.
     for cid in sorted(bundle.blocks):
         assert mem_view.get_block(cid) == injected.get_block(cid) == bundle.blocks[cid]
+
+
+def test_verified_view_exposes_all_root_index_records_typed() -> None:
+    alpha = _make_symbol("pkg.mod.alpha")
+    beta = _make_symbol("pkg.mod.beta")
+    artifact = ArtifactRecord(
+        artifact_id="artifact:contract-alpha",
+        kind="contract",
+        path="contracts/alpha.json",
+        source_cid=_cid("contract-alpha"),
+    )
+    alpha_to_beta = _edge(alpha, beta)
+    alpha_to_artifact = _edge(
+        alpha,
+        artifact.artifact_id,
+        RelationType.CONFIGURED_BY,
+    )
+    beta_to_beta = _edge(beta, beta, RelationType.PROOF_DEPENDS_ON)
+    state = _state(
+        [alpha, beta],
+        artifacts=[artifact],
+        edges=[alpha_to_beta, alpha_to_artifact, beta_to_beta],
+    )
+    limitation = AnalysisLimitation(
+        code="dynamic-callback",
+        message="callback target remains opaque",
+        subject_id=beta.stable_id,
+    )
+    sealed_index = SimpleNamespace(
+        repository_id=state.repository_id,
+        symbols=state.symbols,
+        artifacts=state.artifacts,
+        edges=state.edges,
+        extractor_name=state.extractor_name,
+        extractor_version=state.extractor_version,
+        schema=state.schema,
+        state_cid=state.state_cid,
+        limitations=(limitation,),
+    )
+    bundle = build_semantic_state(sealed_index)
+    store = dict(bundle.blocks)
+    views = (
+        view_semantic_state_bundle(bundle),
+        open_semantic_state(bundle.root.root_cid, store.__getitem__),
+    )
+
+    for view in views:
+        symbol_fact = view.symbol_fact(alpha.stable_id)
+        assert isinstance(symbol_fact, SymbolFactNode)
+        assert symbol_fact.symbol == alpha
+
+        artifact_fact = view.artifact_fact(artifact.artifact_id)
+        assert isinstance(artifact_fact, ArtifactFactNode)
+        assert artifact_fact.artifact == artifact
+
+        link = view.semantic_link(alpha_to_beta.edge_id)
+        assert isinstance(link, SemanticLinkNode)
+        assert link.edge_id == alpha_to_beta.edge_id
+        assert link.source_stable_id == alpha.stable_id
+        assert link.target_stable_id == beta.stable_id
+
+        artifact_link = view.semantic_link(alpha_to_artifact.edge_id)
+        assert artifact_link.target_stable_id == artifact.artifact_id
+        assert artifact_link.target_fact_cid == artifact_fact.fact_cid
+        assert artifact_link.target_version_cid is None
+
+        restored_limitation = view.analysis_limitation(limitation.limitation_cid)
+        assert restored_limitation == limitation
+
+        assert tuple(
+            item.edge_id
+            for item in view.semantic_links_for_symbol(alpha.stable_id, "outgoing")
+        ) == tuple(sorted((alpha_to_beta.edge_id, alpha_to_artifact.edge_id)))
+        assert view.semantic_links_for_symbol(alpha.stable_id, "incoming") == ()
+        assert tuple(
+            item.edge_id
+            for item in view.semantic_links_for_symbol(beta.stable_id, "incoming")
+        ) == tuple(sorted((alpha_to_beta.edge_id, beta_to_beta.edge_id)))
+        assert tuple(
+            item.edge_id
+            for item in view.semantic_links_for_symbol(beta.stable_id, "outgoing")
+        ) == (beta_to_beta.edge_id,)
+        # The self-loop is present in both node vectors but returned only once.
+        assert tuple(
+            item.edge_id
+            for item in view.semantic_links_for_symbol(beta.stable_id)
+        ) == tuple(sorted((alpha_to_beta.edge_id, beta_to_beta.edge_id)))
+
+
+def test_typed_view_selectors_reject_unknown_keys_and_direction() -> None:
+    alpha = _make_symbol("pkg.mod.alpha")
+    view = view_semantic_state_bundle(build_semantic_state(_state([alpha])))
+
+    with pytest.raises(UnknownSymbolError):
+        view.symbol_fact("not-a-real-stable-id")
+    with pytest.raises(UnknownArtifactError):
+        view.artifact_fact("artifact:not-present")
+    with pytest.raises(UnknownSemanticLinkError):
+        view.semantic_link(_cid("edge:not-present"))
+    with pytest.raises(UnknownAnalysisLimitationError):
+        view.analysis_limitation(_cid("limitation:not-present"))
+    with pytest.raises(SemanticStateApiError, match="direction"):
+        view.semantic_links_for_symbol(alpha.stable_id, "sideways")
+
+
+def test_typed_view_selectors_fail_closed_on_missing_corrupt_and_mismatched_data() -> None:
+    alpha = _make_symbol("pkg.mod.alpha")
+    beta = _make_symbol("pkg.mod.beta")
+    artifact = ArtifactRecord(
+        artifact_id="artifact:contract-alpha",
+        kind="contract",
+        path="contracts/alpha.json",
+        source_cid=_cid("contract-alpha"),
+    )
+    edge = _edge(alpha, beta)
+    bundle = build_semantic_state(
+        _state([alpha, beta], artifacts=[artifact], edges=[edge])
+    )
+    baseline = view_semantic_state_bundle(bundle)
+
+    missing_store = dict(bundle.blocks)
+    del missing_store[bundle.root.artifact_fact_index_cid]
+    missing_view = open_semantic_state(bundle.root.root_cid, missing_store.__getitem__)
+    with pytest.raises(MissingBlockError):
+        missing_view.artifact_fact(artifact.artifact_id)
+
+    alpha_fact = baseline.symbol_fact(alpha.stable_id)
+    corrupt_store = dict(bundle.blocks)
+    corrupt_store[alpha_fact.fact_cid] = b'{"schema":"forged"}'
+    corrupt_view = open_semantic_state(bundle.root.root_cid, corrupt_store.__getitem__)
+    with pytest.raises(CorruptBlockError):
+        corrupt_view.symbol_fact(alpha.stable_id)
+
+    beta_fact = baseline.symbol_fact(beta.stable_id)
+    mismatched_index = SortedPairIndex(
+        pairs=((alpha.stable_id, beta_fact.fact_cid),)
+    )
+    mismatched_blocks = dict(bundle.blocks)
+    mismatched_blocks[mismatched_index.index_cid] = canonical_dag_json_bytes(
+        mismatched_index.identity_payload()
+    )
+    mismatched_bundle = SemanticStateBundle(
+        root=replace(
+            bundle.root,
+            symbol_fact_index_cid=mismatched_index.index_cid,
+        ),
+        blocks=mismatched_blocks,
+    )
+    with pytest.raises(CorruptBlockError, match="stable_symbol_id mismatch"):
+        view_semantic_state_bundle(mismatched_bundle).symbol_fact(alpha.stable_id)
+
+
+def test_semantic_link_rejects_canonical_fact_and_version_mismatches() -> None:
+    alpha = _make_symbol("pkg.mod.alpha")
+    beta = _make_symbol("pkg.mod.beta")
+    edge = _edge(alpha, beta)
+    bundle = build_semantic_state(_state([alpha, beta], edges=[edge]))
+    baseline = view_semantic_state_bundle(bundle)
+    link = baseline.semantic_link(edge.edge_id)
+    beta_fact = baseline.symbol_fact(beta.stable_id)
+
+    forged_links = (
+        (
+            replace(link, source_fact_cid=beta_fact.fact_cid),
+            "source_fact_cid mismatch",
+        ),
+        (
+            replace(link, target_version_cid=alpha.version_cid),
+            "target_version_cid mismatch",
+        ),
+    )
+    for forged_link, expected_error in forged_links:
+        forged_index = SortedPairIndex(
+            pairs=((edge.edge_id, forged_link.link_cid),)
+        )
+        forged_blocks = dict(bundle.blocks)
+        forged_blocks[forged_link.link_cid] = canonical_dag_json_bytes(
+            forged_link.identity_payload()
+        )
+        forged_blocks[forged_index.index_cid] = canonical_dag_json_bytes(
+            forged_index.identity_payload()
+        )
+        forged_bundle = SemanticStateBundle(
+            root=replace(
+                bundle.root,
+                semantic_link_index_cid=forged_index.index_cid,
+            ),
+            blocks=forged_blocks,
+        )
+
+        # Every changed block and root has a valid canonical CID; only the
+        # cross-record semantic binding is false.
+        with pytest.raises(CorruptBlockError, match=expected_error):
+            view_semantic_state_bundle(forged_bundle).semantic_link(edge.edge_id)
+
+
+def test_link_traversal_rejects_canonical_node_link_binding_mismatches() -> None:
+    alpha = _make_symbol("pkg.mod.alpha")
+    beta = _make_symbol("pkg.mod.beta")
+    edge = _edge(alpha, beta)
+    bundle = build_semantic_state(_state([alpha, beta], edges=[edge]))
+    baseline = view_semantic_state_bundle(bundle)
+    alpha_node = baseline.symbol_node(alpha.stable_id)
+    beta_node = baseline.symbol_node(beta.stable_id)
+    alpha_fact = baseline.symbol_fact(alpha.stable_id)
+
+    forged_nodes = (
+        (
+            alpha.stable_id,
+            replace(alpha_node, version_cid=beta.version_cid),
+            "outgoing",
+            "outgoing node version mismatch",
+        ),
+        (
+            beta.stable_id,
+            replace(beta_node, symbol_fact_cid=alpha_fact.fact_cid),
+            "incoming",
+            "incoming node fact mismatch",
+        ),
+    )
+    for stable_symbol_id, forged_node, direction, expected_error in forged_nodes:
+        forged_index = SortedPairIndex(
+            pairs=((stable_symbol_id, forged_node.node_cid),)
+        )
+        forged_blocks = dict(bundle.blocks)
+        forged_blocks[forged_node.node_cid] = canonical_dag_json_bytes(
+            forged_node.identity_payload()
+        )
+        forged_blocks[forged_index.index_cid] = canonical_dag_json_bytes(
+            forged_index.identity_payload()
+        )
+        forged_bundle = SemanticStateBundle(
+            root=replace(
+                bundle.root,
+                symbol_node_index_cid=forged_index.index_cid,
+            ),
+            blocks=forged_blocks,
+        )
+
+        with pytest.raises(CorruptBlockError, match=expected_error):
+            view_semantic_state_bundle(forged_bundle).semantic_links_for_symbol(
+                stable_symbol_id,
+                direction,
+            )
 
 
 def test_every_read_reverifies_cid_and_schema() -> None:

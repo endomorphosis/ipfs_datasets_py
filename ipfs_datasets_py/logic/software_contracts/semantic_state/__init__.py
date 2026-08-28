@@ -5,15 +5,20 @@ store, open a network connection, start a scheduler, or perform persistence.
 """
 
 from ipfs_datasets_py.logic.software_contracts.semantic_state.api import (
+    INDEXED_SEMANTIC_STATE_VIEW_INTERFACE,
     SEMANTIC_STATE_API_SCHEMA,
     SEMANTIC_STATE_BLOCK_READER_INTERFACE,
     SEMANTIC_STATE_PRODUCER_INTERFACE,
     SEMANTIC_STATE_VIEW_INTERFACE,
     CorruptBlockError,
     MissingBlockError,
+    IndexedSemanticStateView,
     SemanticStateApiError,
     SemanticStateBlockReader,
     SemanticStateView,
+    UnknownAnalysisLimitationError,
+    UnknownArtifactError,
+    UnknownSemanticLinkError,
     UnknownSymbolError,
     VerifiedSemanticStateView,
     assess_capsule_freshness,
@@ -28,9 +33,13 @@ from ipfs_datasets_py.logic.software_contracts.semantic_state.api import (
     view_semantic_state_bundle,
 )
 from ipfs_datasets_py.logic.software_contracts.semantic_state.models import (
+    AnalysisLimitation,
+    ArtifactFactNode,
     SemanticCapsule,
+    SemanticLinkNode,
     SemanticStateBundle,
     SemanticStateRoot,
+    SymbolFactNode,
     SymbolMerkleNode,
 )
 
@@ -38,22 +47,31 @@ __all__ = [
     # Interface constants
     "SEMANTIC_STATE_API_SCHEMA",
     "SEMANTIC_STATE_BLOCK_READER_INTERFACE",
+    "INDEXED_SEMANTIC_STATE_VIEW_INTERFACE",
     "SEMANTIC_STATE_PRODUCER_INTERFACE",
     "SEMANTIC_STATE_VIEW_INTERFACE",
     # Protocols / view
     "SemanticStateBlockReader",
     "SemanticStateView",
+    "IndexedSemanticStateView",
     "VerifiedSemanticStateView",
     # Errors
     "SemanticStateApiError",
     "MissingBlockError",
     "CorruptBlockError",
     "UnknownSymbolError",
+    "UnknownArtifactError",
+    "UnknownSemanticLinkError",
+    "UnknownAnalysisLimitationError",
     # Durable value types commonly bound by the facade
     "SemanticStateBundle",
     "SemanticStateRoot",
     "SemanticCapsule",
     "SymbolMerkleNode",
+    "SymbolFactNode",
+    "ArtifactFactNode",
+    "SemanticLinkNode",
+    "AnalysisLimitation",
     # Core assembly
     "build_semantic_state",
     "verify_semantic_state_bundle",
