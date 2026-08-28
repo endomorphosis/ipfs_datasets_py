@@ -125,6 +125,13 @@ requirements = ["pytest>=9.0.3,<10.0.0"]
 task = { board-namespace = "logic-governed-compositional-verification-fabric-v1", canonical-task-cid = "baguqeeraompdkd4vtnb7z4sd5evmsx2jsucobyahrzqxyicwmwqdcwcvq3iq", declared-output = "ipfs_datasets_py/tests/unit/logic/software_verification/test_proof_carrying_artifact.py" }
 baseline = { state = "declared-output-absent" }
 
+[[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
+target = "tests/proof_context/test_context_pack_contract.py"
+validation-command-sha256 = "82dc80d11c6a2de52e2151b4ab6b46a87e6c65f242cef5a7646589786a2a03e8"
+requirements = ["pytest>=9.0.3,<10.0.0"]
+task = { board-namespace = "agent-supervisor-efficiency-and-state-hardening-v1", canonical-task-cid = "baguqeera37mgpemf23xikp5wb2fuuycykn57gorpjrsgtwi777br47d6scvq", declared-output = "ipfs_datasets_py/tests/proof_context/test_context_pack_contract.py" }
+baseline = { state = "declared-output-absent" }
+
 [project.optional-dependencies]
 # IPLD / CAR format extras
 ipld = [
