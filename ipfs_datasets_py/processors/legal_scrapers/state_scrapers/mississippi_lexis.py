@@ -741,9 +741,10 @@ def grouped_body_acquisition_contract(
 ) -> dict[str, Any]:
     """Derive exact future body inputs and their mandatory archive grouping.
 
-    Current section and section-collection candidates are reusable body inputs.
-    Recent-legislation identities, future-effectiveness paths, untyped current
-    documents, and duplicate current citations remain explicit residuals.
+    Every current section variant, section collection, recent-legislation
+    identity, and untyped current document remains a body-acquisition target.
+    Duplicate citations and documents without a catalog identity also remain
+    explicit residuals until their exact bodies support reconciliation.
     """
 
     node_list = tuple(nodes)
@@ -751,6 +752,7 @@ def grouped_body_acquisition_contract(
         raise ValueError("body contract requires a live-verified inventory")
 
     candidates: list[MississippiLexisNode] = []
+    body_targets: list[MississippiLexisNode] = []
     residuals: list[dict[str, str]] = []
     exclusions: list[dict[str, str]] = []
     for node in sorted(node_list, key=lambda item: item.node_path):
@@ -767,10 +769,12 @@ def grouped_body_acquisition_contract(
             "current_section_collection_candidate",
         }:
             candidates.append(node)
+            body_targets.append(node)
         elif disposition in {
             "recent_legislation_identity_residual",
             "untyped_current_document_residual",
         }:
+            body_targets.append(node)
             residuals.append(row)
         elif disposition != "not_document":
             exclusions.append(row)
@@ -799,7 +803,7 @@ def grouped_body_acquisition_contract(
                 }
             )
 
-    request_urls = tuple(document_page_url(node) for node in reusable)
+    request_urls = tuple(document_page_url(node) for node in body_targets)
     if len(request_urls) != len(set(request_urls)):
         raise ValueError("future body request membership contains duplicate URLs")
     if any((urlparse(url).hostname or "").lower() != "advance.lexis.com" for url in request_urls):

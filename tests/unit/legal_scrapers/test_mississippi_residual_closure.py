@@ -65,7 +65,6 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.strict_frontier_c
     retain_exact_state_frontier_closure,
 )
 
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 REPORT_PATH = (
     REPO_ROOT
@@ -568,6 +567,7 @@ def test_mississippi_one_domain_body_wave_disables_per_page_archive_and_reinvent
     )
     assert DEAD_2024_CODE_ROOT not in contract["request_urls"]
     assert INVENTED_EVEN_TITLE_URL not in contract["request_urls"]
+    assert contract["request_urls"] == _source_ordered_current_body_urls(nodes)
 
     probe_source = inspect.getsource(
         MississippiScraper._probe_delegated_mississippi_code
@@ -746,7 +746,9 @@ def test_mississippi_compact_recipe_emits_catalog_then_current_bodies_not_even_o
     assert len(residual) == 6
 
     contract = grouped_body_acquisition_contract(nodes)
-    assert set(contract["request_urls"]).issubset(set(residual))
+    assert contract["request_urls"] == residual
+    assert contract["request_url_count"] == len(residual)
+    assert contract["reusable_candidate_node_count"] == 2
     assert INVENTED_EVEN_TITLE_URL not in contract["request_urls"]
     residual_dispositions = {row["disposition"] for row in contract["residuals"]}
     assert "duplicate_current_citation_requires_body_reconciliation" in (

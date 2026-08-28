@@ -284,7 +284,8 @@ def test_grouped_body_contract_keeps_residuals_and_forbids_archive_page_loops() 
     )
 
     assert contract["source_domain"] == "advance.lexis.com"
-    assert contract["request_url_count"] == 1
+    assert contract["request_url_count"] == 4
+    assert contract["reusable_candidate_node_count"] == 1
     assert contract["common_crawl_inventory_query_upper_bound"] == 1
     assert contract["group_warc_ranges_by_warc_filename"] is True
     assert contract["per_page_archive_inventory_loop"] is False
