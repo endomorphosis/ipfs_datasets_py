@@ -7,15 +7,18 @@ from pathlib import Path
 import pytest
 
 from ipfs_datasets_py.processors.legal_data.patent_authority_contracts_v2 import (
+    AcquisitionReceipt,
     canonical_json_bytes,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_multifetch_acquisition import (
     SCHEMA_VERSION as MULTIFETCH_SCHEMA_VERSION,
+    StateLawMultiFetchAcquisitionError,
     StateLawMultiFetchAcquisitionLedger,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_retained_evidence_seed import (
     RetainedEvidenceSeedSource,
     StateLawsRetainedEvidenceSeedError,
+    TRANSPORT_UNSTABLE_EXCLUSION_SCHEMA_VERSION,
     _selected_projection,
     seed_retained_evidence_generation,
     seed_retained_evidence_union,
@@ -100,6 +103,34 @@ def _source_ledger(tmp_path: Path) -> StateLawMultiFetchAcquisitionLedger:
     return ledger
 
 
+def _plant_fixity_valid_raw_bracket_receipt(
+    ledger: StateLawMultiFetchAcquisitionLedger,
+) -> tuple[str, str, str]:
+    encoded_url = "https://law.example.gov/code/section_%5BOLD%5D.htm"
+    raw_url = encoded_url.replace("%5BOLD%5D", "[OLD]")
+    body = b"historical official body at a transport-unstable locator"
+    entry = ledger.retain_parser_input(
+        official_url=encoded_url,
+        body=body,
+        transport_receipt=_direct_receipt(encoded_url, body),
+        retrieved_at="2026-08-26T01:00:04Z",
+    )
+    payload = json.loads(entry.evidence_path.read_text(encoding="utf-8"))
+    receipt_raw = payload["parser_input_envelope"]["acquisition"]["receipt"]
+    receipt_raw["endpoint"] = raw_url
+    receipt_raw["sanitized_request"]["url"] = raw_url
+    receipt_raw["metadata"]["transport_receipt"]["official_url"] = raw_url
+    receipt_raw.pop("receipt_sha256")
+    receipt_raw.pop("receipt_cid")
+    rebound = AcquisitionReceipt.from_dict(receipt_raw)
+    payload["parser_input_envelope"]["acquisition"]["receipt"] = rebound.to_dict()
+    payload["transport_receipt"]["official_url"] = raw_url
+    replacement = entry.evidence_path.with_name(f"{rebound.receipt_sha256}.json")
+    replacement.write_bytes(canonical_json_bytes(payload))
+    entry.evidence_path.unlink()
+    return rebound.receipt_sha256, raw_url, hashlib.sha256(body).hexdigest()
+
+
 def test_seed_direct_inputs_deduplicates_and_replays_without_copying_bytes(
     tmp_path: Path,
 ) -> None:
@@ -147,6 +178,92 @@ def test_seed_direct_inputs_deduplicates_and_replays_without_copying_bytes(
         report.selected_projection_sha256
     )
     assert not (destination / "VA" / "frontiers" / "receipt.json").exists()
+
+
+def test_seed_can_audit_exact_transport_unstable_source_receipt_exclusion(
+    tmp_path: Path,
+) -> None:
+    source = _source_ledger(tmp_path)
+    excluded_sha, raw_url, content_sha = _plant_fixity_valid_raw_bracket_receipt(
+        source
+    )
+
+    with pytest.raises(StateLawTransportReceiptError) as unfiltered:
+        StateLawMultiFetchAcquisitionLedger(
+            tmp_path / "source",
+            jurisdiction="VA",
+            parser_name="VirginiaScraper",
+            allowed_source_transports=("direct",),
+        )
+    assert unfiltered.value.code == "invalid_official_url"
+
+    destination = tmp_path / "destination"
+    report = seed_retained_evidence_generation(
+        source_root=tmp_path / "source",
+        destination_root=destination,
+        jurisdiction="VA",
+        parser_name="VirginiaScraper",
+        exclude_transport_unstable_receipt_sha256s=(excluded_sha,),
+    )
+
+    assert report.schema_version == TRANSPORT_UNSTABLE_EXCLUSION_SCHEMA_VERSION
+    assert report.excluded_transport_unstable_receipt_count == 1
+    assert report.excluded_transport_unstable_receipt_sha256s == (excluded_sha,)
+    replay = StateLawMultiFetchAcquisitionLedger(
+        destination,
+        jurisdiction="VA",
+        parser_name="VirginiaScraper",
+    )
+    assert len(replay.entries) == 2
+    assert raw_url not in {entry.receipt.endpoint for entry in replay.entries}
+    assert not (destination / "VA" / "fetches" / f"{excluded_sha}.json").exists()
+
+    migration = json.loads(Path(report.migration_receipt_path).read_text())
+    assert migration["schema_version"] == (
+        TRANSPORT_UNSTABLE_EXCLUSION_SCHEMA_VERSION
+    )
+    assert migration["excluded_transport_unstable_receipts"] == [
+        {
+            "content_sha256": content_sha,
+            "official_url": raw_url,
+            "receipt_sha256": excluded_sha,
+            "source_transport": "direct",
+        }
+    ]
+
+
+def test_transport_unstable_exclusion_refuses_valid_or_missing_receipts(
+    tmp_path: Path,
+) -> None:
+    source = _source_ledger(tmp_path)
+    valid_sha = next(
+        entry.receipt.receipt_sha256
+        for entry in source.entries
+        if entry.receipt.endpoint == DIRECT_THREE
+    )
+    with pytest.raises(
+        StateLawMultiFetchAcquisitionError,
+        match="refused a transport-valid receipt",
+    ):
+        StateLawMultiFetchAcquisitionLedger(
+            tmp_path / "source",
+            jurisdiction="VA",
+            parser_name="VirginiaScraper",
+            allowed_source_transports=("direct",),
+            excluded_transport_unstable_receipt_sha256s=(valid_sha,),
+        )
+
+    with pytest.raises(
+        StateLawMultiFetchAcquisitionError,
+        match="were not found",
+    ):
+        StateLawMultiFetchAcquisitionLedger(
+            tmp_path / "source",
+            jurisdiction="VA",
+            parser_name="VirginiaScraper",
+            allowed_source_transports=("direct",),
+            excluded_transport_unstable_receipt_sha256s=("f" * 64,),
+        )
 
 
 def test_seed_can_require_an_exact_url_subset(tmp_path: Path) -> None:

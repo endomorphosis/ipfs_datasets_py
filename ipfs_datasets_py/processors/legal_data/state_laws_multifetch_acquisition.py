@@ -72,6 +72,7 @@ from ipfs_datasets_py.processors.legal_data.state_laws_source_policy import (
     OfficialSourceCatalog,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_source_provenance import (
+    StateLawTransportReceiptError,
     VerifiedStateLawTransport,
     canonicalize_state_law_transport_receipt,
     verify_state_law_transport_receipt,
@@ -588,6 +589,7 @@ class StateLawMultiFetchAcquisitionLedger:
         load_existing: bool = True,
         retained_replay_only: bool = False,
         allowed_source_transports: Sequence[str] | None = None,
+        excluded_transport_unstable_receipt_sha256s: Sequence[str] | None = None,
     ) -> None:
         if not isinstance(retained_replay_only, bool):
             raise TypeError("retained_replay_only must be a boolean")
@@ -600,6 +602,21 @@ class StateLawMultiFetchAcquisitionLedger:
         self._allowed_source_transports = (
             self._normalize_allowed_source_transports(allowed_source_transports)
         )
+        self._excluded_transport_unstable_receipt_sha256s = (
+            self._normalize_excluded_transport_unstable_receipts(
+                excluded_transport_unstable_receipt_sha256s
+            )
+        )
+        if self._excluded_transport_unstable_receipt_sha256s:
+            if not load_existing:
+                raise StateLawMultiFetchAcquisitionError(
+                    "transport-unstable receipt exclusions require load_existing"
+                )
+            if self._allowed_source_transports is None:
+                raise StateLawMultiFetchAcquisitionError(
+                    "transport-unstable receipt exclusions require an allowed "
+                    "source-transport projection"
+                )
         unresolved_root = Path(root).expanduser()
         if unresolved_root.is_symlink():
             raise StateLawMultiFetchAcquisitionError(
@@ -631,6 +648,9 @@ class StateLawMultiFetchAcquisitionLedger:
         self._request_index: dict[tuple[str, bytes], list[str]] = {}
         self.retained_replay_only = retained_replay_only
         self.skipped_disallowed_transport_count = 0
+        self._excluded_transport_unstable_receipts: dict[
+            str, dict[str, str]
+        ] = {}
         if load_existing:
             self._load_existing_entries()
 
@@ -656,6 +676,31 @@ class StateLawMultiFetchAcquisitionLedger:
         return transports
 
     @staticmethod
+    def _normalize_excluded_transport_unstable_receipts(
+        receipt_sha256s: Sequence[str] | None,
+    ) -> frozenset[str]:
+        if receipt_sha256s is None:
+            return frozenset()
+        if isinstance(receipt_sha256s, (str, bytes, bytearray)):
+            raise StateLawMultiFetchAcquisitionError(
+                "excluded transport-unstable receipts must be a sequence of SHA-256 digests"
+            )
+        normalized = frozenset(
+            str(value or "").strip().lower().removeprefix("sha256:")
+            for value in receipt_sha256s
+            if str(value or "").strip()
+        )
+        if any(
+            len(digest) != 64
+            or any(char not in "0123456789abcdef" for char in digest)
+            for digest in normalized
+        ):
+            raise StateLawMultiFetchAcquisitionError(
+                "excluded transport-unstable receipts must be exact SHA-256 digests"
+            )
+        return normalized
+
+    @staticmethod
     def _declared_source_transport(transport_receipt: Mapping[str, Any]) -> str:
         return str(transport_receipt.get("source_transport") or "").strip()
 
@@ -675,6 +720,16 @@ class StateLawMultiFetchAcquisitionLedger:
 
         with self._lock:
             return tuple(self._entries[key] for key in sorted(self._entries))
+
+    @property
+    def excluded_transport_unstable_receipts(self) -> tuple[dict[str, str], ...]:
+        """Return fixity-verified source receipts skipped for invalid URL syntax."""
+
+        with self._lock:
+            return tuple(
+                dict(self._excluded_transport_unstable_receipts[key])
+                for key in sorted(self._excluded_transport_unstable_receipts)
+            )
 
     @staticmethod
     def _retained_request_identity(
@@ -1078,7 +1133,11 @@ class StateLawMultiFetchAcquisitionLedger:
             evidence_paths = sorted(self.fetches_dir.glob("*.json"))
         for evidence_path in evidence_paths:
             with self._lock:
-                if evidence_path.stem in self._entries:
+                if (
+                    evidence_path.stem in self._entries
+                    or evidence_path.stem
+                    in self._excluded_transport_unstable_receipts
+                ):
                     continue
             if evidence_path.is_symlink() or not evidence_path.is_file():
                 raise StateLawMultiFetchAcquisitionError(
@@ -1163,17 +1222,56 @@ class StateLawMultiFetchAcquisitionLedger:
                 raise StateLawMultiFetchAcquisitionError(
                     f"retained parser envelope lacks content for {evidence_path.name}"
                 )
+            receipt_sha = envelope.acquisition.receipt.receipt_sha256
+            if evidence_path.stem != receipt_sha:
+                raise StateLawMultiFetchAcquisitionError(
+                    f"retained fetch filename does not match receipt {receipt_sha}"
+                )
+            if receipt_sha in self._excluded_transport_unstable_receipt_sha256s:
+                endpoint = envelope.acquisition.receipt.endpoint
+                declared_transport = self._declared_source_transport(transport_raw)
+                allowed_transports = self._allowed_source_transports or frozenset()
+                if (
+                    str(transport_raw.get("official_url") or "") != endpoint
+                    or str(transport_raw.get("content_sha256") or "").lower()
+                    != content.sha256
+                    or not declared_transport
+                    or declared_transport not in allowed_transports
+                ):
+                    raise StateLawMultiFetchAcquisitionError(
+                        "transport-unstable excluded receipt changed its exact "
+                        f"URL/content binding: {receipt_sha}"
+                    )
+                try:
+                    canonicalize_state_law_transport_receipt(
+                        transport_raw,
+                        official_url=endpoint,
+                        content_sha256=content.sha256,
+                    )
+                except StateLawTransportReceiptError as exc:
+                    if exc.code != "invalid_official_url":
+                        raise StateLawMultiFetchAcquisitionError(
+                            "explicit receipt exclusion may bypass only invalid "
+                            "official URL syntax"
+                        ) from exc
+                else:
+                    raise StateLawMultiFetchAcquisitionError(
+                        "explicit receipt exclusion refused a transport-valid receipt"
+                    )
+                with self._lock:
+                    self._excluded_transport_unstable_receipts[receipt_sha] = {
+                        "content_sha256": content.sha256,
+                        "official_url": endpoint,
+                        "receipt_sha256": receipt_sha,
+                        "source_transport": declared_transport,
+                    }
+                continue
             canonical_transport = canonicalize_state_law_transport_receipt(
                 transport_raw,
                 official_url=envelope.acquisition.receipt.endpoint,
                 content_sha256=content.sha256,
             )
             verified = verify_state_law_transport_receipt(canonical_transport)
-            receipt_sha = envelope.acquisition.receipt.receipt_sha256
-            if evidence_path.stem != receipt_sha:
-                raise StateLawMultiFetchAcquisitionError(
-                    f"retained fetch filename does not match receipt {receipt_sha}"
-                )
             with self._lock:
                 retained = RetainedStateLawParserInput(
                     envelope=envelope,
@@ -1184,6 +1282,15 @@ class StateLawMultiFetchAcquisitionLedger:
                 )
                 self._entries[receipt_sha] = retained
                 self._index_retained_entry_locked(receipt_sha, retained)
+        missing_exclusions = sorted(
+            self._excluded_transport_unstable_receipt_sha256s
+            - set(self._excluded_transport_unstable_receipts)
+        )
+        if missing_exclusions:
+            raise StateLawMultiFetchAcquisitionError(
+                "requested transport-unstable receipt exclusions were not found: "
+                f"{missing_exclusions[:3]}"
+            )
 
     def retain_parser_input(
         self,

@@ -57,6 +57,16 @@ def build_parser() -> argparse.ArgumentParser:
             "needed. Every requested URL must exist under an allowed transport."
         ),
     )
+    parser.add_argument(
+        "--exclude-transport-unstable-source-receipt-sha256",
+        action="append",
+        dest="exclude_transport_unstable_receipt_sha256s",
+        help=(
+            "Exclude this exact fixity-valid source receipt only when its "
+            "official URL has transport-invalid syntax; repeat as needed. "
+            "The exclusion is recorded in the v2 migration receipt."
+        ),
+    )
     return parser
 
 
@@ -67,7 +77,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             "exactly one of --source-root or --source-manifest is required"
         )
     if args.source_manifest is not None:
-        if args.allowed_source_transports or args.include_urls:
+        if (
+            args.allowed_source_transports
+            or args.include_urls
+            or args.exclude_transport_unstable_receipt_sha256s
+        ):
             raise SystemExit(
                 "manifest sources own transport/URL bounds; legacy source flags are invalid"
             )
@@ -120,6 +134,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             ),
             include_urls=(
                 tuple(args.include_urls) if args.include_urls else None
+            ),
+            exclude_transport_unstable_receipt_sha256s=tuple(
+                args.exclude_transport_unstable_receipt_sha256s or ()
             ),
         )
     print(json.dumps(report.to_dict(), sort_keys=True, separators=(",", ":")))
