@@ -3118,6 +3118,306 @@ class BaseStateScraper(ABC):
         replay_cache[locator] = retained
         return retained
 
+    def _bound_shared_official_frontier_replay_plan(
+        self,
+        *,
+        phase: str,
+    ) -> Optional[List[Dict[str, Any]]]:
+        """Load one immutable live-observation input plan for ``phase``.
+
+        A live closure may observe the same sanitized GET more than once.  In
+        particular, the mandatory ``first`` and ``replay`` traversals can
+        receive different bytes from a dynamic catalog endpoint.  The generic
+        ledger replay seam correctly treats that request identity as
+        ambiguous.  The live closure projection removes the ambiguity by
+        binding each traversal, in helper-call order, to an exact immutable
+        receipt and object digest.
+
+        Multiple closure projections are accepted only when they reproduce
+        the same ordered two-phase plan.  This permits idempotent closure
+        materialization while still failing closed if an evidence directory
+        contains competing live histories.  Older single-observation evidence
+        has no bound plan and continues through the strict request-identity
+        replay path.
+        """
+
+        normalized_phase = str(phase or "").strip().lower()
+        if normalized_phase not in {"first", "replay"}:
+            raise RuntimeError(
+                "shared official frontier replay phase must be first or replay"
+            )
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None or getattr(ledger, "retained_replay_only", False) is not True:
+            raise RuntimeError(
+                "bound official frontier replay requires a replay-only ledger"
+            )
+        closure_inputs_dir = Path(ledger.closure_inputs_dir)
+        if not closure_inputs_dir.exists():
+            return None
+        if closure_inputs_dir.is_symlink() or not closure_inputs_dir.is_dir():
+            raise RuntimeError(
+                "shared official frontier closure-input directory is invalid"
+            )
+
+        from ...legal_data.open_us_law_acquisition_coordinator import (
+            canonical_json_bytes,
+        )
+
+        unique_plans: Dict[bytes, Dict[str, List[Dict[str, Any]]]] = {}
+        for candidate in sorted(closure_inputs_dir.glob("*.json")):
+            try:
+                source = ledger.resolve_frontier_closure_projection_path(candidate)
+                projection = ledger._load_frontier_closure_projection(source)
+            except Exception as exc:
+                raise RuntimeError(
+                    "shared official frontier closure input failed fixity"
+                ) from exc
+            completion = projection.get("completion_receipt")
+            if not isinstance(completion, Mapping):
+                continue
+            jurisdiction = str(
+                completion.get("jurisdiction")
+                or completion.get("jurisdiction_code")
+                or ""
+            ).strip().upper()
+            if jurisdiction != self.state_code.upper():
+                raise RuntimeError(
+                    "shared official frontier closure changed jurisdiction"
+                )
+            catalog_evidence = completion.get("source_catalog_evidence")
+            if not isinstance(catalog_evidence, Mapping):
+                continue
+            first = catalog_evidence.get("first_observation")
+            replay = catalog_evidence.get("replay_observation")
+            if not isinstance(first, Mapping) or not isinstance(replay, Mapping):
+                raise RuntimeError(
+                    "shared official frontier closure has an incomplete observation plan"
+                )
+            # Only an original live traversal can disambiguate acquisition
+            # observations.  A later replay-only closure is derivative and
+            # must not become a new selector.
+            replay_flags = (
+                first.get("retained_replay"),
+                replay.get("retained_replay"),
+            )
+            if replay_flags == (True, True):
+                continue
+            if replay_flags != (False, False):
+                raise RuntimeError(
+                    "shared official frontier closure mixes live and replay inputs"
+                )
+
+            normalized_plan: Dict[str, List[Dict[str, Any]]] = {}
+            has_bound_inputs = False
+            for name, observation in (("first", first), ("replay", replay)):
+                raw_inputs = observation.get("retained_parser_inputs")
+                if not isinstance(raw_inputs, Sequence) or isinstance(
+                    raw_inputs,
+                    (str, bytes, bytearray),
+                ):
+                    raise RuntimeError(
+                        "shared official frontier closure lacks ordered parser inputs"
+                    )
+                normalized_inputs: List[Dict[str, Any]] = []
+                for raw_input in raw_inputs:
+                    if not isinstance(raw_input, Mapping):
+                        raise RuntimeError(
+                            "shared official frontier closure input is not an object"
+                        )
+                    locator = self._canonical_fetch_url(
+                        str(raw_input.get("official_url") or "")
+                    )
+                    receipt_sha256 = str(
+                        raw_input.get("receipt_sha256") or ""
+                    ).strip().lower()
+                    body_sha256 = str(
+                        raw_input.get("body_sha256") or ""
+                    ).strip().lower()
+                    sanitized_request = raw_input.get("sanitized_request")
+                    if (
+                        not locator
+                        or re.fullmatch(r"[a-f0-9]{64}", receipt_sha256) is None
+                        or re.fullmatch(r"[a-f0-9]{64}", body_sha256) is None
+                        or not isinstance(sanitized_request, Mapping)
+                    ):
+                        raise RuntimeError(
+                            "shared official frontier closure input identity is invalid"
+                        )
+                    normalized_request = dict(sanitized_request)
+                    if (
+                        str(normalized_request.get("method") or "").strip().upper()
+                        != "GET"
+                        or self._canonical_fetch_url(
+                            str(normalized_request.get("url") or "")
+                        )
+                        != locator
+                    ):
+                        raise RuntimeError(
+                            "shared official frontier closure request is not its helper GET"
+                        )
+                    body_relative_path = str(
+                        raw_input.get("body_relative_path") or ""
+                    ).strip()
+                    evidence_relative_path = str(
+                        raw_input.get("evidence_relative_path") or ""
+                    ).strip()
+                    if (
+                        body_relative_path != f"objects/{body_sha256}.bin"
+                        or evidence_relative_path != f"fetches/{receipt_sha256}.json"
+                    ):
+                        raise RuntimeError(
+                            "shared official frontier closure input path is detached"
+                        )
+                    transport = raw_input.get("transport")
+                    if (
+                        not isinstance(transport, Mapping)
+                        or transport.get("verified") is not True
+                        or str(transport.get("content_sha256") or "").strip().lower()
+                        != body_sha256
+                        or self._canonical_fetch_url(
+                            str(transport.get("official_url") or "")
+                        )
+                        != locator
+                    ):
+                        raise RuntimeError(
+                            "shared official frontier closure transport is invalid"
+                        )
+                    try:
+                        retrieved_at = datetime.fromisoformat(
+                            str(raw_input.get("retrieved_at") or "").replace(
+                                "Z", "+00:00"
+                            )
+                        )
+                    except ValueError as exc:
+                        raise RuntimeError(
+                            "shared official frontier closure retrieval time is invalid"
+                        ) from exc
+                    if retrieved_at.tzinfo is None or retrieved_at.utcoffset() is None:
+                        raise RuntimeError(
+                            "shared official frontier closure retrieval time is naive"
+                        )
+                    normalized_inputs.append(
+                        {
+                            "body_relative_path": body_relative_path,
+                            "body_sha256": body_sha256,
+                            "evidence_relative_path": evidence_relative_path,
+                            "official_url": locator,
+                            "receipt_sha256": receipt_sha256,
+                            "retrieved_at": str(raw_input.get("retrieved_at")),
+                            "sanitized_request": normalized_request,
+                            "transport": dict(transport),
+                        }
+                    )
+                normalized_plan[name] = normalized_inputs
+                has_bound_inputs = has_bound_inputs or bool(normalized_inputs)
+            if not has_bound_inputs:
+                # A pre-retention shared closure cannot resolve a changed
+                # response.  Preserve the exact-request fallback for evidence
+                # that contains one unambiguous catalog body.
+                continue
+            if not normalized_plan["first"] or not normalized_plan["replay"]:
+                raise RuntimeError(
+                    "shared official frontier live plan omitted one traversal"
+                )
+            plan_identity = canonical_json_bytes(normalized_plan)
+            unique_plans[plan_identity] = normalized_plan
+
+        if not unique_plans:
+            return None
+        if len(unique_plans) != 1:
+            raise RuntimeError(
+                "shared official frontier has multiple distinct live replay plans"
+            )
+        plan = next(iter(unique_plans.values()))
+        return [dict(row) for row in plan[normalized_phase]]
+
+    def _replay_bound_shared_official_frontier_input(
+        self,
+        official_url: str,
+        *,
+        expected: Mapping[str, Any],
+        frontier_name: str,
+    ) -> Any:
+        """Replay one exact receipt selected by a retained live closure."""
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None or getattr(ledger, "retained_replay_only", False) is not True:
+            raise RuntimeError(
+                f"{frontier_name} bound replay requires a replay-only ledger"
+            )
+        locator = self._canonical_fetch_url(official_url)
+        expected_locator = self._canonical_fetch_url(
+            str(expected.get("official_url") or "")
+        )
+        if not locator or locator != expected_locator:
+            raise RuntimeError(
+                f"{frontier_name} parser request changed bound order: {locator}"
+            )
+        expected_request = expected.get("sanitized_request")
+        if not isinstance(expected_request, Mapping):
+            raise RuntimeError(f"{frontier_name} bound request is invalid")
+
+        receipt_sha256 = str(expected.get("receipt_sha256") or "").strip().lower()
+        matches = [
+            retained
+            for retained in ledger.entries
+            if str(retained.receipt.receipt_sha256).strip().lower()
+            == receipt_sha256
+        ]
+        if len(matches) != 1:
+            raise RuntimeError(
+                f"{frontier_name} bound receipt is missing or duplicated: "
+                f"{receipt_sha256}"
+            )
+        retained = matches[0]
+
+        from ...legal_data.open_us_law_acquisition_coordinator import (
+            canonical_json_bytes,
+        )
+
+        if (
+            self._canonical_fetch_url(retained.receipt.endpoint) != locator
+            or canonical_json_bytes(dict(retained.receipt.sanitized_request))
+            != canonical_json_bytes(dict(expected_request))
+        ):
+            raise RuntimeError(
+                f"{frontier_name} bound receipt changed request identity: {locator}"
+            )
+        body_sha256 = str(expected.get("body_sha256") or "").strip().lower()
+        if str(retained.receipt.content.sha256).strip().lower() != body_sha256:
+            raise RuntimeError(
+                f"{frontier_name} bound receipt changed content identity: {locator}"
+            )
+        try:
+            body_relative_path = retained.body_path.resolve().relative_to(
+                Path(ledger.jurisdiction_root).resolve()
+            ).as_posix()
+            evidence_relative_path = retained.evidence_path.resolve().relative_to(
+                Path(ledger.jurisdiction_root).resolve()
+            ).as_posix()
+        except ValueError as exc:
+            raise RuntimeError(
+                f"{frontier_name} bound receipt escaped its ledger: {locator}"
+            ) from exc
+        if (
+            body_relative_path != str(expected.get("body_relative_path") or "")
+            or evidence_relative_path
+            != str(expected.get("evidence_relative_path") or "")
+        ):
+            raise RuntimeError(
+                f"{frontier_name} bound receipt path changed: {locator}"
+            )
+        verify = getattr(ledger, "_verify_retained_byte_replay", None)
+        if not callable(verify):
+            raise RuntimeError(f"{frontier_name} ledger lacks byte replay verification")
+        verified = verify([retained])
+        body = bytes(verified.envelope.body or b"")
+        if not body or hashlib.sha256(body).hexdigest() != body_sha256:
+            raise RuntimeError(
+                f"{frontier_name} bound body failed fixity: {locator}"
+            )
+        return verified
+
     def _reparse_shared_official_frontier_from_retained_inputs(
         self,
         *,
@@ -3148,16 +3448,38 @@ class BaseStateScraper(ABC):
         ).lower()
         returns_raw_triplet = "tuple" in annotation and annotation.count("bytes") >= 3
         replay_cache: Dict[str, Any] = {}
+        replay_sequence: List[tuple[str, Any]] = []
+        bound_plan = self._bound_shared_official_frontier_replay_plan(phase=phase)
+        bound_index = 0
         frontier_name = (
             f"{self.state_code.upper()} shared official catalog {phase}"
         )
 
         def _retained_http_get(url: str, *_args: Any, **_kwargs: Any) -> Any:
-            retained = self._replay_exact_shared_official_frontier_input(
-                url,
-                frontier_name=frontier_name,
-                replay_cache=replay_cache,
-            )
+            nonlocal bound_index
+            locator = self._canonical_fetch_url(url)
+            if bound_plan is not None:
+                if bound_index >= len(bound_plan):
+                    raise RuntimeError(
+                        f"{frontier_name} parser made an unbound helper request: "
+                        f"{locator}"
+                    )
+                retained = self._replay_bound_shared_official_frontier_input(
+                    url,
+                    expected=bound_plan[bound_index],
+                    frontier_name=frontier_name,
+                )
+                bound_index += 1
+                replay_sequence.append((locator, retained))
+            else:
+                was_cached = locator in replay_cache
+                retained = self._replay_exact_shared_official_frontier_input(
+                    url,
+                    frontier_name=frontier_name,
+                    replay_cache=replay_cache,
+                )
+                if not was_cached:
+                    replay_sequence.append((locator, retained))
             body = bytes(retained.envelope.body or b"")
             if returns_raw_triplet:
                 from ...legal_data.open_us_law_acquisition_coordinator import (
@@ -3196,7 +3518,11 @@ class BaseStateScraper(ABC):
 
         if not isinstance(parsed_fetch, OfficialFetch):
             raise RuntimeError("retained official frontier parser returned the wrong contract")
-        if not replay_cache:
+        if bound_plan is not None and bound_index != len(bound_plan):
+            raise RuntimeError(
+                f"{frontier_name} parser did not consume every bound helper input"
+            )
+        if not replay_sequence:
             raise RuntimeError(
                 "retained official frontier parser consumed no verified input bytes"
             )
@@ -3205,7 +3531,7 @@ class BaseStateScraper(ABC):
         response_bundle = bytearray(b"state-laws-retained-frontier-inputs-v1\n")
         observed_at_values: List[str] = []
         origin_transports: set[str] = set()
-        for locator, retained in replay_cache.items():
+        for locator, retained in replay_sequence:
             body = bytes(retained.envelope.body or b"")
             body_sha256 = hashlib.sha256(body).hexdigest()
             expected_sha256 = str(retained.receipt.content.sha256)
@@ -3272,6 +3598,138 @@ class BaseStateScraper(ABC):
         )
         return replayed_fetch, retained_inputs
 
+    def _run_live_shared_official_frontier_with_retention(
+        self,
+        *,
+        phase: str,
+    ) -> tuple[Any, List[Dict[str, Any]]]:
+        """Run a legacy catalog helper while retaining every parser input.
+
+        State-owned ``fetch_official`` enumerators predate the strict shared
+        transport adapter.  They expose their live GET seam through
+        ``_official_http_get``.  A live catalog observation must therefore
+        interpose at that seam and admit each non-empty response to the exact
+        state ledger *before* the enumerator parses it.  Merely writing the
+        enumerator's aggregate artifact is insufficient: a later
+        retained-replay-only verifier reparses the source-specific enumerator
+        and needs each original URL/body identity in the parser-input ledger.
+        """
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError("live official frontier retention requires its ledger")
+        if getattr(ledger, "retained_replay_only", False) is True:
+            raise RuntimeError(
+                "live official frontier retention cannot run in replay-only mode"
+            )
+        fetcher = getattr(self, "fetch_official", None)
+        original_http_get = getattr(self, "_official_http_get", None)
+        if not callable(fetcher) or not callable(original_http_get):
+            raise RuntimeError(
+                "shared official frontier parser has no injectable HTTP helper"
+            )
+
+        captured: List[tuple[str, Any]] = []
+
+        def _retaining_http_get(url: str, *args: Any, **kwargs: Any) -> Any:
+            result = original_http_get(url, *args, **kwargs)
+            if isinstance(result, tuple):
+                if len(result) != 3 or not all(
+                    isinstance(value, (bytes, bytearray, memoryview))
+                    for value in result
+                ):
+                    raise RuntimeError(
+                        "official frontier HTTP helper returned an invalid raw triplet"
+                    )
+                body = bytes(result[2])
+            elif isinstance(result, (bytes, bytearray, memoryview)):
+                body = bytes(result)
+            else:
+                raise RuntimeError(
+                    "official frontier HTTP helper returned a non-byte response"
+                )
+            if not body:
+                return result
+
+            locator = self._canonical_fetch_url(url)
+            if not locator:
+                raise RuntimeError("official frontier HTTP helper used an invalid URL")
+            retrieved_at = datetime.now(timezone.utc).isoformat()
+            digest = hashlib.sha256(body).hexdigest()
+            retained = ledger.retain_parser_input(
+                official_url=locator,
+                body=body,
+                transport_receipt={
+                    "content_sha256": digest,
+                    "official_url": locator,
+                    "source_transport": "direct",
+                },
+                retrieved_at=retrieved_at,
+                response_status=200,
+                sanitized_request={"method": "GET", "url": locator},
+                network_used=True,
+                outcome_kind="fetched",
+            )
+            admitted_body = bytes(retained.envelope.body or b"")
+            if admitted_body != body:
+                raise RuntimeError(
+                    "retained official frontier body changed before parser admission"
+                )
+            captured.append((locator, retained))
+            if isinstance(result, tuple):
+                return result[0], result[1], admitted_body
+            return admitted_body
+
+        had_instance_helper = "_official_http_get" in vars(self)
+        previous_instance_helper = vars(self).get("_official_http_get")
+        setattr(self, "_official_http_get", _retaining_http_get)
+        try:
+            parsed_fetch = fetcher(self.state_code)
+        finally:
+            if had_instance_helper:
+                setattr(self, "_official_http_get", previous_instance_helper)
+            else:
+                delattr(self, "_official_http_get")
+
+        if not captured:
+            raise RuntimeError(
+                f"{self.state_code.upper()} shared official catalog {phase} "
+                "consumed no non-empty retained direct parser input"
+            )
+
+        retained_inputs: List[Dict[str, Any]] = []
+        for locator, retained in captured:
+            body = bytes(retained.envelope.body or b"")
+            body_sha256 = hashlib.sha256(body).hexdigest()
+            if not body or body_sha256 != str(retained.receipt.content.sha256):
+                raise RuntimeError(
+                    f"retained live official frontier input changed: {locator}"
+                )
+            try:
+                body_relative_path = retained.body_path.resolve().relative_to(
+                    Path(ledger.jurisdiction_root).resolve()
+                ).as_posix()
+                evidence_relative_path = retained.evidence_path.resolve().relative_to(
+                    Path(ledger.jurisdiction_root).resolve()
+                ).as_posix()
+            except ValueError as exc:
+                raise RuntimeError(
+                    "retained live official frontier input escaped its ledger"
+                ) from exc
+            retained_inputs.append(
+                {
+                    "body_relative_path": body_relative_path,
+                    "body_sha256": body_sha256,
+                    "evidence_relative_path": evidence_relative_path,
+                    "official_url": locator,
+                    "receipt_sha256": str(retained.receipt.receipt_sha256),
+                    "retrieved_at": retained.receipt.retrieved_at.isoformat(),
+                    "sanitized_request": dict(retained.receipt.sanitized_request),
+                    "transport": retained.transport.to_dict(),
+                }
+            )
+        return parsed_fetch, retained_inputs
+
     async def _capture_shared_official_frontier_observation(
         self,
         *,
@@ -3296,13 +3754,17 @@ class BaseStateScraper(ABC):
         )
 
         retained_inputs: List[Dict[str, Any]] = []
-        if self._retained_replay_only_enabled():
+        retained_replay = self._retained_replay_only_enabled()
+        if retained_replay:
             fetch, retained_inputs = await asyncio.to_thread(
                 self._reparse_shared_official_frontier_from_retained_inputs,
                 phase=phase,
             )
         else:
-            fetch = await asyncio.to_thread(fetcher, self.state_code)
+            fetch, retained_inputs = await asyncio.to_thread(
+                self._run_live_shared_official_frontier_with_retention,
+                phase=phase,
+            )
         if not isinstance(fetch, OfficialFetch):
             raise RuntimeError("official frontier enumerator returned the wrong contract")
         if str(fetch.jurisdiction_code or "").strip().upper() != self.state_code.upper():
@@ -3392,19 +3854,23 @@ class BaseStateScraper(ABC):
             ).as_posix()
         except ValueError as exc:
             raise RuntimeError("official frontier evidence escaped its ledger") from exc
+        if retained_inputs:
+            observation_time = max(
+                str(row.get("retrieved_at") or "") for row in retained_inputs
+            )
+        else:
+            observation_time = (
+                str(fetch.observed_at) or datetime.now(timezone.utc).isoformat()
+            )
         return {
             "checkpoint": checkpoint,
             "fetch": fetch,
             "frontier_digest": computed_frontier_digest,
             "observation_digest": observation_digest,
-            "observed_at": (
-                str(fetch.observed_at)
-                if retained_inputs
-                else datetime.now(timezone.utc).isoformat()
-            ),
+            "observed_at": observation_time,
             "relative_root": relative_root,
             "retained_inputs": retained_inputs,
-            "retained_replay": bool(retained_inputs),
+            "retained_replay": retained_replay,
         }
 
     async def produce_state_law_frontier_closure(
@@ -3888,6 +4354,9 @@ class BaseStateScraper(ABC):
 
         requested_url = self._canonical_fetch_url(url)
         observed_at = datetime.now(timezone.utc).isoformat()
+        request_headers = {
+            str(key): str(value) for key, value in dict(headers or {}).items()
+        }
         if not requested_url:
             return {
                 "requested_url": str(url or ""),
@@ -3899,6 +4368,55 @@ class BaseStateScraper(ABC):
                 "error_type": "InvalidUrl",
                 "error_message": "fresh official fetch requires an HTTP(S) URL",
             }
+        sanitized_request = {
+            "headers": request_headers,
+            "method": "GET",
+            "url": requested_url,
+        }
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if self._retained_replay_only_enabled():
+            if ledger is None:
+                raise RuntimeError(
+                    "retained HTTP observation replay requires its ledger"
+                )
+            refresh_entries = getattr(ledger, "refresh_existing_entries", None)
+            if callable(refresh_entries):
+                refresh_entries()
+            replay_observation = getattr(
+                ledger,
+                "replay_empty_http_response_observation",
+                None,
+            )
+            if not callable(replay_observation):
+                raise RuntimeError(
+                    "retained ledger lacks HTTP observation replay support"
+                )
+            retained = replay_observation(
+                official_url=requested_url,
+                sanitized_request=sanitized_request,
+            )
+            if retained is None:
+                raise RuntimeError(
+                    "retained HTTP observation replay returned no response"
+                )
+            receipt = {
+                "body": b"",
+                "content_sha256": str(retained.content_sha256),
+                "error_message": "",
+                "error_type": "",
+                "final_url": str(retained.final_url),
+                "http_observation_sha256": str(retained.observation_sha256),
+                "media_type": str(retained.media_type),
+                "network_used": False,
+                "observed_at": str(retained.observed_at),
+                "requested_url": str(retained.official_url),
+                "status_code": int(retained.response_status),
+            }
+            self._state_law_fresh_discovery_receipts.append(
+                {key: value for key, value in receipt.items() if key != "body"}
+            )
+            self._record_fetch_event(provider=provider, success=True)
+            return receipt
         self._raise_if_retained_replay_only_network(
             operation="fresh official network access",
             url=requested_url,
@@ -3910,7 +4428,7 @@ class BaseStateScraper(ABC):
                     _state_law_http_request,
                     url=requested_url,
                     method="GET",
-                    headers={str(k): str(v) for k, v in dict(headers or {}).items()},
+                    headers=request_headers,
                     request_body=None,
                     timeout_seconds=timeout,
                     verify_tls=bool(verify_tls),
@@ -3974,11 +4492,43 @@ class BaseStateScraper(ABC):
             discovery_receipt = {
                 key: value for key, value in receipt.items() if key != "body"
             }
+            if (
+                ledger is not None
+                and int(response.status_code) == 200
+                and not body
+                and not error_text
+            ):
+                retain_observation = getattr(
+                    ledger,
+                    "retain_empty_http_response_observation",
+                    None,
+                )
+                if not callable(retain_observation):
+                    raise RuntimeError(
+                        "acquisition ledger lacks HTTP observation retention support"
+                    )
+                retained = retain_observation(
+                    official_url=requested_url,
+                    final_url=str(response.final_url or requested_url),
+                    response_status=200,
+                    observed_at=str(receipt["observed_at"]),
+                    sanitized_request=sanitized_request,
+                    transport_receipt={
+                        "content_sha256": digest,
+                        "official_url": requested_url,
+                        "source_transport": "direct",
+                    },
+                    media_type=media_type or response.media_type or None,
+                )
+                discovery_receipt["http_observation_sha256"] = (
+                    retained.observation_sha256
+                )
+                receipt["http_observation_sha256"] = retained.observation_sha256
             self._state_law_fresh_discovery_receipts.append(discovery_receipt)
 
         self._record_fetch_event(
             provider=provider,
-            success=bool(response.status_code == 200 and body),
+            success=bool(response.status_code == 200 and (body or not error_text)),
             error=error_text or None,
         )
         return receipt

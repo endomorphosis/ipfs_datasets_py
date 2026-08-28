@@ -100,23 +100,39 @@ class AlaskaScraper(BaseStateScraper):
         )
         final_title_probe = cursor_title == final_title
         self._last_alaska_terminal_probe = {}
-        payload = await self._fetch_parser_input_with_transport(
-            cache_url,
-            headers={
-                "User-Agent": "ipfs-datasets-alaska-statutes-scraper/2.0",
-                "X-Requested-With": "XMLHttpRequest",
-            },
-            timeout_seconds=timeout,
-            # A successful Alaska terminal request is HTTP 200 with an empty
-            # body.  The shared byte adapter quite correctly rejects empty
-            # parser input, but treating that expected sentinel as a transport
-            # failure launches an unnecessary archive/WARC hunt.  First make a
-            # direct-only attempt in the final official title; retained inputs
-            # are still replayed before the direct request.
-            allow_archival_fallback=not final_title_probe,
-            media_type="text/html",
-            provider="requests_direct",
-        )
+        try:
+            payload = await self._fetch_parser_input_with_transport(
+                cache_url,
+                headers={
+                    "User-Agent": "ipfs-datasets-alaska-statutes-scraper/2.0",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                timeout_seconds=timeout,
+                # A successful Alaska terminal request is HTTP 200 with an empty
+                # body.  The shared byte adapter quite correctly rejects empty
+                # parser input, but treating that expected sentinel as a transport
+                # failure launches an unnecessary archive/WARC hunt.  First make a
+                # direct-only attempt in the final official title; retained inputs
+                # are still replayed before the direct request.
+                allow_archival_fallback=not final_title_probe,
+                media_type="text/html",
+                provider="requests_direct",
+            )
+        except Exception as exc:
+            from ...legal_data.state_laws_multifetch_acquisition import (
+                StateLawRetainedReplayOnlyError,
+            )
+
+            if not (
+                final_title_probe
+                and self._retained_replay_only_enabled()
+                and isinstance(exc, StateLawRetainedReplayOnlyError)
+            ):
+                raise
+            # Empty responses are intentionally absent from the parser-input
+            # ledger.  In replay-only mode, a final-title byte miss therefore
+            # advances to the separately retained exact HTTP observation.
+            payload = b""
         if not payload and final_title_probe:
             terminal_receipt = await self._fetch_fresh_official_response_receipt(
                 cache_url,

@@ -86,6 +86,7 @@ FRONTIER_AGGREGATE_SCHEMA: Final = "state-laws-multifetch-frontier-aggregate-v1"
 CLOSURE_INPUT_SCHEMA: Final = "state-laws-multifetch-closure-input-v1"
 CLOSURE_INPUT_FILENAME: Final = "source-frontier-closure-input.json"
 CLOSURE_INPUTS_DIRNAME: Final = "closure-inputs"
+HTTP_OBSERVATION_SCHEMA: Final = "state-laws-http-observation-v1"
 CANONICAL_OUTPUT_PROJECTION_SCHEMA: Final = (
     "state-laws-canonical-output-projection-v1"
 )
@@ -132,6 +133,52 @@ class RetainedStateLawParserInput:
             "endpoint": self.receipt.endpoint,
             "outcome_kind": self.envelope.acquisition.kind.value,
             "response_status": self.receipt.response_status,
+            "transport_receipt": dict(self.transport_receipt),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class RetainedStateLawHttpObservation:
+    """One immutable non-parser HTTP response observation.
+
+    Empty HTTP-200 bodies cannot be admitted to a parser, but some official
+    source protocols use that exact response as their terminal frontier
+    sentinel.  This record retains the complete request, redirect/status,
+    zero-byte content identity, and verified transport without pretending the
+    empty body was parser input.
+    """
+
+    official_url: str
+    final_url: str
+    response_status: int
+    observed_at: str
+    content_sha256: str
+    body_byte_size: int
+    media_type: str
+    sanitized_request: Mapping[str, Any]
+    transport: VerifiedStateLawTransport
+    transport_receipt: Mapping[str, Any]
+    evidence_path: Path
+
+    @property
+    def observation_sha256(self) -> str:
+        return self.evidence_path.stem.lower()
+
+    def to_ledger_dict(self, *, jurisdiction_root: Path) -> dict[str, Any]:
+        return {
+            "authorizes_parser_admission": False,
+            "body_byte_size": self.body_byte_size,
+            "content_sha256": self.content_sha256,
+            "evidence_relative_path": self.evidence_path.relative_to(
+                jurisdiction_root
+            ).as_posix(),
+            "final_url": self.final_url,
+            "media_type": self.media_type,
+            "observation_sha256": self.observation_sha256,
+            "observed_at": self.observed_at,
+            "official_url": self.official_url,
+            "response_status": self.response_status,
+            "sanitized_request": dict(self.sanitized_request),
             "transport_receipt": dict(self.transport_receipt),
         }
 
@@ -630,11 +677,13 @@ class StateLawMultiFetchAcquisitionLedger:
             )
         self.objects_dir = self.jurisdiction_root / "objects"
         self.fetches_dir = self.jurisdiction_root / "fetches"
+        self.observations_dir = self.jurisdiction_root / "observations"
         self.ledgers_dir = self.jurisdiction_root / "ledgers"
         self.frontiers_dir = self.jurisdiction_root / "frontiers"
         for directory in (
             self.objects_dir,
             self.fetches_dir,
+            self.observations_dir,
             self.ledgers_dir,
             self.frontiers_dir,
         ):
@@ -646,6 +695,14 @@ class StateLawMultiFetchAcquisitionLedger:
         self._lock = threading.RLock()
         self._entries: dict[str, RetainedStateLawParserInput] = {}
         self._request_index: dict[tuple[str, bytes], list[str]] = {}
+        self._http_observations: dict[
+            str,
+            RetainedStateLawHttpObservation,
+        ] = {}
+        self._http_observation_request_index: dict[
+            tuple[str, bytes],
+            list[str],
+        ] = {}
         self.retained_replay_only = retained_replay_only
         self.skipped_disallowed_transport_count = 0
         self._excluded_transport_unstable_receipts: dict[
@@ -653,6 +710,7 @@ class StateLawMultiFetchAcquisitionLedger:
         ] = {}
         if load_existing:
             self._load_existing_entries()
+            self._load_existing_http_observations()
 
     @staticmethod
     def _normalize_allowed_source_transports(
@@ -722,6 +780,16 @@ class StateLawMultiFetchAcquisitionLedger:
             return tuple(self._entries[key] for key in sorted(self._entries))
 
     @property
+    def http_observations(self) -> tuple[RetainedStateLawHttpObservation, ...]:
+        """Return immutable non-parser observations in digest order."""
+
+        with self._lock:
+            return tuple(
+                self._http_observations[key]
+                for key in sorted(self._http_observations)
+            )
+
+    @property
     def excluded_transport_unstable_receipts(self) -> tuple[dict[str, str], ...]:
         """Return fixity-verified source receipts skipped for invalid URL syntax."""
 
@@ -762,6 +830,23 @@ class StateLawMultiFetchAcquisitionLedger:
         if receipt_sha not in receipt_ids:
             receipt_ids.append(receipt_sha)
             receipt_ids.sort()
+
+    def _index_http_observation_locked(
+        self,
+        observation_sha256: str,
+        retained: RetainedStateLawHttpObservation,
+    ) -> None:
+        identity = self._retained_request_identity(
+            official_url=retained.official_url,
+            sanitized_request=retained.sanitized_request,
+        )
+        observation_ids = self._http_observation_request_index.setdefault(
+            identity,
+            [],
+        )
+        if observation_sha256 not in observation_ids:
+            observation_ids.append(observation_sha256)
+            observation_ids.sort()
 
     def _matching_retained_parser_inputs(
         self,
@@ -1111,6 +1196,279 @@ class StateLawMultiFetchAcquisitionLedger:
                 )
         return matches[0]
 
+    @staticmethod
+    def _normalize_http_observation_time(value: datetime | str | None) -> str:
+        raw = value or _utc_now()
+        if isinstance(raw, datetime):
+            observed = raw
+        else:
+            try:
+                observed = datetime.fromisoformat(
+                    str(raw).strip().replace("Z", "+00:00")
+                )
+            except ValueError as exc:
+                raise StateLawMultiFetchAcquisitionError(
+                    "HTTP observation time must be an ISO-8601 timestamp"
+                ) from exc
+        if observed.tzinfo is None or observed.utcoffset() is None:
+            raise StateLawMultiFetchAcquisitionError(
+                "HTTP observation time must include a timezone"
+            )
+        return observed.astimezone(UTC).isoformat()
+
+    def _load_http_observation_path(
+        self,
+        evidence_path: Path,
+    ) -> RetainedStateLawHttpObservation:
+        if evidence_path.is_symlink() or not evidence_path.is_file():
+            raise StateLawMultiFetchAcquisitionError(
+                "retained HTTP observation must be a regular non-symlink file"
+            )
+        try:
+            raw = evidence_path.read_bytes()
+        except OSError as exc:
+            raise StateLawMultiFetchAcquisitionError(
+                "retained HTTP observation cannot be read"
+            ) from exc
+        if hashlib.sha256(raw).hexdigest() != evidence_path.stem.lower():
+            raise StateLawMultiFetchAcquisitionError(
+                "retained HTTP observation filename does not match its bytes"
+            )
+        try:
+            payload = json.loads(raw.decode("utf-8", errors="strict"))
+        except (UnicodeError, json.JSONDecodeError) as exc:
+            raise StateLawMultiFetchAcquisitionError(
+                "retained HTTP observation is not deterministic UTF-8 JSON"
+            ) from exc
+        if (
+            not isinstance(payload, Mapping)
+            or payload.get("schema_version") != HTTP_OBSERVATION_SCHEMA
+            or payload.get("authorizes_parser_admission") is not False
+            or str(payload.get("jurisdiction") or "").strip().upper()
+            != self.jurisdiction
+        ):
+            raise StateLawMultiFetchAcquisitionError(
+                "retained HTTP observation has the wrong contract"
+            )
+        official_url = urldefrag(str(payload.get("official_url") or "").strip())[0]
+        final_url = urldefrag(str(payload.get("final_url") or "").strip())[0]
+        if any(
+            parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname
+            for parsed in (urlparse(official_url), urlparse(final_url))
+        ):
+            raise StateLawMultiFetchAcquisitionError(
+                "retained HTTP observation has an invalid URL"
+            )
+        empty_sha256 = hashlib.sha256(b"").hexdigest()
+        if (
+            int(payload.get("response_status") or 0) != 200
+            or int(payload.get("body_byte_size", -1)) != 0
+            or str(payload.get("content_sha256") or "").strip().lower()
+            != empty_sha256
+        ):
+            raise StateLawMultiFetchAcquisitionError(
+                "retained HTTP terminal observation is not an exact 200 empty response"
+            )
+        sanitized_request = payload.get("sanitized_request")
+        if not isinstance(sanitized_request, Mapping):
+            raise StateLawMultiFetchAcquisitionError(
+                "retained HTTP observation lacks its sanitized request"
+            )
+        request_payload = _json_mapping_copy(
+            sanitized_request,
+            name="HTTP observation sanitized_request",
+        )
+        if (
+            str(request_payload.get("method") or "").strip().upper() != "GET"
+            or urldefrag(str(request_payload.get("url") or "").strip())[0]
+            != official_url
+        ):
+            raise StateLawMultiFetchAcquisitionError(
+                "retained HTTP observation request does not match its official URL"
+            )
+        observed_at = self._normalize_http_observation_time(
+            str(payload.get("observed_at") or "")
+        )
+        transport_raw = payload.get("transport_receipt")
+        if not isinstance(transport_raw, Mapping):
+            raise StateLawMultiFetchAcquisitionError(
+                "retained HTTP observation lacks transport evidence"
+            )
+        if self._is_disallowed_declared_transport(transport_raw):
+            raise StateLawMultiFetchAcquisitionError(
+                "retained HTTP observation uses a disallowed transport"
+            )
+        try:
+            canonical_transport = canonicalize_state_law_transport_receipt(
+                transport_raw,
+                official_url=official_url,
+                content_sha256=empty_sha256,
+            )
+            verified_transport = verify_state_law_transport_receipt(
+                canonical_transport,
+                official_url=official_url,
+                content_sha256=empty_sha256,
+            )
+        except Exception as exc:
+            raise StateLawMultiFetchAcquisitionError(
+                "retained HTTP observation transport failed verification"
+            ) from exc
+        return RetainedStateLawHttpObservation(
+            official_url=official_url,
+            final_url=final_url,
+            response_status=200,
+            observed_at=observed_at,
+            content_sha256=empty_sha256,
+            body_byte_size=0,
+            media_type=str(payload.get("media_type") or ""),
+            sanitized_request=request_payload,
+            transport=verified_transport,
+            transport_receipt=canonical_transport,
+            evidence_path=evidence_path,
+        )
+
+    def retain_empty_http_response_observation(
+        self,
+        *,
+        official_url: str,
+        final_url: str,
+        response_status: int,
+        observed_at: datetime | str | None,
+        sanitized_request: Mapping[str, Any],
+        transport_receipt: Mapping[str, Any],
+        media_type: str | None = None,
+    ) -> RetainedStateLawHttpObservation:
+        """Retain an exact HTTP-200 empty terminal response without admission."""
+
+        if self.retained_replay_only:
+            raise StateLawMultiFetchAcquisitionError(
+                "replay-only ledgers cannot retain new HTTP observations"
+            )
+        endpoint = urldefrag(str(official_url or "").strip())[0]
+        resolved_final_url = urldefrag(str(final_url or "").strip())[0]
+        if any(
+            parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname
+            for parsed in (urlparse(endpoint), urlparse(resolved_final_url))
+        ):
+            raise StateLawMultiFetchAcquisitionError(
+                "HTTP observation requires absolute official and final URLs"
+            )
+        if int(response_status) != 200:
+            raise StateLawMultiFetchAcquisitionError(
+                "only an HTTP-200 empty terminal response may be retained"
+            )
+        request_payload = _json_mapping_copy(
+            sanitized_request,
+            name="HTTP observation sanitized_request",
+        )
+        if (
+            str(request_payload.get("method") or "").strip().upper() != "GET"
+            or urldefrag(str(request_payload.get("url") or "").strip())[0]
+            != endpoint
+        ):
+            raise StateLawMultiFetchAcquisitionError(
+                "HTTP observation request does not match its official URL"
+            )
+        empty_sha256 = hashlib.sha256(b"").hexdigest()
+        try:
+            canonical_transport = canonicalize_state_law_transport_receipt(
+                transport_receipt,
+                official_url=endpoint,
+                content_sha256=empty_sha256,
+            )
+            verify_state_law_transport_receipt(
+                canonical_transport,
+                official_url=endpoint,
+                content_sha256=empty_sha256,
+            )
+        except Exception as exc:
+            raise StateLawMultiFetchAcquisitionError(
+                "HTTP observation lacks verified transport evidence"
+            ) from exc
+        payload = {
+            "authorizes_parser_admission": False,
+            "body_byte_size": 0,
+            "content_sha256": empty_sha256,
+            "final_url": resolved_final_url,
+            "jurisdiction": self.jurisdiction,
+            "media_type": str(media_type or ""),
+            "observed_at": self._normalize_http_observation_time(observed_at),
+            "official_url": endpoint,
+            "response_status": 200,
+            "sanitized_request": request_payload,
+            "schema_version": HTTP_OBSERVATION_SCHEMA,
+            "transport_receipt": canonical_transport,
+        }
+        evidence_bytes = canonical_json_bytes(payload)
+        observation_sha256 = hashlib.sha256(evidence_bytes).hexdigest()
+        evidence_path = self.observations_dir / f"{observation_sha256}.json"
+        with self._lock:
+            if evidence_path.exists():
+                if (
+                    evidence_path.is_symlink()
+                    or not evidence_path.is_file()
+                    or evidence_path.read_bytes() != evidence_bytes
+                ):
+                    raise StateLawMultiFetchAcquisitionError(
+                        "immutable HTTP observation conflicts with retained evidence"
+                    )
+            else:
+                atomic_write_bytes(evidence_path, evidence_bytes)
+            retained = self._load_http_observation_path(evidence_path)
+            self._http_observations[observation_sha256] = retained
+            self._index_http_observation_locked(observation_sha256, retained)
+            return retained
+
+    def replay_empty_http_response_observation(
+        self,
+        *,
+        official_url: str,
+        sanitized_request: Mapping[str, Any],
+    ) -> RetainedStateLawHttpObservation | None:
+        """Replay one exact non-parser terminal response without network I/O."""
+
+        identity = self._retained_request_identity(
+            official_url=official_url,
+            sanitized_request=sanitized_request,
+        )
+        with self._lock:
+            observation_ids = tuple(
+                self._http_observation_request_index.get(identity, ())
+            )
+        if not observation_ids:
+            if self.retained_replay_only:
+                endpoint = urldefrag(str(official_url or "").strip())[0]
+                raise StateLawRetainedReplayOnlyError(
+                    "retained-replay-only ledger miss for exact HTTP observation: "
+                    f"{endpoint}"
+                )
+            return None
+
+        replayed = [
+            self._load_http_observation_path(
+                self._http_observations[observation_sha256].evidence_path
+            )
+            for observation_sha256 in observation_ids
+        ]
+        response_identities = {
+            canonical_json_bytes(
+                {
+                    "body_byte_size": item.body_byte_size,
+                    "content_sha256": item.content_sha256,
+                    "final_url": item.final_url,
+                    "media_type": item.media_type,
+                    "response_status": item.response_status,
+                    "transport_receipt": dict(item.transport_receipt),
+                }
+            )
+            for item in replayed
+        }
+        if len(response_identities) != 1:
+            raise StateLawMultiFetchAcquisitionError(
+                "retained HTTP observation replay is ambiguous for this request"
+            )
+        return replayed[0]
+
     def refresh_existing_entries(self) -> int:
         """Load immutable receipts retained by another live ledger instance.
 
@@ -1126,6 +1484,7 @@ class StateLawMultiFetchAcquisitionLedger:
         with self._lock:
             previous_count = len(self._entries)
             self._load_existing_entries()
+            self._load_existing_http_observations()
             return len(self._entries) - previous_count
 
     def _load_existing_entries(self) -> None:
@@ -1291,6 +1650,22 @@ class StateLawMultiFetchAcquisitionLedger:
                 "requested transport-unstable receipt exclusions were not found: "
                 f"{missing_exclusions[:3]}"
             )
+
+    def _load_existing_http_observations(self) -> None:
+        with self._lock:
+            evidence_paths = sorted(self.observations_dir.glob("*.json"))
+        for evidence_path in evidence_paths:
+            observation_sha256 = evidence_path.stem.lower()
+            with self._lock:
+                if observation_sha256 in self._http_observations:
+                    continue
+            retained = self._load_http_observation_path(evidence_path)
+            with self._lock:
+                self._http_observations[observation_sha256] = retained
+                self._index_http_observation_locked(
+                    observation_sha256,
+                    retained,
+                )
 
     def retain_parser_input(
         self,
@@ -2191,6 +2566,7 @@ class StateLawMultiFetchAcquisitionLedger:
         candidate["frontier"] = projected_frontier
 
         entries = self.entries
+        observations = self.http_observations
         request_rows: list[dict[str, Any]] = []
         response_rows: list[dict[str, Any]] = []
         transport_receipts: list[dict[str, Any]] = []
@@ -2208,6 +2584,23 @@ class StateLawMultiFetchAcquisitionLedger:
             response_rows.append(item.to_ledger_dict(jurisdiction_root=self.jurisdiction_root))
             if receipt.content is not None:
                 response_hashes.append(receipt.content.sha256)
+            transport_payload = dict(item.transport_receipt)
+            transport_key = canonical_json_bytes(transport_payload)
+            if transport_key not in seen_transports:
+                seen_transports.add(transport_key)
+                transport_receipts.append(transport_payload)
+        for item in observations:
+            request_rows.append(
+                {
+                    "http_observation_sha256": item.observation_sha256,
+                    "endpoint": item.official_url,
+                    "sanitized_request": dict(item.sanitized_request),
+                }
+            )
+            response_rows.append(
+                item.to_ledger_dict(jurisdiction_root=self.jurisdiction_root)
+            )
+            response_hashes.append(item.content_sha256)
             transport_payload = dict(item.transport_receipt)
             transport_key = canonical_json_bytes(transport_payload)
             if transport_key not in seen_transports:
@@ -2274,6 +2667,7 @@ class StateLawMultiFetchAcquisitionLedger:
                         "row_count": canonical_rows,
                         "sha256": canonical_sha256,
                     },
+                    "http_observation_count": len(observations),
                     "parser_input_count": len(entries),
                     "request_ledger": request_address.to_dict(),
                     "request_ledger_relative_path": _relative_path(
@@ -2419,11 +2813,13 @@ __all__ = [
     "CLOSURE_INPUT_FILENAME",
     "CLOSURE_INPUT_SCHEMA",
     "FRONTIER_AGGREGATE_SCHEMA",
+    "HTTP_OBSERVATION_SCHEMA",
     "REQUEST_LEDGER_SCHEMA",
     "REQUIRES_PROSPECTIVE_PARSER_INPUT_RECEIPTS",
     "RESPONSE_LEDGER_SCHEMA",
     "SCHEMA_VERSION",
     "ClosedStateLawMultiFetchFrontier",
+    "RetainedStateLawHttpObservation",
     "RetainedStateLawParserInput",
     "StateLawMultiFetchAcquisitionError",
     "StateLawMultiFetchAcquisitionLedger",

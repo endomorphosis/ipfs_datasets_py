@@ -3,11 +3,13 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from ipfs_datasets_py.processors.legal_data.state_laws_multifetch_acquisition import (
     StateLawMultiFetchAcquisitionLedger,
+    StateLawRetainedReplayOnlyError,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import (
     _write_state_jsonld_files,
@@ -15,6 +17,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import (
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alaska import (
     AlaskaScraper,
 )
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import base_scraper
 
 
 def _section(number: str) -> str:
@@ -223,6 +226,115 @@ async def test_alaska_terminal_200_empty_skips_archive_fallback(
         "sec_start": "47.90.070",
         "status_code": 200,
     }
+
+
+@pytest.mark.anyio
+async def test_alaska_terminal_200_empty_persists_and_replays_without_network(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    evidence_root = tmp_path / "evidence"
+    terminal_url = (
+        "https://www.akleg.gov/basis/statutes.asp"
+        "?media=print&type=fetch&secStart=47.90.070"
+    )
+    calls = {"live": 0}
+
+    def _live_request(**kwargs):
+        calls["live"] += 1
+        assert kwargs["url"] == terminal_url
+        return SimpleNamespace(
+            body=b"",
+            error_message="",
+            error_type="",
+            final_url=terminal_url,
+            media_type="text/html",
+            status_code=200,
+        )
+
+    monkeypatch.setattr(base_scraper, "_state_law_http_request", _live_request)
+    live = AlaskaScraper("AK", "Alaska")
+    live_ledger = StateLawMultiFetchAcquisitionLedger(
+        evidence_root,
+        jurisdiction="AK",
+        parser_name="AlaskaScraper",
+    )
+    live.attach_state_law_acquisition_ledger(live_ledger)
+
+    live_receipt = await live._fetch_fresh_official_response_receipt(
+        terminal_url,
+        headers={
+            "User-Agent": "ipfs-datasets-alaska-statutes-scraper/2.0",
+            "X-Requested-With": "XMLHttpRequest",
+        },
+        timeout_seconds=8,
+        admit_success_body=True,
+        media_type="text/html",
+        provider="alaska_basis_terminal_probe",
+    )
+
+    assert calls == {"live": 1}
+    assert live_receipt["status_code"] == 200
+    assert live_receipt["body"] == b""
+    assert len(live_ledger.http_observations) == 1
+    observation = live_ledger.http_observations[0]
+    assert live_receipt["http_observation_sha256"] == (
+        observation.observation_sha256
+    )
+
+    def _network_must_not_run(**_kwargs):
+        raise AssertionError("retained Alaska terminal replay reached network")
+
+    monkeypatch.setattr(
+        base_scraper,
+        "_state_law_http_request",
+        _network_must_not_run,
+    )
+    replay = AlaskaScraper("AK", "Alaska")
+    replay.attach_state_law_acquisition_ledger(
+        StateLawMultiFetchAcquisitionLedger(
+            evidence_root,
+            jurisdiction="AK",
+            parser_name="AlaskaScraper",
+            retained_replay_only=True,
+        )
+    )
+
+    html, cursor = await replay._fetch_statute_chunk("47.90.070")
+
+    assert (html, cursor) == ("", "")
+    assert calls == {"live": 1}
+    assert replay._last_alaska_terminal_probe["closed"] is True
+    assert replay._last_alaska_terminal_probe["status_code"] == 200
+    assert replay._last_alaska_terminal_probe["sec_start"] == "47.90.070"
+
+
+@pytest.mark.anyio
+async def test_alaska_terminal_replay_missing_observation_fails_before_network(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scraper = AlaskaScraper("AK", "Alaska")
+    scraper.attach_state_law_acquisition_ledger(
+        StateLawMultiFetchAcquisitionLedger(
+            tmp_path / "evidence",
+            jurisdiction="AK",
+            parser_name="AlaskaScraper",
+            retained_replay_only=True,
+        )
+    )
+
+    def _network_must_not_run(**_kwargs):
+        raise AssertionError("missing terminal observation reached network")
+
+    monkeypatch.setattr(
+        base_scraper,
+        "_state_law_http_request",
+        _network_must_not_run,
+    )
+
+    with pytest.raises(StateLawRetainedReplayOnlyError, match="HTTP observation"):
+        await scraper._fetch_statute_chunk("47.90.070")
 
 
 @pytest.mark.anyio

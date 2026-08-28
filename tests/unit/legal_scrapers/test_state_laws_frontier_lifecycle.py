@@ -146,6 +146,11 @@ class _SharedCatalogLifecycleScraper(_LifecycleScraper):
         BaseStateScraper.produce_state_law_frontier_closure
     )
 
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        del timeout_seconds
+        assert url == self.get_base_url()
+        return b"Wisconsin official title catalog"
+
     def fetch_official(self, code: str = "WI") -> OfficialFetch:
         type(self).catalog_calls += 1
         assert code == "WI"
@@ -156,7 +161,7 @@ class _SharedCatalogLifecycleScraper(_LifecycleScraper):
                 "text": "Wisconsin Statutes title one catalog unit",
             },
         )
-        body = b"Wisconsin official title catalog"
+        body = self._official_http_get(self.get_base_url())
         frontier = {
             "bundle_closed": False,
             "closed": True,

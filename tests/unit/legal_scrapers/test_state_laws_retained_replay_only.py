@@ -948,6 +948,308 @@ class _TripletCatalogScraper(BaseStateScraper):
 
 
 @pytest.mark.asyncio
+async def test_shared_frontier_live_helper_retains_input_for_later_zero_network_replay(
+    tmp_path: Path,
+) -> None:
+    evidence_root = tmp_path / "evidence"
+    body = b"triplet retained catalog"
+    calls = {"live": 0}
+    live = _TripletCatalogScraper("WI", "Wisconsin")
+
+    def _live_http_get(
+        url: str,
+        timeout: int = 20,
+    ) -> tuple[bytes, bytes, bytes]:
+        del timeout
+        calls["live"] += 1
+        assert url == _TripletCatalogScraper.OFFICIAL_ENTRY_URL
+        return b"GET /catalog HTTP/1.1\nhost: example.gov\n", body, body
+
+    live._official_http_get = _live_http_get  # type: ignore[method-assign]
+    live_ledger = StateLawMultiFetchAcquisitionLedger(
+        evidence_root,
+        jurisdiction="WI",
+        parser_name="_TripletCatalogScraper",
+    )
+    live.attach_state_law_acquisition_ledger(live_ledger)
+
+    first = await live._capture_shared_official_frontier_observation(phase="first")
+
+    assert calls == {"live": 1}
+    assert first["retained_replay"] is False
+    assert len(first["retained_inputs"]) == 1
+    assert (
+        first["retained_inputs"][0]["body_sha256"]
+        == hashlib.sha256(body).hexdigest()
+    )
+    assert len(live_ledger.entries) == 1
+
+    replay = _TripletCatalogScraper("WI", "Wisconsin")
+    replay.attach_state_law_acquisition_ledger(
+        StateLawMultiFetchAcquisitionLedger(
+            evidence_root,
+            jurisdiction="WI",
+            parser_name="_TripletCatalogScraper",
+            retained_replay_only=True,
+        )
+    )
+
+    second = await replay._capture_shared_official_frontier_observation(phase="replay")
+
+    assert calls == {"live": 1}
+    assert second["retained_replay"] is True
+    assert second["fetch"].body_bytes == body
+    assert (
+        second["retained_inputs"][0]["receipt_sha256"]
+        == first["retained_inputs"][0]["receipt_sha256"]
+    )
+
+
+class _ChangingCatalogScraper(BaseStateScraper):
+    OFFICIAL_ENTRY_URL = "https://docs.legis.wisconsin.gov/statutes/statutes"
+    FIRST_BODY = b"first dynamic Wisconsin catalog"
+    REPLAY_BODY = b"second dynamic Wisconsin catalog"
+
+    def get_base_url(self) -> str:
+        return self.OFFICIAL_ENTRY_URL
+
+    def get_code_list(self) -> list[dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> list[Any]:
+        return []
+
+    def _official_http_get(
+        self,
+        url: str,
+        timeout: int = 20,
+    ) -> tuple[bytes, bytes, bytes]:
+        del url, timeout
+        raise AssertionError("dynamic catalog live transport must be injected")
+
+    def fetch_official(self, code: str = "WI") -> OfficialFetch:
+        request, response, body = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        assert request and response == body
+        assert body in {self.FIRST_BODY, self.REPLAY_BODY}
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": 1,
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": 1,
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=code,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain="docs.legis.wisconsin.gov",
+            source_path="/statutes/statutes",
+            frontier=frontier,
+            rows=(
+                {
+                    "canonical_key": "wi:title-1",
+                    "source_url": self.OFFICIAL_ENTRY_URL,
+                    "text": "Stable catalog row parsed from a dynamic response",
+                },
+            ),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit="wi:title-1",
+            last_hierarchy_unit="wi:title-1",
+        )
+
+
+@pytest.mark.asyncio
+async def test_shared_frontier_changed_response_replays_by_bound_phase_receipt(
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.processors.legal_data.open_us_law_acquisition_coordinator import (
+        canonical_json_bytes,
+    )
+
+    evidence_root = tmp_path / "evidence"
+    live = _ChangingCatalogScraper("WI", "Wisconsin")
+    live_bodies = iter(
+        (_ChangingCatalogScraper.FIRST_BODY, _ChangingCatalogScraper.REPLAY_BODY)
+    )
+    calls = {"live": 0}
+
+    def _live_http_get(
+        url: str,
+        timeout: int = 20,
+    ) -> tuple[bytes, bytes, bytes]:
+        del timeout
+        calls["live"] += 1
+        assert url == _ChangingCatalogScraper.OFFICIAL_ENTRY_URL
+        body = next(live_bodies)
+        return b"GET /statutes/statutes HTTP/1.1\n", body, body
+
+    live._official_http_get = _live_http_get  # type: ignore[method-assign]
+    live_ledger = StateLawMultiFetchAcquisitionLedger(
+        evidence_root,
+        jurisdiction="WI",
+        parser_name="_ChangingCatalogScraper",
+    )
+    live.attach_state_law_acquisition_ledger(live_ledger)
+    first = await live._capture_shared_official_frontier_observation(phase="first")
+    live._state_law_first_official_frontier_observation = first
+    live._state_law_official_frontier_observation_error = ""
+    projection = build_canonical_state_law_output_projection(
+        [{"state_code": "WI", "statute_id": "WI-1.01"}],
+        jurisdiction="WI",
+    )
+
+    closure_path = await live.produce_state_law_frontier_closure(
+        canonical_output_projection=projection,
+    )
+
+    assert closure_path is not None
+    assert calls == {"live": 2}
+    assert len(live_ledger.entries) == 2
+    assert {
+        retained.receipt.content.sha256 for retained in live_ledger.entries
+    } == {
+        hashlib.sha256(_ChangingCatalogScraper.FIRST_BODY).hexdigest(),
+        hashlib.sha256(_ChangingCatalogScraper.REPLAY_BODY).hexdigest(),
+    }
+
+    # Idempotent closure materializations may differ outside the parser-input
+    # plan.  They must deduplicate to the same ordered selector.
+    duplicate = json.loads(Path(closure_path).read_text(encoding="utf-8"))
+    duplicate["source_software_version"] += ":duplicate-projection"
+    duplicate_bytes = canonical_json_bytes(duplicate)
+    duplicate_path = Path(closure_path).parent / (
+        f"{hashlib.sha256(duplicate_bytes).hexdigest()}.json"
+    )
+    duplicate_path.write_bytes(duplicate_bytes)
+
+    replay = _ChangingCatalogScraper("WI", "Wisconsin")
+    replay.attach_state_law_acquisition_ledger(
+        StateLawMultiFetchAcquisitionLedger(
+            evidence_root,
+            jurisdiction="WI",
+            parser_name="_ChangingCatalogScraper",
+            retained_replay_only=True,
+        )
+    )
+    replay_first = await replay._capture_shared_official_frontier_observation(
+        phase="first"
+    )
+    replay_second = await replay._capture_shared_official_frontier_observation(
+        phase="replay"
+    )
+
+    assert calls == {"live": 2}
+    assert replay_first["fetch"].body_bytes == _ChangingCatalogScraper.FIRST_BODY
+    assert replay_second["fetch"].body_bytes == _ChangingCatalogScraper.REPLAY_BODY
+    assert replay_first["retained_inputs"][0]["receipt_sha256"] == (
+        first["retained_inputs"][0]["receipt_sha256"]
+    )
+    assert replay_second["retained_inputs"][0]["body_sha256"] == (
+        hashlib.sha256(_ChangingCatalogScraper.REPLAY_BODY).hexdigest()
+    )
+
+    # A second genuinely different live history remains ambiguous even though
+    # every individual object and receipt is valid.
+    divergent = json.loads(Path(closure_path).read_text(encoding="utf-8"))
+    catalog_evidence = divergent["completion_receipt"]["source_catalog_evidence"]
+    first_inputs = catalog_evidence["first_observation"]["retained_parser_inputs"]
+    replay_inputs = catalog_evidence["replay_observation"]["retained_parser_inputs"]
+    catalog_evidence["first_observation"]["retained_parser_inputs"] = replay_inputs
+    catalog_evidence["replay_observation"]["retained_parser_inputs"] = first_inputs
+    divergent_bytes = canonical_json_bytes(divergent)
+    divergent_path = Path(closure_path).parent / (
+        f"{hashlib.sha256(divergent_bytes).hexdigest()}.json"
+    )
+    divergent_path.write_bytes(divergent_bytes)
+    ambiguous = _ChangingCatalogScraper("WI", "Wisconsin")
+    ambiguous.attach_state_law_acquisition_ledger(
+        StateLawMultiFetchAcquisitionLedger(
+            evidence_root,
+            jurisdiction="WI",
+            parser_name="_ChangingCatalogScraper",
+            retained_replay_only=True,
+        )
+    )
+
+    with pytest.raises(RuntimeError, match="multiple distinct live replay plans"):
+        await ambiguous._capture_shared_official_frontier_observation(phase="first")
+    assert calls == {"live": 2}
+
+
+class _StaticFallbackCatalogScraper(BaseStateScraper):
+    OFFICIAL_ENTRY_URL = "https://example.gov/static-catalog"
+
+    def get_base_url(self) -> str:
+        return self.OFFICIAL_ENTRY_URL
+
+    def get_code_list(self) -> list[dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> list[Any]:
+        return []
+
+    def _official_http_get(self, url: str, timeout: int = 20) -> bytes:
+        del url, timeout
+        return b""
+
+    def fetch_official(self, code: str = "WI") -> OfficialFetch:
+        self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        frontier = {
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": 1,
+            "unvisited_continuation_links": [],
+            "visited_index_units": 1,
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=code,
+            request_bytes=b"synthetic request",
+            response_bytes=b"synthetic response",
+            body_bytes=b"synthetic body",
+            source_domain="example.gov",
+            source_path="/static-catalog",
+            frontier=frontier,
+            rows=(
+                {
+                    "canonical_key": "wi:title-1",
+                    "source_url": self.OFFICIAL_ENTRY_URL,
+                    "text": "Static fallback that must not authorize",
+                },
+            ),
+            transport_kind="live_https",
+            fixture=False,
+        )
+
+
+@pytest.mark.asyncio
+async def test_shared_frontier_live_static_fallback_without_retained_body_fails_closed(
+    tmp_path: Path,
+) -> None:
+    evidence_root = tmp_path / "evidence"
+    scraper = _StaticFallbackCatalogScraper("WI", "Wisconsin")
+    ledger = StateLawMultiFetchAcquisitionLedger(
+        evidence_root,
+        jurisdiction="WI",
+        parser_name="_StaticFallbackCatalogScraper",
+    )
+    scraper.attach_state_law_acquisition_ledger(ledger)
+
+    with pytest.raises(RuntimeError, match="consumed no non-empty retained direct"):
+        await scraper._capture_shared_official_frontier_observation(phase="first")
+
+    assert ledger.entries == ()
+    assert list(ledger.frontiers_dir.rglob("*.json")) == []
+
+
+@pytest.mark.asyncio
 async def test_shared_frontier_triplet_helper_receives_exact_retained_body(
     tmp_path: Path,
 ) -> None:

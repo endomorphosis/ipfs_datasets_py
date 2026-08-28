@@ -24,6 +24,7 @@ from ipfs_datasets_py.processors.legal_data.state_laws_multifetch_acquisition im
     AUTHORIZES_REMATERIALIZATION_RECEIPTS,
     StateLawMultiFetchAcquisitionError,
     StateLawMultiFetchAcquisitionLedger,
+    StateLawRetainedReplayOnlyError,
     build_canonical_state_law_output_projection,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
@@ -34,6 +35,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper impo
 OFFICIAL_START = "https://docs.legis.wisconsin.gov/statutes/statutes/1"
 OFFICIAL_ONE = "https://docs.legis.wisconsin.gov/document/statutes/1.01"
 OFFICIAL_TWO = "https://docs.legis.wisconsin.gov/document/statutes/1.02"
+OFFICIAL_TERMINAL = "https://docs.legis.wisconsin.gov/document/statutes/1.02?next=1.03"
 RELEASE_POINT = hashlib.sha256(b"wi-multifetch-release").hexdigest()
 
 
@@ -207,6 +209,20 @@ def test_closed_aggregate_binds_ledgers_and_canonical_jsonld_separately(
         transport_receipt=_direct_receipt(OFFICIAL_TWO, body_two),
         retrieved_at="2026-08-24T01:02:04Z",
     )
+    terminal_request = {
+        "headers": {"Accept": "text/html"},
+        "method": "GET",
+        "url": OFFICIAL_TERMINAL,
+    }
+    terminal = ledger.retain_empty_http_response_observation(
+        official_url=OFFICIAL_TERMINAL,
+        final_url=OFFICIAL_TERMINAL,
+        response_status=200,
+        observed_at="2026-08-24T01:02:05Z",
+        sanitized_request=terminal_request,
+        transport_receipt=_direct_receipt(OFFICIAL_TERMINAL, b""),
+        media_type="text/html",
+    )
     canonical = tmp_path / "STATE-WI.jsonld"
     canonical.write_bytes(_jsonld_bytes())
     completion = _completion_receipt()
@@ -236,6 +252,7 @@ def test_closed_aggregate_binds_ledgers_and_canonical_jsonld_separately(
         "sha256": canonical_digest,
     }
     assert aggregate["parser_input_count"] == 2
+    assert aggregate["http_observation_count"] == 1
     assert aggregate["single_response_claims_entire_corpus"] is False
     assert canonical_digest not in {
         hashlib.sha256(body_one).hexdigest(),
@@ -244,8 +261,25 @@ def test_closed_aggregate_binds_ledgers_and_canonical_jsonld_separately(
     assert closed.request_ledger_path.is_file()
     assert closed.response_ledger_path.is_file()
     response_ledger = json.loads(closed.response_ledger_path.read_text())
-    assert len(response_ledger["responses"]) == 2
-    assert all(item["body_relative_path"].startswith("objects/") for item in response_ledger["responses"])
+    assert len(response_ledger["responses"]) == 3
+    parser_responses = [
+        item
+        for item in response_ledger["responses"]
+        if item.get("authorizes_parser_admission") is not False
+    ]
+    terminal_responses = [
+        item
+        for item in response_ledger["responses"]
+        if item.get("authorizes_parser_admission") is False
+    ]
+    assert len(parser_responses) == 2
+    assert all(
+        item["body_relative_path"].startswith("objects/")
+        for item in parser_responses
+    )
+    assert terminal_responses == [
+        terminal.to_ledger_dict(jurisdiction_root=ledger.jurisdiction_root)
+    ]
 
 
 def test_deferred_closure_writes_only_nondiscoverable_pending_receipt(
@@ -762,6 +796,120 @@ def test_retained_request_replay_fails_closed_when_response_changed(
         ledger.replay_retained_parser_input(
             official_url=OFFICIAL_ONE,
             sanitized_request=request,
+        )
+
+
+def test_empty_http_terminal_observation_persists_and_replays_exact_request(
+    tmp_path: Path,
+) -> None:
+    evidence_root = tmp_path / "evidence"
+    request = {
+        "headers": {"Accept": "text/html", "X-Requested-With": "XMLHttpRequest"},
+        "method": "GET",
+        "url": OFFICIAL_TERMINAL,
+    }
+    live = StateLawMultiFetchAcquisitionLedger(
+        evidence_root,
+        jurisdiction="WI",
+        parser_name="WisconsinStatuteParser",
+    )
+
+    retained = live.retain_empty_http_response_observation(
+        official_url=OFFICIAL_TERMINAL,
+        final_url=OFFICIAL_TERMINAL,
+        response_status=200,
+        observed_at="2026-08-24T01:02:05.123456Z",
+        sanitized_request=request,
+        transport_receipt=_direct_receipt(OFFICIAL_TERMINAL, b""),
+        media_type="text/html",
+    )
+
+    assert live.entries == ()
+    assert retained.evidence_path.parent == live.observations_dir
+    assert retained.evidence_path.name == f"{retained.observation_sha256}.json"
+    assert retained.content_sha256 == hashlib.sha256(b"").hexdigest()
+    assert retained.body_byte_size == 0
+    assert retained.response_status == 200
+
+    replay = StateLawMultiFetchAcquisitionLedger(
+        evidence_root,
+        jurisdiction="WI",
+        parser_name="WisconsinStatuteParser",
+        retained_replay_only=True,
+    )
+    selected = replay.replay_empty_http_response_observation(
+        official_url=OFFICIAL_TERMINAL,
+        sanitized_request=request,
+    )
+
+    assert selected is not None
+    assert selected.observation_sha256 == retained.observation_sha256
+    assert selected.final_url == OFFICIAL_TERMINAL
+    with pytest.raises(StateLawRetainedReplayOnlyError, match="HTTP observation"):
+        replay.replay_empty_http_response_observation(
+            official_url=OFFICIAL_TERMINAL,
+            sanitized_request={
+                **request,
+                "headers": {"Accept": "application/json"},
+            },
+        )
+
+
+def test_empty_http_terminal_observation_replay_rejects_ambiguity_and_tamper(
+    tmp_path: Path,
+) -> None:
+    request = {"method": "GET", "url": OFFICIAL_TERMINAL}
+    ambiguous_root = tmp_path / "ambiguous"
+    live = StateLawMultiFetchAcquisitionLedger(
+        ambiguous_root,
+        jurisdiction="WI",
+        parser_name="WisconsinStatuteParser",
+    )
+    for timestamp, final_url in (
+        ("2026-08-24T01:02:05Z", OFFICIAL_TERMINAL),
+        ("2026-08-24T01:02:06Z", OFFICIAL_ONE),
+    ):
+        live.retain_empty_http_response_observation(
+            official_url=OFFICIAL_TERMINAL,
+            final_url=final_url,
+            response_status=200,
+            observed_at=timestamp,
+            sanitized_request=request,
+            transport_receipt=_direct_receipt(OFFICIAL_TERMINAL, b""),
+        )
+    ambiguous = StateLawMultiFetchAcquisitionLedger(
+        ambiguous_root,
+        jurisdiction="WI",
+        parser_name="WisconsinStatuteParser",
+        retained_replay_only=True,
+    )
+    with pytest.raises(StateLawMultiFetchAcquisitionError, match="ambiguous"):
+        ambiguous.replay_empty_http_response_observation(
+            official_url=OFFICIAL_TERMINAL,
+            sanitized_request=request,
+        )
+
+    tampered_root = tmp_path / "tampered"
+    tampered_live = StateLawMultiFetchAcquisitionLedger(
+        tampered_root,
+        jurisdiction="WI",
+        parser_name="WisconsinStatuteParser",
+    )
+    retained = tampered_live.retain_empty_http_response_observation(
+        official_url=OFFICIAL_TERMINAL,
+        final_url=OFFICIAL_TERMINAL,
+        response_status=200,
+        observed_at="2026-08-24T01:02:05Z",
+        sanitized_request=request,
+        transport_receipt=_direct_receipt(OFFICIAL_TERMINAL, b""),
+    )
+    retained.evidence_path.write_bytes(retained.evidence_path.read_bytes() + b"\n")
+    with pytest.raises(StateLawMultiFetchAcquisitionError, match="filename"):
+        StateLawMultiFetchAcquisitionLedger(
+            tampered_root,
+            jurisdiction="WI",
+            parser_name="WisconsinStatuteParser",
+            retained_replay_only=True,
         )
 
 
