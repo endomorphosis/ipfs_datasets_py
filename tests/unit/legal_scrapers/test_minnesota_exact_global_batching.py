@@ -27,6 +27,18 @@ MN_SEE_NOTE_URL = "https://www.revisor.mn.gov/statutes/cite/352.91"
 MN_SEE_NOTE_SHA256 = (
     "2ac0e1bd344a9117b4a71b8a19226a4ebe4ea67211fe59b34c8bb5319408c12a"
 )
+MN_RESERVED_URL = "https://www.revisor.mn.gov/statutes/cite/363A.18"
+MN_RESERVED_SHA256 = (
+    "d48948be7cdc09253c9c68bfe537b0514449b5bfb1f56bce40de813c236e1d4e"
+)
+
+
+def _mn_terminal_reserved_payload() -> bytes:
+    return (
+        b"<html><body><div id='header'><h1>2025 Minnesota Statutes</h1></div>"
+        b"<div class='sr' id='stat.363A.18'>"
+        b"<b>363A.18</b> [Reserved]</div></body></html>"
+    )
 
 
 def _mn_terminal_see_note_payload() -> bytes:
@@ -208,6 +220,88 @@ def test_minnesota_terminal_display_alias_replays_retained_contract() -> None:
     assert classified is not None
     assert classified["disposition"] == "repealed"
     assert classified["section_number"] == "296.01-1"
+
+
+def test_minnesota_terminal_reserved_marker_is_exact_and_source_bound() -> None:
+    payload = _mn_terminal_reserved_payload()
+
+    classified = minnesota_section.classify_minnesota_terminal_section_html(
+        payload.decode(),
+        source_url=MN_RESERVED_URL,
+        expected_edition=MinnesotaScraper.OFFICIAL_EDITION,
+    )
+
+    assert classified is not None
+    assert classified["disposition"] == "reserved"
+    assert classified["dispositions"] == ["reserved"]
+    assert classified["marker_texts"] == ["[Reserved]"]
+    assert classified["section_number"] == "363A.18"
+    assert classified["source_blocks"] == 1
+    assert classified["source_edition"] == MinnesotaScraper.OFFICIAL_EDITION
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    (
+        ("id='stat.363A.18'", "id='stat.363A.19'"),
+        ("[Reserved]", "[Reserved for future use]"),
+        (
+            "<div class='sr'",
+            "<div class='section'>operative drift</div><div class='sr'",
+        ),
+    ),
+)
+def test_minnesota_terminal_reserved_marker_rejects_source_drift(
+    old: str,
+    new: str,
+) -> None:
+    payload = _mn_terminal_reserved_payload().decode().replace(old, new)
+
+    assert (
+        minnesota_section.classify_minnesota_terminal_section_html(
+            payload,
+            source_url=MN_RESERVED_URL,
+            expected_edition=MinnesotaScraper.OFFICIAL_EDITION,
+        )
+        is None
+    )
+
+
+def test_minnesota_terminal_reserved_marker_rejects_url_drift() -> None:
+    assert (
+        minnesota_section.classify_minnesota_terminal_section_html(
+            _mn_terminal_reserved_payload().decode(),
+            source_url="https://www.revisor.mn.gov/statutes/cite/363A.19",
+            expected_edition=MinnesotaScraper.OFFICIAL_EDITION,
+        )
+        is None
+    )
+
+
+def test_minnesota_terminal_reserved_replays_retained_body() -> None:
+    evidence_root = os.getenv("STATE_LAWS_TEST_MN_EVIDENCE_ROOT", "").strip()
+    if not evidence_root:
+        pytest.skip("requires retained Minnesota acquisition evidence")
+
+    payload_path = (
+        Path(evidence_root) / "MN" / "objects" / f"{MN_RESERVED_SHA256}.bin"
+    )
+    payload = payload_path.read_bytes()
+    assert len(payload) == 60798
+    assert hashlib.sha256(payload).hexdigest() == MN_RESERVED_SHA256
+
+    classified = minnesota_section.classify_minnesota_terminal_section_html(
+        payload.decode("utf-8"),
+        source_url=MN_RESERVED_URL,
+        expected_edition=MinnesotaScraper.OFFICIAL_EDITION,
+    )
+    assert classified is not None
+    assert classified["disposition"] == "reserved"
+    assert classified["dispositions"] == ["reserved"]
+    assert classified["marker_texts"] == ["[Reserved]"]
+    assert classified["section_number"] == "363A.18"
+    assert classified["source_blocks"] == 1
+    assert classified["source_edition"] == MinnesotaScraper.OFFICIAL_EDITION
 
 
 def test_minnesota_terminal_see_note_contract_is_exact_and_source_bound(

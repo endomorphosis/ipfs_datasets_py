@@ -198,6 +198,8 @@ def _terminal_marker_disposition(marker: str) -> str:
     """
 
     value = _clean(marker).casefold()
+    if value == "reserved":
+        return "reserved"
     if value.startswith(("impliedly repealed", "repealed")):
         return "repealed"
     if value.startswith("renumbered"):
