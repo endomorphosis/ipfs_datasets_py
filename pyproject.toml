@@ -93,42 +93,42 @@ target = "tests/unit/logic/test_compositional_verification_public_api.py"
 validation-command-sha256 = "9bf558edafef4c76615e61fe3ca1f7353c9c36d1e75e221feec88840e371c14e"
 requirements = ["pytest>=9.0.3,<10.0.0", "z3-solver>=4.12.0,<5.0.0", "cvc5==1.3.3"]
 task = { board-namespace = "logic-governed-compositional-verification-fabric-v1", canonical-task-cid = "baguqeera5akr2w56xcy6mus4td2ghwaita5k52lnqkh54tgooqq35fai72nq", declared-output = "ipfs_datasets_py/tests/unit/logic/test_compositional_verification_public_api.py" }
-baseline = { state = "present", sha256 = "6c93b34d1b10b5c7e311a87a7aa901a2502858ed8d8601e910e1aec62417b86e" }
+baseline = { state = "present", sha256 = "119ad1a0a28a07ee46e7061fbebdf61171cbf9cdda325d64d5ce107e98591257" }
 
 [[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
 target = "tests/unit/logic/backends/test_interpolation.py"
 validation-command-sha256 = "46fe6b0635f0591d2af7a39c4f26213ff1e34df7b89f63140719edb0e8f5b4e6"
 requirements = ["pytest>=9.0.3,<10.0.0", "z3-solver>=4.12.0,<5.0.0", "cvc5==1.3.3"]
 task = { board-namespace = "logic-governed-compositional-verification-fabric-v1", canonical-task-cid = "baguqeeratlqqozbenktvzhzzk36ewsti3mzegge2ynft24s3mznewzgswfoq", declared-output = "ipfs_datasets_py/tests/unit/logic/backends/test_interpolation.py" }
-baseline = { state = "present", sha256 = "8116954ee49c645ab1b7903521d02f4d3bfd0d659365c2ec66e5f18a3ce6d038" }
+baseline = { state = "present", sha256 = "4717bebac37a83bcc6bca0bb8896a74317e0cea9120be0efce0bd3b8003c2506" }
 
 [[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
 target = "tests/unit/logic/software_verification/test_cegar.py"
 validation-command-sha256 = "4739a8bc973e558e66c28906ab9775e08b9bc1162196bd7371ae572c293d7546"
 requirements = ["pytest>=9.0.3,<10.0.0", "z3-solver>=4.12.0,<5.0.0", "cvc5==1.3.3"]
 task = { board-namespace = "logic-governed-compositional-verification-fabric-v1", canonical-task-cid = "baguqeeraqopotj43fgxcfptvziv3g3kna4wcwhtzarcobv2obvs32njoggjq", declared-output = "ipfs_datasets_py/tests/unit/logic/software_verification/test_cegar.py" }
-baseline = { state = "present", sha256 = "e94e091d30e928219b090133f1f85bedad975028c767480982ec59ff58c4cfd9" }
+baseline = { state = "present", sha256 = "c7723264ac7428cd0798a4fce4dac28f71c41317dca57c0bdbd3aa17e6ec20f6" }
 
 [[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
 target = "tests/unit/logic/formalization/test_translation_receipts.py"
 validation-command-sha256 = "c56346b0625122e5726c632306c674dcf958da388d9e11aa239b959dc27a4317"
 requirements = ["pytest>=9.0.3,<10.0.0"]
 task = { board-namespace = "logic-governed-compositional-verification-fabric-v1", canonical-task-cid = "baguqeeraej2zz7zlrd2l5p6adjnzinnitzuqmxx4agfhfzekixdqm2mnqyda", declared-output = "ipfs_datasets_py/tests/unit/logic/formalization/test_translation_receipts.py" }
-baseline = { state = "present", sha256 = "378b354559efa3fda676343313f1d9a6f14e5fcef4ced675aced58c6a5f6d885" }
+baseline = { state = "present", sha256 = "d22cc2c07bb88abbec196bac8697b8b081647694e78e1a174b8650841290ddbe" }
 
 [[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
 target = "tests/unit/logic/software_verification/test_obligation_slicing.py"
 validation-command-sha256 = "84a18191f479bb98ca1ebd58bd9cce92f75727906e139b8a8e2a3de805843078"
 requirements = ["pytest>=9.0.3,<10.0.0"]
 task = { board-namespace = "logic-governed-compositional-verification-fabric-v1", canonical-task-cid = "baguqeerar3vmbqw7f2qk6mjyhsx3hq7gpbnqcydt7cecm6og5xejbd2vz6cq", declared-output = "ipfs_datasets_py/tests/unit/logic/software_verification/test_obligation_slicing.py" }
-baseline = { state = "present", sha256 = "487194ddf108167e647f5fe2cdce624854a7162f45d46b6a88f28395a608d65e" }
+baseline = { state = "present", sha256 = "a0539072a015020c40ef42149cafe6b2e308d759f5704e5fd26a09a1b64bb1a6" }
 
 [[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
 target = "tests/unit/logic/software_verification/test_proof_carrying_artifact.py"
 validation-command-sha256 = "bce23e39f0ab89b977f8e62767cbe2a162e62f64a6e9ad8aabbaaa57d1ffe8b7"
 requirements = ["pytest>=9.0.3,<10.0.0"]
 task = { board-namespace = "logic-governed-compositional-verification-fabric-v1", canonical-task-cid = "baguqeeraompdkd4vtnb7z4sd5evmsx2jsucobyahrzqxyicwmwqdcwcvq3iq", declared-output = "ipfs_datasets_py/tests/unit/logic/software_verification/test_proof_carrying_artifact.py" }
-baseline = { state = "present", sha256 = "d9b9c3d4391cbecc811059f81108989fa3b01dd5642469cc108bf9ed12fc6829" }
+baseline = { state = "present", sha256 = "cd8cc8313d18537b087139b575716e7f6a165df34742c1d6a03dd7ad692ae5f4" }
 
 [project.optional-dependencies]
 # IPLD / CAR format extras
