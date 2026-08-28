@@ -850,18 +850,26 @@ class ConnecticutScraper(BaseStateScraper):
         for offset in range(0, len(requested), chunk_size):
             chunk = requested[offset : offset + chunk_size]
             direct_records: Dict[str, Dict[str, Any]] = {}
-            if (
-                getattr(self, "_state_law_acquisition_ledger", None) is not None
-                and purpose in {"titles", "supplement_titles"}
-            ):
-                # CGA's current title pages are occasionally served with an
-                # incomplete certificate chain.  The ordinary plural fetcher
-                # deliberately disables insecure TLS while a strict ledger is
-                # attached, so first replay/fetch this source-derived title
-                # wave through the shared custom adapter.  Exact misses alone
-                # continue to the grouped archive-aware plural path below.
+            if getattr(self, "_state_law_acquisition_ledger", None) is not None:
+                # CGA's current hierarchy pages are occasionally served with
+                # an incomplete certificate chain.  The ordinary plural
+                # fetcher deliberately disables insecure TLS while a strict
+                # ledger is attached, so first replay/fetch every
+                # source-derived Connecticut hierarchy wave through the
+                # shared custom adapter.  Exact misses alone continue to the
+                # grouped archive-aware plural path below.
                 for url in chunk:
                     canonical_url = self._canonical_fetch_url(url)
+                    parsed_url = urllib.parse.urlparse(canonical_url)
+                    if (
+                        parsed_url.scheme.lower() != "https"
+                        or (parsed_url.hostname or "").lower()
+                        != self.OFFICIAL_DOMAIN
+                    ):
+                        raise RuntimeError(
+                            "connecticut strict hierarchy wave left the "
+                            "official HTTPS host"
+                        )
                     try:
                         payload = await self._fetch_parser_input_with_transport(
                             canonical_url,
@@ -870,7 +878,7 @@ class ConnecticutScraper(BaseStateScraper):
                             allow_archival_fallback=False,
                             verify_tls=False,
                             media_type="text/html",
-                            provider="connecticut_insecure_tls_title_wave",
+                            provider="connecticut_insecure_tls_hierarchy_wave",
                             content_validator=lambda body: bool(
                                 body
                                 and b"<" in body[:16384]

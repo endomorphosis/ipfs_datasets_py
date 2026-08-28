@@ -627,8 +627,19 @@ async def test_connecticut_frontier_pages_use_shared_batched_fetch(
 
 
 @pytest.mark.anyio
-async def test_connecticut_strict_title_wave_retries_direct_with_insecure_tls(
+@pytest.mark.parametrize(
+    "purpose",
+    [
+        "catalog_roots",
+        "titles",
+        "supplement_titles",
+        "chapters",
+        "supplement_chapters",
+    ],
+)
+async def test_connecticut_strict_hierarchy_wave_retries_direct_with_insecure_tls(
     monkeypatch: pytest.MonkeyPatch,
+    purpose: str,
 ) -> None:
     scraper = ConnecticutScraper("CT", "Connecticut")
     urls = [
@@ -664,13 +675,13 @@ async def test_connecticut_strict_title_wave_retries_direct_with_insecure_tls(
 
     records = await scraper._fetch_connecticut_frontier_pages(
         urls,
-        purpose="titles",
+        purpose=purpose,
     )
 
     assert [url for url, _kwargs in calls] == urls
     assert [record["url"] for record in records] == urls
     assert all(record["payload"].startswith(b"<html>") for record in records)
-    stats = scraper._last_connecticut_batch_stats["titles"]
+    stats = scraper._last_connecticut_batch_stats[purpose]
     assert stats["batch_count"] == 1
     assert stats["shared_batch_stats"][0]["insecure_tls_direct_prepass"] is True
     assert stats["shared_batch_stats"][0]["grouped_archive_residual_pages"] == 0
