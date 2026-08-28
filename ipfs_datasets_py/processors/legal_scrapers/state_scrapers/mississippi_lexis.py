@@ -20,14 +20,18 @@ import asyncio
 import hashlib
 import json
 import re
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass, field, replace
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse
 
-from .base_scraper import current_state_law_run_environment_value
+from .base_scraper import (
+    NormalizedStatute,
+    StatuteMetadata,
+    current_state_law_run_environment_value,
+)
 
 ENABLE_ENV = "MISSISSIPPI_LEXIS_PUBLIC_ACCESS_ENABLE"
 OFFICIAL_LEGISLATURE_ENTRY_URL = "https://www.legislature.ms.gov/"
@@ -142,6 +146,16 @@ OBSERVED_2026_08_26_ALL_NODE_SEMANTIC_SHA256 = (
 OBSERVED_2026_08_26_MAIN_DOCUMENT_SEMANTIC_SHA256 = (
     "243e41985164f1c4cc00782c107c5f9ea8914355a842595869cb250dc5b9d0d3"
 )
+OBSERVED_DESCENDANT_NODE_COUNT = 33_600
+OBSERVED_CURRENT_SECTION_CANDIDATE_COUNT = 30_270
+OBSERVED_CURRENT_COLLECTION_COUNT = 3
+OBSERVED_UNTYPED_CURRENT_COUNT = 3
+OBSERVED_RECENT_LEGISLATION_LOCATOR_COUNT = 15
+OBSERVED_FUTURE_EFFECTIVENESS_COUNT = 80
+OBSERVED_FUTURE_PLACEHOLDER_COUNT = 2
+OBSERVED_EDITORIAL_STRUCTURE_COUNT = 59
+OBSERVED_REPEATED_SECTION_IDENTITY_COUNT = 158
+OBSERVED_EXTRA_VARIANT_LOCATOR_COUNT = 177
 
 _NODE_ID_RE = re.compile(r"^[A-Z0-9]{2,128}$")
 _REQUEST_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
@@ -178,11 +192,72 @@ _DELEGATION_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 _BLOCKED_RE = re.compile(
-    r"robot\s*validation|captcha|confirm\s+you\s+are\s+human|"
-    r"sign\s+in\s+to\s+continue",
+    r"robot\s*validation|robotvalidation|captcha|confirm\s+you\s+are\s+human|"
+    r"complete\s+the\s+security\s+check|signin\.lexisnexis\.com|"
+    r"sign\s+in\s+to\s+continue|browser\s+redirect\s+to\s+the\s+intended\s+"
+    r"destination|\bI\s+Agree\b.*?(?:terms|conditions)|"
+    r"(?:terms|conditions).*?\bI\s+Agree\b|\bResults\s+for\s*:",
+    re.IGNORECASE | re.DOTALL,
+)
+_WS_RE = re.compile(r"\s+")
+_CONTENT_ITEM_RE = re.compile(
+    r"/urn:contentItem:(?P<item>[A-Za-z0-9:-]+)$",
+    re.IGNORECASE,
+)
+_PRIMARY_BODY_SECTION_RE = re.compile(
+    rf"^(?:(?:Miss(?:issippi)?\.?\s+Code(?:\s+Ann\.?)?)\s*)?"
+    rf"(?:§+\s*)?(?P<number>{_SECTION_NUMBER_PATTERN})"
+    r"(?:\s*[.\-\u2013\u2014:]\s*|\s+|$)",
+    re.IGNORECASE,
+)
+_BODY_TERMINAL_RE = re.compile(
+    r"^[\[(]?\s*(?P<kind>repealed|reserved|transferred|expired|obsolete)\b",
+    re.IGNORECASE,
+)
+_CATALOG_TERMINAL_RE = re.compile(
+    r"(?:^|[.\-\u2013\u2014:\s])[\[(]?\s*"
+    r"(?P<kind>repealed|reserved|transferred|expired|obsolete)\b"
+    r"[^\])]{0,100}[\])]?\s*[.]?\s*$",
+    re.IGNORECASE,
+)
+_EDITORIAL_HEADING_RE = re.compile(
+    r"^(?:annotations?|case\s+notes?|notes?\s+to\s+decisions?|"
+    r"research\s+references?|law\s+reviews?|treatises?|practice\s+aids?|"
+    r"cross\s+references?|editor(?:'s|ial)?\s+notes?)\s*[:.]?$",
+    re.IGNORECASE,
+)
+_TEMPORAL_MARKER_RE = re.compile(
+    r"\b(?:effective\s+(?:until|through|on|from|upon)?|"
+    r"repealed\s+effective|expires?\s+(?:on\s+)?|"
+    r"contingent\s+upon|if\s+and\s+when)\b[^\n.;]{0,180}",
+    re.IGNORECASE,
+)
+_MONTH_DATE_RE = re.compile(
+    r"\b(?P<month>January|February|March|April|May|June|July|August|"
+    r"September|October|November|December)\s+"
+    r"(?P<day>\d{1,2})(?:st|nd|rd|th)?\s*,\s*(?P<year>\d{4})\b",
     re.IGNORECASE,
 )
 _LIVE_EVIDENCE_CAPABILITY = object()
+
+
+def _canonical_json_bytes(value: object) -> bytes:
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+
+
+def canonical_digest(value: object) -> str:
+    """Hash one stable Mississippi source/request projection."""
+
+    return hashlib.sha256(_canonical_json_bytes(value)).hexdigest()
+
+
+def _clean(value: object) -> str:
+    return _WS_RE.sub(" ", str(value or "").replace("\xa0", " ")).strip()
 
 
 def _as_bool(value: object) -> bool:
@@ -300,6 +375,7 @@ class MississippiLexisNode:
     can_open: bool
     has_children: bool
     link_href: str = ""
+    open_to_levels: tuple[int, ...] = ()
     subscribed: bool | None = None
     purchase_required: bool | None = None
     list_price: float | None = None
@@ -403,6 +479,8 @@ def _node_shape_valid(node: MississippiLexisNode) -> bool:
         and node.node_path.startswith("/ROOT/")
         and node.node_path.endswith(f"/{node.node_id}")
         and _is_allowed_link_href(node.link_href)
+        and all(2 <= level <= MAX_EXHAUSTIVE_TOC_LEVEL for level in node.open_to_levels)
+        and tuple(sorted(set(node.open_to_levels))) == node.open_to_levels
         and (
             node.title.strip()
             or node.link_href in _PLACEHOLDER_DOCUMENT_PATHS
@@ -430,6 +508,21 @@ def node_from_mapping(value: Mapping[str, Any]) -> MississippiLexisNode | None:
     level = _as_int(props.get("level"))
     pricing = props.get("tocpricing")
     pricing_map = pricing if isinstance(pricing, Mapping) else {}
+    raw_levels = props.get("targetlevels") or ()
+    if isinstance(raw_levels, Sequence) and not isinstance(
+        raw_levels, (str, bytes, bytearray)
+    ):
+        parsed_levels = tuple(
+            sorted(
+                {
+                    level
+                    for item in raw_levels
+                    if (level := _as_int(item)) is not None
+                }
+            )
+        )
+    else:
+        parsed_levels = ()
     node = MississippiLexisNode(
         node_id=node_id,
         title=str(
@@ -441,6 +534,7 @@ def node_from_mapping(value: Mapping[str, Any]) -> MississippiLexisNode | None:
         can_open=_as_bool(props.get("canopen")),
         has_children=_as_bool(props.get("haschildren")),
         link_href=str(props.get("linkhref") or "").strip(),
+        open_to_levels=parsed_levels,
         subscribed=_as_optional_bool(props.get("subscribed")),
         purchase_required=_as_optional_bool(pricing_map.get("purchaserequired")),
         list_price=_as_float(pricing_map.get("listprice")),
@@ -467,6 +561,17 @@ def parse_root_dom_rows(
     nodes: list[MississippiLexisNode] = []
     seen: set[str] = set()
     for row in rows:
+        raw_levels = row.get("targetlevels") or ()
+        if not isinstance(raw_levels, Sequence) or isinstance(
+            raw_levels, (str, bytes, bytearray)
+        ):
+            raw_levels = ()
+        levels: list[int] = []
+        for item in raw_levels:
+            level = _as_int(item)
+            if level is None:
+                continue
+            levels.append(level)
         node = MississippiLexisNode(
             node_id=str(row.get("nodeid") or "").strip(),
             title=str(row.get("title") or "").strip(),
@@ -475,8 +580,14 @@ def parse_root_dom_rows(
             can_expand=_as_bool(row.get("canexpand")),
             can_open=_as_bool(row.get("canopen")),
             has_children=_as_bool(row.get("haschildren")),
+            open_to_levels=tuple(sorted(set(levels))),
         )
-        if node.node_id in seen or not _node_shape_valid(node) or node.level != 1:
+        if (
+            node.node_id in seen
+            or not _node_shape_valid(node)
+            or node.level != 1
+            or len(levels) != len(set(levels))
+        ):
             continue
         seen.add(node.node_id)
         nodes.append(node)
@@ -530,6 +641,37 @@ def toc_open_to_request(
             },
         },
     )
+
+
+def canonical_toc_patch_request(
+    node: MississippiLexisNode,
+) -> tuple[str, bytes, dict[str, Any]]:
+    """Bind one source root's maximum advertised level to exact PATCH bytes."""
+
+    if not (
+        node.level == 1
+        and node.node_id in EXPECTED_ROOT_NODE_IDS
+        and (node.can_expand or node.has_children)
+        and node.open_to_levels
+    ):
+        raise ValueError("Mississippi TOC PATCH requires an expandable source root")
+    endpoint, body = toc_open_to_request(
+        node.node_id,
+        target_level=max(node.open_to_levels),
+    )
+    request_body = _canonical_json_bytes(body)
+    headers = {
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Content-Type": "application/json",
+    }
+    sanitized_request = {
+        "headers": headers,
+        "method": "PATCH",
+        "request_body_length": len(request_body),
+        "request_body_sha256": hashlib.sha256(request_body).hexdigest(),
+        "url": endpoint,
+    }
+    return endpoint, request_body, sanitized_request
 
 
 def parse_title_subtree_payload(
@@ -690,7 +832,14 @@ def canonical_node_digest(nodes: Iterable[MississippiLexisNode]) -> str:
     """Hash the stable source projection, excluding session-local evidence."""
 
     projection = [
-        [node.node_id, node.node_path, node.level, node.title, node.link_href]
+        [
+            node.node_id,
+            node.node_path,
+            node.level,
+            node.title,
+            node.link_href,
+            list(node.open_to_levels),
+        ]
         for node in sorted(nodes, key=lambda item: item.node_path)
     ]
     payload = json.dumps(
@@ -734,6 +883,584 @@ def document_page_url(node: MississippiLexisNode) -> str:
         )
     )
     return f"{ADVANCE_ORIGIN}/documentpage/?{query}"
+
+
+def content_item_id(value: object) -> str:
+    """Return the exact Lexis content-item identity from a validated path."""
+
+    parsed = urlparse(str(value or "").strip())
+    match = _CONTENT_ITEM_RE.search(parsed.path or "")
+    return str(match.group("item") or "") if match else ""
+
+
+def legislature_delegation_present(html: str) -> bool:
+    """Require the Legislature page's exact Mississippi Code publisher link."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return False
+    source = str(html or "")
+    if _BLOCKED_RE.search(source):
+        return False
+    soup = BeautifulSoup(source, "html.parser")
+    for anchor in soup.find_all("a", href=True):
+        href = urljoin(
+            OFFICIAL_LEGISLATURE_ENTRY_URL,
+            str(anchor.get("href") or "").strip(),
+        )
+        if href.rstrip("/") == PUBLIC_ENTRY_URL.rstrip("/") and re.search(
+            r"\bMississippi\s+Code\b",
+            _clean(anchor.get_text(" ")),
+            re.IGNORECASE,
+        ):
+            return True
+    return False
+
+
+def publisher_container_delegation_present(html: str) -> bool:
+    """Require the publisher entry response to name the exact container."""
+
+    source = str(html or "")
+    return bool(
+        not _BLOCKED_RE.search(source)
+        and PUBLIC_CONTAINER_CONFIG in source
+        and re.search(
+            r"advance\.lexis\.com(?:/|&(?:#x2F;|sol;))container",
+            source,
+            re.IGNORECASE,
+        )
+    )
+
+
+def valid_authority_payload(payload: bytes) -> bool:
+    """Reject empty authority responses and access-control shells."""
+
+    if not payload:
+        return False
+    sample = bytes(payload[:200_000]).decode("utf-8", errors="replace")
+    return bool(re.search(r"<html\b|<!doctype\s+html", sample, re.IGNORECASE)) and not (
+        _BLOCKED_RE.search(sample)
+    )
+
+
+def valid_document_payload(payload: bytes) -> bool:
+    """Reject empty and known access/search/bootstrap shells before retention."""
+
+    if not payload:
+        return False
+    sample = bytes(payload[:200_000]).decode("utf-8", errors="replace")
+    return _BLOCKED_RE.search(sample) is None and bool(
+        re.search(
+            r"<html\b|<main\b|<article\b|data-document-content|"
+            r"data-section-number",
+            sample,
+            re.IGNORECASE,
+        )
+    )
+
+
+def canonical_rendered_root_request() -> dict[str, Any]:
+    """Return the stable browser GET identity used for root retention/replay."""
+
+    return {
+        "method": "GET",
+        "rendered_by": "playwright",
+        "url": PUBLIC_CONTAINER_URL,
+        "wait_until": "domcontentloaded",
+    }
+
+
+def parse_root_html(html: str) -> list[MississippiLexisNode]:
+    """Extract and strictly validate the rendered 51-root Lexis hierarchy."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError as exc:  # pragma: no cover - production dependency
+        raise RuntimeError("BeautifulSoup is required for Mississippi Lexis parsing") from exc
+    source = str(html or "")
+    if _BLOCKED_RE.search(source):
+        raise ValueError("Mississippi container returned an access or bootstrap shell")
+    soup = BeautifulSoup(source, "html.parser")
+    if not _DELEGATION_RE.search(_clean(soup.get_text(" "))):
+        raise ValueError("Mississippi container omitted its free-public-access delegation")
+    rows: list[dict[str, Any]] = []
+    for element in soup.select('li.js-node[data-level="1"]'):
+        header = element.find(class_="js-node-header", recursive=False) or element
+        rows.append(
+            {
+                "nodeid": element.get("data-nodeid") or "",
+                "nodepath": element.get("data-nodepath") or "",
+                "level": element.get("data-level") or "",
+                "title": element.get("data-title") or "",
+                "canexpand": element.get("data-canexpand") or "",
+                "canopen": element.get("data-canopen") or "",
+                "haschildren": element.get("data-haschildren") or "",
+                "targetlevels": [
+                    item.get("data-targetlevel") or ""
+                    for item in header.select('[data-command="open-to"]')
+                ],
+            }
+        )
+    roots = parse_root_dom_rows(rows)
+    error = root_membership_error(roots)
+    if error:
+        raise ValueError(f"Mississippi rendered root membership changed: {error}")
+    if any(not node.open_to_levels for node in roots):
+        raise ValueError("Mississippi rendered root omitted a complete open-to contract")
+    for node, number in zip(roots[1:], EXPECTED_TITLE_NUMBERS, strict=True):
+        label = re.sub(
+            rf"^TITLE\s+0*{re.escape(number)}\b[\s.\-\u2013\u2014:]*",
+            "",
+            _clean(node.title),
+            count=1,
+            flags=re.IGNORECASE,
+        )
+        if label.casefold() != _clean(EXPECTED_TITLE_NAMES[int(number)]).casefold():
+            raise ValueError(f"Mississippi Title {number} label drifted: {label!r}")
+    return roots
+
+
+def grouped_get_acquisition_contract(urls: Sequence[str]) -> dict[str, Any]:
+    """Describe one ordered, same-domain plural GET wave."""
+
+    requested = [str(url or "").strip() for url in urls]
+    if not requested or any(not url for url in requested):
+        raise ValueError("Mississippi GET wave must contain non-empty source URLs")
+    if len(requested) != len(set(requested)):
+        raise ValueError("Mississippi GET wave repeated a source URL")
+    domains = {(urlparse(url).hostname or "").lower() for url in requested}
+    if "" in domains or len(domains) != 1:
+        raise ValueError("Mississippi GET wave must contain exactly one source domain")
+    return {
+        "schema_version": "mississippi-lexis-grouped-get-contract-v1",
+        "source_domain": domains.pop(),
+        "request_url_count": len(requested),
+        "request_urls_sha256": canonical_digest(requested),
+        "common_crawl_inventory_query_upper_bound": 1,
+        "wayback_prefix_inventory": True,
+        "group_warc_ranges_by_warc_filename": True,
+        "coalesce_compatible_warc_ranges": True,
+        "per_page_archive_inventory_loop": False,
+        "retry_residual_urls_only": True,
+    }
+
+
+def _remove_editorial_sections(soup: Any) -> None:
+    for selector in (
+        ".case-notes",
+        ".notes-to-decisions",
+        ".research-references",
+        ".editorial-notes",
+        "[data-component='case-notes']",
+        "[data-component='notes-to-decisions']",
+        "[data-component='research-references']",
+    ):
+        for node in soup.select(selector):
+            node.decompose()
+    for heading in list(soup.find_all(re.compile(r"^h[1-6]$"))):
+        if not _EDITORIAL_HEADING_RE.fullmatch(_clean(heading.get_text(" "))):
+            continue
+        level = int(str(heading.name)[1:])
+        cursor = heading.next_sibling
+        while cursor is not None:
+            following = cursor.next_sibling
+            name = str(getattr(cursor, "name", "") or "")
+            if re.fullmatch(r"h[1-6]", name) and int(name[1:]) <= level:
+                break
+            extract = getattr(cursor, "extract", None)
+            if callable(extract):
+                extract()
+            cursor = following
+        heading.decompose()
+
+
+def _section_number_from_body_value(value: object) -> str:
+    match = _PRIMARY_BODY_SECTION_RE.match(_clean(value))
+    if match is None:
+        return ""
+    number = str(match.group("number") or "")
+    return number if number.split("-", 1)[0] in EXPECTED_TITLE_NUMBERS else ""
+
+
+def _chapter_number(section_number: str) -> str:
+    parts = section_number.split("-")
+    return parts[1] if len(parts) >= 3 else ""
+
+
+def _catalog_terminal_disposition(value: object) -> str:
+    match = _CATALOG_TERMINAL_RE.search(_clean(value))
+    return str(match.group("kind") or "").casefold() if match else ""
+
+
+def _document_segments(content: Any, *, expected_section: str) -> tuple[list[tuple[str, Any]], str]:
+    scoped = list(content.select("[data-section-number]"))
+    if scoped:
+        segments: list[tuple[str, Any]] = []
+        seen: set[str] = set()
+        for element in scoped:
+            number = _section_number_from_body_value(
+                element.get("data-section-number") or ""
+            )
+            if not number or number in seen:
+                return [], "document contains a malformed or duplicate section boundary"
+            seen.add(number)
+            segments.append((number, element))
+        if expected_section and (
+            len(segments) != 1 or segments[0][0] != expected_section
+        ):
+            return [], "catalog document section identity does not match body boundaries"
+        return segments, ""
+
+    lines = [
+        _clean(line)
+        for line in content.get_text("\n", strip=True).splitlines()
+        if _clean(line)
+    ]
+    identities: list[str] = []
+    for line in lines:
+        number = _section_number_from_body_value(line)
+        if number and number not in identities:
+            identities.append(number)
+    if expected_section:
+        if not identities or identities[0] != expected_section:
+            return [], "catalog document section identity does not match body"
+        if len(identities) != 1:
+            return [], "single-section catalog document contains multiple body identities"
+        return [(expected_section, content)], ""
+    if len(identities) == 1:
+        return [(identities[0], content)], ""
+    if len(identities) > 1:
+        return [], "multi-section document lacks source-bound section containers"
+    return [], "document body did not establish a Mississippi section identity"
+
+
+def parse_mississippi_lexis_document_html(
+    html: str,
+    *,
+    source_url: str,
+    node: MississippiLexisNode,
+    source_order: int,
+    code_name: str = "Mississippi Code",
+) -> tuple[list[NormalizedStatute], dict[str, Any]]:
+    """Classify one retained content item as operative, terminal, or residual."""
+
+    residuals: list[dict[str, Any]] = []
+    terminals: list[dict[str, Any]] = []
+    statutes: list[NormalizedStatute] = []
+    canonical_url = document_page_url(node) if node.evidence_verified else ""
+    item_id = content_item_id(node.link_href)
+    if not canonical_url or source_url != canonical_url or not item_id:
+        residuals.append(
+            {
+                "reason": "document_url_does_not_match_catalog_content_item",
+                "source_url": source_url,
+            }
+        )
+    elif _BLOCKED_RE.search(str(html or "")):
+        residuals.append(
+            {"reason": "lexis_access_or_search_shell", "source_url": source_url}
+        )
+    else:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError as exc:  # pragma: no cover - production dependency
+            raise RuntimeError("BeautifulSoup is required for Mississippi Lexis parsing") from exc
+        soup = BeautifulSoup(str(html or ""), "html.parser")
+        for tag in soup(
+            [
+                "script",
+                "style",
+                "nav",
+                "header",
+                "footer",
+                "noscript",
+                "form",
+                "button",
+                "aside",
+            ]
+        ):
+            tag.decompose()
+        content = (
+            soup.select_one("[data-document-content]")
+            or soup.select_one("#document-content")
+            or soup.select_one(".document-content")
+            or soup.find("main")
+            or soup.find("article")
+        )
+        if content is None:
+            residuals.append(
+                {
+                    "reason": "document_content_container_missing",
+                    "source_url": source_url,
+                }
+            )
+        else:
+            _remove_editorial_sections(content)
+            segments, segment_error = _document_segments(
+                content,
+                expected_section=node.section_number or "",
+            )
+            if segment_error:
+                residuals.append(
+                    {"reason": segment_error, "source_url": source_url}
+                )
+            for member_order, (section_number, segment) in enumerate(segments):
+                lines = [
+                    _clean(line)
+                    for line in segment.get_text("\n", strip=True).splitlines()
+                    if _clean(line)
+                ]
+                text = "\n".join(lines)
+                nonidentity_lines = [
+                    line for line in lines if section_number not in line
+                ]
+                terminal_match = next(
+                    (
+                        match
+                        for line in nonidentity_lines[:8]
+                        if (match := _BODY_TERMINAL_RE.match(line))
+                    ),
+                    None,
+                )
+                body_terminal = (
+                    str(terminal_match.group("kind") or "").casefold()
+                    if terminal_match
+                    else ""
+                )
+                catalog_terminal = _catalog_terminal_disposition(node.title)
+                if body_terminal:
+                    if catalog_terminal and body_terminal != catalog_terminal:
+                        residuals.append(
+                            {
+                                "body_disposition": body_terminal,
+                                "catalog_disposition": catalog_terminal,
+                                "reason": "catalog_and_body_terminal_dispositions_conflict",
+                                "source_url": source_url,
+                            }
+                        )
+                        continue
+                    terminals.append(
+                        {
+                            "catalog_node_id": node.node_id,
+                            "content_item_id": item_id,
+                            "disposition": body_terminal,
+                            "section_number": section_number,
+                            "source_order": int(source_order),
+                            "source_url": source_url,
+                        }
+                    )
+                    continue
+                if catalog_terminal:
+                    residuals.append(
+                        {
+                            "catalog_disposition": catalog_terminal,
+                            "reason": "catalog_terminal_not_confirmed_by_document_body",
+                            "source_url": source_url,
+                        }
+                    )
+                    continue
+                if not text:
+                    residuals.append(
+                        {"reason": "empty_unclassified_document", "source_url": source_url}
+                    )
+                    continue
+                caption = _clean(node.title)
+                caption = re.sub(
+                    rf"^\s*§+\s*{re.escape(section_number)}\s*[.\-\u2013\u2014:]*\s*",
+                    "",
+                    caption,
+                    count=1,
+                    flags=re.IGNORECASE,
+                ).strip(" .-\u2013\u2014:")
+                marker_source = "\n".join([node.title, *lines[:20]])
+                temporal_markers = list(
+                    dict.fromkeys(
+                        _clean(match.group(0))
+                        for match in _TEMPORAL_MARKER_RE.finditer(marker_source)
+                    )
+                )
+                canonical_key = (
+                    f"ms:{section_number.casefold()}:content-{item_id.casefold()}"
+                )
+                statutes.append(
+                    NormalizedStatute(
+                        state_code="MS",
+                        state_name="Mississippi",
+                        statute_id=(
+                            f"{code_name} § {section_number} [content {item_id}]"
+                        ),
+                        code_name=code_name,
+                        title_number=section_number.split("-", 1)[0],
+                        chapter_number=_chapter_number(section_number),
+                        section_number=section_number,
+                        section_name=(caption or f"Section {section_number}")[:200],
+                        full_text=text,
+                        source_url=source_url,
+                        official_cite=f"Miss. Code Ann. § {section_number}",
+                        metadata=StatuteMetadata(),
+                        structured_data={
+                            "canonical_section_key": canonical_key,
+                            "catalog_node_id": node.node_id,
+                            "catalog_node_path": node.node_path,
+                            "content_item_id": item_id,
+                            "discovery_method": "strict_delegated_lexis_content_item",
+                            "document_member_order": member_order,
+                            "skip_hydrate": True,
+                            "source_authority_class": "official",
+                            "source_kind": "official_delegated_mississippi_lexis_code",
+                            "source_order": int(source_order),
+                            "source_temporal_markers": temporal_markers,
+                            "strict_source_closure": True,
+                        },
+                    )
+                )
+
+    report = {
+        "closed": bool(statutes or terminals) and not residuals,
+        "content_item_id": item_id,
+        "operative_sections": len(statutes),
+        "parser_residuals": residuals,
+        "section_numbers": [str(row.section_number or "") for row in statutes]
+        + [str(row.get("section_number") or "") for row in terminals],
+        "source_order": int(source_order),
+        "source_url": source_url,
+        "terminal_dispositions": terminals,
+        "terminal_sections": len(terminals),
+    }
+    return statutes, report
+
+
+def _marker_date(value: str) -> date | None:
+    match = _MONTH_DATE_RE.search(value)
+    if match is None:
+        return None
+    try:
+        month = {
+            name.casefold(): number
+            for number, name in enumerate(
+                (
+                    "January",
+                    "February",
+                    "March",
+                    "April",
+                    "May",
+                    "June",
+                    "July",
+                    "August",
+                    "September",
+                    "October",
+                    "November",
+                    "December",
+                ),
+                start=1,
+            )
+        }[str(match.group("month")).casefold()]
+        return date(
+            int(match.group("year")),
+            month,
+            int(match.group("day")),
+        )
+    except (KeyError, ValueError):
+        return None
+
+
+def _temporal_marker_state(markers: Sequence[str], observed: date) -> str:
+    constraints: list[bool] = []
+    for marker in markers:
+        boundary = _marker_date(str(marker))
+        if boundary is None:
+            continue
+        lowered = _clean(marker).casefold()
+        if "effective until" in lowered or "repealed effective" in lowered or re.search(
+            r"\bexpires?\b", lowered
+        ):
+            constraints.append(observed < boundary)
+        elif "effective through" in lowered:
+            constraints.append(observed <= boundary)
+        elif "effective" in lowered:
+            constraints.append(observed >= boundary)
+    if not constraints:
+        return "unknown"
+    return "active" if all(constraints) else "inactive"
+
+
+def reconcile_temporal_variants(
+    rows: Sequence[NormalizedStatute],
+    *,
+    observed_at: str,
+) -> tuple[list[NormalizedStatute], list[dict[str, Any]], list[dict[str, Any]]]:
+    """Resolve only duplicate citations whose retained temporal proof is complete."""
+
+    try:
+        observed_value = datetime.fromisoformat(str(observed_at or ""))
+    except ValueError as exc:
+        raise ValueError("Mississippi temporal reconciliation requires an ISO observation") from exc
+    if observed_value.tzinfo is None or observed_value.utcoffset() is None:
+        raise ValueError("Mississippi temporal reconciliation requires a zoned observation")
+    observed = observed_value.date()
+    by_citation: dict[str, list[NormalizedStatute]] = {}
+    for row in rows:
+        citation = str(row.section_number or "").strip().casefold()
+        if citation:
+            by_citation.setdefault(citation, []).append(row)
+    excluded_ids: set[int] = set()
+    exclusions: list[dict[str, Any]] = []
+    residuals: list[dict[str, Any]] = []
+    for citation, variants in by_citation.items():
+        if len(variants) < 2:
+            continue
+        candidates: list[dict[str, Any]] = []
+        active: list[NormalizedStatute] = []
+        complete = True
+        for row in variants:
+            markers = list(
+                (row.structured_data or {}).get("source_temporal_markers") or []
+            )
+            state = _temporal_marker_state(markers, observed)
+            complete = complete and state != "unknown"
+            if state == "active":
+                active.append(row)
+            candidates.append(
+                {
+                    "canonical_section_key": str(
+                        (row.structured_data or {}).get("canonical_section_key") or ""
+                    ),
+                    "content_item_id": str(
+                        (row.structured_data or {}).get("content_item_id") or ""
+                    ),
+                    "source_order": int(
+                        (row.structured_data or {}).get("source_order") or 0
+                    ),
+                    "source_temporal_markers": markers,
+                    "source_url": row.source_url,
+                    "temporal_state": state,
+                }
+            )
+        if complete and len(active) == 1:
+            winner = active[0]
+            for row, candidate in zip(variants, candidates, strict=True):
+                if row is winner:
+                    continue
+                excluded_ids.add(id(row))
+                exclusions.append(
+                    {
+                        **candidate,
+                        "disposition": "superseded_temporal_variant",
+                        "section_number": citation,
+                    }
+                )
+            continue
+        residuals.append(
+            {
+                "candidate_count": len(variants),
+                "candidates": candidates,
+                "reason": "repeated_citation_requires_source_bound_temporal_reconciliation",
+                "section_number": citation,
+            }
+        )
+    kept = [row for row in rows if id(row) not in excluded_ids]
+    return kept, exclusions, residuals
 
 
 def grouped_body_acquisition_contract(
@@ -824,6 +1551,155 @@ def grouped_body_acquisition_contract(
         "per_page_archive_inventory_loop": False,
         "retry_residual_urls_only": True,
         "full_corpus_admissible": False,
+    }
+
+
+def derive_exact_metadata_frontier(
+    roots: Sequence[MississippiLexisNode],
+    *,
+    subtrees_by_root_id: Mapping[str, Sequence[MississippiLexisNode]],
+) -> dict[str, Any]:
+    """Close one retained root/PATCH hierarchy and derive its body membership."""
+
+    root_error = root_membership_error(roots)
+    if root_error:
+        raise ValueError(f"Mississippi source roots did not close: {root_error}")
+    if tuple(subtrees_by_root_id) != EXPECTED_ROOT_NODE_IDS:
+        raise ValueError("Mississippi subtree responses changed root order or membership")
+    if not all(node.evidence_verified for node in roots):
+        raise ValueError("Mississippi source roots lack retained evidence binding")
+
+    all_nodes: list[MississippiLexisNode] = list(roots)
+    descendants: list[MississippiLexisNode] = []
+    seen_ids = {node.node_id for node in roots}
+    seen_paths = {node.node_path for node in roots}
+    seen_hrefs: set[str] = set()
+    for root in roots:
+        members = list(subtrees_by_root_id.get(root.node_id) or ())
+        if not members or not all(node.evidence_verified for node in members):
+            raise ValueError(
+                f"Mississippi root {root.node_id} lacks a retained complete subtree"
+            )
+        for node in members:
+            if node.node_id in seen_ids or node.node_path in seen_paths:
+                raise ValueError("Mississippi hierarchy reused a node identity or path")
+            if node.link_href and node.link_href in seen_hrefs:
+                raise ValueError("Mississippi hierarchy reused a document locator")
+            seen_ids.add(node.node_id)
+            seen_paths.add(node.node_path)
+            if node.link_href:
+                seen_hrefs.add(node.link_href)
+        descendants.extend(members)
+        all_nodes.extend(members)
+
+    catalog_nodes = [
+        node for node in descendants if document_disposition(node) != "not_document"
+    ]
+    document_locators = [node for node in catalog_nodes if node.is_document_locator]
+    dispositions: dict[str, int] = {}
+    for node in descendants:
+        disposition = document_disposition(node)
+        if disposition != "not_document":
+            dispositions[disposition] = dispositions.get(disposition, 0) + 1
+    contract = grouped_body_acquisition_contract(catalog_nodes)
+    body_dispositions = {
+        "current_section_candidate",
+        "current_section_collection_candidate",
+        "recent_legislation_identity_residual",
+        "untyped_current_document_residual",
+    }
+    document_nodes = [
+        node
+        for node in sorted(catalog_nodes, key=lambda item: item.node_path)
+        if document_disposition(node) in body_dispositions
+    ]
+    current_section_nodes = [
+        node
+        for node in document_nodes
+        if document_disposition(node) == "current_section_candidate"
+    ]
+    citation_counts: dict[str, int] = {}
+    for node in current_section_nodes:
+        if node.section_number:
+            citation_counts[node.section_number] = (
+                citation_counts.get(node.section_number, 0) + 1
+            )
+    repeated = {
+        citation: count for citation, count in citation_counts.items() if count > 1
+    }
+    return {
+        "all_node_count": len(all_nodes),
+        "all_node_semantic_sha256": canonical_node_digest(all_nodes),
+        "body_request_count": int(contract["request_url_count"]),
+        "body_request_url_sha256": canonical_digest(contract["request_urls"]),
+        "catalog_exclusion_count": int(contract["exclusion_count"]),
+        "descendant_node_count": len(descendants),
+        "document_like_node_count": len(catalog_nodes),
+        "document_locator_count": len(document_locators),
+        "document_nodes": document_nodes,
+        "document_disposition_counts": dict(sorted(dispositions.items())),
+        "extra_variant_locator_count": sum(count - 1 for count in repeated.values()),
+        "repeated_section_identity_count": len(repeated),
+        "root_count": len(roots),
+        "root_semantic_sha256": canonical_node_digest(roots),
+        "subtree_response_count": len(subtrees_by_root_id),
+    }
+
+
+def observed_metadata_drift(metadata: Mapping[str, Any]) -> dict[str, Any]:
+    """Compare one retained hierarchy with the reviewed diagnostic algebra."""
+
+    dispositions = dict(metadata.get("document_disposition_counts") or {})
+    expected = {
+        "descendant_node_count": OBSERVED_DESCENDANT_NODE_COUNT,
+        "current_section_candidate": OBSERVED_CURRENT_SECTION_CANDIDATE_COUNT,
+        "current_section_collection_candidate": OBSERVED_CURRENT_COLLECTION_COUNT,
+        "untyped_current_document_residual": OBSERVED_UNTYPED_CURRENT_COUNT,
+        "recent_legislation_identity_residual": (
+            OBSERVED_RECENT_LEGISLATION_LOCATOR_COUNT
+        ),
+        "future_effectiveness_excluded": OBSERVED_FUTURE_EFFECTIVENESS_COUNT,
+        "future_structural_placeholder": OBSERVED_FUTURE_PLACEHOLDER_COUNT,
+        "publisher_editorial_structure_excluded": (
+            OBSERVED_EDITORIAL_STRUCTURE_COUNT
+        ),
+        "repeated_section_identity_count": OBSERVED_REPEATED_SECTION_IDENTITY_COUNT,
+        "extra_variant_locator_count": OBSERVED_EXTRA_VARIANT_LOCATOR_COUNT,
+    }
+    observed = {
+        "descendant_node_count": int(metadata.get("descendant_node_count") or 0),
+        "current_section_candidate": dispositions.get(
+            "current_section_candidate", 0
+        ),
+        "current_section_collection_candidate": dispositions.get(
+            "current_section_collection_candidate", 0
+        ),
+        "untyped_current_document_residual": dispositions.get(
+            "untyped_current_document_residual", 0
+        ),
+        "recent_legislation_identity_residual": dispositions.get(
+            "recent_legislation_identity_residual", 0
+        ),
+        "future_effectiveness_excluded": dispositions.get(
+            "future_effectiveness_excluded", 0
+        ),
+        "future_structural_placeholder": dispositions.get(
+            "future_structural_placeholder", 0
+        ),
+        "publisher_editorial_structure_excluded": dispositions.get(
+            "publisher_editorial_structure_excluded", 0
+        ),
+        "repeated_section_identity_count": int(
+            metadata.get("repeated_section_identity_count") or 0
+        ),
+        "extra_variant_locator_count": int(
+            metadata.get("extra_variant_locator_count") or 0
+        ),
+    }
+    return {
+        key: {"expected": expected_value, "observed": observed[key]}
+        for key, expected_value in expected.items()
+        if observed[key] != expected_value
     }
 
 
@@ -1148,6 +2024,7 @@ async def discover_live_inventory(
     timeout_ms: int = 60_000,
     require_enabled: bool = True,
     evidence_dir: str | Path | None = None,
+    retain_parser_input: Callable[..., None] | None = None,
 ) -> MississippiLexisInventory:
     """Fetch only the exact rendered root and 51 complete TOC subtrees."""
 
@@ -1200,7 +2077,7 @@ async def discover_live_inventory(
                     locale="en-US",
                 )
                 page = await context.new_page()
-                await page.goto(
+                navigation = await page.goto(
                     PUBLIC_CONTAINER_URL,
                     wait_until="domcontentloaded",
                     timeout=timeout,
@@ -1212,6 +2089,21 @@ async def discover_live_inventory(
                 html = str(await page.content() or "")
                 root_bytes = html.encode("utf-8")
                 root_hash = hashlib.sha256(root_bytes).hexdigest()
+                response_status = int(getattr(navigation, "status", 0) or 0)
+                if response_status != 200:
+                    raise RuntimeError(
+                        "Mississippi rendered root returned HTTP "
+                        f"{response_status or 'unknown'}"
+                    )
+                if retain_parser_input is not None:
+                    retain_parser_input(
+                        body=root_bytes,
+                        media_type="text/html",
+                        observed_at=observed_at,
+                        official_url=PUBLIC_CONTAINER_URL,
+                        response_status=response_status,
+                        sanitized_request=canonical_rendered_root_request(),
+                    )
                 root_path = _retain_live_evidence_path(
                     evidence_root,
                     relative=f"root-rendered-{root_hash}.html",
@@ -1312,6 +2204,22 @@ async def discover_live_inventory(
                                 parent.node_id,
                                 target_level=target_level,
                             )
+                            (
+                                canonical_endpoint,
+                                request_body,
+                                sanitized_request,
+                            ) = (
+                                canonical_toc_patch_request(parent)
+                            )
+                            if (
+                                canonical_endpoint != endpoint
+                                or _canonical_json_bytes(patch_body) != request_body
+                                or max(parent.open_to_levels) != target_level
+                            ):
+                                diagnostics.append(
+                                    f"root {parent.node_id} target-level identity drifted"
+                                )
+                                break
                             result, request_error = await _live_toc_patch_with_retries(
                                 page,
                                 endpoint=endpoint,
@@ -1327,6 +2235,15 @@ async def discover_live_inventory(
                             response_text = str(result.get("text") or "")
                             response_bytes = response_text.encode("utf-8")
                             response_hash = hashlib.sha256(response_bytes).hexdigest()
+                            if retain_parser_input is not None:
+                                retain_parser_input(
+                                    body=response_bytes,
+                                    media_type="application/json",
+                                    observed_at=observed_at,
+                                    official_url=endpoint,
+                                    response_status=int(result.get("status") or 0),
+                                    sanitized_request=sanitized_request,
+                                )
                             retained_path = _retain_live_evidence_path(
                                 evidence_root,
                                 relative=(

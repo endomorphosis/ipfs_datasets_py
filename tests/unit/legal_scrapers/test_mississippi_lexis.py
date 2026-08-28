@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from dataclasses import replace
 
 import pytest
@@ -17,15 +18,24 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.mississippi_lexis
     MississippiLexisNode,
     _bind_live_nodes,
     canonical_node_digest,
+    canonical_rendered_root_request,
+    canonical_toc_patch_request,
     container_url_matches,
     document_disposition,
     document_page_url,
     grouped_body_acquisition_contract,
+    grouped_get_acquisition_contract,
+    legislature_delegation_present,
     node_from_mapping,
+    parse_mississippi_lexis_document_html,
     parse_root_dom_rows,
+    parse_root_html,
     parse_title_subtree_payload,
+    publisher_container_delegation_present,
+    reconcile_temporal_variants,
     root_membership_error,
     toc_open_to_request,
+    valid_document_payload,
 )
 
 
@@ -317,3 +327,183 @@ def test_scraper_source_bundle_binds_mississippi_lexis() -> None:
     assert mississippi_lexis in dependencies
     with pytest.raises(RuntimeError, match="async delegated Lexis 51-root"):
         scraper.fetch_official("MS")
+
+
+def _strict_root_html() -> str:
+    labels = [
+        mississippi_lexis.RECENT_LEGISLATION_ROOT_LABEL,
+        *(
+            f"TITLE {number}. {mississippi_lexis.EXPECTED_TITLE_NAMES[int(number)]}"
+            for number in EXPECTED_TITLE_NUMBERS
+        ),
+    ]
+    members = "".join(
+        (
+            f'<li class="js-node" data-nodeid="{node_id}" '
+            f'data-nodepath="/ROOT/{node_id}" data-level="1" '
+            f'data-title="{label}" data-canexpand="true" '
+            'data-canopen="false" data-haschildren="true">'
+            '<div class="js-node-header">'
+            '<button data-command="open-to" data-targetlevel="3"></button>'
+            '<button data-command="open-to" data-targetlevel="4"></button>'
+            "</div></li>"
+        )
+        for node_id, label in zip(EXPECTED_ROOT_NODE_IDS, labels, strict=True)
+    )
+    return (
+        "<html><body><p>Mississippi Code Of 1972 Unannotated - Free Public "
+        f"Access maintained by LexisNexis</p><ul>{members}</ul></body></html>"
+    )
+
+
+def test_retained_root_derives_exact_patch_identity_and_rejects_drift() -> None:
+    roots = parse_root_html(_strict_root_html())
+
+    assert tuple(node.node_id for node in roots) == EXPECTED_ROOT_NODE_IDS
+    assert all(node.open_to_levels == (3, 4) for node in roots)
+    endpoint, request_body, request = canonical_toc_patch_request(roots[0])
+    assert endpoint.endswith("/r/tocprovider/6gf5kkk/toc/6gf5kkk")
+    assert request["method"] == "PATCH"
+    assert request["request_body_length"] == len(request_body)
+    assert request["request_body_sha256"] == hashlib.sha256(request_body).hexdigest()
+    assert canonical_rendered_root_request()["method"] == "GET"
+
+    drifted = _strict_root_html().replace(
+        "TITLE 1. Laws and Statutes", "TITLE 1. Invented label", 1
+    )
+    with pytest.raises(ValueError, match="Title 1 label drifted"):
+        parse_root_html(drifted)
+
+
+def test_authority_and_grouped_get_contracts_fail_closed() -> None:
+    legislature = (
+        f"<html><a href='{mississippi_lexis.PUBLIC_ENTRY_URL}'>"
+        "Mississippi Code of 1972</a></html>"
+    )
+    publisher = (
+        "<html><a href='https://advance.lexis.com/container?config="
+        f"{PUBLIC_CONTAINER_CONFIG}'>continue</a></html>"
+    )
+    assert legislature_delegation_present(legislature)
+    assert publisher_container_delegation_present(publisher)
+    assert not legislature_delegation_present("<html>captcha</html>")
+
+    urls = [document_page_url(_node(
+        node_id="GETDOC1",
+        title="§ 1-1-1. One.",
+        node_path="/ROOT/AAC/GETDOC1",
+        link_href=(
+            "/shared/document/statutes-legislation/"
+            "urn:contentItem:6J6W-9RN3-RS74-T55S-00008-00"
+        ),
+    ))]
+    contract = grouped_get_acquisition_contract(urls)
+    assert contract["common_crawl_inventory_query_upper_bound"] == 1
+    assert contract["per_page_archive_inventory_loop"] is False
+    with pytest.raises(ValueError, match="repeated"):
+        grouped_get_acquisition_contract([*urls, *urls])
+
+
+def test_body_parser_handles_section_collection_recent_and_editorial_removal() -> None:
+    section = _node(
+        node_id="BODYDOC1",
+        title="§ 1-1-1. Test section. Effective July 1, 2026.",
+        node_path="/ROOT/AAC/BODYDOC1",
+        link_href=(
+            "/shared/document/statutes-legislation/"
+            "urn:contentItem:6J6W-9RN3-RS74-T55S-00008-00"
+        ),
+    )
+    source_url = document_page_url(section)
+    html = """
+    <html><main data-document-content>
+      <h1>§ 1-1-1. Test section.</h1>
+      <p>Effective July 1, 2026. The operative public-law text.</p>
+      <h2>Case Notes</h2><p>Publisher editorial material.</p>
+    </main></html>
+    """
+    rows, report = parse_mississippi_lexis_document_html(
+        html,
+        source_url=source_url,
+        node=section,
+        source_order=7,
+    )
+    assert report["closed"] is True
+    assert len(rows) == 1
+    assert rows[0].section_number == "1-1-1"
+    assert "Publisher editorial" not in rows[0].full_text
+    assert rows[0].structured_data["source_temporal_markers"]
+    assert valid_document_payload(html.encode())
+    assert not valid_document_payload(b"<html>robot validation</html>")
+
+    collection = _node(
+        node_id="COLLDOC1",
+        title="§§ Selected provisions.",
+        node_path="/ROOT/AAC/COLLDOC1",
+        link_href=(
+            "/shared/document/statutes-legislation/"
+            "urn:contentItem:6J6W-9RN3-RS74-T55S-00009-00"
+        ),
+    )
+    collection_html = """
+    <html><main data-document-content>
+      <section data-section-number="1-1-3"><h2>§ 1-1-3. Three.</h2><p>Text three.</p></section>
+      <section data-section-number="1-1-5"><h2>§ 1-1-5. Five.</h2><p>Text five.</p></section>
+    </main></html>
+    """
+    collection_rows, collection_report = parse_mississippi_lexis_document_html(
+        collection_html,
+        source_url=document_page_url(collection),
+        node=collection,
+        source_order=8,
+    )
+    assert collection_report["closed"] is True
+    assert [row.section_number for row in collection_rows] == ["1-1-3", "1-1-5"]
+
+
+def test_temporal_reconciliation_selects_only_fully_proved_active_variant() -> None:
+    older = _node(
+        node_id="OLDER1",
+        title="§ 1-1-7. Effective until July 1, 2026.",
+        node_path="/ROOT/AAC/OLDER1",
+        link_href=(
+            "/shared/document/statutes-legislation/"
+            "urn:contentItem:6J6W-9RN3-RS74-T55S-00010-00"
+        ),
+    )
+    newer = _node(
+        node_id="NEWER1",
+        title="§ 1-1-7. Effective July 1, 2026.",
+        node_path="/ROOT/AAC/NEWER1",
+        link_href=(
+            "/shared/document/statutes-legislation/"
+            "urn:contentItem:6J6W-9RN3-RS74-T55S-00011-00"
+        ),
+    )
+    parsed = []
+    for order, node in enumerate((older, newer)):
+        rows, report = parse_mississippi_lexis_document_html(
+            "<html><main data-document-content><h1>§ 1-1-7. Test.</h1>"
+            f"<p>{node.title}</p></main></html>",
+            source_url=document_page_url(node),
+            node=node,
+            source_order=order,
+        )
+        assert report["closed"] is True
+        parsed.extend(rows)
+
+    kept, exclusions, residuals = reconcile_temporal_variants(
+        parsed,
+        observed_at="2026-08-26T12:00:00+00:00",
+    )
+    assert len(kept) == 1
+    assert kept[0].structured_data["content_item_id"].endswith("00011-00")
+    assert exclusions[0]["disposition"] == "superseded_temporal_variant"
+    assert residuals == []
+
+    parsed[1].structured_data["source_temporal_markers"] = []
+    _kept, _exclusions, residuals = reconcile_temporal_variants(
+        parsed,
+        observed_at="2026-08-26T12:00:00+00:00",
+    )
+    assert residuals[0]["reason"].startswith("repeated_citation_requires")
