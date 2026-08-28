@@ -661,13 +661,25 @@ class KansasScraper(BaseStateScraper):
         ledger = getattr(self, "_state_law_acquisition_ledger", None)
         if ledger is None:
             raise RuntimeError("Kansas retained replay requires an attached ledger")
+        from ...legal_data.state_laws_multifetch_acquisition import (
+            StateLawRetainedReplayOnlyError,
+        )
+
         payloads: List[bytes] = []
         for source_url in urls:
             url = self._canonical_fetch_url(source_url)
-            retained = ledger.replay_retained_parser_input(
-                official_url=url,
-                sanitized_request=self._official_sanitized_request(url),
-            )
+            try:
+                retained = ledger.replay_retained_parser_input(
+                    official_url=url,
+                    sanitized_request=self._official_sanitized_request(url),
+                )
+            except StateLawRetainedReplayOnlyError:
+                # Historical plural crawls retained a bounded subset of the
+                # hierarchy under the exact headerless GET identity.  A
+                # retained-only ledger raises on the canonical-identity miss
+                # instead of returning ``None``; that miss must not make the
+                # already-retained headerless fallback unreachable.
+                retained = None
             if retained is None:
                 retained = ledger.replay_retained_parser_input(
                     official_url=url,

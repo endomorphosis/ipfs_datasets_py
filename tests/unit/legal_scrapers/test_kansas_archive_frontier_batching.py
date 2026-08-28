@@ -465,6 +465,35 @@ async def test_kansas_partition_replays_exact_dual_and_headerless_identities_wit
     )
 
 
+def test_kansas_retained_only_closure_reaches_headerless_identity(tmp_path) -> None:
+    scraper = KansasScraper("KS", "Kansas")
+    ledger = StateLawMultiFetchAcquisitionLedger(
+        tmp_path / "evidence",
+        jurisdiction="KS",
+        parser_name=type(scraper).__name__,
+    )
+    url = CHAPTER_URLS[0]
+    body = b"retained historical headerless Kansas chapter"
+    ledger.retain_parser_input(
+        official_url=url,
+        body=body,
+        transport_receipt={
+            "content_sha256": hashlib.sha256(body).hexdigest(),
+            "official_url": url,
+            "source_transport": "direct",
+        },
+        retrieved_at="2026-08-25T07:25:00Z",
+        sanitized_request={"method": "GET", "url": url},
+    )
+    ledger.retained_replay_only = True
+    scraper.attach_state_law_acquisition_ledger(ledger)
+
+    assert scraper._replay_kansas_retained_inputs(
+        [url],
+        frontier_name="chapter-pages",
+    ) == [body]
+
+
 @pytest.mark.anyio
 async def test_kansas_unbounded_empty_root_fails_closed(
     monkeypatch: pytest.MonkeyPatch,
