@@ -25,6 +25,8 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.hawaii_section im
     HAWAII_EXPECTED_OPERATIVE_SECTION_COUNT,
     HAWAII_EXPECTED_OPERATIVE_SECTION_INVENTORY_SHA256,
     HAWAII_EXPECTED_TOTAL_SECTION_LOCATOR_COUNT,
+    canonicalize_official_hawaii_url,
+    find_next_link,
     is_source_bound_nonoperative_hawaii_section_html,
     is_source_bound_operative_hawaii_statute,
     nonoperative_chapter_marker_url,
@@ -166,6 +168,29 @@ def test_hawaii_uses_official_static_data_host() -> None:
 )
 def test_hawaii_decodes_every_official_filename_family(url: str, expected: str) -> None:
     assert section_number_from_url(url) == expected
+
+
+def test_hawaii_canonicalizes_raw_bracket_locator_without_double_encoding() -> None:
+    raw = (
+        "https://data.capitol.hawaii.gov/hrscurrent/Vol09_Ch0431-0435H/"
+        "HRS0431/HRS_0431-0009A-0101_[OLD].htm"
+    )
+    encoded = raw.replace("[OLD]", "%5BOLD%5D")
+
+    assert canonicalize_official_hawaii_url(raw) == encoded
+    assert canonicalize_official_hawaii_url(encoded) == encoded
+    assert section_number_from_url(encoded) == "431:9A-101"
+    assert find_next_link(
+        f"<a href='{raw.rsplit('/', 1)[-1]}'>Next</a>",
+        current_url=raw.rsplit("/", 1)[0] + "/HRS_0431-0009A-0100.htm",
+    ) == encoded
+
+    scraper = HawaiiScraper("HI", "Hawaii")
+    assert scraper._links_from_html(
+        raw.rsplit("/", 1)[0] + "/",
+        f"<a href='{raw.rsplit('/', 1)[-1]}'>Article 9A [OLD]</a>",
+        scraper._LIVE_SECTION_RE,
+    ) == [(encoded, "Article 9A [OLD]")]
 
 
 def test_hawaii_parser_skips_article_headings_keeps_complete_enacted_text() -> None:

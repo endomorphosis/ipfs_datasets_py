@@ -28,6 +28,7 @@ from .hawaii_section import (
     HAWAII_EXPECTED_OPERATIVE_SECTION_COUNT,
     HAWAII_EXPECTED_OPERATIVE_SECTION_INVENTORY_SHA256,
     HAWAII_EXPECTED_TOTAL_SECTION_LOCATOR_COUNT,
+    canonicalize_official_hawaii_url,
     is_source_bound_operative_hawaii_statute,
 )
 from .registry import StateScraperRegistry
@@ -68,8 +69,11 @@ class HawaiiScraper(BaseStateScraper):
         ("repealed", 362),
         ("reserved", 10),
     )
+    # Same exact 373 source-bound observations as the preceding inventory;
+    # the publisher's lone literal ``[OLD]`` path is represented by its
+    # transport-stable ``%5BOLD%5D`` URL identity.
     EXPECTED_NONOPERATIVE_SECTION_INVENTORY_SHA256 = (
-        "20c77e27b67e0fd6697152a7d0e532c62b06c93bf004e3ea80e281399d06b440"
+        "64b3446e0b029e554f1ef5461be9e150cdbef940a3f71a61ce57c88066252906"
     )
     MISSING_LINK_QUARANTINE_REASON = "missing_official_source_link"
     OFFICIAL_TITLES = (
@@ -1403,7 +1407,9 @@ class HawaiiScraper(BaseStateScraper):
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
         for anchor in soup.find_all("a", href=True):
-            href = urljoin(page_url, str(anchor.get("href") or "").strip())
+            href = canonicalize_official_hawaii_url(
+                urljoin(page_url, str(anchor.get("href") or "").strip())
+            )
             if not pattern.search(href):
                 continue
             normalized = href if href.endswith(".HTM") or href.endswith(".htm") else href.rstrip("/") + "/"

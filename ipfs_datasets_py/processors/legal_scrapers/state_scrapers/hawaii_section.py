@@ -13,7 +13,7 @@ import re
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Optional
-from urllib.parse import unquote, urljoin, urlsplit
+from urllib.parse import quote, unquote, urljoin, urlsplit, urlunsplit
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -77,6 +77,34 @@ _OFFICIAL_HAWAII_HOSTS = {
     "data.capitol.hawaii.gov",
     "www.capitol.hawaii.gov",
 }
+
+
+def canonicalize_official_hawaii_url(url: str) -> str:
+    """Percent-encode transport-unstable characters in official HRS links.
+
+    The current static publisher exposes one literal ``[OLD]`` filename in
+    its chapter index.  Browsers recover that locator, but the strict source
+    provenance contract correctly rejects raw square brackets.  Preserve the
+    publisher's exact path identity while making the URL transport-stable;
+    existing percent escapes remain untouched.
+    """
+
+    candidate = str(url or "").strip()
+    if not candidate:
+        return candidate
+    try:
+        parsed = urlsplit(candidate)
+    except ValueError:
+        return candidate
+    if (parsed.hostname or "").lower() not in _OFFICIAL_HAWAII_HOSTS:
+        return candidate
+    path = quote(parsed.path, safe="/%:@!$&'()*+,;=-._~")
+    query = quote(parsed.query, safe="=&?/%:@!$'()*+,;=-._~")
+    return urlunsplit(
+        (parsed.scheme, parsed.netloc, path, query, parsed.fragment)
+    )
+
+
 _SOURCE_BOUND_NONOPERATIVE_CHAPTER_SENTINELS = {
     (
         "https://data.capitol.hawaii.gov/hrscurrent/Vol02_Ch0046-0115/"
@@ -246,7 +274,7 @@ def find_next_link(html: str, *, current_url: str) -> Optional[str]:
         href = str(anchor.get("href") or "").strip()
         if not href:
             continue
-        return urljoin(current_url, href)
+        return canonicalize_official_hawaii_url(urljoin(current_url, href))
     return None
 
 
