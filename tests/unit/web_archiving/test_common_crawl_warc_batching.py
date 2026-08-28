@@ -6,6 +6,7 @@ import hashlib
 from types import SimpleNamespace
 
 import anyio
+import anyio.lowlevel
 import pytest
 
 from ipfs_datasets_py.processors.legal_data.state_laws_multifetch_acquisition import (
@@ -989,6 +990,81 @@ async def test_multifetch_direct_first_batches_only_live_misses_without_retrying
     assert result.stats["direct_initial_successes"] == 1
     assert result.stats["common_crawl_selected_pages"] == 2
     assert result.stats["common_crawl"]["range_fetches_avoided"] == 1
+
+
+@pytest.mark.anyio
+async def test_multifetch_direct_first_spaces_starts_without_serializing_fetches(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    urls = [
+        "https://codes.example.gov/title/1",
+        "https://codes.example.gov/title/2",
+        "https://codes.example.gov/title/3",
+    ]
+    clock = [100.0]
+    sleeps: list[float] = []
+    starts: list[tuple[str, float]] = []
+    active_fetches = 0
+    maximum_active_fetches = 0
+    all_started = anyio.Event()
+
+    def _direct(url: str) -> FetchResult:
+        return FetchResult(
+            url=url,
+            content=f"current:{url}".encode(),
+            source="direct",
+            fetched_at="2026-08-28T00:00:00Z",
+        )
+
+    async def _sleep(seconds: float) -> None:
+        sleeps.append(seconds)
+        clock[0] += seconds
+        await anyio.lowlevel.checkpoint()
+
+    async def _to_thread(function, *args, **kwargs):
+        nonlocal active_fetches, maximum_active_fetches
+        starts.append((str(args[0]), clock[0]))
+        active_fetches += 1
+        maximum_active_fetches = max(maximum_active_fetches, active_fetches)
+        if len(starts) == len(urls):
+            all_started.set()
+        await all_started.wait()
+        try:
+            return function(*args, **kwargs)
+        finally:
+            active_fetches -= 1
+
+    client = ArchivalFetchClient(
+        delay_seconds=0.25,
+        content_validator=lambda payload: bool(payload),
+        enable_common_crawl=False,
+    )
+    monkeypatch.setattr(client, "_fetch_direct", _direct)
+    monkeypatch.setattr(
+        state_archival_fetch,
+        "_monotonic_seconds",
+        lambda: clock[0],
+    )
+    monkeypatch.setattr(state_archival_fetch.asyncio, "sleep", _sleep)
+    monkeypatch.setattr(state_archival_fetch.asyncio, "to_thread", _to_thread)
+
+    with anyio.fail_after(2):
+        result = await client.fetch_many_with_fallback(
+            urls,
+            max_concurrency=3,
+            prefer_direct=True,
+        )
+
+    assert [started_at for _url, started_at in starts] == [100.0, 100.25, 100.5]
+    assert {url for url, _started_at in starts} == set(urls)
+    assert sleeps == [0.25, 0.25]
+    assert maximum_active_fetches == 3
+    assert [item.content for item in result.results if item is not None] == [
+        f"current:{url}".encode() for url in urls
+    ]
+    assert result.stats["direct_initial_requests"] == 3
+    assert result.stats["direct_initial_successes"] == 3
+    assert result.stats["direct_start_spacing_seconds"] == 0.25
 
 
 @pytest.mark.anyio

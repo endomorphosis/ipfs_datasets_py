@@ -83,6 +83,12 @@ def _env_float(name: str, default: float = 0.0) -> float:
         return float(default)
 
 
+def _monotonic_seconds() -> float:
+    """Return the local monotonic clock used for direct-start spacing."""
+
+    return time.monotonic()
+
+
 def _normalize_wayback_snapshot_url(url: str) -> str:
     """Return a canonical retained/replay locator without repairing aliases."""
 
@@ -695,6 +701,11 @@ class ArchivalFetchClient:
         successful result is transport-validated.  Production callers use this
         seam to durably admit parser inputs before the rest of a frontier can be
         interrupted; the callback does not alter final alignment or ordering.
+
+        In direct-first mode, a positive constructor ``delay_seconds`` value
+        is the minimum interval between direct request starts.  Only start
+        reservation is serialized; submitted requests continue concurrently
+        up to ``max_concurrency``.
         """
 
         requested = [str(url or "").strip() for url in urls]
@@ -736,7 +747,33 @@ class ArchivalFetchClient:
             for key, value in dict(request_headers or {}).items()
             if str(key).strip()
         }
+        direct_start_spacing_seconds = (
+            max(0.0, float(self.delay_seconds or 0.0))
+            if prefer_direct and self._enable_direct
+            else 0.0
+        )
+        direct_start_lock = asyncio.Lock()
+        last_direct_start_at: Optional[float] = None
         result_callbacks_emitted = 0
+
+        async def _space_direct_request_start() -> None:
+            """Space direct starts without holding the lock across network I/O."""
+
+            nonlocal last_direct_start_at
+            if direct_start_spacing_seconds <= 0.0:
+                return
+            async with direct_start_lock:
+                now = _monotonic_seconds()
+                if last_direct_start_at is not None:
+                    remaining = (
+                        last_direct_start_at
+                        + direct_start_spacing_seconds
+                        - now
+                    )
+                    if remaining > 0.0:
+                        await asyncio.sleep(remaining)
+                        now = _monotonic_seconds()
+                last_direct_start_at = now
 
         def _emit_result(url: str, result: FetchResult) -> None:
             nonlocal result_callbacks_emitted
@@ -799,6 +836,7 @@ class ArchivalFetchClient:
                 nonlocal direct_initial_successes
                 async with direct_semaphore:
                     for candidate in self._direct_candidate_urls(url):
+                        await _space_direct_request_start()
                         logger.info(
                             "archival_fetch stage=direct_batch start url=%s",
                             candidate,
@@ -1108,6 +1146,7 @@ class ArchivalFetchClient:
             ),
             "direct_initial_requests": direct_initial_requests,
             "direct_initial_successes": direct_initial_successes,
+            "direct_start_spacing_seconds": direct_start_spacing_seconds,
             "common_crawl_selected_pages": len(selected_pointer_requests),
             "common_crawl": common_crawl_stats,
             "wayback_inventory": wayback_inventory_stats,
