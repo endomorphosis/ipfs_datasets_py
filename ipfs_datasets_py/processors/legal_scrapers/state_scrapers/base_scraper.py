@@ -581,33 +581,12 @@ class _LoadedExecutableGraphProjector:
             # generation, or memoizes an already-proven correspondence result.
             if name == "__file__" and isinstance(value, str):
                 # ``__file__`` is executable context, but its checkout prefix
-                # is not producer behavior.  Bind the canonical module-relative
-                # locator so identical bytes loaded from two worktrees produce
-                # one content identity while an unexpected module/file pairing
-                # remains visible in the projection.
-                module_relative = global_namespace.replace(".", "/")
-                expected_suffixes = (
-                    f"{module_relative}.py",
-                    f"{module_relative}/__init__.py",
-                )
-                normalized_path = str(value).replace("\\", "/")
-                matched_suffix = next(
-                    (
-                        suffix
-                        for suffix in expected_suffixes
-                        if normalized_path.endswith(suffix)
-                    ),
-                    "",
-                )
-                projection = {
-                    "runtime_module_file": {
-                        "module": global_namespace,
-                        "module_relative_path": (
-                            matched_suffix or Path(normalized_path).name
-                        ),
-                        "module_relative_path_verified": bool(matched_suffix),
-                    }
-                }
+                # is not producer behavior.  The graph separately binds the
+                # canonical module reference and exact source bytes, so the
+                # filename is the only stable locator needed here.  This also
+                # keeps a script executed as ``__main__`` identical to the
+                # verifier's fresh canonical import of that same file.
+                projection = {"runtime_module_file": Path(value).name}
             elif name in {
                 "_MULTIFETCH_REQUEST_RESERVATIONS",
                 "_PARTIAL_CHECKPOINT_GENERATIONS",
