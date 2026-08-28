@@ -171,6 +171,34 @@ def _blank_range_cross_reference_html(
     """
 
 
+def _blank_range_cross_reference_33_1761_html() -> str:
+    """Relevant DOM preserved from the retained direct d=89411 response."""
+
+    return """
+    <form name="aspnetForm" method="post" action="./Law.aspx?d=89411"
+          id="aspnetForm">
+      <input type="submit" name="ctl00$PageBody$ButtonPrevious"
+             value=" &lt; " id="ctl00_PageBody_ButtonPrevious"
+             title="view previous" />
+      <span id="ctl00_PageBody_LabelName" class="title"
+            style="font-size:Large;">RS 33:1761</span>
+      <input type="submit" name="ctl00$PageBody$ButtonNext"
+             value=" &gt; " id="ctl00_PageBody_ButtonNext"
+             title="view next" />
+      <a id="ctl00_PageBody_linkPrint" title="Printable Version"
+         href="LawPrint.aspx?d=89411" target="_blank"></a>
+      <input type="hidden" name="ctl00$PageBody$HiddenDocId"
+             id="ctl00_PageBody_HiddenDocId" value="89411" />
+      <span id="ctl00_PageBody_LabelDocument">
+        <p align="center" class="A0001">PART V. &nbsp;MUNICIPAL OFFICERS</p>
+        <p align="center" class="A0001">SUBPART A. &nbsp;PENSION SYSTEM</p>
+        <p align="justify" class="A0002">&sect;1761. &nbsp;&sect;&sect;1761
+        to 1800 [Blank] &nbsp;See, now, R.S. 11:3841 to 3870.</p>
+      </span>
+    </form>
+    """
+
+
 def _act_section_suffix_redesignation_html(
     *,
     label: str = "RS 14:32.9",
@@ -1434,6 +1462,139 @@ def test_source_bound_blank_range_rejects_structure_or_text_drift(
         )
         is None
     )
+
+
+def test_source_bound_classifier_types_exact_bracketed_blank_range() -> None:
+    url = "https://legis.la.gov/legis/Law.aspx?d=89411"
+    evidence = louisiana_law._EXACT_BLANK_RANGE_CROSS_REFERENCE_OFFICIAL_LOCATORS[
+        url
+    ]
+    html = _blank_range_cross_reference_33_1761_html()
+
+    assert terminal_disposition_from_law_html(html) is None
+    assert (
+        source_bound_terminal_disposition_from_law_html(
+            html,
+            source_url=url,
+            content_sha256=evidence["content_sha256"],
+        )
+        == "blank_range_cross_reference"
+    )
+
+
+@pytest.mark.parametrize(
+    ("source_url", "content_sha256"),
+    [
+        (
+            "http://legis.la.gov/legis/Law.aspx?d=89411",
+            "1a33bc4caa6fdc6b3ccd57696a5271e8a56715356c4f1ae782444022e9ae6008",
+        ),
+        ("https://legis.la.gov/legis/Law.aspx?d=89411", "0" * 64),
+    ],
+)
+def test_source_bound_bracketed_blank_range_rejects_identity_drift(
+    source_url: str,
+    content_sha256: str,
+) -> None:
+    assert (
+        source_bound_terminal_disposition_from_law_html(
+            _blank_range_cross_reference_33_1761_html(),
+            source_url=source_url,
+            content_sha256=content_sha256,
+        )
+        is None
+    )
+
+
+@pytest.mark.parametrize(
+    "html",
+    [
+        _blank_range_cross_reference_33_1761_html().replace(
+            "RS 33:1761</span>", "RS 33:1762</span>"
+        ),
+        _blank_range_cross_reference_33_1761_html().replace(
+            'value="89411"', 'value="89412"'
+        ),
+        _blank_range_cross_reference_33_1761_html().replace(
+            "./Law.aspx?d=89411", "./Law.aspx?d=89412"
+        ),
+        _blank_range_cross_reference_33_1761_html().replace(
+            "LawPrint.aspx?d=89411", "LawPrint.aspx?d=89412"
+        ),
+        _blank_range_cross_reference_33_1761_html().replace(
+            "to 1800 [Blank]", "to 1801 [Blank]"
+        ),
+        _blank_range_cross_reference_33_1761_html().replace(
+            "R.S. 11:3841 to 3870", "R.S. 11:3841 to 3871"
+        ),
+        _blank_range_cross_reference_33_1761_html().replace(
+            'class="A0002"', 'class="A0003"'
+        ),
+        _blank_range_cross_reference_33_1761_html().replace(
+            'method="post"', 'method="get"'
+        ),
+    ],
+)
+def test_source_bound_bracketed_blank_range_rejects_dom_or_substance_drift(
+    html: str,
+) -> None:
+    url = "https://legis.la.gov/legis/Law.aspx?d=89411"
+    digest = louisiana_law._EXACT_BLANK_RANGE_CROSS_REFERENCE_OFFICIAL_LOCATORS[
+        url
+    ]["content_sha256"]
+    assert (
+        source_bound_terminal_disposition_from_law_html(
+            html,
+            source_url=url,
+            content_sha256=digest,
+        )
+        is None
+    )
+
+
+@pytest.mark.anyio
+async def test_strict_frontier_accepts_exact_bracketed_blank_range(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    url = "https://legis.la.gov/legis/Law.aspx?d=89411"
+    payload = _blank_range_cross_reference_33_1761_html().encode()
+    evidence = louisiana_law._EXACT_BLANK_RANGE_CROSS_REFERENCE_OFFICIAL_LOCATORS[
+        url
+    ]
+    monkeypatch.setitem(
+        evidence,
+        "content_sha256",
+        hashlib.sha256(payload).hexdigest(),
+    )
+
+    async def _frontier(_self, requested, **_kwargs):
+        return _batch_result(list(requested), {url: payload})
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(
+        LouisianaScraper,
+        "_fetch_page_contents_with_archival_fallback",
+        _frontier,
+    )
+    monkeypatch.setattr(
+        LouisianaScraper,
+        "_write_partial_checkpoint",
+        lambda *_args, **_kwargs: True,
+    )
+
+    scraper = LouisianaScraper("LA", "Louisiana")
+    rows = await scraper._scrape_law_page_urls(
+        code_name="Louisiana Revised Statutes",
+        law_urls=[url],
+        max_statutes=None,
+    )
+
+    assert rows == []
+    assert scraper._last_louisiana_full_frontier["closed"] is True
+    assert scraper._last_louisiana_full_frontier["law_pages_classified"] == 1
+    assert scraper._last_louisiana_full_frontier["terminal_disposition_counts"] == {
+        "blank_range_cross_reference": 1
+    }
 
 
 @pytest.mark.anyio

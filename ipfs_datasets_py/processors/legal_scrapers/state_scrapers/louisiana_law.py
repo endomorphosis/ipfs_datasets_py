@@ -287,7 +287,91 @@ _EXACT_BLANK_RANGE_CROSS_REFERENCE_OFFICIAL_LOCATORS = {
         ),
         "heading": "§§130.431-130.436 Blank. See R.S. 33:9083.",
         "disposition": "blank_range_cross_reference",
-    }
+    },
+    # The retained Title 33 page is likewise an editorial terminal: it marks
+    # the entire former municipal-officers pension range blank and points to
+    # the controlling Title 11 range.  Bind the bracketed/``See, now`` form to
+    # its exact direct-200 bytes and ASP.NET DOM instead of widening the
+    # generic blank grammar.
+    #
+    # * retained Law.aspx SHA-256:
+    #   1a33bc4caa6fdc6b3ccd57696a5271e8a56715356c4f1ae782444022e9ae6008
+    # * retained Law.aspx CID:
+    #   bafkreia2go6ezktp3rvtztkxnfvfe4piuvtrknlmj4nopaseiarotltaba
+    # * retained receipt SHA-256:
+    #   74086f02fb85121ee6d243967822aae8cc42d911ccdc4ab8f4b3b4be38746648
+    # * retained receipt CID:
+    #   bafkreidubbxqf64fciponusdsz4cfkxizrbnseom3rflr5ftws7dq5dgja
+    "https://legis.la.gov/legis/Law.aspx?d=89411": {
+        "content_sha256": (
+            "1a33bc4caa6fdc6b3ccd57696a5271e8a56715356c4f1ae782444022e9ae6008"
+        ),
+        "content_cid": (
+            "bafkreia2go6ezktp3rvtztkxnfvfe4piuvtrknlmj4nopaseiarotltaba"
+        ),
+        "receipt_sha256": (
+            "74086f02fb85121ee6d243967822aae8cc42d911ccdc4ab8f4b3b4be38746648"
+        ),
+        "receipt_cid": (
+            "bafkreidubbxqf64fciponusdsz4cfkxizrbnseom3rflr5ftws7dq5dgja"
+        ),
+        "label": "RS 33:1761",
+        "label_class": ["title"],
+        "label_style": "font-size:Large;",
+        "document_id": "89411",
+        "form_action": "./Law.aspx?d=89411",
+        "form_method": "post",
+        "form_name": "aspnetForm",
+        "print_href": "LawPrint.aspx?d=89411",
+        "print_target": "_blank",
+        "print_title": "Printable Version",
+        "previous_button": {
+            "name": "ctl00$PageBody$ButtonPrevious",
+            "title": "view previous",
+            "type": "submit",
+            "value": " < ",
+        },
+        "next_button": {
+            "name": "ctl00$PageBody$ButtonNext",
+            "title": "view next",
+            "type": "submit",
+            "value": " > ",
+        },
+        "document_elements": [
+            {
+                "name": "p",
+                "attributes": {"align": "center", "class": ["A0001"]},
+                "text": "PART V. MUNICIPAL OFFICERS",
+            },
+            {
+                "name": "p",
+                "attributes": {"align": "center", "class": ["A0001"]},
+                "text": "SUBPART A. PENSION SYSTEM",
+            },
+            {
+                "name": "p",
+                "attributes": {"align": "justify", "class": ["A0002"]},
+                "text": (
+                    "§1761. §§1761 to 1800 [Blank] See, now, R.S. "
+                    "11:3841 to 3870."
+                ),
+            },
+        ],
+        "document_blocks": [
+            "PART V. MUNICIPAL OFFICERS",
+            "SUBPART A. PENSION SYSTEM",
+            "§1761. §§1761 to 1800 [Blank] See, now, R.S. 11:3841 to 3870.",
+        ],
+        "document_text": (
+            "PART V. MUNICIPAL OFFICERS SUBPART A. PENSION SYSTEM "
+            "§1761. §§1761 to 1800 [Blank] See, now, R.S. 11:3841 to "
+            "3870."
+        ),
+        "heading": (
+            "§§1761 to 1800 [Blank] See, now, R.S. 11:3841 to 3870."
+        ),
+        "disposition": "blank_range_cross_reference",
+    },
 }
 
 # The official Title 16 TOC labels R.S. 16:83 ``Omitted as obsolete``, and its
