@@ -235,7 +235,6 @@ python scripts/ops/legal_data/refresh_state_laws_corpus.py \
   --no-skip-completed-states \
   --no-persist-completed-states-registry \
   --no-startup-stale-sync \
-  --no-incremental-state-materialize \
   --no-incremental-state-publish \
   --output-root ~/.ipfs_datasets/state_laws/legal-corpora-reindex-*/staging-wa-vN \
   --acquisition-evidence-root ~/.ipfs_datasets/state_laws/legal-corpora-reindex-*/full-acquisition-evidence-*-wa-vN \

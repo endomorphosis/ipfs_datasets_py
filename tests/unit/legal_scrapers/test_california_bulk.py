@@ -803,6 +803,9 @@ def test_bulk_table_frontier_replays_and_closes_with_exact_output_parity(
     )
     assert closure_path.parent == ledger.closure_inputs_dir
     closure = json.loads(closure_path.read_text(encoding="utf-8"))
+    assert closure["source_software_version"] == (
+        scraper._state_law_frontier_source_software_version()
+    )
     completion = closure["completion_receipt"]
     digest = hashlib.sha256(zip_path.read_bytes()).hexdigest()
     assert closure["official_source_url"] == (

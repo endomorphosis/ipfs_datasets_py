@@ -220,6 +220,7 @@ class MassachusettsScraper(BaseStateScraper):
 
         statutes: List[NormalizedStatute] = []
         seen_sections = set()
+        full_corpus_section_frontier: List[str] = []
         for part_url in part_links:
             if limit is not None and len(statutes) >= limit:
                 break
@@ -234,9 +235,123 @@ class MassachusettsScraper(BaseStateScraper):
                 if section_url in seen_sections:
                     continue
                 seen_sections.add(section_url)
+                if limit is None:
+                    full_corpus_section_frontier.append(section_url)
+                    continue
                 statute = await self._build_section_statute(code_name, section_url)
                 if statute is not None:
                     statutes.append(statute)
+        if limit is None and full_corpus_section_frontier:
+            return await self._build_full_corpus_section_frontier(
+                code_name,
+                full_corpus_section_frontier,
+            )
+        return statutes
+
+    async def _build_full_corpus_section_frontier(
+        self,
+        code_name: str,
+        section_urls: List[str],
+    ) -> List[NormalizedStatute]:
+        """Fetch the exact section frontier through one bounded plural wave.
+
+        A complete Massachusetts catalog currently exposes tens of thousands
+        of section pages.  Fetching them one at a time cannot finish inside the
+        production worker bound and also defeats grouped archive recovery.
+        The shared plural fetcher replays retained inputs first, submits only
+        exact misses concurrently, retains each completed result immediately,
+        and retries only unresolved rows without repeating archive inventory.
+        """
+
+        requested = [self._canonical_fetch_url(url) for url in section_urls]
+        if (
+            not requested
+            or any(not url for url in requested)
+            or len(requested) != len(set(requested))
+        ):
+            raise RuntimeError(
+                "Massachusetts section frontier is empty, invalid, or duplicated"
+            )
+
+        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+            requested,
+            residual_retry_attempts=max(
+                0,
+                min(
+                    3,
+                    self._env_int(
+                        "STATE_SCRAPER_MA_SECTION_RESIDUAL_RETRY_ATTEMPTS",
+                        default=2,
+                    ),
+                ),
+            ),
+            timeout_seconds=60,
+            headers={"User-Agent": "Mozilla/5.0"},
+            content_validator=lambda payload: bool(
+                payload and b"<" in payload[:16384] and b">" in payload[:16384]
+            ),
+            media_type="text/html",
+            max_concurrency=max(
+                1,
+                min(
+                    32,
+                    self._env_int(
+                        "STATE_SCRAPER_MA_SECTION_FRONTIER_CONCURRENCY",
+                        default=16,
+                    ),
+                ),
+            ),
+            prefer_direct=True,
+            common_crawl_domain_terms=(self.OFFICIAL_DOMAIN,),
+            common_crawl_url_terms=("/Laws/GeneralLaws/", "/Section"),
+            common_crawl_mime_terms=("html", "text"),
+            wayback_prefix_inventory=True,
+        )
+        if list(batch.urls) != requested or any(
+            len(vector) != len(requested)
+            for vector in (
+                batch.payloads,
+                batch.errors,
+                batch.transport_receipts,
+                batch.parser_input_envelopes,
+            )
+        ):
+            raise RuntimeError(
+                "Massachusetts section frontier returned unaligned acquisition rows"
+            )
+
+        failures = [
+            {"url": url, "error": str(error or "invalid parser input")}
+            for url, payload, error in zip(
+                batch.urls,
+                batch.payloads,
+                batch.errors,
+                strict=True,
+            )
+            if error is not None
+            or not payload
+            or b"<" not in bytes(payload)[:16384]
+            or b">" not in bytes(payload)[:16384]
+        ]
+        if failures:
+            raise RuntimeError(
+                "Massachusetts section frontier is incomplete; unresolved exact "
+                f"URLs: {failures[:20]}"
+            )
+
+        statutes: List[NormalizedStatute] = []
+        for section_url, payload in zip(
+            batch.urls,
+            batch.payloads,
+            strict=True,
+        ):
+            statute = self._parse_section_statute_html(
+                code_name,
+                section_url,
+                bytes(payload).decode("utf-8", errors="replace"),
+            )
+            if statute is not None:
+                statutes.append(statute)
         return statutes
 
     async def _discover_section_links_from_part(self, part_url: str, max_sections: int) -> List[str]:
@@ -306,13 +421,20 @@ class MassachusettsScraper(BaseStateScraper):
         return specs
 
     async def _build_section_statute(self, code_name: str, section_url: str) -> Optional[NormalizedStatute]:
+        html = await self._request_text_direct(section_url, timeout=20)
+        if not html:
+            return None
+        return self._parse_section_statute_html(code_name, section_url, html)
+
+    def _parse_section_statute_html(
+        self,
+        code_name: str,
+        section_url: str,
+        html: str,
+    ) -> Optional[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
-            return None
-
-        html = await self._request_text_direct(section_url, timeout=20)
-        if not html:
             return None
         from .massachusetts_section import parse_massachusetts_section_html
 

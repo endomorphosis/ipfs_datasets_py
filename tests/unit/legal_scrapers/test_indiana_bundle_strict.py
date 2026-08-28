@@ -319,8 +319,12 @@ def test_exact_inventory_replay_and_output_parity_close(
 
     original_read_bytes = Path.read_bytes
 
+    retained_bundle_path = ledger.entries[0].body_path
+
     def _read_bytes_must_not_run(_self: Path) -> bytes:
-        raise AssertionError("large Indiana ZIP replay must stay streaming")
+        if _self.resolve() == retained_bundle_path.resolve():
+            raise AssertionError("large Indiana ZIP replay must stay streaming")
+        return original_read_bytes(_self)
 
     monkeypatch.setattr(Path, "read_bytes", _read_bytes_must_not_run)
     closure_path = asyncio.run(
@@ -329,6 +333,9 @@ def test_exact_inventory_replay_and_output_parity_close(
         )
     )
     closure = json.loads(closure_path.read_text(encoding="utf-8"))
+    assert closure["source_software_version"] == (
+        scraper._state_law_frontier_source_software_version()
+    )
     assert closure["official_source_url"] == (
         "https://iga.in.gov/ic/2026/2026-Indiana-Code-html.zip"
     )

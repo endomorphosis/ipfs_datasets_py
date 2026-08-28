@@ -5,7 +5,6 @@ Indiana General Assembly static-document chapter PDFs.
 """
 
 import hashlib
-import inspect
 import json
 import os
 import re
@@ -1974,7 +1973,6 @@ class IndianaScraper(BaseStateScraper):
         from ...legal_data.state_laws_completeness import (
             closed_jurisdiction_receipt,
         )
-        from ...legal_data.state_laws_legacy_v2_adapter import file_sha256
         from .indiana_bulk import inventory_indiana_bulk_zip
 
         ledger = getattr(self, "_state_law_acquisition_ledger", None)
@@ -2136,16 +2134,6 @@ class IndianaScraper(BaseStateScraper):
         acquisition_path_ids = self._catalog_acquisition_path_ids_for_source(
             official_source_url
         )
-        source_file = inspect.getsourcefile(type(self))
-        source_version_digest = (
-            file_sha256(Path(source_file))
-            if source_file and Path(source_file).is_file()
-            else hashlib.sha256(
-                f"{type(self).__module__}.{type(self).__qualname__}".encode(
-                    "utf-8"
-                )
-            ).hexdigest()
-        )
         return self.retain_state_law_frontier_closure_projection(
             completion,
             replayed_frontier=replayed_frontier,
@@ -2157,8 +2145,7 @@ class IndianaScraper(BaseStateScraper):
                 self._indiana_bulk_provenance.get("retrieved_at") or ""
             ),
             source_software_version=(
-                f"{type(self).__module__}.{type(self).__qualname__}"
-                f"@sha256:{source_version_digest}"
+                self._state_law_frontier_source_software_version()
             ),
         )
 

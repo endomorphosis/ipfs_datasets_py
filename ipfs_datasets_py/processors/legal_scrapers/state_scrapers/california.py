@@ -6,7 +6,6 @@ Scrapes laws from the California Legislative Information website
 
 from typing import Any, List, Dict, Mapping, Optional, Sequence, Tuple
 import hashlib
-import inspect
 import json
 import os
 import re
@@ -751,14 +750,6 @@ class CaliforniaScraper(BaseStateScraper):
         acquisition_path_ids = self._catalog_acquisition_path_ids_for_source(
             official_source_url
         )
-        source_file = inspect.getsourcefile(type(self))
-        source_version_digest = hashlib.sha256(
-            Path(source_file).read_bytes()
-            if source_file and Path(source_file).is_file()
-            else (
-                f"{type(self).__module__}.{type(self).__qualname__}"
-            ).encode("utf-8")
-        ).hexdigest()
         return self.retain_state_law_frontier_closure_projection(
             completion,
             replayed_frontier=replayed_frontier,
@@ -770,8 +761,7 @@ class CaliforniaScraper(BaseStateScraper):
                 self._bulk_zip_provenance.get("retrieved_at") or ""
             ),
             source_software_version=(
-                f"{type(self).__module__}.{type(self).__qualname__}"
-                f"@sha256:{source_version_digest}"
+                self._state_law_frontier_source_software_version()
             ),
         )
 

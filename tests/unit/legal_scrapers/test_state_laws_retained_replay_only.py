@@ -57,6 +57,29 @@ PA_CATALOG_HTML = b"""<!doctype html><html><body>
 <a href="/statutes/consolidated/view-statute?txtType=PDF&amp;ttl=01">Title 1</a>
 </body></html>"""
 
+_RETAINED_REPLAY_OPERATOR_REPORTS = (
+    "arkansas_residual_closure_v1.md",
+    "exact51_residual_replay_playbook_v1.md",
+    "georgia_residual_closure_v1.md",
+    "kentucky_residual_closure_v1.md",
+    "louisiana_residual_closure_v1.md",
+    "michigan_residual_closure_v1.md",
+    "minnesota_residual_closure_v1.md",
+    "mississippi_current_source_resolution_v1.md",
+    "mississippi_residual_closure_v1.md",
+    "missouri_residual_closure_v1.md",
+    "montana_residual_closure_v1.md",
+    "new_hampshire_residual_closure_v1.md",
+    "new_york_residual_closure_v1.md",
+    "rhode_island_residual_closure_v1.md",
+    "tennessee_current_source_resolution_v1.md",
+    "tennessee_residual_closure_v1.md",
+    "vermont_residual_closure_v1.md",
+    "washington_residual_closure_v1.md",
+    "west_virginia_residual_closure_v1.md",
+    "wisconsin_residual_closure_v1.md",
+)
+
 
 class _ReplayScraper(BaseStateScraper):
     def get_base_url(self) -> str:
@@ -637,11 +660,13 @@ def test_refresh_cli_threads_and_restores_retained_replay_only(
     )
     args = refresh.parse_args()
     assert args.retained_replay_only is True
+    assert args.incremental_state_materialize is True
 
     result = asyncio.run(refresh.refresh_state_laws_corpus(args))
     assert result["status"] == "dry_run"
     assert result["plan"]["retained_replay_only"] is True
     assert result["plan"]["strict_acquisition_evidence"] is True
+    assert result["plan"]["incremental_state_materialize"] is True
 
     replay_env = state_laws_scraper.RETAINED_REPLAY_ONLY_ENV
     strict_env = state_laws_scraper.STRICT_MULTIFETCH_EVIDENCE_ENV
@@ -658,6 +683,57 @@ def test_refresh_cli_threads_and_restores_retained_replay_only(
         assert os.environ[strict_env] == "1"
     assert os.environ[replay_env] == "prior-replay"
     assert os.environ[strict_env] == "prior-strict"
+
+
+def test_refresh_retained_replay_only_rejects_disabled_local_materialization(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    refresh = _load_refresh_module()
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "refresh_state_laws_corpus.py",
+            "--states",
+            "WI",
+            "--output-root",
+            str(tmp_path / "output"),
+            "--scrape",
+            "--acquisition-evidence-root",
+            str(tmp_path / "evidence"),
+            "--retained-replay-only",
+            "--no-incremental-state-materialize",
+            "--dry-run",
+        ],
+    )
+
+    result = asyncio.run(refresh.refresh_state_laws_corpus(refresh.parse_args()))
+
+    assert result["status"] == "failed_preflight"
+    assert result["reason"] == "strict_acquisition_evidence_preflight_failed"
+    assert (
+        "strict_evidence_requires_incremental_materialization" in result["errors"]
+    )
+    assert not (tmp_path / "output").exists()
+    assert not (tmp_path / "evidence").exists()
+
+
+def test_retained_replay_operator_examples_keep_local_materialization_enabled(
+) -> None:
+    report_root = (
+        Path(__file__).resolve().parents[3]
+        / "docs"
+        / "reports"
+        / "legal_corpora_reindex"
+    )
+
+    assert len(_RETAINED_REPLAY_OPERATOR_REPORTS) == 20
+    for name in _RETAINED_REPLAY_OPERATOR_REPORTS:
+        report = (report_root / name).read_text(encoding="utf-8")
+        assert "refresh_state_laws_corpus.py" in report, name
+        assert "--no-incremental-state-materialize" not in report, name
+        assert "--no-incremental-state-publish" in report, name
 
 
 def test_refresh_retained_replay_only_rejects_remote_release_options(

@@ -40,6 +40,9 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.illinois import (
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kansas import (
     KansasScraper,
 )
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
+    StateLawPageMultiFetchResult,
+)
 
 
 @pytest.mark.anyio
@@ -86,6 +89,113 @@ async def test_html_helpers_delegate_exact_bytes_to_shared_transport_adapter(
     assert kwargs["provider"] == "requests_direct"
     assert kwargs["timeout_seconds"] >= 1
     assert kwargs["headers"]["Accept"].startswith("text/html")
+
+
+@pytest.mark.anyio
+async def test_idaho_full_corpus_uses_aligned_hierarchy_waves(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scraper = IdahoScraper("ID", "Idaho")
+    title_url = "https://legislature.idaho.gov/statutesrules/idstat/title18/"
+    chapter_url = (
+        "https://legislature.idaho.gov/statutesrules/idstat/title18/t18ch1/"
+    )
+    part_url = f"{chapter_url}PT1/"
+    section_urls = [
+        f"{chapter_url}SECT18-101/",
+        f"{chapter_url}SECT18-102/",
+    ]
+
+    def _table(*rows: str) -> bytes:
+        return (
+            "<html><body>"
+            "<div class='vc-column-inner-wrapper'></div>"
+            "<div class='vc-column-inner-wrapper'><table>"
+            + "".join(rows)
+            + "</table></div></body></html>"
+        ).encode()
+
+    pages = {
+        title_url: _table(
+            f"<tr><td><a href='{chapter_url}'>CHAPTER 1</a></td>"
+            "<td></td><td>PRELIMINARY PROVISIONS</td></tr>"
+        ),
+        chapter_url: _table(
+            f"<tr><td><a href='{section_urls[0]}'>18-101</a></td>"
+            "<td></td><td>Definitions.</td></tr>",
+            f"<tr><td><a href='{part_url}'>PART 1</a></td>"
+            "<td></td><td>Additional provisions.</td></tr>",
+        ),
+        part_url: _table(
+            f"<tr><td><a href='{section_urls[1]}'>18-102</a></td>"
+            "<td></td><td>Construction.</td></tr>"
+        ),
+        section_urls[0]: (
+            b"<html><body><div class='pgbrk'>"
+            b"<div>crumb</div><div>crumb</div><div>crumb</div><div>crumb</div>"
+            b"<div>18-101. Definitions. Official Idaho statute text "
+            + (b"continues with operative legal provisions. " * 4)
+            + b"</div></div></body></html>"
+        ),
+        section_urls[1]: (
+            b"<html><body><div class='pgbrk'>"
+            b"<div>crumb</div><div>crumb</div><div>crumb</div><div>crumb</div>"
+            b"<div>18-102. Construction. Official Idaho statute text "
+            + (b"continues with operative legal provisions. " * 4)
+            + b"</div></div></body></html>"
+        ),
+    }
+    calls: list[tuple[list[str], dict[str, Any]]] = []
+
+    async def _titles(_code_url: str) -> list[tuple[str, str]]:
+        return [(title_url, "TITLE 18 CRIMES AND PUNISHMENTS")]
+
+    async def _plural(
+        requested: list[str],
+        **kwargs: Any,
+    ) -> StateLawPageMultiFetchResult:
+        calls.append((list(requested), kwargs))
+        payloads = [pages[url] for url in requested]
+        return StateLawPageMultiFetchResult(
+            urls=list(requested),
+            payloads=payloads,
+            errors=[None] * len(requested),
+            transport_receipts=[{"source_transport": "direct"}] * len(requested),
+            parser_input_envelopes=[object()] * len(requested),
+            stats={"network_requested_pages": len(requested)},
+        )
+
+    monkeypatch.delenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", raising=False)
+    monkeypatch.setattr(scraper, "_discover_title_links", _titles)
+    monkeypatch.setattr(
+        scraper,
+        "_fetch_page_contents_with_archival_fallback_retrying_residuals",
+        _plural,
+    )
+    scraper._state_law_acquisition_ledger = object()
+
+    rows = await scraper.scrape_code(
+        "Idaho Statutes",
+        IdahoScraper.OFFICIAL_ENTRY_URL,
+        max_statutes=None,
+    )
+
+    assert [requested for requested, _kwargs in calls] == [
+        [title_url],
+        [chapter_url],
+        [part_url],
+        section_urls,
+    ]
+    assert all(kwargs["prefer_direct"] is True for _requested, kwargs in calls)
+    assert all(
+        kwargs["wayback_prefix_inventory"] is True
+        for _requested, kwargs in calls
+    )
+    assert all(
+        kwargs["residual_retry_attempts"] == 2
+        for _requested, kwargs in calls
+    )
+    assert [row.section_number for row in rows] == ["18-101", "18-102"]
 
 
 @pytest.mark.anyio

@@ -3,7 +3,7 @@
 This module contains the scraper for Idaho statutes from the official state legislative website.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 import re
 import os
 import ssl
@@ -27,6 +27,8 @@ class IdahoScraper(BaseStateScraper):
     OFFICIAL_DOMAIN = "legislature.idaho.gov"
     OFFICIAL_ENTRY_PATH = "/statutesrules/idstat/"
     OFFICIAL_ENTRY_URL = "https://legislature.idaho.gov/statutesrules/idstat/"
+    _OFFICIAL_ACCEPT = "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8"
+    _OFFICIAL_USER_AGENT = "ipfs-datasets-idaho-statutes-scraper/2.0"
     MISSING_LINK_QUARANTINE_REASON = "missing_official_source_link"
     OFFICIAL_TITLES = (
         ("1", "Courts and Court Officials"),
@@ -106,6 +108,13 @@ class IdahoScraper(BaseStateScraper):
     _ID_CHAPTER_URL_RE = re.compile(r"/statutesrules/idstat/title\d+/t\d+ch\d+/?$", re.IGNORECASE)
     _ID_SECTION_NUM_RE = re.compile(r"/sect([0-9A-Za-z.-]+)/?$", re.IGNORECASE)
 
+    def state_law_frontier_source_dependencies(self) -> Sequence[Any]:
+        """Bind Idaho's exact catalog/section parser to lifecycle receipts."""
+
+        from . import idaho_section, strict_frontier_closure
+
+        return (idaho_section, strict_frontier_closure)
+
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
         for statute in statutes:
@@ -158,6 +167,22 @@ class IdahoScraper(BaseStateScraper):
         title_links = await self._discover_title_links(code_url)
         self.logger.info("Idaho official index: discovered %s title links", len(title_links))
 
+        if (
+            limit is None
+            and getattr(self, "_state_law_acquisition_ledger", None) is not None
+        ):
+            statutes = await self._scrape_full_corpus_plural(
+                code_name=code_name,
+                title_links=title_links,
+                checkpoint=checkpoint,
+            )
+            checkpoint.write(
+                statutes,
+                title_label="complete",
+                chapter_label="complete",
+            )
+            return statutes
+
         for title_index, (title_url, title_label) in enumerate(title_links, start=1):
             if limit is not None and len(statutes) >= limit:
                 break
@@ -204,13 +229,319 @@ class IdahoScraper(BaseStateScraper):
         self.logger.warning("Idaho official direct crawl returned no statutes; skipping generic recovery fallback")
         return []
 
+    async def _fetch_idaho_frontier_batch(
+        self,
+        urls: Sequence[str],
+        *,
+        frontier_name: str,
+    ) -> List[Tuple[str, str]]:
+        """Fetch one exact Idaho hierarchy wave through the plural transport."""
+
+        requested = [self._canonical_fetch_url(url) for url in urls]
+        if (
+            not requested
+            or any(not url for url in requested)
+            or len(requested) != len(set(requested))
+        ):
+            raise RuntimeError(
+                f"Idaho {frontier_name} frontier is empty, invalid, or duplicated"
+            )
+
+        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+            requested,
+            residual_retry_attempts=max(
+                0,
+                min(
+                    3,
+                    self._env_int(
+                        "STATE_SCRAPER_ID_FRONTIER_RESIDUAL_RETRY_ATTEMPTS",
+                        default=2,
+                    ),
+                ),
+            ),
+            timeout_seconds=60,
+            headers={
+                "User-Agent": self._OFFICIAL_USER_AGENT,
+                "Accept": self._OFFICIAL_ACCEPT,
+            },
+            content_validator=lambda payload: bool(
+                payload and b"<" in payload[:16384] and b">" in payload[:16384]
+            ),
+            media_type="text/html",
+            max_concurrency=max(
+                1,
+                min(
+                    32,
+                    self._env_int(
+                        "STATE_SCRAPER_ID_FRONTIER_CONCURRENCY",
+                        default=16,
+                    ),
+                ),
+            ),
+            prefer_direct=True,
+            common_crawl_domain_terms=(self.OFFICIAL_DOMAIN,),
+            common_crawl_url_terms=("/statutesrules/idstat/",),
+            common_crawl_mime_terms=("html", "text"),
+            wayback_prefix_inventory=True,
+        )
+        if list(batch.urls) != requested or any(
+            len(vector) != len(requested)
+            for vector in (
+                batch.payloads,
+                batch.errors,
+                batch.transport_receipts,
+                batch.parser_input_envelopes,
+            )
+        ):
+            raise RuntimeError(
+                f"Idaho {frontier_name} frontier returned unaligned acquisition rows"
+            )
+
+        failures = [
+            {"url": url, "error": str(error or "invalid parser input")}
+            for url, payload, error in zip(
+                batch.urls,
+                batch.payloads,
+                batch.errors,
+                strict=True,
+            )
+            if error is not None
+            or not payload
+            or b"<" not in bytes(payload)[:16384]
+            or b">" not in bytes(payload)[:16384]
+        ]
+        if failures:
+            raise RuntimeError(
+                f"Idaho {frontier_name} frontier is incomplete; unresolved exact "
+                f"URLs: {failures[:20]}"
+            )
+        return [
+            (url, bytes(payload).decode("utf-8", errors="replace"))
+            for url, payload in zip(batch.urls, batch.payloads, strict=True)
+        ]
+
+    async def _scrape_full_corpus_plural(
+        self,
+        *,
+        code_name: str,
+        title_links: Sequence[Tuple[str, str]],
+        checkpoint: Any,
+    ) -> List[NormalizedStatute]:
+        """Resolve Idaho's title/chapter/part/section tree in plural waves."""
+
+        if not title_links:
+            raise RuntimeError("Idaho exact full-corpus title frontier is empty")
+
+        title_context: Dict[str, str] = {}
+        ordered_title_urls: List[str] = []
+        for raw_url, raw_label in title_links:
+            title_url = self._canonical_fetch_url(raw_url)
+            if not title_url:
+                raise RuntimeError("Idaho exact full-corpus title URL is invalid")
+            if title_url in title_context:
+                raise RuntimeError(
+                    f"Idaho exact full-corpus title URL is duplicated: {title_url}"
+                )
+            title_context[title_url] = str(raw_label or title_url)
+            ordered_title_urls.append(title_url)
+
+        title_pages = await self._fetch_idaho_frontier_batch(
+            ordered_title_urls,
+            frontier_name="title",
+        )
+        chapter_context: Dict[str, Tuple[str, str]] = {}
+        ordered_chapter_urls: List[str] = []
+        empty_titles: List[str] = []
+        for title_url, html in title_pages:
+            title_label = title_context[title_url]
+            chapter_links = self._chapter_links_from_html(title_url, html)
+            if not chapter_links:
+                empty_titles.append(title_url)
+                continue
+            for raw_url, raw_label in chapter_links:
+                chapter_url = self._canonical_fetch_url(raw_url)
+                if chapter_url in chapter_context:
+                    continue
+                chapter_context[chapter_url] = (
+                    title_label,
+                    str(raw_label or chapter_url),
+                )
+                ordered_chapter_urls.append(chapter_url)
+        if empty_titles:
+            raise RuntimeError(
+                "Idaho exact title pages exposed no chapter frontier: "
+                f"{empty_titles[:20]}"
+            )
+        if not ordered_chapter_urls:
+            raise RuntimeError("Idaho exact full-corpus chapter frontier is empty")
+
+        self.logger.info(
+            "Idaho exact plural frontier: titles=%s chapters=%s",
+            len(ordered_title_urls),
+            len(ordered_chapter_urls),
+        )
+        chapter_pages = await self._fetch_idaho_frontier_batch(
+            ordered_chapter_urls,
+            frontier_name="chapter",
+        )
+
+        section_context: Dict[str, Tuple[str, str, str]] = {}
+        ordered_section_urls: List[str] = []
+        seen_subcontainers: set[str] = set()
+        pending_subcontainers: List[Tuple[str, str, str]] = []
+        empty_chapters: List[str] = []
+
+        def _admit_section(
+            raw_url: str,
+            raw_label: str,
+            title_label: str,
+            chapter_label: str,
+        ) -> None:
+            section_url = self._canonical_fetch_url(raw_url)
+            if not section_url or section_url in section_context:
+                return
+            section_context[section_url] = (
+                str(raw_label or section_url),
+                title_label,
+                chapter_label,
+            )
+            ordered_section_urls.append(section_url)
+
+        def _admit_subcontainer(
+            raw_url: str,
+            title_label: str,
+            chapter_label: str,
+            target: List[Tuple[str, str, str]],
+        ) -> None:
+            sub_url = self._canonical_fetch_url(raw_url)
+            if not sub_url or sub_url in seen_subcontainers:
+                return
+            seen_subcontainers.add(sub_url)
+            target.append((sub_url, title_label, chapter_label))
+
+        for chapter_url, html in chapter_pages:
+            title_label, chapter_label = chapter_context[chapter_url]
+            section_links, subcontainer_urls = self._section_links_from_html(
+                chapter_url,
+                html,
+            )
+            if not section_links and not subcontainer_urls:
+                empty_chapters.append(chapter_url)
+                continue
+            for section_url, section_label in section_links:
+                _admit_section(
+                    section_url,
+                    section_label,
+                    title_label,
+                    chapter_label,
+                )
+            for sub_url in subcontainer_urls:
+                _admit_subcontainer(
+                    sub_url,
+                    title_label,
+                    chapter_label,
+                    pending_subcontainers,
+                )
+        if empty_chapters:
+            raise RuntimeError(
+                "Idaho exact chapter pages exposed no section or subcontainer "
+                f"frontier: {empty_chapters[:20]}"
+            )
+
+        subcontainer_count = 0
+        subcontainer_depth = 0
+        while pending_subcontainers:
+            subcontainer_depth += 1
+            current = pending_subcontainers
+            pending_subcontainers = []
+            current_urls = [url for url, _title, _chapter in current]
+            current_context = {
+                url: (title_label, chapter_label)
+                for url, title_label, chapter_label in current
+            }
+            subcontainer_count += len(current_urls)
+            sub_pages = await self._fetch_idaho_frontier_batch(
+                current_urls,
+                frontier_name=f"subcontainer-depth-{subcontainer_depth}",
+            )
+            empty_subcontainers: List[str] = []
+            for sub_url, html in sub_pages:
+                title_label, chapter_label = current_context[sub_url]
+                section_links, nested_subcontainers = self._section_links_from_html(
+                    sub_url,
+                    html,
+                )
+                if not section_links and not nested_subcontainers:
+                    empty_subcontainers.append(sub_url)
+                    continue
+                for section_url, section_label in section_links:
+                    _admit_section(
+                        section_url,
+                        section_label,
+                        title_label,
+                        chapter_label,
+                    )
+                for nested_url in nested_subcontainers:
+                    _admit_subcontainer(
+                        nested_url,
+                        title_label,
+                        chapter_label,
+                        pending_subcontainers,
+                    )
+            if empty_subcontainers:
+                raise RuntimeError(
+                    "Idaho exact subcontainer pages exposed no nested frontier: "
+                    f"{empty_subcontainers[:20]}"
+                )
+
+        if not ordered_section_urls:
+            raise RuntimeError("Idaho exact full-corpus section frontier is empty")
+        self.logger.info(
+            "Idaho exact plural frontier: chapters=%s subcontainers=%s sections=%s",
+            len(ordered_chapter_urls),
+            subcontainer_count,
+            len(ordered_section_urls),
+        )
+        section_pages = await self._fetch_idaho_frontier_batch(
+            ordered_section_urls,
+            frontier_name="section",
+        )
+
+        statutes: List[NormalizedStatute] = []
+        parse_failures: List[str] = []
+        for section_url, html in section_pages:
+            section_label, title_label, chapter_label = section_context[section_url]
+            statute = self._parse_section_statute_html(
+                code_name=code_name,
+                section_url=section_url,
+                section_label=section_label,
+                title_label=title_label,
+                chapter_label=chapter_label,
+                html=html,
+            )
+            if statute is None:
+                parse_failures.append(section_url)
+                continue
+            statutes.append(statute)
+            checkpoint.maybe_write(
+                statutes,
+                title_label=title_label,
+                chapter_label=chapter_label,
+            )
+        if parse_failures:
+            raise RuntimeError(
+                "Idaho exact section parser rejected retained official inputs: "
+                f"{parse_failures[:20]}"
+            )
+        return statutes
+
     async def _fetch_official_id_html(self, url: str, timeout_seconds: int = 15) -> str:
         timeout = max(1, int(timeout_seconds or 15))
         payload = await self._fetch_parser_input_with_transport(
             url,
             headers={
-                "User-Agent": "ipfs-datasets-idaho-statutes-scraper/2.0",
-                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                "User-Agent": self._OFFICIAL_USER_AGENT,
+                "Accept": self._OFFICIAL_ACCEPT,
             },
             timeout_seconds=timeout,
             allow_archival_fallback=False,
@@ -249,15 +580,16 @@ class IdahoScraper(BaseStateScraper):
             out.append((normalized, label or normalized.rsplit("/title", 1)[-1].rstrip("/")))
         return out
 
-    async def _discover_chapter_links(self, title_url: str) -> List[Tuple[str, str]]:
+    def _chapter_links_from_html(
+        self,
+        title_url: str,
+        html: str,
+    ) -> List[Tuple[str, str]]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
 
-        html = await self._fetch_official_id_html(title_url)
-        if not html:
-            return []
         from .idaho_section import chapter_rows
 
         listed = chapter_rows(html)
@@ -278,40 +610,38 @@ class IdahoScraper(BaseStateScraper):
             out.append((normalized, label or normalized.rsplit("/", 2)[-2]))
         return out
 
-    async def _discover_section_links(self, chapter_url: str) -> List[Tuple[str, str]]:
+    async def _discover_chapter_links(self, title_url: str) -> List[Tuple[str, str]]:
+        html = await self._fetch_official_id_html(title_url)
+        if not html:
+            return []
+        return self._chapter_links_from_html(title_url, html)
+
+    def _section_links_from_html(
+        self,
+        container_url: str,
+        html: str,
+    ) -> Tuple[List[Tuple[str, str]], List[str]]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
-            return []
+            return [], []
 
-        html = await self._fetch_official_id_html(chapter_url)
-        if not html:
-            return []
         from .idaho_section import section_rows
 
         sections, subcontainers = section_rows(html)
         if sections or subcontainers:
-            out: List[Tuple[str, str]] = [
-                (url, f"{number} {desc}".strip()) for number, desc, url in sections
-            ]
-            seen = {url for url, _label in out}
-            for sub_url in subcontainers:
-                nested_html = await self._fetch_official_id_html(sub_url)
-                if not nested_html:
-                    continue
-                nested_sections, _nested_subs = section_rows(nested_html)
-                for number, desc, url in nested_sections:
-                    if url in seen:
-                        continue
-                    seen.add(url)
-                    out.append((url, f"{number} {desc}".strip()))
-            if out:
-                return out
+            return (
+                [
+                    (url, f"{number} {desc}".strip())
+                    for number, desc, url in sections
+                ],
+                list(subcontainers),
+            )
         soup = BeautifulSoup(html, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
         for anchor in soup.find_all("a", href=True):
-            href = urljoin(chapter_url, str(anchor.get("href") or "").strip())
+            href = urljoin(container_url, str(anchor.get("href") or "").strip())
             if not self._ID_SECTION_URL_RE.search(href.rstrip("/")):
                 continue
             normalized = href.rstrip("/") + "/"
@@ -320,6 +650,27 @@ class IdahoScraper(BaseStateScraper):
             seen.add(normalized)
             label = re.sub(r"\s+", " ", anchor.get_text(" ", strip=True) or "").strip()
             out.append((normalized, label))
+        return out, []
+
+    async def _discover_section_links(self, chapter_url: str) -> List[Tuple[str, str]]:
+        html = await self._fetch_official_id_html(chapter_url)
+        if not html:
+            return []
+        out, subcontainers = self._section_links_from_html(chapter_url, html)
+        seen = {url for url, _label in out}
+        for sub_url in subcontainers:
+            nested_html = await self._fetch_official_id_html(sub_url)
+            if not nested_html:
+                continue
+            nested_sections, _nested_subs = self._section_links_from_html(
+                sub_url,
+                nested_html,
+            )
+            for url, label in nested_sections:
+                if url in seen:
+                    continue
+                seen.add(url)
+                out.append((url, label))
         return out
 
     async def _parse_section_page(
@@ -331,14 +682,33 @@ class IdahoScraper(BaseStateScraper):
         title_label: str,
         chapter_label: str,
     ) -> Optional[NormalizedStatute]:
+        html = await self._fetch_official_id_html(section_url)
+        if not html:
+            return None
+        return self._parse_section_statute_html(
+            code_name=code_name,
+            section_url=section_url,
+            section_label=section_label,
+            title_label=title_label,
+            chapter_label=chapter_label,
+            html=html,
+        )
+
+    def _parse_section_statute_html(
+        self,
+        *,
+        code_name: str,
+        section_url: str,
+        section_label: str,
+        title_label: str,
+        chapter_label: str,
+        html: str,
+    ) -> Optional[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return None
 
-        html = await self._fetch_official_id_html(section_url)
-        if not html:
-            return None
         from .idaho_section import statute_from_section_html
 
         url_match = self._ID_SECTION_NUM_RE.search(section_url)

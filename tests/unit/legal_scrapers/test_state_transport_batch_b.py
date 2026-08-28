@@ -17,6 +17,9 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maryland import M
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.massachusetts import (
     MassachusettsScraper,
 )
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
+    StateLawPageMultiFetchResult,
+)
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon import OregonScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_dakota import (
     SouthDakotaScraper,
@@ -258,6 +261,58 @@ async def test_massachusetts_direct_text_uses_shared_adapter(
 
     assert "General Laws" in text
     assert seen["allow_archival_fallback"] is False
+
+
+@pytest.mark.anyio
+async def test_massachusetts_full_section_frontier_uses_one_plural_wave(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scraper = MassachusettsScraper("MA", "Massachusetts")
+    urls = [
+        "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleI/Chapter1/Section1",
+        "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleI/Chapter1/Section2",
+    ]
+    payloads = [
+        (
+            b"<html><body><h2 class='genLawHeading'>Citizens</h2><p>"
+            + b"Section 1. Massachusetts official statute text. " * 8
+            + b"</p></body></html>"
+        ),
+        (
+            b"<html><body><h2 class='genLawHeading'>Jurisdiction</h2><p>"
+            + b"Section 2. Massachusetts official statute text. " * 8
+            + b"</p></body></html>"
+        ),
+    ]
+    seen: Dict[str, Any] = {}
+
+    async def _plural(requested: list[str], **kwargs: Any) -> StateLawPageMultiFetchResult:
+        seen.update(requested=list(requested), **kwargs)
+        return StateLawPageMultiFetchResult(
+            urls=list(requested),
+            payloads=payloads,
+            errors=[None, None],
+            transport_receipts=[{"source_transport": "direct"}] * 2,
+            parser_input_envelopes=[object(), object()],
+            stats={"network_requested_pages": 2},
+        )
+
+    monkeypatch.setattr(
+        scraper,
+        "_fetch_page_contents_with_archival_fallback_retrying_residuals",
+        _plural,
+    )
+
+    statutes = await scraper._build_full_corpus_section_frontier(
+        "Massachusetts General Laws",
+        urls,
+    )
+
+    assert seen["requested"] == urls
+    assert seen["prefer_direct"] is True
+    assert seen["wayback_prefix_inventory"] is True
+    assert seen["residual_retry_attempts"] == 2
+    assert [row.section_number for row in statutes] == ["1", "2"]
 
 
 @pytest.mark.anyio

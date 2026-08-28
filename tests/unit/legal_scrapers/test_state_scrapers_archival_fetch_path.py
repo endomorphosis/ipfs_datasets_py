@@ -1751,8 +1751,8 @@ async def test_massachusetts_full_corpus_uses_ajax_title_chapter_section_tree(
     )
 
     assert [statute.section_number for statute in statutes] == ["1", "2"]
-    assert statutes[0].structured_data["source_kind"] == "official_massachusetts_general_laws_html"
-    assert statutes[0].structured_data["discovery_method"] == "official_part_title_chapter_section"
+    assert statutes[0].structured_data["source_kind"] == "official_massachusetts_content_html"
+    assert statutes[0].structured_data["discovery_method"] == "malegislature_general_laws_content"
 
 
 @pytest.mark.anyio
