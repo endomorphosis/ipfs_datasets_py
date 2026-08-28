@@ -10,7 +10,7 @@ import os
 import re
 from pathlib import Path
 from typing import List, Optional, Tuple
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -19,13 +19,14 @@ _ADDENDUM_RE = re.compile(
     r"^\s*\(?(?:Added|Amended|Repealed|St\.|P\.L\.|L\.|Acts|R\.L\.)", re.IGNORECASE
 )
 _CHAPTER_RE = re.compile(r"/Chapter(?P<chapter>[A-Za-z0-9.]+)", re.IGNORECASE)
-_SECTION_RE = re.compile(r"/Section(?P<section>[A-Za-z0-9.]+)", re.IGNORECASE)
+_SECTION_RE = re.compile(r"/Section(?P<section>[^/?#]+?)/?$", re.IGNORECASE)
 _CHAPTER_HREF_RE = re.compile(
     r"/Laws/GeneralLaws/Part[IVXLCDM]+/Title[IVXLCDM]+[A-Z]?/Chapter([0-9]+[A-Za-z]?)/?$",
     re.IGNORECASE,
 )
 _SECTION_HREF_RE = re.compile(
-    r"/Laws/GeneralLaws/Part[IVXLCDM]+/Title[IVXLCDM]+[A-Z]?/Chapter[0-9]+[A-Za-z]?/Section([0-9]+[A-Za-z0-9]*)/?$",
+    r"/Laws/GeneralLaws/Part[IVXLCDM]+/Title[IVXLCDM]+[A-Z]?/"
+    r"Chapter[0-9]+[A-Za-z]?/Section[^/?#]+?/?$",
     re.IGNORECASE,
 )
 _TITLE_TOGGLE_HREF_RE = re.compile(r"^#title([A-Z]+)$", re.IGNORECASE)
@@ -122,15 +123,33 @@ def section_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str]]:
     seen: set[str] = set()
     for anchor in soup.find_all("a", href=True):
         path = urlparse(str(anchor.get("href") or "")).path
-        match = _SECTION_HREF_RE.search(path)
-        if not match:
+        if _SECTION_HREF_RE.search(path) is None:
             continue
-        number = match.group(1).upper()
+        number = section_number_from_url(path)
+        if not number:
+            continue
         if number in seen:
             continue
         seen.add(number)
         out.append((urljoin(base_url, path), number))
     return out
+
+
+def section_number_from_url(source_url: str) -> str:
+    """Return the complete official section identity encoded in a URL tail.
+
+    Massachusetts uses punctuation-bearing locators such as ``Section3-101``
+    and encodes fractional section numbers as ``Section25N%201~2``.  Matching
+    only the leading alphanumeric token aliases distinct official sections.
+    The tilde is the site's path-safe representation of the legal slash.
+    """
+
+    path = urlparse(str(source_url or "")).path
+    match = _SECTION_RE.search(path)
+    if match is None:
+        return ""
+    decoded = unquote(str(match.group("section") or "")).replace("~", "/")
+    return _WS.sub(" ", decoded).strip()
 
 
 def _is_navigation(text: str) -> bool:
@@ -184,9 +203,8 @@ def parse_massachusetts_section_html(
     if len(full) < 20:
         return None
     ch_match = _CHAPTER_RE.search(source_url)
-    sec_match = _SECTION_RE.search(source_url)
     chapter = ch_match.group("chapter") if ch_match else ""
-    section = sec_match.group("section") if sec_match else ""
+    section = section_number_from_url(source_url)
     heading = soup.select_one("h2.genLawHeading")
     name = _WS.sub(" ", heading.get_text(" ")).strip() if heading else f"Section {section}"
     return NormalizedStatute(

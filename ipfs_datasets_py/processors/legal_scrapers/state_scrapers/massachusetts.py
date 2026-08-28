@@ -22,7 +22,6 @@ class MassachusettsScraper(BaseStateScraper):
         re.IGNORECASE,
     )
     _MA_CHAPTER_NUMBER_RE = re.compile(r"/chapter(?P<chapter>[a-z0-9.]+)$", re.IGNORECASE)
-    _MA_SECTION_NUMBER_RE = re.compile(r"/section(?P<section>[a-z0-9.]+)$", re.IGNORECASE)
     _MA_SECTION_URL_RE = re.compile(
         r"/laws/generallaws/(?:part[a-z0-9-]*|title[a-z0-9-]*|chapter[a-z0-9-]*|section[a-z0-9-]*)(?:/|$)",
         re.IGNORECASE,
@@ -73,6 +72,13 @@ class MassachusettsScraper(BaseStateScraper):
     def get_base_url(self) -> str:
         """Return the base URL for Massachusetts's legislative website."""
         return "https://malegislature.gov"
+
+    def state_law_frontier_source_dependencies(self) -> tuple[object, ...]:
+        """Bind the sibling section parser into Massachusetts source identity."""
+
+        from . import massachusetts_section
+
+        return (massachusetts_section,)
     
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Massachusetts."""
@@ -436,7 +442,10 @@ class MassachusettsScraper(BaseStateScraper):
             from bs4 import BeautifulSoup
         except ImportError:
             return None
-        from .massachusetts_section import parse_massachusetts_section_html
+        from .massachusetts_section import (
+            parse_massachusetts_section_html,
+            section_number_from_url,
+        )
 
         parsed = parse_massachusetts_section_html(html, source_url=section_url, code_name=code_name)
         if parsed is not None:
@@ -460,13 +469,10 @@ class MassachusettsScraper(BaseStateScraper):
             return None
 
         chapter_match = re.search(r"/Chapter(?P<chapter>[a-z0-9.]+)", section_url, re.IGNORECASE)
-        section_match = re.search(r"/Section(?P<section>[a-z0-9.]+)", section_url, re.IGNORECASE)
         if chapter_match is None:
             chapter_match = self._MA_CHAPTER_NUMBER_RE.search(section_url)
-        if section_match is None:
-            section_match = self._MA_SECTION_NUMBER_RE.search(section_url)
         chapter_number = chapter_match.group("chapter") if chapter_match else ""
-        section_number = section_match.group("section") if section_match else ""
+        section_number = section_number_from_url(section_url)
         statute_id = f"{code_name} ch. {chapter_number} § {section_number}".strip()
         return NormalizedStatute(
             state_code=self.state_code,
