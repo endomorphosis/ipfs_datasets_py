@@ -214,14 +214,8 @@ print(
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
     expected_environment = {
-        "IPFS_ACCELERATE_AGENT_IMPLEMENTATION_PROVIDER": "grok_cli",
-        "IPFS_ACCELERATE_AGENT_IMPLEMENTATION_FALLBACK_PROVIDER": "codex",
-        "IPFS_ACCELERATE_AGENT_IMPLEMENTATION_FALLBACK_TRIGGER": (
-            "primary_quota_exhausted"
-        ),
-        "IPFS_ACCELERATE_AGENT_GROK_MODEL": "grok-4.6",
+        "IPFS_ACCELERATE_AGENT_IMPLEMENTATION_PROVIDER": "codex",
         "IPFS_ACCELERATE_AGENT_CODEX_MODEL": "gpt-5.6-terra",
-        "IPFS_ACCELERATE_AGENT_CODEX_REASONING_EFFORT": "medium",
         "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON": "/usr/bin/python3.12",
         "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHONPATH": VALIDATION_PYTHONPATH,
         "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON_MODULES": ",".join(
@@ -237,7 +231,13 @@ print(
         "ipfs_accelerate_py/agent-supervisor/configured-board-launch-plan@1"
     )
     assert payload["plan_environment"] == expected_environment
-    assert payload["effective_controlled"] == expected_environment
+    assert set(payload["effective_controlled"]) == set(
+        payload["cleared_controlled"]
+    )
+    assert payload["effective_controlled"] == {
+        name: expected_environment.get(name)
+        for name in payload["cleared_controlled"]
+    }
     assert set(payload["cleared_controlled"].values()) == {None}
     assert payload["effective_sentinel"] == "preserved"
     assert payload["cleared_sentinel"] == "preserved"

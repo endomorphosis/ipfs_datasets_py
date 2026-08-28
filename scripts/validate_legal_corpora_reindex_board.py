@@ -915,12 +915,8 @@ def _validate_config(
         errors.append("scheduler provider must be an object")
     else:
         provider_contract = {
-            "primary_provider_id": "grok_cli",
-            "primary_model_id": "grok-4.6",
-            "fallback_provider_id": "codex",
-            "fallback_model_id": "gpt-5.6-terra",
-            "fallback_trigger": "primary_quota_exhausted",
-            "fallback_reasoning_effort": "medium",
+            "provider_id": "codex",
+            "model_id": "gpt-5.6-terra",
             "secrets_from_environment_only": True,
             "secrets_in_argv_prompts_logs_or_receipts": False,
         }
@@ -930,6 +926,15 @@ def _validate_config(
         concurrency = provider.get("max_concurrency")
         if isinstance(concurrency, bool) or not isinstance(concurrency, int) or concurrency < 4:
             errors.append("scheduler provider.max_concurrency must be an integer >= 4")
+        unexpected_provider_fields = set(provider) - {
+            *provider_contract,
+            "max_concurrency",
+        }
+        if unexpected_provider_fields:
+            errors.append(
+                "scheduler provider has unsupported fields: "
+                + ", ".join(sorted(unexpected_provider_fields))
+            )
 
     controller_runtime = config.get("controller_runtime")
     expected_controller_runtime = {
@@ -1062,7 +1067,7 @@ def _validate_config(
             paired_contract = {
                 "sibling_path": "../ipfs_accelerate_py",
                 "repository_name": "ipfs_accelerate_py",
-                "required_revision": "70dc0f1785a94ae869a8cdf9ad22c9e019538bb6",
+                "required_revision": "971e8f13f8b317c88766f58187d50bb6e626661c",
                 "require_clean_worktree": True,
                 "require_exact_revision": True,
             }

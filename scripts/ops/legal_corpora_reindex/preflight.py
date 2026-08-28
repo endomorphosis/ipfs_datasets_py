@@ -29,8 +29,8 @@ configured_board_launch_environment = (
 )
 load_configured_board = _board_entry._scheduler.load_configured_board
 preflight_configured_board = _board_entry._scheduler.preflight_configured_board
-from ipfs_accelerate_py.agent_supervisor.runtime.provider_command_binding import (
-    preflight_provider_entry_module,
+SCHEDULER_CONTROLLED_ENV_NAMES = (
+    _board_entry._scheduler.SCHEDULER_CONTROLLED_ENV_NAMES
 )
 from ipfs_accelerate_py.agent_supervisor.validation.validation_runtime import (
     ValidationRuntimeError,
@@ -623,12 +623,8 @@ def run_preflight(repo_root: Path, config_path: Path) -> dict[str, Any]:
         stamp="PREFLIGHT",
     )
     expected_environment = {
-        "IPFS_ACCELERATE_AGENT_IMPLEMENTATION_PROVIDER": "grok_cli",
-        "IPFS_ACCELERATE_AGENT_IMPLEMENTATION_FALLBACK_PROVIDER": "codex",
-        "IPFS_ACCELERATE_AGENT_IMPLEMENTATION_FALLBACK_TRIGGER": "primary_quota_exhausted",
-        "IPFS_ACCELERATE_AGENT_GROK_MODEL": "grok-4.6",
+        "IPFS_ACCELERATE_AGENT_IMPLEMENTATION_PROVIDER": "codex",
         "IPFS_ACCELERATE_AGENT_CODEX_MODEL": "gpt-5.6-terra",
-        "IPFS_ACCELERATE_AGENT_CODEX_REASONING_EFFORT": "medium",
         "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHON": "/usr/bin/python3.12",
         "IPFS_ACCELERATE_AGENT_VALIDATION_PYTHONPATH": str(
             VALIDATION_PYTHON_ROOT / "site-packages"
@@ -644,7 +640,7 @@ def run_preflight(repo_root: Path, config_path: Path) -> dict[str, Any]:
     }
     if plan.get("environment") != expected_environment:
         errors.append(
-            "launch plan ordered-provider environment does not match the sealed contract"
+            "launch plan direct-Codex environment does not match the sealed contract"
         )
     argv = [str(item) for item in plan.get("argv", [])]
     required_tokens = {
@@ -709,27 +705,18 @@ def run_preflight(repo_root: Path, config_path: Path) -> dict[str, Any]:
             "paired accelerator is missing, dirty, or not at the exact required revision"
         )
 
-    try:
-        binding = preflight_provider_entry_module(
-            "ipfs_accelerate_py.agent_supervisor.grok_cli_runner"
-        )
-        provider_binding = {
-            "complete": bool(binding.complete),
-            "missing": list(binding.missing),
-            "unknown_symbols": list(binding.unknown_symbols),
-        }
-    except Exception as exc:  # noqa: BLE001 - report provider import failures
-        provider_binding = {"complete": False, "error": f"{type(exc).__name__}: {exc}"}
-        errors.append(f"provider entry preflight failed: {type(exc).__name__}: {exc}")
-
-    grok = _run(["grok", "--version"], repo_root)
     codex = _run(["codex", "--version"], repo_root)
     codex_auth = _run(["codex", "login", "status"], repo_root)
     hf_auth = _run(["hf", "auth", "whoami"], repo_root)
-    if grok["returncode"] != 0:
-        errors.append("grok CLI is unavailable")
     if codex["returncode"] != 0 or codex_auth["returncode"] != 0:
-        errors.append("Codex fallback CLI is unavailable or unauthenticated")
+        errors.append("primary Codex CLI is unavailable or unauthenticated")
+    provider_binding = {
+        "complete": codex["returncode"] == 0 and codex_auth["returncode"] == 0,
+        "provider_id": "codex",
+        "model_id": "gpt-5.6-terra",
+        "reasoning_effort": "medium",
+        "dispatch": "codex exec",
+    }
     if hf_auth["returncode"] != 0 or "justicedao" not in hf_auth["stdout"]:
         errors.append(
             "Hugging Face credentials are unavailable or do not show justicedao access"
@@ -743,10 +730,15 @@ def run_preflight(repo_root: Path, config_path: Path) -> dict[str, Any]:
         },
         inherited_environment=os.environ,
     )
-    effective_controlled_environment = {
-        key: effective_launch_environment.get(key) for key in expected_environment
+    expected_controlled_environment = {
+        key: expected_environment.get(key)
+        for key in SCHEDULER_CONTROLLED_ENV_NAMES
     }
-    if effective_controlled_environment != expected_environment:
+    effective_controlled_environment = {
+        key: effective_launch_environment.get(key)
+        for key in SCHEDULER_CONTROLLED_ENV_NAMES
+    }
+    if effective_controlled_environment != expected_controlled_environment:
         errors.append(
             "effective launch environment does not preserve the sealed "
             "validation contract"
@@ -818,7 +810,6 @@ def run_preflight(repo_root: Path, config_path: Path) -> dict[str, Any]:
         },
         "providers": {
             "binding": provider_binding,
-            "grok": grok,
             "codex": codex,
             "codex_auth": codex_auth,
             "huggingface_auth": hf_auth,
