@@ -51,6 +51,9 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia_lexis imp
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia_title import (
     parse_georgia_title_text,
 )
+from ipfs_datasets_py.processors.web_archiving.wayback_machine_engine import (
+    _wayback_inventory_query_url,
+)
 
 
 def _digest(value: object) -> str:
@@ -76,21 +79,40 @@ def test_registered_source_bundle_binds_exact_delegated_inventory_parser() -> No
     )
 
 
-def _inventory() -> dict[str, object]:
+def _inventory(catalog_evidence_root: Path | None = None) -> dict[str, object]:
+    root_payload = b"<html><body>Exact Georgia Title 1-53 fixture catalog</body></html>"
+    root_sha256 = hashlib.sha256(root_payload).hexdigest()
     sections = []
     expansions = []
+    patch_hashes: dict[str, str] = {}
+    patch_paths: dict[str, str] = {}
     for title in range(1, 54):
         section = f"{title}-1-1"
         node_id = f"S{title:02d}"
         expansion_id = f"T{title:02d}"
+        patch_payload = json.dumps(
+            {"title": title, "section_number": section},
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+        patch_sha256 = hashlib.sha256(patch_payload).hexdigest()
         expansions.append(expansion_id)
+        patch_hashes[expansion_id] = patch_sha256
+        patch_relative = (
+            f"catalog-evidence/title-open-to/{expansion_id}-{patch_sha256}.json"
+        )
+        patch_paths[expansion_id] = patch_relative
+        if catalog_evidence_root is not None:
+            patch_path = catalog_evidence_root / patch_relative
+            patch_path.parent.mkdir(parents=True, exist_ok=True)
+            patch_path.write_bytes(patch_payload)
         sections.append(
             {
                 "document_url": (
                     f"{ADVANCE_ORIGIN}/shared/document/statutes-legislation/"
                     f"urn:contentItem:GA{title:02d}-TEST-BODY-00000-00"
                 ),
-                "evidence_sha256": f"{title:064x}",
+                "evidence_sha256": patch_sha256,
                 "evidence_verified": True,
                 "expected_disposition": "admit",
                 "heading": f"{section}. Test provision for Title {title}.",
@@ -122,7 +144,7 @@ def _inventory() -> dict[str, object]:
         "unvisited_continuation_links": [],
     }
     frontier["frontier_digest_sha256"] = _digest(frontier)
-    return {
+    inventory: dict[str, object] = {
         "container_url": PUBLIC_CONTAINER_URL,
         "delegation_verified": True,
         "edition_as_of": "2024-01-01",
@@ -132,16 +154,21 @@ def _inventory() -> dict[str, object]:
         "jurisdiction": "GA",
         "observed_at": "2026-08-24T00:00:00+00:00",
         "official_source": True,
-        "patch_response_sha256": {
-            expansion: f"{title:064x}"
-            for title, expansion in enumerate(expansions, start=1)
-        },
-        "root_rendered_sha256": "a" * 64,
+        "patch_response_sha256": patch_hashes,
+        "root_rendered_sha256": root_sha256,
         "schema": INVENTORY_SCHEMA,
         "source_authority_class": "official",
         "source_kind": INVENTORY_SOURCE_KIND,
         "verification_result": "verified",
     }
+    if catalog_evidence_root is not None:
+        root_relative = f"catalog-evidence/root-rendered-{root_sha256}.html"
+        root_path = catalog_evidence_root / root_relative
+        root_path.parent.mkdir(parents=True, exist_ok=True)
+        root_path.write_bytes(root_payload)
+        inventory["root_rendered_path"] = root_relative
+        inventory["patch_response_paths"] = patch_paths
+    return inventory
 
 
 def _exhaustive_live_discovery() -> GeorgiaLexisDiscoveryResult:
@@ -312,12 +339,30 @@ class _ArchiveClient:
         section = url.rstrip("/").rsplit("section-", 1)[-1]
         if section == self.fail_section:
             raise RuntimeError("bounded fixture miss")
+        payload = _html(section, long_body=section == "1-1-1")
+        archive_timestamp = "20240102030405"
+        archive_url = f"https://web.archive.org/web/{archive_timestamp}id_/{url}"
+        wayback_cdx_query_url, _variant_count = _wayback_inventory_query_url(
+            url,
+            limit=100,
+            exact_originals=[url],
+        )
         return SimpleNamespace(
-            archive_timestamp="20240102030405",
-            archive_url=f"https://web.archive.org/web/20240102030405id_/{url}",
-            content=_html(section, long_body=section == "1-1-1"),
+            archive_timestamp=archive_timestamp,
+            archive_url=archive_url,
+            content=payload,
             fetched_at="2026-08-24T01:02:03+00:00",
             source="wayback",
+            transport_receipt={
+                "archive_timestamp": archive_timestamp,
+                "archive_url": archive_url,
+                "content_sha256": hashlib.sha256(payload).hexdigest(),
+                "official_url": url,
+                "source_transport": "wayback",
+                "wayback_cdx_fetched_at": "2026-08-24T01:00:00+00:00",
+                "wayback_cdx_query_url": wayback_cdx_query_url,
+                "wayback_cdx_response_sha256": "a" * 64,
+            },
             url=url,
         )
 
@@ -440,9 +485,10 @@ class _SharedPageBatchFetcher:
 
 async def _acquire(tmp_path: Path, *, fail_section: str = "") -> tuple[dict, _ArchiveClient]:
     client = _ArchiveClient(fail_section=fail_section)
+    output_root = tmp_path / "ga"
     result = await acquire_georgia_archived_official_corpus(
-        _inventory(),
-        tmp_path / "ga",
+        _inventory(output_root),
+        output_root,
         fetch_client=client,
         require_batched_transport=False,
     )
@@ -455,10 +501,11 @@ async def test_acquisition_batches_whole_frontier_and_retains_warc_savings(
 ) -> None:
     client = _BatchArchiveClient()
     pointers = [(official_section_url("1-1-1"), {"filename": "fixture"})]
+    output_root = tmp_path / "ga-batch"
 
     result = await acquire_georgia_archived_official_corpus(
-        _inventory(),
-        tmp_path / "ga-batch",
+        _inventory(output_root),
+        output_root,
         fetch_client=client,
         common_crawl_records=pointers,
         common_crawl_engine=object(),
@@ -490,10 +537,11 @@ async def test_acquisition_reuses_restart_safe_shared_page_batch_seam(
     tmp_path: Path,
 ) -> None:
     page_fetcher = _SharedPageBatchFetcher()
+    output_root = tmp_path / "ga-shared-page-batch"
 
     result = await acquire_georgia_archived_official_corpus(
-        _inventory(),
-        tmp_path / "ga-shared-page-batch",
+        _inventory(output_root),
+        output_root,
         page_batch_fetcher=page_fetcher,
         max_concurrency=5,
     )
@@ -522,6 +570,31 @@ async def test_acquisition_reuses_restart_safe_shared_page_batch_seam(
         row["source_transport"] == "direct"
         for row in result["manifest"]["artifacts"]
     )
+    inventory_evidence = result["manifest"]["inventory_evidence"]
+    assert inventory_evidence["closed"] is True
+    assert inventory_evidence["catalog_input_count"] == 54
+    assert inventory_evidence["title_patch_input_count"] == 53
+    assert inventory_evidence["expansion_binding_count"] == 53
+    assert len(inventory_evidence["physical_inputs_sha256"]) == 64
+
+
+@pytest.mark.anyio
+async def test_acquisition_refuses_unretained_catalog_before_body_wave(
+    tmp_path: Path,
+) -> None:
+    page_fetcher = _SharedPageBatchFetcher()
+
+    with pytest.raises(
+        GeorgiaArchivedOfficialCorpusError,
+        match="lacks the retained catalog root path",
+    ):
+        await acquire_georgia_archived_official_corpus(
+            _inventory(),
+            tmp_path / "ga-unretained-catalog",
+            page_batch_fetcher=page_fetcher,
+        )
+
+    assert page_fetcher.requests == []
 
 
 @pytest.mark.anyio
@@ -545,9 +618,10 @@ async def test_shared_transport_wrapper_attaches_prospective_ledger(
         _shared_batch,
     )
     evidence_root = tmp_path / "evidence"
+    output_root = tmp_path / "ga-shared-wrapper"
     result = await acquire_georgia_archived_official_with_shared_transport(
-        _inventory(),
-        tmp_path / "ga-shared-wrapper",
+        _inventory(output_root),
+        output_root,
         acquisition_evidence_root=evidence_root,
         max_concurrency=4,
     )
@@ -585,9 +659,10 @@ async def test_acquisition_loads_archive_inventory_once_for_the_whole_frontier(
         return await original_batch(urls, **kwargs)
 
     client.fetch_many_with_fallback = _batch_with_loader  # type: ignore[method-assign]
+    output_root = tmp_path / "ga-loader-batch"
     result = await acquire_georgia_archived_official_corpus(
-        _inventory(),
-        tmp_path / "ga-loader-batch",
+        _inventory(output_root),
+        output_root,
         fetch_client=client,
         common_crawl_record_loader=_record_loader,
         common_crawl_engine=object(),
@@ -604,13 +679,14 @@ async def test_acquisition_loads_archive_inventory_once_for_the_whole_frontier(
 async def test_acquisition_refuses_legacy_per_page_transport_by_default(
     tmp_path: Path,
 ) -> None:
+    output_root = tmp_path / "ga-no-per-page"
     with pytest.raises(
         GeorgiaArchivedOfficialCorpusError,
         match="shared archival multi-fetch transport",
     ):
         await acquire_georgia_archived_official_corpus(
-            _inventory(),
-            tmp_path / "ga-no-per-page",
+            _inventory(output_root),
+            output_root,
             fetch_client=_ArchiveClient(),
         )
 
@@ -619,9 +695,10 @@ async def test_acquisition_refuses_legacy_per_page_transport_by_default(
 async def test_acquisition_rejects_a_batch_response_in_the_wrong_locator_slot(
     tmp_path: Path,
 ) -> None:
+    output_root = tmp_path / "ga-misaligned-batch"
     result = await acquire_georgia_archived_official_corpus(
-        _inventory(),
-        tmp_path / "ga-misaligned-batch",
+        _inventory(output_root),
+        output_root,
         fetch_client=_MisalignedBatchArchiveClient(),
     )
 
@@ -873,6 +950,23 @@ async def test_tampered_body_bytes_fail_the_manifest_hash_binding(tmp_path: Path
 
 
 @pytest.mark.anyio
+async def test_tampered_catalog_bytes_fail_the_manifest_hash_binding(
+    tmp_path: Path,
+) -> None:
+    result, _client = await _acquire(tmp_path)
+    manifest_path = Path(result["manifest_path"])
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    catalog_path = manifest_path.parent / manifest["inventory"]["root_rendered_path"]
+    catalog_path.write_bytes(catalog_path.read_bytes() + b"tampered")
+
+    with pytest.raises(
+        GeorgiaArchivedOfficialCorpusError,
+        match="retained catalog root evidence SHA-256 does not match",
+    ):
+        load_georgia_archived_official_corpus(manifest_path)
+
+
+@pytest.mark.anyio
 async def test_manifest_rejects_secondary_or_unbound_body_source(tmp_path: Path) -> None:
     result, _client = await _acquire(tmp_path)
     manifest_path = Path(result["manifest_path"])
@@ -895,6 +989,14 @@ async def test_durable_cache_requires_original_transport_receipt(tmp_path: Path)
     origin = deepcopy(artifact)
     origin["content_sha256"] = artifact["sha256"]
     artifact["source_transport"] = "durable_cache"
+    for leaf_only_field in (
+        "archive_timestamp",
+        "archive_url",
+        "wayback_cdx_fetched_at",
+        "wayback_cdx_query_url",
+        "wayback_cdx_response_sha256",
+    ):
+        artifact.pop(leaf_only_field, None)
     artifact["origin_transport_receipt"] = origin
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 

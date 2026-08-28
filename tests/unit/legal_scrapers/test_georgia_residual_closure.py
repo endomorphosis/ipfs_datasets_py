@@ -60,7 +60,6 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.strict_frontier_c
     retain_exact_state_frontier_closure,
 )
 
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 REPORT_PATH = (
     REPO_ROOT
@@ -184,9 +183,17 @@ def _section_raw_node(
     }
 
 
-def _compact_delegated_discovery() -> GeorgiaLexisDiscoveryResult:
+def _compact_delegated_discovery(
+    evidence_root: Path | None = None,
+) -> GeorgiaLexisDiscoveryResult:
     """Title 1-53 catalog recipe with one temporal alternate and one terminal."""
 
+    root_payload = b"<html><body>Exact Georgia Title 1-53 fixture catalog</body></html>"
+    root_sha256 = hashlib.sha256(root_payload).hexdigest()
+    root_relative = f"root-rendered-{root_sha256}.html"
+    if evidence_root is not None:
+        evidence_root.mkdir(parents=True, exist_ok=True)
+        (evidence_root / root_relative).write_bytes(root_payload)
     root_rows = [
         {
             "nodeid": f"T{title:02d}",
@@ -201,26 +208,23 @@ def _compact_delegated_discovery() -> GeorgiaLexisDiscoveryResult:
         parse_toc_dom_rows(root_rows),
         source_url=PUBLIC_CONTAINER_URL,
         observed_at=OBSERVED_AT,
-        receipt_sha256="a" * 64,
+        receipt_sha256=root_sha256,
     )
     nodes: list[object] = []
     expanded: list[str] = []
     patch_hashes: list[tuple[str, str]] = []
+    patch_paths: list[tuple[str, str]] = []
     for title, root in enumerate(roots, start=1):
-        receipt_sha256 = f"{title:064x}"
         chapter_id = f"C{title:02d}"
         section_id = f"S{title:02d}"
         if title == 21:
             heading = "21-2-140. [Repealed] Mandatory drug testing."
-            section = "21-2-140"
         elif title == 25:
             heading = (
                 "25-4-8. [Effective until July 1, 2027] Qualifications."
             )
-            section = "25-4-8"
         else:
             heading = f"{title}-1-1. Test provision for Title {title}."
-            section = f"{title}-1-1"
         raw_nodes: list[dict[str, object]] = [
             {
                 "id": chapter_id,
@@ -249,6 +253,20 @@ def _compact_delegated_discovery() -> GeorgiaLexisDiscoveryResult:
                     urn="urn:contentItem:GA25-FUTURE-BODY-00000-00",
                 )
             )
+        patch_payload = json.dumps(
+            {"collections": {"tocnodes": raw_nodes}},
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+        receipt_sha256 = hashlib.sha256(patch_payload).hexdigest()
+        patch_relative = (
+            f"title-open-to/{root.node_id}-{receipt_sha256}.json"
+        )
+        if evidence_root is not None:
+            patch_path = evidence_root / patch_relative
+            patch_path.parent.mkdir(parents=True, exist_ok=True)
+            patch_path.write_bytes(patch_payload)
         bound = _bind_live_toc_nodes(
             parse_toc_payload({"collections": {"tocnodes": raw_nodes}}),
             source_url=PUBLIC_CONTAINER_URL,
@@ -267,6 +285,12 @@ def _compact_delegated_discovery() -> GeorgiaLexisDiscoveryResult:
                 (chapter_id, receipt_sha256),
             ]
         )
+        patch_paths.extend(
+            [
+                (root.node_id, patch_relative),
+                (chapter_id, patch_relative),
+            ]
+        )
     return GeorgiaLexisDiscoveryResult(
         status="official_toc",
         final_url=PUBLIC_CONTAINER_URL,
@@ -275,13 +299,10 @@ def _compact_delegated_discovery() -> GeorgiaLexisDiscoveryResult:
         expanded_node_ids=tuple(expanded),
         diagnostics=(),
         observed_at=OBSERVED_AT,
-        root_rendered_sha256="a" * 64,
+        root_rendered_sha256=root_sha256,
         patch_response_sha256=tuple(patch_hashes),
-        root_rendered_path="root-rendered-aaaaaaaa.html",
-        patch_response_paths=tuple(
-            (node_id, f"title-open-to/{node_id}.json")
-            for node_id, _digest in patch_hashes
-        ),
+        root_rendered_path=root_relative,
+        patch_response_paths=tuple(patch_paths),
     )
 
 
@@ -758,8 +779,9 @@ def test_georgia_full_corpus_refuses_summary_pdfs_and_two_row_artifact_before_bo
 def test_georgia_complete_current_union_is_one_plural_wave_after_catalog(
     tmp_path: Path,
 ) -> None:
+    output_root = tmp_path / "ga-residual"
     inventory = build_georgia_delegated_inventory(
-        _compact_delegated_discovery(),
+        _compact_delegated_discovery(output_root),
         edition_as_of="2026-08-26",
         edition_identifier="ocga-2026-08-26",
     )
@@ -769,7 +791,7 @@ def test_georgia_complete_current_union_is_one_plural_wave_after_catalog(
     result = asyncio.run(
         acquire_georgia_archived_official_corpus(
             inventory,
-            tmp_path / "ga-residual",
+            output_root,
             page_batch_fetcher=fetcher,
             prefer_direct=True,
         )

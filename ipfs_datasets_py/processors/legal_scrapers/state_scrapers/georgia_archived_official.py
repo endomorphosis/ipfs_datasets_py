@@ -751,17 +751,150 @@ def _looks_like_georgia_statute_payload(payload: bytes) -> bool:
 
 
 def _safe_artifact_path(manifest_path: Path, relative: object) -> Path:
+    return _safe_evidence_path(manifest_path.parent, relative)
+
+
+def _safe_evidence_path(root: Path, relative: object) -> Path:
     token = str(relative or "").strip()
     candidate = Path(token)
     if not token or candidate.is_absolute() or ".." in candidate.parts:
         raise GeorgiaArchivedOfficialCorpusError("artifact path is not a safe relative path")
-    root = manifest_path.parent.resolve()
-    resolved = (root / candidate).resolve()
+    resolved_root = root.resolve()
+    resolved = (resolved_root / candidate).resolve()
     try:
-        resolved.relative_to(root)
+        resolved.relative_to(resolved_root)
     except ValueError as exc:
         raise GeorgiaArchivedOfficialCorpusError("artifact path escapes the manifest directory") from exc
     return resolved
+
+
+def _verify_inventory_evidence_files(
+    inventory: Mapping[str, Any],
+    *,
+    root: Path,
+) -> dict[str, Any]:
+    """Reopen every retained delegated-catalog input and bind its exact bytes."""
+
+    root_relative = str(inventory.get("root_rendered_path") or "").strip()
+    if not root_relative:
+        raise GeorgiaArchivedOfficialCorpusError(
+            "inventory lacks the retained catalog root path"
+        )
+    patch_hashes = inventory.get("patch_response_sha256")
+    patch_paths = inventory.get("patch_response_paths")
+    if not isinstance(patch_hashes, Mapping) or not isinstance(patch_paths, Mapping):
+        raise GeorgiaArchivedOfficialCorpusError(
+            "inventory lacks retained TOC expansion paths"
+        )
+    normalized_patch_hashes = {
+        str(key): str(value or "").lower() for key, value in patch_hashes.items()
+    }
+    normalized_patch_paths = {
+        str(key): str(value or "").strip() for key, value in patch_paths.items()
+    }
+    if (
+        len(normalized_patch_hashes) != len(patch_hashes)
+        or len(normalized_patch_paths) != len(patch_paths)
+        or set(normalized_patch_paths) != set(normalized_patch_hashes)
+    ):
+        raise GeorgiaArchivedOfficialCorpusError(
+            "retained TOC expansion paths do not cover every expansion"
+        )
+    resolved_root = root.resolve()
+
+    def _reopen(relative: str, expected_sha256: str, *, label: str) -> tuple[int, str]:
+        path = _safe_evidence_path(resolved_root, relative)
+        try:
+            payload = path.read_bytes()
+        except OSError as exc:
+            raise GeorgiaArchivedOfficialCorpusError(
+                f"{label} evidence is unreadable"
+            ) from exc
+        actual_sha256 = hashlib.sha256(payload).hexdigest()
+        if actual_sha256 != expected_sha256:
+            raise GeorgiaArchivedOfficialCorpusError(
+                f"{label} evidence SHA-256 does not match"
+            )
+        return len(payload), path.relative_to(resolved_root).as_posix()
+
+    root_sha256 = str(inventory.get("root_rendered_sha256") or "").lower()
+    root_size, canonical_root_relative = _reopen(
+        root_relative,
+        root_sha256,
+        label="retained catalog root",
+    )
+    physical_patches: dict[str, dict[str, Any]] = {}
+    expansion_bindings: dict[str, int] = {}
+    for node_id in sorted(normalized_patch_hashes):
+        relative = normalized_patch_paths[node_id]
+        expected_sha256 = normalized_patch_hashes[node_id]
+        canonical_relative = _safe_evidence_path(
+            resolved_root,
+            relative,
+        ).relative_to(resolved_root).as_posix()
+        prior = physical_patches.get(canonical_relative)
+        if prior is not None:
+            if prior["sha256"] != expected_sha256:
+                raise GeorgiaArchivedOfficialCorpusError(
+                    "one retained TOC path claims conflicting response hashes"
+                )
+            expansion_bindings[canonical_relative] += 1
+            continue
+        size, reopened_relative = _reopen(
+            relative,
+            expected_sha256,
+            label=f"retained TOC expansion {node_id}",
+        )
+        if reopened_relative != canonical_relative:
+            raise GeorgiaArchivedOfficialCorpusError(
+                "retained TOC expansion path changed during verification"
+            )
+        if reopened_relative == canonical_root_relative:
+            raise GeorgiaArchivedOfficialCorpusError(
+                "catalog root and title expansion must be distinct inputs"
+            )
+        physical_patches[canonical_relative] = {
+            "path": reopened_relative,
+            "sha256": expected_sha256,
+            "size_bytes": size,
+        }
+        expansion_bindings[canonical_relative] = 1
+    if len(physical_patches) != len(TITLE_NUMBERS):
+        raise GeorgiaArchivedOfficialCorpusError(
+            "retained catalog must contain exactly one physical expansion response per Title 1-53",
+            evidence={"physical_expansion_response_count": len(physical_patches)},
+        )
+
+    patch_inputs = []
+    for relative, row in sorted(
+        physical_patches.items(), key=lambda item: item[1]["path"]
+    ):
+        patch_inputs.append(
+            {
+                **row,
+                "expansion_binding_count": expansion_bindings[relative],
+                "type": "title_open_to_response",
+            }
+        )
+    physical_inputs = [
+        {
+            "path": canonical_root_relative,
+            "sha256": root_sha256,
+            "size_bytes": root_size,
+            "type": "rendered_root",
+        },
+        *patch_inputs,
+    ]
+    return {
+        "catalog_input_count": len(physical_inputs),
+        "closed": True,
+        "expansion_binding_count": len(normalized_patch_hashes),
+        "physical_inputs": physical_inputs,
+        "physical_inputs_sha256": _canonical_sha256(physical_inputs),
+        "schema": "georgia-delegated-toc-retained-evidence/v1",
+        "title_patch_input_count": len(patch_inputs),
+        "total_size_bytes": sum(int(row["size_bytes"]) for row in physical_inputs),
+    }
 
 
 def configured_georgia_archived_official_manifest_path() -> Path | None:
@@ -801,6 +934,14 @@ def load_georgia_archived_official_corpus(
     if not isinstance(inventory, Mapping):
         raise GeorgiaArchivedOfficialCorpusError("manifest inventory receipt is missing")
     sections = _validate_inventory(inventory)
+    inventory_evidence = _verify_inventory_evidence_files(
+        inventory,
+        root=path.parent,
+    )
+    if manifest.get("inventory_evidence") != inventory_evidence:
+        raise GeorgiaArchivedOfficialCorpusError(
+            "manifest retained catalog evidence receipt does not match"
+        )
     inventory_sha256 = _canonical_sha256(inventory)
     if str(manifest.get("inventory_sha256") or "").lower() != inventory_sha256:
         raise GeorgiaArchivedOfficialCorpusError("manifest inventory SHA-256 does not match")
@@ -1017,6 +1158,11 @@ async def acquire_georgia_archived_official_corpus(
         raise TypeError("require_batched_transport must be a boolean")
 
     sections = _validate_inventory(inventory)
+    root = Path(output_dir).expanduser().resolve()
+    inventory_evidence = _verify_inventory_evidence_files(
+        inventory,
+        root=root,
+    )
     inventory_payload = dict(inventory)
     inventory_sha256 = _canonical_sha256(inventory_payload)
     if fetch_client is None and page_batch_fetcher is None:
@@ -1028,7 +1174,6 @@ async def acquire_georgia_archived_official_corpus(
             content_validator=_looks_like_georgia_statute_payload,
         )
 
-    root = Path(output_dir).expanduser().resolve()
     objects_dir = root / "objects"
     objects_dir.mkdir(parents=True, exist_ok=True)
     artifacts: list[dict[str, Any]] = []
@@ -1282,6 +1427,7 @@ async def acquire_georgia_archived_official_corpus(
         ),
         "generated_at": datetime.now(UTC).isoformat(),
         "inventory": inventory_payload,
+        "inventory_evidence": inventory_evidence,
         "inventory_sha256": inventory_sha256,
         "jurisdiction": "GA",
         "official_source": True,
