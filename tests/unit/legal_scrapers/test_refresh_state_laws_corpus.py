@@ -2202,6 +2202,55 @@ def test_loaded_identity_binds_source_owned_module_qualified_helper(
     assert after != before
 
 
+def test_loaded_identity_canonicalizes_equivalent_worktree_module_paths():
+    import types
+
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
+        _loaded_executable_sha256,
+    )
+
+    module_name = "ipfs_datasets_py.identity_projection_path_target"
+
+    def _module_at(checkout_root: str):
+        target = types.ModuleType(module_name)
+        target.__file__ = (
+            f"{checkout_root}/ipfs_datasets_py/"
+            "identity_projection_path_target.py"
+        )
+        exec("def source_path():\n    return __file__\n", target.__dict__)
+        return target
+
+    first = _module_at("/tmp/worktree-a")
+    second = _module_at("/different/worktree-b")
+
+    assert _loaded_executable_sha256(first) == _loaded_executable_sha256(second)
+
+
+def test_loaded_identity_rejects_unexpected_module_file_pairing():
+    import types
+
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
+        _loaded_executable_sha256,
+    )
+
+    module_name = "ipfs_datasets_py.identity_projection_path_target"
+
+    def _module_at(source_path: str):
+        target = types.ModuleType(module_name)
+        target.__file__ = source_path
+        exec("def source_path():\n    return __file__\n", target.__dict__)
+        return target
+
+    expected = _module_at(
+        "/tmp/worktree/ipfs_datasets_py/identity_projection_path_target.py"
+    )
+    mismatched = _module_at("/tmp/worktree/other_module.py")
+
+    assert _loaded_executable_sha256(expected) != _loaded_executable_sha256(
+        mismatched
+    )
+
+
 def test_acquisition_in_progress_marker_is_exclusive_between_contenders(
     tmp_path,
 ):

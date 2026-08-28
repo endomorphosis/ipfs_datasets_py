@@ -579,7 +579,36 @@ class _LoadedExecutableGraphProjector:
             # projecting their live contents would make the identity mutate as
             # a normal acquisition reserves a request, advances a checkpoint
             # generation, or memoizes an already-proven correspondence result.
-            if name in {
+            if name == "__file__" and isinstance(value, str):
+                # ``__file__`` is executable context, but its checkout prefix
+                # is not producer behavior.  Bind the canonical module-relative
+                # locator so identical bytes loaded from two worktrees produce
+                # one content identity while an unexpected module/file pairing
+                # remains visible in the projection.
+                module_relative = global_namespace.replace(".", "/")
+                expected_suffixes = (
+                    f"{module_relative}.py",
+                    f"{module_relative}/__init__.py",
+                )
+                normalized_path = str(value).replace("\\", "/")
+                matched_suffix = next(
+                    (
+                        suffix
+                        for suffix in expected_suffixes
+                        if normalized_path.endswith(suffix)
+                    ),
+                    "",
+                )
+                projection = {
+                    "runtime_module_file": {
+                        "module": global_namespace,
+                        "module_relative_path": (
+                            matched_suffix or Path(normalized_path).name
+                        ),
+                        "module_relative_path_verified": bool(matched_suffix),
+                    }
+                }
+            elif name in {
                 "_MULTIFETCH_REQUEST_RESERVATIONS",
                 "_PARTIAL_CHECKPOINT_GENERATIONS",
                 "_SOURCE_CORRESPONDENCE_CACHE",
