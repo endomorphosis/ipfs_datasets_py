@@ -1,0 +1,593 @@
+{
+  "authority": "ipfs_datasets_py.logic.ui_ux_ir",
+  "interface": "UIIRCrossLanguageParity@1",
+  "schema_version": "ui-ux-ir/v1",
+  "typescript_peer": "swissknife/src/services/mcp/ui-ux-ir-codec.ts",
+  "vectors": [
+    {
+      "canonical_sha256": "sha256:a207b68313d08be024c39f87b6b976629526066ee56edc7b441a44bf3dbc134b",
+      "canonical_utf8_length": 2406,
+      "document": {
+        "components": [
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "loc:form-title",
+            "child_ids": [
+              "component:submit"
+            ],
+            "component_id": "component:root",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Collect a value and submit it.",
+            "role": "form",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          },
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "",
+            "child_ids": [],
+            "component_id": "component:submit",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "component:root",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Submit the form.",
+            "role": "button",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "document_id": "doc:form-v1",
+        "entry_components": [
+          "component:root"
+        ],
+        "schema_version": "ui-ux-ir/v1",
+        "sources": [
+          {
+            "container_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "container_uri": "ipfs://bafy-fixture/form",
+            "content_cid": "",
+            "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "license_expression": "",
+            "ref_id": "source:form-v1",
+            "review_status": "trusted_fixture",
+            "source_id": "form-v1",
+            "source_revision": "rev-1",
+            "source_uri": "https://example.test/ui/form",
+            "span": {
+              "end_char": 120,
+              "start_char": 0
+            }
+          }
+        ],
+        "terminal_outcomes": [
+          {
+            "description": "",
+            "kind": "success",
+            "outcome_id": "outcome:success",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "title": "Sample form"
+      },
+      "id": "valid:minimal-form",
+      "kind": "valid_document"
+    },
+    {
+      "document": {
+        "components": [
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "loc:form-title",
+            "child_ids": [
+              "component:submit"
+            ],
+            "component_id": "component:root",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Collect a value and submit it.",
+            "role": "form",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          },
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "",
+            "child_ids": [],
+            "component_id": "component:submit",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "component:root",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Submit the form.",
+            "role": "button",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "document_id": "doc:form-v1",
+        "entry_components": [
+          "component:root"
+        ],
+        "schema_version": "ui-ux-ir/v9",
+        "sources": [
+          {
+            "container_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "container_uri": "ipfs://bafy-fixture/form",
+            "content_cid": "",
+            "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "license_expression": "",
+            "ref_id": "source:form-v1",
+            "review_status": "trusted_fixture",
+            "source_id": "form-v1",
+            "source_revision": "rev-1",
+            "source_uri": "https://example.test/ui/form",
+            "span": {
+              "end_char": 120,
+              "start_char": 0
+            }
+          }
+        ],
+        "terminal_outcomes": [
+          {
+            "description": "",
+            "kind": "success",
+            "outcome_id": "outcome:success",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "title": "Sample form"
+      },
+      "id": "invalid:0",
+      "kind": "invalid_document"
+    },
+    {
+      "document": {
+        "components": [
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "loc:form-title",
+            "child_ids": [
+              "component:submit"
+            ],
+            "component_id": "component:root",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Collect a value and submit it.",
+            "role": "form",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          },
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "",
+            "child_ids": [],
+            "component_id": "component:submit",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "component:root",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Submit the form.",
+            "role": "button",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "document_id": "doc:form-v1",
+        "entry_components": [
+          "component:root"
+        ],
+        "schema_version": "ui-ux-ir/v0.1",
+        "sources": [
+          {
+            "container_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "container_uri": "ipfs://bafy-fixture/form",
+            "content_cid": "",
+            "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "license_expression": "",
+            "ref_id": "source:form-v1",
+            "review_status": "trusted_fixture",
+            "source_id": "form-v1",
+            "source_revision": "rev-1",
+            "source_uri": "https://example.test/ui/form",
+            "span": {
+              "end_char": 120,
+              "start_char": 0
+            }
+          }
+        ],
+        "terminal_outcomes": [
+          {
+            "description": "",
+            "kind": "success",
+            "outcome_id": "outcome:success",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "title": "Sample form"
+      },
+      "id": "invalid:1",
+      "kind": "invalid_document"
+    },
+    {
+      "document": {
+        "components": [
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "loc:form-title",
+            "child_ids": [
+              "component:submit"
+            ],
+            "component_id": "component:root",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Collect a value and submit it.",
+            "role": "form",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          },
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "",
+            "child_ids": [],
+            "component_id": "component:submit",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "component:root",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Submit the form.",
+            "role": "button",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "document_id": "doc:form-v1",
+        "entry_components": [
+          "component:root"
+        ],
+        "not_a_field": true,
+        "schema_version": "ui-ux-ir/v1",
+        "sources": [
+          {
+            "container_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "container_uri": "ipfs://bafy-fixture/form",
+            "content_cid": "",
+            "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "license_expression": "",
+            "ref_id": "source:form-v1",
+            "review_status": "trusted_fixture",
+            "source_id": "form-v1",
+            "source_revision": "rev-1",
+            "source_uri": "https://example.test/ui/form",
+            "span": {
+              "end_char": 120,
+              "start_char": 0
+            }
+          }
+        ],
+        "terminal_outcomes": [
+          {
+            "description": "",
+            "kind": "success",
+            "outcome_id": "outcome:success",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "title": "Sample form"
+      },
+      "id": "invalid:2",
+      "kind": "invalid_document"
+    },
+    {
+      "document": {
+        "components": [
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "loc:form-title",
+            "child_ids": [
+              "component:submit"
+            ],
+            "component_id": "component:root",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Collect a value and submit it.",
+            "role": "form",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          },
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "",
+            "child_ids": [],
+            "component_id": "component:submit",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "component:root",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Submit the form.",
+            "role": "button",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "document_id": "doc:form-v1",
+        "entry_components": [
+          "component:root"
+        ],
+        "schema_version": "ui-ux-ir/v1",
+        "sources": [
+          {
+            "container_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "container_uri": "ipfs://bafy-fixture/form",
+            "content_cid": "",
+            "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "license_expression": "",
+            "ref_id": "source:form-v1",
+            "review_status": "trusted_fixture",
+            "source_id": "form-v1",
+            "source_revision": "rev-1",
+            "source_uri": "https://example.test/ui/form",
+            "span": {
+              "end_char": 120,
+              "start_char": 0
+            }
+          }
+        ],
+        "terminal_outcomes": [
+          {
+            "description": "",
+            "kind": "success",
+            "outcome_id": "outcome:success",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ]
+      },
+      "id": "invalid:3",
+      "kind": "invalid_document"
+    },
+    {
+      "document": {
+        "components": [
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "loc:form-title",
+            "child_ids": [
+              "component:submit"
+            ],
+            "component_id": "component:root",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Collect a value and submit it.",
+            "role": "form",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          },
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "",
+            "child_ids": [],
+            "component_id": "component:submit",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "component:root",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Submit the form.",
+            "role": "button",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "document_id": "doc:form-v1",
+        "entry_components": [
+          "component:root",
+          "component:missing"
+        ],
+        "schema_version": "ui-ux-ir/v1",
+        "sources": [
+          {
+            "container_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "container_uri": "ipfs://bafy-fixture/form",
+            "content_cid": "",
+            "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "license_expression": "",
+            "ref_id": "source:form-v1",
+            "review_status": "trusted_fixture",
+            "source_id": "form-v1",
+            "source_revision": "rev-1",
+            "source_uri": "https://example.test/ui/form",
+            "span": {
+              "end_char": 120,
+              "start_char": 0
+            }
+          }
+        ],
+        "terminal_outcomes": [
+          {
+            "description": "",
+            "kind": "success",
+            "outcome_id": "outcome:success",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "title": "Sample form"
+      },
+      "id": "invalid:4",
+      "kind": "invalid_document"
+    },
+    {
+      "document": {
+        "components": [
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "loc:form-title",
+            "child_ids": [
+              "component:submit"
+            ],
+            "component_id": "component:root",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "on_click": "alert(1)",
+            "parent_id": "",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Collect a value and submit it.",
+            "role": "form",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          },
+          {
+            "accessible_description_ref": "",
+            "accessible_name_ref": "",
+            "child_ids": [],
+            "component_id": "component:submit",
+            "data_binding_ids": [],
+            "feedback_ids": [],
+            "modality_binding_ids": [],
+            "parent_id": "component:root",
+            "presentation_classification": "interactive",
+            "privacy_sensitivity": "none",
+            "program_binding_ids": [],
+            "purpose": "Submit the form.",
+            "role": "button",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "document_id": "doc:form-v1",
+        "entry_components": [
+          "component:root"
+        ],
+        "schema_version": "ui-ux-ir/v1",
+        "sources": [
+          {
+            "container_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "container_uri": "ipfs://bafy-fixture/form",
+            "content_cid": "",
+            "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "license_expression": "",
+            "ref_id": "source:form-v1",
+            "review_status": "trusted_fixture",
+            "source_id": "form-v1",
+            "source_revision": "rev-1",
+            "source_uri": "https://example.test/ui/form",
+            "span": {
+              "end_char": 120,
+              "start_char": 0
+            }
+          }
+        ],
+        "terminal_outcomes": [
+          {
+            "description": "",
+            "kind": "success",
+            "outcome_id": "outcome:success",
+            "source_ref_ids": [
+              "source:form-v1"
+            ]
+          }
+        ],
+        "title": "Sample form"
+      },
+      "id": "invalid:5",
+      "kind": "invalid_document"
+    },
+    {
+      "id": "decision:deny",
+      "kind": "decision",
+      "payload": {
+        "can_execute": false,
+        "outcome": "deny"
+      },
+      "semantic": {
+        "can_execute": false
+      }
+    },
+    {
+      "id": "receipt:no-invocation",
+      "kind": "receipt",
+      "payload": {
+        "has_invocation": false
+      },
+      "semantic": {
+        "has_invocation": false
+      }
+    }
+  ]
+}
