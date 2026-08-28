@@ -21,6 +21,9 @@ from urllib.parse import urlparse
 
 import pytest
 
+from ipfs_datasets_py.processors.legal_data.state_laws_multifetch_acquisition import (
+    build_canonical_state_law_output_projection,
+)
 from ipfs_datasets_py.processors.legal_data.state_laws_retained_evidence_seed import (
     seed_retained_evidence_generation,
     seed_retained_evidence_union,
@@ -41,7 +44,6 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.retained_replay_i
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.strict_frontier_closure import (
     retain_exact_state_frontier_closure,
 )
-
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 REPORT_PATH = (
@@ -119,6 +121,88 @@ VARIANT_IDENTITIES = (
     ("VAT", "1180-i", "*5"),
     ("VAT", "1180-i", "*6"),
 )
+RETAINED_WAVE_D_OBJECT_ROOT = (
+    Path.home()
+    / ".ipfs_datasets"
+    / "state_laws"
+    / "legal-corpora-reindex-20260828-ny-wave-d-evidence-nz5JAZ"
+    / "NY"
+    / "objects"
+)
+RETAINED_RESOLVER_CASES = (
+    {
+        "code": "EPT",
+        "law_name": "Estates, Powers and Trusts",
+        "section": "3-6.5",
+        "pdf_sha256": (
+            "f9176c690fedaade9769beca8a23246e2af371cdf3e2ceaea27bb71ade6cf479"
+        ),
+        "page_sha256": ny_pdf.EPT365_SENATE_SECTION_SHA256,
+        "url": ny_pdf.EPT365_SENATE_SECTION_URL,
+        "residual": {
+            "section_number": "3-6.5",
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": "missing_lifecycle_note:",
+        },
+        "before": (362, 7, 1, False),
+        "after": (362, 8, 0, True),
+        "action": "terminal",
+        "disposition": "future_effective",
+        "revision": "2026-02-27",
+        "drift_from": b"December 12, 2027",
+        "drift_to": b"December 12, 2028",
+        "drift_conjunct": "explicit_effective_date",
+    },
+    {
+        "code": "GMU",
+        "law_name": "General Municipal",
+        "section": "902",
+        "pdf_sha256": (
+            "56ee2480b30cf406829f0a1fa6be468777b2acea9bc007224c75c29e0ed023a5"
+        ),
+        "page_sha256": ny_pdf.GMU902_SENATE_SECTION_SHA256,
+        "url": ny_pdf.GMU902_SENATE_SECTION_URL,
+        "residual": {
+            "section_number": "902",
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": "missing_lifecycle_note:",
+        },
+        "before": (963, 20, 109, False),
+        "after": (964, 20, 108, False),
+        "action": "operative",
+        "disposition": "source_page_current_with_alternate_never_effective",
+        "revision": "2015-03-20",
+        "drift_from": b"be perpetual in duration",
+        "drift_to": b"remain active in duration",
+        "drift_conjunct": "operative_variant_is_perpetual",
+    },
+    {
+        "code": "PAR",
+        "law_name": "Parks, Recreation and Historic Preservation",
+        "section": "27.09",
+        "pdf_sha256": (
+            "13d0f8cd7ef7fa8cc25e6b2a6da3315d5a9bc2104b3c2f3436ddf0ad310f210c"
+        ),
+        "page_sha256": ny_pdf.PAR2709_SENATE_SECTION_SHA256,
+        "url": ny_pdf.PAR2709_SENATE_SECTION_URL,
+        "residual": {
+            "section_number": "27.09",
+            "toc_variant": "",
+            "reason": "toc_section_missing_body_identity",
+            "detail": "toc_offset=326281",
+        },
+        "before": (170, 0, 1, False),
+        "after": (171, 0, 0, True),
+        "action": "operative",
+        "disposition": "source_page_supplied_missing_pdf_body",
+        "revision": "2014-09-22",
+        "drift_from": b"subsequently<br />reversed",
+        "drift_to": b"later<br />reversed",
+        "drift_conjunct": "substantive_source_body",
+    },
+)
 
 
 def _newline_residual_sha256(urls: list[str] | tuple[str, ...]) -> str:
@@ -178,6 +262,45 @@ def _senate_section_fixture(*, head: str, content: str, revision: str) -> bytes:
         "</div>"
         "</body></html>"
     ).encode()
+
+
+def _retained_wave_d_object(content_sha256: str) -> bytes:
+    path = RETAINED_WAVE_D_OBJECT_ROOT / f"{content_sha256}.bin"
+    if not path.is_file():
+        pytest.skip("retained New York Wave-D evidence is not present")
+    payload = path.read_bytes()
+    assert hashlib.sha256(payload).hexdigest() == content_sha256
+    return payload
+
+
+class _RetainedInputLedger:
+    def __init__(self, payloads: dict[str, bytes]) -> None:
+        self.payloads = dict(payloads)
+        self.requests: list[tuple[str, dict[str, Any]]] = []
+
+    def refresh_existing_entries(self) -> None:
+        return None
+
+    def replay_retained_parser_input(self, *, official_url: str, sanitized_request):
+        self.requests.append((official_url, dict(sanitized_request)))
+        payload = self.payloads.get(official_url)
+        if payload is None:
+            return None
+        return SimpleNamespace(
+            envelope=SimpleNamespace(body=payload),
+            transport_receipt={
+                "official_url": official_url,
+                "content_sha256": hashlib.sha256(payload).hexdigest(),
+                "source_transport": "retained_acquisition_replay",
+            },
+        )
+
+
+def _canonical_projection(scraper: NewYorkScraper, rows) -> dict[str, Any]:
+    return build_canonical_state_law_output_projection(
+        [scraper._enrich_statute_structure(row).to_dict() for row in rows],
+        jurisdiction=scraper.state_code,
+    )
 
 
 def _ordered_code_sha256(*codes: str) -> str:
@@ -371,6 +494,16 @@ def test_new_york_supplemental_wave_is_source_derived_from_pinned_residual_rows(
     assert ny_pdf.AGM28_LIFECYCLE_REPORT_URL == AGM28_URL
     assert ny_pdf.AGM28_LIFECYCLE_REPORT_SHA256 == AGM28_SHA256
     assert ny_pdf.AGM28_LIFECYCLE_SELECTOR_KEY == AGM28_SELECTOR_KEY
+    assert ny_pdf.EPT365_SENATE_SECTION_URL == FIRST_RESIDUAL_URL
+    assert ny_pdf.EPT365_SENATE_SECTION_SHA256 == (
+        "7dc2b7e182e4d36cd358d87384c34981061c7b74156739d12442c6c118c040ff"
+    )
+    assert ny_pdf.GMU902_SENATE_SECTION_SHA256 == (
+        "fc117a03232e1ae39b983d8b982caf318147e574af8488500502beb042f253a0"
+    )
+    assert ny_pdf.PAR2709_SENATE_SECTION_SHA256 == (
+        "76f0a5cfe5313182d5969e5a4c82faeab2aff9f6d2a09a125a35e008006a3b09"
+    )
     assert len(rows) == SUPPLEMENTAL_RESIDUAL_ROWS
     assert len(pinned) == ENUMERABLE_URL_RESIDUAL == len(set(pinned))
     assert derived == pinned
@@ -450,6 +583,282 @@ def test_new_york_senate_section_validator_rejects_retained_soft_not_found_shape
     assert not NewYorkScraper._is_valid_new_york_senate_section_html(
         drifted_content_marker
     )
+
+
+@pytest.mark.parametrize(
+    "case",
+    RETAINED_RESOLVER_CASES,
+    ids=lambda case: f"{case['code']}-{case['section']}",
+)
+def test_new_york_exact_retained_senate_resolvers_reconcile_supported_rows(
+    case: dict[str, Any],
+) -> None:
+    pdf_payload = _retained_wave_d_object(str(case["pdf_sha256"]))
+    page_payload = _retained_wave_d_object(str(case["page_sha256"]))
+    code = str(case["code"])
+    section = str(case["section"])
+    proof = ny_pdf.NewYorkSupplementalProofInput.bind(
+        selector_key=f"{code}:{section}:source-page",
+        proof_kind="official_senate_section",
+        official_url=str(case["url"]),
+        media_type="text/html",
+        payload=page_payload,
+    )
+    registry = ny_pdf.NewYorkSupplementalProofRegistry([proof])
+
+    before = ny_pdf.parse_new_york_law_pdf(
+        pdf_payload,
+        law_code=code,
+        law_name=str(case["law_name"]),
+    )
+    after = ny_pdf.parse_new_york_law_pdf(
+        pdf_payload,
+        law_code=code,
+        law_name=str(case["law_name"]),
+        supplemental_proof_registry=registry,
+    )
+
+    assert (
+        len(before.statutes),
+        len(before.terminal_sections),
+        len(before.unclassified_sections),
+        before.closed,
+    ) == case["before"]
+    assert (
+        len(after.statutes),
+        len(after.terminal_sections),
+        len(after.unclassified_sections),
+        after.closed,
+    ) == case["after"]
+    assert after.source_section_count == (
+        len(after.statutes)
+        + len(after.terminal_sections)
+        + len(after.unclassified_sections)
+    )
+    resolved = [
+        row
+        for row in after.supplemental_proof_attempts
+        if row.get("status") == "resolved"
+    ]
+    assert len(resolved) == 1
+    outcome = resolved[0]
+    assert outcome["decision_action"] == case["action"]
+    assert outcome["decision"]["disposition"] == case["disposition"]
+    assert outcome["source_revision_date"] == case["revision"]
+    assert outcome["proof"]["content_sha256"] == case["page_sha256"]
+    assert all(outcome["conjuncts"].values())
+    source_record_id = f"{code}:{section}"
+    if case["action"] == "terminal":
+        terminal = [
+            row
+            for row in after.terminal_sections
+            if row.get("source_record_id") == source_record_id
+        ]
+        assert len(terminal) == 1
+        assert terminal[0]["source_url"] == case["url"]
+    else:
+        statutes = [
+            row
+            for row in after.statutes
+            if row.structured_data.get("source_record_id") == source_record_id
+        ]
+        assert len(statutes) == 1
+        assert statutes[0].source_url == case["url"]
+        assert statutes[0].structured_data["supplemental_proof_sha256"] == (
+            case["page_sha256"]
+        )
+
+
+@pytest.mark.parametrize(
+    "case",
+    RETAINED_RESOLVER_CASES,
+    ids=lambda case: f"{case['code']}-{case['section']}",
+)
+def test_new_york_retained_senate_resolvers_fail_closed_on_source_drift(
+    case: dict[str, Any],
+) -> None:
+    retained = _retained_wave_d_object(str(case["page_sha256"]))
+    drift_from = bytes(case["drift_from"])
+    assert drift_from in retained
+    drifted = retained.replace(drift_from, bytes(case["drift_to"]))
+    assert drifted != retained
+    code = str(case["code"])
+    section = str(case["section"])
+    proof = ny_pdf.NewYorkSupplementalProofInput.bind(
+        selector_key=f"{code}:{section}:source-page",
+        proof_kind="official_senate_section",
+        official_url=str(case["url"]),
+        media_type="text/html",
+        payload=drifted,
+    )
+
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry([proof]).resolve_residual(
+        law_code=code,
+        residual=dict(case["residual"]),
+    )
+
+    assert outcome["status"] == "unknown"
+    assert outcome["decision_action"] is None
+    assert outcome["reason"] == "source_bound_conjunction_failed"
+    assert outcome["conjuncts"]["exact_retained_page_sha256"] is False
+    assert outcome["conjuncts"][str(case["drift_conjunct"])] is False
+    assert "decision" not in outcome
+
+
+def test_new_york_retained_senate_proof_manifest_replays_without_network(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    case = RETAINED_RESOLVER_CASES[0]
+    pdf_payload = _retained_wave_d_object(str(case["pdf_sha256"]))
+    page_payload = _retained_wave_d_object(str(case["page_sha256"]))
+    pdf_url = ny_pdf.full_law_pdf_url("EPT")
+    section_url = str(case["url"])
+    catalog = (
+        "<html><head><title>Consolidated Laws of New York</title></head><body>"
+        "<a href='/legislation/laws/EPT'>"
+        "EPT Estates, Powers and Trusts</a>"
+        + (" " * 11_000)
+        + "</body></html>"
+    ).encode()
+    payload_by_url = {
+        NewYorkScraper.OFFICIAL_CONSOLIDATED_URL: catalog,
+        pdf_url: pdf_payload,
+        section_url: page_payload,
+    }
+    live_requests: list[list[str]] = []
+
+    async def _fake_plural(self, urls, *, residual_retry_attempts, **kwargs):
+        requested = list(urls)
+        live_requests.append(requested)
+        payloads = [payload_by_url[url] for url in requested]
+        assert all(kwargs["content_validator"](body) for body in payloads)
+        return _aligned_result(requested, payloads)
+
+    async def _forbid_single(*_args, **_kwargs):
+        raise AssertionError("strict New York must not use a per-page archive loop")
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(NewYorkScraper, "STRICT_MINIMUM_CONSOLIDATED_LAWS", 1)
+    monkeypatch.setattr(
+        NewYorkScraper,
+        "STRICT_CURRENT_CONSOLIDATED_CODE_SHA256",
+        _ordered_code_sha256("EPT"),
+    )
+    monkeypatch.setattr(
+        NewYorkScraper,
+        "STRICT_CURRENT_SUPPLEMENTAL_RESIDUAL_ROWS",
+        (("EPT", "3-6.5", "", "missing_lifecycle_note"),),
+    )
+    monkeypatch.setattr(
+        NewYorkScraper,
+        "STRICT_CURRENT_SUPPLEMENTAL_SECTION_URLS",
+        (section_url,),
+    )
+    monkeypatch.setattr(
+        NewYorkScraper,
+        "STRICT_CURRENT_SUPPLEMENTAL_URL_SHA256",
+        _newline_residual_sha256((section_url,)),
+    )
+    monkeypatch.setattr(
+        NewYorkScraper,
+        "_fetch_page_contents_with_archival_fallback_retrying_residuals",
+        _fake_plural,
+    )
+    monkeypatch.setattr(
+        NewYorkScraper,
+        "_fetch_page_content_with_archival_fallback",
+        _forbid_single,
+    )
+    scraper = NewYorkScraper("NY", "New York")
+
+    rows = asyncio.run(
+        scraper.scrape_code(
+            "New York Consolidated Laws",
+            NewYorkScraper.OFFICIAL_ENTRY_URL,
+            max_statutes=None,
+        )
+    )
+
+    assert len(rows) == 362
+    assert live_requests == [
+        [scraper.OFFICIAL_CONSOLIDATED_URL],
+        [pdf_url],
+        [section_url],
+    ]
+    manifest = scraper._last_new_york_full_frontier[
+        "supplemental_proof_manifest"
+    ]
+    assert manifest == [
+        {
+            "content_sha256": case["page_sha256"],
+            "media_type": "text/html",
+            "official_url": section_url,
+            "proof_kind": "official_senate_section",
+            "schema_version": ny_pdf.SUPPLEMENTAL_PROOF_SCHEMA_VERSION,
+            "selector_key": "EPT:3-6.5:source-page",
+        }
+    ]
+    assert scraper._last_new_york_strict_closure[
+        "supplemental_proof_input_count"
+    ] == 1
+
+    ledger = _RetainedInputLedger(payload_by_url)
+    scraper._state_law_acquisition_ledger = ledger
+    captured: dict[str, Any] = {}
+
+    def _retain(completion_receipt, **kwargs):
+        captured["completion"] = dict(completion_receipt)
+        captured["kwargs"] = dict(kwargs)
+        return tmp_path / "ny-retained-supplemental-closure.json"
+
+    monkeypatch.setattr(
+        scraper,
+        "retain_state_law_frontier_closure_projection",
+        _retain,
+    )
+    monkeypatch.setattr(
+        scraper,
+        "_catalog_acquisition_path_ids_for_source",
+        lambda _url: ["ny-senate-laws"],
+    )
+    monkeypatch.setattr(
+        scraper,
+        "_state_law_frontier_source_software_version",
+        lambda: "ny-retained-test@sha256:" + ("c" * 64),
+    )
+    projection = _canonical_projection(scraper, rows)
+
+    retained_path = asyncio.run(
+        scraper.produce_state_law_frontier_closure(
+            canonical_output_projection=projection,
+        )
+    )
+
+    assert retained_path == tmp_path / "ny-retained-supplemental-closure.json"
+    assert [request[0] for request in ledger.requests] == [
+        scraper.OFFICIAL_CONSOLIDATED_URL,
+        section_url,
+        pdf_url,
+    ]
+    assert captured["completion"]["replay"]["network_requests"] == 0
+    assert captured["kwargs"]["replayed_frontier"] == (
+        scraper._last_new_york_full_frontier["frontier"]
+    )
+
+    ledger.payloads[section_url] = page_payload.replace(
+        b"December 12, 2027",
+        b"December 12, 2028",
+    )
+    with pytest.raises(
+        RuntimeError,
+        match="retained supplemental proof changed",
+    ):
+        asyncio.run(
+            scraper.produce_state_law_frontier_closure(
+                canonical_output_projection=projection,
+            )
+        )
 
 
 def test_new_york_adapter_does_not_dump_event_proof_urls_or_use_per_page_senate_loop() -> None:

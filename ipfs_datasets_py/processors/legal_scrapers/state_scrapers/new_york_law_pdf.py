@@ -31,6 +31,24 @@ AGM28_LIFECYCLE_REPORT_SHA256 = (
     "6abaab50ad7bf3bec0c5c98949de8d543bdb4fb8b869f13a824776d39ed8580d"
 )
 AGM28_LIFECYCLE_SELECTOR_KEY = "AGM:28"
+EPT365_SENATE_SECTION_URL = (
+    "https://www.nysenate.gov/legislation/laws/EPT/3-6.5"
+)
+EPT365_SENATE_SECTION_SHA256 = (
+    "7dc2b7e182e4d36cd358d87384c34981061c7b74156739d12442c6c118c040ff"
+)
+GMU902_SENATE_SECTION_URL = (
+    "https://www.nysenate.gov/legislation/laws/GMU/902"
+)
+GMU902_SENATE_SECTION_SHA256 = (
+    "fc117a03232e1ae39b983d8b982caf318147e574af8488500502beb042f253a0"
+)
+PAR2709_SENATE_SECTION_URL = (
+    "https://www.nysenate.gov/legislation/laws/PAR/27.09"
+)
+PAR2709_SENATE_SECTION_SHA256 = (
+    "76f0a5cfe5313182d5969e5a4c82faeab2aff9f6d2a09a125a35e008006a3b09"
+)
 SUPPLEMENTAL_PROOF_SCHEMA_VERSION = "new-york-supplemental-proof-input-v1"
 SUPPLEMENTAL_RESOLUTION_SCHEMA_VERSION = (
     "new-york-supplemental-proof-resolution-v1"
@@ -274,6 +292,282 @@ class NewYorkSupplementalProofInput:
         }
 
 
+def _new_york_senate_section_page(payload: bytes) -> Dict[str, Any]:
+    """Project only the source-bearing fields from one Senate section page."""
+
+    raw = bytes(payload or b"")
+    decoded = raw.decode("utf-8", errors="replace")
+    lowered = decoded.casefold()
+    projection: Dict[str, Any] = {
+        "content": "",
+        "head": "",
+        "history": "",
+        "revision_date": None,
+        "soft_not_found": bool(
+            "nys-openleg-not-found" in lowered
+            or "the requested entry could not be found" in lowered
+        ),
+        "valid_html": bool(
+            len(raw) > 1_000
+            and "<html" in lowered[:4_000]
+            and "</html>" in lowered[-4_000:]
+            and "nys-openleg-content-container" in lowered
+        ),
+    }
+    if projection["soft_not_found"] or not projection["valid_html"]:
+        return projection
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return projection
+    soup = BeautifulSoup(decoded, "html.parser")
+    head_node = soup.select_one(".nys-openleg-head-container")
+    content_node = soup.select_one(".nys-openleg-content-container")
+    history_node = soup.select_one(".nys-openleg-history-container")
+    if head_node is None or content_node is None or history_node is None:
+        return projection
+    projection["head"] = _WS.sub(
+        " ", unicodedata.normalize("NFKC", head_node.get_text(" ", strip=True))
+    ).strip()
+    projection["content"] = _WS.sub(
+        " ", unicodedata.normalize("NFKC", content_node.get_text(" ", strip=True))
+    ).strip()
+    projection["history"] = _WS.sub(
+        " ", unicodedata.normalize("NFKC", history_node.get_text(" ", strip=True))
+    ).strip()
+    revision_match = re.search(
+        r"\bViewing most recent revision \(from (?P<date>\d{4}-\d{2}-\d{2})\)",
+        str(projection["history"]),
+    )
+    if revision_match is not None:
+        try:
+            projection["revision_date"] = date.fromisoformat(
+                revision_match.group("date")
+            )
+        except ValueError:
+            pass
+    return projection
+
+
+def _new_york_senate_resolution_outcome(
+    proof: NewYorkSupplementalProofInput,
+    *,
+    selector_key: str,
+    legal_as_of: date,
+    conjuncts: Mapping[str, bool],
+    decision_action: str,
+    decision: Mapping[str, Any],
+    source_revision_date: Optional[date],
+) -> Dict[str, Any]:
+    resolved = bool(conjuncts) and all(bool(value) for value in conjuncts.values())
+    outcome: Dict[str, Any] = {
+        "conjuncts": dict(conjuncts),
+        "decision_action": decision_action if resolved else None,
+        "legal_as_of": legal_as_of.isoformat(),
+        "proof": proof.manifest_row(),
+        "proof_present": True,
+        "reason": (
+            "source_bound_conjunction_satisfied"
+            if resolved
+            else "source_bound_conjunction_failed"
+        ),
+        "schema_version": SUPPLEMENTAL_RESOLUTION_SCHEMA_VERSION,
+        "selector_key": selector_key,
+        "source_revision_date": (
+            source_revision_date.isoformat() if source_revision_date else None
+        ),
+        "status": "resolved" if resolved else "unknown",
+    }
+    if resolved:
+        outcome["decision"] = dict(decision)
+    outcome["resolution_sha256"] = hashlib.sha256(
+        json.dumps(
+            outcome,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+    return outcome
+
+
+def evaluate_new_york_ept365_senate_section(
+    proof: NewYorkSupplementalProofInput,
+    *,
+    legal_as_of: date = _EXPLICIT_RELEASE_DATE,
+) -> Dict[str, Any]:
+    """Resolve EPT 3-6.5 only from the exact retained current Senate page."""
+
+    page = _new_york_senate_section_page(proof.payload)
+    content = str(page.get("content") or "")
+    revision_date = page.get("revision_date")
+    effective_date = date(2027, 12, 12)
+    selector_key = "EPT:3-6.5:missing_lifecycle_note"
+    conjuncts = {
+        "exact_selector": proof.selector_key == "EPT:3-6.5:source-page",
+        "exact_official_source": proof.official_url == EPT365_SENATE_SECTION_URL,
+        "exact_retained_page_sha256": (
+            proof.content_sha256 == EPT365_SENATE_SECTION_SHA256
+        ),
+        "official_senate_section_html": bool(
+            proof.proof_kind == "official_senate_section"
+            and proof.media_type == "text/html"
+            and page.get("valid_html")
+            and not page.get("soft_not_found")
+        ),
+        "exact_section_heading": str(page.get("head") or "").startswith(
+            "SECTION 3-6.5 Caution to the testator "
+        ),
+        "exact_section_body": content.startswith(
+            "* § 3-6.5 Caution to the testator "
+        ),
+        "explicit_effective_date": (
+            "* NB Effective December 12, 2027" in content
+        ),
+        "revision_on_or_before_legal_as_of": bool(
+            isinstance(revision_date, date) and revision_date <= legal_as_of
+        ),
+        "effective_date_after_legal_as_of": effective_date > legal_as_of,
+    }
+    return _new_york_senate_resolution_outcome(
+        proof,
+        selector_key=selector_key,
+        legal_as_of=legal_as_of,
+        conjuncts=conjuncts,
+        decision_action="terminal",
+        decision={
+            "disposition": "future_effective",
+            "note": "Effective December 12, 2027",
+            "section_name": "Caution to the testator",
+        },
+        source_revision_date=(
+            revision_date if isinstance(revision_date, date) else None
+        ),
+    )
+
+
+def evaluate_new_york_gmu902_senate_section(
+    proof: NewYorkSupplementalProofInput,
+    *,
+    legal_as_of: date = _EXPLICIT_RELEASE_DATE,
+) -> Dict[str, Any]:
+    """Select GMU 902's operative variant from its exact current page."""
+
+    page = _new_york_senate_section_page(proof.payload)
+    content = str(page.get("content") or "")
+    revision_date = page.get("revision_date")
+    marker = "* § 902. Cortland county industrial development agency."
+    marker_starts = [
+        match.start() for match in re.finditer(re.escape(marker), content)
+    ]
+    first_body = (
+        content[marker_starts[0] : marker_starts[1]].strip()
+        if len(marker_starts) == 2
+        else ""
+    )
+    selector_key = "GMU:902:missing_lifecycle_note"
+    conjuncts = {
+        "exact_selector": proof.selector_key == "GMU:902:source-page",
+        "exact_official_source": proof.official_url == GMU902_SENATE_SECTION_URL,
+        "exact_retained_page_sha256": (
+            proof.content_sha256 == GMU902_SENATE_SECTION_SHA256
+        ),
+        "official_senate_section_html": bool(
+            proof.proof_kind == "official_senate_section"
+            and proof.media_type == "text/html"
+            and page.get("valid_html")
+            and not page.get("soft_not_found")
+        ),
+        "exact_section_heading": str(page.get("head") or "").startswith(
+            "SECTION 902 Cortland county industrial development agency "
+        ),
+        "two_source_variants": len(marker_starts) == 2,
+        "operative_variant_is_perpetual": (
+            "be perpetual in duration" in first_body
+        ),
+        "alternate_never_effective": (
+            "* NB Not effective pursuant to § 856 of the general municipal law. "
+            "No certificate filed with Sec. of State. (Added 356/1970)" in content
+        ),
+        "alternate_event_condition_retained": (
+            "* NB Agency expires per §§ 856 and 882" in content
+        ),
+        "revision_on_or_before_legal_as_of": bool(
+            isinstance(revision_date, date) and revision_date <= legal_as_of
+        ),
+    }
+    return _new_york_senate_resolution_outcome(
+        proof,
+        selector_key=selector_key,
+        legal_as_of=legal_as_of,
+        conjuncts=conjuncts,
+        decision_action="operative",
+        decision={
+            "disposition": "source_page_current_with_alternate_never_effective",
+            "full_text": first_body,
+            "section_name": "Cortland county industrial development agency",
+        },
+        source_revision_date=(
+            revision_date if isinstance(revision_date, date) else None
+        ),
+    )
+
+
+def evaluate_new_york_par2709_senate_section(
+    proof: NewYorkSupplementalProofInput,
+    *,
+    legal_as_of: date = _EXPLICIT_RELEASE_DATE,
+) -> Dict[str, Any]:
+    """Supply PAR 27.09's missing PDF body from its exact current page."""
+
+    page = _new_york_senate_section_page(proof.payload)
+    content = str(page.get("content") or "")
+    revision_date = page.get("revision_date")
+    selector_key = "PAR:27.09:toc_section_missing_body_identity"
+    conjuncts = {
+        "exact_selector": proof.selector_key == "PAR:27.09:source-page",
+        "exact_official_source": proof.official_url == PAR2709_SENATE_SECTION_URL,
+        "exact_retained_page_sha256": (
+            proof.content_sha256 == PAR2709_SENATE_SECTION_SHA256
+        ),
+        "official_senate_section_html": bool(
+            proof.proof_kind == "official_senate_section"
+            and proof.media_type == "text/html"
+            and page.get("valid_html")
+            and not page.get("soft_not_found")
+        ),
+        "exact_section_heading": str(page.get("head") or "").startswith(
+            "SECTION 27.09 09 Convictions; bail forfeitures; failure to appear "
+        ),
+        "exact_section_body": content.startswith(
+            "§ 27. 09 Convictions; bail forfeitures; failure to appear."
+        ),
+        "substantive_source_body": bool(
+            len(content) > 1_000
+            and "The trial court or clerk thereof shall certify" in content
+            and "subsequently reversed" in content
+        ),
+        "revision_on_or_before_legal_as_of": bool(
+            isinstance(revision_date, date) and revision_date <= legal_as_of
+        ),
+    }
+    return _new_york_senate_resolution_outcome(
+        proof,
+        selector_key=selector_key,
+        legal_as_of=legal_as_of,
+        conjuncts=conjuncts,
+        decision_action="operative",
+        decision={
+            "disposition": "source_page_supplied_missing_pdf_body",
+            "full_text": content,
+            "section_name": "Convictions; bail forfeitures; failure to appear",
+        },
+        source_revision_date=(
+            revision_date if isinstance(revision_date, date) else None
+        ),
+    )
+
+
 class NewYorkSupplementalProofRegistry:
     """Fixed resolver registry for exact supplemental New York inputs.
 
@@ -357,8 +651,9 @@ class NewYorkSupplementalProofRegistry:
         *,
         law_code: str,
         residual: Mapping[str, Any],
+        legal_as_of: date = _EXPLICIT_RELEASE_DATE,
     ) -> Dict[str, Any]:
-        """Return a diagnostic unknown result for every unimplemented resolver."""
+        """Invoke only fixed resolvers for exact retained source shapes."""
 
         code = str(law_code or "").strip().upper()
         section = str(residual.get("section_number") or "").strip()
@@ -378,6 +673,36 @@ class NewYorkSupplementalProofRegistry:
         )
         section_url = public_section_url(code, section) if code and section else ""
         proof = self.input_for_url(section_url) if section_url else None
+        if proof is not None and not variant:
+            if (
+                code == "EPT"
+                and section == "3-6.5"
+                and reason == "ambiguous_lifecycle_status"
+                and disposition == "missing_lifecycle_note"
+            ):
+                return evaluate_new_york_ept365_senate_section(
+                    proof,
+                    legal_as_of=legal_as_of,
+                )
+            if (
+                code == "GMU"
+                and section == "902"
+                and reason == "ambiguous_lifecycle_status"
+                and disposition == "missing_lifecycle_note"
+            ):
+                return evaluate_new_york_gmu902_senate_section(
+                    proof,
+                    legal_as_of=legal_as_of,
+                )
+            if (
+                code == "PAR"
+                and section == "27.09"
+                and reason == "toc_section_missing_body_identity"
+            ):
+                return evaluate_new_york_par2709_senate_section(
+                    proof,
+                    legal_as_of=legal_as_of,
+                )
         outcome: Dict[str, Any] = {
             "decision_action": None,
             "proof_present": proof is not None,
@@ -411,10 +736,117 @@ def reconcile_new_york_supplemental_proofs(
 
     if registry is None:
         return report
-    report.supplemental_proof_attempts = [
-        registry.resolve_residual(law_code=report.law_code, residual=row)
-        for row in report.unclassified_sections
-    ]
+    try:
+        legal_as_of = date.fromisoformat(str(report.release_date))
+    except ValueError:
+        legal_as_of = _EXPLICIT_RELEASE_DATE
+    remaining: List[Dict[str, str]] = []
+    attempts: List[Dict[str, Any]] = []
+    for residual in report.unclassified_sections:
+        outcome = registry.resolve_residual(
+            law_code=report.law_code,
+            residual=residual,
+            legal_as_of=legal_as_of,
+        )
+        attempts.append(outcome)
+        action = str(outcome.get("decision_action") or "").strip()
+        if action not in {"operative", "terminal"}:
+            remaining.append(residual)
+            continue
+        decision = outcome.get("decision")
+        proof = outcome.get("proof")
+        if not isinstance(decision, Mapping) or not isinstance(proof, Mapping):
+            raise TypeError("New York supplemental resolver omitted its source decision")
+        section = str(residual.get("section_number") or "").strip()
+        variant = str(residual.get("toc_variant") or "").strip()
+        source_url = str(proof.get("official_url") or "").strip()
+        source_record_id = f"{report.law_code}:{section}{variant}"
+        if action == "terminal":
+            if any(
+                str(row.get("source_record_id") or "") == source_record_id
+                for row in report.terminal_sections
+            ):
+                raise ValueError(
+                    "New York supplemental terminal repeated a source identity"
+                )
+            report.terminal_sections.append(
+                {
+                    "section_number": section,
+                    "toc_variant": variant,
+                    "disposition": str(decision.get("disposition") or ""),
+                    "note": str(decision.get("note") or ""),
+                    "source_record_id": source_record_id,
+                    "source_url": source_url,
+                    "supplemental_resolution": outcome,
+                }
+            )
+            continue
+
+        if any(
+            str(statute.section_number or "").strip() == section
+            for statute in report.statutes
+        ):
+            raise ValueError(
+                "New York supplemental operative row repeated a section identity"
+            )
+        full_text = _WS.sub(" ", str(decision.get("full_text") or "")).strip()
+        if len(full_text) < 20:
+            raise ValueError("New York supplemental operative body is incomplete")
+        report.statutes.append(
+            NormalizedStatute(
+                state_code="NY",
+                state_name="New York",
+                statute_id=(
+                    "New York Consolidated Laws § "
+                    f"{report.law_code} {section}"
+                ),
+                code_name="New York Consolidated Laws",
+                title_number=report.law_code,
+                title_name=report.law_name,
+                section_number=section,
+                section_name=str(decision.get("section_name") or "").strip(),
+                full_text=full_text,
+                source_url=source_url,
+                official_cite=f"N.Y. {report.law_code} Law § {section}",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_new_york_senate_section_supplement",
+                    "source_authority_class": "official",
+                    "discovery_method": "nysenate_exact_supplemental_section",
+                    "law_code": report.law_code,
+                    "source_record_id": source_record_id,
+                    "lifecycle_disposition": str(
+                        decision.get("disposition") or ""
+                    ),
+                    "release_date": report.release_date,
+                    "supplemental_proof_sha256": str(
+                        proof.get("content_sha256") or ""
+                    ),
+                    "supplemental_resolution_sha256": str(
+                        outcome.get("resolution_sha256") or ""
+                    ),
+                    "skip_hydrate": True,
+                },
+            )
+        )
+    report.unclassified_sections = remaining
+    report.supplemental_proof_attempts = attempts
+    report.closed = bool(
+        report.page_count > 0
+        and report.source_section_count > 0
+        and (
+            report.raw_section_marker_count
+            + report.source_sections_without_raw_markers
+            == report.source_section_count
+            + len(report.embedded_section_markers)
+            + len(report.lifecycle_alternate_sections)
+        )
+        and report.source_section_count
+        == len(report.statutes)
+        + len(report.terminal_sections)
+        + len(report.unclassified_sections)
+        and not report.unclassified_sections
+    )
     return report
 
 

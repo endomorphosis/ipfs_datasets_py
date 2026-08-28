@@ -1222,9 +1222,9 @@ class NewYorkScraper(BaseStateScraper):
                     )
                 )
             proof_registry = proof_registry.with_inputs(section_proofs)
-            # Invoke the fixed registry against every source residual.  The
-            # current section-page resolvers intentionally return unknown, so
-            # this reparse retains proof bindings but cannot fabricate closure.
+            # Invoke the fixed registry against every source residual.  Only
+            # reviewed source-bound resolvers may change a disposition; all
+            # other retained pages remain typed residuals.
             parsed_reports = _parse_pdf_inputs(proof_registry)
 
         statutes: List[NormalizedStatute] = []
@@ -1333,6 +1333,10 @@ class NewYorkScraper(BaseStateScraper):
             "frontier": exact_frontier,
             "law_reports": law_reports,
             "conditional_event_selectors": conditional_event_selectors,
+            "supplemental_proof_manifest": proof_registry.manifest(),
+            "supplemental_proof_manifest_sha256": (
+                proof_registry.manifest_sha256()
+            ),
             "observed_at": observed_at,
             "transport_batch_stats": list(self._new_york_frontier_batch_stats),
         }
@@ -1362,6 +1366,10 @@ class NewYorkScraper(BaseStateScraper):
             "terminal_sections": terminal_sections,
             "terminal_dispositions": dict(sorted(terminal_counts.items())),
             "conditional_event_selectors": conditional_event_selectors,
+            "supplemental_proof_input_count": len(proof_registry.manifest()),
+            "supplemental_proof_manifest_sha256": (
+                proof_registry.manifest_sha256()
+            ),
             "unclassified_sections": 0,
             "frontier_sha256": frontier_sha256,
             "law_reports": law_reports,
@@ -1393,6 +1401,8 @@ class NewYorkScraper(BaseStateScraper):
         from .new_york_law_pdf import (
             AGM28_LIFECYCLE_REPORT_URL,
             AGM28_LIFECYCLE_SELECTOR_KEY,
+            NewYorkSupplementalProofInput,
+            NewYorkSupplementalProofRegistry,
             evaluate_new_york_agm28_lifecycle_report,
             parse_new_york_law_pdf,
         )
@@ -1421,6 +1431,19 @@ class NewYorkScraper(BaseStateScraper):
             for key, value in first_selectors_raw.items()
             if isinstance(value, Mapping)
         }
+        first_proofs_raw = first.get("supplemental_proof_manifest")
+        if (
+            not isinstance(first_proofs_raw, Sequence)
+            or isinstance(first_proofs_raw, (str, bytes, bytearray))
+            or any(not isinstance(row, Mapping) for row in first_proofs_raw)
+        ):
+            raise RuntimeError(
+                "New York first supplemental proof manifest is invalid"
+            )
+        first_proofs = [dict(row) for row in first_proofs_raw]
+        expected_proof_manifest_sha256 = str(
+            first.get("supplemental_proof_manifest_sha256") or ""
+        ).strip()
 
         catalog_payload = self._replay_new_york_retained_input(
             self.OFFICIAL_CONSOLIDATED_URL,
@@ -1442,6 +1465,15 @@ class NewYorkScraper(BaseStateScraper):
 
         agm28_selector_payload: Optional[bytes] = None
         replay_selectors: Dict[str, Dict[str, Any]] = {}
+        replay_proof_inputs = []
+        proof_manifest_by_url = {
+            str(row.get("official_url") or "").strip(): row
+            for row in first_proofs
+        }
+        if len(proof_manifest_by_url) != len(first_proofs):
+            raise RuntimeError(
+                "New York first supplemental proof manifest repeated a URL"
+            )
         if any(row[0] == "AGM" for row in replay_catalog):
             expected_selector = first_selectors.get(
                 AGM28_LIFECYCLE_SELECTOR_KEY
@@ -1468,9 +1500,78 @@ class NewYorkScraper(BaseStateScraper):
             replay_selectors[AGM28_LIFECYCLE_SELECTOR_KEY] = (
                 replayed_selector
             )
+            bound_agm = NewYorkSupplementalProofInput.bind(
+                selector_key=AGM28_LIFECYCLE_SELECTOR_KEY,
+                proof_kind="official_event_report",
+                official_url=AGM28_LIFECYCLE_REPORT_URL,
+                media_type="application/pdf",
+                payload=agm28_selector_payload,
+            )
+            if bound_agm.manifest_row() != proof_manifest_by_url.get(
+                AGM28_LIFECYCLE_REPORT_URL
+            ):
+                raise RuntimeError(
+                    "New York retained AGM proof manifest changed"
+                )
+            replay_proof_inputs.append(bound_agm)
         elif first_selectors:
             raise RuntimeError(
                 "New York retained selector evidence is outside the law catalog"
+            )
+
+        pinned_supplemental_urls = list(
+            self.STRICT_CURRENT_SUPPLEMENTAL_SECTION_URLS
+        )
+        observed_supplemental_urls = {
+            url
+            for url, row in proof_manifest_by_url.items()
+            if str(row.get("proof_kind") or "") == "official_senate_section"
+        }
+        if observed_supplemental_urls and observed_supplemental_urls != set(
+            pinned_supplemental_urls
+        ):
+            raise RuntimeError(
+                "New York retained supplemental proof membership changed"
+            )
+        expected_supplemental_urls = (
+            pinned_supplemental_urls if observed_supplemental_urls else []
+        )
+        for url in expected_supplemental_urls:
+            expected_proof = proof_manifest_by_url[url]
+            path_parts = [part for part in urlparse(url).path.split("/") if part]
+            if len(path_parts) != 4 or path_parts[:2] != ["legislation", "laws"]:
+                raise RuntimeError(
+                    "New York retained supplemental proof changed URL identity"
+                )
+            law_code, section = path_parts[2], path_parts[3]
+            payload = self._replay_new_york_retained_input(
+                url,
+                media_type="text/html",
+                content_validator=self._is_valid_new_york_senate_section_html,
+                frontier_name=f"retained-supplemental-{law_code}-{section}-replay",
+            )
+            bound_proof = NewYorkSupplementalProofInput.bind(
+                selector_key=f"{law_code.upper()}:{section}:source-page",
+                proof_kind="official_senate_section",
+                official_url=url,
+                media_type="text/html",
+                payload=payload,
+            )
+            if bound_proof.manifest_row() != expected_proof:
+                raise RuntimeError(
+                    f"New York retained supplemental proof changed: {url}"
+                )
+            replay_proof_inputs.append(bound_proof)
+        replay_proof_registry = NewYorkSupplementalProofRegistry(
+            replay_proof_inputs
+        )
+        if (
+            replay_proof_registry.manifest() != first_proofs
+            or replay_proof_registry.manifest_sha256()
+            != expected_proof_manifest_sha256
+        ):
+            raise RuntimeError(
+                "New York retained supplemental proof projection changed"
             )
 
         code_name = str(first.get("code_name") or "New York Consolidated Laws")
@@ -1499,12 +1600,7 @@ class NewYorkScraper(BaseStateScraper):
                 law_name=law_name,
                 code_name=code_name,
                 source_bundle_url=source_url,
-                agm28_lifecycle_report_payload=(
-                    agm28_selector_payload if law_code == "AGM" else None
-                ),
-                agm28_lifecycle_report_source_url=(
-                    AGM28_LIFECYCLE_REPORT_URL if law_code == "AGM" else ""
-                ),
+                supplemental_proof_registry=replay_proof_registry,
             )
             if parsed.law_code != law_code or not parsed.closed:
                 raise RuntimeError(
