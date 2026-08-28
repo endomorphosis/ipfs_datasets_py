@@ -139,6 +139,39 @@ INVENTED_LATER_URN = (
 CRC_SHA256 = "09fb6ff50d24402023c3446823629d6830864997fb87bc30ae3348ecb31473b1"
 DWS_SHA256 = "00eca78717a0ce162e2d2d778348c2a25fc2f19c6e5da7c84e769ae349d5a40a"
 ACT283_SHA256 = "3df754fb7c243c620289f2f05a0381a11f2e787a94b6e1998746ee870320b5a0"
+CONTINUATION_BASE_COMMIT = "c3156cac939f6b8b7d8186d172349dbb87964ef9"
+CONTINUATION_SOURCE_IDENTITY = (
+    "ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arkansas."
+    "ArkansasScraper@sha256:"
+    "cbefc80a992c56260dfdfaf8e3b3b324a5d87b96fc6126051c3b0cdb20962889"
+)
+CONTINUATION_SEED_RECEIPT_SHA256 = (
+    "a8af6d5e97352d9e682c77cd20a32fa19093b4f4def4be1f31e4468382cd8afb"
+)
+CONTINUATION_SEED_PROJECTION_SHA256 = (
+    "28e2d7e9fc154cfe23becb647fc132bfa885899497391bbfadc454de5e6ea980"
+)
+CONTINUATION_PROOF_PROJECTION_SHA256 = (
+    "4fc241f23a60a514e6d71a9106c5d42738f63f21227dbf7b50bfd90dd23fc5e9"
+)
+CONTINUATION_CRC_RECEIPT_SHA256 = (
+    "4281436044f1ffe26b9aaad07eaac05b2240b462205b0fbe6bb6060ca467857a"
+)
+CONTINUATION_CRC_TRANSPORT_SHA256 = (
+    "847fa07cf60bc812b239c9f54fe31d886bdb843325d0a8b0f65fa15d2a0d2f35"
+)
+CONTINUATION_DWS_RECEIPT_SHA256 = (
+    "e5b453930da56d30843b07e378e7923118f8ee7ee9fea657c8e6221bbd8a0382"
+)
+CONTINUATION_DWS_TRANSPORT_SHA256 = (
+    "c57152da2e23382efe43af02a0bbfcb7355d2b61fa8d76d68b0ed69b1391968e"
+)
+CONTINUATION_IDENTITY_URL_SHA256 = (
+    "e8c900cab34f8232c13fc355472d5f9ad90292b3ae98fe5b39a7ed9e10d3dddc"
+)
+CONTINUATION_DECISION_SHA256 = (
+    "ade2bcb9dfb9595c9471654857fb40d7d959a8b94f5f045fa4ae0be43e3217e5"
+)
 
 
 def _canonical_residual_sha256(urls: list[str]) -> str:
@@ -505,6 +538,130 @@ def test_arkansas_residual_closure_report_records_exact_proof_and_urn_residual()
     assert INVENTED_OMV_CERT_URL not in report
     assert INVENTED_LATER_URN not in report
     assert not re.search(r"residual_ordered_sha256_prefix.*[0-9a-f]{12}", report)
+
+
+def test_arkansas_executed_continuation_records_exact_receipts_and_blockers() -> None:
+    report = _report_text()
+    table = _report_table(report)
+
+    expected = {
+        "continuation_status": "partial_evidence_closed",
+        "continuation_base_commit": CONTINUATION_BASE_COMMIT,
+        "continuation_source_identity": CONTINUATION_SOURCE_IDENTITY,
+        "continuation_current_bundle_sealed": "false",
+        "continuation_publication_authorized": "false",
+        "continuation_hub_mutation": "none",
+        "continuation_seed_selected_inputs": "65",
+        "continuation_seed_unique_objects": "65",
+        "continuation_seed_hardlinks": "130",
+        "continuation_seed_copies": "0",
+        "continuation_seed_network_requests": "0",
+        "continuation_seed_migration_receipt_sha256": (
+            CONTINUATION_SEED_RECEIPT_SHA256
+        ),
+        "continuation_seed_projection_sha256": (
+            CONTINUATION_SEED_PROJECTION_SHA256
+        ),
+        "continuation_proof_parser_inputs": "67",
+        "continuation_proof_unique_objects": "67",
+        "continuation_proof_unique_urls": "67",
+        "continuation_proof_total_bytes": "29342101",
+        "continuation_proof_projection_sha256": (
+            CONTINUATION_PROOF_PROJECTION_SHA256
+        ),
+        "continuation_crc_parser_receipt_sha256": (
+            CONTINUATION_CRC_RECEIPT_SHA256
+        ),
+        "continuation_crc_transport_receipt_sha256": (
+            CONTINUATION_CRC_TRANSPORT_SHA256
+        ),
+        "continuation_crc_retrieved_at": "2026-08-28T23:48:13.604000Z",
+        "continuation_dws_parser_receipt_sha256": (
+            CONTINUATION_DWS_RECEIPT_SHA256
+        ),
+        "continuation_dws_transport_receipt_sha256": (
+            CONTINUATION_DWS_TRANSPORT_SHA256
+        ),
+        "continuation_dws_retrieved_at": "2026-08-28T23:48:13.868000Z",
+        "continuation_preflight_network_requests": "0",
+        "continuation_preflight_selected": "126",
+        "continuation_preflight_no_current": "1",
+        "continuation_preflight_unresolved": "5",
+        "continuation_original_conflict_selected": "32",
+        "continuation_original_conflict_unresolved": "5",
+        "continuation_decision_sha256": CONTINUATION_DECISION_SHA256,
+        "continuation_authorizing_for_materialization": "false",
+        "continuation_identity_url_count": "4",
+        "continuation_identity_url_sha256": (
+            CONTINUATION_IDENTITY_URL_SHA256
+        ),
+        "continuation_identity_direct_request_count": "8",
+        "continuation_identity_direct_success_count": "0",
+        "continuation_identity_common_crawl_inventory_queries": "1",
+        "continuation_identity_common_crawl_records": "0",
+        "continuation_identity_wayback_prefix_requests": "8",
+        "continuation_identity_fallback_requests": "0",
+        "continuation_identity_retained_rows": "0",
+        "continuation_identity_retained_entries": "0",
+        "continuation_ag_opinions_index_documents": "10627",
+        "continuation_ag_opinions_index_updated_at": (
+            "2026-08-28T23:34:02.793261422Z"
+        ),
+        "continuation_ag_certification_matches": "0",
+        "continuation_act926_certification_locator": "unidentified",
+        "continuation_act447_certification_locator": "unidentified",
+        "continuation_exact_url_residual_count": "4",
+        "continuation_unidentified_certification_count": "2",
+        "continuation_minimum_nonduplicative_proof_input_residual": "6",
+    }
+    for field, value in expected.items():
+        assert table[field] == value
+
+    assert _canonical_residual_sha256(_identity_document_urls()) == (
+        CONTINUATION_IDENTITY_URL_SHA256
+    )
+    for expected_sha256, official_url, content_sha256 in (
+        (
+            CONTINUATION_CRC_TRANSPORT_SHA256,
+            ACT283_CRC_NONOCCURRENCE_URL,
+            CRC_SHA256,
+        ),
+        (
+            CONTINUATION_DWS_TRANSPORT_SHA256,
+            ACT283_DWS_CURRENT_FORM_URL,
+            DWS_SHA256,
+        ),
+    ):
+        transport = {
+            "content_sha256": content_sha256,
+            "official_url": official_url,
+            "source_transport": "direct",
+        }
+        assert hashlib.sha256(
+            json.dumps(
+                transport,
+                ensure_ascii=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest() == expected_sha256
+    assert table["continuation_sanitized_request_identity"] == (
+        "exact no-header GET URL"
+    )
+    assert table["continuation_parser_change"].startswith("none;")
+    assert table["continuation_full_state_live_to_retained_run"].startswith(
+        "not launched"
+    )
+    assert table["continuation_unresolved_citations"] == (
+        "19-42-201, 23-4-909, 27-14-802, 27-14-803, 5-64-308"
+    )
+    continuation = report.split("## Executed continuation — 2026-08-28", 1)[1]
+    normalized = " ".join(continuation.casefold().split())
+    assert "no parser relaxation was needed" in normalized
+    assert "source readiness gate failed" in normalized
+    assert "neither occurrence nor nonoccurrence is encoded" in normalized
+    assert "zero fallback requests" in normalized
+    assert "no full corpus run" in normalized
 
 
 def test_arkansas_fail_closed_without_act283_proof_inputs(

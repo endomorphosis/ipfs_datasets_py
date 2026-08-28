@@ -320,3 +320,139 @@ The exact remaining proof residual is those two Act 283 inputs plus the
 complete four-URL ordered identity wave at SHA prefix
 `enumerable_six_known_urls`, plus two still-unidentified certifications
 that must not be invented.
+
+## Executed continuation — 2026-08-28
+
+The preceding sections are the immutable 2026-08-27 residual record. This
+continuation records the next bounded execution against integration commit
+`c3156cac939f6b8b7d8186d172349dbb87964ef9`; it does not rewrite the earlier
+counts or claim a sealed corpus. The exact two-input Act 283 residual is now
+retained and accepted by the existing atomic resolver. The remaining
+frontier is four exact delegated body URLs plus two certification identities
+whose official locators are still unknown.
+
+| Field | Value |
+|---|---|
+| continuation_status | partial_evidence_closed |
+| continuation_base_commit | c3156cac939f6b8b7d8186d172349dbb87964ef9 |
+| continuation_source_identity | `ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arkansas.ArkansasScraper@sha256:cbefc80a992c56260dfdfaf8e3b3b324a5d87b96fc6126051c3b0cdb20962889` |
+| continuation_current_bundle_sealed | false |
+| continuation_publication_authorized | false |
+| continuation_hub_mutation | none |
+| continuation_parser_change | none; existing atomic resolver accepted the exact inputs |
+| continuation_final_proof_root | `/home/barberb/.ipfs_datasets/state_laws/legal-corpora-reindex-20260828-ar-final-proof-vJPQZH` |
+| continuation_seed_source_root | `/home/barberb/.ipfs_datasets/state_laws/legal-corpora-reindex-20260824/arkansas-current-resolution-evidence-v1` |
+| continuation_seed_selected_inputs | 65 |
+| continuation_seed_unique_objects | 65 |
+| continuation_seed_hardlinks | 130 |
+| continuation_seed_copies | 0 |
+| continuation_seed_network_requests | 0 |
+| continuation_seed_migration_receipt_sha256 | a8af6d5e97352d9e682c77cd20a32fa19093b4f4def4be1f31e4468382cd8afb |
+| continuation_seed_projection_sha256 | 28e2d7e9fc154cfe23becb647fc132bfa885899497391bbfadc454de5e6ea980 |
+| continuation_proof_parser_inputs | 67 |
+| continuation_proof_unique_objects | 67 |
+| continuation_proof_unique_urls | 67 |
+| continuation_proof_total_bytes | 29342101 |
+| continuation_proof_projection_sha256 | 4fc241f23a60a514e6d71a9106c5d42738f63f21227dbf7b50bfd90dd23fc5e9 |
+| continuation_crc_parser_receipt_sha256 | 4281436044f1ffe26b9aaad07eaac05b2240b462205b0fbe6bb6060ca467857a |
+| continuation_crc_transport_receipt_sha256 | 847fa07cf60bc812b239c9f54fe31d886bdb843325d0a8b0f65fa15d2a0d2f35 |
+| continuation_crc_retrieved_at | 2026-08-28T23:48:13.604000Z |
+| continuation_dws_parser_receipt_sha256 | e5b453930da56d30843b07e378e7923118f8ee7ee9fea657c8e6221bbd8a0382 |
+| continuation_dws_transport_receipt_sha256 | c57152da2e23382efe43af02a0bbfcb7355d2b61fa8d76d68b0ed69b1391968e |
+| continuation_dws_retrieved_at | 2026-08-28T23:48:13.868000Z |
+| continuation_sanitized_request_identity | exact no-header GET URL |
+| continuation_preflight_network_requests | 0 |
+| continuation_preflight_selected | 126 |
+| continuation_preflight_no_current | 1 |
+| continuation_preflight_unresolved | 5 |
+| continuation_original_conflict_selected | 32 |
+| continuation_original_conflict_unresolved | 5 |
+| continuation_unresolved_citations | 19-42-201, 23-4-909, 27-14-802, 27-14-803, 5-64-308 |
+| continuation_decision_sha256 | ade2bcb9dfb9595c9471654857fb40d7d959a8b94f5f045fa4ae0be43e3217e5 |
+| continuation_authorizing_for_materialization | false |
+| continuation_identity_evidence_root | `/home/barberb/.ipfs_datasets/state_laws/legal-corpora-reindex-20260828-ar-identity-evidence-C7IhLg` |
+| continuation_identity_url_count | 4 |
+| continuation_identity_url_sha256 | e8c900cab34f8232c13fc355472d5f9ad90292b3ae98fe5b39a7ed9e10d3dddc |
+| continuation_identity_direct_request_count | 8 |
+| continuation_identity_direct_success_count | 0 |
+| continuation_identity_common_crawl_inventory_queries | 1 |
+| continuation_identity_common_crawl_records | 0 |
+| continuation_identity_wayback_prefix_requests | 8 |
+| continuation_identity_fallback_requests | 0 |
+| continuation_identity_retained_rows | 0 |
+| continuation_identity_retained_entries | 0 |
+| continuation_ag_opinions_index_documents | 10627 |
+| continuation_ag_opinions_index_updated_at | 2026-08-28T23:34:02.793261422Z |
+| continuation_ag_certification_matches | 0 |
+| continuation_act926_certification_locator | unidentified |
+| continuation_act447_certification_locator | unidentified |
+| continuation_exact_url_residual_count | 4 |
+| continuation_unidentified_certification_count | 2 |
+| continuation_minimum_nonduplicative_proof_input_residual | 6 |
+| continuation_full_state_live_to_retained_run | not launched; source readiness gate failed |
+
+### Act 283 proof closure
+
+The final proof generation was seeded from the verified 65-input direct
+ledger with 130 hardlinks, zero copies, and zero network. It then retained
+only the two exact no-header GET identities already listed in this report.
+CRC Exhibit E1 retained body
+`09fb6ff50d24402023c3446823629d6830864997fb87bc30ae3348ecb31473b1`
+(150,593 bytes) under parser-input receipt
+`4281436044f1ffe26b9aaad07eaac05b2240b462205b0fbe6bb6060ca467857a`.
+The current DWS form retained body
+`00eca78717a0ce162e2d2d778348c2a25fc2f19c6e5da7c84e769ae349d5a40a`
+(141,982 bytes) under parser-input receipt
+`e5b453930da56d30843b07e378e7923118f8ee7ee9fea657c8e6221bbd8a0382`.
+Both responses are HTTP 200, direct transport, and bind their exact URL and
+body digest. The DWS observation is later than the fixed delegated inventory.
+
+A retained-only replay with both network entry points replaced by a
+fail-on-call sentinel produced `126 selected + 1 no-current + 5 unresolved`;
+the original conflict cohort is `32 selected + 5 unresolved`. Decision SHA
+`ade2bcb9dfb9595c9471654857fb40d7d959a8b94f5f045fa4ae0be43e3217e5`
+therefore closes `11-10-803` and `26-51-905` atomically, but explicitly keeps
+`authorizing_for_materialization=false` while the other five boundaries are
+unresolved. Existing Act 283 drift/tamper tests cover changed bodies, changed
+requests, stale DWS observations, missing inputs, altered locator identities,
+and partial-pair attempts; no parser relaxation was needed.
+
+### Four-URN wave result
+
+The four URLs printed earlier were submitted as one plural residual wave.
+Their canonical JSON digest is
+`e8c900cab34f8232c13fc355472d5f9ad90292b3ae98fe5b39a7ed9e10d3dddc`.
+Lexis direct responses stopped at human verification. The one shared Common
+Crawl domain inventory timed out without a record or pointer, its legacy
+lookup encountered an upstream 429, and eight Wayback prefix requests
+(including four bounded retries) returned 429. Residual-only direct retries
+did not admit a body. Per-page archive fallback remained disabled: zero
+fallback requests, zero parsed rows, zero retained entries, and no
+`archive.is` request. This is an access blocker, not evidence selecting either
+variant.
+
+### Certification proof result
+
+The Act 926 hunt was limited to the retained act's named filing chain and
+current official Arkansas sources: DFA rule-status material and its Act 926
+rule packet, procurement `S000000464`, the Arkleg document index, and Code
+Revision Commission meetings through the latest posted April 9, 2026 meeting.
+Those sources describe rulemaking or procurement status; none is the written
+Office of Motor Vehicle systems-implementation certification filed with the
+DFA Secretary, Bureau of Legislative Research Director, and Code Revision
+Commission. No exact certification URL or body was located.
+
+The Act 447 hunt included the current official Attorney General opinions
+index. At observation time the index reported 10,627 documents and
+`updatedAt=2026-08-28T23:34:02.793261422Z`. All-term searches, limited to
+2019 and later, for the full statutory federal-requirement phrase,
+`Act 447 electronic prescribing`, `mandatory electronic prescribing`,
+`electronic prescribing controlled substances`, and `5-64-308` each returned
+zero opinions. Current Pharmacy lawbooks still print both statutory
+variants. These are bounded search diagnostics only: an Act 447 certification
+could be a non-opinion letter or another filing, so neither occurrence nor
+nonoccurrence is encoded and no exact certification URL or body was located.
+
+The source-readiness gate therefore failed before the memory/coordination
+gate for a state-only live-to-retained corpus proof. No full corpus run, seal,
+assembler input-map write, Hub mutation, or remote publication was attempted.
