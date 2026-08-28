@@ -3114,9 +3114,10 @@ async def test_new_york_exact_supplemental_wave_is_plural_and_stays_unresolved(
     )
     section_html = {
         url: (
-            b"<html><body>New York State Senate /legislation/laws/ "
+            b"<html><body><div class='nys-openleg-content-container'>"
+            b"New York State Senate /legislation/laws/ "
             + (url.encode() + b" ") * 40
-            + b"</body></html>"
+            + b"</div></body></html>"
         )
         for url in supplemental_urls
     }
