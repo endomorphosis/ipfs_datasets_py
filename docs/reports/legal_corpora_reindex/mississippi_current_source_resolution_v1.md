@@ -385,10 +385,11 @@ and publisher-entry redirect have also been acquired into the same authorizing
 ledger.  It must not be treated as a complete authority-chain receipt by
 itself.
 
-After the 30,291-body plural acquisition/reconciliation path is implemented,
-the isolated strict command should use fresh output and evidence roots and
-disable materialization, publication, registry mutation, startup sync, and
-reuse of an older completed state:
+The 30,291-body plural acquisition/reconciliation path was implemented on
+2026-08-28 in state-local commits `4127d607d`, `10b8c6996`, and `9e0f97b90`.
+The isolated strict command must still use fresh output and evidence roots and
+disable publication, registry mutation, startup sync, and reuse of an older
+completed state:
 
 ```bash
 python scripts/ops/legal_data/refresh_state_laws_corpus.py \
@@ -409,7 +410,16 @@ python scripts/ops/legal_data/refresh_state_laws_corpus.py \
   --json
 ```
 
-With the present code, that second command is expected to stop after the
-catalog probe with the delegated-body-frontier blocker.  That is the intended
-safe failure until exact body acquisition, parsing, temporal reconciliation,
-retained replay, and closure algebra are implemented.
+The command now enters the exact five-wave coordinator rather than the old
+catalog-only blocker. It is not expected or authorized to seal unless all
+30,345 request identities are retained, source drift is absent, every body is
+classified, repeated citations have source-bound temporal decisions, and the
+second traversal reproduces the first frontier with zero network. No live
+Mississippi request was made during implementation, so those evidence
+conditions remain the genuine launch-time blockers.
+
+The new source-software identity is:
+
+```text
+ipfs_datasets_py.processors.legal_scrapers.state_scrapers.mississippi.MississippiScraper@sha256:3e9a9aae982f9fafbee4cdfea776f63306f9ea1b43f54953e3d5768a0d9c2909
+```

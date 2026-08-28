@@ -327,8 +327,39 @@ flip `exact_51_ready` and would not authorize publication.
 
 Fresh isolated acquisition, before any authorizing GET exists, remains the
 strict full-corpus command in `mississippi_current_source_resolution_v1.md`.
-It must stop at the delegated-body-frontier blocker until the 30,345
-identities are retained.
+As of the 2026-08-28 state-local implementation, that command can acquire and
+retain the five ordered waves. It still fails closed unless every one of the
+30,345 request identities is retained, the body parser classifies every
+document, temporal reconciliation has zero residuals, and an independent
+ledger-only traversal reproduces the same frontier.
+
+## 2026-08-28 launch-readiness implementation
+
+The Mississippi adapter now supplies the previously missing production seams:
+
+- the Legislature and publisher GETs use the shared plural retained-input path;
+- one Playwright session retains the rendered root GET and all 51 exact PATCH
+  responses, including the canonical PATCH-body SHA-256 in request identity;
+- the 30,291 body URLs are derived from retained TOC bytes and submitted as one
+  paced, one-worker `advance.lexis.com` plural GET wave;
+- the body parser removes publisher editorial regions, handles source-bounded
+  multi-section containers, and requires recent/untyped documents to establish
+  their section identities from exact body bytes;
+- repeated citations retain every content-item variant and are selected only
+  when parseable source temporal markers prove exactly one active member at the
+  observation date; otherwise the run remains unresolved; and
+- first traversal and closure traversal both use the same exact ledger-only
+  hierarchy/body parser. The closure traversal has no network seam.
+
+The implementation commits are `4127d607d`, `10b8c6996`, and `9e0f97b90`.
+The resulting strict source identity is:
+
+```text
+ipfs_datasets_py.processors.legal_scrapers.state_scrapers.mississippi.MississippiScraper@sha256:3e9a9aae982f9fafbee4cdfea776f63306f9ea1b43f54953e3d5768a0d9c2909
+```
+
+No live Mississippi request was made while implementing or testing these
+seams. The residual status and exact next URL below therefore remain unchanged.
 
 ## Next residual URL
 
