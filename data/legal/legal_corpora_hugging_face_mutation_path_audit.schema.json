@@ -1,27 +1,673 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "ipfs_datasets_py/legal-corpora-hugging-face-mutation-path-audit@1",
+  "$id": "ipfs_datasets_py/legal-corpora-hugging-face-mutation-path-audit@2",
   "title": "Legal corpora Hugging Face mutation path audit (LCR-084)",
   "type": "object",
-  "additionalProperties": true,
+  "additionalProperties": false,
   "required": [
     "schema",
     "producer",
     "program_id",
     "task_id",
     "goal_id",
+    "source_scope",
+    "required_runtime",
+    "protected_repos",
+    "write_methods",
+    "read_only_methods_ignored",
+    "callsite_count",
+    "protected_callsite_count",
+    "unprotected_count",
+    "callsites",
+    "unprotected_callsites",
+    "hard_rejected_functions",
+    "authority_boundary_violations",
+    "non_executable_sources",
+    "syntax_errors",
+    "authorizing_hub_upload",
     "status",
-    "authorizing_hub_upload"
+    "reasons"
   ],
   "properties": {
     "schema": {
-      "const": "ipfs_datasets_py/legal-corpora-hugging-face-mutation-path-audit@1"
+      "const": "ipfs_datasets_py/legal-corpora-hugging-face-mutation-path-audit@2"
     },
-    "producer": { "type": "string" },
-    "program_id": { "const": "legal-corpora-reindex-v1" },
-    "task_id": { "const": "LCR-084" },
-    "goal_id": { "const": "LCR-G146" },
-    "status": { "enum": ["passed", "blocked"] },
-    "authorizing_hub_upload": { "const": false }
+    "producer": {
+      "const": "audit_legal_corpora_hugging_face_mutation_paths.py"
+    },
+    "program_id": {
+      "const": "legal-corpora-reindex-v1"
+    },
+    "task_id": {
+      "const": "LCR-084"
+    },
+    "goal_id": {
+      "const": "LCR-G146"
+    },
+    "source_scope": {
+      "$ref": "#/$defs/source_scope"
+    },
+    "required_runtime": {
+      "$ref": "#/$defs/non_empty_string"
+    },
+    "protected_repos": {
+      "$ref": "#/$defs/unique_strings"
+    },
+    "write_methods": {
+      "const": [
+        "accept_access_request",
+        "cancel_access_request",
+        "change_discussion_status",
+        "comment_discussion",
+        "create_branch",
+        "create_commit",
+        "create_discussion",
+        "create_pull_request",
+        "create_repo",
+        "create_tag",
+        "delete_branch",
+        "delete_file",
+        "delete_files",
+        "delete_folder",
+        "delete_repo",
+        "delete_tag",
+        "edit_discussion_comment",
+        "grant_access",
+        "hide_discussion_comment",
+        "merge_pull_request",
+        "move_repo",
+        "permanently_delete_lfs_files",
+        "preupload_lfs_files",
+        "reject_access_request",
+        "rename_discussion",
+        "super_squash_history",
+        "update_repo_settings",
+        "update_repo_visibility",
+        "upload_file",
+        "upload_folder",
+        "upload_large_folder"
+      ]
+    },
+    "read_only_methods_ignored": {
+      "$ref": "#/$defs/unique_strings"
+    },
+    "callsite_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "protected_callsite_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "unprotected_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "callsites": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/callsite"
+      }
+    },
+    "unprotected_callsites": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/callsite"
+      }
+    },
+    "hard_rejected_functions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/hard_rejected_function"
+      }
+    },
+    "authority_boundary_violations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/authority_boundary_violation"
+      }
+    },
+    "non_executable_sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/non_executable_source"
+      }
+    },
+    "syntax_errors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/syntax_error"
+      }
+    },
+    "authorizing_hub_upload": {
+      "const": false
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "blocked"
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/non_empty_string"
+      }
+    }
+  },
+  "$defs": {
+    "non_empty_string": {
+      "type": "string",
+      "minLength": 1
+    },
+    "strings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unique_strings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/non_empty_string"
+      },
+      "uniqueItems": true
+    },
+    "line_numbers": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "uniqueItems": true
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "source_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "path_digest_algorithm",
+        "scan_roots",
+        "scanned_python_count",
+        "scanned_python_paths_sha256",
+        "exclusion_policy"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "git_tracked_production_python",
+            "explicit_scan_roots"
+          ]
+        },
+        "path_digest_algorithm": {
+          "const": "sha256-canonical-json-string-array-v1"
+        },
+        "scan_roots": {
+          "$ref": "#/$defs/unique_strings"
+        },
+        "tracked_python_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tracked_python_paths_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "scanned_python_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "scanned_python_paths_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "excluded_python_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "excluded_python_paths_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "exclusion_policy": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source_scope_exclusion"
+          },
+          "uniqueItems": true
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "mode": {
+              "const": "git_tracked_production_python"
+            },
+            "scan_roots": {
+              "maxItems": 0
+            },
+            "exclusion_policy": {
+              "minItems": 4,
+              "maxItems": 4
+            }
+          },
+          "required": [
+            "tracked_python_count",
+            "tracked_python_paths_sha256",
+            "excluded_python_count",
+            "excluded_python_paths_sha256"
+          ]
+        },
+        {
+          "properties": {
+            "mode": {
+              "const": "explicit_scan_roots"
+            },
+            "exclusion_policy": {
+              "maxItems": 0
+            }
+          }
+        }
+      ]
+    },
+    "source_scope_exclusion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "category",
+        "path_components",
+        "reason",
+        "excluded_python_count",
+        "excluded_python_paths_sha256"
+      ],
+      "properties": {
+        "category": {
+          "enum": [
+            "archive",
+            "vendor",
+            "generated",
+            "tests"
+          ]
+        },
+        "path_components": {
+          "$ref": "#/$defs/unique_strings"
+        },
+        "reason": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "excluded_python_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "excluded_python_paths_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "category": {
+                "const": "archive"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "path_components": {
+                "const": [
+                  "archive",
+                  "archives"
+                ]
+              },
+              "reason": {
+                "const": "retired archive trees are not runtime code"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "category": {
+                "const": "vendor"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "path_components": {
+                "const": [
+                  "external",
+                  "third-party",
+                  "third_party",
+                  "vendor",
+                  "vendors"
+                ]
+              },
+              "reason": {
+                "const": "vendored or externally maintained trees are not repository runtime code"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "category": {
+                "const": "generated"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "path_components": {
+                "const": [
+                  "build",
+                  "dist",
+                  "generated"
+                ]
+              },
+              "reason": {
+                "const": "generated build outputs are not maintained runtime sources"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "category": {
+                "const": "tests"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "path_components": {
+                "const": [
+                  "test",
+                  "testing",
+                  "tests"
+                ]
+              },
+              "reason": {
+                "const": "test-only trees are not production runtime code"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "callsite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "function",
+        "line",
+        "column",
+        "write_method",
+        "call_expression",
+        "repo_expression",
+        "repo_roots",
+        "protected_repos",
+        "protected_target",
+        "potential_protected_target",
+        "canonical_callback",
+        "attested_executor",
+        "api_or_method_constructed_after_guard",
+        "api_primitive_attested",
+        "api_primitive_exact_call",
+        "prepared_binding_exact",
+        "guarded_write_exact_binding",
+        "guarded_write_individual",
+        "guarded_write_id",
+        "guarded_write_line",
+        "guard_lines",
+        "exact_binding_guard_lines",
+        "guarded_write_lines",
+        "analysis_context_count",
+        "protection_variants",
+        "protection",
+        "reason"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "function": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "write_method": {
+          "enum": [
+            "accept_access_request",
+            "cancel_access_request",
+            "change_discussion_status",
+            "comment_discussion",
+            "create_branch",
+            "create_commit",
+            "create_discussion",
+            "create_pull_request",
+            "create_repo",
+            "create_tag",
+            "delete_branch",
+            "delete_file",
+            "delete_files",
+            "delete_folder",
+            "delete_repo",
+            "delete_tag",
+            "edit_discussion_comment",
+            "grant_access",
+            "hide_discussion_comment",
+            "merge_pull_request",
+            "move_repo",
+            "permanently_delete_lfs_files",
+            "preupload_lfs_files",
+            "reject_access_request",
+            "rename_discussion",
+            "super_squash_history",
+            "update_repo_settings",
+            "update_repo_visibility",
+            "upload_file",
+            "upload_folder",
+            "upload_large_folder"
+          ]
+        },
+        "call_expression": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "repo_expression": {
+          "type": "string"
+        },
+        "repo_roots": {
+          "$ref": "#/$defs/strings"
+        },
+        "protected_repos": {
+          "$ref": "#/$defs/unique_strings"
+        },
+        "protected_target": {
+          "type": "boolean"
+        },
+        "potential_protected_target": {
+          "type": "boolean"
+        },
+        "canonical_callback": {
+          "type": "boolean"
+        },
+        "attested_executor": {
+          "type": "boolean"
+        },
+        "api_or_method_constructed_after_guard": {
+          "type": "boolean"
+        },
+        "api_primitive_attested": {
+          "type": "boolean"
+        },
+        "api_primitive_exact_call": {
+          "type": "boolean"
+        },
+        "prepared_binding_exact": {
+          "type": "boolean"
+        },
+        "guarded_write_exact_binding": {
+          "type": "boolean"
+        },
+        "guarded_write_individual": {
+          "type": "boolean"
+        },
+        "guarded_write_id": {
+          "type": "string"
+        },
+        "guarded_write_line": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "guard_lines": {
+          "$ref": "#/$defs/line_numbers"
+        },
+        "exact_binding_guard_lines": {
+          "$ref": "#/$defs/line_numbers"
+        },
+        "guarded_write_lines": {
+          "$ref": "#/$defs/line_numbers"
+        },
+        "analysis_context_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "protection_variants": {
+          "$ref": "#/$defs/unique_strings"
+        },
+        "protection": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "hard_rejected_function": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "function",
+        "line",
+        "selector",
+        "selector_expression",
+        "mechanism"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "function": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "selector": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "selector_expression": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "mechanism": {
+          "$ref": "#/$defs/non_empty_string"
+        }
+      }
+    },
+    "authority_boundary_violation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "line",
+        "symbol",
+        "error"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "symbol": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "error": {
+          "$ref": "#/$defs/non_empty_string"
+        }
+      }
+    },
+    "non_executable_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "size_bytes",
+        "error_type",
+        "line",
+        "column",
+        "message"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "error_type": {
+          "const": "SyntaxError"
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "message": {
+          "$ref": "#/$defs/non_empty_string"
+        }
+      }
+    },
+    "syntax_error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "error"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "error": {
+          "$ref": "#/$defs/non_empty_string"
+        }
+      }
+    }
   }
 }

@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import subprocess
 import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -115,6 +116,176 @@ def test_cli_defaults_to_preserving_short_statutes(monkeypatch):
     assert args.incremental_state_materialize is True
     assert args.acquisition_evidence_root == ""
     assert args.strict_acquisition_evidence is False
+
+
+def test_common_crawl_ccindex_api_is_captured_by_parent_import_attestation() -> None:
+    from ipfs_datasets_py.processors import legal_scrapers
+    from ipfs_datasets_py.processors.web_archiving.common_crawl_search_engine.ccindex import (
+        api as ccindex_api,
+    )
+
+    source_path = Path(ccindex_api.__file__).resolve()
+    current = hashlib.sha256(source_path.read_bytes()).hexdigest()
+    assert legal_scrapers.STATE_LAWS_PRODUCER_IMPORT_SOURCE_SHA256[str(source_path)] == current
+    identity = refresh_state_laws_corpus._registered_state_source_software_version("MI")
+    assert identity.startswith(
+        "ipfs_datasets_py.processors.legal_scrapers.state_scrapers.michigan."
+        "MichiganScraper@sha256:"
+    )
+
+
+def test_source_correspondence_reuses_release_builder_dependency_path() -> None:
+    program = f"""
+import importlib.util
+import scripts.ops.legal_data.audit_state_laws_full_scrape_acceptance
+
+path = {str(_SCRIPT_PATH)!r}
+spec = importlib.util.spec_from_file_location("refresh_state_laws_corpus", path)
+module = importlib.util.module_from_spec(spec)
+assert spec is not None and spec.loader is not None
+spec.loader.exec_module(module)
+identity = module._registered_state_source_software_version("MI")
+assert identity.startswith(
+    "ipfs_datasets_py.processors.legal_scrapers.state_scrapers.michigan."
+    "MichiganScraper@sha256:"
+)
+"""
+    completed = subprocess.run(
+        [sys.executable, "-c", program],
+        cwd=_SCRIPT_PATH.parents[3],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=180,
+    )
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+
+
+@pytest.mark.parametrize("create_repo", [False, True])
+def test_private_state_parquet_publisher_rejects_protected_repo_before_hf_api(
+    monkeypatch,
+    tmp_path,
+    create_repo,
+):
+    from ipfs_datasets_py.huggingface.protected_repo_guard import (
+        ProtectedRepoGuardError,
+    )
+
+    calls = {"construct": 0, "create_repo": 0, "upload_file": 0}
+
+    class _ForbiddenHfApi:
+        def __init__(self, *_args, **_kwargs):
+            calls["construct"] += 1
+
+        def create_repo(self, **_kwargs):
+            calls["create_repo"] += 1
+
+        def upload_file(self, **_kwargs):
+            calls["upload_file"] += 1
+
+    monkeypatch.setitem(
+        sys.modules,
+        "huggingface_hub",
+        type("_Hub", (), {"HfApi": _ForbiddenHfApi}),
+    )
+    state_path = tmp_path / "STATE-OR.parquet"
+    state_path.write_bytes(b"PAR1")
+
+    with pytest.raises(ProtectedRepoGuardError):
+        refresh_state_laws_corpus._publish_state_parquet_file(
+            state_code="OR",
+            state_parquet_path=state_path,
+            repo_id="justicedao/ipfs_state_laws",
+            token=None,
+            create_repo=create_repo,
+            commit_message="must not publish",
+        )
+
+    assert calls == {"construct": 0, "create_repo": 0, "upload_file": 0}
+
+
+@pytest.mark.parametrize("create_repo", [False, True])
+def test_private_stale_sync_rejects_protected_repo_before_hf_api(
+    monkeypatch,
+    tmp_path,
+    create_repo,
+):
+    from ipfs_datasets_py.huggingface.protected_repo_guard import (
+        ProtectedRepoGuardError,
+    )
+
+    calls = {"construct": 0, "create_repo": 0, "upload_file": 0}
+
+    class _ForbiddenHfApi:
+        def __init__(self, *_args, **_kwargs):
+            calls["construct"] += 1
+
+        def create_repo(self, **_kwargs):
+            calls["create_repo"] += 1
+
+        def upload_file(self, **_kwargs):
+            calls["upload_file"] += 1
+
+    monkeypatch.setitem(
+        sys.modules,
+        "huggingface_hub",
+        type("_Hub", (), {"HfApi": _ForbiddenHfApi}),
+    )
+
+    with pytest.raises(ProtectedRepoGuardError):
+        refresh_state_laws_corpus._sync_stale_local_state_shards_to_hf(
+            states=["OR"],
+            parquet_dir=tmp_path,
+            repo_id="justicedao/ipfs_state_laws",
+            token=None,
+            create_repo=create_repo,
+            commit_message="must not synchronize",
+        )
+
+    assert calls == {"construct": 0, "create_repo": 0, "upload_file": 0}
+
+
+def test_private_state_parquet_publisher_preserves_unprotected_repo_behavior(
+    monkeypatch,
+    tmp_path,
+):
+    calls: list[tuple[str, str]] = []
+
+    class _FakeHfApi:
+        def __init__(self, *_args, **_kwargs):
+            calls.append(("construct", ""))
+
+        def create_repo(self, **kwargs):
+            calls.append(("create_repo", kwargs["repo_id"]))
+            return "created"
+
+        def upload_file(self, **kwargs):
+            calls.append(("upload_file", kwargs["repo_id"]))
+            return "uploaded"
+
+    monkeypatch.setitem(
+        sys.modules,
+        "huggingface_hub",
+        type("_Hub", (), {"HfApi": _FakeHfApi}),
+    )
+    state_path = tmp_path / "STATE-OR.parquet"
+    state_path.write_bytes(b"PAR1")
+
+    result = refresh_state_laws_corpus._publish_state_parquet_file(
+        state_code="OR",
+        state_parquet_path=state_path,
+        repo_id="justicedao/development_state_laws",
+        token=None,
+        create_repo=True,
+        commit_message="development upload",
+    )
+
+    assert result["status"] == "success"
+    assert calls == [
+        ("construct", ""),
+        ("create_repo", "justicedao/development_state_laws"),
+        ("upload_file", "justicedao/development_state_laws"),
+    ]
 
 
 @pytest.mark.parametrize(

@@ -36,7 +36,7 @@
   "goal_id": "LCR-G070",
   "hub_upload": false,
   "inputs": {
-    "local_e2e_digest_sha256": "0a21bfffb6bd0082e9f09aca7d4b165f1e75c150a4e8e396c1b86535e1098842",
+    "local_e2e_digest_sha256": "b00192eeb96e7e6b4023b7be4eb904ef9c8ab15c19a83cc81012ccbffbbeff26",
     "local_e2e_path": "docs/reports/legal_corpora_reindex/local_e2e.json",
     "source_rights_receipt_path": "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json"
   },
@@ -95,12 +95,12 @@
   ],
   "jurisdiction_count": 51,
   "lineage_report": "reports/lineage.json",
-  "manifest_digest": "a1b35e4dbfdb7dc215060c3da73341216894b7b5cc97c05ef12da61e752df189",
+  "manifest_digest": "f21a80f76c879dde2713b88edb5f8f3cae3e7f366b77aeefd316887dfa8d27e2",
   "model_id": "thenlper/gte-small",
   "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
   "multipart_plan": {
     "estimated_parts": 1,
-    "estimated_total_bytes": 330337,
+    "estimated_total_bytes": 330355,
     "part_size_bytes": 8388608,
     "resumable": true,
     "transactional_staging_ready": true
@@ -110,8 +110,8 @@
   "program_id": "legal-corpora-reindex-v1",
   "proves_software_contract_only": true,
   "release_profile": "state-laws-ir-graphrag/v2",
-  "release_root_cid": "bafkreicqdxk752b7yzaahngde6tohejqbxqudcrt6vmim3tjs7dyhnr33y",
-  "report_digest_sha256": "a6e6c77b3fb2cd4777850a5dbe4aebfb0a5cd24385db7f8d4dc2af4b1d5abf78",
+  "release_root_cid": "bafkreifqabjitsq2omd5745wodsqhdpzpzkrxtct2cj4nhjv7meofdv4ne",
+  "report_digest_sha256": "5ec5ae9c9407133cd855d3bf73e0e580175e65ec825beeeebca5fe3dd17d8bae",
   "required_manifest_bindings": [
     "corpus",
     "bm25",
@@ -135,7 +135,7 @@
   "rollback_target": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
   "schema": "ipfs_datasets_py/legal-corpora-reindex-release-candidate@1",
   "schema_version": "state-laws-release-candidate-v1",
-  "source_rights_receipt_digest": "46ef76257b938dc532311207bcbe97f12bc5b9fdf587b370b4273e1b912969ee",
+  "source_rights_receipt_digest": "231f26c7d5c23f0347e2d3d953544a618f9fda8dc9ef0605c822d600d36218db",
   "status": "pass",
   "task_id": "LCR-039",
   "validation": {

@@ -24,7 +24,11 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import stat
+import subprocess
+import sys
+import tempfile
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from hashlib import sha256
@@ -94,6 +98,12 @@ STATE_LAWS_RELEASE_PREFIX_TEMPLATE: Final = "data/state_laws/{release_id}"
 STATE_LAWS_POINTER_PATH: Final = "runtime/state_laws_release_pointer.json"
 STATE_LAWS_COMMIT_MESSAGE: Final = (
     "state-laws: append-only immutable exact-51 public release"
+)
+STATE_LAWS_STAGING_UPLOAD_RELPATH: Final = (
+    "docs/reports/legal_corpora_reindex/staging_upload.json"
+)
+STATE_LAWS_STAGING_CANARY_RELPATH: Final = (
+    "docs/reports/legal_corpora_reindex/staging_canary.json"
 )
 
 AUTHORIZES_PUBLICATION: Final = False
@@ -1189,6 +1199,7 @@ class StateLawsCanonicalControlBundle:
     seal_content_digest: str
     seal_file_sha256: str
     source_rights_receipt_digest: str
+    staging_candidate_digest: str
     staging_revision: str
 
     def to_dict(self) -> dict[str, Any]:
@@ -1207,6 +1218,7 @@ class StateLawsCanonicalControlBundle:
             "source_rights_receipt_digest": (
                 self.source_rights_receipt_digest
             ),
+            "staging_candidate_digest": self.staging_candidate_digest,
             "staging_revision": self.staging_revision,
         }
 
@@ -1226,6 +1238,257 @@ def _canonical_control_receipt(
     body["content_digest"] = digest
     encoded = canonical_json_bytes(body) + b"\n"
     return body, digest, encoded
+
+
+def _load_canonical_control_json(
+    repository_root: Path,
+    relative_path: str,
+    *,
+    label: str,
+    maximum_bytes: int = 64 * 1024 * 1024,
+) -> tuple[dict[str, Any], bytes]:
+    encoded = _read_regular_file_nofollow(
+        repository_root / relative_path,
+        label=label,
+        maximum_bytes=maximum_bytes,
+    )
+    try:
+        payload = json.loads(
+            encoded.decode("utf-8", errors="strict"),
+            object_pairs_hook=_reject_duplicate_json_object,
+        )
+    except StateLawsPublicationPackageError:
+        raise
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise StateLawsPublicationPackageError(f"{label} is malformed") from exc
+    if type(payload) is not dict:
+        raise StateLawsPublicationPackageError(f"{label} must be a JSON object")
+    return payload, encoded
+
+
+def _validate_state_laws_staging_receipt(
+    payload: Mapping[str, Any],
+    *,
+    label: str,
+    staging_candidate_digest: str,
+    release_manifest_digest: str,
+    dataset_repo_id: str,
+    staging_revision: str | None = None,
+) -> None:
+    if (
+        payload.get("status") != "passed"
+        or payload.get("fixture_only") is not False
+        or payload.get("dirty") is not False
+        or payload.get("dataset_repo_id") != dataset_repo_id
+    ):
+        raise StateLawsPublicationPackageError(
+            f"{label} is not clean passed production evidence"
+        )
+    bound_candidate = _require_sha256(
+        payload.get("final_manifest_digest"),
+        label=f"{label} final_manifest_digest",
+    )
+    bound_release = _require_sha256(
+        payload.get("release_manifest_digest"),
+        label=f"{label} release_manifest_digest",
+    )
+    if bound_candidate != staging_candidate_digest:
+        raise StateLawsPublicationPackageError(
+            f"{label} does not bind the null publication candidate A"
+        )
+    if bound_release != release_manifest_digest:
+        raise StateLawsPublicationPackageError(
+            f"{label} release manifest differs from the publication plan"
+        )
+    if staging_revision is not None:
+        observed_revision = str(payload.get("staging_revision") or "")
+        if observed_revision != staging_revision:
+            raise StateLawsPublicationPackageError(
+                f"{label} staging revision differs from the policy proof"
+            )
+
+
+def _lcr084_candidate_report_digest(payload: Mapping[str, Any]) -> str:
+    body = {
+        key: value
+        for key, value in payload.items()
+        if key != "report_digest_sha256"
+    }
+    return sha256(canonical_json_bytes(body)).hexdigest()
+
+
+def _lcr084_staging_candidate_digest(payload: Mapping[str, Any]) -> str:
+    staging = dict(payload)
+    staging["publication_binding"] = None
+    return _lcr084_candidate_report_digest(staging)
+
+
+def _check_lcr084_candidate_in_subprocess(
+    candidate_bytes: bytes,
+    *,
+    repository_root: Path,
+    phase: str,
+) -> dict[str, Any]:
+    """Run the exact @2 builder checker in a private isolated import graph."""
+
+    if phase not in {"state_staging", "state_main"}:
+        raise StateLawsPublicationPackageError(
+            f"unsupported LCR-084 candidate phase: {phase!r}"
+        )
+    if len(candidate_bytes) > 64 * 1024 * 1024:
+        raise StateLawsPublicationPackageError(
+            "canonical LCR-084 candidate exceeds its validation byte bound"
+        )
+    implementation_root = Path(__file__).resolve().parents[3]
+    builder_filename = "_".join(("build", "state", "laws", "hf", "release")) + ".py"
+    source_path = implementation_root / "scripts/ops/legal_data" / builder_filename
+    source_bytes = _read_regular_file_nofollow(
+        source_path,
+        label="canonical LCR-084 candidate builder",
+        maximum_bytes=16 * 1024 * 1024,
+    )
+    child_source = (
+        "import importlib.util,json,os,pathlib,resource,sys,types\n"
+        "resource.setrlimit(resource.RLIMIT_FSIZE,(65536,65536))\n"
+        "source_fd=int(sys.argv[1])\n"
+        "source=pathlib.Path(sys.argv[2]).resolve()\n"
+        "implementation_root=pathlib.Path(sys.argv[3]).resolve()\n"
+        "evidence_root=pathlib.Path(sys.argv[4]).resolve()\n"
+        "phase=sys.argv[5]\n"
+        "sys.path.insert(0,str(implementation_root))\n"
+        "with os.fdopen(os.dup(source_fd),'rb') as stream:\n"
+        " source_bytes=stream.read(16777217)\n"
+        "assert len(source_bytes)<=16777216\n"
+        "name='_lcr084_package_builder'\n"
+        "spec=importlib.util.spec_from_loader(name,loader=None,origin=str(source))\n"
+        "module=types.ModuleType(name)\n"
+        "module.__file__=str(source)\n"
+        "module.__package__=''\n"
+        "module.__spec__=spec\n"
+        "sys.modules[name]=module\n"
+        "exec(compile(source_bytes,str(source),'exec'),module.__dict__)\n"
+        "raw=sys.stdin.buffer.read(67108865)\n"
+        "assert len(raw)<=67108864\n"
+        "payload=module.load_json_value_bytes(raw,label='canonical LCR-084 candidate')\n"
+        "checked=module.check_production_candidate_report(payload,repo_root=evidence_root,remeasure_production_evidence=False)\n"
+        "module.check_production_candidate_publication_binding(payload,phase=phase)\n"
+        "result={'checked':checked,'phase':phase,'report_digest_sha256':module._digest_for_report(payload),'staging_candidate_digest':module.production_candidate_staging_digest(payload)}\n"
+        "sys.stdout.write(json.dumps(result,sort_keys=True,separators=(',',':')))\n"
+    )
+    with (
+        tempfile.TemporaryFile() as source_snapshot,
+        tempfile.TemporaryFile() as candidate_snapshot,
+        tempfile.TemporaryFile() as stdout_snapshot,
+        tempfile.TemporaryFile() as stderr_snapshot,
+    ):
+        source_snapshot.write(source_bytes)
+        source_snapshot.seek(0)
+        candidate_snapshot.write(candidate_bytes)
+        candidate_snapshot.seek(0)
+        try:
+            process = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-I",
+                    "-c",
+                    child_source,
+                    str(source_snapshot.fileno()),
+                    str(source_path),
+                    str(implementation_root),
+                    str(repository_root),
+                    phase,
+                ],
+                cwd=implementation_root,
+                env={
+                    "PATH": os.environ.get("PATH", os.defpath),
+                    "PYTHONDONTWRITEBYTECODE": "1",
+                    "PYTHONHASHSEED": "0",
+                },
+                pass_fds=(source_snapshot.fileno(),),
+                stdin=candidate_snapshot,
+                stdout=stdout_snapshot,
+                stderr=stderr_snapshot,
+                start_new_session=True,
+            )
+        except OSError as exc:
+            raise StateLawsPublicationPackageError(
+                "canonical LCR-084 candidate checker could not start"
+            ) from exc
+        try:
+            process.communicate(timeout=180)
+        except subprocess.TimeoutExpired as exc:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except OSError:
+                process.kill()
+            process.communicate()
+            raise StateLawsPublicationPackageError(
+                "canonical LCR-084 candidate checker timed out"
+            ) from exc
+        stdout_snapshot.seek(0)
+        stdout = stdout_snapshot.read(64 * 1024 + 1)
+        stderr_snapshot.seek(0)
+        stderr = stderr_snapshot.read(64 * 1024 + 1)
+    if (
+        _read_regular_file_nofollow(
+            source_path,
+            label="canonical LCR-084 candidate builder bookend",
+            maximum_bytes=16 * 1024 * 1024,
+        )
+        != source_bytes
+    ):
+        raise StateLawsPublicationPackageError(
+            "canonical LCR-084 candidate builder changed during validation"
+        )
+    if len(stdout) > 64 * 1024 or len(stderr) > 64 * 1024:
+        raise StateLawsPublicationPackageError(
+            "canonical LCR-084 candidate checker exceeded its output bound"
+        )
+    if process.returncode != 0:
+        diagnostic = stderr.decode("utf-8", errors="replace")[-2048:]
+        raise StateLawsPublicationPackageError(
+            "canonical LCR-084 candidate failed strict validation: "
+            + diagnostic
+        )
+    try:
+        result = json.loads(
+            stdout.decode("utf-8", errors="strict"),
+            object_pairs_hook=_reject_duplicate_json_object,
+        )
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise StateLawsPublicationPackageError(
+            "canonical LCR-084 candidate checker returned malformed JSON"
+        ) from exc
+    expected_checked = {
+        "jurisdiction_count": 51,
+        "ok": True,
+        "task_id": "LCR-084",
+        "valid": True,
+    }
+    if (
+        type(result) is not dict
+        or set(result)
+        != {
+            "checked",
+            "phase",
+            "report_digest_sha256",
+            "staging_candidate_digest",
+        }
+        or result.get("checked") != expected_checked
+        or result.get("phase") != phase
+    ):
+        raise StateLawsPublicationPackageError(
+            "canonical LCR-084 candidate checker returned an unexpected result"
+        )
+    _require_sha256(
+        result.get("report_digest_sha256"),
+        label="checked LCR-084 report digest",
+    )
+    _require_sha256(
+        result.get("staging_candidate_digest"),
+        label="checked LCR-084 staging digest",
+    )
+    return result
 
 
 def _open_fixed_control_parent(root_fd: int, relative_path: str) -> tuple[int, str]:
@@ -1455,7 +1718,7 @@ def materialize_state_laws_canonical_controls(
     from ipfs_datasets_py.processors.legal_data.legal_source_rights_policy import (
         LIVE_COMPLIANCE_REPORT_SCHEMA,
     )
-
+    canonical_root = Path(repository_root).expanduser()
     verify_state_laws_publication_package_identity(package)
     profile = state_laws_publication_profile()
     _verify_state_laws_plan_binding(package, plan, profile)
@@ -1501,7 +1764,7 @@ def materialize_state_laws_canonical_controls(
     validate_exact_51_coverage(manifest.get("jurisdictions") or ())
 
     package_rights_path = Path(package.output_root) / SOURCE_RIGHTS_RECEIPT_RELPATH
-    repository_rights_path = Path(repository_root) / SOURCE_RIGHTS_RECEIPT_RELPATH
+    repository_rights_path = canonical_root / SOURCE_RIGHTS_RECEIPT_RELPATH
     package_rights_bytes = _read_regular_file_nofollow(
         package_rights_path,
         label="packaged State Laws source-rights receipt",
@@ -1573,9 +1836,8 @@ def materialize_state_laws_canonical_controls(
     )
 
     request = dict(sealed.request)
-    staging_revision = str(request.get("staging_revision") or "")
-    canonical_runtime.require_immutable_revision(
-        staging_revision,
+    staging_revision = canonical_runtime.require_immutable_revision(
+        str(request.get("staging_revision") or ""),
         name="State Laws staging revision",
     )
     if (
@@ -1588,34 +1850,133 @@ def materialize_state_laws_canonical_controls(
         )
     canonical_runtime.parse_utc_z(sealed_at, name="sealed_at")
 
-    candidate_payload = {
-        "admitted_source_ids": list(admitted_ids),
-        "artifact_count": len(plan.operations),
-        "authorizing_for_publication": True,
-        "dataset_repo_id": plan.repository_id,
-        "dirty": False,
-        "fixture_only": False,
-        "jurisdiction_codes": list(CANONICAL_JURISDICTION_ORDER),
-        "jurisdiction_count": 51,
-        "manifest_digest": plan.release_sha256,
+    staging_candidate, staging_candidate_bytes = _load_canonical_control_json(
+        canonical_root,
+        canonical_runtime.STATE_CANDIDATE_MANIFEST_RELPATH,
+        label="canonical LCR-084 staging candidate",
+    )
+    if (
+        staging_candidate.get("schema")
+        != canonical_runtime.PRODUCTION_MANIFEST_SCHEMA_V2
+    ):
+        raise StateLawsPublicationPackageError(
+            "State Laws main controls require the canonical LCR-084 @2 candidate; "
+            "the generic @1 manifest cannot authorize main publication"
+        )
+    staging_check = _check_lcr084_candidate_in_subprocess(
+        staging_candidate_bytes,
+        repository_root=canonical_root,
+        phase="state_staging",
+    )
+    staging_candidate_digest = str(
+        staging_check["staging_candidate_digest"]
+    )
+    if (
+        staging_candidate.get("report_digest_sha256")
+        != staging_candidate_digest
+        or staging_check["report_digest_sha256"] != staging_candidate_digest
+        or staging_candidate.get("dataset_repo_id") != plan.repository_id
+        or staging_candidate.get("manifest_digest") != plan.release_sha256
+        or staging_candidate.get("source_rights_catalog_digest") != catalog_digest
+        or staging_candidate.get("source_rights_receipt_digest") != rights_digest
+    ):
+        raise StateLawsPublicationPackageError(
+            "canonical LCR-084 staging candidate differs from the exact package, "
+            "plan, or source-rights receipt"
+        )
+
+    staging_receipt_snapshots: dict[str, bytes] = {}
+    for relative_path, label, expected_revision in (
+        (
+            STATE_LAWS_STAGING_UPLOAD_RELPATH,
+            "State Laws staging upload receipt",
+            None,
+        ),
+        (
+            STATE_LAWS_STAGING_CANARY_RELPATH,
+            "State Laws staging canary receipt",
+            staging_revision,
+        ),
+    ):
+        receipt, receipt_bytes = _load_canonical_control_json(
+            canonical_root,
+            relative_path,
+            label=label,
+            maximum_bytes=16 * 1024 * 1024,
+        )
+        if receipt.get("schema") != canonical_runtime.RECEIPT_SCHEMA_V1:
+            raise StateLawsPublicationPackageError(
+                f"{label} is not a canonical generic receipt"
+            )
+        try:
+            canonical_runtime.verify_independent_digests(
+                relpath=relative_path,
+                raw=receipt_bytes,
+                payload=receipt,
+            )
+            canonical_runtime.load_receipt(canonical_root, relative_path)
+        except Exception as exc:
+            raise StateLawsPublicationPackageError(
+                f"{label} failed canonical receipt validation: {exc}"
+            ) from exc
+        _validate_state_laws_staging_receipt(
+            receipt,
+            label=label,
+            staging_candidate_digest=staging_candidate_digest,
+            release_manifest_digest=plan.release_sha256,
+            dataset_repo_id=plan.repository_id,
+            staging_revision=expected_revision,
+        )
+        if (
+            _read_regular_file_nofollow(
+                canonical_root / relative_path,
+                label=f"{label} bookend",
+                maximum_bytes=16 * 1024 * 1024,
+            )
+            != receipt_bytes
+        ):
+            raise StateLawsPublicationPackageError(
+                f"{label} changed during validation"
+            )
+        staging_receipt_snapshots[relative_path] = receipt_bytes
+
+    candidate = _canonical_mapping(
+        staging_candidate,
+        label="canonical LCR-084 main candidate",
+    )
+    candidate["publication_binding"] = {
         "plan_digest": plan.plan_digest,
         "policy_proof_digest": sealed.proof_digest,
-        "release_id": plan.release_id,
-        "release_prefix": plan.release_prefix,
-        "schema": canonical_runtime.MANIFEST_SCHEMA_V1,
-        "source_rights_catalog_digest": catalog_digest,
-        "source_rights_receipt_digest": rights_digest,
-        "source_rights_receipt_path": SOURCE_RIGHTS_RECEIPT_RELPATH,
-        "status": "passed",
+        "release_manifest_digest": plan.release_sha256,
+        "staging_candidate_digest": staging_candidate_digest,
     }
-    candidate, candidate_digest, _ = _canonical_control_receipt(
-        candidate_payload
+    candidate["report_digest_sha256"] = _lcr084_candidate_report_digest(candidate)
+    candidate_digest = str(candidate["report_digest_sha256"])
+    if candidate_digest == staging_candidate_digest:
+        raise StateLawsPublicationPackageError(
+            "main candidate digest B must differ from staging candidate digest A"
+        )
+    if set(candidate) != set(staging_candidate) or any(
+        candidate[key] != staging_candidate[key]
+        for key in candidate
+        if key not in {"publication_binding", "report_digest_sha256"}
+    ):
+        raise StateLawsPublicationPackageError(
+            "main candidate promotion changed fields outside publication_binding"
+        )
+    main_check = _check_lcr084_candidate_in_subprocess(
+        canonical_json_bytes(candidate),
+        repository_root=canonical_root,
+        phase="state_main",
     )
-    # The generic gate uses final_manifest_digest for the candidate-control
-    # identity and reserves top-level manifest_digest for the release artifact
-    # binding. Both are no-self fields, so adding the explicit control identity
-    # does not create a hash cycle.
-    candidate["final_manifest_digest"] = candidate_digest
+    if (
+        main_check["report_digest_sha256"] != candidate_digest
+        or main_check["staging_candidate_digest"]
+        != staging_candidate_digest
+    ):
+        raise StateLawsPublicationPackageError(
+            "canonical LCR-084 main candidate digest chain failed validation"
+        )
     candidate_bytes = canonical_json_bytes(candidate) + b"\n"
     card_bytes = (
         "# State Laws immutable release\n\n"
@@ -1650,7 +2011,31 @@ def materialize_state_laws_canonical_controls(
         canonical_runtime.STATE_DATASET_CARD_RELPATH: card_bytes,
         canonical_runtime.STATE_PREPUBLICATION_SEAL_RELPATH: seal_bytes,
     }
-    _atomic_write_canonical_controls(repository_root, files)
+    if (
+        _read_regular_file_nofollow(
+            canonical_root
+            / canonical_runtime.STATE_CANDIDATE_MANIFEST_RELPATH,
+            label="canonical LCR-084 staging candidate bookend",
+            maximum_bytes=64 * 1024 * 1024,
+        )
+        != staging_candidate_bytes
+    ):
+        raise StateLawsPublicationPackageError(
+            "canonical LCR-084 staging candidate changed during promotion"
+        )
+    for relative_path, expected_bytes in staging_receipt_snapshots.items():
+        if (
+            _read_regular_file_nofollow(
+                canonical_root / relative_path,
+                label=f"{relative_path} final bookend",
+                maximum_bytes=16 * 1024 * 1024,
+            )
+            != expected_bytes
+        ):
+            raise StateLawsPublicationPackageError(
+                f"{relative_path} changed during candidate promotion"
+            )
+    _atomic_write_canonical_controls(canonical_root, files)
     return StateLawsCanonicalControlBundle(
         candidate_path=canonical_runtime.STATE_CANDIDATE_MANIFEST_RELPATH,
         candidate_manifest_digest=candidate_digest,
@@ -1662,6 +2047,7 @@ def materialize_state_laws_canonical_controls(
         seal_content_digest=seal_digest,
         seal_file_sha256=sha256(seal_bytes).hexdigest(),
         source_rights_receipt_digest=rights_digest,
+        staging_candidate_digest=staging_candidate_digest,
         staging_revision=staging_revision,
     )
 

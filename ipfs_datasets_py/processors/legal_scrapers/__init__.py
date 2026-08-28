@@ -32,6 +32,13 @@ def _snapshot_state_law_producer_sources_at_package_import() -> dict[str, str]:
     package_root = Path(__file__).resolve().parent
     candidates = [package_root / "state_laws_scraper.py"]
     candidates.extend(sorted((package_root / "state_scrapers").glob("*.py")))
+    candidates.append(
+        package_root.parent
+        / "web_archiving"
+        / "common_crawl_search_engine"
+        / "ccindex"
+        / "api.py"
+    )
     snapshots: dict[str, str] = {}
     for path in candidates:
         resolved = path.resolve()

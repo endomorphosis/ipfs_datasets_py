@@ -6,9 +6,12 @@ credential, and seal evidence. No live Hub traffic is performed.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
+import sys
 from datetime import datetime, timezone
+from functools import partial
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -18,22 +21,16 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate impor
     AUTHORIZED_DATASET_REPO_IDS,
     BASELINE_REVISIONS,
     PHASE_REQUIREMENTS,
-    PublicationGateDeniedError,
     REQUIRED_PUBLICATION_GATES,
     RIGHTS_RECEIPT_RELPATH,
     RUNTIME_TASK_ID,
     SUCCESSOR_TASK_ID,
-    TASK_ID as GATE_TASK_ID,
+    PublicationGateDeniedError,
     credentials_scope_for,
     phase_requirements,
 )
-from ipfs_datasets_py.processors.legal_data.legal_release_validation import (
-    HARDENED_RIGHTS_CATALOG_SCHEMA,
-    HARDENED_RIGHTS_CODE_VERSION,
-    HARDENED_RIGHTS_LIVE_GOAL_ID,
-    HARDENED_RIGHTS_LIVE_TASK_ID,
-    HARDENED_RIGHTS_POLICY_SCHEMA,
-    HARDENED_RIGHTS_PRODUCER,
+from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate import (
+    TASK_ID as GATE_TASK_ID,
 )
 from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime import (
     AUTHORITATIVE_OVERRIDE_KEYS,
@@ -45,9 +42,12 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime im
     RECEIPT_SCHEMA_V1,
     RUNTIME_SCHEMA,
     SEAL_SCHEMA_V1,
+    STATE_STAGING_CANARY_RELPATH,
+    STATE_STAGING_UPLOAD_RELPATH,
     TASK_ID,
     TOKEN_ENV_ALLOWLIST,
     CanonicalPublicationRequest,
+    PublicationRuntimeError,
     authorize_and_mutate_canonical,
     canonical_no_self_field_digest,
     evaluate_canonical_publication,
@@ -56,6 +56,14 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime im
     parse_utc_z,
     raw_file_digest,
     require_canonical_publication,
+)
+from ipfs_datasets_py.processors.legal_data.legal_release_validation import (
+    HARDENED_RIGHTS_CATALOG_SCHEMA,
+    HARDENED_RIGHTS_CODE_VERSION,
+    HARDENED_RIGHTS_LIVE_GOAL_ID,
+    HARDENED_RIGHTS_LIVE_TASK_ID,
+    HARDENED_RIGHTS_POLICY_SCHEMA,
+    HARDENED_RIGHTS_PRODUCER,
 )
 
 TOKEN = "tok_lcr080_fixture_canonical_runtime"
@@ -88,6 +96,38 @@ def _callback_tracker() -> tuple[list[Any], Callable[..., Any]]:
 def _write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
+
+
+def _poison_ambient_git(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> Path:
+    fake_bin = tmp_path / "hostile-bin"
+    fake_bin.mkdir(parents=True)
+    marker = tmp_path / "hostile-git-invoked"
+    fake_git = fake_bin / "git"
+    _write(
+        fake_git,
+        "#!/bin/sh\n"
+        f"/usr/bin/touch {marker.as_posix()}\n"
+        "exit 97\n",
+    )
+    fake_git.chmod(0o755)
+    forged = tmp_path / "forged-git-authority"
+    forged.mkdir()
+    for name, value in {
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES": str(forged),
+        "GIT_CONFIG_GLOBAL": str(tmp_path / "forged-global-config"),
+        "GIT_CONFIG_SYSTEM": str(tmp_path / "forged-system-config"),
+        "GIT_DIR": str(forged),
+        "GIT_EXEC_PATH": str(fake_bin),
+        "GIT_INDEX_FILE": str(tmp_path / "forged-index"),
+        "GIT_OBJECT_DIRECTORY": str(forged),
+        "GIT_WORK_TREE": str(forged),
+        "PATH": str(fake_bin),
+    }.items():
+        monkeypatch.setenv(name, value)
+    return marker
 
 
 def _seal_json(path: Path, payload: Mapping[str, Any], *, schema: str) -> str:
@@ -341,6 +381,8 @@ def _seed_repo(
 
     _git(repo, "add", "-A")
     _git(repo, "commit", "-m", "canonical LCR-080 fixture")
+    if phase.startswith("state_"):
+        _install_builder_shaped_lcr084_candidate(repo)
     if dirty_after_commit:
         path = repo / dirty_after_commit
         path.write_text(path.read_text(encoding="utf-8") + "\n# dirty\n", encoding="utf-8")
@@ -363,8 +405,153 @@ def _request(
         "environ": dict({TOKEN_ENV: TOKEN} if environ is None else environ),
         "principal_probe": probe or _probe(contract["dataset_repo_id"]),
     }
+    if phase == "state_main":
+        candidate = json.loads(
+            (repo / CANONICAL_PATHS["state_candidate_manifest"]).read_text(
+                encoding="utf-8"
+            )
+        )
+        binding = candidate.get("publication_binding") or {}
+        payload.update(
+            {
+                "expected_dataset_repo_id": contract["dataset_repo_id"],
+                "expected_release_manifest_digest": binding.get(
+                    "release_manifest_digest"
+                ),
+                "expected_plan_digest": binding.get("plan_digest"),
+                "expected_policy_proof_digest": binding.get(
+                    "policy_proof_digest"
+                ),
+            }
+        )
     if extra:
         payload.update(extra)
+    return payload
+
+
+def _install_builder_shaped_lcr084_candidate(repo: Path) -> dict[str, Any]:
+    """Replace generic receipts with the builder's strict @2 test shape."""
+
+    from scripts.ops.legal_data import build_state_laws_hf_release as builder
+    from tests.unit.scripts.test_build_state_laws_hf_release import (
+        _production_candidate,
+    )
+
+    candidate_path = repo / builder.DEFAULT_REPORT_RELPATH
+    existing = json.loads(candidate_path.read_text(encoding="utf-8"))
+    if existing.get("schema") == builder.PRODUCTION_REPORT_SCHEMA:
+        return existing
+    payload = _production_candidate(repo)
+    baseline_relpath = builder.DEFAULT_LIVE_BASELINE_RELPATH.as_posix()
+    _seal_json(
+        repo / baseline_relpath,
+        {
+            "status": "passed",
+            "path": baseline_relpath,
+            "fixture_only": False,
+            "dirty": False,
+            "dataset_repo_id": "justicedao/ipfs_state_laws",
+        },
+        schema=RECEIPT_SCHEMA_V1,
+    )
+    rights = json.loads(
+        (repo / RIGHTS_RECEIPT_RELPATH).read_text(encoding="utf-8")
+    )
+    rights_digest = canonical_no_self_field_digest(rights)
+    catalog_digest = str(rights["catalog_digest_sha256"])
+    evidence = payload["production_evidence"]
+    baseline_file_sha256 = raw_file_digest(
+        (repo / baseline_relpath).read_bytes()
+    )
+    evidence["authenticated_live_baseline"]["sha256"] = baseline_file_sha256
+    payload["inputs"]["live_baseline_sha256"] = baseline_file_sha256
+    evidence["rights_receipt"]["receipt_digest_sha256"] = rights_digest
+    evidence["rights_receipt"]["catalog_digest_sha256"] = catalog_digest
+    evidence_digest = builder.digest_payload(evidence)
+
+    acceptance_path = repo / builder.PRODUCTION_ACCEPTANCE_RELPATH
+    acceptance = json.loads(acceptance_path.read_text(encoding="utf-8"))
+    acceptance["evidence"] = evidence
+    acceptance["production_evidence_digest_sha256"] = evidence_digest
+    acceptance["candidate_requirement"][
+        "production_evidence_digest_sha256"
+    ] = evidence_digest
+    acceptance["report_digest_sha256"] = builder._digest_for_report(
+        acceptance
+    )
+    acceptance_path.write_text(
+        json.dumps(acceptance, sort_keys=True),
+        encoding="utf-8",
+    )
+
+    payload["production_evidence_digest_sha256"] = evidence_digest
+    payload["acceptance"]["production_evidence_digest_sha256"] = (
+        evidence_digest
+    )
+    payload["acceptance"][
+        "full_scrape_acceptance_report_digest_sha256"
+    ] = acceptance["report_digest_sha256"]
+    payload["acceptance"]["full_scrape_acceptance_sha256"] = (
+        builder.file_sha256(acceptance_path)
+    )
+    payload["source_rights_catalog_digest"] = catalog_digest
+    payload["source_rights_receipt_digest"] = rights_digest
+    payload["report_digest_sha256"] = builder._digest_for_report(payload)
+    candidate_path.write_text(
+        json.dumps(payload, sort_keys=True),
+        encoding="utf-8",
+    )
+    if (repo / STATE_STAGING_CANARY_RELPATH).is_file():
+        staging_candidate_digest = (
+            builder.production_candidate_staging_digest(payload)
+        )
+        release_manifest_digest = str(payload["manifest_digest"])
+        plan_digest = "a" * 64
+        policy_proof_digest = "b" * 64
+        for relpath in (
+            STATE_STAGING_UPLOAD_RELPATH,
+            STATE_STAGING_CANARY_RELPATH,
+        ):
+            staging_receipt: dict[str, Any] = {
+                "dataset_repo_id": "justicedao/ipfs_state_laws",
+                "dirty": False,
+                "final_manifest_digest": staging_candidate_digest,
+                "fixture_only": False,
+                "path": relpath,
+                "release_manifest_digest": release_manifest_digest,
+                "status": "passed",
+            }
+            if relpath == STATE_STAGING_CANARY_RELPATH:
+                staging_receipt["staging_revision"] = STAGING_SHA
+            _seal_json(
+                repo / relpath,
+                staging_receipt,
+                schema=RECEIPT_SCHEMA_V1,
+            )
+        payload["publication_binding"] = {
+            "plan_digest": plan_digest,
+            "policy_proof_digest": policy_proof_digest,
+            "release_manifest_digest": release_manifest_digest,
+            "staging_candidate_digest": staging_candidate_digest,
+        }
+        payload["report_digest_sha256"] = builder._digest_for_report(payload)
+        candidate_path.write_text(
+            json.dumps(payload, sort_keys=True),
+            encoding="utf-8",
+        )
+        seal_path = repo / CANONICAL_PATHS["state_prepublication_seal"]
+        seal = json.loads(seal_path.read_text(encoding="utf-8"))
+        seal.pop("canonical_digest", None)
+        if "final_manifest_digest" in seal:
+            seal["final_manifest_digest"] = payload[
+                "report_digest_sha256"
+            ]
+        seal.setdefault("plan_digest", plan_digest)
+        seal.setdefault("policy_proof_digest", policy_proof_digest)
+        seal.setdefault("release_manifest_digest", release_manifest_digest)
+        _seal_json(seal_path, seal, schema=SEAL_SCHEMA_V1)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-m", "install builder-shaped LCR-084 candidate")
     return payload
 
 
@@ -422,6 +609,216 @@ def test_obtain_token_reads_only_allowlisted_env() -> None:
         obtain_token({"OTHER": TOKEN})
 
 
+@pytest.mark.parametrize("invalid", ["false", "true", 0, 1, None])
+def test_authorize_mutation_requires_an_exact_boolean(
+    tmp_path: Path,
+    invalid: object,
+) -> None:
+    with pytest.raises(PublicationRuntimeError, match="exact boolean"):
+        CanonicalPublicationRequest.from_mapping(
+            {
+                "phase": "state_staging",
+                "repository_root": tmp_path,
+                "authorize_mutation": invalid,
+            }
+        )
+    with pytest.raises(PublicationRuntimeError, match="exact boolean"):
+        CanonicalPublicationRequest(
+            phase="state_staging",
+            repository_root=tmp_path,
+            authorize_mutation=invalid,  # type: ignore[arg-type]
+        )
+
+
+@pytest.mark.parametrize(
+    ("relpath", "fixture_only"),
+    [
+        ("docs/reports/legal_corpora_reindex/local_e2e.json", True),
+        ("docs/reports/legal_corpora_reindex/federal_inventory.json", False),
+        (
+            "docs/reports/legal_corpora_reindex/federal_fulltext_coverage.json",
+            True,
+        ),
+        ("docs/reports/legal_corpora_reindex/federal_candidate.json", True),
+        ("docs/reports/legal_corpora_reindex/federal_evaluation.json", True),
+        (
+            "docs/reports/legal_corpora_reindex/"
+            "federal_adjacency_reconciliation.json",
+            True,
+        ),
+    ],
+)
+def test_producer_native_receipts_are_strictly_adapted_without_losing_fixture_state(
+    relpath: str,
+    fixture_only: bool,
+) -> None:
+    from ipfs_datasets_py.processors.legal_data import (
+        legal_corpora_publication_runtime as runtime,
+    )
+
+    root = Path(__file__).resolve().parents[4]
+    receipt = runtime.load_receipt(root, relpath)
+    assert receipt["status"] == "passed"
+    assert receipt["fixture_only"] is fixture_only
+    assert len(receipt["content_digest"]) == 64
+
+
+@pytest.mark.parametrize(
+    "relpath",
+    [
+        "docs/reports/legal_corpora_reindex/full_scrape_acceptance.json",
+        "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json",
+    ],
+)
+def test_legacy_or_unbound_native_receipts_remain_non_authorizing(
+    relpath: str,
+) -> None:
+    from ipfs_datasets_py.processors.legal_data import (
+        legal_corpora_publication_runtime as runtime,
+    )
+
+    root = Path(__file__).resolve().parents[4]
+    with pytest.raises(PublicationRuntimeError):
+        runtime.load_receipt(root, relpath)
+
+
+def test_lcr084_verifier_source_snapshot_uses_head_blobs_and_pinned_gitlink(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_data import (
+        legal_corpora_publication_runtime as runtime,
+    )
+
+    root = Path(__file__).resolve().parents[4]
+    head = _git(root, "rev-parse", "HEAD")
+    expected: dict[str, str] = {}
+    for label, relpath in runtime._VERIFIER_SOURCE_RELPATHS.items():
+        completed = subprocess.run(
+            ["git", "show", f"{head}:{relpath}"],
+            cwd=root,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        expected[label] = raw_file_digest(completed.stdout)
+    marker = _poison_ambient_git(tmp_path, monkeypatch)
+    source_root, archives, manifest = (
+        runtime._materialize_lcr084_source_snapshot(
+            root,
+            tmp_path,
+            head,
+            expected_source_sha256=expected,
+        )
+    )
+    assert all(
+        raw_file_digest(path.read_bytes()) == digest
+        for path, digest in archives.items()
+    )
+    assert manifest[
+        "scripts/ops/legal_data/build_state_laws_hf_release.py"
+    ] == expected["lcr084_candidate"]
+    assert (
+        "ipfs_datasets_py/processors/web_archiving/"
+        "common_crawl_search_engine/ccindex/api.py"
+    ) in manifest
+    assert not any(path.is_symlink() for path in source_root.rglob("*"))
+    assert not marker.exists()
+
+
+def test_authority_git_ignores_hostile_path_and_git_environment(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo = _seed_repo(tmp_path / "evidence", "federal_staging")
+    expected_head = _git(repo, "rev-parse", "HEAD")
+    marker = _poison_ambient_git(tmp_path / "poison", monkeypatch)
+    assert inspect_clean_head(repo) == expected_head
+    assert not marker.exists()
+
+
+def test_same_uid_lcr084_snapshot_denies_before_isolated_verifier_child(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_data import (
+        legal_corpora_publication_runtime as runtime,
+    )
+
+    root = tmp_path / "evidence"
+    candidate_path = root / runtime.STATE_CANDIDATE_MANIFEST_RELPATH
+    payload: dict[str, Any] = {}
+    payload["report_digest_sha256"] = (
+        runtime._production_candidate_report_digest(payload)
+    )
+    candidate_raw = json.dumps(payload, sort_keys=True).encode("utf-8")
+    candidate_path.parent.mkdir(parents=True)
+    candidate_path.write_bytes(candidate_raw)
+    source_root = tmp_path / "same-uid-source"
+    source_root.mkdir(mode=0o700)
+    source_file = source_root / "verifier.py"
+    source_file.write_text("VALUE = 1\n", encoding="utf-8")
+    source_file.chmod(0o400)
+    source_root.chmod(0o500)
+    head = "a" * 40
+    commands: list[tuple[str, ...]] = []
+
+    def bounded_process(command: Any, **_kwargs: Any) -> tuple[int, bytes, bytes]:
+        commands.append(tuple(str(item) for item in command))
+        return 0, candidate_raw, b""
+
+    monkeypatch.setattr(
+        runtime,
+        "_require_mutation_implementation_root",
+        lambda _root: root,
+    )
+    monkeypatch.setattr(runtime, "inspect_clean_head", lambda _root: head)
+    monkeypatch.setattr(
+        runtime,
+        "_materialize_lcr084_source_snapshot",
+        lambda *_args, **_kwargs: (source_root, {}, {}),
+    )
+    monkeypatch.setattr(
+        runtime,
+        "_run_bounded_isolated_process",
+        bounded_process,
+    )
+    with pytest.raises(
+        PublicationRuntimeError,
+        match="trusted LCR-084 source snapshot unavailable",
+    ):
+        runtime._isolated_lcr084_candidate_remeasurement(
+            root,
+            phase="state_main",
+            payload=payload,
+            runtime_token=TOKEN,
+        )
+    assert len(commands) == 1
+    assert "show" in commands[0]
+    assert "-c" not in commands[0]
+
+
+def test_isolated_process_output_is_bounded_while_streaming(
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.processors.legal_data import (
+        legal_corpora_publication_runtime as runtime,
+    )
+
+    with pytest.raises(PublicationRuntimeError, match="live bound"):
+        runtime._run_bounded_isolated_process(
+            [
+                sys.executable,
+                "-c",
+                "import sys;sys.stdout.buffer.write(b'x'*131072);sys.stdout.flush()",
+            ],
+            cwd=tmp_path,
+            environment=None,
+            timeout_seconds=10,
+            output_limit_bytes=1024,
+        )
+
+
 # ---------------------------------------------------------------------------
 # Happy paths
 # ---------------------------------------------------------------------------
@@ -431,14 +828,13 @@ def test_obtain_token_reads_only_allowlisted_env() -> None:
     "phase",
     ["state_staging", "state_main", "federal_staging", "federal_main"],
 )
-def test_canonical_authorized_request_invokes_callback_once(
+def test_canonical_authorized_request_evaluates_all_phases(
     tmp_path: Path, phase: str
 ) -> None:
     repo = _seed_repo(tmp_path, phase)
     head = inspect_clean_head(repo, authoritative_paths=())
     assert len(head) == 40
     payload = _request(repo, phase)
-    calls, upload = _callback_tracker()
     decision = evaluate_canonical_publication(payload)
     assert decision.authorized is True
     assert decision.network_mutation_permitted is True
@@ -458,49 +854,456 @@ def test_canonical_authorized_request_invokes_callback_once(
         assert decision.details["prepublication_seal_bound"] is True
     dumped = json.dumps(decision.to_dict())
     assert TOKEN not in dumped
-    result = authorize_and_mutate_canonical(payload, upload)
-    assert result == "mutated"
-    assert len(calls) == 1
-    bound = calls[0]
-    assert bound.details["head"] == head
-    assert bound.details["principal"] == "fixture-bot"
-    assert {"LCR-081", "LCR-082", "LCR-083"}.issubset(bound.details["required_task_ids"])
     require_canonical_publication(payload)
 
 
-def test_canonical_runtime_context_is_scoped_and_manifest_bound(
+def test_runtime_accepts_builder_shaped_lcr084_candidate_with_strict_evidence(
+    tmp_path: Path,
+) -> None:
+    from scripts.ops.legal_data import build_state_laws_hf_release as builder
+
+    repo = _seed_repo(tmp_path, "state_staging")
+    candidate = _install_builder_shaped_lcr084_candidate(repo)
+    decision = evaluate_canonical_publication(
+        _request(repo, "state_staging")
+    )
+    assert decision.authorized is True
+    on_disk = json.loads(
+        (repo / builder.DEFAULT_REPORT_RELPATH).read_text(encoding="utf-8")
+    )
+    assert on_disk["schema"] == builder.PRODUCTION_REPORT_SCHEMA
+    assert on_disk["mutation_audit"]["status"] == "passed"
+    assert on_disk["acceptance"]["contains_exact_51"] is True
+
+
+def test_state_main_accepts_exact_a_b_chain_without_gate_digest_conflation(
+    tmp_path: Path,
+) -> None:
+    from scripts.ops.legal_data import build_state_laws_hf_release as builder
+    from ipfs_datasets_py.processors.legal_data import (
+        legal_corpora_publication_runtime as runtime,
+    )
+
+    repo = _seed_repo(tmp_path, "state_main")
+    request = _request(repo, "state_main")
+    decision = evaluate_canonical_publication(request)
+    assert decision.authorized is True, decision.to_dict()
+    candidate = json.loads(
+        (repo / CANONICAL_PATHS["state_candidate_manifest"]).read_text(
+            encoding="utf-8"
+        )
+    )
+    binding = candidate["publication_binding"]
+    assert binding["staging_candidate_digest"] == (
+        builder.production_candidate_staging_digest(candidate)
+    )
+    assert decision.final_manifest_digest == candidate["report_digest_sha256"]
+    assert decision.final_manifest_digest != binding["staging_candidate_digest"]
+    normalized = runtime.capture_canonical_snapshot(
+        CanonicalPublicationRequest.from_mapping(request)
+    )["receipts"]
+    for relpath in (
+        STATE_STAGING_UPLOAD_RELPATH,
+        STATE_STAGING_CANARY_RELPATH,
+    ):
+        receipt = normalized[relpath]
+        assert "final_manifest_digest" not in receipt
+        assert receipt["producer_final_manifest_digest"] == binding[
+            "staging_candidate_digest"
+        ]
+
+
+@pytest.mark.parametrize("phase", ["state_staging", "state_main"])
+def test_state_candidate_publication_binding_is_phase_exact(
+    tmp_path: Path,
+    phase: str,
+) -> None:
+    from scripts.ops.legal_data import build_state_laws_hf_release as builder
+
+    repo = _seed_repo(tmp_path, phase)
+    path = repo / CANONICAL_PATHS["state_candidate_manifest"]
+    candidate = json.loads(path.read_text(encoding="utf-8"))
+    if phase == "state_staging":
+        staging_digest = builder.production_candidate_staging_digest(candidate)
+        candidate["publication_binding"] = {
+            "plan_digest": "a" * 64,
+            "policy_proof_digest": "b" * 64,
+            "release_manifest_digest": candidate["manifest_digest"],
+            "staging_candidate_digest": staging_digest,
+        }
+    else:
+        candidate["publication_binding"] = None
+    candidate["report_digest_sha256"] = builder._digest_for_report(candidate)
+    path.write_text(json.dumps(candidate, sort_keys=True), encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-m", "forge phase-incompatible publication binding")
+    calls, callback = _callback_tracker()
+    decision = evaluate_canonical_publication(_request(repo, phase))
+    assert decision.authorized is False
+    with pytest.raises(PublicationGateDeniedError):
+        authorize_and_mutate_canonical(_request(repo, phase), callback)
+    assert calls == []
+
+
+def test_state_main_rejects_staging_receipt_that_does_not_bind_a(
     tmp_path: Path,
 ) -> None:
     repo = _seed_repo(tmp_path, "state_main")
-    payload = _request(repo, "state_main")
-    from ipfs_datasets_py.huggingface.protected_repo_guard import (
-        ProtectedRepoGuardError,
-        require_unprotected_or_runtime,
+    path = repo / STATE_STAGING_UPLOAD_RELPATH
+    receipt = json.loads(path.read_text(encoding="utf-8"))
+    receipt.pop("canonical_digest", None)
+    receipt["final_manifest_digest"] = "d" * 64
+    _seal_json(path, receipt, schema=RECEIPT_SCHEMA_V1)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-m", "drift staging candidate A binding")
+    _assert_denied(
+        _request(repo, "state_main"),
+        fragment="manifest_binding",
     )
 
-    observed: list[str] = []
 
-    def upload(decision: Any) -> str:
-        require_unprotected_or_runtime(
-            decision.dataset_repo_id,
-            method="create_commit",
-            expected_phase=decision.phase,
-            expected_operation=decision.operation,
-            expected_manifest_digest=decision.final_manifest_digest,
+def test_public_builder_checker_monkeypatch_cannot_accept_invalid_lcr084_candidate(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from scripts.ops.legal_data import build_state_laws_hf_release as builder
+
+    repo = _seed_repo(tmp_path, "state_staging")
+    candidate = _install_builder_shaped_lcr084_candidate(repo)
+    candidate["jurisdiction_count"] = 50
+    candidate["report_digest_sha256"] = builder._digest_for_report(candidate)
+    (repo / builder.DEFAULT_REPORT_RELPATH).write_text(
+        json.dumps(candidate, sort_keys=True),
+        encoding="utf-8",
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-m", "forge invalid LCR-084 candidate")
+    monkeypatch.setattr(
+        builder,
+        "check_production_candidate_report",
+        lambda *_args, **_kwargs: {
+            "jurisdiction_count": 51,
+            "ok": True,
+            "task_id": "LCR-084",
+            "valid": True,
+        },
+    )
+    calls, callback = _callback_tracker()
+    decision = evaluate_canonical_publication(_request(repo, "state_staging"))
+    assert decision.authorized is False
+    with pytest.raises(PublicationGateDeniedError):
+        authorize_and_mutate_canonical(
+            _request(repo, "state_staging"),
+            callback,
         )
-        observed.append(decision.final_manifest_digest)
+    assert calls == []
+
+
+def test_prepatched_live_baseline_dependencies_cannot_reach_callback(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from scripts.ops.legal_data import audit_legal_corpora_live_baseline as live
+
+    monkeypatch.setattr(
+        live,
+        "validate_receipt",
+        lambda *_args, **_kwargs: {"ok": True},
+    )
+    monkeypatch.setattr(
+        live,
+        "observe_with_live_hub",
+        lambda *_args, **_kwargs: {"ok": True},
+    )
+    repo = _seed_repo(tmp_path, "state_main")
+    calls, callback = _callback_tracker()
+    with pytest.raises(PublicationRuntimeError):
+        authorize_and_mutate_canonical(_request(repo, "state_main"), callback)
+    assert calls == []
+
+
+@pytest.mark.parametrize("duplicate_surface", ["root", "nested"])
+def test_lcr084_candidate_duplicate_keys_deny_before_callback(
+    tmp_path: Path,
+    duplicate_surface: str,
+) -> None:
+    from scripts.ops.legal_data import build_state_laws_hf_release as builder
+
+    repo = _seed_repo(tmp_path, "state_staging")
+    _install_builder_shaped_lcr084_candidate(repo)
+    candidate_path = repo / builder.DEFAULT_REPORT_RELPATH
+    serialized = candidate_path.read_text(encoding="utf-8")
+    if duplicate_surface == "root":
+        serialized = serialized[:-1] + ', "status": "passed"}'
+    else:
+        needle = f'"kind": "{builder.PRODUCTION_KIND}"'
+        serialized = serialized.replace(
+            needle,
+            needle + f', "kind": "{builder.PRODUCTION_KIND}"',
+            1,
+        )
+    candidate_path.write_text(serialized, encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-m", "forge duplicate candidate key")
+    calls, callback = _callback_tracker()
+    decision = evaluate_canonical_publication(_request(repo, "state_staging"))
+    assert decision.authorized is False
+    with pytest.raises(PublicationGateDeniedError):
+        authorize_and_mutate_canonical(
+            _request(repo, "state_staging"),
+            callback,
+        )
+    assert calls == []
+
+
+def test_state_main_seal_duplicate_key_denies_before_callback(
+    tmp_path: Path,
+) -> None:
+    repo = _seed_repo(tmp_path, "state_main")
+    seal_path = repo / CANONICAL_PATHS["state_prepublication_seal"]
+    serialized = seal_path.read_text(encoding="utf-8")
+    seal_path.write_text(
+        serialized.rstrip()[:-1] + ', "status": "sealed"}',
+        encoding="utf-8",
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-m", "forge duplicate seal key")
+    calls, callback = _callback_tracker()
+    assert evaluate_canonical_publication(_request(repo, "state_main")).authorized is False
+    with pytest.raises(PublicationGateDeniedError):
+        authorize_and_mutate_canonical(_request(repo, "state_main"), callback)
+    assert calls == []
+
+
+def test_alternate_git_checkout_cannot_become_mutation_root(
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.processors.legal_data import (
+        legal_corpora_publication_runtime as runtime,
+    )
+
+    alternate = _seed_repo(tmp_path, "state_main")
+    with pytest.raises(PublicationRuntimeError, match="exact runtime/publisher"):
+        runtime._require_mutation_implementation_root(alternate)
+
+
+def test_final_mutation_inventory_uses_one_paired_capture(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_data import (
+        legal_corpora_publication_runtime as runtime,
+    )
+
+    report = {"schema": "paired", "status": "passed"}
+    projection = (
+        {
+            "path": "services/légal_runtime.py",
+            "sha256": "a" * 64,
+            "size_bytes": 17,
+        },
+    )
+    calls = {"paired": 0}
+
+    class _Capture:
+        source_projection = projection
+
+        def __init__(self) -> None:
+            self.report = report
+
+    class _Verifier:
+        @staticmethod
+        def validate_frozen_mutation_capture(**_kwargs: object) -> _Capture:
+            calls["paired"] += 1
+            return _Capture()
+
+        @staticmethod
+        def validate_frozen_mutation_inventory(**_kwargs: object) -> object:
+            pytest.fail("runtime used the split inventory API")
+
+        @staticmethod
+        def mutation_source_projection(**_kwargs: object) -> object:
+            pytest.fail("runtime used the split projection API")
+
+    head = "d" * 40
+    monkeypatch.setattr(
+        runtime,
+        "_load_fresh_attested_verifier",
+        lambda _name: (_Verifier(), "paired-verifier"),
+    )
+    monkeypatch.setattr(
+        runtime,
+        "_discard_fresh_attested_verifier",
+        lambda *_args: None,
+    )
+    monkeypatch.setattr(
+        runtime,
+        "_require_mutation_implementation_root",
+        lambda _root: tmp_path,
+    )
+    monkeypatch.setattr(runtime, "inspect_clean_head", lambda _root: head)
+    monkeypatch.setattr(
+        runtime,
+        "read_canonical_bytes",
+        lambda _root, relpath: str(relpath).encode("utf-8"),
+    )
+
+    binding = runtime._revalidate_mutation_inventory_before_callback(
+        tmp_path,
+        expected_head=head,
+    )
+
+    assert calls == {"paired": 1}
+    assert binding == {
+        "inventory_digest_sha256": runtime._production_candidate_report_digest(
+            report
+        ),
+        "source_file_count": 1,
+        "source_projection_digest_sha256": hashlib.sha256(
+            json.dumps(
+                projection,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode("utf-8")
+        ).hexdigest(),
+    }
+    runtime._require_final_mutation_audit_binding(dict(binding), binding)
+
+
+@pytest.mark.parametrize(
+    ("field", "mismatched_value"),
+    (
+        ("inventory_digest_sha256", "e" * 64),
+        ("source_projection_digest_sha256", "f" * 64),
+        ("source_file_count", 2),
+    ),
+)
+def test_final_mutation_audit_binding_rejects_every_mismatch(
+    field: str,
+    mismatched_value: object,
+) -> None:
+    from ipfs_datasets_py.processors.legal_data import (
+        legal_corpora_publication_runtime as runtime,
+    )
+
+    final_binding = {
+        "inventory_digest_sha256": "a" * 64,
+        "source_projection_digest_sha256": "b" * 64,
+        "source_file_count": 1,
+    }
+    mismatched_candidate = dict(final_binding)
+    mismatched_candidate[field] = mismatched_value
+    with pytest.raises(
+        PublicationRuntimeError,
+        match="differs from the final protected-write inventory",
+    ):
+        runtime._require_final_mutation_audit_binding(
+            mismatched_candidate,
+            final_binding,
+        )
+
+
+@pytest.mark.parametrize(
+    "phase",
+    ["state_staging", "state_main", "federal_staging", "federal_main"],
+)
+def test_canonical_runtime_rejects_raw_partial_and_bound_alias_callbacks(
+    tmp_path: Path,
+    phase: str,
+) -> None:
+    repo = _seed_repo(tmp_path, phase)
+    payload = _request(repo, phase)
+    observed: list[Any] = []
+
+    def raw_callback(decision: Any, *, marker: str = "raw") -> str:
+        observed.append((marker, decision))
         return "mutated"
 
-    assert authorize_and_mutate_canonical(payload, upload) == "mutated"
-    assert len(observed) == 1
-    with pytest.raises(ProtectedRepoGuardError):
-        require_unprotected_or_runtime(
-            "justicedao/ipfs_state_laws",
-            method="create_commit",
-            expected_phase="state_main",
-            expected_operation="additive_main_upload",
-            expected_manifest_digest=observed[0],
+    class CallbackOwner:
+        def upload(self, decision: Any) -> str:
+            return raw_callback(decision, marker="bound")
+
+    callbacks = (
+        raw_callback,
+        lambda decision: raw_callback(decision, marker="lambda"),
+        partial(raw_callback, marker="partial"),
+        CallbackOwner().upload,
+    )
+    for callback in callbacks:
+        error = "exact sealed" if phase == "state_main" else "fails closed"
+        with pytest.raises(PublicationRuntimeError, match=error):
+            authorize_and_mutate_canonical(payload, callback)
+    assert observed == []
+
+
+def test_principal_is_revalidated_before_executor_attestation(
+    tmp_path: Path,
+) -> None:
+    repo = _seed_repo(tmp_path, "state_main")
+    events: list[str] = []
+    base_probe = _probe("justicedao/ipfs_state_laws")
+
+    def ordered_probe(token: str, repo_id: str) -> Mapping[str, Any]:
+        events.append("principal")
+        return base_probe(token, repo_id)
+
+    def forbidden_executor(_decision: Any) -> None:
+        events.append("executor")
+
+    with pytest.raises(PublicationRuntimeError, match="exact sealed"):
+        authorize_and_mutate_canonical(
+            _request(repo, "state_main", probe=ordered_probe),
+            forbidden_executor,
         )
+    assert events == ["principal", "principal"]
+
+
+@pytest.mark.parametrize("drift_field", ["principal", "owner_role", "token_role"])
+def test_principal_authority_drift_denies_before_executor(
+    tmp_path: Path,
+    drift_field: str,
+) -> None:
+    repo = _seed_repo(tmp_path, "state_main")
+    events: list[str] = []
+
+    def drifting_probe(token: str, repo_id: str) -> Mapping[str, Any]:
+        assert token == TOKEN
+        events.append("principal")
+        projection: dict[str, Any] = {
+            "authority_source": "fixture_whoami",
+            "dataset_repo_id": repo_id,
+            "has_write_access": True,
+            "identity": "huggingface:fixture-bot",
+            "owner": "justicedao",
+            "owner_role": "admin",
+            "principal": "fixture-bot",
+            "scopes": [f"dataset:write:{repo_id}"],
+            "token_role": "write",
+            "write_targets": [repo_id],
+        }
+        if len(events) > 1:
+            projection[drift_field] = {
+                "principal": "other-bot",
+                "owner_role": "write",
+                "token_role": "admin",
+            }[drift_field]
+        return projection
+
+    def forbidden_executor(_decision: Any) -> None:
+        events.append("executor")
+
+    with pytest.raises(
+        PublicationGateDeniedError,
+        match="evidence changed",
+    ) as exc_info:
+        authorize_and_mutate_canonical(
+            _request(repo, "state_main", probe=drifting_probe),
+            forbidden_executor,
+        )
+
+    assert exc_info.value.reason_codes == ("runtime.evidence_race",)
+    assert events == ["principal", "principal"]
 
 
 def test_expected_plan_constraints_fail_closed_before_callback(
@@ -520,6 +1323,57 @@ def test_expected_plan_constraints_fail_closed_before_callback(
                 "expected_release_manifest_digest": "c" * 64,
             },
         ),
+        fragment="manifest_binding",
+    )
+
+
+def test_candidate_and_seal_plan_policy_constraints_are_independent(
+    tmp_path: Path,
+) -> None:
+    from scripts.ops.legal_data import build_state_laws_hf_release as builder
+
+    valid = _seed_repo(tmp_path / "valid", "state_main")
+    valid_request = _request(valid, "state_main")
+    valid_decision = evaluate_canonical_publication(valid_request)
+    assert valid_decision.authorized is True, valid_decision.to_dict()
+    expected = {
+        key: valid_request[key]
+        for key in (
+            "expected_dataset_repo_id",
+            "expected_plan_digest",
+            "expected_policy_proof_digest",
+            "expected_release_manifest_digest",
+        )
+    }
+
+    bad_candidate = _seed_repo(tmp_path / "bad-candidate", "state_main")
+    candidate_path = bad_candidate / CANONICAL_PATHS[
+        "state_candidate_manifest"
+    ]
+    candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+    candidate["publication_binding"]["plan_digest"] = "d" * 64
+    candidate["report_digest_sha256"] = builder._digest_for_report(candidate)
+    candidate_path.write_text(
+        json.dumps(candidate, sort_keys=True),
+        encoding="utf-8",
+    )
+    _git(bad_candidate, "add", "-A")
+    _git(bad_candidate, "commit", "-m", "drift candidate plan binding")
+    _assert_denied(
+        _request(bad_candidate, "state_main", extra=expected),
+        fragment="manifest_binding",
+    )
+
+    bad_seal = _seed_repo(tmp_path / "bad-seal", "state_main")
+    seal_path = bad_seal / CANONICAL_PATHS["state_prepublication_seal"]
+    seal = json.loads(seal_path.read_text(encoding="utf-8"))
+    seal.pop("canonical_digest", None)
+    seal["policy_proof_digest"] = "d" * 64
+    _seal_json(seal_path, seal, schema=SEAL_SCHEMA_V1)
+    _git(bad_seal, "add", "-A")
+    _git(bad_seal, "commit", "-m", "drift seal proof binding")
+    _assert_denied(
+        _request(bad_seal, "state_main", extra=expected),
         fragment="manifest_binding",
     )
 
@@ -581,6 +1435,31 @@ def test_dirty_authoritative_path_denies(tmp_path: Path) -> None:
     _assert_denied(_request(repo, "state_staging"), fragment="dirty_authoritative_path")
 
 
+@pytest.mark.parametrize(
+    "relative_path",
+    [
+        "ipfs_datasets_py/huggingface/publisher.py",
+        (
+            "ipfs_datasets_py/processors/legal_data/"
+            "legal_corpora_publication_runtime.py"
+        ),
+        "ipfs_datasets_py/huggingface/protected_repo_guard.py",
+    ],
+)
+def test_authorizing_mutation_rejects_dirty_non_authoritative_code(
+    tmp_path: Path,
+    relative_path: str,
+) -> None:
+    repo = _seed_repo(tmp_path, "state_main")
+    target = repo / relative_path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("# uncommitted executable drift\n", encoding="utf-8")
+    _assert_denied(
+        _request(repo, "state_main"),
+        fragment="dirty_authoritative_path",
+    )
+
+
 def test_caller_selected_commit_denies(tmp_path: Path) -> None:
     repo = _seed_repo(tmp_path, "federal_main")
     payload = _request(repo, "federal_main", extra={"current_commit": "a" * 40})
@@ -596,11 +1475,13 @@ def test_missing_receipt_status_denies(tmp_path: Path) -> None:
 
 
 def test_forged_digest_denies(tmp_path: Path) -> None:
-    repo = _seed_repo(
-        tmp_path,
-        "state_staging",
-        forged_digest_for="docs/reports/legal_corpora_reindex/full_scrape_acceptance.json",
-    )
+    repo = _seed_repo(tmp_path, "state_staging")
+    target = repo / "docs/reports/legal_corpora_reindex/full_scrape_acceptance.json"
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    payload["report_digest_sha256"] = "0" * 64
+    target.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-m", "forge acceptance digest")
     _assert_denied(_request(repo, "state_staging"), fragment="independent_digest_mismatch")
 
 
@@ -617,16 +1498,27 @@ def test_changed_receipt_bytes_denies(tmp_path: Path) -> None:
 
 
 def test_unknown_receipt_schema_denies(tmp_path: Path) -> None:
-    repo = _seed_repo(
-        tmp_path,
-        "state_staging",
-        unknown_schema_for="docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
-    )
+    repo = _seed_repo(tmp_path, "state_staging")
+    target = repo / "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json"
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    payload["schema"] = "ipfs_datasets_py/unknown-receipt-schema@9"
+    target.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-m", "set unknown receipt schema")
     _assert_denied(_request(repo, "state_staging"), fragment="unknown_receipt_schema")
 
 
 def test_missing_manifest_binding_denies(tmp_path: Path) -> None:
-    repo = _seed_repo(tmp_path, "state_staging", omit_manifest_binding=True)
+    from scripts.ops.legal_data import build_state_laws_hf_release as builder
+
+    repo = _seed_repo(tmp_path, "state_staging")
+    target = repo / CANONICAL_PATHS["state_candidate_manifest"]
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    payload.pop("source_rights_receipt_digest", None)
+    payload["report_digest_sha256"] = builder._digest_for_report(payload)
+    target.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-m", "remove candidate rights binding")
     _assert_denied(_request(repo, "state_staging"), fragment="missing_manifest_binding")
 
 

@@ -34,7 +34,7 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections.abc import Callable, Iterable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import UTC, datetime, timedelta
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -889,6 +889,7 @@ def fetch_parquet_content(
     path: str,
     *,
     expected_lfs_sha256: str | None = None,
+    partition_body_observer: Callable[[bytes], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Download, hash, and count a remote Parquet. Footer-only success is forbidden."""
     url = require_hub_https_url(
@@ -922,7 +923,7 @@ def fetch_parquet_content(
                 f"Parquet content hash mismatch for {path}: "
                 f"downloaded {content_sha256} != LFS {expected}"
             )
-    return {
+    result = {
         "path": path,
         "num_rows": num_rows,
         "content_sha256": content_sha256,
@@ -931,6 +932,14 @@ def fetch_parquet_content(
         "endpoint": url,
         "status": response.status,
     }
+    if partition_body_observer is not None:
+        observation = partition_body_observer(body)
+        if not isinstance(observation, Mapping):
+            raise LiveBaselineAuditError(
+                f"partition body observer for {path} must return an object"
+            )
+        result["partition_body_observation"] = dict(observation)
+    return result
 
 
 def fetch_parquet_footer_rows(
@@ -1066,7 +1075,14 @@ def row_counts_digest(partitions: Mapping[str, Mapping[str, Any]]) -> str:
     return sha256_canonical(payload)
 
 
-def observe_state_laws(transport: Any, token: str) -> dict[str, Any]:
+def observe_state_laws(
+    transport: Any,
+    token: str,
+    *,
+    partition_body_observer_factory: (
+        Callable[[str], Callable[[bytes], Mapping[str, Any]]] | None
+    ) = None,
+) -> dict[str, Any]:
     revision = STATE_PINNED_REVISION
     info = fetch_dataset_revision(transport, token, STATE_REPO_ID, revision)
     tree = fetch_repo_tree(transport, token, STATE_REPO_ID, revision)
@@ -1088,8 +1104,13 @@ def observe_state_laws(transport: Any, token: str) -> dict[str, Any]:
             revision,
             path,
             expected_lfs_sha256=file_meta.get("lfs_sha256"),
+            partition_body_observer=(
+                partition_body_observer_factory(code)
+                if partition_body_observer_factory is not None
+                else None
+            ),
         )
-        partitions[code] = {
+        partition = {
             "code": code,
             "path": path,
             "num_rows": rows["num_rows"],
@@ -1100,6 +1121,11 @@ def observe_state_laws(transport: Any, token: str) -> dict[str, Any]:
             "footer_sha256": rows["footer_sha256"],
             "endpoint": rows["endpoint"],
         }
+        if partition_body_observer_factory is not None:
+            partition["partition_body_observation"] = rows[
+                "partition_body_observation"
+            ]
+        partitions[code] = partition
     if missing_paths:
         raise LiveBaselineAuditError(
             "missing state-law partitions: " + ", ".join(missing_paths)
@@ -2102,13 +2128,20 @@ def build_receipt(
     salvage_roots: Sequence[tuple[str, Path]] | None = None,
     observed_at: str | None = None,
     mode: str = MODE_LIVE,
+    state_partition_body_observer_factory: (
+        Callable[[str], Callable[[bytes], Mapping[str, Any]]] | None
+    ) = None,
 ) -> dict[str, Any]:
     transport_kind = getattr(transport, "kind", TRANSPORT_SCRIPTED)
     is_live_https = bool(getattr(transport, "is_live_https", False))
     if mode == MODE_DRY_RUN:
         transport_kind = TRANSPORT_DRY_RUN
     identity = observe_identity(transport, token, token_source)
-    state = observe_state_laws(transport, token)
+    state = observe_state_laws(
+        transport,
+        token,
+        partition_body_observer_factory=state_partition_body_observer_factory,
+    )
     federal = observe_federal_register(transport, token)
     salvage = observe_local_salvage(salvage_roots)
     if salvage.get("sampled") or salvage.get("truncated"):
@@ -2671,6 +2704,9 @@ def observe_with_live_hub(
     token: str | None = None,
     token_source: str | None = None,
     timeout_seconds: float = 600.0,
+    state_partition_body_observer_factory: (
+        Callable[[str], Callable[[bytes], Mapping[str, Any]]] | None
+    ) = None,
 ) -> dict[str, Any]:
     discovered_token, discovered_source = (
         (token, token_source) if token else discover_hf_token()
@@ -2683,6 +2719,9 @@ def observe_with_live_hub(
         salvage_roots=salvage_roots,
         observed_at=observed_at,
         mode=MODE_LIVE,
+        state_partition_body_observer_factory=(
+            state_partition_body_observer_factory
+        ),
     )
 
 

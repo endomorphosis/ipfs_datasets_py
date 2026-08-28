@@ -1,334 +1,1447 @@
 {
+  "authority_boundary_violations": [],
   "authorizing_hub_upload": false,
-  "callsite_count": 29,
+  "callsite_count": 37,
   "callsites": [
     {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/huggingface/protected_repo_guard.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_federal_register",
-        "justicedao/ipfs_state_laws"
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": false,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "create_commit(repo_id=self.repository_id, repo_type=self.repository_type, operations=operations_payload, commit_message=canonical_message, revision=plan.target_revision, parent_commit=parent)",
+      "canonical_callback": false,
+      "column": 32,
+      "exact_binding_guard_lines": [],
+      "function": "HuggingFaceReleasePublisher.publish_append_only.<locals>.execute_commit",
+      "guard_lines": [],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 2773,
+      "path": "ipfs_datasets_py/huggingface/publisher.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": false,
+      "protection": "not_a_proven_protected_target",
+      "protection_variants": [],
+      "reason": "",
+      "repo_expression": "self.repository_id",
+      "repo_roots": [
+        "self",
+        "self.repository_id"
       ],
-      "write_methods": []
+      "write_method": "create_commit"
     },
     {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_data/canonical_legal_corpora.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_federal_register",
-        "justicedao/ipfs_state_laws"
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": true,
+      "api_primitive_exact_call": true,
+      "attested_executor": true,
+      "call_expression": "create_commit_local(self.runtime_token, repo_id=self.mutation_binding.repository_id, repo_type=self.mutation_binding.repository_type, operations=self.operations_payload, commit_message=self.canonical_message, revision=self.mutation_binding.revision, parent_commit=self.mutation_binding.parent_commit)",
+      "canonical_callback": true,
+      "column": 19,
+      "exact_binding_guard_lines": [
+        2097
       ],
-      "write_methods": []
-    },
-    {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_data/federal_register_release_schema.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_federal_register"
+      "function": "_PreparedStateLawsCanonicalCommitExecutor.__call__.<locals>.commit_once",
+      "guard_lines": [
+        2097
       ],
-      "write_methods": []
-    },
-    {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_data/federal_register_source_policy.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_federal_register"
+      "guarded_write_exact_binding": true,
+      "guarded_write_id": "ipfs_datasets_py/huggingface/publisher.py:2128:24",
+      "guarded_write_individual": true,
+      "guarded_write_line": 2128,
+      "guarded_write_lines": [
+        2128
       ],
-      "write_methods": []
-    },
-    {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_data/legal_corpora_publication_gate.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_federal_register",
-        "justicedao/ipfs_state_laws"
+      "line": 2117,
+      "path": "ipfs_datasets_py/huggingface/publisher.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": true,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "canonical_runtime",
+      "protection_variants": [
+        "canonical_runtime"
       ],
-      "write_methods": []
-    },
-    {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_data/legal_source_recovery_promotion.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_federal_register"
+      "reason": "",
+      "repo_expression": "self.mutation_binding.repository_id",
+      "repo_roots": [
+        "self",
+        "self.mutation_binding",
+        "self.mutation_binding.repository_id"
       ],
-      "write_methods": [
-        "HfApi",
-        "upload_file"
-      ]
+      "write_method": "create_commit"
     },
     {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_data/legal_source_rights_policy.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_federal_register",
-        "justicedao/ipfs_state_laws"
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "dest.create_branch(t, g, bname, from_revision=brow.get('head_revision'))",
+      "canonical_callback": false,
+      "column": 28,
+      "exact_binding_guard_lines": [],
+      "function": "export_sqlite_catalog_compat",
+      "guard_lines": [],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 3234,
+      "path": "ipfs_datasets_py/knowledge_graphs/catalog/store.py",
+      "potential_protected_target": false,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": false,
+      "protection": "not_a_proven_protected_target",
+      "protection_variants": [],
+      "reason": "",
+      "repo_expression": "t",
+      "repo_roots": [
+        "grow['tenant']",
+        "rows"
       ],
-      "write_methods": []
+      "write_method": "create_branch"
     },
     {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_data/state_laws_publication_policy.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_state_laws"
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "dest.create_branch(t, g, bname, from_revision=brow['head_revision'])",
+      "canonical_callback": false,
+      "column": 28,
+      "exact_binding_guard_lines": [],
+      "function": "import_sqlite_catalog_compat",
+      "guard_lines": [],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 3340,
+      "path": "ipfs_datasets_py/knowledge_graphs/catalog/store.py",
+      "potential_protected_target": false,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": false,
+      "protection": "not_a_proven_protected_target",
+      "protection_variants": [],
+      "reason": "",
+      "repo_expression": "t",
+      "repo_roots": [
+        "row['tenant']",
+        "rows"
       ],
-      "write_methods": []
+      "write_method": "create_branch"
     },
     {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_data/state_laws_release_schema.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_state_laws"
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "self._catalog.create_branch(target.tenant, target.graph_id, branch_name, from_revision=from_revision, from_branch=from_branch)",
+      "canonical_callback": false,
+      "column": 14,
+      "exact_binding_guard_lines": [],
+      "function": "GraphService._op_branch",
+      "guard_lines": [],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 1887,
+      "path": "ipfs_datasets_py/knowledge_graphs/service.py",
+      "potential_protected_target": false,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": false,
+      "protection": "not_a_proven_protected_target",
+      "protection_variants": [],
+      "reason": "",
+      "repo_expression": "target.tenant",
+      "repo_roots": [
+        "request",
+        "request.target",
+        "target.tenant"
       ],
-      "write_methods": []
+      "write_method": "create_branch"
     },
     {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_data/state_laws_sparse_graphrag.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_state_laws"
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "self._catalog.delete_branch(target.tenant, target.graph_id, target.branch, reason=reason)",
+      "canonical_callback": false,
+      "column": 19,
+      "exact_binding_guard_lines": [],
+      "function": "GraphService._op_delete",
+      "guard_lines": [],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 1914,
+      "path": "ipfs_datasets_py/knowledge_graphs/service.py",
+      "potential_protected_target": false,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": false,
+      "protection": "not_a_proven_protected_target",
+      "protection_variants": [],
+      "reason": "",
+      "repo_expression": "target.tenant",
+      "repo_roots": [
+        "request",
+        "request.target",
+        "target.tenant"
       ],
-      "write_methods": []
+      "write_method": "delete_branch"
     },
     {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_scrapers/huggingface_pipeline_engine.py",
-      "protected_repo_literals": [],
-      "write_methods": [
-        "HfApi",
-        "upload_file",
-        "upload_folder"
-      ]
-    },
-    {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_scrapers/justicedao_dataset_inventory.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_federal_register",
-        "justicedao/ipfs_state_laws"
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "self._api.create_branch(repo_id=repo_id, branch=branch, revision=revision, repo_type=repo_type, token=token or self._token, exist_ok=exist_ok)",
+      "canonical_callback": false,
+      "column": 12,
+      "exact_binding_guard_lines": [],
+      "function": "LiveHubApiAdapter.create_branch",
+      "guard_lines": [
+        1573
       ],
-      "write_methods": [
-        "HfApi",
-        "upload_file"
-      ]
-    },
-    {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_scrapers/legal_scraper_daemon.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_state_laws"
-      ],
-      "write_methods": [
-        "HfApi"
-      ]
-    },
-    {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_scrapers/municipal_law_database_scrapers/hugging_face_pipeline.py",
-      "protected_repo_literals": [],
-      "write_methods": [
-        "HfApi",
-        "upload_file",
-        "upload_folder"
-      ]
-    },
-    {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/upload.py",
-      "protected_repo_literals": [],
-      "write_methods": [
-        "HfApi",
-        "create_repo",
-        "upload_folder"
-      ]
-    },
-    {
-      "imports_canonical_runtime": false,
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 1575,
       "path": "ipfs_datasets_py/processors/domains/patent/hf_publisher_v2.py",
-      "protected_repo_literals": [],
-      "write_methods": [
-        "create_branch",
-        "create_commit",
-        "create_repo",
-        "merge_pull_request"
-      ]
-    },
-    {
-      "imports_canonical_runtime": false,
-      "path": "scripts/ops/legal_data/audit_federal_register_hf_baseline.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_federal_register"
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
       ],
-      "write_methods": []
+      "reason": "",
+      "repo_expression": "repo_id",
+      "repo_roots": [
+        "repo_id"
+      ],
+      "write_method": "create_branch"
     },
     {
-      "imports_canonical_runtime": false,
-      "path": "scripts/ops/legal_data/audit_legal_source_rights.py",
-      "protected_repo_literals": [
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "self._api.create_commit(repo_id=repo_id, operations=ops, commit_message=commit_message, repo_type=repo_type, revision=use_revision, parent_commit=parent_commit, token=token or self._token, create_pr=use_create_pr)",
+      "canonical_callback": false,
+      "column": 15,
+      "exact_binding_guard_lines": [],
+      "function": "LiveHubApiAdapter.create_commit",
+      "guard_lines": [
+        1605
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 1651,
+      "path": "ipfs_datasets_py/processors/domains/patent/hf_publisher_v2.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "repo_id",
+      "repo_roots": [
+        "repo_id"
+      ],
+      "write_method": "create_commit"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "self._api.create_repo(repo_id=repo_id, repo_type=repo_type, private=private, exist_ok=exist_ok, token=token or self._token)",
+      "canonical_callback": false,
+      "column": 15,
+      "exact_binding_guard_lines": [],
+      "function": "LiveHubApiAdapter.create_repo",
+      "guard_lines": [
+        1553
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 1554,
+      "path": "ipfs_datasets_py/processors/domains/patent/hf_publisher_v2.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "repo_id",
+      "repo_roots": [
+        "repo_id"
+      ],
+      "write_method": "create_repo"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "self._api.merge_pull_request(repo_id=repo_id, discussion_num=int(number), token=token or self._token, repo_type='dataset', comment='Operator-approved patent-legal hub index promote')",
+      "canonical_callback": false,
+      "column": 21,
+      "exact_binding_guard_lines": [],
+      "function": "LiveHubApiAdapter.merge_pull_request",
+      "guard_lines": [
+        1719
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 1732,
+      "path": "ipfs_datasets_py/processors/domains/patent/hf_publisher_v2.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "repo_id",
+      "repo_roots": [
+        "repo_id"
+      ],
+      "write_method": "merge_pull_request"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "merge(repo_id=repo_result.dataset_id, number=int(pr_number), token=token, parent_commit=repo_result.base_commit)",
+      "canonical_callback": false,
+      "column": 35,
+      "exact_binding_guard_lines": [],
+      "function": "PatentHFPublisherV2.promote_approved",
+      "guard_lines": [
+        2140
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 2151,
+      "path": "ipfs_datasets_py/processors/domains/patent/hf_publisher_v2.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "repo_result.dataset_id",
+      "repo_roots": [
+        "repo_result.dataset_id",
+        "staged",
+        "staged.repositories"
+      ],
+      "write_method": "merge_pull_request"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": false,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "create_branch(branch=plan.branch_name, repo_id=dataset_id, revision=base, repo_type='dataset', token=token)",
+      "canonical_callback": false,
+      "column": 20,
+      "exact_binding_guard_lines": [],
+      "function": "PatentHFPublisherV2.stage_pull_request",
+      "guard_lines": [],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 1948,
+      "path": "ipfs_datasets_py/processors/domains/patent/hf_publisher_v2.py",
+      "potential_protected_target": false,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": false,
+      "protection": "not_a_proven_protected_target",
+      "protection_variants": [],
+      "reason": "",
+      "repo_expression": "dataset_id",
+      "repo_roots": [],
+      "write_method": "create_branch"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": false,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "create_commit(repo_id=dataset_id, operations=operations, commit_message=message, repo_type='dataset', revision=plan.branch_name, parent_commit=base, token=token)",
+      "canonical_callback": false,
+      "column": 36,
+      "exact_binding_guard_lines": [],
+      "function": "PatentHFPublisherV2.stage_pull_request",
+      "guard_lines": [],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 1990,
+      "path": "ipfs_datasets_py/processors/domains/patent/hf_publisher_v2.py",
+      "potential_protected_target": false,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": false,
+      "protection": "not_a_proven_protected_target",
+      "protection_variants": [],
+      "reason": "",
+      "repo_expression": "dataset_id",
+      "repo_roots": [],
+      "write_method": "create_commit"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": false,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "create_pr_fn(repo_id=dataset_id, title=message, head=plan.branch_name, base=plan.target_revision, token=token)",
+      "canonical_callback": false,
+      "column": 29,
+      "exact_binding_guard_lines": [],
+      "function": "PatentHFPublisherV2.stage_pull_request",
+      "guard_lines": [],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 2037,
+      "path": "ipfs_datasets_py/processors/domains/patent/hf_publisher_v2.py",
+      "potential_protected_target": false,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": false,
+      "protection": "not_a_proven_protected_target",
+      "protection_variants": [],
+      "reason": "",
+      "repo_expression": "dataset_id",
+      "repo_roots": [],
+      "write_method": "create_pull_request"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "api.upload_file(path_or_fileobj=str(local_path_obj), path_in_repo=repo_path, repo_id=repo_id, repo_type='dataset', commit_message=commit_message or f'Merge recovered legal citation rows into {repo_path}')",
+      "canonical_callback": false,
+      "column": 18,
+      "exact_binding_guard_lines": [],
+      "function": "_upload_huggingface_parquet",
+      "guard_lines": [
+        235
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 249,
+      "path": "ipfs_datasets_py/processors/legal_data/legal_source_recovery_promotion.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "repo_id",
+      "repo_roots": [
+        "repo_id"
+      ],
+      "write_method": "upload_file"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "self.api.upload_file(path_or_fileobj=file_path, path_in_repo=str(_path_in_repo), repo_id=self.repo_id, repo_type=self.repo_type)",
+      "canonical_callback": false,
+      "column": 15,
+      "exact_binding_guard_lines": [],
+      "function": "UploadToHuggingFaceInParallel._upload_file",
+      "guard_lines": [
+        309
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 311,
+      "path": "ipfs_datasets_py/processors/legal_scrapers/huggingface_pipeline_engine.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "self.repo_id",
+      "repo_roots": [
+        "self",
+        "self.repo_id"
+      ],
+      "write_method": "upload_file"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "self.api.upload_folder(folder_path=str(folder_path), path_in_repo=path_in_repo, repo_id=self.repo_id, repo_type=self.repo_type)",
+      "canonical_callback": false,
+      "column": 15,
+      "exact_binding_guard_lines": [],
+      "function": "UploadToHuggingFaceInParallel._upload_folder",
+      "guard_lines": [
+        320
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 321,
+      "path": "ipfs_datasets_py/processors/legal_scrapers/huggingface_pipeline_engine.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "self.repo_id",
+      "repo_roots": [
+        "self",
+        "self.repo_id"
+      ],
+      "write_method": "upload_folder"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "api.upload_file(path_or_fileobj=str(local_path), path_in_repo=str(repo_path), repo_id=dataset_id, repo_type='dataset', commit_message=f'Rebuild retrieval artifacts for {normalized_corpus}')",
+      "canonical_callback": false,
+      "column": 12,
+      "exact_binding_guard_lines": [],
+      "function": "build_canonical_corpus_artifacts",
+      "guard_lines": [
+        4400
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 4602,
+      "path": "ipfs_datasets_py/processors/legal_scrapers/justicedao_dataset_inventory.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [
         "justicedao/ipfs_federal_register",
         "justicedao/ipfs_state_laws"
       ],
-      "write_methods": []
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "dataset_id",
+      "repo_roots": [
+        "_CANONICAL_QUERY_DATASETS[normalized_corpus]",
+        "config['dataset_id']",
+        "literal:justicedao/ipfs_federal_register",
+        "literal:justicedao/ipfs_state_laws",
+        "repo_id"
+      ],
+      "write_method": "upload_file"
     },
     {
-      "imports_canonical_runtime": false,
-      "path": "scripts/ops/legal_data/audit_state_laws_hf_baseline.py",
-      "protected_repo_literals": [
+      "analysis_context_count": 4,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "api.upload_file(path_or_fileobj=local_value, path_in_repo=repo_value, repo_id=dataset_id, repo_type='dataset', commit_message=effective_commit_message)",
+      "canonical_callback": false,
+      "column": 8,
+      "exact_binding_guard_lines": [],
+      "function": "publish_canonical_corpus_semantic_index.<locals>._upload",
+      "guard_lines": [
+        4022
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 4036,
+      "path": "ipfs_datasets_py/processors/legal_scrapers/justicedao_dataset_inventory.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [
+        "justicedao/ipfs_federal_register",
         "justicedao/ipfs_state_laws"
       ],
-      "write_methods": []
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "dataset_id",
+      "repo_roots": [
+        "_CANONICAL_QUERY_DATASETS[corpus_key]",
+        "config['dataset_id']",
+        "literal:justicedao/ipfs_federal_register",
+        "literal:justicedao/ipfs_state_laws",
+        "repo_id"
+      ],
+      "write_method": "upload_file"
     },
     {
-      "imports_canonical_runtime": false,
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "self.api.upload_file(path_or_fileobj=file_path, path_in_repo=str(_path_in_repo.resolve()), repo_id=self.repo_id, repo_type=self.repo_type, run_as_future=True)",
+      "canonical_callback": false,
+      "column": 15,
+      "exact_binding_guard_lines": [],
+      "function": "UploadToHuggingFaceInParallel._upload_file",
+      "guard_lines": [
+        363
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 365,
+      "path": "ipfs_datasets_py/processors/legal_scrapers/municipal_law_database_scrapers/hugging_face_pipeline.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "self.repo_id",
+      "repo_roots": [
+        "self",
+        "self.repo_id"
+      ],
+      "write_method": "upload_file"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "self.api.upload_folder(folder_path=folder_path, path_in_repo=path_in_repo, repo_id=self.repo_id, repo_type=self.repo_type, delete_patterns=delete_patterns, run_as_future=True)",
+      "canonical_callback": false,
+      "column": 15,
+      "exact_binding_guard_lines": [],
+      "function": "UploadToHuggingFaceInParallel._upload_folder",
+      "guard_lines": [
+        381
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 382,
+      "path": "ipfs_datasets_py/processors/legal_scrapers/municipal_law_database_scrapers/hugging_face_pipeline.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "self.repo_id",
+      "repo_roots": [
+        "self",
+        "self.repo_id"
+      ],
+      "write_method": "upload_folder"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "api.create_repo(repo_id=target.repo_id, repo_type='dataset', exist_ok=True, private=private, token=token)",
+      "canonical_callback": false,
+      "column": 4,
+      "exact_binding_guard_lines": [],
+      "function": "upload_dataset",
+      "guard_lines": [
+        201
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 206,
+      "path": "ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/upload.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "target.repo_id",
+      "repo_roots": [
+        "target",
+        "target.repo_id"
+      ],
+      "write_method": "create_repo"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "api.upload_folder(folder_path=str(target.local_dir), repo_id=target.repo_id, repo_type='dataset', commit_message=commit_message or f'Update {target.local_dir.name}', token=token)",
+      "canonical_callback": false,
+      "column": 4,
+      "exact_binding_guard_lines": [],
+      "function": "upload_dataset",
+      "guard_lines": [
+        202
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 209,
+      "path": "ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/upload.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "target.repo_id",
+      "repo_roots": [
+        "target",
+        "target.repo_id"
+      ],
+      "write_method": "upload_folder"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "s3.upload_file(dir, bucket, progress_callback)",
+      "canonical_callback": false,
+      "column": 15,
+      "exact_binding_guard_lines": [],
+      "function": "s3_kit.upload_dir",
+      "guard_lines": [],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 1115,
+      "path": "ipfs_datasets_py/utils/s3_kit.py",
+      "potential_protected_target": false,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": false,
+      "protection": "not_a_proven_protected_target",
+      "protection_variants": [],
+      "reason": "",
+      "repo_expression": "dir",
+      "repo_roots": [
+        "dir"
+      ],
+      "write_method": "upload_file"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "service.reject_access_request(wallet_id, request_id=request_id, actor_did=request.actor_did, reason=request.reason)",
+      "canonical_callback": false,
+      "column": 25,
+      "exact_binding_guard_lines": [],
+      "function": "reject_wallet_access_request",
+      "guard_lines": [],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 2534,
+      "path": "ipfs_datasets_py/wallet/api.py",
+      "potential_protected_target": false,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": false,
+      "protection": "not_a_proven_protected_target",
+      "protection_variants": [],
+      "reason": "",
+      "repo_expression": "wallet_id",
+      "repo_roots": [
+        "wallet_id"
+      ],
+      "write_method": "reject_access_request"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "service.reject_access_request(args.wallet_id, request_id=args.request_id, actor_did=args.actor_did, reason=args.reason)",
+      "canonical_callback": false,
+      "column": 22,
+      "exact_binding_guard_lines": [],
+      "function": "main",
+      "guard_lines": [],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 985,
+      "path": "ipfs_datasets_py/wallet/cli.py",
+      "potential_protected_target": false,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": false,
+      "protection": "not_a_proven_protected_target",
+      "protection_variants": [],
+      "reason": "",
+      "repo_expression": "args.wallet_id",
+      "repo_roots": [
+        "args.wallet_id"
+      ],
+      "write_method": "reject_access_request"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "self.create_branch(branch_name, base_branch)",
+      "canonical_callback": false,
+      "column": 15,
+      "exact_binding_guard_lines": [],
+      "function": "CopilotDraftPRInvoker.invoke_copilot",
+      "guard_lines": [],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 226,
+      "path": "scripts/invoke_copilot_via_draft_pr.py",
+      "potential_protected_target": false,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": false,
+      "protection": "not_a_proven_protected_target",
+      "protection_variants": [],
+      "reason": "",
+      "repo_expression": "branch_name",
+      "repo_roots": [],
+      "write_method": "create_branch"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "expected_aliases.items()",
+      "canonical_callback": false,
+      "column": 30,
+      "exact_binding_guard_lines": [],
+      "function": "_attested_prepared_factory_call",
+      "guard_lines": [],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 1544,
+      "path": "scripts/ops/legal_data/audit_legal_corpora_hugging_face_mutation_paths.py",
+      "potential_protected_target": false,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": false,
+      "protection": "not_a_proven_protected_target",
+      "protection_variants": [],
+      "reason": "",
+      "repo_expression": "",
+      "repo_roots": [
+        "expected_aliases.items"
+      ],
+      "write_method": "create_commit"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "api.upload_folder(folder_path=str(parquet_dir), repo_id=repo_id, repo_type='dataset', path_in_repo=_CORPUS.parquet_dir_name, commit_message=commit_message, allow_patterns=['*.parquet', '*.json'])",
+      "canonical_callback": false,
+      "column": 18,
+      "exact_binding_guard_lines": [],
+      "function": "_publish_parquet_dir",
+      "guard_lines": [
+        309
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 313,
       "path": "scripts/ops/legal_data/merge_state_admin_recovered_rows.py",
-      "protected_repo_literals": [],
-      "write_methods": [
-        "HfApi",
-        "upload_folder"
-      ]
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "repo_id",
+      "repo_roots": [
+        "repo_id"
+      ],
+      "write_method": "upload_folder"
     },
     {
-      "imports_canonical_runtime": false,
-      "path": "scripts/ops/legal_data/publish_oregon_admin_rules_to_hf.py",
-      "protected_repo_literals": [],
-      "write_methods": [
-        "create_repo"
-      ]
-    },
-    {
-      "imports_canonical_runtime": false,
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "api.create_repo(repo_id=dataset_id, repo_type='dataset', private=False, exist_ok=True)",
+      "canonical_callback": false,
+      "column": 8,
+      "exact_binding_guard_lines": [],
+      "function": "_ensure_repos",
+      "guard_lines": [],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 1199,
       "path": "scripts/ops/legal_data/publish_patent_legal_hub_indexes_live.py",
-      "protected_repo_literals": [],
-      "write_methods": [
-        "create_repo"
-      ]
-    },
-    {
-      "imports_canonical_runtime": false,
-      "path": "scripts/ops/legal_data/query_federal_register_hf.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_federal_register"
+      "potential_protected_target": false,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": false,
+      "protection": "not_a_proven_protected_target",
+      "protection_variants": [],
+      "reason": "",
+      "repo_expression": "dataset_id",
+      "repo_roots": [
+        "dataset_ids"
       ],
-      "write_methods": []
+      "write_method": "create_repo"
     },
     {
-      "imports_canonical_runtime": false,
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "api.create_commit(repo_id=repo_id, repo_type='dataset', operations=operations, commit_message=commit_message)",
+      "canonical_callback": false,
+      "column": 12,
+      "exact_binding_guard_lines": [],
+      "function": "_rebuild_state",
+      "guard_lines": [
+        329
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 432,
       "path": "scripts/ops/legal_data/rebuild_state_laws_metadata_from_existing_embeddings.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_state_laws"
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
       ],
-      "write_methods": [
-        "HfApi",
-        "create_commit"
-      ]
+      "reason": "",
+      "repo_expression": "repo_id",
+      "repo_roots": [
+        "repo_id"
+      ],
+      "write_method": "create_commit"
     },
     {
-      "imports_canonical_runtime": false,
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "api.create_repo(repo_id=repo_id, repo_type='dataset', exist_ok=True)",
+      "canonical_callback": false,
+      "column": 8,
+      "exact_binding_guard_lines": [],
+      "function": "_publish_state_parquet_file",
+      "guard_lines": [
+        2077
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 2092,
       "path": "scripts/ops/legal_data/refresh_state_laws_corpus.py",
-      "protected_repo_literals": [],
-      "write_methods": [
-        "HfApi",
-        "create_repo",
-        "upload_file"
-      ]
-    },
-    {
-      "imports_canonical_runtime": false,
-      "path": "scripts/ops/legal_data/seal_federal_register_prepublication.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_federal_register"
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
       ],
-      "write_methods": []
-    },
-    {
-      "imports_canonical_runtime": false,
-      "path": "scripts/ops/legal_data/seal_state_laws_prepublication.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_state_laws"
+      "reason": "",
+      "repo_expression": "repo_id",
+      "repo_roots": [
+        "repo_id"
       ],
-      "write_methods": []
+      "write_method": "create_repo"
     },
     {
-      "imports_canonical_runtime": false,
-      "path": "scripts/repair/publish_parquet_to_hf.py",
-      "protected_repo_literals": [],
-      "write_methods": [
-        "HfApi",
-        "create_repo",
-        "upload_folder"
-      ]
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "api.upload_file(path_or_fileobj=str(state_parquet_path), path_in_repo=repo_path, repo_id=repo_id, repo_type='dataset', commit_message=commit_message)",
+      "canonical_callback": false,
+      "column": 22,
+      "exact_binding_guard_lines": [],
+      "function": "_publish_state_parquet_file",
+      "guard_lines": [
+        2078
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 2096,
+      "path": "scripts/ops/legal_data/refresh_state_laws_corpus.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "repo_id",
+      "repo_roots": [
+        "repo_id"
+      ],
+      "write_method": "upload_file"
     },
     {
-      "imports_canonical_runtime": false,
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "api.create_repo(repo_id=repo_id, repo_type='dataset', exist_ok=True)",
+      "canonical_callback": false,
+      "column": 8,
+      "exact_binding_guard_lines": [],
+      "function": "_sync_stale_local_state_shards_to_hf",
+      "guard_lines": [
+        2137
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 2147,
+      "path": "scripts/ops/legal_data/refresh_state_laws_corpus.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "repo_id",
+      "repo_roots": [
+        "repo_id"
+      ],
+      "write_method": "create_repo"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "self._api().upload_folder(repo_id=release.dataset_id, repo_type='dataset', folder_path=release.directory, token=token, revision='main', parent_commit=parent_commit, commit_message=commit_message, commit_description=commit_description, allow_patterns=patterns, delete_patterns=['README.md', COMPLETE_RELEASE_METADATA_PATH, LEGACY_RELEASE_METADATA_PATH, 'evaluation-report.json', 'manifest.json', 'data/**', 'indexes/**'])",
+      "canonical_callback": false,
+      "column": 21,
+      "exact_binding_guard_lines": [],
+      "function": "HuggingFaceHubGateway.upload",
+      "guard_lines": [
+        2271
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 2277,
       "path": "scripts/ops/security_ir/publish_cvefixes_security_ir.py",
-      "protected_repo_literals": [],
-      "write_methods": [
-        "HfApi",
-        "upload_folder"
-      ]
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "release.dataset_id",
+      "repo_roots": [
+        "release",
+        "release.dataset_id"
+      ],
+      "write_method": "upload_folder"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "api.create_repo(repo_id=repo_id, repo_type='dataset', exist_ok=True)",
+      "canonical_callback": false,
+      "column": 8,
+      "exact_binding_guard_lines": [],
+      "function": "publish",
+      "guard_lines": [
+        115
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 119,
+      "path": "scripts/repair/publish_parquet_to_hf.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "repo_id",
+      "repo_roots": [
+        "repo_id"
+      ],
+      "write_method": "create_repo"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "api.upload_folder(folder_path=str(local_dir), repo_id=repo_id, repo_type='dataset', path_in_repo=path_in_repo, commit_message=commit_message, allow_patterns=allow_patterns)",
+      "canonical_callback": false,
+      "column": 22,
+      "exact_binding_guard_lines": [],
+      "function": "publish",
+      "guard_lines": [
+        114
+      ],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 123,
+      "path": "scripts/repair/publish_parquet_to_hf.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
+      "reason": "",
+      "repo_expression": "repo_id",
+      "repo_roots": [
+        "repo_id"
+      ],
+      "write_method": "upload_folder"
     }
   ],
   "goal_id": "LCR-G146",
+  "hard_rejected_functions": [
+    {
+      "function": "refresh_state_laws_corpus",
+      "line": 2479,
+      "mechanism": "refresh_hard_rejection",
+      "path": "scripts/ops/legal_data/refresh_state_laws_corpus.py",
+      "selector": "direct_external_mutation_requested",
+      "selector_expression": "bool(getattr(args, 'publish_to_hf', False) or getattr(args, 'create_repo', False))"
+    }
+  ],
+  "non_executable_sources": [
+    {
+      "column": 11,
+      "error_type": "SyntaxError",
+      "line": 30,
+      "message": "invalid syntax",
+      "path": "scripts/migration/cleanup_pytest_conflicts.py",
+      "sha256": "605ef53591ba7fa4b69457d3ab435b321c75d3ec4d8acc5b3e71640cf1252a24",
+      "size_bytes": 706
+    }
+  ],
   "producer": "audit_legal_corpora_hugging_face_mutation_paths.py",
   "program_id": "legal-corpora-reindex-v1",
+  "protected_callsite_count": 23,
   "protected_repos": [
     "justicedao/ipfs_federal_register",
     "justicedao/ipfs_state_laws"
   ],
-  "reasons": [
-    "ipfs_datasets_py/processors/legal_data/legal_source_recovery_promotion.py mutates ['justicedao/ipfs_federal_register'] via ['HfApi', 'upload_file'] without importing ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime",
-    "ipfs_datasets_py/processors/legal_scrapers/justicedao_dataset_inventory.py mutates ['justicedao/ipfs_federal_register', 'justicedao/ipfs_state_laws'] via ['HfApi', 'upload_file'] without importing ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime",
-    "ipfs_datasets_py/processors/legal_scrapers/legal_scraper_daemon.py mutates ['justicedao/ipfs_state_laws'] via ['HfApi'] without importing ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime",
-    "scripts/ops/legal_data/rebuild_state_laws_metadata_from_existing_embeddings.py mutates ['justicedao/ipfs_state_laws'] via ['HfApi', 'create_commit'] without importing ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime"
+  "read_only_methods_ignored": [
+    "get_paths_info",
+    "list_datasets",
+    "list_models",
+    "list_repo_files",
+    "repo_info",
+    "whoami"
   ],
+  "reasons": [],
   "required_runtime": "ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime",
-  "schema": "ipfs_datasets_py/legal-corpora-hugging-face-mutation-path-audit@1",
-  "status": "blocked",
+  "schema": "ipfs_datasets_py/legal-corpora-hugging-face-mutation-path-audit@2",
+  "source_scope": {
+    "excluded_python_count": 4522,
+    "excluded_python_paths_sha256": "780b896e88a7a962e1c06168f42866ef18abe2fea08fe3a8ae2586431d5283fc",
+    "exclusion_policy": [
+      {
+        "category": "archive",
+        "excluded_python_count": 151,
+        "excluded_python_paths_sha256": "98686a9556dd0fee9ab7e5612581444d6a47edf2fbd77fc5fec37af0e25038bc",
+        "path_components": [
+          "archive",
+          "archives"
+        ],
+        "reason": "retired archive trees are not runtime code"
+      },
+      {
+        "category": "vendor",
+        "excluded_python_count": 0,
+        "excluded_python_paths_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "path_components": [
+          "external",
+          "third-party",
+          "third_party",
+          "vendor",
+          "vendors"
+        ],
+        "reason": "vendored or externally maintained trees are not repository runtime code"
+      },
+      {
+        "category": "generated",
+        "excluded_python_count": 0,
+        "excluded_python_paths_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "path_components": [
+          "build",
+          "dist",
+          "generated"
+        ],
+        "reason": "generated build outputs are not maintained runtime sources"
+      },
+      {
+        "category": "tests",
+        "excluded_python_count": 4371,
+        "excluded_python_paths_sha256": "455fd0016120b7645ddaee9d0aea08ed270590c0b6ecdb3532c9b545bdbd4429",
+        "path_components": [
+          "test",
+          "testing",
+          "tests"
+        ],
+        "reason": "test-only trees are not production runtime code"
+      }
+    ],
+    "mode": "git_tracked_production_python",
+    "path_digest_algorithm": "sha256-canonical-json-string-array-v1",
+    "scan_roots": [],
+    "scanned_python_count": 4915,
+    "scanned_python_paths_sha256": "598414af18dd9a85350371d39a1861ce9b71256299f3d4fe75dedb18f2783893",
+    "tracked_python_count": 9437,
+    "tracked_python_paths_sha256": "b448e6fc60395cf654d10c4053caf809d375358a8bcfa156ee16cfa6d1fc8c19"
+  },
+  "status": "passed",
+  "syntax_errors": [],
   "task_id": "LCR-084",
-  "unprotected_callsites": [
-    {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_data/legal_source_recovery_promotion.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_federal_register"
-      ],
-      "write_methods": [
-        "HfApi",
-        "upload_file"
-      ]
-    },
-    {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_scrapers/justicedao_dataset_inventory.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_federal_register",
-        "justicedao/ipfs_state_laws"
-      ],
-      "write_methods": [
-        "HfApi",
-        "upload_file"
-      ]
-    },
-    {
-      "imports_canonical_runtime": false,
-      "path": "ipfs_datasets_py/processors/legal_scrapers/legal_scraper_daemon.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_state_laws"
-      ],
-      "write_methods": [
-        "HfApi"
-      ]
-    },
-    {
-      "imports_canonical_runtime": false,
-      "path": "scripts/ops/legal_data/rebuild_state_laws_metadata_from_existing_embeddings.py",
-      "protected_repo_literals": [
-        "justicedao/ipfs_state_laws"
-      ],
-      "write_methods": [
-        "HfApi",
-        "create_commit"
-      ]
-    }
-  ],
-  "unprotected_count": 4
+  "unprotected_callsites": [],
+  "unprotected_count": 0,
+  "write_methods": [
+    "accept_access_request",
+    "cancel_access_request",
+    "change_discussion_status",
+    "comment_discussion",
+    "create_branch",
+    "create_commit",
+    "create_discussion",
+    "create_pull_request",
+    "create_repo",
+    "create_tag",
+    "delete_branch",
+    "delete_file",
+    "delete_files",
+    "delete_folder",
+    "delete_repo",
+    "delete_tag",
+    "edit_discussion_comment",
+    "grant_access",
+    "hide_discussion_comment",
+    "merge_pull_request",
+    "move_repo",
+    "permanently_delete_lfs_files",
+    "preupload_lfs_files",
+    "reject_access_request",
+    "rename_discussion",
+    "super_squash_history",
+    "update_repo_settings",
+    "update_repo_visibility",
+    "upload_file",
+    "upload_folder",
+    "upload_large_folder"
+  ]
 }

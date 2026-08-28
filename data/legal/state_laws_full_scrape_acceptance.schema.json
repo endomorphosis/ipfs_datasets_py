@@ -1,30 +1,519 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "ipfs_datasets_py/state-laws-full-scrape-acceptance@2",
-  "title": "State laws full-scrape acceptance (LCR-084)",
+  "title": "State laws exact-51 production acceptance (LCR-084)",
   "type": "object",
-  "additionalProperties": true,
+  "additionalProperties": false,
   "required": [
-    "schema",
-    "producer",
-    "program_id",
-    "task_id",
-    "goal_id",
-    "mode",
-    "status",
-    "authorizing_for_publication",
-    "authorizing_hub_upload"
+    "schema", "producer", "program_id", "task_id", "goal_id", "mode",
+    "status", "sealed_at", "freshness_max_age_seconds", "local_only",
+    "production_generation_local_only", "network_io_performed",
+    "read_only_live_verification", "hub_mutation_performed",
+    "authorizing_for_publication", "authorizing_hub_upload",
+    "jurisdiction_count", "jurisdiction_codes", "evidence",
+    "production_evidence_digest_sha256", "candidate_requirement",
+    "report_digest_sha256"
   ],
   "properties": {
     "schema": { "const": "ipfs_datasets_py/state-laws-full-scrape-acceptance@2" },
-    "producer": { "type": "string" },
+    "producer": { "const": "audit_state_laws_full_scrape_acceptance.py" },
     "program_id": { "const": "legal-corpora-reindex-v1" },
     "task_id": { "const": "LCR-084" },
     "goal_id": { "const": "LCR-G146" },
-    "mode": { "enum": ["inspect", "live_official"] },
-    "status": { "enum": ["passed", "blocked"] },
+    "mode": { "const": "live_official" },
+    "status": { "const": "passed" },
+    "sealed_at": { "$ref": "#/$defs/timestamp" },
+    "freshness_max_age_seconds": { "const": 2592000 },
+    "local_only": { "const": false },
+    "production_generation_local_only": { "const": true },
+    "network_io_performed": { "const": true },
+    "read_only_live_verification": { "const": true },
+    "hub_mutation_performed": { "const": false },
     "authorizing_for_publication": { "const": false },
     "authorizing_hub_upload": { "const": false },
-    "reasons": { "type": "array", "items": { "type": "string" } }
+    "jurisdiction_count": { "const": 51 },
+    "jurisdiction_codes": {
+      "type": "array", "minItems": 51, "maxItems": 51, "uniqueItems": true,
+      "items": { "$ref": "#/$defs/jurisdictionCode" }
+    },
+    "evidence": { "$ref": "#/$defs/evidence" },
+    "production_evidence_digest_sha256": { "$ref": "#/$defs/sha256" },
+    "candidate_requirement": { "$ref": "#/$defs/candidateRequirement" },
+    "report_digest_sha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "gitSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,6})?(?:Z|\\+00:00)$"
+    },
+    "path": { "type": "string", "minLength": 1, "maxLength": 8192 },
+    "jurisdictionCode": { "type": "string", "pattern": "^[A-Z]{2}$" },
+    "sourceIdentity": {
+      "type": "string", "pattern": "^.+@sha256:[0-9a-f]{64}$"
+    },
+    "candidateRequirement": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "candidate_path", "candidate_schema", "manifest_digest",
+        "production_evidence_digest_sha256"
+      ],
+      "properties": {
+        "candidate_path": { "$ref": "#/$defs/path" },
+        "candidate_schema": {
+          "const": "ipfs_datasets_py/legal-corpora-reindex-release-candidate@2"
+        },
+        "manifest_digest": { "$ref": "#/$defs/sha256" },
+        "production_evidence_digest_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "inputMap": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "schema_version": { "const": "state-laws-production-input-map/v2" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "baselinePartition": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "jurisdiction", "path", "num_rows", "content_sha256", "footer_sha256",
+        "source_identity_count", "source_identity_multiset_sha256",
+        "noncomparable_recovery_manifest_count",
+        "noncomparable_recovery_manifest_multiset_sha256"
+      ],
+      "properties": {
+        "jurisdiction": { "$ref": "#/$defs/jurisdictionCode" },
+        "path": { "$ref": "#/$defs/path" },
+        "num_rows": { "type": "integer", "minimum": 0 },
+        "content_sha256": { "$ref": "#/$defs/sha256" },
+        "footer_sha256": { "$ref": "#/$defs/sha256" },
+        "source_identity_count": { "type": "integer", "minimum": 0 },
+        "source_identity_multiset_sha256": { "$ref": "#/$defs/sha256" },
+        "noncomparable_recovery_manifest_count": { "type": "integer", "minimum": 0 },
+        "noncomparable_recovery_manifest_multiset_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "authenticatedBaseline": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "path", "sha256", "receipt_digest_sha256", "observed_at",
+        "state_revision", "partitions", "partitions_digest_sha256",
+        "verifier_owned_live_reobservation", "live_replay_request_count",
+        "remote_projection_digest_sha256", "source_identity_closure_schema",
+        "source_identity_closure_digest_sha256"
+      ],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "receipt_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "observed_at": { "$ref": "#/$defs/timestamp" },
+        "state_revision": { "$ref": "#/$defs/gitSha" },
+        "partitions": {
+          "type": "array", "minItems": 51, "maxItems": 51,
+          "items": { "$ref": "#/$defs/baselinePartition" }
+        },
+        "partitions_digest_sha256": { "$ref": "#/$defs/sha256" }
+        ,"verifier_owned_live_reobservation": { "const": true }
+        ,"live_replay_request_count": { "type": "integer", "minimum": 1 }
+        ,"remote_projection_digest_sha256": { "$ref": "#/$defs/sha256" }
+        ,"source_identity_closure_schema": {
+          "const": "state-laws-baseline-source-identity-multiset-v1"
+        }
+        ,"source_identity_closure_digest_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "baselineReconciliation": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "jurisdiction", "baseline_row_count", "acquired_row_count",
+        "delta_from_baseline", "disposition", "excluded_count",
+        "quarantined_count", "duplicate_count", "explained_delta_count",
+        "baseline_source_identity_count",
+        "baseline_source_identity_multiset_sha256",
+        "acquired_source_identity_count",
+        "acquired_source_identity_multiset_sha256",
+        "added_source_identity_count", "added_source_identity_multiset_sha256",
+        "removed_source_identity_count",
+        "removed_source_identity_multiset_sha256",
+        "baseline_noncomparable_recovery_manifest_count",
+        "baseline_noncomparable_recovery_manifest_multiset_sha256",
+        "baseline_noncomparable_recovery_manifest_disposition"
+      ],
+      "properties": {
+        "jurisdiction": { "$ref": "#/$defs/jurisdictionCode" },
+        "baseline_row_count": { "type": "integer", "minimum": 0 },
+        "acquired_row_count": { "type": "integer", "minimum": 1 },
+        "delta_from_baseline": { "type": "integer" },
+        "disposition": {
+          "enum": ["exact_match", "current_official_growth"]
+        },
+        "excluded_count": { "type": "integer", "minimum": 0 },
+        "quarantined_count": { "type": "integer", "minimum": 0 },
+        "duplicate_count": { "type": "integer", "minimum": 0 },
+        "explained_delta_count": { "type": "integer", "minimum": 0 },
+        "baseline_source_identity_count": { "type": "integer", "minimum": 0 },
+        "baseline_source_identity_multiset_sha256": { "$ref": "#/$defs/sha256" },
+        "acquired_source_identity_count": { "type": "integer", "minimum": 1 },
+        "acquired_source_identity_multiset_sha256": { "$ref": "#/$defs/sha256" },
+        "added_source_identity_count": { "type": "integer", "minimum": 0 },
+        "added_source_identity_multiset_sha256": { "$ref": "#/$defs/sha256" },
+        "removed_source_identity_count": { "const": 0 },
+        "removed_source_identity_multiset_sha256": { "$ref": "#/$defs/sha256" },
+        "baseline_noncomparable_recovery_manifest_count": { "type": "integer", "minimum": 0 },
+        "baseline_noncomparable_recovery_manifest_multiset_sha256": { "$ref": "#/$defs/sha256" },
+        "baseline_noncomparable_recovery_manifest_disposition": {
+          "const": "authenticated_baseline_recovery_manifest"
+        }
+      }
+    },
+    "jurisdictionEvidence": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "jurisdiction", "canonical_jsonld_path", "canonical_jsonld_sha256",
+        "canonical_row_count", "normalized_source_receipt_path",
+        "normalized_source_receipt_sha256", "run_seal_path",
+        "run_seal_sha256", "run_seal_created_at", "receipt_id",
+        "release_source_receipt_path", "release_source_receipt_sha256",
+        "release_source_receipt_digest_sha256",
+        "observation_time", "official_source_url", "release_point",
+        "source_software_version", "content_hashes_digest_sha256",
+        "discovered", "fetched", "excluded", "quarantined", "failed_final",
+        "duplicates", "frontier_closed"
+      ],
+      "properties": {
+        "jurisdiction": { "$ref": "#/$defs/jurisdictionCode" },
+        "canonical_jsonld_path": { "$ref": "#/$defs/path" },
+        "canonical_jsonld_sha256": { "$ref": "#/$defs/sha256" },
+        "canonical_row_count": { "type": "integer", "minimum": 1 },
+        "normalized_source_receipt_path": { "$ref": "#/$defs/path" },
+        "normalized_source_receipt_sha256": { "$ref": "#/$defs/sha256" },
+        "release_source_receipt_path": { "$ref": "#/$defs/path" },
+        "release_source_receipt_sha256": { "$ref": "#/$defs/sha256" },
+        "release_source_receipt_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "run_seal_path": { "$ref": "#/$defs/path" },
+        "run_seal_sha256": { "$ref": "#/$defs/sha256" },
+        "run_seal_created_at": { "$ref": "#/$defs/timestamp" },
+        "receipt_id": { "type": "string", "minLength": 1 },
+        "observation_time": { "$ref": "#/$defs/timestamp" },
+        "official_source_url": { "type": "string", "pattern": "^https://" },
+        "release_point": { "type": "string", "minLength": 1 },
+        "source_software_version": { "type": "string", "minLength": 1 },
+        "content_hashes_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "discovered": { "type": "integer", "minimum": 1 },
+        "fetched": { "type": "integer", "minimum": 1 },
+        "excluded": { "type": "integer", "minimum": 0 },
+        "quarantined": { "type": "integer", "minimum": 0 },
+        "failed_final": { "const": 0 },
+        "duplicates": { "type": "integer", "minimum": 0 },
+        "frontier_closed": { "const": true }
+      }
+    },
+    "officialReplaySelectedEvidence": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "canonical_jsonld_sha256", "closure_input_sha256",
+        "legacy_receipt_sha256", "normalized_source_receipt_sha256",
+        "run_seal_canonical_jsonld_sha256",
+        "run_seal_normalized_source_receipt_sha256", "run_seal_sha256",
+        "selected_corpus_rows_digest_sha256",
+        "selected_entry_cids_digest_sha256"
+      ],
+      "properties": {
+        "canonical_jsonld_sha256": { "$ref": "#/$defs/sha256" },
+        "closure_input_sha256": { "$ref": "#/$defs/sha256" },
+        "legacy_receipt_sha256": { "$ref": "#/$defs/sha256" },
+        "normalized_source_receipt_sha256": { "$ref": "#/$defs/sha256" },
+        "run_seal_canonical_jsonld_sha256": { "$ref": "#/$defs/sha256" },
+        "run_seal_normalized_source_receipt_sha256": { "$ref": "#/$defs/sha256" },
+        "run_seal_sha256": { "$ref": "#/$defs/sha256" },
+        "selected_corpus_rows_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "selected_entry_cids_digest_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "officialReplayRunnerIdentity": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "runner_end_identity", "runner_start_identity",
+        "source_software_version"
+      ],
+      "properties": {
+        "runner_end_identity": { "$ref": "#/$defs/sourceIdentity" },
+        "runner_start_identity": { "$ref": "#/$defs/sourceIdentity" },
+        "source_software_version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "officialReplayJurisdiction": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "acquisition_path_ids", "canonical_row_count",
+        "content_body_hashes_digest_sha256",
+        "corpus_entry_cids_digest_sha256", "corpus_rows_digest_sha256",
+        "jurisdiction", "official_source_url", "request_ledger_sha256",
+        "response_ledger_sha256", "response_projection_digest_sha256",
+        "runner_identity_binding", "selected_evidence",
+        "source_software_version", "start_urls",
+        "terminal_projection_digest_sha256"
+      ],
+      "properties": {
+        "acquisition_path_ids": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "canonical_row_count": { "type": "integer", "minimum": 1 },
+        "content_body_hashes_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "corpus_entry_cids_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "corpus_rows_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "jurisdiction": { "$ref": "#/$defs/jurisdictionCode" },
+        "official_source_url": { "type": "string", "pattern": "^https://" },
+        "request_ledger_sha256": { "$ref": "#/$defs/sha256" },
+        "response_ledger_sha256": { "$ref": "#/$defs/sha256" },
+        "response_projection_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "runner_identity_binding": { "$ref": "#/$defs/officialReplayRunnerIdentity" },
+        "selected_evidence": { "$ref": "#/$defs/officialReplaySelectedEvidence" },
+        "source_software_version": { "type": "string", "minLength": 1 },
+        "start_urls": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^https://" }
+        },
+        "terminal_projection_digest_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "officialFrontierReobservation": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "copied_file_count", "derivation_reverified_with_current_code",
+        "hardlinked_file_count", "jurisdiction_count",
+        "jurisdictions", "jurisdictions_digest_sha256",
+        "network_io_performed", "origin_reauthentication_performed",
+        "provenance_trust_root", "retained_replay_completed", "schema_version",
+        "verifier_owned"
+      ],
+      "properties": {
+        "copied_file_count": { "const": 0 },
+        "derivation_reverified_with_current_code": { "const": true },
+        "hardlinked_file_count": { "type": "integer", "minimum": 1 },
+        "jurisdiction_count": { "const": 51 },
+        "jurisdictions": {
+          "type": "array", "minItems": 51, "maxItems": 51,
+          "items": { "$ref": "#/$defs/officialReplayJurisdiction" }
+        },
+        "jurisdictions_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "network_io_performed": { "const": false },
+        "origin_reauthentication_performed": { "const": false },
+        "provenance_trust_root": {
+          "const": "verified-retained-acquisition-bytes"
+        },
+        "retained_replay_completed": { "const": true },
+        "schema_version": { "const": "state-laws-verifier-retained-replay/v1" },
+        "verifier_owned": { "const": true }
+      }
+    },
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["family", "relative_path", "row_count", "sha256", "size_bytes"],
+      "properties": {
+        "family": { "type": "string", "minLength": 1 },
+        "relative_path": { "$ref": "#/$defs/path" },
+        "row_count": { "type": "integer", "minimum": 0 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "size_bytes": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "namedCount": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "value"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "value": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "keyParity": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "exact", "parent_entry_cid_count", "parent_entry_cids_sha256",
+        "chunk_cid_count", "chunk_cids_exact", "chunk_cids_sha256",
+        "document_chunk_mapping_exact", "document_chunk_mapping_sha256"
+      ],
+      "properties": {
+        "exact": { "const": true },
+        "parent_entry_cid_count": { "type": "integer", "minimum": 51 },
+        "parent_entry_cids_sha256": { "$ref": "#/$defs/sha256" },
+        "chunk_cid_count": { "type": "integer", "minimum": 51 },
+        "chunk_cids_exact": { "const": true },
+        "chunk_cids_sha256": { "$ref": "#/$defs/sha256" },
+        "document_chunk_mapping_exact": { "const": true },
+        "document_chunk_mapping_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "productionRelease": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "output_root", "manifest_path", "manifest_digest", "manifest_file_sha256",
+        "manifest_size_bytes", "source_revision", "release_point", "dataset_repo_id",
+        "artifact_count", "artifact_descriptors_digest_sha256", "artifacts",
+        "counts", "key_parity"
+      ],
+      "properties": {
+        "output_root": { "$ref": "#/$defs/path" },
+        "manifest_path": { "$ref": "#/$defs/path" },
+        "manifest_digest": { "$ref": "#/$defs/sha256" },
+        "manifest_file_sha256": { "$ref": "#/$defs/sha256" },
+        "manifest_size_bytes": { "type": "integer", "minimum": 1 },
+        "source_revision": { "$ref": "#/$defs/gitSha" },
+        "release_point": { "type": "string", "minLength": 1 },
+        "dataset_repo_id": { "type": "string", "minLength": 1 },
+        "artifact_count": { "type": "integer", "minimum": 1 },
+        "artifact_descriptors_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "artifacts": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/artifact" } },
+        "counts": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/namedCount" } },
+        "key_parity": { "$ref": "#/$defs/keyParity" }
+      }
+    },
+    "rightsReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "receipt_digest_sha256", "catalog_digest_sha256", "status"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "receipt_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "catalog_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "status": { "enum": ["pass", "passed", "complete", "completed", "ok"] }
+      }
+    },
+    "sourceVersion": {
+      "type": "object", "additionalProperties": false,
+      "required": ["jurisdiction", "source_software_version"],
+      "properties": {
+        "jurisdiction": { "$ref": "#/$defs/jurisdictionCode" },
+        "source_software_version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "sourceBundle": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "refresh_runner_source_software_version", "current_source_software_versions",
+        "current_source_software_versions_digest_sha256"
+      ],
+      "properties": {
+        "refresh_runner_source_software_version": { "$ref": "#/$defs/sourceIdentity" },
+        "current_source_software_versions": {
+          "type": "array", "minItems": 51, "maxItems": 51,
+          "items": { "$ref": "#/$defs/sourceVersion" }
+        },
+        "current_source_software_versions_digest_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "sourceControl": {
+      "type": "object", "additionalProperties": false,
+      "required": ["revision", "tree", "clean_at_seal", "excluded_evidence_paths"],
+      "properties": {
+        "revision": { "$ref": "#/$defs/gitSha" },
+        "tree": { "$ref": "#/$defs/gitSha" },
+        "clean_at_seal": { "const": true },
+        "excluded_evidence_paths": {
+          "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/path" }
+        }
+      }
+    },
+    "adapterDispositions": {
+      "type": "object", "additionalProperties": false,
+      "required": ["admitted", "quarantined", "rejected"],
+      "properties": {
+        "admitted": { "type": "integer", "minimum": 1 },
+        "quarantined": { "const": 0 },
+        "rejected": { "const": 0 }
+      }
+    },
+    "corpusShard": {
+      "type": "object", "additionalProperties": false,
+      "required": ["relative_path", "sha256", "row_count", "first_key", "last_key"],
+      "properties": {
+        "relative_path": { "$ref": "#/$defs/path" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "row_count": { "type": "integer", "minimum": 1 },
+        "first_key": { "type": "string", "minLength": 1 },
+        "last_key": { "type": "string", "minLength": 1 }
+      }
+    },
+    "jurisdictionRows": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "jurisdiction", "admitted_row_count", "adapter_dispositions",
+        "input_entry_cids_digest_sha256", "release_entry_cids_digest_sha256",
+        "input_corpus_rows_digest_sha256", "release_corpus_rows_digest_sha256",
+        "release_corpus_shards", "release_corpus_shards_digest_sha256"
+      ],
+      "properties": {
+        "jurisdiction": { "$ref": "#/$defs/jurisdictionCode" },
+        "admitted_row_count": { "type": "integer", "minimum": 1 },
+        "adapter_dispositions": { "$ref": "#/$defs/adapterDispositions" },
+        "input_entry_cids_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "release_entry_cids_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "input_corpus_rows_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "release_corpus_rows_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "release_corpus_shards": {
+          "type": "array", "minItems": 1,
+          "items": { "$ref": "#/$defs/corpusShard" }
+        },
+        "release_corpus_shards_digest_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "union": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "shard_sum_before_dedup", "deduped_union_count", "duplicate_row_count",
+        "deduped_entry_cids_digest_sha256", "deduped_corpus_rows_digest_sha256",
+        "input_source_receipts_digest_sha256",
+        "release_source_receipts_digest_sha256", "per_jurisdiction"
+      ],
+      "properties": {
+        "shard_sum_before_dedup": { "type": "integer", "minimum": 51 },
+        "deduped_union_count": { "type": "integer", "minimum": 51 },
+        "duplicate_row_count": { "const": 0 },
+        "deduped_entry_cids_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "deduped_corpus_rows_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "input_source_receipts_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "release_source_receipts_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "per_jurisdiction": {
+          "type": "array", "minItems": 51, "maxItems": 51,
+          "items": { "$ref": "#/$defs/jurisdictionRows" }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "authenticated_live_baseline", "baseline_reconciliation", "input_map",
+        "jurisdictions", "official_frontier_reobservation",
+        "production_release", "rights_receipt", "source_bundle", "source_control",
+        "source_receipts_digest_sha256", "union"
+      ],
+      "properties": {
+        "authenticated_live_baseline": { "$ref": "#/$defs/authenticatedBaseline" },
+        "baseline_reconciliation": {
+          "type": "array", "minItems": 51, "maxItems": 51,
+          "items": { "$ref": "#/$defs/baselineReconciliation" }
+        },
+        "input_map": { "$ref": "#/$defs/inputMap" },
+        "jurisdictions": {
+          "type": "array", "minItems": 51, "maxItems": 51,
+          "items": { "$ref": "#/$defs/jurisdictionEvidence" }
+        },
+        "official_frontier_reobservation": {
+          "$ref": "#/$defs/officialFrontierReobservation"
+        },
+        "production_release": { "$ref": "#/$defs/productionRelease" },
+        "rights_receipt": { "$ref": "#/$defs/rightsReceipt" },
+        "source_bundle": { "$ref": "#/$defs/sourceBundle" },
+        "source_control": { "$ref": "#/$defs/sourceControl" },
+        "source_receipts_digest_sha256": { "$ref": "#/$defs/sha256" },
+        "union": { "$ref": "#/$defs/union" }
+      }
+    }
   }
 }

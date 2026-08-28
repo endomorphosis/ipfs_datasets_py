@@ -16,30 +16,75 @@ read-only principal probe and a single upload callback after authorization.
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
+import os
 import re
+import selectors
+import signal
+import stat
 import subprocess
 import sys
-from dataclasses import dataclass
+import tarfile
+import tempfile
+import time
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from types import MappingProxyType
 from typing import Any, Callable, Final, Mapping, Optional, Sequence, TypeVar, Union
 
+
+def _pin_trusted_system_git() -> tuple[Path, str]:
+    """Pin one root-owned system Git without consulting ambient ``PATH``."""
+
+    for candidate in (Path("/usr/bin/git"), Path("/usr/local/bin/git")):
+        try:
+            resolved = candidate.resolve(strict=True)
+            metadata = resolved.stat(follow_symlinks=False)
+        except OSError:
+            continue
+        if (
+            resolved.is_symlink()
+            or not stat.S_ISREG(metadata.st_mode)
+            or metadata.st_uid != 0
+            or metadata.st_mode & (stat.S_IWGRP | stat.S_IWOTH)
+            or not metadata.st_mode & stat.S_IXUSR
+        ):
+            continue
+        return resolved, hashlib.sha256(resolved.read_bytes()).hexdigest()
+    raise RuntimeError("no trusted root-owned system Git executable is available")
+
+
+_TRUSTED_GIT_EXECUTABLE, _TRUSTED_GIT_SHA256 = _pin_trusted_system_git()
+del _pin_trusted_system_git
+_AUTHORITY_GIT_ENVIRONMENT: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "GIT_CONFIG_GLOBAL": "/dev/null",
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_OPTIONAL_LOCKS": "0",
+        "GIT_TERMINAL_PROMPT": "0",
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "PATH": "/usr/bin:/bin",
+        "TZ": "UTC",
+    }
+)
+
+from ipfs_datasets_py.huggingface.protected_repo_guard import (
+    CanonicalMutationBinding,
+)
 from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate import (
     AUTHORIZED_DATASET_REPO_IDS,
     BASELINE_REVISIONS,
-    PROGRAM_ID as GATE_PROGRAM_ID,
-    PublicationGateDecision,
-    PublicationGateDeniedError,
-    PublicationGateError,
-    PublicationPhase,
     REQUIRED_PUBLICATION_GATES,
     RIGHTS_RECEIPT_RELPATH,
     SECRET_ENV_NAMES,
     STATE_DATASET_REPO_ID,
-    SUCCESSOR_TASK_ID as GATE_SUCCESSOR_TASK_ID,
-    TASK_ID as GATE_TASK_ID,
+    PublicationGateDecision,
+    PublicationGateDeniedError,
+    PublicationGateError,
+    PublicationPhase,
     credentials_scope_for,
     evaluate_publication_gate,
     normalize_sha256,
@@ -47,6 +92,15 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate impor
     prepublication_seal_required,
     reject_credentials_in_payload,
     require_immutable_revision,
+)
+from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate import (
+    PROGRAM_ID as GATE_PROGRAM_ID,
+)
+from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate import (
+    SUCCESSOR_TASK_ID as GATE_SUCCESSOR_TASK_ID,
+)
+from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate import (
+    TASK_ID as GATE_TASK_ID,
 )
 
 # ---------------------------------------------------------------------------
@@ -63,9 +117,22 @@ PREDECESSOR_GATE_TASK_ID: Final = GATE_TASK_ID
 PREDECESSOR_RIGHTS_TASK_ID: Final = GATE_SUCCESSOR_TASK_ID
 
 TOKEN_ENV_ALLOWLIST: Final = SECRET_ENV_NAMES
+# LCR-084 exposes exactly one implemented protected mutation. The other three
+# canonical phases remain evaluable, but mutation attempts fail closed until a
+# phase-specific source-attested executor is added.
+CANONICAL_MUTATION_EXECUTOR_PHASES: Final = frozenset({"state_main"})
 
 RECEIPT_SCHEMA_V1: Final = "ipfs_datasets_py/legal-corpora-publication-receipt@1"
 MANIFEST_SCHEMA_V1: Final = "ipfs_datasets_py/legal-corpora-candidate-manifest@1"
+PRODUCTION_MANIFEST_SCHEMA_V2: Final = (
+    "ipfs_datasets_py/legal-corpora-reindex-release-candidate@2"
+)
+PRODUCTION_ACCEPTANCE_SCHEMA_V2: Final = (
+    "ipfs_datasets_py/state-laws-full-scrape-acceptance@2"
+)
+MUTATION_AUDIT_SCHEMA_V2: Final = (
+    "ipfs_datasets_py/legal-corpora-hugging-face-mutation-path-audit@2"
+)
 SEAL_SCHEMA_V1: Final = "ipfs_datasets_py/legal-corpora-prepublication-seal@1"
 LIVE_SOURCE_RIGHTS_REPORT_SCHEMA: Final = (
     "ipfs_datasets_py/legal-source-rights-compliance@2"
@@ -74,6 +141,9 @@ ALLOWED_RECEIPT_SCHEMAS: Final = frozenset(
     {
         RECEIPT_SCHEMA_V1,
         MANIFEST_SCHEMA_V1,
+        PRODUCTION_MANIFEST_SCHEMA_V2,
+        PRODUCTION_ACCEPTANCE_SCHEMA_V2,
+        MUTATION_AUDIT_SCHEMA_V2,
         SEAL_SCHEMA_V1,
         LIVE_SOURCE_RIGHTS_REPORT_SCHEMA,
     }
@@ -93,12 +163,120 @@ FEDERAL_CANDIDATE_MANIFEST_RELPATH: Final = (
 STATE_PREPUBLICATION_SEAL_RELPATH: Final = (
     "docs/reports/legal_corpora_reindex/state_prepublication_seal.json"
 )
+STATE_STAGING_UPLOAD_RELPATH: Final = (
+    "docs/reports/legal_corpora_reindex/staging_upload.json"
+)
+STATE_STAGING_CANARY_RELPATH: Final = (
+    "docs/reports/legal_corpora_reindex/staging_canary.json"
+)
 FEDERAL_PREPUBLICATION_SEAL_RELPATH: Final = (
     "docs/reports/legal_corpora_reindex/federal_prepublication_seal.json"
 )
 STATE_DATASET_CARD_RELPATH: Final = (
     "docs/reports/legal_corpora_reindex/state_dataset_card.md"
 )
+MUTATION_AUDIT_REPORT_RELPATH: Final = (
+    "docs/reports/legal_corpora_reindex/"
+    "hugging_face_mutation_path_audit.json"
+)
+MUTATION_AUDIT_SCHEMA_RELPATH: Final = (
+    "data/legal/legal_corpora_hugging_face_mutation_path_audit.schema.json"
+)
+_NATIVE_PHASE_RECEIPT_SCHEMAS: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json": (
+            "ipfs_datasets_py/legal-corpora-reindex-live-baseline-provenance@2"
+        ),
+        "docs/reports/legal_corpora_reindex/full_scrape_acceptance.json": (
+            "ipfs_datasets_py/legal-corpora-reindex-full-scrape-acceptance@1"
+        ),
+        "docs/reports/legal_corpora_reindex/local_e2e.json": (
+            "ipfs_datasets_py/legal-corpora-reindex-local-e2e@1"
+        ),
+        STATE_CANDIDATE_MANIFEST_RELPATH: (
+            "ipfs_datasets_py/legal-corpora-reindex-release-candidate@1"
+        ),
+        "docs/reports/legal_corpora_reindex/federal_inventory.json": (
+            "ipfs_datasets_py/legal-corpora-reindex-federal-inventory@1"
+        ),
+        "docs/reports/legal_corpora_reindex/federal_fulltext_coverage.json": (
+            "ipfs_datasets_py/legal-corpora-reindex-federal-fulltext-coverage@1"
+        ),
+        FEDERAL_CANDIDATE_MANIFEST_RELPATH: (
+            "ipfs_datasets_py/legal-corpora-reindex-federal-candidate@1"
+        ),
+        "docs/reports/legal_corpora_reindex/federal_evaluation.json": (
+            "ipfs_datasets_py/legal-corpora-reindex-federal-evaluation@1"
+        ),
+        "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json": (
+            "ipfs_datasets_py/federal-register-full-live-acceptance@1"
+        ),
+        "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json": (
+            "ipfs_datasets_py/legal-corpora-reindex-federal-adjacency@1"
+        ),
+    }
+)
+_IMPLEMENTATION_REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[3]
+_VERIFIER_SOURCE_RELPATHS: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "lcr084_candidate": (
+            "scripts/ops/legal_data/build_state_laws_hf_release.py"
+        ),
+        "mutation_audit": (
+            "scripts/ops/legal_data/"
+            "audit_legal_corpora_hugging_face_mutation_paths.py"
+        ),
+        "live_baseline": (
+            "scripts/ops/legal_data/audit_legal_corpora_live_baseline.py"
+        ),
+        "state_local_e2e": (
+            "scripts/ops/legal_data/build_state_laws_sparse_graphrag.py"
+        ),
+        "state_acceptance_v1": (
+            "scripts/ops/legal_data/state_laws_acquisition_gap_refill.py"
+        ),
+        "federal_evaluation": (
+            "scripts/ops/legal_data/"
+            "evaluate_federal_register_sparse_graphrag.py"
+        ),
+        "federal_inventory": (
+            "ipfs_datasets_py/processors/legal_data/"
+            "federal_register_acquisition.py"
+        ),
+        "federal_fulltext": (
+            "ipfs_datasets_py/processors/legal_data/"
+            "federal_register_fulltext.py"
+        ),
+        "federal_candidate": (
+            "ipfs_datasets_py/processors/legal_data/"
+            "federal_register_hf_release.py"
+        ),
+        "federal_adjacency": (
+            "ipfs_datasets_py/processors/legal_data/"
+            "federal_register_adjacency_gate.py"
+        ),
+    }
+)
+_VERIFIER_IMPORT_SOURCE_SHA256: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        label: hashlib.sha256(
+            (_IMPLEMENTATION_REPOSITORY_ROOT / relpath).read_bytes()
+        ).hexdigest()
+        for label, relpath in _VERIFIER_SOURCE_RELPATHS.items()
+    }
+)
+_LCR084_SOURCE_ARCHIVE_PATHS: Final = (
+    ":(glob)ipfs_datasets_py/**/*.py",
+    ":(glob)scripts/**/*.py",
+    "data/legal/state_laws_full_scrape_acceptance.schema.json",
+)
+_LCR084_SOURCE_ARCHIVE_LIMIT_BYTES: Final = 256 * 1024 * 1024
+_LCR084_SOURCE_ARCHIVE_MEMBER_LIMIT: Final = 10_000
+_LCR084_CANDIDATE_LIMIT_BYTES: Final = 8 * 1024 * 1024
+_LCR084_VERIFIER_OUTPUT_LIMIT_BYTES: Final = 64 * 1024
+# The retained replay owns a 7,200-second timeout.  Its supervising verifier
+# must have enough time to finish the remaining exact evidence bookends.
+_LCR084_VERIFIER_TIMEOUT_SECONDS: Final = (2 * 60 * 60) + (15 * 60)
 FEDERAL_DATASET_CARD_RELPATH: Final = (
     "docs/reports/legal_corpora_reindex/federal_dataset_card.md"
 )
@@ -286,11 +464,837 @@ def raw_file_digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _json_object_without_duplicate_keys(
+    pairs: list[tuple[str, Any]],
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in payload:
+            raise PublicationRuntimeError(
+                f"canonical JSON contains duplicate key {key!r}"
+            )
+        payload[key] = value
+    return payload
+
+
+def _load_fresh_attested_verifier(label: str) -> tuple[Any, str]:
+    """Load one verifier from import-attested repository source bytes."""
+
+    relpath = _VERIFIER_SOURCE_RELPATHS.get(label)
+    expected_sha256 = _VERIFIER_IMPORT_SOURCE_SHA256.get(label)
+    if not relpath or not expected_sha256:
+        raise PublicationRuntimeError(f"unknown canonical verifier {label!r}")
+    source_path = _IMPLEMENTATION_REPOSITORY_ROOT / relpath
+    if source_path.is_symlink() or not source_path.is_file():
+        raise PublicationRuntimeError(
+            f"canonical {label} verifier source is missing or symlinked"
+        )
+    source_bytes = source_path.read_bytes()
+    if hashlib.sha256(source_bytes).hexdigest() != expected_sha256:
+        raise PublicationRuntimeError(
+            f"canonical {label} verifier source changed after runtime import"
+        )
+    nonce = object()
+    module_name = f"_lcr084_fresh_{label}_{id(nonce):x}"
+    spec = importlib.util.spec_from_file_location(module_name, source_path)
+    if (
+        spec is None
+        or spec.loader is None
+        or Path(str(spec.origin or "")).resolve() != source_path.resolve()
+    ):
+        raise PublicationRuntimeError(
+            f"canonical {label} verifier cannot be loaded from exact source"
+        )
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    try:
+        code = compile(source_bytes, str(source_path), "exec")
+        exec(code, vars(module), vars(module))
+        if source_path.read_bytes() != source_bytes:
+            raise PublicationRuntimeError(
+                f"canonical {label} verifier source changed while loading"
+            )
+    except Exception:
+        if sys.modules.get(module_name) is module:
+            sys.modules.pop(module_name, None)
+        raise
+    return module, module_name
+
+
+def _discard_fresh_attested_verifier(module: Any, module_name: str) -> None:
+    if sys.modules.get(module_name) is module:
+        sys.modules.pop(module_name, None)
+
+
+def _process_identity_table() -> dict[int, tuple[int, int]]:
+    """Return ``pid -> (ppid, starttime)`` from Linux procfs.
+
+    Start times make descendant cleanup safe against PID reuse during the
+    verifier's deliberately long retained-replay bound.
+    """
+
+    proc_root = Path("/proc")
+    if not proc_root.is_dir():
+        raise PublicationRuntimeError(
+            "isolated verifier requires procfs descendant accounting"
+        )
+    table: dict[int, tuple[int, int]] = {}
+    for entry in proc_root.iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            serialized = (entry / "stat").read_text(encoding="ascii")
+            close = serialized.rfind(")")
+            fields = serialized[close + 2 :].split()
+            pid = int(entry.name)
+            table[pid] = (int(fields[1]), int(fields[19]))
+        except (FileNotFoundError, IndexError, OSError, UnicodeError, ValueError):
+            continue
+    return table
+
+
+def _isolated_descendant_identities(
+    root_pid: int,
+) -> dict[int, int]:
+    table = _process_identity_table()
+    descendants: dict[int, int] = {}
+    frontier = {int(root_pid)}
+    while frontier:
+        children = {
+            pid
+            for pid, (ppid, _starttime) in table.items()
+            if ppid in frontier and pid not in descendants
+        }
+        if not children:
+            break
+        for pid in children:
+            descendants[pid] = table[pid][1]
+        frontier = children
+    return descendants
+
+
+def _signal_process_identity(pid: int, starttime: int, sig: int) -> None:
+    current = _process_identity_table().get(int(pid))
+    if current is None or current[1] != int(starttime):
+        return
+    try:
+        os.kill(int(pid), sig)
+    except ProcessLookupError:
+        pass
+
+
+def _terminate_isolated_process_tree(
+    process: subprocess.Popen[bytes],
+    known_descendants: Mapping[int, int],
+) -> None:
+    """Stop and kill the verifier plus separately-sessioned descendants."""
+
+    identities = dict(known_descendants)
+    root_identity = _process_identity_table().get(process.pid)
+    if root_identity is not None:
+        _signal_process_identity(process.pid, root_identity[1], signal.SIGSTOP)
+    # The retained worker creates its own session.  Freeze every observed
+    # descendant before killing so a grandchild cannot escape by forking or
+    # being reparented while the outer supervisor tears down.
+    for _ in range(3):
+        identities.update(_isolated_descendant_identities(process.pid))
+        for pid, starttime in tuple(identities.items()):
+            _signal_process_identity(pid, starttime, signal.SIGSTOP)
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass
+    for pid, starttime in tuple(identities.items()):
+        _signal_process_identity(pid, starttime, signal.SIGKILL)
+    if root_identity is not None:
+        _signal_process_identity(process.pid, root_identity[1], signal.SIGKILL)
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+
+
+def _run_bounded_isolated_process(
+    command: Sequence[str],
+    *,
+    cwd: Path,
+    environment: Mapping[str, str] | None,
+    timeout_seconds: float,
+    output_limit_bytes: int,
+) -> tuple[int, bytes, bytes]:
+    """Run a process with live pipe bounds and descendant-safe cleanup."""
+
+    if timeout_seconds <= 0 or output_limit_bytes <= 0:
+        raise PublicationRuntimeError("isolated verifier bounds are invalid")
+    try:
+        process = subprocess.Popen(
+            list(command),
+            cwd=str(cwd),
+            env=None if environment is None else dict(environment),
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=False,
+            start_new_session=True,
+        )
+    except OSError as exc:
+        raise PublicationRuntimeError(
+            "isolated verifier process could not start"
+        ) from exc
+    if process.stdout is None or process.stderr is None:  # pragma: no cover
+        _terminate_isolated_process_tree(process, {})
+        raise PublicationRuntimeError("isolated verifier pipes are unavailable")
+    selector = selectors.DefaultSelector()
+    stdout = bytearray()
+    stderr = bytearray()
+    total = 0
+    descendants: dict[int, int] = {}
+    deadline = time.monotonic() + float(timeout_seconds)
+    streams = ((process.stdout, stdout), (process.stderr, stderr))
+    failed = False
+    try:
+        for stream, target in streams:
+            os.set_blocking(stream.fileno(), False)
+            selector.register(stream, selectors.EVENT_READ, target)
+        while selector.get_map():
+            descendants.update(_isolated_descendant_identities(process.pid))
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                failed = True
+                raise PublicationRuntimeError("isolated verifier timed out")
+            for key, _ in selector.select(timeout=min(remaining, 0.25)):
+                try:
+                    chunk = os.read(key.fileobj.fileno(), 64 * 1024)
+                except BlockingIOError:
+                    continue
+                if not chunk:
+                    selector.unregister(key.fileobj)
+                    key.fileobj.close()
+                    continue
+                total += len(chunk)
+                if total > output_limit_bytes:
+                    failed = True
+                    raise PublicationRuntimeError(
+                        "isolated verifier output exceeded its live bound"
+                    )
+                key.data.extend(chunk)
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            failed = True
+            raise PublicationRuntimeError("isolated verifier timed out")
+        try:
+            returncode = process.wait(timeout=remaining)
+        except subprocess.TimeoutExpired as exc:
+            failed = True
+            raise PublicationRuntimeError("isolated verifier timed out") from exc
+        descendants.update(_isolated_descendant_identities(process.pid))
+        survivors = {
+            pid: starttime
+            for pid, starttime in descendants.items()
+            if _process_identity_table().get(pid, (0, -1))[1] == starttime
+        }
+        if survivors:
+            failed = True
+            raise PublicationRuntimeError(
+                "isolated verifier left a descendant process running"
+            )
+        return returncode, bytes(stdout), bytes(stderr)
+    finally:
+        selector.close()
+        for stream, _target in streams:
+            if not stream.closed:
+                stream.close()
+        if failed or process.poll() is None:
+            _terminate_isolated_process_tree(process, descendants)
+
+
+def _write_private_snapshot_file(path: Path, content: bytes) -> None:
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    flags |= getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags, 0o600)
+    try:
+        with os.fdopen(descriptor, "wb", closefd=False) as stream:
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+    finally:
+        os.close(descriptor)
+    path.chmod(0o400)
+
+
+def _materialize_lcr084_source_snapshot(
+    root: Path,
+    destination: Path,
+    head: str,
+    *,
+    archive_paths: Sequence[str] = _LCR084_SOURCE_ARCHIVE_PATHS,
+    expected_source_sha256: Mapping[str, str] = _VERIFIER_IMPORT_SOURCE_SHA256,
+) -> tuple[Path, dict[Path, str], dict[str, str]]:
+    """Materialize regular verifier sources from immutable HEAD Git objects."""
+
+    if tuple(archive_paths) != (
+        ":(glob)ipfs_datasets_py/**/*.py",
+        ":(glob)scripts/**/*.py",
+        "data/legal/state_laws_full_scrape_acceptance.schema.json",
+    ):
+        raise PublicationRuntimeError("LCR-084 source archive path set drifted")
+    archive_path = destination / "lcr084-source.tar"
+    source_root = destination / "source"
+    source_root.mkdir(mode=0o700)
+    git_executable, git_environment = _authority_git_invocation()
+    returncode, _stdout, stderr = _run_bounded_isolated_process(
+        [
+            git_executable,
+            "archive",
+            "--format=tar",
+            f"--output={archive_path}",
+            head,
+            "--",
+            *archive_paths,
+        ],
+        cwd=root,
+        environment=git_environment,
+        timeout_seconds=180,
+        output_limit_bytes=64 * 1024,
+    )
+    if returncode != 0:
+        raise PublicationRuntimeError(
+            "could not materialize immutable LCR-084 source archive: "
+            + stderr.decode("utf-8", errors="replace")[-2048:]
+        )
+    archive_size = archive_path.stat().st_size
+    if not (0 < archive_size <= 256 * 1024 * 1024):
+        raise PublicationRuntimeError("LCR-084 source archive exceeds its bound")
+    archive_digests = {archive_path: raw_file_digest(archive_path.read_bytes())}
+    manifest: dict[str, str] = {}
+    total = 0
+    count = 0
+    try:
+        archive = tarfile.open(archive_path, mode="r:")
+    except (OSError, tarfile.TarError) as exc:
+        raise PublicationRuntimeError("invalid LCR-084 source archive") from exc
+    with archive:
+        for member in archive:
+            relative = PurePosixPath(member.name)
+            if (
+                relative.is_absolute()
+                or not relative.parts
+                or any(part in ("", ".", "..") for part in relative.parts)
+            ):
+                raise PublicationRuntimeError(
+                    "LCR-084 source archive contains an unsafe path"
+                )
+            target = source_root.joinpath(*relative.parts)
+            if member.isdir():
+                target.mkdir(mode=0o700, parents=True, exist_ok=True)
+                continue
+            if not member.isreg():
+                raise PublicationRuntimeError(
+                    "LCR-084 source archive contains a non-regular Git entry"
+                )
+            if not (
+                relative.suffix == ".py"
+                or relative.as_posix()
+                == "data/legal/state_laws_full_scrape_acceptance.schema.json"
+            ):
+                raise PublicationRuntimeError(
+                    "LCR-084 source archive contains an unexpected blob"
+                )
+            count += 1
+            total += int(member.size)
+            if count > 10_000 or total > 256 * 1024 * 1024:
+                raise PublicationRuntimeError(
+                    "LCR-084 source archive member bound exceeded"
+                )
+            if relative.as_posix() in manifest:
+                raise PublicationRuntimeError(
+                    "LCR-084 source archive contains a duplicate path"
+                )
+            target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+            extracted = archive.extractfile(member)
+            if extracted is None:
+                raise PublicationRuntimeError(
+                    "LCR-084 source archive blob cannot be read"
+                )
+            digest = hashlib.sha256()
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+            flags |= getattr(os, "O_NOFOLLOW", 0)
+            descriptor = os.open(target, flags, 0o600)
+            try:
+                with os.fdopen(descriptor, "wb", closefd=False) as stream:
+                    while True:
+                        chunk = extracted.read(64 * 1024)
+                        if not chunk:
+                            break
+                        digest.update(chunk)
+                        stream.write(chunk)
+            finally:
+                os.close(descriptor)
+                extracted.close()
+            target.chmod(0o500 if member.mode & 0o111 else 0o400)
+            manifest[relative.as_posix()] = digest.hexdigest()
+    submodule_relpath = (
+        "ipfs_datasets_py/processors/web_archiving/"
+        "common_crawl_search_engine"
+    )
+    gitlink_line = _git(
+        root,
+        "ls-tree",
+        head,
+        "--",
+        submodule_relpath,
+    ).strip()
+    match = re.fullmatch(
+        rf"160000 commit ([0-9a-f]{{40}})\t{re.escape(submodule_relpath)}",
+        gitlink_line,
+    )
+    if match is None:
+        raise PublicationRuntimeError(
+            "LCR-084 Common Crawl dependency is not an exact Git link"
+        )
+    gitlink_commit = match.group(1)
+    submodule_root = root / submodule_relpath
+    if submodule_root.is_symlink() or not submodule_root.is_dir():
+        raise PublicationRuntimeError(
+            "LCR-084 Common Crawl Git dependency is not initialized"
+        )
+    if _git(submodule_root, "cat-file", "-t", gitlink_commit).strip() != "commit":
+        raise PublicationRuntimeError(
+            "LCR-084 Common Crawl Git-link object is unavailable"
+        )
+    if _git(submodule_root, "rev-parse", "HEAD").strip().casefold() != gitlink_commit:
+        raise PublicationRuntimeError(
+            "LCR-084 Common Crawl checkout is not at the pinned Git link"
+        )
+    submodule_archive_path = destination / "common-crawl-source.tar"
+    returncode, _stdout, stderr = _run_bounded_isolated_process(
+        [
+            git_executable,
+            "archive",
+            "--format=tar",
+            f"--output={submodule_archive_path}",
+            gitlink_commit,
+            "--",
+            ":(glob)**/*.py",
+        ],
+        cwd=submodule_root,
+        environment=git_environment,
+        timeout_seconds=60,
+        output_limit_bytes=64 * 1024,
+    )
+    if returncode != 0:
+        raise PublicationRuntimeError(
+            "could not materialize pinned Common Crawl source: "
+            + stderr.decode("utf-8", errors="replace")[-2048:]
+        )
+    submodule_size = submodule_archive_path.stat().st_size
+    if not (0 < submodule_size <= 32 * 1024 * 1024):
+        raise PublicationRuntimeError(
+            "LCR-084 Common Crawl source archive exceeds its bound"
+        )
+    archive_digests[submodule_archive_path] = raw_file_digest(
+        submodule_archive_path.read_bytes()
+    )
+    try:
+        submodule_archive = tarfile.open(submodule_archive_path, mode="r:")
+    except (OSError, tarfile.TarError) as exc:
+        raise PublicationRuntimeError(
+            "invalid pinned Common Crawl source archive"
+        ) from exc
+    with submodule_archive:
+        for member in submodule_archive:
+            relative = PurePosixPath(member.name)
+            if (
+                relative.is_absolute()
+                or not relative.parts
+                or any(part in ("", ".", "..") for part in relative.parts)
+            ):
+                raise PublicationRuntimeError(
+                    "Common Crawl source archive contains an unsafe path"
+                )
+            prefixed = PurePosixPath(submodule_relpath) / relative
+            target = source_root.joinpath(*prefixed.parts)
+            if member.isdir():
+                target.mkdir(mode=0o700, parents=True, exist_ok=True)
+                continue
+            if not member.isreg() or relative.suffix != ".py":
+                raise PublicationRuntimeError(
+                    "Common Crawl source archive contains a non-Python Git blob"
+                )
+            count += 1
+            total += int(member.size)
+            if count > 10_000 or total > 256 * 1024 * 1024:
+                raise PublicationRuntimeError(
+                    "LCR-084 source archive member bound exceeded"
+                )
+            key = prefixed.as_posix()
+            if key in manifest:
+                raise PublicationRuntimeError(
+                    "Common Crawl source archive overlaps a source path"
+                )
+            target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+            extracted = submodule_archive.extractfile(member)
+            if extracted is None:
+                raise PublicationRuntimeError(
+                    "Common Crawl source archive blob cannot be read"
+                )
+            digest = hashlib.sha256()
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+            flags |= getattr(os, "O_NOFOLLOW", 0)
+            descriptor = os.open(target, flags, 0o600)
+            try:
+                with os.fdopen(descriptor, "wb", closefd=False) as stream:
+                    while True:
+                        chunk = extracted.read(64 * 1024)
+                        if not chunk:
+                            break
+                        digest.update(chunk)
+                        stream.write(chunk)
+            finally:
+                os.close(descriptor)
+                extracted.close()
+            target.chmod(0o500 if member.mode & 0o111 else 0o400)
+            manifest[key] = digest.hexdigest()
+    if _git(submodule_root, "rev-parse", "HEAD").strip().casefold() != gitlink_commit:
+        raise PublicationRuntimeError(
+            "LCR-084 Common Crawl Git link changed while archiving"
+        )
+    for label, relpath in _VERIFIER_SOURCE_RELPATHS.items():
+        expected = expected_source_sha256.get(label)
+        if not expected or manifest.get(relpath) != expected:
+            raise PublicationRuntimeError(
+                f"Git-HEAD source for {label} differs from runtime import"
+            )
+    for directory in sorted(
+        (path for path in source_root.rglob("*") if path.is_dir()),
+        key=lambda item: len(item.parts),
+        reverse=True,
+    ):
+        directory.chmod(0o500)
+    source_root.chmod(0o500)
+    for frozen_archive in archive_digests:
+        frozen_archive.chmod(0o400)
+    return source_root, archive_digests, manifest
+
+
+def _require_trusted_lcr084_snapshot_boundary(source_root: Path) -> None:
+    """Require a source tree that the verifier's own uid cannot mutate."""
+
+    prefix = "trusted LCR-084 source snapshot unavailable"
+
+    def refuse(detail: str) -> None:
+        raise PublicationRuntimeError(f"{prefix}: {detail}")
+
+    def reject_authority_xattrs(path: Path) -> None:
+        forbidden = (
+            "security.capability",
+            "system.posix_acl_access",
+            "system.posix_acl_default",
+        )
+        present = set(os.listxattr(path, follow_symlinks=False))
+        hidden_authority = sorted(present.intersection(forbidden))
+        if hidden_authority:
+            refuse(
+                f"path carries ACL/capability authority {hidden_authority}: {path}"
+            )
+
+    selected = Path(source_root)
+    if not selected.is_absolute() or selected != Path(
+        os.path.abspath(os.fspath(selected))
+    ):
+        refuse("source root is not a lexical absolute path")
+    verifier_uid = os.geteuid()
+    if verifier_uid == 0:
+        refuse("verifier uid must be distinct from the trusted root owner")
+    try:
+        boundaries = (selected, *selected.parents)
+        for boundary in boundaries:
+            metadata = os.lstat(boundary)
+            if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISDIR(
+                metadata.st_mode
+            ):
+                refuse(f"boundary component is not a nofollow directory: {boundary}")
+            if metadata.st_uid != 0 or metadata.st_uid == verifier_uid:
+                refuse(f"boundary component lacks a distinct root owner: {boundary}")
+            if metadata.st_mode & (stat.S_IWGRP | stat.S_IWOTH):
+                refuse(f"boundary component is group/world writable: {boundary}")
+            reject_authority_xattrs(boundary)
+
+        pending = [selected]
+        seen = 0
+        while pending:
+            directory = pending.pop()
+            with os.scandir(directory) as entries:
+                for entry in entries:
+                    seen += 1
+                    if seen > 10_000:
+                        refuse("source tree exceeds its trusted-entry bound")
+                    metadata = entry.stat(follow_symlinks=False)
+                    path = Path(entry.path)
+                    if stat.S_ISLNK(metadata.st_mode):
+                        refuse(f"source entry is symlinked: {path}")
+                    if metadata.st_uid != 0 or metadata.st_uid == verifier_uid:
+                        refuse(f"source entry lacks a distinct root owner: {path}")
+                    if metadata.st_mode & (
+                        stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
+                    ):
+                        refuse(f"source entry is writable: {path}")
+                    if stat.S_ISDIR(metadata.st_mode):
+                        pending.append(path)
+                    elif not stat.S_ISREG(metadata.st_mode):
+                        refuse(f"source entry is not regular: {path}")
+                    elif metadata.st_nlink != 1:
+                        refuse(f"source file is multiply linked: {path}")
+                    reject_authority_xattrs(path)
+    except PublicationRuntimeError:
+        raise
+    except OSError as exc:
+        raise PublicationRuntimeError(f"{prefix}: source boundary changed") from exc
+
+
+def _isolated_lcr084_candidate_remeasurement(
+    root: Path,
+    *,
+    phase: str,
+    payload: Mapping[str, Any],
+    runtime_token: str,
+) -> dict[str, Any]:
+    """Remeasure frozen @2 bytes using a detached Git-object source tree."""
+
+    canonical_root = _require_mutation_implementation_root(root)
+    if type(runtime_token) is not str or not runtime_token:
+        raise PublicationRuntimeError(
+            "isolated LCR-084 verification requires the exact runtime token"
+        )
+    if phase not in ("state_staging", "state_main"):
+        raise PublicationRuntimeError("invalid LCR-084 publication phase")
+    head_before = inspect_clean_head(canonical_root)
+    git_executable, git_environment = _authority_git_invocation()
+    returncode, committed_candidate_raw, git_stderr = (
+        _run_bounded_isolated_process(
+            [
+                git_executable,
+                "show",
+                f"{head_before}:{STATE_CANDIDATE_MANIFEST_RELPATH}",
+            ],
+            cwd=canonical_root,
+            environment=git_environment,
+            timeout_seconds=60,
+            output_limit_bytes=(8 * 1024 * 1024) + (64 * 1024),
+        )
+    )
+    if returncode != 0:
+        raise PublicationRuntimeError(
+            "cannot freeze the committed LCR-084 candidate Git blob: "
+            + git_stderr.decode("utf-8", errors="replace")[-2048:]
+        )
+    candidate_raw = read_canonical_bytes(
+        canonical_root,
+        STATE_CANDIDATE_MANIFEST_RELPATH,
+    )
+    if candidate_raw != committed_candidate_raw:
+        raise PublicationRuntimeError(
+            "on-disk LCR-084 candidate differs from its immutable HEAD blob"
+        )
+    if len(candidate_raw) > 8 * 1024 * 1024:
+        raise PublicationRuntimeError("LCR-084 candidate exceeds its byte bound")
+    try:
+        candidate_payload = json.loads(
+            candidate_raw.decode("utf-8", errors="strict"),
+            object_pairs_hook=_json_object_without_duplicate_keys,
+        )
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise PublicationRuntimeError("LCR-084 candidate is not strict JSON") from exc
+    if type(candidate_payload) is not dict or candidate_payload != payload:
+        raise PublicationRuntimeError(
+            "LCR-084 candidate payload differs from exact on-disk bytes"
+        )
+    candidate_raw_sha256 = raw_file_digest(candidate_raw)
+    candidate_report_digest = _production_candidate_report_digest(
+        candidate_payload
+    )
+    if candidate_payload.get("report_digest_sha256") != candidate_report_digest:
+        raise PublicationRuntimeError("LCR-084 candidate self-digest is invalid")
+    source = (
+        "import hashlib,importlib.util,json,os,pathlib,stat,subprocess,sys\n"
+        "source_root=pathlib.Path(sys.argv[1]).resolve()\n"
+        "evidence_root=pathlib.Path(sys.argv[2]).resolve()\n"
+        "frozen_path=pathlib.Path(sys.argv[3]).resolve()\n"
+        "manifest_path=pathlib.Path(sys.argv[4]).resolve()\n"
+        "expected_raw_sha=sys.argv[5]\n"
+        "expected_report_digest=sys.argv[6]\n"
+        "expected_head=sys.argv[7]\n"
+        "phase=sys.argv[8]\n"
+        "git_executable=sys.argv[9]\n"
+        "if source_root==evidence_root: raise RuntimeError('source/evidence roots overlap')\n"
+        "def strict_pairs(pairs):\n"
+        " out={}\n"
+        " for key,value in pairs:\n"
+        "  if key in out: raise RuntimeError('duplicate JSON key')\n"
+        "  out[key]=value\n"
+        " return out\n"
+        "manifest=json.loads(manifest_path.read_text(encoding='utf-8'),object_pairs_hook=strict_pairs)\n"
+        "def source_projection():\n"
+        " measured={}\n"
+        " for path in source_root.rglob('*'):\n"
+        "  if path.is_symlink(): raise RuntimeError('symlink in source snapshot')\n"
+        "  if path.is_file():\n"
+        "   rel=path.relative_to(source_root).as_posix()\n"
+        "   mode=os.lstat(path).st_mode\n"
+        "   if not stat.S_ISREG(mode): raise RuntimeError('non-regular source')\n"
+        "   measured[rel]=hashlib.sha256(path.read_bytes()).hexdigest()\n"
+        " if measured!=manifest: raise RuntimeError('source snapshot drift')\n"
+        " return measured\n"
+        "def git_head():\n"
+        " git_env={'GIT_CONFIG_GLOBAL':'/dev/null','GIT_CONFIG_NOSYSTEM':'1','GIT_OPTIONAL_LOCKS':'0','GIT_TERMINAL_PROMPT':'0','LANG':'C.UTF-8','LC_ALL':'C.UTF-8','PATH':'/usr/bin:/bin','TZ':'UTC'}\n"
+        " result=subprocess.run([git_executable,'rev-parse','HEAD'],cwd=evidence_root,env=git_env,stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=False,timeout=30)\n"
+        " if result.returncode!=0: raise RuntimeError('cannot read evidence HEAD')\n"
+        " return result.stdout.decode('ascii',errors='strict').strip().lower()\n"
+        "def evidence_modules_absent():\n"
+        " for loaded in tuple(sys.modules.values()):\n"
+        "  filename=getattr(loaded,'__file__',None)\n"
+        "  if not filename: continue\n"
+        "  try: pathlib.Path(filename).resolve().relative_to(evidence_root)\n"
+        "  except ValueError: continue\n"
+        "  raise RuntimeError('module loaded from evidence checkout')\n"
+        "source_projection()\n"
+        "if git_head()!=expected_head: raise RuntimeError('evidence HEAD drift')\n"
+        "frozen=frozen_path.read_bytes()\n"
+        "if hashlib.sha256(frozen).hexdigest()!=expected_raw_sha: raise RuntimeError('frozen candidate drift')\n"
+        "candidate_path=evidence_root/'docs/reports/legal_corpora_reindex/release_candidate.json'\n"
+        "if candidate_path.read_bytes()!=frozen: raise RuntimeError('candidate byte mismatch')\n"
+        "source=source_root/'scripts/ops/legal_data/build_state_laws_hf_release.py'\n"
+        "source_bytes=source.read_bytes()\n"
+        "sys.path.insert(0,str(source_root))\n"
+        "spec=importlib.util.spec_from_file_location("
+        "'_lcr084_isolated_builder',source)\n"
+        "module=importlib.util.module_from_spec(spec)\n"
+        "sys.modules[spec.name]=module\n"
+        "exec(compile(source_bytes,str(source),'exec'),vars(module),vars(module))\n"
+        "evidence_modules_absent()\n"
+        "payload=module.load_json_mapping_bytes(frozen,label='frozen canonical LCR-084 candidate')\n"
+        "if module._digest_for_report(payload)!=expected_report_digest: raise RuntimeError('candidate report digest drift')\n"
+        "module.check_production_candidate_publication_binding(payload,phase=phase)\n"
+        "result=module.check_production_candidate_report("
+        "payload,repo_root=evidence_root,remeasure_production_evidence=True)\n"
+        "if source.read_bytes()!=source_bytes: raise RuntimeError('builder source drift')\n"
+        "source_projection()\n"
+        "evidence_modules_absent()\n"
+        "if git_head()!=expected_head: raise RuntimeError('evidence HEAD drift')\n"
+        "if frozen_path.read_bytes()!=frozen: raise RuntimeError('frozen candidate drift')\n"
+        "if candidate_path.read_bytes()!=frozen: raise RuntimeError('candidate byte mismatch')\n"
+        "sys.stdout.write(json.dumps(result,sort_keys=True,separators=(',',':')))\n"
+    )
+    environment = {
+        **dict(_AUTHORITY_GIT_ENVIRONMENT),
+        "HF_TOKEN": runtime_token,
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONHASHSEED": "0",
+    }
+    with tempfile.TemporaryDirectory(prefix="lcr084-verifier-") as temporary:
+        temporary_root = Path(temporary)
+        temporary_root.chmod(0o700)
+        source_root, archive_digests, manifest = (
+            _materialize_lcr084_source_snapshot(
+                canonical_root,
+                temporary_root,
+                head_before,
+            )
+        )
+        frozen_path = temporary_root / "candidate.json"
+        manifest_path = temporary_root / "source-manifest.json"
+        _write_private_snapshot_file(frozen_path, candidate_raw)
+        _write_private_snapshot_file(
+            manifest_path,
+            canonical_json_bytes(manifest),
+        )
+        _require_trusted_lcr084_snapshot_boundary(source_root)
+        returncode, stdout, stderr = _run_bounded_isolated_process(
+            [
+                sys.executable,
+                "-I",
+                "-B",
+                "-c",
+                source,
+                str(source_root),
+                str(canonical_root),
+                str(frozen_path),
+                str(manifest_path),
+                candidate_raw_sha256,
+                candidate_report_digest,
+                head_before,
+                phase,
+                git_executable,
+            ],
+            cwd=source_root,
+            environment=environment,
+            timeout_seconds=(2 * 60 * 60) + (15 * 60),
+            output_limit_bytes=64 * 1024,
+        )
+        for archive_path, archive_digest in archive_digests.items():
+            if raw_file_digest(archive_path.read_bytes()) != archive_digest:
+                raise PublicationRuntimeError(
+                    "immutable LCR-084 source archive changed during verification"
+                )
+        if frozen_path.read_bytes() != candidate_raw:
+            raise PublicationRuntimeError(
+                "frozen LCR-084 candidate changed during verification"
+            )
+    if inspect_clean_head(canonical_root) != head_before:
+        raise PublicationRuntimeError("LCR-084 evidence HEAD changed")
+    if read_canonical_bytes(
+        canonical_root,
+        STATE_CANDIDATE_MANIFEST_RELPATH,
+    ) != candidate_raw:
+        raise PublicationRuntimeError(
+            "LCR-084 candidate bytes changed during verification"
+        )
+    if returncode != 0:
+        diagnostic = stderr.decode(
+            "utf-8", errors="replace"
+        )[-2048:].replace(runtime_token, "<redacted>")
+        raise PublicationRuntimeError(
+            "isolated LCR-084 verifier denied the candidate: " + diagnostic
+        )
+    try:
+        result = json.loads(
+            stdout.decode("utf-8", errors="strict"),
+            object_pairs_hook=_json_object_without_duplicate_keys,
+        )
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise PublicationRuntimeError(
+            "isolated LCR-084 verifier returned invalid JSON"
+        ) from exc
+    if type(result) is not dict:
+        raise PublicationRuntimeError(
+            "isolated LCR-084 verifier returned a non-object result"
+        )
+    return result
+
+
 def canonical_no_self_field_digest(payload: Mapping[str, Any]) -> str:
     if not isinstance(payload, Mapping):
         raise IndependentDigestError("canonical digest requires a JSON object")
     body = {key: value for key, value in payload.items() if key not in SELF_DIGEST_FIELDS}
     return hashlib.sha256(canonical_json_bytes(body)).hexdigest()
+
+
+def _production_candidate_report_digest(payload: Mapping[str, Any]) -> str:
+    """Recompute the self digest used by the LCR-084 candidate builder."""
+
+    body = {
+        key: value
+        for key, value in payload.items()
+        if key != "report_digest_sha256"
+    }
+    encoded = json.dumps(
+        body,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _candidate_release_manifest_digest(payload: Mapping[str, Any]) -> str:
@@ -400,10 +1404,55 @@ def _assert_secret_free(payload: Any, *, label: str, environ: Mapping[str, str])
 # ---------------------------------------------------------------------------
 
 
+def _authority_git_invocation(
+    *,
+    executable: Path = _TRUSTED_GIT_EXECUTABLE,
+    executable_sha256: str = _TRUSTED_GIT_SHA256,
+    environment: Mapping[str, str] = _AUTHORITY_GIT_ENVIRONMENT,
+) -> tuple[str, dict[str, str]]:
+    """Return the pinned Git binary and a Git-variable-free environment."""
+
+    expected_environment = {
+        "GIT_CONFIG_GLOBAL": "/dev/null",
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_OPTIONAL_LOCKS": "0",
+        "GIT_TERMINAL_PROMPT": "0",
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "PATH": "/usr/bin:/bin",
+        "TZ": "UTC",
+    }
+    if dict(environment) != expected_environment:
+        raise PublicationRuntimeError("authority-side Git environment drifted")
+    try:
+        resolved = executable.resolve(strict=True)
+        metadata = resolved.stat(follow_symlinks=False)
+    except OSError as exc:
+        raise PublicationRuntimeError(
+            "trusted system Git executable is unavailable"
+        ) from exc
+    if (
+        resolved != executable
+        or resolved.is_symlink()
+        or not stat.S_ISREG(metadata.st_mode)
+        or metadata.st_uid != 0
+        or metadata.st_mode & (stat.S_IWGRP | stat.S_IWOTH)
+        or not metadata.st_mode & stat.S_IXUSR
+        or hashlib.sha256(resolved.read_bytes()).hexdigest()
+        != executable_sha256
+    ):
+        raise PublicationRuntimeError(
+            "trusted system Git executable identity drifted"
+        )
+    return str(resolved), dict(expected_environment)
+
+
 def _git(repo: Path, *args: str) -> str:
+    git_executable, git_environment = _authority_git_invocation()
     proc = subprocess.run(
-        ["git", *args],
+        [git_executable, *args],
         cwd=str(repo),
+        env=git_environment,
         check=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -431,6 +1480,33 @@ def resolve_repository_root(repository_root: PathLike) -> Path:
             "requested root is not the git toplevel; alternate roots cannot authorize"
         )
     return toplevel
+
+
+def _require_mutation_implementation_root(repository_root: PathLike) -> Path:
+    """Refuse protected authority for any alternate Git checkout."""
+
+    root = resolve_repository_root(repository_root)
+    implementation_root = _IMPLEMENTATION_REPOSITORY_ROOT.resolve()
+    if root != implementation_root:
+        raise AlternateRepositoryError(
+            "protected mutation requires the exact runtime/publisher "
+            "implementation checkout"
+        )
+    runtime_source = Path(__file__)
+    if (
+        runtime_source.is_symlink()
+        or runtime_source.resolve()
+        != (
+            implementation_root
+            / "ipfs_datasets_py/processors/legal_data/"
+            "legal_corpora_publication_runtime.py"
+        ).resolve()
+    ):
+        raise AlternateRepositoryError(
+            "runtime source does not belong to the canonical implementation "
+            "checkout"
+        )
+    return root
 
 
 def inspect_clean_head(
@@ -513,7 +1589,12 @@ def read_canonical_text(root: Path, relpath: str) -> str:
 
 def read_canonical_json(root: Path, relpath: str) -> dict[str, Any]:
     try:
-        payload = json.loads(read_canonical_text(root, relpath))
+        payload = json.loads(
+            read_canonical_text(root, relpath),
+            object_pairs_hook=_json_object_without_duplicate_keys,
+        )
+    except PublicationRuntimeError:
+        raise
     except json.JSONDecodeError as exc:
         raise PublicationRuntimeError(f"canonical JSON is invalid: {relpath}") from exc
     if not isinstance(payload, dict):
@@ -713,43 +1794,271 @@ def _require_receipt_status(payload: Mapping[str, Any], relpath: str) -> str:
     return status
 
 
+def _validated_native_phase_receipt(
+    *,
+    root: Path,
+    relpath: str,
+    payload: Mapping[str, Any],
+    raw: bytes,
+) -> tuple[str, dict[str, str], dict[str, Any]] | None:
+    """Adapt producer-native reports only after their strict semantics pass."""
+
+    expected_schema = _NATIVE_PHASE_RECEIPT_SCHEMAS.get(relpath)
+    if expected_schema is None or payload.get("schema") != expected_schema:
+        return None
+    verifier: Any = None
+    module_name = ""
+    try:
+        if relpath.endswith("live_baseline_provenance_receipt.json"):
+            verifier, module_name = _load_fresh_attested_verifier(
+                "live_baseline"
+            )
+            result = verifier.validate_receipt(
+                payload,
+                require_live_hub=True,
+                require_local_salvage_inventory=True,
+                require_fresh_observation=False,
+            )
+            if result.get("ok") is not True:
+                raise PublicationRuntimeError("live baseline validation failed")
+            content_digest = str(payload.get("receipt_sha256") or "")
+        elif relpath.endswith("local_e2e.json"):
+            verifier, module_name = _load_fresh_attested_verifier(
+                "state_local_e2e"
+            )
+            result = verifier.check_full_build_report(payload)
+            if result.get("ok") is not True:
+                raise PublicationRuntimeError("State local-e2e validation failed")
+            content_digest = str(payload.get("report_digest_sha256") or "")
+        elif relpath.endswith("full_scrape_acceptance.json"):
+            raise PublicationRuntimeError(
+                "legacy State full-scrape acceptance is non-authorizing; "
+                "LCR-084 @2 acceptance is required"
+            )
+        elif relpath == STATE_CANDIDATE_MANIFEST_RELPATH:
+            verifier, module_name = _load_fresh_attested_verifier(
+                "lcr084_candidate"
+            )
+            result = verifier.check_candidate_report(payload)
+            if result.get("valid") is not True:
+                raise PublicationRuntimeError("State candidate validation failed")
+            content_digest = str(payload.get("report_digest_sha256") or "")
+        elif relpath.endswith("federal_inventory.json"):
+            verifier, module_name = _load_fresh_attested_verifier(
+                "federal_inventory"
+            )
+            result = verifier._check_inventory_report_structure(
+                verifier._snapshot_inventory_report(payload),
+                require_live=False,
+            )
+            if result.get("structure_valid") is not True:
+                raise PublicationRuntimeError("Federal inventory validation failed")
+            content_digest = str(result.get("inventory_digest") or "")
+        elif relpath.endswith("federal_fulltext_coverage.json"):
+            verifier, module_name = _load_fresh_attested_verifier(
+                "federal_fulltext"
+            )
+            result = verifier.check_coverage_report(
+                payload,
+                require_live=False,
+            )
+            if result.get("ok") is not True:
+                raise PublicationRuntimeError("Federal full-text validation failed")
+            content_digest = str(result.get("coverage_digest") or "")
+        elif relpath == FEDERAL_CANDIDATE_MANIFEST_RELPATH:
+            verifier, module_name = _load_fresh_attested_verifier(
+                "federal_candidate"
+            )
+            body = {key: value for key, value in payload.items() if key != "content_digest"}
+            computed = verifier.digest_mapping(body)
+            if (
+                payload.get("content_digest") != computed
+                or payload.get("authorizing_for_publication") is not False
+                or payload.get("authorizing_hub_upload") is not False
+                or payload.get("hub_upload") is not False
+            ):
+                raise PublicationRuntimeError("Federal candidate validation failed")
+            content_digest = computed
+        elif relpath.endswith("federal_evaluation.json"):
+            verifier, module_name = _load_fresh_attested_verifier(
+                "federal_evaluation"
+            )
+            result = verifier.check_evaluation_report(payload)
+            if result.get("ok") is not True:
+                raise PublicationRuntimeError("Federal evaluation validation failed")
+            content_digest = hashlib.sha256(
+                json.dumps(
+                    payload,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    ensure_ascii=False,
+                    allow_nan=False,
+                ).encode("utf-8")
+            ).hexdigest()
+        elif relpath.endswith("federal_full_live_acceptance.json"):
+            raise PublicationRuntimeError(
+                "Federal full-live acceptance lacks canonical input bindings"
+            )
+        elif relpath.endswith("federal_adjacency_reconciliation.json"):
+            verifier, module_name = _load_fresh_attested_verifier(
+                "federal_adjacency"
+            )
+            verifier.assert_federal_adjacency_reconciliation(payload)
+            content_digest = str(payload.get("report_digest_sha256") or "")
+        else:  # pragma: no cover - mapping and branches are kept exhaustive.
+            return None
+    except PublicationRuntimeError:
+        raise
+    except Exception as exc:
+        raise PublicationRuntimeError(
+            f"producer-native receipt validation failed for {relpath}: {exc}"
+        ) from exc
+    finally:
+        if verifier is not None and module_name:
+            _discard_fresh_attested_verifier(verifier, module_name)
+    content_digest = normalize_sha256(
+        content_digest,
+        name=f"{relpath}.producer_content_digest",
+    )
+    fixture_only = payload.get("fixture_only") is True or payload.get("mode") == "fixture"
+    return (
+        "passed",
+        {
+            "raw_sha256": raw_file_digest(raw),
+            "canonical_digest": content_digest,
+            "content_digest": content_digest,
+        },
+        {"fixture_only": fixture_only, "producer_native": True},
+    )
+
+
 def load_receipt(root: Path, relpath: str) -> dict[str, Any]:
     raw = read_canonical_bytes(root, relpath)
-    payload = json.loads(raw.decode("utf-8"))
+    try:
+        payload = json.loads(
+            raw.decode("utf-8", errors="strict"),
+            object_pairs_hook=_json_object_without_duplicate_keys,
+        )
+    except PublicationRuntimeError:
+        raise
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise PublicationRuntimeError(
+            f"receipt is not strict UTF-8 JSON: {relpath}"
+        ) from exc
     if not isinstance(payload, dict):
         raise PublicationRuntimeError(f"receipt must be a JSON object: {relpath}")
-    status = _require_receipt_status(payload, relpath)
-    if (
-        relpath == RIGHTS_RECEIPT_RELPATH
-        and payload.get("report_schema") == LIVE_SOURCE_RIGHTS_REPORT_SCHEMA
-    ):
-        declared = _declared_digest(payload, "report_digest_sha256")
-        body = dict(payload)
-        body.pop("report_digest_sha256", None)
-        computed = hashlib.sha256(canonical_json_bytes(body)).hexdigest()
-        if declared is None or declared != computed:
-            raise IndependentDigestError(
-                "live source-rights report digest does not match its canonical "
-                "body"
-            )
-        digests = {
-            "raw_sha256": raw_file_digest(raw),
-            "canonical_digest": computed,
-            "content_digest": computed,
-        }
+    native = _validated_native_phase_receipt(
+        root=root,
+        relpath=relpath,
+        payload=payload,
+        raw=raw,
+    )
+    receipt_overrides: dict[str, Any] = {}
+    if native is not None:
+        status, digests, receipt_overrides = native
     else:
-        _require_receipt_schema(payload, relpath)
-        digests = verify_independent_digests(
-            relpath=relpath,
-            raw=raw,
-            payload=payload,
-        )
+        status = _require_receipt_status(payload, relpath)
+        if (
+            relpath == RIGHTS_RECEIPT_RELPATH
+            and payload.get("report_schema") == LIVE_SOURCE_RIGHTS_REPORT_SCHEMA
+        ):
+            declared = _declared_digest(payload, "report_digest_sha256")
+            body = dict(payload)
+            body.pop("report_digest_sha256", None)
+            computed = hashlib.sha256(canonical_json_bytes(body)).hexdigest()
+            if declared is None or declared != computed:
+                raise IndependentDigestError(
+                    "live source-rights report digest does not match its "
+                    "canonical body"
+                )
+            digests = {
+                "raw_sha256": raw_file_digest(raw),
+                "canonical_digest": computed,
+                "content_digest": computed,
+            }
+        else:
+            schema = _require_receipt_schema(payload, relpath)
+            if schema in {
+                PRODUCTION_MANIFEST_SCHEMA_V2,
+                PRODUCTION_ACCEPTANCE_SCHEMA_V2,
+            }:
+                declared = _declared_digest(payload, "report_digest_sha256")
+                computed = _production_candidate_report_digest(payload)
+                if declared is None or declared != computed:
+                    raise IndependentDigestError(
+                        f"{relpath} LCR-084 report digest does not match its "
+                        "canonical body"
+                    )
+                digests = {
+                    "raw_sha256": raw_file_digest(raw),
+                    "canonical_digest": computed,
+                    "content_digest": computed,
+                }
+            elif schema == MUTATION_AUDIT_SCHEMA_V2:
+                mutation_audit: Any = None
+                module_name = ""
+                try:
+                    mutation_audit, module_name = _load_fresh_attested_verifier(
+                        "mutation_audit"
+                    )
+                    measured = mutation_audit.validate_frozen_mutation_inventory(
+                        repository_root=root
+                    )
+                except Exception as exc:
+                    raise IndependentDigestError(
+                        f"{relpath} mutation-path audit verification failed: {exc}"
+                    ) from exc
+                finally:
+                    if mutation_audit is not None and module_name:
+                        _discard_fresh_attested_verifier(
+                            mutation_audit,
+                            module_name,
+                        )
+                if payload != measured:
+                    raise IndependentDigestError(
+                        f"{relpath} differs from the remeasured mutation inventory"
+                    )
+                computed = hashlib.sha256(canonical_json_bytes(payload)).hexdigest()
+                digests = {
+                    "raw_sha256": raw_file_digest(raw),
+                    "canonical_digest": computed,
+                    "content_digest": computed,
+                }
+            else:
+                digests = verify_independent_digests(
+                    relpath=relpath,
+                    raw=raw,
+                    payload=payload,
+                )
     receipt = dict(payload)
     receipt["path"] = relpath
     receipt["status"] = status
     receipt["content_digest"] = digests["content_digest"]
     receipt["canonical_digest"] = digests["canonical_digest"]
     receipt["raw_sha256"] = digests["raw_sha256"]
+    receipt.update(receipt_overrides)
+    if (
+        receipt.get("producer_native") is True
+        and relpath
+        not in {
+            STATE_CANDIDATE_MANIFEST_RELPATH,
+            FEDERAL_CANDIDATE_MANIFEST_RELPATH,
+        }
+    ):
+        for field_name in ("final_manifest_digest", "manifest_digest"):
+            if field_name in receipt:
+                receipt[f"producer_{field_name}"] = receipt.pop(field_name)
+    if relpath in {
+        STATE_STAGING_UPLOAD_RELPATH,
+        STATE_STAGING_CANARY_RELPATH,
+    }:
+        for field_name in ("final_manifest_digest", "manifest_digest"):
+            if field_name in receipt:
+                receipt[f"producer_{field_name}"] = receipt.pop(field_name)
+    if payload.get("schema") == PRODUCTION_MANIFEST_SCHEMA_V2:
+        # The gate's receipt binding uses final_manifest_digest, while the
+        # candidate's top-level manifest_digest names release artifact bytes.
+        receipt["final_manifest_digest"] = digests["content_digest"]
     receipt.setdefault("fixture_only", False)
     receipt.setdefault("dirty", False)
     return receipt
@@ -783,7 +2092,15 @@ def load_main_seal(
     if not relpath:
         raise SealTimeError(f"{phase} is missing a sealed seal path")
     raw = read_canonical_bytes(root, relpath)
-    payload = json.loads(raw.decode("utf-8"))
+    try:
+        payload = json.loads(
+            raw.decode("utf-8", errors="strict"),
+            object_pairs_hook=_json_object_without_duplicate_keys,
+        )
+    except PublicationRuntimeError:
+        raise
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise SealTimeError("prepublication seal is not strict JSON") from exc
     if not isinstance(payload, dict):
         raise SealTimeError("prepublication seal must be a JSON object")
     _require_receipt_schema(payload, relpath)
@@ -909,11 +2226,26 @@ def verify_write_authority(
     identity = str(projection.get("identity") or "").strip() or f"env:{dataset_repo_id}"
     if dataset_repo_id not in identity and expected_scope not in identity:
         identity = f"env:{dataset_repo_id}"
+    authority_evidence = {
+        "authority_source": str(projection.get("authority_source") or "").strip(),
+        "dataset_repo_id": dataset_repo_id,
+        "has_write_access": write_ok is True,
+        "identity": identity,
+        "owner": str(projection.get("owner") or "").strip().casefold(),
+        "owner_role": str(projection.get("owner_role") or "").strip().casefold(),
+        "principal": principal,
+        "scopes": sorted(scopes),
+        "token_role": str(projection.get("token_role") or "").strip().casefold(),
+        "write_targets": sorted(write_targets),
+    }
     return {
         "principal": principal,
         "identity": identity,
         "credentials_scope": expected_scope,
         "dataset_repo_id": dataset_repo_id,
+        "principal_authority_digest": hashlib.sha256(
+            canonical_json_bytes(authority_evidence)
+        ).hexdigest(),
         "token_env": next(
             (name for name in TOKEN_ENV_ALLOWLIST if environ.get(name) == token),
             TOKEN_ENV_ALLOWLIST[0],
@@ -939,16 +2271,28 @@ class CanonicalPublicationRequest:
     expected_release_manifest_digest: str | None = None
     expected_plan_digest: str | None = None
     expected_policy_proof_digest: str | None = None
+    mutation_binding: CanonicalMutationBinding | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "phase", PublicationPhase.coerce(self.phase).value)
         object.__setattr__(
             self, "repository_root", Path(self.repository_root).expanduser()
         )
+        if type(self.authorize_mutation) is not bool:
+            raise PublicationRuntimeError(
+                "authorize_mutation must be an exact boolean"
+            )
         if self.environ is not None and not isinstance(self.environ, Mapping):
             raise PublicationRuntimeError("environ must be a mapping")
         if self.principal_probe is not None and not callable(self.principal_probe):
             raise PublicationRuntimeError("principal_probe must be callable")
+        if self.mutation_binding is not None and not isinstance(
+            self.mutation_binding,
+            CanonicalMutationBinding,
+        ):
+            raise PublicationRuntimeError(
+                "mutation_binding must be an immutable CanonicalMutationBinding"
+            )
         if self.expected_dataset_repo_id is not None:
             expected_repo = _require_non_empty_str(
                 self.expected_dataset_repo_id,
@@ -1000,7 +2344,7 @@ class CanonicalPublicationRequest:
         return cls(
             phase=value.get("phase", ""),
             repository_root=Path(str(value.get("repository_root") or value.get("repo_root") or "")),
-            authorize_mutation=bool(value.get("authorize_mutation", True)),
+            authorize_mutation=value.get("authorize_mutation", True),
             environ=value.get("environ"),
             principal_probe=value.get("principal_probe"),
             expected_dataset_repo_id=value.get(
@@ -1013,6 +2357,7 @@ class CanonicalPublicationRequest:
             expected_policy_proof_digest=value.get(
                 "expected_policy_proof_digest"
             ),
+            mutation_binding=value.get("mutation_binding"),
         )
 
 
@@ -1023,6 +2368,181 @@ def _control_digests(root: Path, phase: str) -> dict[str, str]:
         if path.is_file():
             digests[relpath] = raw_file_digest(path.read_bytes())
     return digests
+
+
+def _validate_lcr084_production_candidate(
+    root: Path,
+    payload: Mapping[str, Any],
+    *,
+    phase: str,
+    remeasure_production_evidence: bool = False,
+    runtime_token: str | None = None,
+) -> dict[str, str] | None:
+    """Run the LCR-084 builder's strict acceptance/audit remeasurement."""
+
+    verifier: Any = None
+    module_name = ""
+    try:
+        if phase not in ("state_staging", "state_main"):
+            raise PublicationRuntimeError(
+                "LCR-084 candidate requires an exact State Laws phase"
+            )
+        verifier, module_name = _load_fresh_attested_verifier(
+            "lcr084_candidate"
+        )
+        binding_checker = vars(verifier).get(
+            "check_production_candidate_publication_binding"
+        )
+        if not callable(binding_checker):
+            raise PublicationRuntimeError(
+                "fresh LCR-084 verifier omits its publication-binding checker"
+            )
+        publication_binding = binding_checker(payload, phase=phase)
+        if remeasure_production_evidence is True:
+            result = _isolated_lcr084_candidate_remeasurement(
+                root,
+                phase=phase,
+                payload=payload,
+                runtime_token=str(runtime_token or ""),
+            )
+        else:
+            if remeasure_production_evidence is not False:
+                raise PublicationRuntimeError(
+                    "LCR-084 remeasurement selector must be an exact boolean"
+                )
+            checker = vars(verifier).get("check_production_candidate_report")
+            if not callable(checker):
+                raise PublicationRuntimeError(
+                    "fresh LCR-084 verifier omits its strict checker"
+                )
+            result = checker(
+                payload,
+                repo_root=root,
+                remeasure_production_evidence=False,
+            )
+    except Exception as exc:
+        # CandidateError intentionally remains an implementation detail of the
+        # verifier script; the runtime exposes one stable binding failure.
+        raise ManifestBindingError(
+            f"LCR-084 production candidate verification failed: {exc}"
+        ) from exc
+    finally:
+        if verifier is not None and module_name:
+            _discard_fresh_attested_verifier(verifier, module_name)
+    if result != {
+        "jurisdiction_count": 51,
+        "ok": True,
+        "task_id": "LCR-084",
+        "valid": True,
+    }:
+        raise ManifestBindingError(
+            "LCR-084 production candidate verifier returned an unexpected result"
+        )
+    if publication_binding is None:
+        return None
+    if type(publication_binding) is not dict:
+        raise ManifestBindingError(
+            "LCR-084 publication binding verifier returned an invalid result"
+        )
+    return dict(publication_binding)
+
+
+def _validate_lcr084_publication_chain(
+    *,
+    request: CanonicalPublicationRequest,
+    payload: Mapping[str, Any],
+    publication_binding: Mapping[str, str] | None,
+    receipts: Mapping[str, Mapping[str, Any]],
+    candidate_release_manifest_digest: str,
+) -> dict[str, Any]:
+    """Bind staging identity A and main identity B without conflating them."""
+
+    staging_payload = dict(payload)
+    staging_payload["publication_binding"] = None
+    staging_candidate_digest = _production_candidate_report_digest(
+        staging_payload
+    )
+    if request.phase == "state_staging":
+        if publication_binding is not None:
+            raise ManifestBindingError(
+                "State staging requires an LCR-084 candidate with null "
+                "publication_binding"
+            )
+        if payload.get("report_digest_sha256") != staging_candidate_digest:
+            raise ManifestBindingError(
+                "State staging candidate-control digest does not equal A"
+            )
+        return {
+            "staging_candidate_digest": staging_candidate_digest,
+            "staging_revision": None,
+        }
+    if request.phase != "state_main" or not isinstance(
+        publication_binding,
+        Mapping,
+    ):
+        raise ManifestBindingError(
+            "State main requires a populated LCR-084 publication binding"
+        )
+    expected_constraints = {
+        "plan_digest": request.expected_plan_digest,
+        "policy_proof_digest": request.expected_policy_proof_digest,
+        "release_manifest_digest": (
+            request.expected_release_manifest_digest
+        ),
+    }
+    for field_name, expected_value in expected_constraints.items():
+        if expected_value is None:
+            raise ManifestBindingError(
+                f"State main requires the exact {field_name} constraint"
+            )
+        if publication_binding.get(field_name) != expected_value:
+            raise ManifestBindingError(
+                f"LCR-084 publication_binding.{field_name} differs from "
+                "the source-attested publication constraint"
+            )
+    if (
+        publication_binding.get("staging_candidate_digest")
+        != staging_candidate_digest
+        or publication_binding.get("release_manifest_digest")
+        != candidate_release_manifest_digest
+    ):
+        raise ManifestBindingError(
+            "LCR-084 publication binding does not close A and the release "
+            "artifact identity"
+        )
+    canary_revision: str | None = None
+    for relpath in (
+        STATE_STAGING_UPLOAD_RELPATH,
+        STATE_STAGING_CANARY_RELPATH,
+    ):
+        receipt = receipts.get(relpath)
+        if not isinstance(receipt, Mapping):
+            raise ManifestBindingError(
+                f"State main is missing canonical staging receipt {relpath}"
+            )
+        if (
+            receipt.get("status") != "passed"
+            or receipt.get("fixture_only") is not False
+            or receipt.get("dirty") is not False
+            or receipt.get("dataset_repo_id") != STATE_DATASET_REPO_ID
+            or receipt.get("producer_final_manifest_digest")
+            != staging_candidate_digest
+            or receipt.get("release_manifest_digest")
+            != candidate_release_manifest_digest
+        ):
+            raise ManifestBindingError(
+                f"State staging receipt {relpath} does not bind A, the release, "
+                "and the exact live dataset"
+            )
+        if relpath == STATE_STAGING_CANARY_RELPATH:
+            canary_revision = require_immutable_revision(
+                str(receipt.get("staging_revision") or ""),
+                name="State staging canary revision",
+            )
+    return {
+        "staging_candidate_digest": staging_candidate_digest,
+        "staging_revision": canary_revision,
+    }
 
 
 def capture_canonical_snapshot(
@@ -1036,7 +2556,10 @@ def capture_canonical_snapshot(
         start = start.replace(tzinfo=timezone.utc)
     root = resolve_repository_root(request.repository_root)
     paths = authoritative_relpaths(request.phase)
-    head = inspect_clean_head(root, authoritative_paths=paths)
+    head = inspect_clean_head(
+        root,
+        authoritative_paths=() if request.authorize_mutation else paths,
+    )
     policy = load_release_policy(root)
     _require_policy_phase_contract(policy, request.phase)
     lineage = load_task_lineage(root)
@@ -1053,7 +2576,27 @@ def capture_canonical_snapshot(
         receipts[manifest_relpath] = load_receipt(root, manifest_relpath)
         expected[manifest_relpath] = receipts[manifest_relpath]["content_digest"]
     manifest = dict(receipts[manifest_relpath])
-    if manifest.get("schema") != MANIFEST_SCHEMA_V1:
+    on_disk_manifest = read_canonical_json(root, manifest_relpath)
+    manifest_schema = manifest.get("schema")
+    publication_binding: dict[str, str] | None = None
+    if request.phase.startswith("state_") and manifest_schema != (
+        PRODUCTION_MANIFEST_SCHEMA_V2
+    ):
+        raise ManifestBindingError(
+            "State Laws publication requires the canonical LCR-084 @2 "
+            "candidate; generic @1 candidates are non-authorizing"
+        )
+    if manifest_schema == PRODUCTION_MANIFEST_SCHEMA_V2:
+        if not request.phase.startswith("state_"):
+            raise ManifestBindingError(
+                "LCR-084 production candidate is valid only for State Laws"
+            )
+        publication_binding = _validate_lcr084_production_candidate(
+            root,
+            on_disk_manifest,
+            phase=request.phase,
+        )
+    elif manifest_schema != MANIFEST_SCHEMA_V1:
         raise ManifestBindingError("candidate manifest schema is not bound")
     rights = receipts.get(RIGHTS_RECEIPT_RELPATH)
     if not isinstance(rights, Mapping):
@@ -1073,14 +2616,41 @@ def capture_canonical_snapshot(
     if rights["content_digest"] not in card_text and rights["content_digest"][:16] not in card_text:
         raise ManifestBindingError("dataset card does not bind the source-rights receipt digest")
 
-    on_disk_manifest = read_canonical_json(root, manifest_relpath)
-    recomputed_manifest = canonical_no_self_field_digest(on_disk_manifest)
-    declared_manifest = str(on_disk_manifest.get("final_manifest_digest") or "").strip()
-    if declared_manifest:
-        if normalize_sha256(declared_manifest, name="final_manifest_digest") != recomputed_manifest:
-            raise IndependentDigestError(
-                "candidate final_manifest_digest does not match no-self-field recompute"
+    if manifest_schema == PRODUCTION_MANIFEST_SCHEMA_V2:
+        recomputed_manifest = _production_candidate_report_digest(
+            on_disk_manifest
+        )
+        declared_manifest = str(
+            on_disk_manifest.get("report_digest_sha256") or ""
+        ).strip()
+        if (
+            not declared_manifest
+            or normalize_sha256(
+                declared_manifest,
+                name="report_digest_sha256",
             )
+            != recomputed_manifest
+        ):
+            raise IndependentDigestError(
+                "LCR-084 candidate report digest does not match canonical body"
+            )
+    else:
+        recomputed_manifest = canonical_no_self_field_digest(on_disk_manifest)
+        declared_manifest = str(
+            on_disk_manifest.get("final_manifest_digest") or ""
+        ).strip()
+        if declared_manifest:
+            if (
+                normalize_sha256(
+                    declared_manifest,
+                    name="final_manifest_digest",
+                )
+                != recomputed_manifest
+            ):
+                raise IndependentDigestError(
+                    "candidate final_manifest_digest does not match "
+                    "no-self-field recompute"
+                )
     final_manifest_digest = recomputed_manifest
     candidate_release_manifest_digest = _candidate_release_manifest_digest(
         manifest
@@ -1107,6 +2677,41 @@ def capture_canonical_snapshot(
                 "canonical candidate release-manifest binding differs from "
                 "the exact publication plan constraint"
             )
+    publication_chain: dict[str, Any] | None = None
+    if manifest_schema == PRODUCTION_MANIFEST_SCHEMA_V2:
+        publication_chain = _validate_lcr084_publication_chain(
+            request=request,
+            payload=on_disk_manifest,
+            publication_binding=publication_binding,
+            receipts=receipts,
+            candidate_release_manifest_digest=(
+                candidate_release_manifest_digest
+            ),
+        )
+    for field_name, expected_value in (
+        ("plan_digest", request.expected_plan_digest),
+        ("policy_proof_digest", request.expected_policy_proof_digest),
+    ):
+        if expected_value is None:
+            continue
+        if manifest_schema == PRODUCTION_MANIFEST_SCHEMA_V2:
+            # The exact phase-aware nested binding was validated above.  A
+            # staging candidate intentionally carries null and a main
+            # candidate carries the plan/proof identities in that binding.
+            continue
+        candidate_value = manifest.get(field_name)
+        if (
+            not candidate_value
+            or normalize_sha256(
+                candidate_value,
+                name=f"candidate_manifest.{field_name}",
+            )
+            != expected_value
+        ):
+            raise ManifestBindingError(
+                f"canonical candidate {field_name} differs from the exact "
+                "publication constraint"
+            )
 
     token_name, token = obtain_token(environ)
     if request.principal_probe is None:
@@ -1129,6 +2734,39 @@ def capture_canonical_snapshot(
     staging_revision = None
     if seal is not None:
         staging_revision = seal.get("staging_revision")
+        for field_name, expected_value in (
+            ("plan_digest", request.expected_plan_digest),
+            ("policy_proof_digest", request.expected_policy_proof_digest),
+            (
+                "release_manifest_digest",
+                request.expected_release_manifest_digest,
+            ),
+        ):
+            if expected_value is None:
+                continue
+            seal_value = seal.get(field_name)
+            if (
+                not seal_value
+                or normalize_sha256(
+                    seal_value,
+                    name=f"prepublication_seal.{field_name}",
+                )
+                != expected_value
+            ):
+                raise ManifestBindingError(
+                    f"canonical prepublication seal {field_name} differs "
+                    "from the exact publication constraint"
+                )
+        if (
+            manifest_schema == PRODUCTION_MANIFEST_SCHEMA_V2
+            and publication_chain is not None
+            and staging_revision
+            != publication_chain.get("staging_revision")
+        ):
+            raise ManifestBindingError(
+                "State main seal staging revision differs from the canonical "
+                "A-bound staging canary"
+            )
     elif request.phase.endswith("_main"):
         raise SealTimeError("main mutation requires a canonical prepublication seal")
 
@@ -1165,11 +2803,19 @@ def capture_canonical_snapshot(
         "credential_identity": identity["identity"],
         "credentials_scope": identity["credentials_scope"],
         "principal": identity["principal"],
+        "principal_authority_digest": identity[
+            "principal_authority_digest"
+        ],
         "token_env": token_name,
         "authorize_mutation": bool(request.authorize_mutation),
         "expected_plan_digest": request.expected_plan_digest,
         "expected_policy_proof_digest": (
             request.expected_policy_proof_digest
+        ),
+        "expected_payload_digest": (
+            request.mutation_binding.payload_digest
+            if request.mutation_binding is not None
+            else None
         ),
     }
     _assert_secret_free(snapshot, label="canonical_snapshot", environ=environ)
@@ -1244,7 +2890,15 @@ def _snapshot_fingerprint(snapshot: Mapping[str, Any]) -> str:
         "expected_policy_proof_digest": snapshot.get(
             "expected_policy_proof_digest"
         ),
+        "expected_payload_digest": snapshot.get("expected_payload_digest"),
         "task_statuses": snapshot.get("task_statuses"),
+        "principal": snapshot.get("principal"),
+        "credential_identity": snapshot.get("credential_identity"),
+        "credentials_scope": snapshot.get("credentials_scope"),
+        "token_env": snapshot.get("token_env"),
+        "principal_authority_digest": snapshot.get(
+            "principal_authority_digest"
+        ),
     }
     return hashlib.sha256(canonical_json_bytes(material)).hexdigest()
 
@@ -1309,11 +2963,12 @@ def evaluate_canonical_publication(
     try:
         req = (
             request
-            if isinstance(request, CanonicalPublicationRequest)
+            if type(request) is CanonicalPublicationRequest
             else CanonicalPublicationRequest.from_mapping(request)
         )
         phase = req.phase
         environ = dict(req.environ or {})
+        req = replace(req, environ=MappingProxyType(environ))
         start = mutation_start or datetime.now(timezone.utc)
         snapshot = capture_canonical_snapshot(req, mutation_start=start)
         gate_request = build_gate_request(snapshot)
@@ -1328,6 +2983,9 @@ def evaluate_canonical_publication(
                 "head": snapshot["head"],
                 "token_env": snapshot["token_env"],
                 "principal": snapshot["principal"],
+                "principal_authority_digest": snapshot[
+                    "principal_authority_digest"
+                ],
                 "operation": snapshot["operation"],
                 "mutation_start": snapshot["mutation_start"],
                 "control_digest_count": len(snapshot["control_digests"]),
@@ -1340,6 +2998,9 @@ def evaluate_canonical_publication(
                 ),
                 "expected_policy_proof_digest": snapshot.get(
                     "expected_policy_proof_digest"
+                ),
+                "expected_payload_digest": snapshot.get(
+                    "expected_payload_digest"
                 ),
                 "source_rights_binding_required": True,
                 "source_rights_receipt_digest": snapshot["receipts"][
@@ -1388,15 +3049,301 @@ def require_canonical_publication(
     return decision.require_authorized()
 
 
+def _require_publisher_sealed_type(
+    value: Any,
+    *,
+    type_name: str,
+    method_name: str,
+    code_name: str,
+    label: str,
+) -> tuple[CanonicalMutationBinding, Any]:
+    """Attest one exact publisher type/method against loaded and source bytes."""
+
+    module_name = "ipfs_datasets_py.huggingface.publisher"
+    publisher_module = sys.modules.get(module_name)
+    publisher_namespace = (
+        vars(publisher_module) if publisher_module is not None else {}
+    )
+    expected_type = publisher_namespace.get(type_name)
+    expected_code = publisher_namespace.get(code_name)
+    expected_method = (
+        vars(expected_type).get(method_name)
+        if isinstance(expected_type, type)
+        else None
+    )
+    if (
+        publisher_module is None
+        or not isinstance(expected_type, type)
+        or type(value) is not expected_type
+        or getattr(expected_type, "__module__", None) != module_name
+        or getattr(expected_type, "__qualname__", None) != type_name
+        or getattr(expected_method, "__code__", None) is not expected_code
+    ):
+        raise PublicationRuntimeError(
+            f"canonical mutation requires the exact sealed State Laws {label}; "
+            "callbacks, aliases, partials, and subclasses are rejected"
+        )
+
+    loaded_source_name = str(publisher_namespace.get("__file__") or "").strip()
+    loaded_source = Path(loaded_source_name)
+    if (
+        not loaded_source_name
+        or loaded_source.is_symlink()
+        or not loaded_source.is_file()
+        or tuple(loaded_source.parts[-3:])
+        != ("ipfs_datasets_py", "huggingface", "publisher.py")
+    ):
+        raise PublicationRuntimeError(
+            f"sealed State Laws {label} source path is not canonical"
+        )
+    expected_source = loaded_source.resolve()
+    source_bytes = loaded_source.read_bytes()
+    source_digest = hashlib.sha256(source_bytes).hexdigest()
+    if source_digest != str(
+        publisher_namespace.get("_PUBLISHER_IMPORT_SOURCE_SHA256") or ""
+    ):
+        raise PublicationRuntimeError(
+            f"sealed State Laws {label} source changed after import"
+        )
+    try:
+        from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
+            _assert_loaded_executables_match_current_source,
+            _loaded_executable_sha256,
+        )
+
+        loaded_digest = _loaded_executable_sha256(expected_type)
+        _assert_loaded_executables_match_current_source(
+            {
+                f"state_laws_{label.replace(' ', '_')}": {
+                    "loaded_executable_sha256": loaded_digest,
+                    "source_file_sha256": source_digest,
+                    "source_path": str(expected_source),
+                    "target": expected_type,
+                    "fresh_import_file": str(expected_source),
+                    "fresh_import_module": module_name,
+                }
+            }
+        )
+    except PublicationRuntimeError:
+        raise
+    except Exception as exc:
+        raise PublicationRuntimeError(
+            f"sealed State Laws {label} failed loaded/current source attestation"
+        ) from exc
+    try:
+        binding = object.__getattribute__(value, "mutation_binding")
+    except Exception as exc:
+        raise PublicationRuntimeError(
+            f"sealed State Laws {label} omits its mutation binding"
+        ) from exc
+    if type(binding) is not CanonicalMutationBinding:
+        raise PublicationRuntimeError(
+            f"sealed State Laws {label} has no immutable mutation binding"
+        )
+    return binding, expected_method
+
+
+def _require_attested_mutation_executor(
+    mutation_executor: Any,
+) -> tuple[CanonicalMutationBinding, Any]:
+    """Accept only the source-attested State Laws preflight object."""
+
+    return _require_publisher_sealed_type(
+        mutation_executor,
+        type_name="_StateLawsCanonicalCommitPreflight",
+        method_name="prepare",
+        code_name="_STATE_LAWS_CANONICAL_COMMIT_PREFLIGHT_CODE",
+        label="commit preflight",
+    )
+
+
+def _require_attested_prepared_executor(
+    prepared_executor: Any,
+    *,
+    expected_binding: CanonicalMutationBinding,
+    expected_candidate_digest: str,
+    runtime_token: str,
+) -> Any:
+    """Accept only a deeply constrained capsule returned by sealed preflight."""
+
+    binding, prepared_call = _require_publisher_sealed_type(
+        prepared_executor,
+        type_name="_PreparedStateLawsCanonicalCommitExecutor",
+        method_name="__call__",
+        code_name="_STATE_LAWS_PREPARED_COMMIT_EXECUTOR_CODE",
+        label="prepared commit executor",
+    )
+    try:
+        candidate_digest = object.__getattribute__(
+            prepared_executor,
+            "canonical_candidate_digest",
+        )
+        canonical_message = object.__getattribute__(
+            prepared_executor,
+            "canonical_message",
+        )
+        operations = object.__getattribute__(
+            prepared_executor,
+            "operations_payload",
+        )
+        prepared_token = object.__getattribute__(
+            prepared_executor,
+            "runtime_token",
+        )
+    except Exception as exc:
+        raise PublicationRuntimeError(
+            "prepared State Laws executor omits exact inert fields"
+        ) from exc
+    if (
+        binding != expected_binding
+        or type(candidate_digest) is not str
+        or candidate_digest != expected_candidate_digest
+        or type(canonical_message) is not str
+        or not canonical_message
+        or type(operations) is not tuple
+        or not operations
+        or type(prepared_token) is not str
+        or prepared_token != runtime_token
+    ):
+        raise PublicationRuntimeError(
+            "prepared State Laws executor differs from the exact runtime mutation"
+        )
+    return prepared_call
+
+
+def _require_exact_mutation_binding(
+    request: CanonicalPublicationRequest,
+    snapshot: Mapping[str, Any],
+    executor_binding: CanonicalMutationBinding,
+) -> None:
+    """Bind the sealed executor to canonical controls and request constraints."""
+
+    request_binding = request.mutation_binding
+    if request_binding is None or request_binding != executor_binding:
+        raise PublicationRuntimeError(
+            "canonical request and sealed executor mutation bindings differ"
+        )
+    expected_repository = str(request.expected_dataset_repo_id or "").strip().casefold()
+    if (
+        request.authorize_mutation is not True
+        or request.phase != "state_main"
+        or snapshot.get("phase") != "state_main"
+        or snapshot.get("operation") != "additive_main_upload"
+        or executor_binding.method != "create_commit"
+        or executor_binding.repository_id != expected_repository
+        or executor_binding.repository_id
+        != str(snapshot.get("dataset_repo_id") or "").strip().casefold()
+        or executor_binding.repository_type != "dataset"
+        or executor_binding.revision != "main"
+        or request.expected_plan_digest != executor_binding.plan_digest
+        or request.expected_release_manifest_digest
+        != executor_binding.release_manifest_digest
+        or request.expected_policy_proof_digest
+        != executor_binding.policy_proof_digest
+        or snapshot.get("candidate_release_manifest_digest")
+        != executor_binding.release_manifest_digest
+        or snapshot.get("expected_payload_digest")
+        != executor_binding.payload_digest
+        or any(item.sha256 != item.local_sha256 for item in executor_binding.files)
+    ):
+        raise PublicationRuntimeError(
+            "sealed State Laws mutation is not bound to the exact canonical request"
+        )
+
+
+def _revalidate_mutation_inventory_before_callback(
+    repository_root: Path,
+    *,
+    expected_head: str,
+) -> dict[str, Any]:
+    """Bookend HEAD while validating one paired source/report capture."""
+
+    mutation_audit: Any = None
+    module_name = ""
+    try:
+        mutation_audit, module_name = _load_fresh_attested_verifier(
+            "mutation_audit"
+        )
+        root = _require_mutation_implementation_root(repository_root)
+        head_before = inspect_clean_head(root)
+        controls_before = {
+            MUTATION_AUDIT_REPORT_RELPATH: raw_file_digest(
+                read_canonical_bytes(root, MUTATION_AUDIT_REPORT_RELPATH)
+            ),
+            MUTATION_AUDIT_SCHEMA_RELPATH: raw_file_digest(
+                read_canonical_bytes(root, MUTATION_AUDIT_SCHEMA_RELPATH)
+            ),
+        }
+        audit_capture = mutation_audit.validate_frozen_mutation_capture(
+            repository_root=root
+        )
+        measured = audit_capture.report
+        source_projection = audit_capture.source_projection
+        controls_after = {
+            MUTATION_AUDIT_REPORT_RELPATH: raw_file_digest(
+                read_canonical_bytes(root, MUTATION_AUDIT_REPORT_RELPATH)
+            ),
+            MUTATION_AUDIT_SCHEMA_RELPATH: raw_file_digest(
+                read_canonical_bytes(root, MUTATION_AUDIT_SCHEMA_RELPATH)
+            ),
+        }
+        head_after = inspect_clean_head(root)
+    except Exception as exc:
+        raise PublicationRuntimeError(
+            f"final protected-write inventory verification failed: {exc}"
+        ) from exc
+    finally:
+        if mutation_audit is not None and module_name:
+            _discard_fresh_attested_verifier(mutation_audit, module_name)
+    if (
+        head_before != expected_head
+        or head_after != expected_head
+        or head_before != head_after
+        or controls_before != controls_after
+    ):
+        raise EvidenceRaceError(
+            "HEAD, mutation-audit controls, or audited source changed during "
+            "the final protected-write inventory verification"
+        )
+    return {
+        "inventory_digest_sha256": _production_candidate_report_digest(measured),
+        "source_file_count": len(source_projection),
+        "source_projection_digest_sha256": hashlib.sha256(
+            json.dumps(
+                source_projection,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode("utf-8")
+        ).hexdigest(),
+    }
+
+
+def _require_final_mutation_audit_binding(
+    candidate_audit: Any,
+    final_mutation_audit: Mapping[str, Any],
+) -> None:
+    """Require candidate inventory semantics and bytes to match one capture."""
+
+    if not isinstance(candidate_audit, Mapping) or any(
+        candidate_audit.get(key) != value
+        for key, value in final_mutation_audit.items()
+    ):
+        raise PublicationRuntimeError(
+            "LCR-084 candidate mutation audit differs from the final "
+            "protected-write inventory"
+        )
+
+
 def authorize_and_mutate_canonical(
     request: CanonicalPublicationRequest | Mapping[str, Any],
-    upload_callback: Callable[[PublicationGateDecision], T],
+    mutation_executor: Any,
 ) -> T:
-    """Callback-owning adapter for all four mutation phases.
+    """Execute one exact source-attested State Laws canonical commit.
 
-    Revalidates canonical evidence immediately before invoking *upload_callback*.
-    The callback is never invoked on any denial path and runs exactly once after
-    a fully canonical authorized request.
+    Canonical evidence is revalidated immediately before invoking the sealed
+    executor. Arbitrary callbacks, callable aliases, partials, and subclasses
+    are never granted protected-repository mutation authority.
     """
 
     _CanonicalPublicationRuntimeExecutable.assert_current()
@@ -1406,11 +3353,13 @@ def authorize_and_mutate_canonical(
     try:
         req = (
             request
-            if isinstance(request, CanonicalPublicationRequest)
+            if type(request) is CanonicalPublicationRequest
             else CanonicalPublicationRequest.from_mapping(request)
         )
         phase = req.phase
         environ = dict(req.environ or {})
+        _, runtime_token = obtain_token(environ)
+        req = replace(req, environ=MappingProxyType(environ))
     except PublicationGateError as exc:
         denied = _denied_decision(
             phase=phase,
@@ -1474,12 +3423,25 @@ def authorize_and_mutate_canonical(
             reason_codes=race.reason_codes,
             decision=race,
         )
+    if req.phase not in CANONICAL_MUTATION_EXECUTOR_PHASES:
+        raise PublicationRuntimeError(
+            f"canonical phase {req.phase!r} has no sealed mutation executor and "
+            "therefore fails closed"
+        )
+    executor_binding, prepare_method = _require_attested_mutation_executor(
+        mutation_executor
+    )
+    _require_mutation_implementation_root(second["repository_root"])
+    _require_exact_mutation_binding(req, second, executor_binding)
     details = dict(decision.details)
     details.update(
         {
             "runtime_task_id": TASK_ID,
             "head": first["head"],
             "principal": first["principal"],
+            "principal_authority_digest": first[
+                "principal_authority_digest"
+            ],
             "operation": first["operation"],
             "snapshot_fingerprint": _snapshot_fingerprint(first),
             "candidate_release_manifest_digest": first.get(
@@ -1488,6 +3450,9 @@ def authorize_and_mutate_canonical(
             "expected_plan_digest": first.get("expected_plan_digest"),
             "expected_policy_proof_digest": first.get(
                 "expected_policy_proof_digest"
+            ),
+            "expected_payload_digest": first.get(
+                "expected_payload_digest"
             ),
             "revalidated_before_callback": True,
             "source_rights_binding_required": True,
@@ -1522,7 +3487,99 @@ def authorize_and_mutate_canonical(
             reason_codes=("network_mutation.denied",),
             decision=bound,
         )
+    prepared_executor = prepare_method(
+        mutation_executor,
+        bound,
+        runtime_token,
+    )
+    prepared_call = _require_attested_prepared_executor(
+        prepared_executor,
+        expected_binding=executor_binding,
+        expected_candidate_digest=bound.final_manifest_digest,
+        runtime_token=runtime_token,
+    )
+    try:
+        final_snapshot = capture_canonical_snapshot(
+            req,
+            mutation_start=mutation_start,
+        )
+    except PublicationGateError as exc:
+        race = _denied_decision(
+            phase=req.phase,
+            reason_code="runtime.evidence_race",
+            message="canonical evidence changed during sealed mutation preflight",
+            environ=environ,
+            extra={"head_before": second.get("head")},
+        )
+        raise PublicationGateDeniedError(
+            race.message,
+            reason_codes=race.reason_codes,
+            decision=race,
+        ) from exc
+    if _snapshot_fingerprint(second) != _snapshot_fingerprint(final_snapshot):
+        race = _denied_decision(
+            phase=req.phase,
+            reason_code="runtime.evidence_race",
+            message="canonical evidence changed during sealed mutation preflight",
+            environ=environ,
+            extra={
+                "head_before": second["head"],
+                "head_after": final_snapshot["head"],
+            },
+        )
+        raise PublicationGateDeniedError(
+            race.message,
+            reason_codes=race.reason_codes,
+            decision=race,
+        )
+    _require_exact_mutation_binding(req, final_snapshot, executor_binding)
+    final_executor_binding, final_prepare_method = (
+        _require_attested_mutation_executor(mutation_executor)
+    )
+    final_prepared_call = _require_attested_prepared_executor(
+        prepared_executor,
+        expected_binding=executor_binding,
+        expected_candidate_digest=bound.final_manifest_digest,
+        runtime_token=runtime_token,
+    )
+    if (
+        final_executor_binding != executor_binding
+        or final_prepare_method is not prepare_method
+        or final_prepared_call is not prepared_call
+    ):
+        raise PublicationRuntimeError(
+            "sealed State Laws executor identity changed after final revalidation"
+        )
+    if final_snapshot["candidate_manifest"].get("schema") == (
+        PRODUCTION_MANIFEST_SCHEMA_V2
+    ):
+        _validate_lcr084_production_candidate(
+            Path(final_snapshot["repository_root"]),
+            read_canonical_json(
+                Path(final_snapshot["repository_root"]),
+                STATE_CANDIDATE_MANIFEST_RELPATH,
+            ),
+            phase=req.phase,
+            remeasure_production_evidence=True,
+            runtime_token=runtime_token,
+        )
+    final_mutation_audit = _revalidate_mutation_inventory_before_callback(
+        Path(final_snapshot["repository_root"]),
+        expected_head=final_snapshot["head"],
+    )
+    if final_snapshot["candidate_manifest"].get("schema") == (
+        PRODUCTION_MANIFEST_SCHEMA_V2
+    ):
+        candidate_audit = final_snapshot["candidate_manifest"].get(
+            "mutation_audit"
+        )
+        _require_final_mutation_audit_binding(
+            candidate_audit,
+            final_mutation_audit,
+        )
+    _CanonicalPublicationRuntimeExecutable.assert_current()
     from ipfs_datasets_py.huggingface.protected_repo_guard import (
+        _assert_canonical_runtime_authorization_consumed,
         _canonical_runtime_authorization,
     )
 
@@ -1531,8 +3588,23 @@ def authorize_and_mutate_canonical(
         phase=bound.phase,
         operation=bound.operation,
         final_manifest_digest=bound.final_manifest_digest,
-    ):
-        return upload_callback(bound)
+        mutation_binding=executor_binding,
+        preflight_executor=mutation_executor,
+        prepare_method=prepare_method,
+        prepared_executor=prepared_executor,
+        prepared_call=prepared_call,
+        principal=final_snapshot["principal"],
+        principal_authority_digest=final_snapshot[
+            "principal_authority_digest"
+        ],
+        principal_probe=req.principal_probe,
+        credential_identity=final_snapshot["credential_identity"],
+        credentials_scope=final_snapshot["credentials_scope"],
+        token_env=final_snapshot["token_env"],
+    ) as authorization:
+        result = prepared_call(prepared_executor)
+        _assert_canonical_runtime_authorization_consumed(authorization)
+        return result
 
 
 class _CanonicalPublicationRuntimeExecutable:
@@ -1542,6 +3614,32 @@ class _CanonicalPublicationRuntimeExecutable:
     AUTHORIZE_AND_MUTATE_CODE = authorize_and_mutate_canonical.__code__
 
     @staticmethod
+    def _code_projection(code):
+        constants = []
+        for item in code.co_consts:
+            nested_code = getattr(item, "co_code", None)
+            if nested_code is not None:
+                constants.append(
+                    {
+                        "nested_code": (
+                            _CanonicalPublicationRuntimeExecutable
+                            ._code_projection(item)
+                        )
+                    }
+                )
+            else:
+                constants.append({"literal": repr(item)})
+        return {
+            "co_code": list(code.co_code),
+            "co_consts": constants,
+            "co_flags": int(code.co_flags),
+            "co_names": list(code.co_names),
+            "co_nlocals": int(code.co_nlocals),
+            "co_stacksize": int(code.co_stacksize),
+            "co_varnames": list(code.co_varnames),
+        }
+
+    @staticmethod
     def _function_sha256(target):
         code = getattr(target, "__code__", None)
         if code is None:
@@ -1549,13 +3647,9 @@ class _CanonicalPublicationRuntimeExecutable:
                 "canonical runtime target is not a loaded function"
             )
         projection = {
-            "co_code": list(code.co_code),
-            "co_consts": [repr(item) for item in code.co_consts],
-            "co_flags": int(code.co_flags),
-            "co_names": list(code.co_names),
-            "co_nlocals": int(code.co_nlocals),
-            "co_stacksize": int(code.co_stacksize),
-            "co_varnames": list(code.co_varnames),
+            "code": _CanonicalPublicationRuntimeExecutable._code_projection(
+                code
+            ),
             "defaults": repr(getattr(target, "__defaults__", None)),
             "kwdefaults": repr(getattr(target, "__kwdefaults__", None)),
             "qualname": str(getattr(target, "__qualname__", target.__name__)),
@@ -1573,8 +3667,31 @@ class _CanonicalPublicationRuntimeExecutable:
     def current_executable_identities(cls):
         module = sys.modules[__name__]
         names = (
+            "_authority_git_invocation",
             "_candidate_release_manifest_digest",
+            "_discard_fresh_attested_verifier",
+            "_isolated_descendant_identities",
+            "_json_object_without_duplicate_keys",
+            "_load_fresh_attested_verifier",
+            "_isolated_lcr084_candidate_remeasurement",
+            "_git",
+            "_materialize_lcr084_source_snapshot",
+            "_process_identity_table",
+            "_production_candidate_report_digest",
+            "_revalidate_mutation_inventory_before_callback",
+            "_require_final_mutation_audit_binding",
+            "_require_attested_mutation_executor",
+            "_require_exact_mutation_binding",
+            "_require_mutation_implementation_root",
+            "_require_trusted_lcr084_snapshot_boundary",
+            "_run_bounded_isolated_process",
+            "_signal_process_identity",
             "_snapshot_fingerprint",
+            "_terminate_isolated_process_tree",
+            "_validate_lcr084_production_candidate",
+            "_validate_lcr084_publication_chain",
+            "_validated_native_phase_receipt",
+            "_write_private_snapshot_file",
             "authorize_and_mutate_canonical",
             "build_gate_request",
             "capture_canonical_snapshot",
@@ -1582,6 +3699,7 @@ class _CanonicalPublicationRuntimeExecutable:
             "inspect_clean_head",
             "load_main_seal",
             "load_receipt",
+            "read_canonical_json",
         )
         return {
             name: cls._function_sha256(getattr(module, name))
@@ -1602,11 +3720,23 @@ _CanonicalPublicationRuntimeExecutable.EXECUTABLE_IMPORT_SHA256 = MappingProxyTy
     _CanonicalPublicationRuntimeExecutable.current_executable_identities()
 )
 
+from ipfs_datasets_py.huggingface.protected_repo_guard import (
+    _register_canonical_runtime_trust_anchor,
+)
+
+_register_canonical_runtime_trust_anchor(
+    runtime_module=sys.modules[__name__],
+    authorizer=authorize_and_mutate_canonical,
+    runtime_executable=_CanonicalPublicationRuntimeExecutable,
+)
+del _register_canonical_runtime_trust_anchor
+
 
 __all__ = [
     "ALLOWED_RECEIPT_SCHEMAS",
     "AUTHORITATIVE_OVERRIDE_KEYS",
     "CANONICAL_PATHS",
+    "CANONICAL_MUTATION_EXECUTOR_PHASES",
     "GOAL_ID",
     "PREDECESSOR_GATE_TASK_ID",
     "PREDECESSOR_RIGHTS_TASK_ID",

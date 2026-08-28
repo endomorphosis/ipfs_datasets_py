@@ -40,6 +40,9 @@ def _bootstrap_pythonpath() -> None:
 
 _bootstrap_pythonpath()
 
+from ipfs_datasets_py.huggingface.protected_repo_guard import (
+    require_unprotected_or_runtime,
+)
 from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import (
     get_canonical_legal_corpus,
 )
@@ -2071,6 +2074,9 @@ def _publish_state_parquet_file(
     create_repo: bool,
     commit_message: str,
 ) -> Dict[str, Any]:
+    require_unprotected_or_runtime(repo_id, method="create_repo")
+    require_unprotected_or_runtime(repo_id, method="upload_file")
+
     from huggingface_hub import HfApi
 
     if not state_parquet_path.exists():
@@ -2128,6 +2134,9 @@ def _sync_stale_local_state_shards_to_hf(
     stable remote mtime for every shard, while hash mismatch tells us the
     remote is stale relative to local content.
     """
+    require_unprotected_or_runtime(repo_id, method="create_repo")
+    require_unprotected_or_runtime(repo_id, method="upload_file")
+
     try:
         from huggingface_hub import HfApi
     except Exception as exc:

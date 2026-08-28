@@ -1351,11 +1351,31 @@ import json
 from pathlib import Path
 import sys
 
+payload = json.load(sys.stdin)
+runtime_sys_path = payload.get("sys_path")
+if not isinstance(runtime_sys_path, list) or any(
+    not isinstance(item, str) for item in runtime_sys_path
+):
+    raise RuntimeError("fresh correspondence sys.path snapshot is malformed")
+source_import_root = payload.get("source_import_root")
+if (
+    not isinstance(source_import_root, str)
+    or not source_import_root
+    or not Path(source_import_root).is_absolute()
+    or not Path(source_import_root).is_dir()
+):
+    raise RuntimeError("fresh correspondence source import root is malformed")
+sys.path[:] = [source_import_root] + [
+    item for item in runtime_sys_path if item != source_import_root
+]
+
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
     _loaded_executable_sha256,
 )
 
-descriptors = json.load(sys.stdin)
+descriptors = payload.get("descriptors")
+if not isinstance(descriptors, list):
+    raise RuntimeError("fresh correspondence descriptor list is malformed")
 result = {}
 for descriptor in descriptors:
     if descriptor.get("fresh_import_file"):
@@ -1401,7 +1421,16 @@ print(json.dumps(result, sort_keys=True, separators=(",", ":")))
             child_env["PYTHONPYCACHEPREFIX"] = pycache_root
             completed = subprocess.run(
                 [sys.executable, "-c", child_program],
-                input=json.dumps(pending, sort_keys=True),
+                input=json.dumps(
+                    {
+                        "descriptors": pending,
+                        "source_import_root": str(
+                            Path(__file__).resolve().parents[4]
+                        ),
+                        "sys_path": [str(item) for item in sys.path],
+                    },
+                    sort_keys=True,
+                ),
                 text=True,
                 capture_output=True,
                 env=child_env,

@@ -27,15 +27,87 @@ import os
 import re
 import shutil
 import stat
+import sys
 import tempfile
+from collections import OrderedDict
 from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
 from dataclasses import dataclass, field
 from hashlib import sha256
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, BinaryIO, Final
 
+try:  # Import pins only executable identity; it performs no Hub contact.
+    import requests as _CANONICAL_REQUESTS_MODULE
+    from huggingface_hub import CommitOperationAdd as _CANONICAL_COMMIT_ADD_TYPE
+    from huggingface_hub.hf_api import HfApi as _CANONICAL_HF_API_TYPE
+    from huggingface_hub.lfs import UploadInfo as _CANONICAL_UPLOAD_INFO_TYPE
+    from huggingface_hub.utils import _http as _CANONICAL_HF_HTTP_MODULE
+    from requests.cookies import RequestsCookieJar as _CANONICAL_COOKIE_JAR_TYPE
+    from requests.sessions import Session as _CANONICAL_REQUESTS_SESSION_TYPE
+    from requests.structures import CaseInsensitiveDict as _CANONICAL_HEADER_DICT_TYPE
+except ImportError:  # pragma: no cover - optional dependency fail-closed path
+    _CANONICAL_REQUESTS_MODULE = None
+    _CANONICAL_COMMIT_ADD_TYPE = None
+    _CANONICAL_HF_API_TYPE = None
+    _CANONICAL_HF_HTTP_MODULE = None
+    _CANONICAL_UPLOAD_INFO_TYPE = None
+    _CANONICAL_COOKIE_JAR_TYPE = None
+    _CANONICAL_HEADER_DICT_TYPE = None
+    _CANONICAL_REQUESTS_SESSION_TYPE = None
+
+_CANONICAL_HF_GET_SESSION = (
+    getattr(_CANONICAL_HF_HTTP_MODULE, "get_session", None)
+    if _CANONICAL_HF_HTTP_MODULE is not None
+    else None
+)
+_CANONICAL_HF_RESET_SESSIONS = (
+    getattr(_CANONICAL_HF_HTTP_MODULE, "reset_sessions", None)
+    if _CANONICAL_HF_HTTP_MODULE is not None
+    else None
+)
+_CANONICAL_HF_SESSION_CACHE = (
+    getattr(_CANONICAL_HF_HTTP_MODULE, "_get_session_from_cache", None)
+    if _CANONICAL_HF_HTTP_MODULE is not None
+    else None
+)
+_CANONICAL_HF_SESSION_CACHE_FUNCTION = getattr(
+    _CANONICAL_HF_SESSION_CACHE,
+    "__wrapped__",
+    None,
+)
+_CANONICAL_HF_BACKEND_FACTORY = (
+    getattr(_CANONICAL_HF_HTTP_MODULE, "_GLOBAL_BACKEND_FACTORY", None)
+    if _CANONICAL_HF_HTTP_MODULE is not None
+    else None
+)
+_CANONICAL_HF_ADAPTER_TYPE = (
+    getattr(_CANONICAL_HF_HTTP_MODULE, "UniqueRequestIdAdapter", None)
+    if _CANONICAL_HF_HTTP_MODULE is not None
+    else None
+)
+_CANONICAL_REQUESTS_DEFAULT_HEADERS: Final[tuple[tuple[str, str], ...]] = (
+    tuple(
+        sorted(
+            (str(key).casefold(), str(value))
+            for key, value in _CANONICAL_REQUESTS_MODULE.utils.default_headers().items()
+        )
+    )
+    if _CANONICAL_REQUESTS_MODULE is not None
+    else ()
+)
+
+from .protected_repo_guard import (
+    PROTECTED_REPOS,
+    PROTECTED_WRITE_METHODS,
+    CanonicalMutationBinding,
+    CanonicalMutationFileBinding,
+    guarded_write,
+    is_protected_repo,
+    require_unprotected_or_runtime,
+)
 from .publication_profile import (
     ABBY_VOICE_CANONICAL_RELEASE_SCHEMA,
     ABBY_VOICE_COMMIT_MESSAGE,
@@ -46,7 +118,6 @@ from .publication_profile import (
     ABBY_VOICE_RECEIPT_SCHEMA,
     ABBY_VOICE_RELEASE_PREFIX_TEMPLATE,
     BASE_PROHIBITED_OPERATIONS,
-    DEFAULT_TARGET_REVISION as PROFILE_DEFAULT_TARGET_REVISION,
     HuggingFacePublicationProfile,
     PublicationProfileError,
     abby_voice_publication_profile,
@@ -54,10 +125,8 @@ from .publication_profile import (
     is_known_receipt_schema,
     patent_legal_publication_profile,
 )
-from .protected_repo_guard import (
-    PROTECTED_REPOS,
-    is_protected_repo,
-    require_unprotected_or_runtime,
+from .publication_profile import (
+    DEFAULT_TARGET_REVISION as PROFILE_DEFAULT_TARGET_REVISION,
 )
 from .release import (
     canonical_json_bytes,
@@ -131,23 +200,155 @@ _STATE_LAWS_PROTECTED_REPOSITORIES: Final = frozenset(
     for repository_id in PROTECTED_REPOS
     if repository_id.rsplit("/", 1)[-1] == "ipfs_state_laws"
 )
-_WRITE_API_METHODS: Final[frozenset[str]] = frozenset(
-    {
-        "create_commit",
-        "upload_file",
-        "upload_folder",
-        "delete_file",
-        "delete_folder",
-        "create_branch",
-        "create_tag",
-        "move",
-        "super_squash_history",
-    }
+_WRITE_API_METHODS: Final[frozenset[str]] = PROTECTED_WRITE_METHODS
+_PROTECTED_TRANSPORT_ENV_NAMES: Final = (
+    "ALL_PROXY",
+    "CURL_CA_BUNDLE",
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "NETRC",
+    "NO_PROXY",
+    "REQUESTS_CA_BUNDLE",
+    "all_proxy",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy",
 )
 
 
 class HuggingFacePublicationError(ValueError):
     """Raised when a publication plan, commit, or verification fails closed."""
+
+
+def _pinned_class_executable_surface(target: type | None) -> Mapping[str, Any]:
+    if target is None:
+        return MappingProxyType({})
+    return MappingProxyType(
+        {
+            name: value
+            for name, value in vars(target).items()
+            if callable(value)
+            or isinstance(value, (classmethod, property, staticmethod))
+        }
+    )
+
+
+_CANONICAL_HF_API_METHOD_NAMES: Final = (
+    "__init__",
+    "auth_check",
+    "create_commit",
+    "get_paths_info",
+    "repo_info",
+    "whoami",
+)
+_CANONICAL_HF_API_METHODS: Final[Mapping[str, Any]] = MappingProxyType(
+    {
+        name: inspect.getattr_static(_CANONICAL_HF_API_TYPE, name)
+        for name in _CANONICAL_HF_API_METHOD_NAMES
+    }
+    if _CANONICAL_HF_API_TYPE is not None
+    else {}
+)
+_CANONICAL_HF_API_EXECUTABLE_SURFACE: Final = (
+    _pinned_class_executable_surface(_CANONICAL_HF_API_TYPE)
+)
+_CANONICAL_COMMIT_ADD_EXECUTABLE_SURFACE: Final = (
+    _pinned_class_executable_surface(_CANONICAL_COMMIT_ADD_TYPE)
+)
+_CANONICAL_UPLOAD_INFO_EXECUTABLE_SURFACE: Final = (
+    _pinned_class_executable_surface(_CANONICAL_UPLOAD_INFO_TYPE)
+)
+_CANONICAL_REQUESTS_SESSION_EXECUTABLE_SURFACE: Final = (
+    _pinned_class_executable_surface(_CANONICAL_REQUESTS_SESSION_TYPE)
+)
+_CANONICAL_COOKIE_JAR_EXECUTABLE_SURFACE: Final = (
+    _pinned_class_executable_surface(_CANONICAL_COOKIE_JAR_TYPE)
+)
+_CANONICAL_HEADER_DICT_EXECUTABLE_SURFACE: Final = (
+    _pinned_class_executable_surface(_CANONICAL_HEADER_DICT_TYPE)
+)
+_CANONICAL_HF_ADAPTER_EXECUTABLE_SURFACE: Final = (
+    _pinned_class_executable_surface(_CANONICAL_HF_ADAPTER_TYPE)
+)
+_CANONICAL_HF_BACKEND_FACTORY_CODE: Final = getattr(
+    _CANONICAL_HF_BACKEND_FACTORY,
+    "__code__",
+    None,
+)
+_CANONICAL_HF_SESSION_CACHE_CODE: Final = getattr(
+    _CANONICAL_HF_SESSION_CACHE_FUNCTION,
+    "__code__",
+    None,
+)
+_CANONICAL_HF_GET_SESSION_CODE: Final = getattr(
+    _CANONICAL_HF_GET_SESSION,
+    "__code__",
+    None,
+)
+_CANONICAL_HF_RESET_SESSIONS_CODE: Final = getattr(
+    _CANONICAL_HF_RESET_SESSIONS,
+    "__code__",
+    None,
+)
+
+
+def _pin_hf_transport_dependency_graph(
+    roots: Sequence[Any],
+) -> tuple[tuple[Any, ...], tuple[Any, ...], tuple[Any, ...]]:
+    """Pin callable globals/closures reachable from the exact Hub methods."""
+
+    pending = list(roots)
+    seen: set[int] = set()
+    functions: list[tuple[Any, Any]] = []
+    globals_edges: list[tuple[Any, str, Any]] = []
+    closure_edges: list[tuple[Any, int, Any]] = []
+    while pending:
+        function = pending.pop()
+        if not inspect.isfunction(function) or id(function) in seen:
+            continue
+        seen.add(id(function))
+        functions.append((function, function.__code__))
+        namespace = function.__globals__
+        for name in function.__code__.co_names:
+            if name not in namespace:
+                continue
+            dependency = namespace[name]
+            if not callable(dependency):
+                continue
+            globals_edges.append((function, name, dependency))
+            if (
+                inspect.isfunction(dependency)
+                and str(getattr(dependency, "__module__", "")).startswith(
+                    "huggingface_hub"
+                )
+            ):
+                pending.append(dependency)
+        closure = function.__closure__ or ()
+        for index, cell in enumerate(closure):
+            try:
+                dependency = cell.cell_contents
+            except ValueError:
+                continue
+            if not callable(dependency):
+                continue
+            closure_edges.append((function, index, dependency))
+            if (
+                inspect.isfunction(dependency)
+                and str(getattr(dependency, "__module__", "")).startswith(
+                    "huggingface_hub"
+                )
+            ):
+                pending.append(dependency)
+    return (
+        tuple(functions),
+        tuple(globals_edges),
+        tuple(closure_edges),
+    )
+
+
+_CANONICAL_HF_TRANSPORT_DEPENDENCY_GRAPH: Final = (
+    _pin_hf_transport_dependency_graph(tuple(_CANONICAL_HF_API_METHODS.values()))
+)
 
 
 def _text(value: Any, *, label: str) -> str:
@@ -1012,6 +1213,8 @@ class _StateLawsLivePolicyBoundary:
     ) -> dict[str, Any]:
         from ..processors.legal_data import (
             legal_corpora_publication_runtime as runtime_module,
+        )
+        from ..processors.legal_data import (
             state_laws_publication_package as package_module,
         )
 
@@ -1090,6 +1293,899 @@ class _StateLawsLivePolicyBoundary:
             local_root=local_root,
             final_boundary_identity=boundary_identities,
         )
+
+
+def _assert_canonical_hf_api_executables_current() -> None:
+    if (
+        _CANONICAL_HF_API_TYPE is None
+        or _CANONICAL_COMMIT_ADD_TYPE is None
+        or _CANONICAL_UPLOAD_INFO_TYPE is None
+        or _CANONICAL_HF_HTTP_MODULE is None
+        or _CANONICAL_REQUESTS_MODULE is None
+        or _CANONICAL_REQUESTS_SESSION_TYPE is None
+        or _CANONICAL_COOKIE_JAR_TYPE is None
+        or _CANONICAL_HEADER_DICT_TYPE is None
+        or _CANONICAL_HF_ADAPTER_TYPE is None
+    ):
+        raise HuggingFacePublicationError(
+            "State Laws live publication requires the pinned huggingface_hub transport"
+        )
+    for target, pinned, label in (
+        (
+            _CANONICAL_HF_API_TYPE,
+            _CANONICAL_HF_API_EXECUTABLE_SURFACE,
+            "HfApi",
+        ),
+        (
+            _CANONICAL_COMMIT_ADD_TYPE,
+            _CANONICAL_COMMIT_ADD_EXECUTABLE_SURFACE,
+            "CommitOperationAdd",
+        ),
+        (
+            _CANONICAL_UPLOAD_INFO_TYPE,
+            _CANONICAL_UPLOAD_INFO_EXECUTABLE_SURFACE,
+            "UploadInfo",
+        ),
+        (
+            _CANONICAL_REQUESTS_SESSION_TYPE,
+            _CANONICAL_REQUESTS_SESSION_EXECUTABLE_SURFACE,
+            "requests.Session",
+        ),
+        (
+            _CANONICAL_COOKIE_JAR_TYPE,
+            _CANONICAL_COOKIE_JAR_EXECUTABLE_SURFACE,
+            "RequestsCookieJar",
+        ),
+        (
+            _CANONICAL_HEADER_DICT_TYPE,
+            _CANONICAL_HEADER_DICT_EXECUTABLE_SURFACE,
+            "CaseInsensitiveDict",
+        ),
+        (
+            _CANONICAL_HF_ADAPTER_TYPE,
+            _CANONICAL_HF_ADAPTER_EXECUTABLE_SURFACE,
+            "UniqueRequestIdAdapter",
+        ),
+    ):
+        current = _pinned_class_executable_surface(target)
+        if set(current) != set(pinned) or any(
+            current[name] is not pinned[name] for name in pinned
+        ):
+            raise HuggingFacePublicationError(
+                f"canonical {label} executable surface drifted after import"
+            )
+    if any(
+        inspect.getattr_static(_CANONICAL_HF_API_TYPE, name) is not method
+        for name, method in _CANONICAL_HF_API_METHODS.items()
+    ):
+        raise HuggingFacePublicationError(
+            "canonical HfApi method identity drifted after import"
+        )
+    if (
+        getattr(_CANONICAL_HF_HTTP_MODULE, "get_session", None)
+        is not _CANONICAL_HF_GET_SESSION
+        or getattr(_CANONICAL_HF_HTTP_MODULE, "reset_sessions", None)
+        is not _CANONICAL_HF_RESET_SESSIONS
+        or getattr(_CANONICAL_HF_HTTP_MODULE, "_get_session_from_cache", None)
+        is not _CANONICAL_HF_SESSION_CACHE
+        or getattr(_CANONICAL_HF_SESSION_CACHE, "__wrapped__", None)
+        is not _CANONICAL_HF_SESSION_CACHE_FUNCTION
+        or getattr(_CANONICAL_HF_HTTP_MODULE, "_GLOBAL_BACKEND_FACTORY", None)
+        is not _CANONICAL_HF_BACKEND_FACTORY
+        or getattr(_CANONICAL_HF_HTTP_MODULE, "UniqueRequestIdAdapter", None)
+        is not _CANONICAL_HF_ADAPTER_TYPE
+        or getattr(_CANONICAL_REQUESTS_MODULE, "Session", None)
+        is not _CANONICAL_REQUESTS_SESSION_TYPE
+        or getattr(_CANONICAL_REQUESTS_MODULE.sessions, "Session", None)
+        is not _CANONICAL_REQUESTS_SESSION_TYPE
+        or getattr(_CANONICAL_REQUESTS_MODULE.cookies, "RequestsCookieJar", None)
+        is not _CANONICAL_COOKIE_JAR_TYPE
+        or getattr(_CANONICAL_REQUESTS_MODULE.structures, "CaseInsensitiveDict", None)
+        is not _CANONICAL_HEADER_DICT_TYPE
+        or getattr(_CANONICAL_HF_BACKEND_FACTORY, "__code__", None)
+        is not _CANONICAL_HF_BACKEND_FACTORY_CODE
+        or getattr(_CANONICAL_HF_SESSION_CACHE_FUNCTION, "__code__", None)
+        is not _CANONICAL_HF_SESSION_CACHE_CODE
+        or getattr(_CANONICAL_HF_GET_SESSION, "__code__", None)
+        is not _CANONICAL_HF_GET_SESSION_CODE
+        or getattr(_CANONICAL_HF_RESET_SESSIONS, "__code__", None)
+        is not _CANONICAL_HF_RESET_SESSIONS_CODE
+        or getattr(_CANONICAL_HF_BACKEND_FACTORY, "__globals__", {}).get(
+            "requests"
+        )
+        is not _CANONICAL_REQUESTS_MODULE
+        or getattr(_CANONICAL_HF_SESSION_CACHE_FUNCTION, "__globals__", {}).get(
+            "_GLOBAL_BACKEND_FACTORY"
+        )
+        is not _CANONICAL_HF_BACKEND_FACTORY
+    ):
+        raise HuggingFacePublicationError(
+            "canonical Hugging Face Session factory/cache identity drifted after import"
+        )
+    functions, globals_edges, closure_edges = (
+        _CANONICAL_HF_TRANSPORT_DEPENDENCY_GRAPH
+    )
+    if any(function.__code__ is not code for function, code in functions):
+        raise HuggingFacePublicationError(
+            "canonical Hugging Face transport callable code drifted after import"
+        )
+    if any(
+        function.__globals__.get(name) is not dependency
+        for function, name, dependency in globals_edges
+    ):
+        raise HuggingFacePublicationError(
+            "canonical Hugging Face transport global dependency drifted after import"
+        )
+    for function, index, dependency in closure_edges:
+        closure = function.__closure__ or ()
+        try:
+            current = closure[index].cell_contents
+        except (IndexError, ValueError) as exc:
+            raise HuggingFacePublicationError(
+                "canonical Hugging Face transport closure dependency drifted after import"
+            ) from exc
+        if current is not dependency:
+            raise HuggingFacePublicationError(
+                "canonical Hugging Face transport closure dependency drifted after import"
+            )
+
+
+def _fresh_canonical_hf_session() -> Any:
+    """Discard cached hooks/config and return one exact, environment-free Session."""
+
+    _assert_canonical_hf_api_executables_current()
+    configured = tuple(
+        name
+        for name in _PROTECTED_TRANSPORT_ENV_NAMES
+        if str(os.environ.get(name) or "").strip()
+    )
+    if configured:
+        raise HuggingFacePublicationError(
+            "protected State Laws transport rejects proxy, CA-bundle, netrc, "
+            "and related environment configuration: " + ", ".join(configured)
+        )
+    _CANONICAL_HF_RESET_SESSIONS()
+    session = _CANONICAL_HF_GET_SESSION()
+    if (
+        type(session) is not _CANONICAL_REQUESTS_SESSION_TYPE
+        or _CANONICAL_HF_GET_SESSION() is not session
+    ):
+        raise HuggingFacePublicationError(
+            "canonical Hugging Face Session factory returned a non-exact session"
+        )
+    state = object.__getattribute__(session, "__dict__")
+    if type(state) is not dict or set(state) != {
+        "adapters",
+        "auth",
+        "cert",
+        "cookies",
+        "headers",
+        "hooks",
+        "max_redirects",
+        "params",
+        "proxies",
+        "stream",
+        "trust_env",
+        "verify",
+    }:
+        raise HuggingFacePublicationError(
+            "canonical Hugging Face Session has an overridden attribute surface"
+        )
+    headers = state["headers"]
+    hooks = state["hooks"]
+    cookies = state["cookies"]
+    adapters = state["adapters"]
+    header_items = tuple(
+        sorted((str(key).casefold(), str(value)) for key, value in headers.items())
+    ) if type(headers) is _CANONICAL_HEADER_DICT_TYPE else ()
+    if (
+        header_items != _CANONICAL_REQUESTS_DEFAULT_HEADERS
+        or state["auth"] is not None
+        or type(state["proxies"]) is not dict
+        or state["proxies"]
+        or type(hooks) is not dict
+        or set(hooks) != {"response"}
+        or type(hooks["response"]) is not list
+        or hooks["response"]
+        or type(state["params"]) is not dict
+        or state["params"]
+        or state["stream"] is not False
+        or state["verify"] is not True
+        or state["cert"] is not None
+        or type(state["max_redirects"]) is not int
+        or isinstance(state["max_redirects"], bool)
+        or state["max_redirects"] != 30
+        or state["trust_env"] is not True
+        or type(cookies) is not _CANONICAL_COOKIE_JAR_TYPE
+        or len(cookies) != 0
+        or type(adapters) is not OrderedDict
+        or tuple(adapters) != ("https://", "http://")
+    ):
+        raise HuggingFacePublicationError(
+            "canonical Hugging Face Session factory returned mutable custom config"
+        )
+    for adapter in adapters.values():
+        adapter_state = object.__getattribute__(adapter, "__dict__")
+        retries = adapter_state.get("max_retries") if type(adapter_state) is dict else None
+        if (
+            type(adapter) is not _CANONICAL_HF_ADAPTER_TYPE
+            or type(adapter_state) is not dict
+            or set(adapter_state) != {
+                "_pool_block",
+                "_pool_connections",
+                "_pool_maxsize",
+                "config",
+                "max_retries",
+                "poolmanager",
+                "proxy_manager",
+            }
+            or adapter_state["config"] != {}
+            or adapter_state["proxy_manager"] != {}
+            or adapter_state["_pool_connections"] != 10
+            or adapter_state["_pool_maxsize"] != 10
+            or adapter_state["_pool_block"] is not False
+            or getattr(retries, "total", None) != 0
+            or getattr(retries, "read", None) is not False
+        ):
+            raise HuggingFacePublicationError(
+                "canonical Hugging Face Session has custom adapters"
+            )
+    state["trust_env"] = False
+    if (
+        _CANONICAL_HF_GET_SESSION() is not session
+        or object.__getattribute__(session, "__dict__").get("trust_env") is not False
+    ):
+        raise HuggingFacePublicationError(
+            "canonical Hugging Face Session did not retain its exact safe config"
+        )
+    return session
+
+
+def _new_canonical_hf_api(runtime_token: str) -> Any:
+    """Construct a fixed client whose only credential is the runtime token."""
+
+    if (
+        type(runtime_token) is not str
+        or not runtime_token
+        or runtime_token.strip() != runtime_token
+    ):
+        raise HuggingFacePublicationError(
+            "canonical HfApi requires the exact non-empty runtime token"
+        )
+    fresh = object.__new__(_CANONICAL_HF_API_TYPE)
+    _CANONICAL_HF_API_METHODS["__init__"](
+        fresh,
+        endpoint="https://huggingface.co",
+        token=runtime_token,
+        library_name=None,
+        library_version=None,
+        user_agent=None,
+        headers=None,
+    )
+    state = object.__getattribute__(fresh, "__dict__")
+    if (
+        type(fresh) is not _CANONICAL_HF_API_TYPE
+        or type(state) is not dict
+        or state.get("token") != runtime_token
+        or state.get("headers") is not None
+        or state.get("endpoint") != "https://huggingface.co"
+        or state.get("_thread_pool") is not None
+    ):
+        raise HuggingFacePublicationError("canonical HfApi construction drifted")
+    return fresh
+
+
+def _require_canonical_state_laws_hf_api(
+    api: Any,
+    *,
+    runtime_token: str,
+) -> Any:
+    """Validate an exact inert template, then bind a fresh client to one token."""
+
+    _assert_canonical_hf_api_executables_current()
+    if type(api) is not _CANONICAL_HF_API_TYPE:
+        raise HuggingFacePublicationError(
+            "protected State Laws publication rejects fake, subclassed, wrapped, "
+            "or overridden Hugging Face API clients"
+        )
+    state = object.__getattribute__(api, "__dict__")
+    allowed = {
+        "_thread_pool",
+        "endpoint",
+        "headers",
+        "library_name",
+        "library_version",
+        "token",
+        "user_agent",
+    }
+    if type(state) is not dict or set(state) != allowed:
+        raise HuggingFacePublicationError(
+            "protected State Laws HfApi instance has an overridden attribute surface"
+        )
+    endpoint = state["endpoint"]
+    token = state["token"]
+    library_name = state["library_name"]
+    library_version = state["library_version"]
+    user_agent = state["user_agent"]
+    headers = state["headers"]
+    if endpoint != "https://huggingface.co":
+        raise HuggingFacePublicationError(
+            "protected State Laws publication requires the canonical Hugging Face endpoint"
+        )
+    if token is not None and (type(token) is not str or token != runtime_token):
+        raise HuggingFacePublicationError("canonical HfApi token configuration is unsafe")
+    if library_name is not None or library_version is not None:
+        raise HuggingFacePublicationError(
+            "canonical HfApi library identity configuration is unsafe"
+        )
+    if user_agent is not None:
+        raise HuggingFacePublicationError(
+            "canonical HfApi user-agent configuration is unsafe"
+        )
+    if headers is not None and (type(headers) is not dict or headers):
+        raise HuggingFacePublicationError("canonical HfApi headers are unsafe")
+    if state["_thread_pool"] is not None:
+        raise HuggingFacePublicationError(
+            "injected HfApi already owns mutable transport state"
+        )
+
+    return _new_canonical_hf_api(runtime_token)
+
+
+def _canonical_hf_api_read(
+    api: Any,
+    method: str,
+    runtime_token: str,
+    /,
+    **kwargs: Any,
+) -> Any:
+    _assert_canonical_hf_api_executables_current()
+    if type(api) is not _CANONICAL_HF_API_TYPE or method not in {
+        "auth_check",
+        "get_paths_info",
+        "repo_info",
+        "whoami",
+    }:
+        raise HuggingFacePublicationError("noncanonical HfApi read invocation")
+    state = object.__getattribute__(api, "__dict__")
+    if (
+        type(state) is not dict
+        or state.get("token") != runtime_token
+        or state.get("headers") is not None
+    ):
+        raise HuggingFacePublicationError(
+            "canonical HfApi read credential differs from the runtime token"
+        )
+    if "token" in kwargs:
+        raise HuggingFacePublicationError(
+            "canonical HfApi read token must be supplied by the sealed boundary"
+        )
+    session = _fresh_canonical_hf_session()
+    if _CANONICAL_HF_GET_SESSION() is not session:
+        raise HuggingFacePublicationError(
+            "canonical HfApi read lost its exact fresh Session"
+        )
+    return _CANONICAL_HF_API_METHODS[method](
+        api,
+        token=runtime_token,
+        **kwargs,
+    )
+
+
+def _canonical_hf_api_create_commit(
+    runtime_token: str,
+    /,
+    **kwargs: Any,
+) -> Any:
+    """The only source-attested transport primitive permitted under authority."""
+
+    _assert_canonical_hf_api_executables_current()
+    if "token" in kwargs:
+        raise HuggingFacePublicationError(
+            "canonical create_commit token must be supplied by the sealed boundary"
+        )
+    api = _new_canonical_hf_api(runtime_token)
+    if object.__getattribute__(api, "__dict__").get("token") != runtime_token:
+        raise HuggingFacePublicationError(
+            "canonical create_commit client lost the exact runtime token"
+        )
+    session = _fresh_canonical_hf_session()
+    if _CANONICAL_HF_GET_SESSION() is not session:
+        raise HuggingFacePublicationError(
+            "canonical create_commit lost its exact fresh Session"
+        )
+    return _CANONICAL_HF_API_METHODS["create_commit"](
+        api,
+        token=runtime_token,
+        **kwargs,
+    )
+
+
+def _canonical_state_laws_parent_and_prefix_empty(
+    api: Any,
+    *,
+    publisher: HuggingFaceReleasePublisher,
+    plan: PublicationPlan,
+    runtime_token: str,
+) -> str:
+    if not plan.audited_parent_commit:
+        raise HuggingFacePublicationError(
+            "live publication requires audited_parent_commit in the approved plan"
+        )
+    try:
+        info = _canonical_hf_api_read(
+            api,
+            "repo_info",
+            runtime_token,
+            repo_id=publisher.repository_id,
+            repo_type=publisher.repository_type,
+            revision=plan.target_revision,
+        )
+    except Exception as exc:
+        raise HuggingFacePublicationError(
+            f"cannot resolve the current Hugging Face parent commit: {exc}"
+        ) from exc
+    current = _extract_repo_commit_sha(info)
+    if current != plan.audited_parent_commit:
+        raise HuggingFacePublicationError(
+            "Hugging Face repository advanced after audit: "
+            f"approved parent {plan.audited_parent_commit}, current {current}; "
+            "rerun the dry-run and obtain approval for the new plan_digest"
+        )
+
+    def paths_info(paths: Sequence[str]) -> list[Any]:
+        normalized = tuple(
+            _normalize_relative_path(path) for path in paths if str(path).strip()
+        )
+        records: list[Any] = []
+        for offset in range(0, len(normalized), publisher.remote_info_batch_size):
+            try:
+                page = _canonical_hf_api_read(
+                    api,
+                    "get_paths_info",
+                    runtime_token,
+                    repo_id=publisher.repository_id,
+                    paths=list(
+                        normalized[
+                            offset : offset + publisher.remote_info_batch_size
+                        ]
+                    ),
+                    repo_type=publisher.repository_type,
+                    revision=plan.audited_parent_commit,
+                )
+            except Exception as exc:
+                raise HuggingFacePublicationError(
+                    "cannot inspect pinned Hugging Face paths at "
+                    f"{plan.audited_parent_commit}: {exc}"
+                ) from exc
+            records.extend(list(page or ()))
+        return records
+
+    prefix_entries = paths_info((plan.release_prefix,))
+    path_entries = paths_info(tuple(item.remote_path for item in plan.operations))
+    if prefix_entries or path_entries:
+        existing_path = (
+            _record_value((prefix_entries or path_entries)[0], "path")
+            or plan.release_prefix
+        )
+        raise HuggingFacePublicationError(
+            "append-only publication refuses a pre-existing path under the "
+            f"release prefix: {existing_path}"
+        )
+    return current
+
+
+def _verify_state_laws_live_policy(
+    *,
+    publisher: HuggingFaceReleasePublisher,
+    plan: PublicationPlan,
+    proof: Mapping[str, Any] | Any,
+    local_root: str | Path,
+) -> None:
+    """Attest and invoke the fixed State Laws verifier allowlist."""
+
+    try:
+        from ..processors.legal_scrapers.state_scrapers.base_scraper import (
+            _assert_loaded_executables_match_current_source,
+            _loaded_executable_sha256,
+        )
+
+        dispatch_source_name = inspect.getsourcefile(_StateLawsLivePolicyBoundary)
+        if not dispatch_source_name:
+            raise HuggingFacePublicationError(
+                "State Laws generic dispatch has no inspectable source"
+            )
+        dispatch_loaded_sha256 = _loaded_executable_sha256(
+            _StateLawsLivePolicyBoundary
+        )
+        dispatch_record = {
+            "loaded_executable_sha256": dispatch_loaded_sha256,
+            "source_file_sha256": _PUBLISHER_IMPORT_SOURCE_SHA256,
+            "source_path": str(Path(dispatch_source_name).resolve()),
+            "target": _StateLawsLivePolicyBoundary,
+        }
+        _assert_loaded_executables_match_current_source(
+            {"state_laws_generic_live_policy_dispatch": dispatch_record}
+        )
+        dispatch_identity = _StateLawsLivePolicyBoundary.attest_target(
+            _StateLawsLivePolicyBoundary,
+            label="state_laws_generic_live_policy_dispatch",
+        )
+        if (
+            dispatch_identity.get("loaded_executable_sha256")
+            != dispatch_loaded_sha256
+            or dispatch_identity.get("source_sha256")
+            != _PUBLISHER_IMPORT_SOURCE_SHA256
+        ):
+            raise HuggingFacePublicationError(
+                "State Laws generic dispatch identity changed during final attestation"
+            )
+        boundary_identities = _StateLawsLivePolicyBoundary.current_identities(
+            dispatch_identity=dispatch_identity,
+        )
+        if not _StateLawsLivePolicyBoundary.recognizes(
+            profile=publisher.profile,
+            plan=plan,
+            repository_id=publisher.repository_id,
+            release_prefix_template=publisher.release_prefix_template,
+        ):
+            raise HuggingFacePublicationError(
+                "State Laws marker recognition changed during final dispatch"
+            )
+        _StateLawsLivePolicyBoundary.verify(
+            proof,
+            plan=plan,
+            profile=publisher.profile,
+            local_root=local_root,
+            boundary_identities=boundary_identities,
+        )
+    except HuggingFacePublicationError:
+        raise
+    except Exception as exc:
+        raise HuggingFacePublicationError(
+            f"State Laws live policy proof refused publication: {exc}"
+        ) from exc
+
+
+def _state_laws_write_authority_from_whoami(
+    identity: Any,
+    *,
+    repository_id: str,
+) -> dict[str, Any]:
+    """Project only explicit write-token and JusticeDAO organization evidence."""
+
+    if type(identity) is not dict:
+        raise HuggingFacePublicationError(
+            "Hugging Face whoami response is not an exact inert object"
+        )
+    principal = identity.get("name")
+    auth = identity.get("auth")
+    orgs = identity.get("orgs")
+    if type(principal) is not str or not principal.strip():
+        raise HuggingFacePublicationError(
+            "Hugging Face whoami response omits the authenticated principal"
+        )
+    if type(auth) is not dict or type(orgs) is not list:
+        raise HuggingFacePublicationError(
+            "Hugging Face whoami response omits explicit token/organization roles"
+        )
+    access_token = auth.get("accessToken")
+    if type(access_token) is not dict:
+        raise HuggingFacePublicationError(
+            "Hugging Face whoami response omits exact access-token permissions"
+        )
+    token_role = access_token.get("role")
+    if type(token_role) is not str:
+        raise HuggingFacePublicationError(
+            "Hugging Face whoami response omits the access-token role"
+        )
+    normalized_token_role = token_role.strip().casefold()
+    if normalized_token_role not in {"admin", "write"}:
+        raise HuggingFacePublicationError(
+            "Hugging Face token is not explicitly write-capable; read-only and "
+            "unbound fine-grained tokens fail closed"
+        )
+    owner = repository_id.split("/", 1)[0].strip().casefold()
+    owner_role = ""
+    for record in orgs:
+        if type(record) is not dict:
+            raise HuggingFacePublicationError(
+                "Hugging Face whoami organization entries must be exact objects"
+            )
+        name = record.get("name")
+        role = record.get("roleInOrg")
+        if (
+            type(name) is str
+            and name.strip().casefold() == owner
+            and type(role) is str
+        ):
+            owner_role = role.strip().casefold()
+            break
+    if owner != "justicedao" or owner_role not in {"admin", "write"}:
+        raise HuggingFacePublicationError(
+            "authenticated principal lacks an explicit write/admin JusticeDAO role"
+        )
+    expected_scope = f"dataset:write:{repository_id}"
+    return {
+        "authority_source": "huggingface_whoami",
+        "dataset_repo_id": repository_id,
+        "has_write_access": True,
+        "identity": f"huggingface:{principal.strip()}",
+        "owner": owner,
+        "owner_role": owner_role,
+        "principal": principal.strip(),
+        "scopes": [expected_scope],
+        "token_role": normalized_token_role,
+        "write_targets": [repository_id],
+    }
+
+
+@dataclass(frozen=True, slots=True)
+class _StateLawsCanonicalCommitPreflight:
+    """Sealed caller-facing inputs used only before authority is opened."""
+
+    publisher: HuggingFaceReleasePublisher
+    api_template: Any
+    plan: PublicationPlan
+    operations_payload: tuple[Any, ...]
+    canonical_message: str
+    live_policy_proof: Any
+    local_root: Path
+    mutation_binding: CanonicalMutationBinding
+
+    def __post_init__(self) -> None:
+        from ..processors.legal_data.state_laws_publication_package import (
+            StateLawsLivePolicyProof,
+        )
+
+        if type(self.publisher) is not HuggingFaceReleasePublisher:
+            raise HuggingFacePublicationError(
+                "canonical State Laws commit requires the exact publisher type"
+            )
+        _assert_canonical_hf_api_executables_current()
+        if type(self.api_template) is not _CANONICAL_HF_API_TYPE:
+            raise HuggingFacePublicationError(
+                "canonical State Laws preflight requires an exact HfApi template"
+            )
+        if (
+            type(self.plan) is not PublicationPlan
+            or type(self.publisher.profile) is not HuggingFacePublicationProfile
+            or type(self.plan.operations) is not tuple
+            or any(type(item) is not PublicationFilePlan for item in self.plan.operations)
+            or type(self.operations_payload) is not tuple
+            or type(self.canonical_message) is not str
+            or not self.canonical_message
+            or type(self.live_policy_proof) is not StateLawsLivePolicyProof
+            or type(self.local_root) is not type(Path())
+            or type(self.mutation_binding) is not CanonicalMutationBinding
+        ):
+            raise HuggingFacePublicationError(
+                "canonical State Laws preflight rejects subclassed or mutable caller inputs"
+            )
+        if not self.operations_payload or len(self.operations_payload) != len(
+            self.plan.operations
+        ):
+            raise HuggingFacePublicationError(
+                "canonical State Laws commit operations do not match its plan"
+            )
+        proof_digest = _digest(
+            _record_value(self.live_policy_proof, "proof_digest"),
+            label="State Laws policy proof digest",
+        )
+        expected_binding = CanonicalMutationBinding(
+            method="create_commit",
+            repository_id=self.publisher.repository_id,
+            repository_type=self.publisher.repository_type,
+            revision=self.plan.target_revision,
+            parent_commit=self.plan.audited_parent_commit,
+            files=_rehash_anonymous_snapshot_files(
+                self.operations_payload,
+                self.plan,
+            ),
+            plan_digest=self.plan.plan_digest,
+            release_manifest_digest=self.plan.release_sha256,
+            policy_proof_digest=proof_digest,
+            commit_message_digest=sha256(
+                self.canonical_message.encode("utf-8")
+            ).hexdigest(),
+        )
+        if (
+            self.mutation_binding != expected_binding
+            or self.publisher.repository_id != self.plan.repository_id
+        ):
+            raise HuggingFacePublicationError(
+                "canonical State Laws commit binding differs from its exact plan"
+            )
+        if self.publisher.api is not self.api_template:
+            raise HuggingFacePublicationError(
+                "canonical State Laws HfApi template changed before preflight"
+            )
+
+    def prepare(
+        self,
+        decision: Any,
+        runtime_token: str,
+    ) -> _PreparedStateLawsCanonicalCommitExecutor:
+        """Run every hook/read outside authority and return an inert capsule."""
+
+        decision_details = _record_value(decision, "details")
+        if type(decision_details) is not dict:
+            raise HuggingFacePublicationError(
+                "canonical State Laws runtime decision omits its candidate binding"
+            )
+        canonical_candidate_digest = _digest(
+            _record_value(decision, "final_manifest_digest"),
+            label="canonical runtime candidate manifest digest",
+        )
+        candidate_release_digest = _digest(
+            decision_details.get("candidate_release_manifest_digest"),
+            label="canonical candidate release manifest digest",
+        )
+        payload_digest = self.mutation_binding.payload_digest
+        if (
+            _record_value(decision, "authorized") is not True
+            or _record_value(decision, "network_mutation_permitted") is not True
+            or str(_record_value(decision, "dataset_repo_id") or "").casefold()
+            != self.mutation_binding.repository_id
+            or candidate_release_digest
+            != self.mutation_binding.release_manifest_digest
+            or decision_details.get("expected_plan_digest")
+            != self.mutation_binding.plan_digest
+            or decision_details.get("expected_policy_proof_digest")
+            != self.mutation_binding.policy_proof_digest
+            or decision_details.get("expected_payload_digest") != payload_digest
+            or _record_value(decision, "operation") != "additive_main_upload"
+            or _record_value(decision, "phase") != "state_main"
+            or _record_value(self.live_policy_proof, "manifest_digest")
+            != self.mutation_binding.release_manifest_digest
+        ):
+            raise HuggingFacePublicationError(
+                "canonical State Laws runtime decision is not bound to the exact "
+                "publisher mutation"
+            )
+        _verify_state_laws_live_policy(
+            publisher=self.publisher,
+            plan=self.plan,
+            proof=self.live_policy_proof,
+            local_root=self.local_root,
+        )
+        final_files = _rehash_anonymous_snapshot_files(
+            self.operations_payload,
+            self.plan,
+        )
+        if final_files != self.mutation_binding.files:
+            raise HuggingFacePublicationError(
+                "anonymous upload snapshot binding changed before mutation"
+            )
+        canonical_api = _require_canonical_state_laws_hf_api(
+            self.api_template,
+            runtime_token=runtime_token,
+        )
+        parent = _canonical_state_laws_parent_and_prefix_empty(
+            canonical_api,
+            publisher=self.publisher,
+            plan=self.plan,
+            runtime_token=runtime_token,
+        )
+        if parent.casefold() != self.mutation_binding.parent_commit:
+            raise HuggingFacePublicationError(
+                "current audited parent differs from the canonical mutation binding"
+            )
+        return _PreparedStateLawsCanonicalCommitExecutor(
+            canonical_candidate_digest=canonical_candidate_digest,
+            canonical_message=self.canonical_message,
+            mutation_binding=self.mutation_binding,
+            operations_payload=self.operations_payload,
+            runtime_token=runtime_token,
+        )
+
+
+def _build_state_laws_prepared_commit_call(
+    *,
+    require_guard: Callable[..., Any],
+    rehash_files: Callable[..., Any],
+    protected_write: Callable[..., Any],
+    create_commit: Callable[..., Any],
+) -> Callable[[Any], tuple[str, Any]]:
+    """Close the protected write edge over its exact import-time helpers."""
+
+    def prepared_call(self: Any) -> tuple[str, Any]:
+        require_guard_local = require_guard
+        rehash_files_local = rehash_files
+        protected_write_local = protected_write
+        payload_digest = self.mutation_binding.payload_digest
+        require_guard_local(
+            self.mutation_binding.repository_id,
+            method="create_commit",
+            expected_phase="state_main",
+            expected_operation="additive_main_upload",
+            expected_manifest_digest=self.canonical_candidate_digest,
+            expected_payload_digest=payload_digest,
+        )
+        final_files = rehash_files_local(
+            self.operations_payload,
+            self.mutation_binding.files,
+        )
+        if final_files != self.mutation_binding.files:
+            raise HuggingFacePublicationError(
+                "anonymous upload snapshot binding changed before mutation"
+            )
+
+        create_commit_local = create_commit
+
+        def commit_once() -> Any:
+            return create_commit_local(
+                self.runtime_token,
+                repo_id=self.mutation_binding.repository_id,
+                repo_type=self.mutation_binding.repository_type,
+                operations=self.operations_payload,
+                commit_message=self.canonical_message,
+                revision=self.mutation_binding.revision,
+                parent_commit=self.mutation_binding.parent_commit,
+            )
+
+        try:
+            committed = protected_write_local(
+                self.mutation_binding.repository_id,
+                "create_commit",
+                commit_once,
+                expected_phase="state_main",
+                expected_operation="additive_main_upload",
+                expected_manifest_digest=self.canonical_candidate_digest,
+                expected_payload_digest=payload_digest,
+            )
+        except HuggingFacePublicationError:
+            raise
+        except Exception as exc:  # pragma: no cover - transport failures
+            raise HuggingFacePublicationError(
+                f"HfApi create_commit failed: {exc}"
+            ) from exc
+        return self.mutation_binding.parent_commit, committed
+
+    return prepared_call
+
+
+@dataclass(frozen=True, slots=True)
+class _PreparedStateLawsCanonicalCommitExecutor:
+    """Deeply constrained capsule; the only object invoked under authority."""
+
+    canonical_candidate_digest: str
+    canonical_message: str
+    mutation_binding: CanonicalMutationBinding
+    operations_payload: tuple[Any, ...]
+    runtime_token: str = field(repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        if (
+            type(self.canonical_candidate_digest) is not str
+            or _HASH_RE.fullmatch(self.canonical_candidate_digest) is None
+            or type(self.canonical_message) is not str
+            or not self.canonical_message
+            or type(self.mutation_binding) is not CanonicalMutationBinding
+            or type(self.operations_payload) is not tuple
+            or not self.operations_payload
+            or type(self.runtime_token) is not str
+            or not self.runtime_token
+            or self.runtime_token.strip() != self.runtime_token
+            or len(self.operations_payload) != len(self.mutation_binding.files)
+        ):
+            raise HuggingFacePublicationError(
+                "prepared State Laws commit capsule is not exact and inert"
+            )
+        if (
+            _rehash_prepared_snapshot_files(
+                self.operations_payload,
+                self.mutation_binding.files,
+            )
+            != self.mutation_binding.files
+        ):
+            raise HuggingFacePublicationError(
+                "prepared State Laws upload bytes differ from the mutation binding"
+            )
+
+_STATE_LAWS_CANONICAL_COMMIT_PREFLIGHT_CODE: Final = (
+    _StateLawsCanonicalCommitPreflight.prepare.__code__
+)
 
 
 class HuggingFaceReleasePublisher:
@@ -1558,8 +2654,28 @@ class HuggingFaceReleasePublisher:
         a freshly revalidated, plan-bound ``live_policy_proof``.
         """
 
-        if not isinstance(plan, PublicationPlan):
+        if type(self) is not HuggingFaceReleasePublisher:
+            raise HuggingFacePublicationError(
+                "live publication rejects subclassed publisher objects"
+            )
+        if type(plan) is not PublicationPlan:
             raise HuggingFacePublicationError("plan must be a PublicationPlan")
+        if (
+            is_protected_repo(object.__getattribute__(self, "repository_id"))
+            and (
+                type(object.__getattribute__(self, "profile"))
+                is not HuggingFacePublicationProfile
+                or type(approval) is not PublicationApproval
+                or type(plan.operations) is not tuple
+                or any(
+                    type(item) is not PublicationFilePlan
+                    for item in plan.operations
+                )
+            )
+        ):
+            raise HuggingFacePublicationError(
+                "protected publication rejects subclassed or mutable caller objects"
+            )
         state_laws_marked = any(
             (
                 self.profile.profile_id == _STATE_LAWS_PROFILE_ID,
@@ -1637,82 +2753,6 @@ class HuggingFaceReleasePublisher:
                     "no upload operations remain; refusing empty commit"
                 )
 
-            def verify_state_laws_policy() -> None:
-                """Attest and invoke the fixed State Laws verifier allowlist."""
-
-                try:
-                    from ..processors.legal_scrapers.state_scrapers.base_scraper import (
-                        _assert_loaded_executables_match_current_source,
-                        _loaded_executable_sha256,
-                    )
-
-                    dispatch_source_name = inspect.getsourcefile(
-                        _StateLawsLivePolicyBoundary
-                    )
-                    if not dispatch_source_name:
-                        raise HuggingFacePublicationError(
-                            "State Laws generic dispatch has no inspectable source"
-                        )
-                    dispatch_loaded_sha256 = _loaded_executable_sha256(
-                        _StateLawsLivePolicyBoundary
-                    )
-                    dispatch_record = {
-                        "loaded_executable_sha256": dispatch_loaded_sha256,
-                        "source_file_sha256": _PUBLISHER_IMPORT_SOURCE_SHA256,
-                        "source_path": str(Path(dispatch_source_name).resolve()),
-                        "target": _StateLawsLivePolicyBoundary,
-                    }
-                    _assert_loaded_executables_match_current_source(
-                        {"state_laws_generic_live_policy_dispatch": dispatch_record}
-                    )
-                    dispatch_identity = (
-                        _StateLawsLivePolicyBoundary.attest_target(
-                            _StateLawsLivePolicyBoundary,
-                            label=(
-                                "state_laws_generic_live_policy_dispatch"
-                            ),
-                        )
-                    )
-                    if (
-                        dispatch_identity.get("loaded_executable_sha256")
-                        != dispatch_loaded_sha256
-                        or dispatch_identity.get("source_sha256")
-                        != _PUBLISHER_IMPORT_SOURCE_SHA256
-                    ):
-                        raise HuggingFacePublicationError(
-                            "State Laws generic dispatch identity changed during "
-                            "final attestation"
-                        )
-                    boundary_identities = (
-                        _StateLawsLivePolicyBoundary.current_identities(
-                            dispatch_identity=dispatch_identity,
-                        )
-                    )
-                    if not _StateLawsLivePolicyBoundary.recognizes(
-                        profile=self.profile,
-                        plan=plan,
-                        repository_id=self.repository_id,
-                        release_prefix_template=self.release_prefix_template,
-                    ):
-                        raise HuggingFacePublicationError(
-                            "State Laws marker recognition changed during final "
-                            "dispatch"
-                        )
-                    _StateLawsLivePolicyBoundary.verify(
-                        live_policy_proof,
-                        plan=plan,
-                        profile=self.profile,
-                        local_root=root,
-                        boundary_identities=boundary_identities,
-                    )
-                except HuggingFacePublicationError:
-                    raise
-                except Exception as exc:
-                    raise HuggingFacePublicationError(
-                        "State Laws live policy proof refused publication: "
-                        f"{exc}"
-                    ) from exc
-
             message = (
                 commit_message
                 if commit_message is not None
@@ -1720,33 +2760,15 @@ class HuggingFaceReleasePublisher:
             )
             canonical_message = _text(message, label="commit_message")
 
-            def execute_commit(
-                *,
-                canonical_candidate_digest: str | None = None,
-            ) -> tuple[str, Any]:
+            def execute_commit() -> tuple[str, Any]:
+                if state_laws_marked:
+                    raise HuggingFacePublicationError(
+                        "State Laws commit requires its sealed canonical executor"
+                    )
                 create_commit = self._require_api_method("create_commit")
                 parent = (
                     self.assert_audited_parent_is_current_and_prefix_empty(plan)
                 )
-                if state_laws_marked:
-                    # The first proof check precedes all Hub access. Repeat it
-                    # inside the canonical callback after read-only preflight
-                    # and immediately before the sole remote mutation.
-                    verify_state_laws_policy()
-                    if canonical_candidate_digest is None:
-                        raise HuggingFacePublicationError(
-                            "State Laws commit is outside canonical runtime "
-                            "authority"
-                        )
-                    require_unprotected_or_runtime(
-                        self.repository_id,
-                        method="create_commit",
-                        expected_phase="state_main",
-                        expected_operation="additive_main_upload",
-                        expected_manifest_digest=(
-                            canonical_candidate_digest
-                        ),
-                    )
                 try:
                     committed = create_commit(
                         repo_id=self.repository_id,
@@ -1769,40 +2791,76 @@ class HuggingFaceReleasePublisher:
                     raise HuggingFacePublicationError(
                         "State Laws live publication requires a sealed policy proof"
                     )
-                # Re-evaluate after potentially long snapshotting and before
-                # any API attribute resolution or call.
-                verify_state_laws_policy()
+                # Preserve fail-closed policy diagnostics before accepting any
+                # caller-supplied transport. This and the sealed prepare pass
+                # both run outside canonical mutation authority.
+                _verify_state_laws_live_policy(
+                    publisher=self,
+                    plan=plan,
+                    proof=live_policy_proof,
+                    local_root=root,
+                )
                 from ..processors.legal_data import (
                     legal_corpora_publication_runtime as canonical_runtime,
+                )
+
+                policy_proof_digest = _digest(
+                    _record_value(live_policy_proof, "proof_digest"),
+                    label="State Laws policy proof digest",
+                )
+                mutation_binding = CanonicalMutationBinding(
+                    method="create_commit",
+                    repository_id=self.repository_id,
+                    repository_type=self.repository_type,
+                    revision=plan.target_revision,
+                    parent_commit=plan.audited_parent_commit,
+                    files=_rehash_anonymous_snapshot_files(
+                        operations_payload,
+                        plan,
+                    ),
+                    plan_digest=plan.plan_digest,
+                    release_manifest_digest=plan.release_sha256,
+                    policy_proof_digest=policy_proof_digest,
+                    commit_message_digest=sha256(
+                        canonical_message.encode("utf-8")
+                    ).hexdigest(),
+                )
+                api_template = self.api
+                sealed_preflight = _StateLawsCanonicalCommitPreflight(
+                    publisher=self,
+                    api_template=api_template,
+                    plan=plan,
+                    operations_payload=tuple(operations_payload),
+                    canonical_message=canonical_message,
+                    live_policy_proof=live_policy_proof,
+                    local_root=root,
+                    mutation_binding=mutation_binding,
                 )
 
                 def principal_probe(
                     token: str,
                     repository_id: str,
                 ) -> Mapping[str, Any]:
-                    auth_check = self._require_api_method("auth_check")
-                    whoami = self._require_api_method("whoami")
-                    auth_check(
+                    canonical_api = _require_canonical_state_laws_hf_api(
+                        api_template,
+                        runtime_token=token,
+                    )
+                    _canonical_hf_api_read(
+                        canonical_api,
+                        "auth_check",
+                        token,
                         repo_id=repository_id,
                         repo_type=self.repository_type,
-                        token=token,
                     )
-                    identity = whoami(token=token)
-                    principal = str(
-                        _record_value(identity, "name")
-                        or _record_value(identity, "fullname")
-                        or ""
-                    ).strip()
-                    return {
-                        "dataset_repo_id": repository_id,
-                        "has_write_access": True,
-                        "identity": f"huggingface:{principal}",
-                        "principal": principal,
-                        "scopes": [
-                            f"{self.repository_type}:write:{repository_id}"
-                        ],
-                        "write_targets": [repository_id],
-                    }
+                    identity = _canonical_hf_api_read(
+                        canonical_api,
+                        "whoami",
+                        token,
+                    )
+                    return _state_laws_write_authority_from_whoami(
+                        identity,
+                        repository_id=repository_id,
+                    )
 
                 runtime_request = canonical_runtime.CanonicalPublicationRequest(
                     phase="state_main",
@@ -1813,108 +2871,15 @@ class HuggingFaceReleasePublisher:
                     expected_dataset_repo_id=plan.repository_id,
                     expected_release_manifest_digest=plan.release_sha256,
                     expected_plan_digest=plan.plan_digest,
-                    expected_policy_proof_digest=_digest(
-                        _record_value(live_policy_proof, "proof_digest"),
-                        label="State Laws policy proof digest",
-                    ),
+                    expected_policy_proof_digest=policy_proof_digest,
+                    mutation_binding=mutation_binding,
                 )
-
-                def authorized_commit(decision: Any) -> tuple[str, Any]:
-                    decision_details = _record_value(decision, "details")
-                    if not isinstance(decision_details, Mapping):
-                        raise HuggingFacePublicationError(
-                            "canonical State Laws runtime decision omits its "
-                            "candidate-manifest binding"
-                        )
-                    canonical_candidate_digest = _digest(
-                        _record_value(decision, "final_manifest_digest"),
-                        label="canonical runtime candidate manifest digest",
-                    )
-                    candidate_release_digest = _digest(
-                        decision_details.get(
-                            "candidate_release_manifest_digest"
-                        ),
-                        label="canonical candidate release manifest digest",
-                    )
-                    if (
-                        _record_value(decision, "authorized") is not True
-                        or _record_value(
-                            decision,
-                            "network_mutation_permitted",
-                        )
-                        is not True
-                        or _record_value(decision, "dataset_repo_id")
-                        != plan.repository_id
-                        or candidate_release_digest != plan.release_sha256
-                        or decision_details.get("expected_plan_digest")
-                        != plan.plan_digest
-                        or decision_details.get(
-                            "expected_policy_proof_digest"
-                        )
-                        != _record_value(live_policy_proof, "proof_digest")
-                        or _record_value(decision, "operation")
-                        != "additive_main_upload"
-                        or _record_value(decision, "phase") != "state_main"
-                    ):
-                        raise HuggingFacePublicationError(
-                            "canonical State Laws runtime decision is not bound "
-                            "to the exact publisher plan and policy proof"
-                        )
-                    proof_manifest_digest = _record_value(
-                        live_policy_proof,
-                        "manifest_digest",
-                    )
-                    if proof_manifest_digest != plan.release_sha256:
-                        raise HuggingFacePublicationError(
-                            "State Laws proof manifest is not bound to the "
-                            "canonical runtime decision"
-                        )
-                    runtime_binding = {
-                        "candidate_manifest_digest": (
-                            canonical_candidate_digest
-                        ),
-                        "candidate_release_manifest_digest": (
-                            candidate_release_digest
-                        ),
-                        "dataset_repo_id": plan.repository_id,
-                        "operation": "additive_main_upload",
-                        "phase": "state_main",
-                        "plan_digest": plan.plan_digest,
-                        "policy_proof_digest": _record_value(
-                            live_policy_proof,
-                            "proof_digest",
-                        ),
-                    }
-                    runtime_binding_digest = sha256(
-                        canonical_json_bytes(runtime_binding)
-                    ).hexdigest()
-                    if not _HASH_RE.fullmatch(runtime_binding_digest):
-                        raise HuggingFacePublicationError(
-                            "canonical State Laws runtime binding is invalid"
-                        )
-                    # Refuse a monkeypatched runtime adapter before resolving
-                    # or calling even read-only Hub methods. The same scoped
-                    # capability is checked again immediately before commit.
-                    require_unprotected_or_runtime(
-                        self.repository_id,
-                        method="create_commit",
-                        expected_phase="state_main",
-                        expected_operation="additive_main_upload",
-                        expected_manifest_digest=(
-                            canonical_candidate_digest
-                        ),
-                    )
-                    return execute_commit(
-                        canonical_candidate_digest=(
-                            canonical_candidate_digest
-                        )
-                    )
 
                 try:
                     parent_commit, result = (
                         canonical_runtime.authorize_and_mutate_canonical(
                             runtime_request,
-                            authorized_commit,
+                            sealed_preflight,
                         )
                     )
                 except HuggingFacePublicationError:
@@ -2886,6 +3851,169 @@ def _snapshot_commit_add_operation(
     return op
 
 
+def _rehash_anonymous_snapshot_files(
+    operations: Sequence[Any],
+    plan: PublicationPlan,
+) -> tuple[CanonicalMutationFileBinding, ...]:
+    """Re-read exact snapshots against one immutable publication plan."""
+
+    if len(operations) != len(plan.operations):
+        raise HuggingFacePublicationError(
+            "anonymous upload snapshots do not match the publication plan"
+        )
+    expected = tuple(
+        CanonicalMutationFileBinding(
+            relative_path=item.relative_path,
+            remote_path=item.remote_path,
+            size_bytes=item.size_bytes,
+            sha256=item.sha256,
+            local_sha256=item.sha256,
+        )
+        for item in plan.operations
+    )
+    return _rehash_prepared_snapshot_files(operations, expected)
+
+
+def _rehash_prepared_snapshot_files(
+    operations: Sequence[Any],
+    expected_files: tuple[CanonicalMutationFileBinding, ...],
+) -> tuple[CanonicalMutationFileBinding, ...]:
+    """Revalidate exact operation state, UploadInfo, and anonymous bytes."""
+
+    _assert_canonical_hf_api_executables_current()
+    if (
+        type(expected_files) is not tuple
+        or not expected_files
+        or len(operations) != len(expected_files)
+        or any(
+            type(item) is not CanonicalMutationFileBinding
+            for item in expected_files
+        )
+    ):
+        raise HuggingFacePublicationError(
+            "anonymous upload snapshots do not match the immutable file binding"
+        )
+    verified: list[CanonicalMutationFileBinding] = []
+    for operation, item in zip(operations, expected_files, strict=True):
+        if type(operation) is not _CANONICAL_COMMIT_ADD_TYPE:
+            raise HuggingFacePublicationError(
+                "protected publication requires exact CommitOperationAdd objects"
+            )
+        operation_state = object.__getattribute__(operation, "__dict__")
+        if type(operation_state) is not dict or set(operation_state) != {
+            "path_in_repo",
+            "path_or_fileobj",
+            "upload_info",
+        }:
+            raise HuggingFacePublicationError(
+                "CommitOperationAdd instance has an overridden attribute surface"
+            )
+        if operation_state["path_in_repo"] != item.remote_path:
+            raise HuggingFacePublicationError(
+                "anonymous upload snapshot remote path differs from the plan"
+            )
+        handle = operation_state["path_or_fileobj"]
+        upload_info = operation_state["upload_info"]
+        if type(upload_info) is not _CANONICAL_UPLOAD_INFO_TYPE:
+            raise HuggingFacePublicationError(
+                "protected publication requires exact UploadInfo objects"
+            )
+        upload_state = object.__getattribute__(upload_info, "__dict__")
+        if type(upload_state) is not dict or set(upload_state) != {
+            "sample",
+            "sha256",
+            "size",
+        }:
+            raise HuggingFacePublicationError(
+                "CommitOperationAdd upload_info has an overridden attribute surface"
+            )
+        if (
+            type(handle).__module__ != "_io"
+            or type(handle).__name__ != "BufferedRandom"
+        ):
+            raise HuggingFacePublicationError(
+                "protected publication snapshot is not an anonymous buffered file"
+            )
+        try:
+            descriptor = handle.fileno()
+            before = os.fstat(descriptor)
+            if not stat.S_ISREG(before.st_mode) or before.st_nlink != 0:
+                raise HuggingFacePublicationError(
+                    "protected publication snapshot is not an unlinked regular file"
+                )
+            handle.flush()
+            handle.seek(0)
+            digest = sha256()
+            sample = bytearray()
+            size_bytes = 0
+            while True:
+                chunk = handle.read(8 * 1024 * 1024)
+                if not chunk:
+                    break
+                if type(chunk) is not bytes:
+                    raise HuggingFacePublicationError(
+                        "anonymous upload snapshot returned non-byte content"
+                    )
+                size_bytes += len(chunk)
+                if size_bytes > item.size_bytes:
+                    raise HuggingFacePublicationError(
+                        "anonymous upload snapshot exceeds its reviewed size"
+                    )
+                if len(sample) < 512:
+                    sample.extend(chunk[: 512 - len(sample)])
+                digest.update(chunk)
+            after = os.fstat(descriptor)
+            handle.seek(0)
+        except HuggingFacePublicationError:
+            raise
+        except (OSError, TypeError, ValueError) as exc:
+            raise HuggingFacePublicationError(
+                f"cannot rehash anonymous upload snapshot: {item.relative_path}: {exc}"
+            ) from exc
+        local_digest = digest.hexdigest()
+        if (
+            size_bytes != item.size_bytes
+            or local_digest != item.sha256
+            or (before.st_dev, before.st_ino, before.st_size)
+            != (after.st_dev, after.st_ino, after.st_size)
+            or after.st_size != size_bytes
+            or type(upload_state["sha256"]) is not bytes
+            or upload_state["sha256"] != digest.digest()
+            or type(upload_state["size"]) is not int
+            or isinstance(upload_state["size"], bool)
+            or upload_state["size"] != size_bytes
+            or type(upload_state["sample"]) is not bytes
+            or upload_state["sample"] != bytes(sample)
+        ):
+            raise HuggingFacePublicationError(
+                "anonymous upload snapshot bytes differ from the reviewed plan: "
+                f"{item.relative_path}"
+            )
+        verified.append(
+            CanonicalMutationFileBinding(
+                relative_path=item.relative_path,
+                remote_path=item.remote_path,
+                size_bytes=size_bytes,
+                sha256=item.sha256,
+                local_sha256=local_digest,
+            )
+        )
+    return tuple(verified)
+
+
+_PreparedStateLawsCanonicalCommitExecutor.__call__ = (
+    _build_state_laws_prepared_commit_call(
+        require_guard=require_unprotected_or_runtime,
+        rehash_files=_rehash_prepared_snapshot_files,
+        protected_write=guarded_write,
+        create_commit=_canonical_hf_api_create_commit,
+    )
+)
+_STATE_LAWS_PREPARED_COMMIT_EXECUTOR_CODE: Final = (
+    _PreparedStateLawsCanonicalCommitExecutor.__call__.__code__
+)
+
+
 def _extract_commit_sha(result: Any) -> str:
     if isinstance(result, Mapping):
         for key in ("commit_sha", "oid", "sha", "commitId"):
@@ -3225,3 +4353,13 @@ __all__ = [
     "publish_abby_voice_release",
     "publish_huggingface_release",
 ]
+
+
+from .protected_repo_guard import _register_canonical_publisher_trust_anchor
+
+_register_canonical_publisher_trust_anchor(
+    publisher_module=sys.modules[__name__],
+    preflight_type=_StateLawsCanonicalCommitPreflight,
+    prepared_type=_PreparedStateLawsCanonicalCommitExecutor,
+)
+del _register_canonical_publisher_trust_anchor
