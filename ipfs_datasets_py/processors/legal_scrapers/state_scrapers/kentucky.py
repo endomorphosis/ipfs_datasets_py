@@ -102,9 +102,9 @@ class KentuckyScraper(BaseStateScraper):
 
         Early Kentucky evidence used the state adapter's explicit ``Accept``
         header in its sanitized request identity.  Replay that contract first,
-        then submit only genuine misses to the shared plural fetcher.  New
-        responses use the plural fetcher's ordinary GET contract and therefore
-        remain directly replayable by that shared implementation on restart.
+        then the shared plural fetcher's ordinary GET identity, and submit only
+        genuine misses to the plural fetcher.  This deterministic two-identity
+        lookup applies to both live acquisition and retained-only replay.
         """
 
         requested = [self._canonical_fetch_url(url) for url in urls]
@@ -133,19 +133,15 @@ class KentuckyScraper(BaseStateScraper):
         ledger = getattr(self, "_state_law_acquisition_ledger", None)
         if ledger is not None:
             accept = "text/html,application/pdf,*/*;q=0.8"
-            retained_replay_only = bool(
-                getattr(ledger, "retained_replay_only", False)
-            )
             for url in requested:
                 request_variants = [
                     {
                         "headers": {"Accept": accept},
                         "method": "GET",
                         "url": url,
-                    }
+                    },
+                    {"method": "GET", "url": url},
                 ]
-                if retained_replay_only:
-                    request_variants.append({"method": "GET", "url": url})
                 prior = self._replay_retained_ky_request_variants(
                     ledger=ledger,
                     official_url=url,
@@ -312,12 +308,12 @@ class KentuckyScraper(BaseStateScraper):
                 ledger=ledger,
                 official_url=url,
                 request_variants=(
-                    {"method": "GET", "url": url},
                     {
                         "headers": {"Accept": accept},
                         "method": "GET",
                         "url": url,
                     },
+                    {"method": "GET", "url": url},
                 ),
             )
             if retained is None:

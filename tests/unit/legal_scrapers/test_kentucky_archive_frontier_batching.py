@@ -258,7 +258,7 @@ async def test_kentucky_replay_only_accepts_plain_and_legacy_request_identities(
 
 
 @pytest.mark.anyio
-async def test_kentucky_live_frontier_keeps_plain_get_in_shared_residual_wave(
+async def test_kentucky_live_frontier_reuses_plain_get_before_residual_wave(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -308,7 +308,7 @@ async def test_kentucky_live_frontier_keeps_plain_get_in_shared_residual_wave(
         timeout_seconds=1,
         content_validator=scraper._looks_like_kentucky_chapter_payload,
     ) == [body]
-    assert calls == [[url]]
+    assert calls == []
 
 
 @pytest.mark.anyio

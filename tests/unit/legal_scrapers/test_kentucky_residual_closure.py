@@ -67,6 +67,27 @@ V4_WAYBACK_RECEIPTS = 15
 PARSER_INPUT_FRONTIER = 41323
 RESIDUAL_COUNT = 11641
 RESIDUAL_SHA256_PREFIX = "c96072a16cc6"
+RESIDUAL_SHA256 = (
+    "c96072a16cc6cf0def74d7d2d6b5a7420c936a5a28b7b35ffe2f2ec36da5cac1"
+)
+DIRECT_SEED_SELECTED_INPUTS = 29675
+DIRECT_SEED_UNIQUE_CONTENT_OBJECTS = 29663
+DIRECT_SEED_DUPLICATE_OBSERVATIONS_AVOIDED = 164
+DIRECT_SEED_RETAINED_UNIQUE_LEAVES = 28921
+CURRENT_LIVE_RESIDUAL_COUNT = 11648
+CURRENT_LIVE_RESIDUAL_SHA256 = (
+    "f2a7625b4f93fdb1fd05615c8e1e1a84c7e947870322995a1396de786e2a38bf"
+)
+CURRENT_LIVE_FIRST_SOURCE_RECORD_ID = "kentucky-statute-25144"
+WAYBACK_ONLY_CURRENT_REACQUISITION_IDS = (
+    "25144",
+    "25481",
+    "25491",
+    "25501",
+    "43841",
+    "5613",
+    "5626",
+)
 SOURCE_BUNDLE_PREFIX = "7ee7c0ed8855"
 RESIDUAL_WAVE_NAME = "section"
 CATALOG_WAVE_NAME = "chapter-index"
@@ -301,8 +322,8 @@ def test_kentucky_residual_closure_report_records_exact_leaf_residual() -> None:
         "official KRS root/chapter/section HTML-or-PDF tree"
     )
     assert table["seed"] == (
-        "v4 unique request/URL identities; duplicate exact-request groups "
-        "preserved"
+        "v4 direct-only projection; duplicate exact-request groups preserved "
+        "in the source generation and never double-counted"
     )
     assert table["duplicate_exact_request_groups"] == (
         "preserved_never_double_counted"
@@ -335,12 +356,47 @@ def test_kentucky_residual_closure_report_records_exact_leaf_residual() -> None:
     assert table["v4_wayback_receipts"] == str(V4_WAYBACK_RECEIPTS)
     assert table["parser_input_frontier"] == str(PARSER_INPUT_FRONTIER)
     assert table["residual_count"] == str(RESIDUAL_COUNT)
+    assert table["residual_scope"] == "original all-transport v4 diagnostic"
     assert table["residual_kind"] == "unique ordered statute.aspx leaves"
     assert table["residual_first_source_record_id"] == FIRST_SOURCE_RECORD_ID
     assert table["residual_last_source_record_id"] == LAST_SOURCE_RECORD_ID
     assert table["residual_first_url"] == FIRST_RESIDUAL_URL
     assert table["residual_last_url"] == LAST_RESIDUAL_URL
     assert table["residual_ordered_sha256_prefix"] == RESIDUAL_SHA256_PREFIX
+    assert table["residual_ordered_sha256"] == RESIDUAL_SHA256
+    assert table["direct_seed_selected_parser_inputs"] == str(
+        DIRECT_SEED_SELECTED_INPUTS
+    )
+    assert table["direct_seed_unique_content_objects"] == str(
+        DIRECT_SEED_UNIQUE_CONTENT_OBJECTS
+    )
+    assert table["direct_seed_duplicate_request_observations_avoided"] == str(
+        DIRECT_SEED_DUPLICATE_OBSERVATIONS_AVOIDED
+    )
+    assert table["direct_seed_skipped_wayback_receipts"] == str(
+        V4_WAYBACK_RECEIPTS
+    )
+    assert table["direct_seed_retained_unique_leaves"] == str(
+        DIRECT_SEED_RETAINED_UNIQUE_LEAVES
+    )
+    assert table["current_live_residual_count"] == str(
+        CURRENT_LIVE_RESIDUAL_COUNT
+    )
+    assert (
+        table["current_live_residual_first_source_record_id"]
+        == CURRENT_LIVE_FIRST_SOURCE_RECORD_ID
+    )
+    assert (
+        table["current_live_residual_last_source_record_id"]
+        == LAST_SOURCE_RECORD_ID
+    )
+    assert (
+        table["current_live_residual_ordered_sha256"]
+        == CURRENT_LIVE_RESIDUAL_SHA256
+    )
+    assert table["wayback_only_current_reacquisition_ids"] == ", ".join(
+        WAYBACK_ONLY_CURRENT_REACQUISITION_IDS
+    )
     assert (
         table["residual_sha_method"]
         == 'sha256(json.dumps(urls, ensure_ascii=False, separators=(",", ":")))'
@@ -360,11 +416,12 @@ def test_kentucky_residual_closure_report_records_exact_leaf_residual() -> None:
     assert table["archive_is"] == "forbidden"
     assert table["host_retained_replay_network_requests"] == "0"
     assert table["rights_basis"] == "public_law_no_state_copyright"
-    assert table["replay_only_request_identities"] == (
-        "exact plain GET then legacy Accept header"
+    assert table["retained_request_identity_order"] == (
+        "exact legacy Accept-header GET then plain GET, in live and "
+        "replay-only modes"
     )
     assert table["live_residual_request_identity"] == (
-        "shared plural ordinary GET"
+        "shared plural plain GET"
     )
     assert table["legacy_accept_header"] == LEGACY_ACCEPT
     assert table["source_bundle_prefix"] == SOURCE_BUNDLE_PREFIX
@@ -391,7 +448,22 @@ def test_kentucky_residual_closure_report_records_exact_leaf_residual() -> None:
     assert (
         UNIQUE_SOURCE_ORDERED_LEAVES - RETAINED_UNIQUE_LEAVES == RESIDUAL_COUNT
     )
+    assert (
+        RETAINED_ROOT_PAGES
+        + RETAINED_CHAPTER_CATALOGS
+        + DIRECT_SEED_RETAINED_UNIQUE_LEAVES
+        == DIRECT_SEED_SELECTED_INPUTS
+    )
+    assert (
+        UNIQUE_SOURCE_ORDERED_LEAVES - DIRECT_SEED_RETAINED_UNIQUE_LEAVES
+        == CURRENT_LIVE_RESIDUAL_COUNT
+    )
+    assert (
+        RESIDUAL_COUNT + len(WAYBACK_ONLY_CURRENT_REACQUISITION_IDS)
+        == CURRENT_LIVE_RESIDUAL_COUNT
+    )
     assert len(RESIDUAL_SHA256_PREFIX) == 12
+    assert RESIDUAL_SHA256.startswith(RESIDUAL_SHA256_PREFIX)
     assert int(FIRST_RESIDUAL_URL.rsplit("=", 1)[-1]) != int(
         LAST_RESIDUAL_URL.rsplit("=", 1)[-1]
     )
@@ -413,6 +485,7 @@ def test_kentucky_residual_closure_report_records_exact_leaf_residual() -> None:
     assert "never double-count" in lowered or "never double-counted" in lowered
     assert "mixed historical request" in lowered
     assert "11,641" in report
+    assert "11,648" in report
     assert "40,569" in report
     assert "28,928" in report
     assert "29,682" in report
@@ -423,6 +496,10 @@ def test_kentucky_residual_closure_report_records_exact_leaf_residual() -> None:
     assert FIRST_SOURCE_RECORD_ID in report
     assert LAST_SOURCE_RECORD_ID in report
     assert RESIDUAL_SHA256_PREFIX in report
+    assert RESIDUAL_SHA256 in report
+    assert CURRENT_LIVE_RESIDUAL_SHA256 in report
+    for source_id in WAYBACK_ONLY_CURRENT_REACQUISITION_IDS:
+        assert source_id in report
     assert SOURCE_BUNDLE_PREFIX in report
     assert LEGACY_ACCEPT in report
     assert GUESSED_NEXT_URL not in report
@@ -736,7 +813,7 @@ def test_kentucky_replay_only_probes_plain_and_legacy_without_creating_residual_
     ) == []
 
 
-def test_kentucky_live_residual_routing_does_not_treat_mixed_identities_as_current(
+def test_kentucky_live_frontier_reuses_plain_current_identity_without_network(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -760,20 +837,24 @@ def test_kentucky_live_residual_routing_does_not_treat_mixed_identities_as_curre
     )
     scraper = KentuckyScraper("KY", "Kentucky")
     scraper.attach_state_law_acquisition_ledger(ledger)
-    calls: list[list[str]] = []
+    replay_calls: list[dict[str, Any]] = []
+    replay_retained = ledger.replay_retained_parser_input
 
-    async def _plural(urls, **_kwargs: Any) -> StateLawPageMultiFetchResult:
-        requested = list(urls)
-        calls.append(requested)
-        assert requested == [url]
-        assert GUESSED_NEXT_URL not in requested
-        assert INVENTED_SECTION_URL not in requested
-        return _frontier_result(requested, [body])
+    def _record_replay(*, official_url: str, sanitized_request: Mapping[str, Any]):
+        replay_calls.append(dict(sanitized_request))
+        return replay_retained(
+            official_url=official_url,
+            sanitized_request=sanitized_request,
+        )
 
+    async def _forbid_network(*_args: Any, **_kwargs: Any) -> None:
+        raise AssertionError("a retained current plain GET must avoid network")
+
+    monkeypatch.setattr(ledger, "replay_retained_parser_input", _record_replay)
     monkeypatch.setattr(
         scraper,
         "_fetch_page_contents_with_archival_fallback_retrying_residuals",
-        _plural,
+        _forbid_network,
     )
 
     assert asyncio.run(
@@ -784,14 +865,53 @@ def test_kentucky_live_residual_routing_does_not_treat_mixed_identities_as_curre
             content_validator=scraper._looks_like_kentucky_section_payload,
         )
     ) == [body]
-    assert calls == [[url]]
+    assert replay_calls == [_legacy_accept_get(url), _plain_get(url)]
     fetch_source = inspect.getsource(KentuckyScraper._fetch_official_ky_frontier)
-    assert "if retained_replay_only:" in fetch_source
     assert '{"method": "GET", "url": url}' in fetch_source
     report = " ".join(_report_text().casefold().split())
     assert "live residual" in report
     assert "ordinary get" in report
     assert "mixed historical request identities as current" in report
+
+
+def test_kentucky_replay_only_probes_accept_then_plain_and_fails_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    url = FIRST_RESIDUAL_URL
+    ledger = StateLawMultiFetchAcquisitionLedger(
+        tmp_path / "evidence",
+        jurisdiction="KY",
+        parser_name="KentuckyScraper",
+        retained_replay_only=True,
+    )
+    scraper = KentuckyScraper("KY", "Kentucky")
+    scraper.attach_state_law_acquisition_ledger(ledger)
+    replay_calls: list[dict[str, Any]] = []
+    replay_retained = ledger.replay_retained_parser_input
+
+    def _record_replay(*, official_url: str, sanitized_request: Mapping[str, Any]):
+        replay_calls.append(dict(sanitized_request))
+        return replay_retained(
+            official_url=official_url,
+            sanitized_request=sanitized_request,
+        )
+
+    monkeypatch.setattr(ledger, "replay_retained_parser_input", _record_replay)
+    with pytest.raises(
+        StateLawRetainedReplayOnlyError,
+        match="every exact Kentucky parser request variant",
+    ):
+        asyncio.run(
+            scraper._fetch_official_ky_frontier(
+                [url],
+                frontier_name=RESIDUAL_WAVE_NAME,
+                timeout_seconds=1,
+                content_validator=scraper._looks_like_kentucky_section_payload,
+            )
+        )
+
+    assert replay_calls == [_legacy_accept_get(url), _plain_get(url)]
 
 
 def test_kentucky_compact_recipe_emits_unique_leaves_not_invented_or_double_counted(
