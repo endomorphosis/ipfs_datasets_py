@@ -63,16 +63,18 @@ not admitted.
 | host_retained_replay_network_requests | 0 |
 | rights_basis | `public_law_no_state_copyright` |
 | residual_sha_method | `sha256(json.dumps(urls, ensure_ascii=False, separators=(",", ":")))` |
-| residual_ordered_sha256_prefix | aeb95ffc2041 |
+| residual_ordered_sha256 | `1b8cf9c0d27a7e8eae3308f7d64fbd8c4dcaec9b320aa382966cc6db5eca66af` |
+| residual_ordered_sha256_prefix | 1b8cf9c0d27a |
 | source_bundle_prefix | `daefc41326a0` |
 
-The residual SHA-256 prefix `aeb95ffc2041` is the already published identity
-of the source-ordered unique nested-catalog URL array. Recompute that digest
-only from nested locators derived from the nine nested-index parents. This
-report does not emit the 29 URLs: a static dump would be a forbidden residual
-list and would exceed the compact-recipe admission bound. The later leaf-union
-count remains source-dependent on those 29 catalogs and is therefore not a
-predeclared integer.
+The residual SHA-256
+`1b8cf9c0d27a7e8eae3308f7d64fbd8c4dcaec9b320aa382966cc6db5eca66af`
+is the replayed identity of the source-ordered unique nested-catalog URL array.
+Recompute that digest only from nested locators derived from the nine
+nested-index parents. This report does not emit the 29 URLs: a static dump
+would be a forbidden residual list and would exceed the compact-recipe
+admission bound. The later leaf-union count remains source-dependent on those
+29 catalogs and is therefore not a predeclared integer.
 
 ## Outcome
 
@@ -138,7 +140,9 @@ admits. It is not inferred from `OFFICIAL_TITLES`, from a bounded live
 sample, or from a guessed Title/Chapter/Part path.
 
 The exact remaining proof residual is the complete 29-URL ordered nested
-catalog wave at SHA prefix `aeb95ffc2041`, then the complete source-ordered
+catalog wave at SHA
+`1b8cf9c0d27a7e8eae3308f7d64fbd8c4dcaec9b320aa382966cc6db5eca66af`,
+then the complete source-ordered
 leaf union of the 34,184 known leaves plus only descendants newly exposed by
 those 29 catalogs. Recompute the nested-catalog array only from parent
 catalog replay. A later nested-catalog SHA may be recorded only after that
@@ -204,7 +208,7 @@ archive contract. This task does not rewrite those modules.
 | Source-derived frontier | Official `/Statutes/` root, titles, chapters, parts, then nested catalogs |
 | Fresh evidence generation | Seed 3,018 unique direct inputs; never overwrite or promote v1–v3 |
 | Direct-only reuse | `--allowed-source-transport direct` |
-| Nested-catalog residual | `subpart-index`, 29 URLs, SHA prefix `aeb95ffc2041` |
+| Nested-catalog residual | `subpart-index`, 29 URLs, SHA `1b8cf9c0d27a7e8eae3308f7d64fbd8c4dcaec9b320aa382966cc6db5eca66af` |
 | Leaf union | unresolved remainder of `sections` after nested catalogs close |
 | Host retained replay | `build_host_retained_replay_command()`; no `docker`, no `--network` |
 | No-publish gate | `--no-incremental-state-publish`; no Hub mutation |
@@ -239,5 +243,7 @@ from the nine nested-index parents after the 3,018-input seed. Inventing a
 later nested `INDEX.htm` that is not in that 29-URL difference fails closed.
 
 The exact remaining proof residual is the complete 29-URL ordered nested
-catalog wave at SHA prefix `aeb95ffc2041`, then the complete source-ordered
+catalog wave at SHA
+`1b8cf9c0d27a7e8eae3308f7d64fbd8c4dcaec9b320aa382966cc6db5eca66af`,
+then the complete source-ordered
 leaf union whose final count remains source-dependent on those 29 catalogs.

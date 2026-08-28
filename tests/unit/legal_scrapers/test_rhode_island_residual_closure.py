@@ -18,6 +18,9 @@ from pathlib import Path
 
 import pytest
 
+from ipfs_datasets_py.processors.legal_data.state_laws_multifetch_acquisition import (
+    StateLawMultiFetchAcquisitionLedger,
+)
 from ipfs_datasets_py.processors.legal_data.state_laws_retained_evidence_seed import (
     seed_retained_evidence_generation,
 )
@@ -40,7 +43,6 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.rhode_island_sect
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.strict_frontier_closure import (
     retain_exact_state_frontier_closure,
 )
-
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 REPORT_PATH = (
@@ -66,10 +68,19 @@ KNOWN_SECTION_IDENTITIES = 34184
 TEMPORAL_LOCATORS = 69
 CHAPTER_RANGE_MATERIALS = 2
 NESTED_CATALOG_RESIDUAL_COUNT = 29
-RESIDUAL_SHA256_PREFIX = "aeb95ffc2041"
+RESIDUAL_SHA256 = (
+    "1b8cf9c0d27a7e8eae3308f7d64fbd8c4dcaec9b320aa382966cc6db5eca66af"
+)
+RESIDUAL_SHA256_PREFIX = RESIDUAL_SHA256[:12]
 SOURCE_BUNDLE_PREFIX = "daefc41326a0"
 NESTED_CATALOG_WAVE_NAME = "subpart-index"
 LEAF_UNION_WAVE_NAME = "sections"
+RETAINED_DIRECT_EVIDENCE_ROOT = (
+    Path.home()
+    / ".ipfs_datasets"
+    / "state_laws"
+    / "legal-corpora-reindex-20260828-ri-evidence-6nKICq"
+)
 OFFICIAL_ROOT = "https://webserver.rilegislature.gov/Statutes/"
 OFFICIAL_TITLE_ENTRY = (
     "https://webserver.rilegislature.gov/Statutes/TITLE1/INDEX.HTM"
@@ -273,6 +284,7 @@ def test_rhode_island_residual_closure_report_records_exact_nested_catalog_resid
     assert table["archive_is"] == "forbidden"
     assert table["host_retained_replay_network_requests"] == "0"
     assert table["rights_basis"] == "public_law_no_state_copyright"
+    assert table["residual_ordered_sha256"] == RESIDUAL_SHA256
     assert table["residual_ordered_sha256_prefix"] == RESIDUAL_SHA256_PREFIX
     assert table["source_bundle_prefix"] == SOURCE_BUNDLE_PREFIX
     assert (
@@ -304,7 +316,7 @@ def test_rhode_island_residual_closure_report_records_exact_nested_catalog_resid
     assert "3,018" in report
     assert "34,184" in report
     assert "13,860,568" in report
-    assert RESIDUAL_SHA256_PREFIX in report
+    assert RESIDUAL_SHA256 in report
     assert OFFICIAL_ROOT in report
     assert INVENTED_NESTED_CATALOG_URL not in report
     for fenced in FENCED_STAGING_ROOTS:
@@ -363,13 +375,13 @@ def test_rhode_island_adapter_has_no_static_residual_url_list() -> None:
     assert RESIDUAL_SHA256_PREFIX not in section_adapter
     assert INVENTED_NESTED_CATALOG_URL not in adapter
     assert INVENTED_NESTED_CATALOG_URL not in section_adapter
-    assert "aeb95ffc2041" not in unbounded
+    assert RESIDUAL_SHA256 not in unbounded
     for fenced in FENCED_STAGING_ROOTS:
         assert fenced not in adapter
     nested_index_literals = re.findall(
         r"TITLE[0-9A]+/[0-9A.-]+/[0-9A.-]+/[0-9A.-]+/INDEX\.htm",
         adapter,
-        flags=re.I,
+        flags=re.IGNORECASE,
     )
     assert nested_index_literals == []
     assert "subpart_urls = [row[5] for row in subpart_frontier]" in unbounded
@@ -380,12 +392,10 @@ def test_rhode_island_residual_sha256_uses_canonical_json_of_ordered_urls() -> N
     compact = [SUBPART_6A_A_URL, SUBPART_6A_B_URL]
     compact_digest = _canonical_residual_sha256(compact)
     assert compact_digest == hashlib.sha256(
-        (
-            b'["https://webserver.rilegislature.gov/Statutes/TITLE6A/6A-2.1/'
-            b'6A-5/6A-A/INDEX.htm",'
-            b'"https://webserver.rilegislature.gov/Statutes/TITLE6A/6A-2.1/'
-            b'6A-5/6A-B/INDEX.htm"]'
-        )
+        b'["https://webserver.rilegislature.gov/Statutes/TITLE6A/6A-2.1/'
+        b'6A-5/6A-A/INDEX.htm",'
+        b'"https://webserver.rilegislature.gov/Statutes/TITLE6A/6A-2.1/'
+        b'6A-5/6A-B/INDEX.htm"]'
     ).hexdigest()
     assert len(compact_digest) == 64
     assert not compact_digest.startswith(RESIDUAL_SHA256_PREFIX)
@@ -394,6 +404,80 @@ def test_rhode_island_residual_sha256_uses_canonical_json_of_ordered_urls() -> N
     assert 'separators=(",", ":")' in report
     assert NESTED_CATALOG_WAVE_NAME in report
     assert LEAF_UNION_WAVE_NAME in report
+
+
+def test_rhode_island_retained_hierarchy_derives_full_nested_catalog_pin(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fetches = RETAINED_DIRECT_EVIDENCE_ROOT / "RI" / "fetches"
+    objects = RETAINED_DIRECT_EVIDENCE_ROOT / "RI" / "objects"
+    if not fetches.is_dir() or not objects.is_dir():
+        pytest.skip("exact retained Rhode Island hierarchy is not installed")
+
+    ledger = StateLawMultiFetchAcquisitionLedger(
+        RETAINED_DIRECT_EVIDENCE_ROOT,
+        jurisdiction="RI",
+        parser_name="RhodeIslandScraper",
+        retained_replay_only=True,
+        allowed_source_transports=("direct",),
+    )
+    assert len(ledger.entries) == UNIQUE_DIRECT_INPUTS
+
+    scraper = RhodeIslandScraper("RI", "Rhode Island")
+    scraper.attach_state_law_acquisition_ledger(ledger)
+    scraper._rhode_island_retained_replay = True
+    original_fetch = scraper._fetch_rhode_island_frontier_batch
+    observed_waves: list[tuple[str, int]] = []
+    nested_catalog_urls: list[str] = []
+
+    class _NestedCatalogResidualObserved(RuntimeError):
+        pass
+
+    async def _capture_source_derived_wave(
+        urls: list[str],
+        *,
+        frontier_name: str,
+    ):
+        requested = list(urls)
+        observed_waves.append((frontier_name, len(requested)))
+        if frontier_name == NESTED_CATALOG_WAVE_NAME:
+            nested_catalog_urls.extend(requested)
+            raise _NestedCatalogResidualObserved
+        return await original_fetch(requested, frontier_name=frontier_name)
+
+    async def _network_forbidden(*_args, **_kwargs):
+        raise AssertionError("Rhode Island retained hierarchy attempted network I/O")
+
+    monkeypatch.setattr(
+        scraper,
+        "_fetch_rhode_island_frontier_batch",
+        _capture_source_derived_wave,
+    )
+    monkeypatch.setattr(
+        scraper,
+        "_fetch_page_contents_with_archival_fallback_retrying_residuals",
+        _network_forbidden,
+    )
+
+    with pytest.raises(_NestedCatalogResidualObserved):
+        asyncio.run(
+            scraper._scrape_unbounded_rhode_island_frontier(
+                "Rhode Island General Laws",
+                "R.I. Gen. Laws",
+            )
+        )
+
+    assert observed_waves == [
+        ("root-index", ROOT_CATALOGS),
+        ("title-index", TITLE_CATALOGS),
+        ("chapter-index", CHAPTER_CATALOGS),
+        ("part-index", PART_CATALOGS),
+        (NESTED_CATALOG_WAVE_NAME, NESTED_CATALOG_RESIDUAL_COUNT),
+    ]
+    assert len(nested_catalog_urls) == len(set(nested_catalog_urls))
+    retained_urls = {entry.receipt.endpoint for entry in ledger.entries}
+    assert retained_urls.isdisjoint(nested_catalog_urls)
+    assert _canonical_residual_sha256(nested_catalog_urls) == RESIDUAL_SHA256
 
 
 def test_rhode_island_one_domain_wave_disables_per_page_and_per_slice_archive() -> None:
