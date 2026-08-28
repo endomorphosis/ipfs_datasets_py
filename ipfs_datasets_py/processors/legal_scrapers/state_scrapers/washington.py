@@ -1017,7 +1017,6 @@ class WashingtonScraper(BaseStateScraper):
 
         from .washington_section import (
             parse_washington_chapter_material_html,
-            section_page_identity,
             section_cite_belongs_to_chapter,
             source_bound_terminal_disposition_from_chapter_html,
             source_bound_terminal_disposition_from_section_html,
@@ -1320,12 +1319,6 @@ class WashingtonScraper(BaseStateScraper):
             ):
                 _chapter_index, chapter_cite, section_cite, section_url = frontier_row
                 html = payload.decode("utf-8", errors="replace")
-                identity = section_page_identity(html)
-                if identity is None or identity.casefold() != section_cite.casefold():
-                    raise RuntimeError(
-                        "Washington retained section body failed requested identity: "
-                        f"{section_url}"
-                    )
                 evidence_context = self._washington_section_evidence_context(
                     source_url=section_url,
                     payload=payload,
@@ -1689,14 +1682,9 @@ class WashingtonScraper(BaseStateScraper):
         discovery_method: str,
         as_of_date: Optional[date] = None,
     ) -> Optional[NormalizedStatute]:
-        try:
-            from bs4 import BeautifulSoup
-        except ImportError:
-            return None
         if not raw:
             return None
         html_text = raw.decode("utf-8", errors="replace")
-        soup = BeautifulSoup(raw, "html.parser")
         from .washington_section import parse_washington_section_html
 
         parsed = parse_washington_section_html(
@@ -1711,9 +1699,17 @@ class WashingtonScraper(BaseStateScraper):
             data["discovery_method"] = discovery_method
             parsed.structured_data = data
             return parsed
-        if "effective until" in html_text.casefold():
-            # A decorated multi-version page must satisfy the sibling parser's
-            # exact contract.  Do not collapse it through the generic fallback.
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return None
+        soup = BeautifulSoup(raw, "html.parser")
+        official_wrapper = soup.select_one("#contentWrapper.section-page")
+        if official_wrapper is not None:
+            # The sibling parser owns every exact official section-page shape,
+            # including multi-version and source-bound terminal documents.
+            # Never collapse a rejected official shape through the generic
+            # text fallback.
             return None
         citation_node = soup.select_one("#ContentPlaceHolder1_pnlTitleBlock h1")
         caption_node = soup.select_one("#ContentPlaceHolder1_pnlTitleBlock h2")

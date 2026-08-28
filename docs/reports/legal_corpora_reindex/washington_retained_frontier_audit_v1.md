@@ -118,11 +118,11 @@ each discovered level, same-domain pages and same-WARC ranges are bundled.
 
 The current producer identity, which now binds the base plural transport,
 archive client, strict closure code, Washington parser, and Wayback engine, is
-`ipfs_datasets_py.processors.legal_scrapers.state_scrapers.washington.WashingtonScraper@sha256:3baf89518dcf6b9736c2457773bf8c2899c8a3b6feaabd52e7a0d5eb7b8f22cf`.
+`ipfs_datasets_py.processors.legal_scrapers.state_scrapers.washington.WashingtonScraper@sha256:ae7af28342782002a11fd933df2dea5809bb964e3b826ca34b1de1d95255873e`.
 Current source SHA-256 values are
-`31dee559d45acca170f7256802ac22796b483f9dcf3235387b283f516e16ff7a`
+`a2a6cc2d284385b6b255dbc234c3f183a1a6d8108d7156953a7b8632c464a5f1`
 for `washington.py` and
-`c423dfcd45ab87cdab4149df8d6a72db7e7391d559af507f7f2065bbfbe06612`
+`52e1d81a45d908f2830df01b0c1b1516d41ea4ac43d5b0bdd0db4194d8746d5c`
 for `washington_section.py`.
 
 ## Exact next commands

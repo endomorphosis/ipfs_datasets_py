@@ -68,8 +68,8 @@ residuals across states are not admitted.
 | archive_is | forbidden |
 | host_retained_replay_network_requests | 0 |
 | rights_basis | `public_law_no_state_copyright` |
-| source_bundle_prefix | `3baf89518dcf` |
-| diagnostic_producer | `WashingtonScraper@sha256:3baf89518dcf6b9736c2457773bf8c2899c8a3b6feaabd52e7a0d5eb7b8f22cf` |
+| source_bundle_prefix | `ae7af2834278` |
+| diagnostic_producer | `WashingtonScraper@sha256:ae7af28342782002a11fd933df2dea5809bb964e3b826ca34b1de1d95255873e` |
 | diagnostic_hashes_authorizing | false |
 
 The residual SHA-256 prefix `e41a7baf281a` is the already published identity

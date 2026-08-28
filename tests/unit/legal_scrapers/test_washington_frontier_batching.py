@@ -10,6 +10,9 @@ from typing import Any
 
 import pytest
 
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import (
+    washington_section as washington_section_module,
+)
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
     StateLawPageMultiFetchResult,
 )
@@ -23,6 +26,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.washington_sectio
     parse_washington_section_html,
     section_cite_belongs_to_chapter,
     section_page_identity,
+    section_url,
     source_bound_terminal_disposition_from_chapter_html,
     source_bound_terminal_disposition_from_section_html,
 )
@@ -202,6 +206,84 @@ def _dual_effective_section_html(
         "[ 2026 c 261 s 401 ; 1990 c 274 s 14 ; 1988 c 109 s 10 .]"
         "</div>"
         "<div><h3>Notes:</h3></div><div>Future-version note.</div>"
+        "</div></body></html>"
+    ).encode()
+
+
+def _multi_version_section_html(
+    section: str,
+    *,
+    title_caption: str,
+    variants: list[tuple[str, str, str]],
+) -> bytes:
+    """Build the exact top-level div shape used by decorated RCW pages."""
+
+    parts = [
+        "<html><head>",
+        f"<title>RCW {section}: {title_caption}</title>",
+        "</head><body>",
+        "<div id='ContentPlaceHolder1_pnlTitleBlock'>",
+        f"<h1>RCW {section}</h1><h2>{variants[0][0]}</h2>",
+        "</div><div id='contentWrapper' class='section-page'>",
+        "<div></div><div></div>",
+    ]
+    for index, (caption, body, notes) in enumerate(variants):
+        if index:
+            parts.extend(
+                (
+                    f"<div><h3 class='h1'>RCW {section}</h3></div>",
+                    f"<div><h4 class='h2'>{caption}</h4></div>",
+                )
+            )
+        if body:
+            parts.append(f"<div>{body}</div>")
+        parts.append(
+            "<div style='margin-top:15pt'>"
+            f"[ 2026 c {100 + index} s {index + 1} .]</div>"
+        )
+        if notes:
+            parts.extend(("<div>Notes:</div>", f"<div>{notes}</div>"))
+    parts.append("</div></body></html>")
+    return "".join(parts).encode()
+
+
+def _legacy_conflicting_repeal_section_html(
+    section: str = "70.96.150",
+) -> bytes:
+    operative_caption = (
+        "Inability to contribute to cost no bar to admission"
+        "<span>—</span>Department may limit admissions."
+    )
+    title_caption = (
+        "Inability to contribute to cost no bar to admission—"
+        "Department may limit admissions."
+    )
+    operative_body = "Operative Washington statutory text. " * 8
+    return (
+        "<html><head>"
+        f"<title>RCW {section}: {title_caption}</title>"
+        "</head><body>"
+        "<div id='ContentPlaceHolder1_pnlTitleBlock'>"
+        f"<h1>RCW {section}</h1>"
+        "<h2>Inability to contribute to cost no bar to admission.</h2>"
+        "</div>"
+        "<div id='contentWrapper' class='section-page'>"
+        "<div></div><div></div>"
+        "<div style='margin-top:15pt'>[ 1959 c 85 s 15 .]</div>"
+        "<div><h3>Notes:</h3></div>"
+        "<div>Reviser's note: This section was amended by 1989 c 271 s 308, "
+        "without cognizance of the repeal thereof; and subsequently recodified "
+        "without cognizance of the repeal thereof.</div>"
+        f"<div><h3 class='h1'>RCW {section}</h3></div>"
+        f"<div><h4 class='h2'>{operative_caption}</h4></div>"
+        f"<div>{operative_body}</div>"
+        "<div style='margin-top:15pt'>"
+        "[ 1989 c 271 s 308 ; 1959 c 85 s 15 .]</div>"
+        "<div><h3>Notes:</h3></div>"
+        "<div>Reviser's note: This section was also repealed by 1989 c 270 s 35, "
+        "without cognizance of its amendment by 1989 c 271 s 308; and "
+        "subsequently recodified pursuant to 1993 c 131 s 1. For the rule of "
+        "construction, see RCW 1.12.025.</div>"
         "</div></body></html>"
     ).encode()
 
@@ -459,6 +541,189 @@ def test_washington_dual_effective_page_requires_explicit_as_of_and_source() -> 
     )
 
 
+def test_washington_parallel_amendment_selects_unique_publisher_title() -> None:
+    section = "35.92.385"
+    title_caption = "Connection charge waivers (as amended by 2026 c 127)."
+    note = (
+        "Reviser's note: This section was amended twice without reference "
+        "to the other amendment. For rule of construction, see RCW 1.12.025."
+    )
+    html = _multi_version_section_html(
+        section,
+        title_caption=title_caption,
+        variants=[
+            (
+                "Connection charge waivers.",
+                "First parallel Washington statutory version. " * 8,
+                note,
+            ),
+            (
+                title_caption,
+                "Publisher-selected Washington statutory version. " * 8,
+                note,
+            ),
+        ],
+    ).decode()
+    url = section_url(section)
+
+    row = parse_washington_section_html(
+        html,
+        source_url=url,
+        section_number=section,
+        as_of_date=date(2026, 8, 28),
+    )
+
+    assert section_page_identity(html) == section
+    assert row is not None
+    assert row.full_text.startswith("Publisher-selected")
+    assert row.structured_data["effective_variant_selected_index"] == 1
+    assert (
+        row.structured_data["effective_variant_selection"]
+        == "publisher_title_bound_parallel_amendment"
+    )
+    assert (
+        parse_washington_section_html(
+            html.replace(note, "Unrelated note."),
+            source_url=url,
+            section_number=section,
+            as_of_date=date(2026, 8, 28),
+        )
+        is None
+    )
+
+
+def test_washington_multi_calendar_versions_select_latest_eligible_start() -> None:
+    section = "48.43.600"
+    html = _multi_version_section_html(
+        section,
+        title_caption=(
+            "Overpayment recovery—Carrier. "
+            "(Effective January 1, 2027, until January 1, 2028.)"
+        ),
+        variants=[
+            (
+                "Overpayment recovery—Carrier. (Effective until January 1, 2027.)",
+                "Current Washington statutory version. " * 8,
+                "",
+            ),
+            (
+                (
+                    "Overpayment recovery—Carrier. "
+                    "(Effective January 1, 2027, until January 1, 2028.)"
+                ),
+                "Intermediate Washington statutory version. " * 8,
+                "",
+            ),
+            (
+                "Overpayment recovery—Carrier. (Effective January 1, 2028.)",
+                "Successor Washington statutory version. " * 8,
+                "",
+            ),
+        ],
+    ).decode()
+    url = section_url(section)
+
+    current = parse_washington_section_html(
+        html,
+        source_url=url,
+        section_number=section,
+        as_of_date=date(2026, 8, 28),
+    )
+    successor = parse_washington_section_html(
+        html,
+        source_url=url,
+        section_number=section,
+        as_of_date=date(2028, 1, 1),
+    )
+
+    assert current is not None
+    assert current.full_text.startswith("Current")
+    assert current.structured_data["effective_variant_selected_index"] == 0
+    assert successor is not None
+    assert successor.full_text.startswith("Successor")
+    assert successor.structured_data["effective_variant_selected_index"] == 2
+
+
+def test_washington_pending_contingency_selects_primary_expiration_branch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    section = "35A.21.190"
+    html = _multi_version_section_html(
+        section,
+        title_caption="Daylight saving time. (Contingent effective date.)",
+        variants=[
+            (
+                "Daylight saving time. (Contingent expiration date.)",
+                "Pending-contingency Washington statutory version. " * 8,
+                "Contingent expiration date—2019 c 297.",
+            ),
+            (
+                "Daylight saving time. (Contingent effective date.)",
+                "After-contingency Washington statutory version. " * 8,
+                "Contingent effective date—2019 c 297.",
+            ),
+        ],
+    ).decode()
+    url = section_url(section)
+    content_sha256 = hashlib.sha256(html.encode("utf-8")).hexdigest()
+    monkeypatch.setitem(
+        washington_section_module._REVIEWED_PENDING_CONTINGENCY_SNAPSHOTS,
+        section.casefold(),
+        {
+            "content_sha256": content_sha256,
+            "observed_on": date(2026, 8, 28),
+        },
+    )
+
+    row = parse_washington_section_html(
+        html,
+        source_url=url,
+        section_number=section,
+        as_of_date=date(2026, 8, 28),
+    )
+
+    assert row is not None
+    assert row.full_text.startswith("Pending-contingency")
+    assert (
+        row.structured_data["effective_variant_selection"]
+        == "official_pending_contingency_primary_branch"
+    )
+    assert (
+        row.structured_data["contingent_status_evidence"]
+        == "reviewed_retained_snapshot_digest"
+    )
+    assert row.structured_data["contingent_status_content_sha256"] == (
+        content_sha256
+    )
+    assert row.structured_data["contingent_status_observed_on"] == "2026-08-28"
+    assert (
+        parse_washington_section_html(
+            html.replace("Pending-contingency", "Drifted-contingency", 1),
+            source_url=url,
+            section_number=section,
+            as_of_date=date(2026, 8, 28),
+        )
+        is None
+    )
+    assert (
+        parse_washington_section_html(
+            html,
+            source_url=url,
+            section_number=section,
+            as_of_date=date(2026, 8, 29),
+        )
+        is None
+    )
+    assert (
+        parse_washington_section_html(
+            html,
+            source_url=url,
+            section_number=section,
+        )
+        is None
+    )
+
+
 @pytest.mark.parametrize(
     ("old", "new", "count"),
     [
@@ -502,6 +767,141 @@ def test_washington_dual_effective_identity_rejects_structural_drift(
             source_url="https://app.leg.wa.gov/RCW/default.aspx?cite=2.10.155",
             section_number="2.10.155",
             as_of_date=date(2026, 8, 25),
+        )
+        is None
+    )
+
+
+def test_washington_legacy_conflicting_repeal_selects_publisher_title_version() -> None:
+    section = "70.96.150"
+    html = _legacy_conflicting_repeal_section_html(section).decode()
+    url = f"https://app.leg.wa.gov/RCW/default.aspx?cite={section}"
+
+    row = parse_washington_section_html(
+        html,
+        source_url=url,
+        section_number=section,
+    )
+
+    assert section_page_identity(html) == section
+    assert row is not None
+    assert row.full_text.startswith("Operative Washington statutory text.")
+    assert row.metadata.history == [
+        "[ 1989 c 271 s 308 ; 1959 c 85 s 15 .]"
+    ]
+    assert row.structured_data["effective_variant_count"] == 2
+    assert row.structured_data["effective_variant_selected_index"] == 1
+    assert row.structured_data["effective_variant_excluded_indexes"] == [0]
+    assert (
+        row.structured_data["effective_variant_selection"]
+        == "publisher_title_bound_same_session_amendment"
+    )
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    [
+        ("class='section-page'", "class='section-page-drift'"),
+        ("without cognizance of the repeal thereof", "unrelated note"),
+        ("without cognizance of its amendment", "unrelated note"),
+        ("RCW 1.12.025", "RCW 1.12.026"),
+    ],
+)
+def test_washington_legacy_conflicting_repeal_rejects_structural_drift(
+    old: str,
+    new: str,
+) -> None:
+    section = "70.96.150"
+    html = _legacy_conflicting_repeal_section_html(section).decode().replace(
+        old,
+        new,
+    )
+    url = f"https://app.leg.wa.gov/RCW/default.aspx?cite={section}"
+
+    assert section_page_identity(html) is None
+    assert (
+        parse_washington_section_html(
+            html,
+            source_url=url,
+            section_number=section,
+        )
+        is None
+    )
+
+
+@pytest.mark.parametrize(
+    ("section", "body", "history", "contract_kind"),
+    [
+        (
+            "7.07.904",
+            "This act takes effect January 1, 2006.",
+            "<div style='margin-top:15pt'>[ 2005 c 172 s 23 .]</div>",
+            "effective_date",
+        ),
+        (
+            "84.52.745",
+            "See RCW 36.40.090 .",
+            "",
+            "cross_reference",
+        ),
+        (
+            "41.80.083",
+            "RCW 41.56.067 applies to this chapter.",
+            "<div style='margin-top:15pt'>[ 2018 c 250 s 5 .]</div>",
+            "incorporation_by_reference",
+        ),
+        (
+            "46.04.356",
+            '"Natural person" means a human being.',
+            "<div style='margin-top:15pt'>[ 2010 c 161 s 125 .]</div>",
+            "source_history_bound",
+        ),
+    ],
+)
+def test_washington_source_bound_short_shapes_close_current_frontier(
+    section: str,
+    body: str,
+    history: str,
+    contract_kind: str,
+) -> None:
+    payload = _section_html(section, body=body).replace(
+        b"</div></body></html>",
+        f"{history}</div></body></html>".encode(),
+    )
+    url = f"https://app.leg.wa.gov/RCW/default.aspx?cite={section}"
+
+    row = parse_washington_section_html(
+        payload.decode(),
+        source_url=url,
+        section_number=section,
+    )
+
+    assert row is not None
+    assert row.full_text == body
+    assert row.structured_data["source_bound_short_operative"] is True
+    assert (
+        row.structured_data["source_bound_short_contract_kind"]
+        == contract_kind
+    )
+    assert (
+        parse_washington_section_html(
+            payload.decode(),
+            source_url=f"{url}.drift",
+            section_number=section,
+        )
+        is None
+    )
+
+
+def test_washington_unproven_tiny_section_text_stays_fail_closed() -> None:
+    section = "1.01.011"
+    html = _section_html(section, body="Next page").decode()
+
+    assert (
+        parse_washington_section_html(
+            html,
+            source_url=f"https://app.leg.wa.gov/RCW/default.aspx?cite={section}",
+            section_number=section,
         )
         is None
     )
@@ -1153,6 +1553,38 @@ def test_washington_terminal_classifier_is_exact_and_source_bound() -> None:
         terminal_html,
         source_url=url,
         section_number="1.01.020",
+    ) is None
+
+
+def test_washington_decodified_section_note_is_source_bound_terminal() -> None:
+    section = "74.13.107"
+    url = f"https://app.leg.wa.gov/RCW/default.aspx?cite={section}"
+    html = (
+        f"<html><head><title>RCW {section}:</title></head><body>"
+        "<div id='ContentPlaceHolder1_pnlTitleBlock'>"
+        f"<h1>RCW {section}</h1><h2>Former section.</h2></div>"
+        "<div id='contentWrapper' class='section-page'>"
+        "<div></div><div></div><div><h3>Notes:</h3></div>"
+        "<div>Reviser's note: RCW 74.13.107 was amended by 2017 c 6 s 406 "
+        "without reference to its repeal by 2017 c 20 s 15. It has been "
+        "decodified for publication purposes under RCW 1.12.025.</div>"
+        "</div></body></html>"
+    )
+
+    assert parse_washington_section_html(
+        html,
+        source_url=url,
+        section_number=section,
+    ) is None
+    assert source_bound_terminal_disposition_from_section_html(
+        html,
+        source_url=url,
+        section_number=section,
+    ) == "decodified"
+    assert source_bound_terminal_disposition_from_section_html(
+        html.replace("decodified", "omitted"),
+        source_url=url,
+        section_number=section,
     ) is None
 
 

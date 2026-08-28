@@ -89,8 +89,8 @@ CROSS_STATE_MN_URL = (
     "https://www.revisor.mn.gov/statutes/cite/1.01"
 )
 FENCED_STAGING_ROOTS = tuple(f"staging-wa-v{index}" for index in range(1, 11))
-SOURCE_BUNDLE_PREFIX = "3baf89518dcf"
-DIAGNOSTIC_PRODUCER_PREFIX = "WashingtonScraper@sha256:3baf89518dcf"
+SOURCE_BUNDLE_PREFIX = "ae7af2834278"
+DIAGNOSTIC_PRODUCER_PREFIX = "WashingtonScraper@sha256:ae7af2834278"
 
 
 def _canonical_residual_sha256(urls: list[str]) -> str:
