@@ -168,6 +168,18 @@ def _aligned_result(
     )
 
 
+def _senate_section_fixture(*, head: str, content: str, revision: str) -> bytes:
+    return (
+        "<html><body>"
+        f"<div class='nys-openleg-head-container'>{head}</div>"
+        f"<div class='nys-openleg-content-container'>{content}</div>"
+        "<div class='nys-openleg-history-container'>"
+        f"Viewing most recent revision (from {revision})"
+        "</div>"
+        "</body></html>"
+    ).encode()
+
+
 def _ordered_code_sha256(*codes: str) -> str:
     return hashlib.sha256(
         json.dumps(list(codes), separators=(",", ":")).encode("utf-8")
@@ -400,6 +412,44 @@ def test_new_york_supplemental_wave_is_source_derived_from_pinned_residual_rows(
             for law_code, section, variant, reason in rows
         ]
     ) == pinned
+
+
+def test_new_york_senate_section_validator_rejects_retained_soft_not_found_shape() -> None:
+    substantive = _senate_section_fixture(
+        head="SECTION 3-6.5 Caution to the testator",
+        content=(
+            "* § 3-6.5 Caution to the testator "
+            + ("Retained official section body. " * 80)
+        ),
+        revision="2026-02-27",
+    )
+    soft_not_found = (
+        b"<html><body><div class='nys-openleg-content-container'>"
+        + (b"New York State Senate /legislation/laws/ " * 40)
+        + b"</div><div class='nys-openleg-not-found'>"
+        + b"The requested entry could not be found."
+        + b"</div></body></html>"
+    )
+    branded_shell = (
+        b"<html><body>New York State Senate /legislation/laws/ "
+        + (b"navigation shell " * 100)
+        + b"</body></html>"
+    )
+    drifted_content_marker = substantive.replace(
+        b"nys-openleg-content-container",
+        b"nys-openleg-content-container-v2",
+    )
+
+    assert NewYorkScraper._is_valid_new_york_senate_section_html(substantive)
+    assert not NewYorkScraper._is_valid_new_york_senate_section_html(
+        soft_not_found
+    )
+    assert not NewYorkScraper._is_valid_new_york_senate_section_html(
+        branded_shell
+    )
+    assert not NewYorkScraper._is_valid_new_york_senate_section_html(
+        drifted_content_marker
+    )
 
 
 def test_new_york_adapter_does_not_dump_event_proof_urls_or_use_per_page_senate_loop() -> None:
@@ -648,9 +698,10 @@ def test_new_york_compact_supplemental_wave_is_plural_and_stays_unresolved(
     )
     section_html = {
         url: (
-            b"<html><body>New York State Senate /legislation/laws/ "
+            b"<html><body><div class='nys-openleg-content-container'>"
+            b"New York State Senate /legislation/laws/ "
             + (url.encode() + b" ") * 40
-            + b"</body></html>"
+            + b"</div></body></html>"
         )
         for url in supplemental_urls
     }

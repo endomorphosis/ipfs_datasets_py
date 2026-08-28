@@ -261,14 +261,17 @@ class NewYorkScraper(BaseStateScraper):
     @staticmethod
     def _is_valid_new_york_senate_section_html(payload: bytes) -> bool:
         sample = bytes(payload or b"").lower()
+        has_content_container = bool(
+            b'class="nys-openleg-content-container"' in sample
+            or b"class='nys-openleg-content-container'" in sample
+        )
         return bool(
             len(sample) > 1_000
             and b"<html" in sample[:4_000]
             and b"</html>" in sample[-4_000:]
-            and (
-                b"/legislation/laws/" in sample
-                or b"new york state senate" in sample
-            )
+            and has_content_container
+            and b"nys-openleg-not-found" not in sample
+            and b"the requested entry could not be found" not in sample
         )
 
     @classmethod
