@@ -99,15 +99,15 @@ in each earlier run changed. Selecting a single latest endpoint map for audit
 avoids ingesting repeated bodies, while content identity prevents the changed
 responses from being conflated.
 
-The strict unbounded path now performs one bounded, direct-preferred root wave,
-then submits each currently known descendant/body wave as one deterministic
-source-ordered same-domain plural request. Each plural request uses one Common
-Crawl domain inventory plan with grouped/coalesced WARC range reuse and plural
-Wayback prefix discovery. Retries contain only unresolved rows and explicitly
-disable repeated grouped archive inventory. There is no per-page archive loop.
-Certification replays only the complete attached acquisition ledger and makes
-zero network requests. Bounded `max_statutes` probes retain their existing
-behavior.
+The strict unbounded path now performs one bounded direct root wave, then
+submits each currently known descendant/body wave as one deterministic
+source-ordered same-domain plural request. Archive recovery is disabled for the
+authorizing current-code crawl because the viewer exposes no edition marker or
+other exact current-equivalence proof for archived bytes. Retries contain only
+unresolved direct rows. There is no Common Crawl/Wayback inventory or per-page
+archive loop. Certification replays only the complete attached acquisition
+ledger and makes zero network requests. Bounded `max_statutes` probes retain
+their existing behavior.
 
 Publication remains blocked on running and closing the exact acquisition; this
 audit and implementation preparation do not claim that the unknown

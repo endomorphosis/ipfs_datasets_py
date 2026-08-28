@@ -73,8 +73,11 @@ admitted.
 | leaf_acquisition_wave_count | source_dependent_at_least_2 |
 | close_each_source_derived_continuation_wave | true |
 | per_page_archive_loop | false |
-| grouped_warc_recovery | true |
-| wayback_prefix_inventory | true |
+| archive_recovery_enabled | false |
+| grouped_warc_recovery | false |
+| wayback_prefix_inventory | false |
+| current_authorizing_transport | direct_only |
+| archive_current_equivalence | unavailable; archive bodies remain historical diagnostics |
 | residual_only_retries | true |
 | archive_is | forbidden |
 | host_retained_replay_network_requests | 0 |
@@ -245,11 +248,12 @@ Required acquisition shape:
    `section-body-wave-1`, then close each source-derived section `Down`
    as a later `section-body-wave-N`. The first known section-continuation
    floor is 834 URLs.
-5. Use one `docs.legis.wisconsin.gov` Common Crawl inventory with URL
-   terms `/statutes/statutes` and `/document/statutes/`, grouped/coalesced
-   WARC reuse, and Wayback prefix inventory. Residual-only retries must
-   not repeat grouped archive inventory. There is no per-page archive
-   loop and no `archive.is`.
+5. Submit every wave through the shared plural transport with direct preferred
+   and archive recovery disabled. Wisconsin viewer HTML exposes no edition
+   marker or other exact proof that an old Common Crawl/Wayback body equals the
+   current official response. A current-code run therefore admits only direct
+   receipts; residual-only retries contain only unresolved rows. There is no
+   Common Crawl/Wayback inventory, per-page archive loop, or `archive.is`.
 6. Host-replay every parser input with `--retained-replay-only` and zero
    network. Require first/replay frontier equality, closed
    operative-plus-terminal algebra, and
@@ -286,7 +290,7 @@ archive contract. This task does not rewrite those modules.
 | Source-derived frontier | Official root, then chapter and section viewer continuation waves |
 | Fresh evidence generation | Start from an absent evidence root; never import the receiptless cache |
 | Direct-only reuse | `--allowed-source-transport direct`; historical cache has no direct receipts |
-| One residual wave | unresolved remainder of each `chapter-toc-wave-N` / `section-body-wave-N` |
+| One residual wave | direct-only unresolved remainder of each `chapter-toc-wave-N` / `section-body-wave-N` |
 | Host retained replay | `build_host_retained_replay_command()`; no `docker`, no `--network` |
 | No-publish gate | `--no-incremental-state-publish`; no Hub mutation |
 

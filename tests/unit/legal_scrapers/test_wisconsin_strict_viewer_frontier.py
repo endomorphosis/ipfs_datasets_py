@@ -13,6 +13,8 @@ from ipfs_datasets_py.processors.legal_data.state_laws_multifetch_acquisition im
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
     StateLawPageMultiFetchResult,
+    _sanitized_multifetch_headers,
+    _sanitized_multifetch_request,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.wisconsin import (
     WisconsinScraper,
@@ -101,7 +103,9 @@ class _Ledger:
             transport_receipt={
                 "official_url": official_url,
                 "content_sha256": hashlib.sha256(payload).hexdigest(),
-                "source_transport": "retained_acquisition_replay",
+                # A real ledger returns the retained origin receipt during
+                # replay; replay itself is not a new source transport.
+                "source_transport": "direct",
             },
         )
 
@@ -349,7 +353,7 @@ async def test_wisconsin_plural_policy_is_ordered_and_does_not_reinventory_resid
     assert calls[0][0] == urls
     assert calls[0][1]["residual_retry_attempts"] == 2
     assert calls[0][1]["repeat_grouped_archive_inventory_on_residual"] is False
-    assert calls[0][1]["wayback_prefix_inventory"] is True
+    assert calls[0][1]["wayback_prefix_inventory"] is False
     assert calls[0][1]["common_crawl_domain_terms"] == (
         "docs.legis.wisconsin.gov",
     )
@@ -357,6 +361,7 @@ async def test_wisconsin_plural_policy_is_ordered_and_does_not_reinventory_resid
         "/statutes/statutes",
         "/document/statutes/",
     )
+    assert calls[0][1]["archive_recovery_enabled"] is False
 
     with pytest.raises(RuntimeError, match="off-domain"):
         await scraper._fetch_wisconsin_frontier_batch(
@@ -365,6 +370,97 @@ async def test_wisconsin_plural_policy_is_ordered_and_does_not_reinventory_resid
             content_validator=scraper._is_valid_wisconsin_viewer,
             prefer_direct=True,
         )
+
+
+@pytest.mark.parametrize("source_transport", ["common_crawl", "wayback"])
+def test_wisconsin_current_frontier_rejects_archive_only_parser_input(
+    source_transport: str,
+) -> None:
+    scraper = WisconsinScraper("WI", "Wisconsin")
+    payload = _html(
+        _toc("1.01")
+        + _block(
+            "1.01",
+            "An archived viewer body cannot be silently stamped current.",
+            path="/statutes/statutes/1/01",
+        ),
+        title="Wisconsin Legislature: Chapter 1",
+    )
+    url = f"{scraper.get_base_url()}/document/statutes/1"
+    scraper._state_law_acquisition_ledger = object()
+
+    with pytest.raises(RuntimeError, match="only historical as-of authority"):
+        scraper._validate_wisconsin_aligned_evidence(
+            url=url,
+            payload=payload,
+            transport_receipt={
+                "archive_timestamp": "20230801000000",
+                "content_sha256": hashlib.sha256(payload).hexdigest(),
+                "official_url": url,
+                "source_transport": source_transport,
+            },
+            parser_input_envelope=SimpleNamespace(body=payload),
+            frontier_name="chapter-toc-wave-1",
+        )
+
+
+@pytest.mark.anyio
+async def test_wisconsin_real_ledger_replays_exact_direct_viewer_graph(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(WisconsinScraper, "STRICT_MINIMUM_CHAPTERS", 2)
+    seed_scraper = WisconsinScraper("WI", "Wisconsin")
+    pages = _synthetic_pages(seed_scraper)
+    seed_ledger = StateLawMultiFetchAcquisitionLedger(
+        tmp_path / "wi-direct-ledger",
+        jurisdiction="WI",
+        parser_name="WisconsinScraper",
+    )
+    headers = _sanitized_multifetch_headers(
+        seed_scraper._wisconsin_frontier_headers()
+    )
+    for url, payload in pages.items():
+        seed_ledger.retain_parser_input(
+            official_url=url,
+            body=payload,
+            transport_receipt={
+                "content_sha256": hashlib.sha256(payload).hexdigest(),
+                "official_url": url,
+                "source_transport": "direct",
+            },
+            retrieved_at="2026-08-28T00:00:00+00:00",
+            response_status=200,
+            media_type="text/html",
+            sanitized_request=_sanitized_multifetch_request(
+                url,
+                sanitized_headers=headers,
+            ),
+            network_used=True,
+        )
+
+    replay_ledger = StateLawMultiFetchAcquisitionLedger(
+        tmp_path / "wi-direct-ledger",
+        jurisdiction="WI",
+        parser_name="WisconsinScraper",
+        retained_replay_only=True,
+    )
+    scraper = WisconsinScraper("WI", "Wisconsin")
+    scraper.attach_state_law_acquisition_ledger(replay_ledger)
+
+    rows = await scraper._scrape_wisconsin_strict_frontier(
+        "Wisconsin Statutes",
+        network=False,
+        record_primary=False,
+    )
+
+    assert [row.section_number for row in rows] == ["1.01", "2.01", "2.02"]
+    assert len(replay_ledger.entries) == len(pages)
+    assert all(
+        entry.transport_receipt["source_transport"] == "direct"
+        for entry in replay_ledger.entries
+    )
+    assert scraper._last_wisconsin_replayed_frontier["frontier"]["closed"] is True
 
 
 @pytest.mark.anyio
@@ -515,7 +611,8 @@ async def test_wisconsin_strict_frontier_pluralizes_waves_and_replays_zero_netwo
         f"{scraper.get_base_url()}/document/statutes/2.02",
     ]
     assert all(call[1]["retries"] == 1 for call in calls)
-    assert all(call[1]["wayback_prefix_inventory"] is True for call in calls)
+    assert all(call[1]["wayback_prefix_inventory"] is False for call in calls)
+    assert all(call[1]["archive_recovery_enabled"] is False for call in calls)
     assert all(
         call[1]["repeat_grouped_archive_inventory_on_residual"] is False
         for call in calls
@@ -573,9 +670,10 @@ async def test_wisconsin_strict_frontier_pluralizes_waves_and_replays_zero_netwo
     }
     assert completion["rights"]["basis"] == "public_law_no_state_copyright"
     assert completion["replay"]["network_requests"] == 0
-    assert completion["transport"]["grouped_warc_recovery"] is True
+    assert completion["transport"]["archive_recovery_enabled"] is False
+    assert completion["transport"]["grouped_warc_recovery"] is False
     assert completion["transport"]["per_page_archive_loop"] is False
-    assert completion["transport"]["wayback_prefix_inventory"] is True
+    assert completion["transport"]["wayback_prefix_inventory"] is False
     assert completion["transport"]["source_ordered_cross_parent_union"] is True
     assert completion["transport"][
         "repeat_grouped_archive_inventory_on_residual"

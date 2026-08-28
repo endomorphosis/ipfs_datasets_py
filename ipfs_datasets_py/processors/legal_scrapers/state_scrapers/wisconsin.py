@@ -169,6 +169,18 @@ class WisconsinScraper(BaseStateScraper):
                 raise RuntimeError(
                     f"Wisconsin {frontier_name} receipt changed content identity: {url}"
                 )
+            source_transport = str(
+                transport_receipt.get("source_transport")
+                or transport_receipt.get("transport_kind")
+                or ""
+            ).strip().casefold()
+            if ledger_attached and source_transport != "direct":
+                raise RuntimeError(
+                    "Wisconsin current-code frontier requires an exact direct "
+                    "source receipt; an archive snapshot has only historical "
+                    "as-of authority without current-equivalence proof: "
+                    f"transport={source_transport or 'missing'} url={url}"
+                )
         if parser_input_envelope is not None:
             body = getattr(parser_input_envelope, "body", None)
             if ledger_attached and body is None:
@@ -188,7 +200,7 @@ class WisconsinScraper(BaseStateScraper):
         content_validator: Callable[[bytes], bool],
         prefer_direct: bool,
     ) -> StateLawPageMultiFetchResult:
-        """Fetch an exact HTML wave through grouped WARC/residual-only transport."""
+        """Fetch one exact current HTML wave through direct plural transport."""
 
         requested = [self._canonical_fetch_url(url) for url in urls]
         if not requested:
@@ -232,7 +244,12 @@ class WisconsinScraper(BaseStateScraper):
             common_crawl_domain_terms=(self.OFFICIAL_DOMAIN,),
             common_crawl_url_terms=("/statutes/statutes", "/document/statutes/"),
             common_crawl_mime_terms=("html",),
-            wayback_prefix_inventory=True,
+            wayback_prefix_inventory=False,
+            # Wisconsin HTML carries no edition marker that can prove an old
+            # archive body is byte-equivalent to the current official viewer.
+            # Keep the authorizing crawl direct-only instead of retaining an
+            # archive result that the current-code gate must later reject.
+            archive_recovery_enabled=False,
         )
         aligned = {
             len(batch.urls),
@@ -1242,8 +1259,9 @@ class WisconsinScraper(BaseStateScraper):
                     if isinstance(row, Mapping)
                 ),
                 "first_pass_batch_stats": batch_stats,
-                "grouped_warc_recovery": True,
-                "kind": "shared_archive_aware_plural_html_viewer",
+                "archive_recovery_enabled": False,
+                "grouped_warc_recovery": False,
+                "kind": "shared_direct_plural_html_viewer",
                 "leaf_acquisition_wave_count": _wave_count(
                     "section-body-wave-"
                 ),
@@ -1254,7 +1272,7 @@ class WisconsinScraper(BaseStateScraper):
                 "root_acquisition_wave_count": _wave_count("statutes-index"),
                 "source_ordered_cross_parent_union": True,
                 "synthetic": False,
-                "wayback_prefix_inventory": True,
+                "wayback_prefix_inventory": False,
             },
         )
 
