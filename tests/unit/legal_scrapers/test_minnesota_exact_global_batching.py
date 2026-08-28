@@ -23,6 +23,49 @@ MN_ALIAS_URL = "https://www.revisor.mn.gov/statutes/cite/296.01-1"
 MN_ALIAS_SHA256 = (
     "04a01e0bb5ce4817e0ca76ab1e9a67bfa80920ed4155adbbd9fcbbfc7dbb6893"
 )
+MN_SEE_NOTE_URL = "https://www.revisor.mn.gov/statutes/cite/352.91"
+MN_SEE_NOTE_SHA256 = (
+    "2ac0e1bd344a9117b4a71b8a19226a4ebe4ea67211fe59b34c8bb5319408c12a"
+)
+
+
+def _mn_terminal_see_note_payload() -> bytes:
+    return (
+        "<html><body><div id='header'><h1>2025 Minnesota Statutes</h1></div>"
+        "<div class='sr_by_subd' id='stat.352.91'><h1>352.91</h1>"
+        "<div class='subd' id='stat.352.91.1'>"
+        "<p>[Repealed, 1996 c 408 art 8 s 29]</p></div>"
+        "<div class='subd' id='stat.352.91.3c'>"
+        "<p>MS 2025 Supp [Repealed, 2025 c 37 art 5 s 11]</p>"
+        "<p class='see_note'>[See Note.]</p></div>"
+        "<div class='subd' id='stat.352.91.3f'>"
+        "<p>MS 2025 Supp [Repealed, 2025 c 37 art 5 s 11]</p>"
+        "<p class='see_note'>[See Note.]</p></div></div>"
+        "<p><b>NOTE: </b>The repeal of subdivision 3c is effective later.</p>"
+        "<div class='subd' id='stat.352.91.3c'>"
+        "<p>Quoted amendment text is not an operative .section.</p></div>"
+        "</body></html>"
+    ).encode()
+
+
+def _bind_mn_terminal_see_note_contract(
+    monkeypatch: pytest.MonkeyPatch,
+    payload: bytes,
+) -> None:
+    monkeypatch.setattr(
+        minnesota_section,
+        "_EXACT_TERMINAL_SEE_NOTE_CONTRACTS",
+        {
+            MN_SEE_NOTE_URL: {
+                "content_byte_size": len(payload),
+                "content_sha256": hashlib.sha256(payload).hexdigest(),
+                "subdivision_ids": (
+                    "stat.352.91.3c",
+                    "stat.352.91.3f",
+                ),
+            }
+        },
+    )
 
 
 def _aligned_result(urls: list[str]) -> StateLawPageMultiFetchResult:
@@ -166,3 +209,82 @@ def test_minnesota_terminal_display_alias_replays_retained_contract() -> None:
     assert classified["disposition"] == "repealed"
     assert classified["section_number"] == "296.01-1"
 
+
+def test_minnesota_terminal_see_note_contract_is_exact_and_source_bound(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = _mn_terminal_see_note_payload()
+    _bind_mn_terminal_see_note_contract(monkeypatch, payload)
+
+    classified = minnesota_section.classify_minnesota_terminal_section_html(
+        payload.decode(),
+        source_url=MN_SEE_NOTE_URL,
+        expected_edition=MinnesotaScraper.OFFICIAL_EDITION,
+    )
+
+    assert classified is not None
+    assert classified["disposition"] == "repealed"
+    assert classified["section_number"] == "352.91"
+    assert classified["source_blocks"] == 3
+    assert classified["marker_texts"] == [
+        "[Repealed, 1996 c 408 art 8 s 29]",
+        "MS 2025 Supp [Repealed, 2025 c 37 art 5 s 11]",
+        "MS 2025 Supp [Repealed, 2025 c 37 art 5 s 11]",
+    ]
+    assert (
+        minnesota_section.classify_minnesota_terminal_section_html(
+            (payload + b" ").decode(),
+            source_url=MN_SEE_NOTE_URL,
+            expected_edition=MinnesotaScraper.OFFICIAL_EDITION,
+        )
+        is None
+    )
+
+
+@pytest.mark.parametrize(
+    "old,new",
+    (
+        (b"class='see_note'", b"class='editorial_note'"),
+        (b"[See Note.]", b"[See Other Note.]"),
+        (b"stat.352.91.3f", b"stat.352.91.3g"),
+    ),
+)
+def test_minnesota_terminal_see_note_contract_rejects_dom_drift(
+    monkeypatch: pytest.MonkeyPatch,
+    old: bytes,
+    new: bytes,
+) -> None:
+    payload = _mn_terminal_see_note_payload().replace(old, new)
+    _bind_mn_terminal_see_note_contract(monkeypatch, payload)
+
+    assert (
+        minnesota_section.classify_minnesota_terminal_section_html(
+            payload.decode(),
+            source_url=MN_SEE_NOTE_URL,
+            expected_edition=MinnesotaScraper.OFFICIAL_EDITION,
+        )
+        is None
+    )
+
+
+def test_minnesota_terminal_see_note_replays_retained_contract() -> None:
+    evidence_root = os.getenv("STATE_LAWS_TEST_MN_EVIDENCE_ROOT", "").strip()
+    if not evidence_root:
+        pytest.skip("requires retained Minnesota acquisition evidence")
+
+    payload_path = (
+        Path(evidence_root) / "MN" / "objects" / f"{MN_SEE_NOTE_SHA256}.bin"
+    )
+    payload = payload_path.read_bytes()
+    assert len(payload) == 97874
+    assert hashlib.sha256(payload).hexdigest() == MN_SEE_NOTE_SHA256
+
+    classified = minnesota_section.classify_minnesota_terminal_section_html(
+        payload.decode("utf-8"),
+        source_url=MN_SEE_NOTE_URL,
+        expected_edition=MinnesotaScraper.OFFICIAL_EDITION,
+    )
+    assert classified is not None
+    assert classified["disposition"] == "repealed"
+    assert classified["section_number"] == "352.91"
+    assert classified["source_blocks"] == 20

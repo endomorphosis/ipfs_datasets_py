@@ -50,6 +50,25 @@ _EXACT_TERMINAL_DISPLAY_CITATION_ALIASES = {
     }
 }
 
+# One current-edition source-reference page adds exact editorial pointers to
+# two repealed subdivision records.  The pointers do not change the lifecycle
+# disposition, but accepting arbitrary note prose here would weaken the
+# terminal grammar.  Bind the exception to the complete retained page and its
+# exact subdivision identities so every future byte or DOM change fails
+# closed for review.
+_EXACT_TERMINAL_SEE_NOTE_CONTRACTS = {
+    "https://www.revisor.mn.gov/statutes/cite/352.91": {
+        "content_byte_size": 97874,
+        "content_sha256": (
+            "2ac0e1bd344a9117b4a71b8a19226a4ebe4ea67211fe59b34c8bb5319408c12a"
+        ),
+        "subdivision_ids": (
+            "stat.352.91.3c",
+            "stat.352.91.3f",
+        ),
+    }
+}
+
 
 def _clean(text: str) -> str:
     return _WS.sub(" ", (text or "").replace("\xa0", " ")).strip()
@@ -298,6 +317,25 @@ def classify_minnesota_terminal_section_html(
     if soup.find(class_="section") is not None:
         return None
 
+    raw = str(html or "").encode("utf-8")
+    see_note_contract = _EXACT_TERMINAL_SEE_NOTE_CONTRACTS.get(
+        str(source_url or "").strip()
+    )
+    exact_see_note_ids: set[str] = set()
+    if see_note_contract is not None:
+        if (
+            len(raw) != int(see_note_contract["content_byte_size"])
+            or hashlib.sha256(raw).hexdigest()
+            != str(see_note_contract["content_sha256"])
+        ):
+            return None
+        exact_see_note_ids = {
+            str(value)
+            for value in see_note_contract.get("subdivision_ids", ())
+        }
+        if not exact_see_note_ids:
+            return None
+
     expected_id = f"stat.{section_number}"
     containers = [
         node
@@ -309,6 +347,7 @@ def classify_minnesota_terminal_section_html(
 
     marker_texts: List[str] = []
     dispositions: List[str] = []
+    observed_see_note_ids: set[str] = set()
     source_blocks = 0
     for container in containers:
         classes = set(container.get("class") or [])
@@ -325,7 +364,20 @@ def classify_minnesota_terminal_section_html(
                     or not block_id.startswith(f"stat.{section_number}.")
                 ):
                     return None
-                candidates.extend(_clean(paragraph.get_text(" ")) for paragraph in paragraphs)
+                for paragraph in paragraphs:
+                    candidate = _clean(paragraph.get_text(" "))
+                    paragraph_classes = set(paragraph.get("class") or [])
+                    if paragraph_classes == {"see_note"}:
+                        if (
+                            see_note_contract is None
+                            or block_id not in exact_see_note_ids
+                            or block_id in observed_see_note_ids
+                            or candidate != "[See Note.]"
+                        ):
+                            return None
+                        observed_see_note_ids.add(block_id)
+                        continue
+                    candidates.append(candidate)
         else:
             if "sr" not in classes:
                 return None
@@ -365,6 +417,8 @@ def classify_minnesota_terminal_section_html(
             marker_texts.append(_clean(candidate))
             dispositions.extend(candidate_dispositions)
 
+    if see_note_contract is not None and observed_see_note_ids != exact_see_note_ids:
+        return None
     if not source_blocks or not dispositions:
         return None
     unique_dispositions = sorted(set(dispositions))
