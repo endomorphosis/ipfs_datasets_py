@@ -443,9 +443,14 @@ class IdahoScraper(BaseStateScraper):
                     pending_subcontainers,
                 )
         if empty_chapters:
-            raise RuntimeError(
-                "Idaho exact chapter pages exposed no section or subcontainer "
-                f"frontier: {empty_chapters[:20]}"
+            # Idaho keeps source-listed sunset/repealed chapters whose pages
+            # intentionally contain no section links (for example Title 19,
+            # Chapter 54).  They are terminal catalog containers, not missing
+            # parser inputs and not statute rows.
+            self.logger.info(
+                "Idaho exact plural frontier: terminal empty chapters=%s sample=%s",
+                len(empty_chapters),
+                empty_chapters[:20],
             )
 
         subcontainer_count = 0
@@ -489,9 +494,11 @@ class IdahoScraper(BaseStateScraper):
                         pending_subcontainers,
                     )
             if empty_subcontainers:
-                raise RuntimeError(
-                    "Idaho exact subcontainer pages exposed no nested frontier: "
-                    f"{empty_subcontainers[:20]}"
+                self.logger.info(
+                    "Idaho exact plural frontier: terminal empty subcontainers=%s "
+                    "sample=%s",
+                    len(empty_subcontainers),
+                    empty_subcontainers[:20],
                 )
 
         if not ordered_section_urls:

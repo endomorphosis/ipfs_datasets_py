@@ -100,6 +100,9 @@ async def test_idaho_full_corpus_uses_aligned_hierarchy_waves(
     chapter_url = (
         "https://legislature.idaho.gov/statutesrules/idstat/title18/t18ch1/"
     )
+    empty_chapter_url = (
+        "https://legislature.idaho.gov/statutesrules/idstat/title18/t18ch2/"
+    )
     part_url = f"{chapter_url}PT1/"
     section_urls = [
         f"{chapter_url}SECT18-101/",
@@ -118,7 +121,9 @@ async def test_idaho_full_corpus_uses_aligned_hierarchy_waves(
     pages = {
         title_url: _table(
             f"<tr><td><a href='{chapter_url}'>CHAPTER 1</a></td>"
-            "<td></td><td>PRELIMINARY PROVISIONS</td></tr>"
+            "<td></td><td>PRELIMINARY PROVISIONS</td></tr>",
+            f"<tr><td><a href='{empty_chapter_url}'>CHAPTER 2</a></td>"
+            "<td></td><td>SUNSET CHAPTER</td></tr>",
         ),
         chapter_url: _table(
             f"<tr><td><a href='{section_urls[0]}'>18-101</a></td>"
@@ -126,6 +131,7 @@ async def test_idaho_full_corpus_uses_aligned_hierarchy_waves(
             f"<tr><td><a href='{part_url}'>PART 1</a></td>"
             "<td></td><td>Additional provisions.</td></tr>",
         ),
+        empty_chapter_url: _table(),
         part_url: _table(
             f"<tr><td><a href='{section_urls[1]}'>18-102</a></td>"
             "<td></td><td>Construction.</td></tr>"
@@ -182,7 +188,7 @@ async def test_idaho_full_corpus_uses_aligned_hierarchy_waves(
 
     assert [requested for requested, _kwargs in calls] == [
         [title_url],
-        [chapter_url],
+        [chapter_url, empty_chapter_url],
         [part_url],
         section_urls,
     ]
