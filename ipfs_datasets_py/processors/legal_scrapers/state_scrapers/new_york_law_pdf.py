@@ -49,6 +49,20 @@ PAR2709_SENATE_SECTION_URL = (
 PAR2709_SENATE_SECTION_SHA256 = (
     "76f0a5cfe5313182d5969e5a4c82faeab2aff9f6d2a09a125a35e008006a3b09"
 )
+CPL15030_SIGNED_BILL_RECORD_URL = (
+    "https://assembly.ny.gov/leg/"
+    "?Actions=Y&Summary=Y&Text=Y&bn=A02009&term=2019"
+)
+CPL15030_SIGNED_BILL_PROJECTION_SHA256 = (
+    "83609b2646f17478c3b6cbfbfa21400eeb4ba10cacb778afa2659cccc0358be7"
+)
+EDN666_SIGNED_BILL_RECORD_URL = (
+    "https://assembly.ny.gov/leg/"
+    "?Actions=Y&Summary=Y&Text=Y&bn=A03006&term=2025"
+)
+EDN666_SIGNED_BILL_PROJECTION_SHA256 = (
+    "3a212979e4428f98acfad78f033949c7abb2b09f8ffe0ac7c24c46dec6d94a02"
+)
 SUPPLEMENTAL_PROOF_SCHEMA_VERSION = "new-york-supplemental-proof-input-v1"
 SUPPLEMENTAL_RESOLUTION_SCHEMA_VERSION = (
     "new-york-supplemental-proof-resolution-v1"
@@ -257,7 +271,11 @@ class NewYorkSupplementalProofInput:
         host = str(parsed.hostname or "").strip().lower()
         if not key:
             raise ValueError("New York supplemental proof selector must be non-empty")
-        if kind not in {"official_event_report", "official_senate_section"}:
+        if kind not in {
+            "official_event_report",
+            "official_senate_section",
+            "official_signed_bill_record",
+        }:
             raise ValueError("New York supplemental proof kind is not source-bound")
         if (
             parsed.scheme != "https"
@@ -349,6 +367,134 @@ def _new_york_senate_section_page(payload: bytes) -> Dict[str, Any]:
     return projection
 
 
+def _new_york_assembly_signed_bill_page(payload: bytes) -> Dict[str, Any]:
+    """Project stable enactment fields from one official Assembly bill record."""
+
+    raw = bytes(payload or b"")
+    decoded = raw.decode("utf-8", errors="replace")
+    lowered = decoded.casefold()
+    projection: Dict[str, Any] = {
+        "bill_number": "",
+        "bill_text": "",
+        "signed_chapter": "",
+        "signed_date": None,
+        "valid_html": bool(
+            len(raw) > 100_000
+            and "<html" in lowered[:4_000]
+            and "jump_to_actions" in lowered
+            and "jump_to_text" in lowered
+            and "signed chap." in lowered
+            and "</html>" in lowered[-4_000:]
+        ),
+    }
+    if not projection["valid_html"]:
+        return projection
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return projection
+    soup = BeautifulSoup(decoded, "html.parser")
+    actions_heading = soup.find(id="jump_to_Actions")
+    text_heading = soup.find(id="jump_to_Text")
+    actions_table = (
+        actions_heading.find_next("table") if actions_heading is not None else None
+    )
+    text_node = text_heading.find_next("pre") if text_heading is not None else None
+    if actions_table is None or text_node is None:
+        projection["valid_html"] = False
+        return projection
+
+    action_rows: List[List[str]] = []
+    for row in actions_table.find_all("tr"):
+        cells = [
+            _WS.sub(
+                " ",
+                unicodedata.normalize("NFKC", cell.get_text(" ", strip=True)),
+            ).strip()
+            for cell in row.find_all("td")
+        ]
+        cells = [cell for cell in cells if cell]
+        if cells:
+            action_rows.append(cells)
+    action_text = "\n".join(" | ".join(row) for row in action_rows)
+    bill_match = re.search(r"\bBILL NO\s*\|\s*(A\d+[A-Z]?)\b", action_text)
+    signed_match = re.search(
+        r"(?P<date>\d{2}/\d{2}/\d{4})\s*\|\s*SIGNED CHAP\.(?P<chapter>\d+)\b",
+        action_text,
+    )
+    bill_text = _WS.sub(
+        " ",
+        unicodedata.normalize("NFKC", text_node.get_text(" ", strip=True)),
+    ).strip()
+    projection["bill_number"] = bill_match.group(1) if bill_match else ""
+    projection["bill_text"] = bill_text
+    projection["signed_chapter"] = (
+        signed_match.group("chapter") if signed_match else ""
+    )
+    if signed_match is not None:
+        try:
+            month, day, year = signed_match.group("date").split("/")
+            projection["signed_date"] = date(
+                int(year),
+                int(month),
+                int(day),
+            )
+        except (TypeError, ValueError):
+            pass
+    return projection
+
+
+def _new_york_signed_bill_projection_sha256(
+    *,
+    bill_number: str,
+    signed_date: str,
+    signed_chapter: str,
+    part: str,
+    repeal_clause: str,
+    effective_clause: str,
+) -> str:
+    projection = {
+        "bill_number": str(bill_number or ""),
+        "effective_clause": str(effective_clause or ""),
+        "part": str(part or ""),
+        "repeal_clause": str(repeal_clause or ""),
+        "signed_chapter": str(signed_chapter or ""),
+        "signed_date": str(signed_date or ""),
+    }
+    return hashlib.sha256(
+        json.dumps(
+            projection,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _new_york_signed_bill_part_text(bill_text: str, part: str) -> str:
+    """Return one body Part, excluding summary references to other Parts."""
+
+    normalized_part = re.escape(str(part or "").strip().upper())
+    if not normalized_part:
+        return ""
+    start_match = re.search(
+        rf"\b\d+\s+PART\s+{normalized_part}\s+\d+\s+Section\s+1\.",
+        str(bill_text or ""),
+    )
+    if start_match is None:
+        return ""
+    remainder = str(bill_text or "")[start_match.start() :]
+    next_match = re.search(
+        r"\b\d+\s+PART\s+[A-Z][A-Z0-9-]*\s+\d+\s+"
+        r"(?:Section\s+1\.|Intentionally\s+Omitted)",
+        remainder[start_match.end() - start_match.start() :],
+    )
+    if next_match is None:
+        return remainder
+    end = start_match.end() - start_match.start() + next_match.start()
+    return remainder[:end]
+
+
 def _new_york_senate_resolution_outcome(
     proof: NewYorkSupplementalProofInput,
     *,
@@ -358,6 +504,7 @@ def _new_york_senate_resolution_outcome(
     decision_action: str,
     decision: Mapping[str, Any],
     source_revision_date: Optional[date],
+    source_projection_sha256: str = "",
 ) -> Dict[str, Any]:
     resolved = bool(conjuncts) and all(bool(value) for value in conjuncts.values())
     outcome: Dict[str, Any] = {
@@ -378,6 +525,8 @@ def _new_york_senate_resolution_outcome(
         ),
         "status": "resolved" if resolved else "unknown",
     }
+    if source_projection_sha256:
+        outcome["source_projection_sha256"] = source_projection_sha256
     if resolved:
         outcome["decision"] = dict(decision)
     outcome["resolution_sha256"] = hashlib.sha256(
@@ -568,6 +717,164 @@ def evaluate_new_york_par2709_senate_section(
     )
 
 
+def evaluate_new_york_cpl15030_signed_bill_record(
+    proof: NewYorkSupplementalProofInput,
+    *,
+    legal_as_of: date = _EXPLICIT_RELEASE_DATE,
+) -> Dict[str, Any]:
+    """Type CPL 150.30 as repealed from signed 2019 Chapter 59 text."""
+
+    page = _new_york_assembly_signed_bill_page(proof.payload)
+    bill_text = str(page.get("bill_text") or "")
+    signed_date = page.get("signed_date")
+    part_text = _new_york_signed_bill_part_text(bill_text, "JJJ")
+    repeal_clause = "Section 150.30 of the criminal procedure law is REPEALED."
+    effective_clause = "§ 25. This act shall take effect on January 1, 2020."
+    repeal_match = re.search(
+        r"\bSection\s+150\.30\s+of\s+the\s+criminal\s+procedure\s+law\s+"
+        r"is\s+REPEALED\.",
+        part_text,
+    )
+    effective_match = re.search(
+        r"§\s*25\.\s*This\s+act\s+shall\s+take\s+effect\s+on\s+"
+        r"January\s+1,\s+2020\.",
+        part_text,
+    )
+    projection_sha256 = _new_york_signed_bill_projection_sha256(
+        bill_number=str(page.get("bill_number") or ""),
+        signed_date=(
+            signed_date.strftime("%m/%d/%Y")
+            if isinstance(signed_date, date)
+            else ""
+        ),
+        signed_chapter=str(page.get("signed_chapter") or ""),
+        part="JJJ" if part_text else "",
+        repeal_clause=repeal_clause if repeal_match is not None else "",
+        effective_clause=effective_clause if effective_match is not None else "",
+    )
+    effective_date = date(2020, 1, 1)
+    selector_key = "CPL:150.30:toc_section_missing_body_identity"
+    conjuncts = {
+        "exact_selector": proof.selector_key == "CPL:150.30:signed-bill-record",
+        "exact_official_source": (
+            proof.official_url == CPL15030_SIGNED_BILL_RECORD_URL
+        ),
+        "official_signed_bill_html": bool(
+            proof.proof_kind == "official_signed_bill_record"
+            and proof.media_type == "text/html"
+            and page.get("valid_html")
+        ),
+        "exact_bill_identity": page.get("bill_number") == "A02009C",
+        "signed_chapter_59": bool(
+            signed_date == date(2019, 4, 12)
+            and page.get("signed_chapter") == "59"
+        ),
+        "same_part_repeal_clause": repeal_match is not None,
+        "same_part_effective_clause": effective_match is not None,
+        "exact_source_projection_sha256": (
+            projection_sha256 == CPL15030_SIGNED_BILL_PROJECTION_SHA256
+        ),
+        "effective_on_or_before_legal_as_of": effective_date <= legal_as_of,
+    }
+    return _new_york_senate_resolution_outcome(
+        proof,
+        selector_key=selector_key,
+        legal_as_of=legal_as_of,
+        conjuncts=conjuncts,
+        decision_action="terminal",
+        decision={
+            "disposition": "repealed",
+            "note": "Repealed effective January 1, 2020 by 2019 Ch. 59 Part JJJ § 1-b.",
+            "section_name": "Appearance ticket; issuance and service thereof after arrest",
+        },
+        source_revision_date=(
+            signed_date if isinstance(signed_date, date) else None
+        ),
+        source_projection_sha256=projection_sha256,
+    )
+
+
+def evaluate_new_york_edn666_signed_bill_record(
+    proof: NewYorkSupplementalProofInput,
+    *,
+    legal_as_of: date = _EXPLICIT_RELEASE_DATE,
+) -> Dict[str, Any]:
+    """Type Education Law 666 as repealed from signed 2025 Chapter 56."""
+
+    page = _new_york_assembly_signed_bill_page(proof.payload)
+    bill_text = str(page.get("bill_text") or "")
+    signed_date = page.get("signed_date")
+    part_text = _new_york_signed_bill_part_text(bill_text, "D")
+    repeal_clause = "Section 666 of the education law is REPEALED."
+    effective_clause = (
+        "§ 6. This act shall take effect immediately and shall apply to "
+        "academic years 2025-2026 and thereafter."
+    )
+    repeal_match = re.search(
+        r"\bSection\s+666\s+of\s+the\s+education\s+law\s+is\s+REPEALED\.",
+        part_text,
+    )
+    effective_match = re.search(
+        r"§\s*6\.\s*This\s+act\s+shall\s+take\s+effect\s+immediately\s+and\s+"
+        r"shall\s+apply\s+to\s+academ(?:ic|-\s*\d+\s*ic)\s+years\s+"
+        r"2025-2026\s+and\s+"
+        r"thereafter\.",
+        part_text,
+        re.IGNORECASE,
+    )
+    projection_sha256 = _new_york_signed_bill_projection_sha256(
+        bill_number=str(page.get("bill_number") or ""),
+        signed_date=(
+            signed_date.strftime("%m/%d/%Y")
+            if isinstance(signed_date, date)
+            else ""
+        ),
+        signed_chapter=str(page.get("signed_chapter") or ""),
+        part="D" if part_text else "",
+        repeal_clause=repeal_clause if repeal_match is not None else "",
+        effective_clause=effective_clause if effective_match is not None else "",
+    )
+    selector_key = "EDN:666:toc_section_missing_body_identity"
+    conjuncts = {
+        "exact_selector": proof.selector_key == "EDN:666:signed-bill-record",
+        "exact_official_source": proof.official_url == EDN666_SIGNED_BILL_RECORD_URL,
+        "official_signed_bill_html": bool(
+            proof.proof_kind == "official_signed_bill_record"
+            and proof.media_type == "text/html"
+            and page.get("valid_html")
+        ),
+        "exact_bill_identity": page.get("bill_number") == "A03006C",
+        "signed_chapter_56": bool(
+            signed_date == date(2025, 5, 9)
+            and page.get("signed_chapter") == "56"
+        ),
+        "same_part_repeal_clause": repeal_match is not None,
+        "same_part_effective_clause": effective_match is not None,
+        "exact_source_projection_sha256": (
+            projection_sha256 == EDN666_SIGNED_BILL_PROJECTION_SHA256
+        ),
+        "effective_on_or_before_legal_as_of": bool(
+            isinstance(signed_date, date) and signed_date <= legal_as_of
+        ),
+    }
+    return _new_york_senate_resolution_outcome(
+        proof,
+        selector_key=selector_key,
+        legal_as_of=legal_as_of,
+        conjuncts=conjuncts,
+        decision_action="terminal",
+        decision={
+            "disposition": "repealed",
+            "note": "Repealed effective May 9, 2025 by 2025 Ch. 56 Part D § 1.",
+            "section_name": "Tuition awards for part-time undergraduate students",
+        },
+        source_revision_date=(
+            signed_date if isinstance(signed_date, date) else None
+        ),
+        source_projection_sha256=projection_sha256,
+    )
+
+
 class NewYorkSupplementalProofRegistry:
     """Fixed resolver registry for exact supplemental New York inputs.
 
@@ -673,6 +980,35 @@ class NewYorkSupplementalProofRegistry:
         )
         section_url = public_section_url(code, section) if code and section else ""
         proof = self.input_for_url(section_url) if section_url else None
+        signed_bill_proof: Optional[NewYorkSupplementalProofInput] = None
+        if (
+            code == "CPL"
+            and section == "150.30"
+            and not variant
+            and reason == "toc_section_missing_body_identity"
+        ):
+            signed_bill_proof = self.input_for_url(
+                CPL15030_SIGNED_BILL_RECORD_URL
+            )
+            if signed_bill_proof is not None:
+                return evaluate_new_york_cpl15030_signed_bill_record(
+                    signed_bill_proof,
+                    legal_as_of=legal_as_of,
+                )
+        if (
+            code == "EDN"
+            and section == "666"
+            and not variant
+            and reason == "toc_section_missing_body_identity"
+        ):
+            signed_bill_proof = self.input_for_url(
+                EDN666_SIGNED_BILL_RECORD_URL
+            )
+            if signed_bill_proof is not None:
+                return evaluate_new_york_edn666_signed_bill_record(
+                    signed_bill_proof,
+                    legal_as_of=legal_as_of,
+                )
         if proof is not None and not variant:
             if (
                 code == "EPT"
@@ -703,20 +1039,21 @@ class NewYorkSupplementalProofRegistry:
                     proof,
                     legal_as_of=legal_as_of,
                 )
+        retained_proof = signed_bill_proof or proof
         outcome: Dict[str, Any] = {
             "decision_action": None,
-            "proof_present": proof is not None,
+            "proof_present": retained_proof is not None,
             "reason": (
                 "source_bound_resolver_not_implemented"
-                if proof is not None
+                if retained_proof is not None
                 else "proof_input_missing"
             ),
             "schema_version": SUPPLEMENTAL_RESOLUTION_SCHEMA_VERSION,
             "selector_key": selector_key,
             "status": "unknown",
         }
-        if proof is not None:
-            outcome["proof"] = proof.manifest_row()
+        if retained_proof is not None:
+            outcome["proof"] = retained_proof.manifest_row()
         outcome["resolution_sha256"] = hashlib.sha256(
             json.dumps(
                 outcome,

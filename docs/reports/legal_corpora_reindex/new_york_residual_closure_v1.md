@@ -1,189 +1,195 @@
 # New York residual closure v1
 
-Date: 2026-08-27  
-Board: `legal-corpora-reindex-v1`  
-Task: `LCR-103`  
-Goal: `LCR-G153`  
-Track: `exact51-residual-wave-d`  
-Status: **typed residual recorded**; **not** a sealed current-bundle pair; **not** a publication authorization
+Date: 2026-08-28
+Board: `legal-corpora-reindex-v1`
+Task: `LCR-103`
+Track: `exact51-residual-wave-d`
+Status: **three newly source-proved decisions implemented; not sealed; not publication-authorized**
 
-This report closes LCR-103 by recording the exact remaining New York
-residual: seed the 96-input v20-plus-AGM union, then acquire one 30-URL
-`www.nysenate.gov` HTML wave and keep every unresolved decision unresolved
-until reviewed source-bound resolvers see official proof bytes. Host
-zero-network replay has not sealed a current-bundle pair. The six
-closed-state steps remain the only admitted path. Hub mutation, a static
-residual list, a per-page archive loop, the legacy
-`_build_official_senate_section` path, public.law/Justia sole admission,
-and converting unresolved decisions into current law are not admitted.
+This report supersedes the stale 214-row narrative with the corrected
+New York audit and the bounded research completed on 2026-08-28. The
+authoritative starting point is the corrected 212-row inventory. One
+official Agriculture and Markets report is now directly recoverable, and
+two official Assembly bill records prove two more terminal dispositions.
+Those three decisions project the residual from 212 to 209. A fresh
+evidence generation and host zero-network replay have not been run, so the
+209 figure is a source- and unit-test-backed projection, not a sealed
+current-bundle claim.
 
-## Residual identity (exact)
+## Exact identity
 
 | Field | Value |
 |---|---|
 | jurisdiction | NY |
 | official domain | www.nysenate.gov |
 | official_pdf_domain | legislation.nysenate.gov |
-| agm28_domain | agriculture.ny.gov |
+| official_assembly_domain | assembly.ny.gov |
 | official entry | `https://www.nysenate.gov/legislation/laws` |
 | official_consolidated_url | `https://www.nysenate.gov/legislation/laws/CONSOLIDATED` |
+| corrected_evidence_root | `/home/barberb/.ipfs_datasets/state_laws/legal-corpora-reindex-20260828-ny-corrected-evidence-cgGxfD` |
+| corrected_inventory | `NY/inventories/903f27eb0b34c54e3a167ff811e2eb327fa50eb28d14796077c5aec43c09d5f6.json` |
+| corrected_blocker | `NY/blockers/65a124fdb40824bcccd8310e65c3214bf030c10e53d626f95ddf6fd7663bec9c.json` |
+| corrected_seed | 99-input corrected seed: 95 catalog/PDF inputs plus four substantive Senate inputs |
+| corrected_audited_identity | 37441 = 36477 operative + 752 terminal + 212 unresolved |
+| corrected_audited_closed_laws | 70 |
+| corrected_audited_event_rows | 183 |
+| corrected_audited_senate_version_rows | 29 |
+| corrected_unresolved_projection_sha256 | `482b7e60020ad20e2ce6bdd49ef1f9870f9d94269d00f1345c4d1c912b1604b1` |
 | agm28_lifecycle_report_url | `https://agriculture.ny.gov/system/files/documents/2023/02/urbanruralconsumeraccessreport.pdf` |
 | agm28_lifecycle_report_sha256 | `6abaab50ad7bf3bec0c5c98949de8d543bdb4fb8b869f13a824776d39ed8580d` |
-| agm28_selector_key | AGM:28 |
-| closure_status | residual_recorded |
+| agm28_direct_status | HTTP 200; exact digest matched |
+| signed_bill_proof_count | 2 |
+| signed_bill_wave_name | `signed-assembly-bill-records-1-2` |
+| signed_bill_url_projection_sha256 | `ef7e526c284aa62b725b457639b71707627482ac9b35ea76ff8bf74ad48a8a31` |
+| projected_identity_after_bounded_direct_wave | 37441 = 36477 operative + 755 terminal + 209 unresolved |
+| projected_closed_laws | 72 |
+| remaining_event_rows | 182 |
+| remaining_senate_version_rows | 27 |
+| remaining_unresolved_rows | 209 |
+| remaining_senate_wave_url_count | 28 |
+| remaining_senate_wave_name | `source-derived-supplemental-sections-1-28` |
+| remaining_senate_wave_sha256 | `b03131cd20eb808d159427e548a732a078fc7b3f94291a2c5fff8a4cd206dde0` |
 | current_bundle_sealed | false |
 | publication_authorized | false |
 | hub_mutation | forbidden |
-| parser | official full-law PDF plus reviewed supplemental proof resolvers |
-| same_target_parser_for_live_and_replay | true |
-| seed | 96-input v20-plus-AGM union; 95 v20 direct plus one v21 AGM Wayback |
-| seed_v20_direct_inputs | 95 |
-| seed_v21_agm_wayback_inputs | 1 |
-| seed_selected_input_count | 96 |
-| seed_selected_projection_sha256 | `46dce4a3aecf32f3fe21dd743da8f958b1bec8bbc84f5ec680e49f2c13807f76` |
-| seed_copied_file_count | 0 |
-| convert_unresolved_decisions_into_current_law | forbidden |
-| dynamic_resolver_registration | forbidden |
-| public_law_justia_fallback_in_strict | forbidden |
-| legacy_per_page_senate_section_path | forbidden |
-| invent_later_senate_section_urls | forbidden |
-| unbounded_locator_hunt | forbidden |
-| static_residual_list | forbidden |
-| v20_catalog_plus_pdf_inputs | 95 |
-| v20_verified_bytes | 75151982 |
-| catalog_law_count | 94 |
-| catalog_ordered_code_sha256 | `792d08fe5168ff6b429d13076fa843a8e5987c4b670339e1a2c6ca70420d590c` |
-| source_sections | 37441 |
-| operative_sections | 36475 |
-| terminal_sections_before_agm | 751 |
-| terminal_sections_after_agm | 752 |
-| unresolved_before_agm | 215 |
-| unresolved_after_agm | 214 |
-| closed_laws_before_agm | 68 |
-| closed_laws_after_agm | 69 |
-| event_conditioned_rows_before_agm | 183 |
-| event_conditioned_rows_after_agm | 182 |
-| missing_lifecycle_note_rows | 4 |
-| toc_body_rows | 28 |
-| supplemental_residual_rows | 32 |
-| extra_toc_variant_identities | 7 |
-| enumerable_url_residual_count | 30 |
-| unresolved_decision_count | 214 |
-| residual_count | 30 |
-| residual_kind | exact 30-URL www.nysenate.gov wave plus 214 unresolved proof decisions |
-| residual_first_url | `https://www.nysenate.gov/legislation/laws/EPT/3-6.5` |
-| residual_wave_name | `source-derived-supplemental-sections-1-30` |
-| agm28_wave_name | `agm-28-lifecycle-selector` |
-| catalog_wave_name | `consolidated-catalog` |
-| pdf_wave_name_prefix | `full-law-pdfs-` |
-| catalog_acquisition_wave_count | 1 |
-| agm28_acquisition_wave_count | 0 remaining; already retained |
-| supplemental_acquisition_wave_count | 1 |
-| implemented_event_resolvers | 1 |
-| unimplemented_event_resolvers | 182 |
-| per_page_archive_loop | false |
-| grouped_warc_recovery | true |
-| wayback_prefix_inventory | true |
-| residual_only_retries | true |
-| archive_is | forbidden |
-| host_retained_replay_network_requests | 0 |
-| rights_basis | `public_law_no_state_copyright` |
-| residual_sha_method | `sha256("\n".join(urls))` |
-| residual_ordered_sha256 | `30fb7bd969c80f3747b3ff0eae6685f11e61bdd82193b4abf35864a2c32a1ec2` |
-| residual_ordered_sha256_prefix | `30fb7bd969c8` |
-| unresolved_projection_sha256_before_agm | `4e8865cc8dbfe4706e0fbe931e31df60a4e4f7e20e88ee9f628507c354b22dc3` |
-| unresolved_projection_sha256_after_agm_prefix | `d6b209ac65ab` |
-| diagnostic_hashes_authorizing | false |
-| source_bundle | `f68d2672e24092c93810dd0f168a098a855d7879bea746faa63f676ef3ccdd75` |
-| source_bundle_prefix | `f68d2672e240` |
+| host_retained_replay_network_requests | 0 required |
 
-The 30-URL residual SHA-256 is the production pin
-`STRICT_CURRENT_SUPPLEMENTAL_URL_SHA256`. Recompute it only as
-`sha256("\n".join(urls).encode("utf-8"))` over the source-ordered unique
-Senate section URLs derived from the 32 v20 residual rows. Proof
-manifests and unimplemented-resolver outcomes use
-`json.dumps(..., ensure_ascii=False, separators=(",", ":"), sort_keys=True)`
-and are not a substitute for that 30-URL identity. Guessing later Senate
-locators, emitting a 37,441-row dump, or encoding diagnostic notes as
-operative/terminal decisions fails closed.
-
-## Outcome
-
-New York is **not** assembler-eligible. The exact retained v20 source set
-is one official catalog plus 94 official full-law PDFs: 95 unique direct
-inputs over 75,151,982 verified bytes. The only reusable v21 proof is the
-AGM §28 official report (`6abaab50…`); its seven conjuncts pass and the
-fixed source-bound resolver moves exactly one AGM residual to one typed
-terminal without changing 722 operative AGM rows. Candidate algebra is
-therefore:
+The corrected audited identity is exact:
 
 ```text
-37,441 = 36,475 operative + 752 typed terminals + 214 unresolved
+37,441 = 36,477 operative + 752 terminal + 212 unresolved
+212 = 183 official event-condition decisions + 29 Senate/version decisions
 ```
 
-Sixty-nine of 94 laws close. The 214 unresolved decisions split as 182
-event-conditioned rows, four missing lifecycle notes, and 28 TOC/body
-rows. Those 32 body/note rows deduplicate in source order to one exact
-30-URL `www.nysenate.gov` wave. Host zero-network replay has not sealed
-a current-bundle pair, normalized receipt, or JSON-LD/Parquet pair for
-this observation.
-
-The allowed stopping point for this child task is the typed residual
-below. The remaining operator action is: seed a fresh NY evidence
-generation from the exact 96-input v20-plus-AGM union, acquire only the
-ordered 30-URL Senate wave plus any separately source-proved event or
-version inputs, implement reviewed fixed resolvers for those retained
-proofs, require all 94 laws and `37,441 = operative + terminal` to close
-with zero unresolved decisions, then host `--retained-replay-only` of
-every parser input with zero network before materialization.
-
-## Source algebra
-
-Current source-bound parsing of the retained v20 PDFs produces:
+The bounded direct proofs implemented in this worktree produce this
+projection:
 
 ```text
-37,827 body occurrences + 33 source terminals
-  = 37,441 candidate rows + 292 typed terminals + 127 source exclusions
++1 AGM event proof:             terminal +1, unresolved -1, closed laws +1
++2 signed Assembly bill proofs: terminal +2, unresolved -2, closed laws +1
 
-37,441 candidate rows
-  = 36,475 operative + 751 typed terminals + 215 unresolved
+37,441 = 36,477 operative + 755 terminal + 209 unresolved
+209 = 182 official event-condition decisions + 27 Senate/version decisions
+72 of 94 laws projected closed
 ```
 
-The 215-row unresolved projection SHA-256 is
-`4e8865cc8dbfe4706e0fbe931e31df60a4e4f7e20e88ee9f628507c354b22dc3`.
-One event proof is already reusable: AGM §28, body SHA
+Education Law §666 is resolved terminal, but Education remains open because
+§669-c and §2023-b*2 remain unresolved. CPL §150.30 was Criminal Procedure's
+only residual, so that law newly closes. The AGM report newly closes
+Agriculture and Markets.
+
+## Newly recoverable/proved official inputs
+
+### AGM §28
+
+The exact official report now returns HTTP 200 from:
+
+```text
+https://agriculture.ny.gov/system/files/documents/2023/02/urbanruralconsumeraccessreport.pdf
+```
+
+The body is 1,781,639 bytes and its SHA-256 is exactly
 `6abaab50ad7bf3bec0c5c98949de8d543bdb4fb8b869f13a824776d39ed8580d`.
-It closes one of the 183 event rows without a new request:
+The existing seven-conjunct fixed resolver proves delivery of the named
+report and types AGM §28 terminal. This replaces the corrected inventory's
+archive-provider blocker with one direct acquisition; no parser inference is
+involved.
+
+### CPL §150.30
+
+Exact official Assembly bill record:
 
 ```text
-215 = 183 event-conditioned + 4 missing lifecycle notes + 28 TOC/body
-214 = 182 event-conditioned + 4 missing lifecycle notes + 28 TOC/body
- 32 body/note rows = 4 missing notes + 28 TOC/body
- 30 unique Senate URLs = 32 rows minus 2 extra VAT variant identities
-     that share a URL with another residual row
+https://assembly.ny.gov/leg/?Actions=Y&Summary=Y&Text=Y&bn=A02009&term=2019
 ```
 
-After AGM §28, 69/94 laws close and the unresolved-row SHA prefix is
-`d6b209ac65ab`. Absence from a current Senate page is not proof.
+The record identifies A02009C, records `04/12/2019 SIGNED CHAP.59`, and in
+Part JJJ contains both `Section 150.30 of the criminal procedure law is
+REPEALED.` and the Part's January 1, 2020 effective clause. The resolver
+binds that exact URL, selector, signed action, same-Part repeal/effective
+conjunction, legal-as-of check, retained raw-body digest, and stable semantic
+projection SHA-256
+`83609b2646f17478c3b6cbfbfa21400eeb4ba10cacb778afa2659cccc0358be7`.
 
-## Exact remaining URL
+Disposition: `repealed`, effective 2020-01-01.
 
-The exact next URL is the first source-ordered member of the 30-URL
-Senate wave:
+### Education Law §666
+
+Exact official Assembly bill record:
 
 ```text
-https://www.nysenate.gov/legislation/laws/EPT/3-6.5
+https://assembly.ny.gov/leg/?Actions=Y&Summary=Y&Text=Y&bn=A03006&term=2025
 ```
 
-The complete enumerable URL residual, in production source order, is:
+The record identifies A03006C, records `05/09/2025 SIGNED CHAP.56`, and in
+Part D contains both `Section 666 of the education law is REPEALED.` and the
+same Part's immediate effective clause applying to academic years 2025-2026
+and thereafter. Its stable semantic projection SHA-256 is
+`3a212979e4428f98acfad78f033949c7abb2b09f8ffe0ac7c24c46dec6d94a02`.
+
+Disposition: `repealed`, effective 2025-05-09.
+
+Assembly response markup contains request-varying bytes. The ledger still
+retains and replays the exact raw body and raw SHA-256. Resolver admission is
+additionally pinned to the stable source-bearing projection, so harmless
+markup variance does not silently change the legal conjunction and any
+signed-action, chapter, target clause, effective clause, selector, URL, or
+date drift fails closed.
+
+## Exact remaining Senate/version residual
+
+After the two signed-bill dispositions, 27 Senate/version decisions remain:
+
+```text
+EDN 669-c
+EDN 2023-b*2
+ELD 221
+ELN 3-408
+ELN 7-108
+ELN 8-310
+ELN 9-104
+ELN 9-128
+ELN 11-304
+ELN 17-140
+ELN 17-158
+EXC 236
+GBS 495-d
+GMU 371-a*2
+ISC 3114
+MHY 7.48
+PBA 2799-aaaa
+SOS 364-j-1
+SOS 369-ii
+TAX 602
+TAX 622
+TAX 636
+TAX 1262-l*2
+VAT 235*2
+VAT 235*3
+VAT 1180-i*5
+VAT 1180-i*6
+```
+
+They split into two missing-lifecycle-note rows and 25 TOC/body rows. Their
+current evidence statuses are exact: seven direct-missing/archive-blocked,
+18 retained soft-not-found responses rejected as proof, and two VAT §235
+variants for which one retained substantive current page does not expose the
+required historical variants. Current-page absence is not proof.
+
+The production acquisition path replays/fetches 28 source-derived URLs. It
+includes EPT §3-6.5, GMU §902, and PAR §27.09 because their three retained
+pages are inputs to existing resolvers; after those resolvers run, the 27
+decisions above remain over 25 unique URLs. Four of the 28 URL inputs already
+exist in the corrected 99-input seed (the three resolver pages plus VAT
+§235), leaving 24 URL acquisitions/recoveries in that wave.
+
+The ordered URL list is:
 
 ```text
 https://www.nysenate.gov/legislation/laws/EPT/3-6.5
 https://www.nysenate.gov/legislation/laws/GBS/495-d
 https://www.nysenate.gov/legislation/laws/GMU/902
 https://www.nysenate.gov/legislation/laws/PBA/2799-aaaa
-https://www.nysenate.gov/legislation/laws/CPL/150.30
-https://www.nysenate.gov/legislation/laws/EDN/666
 https://www.nysenate.gov/legislation/laws/EDN/669-c
 https://www.nysenate.gov/legislation/laws/EDN/2023-b
 https://www.nysenate.gov/legislation/laws/ELD/221
@@ -210,189 +216,115 @@ https://www.nysenate.gov/legislation/laws/VAT/235
 https://www.nysenate.gov/legislation/laws/VAT/1180-i
 ```
 
-Those 30 URLs are the fail-closed pin
-`STRICT_CURRENT_SUPPLEMENTAL_SECTION_URLS`. Production derives them from
-`STRICT_CURRENT_SUPPLEMENTAL_RESIDUAL_ROWS` and raises if membership,
-order, host, or newline SHA drifts. None of the 30 identities exists in
-the audited 437,240 retained state-law fetch receipts or the
-112,890-entry legal page cache. The wave is therefore a real residual,
-not duplicate acquisition.
+The production pin is
+`sha256("\n".join(urls).encode("utf-8"))` =
+`b03131cd20eb808d159427e548a732a078fc7b3f94291a2c5fff8a4cd206dde0`.
+Proof manifests continue to use
+`json.dumps(..., ensure_ascii=False, separators=(",", ":"), sort_keys=True)`;
+that manifest digest is not a substitute for the ordered URL identity.
 
-Twenty-one of the 28 TOC/body rows have no exact body header in the
-retained PDFs. The other seven extra variants across five identities
-still share those same five URLs:
-
-- `EDN 2023-b*2`
-- `GMU 371-a*2`
-- `TAX 1262-l*2`
-- `VAT 235*2` and `VAT 235*3`
-- `VAT 1180-i*5` and `VAT 1180-i*6`
-
-If a current section page does not expose every required variant, acquire
-only the unresolved variants from a distinct official OpenLeg/version or
-session-law document. A historical response for an otherwise identical
-unversioned request must use a capture-qualified request identity so
-differing bytes cannot make the retained ledger ambiguous. Do not invent
-a later `/legislation/laws/ZZZ/` locator.
-
-## Exact remaining proof residual
-
-The 30-URL wave binds official Senate HTML as
-`official_senate_section` proof inputs. The fixed supplemental-proof
-registry admits only byte-bound official inputs, exposes no
-`register_resolver` API, and leaves every missing or unimplemented
-selector `unknown` with `decision_action=None`. Retaining a Senate page
-does not close a law. The remaining proof residual is therefore all 214
-unresolved decisions until reviewed source-specific resolvers exist.
-
-AGM §28 is the only implemented event resolver. Its seven conjuncts are:
-
-1. exact official source URL
-2. exact retained report SHA-256 `6abaab50…`
-3. valid PDF with extracted pages
-4. identifies the exact 2022 report
-5. states delivery to the governor and the legislature
-6. states that submission of this report concludes the requirement
-7. authoritative dated department XMP on or before `legal_as_of`
-
-The remaining 182 event-conditioned rows group into the following
-governing-event families. Every selector requires affirmative official
-event or non-event evidence and an event date.
-
-- DFS rule promulgation under 2025 Ch. 58 Part Y §13: 16 BNK rows.
-- Superintendent of Financial Services notification: BNK §103.
-- Matching New Jersey enactment: COM §§220–225 and PBA §2985-a.
-- Expiration of three cited session-law provisions: COR §851.
-- Concurrent resolution referenced by 2025 Ch. 488 §2: ENV §§9-2301–9-2304.
-- DEC move to Albany: ENV §3-0105.
-- State Board of Elections compact-threshold notification: ELN §§12-400,
-  12-402.
-- DCJS/Department of State rule promulgation under Executive Law §837-aa:
-  GBS §396-eeee.
-- Agency-specific termination under GMU §§856/882: 107 rows representing
-  101 unique agencies. Use Department of State nonfiling lists and
-  Department of Economic Development dissolved/ceased-agency lists;
-  where those are not cumulative, obtain historical or agency-specific
-  affirmative evidence. Do not invent one URL per agency.
-- DOT roadway-completion record: HAY §342-f.
-- Schedule submission under Insurance Law §5516-e: ISC §9111-a.
-- Reimbursement-rate approval/certification named by 2026 Ch. 60 §8:
-  MHY §36.08.
-- Regulation adoption/publication under 2022 Ch. 481 §1: MHY §§82.01–82.15.
-- Municipal Assistance Corporation liability discharge/termination:
-  PBA §§3030–3041.
-- Event specified by 2022 Ch. 205 §5: PEN §265.38.
-- Appointment of a majority of the State Franchise Oversight Board:
-  PML §207.
-- Two separate IRS rulings: RPT §304 and RPT §926-a; do not merge them.
-- One LIRR election plus Comptroller receipt: RSS §389 and WKC §30.
-- Condition in 2011 Ch. 525 §7: RSS §1204-a.
-- Department of Health contract execution plus 16 years: SOS §365-h.
-- DED notice to LBDC under 2019 Ch. 683 §6(2)(b): TAX §24-b.
-
-Do not convert those families into current law. Do not hunt unbounded
-locators. Do not encode diagnostic notes as decisions.
-
-## Seed, then one 30-URL wave
-
-Required acquisition shape:
-
-1. Seed a fresh absent NY evidence root from the exact 96-input
-   v20-plus-AGM union via `seed_retained_evidence_union`: all 95 v20
-   direct catalog/PDF inputs plus only the one v21 AGM Wayback proof,
-   excluding the other seven v21 observations. Selected-projection SHA
-   must remain
-   `46dce4a3aecf32f3fe21dd743da8f958b1bec8bbc84f5ec680e49f2c13807f76`.
-   Hardlink objects (`copied_file_count=0`). Never overwrite a prior
-   ledger. Direct-only reuse applies to the 95 v20 inputs;
-   `--allowed-source-transport wayback` is admitted only for the exact
-   AGM report URL.
-2. Replay the retained catalog, 94 PDFs, and AGM selector through
-   `_replay_new_york_retained_input` / `_fetch_new_york_frontier_batch`
-   without a new catalog or PDF residual. The AGM selector request
-   identity is `Accept: application/pdf,*/*;q=0.8`.
-3. Submit the 30 Senate URLs as one same-host plural HTML wave named
-   `source-derived-supplemental-sections-1-30` through
-   `_fetch_new_york_frontier_batch`. One `www.nysenate.gov` Common Crawl
-   inventory with URL term `/legislation/laws/`, grouped/coalesced WARC
-   reuse, Wayback prefix inventory, residual-only retries without
-   archive reinventory, `prefer_direct=True`, and no per-page archive
-   loop. Do not use `_build_official_senate_section`.
-4. Bind acquired pages as `official_senate_section` proof inputs and
-   reparse. Unimplemented resolvers must remain `unknown`. Implement
-   reviewed selector-specific resolvers only for retained official proof
-   bytes.
-5. Host-replay every parser input with `--retained-replay-only` and zero
-   network. Require all 94 laws closed, `37,441 = operative + terminal`,
-   first/replay frontier equality, and `public_law_no_state_copyright`
-   before treating the pair as assembler-eligible evidence.
-
-Forbidden:
-
-- static residual URL lists, sample caps, or invented later Senate
-  section targets;
-- Hub mutation, `--publish-to-hf`, assembler input-map writes, or index
-  builds;
-- Docker-copying `~/.ipfs_datasets`;
-- per-page archive loops, `archive.is`, and the legacy per-page
-  `_build_official_senate_section` path;
-- public.law or Justia sole-admission fallback in strict full-corpus
-  mode;
-- converting unresolved decisions, missing proofs, or historical archive
-  bodies into current law;
-- dynamic resolver registration or data that asserts its own status;
-- repeating a Common Crawl domain inventory inside one acquisition
-  attempt;
-- resuming a fenced staging root as current.
-
-## Shared substrate this residual reuses
-
-LCR-086, LCR-087, and LCR-088 own the seed, host worker, and grouped
-archive contract. This task does not rewrite those modules.
-
-| Step | New York binding |
-|---|---|
-| Source-derived frontier | Official consolidated catalog, 94 full-law PDFs, AGM §28 proof, then the 30-URL Senate residual |
-| Fresh evidence generation | `seed_retained_evidence_union` of 95 v20 direct plus one AGM Wayback; never overwrite |
-| Direct-only reuse | `--allowed-source-transport direct` for v20; Wayback only for the exact AGM report |
-| One residual wave | `source-derived-supplemental-sections-1-30` |
-| Host retained replay | `build_host_retained_replay_command()`; no `docker`, no `--network` |
-| No-publish gate | `--no-incremental-state-publish`; no Hub mutation |
-
-Host replay command shape after the residual wave and reviewed resolvers
-close:
-
-```bash
-python scripts/ops/legal_data/refresh_state_laws_corpus.py \
-  --states NY \
-  --scrape \
-  --retained-replay-only \
-  --strict-acquisition-evidence \
-  --strict-full-text \
-  --no-merge-existing-local \
-  --no-skip-completed-states \
-  --no-persist-completed-states-registry \
-  --no-startup-stale-sync \
-  --no-incremental-state-publish \
-  --output-root ~/.ipfs_datasets/state_laws/legal-corpora-reindex-*/staging-ny-vN \
-  --acquisition-evidence-root ~/.ipfs_datasets/state_laws/legal-corpora-reindex-*/full-acquisition-evidence-*-ny-vN \
-  --parallel-workers 1 \
-  --json
-```
-
-A sealed pair would still be assembler-eligible evidence only. It would
-not flip `exact_51_ready` and would not authorize publication.
-
-## Next residual URL
-
-The exact next URL is:
+The seven exact direct-miss rows that still require one bounded grouped
+archive/provider retry are:
 
 ```text
-https://www.nysenate.gov/legislation/laws/EPT/3-6.5
+https://www.nysenate.gov/legislation/laws/EDN/669-c
+https://www.nysenate.gov/legislation/laws/ELN/9-104
+https://www.nysenate.gov/legislation/laws/ELN/9-128
+https://www.nysenate.gov/legislation/laws/PBA/2799-aaaa
+https://www.nysenate.gov/legislation/laws/SOS/364-j-1
+https://www.nysenate.gov/legislation/laws/TAX/622
+https://www.nysenate.gov/legislation/laws/TAX/1262-l
 ```
 
-The exact remaining proof residual is the 214 unresolved decisions: the
-30-URL Senate wave as bound HTML proof inputs plus 182 event-conditioned
-selectors that stay `unknown` until official proof bytes and reviewed
-resolvers exist. The 30-URL ordered newline SHA remains
-`30fb7bd969c80f3747b3ff0eae6685f11e61bdd82193b4abf35864a2c32a1ec2`.
+The remaining version rows need distinct official OpenLeg historical-version
+or signed session-law records when the current section page cannot expose the
+required body. Soft 404/not-found shells are never terminal evidence.
+
+## Exact remaining event families
+
+After AGM §28, 182 event-conditioned decisions remain in 22 families:
+
+| Family | Rows | Required official proof |
+|---|---:|---|
+| DFS 2025 Part Y rules | 16 | DFS/State Register adoption record and event date |
+| DFS superintendent notification | 1 | Named notification and issuance/receipt date |
+| matching New Jersey enactment | 7 | Enacted NJ text with identical effect and effective date |
+| COR session-law expirations | 1 | 1994 ch.60 §42, 1972 ch.339 §10, and 1986 ch.554 §3 expiration proof |
+| ENV 2025 concurrent resolution | 4 | Resolution, certified voter result, and implementation chain |
+| DEC move to Albany | 1 | DEC/OGS move record and date |
+| State BOE compact notification | 2 | Commissioner notification and event date |
+| DCJS/DOS §837-aa rules | 1 | Adoption and State Register publication record |
+| GMU agency termination | 107 | DOS nonfiling and DED dissolved/ceased records for 101 named agencies |
+| DOT roadway completion | 1 | Project completion/noncompletion record and date |
+| Insurance §5516-e schedule | 1 | DFS submission/non-submission record and date |
+| MHY reimbursement approval | 1 | Approval/certification under 2026 ch.60 §8 |
+| MHY 2022 ch.481 regulations | 15 | Adoption plus State Register publication records |
+| MAC liability discharge | 15 | Full discharge record and date sufficient for the one-year condition |
+| PEN 2022 ch.205 condition | 1 | Session-law condition plus occurrence/nonoccurrence record |
+| Franchise Board appointments | 1 | Official roster and appointment dates proving majority status |
+| IRS ruling for RPT §304 | 1 | Exact IRS ruling and applicability/date |
+| IRS ruling for RPT §926-a | 1 | Distinct exact IRS ruling and applicability/date |
+| LIRR election/Comptroller receipt | 2 | Election plus Comptroller receipt and date |
+| RSS 2011 ch.525 condition | 1 | Session-law condition plus occurrence/nonoccurrence record |
+| DOH contract plus 16 years | 1 | Executed contract and execution date |
+| DED notice to LBDC | 1 | Notice/receipt under 2019 ch.683 §6(2)(b) |
+
+### Derived ENV locator bundle
+
+Official research produced a finite candidate bundle for the four ENV rows:
+
+```text
+https://www.nysenate.gov/legislation/bills/2025/A7454
+https://www.nysenate.gov/legislation/bills/2025/S5227
+https://www.nysenate.gov/legislation/bills/2025/S8047
+https://elections.ny.gov/2025-statewide-ballot-proposal
+https://results.elections.ny.gov/contest/5860
+https://results.elections.ny.gov/document/482
+https://www.nysenate.gov/legislation/laws/CNS/A14S1
+```
+
+A7454/S5227 identify the concurrent resolution, S8047 is the signed Chapter
+488 implementation measure, and the Board of Elections pages identify State
+Proposal 1 and its certification document. These are exact official locators,
+but no bytes from the certified-results document were retained in the
+corrected ledger and no selector-specific ENV resolver was added. The four
+ENV rows therefore remain unresolved. This bundle is the next bounded event
+acquisition/review wave, not a disposition claim.
+
+For the other 21 event families, the retained law PDFs identify the governing
+authority and citation but not an exact request URL. The blocker is locator
+derivation, not permission to infer that an event did or did not occur.
+
+## Remaining acquisition waves and gate
+
+Run only these bounded steps in a fresh absent evidence generation:
+
+1. Seed the exact 99-input corrected ledger without copying objects or
+   overwriting an earlier generation. Replay `consolidated-catalog` and the
+   `full-law-pdfs-` waves from those retained inputs.
+2. Acquire AGM §28 directly as `agm-28-lifecycle-selector`; exact digest must
+   remain `6abaab50…`.
+3. Acquire the two Assembly HTML records together as
+   `signed-assembly-bill-records-1-2`; bind them as
+   `official_signed_bill_record` and reparse before the Senate wave.
+4. Replay/fetch the exact 28 Senate URLs together as
+   `source-derived-supplemental-sections-1-28`, with one-domain Common Crawl
+   inventory, grouped/coalesced WARC reuse, Wayback prefix inventory, and
+   residual-only retries. No per-page archive loop or `_build_official_senate_section`.
+5. Separately acquire the finite ENV official locator bundle, then implement a
+   fixed resolver only if exact retained bytes prove every required conjunct.
+6. Derive and review finite exact locators for the other event families;
+   retain unknown for every missing or incomplete proof.
+7. Only after every law closes, run host `--retained-replay-only` with zero
+   network and `--no-incremental-state-publish`. Require 94/94 laws,
+   `37,441 = operative + terminal`, and first/replay frontier equality before
+   materialization.
+
+Forbidden throughout: Hub mutation, `--publish-to-hf`, Docker-copying the
+evidence root, static disposition lists, data-driven resolver registration,
+public.law/Justia sole admission, current-page-absence inference, and any
+conversion of an unresolved row into current law without exact official
+proof.
+
+This worktree did not launch a full corpus job, mutate a remote service, seal
+a bundle, or authorize publication.

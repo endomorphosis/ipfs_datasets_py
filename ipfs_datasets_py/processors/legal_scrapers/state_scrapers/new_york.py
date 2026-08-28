@@ -47,17 +47,16 @@ class NewYorkScraper(BaseStateScraper):
     STRICT_CURRENT_CONSOLIDATED_CODE_SHA256 = (
         "792d08fe5168ff6b429d13076fa843a8e5987c4b670339e1a2c6ca70420d590c"
     )
-    # Exact source-derived v20 residual identities.  These are not decisions:
-    # they authorize only one bounded supplemental-input wave.  Every retained
-    # page remains unresolved until a reviewed source-bound resolver proves a
-    # specific operative or terminal disposition.
+    # Exact source-derived residual identities after the two signed Assembly
+    # bill records below prove CPL 150.30 and EDN 666 repealed.  These are not
+    # decisions: they authorize only one bounded supplemental-input wave.
+    # Every retained page remains unresolved until a reviewed source-bound
+    # resolver proves a specific operative or terminal disposition.
     STRICT_CURRENT_SUPPLEMENTAL_RESIDUAL_ROWS = (
         ("EPT", "3-6.5", "", "missing_lifecycle_note"),
         ("GBS", "495-d", "", "missing_lifecycle_note"),
         ("GMU", "902", "", "missing_lifecycle_note"),
         ("PBA", "2799-aaaa", "", "missing_lifecycle_note"),
-        ("CPL", "150.30", "", "toc_section_missing_body_identity"),
-        ("EDN", "666", "", "toc_section_missing_body_identity"),
         ("EDN", "669-c", "", "toc_section_missing_body_identity"),
         ("EDN", "2023-b", "*2", "toc_section_missing_body_identity"),
         ("ELD", "221", "", "toc_section_missing_body_identity"),
@@ -90,8 +89,6 @@ class NewYorkScraper(BaseStateScraper):
         "https://www.nysenate.gov/legislation/laws/GBS/495-d",
         "https://www.nysenate.gov/legislation/laws/GMU/902",
         "https://www.nysenate.gov/legislation/laws/PBA/2799-aaaa",
-        "https://www.nysenate.gov/legislation/laws/CPL/150.30",
-        "https://www.nysenate.gov/legislation/laws/EDN/666",
         "https://www.nysenate.gov/legislation/laws/EDN/669-c",
         "https://www.nysenate.gov/legislation/laws/EDN/2023-b",
         "https://www.nysenate.gov/legislation/laws/ELD/221",
@@ -118,7 +115,31 @@ class NewYorkScraper(BaseStateScraper):
         "https://www.nysenate.gov/legislation/laws/VAT/1180-i",
     )
     STRICT_CURRENT_SUPPLEMENTAL_URL_SHA256 = (
-        "30fb7bd969c80f3747b3ff0eae6685f11e61bdd82193b4abf35864a2c32a1ec2"
+        "b03131cd20eb808d159427e548a732a078fc7b3f94291a2c5fff8a4cd206dde0"
+    )
+    OFFICIAL_ASSEMBLY_DOMAIN = "assembly.ny.gov"
+    STRICT_CURRENT_SIGNED_BILL_PROOF_ROWS = (
+        (
+            "CPL",
+            "150.30",
+            "CPL:150.30:signed-bill-record",
+            (
+                "https://assembly.ny.gov/leg/"
+                "?Actions=Y&Summary=Y&Text=Y&bn=A02009&term=2019"
+            ),
+        ),
+        (
+            "EDN",
+            "666",
+            "EDN:666:signed-bill-record",
+            (
+                "https://assembly.ny.gov/leg/"
+                "?Actions=Y&Summary=Y&Text=Y&bn=A03006&term=2025"
+            ),
+        ),
+    )
+    STRICT_CURRENT_SIGNED_BILL_PROOF_URL_SHA256 = (
+        "ef7e526c284aa62b725b457639b71707627482ac9b35ea76ff8bf74ad48a8a31"
     )
     _NY_LAW_HREF_RE = re.compile(
         r"/legislation/laws/(?P<code>[A-Z]{2,4})(?:/|$)",
@@ -274,12 +295,84 @@ class NewYorkScraper(BaseStateScraper):
             and b"the requested entry could not be found" not in sample
         )
 
+    @staticmethod
+    def _is_valid_new_york_assembly_signed_bill_html(payload: bytes) -> bool:
+        sample = bytes(payload or b"").lower()
+        return bool(
+            len(sample) > 100_000
+            and b"<html" in sample[:4_000]
+            and b"jump_to_actions" in sample
+            and b"jump_to_text" in sample
+            and b"bill no" in sample
+            and b"signed chap." in sample
+            and b"</html>" in sample[-4_000:]
+        )
+
+    @classmethod
+    def _new_york_exact_signed_bill_proof_rows(
+        cls,
+        parsed_reports,
+    ) -> List[tuple[str, str, str, str]]:
+        """Select the two fixed signed-bill inputs only for present residuals."""
+
+        expected = [
+            tuple(str(value) for value in row)
+            for row in cls.STRICT_CURRENT_SIGNED_BILL_PROOF_ROWS
+        ]
+        expected_urls = [row[3] for row in expected]
+        if len(expected_urls) != len(set(expected_urls)):
+            raise RuntimeError("New York signed-bill proof URLs are not unique")
+        if hashlib.sha256("\n".join(expected_urls).encode("utf-8")).hexdigest() != (
+            cls.STRICT_CURRENT_SIGNED_BILL_PROOF_URL_SHA256
+        ):
+            raise RuntimeError("New York signed-bill proof URL projection changed")
+        for _code, _section, selector_key, url in expected:
+            parsed = urlparse(url)
+            if (
+                parsed.scheme != "https"
+                or parsed.hostname != cls.OFFICIAL_ASSEMBLY_DOMAIN
+                or parsed.path != "/leg/"
+                or not parsed.query
+                or not selector_key.endswith(":signed-bill-record")
+            ):
+                raise RuntimeError(
+                    "New York signed-bill proof escaped its exact official identity"
+                )
+
+        reports_by_code = {
+            str(getattr(report, "law_code", "") or "").strip().upper(): report
+            for report in parsed_reports
+        }
+        selected: List[tuple[str, str, str, str]] = []
+        for code, section, selector_key, url in expected:
+            report = reports_by_code.get(code)
+            if report is None:
+                continue
+            matches = [
+                row
+                for row in list(
+                    getattr(report, "unclassified_sections", []) or []
+                )
+                if isinstance(row, Mapping)
+                and str(row.get("section_number") or "").strip() == section
+                and not str(row.get("toc_variant") or "").strip()
+                and str(row.get("reason") or "").strip()
+                == "toc_section_missing_body_identity"
+            ]
+            if len(matches) != 1:
+                raise RuntimeError(
+                    "New York signed-bill target residual membership drifted: "
+                    f"{code} {section} count={len(matches)}"
+                )
+            selected.append((code, section, selector_key, url))
+        return selected
+
     @classmethod
     def _new_york_exact_supplemental_urls(
         cls,
         parsed_reports,
     ) -> List[str]:
-        """Return the pinned 30-URL wave only for the exact v20 residual set."""
+        """Return the pinned 28-URL wave after signed-bill reconciliation."""
 
         observed: List[tuple[str, str, str, str]] = []
         for report in parsed_reports:
@@ -308,6 +401,16 @@ class NewYorkScraper(BaseStateScraper):
                 )
         if not observed:
             return []
+
+        # The retained v20 projection test invokes this pure URL projector
+        # before the mandatory signed-bill wave.  Those two exact rows belong
+        # to that separate Assembly wave, never to the Senate section wave;
+        # filtering them here does not resolve or reclassify either row.
+        signed_bill_targets = {
+            (str(row[0]), str(row[1]), "", "toc_section_missing_body_identity")
+            for row in cls.STRICT_CURRENT_SIGNED_BILL_PROOF_ROWS
+        }
+        observed = [row for row in observed if row not in signed_bill_targets]
 
         expected = [
             tuple(str(value) for value in row)
@@ -1190,11 +1293,50 @@ class NewYorkScraper(BaseStateScraper):
             return parsed
 
         parsed_reports = _parse_pdf_inputs(proof_registry)
+        signed_bill_rows = self._new_york_exact_signed_bill_proof_rows(
+            parsed_reports
+        )
+        if signed_bill_rows:
+            signed_bill_urls = [row[3] for row in signed_bill_rows]
+            signed_bill_batch = await self._fetch_new_york_frontier_batch(
+                signed_bill_urls,
+                frontier_name="signed-assembly-bill-records-1-2",
+                content_validator=(
+                    self._is_valid_new_york_assembly_signed_bill_html
+                ),
+                media_type="text/html",
+                common_crawl_domains=(self.OFFICIAL_ASSEMBLY_DOMAIN,),
+                common_crawl_url_terms=("/leg/", "Actions=Y",),
+            )
+            signed_bill_proofs = []
+            for row, url, payload in zip(
+                signed_bill_rows,
+                signed_bill_batch.urls,
+                signed_bill_batch.payloads,
+                strict=True,
+            ):
+                _law_code, _section, selector_key, expected_url = row
+                if url != self._canonical_fetch_url(expected_url):
+                    raise RuntimeError(
+                        "New York signed-bill proof changed exact URL identity"
+                    )
+                signed_bill_proofs.append(
+                    NewYorkSupplementalProofInput.bind(
+                        selector_key=selector_key,
+                        proof_kind="official_signed_bill_record",
+                        official_url=url,
+                        media_type="text/html",
+                        payload=bytes(payload),
+                    )
+                )
+            proof_registry = proof_registry.with_inputs(signed_bill_proofs)
+            parsed_reports = _parse_pdf_inputs(proof_registry)
+
         supplemental_urls = self._new_york_exact_supplemental_urls(parsed_reports)
         if supplemental_urls:
             supplemental_batch = await self._fetch_new_york_frontier_batch(
                 supplemental_urls,
-                frontier_name="source-derived-supplemental-sections-1-30",
+                frontier_name="source-derived-supplemental-sections-1-28",
                 content_validator=self._is_valid_new_york_senate_section_html,
                 media_type="text/html",
                 common_crawl_domains=(self.OFFICIAL_DOMAIN,),
@@ -1518,6 +1660,48 @@ class NewYorkScraper(BaseStateScraper):
             raise RuntimeError(
                 "New York retained selector evidence is outside the law catalog"
             )
+
+        replay_catalog_codes = {row[0] for row in replay_catalog}
+        pinned_signed_bill_rows = [
+            tuple(str(value) for value in row)
+            for row in self.STRICT_CURRENT_SIGNED_BILL_PROOF_ROWS
+            if str(row[0]) in replay_catalog_codes
+        ]
+        observed_signed_bill_urls = {
+            url
+            for url, row in proof_manifest_by_url.items()
+            if str(row.get("proof_kind") or "")
+            == "official_signed_bill_record"
+        }
+        expected_signed_bill_urls = {row[3] for row in pinned_signed_bill_rows}
+        if observed_signed_bill_urls != expected_signed_bill_urls:
+            raise RuntimeError(
+                "New York retained signed-bill proof membership changed"
+            )
+        for _code, _section, selector_key, url in pinned_signed_bill_rows:
+            expected_proof = proof_manifest_by_url[url]
+            payload = self._replay_new_york_retained_input(
+                url,
+                media_type="text/html",
+                content_validator=(
+                    self._is_valid_new_york_assembly_signed_bill_html
+                ),
+                frontier_name=(
+                    f"retained-signed-bill-{selector_key}-replay"
+                ),
+            )
+            bound_proof = NewYorkSupplementalProofInput.bind(
+                selector_key=selector_key,
+                proof_kind="official_signed_bill_record",
+                official_url=url,
+                media_type="text/html",
+                payload=payload,
+            )
+            if bound_proof.manifest_row() != expected_proof:
+                raise RuntimeError(
+                    f"New York retained signed-bill proof changed: {url}"
+                )
+            replay_proof_inputs.append(bound_proof)
 
         pinned_supplemental_urls = list(
             self.STRICT_CURRENT_SUPPLEMENTAL_SECTION_URLS

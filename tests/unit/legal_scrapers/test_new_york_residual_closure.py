@@ -1,11 +1,8 @@
 """LCR-103: New York exact residual proofs and URLs.
 
-The child task either seals a current-bundle pair after host zero-network
-replay or records the exact remaining URL/proof residual. This module pins
-the recorded 30-URL Senate wave plus 214 unresolved proof decisions and the
-production contracts that forbid Hub mutation, static lists, per-page
-archive loops, the legacy Senate section path, and converting unresolved
-decisions into current law.
+This module pins the corrected 212-row audit, two fixed signed-bill
+resolvers, the now-live AGM proof, and the remaining 28-URL Senate wave.
+Unproved decisions remain unresolved and publication remains forbidden.
 """
 
 from __future__ import annotations
@@ -76,10 +73,22 @@ CLOSED_LAWS_AFTER_AGM = 69
 EVENT_ROWS_BEFORE_AGM = 183
 EVENT_ROWS_AFTER_AGM = 182
 MISSING_NOTE_ROWS = 4
-TOC_BODY_ROWS = 28
-SUPPLEMENTAL_RESIDUAL_ROWS = 32
+TOC_BODY_ROWS = 26
+SUPPLEMENTAL_RESIDUAL_ROWS = 30
 EXTRA_TOC_VARIANTS = 7
-ENUMERABLE_URL_RESIDUAL = 30
+ENUMERABLE_URL_RESIDUAL = 28
+AUDITED_OPERATIVE = 36477
+AUDITED_TERMINAL = 752
+AUDITED_UNRESOLVED = 212
+AUDITED_CLOSED_LAWS = 70
+AUDITED_EVENT_ROWS = 183
+AUDITED_SENATE_ROWS = 29
+PROJECTED_OPERATIVE = 36477
+PROJECTED_TERMINAL = 755
+PROJECTED_UNRESOLVED = 209
+PROJECTED_CLOSED_LAWS = 72
+PROJECTED_EVENT_ROWS = 182
+PROJECTED_SENATE_ROWS = 27
 SEED_V20_DIRECT = 95
 SEED_V21_AGM = 1
 SEED_SELECTED = 96
@@ -95,14 +104,15 @@ UNRESOLVED_SHA_BEFORE_AGM = (
 )
 UNRESOLVED_SHA_AFTER_AGM_PREFIX = "d6b209ac65ab"
 RESIDUAL_SHA256 = (
-    "30fb7bd969c80f3747b3ff0eae6685f11e61bdd82193b4abf35864a2c32a1ec2"
+    "b03131cd20eb808d159427e548a732a078fc7b3f94291a2c5fff8a4cd206dde0"
 )
-RESIDUAL_SHA256_PREFIX = "30fb7bd969c8"
+RESIDUAL_SHA256_PREFIX = "b03131cd20eb"
 SOURCE_BUNDLE = (
     "f68d2672e24092c93810dd0f168a098a855d7879bea746faa63f676ef3ccdd75"
 )
 SOURCE_BUNDLE_PREFIX = "f68d2672e240"
-RESIDUAL_WAVE_NAME = "source-derived-supplemental-sections-1-30"
+RESIDUAL_WAVE_NAME = "source-derived-supplemental-sections-1-28"
+SIGNED_BILL_WAVE_NAME = "signed-assembly-bill-records-1-2"
 AGM28_WAVE_NAME = "agm-28-lifecycle-selector"
 CATALOG_WAVE_NAME = "consolidated-catalog"
 PDF_WAVE_PREFIX = "full-law-pdfs-"
@@ -120,6 +130,51 @@ VARIANT_IDENTITIES = (
     ("VAT", "235", "*3"),
     ("VAT", "1180-i", "*5"),
     ("VAT", "1180-i", "*6"),
+)
+SIGNED_BILL_CASES = (
+    {
+        "code": "CPL",
+        "law_name": "Criminal Procedure",
+        "section": "150.30",
+        "pdf_sha256": (
+            "5d80d8879e7a76ab1fb26963368e5a112d5dd16cebb693502b41fad127af3ade"
+        ),
+        "url": ny_pdf.CPL15030_SIGNED_BILL_RECORD_URL,
+        "selector": "CPL:150.30:signed-bill-record",
+        "bill_number": "A02009C",
+        "signed_date": "04/12/2019",
+        "signed_chapter": "59",
+        "part": "JJJ",
+        "next_part": "KKK",
+        "repeal": "Section 150.30 of the criminal procedure law is REPEALED.",
+        "effective": "§ 25. This act shall take effect on January 1, 2020.",
+        "projection_sha256": ny_pdf.CPL15030_SIGNED_BILL_PROJECTION_SHA256,
+        "before": (585, 5, 1, False),
+        "after": (585, 6, 0, True),
+    },
+    {
+        "code": "EDN",
+        "law_name": "Education",
+        "section": "666",
+        "pdf_sha256": (
+            "acb97e009f4b5028f16b91c554243844da8b6428e23cadbedb7f8eca4148432b"
+        ),
+        "url": ny_pdf.EDN666_SIGNED_BILL_RECORD_URL,
+        "selector": "EDN:666:signed-bill-record",
+        "bill_number": "A03006C",
+        "signed_date": "05/09/2025",
+        "signed_chapter": "56",
+        "part": "D",
+        "next_part": "E",
+        "repeal": "Section 666 of the education law is REPEALED.",
+        "effective": (
+            "§ 6. This act shall take effect immediately and shall apply to "
+            "academic years 2025-2026 and thereafter."
+        ),
+        "projection_sha256": ny_pdf.EDN666_SIGNED_BILL_PROJECTION_SHA256,
+        "before": (1941, 6, 3, False),
+        "after": (1941, 7, 2, False),
+    },
 )
 RETAINED_WAVE_D_OBJECT_ROOT = (
     Path.home()
@@ -264,6 +319,24 @@ def _senate_section_fixture(*, head: str, content: str, revision: str) -> bytes:
     ).encode()
 
 
+def _signed_bill_fixture(case: dict[str, Any]) -> bytes:
+    return (
+        "<html><body>"
+        "<h3 id='jump_to_Actions'>Actions</h3><table>"
+        f"<tr><td>BILL NO</td><td>{case['bill_number']}</td></tr>"
+        f"<tr><td>{case['signed_date']}</td>"
+        f"<td>SIGNED CHAP.{case['signed_chapter']}</td></tr>"
+        "</table>"
+        "<h3 id='jump_to_Text'>Text</h3><pre>"
+        f"1 PART {case['part']} 2 Section 1. {case['repeal']} "
+        f"3 {case['effective']} "
+        f"4 PART {case['next_part']} 5 Section 1. Next part."
+        "</pre>"
+        + (" stable official Assembly record padding" * 3_200)
+        + "</body></html>"
+    ).encode()
+
+
 def _retained_wave_d_object(content_sha256: str) -> bytes:
     path = RETAINED_WAVE_D_OBJECT_ROOT / f"{content_sha256}.bin"
     if not path.is_file():
@@ -332,7 +405,7 @@ def _report_table(report: str) -> dict[str, str]:
     return rows
 
 
-def test_new_york_residual_closure_report_records_exact_thirty_url_and_proof_residual() -> None:
+def test_new_york_residual_closure_report_records_corrected_audit_and_projection() -> None:
     report = _report_text()
     table = _report_table(report)
     supplemental_urls = list(NewYorkScraper.STRICT_CURRENT_SUPPLEMENTAL_SECTION_URLS)
@@ -340,143 +413,67 @@ def test_new_york_residual_closure_report_records_exact_thirty_url_and_proof_res
     assert table["jurisdiction"] == "NY"
     assert table["official domain"] == OFFICIAL_DOMAIN
     assert table["official_pdf_domain"] == OFFICIAL_PDF_DOMAIN
-    assert table["agm28_domain"] == "agriculture.ny.gov"
+    assert table["official_assembly_domain"] == "assembly.ny.gov"
     assert table["official entry"] == OFFICIAL_ENTRY
     assert table["official_consolidated_url"] == OFFICIAL_CONSOLIDATED
+    assert table["corrected_audited_identity"] == (
+        "37441 = 36477 operative + 752 terminal + 212 unresolved"
+    )
+    assert table["corrected_audited_closed_laws"] == str(AUDITED_CLOSED_LAWS)
+    assert table["corrected_audited_event_rows"] == str(AUDITED_EVENT_ROWS)
+    assert table["corrected_audited_senate_version_rows"] == str(
+        AUDITED_SENATE_ROWS
+    )
     assert table["agm28_lifecycle_report_url"] == AGM28_URL
     assert table["agm28_lifecycle_report_sha256"] == AGM28_SHA256
-    assert table["agm28_selector_key"] == AGM28_SELECTOR_KEY
-    assert table["closure_status"] == "residual_recorded"
+    assert table["agm28_direct_status"] == "HTTP 200; exact digest matched"
+    assert table["signed_bill_proof_count"] == "2"
+    assert table["signed_bill_wave_name"] == SIGNED_BILL_WAVE_NAME
+    assert table["projected_identity_after_bounded_direct_wave"] == (
+        "37441 = 36477 operative + 755 terminal + 209 unresolved"
+    )
+    assert table["projected_closed_laws"] == str(PROJECTED_CLOSED_LAWS)
+    assert table["remaining_event_rows"] == str(PROJECTED_EVENT_ROWS)
+    assert table["remaining_senate_version_rows"] == str(PROJECTED_SENATE_ROWS)
+    assert table["remaining_unresolved_rows"] == str(PROJECTED_UNRESOLVED)
+    assert table["remaining_senate_wave_url_count"] == str(
+        ENUMERABLE_URL_RESIDUAL
+    )
+    assert table["remaining_senate_wave_name"] == RESIDUAL_WAVE_NAME
+    assert table["remaining_senate_wave_sha256"] == RESIDUAL_SHA256
     assert table["current_bundle_sealed"] == "false"
     assert table["publication_authorized"] == "false"
     assert table["hub_mutation"] == "forbidden"
-    assert table["parser"] == (
-        "official full-law PDF plus reviewed supplemental proof resolvers"
-    )
-    assert table["same_target_parser_for_live_and_replay"] == "true"
-    assert table["seed"] == (
-        "96-input v20-plus-AGM union; 95 v20 direct plus one v21 AGM Wayback"
-    )
-    assert table["seed_v20_direct_inputs"] == str(SEED_V20_DIRECT)
-    assert table["seed_v21_agm_wayback_inputs"] == str(SEED_V21_AGM)
-    assert table["seed_selected_input_count"] == str(SEED_SELECTED)
-    assert table["seed_selected_projection_sha256"] == SEED_PROJECTION_SHA256
-    assert table["seed_copied_file_count"] == "0"
-    assert table["convert_unresolved_decisions_into_current_law"] == "forbidden"
-    assert table["dynamic_resolver_registration"] == "forbidden"
-    assert table["public_law_justia_fallback_in_strict"] == "forbidden"
-    assert table["legacy_per_page_senate_section_path"] == "forbidden"
-    assert table["invent_later_senate_section_urls"] == "forbidden"
-    assert table["unbounded_locator_hunt"] == "forbidden"
-    assert table["static_residual_list"] == "forbidden"
-    assert table["v20_catalog_plus_pdf_inputs"] == str(SEED_V20_DIRECT)
-    assert table["v20_verified_bytes"] == str(V20_VERIFIED_BYTES)
-    assert table["catalog_law_count"] == str(CATALOG_LAW_COUNT)
-    assert table["catalog_ordered_code_sha256"] == CATALOG_CODE_SHA256
-    assert table["source_sections"] == str(SOURCE_SECTIONS)
-    assert table["operative_sections"] == str(OPERATIVE_SECTIONS)
-    assert table["terminal_sections_before_agm"] == str(TERMINAL_BEFORE_AGM)
-    assert table["terminal_sections_after_agm"] == str(TERMINAL_AFTER_AGM)
-    assert table["unresolved_before_agm"] == str(UNRESOLVED_BEFORE_AGM)
-    assert table["unresolved_after_agm"] == str(UNRESOLVED_AFTER_AGM)
-    assert table["closed_laws_before_agm"] == str(CLOSED_LAWS_BEFORE_AGM)
-    assert table["closed_laws_after_agm"] == str(CLOSED_LAWS_AFTER_AGM)
-    assert table["event_conditioned_rows_before_agm"] == str(EVENT_ROWS_BEFORE_AGM)
-    assert table["event_conditioned_rows_after_agm"] == str(EVENT_ROWS_AFTER_AGM)
-    assert table["missing_lifecycle_note_rows"] == str(MISSING_NOTE_ROWS)
-    assert table["toc_body_rows"] == str(TOC_BODY_ROWS)
-    assert table["supplemental_residual_rows"] == str(SUPPLEMENTAL_RESIDUAL_ROWS)
-    assert table["extra_toc_variant_identities"] == str(EXTRA_TOC_VARIANTS)
-    assert table["enumerable_url_residual_count"] == str(ENUMERABLE_URL_RESIDUAL)
-    assert table["unresolved_decision_count"] == str(UNRESOLVED_AFTER_AGM)
-    assert table["residual_count"] == str(ENUMERABLE_URL_RESIDUAL)
-    assert table["residual_kind"] == (
-        "exact 30-URL www.nysenate.gov wave plus 214 unresolved proof decisions"
-    )
-    assert table["residual_first_url"] == FIRST_RESIDUAL_URL
-    assert table["residual_wave_name"] == RESIDUAL_WAVE_NAME
-    assert table["agm28_wave_name"] == AGM28_WAVE_NAME
-    assert table["catalog_wave_name"] == CATALOG_WAVE_NAME
-    assert table["pdf_wave_name_prefix"] == PDF_WAVE_PREFIX
-    assert table["catalog_acquisition_wave_count"] == "1"
-    assert table["agm28_acquisition_wave_count"] == (
-        "0 remaining; already retained"
-    )
-    assert table["supplemental_acquisition_wave_count"] == "1"
-    assert table["implemented_event_resolvers"] == "1"
-    assert table["unimplemented_event_resolvers"] == str(EVENT_ROWS_AFTER_AGM)
-    assert table["per_page_archive_loop"] == "false"
-    assert table["grouped_warc_recovery"] == "true"
-    assert table["wayback_prefix_inventory"] == "true"
-    assert table["residual_only_retries"] == "true"
-    assert table["archive_is"] == "forbidden"
-    assert table["host_retained_replay_network_requests"] == "0"
-    assert table["rights_basis"] == "public_law_no_state_copyright"
-    assert table["residual_sha_method"] == 'sha256("\\n".join(urls))'
-    assert table["residual_ordered_sha256"] == RESIDUAL_SHA256
-    assert table["residual_ordered_sha256_prefix"] == RESIDUAL_SHA256_PREFIX
-    assert table["unresolved_projection_sha256_before_agm"] == (
-        UNRESOLVED_SHA_BEFORE_AGM
-    )
-    assert table["unresolved_projection_sha256_after_agm_prefix"] == (
-        UNRESOLVED_SHA_AFTER_AGM_PREFIX
-    )
-    assert table["diagnostic_hashes_authorizing"] == "false"
-    assert table["source_bundle"] == SOURCE_BUNDLE
-    assert table["source_bundle_prefix"] == SOURCE_BUNDLE_PREFIX
+    assert table["host_retained_replay_network_requests"] == "0 required"
 
-    assert SEED_V20_DIRECT + SEED_V21_AGM == SEED_SELECTED
-    assert TERMINAL_BEFORE_AGM + 1 == TERMINAL_AFTER_AGM
-    assert UNRESOLVED_BEFORE_AGM - 1 == UNRESOLVED_AFTER_AGM
-    assert CLOSED_LAWS_BEFORE_AGM + 1 == CLOSED_LAWS_AFTER_AGM
-    assert EVENT_ROWS_BEFORE_AGM - 1 == EVENT_ROWS_AFTER_AGM
-    assert (
-        MISSING_NOTE_ROWS + TOC_BODY_ROWS == SUPPLEMENTAL_RESIDUAL_ROWS
-    )
-    assert (
-        EVENT_ROWS_AFTER_AGM + MISSING_NOTE_ROWS + TOC_BODY_ROWS
-        == UNRESOLVED_AFTER_AGM
-    )
-    assert OPERATIVE_SECTIONS + TERMINAL_AFTER_AGM + UNRESOLVED_AFTER_AGM == (
+    assert PROJECTED_OPERATIVE + PROJECTED_TERMINAL + PROJECTED_UNRESOLVED == (
         SOURCE_SECTIONS
     )
+    assert PROJECTED_EVENT_ROWS + PROJECTED_SENATE_ROWS == PROJECTED_UNRESOLVED
+    assert MISSING_NOTE_ROWS + TOC_BODY_ROWS == SUPPLEMENTAL_RESIDUAL_ROWS
     assert SUPPLEMENTAL_RESIDUAL_ROWS - 2 == ENUMERABLE_URL_RESIDUAL
     assert len(supplemental_urls) == ENUMERABLE_URL_RESIDUAL
     assert supplemental_urls[0] == FIRST_RESIDUAL_URL
     assert _newline_residual_sha256(supplemental_urls) == RESIDUAL_SHA256
-    assert RESIDUAL_SHA256.startswith(RESIDUAL_SHA256_PREFIX)
-    assert SOURCE_BUNDLE.startswith(SOURCE_BUNDLE_PREFIX)
 
     lowered = " ".join(report.casefold().split())
-    assert "typed residual recorded" in lowered
-    assert "not a sealed current-bundle pair" in lowered.replace("*", "")
-    assert "not a publication authorization" in lowered.replace("*", "")
-    assert "hub mutation" in lowered
+    assert "not sealed" in lowered
+    assert "not publication-authorized" in lowered
+    assert "current-page absence is not proof" in lowered
     assert "per-page archive" in lowered
-    assert "static residual" in lowered
-    assert "unresolved" in lowered and "current law" in lowered
-    assert "docker-copying" in lowered or "docker-copy" in lowered
-    assert "--publish-to-hf" in report
-    assert "--no-incremental-state-publish" in report
     assert "--retained-replay-only" in report
-    assert "seed_retained_evidence_union" in report
-    assert "_fetch_new_york_frontier_batch" in report
-    assert "_build_official_senate_section" in report
-    assert "30-URL" in report or "30-url" in lowered
-    assert "214" in report
-    assert "37,441" in report
+    assert "--no-incremental-state-publish" in report
+    assert SIGNED_BILL_WAVE_NAME in report
     assert FIRST_RESIDUAL_URL in report
     assert AGM28_URL in report
-    assert OFFICIAL_CONSOLIDATED in report
     assert RESIDUAL_SHA256 in report
-    assert SEED_PROJECTION_SHA256 in report
+    assert ny_pdf.CPL15030_SIGNED_BILL_RECORD_URL in report
+    assert ny_pdf.EDN666_SIGNED_BILL_RECORD_URL in report
     assert INVENTED_SENATE_URL not in report
     assert PUBLIC_LAW_URL not in report
     assert INVENTED_AGENCY_PROOF_URL not in report
     for url in supplemental_urls:
         assert url in report
-    senate_url_mentions = report.count("https://www.nysenate.gov/legislation/laws/")
-    assert ENUMERABLE_URL_RESIDUAL <= senate_url_mentions <= ENUMERABLE_URL_RESIDUAL + 6
 
 
 def test_new_york_supplemental_wave_is_source_derived_from_pinned_residual_rows() -> None:
@@ -545,6 +542,269 @@ def test_new_york_supplemental_wave_is_source_derived_from_pinned_residual_rows(
             for law_code, section, variant, reason in rows
         ]
     ) == pinned
+
+
+def test_new_york_signed_bill_wave_is_exact_official_and_source_derived() -> None:
+    rows = list(NewYorkScraper.STRICT_CURRENT_SIGNED_BILL_PROOF_ROWS)
+    urls = [row[3] for row in rows]
+
+    assert [(row[0], row[1]) for row in rows] == [
+        ("CPL", "150.30"),
+        ("EDN", "666"),
+    ]
+    assert [row[2] for row in rows] == [case["selector"] for case in SIGNED_BILL_CASES]
+    assert urls == [case["url"] for case in SIGNED_BILL_CASES]
+    assert all(urlparse(url).hostname == "assembly.ny.gov" for url in urls)
+    assert _newline_residual_sha256(urls) == (
+        NewYorkScraper.STRICT_CURRENT_SIGNED_BILL_PROOF_URL_SHA256
+    )
+
+    reports = [
+        SimpleNamespace(
+            law_code=case["code"],
+            unclassified_sections=[
+                {
+                    "section_number": case["section"],
+                    "toc_variant": "",
+                    "reason": "toc_section_missing_body_identity",
+                }
+            ],
+        )
+        for case in SIGNED_BILL_CASES
+    ]
+    assert NewYorkScraper._new_york_exact_signed_bill_proof_rows(reports) == rows
+
+
+@pytest.mark.parametrize(
+    "case",
+    SIGNED_BILL_CASES,
+    ids=lambda case: f"{case['code']}-{case['section']}",
+)
+def test_new_york_signed_bill_resolvers_reconcile_exact_rows(
+    case: dict[str, Any],
+) -> None:
+    payload = _signed_bill_fixture(case)
+    assert NewYorkScraper._is_valid_new_york_assembly_signed_bill_html(payload)
+    proof = ny_pdf.NewYorkSupplementalProofInput.bind(
+        selector_key=str(case["selector"]),
+        proof_kind="official_signed_bill_record",
+        official_url=str(case["url"]),
+        media_type="text/html",
+        payload=payload,
+    )
+    registry = ny_pdf.NewYorkSupplementalProofRegistry([proof])
+    pdf_payload = _retained_wave_d_object(str(case["pdf_sha256"]))
+
+    before = ny_pdf.parse_new_york_law_pdf(
+        pdf_payload,
+        law_code=str(case["code"]),
+        law_name=str(case["law_name"]),
+    )
+    after = ny_pdf.parse_new_york_law_pdf(
+        pdf_payload,
+        law_code=str(case["code"]),
+        law_name=str(case["law_name"]),
+        supplemental_proof_registry=registry,
+    )
+
+    assert (
+        len(before.statutes),
+        len(before.terminal_sections),
+        len(before.unclassified_sections),
+        before.closed,
+    ) == case["before"]
+    assert (
+        len(after.statutes),
+        len(after.terminal_sections),
+        len(after.unclassified_sections),
+        after.closed,
+    ) == case["after"]
+    resolved = [
+        row
+        for row in after.supplemental_proof_attempts
+        if row.get("status") == "resolved"
+    ]
+    assert len(resolved) == 1
+    outcome = resolved[0]
+    assert outcome["decision_action"] == "terminal"
+    assert outcome["decision"]["disposition"] == "repealed"
+    assert outcome["source_projection_sha256"] == case["projection_sha256"]
+    assert all(outcome["conjuncts"].values())
+    terminal = [
+        row
+        for row in after.terminal_sections
+        if row.get("source_record_id")
+        == f"{case['code']}:{case['section']}"
+    ]
+    assert len(terminal) == 1
+    assert terminal[0]["source_url"] == case["url"]
+
+
+@pytest.mark.parametrize(
+    "case",
+    SIGNED_BILL_CASES,
+    ids=lambda case: f"{case['code']}-{case['section']}",
+)
+def test_new_york_signed_bill_resolvers_fail_closed_on_source_drift(
+    case: dict[str, Any],
+) -> None:
+    payload = _signed_bill_fixture(case)
+    drifted = payload.replace(
+        str(case["repeal"]).encode(),
+        str(case["repeal"]).replace("REPEALED", "AMENDED").encode(),
+    )
+    proof = ny_pdf.NewYorkSupplementalProofInput.bind(
+        selector_key=str(case["selector"]),
+        proof_kind="official_signed_bill_record",
+        official_url=str(case["url"]),
+        media_type="text/html",
+        payload=drifted,
+    )
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry([proof]).resolve_residual(
+        law_code=str(case["code"]),
+        residual={
+            "section_number": str(case["section"]),
+            "toc_variant": "",
+            "reason": "toc_section_missing_body_identity",
+            "detail": "toc_offset=1",
+        },
+    )
+
+    assert outcome["status"] == "unknown"
+    assert outcome["decision_action"] is None
+    assert outcome["conjuncts"]["same_part_repeal_clause"] is False
+    assert outcome["conjuncts"]["exact_source_projection_sha256"] is False
+    assert "decision" not in outcome
+
+
+def test_new_york_signed_bill_proof_manifest_replays_without_network(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    case = SIGNED_BILL_CASES[0]
+    code = str(case["code"])
+    pdf_url = ny_pdf.full_law_pdf_url(code)
+    proof_url = str(case["url"])
+    pdf_payload = _retained_wave_d_object(str(case["pdf_sha256"]))
+    proof_payload = _signed_bill_fixture(case)
+    catalog = (
+        "<html><head><title>Consolidated Laws of New York</title></head><body>"
+        "<a href='/legislation/laws/CPL'>CPL Criminal Procedure</a>"
+        + (" " * 11_000)
+        + "</body></html>"
+    ).encode()
+    payload_by_url = {
+        NewYorkScraper.OFFICIAL_CONSOLIDATED_URL: catalog,
+        pdf_url: pdf_payload,
+        proof_url: proof_payload,
+    }
+    live_requests: list[list[str]] = []
+
+    async def _fake_plural(self, urls, *, residual_retry_attempts, **kwargs):
+        requested = list(urls)
+        live_requests.append(requested)
+        payloads = [payload_by_url[url] for url in requested]
+        assert all(kwargs["content_validator"](body) for body in payloads)
+        return _aligned_result(requested, payloads)
+
+    async def _forbid_single(*_args, **_kwargs):
+        raise AssertionError("strict New York must not use a per-page archive loop")
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(NewYorkScraper, "STRICT_MINIMUM_CONSOLIDATED_LAWS", 1)
+    monkeypatch.setattr(
+        NewYorkScraper,
+        "STRICT_CURRENT_CONSOLIDATED_CODE_SHA256",
+        _ordered_code_sha256(code),
+    )
+    monkeypatch.setattr(
+        NewYorkScraper,
+        "_fetch_page_contents_with_archival_fallback_retrying_residuals",
+        _fake_plural,
+    )
+    monkeypatch.setattr(
+        NewYorkScraper,
+        "_fetch_page_content_with_archival_fallback",
+        _forbid_single,
+    )
+    scraper = NewYorkScraper("NY", "New York")
+
+    rows = asyncio.run(
+        scraper.scrape_code(
+            "New York Consolidated Laws",
+            NewYorkScraper.OFFICIAL_ENTRY_URL,
+            max_statutes=None,
+        )
+    )
+
+    assert len(rows) == 585
+    assert live_requests == [
+        [scraper.OFFICIAL_CONSOLIDATED_URL],
+        [pdf_url],
+        [proof_url],
+    ]
+    manifest = scraper._last_new_york_full_frontier[
+        "supplemental_proof_manifest"
+    ]
+    assert manifest == [
+        {
+            "content_sha256": hashlib.sha256(proof_payload).hexdigest(),
+            "media_type": "text/html",
+            "official_url": proof_url,
+            "proof_kind": "official_signed_bill_record",
+            "schema_version": ny_pdf.SUPPLEMENTAL_PROOF_SCHEMA_VERSION,
+            "selector_key": case["selector"],
+        }
+    ]
+
+    ledger = _RetainedInputLedger(payload_by_url)
+    scraper._state_law_acquisition_ledger = ledger
+    captured: dict[str, Any] = {}
+
+    def _retain(completion_receipt, **kwargs):
+        captured["completion"] = dict(completion_receipt)
+        captured["kwargs"] = dict(kwargs)
+        return tmp_path / "ny-retained-signed-bill-closure.json"
+
+    monkeypatch.setattr(
+        scraper,
+        "retain_state_law_frontier_closure_projection",
+        _retain,
+    )
+    monkeypatch.setattr(
+        scraper,
+        "_catalog_acquisition_path_ids_for_source",
+        lambda _url: ["ny-senate-laws"],
+    )
+    monkeypatch.setattr(
+        scraper,
+        "_state_law_frontier_source_software_version",
+        lambda: "ny-signed-bill-test@sha256:" + ("d" * 64),
+    )
+    retained_path = asyncio.run(
+        scraper.produce_state_law_frontier_closure(
+            canonical_output_projection=_canonical_projection(scraper, rows),
+        )
+    )
+
+    assert retained_path == tmp_path / "ny-retained-signed-bill-closure.json"
+    assert [request[0] for request in ledger.requests] == [
+        scraper.OFFICIAL_CONSOLIDATED_URL,
+        proof_url,
+        pdf_url,
+    ]
+    assert captured["completion"]["replay"]["network_requests"] == 0
+
+    ledger.payloads[proof_url] = proof_payload.replace(
+        b"SIGNED CHAP.59",
+        b"SIGNED CHAP.60",
+    )
+    with pytest.raises(RuntimeError, match="retained signed-bill proof changed"):
+        asyncio.run(
+            scraper.produce_state_law_frontier_closure(
+                canonical_output_projection=_canonical_projection(scraper, rows),
+            )
+        )
 
 
 def test_new_york_senate_section_validator_rejects_retained_soft_not_found_shape() -> None:
@@ -998,7 +1258,7 @@ def test_new_york_seed_and_host_replay_forbid_hub_docker_and_unresolved_as_curre
     assert "docker-copying" in report or "docker-copy" in report
     assert "unresolved" in report
     assert "current law" in report
-    assert "96-input" in report
+    assert "99-input corrected seed" in report
 
 
 def test_new_york_closure_helper_still_requires_zero_network_seal_inputs() -> None:
@@ -1019,7 +1279,7 @@ def test_new_york_closure_helper_still_requires_zero_network_seal_inputs() -> No
     assert "did not prove occurrence" in exact_frontier
 
 
-def test_new_york_compact_recipe_emits_thirty_url_wave_not_invented_targets() -> None:
+def test_new_york_compact_recipe_emits_twenty_eight_url_wave_not_invented_targets() -> None:
     derived = _derived_supplemental_urls()
     pinned = list(NewYorkScraper.STRICT_CURRENT_SUPPLEMENTAL_SECTION_URLS)
     assert derived == pinned
