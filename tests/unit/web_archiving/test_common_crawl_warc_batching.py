@@ -1394,6 +1394,63 @@ async def test_large_same_domain_frontier_compacts_inventory_terms_then_exact_ma
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("fetch_kwargs", "expected_delay_seconds"),
+    [
+        ({}, 0.0),
+        ({"direct_request_delay_seconds": 0.5}, 0.5),
+    ],
+)
+async def test_page_multifetch_direct_start_spacing_is_explicit_and_default_zero(
+    monkeypatch: pytest.MonkeyPatch,
+    fetch_kwargs: dict[str, float],
+    expected_delay_seconds: float,
+) -> None:
+    url = "https://codes.example.gov/title/1"
+    body = b"current official title one"
+    observed_delay_seconds: list[float] = []
+    original_init = ArchivalFetchClient.__init__
+
+    def _init(self, **kwargs):
+        observed_delay_seconds.append(float(kwargs["delay_seconds"]))
+        original_init(self, **kwargs)
+
+    async def _many(self, requested_urls, **_kwargs):
+        assert list(requested_urls) == [url]
+        return SimpleNamespace(
+            results=[
+                FetchResult(
+                    url=url,
+                    content=body,
+                    source="direct",
+                    fetched_at="2026-08-28T00:00:00Z",
+                    status_code=200,
+                )
+            ],
+            errors=[None],
+            stats={"requested_pages": 1, "common_crawl": {}},
+        )
+
+    async def _no_cache(**_kwargs):
+        return None
+
+    monkeypatch.setattr(ArchivalFetchClient, "__init__", _init)
+    monkeypatch.setattr(ArchivalFetchClient, "fetch_many_with_fallback", _many)
+    scraper = _StateFrontierScraper("WI", "Wisconsin")
+    monkeypatch.setattr(scraper, "_cache_successful_page_fetch", _no_cache)
+
+    result = await scraper._fetch_page_contents_with_archival_fallback(
+        [url],
+        prefer_direct=True,
+        archive_recovery_enabled=False,
+        **fetch_kwargs,
+    )
+
+    assert result.payloads == [body]
+    assert observed_delay_seconds == [expected_delay_seconds]
+
+
+@pytest.mark.asyncio
 async def test_generic_discovery_submits_same_depth_pages_as_one_frontier(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

@@ -36,6 +36,7 @@ class MissouriScraper(BaseStateScraper):
     OFFICIAL_DOMAIN = "revisor.mo.gov"
     OFFICIAL_ENTRY_PATH = "/main/Home.aspx"
     OFFICIAL_ENTRY_URL = "https://revisor.mo.gov/main/Home.aspx"
+    OFFICIAL_DIRECT_REQUEST_DELAY_SECONDS = 0.5
     _MO_CHAPTER_RE = re.compile(
         r"OneChapter\.aspx\?chapter=(?P<chapter>\d+[A-Za-z]?)\b",
         re.IGNORECASE,
@@ -391,6 +392,9 @@ class MissouriScraper(BaseStateScraper):
             media_type="text/html",
             max_concurrency=self._missouri_frontier_concurrency(),
             prefer_direct=True,
+            direct_request_delay_seconds=(
+                self.OFFICIAL_DIRECT_REQUEST_DELAY_SECONDS
+            ),
             common_crawl_domain_terms=(self.OFFICIAL_DOMAIN,),
             common_crawl_url_terms=("/main/",),
             common_crawl_mime_terms=("html",),

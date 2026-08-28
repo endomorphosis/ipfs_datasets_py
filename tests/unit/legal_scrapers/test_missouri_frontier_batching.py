@@ -715,6 +715,7 @@ async def test_missouri_frontier_batch_uses_shared_grouped_warc_path(
                 "media_type": "text/html",
                 "max_concurrency": 16,
                 "prefer_direct": True,
+                "direct_request_delay_seconds": 0.5,
                 "common_crawl_domain_terms": ("revisor.mo.gov",),
                 "common_crawl_url_terms": ("/main/",),
                 "common_crawl_mime_terms": ("html",),

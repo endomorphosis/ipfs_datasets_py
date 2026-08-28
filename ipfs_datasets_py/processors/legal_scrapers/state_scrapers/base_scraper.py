@@ -5199,6 +5199,7 @@ class BaseStateScraper(ABC):
         media_type: Optional[str] = None,
         max_concurrency: int = 8,
         prefer_direct: bool = False,
+        direct_request_delay_seconds: float = 0.0,
         common_crawl_domain_terms: Optional[Sequence[str]] = None,
         common_crawl_url_terms: Optional[Sequence[str]] = None,
         common_crawl_mime_terms: Optional[Sequence[str]] = None,
@@ -5212,7 +5213,10 @@ class BaseStateScraper(ABC):
         pointers by immutable WARC filename and coalesces nearby byte ranges.
         With ``prefer_direct``, concurrent official requests run once before
         the grouped archive recovery; otherwise the historical archive-first
-        order is preserved.
+        order is preserved.  ``direct_request_delay_seconds`` explicitly
+        opts a caller into minimum spacing between those direct request starts;
+        its zero default preserves the existing behavior for every other
+        state adapter.
 
         The returned payloads and receipts remain aligned with ``urls``.  This
         is the multi-page counterpart to
@@ -5844,7 +5848,7 @@ class BaseStateScraper(ABC):
                 )
             archival_client = ArchivalFetchClient(
                 request_timeout_seconds=max(1, int(timeout_seconds or 25)),
-                delay_seconds=0.0,
+                delay_seconds=direct_request_delay_seconds,
                 content_validator=content_validator or (lambda payload: bool(payload)),
                 enable_common_crawl=archive_recovery_enabled,
                 enable_direct=True,
