@@ -87,7 +87,7 @@ and admitting the capped 160-row corpus are not admitted.
 | residual_sha_method | `sha256(json.dumps(urls, ensure_ascii=False, separators=(",", ":")))` |
 | residual_ordered_sha256_prefix | 5b39edd9cdd6 |
 | diagnostic_hashes_authorizing | false |
-| source_bundle_prefix | 42c02e83f84c |
+| source_bundle_prefix | 1cfc4e8a0db0 |
 
 The residual SHA-256 prefix `5b39edd9cdd6` is the already published identity
 of the source-ordered unique 227 official XML URLs (newline join of

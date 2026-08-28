@@ -2212,6 +2212,56 @@ def test_michigan_catalog_rejects_ordered_membership_drift(
         MichiganScraper("MI", "Michigan")._michigan_source_catalog_rows(root)
 
 
+@pytest.mark.parametrize(
+    "opening_tags",
+    [
+        (
+            "<MCLChapterInfo  ><DocumentID >2252</DocumentID>"
+            "<Repealed >false</Repealed><EditorsNotes  />"
+            "<Commentary  /><History  /><Name >26</Name>"
+        ),
+        (
+            '<MCLChapterInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
+            'xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
+            + (
+                '<DocumentID xmlns="http://localhost/MCLWebService/'
+                'MCLSearchService">6229</DocumentID>'
+            )
+            + (" " * 4_100)
+            + (
+                '<Name xmlns="http://localhost/MCLWebService/'
+                'MCLSearchService">115</Name>'
+            )
+        ),
+    ],
+)
+def test_michigan_xml_validator_accepts_official_tag_serialization_variants(
+    opening_tags: str,
+) -> None:
+    xml = (
+        '<?xml version="1.0" encoding="utf-16"?>'
+        + opening_tags
+        + ("<MCLDocumentInfoCollection />" + (" " * 600))
+        + "</MCLChapterInfo>"
+    ).encode("utf-16")
+
+    assert MichiganScraper._is_valid_michigan_chapter_xml(xml) is True
+
+
+@pytest.mark.parametrize(
+    "opening_tags",
+    [
+        "<MCLChapterInfo><GivenName>26</GivenName>",
+        "<NotMCLChapterInfo><Name>26</Name>",
+        "<div>MCLChapterInfo Name</div>",
+    ],
+)
+def test_michigan_xml_validator_rejects_marker_drift(opening_tags: str) -> None:
+    xml = (opening_tags + (" " * 600) + "</MCLChapterInfo>").encode("utf-16")
+
+    assert MichiganScraper._is_valid_michigan_chapter_xml(xml) is False
+
+
 @pytest.mark.anyio
 async def test_michigan_incomplete_batch_exposes_shared_transport_stats(
     monkeypatch: pytest.MonkeyPatch,

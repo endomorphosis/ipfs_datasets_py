@@ -31,6 +31,8 @@ class MichiganScraper(BaseStateScraper):
         r"objectName=mcl-chap(?P<chapter>\d+)\b",
         re.IGNORECASE,
     )
+    _MI_CHAPTER_XML_ROOT_RE = re.compile(r"<MCLChapterInfo(?=[\s>])")
+    _MI_CHAPTER_XML_NAME_RE = re.compile(r"<Name(?=[\s>])")
     OFFICIAL_DOMAIN = "www.legislature.mi.gov"
     OFFICIAL_ENTRY_PATH = "/Laws/ChapterIndex"
     OFFICIAL_ENTRY_URL = "https://www.legislature.mi.gov/Laws/ChapterIndex"
@@ -120,12 +122,18 @@ class MichiganScraper(BaseStateScraper):
             return False
         try:
             if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):
-                sample = raw[:4_000].decode("utf-16", errors="replace")
+                # Some official UTF-16 chapters serialize namespace
+                # attributes on every early child, placing ``Name`` beyond
+                # the old 2,000-character sample.
+                sample = raw[:65_536].decode("utf-16", errors="replace")
             else:
-                sample = raw[:4_000].decode("utf-8-sig", errors="replace")
+                sample = raw[:65_536].decode("utf-8-sig", errors="replace")
         except (UnicodeError, ValueError):
             return False
-        return "<MCLChapterInfo" in sample and "<Name>" in sample
+        return bool(
+            MichiganScraper._MI_CHAPTER_XML_ROOT_RE.search(sample)
+            and MichiganScraper._MI_CHAPTER_XML_NAME_RE.search(sample)
+        )
 
     def _validate_michigan_aligned_evidence(
         self,
