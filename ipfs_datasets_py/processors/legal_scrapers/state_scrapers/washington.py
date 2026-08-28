@@ -9,7 +9,7 @@ import re
 import ssl
 import urllib.request
 from collections.abc import Mapping, Sequence
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib.parse import parse_qs, urljoin, urlparse
@@ -150,6 +150,16 @@ class WashingtonScraper(BaseStateScraper):
         r"|62A\.\d+[A-Za-z]?-\d+[A-Za-z]?)$",
         re.IGNORECASE,
     )
+    _SOURCE_BOUND_SHORT_CONTRACT_KINDS = frozenset(
+        {
+            "cross_reference",
+            "effective_date",
+            "exact_static",
+            "expiration_date",
+            "incorporation_by_reference",
+            "source_history_bound",
+        }
+    )
 
     def state_law_frontier_source_dependencies(self) -> tuple[object, ...]:
         """Bind parsing, closure, and exact plural acquisition code."""
@@ -169,6 +179,130 @@ class WashingtonScraper(BaseStateScraper):
             washington_section,
             wayback_machine_engine,
         )
+
+    def _is_source_bound_operative_statute_record(
+        self,
+        statute: NormalizedStatute,
+    ) -> bool:
+        """Admit only an exact retained official RCW section row.
+
+        Operative Washington provisions commonly contain words such as
+        ``agency``, ``members``, ``media``, and ``session``.  Those words
+        overlap the generic short-text navigation heuristic, so the official
+        contentWrapper parser must prove the complete row identity and its
+        retained direct-input provenance.  Chapter materials and terminal
+        dispositions remain outside this exception.
+        """
+
+        if not isinstance(statute, NormalizedStatute):
+            return False
+        section_number = str(statute.section_number or "").strip()
+        if self._SECTION_CITE_RE.fullmatch(section_number) is None:
+            return False
+        expected_source_url = (
+            f"https://app.leg.wa.gov/RCW/default.aspx?cite={section_number}"
+        )
+        section_name = self._normalize_legal_text(str(statute.section_name or ""))
+        full_text = self._normalize_legal_text(str(statute.full_text or ""))
+        if (
+            str(statute.state_code or "").strip() != "WA"
+            or str(statute.state_name or "").strip() != "Washington"
+            or str(statute.code_name or "").strip() != "Revised Code of Washington"
+            or str(statute.statute_id or "").strip()
+            != f"Revised Code of Washington § {section_number}"
+            or str(statute.title_number or "").strip()
+            != section_number.split(".", 1)[0]
+            or not section_name
+            or len(section_name) > 200
+            or not full_text
+            or str(statute.source_url or "").strip() != expected_source_url
+            or str(statute.official_cite or "").strip()
+            != f"Wash. Rev. Code § {section_number}"
+            or re.match(
+                r"^section\s+section-\d+\s*:",
+                full_text,
+                flags=re.IGNORECASE,
+            )
+            is not None
+        ):
+            return False
+
+        metadata = statute.metadata
+        if (
+            not isinstance(metadata, StatuteMetadata)
+            or metadata.repealed is not False
+            or metadata.superseded_by not in (None, "")
+        ):
+            return False
+
+        from .washington_section import (
+            _DECODIFIED_SECTION_NOTE_RE,
+            _TERMINAL_CAPTION_PATTERNS,
+        )
+
+        if any(
+            pattern.match(value)
+            for value in (section_name, full_text)
+            for _disposition, pattern in _TERMINAL_CAPTION_PATTERNS
+        ) or _DECODIFIED_SECTION_NOTE_RE.fullmatch(full_text):
+            return False
+
+        data = statute.structured_data
+        if not isinstance(data, Mapping):
+            return False
+        if (
+            str(data.get("source_kind") or "") != "official_washington_contentwrapper"
+            or str(data.get("source_authority_class") or "") != "official"
+            or str(data.get("discovery_method") or "")
+            != "official_title_chapter_section_index"
+            or data.get("skip_hydrate") is not True
+            or any(
+                data.get(key) not in (None, "")
+                for key in (
+                    "disposition",
+                    "record_level",
+                    "record_type",
+                    "terminal_disposition",
+                )
+            )
+        ):
+            return False
+        for digest_field in (
+            "content_sha256",
+            "parser_input_receipt_sha256",
+        ):
+            if (
+                re.fullmatch(
+                    r"[0-9a-f]{64}",
+                    str(data.get(digest_field) or ""),
+                )
+                is None
+            ):
+                return False
+
+        observed_raw = str(data.get("source_observed_date") or "")
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}", observed_raw) is None:
+            return False
+        try:
+            observed_date = date.fromisoformat(observed_raw)
+        except ValueError:
+            return False
+        if observed_date > datetime.now(UTC).date():
+            return False
+        if (
+            str(data.get("source_transport") or "") != "direct"
+            or "archive_timestamp" not in data
+            or data.get("archive_timestamp") != ""
+        ):
+            return False
+
+        short_source_bound = data.get("source_bound_short_operative")
+        short_contract_kind = str(data.get("source_bound_short_contract_kind") or "")
+        if not isinstance(short_source_bound, bool):
+            return False
+        if short_source_bound:
+            return short_contract_kind in self._SOURCE_BOUND_SHORT_CONTRACT_KINDS
+        return not short_contract_kind
 
     def _washington_frontier_concurrency(self) -> int:
         return max(

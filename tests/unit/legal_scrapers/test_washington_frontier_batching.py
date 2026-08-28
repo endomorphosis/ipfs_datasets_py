@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import inspect
 import json
@@ -14,6 +15,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import (
     washington_section as washington_section_module,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
+    NormalizedStatute,
     StateLawPageMultiFetchResult,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.washington import (
@@ -113,6 +115,35 @@ def _section_html(
         f"<div></div><div></div><div>{section_body}</div></div>"
         "</body></html>"
     ).encode()
+
+
+def _source_bound_navigation_collision_row() -> NormalizedStatute:
+    section = "2.48.020"
+    url = section_url(section)
+    payload = _section_html(
+        section,
+        caption="First members.",
+        body=(
+            "The first members of the commission shall serve for five "
+            "years and may appoint successors."
+        ),
+    )
+    row = parse_washington_section_html(
+        payload.decode(),
+        source_url=url,
+        section_number=section,
+    )
+    assert row is not None
+    row.structured_data = {
+        **row.structured_data,
+        "archive_timestamp": "",
+        "content_sha256": hashlib.sha256(payload).hexdigest(),
+        "discovery_method": "official_title_chapter_section_index",
+        "parser_input_receipt_sha256": "b" * 64,
+        "source_observed_date": "2024-01-02",
+        "source_transport": "direct",
+    }
+    return row
 
 
 _RETAINED_SHORT_OPERATIVE_EVIDENCE = {
@@ -905,6 +936,112 @@ def test_washington_unproven_tiny_section_text_stays_fail_closed() -> None:
         )
         is None
     )
+
+
+def test_washington_source_bound_section_bypasses_generic_nav_collision() -> None:
+    scraper = WashingtonScraper("WA", "Washington")
+    row = _source_bound_navigation_collision_row()
+
+    assert scraper._looks_like_navigation_text(row.section_name or "")
+    assert scraper._looks_like_navigation_text(row.full_text or "")
+    assert not scraper._contains_statute_signals(row.section_name or "")
+    assert not scraper._contains_statute_signals(row.full_text or "")
+    assert scraper._is_source_bound_operative_statute_record(row)
+    assert not scraper._is_low_quality_statute_record(row)
+
+
+@pytest.mark.parametrize(
+    ("field", "drift"),
+    [
+        ("state_code", "OR"),
+        ("state_name", "Washington State"),
+        ("code_name", "Washington Code"),
+        ("statute_id", "Revised Code of Washington § 2.48.021"),
+        ("title_number", "3"),
+        ("section_number", "2.48.021"),
+        ("section_name", "Reserved."),
+        ("full_text", "Section Section-1: First members."),
+        (
+            "source_url",
+            "https://app.leg.wa.gov/RCW/default.aspx?cite=2.48.020#drift",
+        ),
+        ("official_cite", "Wash. Rev. Code § 2.48.021"),
+    ],
+)
+def test_washington_source_bound_section_rejects_identity_and_terminal_drift(
+    field: str,
+    drift: str,
+) -> None:
+    scraper = WashingtonScraper("WA", "Washington")
+    row = copy.deepcopy(_source_bound_navigation_collision_row())
+    setattr(row, field, drift)
+
+    assert not scraper._is_source_bound_operative_statute_record(row)
+
+
+@pytest.mark.parametrize(
+    ("field", "drift"),
+    [
+        ("source_kind", "official_washington_chapter_material"),
+        ("source_authority_class", "aggregator"),
+        ("discovery_method", "official_seed_section"),
+        ("skip_hydrate", False),
+        ("content_sha256", "A" * 64),
+        ("parser_input_receipt_sha256", "b" * 63),
+        ("source_observed_date", "20240102"),
+        ("source_observed_date", "2999-01-02"),
+        ("source_transport", "wayback"),
+        ("archive_timestamp", None),
+        ("archive_timestamp", "20240102000000"),
+        ("source_bound_short_operative", "false"),
+        ("source_bound_short_contract_kind", "cross_reference"),
+        ("record_level", "terminal_section"),
+        ("terminal_disposition", "repealed"),
+    ],
+)
+def test_washington_source_bound_section_rejects_provenance_drift(
+    field: str,
+    drift: Any,
+) -> None:
+    scraper = WashingtonScraper("WA", "Washington")
+    row = copy.deepcopy(_source_bound_navigation_collision_row())
+    row.structured_data[field] = drift
+
+    assert not scraper._is_source_bound_operative_statute_record(row)
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "source_kind",
+        "source_authority_class",
+        "discovery_method",
+        "skip_hydrate",
+        "content_sha256",
+        "parser_input_receipt_sha256",
+        "source_observed_date",
+        "source_transport",
+        "archive_timestamp",
+        "source_bound_short_operative",
+    ],
+)
+def test_washington_source_bound_section_requires_complete_provenance(
+    field: str,
+) -> None:
+    scraper = WashingtonScraper("WA", "Washington")
+    row = copy.deepcopy(_source_bound_navigation_collision_row())
+    del row.structured_data[field]
+
+    assert not scraper._is_source_bound_operative_statute_record(row)
+
+
+def test_washington_source_bound_section_rejects_metadata_terminal() -> None:
+    scraper = WashingtonScraper("WA", "Washington")
+    row = copy.deepcopy(_source_bound_navigation_collision_row())
+    assert row.metadata is not None
+    row.metadata.repealed = True
+
+    assert not scraper._is_source_bound_operative_statute_record(row)
 
 
 @pytest.mark.parametrize(
