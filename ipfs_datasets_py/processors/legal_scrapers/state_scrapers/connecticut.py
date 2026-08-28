@@ -849,11 +849,77 @@ class ConnecticutScraper(BaseStateScraper):
         batch_stats: List[Dict[str, Any]] = []
         for offset in range(0, len(requested), chunk_size):
             chunk = requested[offset : offset + chunk_size]
+            direct_records: Dict[str, Dict[str, Any]] = {}
+            if (
+                getattr(self, "_state_law_acquisition_ledger", None) is not None
+                and purpose in {"titles", "supplement_titles"}
+            ):
+                # CGA's current title pages are occasionally served with an
+                # incomplete certificate chain.  The ordinary plural fetcher
+                # deliberately disables insecure TLS while a strict ledger is
+                # attached, so first replay/fetch this source-derived title
+                # wave through the shared custom adapter.  Exact misses alone
+                # continue to the grouped archive-aware plural path below.
+                for url in chunk:
+                    canonical_url = self._canonical_fetch_url(url)
+                    try:
+                        payload = await self._fetch_parser_input_with_transport(
+                            canonical_url,
+                            headers={"User-Agent": "Mozilla/5.0"},
+                            timeout_seconds=timeout_seconds,
+                            allow_archival_fallback=False,
+                            verify_tls=False,
+                            media_type="text/html",
+                            provider="connecticut_insecure_tls_title_wave",
+                            content_validator=lambda body: bool(
+                                body
+                                and b"<" in body[:16384]
+                                and b">" in body[:16384]
+                            ),
+                        )
+                    except Exception:
+                        payload = b""
+                    if not payload:
+                        continue
+                    transport_receipt = dict(
+                        getattr(self, "_last_page_fetch_transport_evidence", {})
+                        or {}
+                    )
+                    direct_records[canonical_url] = {
+                        "url": canonical_url,
+                        "payload": bytes(payload),
+                        "error": "",
+                        "transport_receipt": transport_receipt,
+                        "content_sha256": str(
+                            transport_receipt.get("content_sha256")
+                            or hashlib.sha256(bytes(payload)).hexdigest()
+                        ),
+                    }
+
+            residual_chunk = [
+                url
+                for url in chunk
+                if self._canonical_fetch_url(url) not in direct_records
+            ]
+            if not residual_chunk:
+                records.extend(
+                    direct_records[self._canonical_fetch_url(url)] for url in chunk
+                )
+                batch_stats.append(
+                    {
+                        "requested_pages": len(chunk),
+                        "successful_pages": len(chunk),
+                        "failed_pages": 0,
+                        "insecure_tls_direct_prepass": True,
+                        "grouped_archive_residual_pages": 0,
+                    }
+                )
+                continue
             batch = await self._fetch_page_contents_with_archival_fallback(
-                chunk,
+                residual_chunk,
                 timeout_seconds=timeout_seconds,
                 media_type="text/html",
-                max_concurrency=min(12, len(chunk)),
+                max_concurrency=min(12, len(residual_chunk)),
                 prefer_direct=True,
                 common_crawl_domain_terms=[self.OFFICIAL_DOMAIN],
                 common_crawl_mime_terms=["html"],
@@ -865,16 +931,27 @@ class ConnecticutScraper(BaseStateScraper):
                 len(batch.transport_receipts),
                 len(batch.parser_input_envelopes),
             }
-            if aligned_lengths != {len(chunk)}:
+            if aligned_lengths != {len(residual_chunk)}:
                 raise RuntimeError(
                     "connecticut archival batch returned unaligned acquisition rows"
                 )
-            expected_chunk = [self._canonical_fetch_url(url) for url in chunk]
-            if list(batch.urls) != expected_chunk:
+            expected_residual = [
+                self._canonical_fetch_url(url) for url in residual_chunk
+            ]
+            if list(batch.urls) != expected_residual:
                 raise RuntimeError(
                     "connecticut archival batch changed URL order or identity"
                 )
-            batch_stats.append(dict(batch.stats or {}))
+            batch_stat = dict(batch.stats or {})
+            batch_stat.update(
+                {
+                    "insecure_tls_direct_prepass": bool(direct_records),
+                    "insecure_tls_direct_prepass_pages": len(direct_records),
+                    "grouped_archive_residual_pages": len(residual_chunk),
+                }
+            )
+            batch_stats.append(batch_stat)
+            residual_records: Dict[str, Dict[str, Any]] = {}
             for url, payload, error, receipt in zip(
                 batch.urls,
                 batch.payloads,
@@ -883,17 +960,25 @@ class ConnecticutScraper(BaseStateScraper):
                 strict=True,
             ):
                 transport_receipt = dict(receipt or {})
-                records.append(
-                    {
-                        "url": url,
-                        "payload": bytes(payload or b""),
-                        "error": str(error or ""),
-                        "transport_receipt": transport_receipt,
-                        "content_sha256": str(
-                            transport_receipt.get("content_sha256") or ""
-                        ),
-                    }
+                residual_records[url] = {
+                    "url": url,
+                    "payload": bytes(payload or b""),
+                    "error": str(error or ""),
+                    "transport_receipt": transport_receipt,
+                    "content_sha256": str(
+                        transport_receipt.get("content_sha256") or ""
+                    ),
+                }
+            for url in chunk:
+                canonical_url = self._canonical_fetch_url(url)
+                record = direct_records.get(canonical_url) or residual_records.get(
+                    canonical_url
                 )
+                if record is None:
+                    raise RuntimeError(
+                        "connecticut archival batch lost an aligned URL row"
+                    )
+                records.append(record)
         observed_urls = [str(record["url"]) for record in records]
         expected_urls = [self._canonical_fetch_url(url) for url in requested]
         if observed_urls != expected_urls:

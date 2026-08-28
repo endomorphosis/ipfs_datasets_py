@@ -627,6 +627,56 @@ async def test_connecticut_frontier_pages_use_shared_batched_fetch(
 
 
 @pytest.mark.anyio
+async def test_connecticut_strict_title_wave_retries_direct_with_insecure_tls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scraper = ConnecticutScraper("CT", "Connecticut")
+    urls = [
+        "https://www.cga.ct.gov/current/pub/title_01.htm",
+        "https://www.cga.ct.gov/current/pub/title_02.htm",
+        "https://www.cga.ct.gov/current/pub/title_02c.htm",
+    ]
+    calls: list[tuple[str, dict[str, Any]]] = []
+
+    async def _adapter(url: str, **kwargs: Any) -> bytes:
+        payload = f"<html>official:{url}</html>".encode()
+        assert kwargs["verify_tls"] is False
+        assert kwargs["allow_archival_fallback"] is False
+        assert kwargs["content_validator"](payload) is True
+        calls.append((url, dict(kwargs)))
+        scraper._last_page_fetch_transport_evidence = {
+            "official_url": url,
+            "content_sha256": hashlib.sha256(payload).hexdigest(),
+            "source_transport": "direct",
+        }
+        return payload
+
+    async def _forbid_archive(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("successful insecure direct rows must skip archive recovery")
+
+    monkeypatch.setattr(scraper, "_fetch_parser_input_with_transport", _adapter)
+    monkeypatch.setattr(
+        scraper,
+        "_fetch_page_contents_with_archival_fallback",
+        _forbid_archive,
+    )
+    scraper._state_law_acquisition_ledger = object()
+
+    records = await scraper._fetch_connecticut_frontier_pages(
+        urls,
+        purpose="titles",
+    )
+
+    assert [url for url, _kwargs in calls] == urls
+    assert [record["url"] for record in records] == urls
+    assert all(record["payload"].startswith(b"<html>") for record in records)
+    stats = scraper._last_connecticut_batch_stats["titles"]
+    assert stats["batch_count"] == 1
+    assert stats["shared_batch_stats"][0]["insecure_tls_direct_prepass"] is True
+    assert stats["shared_batch_stats"][0]["grouped_archive_residual_pages"] == 0
+
+
+@pytest.mark.anyio
 async def test_connecticut_strict_catalog_roots_use_one_base_plural_call(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
