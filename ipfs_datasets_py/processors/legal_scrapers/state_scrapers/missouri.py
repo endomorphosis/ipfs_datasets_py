@@ -206,9 +206,44 @@ class MissouriScraper(BaseStateScraper):
         if not payload:
             return False
         lowered = bytes(payload).lower()
+        blocked_robot_page = (
+            b'action="./block.aspx"' in lowered
+            and b"/mopics/robot.png" in lowered
+            and b">blocked</h2>" in lowered
+        )
         return (
             b"nofish.aspx" not in lowered
             and b"are you double clicking links?" not in lowered
+            and not blocked_robot_page
+        )
+
+    @classmethod
+    def _is_valid_missouri_identity_aligned_section_payload(
+        cls,
+        payload: bytes,
+    ) -> bool:
+        """Require one internally source-bound Revisor section response.
+
+        The plural transport validator receives response bytes but not the
+        aligned requested URL.  The Revisor page still publishes two
+        independent identities in those bytes: its statutory body heading and
+        its title/OpenGraph/canonical page identity.  Requiring those markers
+        to agree prevents a mismatched recovery page from reaching the
+        prospective evidence ledger; the caller additionally binds that
+        agreed identity to the exact requested catalog URL before parsing.
+        """
+
+        if not cls._is_valid_missouri_frontier_payload(payload):
+            return False
+        from .missouri_chapter import section_body_identity, section_page_identity
+
+        section_html = bytes(payload).decode("utf-8", errors="replace")
+        body_identity = section_body_identity(section_html)
+        page_identity = section_page_identity(section_html)
+        return bool(
+            body_identity
+            and page_identity
+            and body_identity.casefold() == page_identity.casefold()
         )
 
     @staticmethod
@@ -344,6 +379,11 @@ class MissouriScraper(BaseStateScraper):
                 ),
             ),
         )
+        content_validator = self._is_valid_missouri_frontier_payload
+        if frontier_name == "source-ordered-page-select-identity-recovery":
+            content_validator = (
+                self._is_valid_missouri_identity_aligned_section_payload
+            )
         batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
             requested,
             residual_retry_attempts=residual_retry_attempts,
@@ -355,7 +395,7 @@ class MissouriScraper(BaseStateScraper):
             common_crawl_url_terms=("/main/",),
             common_crawl_mime_terms=("html",),
             wayback_prefix_inventory=True,
-            content_validator=self._is_valid_missouri_frontier_payload,
+            content_validator=content_validator,
         )
         aligned_lengths = {
             len(batch.urls),
@@ -1148,7 +1188,7 @@ class MissouriScraper(BaseStateScraper):
         def _admit_one_section(
             candidate: tuple[int, tuple[Any, ...], str, str, bytes],
             fallback_payload: bytes,
-        ) -> None:
+        ) -> Optional[tuple[Any, ...]]:
             (
                 row_index,
                 frontier_row,
@@ -1166,16 +1206,28 @@ class MissouriScraper(BaseStateScraper):
                 effective_date,
                 report_index,
             ) = frontier_row
-            fallback_identity = section_body_identity(
-                fallback_payload.decode("utf-8", errors="replace")
-            )
+            fallback_html = fallback_payload.decode("utf-8", errors="replace")
+            fallback_identity = section_body_identity(fallback_html)
             if fallback_identity.casefold() != section_number.casefold():
+                page_identity = section_page_identity(fallback_html)
+                if page_identity.casefold() == section_number.casefold():
+                    # The exact OneSection response identifies the requested
+                    # page but does not publish its requested statutory body.
+                    # Keep it out of normalized output and recover only from
+                    # the exact versioned PageSelect locator already derived
+                    # from this chapter catalog row.
+                    return (
+                        candidate,
+                        fallback_payload,
+                        fallback_identity,
+                        page_identity,
+                    )
                 raise RuntimeError(
                     "Missouri alternate official section body failed requested "
                     f"identity verification: {fallback_url}"
                 )
             parsed = statute_from_section_html(
-                fallback_payload.decode("utf-8", errors="replace"),
+                fallback_html,
                 section_number=section_number,
                 code_name=code_name,
                 section_title=section_title,
@@ -1202,16 +1254,20 @@ class MissouriScraper(BaseStateScraper):
                 fallback_reason=fallback_reason,
             )
             parsed_rows[row_index] = parsed
+            return None
 
         one_section_residuals: List[
             tuple[int, tuple[Any, ...], str, str, bytes]
         ] = []
+        one_section_identity_mismatches: List[tuple[Any, ...]] = []
         for candidate in one_section_candidates:
             retained_fallback = retained_one_section.get(candidate[2])
             if retained_fallback is None:
                 one_section_residuals.append(candidate)
                 continue
-            _admit_one_section(candidate, retained_fallback[0])
+            mismatch = _admit_one_section(candidate, retained_fallback[0])
+            if mismatch is not None:
+                one_section_identity_mismatches.append(mismatch)
 
         residual_urls = [candidate[2] for candidate in one_section_residuals]
         residual_batch_stats: Dict[str, Any] = {}
@@ -1226,13 +1282,131 @@ class MissouriScraper(BaseStateScraper):
                 residual_batch.payloads,
                 strict=True,
             ):
-                _admit_one_section(candidate, fallback_payload)
+                mismatch = _admit_one_section(candidate, fallback_payload)
+                if mismatch is not None:
+                    one_section_identity_mismatches.append(mismatch)
+
+        def _admit_page_select_identity_recovery(
+            mismatch: tuple[Any, ...],
+            recovery_payload: bytes,
+        ) -> None:
+            candidate, _rejected_payload, _observed_body, _observed_page = mismatch
+            (
+                row_index,
+                frontier_row,
+                _fallback_url,
+                _fallback_reason,
+                _frontier_payload,
+            ) = candidate
+            (
+                _chapter_index,
+                _chapter_number,
+                section_number,
+                section_title,
+                frontier_url,
+                source_record_bid,
+                effective_date,
+                report_index,
+            ) = frontier_row
+            recovery_html = recovery_payload.decode("utf-8", errors="replace")
+            recovery_body_identity = section_body_identity(recovery_html)
+            recovery_page_identity = section_page_identity(recovery_html)
+            if (
+                recovery_body_identity.casefold() != section_number.casefold()
+                or recovery_page_identity.casefold() != section_number.casefold()
+            ):
+                raise RuntimeError(
+                    "Missouri exact PageSelect recovery failed requested identity "
+                    f"verification: {frontier_url}"
+                )
+            parsed = statute_from_section_html(
+                recovery_html,
+                section_number=section_number,
+                code_name=code_name,
+                section_title=section_title,
+                source_url=frontier_url,
+                source_record_bid=source_record_bid,
+                effective_date=effective_date,
+                source_frontier_record_url=frontier_url,
+            )
+            if parsed is None:
+                raise RuntimeError(
+                    "Missouri exact PageSelect recovery failed official parsing: "
+                    f"{frontier_url}"
+                )
+            parsed.structured_data = {
+                **dict(parsed.structured_data or {}),
+                "content_sha256": hashlib.sha256(recovery_payload).hexdigest(),
+            }
+            # Once the exact catalog record supplies its own requested body,
+            # it is the primary parser input.  Recording it as such makes a
+            # later retained-only run converge to the same strongest source
+            # without depending on the rejected OneSection response.
+            variant_reports[report_index] = self._missouri_operative_report(
+                variant_reports[report_index],
+                parser_payload=recovery_payload,
+                parser_input_source_url=frontier_url,
+                frontier_payload=recovery_payload,
+            )
+            parsed_rows[row_index] = parsed
+
+        page_select_recovery_urls = [
+            str(mismatch[0][1][4]) for mismatch in one_section_identity_mismatches
+        ]
+        if len(page_select_recovery_urls) != len(set(page_select_recovery_urls)):
+            raise RuntimeError(
+                "Missouri OneSection identity recovery repeated a PageSelect URL"
+            )
+        page_select_recovery_residuals: List[tuple[Any, ...]] = []
+        for mismatch in one_section_identity_mismatches:
+            frontier_url = str(mismatch[0][1][4])
+            retained_recovery = retained_page_select.get(frontier_url)
+            if retained_recovery is None:
+                page_select_recovery_residuals.append(mismatch)
+                continue
+            _admit_page_select_identity_recovery(mismatch, retained_recovery[0])
+
+        residual_page_select_recovery_urls = [
+            str(mismatch[0][1][4]) for mismatch in page_select_recovery_residuals
+        ]
+        page_select_recovery_batch_stats: Dict[str, Any] = {}
+        if residual_page_select_recovery_urls:
+            recovery_batch = await self._fetch_missouri_frontier_batch(
+                residual_page_select_recovery_urls,
+                frontier_name="source-ordered-page-select-identity-recovery",
+            )
+            page_select_recovery_batch_stats = dict(recovery_batch.stats or {})
+            for mismatch, recovery_payload in zip(
+                page_select_recovery_residuals,
+                recovery_batch.payloads,
+                strict=True,
+            ):
+                _admit_page_select_identity_recovery(mismatch, recovery_payload)
 
         if any(parsed is None for parsed in parsed_rows):
             raise RuntimeError(
                 "Missouri section identity residual reconciliation was incomplete"
             )
         statutes.extend(parsed for parsed in parsed_rows if parsed is not None)
+
+        one_section_identity_mismatch_evidence = [
+            {
+                "body_identity": str(mismatch[2]),
+                "content_sha256": hashlib.sha256(mismatch[1]).hexdigest(),
+                "page_identity": str(mismatch[3]),
+                "page_select_recovery_url": str(mismatch[0][1][4]),
+                "source_url": str(mismatch[0][2]),
+            }
+            for mismatch in one_section_identity_mismatches
+        ]
+        one_section_identity_mismatch_sha256 = hashlib.sha256(
+            json.dumps(
+                one_section_identity_mismatch_evidence,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
 
         section_acquisition_plan = {
             "page_select_catalog_count": len(page_select_urls),
@@ -1253,6 +1427,35 @@ class MissouriScraper(BaseStateScraper):
             "residual_urls_unique": len(residual_urls) == len(set(residual_urls)),
             "source_ordered": True,
             "one_section_plural_wave_count": 1 if residual_urls else 0,
+            "one_section_identity_mismatch_count": len(
+                one_section_identity_mismatches
+            ),
+            "one_section_identity_mismatch_sha256": (
+                one_section_identity_mismatch_sha256
+            ),
+            "page_select_identity_recovery_count": len(
+                page_select_recovery_urls
+            ),
+            "retained_page_select_identity_recovery_count": (
+                len(page_select_recovery_urls)
+                - len(residual_page_select_recovery_urls)
+            ),
+            "residual_page_select_identity_recovery_count": len(
+                residual_page_select_recovery_urls
+            ),
+            "residual_page_select_identity_recovery_sha256": hashlib.sha256(
+                json.dumps(
+                    residual_page_select_recovery_urls,
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            ).hexdigest(),
+            "page_select_identity_recovery_plural_wave_count": (
+                1 if residual_page_select_recovery_urls else 0
+            ),
+            "page_select_identity_recovery_batch_stats": (
+                page_select_recovery_batch_stats
+            ),
             "per_page_archive_loop": False,
             "residual_batch_stats": residual_batch_stats,
         }
@@ -1702,6 +1905,25 @@ class MissouriScraper(BaseStateScraper):
                 ),
                 "one_section_plural_wave_count": int(
                     section_plan.get("one_section_plural_wave_count", 0) or 0
+                ),
+                "one_section_identity_mismatch_count": int(
+                    section_plan.get("one_section_identity_mismatch_count", 0)
+                    or 0
+                ),
+                "one_section_identity_mismatch_sha256": str(
+                    section_plan.get("one_section_identity_mismatch_sha256")
+                    or ""
+                ),
+                "page_select_identity_recovery_count": int(
+                    section_plan.get("page_select_identity_recovery_count", 0)
+                    or 0
+                ),
+                "page_select_identity_recovery_plural_wave_count": int(
+                    section_plan.get(
+                        "page_select_identity_recovery_plural_wave_count",
+                        0,
+                    )
+                    or 0
                 ),
                 "per_page_archive_loop": False,
                 "residual_only_retries": True,

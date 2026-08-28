@@ -177,6 +177,18 @@ def _page_select_identity_mismatch_html(
     )
 
 
+def _blocked_robot_html() -> bytes:
+    """Exact structural shape retained for the 2026-08-28 Revisor block."""
+
+    return (
+        b"<!DOCTYPE html><html><head><title>Missouri Revisor of Statutes</title>"
+        b"</head><body style='background-image:url(https://revisor.mo.gov/"
+        b"MOPics/robot.png)'><form method='post' action=\"./Block.aspx\">"
+        b"<h2>Blocked</h2><h3>WebMaster</h3><h3>@LR.mo.gov</h3>"
+        b"</form></body></html>"
+    )
+
+
 class _MissouriRetainedLedger:
     def __init__(self, pages: dict[str, bytes]) -> None:
         self.pages = dict(pages)
@@ -743,6 +755,7 @@ async def test_missouri_batches_reject_nofish_robot_throttle_before_retention(
         assert validator(
             b"<html><body>Are you double clicking links?</body></html>"
         ) is False
+        assert validator(_blocked_robot_html()) is False
         assert validator(b"<html><body>Official Missouri content</body></html>") is True
         return StateLawPageMultiFetchResult(
             urls=requested,
@@ -767,6 +780,42 @@ async def test_missouri_batches_reject_nofish_robot_throttle_before_retention(
 
     assert batch.payloads == [b"<html><body>Official Missouri content</body></html>"]
     assert len(observed_validators) == 1
+
+
+@pytest.mark.anyio
+async def test_missouri_page_select_recovery_validator_requires_aligned_identity(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    url = (
+        "https://revisor.mo.gov/main/"
+        "PageSelect.aspx?section=86.127&bid=4092&hl="
+    )
+    aligned = _page_select_identity_mismatch_html("86.127", "4092", "86.127")
+
+    async def _plural(self, requested, **kwargs):
+        requested = list(requested)
+        validator = kwargs["content_validator"]
+        assert validator(_blocked_robot_html()) is False
+        assert validator(
+            _page_select_identity_mismatch_html("86.127", "4092", "86.130")
+        ) is False
+        assert validator(aligned) is True
+        return _frontier_result(requested, [aligned])
+
+    monkeypatch.setattr(
+        MissouriScraper,
+        "_fetch_page_contents_with_archival_fallback_retrying_residuals",
+        _plural,
+    )
+    scraper = MissouriScraper("MO", "Missouri")
+
+    batch = await scraper._fetch_missouri_frontier_batch(
+        [url],
+        frontier_name="source-ordered-page-select-identity-recovery",
+    )
+
+    assert batch.urls == [url]
+    assert batch.payloads == [aligned]
 
 
 @pytest.mark.anyio
@@ -1375,6 +1424,251 @@ async def test_missouri_exact_page_shell_uses_batched_one_section_residual(
     assert rows[0].structured_data["source_identity_fallback_reason"] == (
         "official_page_select_body_unavailable"
     )
+
+
+@pytest.mark.anyio
+async def test_missouri_retained_block_page_fails_closed_without_recovery_fetch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    home_url = MissouriScraper.OFFICIAL_ENTRY_URL
+    chapter_url = "https://revisor.mo.gov/main/OneChapter.aspx?chapter=79"
+    fallback_url = "https://revisor.mo.gov/main/OneSection.aspx?section=79.180"
+    chapter_payload = _variant_chapter_html(
+        "79",
+        [("79.180", "4100", "Official current provision", "8/28/2025")],
+    )
+    batch_calls: list[tuple[str, list[str]]] = []
+
+    async def _single(self, url: str, timeout_seconds: int = 25) -> bytes:
+        assert url == home_url
+        return b"<a href='/main/OneChapter.aspx?chapter=79'>Chapter 79</a>"
+
+    async def _batch(
+        self,
+        urls,
+        *,
+        frontier_name: str,
+        allow_residuals: bool = False,
+    ):
+        requested = list(urls)
+        batch_calls.append((frontier_name, requested))
+        assert frontier_name == "chapter-index"
+        return _frontier_result(requested, [chapter_payload])
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(
+        MissouriScraper,
+        "_fetch_page_content_with_archival_fallback",
+        _single,
+    )
+    monkeypatch.setattr(MissouriScraper, "_fetch_missouri_frontier_batch", _batch)
+    monkeypatch.setattr(
+        MissouriScraper,
+        "_write_partial_checkpoint",
+        lambda *args, **kwargs: True,
+    )
+    scraper = MissouriScraper("MO", "Missouri")
+    scraper._state_law_acquisition_ledger = _MissouriRetainedLedger(
+        {fallback_url: _blocked_robot_html()}
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"OneSection\.aspx\?section=79\.180",
+    ):
+        await scraper._custom_scrape_missouri(
+            "Missouri Revised Statutes",
+            home_url,
+            "Mo. Rev. Stat.",
+            max_sections=None,
+        )
+
+    assert batch_calls == [("chapter-index", [chapter_url])]
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("section", "bid", "observed_body"),
+    [
+        ("86.127", "4092", "86.130"),
+        ("411.519", "23655", "411.511"),
+    ],
+)
+async def test_missouri_one_section_mismatch_recovers_exact_page_select(
+    monkeypatch: pytest.MonkeyPatch,
+    section: str,
+    bid: str,
+    observed_body: str,
+) -> None:
+    home_url = MissouriScraper.OFFICIAL_ENTRY_URL
+    chapter = section.split(".", 1)[0]
+    chapter_url = f"https://revisor.mo.gov/main/OneChapter.aspx?chapter={chapter}"
+    page_select_url = (
+        "https://revisor.mo.gov/main/"
+        f"PageSelect.aspx?section={section}&bid={bid}&hl="
+    )
+    fallback_url = (
+        "https://revisor.mo.gov/main/OneSection.aspx?section=" + section
+    )
+    chapter_payload = _variant_chapter_html(
+        chapter,
+        [(section, bid, "Official current provision", "8/28/2025")],
+    )
+    rejected_payload = _page_select_identity_mismatch_html(
+        section,
+        bid,
+        observed_body,
+    )
+    recovery_payload = _page_select_identity_mismatch_html(section, bid, section)
+    batch_calls: list[tuple[str, list[str]]] = []
+
+    async def _single(self, url: str, timeout_seconds: int = 25) -> bytes:
+        assert url == home_url
+        return (
+            f"<a href='/main/OneChapter.aspx?chapter={chapter}'>"
+            f"Chapter {chapter}</a>"
+        ).encode()
+
+    async def _batch(
+        self,
+        urls,
+        *,
+        frontier_name: str,
+        allow_residuals: bool = False,
+    ):
+        requested = list(urls)
+        batch_calls.append((frontier_name, requested))
+        if frontier_name == "chapter-index":
+            return _frontier_result(requested, [chapter_payload])
+        assert frontier_name == "source-ordered-page-select-identity-recovery"
+        assert requested == [page_select_url]
+        return _frontier_result(requested, [recovery_payload])
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(
+        MissouriScraper,
+        "_fetch_page_content_with_archival_fallback",
+        _single,
+    )
+    monkeypatch.setattr(MissouriScraper, "_fetch_missouri_frontier_batch", _batch)
+    monkeypatch.setattr(
+        MissouriScraper,
+        "_write_partial_checkpoint",
+        lambda *args, **kwargs: True,
+    )
+    scraper = MissouriScraper("MO", "Missouri")
+    scraper._state_law_acquisition_ledger = _MissouriRetainedLedger(
+        {fallback_url: rejected_payload}
+    )
+
+    rows = await scraper._custom_scrape_missouri(
+        "Missouri Revised Statutes",
+        home_url,
+        "Mo. Rev. Stat.",
+        max_sections=None,
+    )
+
+    assert batch_calls == [
+        ("chapter-index", [chapter_url]),
+        ("source-ordered-page-select-identity-recovery", [page_select_url]),
+    ]
+    assert [row.section_number for row in rows] == [section]
+    assert rows[0].source_url == page_select_url
+    assert rows[0].structured_data["source_frontier_record_url"] == page_select_url
+    assert rows[0].structured_data["source_identity_fallback_reason"] == ""
+    report = scraper._last_missouri_full_frontier["variant_reports"][0]
+    recovery_sha256 = hashlib.sha256(recovery_payload).hexdigest()
+    assert report["parser_input_source_url"] == page_select_url
+    assert report["source_identity_fallback_reason"] == ""
+    assert report["content_sha256"] == recovery_sha256
+    assert report["frontier_content_sha256"] == recovery_sha256
+    plan = scraper._last_missouri_section_acquisition_plan
+    assert plan["one_section_identity_mismatch_count"] == 1
+    assert plan["page_select_identity_recovery_count"] == 1
+    assert plan["retained_page_select_identity_recovery_count"] == 0
+    assert plan["residual_page_select_identity_recovery_count"] == 1
+    assert plan["page_select_identity_recovery_plural_wave_count"] == 1
+
+
+@pytest.mark.anyio
+async def test_missouri_page_select_recovery_binds_requested_catalog_identity(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    home_url = MissouriScraper.OFFICIAL_ENTRY_URL
+    section = "86.127"
+    chapter_url = "https://revisor.mo.gov/main/OneChapter.aspx?chapter=86"
+    page_select_url = (
+        "https://revisor.mo.gov/main/"
+        "PageSelect.aspx?section=86.127&bid=4092&hl="
+    )
+    fallback_url = "https://revisor.mo.gov/main/OneSection.aspx?section=86.127"
+    chapter_payload = _variant_chapter_html(
+        "86",
+        [(section, "4092", "Official current provision", "8/28/2025")],
+    )
+    rejected_payload = _page_select_identity_mismatch_html(
+        section,
+        "4092",
+        "86.130",
+    )
+    wrong_recovery_payload = _page_select_identity_mismatch_html(
+        "86.130",
+        "4092",
+        "86.130",
+    )
+
+    async def _single(self, url: str, timeout_seconds: int = 25) -> bytes:
+        assert url == home_url
+        return b"<a href='/main/OneChapter.aspx?chapter=86'>Chapter 86</a>"
+
+    async def _batch(
+        self,
+        urls,
+        *,
+        frontier_name: str,
+        allow_residuals: bool = False,
+    ):
+        requested = list(urls)
+        if frontier_name == "chapter-index":
+            assert requested == [chapter_url]
+            return _frontier_result(requested, [chapter_payload])
+        assert frontier_name == "source-ordered-page-select-identity-recovery"
+        assert requested == [page_select_url]
+        # This payload is internally aligned, so the transport validator can
+        # retain it.  The caller must still bind it to the catalog URL's exact
+        # requested section before parsing.
+        assert MissouriScraper._is_valid_missouri_identity_aligned_section_payload(
+            wrong_recovery_payload
+        )
+        return _frontier_result(requested, [wrong_recovery_payload])
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(
+        MissouriScraper,
+        "_fetch_page_content_with_archival_fallback",
+        _single,
+    )
+    monkeypatch.setattr(MissouriScraper, "_fetch_missouri_frontier_batch", _batch)
+    monkeypatch.setattr(
+        MissouriScraper,
+        "_write_partial_checkpoint",
+        lambda *args, **kwargs: True,
+    )
+    scraper = MissouriScraper("MO", "Missouri")
+    scraper._state_law_acquisition_ledger = _MissouriRetainedLedger(
+        {fallback_url: rejected_payload}
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"PageSelect recovery failed requested identity.*86\.127",
+    ):
+        await scraper._custom_scrape_missouri(
+            "Missouri Revised Statutes",
+            home_url,
+            "Mo. Rev. Stat.",
+            max_sections=None,
+        )
 
 
 @pytest.mark.anyio
