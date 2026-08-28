@@ -26,6 +26,7 @@ from ipfs_datasets_py.utils import anyio_compat
 from .base_scraper import (
     BaseStateScraper,
     NormalizedStatute,
+    StateLawPageMultiFetchResult,
     StatuteMetadata,
     current_partial_checkpoint_run_directory,
 )
@@ -109,6 +110,7 @@ class MississippiScraper(BaseStateScraper):
     OFFICIAL_DOMAIN = "www.legislature.ms.gov"
     OFFICIAL_ENTRY_PATH = "/legislation/"
     OFFICIAL_ENTRY_URL = "https://www.legislature.ms.gov/legislation/"
+    OFFICIAL_LEGISLATURE_ENTRY_URL = "https://www.legislature.ms.gov/"
     OFFICIAL_CODE_INDEX_URL = "https://www.legislature.ms.gov/legislation/ms-code/"
     OFFICIAL_HELP_URL = "https://www.legislature.ms.gov/help/"
     OFFICIAL_DELEGATED_ENTRY_URL = (
@@ -179,13 +181,28 @@ class MississippiScraper(BaseStateScraper):
         99: "Criminal Procedure",
     }
     last_mississippi_full_corpus_report: Dict[str, Any] = {}
+    ENFORCE_OBSERVED_MS_FRONTIER = True
 
     def state_law_frontier_source_dependencies(self) -> Sequence[Any]:
         """Bind both the delegated inventory and exact body parser."""
 
-        from . import mississippi_lexis, mississippi_section
+        from ...web_archiving import wayback_machine_engine
+        from . import (
+            base_scraper,
+            mississippi_lexis,
+            mississippi_section,
+            state_archival_fetch,
+            strict_frontier_closure,
+        )
 
-        return (mississippi_lexis, mississippi_section)
+        return (
+            base_scraper,
+            state_archival_fetch,
+            strict_frontier_closure,
+            mississippi_lexis,
+            mississippi_section,
+            wayback_machine_engine,
+        )
 
     async def scrape_all(
         self,
@@ -234,6 +251,302 @@ class MississippiScraper(BaseStateScraper):
                     ),
                 ),
             ),
+        )
+
+    @staticmethod
+    def _mississippi_lexis_concurrency() -> int:
+        """Keep all delegated-source requests under one global worker."""
+
+        return 1
+
+    def _mississippi_lexis_request_delay_seconds(self) -> float:
+        raw = self.state_law_run_environment_value(
+            "STATE_SCRAPER_MS_LEXIS_DIRECT_DELAY_SECONDS"
+        )
+        try:
+            value = float(raw) if raw else 0.25
+        except ValueError:
+            value = 0.25
+        return max(0.05, min(value, 5.0))
+
+    @staticmethod
+    def _mississippi_get_request(url: str) -> Dict[str, Any]:
+        return {
+            "headers": {
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5"
+            },
+            "method": "GET",
+            "url": str(url),
+        }
+
+    async def _fetch_mississippi_lexis_get_wave(
+        self,
+        urls: Sequence[str],
+        *,
+        frontier_name: str,
+        content_validator: Any,
+    ) -> StateLawPageMultiFetchResult:
+        """Acquire one ordered same-domain GET wave with bounded direct pacing."""
+
+        from .mississippi_lexis import grouped_get_acquisition_contract
+
+        requested = list(urls)
+        if not requested:
+            return StateLawPageMultiFetchResult([], [], [], [], [], {})
+        contract = grouped_get_acquisition_contract(requested)
+        domain = str(contract["source_domain"])
+        if domain == "advance.lexis.com":
+            url_terms = ("/documentpage/",)
+        elif domain == "www.legislature.ms.gov":
+            url_terms = ("/",)
+        elif domain == "www.lexisnexis.com":
+            url_terms = ("/hottopics/mscode/",)
+        else:
+            raise RuntimeError(
+                f"Mississippi {frontier_name} crossed an unbound source domain: {domain}"
+            )
+        headers = {
+            **dict(self._mississippi_get_request(requested[0])["headers"]),
+            "User-Agent": "ipfs-datasets-mississippi-lexis/3.0",
+        }
+        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+            requested,
+            residual_retry_attempts=self._mississippi_residual_retry_attempts(),
+            timeout_seconds=60,
+            headers=headers,
+            content_validator=content_validator,
+            media_type="text/html",
+            max_concurrency=self._mississippi_lexis_concurrency(),
+            prefer_direct=True,
+            direct_request_delay_seconds=(
+                self._mississippi_lexis_request_delay_seconds()
+            ),
+            common_crawl_domain_terms=(domain,),
+            common_crawl_url_terms=url_terms,
+            common_crawl_mime_terms=("html",),
+            wayback_prefix_inventory=True,
+        )
+        vectors = (
+            batch.urls,
+            batch.payloads,
+            batch.errors,
+            batch.transport_receipts,
+            batch.parser_input_envelopes,
+        )
+        if any(len(vector) != len(requested) for vector in vectors):
+            raise RuntimeError(
+                f"Mississippi {frontier_name} returned unaligned acquisition rows"
+            )
+        if list(batch.urls) != requested:
+            raise RuntimeError(
+                f"Mississippi {frontier_name} changed source URL order or identity"
+            )
+        failures = [
+            {"error": error or "invalid parser input", "url": url}
+            for url, payload, error in zip(
+                batch.urls,
+                batch.payloads,
+                batch.errors,
+                strict=True,
+            )
+            if error is not None or not content_validator(bytes(payload or b""))
+        ]
+        if failures:
+            raise RuntimeError(
+                f"Mississippi {frontier_name} is incomplete after residual-only "
+                f"plural retries: {failures[:10]} (total={len(failures)})"
+            )
+        if int((batch.stats or {}).get("common_crawl_inventory_queries", 0) or 0) > 1:
+            raise RuntimeError(
+                f"Mississippi {frontier_name} repeated a same-domain archive inventory"
+            )
+        batch.payloads = [bytes(payload) for payload in batch.payloads]
+        return batch
+
+    def _retain_mississippi_browser_input(
+        self,
+        *,
+        official_url: str,
+        body: bytes,
+        sanitized_request: Mapping[str, Any],
+        response_status: int,
+        media_type: str,
+        observed_at: str,
+    ) -> None:
+        """Retain a rendered GET or exact PATCH before live parsing touches it."""
+
+        from ipfs_datasets_py.processors.legal_data.state_laws_source_provenance import (
+            canonicalize_state_law_transport_receipt,
+        )
+        from .mississippi_lexis import PUBLIC_CONTAINER_URL, TOC_ENDPOINT_PATH
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError("Mississippi browser evidence requires an attached ledger")
+        if self._retained_replay_only_enabled():
+            self._raise_if_retained_replay_only_network(
+                operation="Mississippi browser acquisition",
+                url=official_url,
+            )
+        request = dict(sanitized_request)
+        method = str(request.get("method") or "").upper()
+        expected_patch_url = f"https://advance.lexis.com{TOC_ENDPOINT_PATH}"
+        if not (
+            (official_url == PUBLIC_CONTAINER_URL and method == "GET")
+            or (official_url == expected_patch_url and method == "PATCH")
+        ):
+            raise RuntimeError("Mississippi browser callback exposed an unbound request")
+        payload = bytes(body)
+        if not payload or int(response_status) != 200:
+            raise RuntimeError("Mississippi browser callback exposed an invalid response")
+        digest = hashlib.sha256(payload).hexdigest()
+        transport_receipt = canonicalize_state_law_transport_receipt(
+            {
+                "content_sha256": digest,
+                "official_url": official_url,
+                "source_transport": "browser_rendered",
+            },
+            official_url=official_url,
+            content_sha256=digest,
+        )
+        ledger.retain_parser_input(
+            official_url=official_url,
+            body=payload,
+            transport_receipt=transport_receipt,
+            retrieved_at=observed_at,
+            response_status=int(response_status),
+            media_type=media_type,
+            sanitized_request=request,
+            network_used=True,
+        )
+
+    @staticmethod
+    def _mississippi_envelope_receipt_sha256(envelope: Any) -> str:
+        value = envelope
+        if not isinstance(value, Mapping):
+            to_dict = getattr(value, "to_dict", None)
+            if callable(to_dict):
+                value = to_dict()
+        if isinstance(value, Mapping) and isinstance(
+            value.get("parser_input_envelope"), Mapping
+        ):
+            value = value["parser_input_envelope"]
+        if not isinstance(value, Mapping):
+            return ""
+        acquisition = value.get("acquisition")
+        receipt = acquisition.get("receipt") if isinstance(acquisition, Mapping) else None
+        return (
+            str(receipt.get("receipt_sha256") or "").strip()
+            if isinstance(receipt, Mapping)
+            else ""
+        )
+
+    @staticmethod
+    def _mississippi_observed_at_from_retained(retained: Any) -> str:
+        receipt = dict(getattr(retained, "transport_receipt", {}) or {})
+
+        def _find(value: Mapping[str, Any]) -> str:
+            for key in ("retrieved_at", "observed_at", "timestamp", "fetched_at"):
+                candidate = str(value.get(key) or "").strip()
+                if candidate:
+                    return candidate
+            origin = value.get("origin_transport_receipt")
+            return _find(origin) if isinstance(origin, Mapping) else ""
+
+        observed = _find(receipt)
+        if observed:
+            return observed
+        acquisition_receipt = getattr(retained, "receipt", None)
+        return str(getattr(acquisition_receipt, "retrieved_at", "") or "").strip()
+
+    def _record_mississippi_retained_input(
+        self,
+        *,
+        source_role: str,
+        official_url: str,
+        sanitized_request: Mapping[str, Any],
+        retained: Any,
+    ) -> bytes:
+        """Bind one exact retained request, body, receipt, and source position."""
+
+        from .mississippi_lexis import canonical_digest
+
+        body = bytes(getattr(retained.envelope, "body", b"") or b"")
+        transport_receipt = dict(
+            getattr(retained, "transport_receipt", {}) or {}
+        )
+        body_sha256 = hashlib.sha256(body).hexdigest()
+        parser_receipt_sha256 = self._mississippi_envelope_receipt_sha256(
+            retained.envelope
+        )
+        if (
+            not body
+            or str(transport_receipt.get("official_url") or "") != official_url
+            or str(transport_receipt.get("content_sha256") or "").lower()
+            != body_sha256
+            or not str(transport_receipt.get("source_transport") or "").strip()
+            or not re.fullmatch(r"[a-f0-9]{64}", parser_receipt_sha256)
+        ):
+            raise RuntimeError(
+                "Mississippi retained parser input omitted exact byte/transport "
+                f"evidence: {official_url}"
+            )
+        reports = list(getattr(self, "_mississippi_frontier_input_reports", []))
+        report = {
+            "content_sha256": body_sha256,
+            "parser_input_receipt_sha256": parser_receipt_sha256,
+            "request_identity_sha256": canonical_digest(dict(sanitized_request)),
+            "source_order": len(reports),
+            "source_role": str(source_role),
+            "source_transport": str(transport_receipt["source_transport"]),
+            "source_url": official_url,
+            "transport_receipt_sha256": canonical_digest(transport_receipt),
+        }
+        if any(
+            item.get("request_identity_sha256") == report["request_identity_sha256"]
+            for item in reports
+        ):
+            raise RuntimeError(
+                "Mississippi retained frontier repeated an exact request identity"
+            )
+        reports.append(report)
+        self._mississippi_frontier_input_reports = reports
+        if not getattr(self, "_mississippi_frontier_observed_at", ""):
+            self._mississippi_frontier_observed_at = (
+                self._mississippi_observed_at_from_retained(retained)
+            )
+        return body
+
+    def _replay_mississippi_retained_wave(
+        self,
+        requests: Sequence[tuple[str, Mapping[str, Any]]],
+        *,
+        frontier_name: str,
+        source_role: str,
+    ) -> tuple[bytes, ...]:
+        """Replay one complete ordered hierarchy/body wave with zero I/O."""
+
+        from .strict_frontier_closure import replay_exact_retained_state_records
+
+        requested = [(str(url), dict(request)) for url, request in requests]
+        retained_rows = replay_exact_retained_state_records(
+            self,
+            requests=requested,
+            frontier_name=f"Mississippi {frontier_name}",
+            refresh=False,
+        )
+        return tuple(
+            self._record_mississippi_retained_input(
+                source_role=source_role,
+                official_url=official_url,
+                sanitized_request=sanitized_request,
+                retained=retained,
+            )
+            for (official_url, sanitized_request), retained in zip(
+                requested,
+                retained_rows,
+                strict=True,
+            )
         )
 
     @staticmethod
@@ -459,6 +772,604 @@ class MississippiScraper(BaseStateScraper):
         if re.search(r"\bRESERVED\b", tail, re.IGNORECASE):
             return "reserved_title"
         return ""
+
+    async def _acquire_mississippi_lexis_frontier(
+        self,
+        *,
+        code_name: str,
+    ) -> List[NormalizedStatute]:
+        """Acquire five bounded waves, then parse only their retained replay."""
+
+        from .mississippi_lexis import (
+            EXPECTED_ROOT_NODE_IDS,
+            PUBLIC_CONTAINER_CONFIG,
+            PUBLIC_ENTRY_URL,
+            derive_exact_metadata_frontier,
+            discover_live_inventory,
+            document_page_url,
+            grouped_body_acquisition_contract,
+            legislature_delegation_present,
+            observed_metadata_drift,
+            publisher_container_delegation_present,
+            valid_authority_payload,
+            valid_document_payload,
+        )
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError("Mississippi live closure requires an attached ledger")
+        if self._retained_replay_only_enabled():
+            raise RuntimeError("Mississippi live acquisition cannot run in replay-only mode")
+
+        authority_batch = await self._fetch_mississippi_lexis_get_wave(
+            [self.OFFICIAL_LEGISLATURE_ENTRY_URL],
+            frontier_name="Legislature delegation",
+            content_validator=valid_authority_payload,
+        )
+        authority_html = self._decode_mississippi_code_html(
+            authority_batch.payloads[0]
+        )
+        if not legislature_delegation_present(authority_html):
+            raise RuntimeError(
+                "Mississippi Legislature page did not prove the exact Code delegation"
+            )
+
+        publisher_batch = await self._fetch_mississippi_lexis_get_wave(
+            [PUBLIC_ENTRY_URL],
+            frontier_name="publisher entry",
+            content_validator=valid_authority_payload,
+        )
+        publisher_payload = publisher_batch.payloads[0]
+        publisher_receipt = dict(publisher_batch.transport_receipts[0] or {})
+        if not (
+            publisher_container_delegation_present(
+                publisher_payload.decode("utf-8", errors="replace")
+            )
+            or PUBLIC_CONTAINER_CONFIG
+            in json.dumps(publisher_receipt, ensure_ascii=False, sort_keys=True)
+        ):
+            raise RuntimeError(
+                "Mississippi publisher entry did not prove the exact Lexis container"
+            )
+
+        raw_evidence_dir = self.state_law_run_environment_value(
+            "STATE_SCRAPER_MS_LEXIS_EVIDENCE_DIR"
+        )
+        inventory = await discover_live_inventory(
+            retries=max(
+                1,
+                min(
+                    5,
+                    self._env_int("MISSISSIPPI_LEXIS_PROBE_RETRIES", default=2),
+                ),
+            ),
+            request_delay_seconds=max(
+                0.05,
+                self._mississippi_lexis_request_delay_seconds(),
+            ),
+            timeout_ms=max(
+                15_000,
+                self._env_int(
+                    "MISSISSIPPI_LEXIS_PROBE_TIMEOUT_MS", default=60_000
+                ),
+            ),
+            require_enabled=False,
+            evidence_dir=raw_evidence_dir or None,
+            retain_parser_input=self._retain_mississippi_browser_input,
+        )
+        if inventory.status != "complete" or inventory.diagnostics:
+            raise RuntimeError(
+                "Mississippi rendered root/PATCH wave did not close: "
+                f"{list(inventory.diagnostics)}"
+            )
+        roots = list(inventory.roots)
+        subtrees = {
+            root.node_id: [
+                node
+                for node in inventory.nodes
+                if node.level > 1 and node.node_path.startswith(f"{root.node_path}/")
+            ]
+            for root in roots
+        }
+        if tuple(subtrees) != EXPECTED_ROOT_NODE_IDS:
+            raise RuntimeError("Mississippi live inventory changed PATCH response membership")
+        metadata = derive_exact_metadata_frontier(
+            roots,
+            subtrees_by_root_id=subtrees,
+        )
+        document_nodes = list(metadata.pop("document_nodes"))
+        drift = observed_metadata_drift(metadata)
+        if self.ENFORCE_OBSERVED_MS_FRONTIER and drift:
+            raise RuntimeError(
+                "Mississippi retained Lexis hierarchy drifted from the reviewed exact "
+                f"frontier: {drift}"
+            )
+        contract = grouped_body_acquisition_contract(document_nodes)
+        body_urls = [document_page_url(node) for node in document_nodes]
+        if body_urls != list(contract["request_urls"]):
+            raise RuntimeError("Mississippi body wave changed source-derived URL order")
+        await self._fetch_mississippi_lexis_get_wave(
+            body_urls,
+            frontier_name="source-ordered-current-bodies",
+            content_validator=valid_document_payload,
+        )
+        refresh = getattr(ledger, "refresh_existing_entries", None)
+        if callable(refresh):
+            refresh()
+        return await self._scrape_strict_mississippi_retained_frontier(
+            code_name=code_name
+        )
+
+    @staticmethod
+    def _mississippi_publisher_receipt_proves_container(
+        retained: Any,
+        payload: bytes,
+    ) -> bool:
+        from .mississippi_lexis import (
+            PUBLIC_CONTAINER_CONFIG,
+            publisher_container_delegation_present,
+        )
+
+        if publisher_container_delegation_present(
+            payload.decode("utf-8", errors="replace")
+        ):
+            return True
+        receipt = dict(getattr(retained, "transport_receipt", {}) or {})
+        return PUBLIC_CONTAINER_CONFIG in json.dumps(
+            receipt,
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+
+    async def _scrape_strict_mississippi_retained_frontier(
+        self,
+        *,
+        code_name: str,
+    ) -> List[NormalizedStatute]:
+        """Reconstruct the complete delegated Code from retained inputs only."""
+
+        from .mississippi_lexis import (
+            EXPECTED_ROOT_NODE_IDS,
+            PUBLIC_CONTAINER_URL,
+            PUBLIC_ENTRY_URL,
+            _bind_live_nodes,
+            canonical_digest,
+            canonical_rendered_root_request,
+            canonical_toc_patch_request,
+            derive_exact_metadata_frontier,
+            document_page_url,
+            legislature_delegation_present,
+            observed_metadata_drift,
+            parse_mississippi_lexis_document_html,
+            parse_root_html,
+            parse_title_subtree_payload,
+            reconcile_temporal_variants,
+            valid_document_payload,
+        )
+        from .strict_frontier_closure import replay_exact_retained_state_records
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError("Mississippi strict retained route requires an attached ledger")
+        refresh = getattr(ledger, "refresh_existing_entries", None)
+        if callable(refresh):
+            refresh()
+        self._mississippi_frontier_input_reports = []
+        self._mississippi_frontier_observed_at = ""
+
+        authority_url = self.OFFICIAL_LEGISLATURE_ENTRY_URL
+        authority_payload = self._replay_mississippi_retained_wave(
+            [(authority_url, self._mississippi_get_request(authority_url))],
+            frontier_name="Legislature delegation",
+            source_role="state_delegation",
+        )[0]
+        if not legislature_delegation_present(
+            self._decode_mississippi_code_html(authority_payload)
+        ):
+            raise RuntimeError(
+                "Mississippi retained Legislature page does not prove the Code delegation"
+            )
+
+        publisher_request = self._mississippi_get_request(PUBLIC_ENTRY_URL)
+        publisher_retained = replay_exact_retained_state_records(
+            self,
+            requests=[(PUBLIC_ENTRY_URL, publisher_request)],
+            frontier_name="Mississippi publisher entry",
+            refresh=False,
+        )[0]
+        publisher_payload = self._record_mississippi_retained_input(
+            source_role="publisher_entry",
+            official_url=PUBLIC_ENTRY_URL,
+            sanitized_request=publisher_request,
+            retained=publisher_retained,
+        )
+        if not self._mississippi_publisher_receipt_proves_container(
+            publisher_retained,
+            publisher_payload,
+        ):
+            raise RuntimeError(
+                "Mississippi retained publisher entry does not prove the Lexis container"
+            )
+
+        root_payload = self._replay_mississippi_retained_wave(
+            [(PUBLIC_CONTAINER_URL, canonical_rendered_root_request())],
+            frontier_name="rendered Lexis root",
+            source_role="rendered_container_root",
+        )[0]
+        observed_at = str(self._mississippi_frontier_observed_at or "")
+        roots = parse_root_html(self._decode_mississippi_code_html(root_payload))
+        bound_roots = _bind_live_nodes(
+            roots,
+            source_url=PUBLIC_CONTAINER_URL,
+            observed_at=observed_at,
+            receipt_sha256=hashlib.sha256(root_payload).hexdigest(),
+        )
+        if len(bound_roots) != len(roots):
+            raise RuntimeError("Mississippi retained rendered roots failed evidence binding")
+
+        patch_specs = [canonical_toc_patch_request(root) for root in bound_roots]
+        patch_payloads = self._replay_mississippi_retained_wave(
+            [
+                (endpoint, sanitized_request)
+                for endpoint, _request_body, sanitized_request in patch_specs
+            ],
+            frontier_name="51-root-open-to",
+            source_role="root_open_to_response",
+        )
+        subtrees: Dict[str, Sequence[Any]] = {}
+        subtree_manifest: List[Dict[str, Any]] = []
+        for parent, spec, payload in zip(
+            bound_roots,
+            patch_specs,
+            patch_payloads,
+            strict=True,
+        ):
+            _endpoint, request_body, _sanitized = spec
+            try:
+                response = json.loads(payload.decode("utf-8-sig", errors="strict"))
+            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                raise RuntimeError(
+                    f"Mississippi root {parent.node_id} retained TOC response is invalid JSON"
+                ) from exc
+            target_level = max(parent.open_to_levels)
+            descendants, closed_ids, error = parse_title_subtree_payload(
+                response,
+                parent=parent,
+                target_level=target_level,
+            )
+            if error:
+                raise RuntimeError(
+                    f"Mississippi root {parent.node_id} retained TOC did not close: {error}"
+                )
+            bound_descendants = _bind_live_nodes(
+                descendants,
+                source_url=PUBLIC_CONTAINER_URL,
+                observed_at=observed_at,
+                receipt_sha256=hashlib.sha256(payload).hexdigest(),
+            )
+            if len(bound_descendants) != len(descendants):
+                raise RuntimeError(
+                    f"Mississippi root {parent.node_id} descendants failed evidence binding"
+                )
+            subtrees[parent.node_id] = bound_descendants
+            subtree_manifest.append(
+                {
+                    "closed_expandable_node_count": len(closed_ids),
+                    "parent_node_id": parent.node_id,
+                    "request_body_sha256": hashlib.sha256(request_body).hexdigest(),
+                    "response_sha256": hashlib.sha256(payload).hexdigest(),
+                    "target_level": target_level,
+                }
+            )
+        if tuple(subtrees) != EXPECTED_ROOT_NODE_IDS:
+            raise RuntimeError("Mississippi retained PATCH wave changed source order")
+
+        metadata = derive_exact_metadata_frontier(
+            bound_roots,
+            subtrees_by_root_id=subtrees,
+        )
+        document_nodes = list(metadata.pop("document_nodes"))
+        drift = observed_metadata_drift(metadata)
+        if self.ENFORCE_OBSERVED_MS_FRONTIER and drift:
+            raise RuntimeError(
+                "Mississippi retained Lexis hierarchy drifted from the reviewed exact "
+                f"frontier: {drift}"
+            )
+
+        body_urls = [document_page_url(node) for node in document_nodes]
+        body_payloads = self._replay_mississippi_retained_wave(
+            [(url, self._mississippi_get_request(url)) for url in body_urls],
+            frontier_name="source-ordered-current-bodies",
+            source_role="statute_document_body",
+        )
+        rows: List[NormalizedStatute] = []
+        body_reports: List[Dict[str, Any]] = []
+        terminals: List[Dict[str, Any]] = []
+        parser_residuals: List[Dict[str, Any]] = []
+        body_input_offset = 3 + len(bound_roots)
+        for source_order, (node, url, payload) in enumerate(
+            zip(document_nodes, body_urls, body_payloads, strict=True)
+        ):
+            if not valid_document_payload(payload):
+                parser_residuals.append(
+                    {
+                        "content_item_id": node.node_id,
+                        "reason": "invalid_or_blocked_document_payload",
+                        "source_order": source_order,
+                        "source_url": url,
+                    }
+                )
+                continue
+            parsed_rows, report = parse_mississippi_lexis_document_html(
+                self._decode_mississippi_code_html(payload),
+                source_url=url,
+                node=node,
+                source_order=source_order,
+                code_name=code_name,
+            )
+            body_input_report = self._mississippi_frontier_input_reports[
+                body_input_offset + source_order
+            ]
+            proof = {
+                "parser_input_receipt_sha256": str(
+                    body_input_report["parser_input_receipt_sha256"]
+                ),
+                "source_content_sha256": str(body_input_report["content_sha256"]),
+                "source_request_identity_sha256": str(
+                    body_input_report["request_identity_sha256"]
+                ),
+                "source_transport": str(body_input_report["source_transport"]),
+                "transport_receipt_sha256": str(
+                    body_input_report["transport_receipt_sha256"]
+                ),
+            }
+            for row in parsed_rows:
+                row.structured_data.update(proof)
+            for terminal in report.get("terminal_dispositions") or []:
+                terminal.update(proof)
+            body_reports.append(report)
+            rows.extend(parsed_rows)
+            terminals.extend(report.get("terminal_dispositions") or [])
+            parser_residuals.extend(report.get("parser_residuals") or [])
+        if parser_residuals:
+            self.last_mississippi_full_corpus_report = {
+                **metadata,
+                "closed": False,
+                "disposition": "retained_body_parser_residuals",
+                "parser_residual_count": len(parser_residuals),
+                "parser_residuals": parser_residuals[:100],
+                "retained_replay_only": True,
+            }
+            raise RuntimeError(
+                "Mississippi retained body frontier has parser residuals: "
+                f"{parser_residuals[:10]} (total={len(parser_residuals)})"
+            )
+
+        rows, temporal_exclusions, temporal_residuals = reconcile_temporal_variants(
+            rows,
+            observed_at=observed_at,
+        )
+        if temporal_residuals:
+            self.last_mississippi_full_corpus_report = {
+                **metadata,
+                "closed": False,
+                "disposition": "source_bound_temporal_reconciliation_required",
+                "parser_residual_count": len(temporal_residuals),
+                "retained_replay_only": True,
+                "temporal_variant_residual_identity_count": len(
+                    temporal_residuals
+                ),
+                "temporal_variant_residual_locator_count": sum(
+                    int(item["candidate_count"]) for item in temporal_residuals
+                ),
+                "temporal_variant_residuals": temporal_residuals,
+            }
+            raise RuntimeError(
+                "Mississippi retained body frontier requires source-bound temporal "
+                f"reconciliation for {len(temporal_residuals)} repeated citations"
+            )
+
+        canonical_keys = [
+            str((row.structured_data or {}).get("canonical_section_key") or "")
+            for row in rows
+        ]
+        if any(not key for key in canonical_keys) or len(canonical_keys) != len(
+            set(canonical_keys)
+        ):
+            raise RuntimeError("Mississippi retained output identities are empty or duplicated")
+        if len(body_reports) != len(document_nodes) or any(
+            report.get("closed") is not True for report in body_reports
+        ):
+            raise RuntimeError("Mississippi retained body decision algebra is incomplete")
+
+        input_reports = list(self._mississippi_frontier_input_reports)
+        expected_inputs = 3 + len(bound_roots) + len(document_nodes)
+        if len(input_reports) != expected_inputs:
+            raise RuntimeError("Mississippi strict input report count is not exact")
+        excluded_count = (
+            int(metadata["catalog_exclusion_count"])
+            + len(terminals)
+            + len(temporal_exclusions)
+        )
+        disposition = {
+            "discovered": len(rows) + excluded_count,
+            "duplicates": 0,
+            "excluded": excluded_count,
+            "failed_final": 0,
+            "fetched": len(rows),
+            "quarantined": 0,
+        }
+        frontier: Dict[str, Any] = {
+            **metadata,
+            "algebra_closed": True,
+            "authority_catalog_input_count": 3 + len(bound_roots),
+            "body_input_count": len(document_nodes),
+            "body_parser_report_count": len(body_reports),
+            "catalog_exclusion_count": int(metadata["catalog_exclusion_count"]),
+            "closed": True,
+            "diagnostic_baseline_drift": drift,
+            "disposition": disposition,
+            "enumerator_closed": True,
+            "input_report_digest_sha256": canonical_digest(input_reports),
+            "method": "official_delegated_mississippi_lexis_retained_replay",
+            "network_requested_pages": 0,
+            "ordered_request_wave_counts": [
+                1,
+                1,
+                1,
+                len(bound_roots),
+                len(document_nodes),
+            ],
+            "parser_residual_count": 0,
+            "per_page_archive_inventory_loop": False,
+            "retained_replay_only": True,
+            "row_binding_digest_sha256": canonical_digest(
+                [
+                    [
+                        key,
+                        row.source_url,
+                        str((row.structured_data or {}).get("content_item_id") or ""),
+                        str(
+                            (row.structured_data or {}).get("source_content_sha256")
+                            or ""
+                        ),
+                    ]
+                    for key, row in zip(canonical_keys, rows, strict=True)
+                ]
+            ),
+            "scope_closed": True,
+            "source_input_count": len(input_reports),
+            "source_request_order_digest_sha256": canonical_digest(
+                [
+                    [
+                        item["source_order"],
+                        item["source_role"],
+                        item["source_url"],
+                        item["request_identity_sha256"],
+                    ]
+                    for item in input_reports
+                ]
+            ),
+            "source_order_preserved": True,
+            "source_parser_body_order_digest_sha256": canonical_digest(
+                [
+                    [
+                        item["source_order"],
+                        item["source_url"],
+                        item["content_sha256"],
+                    ]
+                    for item in input_reports
+                ]
+            ),
+            "subtree_manifest_sha256": canonical_digest(subtree_manifest),
+            "temporal_exclusion_count": len(temporal_exclusions),
+            "temporal_exclusion_digest_sha256": canonical_digest(
+                temporal_exclusions
+            ),
+            "terminal_binding_digest_sha256": canonical_digest(terminals),
+            "terminal_document_count": len(terminals),
+            "toc_patch_archive_substitution_allowed": False,
+            "unresolved_input_count": 0,
+        }
+        frontier["frontier_digest_sha256"] = canonical_digest(frontier)
+        observation = {
+            "boundary_first": body_urls[0] if body_urls else "",
+            "boundary_last": body_urls[-1] if body_urls else "",
+            "code_name": code_name,
+            "frontier": frontier,
+            "input_reports": input_reports,
+            "legal_as_of": observed_at[:10] if observed_at else "",
+            "observed_at": observed_at,
+        }
+        replaying = bool(getattr(self, "_mississippi_retained_replay", False))
+        if replaying:
+            self._last_mississippi_replayed_frontier = observation
+        else:
+            self._last_mississippi_full_frontier = observation
+        self.last_mississippi_full_corpus_report = dict(frontier)
+        return rows
+
+    async def produce_state_law_frontier_closure(
+        self,
+        *,
+        canonical_output_projection: Mapping[str, Any],
+    ) -> Optional[Path]:
+        """Repeat every exact Mississippi input by ordered ledger-only waves."""
+
+        first = getattr(self, "_last_mississippi_full_frontier", None)
+        if not isinstance(first, Mapping):
+            raise RuntimeError(
+                "Mississippi strict source frontier was not closed before output"
+            )
+        first_frontier = first.get("frontier")
+        first_reports = first.get("input_reports")
+        if not isinstance(first_frontier, Mapping) or not isinstance(
+            first_reports, Sequence
+        ):
+            raise RuntimeError(
+                "Mississippi first exact frontier observation is incomplete"
+            )
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError("Mississippi closure requires an attached ledger")
+        refresh = getattr(ledger, "refresh_existing_entries", None)
+        if callable(refresh):
+            refresh()
+
+        prior = bool(getattr(self, "_mississippi_retained_replay", False))
+        self._mississippi_retained_replay = True
+        try:
+            replay_rows = await self._scrape_strict_mississippi_retained_frontier(
+                code_name=str(first.get("code_name") or "Mississippi Code")
+            )
+        finally:
+            self._mississippi_retained_replay = prior
+        replay = getattr(self, "_last_mississippi_replayed_frontier", None)
+        if not isinstance(replay, Mapping):
+            raise RuntimeError("Mississippi retained replay observation is missing")
+        replayed_frontier = replay.get("frontier")
+        if (
+            not isinstance(replayed_frontier, Mapping)
+            or list(replay.get("input_reports") or []) != list(first_reports)
+        ):
+            raise RuntimeError(
+                "Mississippi retained request/body identities changed on replay"
+            )
+
+        from .strict_frontier_closure import retain_exact_state_frontier_closure
+
+        disposition = first_frontier.get("disposition")
+        if not isinstance(disposition, Mapping):
+            raise RuntimeError("Mississippi frontier lacks disposition algebra")
+        return retain_exact_state_frontier_closure(
+            self,
+            canonical_output_projection=canonical_output_projection,
+            first_frontier=first_frontier,
+            replayed_frontier=replayed_frontier,
+            replay_rows=replay_rows,
+            jurisdiction="MS",
+            source_domain="advance.lexis.com",
+            official_source_url=self.OFFICIAL_LEGISLATURE_ENTRY_URL,
+            observed_at=str(first.get("observed_at") or ""),
+            legal_as_of=str(first.get("legal_as_of") or ""),
+            boundary_first=str(first.get("boundary_first") or ""),
+            boundary_last=str(first.get("boundary_last") or ""),
+            bundle_total=int(disposition.get("discovered") or 0),
+            pagination_total=int(first_frontier.get("subtree_response_count") or 0),
+            transport={
+                "fixture": False,
+                "first_pass_requested_pages": int(
+                    first_frontier.get("source_input_count") or 0
+                ),
+                "get_acquisition_contract": "shared_archive_aware_plural_residual",
+                "grouped_warc_recovery": True,
+                "kind": "delegated_lexis_patch_ledger_plus_plural_get",
+                "per_page_archive_loop": False,
+                "retained_replay_network_requests": 0,
+                "synthetic": False,
+                "toc_patch_archive_substitution_allowed": False,
+            },
+        )
 
     async def _probe_delegated_mississippi_code(
         self,
@@ -722,11 +1633,34 @@ class MississippiScraper(BaseStateScraper):
         statute: NormalizedStatute,
     ) -> bool:
         structured = dict(statute.structured_data or {})
-        return (
-            structured.get("source_kind")
-            == "official_mississippi_code_section_html"
+        source_kind = str(structured.get("source_kind") or "")
+        if not (
+            source_kind
+            in {
+                "official_mississippi_code_section_html",
+                "official_delegated_mississippi_lexis_code",
+            }
             and structured.get("strict_source_closure") is True
             and bool(str(structured.get("canonical_section_key") or "").strip())
+        ):
+            return False
+        if source_kind == "official_mississippi_code_section_html":
+            return True
+        parsed = urlparse(str(statute.source_url or ""))
+        proof_fields = (
+            "source_content_sha256",
+            "source_request_identity_sha256",
+            "parser_input_receipt_sha256",
+            "transport_receipt_sha256",
+        )
+        return bool(
+            parsed.scheme == "https"
+            and (parsed.hostname or "").lower() == "advance.lexis.com"
+            and parsed.path == "/documentpage/"
+            and all(
+                re.fullmatch(r"[a-f0-9]{64}", str(structured.get(field) or ""))
+                for field in proof_fields
+            )
         )
 
     def get_base_url(self) -> str:
@@ -760,6 +1694,14 @@ class MississippiScraper(BaseStateScraper):
             if max_statutes is not None:
                 raise RuntimeError(
                     "Mississippi strict full-corpus route refuses a statute cap"
+                )
+            if getattr(self, "_state_law_acquisition_ledger", None) is not None:
+                if self._retained_replay_only_enabled():
+                    return await self._scrape_strict_mississippi_retained_frontier(
+                        code_name=code_name or "Mississippi Code"
+                    )
+                return await self._acquire_mississippi_lexis_frontier(
+                    code_name=code_name or "Mississippi Code"
                 )
             evidence = await self._probe_delegated_mississippi_code(
                 code_name=code_name,
