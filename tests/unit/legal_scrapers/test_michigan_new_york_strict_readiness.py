@@ -251,6 +251,101 @@ def test_michigan_xml_closure_types_terminals_and_constitution_identity() -> Non
     assert row.source_url.endswith("objectName=mcl-Article-I-1")
 
 
+def test_michigan_xml_closure_accepts_exact_official_child_namespace() -> None:
+    namespace = "http://localhost/MCLWebService/MCLSearchService"
+    xml = f"""
+    <MCLChapterInfo>
+      <Name xmlns="{namespace}">115</Name>
+      <Title xmlns="{namespace}">SUPREME COURT REPORTS</Title>
+      <MCLDocumentInfoCollection xmlns="{namespace}">
+        <MCLStatuteInfo><Name>Act 4 of 1911</Name>
+          <MCLDocumentInfoCollection>
+            <MCLSectionInfo><MCLNumber>115.1</MCLNumber>
+              <CatchLine>Official namespaced provision.</CatchLine>
+              <Repealed>false</Repealed>
+              <BodyText>&lt;P&gt;Current official Michigan statutory text remains operative.&lt;/P&gt;</BodyText>
+            </MCLSectionInfo>
+          </MCLDocumentInfoCollection>
+        </MCLStatuteInfo>
+      </MCLDocumentInfoCollection>
+    </MCLChapterInfo>
+    """
+
+    report = parse_michigan_chapter_xml_closure(xml, chapter_hint="115")
+
+    assert report.closed is True
+    assert report.source_section_count == 1
+    assert [row.section_number for row in report.statutes] == ["115.1"]
+    assert report.unclassified_sections == []
+
+
+def test_michigan_xml_closure_rejects_unreviewed_namespace() -> None:
+    xml = """
+    <MCLChapterInfo xmlns="https://example.invalid/unreviewed">
+      <Name>115</Name><Title>Not an official namespace</Title>
+    </MCLChapterInfo>
+    """
+
+    report = parse_michigan_chapter_xml_closure(xml, chapter_hint="115")
+
+    assert report.closed is False
+    assert report.unclassified_sections == [
+        {"reason": "unexpected_xml_namespace"}
+    ]
+
+
+def test_michigan_xml_closure_types_source_bound_nonoperative_sections() -> None:
+    xml = """
+    <MCLChapterInfo><Name>141</Name><Title>LOCAL GOVERNMENT</Title>
+      <MCLDocumentInfoCollection><MCLStatuteInfo><Name>Act 4 of 2011</Name>
+        <MCLDocumentInfoCollection>
+          <MCLSectionInfo><DocumentID>47735</DocumentID><Repealed>false</Repealed>
+            <EditorsNotes><EditorsNoteInfo><Text>
+              A petition seeking a referendum on Act 4 of 2011. No law shall
+              be effective thereafter unless approved by a majority. Act 4
+              was rejected by a majority of the electors. The vote was
+              certified by the state board of canvassers on November 26, 2012.
+              Act 72 of 1990, which had been repealed by Act 4 of 2011, came
+              back into effect.
+            </Text></EditorsNoteInfo></EditorsNotes>
+            <MCLNumber>141.1501</MCLNumber>
+            <CatchLine>Act 4 of 2011 was rejected by a majority of the electors at the November 2012 general election.</CatchLine>
+            <SectRef>141.1501-141.1531</SectRef><BodyText>`</BodyText>
+          </MCLSectionInfo>
+          <MCLSectionInfo><DocumentID>21397</DocumentID><Repealed>false</Repealed>
+            <EditorsNotes><EditorsNoteInfo><Text>
+              This section shall terminate when the committee is appointed or
+              2 years after the effective date of this part, whichever occurs
+              first. The date the renal disease subcommittee was appointed is
+              not determinable.
+            </Text></EditorsNoteInfo></EditorsNotes>
+            <MCLNumber>333.5429</MCLNumber>
+            <CatchLine>Terminated. 1978, Act 368, Eff. Sept. 30, 1980.</CatchLine>
+            <SectRef>333.5429</SectRef><BodyText />
+          </MCLSectionInfo>
+        </MCLDocumentInfoCollection>
+      </MCLStatuteInfo></MCLDocumentInfoCollection>
+    </MCLChapterInfo>
+    """
+
+    report = parse_michigan_chapter_xml_closure(xml, chapter_hint="141")
+
+    assert report.closed is True
+    assert report.statutes == []
+    assert [row["disposition"] for row in report.terminal_sections] == [
+        "rejected",
+        "terminated",
+    ]
+    assert report.unclassified_sections == []
+
+    drifted = parse_michigan_chapter_xml_closure(
+        xml.replace("November 26, 2012", "November 27, 2012", 1),
+        chapter_hint="141",
+    )
+    assert drifted.closed is False
+    assert drifted.unclassified_sections[0]["section_number"] == "141.1501"
+
+
 def test_michigan_xml_closure_rejects_terminal_flag_mismatch() -> None:
     xml = _mi_xml("750", "750.1").decode().replace(
         "Operative provision.", "Repealed. 2020, Act 1."
@@ -261,6 +356,30 @@ def test_michigan_xml_closure_rejects_terminal_flag_mismatch() -> None:
     assert report.unclassified_sections[0]["reason"] == (
         "terminal_disposition_flag_mismatch"
     )
+
+
+@pytest.mark.parametrize(
+    "catchline",
+    [
+        "Transferred mileage; worth per mile of county primary roads.",
+        "Reserved or forfeited lands; restoration to market.",
+        "Reserved power of revocation; effect on creditors.",
+        "Omitted children.",
+    ],
+)
+def test_michigan_xml_closure_keeps_operative_grammar(
+    catchline: str,
+) -> None:
+    xml = _mi_xml("247", "247.660a").decode().replace(
+        "Operative provision.", catchline
+    )
+
+    report = parse_michigan_chapter_xml_closure(xml, chapter_hint="247")
+
+    assert report.closed is True
+    assert [row.section_number for row in report.statutes] == ["247.660a"]
+    assert report.terminal_sections == []
+    assert report.unclassified_sections == []
 
 
 def test_michigan_xml_closure_types_sectionless_repealed_statute() -> None:
@@ -2220,17 +2339,15 @@ def test_michigan_catalog_rejects_ordered_membership_drift(
             "<Repealed >false</Repealed><EditorsNotes  />"
             "<Commentary  /><History  /><Name >26</Name>"
         ),
-        (
-            '<MCLChapterInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
-            'xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
-            + (
-                '<DocumentID xmlns="http://localhost/MCLWebService/'
-                'MCLSearchService">6229</DocumentID>'
-            )
-            + (" " * 4_100)
-            + (
-                '<Name xmlns="http://localhost/MCLWebService/'
-                'MCLSearchService">115</Name>'
+        "".join(
+            (
+                '<MCLChapterInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ',
+                'xmlns:xsd="http://www.w3.org/2001/XMLSchema">',
+                '<DocumentID xmlns="http://localhost/MCLWebService/',
+                'MCLSearchService">6229</DocumentID>',
+                " " * 4_100,
+                '<Name xmlns="http://localhost/MCLWebService/',
+                'MCLSearchService">115</Name>',
             )
         ),
     ],

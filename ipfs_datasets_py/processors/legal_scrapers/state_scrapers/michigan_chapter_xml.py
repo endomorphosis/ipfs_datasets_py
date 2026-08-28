@@ -21,6 +21,41 @@ from .base_scraper import (
 
 BASE = "https://www.legislature.mi.gov"
 _WS = re.compile(r"\s+")
+_OFFICIAL_MCL_XML_NAMESPACE = (
+    "http://localhost/MCLWebService/MCLSearchService"
+)
+_EXPANDED_XML_TAG_RE = re.compile(r"^\{(?P<namespace>[^{}]+)\}(?P<local>[^{}]+)$")
+_SOURCE_BOUND_NONOPERATIVE_SECTIONS = {
+    "141.1501": {
+        "document_id": "47735",
+        "catchline": (
+            "Act 4 of 2011 was rejected by a majority of the electors at the "
+            "November 2012 general election."
+        ),
+        "sect_ref": "141.1501-141.1531",
+        "body_text": "`",
+        "disposition": "rejected",
+        "editors_note_parts": (
+            "a petition seeking a referendum on Act 4 of 2011",
+            "shall be effective thereafter unless approved by a majority",
+            "was rejected by a majority of the electors",
+            "certified by the state board of canvassers on November 26, 2012",
+            "Act 72 of 1990, which had been repealed by Act 4 of 2011, came back into effect",
+        ),
+    },
+    "333.5429": {
+        "document_id": "21397",
+        "catchline": "Terminated. 1978, Act 368, Eff. Sept. 30, 1980.",
+        "sect_ref": "333.5429",
+        "body_text": "",
+        "disposition": "terminated",
+        "editors_note_parts": (
+            "This section shall terminate",
+            "or 2 years after the effective date of this part, whichever occurs first",
+            "The date the renal disease subcommittee was appointed is not determinable",
+        ),
+    },
+}
 
 
 @dataclass
@@ -91,11 +126,62 @@ def _markup_to_paragraphs(markup: str) -> List[str]:
 def _terminal_disposition(*, repealed: bool, catchline: str) -> str:
     normalized = _clean(catchline).strip(" .")
     for disposition in ("expired", "reserved", "renumbered", "transferred", "omitted"):
-        if re.match(rf"^{disposition}\b", normalized, re.IGNORECASE):
+        if re.match(
+            rf"^{disposition}(?:[.:-]|$|\s+(?:by|effective)\b)",
+            normalized,
+            re.IGNORECASE,
+        ):
             return disposition
     if repealed or re.match(r"^repealed\b", normalized, re.IGNORECASE):
         return "repealed"
     return ""
+
+
+def _localize_official_mcl_xml_tags(root: ET.Element) -> bool:
+    """Remove only the exact namespace emitted by two official chapters."""
+
+    for node in root.iter():
+        if not isinstance(node.tag, str):
+            return False
+        expanded = _EXPANDED_XML_TAG_RE.fullmatch(node.tag)
+        if expanded is None:
+            if "{" in node.tag or "}" in node.tag:
+                return False
+            continue
+        if expanded.group("namespace") != _OFFICIAL_MCL_XML_NAMESPACE:
+            return False
+        node.tag = expanded.group("local")
+    return True
+
+
+def _source_bound_nonoperative_disposition(
+    node: ET.Element,
+    *,
+    section_number: str,
+    catchline: str,
+    repealed_raw: str,
+) -> str:
+    """Classify the two exact nonoperative rows whose flag remains false."""
+
+    contract = _SOURCE_BOUND_NONOPERATIVE_SECTIONS.get(section_number.casefold())
+    if contract is None or repealed_raw != "false":
+        return ""
+    editors_node = node.find("EditorsNotes")
+    editors_text = _clean(
+        " ".join(editors_node.itertext()) if editors_node is not None else ""
+    )
+    if (
+        _clean(node.findtext("DocumentID") or "") != contract["document_id"]
+        or catchline != contract["catchline"]
+        or _clean(node.findtext("SectRef") or "") != contract["sect_ref"]
+        or str(node.findtext("BodyText") or "").strip() != contract["body_text"]
+        or any(
+            part.casefold() not in editors_text.casefold()
+            for part in contract["editors_note_parts"]
+        )
+    ):
+        return ""
+    return str(contract["disposition"])
 
 
 def parse_michigan_chapter_xml_closure(
@@ -126,6 +212,11 @@ def parse_michigan_chapter_xml_closure(
     except (ET.ParseError, ValueError, UnicodeError) as exc:
         report.unclassified_sections.append(
             {"reason": "xml_parse_error", "detail": str(exc)[:300]}
+        )
+        return report
+    if not _localize_official_mcl_xml_tags(root):
+        report.unclassified_sections.append(
+            {"reason": "unexpected_xml_namespace"}
         )
         return report
     chapter_name = _clean(root.findtext("Name") or "") or str(chapter_hint)
@@ -229,6 +320,22 @@ def parse_michigan_chapter_xml_closure(
                             "section_number": number,
                             "catchline": catchline,
                             "reason": "missing_or_invalid_repealed_flag",
+                        }
+                    )
+                    continue
+                source_bound_disposition = _source_bound_nonoperative_disposition(
+                    child,
+                    section_number=number,
+                    catchline=catchline,
+                    repealed_raw=repealed_raw,
+                )
+                if source_bound_disposition:
+                    report.terminal_sections.append(
+                        {
+                            "section_number": number,
+                            "catchline": catchline,
+                            "disposition": source_bound_disposition,
+                            "source_url": section_url(number),
                         }
                     )
                     continue
