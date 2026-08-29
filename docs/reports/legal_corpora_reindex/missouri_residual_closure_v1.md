@@ -14,6 +14,150 @@ admitted path. Hub mutation, a static residual list, a per-page archive
 loop, wholesale v4 seeding, and an inferred § 70.655 locator are not
 admitted.
 
+## Paced acquisition postmortem (2026-08-29)
+
+The paced direct acquisition completed its exact transport frontier but failed
+closed before normalization. The preserved generations are:
+
+- evidence:
+  `/home/barberb/.ipfs_datasets/state_laws/legal-corpora-reindex-20260828-mo-paced-evidence-14YnHy`;
+- failed output:
+  `/home/barberb/.ipfs_datasets/state_laws/legal-corpora-reindex-20260828-mo-paced-output-SUThd0`;
+- direct-only seed source:
+  `/home/barberb/.ipfs_datasets/state_laws/legal-corpora-reindex-20260828-mo-evidence-GjIIlI`;
+- seed migration receipt:
+  `fa72ed18136c4f3b771aa97cccdb312e219e91548bfcd43e7333e5bb0a4e9932`;
+- 4,983-input seed projection:
+  `d745cf3f1d27f37fcc82f00b3a3323463f4efc64070da66c976ecd286a5635b9`.
+
+That seed used hardlinks, copied zero bodies, and performed zero network I/O.
+The live runtime was
+`MissouriScraper@sha256:ecd6eb8b362309b313dbc16b3035f392ba7930541dbb0323ac60ce35fdc2a801`.
+The runner identity was
+`refresh_state_laws_corpus@sha256:91ba1bb60d363033bf28784d3f49e9f27d9cd381f42324f2be323029e2571260`.
+Both identities remained equal from start to finish.
+
+### Exact acquisition algebra
+
+The retained catalogs still derive 30,170 operative identities. The 4,983-input
+seed contains 3,584 current `PageSelect` inputs and 926 source-reachable
+`OneSection` fallbacks. Therefore the live difference is exactly 25,660
+source-ordered `OneSection` URLs:
+
+```text
+30,170 operative identities
+- 3,584 retained current PageSelect inputs
+-   926 retained current OneSection inputs
+= 25,660 live OneSection residuals
+```
+
+The compact-JSON ordered residual SHA-256 is
+`8af665b9df4130d3f1554bb347140e5960ef5ea783b5263484423429249953e2`.
+The final evidence ledger has exactly 30,643 unique direct receipts and 30,643
+fixity-valid unique objects:
+
+```text
+30,643 = 1 Home + 468 chapters + 3,584 PageSelect + 26,590 OneSection
+```
+
+The primary residual wave left 97 transport misses. One direct-only residual
+retry recovered all 97; every recovered body now has the requested statutory
+identity. Their source-ordered URL SHA-256 is
+`b635af38434a8776321efcb23ae0c42d23f8df5e505e3300e93a6d727aef7f0c`.
+No archive body was retained.
+
+### Complete retained-body classification
+
+A zero-network scan of all 25,660 live residual bodies produced this exact
+algebra:
+
+```text
+25,660 = 25,409 requested-body matches
+       +    140 requested-page shells with blank or wrong statutory bodies
+       +    111 source-bound HTTP-200 Server-busy shells
+```
+
+All 25,660 receipt/body pairs pass SHA-256 fixity. The 140 requested-page
+shells comprise 94 blank bodies and 46 wrong-section bodies. Their ordered
+`OneSection` URL SHA-256 is
+`afd504524183754280d87dcdc5bce08af9c9f730b6da64d173cb73a2baa21dfe`;
+the corresponding exact catalog `PageSelect` locator SHA-256 is
+`d51b571f3037eb9c8bb40f64a469b60473a7ef2b5c19e8f20d2393df949c9fd6`.
+
+All 111 no-identity responses are one semantic source shape: a 1,292-byte
+ASP.NET form posting to `./Wait.aspx`, linking the Revisor home/logo, and
+publishing the visible text `Server busy! Please use browser back button and
+retry your request.` The normalized visible-text SHA-256 is
+`888de13904125c5c46f87a2ab415d4b5364f6bc4e981c68f162be56966054fe8`.
+Their ordered `OneSection` URL SHA-256 is
+`888751230e20482b9e83914123b498ef9d522267d78ab0db88b182d9ecdf2fda`;
+their corresponding exact catalog `PageSelect` locator SHA-256 is
+`40aed5e853a1ac5f716a430974e5d4a3c4a7ed49a077fae7b699ee93f561f542`.
+Neither preserved Missouri evidence generation retains any of those 111 exact
+`PageSelect` locators.
+
+The first hard failure is § 86.910. Its rejected `OneSection` receipt is
+`7577fb7a6d184442c174f6eff3e1537b2b21fea81ce184b3df09915b26880e6e`,
+and its Server-busy body is
+`be26f588406e998cf30e9e190857ebedad6e9959c75f6651e76a6c9d17225991`.
+The current catalog independently binds that identity to exact locator
+`PageSelect.aspx?section=86.910&bid=4279&hl=`.
+
+### Bounded retained-valid reseed and recovery
+
+No reseed or acquisition was launched by this audit. The exact next seed
+projection is nevertheless closed over 30,392 identity-aligned direct inputs:
+
+```text
+30,392 = 30,643 retained direct inputs
+       -    111 Server-busy OneSection shells
+       -    140 page-only/mismatched OneSection shells
+```
+
+Those 30,392 inputs have 30,392 unique content objects. In seeder order, their
+selected-projection SHA-256 is
+`285b26bbadedfd2d0f41ff8b9e2955f2944f7ef975e69c226625ead9bbf30f36`;
+their ordered included-URL SHA-256 is
+`d245cd23bd460d0c48cb166c04bb8bb2fe0c6925ee03caf0bbf3a1db58dadd91`.
+These are prospective zero-network seed identities, not a migration receipt or
+an authorizing closure.
+
+The remaining acquisition is bounded to two source-derived sets:
+
+1. reacquire the exact 111 `OneSection` URLs through the Missouri validator,
+   which now rejects the semantic `Wait.aspx` Server-busy shell before
+   retention; and
+2. acquire the exact 140 current catalog `PageSelect` locators for the
+   independently proven requested-page/body-mismatch set.
+
+The isolated patched producer identity for that plan is
+`MissouriScraper@sha256:8d0afd323923bd2029d87a74ba9297e3a5c8a3a4bdd463c1a9efce320bc10a69`.
+
+If both sets return requested identities, the resulting parser-input algebra
+is again exactly 30,643, but with the rejected inputs replaced:
+
+```text
+30,643 = 30,392 retained-valid seed
+       +    111 corrected OneSection inputs
+       +    140 exact PageSelect recovery inputs
+```
+
+Only then may a hard zero-network replay attempt normalization and a run seal.
+No corpus-scale acquisition, retained replay, materialization, or publication
+is authorized by this postmortem.
+
+### Failed output identity
+
+Run `768e2bdb181646fda670ae1e594d7f61` finished with status
+`failed_acquisition_run_finalization`, zero statutes, and one state error. Its
+run seal is `not_issued` and nonauthorizing. Preserved output hashes are:
+
+| Artifact | SHA-256 |
+|---|---|
+| `partial_checkpoints/STATE-MO-partial.json` | `8fedbd63a813ce209be2f63259c0d4d2c03c5abb70cbf6181e167fba1787f787` |
+| `state_laws_parquet_cid/state_laws_refresh_manifest.json` | `8ec328dc58213fd17855a7f3f2bd0afac4edc7611e769c71bb9015f4d13c18bc` |
+| `state_refresh_progress.json` | `146b456dba9b112617763d91fc7626f5e65de6fc3e969c84bbcd8e02716b6073` |
+
 ## Residual identity (exact)
 
 | Field | Value |

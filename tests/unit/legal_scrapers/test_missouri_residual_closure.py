@@ -70,6 +70,16 @@ PAGE_SELECT_70_655 = (
     "https://revisor.mo.gov/main/PageSelect.aspx?section=70.655&bid=57378&hl="
 )
 RESIDUAL_WAVE_NAME = "source-ordered-one-section-residuals"
+PACED_RESIDUAL_COUNT = 25660
+PACED_RESIDUAL_SHA256 = (
+    "8af665b9df4130d3f1554bb347140e5960ef5ea783b5263484423429249953e2"
+)
+RETAINED_VALID_SEED_COUNT = 30392
+RETAINED_VALID_SEED_SHA256 = (
+    "285b26bbadedfd2d0f41ff8b9e2955f2944f7ef975e69c226625ead9bbf30f36"
+)
+SERVER_BUSY_COUNT = 111
+PAGE_SELECT_RECOVERY_COUNT = 140
 
 
 def _receipt_sha256(url: str, content_sha256: str, retrieved_at: str) -> str:
@@ -300,6 +310,30 @@ def test_missouri_residual_closure_report_records_exact_onesection_residual() ->
     assert RESIDUAL_SHA256_PREFIX in report
     assert "26,587" in report
     assert report.count("https://revisor.mo.gov/main/OneSection.aspx?section=") < 12
+
+
+def test_missouri_report_records_paced_failure_and_bounded_recovery() -> None:
+    report = _report_text()
+    normalized = " ".join(report.split())
+
+    assert "Paced acquisition postmortem (2026-08-29)" in report
+    assert f"{PACED_RESIDUAL_COUNT:,}" in report
+    assert PACED_RESIDUAL_SHA256 in report
+    assert f"{RETAINED_VALID_SEED_COUNT:,}" in report
+    assert RETAINED_VALID_SEED_SHA256 in report
+    assert (
+        f"{SERVER_BUSY_COUNT} source-bound HTTP-200 Server-busy shells"
+        in normalized
+    )
+    assert (
+        f"{PAGE_SELECT_RECOVERY_COUNT} requested-page shells with blank or wrong "
+        "statutory bodies"
+    ) in normalized
+    assert "30,643 = 30,392 retained-valid seed" in normalized
+    assert "111 corrected OneSection inputs" in normalized
+    assert "140 exact PageSelect recovery inputs" in normalized
+    assert "run seal is `not_issued`" in normalized
+    assert "No reseed or acquisition was launched by this audit." in report
 
 
 def test_missouri_onesection_locator_is_exact_and_not_inferred() -> None:

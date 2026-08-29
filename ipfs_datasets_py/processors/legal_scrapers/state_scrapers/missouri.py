@@ -28,6 +28,13 @@ _SECONDARY_HOST_MARKERS = (
     "unicourt.github.io",
     "law.cornell.edu",
 )
+_MISSOURI_SERVER_BUSY_MESSAGE = (
+    b"please use browser back button and retry your request."
+)
+_MISSOURI_SERVER_BUSY_WAIT_FORM_RE = re.compile(
+    rb"<form\b[^>]{0,1024}\baction\s*=\s*[\"']?\./wait\.aspx"
+    rb"(?:[\"'\s>])",
+)
 
 
 class MissouriScraper(BaseStateScraper):
@@ -202,7 +209,7 @@ class MissouriScraper(BaseStateScraper):
 
     @staticmethod
     def _is_valid_missouri_frontier_payload(payload: bytes) -> bool:
-        """Reject the Revisor robot-throttle shell before it is retained."""
+        """Reject source-bound Revisor throttle shells before retention."""
 
         if not payload:
             return False
@@ -212,10 +219,28 @@ class MissouriScraper(BaseStateScraper):
             and b"/mopics/robot.png" in lowered
             and b">blocked</h2>" in lowered
         )
+        # The Revisor also returns HTTP 200 for an ASP.NET ``Wait.aspx``
+        # response whose visible body says that the server is busy.  Bind the
+        # rejection to that exact source UI, not merely to the prose: an
+        # operative statute may itself mention a busy server or retrying a
+        # request.  Attribute quoting, casing, and whitespace may vary, so the
+        # independent form, home-link, logo, and message markers are used as
+        # the semantic identity of the shell.
+        busy_wait_form = (
+            _MISSOURI_SERVER_BUSY_WAIT_FORM_RE.search(lowered) is not None
+        )
+        busy_wait_page = (
+            busy_wait_form
+            and b"/main/home.aspx" in lowered
+            and b"/mopics/revisorlogo.png" in lowered
+            and b"server busy!" in lowered
+            and _MISSOURI_SERVER_BUSY_MESSAGE in lowered
+        )
         return (
             b"nofish.aspx" not in lowered
             and b"are you double clicking links?" not in lowered
             and not blocked_robot_page
+            and not busy_wait_page
         )
 
     @classmethod

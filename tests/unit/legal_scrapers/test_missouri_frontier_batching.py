@@ -189,6 +189,19 @@ def _blocked_robot_html() -> bytes:
     )
 
 
+def _server_busy_wait_html(*, action: str = "./Wait.aspx") -> bytes:
+    """Source-bound semantic shape of the 2026-08-28 HTTP-200 wait page."""
+
+    return (
+        "<!DOCTYPE html><html><head><title>\n</title></head><body>"
+        f"<form method='post' action='{action}' id='form1'>"
+        "<a title='Revisor Home' href='/main/Home.aspx'>"
+        "<img src='https://revisor.mo.gov/MOPics/RevisorLogo.png' alt='home'>"
+        "</a><p>Server busy!&nbsp;&nbsp; Please use browser back button and "
+        "retry your request.</p></form></body></html>"
+    ).encode()
+
+
 class _MissouriRetainedLedger:
     def __init__(self, pages: dict[str, bytes]) -> None:
         self.pages = dict(pages)
@@ -757,7 +770,11 @@ async def test_missouri_batches_reject_nofish_robot_throttle_before_retention(
             b"<html><body>Are you double clicking links?</body></html>"
         ) is False
         assert validator(_blocked_robot_html()) is False
-        assert validator(b"<html><body>Official Missouri content</body></html>") is True
+        assert validator(_server_busy_wait_html()) is False
+        assert (
+            validator(b"<html><body>Official Missouri content</body></html>")
+            is True
+        )
         return StateLawPageMultiFetchResult(
             urls=requested,
             payloads=[b"<html><body>Official Missouri content</body></html>"],
@@ -781,6 +798,52 @@ async def test_missouri_batches_reject_nofish_robot_throttle_before_retention(
 
     assert batch.payloads == [b"<html><body>Official Missouri content</body></html>"]
     assert len(observed_validators) == 1
+
+
+@pytest.mark.parametrize(
+    ("payload", "expected"),
+    [
+        (_server_busy_wait_html(), False),
+        (_server_busy_wait_html(action="./WAIT.ASPX"), False),
+        (
+            _section_html("1.010").replace(
+                b"Official Missouri statutory text.",
+                (
+                    b"A server busy! notice shall ask a user to please use browser "
+                    b"back button and retry your request."
+                ),
+                1,
+            ),
+            True,
+        ),
+        (
+            _server_busy_wait_html().replace(
+                b"./Wait.aspx",
+                b"./OneSection.aspx?section=1.010",
+            ),
+            True,
+        ),
+        (
+            _server_busy_wait_html().replace(
+                b"/MOPics/RevisorLogo.png",
+                b"/MOPics/Other.png",
+            ),
+            True,
+        ),
+        (
+            _server_busy_wait_html().replace(
+                b"retry your request.",
+                b"review your request.",
+            ),
+            True,
+        ),
+    ],
+)
+def test_missouri_frontier_validator_rejects_only_source_bound_busy_shell(
+    payload: bytes,
+    expected: bool,
+) -> None:
+    assert MissouriScraper._is_valid_missouri_frontier_payload(payload) is expected
 
 
 @pytest.mark.anyio
