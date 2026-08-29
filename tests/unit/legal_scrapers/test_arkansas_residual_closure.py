@@ -68,7 +68,6 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.strict_frontier_c
     retain_exact_state_frontier_closure,
 )
 
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 REPORT_PATH = (
     REPO_ROOT
