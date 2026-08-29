@@ -1,0 +1,319 @@
+{
+  "access": "agent-readable",
+  "forbidden_content": [
+    "answer-bytes",
+    "evaluator-paths",
+    "gold-labels",
+    "hidden-test-bytes",
+    "sealed-evaluator-identities"
+  ],
+  "partition": "visible",
+  "schema": "ipfs-datasets.proof-context.typed-visible-partition@1",
+  "source_pin_id": "python-attrs-attrs-25.3.0",
+  "tasks": [
+    {
+      "agent_view": {
+        "base_commit": "3dca08ce5bbe673d7df25f44f3dda92505d1043d",
+        "base_tree": "2f143c350d12dc394f3320a2d4e259dda86874d7",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Repair the historical attrs alias regression at the exact pinned source state while preserving explicit aliases and public initializer behavior.",
+        "owned_paths": [
+          "src/attr/_make.py"
+        ],
+        "repository_class": "typed_structured",
+        "risk_class": "routine",
+        "routine_localized": true,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-agent-view@1",
+        "seed": 61001,
+        "source_pin_id": "python-attrs-attrs-25.3.0",
+        "task_id": "typed-historical-001",
+        "task_kind": "historical_replay",
+        "visible_projection_cid": "baguqeerau3r7vankgrb3ejfehsb64g2xqcwx55wpx37wynwyqe2t47u6mpja"
+      },
+      "agent_view_cid": "baguqeera7b367ykdzyhfkdj4wuvkz5ofoafftxpqx7ekxdsbhhwi3zacn6ta",
+      "projection": {
+        "files": [],
+        "materialization": "source-archive-required-unavailable-no-permit",
+        "projection_policy": "agent-visible-baseline-objective-owned-paths-and-public-tests-only",
+        "schema": "ipfs-datasets.proof-context.typed-agent-projection@1",
+        "source_pin_id": "python-attrs-attrs-25.3.0",
+        "task_id": "typed-historical-001"
+      },
+      "projection_cid": "baguqeerau3r7vankgrb3ejfehsb64g2xqcwx55wpx37wynwyqe2t47u6mpja",
+      "task_id": "typed-historical-001"
+    },
+    {
+      "agent_view": {
+        "base_commit": "3dca08ce5bbe673d7df25f44f3dda92505d1043d",
+        "base_tree": "2f143c350d12dc394f3320a2d4e259dda86874d7",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Make the frozen typed limits decoder reject boolean integers and non-string tag members without changing valid immutable results.",
+        "owned_paths": [
+          "src/typed_fixture/config.py"
+        ],
+        "repository_class": "typed_structured",
+        "risk_class": "routine",
+        "routine_localized": true,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-agent-view@1",
+        "seed": 61002,
+        "source_pin_id": "python-attrs-attrs-25.3.0",
+        "task_id": "typed-synthetic-001",
+        "task_kind": "controlled_synthetic",
+        "visible_projection_cid": "baguqeeragxaip3eqp722irikvq25a6bmgnncsxhru4rb3fcyqwzzeqk4damq"
+      },
+      "agent_view_cid": "baguqeeraedq7kh7yjprqqlmooh2m62bv35qq2kpf6fc63pnemi4rjtjyowma",
+      "projection": {
+        "files": [
+          {
+            "bytes_cid": "bafkreigjc3uqr7tj2pmoncz36phna46hqz55bk4mdcflboyrc2bgjzzdhu",
+            "path": "src/typed_fixture/config.py",
+            "sha256": "c916e908fe69d3d8e68b3bf3ced073c7867bd0ab8c188ab0bb11168264e7233d",
+            "size": 546,
+            "utf8": "from __future__ import annotations\n\nfrom collections.abc import Mapping\nfrom dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Limits:\n    retries: int\n    tags: tuple[str, ...]\n\n\ndef parse_limits(payload: Mapping[str, object]) -> Limits:\n    retries = payload.get(\"retries\", 0)\n    if not isinstance(retries, int):\n        raise TypeError(\"retries must be an integer\")\n    tags = payload.get(\"tags\", ())\n    if not isinstance(tags, tuple):\n        raise TypeError(\"tags must be a tuple\")\n    return Limits(retries=retries, tags=tags)\n"
+          },
+          {
+            "bytes_cid": "bafkreih6wufq236yrr5x54lwucxvxw3eavljmvag7edt5w5uo5q7sn6mfm",
+            "path": "tests/test_config_public.py",
+            "sha256": "feb50b0d6fd88c7b7ef176a0af5bdb640556965406f9073edbb47761f937cc2b",
+            "size": 222,
+            "utf8": "from typed_fixture.config import Limits, parse_limits\n\n\ndef test_valid_limits_are_frozen() -> None:\n    assert parse_limits({\"retries\": 2, \"tags\": (\"ci\", \"typed\")}) == Limits(\n        retries=2, tags=(\"ci\", \"typed\")\n    )\n"
+          }
+        ],
+        "materialization": "locally-authored-standalone-synthetic",
+        "projection_policy": "agent-visible-baseline-objective-owned-paths-and-public-tests-only",
+        "schema": "ipfs-datasets.proof-context.typed-agent-projection@1",
+        "source_pin_id": "python-attrs-attrs-25.3.0",
+        "task_id": "typed-synthetic-001"
+      },
+      "projection_cid": "baguqeeragxaip3eqp722irikvq25a6bmgnncsxhru4rb3fcyqwzzeqk4damq",
+      "task_id": "typed-synthetic-001"
+    },
+    {
+      "agent_view": {
+        "base_commit": "3dca08ce5bbe673d7df25f44f3dda92505d1043d",
+        "base_tree": "2f143c350d12dc394f3320a2d4e259dda86874d7",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Reject omitted required typed fields deterministically and report every missing name without weakening ordered projection.",
+        "owned_paths": [
+          "src/typed_fixture/required.py"
+        ],
+        "repository_class": "typed_structured",
+        "risk_class": "assurance-critical",
+        "routine_localized": true,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-agent-view@1",
+        "seed": 61003,
+        "source_pin_id": "python-attrs-attrs-25.3.0",
+        "task_id": "typed-assurance-omission-001",
+        "task_kind": "assurance_mutation",
+        "visible_projection_cid": "baguqeerarpxcl4u3rmqoeeoafgtatbzd7fi5gbfgbupsq45wbmiitd55s6zq"
+      },
+      "agent_view_cid": "baguqeerad2uac5647r4zy6lfmjva3mil6f7juvpq5r4dwmf6ssw7pssmuyfa",
+      "projection": {
+        "files": [
+          {
+            "bytes_cid": "bafkreihgvtnz76illebzpfypyujdum5lgykuw5k74nlbr3kd37igkpnohu",
+            "path": "src/typed_fixture/required.py",
+            "sha256": "e6acdb9ff90b590397970fc5123a33ab36154b755fe35618ed43dfd0653dae3d",
+            "size": 248,
+            "utf8": "from __future__ import annotations\n\nfrom collections.abc import Mapping, Sequence\n\n\ndef require_fields(payload: Mapping[str, object], names: Sequence[str]) -> dict[str, object]:\n    return {name: payload[name] for name in names if name in payload}\n"
+          },
+          {
+            "bytes_cid": "bafkreicuwmrurrv5gdqlebiiocihbzvyufvatga2ztquve2tviwvtcgh5a",
+            "path": "tests/test_required_public.py",
+            "sha256": "54b32348c6bd30e0b20508709070e6b8a16a09981acce14a9353aa2d5988c7e8",
+            "size": 264,
+            "utf8": "from typed_fixture.required import require_fields\n\n\ndef test_present_fields_are_selected_in_request_order() -> None:\n    assert require_fields({\"port\": 443, \"host\": \"example.test\"}, (\"host\", \"port\")) == {\n        \"host\": \"example.test\",\n        \"port\": 443,\n    }\n"
+          }
+        ],
+        "materialization": "locally-authored-standalone-synthetic",
+        "projection_policy": "agent-visible-baseline-objective-owned-paths-and-public-tests-only",
+        "schema": "ipfs-datasets.proof-context.typed-agent-projection@1",
+        "source_pin_id": "python-attrs-attrs-25.3.0",
+        "task_id": "typed-assurance-omission-001"
+      },
+      "projection_cid": "baguqeerarpxcl4u3rmqoeeoafgtatbzd7fi5gbfgbupsq45wbmiitd55s6zq",
+      "task_id": "typed-assurance-omission-001"
+    },
+    {
+      "agent_view": {
+        "base_commit": "3dca08ce5bbe673d7df25f44f3dda92505d1043d",
+        "base_tree": "2f143c350d12dc394f3320a2d4e259dda86874d7",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Ensure an empty typed batch cannot pass validation by vacuous truth.",
+        "owned_paths": [
+          "src/typed_fixture/batch.py"
+        ],
+        "repository_class": "typed_structured",
+        "risk_class": "assurance-critical",
+        "routine_localized": true,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-agent-view@1",
+        "seed": 61004,
+        "source_pin_id": "python-attrs-attrs-25.3.0",
+        "task_id": "typed-assurance-vacuity-001",
+        "task_kind": "assurance_mutation",
+        "visible_projection_cid": "baguqeeralmadkcqnjffrtpo7n336kzpg7ueavcuwvr76ompulodhd3evivwa"
+      },
+      "agent_view_cid": "baguqeerahj6pguyc5b3ulupmv3dz3vvpomt6fhja7wylabammedcbqpmymbq",
+      "projection": {
+        "files": [
+          {
+            "bytes_cid": "bafkreicyjqsn7k2vbzd5aig5kfka477urc6s7z4sjkxq4bwjtogj2g5wky",
+            "path": "src/typed_fixture/batch.py",
+            "sha256": "584c24dfab550e47d020dd51540e7ff488bd2fe7924aaf0e06c99b8c9d1bb656",
+            "size": 325,
+            "utf8": "from __future__ import annotations\n\nfrom collections.abc import Mapping, Sequence\n\n\ndef valid_row(row: Mapping[str, object]) -> bool:\n    return type(row.get(\"id\")) is int and isinstance(row.get(\"label\"), str)\n\n\ndef validate_batch(rows: Sequence[Mapping[str, object]]) -> bool:\n    return all(valid_row(row) for row in rows)\n"
+          },
+          {
+            "bytes_cid": "bafkreiacz7dwn7owg7fd3t5x3hhebeumdlhntk4bky2ooegjti5htb6rty",
+            "path": "tests/test_batch_public.py",
+            "sha256": "02cfc766fdd637ca3dcfb7d9ce40928c1aced9ab815634e710c99a3a7987d19e",
+            "size": 163,
+            "utf8": "from typed_fixture.batch import validate_batch\n\n\ndef test_nonempty_typed_batch_is_valid() -> None:\n    assert validate_batch(({\"id\": 1, \"label\": \"one\"},)) is True\n"
+          }
+        ],
+        "materialization": "locally-authored-standalone-synthetic",
+        "projection_policy": "agent-visible-baseline-objective-owned-paths-and-public-tests-only",
+        "schema": "ipfs-datasets.proof-context.typed-agent-projection@1",
+        "source_pin_id": "python-attrs-attrs-25.3.0",
+        "task_id": "typed-assurance-vacuity-001"
+      },
+      "projection_cid": "baguqeeralmadkcqnjffrtpo7n336kzpg7ueavcuwvr76ompulodhd3evivwa",
+      "task_id": "typed-assurance-vacuity-001"
+    },
+    {
+      "agent_view": {
+        "base_commit": "3dca08ce5bbe673d7df25f44f3dda92505d1043d",
+        "base_tree": "2f143c350d12dc394f3320a2d4e259dda86874d7",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Render every typed report section deterministically while preserving the no-section result; expand context to the Report definition before editing.",
+        "owned_paths": [
+          "src/typed_fixture/render.py"
+        ],
+        "repository_class": "typed_structured",
+        "risk_class": "assurance-critical",
+        "routine_localized": false,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-agent-view@1",
+        "seed": 61005,
+        "source_pin_id": "python-attrs-attrs-25.3.0",
+        "task_id": "typed-assurance-context-expansion-001",
+        "task_kind": "assurance_mutation",
+        "visible_projection_cid": "baguqeera4suapyzgz2ym77gjydwdi3usjjmrzhpx6mmtlbtx4rsgtwkwwcaq"
+      },
+      "agent_view_cid": "baguqeerahmtn6lsmxgnreup3dvucgylosa5euuganqg7j2q4r7ogpai53e2q",
+      "projection": {
+        "files": [
+          {
+            "bytes_cid": "bafkreib2rd6zipy6sxnzefwhectg5jzbgzvxsndyebhkz52mj4oivovm7m",
+            "path": "src/typed_fixture/render.py",
+            "sha256": "3a88fd943f1e95db9216c720a66ea721366b793478204eacf74c4f1c8abaacfb",
+            "size": 143,
+            "utf8": "from __future__ import annotations\n\nfrom typed_fixture.model import Report\n\n\ndef render_report(report: Report) -> str:\n    return report.title\n"
+          },
+          {
+            "bytes_cid": "bafkreial5bwg5dha6baxfvsx6smhvadqhyspv3oahv2njs5qtbtex4sk5q",
+            "path": "src/typed_fixture/model.py",
+            "sha256": "0be86c6e8ce0f04172d657f4987a80703e24faedc03d74d4cbb098664bf24aec",
+            "size": 160,
+            "utf8": "from __future__ import annotations\n\nfrom dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Report:\n    title: str\n    sections: tuple[str, ...] = ()\n"
+          },
+          {
+            "bytes_cid": "bafkreid7djgabdyrogyo6hpelvs446xqfcxvvrycpbxxd4zwub3ekkosnu",
+            "path": "tests/test_render_public.py",
+            "sha256": "7f1a4c008f1171b0ef1de45d65ce7af028af5ac702786f71f336a0764529d26d",
+            "size": 205,
+            "utf8": "from typed_fixture.model import Report\nfrom typed_fixture.render import render_report\n\n\ndef test_report_without_sections_keeps_title() -> None:\n    assert render_report(Report(title=\"Status\")) == \"Status\"\n"
+          }
+        ],
+        "materialization": "locally-authored-standalone-synthetic",
+        "projection_policy": "agent-visible-baseline-objective-owned-paths-and-public-tests-only",
+        "schema": "ipfs-datasets.proof-context.typed-agent-projection@1",
+        "source_pin_id": "python-attrs-attrs-25.3.0",
+        "task_id": "typed-assurance-context-expansion-001"
+      },
+      "projection_cid": "baguqeera4suapyzgz2ym77gjydwdi3usjjmrzhpx6mmtlbtx4rsgtwkwwcaq",
+      "task_id": "typed-assurance-context-expansion-001"
+    },
+    {
+      "agent_view": {
+        "base_commit": "3dca08ce5bbe673d7df25f44f3dda92505d1043d",
+        "base_tree": "2f143c350d12dc394f3320a2d4e259dda86874d7",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Allow legacy deployment manifests with unknown keys when safe without changing strict callers.",
+        "owned_paths": [
+          "src/typed_fixture/policy.py"
+        ],
+        "repository_class": "typed_structured",
+        "risk_class": "human-review-required",
+        "routine_localized": false,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-agent-view@1",
+        "seed": 61006,
+        "source_pin_id": "python-attrs-attrs-25.3.0",
+        "task_id": "typed-negative-review-001",
+        "task_kind": "negative_human_review",
+        "visible_projection_cid": "baguqeeravu6yoeaop4ehywbwonsmcro5dyk3cmhgezfrbnul6qkgwq4wex6q"
+      },
+      "agent_view_cid": "baguqeera5xm7wdc3i7m4iuo37glpxdcp5jfhxkwedezlfhxfjqxtvkoxdeiq",
+      "projection": {
+        "files": [
+          {
+            "bytes_cid": "bafkreib5edvl5c3x2nnl2vjbv3v7efp4mw56bpvw34whc5sbkyija44yqi",
+            "path": "src/typed_fixture/policy.py",
+            "sha256": "3d20eabe8b77d35abd5521aeebf215fc65bbe0beb6df2c717641561090739882",
+            "size": 331,
+            "utf8": "from __future__ import annotations\n\nfrom collections.abc import Mapping\n\n\nKNOWN_KEYS = frozenset({\"environment\", \"replicas\"})\n\n\ndef validate_deployment(payload: Mapping[str, object]) -> None:\n    unknown = sorted(set(payload) - KNOWN_KEYS)\n    if unknown:\n        raise ValueError(f\"unknown deployment keys: {', '.join(unknown)}\")\n"
+          },
+          {
+            "bytes_cid": "bafkreibefzod2hzw57ohsasknmp3sndn6zj32vysreg3k32x5uejnmmhae",
+            "path": "tests/test_policy_public.py",
+            "sha256": "242e5c3d1f36efdc79024a6b1fb9346df653bd5712890db56f57ed0896b18701",
+            "size": 174,
+            "utf8": "from typed_fixture.policy import validate_deployment\n\n\ndef test_known_deployment_keys_are_admitted() -> None:\n    validate_deployment({\"environment\": \"test\", \"replicas\": 2})\n"
+          }
+        ],
+        "materialization": "locally-authored-standalone-synthetic",
+        "projection_policy": "agent-visible-baseline-objective-owned-paths-and-public-tests-only",
+        "schema": "ipfs-datasets.proof-context.typed-agent-projection@1",
+        "source_pin_id": "python-attrs-attrs-25.3.0",
+        "task_id": "typed-negative-review-001"
+      },
+      "projection_cid": "baguqeeravu6yoeaop4ehywbwonsmcro5dyk3cmhgezfrbnul6qkgwq4wex6q",
+      "task_id": "typed-negative-review-001"
+    }
+  ]
+}

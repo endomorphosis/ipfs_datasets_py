@@ -1,0 +1,186 @@
+{
+  "access_policy": {
+    "agent_mounts": [
+      "visible_manifest.json",
+      "LICENSE"
+    ],
+    "control_mounts": [
+      "shard_manifest.json"
+    ],
+    "evaluator_mounts_after_terminal_patch": [
+      "evaluator_manifest.json"
+    ],
+    "hardlinks": "denied",
+    "path_escape": "denied",
+    "symlinks": "denied"
+  },
+  "benchmark_id": "pcce-external-generalization-v0.1",
+  "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+  "freeze_task_id": "PCCE-060",
+  "identity_profile": "software-contract-cid-profile-v1",
+  "license": {
+    "bytes_cid": "bafkreigwwzpgyij2lufvo6ir2ngw4wkjxh2z25wchdcqogrph7awz6zgay",
+    "path": "LICENSE",
+    "sha256": "d6b65e6c213a5d0b577911d34d6e5949b9f59d76c238c5071a2f3fc16cfb2606",
+    "size": 1110,
+    "spdx": "MIT"
+  },
+  "license_materialization": {
+    "archive_used": false,
+    "hash_matches_frozen_pin": true,
+    "local_source": "installed-pluggy-1.6.0-distribution-license-metadata",
+    "network_used": false
+  },
+  "partitions": {
+    "evaluator": {
+      "bytes_cid": "bafkreidxhbzglpqoixmrqstylvnltyjlpemckn67eefp4ahbwla2do2kma",
+      "path": "evaluator_manifest.json",
+      "sha256": "77387265be0e45d9184a785d5ab9e12b79182537df210afe00e1b2c1a1bb4a60",
+      "size": 26737,
+      "structured_cid": "baguqeerarffevzai7vcy62whw4c7sqfcva4cmo6fgoqu5kfphaevwqgmwn6q"
+    },
+    "visible": {
+      "bytes_cid": "bafkreiejr2yqfmnqji4cuhof5nkc32mujiznvm2yplcmh2vvddg7mt2ou4",
+      "path": "visible_manifest.json",
+      "sha256": "898eb102b1b04a382a1dc5eb542de9944a32dab3587ac4c3eab518cdf64f4ea7",
+      "size": 21858,
+      "structured_cid": "baguqeerazqreg5447ubjrmrvdkzlmnz7fxcfxx2q2lnotcxzxt24g4plin2q"
+    }
+  },
+  "repository_class": "dynamic_plugins",
+  "schema": "ipfs-datasets.proof-context.dynamic-plugin-corpus-shard@1",
+  "shard_id": "dynamic-plugins-v0.1",
+  "source_materialization": {
+    "archive_present": false,
+    "archive_sha256": "d5f397694a7b520e09127a384369d94004acd8bef1810bcb184d0cf7567e506f",
+    "archive_size": 64481,
+    "fetch_permit": null,
+    "historical_answer_present": false,
+    "network_used": false,
+    "reason": "no-explicit-corpus-fetch-permit-and-no-exact-local-source-archive",
+    "state": "source_materialization_unavailable"
+  },
+  "source_pin": {
+    "archive": {
+      "sha256": "d5f397694a7b520e09127a384369d94004acd8bef1810bcb184d0cf7567e506f",
+      "size": 64481,
+      "url": "https://codeload.github.com/pytest-dev/pluggy/tar.gz/fd08ab5f811a9b2fa9124ae8cbbd393221151e2c"
+    },
+    "authority": "commit-tree-and-exact-archive-bytes",
+    "availability_probe": {
+      "archive_http_status": 200,
+      "commit_api": "exact-commit-and-tree-match",
+      "git_ls_remote": "exact-tag-and-resolved-commit-match",
+      "license_http_status": 200,
+      "observed_at": "2026-08-24T17:07:45Z",
+      "status": "available-observational-not-execution-authority"
+    },
+    "commit": "fd08ab5f811a9b2fa9124ae8cbbd393221151e2c",
+    "commit_time": "2025-05-15T08:14:23Z",
+    "display_tag": "1.6.0",
+    "inventory": {
+      "blob_count": 62,
+      "python_file_count": 29,
+      "python_test_file_count": 11
+    },
+    "license": {
+      "path": "LICENSE",
+      "sha256": "d6b65e6c213a5d0b577911d34d6e5949b9f59d76c238c5071a2f3fc16cfb2606",
+      "spdx": "MIT"
+    },
+    "origin": "https://github.com/pytest-dev/pluggy.git",
+    "pin_id": "pytest-dev-pluggy-1.6.0",
+    "repository": "pytest-dev/pluggy",
+    "repository_class": "dynamic_plugins",
+    "tag_kind": "lightweight",
+    "tag_object": null,
+    "tree": "d3aac17eab19c9e8f6f6358ad2dcaec02d734020"
+  },
+  "status": "frozen-partitions-with-historical-source-unavailable",
+  "task_count": 7,
+  "tasks": [
+    {
+      "agent_view_cid": "baguqeera2kinqksphdzzriu6k22y3bhjdrapbbouskimdjvytjpj6rnzuoma",
+      "answer_bytes_cid": null,
+      "case_class": "historical-source-unavailable",
+      "control_cid": "baguqeerakddkdbl3ffcgiambtm54cjlltnecsufwmwtgapw7uhkm6wfucrrq",
+      "evaluator_root_cid": "baguqeeraecdt6via2gj6rfhnkabiomufxlo2tvx64stplgnsspkojznkmxdq",
+      "expected_outcome_cid": "baguqeeradvzwta26lzy7gzbdadulrexg26juwuhlg53bb3wslya4qjenwnda",
+      "projection_cid": "baguqeerarcfdkcp23277d4mregppkhw5gnnqup6nav6mxoliwmzvysht7cda",
+      "task_id": "dynamic-historical-001",
+      "task_kind": "historical_replay"
+    },
+    {
+      "agent_view_cid": "baguqeeraavisralxmnlu3pln4coujdfeou4t6upy5hb67ffgpr4d7frvlhva",
+      "answer_bytes_cid": "bafkreiayofq4vo2uuwivoaueitv57o3h4qoxwm46xhkt5xft5z6rq54nwi",
+      "case_class": "controlled-synthetic-plugin-discovery",
+      "control_cid": "baguqeeraqjdz4xe5pkavnrdw4xsm6sdu4xjxtmc5evyiidbzkvgwa6it67ja",
+      "evaluator_root_cid": "baguqeerajoy73gl5opfb7g2kh3poy4a5viyvgyyeegc3lq4jwfbovueh74dq",
+      "expected_outcome_cid": "baguqeera6xklonvjbsg46dgnp5en2wmw3ae6w4cporvwzsyuctn7g52hvs7a",
+      "projection_cid": "baguqeera52xiwfxep6u23nwwl3cyn5budcuvytcxiiq5cd6isfrqtwyv4dqq",
+      "task_id": "dynamic-synthetic-plugin-discovery-001",
+      "task_kind": "controlled_synthetic"
+    },
+    {
+      "agent_view_cid": "baguqeerammf7vvwfd2iazh3up45fewks6jpunxaaeyn5fu3mamscd4js7r3a",
+      "answer_bytes_cid": "bafkreiaxmwwkn6kgyw66ro6esydpaxupukoolscnxnpzq4ncx5wfo6n55u",
+      "case_class": "opaque-dynamic-import-fallback",
+      "control_cid": "baguqeerau7seeneholoqcdxyzeqpxcnnvonlosg2tonh7j2glywxmn4ffaha",
+      "evaluator_root_cid": "baguqeerafrqi4uh4tbhcq5xd7ataknbpcixxoaginvd2pq2mnfraybqg7hla",
+      "expected_outcome_cid": "baguqeeraurjq7tus4zs7xk3nxohaaie56q6tnk4t52pwufdzjhoypxql3woa",
+      "projection_cid": "baguqeeranzbrguyelikdgrkuj4h7f5txaknw6v6kguvnsk3m35gvxstpkl4a",
+      "task_id": "dynamic-assurance-opaque-fallback-001",
+      "task_kind": "assurance_mutation"
+    },
+    {
+      "agent_view_cid": "baguqeeranvusfb47lzmlgt7b7sxnqjiauakc7p3jriy53p6fibbtfxkdvt2a",
+      "answer_bytes_cid": "bafkreibbo7c7g7krky7kkvqvmfmszxriw3fztj2jtsfjnndwjfi3wndjfe",
+      "case_class": "plugin-registration-omission",
+      "control_cid": "baguqeerad5moqfhgyse563osyj5inxatw4ufqhpndl26wz5vmvkh53zj4rbq",
+      "evaluator_root_cid": "baguqeerahao2dgvhvv26xpeyli575cq5ricfyq7c7tpms2vxvwnxk5m4pgjq",
+      "expected_outcome_cid": "baguqeerazgcl5v44y55lwdcpo2ocjfd42dkyx4iwj5m774kso5ug4yhnykga",
+      "projection_cid": "baguqeerak5gqaej2p2aoepggz4knyg3jxke3ck23qwlr4vzmdgmsp3oxbp2q",
+      "task_id": "dynamic-assurance-registration-omission-001",
+      "task_kind": "assurance_mutation"
+    },
+    {
+      "agent_view_cid": "baguqeeraihgvayibpur7afsgtosgq4lkbnz7k2c4tpuhwbiskaa7bhckebqa",
+      "answer_bytes_cid": "bafkreigeeajvtd4uh3m3bavsu3djlcnh7g4j6draejoj5ygo2apjjxwliu",
+      "case_class": "vacuity",
+      "control_cid": "baguqeerae3cjc35h44bui5jwm6sahwpwff6vkylan7mzqmrbp5pj2nkeuitq",
+      "evaluator_root_cid": "baguqeeraur63iynulaituwfgli5pcdznrpke73kq3vhjcsyk56bqnbfriuia",
+      "expected_outcome_cid": "baguqeerax6tcsxtyzo4zeo75glo5vnosbw4mkhta6stvt2oaw3gfezb4titq",
+      "projection_cid": "baguqeerand2kyci4xwaflkmato7pldxf4na4mk2brlwfqsn722gqdhvdzxwq",
+      "task_id": "dynamic-assurance-vacuity-001",
+      "task_kind": "assurance_mutation"
+    },
+    {
+      "agent_view_cid": "baguqeerafuqbz3lpp6fpuq5sl7q6aypymdi4hj4r43imtusqh3nxtyo7i6fa",
+      "answer_bytes_cid": "bafkreic7wfzjwuexojwd6iabogbvqsclzzbwea3weiulmciwqb3s5cljju",
+      "case_class": "context-expansion-conservative-impact",
+      "control_cid": "baguqeeratnlxvtfedh3g2t5ki4oqkxp6lwx56a52rcu2gkbfh7fnnz3jabpq",
+      "evaluator_root_cid": "baguqeerald35bigddosq2g7mt5q7urk34xfxjcytnzlhivfou664sddg6ira",
+      "expected_outcome_cid": "baguqeerarnqr74hkik5wmm4s2yvcnaplv6g4op5qvnftimyjuxjtvbipipfq",
+      "projection_cid": "baguqeerahu5subigyeqczeh2qmvuz2yolsymhnvjcabckq4ihoypnkiadg3a",
+      "task_id": "dynamic-assurance-context-expansion-001",
+      "task_kind": "assurance_mutation"
+    },
+    {
+      "agent_view_cid": "baguqeeraifvea4texgut4oxdrqlyxsg5hyto3ihaqd7vwmyh5p5vzqeh3tvq",
+      "answer_bytes_cid": null,
+      "case_class": "negative-human-review",
+      "control_cid": "baguqeera6qsx3zqfspvuzo6oggmigjidjjrgrgrcbwz2koksxtybcrukpipq",
+      "evaluator_root_cid": "baguqeerag4tcpczyhkfuhuhv3wdd7mrn62px2wddm7mfni6qcjo57mmtm7mq",
+      "expected_outcome_cid": "baguqeerankmsjjuetr34gmzlro7sq3ajosvidohanj3filowqyodekfobiuq",
+      "projection_cid": "baguqeera2fbg54dbwom7j6wx7s76r6kz76ntbzkmlnrykjgba6ggray6zvdq",
+      "task_id": "dynamic-negative-review-001",
+      "task_kind": "negative_human_review"
+    }
+  ],
+  "validation_state": {
+    "ground_truth_scope": "controlled-synthetic-and-policy-cases-only",
+    "live_execution_eligible": false,
+    "reason": "PCCE-056-no-go-and-historical-source-materialization-unavailable",
+    "synthetic_answers_locally_executable": true
+  }
+}

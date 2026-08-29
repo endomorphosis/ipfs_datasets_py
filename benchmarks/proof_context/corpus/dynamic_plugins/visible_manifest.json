@@ -1,0 +1,399 @@
+{
+  "access": "agent-readable",
+  "forbidden_content": [
+    "answer-bytes",
+    "evaluator-paths",
+    "gold-labels",
+    "hidden-test-bytes",
+    "sealed-evaluator-identities"
+  ],
+  "partition": "visible",
+  "schema": "ipfs-datasets.proof-context.dynamic-plugin-visible-partition@1",
+  "source_pin_id": "pytest-dev-pluggy-1.6.0",
+  "tasks": [
+    {
+      "agent_view": {
+        "base_commit": "fd08ab5f811a9b2fa9124ae8cbbd393221151e2c",
+        "base_tree": "d3aac17eab19c9e8f6f6358ad2dcaec02d734020",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Repair the historical Pluggy registration regression at the exact pinned source state without exposing future commits, hidden tests, or answer bytes.",
+        "owned_paths": [
+          "src/pluggy/_manager.py"
+        ],
+        "repository_class": "dynamic_plugins",
+        "risk_class": "routine",
+        "routine_localized": true,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-agent-view@1",
+        "seed": 62001,
+        "source_pin_id": "pytest-dev-pluggy-1.6.0",
+        "task_id": "dynamic-historical-001",
+        "task_kind": "historical_replay",
+        "visible_projection_cid": "baguqeerarcfdkcp23277d4mregppkhw5gnnqup6nav6mxoliwmzvysht7cda"
+      },
+      "agent_view_cid": "baguqeera2kinqksphdzzriu6k22y3bhjdrapbbouskimdjvytjpj6rnzuoma",
+      "projection": {
+        "files": [],
+        "materialization": "source-archive-required-unavailable-no-permit",
+        "projection_policy": "agent-visible-baseline-objective-owned-paths-and-public-tests-only",
+        "schema": "ipfs-datasets.proof-context.dynamic-plugin-agent-projection@1",
+        "source_pin_id": "pytest-dev-pluggy-1.6.0",
+        "task_id": "dynamic-historical-001"
+      },
+      "projection_cid": "baguqeerarcfdkcp23277d4mregppkhw5gnnqup6nav6mxoliwmzvysht7cda",
+      "task_id": "dynamic-historical-001"
+    },
+    {
+      "agent_view": {
+        "base_commit": "fd08ab5f811a9b2fa9124ae8cbbd393221151e2c",
+        "base_tree": "d3aac17eab19c9e8f6f6358ad2dcaec02d734020",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Load every declared plugin module exactly once and reject malformed modules that do not expose a callable registration hook.",
+        "owned_paths": [
+          "src/dynamic_fixture/registry.py"
+        ],
+        "repository_class": "dynamic_plugins",
+        "risk_class": "routine",
+        "routine_localized": true,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-agent-view@1",
+        "seed": 62002,
+        "source_pin_id": "pytest-dev-pluggy-1.6.0",
+        "task_id": "dynamic-synthetic-plugin-discovery-001",
+        "task_kind": "controlled_synthetic",
+        "visible_projection_cid": "baguqeera52xiwfxep6u23nwwl3cyn5budcuvytcxiiq5cd6isfrqtwyv4dqq"
+      },
+      "agent_view_cid": "baguqeeraavisralxmnlu3pln4coujdfeou4t6upy5hb67ffgpr4d7frvlhva",
+      "projection": {
+        "files": [
+          {
+            "bytes_cid": "bafkreids5j6onnni5cgxl6sadnmsbmct55abphehtsecgo4fefchkhtx7i",
+            "path": "src/dynamic_fixture/registry.py",
+            "sha256": "72ea7ce6b5a8e88d75fa401b5920b053ef40179c879c88233b852144751e77fa",
+            "size": 443,
+            "utf8": "from __future__ import annotations\n\nfrom collections.abc import Iterable\nfrom importlib import import_module\n\n\ndef load_plugins(module_names: Iterable[str]) -> tuple[str, ...]:\n    loaded: list[str] = []\n    for module_name in tuple(module_names)[:1]:\n        module = import_module(module_name)\n        register = getattr(module, \"register\", None)\n        if callable(register):\n            loaded.append(register())\n    return tuple(loaded)\n"
+          },
+          {
+            "bytes_cid": "bafkreid3agvz3mnenmw3i3c2pi5qohdx33563ppkgnjwovztvzfxnoqcae",
+            "path": "src/dynamic_fixture/plugins/alpha.py",
+            "sha256": "7b01ab9db1a46b2db46c5a7a3b071c77defbedbdea3353675733ae4b76ba0201",
+            "size": 42,
+            "utf8": "def register() -> str:\n    return \"alpha\"\n"
+          },
+          {
+            "bytes_cid": "bafkreiavi4twawxbun722ycqidcxtu7i7nqmdi42vlvruu37k72htmqike",
+            "path": "src/dynamic_fixture/plugins/beta.py",
+            "sha256": "154727605ae1a37fad605040c579d3e8fb60c1a39aaaeb1a537f57f479b20851",
+            "size": 41,
+            "utf8": "def register() -> str:\n    return \"beta\"\n"
+          },
+          {
+            "bytes_cid": "bafkreiglyh6chdfwvqkfbnzsfiobf4puugnp3gfftodybk7wozhduwtqzi",
+            "path": "src/dynamic_fixture/plugins/malformed.py",
+            "sha256": "cbc1fc238cb6ac1450b7322a1c12f1f4a19afd98a59b8780abf6764e3a5a70ca",
+            "size": 26,
+            "utf8": "register = \"not-callable\"\n"
+          },
+          {
+            "bytes_cid": "bafkreic24s4bvszy3v5qwg35q6nhhv65evwqooz5vo6anuwltculrkqyou",
+            "path": "tests/test_registry_public.py",
+            "sha256": "5ae4b81acb38dd7b0b1b7d879a73d7dd256d073b3dabbc06d2cb98a8b8aa1875",
+            "size": 172,
+            "utf8": "from dynamic_fixture.registry import load_plugins\n\n\ndef test_one_declared_plugin_loads() -> None:\n    assert load_plugins((\"dynamic_fixture.plugins.alpha\",)) == (\"alpha\",)\n"
+          }
+        ],
+        "materialization": "locally-authored-standalone-synthetic",
+        "projection_policy": "agent-visible-baseline-objective-owned-paths-and-public-tests-only",
+        "schema": "ipfs-datasets.proof-context.dynamic-plugin-agent-projection@1",
+        "source_pin_id": "pytest-dev-pluggy-1.6.0",
+        "task_id": "dynamic-synthetic-plugin-discovery-001"
+      },
+      "projection_cid": "baguqeera52xiwfxep6u23nwwl3cyn5budcuvytcxiiq5cd6isfrqtwyv4dqq",
+      "task_id": "dynamic-synthetic-plugin-discovery-001"
+    },
+    {
+      "agent_view": {
+        "base_commit": "fd08ab5f811a9b2fa9124ae8cbbd393221151e2c",
+        "base_tree": "d3aac17eab19c9e8f6f6358ad2dcaec02d734020",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Return conservative all-plugin impact when dynamic import targets cannot be resolved statically, while retaining exact impact for literal imports.",
+        "owned_paths": [
+          "src/dynamic_fixture/impact.py"
+        ],
+        "repository_class": "dynamic_plugins",
+        "risk_class": "assurance-critical",
+        "routine_localized": false,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-agent-view@1",
+        "seed": 62003,
+        "source_pin_id": "pytest-dev-pluggy-1.6.0",
+        "task_id": "dynamic-assurance-opaque-fallback-001",
+        "task_kind": "assurance_mutation",
+        "visible_projection_cid": "baguqeeranzbrguyelikdgrkuj4h7f5txaknw6v6kguvnsk3m35gvxstpkl4a"
+      },
+      "agent_view_cid": "baguqeerammf7vvwfd2iazh3up45fewks6jpunxaaeyn5fu3mamscd4js7r3a",
+      "projection": {
+        "files": [
+          {
+            "bytes_cid": "bafkreihus42yonmosjijifzgqbbtbfahtql6mrthvjdk5o5a2dkamdfmuy",
+            "path": "src/dynamic_fixture/impact.py",
+            "sha256": "f4973587358e925094172680433094079c17e64667aa46aebba0d0d4060caca6",
+            "size": 556,
+            "utf8": "from __future__ import annotations\n\nimport ast\nfrom collections.abc import Iterable\n\n\ndef impacted_plugins(source: str, known_plugins: Iterable[str]) -> tuple[str, ...]:\n    known = frozenset(known_plugins)\n    observed: set[str] = set()\n    for node in ast.walk(ast.parse(source)):\n        if isinstance(node, ast.Import):\n            observed.update(alias.name for alias in node.names if alias.name in known)\n        elif isinstance(node, ast.ImportFrom) and node.module in known:\n            observed.add(node.module)\n    return tuple(sorted(observed))\n"
+          },
+          {
+            "bytes_cid": "bafkreiazjwaguu54ligpndpqzbuk253aqi7o535oo4335zobyq55fxuqza",
+            "path": "tests/test_impact_public.py",
+            "sha256": "194d806a53bc5a0cf68df0c868ad7760823eeeefae7737bee5c1c43bd2de90c8",
+            "size": 231,
+            "utf8": "from dynamic_fixture.impact import impacted_plugins\n\n\ndef test_literal_import_has_exact_impact() -> None:\n    assert impacted_plugins(\n        \"import plugins.alpha\\n\", (\"plugins.alpha\", \"plugins.beta\")\n    ) == (\"plugins.alpha\",)\n"
+          }
+        ],
+        "materialization": "locally-authored-standalone-synthetic",
+        "projection_policy": "agent-visible-baseline-objective-owned-paths-and-public-tests-only",
+        "schema": "ipfs-datasets.proof-context.dynamic-plugin-agent-projection@1",
+        "source_pin_id": "pytest-dev-pluggy-1.6.0",
+        "task_id": "dynamic-assurance-opaque-fallback-001"
+      },
+      "projection_cid": "baguqeeranzbrguyelikdgrkuj4h7f5txaknw6v6kguvnsk3m35gvxstpkl4a",
+      "task_id": "dynamic-assurance-opaque-fallback-001"
+    },
+    {
+      "agent_view": {
+        "base_commit": "fd08ab5f811a9b2fa9124ae8cbbd393221151e2c",
+        "base_tree": "d3aac17eab19c9e8f6f6358ad2dcaec02d734020",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Preserve every callback registered for a hook instead of silently replacing an earlier plugin registration.",
+        "owned_paths": [
+          "src/dynamic_fixture/hooks.py"
+        ],
+        "repository_class": "dynamic_plugins",
+        "risk_class": "assurance-critical",
+        "routine_localized": true,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-agent-view@1",
+        "seed": 62004,
+        "source_pin_id": "pytest-dev-pluggy-1.6.0",
+        "task_id": "dynamic-assurance-registration-omission-001",
+        "task_kind": "assurance_mutation",
+        "visible_projection_cid": "baguqeerak5gqaej2p2aoepggz4knyg3jxke3ck23qwlr4vzmdgmsp3oxbp2q"
+      },
+      "agent_view_cid": "baguqeeranvusfb47lzmlgt7b7sxnqjiauakc7p3jriy53p6fibbtfxkdvt2a",
+      "projection": {
+        "files": [
+          {
+            "bytes_cid": "bafkreigqjluio764vkldhnrlaueuan7odmhi3sgrekcopmwaaeyxd5rgo4",
+            "path": "src/dynamic_fixture/hooks.py",
+            "sha256": "d04ae8877fdcaa9633b62b05094037ee1b0e8dc8d12284e7b2c0013171f62677",
+            "size": 534,
+            "utf8": "from __future__ import annotations\n\nfrom collections.abc import Callable, Iterable, Mapping\nfrom typing import Any\n\n\ndef build_registry(\n    plugins: Iterable[object],\n) -> dict[str, tuple[Callable[..., Any], ...]]:\n    registry: dict[str, list[Callable[..., Any]]] = {}\n    for plugin in plugins:\n        hooks: Mapping[str, Callable[..., Any]] = plugin.hooks()\n        for hook_name, callback in hooks.items():\n            registry[hook_name] = [callback]\n    return {name: tuple(callbacks) for name, callbacks in registry.items()}\n"
+          },
+          {
+            "bytes_cid": "bafkreigwakslfymmlm7l7utx57gzihm3hddarjwqompeudgzwh22wgdbha",
+            "path": "tests/test_hooks_public.py",
+            "sha256": "d602a4b2e18c5b3ebfd277efcd941d9b38c608a6d0731e4a0cd9b1f5ab186138",
+            "size": 309,
+            "utf8": "from dynamic_fixture.hooks import build_registry\n\n\nclass Alpha:\n    def hooks(self):\n        return {\"collect\": lambda: \"alpha\"}\n\n\ndef test_one_plugin_registration_is_preserved() -> None:\n    registry = build_registry((Alpha(),))\n    assert tuple(callback() for callback in registry[\"collect\"]) == (\"alpha\",)\n"
+          }
+        ],
+        "materialization": "locally-authored-standalone-synthetic",
+        "projection_policy": "agent-visible-baseline-objective-owned-paths-and-public-tests-only",
+        "schema": "ipfs-datasets.proof-context.dynamic-plugin-agent-projection@1",
+        "source_pin_id": "pytest-dev-pluggy-1.6.0",
+        "task_id": "dynamic-assurance-registration-omission-001"
+      },
+      "projection_cid": "baguqeerak5gqaej2p2aoepggz4knyg3jxke3ck23qwlr4vzmdgmsp3oxbp2q",
+      "task_id": "dynamic-assurance-registration-omission-001"
+    },
+    {
+      "agent_view": {
+        "base_commit": "fd08ab5f811a9b2fa9124ae8cbbd393221151e2c",
+        "base_tree": "d3aac17eab19c9e8f6f6358ad2dcaec02d734020",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Reject an empty expected-plugin set instead of reporting registry completeness by vacuous truth.",
+        "owned_paths": [
+          "src/dynamic_fixture/completeness.py"
+        ],
+        "repository_class": "dynamic_plugins",
+        "risk_class": "assurance-critical",
+        "routine_localized": true,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-agent-view@1",
+        "seed": 62005,
+        "source_pin_id": "pytest-dev-pluggy-1.6.0",
+        "task_id": "dynamic-assurance-vacuity-001",
+        "task_kind": "assurance_mutation",
+        "visible_projection_cid": "baguqeerand2kyci4xwaflkmato7pldxf4na4mk2brlwfqsn722gqdhvdzxwq"
+      },
+      "agent_view_cid": "baguqeeraihgvayibpur7afsgtosgq4lkbnz7k2c4tpuhwbiskaa7bhckebqa",
+      "projection": {
+        "files": [
+          {
+            "bytes_cid": "bafkreiecqruz4ggikygi2lm4dbogeifmdvc2fmjkmcnmdfzk3x2pnmgyte",
+            "path": "src/dynamic_fixture/completeness.py",
+            "sha256": "8284699e18c8560c8d2d9c185c6220ac1d45a2b12a609ac1972addf4f6b0d899",
+            "size": 261,
+            "utf8": "from __future__ import annotations\n\nfrom collections.abc import Collection\n\n\ndef registry_is_complete(\n    expected_plugins: Collection[str], registered_plugins: Collection[str]\n) -> bool:\n    return all(name in registered_plugins for name in expected_plugins)\n"
+          },
+          {
+            "bytes_cid": "bafkreieihlslnzkfcwx2zhtll6wcflsml7dga7kq5bv6bog4ajqket5rfi",
+            "path": "tests/test_completeness_public.py",
+            "sha256": "883ae4b6e54515afac9e6b5fac22ae4c5fc6607d50e86be0b8dc0260a24fb12a",
+            "size": 194,
+            "utf8": "from dynamic_fixture.completeness import registry_is_complete\n\n\ndef test_nonempty_complete_registry_is_admitted() -> None:\n    assert registry_is_complete((\"alpha\",), (\"alpha\", \"beta\")) is True\n"
+          }
+        ],
+        "materialization": "locally-authored-standalone-synthetic",
+        "projection_policy": "agent-visible-baseline-objective-owned-paths-and-public-tests-only",
+        "schema": "ipfs-datasets.proof-context.dynamic-plugin-agent-projection@1",
+        "source_pin_id": "pytest-dev-pluggy-1.6.0",
+        "task_id": "dynamic-assurance-vacuity-001"
+      },
+      "projection_cid": "baguqeerand2kyci4xwaflkmato7pldxf4na4mk2brlwfqsn722gqdhvdzxwq",
+      "task_id": "dynamic-assurance-vacuity-001"
+    },
+    {
+      "agent_view": {
+        "base_commit": "fd08ab5f811a9b2fa9124ae8cbbd393221151e2c",
+        "base_tree": "d3aac17eab19c9e8f6f6358ad2dcaec02d734020",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Include every contract-declared fallback module in admission scope; expand context to the immutable contract definition without editing it.",
+        "owned_paths": [
+          "src/dynamic_fixture/manager.py"
+        ],
+        "repository_class": "dynamic_plugins",
+        "risk_class": "assurance-critical",
+        "routine_localized": false,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-agent-view@1",
+        "seed": 62006,
+        "source_pin_id": "pytest-dev-pluggy-1.6.0",
+        "task_id": "dynamic-assurance-context-expansion-001",
+        "task_kind": "assurance_mutation",
+        "visible_projection_cid": "baguqeerahu5subigyeqczeh2qmvuz2yolsymhnvjcabckq4ihoypnkiadg3a"
+      },
+      "agent_view_cid": "baguqeerafuqbz3lpp6fpuq5sl7q6aypymdi4hj4r43imtusqh3nxtyo7i6fa",
+      "projection": {
+        "files": [
+          {
+            "bytes_cid": "bafkreibevn2gppiatnq2tsqb7fihpnkfa3jpayy3cwqew2wltj43h66ldm",
+            "path": "src/dynamic_fixture/contracts.py",
+            "sha256": "24ab7467bd009b61a9ca01f95077b54506d2f0631b15a04b6acb9a79b3fbcb1b",
+            "size": 181,
+            "utf8": "from __future__ import annotations\n\nfrom dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass PluginContract:\n    entrypoint: str\n    fallback_modules: tuple[str, ...] = ()\n"
+          },
+          {
+            "bytes_cid": "bafkreieleurlmfbh55uwtxu6x4sc7jla2dbjxjk4xkru3ukeivfgrio5ym",
+            "path": "src/dynamic_fixture/manager.py",
+            "sha256": "8b2522b61427ef6969de9ebf242fa560d0c29ba55cbaa34dd144454a68a1ddc3",
+            "size": 191,
+            "utf8": "from __future__ import annotations\n\nfrom dynamic_fixture.contracts import PluginContract\n\n\ndef admission_scope(contract: PluginContract) -> tuple[str, ...]:\n    return (contract.entrypoint,)\n"
+          },
+          {
+            "bytes_cid": "bafkreigllbajfozz6m4eypwu4x6czti7zkgsrdg6i36mutodw5wcmbiuci",
+            "path": "tests/test_manager_public.py",
+            "sha256": "cb584092bb39f3384c3ed4e5fc2ccd1fca8d288cde46fcca4dc3b76c26051412",
+            "size": 253,
+            "utf8": "from dynamic_fixture.contracts import PluginContract\nfrom dynamic_fixture.manager import admission_scope\n\n\ndef test_entrypoint_without_fallback_has_exact_scope() -> None:\n    assert admission_scope(PluginContract(\"plugins.alpha\")) == (\"plugins.alpha\",)\n"
+          }
+        ],
+        "materialization": "locally-authored-standalone-synthetic",
+        "projection_policy": "agent-visible-baseline-objective-owned-paths-and-public-tests-only",
+        "schema": "ipfs-datasets.proof-context.dynamic-plugin-agent-projection@1",
+        "source_pin_id": "pytest-dev-pluggy-1.6.0",
+        "task_id": "dynamic-assurance-context-expansion-001"
+      },
+      "projection_cid": "baguqeerahu5subigyeqczeh2qmvuz2yolsymhnvjcabckq4ihoypnkiadg3a",
+      "task_id": "dynamic-assurance-context-expansion-001"
+    },
+    {
+      "agent_view": {
+        "base_commit": "fd08ab5f811a9b2fa9124ae8cbbd393221151e2c",
+        "base_tree": "d3aac17eab19c9e8f6f6358ad2dcaec02d734020",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Permit any module named by an environment variable to load as a plugin without maintaining an allowlist.",
+        "owned_paths": [
+          "src/dynamic_fixture/loader.py"
+        ],
+        "repository_class": "dynamic_plugins",
+        "risk_class": "human-review-required",
+        "routine_localized": false,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-agent-view@1",
+        "seed": 62007,
+        "source_pin_id": "pytest-dev-pluggy-1.6.0",
+        "task_id": "dynamic-negative-review-001",
+        "task_kind": "negative_human_review",
+        "visible_projection_cid": "baguqeera2fbg54dbwom7j6wx7s76r6kz76ntbzkmlnrykjgba6ggray6zvdq"
+      },
+      "agent_view_cid": "baguqeeraifvea4texgut4oxdrqlyxsg5hyto3ihaqd7vwmyh5p5vzqeh3tvq",
+      "projection": {
+        "files": [
+          {
+            "bytes_cid": "bafkreiegfdvqvabl5f264kpbhkpiibsl5z24zkx7xeqf2wgzcbadjixlie",
+            "path": "src/dynamic_fixture/loader.py",
+            "sha256": "8628eb0a802be975ee29e13a9e84064bee75ccaaffb9205d58d9104034a2eb41",
+            "size": 382,
+            "utf8": "from __future__ import annotations\n\nfrom importlib import import_module\nfrom types import ModuleType\n\nALLOWED_PLUGINS = frozenset({\"dynamic_fixture.plugins.alpha\"})\n\n\ndef import_allowed_plugin(module_name: str) -> ModuleType:\n    if module_name not in ALLOWED_PLUGINS:\n        raise PermissionError(f\"plugin is not allowlisted: {module_name}\")\n    return import_module(module_name)\n"
+          },
+          {
+            "bytes_cid": "bafkreia5jzryq7vwvojy5nd4ophsmw6ixybgwqr2ez2i2wz3g7lpumubau",
+            "path": "src/dynamic_fixture/plugins/alpha.py",
+            "sha256": "1d4e63887eb6ab938eb47c73cf265bc8be026b423a26748d5b3b37d6fa328105",
+            "size": 20,
+            "utf8": "PLUGIN_ID = \"alpha\"\n"
+          },
+          {
+            "bytes_cid": "bafkreifq3bbkx63ui4owc4nrlscvtqzof45oovxc73jmxv2idz7ab7acye",
+            "path": "tests/test_loader_public.py",
+            "sha256": "b0d842abfb74471d6171b15c8559c32e2f3ae756e2fed2cbd7481e7e00fc02c1",
+            "size": 193,
+            "utf8": "from dynamic_fixture.loader import import_allowed_plugin\n\n\ndef test_allowlisted_plugin_imports() -> None:\n    assert import_allowed_plugin(\"dynamic_fixture.plugins.alpha\").PLUGIN_ID == \"alpha\"\n"
+          }
+        ],
+        "materialization": "locally-authored-standalone-synthetic",
+        "projection_policy": "agent-visible-baseline-objective-owned-paths-and-public-tests-only",
+        "schema": "ipfs-datasets.proof-context.dynamic-plugin-agent-projection@1",
+        "source_pin_id": "pytest-dev-pluggy-1.6.0",
+        "task_id": "dynamic-negative-review-001"
+      },
+      "projection_cid": "baguqeera2fbg54dbwom7j6wx7s76r6kz76ntbzkmlnrykjgba6ggray6zvdq",
+      "task_id": "dynamic-negative-review-001"
+    }
+  ]
+}
