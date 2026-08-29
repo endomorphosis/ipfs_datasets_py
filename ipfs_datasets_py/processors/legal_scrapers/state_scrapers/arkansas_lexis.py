@@ -27,6 +27,26 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlencode, urlparse
 
+from .arkansas_act373 import (
+    ACT373_AMENDMENT_INSTRUCTION_SHA256,
+    ACT373_CANDIDATE_CONTRACT,
+    ACT373_CURRENT_TEXT,
+    ACT373_CURRENT_TEXT_SHA256,
+    ACT373_DECISION_REASON,
+    ACT373_EFFECTIVE_DATE,
+    ACT373_EFFECTIVE_DATE_GEOMETRY_SHA256,
+    ACT373_GEOMETRY_SHA256,
+    ACT373_MARK_PROJECTION_SHA256,
+    ACT373_MARKUP_GEOMETRY_SHA256,
+    ACT373_PAGINATION_SHA256,
+    ACT373_SECTION_NUMBER,
+    ACT373_TEMPORAL_SOURCE_INPUT_CONTRACT,
+    ACT373_URL,
+    ArkansasAct373EnactedSection,
+    ArkansasAct373TemporalChain,
+    validate_act373_enacted_section,
+    validate_act373_temporal_chain,
+)
 from .base_scraper import current_state_law_run_environment_value
 
 ENABLE_ENV = "ARKANSAS_LEXIS_PUBLIC_ACCESS_ENABLE"
@@ -940,6 +960,28 @@ class ArkansasLexisVariantDecision:
 
 
 @dataclass(frozen=True)
+class ArkansasLexisEnactedBodyDecision:
+    """Current-body decision that deliberately selects no delegated URN."""
+
+    section_number: str
+    disposition: str
+    reason: str
+    candidate_node_ids: tuple[str, ...]
+    source_url: str
+    source_sha256: str
+    full_text_sha256: str
+    effective_date: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+ArkansasLexisCurrentDecision = (
+    ArkansasLexisVariantDecision | ArkansasLexisEnactedBodyDecision
+)
+
+
+@dataclass(frozen=True)
 class ArkansasLexisSourceBoundVariantResolution:
     """One immutable current-locator choice backed by retained official bytes."""
 
@@ -1029,6 +1071,120 @@ class ArkansasLexisRetainedOfficialInputIdentity:
     source_transport_receipt_sha256: str
     parser_input_receipt_sha256: str
     retrieved_at: str
+
+
+@dataclass(frozen=True)
+class ArkansasLexisAct373EnactedBodyResolution:
+    """Exact Act 373 body plus a complete post-enactment session chain."""
+
+    section_number: str
+    candidate_node_ids: tuple[str, ...]
+    proof_keys: tuple[str, ...]
+    proof_inputs: tuple[ArkansasLexisRetainedOfficialInputIdentity, ...]
+    enacted_section: ArkansasAct373EnactedSection
+    temporal_chain: ArkansasAct373TemporalChain
+    _evidence_capability: object | None = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+    )
+
+    @property
+    def decision_reason(self) -> str:
+        return ACT373_DECISION_REASON
+
+    @property
+    def evidence_verified(self) -> bool:
+        expected_keys = tuple(ACT373_TEMPORAL_SOURCE_INPUT_CONTRACT)
+        if self.proof_keys != expected_keys or len(self.proof_inputs) != len(
+            expected_keys
+        ):
+            return False
+        expected_candidates = tuple(
+            sorted(node_id for node_id, _link_href in ACT373_CANDIDATE_CONTRACT)
+        )
+        exact_inputs = []
+        for key, identity in zip(
+            self.proof_keys,
+            self.proof_inputs,
+            strict=True,
+        ):
+            expected = ACT373_TEMPORAL_SOURCE_INPUT_CONTRACT.get(key)
+            if expected is None:
+                return False
+            exact_inputs.append((key, identity, *expected))
+        try:
+            current_session_index = self.proof_keys.index("CURRENT_SESSION")
+            current_session_observed_at = datetime.fromisoformat(
+                self.proof_inputs[current_session_index].retrieved_at
+            )
+        except (ValueError, IndexError):
+            return False
+        section = self.enacted_section
+        chronology = self.temporal_chain
+        return bool(
+            self._evidence_capability is _SOURCE_BOUND_VARIANT_CAPABILITY
+            and self.section_number == ACT373_SECTION_NUMBER
+            and self.candidate_node_ids == expected_candidates
+            and section.section_number == ACT373_SECTION_NUMBER
+            and section.full_text == ACT373_CURRENT_TEXT
+            and section.full_text_sha256 == ACT373_CURRENT_TEXT_SHA256
+            and section.effective_date == ACT373_EFFECTIVE_DATE
+            and section.geometry_sha256 == ACT373_GEOMETRY_SHA256
+            and section.pagination_sha256 == ACT373_PAGINATION_SHA256
+            and section.amendment_instruction_sha256
+            == ACT373_AMENDMENT_INSTRUCTION_SHA256
+            and section.markup_geometry_sha256
+            == ACT373_MARKUP_GEOMETRY_SHA256
+            and section.effective_date_geometry_sha256
+            == ACT373_EFFECTIVE_DATE_GEOMETRY_SHA256
+            and section.mark_projection_sha256
+            == ACT373_MARK_PROJECTION_SHA256
+            and section.source_sha256 == ACT373_TEMPORAL_SOURCE_INPUT_CONTRACT[
+                "A373"
+            ][1]
+            and chronology.section_number == ACT373_SECTION_NUMBER
+            and chronology.act_number == 373
+            and chronology.measure == "SB307"
+            and chronology.emergency_clause
+            and not chronology.repealed
+            and not chronology.new_section
+            and not chronology.renumbered
+            and chronology.later_sessions
+            == ("2025/2026F", "2025/2026S1")
+            and chronology.fiscal_2026_title_23_rows
+            == (("23-86-119(a)(1)", "147", "SB7"),)
+            and chronology.extraordinary_2026_title_23_terminal
+            == "No amended code for this section."
+            and current_session_observed_at.tzinfo is not None
+            and current_session_observed_at
+            >= datetime.fromisoformat("2026-08-29T00:00:00+00:00")
+            and all(
+                identity.source_url == expected_url
+                and identity.source_sha256 == expected_sha256
+                and identity.source_byte_size > 0
+                and identity.source_transport == "direct"
+                and bool(
+                    _SHA256_RE.fullmatch(
+                        identity.source_transport_receipt_sha256
+                    )
+                )
+                and bool(
+                    _SHA256_RE.fullmatch(identity.parser_input_receipt_sha256)
+                )
+                and _observed_at_valid(identity.retrieved_at)
+                for _key, identity, expected_url, expected_sha256 in exact_inputs
+            )
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        value = asdict(self)
+        value.pop("_evidence_capability", None)
+        value["evidence_verified"] = self.evidence_verified
+        value["reason"] = self.decision_reason
+        value["source_url"] = ACT373_URL
+        return value
 
 
 @dataclass(frozen=True)
@@ -1242,6 +1398,7 @@ ArkansasLexisVerifiedVariantResolution = (
     ArkansasLexisSourceBoundVariantResolution
     | ArkansasLexisEnactmentTocVariantResolution
     | ArkansasLexisAct283VariantResolution
+    | ArkansasLexisAct373EnactedBodyResolution
 )
 
 
@@ -1485,6 +1642,87 @@ def _verify_retained_official_input(
         parser_input_receipt_sha256=parser_receipt_sha256,
         retrieved_at=retrieved_at,
     )
+
+
+def resolve_act373_enacted_body(
+    nodes: Iterable[ArkansasLexisNode],
+    *,
+    inventory_sha256: str,
+    retained_inputs: Mapping[str, Any],
+) -> ArkansasLexisAct373EnactedBodyResolution:
+    """Resolve § 23-4-909 to an exact act body, never to a guessed URN."""
+
+    if inventory_sha256 != ARKANSAS_DELEGATED_INVENTORY_SHA256:
+        raise ValueError("Arkansas delegated inventory fingerprint drifted")
+    if set(retained_inputs) != set(ACT373_TEMPORAL_SOURCE_INPUT_CONTRACT):
+        raise ValueError("Arkansas Act 373 retained proof bundle is incomplete")
+    candidate_contract = dict(ACT373_CANDIDATE_CONTRACT)
+    candidates = sorted(
+        (
+            node
+            for node in nodes
+            if node.section_number == ACT373_SECTION_NUMBER
+        ),
+        key=lambda node: (node.node_id, node.link_href),
+    )
+    if len(candidates) != len(candidate_contract):
+        raise ValueError("Arkansas Act 373 candidate frontier drifted")
+    for node in candidates:
+        if not (
+            node.evidence_verified
+            and node.is_statute_locator
+            and node.node_id in candidate_contract
+            and node.link_href == candidate_contract[node.node_id]
+            and node.title
+            == "23-4-909. Apportionment of rates and charges."
+        ):
+            raise ValueError("Arkansas Act 373 candidate identity drifted")
+
+    proof_keys = tuple(ACT373_TEMPORAL_SOURCE_INPUT_CONTRACT)
+    identities: list[ArkansasLexisRetainedOfficialInputIdentity] = []
+    bodies: dict[str, bytes] = {}
+    for key in proof_keys:
+        retained = retained_inputs[key]
+        official_url, expected_sha256 = ACT373_TEMPORAL_SOURCE_INPUT_CONTRACT[
+            key
+        ]
+        identities.append(
+            _verify_retained_official_input(
+                retained,
+                label=f"Arkansas Act 373 {key}",
+                official_url=official_url,
+                expected_sha256=expected_sha256,
+            )
+        )
+        envelope = getattr(retained, "envelope", None)
+        body = getattr(envelope, "body", None)
+        if body is None:
+            raise ValueError(f"Arkansas Act 373 {key} body is missing")
+        bodies[key] = bytes(body)
+
+    enacted_section = validate_act373_enacted_section(bodies["A373"])
+    temporal_chain = validate_act373_temporal_chain(
+        change_table_2025=bodies["T23_2025R"],
+        current_session_contract=bodies["CURRENT_SESSION"],
+        change_table_2026f=bodies["T23_2026F"],
+        change_table_2026s1=bodies["T23_2026S1"],
+    )
+    resolution = ArkansasLexisAct373EnactedBodyResolution(
+        section_number=ACT373_SECTION_NUMBER,
+        candidate_node_ids=tuple(node.node_id for node in candidates),
+        proof_keys=proof_keys,
+        proof_inputs=tuple(identities),
+        enacted_section=enacted_section,
+        temporal_chain=temporal_chain,
+    )
+    object.__setattr__(
+        resolution,
+        "_evidence_capability",
+        _SOURCE_BOUND_VARIANT_CAPABILITY,
+    )
+    if not resolution.evidence_verified:
+        raise ValueError("Arkansas Act 373 enacted-body resolution did not verify")
+    return resolution
 
 
 def resolve_enactment_toc_source_bound_variants(
@@ -2041,7 +2279,7 @@ def reconcile_current_statute_variants(
     source_bound_resolutions: Iterable[
         ArkansasLexisVerifiedVariantResolution
     ] = (),
-) -> tuple[ArkansasLexisVariantDecision, ...]:
+) -> tuple[ArkansasLexisCurrentDecision, ...]:
     """Resolve repeated citations only when source labels prove one outcome.
 
     Undated repeal collisions, condition-triggered alternatives, malformed
@@ -2062,6 +2300,7 @@ def reconcile_current_statute_variants(
                     ArkansasLexisSourceBoundVariantResolution,
                     ArkansasLexisEnactmentTocVariantResolution,
                     ArkansasLexisAct283VariantResolution,
+                    ArkansasLexisAct373EnactedBodyResolution,
                 ),
             )
             and resolution.evidence_verified
@@ -2079,7 +2318,7 @@ def reconcile_current_statute_variants(
             raise ValueError("Arkansas variant locator lacks verified evidence")
         grouped.setdefault(str(node.section_number), []).append(node)
 
-    decisions: list[ArkansasLexisVariantDecision] = []
+    decisions: list[ArkansasLexisCurrentDecision] = []
     for section_number in sorted(grouped):
         candidates = sorted(
             grouped[section_number], key=lambda node: (node.node_id, node.link_href)
@@ -2105,6 +2344,23 @@ def reconcile_current_statute_variants(
                     f"Arkansas source-bound variant {section_number} "
                     "candidate set drifted"
                 )
+            if isinstance(resolution, ArkansasLexisAct373EnactedBodyResolution):
+                decisions.append(
+                    ArkansasLexisEnactedBodyDecision(
+                        section_number=section_number,
+                        disposition="selected_current_source_body",
+                        reason=resolution.decision_reason,
+                        candidate_node_ids=node_ids,
+                        source_url=ACT373_URL,
+                        source_sha256=resolution.enacted_section.source_sha256,
+                        full_text_sha256=(
+                            resolution.enacted_section.full_text_sha256
+                        ),
+                        effective_date=resolution.enacted_section.effective_date,
+                    )
+                )
+                consumed_resolutions.add(section_number)
+                continue
             selected = next(
                 (
                     node
@@ -2294,7 +2550,7 @@ def act283_selection_plan_sha256() -> str:
 
 
 def variant_decision_sha256(
-    decisions: Iterable[ArkansasLexisVariantDecision],
+    decisions: Iterable[ArkansasLexisCurrentDecision],
 ) -> str:
     """Return the byte-reproducible digest of an ordered decision plan."""
 
@@ -3855,6 +4111,7 @@ __all__ = [
     "ACT283_SHA256",
     "ACT283_URL",
     "ACT283_VARIANT_CONTRACT",
+    "ACT373_TEMPORAL_SOURCE_INPUT_CONTRACT",
     "ACT1032_BYTE_SIZE",
     "ACT1032_SHA256",
     "ACT1032_URL",
@@ -3883,6 +4140,9 @@ __all__ = [
     "UNRESOLVED_VARIANT_DOCUMENT_CONTRACT",
     "UNRESOLVED_VARIANT_IDENTITY_DOCUMENT_CONTRACT",
     "ArkansasLexisAct283VariantResolution",
+    "ArkansasLexisAct373EnactedBodyResolution",
+    "ArkansasLexisCurrentDecision",
+    "ArkansasLexisEnactedBodyDecision",
     "ArkansasLexisEnactmentTocVariantResolution",
     "ArkansasLexisInventory",
     "ArkansasLexisNode",
@@ -3907,6 +4167,7 @@ __all__ = [
     "parse_toc_payload",
     "reconcile_current_statute_variants",
     "resolve_act283_source_bound_variants",
+    "resolve_act373_enacted_body",
     "resolve_enactment_toc_source_bound_variants",
     "resolve_hr5330_source_bound_variant",
     "toc_expand_request",

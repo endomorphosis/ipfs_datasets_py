@@ -635,3 +635,25 @@ No full Arkansas corpus proof was launched. A later retry is justified only
 by a changed Lexis access context, a newly indexed/filed Act 926 certification,
 or a source-proved Act 447 Attorney General certification. Repeating the same
 negative searches cannot make the five unresolved rows assembler-eligible.
+
+## Superseding Act 373 temporal addendum — 2026-08-29
+
+The earlier five-row stopping point is superseded for current row counts by
+the exact-source audit in
+[`arkansas_act373_act926_temporal_audit_v1.md`](arkansas_act373_act926_temporal_audit_v1.md).
+That audit closes only `23-4-909`, using a digest-pinned, vector-aware
+derivation of the complete section 11 body in Act 373 plus exact official
+2025R, 2026F, and 2026S1 change-table evidence. It deliberately selects no
+delegated Lexis URN. Act 926 remains fail-closed because the retained
+rulemaking records prove neither occurrence nor nonoccurrence of its separate
+systems-implementation certification.
+
+| Field | Value |
+|---|---|
+| temporal_addendum_status | one_exact_source_body_closed |
+| temporal_addendum_closed_citation | 23-4-909 |
+| temporal_addendum_selected_delegated_urn | false |
+| temporal_addendum_remaining_citations | 19-42-201, 27-14-802, 27-14-803, 5-64-308 |
+| temporal_addendum_remaining_count | 4 |
+| temporal_addendum_authorizing_for_materialization | false |
+| temporal_addendum_publication_authorized | false |

@@ -1108,6 +1108,91 @@ class ArkansasScraper(BaseStateScraper):
         )
         return resolutions, diagnostic
 
+    async def _resolve_act373_enacted_body(
+        self,
+        *,
+        nodes: Sequence[Any],
+        inventory_sha256: str,
+    ) -> tuple[Any | None, dict[str, Any]]:
+        """Replay the exact Act 373 body and post-enactment session chain."""
+
+        from .arkansas_lexis import (
+            ACT373_TEMPORAL_SOURCE_INPUT_CONTRACT,
+            CURRENT_VARIANT_RESOLVER_PARSER_NAME,
+            resolve_act373_enacted_body,
+        )
+
+        diagnostic: dict[str, Any] = {
+            "schema_version": "arkansas-act373-enacted-body-resolution-v1",
+            "section_number": "23-4-909",
+            "source_input_count": len(ACT373_TEMPORAL_SOURCE_INPUT_CONTRACT),
+            "disposition": "unresolved",
+        }
+        ledger = self._get_arkansas_current_variant_resolution_ledger()
+        if ledger is None:
+            diagnostic["error"] = (
+                "Act 373 enacted-body resolution requires the Arkansas proof "
+                "ledger"
+            )
+            return None, diagnostic
+        if str(getattr(ledger, "parser_name", "") or "") != (
+            CURRENT_VARIANT_RESOLVER_PARSER_NAME
+        ):
+            diagnostic["error"] = (
+                "Act 373 enacted-body proof ledger identity drifted"
+            )
+            return None, diagnostic
+        proof_keys = tuple(ACT373_TEMPORAL_SOURCE_INPUT_CONTRACT)
+        requests = tuple(
+            (
+                ACT373_TEMPORAL_SOURCE_INPUT_CONTRACT[key][0],
+                {
+                    "method": "GET",
+                    "url": ACT373_TEMPORAL_SOURCE_INPUT_CONTRACT[key][0],
+                },
+            )
+            for key in proof_keys
+        )
+        try:
+            retained = tuple(
+                ledger.replay_retained_parser_inputs(requests=requests)
+            )
+        except Exception as exc:  # noqa: BLE001 - retained proof boundary
+            retained_urls = {
+                str(getattr(entry.receipt, "endpoint", "") or "")
+                for entry in getattr(ledger, "entries", ())
+            }
+            diagnostic["missing_source_urls"] = [
+                url for url, _request in requests if url not in retained_urls
+            ]
+            diagnostic["error"] = (
+                f"{type(exc).__name__}: exact Act 373 replay failed: {exc}"
+            )
+            return None, diagnostic
+        try:
+            resolution = resolve_act373_enacted_body(
+                nodes,
+                inventory_sha256=inventory_sha256,
+                retained_inputs=dict(zip(proof_keys, retained, strict=True)),
+            )
+        except Exception as exc:  # noqa: BLE001 - fail-closed proof boundary
+            diagnostic["error"] = f"{type(exc).__name__}: {exc}"
+            return None, diagnostic
+        diagnostic.update(
+            {
+                "disposition": "selected_current_source_body",
+                "resolution": resolution.to_dict(),
+                "retained_body_paths": [
+                    str(item.body_path) for item in retained
+                ],
+                "retained_evidence_paths": [
+                    str(item.evidence_path) for item in retained
+                ],
+                "network_requested_pages": 0,
+            }
+        )
+        return resolution, diagnostic
+
     async def _resolve_act283_current_variants(
         self,
         *,
@@ -1327,9 +1412,15 @@ class ArkansasScraper(BaseStateScraper):
         act283, act283_diagnostic = await self._resolve_act283_current_variants(
             nodes=nodes,
         )
+        act373, act373_diagnostic = await self._resolve_act373_enacted_body(
+            nodes=nodes,
+            inventory_sha256=inventory_sha256,
+        )
         source_bound = [*enactment, *act283]
         if hr5330 is not None:
             source_bound.append(hr5330)
+        if act373 is not None:
+            source_bound.append(act373)
         decisions = reconcile_current_statute_variants(
             nodes,
             observed_at=observed_at,
@@ -1339,7 +1430,16 @@ class ArkansasScraper(BaseStateScraper):
         def _counts(items: Sequence[Any]) -> dict[str, int]:
             return {
                 disposition: sum(
-                    item.disposition == disposition for item in items
+                    (
+                        item.disposition
+                        in {
+                            "selected_current_locator",
+                            "selected_current_source_body",
+                        }
+                        if disposition == "selected_current_locator"
+                        else item.disposition == disposition
+                    )
+                    for item in items
                 )
                 for disposition in (
                     "selected_current_locator",
@@ -1376,6 +1476,11 @@ class ArkansasScraper(BaseStateScraper):
             "enactment_toc": enactment_diagnostic,
             "hr5330": hr5330_diagnostic,
             "act283": act283_diagnostic,
+            "act373": act373_diagnostic,
+            "selected_current_source_body_count": sum(
+                item.disposition == "selected_current_source_body"
+                for item in decisions
+            ),
             "authorizing_for_materialization": not unresolved,
             "disposition": (
                 "current_variant_frontier_closed"

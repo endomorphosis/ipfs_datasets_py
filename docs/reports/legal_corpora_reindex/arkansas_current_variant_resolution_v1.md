@@ -680,3 +680,29 @@ Future work should not repeat these bounded searches unless a new official
 locator, filing index, meeting attachment, or changed delegated body becomes
 available. The remaining boundary is source proof of the named legal events
 and body identities; it is unrelated to copyright in enacted public law.
+
+## Superseding Act 373 temporal addendum — 2026-08-29
+
+The earlier five-row stopping point is superseded for current row counts by
+the exact-source audit in
+[`arkansas_act373_act926_temporal_audit_v1.md`](arkansas_act373_act926_temporal_audit_v1.md).
+The new exact-only resolver emits `selected_current_source_body` for
+`23-4-909` from the vector markup in Act 373 section 11 and a complete retained
+later-session change-table chain. It emits no `selected_node_id` or
+`selected_link_href`; the two same-heading Lexis identities remain unselected.
+The resulting retained preflight is `127 selected + 1 no-current + 4
+unresolved`, including one selected source body. It is still not authorizing
+for materialization or publication.
+
+| Field | Value |
+|---|---|
+| temporal_variant_addendum_status | one_exact_source_body_closed |
+| temporal_variant_addendum_disposition | selected_current_source_body |
+| temporal_variant_addendum_closed_citation | 23-4-909 |
+| temporal_variant_addendum_selected_delegated_urn | false |
+| temporal_variant_addendum_preflight_selected | 127 |
+| temporal_variant_addendum_preflight_source_bodies | 1 |
+| temporal_variant_addendum_preflight_no_current | 1 |
+| temporal_variant_addendum_preflight_unresolved | 4 |
+| temporal_variant_addendum_authorizing_for_materialization | false |
+| temporal_variant_addendum_publication_authorized | false |
