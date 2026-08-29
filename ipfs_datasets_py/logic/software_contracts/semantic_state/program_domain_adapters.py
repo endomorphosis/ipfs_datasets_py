@@ -236,13 +236,13 @@ HISTORICAL_ONLY_DOMAINS: Final[frozenset[str]] = frozenset(
         UnsupportedDomainKind.PROOF_CARRYING_PROCEDURE_COMPILER.value,
         UnsupportedDomainKind.VERIFIED_RESIDUAL_INTELLIGENCE_FOUNDRY.value,
         UnsupportedDomainKind.AUTONOMOUS_META_CONTROLLER.value,
+        UnsupportedDomainKind.CAUSAL_ABSTRACTION_SUPERVISOR_FEDERATION.value,
     }
 )
 LANGUAGE_UNAVAILABLE_DOMAINS: Final[frozenset[str]] = frozenset(UNAVAILABLE_LANGUAGES)
 MISSING_DOMAINS: Final[frozenset[str]] = frozenset(
     {
         UnsupportedDomainKind.E_GRAPH.value,
-        UnsupportedDomainKind.CAUSAL_ABSTRACTION_SUPERVISOR_FEDERATION.value,
         UnsupportedDomainKind.DYNAMIC_EXECUTION_TRACE.value,
         UnsupportedDomainKind.ANN_INDEX.value,
         UnsupportedDomainKind.MODEL_CHECKPOINT.value,
@@ -569,6 +569,20 @@ class DomainAdapterScope:
                 self.unavailable_dimensions, "unavailable_dimension"
             ),
         )
+        if self.scope_kind in {
+            DomainScopeKind.REPOSITORY.value,
+            DomainScopeKind.WORLD.value,
+        } and self.repository_id is None:
+            raise DomainAdapterError(
+                "unscoped adapters fail; repository_id is required for this scope"
+            )
+        if (
+            self.scope_kind == DomainScopeKind.NAMESPACE.value
+            and self.namespace_id is None
+        ):
+            raise DomainAdapterError(
+                "unscoped adapters fail; namespace_id is required for this scope"
+            )
 
     def identity_payload(self) -> dict[str, Any]:
         return {
@@ -1047,6 +1061,8 @@ def _require_source(source: object, domain_kind: str) -> object | DomainCapabili
             reason=DomainUnavailabilityReason.SOURCE_ABSENT.value,
             evidence=f"{domain_kind} source is absent; adapters do not simulate it",
         )
+    if isinstance(source, Mapping):
+        _reject_forbidden_keys(source, domain_kind)
     return source
 
 
@@ -1274,7 +1290,9 @@ class IntentIRAdapter(_DomainAdapter):
         if isinstance(required, DomainCapabilityUnavailable):
             return required
         source = required
-        identity = _attr(source, "intent_ir_sha256", "domain_identity", "digest")
+        identity = _attr(source, "intent_ir_sha256", "domain_identity")
+        if identity is None and isinstance(source, Mapping):
+            identity = source.get("digest")
         if identity is None and _is_type(
             source, "ipfs_datasets_py.logic.intent_ir.schema", "IntentIRDocument"
         ):
@@ -1511,7 +1529,8 @@ def adapt_program_world_domain(
     if kind not in ADMITTED_DOMAIN_KINDS:
         return unavailable_domain(kind)
     adapter = adapter_for(kind)
-    assert adapter is not None
+    if adapter is None:
+        return unavailable_domain(kind)
     return adapter.adapt(source, **kwargs)
 
 
@@ -1576,6 +1595,8 @@ __all__ = [
     "DOMAIN_CAPABILITY_UNAVAILABLE_SCHEMA",
     "PROGRAM_WORLD_DOMAIN_ADAPTER_INTERFACE",
     "PROGRAM_WORLD_DOMAIN_ADAPTER_SCHEMA",
+    "SOURCE_AUTHORITY_DATASETS",
+    "SOURCE_AUTHORITY_KIT",
     "UNSUPPORTED_DOMAIN_KINDS",
     "AdapterFreshnessState",
     "DatasetStateAdapter",

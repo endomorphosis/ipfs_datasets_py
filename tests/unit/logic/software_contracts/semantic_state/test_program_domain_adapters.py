@@ -687,6 +687,7 @@ def test_unsupported_domain_matrix_never_simulates_or_reimplements(
         UnsupportedDomainKind.PROOF_CARRYING_PROCEDURE_COMPILER.value,
         UnsupportedDomainKind.VERIFIED_RESIDUAL_INTELLIGENCE_FOUNDRY.value,
         UnsupportedDomainKind.AUTONOMOUS_META_CONTROLLER.value,
+        UnsupportedDomainKind.CAUSAL_ABSTRACTION_SUPERVISOR_FEDERATION.value,
     }:
         assert result.reason == DomainUnavailabilityReason.HISTORICAL_ONLY.value
     elif kind in {
@@ -749,3 +750,12 @@ def test_closed_records_reject_unknown_fields_and_authority_weakening() -> None:
     replacement["adapter_may_replace_domain_identity"] = True
     with pytest.raises(DomainAdapterError):
         ProgramWorldDomainAdapter.from_dict(replacement)
+
+
+def test_unscoped_repository_world_and_namespace_adapters_fail() -> None:
+    with pytest.raises(DomainAdapterError, match="unscoped"):
+        RepositorySemanticStateAdapter().adapt({"state_cid": _cid("state")})
+    with pytest.raises(DomainAdapterError, match="unscoped"):
+        DatasetStateAdapter().adapt({"root_cid": _cid("root")})
+    with pytest.raises(DomainAdapterError, match="unscoped"):
+        VFSNamespaceAdapter().adapt({"snapshot_cid": _cid("snap")})
