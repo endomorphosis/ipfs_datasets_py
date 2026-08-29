@@ -245,42 +245,224 @@ def test_check_cli_is_read_only(tmp_path: Path) -> None:
     assert target.read_bytes() == before
 
 
-def test_lcr047_checker_requires_exact_dependency_closure(tmp_path: Path) -> None:
-    final = {
-        "schema": check.RECEIPT_SCHEMA_V1,
-        "receipt_kind": check.FINAL_RECEIPT_KIND,
-        "task_id": "LCR-047",
-        "status": "passed",
-        "fixture_only": False,
-        "dirty": False,
-        "dataset_repo_id": check.DEFAULT_DATASET_REPO,
-        "public_revision": PUBLIC,
-        "previous_public_pin": PARENT,
+def _install_final_dependency_stub(
+    root: Path, monkeypatch: pytest.MonkeyPatch
+) -> dict[str, Path]:
+    paths: dict[str, Path] = {}
+    for name, relative_path in check.FINAL_DEPENDENCY_RELPATHS.items():
+        target = root / relative_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps({"name": name}), encoding="utf-8")
+        paths[name] = target
+
+    publication = {
+        "canonical_digest": "7" * 64,
         "final_manifest_digest": CANDIDATE_DIGEST,
+        "previous_public_pin": PARENT,
+        "public_revision": PUBLIC,
         "release_manifest_digest": RELEASE_DIGEST,
-        "receipt_digests": {
-            name: str(index) * 64
-            for index, name in enumerate(
-                (
-                    "staging_upload",
-                    "staging_canary",
-                    "publication",
-                    "public_canary",
-                    "public_benchmark",
-                    "rollback_rehearsal",
-                    "post_publication_audit",
-                ),
-                start=1,
-            )
-        },
-        "unresolved_gaps": [],
     }
-    digest = canonical_no_self_field_digest(final)
-    final["canonical_digest"] = final["content_digest"] = digest
+
+    def load_dependencies(*, repo_root: Path):
+        assert repo_root.resolve() == root.resolve()
+        digests = {
+            name: hashlib.sha256(path.read_bytes()).hexdigest()
+            for name, path in paths.items()
+        }
+        return {"publication": publication}, digests
+
+    monkeypatch.setattr(check, "_load_final_dependency_snapshots", load_dependencies)
+    return paths
+
+
+def test_lcr047_generator_is_deterministic_and_binds_seal_and_receipts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    paths = _install_final_dependency_stub(tmp_path, monkeypatch)
+    first = check.build_state_final_release_receipt(repo_root=tmp_path)
+    second = check.build_state_final_release_receipt(repo_root=tmp_path)
+    assert first == second
+    assert set(first["receipt_digests"]) == set(check.FINAL_DEPENDENCY_RELPATHS)
+    assert "prepublication_seal" in first["receipt_digests"]
+    assert first["acceptance"] == {
+        "all_required_receipts_bound": True,
+        "every_state_law_gate_at_public_sha": True,
+        "no_unresolved_gap": True,
+        "prepublication_seal_bound": True,
+    }
+
+    target = tmp_path / "state_final_release_receipt.json"
+    check.write_state_final_release_receipt(
+        first, path=target, repo_root=tmp_path
+    )
+    assert (
+        check.check_state_final_release_receipt(target, repo_root=tmp_path)
+        == first
+    )
+
+    paths["prepublication_seal"].write_text(
+        json.dumps({"name": "prepublication_seal", "tampered": True}),
+        encoding="utf-8",
+    )
+    with pytest.raises(check.PublicPinError, match="dependency bytes changed"):
+        check.check_state_final_release_receipt(target, repo_root=tmp_path)
+
+
+def test_lcr047_dependency_loader_cross_binds_every_receipt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from scripts.ops.legal_data import audit_state_laws_post_publication as audit
+    from scripts.ops.legal_data import benchmark_state_laws_public_release as benchmark
+    from scripts.ops.legal_data import canary_state_laws_hf_release as staging_canary
+    from scripts.ops.legal_data import rehearse_state_laws_release_rollback as rollback
+    from scripts.ops.legal_data import seal_state_laws_prepublication as seal
+    from scripts.ops.legal_data import stage_state_laws_hf_release as stage
+
+    upload_digest = "1" * 64
+    seal_digest = "2" * 64
+    publication_digest = "3" * 64
+    canary_digest = "4" * 64
+    benchmark_digest = "5" * 64
+    rollback_digest = "6" * 64
+    plan_digest = "7" * 64
+    proof_digest = "8" * 64
+    payloads = {
+        "staging_upload": {"canonical_digest": upload_digest},
+        "staging_canary": {
+            "release_manifest_digest": RELEASE_DIGEST,
+            "staging_revision": STAGING,
+            "staging_upload_digest": upload_digest,
+        },
+        "prepublication_seal": {
+            "content_digest": seal_digest,
+            "final_manifest_digest": CANDIDATE_DIGEST,
+            "plan_digest": plan_digest,
+            "policy_proof_digest": proof_digest,
+            "release_manifest_digest": RELEASE_DIGEST,
+            "staging_revision": STAGING,
+        },
+        "publication": {
+            "canonical_digest": publication_digest,
+            "final_manifest_digest": CANDIDATE_DIGEST,
+            "plan_digest": plan_digest,
+            "policy_proof_digest": proof_digest,
+            "prepublication_seal_digest": seal_digest,
+            "previous_public_pin": PARENT,
+            "public_revision": PUBLIC,
+            "release_manifest_digest": RELEASE_DIGEST,
+            "staging_revision": STAGING,
+        },
+        "public_canary": {
+            "canonical_digest": canary_digest,
+            "final_manifest_digest": CANDIDATE_DIGEST,
+            "previous_public_pin": PARENT,
+            "publication_receipt_digest": publication_digest,
+            "public_revision": PUBLIC,
+            "release_manifest_digest": RELEASE_DIGEST,
+        },
+        "public_benchmark": {
+            "canonical_digest": benchmark_digest,
+            "final_manifest_digest": CANDIDATE_DIGEST,
+            "previous_public_pin": PARENT,
+            "public_canary_digest": canary_digest,
+            "public_revision": PUBLIC,
+            "release_manifest_digest": RELEASE_DIGEST,
+        },
+        "rollback_rehearsal": {
+            "canonical_digest": rollback_digest,
+            "final_manifest_digest": CANDIDATE_DIGEST,
+            "previous_public_pin": PARENT,
+            "publication_receipt_digest": publication_digest,
+            "public_canary_digest": canary_digest,
+            "public_revision": PUBLIC,
+            "release_manifest_digest": RELEASE_DIGEST,
+        },
+        "post_publication_audit": {
+            "final_manifest_digest": CANDIDATE_DIGEST,
+            "previous_public_pin": PARENT,
+            "public_benchmark_digest": benchmark_digest,
+            "public_canary_digest": canary_digest,
+            "public_revision": PUBLIC,
+            "release_manifest_digest": RELEASE_DIGEST,
+            "rollback_rehearsal_digest": rollback_digest,
+        },
+    }
+    for name, relative_path in check.FINAL_DEPENDENCY_RELPATHS.items():
+        target = tmp_path / relative_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(payloads[name]), encoding="utf-8")
+
+    monkeypatch.setattr(
+        stage, "check_canonical_staging_receipt", lambda value, **_kwargs: value
+    )
+    monkeypatch.setattr(
+        staging_canary,
+        "check_canonical_staging_canary_receipt",
+        lambda value: value,
+    )
+    monkeypatch.setattr(
+        check, "check_canonical_publication_receipt", lambda value, **_kwargs: value
+    )
+    monkeypatch.setattr(
+        check, "check_canonical_public_canary_receipt", lambda value: value
+    )
+    monkeypatch.setattr(
+        benchmark, "check_canonical_public_benchmark_receipt", lambda value: value
+    )
+    monkeypatch.setattr(
+        rollback, "check_canonical_rollback_rehearsal", lambda value: value
+    )
+    monkeypatch.setattr(
+        audit, "check_canonical_post_publication_audit", lambda value: value
+    )
+    monkeypatch.setattr(
+        seal, "check_state_prepublication_seal", lambda **_kwargs: {"ok": True}
+    )
+    loaded, digests = check._load_final_dependency_snapshots(repo_root=tmp_path)
+    assert set(loaded) == set(check.FINAL_DEPENDENCY_RELPATHS)
+    assert set(digests) == set(check.FINAL_DEPENDENCY_RELPATHS)
+
+    payloads["post_publication_audit"]["public_benchmark_digest"] = "f" * 64
+    (tmp_path / check.DEFAULT_POST_PUBLICATION_AUDIT_RELPATH).write_text(
+        json.dumps(payloads["post_publication_audit"]), encoding="utf-8"
+    )
+    with pytest.raises(check.PublicPinError, match="digest/pin chain"):
+        check._load_final_dependency_snapshots(repo_root=tmp_path)
+
+
+def test_lcr047_checker_rejects_open_gap(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _install_final_dependency_stub(tmp_path, monkeypatch)
+    final = check.build_state_final_release_receipt(repo_root=tmp_path)
+    final["unresolved_gaps"] = ["LCR-046"]
+    final["canonical_digest"] = final["content_digest"] = (
+        canonical_no_self_field_digest(final)
+    )
     target = tmp_path / "final.json"
     target.write_text(json.dumps(final), encoding="utf-8")
-    assert check.check_state_final_release_receipt(target)["public_revision"] == PUBLIC
-    final["unresolved_gaps"] = ["LCR-046"]
-    target.write_text(json.dumps(final), encoding="utf-8")
     with pytest.raises(check.PublicPinError, match="not closed"):
-        check.check_state_final_release_receipt(target)
+        check.check_state_final_release_receipt(target, repo_root=tmp_path)
+
+
+def test_lcr047_cli_generation_requires_explicit_write(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    generated = {
+        "task_id": "LCR-047",
+        "receipt_digests": {},
+    }
+    writes: list[dict] = []
+    monkeypatch.setattr(
+        check, "build_state_final_release_receipt", lambda: generated
+    )
+    monkeypatch.setattr(
+        check,
+        "write_state_final_release_receipt",
+        lambda receipt, **_kwargs: writes.append(dict(receipt)),
+    )
+    assert check.main(["--generate-final"]) == 0
+    assert writes == []
+    assert check.main(["--generate-final", "--write-final"]) == 0
+    assert writes == [generated]
+    assert check.main(["--write-final"]) == 2

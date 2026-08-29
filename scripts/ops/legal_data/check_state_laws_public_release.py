@@ -163,6 +163,21 @@ DEFAULT_REPORT_RELPATH: Final = Path(
 DEFAULT_FINAL_RECEIPT_RELPATH: Final = Path(
     "docs/reports/legal_corpora_reindex/state_final_release_receipt.json"
 )
+DEFAULT_PREPUBLICATION_SEAL_RELPATH: Final = Path(
+    "docs/reports/legal_corpora_reindex/state_prepublication_seal.json"
+)
+DEFAULT_STAGING_UPLOAD_RELPATH: Final = Path(
+    "docs/reports/legal_corpora_reindex/staging_upload.json"
+)
+DEFAULT_PUBLIC_BENCHMARK_RELPATH: Final = Path(
+    "docs/reports/legal_corpora_reindex/public_benchmark.json"
+)
+DEFAULT_ROLLBACK_REHEARSAL_RELPATH: Final = Path(
+    "docs/reports/legal_corpora_reindex/rollback_rehearsal.json"
+)
+DEFAULT_POST_PUBLICATION_AUDIT_RELPATH: Final = Path(
+    "docs/reports/legal_corpora_reindex/post_publication_audit.json"
+)
 DEFAULT_CANDIDATE_RELPATH: Final = Path(
     "docs/reports/legal_corpora_reindex/release_candidate.json"
 )
@@ -172,6 +187,17 @@ DEFAULT_STAGING_CANARY_RELPATH: Final = Path(
 DEFAULT_QUERY_CONTRACT_RELPATH: Final = Path(
     "docs/reports/legal_corpora_reindex/query_contract.json"
 )
+
+FINAL_DEPENDENCY_RELPATHS: Final[dict[str, Path]] = {
+    "staging_upload": DEFAULT_STAGING_UPLOAD_RELPATH,
+    "staging_canary": DEFAULT_STAGING_CANARY_RELPATH,
+    "prepublication_seal": DEFAULT_PREPUBLICATION_SEAL_RELPATH,
+    "publication": DEFAULT_RECEIPT_RELPATH,
+    "public_canary": DEFAULT_REPORT_RELPATH,
+    "public_benchmark": DEFAULT_PUBLIC_BENCHMARK_RELPATH,
+    "rollback_rehearsal": DEFAULT_ROLLBACK_REHEARSAL_RELPATH,
+    "post_publication_audit": DEFAULT_POST_PUBLICATION_AUDIT_RELPATH,
+}
 
 REMOTE_REPO_ENV: Final = "STATE_LAWS_PUBLIC_CANARY_REPO_ID"
 REMOTE_REVISION_ENV: Final = "STATE_LAWS_PUBLIC_CANARY_REVISION"
@@ -1675,24 +1701,183 @@ def check_canonical_public_canary_receipt(
     return report
 
 
-def check_state_final_release_receipt(
-    path: Path | str | None = None,
+def _load_final_dependency_snapshots(
     *,
-    repo_root: Path | str | None = None,
-) -> dict[str, Any]:
-    """Validate the terminal LCR-047 closure without generating evidence."""
+    repo_root: Path,
+) -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
+    """Reopen, validate, cross-bind, and hash all LCR-047 dependencies."""
 
-    root = Path(repo_root) if repo_root is not None else REPOSITORY_ROOT
-    target = Path(path) if path is not None else root / DEFAULT_FINAL_RECEIPT_RELPATH
-    report = load_json_mapping(target)
+    root = repo_root.expanduser().resolve()
+    payloads: dict[str, dict[str, Any]] = {}
+    raw_snapshots: dict[str, bytes] = {}
+    for name, relative_path in FINAL_DEPENDENCY_RELPATHS.items():
+        unresolved = root / relative_path
+        if unresolved.is_symlink():
+            raise PublicPinError(f"state final dependency is a symlink: {name}")
+        target = unresolved.resolve()
+        try:
+            target.relative_to(root)
+        except ValueError as exc:
+            raise PublicPinError(
+                f"state final dependency escapes the repository: {name}"
+            ) from exc
+        if not target.is_file():
+            raise PublicPinError(f"state final dependency is missing: {name}")
+        try:
+            raw = target.read_bytes()
+            payload = json.loads(raw.decode("utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise PublicPinError(
+                f"state final dependency is malformed: {name}"
+            ) from exc
+        if type(payload) is not dict:
+            raise PublicPinError(
+                f"state final dependency must be an object: {name}"
+            )
+        raw_snapshots[name] = raw
+        payloads[name] = payload
+
+    # These imports are deliberately lazy: the benchmark, rollback, and audit
+    # producers import this public-canary module for their own shared checks.
+    from scripts.ops.legal_data import audit_state_laws_post_publication as audit
+    from scripts.ops.legal_data import benchmark_state_laws_public_release as benchmark
+    from scripts.ops.legal_data import canary_state_laws_hf_release as staging_canary
+    from scripts.ops.legal_data import rehearse_state_laws_release_rollback as rollback
+    from scripts.ops.legal_data import seal_state_laws_prepublication as seal
+    from scripts.ops.legal_data import stage_state_laws_hf_release as stage
+
+    checked = {
+        "staging_upload": stage.check_canonical_staging_receipt(
+            payloads["staging_upload"], require_live=True
+        ),
+        "staging_canary": staging_canary.check_canonical_staging_canary_receipt(
+            payloads["staging_canary"]
+        ),
+        "publication": check_canonical_publication_receipt(
+            payloads["publication"], require_live=True
+        ),
+        "public_canary": check_canonical_public_canary_receipt(
+            payloads["public_canary"]
+        ),
+        "public_benchmark": benchmark.check_canonical_public_benchmark_receipt(
+            payloads["public_benchmark"]
+        ),
+        "rollback_rehearsal": rollback.check_canonical_rollback_rehearsal(
+            payloads["rollback_rehearsal"]
+        ),
+        "post_publication_audit": audit.check_canonical_post_publication_audit(
+            payloads["post_publication_audit"]
+        ),
+    }
+    seal.check_state_prepublication_seal(
+        path=root / DEFAULT_PREPUBLICATION_SEAL_RELPATH,
+        repo_root=root,
+        require_live_staging_pin=True,
+    )
+    checked["prepublication_seal"] = payloads["prepublication_seal"]
+
+    upload = checked["staging_upload"]
+    staging = checked["staging_canary"]
+    sealed = checked["prepublication_seal"]
+    publication = checked["publication"]
+    canary = checked["public_canary"]
+    bench = checked["public_benchmark"]
+    rehearsal = checked["rollback_rehearsal"]
+    post_audit = checked["post_publication_audit"]
+    public = require_immutable_revision(
+        publication.get("public_revision"), name="public_revision"
+    )
+    previous = require_immutable_revision(
+        publication.get("previous_public_pin"), name="previous_public_pin"
+    )
+    staging_revision = require_immutable_revision(
+        staging.get("staging_revision"), name="staging_revision"
+    )
+    final_manifest = str(publication.get("final_manifest_digest") or "")
+    release_manifest = str(publication.get("release_manifest_digest") or "")
+    if (
+        previous != PREVIOUS_PUBLIC_PIN
+        or public == previous
+        or upload.get("canonical_digest") != staging.get("staging_upload_digest")
+        or sealed.get("content_digest")
+        != publication.get("prepublication_seal_digest")
+        or canary.get("publication_receipt_digest")
+        != publication.get("canonical_digest")
+        or bench.get("public_canary_digest") != canary.get("canonical_digest")
+        or rehearsal.get("publication_receipt_digest")
+        != publication.get("canonical_digest")
+        or rehearsal.get("public_canary_digest") != canary.get("canonical_digest")
+        or post_audit.get("public_canary_digest") != canary.get("canonical_digest")
+        or post_audit.get("public_benchmark_digest")
+        != bench.get("canonical_digest")
+        or post_audit.get("rollback_rehearsal_digest")
+        != rehearsal.get("canonical_digest")
+        or sealed.get("plan_digest") != publication.get("plan_digest")
+        or sealed.get("policy_proof_digest")
+        != publication.get("policy_proof_digest")
+        or sealed.get("staging_revision") != staging_revision
+        or publication.get("staging_revision") != staging_revision
+    ):
+        raise PublicPinError("state final dependency digest/pin chain drifted")
+    for name, dependency in (
+        ("prepublication_seal", sealed),
+        ("public_canary", canary),
+        ("public_benchmark", bench),
+        ("rollback_rehearsal", rehearsal),
+        ("post_publication_audit", post_audit),
+    ):
+        if (
+            dependency.get("final_manifest_digest") != final_manifest
+            or dependency.get("release_manifest_digest") != release_manifest
+        ):
+            raise PublicPinError(
+                f"state final manifest chain drifted: {name}"
+            )
+    for name, dependency in (
+        ("public_canary", canary),
+        ("public_benchmark", bench),
+        ("rollback_rehearsal", rehearsal),
+        ("post_publication_audit", post_audit),
+    ):
+        if (
+            dependency.get("public_revision") != public
+            or dependency.get("previous_public_pin") != previous
+        ):
+            raise PublicPinError(f"state final public pin chain drifted: {name}")
+
+    for name, relative_path in FINAL_DEPENDENCY_RELPATHS.items():
+        if (root / relative_path).read_bytes() != raw_snapshots[name]:
+            raise PublicPinError(
+                f"state final dependency changed during validation: {name}"
+            )
+    return checked, {
+        name: hashlib.sha256(raw).hexdigest()
+        for name, raw in raw_snapshots.items()
+    }
+
+
+def _check_state_final_release_payload(
+    report: Mapping[str, Any],
+    *,
+    dependency_digests: Mapping[str, str] | None,
+) -> dict[str, Any]:
+    report = dict(report)
     if (
         report.get("schema") != RECEIPT_SCHEMA_V1
         or report.get("receipt_kind") != FINAL_RECEIPT_KIND
         or report.get("task_id") != "LCR-047"
+        or report.get("goal_id") != "LCR-G090"
+        or report.get("program_id") != PROGRAM_ID
         or report.get("status") != "passed"
         or report.get("fixture_only") is not False
         or report.get("dirty") is not False
         or report.get("dataset_repo_id") != DEFAULT_DATASET_REPO
+        or report.get("target") != DEFAULT_DATASET_REPO
+        or report.get("read_only") is not True
+        or report.get("remote_mutation_attempted") is not False
+        or report.get("rollback_target") != PREVIOUS_PUBLIC_PIN
+        or report.get("schema_version") != "state-laws-final-release/v1"
+        or report.get("depends_on") != ["LCR-046"]
         or report.get("unresolved_gaps") != []
     ):
         raise PublicPinError("state final release receipt is not closed")
@@ -1700,33 +1885,181 @@ def check_state_final_release_receipt(
     previous = require_immutable_revision(
         report.get("previous_public_pin"), name="previous_public_pin"
     )
-    if previous != PREVIOUS_PUBLIC_PIN or public == previous:
+    if (
+        previous != PREVIOUS_PUBLIC_PIN
+        or public == previous
+        or report.get("public_sha") != public
+        or report.get("old_sha") != previous
+    ):
         raise PublicPinError("state final receipt public/rollback pins drifted")
     receipt_digests = report.get("receipt_digests")
-    required = {
-        "staging_upload",
-        "staging_canary",
-        "publication",
-        "public_canary",
-        "public_benchmark",
-        "rollback_rehearsal",
-        "post_publication_audit",
-    }
+    required = set(FINAL_DEPENDENCY_RELPATHS)
     if not isinstance(receipt_digests, Mapping) or set(receipt_digests) != required:
         raise PublicPinError("state final receipt dependency digest set drifted")
     for name, digest in receipt_digests.items():
         if _SHA256_RE.fullmatch(str(digest or "")) is None:
             raise PublicPinError(f"state final dependency digest is malformed: {name}")
+    if dependency_digests is not None and dict(receipt_digests) != dict(
+        dependency_digests
+    ):
+        raise PublicPinError("state final dependency bytes changed after sealing")
+    evidence_paths = report.get("evidence_paths")
+    expected_paths = {
+        name: path.as_posix()
+        for name, path in FINAL_DEPENDENCY_RELPATHS.items()
+    }
+    if not isinstance(evidence_paths, Mapping) or dict(evidence_paths) != expected_paths:
+        raise PublicPinError("state final dependency path set drifted")
     for name in ("final_manifest_digest", "release_manifest_digest"):
         if _SHA256_RE.fullmatch(str(report.get(name) or "")) is None:
             raise PublicPinError(f"state final {name} is malformed")
+    acceptance = report.get("acceptance")
+    if not isinstance(acceptance, Mapping) or acceptance != {
+        "all_required_receipts_bound": True,
+        "every_state_law_gate_at_public_sha": True,
+        "no_unresolved_gap": True,
+        "prepublication_seal_bound": True,
+    }:
+        raise PublicPinError("state final acceptance closure drifted")
+    completion = report.get("completion_proof")
+    if not isinstance(completion, Mapping) or completion != {
+        "kind": "final_release_receipt",
+        "path": DEFAULT_FINAL_RECEIPT_RELPATH.as_posix(),
+        "public_sha": public,
+        "schema": RECEIPT_SCHEMA_V1,
+        "status": "passed",
+        "task_id": "LCR-047",
+    }:
+        raise PublicPinError("state final completion proof drifted")
     declared = str(report.get("canonical_digest") or report.get("content_digest") or "")
     if _SHA256_RE.fullmatch(declared) is None or canonical_no_self_field_digest(
         report
     ) != declared:
         raise PublicPinError("state final receipt digest mismatch")
     reject_credentials_in_payload(report, label="state_final_release_receipt")
+    assert_no_secrets_or_absolute_paths(
+        report, label="state_final_release_receipt"
+    )
     return report
+
+
+def build_state_final_release_receipt(
+    *,
+    repo_root: Path | str | None = None,
+) -> dict[str, Any]:
+    """Build the deterministic LCR-047 closure from existing live evidence."""
+
+    root = Path(repo_root) if repo_root is not None else REPOSITORY_ROOT
+    dependencies, receipt_digests = _load_final_dependency_snapshots(
+        repo_root=root
+    )
+    publication = dependencies["publication"]
+    report: dict[str, Any] = {
+        "acceptance": {
+            "all_required_receipts_bound": True,
+            "every_state_law_gate_at_public_sha": True,
+            "no_unresolved_gap": True,
+            "prepublication_seal_bound": True,
+        },
+        "completion_proof": {
+            "kind": "final_release_receipt",
+            "path": DEFAULT_FINAL_RECEIPT_RELPATH.as_posix(),
+            "public_sha": publication["public_revision"],
+            "schema": RECEIPT_SCHEMA_V1,
+            "status": "passed",
+            "task_id": "LCR-047",
+        },
+        "dataset_repo_id": DEFAULT_DATASET_REPO,
+        "depends_on": ["LCR-046"],
+        "dirty": False,
+        "evidence_paths": {
+            name: path.as_posix()
+            for name, path in FINAL_DEPENDENCY_RELPATHS.items()
+        },
+        "final_manifest_digest": publication["final_manifest_digest"],
+        "fixture_only": False,
+        "goal_id": "LCR-G090",
+        "old_sha": publication["previous_public_pin"],
+        "previous_public_pin": publication["previous_public_pin"],
+        "producer": "check_state_laws_public_release.py",
+        "program_id": PROGRAM_ID,
+        "public_revision": publication["public_revision"],
+        "public_sha": publication["public_revision"],
+        "read_only": True,
+        "receipt_digests": receipt_digests,
+        "receipt_kind": FINAL_RECEIPT_KIND,
+        "release_manifest_digest": publication["release_manifest_digest"],
+        "remote_mutation_attempted": False,
+        "rollback_target": publication["previous_public_pin"],
+        "schema": RECEIPT_SCHEMA_V1,
+        "schema_version": "state-laws-final-release/v1",
+        "status": "passed",
+        "target": DEFAULT_DATASET_REPO,
+        "task_id": "LCR-047",
+        "unresolved_gaps": [],
+    }
+    digest = canonical_no_self_field_digest(report)
+    report["canonical_digest"] = digest
+    report["content_digest"] = digest
+    return _check_state_final_release_payload(
+        report, dependency_digests=receipt_digests
+    )
+
+
+def write_state_final_release_receipt(
+    receipt: Mapping[str, Any],
+    *,
+    path: Path | str | None = None,
+    repo_root: Path | str | None = None,
+) -> Path:
+    """Explicitly persist one already-validated deterministic final receipt."""
+
+    root = Path(repo_root) if repo_root is not None else REPOSITORY_ROOT
+    target = (
+        Path(path).expanduser()
+        if path is not None
+        else root / DEFAULT_FINAL_RECEIPT_RELPATH
+    )
+    if target.is_symlink():
+        raise PublicPinError("state final receipt output must not be a symlink")
+    _, dependency_digests = _load_final_dependency_snapshots(
+        repo_root=Path(root)
+    )
+    checked = _check_state_final_release_payload(
+        receipt,
+        dependency_digests=dependency_digests,
+    )
+    write_json(target, checked)
+    return target.resolve()
+
+
+def check_state_final_release_receipt(
+    path: Path | str | None = None,
+    *,
+    repo_root: Path | str | None = None,
+) -> dict[str, Any]:
+    """Validate LCR-047 and re-open every byte-bound dependency."""
+
+    root = Path(repo_root) if repo_root is not None else REPOSITORY_ROOT
+    target = Path(path) if path is not None else root / DEFAULT_FINAL_RECEIPT_RELPATH
+    report = load_json_mapping(target)
+    dependencies, receipt_digests = _load_final_dependency_snapshots(
+        repo_root=root
+    )
+    checked = _check_state_final_release_payload(
+        report, dependency_digests=receipt_digests
+    )
+    publication = dependencies["publication"]
+    if (
+        checked["public_revision"] != publication["public_revision"]
+        or checked["previous_public_pin"] != publication["previous_public_pin"]
+        or checked["final_manifest_digest"]
+        != publication["final_manifest_digest"]
+        or checked["release_manifest_digest"]
+        != publication["release_manifest_digest"]
+    ):
+        raise PublicPinError("state final receipt/publication binding drifted")
+    return checked
 
 
 def check_state_public_release(
@@ -1898,7 +2231,25 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--check-final",
         action="store_true",
-        help="Run the public-pin check plus exact-51 / Viewer / query finalization flags.",
+        help=(
+            "Validate LCR-047 and re-open its exact publication, seal, public "
+            "canary, benchmark, rollback, and audit dependencies."
+        ),
+    )
+    parser.add_argument(
+        "--generate-final",
+        action="store_true",
+        help=(
+            "Build deterministic LCR-047 JSON from existing verified State "
+            "receipts without network contact."
+        ),
+    )
+    parser.add_argument(
+        "--write-final",
+        action="store_true",
+        help=(
+            "With --generate-final, explicitly write state_final_release_receipt.json."
+        ),
     )
     parser.add_argument(
         "--write-report",
@@ -1982,14 +2333,37 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         if args.require_public_pin and not (
-            args.check or args.write_report or args.network or args.check_final
+            args.check
+            or args.write_report
+            or args.network
+            or args.check_final
+            or args.generate_final
         ):
             args.check = True
 
+        if args.check_final and args.generate_final:
+            raise PublicPinError(
+                "--check-final and --generate-final are mutually exclusive"
+            )
+        if args.write_final and not args.generate_final:
+            raise PublicPinError("--write-final requires --generate-final")
+
         if args.check_final:
-            if args.write_report or args.network:
+            if args.write_report or args.write_final or args.network:
                 raise PublicPinError("--check-final is read-only")
             result = check_state_final_release_receipt(path=args.final_receipt)
+            write_json(args.output, result)
+            return 0
+
+        if args.generate_final:
+            if args.write_report or args.network:
+                raise PublicPinError("final receipt generation is local-only")
+            result = build_state_final_release_receipt()
+            if args.write_final:
+                write_state_final_release_receipt(
+                    result,
+                    path=args.final_receipt,
+                )
             write_json(args.output, result)
             return 0
 

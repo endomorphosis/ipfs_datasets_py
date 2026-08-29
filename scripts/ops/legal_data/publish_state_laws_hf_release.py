@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -97,18 +98,61 @@ from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
     canonical_json_dumps,
     digest_mapping,
 )
-from scripts.ops.legal_data.seal_state_laws_prepublication import (
-    SealBindingError,
-    SealEvidenceError,
-    SealLiveStagingError,
-    SealStateLawsError,
-    check_state_prepublication_seal,
-    default_seal_path,
-    load_staging_canary,
+
+
+def _load_exact_local_script_module(*, filename: str, module_name: str) -> Any:
+    """Load one security-critical sibling script from its exact local path."""
+
+    expected_parent = Path(__file__).resolve().parent
+    if Path(filename).name != filename:
+        raise RuntimeError(
+            f"local script dependency name is not a basename: {filename}"
+        )
+    unresolved_path = expected_parent / filename
+    if unresolved_path.is_symlink():
+        raise RuntimeError(
+            f"local script dependency must not be a symlink: {unresolved_path}"
+        )
+    script_path = unresolved_path.resolve(strict=True)
+    if script_path.parent != expected_parent or not script_path.is_file():
+        raise RuntimeError(
+            f"local script dependency is not a safe regular file: {script_path}"
+        )
+    before_sha256 = hashlib.sha256(script_path.read_bytes()).hexdigest()
+    spec = importlib.util.spec_from_file_location(module_name, script_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"local script dependency has no file loader: {script_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+    except BaseException:
+        sys.modules.pop(module_name, None)
+        raise
+    loaded_path = Path(str(getattr(module, "__file__", ""))).resolve(strict=True)
+    after_sha256 = hashlib.sha256(script_path.read_bytes()).hexdigest()
+    if loaded_path != script_path or after_sha256 != before_sha256:
+        sys.modules.pop(module_name, None)
+        raise RuntimeError(
+            f"local script dependency changed or resolved elsewhere: {script_path}"
+        )
+    return module
+
+
+_LOCAL_SEAL_MODULE = _load_exact_local_script_module(
+    filename="seal_state_laws_prepublication.py",
+    module_name="_state_laws_exact_local_prepublication_seal_for_publish",
 )
-from scripts.ops.legal_data.seal_state_laws_prepublication import (
-    load_json_mapping as load_seal_mapping,
+SealBindingError = _LOCAL_SEAL_MODULE.SealBindingError
+SealEvidenceError = _LOCAL_SEAL_MODULE.SealEvidenceError
+SealLiveStagingError = _LOCAL_SEAL_MODULE.SealLiveStagingError
+SealStateLawsError = _LOCAL_SEAL_MODULE.SealStateLawsError
+check_state_prepublication_seal = (
+    _LOCAL_SEAL_MODULE.check_state_prepublication_seal
 )
+default_seal_path = _LOCAL_SEAL_MODULE.default_seal_path
+load_staging_canary = _LOCAL_SEAL_MODULE.load_staging_canary
+load_seal_mapping = _LOCAL_SEAL_MODULE.load_json_mapping
 
 # ---------------------------------------------------------------------------
 # Identity / sealed policy

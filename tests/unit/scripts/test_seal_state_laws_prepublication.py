@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from hashlib import sha256
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -168,3 +169,144 @@ def test_strict_seal_rejects_content_digest_tamper(tmp_path: Path) -> None:
     seal_path.write_bytes(_canonical(payload) + b"\n")
     with pytest.raises(seal.SealBindingError, match="content digest"):
         seal.check_state_prepublication_seal(repo_root=tmp_path)
+
+
+def _write_approval(path: Path, *, plan_digest: str) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "approval_id": "approved-main-plan",
+                "approver": "release-operator",
+                "credentials_scope": seal.DEFAULT_CREDENTIALS_SCOPE,
+                "max_cost_usd": 1.0,
+                "max_upload_bytes": 4096,
+                "notes": "bounded local control preparation",
+                "plan_digest": plan_digest,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_standalone_generator_uses_verified_inputs_and_never_mutates_hub(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _write_bound_fixture(tmp_path)
+    plan_digest = "6" * 64
+    release_digest = "3" * 64
+    approval = tmp_path / "approval.json"
+    _write_approval(approval, plan_digest=plan_digest)
+    package = SimpleNamespace(manifest_digest=release_digest)
+    plan = SimpleNamespace(
+        audited_parent_commit=seal.PREVIOUS_PUBLIC_PIN,
+        cost_receipt={"estimated_cost_usd": 0.25, "upload_bytes": 1024},
+        plan_digest=plan_digest,
+        release_sha256=release_digest,
+        repository_id=seal.TARGET_REPO,
+        target_revision="main",
+    )
+    candidate = {"manifest_digest": release_digest}
+    calls: list[str] = []
+
+    monkeypatch.setattr(
+        seal,
+        "_load_verified_production_candidate",
+        lambda **_kwargs: (candidate, None),
+    )
+    monkeypatch.setattr(
+        seal,
+        "plan_state_laws_publication_dry_run",
+        lambda *_args, **_kwargs: SimpleNamespace(package=package, plan=plan),
+    )
+    monkeypatch.setattr(
+        seal,
+        "require_state_laws_policy_binding",
+        lambda *_args, **_kwargs: calls.append("policy") or SimpleNamespace(),
+    )
+
+    def materialize(*_args, repository_root: Path, sealed_at: str, **_kwargs):
+        calls.append("materialize")
+        assert Path(repository_root) == tmp_path.resolve()
+        assert sealed_at == "2026-08-29T12:00:00Z"
+        (tmp_path / seal.SEAL_RELPATH).write_text(
+            json.dumps({"task_id": seal.TASK_ID}), encoding="utf-8"
+        )
+        return SimpleNamespace(
+            candidate_file_sha256="7" * 64,
+            release_manifest_digest=release_digest,
+            seal_content_digest="8" * 64,
+            seal_file_sha256="9" * 64,
+            staging_revision="5" * 40,
+        )
+
+    monkeypatch.setattr(
+        seal, "materialize_state_laws_canonical_controls", materialize
+    )
+    monkeypatch.setattr(
+        seal,
+        "check_state_prepublication_seal",
+        lambda **_kwargs: {"ok": True, "task_id": seal.TASK_ID},
+    )
+    result = seal.generate_state_prepublication_seal(
+        release_root=tmp_path / "release",
+        approval_path=approval,
+        sealed_at="2026-08-29T12:00:00Z",
+        repository_root=tmp_path,
+    )
+    assert calls == ["policy", "materialize"]
+    assert result["approval_id"] == "approved-main-plan"
+    assert result["hub_mutation_performed"] is False
+    assert result["network_io_performed"] is False
+    assert result["seal"]["task_id"] == seal.TASK_ID
+
+
+def test_standalone_generator_rejects_approval_for_another_plan(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _write_bound_fixture(tmp_path)
+    approval = tmp_path / "approval.json"
+    _write_approval(approval, plan_digest="a" * 64)
+    package = SimpleNamespace(manifest_digest="3" * 64)
+    plan = SimpleNamespace(
+        audited_parent_commit=seal.PREVIOUS_PUBLIC_PIN,
+        cost_receipt={"estimated_cost_usd": 0.25, "upload_bytes": 1024},
+        plan_digest="6" * 64,
+        release_sha256="3" * 64,
+        repository_id=seal.TARGET_REPO,
+        target_revision="main",
+    )
+    monkeypatch.setattr(
+        seal,
+        "_load_verified_production_candidate",
+        lambda **_kwargs: ({"manifest_digest": "3" * 64}, None),
+    )
+    monkeypatch.setattr(
+        seal,
+        "plan_state_laws_publication_dry_run",
+        lambda *_args, **_kwargs: SimpleNamespace(package=package, plan=plan),
+    )
+    with pytest.raises(seal.SealBindingError, match="another plan"):
+        seal.generate_state_prepublication_seal(
+            release_root=tmp_path / "release",
+            approval_path=approval,
+            sealed_at="2026-08-29T12:00:00Z",
+            repository_root=tmp_path,
+        )
+
+
+def test_generate_cli_is_explicit_and_no_mutate_required() -> None:
+    assert seal.main(["--generate", "--no-mutate"]) == 2
+    assert (
+        seal.main(
+            [
+                "--generate",
+                "--release-root",
+                "release",
+                "--approval",
+                "approval.json",
+                "--sealed-at",
+                "2026-08-29T12:00:00Z",
+            ]
+        )
+        == 2
+    )

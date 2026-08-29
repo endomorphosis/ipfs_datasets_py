@@ -7,6 +7,7 @@ import importlib
 import json
 import sys
 from pathlib import Path
+from types import ModuleType
 
 import pytest
 
@@ -135,6 +136,57 @@ def test_identity_help_and_single_canonical_protected_writer() -> None:
         assert forbidden not in source
     assert "execute_canonical_legal_corpora_mutation" in source
     assert "check_state_prepublication_seal" in source
+
+
+def test_module_level_seal_symbols_come_from_exact_local_sibling() -> None:
+    expected_path = (
+        Path(publish.__file__).resolve().parent
+        / "seal_state_laws_prepublication.py"
+    ).resolve()
+    assert Path(publish._LOCAL_SEAL_MODULE.__file__).resolve() == expected_path
+    for name in (
+        "SealBindingError",
+        "SealEvidenceError",
+        "SealLiveStagingError",
+        "SealStateLawsError",
+        "check_state_prepublication_seal",
+        "default_seal_path",
+        "load_staging_canary",
+    ):
+        assert getattr(publish, name) is getattr(publish._LOCAL_SEAL_MODULE, name)
+    assert publish.load_seal_mapping is publish._LOCAL_SEAL_MODULE.load_json_mapping
+
+
+def test_exact_local_seal_load_ignores_ambiguous_scripts_module(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    poison_package = ModuleType("scripts.ops.legal_data")
+    poison_seal = ModuleType(
+        "scripts.ops.legal_data.seal_state_laws_prepublication"
+    )
+    poison_check = object()
+    poison_seal.check_state_prepublication_seal = poison_check
+    local_module_name = "_state_laws_test_exact_local_prepublication_seal"
+    monkeypatch.setitem(sys.modules, "scripts.ops.legal_data", poison_package)
+    monkeypatch.setitem(
+        sys.modules,
+        "scripts.ops.legal_data.seal_state_laws_prepublication",
+        poison_seal,
+    )
+    monkeypatch.delitem(sys.modules, local_module_name, raising=False)
+
+    loaded = publish._load_exact_local_script_module(
+        filename="seal_state_laws_prepublication.py",
+        module_name=local_module_name,
+    )
+
+    expected_path = (
+        Path(publish.__file__).resolve().parent
+        / "seal_state_laws_prepublication.py"
+    ).resolve()
+    assert loaded is not poison_seal
+    assert Path(loaded.__file__).resolve() == expected_path
+    assert loaded.check_state_prepublication_seal is not poison_check
 
 
 def test_dry_run_is_add_only_and_non_authorizing() -> None:

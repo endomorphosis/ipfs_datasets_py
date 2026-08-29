@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
-"""Read-only state-law prepublication seal (LCR-072).
+"""Local-only state-law prepublication seal (LCR-072).
 
 Never uploads, deletes, force-pushes, or changes visibility. ``--no-mutate``
 is required. ``--require-live-staging-pin`` fails closed until LCR-041 has
 produced an immutable staging SHA.
+
+``--generate`` is the explicit, standalone local control-materialization
+path.  It rebuilds the exact main publication plan from an existing release
+tree, verifies the LCR-084 candidate and a bounded human approval for that
+plan, seals the policy proof, and atomically materializes the candidate/card/
+seal controls.  It does not construct or receive a Hub transport and cannot
+perform a remote mutation.
 
 Validation::
 
@@ -14,6 +21,8 @@ Validation::
 from __future__ import annotations
 
 import argparse
+import hashlib
+import importlib.util
 import json
 import re
 import sys
@@ -25,6 +34,17 @@ from typing import Any
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
+
+from ipfs_datasets_py.huggingface.publisher import PublicationApproval
+from ipfs_datasets_py.processors.legal_data.state_laws_publication_package import (
+    materialize_state_laws_canonical_controls,
+    plan_state_laws_publication_dry_run,
+    require_state_laws_policy_binding,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import (
+    DEFAULT_CREDENTIALS_SCOPE,
+    example_authorized_main_request,
+)
 
 TASK_ID = "LCR-072"
 GOAL_ID = "LCR-G080"
@@ -73,7 +93,12 @@ PrepublicationSealError = SealStateLawsError
 
 
 def load_json_mapping(path: Path | str) -> dict[str, Any]:
-    path = Path(path).expanduser().resolve()
+    unresolved = Path(path).expanduser()
+    if unresolved.is_symlink():
+        raise SealEvidenceError(
+            f"required receipt must not be a symlink: {unresolved.as_posix()}"
+        )
+    path = unresolved.resolve()
     if not path.is_file():
         raise SealEvidenceError(f"required receipt is missing: {path.as_posix()}")
     try:
@@ -96,6 +121,210 @@ def default_seal_path(repo_root: Path | str | None = None) -> Path:
 def default_canary_path(repo_root: Path | str | None = None) -> Path:
     root = Path(repo_root) if repo_root is not None else REPOSITORY_ROOT
     return (root / STAGING_RELPATH).resolve()
+
+
+def load_publication_approval(
+    path: Path | str,
+    *,
+    expected_plan_digest: str,
+    expected_upload_bytes: int,
+    expected_cost_usd: float,
+) -> PublicationApproval:
+    """Load one bounded approval for the exact rebuilt main plan."""
+
+    unresolved = Path(path).expanduser()
+    if unresolved.is_symlink():
+        raise SealEvidenceError("publication approval is missing or unsafe")
+    target = unresolved.resolve()
+    if not target.is_file():
+        raise SealEvidenceError("publication approval is missing or unsafe")
+    payload = load_json_mapping(target)
+    allowed = {
+        "approval_id",
+        "approver",
+        "credentials_scope",
+        "max_cost_usd",
+        "max_upload_bytes",
+        "notes",
+        "plan_digest",
+    }
+    if set(payload) - allowed:
+        raise SealBindingError("publication approval has unexpected fields")
+    try:
+        approval = PublicationApproval(
+            approval_id=payload["approval_id"],
+            approver=payload["approver"],
+            credentials_scope=payload["credentials_scope"],
+            max_cost_usd=payload["max_cost_usd"],
+            max_upload_bytes=payload["max_upload_bytes"],
+            notes=payload.get("notes", ""),
+            plan_digest=payload["plan_digest"],
+        )
+    except (KeyError, RuntimeError, TypeError, ValueError) as exc:
+        raise SealBindingError("publication approval failed validation") from exc
+    if approval.plan_digest != _sha256(
+        expected_plan_digest, label="expected_plan_digest"
+    ):
+        raise SealBindingError("publication approval binds another plan")
+    if approval.credentials_scope != DEFAULT_CREDENTIALS_SCOPE:
+        raise SealBindingError("publication approval credential scope drifted")
+    if approval.max_upload_bytes < expected_upload_bytes:
+        raise SealBindingError("publication approval upload-byte bound is too small")
+    if approval.max_cost_usd < expected_cost_usd:
+        raise SealBindingError("publication approval cost bound is too small")
+    return approval
+
+
+def _load_verified_production_candidate(
+    *,
+    repo_root: Path,
+) -> tuple[dict[str, Any], dict[str, str] | None]:
+    """Validate the exact LCR-084 candidate without live remeasurement."""
+
+    candidate = load_json_mapping(repo_root / CANDIDATE_RELPATH)
+    try:
+        script_path = Path(__file__).resolve().with_name(
+            "build_state_laws_hf_release.py"
+        )
+        if script_path.is_symlink() or not script_path.is_file():
+            raise SealEvidenceError(
+                "exact LCR-084 candidate validator is missing or unsafe"
+            )
+        source_sha256 = hashlib.sha256(script_path.read_bytes()).hexdigest()
+        spec = importlib.util.spec_from_file_location(
+            "_state_laws_exact_local_candidate_builder_for_seal",
+            script_path,
+        )
+        if spec is None or spec.loader is None:
+            raise SealEvidenceError("exact LCR-084 validator has no file loader")
+        builder = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(builder)
+        if (
+            Path(str(getattr(builder, "__file__", ""))).resolve()
+            != script_path
+            or hashlib.sha256(script_path.read_bytes()).hexdigest()
+            != source_sha256
+        ):
+            raise SealEvidenceError(
+                "exact LCR-084 candidate validator identity changed"
+            )
+
+        checked = builder.check_production_candidate_report(
+            candidate,
+            repo_root=repo_root,
+            remeasure_production_evidence=False,
+        )
+        binding = builder.check_production_candidate_publication_binding(candidate)
+    except Exception as exc:
+        raise SealEvidenceError(
+            f"LCR-084 production candidate validation failed: {exc}"
+        ) from exc
+    if checked.get("valid") is not True:
+        raise SealEvidenceError("LCR-084 production candidate did not pass")
+    return candidate, binding
+
+
+def generate_state_prepublication_seal(
+    *,
+    release_root: Path | str,
+    approval_path: Path | str,
+    sealed_at: str,
+    repository_root: Path | str = REPOSITORY_ROOT,
+) -> dict[str, Any]:
+    """Materialize the canonical LCR-072 controls with no remote mutation.
+
+    All inputs are reopened and bound before the existing atomic local control
+    writer runs.  This function deliberately has no API/transport parameter.
+    """
+
+    root = Path(repository_root).expanduser().resolve()
+    canary = load_staging_canary(root)
+    candidate, existing_binding = _load_verified_production_candidate(
+        repo_root=root
+    )
+    try:
+        dry_run = plan_state_laws_publication_dry_run(
+            Path(release_root).expanduser().resolve(),
+            audited_parent_commit=PREVIOUS_PUBLIC_PIN,
+        )
+        package = dry_run.package
+        plan = dry_run.plan
+    except (OSError, RuntimeError, TypeError, ValueError) as exc:
+        raise SealEvidenceError(
+            f"exact State Laws main plan failed validation: {exc}"
+        ) from exc
+    if (
+        plan.repository_id != TARGET_REPO
+        or plan.target_revision != "main"
+        or plan.audited_parent_commit != PREVIOUS_PUBLIC_PIN
+        or plan.release_sha256 != package.manifest_digest
+        or candidate.get("manifest_digest") != package.manifest_digest
+        or canary.get("release_manifest_digest") != package.manifest_digest
+    ):
+        raise SealBindingError(
+            "candidate, staging canary, release package, or main plan drifted"
+        )
+    if existing_binding is not None and (
+        existing_binding.get("plan_digest") != plan.plan_digest
+        or existing_binding.get("release_manifest_digest")
+        != package.manifest_digest
+    ):
+        raise SealBindingError("existing main candidate binds another plan")
+    cost = dict(plan.cost_receipt)
+    try:
+        expected_upload_bytes = int(cost["upload_bytes"])
+        expected_cost_usd = float(cost["estimated_cost_usd"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise SealBindingError("main plan cost receipt is malformed") from exc
+    approval = load_publication_approval(
+        approval_path,
+        expected_plan_digest=plan.plan_digest,
+        expected_upload_bytes=expected_upload_bytes,
+        expected_cost_usd=expected_cost_usd,
+    )
+    request = example_authorized_main_request(
+        manifest_digest=package.manifest_digest,
+        staging_revision=canary["staging_revision"],
+    )
+    try:
+        proof = require_state_laws_policy_binding(
+            package,
+            request,
+            plan=plan,
+            environ={},
+        )
+        controls = materialize_state_laws_canonical_controls(
+            package,
+            plan,
+            proof,
+            repository_root=root,
+            sealed_at=sealed_at,
+        )
+    except (OSError, RuntimeError, TypeError, ValueError) as exc:
+        raise SealBindingError(
+            f"local prepublication control materialization failed: {exc}"
+        ) from exc
+    if (
+        controls.release_manifest_digest != package.manifest_digest
+        or controls.staging_revision != canary["staging_revision"]
+    ):
+        raise SealBindingError("materialized controls drifted from sealed inputs")
+    checked = check_state_prepublication_seal(
+        repo_root=root,
+        require_live_staging_pin=True,
+    )
+    seal = load_json_mapping(root / SEAL_RELPATH)
+    return {
+        **checked,
+        "approval_id": approval.approval_id,
+        "candidate_file_sha256": controls.candidate_file_sha256,
+        "generated": True,
+        "hub_mutation_performed": False,
+        "network_io_performed": False,
+        "seal_content_digest": controls.seal_content_digest,
+        "seal_file_sha256": controls.seal_file_sha256,
+        "seal": seal,
+    }
 
 
 def load_staging_canary(
@@ -276,24 +505,81 @@ def inspect_state_prepublication_seal(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="LCR-072 read-only state prepublication seal")
+    parser = argparse.ArgumentParser(
+        description="LCR-072 local-only state prepublication seal"
+    )
     parser.add_argument("--require-live-staging-pin", action="store_true")
     parser.add_argument("--no-mutate", action="store_true")
     parser.add_argument("--check", action="store_true")
+    parser.add_argument(
+        "--generate",
+        action="store_true",
+        help=(
+            "Explicitly materialize the local candidate/card/seal controls; "
+            "never contacts or mutates the Hub."
+        ),
+    )
+    parser.add_argument(
+        "--release-root",
+        type=Path,
+        default=None,
+        help="Existing verified State Laws release root for --generate.",
+    )
+    parser.add_argument(
+        "--approval",
+        type=Path,
+        default=None,
+        help="Bounded human approval JSON for the exact rebuilt main plan.",
+    )
+    parser.add_argument(
+        "--sealed-at",
+        default=None,
+        help="Strict UTC-Z seal time for local control materialization.",
+    )
     parser.add_argument("--json", action="store_true")
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(list(argv) if argv is not None else None)
-    if not args.check:
-        sys.stderr.write("seal_state_laws_prepublication: FAILED: --check is required\n")
+    if args.check == args.generate:
+        sys.stderr.write(
+            "seal_state_laws_prepublication: FAILED: choose exactly one of "
+            "--check or --generate\n"
+        )
+        return 2
+    if not args.no_mutate:
+        sys.stderr.write(
+            "seal_state_laws_prepublication: FAILED: --no-mutate is required\n"
+        )
+        return 2
+    if args.generate and (
+        args.release_root is None
+        or args.approval is None
+        or not str(args.sealed_at or "").strip()
+    ):
+        sys.stderr.write(
+            "seal_state_laws_prepublication: FAILED: --generate requires "
+            "--release-root, --approval, and --sealed-at\n"
+        )
         return 2
     try:
-        report = inspect_state_prepublication_seal(
-            require_live_staging_pin=bool(args.require_live_staging_pin),
-            no_mutate=bool(args.no_mutate),
-        )
+        if args.generate:
+            if not args.require_live_staging_pin:
+                raise SealLiveStagingError(
+                    "--generate requires --require-live-staging-pin"
+                )
+            report = generate_state_prepublication_seal(
+                release_root=args.release_root,
+                approval_path=args.approval,
+                sealed_at=str(args.sealed_at),
+            )
+            report = {**report, "no_mutate": True, "status": "passed"}
+        else:
+            report = inspect_state_prepublication_seal(
+                require_live_staging_pin=bool(args.require_live_staging_pin),
+                no_mutate=bool(args.no_mutate),
+            )
     except PrepublicationSealError as exc:
         sys.stderr.write(f"seal_state_laws_prepublication: FAILED: {exc}\n")
         return 1
