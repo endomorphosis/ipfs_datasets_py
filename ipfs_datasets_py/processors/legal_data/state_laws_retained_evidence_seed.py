@@ -53,6 +53,9 @@ SCHEMA_VERSION: Final = "state-laws-retained-evidence-seed-v1"
 TRANSPORT_UNSTABLE_EXCLUSION_SCHEMA_VERSION: Final = (
     "state-laws-retained-evidence-seed-v2"
 )
+PHASE_BOUND_SEED_SCHEMA_VERSION: Final = (
+    "state-laws-retained-evidence-phase-bound-seed-v1"
+)
 UNION_SCHEMA_VERSION: Final = "state-laws-retained-evidence-union-v1"
 _SELECTION_RECEIPT_SCHEMA_VERSIONS: Final = frozenset(
     {
@@ -193,8 +196,26 @@ def _select_entries(
     *,
     allowed_source_transports: Sequence[str],
     include_urls: Iterable[str] | None,
+    phase_bound_receipt_sha256s: Sequence[str] = (),
 ) -> tuple[list[RetainedStateLawParserInput], int, tuple[str, ...]]:
     transports = _normalized_allowed_transports(allowed_source_transports)
+
+    bound_receipt_ids: set[str] = set()
+    for raw_digest in phase_bound_receipt_sha256s:
+        digest = str(raw_digest or "").strip().lower()
+        if (
+            raw_digest != digest
+            or len(digest) != 64
+            or any(character not in "0123456789abcdef" for character in digest)
+        ):
+            raise StateLawsRetainedEvidenceSeedError(
+                "phase-bound receipt identity must be a canonical SHA-256"
+            )
+        if digest in bound_receipt_ids:
+            raise StateLawsRetainedEvidenceSeedError(
+                "phase-bound receipt identities must be unique"
+            )
+        bound_receipt_ids.add(digest)
 
     requested_urls = (
         tuple(sorted({_canonical_url(value) for value in include_urls}))
@@ -233,9 +254,39 @@ def _select_entries(
     for entry in candidates:
         grouped.setdefault(_request_identity(entry), []).append(entry)
 
+    candidates_by_receipt = {
+        entry.receipt.receipt_sha256: entry for entry in candidates
+    }
+    if len(candidates_by_receipt) != len(candidates):
+        raise StateLawsRetainedEvidenceSeedError(
+            "allowed retained evidence repeats one receipt identity"
+        )
+    missing_bound_receipts = sorted(bound_receipt_ids - set(candidates_by_receipt))
+    if missing_bound_receipts:
+        raise StateLawsRetainedEvidenceSeedError(
+            "phase-bound receipt is absent from the allowed transport projection: "
+            f"{missing_bound_receipts[0]}"
+        )
+
     selected: list[RetainedStateLawParserInput] = []
     for identity in sorted(grouped, key=lambda item: (item[0], item[1])):
         observations = grouped[identity]
+        observation_ids = {
+            entry.receipt.receipt_sha256 for entry in observations
+        }
+        bound_observation_ids = observation_ids & bound_receipt_ids
+        if bound_observation_ids:
+            if bound_observation_ids != observation_ids:
+                raise StateLawsRetainedEvidenceSeedError(
+                    "phase-bound plan does not bind every retained observation for "
+                    f"one exact request: {identity[0]}"
+                )
+            selected.extend(
+                entry
+                for entry in observations
+                if entry.receipt.receipt_sha256 in bound_observation_ids
+            )
+            continue
         content_digests = {
             str(entry.receipt.content.sha256)
             for entry in observations
@@ -532,6 +583,7 @@ def seed_retained_evidence_generation(
     include_urls: Iterable[str] | None = None,
     exclude_transport_unstable_receipt_sha256s: Sequence[str] = (),
     source_selection_receipt: str | Path | None = None,
+    phase_bound_receipt_sha256s: Sequence[str] = (),
 ) -> RetainedEvidenceSeedReport:
     """Seed one fresh evidence generation from verified retained inputs.
 
@@ -548,6 +600,13 @@ def seed_retained_evidence_generation(
     from a prior in-root v1/v2 seed or union migration.  This permits a later
     conflicting observation to remain in the source ledger without silently
     changing the fresh generation's previously selected inputs.
+
+    ``phase_bound_receipt_sha256s`` is reserved for a caller that has already
+    validated one immutable two-phase live closure plan.  Every observation
+    sharing a bound exact request identity must be named, so this opt-in seam
+    cannot turn an unbound or partially bound conflict into parser evidence.
+    The default selection remains fail-closed for different bodies returned
+    by one exact request.
     """
 
     code = validate_jurisdiction(jurisdiction)
@@ -587,6 +646,15 @@ def seed_retained_evidence_generation(
             "source_selection_receipt cannot be combined with transport-unstable "
             "receipt exclusions"
         )
+    if phase_bound_receipt_sha256s and (
+        include_urls is not None
+        or source_selection_receipt is not None
+        or exclude_transport_unstable_receipt_sha256s
+    ):
+        raise StateLawsRetainedEvidenceSeedError(
+            "phase-bound receipt selection cannot be combined with URL, prior "
+            "selection-receipt, or transport-unstable filters"
+        )
     source_ledger = StateLawMultiFetchAcquisitionLedger(
         source,
         jurisdiction=code,
@@ -606,6 +674,7 @@ def seed_retained_evidence_generation(
             source_ledger,
             allowed_source_transports=transports,
             include_urls=include_urls,
+            phase_bound_receipt_sha256s=phase_bound_receipt_sha256s,
         )
     else:
         pinned_projection, pinned_receipt_path, pinned_receipt_sha256 = (
@@ -684,11 +753,11 @@ def seed_retained_evidence_generation(
                 "staged evidence projection differs after retained replay"
             )
 
-        migration_schema = (
-            TRANSPORT_UNSTABLE_EXCLUSION_SCHEMA_VERSION
-            if excluded_transport_unstable_receipts
-            else SCHEMA_VERSION
-        )
+        migration_schema = SCHEMA_VERSION
+        if excluded_transport_unstable_receipts:
+            migration_schema = TRANSPORT_UNSTABLE_EXCLUSION_SCHEMA_VERSION
+        elif phase_bound_receipt_sha256s:
+            migration_schema = PHASE_BOUND_SEED_SCHEMA_VERSION
         migration = {
             "allowed_source_transports": sorted(
                 {str(value).strip() for value in allowed_source_transports}
@@ -711,6 +780,10 @@ def seed_retained_evidence_generation(
         if excluded_transport_unstable_receipts:
             migration["excluded_transport_unstable_receipts"] = list(
                 excluded_transport_unstable_receipts
+            )
+        if phase_bound_receipt_sha256s:
+            migration["phase_bound_receipt_sha256s"] = sorted(
+                {str(value) for value in phase_bound_receipt_sha256s}
             )
         if pinned_receipt_path is not None:
             migration["source_selection_receipt_path"] = str(
@@ -776,7 +849,11 @@ def seed_retained_evidence_generation(
         schema_version=(
             TRANSPORT_UNSTABLE_EXCLUSION_SCHEMA_VERSION
             if excluded_transport_unstable_receipts
-            else SCHEMA_VERSION
+            else (
+                PHASE_BOUND_SEED_SCHEMA_VERSION
+                if phase_bound_receipt_sha256s
+                else SCHEMA_VERSION
+            )
         ),
     )
 
@@ -1120,6 +1197,7 @@ def seed_retained_evidence_union(
 
 
 __all__ = [
+    "PHASE_BOUND_SEED_SCHEMA_VERSION",
     "SCHEMA_VERSION",
     "TRANSPORT_UNSTABLE_EXCLUSION_SCHEMA_VERSION",
     "RetainedEvidenceSeedReport",

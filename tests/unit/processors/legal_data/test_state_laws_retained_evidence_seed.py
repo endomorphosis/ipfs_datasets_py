@@ -18,6 +18,7 @@ from ipfs_datasets_py.processors.legal_data.state_laws_multifetch_acquisition im
     StateLawMultiFetchAcquisitionLedger,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_retained_evidence_seed import (
+    PHASE_BOUND_SEED_SCHEMA_VERSION,
     TRANSPORT_UNSTABLE_EXCLUSION_SCHEMA_VERSION,
     RetainedEvidenceSeedSource,
     StateLawsRetainedEvidenceSeedError,
@@ -328,6 +329,77 @@ def test_seed_rejects_disagreeing_bodies_for_one_allowed_request(
             parser_name="VirginiaScraper",
         )
     assert not (tmp_path / "destination" / "VA").exists()
+
+
+def test_seed_accepts_only_a_fully_bound_phase_request_conflict(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "source"
+    ledger = StateLawMultiFetchAcquisitionLedger(
+        source,
+        jurisdiction="VA",
+        parser_name="VirginiaScraper",
+    )
+    entries = []
+    for index, body in enumerate((b"first phase body", b"replay phase body")):
+        entries.append(
+            ledger.retain_parser_input(
+                official_url=DIRECT_ONE,
+                body=body,
+                transport_receipt=_direct_receipt(DIRECT_ONE, body),
+                retrieved_at=f"2026-08-26T01:00:0{index}Z",
+            )
+        )
+    receipt_ids = tuple(entry.receipt.receipt_sha256 for entry in entries)
+
+    with pytest.raises(
+        StateLawsRetainedEvidenceSeedError,
+        match="does not bind every retained observation",
+    ):
+        seed_retained_evidence_generation(
+            source_root=source,
+            destination_root=tmp_path / "partially-bound",
+            jurisdiction="VA",
+            parser_name="VirginiaScraper",
+            phase_bound_receipt_sha256s=receipt_ids[:1],
+        )
+
+    destination = tmp_path / "fully-bound"
+    report = seed_retained_evidence_generation(
+        source_root=source,
+        destination_root=destination,
+        jurisdiction="VA",
+        parser_name="VirginiaScraper",
+        phase_bound_receipt_sha256s=receipt_ids,
+    )
+
+    assert report.schema_version == PHASE_BOUND_SEED_SCHEMA_VERSION
+    assert report.selected_parser_input_count == 2
+    assert report.duplicate_request_observations_avoided == 0
+    assert report.unique_content_object_count == 2
+    assert report.hardlinked_file_count == 4
+    assert report.copied_file_count == 0
+    migration = json.loads(Path(report.migration_receipt_path).read_text())
+    assert migration["phase_bound_receipt_sha256s"] == sorted(receipt_ids)
+
+    replay = StateLawMultiFetchAcquisitionLedger(
+        destination,
+        jurisdiction="VA",
+        parser_name="VirginiaScraper",
+        retained_replay_only=True,
+    )
+    assert {entry.receipt.content.sha256 for entry in replay.entries} == {
+        hashlib.sha256(body).hexdigest()
+        for body in (b"first phase body", b"replay phase body")
+    }
+    with pytest.raises(
+        StateLawMultiFetchAcquisitionError,
+        match="ambiguous for this request",
+    ):
+        replay.replay_retained_parser_input(
+            official_url=DIRECT_ONE,
+            sanitized_request={"method": "GET", "url": DIRECT_ONE},
+        )
 
 
 def _pinned_source_with_later_conflict(

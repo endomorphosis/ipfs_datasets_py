@@ -2526,6 +2526,21 @@ def _closure_input_for_raw_receipt(
             != raw_receipt.get("canonical_row_count")
         ):
             continue
+        raw_catalog_evidence = raw_receipt.get("source_catalog_evidence")
+        completion_catalog_evidence = completion.get("source_catalog_evidence")
+        if (
+            (
+                raw_catalog_evidence is not None
+                or completion_catalog_evidence is not None
+            )
+            and (
+                not isinstance(raw_catalog_evidence, Mapping)
+                or not isinstance(completion_catalog_evidence, Mapping)
+                or canonical_json_bytes(raw_catalog_evidence)
+                != canonical_json_bytes(completion_catalog_evidence)
+            )
+        ):
+            continue
         raw_frontier = dict(raw_receipt.get("frontier") or {})
         completion_frontier = dict(completion.get("frontier") or {})
         raw_frontier.pop("frontier_digest_sha256", None)
@@ -2987,6 +3002,188 @@ def _run_bounded_retained_replay_subprocess(
                 stream.close()
 
 
+def _verifier_phase_bound_seed_selection(
+    *,
+    scraper: Any,
+    ledger: Any,
+    code: str,
+) -> tuple[tuple[str, ...], Path | None]:
+    """Resolve one current-scraper-validated live phase plan for verifier seeding.
+
+    The generic retained ledger deliberately cannot choose between different
+    bodies for one exact request.  Shared official-frontier scrapers have a
+    narrower selector: their original live closure binds each helper call to
+    an immutable receipt in ``first``/``replay`` order and rejects competing
+    live histories.  Reuse that current scraper validator here, then retain
+    only one content-addressed original-live closure as the replay selector.
+    """
+
+    attach = getattr(scraper, "attach_state_law_acquisition_ledger", None)
+    load_phase = getattr(
+        scraper, "_bound_shared_official_frontier_replay_plan", None
+    )
+    if not callable(attach) or not callable(load_phase):
+        raise CandidateError(
+            f"{code} current scraper lacks phase-bound retained replay support"
+        )
+    attach(ledger)
+    try:
+        first = load_phase(phase="first")
+        replay = load_phase(phase="replay")
+    except RuntimeError as exc:
+        raise CandidateError(
+            f"{code} shared-frontier phase plan is not uniquely replayable: {exc}"
+        ) from exc
+
+    if first is None and replay is None:
+        return (), None
+    if (
+        not isinstance(first, list)
+        or not first
+        or not isinstance(replay, list)
+        or not replay
+    ):
+        raise CandidateError(
+            f"{code} shared-frontier phase plan omitted one traversal"
+        )
+
+    expected_receipts: dict[str, tuple[str, ...]] = {}
+    bound_receipts: set[str] = set()
+    for phase, rows in (("first", first), ("replay", replay)):
+        phase_receipts: list[str] = []
+        for row in rows:
+            if not isinstance(row, Mapping):
+                raise CandidateError(
+                    f"{code} shared-frontier {phase} plan has a non-object input"
+                )
+            receipt_sha256 = _require_sha256(
+                row.get("receipt_sha256"),
+                label=f"{code} shared-frontier {phase} receipt",
+            )
+            phase_receipts.append(receipt_sha256)
+            bound_receipts.add(receipt_sha256)
+        expected_receipts[phase] = tuple(phase_receipts)
+
+    closure_dir = Path(ledger.closure_inputs_dir)
+    live_selectors: list[Path] = []
+    for candidate in sorted(closure_dir.glob("*.json"), key=lambda item: item.name):
+        try:
+            source = ledger.resolve_frontier_closure_projection_path(candidate)
+            closure = ledger._load_frontier_closure_projection(source)
+        except Exception as exc:
+            raise CandidateError(
+                f"{code} phase-bound closure selector failed fixity"
+            ) from exc
+        completion = closure.get("completion_receipt")
+        if not isinstance(completion, Mapping):
+            continue
+        catalog = completion.get("source_catalog_evidence")
+        if not isinstance(catalog, Mapping):
+            continue
+        first_observation = catalog.get("first_observation")
+        replay_observation = catalog.get("replay_observation")
+        if not isinstance(first_observation, Mapping) or not isinstance(
+            replay_observation, Mapping
+        ):
+            continue
+        if (
+            first_observation.get("retained_replay"),
+            replay_observation.get("retained_replay"),
+        ) != (False, False):
+            continue
+        observed_receipts: dict[str, tuple[str, ...]] = {}
+        malformed = False
+        for phase, observation in (
+            ("first", first_observation),
+            ("replay", replay_observation),
+        ):
+            raw_inputs = observation.get("retained_parser_inputs")
+            if not isinstance(raw_inputs, list) or not raw_inputs:
+                malformed = True
+                break
+            phase_receipts = []
+            for raw_input in raw_inputs:
+                if not isinstance(raw_input, Mapping):
+                    malformed = True
+                    break
+                receipt_sha256 = str(
+                    raw_input.get("receipt_sha256") or ""
+                ).strip().lower()
+                phase_receipts.append(receipt_sha256)
+            if malformed:
+                break
+            observed_receipts[phase] = tuple(phase_receipts)
+        if not malformed and observed_receipts == expected_receipts:
+            live_selectors.append(Path(source))
+
+    if not live_selectors:
+        raise CandidateError(
+            f"{code} phase-bound plan lacks its original live closure selector"
+        )
+    return tuple(sorted(bound_receipts)), min(
+        live_selectors, key=lambda item: item.name
+    )
+
+
+def _hardlink_verifier_phase_selector(
+    *,
+    source: Path,
+    destination_root: Path,
+    code: str,
+) -> Path:
+    """Hardlink one digest-named live closure into the isolated verifier root."""
+
+    source_bytes = read_regular_file_bytes(
+        source, label=f"{code} live phase closure selector"
+    )
+    source_sha256 = hashlib.sha256(source_bytes).hexdigest()
+    if source.name != f"{source_sha256}.json":
+        raise CandidateError(
+            f"{code} live phase closure selector filename failed fixity"
+        )
+    jurisdiction_root = _safe_existing_directory(
+        destination_root / code,
+        label=f"{code} verifier jurisdiction evidence root",
+    )
+    selector_dir = jurisdiction_root / "frontiers" / "closure-inputs"
+    if selector_dir.exists() and (
+        selector_dir.is_symlink() or not selector_dir.is_dir()
+    ):
+        raise CandidateError(
+            f"{code} verifier closure selector directory is invalid"
+        )
+    selector_dir.mkdir(parents=True, exist_ok=True)
+    if selector_dir.is_symlink() or not selector_dir.is_dir():
+        raise CandidateError(
+            f"{code} verifier closure selector directory is invalid"
+        )
+    destination = selector_dir / source.name
+    if destination.exists() or destination.is_symlink():
+        raise CandidateError(
+            f"{code} verifier closure selector destination already exists"
+        )
+    try:
+        os.link(source, destination, follow_symlinks=False)
+    except OSError as exc:
+        raise CandidateError(
+            f"{code} verifier closure selector could not be hardlinked"
+        ) from exc
+    destination_bytes = read_regular_file_bytes(
+        destination, label=f"{code} verifier live phase closure selector"
+    )
+    source_stat = source.stat(follow_symlinks=False)
+    destination_stat = destination.stat(follow_symlinks=False)
+    if (
+        destination_bytes != source_bytes
+        or source_stat.st_dev != destination_stat.st_dev
+        or source_stat.st_ino != destination_stat.st_ino
+    ):
+        raise CandidateError(
+            f"{code} verifier closure selector is not the source hardlink"
+        )
+    return destination
+
+
 def _verifier_owned_retained_replay(
     *,
     prepared: Any,
@@ -3114,17 +3311,39 @@ def _verifier_owned_retained_replay(
             )
             if not transports:
                 raise CandidateError(f"{code} retained evidence has no verified transports")
+            replay_selection_ledger = StateLawMultiFetchAcquisitionLedger(
+                matching_roots[0],
+                jurisdiction=code,
+                parser_name=parser_name,
+                allowed_source_transports=transports,
+                retained_replay_only=True,
+            )
+            phase_bound_receipts, live_phase_selector = (
+                _verifier_phase_bound_seed_selection(
+                    scraper=scraper,
+                    ledger=replay_selection_ledger,
+                    code=code,
+                )
+            )
             seed_report = seed_retained_evidence_generation(
                 source_root=matching_roots[0],
                 destination_root=evidence_root,
                 jurisdiction=code,
                 parser_name=parser_name,
                 allowed_source_transports=transports,
+                phase_bound_receipt_sha256s=phase_bound_receipts,
             )
             authorize_hardlink_only_seed(seed_report, home=verifier_home)
             if int(seed_report.copied_file_count) != 0:
                 raise CandidateError(f"{code} verifier seed copied retained evidence")
             hardlinked_files += int(seed_report.hardlinked_file_count)
+            if live_phase_selector is not None:
+                _hardlink_verifier_phase_selector(
+                    source=live_phase_selector,
+                    destination_root=evidence_root,
+                    code=code,
+                )
+                hardlinked_files += 1
 
         source_root = _safe_existing_directory(
             REPOSITORY_ROOT,

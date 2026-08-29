@@ -727,6 +727,153 @@ def test_closure_input_parses_its_digest_named_snapshot_without_reopening(
     assert selected == closure
 
 
+def test_closure_input_binds_exact_live_or_replay_catalog_evidence(
+    tmp_path: Path,
+) -> None:
+    closure_dir = tmp_path / "frontiers" / "closure-inputs"
+    closure_dir.mkdir(parents=True)
+    frontier = {"complete": True, "frontier_digest_sha256": "f" * 64}
+
+    def catalog_evidence(*, retained_replay: bool, receipt: str) -> dict[str, object]:
+        observation = {
+            "body_sha256": "b" * 64,
+            "observation_digest": "d" * 64,
+            "retained_parser_inputs": [{"receipt_sha256": receipt}],
+            "retained_replay": retained_replay,
+        }
+        return {
+            "catalog_key_count": 1,
+            "first_observation": observation,
+            "replay_observation": observation,
+        }
+
+    closure_paths: dict[str, Path] = {}
+    catalogs = {
+        "live": catalog_evidence(retained_replay=False, receipt="a" * 64),
+        "replay": catalog_evidence(retained_replay=True, receipt="c" * 64),
+    }
+    for name, catalog in catalogs.items():
+        closure = {
+            "canonical_output_binding": {"canonical_row_count": 1},
+            "completion_receipt": {
+                "disposition": {"admitted": 1},
+                "frontier": frontier,
+                "index_keys": ["one"],
+                "jurisdiction": "IA",
+                "source_catalog_evidence": catalog,
+            },
+            "replayed_frontier": frontier,
+        }
+        serialized = cli.canonical_json_bytes(closure)
+        digest = cli.hashlib.sha256(serialized).hexdigest()
+        closure_paths[name] = closure_dir / f"{digest}.json"
+        closure_paths[name].write_bytes(serialized)
+
+    selected_path, selected = cli._closure_input_for_raw_receipt(
+        jurisdiction_root=tmp_path,
+        raw_receipt={
+            "canonical_row_count": 1,
+            "disposition": {"admitted": 1},
+            "frontier": frontier,
+            "index_keys": ["one"],
+            "source_catalog_evidence": catalogs["replay"],
+        },
+        code="IA",
+    )
+
+    assert selected_path == closure_paths["replay"]
+    assert selected["completion_receipt"]["source_catalog_evidence"] == catalogs[
+        "replay"
+    ]
+
+
+def test_verifier_phase_bound_seed_uses_one_live_selector_and_rejects_competing_plan(
+    tmp_path: Path,
+) -> None:
+    closure_dir = tmp_path / "frontiers" / "closure-inputs"
+    closure_dir.mkdir(parents=True)
+    first_receipt = "a" * 64
+    replay_receipt = "b" * 64
+    closure = {
+        "completion_receipt": {
+            "jurisdiction": "IA",
+            "source_catalog_evidence": {
+                "first_observation": {
+                    "retained_parser_inputs": [
+                        {"receipt_sha256": first_receipt}
+                    ],
+                    "retained_replay": False,
+                },
+                "replay_observation": {
+                    "retained_parser_inputs": [
+                        {"receipt_sha256": replay_receipt}
+                    ],
+                    "retained_replay": False,
+                },
+            },
+        }
+    }
+    serialized = cli.canonical_json_bytes(closure)
+    selector = closure_dir / f"{cli.hashlib.sha256(serialized).hexdigest()}.json"
+    selector.write_bytes(serialized)
+
+    class PhaseScraper:
+        def attach_state_law_acquisition_ledger(self, ledger: object) -> None:
+            self.ledger = ledger
+
+        def _bound_shared_official_frontier_replay_plan(
+            self, *, phase: str
+        ) -> list[dict[str, str]]:
+            return [
+                {
+                    "receipt_sha256": (
+                        first_receipt if phase == "first" else replay_receipt
+                    )
+                }
+            ]
+
+    ledger = SimpleNamespace(
+        closure_inputs_dir=closure_dir,
+        resolve_frontier_closure_projection_path=lambda path: path,
+        _load_frontier_closure_projection=lambda path: json.loads(
+            path.read_text(encoding="utf-8")
+        ),
+    )
+    receipt_ids, selected = cli._verifier_phase_bound_seed_selection(
+        scraper=PhaseScraper(),
+        ledger=ledger,
+        code="IA",
+    )
+
+    assert receipt_ids == (first_receipt, replay_receipt)
+    assert selected == selector
+    destination_root = tmp_path / "destination"
+    (destination_root / "IA").mkdir(parents=True)
+    linked = cli._hardlink_verifier_phase_selector(
+        source=selector,
+        destination_root=destination_root,
+        code="IA",
+    )
+    assert linked.read_bytes() == serialized
+    assert linked.stat().st_ino == selector.stat().st_ino
+
+    class CompetingPlanScraper(PhaseScraper):
+        def _bound_shared_official_frontier_replay_plan(
+            self, *, phase: str
+        ) -> list[dict[str, str]]:
+            del phase
+            raise RuntimeError(
+                "shared official frontier has multiple distinct live replay plans"
+            )
+
+    with pytest.raises(cli.CandidateError, match="multiple distinct live replay plans"):
+        cli._verifier_phase_bound_seed_selection(
+            scraper=CompetingPlanScraper(),
+            ledger=ledger,
+            code="IA",
+        )
+
+
 def test_release_artifact_snapshot_rejects_path_swap(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
