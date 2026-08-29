@@ -1,0 +1,357 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/program-relation.payload.schema.json",
+  "title": "Scoped program-relation claims, invalidation, and validation receipts v1",
+  "description": "Closed, fail-closed JSON Schema for datasets-owned scoped relation lifecycle records. Exact equality, refinement, entailment, contradiction, compatibility, and equivalence families remain scoped. Neural similarity is never an authoritative relation. Contradictions yield conflict or abstention, never ex falso admission. Canonical bytes and CIDv1 come from software_contracts.content over ir_core collection-canonical DAG-JSON. Unknown fields, unsupported schema versions, floats, and nonfinite numbers are rejected.",
+  "oneOf": [
+    { "$ref": "#/$defs/relationScope" },
+    { "$ref": "#/$defs/programRelationClaim" },
+    { "$ref": "#/$defs/relationInvalidation" },
+    { "$ref": "#/$defs/relationValidationReceipt" }
+  ],
+  "$defs": {
+    "cid": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128,
+      "pattern": "^b[a-z2-7]+$"
+    },
+    "cidOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/cid" }]
+    },
+    "nfcString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "cidArraySet": {
+      "type": "array",
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/cid" }
+    },
+    "nfcStringSet": {
+      "type": "array",
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nfcString" }
+    },
+    "programLanguage": {
+      "type": "string",
+      "enum": ["python"]
+    },
+    "relationKind": {
+      "type": "string",
+      "enum": [
+        "equality",
+        "refinement",
+        "entailment",
+        "contradiction",
+        "compatibility",
+        "alpha_equivalence",
+        "structural_equivalence",
+        "logical_equivalence",
+        "behavioral_equivalence",
+        "observational_equivalence",
+        "intent",
+        "transition_behavior"
+      ]
+    },
+    "relationAuthorityStatus": {
+      "type": "string",
+      "enum": [
+        "candidate",
+        "asserted",
+        "validated",
+        "proved",
+        "refuted",
+        "unknown",
+        "stale",
+        "superseded"
+      ]
+    },
+    "relationScopeKind": {
+      "type": "string",
+      "enum": [
+        "module",
+        "symbol",
+        "program_graph",
+        "snapshot",
+        "execution_state",
+        "trace",
+        "theory",
+        "world"
+      ]
+    },
+    "relationInvalidationKind": {
+      "type": "string",
+      "enum": [
+        "scope_changed",
+        "assumption_invalidated",
+        "environment_changed",
+        "evidence_refuted",
+        "superseded",
+        "contradiction_conflict"
+      ]
+    },
+    "relationValidationVerdict": {
+      "type": "string",
+      "enum": [
+        "admitted",
+        "conflict",
+        "abstain",
+        "refuted",
+        "stale",
+        "superseded",
+        "unknown"
+      ]
+    },
+    "contradictionDisposition": {
+      "type": "string",
+      "enum": ["conflict", "abstention", "not_applicable"]
+    },
+    "negativeAuthorityStatus": {
+      "type": "string",
+      "enum": ["refuted", "stale", "superseded"]
+    },
+    "relationScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "scope_kind",
+        "language",
+        "subject_cids",
+        "assumption_cids",
+        "theory_or_policy_cid",
+        "environment_binding_cid",
+        "unavailable_dimensions",
+        "scope_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.relation-scope@1"
+        },
+        "scope_kind": { "$ref": "#/$defs/relationScopeKind" },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "subject_cids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100000,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/cid" }
+        },
+        "assumption_cids": { "$ref": "#/$defs/cidArraySet" },
+        "theory_or_policy_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_cid": { "$ref": "#/$defs/cid" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "scope_cid": { "$ref": "#/$defs/cid" }
+      },
+      "not": {
+        "anyOf": [
+          { "required": ["embedding"] },
+          { "required": ["similarity"] },
+          { "required": ["score"] },
+          { "required": ["model_cid"] }
+        ]
+      }
+    },
+    "programRelationClaim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "relation_kind",
+        "left_cid",
+        "right_cid",
+        "scope_cid",
+        "assumption_cids",
+        "theory_or_policy_cid",
+        "environment_binding_cid",
+        "evidence_cids",
+        "invalidator_cids",
+        "authority_status",
+        "superseded_by_cid",
+        "relation_claim_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.scoped-program-relation@1"
+        },
+        "relation_kind": { "$ref": "#/$defs/relationKind" },
+        "left_cid": { "$ref": "#/$defs/cid" },
+        "right_cid": { "$ref": "#/$defs/cid" },
+        "scope_cid": { "$ref": "#/$defs/cid" },
+        "assumption_cids": { "$ref": "#/$defs/cidArraySet" },
+        "theory_or_policy_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_cid": { "$ref": "#/$defs/cid" },
+        "evidence_cids": { "$ref": "#/$defs/cidArraySet" },
+        "invalidator_cids": { "$ref": "#/$defs/cidArraySet" },
+        "authority_status": { "$ref": "#/$defs/relationAuthorityStatus" },
+        "superseded_by_cid": { "$ref": "#/$defs/cidOrNull" },
+        "relation_claim_cid": { "$ref": "#/$defs/cid" }
+      },
+      "allOf": [
+        {
+          "not": {
+            "anyOf": [
+              { "required": ["embedding"] },
+              { "required": ["embeddings"] },
+              { "required": ["similarity"] },
+              { "required": ["score"] },
+              { "required": ["scores"] },
+              { "required": ["knn"] },
+              { "required": ["nearest"] },
+              { "required": ["distance"] },
+              { "required": ["model_cid"] },
+              { "required": ["vector_cid"] },
+              { "required": ["ann_score"] }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authority_status": { "enum": ["validated", "proved", "refuted"] }
+            },
+            "required": ["authority_status"]
+          },
+          "then": {
+            "properties": {
+              "evidence_cids": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authority_status": { "enum": ["stale", "superseded"] }
+            },
+            "required": ["authority_status"]
+          },
+          "then": {
+            "properties": {
+              "invalidator_cids": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authority_status": { "const": "superseded" }
+            },
+            "required": ["authority_status"]
+          },
+          "then": {
+            "properties": {
+              "superseded_by_cid": { "$ref": "#/$defs/cid" }
+            }
+          }
+        }
+      ]
+    },
+    "relationInvalidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "relation_claim_cid",
+        "invalidation_kind",
+        "resulting_status",
+        "invalidator_cids",
+        "successor_claim_cid",
+        "relation_invalidation_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.relation-invalidation@1"
+        },
+        "relation_claim_cid": { "$ref": "#/$defs/cid" },
+        "invalidation_kind": { "$ref": "#/$defs/relationInvalidationKind" },
+        "resulting_status": { "$ref": "#/$defs/negativeAuthorityStatus" },
+        "invalidator_cids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100000,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/cid" }
+        },
+        "successor_claim_cid": { "$ref": "#/$defs/cidOrNull" },
+        "relation_invalidation_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "relationValidationReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "relation_claim_cid",
+        "verdict",
+        "authority_status",
+        "contradiction_disposition",
+        "conflict_claim_cids",
+        "evidence_cids",
+        "limitation_cids",
+        "similarity_authoritative",
+        "ex_falso_admission",
+        "relation_validation_receipt_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.relation-validation-receipt@1"
+        },
+        "relation_claim_cid": { "$ref": "#/$defs/cid" },
+        "verdict": { "$ref": "#/$defs/relationValidationVerdict" },
+        "authority_status": { "$ref": "#/$defs/relationAuthorityStatus" },
+        "contradiction_disposition": { "$ref": "#/$defs/contradictionDisposition" },
+        "conflict_claim_cids": { "$ref": "#/$defs/cidArraySet" },
+        "evidence_cids": { "$ref": "#/$defs/cidArraySet" },
+        "limitation_cids": { "$ref": "#/$defs/cidArraySet" },
+        "similarity_authoritative": { "const": false },
+        "ex_falso_admission": { "const": false },
+        "relation_validation_receipt_cid": { "$ref": "#/$defs/cid" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "verdict": { "const": "admitted" } },
+            "required": ["verdict"]
+          },
+          "then": {
+            "properties": {
+              "authority_status": { "enum": ["validated", "proved"] },
+              "contradiction_disposition": { "const": "not_applicable" },
+              "conflict_claim_cids": { "maxItems": 0 },
+              "similarity_authoritative": { "const": false },
+              "ex_falso_admission": { "const": false }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "verdict": { "const": "conflict" } },
+            "required": ["verdict"]
+          },
+          "then": {
+            "properties": {
+              "conflict_claim_cids": { "minItems": 1 },
+              "contradiction_disposition": { "enum": ["conflict", "abstention"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "verdict": { "const": "abstain" } },
+            "required": ["verdict"]
+          },
+          "then": {
+            "properties": {
+              "contradiction_disposition": { "const": "abstention" },
+              "ex_falso_admission": { "const": false }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
