@@ -1,0 +1,733 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/program-execution.payload.schema.json",
+  "title": "Dynamic execution-state, event, and trace contracts v1",
+  "description": "Closed, fail-closed JSON Schema for datasets-owned execution-state, event, and trace records. Every event binds exact tree, source, code, and environment identities. Call-stack order and exception/handler state are preserved. Redaction never claims full state. Exception snapshots are not future execution. Predicted and simulated events cannot decode as observations. Canonical bytes and CIDv1 come from software_contracts.content over ir_core collection-canonical DAG-JSON. Unknown fields, unsupported schema versions, timestamps, secrets, floats, and nonfinite numbers are rejected.",
+  "oneOf": [
+    { "$ref": "#/$defs/redactionProfile" },
+    { "$ref": "#/$defs/exceptionSnapshot" },
+    { "$ref": "#/$defs/handlerState" },
+    { "$ref": "#/$defs/stackFrameState" },
+    { "$ref": "#/$defs/programExecutionState" },
+    { "$ref": "#/$defs/abstractProgramState" },
+    { "$ref": "#/$defs/programEvent" },
+    { "$ref": "#/$defs/executionObservation" },
+    { "$ref": "#/$defs/executionTraceSegment" },
+    { "$ref": "#/$defs/executionTrace" },
+    { "$ref": "#/$defs/stateAbstractionReceipt" }
+  ],
+  "$defs": {
+    "cid": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128,
+      "pattern": "^b[a-z2-7]+$"
+    },
+    "cidOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/cid" }]
+    },
+    "nfcString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "nonnegInt": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "nonnegIntOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nonnegInt" }]
+    },
+    "cidArrayOrdered": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": { "$ref": "#/$defs/cid" }
+    },
+    "cidArrayOrderedNonEmpty": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100000,
+      "items": { "$ref": "#/$defs/cid" }
+    },
+    "nfcStringSet": {
+      "type": "array",
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nfcString" }
+    },
+    "strictDagJson": {
+      "description": "Strict DAG-JSON value: null, bool, safe int, string, array, or string-keyed object. Floats and host types are rejected by the Python decoder.",
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        { "type": "string", "maxLength": 16384 },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/strictDagJson" }
+        },
+        {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/strictDagJson" }
+        }
+      ]
+    },
+    "strictObject": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/strictDagJson" }
+    },
+    "programLanguage": {
+      "type": "string",
+      "enum": ["python"]
+    },
+    "observationStatus": {
+      "type": "string",
+      "enum": ["observed", "unavailable", "redacted", "inferred_untrusted"]
+    },
+    "privacyClass": {
+      "type": "string",
+      "enum": ["public", "internal", "restricted", "private"]
+    },
+    "completenessClaim": {
+      "type": "string",
+      "enum": ["full_state", "partial", "redacted", "unavailable"]
+    },
+    "eventKind": {
+      "type": "string",
+      "enum": [
+        "call",
+        "return",
+        "line",
+        "assign",
+        "raise",
+        "catch",
+        "handler",
+        "yield",
+        "await",
+        "branch",
+        "enter",
+        "exit",
+        "external",
+        "observe",
+        "unavailable"
+      ]
+    },
+    "eventOrigin": {
+      "type": "string",
+      "enum": ["observed", "predicted", "simulated"]
+    },
+    "heapBound": {
+      "type": "string",
+      "enum": ["bounded_abstract", "unavailable"]
+    },
+    "handlerKind": {
+      "type": "string",
+      "enum": ["except", "except_star", "finally", "else"]
+    },
+    "abstractionSoundnessClaim": {
+      "type": "string",
+      "enum": ["over_approximation", "under_approximation", "exact", "unknown"]
+    },
+    "forbiddenIdentityFields": {
+      "anyOf": [
+        { "required": ["timestamp"] },
+        { "required": ["timestamps"] },
+        { "required": ["wall_clock"] },
+        { "required": ["observed_at"] },
+        { "required": ["hostname"] },
+        { "required": ["pid"] },
+        { "required": ["embedding"] },
+        { "required": ["hnsw"] },
+        { "required": ["secret"] },
+        { "required": ["password"] },
+        { "required": ["api_key"] },
+        { "required": ["access_token"] },
+        { "required": ["raw_memory"] }
+      ]
+    },
+    "forbiddenFutureExecutionFields": {
+      "anyOf": [
+        { "required": ["continuation_cid"] },
+        { "required": ["future_state_cid"] },
+        { "required": ["next_event_cid"] },
+        { "required": ["predicted_event_cid"] },
+        { "required": ["resume_event_cid"] },
+        { "required": ["scheduled_event_cid"] }
+      ]
+    },
+    "redactionProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "privacy_class",
+        "redacted_dimensions",
+        "unavailable_dimensions",
+        "completeness_claim",
+        "redaction_profile_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.redaction-profile@1"
+        },
+        "privacy_class": { "$ref": "#/$defs/privacyClass" },
+        "redacted_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "completeness_claim": { "$ref": "#/$defs/completenessClaim" },
+        "redaction_profile_cid": { "$ref": "#/$defs/cid" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "completeness_claim": { "const": "full_state" } },
+            "required": ["completeness_claim"]
+          },
+          "then": {
+            "properties": {
+              "redacted_dimensions": { "maxItems": 0 },
+              "unavailable_dimensions": { "maxItems": 0 }
+            }
+          }
+        }
+      ],
+      "not": { "$ref": "#/$defs/forbiddenIdentityFields" }
+    },
+    "exceptionSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "exception_type",
+        "tree_cid",
+        "source_cid",
+        "code_cid",
+        "environment_binding_cid",
+        "exception_value_summary",
+        "traceback_stack_frame_cids",
+        "raised_at_event_cid",
+        "handler_state_cid",
+        "future_execution",
+        "unavailable_dimensions",
+        "completeness_claim",
+        "exception_snapshot_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.exception-snapshot@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "exception_type": { "$ref": "#/$defs/nfcString" },
+        "tree_cid": { "$ref": "#/$defs/cid" },
+        "source_cid": { "$ref": "#/$defs/cid" },
+        "code_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_cid": { "$ref": "#/$defs/cid" },
+        "exception_value_summary": { "$ref": "#/$defs/strictObject" },
+        "traceback_stack_frame_cids": { "$ref": "#/$defs/cidArrayOrdered" },
+        "raised_at_event_cid": { "$ref": "#/$defs/cidOrNull" },
+        "handler_state_cid": { "$ref": "#/$defs/cidOrNull" },
+        "future_execution": { "const": false },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "completeness_claim": { "$ref": "#/$defs/completenessClaim" },
+        "exception_snapshot_cid": { "$ref": "#/$defs/cid" }
+      },
+      "not": {
+        "anyOf": [
+          { "$ref": "#/$defs/forbiddenIdentityFields" },
+          { "$ref": "#/$defs/forbiddenFutureExecutionFields" }
+        ]
+      }
+    },
+    "handlerState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "handler_kind",
+        "tree_cid",
+        "source_cid",
+        "code_cid",
+        "environment_binding_cid",
+        "logical_name",
+        "stack_ordinal",
+        "handler_active",
+        "matching_exception_snapshot_cid",
+        "unavailable_dimensions",
+        "handler_state_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.handler-state@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "handler_kind": { "$ref": "#/$defs/handlerKind" },
+        "tree_cid": { "$ref": "#/$defs/cid" },
+        "source_cid": { "$ref": "#/$defs/cid" },
+        "code_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_cid": { "$ref": "#/$defs/cid" },
+        "logical_name": { "$ref": "#/$defs/nfcString" },
+        "stack_ordinal": { "$ref": "#/$defs/nonnegInt" },
+        "handler_active": { "type": "boolean" },
+        "matching_exception_snapshot_cid": { "$ref": "#/$defs/cidOrNull" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "handler_state_cid": { "$ref": "#/$defs/cid" }
+      },
+      "not": {
+        "anyOf": [
+          { "$ref": "#/$defs/forbiddenIdentityFields" },
+          { "$ref": "#/$defs/forbiddenFutureExecutionFields" }
+        ]
+      }
+    },
+    "stackFrameState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "ordinal",
+        "language",
+        "tree_cid",
+        "source_cid",
+        "code_cid",
+        "environment_binding_cid",
+        "logical_name",
+        "line",
+        "column",
+        "state_summary",
+        "exception_snapshot_cid",
+        "handler_state_cid",
+        "exception_active",
+        "handler_active",
+        "redacted_dimensions",
+        "unavailable_dimensions",
+        "completeness_claim",
+        "privacy_class",
+        "stack_frame_state_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.stack-frame-state@1"
+        },
+        "ordinal": { "$ref": "#/$defs/nonnegInt" },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "tree_cid": { "$ref": "#/$defs/cid" },
+        "source_cid": { "$ref": "#/$defs/cid" },
+        "code_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_cid": { "$ref": "#/$defs/cid" },
+        "logical_name": { "$ref": "#/$defs/nfcString" },
+        "line": { "$ref": "#/$defs/nonnegIntOrNull" },
+        "column": { "$ref": "#/$defs/nonnegIntOrNull" },
+        "state_summary": { "$ref": "#/$defs/strictObject" },
+        "exception_snapshot_cid": { "$ref": "#/$defs/cidOrNull" },
+        "handler_state_cid": { "$ref": "#/$defs/cidOrNull" },
+        "exception_active": { "type": "boolean" },
+        "handler_active": { "type": "boolean" },
+        "redacted_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "completeness_claim": { "$ref": "#/$defs/completenessClaim" },
+        "privacy_class": { "$ref": "#/$defs/privacyClass" },
+        "stack_frame_state_cid": { "$ref": "#/$defs/cid" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "completeness_claim": { "const": "full_state" } },
+            "required": ["completeness_claim"]
+          },
+          "then": {
+            "properties": {
+              "redacted_dimensions": { "maxItems": 0 },
+              "unavailable_dimensions": { "maxItems": 0 }
+            }
+          }
+        }
+      ],
+      "not": { "$ref": "#/$defs/forbiddenIdentityFields" }
+    },
+    "programExecutionState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "capture_profile_cid",
+        "tree_cid",
+        "source_cid",
+        "code_cid",
+        "environment_binding_cid",
+        "observed_state",
+        "heap_summary",
+        "heap_bound",
+        "stack_frame_cids",
+        "exception_snapshot_cid",
+        "handler_state_cid",
+        "redaction_profile_cid",
+        "redacted_dimensions",
+        "unavailable_dimensions",
+        "observation_status",
+        "completeness_claim",
+        "privacy_class",
+        "includes_raw_bodies",
+        "program_execution_state_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.program-execution-state@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "capture_profile_cid": { "$ref": "#/$defs/cid" },
+        "tree_cid": { "$ref": "#/$defs/cid" },
+        "source_cid": { "$ref": "#/$defs/cid" },
+        "code_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_cid": { "$ref": "#/$defs/cid" },
+        "observed_state": { "$ref": "#/$defs/strictObject" },
+        "heap_summary": { "$ref": "#/$defs/strictObject" },
+        "heap_bound": { "$ref": "#/$defs/heapBound" },
+        "stack_frame_cids": { "$ref": "#/$defs/cidArrayOrdered" },
+        "exception_snapshot_cid": { "$ref": "#/$defs/cidOrNull" },
+        "handler_state_cid": { "$ref": "#/$defs/cidOrNull" },
+        "redaction_profile_cid": { "$ref": "#/$defs/cidOrNull" },
+        "redacted_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "observation_status": { "$ref": "#/$defs/observationStatus" },
+        "completeness_claim": { "$ref": "#/$defs/completenessClaim" },
+        "privacy_class": { "$ref": "#/$defs/privacyClass" },
+        "includes_raw_bodies": { "type": "boolean" },
+        "program_execution_state_cid": { "$ref": "#/$defs/cid" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "completeness_claim": { "const": "full_state" } },
+            "required": ["completeness_claim"]
+          },
+          "then": {
+            "properties": {
+              "redacted_dimensions": { "maxItems": 0 },
+              "unavailable_dimensions": { "maxItems": 0 }
+            }
+          }
+        }
+      ],
+      "not": {
+        "anyOf": [
+          { "$ref": "#/$defs/forbiddenIdentityFields" },
+          {
+            "properties": {
+              "privacy_class": { "enum": ["public", "internal"] },
+              "includes_raw_bodies": { "const": true }
+            },
+            "required": ["privacy_class", "includes_raw_bodies"]
+          }
+        ]
+      }
+    },
+    "abstractProgramState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "raw_execution_state_cid",
+        "abstraction_profile_cid",
+        "tree_cid",
+        "environment_binding_cid",
+        "abstract_state",
+        "stack_frame_cids",
+        "unavailable_dimensions",
+        "observation_status",
+        "completeness_claim",
+        "abstract_program_state_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.abstract-program-state@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "raw_execution_state_cid": { "$ref": "#/$defs/cid" },
+        "abstraction_profile_cid": { "$ref": "#/$defs/cid" },
+        "tree_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_cid": { "$ref": "#/$defs/cid" },
+        "abstract_state": { "$ref": "#/$defs/strictObject" },
+        "stack_frame_cids": { "$ref": "#/$defs/cidArrayOrdered" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "observation_status": { "$ref": "#/$defs/observationStatus" },
+        "completeness_claim": { "$ref": "#/$defs/completenessClaim" },
+        "abstract_program_state_cid": { "$ref": "#/$defs/cid" }
+      },
+      "not": { "$ref": "#/$defs/forbiddenIdentityFields" }
+    },
+    "programEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "event_kind",
+        "event_origin",
+        "observation_status",
+        "language",
+        "tree_cid",
+        "source_cid",
+        "code_cid",
+        "environment_binding_cid",
+        "subject_cid",
+        "logical_name",
+        "payload",
+        "line",
+        "column",
+        "predecessor_event_cid",
+        "stack_frame_cids",
+        "exception_snapshot_cid",
+        "handler_state_cid",
+        "redaction_profile_cid",
+        "redacted_dimensions",
+        "unavailable_dimensions",
+        "completeness_claim",
+        "privacy_class",
+        "program_event_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.program-event@1"
+        },
+        "event_kind": { "$ref": "#/$defs/eventKind" },
+        "event_origin": { "$ref": "#/$defs/eventOrigin" },
+        "observation_status": { "$ref": "#/$defs/observationStatus" },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "tree_cid": { "$ref": "#/$defs/cid" },
+        "source_cid": { "$ref": "#/$defs/cid" },
+        "code_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_cid": { "$ref": "#/$defs/cid" },
+        "subject_cid": { "$ref": "#/$defs/cid" },
+        "logical_name": { "$ref": "#/$defs/nfcString" },
+        "payload": { "$ref": "#/$defs/strictObject" },
+        "line": { "$ref": "#/$defs/nonnegIntOrNull" },
+        "column": { "$ref": "#/$defs/nonnegIntOrNull" },
+        "predecessor_event_cid": { "$ref": "#/$defs/cidOrNull" },
+        "stack_frame_cids": { "$ref": "#/$defs/cidArrayOrdered" },
+        "exception_snapshot_cid": { "$ref": "#/$defs/cidOrNull" },
+        "handler_state_cid": { "$ref": "#/$defs/cidOrNull" },
+        "redaction_profile_cid": { "$ref": "#/$defs/cidOrNull" },
+        "redacted_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "completeness_claim": { "$ref": "#/$defs/completenessClaim" },
+        "privacy_class": { "$ref": "#/$defs/privacyClass" },
+        "program_event_cid": { "$ref": "#/$defs/cid" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "event_origin": { "enum": ["predicted", "simulated"] }
+            },
+            "required": ["event_origin"]
+          },
+          "then": {
+            "not": {
+              "properties": { "observation_status": { "const": "observed" } }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "completeness_claim": { "const": "full_state" } },
+            "required": ["completeness_claim"]
+          },
+          "then": {
+            "properties": {
+              "event_origin": { "const": "observed" },
+              "observation_status": { "const": "observed" },
+              "redacted_dimensions": { "maxItems": 0 },
+              "unavailable_dimensions": { "maxItems": 0 }
+            }
+          }
+        }
+      ],
+      "not": { "$ref": "#/$defs/forbiddenIdentityFields" }
+    },
+    "executionObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "event_cid",
+        "event_kind",
+        "event_origin",
+        "observation_status",
+        "language",
+        "tree_cid",
+        "source_cid",
+        "code_cid",
+        "environment_binding_cid",
+        "subject_cid",
+        "payload",
+        "predecessor_event_cid",
+        "stack_frame_cids",
+        "unavailable_dimensions",
+        "execution_observation_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.execution-observation@1"
+        },
+        "event_cid": { "$ref": "#/$defs/cid" },
+        "event_kind": { "$ref": "#/$defs/eventKind" },
+        "event_origin": { "const": "observed" },
+        "observation_status": { "const": "observed" },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "tree_cid": { "$ref": "#/$defs/cid" },
+        "source_cid": { "$ref": "#/$defs/cid" },
+        "code_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_cid": { "$ref": "#/$defs/cid" },
+        "subject_cid": { "$ref": "#/$defs/cid" },
+        "payload": { "$ref": "#/$defs/strictObject" },
+        "predecessor_event_cid": { "$ref": "#/$defs/cidOrNull" },
+        "stack_frame_cids": { "$ref": "#/$defs/cidArrayOrdered" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "execution_observation_cid": { "$ref": "#/$defs/cid" }
+      },
+      "not": {
+        "anyOf": [
+          { "$ref": "#/$defs/forbiddenIdentityFields" },
+          {
+            "properties": {
+              "event_origin": { "enum": ["predicted", "simulated"] }
+            }
+          }
+        ]
+      }
+    },
+    "executionTraceSegment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "tree_cid",
+        "environment_binding_cid",
+        "parent_trace_cid",
+        "start_event_cid",
+        "end_event_cid",
+        "event_cids",
+        "unavailable_dimensions",
+        "execution_trace_segment_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.execution-trace-segment@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "tree_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_cid": { "$ref": "#/$defs/cid" },
+        "parent_trace_cid": { "$ref": "#/$defs/cid" },
+        "start_event_cid": { "$ref": "#/$defs/cid" },
+        "end_event_cid": { "$ref": "#/$defs/cid" },
+        "event_cids": { "$ref": "#/$defs/cidArrayOrderedNonEmpty" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "execution_trace_segment_cid": { "$ref": "#/$defs/cid" }
+      },
+      "not": { "$ref": "#/$defs/forbiddenIdentityFields" }
+    },
+    "executionTrace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "tree_cid",
+        "source_cid",
+        "environment_binding_cid",
+        "event_cids",
+        "segment_cids",
+        "raw_execution_state_cids",
+        "parent_trace_cid",
+        "redaction_profile_cid",
+        "redacted_dimensions",
+        "unavailable_dimensions",
+        "completeness_claim",
+        "privacy_class",
+        "includes_raw_bodies",
+        "execution_trace_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.execution-trace@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "tree_cid": { "$ref": "#/$defs/cid" },
+        "source_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_cid": { "$ref": "#/$defs/cid" },
+        "event_cids": { "$ref": "#/$defs/cidArrayOrderedNonEmpty" },
+        "segment_cids": { "$ref": "#/$defs/cidArrayOrdered" },
+        "raw_execution_state_cids": { "$ref": "#/$defs/cidArrayOrdered" },
+        "parent_trace_cid": { "$ref": "#/$defs/cidOrNull" },
+        "redaction_profile_cid": { "$ref": "#/$defs/cidOrNull" },
+        "redacted_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "completeness_claim": { "$ref": "#/$defs/completenessClaim" },
+        "privacy_class": { "$ref": "#/$defs/privacyClass" },
+        "includes_raw_bodies": { "type": "boolean" },
+        "execution_trace_cid": { "$ref": "#/$defs/cid" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "completeness_claim": { "const": "full_state" } },
+            "required": ["completeness_claim"]
+          },
+          "then": {
+            "properties": {
+              "redacted_dimensions": { "maxItems": 0 },
+              "unavailable_dimensions": { "maxItems": 0 }
+            }
+          }
+        }
+      ],
+      "not": {
+        "anyOf": [
+          { "$ref": "#/$defs/forbiddenIdentityFields" },
+          {
+            "properties": {
+              "privacy_class": { "enum": ["public", "internal"] },
+              "includes_raw_bodies": { "const": true }
+            },
+            "required": ["privacy_class", "includes_raw_bodies"]
+          }
+        ]
+      }
+    },
+    "stateAbstractionReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "raw_execution_state_cid",
+        "abstract_program_state_cid",
+        "abstraction_profile_cid",
+        "soundness_claim",
+        "unavailable_dimensions",
+        "state_abstraction_receipt_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.state-abstraction-receipt@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "raw_execution_state_cid": { "$ref": "#/$defs/cid" },
+        "abstract_program_state_cid": { "$ref": "#/$defs/cid" },
+        "abstraction_profile_cid": { "$ref": "#/$defs/cid" },
+        "soundness_claim": { "$ref": "#/$defs/abstractionSoundnessClaim" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "state_abstraction_receipt_cid": { "$ref": "#/$defs/cid" }
+      },
+      "not": { "$ref": "#/$defs/forbiddenIdentityFields" }
+    }
+  }
+}
