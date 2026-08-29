@@ -5,9 +5,15 @@ from __future__ import annotations
 import ast
 import copy
 import json
+import os
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any
+
+os.environ.setdefault("IPFS_DATASETS_AUTO_INSTALL", "0")
+os.environ.setdefault("IPFS_DATASETS_AUTO_INSTALL_TEST_DEPS", "0")
+os.environ.setdefault("IPFS_DATASETS_PY_MINIMAL_IMPORTS", "1")
+os.environ.setdefault("IPFS_KIT_AUTO_INSTALL_DEPS", "0")
 
 import pytest
 
@@ -18,21 +24,11 @@ from ipfs_datasets_py.logic.software_contracts.content import (
     cid_for_bytes,
     cid_for_structured,
 )
-from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
-    AnalysisConfidence,
-)
-from ipfs_datasets_py.semantic_refactoring.capsules import (
-    CapsuleFreshness,
-    EvidenceClass,
-    FunctionSemanticCapsule,
-    IDENTITY_DIMENSIONS,
-    TypedUncertainty,
-    capsule_from_identity_payload,
-)
 from ipfs_datasets_py.semantic_refactoring.identities import (
     AGGREGATE_IDENTITY_FIELDS,
     AUTHORITY,
     AUTHORITY_OWNER,
+    BINDING_AND_COMPATIBILITY_IDENTITY_FIELDS,
     EXISTING_AT1_IDENTITY_DIMENSIONS,
     FORBIDDEN_OBSERVATIONAL_FIELDS,
     GOLDEN_MOVE_VECTORS,
@@ -43,6 +39,7 @@ from ipfs_datasets_py.semantic_refactoring.identities import (
     IDENTITY_FIELDS,
     IDENTITY_FIELD_SPECS,
     IDENTITY_MOVE_VECTOR_INTERFACE,
+    IMPLEMENTATION_AND_CONTRACT_IDENTITY_FIELDS,
     IMPLEMENTATION_IDENTITY_FIELDS,
     LOCATION_INDEPENDENT_IDENTITY_FIELDS,
     LOCATION_SENSITIVE_IDENTITY_FIELDS,
@@ -68,6 +65,7 @@ from ipfs_datasets_py.semantic_refactoring.identities import (
     extract_existing_at1_identity_fields,
     fields_for_family,
     identity_cid_profile,
+    is_forbidden_observational_field,
     present_existing_at1_identity_fields,
     provider_free_exports,
     require_semantic_preserving_relocation,
@@ -88,6 +86,13 @@ INVENTORY_PATH = (
     / "identity_inventory.json"
 )
 
+EXISTING_AT1_FUNCTION_SCHEMA = (
+    "ipfs-datasets.semantic-refactoring.function-semantic-capsule@1"
+)
+EXISTING_SEMANTIC_CAPSULE_SCHEMA = (
+    "ipfs-datasets.software-contracts.semantic-capsule@1"
+)
+
 
 def _cid(label: str) -> str:
     return cid_for_bytes(label.encode("utf-8"))
@@ -103,27 +108,33 @@ def _identities(**overrides: str) -> SemanticArtifactIdentitySet:
     return SemanticArtifactIdentitySet(**fields)
 
 
-def _uncertainty() -> TypedUncertainty:
-    return TypedUncertainty(
-        confidence=AnalysisConfidence.EXACT.value,
-        unresolved_identity_fields=(),
-        evidence_class=EvidenceClass.EXACT_STATIC_FACT.value,
-    )
+def _existing_at1_envelope(**overrides: Any) -> dict[str, Any]:
+    """Closed-looking existing @1 function-capsule envelope as a plain mapping.
 
+    SPAR-003 must read existing @1 identity fields without importing SPAR-002
+    capsule types or rewriting the source mapping.
+    """
 
-def _function_capsule(**overrides: Any) -> FunctionSemanticCapsule:
-    fields: dict[str, Any] = {
-        **{name: _cid(f"id:{name}") for name in IDENTITY_DIMENSIONS},
-        "freshness": CapsuleFreshness.FRESH.value,
-        "typed_uncertainty": _uncertainty(),
+    payload: dict[str, Any] = {
+        "schema": EXISTING_AT1_FUNCTION_SCHEMA,
+        "kind": "function",
+        **{name: _cid(f"id:{name}") for name in EXISTING_AT1_IDENTITY_DIMENSIONS},
+        "freshness": "fresh",
+        "typed_uncertainty": {
+            "schema": "ipfs-datasets.semantic-refactoring.typed-uncertainty@1",
+            "confidence": "exact",
+            "unresolved_identity_fields": [],
+            "evidence_class": "exact_static_fact",
+        },
         "logical_qualname": "pkg.mod.answer",
         "owner_module_id": _cid("module:pkg.mod"),
         "is_async": False,
         "is_generator": False,
         "positional_arity": 1,
+        "function_capsule_cid": _cid("id:function_capsule_cid"),
     }
-    fields.update(overrides)
-    return FunctionSemanticCapsule(**fields)
+    payload.update(overrides)
+    return payload
 
 
 def test_predicted_symbols_and_task_identity() -> None:
@@ -146,6 +157,8 @@ def test_predicted_symbols_and_task_identity() -> None:
     assert "SemanticArtifactIdentitySet" in class_names
     assert "IdentityMoveVector" in class_names
     assert "FunctionSemanticCapsule" not in class_names
+    assert "SemanticCapsule" not in class_names
+    assert "SemanticCapsuleCompiler" not in class_names
 
 
 def test_identity_fields_match_inventory_and_existing_at1_dimensions() -> None:
@@ -154,7 +167,6 @@ def test_identity_fields_match_inventory_and_existing_at1_dimensions() -> None:
     assert list(EXISTING_AT1_IDENTITY_DIMENSIONS) == [
         item for item in inventory["identity_fields"] if item != "function_capsule_cid"
     ]
-    assert tuple(EXISTING_AT1_IDENTITY_DIMENSIONS) == IDENTITY_DIMENSIONS
     assert set(LOCATION_INDEPENDENT_IDENTITY_FIELDS).isdisjoint(
         LOCATION_SENSITIVE_IDENTITY_FIELDS
     )
@@ -175,6 +187,12 @@ def test_identity_fields_match_inventory_and_existing_at1_dimensions() -> None:
         "behavior",
         "validation",
     )
+    assert tuple(inventory["rules"]) == (
+        "CID identifies exact canonical bytes under declared codec/profile, not universal meaning",
+        "move may preserve implementation/contract identity while changing binding/compatibility identity",
+        "timestamps, process IDs, local paths, and model output are excluded from semantic identity",
+        "accepted @1 payloads are not rewritten in place",
+    )
 
 
 def test_field_catalog_separates_implementation_from_binding_and_compat() -> None:
@@ -190,8 +208,18 @@ def test_field_catalog_separates_implementation_from_binding_and_compat() -> Non
     assert compatibility.family == IdentityFamily.COMPATIBILITY.value
     assert compatibility.sensitivity == IdentitySensitivity.LOCATION_SENSITIVE.value
     assert fields_for_family(IdentityFamily.IMPLEMENTATION) == IMPLEMENTATION_IDENTITY_FIELDS
-    with pytest.raises(IdentityContractError, match="unknown identity field"):
+    assert IMPLEMENTATION_AND_CONTRACT_IDENTITY_FIELDS == (
+        "implementation_ir_cid",
+        "interface_contract_cid",
+    )
+    assert BINDING_AND_COMPATIBILITY_IDENTITY_FIELDS == (
+        "symbol_binding_cid",
+        "public_compatibility_cid",
+    )
+    with pytest.raises(IdentityContractError, match="observational|unknown identity field"):
         classify_identity_field("timestamp")
+    with pytest.raises(IdentityContractError, match="unknown identity field"):
+        classify_identity_field("not_an_identity_field")
 
 
 def test_authority_flags_cannot_self_authorize() -> None:
@@ -223,6 +251,14 @@ def test_identity_set_round_trips_and_reverifies_independent_cid() -> None:
     assert grouped["binding"] == {"symbol_binding_cid": record.symbol_binding_cid}
     assert grouped["compatibility"] == {
         "public_compatibility_cid": record.public_compatibility_cid
+    }
+    assert record.implementation_and_contract_identity() == {
+        "implementation_ir_cid": record.implementation_ir_cid,
+        "interface_contract_cid": record.interface_contract_cid,
+    }
+    assert record.binding_and_compatibility_identity() == {
+        "symbol_binding_cid": record.symbol_binding_cid,
+        "public_compatibility_cid": record.public_compatibility_cid,
     }
 
 
@@ -282,6 +318,11 @@ def test_closed_records_reject_unknown_and_observational_fields() -> None:
                 "schema": SEMANTIC_ARTIFACT_IDENTITY_SET_SCHEMA.replace("@1", "@2"),
             }
         )
+    assert is_forbidden_observational_field("timestamp") is True
+    assert is_forbidden_observational_field("process_id") is True
+    assert is_forbidden_observational_field("local_path") is True
+    assert is_forbidden_observational_field("model_output") is True
+    assert is_forbidden_observational_field("implementation_ir_cid") is False
 
 
 def test_invalid_cids_floats_and_local_paths_are_rejected() -> None:
@@ -301,7 +342,10 @@ def test_invalid_cids_floats_and_local_paths_are_rejected() -> None:
             name="/tmp/move",
             kind=IdentityMoveKind.IMPLEMENTATION_EDIT,
             before=_identities(),
-            after=_identities(implementation_ir_cid=_cid("impl:other"), function_capsule_cid=_cid("agg:other")),
+            after=_identities(
+                implementation_ir_cid=_cid("impl:other"),
+                function_capsule_cid=_cid("agg:other"),
+            ),
         )
 
 
@@ -319,6 +363,7 @@ def test_relocation_preserves_implementation_and_contract_identity() -> None:
     assert moved.dependency_slice_cid == original.dependency_slice_cid
     assert moved.behavior_summary_cid == original.behavior_summary_cid
     assert moved.validation_profile_cid == original.validation_profile_cid
+    assert moved.initialization_dependency_cid == original.initialization_dependency_cid
     assert moved.symbol_binding_cid != original.symbol_binding_cid
     assert moved.public_compatibility_cid != original.public_compatibility_cid
     assert moved.function_capsule_cid != original.function_capsule_cid
@@ -326,6 +371,14 @@ def test_relocation_preserves_implementation_and_contract_identity() -> None:
     assert (
         moved.location_independent_identities()
         == original.location_independent_identities()
+    )
+    assert (
+        moved.implementation_and_contract_identity()
+        == original.implementation_and_contract_identity()
+    )
+    assert (
+        moved.binding_and_compatibility_identity()
+        != original.binding_and_compatibility_identity()
     )
     delta = require_semantic_preserving_relocation(original, moved)
     assert delta.is_semantic_preserving_relocation()
@@ -352,47 +405,75 @@ def test_implementation_edit_does_not_change_binding_or_compatibility() -> None:
     assert "implementation_ir_cid" in delta.changed_fields
     assert "symbol_binding_cid" in delta.preserved_fields
     assert "public_compatibility_cid" in delta.preserved_fields
+    assert edited.binding_and_compatibility_identity() == (
+        original.binding_and_compatibility_identity()
+    )
     with pytest.raises(IdentityContractError, match="not a semantic-preserving"):
         require_semantic_preserving_relocation(original, edited)
 
 
 def test_existing_at1_capsule_readers_are_preserved_without_rewrite() -> None:
-    capsule = _function_capsule()
-    exported = capsule.to_dict()
-    original = copy.deepcopy(exported)
-    frozen = MappingProxyType(exported)
+    envelope = _existing_at1_envelope()
+    original = copy.deepcopy(envelope)
+    frozen = MappingProxyType(envelope)
     projected = SemanticArtifactIdentitySet.from_existing_at1(frozen)
-    assert exported == original
-    assert projected.implementation_ir_cid == capsule.implementation_ir_cid
-    assert projected.symbol_binding_cid == capsule.symbol_binding_cid
-    assert projected.public_compatibility_cid == capsule.public_compatibility_cid
-    assert projected.function_capsule_cid == capsule.function_capsule_cid
-    identity_payload = capsule.identity_payload()
+    assert envelope == original
+    assert projected.implementation_ir_cid == envelope["implementation_ir_cid"]
+    assert projected.symbol_binding_cid == envelope["symbol_binding_cid"]
+    assert projected.public_compatibility_cid == envelope["public_compatibility_cid"]
+    assert projected.function_capsule_cid == envelope["function_capsule_cid"]
+    identity_payload = {
+        name: envelope[name] for name in EXISTING_AT1_IDENTITY_DIMENSIONS
+    }
+    identity_payload["schema"] = envelope["schema"]
+    identity_payload["kind"] = envelope["kind"]
+    identity_payload["freshness"] = envelope["freshness"]
     identity_original = copy.deepcopy(identity_payload)
     from_identity = SemanticArtifactIdentitySet.from_existing_at1(
         identity_payload,
-        function_capsule_cid=capsule.function_capsule_cid,
+        function_capsule_cid=envelope["function_capsule_cid"],
     )
     assert identity_payload == identity_original
-    assert from_identity.function_capsule_cid == capsule.function_capsule_cid
-    restored = capsule_from_identity_payload(identity_payload)
-    assert restored == capsule
+    assert from_identity.function_capsule_cid == envelope["function_capsule_cid"]
     assert SemanticArtifactIdentitySet.from_dict(projected.to_dict()) == projected
     with pytest.raises(IdentityContractError, match="unsupported|exactly"):
-        SemanticArtifactIdentitySet.from_dict(exported)
+        SemanticArtifactIdentitySet.from_dict(envelope)
     present = present_existing_at1_identity_fields(identity_payload)
     assert "function_capsule_cid" not in present
-    assert present["implementation_ir_cid"] == capsule.implementation_ir_cid
+    assert present["implementation_ir_cid"] == envelope["implementation_ir_cid"]
+
+
+def test_existing_semantic_capsule_at1_overlap_is_read_without_rewrite() -> None:
+    payload = {
+        "schema": EXISTING_SEMANTIC_CAPSULE_SCHEMA,
+        "stable_symbol_id": _cid("stable"),
+        "version_cid": _cid("version"),
+        "source_cid": _cid("source"),
+        "source_slice_path": "pkg/mod.py",
+        "capsule_schema": EXISTING_SEMANTIC_CAPSULE_SCHEMA,
+        "confidence": "exact",
+    }
+    original = copy.deepcopy(payload)
+    frozen = MappingProxyType(payload)
+    present = present_existing_at1_identity_fields(frozen)
+    assert payload == original
+    assert present["stable_symbol_id"] == payload["stable_symbol_id"]
+    assert present["source_cid"] == payload["source_cid"]
+    assert "source_slice_path" not in present
+    assert "version_cid" not in present
+    assert "function_capsule_cid" not in present
 
 
 def test_existing_at1_reader_rejects_observational_metadata() -> None:
-    capsule = _function_capsule()
-    payload = capsule.to_dict()
+    envelope = _existing_at1_envelope()
+    payload = dict(envelope)
     payload["model_output"] = "hypothesis"
     with pytest.raises(IdentityContractError, match="observational"):
         extract_existing_at1_identity_fields(payload)
     with pytest.raises(IdentityContractError, match="observational"):
-        present_existing_at1_identity_fields({"timestamp": "now", "source_cid": _cid("s")})
+        present_existing_at1_identity_fields(
+            {"timestamp": "now", "source_cid": _cid("s")}
+        )
     incomplete = {name: _cid(name) for name in EXISTING_AT1_IDENTITY_DIMENSIONS[:3]}
     with pytest.raises(IdentityContractError, match="missing identity fields"):
         extract_existing_at1_identity_fields(incomplete)
@@ -423,6 +504,10 @@ def test_golden_move_vectors_are_closed_deterministic_and_self_verifying() -> No
     )
     assert (
         relocation.before.contract_identity() == relocation.after.contract_identity()
+    )
+    assert (
+        relocation.before.implementation_and_contract_identity()
+        == relocation.after.implementation_and_contract_identity()
     )
     assert relocation.before.binding_identity() != relocation.after.binding_identity()
     assert (
@@ -527,6 +612,8 @@ def test_records_are_frozen_and_duplicate_construction_is_deterministic() -> Non
     changed = first.replace(semantic_state_root_cid=_cid("root:other"))
     assert changed.identity_set_cid != first.identity_set_cid
     assert changed.implementation_ir_cid == first.implementation_ir_cid
+    with pytest.raises(IdentityContractError, match="observational"):
+        first.replace(timestamp="now")  # type: ignore[arg-type]
 
 
 def test_provider_free_exports_and_no_provider_imports() -> None:
@@ -557,8 +644,12 @@ def test_provider_free_exports_and_no_provider_imports() -> None:
     assert "transformers" not in imported
     assert "torch" not in imported
     assert "ipfs_datasets_py.semantic_refactoring.capsules" not in imported_modules
+    assert "ipfs_datasets_py.logic.software_contracts.semantic_state" not in (
+        imported_modules
+    )
     assert "SemanticArtifactIdentitySet" in exports
     assert "GOLDEN_MOVE_VECTORS" in exports
+    assert "is_forbidden_observational_field" in exports
     text = IDENTITIES_PATH.read_text(encoding="utf-8")
     assert "does not replace" in text
     assert "accepted" in text.lower() and "rewritten" in text.lower()
@@ -575,3 +666,5 @@ def test_module_import_is_provider_free_and_side_effect_free() -> None:
     assert identities.GOLDEN_MOVE_VECTORS[0].kind == (
         IdentityMoveKind.SEMANTIC_PRESERVING_RELOCATION.value
     )
+    assert identities.IDENTITIES_CAN_AUTHORIZE_COMPLETION is False
+    assert identities.VECTOR_SIMILARITY_IS_AUTHORITY is False

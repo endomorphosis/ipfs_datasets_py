@@ -249,6 +249,16 @@ DEPENDENCY_IDENTITY_FIELDS: Final[tuple[str, ...]] = ("dependency_slice_cid",)
 BEHAVIOR_IDENTITY_FIELDS: Final[tuple[str, ...]] = ("behavior_summary_cid",)
 VALIDATION_IDENTITY_FIELDS: Final[tuple[str, ...]] = ("validation_profile_cid",)
 COMPATIBILITY_IDENTITY_FIELDS: Final[tuple[str, ...]] = ("public_compatibility_cid",)
+# Plan rule: a move may preserve implementation/contract identity while
+# changing binding/compatibility identity.  These tuples are that split.
+IMPLEMENTATION_AND_CONTRACT_IDENTITY_FIELDS: Final[tuple[str, ...]] = (
+    *IMPLEMENTATION_IDENTITY_FIELDS,
+    *CONTRACT_IDENTITY_FIELDS,
+)
+BINDING_AND_COMPATIBILITY_IDENTITY_FIELDS: Final[tuple[str, ...]] = (
+    *BINDING_IDENTITY_FIELDS,
+    *COMPATIBILITY_IDENTITY_FIELDS,
+)
 
 _KIND_REQUIRED_CHANGED_FAMILIES: Final[Mapping[str, frozenset[str]]] = MappingProxyType(
     {
@@ -391,10 +401,22 @@ def identity_cid_profile() -> dict[str, str]:
     }
 
 
+def is_forbidden_observational_field(name: str) -> bool:
+    """True when ``name`` is excluded from semantic identity."""
+
+    if type(name) is not str or not name:
+        return False
+    return name in FORBIDDEN_OBSERVATIONAL_FIELDS
+
+
 def classify_identity_field(name: str) -> IdentityFieldSpec:
     """Return the closed family/sensitivity catalog entry for one field."""
 
     field_name = _text(name, "identity field")
+    if field_name in FORBIDDEN_OBSERVATIONAL_FIELDS:
+        raise IdentityContractError(
+            f"observational field {field_name!r} is excluded from semantic identity"
+        )
     if field_name not in IDENTITY_FIELD_SET:
         raise IdentityContractError(f"unknown identity field {field_name!r}")
     return IdentityFieldSpec(
@@ -572,6 +594,12 @@ class SemanticArtifactIdentitySet:
     def compatibility_identity(self) -> dict[str, str]:
         return self.identities_for(COMPATIBILITY_IDENTITY_FIELDS)
 
+    def implementation_and_contract_identity(self) -> dict[str, str]:
+        return self.identities_for(IMPLEMENTATION_AND_CONTRACT_IDENTITY_FIELDS)
+
+    def binding_and_compatibility_identity(self) -> dict[str, str]:
+        return self.identities_for(BINDING_AND_COMPATIBILITY_IDENTITY_FIELDS)
+
     def family_identities(self) -> dict[str, dict[str, str]]:
         return {
             family.value: self.identities_for(fields_for_family(family))
@@ -581,15 +609,15 @@ class SemanticArtifactIdentitySet:
     def replace(self, **changes: str) -> "SemanticArtifactIdentitySet":
         """Return a copy with named identity CIDs replaced."""
 
-        unknown = set(changes) - IDENTITY_FIELD_SET
-        if unknown:
-            raise IdentityContractError(
-                f"replace rejects unknown identity fields {sorted(unknown)}"
-            )
         overlap = FORBIDDEN_OBSERVATIONAL_FIELDS.intersection(changes)
         if overlap:
             raise IdentityContractError(
                 f"replace excludes observational fields {sorted(overlap)}"
+            )
+        unknown = set(changes) - IDENTITY_FIELD_SET
+        if unknown:
+            raise IdentityContractError(
+                f"replace rejects unknown identity fields {sorted(unknown)}"
             )
         payload = {name: getattr(self, name) for name in IDENTITY_FIELDS}
         payload.update(changes)
@@ -1125,6 +1153,7 @@ __all__ = [
     "AUTHORITY",
     "AUTHORITY_OWNER",
     "BEHAVIOR_IDENTITY_FIELDS",
+    "BINDING_AND_COMPATIBILITY_IDENTITY_FIELDS",
     "BINDING_IDENTITY_FIELDS",
     "COMPATIBILITY_IDENTITY_FIELDS",
     "CONTRACT_IDENTITY_FIELDS",
@@ -1148,6 +1177,7 @@ __all__ = [
     "IDENTITY_FIELD_SPECS",
     "IDENTITY_MOVE_VECTOR_INTERFACE",
     "IDENTITY_MOVE_VECTOR_SCHEMA",
+    "IMPLEMENTATION_AND_CONTRACT_IDENTITY_FIELDS",
     "IMPLEMENTATION_IDENTITY_FIELDS",
     "LOCATION_INDEPENDENT_IDENTITY_FIELDS",
     "LOCATION_SENSITIVE_IDENTITY_FIELDS",
@@ -1182,6 +1212,7 @@ __all__ = [
     "fields_for_family",
     "fields_for_sensitivity",
     "identity_cid_profile",
+    "is_forbidden_observational_field",
     "present_existing_at1_identity_fields",
     "provider_free_exports",
     "require_semantic_preserving_relocation",
