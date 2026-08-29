@@ -9,11 +9,12 @@ import re
 import ssl
 import urllib.request
 from datetime import UTC, datetime
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import parse_qs, urljoin, urlparse
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 
+from . import retained_shared_frontier
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -90,6 +91,30 @@ class ArizonaScraper(BaseStateScraper):
         ("49", "The Environment"),
     )
     
+    def state_law_frontier_source_dependencies(self) -> Sequence[Any]:
+        """Bind retained catalog replay to Arizona's source identity."""
+
+        return (
+            *super().state_law_frontier_source_dependencies(),
+            retained_shared_frontier,
+        )
+
+    async def _capture_shared_official_frontier_observation(
+        self,
+        *,
+        phase: str,
+    ) -> Dict[str, Any]:
+        """Replay retained catalog inputs inline so no worker survives."""
+
+        if not self._retained_replay_only_enabled():
+            return await super()._capture_shared_official_frontier_observation(
+                phase=phase
+            )
+        return retained_shared_frontier.capture_retained_shared_official_frontier_observation(
+            self,
+            phase=phase,
+        )
+
     def get_base_url(self) -> str:
         """Return the base URL for Arizona's legislative website."""
         return "https://www.azleg.gov"

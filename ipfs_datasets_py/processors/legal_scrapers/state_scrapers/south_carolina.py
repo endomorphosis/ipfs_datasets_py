@@ -10,6 +10,7 @@ import ssl
 import urllib.request
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 from urllib.parse import urljoin, urlparse
+from . import retained_shared_frontier
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -91,6 +92,30 @@ class SouthCarolinaScraper(BaseStateScraper):
         ("63", "South Carolina Children's Code"),
     )
     last_south_carolina_full_corpus_report: Dict[str, Any] = {}
+
+    def state_law_frontier_source_dependencies(self) -> tuple[object, ...]:
+        """Bind the retained-inline bridge into South Carolina source identity."""
+
+        return (
+            *super().state_law_frontier_source_dependencies(),
+            retained_shared_frontier,
+        )
+
+    async def _capture_shared_official_frontier_observation(
+        self,
+        *,
+        phase: str,
+    ) -> Dict[str, Any]:
+        """Keep retained catalog replay on the guarded worker thread."""
+
+        if not self._retained_replay_only_enabled():
+            return await super()._capture_shared_official_frontier_observation(
+                phase=phase
+            )
+        return retained_shared_frontier.capture_retained_shared_official_frontier_observation(
+            self,
+            phase=phase,
+        )
 
     async def scrape_all(
         self,

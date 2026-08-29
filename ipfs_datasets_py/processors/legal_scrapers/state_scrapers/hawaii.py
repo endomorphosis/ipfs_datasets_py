@@ -23,6 +23,7 @@ from urllib.parse import unquote, urljoin, urlparse
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 
+from . import retained_shared_frontier
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .hawaii_section import (
     HAWAII_EXPECTED_OPERATIVE_SECTION_COUNT,
@@ -157,7 +158,27 @@ class HawaiiScraper(BaseStateScraper):
 
         from . import hawaii_section
 
-        return (hawaii_section,)
+        return (
+            *super().state_law_frontier_source_dependencies(),
+            hawaii_section,
+            retained_shared_frontier,
+        )
+
+    async def _capture_shared_official_frontier_observation(
+        self,
+        *,
+        phase: str,
+    ) -> Dict[str, Any]:
+        """Replay retained catalog inputs inline so no worker survives."""
+
+        if not self._retained_replay_only_enabled():
+            return await super()._capture_shared_official_frontier_observation(
+                phase=phase
+            )
+        return retained_shared_frontier.capture_retained_shared_official_frontier_observation(
+            self,
+            phase=phase,
+        )
 
     def _supports_shared_official_frontier_bridge(self) -> bool:
         """Keep the shared catalog replay while owning Hawaii row parity."""

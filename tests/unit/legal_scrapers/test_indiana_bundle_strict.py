@@ -376,6 +376,49 @@ def test_exact_inventory_replay_and_output_parity_close(
     assert closed.normalized_source_receipt.admission_eligible is True
 
 
+def test_retained_bundle_parse_and_closure_stay_inline(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import indiana
+
+    _archive, ledger, scraper = _strict_scraper(tmp_path, monkeypatch)
+    live_rows = scraper._scrape_official_bulk_zip(
+        code_name="Indiana Code",
+        max_statutes=None,
+    )
+    assert len(live_rows) == 2
+    ledger.retained_replay_only = True
+    monkeypatch.setenv("INDIANA_CODE_ZIP_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("INDIANA_CODE_YEAR", "2026")
+    monkeypatch.setattr(scraper, "_write_partial_checkpoint", lambda *_a, **_k: True)
+
+    async def _forbid_thread_offload(*_args, **_kwargs):
+        raise AssertionError("retained Indiana ZIP work must stay inline")
+
+    monkeypatch.setattr(indiana.asyncio, "to_thread", _forbid_thread_offload)
+
+    replay_rows = asyncio.run(
+        scraper._scrape_indiana_download_bundle(
+            "Indiana Code",
+            max_statutes=None,
+        )
+    )
+    replay_rows = [scraper._enrich_statute_structure(row) for row in replay_rows]
+    projection = build_canonical_state_law_output_projection(
+        replay_rows,
+        jurisdiction="IN",
+    )
+    closure_path = asyncio.run(
+        scraper.produce_state_law_frontier_closure(
+            canonical_output_projection=projection,
+        )
+    )
+
+    assert [row.section_number for row in replay_rows] == ["1-1-1-1", "1-1-1-2"]
+    assert closure_path.parent == ledger.closure_inputs_dir
+
+
 def test_missing_final_section_identity_fails_closed(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

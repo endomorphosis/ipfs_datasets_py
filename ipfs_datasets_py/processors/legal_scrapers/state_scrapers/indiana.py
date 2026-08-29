@@ -593,16 +593,23 @@ class IndianaScraper(BaseStateScraper):
             and getattr(self, "_state_law_acquisition_ledger", None) is not None
         ):
             inventory_observer = self._retain_indiana_bulk_inventory_observation
-        out = await asyncio.to_thread(
-            parse_indiana_bulk_zip,
-            bundle_path,
-            code_name=code_name,
-            max_statutes=max_statutes,
-            code_year=str(year),
-            bundle_provenance=self._indiana_bulk_provenance or None,
-            inventory_observer=inventory_observer,
-            fail_on_unusable=inventory_observer is not None,
-        )
+        parser_args = (bundle_path,)
+        parser_kwargs = {
+            "code_name": code_name,
+            "max_statutes": max_statutes,
+            "code_year": str(year),
+            "bundle_provenance": self._indiana_bulk_provenance or None,
+            "inventory_observer": inventory_observer,
+            "fail_on_unusable": inventory_observer is not None,
+        }
+        if self._retained_replay_only_enabled():
+            out = parse_indiana_bulk_zip(*parser_args, **parser_kwargs)
+        else:
+            out = await asyncio.to_thread(
+                parse_indiana_bulk_zip,
+                *parser_args,
+                **parser_kwargs,
+            )
         self._write_partial_checkpoint(
             out,
             code_name=code_name,
@@ -2012,13 +2019,23 @@ class IndianaScraper(BaseStateScraper):
             self._indiana_bulk_provenance.get("content_sha256") or ""
         ):
             raise RuntimeError("Indiana retained bundle digest changed on replay")
-        replayed = await asyncio.to_thread(
-            inventory_indiana_bulk_zip,
-            Path(replayed_input.body_path),
-            code_name=str(first.get("code_name") or "Indiana Code"),
-            code_year=str(first.get("code_year") or self.OFFICIAL_CODE_YEAR),
-            bundle_provenance=dict(self._indiana_bulk_provenance),
-        )
+        inventory_args = (Path(replayed_input.body_path),)
+        inventory_kwargs = {
+            "code_name": str(first.get("code_name") or "Indiana Code"),
+            "code_year": str(first.get("code_year") or self.OFFICIAL_CODE_YEAR),
+            "bundle_provenance": dict(self._indiana_bulk_provenance),
+        }
+        if self._retained_replay_only_enabled():
+            replayed = inventory_indiana_bulk_zip(
+                *inventory_args,
+                **inventory_kwargs,
+            )
+        else:
+            replayed = await asyncio.to_thread(
+                inventory_indiana_bulk_zip,
+                *inventory_args,
+                **inventory_kwargs,
+            )
         replayed = self._validate_indiana_bulk_inventory(replayed)
         if canonical_json_bytes(first) != canonical_json_bytes(replayed):
             raise RuntimeError(

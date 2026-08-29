@@ -13,6 +13,7 @@ import urllib.request
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
+from . import retained_shared_frontier
 from .base_scraper import (
     BaseStateScraper,
     NormalizedStatute,
@@ -113,7 +114,28 @@ class IdahoScraper(BaseStateScraper):
 
         from . import idaho_section, strict_frontier_closure
 
-        return (idaho_section, strict_frontier_closure)
+        return (
+            *super().state_law_frontier_source_dependencies(),
+            idaho_section,
+            strict_frontier_closure,
+            retained_shared_frontier,
+        )
+
+    async def _capture_shared_official_frontier_observation(
+        self,
+        *,
+        phase: str,
+    ) -> Dict[str, Any]:
+        """Replay retained catalog inputs inline so no worker survives."""
+
+        if not self._retained_replay_only_enabled():
+            return await super()._capture_shared_official_frontier_observation(
+                phase=phase
+            )
+        return retained_shared_frontier.capture_retained_shared_official_frontier_observation(
+            self,
+            phase=phase,
+        )
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []

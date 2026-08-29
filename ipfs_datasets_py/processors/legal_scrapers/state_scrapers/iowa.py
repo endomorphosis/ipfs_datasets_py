@@ -12,7 +12,8 @@ import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
+from . import retained_shared_frontier
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -49,7 +50,27 @@ class IowaScraper(BaseStateScraper):
 
         from . import iowa_chapter_xml
 
-        return (iowa_chapter_xml,)
+        return (
+            *super().state_law_frontier_source_dependencies(),
+            iowa_chapter_xml,
+            retained_shared_frontier,
+        )
+
+    async def _capture_shared_official_frontier_observation(
+        self,
+        *,
+        phase: str,
+    ) -> Dict[str, Any]:
+        """Keep retained catalog replay on the guarded worker thread."""
+
+        if not self._retained_replay_only_enabled():
+            return await super()._capture_shared_official_frontier_observation(
+                phase=phase
+            )
+        return retained_shared_frontier.capture_retained_shared_official_frontier_observation(
+            self,
+            phase=phase,
+        )
 
     def get_base_url(self) -> str:
         """Return the base URL for Iowa's legislative website."""

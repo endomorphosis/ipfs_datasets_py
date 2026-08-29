@@ -10,6 +10,7 @@ import re
 import ssl
 import urllib.request
 from urllib.parse import urljoin
+from . import retained_shared_frontier
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
 
@@ -78,7 +79,27 @@ class MassachusettsScraper(BaseStateScraper):
 
         from . import massachusetts_section
 
-        return (massachusetts_section,)
+        return (
+            *super().state_law_frontier_source_dependencies(),
+            massachusetts_section,
+            retained_shared_frontier,
+        )
+
+    async def _capture_shared_official_frontier_observation(
+        self,
+        *,
+        phase: str,
+    ) -> Dict[str, Any]:
+        """Keep retained catalog replay on the guarded worker thread."""
+
+        if not self._retained_replay_only_enabled():
+            return await super()._capture_shared_official_frontier_observation(
+                phase=phase
+            )
+        return retained_shared_frontier.capture_retained_shared_official_frontier_observation(
+            self,
+            phase=phase,
+        )
     
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Massachusetts."""

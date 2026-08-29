@@ -8,9 +8,10 @@ import json
 import re
 import ssl
 import urllib.request
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import parse_qs, urljoin, urlparse
 
+from . import retained_shared_frontier
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -78,6 +79,30 @@ class AlaskaScraper(BaseStateScraper):
         ("47", "Welfare, Social Services, and Institutions"),
     )
     
+    def state_law_frontier_source_dependencies(self) -> Sequence[Any]:
+        """Bind retained catalog replay to Alaska's source identity."""
+
+        return (
+            *super().state_law_frontier_source_dependencies(),
+            retained_shared_frontier,
+        )
+
+    async def _capture_shared_official_frontier_observation(
+        self,
+        *,
+        phase: str,
+    ) -> Dict[str, Any]:
+        """Replay retained catalog inputs inline so no worker survives."""
+
+        if not self._retained_replay_only_enabled():
+            return await super()._capture_shared_official_frontier_observation(
+                phase=phase
+            )
+        return retained_shared_frontier.capture_retained_shared_official_frontier_observation(
+            self,
+            phase=phase,
+        )
+
     def get_base_url(self) -> str:
         """Return the base URL for Alaska's legislative website."""
         return "http://www.legis.state.ak.us"

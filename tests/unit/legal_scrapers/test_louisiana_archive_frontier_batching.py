@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
+    BaseStateScraper,
     StateLawPageMultiFetchResult,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.louisiana import (
@@ -122,6 +123,40 @@ def test_louisiana_source_bundle_binds_parser_closure_and_plural_transport(
     monkeypatch.setattr(Path, "read_bytes", _read_mutated_dependency)
 
     assert scraper._state_law_frontier_source_software_version() != baseline
+
+
+@pytest.mark.anyio
+async def test_louisiana_retained_session_close_is_inline_and_live_delegates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scraper = LouisianaScraper("LA", "Louisiana")
+    calls: list[tuple[str, object]] = []
+
+    class _Session:
+        def close(self) -> None:
+            calls.append(("inline", self))
+
+    async def _live_close(_self: BaseStateScraper, session: object) -> None:
+        calls.append(("delegated", session))
+
+    monkeypatch.setattr(
+        BaseStateScraper,
+        "_close_stateful_parser_input_session",
+        _live_close,
+    )
+    live_session = _Session()
+    await scraper._close_stateful_parser_input_session(live_session)
+    assert calls == [("delegated", live_session)]
+
+    scraper._state_law_acquisition_ledger = SimpleNamespace(
+        retained_replay_only=True,
+    )
+    retained_session = _Session()
+    await scraper._close_stateful_parser_input_session(retained_session)
+    assert calls == [
+        ("delegated", live_session),
+        ("inline", retained_session),
+    ]
 
 
 def test_louisiana_title_postbacks_decode_only_exact_anchor_hrefs() -> None:

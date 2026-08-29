@@ -4,12 +4,13 @@ Primary path: official hierarchy on https://code.dccouncil.gov
 (title → chapter → section). Playwright/generic remain fallbacks only.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 import json
 import re
 import ssl
 import urllib.request
 from urllib.parse import urljoin
+from . import retained_shared_frontier
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -103,6 +104,30 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
             if self._DC_LEGACY_LEVEL_URL_RE.search(source):
                 filtered.append(statute)
         return filtered
+
+    def state_law_frontier_source_dependencies(self) -> Sequence[Any]:
+        """Bind retained catalog replay to the District's source identity."""
+
+        return (
+            *super().state_law_frontier_source_dependencies(),
+            retained_shared_frontier,
+        )
+
+    async def _capture_shared_official_frontier_observation(
+        self,
+        *,
+        phase: str,
+    ) -> Dict[str, Any]:
+        """Replay retained catalog inputs inline so no worker survives."""
+
+        if not self._retained_replay_only_enabled():
+            return await super()._capture_shared_official_frontier_observation(
+                phase=phase
+            )
+        return retained_shared_frontier.capture_retained_shared_official_frontier_observation(
+            self,
+            phase=phase,
+        )
 
     def get_base_url(self) -> str:
         """Return the base URL for District of Columbia's legislative website."""

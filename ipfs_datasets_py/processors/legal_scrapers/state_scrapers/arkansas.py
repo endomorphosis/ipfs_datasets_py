@@ -13,6 +13,7 @@ import urllib.request
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import urljoin, urlparse
 
+from . import retained_shared_frontier
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -81,7 +82,27 @@ class ArkansasScraper(BaseStateScraper):
 
         from . import arkansas_lexis
 
-        return (arkansas_lexis,)
+        return (
+            *super().state_law_frontier_source_dependencies(),
+            arkansas_lexis,
+            retained_shared_frontier,
+        )
+
+    async def _capture_shared_official_frontier_observation(
+        self,
+        *,
+        phase: str,
+    ) -> Dict[str, Any]:
+        """Replay retained catalog inputs inline so no worker survives."""
+
+        if not self._retained_replay_only_enabled():
+            return await super()._capture_shared_official_frontier_observation(
+                phase=phase
+            )
+        return retained_shared_frontier.capture_retained_shared_official_frontier_observation(
+            self,
+            phase=phase,
+        )
 
     def attach_arkansas_current_variant_resolution_ledger(
         self,

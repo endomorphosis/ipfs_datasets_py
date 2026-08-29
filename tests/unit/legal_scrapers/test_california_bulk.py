@@ -842,6 +842,32 @@ def test_bulk_table_frontier_replays_and_closes_with_exact_output_parity(
     assert closed.normalized_source_receipt.admission_eligible is True
 
 
+def test_retained_bulk_closure_reinventory_stays_inline(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import california
+
+    _zip_path, ledger, scraper, _rows, projection = _prepare_successful_frontier(
+        tmp_path,
+        monkeypatch,
+    )
+    ledger.retained_replay_only = True
+
+    async def _forbid_thread_offload(*_args, **_kwargs):
+        raise AssertionError("retained California inventory must stay inline")
+
+    monkeypatch.setattr(california.asyncio, "to_thread", _forbid_thread_offload)
+
+    closure_path = asyncio.run(
+        scraper.produce_state_law_frontier_closure(
+            canonical_output_projection=projection,
+        )
+    )
+
+    assert closure_path.parent == ledger.closure_inputs_dir
+
+
 @pytest.mark.parametrize(
     ("case_name", "table_row", "members", "expected_reason"),
     [

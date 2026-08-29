@@ -9,6 +9,7 @@ from ipfs_datasets_py.processors.legal_data.state_laws_multifetch_acquisition im
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import (
     massachusetts_section,
+    retained_shared_frontier,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.massachusetts import (
     MassachusettsScraper,
@@ -103,6 +104,7 @@ def test_massachusetts_section_parser_is_bound_to_frontier_source_identity() -> 
 
     assert scraper.state_law_frontier_source_dependencies() == (
         massachusetts_section,
+        retained_shared_frontier,
     )
 
 

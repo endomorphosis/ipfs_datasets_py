@@ -12,7 +12,10 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 
-from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import arkansas_lexis
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import (
+    arkansas_lexis,
+    retained_shared_frontier,
+)
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arkansas import (
     ArkansasDelegatedCorpusBlockedError,
     ArkansasScraper,
@@ -90,7 +93,10 @@ def test_arkansas_source_bundle_binds_delegated_lexis_parser(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     scraper = ArkansasScraper("AR", "Arkansas")
-    assert scraper.state_law_frontier_source_dependencies() == (arkansas_lexis,)
+    assert scraper.state_law_frontier_source_dependencies() == (
+        arkansas_lexis,
+        retained_shared_frontier,
+    )
 
     baseline = scraper._state_law_frontier_source_software_version()
     helper_path = Path(arkansas_lexis.__file__).resolve()

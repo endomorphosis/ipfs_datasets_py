@@ -32,6 +32,7 @@ from urllib.parse import urljoin, urlparse
 
 from ipfs_datasets_py.utils import anyio_compat
 
+from . import retained_shared_frontier
 from .base_scraper import (
     BaseStateScraper,
     NormalizedStatute,
@@ -479,7 +480,27 @@ class NorthCarolinaScraper(BaseStateScraper):
 
         from . import north_carolina_chapter
 
-        return (north_carolina_chapter,)
+        return (
+            *super().state_law_frontier_source_dependencies(),
+            north_carolina_chapter,
+            retained_shared_frontier,
+        )
+
+    async def _capture_shared_official_frontier_observation(
+        self,
+        *,
+        phase: str,
+    ) -> Dict[str, Any]:
+        """Keep retained catalog replay on the guarded worker thread."""
+
+        if not self._retained_replay_only_enabled():
+            return await super()._capture_shared_official_frontier_observation(
+                phase=phase
+            )
+        return retained_shared_frontier.capture_retained_shared_official_frontier_observation(
+            self,
+            phase=phase,
+        )
 
     def _north_carolina_residual_concurrency(self) -> int:
         return max(

@@ -21,6 +21,7 @@ from bs4 import BeautifulSoup
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 
+from . import retained_shared_frontier
 from .base_scraper import (
     BaseStateScraper,
     NormalizedStatute,
@@ -147,6 +148,30 @@ class OklahomaScraper(BaseStateScraper):
         r"oklahoma attorney general'?s opinions|oklahoma jury instructions|uniform jury instructions|ag\s+\d{2,4}\s*[- ]\s*\d+|question submitted by:|previous case\s+top of index\s+this point in index",
         re.IGNORECASE,
     )
+
+    def state_law_frontier_source_dependencies(self) -> tuple[object, ...]:
+        """Bind the retained-inline bridge into Oklahoma source identity."""
+
+        return (
+            *super().state_law_frontier_source_dependencies(),
+            retained_shared_frontier,
+        )
+
+    async def _capture_shared_official_frontier_observation(
+        self,
+        *,
+        phase: str,
+    ) -> Dict[str, Any]:
+        """Keep retained catalog replay on the guarded worker thread."""
+
+        if not self._retained_replay_only_enabled():
+            return await super()._capture_shared_official_frontier_observation(
+                phase=phase
+            )
+        return retained_shared_frontier.capture_retained_shared_official_frontier_observation(
+            self,
+            phase=phase,
+        )
 
     @staticmethod
     def _normalize_wayback_url(url: str) -> str:

@@ -10,7 +10,10 @@ import pytest
 from ipfs_datasets_py.processors.legal_data.state_laws_multifetch_acquisition import (
     StateLawMultiFetchAcquisitionLedger,
 )
-from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import iowa_chapter_xml
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import (
+    iowa_chapter_xml,
+    retained_shared_frontier,
+)
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.iowa import IowaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.iowa_chapter_xml import (
     parse_iowa_chapter_xml,
@@ -34,6 +37,7 @@ def test_iowa_frontier_software_identity_binds_chapter_xml_helper(
     scraper = IowaScraper("IA", "Iowa")
     assert scraper.state_law_frontier_source_dependencies() == (
         iowa_chapter_xml,
+        retained_shared_frontier,
     )
     baseline = scraper._state_law_frontier_source_software_version()
     helper_path = Path(iowa_chapter_xml.__file__).resolve()

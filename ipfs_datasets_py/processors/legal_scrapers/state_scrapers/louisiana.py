@@ -60,6 +60,14 @@ class LouisianaScraper(BaseStateScraper):
             wayback_machine_engine,
         )
 
+    async def _close_stateful_parser_input_session(self, session: Any) -> None:
+        """Close retained sessions inline so replay exits thread-quiescent."""
+
+        if self._retained_replay_only_enabled():
+            session.close()
+            return
+        await super()._close_stateful_parser_input_session(session)
+
     def get_base_url(self) -> str:
         """Return the base URL for Louisiana's legislative website."""
         return "https://legis.la.gov"

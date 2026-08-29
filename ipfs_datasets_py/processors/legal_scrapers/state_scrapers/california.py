@@ -624,11 +624,21 @@ class CaliforniaScraper(BaseStateScraper):
             self._bulk_zip_provenance.get("content_sha256") or ""
         ):
             raise RuntimeError("California retained bundle digest changed on replay")
-        replayed = await asyncio.to_thread(
-            inventory_california_bulk_zip,
-            Path(replayed_input.body_path),
-            bundle_provenance=dict(self._bulk_zip_provenance),
-        )
+        inventory_args = (Path(replayed_input.body_path),)
+        inventory_kwargs = {
+            "bundle_provenance": dict(self._bulk_zip_provenance),
+        }
+        if self._retained_replay_only_enabled():
+            replayed = inventory_california_bulk_zip(
+                *inventory_args,
+                **inventory_kwargs,
+            )
+        else:
+            replayed = await asyncio.to_thread(
+                inventory_california_bulk_zip,
+                *inventory_args,
+                **inventory_kwargs,
+            )
         replayed = self._validate_california_bulk_inventory(replayed)
         if canonical_json_bytes(first) != canonical_json_bytes(replayed):
             raise RuntimeError(
