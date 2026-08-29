@@ -303,6 +303,17 @@ membership, and the COR dated-current parser rule.
 Before any later materialization, rerun host `--retained-replay-only` with
 `--no-incremental-state-publish`; require 94/94 laws closed,
 `37,441 = operative + terminal`, and first/replay frontier equality.
+
+```bash
+python -B scripts/ops/legal_data/refresh_state_laws_corpus.py \
+  --states NY \
+  --output-root /absent/fresh/new-york-replay-output \
+  --scrape \
+  --acquisition-evidence-root /home/barberb/.ipfs_datasets/state_laws/legal-corpora-reindex-20260828-ny-closure-evidence-v2-85Omy9 \
+  --retained-replay-only \
+  --no-incremental-state-publish
+```
+
 Publication remains forbidden while 173 decisions are unresolved. This
 worktree did not launch a corpus-scale job or mutate any remote service.
 The generation was seeded from the exact 99-input corrected seed; copying an
