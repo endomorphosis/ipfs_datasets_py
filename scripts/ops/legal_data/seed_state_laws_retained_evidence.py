@@ -29,6 +29,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--source-root", type=Path)
     parser.add_argument(
+        "--source-selection-receipt",
+        type=Path,
+        help=(
+            "Prior in-root seed-v1/v2 or union-v1 migration receipt whose "
+            "selected_projection pins the exact inputs to hardlink. Valid only "
+            "with --source-root."
+        ),
+    )
+    parser.add_argument(
         "--source-manifest",
         type=Path,
         help=(
@@ -75,6 +84,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     if (args.source_root is None) == (args.source_manifest is None):
         raise SystemExit(
             "exactly one of --source-root or --source-manifest is required"
+        )
+    if args.source_selection_receipt is not None and args.source_root is None:
+        raise SystemExit(
+            "--source-selection-receipt is valid only with --source-root"
         )
     if args.source_manifest is not None:
         if (
@@ -138,6 +151,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             exclude_transport_unstable_receipt_sha256s=tuple(
                 args.exclude_transport_unstable_receipt_sha256s or ()
             ),
+            source_selection_receipt=args.source_selection_receipt,
         )
     print(json.dumps(report.to_dict(), sort_keys=True, separators=(",", ":")))
     return 0

@@ -12,13 +12,15 @@ from ipfs_datasets_py.processors.legal_data.patent_authority_contracts_v2 import
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_multifetch_acquisition import (
     SCHEMA_VERSION as MULTIFETCH_SCHEMA_VERSION,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_multifetch_acquisition import (
     StateLawMultiFetchAcquisitionError,
     StateLawMultiFetchAcquisitionLedger,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_retained_evidence_seed import (
+    TRANSPORT_UNSTABLE_EXCLUSION_SCHEMA_VERSION,
     RetainedEvidenceSeedSource,
     StateLawsRetainedEvidenceSeedError,
-    TRANSPORT_UNSTABLE_EXCLUSION_SCHEMA_VERSION,
     _selected_projection,
     seed_retained_evidence_generation,
     seed_retained_evidence_union,
@@ -101,6 +103,18 @@ def _source_ledger(tmp_path: Path) -> StateLawMultiFetchAcquisitionLedger:
         retrieved_at="2026-08-26T01:00:03Z",
     )
     return ledger
+
+
+def _write_selection_receipt(
+    directory: Path,
+    payload: dict[str, object],
+) -> Path:
+    receipt_bytes = canonical_json_bytes(payload)
+    receipt_sha256 = hashlib.sha256(receipt_bytes).hexdigest()
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{receipt_sha256}.json"
+    path.write_bytes(receipt_bytes)
+    return path
 
 
 def _plant_fixity_valid_raw_bracket_receipt(
@@ -314,6 +328,226 @@ def test_seed_rejects_disagreeing_bodies_for_one_allowed_request(
             parser_name="VirginiaScraper",
         )
     assert not (tmp_path / "destination" / "VA").exists()
+
+
+def _pinned_source_with_later_conflict(
+    tmp_path: Path,
+) -> tuple[Path, Path, dict[str, object]]:
+    _source_ledger(tmp_path)
+    source_root = tmp_path / "pinned-source"
+    original = seed_retained_evidence_generation(
+        source_root=tmp_path / "source",
+        destination_root=source_root,
+        jurisdiction="VA",
+        parser_name="VirginiaScraper",
+    )
+    selection_receipt = Path(original.migration_receipt_path)
+    selection_payload = json.loads(selection_receipt.read_text(encoding="utf-8"))
+
+    ledger = StateLawMultiFetchAcquisitionLedger(
+        source_root,
+        jurisdiction="VA",
+        parser_name="VirginiaScraper",
+    )
+    changed_body = b"later conflicting current-law observation"
+    ledger.retain_parser_input(
+        official_url=DIRECT_ONE,
+        body=changed_body,
+        transport_receipt=_direct_receipt(DIRECT_ONE, changed_body),
+        retrieved_at="2026-08-27T01:00:00Z",
+    )
+    return source_root, selection_receipt, selection_payload
+
+
+def test_seed_can_reuse_exact_prior_projection_after_later_conflict(
+    tmp_path: Path,
+) -> None:
+    source_root, selection_receipt, selection_payload = (
+        _pinned_source_with_later_conflict(tmp_path)
+    )
+
+    with pytest.raises(
+        StateLawsRetainedEvidenceSeedError,
+        match="disagree for one exact request",
+    ):
+        seed_retained_evidence_generation(
+            source_root=source_root,
+            destination_root=tmp_path / "unpinned-destination",
+            jurisdiction="VA",
+            parser_name="VirginiaScraper",
+        )
+
+    destination = tmp_path / "pinned-destination"
+    report = seed_retained_evidence_generation(
+        source_root=source_root,
+        destination_root=destination,
+        jurisdiction="VA",
+        parser_name="VirginiaScraper",
+        source_selection_receipt=selection_receipt,
+    )
+
+    replay = StateLawMultiFetchAcquisitionLedger(
+        destination,
+        jurisdiction="VA",
+        parser_name="VirginiaScraper",
+    )
+    assert _selected_projection(replay.entries) == selection_payload[
+        "selected_projection"
+    ]
+    assert report.selected_projection_sha256 == selection_payload[
+        "selected_projection_sha256"
+    ]
+    assert report.selected_parser_input_count == 2
+    assert report.duplicate_request_observations_avoided == 1
+    assert report.hardlinked_file_count == 4
+    migration = json.loads(
+        Path(report.migration_receipt_path).read_text(encoding="utf-8")
+    )
+    assert migration["source_selection_receipt_path"] == str(
+        selection_receipt.resolve()
+    )
+    assert migration["source_selection_receipt_sha256"] == hashlib.sha256(
+        selection_receipt.read_bytes()
+    ).hexdigest()
+
+
+def test_pinned_seed_rejects_tampered_or_missing_selection_receipt(
+    tmp_path: Path,
+) -> None:
+    source_root, selection_receipt, _payload = _pinned_source_with_later_conflict(
+        tmp_path
+    )
+    selection_receipt.write_bytes(selection_receipt.read_bytes() + b"\n")
+    with pytest.raises(
+        StateLawsRetainedEvidenceSeedError,
+        match="filename failed SHA-256 fixity",
+    ):
+        seed_retained_evidence_generation(
+            source_root=source_root,
+            destination_root=tmp_path / "tampered-destination",
+            jurisdiction="VA",
+            parser_name="VirginiaScraper",
+            source_selection_receipt=selection_receipt,
+        )
+
+    missing = source_root / "VA" / "migrations" / f"{'0' * 64}.json"
+    with pytest.raises(
+        StateLawsRetainedEvidenceSeedError,
+        match="regular non-symlink file",
+    ):
+        seed_retained_evidence_generation(
+            source_root=source_root,
+            destination_root=tmp_path / "missing-destination",
+            jurisdiction="VA",
+            parser_name="VirginiaScraper",
+            source_selection_receipt=missing,
+        )
+
+
+def test_pinned_seed_rejects_selection_receipt_outside_source_root(
+    tmp_path: Path,
+) -> None:
+    source_root, selection_receipt, _payload = _pinned_source_with_later_conflict(
+        tmp_path
+    )
+    outside = tmp_path / selection_receipt.name
+    outside.write_bytes(selection_receipt.read_bytes())
+
+    with pytest.raises(
+        StateLawsRetainedEvidenceSeedError,
+        match="contained within the source jurisdiction",
+    ):
+        seed_retained_evidence_generation(
+            source_root=source_root,
+            destination_root=tmp_path / "outside-destination",
+            jurisdiction="VA",
+            parser_name="VirginiaScraper",
+            source_selection_receipt=outside,
+        )
+
+
+def test_pinned_seed_rejects_schema_digest_ambiguity_and_missing_pin(
+    tmp_path: Path,
+) -> None:
+    source_root, _selection_receipt, payload = (
+        _pinned_source_with_later_conflict(tmp_path)
+    )
+    migration_dir = source_root / "VA" / "migrations"
+
+    wrong_schema = dict(payload)
+    wrong_schema["schema_version"] = "state-laws-retained-evidence-seed-v999"
+    wrong_schema_path = _write_selection_receipt(migration_dir, wrong_schema)
+    with pytest.raises(
+        StateLawsRetainedEvidenceSeedError,
+        match="unsupported schema_version",
+    ):
+        seed_retained_evidence_generation(
+            source_root=source_root,
+            destination_root=tmp_path / "wrong-schema-destination",
+            jurisdiction="VA",
+            parser_name="VirginiaScraper",
+            source_selection_receipt=wrong_schema_path,
+        )
+
+    wrong_projection_digest = json.loads(json.dumps(payload))
+    wrong_projection_digest["selected_projection"][0]["content_sha256"] = (
+        "e" * 64
+    )
+    wrong_projection_digest_path = _write_selection_receipt(
+        migration_dir,
+        wrong_projection_digest,
+    )
+    with pytest.raises(
+        StateLawsRetainedEvidenceSeedError,
+        match="selected_projection failed SHA-256 verification",
+    ):
+        seed_retained_evidence_generation(
+            source_root=source_root,
+            destination_root=tmp_path / "wrong-digest-destination",
+            jurisdiction="VA",
+            parser_name="VirginiaScraper",
+            source_selection_receipt=wrong_projection_digest_path,
+        )
+
+    ambiguous = json.loads(json.dumps(payload))
+    ambiguous["selected_projection"].insert(
+        0,
+        dict(ambiguous["selected_projection"][0]),
+    )
+    ambiguous["selected_parser_input_count"] += 1
+    ambiguous["selected_projection_sha256"] = hashlib.sha256(
+        canonical_json_bytes(ambiguous["selected_projection"])
+    ).hexdigest()
+    ambiguous_path = _write_selection_receipt(migration_dir, ambiguous)
+    with pytest.raises(
+        StateLawsRetainedEvidenceSeedError,
+        match="repeats one receipt_sha256",
+    ):
+        seed_retained_evidence_generation(
+            source_root=source_root,
+            destination_root=tmp_path / "ambiguous-destination",
+            jurisdiction="VA",
+            parser_name="VirginiaScraper",
+            source_selection_receipt=ambiguous_path,
+        )
+
+    missing_pin = json.loads(json.dumps(payload))
+    missing_pin["selected_projection"][0]["receipt_sha256"] = "f" * 64
+    missing_pin["selected_projection_sha256"] = hashlib.sha256(
+        canonical_json_bytes(missing_pin["selected_projection"])
+    ).hexdigest()
+    missing_pin_path = _write_selection_receipt(migration_dir, missing_pin)
+    with pytest.raises(
+        StateLawsRetainedEvidenceSeedError,
+        match="absent from the fully verified source ledger",
+    ):
+        seed_retained_evidence_generation(
+            source_root=source_root,
+            destination_root=tmp_path / "missing-pin-destination",
+            jurisdiction="VA",
+            parser_name="VirginiaScraper",
+            source_selection_receipt=missing_pin_path,
+        )
 
 
 def test_seed_requires_fresh_destination_and_complete_requested_urls(

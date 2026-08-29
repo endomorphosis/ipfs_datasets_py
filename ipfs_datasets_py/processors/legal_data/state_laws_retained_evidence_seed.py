@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import errno
 import hashlib
+import json
 import os
 import shutil
 import tempfile
@@ -51,6 +52,23 @@ from ipfs_datasets_py.retrieval.hf_graphrag.artifacts import atomic_write_bytes
 SCHEMA_VERSION: Final = "state-laws-retained-evidence-seed-v1"
 TRANSPORT_UNSTABLE_EXCLUSION_SCHEMA_VERSION: Final = (
     "state-laws-retained-evidence-seed-v2"
+)
+UNION_SCHEMA_VERSION: Final = "state-laws-retained-evidence-union-v1"
+_SELECTION_RECEIPT_SCHEMA_VERSIONS: Final = frozenset(
+    {
+        SCHEMA_VERSION,
+        TRANSPORT_UNSTABLE_EXCLUSION_SCHEMA_VERSION,
+        UNION_SCHEMA_VERSION,
+    }
+)
+_PROJECTION_FIELDS: Final = frozenset(
+    {
+        "content_sha256",
+        "official_url",
+        "receipt_sha256",
+        "request_sha256",
+        "source_transport",
+    }
 )
 
 
@@ -116,7 +134,7 @@ class RetainedEvidenceUnionReport:
     migration_receipt_path: str
     migration_receipt_sha256: str
     network_io_performed: bool = False
-    schema_version: str = "state-laws-retained-evidence-union-v1"
+    schema_version: str = UNION_SCHEMA_VERSION
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -271,6 +289,208 @@ def _selected_projection(
     return projection
 
 
+def _validated_sha256(value: object, *, field_name: str) -> str:
+    digest = str(value or "").strip()
+    if (
+        not isinstance(value, str)
+        or value != digest
+        or len(digest) != 64
+        or digest != digest.lower()
+        or any(character not in "0123456789abcdef" for character in digest)
+    ):
+        raise StateLawsRetainedEvidenceSeedError(
+            f"source selection receipt has an invalid {field_name}"
+        )
+    return digest
+
+
+def _load_source_selection_projection(
+    selection_receipt: str | Path,
+    *,
+    source: Path,
+    jurisdiction: str,
+    parser_name: str,
+    allowed_source_transports: Sequence[str],
+) -> tuple[list[dict[str, Any]], Path, str]:
+    """Load and verify one prior migration's exact retained projection."""
+
+    unresolved = Path(selection_receipt).expanduser()
+    if unresolved.is_symlink() or not unresolved.is_file():
+        raise StateLawsRetainedEvidenceSeedError(
+            "source selection receipt must be a regular non-symlink file"
+        )
+    resolved = unresolved.resolve()
+    source_jurisdiction = (source / jurisdiction).resolve()
+    try:
+        resolved.relative_to(source_jurisdiction)
+    except ValueError as exc:
+        raise StateLawsRetainedEvidenceSeedError(
+            "source selection receipt must be contained within the source "
+            "jurisdiction evidence root"
+        ) from exc
+
+    receipt_bytes = resolved.read_bytes()
+    receipt_sha256 = hashlib.sha256(receipt_bytes).hexdigest()
+    if resolved.name != f"{receipt_sha256}.json":
+        raise StateLawsRetainedEvidenceSeedError(
+            "source selection receipt filename failed SHA-256 fixity verification"
+        )
+    try:
+        payload = json.loads(receipt_bytes.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise StateLawsRetainedEvidenceSeedError(
+            "source selection receipt is not valid UTF-8 JSON"
+        ) from exc
+    if not isinstance(payload, dict):
+        raise StateLawsRetainedEvidenceSeedError(
+            "source selection receipt must be a JSON object"
+        )
+    if canonical_json_bytes(payload) != receipt_bytes:
+        raise StateLawsRetainedEvidenceSeedError(
+            "source selection receipt is not canonical JSON"
+        )
+    if payload.get("schema_version") not in _SELECTION_RECEIPT_SCHEMA_VERSIONS:
+        raise StateLawsRetainedEvidenceSeedError(
+            "source selection receipt has an unsupported schema_version"
+        )
+    if payload.get("jurisdiction") != jurisdiction:
+        raise StateLawsRetainedEvidenceSeedError(
+            "source selection receipt jurisdiction does not match the source ledger"
+        )
+    if payload.get("parser_name") != parser_name:
+        raise StateLawsRetainedEvidenceSeedError(
+            "source selection receipt parser_name does not match the source ledger"
+        )
+    if payload.get("authorizes_parser_admission") is not False:
+        raise StateLawsRetainedEvidenceSeedError(
+            "source selection receipt must be diagnostic-only"
+        )
+    if payload.get("network_io_performed") is not False:
+        raise StateLawsRetainedEvidenceSeedError(
+            "source selection receipt must attest zero network I/O"
+        )
+
+    raw_projection = payload.get("selected_projection")
+    if not isinstance(raw_projection, list) or not raw_projection:
+        raise StateLawsRetainedEvidenceSeedError(
+            "source selection receipt has no selected_projection"
+        )
+    selected_count = payload.get("selected_parser_input_count")
+    if type(selected_count) is not int or selected_count != len(raw_projection):
+        raise StateLawsRetainedEvidenceSeedError(
+            "source selection receipt selected_parser_input_count is inconsistent"
+        )
+
+    transports = set(_normalized_allowed_transports(allowed_source_transports))
+    projection: list[dict[str, Any]] = []
+    receipt_ids: set[str] = set()
+    request_ids: set[tuple[str, str]] = set()
+    for raw_row in raw_projection:
+        if not isinstance(raw_row, dict) or set(raw_row) != _PROJECTION_FIELDS:
+            raise StateLawsRetainedEvidenceSeedError(
+                "source selection receipt has an invalid selected_projection row"
+            )
+        official_url = _canonical_url(raw_row.get("official_url"))
+        if raw_row.get("official_url") != official_url:
+            raise StateLawsRetainedEvidenceSeedError(
+                "source selection receipt official_url is not canonical"
+            )
+        source_transport = str(raw_row.get("source_transport") or "").strip()
+        if (
+            not source_transport
+            or raw_row.get("source_transport") != source_transport
+            or source_transport not in transports
+        ):
+            raise StateLawsRetainedEvidenceSeedError(
+                "source selection receipt names a disallowed source_transport"
+            )
+        row = {
+            "content_sha256": _validated_sha256(
+                raw_row.get("content_sha256"), field_name="content_sha256"
+            ),
+            "official_url": official_url,
+            "receipt_sha256": _validated_sha256(
+                raw_row.get("receipt_sha256"), field_name="receipt_sha256"
+            ),
+            "request_sha256": _validated_sha256(
+                raw_row.get("request_sha256"), field_name="request_sha256"
+            ),
+            "source_transport": source_transport,
+        }
+        if row["receipt_sha256"] in receipt_ids:
+            raise StateLawsRetainedEvidenceSeedError(
+                "source selection receipt repeats one receipt_sha256"
+            )
+        request_id = (row["official_url"], row["request_sha256"])
+        if request_id in request_ids:
+            raise StateLawsRetainedEvidenceSeedError(
+                "source selection receipt ambiguously pins one exact request twice"
+            )
+        receipt_ids.add(row["receipt_sha256"])
+        request_ids.add(request_id)
+        projection.append(row)
+
+    ordered_projection = sorted(
+        projection,
+        key=lambda item: (
+            item["official_url"],
+            item["request_sha256"],
+            item["receipt_sha256"],
+        ),
+    )
+    if projection != ordered_projection:
+        raise StateLawsRetainedEvidenceSeedError(
+            "source selection receipt selected_projection is not canonical"
+        )
+    projection_sha256 = hashlib.sha256(
+        canonical_json_bytes(projection)
+    ).hexdigest()
+    declared_projection_sha256 = _validated_sha256(
+        payload.get("selected_projection_sha256"),
+        field_name="selected_projection_sha256",
+    )
+    if declared_projection_sha256 != projection_sha256:
+        raise StateLawsRetainedEvidenceSeedError(
+            "source selection receipt selected_projection failed SHA-256 verification"
+        )
+    return projection, resolved, receipt_sha256
+
+
+def _select_entries_from_pinned_projection(
+    ledger: StateLawMultiFetchAcquisitionLedger,
+    *,
+    projection: Sequence[Mapping[str, Any]],
+) -> list[RetainedStateLawParserInput]:
+    """Resolve every pinned receipt to one exact, fully replayed ledger entry."""
+
+    entries_by_receipt: dict[str, list[RetainedStateLawParserInput]] = {}
+    for entry in ledger.entries:
+        entries_by_receipt.setdefault(entry.receipt.receipt_sha256, []).append(entry)
+
+    selected: list[RetainedStateLawParserInput] = []
+    for row in projection:
+        receipt_sha256 = str(row["receipt_sha256"])
+        matches = entries_by_receipt.get(receipt_sha256, [])
+        if not matches:
+            raise StateLawsRetainedEvidenceSeedError(
+                "source selection receipt pins a receipt absent from the fully "
+                f"verified source ledger: {receipt_sha256}"
+            )
+        if len(matches) != 1:
+            raise StateLawsRetainedEvidenceSeedError(
+                "source selection receipt does not resolve uniquely in the source "
+                f"ledger: {receipt_sha256}"
+            )
+        entry = matches[0]
+        if _selected_projection((entry,))[0] != dict(row):
+            raise StateLawsRetainedEvidenceSeedError(
+                "source selection receipt does not exactly match its retained "
+                f"ledger entry: {receipt_sha256}"
+            )
+        selected.append(entry)
+    return selected
+
+
 def _link_or_copy(source: Path, destination: Path) -> str:
     if source.is_symlink() or not source.is_file():
         raise StateLawsRetainedEvidenceSeedError(
@@ -311,6 +531,7 @@ def seed_retained_evidence_generation(
     allowed_source_transports: Sequence[str] = ("direct",),
     include_urls: Iterable[str] | None = None,
     exclude_transport_unstable_receipt_sha256s: Sequence[str] = (),
+    source_selection_receipt: str | Path | None = None,
 ) -> RetainedEvidenceSeedReport:
     """Seed one fresh evidence generation from verified retained inputs.
 
@@ -323,6 +544,10 @@ def seed_retained_evidence_generation(
     official URL alone has transport-invalid syntax.  That narrow exclusion is
     accepted only after envelope/body replay and is recorded under the v2
     migration schema so the repaired URL must be reacquired prospectively.
+    Alternatively, ``source_selection_receipt`` may pin the exact projection
+    from a prior in-root v1/v2 seed or union migration.  This permits a later
+    conflicting observation to remain in the source ledger without silently
+    changing the fresh generation's previously selected inputs.
     """
 
     code = validate_jurisdiction(jurisdiction)
@@ -350,6 +575,18 @@ def seed_retained_evidence_generation(
         )
 
     transports = _normalized_allowed_transports(allowed_source_transports)
+    if source_selection_receipt is not None and include_urls is not None:
+        raise StateLawsRetainedEvidenceSeedError(
+            "source_selection_receipt cannot be combined with include_urls"
+        )
+    if (
+        source_selection_receipt is not None
+        and exclude_transport_unstable_receipt_sha256s
+    ):
+        raise StateLawsRetainedEvidenceSeedError(
+            "source_selection_receipt cannot be combined with transport-unstable "
+            "receipt exclusions"
+        )
     source_ledger = StateLawMultiFetchAcquisitionLedger(
         source,
         jurisdiction=code,
@@ -362,11 +599,30 @@ def seed_retained_evidence_generation(
     excluded_transport_unstable_receipts = (
         source_ledger.excluded_transport_unstable_receipts
     )
-    selected, duplicate_count, requested_urls = _select_entries(
-        source_ledger,
-        allowed_source_transports=transports,
-        include_urls=include_urls,
-    )
+    pinned_receipt_path: Path | None = None
+    pinned_receipt_sha256 = ""
+    if source_selection_receipt is None:
+        selected, duplicate_count, requested_urls = _select_entries(
+            source_ledger,
+            allowed_source_transports=transports,
+            include_urls=include_urls,
+        )
+    else:
+        pinned_projection, pinned_receipt_path, pinned_receipt_sha256 = (
+            _load_source_selection_projection(
+                source_selection_receipt,
+                source=source,
+                jurisdiction=code,
+                parser_name=parser,
+                allowed_source_transports=transports,
+            )
+        )
+        selected = _select_entries_from_pinned_projection(
+            source_ledger,
+            projection=pinned_projection,
+        )
+        duplicate_count = len(source_ledger.entries) - len(selected)
+        requested_urls = ()
     skipped_disallowed = source_ledger.skipped_disallowed_transport_count
     projection = _selected_projection(selected)
     projection_sha256 = hashlib.sha256(
@@ -455,6 +711,13 @@ def seed_retained_evidence_generation(
         if excluded_transport_unstable_receipts:
             migration["excluded_transport_unstable_receipts"] = list(
                 excluded_transport_unstable_receipts
+            )
+        if pinned_receipt_path is not None:
+            migration["source_selection_receipt_path"] = str(
+                pinned_receipt_path
+            )
+            migration["source_selection_receipt_sha256"] = (
+                pinned_receipt_sha256
             )
         migration_bytes = canonical_json_bytes(migration)
         migration_receipt_sha256 = hashlib.sha256(migration_bytes).hexdigest()
@@ -800,7 +1063,7 @@ def seed_retained_evidence_union(
             "network_io_performed": False,
             "parser_name": destination_parser,
             "rebound_parser_inputs": rebound_rows,
-            "schema_version": "state-laws-retained-evidence-union-v1",
+            "schema_version": UNION_SCHEMA_VERSION,
             "selected_parser_input_count": len(selected_union),
             "selected_projection": projection,
             "selected_projection_sha256": projection_sha256,
