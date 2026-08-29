@@ -141,6 +141,77 @@ class NewYorkScraper(BaseStateScraper):
     STRICT_CURRENT_SIGNED_BILL_PROOF_URL_SHA256 = (
         "ef7e526c284aa62b725b457639b71707627482ac9b35ea76ff8bf74ad48a8a31"
     )
+    STRICT_CURRENT_ENV_PROOF_ROWS = (
+        (
+            "ENV:2025:concurrent-resolution",
+            "official_assembly_bill_record",
+            (
+                "https://assembly.ny.gov/leg/"
+                "?Actions=Y&Summary=Y&Text=Y&bn=A07454&term=2025"
+            ),
+        ),
+        (
+            "ENV:2025:implementation-record",
+            "official_assembly_bill_record",
+            (
+                "https://assembly.ny.gov/leg/"
+                "?Actions=Y&Summary=Y&Text=Y&bn=A03628&term=2025"
+            ),
+        ),
+        (
+            "ENV:2025:constitution-article-14",
+            "official_constitution_section",
+            "https://www.nysenate.gov/legislation/laws/CNS/A14S1",
+        ),
+        (
+            "ENV:2025:constitution-article-19",
+            "official_constitution_section",
+            "https://www.nysenate.gov/legislation/laws/CNS/A19S1",
+        ),
+    )
+    STRICT_CURRENT_ENV_PROOF_URL_SHA256 = (
+        "8c37b727ae420312d7ef203c3a047cd8e8496d4bae2b35a9af36e820a672a74e"
+    )
+    STRICT_CURRENT_EVENT_PROOF_ROWS = (
+        (
+            "MHY",
+            "mhy_2022_ch481_regulations",
+            "MHY:82:state-register-adoption",
+            "official_state_register_adoption",
+            "https://dos.ny.gov/system/files/documents/2025/08/082025.pdf",
+        ),
+        (
+            "PBA",
+            "mac_liability_discharge",
+            "PBA:3030-3041:mac-termination",
+            "official_government_financial_report",
+            (
+                "https://www.nyc.gov/assets/investorrelations/downloads/pdf/"
+                "go-bonds-statements/2011/nycgo-2011f.pdf"
+            ),
+        ),
+        (
+            "RSS",
+            "rss_2011_ch525_condition",
+            "RSS:1204-a:chapter-525-effective-clause",
+            "official_enacted_bill_text",
+            "https://legislation.nysenate.gov/pdf/bills/2011/S5837",
+        ),
+        (
+            "RSS",
+            "rss_2011_ch525_condition",
+            "RSS:1204-a:osc-payroll-bulletin-1275",
+            "official_comptroller_payroll_bulletin",
+            (
+                "https://www.osc.ny.gov/state-agencies/payroll-bulletins/"
+                "state-agencies/1275-new-deduction-code-616-paf-retirement-"
+                "tax-paf-btx-and-new-deduction"
+            ),
+        ),
+    )
+    STRICT_CURRENT_EVENT_PROOF_URL_SHA256 = (
+        "0e874dec7297f2d6862acba3f5c1369033ab2817cbb47bf61ec4d076adeb23a6"
+    )
     _NY_LAW_HREF_RE = re.compile(
         r"/legislation/laws/(?P<code>[A-Z]{2,4})(?:/|$)",
         re.IGNORECASE,
@@ -246,6 +317,12 @@ class NewYorkScraper(BaseStateScraper):
 
         return {"Accept": "application/pdf,*/*;q=0.8"}
 
+    @staticmethod
+    def _new_york_constitution_section_headers() -> Dict[str, str]:
+        """Use the direct request shape accepted by the official CNS pages."""
+
+        return {"Accept": "*/*", "User-Agent": "curl/8.5.0"}
+
     def _new_york_pdf_frontier_batch_size(self) -> int:
         return max(
             1,
@@ -280,6 +357,42 @@ class NewYorkScraper(BaseStateScraper):
         return len(raw) > 1_000 and raw.lstrip().startswith(b"%PDF")
 
     @staticmethod
+    def _is_valid_new_york_event_proof_pdf(payload: bytes) -> bool:
+        """Admit exact official PDFs, including DOS's warning-prefixed file."""
+
+        raw = bytes(payload or b"")
+        pdf_offset = raw.find(b"%PDF")
+        return bool(len(raw) > 1_000 and 0 <= pdf_offset < 1_024)
+
+    @staticmethod
+    def _is_valid_new_york_event_proof_html(payload: bytes) -> bool:
+        """Admit the exact OSC payroll bulletin event record."""
+
+        sample = bytes(payload or b"").lower()
+        return bool(
+            len(sample) > 10_000
+            and b"<html" in sample[:4_000]
+            and b"</html>" in sample[-4_000:]
+            and b"state agencies bulletin no. 1275" in sample
+            and b"irs) ruling dated july 9, 2013" in sample
+            and b"effective october 1, 2013" in sample
+            and b"internal revenue code section 414(h)" in sample
+        )
+
+    @staticmethod
+    def _new_york_event_proof_media_type(proof_kind: str) -> str:
+        kind = str(proof_kind or "").strip()
+        if kind == "official_comptroller_payroll_bulletin":
+            return "text/html"
+        if kind in {
+            "official_enacted_bill_text",
+            "official_government_financial_report",
+            "official_state_register_adoption",
+        }:
+            return "application/pdf"
+        raise RuntimeError("New York event proof has an unsupported media type")
+
+    @staticmethod
     def _is_valid_new_york_senate_section_html(payload: bytes) -> bool:
         sample = bytes(payload or b"").lower()
         has_content_container = bool(
@@ -305,6 +418,18 @@ class NewYorkScraper(BaseStateScraper):
             and b"jump_to_text" in sample
             and b"bill no" in sample
             and b"signed chap." in sample
+            and b"</html>" in sample[-4_000:]
+        )
+
+    @staticmethod
+    def _is_valid_new_york_assembly_bill_html(payload: bytes) -> bool:
+        sample = bytes(payload or b"").lower()
+        return bool(
+            len(sample) > 10_000
+            and b"<html" in sample[:4_000]
+            and b"jump_to_actions" in sample
+            and b"jump_to_text" in sample
+            and b"bill no" in sample
             and b"</html>" in sample[-4_000:]
         )
 
@@ -365,6 +490,200 @@ class NewYorkScraper(BaseStateScraper):
                     f"{code} {section} count={len(matches)}"
                 )
             selected.append((code, section, selector_key, url))
+        return selected
+
+    @classmethod
+    def _new_york_exact_env_proof_rows(
+        cls,
+        parsed_reports,
+    ) -> List[tuple[str, str, str]]:
+        """Select the fixed four-input ENV chain only for its four residuals."""
+
+        expected = [
+            tuple(str(value) for value in row)
+            for row in cls.STRICT_CURRENT_ENV_PROOF_ROWS
+        ]
+        urls = [row[2] for row in expected]
+        if len(urls) != len(set(urls)):
+            raise RuntimeError("New York ENV proof URLs are not unique")
+        observed_sha256 = hashlib.sha256(
+            "\n".join(urls).encode("utf-8")
+        ).hexdigest()
+        if observed_sha256 != cls.STRICT_CURRENT_ENV_PROOF_URL_SHA256:
+            raise RuntimeError(
+                "New York ENV proof URL projection changed: "
+                f"{observed_sha256}"
+            )
+        for selector_key, proof_kind, url in expected:
+            parsed = urlparse(url)
+            if (
+                parsed.scheme != "https"
+                or parsed.hostname
+                not in {cls.OFFICIAL_ASSEMBLY_DOMAIN, cls.OFFICIAL_DOMAIN}
+                or proof_kind
+                not in {
+                    "official_assembly_bill_record",
+                    "official_constitution_section",
+                }
+                or not selector_key.startswith("ENV:2025:")
+            ):
+                raise RuntimeError(
+                    "New York ENV proof escaped its exact official identity"
+                )
+
+        report = next(
+            (
+                item
+                for item in parsed_reports
+                if str(getattr(item, "law_code", "") or "").strip().upper()
+                == "ENV"
+            ),
+            None,
+        )
+        if report is None:
+            return []
+        observed = {
+            (
+                str(row.get("section_number") or "").strip(),
+                str(row.get("toc_variant") or "").strip(),
+                str(row.get("reason") or "").strip(),
+                str(row.get("detail") or "").strip().split(":", 1)[0],
+            )
+            for row in list(getattr(report, "unclassified_sections", []) or [])
+            if isinstance(row, Mapping)
+            and str(row.get("section_number") or "").strip()
+            in {"9-2301", "9-2302", "9-2303", "9-2304"}
+        }
+        targets = {
+            (section, "", "ambiguous_lifecycle_status", "event_conditioned_effective")
+            for section in ("9-2301", "9-2302", "9-2303", "9-2304")
+        }
+        if not observed:
+            return []
+        if observed != targets:
+            raise RuntimeError(
+                "New York ENV residual membership drifted; "
+                f"observed={sorted(observed)}"
+            )
+        return expected
+
+    @classmethod
+    def _new_york_exact_event_proof_rows(
+        cls,
+        parsed_reports,
+    ) -> List[tuple[str, str, str, str, str]]:
+        """Select fixed event records only for their exact residual sets."""
+
+        expected = [
+            tuple(str(value) for value in row)
+            for row in cls.STRICT_CURRENT_EVENT_PROOF_ROWS
+        ]
+        urls = [row[4] for row in expected]
+        if len(urls) != len(set(urls)):
+            raise RuntimeError("New York event proof URLs are not unique")
+        observed_sha256 = hashlib.sha256(
+            "\n".join(urls).encode("utf-8")
+        ).hexdigest()
+        if observed_sha256 != cls.STRICT_CURRENT_EVENT_PROOF_URL_SHA256:
+            raise RuntimeError(
+                "New York event proof URL projection changed: "
+                f"{observed_sha256}"
+            )
+
+        target_sections = {
+            "MHY": tuple(f"82.{number:02d}" for number in range(1, 16)),
+            "PBA": (
+                "3030",
+                "3031",
+                "3032",
+                "3033",
+                "3034",
+                "3035",
+                "3036",
+                "3036-a",
+                "3036-b",
+                "3037",
+                "3037-a",
+                "3038",
+                "3039",
+                "3040",
+                "3041",
+            ),
+            "RSS": ("1204-a",),
+        }
+        target_dispositions = {
+            "MHY": "event_conditioned_effective",
+            "PBA": "event_conditioned_expiration",
+            "RSS": "event_conditioned_effective",
+        }
+        expected_hosts = {
+            "MHY": {"dos.ny.gov"},
+            "PBA": {"www.nyc.gov"},
+            "RSS": {"legislation.nysenate.gov", "www.osc.ny.gov"},
+        }
+        reports_by_code = {
+            str(getattr(report, "law_code", "") or "").strip().upper(): report
+            for report in parsed_reports
+        }
+        selected: List[tuple[str, str, str, str, str]] = []
+        for code, proof_family, selector_key, proof_kind, url in expected:
+            parsed = urlparse(url)
+            if (
+                code not in target_sections
+                or parsed.scheme != "https"
+                or parsed.hostname not in expected_hosts[code]
+                or proof_kind
+                not in {
+                    "official_comptroller_payroll_bulletin",
+                    "official_enacted_bill_text",
+                    "official_state_register_adoption",
+                    "official_government_financial_report",
+                }
+                or cls._new_york_event_proof_media_type(proof_kind)
+                not in {"application/pdf", "text/html"}
+                or not proof_family
+                or not selector_key.startswith(f"{code}:")
+            ):
+                raise RuntimeError(
+                    "New York event proof escaped its exact official identity"
+                )
+            report = reports_by_code.get(code)
+            if report is None:
+                continue
+            target_set = set(target_sections[code])
+            observed = {
+                (
+                    str(row.get("section_number") or "").strip(),
+                    str(row.get("toc_variant") or "").strip(),
+                    str(row.get("reason") or "").strip(),
+                    str(row.get("detail") or "").strip().split(":", 1)[0],
+                )
+                for row in list(
+                    getattr(report, "unclassified_sections", []) or []
+                )
+                if isinstance(row, Mapping)
+                and str(row.get("section_number") or "").strip()
+                in target_set
+            }
+            targets = {
+                (
+                    section,
+                    "",
+                    "ambiguous_lifecycle_status",
+                    target_dispositions[code],
+                )
+                for section in target_sections[code]
+            }
+            if not observed:
+                continue
+            if observed != targets:
+                raise RuntimeError(
+                    f"New York {proof_family} residual membership drifted; "
+                    f"observed={sorted(observed)}"
+                )
+            selected.append(
+                (code, proof_family, selector_key, proof_kind, url)
+            )
         return selected
 
     @classmethod
@@ -1332,6 +1651,141 @@ class NewYorkScraper(BaseStateScraper):
             proof_registry = proof_registry.with_inputs(signed_bill_proofs)
             parsed_reports = _parse_pdf_inputs(proof_registry)
 
+        env_proof_rows = self._new_york_exact_env_proof_rows(parsed_reports)
+        if env_proof_rows:
+            env_proofs = []
+            assembly_rows = [
+                row
+                for row in env_proof_rows
+                if row[1] == "official_assembly_bill_record"
+            ]
+            assembly_batch = await self._fetch_new_york_frontier_batch(
+                [row[2] for row in assembly_rows],
+                frontier_name="env-assembly-proof-chain-1-2",
+                content_validator=self._is_valid_new_york_assembly_bill_html,
+                media_type="text/html",
+                common_crawl_domains=(self.OFFICIAL_ASSEMBLY_DOMAIN,),
+                common_crawl_url_terms=("/leg/", "Actions=Y",),
+                residual_retry_attempts=0,
+            )
+            for row, url, payload in zip(
+                assembly_rows,
+                assembly_batch.urls,
+                assembly_batch.payloads,
+                strict=True,
+            ):
+                selector_key, proof_kind, expected_url = row
+                if url != self._canonical_fetch_url(expected_url):
+                    raise RuntimeError(
+                        "New York ENV Assembly proof changed exact URL identity"
+                    )
+                env_proofs.append(
+                    NewYorkSupplementalProofInput.bind(
+                        selector_key=selector_key,
+                        proof_kind=proof_kind,
+                        official_url=url,
+                        media_type="text/html",
+                        payload=bytes(payload),
+                    )
+                )
+
+            constitution_rows = [
+                row
+                for row in env_proof_rows
+                if row[1] == "official_constitution_section"
+            ]
+            constitution_batch = await self._fetch_new_york_frontier_batch(
+                [row[2] for row in constitution_rows],
+                frontier_name="env-constitution-proof-chain-1-2",
+                content_validator=self._is_valid_new_york_senate_section_html,
+                media_type="text/html",
+                common_crawl_domains=(self.OFFICIAL_DOMAIN,),
+                common_crawl_url_terms=("/legislation/laws/CNS/",),
+                residual_retry_attempts=0,
+                request_headers=self._new_york_constitution_section_headers(),
+            )
+            for row, url, payload in zip(
+                constitution_rows,
+                constitution_batch.urls,
+                constitution_batch.payloads,
+                strict=True,
+            ):
+                selector_key, proof_kind, expected_url = row
+                if url != self._canonical_fetch_url(expected_url):
+                    raise RuntimeError(
+                        "New York ENV Constitution proof changed exact URL identity"
+                    )
+                env_proofs.append(
+                    NewYorkSupplementalProofInput.bind(
+                        selector_key=selector_key,
+                        proof_kind=proof_kind,
+                        official_url=url,
+                        media_type="text/html",
+                        payload=bytes(payload),
+                    )
+                )
+            proof_registry = proof_registry.with_inputs(env_proofs)
+            parsed_reports = _parse_pdf_inputs(proof_registry)
+
+        event_proof_rows = self._new_york_exact_event_proof_rows(
+            parsed_reports
+        )
+        if event_proof_rows:
+            event_proofs = []
+            for media_type in ("application/pdf", "text/html"):
+                media_rows = [
+                    row
+                    for row in event_proof_rows
+                    if self._new_york_event_proof_media_type(row[3])
+                    == media_type
+                ]
+                if not media_rows:
+                    continue
+                event_urls = [row[4] for row in media_rows]
+                event_batch = await self._fetch_new_york_frontier_batch(
+                    event_urls,
+                    frontier_name=(
+                        "event-condition-"
+                        f"{'pdf' if media_type == 'application/pdf' else 'html'}-"
+                        f"proof-chain-1-{len(event_urls)}"
+                    ),
+                    content_validator=(
+                        self._is_valid_new_york_event_proof_pdf
+                        if media_type == "application/pdf"
+                        else self._is_valid_new_york_event_proof_html
+                    ),
+                    media_type=media_type,
+                    common_crawl_domains=tuple(
+                        str(urlparse(url).hostname or "") for url in event_urls
+                    ),
+                    common_crawl_url_terms=tuple(
+                        urlparse(url).path for url in event_urls
+                    ),
+                    residual_retry_attempts=0,
+                )
+                for row, url, payload in zip(
+                    media_rows,
+                    event_batch.urls,
+                    event_batch.payloads,
+                    strict=True,
+                ):
+                    _code, _family, selector_key, proof_kind, expected_url = row
+                    if url != self._canonical_fetch_url(expected_url):
+                        raise RuntimeError(
+                            "New York event proof changed exact URL identity"
+                        )
+                    event_proofs.append(
+                        NewYorkSupplementalProofInput.bind(
+                            selector_key=selector_key,
+                            proof_kind=proof_kind,
+                            official_url=url,
+                            media_type=media_type,
+                            payload=bytes(payload),
+                        )
+                    )
+            proof_registry = proof_registry.with_inputs(event_proofs)
+            parsed_reports = _parse_pdf_inputs(proof_registry)
+
         supplemental_urls = self._new_york_exact_supplemental_urls(parsed_reports)
         if supplemental_urls:
             supplemental_batch = await self._fetch_new_york_frontier_batch(
@@ -1700,6 +2154,106 @@ class NewYorkScraper(BaseStateScraper):
             if bound_proof.manifest_row() != expected_proof:
                 raise RuntimeError(
                     f"New York retained signed-bill proof changed: {url}"
+                )
+            replay_proof_inputs.append(bound_proof)
+
+        pinned_env_rows = (
+            [
+                tuple(str(value) for value in row)
+                for row in self.STRICT_CURRENT_ENV_PROOF_ROWS
+            ]
+            if "ENV" in replay_catalog_codes
+            else []
+        )
+        observed_env_urls = {
+            url
+            for url, row in proof_manifest_by_url.items()
+            if str(row.get("proof_kind") or "")
+            in {
+                "official_assembly_bill_record",
+                "official_constitution_section",
+            }
+        }
+        expected_env_urls = {row[2] for row in pinned_env_rows}
+        if observed_env_urls != expected_env_urls:
+            raise RuntimeError(
+                "New York retained ENV proof membership changed"
+            )
+        for selector_key, proof_kind, url in pinned_env_rows:
+            expected_proof = proof_manifest_by_url[url]
+            constitution_input = proof_kind == "official_constitution_section"
+            payload = self._replay_new_york_retained_input(
+                url,
+                media_type="text/html",
+                content_validator=(
+                    self._is_valid_new_york_senate_section_html
+                    if constitution_input
+                    else self._is_valid_new_york_assembly_bill_html
+                ),
+                frontier_name=f"retained-env-{selector_key}-replay",
+                request_headers=(
+                    self._new_york_constitution_section_headers()
+                    if constitution_input
+                    else None
+                ),
+            )
+            bound_proof = NewYorkSupplementalProofInput.bind(
+                selector_key=selector_key,
+                proof_kind=proof_kind,
+                official_url=url,
+                media_type="text/html",
+                payload=payload,
+            )
+            if bound_proof.manifest_row() != expected_proof:
+                raise RuntimeError(
+                    f"New York retained ENV proof changed: {url}"
+                )
+            replay_proof_inputs.append(bound_proof)
+
+        pinned_event_rows = [
+            tuple(str(value) for value in row)
+            for row in self.STRICT_CURRENT_EVENT_PROOF_ROWS
+            if str(row[0]) in replay_catalog_codes
+        ]
+        observed_event_urls = {
+            url
+            for url, row in proof_manifest_by_url.items()
+            if str(row.get("proof_kind") or "")
+            in {
+                "official_comptroller_payroll_bulletin",
+                "official_enacted_bill_text",
+                "official_state_register_adoption",
+                "official_government_financial_report",
+            }
+        }
+        expected_event_urls = {row[4] for row in pinned_event_rows}
+        if observed_event_urls != expected_event_urls:
+            raise RuntimeError(
+                "New York retained event proof membership changed"
+            )
+        for _code, _family, selector_key, proof_kind, url in pinned_event_rows:
+            expected_proof = proof_manifest_by_url[url]
+            media_type = self._new_york_event_proof_media_type(proof_kind)
+            payload = self._replay_new_york_retained_input(
+                url,
+                media_type=media_type,
+                content_validator=(
+                    self._is_valid_new_york_event_proof_pdf
+                    if media_type == "application/pdf"
+                    else self._is_valid_new_york_event_proof_html
+                ),
+                frontier_name=f"retained-event-{selector_key}-replay",
+            )
+            bound_proof = NewYorkSupplementalProofInput.bind(
+                selector_key=selector_key,
+                proof_kind=proof_kind,
+                official_url=url,
+                media_type=media_type,
+                payload=payload,
+            )
+            if bound_proof.manifest_row() != expected_proof:
+                raise RuntimeError(
+                    f"New York retained event proof changed: {url}"
                 )
             replay_proof_inputs.append(bound_proof)
 

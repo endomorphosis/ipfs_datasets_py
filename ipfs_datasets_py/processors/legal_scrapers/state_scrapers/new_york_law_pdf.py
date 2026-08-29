@@ -15,7 +15,7 @@ import re
 import unicodedata
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Dict, Iterable, List, Mapping, Optional
 from urllib.parse import quote, urlparse
 
@@ -62,6 +62,95 @@ EDN666_SIGNED_BILL_RECORD_URL = (
 )
 EDN666_SIGNED_BILL_PROJECTION_SHA256 = (
     "3a212979e4428f98acfad78f033949c7abb2b09f8ffe0ac7c24c46dec6d94a02"
+)
+ENV2025_CONCURRENT_RESOLUTION_URL = (
+    "https://assembly.ny.gov/leg/"
+    "?Actions=Y&Summary=Y&Text=Y&bn=A07454&term=2025"
+)
+ENV2025_IMPLEMENTATION_RECORD_URL = (
+    "https://assembly.ny.gov/leg/"
+    "?Actions=Y&Summary=Y&Text=Y&bn=A03628&term=2025"
+)
+ENV2025_ARTICLE14_SECTION1_URL = (
+    "https://www.nysenate.gov/legislation/laws/CNS/A14S1"
+)
+ENV2025_ARTICLE19_SECTION1_URL = (
+    "https://www.nysenate.gov/legislation/laws/CNS/A19S1"
+)
+ENV2025_PROOF_SELECTOR_BY_URL = {
+    ENV2025_CONCURRENT_RESOLUTION_URL: "ENV:2025:concurrent-resolution",
+    ENV2025_IMPLEMENTATION_RECORD_URL: "ENV:2025:implementation-record",
+    ENV2025_ARTICLE14_SECTION1_URL: "ENV:2025:constitution-article-14",
+    ENV2025_ARTICLE19_SECTION1_URL: "ENV:2025:constitution-article-19",
+}
+# Stable projection over the source-bearing identities, actions, clauses, and
+# current constitutional sections.  Raw response digests remain retained in
+# the proof manifest; request-varying Assembly markup does not alter this pin.
+ENV2025_PROOF_PROJECTION_SHA256 = (
+    "d8a0b122f30db8d19162c9c6fb195d7ef8725f227d2ded7a15c8dc0af748e57d"
+)
+MHY82_STATE_REGISTER_URL = (
+    "https://dos.ny.gov/system/files/documents/2025/08/082025.pdf"
+)
+MHY82_STATE_REGISTER_SELECTOR_KEY = "MHY:82:state-register-adoption"
+MHY82_STATE_REGISTER_SHA256 = (
+    "e9fc4f3ed8d434edc0311b018101db5152f46821a60139aeceeb0aaf84b8c0dd"
+)
+MHY82_STATE_REGISTER_PROJECTION_SHA256 = (
+    "56a4639fec369eaa7b9c0bcafebc049497fe462150169c6bdcec46bcdbf7360d"
+)
+MAC_TERMINATION_REPORT_URL = (
+    "https://www.nyc.gov/assets/investorrelations/downloads/pdf/"
+    "go-bonds-statements/2011/nycgo-2011f.pdf"
+)
+MAC_TERMINATION_REPORT_SELECTOR_KEY = "PBA:3030-3041:mac-termination"
+MAC_TERMINATION_REPORT_SHA256 = (
+    "dd8066805f497b94bc2497b42a25be882d70360ee7f56f36912748d10f4480d7"
+)
+MAC_TERMINATION_REPORT_PROJECTION_SHA256 = (
+    "56803160ce2f27076cc5eff975fc9daa13429153fa0d709812d3862b7badd044"
+)
+RSS1204A_ENACTED_BILL_URL = (
+    "https://legislation.nysenate.gov/pdf/bills/2011/S5837"
+)
+RSS1204A_ENACTED_BILL_SELECTOR_KEY = "RSS:1204-a:chapter-525-effective-clause"
+RSS1204A_ENACTED_BILL_SHA256 = (
+    "48d0029397e4b7c6e7392ad15a5f18e8b01a5cf3ede3460727b1a9d35d4c5135"
+)
+RSS1204A_ENACTED_BILL_PROJECTION_SHA256 = (
+    "cc908cd562c6fb3d5e818812d1618e3c81cf1963590eeb54fff1853f05c4cef9"
+)
+RSS1204A_OSC_BULLETIN_URL = (
+    "https://www.osc.ny.gov/state-agencies/payroll-bulletins/state-agencies/"
+    "1275-new-deduction-code-616-paf-retirement-tax-paf-btx-and-new-deduction"
+)
+RSS1204A_OSC_BULLETIN_SELECTOR_KEY = "RSS:1204-a:osc-payroll-bulletin-1275"
+RSS1204A_OSC_BULLETIN_SHA256 = (
+    "bdcc51aa2ce75775110eedaa80e56c0ea8f03b2ebf4812ce1fc39c4fdccb97ff"
+)
+RSS1204A_OSC_BULLETIN_PROJECTION_SHA256 = (
+    "0c62cb0118bf665a5935f9214d4d4210c6fed5765aeda3fb60a7b6c1c522c8ca"
+)
+RSS1204A_PROOF_BUNDLE_PROJECTION_SHA256 = (
+    "c13fd0df9f5a8e0e898c562e02d6881d893f36bb9e0836dd10b7b951f48e3448"
+)
+MHY82_SECTIONS = tuple(f"82.{number:02d}" for number in range(1, 16))
+MAC_TITLE_SECTIONS = (
+    "3030",
+    "3031",
+    "3032",
+    "3033",
+    "3034",
+    "3035",
+    "3036",
+    "3036-a",
+    "3036-b",
+    "3037",
+    "3037-a",
+    "3038",
+    "3039",
+    "3040",
+    "3041",
 )
 SUPPLEMENTAL_PROOF_SCHEMA_VERSION = "new-york-supplemental-proof-input-v1"
 SUPPLEMENTAL_RESOLUTION_SCHEMA_VERSION = (
@@ -273,8 +362,14 @@ class NewYorkSupplementalProofInput:
             raise ValueError("New York supplemental proof selector must be non-empty")
         if kind not in {
             "official_event_report",
+            "official_assembly_bill_record",
+            "official_comptroller_payroll_bulletin",
+            "official_constitution_section",
+            "official_enacted_bill_text",
+            "official_government_financial_report",
             "official_senate_section",
             "official_signed_bill_record",
+            "official_state_register_adoption",
         }:
             raise ValueError("New York supplemental proof kind is not source-bound")
         if (
@@ -282,6 +377,8 @@ class NewYorkSupplementalProofInput:
             or not host
             or not (
                 host == "www.nysenate.gov"
+                or host == "legislation.nysenate.gov"
+                or host == "www.nyc.gov"
                 or host.endswith(".ny.gov")
             )
         ):
@@ -439,6 +536,121 @@ def _new_york_assembly_signed_bill_page(payload: bytes) -> Dict[str, Any]:
                 int(month),
                 int(day),
             )
+        except (TypeError, ValueError):
+            pass
+    return projection
+
+
+def _new_york_clean_assembly_bill_text(text_node: Any) -> str:
+    """Remove printed line numbers/page furniture from Assembly bill text."""
+
+    parts: List[str] = []
+    for raw_line in text_node.get_text("\n").splitlines():
+        line = unicodedata.normalize("NFKC", raw_line).strip()
+        line = re.sub(r"^\d{1,3}\s+", "", line).strip()
+        if not line or re.fullmatch(r"\d{1,3}", line):
+            continue
+        parts.append(line)
+    cleaned = " ".join(parts)
+    cleaned = re.sub(
+        r"EXPLANATION--Matter\s+in\s+.*?\bLBD[A-Z0-9-]+\b",
+        " ",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(r"\s+[AS]\.\s*\d+[A-Z]?\s+\d+\s+", " ", cleaned)
+    cleaned = re.sub(r"(?<=[A-Za-z])-\s+(?=[a-z])", "", cleaned)
+    return _WS.sub(" ", cleaned).strip()
+
+
+def _new_york_assembly_bill_page(payload: bytes) -> Dict[str, Any]:
+    """Project stable fields from a signed bill or concurrent resolution."""
+
+    raw = bytes(payload or b"")
+    decoded = raw.decode("utf-8", errors="replace")
+    lowered = decoded.casefold()
+    projection: Dict[str, Any] = {
+        "action_text": "",
+        "bill_number": "",
+        "bill_text": "",
+        "same_as": "",
+        "signed_chapter": "",
+        "signed_date": None,
+        "valid_html": bool(
+            len(raw) > 10_000
+            and "<html" in lowered[:4_000]
+            and "jump_to_actions" in lowered
+            and "jump_to_text" in lowered
+            and "bill no" in lowered
+            and "</html>" in lowered[-4_000:]
+        ),
+    }
+    if not projection["valid_html"]:
+        return projection
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return projection
+    soup = BeautifulSoup(decoded, "html.parser")
+    actions_heading = soup.find(id="jump_to_Actions")
+    text_heading = soup.find(id="jump_to_Text")
+    summary_heading = soup.find(id="jump_to_Summary")
+    actions_table = (
+        actions_heading.find_next("table") if actions_heading is not None else None
+    )
+    summary_table = (
+        summary_heading.find_next("table") if summary_heading is not None else None
+    )
+    text_node = text_heading.find_next("pre") if text_heading is not None else None
+    if actions_table is None or text_node is None:
+        projection["valid_html"] = False
+        return projection
+
+    action_rows: List[List[str]] = []
+    for row in actions_table.find_all("tr"):
+        cells = [
+            _WS.sub(
+                " ",
+                unicodedata.normalize("NFKC", cell.get_text(" ", strip=True)),
+            ).strip()
+            for cell in row.find_all("td")
+        ]
+        cells = [cell for cell in cells if cell]
+        if cells:
+            action_rows.append(cells)
+    action_text = "\n".join(" | ".join(row) for row in action_rows)
+    summary_text = (
+        _WS.sub(
+            " ",
+            unicodedata.normalize(
+                "NFKC", summary_table.get_text(" ", strip=True)
+            ),
+        ).strip()
+        if summary_table is not None
+        else ""
+    )
+    bill_match = re.search(r"\bBILL NO\s*\|\s*(A\d+[A-Z]?)\b", action_text)
+    same_as_match = re.search(r"\bSAME AS\s+(S\d+[A-Z]?)\b", summary_text)
+    signed_match = re.search(
+        r"(?P<date>\d{2}/\d{2}/\d{4})\s*\|\s*SIGNED CHAP\.(?P<chapter>\d+)\b",
+        action_text,
+        re.IGNORECASE,
+    )
+    projection.update(
+        {
+            "action_text": action_text,
+            "bill_number": bill_match.group(1) if bill_match else "",
+            "bill_text": _new_york_clean_assembly_bill_text(text_node),
+            "same_as": same_as_match.group(1) if same_as_match else "",
+            "signed_chapter": (
+                signed_match.group("chapter") if signed_match else ""
+            ),
+        }
+    )
+    if signed_match is not None:
+        try:
+            month, day, year = signed_match.group("date").split("/")
+            projection["signed_date"] = date(int(year), int(month), int(day))
         except (TypeError, ValueError):
             pass
     return projection
@@ -875,6 +1087,790 @@ def evaluate_new_york_edn666_signed_bill_record(
     )
 
 
+def _new_york_env_section_text(bill_text: str, section: str) -> str:
+    """Extract one enacted ENV section from the cleaned implementation text."""
+
+    ordered = ("9-2301", "9-2302", "9-2303", "9-2304")
+    if section not in ordered:
+        return ""
+    start_marker = f"§ {section}."
+    start = str(bill_text or "").find(start_marker)
+    if start < 0:
+        return ""
+    position = ordered.index(section)
+    if position + 1 < len(ordered):
+        end = str(bill_text or "").find(
+            f"§ {ordered[position + 1]}.", start + len(start_marker)
+        )
+    else:
+        end = str(bill_text or "").find("§ 2. This act", start + len(start_marker))
+    if end < 0:
+        return ""
+    return _WS.sub(" ", str(bill_text or "")[start:end]).strip()
+
+
+def _new_york_env_projection_sha256(
+    *,
+    resolution_page: Mapping[str, Any],
+    implementation_page: Mapping[str, Any],
+    article14_page: Mapping[str, Any],
+    article19_page: Mapping[str, Any],
+) -> str:
+    """Hash stable source-bearing fields from the four exact ENV proofs."""
+
+    resolution_actions = str(resolution_page.get("action_text") or "")
+    resolution_text = str(resolution_page.get("bill_text") or "")
+    implementation_actions = str(implementation_page.get("action_text") or "")
+    implementation_text = str(implementation_page.get("bill_text") or "")
+    article14_content = str(article14_page.get("content") or "")
+    article19_content = str(article19_page.get("content") or "")
+
+    resolution_submission_clause = (
+        "§ 2. Resolved (if the Senate concur), That the foregoing amendment "
+        "be submitted to the people for approval at the general election to "
+        "be held in the year 2025 in accordance with the provisions of the "
+        "election law."
+    )
+    implementation_effective_clause = (
+        "§ 2. This act shall take effect on the same date and in the same "
+        "manner as a \"CONCURRENT RESOLUTION OF THE SENATE AND ASSEMBLY "
+        "proposing an amendment to section 1 of article 14 of the "
+        "constitution, in relation to the Mount Van Hoevenberg Olympic Sports "
+        "Complex in Essex County\" takes effect, in accordance with section "
+        "1 of article 19 of the constitution."
+    )
+    article14_amendment_clause = (
+        "construction, operation, and maintenance to international standards "
+        "for Nordic skiing and biathlon trails"
+    )
+    article19_effective_clause = (
+        "such amendment or amendments shall become a part of the constitution "
+        "on the first day of January next after such approval"
+    )
+
+    def _present(pattern: str, text: str) -> bool:
+        return re.search(pattern, text, re.IGNORECASE | re.DOTALL) is not None
+
+    signed_date = implementation_page.get("signed_date")
+    article14_revision = article14_page.get("revision_date")
+    article19_revision = article19_page.get("revision_date")
+    projection = {
+        "article14_amendment_clause": (
+            article14_amendment_clause
+            if all(
+                phrase.casefold() in article14_content.casefold()
+                for phrase in (
+                    article14_amendment_clause,
+                    "not more than three hundred twenty-three acres",
+                    "one thousand thirty-nine acres of forest preserve lands",
+                    "at least two thousand five hundred acres of forest land",
+                )
+            )
+            else ""
+        ),
+        "article14_revision_date": (
+            article14_revision.isoformat()
+            if isinstance(article14_revision, date)
+            else ""
+        ),
+        "article19_effective_clause": (
+            article19_effective_clause
+            if article19_effective_clause.casefold() in article19_content.casefold()
+            else ""
+        ),
+        "article19_revision_date": (
+            article19_revision.isoformat()
+            if isinstance(article19_revision, date)
+            else ""
+        ),
+        "implementation_bill_number": str(
+            implementation_page.get("bill_number") or ""
+        ),
+        "implementation_effective_clause": (
+            implementation_effective_clause
+            if implementation_effective_clause.casefold()
+            in implementation_text.casefold()
+            else ""
+        ),
+        "implementation_same_as": str(
+            implementation_page.get("same_as") or ""
+        ),
+        "implementation_sections": [
+            section
+            for section in ("9-2301", "9-2302", "9-2303", "9-2304")
+            if _new_york_env_section_text(implementation_text, section)
+        ],
+        "implementation_signed_chapter": str(
+            implementation_page.get("signed_chapter") or ""
+        ),
+        "implementation_signed_date": (
+            signed_date.isoformat() if isinstance(signed_date, date) else ""
+        ),
+        "resolution_assembly_passed": bool(
+            _present(r"(?:^|\n)05/27/2025\s*\|\s*passed assembly(?:\n|$)", resolution_actions)
+        ),
+        "resolution_bill_number": str(resolution_page.get("bill_number") or ""),
+        "resolution_delivered_secretary_of_state": bool(
+            _present(
+                r"(?:^|\n)06/25/2025\s*\|\s*delivered to secretary of state(?:\n|$)",
+                resolution_actions,
+            )
+        ),
+        "resolution_same_as": str(resolution_page.get("same_as") or ""),
+        "resolution_senate_passed": bool(
+            _present(r"(?:^|\n)06/06/2025\s*\|\s*PASSED SENATE(?:\n|$)", resolution_actions)
+        ),
+        "resolution_submission_clause": (
+            resolution_submission_clause
+            if resolution_submission_clause.casefold() in resolution_text.casefold()
+            else ""
+        ),
+    }
+    return hashlib.sha256(
+        json.dumps(
+            projection,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def evaluate_new_york_env2025_proof_bundle(
+    proofs: Iterable[NewYorkSupplementalProofInput],
+    *,
+    section: str,
+    legal_as_of: date = _EXPLICIT_RELEASE_DATE,
+) -> Dict[str, Any]:
+    """Resolve ENV 9-2301--9-2304 from the exact four-source official chain."""
+
+    by_url = {proof.official_url: proof for proof in proofs}
+    expected_urls = tuple(ENV2025_PROOF_SELECTOR_BY_URL)
+    missing = [url for url in expected_urls if url not in by_url]
+    if missing:
+        raise ValueError(f"New York ENV proof bundle is incomplete: {missing}")
+    resolution_proof = by_url[ENV2025_CONCURRENT_RESOLUTION_URL]
+    implementation_proof = by_url[ENV2025_IMPLEMENTATION_RECORD_URL]
+    article14_proof = by_url[ENV2025_ARTICLE14_SECTION1_URL]
+    article19_proof = by_url[ENV2025_ARTICLE19_SECTION1_URL]
+    resolution_page = _new_york_assembly_bill_page(resolution_proof.payload)
+    implementation_page = _new_york_assembly_bill_page(
+        implementation_proof.payload
+    )
+    article14_page = _new_york_senate_section_page(article14_proof.payload)
+    article19_page = _new_york_senate_section_page(article19_proof.payload)
+    implementation_text = str(implementation_page.get("bill_text") or "")
+    section_text = _new_york_env_section_text(implementation_text, section)
+    projection_sha256 = _new_york_env_projection_sha256(
+        resolution_page=resolution_page,
+        implementation_page=implementation_page,
+        article14_page=article14_page,
+        article19_page=article19_page,
+    )
+    expected_selectors = ENV2025_PROOF_SELECTOR_BY_URL
+    exact_input_identities = all(
+        proof.selector_key == expected_selectors[url]
+        and proof.media_type == "text/html"
+        and proof.proof_kind
+        == (
+            "official_assembly_bill_record"
+            if url in {
+                ENV2025_CONCURRENT_RESOLUTION_URL,
+                ENV2025_IMPLEMENTATION_RECORD_URL,
+            }
+            else "official_constitution_section"
+        )
+        for url, proof in by_url.items()
+        if url in expected_selectors
+    )
+    effective_date = date(2026, 1, 1)
+    conjuncts = {
+        "exact_four_input_identities": bool(
+            exact_input_identities and set(by_url) == set(expected_urls)
+        ),
+        "valid_official_assembly_records": bool(
+            resolution_page.get("valid_html")
+            and implementation_page.get("valid_html")
+        ),
+        "valid_official_constitution_sections": bool(
+            article14_page.get("valid_html")
+            and not article14_page.get("soft_not_found")
+            and article19_page.get("valid_html")
+            and not article19_page.get("soft_not_found")
+        ),
+        "exact_source_projection_sha256": (
+            projection_sha256 == ENV2025_PROOF_PROJECTION_SHA256
+        ),
+        "exact_target_section": section
+        in {"9-2301", "9-2302", "9-2303", "9-2304"},
+        "substantive_enacted_section_body": len(section_text) >= 100,
+        "effective_on_or_before_legal_as_of": effective_date <= legal_as_of,
+    }
+    resolved = bool(conjuncts) and all(conjuncts.values())
+    section_names = {
+        "9-2301": "Legislative purpose and intent",
+        "9-2302": "Definitions",
+        "9-2303": (
+            "Construction, operation, and maintenance of the Mount Van "
+            "Hoevenberg Olympic Sports Complex"
+        ),
+        "9-2304": (
+            "Land to be acquired for inclusion in the forest preserve in the "
+            "Adirondack park"
+        ),
+    }
+    proof_bundle = [by_url[url].manifest_row() for url in expected_urls]
+    outcome: Dict[str, Any] = {
+        "conjuncts": conjuncts,
+        "decision_action": "operative" if resolved else None,
+        "legal_as_of": legal_as_of.isoformat(),
+        "proof": implementation_proof.manifest_row(),
+        "proof_bundle": proof_bundle,
+        "proof_bundle_sha256": hashlib.sha256(
+            json.dumps(
+                proof_bundle,
+                ensure_ascii=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest(),
+        "proof_present": True,
+        "reason": (
+            "source_bound_conjunction_satisfied"
+            if resolved
+            else "source_bound_conjunction_failed"
+        ),
+        "schema_version": SUPPLEMENTAL_RESOLUTION_SCHEMA_VERSION,
+        "selector_key": f"ENV:{section}:event_conditioned_effective",
+        "source_projection_sha256": projection_sha256,
+        "source_revision_date": "2026-01-09",
+        "status": "resolved" if resolved else "unknown",
+    }
+    if resolved:
+        outcome["decision"] = {
+            "disposition": "event_condition_occurred_operative",
+            "effective_date": effective_date.isoformat(),
+            "full_text": section_text,
+            "section_name": section_names[section],
+        }
+    outcome["resolution_sha256"] = hashlib.sha256(
+        json.dumps(
+            outcome,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+    return outcome
+
+
+def _new_york_official_pdf_projection_text(payload: bytes) -> str:
+    """Extract stable searchable text from one retained official PDF."""
+
+    text, _page_count = extract_new_york_law_pdf_text(payload)
+    return _WS.sub(
+        " ",
+        unicodedata.normalize("NFKC", str(text or "")),
+    ).strip()
+
+
+def _new_york_mhy82_state_register_projection_sha256(payload: bytes) -> str:
+    """Project only the exact Article 82 adoption facts from the Register."""
+
+    text = _new_york_official_pdf_projection_text(payload)
+    marker = "I.D. No. PDD-31-24-00014-A"
+    marker_index = text.find(marker)
+    excerpt = (
+        text[max(0, marker_index - 250) : marker_index + 4_500]
+        if marker_index >= 0
+        else ""
+    )
+
+    def _has(pattern: str) -> bool:
+        return re.search(pattern, excerpt, re.IGNORECASE) is not None
+
+    projection = {
+        "action_adds_part_634": _has(r"Action taken:\s*Addition of Part 634\b"),
+        "article_82_authority": _has(
+            r"Statutory authority:\s*Mental Hygiene Law,\s*sections\s+"
+            r"13\.07,\s*13\.09\(b\),\s*13\.15\(a\),\s*16\.00\s+and\s+art\.\s*82"
+        ),
+        "effective_date": (
+            "2025-08-20"
+            if _has(r"Effective Date:\s*2025-08-20\b")
+            else ""
+        ),
+        "filing_date": (
+            "2025-07-30"
+            if _has(r"Filing Date:\s*2025-07-30\b")
+            else ""
+        ),
+        "filing_number": "691" if _has(r"Filing No\.\s*691\b") else "",
+        "implements_article_82": _has(
+            r"regulations\s+to\s+be\s+adopted\s+at\s+14\s+NYCRR\s+Part\s+634\s+"
+            r"contain\s+rules\s+necessary\s+to\s+implement\s+New\s+Y\s*ork\s+"
+            r"Mental\s+Hygiene\s+Law\s+\(MHL\)\s+Article\s+82"
+        ),
+        "notice_identity": bool(
+            marker_index >= 0
+            and _has(
+                r"NOTICE OF ADOPTION\s+Support Decision Making\s+"
+                r"I\.D\. No\. PDD-31-24-00014-A"
+            )
+        ),
+        "register_issue": bool(
+            "NYS Register/August 20, 2025 Rule Making Activities" in text
+        ),
+        "subject": (
+            "Support Decision Making"
+            if _has(r"Subject:\s*Support Decision Making\.")
+            else ""
+        ),
+    }
+    return hashlib.sha256(
+        json.dumps(
+            projection,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def evaluate_new_york_mhy82_state_register_adoption(
+    proof: NewYorkSupplementalProofInput,
+    *,
+    section: str,
+    source_full_text: str,
+    source_section_name: str,
+    legal_as_of: date = _EXPLICIT_RELEASE_DATE,
+    source_projection_sha256: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Resolve MHY Article 82 from its exact final State Register notice."""
+
+    projection_sha256 = str(
+        source_projection_sha256
+        or _new_york_mhy82_state_register_projection_sha256(proof.payload)
+    )
+    register_date = date(2025, 8, 20)
+    effective_date = register_date + timedelta(days=90)
+    full_text = _WS.sub(" ", str(source_full_text or "")).strip()
+    section_name = _WS.sub(" ", str(source_section_name or "")).strip(" .")
+    conjuncts = {
+        "exact_selector": (
+            proof.selector_key == MHY82_STATE_REGISTER_SELECTOR_KEY
+        ),
+        "exact_official_source": proof.official_url == MHY82_STATE_REGISTER_URL,
+        "exact_retained_pdf_sha256": (
+            proof.content_sha256 == MHY82_STATE_REGISTER_SHA256
+        ),
+        "official_state_register_pdf": bool(
+            proof.proof_kind == "official_state_register_adoption"
+            and proof.media_type == "application/pdf"
+        ),
+        "exact_source_projection_sha256": (
+            projection_sha256 == MHY82_STATE_REGISTER_PROJECTION_SHA256
+        ),
+        "exact_target_section": section in MHY82_SECTIONS,
+        "source_bound_statutory_body": len(full_text) >= 20,
+        "source_bound_section_name": bool(section_name),
+        "effective_on_or_before_legal_as_of": effective_date <= legal_as_of,
+    }
+    return _new_york_senate_resolution_outcome(
+        proof,
+        selector_key=f"MHY:{section}:event_conditioned_effective",
+        legal_as_of=legal_as_of,
+        conjuncts=conjuncts,
+        decision_action="operative",
+        decision={
+            "disposition": "event_condition_occurred_operative",
+            "effective_date": effective_date.isoformat(),
+            "full_text": full_text,
+            "section_name": section_name,
+            "source_url": public_section_url("MHY", section),
+        },
+        source_revision_date=register_date,
+        source_projection_sha256=projection_sha256,
+    )
+
+
+def _new_york_mac_termination_projection_sha256(payload: bytes) -> str:
+    """Project the exact MAC payment, findings, and termination facts."""
+
+    text = _new_york_official_pdf_projection_text(payload)
+    event_marker = "On September 24, 2008, MAC had all of its liabilities"
+    marker_index = text.find(event_marker)
+    excerpt = (
+        text[max(0, marker_index - 1_500) : marker_index + 2_500]
+        if marker_index >= 0
+        else ""
+    )
+
+    def _has(pattern: str) -> bool:
+        return re.search(pattern, excerpt, re.IGNORECASE) is not None
+
+    projection = {
+        "board_made_dissolution_findings": _has(
+            r"MAC(?:'|’|\u2019)s Board made the necessary statutory findings "
+            r"for dissolution and termination"
+        ),
+        "financial_statement_period": bool(
+            "THE CITY OF NEW YORK NOTES TO FINANCIAL STATEMENTS "
+            "JUNE 30, 2010 and 2009" in text
+        ),
+        "liabilities_discharged_date": (
+            "2008-09-24"
+            if _has(
+                r"On September 24, 2008, MAC had all of its liabilities paid "
+                r"and discharged"
+            )
+            else ""
+        ),
+        "property_passed_to_state": _has(
+            r"Upon the termination of the existence of MAC, all of its rights "
+            r"and property passed to and were vested in the State of New York"
+        ),
+        "statutory_term_formula": _has(
+            r"MAC shall continue for a term ending the later of July 1, 2008 "
+            r"or one year after all its liabilities have been fully paid and "
+            r"discharged"
+        ),
+        "termination_date": (
+            "2009-09-30"
+            if _has(r"set the date of termination at September 30, 2009")
+            else ""
+        ),
+    }
+    return hashlib.sha256(
+        json.dumps(
+            projection,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def evaluate_new_york_mac_termination_report(
+    proof: NewYorkSupplementalProofInput,
+    *,
+    section: str,
+    legal_as_of: date = _EXPLICIT_RELEASE_DATE,
+    source_projection_sha256: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Type the former MAC title terminal from its official City report."""
+
+    projection_sha256 = str(
+        source_projection_sha256
+        or _new_york_mac_termination_projection_sha256(proof.payload)
+    )
+    termination_date = date(2009, 9, 30)
+    conjuncts = {
+        "exact_selector": (
+            proof.selector_key == MAC_TERMINATION_REPORT_SELECTOR_KEY
+        ),
+        "exact_official_source": proof.official_url == MAC_TERMINATION_REPORT_URL,
+        "exact_retained_pdf_sha256": (
+            proof.content_sha256 == MAC_TERMINATION_REPORT_SHA256
+        ),
+        "official_government_financial_report_pdf": bool(
+            proof.proof_kind == "official_government_financial_report"
+            and proof.media_type == "application/pdf"
+        ),
+        "exact_source_projection_sha256": (
+            projection_sha256 == MAC_TERMINATION_REPORT_PROJECTION_SHA256
+        ),
+        "exact_target_section": section in MAC_TITLE_SECTIONS,
+        "termination_on_or_before_legal_as_of": termination_date <= legal_as_of,
+    }
+    return _new_york_senate_resolution_outcome(
+        proof,
+        selector_key=f"PBA:{section}:event_conditioned_expiration",
+        legal_as_of=legal_as_of,
+        conjuncts=conjuncts,
+        decision_action="terminal",
+        decision={
+            "disposition": "expired",
+            "effective_date": termination_date.isoformat(),
+            "note": (
+                "Municipal Assistance Corporation terminated September 30, "
+                "2009 after all liabilities were paid and discharged and its "
+                "board made the statutory dissolution findings."
+            ),
+        },
+        source_revision_date=date(2010, 6, 30),
+        source_projection_sha256=projection_sha256,
+    )
+
+
+def _new_york_rss1204a_bill_projection_sha256(payload: bytes) -> str:
+    """Project the exact section 1204-a text and contingent date formula."""
+
+    text = _new_york_official_pdf_projection_text(payload)
+
+    def _has(pattern: str) -> bool:
+        return re.search(pattern, text, re.IGNORECASE) is not None
+
+    projection = {
+        "bill_identity": bool(
+            _has(r"\b5837\s+2011-2012 Regular Sessions\s+I N S E N A T E\b")
+        ),
+        "creates_section_1204a": _has(
+            r"retirement and social security law is amended by adding\s+"
+            r"\d+\s+a new section 1204-a to read as follows"
+        ),
+        "employer_pickup": _has(
+            r"EACH PARTICIPATING EMPLOYER SHALL\s+\d+\s+PICK UP THE MEMBER "
+            r"CONTRIBUTIONS REQUIRED TO BE MADE UNDER SECTION"
+        ),
+        "federal_tax_treatment": _has(
+            r"INCOME TAX TREATMENT UNDER SECTION 414\(H\) OF THE INTERNAL "
+            r"REVENUE"
+        ),
+        "first_payroll_after_sixty_days": _has(
+            r"This act shall take effect at the beginning of the first payroll\s+"
+            r"\d+\s+period following sixty days after the retirement system "
+            r"covered by this"
+        ),
+        "favorable_irs_ruling_condition": _has(
+            r"act shall receive an Internal Revenue Service ruling stating "
+            r"that the\s+\d+\s+employee contributions covered by this act are "
+            r"not includible in the\s+\d+\s+gross income of the employee"
+        ),
+        "comptroller_notification": _has(
+            r"state comp-\s+\d+\s+troller shall notify the legislative bill "
+            r"drafting commission upon the\s+\d+\s+occurrence of such ruling"
+        ),
+        "pfrs_fiscal_identity": _has(
+            r"Tier 5 members of the New York State and Local Police"
+            r"(?:\s+\d+)?\s+"
+            r"and Fire Retirement System"
+        ),
+    }
+    return hashlib.sha256(
+        json.dumps(
+            projection,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _new_york_rss1204a_osc_article_text(payload: bytes) -> str:
+    """Return stable article text from the exact official OSC bulletin."""
+
+    raw = bytes(payload or b"")
+    decoded = raw.decode("utf-8", errors="replace")
+    lowered = decoded.casefold()
+    if not (
+        len(raw) > 10_000
+        and "<html" in lowered[:4_000]
+        and "</html>" in lowered[-4_000:]
+    ):
+        return ""
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return ""
+    soup = BeautifulSoup(decoded, "html.parser")
+    article = soup.find("article")
+    if article is None:
+        return ""
+    heading = soup.find("h1")
+    source_text = " ".join(
+        node.get_text(" ", strip=True)
+        for node in (heading, article)
+        if node is not None
+    )
+    return _WS.sub(
+        " ",
+        unicodedata.normalize("NFKC", source_text),
+    ).strip()
+
+
+def _new_york_rss1204a_osc_projection_sha256(payload: bytes) -> str:
+    """Project the ruling and implementation facts from OSC Bulletin 1275."""
+
+    text = _new_york_rss1204a_osc_article_text(payload)
+
+    def _has(pattern: str) -> bool:
+        return re.search(pattern, text, re.IGNORECASE) is not None
+
+    projection = {
+        "affected_members": _has(r"Members of PFRS in Tiers 3, 5 and 6\b"),
+        "bulletin_number": (
+            "1275"
+            if _has(r"State Agencies Bulletin (?:No\.\s*)?1275\b")
+            else ""
+        ),
+        "effective_date": (
+            "2013-10-01"
+            if _has(
+                r"Effective October 1, 2013, the mandatory contributions made "
+                r"by Tier 3, 5 and 6 PFRS members will be tax deferred"
+            )
+            else ""
+        ),
+        "federal_tax_section": _has(
+            r"Federal income tax purposes under Internal Revenue Code "
+            r"Section 414\(h\)"
+        ),
+        "issued_date": (
+            "2013-10-15" if _has(r"Date Issued October 15, 2013\b") else ""
+        ),
+        "pfrs_identity": _has(
+            r"New York State Police and Fireman Retirement System \(PFRS\)"
+        ),
+        "ruling_date": (
+            "2013-07-09"
+            if _has(r"Internal Revenue Service \(IRS\) ruling dated July 9, 2013")
+            else ""
+        ),
+        "subject": _has(
+            r"New Deduction Code 616 PAF Retirement Before Tax \(PAF BTX\) "
+            r"and new Deduction Code 618 PAF Arrears Before Tax"
+        ),
+    }
+    return hashlib.sha256(
+        json.dumps(
+            projection,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _new_york_rss1204a_bundle_projection_sha256(
+    bill_payload: bytes,
+    bulletin_payload: bytes,
+) -> str:
+    projection = {
+        "enacted_bill_projection_sha256": (
+            _new_york_rss1204a_bill_projection_sha256(bill_payload)
+        ),
+        "osc_bulletin_projection_sha256": (
+            _new_york_rss1204a_osc_projection_sha256(bulletin_payload)
+        ),
+    }
+    return hashlib.sha256(
+        json.dumps(
+            projection,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def evaluate_new_york_rss1204a_proof_bundle(
+    proofs: Iterable[NewYorkSupplementalProofInput],
+    *,
+    section: str,
+    source_full_text: str,
+    source_section_name: str,
+    legal_as_of: date = _EXPLICIT_RELEASE_DATE,
+    source_projection_sha256: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Resolve RSS 1204-a from its enactment formula and OSC event record."""
+
+    by_url = {proof.official_url: proof for proof in proofs}
+    expected_urls = (RSS1204A_ENACTED_BILL_URL, RSS1204A_OSC_BULLETIN_URL)
+    bill_proof = by_url.get(RSS1204A_ENACTED_BILL_URL)
+    bulletin_proof = by_url.get(RSS1204A_OSC_BULLETIN_URL)
+    if bill_proof is None or bulletin_proof is None:
+        raise ValueError("New York RSS 1204-a proof bundle is incomplete")
+    bill_projection = _new_york_rss1204a_bill_projection_sha256(
+        bill_proof.payload
+    )
+    bulletin_projection = _new_york_rss1204a_osc_projection_sha256(
+        bulletin_proof.payload
+    )
+    bundle_projection = str(
+        source_projection_sha256
+        or _new_york_rss1204a_bundle_projection_sha256(
+            bill_proof.payload,
+            bulletin_proof.payload,
+        )
+    )
+    full_text = _WS.sub(" ", str(source_full_text or "")).strip()
+    section_name = _WS.sub(" ", str(source_section_name or "")).strip(" .")
+    effective_date = date(2013, 10, 1)
+    conjuncts = {
+        "exact_two_input_identities": bool(
+            set(by_url) == set(expected_urls)
+            and bill_proof.selector_key == RSS1204A_ENACTED_BILL_SELECTOR_KEY
+            and bulletin_proof.selector_key == RSS1204A_OSC_BULLETIN_SELECTOR_KEY
+        ),
+        "exact_official_bill_bytes": bool(
+            bill_proof.content_sha256 == RSS1204A_ENACTED_BILL_SHA256
+            and bill_proof.proof_kind == "official_enacted_bill_text"
+            and bill_proof.media_type == "application/pdf"
+        ),
+        "exact_official_bulletin_bytes": bool(
+            bulletin_proof.content_sha256 == RSS1204A_OSC_BULLETIN_SHA256
+            and bulletin_proof.proof_kind
+            == "official_comptroller_payroll_bulletin"
+            and bulletin_proof.media_type == "text/html"
+        ),
+        "exact_bill_projection_sha256": (
+            bill_projection == RSS1204A_ENACTED_BILL_PROJECTION_SHA256
+        ),
+        "exact_bulletin_projection_sha256": (
+            bulletin_projection == RSS1204A_OSC_BULLETIN_PROJECTION_SHA256
+        ),
+        "exact_bundle_projection_sha256": (
+            bundle_projection == RSS1204A_PROOF_BUNDLE_PROJECTION_SHA256
+        ),
+        "exact_target_section": section == "1204-a",
+        "source_bound_statutory_body": bool(
+            len(full_text) >= 100
+            and "section 414(h) of the Internal Revenue Code" in full_text
+            and "each participating employer" in full_text.casefold()
+        ),
+        "source_bound_section_name": (
+            section_name.casefold() == "pick up of member contributions by employer"
+        ),
+        "effective_on_or_before_legal_as_of": effective_date <= legal_as_of,
+    }
+    proof_bundle = [by_url[url].manifest_row() for url in expected_urls]
+    outcome = _new_york_senate_resolution_outcome(
+        bulletin_proof,
+        selector_key="RSS:1204-a:event_conditioned_effective",
+        legal_as_of=legal_as_of,
+        conjuncts=conjuncts,
+        decision_action="operative",
+        decision={
+            "disposition": "event_condition_occurred_operative",
+            "effective_date": effective_date.isoformat(),
+            "full_text": full_text,
+            "section_name": section_name,
+            "source_url": public_section_url("RSS", section),
+        },
+        source_revision_date=date(2013, 10, 15),
+        source_projection_sha256=bundle_projection,
+    )
+    outcome["proof_bundle"] = proof_bundle
+    outcome["proof_bundle_sha256"] = hashlib.sha256(
+        json.dumps(
+            proof_bundle,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+    outcome["resolution_sha256"] = hashlib.sha256(
+        json.dumps(
+            {key: value for key, value in outcome.items() if key != "resolution_sha256"},
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+    return outcome
+
+
 class NewYorkSupplementalProofRegistry:
     """Fixed resolver registry for exact supplemental New York inputs.
 
@@ -901,6 +1897,7 @@ class NewYorkSupplementalProofRegistry:
                 )
             by_url[proof.official_url] = proof
         self._by_url = by_url
+        self._source_projection_sha256_by_url: Dict[str, str] = {}
 
     def with_inputs(
         self,
@@ -981,6 +1978,121 @@ class NewYorkSupplementalProofRegistry:
         section_url = public_section_url(code, section) if code and section else ""
         proof = self.input_for_url(section_url) if section_url else None
         signed_bill_proof: Optional[NewYorkSupplementalProofInput] = None
+        if (
+            code == "MHY"
+            and section in MHY82_SECTIONS
+            and not variant
+            and reason == "ambiguous_lifecycle_status"
+            and disposition == "event_conditioned_effective"
+        ):
+            state_register_proof = self.input_for_url(MHY82_STATE_REGISTER_URL)
+            if state_register_proof is not None:
+                projection_sha256 = self._source_projection_sha256_by_url.get(
+                    MHY82_STATE_REGISTER_URL
+                )
+                if projection_sha256 is None:
+                    projection_sha256 = (
+                        _new_york_mhy82_state_register_projection_sha256(
+                            state_register_proof.payload
+                        )
+                    )
+                    self._source_projection_sha256_by_url[
+                        MHY82_STATE_REGISTER_URL
+                    ] = projection_sha256
+                return evaluate_new_york_mhy82_state_register_adoption(
+                    state_register_proof,
+                    section=section,
+                    source_full_text=str(
+                        residual.get("_supplemental_source_full_text") or ""
+                    ),
+                    source_section_name=str(
+                        residual.get("_supplemental_source_section_name") or ""
+                    ),
+                    legal_as_of=legal_as_of,
+                    source_projection_sha256=projection_sha256,
+                )
+        if (
+            code == "PBA"
+            and section in MAC_TITLE_SECTIONS
+            and not variant
+            and reason == "ambiguous_lifecycle_status"
+            and disposition == "event_conditioned_expiration"
+        ):
+            termination_proof = self.input_for_url(MAC_TERMINATION_REPORT_URL)
+            if termination_proof is not None:
+                projection_sha256 = self._source_projection_sha256_by_url.get(
+                    MAC_TERMINATION_REPORT_URL
+                )
+                if projection_sha256 is None:
+                    projection_sha256 = (
+                        _new_york_mac_termination_projection_sha256(
+                            termination_proof.payload
+                        )
+                    )
+                    self._source_projection_sha256_by_url[
+                        MAC_TERMINATION_REPORT_URL
+                    ] = projection_sha256
+                return evaluate_new_york_mac_termination_report(
+                    termination_proof,
+                    section=section,
+                    legal_as_of=legal_as_of,
+                    source_projection_sha256=projection_sha256,
+                )
+        if (
+            code == "RSS"
+            and section == "1204-a"
+            and not variant
+            and reason == "ambiguous_lifecycle_status"
+            and disposition == "event_conditioned_effective"
+        ):
+            bill_proof = self.input_for_url(RSS1204A_ENACTED_BILL_URL)
+            bulletin_proof = self.input_for_url(RSS1204A_OSC_BULLETIN_URL)
+            if bill_proof is not None and bulletin_proof is not None:
+                projection_cache_key = (
+                    f"{RSS1204A_ENACTED_BILL_URL}\n"
+                    f"{RSS1204A_OSC_BULLETIN_URL}"
+                )
+                projection_sha256 = self._source_projection_sha256_by_url.get(
+                    projection_cache_key
+                )
+                if projection_sha256 is None:
+                    projection_sha256 = (
+                        _new_york_rss1204a_bundle_projection_sha256(
+                            bill_proof.payload,
+                            bulletin_proof.payload,
+                        )
+                    )
+                    self._source_projection_sha256_by_url[
+                        projection_cache_key
+                    ] = projection_sha256
+                return evaluate_new_york_rss1204a_proof_bundle(
+                    [bill_proof, bulletin_proof],
+                    section=section,
+                    source_full_text=str(
+                        residual.get("_supplemental_source_full_text") or ""
+                    ),
+                    source_section_name=str(
+                        residual.get("_supplemental_source_section_name") or ""
+                    ),
+                    legal_as_of=legal_as_of,
+                    source_projection_sha256=projection_sha256,
+                )
+        if (
+            code == "ENV"
+            and section in {"9-2301", "9-2302", "9-2303", "9-2304"}
+            and not variant
+            and reason == "ambiguous_lifecycle_status"
+            and disposition == "event_conditioned_effective"
+        ):
+            env_proofs = [
+                self.input_for_url(url) for url in ENV2025_PROOF_SELECTOR_BY_URL
+            ]
+            if all(item is not None for item in env_proofs):
+                return evaluate_new_york_env2025_proof_bundle(
+                    [item for item in env_proofs if item is not None],
+                    section=section,
+                    legal_as_of=legal_as_of,
+                )
         if (
             code == "CPL"
             and section == "150.30"
@@ -1071,7 +2183,12 @@ def reconcile_new_york_supplemental_proofs(
 ) -> NewYorkLawPdfParseResult:
     """Invoke every fixed resolver without admitting generic proof claims."""
 
+    source_candidates = dict(
+        getattr(report, "_supplemental_source_candidates", {}) or {}
+    )
     if registry is None:
+        if hasattr(report, "_supplemental_source_candidates"):
+            delattr(report, "_supplemental_source_candidates")
         return report
     try:
         legal_as_of = date.fromisoformat(str(report.release_date))
@@ -1080,9 +2197,22 @@ def reconcile_new_york_supplemental_proofs(
     remaining: List[Dict[str, str]] = []
     attempts: List[Dict[str, Any]] = []
     for residual in report.unclassified_sections:
+        resolver_residual = dict(residual)
+        section = str(residual.get("section_number") or "").strip()
+        variant = str(residual.get("toc_variant") or "").strip()
+        source_candidate = source_candidates.get(
+            f"{report.law_code}:{section}:{variant}"
+        )
+        if isinstance(source_candidate, Mapping):
+            resolver_residual["_supplemental_source_full_text"] = str(
+                source_candidate.get("full_text") or ""
+            )
+            resolver_residual["_supplemental_source_section_name"] = str(
+                source_candidate.get("section_name") or ""
+            )
         outcome = registry.resolve_residual(
             law_code=report.law_code,
-            residual=residual,
+            residual=resolver_residual,
             legal_as_of=legal_as_of,
         )
         attempts.append(outcome)
@@ -1094,9 +2224,9 @@ def reconcile_new_york_supplemental_proofs(
         proof = outcome.get("proof")
         if not isinstance(decision, Mapping) or not isinstance(proof, Mapping):
             raise TypeError("New York supplemental resolver omitted its source decision")
-        section = str(residual.get("section_number") or "").strip()
-        variant = str(residual.get("toc_variant") or "").strip()
-        source_url = str(proof.get("official_url") or "").strip()
+        source_url = str(
+            decision.get("source_url") or proof.get("official_url") or ""
+        ).strip()
         source_record_id = f"{report.law_code}:{section}{variant}"
         if action == "terminal":
             if any(
@@ -1168,6 +2298,8 @@ def reconcile_new_york_supplemental_proofs(
         )
     report.unclassified_sections = remaining
     report.supplemental_proof_attempts = attempts
+    if hasattr(report, "_supplemental_source_candidates"):
+        delattr(report, "_supplemental_source_candidates")
     report.closed = bool(
         report.page_count > 0
         and report.source_section_count > 0
@@ -3863,6 +4995,34 @@ def _parse_source_bound_units(
         ambiguous = [row for row in candidates if row["status"] == "ambiguous"]
         current = [row for row in candidates if row["status"] == "current"]
         terminal = [row for row in candidates if row["status"] == "terminal"]
+        # A generated volume can retain an undated, event-conditioned legacy
+        # version beside a complete dated transition pair.  When exactly one
+        # version is expressly current through a future calendar date, that
+        # publisher-supplied date controls the release-date snapshot; the
+        # undated legacy version remains an alternate, not a reason to discard
+        # the uniquely dated current body (COR 851).
+        dated_current_controls = bool(
+            len(current) == 1
+            and current[0]["disposition"] == "effective_until"
+            and (
+                controlling_date := _explicit_status_date(
+                    str(current[0].get("note") or "")
+                )
+            )
+            is not None
+            and _EXPLICIT_RELEASE_DATE < controlling_date
+        )
+        if dated_current_controls and ambiguous:
+            for alternate in ambiguous:
+                report.lifecycle_alternate_sections.append(
+                    {
+                        "section_number": unit.section,
+                        "toc_variant": unit.variant_label,
+                        "disposition": str(alternate["disposition"]),
+                        "note": str(alternate["note"]),
+                    }
+                )
+            ambiguous = []
         source_proved_repeated = bool(
             len(current) > 1
             and not ambiguous
@@ -3934,6 +5094,30 @@ def _parse_source_bound_units(
                         "disposition": str(alternate["disposition"]),
                         "note": str(alternate["note"]),
                     }
+                )
+            if len(ambiguous) == 1:
+                source_candidate = ambiguous[0]
+                source_candidates = getattr(
+                    report,
+                    "_supplemental_source_candidates",
+                    {},
+                )
+                source_candidates[
+                    f"{code}:{unit.section}:{unit.variant_label}"
+                ] = {
+                    "full_text": str(source_candidate.get("full_text") or ""),
+                    "section_name": (
+                        unit.heading.strip(" .")
+                        or _section_heading(
+                            str(source_candidate.get("normalized_after") or ""),
+                            unit.section,
+                        )
+                    ),
+                }
+                setattr(
+                    report,
+                    "_supplemental_source_candidates",
+                    source_candidates,
                 )
             report.unclassified_sections.append(
                 {

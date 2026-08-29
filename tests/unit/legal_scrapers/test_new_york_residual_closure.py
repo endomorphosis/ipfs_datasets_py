@@ -1,8 +1,9 @@
 """LCR-103: New York exact residual proofs and URLs.
 
-This module pins the corrected 212-row audit, two fixed signed-bill
-resolvers, the now-live AGM proof, and the remaining 28-URL Senate wave.
-Unproved decisions remain unresolved and publication remains forbidden.
+This module pins the corrected 212-row audit, the retained official proof
+chains, the current-variant parser rule, and the exhausted 28-URL Senate
+wave. Unproved decisions remain unresolved and publication remains
+forbidden.
 """
 
 from __future__ import annotations
@@ -83,11 +84,11 @@ AUDITED_UNRESOLVED = 212
 AUDITED_CLOSED_LAWS = 70
 AUDITED_EVENT_ROWS = 183
 AUDITED_SENATE_ROWS = 29
-PROJECTED_OPERATIVE = 36477
-PROJECTED_TERMINAL = 755
-PROJECTED_UNRESOLVED = 209
-PROJECTED_CLOSED_LAWS = 72
-PROJECTED_EVENT_ROWS = 182
+PROJECTED_OPERATIVE = 36498
+PROJECTED_TERMINAL = 770
+PROJECTED_UNRESOLVED = 173
+PROJECTED_CLOSED_LAWS = 73
+PROJECTED_EVENT_ROWS = 146
 PROJECTED_SENATE_ROWS = 27
 SEED_V20_DIRECT = 95
 SEED_V21_AGM = 1
@@ -337,6 +338,182 @@ def _signed_bill_fixture(case: dict[str, Any]) -> bytes:
     ).encode()
 
 
+def _env_assembly_fixture(*, resolution: bool) -> bytes:
+    if resolution:
+        bill_number = "A07454"
+        same_as = "S05227"
+        actions = (
+            "<tr><td>05/27/2025</td><td>passed assembly</td></tr>"
+            "<tr><td>06/06/2025</td><td>PASSED SENATE</td></tr>"
+            "<tr><td>06/25/2025</td><td>delivered to secretary of state</td></tr>"
+        )
+        bill_text = (
+            "§ 1. The lands at the Mount Van Hoevenberg Olympic Sports Complex. "
+            "§ 2. Resolved (if the Senate concur), That the foregoing amendment "
+            "be submitted to the people for approval at the general election to "
+            "be held in the year 2025 in accordance with the provisions of the "
+            "election law."
+        )
+    else:
+        bill_number = "A03628"
+        same_as = "S08047"
+        actions = (
+            "<tr><td>10/27/2025</td><td>SIGNED CHAP.488</td></tr>"
+        )
+        bill_text = (
+            "§ 9-2301. Legislative purpose and intent. "
+            + ("Implementation purpose and forest preserve protection. " * 4)
+            + "§ 9-2302. Definitions. "
+            + ("The terms used in this title have the following meanings. " * 4)
+            + "§ 9-2303. Construction, operation, and maintenance of the Mount "
+            "Van Hoevenberg Olympic Sports Complex. "
+            + ("Development must conform to the governing management plan. " * 4)
+            + "§ 9-2304. Land to be acquired for inclusion in the forest "
+            "preserve in the Adirondack park. "
+            + ("The state shall acquire land for the forest preserve. " * 4)
+            + "§ 2. This act shall take effect on the same date and in the same "
+            "manner as a \"CONCURRENT RESOLUTION OF THE SENATE AND ASSEMBLY "
+            "proposing an amendment to section 1 of article 14 of the "
+            "constitution, in relation to the Mount Van Hoevenberg Olympic Sports "
+            "Complex in Essex County\" takes effect, in accordance with section "
+            "1 of article 19 of the constitution."
+        )
+    return (
+        "<html><body>"
+        "<h3 id='jump_to_Summary'>Summary</h3><table>"
+        f"<tr><td>BILL NO</td><td>{bill_number}</td></tr>"
+        f"<tr><td>SAME AS</td><td>SAME AS {same_as}</td></tr>"
+        "</table>"
+        "<h3 id='jump_to_Actions'>Actions</h3><table>"
+        f"<tr><td>BILL NO</td><td>{bill_number}</td></tr>{actions}"
+        "</table>"
+        f"<h3 id='jump_to_Text'>Text</h3><pre>{bill_text}</pre>"
+        + (" stable official Assembly record padding" * 400)
+        + "</body></html>"
+    ).encode()
+
+
+def _env_proof_fixture_inputs() -> list[ny_pdf.NewYorkSupplementalProofInput]:
+    article14_content = (
+        "SECTION 1 Forest preserve. Notwithstanding the foregoing provisions, "
+        "the construction, operation, and maintenance to international standards "
+        "for Nordic skiing and biathlon trails is authorized on not more than "
+        "three hundred twenty-three acres within one thousand thirty-nine acres "
+        "of forest preserve lands, and the state must acquire at least two "
+        "thousand five hundred acres of forest land."
+        + (" constitutional source padding" * 40)
+    )
+    article19_content = (
+        "SECTION 1 Amendments to constitution. If the people approve and ratify, "
+        "such amendment or amendments shall become a part of the constitution "
+        "on the first day of January next after such approval."
+        + (" constitutional source padding" * 40)
+    )
+    payload_by_url = {
+        ny_pdf.ENV2025_CONCURRENT_RESOLUTION_URL: _env_assembly_fixture(
+            resolution=True
+        ),
+        ny_pdf.ENV2025_IMPLEMENTATION_RECORD_URL: _env_assembly_fixture(
+            resolution=False
+        ),
+        ny_pdf.ENV2025_ARTICLE14_SECTION1_URL: _senate_section_fixture(
+            head="SECTION 1 Forest preserve",
+            content=article14_content,
+            revision="2026-01-09",
+        ),
+        ny_pdf.ENV2025_ARTICLE19_SECTION1_URL: _senate_section_fixture(
+            head="SECTION 1 Amendments to constitution",
+            content=article19_content,
+            revision="2014-09-22",
+        ),
+    }
+    return [
+        ny_pdf.NewYorkSupplementalProofInput.bind(
+            selector_key=ny_pdf.ENV2025_PROOF_SELECTOR_BY_URL[url],
+            proof_kind=(
+                "official_assembly_bill_record"
+                if "assembly.ny.gov" in url
+                else "official_constitution_section"
+            ),
+            official_url=url,
+            media_type="text/html",
+            payload=payload,
+        )
+        for url, payload in payload_by_url.items()
+    ]
+
+
+def _mhy82_state_register_fixture_text() -> str:
+    return (
+        "NYS Register/August 20, 2025 Rule Making Activities "
+        "Office for People with Developmental Disabilities NOTICE OF ADOPTION "
+        "Support Decision Making I.D. No. PDD-31-24-00014-A Filing No. 691 "
+        "Filing Date: 2025-07-30 Effective Date: 2025-08-20 "
+        "Action taken: Addition of Part 634; amendment of Parts 624, 629, 633, "
+        "635, 636, 670; and repeal of section 681.13 of Title 14 NYCRR. "
+        "Statutory authority: Mental Hygiene Law, sections 13.07, 13.09(b), "
+        "13.15(a), 16.00 and art. 82 Subject: Support Decision Making. "
+        "Substance of final rule: The enclosed regulations to be adopted at 14 "
+        "NYCRR Part 634 contain rules necessary to implement New York Mental "
+        "Hygiene Law (MHL) Article 82."
+    )
+
+
+def _mac_termination_fixture_text() -> str:
+    return (
+        "THE CITY OF NEW YORK NOTES TO FINANCIAL STATEMENTS JUNE 30, 2010 and "
+        "2009 Municipal Assistance Corporation for The City Of New York (MAC). "
+        "The Act provides that MAC shall continue for a term ending the later "
+        "of July 1, 2008 or one year after all its liabilities have been fully "
+        "paid and discharged. On September 24, 2008, MAC had all of its "
+        "liabilities paid and discharged and MAC’s Board made the necessary "
+        "statutory findings for dissolution and termination and set the date "
+        "of termination at September 30, 2009. Upon the termination of the "
+        "existence of MAC, all of its rights and property passed to and were "
+        "vested in the State of New York."
+    )
+
+
+def _rss1204a_bill_fixture_text() -> str:
+    return (
+        "5837 2011-2012 Regular Sessions I N S E N A T E "
+        "1 Section 1. The retirement and social security law is amended by "
+        "adding 2 a new section 1204-a to read as follows: "
+        "EACH PARTICIPATING EMPLOYER SHALL 5 PICK UP THE MEMBER CONTRIBUTIONS "
+        "REQUIRED TO BE MADE UNDER SECTION TWELVE HUNDRED FOUR. "
+        "INCOME TAX TREATMENT UNDER SECTION 414(H) OF THE INTERNAL REVENUE CODE. "
+        "S 7. This act shall take effect at the beginning of the first payroll "
+        "30 period following sixty days after the retirement system covered by "
+        "this 31 act shall receive an Internal Revenue Service ruling stating "
+        "that the 32 employee contributions covered by this act are not includible "
+        "in the 33 gross income of the employee. The state comp- 37 troller shall "
+        "notify the legislative bill drafting commission upon the 38 occurrence "
+        "of such ruling. Tier 5 members of the New York State and Local Police "
+        "and Fire Retirement System."
+    )
+
+
+def _rss1204a_osc_fixture() -> bytes:
+    article = (
+        "<article>Subject New Deduction Code 616 PAF Retirement Before Tax "
+        "(PAF BTX) and new Deduction Code 618 PAF Arrears Before Tax "
+        "(PAF ARBTX) Date Issued October 15, 2013 Purpose To notify agencies "
+        "of codes established for members of the New York State Police and "
+        "Fireman Retirement System (PFRS). Affected Employees Members of PFRS "
+        "in Tiers 3, 5 and 6 Background An Internal Revenue Service (IRS) "
+        "ruling dated July 9, 2013 states the mandatory contributions qualify. "
+        "Effective October 1, 2013, the mandatory contributions made by Tier "
+        "3, 5 and 6 PFRS members will be tax deferred for Federal income tax "
+        "purposes under Internal Revenue Code Section 414(h).</article>"
+    )
+    return (
+        "<html><body><h1>State Agencies Bulletin No. 1275</h1>"
+        + article
+        + (" stable official OSC bulletin padding" * 400)
+        + "</body></html>"
+    ).encode()
+
+
 def _retained_wave_d_object(content_sha256: str) -> bytes:
     path = RETAINED_WAVE_D_OBJECT_ROOT / f"{content_sha256}.bin"
     if not path.is_file():
@@ -573,6 +750,539 @@ def test_new_york_signed_bill_wave_is_exact_official_and_source_derived() -> Non
         for case in SIGNED_BILL_CASES
     ]
     assert NewYorkScraper._new_york_exact_signed_bill_proof_rows(reports) == rows
+
+
+def test_new_york_env_wave_is_exact_official_and_source_derived() -> None:
+    rows = list(NewYorkScraper.STRICT_CURRENT_ENV_PROOF_ROWS)
+    urls = [row[2] for row in rows]
+    assert urls == list(ny_pdf.ENV2025_PROOF_SELECTOR_BY_URL)
+    assert _newline_residual_sha256(urls) == (
+        NewYorkScraper.STRICT_CURRENT_ENV_PROOF_URL_SHA256
+    )
+    assert all(
+        urlparse(url).hostname in {"assembly.ny.gov", "www.nysenate.gov"}
+        for url in urls
+    )
+    report = SimpleNamespace(
+        law_code="ENV",
+        unclassified_sections=[
+            {
+                "section_number": section,
+                "toc_variant": "",
+                "reason": "ambiguous_lifecycle_status",
+                "detail": "event_conditioned_effective: exact source note",
+            }
+            for section in ("9-2301", "9-2302", "9-2303", "9-2304")
+        ],
+    )
+    assert NewYorkScraper._new_york_exact_env_proof_rows([report]) == rows
+
+
+@pytest.mark.parametrize(
+    "section",
+    ("9-2301", "9-2302", "9-2303", "9-2304"),
+)
+def test_new_york_env_resolver_closes_exact_event_rows(section: str) -> None:
+    proofs = _env_proof_fixture_inputs()
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry(proofs).resolve_residual(
+        law_code="ENV",
+        residual={
+            "section_number": section,
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": "event_conditioned_effective: exact source note",
+        },
+    )
+    assert outcome["status"] == "resolved"
+    assert outcome["decision_action"] == "operative"
+    assert outcome["decision"]["effective_date"] == "2026-01-01"
+    assert outcome["source_projection_sha256"] == (
+        ny_pdf.ENV2025_PROOF_PROJECTION_SHA256
+    )
+    assert len(outcome["proof_bundle"]) == 4
+    assert all(outcome["conjuncts"].values())
+
+
+def test_new_york_env_resolver_fails_closed_on_constitution_drift() -> None:
+    proofs = _env_proof_fixture_inputs()
+    drifted = []
+    for proof in proofs:
+        payload = proof.payload
+        if proof.official_url == ny_pdf.ENV2025_ARTICLE14_SECTION1_URL:
+            payload = payload.replace(
+                b"three hundred twenty-three acres",
+                b"three hundred twenty-four acres",
+            )
+        drifted.append(
+            ny_pdf.NewYorkSupplementalProofInput.bind(
+                selector_key=proof.selector_key,
+                proof_kind=proof.proof_kind,
+                official_url=proof.official_url,
+                media_type=proof.media_type,
+                payload=payload,
+            )
+        )
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry(drifted).resolve_residual(
+        law_code="ENV",
+        residual={
+            "section_number": "9-2301",
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": "event_conditioned_effective: exact source note",
+        },
+    )
+    assert outcome["status"] == "unknown"
+    assert outcome["decision_action"] is None
+    assert outcome["conjuncts"]["exact_source_projection_sha256"] is False
+    assert "decision" not in outcome
+
+
+def test_new_york_event_wave_is_exact_official_and_source_derived() -> None:
+    rows = list(NewYorkScraper.STRICT_CURRENT_EVENT_PROOF_ROWS)
+    urls = [row[4] for row in rows]
+    assert [row[:2] for row in rows] == [
+        ("MHY", "mhy_2022_ch481_regulations"),
+        ("PBA", "mac_liability_discharge"),
+        ("RSS", "rss_2011_ch525_condition"),
+        ("RSS", "rss_2011_ch525_condition"),
+    ]
+    assert urls == [
+        ny_pdf.MHY82_STATE_REGISTER_URL,
+        ny_pdf.MAC_TERMINATION_REPORT_URL,
+        ny_pdf.RSS1204A_ENACTED_BILL_URL,
+        ny_pdf.RSS1204A_OSC_BULLETIN_URL,
+    ]
+    assert _newline_residual_sha256(urls) == (
+        NewYorkScraper.STRICT_CURRENT_EVENT_PROOF_URL_SHA256
+    )
+    assert [urlparse(url).hostname for url in urls] == [
+        "dos.ny.gov",
+        "www.nyc.gov",
+        "legislation.nysenate.gov",
+        "www.osc.ny.gov",
+    ]
+    reports = [
+        SimpleNamespace(
+            law_code="MHY",
+            unclassified_sections=[
+                {
+                    "section_number": section,
+                    "toc_variant": "",
+                    "reason": "ambiguous_lifecycle_status",
+                    "detail": "event_conditioned_effective: exact source note",
+                }
+                for section in ny_pdf.MHY82_SECTIONS
+            ],
+        ),
+        SimpleNamespace(
+            law_code="PBA",
+            unclassified_sections=[
+                {
+                    "section_number": section,
+                    "toc_variant": "",
+                    "reason": "ambiguous_lifecycle_status",
+                    "detail": "event_conditioned_expiration: exact source note",
+                }
+                for section in ny_pdf.MAC_TITLE_SECTIONS
+            ],
+        ),
+        SimpleNamespace(
+            law_code="RSS",
+            unclassified_sections=[
+                {
+                    "section_number": "1204-a",
+                    "toc_variant": "",
+                    "reason": "ambiguous_lifecycle_status",
+                    "detail": "event_conditioned_effective: exact source note",
+                }
+            ],
+        ),
+    ]
+    assert NewYorkScraper._new_york_exact_event_proof_rows(reports) == rows
+
+
+@pytest.mark.parametrize("section", ("82.01", "82.15"))
+def test_new_york_mhy82_resolver_closes_exact_event_rows(
+    monkeypatch,
+    section: str,
+) -> None:
+    payload = b"%PDF synthetic MHY Article 82 adoption"
+    text = _mhy82_state_register_fixture_text()
+    monkeypatch.setattr(
+        ny_pdf,
+        "_new_york_official_pdf_projection_text",
+        lambda _payload: text,
+    )
+    projection_sha256 = (
+        ny_pdf._new_york_mhy82_state_register_projection_sha256(payload)
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "MHY82_STATE_REGISTER_SHA256",
+        hashlib.sha256(payload).hexdigest(),
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "MHY82_STATE_REGISTER_PROJECTION_SHA256",
+        projection_sha256,
+    )
+    proof = ny_pdf.NewYorkSupplementalProofInput.bind(
+        selector_key=ny_pdf.MHY82_STATE_REGISTER_SELECTOR_KEY,
+        proof_kind="official_state_register_adoption",
+        official_url=ny_pdf.MHY82_STATE_REGISTER_URL,
+        media_type="application/pdf",
+        payload=payload,
+    )
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry([proof]).resolve_residual(
+        law_code="MHY",
+        residual={
+            "section_number": section,
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": "event_conditioned_effective: exact source note",
+            "_supplemental_source_full_text": (
+                f"§ {section}. Supported decision-making source body. " * 3
+            ),
+            "_supplemental_source_section_name": "Supported decision making",
+        },
+    )
+    assert outcome["status"] == "resolved"
+    assert outcome["decision_action"] == "operative"
+    assert outcome["decision"]["effective_date"] == "2025-11-18"
+    assert outcome["source_projection_sha256"] == projection_sha256
+    assert all(outcome["conjuncts"].values())
+
+
+@pytest.mark.parametrize("section", ("3030", "3041"))
+def test_new_york_mac_resolver_closes_exact_event_rows(
+    monkeypatch,
+    section: str,
+) -> None:
+    payload = b"%PDF synthetic MAC audited financial report"
+    text = _mac_termination_fixture_text()
+    monkeypatch.setattr(
+        ny_pdf,
+        "_new_york_official_pdf_projection_text",
+        lambda _payload: text,
+    )
+    projection_sha256 = ny_pdf._new_york_mac_termination_projection_sha256(
+        payload
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "MAC_TERMINATION_REPORT_SHA256",
+        hashlib.sha256(payload).hexdigest(),
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "MAC_TERMINATION_REPORT_PROJECTION_SHA256",
+        projection_sha256,
+    )
+    proof = ny_pdf.NewYorkSupplementalProofInput.bind(
+        selector_key=ny_pdf.MAC_TERMINATION_REPORT_SELECTOR_KEY,
+        proof_kind="official_government_financial_report",
+        official_url=ny_pdf.MAC_TERMINATION_REPORT_URL,
+        media_type="application/pdf",
+        payload=payload,
+    )
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry([proof]).resolve_residual(
+        law_code="PBA",
+        residual={
+            "section_number": section,
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": "event_conditioned_expiration: exact source note",
+        },
+    )
+    assert outcome["status"] == "resolved"
+    assert outcome["decision_action"] == "terminal"
+    assert outcome["decision"]["disposition"] == "expired"
+    assert outcome["decision"]["effective_date"] == "2009-09-30"
+    assert outcome["source_projection_sha256"] == projection_sha256
+    assert all(outcome["conjuncts"].values())
+
+
+def test_new_york_event_resolvers_fail_closed_on_semantic_drift(
+    monkeypatch,
+) -> None:
+    payload = b"%PDF synthetic drifted MAC report"
+    original_text = _mac_termination_fixture_text()
+    monkeypatch.setattr(
+        ny_pdf,
+        "_new_york_official_pdf_projection_text",
+        lambda _payload: original_text,
+    )
+    expected_projection = ny_pdf._new_york_mac_termination_projection_sha256(
+        payload
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "_new_york_official_pdf_projection_text",
+        lambda _payload: original_text.replace(
+            "September 30, 2009",
+            "September 30, 2010",
+        ),
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "MAC_TERMINATION_REPORT_SHA256",
+        hashlib.sha256(payload).hexdigest(),
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "MAC_TERMINATION_REPORT_PROJECTION_SHA256",
+        expected_projection,
+    )
+    proof = ny_pdf.NewYorkSupplementalProofInput.bind(
+        selector_key=ny_pdf.MAC_TERMINATION_REPORT_SELECTOR_KEY,
+        proof_kind="official_government_financial_report",
+        official_url=ny_pdf.MAC_TERMINATION_REPORT_URL,
+        media_type="application/pdf",
+        payload=payload,
+    )
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry([proof]).resolve_residual(
+        law_code="PBA",
+        residual={
+            "section_number": "3030",
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": "event_conditioned_expiration: exact source note",
+        },
+    )
+    assert outcome["status"] == "unknown"
+    assert outcome["decision_action"] is None
+    assert outcome["conjuncts"]["exact_source_projection_sha256"] is False
+    assert "decision" not in outcome
+
+
+def test_new_york_rss1204a_resolver_closes_exact_event_row(monkeypatch) -> None:
+    bill_payload = b"%PDF synthetic S5837"
+    bulletin_payload = _rss1204a_osc_fixture()
+    monkeypatch.setattr(
+        ny_pdf,
+        "_new_york_official_pdf_projection_text",
+        lambda _payload: _rss1204a_bill_fixture_text(),
+    )
+    bill_projection = ny_pdf._new_york_rss1204a_bill_projection_sha256(
+        bill_payload
+    )
+    bulletin_projection = ny_pdf._new_york_rss1204a_osc_projection_sha256(
+        bulletin_payload
+    )
+    bundle_projection = ny_pdf._new_york_rss1204a_bundle_projection_sha256(
+        bill_payload,
+        bulletin_payload,
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "RSS1204A_ENACTED_BILL_SHA256",
+        hashlib.sha256(bill_payload).hexdigest(),
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "RSS1204A_OSC_BULLETIN_SHA256",
+        hashlib.sha256(bulletin_payload).hexdigest(),
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "RSS1204A_ENACTED_BILL_PROJECTION_SHA256",
+        bill_projection,
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "RSS1204A_OSC_BULLETIN_PROJECTION_SHA256",
+        bulletin_projection,
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "RSS1204A_PROOF_BUNDLE_PROJECTION_SHA256",
+        bundle_projection,
+    )
+    proofs = [
+        ny_pdf.NewYorkSupplementalProofInput.bind(
+            selector_key=ny_pdf.RSS1204A_ENACTED_BILL_SELECTOR_KEY,
+            proof_kind="official_enacted_bill_text",
+            official_url=ny_pdf.RSS1204A_ENACTED_BILL_URL,
+            media_type="application/pdf",
+            payload=bill_payload,
+        ),
+        ny_pdf.NewYorkSupplementalProofInput.bind(
+            selector_key=ny_pdf.RSS1204A_OSC_BULLETIN_SELECTOR_KEY,
+            proof_kind="official_comptroller_payroll_bulletin",
+            official_url=ny_pdf.RSS1204A_OSC_BULLETIN_URL,
+            media_type="text/html",
+            payload=bulletin_payload,
+        ),
+    ]
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry(proofs).resolve_residual(
+        law_code="RSS",
+        residual={
+            "section_number": "1204-a",
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": "event_conditioned_effective: See ch 525/2011 § 7",
+            "_supplemental_source_full_text": (
+                "* § 1204-a. Pick up of member contributions by employer. "
+                "Each participating employer shall pick up contributions and "
+                "shall receive income tax treatment under section 414(h) of "
+                "the Internal Revenue Code. "
+                + ("Source-bound statutory body. " * 5)
+            ),
+            "_supplemental_source_section_name": (
+                "Pick up of member contributions by employer"
+            ),
+        },
+    )
+    assert outcome["status"] == "resolved"
+    assert outcome["decision_action"] == "operative"
+    assert outcome["decision"]["effective_date"] == "2013-10-01"
+    assert outcome["source_projection_sha256"] == bundle_projection
+    assert len(outcome["proof_bundle"]) == 2
+    assert all(outcome["conjuncts"].values())
+
+
+def test_new_york_rss1204a_resolver_fails_closed_on_semantic_drift(
+    monkeypatch,
+) -> None:
+    bill_payload = b"%PDF synthetic S5837"
+    bulletin_payload = _rss1204a_osc_fixture()
+    bill_text = _rss1204a_bill_fixture_text()
+    original_article = ny_pdf._new_york_rss1204a_osc_article_text(
+        bulletin_payload
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "_new_york_official_pdf_projection_text",
+        lambda _payload: bill_text,
+    )
+    bill_projection = ny_pdf._new_york_rss1204a_bill_projection_sha256(
+        bill_payload
+    )
+    bulletin_projection = ny_pdf._new_york_rss1204a_osc_projection_sha256(
+        bulletin_payload
+    )
+    bundle_projection = ny_pdf._new_york_rss1204a_bundle_projection_sha256(
+        bill_payload,
+        bulletin_payload,
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "RSS1204A_ENACTED_BILL_SHA256",
+        hashlib.sha256(bill_payload).hexdigest(),
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "RSS1204A_OSC_BULLETIN_SHA256",
+        hashlib.sha256(bulletin_payload).hexdigest(),
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "RSS1204A_ENACTED_BILL_PROJECTION_SHA256",
+        bill_projection,
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "RSS1204A_OSC_BULLETIN_PROJECTION_SHA256",
+        bulletin_projection,
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "RSS1204A_PROOF_BUNDLE_PROJECTION_SHA256",
+        bundle_projection,
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "_new_york_rss1204a_osc_article_text",
+        lambda _payload: original_article.replace(
+            "Effective October 1, 2013",
+            "Effective October 1, 2014",
+        ),
+    )
+    proofs = [
+        ny_pdf.NewYorkSupplementalProofInput.bind(
+            selector_key=ny_pdf.RSS1204A_ENACTED_BILL_SELECTOR_KEY,
+            proof_kind="official_enacted_bill_text",
+            official_url=ny_pdf.RSS1204A_ENACTED_BILL_URL,
+            media_type="application/pdf",
+            payload=bill_payload,
+        ),
+        ny_pdf.NewYorkSupplementalProofInput.bind(
+            selector_key=ny_pdf.RSS1204A_OSC_BULLETIN_SELECTOR_KEY,
+            proof_kind="official_comptroller_payroll_bulletin",
+            official_url=ny_pdf.RSS1204A_OSC_BULLETIN_URL,
+            media_type="text/html",
+            payload=bulletin_payload,
+        ),
+    ]
+    outcome = ny_pdf.evaluate_new_york_rss1204a_proof_bundle(
+        proofs,
+        section="1204-a",
+        source_full_text=(
+            "* § 1204-a. Pick up of member contributions by employer. "
+            "Each participating employer shall receive income tax treatment "
+            "under section 414(h) of the Internal Revenue Code. "
+            + ("Source-bound statutory body. " * 5)
+        ),
+        source_section_name="Pick up of member contributions by employer",
+    )
+    assert outcome["status"] == "unknown"
+    assert outcome["decision_action"] is None
+    assert outcome["conjuncts"]["exact_bulletin_projection_sha256"] is False
+    assert "decision" not in outcome
+
+
+def test_new_york_event_pdf_validator_accepts_dos_warning_prefix() -> None:
+    payload = b"\n**** Ghostscript warning\n%PDF-1.4\n" + (b"x" * 100_001)
+    assert NewYorkScraper._is_valid_new_york_event_proof_pdf(payload)
+
+
+def test_new_york_event_html_validator_accepts_exact_osc_bulletin() -> None:
+    assert NewYorkScraper._is_valid_new_york_event_proof_html(
+        _rss1204a_osc_fixture()
+    )
+
+
+def test_new_york_dated_current_variant_controls_undated_legacy(
+    monkeypatch,
+) -> None:
+    law_text = """
+    ARTICLE 23
+    TEMPORARY RELEASE PROGRAMS
+    Section 851. Definitions.
+            852. Establishment of temporary release.
+      * § 851. Definitions. The current dated version has a complete source
+      body and remains operative for the release-date snapshot.
+      * NB Effective until September 1, 2027
+      * § 851. Definitions. The future version has a complete source body and
+      will replace the dated current version.
+      * NB Effective September 1, 2027
+      * § 851. Definitions. The legacy version has a complete source body and
+      depends on expirations of several prior session-law provisions.
+      * NB Effective only upon the expiration of §42 of ch. 60/1994, §10 of
+      ch. 339/1972 and §3 of ch. 554/1986
+      § 852. Establishment of temporary release. This following source section
+      has a complete operative body for exact source reconciliation.
+    """
+    monkeypatch.setattr(
+        ny_pdf,
+        "extract_new_york_law_pdf_text",
+        lambda _payload: (law_text, 1),
+    )
+    parsed = ny_pdf.parse_new_york_law_pdf(
+        b"%PDF-law",
+        law_code="COR",
+        law_name="Correction",
+    )
+    assert parsed.closed is True
+    section = next(row for row in parsed.statutes if row.section_number == "851")
+    assert "current dated version" in section.full_text
+    assert section.structured_data["lifecycle_disposition"] == (
+        "effective_until"
+    )
+    assert parsed.unclassified_sections == []
+    assert {
+        row["disposition"] for row in parsed.lifecycle_alternate_sections
+    } == {"future_effective", "event_conditioned_effective"}
 
 
 @pytest.mark.parametrize(

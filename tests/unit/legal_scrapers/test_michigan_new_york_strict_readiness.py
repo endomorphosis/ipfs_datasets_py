@@ -93,13 +93,13 @@ _RETAINED_NY_PROJECTION = {
     "source": 37_441,
     "embedded": 292,
     "lifecycle_alternates": 127,
-    "operative": 36_475,
+    "operative": 36_476,
     "terminal": 751,
-    "residual": 215,
-    "closed_laws": 68,
+    "residual": 214,
+    "closed_laws": 69,
 }
 _RETAINED_NY_RESIDUAL_PROJECTION_SHA256 = (
-    "4e8865cc8dbfe4706e0fbe931e31df60a4e4f7e20e88ee9f628507c354b22dc3"
+    "4c328dd34c85eb8e3036aac6d07366244a7df88efa586aa39bfd691bbb2dd7f7"
 )
 
 
