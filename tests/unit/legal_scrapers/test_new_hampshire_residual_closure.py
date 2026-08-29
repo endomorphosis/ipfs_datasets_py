@@ -59,6 +59,10 @@ TITLE_I = "https://gc.nh.gov/rsa/html/NHTOC/NHTOC-I.htm"
 TITLE_IV = "https://gc.nh.gov/rsa/html/NHTOC/NHTOC-IV.htm"
 TITLE_IX = "https://gc.nh.gov/rsa/html/NHTOC/NHTOC-IX.htm"
 INVENTED_TITLE_URL = "https://gc.nh.gov/rsa/html/NHTOC/NHTOC-XCIX.htm"
+INVENTED_CHAPTER_URL = (
+    "https://gc.nh.gov/rsa/html/NHTOC/NHTOC-XCIX-99.htm"
+)
+INVENTED_SECTION_URL = "https://gc.nh.gov/rsa/html/XCIX/99/99-1.htm"
 CHAPTER_1 = "https://gc.nh.gov/rsa/html/NHTOC/NHTOC-I-1.htm"
 CHAPTER_2 = "https://gc.nh.gov/rsa/html/NHTOC/NHTOC-I-2.htm"
 SECTION_1_1 = "https://gc.nh.gov/rsa/html/I/1/1-1.htm"
@@ -200,21 +204,44 @@ def _aligned_result(
     urls: list[str],
     payloads: list[bytes],
 ) -> StateLawPageMultiFetchResult:
+    transports: list[dict[str, str]] = []
+    envelopes: list[Any] = []
+    for url, payload in zip(urls, payloads, strict=True):
+        digest = hashlib.sha256(payload).hexdigest()
+        transport = {
+            "official_url": url,
+            "content_sha256": digest,
+            "source_transport": "direct",
+        }
+        retrieved_at = "2026-08-28T12:34:56Z"
+        receipt_sha256 = hashlib.sha256(
+            f"{url}\n{digest}\n{retrieved_at}".encode()
+        ).hexdigest()
+        envelope_dict = {
+            "acquisition": {
+                "body_sha256": digest,
+                "receipt": {
+                    "content": {"sha256": digest},
+                    "endpoint": url,
+                    "metadata": {"transport_receipt": dict(transport)},
+                    "receipt_sha256": receipt_sha256,
+                    "retrieved_at": retrieved_at,
+                },
+            },
+        }
+        transports.append(transport)
+        envelopes.append(
+            SimpleNamespace(
+                body=payload,
+                to_dict=lambda value=envelope_dict: value,
+            )
+        )
     return StateLawPageMultiFetchResult(
         urls=list(urls),
         payloads=list(payloads),
         errors=[None] * len(urls),
-        transport_receipts=[
-            {
-                "official_url": url,
-                "content_sha256": hashlib.sha256(payload).hexdigest(),
-                "source_transport": "direct",
-            }
-            for url, payload in zip(urls, payloads, strict=True)
-        ],
-        parser_input_envelopes=[
-            SimpleNamespace(body=payload) for payload in payloads
-        ],
+        transport_receipts=transports,
+        parser_input_envelopes=envelopes,
         stats={
             "network_requested_pages": 0,
             "requested_pages": len(urls),
@@ -378,7 +405,8 @@ def test_new_hampshire_current_root_is_source_derived_and_not_v4_wayback() -> No
     assert scraper.get_base_url() == f"https://{OFFICIAL_DOMAIN}"
     assert scraper.OFFICIAL_DOMAIN == OFFICIAL_DOMAIN
     assert scraper.CURRENT_OFFICIAL_ENTRY_URL == CURRENT_ROOT
-    assert scraper.OFFICIAL_ENTRY_URL == LEGACY_ROOT
+    assert scraper.OFFICIAL_ENTRY_URL == CURRENT_ROOT
+    assert scraper.LEGACY_OFFICIAL_ENTRY_URL == LEGACY_ROOT
     assert scraper.get_code_list()[0]["url"] == CURRENT_ROOT
     assert scraper.official_title_url("I") == TITLE_I
     assert scraper.OFFICIAL_TITLE_COUNT == HISTORICAL_V4_TITLES
@@ -549,17 +577,131 @@ def test_new_hampshire_closure_helper_still_requires_zero_network_seal_inputs() 
     assert "retained_replay_network_requests" in hampshire_source
     assert hampshire_source.index('"retained_replay_network_requests": 0') > 0
     assert "_new_hampshire_retained_replay" in hampshire_source
-    assert "New Hampshire retained hierarchy inputs changed on replay" in (
+    assert "New Hampshire retained hierarchy inputs or temporal binding changed on replay" in (
         hampshire_source
     )
 
 
-def test_new_hampshire_legal_as_of_wall_clock_on_2025_bytes_is_recorded_proof_residual() -> None:
+def _closure_observation() -> dict[str, Any]:
+    temporal_report = {
+        "legal_as_of": "2026-08-28",
+        "observed_at": "2026-08-28T12:34:56+00:00",
+        "root_parser_input_receipt_sha256": "a" * 64,
+        "root_source_transport": "direct",
+        "source_input_temporal_projection_sha256": "b" * 64,
+    }
+    return {
+        "batch_calls": [{"requested_pages": 1}],
+        "boundary_first": SECTION_1_1,
+        "boundary_last": SECTION_1_1,
+        "chapter_pages_fetched": 1,
+        "code_name": "New Hampshire Revised Statutes",
+        "frontier": {
+            "disposition": {"discovered": 1},
+            "frontier_digest_sha256": "c" * 64,
+        },
+        "input_reports": [
+            {
+                "content_sha256": "d" * 64,
+                "legal_as_of": "2026-08-28",
+                "observed_at": "2026-08-28T12:34:56+00:00",
+                "parser_input_receipt_sha256": "a" * 64,
+                "source_role": "root_catalog",
+                "source_transport": "direct",
+                "source_url": CURRENT_ROOT,
+            }
+        ],
+        "legal_as_of": "2026-08-28",
+        "observed_at": "2026-08-28T12:34:56+00:00",
+        "static_catalog_diagnostic": {"authorizes_current_frontier": False},
+        "temporal_report": temporal_report,
+        "title_pages_fetched": 1,
+    }
+
+
+def test_new_hampshire_closure_rejects_live_replay_temporal_drift(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scraper = NewHampshireScraper("NH", "New Hampshire")
+    first = _closure_observation()
+    scraper._last_new_hampshire_full_frontier = first
+    scraper._state_law_acquisition_ledger = SimpleNamespace(
+        refresh_existing_entries=lambda: None
+    )
+
+    async def _replay(*_args: Any, **_kwargs: Any) -> list[Any]:
+        replay = dict(first)
+        replay["temporal_report"] = {
+            **first["temporal_report"],
+            "observed_at": "2026-08-29T12:34:56+00:00",
+        }
+        scraper._last_new_hampshire_replayed_frontier = replay
+        return []
+
+    monkeypatch.setattr(scraper, "_scrape_official_rsa_tree_batched", _replay)
+    with pytest.raises(RuntimeError, match="temporal binding changed on replay"):
+        asyncio.run(
+            scraper.produce_state_law_frontier_closure(
+                canonical_output_projection={"canonical_keys": []}
+            )
+        )
+
+
+def test_new_hampshire_closure_uses_canonical_current_source_fields(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scraper = NewHampshireScraper("NH", "New Hampshire")
+    first = _closure_observation()
+    scraper._last_new_hampshire_full_frontier = first
+    scraper._state_law_acquisition_ledger = SimpleNamespace(
+        refresh_existing_entries=lambda: None
+    )
+
+    async def _replay(*_args: Any, **_kwargs: Any) -> list[Any]:
+        scraper._last_new_hampshire_replayed_frontier = dict(first)
+        return []
+
+    captured: dict[str, Any] = {}
+
+    def _retain(_scraper: Any, **kwargs: Any) -> Path:
+        captured.update(kwargs)
+        return Path("/tmp/nh-current-closure.json")
+
+    monkeypatch.setattr(scraper, "_scrape_official_rsa_tree_batched", _replay)
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.legal_scrapers.state_scrapers."
+        "strict_frontier_closure.retain_exact_state_frontier_closure",
+        _retain,
+    )
+
+    retained = asyncio.run(
+        scraper.produce_state_law_frontier_closure(
+            canonical_output_projection={"canonical_keys": []}
+        )
+    )
+
+    assert retained == Path("/tmp/nh-current-closure.json")
+    assert captured["official_source_url"] == CURRENT_ROOT
+    assert captured["source_domain"] == OFFICIAL_DOMAIN
+    assert captured["observed_at"] == first["observed_at"]
+    assert captured["legal_as_of"] == first["legal_as_of"]
+    assert captured["transport"]["canonical_official_entry_url"] == CURRENT_ROOT
+    assert captured["transport"]["legacy_source_authorizes_current_frontier"] is False
+    assert scraper._catalog_acquisition_path_ids_for_source(CURRENT_ROOT) == [
+        "nh-gencourt-rsa"
+    ]
+    with pytest.raises(RuntimeError, match="canonical current RSA root"):
+        scraper._catalog_acquisition_path_ids_for_source(LEGACY_ROOT)
+
+
+def test_new_hampshire_legal_as_of_is_bound_to_retained_root_receipt() -> None:
     batched = inspect.getsource(
         NewHampshireScraper._scrape_official_rsa_tree_batched
     )
-    assert "datetime.now(timezone.utc)" in batched
-    assert '"legal_as_of": observed_at[:10]' in batched
+    assert "datetime.now(timezone.utc)" not in batched
+    assert 'root_report.get("observed_at")' in batched
+    assert 'root_report.get("legal_as_of")' in batched
+    assert '"temporal_report": temporal_report' in batched
     report = _report_text()
     table = _report_table(report)
     assert table["legal_as_of_wall_clock_on_2025_bytes"] == "forbidden"
@@ -646,7 +788,7 @@ def test_new_hampshire_compact_current_root_recipe_starts_before_titles_and_leav
     assert len(frontier["terminal_titles"]) == 1
 
 
-def test_new_hampshire_invented_or_historical_title_is_not_admitted_from_current_root(
+def test_new_hampshire_fresh_source_title_is_admitted_despite_static_catalog_drift(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     pages = _compact_current_root_pages()
@@ -667,33 +809,65 @@ def test_new_hampshire_invented_or_historical_title_is_not_admitted_from_current
         ),
         ("XCIX", "INVENTED TITLE", "(Includes Chapters 99 - 99)"),
     )
-    with pytest.raises(RuntimeError, match="does not match the exact official"):
-        scraper = NewHampshireScraper("NH", "New Hampshire")
-        monkeypatch.setattr(scraper, "OFFICIAL_ENTRY_URL", CURRENT_ROOT)
-        monkeypatch.setattr(
-            scraper,
-            "OFFICIAL_TITLES",
-            (("I", "The State and Its Government"), ("IV", "Elections")),
-        )
-        monkeypatch.setattr(scraper, "OFFICIAL_TITLE_COUNT", 2)
+    pages.update(
+        {
+            CURRENT_ROOT: extra_root,
+            INVENTED_TITLE_URL: _title_html(
+                "XCIX", "INVENTED TITLE", ("99", "SOURCE-DERIVED CHAPTER")
+            ),
+            INVENTED_CHAPTER_URL: (
+                b"<html><body><h1>New Hampshire Statutes</h1>"
+                b"<h2>Table of Contents</h2>"
+                b"<h2><a href='../XCIX/99/99-mrg.htm'>"
+                b"CHAPTER 99: SOURCE-DERIVED CHAPTER</a></h2>"
+                b"<a href='../XCIX/99/99-1.htm'>"
+                b"Section 99:1 Source-derived section.</a>"
+                b"</body></html>"
+            ),
+            INVENTED_SECTION_URL: _section_page(
+                "99:1", "The fresh official title is source-derived."
+            ),
+        }
+    )
+    calls: list[list[str]] = []
 
-        async def _plural(self, urls, **_kwargs: Any) -> StateLawPageMultiFetchResult:
-            del self
-            requested = list(urls)
-            payloads = [extra_root if url == CURRENT_ROOT else pages[url] for url in requested]
-            return _aligned_result(requested, payloads)
+    async def _plural(self, urls, **_kwargs: Any) -> StateLawPageMultiFetchResult:
+        del self
+        requested = list(urls)
+        calls.append(requested)
+        return _aligned_result(requested, [pages[url] for url in requested])
 
-        monkeypatch.setattr(
-            NewHampshireScraper,
-            "_fetch_page_contents_with_archival_fallback_retrying_residuals",
-            _plural,
+    monkeypatch.setattr(
+        NewHampshireScraper,
+        "_fetch_page_contents_with_archival_fallback_retrying_residuals",
+        _plural,
+    )
+    scraper = NewHampshireScraper("NH", "New Hampshire")
+    monkeypatch.setattr(
+        scraper,
+        "OFFICIAL_TITLES",
+        (("I", "The State and Its Government"), ("IV", "Elections")),
+    )
+
+    rows = asyncio.run(
+        scraper._scrape_official_rsa_tree_batched(
+            code_name="New Hampshire Revised Statutes",
+            checkpoint=_NewHampshireCheckpoint("NH"),
         )
-        asyncio.run(
-            scraper._scrape_official_rsa_tree_batched(
-                code_name="New Hampshire Revised Statutes",
-                checkpoint=_NewHampshireCheckpoint("NH"),
-            )
-        )
+    )
+
+    assert calls[1] == [TITLE_I, INVENTED_TITLE_URL]
+    assert INVENTED_CHAPTER_URL in calls[2]
+    assert INVENTED_SECTION_URL in calls[3]
+    assert [row.section_number for row in rows] == ["1:1", "2:1", "99:1"]
+    observation = scraper._last_new_hampshire_full_frontier
+    assert observation["titles_discovered"] == 3
+    assert observation["static_catalog_diagnostic"]["unexpected_titles"] == [
+        "XCIX"
+    ]
+    assert observation["static_catalog_diagnostic"][
+        "authorizes_current_frontier"
+    ] is False
 
 
 def test_new_hampshire_retained_replay_only_miss_does_not_open_per_page_archive_loop(

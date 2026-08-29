@@ -13,7 +13,7 @@ import time
 import urllib.request
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import fields as dataclass_fields
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote, urljoin, urlparse
@@ -51,13 +51,11 @@ class NewHampshireScraper(BaseStateScraper):
     )
     OFFICIAL_DOMAIN = "gc.nh.gov"
     OFFICIAL_ENTRY_PATH = "/rsa/html/NHTOC.htm"
-    # The legacy root is already retained with exact acquisition evidence and
-    # remains the stable catalog bootstrap.  The General Court migrated its
-    # live RSA tree to gc.nh.gov; every descendant locator is canonicalized to
-    # that current official host below instead of equating the two request
-    # identities.
-    OFFICIAL_ENTRY_URL = "https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm"
-    CURRENT_OFFICIAL_ENTRY_URL = "https://gc.nh.gov/rsa/html/NHTOC.htm"
+    OFFICIAL_ENTRY_URL = "https://gc.nh.gov/rsa/html/NHTOC.htm"
+    CURRENT_OFFICIAL_ENTRY_URL = OFFICIAL_ENTRY_URL
+    LEGACY_OFFICIAL_ENTRY_URL = (
+        "https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm"
+    )
     _NH_TITLE_HREF_RE = re.compile(
         r"/rsa/html/NHTOC/NHTOC-([IVXLCDM]+(?:-[A-Z]+)?)\.htm$",
         re.IGNORECASE,
@@ -136,10 +134,8 @@ class NewHampshireScraper(BaseStateScraper):
         ("LXIV", "Planning and Zoning"),
     )
     OFFICIAL_TITLE_COUNT = len(OFFICIAL_TITLES)
-    # The retained official root classifies Title IV itself, rather than a
-    # fetched child document, as terminal.  Keep this projection explicit so
-    # loss or broadening of the source label cannot silently change the 66-page
-    # active title frontier.
+    # Historical catalog expectations are diagnostics only. Current title
+    # membership and terminal status come from the receipt-bound root below.
     OFFICIAL_TERMINAL_TITLES = (("IV", "repealed"),)
     OFFICIAL_TERMINAL_TITLE_COUNT = len(OFFICIAL_TERMINAL_TITLES)
     OFFICIAL_ACTIVE_TITLE_COUNT = (
@@ -156,6 +152,35 @@ class NewHampshireScraper(BaseStateScraper):
     def get_base_url(self) -> str:
         """Return the base URL for New Hampshire's legislative website."""
         return "https://gc.nh.gov"
+
+    def _new_hampshire_current_source_url(self, url: str) -> bool:
+        """Return whether *url* is a canonical current-host RSA locator."""
+
+        parsed = urlparse(str(url or "").strip())
+        return bool(
+            parsed.scheme.lower() == "https"
+            and str(parsed.hostname or "").lower() == self.OFFICIAL_DOMAIN
+            and not parsed.params
+            and not parsed.query
+            and not parsed.fragment
+            and parsed.path.startswith("/rsa/html/")
+        )
+
+    def _catalog_acquisition_path_ids_for_source(
+        self,
+        official_source_url: str,
+    ) -> list[str]:
+        """Bind the migrated current RSA host to NH's existing catalog path."""
+
+        if (
+            self._canonical_fetch_url(official_source_url)
+            != self.OFFICIAL_ENTRY_URL
+            or not self._new_hampshire_current_source_url(official_source_url)
+        ):
+            raise RuntimeError(
+                "New Hampshire closure source must be the canonical current RSA root"
+            )
+        return ["nh-gencourt-rsa"]
     
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for New Hampshire."""
@@ -460,7 +485,7 @@ class NewHampshireScraper(BaseStateScraper):
         urls: Sequence[str],
         payloads: Sequence[bytes],
     ) -> None:
-        """Retain the ordered URL/body projection used by one exact traversal."""
+        """Retain the ordered URL/body/receipt projection used by one traversal."""
 
         requested = [self._canonical_fetch_url(url) for url in urls]
         if len(requested) != len(payloads):
@@ -469,6 +494,9 @@ class NewHampshireScraper(BaseStateScraper):
             )
         reports = list(
             getattr(self, "_new_hampshire_frontier_input_reports", [])
+        )
+        evidence_by_url = dict(
+            getattr(self, "_new_hampshire_frontier_input_evidence", {})
         )
         seen = {str(row.get("source_url") or "") for row in reports}
         for url, payload in zip(requested, payloads, strict=True):
@@ -482,15 +510,73 @@ class NewHampshireScraper(BaseStateScraper):
                 raise RuntimeError(
                     f"New Hampshire frontier input projection is empty: {url}"
                 )
+            evidence = evidence_by_url.get(url)
+            if not isinstance(evidence, Mapping):
+                raise RuntimeError(  # noqa: TRY004 - closure contract error
+                    "New Hampshire authorizing frontier input lacks receipt-bound "
+                    f"temporal evidence: {url}"
+                )
+            content_sha256 = hashlib.sha256(raw).hexdigest()
+            if str(evidence.get("content_sha256") or "") != content_sha256:
+                raise RuntimeError(
+                    "New Hampshire frontier evidence changed parser bytes: "
+                    f"{url}"
+                )
             seen.add(url)
             reports.append(
                 {
-                    "content_sha256": hashlib.sha256(raw).hexdigest(),
+                    **dict(evidence),
+                    "content_sha256": content_sha256,
                     "source_role": str(source_role or "").strip(),
                     "source_url": url,
                 }
             )
         self._new_hampshire_frontier_input_reports = reports
+
+    def _new_hampshire_static_catalog_diagnostic(
+        self,
+        title_units: Sequence[Mapping[str, Any]],
+    ) -> dict[str, Any]:
+        """Describe drift from the historical catalog without authorizing scope."""
+
+        expected_names = {
+            str(number): self._normalize_legal_text(str(name))
+            for number, name in self.OFFICIAL_TITLES
+        }
+        observed_names = {
+            str(unit.get("title_number") or ""): self._normalize_legal_text(
+                str(unit.get("title_name") or "")
+            )
+            for unit in title_units
+        }
+        expected_terminal = [list(row) for row in self.OFFICIAL_TERMINAL_TITLES]
+        observed_terminal = [
+            [
+                str(unit.get("title_number") or ""),
+                str(unit.get("terminal_disposition") or ""),
+            ]
+            for unit in title_units
+            if str(unit.get("terminal_disposition") or "")
+        ]
+        name_mismatches = [
+            number
+            for number in observed_names.keys() & expected_names.keys()
+            if observed_names[number].casefold()
+            != expected_names[number].casefold()
+        ]
+        return {
+            "authorizes_current_frontier": False,
+            "expected_title_count": len(expected_names),
+            "missing_titles": [
+                number for number in expected_names if number not in observed_names
+            ],
+            "name_mismatches": sorted(name_mismatches),
+            "observed_title_count": len(title_units),
+            "terminal_projection_matches": observed_terminal == expected_terminal,
+            "unexpected_titles": [
+                number for number in observed_names if number not in expected_names
+            ],
+        }
 
     @staticmethod
     def _new_hampshire_root_payload(payload: bytes) -> bool:
@@ -534,13 +620,18 @@ class NewHampshireScraper(BaseStateScraper):
         *,
         url: str,
         payload: bytes,
-        transport_receipt: Optional[Dict[str, Any]],
+        transport_receipt: dict[str, Any] | None,
         parser_input_envelope: Any,
         frontier_name: str,
-    ) -> None:
-        """Bind optional transport evidence to its exact aligned NH payload."""
+    ) -> dict[str, str] | None:
+        """Bind exact NH bytes to their receipt-derived temporal observation."""
 
         canonical_url = self._canonical_fetch_url(url)
+        if not self._new_hampshire_current_source_url(url):
+            raise RuntimeError(
+                "New Hampshire current frontier rejects a legacy or non-canonical "
+                f"source URL: {url}"
+            )
         digest = hashlib.sha256(payload).hexdigest()
         ledger_attached = getattr(self, "_state_law_acquisition_ledger", None) is not None
         if ledger_attached and (
@@ -583,6 +674,121 @@ class NewHampshireScraper(BaseStateScraper):
                     f"New Hampshire {frontier_name} envelope changed payload identity: {url}"
                 )
 
+        envelope: Any = parser_input_envelope
+        if not isinstance(envelope, Mapping):
+            to_dict = getattr(envelope, "to_dict", None)
+            if callable(to_dict):
+                envelope = to_dict()
+        if isinstance(envelope, Mapping) and isinstance(
+            envelope.get("parser_input_envelope"),
+            Mapping,
+        ):
+            envelope = envelope["parser_input_envelope"]
+        acquisition = (
+            envelope.get("acquisition", {})
+            if isinstance(envelope, Mapping)
+            else {}
+        )
+        receipt = (
+            acquisition.get("receipt", {})
+            if isinstance(acquisition, Mapping)
+            else {}
+        )
+        if not isinstance(receipt, Mapping) or not receipt:
+            if ledger_attached:
+                raise RuntimeError(
+                    f"New Hampshire {frontier_name} envelope lacks an acquisition receipt: {url}"
+                )
+            return None
+        if self._canonical_fetch_url(str(receipt.get("endpoint") or "")) != canonical_url:
+            raise RuntimeError(
+                f"New Hampshire {frontier_name} acquisition receipt changed URL identity: {url}"
+            )
+        content = receipt.get("content", {})
+        receipt_digest = str(
+            content.get("sha256") if isinstance(content, Mapping) else ""
+        ).strip().lower()
+        envelope_digest = str(acquisition.get("body_sha256") or "").strip().lower()
+        if receipt_digest != digest or envelope_digest != digest:
+            raise RuntimeError(
+                f"New Hampshire {frontier_name} acquisition receipt changed parser bytes: {url}"
+            )
+        receipt_sha256 = str(receipt.get("receipt_sha256") or "").strip().lower()
+        if re.fullmatch(r"[0-9a-f]{64}", receipt_sha256) is None:
+            raise RuntimeError(
+                f"New Hampshire {frontier_name} acquisition receipt lacks exact identity: {url}"
+            )
+
+        receipt_metadata = receipt.get("metadata", {})
+        retained_transport = (
+            receipt_metadata.get("transport_receipt", {})
+            if isinstance(receipt_metadata, Mapping)
+            else {}
+        )
+        if not isinstance(retained_transport, Mapping):
+            retained_transport = {}
+        aligned_transport = (
+            dict(transport_receipt)
+            if isinstance(transport_receipt, Mapping)
+            else {}
+        )
+        source_transport = str(
+            retained_transport.get("source_transport")
+            or ""
+        ).strip().lower()
+        transport_url = str(
+            retained_transport.get("official_url")
+            or ""
+        ).strip()
+        transport_digest = str(
+            retained_transport.get("content_sha256")
+            or ""
+        ).strip().lower()
+        if (
+            not source_transport
+            or self._canonical_fetch_url(transport_url) != canonical_url
+            or transport_digest != digest
+        ):
+            raise RuntimeError(
+                f"New Hampshire {frontier_name} acquisition transport identity is incomplete: {url}"
+            )
+        aligned_source_transport = str(
+            aligned_transport.get("source_transport") or ""
+        ).strip().lower()
+        if (
+            aligned_source_transport
+            and aligned_source_transport != source_transport
+        ):
+            raise RuntimeError(
+                f"New Hampshire {frontier_name} aligned transport changed receipt provenance: {url}"
+            )
+
+        retrieved_at = str(receipt.get("retrieved_at") or "").strip()
+        try:
+            retrieved_time = datetime.fromisoformat(retrieved_at)
+            if retrieved_time.tzinfo is None or retrieved_time.utcoffset() is None:
+                raise ValueError("retrieval time lacks timezone")
+        except (TypeError, ValueError) as exc:
+            raise RuntimeError(
+                f"New Hampshire {frontier_name} receipt lacks a valid retrieval time: {url}"
+            ) from exc
+        observed_at = retrieved_time.astimezone(UTC).isoformat()
+
+        if source_transport != "direct":
+            raise RuntimeError(
+                "New Hampshire current frontier requires direct official-source "
+                f"receipts; archive transport cannot authorize: {url}"
+            )
+        legal_as_of = retrieved_time.date().isoformat()
+        return {
+            "archive_timestamp": "",
+            "content_sha256": digest,
+            "legal_as_of": legal_as_of,
+            "observed_at": observed_at,
+            "parser_input_receipt_sha256": receipt_sha256,
+            "source_transport": source_transport,
+        }
+
     async def _fetch_new_hampshire_frontier_batch(
         self,
         urls: Sequence[str],
@@ -596,6 +802,12 @@ class NewHampshireScraper(BaseStateScraper):
         if any(not url for url in requested):
             raise RuntimeError(
                 f"New Hampshire {frontier_name} frontier contains an invalid URL"
+            )
+        if any(
+            not self._new_hampshire_current_source_url(url) for url in requested
+        ):
+            raise RuntimeError(
+                f"New Hampshire {frontier_name} frontier rejects legacy-host current authority"
             )
         if len(set(requested)) != len(requested):
             raise RuntimeError(
@@ -624,6 +836,27 @@ class NewHampshireScraper(BaseStateScraper):
                         "New Hampshire retained frontier input is no longer valid: "
                         f"{url}"
                     )
+                evidence = self._validate_new_hampshire_aligned_evidence(
+                    url=url,
+                    payload=raw,
+                    transport_receipt=getattr(
+                        retained,
+                        "transport_receipt",
+                        None,
+                    ),
+                    parser_input_envelope=retained.envelope,
+                    frontier_name=frontier_name,
+                )
+                if evidence is not None:
+                    retained_evidence = dict(
+                        getattr(
+                            self,
+                            "_new_hampshire_frontier_input_evidence",
+                            {},
+                        )
+                    )
+                    retained_evidence[url] = evidence
+                    self._new_hampshire_frontier_input_evidence = retained_evidence
                 payloads.append(raw)
             stats_rows = list(
                 getattr(self, "_new_hampshire_frontier_batch_stats", [])
@@ -662,7 +895,6 @@ class NewHampshireScraper(BaseStateScraper):
             prefer_direct=True,
             common_crawl_domain_terms=(
                 "gc.nh.gov",
-                "www.gencourt.state.nh.us",
             ),
             common_crawl_url_terms=("/rsa/html/",),
             common_crawl_mime_terms=("html",),
@@ -698,13 +930,23 @@ class NewHampshireScraper(BaseStateScraper):
                     {"url": url, "error": str(error or "empty or invalid parser input")}
                 )
                 continue
-            self._validate_new_hampshire_aligned_evidence(
+            evidence = self._validate_new_hampshire_aligned_evidence(
                 url=url,
                 payload=raw,
                 transport_receipt=receipt,
                 parser_input_envelope=envelope,
                 frontier_name=frontier_name,
             )
+            if evidence is not None:
+                retained_evidence = dict(
+                    getattr(
+                        self,
+                        "_new_hampshire_frontier_input_evidence",
+                        {},
+                    )
+                )
+                retained_evidence[url] = evidence
+                self._new_hampshire_frontier_input_evidence = retained_evidence
         if failures:
             raise RuntimeError(
                 f"New Hampshire {frontier_name} frontier is incomplete; unresolved exact URLs: "
@@ -771,6 +1013,7 @@ class NewHampshireScraper(BaseStateScraper):
 
         self._new_hampshire_frontier_batch_stats = []
         self._new_hampshire_frontier_input_reports = []
+        self._new_hampshire_frontier_input_evidence = {}
         root_payloads = await self._fetch_new_hampshire_frontier_batch(
             [self.OFFICIAL_ENTRY_URL],
             frontier_name="root",
@@ -786,32 +1029,29 @@ class NewHampshireScraper(BaseStateScraper):
             root_html,
             base_url=self.CURRENT_OFFICIAL_ENTRY_URL,
         )
-        expected_titles = [number for number, _name in self.OFFICIAL_TITLES]
-        expected_title_names = dict(self.OFFICIAL_TITLES)
-        observed_titles = [str(unit["title_number"]) for unit in title_units]
-        if observed_titles != expected_titles:
-            missing = [number for number in expected_titles if number not in observed_titles]
-            unexpected = [number for number in observed_titles if number not in expected_titles]
-            raise RuntimeError(
-                "New Hampshire root title frontier does not match the exact official "
-                f"catalog: observed={len(observed_titles)} expected={len(expected_titles)} "
-                f"missing={missing} unexpected={unexpected}"
-            )
+        if not title_units:
+            raise RuntimeError("New Hampshire current root contains no title frontier")
+        seen_title_numbers: set[str] = set()
+        seen_title_urls: set[str] = set()
         for unit in title_units:
             title_number = str(unit["title_number"])
             expected_url = self.official_title_url(title_number)
             observed_name = self._normalize_legal_text(str(unit["title_name"]))
-            expected_name = self._normalize_legal_text(
-                expected_title_names[title_number]
-            )
             if (
                 str(unit["source_url"]) != expected_url
-                or not self._host_is_official(expected_url)
-                or observed_name.casefold() != expected_name.casefold()
+                or not self._new_hampshire_current_source_url(expected_url)
+                or not observed_name
+                or title_number.casefold() in seen_title_numbers
+                or expected_url.casefold() in seen_title_urls
             ):
                 raise RuntimeError(
                     f"New Hampshire root changed title identity: {title_number}"
                 )
+            seen_title_numbers.add(title_number.casefold())
+            seen_title_urls.add(expected_url.casefold())
+        static_catalog_diagnostic = (
+            self._new_hampshire_static_catalog_diagnostic(title_units)
+        )
 
         terminal_titles: List[Dict[str, str]] = []
         active_title_units: List[Dict[str, str]] = []
@@ -828,30 +1068,6 @@ class NewHampshireScraper(BaseStateScraper):
                 )
             else:
                 active_title_units.append(unit)
-        expected_terminal_titles = [
-            (number, disposition)
-            for number, disposition in self.OFFICIAL_TERMINAL_TITLES
-            if number in expected_titles
-        ]
-        observed_terminal_titles = [
-            (str(unit["title_number"]), str(unit["terminal_disposition"]))
-            for unit in title_units
-            if str(unit.get("terminal_disposition") or "")
-        ]
-        if observed_terminal_titles != expected_terminal_titles:
-            raise RuntimeError(
-                "New Hampshire root changed its exact terminal title projection: "
-                f"observed={observed_terminal_titles} "
-                f"expected={expected_terminal_titles}"
-            )
-        if len(active_title_units) != len(expected_titles) - len(
-            expected_terminal_titles
-        ):
-            raise RuntimeError(
-                "New Hampshire root changed its exact active title count: "
-                f"observed={len(active_title_units)} "
-                f"expected={len(expected_titles) - len(expected_terminal_titles)}"
-            )
         if not active_title_units:
             raise RuntimeError("New Hampshire root contains no active title frontier")
 
@@ -926,7 +1142,7 @@ class NewHampshireScraper(BaseStateScraper):
                 if (
                     chapter_url.casefold() in seen_chapter_urls
                     or chapter_identity in seen_chapter_identities
-                    or not self._host_is_official(chapter_url)
+                    or not self._new_hampshire_current_source_url(chapter_url)
                 ):
                     raise RuntimeError(
                         f"New Hampshire chapter frontier has a duplicate or invalid identity: {chapter_url}"
@@ -1018,7 +1234,7 @@ class NewHampshireScraper(BaseStateScraper):
                 if (
                     section_url.casefold() in seen_section_urls
                     or section_number.casefold() in seen_section_identities
-                    or not self._host_is_official(section_url)
+                    or not self._new_hampshire_current_source_url(section_url)
                 ):
                     raise RuntimeError(
                         f"New Hampshire section frontier has a duplicate or invalid identity: {section_url}"
@@ -1198,6 +1414,46 @@ class NewHampshireScraper(BaseStateScraper):
         )
 
         input_reports = list(self._new_hampshire_frontier_input_reports)
+        root_reports = [
+            report
+            for report in input_reports
+            if str(report.get("source_role") or "") == "root_catalog"
+            and str(report.get("source_url") or "") == self.OFFICIAL_ENTRY_URL
+        ]
+        if len(root_reports) != 1:
+            raise RuntimeError(
+                "New Hampshire frontier lacks one canonical root receipt observation"
+            )
+        root_report = root_reports[0]
+        observed_at = str(root_report.get("observed_at") or "")
+        legal_as_of = str(root_report.get("legal_as_of") or "")
+        temporal_projection = [
+            {
+                "legal_as_of": str(report.get("legal_as_of") or ""),
+                "observed_at": str(report.get("observed_at") or ""),
+                "parser_input_receipt_sha256": str(
+                    report.get("parser_input_receipt_sha256") or ""
+                ),
+                "source_url": str(report.get("source_url") or ""),
+            }
+            for report in input_reports
+        ]
+        temporal_projection_sha256 = hashlib.sha256(
+            canonical_json_bytes(temporal_projection)
+        ).hexdigest()
+        temporal_report = {
+            "legal_as_of": legal_as_of,
+            "observed_at": observed_at,
+            "root_parser_input_receipt_sha256": str(
+                root_report.get("parser_input_receipt_sha256") or ""
+            ),
+            "root_source_transport": str(
+                root_report.get("source_transport") or ""
+            ),
+            "source_input_temporal_projection_sha256": (
+                temporal_projection_sha256
+            ),
+        }
         terminal_projection = {
             "chapters": terminal_chapters,
             "sections": terminal_sections,
@@ -1238,12 +1494,12 @@ class NewHampshireScraper(BaseStateScraper):
             ).hexdigest(),
             "terminal_section_count": len(terminal_sections),
             "terminal_title_count": len(terminal_titles),
+            "temporal_projection_sha256": temporal_projection_sha256,
             "title_document_count": len(title_units),
         }
         exact_frontier["frontier_digest_sha256"] = compute_frontier_digest(
             exact_frontier
         )
-        observed_at = datetime.now(timezone.utc).isoformat()
         observation = {
             "closed": True,
             "boundary_first": str(statutes[0].source_url or ""),
@@ -1251,8 +1507,10 @@ class NewHampshireScraper(BaseStateScraper):
             "code_name": code_name,
             "frontier": exact_frontier,
             "input_reports": input_reports,
-            "legal_as_of": observed_at[:10],
+            "legal_as_of": legal_as_of,
             "observed_at": observed_at,
+            "static_catalog_diagnostic": static_catalog_diagnostic,
+            "temporal_report": temporal_report,
             "titles_discovered": len(title_units),
             "title_pages_fetched": len(active_title_units),
             "terminal_titles": terminal_titles,
@@ -1362,9 +1620,14 @@ class NewHampshireScraper(BaseStateScraper):
         if (
             not isinstance(replayed_frontier, Mapping)
             or list(replay_reports or []) != list(first_reports)
+            or replay.get("observed_at") != first.get("observed_at")
+            or replay.get("legal_as_of") != first.get("legal_as_of")
+            or replay.get("temporal_report") != first.get("temporal_report")
+            or replay.get("static_catalog_diagnostic")
+            != first.get("static_catalog_diagnostic")
         ):
             raise RuntimeError(
-                "New Hampshire retained hierarchy inputs changed on replay"
+                "New Hampshire retained hierarchy inputs or temporal binding changed on replay"
             )
 
         from .strict_frontier_closure import (
@@ -1388,7 +1651,7 @@ class NewHampshireScraper(BaseStateScraper):
             replayed_frontier=replayed_frontier,
             replay_rows=replay_rows,
             jurisdiction="NH",
-            source_domain=str(urlparse(self.OFFICIAL_ENTRY_URL).hostname or ""),
+            source_domain=self.OFFICIAL_DOMAIN,
             official_source_url=self.OFFICIAL_ENTRY_URL,
             observed_at=str(first.get("observed_at") or ""),
             legal_as_of=str(first.get("legal_as_of") or ""),
@@ -1401,6 +1664,7 @@ class NewHampshireScraper(BaseStateScraper):
                 + int(first.get("chapter_pages_fetched") or 0)
             ),
             transport={
+                "canonical_official_entry_url": self.OFFICIAL_ENTRY_URL,
                 "current_official_domain": self.OFFICIAL_DOMAIN,
                 "fixture": False,
                 "first_pass_request_batches": len(batch_stats),
@@ -1408,7 +1672,9 @@ class NewHampshireScraper(BaseStateScraper):
                     int(row.get("requested_pages") or 0) for row in batch_stats
                 ),
                 "grouped_warc_recovery": True,
-                "kind": "archived_root_plus_shared_archive_aware_plural_html",
+                "kind": "current_official_shared_archive_aware_plural_html",
+                "legacy_official_entry_url": self.LEGACY_OFFICIAL_ENTRY_URL,
+                "legacy_source_authorizes_current_frontier": False,
                 "per_page_archive_loop": False,
                 "retained_replay_network_requests": 0,
                 "synthetic": False,
@@ -2471,7 +2737,7 @@ class NewHampshireScraper(BaseStateScraper):
         return f"{self.get_base_url()}/rsa/html/NHTOC/NHTOC-{roman}.htm"
 
     def official_title_catalog(self) -> List[Dict[str, Any]]:
-        """Return the exhaustive official New Hampshire RSA title catalog."""
+        """Return the historical RSA title catalog for drift diagnostics."""
 
         rows: List[Dict[str, Any]] = []
         for number, name in self.OFFICIAL_TITLES:
@@ -2558,7 +2824,7 @@ class NewHampshireScraper(BaseStateScraper):
         *,
         page_url: str = "",
     ) -> List[Dict[str, Any]]:
-        """Enumerate every official New Hampshire RSA title."""
+        """Project the historical diagnostic catalog against observed links."""
 
         del page_url
         discovered = self._parse_official_title_links(html)
@@ -2573,11 +2839,11 @@ class NewHampshireScraper(BaseStateScraper):
         return rows
 
     def fetch_official(self, code: str = "NH"):
-        """Acquire the exhaustive official New Hampshire RSA title catalog.
+        """Acquire the non-authorizing historical title diagnostic.
 
-        Live HTTPS retains the official gencourt RSA index. Every RSA title is
-        enumerated with an official gencourt.state.nh.us URL. This hook never
-        returns fixture bytes or secondary-mirror hosts.
+        The strict current closure is owned by the receipt-bound breadth-first
+        route above; its source-derived membership never comes from these
+        static rows.
         """
 
         from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (

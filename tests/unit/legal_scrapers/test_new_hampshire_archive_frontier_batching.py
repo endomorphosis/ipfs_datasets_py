@@ -26,8 +26,8 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_hampshire_sec
     terminal_disposition_from_label,
 )
 
-ROOT = "https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm"
-CURRENT_ROOT = "https://gc.nh.gov/rsa/html/NHTOC.htm"
+ROOT = "https://gc.nh.gov/rsa/html/NHTOC.htm"
+LEGACY_ROOT = "https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm"
 TITLE_I = "https://gc.nh.gov/rsa/html/NHTOC/NHTOC-I.htm"
 TITLE_IV = "https://gc.nh.gov/rsa/html/NHTOC/NHTOC-IV.htm"
 CHAPTER_1 = "https://gc.nh.gov/rsa/html/NHTOC/NHTOC-I-1.htm"
@@ -55,22 +55,48 @@ def _aligned_result(
     *,
     errors: list[str | None] | None = None,
 ) -> StateLawPageMultiFetchResult:
+    transports: list[dict[str, str] | None] = []
+    envelopes: list[Any] = []
+    for url, payload in zip(urls, payloads, strict=True):
+        if not payload:
+            transports.append(None)
+            envelopes.append(None)
+            continue
+        digest = hashlib.sha256(payload).hexdigest()
+        transport = {
+            "official_url": url,
+            "content_sha256": digest,
+            "source_transport": "direct",
+        }
+        retrieved_at = "2026-08-28T12:34:56Z"
+        receipt_sha256 = hashlib.sha256(
+            f"{url}\n{digest}\n{retrieved_at}".encode()
+        ).hexdigest()
+        envelope_dict = {
+            "acquisition": {
+                "body_sha256": digest,
+                "receipt": {
+                    "content": {"sha256": digest},
+                    "endpoint": url,
+                    "metadata": {"transport_receipt": dict(transport)},
+                    "receipt_sha256": receipt_sha256,
+                    "retrieved_at": retrieved_at,
+                },
+            },
+        }
+        transports.append(transport)
+        envelopes.append(
+            SimpleNamespace(
+                body=payload,
+                to_dict=lambda value=envelope_dict: value,
+            )
+        )
     return StateLawPageMultiFetchResult(
         urls=list(urls),
         payloads=list(payloads),
         errors=list(errors or [None] * len(urls)),
-        transport_receipts=[
-            {
-                "official_url": url,
-                "content_sha256": hashlib.sha256(payload).hexdigest(),
-            }
-            if payload
-            else None
-            for url, payload in zip(urls, payloads, strict=True)
-        ],
-        parser_input_envelopes=[
-            SimpleNamespace(body=payload) if payload else None for payload in payloads
-        ],
+        transport_receipts=transports,
+        parser_input_envelopes=envelopes,
         stats={"requested_pages": len(urls), "range_fetches_avoided": 3},
     )
 
@@ -154,7 +180,7 @@ async def test_new_hampshire_unbounded_tree_batches_and_closes_exact_frontier(
     assert all(kwargs["prefer_direct"] is True for _urls, kwargs in plural_calls)
     assert all(
         kwargs["common_crawl_domain_terms"]
-        == ("gc.nh.gov", "www.gencourt.state.nh.us")
+        == ("gc.nh.gov",)
         for _urls, kwargs in plural_calls
     )
     assert all(kwargs["common_crawl_url_terms"] == ("/rsa/html/",) for _urls, kwargs in plural_calls)
@@ -182,6 +208,22 @@ async def test_new_hampshire_unbounded_tree_batches_and_closes_exact_frontier(
     assert frontier["active_section_pages_fetched"] == 2
     assert len(frontier["terminal_sections"]) == 1
     assert frontier["statutes_emitted"] == 2
+    assert frontier["observed_at"] == "2026-08-28T12:34:56+00:00"
+    assert frontier["legal_as_of"] == "2026-08-28"
+    assert frontier["temporal_report"]["root_source_transport"] == "direct"
+    assert len(frontier["input_reports"]) == 6
+    assert {
+        (
+            report["observed_at"],
+            report["legal_as_of"],
+            report["source_transport"],
+        )
+        for report in frontier["input_reports"]
+    } == {("2026-08-28T12:34:56+00:00", "2026-08-28", "direct")}
+    assert all(
+        len(report["parser_input_receipt_sha256"]) == 64
+        for report in frontier["input_reports"]
+    )
 
 
 @pytest.mark.anyio
@@ -340,7 +382,56 @@ async def test_new_hampshire_frontier_rejects_duplicate_urls_before_transport(
         )
 
 
+@pytest.mark.anyio
+async def test_new_hampshire_legacy_root_cannot_authorize_current_frontier(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _forbid(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("legacy current authority must fail before transport")
+
+    monkeypatch.setattr(
+        NewHampshireScraper,
+        "_fetch_page_contents_with_archival_fallback_retrying_residuals",
+        _forbid,
+    )
+    scraper = NewHampshireScraper("NH", "New Hampshire")
+    with pytest.raises(RuntimeError, match="rejects legacy-host current authority"):
+        await scraper._fetch_new_hampshire_frontier_batch(
+            [LEGACY_ROOT],
+            frontier_name="root",
+            content_validator=lambda value: bool(value),
+        )
+
+
+def test_new_hampshire_archive_receipt_cannot_authorize_current_frontier() -> None:
+    payload = b"exact archived title"
+    batch = _aligned_result([TITLE_I], [payload])
+    transport = batch.transport_receipts[0]
+    assert isinstance(transport, dict)
+    transport["source_transport"] = "wayback"
+    transport["archive_timestamp"] = "20250124114611"
+    envelope = batch.parser_input_envelopes[0]
+    envelope_dict = envelope.to_dict()
+    envelope_dict["acquisition"]["receipt"]["metadata"][
+        "transport_receipt"
+    ] = dict(transport)
+
+    with pytest.raises(RuntimeError, match="archive transport cannot authorize"):
+        NewHampshireScraper(
+            "NH", "New Hampshire"
+        )._validate_new_hampshire_aligned_evidence(
+            url=TITLE_I,
+            payload=payload,
+            transport_receipt=transport,
+            parser_input_envelope=envelope,
+            frontier_name="title",
+        )
+
+
 def test_new_hampshire_catalog_matches_retained_root_shape() -> None:
+    assert NewHampshireScraper.OFFICIAL_ENTRY_URL == ROOT
+    assert NewHampshireScraper.CURRENT_OFFICIAL_ENTRY_URL == ROOT
+    assert NewHampshireScraper.LEGACY_OFFICIAL_ENTRY_URL == LEGACY_ROOT
     titles = [number for number, _name in NewHampshireScraper.OFFICIAL_TITLES]
     assert len(titles) == 67
     assert NewHampshireScraper.OFFICIAL_TITLE_COUNT == 67
@@ -370,30 +461,16 @@ def test_new_hampshire_catalog_matches_retained_root_shape() -> None:
     assert units[1]["terminal_disposition"] == "repealed"
 
 
-@pytest.mark.anyio
-async def test_new_hampshire_root_terminal_projection_fails_closed(
+def test_new_hampshire_static_terminal_projection_is_diagnostic_only(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     root = (
-        "<html><body><h1>New Hampshire Statutes</h1><h2>Table of Contents</h2><ul>"
-        "<li><a href='NHTOC/NHTOC-I.htm'>TITLE I: THE STATE AND ITS GOVERNMENT</a></li>"
-        "<p class='chapter_list'>(Includes Chapters 1 - 2)</p>"
-        "<li><a href='NHTOC/NHTOC-IV.htm'>TITLE IV: ELECTIONS</a></li>"
-        "<p class='chapter_list'>(Includes Chapters 54 - 70)</p>"
-        "</ul></body></html>"
-    ).encode()
-    calls: list[list[str]] = []
-
-    async def _plural(self, urls, **_kwargs: Any) -> StateLawPageMultiFetchResult:
-        del self
-        requested = list(urls)
-        calls.append(requested)
-        return _aligned_result(requested, [root])
-
-    monkeypatch.setattr(
-        NewHampshireScraper,
-        "_fetch_page_contents_with_archival_fallback_retrying_residuals",
-        _plural,
+        b"<html><body><h1>New Hampshire Statutes</h1><h2>Table of Contents</h2><ul>"
+        b"<li><a href='NHTOC/NHTOC-I.htm'>TITLE I: THE STATE AND ITS GOVERNMENT</a></li>"
+        b"<p class='chapter_list'>(Includes Chapters 1 - 2)</p>"
+        b"<li><a href='NHTOC/NHTOC-IV.htm'>TITLE IV: ELECTIONS</a></li>"
+        b"<p class='chapter_list'>(Includes Chapters 54 - 70)</p>"
+        b"</ul></body></html>"
     )
     scraper = NewHampshireScraper("NH", "New Hampshire")
     monkeypatch.setattr(
@@ -401,17 +478,12 @@ async def test_new_hampshire_root_terminal_projection_fails_closed(
         "OFFICIAL_TITLES",
         (("I", "The State and Its Government"), ("IV", "Elections")),
     )
-    monkeypatch.setattr(scraper, "OFFICIAL_TITLE_COUNT", 2)
+    units = nhtoc_title_units(root.decode(), base_url=ROOT)
+    diagnostic = scraper._new_hampshire_static_catalog_diagnostic(units)
 
-    with pytest.raises(
-        RuntimeError, match="changed its exact terminal title projection"
-    ):
-        await scraper._scrape_official_rsa_tree_batched(
-            code_name="New Hampshire Revised Statutes",
-            checkpoint=_NewHampshireCheckpoint("NH"),
-        )
-
-    assert calls == [[ROOT]]
+    assert [unit["terminal_disposition"] for unit in units] == ["", ""]
+    assert diagnostic["terminal_projection_matches"] is False
+    assert diagnostic["authorizes_current_frontier"] is False
 
 
 def test_new_hampshire_section_identity_is_bound_across_toc_url_and_body() -> None:
