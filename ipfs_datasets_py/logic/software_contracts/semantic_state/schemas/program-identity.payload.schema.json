@@ -1,0 +1,761 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/program-identity.payload.schema.json",
+  "title": "Program-world identity and canonicalization profiles v1",
+  "description": "Closed, fail-closed JSON Schema for datasets-owned program-world identity envelopes. Canonical bytes and CIDv1 come from software_contracts.content over ir_core collection-canonical DAG-JSON. Unknown fields, unsupported schema versions, floats, and nonfinite numbers are rejected. Model-dependent projection material never participates in semantic-object identity.",
+  "oneOf": [
+    { "$ref": "#/$defs/programWorldCanonicalizationProfile" },
+    { "$ref": "#/$defs/semanticObjectEnvelope" },
+    { "$ref": "#/$defs/canonicalProgramGraphIdentity" },
+    { "$ref": "#/$defs/programGraphSnapshotIdentity" },
+    { "$ref": "#/$defs/programGraphDeltaIdentity" },
+    { "$ref": "#/$defs/rawExecutionStateIdentity" },
+    { "$ref": "#/$defs/stateAbstractionProfileIdentity" },
+    { "$ref": "#/$defs/abstractExecutionStateIdentity" },
+    { "$ref": "#/$defs/stackFrameIdentity" },
+    { "$ref": "#/$defs/programEventIdentity" },
+    { "$ref": "#/$defs/executionTraceIdentity" },
+    { "$ref": "#/$defs/projectionIdentity" },
+    { "$ref": "#/$defs/projectionIndexManifestIdentity" },
+    { "$ref": "#/$defs/relationClaimIdentity" },
+    { "$ref": "#/$defs/transitionIdentity" },
+    { "$ref": "#/$defs/semanticWorldRootIdentity" }
+  ],
+  "$defs": {
+    "cid": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128,
+      "pattern": "^b[a-z2-7]+$"
+    },
+    "cidOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/cid" }]
+    },
+    "nfcString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "nfcStringOrEmpty": {
+      "type": "string",
+      "maxLength": 16384
+    },
+    "nonnegInt": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "positiveDimension": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1048576
+    },
+    "cidArraySet": {
+      "type": "array",
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/cid" }
+    },
+    "cidArrayOrdered": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": { "$ref": "#/$defs/cid" }
+    },
+    "nfcStringSet": {
+      "type": "array",
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nfcString" }
+    },
+    "strictDagJson": {
+      "description": "Strict DAG-JSON value: null, bool, safe int, string, array, or string-keyed object. Floats and host types are rejected by the Python decoder.",
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        { "type": "string", "maxLength": 16384 },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/strictDagJson" }
+        },
+        {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/strictDagJson" }
+        }
+      ]
+    },
+    "strictObject": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/strictDagJson" }
+    },
+    "programLanguage": {
+      "type": "string",
+      "enum": ["python"]
+    },
+    "semanticObjectKind": {
+      "type": "string",
+      "enum": [
+        "symbol",
+        "artifact",
+        "source",
+        "domain_state",
+        "program_graph",
+        "execution_state",
+        "event",
+        "trace",
+        "relation",
+        "transition",
+        "world_root"
+      ]
+    },
+    "programGraphKind": {
+      "type": "string",
+      "enum": ["static_logical", "dynamic_logical"]
+    },
+    "projectionKind": {
+      "type": "string",
+      "enum": ["embedding", "structural_feature", "token_histogram", "graph_kernel"]
+    },
+    "projectionSubjectKind": {
+      "type": "string",
+      "enum": ["semantic_object", "raw_execution_state", "abstract_execution_state"]
+    },
+    "projectionMetric": {
+      "type": "string",
+      "enum": ["cosine", "dot_product", "euclidean"]
+    },
+    "projectionDType": {
+      "type": "string",
+      "enum": ["float32", "float16", "bfloat16", "int8", "uint8", "int32"]
+    },
+    "byteOrder": {
+      "type": "string",
+      "enum": ["little", "big"]
+    },
+    "privacyClass": {
+      "type": "string",
+      "enum": ["public", "internal", "restricted", "private"]
+    },
+    "availabilityPolicy": {
+      "type": "string",
+      "enum": ["available", "unavailable", "redacted"]
+    },
+    "observationStatus": {
+      "type": "string",
+      "enum": ["observed", "unavailable", "redacted", "inferred_untrusted"]
+    },
+    "observationStatusOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/observationStatus" }]
+    },
+    "eventKind": {
+      "type": "string",
+      "enum": [
+        "call",
+        "return",
+        "assign",
+        "raise",
+        "catch",
+        "branch",
+        "enter",
+        "exit",
+        "observe",
+        "unavailable"
+      ]
+    },
+    "transitionKind": {
+      "type": "string",
+      "enum": ["query", "prediction", "observation", "admission", "accepted"]
+    },
+    "relationKind": {
+      "type": "string",
+      "enum": [
+        "equality",
+        "refinement",
+        "entailment",
+        "contradiction",
+        "compatibility",
+        "alpha_equivalence",
+        "structural_equivalence",
+        "logical_equivalence",
+        "behavioral_equivalence",
+        "observational_equivalence",
+        "intent",
+        "transition_behavior"
+      ]
+    },
+    "relationAuthorityStatus": {
+      "type": "string",
+      "enum": [
+        "candidate",
+        "asserted",
+        "validated",
+        "proved",
+        "refuted",
+        "unknown",
+        "stale",
+        "superseded"
+      ]
+    },
+    "abstractionSoundnessClaim": {
+      "type": "string",
+      "enum": ["over_approximation", "under_approximation", "exact", "unknown"]
+    },
+    "collectionSemanticsName": {
+      "type": "string",
+      "enum": ["ordered", "set-like", "multiset"]
+    },
+    "programWorldCanonicalizationProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "profile_id",
+        "profile_version",
+        "cid_profile_id",
+        "cid_profile_version",
+        "canonical_json_profile",
+        "cid_version",
+        "base",
+        "multihash",
+        "source_codec",
+        "structured_codec",
+        "admitted_languages",
+        "unavailable_languages",
+        "unknown_fields",
+        "duplicate_json_keys",
+        "nonfinite_numbers",
+        "arbitrary_code_deserialization",
+        "semantic_object_identity_may_derive_from_embedding_score",
+        "model_dependent_projection_in_semantic_declaration_identity",
+        "irrelevant_wall_clock_observation_in_semantic_identity",
+        "existing_v1_payload_may_change",
+        "claimed_cid_must_rehash",
+        "collection_semantics",
+        "semantic_identity_excluded_fields",
+        "projection_required_fields",
+        "projection_rejection_reasons",
+        "profile_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.program-world-canonicalization-profile@1"
+        },
+        "profile_id": { "const": "program-world-canonicalization-profile-v1" },
+        "profile_version": { "const": "1.0.0" },
+        "cid_profile_id": { "const": "software-contract-cid-profile-v1" },
+        "cid_profile_version": { "const": "1.0.0" },
+        "canonical_json_profile": { "const": "ir-canonical-json-v1" },
+        "cid_version": { "const": 1 },
+        "base": { "const": "base32" },
+        "multihash": { "const": "sha2-256" },
+        "source_codec": { "const": "raw" },
+        "structured_codec": { "const": "dag-json" },
+        "admitted_languages": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "prefixItems": [{ "const": "python" }],
+          "items": false
+        },
+        "unavailable_languages": { "$ref": "#/$defs/nfcStringSet" },
+        "unknown_fields": { "const": "reject" },
+        "duplicate_json_keys": { "const": "reject" },
+        "nonfinite_numbers": { "const": "reject" },
+        "arbitrary_code_deserialization": { "const": "forbidden" },
+        "semantic_object_identity_may_derive_from_embedding_score": { "const": false },
+        "model_dependent_projection_in_semantic_declaration_identity": { "const": false },
+        "irrelevant_wall_clock_observation_in_semantic_identity": { "const": false },
+        "existing_v1_payload_may_change": { "const": false },
+        "claimed_cid_must_rehash": { "const": true },
+        "collection_semantics": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/collectionSemanticsName" }
+        },
+        "semantic_identity_excluded_fields": { "$ref": "#/$defs/nfcStringSet" },
+        "projection_required_fields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "projection_rejection_reasons": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "profile_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "semanticObjectEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "kind",
+        "language",
+        "repository_id",
+        "logical_name",
+        "declaration_cid",
+        "source_cid",
+        "environment_binding_cid",
+        "metadata",
+        "semantic_object_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-object-envelope@1"
+        },
+        "kind": { "$ref": "#/$defs/semanticObjectKind" },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "repository_id": { "$ref": "#/$defs/nfcString" },
+        "logical_name": { "$ref": "#/$defs/nfcString" },
+        "declaration_cid": { "$ref": "#/$defs/cid" },
+        "source_cid": { "$ref": "#/$defs/cidOrNull" },
+        "environment_binding_cid": { "$ref": "#/$defs/cidOrNull" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "semantic_object_cid": { "$ref": "#/$defs/cid" }
+      },
+      "not": {
+        "anyOf": [
+          { "required": ["embedding"] },
+          { "required": ["embeddings"] },
+          { "required": ["vector"] },
+          { "required": ["vector_cid"] },
+          { "required": ["score"] },
+          { "required": ["similarity"] },
+          { "required": ["model_cid"] },
+          { "required": ["tokenizer_cid"] },
+          { "required": ["timestamp"] },
+          { "required": ["wall_clock"] },
+          { "required": ["observed_at"] }
+        ]
+      }
+    },
+    "canonicalProgramGraphIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "graph_kind",
+        "node_cids",
+        "edge_cids",
+        "environment_binding_set_cid",
+        "unavailable_dimensions",
+        "canonical_program_graph_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.canonical-program-graph-identity@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "graph_kind": { "$ref": "#/$defs/programGraphKind" },
+        "node_cids": { "$ref": "#/$defs/cidArraySet" },
+        "edge_cids": { "$ref": "#/$defs/cidArraySet" },
+        "environment_binding_set_cid": { "$ref": "#/$defs/cidOrNull" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "canonical_program_graph_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "programGraphSnapshotIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "canonical_program_graph_cid",
+        "node_cids",
+        "edge_cids",
+        "environment_binding_set_cid",
+        "sealed_binding_cid",
+        "program_graph_snapshot_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.program-graph-snapshot-identity@1"
+        },
+        "canonical_program_graph_cid": { "$ref": "#/$defs/cid" },
+        "node_cids": { "$ref": "#/$defs/cidArraySet" },
+        "edge_cids": { "$ref": "#/$defs/cidArraySet" },
+        "environment_binding_set_cid": { "$ref": "#/$defs/cid" },
+        "sealed_binding_cid": { "$ref": "#/$defs/cid" },
+        "program_graph_snapshot_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "programGraphDeltaIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "previous_snapshot_cid",
+        "added_node_cids",
+        "removed_node_cids",
+        "added_edge_cids",
+        "removed_edge_cids",
+        "retained_subroot_cids",
+        "program_graph_delta_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.program-graph-delta-identity@1"
+        },
+        "previous_snapshot_cid": { "$ref": "#/$defs/cid" },
+        "added_node_cids": { "$ref": "#/$defs/cidArraySet" },
+        "removed_node_cids": { "$ref": "#/$defs/cidArraySet" },
+        "added_edge_cids": { "$ref": "#/$defs/cidArraySet" },
+        "removed_edge_cids": { "$ref": "#/$defs/cidArraySet" },
+        "retained_subroot_cids": { "$ref": "#/$defs/cidArraySet" },
+        "program_graph_delta_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "rawExecutionStateIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "capture_profile_cid",
+        "observed_state",
+        "stack_frame_cids",
+        "unavailable_dimensions",
+        "observation_status",
+        "raw_execution_state_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.raw-execution-state-identity@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "capture_profile_cid": { "$ref": "#/$defs/cid" },
+        "observed_state": { "$ref": "#/$defs/strictObject" },
+        "stack_frame_cids": { "$ref": "#/$defs/cidArrayOrdered" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "observation_status": { "$ref": "#/$defs/observationStatus" },
+        "raw_execution_state_cid": { "$ref": "#/$defs/cid" }
+      },
+      "not": {
+        "anyOf": [
+          { "required": ["abstraction_profile_cid"] },
+          { "required": ["timestamp"] },
+          { "required": ["wall_clock"] }
+        ]
+      }
+    },
+    "stateAbstractionProfileIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "profile_name",
+        "dimensions",
+        "unavailable_dimensions",
+        "soundness_claim",
+        "abstraction_profile_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.state-abstraction-profile-identity@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "profile_name": { "$ref": "#/$defs/nfcString" },
+        "dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "soundness_claim": { "$ref": "#/$defs/abstractionSoundnessClaim" },
+        "abstraction_profile_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "abstractExecutionStateIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "raw_execution_state_cid",
+        "abstraction_profile_cid",
+        "abstract_state",
+        "unavailable_dimensions",
+        "observation_status",
+        "abstract_execution_state_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.abstract-execution-state-identity@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "raw_execution_state_cid": { "$ref": "#/$defs/cid" },
+        "abstraction_profile_cid": { "$ref": "#/$defs/cid" },
+        "abstract_state": { "$ref": "#/$defs/strictObject" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "observation_status": { "$ref": "#/$defs/observationStatus" },
+        "abstract_execution_state_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "stackFrameIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "ordinal",
+        "language",
+        "code_cid",
+        "environment_binding_cid",
+        "state_summary",
+        "stack_frame_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.stack-frame-identity@1"
+        },
+        "ordinal": { "$ref": "#/$defs/nonnegInt" },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "code_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_cid": { "$ref": "#/$defs/cid" },
+        "state_summary": { "$ref": "#/$defs/strictObject" },
+        "stack_frame_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "programEventIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "event_kind",
+        "observation_status",
+        "subject_cid",
+        "payload",
+        "predecessor_event_cid",
+        "program_event_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.program-event-identity@1"
+        },
+        "event_kind": { "$ref": "#/$defs/eventKind" },
+        "observation_status": { "$ref": "#/$defs/observationStatus" },
+        "subject_cid": { "$ref": "#/$defs/cid" },
+        "payload": { "$ref": "#/$defs/strictObject" },
+        "predecessor_event_cid": { "$ref": "#/$defs/cidOrNull" },
+        "program_event_cid": { "$ref": "#/$defs/cid" }
+      },
+      "not": {
+        "anyOf": [
+          { "required": ["timestamp"] },
+          { "required": ["wall_clock"] },
+          { "required": ["observed_at"] }
+        ]
+      }
+    },
+    "executionTraceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "event_cids",
+        "segment_cids",
+        "raw_execution_state_cids",
+        "execution_trace_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.execution-trace-identity@1"
+        },
+        "event_cids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100000,
+          "items": { "$ref": "#/$defs/cid" }
+        },
+        "segment_cids": { "$ref": "#/$defs/cidArrayOrdered" },
+        "raw_execution_state_cids": { "$ref": "#/$defs/cidArrayOrdered" },
+        "execution_trace_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "projectionIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "subject_cid",
+        "subject_kind",
+        "projection_kind",
+        "model_cid",
+        "tokenizer_cid",
+        "preprocessing_profile_cid",
+        "normalization_profile_cid",
+        "dimension",
+        "metric",
+        "dtype",
+        "byte_order",
+        "quantization_profile_cid",
+        "vector_cid",
+        "privacy_class",
+        "availability_policy",
+        "authoritative",
+        "projection_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.projection-identity@1"
+        },
+        "subject_cid": { "$ref": "#/$defs/cid" },
+        "subject_kind": { "$ref": "#/$defs/projectionSubjectKind" },
+        "projection_kind": { "$ref": "#/$defs/projectionKind" },
+        "model_cid": { "$ref": "#/$defs/cid" },
+        "tokenizer_cid": { "$ref": "#/$defs/cid" },
+        "preprocessing_profile_cid": { "$ref": "#/$defs/cid" },
+        "normalization_profile_cid": { "$ref": "#/$defs/cid" },
+        "dimension": { "$ref": "#/$defs/positiveDimension" },
+        "metric": { "$ref": "#/$defs/projectionMetric" },
+        "dtype": { "$ref": "#/$defs/projectionDType" },
+        "byte_order": { "$ref": "#/$defs/byteOrder" },
+        "quantization_profile_cid": { "$ref": "#/$defs/cidOrNull" },
+        "vector_cid": { "$ref": "#/$defs/cid" },
+        "privacy_class": { "$ref": "#/$defs/privacyClass" },
+        "availability_policy": { "$ref": "#/$defs/availabilityPolicy" },
+        "authoritative": { "const": false },
+        "projection_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "projectionIndexManifestIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "projection_kind",
+        "model_cid",
+        "tokenizer_cid",
+        "preprocessing_profile_cid",
+        "dimension",
+        "metric",
+        "dtype",
+        "byte_order",
+        "source_cid",
+        "schema_ids",
+        "rebuildable",
+        "authoritative",
+        "projection_index_manifest_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.projection-index-manifest-identity@1"
+        },
+        "projection_kind": { "$ref": "#/$defs/projectionKind" },
+        "model_cid": { "$ref": "#/$defs/cid" },
+        "tokenizer_cid": { "$ref": "#/$defs/cid" },
+        "preprocessing_profile_cid": { "$ref": "#/$defs/cid" },
+        "dimension": { "$ref": "#/$defs/positiveDimension" },
+        "metric": { "$ref": "#/$defs/projectionMetric" },
+        "dtype": { "$ref": "#/$defs/projectionDType" },
+        "byte_order": { "$ref": "#/$defs/byteOrder" },
+        "source_cid": { "$ref": "#/$defs/cid" },
+        "schema_ids": { "$ref": "#/$defs/nfcStringSet" },
+        "rebuildable": { "const": true },
+        "authoritative": { "const": false },
+        "projection_index_manifest_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "relationClaimIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "relation_kind",
+        "left_cid",
+        "right_cid",
+        "scope_cid",
+        "assumption_cids",
+        "theory_or_policy_cid",
+        "environment_binding_cid",
+        "evidence_cids",
+        "invalidator_cids",
+        "authority_status",
+        "relation_claim_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.relation-claim-identity@1"
+        },
+        "relation_kind": { "$ref": "#/$defs/relationKind" },
+        "left_cid": { "$ref": "#/$defs/cid" },
+        "right_cid": { "$ref": "#/$defs/cid" },
+        "scope_cid": { "$ref": "#/$defs/cid" },
+        "assumption_cids": { "$ref": "#/$defs/cidArraySet" },
+        "theory_or_policy_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_cid": { "$ref": "#/$defs/cid" },
+        "evidence_cids": { "$ref": "#/$defs/cidArraySet" },
+        "invalidator_cids": { "$ref": "#/$defs/cidArraySet" },
+        "authority_status": { "$ref": "#/$defs/relationAuthorityStatus" },
+        "relation_claim_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "transitionIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "transition_kind",
+        "subject_cid",
+        "evidence_cids",
+        "environment_binding_cid",
+        "policy_cid",
+        "model_profile_cid",
+        "proposal_only",
+        "observation_status",
+        "transition_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.transition-identity@1"
+        },
+        "transition_kind": { "$ref": "#/$defs/transitionKind" },
+        "subject_cid": { "$ref": "#/$defs/cid" },
+        "evidence_cids": { "$ref": "#/$defs/cidArraySet" },
+        "environment_binding_cid": { "$ref": "#/$defs/cidOrNull" },
+        "policy_cid": { "$ref": "#/$defs/cidOrNull" },
+        "model_profile_cid": { "$ref": "#/$defs/cidOrNull" },
+        "proposal_only": { "type": "boolean" },
+        "observation_status": { "$ref": "#/$defs/observationStatusOrNull" },
+        "transition_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "semanticWorldRootIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "domain_state_cid",
+        "canonical_program_graph_cid",
+        "program_graph_snapshot_cid",
+        "semantic_object_index_cid",
+        "environment_binding_set_cid",
+        "policy_cid",
+        "analysis_limitation_index_cid",
+        "semantic_world_root_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-world-root-identity@1"
+        },
+        "domain_state_cid": { "$ref": "#/$defs/cid" },
+        "canonical_program_graph_cid": { "$ref": "#/$defs/cid" },
+        "program_graph_snapshot_cid": { "$ref": "#/$defs/cid" },
+        "semantic_object_index_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_set_cid": { "$ref": "#/$defs/cid" },
+        "policy_cid": { "$ref": "#/$defs/cid" },
+        "analysis_limitation_index_cid": { "$ref": "#/$defs/cid" },
+        "semantic_world_root_cid": { "$ref": "#/$defs/cid" }
+      },
+      "not": {
+        "anyOf": [
+          { "required": ["projection_cid"] },
+          { "required": ["generation"] },
+          { "required": ["timestamp"] },
+          { "required": ["history"] },
+          { "required": ["model_cid"] },
+          { "required": ["embedding"] }
+        ]
+      }
+    }
+  }
+}
