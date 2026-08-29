@@ -2046,10 +2046,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--check-receipt",
         action="store_true",
         help=(
-            "Verify the LCR-073 seal, invoke the LCR-074 federal_main gate, "
-            "rebuild the FakeHub receipt, seal "
-            f"{DEFAULT_RECEIPT_RELPATH.as_posix()}, and check old/staging/"
-            "public SHAs, manifest, operations, and upload success."
+            "Read and verify the existing live receipt at "
+            f"{DEFAULT_RECEIPT_RELPATH.as_posix()}; never replay a write."
         ),
     )
     parser.add_argument(
@@ -2084,7 +2082,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--fake-hub",
         action="store_true",
-        help="Use the in-memory add-only public Hub (no network).",
+        help="Reserved test-only transport; the production CLI always refuses it.",
     )
     parser.add_argument(
         "--target-repo",
@@ -2152,6 +2150,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             write_json(args.output, result)
             return 0 if result.get("check") == "pass" else 1
 
+        if args.fake_hub:
+            raise PublishAuthorizationError(
+                "--fake-hub is test-only and unavailable from the production CLI"
+            )
         candidate = load_candidate_report(args.candidate)
         seal_record = verify_federal_prepublication_seal(require_live_staging_pin=True)
         plan = plan_public_from_candidate(
@@ -2165,17 +2167,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         release = build_fixture_release()
         want_mutate = bool(args.authorize_mutation)
-        if want_mutate and not args.fake_hub:
+        if want_mutate:
             assert_mutation_authorized(authorize_mutation=True)
             raise PublishAuthorizationError(
-                "live Hub mutation requires --fake-hub or an injected "
-                "upload callback; default CLI stays offline so validation "
-                "cannot mutate justicedao/ipfs_federal_register"
+                "standalone live publication requires the exact in-memory "
+                "production release, approval, staging pin, and seal time; call "
+                "execute_canonical_main_release so the commit passes the shared runtime"
             )
         receipt = execute_public_upload(
             plan,
             release=release,
-            hub=FakeFederalRegisterPublicHub() if args.fake_hub else None,
+            hub=None,
             authorize_mutation=want_mutate,
             dry_run=not want_mutate or args.dry_run,
             batch_size=int(args.batch_size),

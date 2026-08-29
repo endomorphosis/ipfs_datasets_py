@@ -14,8 +14,10 @@ Operator workflow after a successful dry-run receipt:
 
 1. ``--dry-run`` / ``--check-receipt`` — deterministic plan + receipt (default)
 2. Review ``plan_digest``, ``manifest_digest``, target, and staging branch
-3. Only then consider remote mutation under explicit opt-in authorization
-   (``--authorize-mutation`` + ``$FEDERAL_REGISTER_STAGING_AUTHORIZATION``).
+3. Only then consider remote mutation through
+   :func:`execute_canonical_staging_release`, with two distinct bounded
+   approvals. The standalone CLI fails closed because it cannot reconstruct
+   reviewed production artifact bytes from a receipt.
 
 This script never:
 
@@ -1798,7 +1800,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--fake-hub",
         action="store_true",
-        help="Use the in-memory add-only Hub (no network).",
+        help="Reserved test-only transport; the production CLI always refuses it.",
     )
     parser.add_argument(
         "--staging-branch",
@@ -1866,10 +1868,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         release = build_fixture_release()
         want_mutate = bool(args.authorize_mutation)
+        if args.fake_hub:
+            raise StageAuthorizationError(
+                "--fake-hub is test-only and unavailable from the production CLI"
+            )
+        if want_mutate:
+            assert_mutation_authorized(authorize_mutation=True)
+            raise StageAuthorizationError(
+                "standalone live staging requires the exact in-memory production "
+                "release plus two approvals; call execute_canonical_staging_release "
+                "so create_branch and create_commit each pass the shared runtime"
+            )
         receipt = execute_stage(
             plan,
             release=release,
-            hub=FakeFederalRegisterHub() if args.fake_hub else None,
+            hub=None,
             authorize_mutation=want_mutate,
             dry_run=not want_mutate or args.dry_run,
             batch_size=int(args.batch_size),
