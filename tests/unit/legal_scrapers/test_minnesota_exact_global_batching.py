@@ -23,6 +23,10 @@ MN_ALIAS_URL = "https://www.revisor.mn.gov/statutes/cite/296.01-1"
 MN_ALIAS_SHA256 = (
     "04a01e0bb5ce4817e0ca76ab1e9a67bfa80920ed4155adbbd9fcbbfc7dbb6893"
 )
+MN_SECOND_ALIAS_URL = "https://www.revisor.mn.gov/statutes/cite/431.41"
+MN_SECOND_ALIAS_SHA256 = (
+    "99dbf7fb630dbb83fce8550a462009ed0922cad28d2032bd619f49df711cb525"
+)
 MN_SEE_NOTE_URL = "https://www.revisor.mn.gov/statutes/cite/352.91"
 MN_SEE_NOTE_SHA256 = (
     "2ac0e1bd344a9117b4a71b8a19226a4ebe4ea67211fe59b34c8bb5319408c12a"
@@ -30,6 +34,20 @@ MN_SEE_NOTE_SHA256 = (
 MN_RESERVED_URL = "https://www.revisor.mn.gov/statutes/cite/363A.18"
 MN_RESERVED_SHA256 = (
     "d48948be7cdc09253c9c68bfe537b0514449b5bfb1f56bce40de813c236e1d4e"
+)
+MN_REPEALER_URL = "https://www.revisor.mn.gov/statutes/cite/423C.07"
+MN_REPEALER_SHA256 = (
+    "604470cf63c42a9a7e372606a794ec6c4412d870d6d0892647f024ca122aa509"
+)
+MN_TRANSITIONAL_CASES = (
+    (
+        "https://www.revisor.mn.gov/statutes/cite/488A.114",
+        "f18d8e47b069451cbd4e853c752be4e36b7f22ba392e50188dfe85451d05efc0",
+    ),
+    (
+        "https://www.revisor.mn.gov/statutes/cite/488A.117",
+        "834aa41ef4f99fce498f2ac70d84a61d3e384f16ddcb5e630f1193c4e30a6fde",
+    ),
 )
 
 
@@ -39,6 +57,22 @@ def _mn_terminal_reserved_payload() -> bytes:
         b"<div class='sr' id='stat.363A.18'>"
         b"<b>363A.18</b> [Reserved]</div></body></html>"
     )
+
+
+def _mn_terminal_source_reference_payload(
+    section_number: str,
+    marker: str,
+    *,
+    display_citation: str = "",
+) -> bytes:
+    display = display_citation or section_number
+    return (
+        "<html><body>"
+        "<div id='header'><h1>2025 Minnesota Statutes</h1></div>"
+        f"<div class='sr' id='stat.{section_number}'>"
+        f"<b>{display}</b> {marker}</div>"
+        "</body></html>"
+    ).encode()
 
 
 def _mn_terminal_see_note_payload() -> bytes:
@@ -220,6 +254,129 @@ def test_minnesota_terminal_display_alias_replays_retained_contract() -> None:
     assert classified is not None
     assert classified["disposition"] == "repealed"
     assert classified["section_number"] == "296.01-1"
+
+
+def test_minnesota_second_terminal_display_alias_replays_retained_contract() -> None:
+    evidence_root = os.getenv("STATE_LAWS_TEST_MN_EVIDENCE_ROOT", "").strip()
+    if not evidence_root:
+        pytest.skip("requires retained Minnesota acquisition evidence")
+
+    payload_path = (
+        Path(evidence_root)
+        / "MN"
+        / "objects"
+        / f"{MN_SECOND_ALIAS_SHA256}.bin"
+    )
+    payload = payload_path.read_bytes()
+    assert len(payload) == 60796
+    assert hashlib.sha256(payload).hexdigest() == MN_SECOND_ALIAS_SHA256
+
+    classified = minnesota_section.classify_minnesota_terminal_section_html(
+        payload.decode("utf-8"),
+        source_url=MN_SECOND_ALIAS_URL,
+        expected_edition=MinnesotaScraper.OFFICIAL_EDITION,
+    )
+    assert classified is not None
+    assert classified["disposition"] == "repealed"
+    assert classified["section_number"] == "431.41"
+
+
+@pytest.mark.parametrize(
+    ("section_number", "marker", "disposition"),
+    (
+        ("423C.07", "[Repealer, 1Sp2011 c 8 art 6 s 18,19]", "repealed"),
+        ("488A.114", "[Transitional]", "transitional"),
+    ),
+)
+def test_minnesota_terminal_lifecycle_markers_are_source_bound(
+    section_number: str,
+    marker: str,
+    disposition: str,
+) -> None:
+    source_url = f"https://www.revisor.mn.gov/statutes/cite/{section_number}"
+    payload = _mn_terminal_source_reference_payload(section_number, marker)
+
+    classified = minnesota_section.classify_minnesota_terminal_section_html(
+        payload.decode(),
+        source_url=source_url,
+        expected_edition=MinnesotaScraper.OFFICIAL_EDITION,
+    )
+
+    assert classified is not None
+    assert classified["disposition"] == disposition
+    assert classified["marker_texts"] == [marker]
+    assert classified["section_number"] == section_number
+    assert classified["source_blocks"] == 1
+
+
+@pytest.mark.parametrize(
+    ("section_number", "marker"),
+    (
+        ("423C.07", "[Repealer for later review]"),
+        ("488A.114", "[Transitional provision]"),
+    ),
+)
+def test_minnesota_terminal_lifecycle_markers_reject_broader_prose(
+    section_number: str,
+    marker: str,
+) -> None:
+    source_url = f"https://www.revisor.mn.gov/statutes/cite/{section_number}"
+    payload = _mn_terminal_source_reference_payload(section_number, marker)
+
+    assert (
+        minnesota_section.classify_minnesota_terminal_section_html(
+            payload.decode(),
+            source_url=source_url,
+            expected_edition=MinnesotaScraper.OFFICIAL_EDITION,
+        )
+        is None
+    )
+
+
+def test_minnesota_repealer_marker_replays_retained_body() -> None:
+    evidence_root = os.getenv("STATE_LAWS_TEST_MN_EVIDENCE_ROOT", "").strip()
+    if not evidence_root:
+        pytest.skip("requires retained Minnesota acquisition evidence")
+
+    payload_path = (
+        Path(evidence_root) / "MN" / "objects" / f"{MN_REPEALER_SHA256}.bin"
+    )
+    payload = payload_path.read_bytes()
+    assert len(payload) == 62028
+    assert hashlib.sha256(payload).hexdigest() == MN_REPEALER_SHA256
+
+    classified = minnesota_section.classify_minnesota_terminal_section_html(
+        payload.decode("utf-8"),
+        source_url=MN_REPEALER_URL,
+        expected_edition=MinnesotaScraper.OFFICIAL_EDITION,
+    )
+    assert classified is not None
+    assert classified["disposition"] == "repealed"
+    assert classified["section_number"] == "423C.07"
+
+
+@pytest.mark.parametrize(("source_url", "content_sha256"), MN_TRANSITIONAL_CASES)
+def test_minnesota_transitional_markers_replay_retained_bodies(
+    source_url: str,
+    content_sha256: str,
+) -> None:
+    evidence_root = os.getenv("STATE_LAWS_TEST_MN_EVIDENCE_ROOT", "").strip()
+    if not evidence_root:
+        pytest.skip("requires retained Minnesota acquisition evidence")
+
+    payload_path = Path(evidence_root) / "MN" / "objects" / f"{content_sha256}.bin"
+    payload = payload_path.read_bytes()
+    assert len(payload) == 60804
+    assert hashlib.sha256(payload).hexdigest() == content_sha256
+
+    classified = minnesota_section.classify_minnesota_terminal_section_html(
+        payload.decode("utf-8"),
+        source_url=source_url,
+        expected_edition=MinnesotaScraper.OFFICIAL_EDITION,
+    )
+    assert classified is not None
+    assert classified["disposition"] == "transitional"
+    assert classified["section_number"] == source_url.rsplit("/", 1)[-1]
 
 
 def test_minnesota_terminal_reserved_marker_is_exact_and_source_bound() -> None:

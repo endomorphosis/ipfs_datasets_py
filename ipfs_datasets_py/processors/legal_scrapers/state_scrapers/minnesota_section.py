@@ -47,6 +47,13 @@ _EXACT_TERMINAL_DISPLAY_CITATION_ALIASES = {
             "04a01e0bb5ce4817e0ca76ab1e9a67bfa80920ed4155adbbd9fcbbfc7dbb6893"
         ),
         "display_citation": "296.01",
+    },
+    "https://www.revisor.mn.gov/statutes/cite/431.41": {
+        "content_byte_size": 60796,
+        "content_sha256": (
+            "99dbf7fb630dbb83fce8550a462009ed0922cad28d2032bd619f49df711cb525"
+        ),
+        "display_citation": "434.41",
     }
 }
 
@@ -200,7 +207,9 @@ def _terminal_marker_disposition(marker: str) -> str:
     value = _clean(marker).casefold()
     if value == "reserved":
         return "reserved"
-    if value.startswith(("impliedly repealed", "repealed")):
+    if value.startswith(("impliedly repealed", "repealed")) or (
+        value == "repealer" or value.startswith("repealer,")
+    ):
         return "repealed"
     if value.startswith("renumbered"):
         return "renumbered"
@@ -222,6 +231,8 @@ def _terminal_marker_disposition(marker: str) -> str:
         return "inoperative"
     if value.startswith("temporary"):
         return "temporary"
+    if value == "transitional":
+        return "transitional"
     if value.startswith(
         ("local", "private", "special", "no local approval filed")
     ):
