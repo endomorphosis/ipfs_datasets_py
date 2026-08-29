@@ -18,8 +18,10 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.rhode_island impo
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.rhode_island_section import (
     chapter_part_links,
+    parse_rhode_island_section_html,
     part_section_links,
     part_subpart_links,
+    source_bound_section_locator_identity,
     source_bound_terminal_section_disposition,
     subpart_section_links,
 )
@@ -36,6 +38,10 @@ CHAPTER_6A_2_1_URL = f"{ROOT_URL}TITLE6A/6A-2.1/INDEX.htm"
 PART_6A_2_1_5_URL = f"{ROOT_URL}TITLE6A/6A-2.1/6A-5/INDEX.htm"
 SUBPART_6A_2_1_5_A_URL = f"{PART_6A_2_1_5_URL[:-9]}6A-A/INDEX.htm"
 SUBPART_6A_2_1_5_B_URL = f"{PART_6A_2_1_5_URL[:-9]}6A-B/INDEX.htm"
+SUBPART_6A_9_1_1_URL = f"{ROOT_URL}TITLE6A/6A-9/6A-1/6A-1/INDEX.htm"
+ENCODED_SECTION_6A_9_102_URL = (
+    f"{SUBPART_6A_9_1_1_URL[:-9]}%C2%A7_6A-9-102.htm"
+)
 CHAPTER_7_12_1_URL = f"{ROOT_URL}TITLE7/7-12.1/INDEX.htm"
 ARTICLE_7_12_1_11_URL = f"{CHAPTER_7_12_1_URL[:-9]}7-11/INDEX.htm"
 NESTED_PART_7_12_1_11_1_URL = f"{ARTICLE_7_12_1_11_URL[:-9]}7-1/INDEX.htm"
@@ -447,6 +453,114 @@ def test_rhode_island_subpart_sections_reject_parent_or_heading_drift() -> None:
         subpart_number="6A-A",
         intermediate_label="Subpart A Official Subpart",
     ) == []
+
+
+def test_rhode_island_encoded_nested_section_link_is_exact_catalog_bound(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    html = (
+        _subpart_html("6A-1", "6A-9-102")
+        .decode()
+        .replace("6A-9-102.htm", "%C2%A7_6A-9-102.htm")
+        .replace("Official section", "Definitions.")
+    )
+    label = "§ 6A-9-102. Definitions."
+    binding = (
+        "6A",
+        "6A-9",
+        "6A-1",
+        "6A-1",
+        hashlib.sha256(html.encode()).hexdigest(),
+        "%C2%A7_6A-9-102",
+        label,
+    )
+    monkeypatch.setattr(
+        rhode_island_section,
+        "_SOURCE_BOUND_SUBPART_SECTION_CATALOG_CORRECTIONS",
+        {binding},
+    )
+
+    kwargs = {
+        "subpart_url": SUBPART_6A_9_1_1_URL,
+        "title_number": "6A",
+        "chapter_number": "6A-9",
+        "part_number": "6A-1",
+        "subpart_number": "6A-1",
+        "intermediate_label": "Subpart 1 Official Subpart",
+    }
+    assert subpart_section_links(html, **kwargs) == [
+        (ENCODED_SECTION_6A_9_102_URL, label)
+    ]
+    assert source_bound_section_locator_identity(
+        title_number="6A",
+        chapter_number="6A-9",
+        locator="%C2%A7_6A-9-102",
+        frontier_label=label,
+    ) == ("6A-9-102", 1, "6A-9-102")
+
+    # The exceptional URL is not admitted after any catalog, label, locator,
+    # or parent-identity drift.
+    assert (
+        subpart_section_links(
+            html.replace("Official Subpart", "Drifted"), **kwargs
+        )
+        == []
+    )
+    assert (
+        subpart_section_links(
+            html.replace("Definitions.", "Changed."), **kwargs
+        )
+        == []
+    )
+    assert subpart_section_links(
+        html.replace("%C2%A7_6A-9-102", "%C2%A7_6A-9-103"),
+        **kwargs,
+    ) == []
+    assert subpart_section_links(
+        html,
+        **{**kwargs, "chapter_number": "6A-8"},
+    ) == []
+
+    scraper = RhodeIslandScraper("RI", "Rhode Island")
+    assert scraper._canonical_rhode_island_section_locator(
+        ENCODED_SECTION_6A_9_102_URL,
+        title_number="6A",
+        chapter_number="6A-9",
+        part_number="6A-1",
+        subpart_number="6A-1",
+        section_label=label,
+    ) == (ENCODED_SECTION_6A_9_102_URL, "6A-9-102")
+    parsed = parse_rhode_island_section_html(
+        _section_html("6A-9-102").decode(),
+        source_url=ENCODED_SECTION_6A_9_102_URL,
+        frontier_section_label=label,
+        expected_section_number="6A-9-102",
+        strict_official_identity=True,
+    )
+    assert parsed is not None
+    assert parsed.section_number == "6A-9-102"
+    assert parsed.source_url == ENCODED_SECTION_6A_9_102_URL
+    assert (
+        parse_rhode_island_section_html(
+            _section_html("6A-9-102").decode(),
+            source_url=ENCODED_SECTION_6A_9_102_URL.replace(
+                "/6A-1/6A-1/", "/6A-1/6A-2/"
+            ),
+            frontier_section_label=label,
+            expected_section_number="6A-9-102",
+            strict_official_identity=True,
+        )
+        is None
+    )
+    with pytest.raises(RuntimeError, match="non-canonical section locator"):
+        scraper._canonical_rhode_island_section_locator(
+            ENCODED_SECTION_6A_9_102_URL.replace("102", "103"),
+            title_number="6A",
+            chapter_number="6A-9",
+            part_number="6A-1",
+            subpart_number="6A-1",
+            section_label=label.replace("102", "103"),
+        )
 
 
 def test_rhode_island_exact_article_part_frontier_is_digest_bound(

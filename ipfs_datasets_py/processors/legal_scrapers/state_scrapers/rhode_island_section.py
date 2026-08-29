@@ -85,6 +85,37 @@ _SOURCE_BOUND_SECTION_LOCATOR_CORRECTIONS = {
     ): ("42-164-4", "42-164-4"),
 }
 
+# The current official 2026-08-29 nested catalog for UCC article 9, part 1
+# links section 6A-9-102 with a percent-encoded section-sign prefix.  The exact
+# source-linked URL serves the current body while an otherwise-normalized
+# sibling filename returns an empty 404.  The correction below therefore
+# admits only that retained catalog byte identity and preserves its linked
+# locator in the derived frontier.
+_SOURCE_BOUND_ENCODED_SECTION_LOCATOR_CORRECTIONS = {
+    (
+        "6A",
+        "6A-9",
+        "%C2%A7_6A-9-102",
+        "§ 6A-9-102. Definitions.",
+    ): ("6A-9-102", "6A-9-102"),
+}
+
+_SOURCE_BOUND_ENCODED_SECTION_PARENT_IDENTITIES = frozenset(
+    {("6A", "6A-9", "6A-1", "6A-1", "%C2%A7_6A-9-102")}
+)
+
+_SOURCE_BOUND_SUBPART_SECTION_CATALOG_CORRECTIONS = {
+    (
+        "6A",
+        "6A-9",
+        "6A-1",
+        "6A-1",
+        "d63b33c61f1abf9650be1e9761a314a1ddda6d8d11dd55ac5e335ee66de09c3e",
+        "%C2%A7_6A-9-102",
+        "§ 6A-9-102. Definitions.",
+    ),
+}
+
 # These are official terminal chapter-range documents linked from the exact
 # chapter indexes.  Their filenames are not section cites, so they are kept as
 # source-bound closure evidence and never normalized as operative statutes.
@@ -150,6 +181,12 @@ def source_bound_section_locator_identity(
     )
     if chapter_material is not None:
         return chapter, 1, str(locator or "").strip()
+    encoded_correction = _SOURCE_BOUND_ENCODED_SECTION_LOCATOR_CORRECTIONS.get(
+        (title, chapter, str(locator or "").strip(), label)
+    )
+    if encoded_correction is not None:
+        logical, body_heading = encoded_correction
+        return logical, 1, body_heading
     repeated = repeated_section_locator_identity(locator)
     if repeated is None:
         return None
@@ -474,6 +511,12 @@ def parse_rhode_island_section_html(
 
     if source_identity is not None:
         title, chapter, _part, _subpart, locator = source_identity
+        if (
+            locator.startswith("%")
+            and source_identity
+            not in _SOURCE_BOUND_ENCODED_SECTION_PARENT_IDENTITIES
+        ):
+            return None
         repeated = repeated_section_locator_identity(locator)
         if frontier_section_label:
             bound_identity = source_bound_section_locator_identity(
@@ -667,6 +710,11 @@ def source_bound_terminal_section_disposition(
     if source_identity is None or not expected_section:
         return None
     title, chapter, _part, _subpart, locator = source_identity
+    if (
+        locator.startswith("%")
+        and source_identity not in _SOURCE_BOUND_ENCODED_SECTION_PARENT_IDENTITIES
+    ):
+        return None
     label = _clean(frontier_section_label)
     chapter_material = _SOURCE_BOUND_CHAPTER_RANGE_MATERIALS.get(
         (title, chapter, locator, label)
@@ -846,7 +894,7 @@ _SUBPART_SECTION_PATH_RE = re.compile(
     r"(?P<chapter>[0-9A-Za-z.]+(?:-[0-9A-Za-z.]+)+)/"
     r"(?P<part>[0-9A-Za-z.]+(?:-[0-9A-Za-z.]+)+)/"
     r"(?P<subpart>[0-9A-Za-z.]+(?:-[0-9A-Za-z.]+)+)/"
-    r"(?P<section>[0-9A-Za-z._-]+)\.htm$",
+    r"(?P<section>(?:[0-9A-Za-z._-]+|%C2%A7_6A-9-102))\.htm$",
     re.IGNORECASE,
 )
 _CHAPTER_INDEX_HEADING_RE = re.compile(
@@ -1359,6 +1407,7 @@ def subpart_section_links(
     anchors = body.find_all("a", href=True)
     if not anchors:
         return []
+    observed_catalog_digest = sha256((html or "").encode("utf-8")).hexdigest()
     out: List[Tuple[str, str]] = []
     seen_urls: set[str] = set()
     seen_sections: set[str] = set()
@@ -1374,6 +1423,16 @@ def subpart_section_links(
         if section_match is None or label_match is None:
             return []
         observed_locator = section_match.group("section")
+        if observed_locator.startswith("%") and (
+            expected_title,
+            expected_chapter,
+            expected_part,
+            expected_subpart,
+            observed_catalog_digest,
+            observed_locator,
+            label,
+        ) not in _SOURCE_BOUND_SUBPART_SECTION_CATALOG_CORRECTIONS:
+            return []
         locator_identity = source_bound_section_locator_identity(
             title_number=expected_title,
             chapter_number=expected_chapter,

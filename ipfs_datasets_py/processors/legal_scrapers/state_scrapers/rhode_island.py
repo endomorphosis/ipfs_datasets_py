@@ -27,7 +27,7 @@ _TITLE_INDEX_URL_TEMPLATE = "https://webserver.rilegislature.gov/Statutes/TITLE{
 _RI_TITLE_TOKEN_PATTERN = r"[0-9]+(?:A|\.[0-9]+)?"
 _RI_CHAPTER_TOKEN_PATTERN = r"[0-9A-Za-z.]+(?:-[0-9A-Za-z.]+)+"
 _RI_SECTION_TOKEN_PATTERN = r"[0-9A-Za-z.]+(?:-[0-9A-Za-z.]+)+"
-_RI_SECTION_LOCATOR_PATTERN = r"[0-9A-Za-z._-]+"
+_RI_SECTION_LOCATOR_PATTERN = r"(?:[0-9A-Za-z._-]+|%C2%A7_6A-9-102)"
 _TITLE_LINK_RE = re.compile(
     rf"/Statutes/TITLE({_RI_TITLE_TOKEN_PATTERN})/"
     rf"({_RI_CHAPTER_TOKEN_PATTERN})/INDEX\.htm$",
