@@ -5,6 +5,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -87,6 +89,42 @@ def _operative_dot_label_html() -> str:
         </p>
         <p style="text-align:left">Acts 2021, No. 220, &sect;1.</p>
       </div></span>
+    </form>
+    """
+
+
+def _operative_dot_label_40_1002_html() -> str:
+    return """
+    <form id="aspnetForm" name="aspnetForm" method="post"
+          action="./Law.aspx?d=409416">
+      <input type="submit" name="ctl00$PageBody$ButtonPrevious"
+             value=" &lt; " id="ctl00_PageBody_ButtonPrevious"
+             title="view previous" />
+      <span id="ctl00_PageBody_LabelName" class="title"
+            style="font-size:Large;">RS 40.1002</span>
+      <input type="submit" name="ctl00$PageBody$ButtonNext"
+             value=" &gt; " id="ctl00_PageBody_ButtonNext"
+             title="view next" />
+      <a id="ctl00_PageBody_linkPrint" title="Printable Version"
+         href="LawPrint.aspx?d=409416" target="_blank">Print</a>
+      <input type="hidden" id="ctl00_PageBody_HiddenDocId" value="409416" />
+      <span id="ctl00_PageBody_LabelDocument">
+        <p class="A0001" align="justify">&sect;1002. Purpose</p>
+        <p class="A0002" align="justify">
+          The purpose of this Part is to authorize the development,
+          implementation, operation, and evaluation of an electronic system
+          for the monitoring of controlled substances and other drugs of
+          concern that are dispensed in the state or dispensed to an address
+          within the state. The goal of the program is to improve the state's
+          ability to identify and inhibit the diversion of controlled
+          substances and drugs in an efficient and cost-effective manner and
+          in a manner that shall not impede the appropriate utilization of
+          these drugs for legitimate medical purposes.
+        </p>
+        <p class="A0002" align="justify">
+          Acts 2006, No. 676, &sect;1, eff. July 1, 2006.
+        </p>
+      </span>
     </form>
     """
 
@@ -7078,8 +7116,9 @@ def test_terminal_classifier_does_not_exclude_redesignation_with_body() -> None:
 def _bind_operative_dot_label_fixture_digest(
     monkeypatch: pytest.MonkeyPatch,
     html: str,
+    *,
+    url: str = "https://legis.la.gov/legis/Law.aspx?d=1238853",
 ) -> str:
-    url = "https://legis.la.gov/legis/Law.aspx?d=1238853"
     evidence = dict(louisiana_law._EXACT_OPERATIVE_LABEL_CORRECTIONS[url])
     digest = hashlib.sha256(html.encode("utf-8")).hexdigest()
     evidence["content_sha256"] = digest
@@ -7200,3 +7239,510 @@ def test_source_bound_operative_dot_label_rejects_dom_or_text_drift(
         )
         is None
     )
+
+
+def test_source_bound_operative_dot_label_40_1002_is_retained(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    url = "https://legis.la.gov/legis/Law.aspx?d=409416"
+    html = _operative_dot_label_40_1002_html()
+
+    assert louisiana_law.parse_label("RS 40.1002") is None
+    assert louisiana_law.statute_from_law_html(html, source_url=url) is None
+    digest = _bind_operative_dot_label_fixture_digest(
+        monkeypatch,
+        html,
+        url=url,
+    )
+
+    row = louisiana_law.statute_from_law_html(
+        html,
+        source_url=url,
+        content_sha256=digest,
+    )
+
+    assert row is not None
+    assert row.title_number == "40"
+    assert row.section_number == "1002"
+    assert row.section_name == "Purpose"
+    assert row.source_url == url
+    assert row.full_text == (
+        "The purpose of this Part is to authorize the development, "
+        "implementation, operation, and evaluation of an electronic system "
+        "for the monitoring of controlled substances and other drugs of "
+        "concern that are dispensed in the state or dispensed to an address "
+        "within the state. The goal of the program is to improve the state's "
+        "ability to identify and inhibit the diversion of controlled "
+        "substances and drugs in an efficient and cost-effective manner and "
+        "in a manner that shall not impede the appropriate utilization of "
+        "these drugs for legitimate medical purposes. Acts 2006, No. 676, "
+        "§1, eff. July 1, 2006."
+    )
+    assert row.structured_data["source_label"] == "RS 40.1002"
+    assert row.structured_data["normalized_label"] == "RS 40:1002"
+
+
+@pytest.mark.parametrize(
+    ("original", "replacement"),
+    [
+        ("RS 40.1002", "RS 40.1003"),
+        ("./Law.aspx?d=409416", "./Law.aspx?d=409417"),
+        ('class="A0001"', 'class="A0099"'),
+        ("&sect;1002. Purpose", "&sect;1002. Purposes"),
+        ("Acts 2006, No. 676", "Acts 2006, No. 677"),
+    ],
+)
+def test_source_bound_operative_dot_label_40_1002_rejects_drift(
+    monkeypatch: pytest.MonkeyPatch,
+    original: str,
+    replacement: str,
+) -> None:
+    url = "https://legis.la.gov/legis/Law.aspx?d=409416"
+    html = _operative_dot_label_40_1002_html().replace(original, replacement, 1)
+    digest = _bind_operative_dot_label_fixture_digest(
+        monkeypatch,
+        html,
+        url=url,
+    )
+
+    assert (
+        louisiana_law.source_bound_operative_label_correction_from_law_html(
+            html,
+            source_url=url,
+            content_sha256=digest,
+        )
+        is None
+    )
+    assert (
+        louisiana_law.statute_from_law_html(
+            html,
+            source_url=url,
+            content_sha256=digest,
+        )
+        is None
+    )
+
+
+def _clustered_terminal_html(
+    *,
+    document_id: str,
+    label: str,
+    document: str,
+) -> str:
+    return f"""
+    <form id="aspnetForm" name="aspnetForm" method="post"
+          action="./Law.aspx?d={document_id}">
+      <input type="submit" name="ctl00$PageBody$ButtonPrevious"
+             value=" &lt; " id="ctl00_PageBody_ButtonPrevious"
+             title="view previous" />
+      <span id="ctl00_PageBody_LabelName" class="title"
+            style="font-size:Large;">{label}</span>
+      <input type="submit" name="ctl00$PageBody$ButtonNext"
+             value=" &gt; " id="ctl00_PageBody_ButtonNext"
+             title="view next" />
+      <a id="ctl00_PageBody_linkPrint" title="Printable Version"
+         href="LawPrint.aspx?d={document_id}" target="_blank">Print</a>
+      <input type="hidden" id="ctl00_PageBody_HiddenDocId"
+             value="{document_id}" />
+      <span id="ctl00_PageBody_LabelDocument">{document}</span>
+    </form>
+    """
+
+
+def _bind_clustered_terminal_fixture_digest(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    url: str,
+    html: str,
+) -> str:
+    evidence = dict(louisiana_law._EXACT_CLUSTERED_TERMINAL_LOCATORS[url])
+    digest = hashlib.sha256(html.encode("utf-8")).hexdigest()
+    evidence["content_sha256"] = digest
+    monkeypatch.setitem(
+        louisiana_law._EXACT_CLUSTERED_TERMINAL_LOCATORS,
+        url,
+        evidence,
+    )
+    return digest
+
+
+def test_clustered_terminal_ledger_has_exact_closed_algebra() -> None:
+    expected = Counter(
+        {
+            "redesignated_hcr_2015": 428,
+            "redesignated_to_see_acts": 24,
+            "redesignated_act_section_suffix": 15,
+            "redesignated_effective_date": 13,
+            "redesignated_range": 6,
+            "blank_range_cross_reference": 3,
+            "blank_range": 4,
+            "terminated": 12,
+            "expired": 2,
+            "empty_official_locator": 7,
+            "title_heading": 1,
+        }
+    )
+    ledger = louisiana_law._EXACT_CLUSTERED_TERMINAL_LOCATORS
+
+    assert len(ledger) == 515
+    assert Counter(item["disposition"] for item in ledger.values()) == expected
+    assert len({item["content_sha256"] for item in ledger.values()}) == 515
+    assert all(
+        re.fullmatch(
+            r"https://legis\.la\.gov/legis/Law\.aspx\?d=[0-9]+",
+            url,
+        )
+        for url in ledger
+    )
+    assert all(
+        re.fullmatch(r"[0-9a-f]{64}", item["content_sha256"])
+        for item in ledger.values()
+    )
+
+
+@pytest.mark.parametrize(
+    ("document_id", "label", "document", "expected"),
+    [
+        (
+            "966325",
+            "RS 40:1300.122",
+            (
+                '<div id="WPMainDoc"><p>§1300.122. Redesignated to R.S. '
+                "40:1101.1 by HCR 84 of 2015 R.S.</p></div>"
+            ),
+            "redesignated_hcr_2015",
+        ),
+        (
+            "89491",
+            "RS 33:2005",
+            (
+                '<div id="WPMainDoc"><p>§2005. Redesignated to R.S. '
+                "40:1666.4. See Acts 2014, No. 158, §§3 and 7.</p></div>"
+            ),
+            "redesignated_to_see_acts",
+        ),
+        (
+            "965146",
+            "RS 40:1081.8",
+            (
+                '<div id="WPMainDoc"><p>§1081.8. Redesignated as R.S. '
+                "40:1125.21 by Acts 2022, No. 647, §4B.</p></div>"
+            ),
+            "redesignated_act_section_suffix",
+        ),
+        (
+            "321477",
+            "RS 44:108",
+            (
+                '<p class="A0001" align="justify">§108. Redesignated as R.S. '
+                "9:5171 by Acts 2010, No. 284, §1, eff. Jan. 1, 2011.</p>"
+            ),
+            "redesignated_effective_date",
+        ),
+        (
+            "105521",
+            "RS 56:681",
+            (
+                '<div id="WPMainDoc"><p>§681. §§681 to 692 redesignated as '
+                "R.S. 11:581 to 591.</p></div>"
+            ),
+            "redesignated_range",
+        ),
+        (
+            "96602",
+            "RS 39:791",
+            (
+                '<p class="A0001" align="center">CHAPTER</p>'
+                '<p class="A0001" align="justify">§791. Blank. See, now, '
+                "R.S. 33:7726</p>"
+            ),
+            "blank_range_cross_reference",
+        ),
+        (
+            "101676",
+            "RS 47:287.3",
+            (
+                '<p class="A0001" align="justify">§287.3. §§287.3 - '
+                "287.10. (Blank)</p>"
+            ),
+            "blank_range",
+        ),
+        (
+            "97226",
+            "RS 40:1299.36.6",
+            (
+                '<p class="A0001" align="justify">§1299.36.6. Terminated '
+                "July 1, 2003, by Acts 1999, No. 788, §3.</p>"
+            ),
+            "terminated",
+        ),
+        (
+            "101665",
+            "RS 47:2751",
+            (
+                '<p class="A0001" align="center">PART</p>'
+                '<p class="A0001" align="center">SUBPART</p>'
+                '<p class="A0002" align="justify">§2751. §§2751 to 2759 '
+                "[Expired]</p>"
+            ),
+            "expired",
+        ),
+        ("96982", "RS 40:1042", "", "empty_official_locator"),
+        (
+            "92686",
+            "RS 36",
+            (
+                '<p class="A0001" align="justify">TITLE 36. ORGANIZATION OF '
+                "THE EXECUTIVE BRANCH</p>"
+                '<p class="A0001" align="justify">OF STATE GOVERNMENT</p>'
+            ),
+            "title_heading",
+        ),
+    ],
+)
+def test_clustered_terminal_representatives_are_source_bound(
+    monkeypatch: pytest.MonkeyPatch,
+    document_id: str,
+    label: str,
+    document: str,
+    expected: str,
+) -> None:
+    url = f"https://legis.la.gov/legis/Law.aspx?d={document_id}"
+    html = _clustered_terminal_html(
+        document_id=document_id,
+        label=label,
+        document=document,
+    )
+    digest = _bind_clustered_terminal_fixture_digest(
+        monkeypatch,
+        url=url,
+        html=html,
+    )
+
+    assert louisiana_law.requires_source_bound_terminal_disposition(url) is True
+    assert (
+        source_bound_terminal_disposition_from_law_html(
+            html,
+            source_url=url,
+            content_sha256=digest,
+        )
+        == expected
+    )
+
+
+def _clustered_hcr_fixture() -> tuple[str, str]:
+    document_id = "966325"
+    return (
+        f"https://legis.la.gov/legis/Law.aspx?d={document_id}",
+        _clustered_terminal_html(
+            document_id=document_id,
+            label="RS 40:1300.122",
+            document=(
+                '<div id="WPMainDoc"><p>§1300.122. Redesignated to R.S. '
+                "40:1101.1 by HCR 84 of 2015 R.S.</p></div>"
+            ),
+        ),
+    )
+
+
+def _clustered_hcr_operative_drift_fixture() -> tuple[str, str]:
+    url, html = _clustered_hcr_fixture()
+    return (
+        url,
+        html.replace(
+            "Redesignated to R.S. 40:1101.1 by HCR 84 of 2015 R.S.</p></div>",
+            "Administration</p><p>This provision now contains operative "
+            "requirements that would otherwise satisfy the row parser.</p></div>",
+            1,
+        ),
+    )
+
+
+def test_clustered_terminal_checks_supplied_and_actual_body_digests(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    url, html = _clustered_hcr_fixture()
+    digest = _bind_clustered_terminal_fixture_digest(
+        monkeypatch,
+        url=url,
+        html=html,
+    )
+    changed_html = html.replace("HCR 84", "HCR 85", 1)
+
+    assert (
+        source_bound_terminal_disposition_from_law_html(
+            changed_html,
+            source_url=url,
+            content_sha256=digest,
+        )
+        is None
+    )
+    assert (
+        source_bound_terminal_disposition_from_law_html(
+            html,
+            source_url=url,
+            content_sha256="0" * 64,
+        )
+        is None
+    )
+    assert (
+        source_bound_terminal_disposition_from_law_html(
+            html,
+            source_url="https://legis.la.gov/legis/Law.aspx?d=966326",
+            content_sha256=digest,
+        )
+        is None
+    )
+
+
+def test_clustered_terminal_digest_drift_cannot_become_an_operative_row(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    url, exact_html = _clustered_hcr_fixture()
+    _bind_clustered_terminal_fixture_digest(
+        monkeypatch,
+        url=url,
+        html=exact_html,
+    )
+    _, changed_html = _clustered_hcr_operative_drift_fixture()
+    changed_digest = hashlib.sha256(changed_html.encode()).hexdigest()
+
+    assert (
+        louisiana_law.statute_from_law_html(
+            changed_html,
+            source_url=url,
+            content_sha256=changed_digest,
+        )
+        is None
+    )
+    assert (
+        louisiana_law.statute_from_law_html(
+            changed_html,
+            source_url="https://legis.la.gov/legis/Law.aspx?d=999999999",
+            content_sha256=changed_digest,
+        )
+        is not None
+    )
+
+
+@pytest.mark.parametrize(
+    ("original", "replacement"),
+    [
+        ('action="./Law.aspx?d=966325"', 'action="./Law.aspx?d=966326"'),
+        ('method="post"', 'method="get"'),
+        ('name="aspnetForm"', 'name="otherForm"'),
+        ('class="title"', 'class="subtitle"'),
+        ("font-size:Large;", "font-size:Small;"),
+        ('value="966325"', 'value="966326"'),
+        ("LawPrint.aspx?d=966325", "LawPrint.aspx?d=966326"),
+        ('target="_blank"', 'target="_self"'),
+        ("Printable Version", "Print Version"),
+        ("ctl00$PageBody$ButtonPrevious", "wrong-previous"),
+        ('id="WPMainDoc"', 'id="WrongDocument"'),
+        ("§1300.122.", "§1300.123."),
+        ("HCR 84", "HJR 84"),
+        ("40:1101.1", "40:1300.122"),
+        ("</p></div>", "</p><p>Operative text survives.</p></div>"),
+    ],
+)
+def test_clustered_terminal_rejects_control_dom_section_or_semantic_drift(
+    monkeypatch: pytest.MonkeyPatch,
+    original: str,
+    replacement: str,
+) -> None:
+    url, base_html = _clustered_hcr_fixture()
+    html = base_html.replace(original, replacement, 1)
+    assert html != base_html
+    digest = _bind_clustered_terminal_fixture_digest(
+        monkeypatch,
+        url=url,
+        html=html,
+    )
+
+    assert (
+        source_bound_terminal_disposition_from_law_html(
+            html,
+            source_url=url,
+            content_sha256=digest,
+        )
+        is None
+    )
+
+
+@pytest.mark.anyio
+async def test_clustered_locator_does_not_fall_through_to_generic_grammar(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    url, exact_html = _clustered_hcr_fixture()
+    _bind_clustered_terminal_fixture_digest(
+        monkeypatch,
+        url=url,
+        html=exact_html,
+    )
+    changed_html = exact_html.replace(
+        "Redesignated to R.S. 40:1101.1 by HCR 84 of 2015 R.S.",
+        "[Blank]",
+        1,
+    )
+    payload = changed_html.encode()
+    assert terminal_disposition_from_law_html(changed_html) == "blank"
+
+    async def _frontier(_self, requested, **_kwargs):
+        return _batch_result(list(requested), {url: payload})
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(
+        LouisianaScraper,
+        "_fetch_page_contents_with_archival_fallback",
+        _frontier,
+    )
+    monkeypatch.setattr(
+        LouisianaScraper,
+        "_write_partial_checkpoint",
+        lambda *_args, **_kwargs: True,
+    )
+
+    scraper = LouisianaScraper("LA", "Louisiana")
+    with pytest.raises(RuntimeError, match="left an official locator untyped"):
+        await scraper._scrape_law_page_urls(
+            code_name="Louisiana Revised Statutes",
+            law_urls=[url],
+            max_statutes=None,
+        )
+
+
+@pytest.mark.anyio
+async def test_clustered_locator_operative_drift_fails_closed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    url, exact_html = _clustered_hcr_fixture()
+    _bind_clustered_terminal_fixture_digest(
+        monkeypatch,
+        url=url,
+        html=exact_html,
+    )
+    _, changed_html = _clustered_hcr_operative_drift_fixture()
+    payload = changed_html.encode()
+
+    async def _frontier(_self, requested, **_kwargs):
+        return _batch_result(list(requested), {url: payload})
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(
+        LouisianaScraper,
+        "_fetch_page_contents_with_archival_fallback",
+        _frontier,
+    )
+    monkeypatch.setattr(
+        LouisianaScraper,
+        "_write_partial_checkpoint",
+        lambda *_args, **_kwargs: True,
+    )
+
+    scraper = LouisianaScraper("LA", "Louisiana")
+    with pytest.raises(RuntimeError, match="left an official locator untyped"):
+        await scraper._scrape_law_page_urls(
+            code_name="Louisiana Revised Statutes",
+            law_urls=[url],
+            max_statutes=None,
+        )

@@ -658,6 +658,7 @@ class LouisianaScraper(BaseStateScraper):
         seen_legal_identities: Dict[str, str] = {}
         if exact_full_frontier:
             from .louisiana_law import (
+                requires_source_bound_terminal_disposition,
                 source_bound_terminal_disposition_from_law_html,
                 statute_from_law_html,
                 terminal_disposition_from_law_html,
@@ -960,7 +961,12 @@ class LouisianaScraper(BaseStateScraper):
                             source_url=law_url,
                             content_sha256=digest,
                         )
-                        if not disposition:
+                        if (
+                            not disposition
+                            and not requires_source_bound_terminal_disposition(
+                                law_url
+                            )
+                        ):
                             disposition = terminal_disposition_from_law_html(law_html)
                         if not disposition:
                             unresolved = {
@@ -1206,6 +1212,7 @@ class LouisianaScraper(BaseStateScraper):
             raise RuntimeError("Louisiana retained TOC law membership changed on replay")
 
         from .louisiana_law import (
+            requires_source_bound_terminal_disposition,
             source_bound_terminal_disposition_from_law_html,
             statute_from_law_html,
             terminal_disposition_from_law_html,
@@ -1260,7 +1267,12 @@ class LouisianaScraper(BaseStateScraper):
                     html,
                     source_url=source_url,
                     content_sha256=digest,
-                ) or terminal_disposition_from_law_html(html)
+                )
+                if (
+                    not disposition
+                    and not requires_source_bound_terminal_disposition(source_url)
+                ):
+                    disposition = terminal_disposition_from_law_html(html)
                 if not disposition:
                     raise RuntimeError(
                         "Louisiana retained replay left a law page unclassified: "
