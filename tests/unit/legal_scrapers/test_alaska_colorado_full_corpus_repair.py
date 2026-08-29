@@ -1,12 +1,21 @@
 from __future__ import annotations
 
+import hashlib
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
+from ipfs_datasets_py.processors.legal_data.state_laws_multifetch_acquisition import (
+    StateLawMultiFetchAcquisitionLedger,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_run_seal import (
+    NONQUIESCENT_EVIDENCE_MARKER,
+)
 from ipfs_datasets_py.processors.legal_data.state_laws_source_policy import (
     get_official_source_catalog,
 )
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import base_scraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alaska import (
     AlaskaScraper,
 )
@@ -19,6 +28,9 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.colorado import (
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.colorado_title import (
     parse_colorado_title_html,
     title_download_rows,
+)
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.retained_replay_network_guard import (
+    retained_replay_network_guard,
 )
 
 
@@ -301,6 +313,61 @@ async def test_colorado_full_mode_requires_and_parses_exact_title_frontier(
     assert all(row.structured_data["edition"] == "2026" for row in rows)
     assert direct_urls == [scraper.OFFICIAL_CRS_TITLES_DOWNLOAD_URL]
     assert plural_calls == [[url for url in payloads if url != direct_urls[0]]]
+
+
+@pytest.mark.anyio
+async def test_colorado_retained_catalog_replay_stays_worker_quiescent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    evidence_root = tmp_path / "evidence"
+    numbers = [str(number) for number, _name in ColoradoScraper.OFFICIAL_CRS_TITLES]
+    body = _co_download_page(numbers)
+    url = ColoradoScraper.OFFICIAL_CRS_TITLES_DOWNLOAD_URL
+    seed = StateLawMultiFetchAcquisitionLedger(
+        evidence_root,
+        jurisdiction="CO",
+        parser_name="ColoradoScraper",
+    )
+    seed.retain_parser_input(
+        official_url=url,
+        body=body,
+        transport_receipt={
+            "content_sha256": hashlib.sha256(body).hexdigest(),
+            "official_url": url,
+            "source_transport": "direct",
+        },
+        retrieved_at="2026-08-29T00:00:00Z",
+        sanitized_request={"method": "GET", "url": url},
+    )
+
+    ledger = StateLawMultiFetchAcquisitionLedger(
+        evidence_root,
+        jurisdiction="CO",
+        parser_name="ColoradoScraper",
+        retained_replay_only=True,
+    )
+    scraper = ColoradoScraper("CO", "Colorado")
+    scraper.attach_state_law_acquisition_ledger(ledger)
+
+    async def _forbid_thread_offload(*_args, **_kwargs):
+        raise AssertionError("Colorado retained catalog replay created a worker thread")
+
+    monkeypatch.setattr(base_scraper.asyncio, "to_thread", _forbid_thread_offload)
+    with retained_replay_network_guard(ledger=ledger, state_code="CO"):
+        first = await scraper._capture_shared_official_frontier_observation(
+            phase="first"
+        )
+        replay = await scraper._capture_shared_official_frontier_observation(
+            phase="replay"
+        )
+
+    assert first["retained_replay"] is True
+    assert replay["retained_replay"] is True
+    assert first["frontier_digest"] == replay["frontier_digest"]
+    assert first["fetch"].rows == replay["fetch"].rows
+    assert first["fetch"].body_bytes == replay["fetch"].body_bytes == body
+    assert not (evidence_root / NONQUIESCENT_EVIDENCE_MARKER).exists()
 
 
 @pytest.mark.anyio
