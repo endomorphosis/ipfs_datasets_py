@@ -121,6 +121,7 @@ _PREPARED_CALL_FACTORY_BINDINGS = {
     "require_guard": "require_unprotected_or_runtime",
     "rehash_files": "_rehash_prepared_snapshot_files",
     "protected_write": "guarded_write",
+    "create_branch": "_canonical_hf_api_create_branch",
     "create_commit": "_canonical_hf_api_create_commit",
 }
 _EXACT_BINDING_KEYWORDS = (
@@ -131,7 +132,15 @@ _EXACT_BINDING_KEYWORDS = (
 )
 _API_METHOD_RESOLVERS = {"_require_api_method", "_require_method"}
 _ATTESTED_API_WRITE_FUNCTIONS = {
+    "_canonical_hf_api_create_branch": "create_branch",
     "_canonical_hf_api_create_commit": "create_commit",
+}
+_PREPARED_BRANCH_WRITE_KEYWORDS = {
+    "repo_id": "self.mutation_binding.repository_id",
+    "repo_type": "self.mutation_binding.repository_type",
+    "branch": "self.mutation_binding.revision",
+    "revision": "self.mutation_binding.parent_commit",
+    "exist_ok": "False",
 }
 _PREPARED_WRITE_KEYWORDS = {
     "repo_id": "self.mutation_binding.repository_id",
@@ -1003,10 +1012,15 @@ def _simple_condition_selector(node: ast.AST) -> tuple[str, bool] | None:
 
 def _is_attested_create_commit_primitive(
     node: ast.FunctionDef | ast.AsyncFunctionDef,
+    *,
+    expected_method: str = "create_commit",
 ) -> bool:
-    """Recognize the fixed token-owning HfApi primitive and nothing else."""
+    """Recognize one fixed token-owning HfApi write primitive exactly."""
 
-    if isinstance(node, ast.AsyncFunctionDef):
+    if (
+        isinstance(node, ast.AsyncFunctionDef)
+        or expected_method not in {"create_branch", "create_commit"}
+    ):
         return False
     if (
         [argument.arg for argument in node.args.posonlyargs] != ["runtime_token"]
@@ -1048,16 +1062,18 @@ def _is_attested_create_commit_primitive(
         and not identity_check.value.keywords
     ):
         return False
+    expected_token_gate = ast.parse(
+        (
+            "'token' in kwargs"
+            if expected_method == "create_commit"
+            else "'token' in kwargs or kwargs.get('exist_ok') is not False"
+        ),
+        mode="eval",
+    ).body
     if not (
         isinstance(token_gate, ast.If)
-        and isinstance(token_gate.test, ast.Compare)
-        and isinstance(token_gate.test.left, ast.Constant)
-        and token_gate.test.left.value == "token"
-        and len(token_gate.test.ops) == 1
-        and isinstance(token_gate.test.ops[0], ast.In)
-        and len(token_gate.test.comparators) == 1
-        and isinstance(token_gate.test.comparators[0], ast.Name)
-        and token_gate.test.comparators[0].id == "kwargs"
+        and ast.dump(token_gate.test, include_attributes=False)
+        == ast.dump(expected_token_gate, include_attributes=False)
         and not token_gate.orelse
         and len(token_gate.body) == 1
         and isinstance(token_gate.body[0], ast.Raise)
@@ -1127,7 +1143,7 @@ def _is_attested_create_commit_primitive(
         isinstance(call.func, ast.Subscript)
         and isinstance(call.func.value, ast.Name)
         and call.func.value.id == "_CANONICAL_HF_API_METHODS"
-        and _literal_text(call.func.slice) == "create_commit"
+        and _literal_text(call.func.slice) == expected_method
         and len(call.args) == 1
         and isinstance(call.args[0], ast.Name)
         and call.args[0].id == "api"
@@ -1533,10 +1549,19 @@ def _attested_prepared_factory_call(
     if not _is_attested_prepared_call(prepared):
         return None
     expected_aliases = {
+        "corpus": (
+            "'state' if self.mutation_binding.repository_id == "
+            "'justicedao/ipfs_state_laws' else 'federal'"
+        ),
+        "target": "'main' if self.mutation_binding.revision == 'main' else 'staging'",
+        "phase": "f'{corpus}_{target}'",
+        "operation": (
+            "'additive_main_upload' if target == 'main' else "
+            "'additive_staging_upload'"
+        ),
         "require_guard_local": "require_guard",
         "rehash_files_local": "rehash_files",
         "protected_write_local": "protected_write",
-        "create_commit_local": "create_commit",
         "payload_digest": "self.mutation_binding.payload_digest",
     }
     if any(
@@ -1545,47 +1570,118 @@ def _attested_prepared_factory_call(
     ):
         return None
 
+    branch_dispatches = [
+        statement
+        for statement in prepared.body
+        if isinstance(statement, ast.If)
+        and _source(statement.test)
+        == "self.mutation_binding.method == 'create_branch'"
+    ]
+    if len(branch_dispatches) != 1 or branch_dispatches[0].orelse:
+        return None
+    branch_dispatch = branch_dispatches[0]
+    if not (
+        _simple_name_assignment_source(
+            branch_dispatch.body,
+            "create_branch_local",
+        )
+        == "create_branch"
+        and _simple_name_assignment_source(
+            prepared.body,
+            "create_commit_local",
+        )
+        == "create_commit"
+    ):
+        return None
+
+    branch_once = [
+        statement
+        for statement in branch_dispatch.body
+        if isinstance(statement, ast.FunctionDef)
+        and statement.name == "branch_once"
+    ]
     commit_once = [
         statement
         for statement in prepared.body
         if isinstance(statement, ast.FunctionDef)
         and statement.name == "commit_once"
     ]
-    if len(commit_once) != 1:
+    if len(branch_once) != 1 or len(commit_once) != 1:
         return None
+    branch = branch_once[0]
     commit = commit_once[0]
     if not (
-        not commit.args.posonlyargs
+        not branch.args.posonlyargs
+        and not branch.args.args
+        and not branch.args.kwonlyargs
+        and branch.args.vararg is None
+        and branch.args.kwarg is None
+        and not commit.args.posonlyargs
         and not commit.args.args
         and not commit.args.kwonlyargs
         and commit.args.vararg is None
         and commit.args.kwarg is None
     ):
         return None
-    transport_calls = _exact_named_calls(commit, "create_commit_local")
-    if len(transport_calls) != 1:
+    branch_calls = _exact_named_calls(branch, "create_branch_local")
+    commit_calls = _exact_named_calls(commit, "create_commit_local")
+    if len(branch_calls) != 1 or len(commit_calls) != 1:
         return None
-    transport = transport_calls[0]
+    branch_transport = branch_calls[0]
+    commit_transport = commit_calls[0]
     if not (
-        [_source(argument) for argument in transport.args]
+        len(branch.body) == 1
+        and isinstance(branch.body[0], ast.Return)
+        and branch.body[0].value is branch_transport
+        and len(commit.body) == 1
+        and isinstance(commit.body[0], ast.Return)
+        and commit.body[0].value is commit_transport
+        and [_source(argument) for argument in branch_transport.args]
         == ["self.runtime_token"]
-        and _has_exact_keyword_sources(transport, _PREPARED_WRITE_KEYWORDS)
+        and _has_exact_keyword_sources(
+            branch_transport,
+            _PREPARED_BRANCH_WRITE_KEYWORDS,
+        )
+        and [_source(argument) for argument in commit_transport.args]
+        == ["self.runtime_token"]
+        and _has_exact_keyword_sources(
+            commit_transport,
+            _PREPARED_WRITE_KEYWORDS,
+        )
     ):
         return None
 
     guard_calls = _exact_named_calls(prepared, "require_guard_local")
     protected_calls = _exact_named_calls(prepared, "protected_write_local")
     rehash_calls = _exact_named_calls(prepared, "rehash_files_local")
+    branch_nodes = set(ast.walk(branch_dispatch))
+    branch_guards = [call for call in guard_calls if call in branch_nodes]
+    commit_guards = [call for call in guard_calls if call not in branch_nodes]
+    branch_writes = [call for call in protected_calls if call in branch_nodes]
+    commit_writes = [call for call in protected_calls if call not in branch_nodes]
     if not (
-        len(guard_calls) == 1
-        and [_source(item) for item in guard_calls[0].args]
+        len(branch_guards) == 1
+        and len(commit_guards) == 1
+        and [_source(item) for item in branch_guards[0].args]
         == ["self.mutation_binding.repository_id"]
         and _has_exact_keyword_sources(
-            guard_calls[0],
+            branch_guards[0],
+            {
+                "method": "'create_branch'",
+                "expected_phase": "phase",
+                "expected_operation": "operation",
+                "expected_manifest_digest": "self.canonical_candidate_digest",
+                "expected_payload_digest": "payload_digest",
+            },
+        )
+        and [_source(item) for item in commit_guards[0].args]
+        == ["self.mutation_binding.repository_id"]
+        and _has_exact_keyword_sources(
+            commit_guards[0],
             {
                 "method": "'create_commit'",
-                "expected_phase": "'state_main'",
-                "expected_operation": "'additive_main_upload'",
+                "expected_phase": "phase",
+                "expected_operation": "operation",
                 "expected_manifest_digest": "self.canonical_candidate_digest",
                 "expected_payload_digest": "payload_digest",
             },
@@ -1594,22 +1690,44 @@ def _attested_prepared_factory_call(
         and [_source(item) for item in rehash_calls[0].args]
         == ["self.operations_payload", "self.mutation_binding.files"]
         and not rehash_calls[0].keywords
-        and len(protected_calls) == 1
-        and [_source(item) for item in protected_calls[0].args]
+        and len(branch_writes) == 1
+        and len(commit_writes) == 1
+        and [_source(item) for item in branch_writes[0].args]
+        == [
+            "self.mutation_binding.repository_id",
+            "'create_branch'",
+            "branch_once",
+        ]
+        and _has_exact_keyword_sources(
+            branch_writes[0],
+            {
+                "expected_phase": "phase",
+                "expected_operation": "operation",
+                "expected_manifest_digest": "self.canonical_candidate_digest",
+                "expected_payload_digest": "payload_digest",
+            },
+        )
+        and [_source(item) for item in commit_writes[0].args]
         == [
             "self.mutation_binding.repository_id",
             "'create_commit'",
             "commit_once",
         ]
         and _has_exact_keyword_sources(
-            protected_calls[0],
+            commit_writes[0],
             {
-                "expected_phase": "'state_main'",
-                "expected_operation": "'additive_main_upload'",
+                "expected_phase": "phase",
+                "expected_operation": "operation",
                 "expected_manifest_digest": "self.canonical_candidate_digest",
                 "expected_payload_digest": "payload_digest",
             },
         )
+        and isinstance(branch_dispatch.body[-1], ast.Return)
+        and _source(branch_dispatch.body[-1].value)
+        == "(self.mutation_binding.parent_commit, committed)"
+        and isinstance(prepared.body[-1], ast.Return)
+        and _source(prepared.body[-1].value)
+        == "(self.mutation_binding.parent_commit, committed)"
     ):
         return None
     return prepared, assignment_call
@@ -2095,7 +2213,10 @@ class _FileAnalyzer:
                     }
                     if (
                         self.fresh_session_boundary_attested
-                        and _is_attested_create_commit_primitive(stmt)
+                        and _is_attested_create_commit_primitive(
+                            stmt,
+                            expected_method=method,
+                        )
                     ):
                         symbols.add(f"attested-api-write:{method}")
                     self.base_env[stmt.name] = _Value(
@@ -2150,7 +2271,11 @@ class _FileAnalyzer:
                     "_rehash_prepared_snapshot_files",
                     [],
                 )
-                primitive_identifiers = self.name_to_functions.get(
+                branch_primitive_identifiers = self.name_to_functions.get(
+                    "_canonical_hf_api_create_branch",
+                    [],
+                )
+                commit_primitive_identifiers = self.name_to_functions.get(
                     "_canonical_hf_api_create_commit",
                     [],
                 )
@@ -2165,6 +2290,10 @@ class _FileAnalyzer:
                 )
                 create_commit = self.base_env.get(
                     "_canonical_hf_api_create_commit",
+                    _Value(),
+                )
+                create_branch = self.base_env.get(
+                    "_canonical_hf_api_create_branch",
                     _Value(),
                 )
                 guard_module = (
@@ -2191,7 +2320,8 @@ class _FileAnalyzer:
                 exact_factory_bindings = bool(
                     len(factory_identifiers) == 1
                     and len(rehash_identifiers) == 1
-                    and len(primitive_identifiers) == 1
+                    and len(branch_primitive_identifiers) == 1
+                    and len(commit_primitive_identifiers) == 1
                     and require_guard.symbols in expected_guard_symbols
                     and protected_write.symbols in expected_write_symbols
                     and rehash_files.symbols
@@ -2205,9 +2335,21 @@ class _FileAnalyzer:
                     == frozenset(
                         {
                             "_canonical_hf_api_create_commit",
-                            f"function:{primitive_identifiers[0]}",
+                            f"function:{commit_primitive_identifiers[0]}",
                             "api-write:create_commit",
                             "attested-api-write:create_commit",
+                        }
+                    )
+                    and create_branch.methods == frozenset({"create_branch"})
+                    and create_branch.roots
+                    == frozenset({"_canonical_hf_api_create_branch"})
+                    and create_branch.symbols
+                    == frozenset(
+                        {
+                            "_canonical_hf_api_create_branch",
+                            f"function:{branch_primitive_identifiers[0]}",
+                            "api-write:create_branch",
+                            "attested-api-write:create_branch",
                         }
                     )
                 )
@@ -2218,6 +2360,7 @@ class _FileAnalyzer:
                             "require_guard": require_guard,
                             "rehash_files": rehash_files,
                             "protected_write": protected_write,
+                            "create_branch": create_branch,
                             "create_commit": create_commit,
                         }
                     )
@@ -2993,14 +3136,27 @@ class _FunctionRun:
     def _prepared_binding_is_exact(
         binding: tuple[tuple[str, tuple[str, ...]], ...],
     ) -> bool:
-        return dict(binding) == {
-            "expected_phase": ("literal:state_main",),
-            "expected_operation": ("literal:additive_main_upload",),
-            "expected_manifest_digest": ("self.canonical_candidate_digest",),
+        observed = dict(binding)
+        common = {
+            "expected_manifest_digest": (
+                "self.canonical_candidate_digest",
+            ),
             "expected_payload_digest": (
                 "self.mutation_binding.payload_digest",
             ),
         }
+        return observed in (
+            {
+                **common,
+                "expected_phase": ("literal:state_main",),
+                "expected_operation": ("literal:additive_main_upload",),
+            },
+            {
+                **common,
+                "expected_phase": ("expression:phase",),
+                "expected_operation": ("expression:operation",),
+            },
+        )
 
     def _prepared_primitive_call_is_exact(
         self,
@@ -3009,11 +3165,24 @@ class _FunctionRun:
         env: Mapping[str, _Value],
         active_guards: Sequence[_Guard],
     ) -> bool:
+        if callee_value.methods == frozenset({"create_branch"}):
+            function_names = {
+                "_canonical_hf_api_create_branch",
+                "create_branch_local",
+            }
+            expected_keywords = _PREPARED_BRANCH_WRITE_KEYWORDS
+        elif callee_value.methods == frozenset({"create_commit"}):
+            function_names = {
+                "_canonical_hf_api_create_commit",
+                "create_commit_local",
+            }
+            expected_keywords = _PREPARED_WRITE_KEYWORDS
+        else:
+            return False
         if not (
             callee_value.api_attested
             and isinstance(call.func, ast.Name)
-            and call.func.id
-            in {"_canonical_hf_api_create_commit", "create_commit_local"}
+            and call.func.id in function_names
             and len(call.args) == 1
             and self._binding_token(call.args[0], env, active_guards)
             == ("self.runtime_token",)
@@ -3021,12 +3190,14 @@ class _FunctionRun:
         ):
             return False
         keywords = {keyword.arg: keyword.value for keyword in call.keywords}
-        if set(keywords) != set(_PREPARED_WRITE_KEYWORDS):
+        if set(keywords) != set(expected_keywords):
             return False
         return all(
             self._binding_token(keywords[name], env, active_guards)
-            == (expected_root,)
-            for name, expected_root in _PREPARED_WRITE_KEYWORDS.items()
+            == (
+                "literal:False" if name == "exist_ok" else expected_root,
+            )
+            for name, expected_root in expected_keywords.items()
         )
 
     def _record_write(

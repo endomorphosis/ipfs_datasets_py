@@ -2473,14 +2473,6 @@ def _build_state_laws_prepared_commit_call(
             else "additive_staging_upload"
         )
         payload_digest = self.mutation_binding.payload_digest
-        require_guard_local(
-            self.mutation_binding.repository_id,
-            method=self.mutation_binding.method,
-            expected_phase=phase,
-            expected_operation=operation,
-            expected_manifest_digest=self.canonical_candidate_digest,
-            expected_payload_digest=payload_digest,
-        )
         final_files = rehash_files_local(
             self.operations_payload,
             self.mutation_binding.files,
@@ -2490,11 +2482,18 @@ def _build_state_laws_prepared_commit_call(
                 "anonymous upload snapshot binding changed before mutation"
             )
 
-        create_branch_local = create_branch
-        create_commit_local = create_commit
+        if self.mutation_binding.method == "create_branch":
+            require_guard_local(
+                self.mutation_binding.repository_id,
+                method="create_branch",
+                expected_phase=phase,
+                expected_operation=operation,
+                expected_manifest_digest=self.canonical_candidate_digest,
+                expected_payload_digest=payload_digest,
+            )
+            create_branch_local = create_branch
 
-        def mutate_once() -> Any:
-            if self.mutation_binding.method == "create_branch":
+            def branch_once() -> Any:
                 return create_branch_local(
                     self.runtime_token,
                     repo_id=self.mutation_binding.repository_id,
@@ -2503,6 +2502,36 @@ def _build_state_laws_prepared_commit_call(
                     revision=self.mutation_binding.parent_commit,
                     exist_ok=False,
                 )
+
+            try:
+                committed = protected_write_local(
+                    self.mutation_binding.repository_id,
+                    "create_branch",
+                    branch_once,
+                    expected_phase=phase,
+                    expected_operation=operation,
+                    expected_manifest_digest=self.canonical_candidate_digest,
+                    expected_payload_digest=payload_digest,
+                )
+            except HuggingFacePublicationError:
+                raise
+            except Exception as exc:  # pragma: no cover - transport failures
+                raise HuggingFacePublicationError(
+                    f"HfApi {self.mutation_binding.method} failed: {exc}"
+                ) from exc
+            return self.mutation_binding.parent_commit, committed
+
+        require_guard_local(
+            self.mutation_binding.repository_id,
+            method="create_commit",
+            expected_phase=phase,
+            expected_operation=operation,
+            expected_manifest_digest=self.canonical_candidate_digest,
+            expected_payload_digest=payload_digest,
+        )
+        create_commit_local = create_commit
+
+        def commit_once() -> Any:
             return create_commit_local(
                 self.runtime_token,
                 repo_id=self.mutation_binding.repository_id,
@@ -2516,8 +2545,8 @@ def _build_state_laws_prepared_commit_call(
         try:
             committed = protected_write_local(
                 self.mutation_binding.repository_id,
-                self.mutation_binding.method,
-                mutate_once,
+                "create_commit",
+                commit_once,
                 expected_phase=phase,
                 expected_operation=operation,
                 expected_manifest_digest=self.canonical_candidate_digest,
@@ -3433,6 +3462,13 @@ class HuggingFaceReleasePublisher:
             canonical_message = _text(message, label="commit_message")
 
             def execute_commit() -> tuple[str, Any]:
+                # This fallback is reachable only for non-protected profiles,
+                # but retain the exact legacy guard at the transport edge so
+                # future control-flow drift cannot expose a protected target.
+                require_unprotected_or_runtime(
+                    self.repository_id,
+                    method="create_commit",
+                )
                 create_commit = self._require_api_method("create_commit")
                 parent = (
                     self.assert_audited_parent_is_current_and_prefix_empty(plan)

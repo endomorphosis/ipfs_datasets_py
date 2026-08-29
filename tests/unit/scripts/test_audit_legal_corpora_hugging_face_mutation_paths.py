@@ -1459,9 +1459,29 @@ def test_live_publisher_closure_factory_attestation_is_exact() -> None:
             "        create_commit=guarded_write,\n",
         ),
         (
+            "spoofed_branch_helper",
+            "        create_branch=_canonical_hf_api_create_branch,\n",
+            "        create_branch=guarded_write,\n",
+        ),
+        (
             "renamed_transport",
             "        def commit_once() -> Any:\n",
             "        def renamed_commit() -> Any:\n",
+        ),
+        (
+            "renamed_branch_transport",
+            "            def branch_once() -> Any:\n",
+            "            def renamed_branch() -> Any:\n",
+        ),
+        (
+            "phase_binding_drift",
+            "        phase = f\"{corpus}_{target}\"\n",
+            '        phase = "state_main"\n',
+        ),
+        (
+            "branch_method_binding_drift",
+            '                method="create_branch",\n',
+            "                method=self.mutation_binding.method,\n",
         ),
         (
             "missing_helper",
@@ -1505,6 +1525,37 @@ def test_publisher_closure_factory_drift_fails_closed(
         }
         for item in report["authority_boundary_violations"]
     ), label
+
+
+def test_live_publisher_legacy_fallback_requires_exact_dominating_guard(
+    tmp_path: Path,
+) -> None:
+    publisher = audit.REPOSITORY_ROOT / audit._PUBLISHER_RELPATH
+    source = publisher.read_text(encoding="utf-8")
+    guard = '''\
+                require_unprotected_or_runtime(
+                    self.repository_id,
+                    method="create_commit",
+                )
+'''
+    assert source.count(guard) == 1
+
+    report = _audit_source(
+        tmp_path,
+        source.replace(guard, "", 1),
+        relpath=Path(audit._PUBLISHER_RELPATH),
+    )
+
+    fallback = [
+        item
+        for item in report["callsites"]
+        if item["function"]
+        == "HuggingFaceReleasePublisher.publish_append_only.<locals>.execute_commit"
+    ]
+    assert len(fallback) == 1
+    assert fallback[0]["protection"] == "unprotected"
+    assert report["status"] == "blocked"
+    assert report["unprotected_count"] >= 1
 
 
 def test_session_boundary_drift_deattests_create_commit(
@@ -2232,13 +2283,18 @@ def test_live_tree_has_no_unprotected_protected_repo_writer() -> None:
             "_PreparedStateLawsCanonicalCommitExecutor.__call__"
         )
     ]
-    assert len(prepared_calls) == 1
-    prepared_call = prepared_calls[0]
-    assert prepared_call["attested_executor"] is True
-    assert prepared_call["prepared_binding_exact"] is True
-    assert prepared_call["api_primitive_attested"] is True
-    assert prepared_call["api_primitive_exact_call"] is True
-    assert "canonical_runtime" in prepared_call["protection_variants"]
+    assert {item["write_method"] for item in prepared_calls} == {
+        "create_branch",
+        "create_commit",
+    }
+    assert len(prepared_calls) == 2
+    for prepared_call in prepared_calls:
+        assert prepared_call["attested_executor"] is True
+        assert prepared_call["prepared_binding_exact"] is True
+        assert prepared_call["api_primitive_attested"] is True
+        assert prepared_call["api_primitive_exact_call"] is True
+        assert prepared_call["guarded_write_individual"] is True
+        assert "canonical_runtime" in prepared_call["protection_variants"]
     assert any(
         item["function"] == "refresh_state_laws_corpus"
         and item["mechanism"] == "refresh_hard_rejection"
