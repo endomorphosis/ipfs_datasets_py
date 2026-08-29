@@ -1209,19 +1209,19 @@ def build_canonical_publication_receipt(
     ):
         raise PublishReceiptError("main controls differ from candidate or plan")
     mutation = mutation_receipt.to_dict()
-    expected = {
-        "method": "create_commit",
-        "operation": AUTHORIZED_OPERATION,
-        "parent_commit": plan.audited_parent_commit,
-        "phase": PUBLICATION_PHASE,
-        "plan_digest": plan.plan_digest,
-        "policy_proof_digest": mutation_receipt.policy_proof_digest,
-        "release_manifest_digest": release_digest,
-        "repository_id": plan.repository_id,
-        "revision": PUBLIC_BRANCH,
-        "runtime_authorized": True,
-    }
-    if any(mutation.get(key) != value for key, value in expected.items()):
+    if (
+        mutation.get("method") != "create_commit"
+        or mutation.get("operation") != AUTHORIZED_OPERATION
+        or mutation.get("parent_commit") != plan.audited_parent_commit
+        or mutation.get("phase") != PUBLICATION_PHASE
+        or mutation.get("plan_digest") != plan.plan_digest
+        or mutation.get("policy_proof_digest")
+        != mutation_receipt.policy_proof_digest
+        or mutation.get("release_manifest_digest") != release_digest
+        or mutation.get("repository_id") != plan.repository_id
+        or mutation.get("revision") != PUBLIC_BRANCH
+        or mutation.get("runtime_authorized") is not True
+    ):
         raise PublishReceiptError("canonical main mutation differs from its plan")
     if mutation["policy_proof_digest"] != _normalize_sha256(
         (candidate.get("publication_binding") or {}).get("policy_proof_digest"),
