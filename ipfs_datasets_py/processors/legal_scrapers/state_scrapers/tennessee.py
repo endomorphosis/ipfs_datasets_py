@@ -4,10 +4,12 @@ import hashlib
 import json
 import os
 import re
+import secrets
 import ssl
 import time
 import urllib.request
 import warnings
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Set
 from urllib.parse import urljoin, urlparse
@@ -21,6 +23,64 @@ from .base_scraper import (
     StatuteMetadata,
 )
 from .registry import StateScraperRegistry
+
+
+class _TennesseePhaseLedgerView:
+    """Project shared GET retain/replay calls onto one signed TN phase."""
+
+    def __init__(self, ledger: Any, *, phase_id: str, phase_started_at: str) -> None:
+        self._ledger = ledger
+        self.phase_id = phase_id
+        self.phase_started_at = phase_started_at
+        self.jurisdiction_root = ledger.jurisdiction_root
+        self.parser_name = ledger.parser_name
+        self.retained_replay_only = bool(
+            getattr(ledger, "retained_replay_only", False)
+        )
+
+    def _request(self, value: Mapping[str, Any]) -> Dict[str, Any]:
+        request = dict(value)
+        conflicting = str(request.get("acquisition_phase_id") or "").strip()
+        if conflicting and conflicting != self.phase_id:
+            raise RuntimeError("Tennessee GET request crossed acquisition phases")
+        request.update(
+            {
+                "acquisition_phase_id": self.phase_id,
+                "acquisition_phase_schema": TennesseeScraper.TN_PHASE_SCHEMA,
+                "acquisition_phase_started_at": self.phase_started_at,
+            }
+        )
+        return request
+
+    def replay_retained_parser_input(
+        self,
+        *,
+        official_url: str,
+        sanitized_request: Mapping[str, Any],
+    ) -> Any:
+        return self._ledger.replay_retained_parser_input(
+            official_url=official_url,
+            sanitized_request=self._request(sanitized_request),
+        )
+
+    def retain_parser_input(self, **kwargs: Any) -> Any:
+        request = kwargs.get("sanitized_request")
+        if not isinstance(request, Mapping):
+            raise RuntimeError("Tennessee phased GET omitted its request identity")
+        kwargs["sanitized_request"] = self._request(request)
+        pagination = dict(kwargs.get("pagination") or {})
+        pagination["tennessee_acquisition_phase"] = {
+            "phase_id": self.phase_id,
+            "schema_version": TennesseeScraper.TN_PHASE_SCHEMA,
+            "started_at": self.phase_started_at,
+        }
+        kwargs["pagination"] = pagination
+        return self._ledger.retain_parser_input(**kwargs)
+
+    def refresh_existing_entries(self) -> None:
+        refresh = getattr(self._ledger, "refresh_existing_entries", None)
+        if callable(refresh):
+            refresh()
 
 # Suppress SSL warnings for tn.gov
 warnings.filterwarnings("ignore", message="Unverified HTTPS request")
@@ -169,12 +229,18 @@ class TennesseeScraper(BaseStateScraper):
     OBSERVED_STRICT_INPUT_COUNT = 36_118
     OBSERVED_BODY_LEAF_COUNT = 36_046
     OBSERVED_SUBTREE_RESPONSE_COUNT = 69
+    STRICT_GET_ACCEPT = "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5"
+    TN_PHASE_SCHEMA = "tennessee-lexis-acquisition-phase-v1"
+    TN_PHASE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
+    TN_PHASE_MAX_SPAN_SECONDS = 2 * 24 * 60 * 60
+    TN_PHASE_CLOCK_SKEW_SECONDS = 5 * 60
     # Source drift requires an explicit reviewed code update.  Tests may
     # replace this class attribute for a deliberately smaller exact fixture.
     ENFORCE_OBSERVED_TN_FRONTIER = True
     STRICT_FULL_BLOCKER = (
-        "Tennessee strict full-corpus acquisition requires a retained-replay-only "
-        "ledger containing the current General Assembly-delegated Lexis chain: "
+        "Tennessee strict full-corpus acquisition requires an attached live ledger "
+        "or a retained-replay-only ledger containing the current General "
+        "Assembly-delegated Lexis chain: "
         "publisher entry, exact root, all 69 deepest TOC responses, and every "
         "source-derived document body must be ledger-replayed; synthetic tn.gov, "
         "Justia, and Jina rows cannot prove this source frontier"
@@ -232,6 +298,7 @@ class TennesseeScraper(BaseStateScraper):
             state_archival_fetch,
             strict_frontier_closure,
             tennessee_lexis,
+            tennessee_lexis_live,
             tennessee_section,
         )
 
@@ -240,6 +307,7 @@ class TennesseeScraper(BaseStateScraper):
             state_archival_fetch,
             strict_frontier_closure,
             tennessee_lexis,
+            tennessee_lexis_live,
             tennessee_section,
             wayback_machine_engine,
         )
@@ -268,20 +336,163 @@ class TennesseeScraper(BaseStateScraper):
             ),
         )
 
+    @staticmethod
+    def _parse_tennessee_timestamp(value: object, *, field: str) -> datetime:
+        raw = str(value or "").strip()
+        try:
+            parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise RuntimeError(f"Tennessee {field} is not ISO-8601") from exc
+        if parsed.tzinfo is None or parsed.utcoffset() is None:
+            raise RuntimeError(f"Tennessee {field} requires a timezone")
+        return parsed.astimezone(UTC)
+
+    @classmethod
+    def _bind_tennessee_phase_request(
+        cls,
+        request: Mapping[str, Any],
+        *,
+        phase_id: str,
+        phase_started_at: str,
+    ) -> Dict[str, Any]:
+        normalized_id = str(phase_id or "").strip().lower()
+        normalized_start = cls._parse_tennessee_timestamp(
+            phase_started_at,
+            field="acquisition phase start",
+        ).isoformat()
+        if not re.fullmatch(r"[a-f0-9]{64}", normalized_id):
+            raise RuntimeError("Tennessee acquisition phase ID is invalid")
+        bound = dict(request)
+        existing = str(bound.get("acquisition_phase_id") or "").strip().lower()
+        if existing and existing != normalized_id:
+            raise RuntimeError("Tennessee request crossed acquisition phases")
+        bound.update(
+            {
+                "acquisition_phase_id": normalized_id,
+                "acquisition_phase_schema": cls.TN_PHASE_SCHEMA,
+                "acquisition_phase_started_at": normalized_start,
+            }
+        )
+        return bound
+
+    @classmethod
+    def _phase_from_request(
+        cls,
+        request: Mapping[str, Any],
+    ) -> tuple[str, str] | None:
+        phase_id = str(request.get("acquisition_phase_id") or "").strip().lower()
+        schema = str(request.get("acquisition_phase_schema") or "").strip()
+        started_at = str(
+            request.get("acquisition_phase_started_at") or ""
+        ).strip()
+        if not any((phase_id, schema, started_at)):
+            return None
+        if schema != cls.TN_PHASE_SCHEMA or not re.fullmatch(
+            r"[a-f0-9]{64}", phase_id
+        ):
+            raise RuntimeError("Tennessee retained phase metadata is malformed")
+        return (
+            phase_id,
+            cls._parse_tennessee_timestamp(
+                started_at,
+                field="retained acquisition phase start",
+            ).isoformat(),
+        )
+
+    def _select_tennessee_acquisition_phase(
+        self,
+        *,
+        allow_new: bool,
+    ) -> tuple[str, str]:
+        existing_id = str(
+            getattr(self, "_tennessee_acquisition_phase_id", "") or ""
+        ).strip().lower()
+        existing_start = str(
+            getattr(self, "_tennessee_acquisition_phase_started_at", "") or ""
+        ).strip()
+        if existing_id or existing_start:
+            bound = self._bind_tennessee_phase_request(
+                {},
+                phase_id=existing_id,
+                phase_started_at=existing_start,
+            )
+            return (
+                str(bound["acquisition_phase_id"]),
+                str(bound["acquisition_phase_started_at"]),
+            )
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError("Tennessee acquisition phase requires an attached ledger")
+        candidates: dict[str, str] = {}
+        for retained in tuple(getattr(ledger, "entries", ()) or ()):
+            receipt = getattr(retained, "receipt", None)
+            request = getattr(receipt, "sanitized_request", None)
+            if not isinstance(request, Mapping):
+                continue
+            phase = self._phase_from_request(request)
+            if phase is None:
+                continue
+            phase_id, started_at = phase
+            prior = candidates.get(phase_id)
+            if prior is not None and prior != started_at:
+                raise RuntimeError(
+                    "Tennessee retained phase ID has conflicting start times"
+                )
+            candidates[phase_id] = started_at
+
+        now = datetime.now(UTC)
+        eligible: list[tuple[datetime, str, str]] = []
+        for phase_id, started_at in candidates.items():
+            started = self._parse_tennessee_timestamp(
+                started_at,
+                field="retained acquisition phase start",
+            )
+            age = (now - started).total_seconds()
+            if age < -self.TN_PHASE_CLOCK_SKEW_SECONDS:
+                raise RuntimeError("Tennessee retained acquisition phase begins in the future")
+            if age <= self.TN_PHASE_MAX_AGE_SECONDS:
+                eligible.append((started, phase_id, started_at))
+        if eligible:
+            _started, phase_id, started_at = max(eligible)
+        elif allow_new:
+            started_at = now.isoformat()
+            phase_id = hashlib.sha256(
+                json.dumps(
+                    {
+                        "jurisdiction": "TN",
+                        "nonce": secrets.token_hex(32),
+                        "schema_version": self.TN_PHASE_SCHEMA,
+                        "started_at": started_at,
+                    },
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            ).hexdigest()
+        elif candidates:
+            raise RuntimeError("Tennessee retained acquisition phase is stale")
+        else:
+            raise RuntimeError(
+                "Tennessee retained frontier lacks an acquisition phase binding"
+            )
+        self._tennessee_acquisition_phase_id = phase_id
+        self._tennessee_acquisition_phase_started_at = started_at
+        self._tennessee_ignored_phase_count = max(0, len(candidates) - 1)
+        return phase_id, started_at
+
     async def _fetch_tennessee_lexis_get_wave(
         self,
         urls: Sequence[str],
         *,
         frontier_name: str,
         content_validator: Any,
+        require_direct: bool = False,
     ) -> StateLawPageMultiFetchResult:
         """Use one shared plural inventory for an ordered same-domain GET wave.
 
-        This is the future acquisition seam for authority and document GETs.
-        The current strict route below never invokes it: offline certification
-        reads only exact retained ledger identities.  Lexis TOC ``PATCH``
-        requests are deliberately absent because a GET archive cannot bind
-        their request bodies.
+        Lexis TOC ``PATCH`` requests are deliberately absent because a GET
+        archive cannot bind their request bodies; GET archive cannot bind a
+        PATCH identity.
         """
 
         from .tennessee_lexis import grouped_get_acquisition_contract
@@ -301,23 +512,44 @@ class TennesseeScraper(BaseStateScraper):
             raise RuntimeError(
                 f"Tennessee {frontier_name} crossed an unbound source domain: {domain}"
             )
-        batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
-            requested,
-            residual_retry_attempts=self._tennessee_residual_retry_attempts(),
-            timeout_seconds=45,
-            headers={
-                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5",
-                "User-Agent": "ipfs-datasets-tennessee-code/3.0",
-            },
-            content_validator=content_validator,
-            media_type="text/html",
-            max_concurrency=self._tennessee_frontier_concurrency(),
-            prefer_direct=True,
-            common_crawl_domain_terms=(domain,),
-            common_crawl_url_terms=url_terms,
-            common_crawl_mime_terms=("html",),
-            wayback_prefix_inventory=True,
-        )
+        headers = {
+            **dict(self._tennessee_get_request(requested[0])["headers"]),
+            "User-Agent": "ipfs-datasets-tennessee-code/3.0",
+        }
+        original_ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        phase_id = str(
+            getattr(self, "_tennessee_acquisition_phase_id", "") or ""
+        ).strip()
+        phase_started_at = str(
+            getattr(self, "_tennessee_acquisition_phase_started_at", "") or ""
+        ).strip()
+        phase_view: _TennesseePhaseLedgerView | None = None
+        if original_ledger is not None and (phase_id or phase_started_at):
+            phase_view = _TennesseePhaseLedgerView(
+                original_ledger,
+                phase_id=phase_id,
+                phase_started_at=phase_started_at,
+            )
+            self._state_law_acquisition_ledger = phase_view
+        try:
+            batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
+                requested,
+                residual_retry_attempts=self._tennessee_residual_retry_attempts(),
+                timeout_seconds=45,
+                headers=headers,
+                content_validator=content_validator,
+                media_type="text/html",
+                max_concurrency=self._tennessee_frontier_concurrency(),
+                prefer_direct=True,
+                common_crawl_domain_terms=(domain,),
+                common_crawl_url_terms=url_terms,
+                common_crawl_mime_terms=("html",),
+                wayback_prefix_inventory=True,
+                archive_recovery_enabled=not require_direct,
+            )
+        finally:
+            if phase_view is not None:
+                self._state_law_acquisition_ledger = original_ledger
         vectors = (
             batch.urls,
             batch.payloads,
@@ -352,12 +584,271 @@ class TennesseeScraper(BaseStateScraper):
             raise RuntimeError(
                 f"Tennessee {frontier_name} repeated a same-domain Common Crawl inventory"
             )
+        if require_direct:
+            non_direct = [
+                {
+                    "source_transport": str(
+                        (receipt.get("source_transport") or "")
+                        if isinstance(receipt, Mapping)
+                        else ""
+                    ),
+                    "url": url,
+                }
+                for url, receipt in zip(
+                    batch.urls,
+                    batch.transport_receipts,
+                    strict=True,
+                )
+                if not isinstance(receipt, Mapping)
+                or str(receipt.get("source_transport") or "").casefold()
+                != "direct"
+            ]
+            if non_direct:
+                raise RuntimeError(
+                    f"Tennessee {frontier_name} rejected non-direct current-source "
+                    f"transport: {non_direct[:10]} (total={len(non_direct)})"
+                )
         batch.payloads = [bytes(payload) for payload in batch.payloads]
         return batch
 
-    @staticmethod
-    def _tennessee_get_request(url: str) -> Dict[str, Any]:
-        return {"method": "GET", "url": str(url)}
+    def _tennessee_get_request(
+        self,
+        url: str,
+        *,
+        phase_id: str | None = None,
+        phase_started_at: str | None = None,
+    ) -> Dict[str, Any]:
+        request = {
+            "headers": {"Accept": TennesseeScraper.STRICT_GET_ACCEPT},
+            "method": "GET",
+            "url": str(url),
+        }
+        selected_id = str(
+            phase_id
+            or getattr(self, "_tennessee_acquisition_phase_id", "")
+            or ""
+        ).strip()
+        selected_start = str(
+            phase_started_at
+            or getattr(self, "_tennessee_acquisition_phase_started_at", "")
+            or ""
+        ).strip()
+        if selected_id or selected_start:
+            return self._bind_tennessee_phase_request(
+                request,
+                phase_id=selected_id,
+                phase_started_at=selected_start,
+            )
+        return request
+
+    def _validate_tennessee_lexis_configuration(self) -> None:
+        """Fail closed if class and parser source identities diverge."""
+
+        from .tennessee_lexis import (
+            GENERAL_ASSEMBLY_PUBLICATIONS_URL,
+            PUBLIC_CONTAINER_URL,
+            PUBLIC_ENTRY_URL,
+            TOC_ENDPOINT_PATH,
+            TOC_ROOT_ID,
+        )
+
+        observed = (
+            self.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL,
+            self.AUTHORIZED_CODE_ENTRY_URL,
+            self.AUTHORIZED_CODE_CONTAINER_URL,
+            self.AUTHORIZED_TOC_ROOT_ID,
+            self.AUTHORIZED_TOC_ENDPOINT,
+        )
+        expected = (
+            GENERAL_ASSEMBLY_PUBLICATIONS_URL,
+            PUBLIC_ENTRY_URL,
+            PUBLIC_CONTAINER_URL,
+            TOC_ROOT_ID,
+            TOC_ENDPOINT_PATH,
+        )
+        if observed != expected:
+            raise RuntimeError(
+                "Tennessee delegated Lexis source configuration changed without review"
+            )
+
+    def _retain_tennessee_browser_input(
+        self,
+        *,
+        official_url: str,
+        body: bytes,
+        sanitized_request: Mapping[str, Any],
+        response_status: int,
+        media_type: str,
+        observed_at: str,
+        response_proof: Mapping[str, Any],
+    ) -> None:
+        """Retain a rendered root or exact TOC PATCH before live parsing."""
+
+        from ipfs_datasets_py.processors.legal_data.state_laws_source_provenance import (
+            canonicalize_state_law_transport_receipt,
+        )
+
+        from .tennessee_lexis import (
+            PUBLIC_CONTAINER_URL,
+            PUBLIC_ENTRY_URL,
+            TOC_ENDPOINT_URL,
+            container_url_matches,
+        )
+        from .tennessee_lexis_live import (
+            PATCH_ACCEPT,
+            canonical_rendered_root_request,
+        )
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError("Tennessee browser evidence requires an attached ledger")
+        if self._retained_replay_only_enabled():
+            self._raise_if_retained_replay_only_network(
+                operation="Tennessee browser acquisition",
+                url=official_url,
+            )
+        request = dict(sanitized_request)
+        phase = self._phase_from_request(request)
+        active_phase = self._select_tennessee_acquisition_phase(allow_new=False)
+        if phase != active_phase:
+            raise RuntimeError("Tennessee browser callback crossed acquisition phases")
+        method = str(request.get("method") or "").upper()
+        if method == "GET":
+            valid_request = bool(
+                official_url == PUBLIC_CONTAINER_URL
+                and request
+                == canonical_rendered_root_request(
+                    acquisition_phase_id=active_phase[0],
+                    acquisition_phase_started_at=active_phase[1],
+                )
+            )
+        else:
+            headers = request.get("headers")
+            valid_request = bool(
+                official_url == TOC_ENDPOINT_URL
+                and method == "PATCH"
+                and isinstance(headers, Mapping)
+                and dict(headers)
+                == {
+                    "Accept": PATCH_ACCEPT,
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                }
+                and re.fullmatch(
+                    r"[a-f0-9]{64}",
+                    str(request.get("request_body_sha256") or ""),
+                )
+                and int(request.get("request_body_length") or 0) > 0
+                and request.get("session_request_header")
+                == "X-LN-CurrentRequestId"
+                and re.fullmatch(
+                    r"[a-f0-9]{64}",
+                    str(request.get("session_request_id_sha256") or ""),
+                )
+            )
+        payload = bytes(body or b"")
+        proof = dict(response_proof or {})
+        proof_observed_at = self._parse_tennessee_timestamp(
+            proof.get("response_observed_at"),
+            field="browser response boundary",
+        ).isoformat()
+        callback_observed_at = self._parse_tennessee_timestamp(
+            observed_at,
+            field="browser callback boundary",
+        ).isoformat()
+        final_url = str(proof.get("final_url") or "").strip()
+        redirect_chain = proof.get("redirect_chain")
+        session_digest = str(
+            proof.get("session_request_id_sha256") or ""
+        ).strip().lower()
+        proof_valid = bool(
+            proof_observed_at == callback_observed_at
+            and isinstance(redirect_chain, Sequence)
+            and not isinstance(redirect_chain, (str, bytes, bytearray))
+            and re.fullmatch(r"[a-f0-9]{64}", session_digest)
+        )
+        if method == "GET":
+            proof_valid = bool(
+                proof_valid
+                and container_url_matches(final_url)
+                and re.fullmatch(
+                    r"[a-f0-9]{64}",
+                    str(proof.get("final_url_sha256") or "").strip().lower(),
+                )
+                and all(
+                    isinstance(item, Mapping)
+                    and re.fullmatch(
+                        r"[a-f0-9]{64}",
+                        str(item.get("url_sha256") or "").strip().lower(),
+                    )
+                    and (
+                        str(item.get("url") or "").rstrip("/")
+                        == PUBLIC_ENTRY_URL.rstrip("/")
+                        or container_url_matches(item.get("url"))
+                    )
+                    for item in redirect_chain
+                )
+            )
+        else:
+            proof_valid = bool(
+                proof_valid
+                and final_url == TOC_ENDPOINT_URL
+                and proof.get("redirected") is False
+                and list(redirect_chain) == []
+                and session_digest
+                == str(request.get("session_request_id_sha256") or "")
+            )
+        sensitive_projection = json.dumps(
+            proof,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).casefold()
+        if any(key in sensitive_projection for key in ('"cookie"', '"authorization"')):
+            proof_valid = False
+        if (
+            not valid_request
+            or not proof_valid
+            or not payload
+            or int(response_status) != 200
+            or not str(observed_at or "").strip()
+        ):
+            raise RuntimeError(
+                "Tennessee browser callback exposed an unbound request or response"
+            )
+        if method == "GET" and "html" not in str(media_type or "").casefold():
+            raise RuntimeError("Tennessee rendered root omitted its HTML media type")
+        if method == "PATCH" and "json" not in str(media_type or "").casefold():
+            raise RuntimeError("Tennessee TOC PATCH omitted its JSON media type")
+        digest = hashlib.sha256(payload).hexdigest()
+        transport_receipt = canonicalize_state_law_transport_receipt(
+            {
+                "content_sha256": digest,
+                "official_url": official_url,
+                "source_transport": "browser_rendered",
+            },
+            official_url=official_url,
+            content_sha256=digest,
+        )
+        retained = ledger.retain_parser_input(
+            official_url=official_url,
+            body=payload,
+            transport_receipt=transport_receipt,
+            retrieved_at=observed_at,
+            response_status=int(response_status),
+            media_type=media_type,
+            sanitized_request=request,
+            pagination={
+                "tennessee_acquisition_phase": {
+                    "phase_id": active_phase[0],
+                    "schema_version": self.TN_PHASE_SCHEMA,
+                    "started_at": active_phase[1],
+                },
+                "tennessee_browser_response": proof,
+            },
+            network_used=True,
+        )
+        if bytes(getattr(retained.envelope, "body", b"") or b"") != payload:
+            raise RuntimeError("Tennessee ledger changed browser bytes before admission")
 
     @staticmethod
     def _tennessee_envelope_receipt_sha256(envelope: Any) -> str:
@@ -382,7 +873,7 @@ class TennesseeScraper(BaseStateScraper):
 
     @staticmethod
     def _tennessee_observed_at_from_receipt(receipt: Mapping[str, Any]) -> str:
-        for key in ("retrieved_at", "observed_at", "timestamp"):
+        for key in ("retrieved_at", "observed_at", "timestamp", "fetched_at"):
             value = str(receipt.get(key) or "").strip()
             if value:
                 return value
@@ -390,6 +881,141 @@ class TennesseeScraper(BaseStateScraper):
         if isinstance(origin, Mapping):
             return TennesseeScraper._tennessee_observed_at_from_receipt(origin)
         return ""
+
+    @classmethod
+    def _tennessee_observed_at_from_retained(cls, retained: Any) -> str:
+        observed_at = cls._tennessee_observed_at_from_receipt(
+            dict(getattr(retained, "transport_receipt", {}) or {})
+        )
+        if observed_at:
+            return observed_at
+        receipt = getattr(retained, "receipt", None)
+        return str(getattr(receipt, "retrieved_at", "") or "").strip()
+
+    def _latest_tennessee_browser_record(
+        self,
+        official_url: str,
+        sanitized_request: Mapping[str, Any],
+    ) -> Any:
+        """Select the latest exact phased browser observation by receipt time."""
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError("Tennessee browser replay requires an attached ledger")
+        request = dict(sanitized_request)
+        candidates = []
+        for retained in tuple(getattr(ledger, "entries", ()) or ()):
+            receipt = getattr(retained, "receipt", None)
+            if (
+                str(getattr(receipt, "endpoint", "") or "").rstrip("/")
+                == str(official_url).rstrip("/")
+                and isinstance(getattr(receipt, "sanitized_request", None), Mapping)
+                and dict(receipt.sanitized_request) == request
+            ):
+                candidates.append(retained)
+        if not candidates:
+            replay_one = getattr(ledger, "replay_retained_parser_input", None)
+            if callable(replay_one):
+                return replay_one(
+                    official_url=str(official_url),
+                    sanitized_request=request,
+                )
+            replay_many = getattr(ledger, "replay_retained_parser_inputs", None)
+            if callable(replay_many):
+                rows = replay_many(requests=[(str(official_url), request)])
+                return rows[0] if rows else None
+            raise RuntimeError("Tennessee ledger lacks browser replay support")
+
+        def _receipt_time(retained: Any) -> datetime:
+            return self._parse_tennessee_timestamp(
+                self._tennessee_observed_at_from_retained(retained),
+                field="retained browser response boundary",
+            )
+
+        selected = max(candidates, key=_receipt_time)
+        body = bytes(getattr(selected.envelope, "body", b"") or b"")
+        body_path = getattr(selected, "body_path", None)
+        if body_path is not None:
+            source = Path(body_path)
+            if source.is_symlink() or not source.is_file() or source.read_bytes() != body:
+                raise RuntimeError(
+                    "Tennessee latest browser response object changed after retention"
+                )
+        content = getattr(getattr(selected, "receipt", None), "content", None)
+        if (
+            not body
+            or str(getattr(content, "sha256", "") or "").strip().lower()
+            != hashlib.sha256(body).hexdigest()
+        ):
+            raise RuntimeError("Tennessee latest browser response failed fixity")
+        return selected
+
+    def _replay_optional_tennessee_input(
+        self,
+        official_url: str,
+        sanitized_request: Mapping[str, Any],
+    ) -> Any:
+        """Return one exact live-ledger hit without recording a parse report."""
+
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError("Tennessee live resume requires an attached ledger")
+        request = dict(sanitized_request)
+        phase = self._phase_from_request(request)
+        if phase is not None and phase != self._select_tennessee_acquisition_phase(
+            allow_new=False
+        ):
+            raise RuntimeError("Tennessee live resume crossed acquisition phases")
+        retained = self._latest_tennessee_browser_record(
+            str(official_url),
+            request,
+        )
+        if retained is None:
+            return None
+        body = bytes(getattr(retained.envelope, "body", b"") or b"")
+        transport = dict(getattr(retained, "transport_receipt", {}) or {})
+        digest = hashlib.sha256(body).hexdigest()
+        if (
+            not body
+            or str(transport.get("official_url") or "").rstrip("/")
+            != str(official_url).rstrip("/")
+            or str(transport.get("content_sha256") or "").lower() != digest
+            or str(transport.get("source_transport") or "")
+            != "browser_rendered"
+            or not self._tennessee_observed_at_from_retained(retained)
+        ):
+            raise RuntimeError(
+                f"Tennessee live resume found invalid retained evidence: {official_url}"
+            )
+        receipt = getattr(retained, "receipt", None)
+        pagination = getattr(receipt, "pagination", None)
+        response_proof = (
+            pagination.get("tennessee_browser_response")
+            if isinstance(pagination, Mapping)
+            else None
+        )
+        if phase is not None:
+            if not isinstance(response_proof, Mapping):
+                raise RuntimeError(
+                    "Tennessee phased browser replay lacks response-bound proof"
+                )
+            proof_phase = pagination.get("tennessee_acquisition_phase")
+            if not isinstance(proof_phase, Mapping) or (
+                str(proof_phase.get("phase_id") or "").strip().lower(),
+                self._parse_tennessee_timestamp(
+                    proof_phase.get("started_at"),
+                    field="retained browser phase start",
+                ).isoformat(),
+            ) != phase:
+                raise RuntimeError(
+                    "Tennessee phased browser replay has detached phase proof"
+                )
+        from .tennessee_lexis_live import TennesseeRetainedBrowserInput
+
+        return TennesseeRetainedBrowserInput(
+            body=body,
+            response_proof=dict(response_proof or {}),
+        )
 
     def _record_tennessee_retained_input(
         self,
@@ -411,8 +1037,32 @@ class TennesseeScraper(BaseStateScraper):
         parser_input_receipt_sha256 = self._tennessee_envelope_receipt_sha256(
             retained.envelope
         )
+        observed_at = self._tennessee_observed_at_from_retained(retained)
+        normalized_observed_at = self._parse_tennessee_timestamp(
+            observed_at,
+            field=f"{source_role} receipt time",
+        ).isoformat()
+        request_phase = self._phase_from_request(dict(sanitized_request))
+        active_phase = self._select_tennessee_acquisition_phase(allow_new=False)
+        receipt = getattr(retained, "receipt", None)
+        pagination = getattr(receipt, "pagination", None)
+        pagination_phase = (
+            pagination.get("tennessee_acquisition_phase")
+            if isinstance(pagination, Mapping)
+            else None
+        )
+        retained_phase = None
+        if isinstance(pagination_phase, Mapping):
+            retained_phase = (
+                str(pagination_phase.get("phase_id") or "").strip().lower(),
+                self._parse_tennessee_timestamp(
+                    pagination_phase.get("started_at"),
+                    field=f"{source_role} retained phase start",
+                ).isoformat(),
+            )
         if (
-            not transport_receipt
+            not body
+            or not transport_receipt
             or str(transport_receipt.get("official_url") or "").rstrip("/")
             != str(official_url).rstrip("/")
             or str(transport_receipt.get("content_sha256") or "").lower()
@@ -421,14 +1071,72 @@ class TennesseeScraper(BaseStateScraper):
                 transport_receipt.get("source_transport") or ""
             ).strip()
             or not re.fullmatch(r"[a-f0-9]{64}", parser_input_receipt_sha256)
+            or request_phase != active_phase
+            or retained_phase != active_phase
+            or not normalized_observed_at
         ):
             raise RuntimeError(
                 "Tennessee retained parser input omitted exact byte/transport "
                 f"evidence: {official_url}"
             )
+        browser_proof: Dict[str, Any] = {}
+        if source_role in {"rendered_container_root", "title_open_to_response"}:
+            from .tennessee_lexis import (
+                PUBLIC_CONTAINER_URL,
+                TOC_ENDPOINT_URL,
+                container_url_matches,
+            )
+
+            raw_browser_proof = (
+                pagination.get("tennessee_browser_response")
+                if isinstance(pagination, Mapping)
+                else None
+            )
+            if not isinstance(raw_browser_proof, Mapping):
+                raise RuntimeError(
+                    "Tennessee browser receipt lacks response-bound URL proof"
+                )
+            browser_proof = dict(raw_browser_proof)
+            proof_time = self._parse_tennessee_timestamp(
+                browser_proof.get("response_observed_at"),
+                field=f"{source_role} browser response boundary",
+            ).isoformat()
+            session_digest = str(
+                browser_proof.get("session_request_id_sha256") or ""
+            ).strip().lower()
+            final_url = str(browser_proof.get("final_url") or "").strip()
+            if (
+                proof_time != normalized_observed_at
+                or not re.fullmatch(r"[a-f0-9]{64}", session_digest)
+                or (
+                    source_role == "rendered_container_root"
+                    and (
+                        official_url != PUBLIC_CONTAINER_URL
+                        or not container_url_matches(final_url)
+                    )
+                )
+                or (
+                    source_role == "title_open_to_response"
+                    and (
+                        official_url != TOC_ENDPOINT_URL
+                        or final_url != TOC_ENDPOINT_URL
+                        or browser_proof.get("redirected") is not False
+                        or list(browser_proof.get("redirect_chain") or []) != []
+                        or session_digest
+                        != str(
+                            sanitized_request.get("session_request_id_sha256") or ""
+                        )
+                    )
+                )
+            ):
+                raise RuntimeError(
+                    "Tennessee browser receipt has detached response/session proof"
+                )
         reports = list(getattr(self, "_tennessee_frontier_input_reports", []))
         report = {
             "content_sha256": body_sha256,
+            "acquisition_phase_id": active_phase[0],
+            "acquisition_phase_started_at": active_phase[1],
             "parser_input_receipt_sha256": parser_input_receipt_sha256,
             "request_identity_sha256": canonical_digest(dict(sanitized_request)),
             "source_order": len(reports),
@@ -437,8 +1145,32 @@ class TennesseeScraper(BaseStateScraper):
                 transport_receipt.get("source_transport") or ""
             ),
             "source_url": str(official_url),
+            "observed_at": normalized_observed_at,
             "transport_receipt_sha256": canonical_digest(transport_receipt),
         }
+        if browser_proof:
+            report.update(
+                {
+                    "browser_response_proof_sha256": canonical_digest(browser_proof),
+                    "final_response_url": str(browser_proof.get("final_url") or ""),
+                    "response_redirected": browser_proof.get("redirected") is True,
+                    "session_request_id_sha256": str(
+                        browser_proof.get("session_request_id_sha256") or ""
+                    ),
+                }
+            )
+        expected_transport = {
+            "state_delegation": "direct",
+            "publisher_entry": "direct",
+            "rendered_container_root": "browser_rendered",
+            "title_open_to_response": "browser_rendered",
+            "statute_document_body": "direct",
+        }.get(str(source_role))
+        if expected_transport and report["source_transport"] != expected_transport:
+            raise RuntimeError(
+                "Tennessee retained frontier rejected an inadmissible current-source "
+                f"transport for {source_role}: {report['source_transport'] or 'missing'}"
+            )
         request_identity = str(report["request_identity_sha256"])
         if any(
             str(item.get("request_identity_sha256") or "") == request_identity
@@ -449,10 +1181,6 @@ class TennesseeScraper(BaseStateScraper):
             )
         reports.append(report)
         self._tennessee_frontier_input_reports = reports
-        if not getattr(self, "_tennessee_frontier_observed_at", ""):
-            self._tennessee_frontier_observed_at = (
-                self._tennessee_observed_at_from_receipt(transport_receipt)
-            )
         return body
 
     def _replay_tennessee_retained_wave(
@@ -489,6 +1217,165 @@ class TennesseeScraper(BaseStateScraper):
             )
         return tuple(payloads)
 
+    def _validate_tennessee_phase_reports(
+        self,
+        reports: Sequence[Mapping[str, Any]],
+        *,
+        patch_count: int,
+        body_count: int,
+    ) -> Dict[str, Any]:
+        """Close one exact phase and its response-bound temporal interval."""
+
+        from .tennessee_lexis import (
+            PUBLIC_CONTAINER_URL,
+            PUBLIC_ENTRY_URL,
+            TOC_ENDPOINT_URL,
+            canonical_digest,
+            is_document_path,
+        )
+
+        phase_id, phase_started_at = self._select_tennessee_acquisition_phase(
+            allow_new=False
+        )
+        expected_roles = [
+            "state_delegation",
+            "publisher_entry",
+            "rendered_container_root",
+            *(["title_open_to_response"] * int(patch_count)),
+            *(["statute_document_body"] * int(body_count)),
+        ]
+        normalized = [dict(item) for item in reports]
+        if (
+            not normalized
+            or len(normalized) != len(expected_roles)
+            or [str(item.get("source_role") or "") for item in normalized]
+            != expected_roles
+            or [int(item.get("source_order", -1)) for item in normalized]
+            != list(range(len(normalized)))
+        ):
+            raise RuntimeError("Tennessee acquisition phase changed exact wave order")
+        if any(
+            (
+                str(item.get("acquisition_phase_id") or "").strip().lower(),
+                self._parse_tennessee_timestamp(
+                    item.get("acquisition_phase_started_at"),
+                    field="input phase start",
+                ).isoformat(),
+            )
+            != (phase_id, phase_started_at)
+            for item in normalized
+        ):
+            raise RuntimeError("Tennessee closure mixed acquisition phases")
+        if len(
+            {
+                str(item.get("request_identity_sha256") or "")
+                for item in normalized
+            }
+        ) != len(normalized):
+            raise RuntimeError("Tennessee phase repeats a request identity")
+
+        expected_urls = (
+            self.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL,
+            PUBLIC_ENTRY_URL,
+            PUBLIC_CONTAINER_URL,
+        )
+        if tuple(str(normalized[index].get("source_url") or "") for index in range(3)) != expected_urls:
+            raise RuntimeError("Tennessee phase changed the delegation chain locators")
+        root_session = str(
+            normalized[2].get("session_request_id_sha256") or ""
+        ).strip().lower()
+        patch_rows = normalized[3 : 3 + int(patch_count)]
+        if any(
+            str(item.get("source_url") or "") != TOC_ENDPOINT_URL
+            or str(item.get("source_transport") or "") != "browser_rendered"
+            or str(item.get("session_request_id_sha256") or "").strip().lower()
+            != root_session
+            or item.get("response_redirected") is not False
+            for item in patch_rows
+        ):
+            raise RuntimeError("Tennessee phase has an unbound PATCH session/response")
+        body_rows = normalized[3 + int(patch_count) :]
+        if any(
+            str(item.get("source_transport") or "") != "direct"
+            or (urlparse(str(item.get("source_url") or "")).hostname or "").lower()
+            != "advance.lexis.com"
+            or not is_document_path(
+                urlparse(str(item.get("source_url") or "")).path
+            )
+            for item in body_rows
+        ):
+            raise RuntimeError("Tennessee phase substituted a delegated body locator")
+
+        observed = [
+            self._parse_tennessee_timestamp(
+                item.get("observed_at"),
+                field=f"input {position} response boundary",
+            )
+            for position, item in enumerate(normalized)
+        ]
+        started = self._parse_tennessee_timestamp(
+            phase_started_at,
+            field="acquisition phase start",
+        )
+        completed = max(observed)
+        earliest = min(observed)
+        wave_observed = {
+            "state_delegation": observed[0:1],
+            "publisher_entry": observed[1:2],
+            "rendered_container_root": observed[2:3],
+            "title_open_to_response": observed[3 : 3 + int(patch_count)],
+            "statute_document_body": observed[3 + int(patch_count) :],
+        }
+        ordered_waves = [
+            wave_observed[name]
+            for name in (
+                "state_delegation",
+                "publisher_entry",
+                "rendered_container_root",
+                "title_open_to_response",
+                "statute_document_body",
+            )
+            if wave_observed[name]
+        ]
+        if any(
+            max(left) > min(right)
+            for left, right in zip(ordered_waves, ordered_waves[1:], strict=False)
+        ):
+            raise RuntimeError("Tennessee acquisition phase crossed temporal wave order")
+        now = datetime.now(UTC)
+        span = (completed - earliest).total_seconds()
+        if (
+            earliest < started
+            or completed < started
+            or span < 0
+            or span > self.TN_PHASE_MAX_SPAN_SECONDS
+            or (completed - started).total_seconds() > self.TN_PHASE_MAX_SPAN_SECONDS
+            or completed
+            > now + timedelta(seconds=self.TN_PHASE_CLOCK_SKEW_SECONDS)
+        ):
+            raise RuntimeError("Tennessee acquisition phase is temporally incoherent")
+        projection = {
+            "completed_at": completed.isoformat(),
+            "delegated_body_source_domain": "advance.lexis.com",
+            "delegating_authority_url": self.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL,
+            "input_count": len(normalized),
+            "input_receipt_sha256s": [
+                str(item.get("parser_input_receipt_sha256") or "")
+                for item in normalized
+            ],
+            "observed_at_first": earliest.isoformat(),
+            "observed_at_last": completed.isoformat(),
+            "phase_id": phase_id,
+            "phase_schema": self.TN_PHASE_SCHEMA,
+            "phase_span_seconds": span,
+            "phase_started_at": phase_started_at,
+            "required_role_counts": {
+                role: expected_roles.count(role) for role in dict.fromkeys(expected_roles)
+            },
+        }
+        projection["projection_sha256"] = canonical_digest(projection)
+        return projection
+
     @staticmethod
     def _tennessee_decode(payload: bytes, *, source_role: str) -> str:
         for encoding in ("utf-8-sig", "windows-1252"):
@@ -500,25 +1387,213 @@ class TennesseeScraper(BaseStateScraper):
             f"Tennessee retained {source_role} input has no supported exact encoding"
         )
 
+    @classmethod
+    def _valid_tennessee_authority_payload(cls, payload: bytes) -> bool:
+        raw = bytes(payload or b"")
+        if not raw:
+            return False
+        try:
+            html = cls._tennessee_decode(raw, source_role="authority")
+        except RuntimeError:
+            return False
+        sample = html[:200_000]
+        return bool(
+            re.search(r"<html\b|<!doctype\s+html", sample, re.IGNORECASE)
+            and not cls._TN_CLOUDFLARE_CHALLENGE_RE.search(sample)
+            and not re.search(
+                r"robot\s*validation|captcha|sign\s+in\s+to\s+continue",
+                sample,
+                re.IGNORECASE,
+            )
+        )
+
+    @staticmethod
+    def _tennessee_receipt_proves_container(
+        receipt: Mapping[str, Any],
+    ) -> bool:
+        """Accept only named final/redirect locator evidence, never arbitrary text."""
+
+        from .tennessee_lexis import container_url_matches
+
+        pending: List[Mapping[str, Any]] = [dict(receipt)]
+        while pending:
+            value = pending.pop()
+            for key in ("final_url", "response_url"):
+                locator = value.get(key)
+                if isinstance(locator, str) and container_url_matches(locator):
+                    return True
+            for key in ("redirect_chain", "redirects"):
+                chain = value.get(key)
+                if not isinstance(chain, Sequence) or isinstance(
+                    chain, (str, bytes, bytearray)
+                ):
+                    continue
+                for hop in chain:
+                    if isinstance(hop, str) and container_url_matches(hop):
+                        return True
+                    if isinstance(hop, Mapping):
+                        for locator_key in ("url", "location", "final_url"):
+                            locator = hop.get(locator_key)
+                            if isinstance(locator, str) and container_url_matches(
+                                locator
+                            ):
+                                return True
+            origin = value.get("origin_transport_receipt")
+            if isinstance(origin, Mapping):
+                pending.append(origin)
+        return False
+
     @staticmethod
     def _tennessee_publisher_receipt_proves_container(
         retained: Any,
         payload: bytes,
     ) -> bool:
-        from .tennessee_lexis import (
-            PUBLIC_CONTAINER_CONFIG,
-            publisher_container_delegation_present,
-        )
+        from .tennessee_lexis import publisher_container_delegation_present
 
         if publisher_container_delegation_present(
             payload.decode("utf-8", errors="replace")
         ):
             return True
         receipt = dict(getattr(retained, "transport_receipt", {}) or {})
-        return PUBLIC_CONTAINER_CONFIG in json.dumps(
-            receipt,
-            ensure_ascii=False,
-            sort_keys=True,
+        return TennesseeScraper._tennessee_receipt_proves_container(receipt)
+
+    async def _acquire_tennessee_lexis_frontier(
+        self,
+        *,
+        code_name: str,
+    ) -> List[NormalizedStatute]:
+        """Acquire five bounded live waves, then parse their retained replay."""
+
+        from .tennessee_lexis import (
+            derive_exact_metadata_frontier,
+            document_url,
+            general_assembly_delegation_present,
+            observed_metadata_drift,
+            publisher_container_delegation_present,
+            valid_document_payload,
+        )
+        from .tennessee_lexis_live import acquire_live_catalog
+
+        self._validate_tennessee_lexis_configuration()
+        ledger = getattr(self, "_state_law_acquisition_ledger", None)
+        if ledger is None:
+            raise RuntimeError(self.STRICT_FULL_BLOCKER)
+        if self._retained_replay_only_enabled():
+            raise RuntimeError(
+                "Tennessee live acquisition cannot run in retained-replay-only mode"
+            )
+        if not callable(getattr(ledger, "retain_parser_input", None)) or not callable(
+            getattr(ledger, "replay_retained_parser_input", None)
+        ):
+            raise RuntimeError(
+                "Tennessee live acquisition ledger lacks exact retain/replay support"
+            )
+        phase_id, phase_started_at = self._select_tennessee_acquisition_phase(
+            allow_new=True
+        )
+
+        authority_batch = await self._fetch_tennessee_lexis_get_wave(
+            [self.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL],
+            frontier_name="General Assembly delegation",
+            content_validator=lambda payload: bool(
+                self._valid_tennessee_authority_payload(payload)
+                and general_assembly_delegation_present(
+                    self._tennessee_decode(payload, source_role="state delegation")
+                )
+            ),
+            require_direct=True,
+        )
+        authority_payload = bytes(authority_batch.payloads[0])
+        if not general_assembly_delegation_present(
+            self._tennessee_decode(
+                authority_payload,
+                source_role="state delegation",
+            )
+        ):
+            raise RuntimeError(
+                "Tennessee General Assembly page did not prove the exact Code delegation"
+            )
+
+        publisher_batch = await self._fetch_tennessee_lexis_get_wave(
+            [self.AUTHORIZED_CODE_ENTRY_URL],
+            frontier_name="publisher entry",
+            content_validator=self._valid_tennessee_authority_payload,
+            require_direct=True,
+        )
+        publisher_payload = bytes(publisher_batch.payloads[0])
+        publisher_receipt = dict(publisher_batch.transport_receipts[0] or {})
+        if not (
+            publisher_container_delegation_present(
+                publisher_payload.decode("utf-8", errors="replace")
+            )
+            or self._tennessee_receipt_proves_container(publisher_receipt)
+        ):
+            raise RuntimeError(
+                "Tennessee publisher entry did not prove the exact Lexis container"
+            )
+
+        inventory = await acquire_live_catalog(
+            acquisition_phase_id=phase_id,
+            acquisition_phase_started_at=phase_started_at,
+            expected_titles=self.OFFICIAL_TITLES,
+            expected_patch_count=(
+                self.OBSERVED_SUBTREE_RESPONSE_COUNT
+                if self.ENFORCE_OBSERVED_TN_FRONTIER
+                else sum(
+                    number not in {"19", "51"}
+                    for number, _label in self.OFFICIAL_TITLES
+                )
+            ),
+            retain_parser_input=self._retain_tennessee_browser_input,
+            replay_parser_input=self._replay_optional_tennessee_input,
+            retries=max(
+                1,
+                min(
+                    5,
+                    self._env_int("TENNESSEE_LEXIS_PROBE_RETRIES", default=2),
+                ),
+            ),
+            timeout_ms=max(
+                15_000,
+                self._env_int("TENNESSEE_LEXIS_PROBE_TIMEOUT_MS", default=60_000),
+            ),
+        )
+        metadata = dict(inventory.metadata)
+        # Re-derive here so a mocked or future live seam cannot inject body URLs.
+        expected_metadata = derive_exact_metadata_frontier(
+            inventory.title_roots,
+            subtrees_by_root_id=inventory.subtrees_by_root_id,
+        )
+        if metadata != expected_metadata:
+            raise RuntimeError("Tennessee live catalog returned injected metadata")
+        document_nodes = list(metadata.pop("document_nodes"))
+        drift = observed_metadata_drift(metadata)
+        if self.ENFORCE_OBSERVED_TN_FRONTIER and drift:
+            raise RuntimeError(
+                "Tennessee live Lexis hierarchy drifted from the reviewed exact "
+                f"frontier: {drift}"
+            )
+        body_urls = [document_url(node.link_href) for node in document_nodes]
+        if len(body_urls) != len(set(body_urls)):
+            raise RuntimeError("Tennessee live body frontier repeated a source URL")
+        if (
+            self.ENFORCE_OBSERVED_TN_FRONTIER
+            and len(body_urls) != self.OBSERVED_BODY_LEAF_COUNT
+        ):
+            raise RuntimeError(
+                "Tennessee live body wave changed reviewed membership without review"
+            )
+        await self._fetch_tennessee_lexis_get_wave(
+            body_urls,
+            frontier_name="document body wave",
+            content_validator=valid_document_payload,
+            require_direct=True,
+        )
+        refresh = getattr(ledger, "refresh_existing_entries", None)
+        if callable(refresh):
+            refresh()
+        return await self._scrape_strict_tennessee_retained_frontier(
+            code_name=code_name
         )
 
     async def _scrape_strict_tennessee_retained_frontier(
@@ -532,7 +1607,6 @@ class TennesseeScraper(BaseStateScraper):
         from .tennessee_lexis import (
             OBSERVED_TOTAL_RESIDUAL_COUNT,
             canonical_digest,
-            canonical_toc_patch_request,
             derive_exact_metadata_frontier,
             document_url,
             general_assembly_delegation_present,
@@ -543,15 +1617,22 @@ class TennesseeScraper(BaseStateScraper):
             unresolved_temporal_variant_groups,
             valid_document_payload,
         )
+        from .tennessee_lexis_live import (
+            canonical_live_toc_patch_request,
+            canonical_rendered_root_request,
+        )
 
         ledger = getattr(self, "_state_law_acquisition_ledger", None)
         if ledger is None:
             raise RuntimeError("Tennessee strict retained route requires an attached ledger")
+        self._validate_tennessee_lexis_configuration()
         refresh = getattr(ledger, "refresh_existing_entries", None)
         if callable(refresh):
             refresh()
+        phase_id, phase_started_at = self._select_tennessee_acquisition_phase(
+            allow_new=False
+        )
         self._tennessee_frontier_input_reports = []
-        self._tennessee_frontier_observed_at = ""
 
         authority_request = self._tennessee_get_request(
             self.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL
@@ -589,12 +1670,22 @@ class TennesseeScraper(BaseStateScraper):
                 "Tennessee retained publisher entry does not prove the exact Lexis container"
             )
 
-        root_request = self._tennessee_get_request(self.AUTHORIZED_CODE_CONTAINER_URL)
-        root_payload = self._replay_tennessee_retained_wave(
-            [(self.AUTHORIZED_CODE_CONTAINER_URL, root_request)],
-            frontier_name="rendered Lexis root",
+        root_request = canonical_rendered_root_request(
+            acquisition_phase_id=phase_id,
+            acquisition_phase_started_at=phase_started_at,
+        )
+        root_retained = self._latest_tennessee_browser_record(
+            self.AUTHORIZED_CODE_CONTAINER_URL,
+            root_request,
+        )
+        if root_retained is None:
+            raise RuntimeError("Tennessee retained rendered root is missing")
+        root_payload = self._record_tennessee_retained_input(
             source_role="rendered_container_root",
-        )[0]
+            official_url=self.AUTHORIZED_CODE_CONTAINER_URL,
+            sanitized_request=root_request,
+            retained=root_retained,
+        )
         title_roots, tables_root = parse_root_html(
             self._tennessee_decode(root_payload, source_role="rendered Lexis root"),
             expected_titles=self.OFFICIAL_TITLES,
@@ -603,7 +1694,21 @@ class TennesseeScraper(BaseStateScraper):
         expandable_roots = [
             node for node in title_roots if node.can_expand or node.has_children
         ]
-        patch_specs = [canonical_toc_patch_request(node) for node in expandable_roots]
+        root_report = self._tennessee_frontier_input_reports[2]
+        root_session_digest = str(
+            root_report.get("session_request_id_sha256") or ""
+        ).strip().lower()
+        if not re.fullmatch(r"[a-f0-9]{64}", root_session_digest):
+            raise RuntimeError("Tennessee retained root lacks its browser session binding")
+        patch_specs = [
+            canonical_live_toc_patch_request(
+                node,
+                acquisition_phase_id=phase_id,
+                acquisition_phase_started_at=phase_started_at,
+                session_request_id_sha256=root_session_digest,
+            )
+            for node in expandable_roots
+        ]
         patch_requests = [
             (endpoint, sanitized_request)
             for endpoint, _request_body, sanitized_request in patch_specs
@@ -792,6 +1897,11 @@ class TennesseeScraper(BaseStateScraper):
             raise RuntimeError(
                 "Tennessee exact source input algebra changed without review"
             )
+        phase_projection = self._validate_tennessee_phase_reports(
+            input_reports,
+            patch_count=len(expandable_roots),
+            body_count=len(document_nodes),
+        )
 
         disposition = {
             "discovered": len(document_nodes),
@@ -801,7 +1911,38 @@ class TennesseeScraper(BaseStateScraper):
             "fetched": len(rows),
             "quarantined": 0,
         }
-        observed_at = str(self._tennessee_frontier_observed_at or "")
+        observed_at = str(phase_projection["completed_at"])
+        delegated_body_authority = {
+            "acquisition_phase": phase_projection,
+            "body_input_count": len(document_nodes),
+            "body_input_receipt_sha256s_digest": canonical_digest(
+                [
+                    item["parser_input_receipt_sha256"]
+                    for item in input_reports[3 + len(expandable_roots) :]
+                ]
+            ),
+            "body_url_path_prefix": "/shared/document/statutes-legislation/",
+            "catalog_acquisition_path_id": "tn-tga",
+            "delegated_body_source_domain": "advance.lexis.com",
+            "delegated_container_url": self.AUTHORIZED_CODE_CONTAINER_URL,
+            "delegated_toc_endpoint_url": (
+                "https://advance.lexis.com" + self.AUTHORIZED_TOC_ENDPOINT
+            ),
+            "delegating_authority_url": self.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL,
+            "input_report_digest_sha256": canonical_digest(input_reports),
+            "publisher_entry_url": self.AUTHORIZED_CODE_ENTRY_URL,
+            "required_transports": {
+                "publisher_entry": "direct",
+                "rendered_container_root": "browser_rendered",
+                "state_delegation": "direct",
+                "statute_document_body": "direct",
+                "title_open_to_response": "browser_rendered",
+            },
+            "schema_version": "tennessee-delegated-body-authority-v1",
+        }
+        delegated_body_authority["projection_sha256"] = canonical_digest(
+            delegated_body_authority
+        )
         frontier: Dict[str, Any] = {
             **metadata,
             "algebra_closed": True,
@@ -810,6 +1951,10 @@ class TennesseeScraper(BaseStateScraper):
             "body_parser_report_count": len(body_reports),
             "closed": True,
             "diagnostic_baseline_drift": drift,
+            "delegated_body_authority": delegated_body_authority,
+            "delegated_body_authority_projection_sha256": delegated_body_authority[
+                "projection_sha256"
+            ],
             "disposition": disposition,
             "enumerator_closed": True,
             "excluded_root_count": 1,
@@ -909,6 +2054,104 @@ class TennesseeScraper(BaseStateScraper):
         self.last_tennessee_full_corpus_report = dict(frontier)
         return rows
 
+    def retain_state_law_frontier_closure_projection(
+        self,
+        completion_receipt: Mapping[str, Any],
+        *,
+        replayed_frontier: Mapping[str, Any],
+        canonical_output_projection: Mapping[str, Any] | None = None,
+        release_point: str,
+        official_source_url: str,
+        acquisition_path_ids: Sequence[str],
+        observation_time: str,
+        source_software_version: str,
+        relative_path: str | None = None,
+        legacy_singleton: bool = False,
+    ) -> Path:
+        """Layer exact delegated-body proof over truthful ``tn-tga`` admission."""
+
+        from .tennessee_lexis import canonical_digest
+
+        completion = dict(completion_receipt)
+        frontier = completion.get("frontier")
+        replay_frontier = dict(replayed_frontier)
+        if not isinstance(frontier, Mapping):
+            raise RuntimeError("Tennessee closure lacks its exact source frontier")
+        body_authority = frontier.get("delegated_body_authority")
+        if not isinstance(body_authority, Mapping):
+            raise RuntimeError("Tennessee closure lacks delegated body authority proof")
+        body_projection = dict(body_authority)
+        claimed_digest = str(body_projection.pop("projection_sha256", "") or "")
+        if (
+            official_source_url.rstrip("/")
+            != self.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL.rstrip("/")
+            or list(acquisition_path_ids) != ["tn-tga"]
+            or body_authority.get("delegating_authority_url")
+            != self.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL
+            or body_authority.get("delegated_body_source_domain")
+            != "advance.lexis.com"
+            or body_authority.get("delegated_container_url")
+            != self.AUTHORIZED_CODE_CONTAINER_URL
+            or body_authority.get("publisher_entry_url")
+            != self.AUTHORIZED_CODE_ENTRY_URL
+            or not re.fullmatch(r"[a-f0-9]{64}", claimed_digest)
+            or canonical_digest(body_projection) != claimed_digest
+            or str(frontier.get("delegated_body_authority_projection_sha256") or "")
+            != claimed_digest
+            or replay_frontier.get("delegated_body_authority") != body_authority
+        ):
+            raise RuntimeError(
+                "Tennessee closure detached generic authority from delegated bodies"
+            )
+        first = getattr(self, "_last_tennessee_full_frontier", None)
+        reports = first.get("input_reports") if isinstance(first, Mapping) else None
+        if (
+            not isinstance(reports, Sequence)
+            or isinstance(reports, (str, bytes, bytearray))
+            or any(not isinstance(item, Mapping) for item in reports)
+            or canonical_digest(list(reports))
+            != str(body_authority.get("input_report_digest_sha256") or "")
+            or any(
+                str(item.get("source_role") or "") == "statute_document_body"
+                and (
+                    str(item.get("source_transport") or "") != "direct"
+                    or (urlparse(str(item.get("source_url") or "")).hostname or "").lower()
+                    != "advance.lexis.com"
+                )
+                for item in reports
+                if isinstance(item, Mapping)
+            )
+        ):
+            raise RuntimeError("Tennessee closure body receipts changed after parsing")
+        validated_phase = self._validate_tennessee_phase_reports(
+            reports,
+            patch_count=int(frontier.get("subtree_response_count") or 0),
+            body_count=int(frontier.get("body_input_count") or 0),
+        )
+        if validated_phase != body_authority.get("acquisition_phase"):
+            raise RuntimeError("Tennessee closure phase proof changed after parsing")
+        completion.update(
+            {
+                "catalog_authority_domain": "wapp.capitol.tn.gov",
+                "delegated_body_authority": dict(body_authority),
+                "delegated_body_source_domain": "advance.lexis.com",
+                "delegating_authority_url": self.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL,
+                "source_domain": "wapp.capitol.tn.gov",
+            }
+        )
+        return super().retain_state_law_frontier_closure_projection(
+            completion,
+            replayed_frontier=replayed_frontier,
+            canonical_output_projection=canonical_output_projection,
+            release_point=release_point,
+            official_source_url=official_source_url,
+            acquisition_path_ids=acquisition_path_ids,
+            observation_time=observation_time,
+            source_software_version=source_software_version,
+            relative_path=relative_path,
+            legacy_singleton=legacy_singleton,
+        )
+
     async def produce_state_law_frontier_closure(
         self,
         *,
@@ -957,6 +2200,16 @@ class TennesseeScraper(BaseStateScraper):
         disposition = first_frontier.get("disposition")
         if not isinstance(disposition, Mapping):
             raise RuntimeError("Tennessee frontier lacks disposition algebra")
+        if any(
+            (urlparse(str(row.source_url or "")).hostname or "").lower()
+            != "advance.lexis.com"
+            or str((row.structured_data or {}).get("source_transport") or "")
+            != "direct"
+            for row in replay_rows
+        ):
+            raise RuntimeError(
+                "Tennessee closure rows escaped delegated Lexis body receipts"
+            )
         return retain_exact_state_frontier_closure(
             self,
             canonical_output_projection=canonical_output_projection,
@@ -964,7 +2217,7 @@ class TennesseeScraper(BaseStateScraper):
             replayed_frontier=replayed_frontier,
             replay_rows=replay_rows,
             jurisdiction="TN",
-            source_domain="advance.lexis.com",
+            source_domain="wapp.capitol.tn.gov",
             official_source_url=self.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL,
             observed_at=str(first.get("observed_at") or ""),
             legal_as_of=str(first.get("legal_as_of") or ""),
@@ -973,12 +2226,15 @@ class TennesseeScraper(BaseStateScraper):
             bundle_total=int(disposition.get("discovered") or 0),
             pagination_total=int(first_frontier.get("subtree_response_count") or 0),
             transport={
+                "archive_recovery_enabled": False,
+                "body_get_transport": "direct",
+                "browser_transport": "browser_rendered",
                 "fixture": False,
                 "first_pass_requested_pages": int(
                     first_frontier.get("source_input_count") or 0
                 ),
-                "get_acquisition_contract": "shared_archive_aware_plural_residual",
-                "grouped_warc_recovery": True,
+                "get_acquisition_contract": "tennessee_current_authority_direct_only",
+                "grouped_warc_recovery": False,
                 "kind": "delegated_lexis_patch_ledger_plus_plural_get",
                 "per_page_archive_loop": False,
                 "retained_replay_network_requests": 0,
@@ -1042,11 +2298,25 @@ class TennesseeScraper(BaseStateScraper):
                 raise RuntimeError(
                     "Tennessee strict full-corpus route refuses a statute cap"
                 )
+            self._validate_tennessee_lexis_configuration()
+            if (
+                str(code_url or "").rstrip("/")
+                != self.AUTHORIZED_CODE_ENTRY_URL.rstrip("/")
+            ):
+                raise RuntimeError(
+                    "Tennessee strict full-corpus route requires the exact General "
+                    "Assembly-delegated Lexis publisher entry URL"
+                )
+            ledger = getattr(self, "_state_law_acquisition_ledger", None)
+            if ledger is None:
+                raise RuntimeError(self.STRICT_FULL_BLOCKER)
             if self._retained_replay_only_enabled():
                 return await self._scrape_strict_tennessee_retained_frontier(
                     code_name=code_name or "Tennessee Code Annotated"
                 )
-            raise RuntimeError(self.STRICT_FULL_BLOCKER)
+            return await self._acquire_tennessee_lexis_frontier(
+                code_name=code_name or "Tennessee Code Annotated"
+            )
 
         limit = self._effective_scrape_limit(max_statutes, default=160)
         from .tennessee_constitution import (
@@ -1063,7 +2333,10 @@ class TennesseeScraper(BaseStateScraper):
                     max_statutes=limit,
                 )
                 return constitution_rows if limit is None else constitution_rows[: int(limit)]
-        from .tennessee_section import configured_section_html_path, parse_tennessee_section_html
+        from .tennessee_section import (
+            configured_section_html_path,
+            parse_tennessee_section_html,
+        )
 
         local_section = configured_section_html_path()
         if local_section is not None:

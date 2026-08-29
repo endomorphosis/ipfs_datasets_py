@@ -550,7 +550,7 @@ def test_representative_custom_transport_migrations_are_exactly_inventory_visibl
         inventory["jurisdictions"]["CT"][
             "shared_custom_transport_adapter_call_count"
         ]
-        == 2
+        == 3
     )
     assert inventory["jurisdictions"]["GA"]["candidates"] == []
     assert (

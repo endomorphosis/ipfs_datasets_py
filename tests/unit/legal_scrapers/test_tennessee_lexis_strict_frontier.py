@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Mapping, Sequence
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -42,6 +44,31 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.tennessee_lexis i
     unresolved_temporal_variant_groups,
     valid_document_payload,
 )
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.tennessee_lexis_live import (
+    TennesseeLiveCatalog,
+    TennesseeRetainedBrowserInput,
+    acquire_live_catalog,
+    assert_rendered_root_coherence,
+    canonical_live_toc_patch_request,
+    canonical_rendered_root_request,
+)
+
+PHASE_ID = hashlib.sha256(b"tennessee-test-phase").hexdigest()
+PHASE_STARTED_AT = datetime.now(UTC).replace(microsecond=0).isoformat()
+SESSION_ID = "test-session-request-id"
+SESSION_SHA256 = hashlib.sha256(SESSION_ID.encode()).hexdigest()
+
+
+def _bind_phase(scraper: TennesseeScraper) -> None:
+    scraper._tennessee_acquisition_phase_id = PHASE_ID
+    scraper._tennessee_acquisition_phase_started_at = PHASE_STARTED_AT
+
+
+def _root_request() -> dict[str, Any]:
+    return canonical_rendered_root_request(
+        acquisition_phase_id=PHASE_ID,
+        acquisition_phase_started_at=PHASE_STARTED_AT,
+    )
 
 
 def _content_path(token: str) -> str:
@@ -428,12 +455,657 @@ async def test_future_get_wave_reuses_shared_plural_archive_contract(
     assert kwargs["wayback_prefix_inventory"] is True
     assert kwargs["prefer_direct"] is True
     assert kwargs["residual_retry_attempts"] in range(4)
+    assert kwargs["headers"]["Accept"] == TennesseeScraper.STRICT_GET_ACCEPT
+    assert scraper._tennessee_get_request(urls[0])["headers"] == {
+        "Accept": TennesseeScraper.STRICT_GET_ACCEPT
+    }
+    assert canonical_rendered_root_request()["headers"] == {
+        "Accept": TennesseeScraper.STRICT_GET_ACCEPT
+    }
     contract = grouped_get_acquisition_contract(urls)
     assert contract["common_crawl_inventory_query_upper_bound"] == 1
     assert contract["group_warc_ranges_by_warc_filename"] is True
     assert contract["coalesce_compatible_warc_ranges"] is True
     assert contract["retry_residual_urls_only"] is True
     assert contract["per_page_archive_inventory_loop"] is False
+
+
+@pytest.mark.anyio
+async def test_current_get_wave_rejects_archival_transport(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scraper = TennesseeScraper("TN", "Tennessee")
+    url = scraper.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL
+    payload = (
+        b"<html><a href='https://www.lexisnexis.com/hottopics/tncode'>"
+        b"Tennessee Code</a></html>"
+    )
+
+    async def _plural(
+        requested: list[str],
+        **kwargs: Any,
+    ) -> StateLawPageMultiFetchResult:
+        assert kwargs["archive_recovery_enabled"] is False
+        return StateLawPageMultiFetchResult(
+            urls=list(requested),
+            payloads=[payload],
+            errors=[None],
+            transport_receipts=[{"source_transport": "common_crawl"}],
+            parser_input_envelopes=[None],
+            stats={"common_crawl_inventory_queries": 0},
+        )
+
+    monkeypatch.setattr(
+        scraper,
+        "_fetch_page_contents_with_archival_fallback_retrying_residuals",
+        _plural,
+    )
+
+    with pytest.raises(RuntimeError, match="non-direct"):
+        await scraper._fetch_tennessee_lexis_get_wave(
+            [url],
+            frontier_name="General Assembly delegation",
+            content_validator=lambda value: value == payload,
+            require_direct=True,
+        )
+
+
+@pytest.mark.anyio
+async def test_live_catalog_reuses_complete_retained_root_and_patch_wave() -> None:
+    scraper = TennesseeScraper("TN", "Tennessee")
+    compact_titles = (
+        ("1", "Code and Statutes"),
+        ("19", "[Reserved]"),
+        ("51", "[Reserved]"),
+    )
+    scraper.OFFICIAL_TITLES = compact_titles
+    compact_root = _root_html(scraper).encode()
+    roots, _tables = parse_root_html(
+        compact_root.decode(),
+        expected_titles=compact_titles,
+    )
+    parent = next(node for node in roots if node.can_expand or node.has_children)
+    subtree, _href = _subtree_payload(parent)
+    endpoint, _body, patch_request = canonical_toc_patch_request(parent)
+    retained = {
+        json.dumps(
+            [PUBLIC_CONTAINER_URL, _root_request()],
+            sort_keys=True,
+            separators=(",", ":"),
+        ): compact_root,
+        json.dumps(
+            [endpoint, patch_request],
+            sort_keys=True,
+            separators=(",", ":"),
+        ): json.dumps(subtree).encode(),
+    }
+
+    def _replay(url: str, request: dict[str, Any]) -> bytes | None:
+        return retained.get(
+            json.dumps([url, request], sort_keys=True, separators=(",", ":"))
+        )
+
+    def _retain(**_kwargs: Any) -> None:
+        raise AssertionError("complete retained catalog must not be reacquired")
+
+    inventory = await acquire_live_catalog(
+        acquisition_phase_id=PHASE_ID,
+        acquisition_phase_started_at=PHASE_STARTED_AT,
+        expected_titles=compact_titles,
+        expected_patch_count=1,
+        retain_parser_input=_retain,
+        replay_parser_input=_replay,
+    )
+
+    assert inventory.network_patch_count == 0
+    assert inventory.retained_patch_count == 1
+    assert inventory.metadata["document_count"] == 3
+
+
+def test_resumed_browser_root_must_match_retained_semantic_projection() -> None:
+    scraper = TennesseeScraper("TN", "Tennessee")
+    retained = _root_html(scraper).encode()
+    semantically_changed = retained.replace(
+        b'data-nodeid="T001"',
+        b'data-nodeid="DRIFT"',
+        1,
+    )
+
+    assert_rendered_root_coherence(
+        retained_payload=retained,
+        live_payload=retained,
+        expected_titles=scraper.OFFICIAL_TITLES,
+    )
+    with pytest.raises(RuntimeError, match="semantic"):
+        assert_rendered_root_coherence(
+            retained_payload=retained,
+            live_payload=semantically_changed,
+            expected_titles=scraper.OFFICIAL_TITLES,
+        )
+
+
+def test_publisher_delegation_receipt_accepts_only_named_locator_fields() -> None:
+    scraper = TennesseeScraper("TN", "Tennessee")
+
+    assert scraper._tennessee_receipt_proves_container(
+        {"final_url": PUBLIC_CONTAINER_URL}
+    )
+    assert scraper._tennessee_receipt_proves_container(
+        {"redirect_chain": [{"location": PUBLIC_CONTAINER_URL}]}
+    )
+    assert not scraper._tennessee_receipt_proves_container(
+        {"diagnostic": {"note": PUBLIC_CONTAINER_URL}}
+    )
+    assert not scraper._tennessee_receipt_proves_container(
+        {"headers": {"X-Debug": PUBLIC_CONTAINER_URL}}
+    )
+
+
+def _compact_phase_reports(scraper: TennesseeScraper) -> list[dict[str, Any]]:
+    roles_urls_transports = [
+        (
+            "state_delegation",
+            scraper.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL,
+            "direct",
+        ),
+        ("publisher_entry", scraper.AUTHORIZED_CODE_ENTRY_URL, "direct"),
+        ("rendered_container_root", PUBLIC_CONTAINER_URL, "browser_rendered"),
+        ("title_open_to_response", TOC_ENDPOINT_URL, "browser_rendered"),
+        (
+            "statute_document_body",
+            f"https://advance.lexis.com{_content_path('TN01-TEST-BODY-00001-00')}",
+            "direct",
+        ),
+    ]
+    observed_at = datetime.now(UTC).isoformat()
+    rows: list[dict[str, Any]] = []
+    for position, (role, url, transport) in enumerate(roles_urls_transports):
+        row = {
+            "acquisition_phase_id": PHASE_ID,
+            "acquisition_phase_started_at": PHASE_STARTED_AT,
+            "content_sha256": hashlib.sha256(f"content-{position}".encode()).hexdigest(),
+            "observed_at": observed_at,
+            "parser_input_receipt_sha256": hashlib.sha256(
+                f"receipt-{position}".encode()
+            ).hexdigest(),
+            "request_identity_sha256": hashlib.sha256(
+                f"request-{position}".encode()
+            ).hexdigest(),
+            "source_order": position,
+            "source_role": role,
+            "source_transport": transport,
+            "source_url": url,
+        }
+        if role in {"rendered_container_root", "title_open_to_response"}:
+            row.update(
+                {
+                    "response_redirected": False,
+                    "session_request_id_sha256": SESSION_SHA256,
+                }
+            )
+        rows.append(row)
+    return rows
+
+
+def test_phase_closure_rejects_cross_phase_and_malformed_temporal_inputs() -> None:
+    scraper = TennesseeScraper("TN", "Tennessee")
+    _bind_phase(scraper)
+    reports = _compact_phase_reports(scraper)
+
+    projection = scraper._validate_tennessee_phase_reports(
+        reports,
+        patch_count=1,
+        body_count=1,
+    )
+    assert projection["phase_id"] == PHASE_ID
+    assert projection["delegating_authority_url"] == (
+        scraper.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL
+    )
+
+    cross_phase = [dict(item) for item in reports]
+    cross_phase[-1]["acquisition_phase_id"] = hashlib.sha256(
+        b"different-phase"
+    ).hexdigest()
+    with pytest.raises(RuntimeError, match="mixed acquisition phases"):
+        scraper._validate_tennessee_phase_reports(
+            cross_phase,
+            patch_count=1,
+            body_count=1,
+        )
+
+    malformed = [dict(item) for item in reports]
+    malformed[-1]["observed_at"] = "2026-08-29T12:00:00"
+    with pytest.raises(RuntimeError, match="requires a timezone"):
+        scraper._validate_tennessee_phase_reports(
+            malformed,
+            patch_count=1,
+            body_count=1,
+        )
+
+    out_of_order = [dict(item) for item in reports]
+    boundary = datetime.now(UTC)
+    out_of_order[3]["observed_at"] = (boundary + timedelta(seconds=1)).isoformat()
+    out_of_order[4]["observed_at"] = boundary.isoformat()
+    with pytest.raises(RuntimeError, match="temporal wave order"):
+        scraper._validate_tennessee_phase_reports(
+            out_of_order,
+            patch_count=1,
+            body_count=1,
+        )
+
+
+def test_partial_browser_resume_rejects_cross_phase_before_ledger_lookup() -> None:
+    scraper = TennesseeScraper("TN", "Tennessee")
+    _bind_phase(scraper)
+    replay_calls: list[dict[str, Any]] = []
+    scraper._state_law_acquisition_ledger = SimpleNamespace(
+        entries=(),
+        replay_retained_parser_input=lambda **kwargs: replay_calls.append(kwargs),
+        retained_replay_only=False,
+    )
+    other_phase = hashlib.sha256(b"other-partial-phase").hexdigest()
+
+    with pytest.raises(RuntimeError, match="crossed acquisition phases"):
+        scraper._replay_optional_tennessee_input(
+            PUBLIC_CONTAINER_URL,
+            canonical_rendered_root_request(
+                acquisition_phase_id=other_phase,
+                acquisition_phase_started_at=PHASE_STARTED_AT,
+            ),
+        )
+
+    assert replay_calls == []
+
+
+def test_partial_browser_resume_rejects_stale_phase() -> None:
+    scraper = TennesseeScraper("TN", "Tennessee")
+    stale_started_at = (
+        datetime.now(UTC)
+        - timedelta(seconds=TennesseeScraper.TN_PHASE_MAX_AGE_SECONDS + 1)
+    ).isoformat()
+    stale_request = canonical_rendered_root_request(
+        acquisition_phase_id=PHASE_ID,
+        acquisition_phase_started_at=stale_started_at,
+    )
+    scraper._state_law_acquisition_ledger = SimpleNamespace(
+        entries=(
+            SimpleNamespace(
+                receipt=SimpleNamespace(sanitized_request=stale_request),
+            ),
+        ),
+        retained_replay_only=False,
+    )
+
+    with pytest.raises(RuntimeError, match="phase is stale"):
+        scraper._select_tennessee_acquisition_phase(allow_new=False)
+
+
+class _FakeNavigationRequest:
+    def __init__(self, url: str, redirected_from: Any = None) -> None:
+        self.url = url
+        self.redirected_from = redirected_from
+
+
+class _FakeNavigation:
+    status = 200
+
+    def __init__(self, url: str) -> None:
+        self.request = _FakeNavigationRequest(url)
+
+
+class _FakePage:
+    def __init__(self, *, root_html: str, patch_payload: Mapping[str, Any]) -> None:
+        self.url = f"{PUBLIC_CONTAINER_URL}&crid={SESSION_ID}"
+        self._root_html = root_html
+        self._patch_payload = patch_payload
+
+    async def goto(self, *_args: Any, **_kwargs: Any) -> _FakeNavigation:
+        return _FakeNavigation(self.url)
+
+    async def wait_for_selector(self, *_args: Any, **_kwargs: Any) -> None:
+        return None
+
+    async def content(self) -> str:
+        return self._root_html
+
+    async def evaluate(self, _script: str, args: Mapping[str, Any]) -> Mapping[str, Any]:
+        assert args["sessionRequestId"] == SESSION_ID
+        return {
+            "contentType": "application/json; charset=utf-8",
+            "finalUrl": TOC_ENDPOINT_URL,
+            "observedAt": datetime.now(UTC).isoformat(),
+            "redirected": False,
+            "status": 200,
+            "text": json.dumps(self._patch_payload),
+        }
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("final_url", "redirected"),
+    [
+        (PUBLIC_CONTAINER_URL, False),
+        (TOC_ENDPOINT_URL, True),
+    ],
+)
+async def test_patch_wire_rejects_changed_final_url_or_redirect(
+    final_url: str,
+    redirected: bool,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import (
+        tennessee_lexis_live,
+    )
+
+    class _WirePage:
+        async def evaluate(
+            self,
+            _script: str,
+            _args: Mapping[str, Any],
+        ) -> Mapping[str, Any]:
+            return {
+                "contentType": "application/json",
+                "finalUrl": final_url,
+                "observedAt": datetime.now(UTC).isoformat(),
+                "redirected": redirected,
+                "status": 200,
+                "text": "{}",
+            }
+
+    payload, proof, error = await tennessee_lexis_live._patch_with_retries(
+        _WirePage(),
+        endpoint=TOC_ENDPOINT_URL,
+        request_body=b"{}",
+        session_request_id=SESSION_ID,
+        retry_count=1,
+    )
+
+    assert payload == b""
+    assert proof == {}
+    assert "final-URL/redirect proof" in error
+
+
+@pytest.mark.anyio
+async def test_patch_wire_uses_verifier_clock_not_page_javascript_clock() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import (
+        tennessee_lexis_live,
+    )
+
+    malicious_page_time = "1900-01-01T00:00:00+00:00"
+
+    class _WirePage:
+        async def evaluate(
+            self,
+            _script: str,
+            _args: Mapping[str, Any],
+        ) -> Mapping[str, Any]:
+            return {
+                "contentType": "application/json",
+                "finalUrl": TOC_ENDPOINT_URL,
+                "observedAt": malicious_page_time,
+                "redirected": False,
+                "status": 200,
+                "text": "{}",
+            }
+
+    before = datetime.now(UTC)
+    payload, proof, error = await tennessee_lexis_live._patch_with_retries(
+        _WirePage(),
+        endpoint=TOC_ENDPOINT_URL,
+        request_body=b"{}",
+        session_request_id=SESSION_ID,
+        retry_count=1,
+    )
+    after = datetime.now(UTC)
+
+    observed = datetime.fromisoformat(str(proof["response_observed_at"]))
+    assert payload == b"{}"
+    assert error == ""
+    assert proof["response_observed_at"] != malicious_page_time
+    assert before <= observed <= after
+
+
+class _FakeBrowser:
+    def __init__(self, page: _FakePage) -> None:
+        self._page = page
+
+    async def new_context(self, **_kwargs: Any) -> Any:
+        page = self._page
+        return SimpleNamespace(new_page=lambda: None, _page=page)
+
+    async def close(self) -> None:
+        return None
+
+
+class _FakeBrowserContext:
+    def __init__(self, page: _FakePage) -> None:
+        self._page = page
+
+    async def new_page(self) -> _FakePage:
+        return self._page
+
+
+class _FakeChromium:
+    def __init__(self, page: _FakePage) -> None:
+        self._page = page
+
+    async def launch(self, **_kwargs: Any) -> Any:
+        page = self._page
+
+        class Browser(_FakeBrowser):
+            async def new_context(self, **_kwargs: Any) -> _FakeBrowserContext:
+                return _FakeBrowserContext(page)
+
+        return Browser(page)
+
+
+class _FakePlaywrightManager:
+    def __init__(self, page: _FakePage) -> None:
+        self._playwright = SimpleNamespace(chromium=_FakeChromium(page))
+
+    async def __aenter__(self) -> Any:
+        return self._playwright
+
+    async def __aexit__(self, *_args: Any) -> None:
+        return None
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("retained_root", [False, True])
+async def test_live_browser_retains_missing_root_and_session_bound_patch(
+    monkeypatch: pytest.MonkeyPatch,
+    retained_root: bool,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import (
+        tennessee_lexis_live,
+    )
+
+    scraper = TennesseeScraper("TN", "Tennessee")
+    compact_titles = (
+        ("1", "Code and Statutes"),
+        ("19", "[Reserved]"),
+        ("51", "[Reserved]"),
+    )
+    scraper.OFFICIAL_TITLES = compact_titles
+    root_html = _root_html(scraper)
+    roots, _tables = parse_root_html(root_html, expected_titles=compact_titles)
+    parent = next(node for node in roots if node.can_expand or node.has_children)
+    subtree, _href = _subtree_payload(parent)
+    page = _FakePage(root_html=root_html, patch_payload=subtree)
+    monkeypatch.setattr(
+        tennessee_lexis_live,
+        "_playwright_manager",
+        lambda: _FakePlaywrightManager(page),
+    )
+    retained_inputs: list[dict[str, Any]] = []
+
+    def _replay(url: str, request: Mapping[str, Any]) -> Any:
+        if retained_root and url == PUBLIC_CONTAINER_URL:
+            return TennesseeRetainedBrowserInput(
+                body=root_html.encode(),
+                response_proof={
+                    "final_url": PUBLIC_CONTAINER_URL,
+                    "final_url_sha256": hashlib.sha256(
+                        PUBLIC_CONTAINER_URL.encode()
+                    ).hexdigest(),
+                    "redirect_chain": [],
+                    "redirected": False,
+                    "response_observed_at": datetime.now(UTC).isoformat(),
+                    "session_request_id_sha256": hashlib.sha256(
+                        b"prior-session"
+                    ).hexdigest(),
+                },
+            )
+        return None
+
+    inventory = await acquire_live_catalog(
+        acquisition_phase_id=PHASE_ID,
+        acquisition_phase_started_at=PHASE_STARTED_AT,
+        expected_titles=compact_titles,
+        expected_patch_count=1,
+        retain_parser_input=lambda **kwargs: retained_inputs.append(dict(kwargs)),
+        replay_parser_input=_replay,
+    )
+
+    assert inventory.network_patch_count == 1
+    assert [item["sanitized_request"]["method"] for item in retained_inputs] == [
+        "GET",
+        "PATCH",
+    ]
+    patch_request = retained_inputs[1]["sanitized_request"]
+    assert patch_request["headers"]["X-Requested-With"] == "XMLHttpRequest"
+    assert patch_request["session_request_id_sha256"] == SESSION_SHA256
+    assert SESSION_ID not in json.dumps(patch_request, sort_keys=True)
+    assert retained_inputs[0]["observed_at"] != retained_inputs[1]["observed_at"]
+
+
+@pytest.mark.anyio
+async def test_live_ledger_route_derives_body_wave_then_uses_retained_parser(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import (
+        tennessee_lexis_live,
+    )
+
+    scraper = TennesseeScraper("TN", "Tennessee")
+    scraper.OFFICIAL_TITLES = (
+        ("1", "Code and Statutes"),
+        ("19", "[Reserved]"),
+        ("51", "[Reserved]"),
+    )
+    scraper.ENFORCE_OBSERVED_TN_FRONTIER = False
+    ledger = SimpleNamespace(
+        retained_replay_only=False,
+        refresh_count=0,
+        retain_parser_input=lambda **_kwargs: None,
+        replay_retained_parser_input=lambda **_kwargs: None,
+    )
+
+    def _refresh() -> None:
+        ledger.refresh_count += 1
+
+    ledger.refresh_existing_entries = _refresh
+    scraper._state_law_acquisition_ledger = ledger
+    root_payload = _root_html(scraper).encode()
+    roots, tables = parse_root_html(
+        root_payload.decode(),
+        expected_titles=scraper.OFFICIAL_TITLES,
+    )
+    parent = next(node for node in roots if node.can_expand or node.has_children)
+    subtree_payload, _href = _subtree_payload(parent)
+    descendants, _closed, error = parse_title_subtree_payload(
+        subtree_payload,
+        parent=parent,
+        target_level=max(parent.open_to_levels),
+    )
+    assert error == ""
+    subtrees = {parent.node_id: tuple(descendants)}
+    metadata = derive_exact_metadata_frontier(
+        roots,
+        subtrees_by_root_id=subtrees,
+    )
+    inventory = TennesseeLiveCatalog(
+        title_roots=tuple(roots),
+        tables_root=tables,
+        subtrees_by_root_id=subtrees,
+        metadata=metadata,
+        observed_at="2026-08-29T00:00:00+00:00",
+        network_patch_count=1,
+        retained_patch_count=0,
+    )
+    catalog_calls: list[dict[str, Any]] = []
+
+    async def _catalog(**kwargs: Any) -> TennesseeLiveCatalog:
+        catalog_calls.append(dict(kwargs))
+        return inventory
+
+    body_urls = [document_url(node.link_href) for node in metadata["document_nodes"]]
+    get_waves: list[tuple[str, list[str]]] = []
+
+    async def _get_wave(
+        urls: Sequence[str],
+        *,
+        frontier_name: str,
+        content_validator: Any,
+        require_direct: bool = False,
+    ) -> StateLawPageMultiFetchResult:
+        assert require_direct is True
+        requested = list(urls)
+        get_waves.append((frontier_name, requested))
+        if frontier_name == "General Assembly delegation":
+            payloads = [
+                b"<html><a href='https://www.lexisnexis.com/hottopics/tncode'>"
+                b"Tennessee Code</a></html>"
+            ]
+        elif frontier_name == "publisher entry":
+            payloads = [
+                f"<html><a href='{PUBLIC_CONTAINER_URL}'>continue</a></html>".encode()
+            ]
+        else:
+            assert frontier_name == "document body wave"
+            assert requested == body_urls
+            payloads = [b"<html><main data-document-content>body</main></html>"] * len(
+                requested
+            )
+        assert all(content_validator(payload) for payload in payloads)
+        return StateLawPageMultiFetchResult(
+            urls=requested,
+            payloads=payloads,
+            errors=[None] * len(requested),
+            transport_receipts=[{"source_transport": "direct"}] * len(requested),
+            parser_input_envelopes=[None] * len(requested),
+            stats={"network_requested_pages": len(requested)},
+        )
+
+    marker = [SimpleNamespace(section_number="1-1-1")]
+
+    async def _retained(*, code_name: str) -> list[Any]:
+        assert code_name == "Tennessee Code Annotated"
+        return marker
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(tennessee_lexis_live, "acquire_live_catalog", _catalog)
+    monkeypatch.setattr(scraper, "_fetch_tennessee_lexis_get_wave", _get_wave)
+    monkeypatch.setattr(
+        scraper,
+        "_scrape_strict_tennessee_retained_frontier",
+        _retained,
+    )
+
+    rows = await scraper.scrape_code(
+        "Tennessee Code Annotated",
+        scraper.AUTHORIZED_CODE_ENTRY_URL,
+        max_statutes=None,
+    )
+
+    assert rows is marker
+    assert [name for name, _urls in get_waves] == [
+        "General Assembly delegation",
+        "publisher entry",
+        "document body wave",
+    ]
+    assert len(catalog_calls) == 1
+    assert catalog_calls[0]["expected_patch_count"] == 1
+    assert ledger.refresh_count == 1
 
 
 class _Envelope(SimpleNamespace):
@@ -459,6 +1131,10 @@ class _FakeLedger:
         self.calls: list[list[tuple[str, dict[str, Any]]]] = []
         self.refresh_count = 0
 
+    @property
+    def entries(self) -> tuple[Any, ...]:
+        return tuple(self._rows.values())
+
     @staticmethod
     def _key(url: str, request: dict[str, Any]) -> str:
         return json.dumps([url, request], sort_keys=True, separators=(",", ":"))
@@ -470,14 +1146,48 @@ class _FakeLedger:
             receipt_sha256=hashlib.sha256((url + digest).encode()).hexdigest(),
             url=url,
         )
+        observed_at = datetime.now(UTC).isoformat()
+        browser = request.get("method") == "PATCH" or request.get("rendered_by") == "playwright"
+        browser_proof = {
+            "final_url": TOC_ENDPOINT_URL if request.get("method") == "PATCH" else PUBLIC_CONTAINER_URL,
+            "final_url_sha256": hashlib.sha256(PUBLIC_CONTAINER_URL.encode()).hexdigest(),
+            "redirect_chain": [],
+            "redirected": False,
+            "response_observed_at": observed_at,
+            "session_request_id_sha256": str(
+                request.get("session_request_id_sha256") or SESSION_SHA256
+            ),
+        }
         self._rows[self._key(url, request)] = SimpleNamespace(
             envelope=envelope,
-            receipt=SimpleNamespace(content=SimpleNamespace(sha256=digest)),
+            receipt=SimpleNamespace(
+                content=SimpleNamespace(sha256=digest),
+                endpoint=url,
+                pagination={
+                    "tennessee_acquisition_phase": {
+                        "phase_id": PHASE_ID,
+                        "schema_version": TennesseeScraper.TN_PHASE_SCHEMA,
+                        "started_at": PHASE_STARTED_AT,
+                    },
+                    **(
+                        {"tennessee_browser_response": browser_proof}
+                        if browser
+                        else {}
+                    ),
+                },
+                retrieved_at=observed_at,
+                sanitized_request=dict(request),
+            ),
             transport_receipt={
                 "content_sha256": digest,
                 "official_url": url,
-                "retrieved_at": "2026-08-26T00:00:00+00:00",
-                "source_transport": "retained_test_transport",
+                "retrieved_at": observed_at,
+                "source_transport": (
+                    "browser_rendered"
+                    if request.get("method") == "PATCH"
+                    or request.get("rendered_by") == "playwright"
+                    else "direct"
+                ),
             },
         )
 
@@ -494,11 +1204,123 @@ class _FakeLedger:
         return tuple(self._rows[self._key(url, request)] for url, request in normalized)
 
 
+def test_retained_observed_at_comes_from_signed_acquisition_receipt() -> None:
+    scraper = TennesseeScraper("TN", "Tennessee")
+    _bind_phase(scraper)
+    url = scraper.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL
+    body = b"<html>receipt-bound</html>"
+    digest = hashlib.sha256(body).hexdigest()
+    observed_at = "2026-08-29T03:04:05+00:00"
+    retained = SimpleNamespace(
+        envelope=_Envelope(
+            body=body,
+            receipt_sha256=hashlib.sha256((url + digest).encode()).hexdigest(),
+            url=url,
+        ),
+        receipt=SimpleNamespace(
+            pagination={
+                "tennessee_acquisition_phase": {
+                    "phase_id": PHASE_ID,
+                    "schema_version": TennesseeScraper.TN_PHASE_SCHEMA,
+                    "started_at": PHASE_STARTED_AT,
+                }
+            },
+            retrieved_at=observed_at,
+        ),
+        transport_receipt={
+            "content_sha256": digest,
+            "official_url": url,
+            "source_transport": "direct",
+        },
+    )
+    scraper._tennessee_frontier_input_reports = []
+
+    admitted = scraper._record_tennessee_retained_input(
+        source_role="state_delegation",
+        official_url=url,
+        sanitized_request=scraper._tennessee_get_request(url),
+        retained=retained,
+    )
+
+    assert admitted == body
+    assert scraper._tennessee_frontier_input_reports[0]["observed_at"] == observed_at
+
+
+def test_retained_current_get_role_rejects_archival_transport() -> None:
+    scraper = TennesseeScraper("TN", "Tennessee")
+    _bind_phase(scraper)
+    url = scraper.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL
+    body = b"<html>archived authority</html>"
+    digest = hashlib.sha256(body).hexdigest()
+    retained = SimpleNamespace(
+        envelope=_Envelope(
+            body=body,
+            receipt_sha256=hashlib.sha256((url + digest).encode()).hexdigest(),
+            url=url,
+        ),
+        receipt=SimpleNamespace(
+            pagination={
+                "tennessee_acquisition_phase": {
+                    "phase_id": PHASE_ID,
+                    "schema_version": TennesseeScraper.TN_PHASE_SCHEMA,
+                    "started_at": PHASE_STARTED_AT,
+                }
+            },
+            retrieved_at=datetime.now(UTC).isoformat(),
+        ),
+        transport_receipt={
+            "content_sha256": digest,
+            "official_url": url,
+            "source_transport": "wayback",
+        },
+    )
+    scraper._tennessee_frontier_input_reports = []
+
+    with pytest.raises(RuntimeError, match="inadmissible current-source transport"):
+        scraper._record_tennessee_retained_input(
+            source_role="state_delegation",
+            official_url=url,
+            sanitized_request=scraper._tennessee_get_request(url),
+            retained=retained,
+        )
+
+
+def test_optional_browser_resume_rejects_nonbrowser_provenance_before_network() -> None:
+    scraper = TennesseeScraper("TN", "Tennessee")
+    url = PUBLIC_CONTAINER_URL
+    body = _root_html(scraper).encode()
+    digest = hashlib.sha256(body).hexdigest()
+    retained = SimpleNamespace(
+        envelope=_Envelope(
+            body=body,
+            receipt_sha256=hashlib.sha256((url + digest).encode()).hexdigest(),
+            url=url,
+        ),
+        receipt=SimpleNamespace(retrieved_at="2026-08-29T03:04:05+00:00"),
+        transport_receipt={
+            "content_sha256": digest,
+            "official_url": url,
+            "source_transport": "direct",
+        },
+    )
+    scraper._state_law_acquisition_ledger = SimpleNamespace(
+        retained_replay_only=False,
+        replay_retained_parser_input=lambda **_kwargs: retained,
+    )
+
+    with pytest.raises(RuntimeError, match="invalid retained evidence"):
+        scraper._replay_optional_tennessee_input(
+            url,
+            canonical_rendered_root_request(),
+        )
+
+
 @pytest.mark.anyio
 async def test_strict_route_is_five_ordered_ledger_only_waves(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     scraper = TennesseeScraper("TN", "Tennessee")
+    _bind_phase(scraper)
     scraper.ENFORCE_OBSERVED_TN_FRONTIER = False
     ledger = _FakeLedger()
     scraper._state_law_acquisition_ledger = ledger
@@ -524,7 +1346,7 @@ async def test_strict_route_is_five_ordered_ledger_only_waves(
     )
     ledger.add(
         scraper.AUTHORIZED_CODE_CONTAINER_URL,
-        get_request(scraper.AUTHORIZED_CODE_CONTAINER_URL),
+        _root_request(),
         root_body,
     )
 
@@ -538,7 +1360,12 @@ async def test_strict_route_is_five_ordered_ledger_only_waves(
             document_nodes.append(parent)
             continue
         payload, href = _subtree_payload(parent)
-        endpoint, _body, request = canonical_toc_patch_request(parent)
+        endpoint, _body, request = canonical_live_toc_patch_request(
+            parent,
+            acquisition_phase_id=PHASE_ID,
+            acquisition_phase_started_at=PHASE_STARTED_AT,
+            session_request_id_sha256=SESSION_SHA256,
+        )
         ledger.add(endpoint, request, json.dumps(payload).encode())
         document_nodes.append(
             _document_node(
@@ -569,13 +1396,13 @@ async def test_strict_route_is_five_ordered_ledger_only_waves(
     )
 
     assert len(rows) == 69
-    assert [len(call) for call in ledger.calls] == [1, 1, 1, 69, 71]
+    assert [len(call) for call in ledger.calls] == [1, 1, 69, 71]
     assert all(call for call in ledger.calls)
     assert all(
         request["method"] == "PATCH"
-        for _url, request in ledger.calls[3]
+        for _url, request in ledger.calls[2]
     )
-    assert all(request["method"] == "GET" for _url, request in ledger.calls[4])
+    assert all(request["method"] == "GET" for _url, request in ledger.calls[3])
     report = scraper.last_tennessee_full_corpus_report
     assert report["closed"] is True
     assert report["retained_replay_only"] is True
@@ -617,7 +1444,6 @@ async def test_strict_route_is_five_ordered_ledger_only_waves(
 
     assert closure_path == Path("/tmp/tennessee-test-closure.json")
     assert [len(call) for call in ledger.calls[first_wave_count:]] == [
-        1,
         1,
         1,
         69,
@@ -672,6 +1498,7 @@ def test_producer_identity_binds_tennessee_and_shared_dependencies() -> None:
     labels = {getattr(item, "__name__", "") for item in dependencies}
 
     assert any(label.endswith(".tennessee_lexis") for label in labels)
+    assert any(label.endswith(".tennessee_lexis_live") for label in labels)
     assert any(label.endswith(".tennessee_section") for label in labels)
     assert any(label.endswith(".strict_frontier_closure") for label in labels)
     assert any(label.endswith(".state_archival_fetch") for label in labels)
