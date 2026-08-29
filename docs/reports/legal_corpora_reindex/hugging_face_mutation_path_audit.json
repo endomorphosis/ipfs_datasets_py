@@ -1085,7 +1085,7 @@
       "guarded_write_individual": false,
       "guarded_write_line": 0,
       "guarded_write_lines": [],
-      "line": 1416,
+      "line": 1460,
       "path": "scripts/ops/legal_data/publish_state_laws_hf_release.py",
       "potential_protected_target": false,
       "prepared_binding_exact": false,
