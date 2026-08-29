@@ -73,6 +73,7 @@ from ipfs_datasets_py.processors.legal_data.federal_register_hf_release import (
     MANIFEST_FILENAME,
     advertised_viewer_configs,
     assert_configs_schema_coherent,
+    build_federal_candidate_evidence,
     build_federal_register_hf_release,
     fixture_family_rows,
     fixture_legacy_files,
@@ -1674,7 +1675,17 @@ def build_dry_run_receipt(
     *,
     repo_root: Path | str | None = None,
 ) -> dict[str, Any]:
-    resolved = plan or plan_stage_from_candidate(repo_root=repo_root, dry_run=True)
+    if plan is None:
+        release = build_fixture_release(repo_root=repo_root)
+        fixture_candidate = build_federal_candidate_evidence(release)
+        resolved = plan_stage_from_candidate(
+            fixture_candidate,
+            release=release,
+            repo_root=repo_root,
+            dry_run=True,
+        )
+    else:
+        resolved = plan
     request = federal_staging_gate_request(
         manifest_digest=str(resolved["manifest_digest"]),
         repo_root=repo_root,

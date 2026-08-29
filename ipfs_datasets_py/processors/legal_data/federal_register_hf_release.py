@@ -166,6 +166,10 @@ DEFAULT_DETERMINISM_SEED: Final = 20260810
 DEFAULT_GRAPH_ONTOLOGY_VERSION: Final = "federal-register-graph-ontology/v1"
 DEFAULT_SOURCE_REVISION: Final = PREVIOUS_PUBLIC_PIN
 DEFAULT_RELEASE_POINT: Final = f"federal-register/v2/{DEFAULT_OBSERVATION_CUTOFF[:10]}"
+FIRST_FEDERAL_REGISTER_PACKAGE_ID: Final = "FR-1936-03-14"
+FIRST_FEDERAL_REGISTER_PUBLICATION_DATE: Final = "1936-03-14"
+FIRST_FEDERAL_REGISTER_VOLUME: Final = 1
+FIRST_FEDERAL_REGISTER_NUMBER: Final = 1
 DEFAULT_MODEL_TOKEN_CEILING: Final = PINNED_MAX_TOKENS
 DEFAULT_BM25_K1: Final = 1.2
 DEFAULT_BM25_B: Final = 0.75
@@ -3264,6 +3268,201 @@ def build_federal_candidate_evidence(
     return payload
 
 
+def build_federal_production_candidate_evidence(
+    release: FederalRegisterHuggingFaceRelease,
+    *,
+    official_document_count: int,
+    first_issue: Mapping[str, Any],
+    inventory_digest: str,
+    admission_digest: str,
+    fulltext_digest: str,
+    evaluation_digest: str,
+    full_live_acceptance_digest: str,
+    source_rights: Mapping[str, Any] | None = None,
+    validation: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build the canonical non-fixture candidate from exact release bytes.
+
+    This is deliberately separate from :func:`build_federal_candidate_evidence`.
+    The fixture constructor remains incapable of producing publication-shaped
+    evidence.  Callers must supply the verified live receipt digests and the
+    exact in-memory release later handed to the canonical publisher.
+
+    The returned mapping is evidence only: it never authorizes or performs a
+    Hub mutation.
+    """
+
+    if type(release) is not FederalRegisterHuggingFaceRelease:
+        raise FederalRegisterHFReleaseSafetyError(
+            "production candidate requires an exact FederalRegisterHuggingFaceRelease"
+        )
+    measured_validation = validate_federal_register_hf_release(release)
+    if measured_validation.get("valid") is not True:
+        raise FederalRegisterHFReleaseIntegrityError(
+            "production release validation did not pass"
+        )
+    if validation is not None and canonical_json_bytes(
+        dict(validation)
+    ) != canonical_json_bytes(measured_validation):
+        raise FederalRegisterHFReleaseIntegrityError(
+            "caller-supplied production validation differs from fresh validation"
+        )
+    receipt = dict(measured_validation)
+    if type(official_document_count) is not int or official_document_count <= 0:
+        raise FederalRegisterHFReleaseIntegrityError(
+            "official_document_count must be a positive integer"
+        )
+
+    expected_first_issue = {
+        "number": FIRST_FEDERAL_REGISTER_NUMBER,
+        "package_id": FIRST_FEDERAL_REGISTER_PACKAGE_ID,
+        "publication_date": FIRST_FEDERAL_REGISTER_PUBLICATION_DATE,
+        "volume": FIRST_FEDERAL_REGISTER_VOLUME,
+    }
+    observed_first_issue = {
+        key: first_issue.get(key) for key in expected_first_issue
+    }
+    if observed_first_issue != expected_first_issue:
+        raise FederalRegisterHFReleaseIntegrityError(
+            "production candidate does not bind the first Federal Register issue"
+        )
+
+    evidence_digests = {
+        "admission": normalize_sha256(admission_digest, name="admission_digest"),
+        "evaluation": normalize_sha256(evaluation_digest, name="evaluation_digest"),
+        "full_live_acceptance": normalize_sha256(
+            full_live_acceptance_digest,
+            name="full_live_acceptance_digest",
+        ),
+        "fulltext": normalize_sha256(fulltext_digest, name="fulltext_digest"),
+        "inventory": normalize_sha256(inventory_digest, name="inventory_digest"),
+    }
+    current_rights = load_source_rights_receipt()
+    rights = dict(source_rights or current_rights)
+    rights_digest = normalize_sha256(
+        rights.get("receipt_digest")
+        or rights.get("report_digest_sha256")
+        or release.source_rights_receipt_digest,
+        name="source_rights_receipt_digest",
+    )
+    catalog_digest = normalize_sha256(
+        rights.get("catalog_digest_sha256"),
+        name="source_rights_catalog_digest",
+    )
+    if (
+        rights_digest != release.source_rights_receipt_digest
+        or rights_digest != current_rights["receipt_digest"]
+        or catalog_digest != current_rights["catalog_digest_sha256"]
+    ):
+        raise FederalRegisterHFReleaseIntegrityError(
+            "production candidate source-rights binding differs from current "
+            "release bytes"
+        )
+
+    manifest = release.manifest_dict()
+    corpus_binding = manifest.get("corpus")
+    if (
+        not isinstance(corpus_binding, Mapping)
+        or int(corpus_binding.get("row_count") or 0) != official_document_count
+    ):
+        raise FederalRegisterHFReleaseIntegrityError(
+            "production release corpus rows differ from the live official inventory"
+        )
+    descriptors = [item.descriptor_dict() for item in release.artifacts]
+    if not descriptors or any(
+        not item.get("relative_path")
+        or not item.get("sha256")
+        or int(item.get("size_bytes") or -1) < 0
+        for item in descriptors
+    ):
+        raise FederalRegisterHFReleaseIntegrityError(
+            "production candidate requires complete release artifact descriptors"
+        )
+
+    payload: dict[str, Any] = {
+        "acceptance": {
+            **dict(receipt.get("acceptance") or {}),
+            "binds_first_issue": True,
+            "descriptor_complete": True,
+            "fixture_evidence_rejected": True,
+            "live_receipts_bound": True,
+            "publication_not_authorized": True,
+            "secrets_absent": True,
+            "source_rights_bound": True,
+        },
+        "artifact_count": len(descriptors),
+        "authorizing_for_publication": False,
+        "authorizing_hub_upload": False,
+        "board_namespace": BOARD_NAMESPACE,
+        "bundle": BUNDLE,
+        "candidate": {
+            "build_config_cid": release.build_config_cid,
+            "dataset_id": release.dataset_id,
+            "default_config": DEFAULT_CONFIG_NAME,
+            "kind": "production_descriptor_complete",
+            "manifest_digest": release.manifest_digest,
+            "observation_cutoff": release.observation_cutoff,
+            "official_document_count": official_document_count,
+            "package_version": release.package_version,
+            "release_point": DEFAULT_RELEASE_POINT,
+            "release_profile": release.release_profile,
+            "release_root_cid": release.release_root_cid,
+            "source_revision": release.source_revision,
+            "vector_space_id": release.vector_space_id,
+        },
+        "code_version": CODE_VERSION,
+        "configs": [cfg.config_name for cfg in release.configs],
+        "currentness_disclaimer": CURRENTNESS_DISCLAIMER,
+        "depends_on": [
+            "LCR-050",
+            "LCR-061",
+            "LCR-062",
+            "LCR-063",
+            "LCR-071",
+            "LCR-079",
+        ],
+        "descriptors": descriptors,
+        "evidence_digests": evidence_digests,
+        "evidence_root": CANDIDATE_EVIDENCE_RELPATH,
+        "first_issue": expected_first_issue,
+        "first_package_id": FIRST_FEDERAL_REGISTER_PACKAGE_ID,
+        "fixture_only": False,
+        "goal_id": GOAL_ID,
+        "hub_upload": False,
+        "legacy_baseline_end_inclusive": LEGACY_BASELINE_END_INCLUSIVE,
+        "manifest_digest": release.manifest_digest,
+        "mode": "live_official",
+        "producer": PRODUCER,
+        "program_id": PROGRAM_ID,
+        "proves_software_contract_only": False,
+        "publication_binding": None,
+        "release_root_cid": release.release_root_cid,
+        "required_semantic_families": list(required_semantic_families()),
+        "rollback": rollback_map(),
+        "route_bounds": route_bounds_policy(),
+        "schema": "ipfs_datasets_py/legal-corpora-reindex-federal-candidate@1",
+        "schema_version": SCHEMA_VERSION,
+        "semantic_family_closure": manifest.get("semantic_family_closure"),
+        "source_rights": {
+            "catalog_digest_sha256": catalog_digest,
+            "receipt_digest": rights_digest,
+            "receipt_path": SOURCE_RIGHTS_RECEIPT_RELPATH,
+            "unknown_or_prohibited_excluded_from_default": True,
+        },
+        "task_id": TASK_ID,
+        "viewer_safe_default_v2": True,
+    }
+    payload["content_digest"] = digest_mapping(
+        {key: value for key, value in payload.items() if key != "content_digest"}
+    )
+    reject_identity_contamination(payload, label="federal-production-candidate")
+    _assert_no_secrets_or_absolute_paths(
+        payload,
+        label="federal-production-candidate",
+    )
+    return payload
+
+
 def write_federal_candidate_evidence(
     payload: Mapping[str, Any],
     *,
@@ -3308,6 +3507,163 @@ def load_federal_candidate_evidence(
                 )
             return dict(payload)
     raise FederalRegisterHFReleaseError("federal_candidate.json is missing")
+
+
+def validate_canonical_federal_candidate_evidence(
+    payload: Mapping[str, Any],
+    *,
+    expected_fixture: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Strictly validate the canonical candidate in fixture or production form.
+
+    Fixture evidence must be byte-canonically identical to the freshly rebuilt
+    fixture candidate.  A production candidate cannot be compared to fixture
+    bytes, so it instead must pass its complete self digest, current rights
+    binding, descriptor inventory, semantic closure, and live-receipt bindings.
+    The staging operator later rebinds every descriptor to exact in-memory
+    release bytes before any mutation.
+    """
+
+    if not isinstance(payload, Mapping):
+        raise FederalRegisterHFReleaseIntegrityError(
+            "canonical Federal candidate must be an object"
+        )
+    candidate = dict(payload)
+    if candidate.get("fixture_only") is True:
+        if expected_fixture is None or canonical_json_bytes(
+            candidate
+        ) != canonical_json_bytes(dict(expected_fixture)):
+            raise FederalRegisterHFReleaseIntegrityError(
+                "canonical fixture candidate differs from the fresh hermetic release"
+            )
+        return {
+            "candidate_kind": "fixture",
+            "manifest_digest": candidate["candidate"]["manifest_digest"],
+            "valid": True,
+        }
+
+    nested = candidate.get("candidate")
+    acceptance = candidate.get("acceptance")
+    first_issue = candidate.get("first_issue")
+    closure = candidate.get("semantic_family_closure")
+    descriptors = candidate.get("descriptors")
+    evidence_digests = candidate.get("evidence_digests")
+    source_rights = candidate.get("source_rights")
+    declared = str(candidate.get("content_digest") or "").strip().casefold()
+    expected_digest = digest_mapping(
+        {key: value for key, value in candidate.items() if key != "content_digest"}
+    )
+    if (
+        candidate.get("schema")
+        != "ipfs_datasets_py/legal-corpora-reindex-federal-candidate@1"
+        or candidate.get("fixture_only") is not False
+        or candidate.get("mode") not in {"live", "live_official", "production"}
+        or candidate.get("authorizing_for_publication") is not False
+        or candidate.get("authorizing_hub_upload") is not False
+        or candidate.get("hub_upload") is not False
+        or candidate.get("publication_binding") is not None
+        or candidate.get("first_package_id")
+        != FIRST_FEDERAL_REGISTER_PACKAGE_ID
+        or not isinstance(first_issue, Mapping)
+        or dict(first_issue)
+        != {
+            "number": FIRST_FEDERAL_REGISTER_NUMBER,
+            "package_id": FIRST_FEDERAL_REGISTER_PACKAGE_ID,
+            "publication_date": FIRST_FEDERAL_REGISTER_PUBLICATION_DATE,
+            "volume": FIRST_FEDERAL_REGISTER_VOLUME,
+        }
+        or not isinstance(acceptance, Mapping)
+        or acceptance.get("binds_first_issue") is not True
+        or acceptance.get("descriptor_complete") is not True
+        or acceptance.get("live_receipts_bound") is not True
+        or acceptance.get("source_rights_bound") is not True
+        or not isinstance(nested, Mapping)
+        or nested.get("kind") != "production_descriptor_complete"
+        or nested.get("dataset_id") != DEFAULT_DATASET_REPO_ID
+        or type(nested.get("official_document_count")) is not int
+        or nested.get("official_document_count", 0) <= 0
+        or not re.fullmatch(r"[0-9a-f]{64}", str(nested.get("manifest_digest") or ""))
+        or candidate.get("manifest_digest") != nested.get("manifest_digest")
+        or candidate.get("release_root_cid") != nested.get("release_root_cid")
+        or not re.fullmatch(r"[0-9a-f]{64}", declared)
+        or declared != expected_digest
+        or not isinstance(closure, Mapping)
+        or closure.get("closed") is not True
+        or closure.get("missing") != []
+        or not isinstance(descriptors, Sequence)
+        or isinstance(descriptors, (str, bytes))
+        or len(descriptors) != int(candidate.get("artifact_count") or -1)
+        or not isinstance(evidence_digests, Mapping)
+        or set(evidence_digests)
+        != {"admission", "evaluation", "full_live_acceptance", "fulltext", "inventory"}
+        or any(
+            not re.fullmatch(r"[0-9a-f]{64}", str(value or ""))
+            for value in evidence_digests.values()
+        )
+        or not isinstance(source_rights, Mapping)
+    ):
+        raise FederalRegisterHFReleaseIntegrityError(
+            "canonical production candidate is incomplete, unsafe, or stale"
+        )
+    paths: set[str] = set()
+    for descriptor in descriptors:
+        if not isinstance(descriptor, Mapping):
+            raise FederalRegisterHFReleaseIntegrityError(
+                "canonical production descriptor must be an object"
+            )
+        path = str(descriptor.get("relative_path") or "")
+        if (
+            not path
+            or path in paths
+            or path.startswith("/")
+            or ".." in PurePosixPath(path).parts
+            or not re.fullmatch(r"[0-9a-f]{64}", str(descriptor.get("sha256") or ""))
+            or int(descriptor.get("size_bytes") or -1) < 0
+        ):
+            raise FederalRegisterHFReleaseIntegrityError(
+                "canonical production descriptor inventory is unsafe or incomplete"
+            )
+        paths.add(path)
+    try:
+        expected_closure = validate_semantic_family_closure(
+            closure.get("present") or (),
+            required=required_semantic_families(),
+        )
+    except SemanticFamilyClosureError as exc:
+        raise FederalRegisterHFReleaseIntegrityError(
+            "canonical production semantic-family closure is invalid"
+        ) from exc
+    if (
+        list(candidate.get("required_semantic_families") or ())
+        != list(required_semantic_families())
+        or canonical_json_bytes(dict(closure))
+        != canonical_json_bytes(expected_closure)
+    ):
+        raise FederalRegisterHFReleaseIntegrityError(
+            "canonical production semantic-family closure drifted"
+        )
+    current_rights = load_source_rights_receipt()
+    if (
+        source_rights.get("receipt_digest") != current_rights["receipt_digest"]
+        or source_rights.get("catalog_digest_sha256")
+        != current_rights["catalog_digest_sha256"]
+        or source_rights.get("receipt_path") != SOURCE_RIGHTS_RECEIPT_RELPATH
+        or source_rights.get("unknown_or_prohibited_excluded_from_default")
+        is not True
+    ):
+        raise FederalRegisterHFReleaseIntegrityError(
+            "canonical production candidate source-rights binding is stale"
+        )
+    reject_identity_contamination(candidate, label="canonical-federal-candidate")
+    _assert_no_secrets_or_absolute_paths(
+        candidate,
+        label="canonical-federal-candidate",
+    )
+    return {
+        "candidate_kind": "production",
+        "manifest_digest": nested["manifest_digest"],
+        "valid": True,
+    }
 
 
 def run_hermetic_check(
@@ -3358,30 +3714,16 @@ def run_hermetic_check(
         validation=receipt,
     )
     sealed = load_federal_candidate_evidence()
-    comparable_keys = (
-        "task_id",
-        "goal_id",
-        "program_id",
-        "authorizing_for_publication",
-        "authorizing_hub_upload",
-        "fixture_only",
-        "schema_version",
-        "evidence_root",
+    canonical_candidate = validate_canonical_federal_candidate_evidence(
+        sealed,
+        expected_fixture=evidence,
     )
-    for key in comparable_keys:
-        if sealed.get(key) != evidence.get(key):
-            raise FederalRegisterHFReleaseIntegrityError(
-                f"federal_candidate.json field {key!r} drifted"
-            )
-    if sealed["candidate"]["manifest_digest"] != first.manifest_digest:
-        raise FederalRegisterHFReleaseIntegrityError(
-            "federal_candidate.json manifest_digest does not match fixture release"
-        )
-    if sealed["source_rights"]["receipt_digest"] != first.source_rights_receipt_digest:
-        raise FederalRegisterHFReleaseIntegrityError(
-            "federal_candidate.json source-rights digest drifted"
-        )
     proofs.append("candidate_evidence_root_bound")
+    proofs.append(
+        "canonical_"
+        + str(canonical_candidate["candidate_kind"])
+        + "_candidate_validated"
+    )
     if write_candidate:
         write_federal_candidate_evidence(evidence)
         proofs.append("candidate_evidence_written")
@@ -3603,6 +3945,7 @@ __all__ = [
     "assemble_federal_register_hf_release",
     "assert_configs_schema_coherent",
     "build_federal_candidate_evidence",
+    "build_federal_production_candidate_evidence",
     "build_federal_register_hf_release",
     "consume_lcr061_family_outputs",
     "fixture_family_rows",
@@ -3618,5 +3961,6 @@ __all__ = [
     "run_hermetic_check",
     "stage_federal_register_hf_release",
     "validate_federal_register_hf_release",
+    "validate_canonical_federal_candidate_evidence",
     "write_federal_candidate_evidence",
 ]

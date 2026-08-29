@@ -98,8 +98,8 @@ The control plane consists of `manifest.json`, `release_metadata.json`, routing 
 This additive fixture assembly binds the LCR-078/LCR-079/LCR-083 source-rights compliance receipt and cannot authorize publication.
 
 - Receipt path: `docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json`
-- Source-rights receipt digest: `46ef76257b938dc532311207bcbe97f12bc5b9fdf587b370b4273e1b912969ee`
-- Source-rights catalog digest: `3ba1d10b30598c2145ee0dfa62db42d69d2d664578fce90d5c4ed756ac742a4b`
+- Source-rights receipt digest: `231f26c7d5c23f0347e2d3d953544a618f9fda8dc9ef0605c822d600d36218db`
+- Source-rights catalog digest: `965edf55cbffe12cfc8d1ab6fddf182c6f72a8d2492cc9e38bdf886e1fa6bcb1`
 - Admitted source-scope records: 52
 - Unknown or prohibited rights cannot enter the default v2 release.
 - Fixture receipts set `authorizing_for_publication=false`.

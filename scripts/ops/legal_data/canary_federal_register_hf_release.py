@@ -1407,7 +1407,25 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(
+    argv: Sequence[str] | None = None,
+    *,
+    staging_receipt: Mapping[str, Any] | None = None,
+    candidate: Mapping[str, Any] | None = None,
+    artifact_descriptors: Sequence[Mapping[str, Any]] | None = None,
+    remote_descriptors: Sequence[Mapping[str, Any]] | None = None,
+    fetch_file: Callable[[str, str, str], bytes] | None = None,
+    inventory: Mapping[str, Any] | None = None,
+    fulltext: Mapping[str, Any] | None = None,
+) -> int:
+    """CLI/check entry point with an injection-only live-network surface.
+
+    Ordinary command-line invocation cannot manufacture the receipt,
+    descriptor inventories, or byte fetcher required by a live canary.  The
+    canonical operator wrapper supplies them in memory; omitting any of them
+    continues to fail closed in :func:`run_remote_canary`.
+    """
+
     argv_list = list(sys.argv[1:] if argv is None else argv)
     try:
         reject_secrets_in_argv(argv_list)
@@ -1468,7 +1486,17 @@ def main(argv: Sequence[str] | None = None) -> int:
                     f"(--repo-id/--revision or ${REMOTE_REPO_ENV}/"
                     f"${REMOTE_REVISION_ENV}); refusing to infer a mutable revision"
                 )
-            receipt = run_remote_canary(repo_id=remote_repo, revision=remote_rev)
+            receipt = run_remote_canary(
+                repo_id=remote_repo,
+                revision=remote_rev,
+                staging_receipt=staging_receipt,
+                candidate=candidate,
+                artifact_descriptors=artifact_descriptors,
+                remote_descriptors=remote_descriptors,
+                fetch_file=fetch_file,
+                inventory=inventory,
+                fulltext=fulltext,
+            )
             write_json(args.output, receipt)
             return 0
 

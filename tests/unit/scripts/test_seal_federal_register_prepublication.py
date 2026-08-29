@@ -9,6 +9,16 @@ from pathlib import Path
 import pytest
 
 import scripts.ops.legal_data.seal_federal_register_prepublication as seal
+from ipfs_datasets_py.processors.legal_data.federal_register_hf_release import (
+    build_federal_register_hf_release,
+    fixture_family_rows,
+    fixture_legacy_files,
+)
+from ipfs_datasets_py.processors.legal_data.federal_register_publication_package import (
+    FederalRegisterCanonicalControlBundle,
+    plan_federal_register_publication_dry_run,
+    prepare_federal_register_publication_package,
+)
 
 
 def _canonical(payload: dict) -> bytes:
@@ -172,3 +182,78 @@ def test_strict_seal_rejects_content_digest_tamper(tmp_path: Path) -> None:
     seal_path.write_bytes(_canonical(payload) + b"\n")
     with pytest.raises(seal.SealBindingError, match="content digest"):
         seal.check_federal_prepublication_seal(repo_root=tmp_path)
+
+
+def test_generation_api_materializes_then_checks_without_network(
+    tmp_path: Path, monkeypatch
+) -> None:
+    release = build_federal_register_hf_release(
+        fixture_family_rows(),
+        legacy_files=fixture_legacy_files(),
+    )
+    package = prepare_federal_register_publication_package(
+        release,
+        output_root=tmp_path / "release",
+    )
+    plan = plan_federal_register_publication_dry_run(
+        package,
+        audited_parent_commit=seal.PREVIOUS_PUBLIC_PIN,
+        target_revision="main",
+    )
+    controls = FederalRegisterCanonicalControlBundle(
+        phase="federal_main",
+        candidate_manifest_digest="1" * 64,
+        staging_candidate_digest="2" * 64,
+        candidate_path=seal.CANDIDATE_RELPATH.as_posix(),
+        dataset_card_path="README.md",
+        dataset_card_sha256="3" * 64,
+        release_manifest_digest=package.manifest_digest,
+        plan_digest=plan.plan_digest,
+        policy_proof_digest="4" * 64,
+        source_rights_receipt_digest=package.source_rights_receipt_digest,
+        staging_revision="5" * 40,
+        seal_path=seal.SEAL_RELPATH.as_posix(),
+        seal_content_digest="6" * 64,
+    )
+    calls = []
+
+    def materialize(*args, **kwargs):
+        calls.append((args, kwargs))
+        return controls
+
+    checked = {
+        "final_manifest_digest": controls.candidate_manifest_digest,
+        "plan_digest": controls.plan_digest,
+        "policy_proof_digest": controls.policy_proof_digest,
+        "release_manifest_digest": controls.release_manifest_digest,
+        "staging_revision": controls.staging_revision,
+    }
+    monkeypatch.setattr(seal, "materialize_federal_register_main_controls", materialize)
+    monkeypatch.setattr(
+        seal,
+        "check_federal_prepublication_seal",
+        lambda **_kwargs: dict(checked),
+    )
+    generated, result = seal.generate_federal_prepublication_seal(
+        package=package,
+        plan=plan,
+        staging_revision=controls.staging_revision,
+        sealed_at="2026-08-29T12:00:00Z",
+        repository_root=tmp_path,
+        no_mutate=True,
+    )
+    assert generated is controls
+    assert result == checked
+    assert len(calls) == 1
+
+
+def test_generation_api_requires_no_mutate(tmp_path: Path) -> None:
+    with pytest.raises(seal.SealFederalRegisterError, match="no_mutate"):
+        seal.generate_federal_prepublication_seal(
+            package=object(),
+            plan=object(),
+            staging_revision="5" * 40,
+            sealed_at="2026-08-29T12:00:00Z",
+            repository_root=tmp_path,
+            no_mutate=False,
+        )

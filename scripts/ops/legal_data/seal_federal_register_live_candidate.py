@@ -23,6 +23,15 @@ from ipfs_datasets_py.processors.legal_data.federal_register_source_policy impor
     DEFAULT_OBSERVATION_CUTOFF,
     digest_mapping,
 )
+from ipfs_datasets_py.processors.legal_data.federal_register_hf_release import (  # noqa: E402
+    FIRST_FEDERAL_REGISTER_NUMBER,
+    FIRST_FEDERAL_REGISTER_PACKAGE_ID,
+    FIRST_FEDERAL_REGISTER_PUBLICATION_DATE,
+    FIRST_FEDERAL_REGISTER_VOLUME,
+    FederalRegisterHuggingFaceRelease,
+    build_federal_production_candidate_evidence,
+    validate_federal_register_hf_release,
+)
 
 TASK_ID = "LCR-071"
 GOAL_ID = "LCR-G130"
@@ -52,6 +61,21 @@ INVENTORY_RELPATH = Path("docs/reports/legal_corpora_reindex/federal_inventory.j
 RIGHTS_RELPATH = Path(
     "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json"
 )
+CANONICAL_CANDIDATE_RELPATH = Path(
+    "docs/reports/legal_corpora_reindex/federal_candidate.json"
+)
+CANONICAL_ADMISSION_RELPATH = Path(
+    "docs/reports/legal_corpora_reindex/federal_admission.json"
+)
+CANONICAL_FULLTEXT_RELPATH = Path(
+    "docs/reports/legal_corpora_reindex/federal_fulltext_coverage.json"
+)
+CANONICAL_EVALUATION_RELPATH = Path(
+    "docs/reports/legal_corpora_reindex/federal_evaluation.json"
+)
+CANONICAL_ACCEPTANCE_RELPATH = Path(
+    "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json"
+)
 EXPECTED_LIVE_DOCUMENTS = 11784
 FORBIDDEN_KINDS = frozenset(
     {
@@ -71,6 +95,392 @@ FORBIDDEN_KINDS = frozenset(
 
 class LiveCandidateError(RuntimeError):
     pass
+
+
+def _receipt_digest(payload: Mapping[str, Any]) -> str:
+    """Digest one in-memory receipt without trusting a declared self digest."""
+
+    body = {
+        key: value
+        for key, value in payload.items()
+        if key
+        not in {
+            "content_digest",
+            "digest",
+            "report_digest_sha256",
+            "receipt_digest",
+        }
+    }
+    return digest_mapping(body)
+
+
+def _seal_evidence_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
+    sealed = dict(payload)
+    sealed.pop("content_digest", None)
+    sealed.pop("report_digest_sha256", None)
+    sealed["content_digest"] = digest_mapping(sealed)
+    return sealed
+
+
+def _official_live_inventory_total(inventory: Mapping[str, Any]) -> int:
+    acceptance = inventory.get("acceptance")
+    if not isinstance(acceptance, Mapping):
+        raise LiveCandidateError("live inventory acceptance is missing")
+    official_total = int(acceptance.get("official_total") or 0)
+    failed_final = int(
+        acceptance.get("failed_final")
+        if acceptance.get("failed_final") is not None
+        else (inventory.get("counts") or {}).get("failed_final") or 0
+    )
+    if (
+        acceptance.get("mode") != "live"
+        or official_total <= 0
+        or acceptance.get("frontier_closed") is not True
+        or acceptance.get("failed_final_zero") is not True
+        or inventory.get("frontier_closed") is not True
+        or failed_final != 0
+    ):
+        raise LiveCandidateError(
+            "inventory is not a closed, failed-final-zero live frontier"
+        )
+    return official_total
+
+
+def build_canonical_live_fulltext_evidence(
+    *,
+    inventory: Mapping[str, Any],
+    fulltext: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Normalize verified LCR-071 exhaustion into the canonical LCR-053 schema."""
+
+    official_total = _official_live_inventory_total(inventory)
+    classified = int(fulltext.get("classified") or 0)
+    admitted = int(fulltext.get("full_text_admitted") or 0)
+    excluded = int(fulltext.get("excluded") or 0)
+    failed_final = int(fulltext.get("failed_final") or 0)
+    metadata_only = int(fulltext.get("metadata_only") or 0)
+    quarantined = int(fulltext.get("quarantined") or 0)
+    if (
+        fulltext.get("mode") != "live"
+        or fulltext.get("fixture_only") is True
+        or fulltext.get("sample_identity") is True
+        or fulltext.get("compact_recipe") is True
+        or fulltext.get("authorizing_hub_upload") is True
+        or classified != official_total
+        or admitted != official_total
+        or failed_final != 0
+        or excluded != 0
+        or metadata_only != 0
+        or quarantined != 0
+    ):
+        raise LiveCandidateError(
+            "full-text input is not exact, non-fixture live exhaustion"
+        )
+    payload = {
+        "acceptance": {
+            "all_inventory_documents_classified": True,
+            "failed_final_zero": True,
+            "full_text_admitted_equals_inventory": True,
+            "metadata_as_body_rejected": True,
+            "one_disposition_per_document": True,
+            "sample_or_cap_rejected": True,
+        },
+        "authorizing_for_publication": False,
+        "authorizing_hub_upload": False,
+        "classified": classified,
+        "compact_recipe": False,
+        "excluded": excluded,
+        "failed_final": failed_final,
+        "fixture_only": False,
+        "full_text_admitted": admitted,
+        "goal_id": "LCR-G110",
+        "input_receipt_digest": _receipt_digest(fulltext),
+        "inventory_digest": _receipt_digest(inventory),
+        "metadata_only": metadata_only,
+        "mode": "live_official",
+        "observation_cutoff": fulltext.get("observation_cutoff"),
+        "producer": PRODUCER,
+        "program_id": PROGRAM_ID,
+        "quarantined": quarantined,
+        "sample_identity": False,
+        "schema": "ipfs_datasets_py/legal-corpora-reindex-federal-fulltext-coverage@1",
+        "status": "passed",
+        "task_id": "LCR-053",
+    }
+    return _seal_evidence_payload(payload)
+
+
+def build_canonical_live_admission_evidence(
+    *,
+    inventory: Mapping[str, Any],
+    fulltext: Mapping[str, Any],
+    corpus: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Normalize exact live inventory/body/corpus conservation for LCR-055."""
+
+    official_total = _official_live_inventory_total(inventory)
+    identity = inventory.get("identity")
+    if not isinstance(identity, Mapping):
+        raise LiveCandidateError("live inventory identity evidence is missing")
+    if (
+        corpus.get("status") != "passed"
+        or corpus.get("fixture_only") is True
+        or corpus.get("authorizing_hub_upload") is True
+        or int(corpus.get("verified") or 0) != official_total
+        or int(corpus.get("error_count") or 0) != 0
+        or int(corpus.get("mismatches") or 0) != 0
+        or int(fulltext.get("full_text_admitted") or 0) != official_total
+        or int(fulltext.get("failed_final") or 0) != 0
+        or int(fulltext.get("excluded") or 0) != 0
+        or int(fulltext.get("metadata_only") or 0) != 0
+        or int(fulltext.get("quarantined") or 0) != 0
+        or identity.get("duplicate_free") is not True
+        or int(identity.get("unique_legal_id_count") or 0) != official_total
+    ):
+        raise LiveCandidateError(
+            "canonical admission inputs do not conserve the verified live corpus"
+        )
+    payload = {
+        "acceptance": {
+            "admitted_rows_have_complete_official_provenance": True,
+            "admitted_rows_have_non_placeholder_text": True,
+            "exact_row_conservation": True,
+            "failed_final_zero": True,
+            "no_duplicate_primary_keys": True,
+            "one_disposition_per_input": True,
+            "primary_keys_unique": True,
+            "unique_primary_keys": True,
+            "valid_provenance_and_offsets": True,
+        },
+        "authorizing_for_publication": False,
+        "authorizing_hub_upload": False,
+        "counts": {
+            "admitted": official_total,
+            "excluded": int(fulltext.get("excluded") or 0),
+            "failed_final": 0,
+            "inventory": official_total,
+            "quarantined": int(fulltext.get("quarantined") or 0),
+        },
+        "fixture_only": False,
+        "goal_id": "LCR-G110",
+        "input_receipt_digests": {
+            "corpus": _receipt_digest(corpus),
+            "fulltext": _receipt_digest(fulltext),
+            "inventory": _receipt_digest(inventory),
+        },
+        "mode": "live_official",
+        "observation_cutoff": inventory.get("observation_cutoff"),
+        "producer": PRODUCER,
+        "program_id": PROGRAM_ID,
+        "schema": "ipfs_datasets_py/legal-corpora-reindex-federal-admission@1",
+        "status": "passed",
+        "task_id": "LCR-055",
+    }
+    return _seal_evidence_payload(payload)
+
+
+def build_canonical_live_evaluation_evidence(
+    *,
+    evaluation: Mapping[str, Any],
+    official_document_count: int,
+) -> dict[str, Any]:
+    """Normalize the non-fixture local evaluation into the canonical schema."""
+
+    acceptance = evaluation.get("acceptance")
+    if not isinstance(acceptance, Mapping):
+        raise LiveCandidateError("live evaluation acceptance is missing")
+    families = {
+        name: evaluation.get(name)
+        for name in ("bm25", "gold", "graph", "vector")
+    }
+    if (
+        evaluation.get("fixture_only") is not False
+        or evaluation.get("status") != "passed"
+        or evaluation.get("authorizing_hub_upload") is True
+        or int(evaluation.get("documents") or 0) != official_document_count
+        or any(
+            not isinstance(value, Mapping)
+            or value.get("meets_declared_gates") is not True
+            for value in families.values()
+        )
+        or acceptance.get("local_query_canary") is not True
+        or acceptance.get("no_fixture_result_called_live_canary") is not True
+    ):
+        raise LiveCandidateError(
+            "evaluation input is not a complete non-fixture local production evaluation"
+        )
+    payload = {
+        key: value
+        for key, value in evaluation.items()
+        if key not in {"content_digest", "schema", "task_id"}
+    }
+    payload.update(
+        {
+            "acceptance": {
+                **dict(acceptance),
+                "all_expected_outputs_accounted": True,
+                "sealed_thresholds_pass": True,
+            },
+            "authorizing_for_publication": False,
+            "authorizing_hub_upload": False,
+            "fixture_only": False,
+            "input_receipt_digest": _receipt_digest(evaluation),
+            "mode": "live_official",
+            "producer": PRODUCER,
+            "schema": "ipfs_datasets_py/legal-corpora-reindex-federal-evaluation@1",
+            "status": "passed",
+            "task_id": "LCR-063",
+        }
+    )
+    return _seal_evidence_payload(payload)
+
+
+def build_canonical_full_live_acceptance_evidence(
+    *,
+    release: FederalRegisterHuggingFaceRelease,
+    inventory: Mapping[str, Any],
+    fulltext: Mapping[str, Any],
+    admission: Mapping[str, Any],
+    evaluation: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Build terminal LCR-071 evidence with the fields consumed by LCR-069."""
+
+    official_total = _official_live_inventory_total(inventory)
+    fulltext_acceptance = fulltext.get("acceptance")
+    admission_acceptance = admission.get("acceptance")
+    admission_counts = admission.get("counts")
+    evaluation_acceptance = evaluation.get("acceptance")
+    if (
+        fulltext.get("schema")
+        != "ipfs_datasets_py/legal-corpora-reindex-federal-fulltext-coverage@1"
+        or fulltext.get("status") != "passed"
+        or not isinstance(fulltext_acceptance, Mapping)
+        or fulltext_acceptance.get("failed_final_zero") is not True
+        or fulltext_acceptance.get("full_text_admitted_equals_inventory") is not True
+        or int(fulltext.get("full_text_admitted") or 0) != official_total
+        or int(fulltext.get("failed_final") or 0) != 0
+        or admission.get("schema")
+        != "ipfs_datasets_py/legal-corpora-reindex-federal-admission@1"
+        or admission.get("status") != "passed"
+        or admission.get("fixture_only") is not False
+        or not isinstance(admission_acceptance, Mapping)
+        or admission_acceptance.get("exact_row_conservation") is not True
+        or admission_acceptance.get("failed_final_zero") is not True
+        or not isinstance(admission_counts, Mapping)
+        or admission_counts.get("inventory") != official_total
+        or admission_counts.get("admitted") != official_total
+        or admission_counts.get("failed_final") != 0
+        or admission_counts.get("excluded") != 0
+        or admission_counts.get("quarantined") != 0
+        or evaluation.get("schema")
+        != "ipfs_datasets_py/legal-corpora-reindex-federal-evaluation@1"
+        or evaluation.get("status") != "passed"
+        or evaluation.get("fixture_only") is not False
+        or not isinstance(evaluation_acceptance, Mapping)
+        or evaluation_acceptance.get("all_expected_outputs_accounted") is not True
+        or evaluation_acceptance.get("sealed_thresholds_pass") is not True
+    ):
+        raise LiveCandidateError("terminal live evidence inputs are not complete")
+    validation = validate_federal_register_hf_release(release)
+    if validation.get("valid") is not True:
+        raise LiveCandidateError("production release did not validate")
+    first_issue = {
+        "number": FIRST_FEDERAL_REGISTER_NUMBER,
+        "package_id": FIRST_FEDERAL_REGISTER_PACKAGE_ID,
+        "publication_date": FIRST_FEDERAL_REGISTER_PUBLICATION_DATE,
+        "volume": FIRST_FEDERAL_REGISTER_VOLUME,
+    }
+    payload = {
+        "acceptance": {
+            "binds_first_issue": True,
+            "candidate_descriptor_complete": True,
+            "failed_final_zero": True,
+            "frontier_closed": True,
+            "live_official_inputs_only": True,
+        },
+        "authorizing_for_publication": False,
+        "authorizing_hub_upload": False,
+        "binds_first_issue": True,
+        "candidate_kind": "production_descriptor_complete",
+        "candidate_manifest_digest": release.manifest_digest,
+        "failed_final_count": 0,
+        "first_issue": first_issue,
+        "fixture_only": False,
+        "frontier_closed": True,
+        "goal_id": GOAL_ID,
+        "input_receipt_digests": {
+            "admission": _receipt_digest(admission),
+            "evaluation": _receipt_digest(evaluation),
+            "fulltext": _receipt_digest(fulltext),
+            "inventory": _receipt_digest(inventory),
+        },
+        "inventory_official_total": official_total,
+        "mode": "live_official",
+        "producer": "run_federal_register_full_release_acceptance.py",
+        "program_id": PROGRAM_ID,
+        "schema": "ipfs_datasets_py/federal-register-full-live-acceptance@2",
+        "status": "passed",
+        "task_id": TASK_ID,
+    }
+    sealed = dict(payload)
+    sealed["report_digest_sha256"] = digest_mapping(sealed)
+    return sealed
+
+
+def build_canonical_production_evidence_bundle(
+    *,
+    release: FederalRegisterHuggingFaceRelease,
+    inventory: Mapping[str, Any],
+    fulltext: Mapping[str, Any],
+    corpus: Mapping[str, Any],
+    evaluation: Mapping[str, Any],
+    source_rights: Mapping[str, Any],
+) -> dict[str, dict[str, Any]]:
+    """Build all canonical Federal production reports in memory, without I/O."""
+
+    if type(release) is not FederalRegisterHuggingFaceRelease:
+        raise LiveCandidateError(
+            "canonical evidence requires an exact in-memory production release"
+        )
+    canonical_fulltext = build_canonical_live_fulltext_evidence(
+        inventory=inventory,
+        fulltext=fulltext,
+    )
+    canonical_admission = build_canonical_live_admission_evidence(
+        inventory=inventory,
+        fulltext=fulltext,
+        corpus=corpus,
+    )
+    official_total = _official_live_inventory_total(inventory)
+    canonical_evaluation = build_canonical_live_evaluation_evidence(
+        evaluation=evaluation,
+        official_document_count=official_total,
+    )
+    acceptance = build_canonical_full_live_acceptance_evidence(
+        release=release,
+        inventory=inventory,
+        fulltext=canonical_fulltext,
+        admission=canonical_admission,
+        evaluation=canonical_evaluation,
+    )
+    candidate = build_federal_production_candidate_evidence(
+        release,
+        official_document_count=official_total,
+        first_issue=acceptance["first_issue"],
+        inventory_digest=_receipt_digest(inventory),
+        admission_digest=_receipt_digest(canonical_admission),
+        fulltext_digest=_receipt_digest(canonical_fulltext),
+        evaluation_digest=_receipt_digest(canonical_evaluation),
+        full_live_acceptance_digest=_receipt_digest(acceptance),
+        source_rights=source_rights,
+    )
+    return {
+        "admission": canonical_admission,
+        "candidate": candidate,
+        "evaluation": canonical_evaluation,
+        "full_live_acceptance": acceptance,
+        "fulltext": canonical_fulltext,
+    }
 
 
 def _load(path: Path) -> dict[str, Any]:

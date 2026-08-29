@@ -299,6 +299,48 @@ def test_remote_canary_rejects_tamper_mutable_pins_and_missing_receipt(
         )
 
 
+def test_network_entrypoint_wires_injected_live_evidence(
+    canary, bundle, monkeypatch
+) -> None:
+    revision = "e" * 40
+    sentinel = {
+        "fixture_only": False,
+        "status": "passed",
+        "staging_revision": revision,
+    }
+    captured = {}
+
+    def run_remote_canary(**kwargs):
+        captured.update(kwargs)
+        return sentinel
+
+    monkeypatch.setattr(canary, "run_remote_canary", run_remote_canary)
+    monkeypatch.setattr(canary, "write_json", lambda *_args, **_kwargs: None)
+    receipt = {"fixture_only": False}
+    descriptors = bundle["plan"]["artifacts"]
+    fetch = lambda *_args: b""
+    assert canary.main(
+        [
+            "--network",
+            "--repo-id",
+            canary.DEFAULT_DATASET_REPO,
+            "--revision",
+            revision,
+        ],
+        staging_receipt=receipt,
+        candidate=bundle["candidate"],
+        artifact_descriptors=descriptors,
+        remote_descriptors=descriptors,
+        fetch_file=fetch,
+        inventory=bundle["inventory"],
+        fulltext={},
+    ) == 0
+    assert captured["staging_receipt"] is receipt
+    assert captured["artifact_descriptors"] is descriptors
+    assert captured["remote_descriptors"] is descriptors
+    assert captured["fetch_file"] is fetch
+
+
 def test_secret_and_path_guards(stage) -> None:
     with pytest.raises(stage.StageSafetyError):
         stage.reject_secrets_in_argv(["--hf_token=hf_abcdefghijklmnopqrstuvwxyz"])

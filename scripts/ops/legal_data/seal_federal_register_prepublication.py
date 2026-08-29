@@ -26,6 +26,13 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
+from ipfs_datasets_py.huggingface.publisher import PublicationPlan  # noqa: E402
+from ipfs_datasets_py.processors.legal_data.federal_register_publication_package import (  # noqa: E402
+    FederalRegisterCanonicalControlBundle,
+    FederalRegisterPublicationPackage,
+    materialize_federal_register_main_controls,
+)
+
 TASK_ID = "LCR-073"
 GOAL_ID = "LCR-G140"
 PROGRAM_ID = "legal-corpora-reindex-v1"
@@ -70,6 +77,62 @@ class SealBindingError(SealFederalRegisterError):
 
 
 PrepublicationSealError = SealFederalRegisterError
+
+
+def generate_federal_prepublication_seal(
+    *,
+    package: FederalRegisterPublicationPackage,
+    plan: PublicationPlan,
+    staging_revision: str,
+    sealed_at: str,
+    repository_root: Path | str = REPOSITORY_ROOT,
+    no_mutate: bool,
+) -> tuple[FederalRegisterCanonicalControlBundle, dict[str, Any]]:
+    """Generate and immediately source-check the no-mutation LCR-073 seal.
+
+    The caller must already hold the exact in-memory publication package and
+    reviewed main plan.  This function writes only canonical local control
+    files through the shared atomic control writer; it has no Hub client and
+    cannot execute the plan.  Keeping this as an operator API (rather than a
+    path-driven CLI mutation shortcut) preserves the in-memory byte binding.
+    """
+
+    if no_mutate is not True:
+        raise SealFederalRegisterError(
+            "no_mutate=true is required to generate a prepublication seal"
+        )
+    if type(package) is not FederalRegisterPublicationPackage:
+        raise SealBindingError(
+            "seal generation requires the exact in-memory Federal package"
+        )
+    if type(plan) is not PublicationPlan:
+        raise SealBindingError(
+            "seal generation requires the exact reviewed PublicationPlan"
+        )
+    controls = materialize_federal_register_main_controls(
+        package,
+        plan,
+        repository_root=repository_root,
+        staging_revision=staging_revision,
+        sealed_at=sealed_at,
+    )
+    checked = check_federal_prepublication_seal(
+        repo_root=repository_root,
+        require_live_staging_pin=True,
+    )
+    if (
+        checked.get("final_manifest_digest")
+        != controls.candidate_manifest_digest
+        or checked.get("release_manifest_digest")
+        != controls.release_manifest_digest
+        or checked.get("plan_digest") != controls.plan_digest
+        or checked.get("policy_proof_digest") != controls.policy_proof_digest
+        or checked.get("staging_revision") != controls.staging_revision
+    ):
+        raise SealBindingError(
+            "generated Federal prepublication seal differs from canonical controls"
+        )
+    return controls, checked
 
 
 def load_json_mapping(path: Path | str) -> dict[str, Any]:

@@ -34,11 +34,11 @@ from ipfs_datasets_py.processors.legal_data.federal_register_hf_release import (
     advertised_viewer_configs,
     assemble_federal_register_hf_release,
     assert_configs_schema_coherent,
+    build_federal_candidate_evidence,
     build_federal_register_hf_release,
     consume_lcr061_family_outputs,
     fixture_family_rows,
     fixture_legacy_files,
-    load_federal_candidate_evidence,
     load_fixture_dataset_card,
     load_source_rights_receipt,
     reject_hub_upload,
@@ -591,9 +591,8 @@ def test_corpus_uses_year_month_document_type_paths() -> None:
 
 
 def test_federal_candidate_evidence_is_bound() -> None:
-    assert CANDIDATE_PATH.is_file()
-    sealed = load_federal_candidate_evidence(CANDIDATE_PATH)
     release = _build_fixture_release()
+    sealed = build_federal_candidate_evidence(release)
     assert sealed["task_id"] == TASK_ID
     assert sealed["goal_id"] == GOAL_ID
     assert sealed["program_id"] == PROGRAM_ID
