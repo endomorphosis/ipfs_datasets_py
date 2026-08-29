@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import zipfile
+from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
 
@@ -15,6 +16,9 @@ import pytest
 from ipfs_datasets_py.processors.legal_data.state_laws_multifetch_acquisition import (
     StateLawMultiFetchAcquisitionLedger,
     build_canonical_state_law_output_projection,
+)
+from ipfs_datasets_py.processors.legal_data import (
+    state_laws_multifetch_acquisition as multifetch_acquisition,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import base_scraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_jersey import (
@@ -255,6 +259,11 @@ def test_prospective_fetch_replay_and_canonical_identity_parity_close(
 ) -> None:
     payload = _zip_bytes()
     requested: list[str] = []
+    monkeypatch.setattr(
+        multifetch_acquisition,
+        "_utc_now",
+        lambda: datetime(2026, 8, 29, 7, 26, 14, 123456, tzinfo=UTC),
+    )
 
     def _official_response(**kwargs):
         requested.append(str(kwargs["url"]))
@@ -315,8 +324,21 @@ def test_prospective_fetch_replay_and_canonical_identity_parity_close(
         "2C:11-4",
     ]
     assert requested == [OFFICIAL_ZIP_URL]
+    assert rows[0].structured_data["source_bundle"]["retrieved_at"] == (
+        "2026-08-29T07:26:14.123000Z"
+    )
+    assert (
+        replayed_rows[0].structured_data["source_bundle"]
+        == rows[0].structured_data["source_bundle"]
+    )
 
     rows = [scraper._enrich_statute_structure(row) for row in rows]
+    replayed_rows = [
+        replay_scraper._enrich_statute_structure(row) for row in replayed_rows
+    ]
+    assert [row.structured_data["jsonld"] for row in replayed_rows] == [
+        row.structured_data["jsonld"] for row in rows
+    ]
     assert rows[0].structured_data["jsonld"]["provenance"][
         "source_record_id"
     ] == "2C:11-3"

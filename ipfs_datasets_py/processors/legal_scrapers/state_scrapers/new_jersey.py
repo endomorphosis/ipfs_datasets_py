@@ -393,7 +393,11 @@ class NewJerseyScraper(BaseStateScraper):
         }
         if envelope is not None:
             source_receipt = envelope.acquisition.receipt
-            retrieved_at = str(source_receipt.retrieved_at or "")
+            # Rows must bind the canonical serialized receipt timestamp.  The
+            # receipt contract intentionally emits millisecond precision, while
+            # the in-memory live object can retain finer microseconds.  Using
+            # the raw datetime here made live output differ from retained replay.
+            retrieved_at = str(source_receipt.to_dict().get("retrieved_at") or "")
             sanitized_request = dict(source_receipt.sanitized_request)
             content = source_receipt.content
             if content is not None:
