@@ -603,7 +603,7 @@ def _sealed_live_policy_fixture(root: Path):
     return dry_run, proof, approval
 
 
-def test_canonical_controls_reach_real_runtime_callback(
+def test_canonical_controls_authorize_runtime_but_reject_unsealed_callback(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -617,7 +617,15 @@ def test_canonical_controls_reach_real_runtime_callback(
     _materialize_local_release(release_root, fixture_only=False)
     dry_run, proof, _ = _sealed_live_policy_fixture(release_root)
 
-    canonical_root = _seed_repo(tmp_path / "runtime", "state_main")
+    canonical_root = _seed_repo(
+        tmp_path / "runtime",
+        "state_main",
+        bind_state_main_candidate=False,
+        state_release_manifest_digest=dry_run.package.manifest_digest,
+        state_rights_receipt_bytes=(
+            release_root / SOURCE_RIGHTS_RECEIPT_RELPATH
+        ).read_bytes(),
+    )
     canonical_rights = canonical_root / SOURCE_RIGHTS_RECEIPT_RELPATH
     canonical_rights.write_bytes(
         (release_root / SOURCE_RIGHTS_RECEIPT_RELPATH).read_bytes()
@@ -658,10 +666,19 @@ def test_canonical_controls_reach_real_runtime_callback(
         (canonical_root / bundle.candidate_path).read_text(encoding="utf-8")
     )
     assert candidate["schema"] == (
-        legal_corpora_publication_runtime.MANIFEST_SCHEMA_V1
+        legal_corpora_publication_runtime.PRODUCTION_MANIFEST_SCHEMA_V2
     )
     assert candidate["manifest_digest"] == dry_run.plan.release_sha256
-    assert candidate["canonical_digest"] == bundle.candidate_manifest_digest
+    assert candidate["report_digest_sha256"] == (
+        bundle.candidate_manifest_digest
+    )
+    assert candidate["publication_binding"] == {
+        "plan_digest": dry_run.plan.plan_digest,
+        "policy_proof_digest": proof.proof_digest,
+        "release_manifest_digest": dry_run.plan.release_sha256,
+        "staging_candidate_digest": bundle.staging_candidate_digest,
+    }
+    assert bundle.staging_candidate_digest != bundle.candidate_manifest_digest
 
     _git(canonical_root, "add", "-A")
     _git(canonical_root, "commit", "-m", "canonical State controls")
@@ -683,13 +700,19 @@ def test_canonical_controls_reach_real_runtime_callback(
         calls.append(decision)
         return decision
 
-    decision = (
+    decision = legal_corpora_publication_runtime.evaluate_canonical_publication(
+        request
+    )
+    assert decision.authorized is True
+    with pytest.raises(
+        legal_corpora_publication_runtime.PublicationRuntimeError,
+        match="exact sealed legal-corpora commit preflight",
+    ):
         legal_corpora_publication_runtime.authorize_and_mutate_canonical(
             request,
             callback,
         )
-    )
-    assert len(calls) == 1
+    assert calls == []
     assert decision.final_manifest_digest == bundle.candidate_manifest_digest
     assert decision.details["candidate_release_manifest_digest"] == (
         dry_run.plan.release_sha256
@@ -1152,7 +1175,7 @@ def test_live_policy_request_must_bind_the_exact_verified_package(
         )
 
 
-def test_live_policy_proof_roundtrip_and_generic_boundary(
+def test_live_policy_proof_roundtrip_and_generic_boundary_rejects_fake_transport(
     local_release: tuple[Path, dict[str, object]],
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1173,7 +1196,15 @@ def test_live_policy_proof_roundtrip_and_generic_boundary(
         local_root=root,
     ).proof_digest == proof.proof_digest
 
-    canonical_root = _seed_repo(tmp_path / "publisher-runtime", "state_main")
+    canonical_root = _seed_repo(
+        tmp_path / "publisher-runtime",
+        "state_main",
+        bind_state_main_candidate=False,
+        state_release_manifest_digest=dry_run.package.manifest_digest,
+        state_rights_receipt_bytes=(
+            root / SOURCE_RIGHTS_RECEIPT_RELPATH
+        ).read_bytes(),
+    )
     (canonical_root / SOURCE_RIGHTS_RECEIPT_RELPATH).write_bytes(
         (root / SOURCE_RIGHTS_RECEIPT_RELPATH).read_bytes()
     )
@@ -1203,26 +1234,20 @@ def test_live_policy_proof_roundtrip_and_generic_boundary(
     monkeypatch.setenv("HF_TOKEN", "state-laws-synthetic-runtime-token")
 
     api = _WriteTrackingApi()
-    commit = HuggingFaceReleasePublisher(
-        profile=dry_run.profile,
-        api=api,
-    ).publish_append_only(
-        dry_run.plan,
-        approval=approval,
-        local_root=root,
-        live_policy_proof=round_tripped,
-    )
-    assert commit.plan_digest == dry_run.plan.plan_digest
-    assert api.calls == [
-        "auth_check",
-        "whoami",
-        "auth_check",
-        "whoami",
-        "repo_info",
-        "get_paths_info",
-        "get_paths_info",
-        "create_commit",
-    ]
+    with pytest.raises(
+        HuggingFacePublicationError,
+        match="exact HfApi template",
+    ):
+        HuggingFaceReleasePublisher(
+            profile=dry_run.profile,
+            api=api,
+        ).publish_append_only(
+            dry_run.plan,
+            approval=approval,
+            local_root=root,
+            live_policy_proof=round_tripped,
+        )
+    assert api.calls == []
 
 
 def test_generic_state_laws_boundary_rejects_missing_forged_and_mismatched_proof(

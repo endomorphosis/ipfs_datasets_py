@@ -200,6 +200,22 @@ _STATE_LAWS_PROTECTED_REPOSITORIES: Final = frozenset(
     for repository_id in PROTECTED_REPOS
     if repository_id.rsplit("/", 1)[-1] == "ipfs_state_laws"
 )
+_FEDERAL_REGISTER_PROTECTED_REPOSITORIES: Final = frozenset(
+    repository_id
+    for repository_id in PROTECTED_REPOS
+    if repository_id.rsplit("/", 1)[-1] == "ipfs_federal_register"
+)
+_CANONICAL_LEGAL_CORPORA_PHASES: Final = frozenset(
+    {
+        "state_staging",
+        "state_main",
+        "federal_staging",
+        "federal_main",
+    }
+)
+_CANONICAL_LEGAL_CORPORA_METHODS: Final = frozenset(
+    {"create_branch", "create_commit"}
+)
 _WRITE_API_METHODS: Final[frozenset[str]] = PROTECTED_WRITE_METHODS
 _PROTECTED_TRANSPORT_ENV_NAMES: Final = (
     "ALL_PROXY",
@@ -236,6 +252,7 @@ def _pinned_class_executable_surface(target: type | None) -> Mapping[str, Any]:
 _CANONICAL_HF_API_METHOD_NAMES: Final = (
     "__init__",
     "auth_check",
+    "create_branch",
     "create_commit",
     "get_paths_info",
     "repo_info",
@@ -377,6 +394,127 @@ def _digest(value: Any, *, label: str = "sha256") -> str:
             f"{label} must be a full lower-case 64-character hex digest"
         )
     return digest
+
+
+def _canonical_legal_corpora_phase_contract(
+    phase: Any,
+    *,
+    repository_id: Any,
+    revision: Any,
+    method: Any,
+) -> tuple[str, str]:
+    """Return the exact gate operation for one protected phase/method.
+
+    This is deliberately duplicated at the publisher edge instead of trusting
+    caller labels.  The canonical runtime independently derives the same
+    repository/operation pair from its sealed phase policy.
+    """
+
+    if (
+        type(phase) is not str
+        or phase != phase.strip().casefold()
+        or type(method) is not str
+        or method != method.strip()
+    ):
+        raise HuggingFacePublicationError(
+            "canonical publication phase and mutation method must be exact strings"
+        )
+    phase_text = _text(phase, label="publication_phase").casefold()
+    method_text = _text(method, label="mutation_method")
+    repository = _text(repository_id, label="repository_id").casefold()
+    target_revision = _text(revision, label="target_revision")
+    if phase_text not in _CANONICAL_LEGAL_CORPORA_PHASES:
+        raise HuggingFacePublicationError(
+            f"unsupported canonical legal-corpora phase: {phase_text!r}"
+        )
+    if method_text not in _CANONICAL_LEGAL_CORPORA_METHODS:
+        raise HuggingFacePublicationError(
+            "canonical legal-corpora mutation permits only create_branch or "
+            "create_commit"
+        )
+    expected_repository = (
+        "justicedao/ipfs_state_laws"
+        if phase_text.startswith("state_")
+        else "justicedao/ipfs_federal_register"
+    )
+    if repository != expected_repository:
+        raise HuggingFacePublicationError(
+            "canonical publication phase targets a different protected repository"
+        )
+    staging = phase_text.endswith("_staging")
+    if staging:
+        expected_revision = (
+            "stage/state-laws-sparse-graphrag-v2"
+            if phase_text == "state_staging"
+            else "stage/federal-register-ir-graphrag-v2"
+        )
+        if target_revision != expected_revision:
+            raise HuggingFacePublicationError(
+                "canonical staging publication requires its board-declared branch"
+            )
+        if target_revision.casefold() == "main":
+            raise HuggingFacePublicationError(
+                "canonical staging publication requires a dedicated staging branch"
+            )
+        if (
+            len(target_revision) > 128
+            or target_revision.startswith(("-", ".", "/"))
+            or target_revision.endswith((".", "/", ".lock"))
+            or ".." in target_revision
+            or "@{" in target_revision
+            or any(character in target_revision for character in " ~^:?*[\\")
+        ):
+            raise HuggingFacePublicationError(
+                "canonical staging branch name is not a safe Git revision"
+            )
+        operation = "additive_staging_upload"
+    else:
+        if target_revision != "main":
+            raise HuggingFacePublicationError(
+                "canonical main publication must target exactly 'main'"
+            )
+        if method_text == "create_branch":
+            raise HuggingFacePublicationError(
+                "canonical main publication cannot create or replace a branch"
+            )
+        operation = "additive_main_upload"
+    return phase_text, operation
+
+
+def canonical_legal_corpora_policy_proof_digest(
+    *,
+    phase: str,
+    candidate_manifest_digest: str,
+    plan: PublicationPlan,
+) -> str:
+    """Bind a non-authorizing policy identity to one canonical phase/plan."""
+
+    if type(plan) is not PublicationPlan:
+        raise HuggingFacePublicationError(
+            "canonical policy proof digest requires an exact PublicationPlan"
+        )
+    phase_text, operation = _canonical_legal_corpora_phase_contract(
+        phase,
+        repository_id=plan.repository_id,
+        revision=plan.target_revision,
+        method="create_commit",
+    )
+    candidate_digest = _digest(
+        candidate_manifest_digest,
+        label="candidate_manifest_digest",
+    )
+    payload = {
+        "candidate_manifest_digest": candidate_digest,
+        "operation": operation,
+        "phase": phase_text,
+        "plan_digest": plan.plan_digest,
+        "release_manifest_digest": plan.release_sha256,
+        "repository_id": plan.repository_id,
+        "repository_type": plan.repository_type,
+        "schema": "ipfs_datasets_py/legal-corpora-canonical-policy-binding@1",
+        "target_revision": plan.target_revision,
+    }
+    return sha256(canonical_json_bytes(payload)).hexdigest()
 
 
 def _normalize_relative_path(value: str) -> str:
@@ -561,10 +699,28 @@ class PublicationPlan:
             self.target_revision,
             label="target_revision",
         )
-        if target_revision != DEFAULT_TARGET_REVISION:
+        if (
+            target_revision != DEFAULT_TARGET_REVISION
+            and not is_protected_repo(self.repository_id)
+        ):
             raise HuggingFacePublicationError(
-                "immutable publication currently supports target_revision=main only"
+                "noncanonical publication currently supports target_revision=main only"
             )
+        if target_revision != DEFAULT_TARGET_REVISION:
+            # Full phase/repository/method validation is repeated at the sealed
+            # mutation edge; this keeps a dry-run plan from carrying an unsafe
+            # Git ref in the first place.
+            if (
+                len(target_revision) > 128
+                or target_revision.startswith(("-", ".", "/"))
+                or target_revision.endswith((".", "/", ".lock"))
+                or ".." in target_revision
+                or "@{" in target_revision
+                or any(character in target_revision for character in " ~^:?*[\\")
+            ):
+                raise HuggingFacePublicationError(
+                    "protected publication target_revision is not a safe Git branch"
+                )
         ops = tuple(self.operations)
         if not ops:
             raise HuggingFacePublicationError("publication plan requires at least one add")
@@ -791,6 +947,93 @@ class PublicationCommitReceipt:
             "target_revision": self.target_revision,
             "upload_bytes": self.upload_bytes,
             "uploaded_paths": list(self.uploaded_paths),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CanonicalLegalCorporaMutationReceipt:
+    """One runtime-authorized protected branch or append-only commit."""
+
+    phase: str
+    method: str
+    operation: str
+    repository_id: str
+    revision: str
+    parent_commit: str
+    resulting_commit_sha: str
+    plan_digest: str
+    release_manifest_digest: str
+    policy_proof_digest: str
+    payload_digest: str
+    approval_id: str
+
+    def __post_init__(self) -> None:
+        phase, operation = _canonical_legal_corpora_phase_contract(
+            self.phase,
+            repository_id=self.repository_id,
+            revision=self.revision,
+            method=self.method,
+        )
+        if self.operation != operation:
+            raise HuggingFacePublicationError(
+                "canonical mutation receipt operation differs from its phase"
+            )
+        object.__setattr__(self, "phase", phase)
+        object.__setattr__(
+            self,
+            "repository_id",
+            _text(self.repository_id, label="repository_id").casefold(),
+        )
+        object.__setattr__(
+            self,
+            "parent_commit",
+            _commit_sha(self.parent_commit, label="parent_commit"),
+        )
+        object.__setattr__(
+            self,
+            "resulting_commit_sha",
+            _commit_sha(
+                self.resulting_commit_sha,
+                label="resulting_commit_sha",
+            ),
+        )
+        object.__setattr__(self, "plan_digest", _digest(self.plan_digest))
+        object.__setattr__(
+            self,
+            "release_manifest_digest",
+            _digest(self.release_manifest_digest),
+        )
+        object.__setattr__(
+            self,
+            "policy_proof_digest",
+            _digest(self.policy_proof_digest),
+        )
+        object.__setattr__(
+            self,
+            "payload_digest",
+            _digest(self.payload_digest),
+        )
+        object.__setattr__(
+            self,
+            "approval_id",
+            _text(self.approval_id, label="approval_id"),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "approval_id": self.approval_id,
+            "method": self.method,
+            "operation": self.operation,
+            "parent_commit": self.parent_commit,
+            "payload_digest": self.payload_digest,
+            "phase": self.phase,
+            "plan_digest": self.plan_digest,
+            "policy_proof_digest": self.policy_proof_digest,
+            "release_manifest_digest": self.release_manifest_digest,
+            "repository_id": self.repository_id,
+            "resulting_commit_sha": self.resulting_commit_sha,
+            "revision": self.revision,
+            "runtime_authorized": True,
         }
 
 
@@ -1701,6 +1944,35 @@ def _canonical_hf_api_create_commit(
     )
 
 
+def _canonical_hf_api_create_branch(
+    runtime_token: str,
+    /,
+    **kwargs: Any,
+) -> Any:
+    """Source-attested branch primitive for a new staging ref only."""
+
+    _assert_canonical_hf_api_executables_current()
+    if "token" in kwargs or kwargs.get("exist_ok") is not False:
+        raise HuggingFacePublicationError(
+            "canonical create_branch requires sealed credentials and exist_ok=False"
+        )
+    api = _new_canonical_hf_api(runtime_token)
+    if object.__getattribute__(api, "__dict__").get("token") != runtime_token:
+        raise HuggingFacePublicationError(
+            "canonical create_branch client lost the exact runtime token"
+        )
+    session = _fresh_canonical_hf_session()
+    if _CANONICAL_HF_GET_SESSION() is not session:
+        raise HuggingFacePublicationError(
+            "canonical create_branch lost its exact fresh Session"
+        )
+    return _CANONICAL_HF_API_METHODS["create_branch"](
+        api,
+        token=runtime_token,
+        **kwargs,
+    )
+
+
 def _canonical_state_laws_parent_and_prefix_empty(
     api: Any,
     *,
@@ -1773,6 +2045,44 @@ def _canonical_state_laws_parent_and_prefix_empty(
             f"release prefix: {existing_path}"
         )
     return current
+
+
+def _canonical_legal_corpora_branch_parent(
+    api: Any,
+    *,
+    publisher: HuggingFaceReleasePublisher,
+    plan: PublicationPlan,
+    runtime_token: str,
+) -> str:
+    """Prove the exact immutable source commit before creating a staging ref."""
+
+    parent = _commit_sha(
+        plan.audited_parent_commit,
+        label="audited_parent_commit",
+    )
+    if len(parent) != 40:
+        raise HuggingFacePublicationError(
+            "canonical staging branch requires an exact 40-hex parent commit"
+        )
+    try:
+        info = _canonical_hf_api_read(
+            api,
+            "repo_info",
+            runtime_token,
+            repo_id=publisher.repository_id,
+            repo_type=publisher.repository_type,
+            revision=parent,
+        )
+    except Exception as exc:
+        raise HuggingFacePublicationError(
+            f"cannot resolve canonical staging branch parent: {exc}"
+        ) from exc
+    observed = _extract_repo_commit_sha(info)
+    if observed != parent:
+        raise HuggingFacePublicationError(
+            "canonical staging branch parent differs from the audited commit"
+        )
+    return parent
 
 
 def _verify_state_laws_live_policy(
@@ -1922,7 +2232,12 @@ def _state_laws_write_authority_from_whoami(
 
 @dataclass(frozen=True, slots=True)
 class _StateLawsCanonicalCommitPreflight:
-    """Sealed caller-facing inputs used only before authority is opened."""
+    """Sealed legal-corpora inputs used only before authority is opened.
+
+    The historical private name is retained because it is part of the guard's
+    import-time trust anchor.  Its behavior now covers both protected corpora,
+    all four canonical phases, and the two allowlisted additive primitives.
+    """
 
     publisher: HuggingFaceReleasePublisher
     api_template: Any
@@ -1947,6 +2262,27 @@ class _StateLawsCanonicalCommitPreflight:
             raise HuggingFacePublicationError(
                 "canonical State Laws preflight requires an exact HfApi template"
             )
+        if type(self.mutation_binding) is not CanonicalMutationBinding:
+            raise HuggingFacePublicationError(
+                "canonical legal-corpora preflight requires an immutable mutation binding"
+            )
+        phase, _ = _canonical_legal_corpora_phase_contract(
+            (
+                "state_main"
+                if self.mutation_binding.repository_id
+                in _STATE_LAWS_PROTECTED_REPOSITORIES
+                and self.mutation_binding.revision == "main"
+                else "state_staging"
+                if self.mutation_binding.repository_id
+                in _STATE_LAWS_PROTECTED_REPOSITORIES
+                else "federal_main"
+                if self.mutation_binding.revision == "main"
+                else "federal_staging"
+            ),
+            repository_id=self.mutation_binding.repository_id,
+            revision=self.mutation_binding.revision,
+            method=self.mutation_binding.method,
+        )
         if (
             type(self.plan) is not PublicationPlan
             or type(self.publisher.profile) is not HuggingFacePublicationProfile
@@ -1955,25 +2291,34 @@ class _StateLawsCanonicalCommitPreflight:
             or type(self.operations_payload) is not tuple
             or type(self.canonical_message) is not str
             or not self.canonical_message
-            or type(self.live_policy_proof) is not StateLawsLivePolicyProof
             or type(self.local_root) is not type(Path())
-            or type(self.mutation_binding) is not CanonicalMutationBinding
         ):
             raise HuggingFacePublicationError(
-                "canonical State Laws preflight rejects subclassed or mutable caller inputs"
+                "canonical legal-corpora preflight rejects subclassed or mutable caller inputs"
             )
+        if phase == "state_main":
+            if type(self.live_policy_proof) is not StateLawsLivePolicyProof:
+                raise HuggingFacePublicationError(
+                    "canonical State Laws main commit requires its exact sealed policy proof"
+                )
+            proof_digest = _digest(
+                _record_value(self.live_policy_proof, "proof_digest"),
+                label="State Laws policy proof digest",
+            )
+        else:
+            if self.live_policy_proof is not None:
+                raise HuggingFacePublicationError(
+                    "non-State-main canonical mutations reject caller proof objects"
+                )
+            proof_digest = self.mutation_binding.policy_proof_digest
         if not self.operations_payload or len(self.operations_payload) != len(
             self.plan.operations
         ):
             raise HuggingFacePublicationError(
                 "canonical State Laws commit operations do not match its plan"
             )
-        proof_digest = _digest(
-            _record_value(self.live_policy_proof, "proof_digest"),
-            label="State Laws policy proof digest",
-        )
         expected_binding = CanonicalMutationBinding(
-            method="create_commit",
+            method=self.mutation_binding.method,
             repository_id=self.publisher.repository_id,
             repository_type=self.publisher.repository_type,
             revision=self.plan.target_revision,
@@ -1994,11 +2339,11 @@ class _StateLawsCanonicalCommitPreflight:
             or self.publisher.repository_id != self.plan.repository_id
         ):
             raise HuggingFacePublicationError(
-                "canonical State Laws commit binding differs from its exact plan"
+                "canonical legal-corpora mutation binding differs from its exact plan"
             )
         if self.publisher.api is not self.api_template:
             raise HuggingFacePublicationError(
-                "canonical State Laws HfApi template changed before preflight"
+                "canonical legal-corpora HfApi template changed before preflight"
             )
 
     def prepare(
@@ -2022,6 +2367,12 @@ class _StateLawsCanonicalCommitPreflight:
             label="canonical candidate release manifest digest",
         )
         payload_digest = self.mutation_binding.payload_digest
+        phase, operation = _canonical_legal_corpora_phase_contract(
+            _record_value(decision, "phase"),
+            repository_id=self.mutation_binding.repository_id,
+            revision=self.mutation_binding.revision,
+            method=self.mutation_binding.method,
+        )
         if (
             _record_value(decision, "authorized") is not True
             or _record_value(decision, "network_mutation_permitted") is not True
@@ -2034,21 +2385,27 @@ class _StateLawsCanonicalCommitPreflight:
             or decision_details.get("expected_policy_proof_digest")
             != self.mutation_binding.policy_proof_digest
             or decision_details.get("expected_payload_digest") != payload_digest
-            or _record_value(decision, "operation") != "additive_main_upload"
-            or _record_value(decision, "phase") != "state_main"
-            or _record_value(self.live_policy_proof, "manifest_digest")
-            != self.mutation_binding.release_manifest_digest
+            or _record_value(decision, "operation") != operation
+            or _record_value(decision, "phase") != phase
         ):
             raise HuggingFacePublicationError(
-                "canonical State Laws runtime decision is not bound to the exact "
+                "canonical legal-corpora runtime decision is not bound to the exact "
                 "publisher mutation"
             )
-        _verify_state_laws_live_policy(
-            publisher=self.publisher,
-            plan=self.plan,
-            proof=self.live_policy_proof,
-            local_root=self.local_root,
-        )
+        if phase == "state_main":
+            if (
+                _record_value(self.live_policy_proof, "manifest_digest")
+                != self.mutation_binding.release_manifest_digest
+            ):
+                raise HuggingFacePublicationError(
+                    "State Laws proof release identity differs from the mutation"
+                )
+            _verify_state_laws_live_policy(
+                publisher=self.publisher,
+                plan=self.plan,
+                proof=self.live_policy_proof,
+                local_root=self.local_root,
+            )
         final_files = _rehash_anonymous_snapshot_files(
             self.operations_payload,
             self.plan,
@@ -2061,12 +2418,20 @@ class _StateLawsCanonicalCommitPreflight:
             self.api_template,
             runtime_token=runtime_token,
         )
-        parent = _canonical_state_laws_parent_and_prefix_empty(
-            canonical_api,
-            publisher=self.publisher,
-            plan=self.plan,
-            runtime_token=runtime_token,
-        )
+        if self.mutation_binding.method == "create_branch":
+            parent = _canonical_legal_corpora_branch_parent(
+                canonical_api,
+                publisher=self.publisher,
+                plan=self.plan,
+                runtime_token=runtime_token,
+            )
+        else:
+            parent = _canonical_state_laws_parent_and_prefix_empty(
+                canonical_api,
+                publisher=self.publisher,
+                plan=self.plan,
+                runtime_token=runtime_token,
+            )
         if parent.casefold() != self.mutation_binding.parent_commit:
             raise HuggingFacePublicationError(
                 "current audited parent differs from the canonical mutation binding"
@@ -2085,6 +2450,7 @@ def _build_state_laws_prepared_commit_call(
     require_guard: Callable[..., Any],
     rehash_files: Callable[..., Any],
     protected_write: Callable[..., Any],
+    create_branch: Callable[..., Any],
     create_commit: Callable[..., Any],
 ) -> Callable[[Any], tuple[str, Any]]:
     """Close the protected write edge over its exact import-time helpers."""
@@ -2093,12 +2459,25 @@ def _build_state_laws_prepared_commit_call(
         require_guard_local = require_guard
         rehash_files_local = rehash_files
         protected_write_local = protected_write
+        corpus = (
+            "state"
+            if self.mutation_binding.repository_id
+            == "justicedao/ipfs_state_laws"
+            else "federal"
+        )
+        target = "main" if self.mutation_binding.revision == "main" else "staging"
+        phase = f"{corpus}_{target}"
+        operation = (
+            "additive_main_upload"
+            if target == "main"
+            else "additive_staging_upload"
+        )
         payload_digest = self.mutation_binding.payload_digest
         require_guard_local(
             self.mutation_binding.repository_id,
-            method="create_commit",
-            expected_phase="state_main",
-            expected_operation="additive_main_upload",
+            method=self.mutation_binding.method,
+            expected_phase=phase,
+            expected_operation=operation,
             expected_manifest_digest=self.canonical_candidate_digest,
             expected_payload_digest=payload_digest,
         )
@@ -2111,9 +2490,19 @@ def _build_state_laws_prepared_commit_call(
                 "anonymous upload snapshot binding changed before mutation"
             )
 
+        create_branch_local = create_branch
         create_commit_local = create_commit
 
-        def commit_once() -> Any:
+        def mutate_once() -> Any:
+            if self.mutation_binding.method == "create_branch":
+                return create_branch_local(
+                    self.runtime_token,
+                    repo_id=self.mutation_binding.repository_id,
+                    repo_type=self.mutation_binding.repository_type,
+                    branch=self.mutation_binding.revision,
+                    revision=self.mutation_binding.parent_commit,
+                    exist_ok=False,
+                )
             return create_commit_local(
                 self.runtime_token,
                 repo_id=self.mutation_binding.repository_id,
@@ -2127,10 +2516,10 @@ def _build_state_laws_prepared_commit_call(
         try:
             committed = protected_write_local(
                 self.mutation_binding.repository_id,
-                "create_commit",
-                commit_once,
-                expected_phase="state_main",
-                expected_operation="additive_main_upload",
+                self.mutation_binding.method,
+                mutate_once,
+                expected_phase=phase,
+                expected_operation=operation,
                 expected_manifest_digest=self.canonical_candidate_digest,
                 expected_payload_digest=payload_digest,
             )
@@ -2138,7 +2527,7 @@ def _build_state_laws_prepared_commit_call(
             raise
         except Exception as exc:  # pragma: no cover - transport failures
             raise HuggingFacePublicationError(
-                f"HfApi create_commit failed: {exc}"
+                f"HfApi {self.mutation_binding.method} failed: {exc}"
             ) from exc
         return self.mutation_binding.parent_commit, committed
 
@@ -2313,7 +2702,11 @@ class HuggingFaceReleasePublisher:
             mismatches.append("repository_type")
         if plan.schema_version != self.profile.plan_schema_version:
             mismatches.append("plan schema")
-        if plan.target_revision != self.profile.target_revision:
+        if plan.target_revision != self.profile.target_revision and not (
+            is_protected_repo(self.repository_id)
+            and self.profile.target_revision == "main"
+            and plan.target_revision != "main"
+        ):
             mismatches.append("target revision")
         if plan.release_prefix != self.release_prefix_for(plan.release_id):
             mismatches.append("release prefix")
@@ -2637,6 +3030,234 @@ class HuggingFaceReleasePublisher:
             records.extend(list(page or ()))
         return records
 
+    def execute_canonical_legal_corpora_mutation(
+        self,
+        plan: PublicationPlan,
+        *,
+        approval: PublicationApproval,
+        local_root: str | Path,
+        publication_phase: str,
+        mutation_method: str,
+        policy_proof_digest: str,
+        commit_message: str | None = None,
+        live_policy_proof: Mapping[str, Any] | Any | None = None,
+    ) -> CanonicalLegalCorporaMutationReceipt:
+        """Execute one exact runtime-gated legal-corpora branch or commit.
+
+        Creating a staging branch and committing to it are intentionally two
+        separately authorized calls.  Both are bound to the approved plan and
+        the same anonymous snapshots of every reviewed release byte.
+        """
+
+        if type(self) is not HuggingFaceReleasePublisher:
+            raise HuggingFacePublicationError(
+                "canonical publication rejects subclassed publisher objects"
+            )
+        if type(plan) is not PublicationPlan or type(approval) is not PublicationApproval:
+            raise HuggingFacePublicationError(
+                "canonical publication requires exact plan and approval objects"
+            )
+        if type(plan.operations) is not tuple or any(
+            type(item) is not PublicationFilePlan for item in plan.operations
+        ):
+            raise HuggingFacePublicationError(
+                "canonical publication rejects mutable or subclassed operations"
+            )
+        phase, operation = _canonical_legal_corpora_phase_contract(
+            publication_phase,
+            repository_id=self.repository_id,
+            revision=plan.target_revision,
+            method=mutation_method,
+        )
+        if (
+            not is_protected_repo(self.repository_id)
+            or self.repository_id != self.repository_id.casefold()
+            or plan.repository_id != self.repository_id
+            or plan.repository_type != "dataset"
+            or self.repository_type != "dataset"
+        ):
+            raise HuggingFacePublicationError(
+                "canonical legal-corpora mutation targets a noncanonical repository"
+            )
+        upload_bytes = self._assert_live_plan_matches_publisher(plan)
+        if plan.plan_digest != approval.plan_digest:
+            raise HuggingFacePublicationError(
+                "approval plan_digest does not match the dry-run plan"
+            )
+        expected_scope = f"dataset:write:{self.repository_id}"
+        if approval.credentials_scope != expected_scope:
+            raise HuggingFacePublicationError(
+                "approval credentials_scope does not match the protected target"
+            )
+        estimated = float(plan.cost_receipt.get("estimated_cost_usd", 0.0))
+        if estimated > float(approval.max_cost_usd):
+            raise HuggingFacePublicationError(
+                "plan estimated cost exceeds approved max_cost_usd bound"
+            )
+        if upload_bytes > int(approval.max_upload_bytes):
+            raise HuggingFacePublicationError(
+                "plan upload_bytes exceeds approved max_upload_bytes bound"
+            )
+        parent_commit = _commit_sha(
+            plan.audited_parent_commit,
+            label="audited_parent_commit",
+        )
+        if len(parent_commit) != 40:
+            raise HuggingFacePublicationError(
+                "canonical mutation requires an exact 40-hex audited parent"
+            )
+        proof_digest = _digest(
+            policy_proof_digest,
+            label="policy_proof_digest",
+        )
+        if phase == "state_main":
+            if live_policy_proof is None:
+                raise HuggingFacePublicationError(
+                    "State Laws main publication requires a sealed policy proof"
+                )
+            observed_proof_digest = _digest(
+                _record_value(live_policy_proof, "proof_digest"),
+                label="State Laws policy proof digest",
+            )
+            if observed_proof_digest != proof_digest:
+                raise HuggingFacePublicationError(
+                    "State Laws proof digest differs from the mutation binding"
+                )
+            _verify_state_laws_live_policy(
+                publisher=self,
+                plan=plan,
+                proof=live_policy_proof,
+                local_root=local_root,
+            )
+        elif live_policy_proof is not None:
+            raise HuggingFacePublicationError(
+                "only State Laws main accepts a live policy proof object"
+            )
+
+        _assert_anonymous_snapshot_capacity(upload_bytes)
+        message = (
+            commit_message
+            if commit_message is not None
+            else self.profile.commit_message
+        )
+        canonical_message = _text(message, label="commit_message")
+        with ExitStack() as snapshots:
+            root, root_fd = _open_local_root_directory_nofollow(
+                local_root,
+                snapshots=snapshots,
+            )
+            operations_payload = tuple(
+                _snapshot_commit_add_operation(
+                    root_fd=root_fd,
+                    item=item,
+                    snapshots=snapshots,
+                )
+                for item in plan.operations
+            )
+            if not operations_payload:
+                raise HuggingFacePublicationError(
+                    "canonical mutation refuses an empty reviewed payload"
+                )
+            files = _rehash_anonymous_snapshot_files(operations_payload, plan)
+            mutation_binding = CanonicalMutationBinding(
+                method=mutation_method,
+                repository_id=self.repository_id,
+                repository_type=self.repository_type,
+                revision=plan.target_revision,
+                parent_commit=parent_commit,
+                files=files,
+                plan_digest=plan.plan_digest,
+                release_manifest_digest=plan.release_sha256,
+                policy_proof_digest=proof_digest,
+                commit_message_digest=sha256(
+                    canonical_message.encode("utf-8")
+                ).hexdigest(),
+            )
+            api_template = self.api
+            sealed_preflight = _StateLawsCanonicalCommitPreflight(
+                publisher=self,
+                api_template=api_template,
+                plan=plan,
+                operations_payload=operations_payload,
+                canonical_message=canonical_message,
+                live_policy_proof=live_policy_proof,
+                local_root=root,
+                mutation_binding=mutation_binding,
+            )
+
+            def principal_probe(
+                token: str,
+                repository_id: str,
+            ) -> Mapping[str, Any]:
+                canonical_api = _require_canonical_state_laws_hf_api(
+                    api_template,
+                    runtime_token=token,
+                )
+                _canonical_hf_api_read(
+                    canonical_api,
+                    "auth_check",
+                    token,
+                    repo_id=repository_id,
+                    repo_type=self.repository_type,
+                )
+                identity = _canonical_hf_api_read(
+                    canonical_api,
+                    "whoami",
+                    token,
+                )
+                return _state_laws_write_authority_from_whoami(
+                    identity,
+                    repository_id=repository_id,
+                )
+
+            from ..processors.legal_data import (
+                legal_corpora_publication_runtime as canonical_runtime,
+            )
+
+            runtime_request = canonical_runtime.CanonicalPublicationRequest(
+                phase=phase,
+                repository_root=Path(__file__).resolve().parents[2],
+                authorize_mutation=True,
+                environ=os.environ,
+                principal_probe=principal_probe,
+                expected_dataset_repo_id=plan.repository_id,
+                expected_release_manifest_digest=plan.release_sha256,
+                expected_plan_digest=plan.plan_digest,
+                expected_policy_proof_digest=proof_digest,
+                mutation_binding=mutation_binding,
+            )
+            try:
+                parent, result = canonical_runtime.authorize_and_mutate_canonical(
+                    runtime_request,
+                    sealed_preflight,
+                )
+            except HuggingFacePublicationError:
+                raise
+            except Exception as exc:
+                raise HuggingFacePublicationError(
+                    "canonical legal-corpora runtime refused publication: "
+                    f"{exc}"
+                ) from exc
+            resulting_commit = (
+                parent
+                if mutation_method == "create_branch"
+                else _extract_commit_sha(result)
+            )
+            return CanonicalLegalCorporaMutationReceipt(
+                phase=phase,
+                method=mutation_method,
+                operation=operation,
+                repository_id=self.repository_id,
+                revision=plan.target_revision,
+                parent_commit=parent,
+                resulting_commit_sha=resulting_commit,
+                plan_digest=plan.plan_digest,
+                release_manifest_digest=plan.release_sha256,
+                policy_proof_digest=proof_digest,
+                payload_digest=mutation_binding.payload_digest,
+                approval_id=approval.approval_id,
+            )
+
     def publish_append_only(
         self,
         plan: PublicationPlan,
@@ -2645,6 +3266,8 @@ class HuggingFaceReleasePublisher:
         local_root: str | Path,
         commit_message: str | None = None,
         live_policy_proof: Mapping[str, Any] | Any | None = None,
+        publication_phase: str | None = None,
+        policy_proof_digest: str | None = None,
     ) -> PublicationCommitReceipt:
         """Execute an approved append-only ``create_commit`` transaction.
 
@@ -2722,9 +3345,58 @@ class HuggingFaceReleasePublisher:
             raise HuggingFacePublicationError(
                 "plan upload_bytes exceeds approved max_upload_bytes bound"
             )
-        if is_protected_repo(self.repository_id) and not state_laws_marked:
+        if state_laws_marked and self.repository_id.casefold() not in (
+            _STATE_LAWS_PROTECTED_REPOSITORIES
+        ):
             raise HuggingFacePublicationError(
-                "protected repository publication requires its canonical runtime"
+                "State Laws publication identity cannot be relabelled to another target"
+            )
+        if is_protected_repo(self.repository_id):
+            selected_phase = publication_phase
+            selected_proof_digest = policy_proof_digest
+            if selected_phase is None:
+                if (
+                    self.repository_id.casefold()
+                    in _STATE_LAWS_PROTECTED_REPOSITORIES
+                ):
+                    selected_phase = "state_main"
+                else:
+                    raise HuggingFacePublicationError(
+                        "Federal protected publication requires an explicit canonical phase"
+                    )
+            if selected_phase == "state_main" and live_policy_proof is None:
+                raise HuggingFacePublicationError(
+                    "State Laws main publication requires a sealed policy proof"
+                )
+            if selected_proof_digest is None and live_policy_proof is not None:
+                selected_proof_digest = str(
+                    _record_value(live_policy_proof, "proof_digest") or ""
+                )
+            if selected_proof_digest is None:
+                raise HuggingFacePublicationError(
+                    "protected publication requires an exact policy_proof_digest"
+                )
+            canonical = self.execute_canonical_legal_corpora_mutation(
+                plan,
+                approval=approval,
+                local_root=local_root,
+                publication_phase=selected_phase,
+                mutation_method="create_commit",
+                policy_proof_digest=selected_proof_digest,
+                commit_message=commit_message,
+                live_policy_proof=live_policy_proof,
+            )
+            return PublicationCommitReceipt(
+                repository_id=self.repository_id,
+                commit_sha=canonical.resulting_commit_sha,
+                release_id=plan.release_id,
+                release_prefix=plan.release_prefix,
+                plan_digest=plan.plan_digest,
+                parent_commit=canonical.parent_commit,
+                target_revision=plan.target_revision,
+                uploaded_paths=tuple(item.remote_path for item in plan.operations),
+                upload_bytes=upload_bytes,
+                approval_id=approval.approval_id,
             )
         _assert_anonymous_snapshot_capacity(upload_bytes)
 
@@ -2761,10 +3433,6 @@ class HuggingFaceReleasePublisher:
             canonical_message = _text(message, label="commit_message")
 
             def execute_commit() -> tuple[str, Any]:
-                if state_laws_marked:
-                    raise HuggingFacePublicationError(
-                        "State Laws commit requires its sealed canonical executor"
-                    )
                 create_commit = self._require_api_method("create_commit")
                 parent = (
                     self.assert_audited_parent_is_current_and_prefix_empty(plan)
@@ -2785,111 +3453,7 @@ class HuggingFaceReleasePublisher:
                         f"HfApi create_commit failed: {exc}"
                     ) from exc
                 return parent, committed
-
-            if state_laws_marked:
-                if live_policy_proof is None:
-                    raise HuggingFacePublicationError(
-                        "State Laws live publication requires a sealed policy proof"
-                    )
-                # Preserve fail-closed policy diagnostics before accepting any
-                # caller-supplied transport. This and the sealed prepare pass
-                # both run outside canonical mutation authority.
-                _verify_state_laws_live_policy(
-                    publisher=self,
-                    plan=plan,
-                    proof=live_policy_proof,
-                    local_root=root,
-                )
-                from ..processors.legal_data import (
-                    legal_corpora_publication_runtime as canonical_runtime,
-                )
-
-                policy_proof_digest = _digest(
-                    _record_value(live_policy_proof, "proof_digest"),
-                    label="State Laws policy proof digest",
-                )
-                mutation_binding = CanonicalMutationBinding(
-                    method="create_commit",
-                    repository_id=self.repository_id,
-                    repository_type=self.repository_type,
-                    revision=plan.target_revision,
-                    parent_commit=plan.audited_parent_commit,
-                    files=_rehash_anonymous_snapshot_files(
-                        operations_payload,
-                        plan,
-                    ),
-                    plan_digest=plan.plan_digest,
-                    release_manifest_digest=plan.release_sha256,
-                    policy_proof_digest=policy_proof_digest,
-                    commit_message_digest=sha256(
-                        canonical_message.encode("utf-8")
-                    ).hexdigest(),
-                )
-                api_template = self.api
-                sealed_preflight = _StateLawsCanonicalCommitPreflight(
-                    publisher=self,
-                    api_template=api_template,
-                    plan=plan,
-                    operations_payload=tuple(operations_payload),
-                    canonical_message=canonical_message,
-                    live_policy_proof=live_policy_proof,
-                    local_root=root,
-                    mutation_binding=mutation_binding,
-                )
-
-                def principal_probe(
-                    token: str,
-                    repository_id: str,
-                ) -> Mapping[str, Any]:
-                    canonical_api = _require_canonical_state_laws_hf_api(
-                        api_template,
-                        runtime_token=token,
-                    )
-                    _canonical_hf_api_read(
-                        canonical_api,
-                        "auth_check",
-                        token,
-                        repo_id=repository_id,
-                        repo_type=self.repository_type,
-                    )
-                    identity = _canonical_hf_api_read(
-                        canonical_api,
-                        "whoami",
-                        token,
-                    )
-                    return _state_laws_write_authority_from_whoami(
-                        identity,
-                        repository_id=repository_id,
-                    )
-
-                runtime_request = canonical_runtime.CanonicalPublicationRequest(
-                    phase="state_main",
-                    repository_root=Path(__file__).resolve().parents[2],
-                    authorize_mutation=True,
-                    environ=os.environ,
-                    principal_probe=principal_probe,
-                    expected_dataset_repo_id=plan.repository_id,
-                    expected_release_manifest_digest=plan.release_sha256,
-                    expected_plan_digest=plan.plan_digest,
-                    expected_policy_proof_digest=policy_proof_digest,
-                    mutation_binding=mutation_binding,
-                )
-
-                try:
-                    parent_commit, result = (
-                        canonical_runtime.authorize_and_mutate_canonical(
-                            runtime_request,
-                            sealed_preflight,
-                        )
-                    )
-                except HuggingFacePublicationError:
-                    raise
-                except Exception as exc:
-                    raise HuggingFacePublicationError(
-                        f"canonical State Laws runtime refused publication: {exc}"
-                    ) from exc
-            else:
-                parent_commit, result = execute_commit()
+            parent_commit, result = execute_commit()
 
         commit_sha = _extract_commit_sha(result)
         return PublicationCommitReceipt(
@@ -4006,6 +4570,7 @@ _PreparedStateLawsCanonicalCommitExecutor.__call__ = (
         require_guard=require_unprotected_or_runtime,
         rehash_files=_rehash_prepared_snapshot_files,
         protected_write=guarded_write,
+        create_branch=_canonical_hf_api_create_branch,
         create_commit=_canonical_hf_api_create_commit,
     )
 )
@@ -4068,6 +4633,8 @@ def publish_huggingface_release(
     run_pinned_redownload_validation: bool = True,
     commit_message: str | None = None,
     live_policy_proof: Mapping[str, Any] | Any | None = None,
+    publication_phase: str | None = None,
+    policy_proof_digest: str | None = None,
 ) -> dict[str, Any]:
     """Plan (and optionally publish) a profile-bound Hugging Face release.
 
@@ -4177,6 +4744,8 @@ def publish_huggingface_release(
         local_root=local_root,
         commit_message=commit_message,
         live_policy_proof=live_policy_proof,
+        publication_phase=publication_phase,
+        policy_proof_digest=policy_proof_digest,
     )
 
     post_publication: PostPublicationVerification | None = None
@@ -4316,6 +4885,7 @@ def _write_receipt(path: str | Path, receipt: Mapping[str, Any]) -> Path:
 
 __all__ = [
     "CANONICAL_ABBY_RELEASE_SCHEMA",
+    "CanonicalLegalCorporaMutationReceipt",
     "CANONICAL_RELEASE_MANIFEST_PATH",
     "DEFAULT_COMMIT_MESSAGE",
     "DEFAULT_DATASET_REPO_ID",
@@ -4347,6 +4917,7 @@ __all__ = [
     "PublicationPlan",
     "RuntimeReleasePointer",
     "abby_voice_publication_profile",
+    "canonical_legal_corpora_policy_proof_digest",
     "estimate_publication_cost",
     "extract_manifest_files",
     "patent_legal_publication_profile",

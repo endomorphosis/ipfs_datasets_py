@@ -274,6 +274,32 @@ def state_laws_publication_profile() -> HuggingFacePublicationProfile:
     )
 
 
+def state_laws_staging_publication_profile(
+    staging_branch: str,
+) -> HuggingFacePublicationProfile:
+    """Validate a staging ref and return the immutable State Laws identity.
+
+    The branch itself is carried by the digest-bound ``PublicationPlan``;
+    profile identity remains byte-for-byte identical between staging and main.
+    """
+
+    branch = str(staging_branch or "").strip()
+    if (
+        not branch
+        or branch == "main"
+        or len(branch) > 128
+        or branch.startswith(("-", ".", "/"))
+        or branch.endswith((".", "/", ".lock"))
+        or ".." in branch
+        or "@{" in branch
+        or any(character in branch for character in " ~^:?*[\\")
+    ):
+        raise StateLawsPublicationPackageError(
+            "State Laws staging branch is not a safe dedicated Git revision"
+        )
+    return state_laws_publication_profile()
+
+
 @dataclass(frozen=True, slots=True)
 class StateLawsPublicationPackage:
     """Verified local descriptors plus the existing manifest byte descriptor."""
@@ -806,10 +832,52 @@ def plan_state_laws_publication_dry_run(
     )
 
 
+def plan_state_laws_staging_publication_dry_run(
+    output_root: str | Path,
+    *,
+    staging_branch: str,
+    api: Any | None = None,
+    existing_remote_paths: Sequence[str] = (),
+    existing_remote_digests: Mapping[str, str] | None = None,
+    audited_parent_commit: str,
+) -> StateLawsPublicationDryRun:
+    """Return the exact offline plan for a dedicated State staging branch."""
+
+    package = prepare_state_laws_publication_package(output_root)
+    profile = state_laws_staging_publication_profile(staging_branch)
+    publisher = HuggingFaceReleasePublisher(profile=profile, api=api)
+    plan = publisher.plan_dry_run(
+        package.to_publisher_manifest(),
+        local_root=package.output_root,
+        existing_remote_paths=existing_remote_paths,
+        existing_remote_digests=existing_remote_digests,
+        audited_parent_commit=audited_parent_commit,
+        target_revision=staging_branch,
+    )
+    _verify_state_laws_plan_binding(
+        package,
+        plan,
+        profile,
+        target_revision=staging_branch,
+    )
+    receipt = publisher.build_publication_receipt(
+        plan=plan,
+        status="dry_run_only",
+    )
+    return StateLawsPublicationDryRun(
+        package=package,
+        profile=profile,
+        plan=plan,
+        receipt=MappingProxyType(dict(receipt)),
+    )
+
+
 def _verify_state_laws_plan_binding(
     package: StateLawsPublicationPackage,
     plan: PublicationPlan,
     profile: HuggingFacePublicationProfile,
+    *,
+    target_revision: str = "main",
 ) -> None:
     if not isinstance(plan, PublicationPlan):
         raise StateLawsPublicationPackageError(
@@ -829,7 +897,7 @@ def _verify_state_laws_plan_binding(
         or plan.metadata.get("goal_id") != STATE_LAWS_POLICY_GOAL_ID
         or plan.repository_id != official.repository_id
         or plan.repository_type != official.repository_type
-        or plan.target_revision != official.target_revision
+        or plan.target_revision != target_revision
         or plan.release_id != package.release_id
         or plan.release_sha256 != package.manifest_digest
         or plan.release_prefix != official.release_prefix_for(package.release_id)
@@ -1220,6 +1288,36 @@ class StateLawsCanonicalControlBundle:
             ),
             "staging_candidate_digest": self.staging_candidate_digest,
             "staging_revision": self.staging_revision,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class StateLawsStagingControlBundle:
+    """Local-only canonical card/proof binding prepared before staging."""
+
+    candidate_manifest_digest: str
+    candidate_path: str
+    dataset_card_path: str
+    dataset_card_sha256: str
+    plan_digest: str
+    policy_proof_digest: str
+    release_manifest_digest: str
+    source_rights_receipt_digest: str
+    staging_branch: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "candidate_manifest_digest": self.candidate_manifest_digest,
+            "candidate_path": self.candidate_path,
+            "dataset_card_path": self.dataset_card_path,
+            "dataset_card_sha256": self.dataset_card_sha256,
+            "hub_mutation_performed": False,
+            "network_io_performed": False,
+            "plan_digest": self.plan_digest,
+            "policy_proof_digest": self.policy_proof_digest,
+            "release_manifest_digest": self.release_manifest_digest,
+            "source_rights_receipt_digest": self.source_rights_receipt_digest,
+            "staging_branch": self.staging_branch,
         }
 
 
@@ -1702,6 +1800,180 @@ def _atomic_write_canonical_controls(
         os.close(root_fd)
 
 
+def materialize_state_laws_staging_controls(
+    package: StateLawsPublicationPackage,
+    plan: PublicationPlan,
+    *,
+    repository_root: str | Path,
+) -> StateLawsStagingControlBundle:
+    """Write the canonical State card and bind an exact staging plan locally."""
+
+    from ipfs_datasets_py.huggingface.publisher import (
+        canonical_legal_corpora_policy_proof_digest,
+    )
+    from ipfs_datasets_py.processors.legal_data import (
+        legal_corpora_publication_runtime as canonical_runtime,
+    )
+    from ipfs_datasets_py.processors.legal_data.legal_source_rights_policy import (
+        LIVE_COMPLIANCE_REPORT_SCHEMA,
+    )
+
+    canonical_root = Path(repository_root).expanduser()
+    verify_state_laws_publication_package_identity(package)
+    profile = state_laws_staging_publication_profile(plan.target_revision)
+    _verify_state_laws_plan_binding(
+        package,
+        plan,
+        profile,
+        target_revision=plan.target_revision,
+    )
+    manifest_bytes = _read_regular_file_nofollow(
+        package.manifest_path,
+        label="State Laws release manifest",
+        maximum_bytes=64 * 1024 * 1024,
+    )
+    try:
+        manifest = json.loads(
+            manifest_bytes.decode("utf-8"),
+            object_pairs_hook=_reject_duplicate_json_object,
+        )
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise StateLawsPublicationPackageError(
+            "State Laws release manifest is malformed"
+        ) from exc
+    if not isinstance(manifest, Mapping):
+        raise StateLawsPublicationPackageError(
+            "State Laws release manifest must be an object"
+        )
+    if (
+        manifest.get("fixture_only") is True
+        or str(manifest.get("mode") or "").casefold()
+        in {"fixture", "fixture_only", "test"}
+        or "fixture" in str(manifest.get("release_point") or "").casefold()
+    ):
+        raise StateLawsPublicationPackageError(
+            "fixture State Laws releases cannot produce staging controls"
+        )
+    validate_exact_51_coverage(manifest.get("jurisdictions") or ())
+
+    package_rights_bytes = _read_regular_file_nofollow(
+        Path(package.output_root) / SOURCE_RIGHTS_RECEIPT_RELPATH,
+        label="packaged State Laws source-rights receipt",
+        maximum_bytes=16 * 1024 * 1024,
+    )
+    canonical_rights_bytes = _read_regular_file_nofollow(
+        canonical_root / SOURCE_RIGHTS_RECEIPT_RELPATH,
+        label="canonical State Laws source-rights receipt",
+        maximum_bytes=16 * 1024 * 1024,
+    )
+    if package_rights_bytes != canonical_rights_bytes:
+        raise StateLawsPublicationPackageError(
+            "packaged and canonical source-rights receipt bytes differ"
+        )
+    try:
+        rights = json.loads(
+            canonical_rights_bytes.decode("utf-8"),
+            object_pairs_hook=_reject_duplicate_json_object,
+        )
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise StateLawsPublicationPackageError(
+            "canonical source-rights receipt is malformed"
+        ) from exc
+    require_live_source_rights_receipt(rights)
+    if (
+        rights.get("report_schema") != LIVE_COMPLIANCE_REPORT_SCHEMA
+        or rights.get("status") != "passed"
+        or rights.get("authorizing_for_publication") is not True
+        or rights.get("fixture_only_non_authorizing") is not False
+    ):
+        raise StateLawsPublicationPackageError(
+            "canonical source-rights receipt is non-authorizing"
+        )
+    rights_digest = _require_sha256(
+        rights.get("report_digest_sha256"),
+        label="canonical source-rights receipt digest",
+    )
+    rights_body = dict(rights)
+    rights_body.pop("report_digest_sha256", None)
+    if sha256(canonical_json_bytes(rights_body)).hexdigest() != rights_digest:
+        raise StateLawsPublicationPackageError(
+            "canonical source-rights receipt digest does not match its body"
+        )
+
+    candidate, candidate_bytes = _load_canonical_control_json(
+        canonical_root,
+        canonical_runtime.STATE_CANDIDATE_MANIFEST_RELPATH,
+        label="canonical LCR-084 staging candidate",
+    )
+    if candidate.get("schema") != canonical_runtime.PRODUCTION_MANIFEST_SCHEMA_V2:
+        raise StateLawsPublicationPackageError(
+            "State staging controls require the canonical LCR-084 @2 candidate"
+        )
+    check = _check_lcr084_candidate_in_subprocess(
+        candidate_bytes,
+        repository_root=canonical_root,
+        phase="state_staging",
+    )
+    candidate_digest = str(check["staging_candidate_digest"])
+    if (
+        candidate.get("publication_binding") is not None
+        or candidate.get("report_digest_sha256") != candidate_digest
+        or candidate.get("dataset_repo_id") != plan.repository_id
+        or candidate.get("manifest_digest") != plan.release_sha256
+        or candidate.get("source_rights_receipt_digest") != rights_digest
+    ):
+        raise StateLawsPublicationPackageError(
+            "canonical staging candidate differs from the package, plan, or rights receipt"
+        )
+    proof_digest = canonical_legal_corpora_policy_proof_digest(
+        phase="state_staging",
+        candidate_manifest_digest=candidate_digest,
+        plan=plan,
+    )
+    card_bytes = (
+        "# State Laws immutable release\n\n"
+        f"Release manifest digest: `{plan.release_sha256}`\n\n"
+        f"Canonical candidate digest: `{candidate_digest}`\n\n"
+        "Canonical source-rights compliance digest: "
+        f"`{rights_digest}`\n\n"
+        f"Staging plan digest: `{plan.plan_digest}`\n\n"
+        f"Staging policy binding: `{proof_digest}`\n\n"
+        "Coverage: exact 51 U.S. state-level jurisdictions.\n"
+    ).encode("utf-8")
+    if (
+        _read_regular_file_nofollow(
+            canonical_root / canonical_runtime.STATE_CANDIDATE_MANIFEST_RELPATH,
+            label="canonical staging candidate bookend",
+            maximum_bytes=64 * 1024 * 1024,
+        )
+        != candidate_bytes
+        or _read_regular_file_nofollow(
+            canonical_root / SOURCE_RIGHTS_RECEIPT_RELPATH,
+            label="canonical source-rights receipt bookend",
+            maximum_bytes=16 * 1024 * 1024,
+        )
+        != canonical_rights_bytes
+    ):
+        raise StateLawsPublicationPackageError(
+            "canonical State Laws controls changed during materialization"
+        )
+    _atomic_write_canonical_controls(
+        canonical_root,
+        {canonical_runtime.STATE_DATASET_CARD_RELPATH: card_bytes},
+    )
+    return StateLawsStagingControlBundle(
+        candidate_manifest_digest=candidate_digest,
+        candidate_path=canonical_runtime.STATE_CANDIDATE_MANIFEST_RELPATH,
+        dataset_card_path=canonical_runtime.STATE_DATASET_CARD_RELPATH,
+        dataset_card_sha256=sha256(card_bytes).hexdigest(),
+        plan_digest=plan.plan_digest,
+        policy_proof_digest=proof_digest,
+        release_manifest_digest=plan.release_sha256,
+        source_rights_receipt_digest=rights_digest,
+        staging_branch=plan.target_revision,
+    )
+
+
 def materialize_state_laws_canonical_controls(
     package: StateLawsPublicationPackage,
     plan: PublicationPlan,
@@ -1863,18 +2135,40 @@ def materialize_state_laws_canonical_controls(
             "State Laws main controls require the canonical LCR-084 @2 candidate; "
             "the generic @1 manifest cannot authorize main publication"
         )
+    existing_publication_binding = staging_candidate.get(
+        "publication_binding"
+    )
+    if existing_publication_binding is None:
+        candidate_phase = "state_staging"
+    elif type(existing_publication_binding) is dict:
+        candidate_phase = "state_main"
+        if existing_publication_binding != {
+            "plan_digest": plan.plan_digest,
+            "policy_proof_digest": sealed.proof_digest,
+            "release_manifest_digest": plan.release_sha256,
+            "staging_candidate_digest": existing_publication_binding.get(
+                "staging_candidate_digest"
+            ),
+        }:
+            raise StateLawsPublicationPackageError(
+                "existing State Laws main candidate differs from the exact "
+                "plan or sealed policy proof"
+            )
+    else:
+        raise StateLawsPublicationPackageError(
+            "canonical LCR-084 publication binding is malformed"
+        )
     staging_check = _check_lcr084_candidate_in_subprocess(
         staging_candidate_bytes,
         repository_root=canonical_root,
-        phase="state_staging",
+        phase=candidate_phase,
     )
     staging_candidate_digest = str(
         staging_check["staging_candidate_digest"]
     )
     if (
         staging_candidate.get("report_digest_sha256")
-        != staging_candidate_digest
-        or staging_check["report_digest_sha256"] != staging_candidate_digest
+        != staging_check["report_digest_sha256"]
         or staging_candidate.get("dataset_repo_id") != plan.repository_id
         or staging_candidate.get("manifest_digest") != plan.release_sha256
         or staging_candidate.get("source_rights_catalog_digest") != catalog_digest
@@ -1981,28 +2275,46 @@ def materialize_state_laws_canonical_controls(
     card_bytes = (
         "# State Laws immutable release\n\n"
         f"Release manifest digest: `{plan.release_sha256}`\n\n"
+        f"Canonical candidate digest: `{candidate_digest}`\n\n"
+        f"Staging candidate digest: `{staging_candidate_digest}`\n\n"
         "Canonical source-rights compliance digest: "
         f"`{rights_digest}`\n\n"
+        f"Main plan digest: `{plan.plan_digest}`\n\n"
+        f"Main policy proof digest: `{sealed.proof_digest}`\n\n"
+        f"Verified staging commit: `{staging_revision}`\n\n"
         "Coverage: exact 51 U.S. state-level jurisdictions.\n"
     ).encode("utf-8")
     seal_payload = {
+        "authorizing_for_publication": False,
+        "authorizing_hub_upload": False,
         "created_after_mutation": False,
         "dataset_repo_id": plan.repository_id,
         "dirty": False,
         "final_manifest_digest": candidate_digest,
         "fixture_only": False,
+        "goal_id": "LCR-G080",
+        "live_staging": True,
         "manifest_digest": candidate_digest,
+        "mutation_executed": False,
+        "network_mutation": False,
+        "no_mutation": True,
+        "no_mutate": True,
         "operation": "additive_main_upload",
         "phase": "state_main",
         "plan_digest": plan.plan_digest,
         "policy_proof_digest": sealed.proof_digest,
         "post_hoc": False,
         "present": True,
+        "previous_public_pin": PREVIOUS_PUBLIC_PIN,
+        "producer": "seal_state_laws_prepublication.py",
+        "program_id": "legal-corpora-reindex-v1",
         "release_manifest_digest": plan.release_sha256,
         "schema": canonical_runtime.SEAL_SCHEMA_V1,
         "sealed_at": sealed_at,
         "staging_revision": staging_revision,
         "status": "sealed",
+        "target_repo": plan.repository_id,
+        "task_id": "LCR-072",
         "timing": "before_mutation",
     }
     _, seal_digest, seal_bytes = _canonical_control_receipt(seal_payload)
@@ -2157,15 +2469,19 @@ __all__ = [
     "STATE_LAWS_PROFILE_ID",
     "STATE_LAWS_RECEIPT_SCHEMA",
     "StateLawsCanonicalControlBundle",
+    "StateLawsStagingControlBundle",
     "StateLawsPublicationDryRun",
     "StateLawsLivePolicyProof",
     "StateLawsPublicationPackage",
     "StateLawsPublicationPackageError",
     "materialize_state_laws_canonical_controls",
+    "materialize_state_laws_staging_controls",
     "plan_state_laws_publication_dry_run",
+    "plan_state_laws_staging_publication_dry_run",
     "prepare_state_laws_publication_package",
     "require_state_laws_policy_binding",
     "state_laws_publication_profile",
+    "state_laws_staging_publication_profile",
     "verify_state_laws_live_policy_proof",
     "verify_state_laws_publication_package_identity",
 ]

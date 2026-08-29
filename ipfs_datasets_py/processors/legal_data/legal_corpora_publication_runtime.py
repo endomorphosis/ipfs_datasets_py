@@ -117,10 +117,12 @@ PREDECESSOR_GATE_TASK_ID: Final = GATE_TASK_ID
 PREDECESSOR_RIGHTS_TASK_ID: Final = GATE_SUCCESSOR_TASK_ID
 
 TOKEN_ENV_ALLOWLIST: Final = SECRET_ENV_NAMES
-# LCR-084 exposes exactly one implemented protected mutation. The other three
-# canonical phases remain evaluable, but mutation attempts fail closed until a
-# phase-specific source-attested executor is added.
-CANONICAL_MUTATION_EXECUTOR_PHASES: Final = frozenset({"state_main"})
+# Each phase reaches the same source-attested, payload-bound publisher capsule.
+# A branch creation and its subsequent commit still require two independent
+# calls and therefore two one-shot runtime capabilities.
+CANONICAL_MUTATION_EXECUTOR_PHASES: Final = frozenset(
+    {"state_staging", "state_main", "federal_staging", "federal_main"}
+)
 
 RECEIPT_SCHEMA_V1: Final = "ipfs_datasets_py/legal-corpora-publication-receipt@1"
 MANIFEST_SCHEMA_V1: Final = "ipfs_datasets_py/legal-corpora-candidate-manifest@1"
@@ -129,6 +131,15 @@ PRODUCTION_MANIFEST_SCHEMA_V2: Final = (
 )
 PRODUCTION_ACCEPTANCE_SCHEMA_V2: Final = (
     "ipfs_datasets_py/state-laws-full-scrape-acceptance@2"
+)
+FEDERAL_PRODUCTION_CANDIDATE_SCHEMA: Final = (
+    "ipfs_datasets_py/legal-corpora-reindex-federal-candidate@1"
+)
+FEDERAL_STAGING_CANARY_SCHEMA_V1: Final = (
+    "ipfs_datasets_py/legal-corpora-reindex-federal-staging-canary@1"
+)
+FEDERAL_FULL_LIVE_ACCEPTANCE_SCHEMA_V2: Final = (
+    "ipfs_datasets_py/federal-register-full-live-acceptance@2"
 )
 MUTATION_AUDIT_SCHEMA_V2: Final = (
     "ipfs_datasets_py/legal-corpora-hugging-face-mutation-path-audit@2"
@@ -146,6 +157,7 @@ ALLOWED_RECEIPT_SCHEMAS: Final = frozenset(
         MUTATION_AUDIT_SCHEMA_V2,
         SEAL_SCHEMA_V1,
         LIVE_SOURCE_RIGHTS_REPORT_SCHEMA,
+        FEDERAL_STAGING_CANARY_SCHEMA_V1,
     }
 )
 
@@ -209,10 +221,13 @@ _NATIVE_PHASE_RECEIPT_SCHEMAS: Final[Mapping[str, str]] = MappingProxyType(
             "ipfs_datasets_py/legal-corpora-reindex-federal-evaluation@1"
         ),
         "docs/reports/legal_corpora_reindex/federal_full_live_acceptance.json": (
-            "ipfs_datasets_py/federal-register-full-live-acceptance@1"
+            FEDERAL_FULL_LIVE_ACCEPTANCE_SCHEMA_V2
         ),
         "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.json": (
             "ipfs_datasets_py/legal-corpora-reindex-federal-adjacency@1"
+        ),
+        "docs/reports/legal_corpora_reindex/federal_staging_canary.json": (
+            FEDERAL_STAGING_CANARY_SCHEMA_V1
         ),
     }
 )
@@ -254,6 +269,13 @@ _VERIFIER_SOURCE_RELPATHS: Final[Mapping[str, str]] = MappingProxyType(
         "federal_adjacency": (
             "ipfs_datasets_py/processors/legal_data/"
             "federal_register_adjacency_gate.py"
+        ),
+        "federal_staging_canary": (
+            "scripts/ops/legal_data/canary_federal_register_hf_release.py"
+        ),
+        "federal_full_live_acceptance": (
+            "scripts/ops/legal_data/"
+            "run_federal_register_full_release_acceptance.py"
         ),
     }
 )
@@ -1297,6 +1319,11 @@ def _production_candidate_report_digest(payload: Mapping[str, Any]) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _federal_candidate_report_digest(payload: Mapping[str, Any]) -> str:
+    body = {key: value for key, value in payload.items() if key != "content_digest"}
+    return hashlib.sha256(canonical_json_bytes(body)).hexdigest()
+
+
 def _candidate_release_manifest_digest(payload: Mapping[str, Any]) -> str:
     """Return the artifact-manifest digest bound by a candidate receipt.
 
@@ -1896,15 +1923,41 @@ def _validated_native_phase_receipt(
                 ).encode("utf-8")
             ).hexdigest()
         elif relpath.endswith("federal_full_live_acceptance.json"):
-            raise PublicationRuntimeError(
-                "Federal full-live acceptance lacks canonical input bindings"
+            verifier, module_name = _load_fresh_attested_verifier(
+                "federal_full_live_acceptance"
             )
+            result = verifier.check_full_live_acceptance_report(
+                payload,
+                repository_root=root,
+            )
+            if result.get("ok") is not True:
+                raise PublicationRuntimeError(
+                    "Federal full-live acceptance validation failed"
+                )
+            content_digest = str(result.get("report_digest_sha256") or "")
         elif relpath.endswith("federal_adjacency_reconciliation.json"):
             verifier, module_name = _load_fresh_attested_verifier(
                 "federal_adjacency"
             )
             verifier.assert_federal_adjacency_reconciliation(payload)
             content_digest = str(payload.get("report_digest_sha256") or "")
+        elif relpath.endswith("federal_staging_canary.json"):
+            verifier, module_name = _load_fresh_attested_verifier(
+                "federal_staging_canary"
+            )
+            verifier.assert_live_staging_contract(payload)
+            resealed = verifier.seal_report(payload)
+            content_digest = str(payload.get("content_digest") or "")
+            if (
+                resealed.get("content_digest") != content_digest
+                or payload.get("digest") != content_digest
+                or payload.get("fixture_only") is not False
+                or payload.get("live_staging") is not True
+                or payload.get("dirty") is not False
+            ):
+                raise PublicationRuntimeError(
+                    "Federal staging canary digest or live identity drifted"
+                )
         else:  # pragma: no cover - mapping and branches are kept exhaustive.
             return None
     except PublicationRuntimeError:
@@ -2596,14 +2649,41 @@ def capture_canonical_snapshot(
             on_disk_manifest,
             phase=request.phase,
         )
+    elif (
+        request.phase.startswith("federal_")
+        and manifest_schema == FEDERAL_PRODUCTION_CANDIDATE_SCHEMA
+    ):
+        publication_binding_value = on_disk_manifest.get("publication_binding")
+        if not isinstance(publication_binding_value, Mapping):
+            raise ManifestBindingError(
+                "Federal publication candidate lacks its exact publication binding"
+            )
+        publication_binding = dict(publication_binding_value)
+        if (
+            on_disk_manifest.get("fixture_only") is not False
+            or on_disk_manifest.get("mode")
+            not in ("live", "production", "live_official")
+            or on_disk_manifest.get("authorizing_for_publication") is not False
+            or on_disk_manifest.get("authorizing_hub_upload") is not False
+            or on_disk_manifest.get("hub_upload") is not False
+        ):
+            raise ManifestBindingError(
+                "Federal publication candidate is fixture or mutation-authorizing"
+            )
     elif manifest_schema != MANIFEST_SCHEMA_V1:
         raise ManifestBindingError("candidate manifest schema is not bound")
     rights = receipts.get(RIGHTS_RECEIPT_RELPATH)
     if not isinstance(rights, Mapping):
         raise ManifestBindingError("source-rights receipt is missing from canonical paths")
+    source_rights_binding = manifest.get("source_rights")
     bound_rights = str(
         manifest.get("source_rights_receipt_digest")
         or manifest.get("source_rights_compliance_digest")
+        or (
+            source_rights_binding.get("receipt_digest")
+            if isinstance(source_rights_binding, Mapping)
+            else ""
+        )
         or ""
     ).strip()
     if not bound_rights:
@@ -2633,6 +2713,22 @@ def capture_canonical_snapshot(
         ):
             raise IndependentDigestError(
                 "LCR-084 candidate report digest does not match canonical body"
+            )
+    elif manifest_schema == FEDERAL_PRODUCTION_CANDIDATE_SCHEMA:
+        recomputed_manifest = _federal_candidate_report_digest(on_disk_manifest)
+        declared_manifest = str(
+            on_disk_manifest.get("content_digest") or ""
+        ).strip()
+        if (
+            not declared_manifest
+            or normalize_sha256(
+                declared_manifest,
+                name="content_digest",
+            )
+            != recomputed_manifest
+        ):
+            raise IndependentDigestError(
+                "Federal candidate content_digest does not match canonical body"
             )
     else:
         recomputed_manifest = canonical_no_self_field_digest(on_disk_manifest)
@@ -2688,13 +2784,38 @@ def capture_canonical_snapshot(
                 candidate_release_manifest_digest
             ),
         )
+    elif manifest_schema == FEDERAL_PRODUCTION_CANDIDATE_SCHEMA:
+        if publication_binding is None:
+            raise ManifestBindingError(
+                "Federal candidate publication binding is missing"
+            )
+        expected_constraints = {
+            "plan_digest": request.expected_plan_digest,
+            "policy_proof_digest": request.expected_policy_proof_digest,
+            "release_manifest_digest": request.expected_release_manifest_digest,
+        }
+        for field_name, expected_value in expected_constraints.items():
+            if expected_value is None or publication_binding.get(field_name) != expected_value:
+                raise ManifestBindingError(
+                    f"Federal publication_binding.{field_name} differs from the exact request"
+                )
+        if (
+            publication_binding.get("release_manifest_digest")
+            != candidate_release_manifest_digest
+        ):
+            raise ManifestBindingError(
+                "Federal candidate publication binding differs from release bytes"
+            )
     for field_name, expected_value in (
         ("plan_digest", request.expected_plan_digest),
         ("policy_proof_digest", request.expected_policy_proof_digest),
     ):
         if expected_value is None:
             continue
-        if manifest_schema == PRODUCTION_MANIFEST_SCHEMA_V2:
+        if manifest_schema in (
+            PRODUCTION_MANIFEST_SCHEMA_V2,
+            FEDERAL_PRODUCTION_CANDIDATE_SCHEMA,
+        ):
             # The exact phase-aware nested binding was validated above.  A
             # staging candidate intentionally carries null and a main
             # candidate carries the plan/proof identities in that binding.
@@ -3080,7 +3201,7 @@ def _require_publisher_sealed_type(
         or getattr(expected_method, "__code__", None) is not expected_code
     ):
         raise PublicationRuntimeError(
-            f"canonical mutation requires the exact sealed State Laws {label}; "
+            f"canonical mutation requires the exact sealed legal-corpora {label}; "
             "callbacks, aliases, partials, and subclasses are rejected"
         )
 
@@ -3094,7 +3215,7 @@ def _require_publisher_sealed_type(
         != ("ipfs_datasets_py", "huggingface", "publisher.py")
     ):
         raise PublicationRuntimeError(
-            f"sealed State Laws {label} source path is not canonical"
+            f"sealed legal-corpora {label} source path is not canonical"
         )
     expected_source = loaded_source.resolve()
     source_bytes = loaded_source.read_bytes()
@@ -3103,7 +3224,7 @@ def _require_publisher_sealed_type(
         publisher_namespace.get("_PUBLISHER_IMPORT_SOURCE_SHA256") or ""
     ):
         raise PublicationRuntimeError(
-            f"sealed State Laws {label} source changed after import"
+            f"sealed legal-corpora {label} source changed after import"
         )
     try:
         from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
@@ -3114,7 +3235,7 @@ def _require_publisher_sealed_type(
         loaded_digest = _loaded_executable_sha256(expected_type)
         _assert_loaded_executables_match_current_source(
             {
-                f"state_laws_{label.replace(' ', '_')}": {
+                f"legal_corpora_{label.replace(' ', '_')}": {
                     "loaded_executable_sha256": loaded_digest,
                     "source_file_sha256": source_digest,
                     "source_path": str(expected_source),
@@ -3128,17 +3249,17 @@ def _require_publisher_sealed_type(
         raise
     except Exception as exc:
         raise PublicationRuntimeError(
-            f"sealed State Laws {label} failed loaded/current source attestation"
+            f"sealed legal-corpora {label} failed loaded/current source attestation"
         ) from exc
     try:
         binding = object.__getattribute__(value, "mutation_binding")
     except Exception as exc:
         raise PublicationRuntimeError(
-            f"sealed State Laws {label} omits its mutation binding"
+            f"sealed legal-corpora {label} omits its mutation binding"
         ) from exc
     if type(binding) is not CanonicalMutationBinding:
         raise PublicationRuntimeError(
-            f"sealed State Laws {label} has no immutable mutation binding"
+            f"sealed legal-corpora {label} has no immutable mutation binding"
         )
     return binding, expected_method
 
@@ -3146,7 +3267,7 @@ def _require_publisher_sealed_type(
 def _require_attested_mutation_executor(
     mutation_executor: Any,
 ) -> tuple[CanonicalMutationBinding, Any]:
-    """Accept only the source-attested State Laws preflight object."""
+    """Accept only the source-attested legal-corpora preflight object."""
 
     return _require_publisher_sealed_type(
         mutation_executor,
@@ -3192,7 +3313,7 @@ def _require_attested_prepared_executor(
         )
     except Exception as exc:
         raise PublicationRuntimeError(
-            "prepared State Laws executor omits exact inert fields"
+            "prepared legal-corpora executor omits exact inert fields"
         ) from exc
     if (
         binding != expected_binding
@@ -3206,7 +3327,7 @@ def _require_attested_prepared_executor(
         or prepared_token != runtime_token
     ):
         raise PublicationRuntimeError(
-            "prepared State Laws executor differs from the exact runtime mutation"
+            "prepared legal-corpora executor differs from the exact runtime mutation"
         )
     return prepared_call
 
@@ -3224,17 +3345,51 @@ def _require_exact_mutation_binding(
             "canonical request and sealed executor mutation bindings differ"
         )
     expected_repository = str(request.expected_dataset_repo_id or "").strip().casefold()
+    contract = phase_requirements(request.phase)
+    expected_operation = str(contract["authorized_operation"])
+    expected_phase_repository = str(contract["dataset_repo_id"]).casefold()
+    staging_phase = request.phase.endswith("_staging")
+    revision = executor_binding.revision
+    expected_staging_revision = (
+        "stage/state-laws-sparse-graphrag-v2"
+        if request.phase == "state_staging"
+        else "stage/federal-register-ir-graphrag-v2"
+        if request.phase == "federal_staging"
+        else ""
+    )
+    revision_is_safe_staging = bool(
+        staging_phase
+        and revision == expected_staging_revision
+        and revision != "main"
+        and len(revision) <= 128
+        and not revision.startswith(("-", ".", "/"))
+        and not revision.endswith((".", "/", ".lock"))
+        and ".." not in revision
+        and "@{" not in revision
+        and not any(character in revision for character in " ~^:?*[\\")
+    )
     if (
         request.authorize_mutation is not True
-        or request.phase != "state_main"
-        or snapshot.get("phase") != "state_main"
-        or snapshot.get("operation") != "additive_main_upload"
-        or executor_binding.method != "create_commit"
+        or request.phase not in CANONICAL_MUTATION_EXECUTOR_PHASES
+        or snapshot.get("phase") != request.phase
+        or snapshot.get("operation") != expected_operation
+        or executor_binding.method not in ("create_branch", "create_commit")
+        or (executor_binding.method == "create_branch" and not staging_phase)
         or executor_binding.repository_id != expected_repository
+        or executor_binding.repository_id != expected_phase_repository
         or executor_binding.repository_id
         != str(snapshot.get("dataset_repo_id") or "").strip().casefold()
         or executor_binding.repository_type != "dataset"
-        or executor_binding.revision != "main"
+        or (
+            staging_phase
+            and not revision_is_safe_staging
+        )
+        or (
+            not staging_phase
+            and revision != "main"
+        )
+        or executor_binding.parent_commit
+        != str(snapshot.get("previous_public_pin") or "").strip().casefold()
         or request.expected_plan_digest != executor_binding.plan_digest
         or request.expected_release_manifest_digest
         != executor_binding.release_manifest_digest
@@ -3247,7 +3402,7 @@ def _require_exact_mutation_binding(
         or any(item.sha256 != item.local_sha256 for item in executor_binding.files)
     ):
         raise PublicationRuntimeError(
-            "sealed State Laws mutation is not bound to the exact canonical request"
+            "sealed legal-corpora mutation is not bound to the exact canonical request"
         )
 
 
@@ -3548,7 +3703,7 @@ def authorize_and_mutate_canonical(
         or final_prepared_call is not prepared_call
     ):
         raise PublicationRuntimeError(
-            "sealed State Laws executor identity changed after final revalidation"
+            "sealed legal-corpora executor identity changed after final revalidation"
         )
     if final_snapshot["candidate_manifest"].get("schema") == (
         PRODUCTION_MANIFEST_SCHEMA_V2

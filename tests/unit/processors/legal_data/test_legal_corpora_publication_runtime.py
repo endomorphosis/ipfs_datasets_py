@@ -17,6 +17,16 @@ from typing import Any, Callable, Mapping
 
 import pytest
 
+# Pin this checkout's regular ``scripts`` package before importing the runtime.
+# Some test environments also install a sibling project with a top-level
+# package of that name and prepend it to ``sys.path`` during IPFS imports.
+# Loading the repository package now keeps later source-attested fixture
+# imports bound to the files under test, independent of test ordering.
+_REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(_REPOSITORY_ROOT))
+import scripts as _repository_scripts_package  # noqa: E402,F401
+from scripts import ops as _repository_scripts_ops_package  # noqa: E402,F401
+
 from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate import (
     AUTHORIZED_DATASET_REPO_IDS,
     BASELINE_REVISIONS,
@@ -213,6 +223,9 @@ def _seed_repo(
     tmp_path: Path,
     phase: str,
     *,
+    bind_state_main_candidate: bool = True,
+    state_release_manifest_digest: str | None = None,
+    state_rights_receipt_bytes: bytes | None = None,
     task_status_overrides: Mapping[str, str] | None = None,
     omit_task: str | None = None,
     include_generated_todo: bool = False,
@@ -238,12 +251,20 @@ def _seed_repo(
     contract = phase_requirements(phase)
     dataset_repo_id = contract["dataset_repo_id"]
     roots = list(contract["generated_work_goal_roots"])
-    catalog_digest = canonical_no_self_field_digest({"catalog": f"{phase}:fixture"})
-    admitted = (
-        ["al-alison-code-statutory_text", "ak-akleg-basis-statutory_text"]
-        if phase.startswith("state_")
-        else ["fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa-federal_government_text"]
-    )
+    supplied_rights: dict[str, Any] | None = None
+    if state_rights_receipt_bytes is not None:
+        supplied_rights = json.loads(state_rights_receipt_bytes)
+        catalog_digest = str(supplied_rights["catalog_digest_sha256"])
+        admitted = list(supplied_rights["admitted_record_ids"])
+    else:
+        catalog_digest = canonical_no_self_field_digest(
+            {"catalog": f"{phase}:fixture"}
+        )
+        admitted = (
+            ["al-alison-code-statutory_text", "ak-akleg-basis-statutory_text"]
+            if phase.startswith("state_")
+            else ["fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa-federal_government_text"]
+        )
 
     tasks = ["LCR-008", *list(contract["required_task_ids"]), "LCR-080"]
     if omit_task:
@@ -317,7 +338,17 @@ def _seed_repo(
         "program_id": "legal-corpora-reindex-v1",
         "verified_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
-    rights_digest = _finalize(RIGHTS_RECEIPT_RELPATH, rights_payload, RECEIPT_SCHEMA_V1)
+    if supplied_rights is None:
+        rights_digest = _finalize(
+            RIGHTS_RECEIPT_RELPATH,
+            rights_payload,
+            RECEIPT_SCHEMA_V1,
+        )
+    else:
+        rights_path = repo / RIGHTS_RECEIPT_RELPATH
+        rights_path.parent.mkdir(parents=True, exist_ok=True)
+        rights_path.write_bytes(state_rights_receipt_bytes)
+        rights_digest = str(supplied_rights["report_digest_sha256"])
 
     manifest_relpath = (
         CANONICAL_PATHS["federal_candidate_manifest"]
@@ -382,7 +413,11 @@ def _seed_repo(
     _git(repo, "add", "-A")
     _git(repo, "commit", "-m", "canonical LCR-080 fixture")
     if phase.startswith("state_"):
-        _install_builder_shaped_lcr084_candidate(repo)
+        _install_builder_shaped_lcr084_candidate(
+            repo,
+            bind_main_candidate=bind_state_main_candidate,
+            release_manifest_digest=state_release_manifest_digest,
+        )
     if dirty_after_commit:
         path = repo / dirty_after_commit
         path.write_text(path.read_text(encoding="utf-8") + "\n# dirty\n", encoding="utf-8")
@@ -429,7 +464,12 @@ def _request(
     return payload
 
 
-def _install_builder_shaped_lcr084_candidate(repo: Path) -> dict[str, Any]:
+def _install_builder_shaped_lcr084_candidate(
+    repo: Path,
+    *,
+    bind_main_candidate: bool = True,
+    release_manifest_digest: str | None = None,
+) -> dict[str, Any]:
     """Replace generic receipts with the builder's strict @2 test shape."""
 
     from scripts.ops.legal_data import build_state_laws_hf_release as builder
@@ -457,7 +497,10 @@ def _install_builder_shaped_lcr084_candidate(repo: Path) -> dict[str, Any]:
     rights = json.loads(
         (repo / RIGHTS_RECEIPT_RELPATH).read_text(encoding="utf-8")
     )
-    rights_digest = canonical_no_self_field_digest(rights)
+    rights_digest = str(
+        rights.get("report_digest_sha256")
+        or canonical_no_self_field_digest(rights)
+    )
     catalog_digest = str(rights["catalog_digest_sha256"])
     evidence = payload["production_evidence"]
     baseline_file_sha256 = raw_file_digest(
@@ -467,11 +510,18 @@ def _install_builder_shaped_lcr084_candidate(repo: Path) -> dict[str, Any]:
     payload["inputs"]["live_baseline_sha256"] = baseline_file_sha256
     evidence["rights_receipt"]["receipt_digest_sha256"] = rights_digest
     evidence["rights_receipt"]["catalog_digest_sha256"] = catalog_digest
+    if release_manifest_digest is not None:
+        evidence["production_release"]["manifest_digest"] = (
+            release_manifest_digest
+        )
     evidence_digest = builder.digest_payload(evidence)
 
     acceptance_path = repo / builder.PRODUCTION_ACCEPTANCE_RELPATH
     acceptance = json.loads(acceptance_path.read_text(encoding="utf-8"))
     acceptance["evidence"] = evidence
+    acceptance["candidate_requirement"]["manifest_digest"] = evidence[
+        "production_release"
+    ]["manifest_digest"]
     acceptance["production_evidence_digest_sha256"] = evidence_digest
     acceptance["candidate_requirement"][
         "production_evidence_digest_sha256"
@@ -496,6 +546,9 @@ def _install_builder_shaped_lcr084_candidate(repo: Path) -> dict[str, Any]:
     )
     payload["source_rights_catalog_digest"] = catalog_digest
     payload["source_rights_receipt_digest"] = rights_digest
+    payload["manifest_digest"] = evidence["production_release"][
+        "manifest_digest"
+    ]
     payload["report_digest_sha256"] = builder._digest_for_report(payload)
     candidate_path.write_text(
         json.dumps(payload, sort_keys=True),
@@ -528,28 +581,29 @@ def _install_builder_shaped_lcr084_candidate(repo: Path) -> dict[str, Any]:
                 staging_receipt,
                 schema=RECEIPT_SCHEMA_V1,
             )
-        payload["publication_binding"] = {
-            "plan_digest": plan_digest,
-            "policy_proof_digest": policy_proof_digest,
-            "release_manifest_digest": release_manifest_digest,
-            "staging_candidate_digest": staging_candidate_digest,
-        }
-        payload["report_digest_sha256"] = builder._digest_for_report(payload)
-        candidate_path.write_text(
-            json.dumps(payload, sort_keys=True),
-            encoding="utf-8",
-        )
-        seal_path = repo / CANONICAL_PATHS["state_prepublication_seal"]
-        seal = json.loads(seal_path.read_text(encoding="utf-8"))
-        seal.pop("canonical_digest", None)
-        if "final_manifest_digest" in seal:
-            seal["final_manifest_digest"] = payload[
-                "report_digest_sha256"
-            ]
-        seal.setdefault("plan_digest", plan_digest)
-        seal.setdefault("policy_proof_digest", policy_proof_digest)
-        seal.setdefault("release_manifest_digest", release_manifest_digest)
-        _seal_json(seal_path, seal, schema=SEAL_SCHEMA_V1)
+        if bind_main_candidate:
+            payload["publication_binding"] = {
+                "plan_digest": plan_digest,
+                "policy_proof_digest": policy_proof_digest,
+                "release_manifest_digest": release_manifest_digest,
+                "staging_candidate_digest": staging_candidate_digest,
+            }
+            payload["report_digest_sha256"] = builder._digest_for_report(payload)
+            candidate_path.write_text(
+                json.dumps(payload, sort_keys=True),
+                encoding="utf-8",
+            )
+            seal_path = repo / CANONICAL_PATHS["state_prepublication_seal"]
+            seal = json.loads(seal_path.read_text(encoding="utf-8"))
+            seal.pop("canonical_digest", None)
+            if "final_manifest_digest" in seal:
+                seal["final_manifest_digest"] = payload[
+                    "report_digest_sha256"
+                ]
+            seal.setdefault("plan_digest", plan_digest)
+            seal.setdefault("policy_proof_digest", policy_proof_digest)
+            seal.setdefault("release_manifest_digest", release_manifest_digest)
+            _seal_json(seal_path, seal, schema=SEAL_SCHEMA_V1)
     _git(repo, "add", "-A")
     _git(repo, "commit", "-m", "install builder-shaped LCR-084 candidate")
     return payload
@@ -1231,8 +1285,7 @@ def test_canonical_runtime_rejects_raw_partial_and_bound_alias_callbacks(
         CallbackOwner().upload,
     )
     for callback in callbacks:
-        error = "exact sealed" if phase == "state_main" else "fails closed"
-        with pytest.raises(PublicationRuntimeError, match=error):
+        with pytest.raises(PublicationRuntimeError, match="exact sealed"):
             authorize_and_mutate_canonical(payload, callback)
     assert observed == []
 

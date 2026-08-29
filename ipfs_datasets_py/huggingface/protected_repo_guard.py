@@ -440,7 +440,9 @@ def _build_authority_manager():
             )
             publisher_type = namespace.get("HuggingFaceReleasePublisher")
             publish_method = (
-                vars(publisher_type).get("publish_append_only")
+                vars(publisher_type).get(
+                    "execute_canonical_legal_corpora_mutation"
+                )
                 if isinstance(publisher_type, type)
                 else None
             )
@@ -469,6 +471,12 @@ def _build_authority_manager():
                     "protected_write",
                     "protected_write_local",
                     namespace.get("guarded_write"),
+                ),
+                (
+                    "_canonical_hf_api_create_branch",
+                    "create_branch",
+                    "create_branch_local",
+                    namespace.get("_canonical_hf_api_create_branch"),
                 ),
                 (
                     "_canonical_hf_api_create_commit",
@@ -581,7 +589,9 @@ def _build_authority_manager():
             sys.modules.get("ipfs_datasets_py.huggingface.publisher")
             is not publisher_module
             or namespace.get("HuggingFaceReleasePublisher") is not publisher_type
-            or vars(publisher_type).get("publish_append_only") is not publish_method
+            or vars(publisher_type).get(
+                "execute_canonical_legal_corpora_mutation"
+            ) is not publish_method
             or getattr(publish_method, "__code__", None) is not publish_code
             or _publisher_type_surface(publisher_type) != publisher_surface
             or _nested_code(publish_code, "principal_probe")
@@ -753,7 +763,7 @@ def _build_authority_manager():
             anchor = runtime_anchor
         if anchor is None:
             raise ProtectedRepoGuardError(
-                "canonical runtime trust anchor is not registered"
+                "no active canonical runtime authorize boundary is registered"
             )
         (
             runtime_module,

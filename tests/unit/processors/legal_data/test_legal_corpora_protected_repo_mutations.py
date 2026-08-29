@@ -60,6 +60,25 @@ def test_protected_repo_literals_are_exact() -> None:
     assert not is_protected_repo("justicedao/other")
 
 
+def test_branch_and_commit_bindings_are_not_interchangeable() -> None:
+    branch = CanonicalMutationBinding(
+        method="create_branch",
+        repository_id="justicedao/ipfs_federal_register",
+        repository_type="dataset",
+        revision="stage/federal-register-ir-graphrag-v2",
+        parent_commit="1" * 40,
+        files=_binding(repository_id="justicedao/ipfs_federal_register").files,
+        plan_digest="3" * 64,
+        release_manifest_digest="4" * 64,
+        policy_proof_digest="5" * 64,
+        commit_message_digest="6" * 64,
+    )
+    commit = replace(branch, method="create_commit")
+    assert branch.payload_digest != commit.payload_digest
+    assert branch.to_dict()["method"] == "create_branch"
+    assert commit.to_dict()["method"] == "create_commit"
+
+
 @pytest.mark.parametrize("method", sorted(PROTECTED_WRITE_METHODS))
 def test_protected_write_surface_exists_on_the_pinned_hf_api(method: str) -> None:
     from huggingface_hub import HfApi

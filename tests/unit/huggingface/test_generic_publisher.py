@@ -53,6 +53,150 @@ def test_publisher_uses_the_canonical_protected_write_surface() -> None:
     assert "move_repo" in publisher_module._WRITE_API_METHODS
 
 
+@pytest.mark.parametrize(
+    ("phase", "repository_id", "revision", "method", "operation"),
+    [
+        (
+            "state_staging",
+            "justicedao/ipfs_state_laws",
+            "stage/state-laws-sparse-graphrag-v2",
+            "create_branch",
+            "additive_staging_upload",
+        ),
+        (
+            "state_staging",
+            "justicedao/ipfs_state_laws",
+            "stage/state-laws-sparse-graphrag-v2",
+            "create_commit",
+            "additive_staging_upload",
+        ),
+        (
+            "state_main",
+            "justicedao/ipfs_state_laws",
+            "main",
+            "create_commit",
+            "additive_main_upload",
+        ),
+        (
+            "federal_staging",
+            "justicedao/ipfs_federal_register",
+            "stage/federal-register-ir-graphrag-v2",
+            "create_branch",
+            "additive_staging_upload",
+        ),
+        (
+            "federal_staging",
+            "justicedao/ipfs_federal_register",
+            "stage/federal-register-ir-graphrag-v2",
+            "create_commit",
+            "additive_staging_upload",
+        ),
+        (
+            "federal_main",
+            "justicedao/ipfs_federal_register",
+            "main",
+            "create_commit",
+            "additive_main_upload",
+        ),
+    ],
+)
+def test_canonical_phase_contract_is_exact(
+    phase: str,
+    repository_id: str,
+    revision: str,
+    method: str,
+    operation: str,
+) -> None:
+    assert publisher_module._canonical_legal_corpora_phase_contract(
+        phase,
+        repository_id=repository_id,
+        revision=revision,
+        method=method,
+    ) == (phase, operation)
+
+
+@pytest.mark.parametrize(
+    ("phase", "repository_id", "revision", "method"),
+    [
+        (
+            "state_staging",
+            "justicedao/ipfs_federal_register",
+            "stage/state-laws-sparse-graphrag-v2",
+            "create_commit",
+        ),
+        (
+            "federal_staging",
+            "justicedao/ipfs_federal_register",
+            "stage/alternate",
+            "create_commit",
+        ),
+        (
+            "state_main",
+            "justicedao/ipfs_state_laws",
+            "main",
+            "create_branch",
+        ),
+        (
+            " federal_main",
+            "justicedao/ipfs_federal_register",
+            "main",
+            "create_commit",
+        ),
+        (
+            "federal_main",
+            "justicedao/ipfs_federal_register",
+            "main",
+            "create_commit ",
+        ),
+    ],
+)
+def test_canonical_phase_contract_rejects_relabelling(
+    phase: str,
+    repository_id: str,
+    revision: str,
+    method: str,
+) -> None:
+    with pytest.raises(HuggingFacePublicationError):
+        publisher_module._canonical_legal_corpora_phase_contract(
+            phase,
+            repository_id=repository_id,
+            revision=revision,
+            method=method,
+        )
+
+
+def test_canonical_mutation_receipt_has_only_bound_public_fields() -> None:
+    receipt = publisher_module.CanonicalLegalCorporaMutationReceipt(
+        phase="federal_staging",
+        method="create_branch",
+        operation="additive_staging_upload",
+        repository_id="justicedao/ipfs_federal_register",
+        revision="stage/federal-register-ir-graphrag-v2",
+        parent_commit="0" * 40,
+        resulting_commit_sha="0" * 40,
+        plan_digest="1" * 64,
+        release_manifest_digest="2" * 64,
+        policy_proof_digest="3" * 64,
+        payload_digest="4" * 64,
+        approval_id="branch-approval",
+    )
+    assert set(receipt.to_dict()) == {
+        "approval_id",
+        "method",
+        "operation",
+        "parent_commit",
+        "payload_digest",
+        "phase",
+        "plan_digest",
+        "policy_proof_digest",
+        "release_manifest_digest",
+        "repository_id",
+        "resulting_commit_sha",
+        "revision",
+        "runtime_authorized",
+    }
+
+
 class _WriteTrackingApi:
     """Fake Hub API that records every method invocation."""
 
@@ -1082,12 +1226,14 @@ def test_prepared_executor_retains_no_proof_plan_profile_or_api_hooks() -> None:
         )
     }
     assert closure == {
+        "create_branch": publisher_module._canonical_hf_api_create_branch,
         "create_commit": publisher_module._canonical_hf_api_create_commit,
         "protected_write": publisher_module.guarded_write,
         "rehash_files": publisher_module._rehash_prepared_snapshot_files,
         "require_guard": publisher_module.require_unprotected_or_runtime,
     }
     assert {
+        "create_branch_local",
         "create_commit_local",
         "protected_write_local",
         "rehash_files_local",
@@ -1104,6 +1250,7 @@ def test_prepared_executor_retains_no_proof_plan_profile_or_api_hooks() -> None:
         "require_unprotected_or_runtime",
         "_rehash_prepared_snapshot_files",
         "guarded_write",
+        "_canonical_hf_api_create_branch",
         "_canonical_hf_api_create_commit",
     ],
 )
