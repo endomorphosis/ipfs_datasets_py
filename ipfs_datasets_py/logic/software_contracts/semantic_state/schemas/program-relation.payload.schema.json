@@ -278,7 +278,32 @@
         },
         "successor_claim_cid": { "$ref": "#/$defs/cidOrNull" },
         "relation_invalidation_cid": { "$ref": "#/$defs/cid" }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "invalidation_kind": { "const": "superseded" } },
+            "required": ["invalidation_kind"]
+          },
+          "then": {
+            "properties": {
+              "resulting_status": { "const": "superseded" },
+              "successor_claim_cid": { "$ref": "#/$defs/cid" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "invalidation_kind": { "const": "evidence_refuted" } },
+            "required": ["invalidation_kind"]
+          },
+          "then": {
+            "properties": {
+              "resulting_status": { "const": "refuted" }
+            }
+          }
+        }
+      ]
     },
     "relationValidationReceipt": {
       "type": "object",

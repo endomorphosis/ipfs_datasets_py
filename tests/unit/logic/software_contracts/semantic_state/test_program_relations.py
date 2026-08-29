@@ -14,8 +14,12 @@ from ipfs_datasets_py.logic.software_contracts.content import (
     cid_for_structured,
     decode_and_recompute_structured,
 )
+from ipfs_datasets_py.logic.software_contracts.semantic_state.program_identity import (
+    RelationClaimIdentity,
+)
 from ipfs_datasets_py.logic.software_contracts.semantic_state.program_relations import (
     FORBIDDEN_RELATION_KINDS,
+    RELATION_CLAIM_IDENTITY_SCHEMA,
     RELATION_INVALIDATION_SCHEMA,
     RELATION_KIND_FAMILY,
     RELATION_SCOPE_SCHEMA,
@@ -39,6 +43,7 @@ from ipfs_datasets_py.logic.software_contracts.semantic_state.program_relations 
     ScopedProgramRelation,
     attempt_ex_falso_admission,
     canonical_relation_bytes,
+    claims_conflict,
     decode_relation_record,
     detect_conflicts,
     invalidate_by_assumption,
@@ -46,6 +51,7 @@ from ipfs_datasets_py.logic.software_contracts.semantic_state.program_relations 
     invalidate_by_scope,
     invalidate_relation,
     is_authoritative_status,
+    is_symmetric_relation,
     load_payload_schema,
     loads_relation_json,
     may_influence_planning,
@@ -612,3 +618,220 @@ def test_json_text_round_trip_uses_closed_decoder() -> None:
     duplicate = encoded[:-1] + ',"relation_kind":"similarity"}'
     with pytest.raises(ProgramRelationError, match="duplicate JSON key"):
         loads_relation_json(duplicate)
+
+
+def test_theory_policy_and_assumption_changes_rebind_scope() -> None:
+    base = _scope()
+    theory = _scope(theory_or_policy_cid=_cid("theory-other"))
+    assumptions = _scope(assumption_cids=[_cid("asm-only")])
+    assert len({base.scope_cid, theory.scope_cid, assumptions.scope_cid}) == 3
+    kinds = (
+        RelationKind.EQUALITY,
+        RelationKind.REFINEMENT,
+        RelationKind.ENTAILMENT,
+        RelationKind.CONTRADICTION,
+        RelationKind.COMPATIBILITY,
+        RelationKind.ALPHA_EQUIVALENCE,
+        RelationKind.STRUCTURAL_EQUIVALENCE,
+        RelationKind.LOGICAL_EQUIVALENCE,
+        RelationKind.BEHAVIORAL_EQUIVALENCE,
+        RelationKind.OBSERVATIONAL_EQUIVALENCE,
+    )
+    for kind in kinds:
+        left = ProgramRelationClaim.from_scope(
+            base, relation_kind=kind, left_cid=_cid("x"), right_cid=_cid("y")
+        )
+        right = ProgramRelationClaim.from_scope(
+            theory, relation_kind=kind, left_cid=_cid("x"), right_cid=_cid("y")
+        )
+        other = ProgramRelationClaim.from_scope(
+            assumptions, relation_kind=kind, left_cid=_cid("x"), right_cid=_cid("y")
+        )
+        assert relation_family_for(kind) in SCOPED_RELATION_FAMILIES
+        assert left.scope_cid == base.scope_cid
+        assert len({left.relation_claim_cid, right.relation_claim_cid, other.relation_claim_cid}) == 3
+        stale = invalidate_by_scope(left, theory)
+        assert stale is not None
+        assert stale[1].invalidation_kind == "scope_changed"
+
+
+def test_candidate_contradiction_does_not_veto_admitted_equality() -> None:
+    scope = _scope()
+    proved = _proved(scope, relation_kind=RelationKind.EQUALITY)
+    candidate = _claim(scope, relation_kind=RelationKind.CONTRADICTION)
+    assert claims_conflict(proved, candidate) is False
+    receipts = validate_relation_set([proved, candidate])
+    by_cid = {item.relation_claim_cid: item for item in receipts}
+    assert by_cid[proved.relation_claim_cid].verdict == "admitted"
+    assert by_cid[candidate.relation_claim_cid].verdict == "unknown"
+    assert may_influence_planning(proved, by_cid[proved.relation_claim_cid]) is True
+    assert may_influence_planning(candidate, by_cid[candidate.relation_claim_cid]) is False
+
+
+def test_proved_and_refuted_same_kind_cannot_be_jointly_admitted() -> None:
+    scope = _scope()
+    proved = _proved(scope, relation_kind=RelationKind.COMPATIBILITY)
+    refuted, _ = invalidate_relation(
+        proved,
+        RelationInvalidationKind.EVIDENCE_REFUTED,
+        [_cid("countermodel")],
+    )
+    assert claims_conflict(proved, refuted) is True
+    receipts = validate_relation_set([proved, refuted])
+    by_cid = {item.relation_claim_cid: item for item in receipts}
+    assert by_cid[proved.relation_claim_cid].verdict == "conflict"
+    assert by_cid[refuted.relation_claim_cid].verdict == "conflict"
+    assert by_cid[proved.relation_claim_cid].ex_falso_admission is False
+
+
+def test_negative_claims_are_not_overwritten_by_freshness() -> None:
+    scope = _scope()
+    proved = _proved(scope)
+    refuted, _ = invalidate_relation(
+        proved,
+        RelationInvalidationKind.EVIDENCE_REFUTED,
+        [_cid("countermodel")],
+    )
+    other = _scope(scope_kind="world")
+    receipt = validate_relation_claim(refuted, current_scope_cid=other.scope_cid)
+    assert receipt.verdict == "refuted"
+    assert receipt.authority_status == "refuted"
+    assert receipt.may_influence_planning is False
+
+
+def test_identity_envelope_lifts_without_collapsing_lifecycle_cid() -> None:
+    scope = _scope()
+    claim = _proved(scope, relation_kind=RelationKind.BEHAVIORAL_EQUIVALENCE)
+    identity_payload = claim.to_identity_record()
+    assert identity_payload["schema"] == RELATION_CLAIM_IDENTITY_SCHEMA
+    identity = RelationClaimIdentity.from_dict(identity_payload)
+    lifted = ProgramRelationClaim.from_identity_record(identity)
+    assert lifted.relation_kind == claim.relation_kind
+    assert lifted.scope_cid == claim.scope_cid
+    assert lifted.assumption_cids == claim.assumption_cids
+    assert lifted.relation_claim_cid == claim.relation_claim_cid
+    assert identity.relation_claim_cid != claim.relation_claim_cid
+    with pytest.raises(ProgramRelationError, match="identity schema version"):
+        ProgramRelationClaim.from_identity_record({"schema": "not-an-identity"})
+    superseded = _proved(scope)
+    superseded = superseded.replace(
+        authority_status="superseded",
+        invalidator_cids=[_cid("next")],
+        superseded_by_cid=_cid("successor"),
+    )
+    identity_superseded = superseded.to_identity_record()
+    with pytest.raises(ProgramRelationError, match="require superseded_by_cid"):
+        ProgramRelationClaim.from_identity_record(identity_superseded)
+    restored = ProgramRelationClaim.from_identity_record(
+        identity_superseded, superseded_by_cid=superseded.superseded_by_cid
+    )
+    assert restored.authority_status == "superseded"
+    assert restored.superseded_by_cid == superseded.superseded_by_cid
+
+
+def test_symmetric_families_and_directed_kinds_stay_closed() -> None:
+    assert is_symmetric_relation("equality") is True
+    assert is_symmetric_relation(RelationKind.LOGICAL_EQUIVALENCE) is True
+    assert is_symmetric_relation("refinement") is False
+    assert is_symmetric_relation("entailment") is False
+    assert is_symmetric_relation("intent") is False
+    assert relation_family_for("intent") == RelationFamily.INTENT.value
+    assert relation_family_for("transition_behavior") == (
+        RelationFamily.TRANSITION_BEHAVIOR.value
+    )
+    scope = _scope()
+    intent = ProgramRelationClaim.from_scope(
+        scope,
+        relation_kind="intent",
+        left_cid=_cid("x"),
+        right_cid=_cid("y"),
+    )
+    other_scope = _scope(scope_kind="symbol")
+    other = ProgramRelationClaim.from_scope(
+        other_scope,
+        relation_kind="intent",
+        left_cid=_cid("x"),
+        right_cid=_cid("y"),
+    )
+    assert intent.relation_claim_cid != other.relation_claim_cid
+
+
+def test_contradiction_conflict_invalidation_does_not_admit_explosion() -> None:
+    scope = _scope()
+    equality = _proved(scope)
+    contradiction = _proved(scope, relation_kind=RelationKind.CONTRADICTION)
+    stale, record = invalidate_relation(
+        equality,
+        RelationInvalidationKind.CONTRADICTION_CONFLICT,
+        [contradiction.relation_claim_cid],
+    )
+    assert stale.authority_status == "stale"
+    assert record.invalidation_kind == "contradiction_conflict"
+    explosion = attempt_ex_falso_admission(contradiction, equality)
+    assert explosion.verdict == "abstain"
+    assert explosion.contradiction_disposition == "abstention"
+    assert explosion.ex_falso_admission is False
+    assert may_influence_planning(equality, explosion) is False
+    mismatched = RelationValidationReceipt(
+        relation_claim_cid=equality.relation_claim_cid,
+        verdict=RelationValidationVerdict.UNKNOWN,
+        authority_status=RelationAuthorityStatus.CANDIDATE,
+        contradiction_disposition=ContradictionDisposition.NOT_APPLICABLE,
+    )
+    with pytest.raises(ProgramRelationError, match="receipt authority_status"):
+        may_influence_planning(equality, mismatched)
+
+
+def test_schema_rejects_similarity_authority_and_ex_falso_flags() -> None:
+    jsonschema = pytest.importorskip("jsonschema")
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    validator = jsonschema.Draft202012Validator(schema)
+    admitted = validate_relation_claim(_proved()).to_dict()
+    similarity = dict(admitted)
+    similarity["similarity_authoritative"] = True
+    assert list(validator.iter_errors(similarity))
+    explosion = dict(admitted)
+    explosion["ex_falso_admission"] = True
+    assert list(validator.iter_errors(explosion))
+    conflicted = dict(admitted)
+    conflicted["verdict"] = "admitted"
+    conflicted["conflict_claim_cids"] = [_cid("other-claim")]
+    assert list(validator.iter_errors(conflicted))
+    superseded_source = _proved()
+    replacement = _proved(evidence_cids=[_cid("proof-2")])
+    _, supersession = invalidate_relation(
+        superseded_source,
+        RelationInvalidationKind.SUPERSEDED,
+        [_cid("successor")],
+        successor_claim_cid=replacement.relation_claim_cid,
+    )
+    missing_successor = supersession.to_dict()
+    missing_successor["successor_claim_cid"] = None
+    assert list(validator.iter_errors(missing_successor))
+    _, refutation = invalidate_relation(
+        superseded_source,
+        RelationInvalidationKind.EVIDENCE_REFUTED,
+        [_cid("countermodel")],
+    )
+    wrong_status = refutation.to_dict()
+    wrong_status["resulting_status"] = "stale"
+    assert list(validator.iter_errors(wrong_status))
+
+
+def test_unknown_kind_non_nfc_and_floats_fail_closed() -> None:
+    scope = _scope()
+    with pytest.raises(ProgramRelationError, match="unsupported value"):
+        ProgramRelationClaim.from_scope(
+            scope,
+            relation_kind="bisimulation",
+            left_cid=_cid("left"),
+            right_cid=_cid("right"),
+        )
+    with pytest.raises(ProgramRelationError, match="trimmed NFC"):
+        _scope(unavailable_dimensions=["cafe\u0301"])
+    with pytest.raises(ProgramRelationError, match="strict DAG-JSON"):
+        from ipfs_datasets_py.logic.software_contracts.semantic_state.program_relations import (
+            canonicalize_relation_value,
+        )
+
+        canonicalize_relation_value({"score": 0.99})

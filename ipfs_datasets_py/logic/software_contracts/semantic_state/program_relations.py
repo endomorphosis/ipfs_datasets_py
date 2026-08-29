@@ -59,6 +59,9 @@ RELATION_SCOPE_SCHEMA: Final[str] = (
 SCOPED_PROGRAM_RELATION_SCHEMA: Final[str] = (
     "ipfs-datasets.software-contracts.scoped-program-relation@1"
 )
+RELATION_CLAIM_IDENTITY_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contracts.relation-claim-identity@1"
+)
 RELATION_INVALIDATION_SCHEMA: Final[str] = (
     "ipfs-datasets.software-contracts.relation-invalidation@1"
 )
@@ -311,6 +314,23 @@ SCOPED_RELATION_FAMILIES: Final[frozenset[str]] = frozenset(
     }
 )
 
+IDENTITY_CLAIM_FIELDS: Final[frozenset[str]] = frozenset(
+    {
+        "schema",
+        "relation_kind",
+        "left_cid",
+        "right_cid",
+        "scope_cid",
+        "assumption_cids",
+        "theory_or_policy_cid",
+        "environment_binding_cid",
+        "evidence_cids",
+        "invalidator_cids",
+        "authority_status",
+        "relation_claim_cid",
+    }
+)
+
 
 # ---------------------------------------------------------------------------
 # Validation helpers
@@ -506,6 +526,26 @@ def _verify_claimed(name: str, claimed: Any, payload: Mapping[str, Any]) -> str:
     canonical = canonicalize_relation_value(payload)
     try:
         return decode_and_recompute_structured(claimed, canonical)
+    except Exception as exc:
+        raise ProgramRelationError(f"{name} cid does not verify") from exc
+
+
+def _verify_identity_claimed(
+    name: str, claimed: Any, payload: Mapping[str, Any]
+) -> str:
+    """Rehash an identity envelope with the landed identity canonicalizer."""
+
+    try:
+        from ipfs_datasets_py.logic.software_contracts.semantic_state.program_identity import (
+            canonicalize_identity_value,
+        )
+    except ImportError:
+        return _verify_claimed(name, claimed, payload)
+    try:
+        canonical = canonicalize_identity_value(payload)
+        return decode_and_recompute_structured(claimed, canonical)
+    except ProgramRelationError:
+        raise
     except Exception as exc:
         raise ProgramRelationError(f"{name} cid does not verify") from exc
 
@@ -898,6 +938,87 @@ class ProgramRelationClaim:
             superseded_by_cid=superseded_by_cid,
         )
         return claim.bind_scope(scope)
+
+    def to_identity_record(self) -> dict[str, Any]:
+        """Project the landed identity envelope; lifecycle CID remains distinct."""
+
+        payload = {
+            "schema": RELATION_CLAIM_IDENTITY_SCHEMA,
+            "relation_kind": self.relation_kind,
+            "left_cid": self.left_cid,
+            "right_cid": self.right_cid,
+            "scope_cid": self.scope_cid,
+            "assumption_cids": list(self.assumption_cids),
+            "theory_or_policy_cid": self.theory_or_policy_cid,
+            "environment_binding_cid": self.environment_binding_cid,
+            "evidence_cids": list(self.evidence_cids),
+            "invalidator_cids": list(self.invalidator_cids),
+            "authority_status": self.authority_status,
+        }
+        try:
+            from ipfs_datasets_py.logic.software_contracts.semantic_state.program_identity import (
+                identity_cid_for,
+            )
+        except ImportError:
+            identity_cid_for = relation_cid_for
+        encoded = dict(payload)
+        encoded["relation_claim_cid"] = identity_cid_for(payload)
+        return encoded
+
+    @classmethod
+    def from_identity_record(
+        cls,
+        data: Mapping[str, Any] | Any,
+        *,
+        superseded_by_cid: str | None = None,
+    ) -> "ProgramRelationClaim":
+        """Lift a SAWM-002 identity envelope into a scoped lifecycle claim."""
+
+        if isinstance(data, ProgramRelationClaim):
+            return data
+        if not isinstance(data, Mapping):
+            to_dict = getattr(data, "to_dict", None)
+            if not callable(to_dict):
+                raise ProgramRelationError("identity record must be a mapping")
+            data = to_dict()
+            if not isinstance(data, Mapping):
+                raise ProgramRelationError(
+                    "identity record to_dict must return a mapping"
+                )
+        schema = data.get("schema")
+        if schema == cls.SCHEMA:
+            return cls.from_dict(data)
+        if schema != RELATION_CLAIM_IDENTITY_SCHEMA:
+            raise ProgramRelationError(
+                "unsupported relation identity schema version"
+            )
+        payload = _closed(data, IDENTITY_CLAIM_FIELDS, "RelationClaimIdentity")
+        claimed = payload.pop("relation_claim_cid")
+        payload.pop("schema")
+        identity_payload = {
+            "schema": RELATION_CLAIM_IDENTITY_SCHEMA,
+            "relation_kind": payload["relation_kind"],
+            "left_cid": payload["left_cid"],
+            "right_cid": payload["right_cid"],
+            "scope_cid": payload["scope_cid"],
+            "assumption_cids": list(payload["assumption_cids"]),
+            "theory_or_policy_cid": payload["theory_or_policy_cid"],
+            "environment_binding_cid": payload["environment_binding_cid"],
+            "evidence_cids": list(payload["evidence_cids"]),
+            "invalidator_cids": list(payload["invalidator_cids"]),
+            "authority_status": payload["authority_status"],
+        }
+        _verify_identity_claimed("RelationClaimIdentity", claimed, identity_payload)
+        status = _enum(
+            payload["authority_status"], RelationAuthorityStatus, "authority_status"
+        )
+        if status == RelationAuthorityStatus.SUPERSEDED.value and superseded_by_cid is None:
+            raise ProgramRelationError(
+                "identity superseded claims require superseded_by_cid"
+            )
+        if status != RelationAuthorityStatus.SUPERSEDED.value:
+            superseded_by_cid = None
+        return cls(**payload, superseded_by_cid=superseded_by_cid)
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "ProgramRelationClaim":
@@ -1348,11 +1469,26 @@ def invalidate_by_environment(
 
 
 def claims_conflict(left: ProgramRelationClaim, right: ProgramRelationClaim) -> bool:
-    """Return True when two scoped claims cannot be jointly admitted."""
+    """Return True when two scoped claims cannot be jointly admitted.
 
+    Only admitted (validated/proved) contradictory premises collide. A
+    candidate, unknown, stale, or superseded contradiction cannot grant ex
+    falso admission and also cannot veto an independently admitted positive
+    claim. Proved and refuted records of the same scoped kind still conflict.
+    """
+
+    if not isinstance(left, ProgramRelationClaim) or not isinstance(
+        right, ProgramRelationClaim
+    ):
+        raise ProgramRelationError("claims must be ProgramRelationClaim records")
     if left.relation_claim_cid == right.relation_claim_cid:
         return False
     if left.scope_cid != right.scope_cid:
+        return False
+    if (
+        left.theory_or_policy_cid != right.theory_or_policy_cid
+        or left.environment_binding_cid != right.environment_binding_cid
+    ):
         return False
     unordered_left = _unordered_subject(left.left_cid, left.right_cid, left.scope_cid)
     unordered_right = _unordered_subject(right.left_cid, right.right_cid, right.scope_cid)
@@ -1360,6 +1496,8 @@ def claims_conflict(left: ProgramRelationClaim, right: ProgramRelationClaim) -> 
         return False
     left_family = left.relation_family
     right_family = right.relation_family
+    left_status = str(left.authority_status)
+    right_status = str(right.authority_status)
     if (
         left_family == RelationFamily.CONTRADICTION.value
         and right_family in POSITIVE_RELATION_FAMILIES
@@ -1367,9 +1505,12 @@ def claims_conflict(left: ProgramRelationClaim, right: ProgramRelationClaim) -> 
         right_family == RelationFamily.CONTRADICTION.value
         and left_family in POSITIVE_RELATION_FAMILIES
     ):
-        return True
+        return (
+            left_status in AUTHORITATIVE_STATUSES
+            and right_status in AUTHORITATIVE_STATUSES
+        )
     if left.relation_kind == right.relation_kind:
-        statuses = {str(left.authority_status), str(right.authority_status)}
+        statuses = {left_status, right_status}
         if RelationAuthorityStatus.REFUTED.value in statuses and statuses & AUTHORITATIVE_STATUSES:
             return True
     return False
@@ -1442,12 +1583,14 @@ def validate_relation_claim(
         for peer in peers
         if claims_conflict(claim, peer)
     ]
-    freshness = _freshness_failure(
-        claim,
-        current_scope_cid=current_scope_cid,
-        current_environment_binding_cid=current_environment_binding_cid,
-        invalidated_assumption_cids=invalidated_assumption_cids,
-    )
+    freshness = None
+    if status not in NEGATIVE_STATUSES:
+        freshness = _freshness_failure(
+            claim,
+            current_scope_cid=current_scope_cid,
+            current_environment_binding_cid=current_environment_binding_cid,
+            invalidated_assumption_cids=invalidated_assumption_cids,
+        )
     if conflicts:
         return RelationValidationReceipt(
             relation_claim_cid=claim.relation_claim_cid,
@@ -1461,9 +1604,7 @@ def validate_relation_claim(
         return RelationValidationReceipt(
             relation_claim_cid=claim.relation_claim_cid,
             verdict=freshness,
-            authority_status=RelationAuthorityStatus.STALE
-            if status not in NEGATIVE_STATUSES
-            else status,
+            authority_status=RelationAuthorityStatus.STALE,
             contradiction_disposition=ContradictionDisposition.NOT_APPLICABLE,
             evidence_cids=claim.evidence_cids,
             limitation_cids=claim.invalidator_cids,
@@ -1544,9 +1685,13 @@ def may_influence_planning(
         raise ProgramRelationError("planning admission requires claim and receipt")
     if receipt.relation_claim_cid != claim.relation_claim_cid:
         raise ProgramRelationError("receipt does not bind the supplied claim")
+    if str(receipt.authority_status) != str(claim.authority_status):
+        raise ProgramRelationError("receipt authority_status does not bind the claim")
     if claim.relation_kind in FORBIDDEN_RELATION_KINDS:
         return False
     if str(claim.authority_status) not in AUTHORITATIVE_STATUSES:
+        return False
+    if receipt.similarity_authoritative or receipt.ex_falso_admission:
         return False
     return receipt.may_influence_planning
 
@@ -1557,6 +1702,9 @@ __all__ = [
     "AUTHORITATIVE_STATUSES",
     "COLLECTION_SEMANTICS_DECLARATION",
     "FORBIDDEN_RELATION_KINDS",
+    "IDENTITY_CLAIM_FIELDS",
+    "POSITIVE_RELATION_FAMILIES",
+    "RELATION_CLAIM_IDENTITY_SCHEMA",
     "RELATION_INVALIDATION_SCHEMA",
     "RELATION_KIND_FAMILY",
     "RELATION_SCOPE_SCHEMA",
@@ -1565,6 +1713,7 @@ __all__ = [
     "SCOPED_PROGRAM_RELATION_INTERFACE",
     "SCOPED_PROGRAM_RELATION_SCHEMA",
     "SCOPED_RELATION_FAMILIES",
+    "SYMMETRIC_RELATION_KINDS",
     "ContradictionDisposition",
     "ProgramLanguage",
     "ProgramRelationClaim",
