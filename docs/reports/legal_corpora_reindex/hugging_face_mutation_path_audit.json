@@ -1,11 +1,11 @@
 {
   "authority_boundary_violations": [],
   "authorizing_hub_upload": false,
-  "callsite_count": 37,
+  "callsite_count": 38,
   "callsites": [
     {
       "analysis_context_count": 1,
-      "api_or_method_constructed_after_guard": false,
+      "api_or_method_constructed_after_guard": true,
       "api_primitive_attested": false,
       "api_primitive_exact_call": false,
       "attested_executor": false,
@@ -14,20 +14,24 @@
       "column": 32,
       "exact_binding_guard_lines": [],
       "function": "HuggingFaceReleasePublisher.publish_append_only.<locals>.execute_commit",
-      "guard_lines": [],
+      "guard_lines": [
+        3468
+      ],
       "guarded_write_exact_binding": false,
       "guarded_write_id": "",
       "guarded_write_individual": false,
       "guarded_write_line": 0,
       "guarded_write_lines": [],
-      "line": 2773,
+      "line": 3477,
       "path": "ipfs_datasets_py/huggingface/publisher.py",
       "potential_protected_target": true,
       "prepared_binding_exact": false,
       "protected_repos": [],
-      "protected_target": false,
-      "protection": "not_a_proven_protected_target",
-      "protection_variants": [],
+      "protected_target": true,
+      "protection": "legacy_dominating_guard",
+      "protection_variants": [
+        "legacy_dominating_guard"
+      ],
       "reason": "",
       "repo_expression": "self.repository_id",
       "repo_roots": [
@@ -42,24 +46,66 @@
       "api_primitive_attested": true,
       "api_primitive_exact_call": true,
       "attested_executor": true,
+      "call_expression": "create_branch_local(self.runtime_token, repo_id=self.mutation_binding.repository_id, repo_type=self.mutation_binding.repository_type, branch=self.mutation_binding.revision, revision=self.mutation_binding.parent_commit, exist_ok=False)",
+      "canonical_callback": true,
+      "column": 23,
+      "exact_binding_guard_lines": [
+        2486
+      ],
+      "function": "_PreparedStateLawsCanonicalCommitExecutor.__call__.<locals>.branch_once",
+      "guard_lines": [
+        2486
+      ],
+      "guarded_write_exact_binding": true,
+      "guarded_write_id": "ipfs_datasets_py/huggingface/publisher.py:2507:28",
+      "guarded_write_individual": true,
+      "guarded_write_line": 2507,
+      "guarded_write_lines": [
+        2507
+      ],
+      "line": 2497,
+      "path": "ipfs_datasets_py/huggingface/publisher.py",
+      "potential_protected_target": true,
+      "prepared_binding_exact": true,
+      "protected_repos": [],
+      "protected_target": true,
+      "protection": "canonical_runtime",
+      "protection_variants": [
+        "canonical_runtime"
+      ],
+      "reason": "",
+      "repo_expression": "self.mutation_binding.repository_id",
+      "repo_roots": [
+        "self",
+        "self.mutation_binding",
+        "self.mutation_binding.repository_id"
+      ],
+      "write_method": "create_branch"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": true,
+      "api_primitive_exact_call": true,
+      "attested_executor": true,
       "call_expression": "create_commit_local(self.runtime_token, repo_id=self.mutation_binding.repository_id, repo_type=self.mutation_binding.repository_type, operations=self.operations_payload, commit_message=self.canonical_message, revision=self.mutation_binding.revision, parent_commit=self.mutation_binding.parent_commit)",
       "canonical_callback": true,
       "column": 19,
       "exact_binding_guard_lines": [
-        2097
+        2524
       ],
       "function": "_PreparedStateLawsCanonicalCommitExecutor.__call__.<locals>.commit_once",
       "guard_lines": [
-        2097
+        2524
       ],
       "guarded_write_exact_binding": true,
-      "guarded_write_id": "ipfs_datasets_py/huggingface/publisher.py:2128:24",
+      "guarded_write_id": "ipfs_datasets_py/huggingface/publisher.py:2546:24",
       "guarded_write_individual": true,
-      "guarded_write_line": 2128,
+      "guarded_write_line": 2546,
       "guarded_write_lines": [
-        2128
+        2546
       ],
-      "line": 2117,
+      "line": 2535,
       "path": "ipfs_datasets_py/huggingface/publisher.py",
       "potential_protected_target": true,
       "prepared_binding_exact": true,
@@ -960,38 +1006,6 @@
       "api_primitive_attested": false,
       "api_primitive_exact_call": false,
       "attested_executor": false,
-      "call_expression": "expected_aliases.items()",
-      "canonical_callback": false,
-      "column": 30,
-      "exact_binding_guard_lines": [],
-      "function": "_attested_prepared_factory_call",
-      "guard_lines": [],
-      "guarded_write_exact_binding": false,
-      "guarded_write_id": "",
-      "guarded_write_individual": false,
-      "guarded_write_line": 0,
-      "guarded_write_lines": [],
-      "line": 1544,
-      "path": "scripts/ops/legal_data/audit_legal_corpora_hugging_face_mutation_paths.py",
-      "potential_protected_target": false,
-      "prepared_binding_exact": false,
-      "protected_repos": [],
-      "protected_target": false,
-      "protection": "not_a_proven_protected_target",
-      "protection_variants": [],
-      "reason": "",
-      "repo_expression": "",
-      "repo_roots": [
-        "expected_aliases.items"
-      ],
-      "write_method": "create_commit"
-    },
-    {
-      "analysis_context_count": 1,
-      "api_or_method_constructed_after_guard": true,
-      "api_primitive_attested": false,
-      "api_primitive_exact_call": false,
-      "attested_executor": false,
       "call_expression": "api.upload_folder(folder_path=str(parquet_dir), repo_id=repo_id, repo_type='dataset', path_in_repo=_CORPUS.parquet_dir_name, commit_message=commit_message, allow_patterns=['*.parquet', '*.json'])",
       "canonical_callback": false,
       "column": 18,
@@ -1053,6 +1067,44 @@
         "dataset_ids"
       ],
       "write_method": "create_repo"
+    },
+    {
+      "analysis_context_count": 1,
+      "api_or_method_constructed_after_guard": true,
+      "api_primitive_attested": false,
+      "api_primitive_exact_call": false,
+      "attested_executor": false,
+      "call_expression": "expected_mutation.items()",
+      "canonical_callback": false,
+      "column": 30,
+      "exact_binding_guard_lines": [],
+      "function": "check_canonical_publication_receipt",
+      "guard_lines": [],
+      "guarded_write_exact_binding": false,
+      "guarded_write_id": "",
+      "guarded_write_individual": false,
+      "guarded_write_line": 0,
+      "guarded_write_lines": [],
+      "line": 1416,
+      "path": "scripts/ops/legal_data/publish_state_laws_hf_release.py",
+      "potential_protected_target": false,
+      "prepared_binding_exact": false,
+      "protected_repos": [],
+      "protected_target": false,
+      "protection": "not_a_proven_protected_target",
+      "protection_variants": [],
+      "reason": "",
+      "repo_expression": "",
+      "repo_roots": [
+        "PublicationPhase.STATE_MAIN",
+        "PublicationPhase.STATE_MAIN.value",
+        "expected_mutation.items",
+        "report['dataset_repo_id']",
+        "report['plan_digest']",
+        "report['policy_proof_digest']",
+        "report['release_manifest_digest']"
+      ],
+      "write_method": "create_commit"
     },
     {
       "analysis_context_count": 1,
@@ -1332,7 +1384,7 @@
   ],
   "producer": "audit_legal_corpora_hugging_face_mutation_paths.py",
   "program_id": "legal-corpora-reindex-v1",
-  "protected_callsite_count": 23,
+  "protected_callsite_count": 25,
   "protected_repos": [
     "justicedao/ipfs_federal_register",
     "justicedao/ipfs_state_laws"
@@ -1349,8 +1401,8 @@
   "required_runtime": "ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime",
   "schema": "ipfs_datasets_py/legal-corpora-hugging-face-mutation-path-audit@2",
   "source_scope": {
-    "excluded_python_count": 4522,
-    "excluded_python_paths_sha256": "780b896e88a7a962e1c06168f42866ef18abe2fea08fe3a8ae2586431d5283fc",
+    "excluded_python_count": 4540,
+    "excluded_python_paths_sha256": "c16cb80a333b615332516dd180615604274ff1c397cf4eb032d6a5fde5839f87",
     "exclusion_policy": [
       {
         "category": "archive",
@@ -1388,8 +1440,8 @@
       },
       {
         "category": "tests",
-        "excluded_python_count": 4371,
-        "excluded_python_paths_sha256": "455fd0016120b7645ddaee9d0aea08ed270590c0b6ecdb3532c9b545bdbd4429",
+        "excluded_python_count": 4389,
+        "excluded_python_paths_sha256": "e8b69c38e116ad3d73019547803e83d0e5923918c169cdbd7e488d6458370eb0",
         "path_components": [
           "test",
           "testing",
@@ -1401,10 +1453,10 @@
     "mode": "git_tracked_production_python",
     "path_digest_algorithm": "sha256-canonical-json-string-array-v1",
     "scan_roots": [],
-    "scanned_python_count": 4915,
-    "scanned_python_paths_sha256": "598414af18dd9a85350371d39a1861ce9b71256299f3d4fe75dedb18f2783893",
-    "tracked_python_count": 9437,
-    "tracked_python_paths_sha256": "b448e6fc60395cf654d10c4053caf809d375358a8bcfa156ee16cfa6d1fc8c19"
+    "scanned_python_count": 4933,
+    "scanned_python_paths_sha256": "fad464da51a1e3872c083e5455f638ad02278c55cefaf10b9b1e631f69823947",
+    "tracked_python_count": 9473,
+    "tracked_python_paths_sha256": "0c59e8902186b6fd348c9c61f77be904c6dda8c32194ed2584dbd216e86ed17a"
   },
   "status": "passed",
   "syntax_errors": [],
