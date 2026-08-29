@@ -287,6 +287,71 @@ def _write_selection_manifest(
     return path
 
 
+def _write_v2_selection_manifest(
+    path: Path,
+    selections: dict[str, tuple[str, str, str]],
+) -> Path:
+    payload = {
+        "schema_version": cli.SELECTION_MANIFEST_SCHEMA_VERSION_V2,
+        "states": {
+            code: {
+                "canonical_jsonld_sha256": artifact_sha256,
+                "normalized_source_receipt_sha256": receipt_sha256,
+                "run_seal_sha256": run_seal_sha256,
+            }
+            for code, (
+                artifact_sha256,
+                receipt_sha256,
+                run_seal_sha256,
+            ) in selections.items()
+        },
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+    return path
+
+
+def _write_additional_run_seal(
+    receipt_path: Path,
+    artifact_path: Path,
+    *,
+    label: str,
+) -> Path:
+    receipt = SourceReceiptRecord.from_mapping(
+        json.loads(receipt_path.read_text(encoding="utf-8"))
+    )
+    code = receipt.jurisdiction
+    run_id = hashlib.sha256(
+        f"{code}:{label}:{_sha256_file(receipt_path)}".encode("ascii")
+    ).hexdigest()[:32]
+    seal = build_state_laws_run_seal(
+        run_id=run_id,
+        created_at="2026-08-24T00:00:02Z",
+        active_states=[code],
+        start_identities={code: str(receipt.source_software_version)},
+        end_identities={code: str(receipt.source_software_version)},
+        runner_start_identity=_test_runner_source_software_version(),
+        runner_end_identity=_test_runner_source_software_version(),
+        worker_quiescence={
+            code: {
+                "attested": True,
+                "quiescent": True,
+                "completion_mode": "test_worker_returned",
+            }
+        },
+        states={
+            code: {
+                "canonical_jsonld_sha256": _sha256_file(artifact_path),
+                "normalized_source_receipt_sha256": _sha256_file(receipt_path),
+                "source_software_version": str(receipt.source_software_version),
+            }
+        },
+    )
+    path = receipt_path.parent / f"{run_id}{RUN_SEAL_SUFFIX}"
+    path.write_bytes(canonical_run_seal_bytes(seal))
+    return path
+
+
 class _FakeAdapter:
     calls: ClassVar[list[tuple[str, Path, str]]] = []
 
@@ -861,10 +926,63 @@ def test_checked_in_exact_51_manifest_pins_curated_evidence_pairs() -> None:
         _EXACT_51_SELECTION_MANIFEST
     )
 
+    assert manifest.schema_version == cli.SELECTION_MANIFEST_SCHEMA_VERSION
+    assert manifest.summary()["schema_version"] == cli.SELECTION_MANIFEST_SCHEMA_VERSION
     assert {
         code: selection.summary()
         for code, selection in manifest.selections.items()
     } == _EXACT_51_CURATED_SELECTIONS
+
+
+def test_v2_manifest_selects_exact_digest_from_multiple_distinct_run_seals(
+    tmp_path: Path,
+) -> None:
+    evidence_root, canonical_root, artifacts = _write_exact_51(tmp_path)
+    al_receipt = evidence_root / "AL" / "al-primary.normalized.json"
+    primary_seal = next((evidence_root / "AL").glob(f"*{RUN_SEAL_SUFFIX}"))
+    selected_seal = _write_additional_run_seal(
+        al_receipt,
+        artifacts["AL"],
+        label="second-distinct-authorizing-seal",
+    )
+    assert _sha256_file(primary_seal) != _sha256_file(selected_seal)
+    manifest = _write_v2_selection_manifest(
+        tmp_path / "al-v2-selection.json",
+        {
+            "AL": (
+                _sha256_file(artifacts["AL"]),
+                _sha256_file(al_receipt),
+                _sha256_file(selected_seal),
+            )
+        },
+    )
+
+    report = cli.assemble_state_laws_production_input_map(
+        acquisition_evidence_root=evidence_root,
+        canonical_output_roots=[canonical_root],
+        candidate_selection_manifest_path=manifest,
+        output_path=tmp_path / "maps" / "selected-v2.json",
+        preflight_only=True,
+    )
+
+    al_report = report["jurisdictions"]["AL"]
+    assert report["exact_51_ready"] is True
+    assert report["candidate_selection_manifest"]["schema_version"] == (
+        cli.SELECTION_MANIFEST_SCHEMA_VERSION_V2
+    )
+    assert al_report["receipt_candidate_count"] == 2
+    assert al_report["eligible_pair_count"] == 2
+    assert {
+        candidate["run_seal_sha256"]
+        for candidate in al_report["receipt_candidates"]
+    } == {_sha256_file(primary_seal), _sha256_file(selected_seal)}
+    assert al_report["selected"]["run_seal_path"] == str(selected_seal.resolve())
+    assert al_report["selected"]["run_seal_sha256"] == _sha256_file(selected_seal)
+    assert al_report["selection_evidence"]["requested_digest_pair"] == {
+        "canonical_jsonld_sha256": _sha256_file(artifacts["AL"]),
+        "normalized_source_receipt_sha256": _sha256_file(al_receipt),
+        "run_seal_sha256": _sha256_file(selected_seal),
+    }
 
 
 def test_ct_digest_selection_selects_v12_and_retains_v11_as_unselected_evidence(

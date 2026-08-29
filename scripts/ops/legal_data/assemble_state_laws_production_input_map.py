@@ -39,11 +39,10 @@ The optional manifest has exactly this shape (digest values abbreviated here)::
 It may list only the jurisdictions that need explicit curation.  The receipt
 digest binds the serialized normalized receipt file, not merely its adapter
 input identity, so provenance-distinct receipts are never silently collapsed.
+The checked-in v1 shape remains accepted.  A v2 manifest additionally binds
+``run_seal_sha256`` so a receipt covered by multiple distinct run-final seals
+can select one exact seal without relying on discovery order.
 """
-
-# The repository root bootstrap must precede project imports when this file is
-# executed directly as an operations script.
-# ruff: noqa: E402
 
 from __future__ import annotations
 
@@ -164,6 +163,15 @@ SCHEMA_VERSION: Final = "state-laws-production-input-map-assembly/v1"
 SELECTION_MANIFEST_SCHEMA_VERSION: Final = (
     "state-laws-production-input-map-candidate-selection/v1"
 )
+SELECTION_MANIFEST_SCHEMA_VERSION_V2: Final = (
+    "state-laws-production-input-map-candidate-selection/v2"
+)
+_SELECTION_MANIFEST_SCHEMA_VERSIONS: Final = frozenset(
+    {
+        SELECTION_MANIFEST_SCHEMA_VERSION,
+        SELECTION_MANIFEST_SCHEMA_VERSION_V2,
+    }
+)
 
 LOCAL_ONLY: Final = True
 AUTHORIZES_PUBLICATION: Final = False
@@ -181,6 +189,7 @@ _SELECTION_MANIFEST_FIELDS: Final = frozenset({"schema_version", "states"})
 _SELECTION_FIELDS: Final = frozenset(
     {"canonical_jsonld_sha256", "normalized_source_receipt_sha256"}
 )
+_SELECTION_FIELDS_V2: Final = frozenset({*_SELECTION_FIELDS, "run_seal_sha256"})
 
 
 class StateLawsInputMapAssemblyError(ValueError):
@@ -194,12 +203,16 @@ class CandidateSelection:
     jurisdiction: str
     canonical_jsonld_sha256: str
     normalized_source_receipt_sha256: str
+    run_seal_sha256: str | None = None
 
     def summary(self) -> dict[str, str]:
-        return {
+        summary = {
             "canonical_jsonld_sha256": self.canonical_jsonld_sha256,
             "normalized_source_receipt_sha256": (self.normalized_source_receipt_sha256),
         }
+        if self.run_seal_sha256 is not None:
+            summary["run_seal_sha256"] = self.run_seal_sha256
+        return summary
 
 
 @dataclass(frozen=True, slots=True)
@@ -207,6 +220,7 @@ class CandidateSelectionManifest:
     """Validated local manifest plus the digest of its exact serialized bytes."""
 
     path: Path
+    schema_version: str
     file_sha256: str
     file_size_bytes: int
     selections: Mapping[str, CandidateSelection]
@@ -219,7 +233,7 @@ class CandidateSelectionManifest:
                 code for code in CANONICAL_JURISDICTION_ORDER if code in self.selections
             ],
             "path": str(self.path),
-            "schema_version": SELECTION_MANIFEST_SCHEMA_VERSION,
+            "schema_version": self.schema_version,
             "selection_count": len(self.selections),
         }
 
@@ -236,6 +250,7 @@ class ReceiptCandidate:
     adapter_input_sha256: str
     adapter_input_row_count: int
     run_seal_path: Path
+    run_seal_paths: tuple[Path, ...]
     run_seal_sha256: str
 
     @property
@@ -252,7 +267,9 @@ class ReceiptCandidate:
             "paths": [str(path) for path in self.paths],
             "receipt_id": self.record.receipt_id,
             "release_point": self.record.release_point,
+            "run_seal_duplicate_path_count": len(self.run_seal_paths) - 1,
             "run_seal_path": str(self.run_seal_path),
+            "run_seal_paths": [str(path) for path in self.run_seal_paths],
             "run_seal_sha256": self.run_seal_sha256,
             "source_software_version": self.record.source_software_version,
         }
@@ -391,10 +408,11 @@ def _load_candidate_selection_manifest(
         expected=_SELECTION_MANIFEST_FIELDS,
         label="candidate selection manifest",
     )
-    if payload.get("schema_version") != SELECTION_MANIFEST_SCHEMA_VERSION:
+    schema_version = str(payload.get("schema_version") or "").strip()
+    if schema_version not in _SELECTION_MANIFEST_SCHEMA_VERSIONS:
         raise StateLawsInputMapAssemblyError(
-            "candidate selection manifest schema_version must be "
-            f"{SELECTION_MANIFEST_SCHEMA_VERSION!r}"
+            "candidate selection manifest schema_version must be one of "
+            f"{sorted(_SELECTION_MANIFEST_SCHEMA_VERSIONS)!r}"
         )
     raw_states = payload.get("states")
     if not isinstance(raw_states, Mapping) or not raw_states:
@@ -414,7 +432,11 @@ def _load_candidate_selection_manifest(
             )
         _require_exact_fields(
             raw_selection,
-            expected=_SELECTION_FIELDS,
+            expected=(
+                _SELECTION_FIELDS_V2
+                if schema_version == SELECTION_MANIFEST_SCHEMA_VERSION_V2
+                else _SELECTION_FIELDS
+            ),
             label=f"candidate selection manifest states.{code}",
         )
         try:
@@ -430,11 +452,21 @@ def _load_candidate_selection_manifest(
                     name=f"candidate selection manifest states.{code}."
                     "normalized_source_receipt_sha256",
                 ),
+                run_seal_sha256=(
+                    normalize_sha256(
+                        raw_selection.get("run_seal_sha256"),
+                        name=f"candidate selection manifest states.{code}."
+                        "run_seal_sha256",
+                    )
+                    if schema_version == SELECTION_MANIFEST_SCHEMA_VERSION_V2
+                    else None
+                ),
             )
         except (TypeError, ValueError) as exc:
             raise StateLawsInputMapAssemblyError(str(exc)) from exc
     return CandidateSelectionManifest(
         path=path,
+        schema_version=schema_version,
         file_sha256=hashlib.sha256(serialized).hexdigest(),
         file_size_bytes=len(serialized),
         selections=selections,
@@ -520,7 +552,10 @@ def _discover_run_seals(
     *,
     current_runner_source_software_version: str,
 ) -> tuple[
-    dict[tuple[str, str, str, str], tuple[tuple[Path, str], ...]],
+    dict[
+        tuple[str, str, str, str],
+        tuple[tuple[tuple[Path, ...], str], ...],
+    ],
     list[dict[str, str]],
     tuple[Path, ...],
     tuple[Path, ...],
@@ -540,8 +575,8 @@ def _discover_run_seals(
         special_files.update(specials)
     by_binding: dict[
         tuple[str, str, str, str],
-        list[tuple[Path, str]],
-    ] = defaultdict(list)
+        dict[str, list[Path]],
+    ] = defaultdict(lambda: defaultdict(list))
     invalid: list[dict[str, str]] = []
     for path in sorted(paths, key=str):
         try:
@@ -563,7 +598,7 @@ def _discover_run_seals(
                     binding["canonical_jsonld_sha256"],
                     binding["source_software_version"],
                 )
-                by_binding[key].append((path, seal_sha256))
+                by_binding[key][seal_sha256].append(path)
         except (
             OSError,
             UnicodeError,
@@ -575,7 +610,13 @@ def _discover_run_seals(
             )
     return (
         {
-            key: tuple(sorted(values, key=lambda item: (item[1], str(item[0]))))
+            key: tuple(
+                (
+                    tuple(sorted(grouped_paths, key=str)),
+                    seal_sha256,
+                )
+                for seal_sha256, grouped_paths in sorted(values.items())
+            )
             for key, values in by_binding.items()
         },
         sorted(invalid, key=lambda item: item["path"]),
@@ -714,20 +755,21 @@ def _discover_receipts(
                     }
                 )
                 continue
-            run_seal_path, run_seal_digest = seal_candidates[0]
-            by_code[record.jurisdiction].append(
-                ReceiptCandidate(
-                    jurisdiction=record.jurisdiction,
-                    paths=ordered_paths,
-                    record=record,
-                    file_sha256=digest,
-                    file_size_bytes=size,
-                    adapter_input_sha256=input_sha256,
-                    adapter_input_row_count=input_rows,
-                    run_seal_path=run_seal_path,
-                    run_seal_sha256=run_seal_digest,
+            for run_seal_paths, run_seal_digest in seal_candidates:
+                by_code[record.jurisdiction].append(
+                    ReceiptCandidate(
+                        jurisdiction=record.jurisdiction,
+                        paths=ordered_paths,
+                        record=record,
+                        file_sha256=digest,
+                        file_size_bytes=size,
+                        adapter_input_sha256=input_sha256,
+                        adapter_input_row_count=input_rows,
+                        run_seal_path=run_seal_paths[0],
+                        run_seal_paths=run_seal_paths,
+                        run_seal_sha256=run_seal_digest,
+                    )
                 )
-            )
         except (OSError, TypeError, ValueError) as exc:
             invalid.append(
                 {
@@ -741,7 +783,12 @@ def _discover_receipts(
             code: tuple(
                 sorted(
                     candidates,
-                    key=lambda item: (item.file_sha256, str(item.selected_path)),
+                    key=lambda item: (
+                        item.file_sha256,
+                        item.run_seal_sha256,
+                        str(item.selected_path),
+                        str(item.run_seal_path),
+                    ),
                 )
             )
             for code, candidates in by_code.items()
@@ -894,8 +941,10 @@ def _eligible_pairs_for_code(
                 key=lambda item: (
                     item.receipt.file_sha256,
                     item.artifact.file_sha256,
+                    item.receipt.run_seal_sha256,
                     str(item.receipt.selected_path),
                     str(item.artifact.selected_path),
+                    str(item.receipt.run_seal_path),
                 ),
             )
         ),
@@ -1148,6 +1197,10 @@ def assemble_state_laws_production_input_map(
                 if item.artifact.file_sha256 == selector.canonical_jsonld_sha256
                 and item.receipt.file_sha256
                 == selector.normalized_source_receipt_sha256
+                and (
+                    selector.run_seal_sha256 is None
+                    or item.receipt.run_seal_sha256 == selector.run_seal_sha256
+                )
             )
             if selector is not None
             else ()
@@ -1267,7 +1320,11 @@ def assemble_state_laws_production_input_map(
     selected_paths = {
         *(item.artifact.selected_path for item in selected.values()),
         *(item.receipt.selected_path for item in selected.values()),
-        *(item.receipt.run_seal_path for item in selected.values()),
+        *(
+            seal_path
+            for item in selected.values()
+            for seal_path in item.receipt.run_seal_paths
+        ),
     }
     if selection_manifest is not None:
         selected_paths.add(selection_manifest.path)
@@ -1338,11 +1395,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--candidate-selection-manifest",
         help=(
-            "Optional local read-only JSON manifest pinned to schema "
-            f"{SELECTION_MANIFEST_SCHEMA_VERSION!r}; each listed jurisdiction "
+            "Optional local read-only JSON manifest pinned to selector schema v1 "
+            "or v2; each listed jurisdiction "
             "selects exactly one eligible pair by canonical artifact SHA-256 and "
-            "normalized receipt-file SHA-256. Unlisted jurisdictions retain the "
-            "fail-closed unique-candidate rule"
+            "normalized receipt-file SHA-256, with v2 also binding the run-seal "
+            "SHA-256. Unlisted jurisdictions retain the fail-closed "
+            "unique-candidate rule"
         ),
     )
     source_software_group = parser.add_mutually_exclusive_group()
