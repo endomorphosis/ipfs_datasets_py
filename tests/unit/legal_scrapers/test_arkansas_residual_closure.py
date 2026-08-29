@@ -171,6 +171,23 @@ CONTINUATION_IDENTITY_URL_SHA256 = (
 CONTINUATION_DECISION_SHA256 = (
     "ade2bcb9dfb9595c9471654857fb40d7d959a8b94f5f045fa4ae0be43e3217e5"
 )
+READINESS_EVIDENCE_ROOT = (
+    "/home/barberb/.ipfs_datasets/state_laws/"
+    "legal-corpora-reindex-20260829-ar-source-readiness-research-v1-6CmeUd"
+)
+READINESS_PROJECTION_SHA256 = (
+    "6b4bb50ee510e35b00f860c13a6074a29edec902ef7d1e6c9cbd0a26ae05c756"
+)
+READINESS_LEXIS_CONTAINER_BUNDLE_SHA256 = (
+    "e0c36ce9b9cd33a109a683340faefdf957c695f27ac97d39542b67c2c2604ba3"
+)
+READINESS_LEXIS_CONTAINER_BUNDLE_RECEIPT_SHA256 = (
+    "d307075788556a856c5263e805a82efee24580792dfbfa2fe560bf7ca6374f0c"
+)
+READINESS_ARKLEG_SEARCH_RECEIPT_SHA256 = (
+    "31602e094c6be0a96821106eec4c39d3973a4836fc2eb163aae5e6786e112e93"
+)
+READINESS_AG_INDEX_UPDATED_AT = "2026-08-29T00:31:21.527062309Z"
 
 
 def _canonical_residual_sha256(urls: list[str]) -> str:
@@ -661,6 +678,79 @@ def test_arkansas_executed_continuation_records_exact_receipts_and_blockers() ->
     assert "neither occurrence nor nonoccurrence is encoded" in normalized
     assert "zero fallback requests" in normalized
     assert "no full corpus run" in normalized
+
+
+def test_arkansas_source_readiness_research_is_exact_and_diagnostic_only() -> None:
+    report = _report_text()
+    table = _report_table(report)
+
+    expected = {
+        "readiness_status": "genuine_external_source_blockers",
+        "readiness_current_bundle_sealed": "false",
+        "readiness_authorizing_for_materialization": "false",
+        "readiness_publication_authorized": "false",
+        "readiness_evidence_root": READINESS_EVIDENCE_ROOT,
+        "readiness_parser_name": (
+            "ArkansasSourceReadinessResearchV1DiagnosticOnly"
+        ),
+        "readiness_parser_inputs": "61",
+        "readiness_direct_get_inputs": "56",
+        "readiness_direct_post_inputs": "5",
+        "readiness_unique_objects": "42",
+        "readiness_unique_urls": "57",
+        "readiness_total_bytes": "10573969",
+        "readiness_projection_sha256": READINESS_PROJECTION_SHA256,
+        "readiness_retained_replay_inputs": "61",
+        "readiness_retained_replay_network_requests": "0",
+        "readiness_arkleg_exact_phrase_queries": "12",
+        "readiness_arkleg_exact_phrase_rows": "31",
+        "readiness_crc_unique_attachment_urls": "75",
+        "readiness_ag_wp_search_requests": "26",
+        "readiness_ag_wp_media_matches": "0",
+        "readiness_ag_opinions_index_documents": "10627",
+        "readiness_ag_opinions_index_updated_at": (
+            READINESS_AG_INDEX_UPDATED_AT
+        ),
+        "readiness_ag_opinions_all_term_queries": "5",
+        "readiness_ag_opinions_all_term_matches": "0",
+        "readiness_lexis_exact_nodes_candeliver": "4",
+        "readiness_lexis_exact_body_inputs": "0",
+        "readiness_act926_certification_locator": "unidentified",
+        "readiness_act447_certification_locator": "unidentified",
+    }
+    for field, value in expected.items():
+        assert table[field] == value
+
+    assert int(table["readiness_direct_get_inputs"]) + int(
+        table["readiness_direct_post_inputs"]
+    ) == int(table["readiness_parser_inputs"])
+    assert table["readiness_parser_change"].startswith("none;")
+    assert table["readiness_unresolved_citations"] == (
+        "19-42-201, 23-4-909, 27-14-802, 27-14-803, 5-64-308"
+    )
+    assert table["readiness_full_state_live_to_retained_run"].startswith(
+        "not launched"
+    )
+
+    continuation = report.split(
+        "## Source-readiness continuation — 2026-08-29", 1
+    )[1]
+    normalized = " ".join(continuation.casefold().split())
+    assert READINESS_LEXIS_CONTAINER_BUNDLE_SHA256 in continuation
+    assert READINESS_LEXIS_CONTAINER_BUNDLE_RECEIPT_SHA256 in continuation
+    assert READINESS_ARKLEG_SEARCH_RECEIPT_SHA256 in continuation
+    assert "/r/tocprovider/6gf5kkk/cart/6gf5kkk" in continuation
+    assert 'createsub("cart")' in continuation
+    assert '"action":"add-document"' in continuation
+    assert "x-ln-currentrequestid" in normalized
+    assert "canselect" in normalized
+    assert "canopen" in normalized
+    assert "candeliver" in normalized
+    assert "human-verification boundary" in normalized
+    assert "no challenge body or error page was admitted" in normalized
+    assert "search bodies are diagnostic evidence" in normalized
+    assert "does not prove" in normalized
+    assert "no full arkansas corpus proof was launched" in normalized
 
 
 def test_arkansas_fail_closed_without_act283_proof_inputs(

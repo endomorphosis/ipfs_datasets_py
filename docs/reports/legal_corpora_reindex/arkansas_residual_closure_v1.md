@@ -456,3 +456,182 @@ nonoccurrence is encoded and no exact certification URL or body was located.
 The source-readiness gate therefore failed before the memory/coordination
 gate for a state-only live-to-retained corpus proof. No full corpus run, seal,
 assembler input-map write, Hub mutation, or remote publication was attempted.
+
+## Source-readiness continuation — 2026-08-29
+
+The five unresolved citation boundaries remain fail-closed. This continuation
+exhausted the currently enumerable official indexes, document stores, and
+alternate Lexis application routes without converting a search miss or an
+access challenge into a current-law decision. It retained every successful
+response used by this investigation in a separate diagnostic-only direct
+ledger and then replayed every exact request identity with zero network.
+
+| Field | Value |
+|---|---|
+| readiness_status | genuine_external_source_blockers |
+| readiness_current_bundle_sealed | false |
+| readiness_authorizing_for_materialization | false |
+| readiness_publication_authorized | false |
+| readiness_parser_change | none; no validated body or certification permitted a resolver change |
+| readiness_evidence_root | `/home/barberb/.ipfs_datasets/state_laws/legal-corpora-reindex-20260829-ar-source-readiness-research-v1-6CmeUd` |
+| readiness_parser_name | `ArkansasSourceReadinessResearchV1DiagnosticOnly` |
+| readiness_parser_inputs | 61 |
+| readiness_direct_get_inputs | 56 |
+| readiness_direct_post_inputs | 5 |
+| readiness_unique_objects | 42 |
+| readiness_unique_urls | 57 |
+| readiness_total_bytes | 10573969 |
+| readiness_projection_sha256 | 6b4bb50ee510e35b00f860c13a6074a29edec902ef7d1e6c9cbd0a26ae05c756 |
+| readiness_retained_replay_inputs | 61 |
+| readiness_retained_replay_network_requests | 0 |
+| readiness_arkleg_exact_phrase_queries | 12 |
+| readiness_arkleg_exact_phrase_rows | 31 |
+| readiness_crc_unique_attachment_urls | 75 |
+| readiness_ag_wp_search_requests | 26 |
+| readiness_ag_wp_media_matches | 0 |
+| readiness_ag_opinions_index_documents | 10627 |
+| readiness_ag_opinions_index_updated_at | 2026-08-29T00:31:21.527062309Z |
+| readiness_ag_opinions_all_term_queries | 5 |
+| readiness_ag_opinions_all_term_matches | 0 |
+| readiness_lexis_exact_nodes_candeliver | 4 |
+| readiness_lexis_exact_body_inputs | 0 |
+| readiness_act926_certification_locator | unidentified |
+| readiness_act447_certification_locator | unidentified |
+| readiness_unresolved_citations | 19-42-201, 23-4-909, 27-14-802, 27-14-803, 5-64-308 |
+| readiness_full_state_live_to_retained_run | not launched; source readiness gate still failed |
+
+The projection seal is
+`sha256(canonical_json([{url, content_sha256, parser_receipt_sha256,
+sanitized_request}, ...]))` in parser-input receipt-SHA order, using
+`ensure_ascii=False`, `separators=(",", ":")`, and `sort_keys=True`.
+The 56 GET and five POST identities are all direct. The five POST identities
+include exact JSON body digests and the digest of the public read-only search
+key; no credential value is retained. The root is deliberately not attached
+to the Arkansas statute parser or current-variant resolver. Its search bodies
+are diagnostic evidence, not proof of legal occurrence or nonoccurrence.
+
+### Exact Lexis delivery boundary
+
+The retained delegated TOC evidence is stronger than a bare URN mapping. The
+two exact response objects below bind all four residual nodes to `canselect`,
+`canopen`, and `candeliver` equal to `true`; `subscribed=true`,
+`canpurchase=false`, `purchaserequired=false`, zero-dollar subscription
+pricing, and `documentstatus=Available`:
+
+| Citation | Node | Entry sequence | Raw response SHA-256 |
+|---|---|---:|---|
+| 19-42-201 | AATAAEAADAACAAC | 27473 | 996e08c724817e555f9d3218b09bbaa0f945fdd95cbfaa18181f297e6a76e48b |
+| 19-42-201 | AATAAEAADAACAAD | 27474 | 996e08c724817e555f9d3218b09bbaa0f945fdd95cbfaa18181f297e6a76e48b |
+| 23-4-909 | AAXAABAAFAAJAAK | 32478 | 91866f9cd2f722396ae8b9e79408731dd5aace64d307a3850732e8f2303d53de |
+| 23-4-909 | AAXAABAAFAAJAAL | 32479 | 91866f9cd2f722396ae8b9e79408731dd5aace64d307a3850732e8f2303d53de |
+
+The exact versioned application inputs that define the alternative delivery
+path were retained and replayed:
+
+| Input | Body SHA-256 | Parser-input receipt SHA-256 |
+|---|---|---|
+| `https://advance.lexis.com/bundles/core-en-US?ver=11.2.0001.01167` | 51ad81089d9fb8797a57ed455af2a3f6fcdb9ce26e9f289e7665e9791b13ace9 | 304755daa57df54c9729d704122e7050a01878dc0826a8bcc01167ce823c57e4 |
+| `https://advance.lexis.com/bundles/container-default-usresearch-en-us?ver=11.2.0001.01167` | e0c36ce9b9cd33a109a683340faefdf957c695f27ac97d39542b67c2c2604ba3 | d307075788556a856c5263e805a82efee24580792dfbfa2fe560bf7ca6374f0c |
+| `https://advance.lexis.com/bundles/container-default-usresearch-en-us-lazy?ver=11.2.0001.01167` | e8317e6ecd0713507fcdec3dc83f4cb98c2c685c0f857b3089f1423a6e8017cd | 33d56c07a5b24a121f0f24cc257addd67d10f3807d7ee8195bcc20926e969c8d |
+
+Those bytes make the route deterministic. The provider model initializes at
+`/r` plus the retained `/tocprovider` base URL and has id `6gf5kkk`.
+`createsub("cart")` appends the provider id and `cart`; saving a model whose
+id is again `6gf5kkk` therefore PATCHes exactly:
+
+```text
+/r/tocprovider/6gf5kkk/cart/6gf5kkk
+```
+
+For one node the retained application payload shape is exactly
+`{"id":"6gf5kkk","props":{"action":"add-document","value":NODE_PATH,
+"items":[{"props":{"display":TITLE,"value":NODE_ID}}]}}`, with
+`patch=true` and `stateless=true`; the core bundle consequently supplies
+`X-LN-CurrentRequestId`. The same retained page binds the delivery toolbar to
+`/delivery`, provider `6gt59fk` to `delivery_createjob`, public TOC links to
+`/documentpage`, and delivery content to `/r/delivery/content/...`.
+
+Fresh direct document-page navigation, a fresh official Arkleg-to-Lexis
+entry, and the exact cart subroute were each exercised only in bounded browser
+contexts. The first reached Lexis Human Verification/sign-in, the second was
+denied at the delegated entry, and the cart call without a valid live model
+context returned the generic container error. Thus the remaining Lexis block
+is a live session/human-verification boundary, not an unknown content-item,
+incorrect route, subscription/purchase denial, or parser ambiguity. No
+challenge body or error page was admitted as statute text, and all four exact
+body inputs remain absent.
+
+### Act 926 official filing search
+
+The current official legislature and procurement inputs are pinned below:
+
+| Input | Body SHA-256 | Parser-input receipt SHA-256 | Retained result |
+|---|---|---|---|
+| Arkleg Search contract | bcf72c798505d420a0a355dfcfa7dafab47de73cda8ce94298c9b67279cafae4 | 31602e094c6be0a96821106eec4c39d3973a4836fc2eb163aae5e6786e112e93 | deterministic `GET /Search/AllDocuments` form |
+| exact `27-14-906` search | 0fe2a1a2f6b177a8d138a5e41142c9bad59cb7acabfc2439658f5e0aabd2e246 | 94ed1f637b9691d746a93e1a10430a5a833538f4c0543ca5437f5d237232cae9 | 20 rows |
+| CRC Documents & Reports | dc544ba9e05f684ec81c5510f9e0cb1d3ef8f3b118ffbe51999dec1022937a75 | b30fc65083187816d15120dad11de5e2a4e62a4058828ded1f61933da6d126ae | no 95th General Assembly documents |
+| CRC Past Meetings | 9960f0c23c55cab3f736794950e274e3fecab5783c98716ebcb35bf4cba04aaf | d0f99ed23746dd42f9fa7555cf6162cbfc1b78fef2db2dcf89eee1f991afd005 | 75 unique code-630 attachment URLs, December 2018 through April 9, 2026 |
+| ARBuy bid detail | 12c879e93632a5b8a83a0d191f5a59ee0093422051fbd31b6d73d131bb774470 | 5862e6c8fb916dd46426839744787dcda3938e60f3a15d8139b69a0d3933cbe2 | original seven solicitation attachments; no intent-to-award banner |
+| ARBuy live summary | 13d0658502a3146430db6670e85caf488b03facd137dc1959dd1aa10ffdd3987 | 56861d2766c776b1a94637baef09982f375986be57deb49be0ba698cb386c792 | `2BA - Bid Approved (Ready for Vendor Awarding)` |
+
+Of the 20 exact `27-14-906` rows, the only post-Act-926 meeting attachment is
+the June 15, 2026 DFA odometer-disclosure/Act-926 rule packet already evaluated
+as rulemaking evidence. The other current rows are the act, bill, amendment,
+and journals. Exact searches for `certification of implementation`, `Office
+of Motor Vehicle shall certify`, `electronic lien system`, `electronic
+titling system`, and `S000000464` returned zero rows. The CRC past-meetings
+index contains no filename matching Act 926, section 27-14-906,
+implementation, or certification. Those current official sources still do
+not identify the written Office of Motor Vehicle certification or a filed
+copy. Procurement status is not a substitute for that filing.
+
+### Act 447 official certification search
+
+The exact Arkleg `5-64-308` response has body SHA-256
+`99703385e265d63bb5ada3b20f8fd71a141276de02e17bbf9f6186670a5127e6`
+and parser-input receipt
+`243616f5a13934496b0c5a0c6cf9a7f37f2d90aa83942cffd184f8582b4787e6`.
+Its seven rows are Act 447, SB174, CRC Exhibit E1, Act 1331, SB1171 and its
+amendment, and the 2013 Senate Journal. Exact `electronic prescribing` has
+three older study/bill/fiscal-impact rows. Exact `mandatory electronic
+prescribing`, `certification by the Attorney General`, and `Act 447` have no
+row that is the certification.
+
+The current AG site was searched through two independently retained official
+paths. First, 13 terms were submitted to both the WordPress global content and
+media endpoints (26 exact GET identities). Every media search returned zero.
+The few global matches were unrelated pages, templates, health-care releases,
+or the generic health-insurance page; `5-64-308`, `electronic prescribing`,
+`mandatory electronic`, `e-prescribing`, `EPCS`, and `Act 447 of 2019` each
+returned zero.
+
+Second, the official AG opinions page's complete delegation chain was
+retained: official wrapper body
+`c982a625b5df4638c3c6bf5e3e15f1f5fbceecc8d76465989067cd5e7c516211`,
+delegated app body
+`4ee3c107527b091b1bf3eed877c433fe14d5b3d23bee2dd0f84073add5ce1641`,
+and delegated application bundle
+`8b70dbc1a45d2eb21a2bf17e6dec32de635ffe4dd06c03e38e6c3385da93d4a7`.
+The bundle binds the public read-only `opinions` index. Its metadata receipt
+`f7d47b537b84be2403295e18b506ae5aacff3707467bf0d7c55057b67eae7ee8`
+and stats receipt
+`93d8ea074450b250e491c63ce813533a2bab47c0420a7cb3351330702f505987`
+bind 10,627 documents and the update time in the table above. All-term,
+full-text searches limited to 2019 and later for the complete statutory
+federal-requirement phrase, `Act 447 electronic prescribing`, `mandatory
+electronic prescribing`, `electronic prescribing controlled substances`, and
+`5-64-308` each returned zero.
+
+The sitemap index was also retained under receipt
+`6246e70187d78613c9c24c9444a8332995a8f6c2cc8154dbe233071a5a490821`.
+It binds the page sitemap at `2026-08-24T18:48:05+00:00` and the 479-entry
+news-release sitemap at `2026-08-27T16:47:09+00:00`; neither supplies the
+certification. This closes the bounded current-site search surface, but it
+does not prove that a non-opinion Attorney General letter never existed or
+that the statutory contingency did not occur. `5-64-308` therefore remains
+unresolved.
+
+No full Arkansas corpus proof was launched. A later retry is justified only
+by a changed Lexis access context, a newly indexed/filed Act 926 certification,
+or a source-proved Act 447 Attorney General certification. Repeating the same
+negative searches cannot make the five unresolved rows assembler-eligible.
