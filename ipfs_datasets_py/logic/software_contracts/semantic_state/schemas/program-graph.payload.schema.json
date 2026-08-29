@@ -1,0 +1,584 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/program-graph.payload.schema.json",
+  "title": "Static program-graph contracts v1",
+  "description": "Closed, fail-closed JSON Schema for datasets-owned static program-graph records. Physical IPLD blocks remain acyclic while logical cycles are represented by immutable node/edge records. Unknown dynamic behavior stays explicit on a frontier. Unchanged subroots are retained by CID. Canonical bytes and CIDv1 come from software_contracts.content over ir_core collection-canonical DAG-JSON. Unknown fields, unsupported schema versions, ANN/HNSW kinds, floats, and nonfinite numbers are rejected.",
+  "oneOf": [
+    { "$ref": "#/$defs/programGraphNode" },
+    { "$ref": "#/$defs/programGraphEdge" },
+    { "$ref": "#/$defs/callsiteRecord" },
+    { "$ref": "#/$defs/functionSymbolRecord" },
+    { "$ref": "#/$defs/contractStateRecord" },
+    { "$ref": "#/$defs/proofObligationGraph" },
+    { "$ref": "#/$defs/staticSuccessorSet" },
+    { "$ref": "#/$defs/dynamicFrontierRecord" },
+    { "$ref": "#/$defs/programGraphIndexManifest" },
+    { "$ref": "#/$defs/programGraphSnapshot" },
+    { "$ref": "#/$defs/programGraphDelta" }
+  ],
+  "$defs": {
+    "cid": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128,
+      "pattern": "^b[a-z2-7]+$"
+    },
+    "cidOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/cid" }]
+    },
+    "nfcString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "nfcStringOrEmpty": {
+      "type": "string",
+      "maxLength": 16384
+    },
+    "nonnegInt": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "cidArraySet": {
+      "type": "array",
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/cid" }
+    },
+    "nfcStringSet": {
+      "type": "array",
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nfcString" }
+    },
+    "nfcStringOrdered": {
+      "type": "array",
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nfcString" }
+    },
+    "strictDagJson": {
+      "description": "Strict DAG-JSON value: null, bool, safe int, string, array, or string-keyed object. Floats and host types are rejected by the Python decoder.",
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        { "type": "string", "maxLength": 16384 },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/strictDagJson" }
+        },
+        {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/strictDagJson" }
+        }
+      ]
+    },
+    "strictObject": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/strictDagJson" }
+    },
+    "programLanguage": {
+      "type": "string",
+      "enum": ["python"]
+    },
+    "programGraphKind": {
+      "type": "string",
+      "enum": ["static_logical"]
+    },
+    "programGraphNodeKind": {
+      "type": "string",
+      "enum": [
+        "module",
+        "package",
+        "source",
+        "ast",
+        "symbol",
+        "function",
+        "class",
+        "callsite",
+        "import_binding",
+        "cfg_block",
+        "data_flow",
+        "exception_handler",
+        "type_binding",
+        "effect",
+        "contract_state",
+        "test",
+        "fixture",
+        "proof_obligation",
+        "unresolved_dynamic"
+      ]
+    },
+    "programGraphEdgeKind": {
+      "type": "string",
+      "enum": [
+        "contains",
+        "declares",
+        "imports",
+        "cyclic_import",
+        "calls",
+        "mutual_recursion",
+        "cfg_next",
+        "cfg_branch",
+        "data_flow",
+        "exception_edge",
+        "type_of",
+        "effect_of",
+        "binds_contract",
+        "tested_by",
+        "proved_by",
+        "successor",
+        "unresolved_dynamic",
+        "inherits",
+        "implements",
+        "reads_state",
+        "writes_state",
+        "raises",
+        "catches",
+        "uses_fixture"
+      ]
+    },
+    "resolutionStatus": {
+      "type": "string",
+      "enum": ["definite", "finite_may", "unresolved", "unavailable"]
+    },
+    "contractKind": {
+      "type": "string",
+      "enum": [
+        "precondition",
+        "postcondition",
+        "invariant",
+        "frame",
+        "exceptional"
+      ]
+    },
+    "contractDischargeStatus": {
+      "type": "string",
+      "enum": ["unknown", "assumed", "discharged", "violated", "unavailable"]
+    },
+    "programGraphIndexKind": {
+      "type": "string",
+      "enum": ["adjacency", "successor", "frontier", "structural"]
+    },
+    "dynamicFrontierReason": {
+      "type": "string",
+      "enum": [
+        "reflection",
+        "dynamic_dispatch",
+        "eval",
+        "exec",
+        "plugin",
+        "native_call",
+        "import_hook",
+        "unknown_callee",
+        "solver_unknown",
+        "incomplete_analysis"
+      ]
+    },
+    "programGraphNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "node_kind",
+        "language",
+        "logical_name",
+        "source_cid",
+        "declaration_cid",
+        "environment_binding_cid",
+        "subject_cid",
+        "record_cid",
+        "unavailable_dimensions",
+        "metadata",
+        "program_graph_node_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.program-graph-node@1"
+        },
+        "node_kind": { "$ref": "#/$defs/programGraphNodeKind" },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "logical_name": { "$ref": "#/$defs/nfcString" },
+        "source_cid": { "$ref": "#/$defs/cid" },
+        "declaration_cid": { "$ref": "#/$defs/cidOrNull" },
+        "environment_binding_cid": { "$ref": "#/$defs/cidOrNull" },
+        "subject_cid": { "$ref": "#/$defs/cidOrNull" },
+        "record_cid": { "$ref": "#/$defs/cidOrNull" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "program_graph_node_cid": { "$ref": "#/$defs/cid" }
+      },
+      "not": {
+        "anyOf": [
+          { "required": ["embedding"] },
+          { "required": ["hnsw"] },
+          { "required": ["knn"] },
+          { "required": ["score"] },
+          { "required": ["similarity"] },
+          { "required": ["vector"] },
+          { "required": ["wall_clock"] }
+        ]
+      }
+    },
+    "programGraphEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "edge_kind",
+        "source_node_cid",
+        "target_node_cid",
+        "language",
+        "environment_binding_cid",
+        "resolution_status",
+        "logical_cycle",
+        "unavailable_dimensions",
+        "metadata",
+        "program_graph_edge_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.program-graph-edge@1"
+        },
+        "edge_kind": { "$ref": "#/$defs/programGraphEdgeKind" },
+        "source_node_cid": { "$ref": "#/$defs/cid" },
+        "target_node_cid": { "$ref": "#/$defs/cid" },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "environment_binding_cid": { "$ref": "#/$defs/cidOrNull" },
+        "resolution_status": { "$ref": "#/$defs/resolutionStatus" },
+        "logical_cycle": { "type": "boolean" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "program_graph_edge_cid": { "$ref": "#/$defs/cid" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "edge_kind": { "enum": ["cyclic_import", "mutual_recursion"] }
+            },
+            "required": ["edge_kind"]
+          },
+          "then": {
+            "properties": { "logical_cycle": { "const": true } }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "edge_kind": { "const": "unresolved_dynamic" }
+            },
+            "required": ["edge_kind"]
+          },
+          "then": {
+            "not": {
+              "properties": { "resolution_status": { "const": "definite" } }
+            }
+          }
+        }
+      ]
+    },
+    "callsiteRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "caller_logical_name",
+        "callee_logical_name",
+        "source_cid",
+        "ordinal",
+        "resolution_status",
+        "callee_declaration_cid",
+        "unavailable_dimensions",
+        "callsite_record_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.callsite-record@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "caller_logical_name": { "$ref": "#/$defs/nfcString" },
+        "callee_logical_name": { "$ref": "#/$defs/nfcString" },
+        "source_cid": { "$ref": "#/$defs/cid" },
+        "ordinal": { "$ref": "#/$defs/nonnegInt" },
+        "resolution_status": { "$ref": "#/$defs/resolutionStatus" },
+        "callee_declaration_cid": { "$ref": "#/$defs/cidOrNull" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "callsite_record_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "functionSymbolRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "logical_name",
+        "source_cid",
+        "declaration_cid",
+        "parameter_names",
+        "return_annotation",
+        "unavailable_dimensions",
+        "function_symbol_record_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.function-symbol-record@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "logical_name": { "$ref": "#/$defs/nfcString" },
+        "source_cid": { "$ref": "#/$defs/cid" },
+        "declaration_cid": { "$ref": "#/$defs/cid" },
+        "parameter_names": { "$ref": "#/$defs/nfcStringOrdered" },
+        "return_annotation": { "$ref": "#/$defs/nfcStringOrEmpty" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "function_symbol_record_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "contractStateRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "subject_logical_name",
+        "contract_kind",
+        "specification_cid",
+        "discharge_status",
+        "unavailable_dimensions",
+        "contract_state_record_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.contract-state-record@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "subject_logical_name": { "$ref": "#/$defs/nfcString" },
+        "contract_kind": { "$ref": "#/$defs/contractKind" },
+        "specification_cid": { "$ref": "#/$defs/cid" },
+        "discharge_status": { "$ref": "#/$defs/contractDischargeStatus" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "contract_state_record_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "proofObligationGraph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "root_obligation_cid",
+        "obligation_node_cids",
+        "obligation_edge_cids",
+        "environment_binding_cid",
+        "unavailable_dimensions",
+        "proof_obligation_graph_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.program-graph-proof-obligation-graph@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "root_obligation_cid": { "$ref": "#/$defs/cid" },
+        "obligation_node_cids": { "$ref": "#/$defs/cidArraySet" },
+        "obligation_edge_cids": { "$ref": "#/$defs/cidArraySet" },
+        "environment_binding_cid": { "$ref": "#/$defs/cidOrNull" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "proof_obligation_graph_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "staticSuccessorSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "subject_node_cid",
+        "successor_node_cids",
+        "successor_edge_cids",
+        "complete",
+        "unavailable_dimensions",
+        "static_successor_set_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.static-successor-set@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "subject_node_cid": { "$ref": "#/$defs/cid" },
+        "successor_node_cids": { "$ref": "#/$defs/cidArraySet" },
+        "successor_edge_cids": { "$ref": "#/$defs/cidArraySet" },
+        "complete": { "type": "boolean" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "static_successor_set_cid": { "$ref": "#/$defs/cid" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "complete": { "const": false } },
+            "required": ["complete"]
+          },
+          "then": {
+            "properties": {
+              "unavailable_dimensions": { "minItems": 1 }
+            }
+          }
+        }
+      ]
+    },
+    "dynamicFrontierRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "unresolved_node_cids",
+        "unresolved_edge_cids",
+        "reasons",
+        "unavailable_dimensions",
+        "dynamic_frontier_record_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.dynamic-frontier-record@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "unresolved_node_cids": { "$ref": "#/$defs/cidArraySet" },
+        "unresolved_edge_cids": { "$ref": "#/$defs/cidArraySet" },
+        "reasons": {
+          "type": "array",
+          "maxItems": 100000,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/dynamicFrontierReason" }
+        },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "dynamic_frontier_record_cid": { "$ref": "#/$defs/cid" }
+      },
+      "anyOf": [
+        { "properties": { "unresolved_node_cids": { "minItems": 1 } } },
+        { "properties": { "unresolved_edge_cids": { "minItems": 1 } } },
+        { "properties": { "unavailable_dimensions": { "minItems": 1 } } }
+      ]
+    },
+    "programGraphIndexManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "snapshot_cid",
+        "index_kind",
+        "schema_ids",
+        "rebuildable",
+        "authoritative",
+        "projection_cid",
+        "program_graph_index_manifest_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.program-graph-index-manifest@1"
+        },
+        "snapshot_cid": { "$ref": "#/$defs/cid" },
+        "index_kind": { "$ref": "#/$defs/programGraphIndexKind" },
+        "schema_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100000,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "rebuildable": { "const": true },
+        "authoritative": { "type": "boolean" },
+        "projection_cid": { "$ref": "#/$defs/cidOrNull" },
+        "program_graph_index_manifest_cid": { "$ref": "#/$defs/cid" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "not": { "properties": { "projection_cid": { "type": "null" } } },
+            "required": ["projection_cid"]
+          },
+          "then": {
+            "properties": { "authoritative": { "const": false } }
+          }
+        }
+      ]
+    },
+    "programGraphSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "language",
+        "graph_kind",
+        "canonical_program_graph_cid",
+        "node_cids",
+        "edge_cids",
+        "environment_binding_set_cid",
+        "sealed_binding_cid",
+        "callsite_cids",
+        "function_symbol_cids",
+        "contract_state_cids",
+        "proof_obligation_graph_cids",
+        "successor_set_cids",
+        "frontier_cids",
+        "retained_subroot_cids",
+        "unavailable_dimensions",
+        "program_graph_snapshot_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.program-graph-snapshot@1"
+        },
+        "language": { "$ref": "#/$defs/programLanguage" },
+        "graph_kind": { "$ref": "#/$defs/programGraphKind" },
+        "canonical_program_graph_cid": { "$ref": "#/$defs/cid" },
+        "node_cids": { "$ref": "#/$defs/cidArraySet" },
+        "edge_cids": { "$ref": "#/$defs/cidArraySet" },
+        "environment_binding_set_cid": { "$ref": "#/$defs/cid" },
+        "sealed_binding_cid": { "$ref": "#/$defs/cid" },
+        "callsite_cids": { "$ref": "#/$defs/cidArraySet" },
+        "function_symbol_cids": { "$ref": "#/$defs/cidArraySet" },
+        "contract_state_cids": { "$ref": "#/$defs/cidArraySet" },
+        "proof_obligation_graph_cids": { "$ref": "#/$defs/cidArraySet" },
+        "successor_set_cids": { "$ref": "#/$defs/cidArraySet" },
+        "frontier_cids": { "$ref": "#/$defs/cidArraySet" },
+        "retained_subroot_cids": { "$ref": "#/$defs/cidArraySet" },
+        "unavailable_dimensions": { "$ref": "#/$defs/nfcStringSet" },
+        "program_graph_snapshot_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "programGraphDelta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "previous_snapshot_cid",
+        "added_node_cids",
+        "removed_node_cids",
+        "added_edge_cids",
+        "removed_edge_cids",
+        "retained_subroot_cids",
+        "program_graph_delta_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.program-graph-delta@1"
+        },
+        "previous_snapshot_cid": { "$ref": "#/$defs/cid" },
+        "added_node_cids": { "$ref": "#/$defs/cidArraySet" },
+        "removed_node_cids": { "$ref": "#/$defs/cidArraySet" },
+        "added_edge_cids": { "$ref": "#/$defs/cidArraySet" },
+        "removed_edge_cids": { "$ref": "#/$defs/cidArraySet" },
+        "retained_subroot_cids": { "$ref": "#/$defs/cidArraySet" },
+        "program_graph_delta_cid": { "$ref": "#/$defs/cid" }
+      }
+    }
+  }
+}
