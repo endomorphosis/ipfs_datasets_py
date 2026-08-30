@@ -1,0 +1,74 @@
+{
+  "authority": {
+    "canonical_semantic_identity": "ipfs_datasets_py",
+    "exact_bytes_cid_storage": "ipfs_kit_py",
+    "operational_admission": "ipfs_accelerate_py"
+  },
+  "board_namespace": "agent-supervisor-direct-objective-and-event-driven-planning-v1",
+  "candidate_status": "implemented",
+  "changed_paths": [
+    "ipfs_datasets_py/proof_context/context_pack.py",
+    "tests/doep/test_doep_060_define_supervisorcontextpack_contract.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-060.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-060.json"
+  ],
+  "completion_authoritative": false,
+  "expected_outputs": [
+    "ipfs_datasets_py/proof_context/context_pack.py",
+    "tests/doep/test_doep_060_define_supervisorcontextpack_contract.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-060.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-060.json"
+  ],
+  "goal_id": "DOEP-G070.S1",
+  "no_competing_subsystem_created": true,
+  "outputs_present": {
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-060.json": true,
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-060.json": true,
+    "ipfs_datasets_py/proof_context/context_pack.py": true,
+    "tests/doep/test_doep_060_define_supervisorcontextpack_contract.py": true
+  },
+  "parent_goal_id": "DOEP-G070",
+  "path_digests": {
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-060.json": "sha256:cdbad650fba1da15acd89621bf9b50f6751832a2ff48980b5b6a3aa1da738163",
+    "ipfs_datasets_py/proof_context/context_pack.py": "sha256:bc9c044f8cdea25d1ffe71769aaa9a10243bc7acd87a89cf9e796e8c290472e5",
+    "tests/doep/test_doep_060_define_supervisorcontextpack_contract.py": "sha256:51f5ddda10a78b26343906b3d249638ea28f64a598f359593a0c8e8c54d33947"
+  },
+  "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
+  "plan_epoch": 1,
+  "plan_revision": "DOEP-PLAN-V5",
+  "required_evidence": {
+    "changed_path_digest": "sha256:374c9a509c6fe16e526f8c1ebb9eb4bc2a21a817aeec36dcf71b24b58954da32",
+    "limitations": [
+      "Candidate contract receipt only; independent fenced supervisor admission is required.",
+      "The view carries semantic references only: Kit owns durable bytes and Accelerate owns operational admission.",
+      "Worker or model assertion alone is insufficient for task completion."
+    ],
+    "receipt_cid": {"reason": "ipfs CLI absent from sealed validation PATH; SHA-256 is not substituted for a CID.", "status": "unavailable"},
+    "source_commit_tree_gitlinks": {
+      "ipfs_accelerate_py": {"commit": "87715e9295626e7918f7fc8a7b1a1531ab04208f", "tree": "1c9a399cc7a599d5904e5be2ae58c6be3650cff7"},
+      "ipfs_datasets_py": {"commit": "3668b8857a9aa7b1a3c847be12725b5cd057d2e7", "tree": "456e09b51d6a07a3a5873436df24054768195320"},
+      "ipfs_kit_py": {"commit": "b6c65ba732733d7e33852713ba18aa3b12235668", "tree": "14da7d92e130b7ba3523d0d6741a3ef7ef1e1bc2"},
+      "lift_coding": {"commit": "bb8869ed72eb7002434345d9969efee729c4f7f6", "tree": "99e85bfe584b7688ffbeff86da1e612dd6893a42"}
+    },
+    "test_proof_results": {
+      "proof_reason": "Contract-definition task; fail-closed semantic validation is exercised by pytest; no formal prover selected.",
+      "proof_selection": "verified_empty",
+      "validation_command": ["python3", "-m", "pytest", "tests/doep/test_doep_060_define_supervisorcontextpack_contract.py", "-q"]
+    },
+    "verifier_admission": "pending_independent_fenced_supervisor"
+  },
+  "root_goal_id": "DOEP-G000",
+  "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-receipt@1",
+  "supervisor_acceptance": {"completion_authoritative": false, "state": "pending_independent_fenced_supervisor"},
+  "task_cid": "sha256:78152e7bcbcc6d26f39cb9774b073d418c96d12fc6f66fbd11b0c25d99150c80",
+  "task_id": "DOEP-060",
+  "title": "Define SupervisorContextPack contract",
+  "validation": {"commands": [{"argv": ["python3", "-m", "pytest", "tests/doep/test_doep_060_define_supervisorcontextpack_contract.py", "-q"], "cwd": "external/ipfs_datasets", "status": "candidate_local"}]},
+  "worker_completion_insufficient": true,
+  "write_scope": [
+    "ipfs_datasets_py/proof_context/context_pack.py",
+    "tests/doep/test_doep_060_define_supervisorcontextpack_contract.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-060.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-060.json"
+  ]
+}

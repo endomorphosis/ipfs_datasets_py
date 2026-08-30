@@ -8,6 +8,7 @@ new analyzer or capsule compiler. Accelerator may only delegate.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
 from ipfs_datasets_py.logic.software_contracts.content import cid_for_obj
@@ -52,6 +53,40 @@ from ipfs_datasets_py.proof_context.contracts import (
 AUTHORITY = "ipfs_datasets_py.proof_context.context_pack"
 INTERFACE = "DatasetsContextPackAuthority@0.1"
 GENERATOR_ID = "datasets_v01_context_pack"
+
+# DOEP-060 is deliberately a view over the existing datasets ContextPack, not
+# another ContextPack implementation.  Datasets defines semantic identity;
+# Kit stores durable bytes and CIDs; Accelerate decides whether execution is
+# admitted.  A supervisor-facing caller can therefore carry this record
+# without receiving either storage or execution authority.
+SUPERVISOR_CONTEXT_PACK_SCHEMA = (
+    "ipfs_datasets_py/proof-context/supervisor-context-pack@1"
+)
+SUPERVISOR_CONTEXT_PACK_SCHEMA_VERSION = "supervisor-context-pack/v1"
+SUPERVISOR_CONTEXT_PACK_OWNERSHIP = MappingProxyType(
+    {
+        "canonical_semantic_identity": "ipfs_datasets_py",
+        "exact_bytes_cid_storage": "ipfs_kit_py",
+        "operational_admission": "ipfs_accelerate_py",
+    }
+)
+SUPERVISOR_CONTEXT_PACK_FORBIDDEN_FIELDS = frozenset(
+    {
+        "authorization",
+        "authorization_decision",
+        "completion_authoritative",
+        "duckdb",
+        "ducklake",
+        "execution_admission",
+        "lease_id",
+        "policy",
+        "policy_id",
+        "policy_revision",
+        "receipt_bytes",
+        "storage_bytes",
+        "terminal_status",
+    }
+)
 
 
 class ContextPackConstructionError(RuntimeError):
@@ -156,6 +191,121 @@ class ContextPackRecord:
             "required_source_cids": dict(self.required_source_cids),
             "producer": self.producer,
         }
+
+
+@dataclass(frozen=True)
+class SupervisorContextPack:
+    """Immutable supervisor view of one datasets-owned semantic ContextPack.
+
+    This contract carries only semantic references and sufficiency state.  It
+    neither stores ContextPack bytes nor admits execution or task completion.
+    ``pack_cid`` is the CID minted by :func:`build_context_pack`, so this view
+    intentionally introduces no second semantic identity.
+    """
+
+    pack_cid: str
+    repository_state_cid: str
+    task_id: str
+    scanned_tree_oid: str
+    required_source_cids: Mapping[str, str]
+    capsule_cids: tuple[str, ...]
+    sufficiency_state: str
+    expansion_required: bool
+    producer: str = AUTHORITY
+    schema: str = SUPERVISOR_CONTEXT_PACK_SCHEMA
+    schema_version: str = SUPERVISOR_CONTEXT_PACK_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        required_keys = {"target_source", "surrounding_source", "test_source"}
+        if self.schema != SUPERVISOR_CONTEXT_PACK_SCHEMA:
+            raise ContextPackConstructionError("unsupported SupervisorContextPack schema")
+        if self.schema_version != SUPERVISOR_CONTEXT_PACK_SCHEMA_VERSION:
+            raise ContextPackConstructionError("unsupported SupervisorContextPack schema version")
+        for name in ("pack_cid", "repository_state_cid", "task_id", "scanned_tree_oid"):
+            value = getattr(self, name)
+            if not isinstance(value, str) or not value.strip():
+                raise ContextPackConstructionError(
+                    f"SupervisorContextPack.{name} must be a non-empty string"
+                )
+        if not isinstance(self.expansion_required, bool):
+            raise ContextPackConstructionError(
+                "SupervisorContextPack.expansion_required must be a bool"
+            )
+        sources = dict(self.required_source_cids)
+        if set(sources) != required_keys or any(
+            not isinstance(cid, str) or not cid.strip() for cid in sources.values()
+        ):
+            raise ContextPackConstructionError(
+                "SupervisorContextPack must retain the exact required source CIDs"
+            )
+        if any(not isinstance(cid, str) or not cid.strip() for cid in self.capsule_cids):
+            raise ContextPackConstructionError(
+                "SupervisorContextPack capsule CIDs must be non-empty strings"
+            )
+        object.__setattr__(self, "required_source_cids", MappingProxyType(sources))
+        object.__setattr__(self, "capsule_cids", tuple(self.capsule_cids))
+
+    @property
+    def semantic_pack_cid(self) -> str:
+        """Explicit alias showing that the CID remains datasets semantic identity."""
+        return self.pack_cid
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return the closed wire view; authority-bearing fields are absent."""
+        return {
+            "capsule_cids": list(self.capsule_cids),
+            "expansion_required": self.expansion_required,
+            "pack_cid": self.pack_cid,
+            "producer": self.producer,
+            "repository_state_cid": self.repository_state_cid,
+            "required_source_cids": dict(self.required_source_cids),
+            "scanned_tree_oid": self.scanned_tree_oid,
+            "schema": self.schema,
+            "schema_version": self.schema_version,
+            "sufficiency_state": self.sufficiency_state,
+            "task_id": self.task_id,
+        }
+
+    @classmethod
+    def from_context_pack(
+        cls,
+        record: ContextPackRecord,
+        *,
+        task_id: str,
+        scanned_tree_oid: str,
+    ) -> "SupervisorContextPack":
+        """Bind a supervisor task to an already-built canonical pack."""
+        if not isinstance(record, ContextPackRecord):
+            raise ContextPackConstructionError(
+                "SupervisorContextPack requires a datasets ContextPackRecord"
+            )
+        return cls(
+            pack_cid=record.pack_cid,
+            repository_state_cid=record.repository_state_cid,
+            task_id=task_id,
+            scanned_tree_oid=scanned_tree_oid,
+            required_source_cids=record.required_source_cids,
+            capsule_cids=record.capsule_cids,
+            sufficiency_state=record.sufficiency_state,
+            expansion_required=record.expansion_required,
+        )
+
+
+def build_supervisor_context_pack(
+    **kwargs: Any,
+) -> SupervisorContextPack:
+    """Build the canonical pack and expose its narrow supervisor contract.
+
+    All construction and fail-closed freshness checks remain in
+    :func:`build_context_pack`; this adapter has no independent analyzer,
+    canonicalizer, storage path, or execution-admission behaviour.
+    """
+    record = build_context_pack(**kwargs)
+    return SupervisorContextPack.from_context_pack(
+        record,
+        task_id=kwargs["task_id"],
+        scanned_tree_oid=kwargs["scanned_tree_oid"],
+    )
 
 
 def build_context_pack(
