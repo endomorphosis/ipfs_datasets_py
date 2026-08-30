@@ -154,7 +154,7 @@ baseline = { state = "declared-output-absent" }
 target = "tests/doep/test_doep_021_add_deterministic_normalization.py"
 validation-command-sha256 = "bb2aa757bbb9c0bb0c7468ad07c486ff4b2db2d538d310202d68c193c3a4546e"
 requirements = ["pytest>=9.0.3,<10.0.0"]
-task = { board-namespace = "agent-supervisor-direct-objective-and-event-driven-planning-v1", canonical-task-cid = "sha256:662c80c6ba48b9d5ed0d1cde3dc91c3228d46572e16a748ea61c757f86e4d183", declared-output = "external/ipfs_datasets/tests/doep/test_doep_021_add_deterministic_normalization.py" }
+task = { board-namespace = "agent-supervisor-direct-objective-and-event-driven-planning-v1", canonical-task-cid = "sha256:0dd33307ac04ab0cdfc11dd1f4bb63ed27ebba551460fc96637d63f377390be8", declared-output = "external/ipfs_datasets/tests/doep/test_doep_021_add_deterministic_normalization.py" }
 baseline = { state = "declared-output-absent" }
 
 [[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
@@ -196,7 +196,7 @@ baseline = { state = "declared-output-absent" }
 target = "tests/doep/test_doep_052_add_plandelta_contract.py"
 validation-command-sha256 = "d2deea014b27d807db31353d1a3cadb62888e66330aa940eb999b0acefa49965"
 requirements = ["pytest>=9.0.3,<10.0.0"]
-task = { board-namespace = "agent-supervisor-direct-objective-and-event-driven-planning-v1", canonical-task-cid = "sha256:119be098f6b9c4f97abbad664dc9403d71a1760acc7bf2cdbe06df61dac2f7d9", declared-output = "external/ipfs_datasets/tests/doep/test_doep_052_add_plandelta_contract.py" }
+task = { board-namespace = "agent-supervisor-direct-objective-and-event-driven-planning-v1", canonical-task-cid = "sha256:fd428d1e139d06f72f1ef954625c94475f1d50bfcd9b5f14e8a6343fc7787cb4", declared-output = "external/ipfs_datasets/tests/doep/test_doep_052_add_plandelta_contract.py" }
 baseline = { state = "declared-output-absent" }
 
 [[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
@@ -224,7 +224,7 @@ baseline = { state = "declared-output-absent" }
 target = "tests/doep/test_doep_080_add_assume_guarantee_planning_contracts.py"
 validation-command-sha256 = "043044baab5e3720305b115b771f26e070cc1d2b689a988979ce404e2680531f"
 requirements = ["pytest>=9.0.3,<10.0.0"]
-task = { board-namespace = "agent-supervisor-direct-objective-and-event-driven-planning-v1", canonical-task-cid = "sha256:8ec65227a213501167139586c15d69741544d12005232ed352afc7fdfe6cf43a", declared-output = "external/ipfs_datasets/tests/doep/test_doep_080_add_assume_guarantee_planning_contracts.py" }
+task = { board-namespace = "agent-supervisor-direct-objective-and-event-driven-planning-v1", canonical-task-cid = "sha256:da5400dc14c0a2bd420037b32e362ed3cf322b1d4883891fa27275563968b2ae", declared-output = "external/ipfs_datasets/tests/doep/test_doep_080_add_assume_guarantee_planning_contracts.py" }
 baseline = { state = "declared-output-absent" }
 
 [[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
@@ -252,14 +252,14 @@ baseline = { state = "declared-output-absent" }
 target = "tests/doep/test_doep_090_define_supervisorpatchplan.py"
 validation-command-sha256 = "9ed7423448f6fd1367c25deb789b347cfb1514c0245e7e7f5f55c7fbdded1724"
 requirements = ["pytest>=9.0.3,<10.0.0"]
-task = { board-namespace = "agent-supervisor-direct-objective-and-event-driven-planning-v1", canonical-task-cid = "sha256:fff3436b6ca46df7ec80aa075f1f9a191ffd6072dc87de543cf9afc8eafe2da1", declared-output = "external/ipfs_datasets/tests/doep/test_doep_090_define_supervisorpatchplan.py" }
+task = { board-namespace = "agent-supervisor-direct-objective-and-event-driven-planning-v1", canonical-task-cid = "sha256:135e11c77f2faa30d41a4e5970fe28f5f65a4fa7efe1319b528afa563d22087d", declared-output = "external/ipfs_datasets/tests/doep/test_doep_090_define_supervisorpatchplan.py" }
 baseline = { state = "declared-output-absent" }
 
 [[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
 target = "tests/doep/test_doep_101_add_cross_supervisor_task_requests.py"
 validation-command-sha256 = "3a2524d1124e1f72107e014e1ef3564a2250a608815458970d02a984926e9693"
 requirements = ["pytest>=9.0.3,<10.0.0"]
-task = { board-namespace = "agent-supervisor-direct-objective-and-event-driven-planning-v1", canonical-task-cid = "sha256:9ef5f6761f19f404bb28f73169b15c2c914b12ee890e53610c0e05f01f074e4c", declared-output = "external/ipfs_datasets/tests/doep/test_doep_101_add_cross_supervisor_task_requests.py" }
+task = { board-namespace = "agent-supervisor-direct-objective-and-event-driven-planning-v1", canonical-task-cid = "sha256:59ef279a3ab79d4e0a299c87ae1e7c35f35622fcc01d801eeafeb123a4e871e3", declared-output = "external/ipfs_datasets/tests/doep/test_doep_101_add_cross_supervisor_task_requests.py" }
 baseline = { state = "declared-output-absent" }
 
 # END DOEP-PLAN-V4 GENERATED TASK-BOUND VALIDATION CONTRACTS
