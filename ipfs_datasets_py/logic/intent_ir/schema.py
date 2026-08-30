@@ -64,6 +64,41 @@ SUPERVISOR_OBJECTIVE_INTENT_FORBIDDEN_FIELDS = frozenset(
     }
 )
 
+# Datasets-owned semantic materialization identity (DOEP-011).  A receipt
+# records the immutable relationship between an accepted direct-objective
+# intent and its semantic objective references.  It is evidence only: the
+# operational service owns admission and execution, while Kit owns durable
+# bytes and CID storage.
+OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA = (
+    "ipfs_datasets_py/logic/intent-ir/objective-materialization-receipt@1"
+)
+OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA_VERSION = "objective-materialization-receipt/v1"
+OBJECTIVE_MATERIALIZATION_RECEIPT_FORBIDDEN_FIELDS = frozenset(
+    {
+        "authorization",
+        "authorization_decision",
+        "budget_profile",
+        "budgets",
+        "completion_authoritative",
+        "duckdb",
+        "ducklake",
+        "execution_authorization",
+        "fencing_epoch",
+        "fencing_generation",
+        "lease_id",
+        "plan",
+        "plan_root_cid",
+        "policy",
+        "policy_document",
+        "policy_id",
+        "policy_revision",
+        "quack_mutation",
+        "storage_authorization",
+        "task_cids",
+        "terminalize",
+    }
+)
+
 
 class IntentIRValidationError(ValueError):
     """Raised when an Intent IR document violates its canonical contract."""
@@ -904,12 +939,140 @@ def validate_supervisor_objective_intent(
     return intent
 
 
+@dataclass(frozen=True, slots=True)
+class ObjectiveMaterializationReceipt:
+    """Immutable semantic evidence produced when an objective is materialized.
+
+    The receipt binds the submitted intent's digest to the materialized
+    semantic objective and revision identities.  It neither admits work nor
+    authorizes storage, execution, policy decisions, or task completion.
+    """
+
+    receipt_id: str
+    intent_id: str
+    intent_sha256: str
+    objective_id: str
+    objective_cid: str
+    objective_revision_cid: str
+    schema_version: str = OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA_VERSION
+
+    def validate(self) -> None:
+        validate_objective_materialization_receipt(self)
+
+    @property
+    def schema(self) -> str:
+        return OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA
+
+    @property
+    def is_completion_authority(self) -> bool:
+        """Receipts are evidence and can never complete an objective."""
+
+        return False
+
+    def to_dict(self) -> dict[str, str]:
+        self.validate()
+        return {
+            "intent_id": self.intent_id,
+            "intent_sha256": self.intent_sha256,
+            "objective_cid": self.objective_cid,
+            "objective_id": self.objective_id,
+            "objective_revision_cid": self.objective_revision_cid,
+            "receipt_id": self.receipt_id,
+            "schema": OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA,
+            "schema_version": self.schema_version,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "ObjectiveMaterializationReceipt":
+        if not isinstance(value, Mapping):
+            raise IntentIRValidationError(
+                "ObjectiveMaterializationReceipt mapping must be a mapping"
+            )
+        forbidden = sorted(
+            key
+            for key in value
+            if key in OBJECTIVE_MATERIALIZATION_RECEIPT_FORBIDDEN_FIELDS
+        )
+        if forbidden:
+            raise IntentIRValidationError(
+                "ObjectiveMaterializationReceipt forbids authoritative fields: "
+                + ", ".join(forbidden)
+            )
+        allowed = {
+            "intent_id",
+            "intent_sha256",
+            "objective_cid",
+            "objective_id",
+            "objective_revision_cid",
+            "receipt_id",
+            "schema",
+            "schema_version",
+        }
+        unknown = sorted(key for key in value if key not in allowed)
+        if unknown:
+            raise IntentIRValidationError(
+                "ObjectiveMaterializationReceipt has unknown fields: "
+                + ", ".join(unknown)
+            )
+        schema = value.get("schema", OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA)
+        if schema != OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA:
+            raise IntentIRValidationError(
+                "Unsupported ObjectiveMaterializationReceipt schema: "
+                f"{schema!r}"
+            )
+        return cls(
+            receipt_id=str(value.get("receipt_id") or ""),
+            intent_id=str(value.get("intent_id") or ""),
+            intent_sha256=str(value.get("intent_sha256") or ""),
+            objective_id=str(value.get("objective_id") or ""),
+            objective_cid=str(value.get("objective_cid") or ""),
+            objective_revision_cid=str(value.get("objective_revision_cid") or ""),
+            schema_version=str(
+                value.get("schema_version")
+                or OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA_VERSION
+            ),
+        )
+
+
+def validate_objective_materialization_receipt(
+    receipt: ObjectiveMaterializationReceipt | Mapping[str, Any],
+) -> ObjectiveMaterializationReceipt:
+    """Validate and return an :class:`ObjectiveMaterializationReceipt`."""
+
+    if isinstance(receipt, Mapping):
+        receipt = ObjectiveMaterializationReceipt.from_dict(receipt)
+    if not isinstance(receipt, ObjectiveMaterializationReceipt):
+        raise IntentIRValidationError(
+            "ObjectiveMaterializationReceipt mappings require from_dict or a typed value"
+        )
+    if receipt.schema_version != OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA_VERSION:
+        raise IntentIRValidationError(
+            "Unsupported ObjectiveMaterializationReceipt schema_version: "
+            f"{receipt.schema_version!r}"
+        )
+    for name in ("receipt_id", "intent_id", "objective_id"):
+        _validate_identifier(
+            f"ObjectiveMaterializationReceipt.{name}", getattr(receipt, name)
+        )
+    _validate_sha256(
+        "ObjectiveMaterializationReceipt.intent_sha256", receipt.intent_sha256
+    )
+    for name in ("objective_cid", "objective_revision_cid"):
+        _validate_identifier(
+            f"ObjectiveMaterializationReceipt.{name}", getattr(receipt, name)
+        )
+    return receipt
+
+
 __all__ = [
     "CollectionSemantics",
     "INTENT_IR_COLLECTION_SCHEMA",
     "INTENT_IR_SCHEMA_VERSION",
     "INTENT_IR_COLLECTION_SEMANTICS",
     "LEGACY_INTENT_IR_SCHEMA_VERSION",
+    "OBJECTIVE_MATERIALIZATION_RECEIPT_FORBIDDEN_FIELDS",
+    "OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA",
+    "OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA_VERSION",
     "SUPERVISOR_OBJECTIVE_INTENT_FORBIDDEN_FIELDS",
     "SUPERVISOR_OBJECTIVE_INTENT_MAX_IDEA_UTF8_BYTES",
     "SUPERVISOR_OBJECTIVE_INTENT_MAX_TAGS",
@@ -925,6 +1088,7 @@ __all__ = [
     "IntentModality",
     "IntentStatement",
     "NodeGrounding",
+    "ObjectiveMaterializationReceipt",
     "ReviewStatus",
     "SourceRef",
     "SourceSpan",
@@ -933,5 +1097,6 @@ __all__ = [
     "SupervisorObjectiveSubmitterKind",
     "idea_text_sha256",
     "validate_intent_ir",
+    "validate_objective_materialization_receipt",
     "validate_supervisor_objective_intent",
 ]
