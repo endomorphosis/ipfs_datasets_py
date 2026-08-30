@@ -912,3 +912,132 @@ def test_payload_schema_validates_closed_records_and_rejects_unknowns() -> None:
     assert "additionalProperties" in text
     assert "predicted" in text
     assert "future_execution" in text
+    redacted_full = dict(payloads[0])
+    redacted_full["completeness_claim"] = "full_state"
+    assert list(validator.iter_errors(redacted_full))
+    simulated_as_observed = dict(event_payload)
+    simulated_as_observed["event_origin"] = "simulated"
+    simulated_as_observed["observation_status"] = "observed"
+    assert list(validator.iter_errors(simulated_as_observed))
+
+
+def test_json_text_round_trip_uses_closed_decoder() -> None:
+    event = _event("call")
+    encoded = canonical_program_execution_bytes(event.to_dict()).decode("utf-8")
+    decoded = loads_program_execution_json(encoded)
+    restored = decode_program_execution_record(decoded)
+    assert restored.to_dict() == event.to_dict()
+    assert restored.program_event_cid == event.program_event_cid
+
+
+def test_nested_future_execution_fields_cannot_smuggle_continuations() -> None:
+    with pytest.raises(ProgramExecutionError, match="future-execution"):
+        _event("call", payload={"callee": "pkg.mod.pong", "next_event_cid": _cid("next")})
+    with pytest.raises(ProgramExecutionError, match="future-execution"):
+        _exception(exception_value_summary={"type": "ValueError", "continuation_cid": _cid("cont")})
+    with pytest.raises(ProgramExecutionError, match="future-execution"):
+        _state(observed_state={"locals": {"x": 1}, "resume_event_cid": _cid("resume")})
+
+
+def test_assembled_records_bind_shared_source_and_environment() -> None:
+    inner = _frame(0)
+    with pytest.raises(ProgramExecutionError, match="same source_cid"):
+        assemble_program_execution_state(
+            capture_profile_cid=_capture(),
+            tree_cid=_tree(),
+            source_cid=_cid("source:other"),
+            environment_binding_cid=_env(),
+            frames=[inner],
+        )
+    with pytest.raises(ProgramExecutionError, match="same tree, source, and environment"):
+        assemble_execution_trace(
+            tree_cid=_tree(),
+            source_cid=_cid("source:other"),
+            environment_binding_cid=_env(),
+            events=[_event("call")],
+        )
+    foreign_state = assemble_program_execution_state(
+        capture_profile_cid=_capture(),
+        tree_cid=_tree(),
+        source_cid=_source(),
+        environment_binding_cid=_cid("env:other"),
+        frames=[_frame(0, environment_binding_cid=_cid("env:other"))],
+        observed_state={"locals": {"x": 1}},
+        unavailable_dimensions=("native_stack",),
+        completeness_claim=CompletenessClaim.PARTIAL,
+    )
+    with pytest.raises(ProgramExecutionError, match="same tree, source, and environment"):
+        assemble_execution_trace(
+            tree_cid=_tree(),
+            source_cid=_source(),
+            environment_binding_cid=_env(),
+            events=[_event("call")],
+            states=[foreign_state],
+        )
+
+
+def test_handler_kinds_preserve_matching_exception_state() -> None:
+    exception = _exception()
+    for kind in (HandlerKind.EXCEPT, HandlerKind.EXCEPT_STAR, HandlerKind.FINALLY, HandlerKind.ELSE):
+        handler = _handler(exception, handler_kind=kind)
+        assert handler.handler_kind == kind.value
+        assert handler.matching_exception_snapshot_cid == exception.exception_snapshot_cid
+        restored = decode_program_execution_record(handler.to_dict())
+        assert restored.handler_kind == kind.value
+        assert restored.matching_exception_snapshot_cid == exception.exception_snapshot_cid
+    with pytest.raises(ProgramExecutionError, match="matching exception"):
+        _handler(
+            handler_kind=HandlerKind.EXCEPT,
+            handler_active=True,
+            matching_exception_snapshot_cid=None,
+            unavailable_dimensions=(),
+        )
+    inactive = _handler(
+        handler_kind=HandlerKind.FINALLY,
+        handler_active=False,
+        matching_exception_snapshot_cid=None,
+    )
+    assert inactive.matching_exception_snapshot_cid is None
+
+
+def test_empty_exception_traceback_is_explicitly_unavailable() -> None:
+    with pytest.raises(ProgramExecutionError, match="traceback order"):
+        _exception(traceback_stack_frame_cids=())
+    snapshot = _exception(
+        traceback_stack_frame_cids=(),
+        unavailable_dimensions=("call_stack",),
+        completeness_claim=CompletenessClaim.PARTIAL,
+    )
+    assert snapshot.traceback_stack_frame_cids == ()
+    assert "call_stack" in snapshot.unavailable_dimensions
+    assert snapshot.future_execution is False
+
+
+def test_public_trace_view_never_carries_raw_state_cids() -> None:
+    call = _event("call")
+    state = _state()
+    internal = assemble_execution_trace(
+        tree_cid=_tree(),
+        source_cid=_source(),
+        environment_binding_cid=_env(),
+        events=[call],
+        states=[state],
+        privacy_class=PrivacyClass.INTERNAL,
+        includes_raw_bodies=False,
+    )
+    assert internal.raw_execution_state_cids == (state.program_execution_state_cid,)
+    public = internal.public_view()
+    assert public.includes_raw_bodies is False
+    assert public.privacy_class == PrivacyClass.PUBLIC.value
+    assert public.raw_execution_state_cids == ()
+    assert public.completeness_claim != CompletenessClaim.FULL_STATE.value
+    assert public.execution_trace_cid != internal.execution_trace_cid
+
+
+def test_nfc_text_and_unknown_kinds_fail_closed() -> None:
+    with pytest.raises(ProgramExecutionError, match="trimmed NFC"):
+        _frame(logical_name="cafe\u0301")
+    with pytest.raises(ProgramExecutionError, match="unsupported value"):
+        _event("invoke")
+    with pytest.raises(ProgramExecutionError, match="unsupported value"):
+        _handler(_exception(), handler_kind="rescue")

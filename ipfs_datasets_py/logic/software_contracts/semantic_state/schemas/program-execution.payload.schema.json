@@ -147,7 +147,66 @@
         { "required": ["password"] },
         { "required": ["api_key"] },
         { "required": ["access_token"] },
-        { "required": ["raw_memory"] }
+        { "required": ["raw_memory"] },
+        { "required": ["next_event_cid"] }
+      ]
+    },
+    "completenessConstraints": {
+      "allOf": [
+        {
+          "if": {
+            "properties": { "completeness_claim": { "const": "full_state" } },
+            "required": ["completeness_claim"]
+          },
+          "then": {
+            "properties": {
+              "redacted_dimensions": { "maxItems": 0 },
+              "unavailable_dimensions": { "maxItems": 0 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "completeness_claim": { "const": "redacted" } },
+            "required": ["completeness_claim"]
+          },
+          "then": {
+            "properties": {
+              "redacted_dimensions": { "minItems": 1 }
+            },
+            "required": ["redacted_dimensions"]
+          }
+        },
+        {
+          "if": {
+            "properties": { "completeness_claim": { "const": "unavailable" } },
+            "required": ["completeness_claim"]
+          },
+          "then": {
+            "properties": {
+              "unavailable_dimensions": { "minItems": 1 }
+            },
+            "required": ["unavailable_dimensions"]
+          }
+        },
+        {
+          "if": {
+            "properties": { "completeness_claim": { "const": "partial" } },
+            "required": ["completeness_claim"]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "properties": { "redacted_dimensions": { "minItems": 1 } },
+                "required": ["redacted_dimensions"]
+              },
+              {
+                "properties": { "unavailable_dimensions": { "minItems": 1 } },
+                "required": ["unavailable_dimensions"]
+              }
+            ]
+          }
+        }
       ]
     },
     "forbiddenFutureExecutionFields": {
@@ -182,18 +241,7 @@
         "redaction_profile_cid": { "$ref": "#/$defs/cid" }
       },
       "allOf": [
-        {
-          "if": {
-            "properties": { "completeness_claim": { "const": "full_state" } },
-            "required": ["completeness_claim"]
-          },
-          "then": {
-            "properties": {
-              "redacted_dimensions": { "maxItems": 0 },
-              "unavailable_dimensions": { "maxItems": 0 }
-            }
-          }
-        }
+        { "$ref": "#/$defs/completenessConstraints" }
       ],
       "not": { "$ref": "#/$defs/forbiddenIdentityFields" }
     },
@@ -236,6 +284,36 @@
         "completeness_claim": { "$ref": "#/$defs/completenessClaim" },
         "exception_snapshot_cid": { "$ref": "#/$defs/cid" }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "completeness_claim": { "const": "redacted" } },
+            "required": ["completeness_claim"]
+          },
+          "then": { "not": true }
+        },
+        {
+          "if": {
+            "properties": { "completeness_claim": { "const": "full_state" } },
+            "required": ["completeness_claim"]
+          },
+          "then": {
+            "properties": { "unavailable_dimensions": { "maxItems": 0 } }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "completeness_claim": { "enum": ["partial", "unavailable"] }
+            },
+            "required": ["completeness_claim"]
+          },
+          "then": {
+            "properties": { "unavailable_dimensions": { "minItems": 1 } },
+            "required": ["unavailable_dimensions"]
+          }
+        }
+      ],
       "not": {
         "anyOf": [
           { "$ref": "#/$defs/forbiddenIdentityFields" },
@@ -335,18 +413,7 @@
         "stack_frame_state_cid": { "$ref": "#/$defs/cid" }
       },
       "allOf": [
-        {
-          "if": {
-            "properties": { "completeness_claim": { "const": "full_state" } },
-            "required": ["completeness_claim"]
-          },
-          "then": {
-            "properties": {
-              "redacted_dimensions": { "maxItems": 0 },
-              "unavailable_dimensions": { "maxItems": 0 }
-            }
-          }
-        }
+        { "$ref": "#/$defs/completenessConstraints" }
       ],
       "not": { "$ref": "#/$defs/forbiddenIdentityFields" }
     },
@@ -402,18 +469,7 @@
         "program_execution_state_cid": { "$ref": "#/$defs/cid" }
       },
       "allOf": [
-        {
-          "if": {
-            "properties": { "completeness_claim": { "const": "full_state" } },
-            "required": ["completeness_claim"]
-          },
-          "then": {
-            "properties": {
-              "redacted_dimensions": { "maxItems": 0 },
-              "unavailable_dimensions": { "maxItems": 0 }
-            }
-          }
-        }
+        { "$ref": "#/$defs/completenessConstraints" }
       ],
       "not": {
         "anyOf": [
@@ -461,6 +517,36 @@
         "completeness_claim": { "$ref": "#/$defs/completenessClaim" },
         "abstract_program_state_cid": { "$ref": "#/$defs/cid" }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "completeness_claim": { "const": "redacted" } },
+            "required": ["completeness_claim"]
+          },
+          "then": { "not": true }
+        },
+        {
+          "if": {
+            "properties": { "completeness_claim": { "const": "full_state" } },
+            "required": ["completeness_claim"]
+          },
+          "then": {
+            "properties": { "unavailable_dimensions": { "maxItems": 0 } }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "completeness_claim": { "enum": ["partial", "unavailable"] }
+            },
+            "required": ["completeness_claim"]
+          },
+          "then": {
+            "properties": { "unavailable_dimensions": { "minItems": 1 } },
+            "required": ["unavailable_dimensions"]
+          }
+        }
+      ],
       "not": { "$ref": "#/$defs/forbiddenIdentityFields" }
     },
     "programEvent": {
@@ -521,6 +607,7 @@
         "program_event_cid": { "$ref": "#/$defs/cid" }
       },
       "allOf": [
+        { "$ref": "#/$defs/completenessConstraints" },
         {
           "if": {
             "properties": {
@@ -529,9 +616,12 @@
             "required": ["event_origin"]
           },
           "then": {
-            "not": {
-              "properties": { "observation_status": { "const": "observed" } }
-            }
+            "properties": {
+              "observation_status": {
+                "enum": ["unavailable", "redacted", "inferred_untrusted"]
+              }
+            },
+            "required": ["observation_status"]
           }
         },
         {
@@ -549,7 +639,12 @@
           }
         }
       ],
-      "not": { "$ref": "#/$defs/forbiddenIdentityFields" }
+      "not": {
+        "anyOf": [
+          { "$ref": "#/$defs/forbiddenIdentityFields" },
+          { "$ref": "#/$defs/forbiddenFutureExecutionFields" }
+        ]
+      }
     },
     "executionObservation": {
       "type": "object",
@@ -676,18 +771,7 @@
         "execution_trace_cid": { "$ref": "#/$defs/cid" }
       },
       "allOf": [
-        {
-          "if": {
-            "properties": { "completeness_claim": { "const": "full_state" } },
-            "required": ["completeness_claim"]
-          },
-          "then": {
-            "properties": {
-              "redacted_dimensions": { "maxItems": 0 },
-              "unavailable_dimensions": { "maxItems": 0 }
-            }
-          }
-        }
+        { "$ref": "#/$defs/completenessConstraints" }
       ],
       "not": {
         "anyOf": [

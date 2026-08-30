@@ -144,6 +144,7 @@ FORBIDDEN_FIELD_MARKERS: Final[frozenset[str]] = frozenset(
         "future_state_cid",
         "hostname",
         "hnsw",
+        "next_event_cid",
         "observed_at",
         "password",
         "pid",
@@ -1487,7 +1488,8 @@ class AbstractProgramState:
             observation_status=str(self.observation_status),
             name="AbstractProgramState",
         )
-        if self.raw_execution_state_cid == program_execution_cid_for(self.identity_payload()):
+        abstract_cid = program_execution_cid_for(self.identity_payload())
+        if self.raw_execution_state_cid == abstract_cid:
             raise ProgramExecutionError("raw and abstract execution states must remain distinct")
 
     def identity_payload(self) -> dict[str, Any]:
@@ -1690,6 +1692,9 @@ class ProgramEvent:
                 raise ProgramExecutionError(
                     "unavailable event kinds cannot be observed"
                 )
+        if self.predecessor_event_cid is not None:
+            if self.predecessor_event_cid == program_execution_cid_for(self.identity_payload()):
+                raise ProgramExecutionError("events cannot be their own predecessor")
 
     def identity_payload(self) -> dict[str, Any]:
         return {
@@ -2098,6 +2103,13 @@ class ExecutionTrace:
             unavailable_dimensions=self.unavailable_dimensions,
             name="ExecutionTrace",
         )
+        own_cid = program_execution_cid_for(self.identity_payload())
+        if self.parent_trace_cid == own_cid:
+            raise ProgramExecutionError("execution traces cannot be their own parent")
+        if self.parent_trace_cid is not None and self.parent_trace_cid in self.event_cids:
+            raise ProgramExecutionError(
+                "parent_trace_cid cannot appear in event_cids; physical DAG remains acyclic"
+            )
 
     def identity_payload(self) -> dict[str, Any]:
         return {
@@ -2147,7 +2159,11 @@ class ExecutionTrace:
 
         redacted = set(self.redacted_dimensions)
         claim = str(self.completeness_claim)
-        if self.includes_raw_bodies or str(self.privacy_class) not in PUBLIC_PRIVACY_CLASSES:
+        if (
+            self.includes_raw_bodies
+            or self.raw_execution_state_cids
+            or str(self.privacy_class) not in PUBLIC_PRIVACY_CLASSES
+        ):
             redacted.add("raw_body")
             claim = CompletenessClaim.REDACTED.value
         if claim == CompletenessClaim.FULL_STATE.value and redacted:
@@ -2383,6 +2399,8 @@ def assemble_program_execution_state(
             raise ProgramExecutionError("stack frames must share the execution language")
         if frame.tree_cid != _cid(tree_cid, "tree_cid"):
             raise ProgramExecutionError("stack frames must bind the same tree_cid")
+        if frame.source_cid != _cid(source_cid, "source_cid"):
+            raise ProgramExecutionError("stack frames must bind the same source_cid")
         if frame.environment_binding_cid != _cid(
             environment_binding_cid, "environment_binding_cid"
         ):
@@ -2413,6 +2431,8 @@ def assemble_program_execution_state(
     if exception is not None:
         if exception.tree_cid != _cid(tree_cid, "tree_cid"):
             raise ProgramExecutionError("exception snapshot must bind the same tree_cid")
+        if exception.source_cid != _cid(source_cid, "source_cid"):
+            raise ProgramExecutionError("exception snapshot must bind the same source_cid")
         if exception.environment_binding_cid != _cid(
             environment_binding_cid, "environment_binding_cid"
         ):
@@ -2422,6 +2442,8 @@ def assemble_program_execution_state(
     if handler is not None:
         if handler.tree_cid != _cid(tree_cid, "tree_cid"):
             raise ProgramExecutionError("handler state must bind the same tree_cid")
+        if handler.source_cid != _cid(source_cid, "source_cid"):
+            raise ProgramExecutionError("handler state must bind the same source_cid")
         if handler.environment_binding_cid != _cid(
             environment_binding_cid, "environment_binding_cid"
         ):
@@ -2524,6 +2546,7 @@ def assemble_execution_trace(
     if not event_list:
         raise ProgramExecutionError("execution trace requires at least one event")
     tree = _cid(tree_cid, "tree_cid")
+    source = _cid(source_cid, "source_cid")
     env = _cid(environment_binding_cid, "environment_binding_cid")
     predecessors: set[str] = set()
     previous: str | None = None
@@ -2532,9 +2555,13 @@ def assemble_execution_trace(
             raise ProgramExecutionError("trace events must be ProgramEvent values")
         if str(event.language) != language_value:
             raise ProgramExecutionError("trace events must share the execution language")
-        if event.tree_cid != tree or event.environment_binding_cid != env:
+        if (
+            event.tree_cid != tree
+            or event.source_cid != source
+            or event.environment_binding_cid != env
+        ):
             raise ProgramExecutionError(
-                "trace events must bind the same tree and environment"
+                "trace events must bind the same tree, source, and environment"
             )
         if event.predecessor_event_cid is not None:
             if event.predecessor_event_cid not in predecessors and previous is not None:
@@ -2548,6 +2575,17 @@ def assemble_execution_trace(
         previous = event.program_event_cid
     event_cids = tuple(event.program_event_cid for event in event_list)
     event_cid_set = set(event_cids)
+    for state in states:
+        if not isinstance(state, ProgramExecutionState):
+            raise ProgramExecutionError("trace states must be ProgramExecutionState values")
+        if (
+            state.tree_cid != tree
+            or state.source_cid != source
+            or state.environment_binding_cid != env
+        ):
+            raise ProgramExecutionError(
+                "trace states must bind the same tree, source, and environment"
+            )
     for segment in segments:
         if not isinstance(segment, ExecutionTraceSegment):
             raise ProgramExecutionError("trace segments must be ExecutionTraceSegment values")
