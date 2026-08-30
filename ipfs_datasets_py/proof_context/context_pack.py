@@ -88,6 +88,25 @@ SUPERVISOR_CONTEXT_PACK_FORBIDDEN_FIELDS = frozenset(
     }
 )
 
+# The semantic builder is deliberately a facade over ``build_context_pack``.
+# Its versioned name gives cross-repository callers a stable Datasets entry
+# point without creating a second ContextPack format, identity, analyzer, or
+# authority boundary.
+DATASETS_SEMANTIC_BUILDER_INTERFACE = "DatasetsSemanticContextBuilder@1"
+DATASETS_SEMANTIC_BUILDER_OWNERSHIP = SUPERVISOR_CONTEXT_PACK_OWNERSHIP
+DATASETS_SEMANTIC_BUILDER_FORBIDDEN_FIELDS = frozenset(
+    {
+        "completion_authoritative",
+        "execution_admission",
+        "lease_id",
+        "policy_id",
+        "policy_revision",
+        "receipt_bytes",
+        "storage_bytes",
+        "terminal_status",
+    }
+)
+
 
 class ContextPackConstructionError(RuntimeError):
     reason = "invalid"
@@ -191,6 +210,41 @@ class ContextPackRecord:
             "required_source_cids": dict(self.required_source_cids),
             "producer": self.producer,
         }
+
+
+class DatasetsSemanticContextBuilder:
+    """Stable Datasets entry point for canonical semantic ContextPack builds.
+
+    The builder is intentionally stateless.  It delegates all identity and
+    sufficiency work to :func:`build_context_pack`; Kit and Accelerate remain
+    the owners of durable bytes/CIDs and operational admission respectively.
+    """
+
+    __slots__ = ()
+
+    interface = DATASETS_SEMANTIC_BUILDER_INTERFACE
+    authority = AUTHORITY
+
+    def build(self, **kwargs: Any) -> ContextPackRecord:
+        forbidden = sorted(
+            set(kwargs).intersection(DATASETS_SEMANTIC_BUILDER_FORBIDDEN_FIELDS)
+        )
+        if forbidden:
+            raise ContextPackConstructionError(
+                "semantic builder does not accept authority-bearing fields: "
+                + ", ".join(forbidden)
+            )
+        return build_context_pack(**kwargs)
+
+
+def build_datasets_semantic_context(**kwargs: Any) -> ContextPackRecord:
+    """Build the one canonical Datasets semantic ContextPack.
+
+    This is a convenience entry point for callers that need the semantic
+    builder contract.  It is equivalent to ``build_context_pack`` for the
+    same inputs and owns neither byte storage nor execution admission.
+    """
+    return DatasetsSemanticContextBuilder().build(**kwargs)
 
 
 @dataclass(frozen=True)
