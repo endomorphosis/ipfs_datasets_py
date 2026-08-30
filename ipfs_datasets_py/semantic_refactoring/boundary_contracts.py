@@ -13,6 +13,8 @@ Normative rules:
   conditions, invariants, exceptions, allowed/forbidden effects,
   state/resource owner, initialization, authorization, concurrency/atomicity,
   serialization, versioning, and proof obligations.
+* SPAR-013/014 partition cut-edge payloads are ingested as DAG-JSON
+  mappings only.  Missing assume/guarantee facts stay retrieval.
 * Incomplete authoritative contracts cause retrieval, proof, abstention, or
   review.  Guessed axioms are rejected.
 * Exact static facts and conservative may-facts stay distinct evidence
@@ -118,6 +120,16 @@ PROOF_OBLIGATION_SCHEMA: Final[str] = (
 )
 BOUNDARY_TERMINAL_SCHEMA: Final[str] = (
     "ipfs-datasets.semantic-refactoring.boundary-terminal@1"
+)
+PARTITION_CUT_EDGE_SCHEMA: Final[str] = (
+    "ipfs_accelerate_py/agent-supervisor/partition-cut-edge@1"
+)
+PROGRAM_PARTITION_CANDIDATE_SCHEMA: Final[str] = (
+    "ipfs_accelerate_py/agent-supervisor/program-partition-candidate@1"
+)
+PARTITION_CUT_EDGE_INTERFACE: Final[str] = "PartitionCutEdge@1"
+PROGRAM_PARTITION_CANDIDATE_INTERFACE: Final[str] = (
+    "ProgramPartitionCandidate@1"
 )
 
 BOUNDARY_CONTRACT_VERSION: Final[str] = "1"
@@ -364,6 +376,38 @@ INCOMPLETE_DISPOSITIONS: Final[frozenset[str]] = frozenset(
 )
 GUESSED_AXIOM_DISPOSITIONS: Final[frozenset[str]] = frozenset()
 
+_PARTITION_KIND_ALIASES: Final[dict[str, str]] = {
+    "import": "import",
+    "imports": "import",
+    "call": "call",
+    "calls": "call",
+    "state": "state",
+    "resource": "resource",
+    "uses_resource": "resource",
+    "registration": "registration",
+    "registers": "registration",
+    "type": "type",
+    "serialization": "serialization",
+    "external": "external",
+}
+_PARTITION_CUT_EDGE_FIELDS: Final[frozenset[str]] = frozenset(
+    {
+        "schema",
+        "interface",
+        "source_id",
+        "target_id",
+        "kind",
+        "constraint_class",
+        "edge_cid",
+        "edge_id",
+        "producer_module",
+        "consumer_module",
+        "producer_symbol",
+        "consumer_symbol",
+        "evidence_class",
+    }
+)
+
 _TERMINAL_PRECEDENCE: Final[tuple[BoundaryTerminalKind, ...]] = (
     BoundaryTerminalKind.GUESSED_AXIOM_REJECTED,
     BoundaryTerminalKind.CONFLICT,
@@ -511,6 +555,94 @@ def _coerce(value: Any, cls: type, name: str) -> Any:
             return cls.from_dict(value)
         return cls(**dict(value))
     raise BoundaryContractError(f"{name} must be a {cls.__name__}")
+
+
+def _partition_kind(kind: str) -> str:
+    mapped = _PARTITION_KIND_ALIASES.get(kind)
+    if mapped is not None:
+        return mapped
+    if kind in DECLARED_CUT_EDGE_KINDS:
+        return kind
+    return CutEdgeKind.EXTERNAL.value
+
+
+def _symbol_module(
+    symbol_id: str,
+    member_to_module: Mapping[str, str] | None,
+) -> str:
+    if member_to_module is not None and symbol_id in member_to_module:
+        return _text(member_to_module[symbol_id], "module_id")
+    return symbol_id
+
+
+def _coerce_cut_edge(
+    value: Any,
+    *,
+    member_to_module: Mapping[str, str] | None = None,
+    evidence_class: EvidenceClass | str = EvidenceClass.EXACT_STATIC_FACT,
+) -> CutEdge:
+    if isinstance(value, CutEdge):
+        return value
+    if isinstance(value, Mapping):
+        interface = value.get("interface")
+        if interface == CUT_EDGE_INTERFACE or "producer_module" in value:
+            return _coerce(value, CutEdge, "cut_edge")
+        return cut_edge_from_partition_payload(
+            value,
+            member_to_module=member_to_module,
+            evidence_class=evidence_class,
+        )
+    raise BoundaryContractError("cut_edge must be a CutEdge")
+
+
+def cut_edge_from_partition_payload(
+    payload: Mapping[str, Any],
+    *,
+    member_to_module: Mapping[str, str] | None = None,
+    evidence_class: EvidenceClass | str = EvidenceClass.EXACT_STATIC_FACT,
+) -> CutEdge:
+    """Map a SPAR-013/014 partition cut-edge payload onto CutEdge@1.
+
+    Missing module assignments keep the member identity.  Unknown kinds become
+    ``external``.  Required assume/guarantee facts are not guessed.
+    """
+
+    if not isinstance(payload, Mapping) or isinstance(
+        payload, (str, bytes, bytearray)
+    ):
+        raise BoundaryContractError("partition cut edge must be an object")
+    _reject_excluded(payload, "partition cut edge")
+    extra = set(payload) - _PARTITION_CUT_EDGE_FIELDS
+    if extra:
+        raise BoundaryContractError(
+            f"unknown partition cut edge field: {sorted(extra)}"
+        )
+    schema = payload.get("schema")
+    if schema not in {None, "", PARTITION_CUT_EDGE_SCHEMA, CUT_EDGE_SCHEMA}:
+        raise BoundaryContractError("unsupported partition cut edge schema")
+    interface = payload.get("interface")
+    if interface not in {None, "", PARTITION_CUT_EDGE_INTERFACE, CUT_EDGE_INTERFACE}:
+        raise BoundaryContractError("unsupported partition cut edge interface")
+    if "producer_module" in payload:
+        return _coerce(payload, CutEdge, "cut_edge")
+    source = _text(payload.get("source_id"), "source_id")
+    target = _text(payload.get("target_id"), "target_id")
+    kind = _partition_kind(_text(payload.get("kind"), "kind"))
+    evidence = _evidence(
+        payload.get("evidence_class", evidence_class), "evidence_class"
+    )
+    edge_id = payload.get("edge_id") or payload.get("edge_cid") or (
+        f"edge:{source}:{target}:{kind}"
+    )
+    return CutEdge(
+        edge_id=_text(edge_id, "edge_id"),
+        producer_module=_symbol_module(source, member_to_module),
+        consumer_module=_symbol_module(target, member_to_module),
+        producer_symbol=source,
+        consumer_symbol=target,
+        kind=kind,
+        evidence_class=evidence,
+    )
 
 
 def _optional_coerce(value: Any, cls: type, name: str) -> Any:
@@ -2264,11 +2396,12 @@ def synthesize_boundary_contracts(
     source_cid: str,
     partition_cid: str,
     contracts: Sequence[ModuleBoundaryContract | Mapping[str, Any]] | None = None,
+    member_to_module: Mapping[str, str] | None = None,
 ) -> BoundaryContractSet:
     """Synthesize contracts for every cut edge without guessing axioms."""
 
     edges = tuple(
-        _coerce(item, CutEdge, "cut_edge")
+        _coerce_cut_edge(item, member_to_module=member_to_module)
         for item in _sequence(cut_edges, "cut_edges", limit=MAX_EDGES)
     )
     if contracts is None:
@@ -2288,6 +2421,51 @@ def synthesize_boundary_contracts(
         source_cid=source_cid,
         partition_cid=partition_cid,
         contracts=synthesized,
+    )
+
+
+def synthesize_boundary_contracts_from_partition(
+    partition: Mapping[str, Any],
+    *,
+    source_cid: str | None = None,
+    member_to_module: Mapping[str, str] | None = None,
+    contracts: Sequence[ModuleBoundaryContract | Mapping[str, Any]] | None = None,
+) -> BoundaryContractSet:
+    """Cover every SPAR-014 partition cut edge without guessing axioms."""
+
+    if not isinstance(partition, Mapping) or isinstance(
+        partition, (str, bytes, bytearray)
+    ):
+        raise BoundaryContractError("partition must be an object")
+    _reject_excluded(partition, "partition")
+    schema = partition.get("schema")
+    if schema not in {None, "", PROGRAM_PARTITION_CANDIDATE_SCHEMA}:
+        raise BoundaryContractError("unsupported partition schema")
+    interface = partition.get("interface")
+    if interface not in {None, "", PROGRAM_PARTITION_CANDIDATE_INTERFACE}:
+        raise BoundaryContractError("unsupported partition interface")
+    partition_cid = partition.get("candidate_cid") or partition.get("partition_cid")
+    if not partition_cid:
+        raise BoundaryContractError("partition synthesis requires candidate_cid")
+    evidence_cids = partition.get("evidence_cids") or ()
+    resolved_source = source_cid
+    if resolved_source is None and isinstance(evidence_cids, Sequence):
+        if evidence_cids and not isinstance(evidence_cids, (str, bytes, bytearray)):
+            resolved_source = evidence_cids[0]
+    if not resolved_source:
+        raise BoundaryContractError("partition synthesis requires source_cid")
+    evidence = _evidence(
+        partition.get("evidence_class", EvidenceClass.EXACT_STATIC_FACT.value),
+        "evidence_class",
+    )
+    _reject_guessed_axiom(evidence, "partition")
+    return synthesize_boundary_contracts(
+        partition.get("cut_edges") or (),
+        tree_id=partition.get("tree_id"),
+        source_cid=resolved_source,
+        partition_cid=partition_cid,
+        contracts=contracts,
+        member_to_module=member_to_module,
     )
 
 
@@ -2348,6 +2526,10 @@ __all__ = [
     "CONCURRENCY_BINDING_SCHEMA",
     "CUT_EDGE_INTERFACE",
     "CUT_EDGE_SCHEMA",
+    "PARTITION_CUT_EDGE_INTERFACE",
+    "PARTITION_CUT_EDGE_SCHEMA",
+    "PROGRAM_PARTITION_CANDIDATE_INTERFACE",
+    "PROGRAM_PARTITION_CANDIDATE_SCHEMA",
     "DECLARED_CLAUSE_KINDS",
     "DECLARED_CLAUSE_POLARITIES",
     "DECLARED_CUT_EDGE_KINDS",
@@ -2412,7 +2594,9 @@ __all__ = [
     "StateResourceOwnerBinding",
     "VersioningBinding",
     "VersioningKind",
+    "cut_edge_from_partition_payload",
     "provider_free_exports",
     "synthesize_boundary_contract",
     "synthesize_boundary_contracts",
+    "synthesize_boundary_contracts_from_partition",
 ]

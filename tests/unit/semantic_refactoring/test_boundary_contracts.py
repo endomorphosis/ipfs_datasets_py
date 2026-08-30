@@ -52,6 +52,10 @@ from ipfs_datasets_py.semantic_refactoring.boundary_contracts import (  # noqa: 
     MODEL_OUTPUT_IS_PROPOSAL_ONLY,
     MODULE_BOUNDARY_CONTRACT_INTERFACE,
     MODULE_BOUNDARY_CONTRACT_SCHEMA,
+    PARTITION_CUT_EDGE_INTERFACE,
+    PARTITION_CUT_EDGE_SCHEMA,
+    PROGRAM_PARTITION_CANDIDATE_INTERFACE,
+    PROGRAM_PARTITION_CANDIDATE_SCHEMA,
     REQUIRED_CONTRACT_DIMENSIONS,
     TASK_ID,
     TEST_PASS_IS_NOT_COMPLETION,
@@ -85,9 +89,11 @@ from ipfs_datasets_py.semantic_refactoring.boundary_contracts import (  # noqa: 
     StateResourceOwnerBinding,
     VersioningBinding,
     VersioningKind,
+    cut_edge_from_partition_payload,
     provider_free_exports,
     synthesize_boundary_contract,
     synthesize_boundary_contracts,
+    synthesize_boundary_contracts_from_partition,
 )
 
 
@@ -823,6 +829,8 @@ def test_provider_free_exports_and_no_provider_imports() -> None:
     assert "ModuleBoundaryContract" in exports
     assert "BoundaryContractSet" in exports
     assert "synthesize_boundary_contracts" in exports
+    assert "synthesize_boundary_contracts_from_partition" in exports
+    assert "cut_edge_from_partition_payload" in exports
     assert ANALYZER_ID.endswith("boundary_contracts@1")
 
 
@@ -852,6 +860,153 @@ def test_authority_matrix_and_safety_floors_do_not_regress() -> None:
     names = {node.name for node in tree.body if isinstance(node, ast.ClassDef)}
     for capsule in identity["capsule_types"]:
         assert capsule.split("@", 1)[0] not in names
+
+
+def _partition_cut(
+    source_id: str = "pkg.mod.Record",
+    target_id: str = "pkg.cli.build",
+    kind: str = "calls",
+    **overrides: Any,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "schema": PARTITION_CUT_EDGE_SCHEMA,
+        "interface": PARTITION_CUT_EDGE_INTERFACE,
+        "source_id": source_id,
+        "target_id": target_id,
+        "kind": kind,
+        "constraint_class": "hard",
+        "edge_cid": _cid(f"cut:{source_id}:{target_id}:{kind}"),
+    }
+    payload.update(overrides)
+    return payload
+
+
+def _partition_candidate(**overrides: Any) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "schema": PROGRAM_PARTITION_CANDIDATE_SCHEMA,
+        "interface": PROGRAM_PARTITION_CANDIDATE_INTERFACE,
+        "tree_id": TREE_ID,
+        "candidate_cid": _cid("partition-candidate"),
+        "evidence_cids": [_cid("source")],
+        "evidence_class": "exact_static_fact",
+        "cut_edges": (_partition_cut(),),
+        "member_ids": ("pkg.mod.Record",),
+    }
+    payload.update(overrides)
+    return payload
+
+
+def test_partition_cut_edge_is_ingested_without_guessing_clauses() -> None:
+    edge = cut_edge_from_partition_payload(_partition_cut())
+    assert edge.producer_symbol == "pkg.mod.Record"
+    assert edge.consumer_symbol == "pkg.cli.build"
+    assert edge.producer_module == "pkg.mod.Record"
+    assert edge.consumer_module == "pkg.cli.build"
+    assert edge.kind == CutEdgeKind.CALL.value
+    contract = synthesize_boundary_contract(edge)
+    assert contract.complete is False
+    assert contract.disposition == ContractDisposition.RETRIEVAL.value
+    assert contract.missing_dimensions == REQUIRED_CONTRACT_DIMENSIONS
+
+
+def test_unknown_partition_kind_is_external_and_stays_retrieval() -> None:
+    edge = cut_edge_from_partition_payload(
+        _partition_cut(kind="happens_before")
+    )
+    assert edge.kind == CutEdgeKind.EXTERNAL.value
+    terminal = synthesize_boundary_contract(edge).evaluate()
+    assert terminal.success is False
+    assert terminal.kind == BoundaryTerminalKind.INCOMPLETE_CONTRACT.value
+
+
+def test_member_to_module_mapping_is_exact_and_self_cuts_fail_closed() -> None:
+    mapped = cut_edge_from_partition_payload(
+        _partition_cut(),
+        member_to_module={
+            "pkg.mod.Record": "pkg.mod",
+            "pkg.cli.build": "pkg.cli",
+        },
+    )
+    assert mapped.producer_module == "pkg.mod"
+    assert mapped.consumer_module == "pkg.cli"
+    with pytest.raises(BoundaryContractError, match="must differ"):
+        cut_edge_from_partition_payload(
+            _partition_cut(),
+            member_to_module={
+                "pkg.mod.Record": "pkg.mod",
+                "pkg.cli.build": "pkg.mod",
+            },
+        )
+
+
+def test_partition_candidate_covers_every_cut_edge_as_retrieval() -> None:
+    second = _partition_cut(
+        source_id="pkg.mod.Record",
+        target_id="pkg.api.load",
+        kind="imports",
+    )
+    contract_set = synthesize_boundary_contracts_from_partition(
+        _partition_candidate(cut_edges=(_partition_cut(), second))
+    )
+    assert len(contract_set.contracts) == 2
+    assert contract_set.complete is False
+    assert contract_set.dispositions == (ContractDisposition.RETRIEVAL.value,)
+    assert set(contract_set.edge_ids) == {
+        _partition_cut()["edge_cid"],
+        second["edge_cid"],
+    }
+    terminal = contract_set.evaluate()
+    assert terminal.success is False
+    assert terminal.authorizes_completion is False
+    assert terminal.kind == BoundaryTerminalKind.INCOMPLETE_CONTRACT.value
+
+
+def test_partition_model_evidence_cannot_complete_required_cuts() -> None:
+    with pytest.raises(BoundaryContractError, match="model or vector"):
+        synthesize_boundary_contracts_from_partition(
+            _partition_candidate(evidence_class="model_hypothesis")
+        )
+    with pytest.raises(BoundaryContractError, match="model or vector"):
+        cut_edge_from_partition_payload(
+            _partition_cut(),
+            evidence_class=EvidenceClass.VECTOR_CANDIDATE,
+        )
+
+
+def test_partition_synthesis_requires_exact_identities() -> None:
+    with pytest.raises(BoundaryContractError, match="candidate_cid"):
+        synthesize_boundary_contracts_from_partition(
+            {
+                "tree_id": TREE_ID,
+                "cut_edges": (_partition_cut(),),
+            }
+        )
+    with pytest.raises(BoundaryContractError, match="source_cid"):
+        synthesize_boundary_contracts_from_partition(
+            {
+                "tree_id": TREE_ID,
+                "candidate_cid": _cid("partition-candidate"),
+                "cut_edges": (_partition_cut(),),
+            }
+        )
+    with pytest.raises(BoundaryContractError, match="unsupported partition schema"):
+        synthesize_boundary_contracts_from_partition(
+            _partition_candidate(
+                schema="ipfs_accelerate_py/agent-supervisor/other@1"
+            )
+        )
+
+
+def test_synthesize_boundary_contracts_accepts_partition_shaped_edges() -> None:
+    contract_set = synthesize_boundary_contracts(
+        (_partition_cut(),),
+        tree_id=TREE_ID,
+        source_cid=_cid("source"),
+        partition_cid=_cid("partition"),
+    )
+    assert len(contract_set.contracts) == 1
+    assert contract_set.contracts[0].cut_edge.kind == CutEdgeKind.CALL.value
+    assert contract_set.evaluate().success is False
 
 
 def test_import_is_provider_free() -> None:
