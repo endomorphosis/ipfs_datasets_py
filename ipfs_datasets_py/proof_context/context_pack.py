@@ -1,10 +1,14 @@
-"""Datasets-owned v0.1 ContextPack construction authority (PCCE-012 / ASEH-030).
+"""Datasets-owned v0.1 ContextPack construction authority (PCCE-012 / ASEH-030 / ASEH-031).
 
 This module is the sole production builder for ContextPack identity,
 coverage view, and pre-execution sufficiency. It extends
 ``DatasetsContextPackAuthority@0.1`` rather than minting a competing type
 such as ``SupervisorContextPack@1``. Accelerator may only consume the
 existing ``ContextPack@1`` contract; it must not remint Datasets identity.
+
+``build_minimal_semantic_pack`` is the Datasets semantic builder: it may
+declare meaning and completeness, but it cannot budget provider execution
+or admit proof reuse.
 """
 
 from __future__ import annotations
@@ -64,6 +68,7 @@ from ipfs_datasets_py.proof_context.contracts import (
 AUTHORITY = "ipfs_datasets_py.proof_context.context_pack"
 INTERFACE = "DatasetsContextPackAuthority@0.1"
 GENERATOR_ID = "datasets_v01_context_pack"
+SEMANTIC_BUILDER_ID = "datasets_v01_minimal_semantic_pack"
 CONTEXT_PACK_SCHEMA = "ipfs-datasets.proof-context.context-pack@0.1"
 CONSUMER_INTERFACE = "ContextPack@1"
 SCHEMA_PATH = Path(__file__).resolve().parent / "schemas" / "context_pack.schema.json"
@@ -80,6 +85,41 @@ REQUIRED_SOURCE_KEYS: Final[tuple[str, ...]] = (
     "target_source",
     "surrounding_source",
     "test_source",
+)
+LINEAGE_KINDS: Final[tuple[str, ...]] = REQUIRED_SOURCE_KEYS + ("dependency",)
+DEPENDENCY_FIELDS: Final[tuple[str, ...]] = ("symbol", "cid", "path", "meaning")
+LINEAGE_FIELDS: Final[tuple[str, ...]] = ("path", "symbol", "cid", "kind")
+FORBIDDEN_EXECUTION_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        "admit_proof_reuse",
+        "apply_token_budget",
+        "proof_reuse",
+        "provider_budget",
+        "reuse_admission",
+        "truncate_to_budget",
+    }
+)
+SEMANTIC_PASSTHROUGH_FIELDS: Final[frozenset[str]] = frozenset(
+    {
+        "task_class",
+        "risk_class",
+        "route_tier",
+        "freshness",
+        "opaque",
+        "unavailable",
+        "repository_identity",
+        "commit",
+        "objective_identity",
+        "objective_revision",
+        "policy_identity",
+        "creation_time",
+        "parent_context_pack_cid",
+        "delta_cid",
+        "incremental",
+        "identity",
+        "parent",
+        "delta",
+    }
 )
 
 _GIT_OID_RE: Final[re.Pattern[str]] = re.compile(r"^[0-9a-f]{40}$|^[0-9a-f]{64}$")
@@ -560,18 +600,21 @@ def _bind_questions(
         "expansion_references": [],
     }
     raw = _normalize_section(provided, defaults, QUESTION_FIELDS, "questions")
+    missing = _string_list(raw["missing_evidence"], "questions.missing_evidence")
     witness = _optional_cid(
         raw["completeness_witness"], "questions.completeness_witness"
     )
     if identity_kind == "synthetic" and witness is not None:
         raise _error("synthetic identity cannot be accepted as complete")
+    if witness is not None and missing:
+        raise _error(
+            "silent completeness: completeness_witness cannot coexist with missing evidence"
+        )
     return {
         "named_unresolved_questions": _string_list(
             raw["named_unresolved_questions"], "questions.named_unresolved_questions"
         ),
-        "missing_evidence": _string_list(
-            raw["missing_evidence"], "questions.missing_evidence"
-        ),
+        "missing_evidence": missing,
         "completeness_witness": witness,
         "expansion_references": _string_list(
             raw["expansion_references"], "questions.expansion_references"
@@ -856,6 +899,9 @@ class DatasetsContextPackAuthority:
 
     def build(self, **kwargs: Any) -> ContextPackRecord:
         return build_context_pack(**kwargs)
+
+    def build_minimal(self, **kwargs: Any) -> ContextPackRecord:
+        return build_minimal_semantic_pack(**kwargs)
 
     def canonical_bytes(self, record: ContextPackRecord) -> bytes:
         return record.canonical_bytes()
@@ -1145,4 +1191,424 @@ def build_context_pack(
         capsule_cids=tuple(capsules),
         required_source_cids=required,
         canonical=canonical,
+    )
+
+
+def _reject_execution_authority(payload: Mapping[str, Any] | None, name: str) -> None:
+    if payload is None:
+        return
+    if not isinstance(payload, Mapping):
+        raise _error(f"{name} must be a mapping")
+    extra = set(payload) & FORBIDDEN_EXECUTION_KEYS
+    if extra:
+        raise _error(
+            "Accelerator-owned budget decisions or proof reuse cannot be admitted "
+            f"by the Datasets semantic builder: {sorted(extra)}"
+        )
+
+
+def _reject_placeholder_cid(value: Any, name: str) -> str:
+    try:
+        return _cid(value, name)
+    except ContextPackConstructionError as exc:
+        raise _error(f"{name} is a placeholder CID and cannot mint identity") from exc
+
+
+def _bind_dependency(item: Any, index: int) -> dict[str, Any]:
+    name = f"dependencies[{index}]"
+    if isinstance(item, str):
+        symbol = _nfc(item, f"{name}.symbol")
+        return {"symbol": symbol, "cid": None, "path": None, "meaning": None}
+    closed = _closed(item, DEPENDENCY_FIELDS, name)
+    symbol = _nfc(closed["symbol"], f"{name}.symbol")
+    cid = closed["cid"]
+    if cid is not None:
+        cid = _reject_placeholder_cid(cid, f"{name}.cid")
+    path = _optional_nfc(closed["path"], f"{name}.path")
+    meaning = _optional_nfc(closed["meaning"], f"{name}.meaning")
+    return {"symbol": symbol, "cid": cid, "path": path, "meaning": meaning}
+
+
+def _bind_lineage_record(item: Any, index: int) -> dict[str, Any]:
+    name = f"lineage[{index}]"
+    closed = _closed(item, LINEAGE_FIELDS, name)
+    kind = _enum_member(closed["kind"], LINEAGE_KINDS, f"{name}.kind")
+    return {
+        "path": _nfc(closed["path"], f"{name}.path"),
+        "symbol": _nfc(closed["symbol"], f"{name}.symbol"),
+        "cid": _reject_placeholder_cid(closed["cid"], f"{name}.cid"),
+        "kind": kind,
+    }
+
+
+def _lineage_identity(record: Mapping[str, Any]) -> str:
+    return f"{record['path']}:{record['symbol']}@{record['cid']}"
+
+
+def _default_required_lineage(
+    *,
+    target_source_cid: str,
+    surrounding_source_cid: str,
+    test_source_cid: str,
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "path": "target.py",
+            "symbol": "target",
+            "cid": target_source_cid,
+            "kind": "target_source",
+        },
+        {
+            "path": "surrounding.py",
+            "symbol": "surrounding",
+            "cid": surrounding_source_cid,
+            "kind": "surrounding_source",
+        },
+        {
+            "path": "test_target.py",
+            "symbol": "test",
+            "cid": test_source_cid,
+            "kind": "test_source",
+        },
+    ]
+
+
+def _merge_string_lists(*groups: Iterable[str]) -> list[str]:
+    items: list[str] = []
+    seen: set[str] = set()
+    for group in groups:
+        for item in group:
+            if item not in seen:
+                seen.add(item)
+                items.append(item)
+    return sorted(items)
+
+
+def _path_excluded(path: str | None, excluded: Sequence[str]) -> bool:
+    if path is None:
+        return False
+    for prefix in excluded:
+        if path == prefix or path.startswith(prefix.rstrip("/") + "/"):
+            return True
+    return False
+
+
+def build_minimal_semantic_pack(
+    *,
+    repository_state_cid: str,
+    task_id: str,
+    target_source_cid: str,
+    surrounding_source_cid: str,
+    test_source_cid: str,
+    scanned_tree_oid: str,
+    source_tree_oid: str | None = None,
+    capsule_cids: Sequence[str] = (),
+    dependencies: Sequence[Mapping[str, Any] | str] = (),
+    lineage: Sequence[Mapping[str, Any]] | None = None,
+    obligations: Sequence[str] = (),
+    missing_evidence: Sequence[str] = (),
+    completeness_witness: str | None = None,
+    expansion_references: Sequence[str] = (),
+    named_unresolved_questions: Sequence[str] = (),
+    reverse_dependencies: Sequence[str] = (),
+    explicitly_excluded_paths: Sequence[str] = (),
+    changed_interfaces_and_schemas: Sequence[str] = (),
+    semantic_diff_summary: str | None = None,
+    identity_kind: str = "live",
+    evidence_kind: str = "real",
+    execution_mode: str | ExecutionMode = ExecutionMode.LIVE,
+    contracts: Mapping[str, Any] | None = None,
+    validation: Mapping[str, Any] | None = None,
+    questions: Mapping[str, Any] | None = None,
+    scope: Mapping[str, Any] | None = None,
+    budgets: Mapping[str, Any] | None = None,
+    freshness_bindings: Mapping[str, Any] | None = None,
+    history: Mapping[str, Any] | None = None,
+    invalidation: Mapping[str, Any] | None = None,
+    **kwargs: Any,
+) -> ContextPackRecord:
+    """Build a minimal Datasets-owned semantic ContextPack.
+
+    Includes required sources and named dependency-cone members only. Source
+    lineage, contracts, obligations, missing evidence, and completeness
+    witnesses are bound into the closed envelope. Token/execution budgets and
+    proof-reuse admission remain Accelerator consumer concerns.
+    """
+    extra = set(kwargs) & FORBIDDEN_EXECUTION_KEYS
+    if extra:
+        raise _error(
+            "Accelerator-owned budget decisions or proof reuse cannot be admitted "
+            f"by the Datasets semantic builder: {sorted(extra)}"
+        )
+    unknown = set(kwargs) - SEMANTIC_PASSTHROUGH_FIELDS
+    if unknown:
+        raise _error(f"unknown field {sorted(unknown)}")
+    _reject_execution_authority(budgets, "budgets")
+    _reject_execution_authority(contracts, "contracts")
+    _reject_execution_authority(validation, "validation")
+    _reject_execution_authority(questions, "questions")
+
+    target_cid = _reject_placeholder_cid(target_source_cid, "target_source_cid")
+    surrounding_cid = _reject_placeholder_cid(
+        surrounding_source_cid, "surrounding_source_cid"
+    )
+    test_cid = _reject_placeholder_cid(test_source_cid, "test_source_cid")
+    required_cids = {
+        "target_source": target_cid,
+        "surrounding_source": surrounding_cid,
+        "test_source": test_cid,
+    }
+    excluded_paths = _string_list(
+        list(explicitly_excluded_paths), "explicitly_excluded_paths"
+    )
+    if not isinstance(dependencies, (list, tuple)):
+        raise _error("dependencies must be a list")
+    bound_dependencies = [
+        _bind_dependency(item, index) for index, item in enumerate(dependencies)
+    ]
+    if len({item["symbol"] for item in bound_dependencies}) != len(bound_dependencies):
+        raise _error("dependencies must not contain duplicate symbols")
+
+    named_missing = _string_list(list(missing_evidence), "missing_evidence")
+    named_questions = _string_list(
+        list(named_unresolved_questions), "named_unresolved_questions"
+    )
+    named_expansion = _string_list(list(expansion_references), "expansion_references")
+    named_obligations = _string_list(list(obligations), "obligations")
+    named_reverse = _string_list(list(reverse_dependencies), "reverse_dependencies")
+    named_interfaces = _string_list(
+        list(changed_interfaces_and_schemas), "changed_interfaces_and_schemas"
+    )
+
+    if questions is not None:
+        raw_questions = _closed(questions, QUESTION_FIELDS, "questions")
+        claimed_missing = _string_list(
+            raw_questions["missing_evidence"], "questions.missing_evidence"
+        )
+        claimed_questions = _string_list(
+            raw_questions["named_unresolved_questions"],
+            "questions.named_unresolved_questions",
+        )
+        claimed_expansion = _string_list(
+            raw_questions["expansion_references"], "questions.expansion_references"
+        )
+        claimed_witness = _optional_cid(
+            raw_questions["completeness_witness"], "questions.completeness_witness"
+        )
+        if named_missing and claimed_missing != named_missing:
+            raise _error("questions.missing_evidence does not match missing_evidence")
+        if named_questions and claimed_questions != named_questions:
+            raise _error(
+                "questions.named_unresolved_questions does not match named_unresolved_questions"
+            )
+        if named_expansion and claimed_expansion != named_expansion:
+            raise _error(
+                "questions.expansion_references does not match expansion_references"
+            )
+        if completeness_witness is not None and claimed_witness != completeness_witness:
+            raise _error(
+                "questions.completeness_witness does not match completeness_witness"
+            )
+        named_missing = claimed_missing
+        named_questions = claimed_questions
+        named_expansion = claimed_expansion
+        completeness_witness = claimed_witness
+
+    if completeness_witness is not None:
+        completeness_witness = _reject_placeholder_cid(
+            completeness_witness, "completeness_witness"
+        )
+
+    unnamed_expansion = [item for item in named_expansion if item not in named_missing]
+    if unnamed_expansion:
+        raise _error(f"missing reference {sorted(unnamed_expansion)}")
+
+    admitted: list[dict[str, Any]] = []
+    for item in bound_dependencies:
+        if _path_excluded(item["path"], excluded_paths):
+            continue
+        if item["cid"] is None:
+            aliases = {item["symbol"]}
+            if item["path"] is not None:
+                aliases.add(item["path"])
+            if item["meaning"] is not None:
+                aliases.add(item["meaning"])
+            if aliases.isdisjoint(set(named_missing)):
+                raise _error(f"missing reference {item['symbol']!r}")
+            continue
+        admitted.append(item)
+
+    admitted_cids = {item["cid"] for item in admitted if item["cid"] is not None}
+    _cid_list(list(capsule_cids), "capsule_cids")
+    # Minimality: drop unreferenced capsules; do not mint them into identity.
+    minimal_capsules = sorted(admitted_cids - set(required_cids.values()))
+
+    if lineage is None:
+        bound_lineage = _default_required_lineage(
+            target_source_cid=target_cid,
+            surrounding_source_cid=surrounding_cid,
+            test_source_cid=test_cid,
+        )
+        for item in admitted:
+            bound_lineage.append(
+                {
+                    "path": item["path"] or f"{item['symbol']}.py",
+                    "symbol": item["symbol"],
+                    "cid": item["cid"],
+                    "kind": "dependency",
+                }
+            )
+    else:
+        if not isinstance(lineage, (list, tuple)):
+            raise _error("lineage must be a list")
+        bound_lineage = [
+            _bind_lineage_record(item, index) for index, item in enumerate(lineage)
+        ]
+        if len(bound_lineage) != len({_lineage_identity(item) for item in bound_lineage}):
+            raise _error("lineage must not contain duplicates")
+
+    lineage_by_kind = {kind: [] for kind in REQUIRED_SOURCE_KEYS}
+    known_cids = set(required_cids.values()) | set(minimal_capsules)
+    for record in bound_lineage:
+        if record["cid"] not in known_cids:
+            raise _error(f"missing reference {record['cid']}")
+        if record["kind"] in REQUIRED_SOURCE_KEYS:
+            lineage_by_kind[record["kind"]].append(record)
+            expected = required_cids[record["kind"]]
+            if record["cid"] != expected:
+                raise _error(
+                    f"source lineage {record['kind']} does not match required source CID"
+                )
+    for kind in REQUIRED_SOURCE_KEYS:
+        if not lineage_by_kind[kind]:
+            raise _error(f"missing reference {kind}")
+
+    cone_symbols = [item["symbol"] for item in admitted]
+    affected_files = _merge_string_lists(
+        (item["path"] for item in bound_lineage if item.get("path")),
+        (item["path"] for item in admitted if item.get("path")),
+    )
+    affected_symbols = _merge_string_lists(
+        (item["symbol"] for item in bound_lineage),
+        cone_symbols,
+    )
+    meanings = [
+        f"{item['symbol']}:{item['meaning']}"
+        for item in bound_dependencies
+        if item["meaning"] is not None
+    ]
+    derived_scope = {
+        "affected_files": affected_files,
+        "affected_symbols": affected_symbols,
+        "dependency_cone": sorted(cone_symbols),
+        "reverse_dependencies": named_reverse,
+        "explicitly_excluded_paths": excluded_paths,
+        "changed_interfaces_and_schemas": named_interfaces,
+        "semantic_diff_summary": semantic_diff_summary,
+    }
+    if scope is not None:
+        provided_scope = _closed(scope, SCOPE_FIELDS, "scope")
+        extra_cone = sorted(
+            set(_string_list(provided_scope["dependency_cone"], "scope.dependency_cone"))
+            - set(derived_scope["dependency_cone"])
+            - set(affected_symbols)
+        )
+        if extra_cone:
+            raise _error(f"missing reference {extra_cone}")
+        provided_files = _string_list(
+            provided_scope["affected_files"], "scope.affected_files"
+        )
+        provided_symbols = _string_list(
+            provided_scope["affected_symbols"], "scope.affected_symbols"
+        )
+        provided_reverse = _string_list(
+            provided_scope["reverse_dependencies"], "scope.reverse_dependencies"
+        )
+        provided_excluded = _string_list(
+            provided_scope["explicitly_excluded_paths"],
+            "scope.explicitly_excluded_paths",
+        )
+        provided_interfaces = _string_list(
+            provided_scope["changed_interfaces_and_schemas"],
+            "scope.changed_interfaces_and_schemas",
+        )
+        derived_scope = {
+            "affected_files": _merge_string_lists(
+                derived_scope["affected_files"], provided_files
+            ),
+            "affected_symbols": _merge_string_lists(
+                derived_scope["affected_symbols"], provided_symbols
+            ),
+            "dependency_cone": _merge_string_lists(
+                derived_scope["dependency_cone"],
+                _string_list(
+                    provided_scope["dependency_cone"], "scope.dependency_cone"
+                ),
+            ),
+            "reverse_dependencies": _merge_string_lists(
+                derived_scope["reverse_dependencies"], provided_reverse
+            ),
+            "explicitly_excluded_paths": _merge_string_lists(
+                derived_scope["explicitly_excluded_paths"], provided_excluded
+            ),
+            "changed_interfaces_and_schemas": _merge_string_lists(
+                derived_scope["changed_interfaces_and_schemas"],
+                provided_interfaces,
+            ),
+            "semantic_diff_summary": provided_scope["semantic_diff_summary"]
+            if provided_scope["semantic_diff_summary"] is not None
+            else derived_scope["semantic_diff_summary"],
+        }
+
+    derived_contracts = {field: [] for field in CONTRACT_FIELDS}
+    if contracts is not None:
+        derived_contracts = _bind_contracts(contracts)
+    derived_contracts["assumptions_and_guarantees"] = _merge_string_lists(
+        derived_contracts["assumptions_and_guarantees"],
+        meanings,
+    )
+
+    derived_validation = {field: [] for field in VALIDATION_FIELDS}
+    if validation is not None:
+        derived_validation = _bind_validation(validation)
+    derived_validation["proof_obligations"] = _merge_string_lists(
+        derived_validation["proof_obligations"],
+        named_obligations,
+    )
+
+    derived_questions = {
+        "named_unresolved_questions": named_questions,
+        "missing_evidence": named_missing,
+        "completeness_witness": completeness_witness,
+        "expansion_references": named_expansion,
+    }
+    derived_freshness = {field: [] for field in FRESHNESS_BINDING_FIELDS}
+    if freshness_bindings is not None:
+        derived_freshness = _bind_freshness_bindings(freshness_bindings)
+    derived_freshness["file_and_symbol_identities"] = _merge_string_lists(
+        derived_freshness["file_and_symbol_identities"],
+        (_lineage_identity(item) for item in bound_lineage),
+    )
+
+    return build_context_pack(
+        repository_state_cid=repository_state_cid,
+        task_id=task_id,
+        target_source_cid=target_cid,
+        surrounding_source_cid=surrounding_cid,
+        test_source_cid=test_cid,
+        scanned_tree_oid=scanned_tree_oid,
+        source_tree_oid=source_tree_oid,
+        capsule_cids=minimal_capsules,
+        identity_kind=identity_kind,
+        evidence_kind=evidence_kind,
+        execution_mode=execution_mode,
+        scope=derived_scope,
+        contracts=derived_contracts,
+        validation=derived_validation,
+        questions=derived_questions,
+        budgets=budgets,
+        freshness_bindings=derived_freshness,
+        history=history,
+        invalidation=invalidation,
+        **kwargs,
     )
