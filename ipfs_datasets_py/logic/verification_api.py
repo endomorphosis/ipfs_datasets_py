@@ -182,6 +182,10 @@ COMPOSITIONAL_VERIFICATION_OPERATIONS: Final[tuple[str, ...]] = (
     "open_incremental_smt_session",
     "compute_and_validate_interpolant",
     "run_z3_cvc5_differential",
+    "minimize_counterexample_context",
+    "minimize_unsat_core_context",
+    "qualify_craig_interpolant",
+    "run_cegar_refinement",
 )
 
 # Sealed artifact pins for checked compositional adapters (LGCVF-051).
@@ -209,6 +213,14 @@ COMPOSITIONAL_INTERPOLATION_INTERFACE: Final = "ValidatedCraigInterpolation@1"
 COMPOSITIONAL_INTERPOLATION_RECEIPT_SCHEMA: Final = "validated-craig-interpolant/v1"
 COMPOSITIONAL_SMT_DIFFERENTIAL_INTERFACE: Final = "SmtDifferentialVerification@1"
 COMPOSITIONAL_SMT_DIFFERENTIAL_SCHEMA: Final = "smt-differential-verification/v1"
+REFINEMENT_CONTEXT_INTERFACE: Final = "SemanticStateRefinementContext@1"
+REFINEMENT_CONTEXT_SCHEMA: Final = "semantic-state-refinement-context/v1"
+REFINEMENT_CONTEXT_OPERATIONS: Final[tuple[str, ...]] = (
+    "minimize_counterexample_context",
+    "minimize_unsat_core_context",
+    "qualify_craig_interpolant",
+    "run_cegar_refinement",
+)
 _COMPOSITIONAL_SESSION_METHODS: Final[tuple[str, ...]] = (
     "add_named_assertion",
     "push",
@@ -269,6 +281,26 @@ _COMPOSITIONAL_RESULT_CONTRACTS: Final[Mapping[str, tuple[str, str, str | None]]
                 COMPOSITIONAL_SMT_DIFFERENTIAL_SCHEMA,
                 COMPOSITIONAL_SMT_DIFFERENTIAL_INTERFACE,
                 "report_id",
+            ),
+            "minimize_counterexample_context": (
+                REFINEMENT_CONTEXT_SCHEMA,
+                REFINEMENT_CONTEXT_INTERFACE,
+                "receipt_cid",
+            ),
+            "minimize_unsat_core_context": (
+                REFINEMENT_CONTEXT_SCHEMA,
+                REFINEMENT_CONTEXT_INTERFACE,
+                "receipt_cid",
+            ),
+            "qualify_craig_interpolant": (
+                REFINEMENT_CONTEXT_SCHEMA,
+                REFINEMENT_CONTEXT_INTERFACE,
+                None,
+            ),
+            "run_cegar_refinement": (
+                REFINEMENT_CONTEXT_SCHEMA,
+                REFINEMENT_CONTEXT_INTERFACE,
+                "receipt_cid",
             ),
         }
     )
@@ -2236,6 +2268,74 @@ class LogicVerificationAPI:
         return _check_compositional_result(
             "run_z3_cvc5_differential",
             run_z3_cvc5_differential(_require_present(obligation, "obligation"), **kwargs),
+        )
+
+    def minimize_counterexample_context(
+        self, assertions: Any, witness: Any, replay: Any
+    ) -> Any:
+        """Minimize a trace only when every deletion replay is evidenced."""
+
+        from ipfs_datasets_py.logic.software_contracts.semantic_state.refinement_context import (
+            minimize_counterexample_context,
+        )
+
+        return _check_compositional_result(
+            "minimize_counterexample_context",
+            minimize_counterexample_context(
+                _require_present(assertions, "assertions"),
+                _require_present(witness, "witness"),
+                _require_present(replay, "replay"),
+            ),
+        )
+
+    def minimize_unsat_core_context(
+        self, assertions: Any, core_ids: Any, is_unsat: Any, **kwargs: Any
+    ) -> Any:
+        """Minimize an UNSAT core with explicit replay evidence per deletion."""
+
+        from ipfs_datasets_py.logic.software_contracts.semantic_state.refinement_context import (
+            minimize_unsat_core_context,
+        )
+
+        return _check_compositional_result(
+            "minimize_unsat_core_context",
+            minimize_unsat_core_context(
+                _require_present(assertions, "assertions"),
+                _require_present(core_ids, "core_ids"),
+                _require_present(is_unsat, "is_unsat"),
+                **kwargs,
+            ),
+        )
+
+    def qualify_craig_interpolant(self, receipt: Any) -> Any:
+        """Expose whether an interpolant receipt may safely refine CEGAR."""
+
+        from ipfs_datasets_py.logic.software_contracts.semantic_state.refinement_context import (
+            qualify_craig_interpolant,
+        )
+
+        return _check_compositional_result(
+            "qualify_craig_interpolant",
+            qualify_craig_interpolant(_require_present(receipt, "receipt")),
+        )
+
+    def run_cegar_refinement(
+        self, abstraction: Any, affected_abstractions: Any, check: Any, **kwargs: Any
+    ) -> Any:
+        """Run bounded CEGAR and expand only the declared affected abstraction."""
+
+        from ipfs_datasets_py.logic.software_contracts.semantic_state.refinement_context import (
+            run_cegar_refinement,
+        )
+
+        return _check_compositional_result(
+            "run_cegar_refinement",
+            run_cegar_refinement(
+                _require_present(abstraction, "abstraction"),
+                _require_present(affected_abstractions, "affected_abstractions"),
+                _require_present(check, "check"),
+                **kwargs,
+            ),
         )
 
     # ── LFP-044 Canonical discovery / dual-read one-write migration ───────
@@ -6752,6 +6852,30 @@ def compute_and_validate_interpolant(
 def run_z3_cvc5_differential(obligation: Any, **kwargs: Any) -> Any:
     return get_verification_api().run_z3_cvc5_differential(obligation, **kwargs)
 
+
+def minimize_counterexample_context(assertions: Any, witness: Any, replay: Any) -> Any:
+    return get_verification_api().minimize_counterexample_context(assertions, witness, replay)
+
+
+def minimize_unsat_core_context(
+    assertions: Any, core_ids: Any, is_unsat: Any, **kwargs: Any
+) -> Any:
+    return get_verification_api().minimize_unsat_core_context(
+        assertions, core_ids, is_unsat, **kwargs
+    )
+
+
+def qualify_craig_interpolant(receipt: Any) -> Any:
+    return get_verification_api().qualify_craig_interpolant(receipt)
+
+
+def run_cegar_refinement(
+    abstraction: Any, affected_abstractions: Any, check: Any, **kwargs: Any
+) -> Any:
+    return get_verification_api().run_cegar_refinement(
+        abstraction, affected_abstractions, check, **kwargs
+    )
+
 def list_logic_families() -> VerificationResponse:
     return get_verification_api().list_logic_families()
 
@@ -7099,6 +7223,9 @@ __all__ = [
     "COMPOSITIONAL_SMT_DIFFERENTIAL_INTERFACE",
     "COMPOSITIONAL_SMT_DIFFERENTIAL_SCHEMA",
     "COMPOSITIONAL_VERIFICATION_OPERATIONS",
+    "REFINEMENT_CONTEXT_INTERFACE",
+    "REFINEMENT_CONTEXT_OPERATIONS",
+    "REFINEMENT_CONTEXT_SCHEMA",
     "LOGIC_MIGRATION_ARTIFACT_SCHEMA",
     "LOGIC_VERIFICATION_API_INTERFACE",
     "LOGIC_VERIFICATION_API_VERSION",
@@ -7159,6 +7286,9 @@ __all__ = [
     "monitor",
     "open_incremental_smt_session",
     "plan_incremental_verification",
+    "minimize_counterexample_context",
+    "minimize_unsat_core_context",
+    "qualify_craig_interpolant",
     "plan_proof",
     "probe_provider",
     "production_authorization_check",
@@ -7169,6 +7299,7 @@ __all__ = [
     "provider_role",
     "replay_counterexample",
     "run_portfolio",
+    "run_cegar_refinement",
     "run_z3_cvc5_differential",
     "secpal_artifact_intake",
     "secpal_compatibility_lookup",
