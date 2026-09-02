@@ -1,6 +1,8 @@
-"""LogicProviderProtocol@2 — operation-specific typed provider requests (LPC-050).
+"""LogicProviderProtocol@2 — canonical operation-specific typed provider requests.
 
-Interface: ``LogicProviderProtocol@2``.
+Interface: ``LogicProviderProtocol@2``.  This is the canonical
+``LogicProviderProtocol`` (PCPR-013).  Version 1 remains a compatibility
+envelope only.
 
 Replaces unrestricted JSON ``payload`` routing from ``LogicProvider@1`` with
 typed, operation-specific request records:
@@ -66,6 +68,12 @@ from ipfs_datasets_py.logic.syntax_core.contracts import (
 
 LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE: Final = "LogicProviderProtocol@2"
 LOGIC_PROVIDER_PROTOCOL_VERSION: Final = 2
+LOGIC_PROVIDER_PROTOCOL_CANONICAL: Final = True
+LOGIC_PROVIDER_PROTOCOL_MATURITY: Final = "stable"
+CANONICAL_LOGIC_PROVIDER_PROTOCOL_INTERFACE: Final = (
+    LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE
+)
+CANONICAL_LOGIC_PROVIDER_PROTOCOL_VERSION: Final = LOGIC_PROVIDER_PROTOCOL_VERSION
 LOGIC_PROVIDER_PROTOCOL_V2_MODULE_VERSION: Final = "1.0.0"
 
 LOGIC_PROVIDER_PROTOCOL_V2_SCHEMA: Final = (
@@ -1416,7 +1424,11 @@ class ProviderProtocolEnvelopeV2:
 
 @runtime_checkable
 class LogicProviderProtocolV2(Protocol):
-    """Structural LogicProviderProtocol@2 surface for concrete providers."""
+    """Structural LogicProviderProtocol@2 surface for concrete providers.
+
+    This is the canonical provider protocol.  The public alias
+    :data:`LogicProviderProtocol` names the same surface.
+    """
 
     provider_id: str
     provider_version: str
@@ -1456,6 +1468,22 @@ class LogicProviderProtocolV2(Protocol):
         self, request: AttestRequestV2
     ) -> Mapping[str, Any]:
         ...
+
+
+# Canonical public name. LogicProviderProtocol@2 is the current successor.
+LogicProviderProtocol = LogicProviderProtocolV2
+
+
+def admit_canonical_provider_request(
+    value: Mapping[str, Any] | ProviderRequestV2,
+) -> ProviderRequestV2:
+    """Canonical new-write gate: LogicProviderProtocol@2 typed requests only.
+
+    Free-form v1 payloads are rejected.  Dual-read of v1 generics must use
+    the explicit v1 adapter.
+    """
+
+    return admit_provider_request_v2(value)
 
 
 def require_executable_bounds(request: ProviderRequestV2) -> RequestBounds:
@@ -1517,8 +1545,12 @@ def v1_operation_for(operation: ProtocolOperationV2 | str) -> LogicProviderOpera
 
 __all__ = [
     "ATTEST_REQUEST_V2_SCHEMA",
+    "CANONICAL_LOGIC_PROVIDER_PROTOCOL_INTERFACE",
+    "CANONICAL_LOGIC_PROVIDER_PROTOCOL_VERSION",
     "CAPABILITY_REQUEST_V2_SCHEMA",
     "EXECUTABLE_OPERATIONS",
+    "LOGIC_PROVIDER_PROTOCOL_CANONICAL",
+    "LOGIC_PROVIDER_PROTOCOL_MATURITY",
     "LOGIC_PROVIDER_PROTOCOL_VERSION",
     "LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE",
     "LOGIC_PROVIDER_PROTOCOL_V2_MODULE_VERSION",
@@ -1532,6 +1564,7 @@ __all__ = [
     "ArbitraryPayloadProtocolError",
     "AttestRequestV2",
     "CapabilityRequestV2",
+    "LogicProviderProtocol",
     "LogicProviderProtocolV2",
     "MissingExecutableBoundsError",
     "ProveCheckMode",
@@ -1544,6 +1577,7 @@ __all__ = [
     "ReconstructRequestV2",
     "TranslationRequestV2",
     "VerifyRequestV2",
+    "admit_canonical_provider_request",
     "admit_provider_request_v2",
     "content_digest_for_request",
     "is_executable_operation",

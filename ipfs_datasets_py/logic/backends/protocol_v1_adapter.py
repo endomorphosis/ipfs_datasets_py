@@ -1,6 +1,7 @@
 """Explicit LogicProvider@1 → LogicProviderProtocol@2 adapter (LPC-051).
 
-Interface: ``LogicProviderProtocolV1Adapter@1``.
+Interface: ``LogicProviderProtocolV1Adapter@1``.  Compatibility-only; not
+canonical.  New writes use ``LogicProviderProtocol@2``.
 
 ``LogicProvider@1`` carries an unrestricted JSON ``payload``.  That envelope
 must never silently become executable work or mint a
@@ -75,6 +76,8 @@ from ipfs_datasets_py.logic.syntax_core.contracts import (
 
 PROTOCOL_V1_ADAPTER_INTERFACE: Final = "LogicProviderProtocolV1Adapter@1"
 PROTOCOL_V1_ADAPTER_VERSION: Final = "1.0.0"
+PROTOCOL_V1_ADAPTER_CANONICAL: Final = False
+PROTOCOL_V1_ADAPTER_MATURITY: Final = "compatibility_only"
 PROTOCOL_V1_ADAPTER_SCHEMA: Final = (
     "ipfs_datasets_py/logic-provider-v1-adapter@1"
 )
@@ -856,7 +859,9 @@ def is_executable_v1_elevation(
 __all__ = [
     "ADVISORY_V1_RETENTION_SCHEMA",
     "EXECUTABLE_OPERATIONS",
+    "PROTOCOL_V1_ADAPTER_CANONICAL",
     "PROTOCOL_V1_ADAPTER_INTERFACE",
+    "PROTOCOL_V1_ADAPTER_MATURITY",
     "PROTOCOL_V1_ADAPTER_SCHEMA",
     "PROTOCOL_V1_ADAPTER_VERSION",
     "AdvisoryV1Retention",

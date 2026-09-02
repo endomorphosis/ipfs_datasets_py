@@ -28,7 +28,8 @@ from types import MappingProxyType
 from typing import Any, ClassVar, Final
 
 from ipfs_datasets_py.logic.backends.provider import (
-    LOGIC_PROVIDER_PROTOCOL_VERSION,
+    LOGIC_PROVIDER_PROTOCOL_V1_INTERFACE,
+    LOGIC_PROVIDER_PROTOCOL_VERSION as LOGIC_PROVIDER_PROTOCOL_V1_VERSION,
     LOGIC_PROVIDER_REQUEST_SCHEMA,
     LOGIC_PROVIDER_RESPONSE_SCHEMA,
 )
@@ -55,6 +56,18 @@ DOMAIN_LOGIC_SLICE_V2_SCHEMA_VERSION: Final = "domain-logic-slice/v2"
 GOAL_DIRECTED_PROOF_PLAN_INTERFACE: Final = "GoalDirectedProofPlan@1"
 GOAL_DIRECTED_PROOF_PLAN_SCHEMA: Final = (
     "ipfs_datasets_py/logic/software_verification/goal-directed-proof-plan@1"
+)
+# Handshake identity only. Canonical protocol is @2; v1 is compatibility.
+LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE: Final = "LogicProviderProtocol@2"
+LOGIC_PROVIDER_PROTOCOL_V2_VERSION: Final = "2"
+LOGIC_PROVIDER_PROTOCOL_V1_ADAPTER_INTERFACE: Final = (
+    "LogicProviderProtocolV1Adapter@1"
+)
+LOGIC_PROVIDER_PROTOCOL_V2_SCHEMA: Final = (
+    "ipfs_datasets_py/logic-provider-protocol@2"
+)
+LOGIC_PROVIDER_RESPONSE_V2_SCHEMA: Final = (
+    "ipfs_datasets_py/logic-provider-response@2"
 )
 
 # ---------------------------------------------------------------------------
@@ -292,7 +305,11 @@ def _default_interface_versions() -> Mapping[str, str]:
             LOGIC_OBLIGATION_V2_INTERFACE: "2",
             BACKEND_REQUEST_V2_INTERFACE: "2",
             GOAL_DIRECTED_PROOF_PLAN_INTERFACE: "1",
-            "LogicProviderProtocol@1": str(LOGIC_PROVIDER_PROTOCOL_VERSION),
+            LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE: LOGIC_PROVIDER_PROTOCOL_V2_VERSION,
+            LOGIC_PROVIDER_PROTOCOL_V1_ADAPTER_INTERFACE: "1.0.0",
+            LOGIC_PROVIDER_PROTOCOL_V1_INTERFACE: str(
+                LOGIC_PROVIDER_PROTOCOL_V1_VERSION
+            ),
         }
     )
 
@@ -306,20 +323,23 @@ def _default_schema_roots() -> Mapping[str, str]:
             "logic_obligation": LOGIC_OBLIGATION_V2_SCHEMA_VERSION,
             "backend_request": BACKEND_REQUEST_V2_SCHEMA_VERSION,
             "goal_directed_proof_plan": GOAL_DIRECTED_PROOF_PLAN_SCHEMA,
-            "provider_request": LOGIC_PROVIDER_REQUEST_SCHEMA,
-            "provider_response": LOGIC_PROVIDER_RESPONSE_SCHEMA,
+            "provider_request": LOGIC_PROVIDER_PROTOCOL_V2_SCHEMA,
+            "provider_response": LOGIC_PROVIDER_RESPONSE_V2_SCHEMA,
+            "provider_request_v1": LOGIC_PROVIDER_REQUEST_SCHEMA,
+            "provider_response_v1": LOGIC_PROVIDER_RESPONSE_SCHEMA,
             "manifest": LOGIC_PLATFORM_MANIFEST_SCHEMA,
         }
     )
 
 
 def _default_operation_versions() -> Mapping[str, str]:
-    protocol = str(LOGIC_PROVIDER_PROTOCOL_VERSION)
+    protocol = LOGIC_PROVIDER_PROTOCOL_V2_VERSION
     return MappingProxyType(
         {
             "capability": protocol,
             "translate": protocol,
             "prove": protocol,
+            "check": protocol,
             "reconstruct": protocol,
             "verify": protocol,
             "attest": protocol,
@@ -1062,6 +1082,10 @@ __all__ = [
     "LOGIC_PLATFORM_MANIFEST_SCHEMA",
     "LOGIC_PLATFORM_MANIFEST_TASK_ID",
     "LOGIC_PLATFORM_MANIFEST_VERSION",
+    "LOGIC_PROVIDER_PROTOCOL_V1_ADAPTER_INTERFACE",
+    "LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE",
+    "LOGIC_PROVIDER_PROTOCOL_V2_SCHEMA",
+    "LOGIC_PROVIDER_PROTOCOL_V2_VERSION",
     "PACKAGE_NAME",
     "HandshakeRequirements",
     "HandshakeResult",
