@@ -84,6 +84,20 @@ live-scanner-qualified = false
 slsa-attestation-live = false
 release-claim = false
 
+[tool.ipfs-datasets-py.signed-tags-and-artifacts]
+schema = "ipfs_datasets_py/assurance/signed-tags-and-artifacts@1"
+interface = "DatasetsSignedTagsAndArtifacts@1"
+task-id = "PCPR-055"
+goal-id = "PCPR-G600"
+tag-kind = "declared_signed_tag_policy"
+checksum-kind = "declared_artifact_checksum_manifest"
+intended-tag-name = "ipfs_datasets_py-v0.2.0"
+hashes-invented = false
+signatures-invented = false
+live-signed-tag = false
+live-artifact-signature = false
+release-claim = false
+
 [tool.ipfs-accelerate-py.agent-supervisor.validation-dependencies]
 schema = "ipfs_accelerate_py/agent-supervisor/validation-dependencies@1"
 scope = "complete-authoritative-validation-environment"

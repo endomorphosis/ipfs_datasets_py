@@ -124,6 +124,15 @@ DATASETS_SBOM_AND_PROVENANCE_INTERFACE: Final = "DatasetsSbomAndProvenance@1"
 DATASETS_SBOM_AND_PROVENANCE_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/sbom-and-provenance@1"
 )
+# PCPR-055 declared signed tags and artifacts. Handshake identity only;
+# live GPG/SSH git tags, cosign signatures, and published wheel/sdist
+# identities stay typed unavailable until admitted.
+DATASETS_SIGNED_TAGS_AND_ARTIFACTS_INTERFACE: Final = (
+    "DatasetsSignedTagsAndArtifacts@1"
+)
+DATASETS_SIGNED_TAGS_AND_ARTIFACTS_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/signed-tags-and-artifacts@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -376,6 +385,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_CLEAN_PACKAGE_INTERFACE: "1",
             DATASETS_DEPENDENCY_LOCKS_INTERFACE: "1",
             DATASETS_SBOM_AND_PROVENANCE_INTERFACE: "1",
+            DATASETS_SIGNED_TAGS_AND_ARTIFACTS_INTERFACE: "1",
         }
     )
 
@@ -404,6 +414,7 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_clean_package": DATASETS_CLEAN_PACKAGE_SCHEMA,
             "datasets_dependency_locks": DATASETS_DEPENDENCY_LOCKS_SCHEMA,
             "datasets_sbom_and_provenance": DATASETS_SBOM_AND_PROVENANCE_SCHEMA,
+            "datasets_signed_tags_and_artifacts": DATASETS_SIGNED_TAGS_AND_ARTIFACTS_SCHEMA,
         }
     )
 
@@ -430,6 +441,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "clean_package": "1",
             "dependency_locks": "1",
             "sbom_and_provenance": "1",
+            "signed_tags_and_artifacts": "1",
         }
     )
 
