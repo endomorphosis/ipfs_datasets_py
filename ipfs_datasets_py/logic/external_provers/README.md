@@ -1,27 +1,27 @@
 # External Theorem Prover Integration
 
 **Version:** 1.0.0  
-**Status:** Production Ready  
+**Status:** R&D / not production-qualified  
 **Location:** `ipfs_datasets_py/logic/external_provers/`
 
 ---
 
 ## Overview
 
-This module provides integration with world-class external theorem provers, enabling the neurosymbolic reasoning system to leverage:
+This module provides adapters for optional external theorem provers. Live use requires sealed-PATH or approved digest-bound evidence (PCPR-017). Missing solvers stay typed unavailable. User-home installs and simulated fixtures are not live qualification. This README is not a closed PCPR release.
 
-- **SMT Solvers:** Z3, CVC5 (industrial-strength satisfiability solving) ✅ COMPLETE
-- **Interactive Provers:** Lean 4, Coq (formal verification and proof assistants) ✅ COMPLETE
-- **Neural/LLM Provers:** SymbolicAI (semantic understanding and natural language reasoning) ✅ COMPLETE
+- **SMT Solvers:** Z3, CVC5 adapters exist; live claims require live evidence
+- **Interactive Provers:** Lean 4, Coq adapters exist; live claims require live evidence
+- **Neural/LLM Provers:** SymbolicAI adapter exists; not a live SMT/ITP qualification
 
 The integration includes:
-- ✅ Unified prover interface
-- ✅ Automatic prover selection and routing
-- ✅ CID-based proof caching (O(1) lookups)
-- ✅ Parallel proving support
-- ✅ Performance monitoring
-- ✅ Graceful fallbacks
-- ✅ **All 5 provers fully implemented!**
+- Unified prover interface
+- Automatic prover selection and routing
+- CID-based proof caching
+- Parallel proving support
+- Performance monitoring
+- Fallbacks that cannot mint live success
+- Adapters for Z3, CVC5, Lean, Coq, and SymbolicAI
 
 ---
 

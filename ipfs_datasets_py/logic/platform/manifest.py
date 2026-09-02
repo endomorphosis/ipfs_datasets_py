@@ -99,6 +99,12 @@ DATASETS_LICENSE_METADATA_INTERFACE: Final = "DatasetsLicenseMetadata@1"
 DATASETS_LICENSE_METADATA_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/license-authority@1"
 )
+# PCPR-017 solver qualification. Handshake identity only; live solvers require
+# sealed-PATH or digest-bound evidence. Missing solvers stay typed unavailable.
+DATASETS_SOLVER_QUALIFICATION_INTERFACE: Final = "DatasetsSolverQualification@1"
+DATASETS_SOLVER_QUALIFICATION_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/solver-qualification@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -347,6 +353,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_SCHEMA_PACKAGING_INTERFACE: "1",
             DATASETS_SHARED_VECTORS_INTERFACE: "1",
             DATASETS_LICENSE_METADATA_INTERFACE: "1",
+            DATASETS_SOLVER_QUALIFICATION_INTERFACE: "1",
         }
     )
 
@@ -371,6 +378,7 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_schema_packaging": DATASETS_SCHEMA_PACKAGING_SCHEMA,
             "datasets_shared_vectors": DATASETS_SHARED_VECTORS_SCHEMA,
             "datasets_license_metadata": DATASETS_LICENSE_METADATA_SCHEMA,
+            "datasets_solver_qualification": DATASETS_SOLVER_QUALIFICATION_SCHEMA,
         }
     )
 
@@ -393,6 +401,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "schema_packaging": "1",
             "shared_vectors": "1",
             "license_metadata": "1",
+            "solver_qualification": "1",
         }
     )
 

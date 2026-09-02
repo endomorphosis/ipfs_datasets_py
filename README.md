@@ -408,22 +408,14 @@ print(f"Relationships: {kg.relationships}")
 
 #### Optional: Z3 / CVC5 / Lean / Coq theorem provers
 
-Z3, CVC5, Lean, and Coq are external system tools (not Python packages). `ipfs_datasets_py` can use them for symbolic proof execution when installed.
+Z3, CVC5, Lean, and Coq are optional external tools, not Python packages. Live solver claims require live evidence from the sealed validation PATH (`/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin`) or an approved digest-bound, root-owned, non-writable toolchain. User-home installs (`~/.elan`, `~/.local`) and simulated fixtures are not live qualification. Missing solvers stay typed unavailable and are not recorded as passing.
 
-- Manual best-effort installer:
+- Explicit operator install (not import-time, not live qualification):
 	- `ipfs-datasets-install-provers --yes --z3 --cvc5 --lean --coq`
 
-- Auto-run after `setup.py` install/develop (enabled by default; set to `0` to disable):
-	- `IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS=1` (set `0` to disable)
-	- Fine-grained toggles:
-		- `IPFS_DATASETS_PY_AUTO_INSTALL_Z3=1`
-		- `IPFS_DATASETS_PY_AUTO_INSTALL_CVC5=1`
-		- `IPFS_DATASETS_PY_AUTO_INSTALL_LEAN=1`
-		- `IPFS_DATASETS_PY_AUTO_INSTALL_COQ=1`
+Auto-install after `setup.py` (including `IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS` and the per-solver `IPFS_DATASETS_PY_AUTO_INSTALL_*` toggles) is not a sealed-PATH or digest-bound deployment and cannot mint live qualification. Lean-via-elan into a user home is not live qualification.
 
-Notes:
-- Lean installs via `elan` into your user home.
-- Z3/CVC5/Coq installation depends on your OS/package manager; auto-install may require root (apt) or manual steps.
+PCPR-017 records the current-head solver matrix as an R&D non-promotion. It is not a closed PCPR release.
 
 ## 🤖 MCP Server
 
@@ -921,7 +913,7 @@ Complete neurosymbolic reasoning system (790+ tests, 94% coverage).
 - **logic/ErgoAI/** - ErgoAI integration *(planned — placeholder)*
 - **logic/flogic/** - Functional logic utilities
 - **logic/integration/** - Bridge adapters (TDFOL↔CEC, UCAN policy, neurosymbolic GraphRAG)
-- **logic/external_provers/** - Z3, CVC5, Lean 4, Coq router
+- **logic/external_provers/** - Z3, CVC5, Lean 4, Coq adapters; live use requires sealed-PATH or digest-bound evidence (otherwise typed unavailable)
 
 **Canonical API:**
 
