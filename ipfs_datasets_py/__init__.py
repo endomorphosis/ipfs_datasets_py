@@ -221,13 +221,19 @@ class _FallbackIPFSDatasets:
     PCPR-011: download and upload never return status success without a real
     effect. Missing backends stay typed Unavailable. Simulation requires
     explicit caller selection and is never represented as live.
+    PCPR-012: this public surface is typed unavailable, never silent None.
     """
+
+    surface_maturity = "unavailable"
+    unavailable = True
 
     def __init__(self, *_: object, **__: object) -> None:
         self.status = "unavailable"
         self.outcome = "Unavailable"
         self.ok = False
         self.live = False
+        self.surface_maturity = "unavailable"
+        self.unavailable = True
 
     def list_datasets(self) -> list:
         """No catalog is observed when the backend is unavailable."""
@@ -317,9 +323,10 @@ class _FallbackIPFSDatasets:
 # NOTE: intentionally lazy; see `__getattr__`.
 HAVE_IPFS_DATASETS = False
 
-# Re-export key functions with automated installation (lazy; see __getattr__)
+# Re-export key functions (lazy; see __getattr__). PCPR-012: load_dataset is
+# never silent None. Missing HuggingFace datasets resolve to a typed
+# Unavailable surface via DatasetsTypedOutcomesCanonical@1.
 HAVE_LOAD_DATASET = False
-load_dataset = None
 
 
 # IPLD components (lazy; see __getattr__).
@@ -1142,25 +1149,12 @@ def __getattr__(name: str):
 
     if name == "load_dataset":
         global HAVE_LOAD_DATASET
-        if _MINIMAL_IMPORTS:
-            globals()["load_dataset"] = None
-            HAVE_LOAD_DATASET = False
-            return None
-        try:
-            # Best-effort: only attempt optional dependency resolution when requested.
-            ok = ensure_module("datasets", "datasets", required=False)
-            if ok:
-                from datasets import load_dataset as _load_dataset
+        from .assurance.typed_outcomes import resolve_load_dataset_surface
 
-                globals()["load_dataset"] = _load_dataset
-                HAVE_LOAD_DATASET = True
-                return _load_dataset
-        except Exception:
-            pass
-
-        globals()["load_dataset"] = None
-        HAVE_LOAD_DATASET = False
-        return None
+        surface = resolve_load_dataset_surface(minimal_imports=_MINIMAL_IMPORTS)
+        globals()["load_dataset"] = surface
+        HAVE_LOAD_DATASET = bool(surface) and not surface.unavailable
+        return surface
 
     # -----------------------------------------------------------------------
     # Phase E+F canonical package modules (lazy on first access)
