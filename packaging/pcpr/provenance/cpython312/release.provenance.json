@@ -1,0 +1,139 @@
+{
+  "artifacts": {
+    "container": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "No container digest is bound by this declared provenance.",
+      "status": "unavailable"
+    },
+    "sbom": {
+      "evidence_kind": "measured",
+      "live": false,
+      "path": "packaging/pcpr/sbom/cpython312/release.sbom.json",
+      "sbom_cid": "baguqeerao2zimzk7v7femnhzw5zhlvalaaor6foyvkrca3fneuhpe6ieoneq",
+      "status": "observed"
+    },
+    "sdist": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "No published sdist digest is bound. Hermetic private builds are not a PCPR release.",
+      "status": "unavailable"
+    },
+    "wheel": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "No published wheel digest is bound. Hermetic private builds are not a PCPR release.",
+      "status": "unavailable"
+    }
+  },
+  "builder": {
+    "id": "urn:pcpr:builder:declared-release-profile@1",
+    "live": false,
+    "reason": "This builder identity is declared R&D, not a live SLSA builder.",
+    "signed": false
+  },
+  "closed_release_outcome": null,
+  "commands": {
+    "cosign_sign": "unavailable",
+    "cyclonedx_scan": "unavailable",
+    "intended_build": "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin SOURCE_DATE_EPOCH=0 /usr/bin/python3.12 -m build --wheel --sdist",
+    "materialize": "python -c \"from ipfs_datasets_py.assurance.sbom_and_provenance import write_sbom_and_provenance_files; write_sbom_and_provenance_files()\"",
+    "observed_build": "unavailable",
+    "slsa_attest": "unavailable",
+    "syft_scan": "unavailable"
+  },
+  "evidence_kind": "measured",
+  "goal_id": "PCPR-G600",
+  "hashes_invented": false,
+  "interface": "DatasetsSbomAndProvenance@1",
+  "live": false,
+  "lock_cid": "baguqeeraxwt7j3qjwfy3yvicngqwrnx2suobs3yxa4ah6gbgbszxrbsrid7q",
+  "native_dependencies": {
+    "coqtop": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "coqtop is absent from the sealed PATH.",
+      "status": "unavailable"
+    },
+    "cvc5": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "cvc5 is absent from the sealed PATH.",
+      "status": "unavailable"
+    },
+    "lean": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "lean is absent from the sealed PATH.",
+      "status": "unavailable"
+    },
+    "z3": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "z3 is absent from the sealed PATH.",
+      "status": "unavailable"
+    }
+  },
+  "package_name": "ipfs_datasets_py",
+  "package_version": "0.2.0",
+  "predicate_type": "https://slsa.dev/provenance/v1",
+  "program_id": "proof-carrying-platform-qualification-and-release-v1",
+  "provenance_cid": "baguqeeraoq7sa7f5vjjauqzgwuz5w4lo4cayvmf3lwiijyurtn6dhtgakeia",
+  "provenance_kind": "declared_build_binding",
+  "release_claim": false,
+  "sbom_cid": "baguqeerao2zimzk7v7femnhzw5zhlvalaaor6foyvkrca3fneuhpe6ieoneq",
+  "schema": "ipfs_datasets_py/assurance/build-provenance@1",
+  "slsa": {
+    "evidence_kind": "unavailable",
+    "level": "unavailable",
+    "live": false,
+    "reason": "slsa-generator, in-toto, and cosign are absent from the sealed PATH. A signed SLSA attestation was not invented.",
+    "signed": false,
+    "status": "unavailable"
+  },
+  "source": {
+    "binding": "current_head_not_mutable_main",
+    "commit": {
+      "evidence_kind": "measured",
+      "field": "PCPR-054 receipt current_tree_binding",
+      "live": false,
+      "reason": "Exact commit and tree are bound by the task receipt because nested admission rewrites HEAD. This document does not pin origin/main.",
+      "status": "observed_at_evaluation"
+    },
+    "kind": "git",
+    "mutable_main_reference": false,
+    "origin_url": "https://github.com/endomorphosis/ipfs_datasets_py",
+    "repository": "endomorphosis/ipfs_datasets_py"
+  },
+  "task_id": "PCPR-054",
+  "tools": {
+    "build": "/usr/local/lib/python3.12/dist-packages/build/__init__.py",
+    "evidence_kind": "measured",
+    "git": "/usr/bin/git",
+    "pip": "/usr/bin/pip",
+    "provenance_attestors": {
+      "cosign": "unavailable",
+      "in_toto_run": "unavailable",
+      "in_toto_sign": "unavailable",
+      "slsa_generator": "unavailable",
+      "slsa_verifier": "unavailable"
+    },
+    "python": "/usr/bin/python3.12",
+    "python_version": "Python 3.12.3",
+    "sbom_scanners": {
+      "cdxgen": "unavailable",
+      "cyclonedx": "unavailable",
+      "cyclonedx_bom": "unavailable",
+      "cyclonedx_py": "unavailable",
+      "grype": "unavailable",
+      "syft": "unavailable",
+      "trivy": "unavailable"
+    },
+    "sealed_path": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin",
+    "sealed_python": "/usr/bin/python3.12",
+    "setuptools": "/usr/local/lib/python3.12/dist-packages/setuptools/__init__.py",
+    "source_date_epoch": "0",
+    "uv": "unavailable",
+    "wheel": "/usr/lib/python3/dist-packages/wheel/__init__.py"
+  }
+}

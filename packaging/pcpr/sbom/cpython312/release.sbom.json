@@ -1,0 +1,183 @@
+{
+  "artifacts": {
+    "container": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "No container digest is bound by this declared-spec lock.",
+      "status": "unavailable"
+    },
+    "sdist": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "No published sdist identity is bound by this declared-spec lock.",
+      "status": "unavailable"
+    },
+    "wheel": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "No published wheel identity is bound by this declared-spec lock.",
+      "status": "unavailable"
+    }
+  },
+  "closed_release_outcome": null,
+  "cyclonedx": {
+    "evidence_kind": "unavailable",
+    "live": false,
+    "reason": "cyclonedx-bom and cdxgen are absent from the sealed PATH. A CycloneDX document was not invented.",
+    "status": "unavailable"
+  },
+  "direct_package_count": 0,
+  "direct_packages": [],
+  "evidence_kind": "measured",
+  "files_analyzed": false,
+  "goal_id": "PCPR-G600",
+  "hashes_invented": false,
+  "interface": "DatasetsSbomAndProvenance@1",
+  "live": false,
+  "live_scanner_qualified": false,
+  "lock_cid": "baguqeeraxwt7j3qjwfy3yvicngqwrnx2suobs3yxa4ah6gbgbszxrbsrid7q",
+  "lock_kind": "declared_release_profile",
+  "native_dependencies": {
+    "coqtop": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "coqtop is absent from the sealed PATH.",
+      "status": "unavailable"
+    },
+    "cvc5": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "cvc5 is absent from the sealed PATH.",
+      "status": "unavailable"
+    },
+    "lean": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "lean is absent from the sealed PATH.",
+      "status": "unavailable"
+    },
+    "z3": {
+      "evidence_kind": "unavailable",
+      "live": false,
+      "reason": "z3 is absent from the sealed PATH.",
+      "status": "unavailable"
+    }
+  },
+  "package_name": "ipfs_datasets_py",
+  "package_version": "0.2.0",
+  "program_id": "proof-carrying-platform-qualification-and-release-v1",
+  "python_requires": ">=3.12",
+  "release_claim": false,
+  "requirements_authority": "setup.py:install_requires",
+  "root": {
+    "license_declared": "AGPL-3.0-only",
+    "mutable_main_reference": false,
+    "name": "ipfs_datasets_py",
+    "source_repository": "endomorphosis/ipfs_datasets_py",
+    "version": "0.2.0"
+  },
+  "sbom_cid": "baguqeerao2zimzk7v7femnhzw5zhlvalaaor6foyvkrca3fneuhpe6ieoneq",
+  "sbom_kind": "declared_release_profile",
+  "scanners": {
+    "evidence_kind": "unavailable",
+    "live": false,
+    "reason": "Syft, CycloneDX, cdxgen, Trivy, and Grype are absent from the sealed PATH. A scanner SBOM was not invented.",
+    "status": "unavailable",
+    "tools": {
+      "cdxgen": {
+        "evidence_kind": "unavailable",
+        "live": false,
+        "reason": "cdxgen is absent from the sealed PATH.",
+        "status": "unavailable"
+      },
+      "cyclonedx": {
+        "evidence_kind": "unavailable",
+        "live": false,
+        "reason": "cyclonedx is absent from the sealed PATH.",
+        "status": "unavailable"
+      },
+      "cyclonedx_bom": {
+        "evidence_kind": "unavailable",
+        "live": false,
+        "reason": "cyclonedx_bom is absent from the sealed PATH.",
+        "status": "unavailable"
+      },
+      "cyclonedx_py": {
+        "evidence_kind": "unavailable",
+        "live": false,
+        "reason": "cyclonedx_py is absent from the sealed PATH.",
+        "status": "unavailable"
+      },
+      "grype": {
+        "evidence_kind": "unavailable",
+        "live": false,
+        "reason": "grype is absent from the sealed PATH.",
+        "status": "unavailable"
+      },
+      "syft": {
+        "evidence_kind": "unavailable",
+        "live": false,
+        "reason": "syft is absent from the sealed PATH.",
+        "status": "unavailable"
+      },
+      "trivy": {
+        "evidence_kind": "unavailable",
+        "live": false,
+        "reason": "trivy is absent from the sealed PATH.",
+        "status": "unavailable"
+      }
+    }
+  },
+  "schema": "ipfs_datasets_py/assurance/declared-sbom@1",
+  "sibling_source_required": false,
+  "source_date_epoch": "0",
+  "spdx": {
+    "SPDXID": "SPDXRef-DOCUMENT",
+    "creationInfo": {
+      "comment": "created is SOURCE_DATE_EPOCH=0. It is not a live scan timestamp.",
+      "created": "1970-01-01T00:00:00Z",
+      "creators": [
+        "Tool: DatasetsSbomAndProvenance@1"
+      ]
+    },
+    "dataLicense": "CC0-1.0",
+    "documentNamespace": "urn:pcpr:declared-sbom:ipfs_datasets_py:0.2.0",
+    "name": "ipfs_datasets_py-0.2.0-declared-release-profile",
+    "packages": [
+      {
+        "SPDXID": "SPDXRef-Package-ipfs-datasets-py",
+        "comment": "Root package of the declared release profile. The core is dependency-free. Files were not analyzed.",
+        "downloadLocation": "git+https://github.com/endomorphosis/ipfs_datasets_py",
+        "externalRefs": [
+          {
+            "referenceCategory": "PACKAGE-MANAGER",
+            "referenceLocator": "pkg:pypi/ipfs_datasets_py@0.2.0",
+            "referenceType": "purl"
+          }
+        ],
+        "filesAnalyzed": false,
+        "licenseConcluded": "AGPL-3.0-only",
+        "licenseDeclared": "AGPL-3.0-only",
+        "name": "ipfs_datasets_py",
+        "supplier": "Organization: endomorphosis",
+        "versionInfo": "0.2.0"
+      }
+    ],
+    "relationships": [
+      {
+        "relatedSpdxElement": "SPDXRef-Package-ipfs-datasets-py",
+        "relationshipType": "DESCRIBES",
+        "spdxElementId": "SPDXRef-DOCUMENT"
+      }
+    ],
+    "spdxVersion": "SPDX-2.3"
+  },
+  "spdx_version": "SPDX-2.3",
+  "task_id": "PCPR-054",
+  "transitive_packages": {
+    "evidence_kind": "unavailable",
+    "live": false,
+    "reason": "The empty core has no transitive graph. A transitive SBOM was not invented.",
+    "status": "unavailable"
+  }
+}

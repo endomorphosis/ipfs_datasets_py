@@ -117,6 +117,13 @@ DATASETS_DEPENDENCY_LOCKS_INTERFACE: Final = "DatasetsDependencyLocks@1"
 DATASETS_DEPENDENCY_LOCKS_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/dependency-locks@1"
 )
+# PCPR-054 declared SBOMs and build provenance. Handshake identity only;
+# live scanners, SLSA attestations, and published artifact digests stay
+# typed unavailable until admitted.
+DATASETS_SBOM_AND_PROVENANCE_INTERFACE: Final = "DatasetsSbomAndProvenance@1"
+DATASETS_SBOM_AND_PROVENANCE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/sbom-and-provenance@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -368,6 +375,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_SOLVER_QUALIFICATION_INTERFACE: "1",
             DATASETS_CLEAN_PACKAGE_INTERFACE: "1",
             DATASETS_DEPENDENCY_LOCKS_INTERFACE: "1",
+            DATASETS_SBOM_AND_PROVENANCE_INTERFACE: "1",
         }
     )
 
@@ -395,6 +403,7 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_solver_qualification": DATASETS_SOLVER_QUALIFICATION_SCHEMA,
             "datasets_clean_package": DATASETS_CLEAN_PACKAGE_SCHEMA,
             "datasets_dependency_locks": DATASETS_DEPENDENCY_LOCKS_SCHEMA,
+            "datasets_sbom_and_provenance": DATASETS_SBOM_AND_PROVENANCE_SCHEMA,
         }
     )
 
@@ -420,6 +429,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "solver_qualification": "1",
             "clean_package": "1",
             "dependency_locks": "1",
+            "sbom_and_provenance": "1",
         }
     )
 
