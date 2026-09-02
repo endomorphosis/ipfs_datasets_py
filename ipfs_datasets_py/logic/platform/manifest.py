@@ -69,6 +69,20 @@ LOGIC_PROVIDER_PROTOCOL_V2_SCHEMA: Final = (
 LOGIC_PROVIDER_RESPONSE_V2_SCHEMA: Final = (
     "ipfs_datasets_py/logic-provider-response@2"
 )
+# PCPR-014 Datasets-owned semantic APIs and ContextPack@1. Handshake identity
+# only; owners remain the named leaf modules. v0.1 ContextPack is compatibility.
+DATASETS_CONTEXT_PACK_INTERFACE: Final = "DatasetsContextPack@1"
+DATASETS_CONTEXT_PACK_VERSION: Final = "1"
+DATASETS_CONTEXT_PACK_SCHEMA: Final = (
+    "ipfs_datasets_py/datasets-context-pack@1"
+)
+DATASETS_CONTEXT_PACK_V01_INTERFACE: Final = "DatasetsContextPackAuthority@0.1"
+CANONICAL_IR_IDENTITY_INTERFACE: Final = "CanonicalIRIdentity@1"
+CANONICAL_IR_IDENTITY_SCHEMA: Final = "ir-canonical-identity-v1"
+DATASETS_SEMANTIC_API_CATALOG_INTERFACE: Final = "DatasetsSemanticApiCatalog@1"
+DATASETS_SEMANTIC_API_CATALOG_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/semantic-api-catalog@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -310,6 +324,10 @@ def _default_interface_versions() -> Mapping[str, str]:
             LOGIC_PROVIDER_PROTOCOL_V1_INTERFACE: str(
                 LOGIC_PROVIDER_PROTOCOL_V1_VERSION
             ),
+            DATASETS_CONTEXT_PACK_INTERFACE: DATASETS_CONTEXT_PACK_VERSION,
+            DATASETS_CONTEXT_PACK_V01_INTERFACE: "0.1",
+            CANONICAL_IR_IDENTITY_INTERFACE: "1",
+            DATASETS_SEMANTIC_API_CATALOG_INTERFACE: "1",
         }
     )
 
@@ -328,6 +346,9 @@ def _default_schema_roots() -> Mapping[str, str]:
             "provider_request_v1": LOGIC_PROVIDER_REQUEST_SCHEMA,
             "provider_response_v1": LOGIC_PROVIDER_RESPONSE_SCHEMA,
             "manifest": LOGIC_PLATFORM_MANIFEST_SCHEMA,
+            "datasets_context_pack": DATASETS_CONTEXT_PACK_SCHEMA,
+            "canonical_ir_identity": CANONICAL_IR_IDENTITY_SCHEMA,
+            "datasets_semantic_api_catalog": DATASETS_SEMANTIC_API_CATALOG_SCHEMA,
         }
     )
 
@@ -345,6 +366,8 @@ def _default_operation_versions() -> Mapping[str, str]:
             "attest": protocol,
             "handshake": LOGIC_PLATFORM_MANIFEST_VERSION,
             "catalog": CANONICAL_CATALOG_SNAPSHOT_VERSION,
+            "context_pack": DATASETS_CONTEXT_PACK_VERSION,
+            "canonical_ir_identity": "1",
         }
     )
 

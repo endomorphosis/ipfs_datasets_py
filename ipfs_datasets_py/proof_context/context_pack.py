@@ -8,7 +8,8 @@ new analyzer or capsule compiler. Accelerator may only delegate.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Mapping, Sequence
+from types import MappingProxyType
+from typing import Any, Final, Mapping, Sequence
 
 from ipfs_datasets_py.logic.software_contracts.content import cid_for_obj
 from ipfs_datasets_py.logic.software_contracts.semantic_governor.audit_contracts import (
@@ -53,9 +54,63 @@ AUTHORITY = "ipfs_datasets_py.proof_context.context_pack"
 INTERFACE = "DatasetsContextPackAuthority@0.1"
 GENERATOR_ID = "datasets_v01_context_pack"
 
+# PCPR-014 canonical ContextPack contract. v0.1 remains importable as
+# compatibility-only and must not silently remint @1 identity.
+CANONICAL_INTERFACE: Final = "DatasetsContextPack@1"
+CANONICAL_SCHEMA: Final = "ipfs_datasets_py/datasets-context-pack@1"
+CANONICAL_DOMAIN: Final = "datasets.context-pack"
+CANONICAL_VERSION: Final = "1"
+V01_INTERFACE: Final = INTERFACE
+V01_MATURITY: Final = "compatibility_only"
+DATASETS_CONTEXT_PACK_CANONICAL: Final = True
+
+_EXECUTABLE_MINT_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        "backend_request",
+        "cegar_receipt",
+        "interpolant",
+        "proof_result",
+        "smt_session",
+        "solver_result",
+    }
+)
+_REQUIRED_CONTEXT_PACK_FIELDS: Final[tuple[str, ...]] = (
+    "repository_state_cid",
+    "scanned_tree_oid",
+    "surrounding_source_cid",
+    "target_source_cid",
+    "task_id",
+    "test_source_cid",
+)
+_ALLOWED_CONTEXT_PACK_FIELDS: Final[frozenset[str]] = frozenset(
+    _REQUIRED_CONTEXT_PACK_FIELDS
+) | frozenset(
+    {
+        "advisory",
+        "bounds",
+        "capsule_cids",
+        "executable",
+        "freshness",
+        "interface",
+        "opaque",
+        "risk_class",
+        "route_tier",
+        "schema",
+        "source_tree_oid",
+        "task_class",
+        "unavailable",
+    }
+)
+
 
 class ContextPackConstructionError(RuntimeError):
     reason = "invalid"
+
+
+class ContextPackAdmissionError(ContextPackConstructionError):
+    """Raised when a ContextPack request is free-form, advisory, or executable."""
+
+    reason = "rejected"
 
 
 def _cid_label(label: str) -> str:
@@ -156,6 +211,192 @@ class ContextPackRecord:
             "required_source_cids": dict(self.required_source_cids),
             "producer": self.producer,
         }
+
+
+def _require_cid_text(value: Any, name: str) -> str:
+    if not isinstance(value, str) or not value.strip() or value.strip() != value:
+        raise ContextPackAdmissionError(f"{name} must be a non-empty exact CID string")
+    if any(ch.isspace() for ch in value):
+        raise ContextPackAdmissionError(f"{name} must not contain whitespace")
+    return value
+
+
+def _require_task_id(value: Any) -> str:
+    if not isinstance(value, str) or not value.strip() or value.strip() != value:
+        raise ContextPackAdmissionError("task_id must be a non-empty exact string")
+    return value
+
+
+def context_pack_v1_identity_payload(
+    *,
+    repository_state_cid: str,
+    task_id: str,
+    task_class: str,
+    required_source_cids: Mapping[str, str],
+    capsule_cids: Sequence[str],
+    scanned_tree_oid: str,
+    freshness: str,
+    opaque: bool,
+) -> dict[str, Any]:
+    """Canonical @1 identity preimage. Order is stable JSON map-key order."""
+
+    return {
+        "capsule_cids": list(capsule_cids),
+        "freshness": freshness,
+        "interface": CANONICAL_INTERFACE,
+        "opaque": opaque,
+        "repository_state_cid": repository_state_cid,
+        "required_source_cids": dict(required_source_cids),
+        "scanned_tree_oid": scanned_tree_oid,
+        "schema": CANONICAL_SCHEMA,
+        "task_class": task_class,
+        "task_id": task_id,
+    }
+
+
+@dataclass(frozen=True)
+class DatasetsContextPack:
+    """Datasets-owned canonical ContextPack@1 identity.
+
+    Construction is identity minting, not executable solver work. Advisory
+    material cannot authorize a pack. v0.1 CIDs are not reminted as @1.
+    """
+
+    pack_cid: str
+    repository_state_cid: str
+    required_source_cids: Mapping[str, str]
+    capsule_cids: tuple[str, ...]
+    scanned_tree_oid: str
+    task_id: str
+    task_class: str
+    freshness: str
+    opaque: bool
+    producer: str = AUTHORITY
+    interface: str = CANONICAL_INTERFACE
+    schema: str = CANONICAL_SCHEMA
+    v01_compatibility_interface: str = V01_INTERFACE
+    v01_maturity: str = V01_MATURITY
+
+    def identity_payload(self) -> dict[str, Any]:
+        return context_pack_v1_identity_payload(
+            repository_state_cid=self.repository_state_cid,
+            task_id=self.task_id,
+            task_class=self.task_class,
+            required_source_cids=self.required_source_cids,
+            capsule_cids=self.capsule_cids,
+            scanned_tree_oid=self.scanned_tree_oid,
+            freshness=self.freshness,
+            opaque=self.opaque,
+        )
+
+
+def admit_datasets_context_pack(payload: Mapping[str, Any]) -> DatasetsContextPack:
+    """Admit a DatasetsContextPack@1 request.
+
+    Free-form, advisory-as-authority, and executable-minting payloads fail
+    closed. Stale, unavailable, and opaque-without-exact-source stay typed
+    errors. Identities are deterministic under ``ir-canonical-identity-v1``.
+    """
+    if not isinstance(payload, Mapping):
+        raise ContextPackAdmissionError("DatasetsContextPack@1 payload must be a mapping")
+    extra = sorted(set(payload) - _ALLOWED_CONTEXT_PACK_FIELDS)
+    if extra:
+        raise ContextPackAdmissionError(
+            f"free-form ContextPack field(s) cannot mint DatasetsContextPack@1: {extra[0]}"
+        )
+    minted = sorted(set(payload) & _EXECUTABLE_MINT_KEYS)
+    if minted:
+        raise ContextPackAdmissionError(
+            f"field {minted[0]!r} cannot mint executable work from a ContextPack request"
+        )
+    if payload.get("advisory") is True:
+        raise ContextPackAdmissionError(
+            "advisory ContextPack material is non-authoritative and cannot mint DatasetsContextPack@1"
+        )
+    if payload.get("executable") is True:
+        raise ContextPackAdmissionError(
+            "ContextPack construction is identity minting, not executable work"
+        )
+    if payload.get("unavailable") is True:
+        raise UnavailableContextError("unavailable ContextPack inputs are not success")
+    freshness = payload.get("freshness", "fresh")
+    if not isinstance(freshness, str) or not freshness:
+        raise ContextPackAdmissionError("freshness must be a non-empty string")
+    if freshness == "stale":
+        raise StaleContextError("stale capsules cannot mint a DatasetsContextPack@1")
+    opaque = bool(payload.get("opaque", False))
+    scanned_tree_oid = _require_cid_text(payload.get("scanned_tree_oid"), "scanned_tree_oid")
+    source_tree_oid = payload.get("source_tree_oid")
+    if opaque:
+        if not isinstance(source_tree_oid, str) or source_tree_oid != scanned_tree_oid:
+            raise OpaqueSourceRequiredError(
+                "opaque content requires the exact scanned-tree source"
+            )
+    declared_interface = payload.get("interface")
+    if declared_interface not in (None, CANONICAL_INTERFACE, V01_INTERFACE):
+        raise ContextPackAdmissionError(
+            f"unsupported ContextPack interface {declared_interface!r}"
+        )
+    declared_schema = payload.get("schema")
+    if declared_schema not in (None, CANONICAL_SCHEMA, PORT_SCHEMA):
+        raise ContextPackAdmissionError(
+            f"unsupported ContextPack schema {declared_schema!r}"
+        )
+    missing = [name for name in _REQUIRED_CONTEXT_PACK_FIELDS if not payload.get(name)]
+    if missing:
+        raise ContextPackAdmissionError(
+            f"DatasetsContextPack@1 requires {missing[0]}"
+        )
+    required = {
+        "surrounding_source": _require_cid_text(
+            payload.get("surrounding_source_cid"), "surrounding_source_cid"
+        ),
+        "target_source": _require_cid_text(
+            payload.get("target_source_cid"), "target_source_cid"
+        ),
+        "test_source": _require_cid_text(
+            payload.get("test_source_cid"), "test_source_cid"
+        ),
+    }
+    capsule_raw = payload.get("capsule_cids", ())
+    if isinstance(capsule_raw, (str, bytes, bytearray)) or not isinstance(
+        capsule_raw, Sequence
+    ):
+        raise ContextPackAdmissionError("capsule_cids must be a sequence of CID strings")
+    capsule_cids = tuple(_require_cid_text(item, "capsule_cids") for item in capsule_raw)
+    task_class = payload.get("task_class", "local_bug")
+    if not isinstance(task_class, str) or not task_class.strip():
+        raise ContextPackAdmissionError("task_class must be a non-empty string")
+    identity_payload = context_pack_v1_identity_payload(
+        repository_state_cid=_require_cid_text(
+            payload.get("repository_state_cid"), "repository_state_cid"
+        ),
+        task_id=_require_task_id(payload.get("task_id")),
+        task_class=task_class,
+        required_source_cids=required,
+        capsule_cids=capsule_cids,
+        scanned_tree_oid=scanned_tree_oid,
+        freshness=freshness,
+        opaque=opaque,
+    )
+    from ipfs_datasets_py.logic.ir_core.identity import canonical_identity
+
+    identity = canonical_identity(
+        identity_payload,
+        domain=CANONICAL_DOMAIN,
+        schema_version=CANONICAL_SCHEMA,
+    )
+    return DatasetsContextPack(
+        pack_cid=identity.cid,
+        repository_state_cid=identity_payload["repository_state_cid"],
+        required_source_cids=MappingProxyType(required),
+        capsule_cids=capsule_cids,
+        scanned_tree_oid=scanned_tree_oid,
+        task_id=identity_payload["task_id"],
+        task_class=task_class,
+        freshness=freshness,
+        opaque=opaque,
+    )
 
 
 def build_context_pack(
