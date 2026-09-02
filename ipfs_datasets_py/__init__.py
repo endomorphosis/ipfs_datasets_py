@@ -1,8 +1,10 @@
 """
 IPFS Datasets Python
 
-A unified interface for data processing and distribution across decentralized networks
-with automated dependency installation for full functionality.
+A unified interface for data processing and distribution across decentralized
+networks. Package import is inert: it does not set auto-install flags, invoke
+installers, repair environments, start services, or access networks.
+Installation is an explicit CLI or operator action.
 """
 
 __version__ = "0.2.0"
@@ -27,14 +29,12 @@ def _truthy(value: str | None) -> bool:
 
 
 def _enable_default_auto_install() -> None:
-    """Enable runtime dependency installation unless the caller opted out."""
-    if not os.environ.get("IPFS_DATASETS_AUTO_INSTALL"):
-        os.environ["IPFS_DATASETS_AUTO_INSTALL"] = "true"
-    if not os.environ.get("IPFS_KIT_AUTO_INSTALL_DEPS"):
-        os.environ["IPFS_KIT_AUTO_INSTALL_DEPS"] = "1"
+    """Historical import-time helper. PCPR-010: never silently default-on.
 
-
-_enable_default_auto_install()
+    Installation is an explicit CLI or operator action. This function does
+    not write ``IPFS_DATASETS_AUTO_INSTALL`` or ``IPFS_KIT_AUTO_INSTALL_DEPS``.
+    """
+    return None
 
 
 # In benchmark/CI contexts we want imports to be as hermetic as possible.
@@ -176,33 +176,43 @@ def initialize(
 # subsystems (PDF pipelines, auto-installers, accelerate patching, etc.).
 HAVE_FILE_CONVERTER = False
 
-# Import automated dependency installer
-if _MINIMAL_IMPORTS:
+# Import-time installer stand-in. Never constructs DependencyInstaller,
+# never mkdir's project bin/deps, never mutates PATH, and never pip-installs.
+# Explicit installation remains `python -m ipfs_datasets_py.auto_installer`
+# or `ipfs_datasets_py.assurance.initialization.initialize_datasets`.
+class _InertInstaller:
+    auto_install = False
+    verbose = False
 
-    class _MinimalInstaller:
-        auto_install = False
-        verbose = False
 
-    installer = _MinimalInstaller()
+installer = _InertInstaller()
 
-    def ensure_module(*_: object, **__: object) -> bool:  # type: ignore
-        return False
 
-    lazy_import = ensure_module
-else:
-    from .auto_installer import (
-        ensure_module,
-        ensure_repo_installer_current,
-        get_installer,
-        lazy_import,
-    )
+def ensure_module(
+    module_name: str,
+    package_name: object = None,
+    system_deps: object = None,
+    fallback_mock: object = None,
+    required: bool = False,
+) -> object:
+    """Resolve a module without installing.
 
-    # Initialize installer with environment configuration
-    installer = get_installer()
+    Missing optional dependencies stay unavailable. Installation is an
+    explicit CLI or operator action, not an import-time side effect.
+    """
     try:
-        ensure_repo_installer_current()
+        return importlib.import_module(str(module_name))
     except Exception:
-        pass
+        if required:
+            raise ImportError(
+                f"Failed to import {module_name!r}; installation is an "
+                "explicit CLI or operator action "
+                "(python -m ipfs_datasets_py.auto_installer)"
+            ) from None
+        return fallback_mock
+
+
+lazy_import = ensure_module
 
 
 class _FallbackIPFSDatasets:

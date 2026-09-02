@@ -2,11 +2,12 @@
 
 Sandboxed probes reproduce every FACP-003 ``DS-IMPORT-*`` seed under empty
 HOME / XDG / project-root equivalents with network, subprocess, and
-out-of-sandbox writes denied. The purity oracle **fails** for each seeded
-effect. Observations record exact legacy behavior and must never be labeled
-``success`` or treated as formal purity / production proof.
+out-of-sandbox writes denied. Observations must never be labeled ``success``
+or treated as production proof.
 
-This task does not repair package import (FACP-022 owns that).
+PCPR-010 repaired import-time ``DS-IMPORT-001`` and ``DS-IMPORT-002``.
+Those seeds now observe inert import (not production-success). Remaining
+seeds (003–005) are explicit installer-API reachability, not package import.
 """
 
 from __future__ import annotations
@@ -98,6 +99,7 @@ def _load_import_effect_seeds() -> list[dict[str, Any]]:
 
 SEEDS = _load_import_effect_seeds()
 SEED_BY_ID = {s["defect_id"]: s for s in SEEDS}
+IMPORT_TIME_REPAIRED = frozenset({"DS-IMPORT-001", "DS-IMPORT-002"})
 
 
 def _sandbox_env(sandbox: Path, *, extra: dict[str, str] | None = None) -> dict[str, str]:
@@ -363,11 +365,12 @@ def _classify_observation(defect_id: str, observation: dict[str, Any]) -> dict[s
         raise AssertionError(f"unknown defect_id: {defect_id}")
 
     purity_passed = len(matched) == 0
-    disposition = (
-        "legacy_impurity_observed"
-        if not purity_passed
-        else "unexpected_clean"  # still not success; characterization expects impurity
-    )
+    if defect_id in IMPORT_TIME_REPAIRED and purity_passed:
+        disposition = "import_time_repaired_inert"
+    elif not purity_passed:
+        disposition = "legacy_impurity_observed"
+    else:
+        disposition = "unexpected_clean"
     return {
         "defect_id": defect_id,
         "purity_passed": purity_passed,
@@ -590,21 +593,30 @@ def test_inventory_seeds_cover_evidence_subset() -> None:
 
 @pytest.mark.parametrize("defect_id", sorted(PROBES), ids=sorted(PROBES))
 def test_seeded_import_effect_fails_purity_oracle(defect_id: str) -> None:
-    """Acceptance: purity fails on every seeded import effect."""
+    """Import-time seeds are inert after PCPR-010; remaining seeds stay impure."""
     seed = SEED_BY_ID[defect_id]
     observation = PROBES[defect_id]()
     verdict = _classify_observation(defect_id, observation)
 
-    assert verdict["purity_passed"] is False, (
-        f"{defect_id} purity unexpectedly passed; oracle={seed['oracle']!r}; "
-        f"observation={json.dumps({k: observation.get(k) for k in ('after_env','path_delta','effects','force_error','pip_error')}, default=str)[:2000]}"
-    )
-    assert verdict["matched_effects"], f"{defect_id} recorded no matched legacy effects"
-    assert verdict["disposition"] == "legacy_impurity_observed"
     assert verdict["normalized_as_success"] is False
     assert verdict["fca"]["unsafe_promotion"] is False
     assert "effect_successful" in verdict["fca"]["forbidden_predicates"]
     assert "production_supported" in verdict["fca"]["forbidden_predicates"]
+    if defect_id in IMPORT_TIME_REPAIRED:
+        assert verdict["purity_passed"] is True, (
+            f"{defect_id} import-time effect still present after PCPR-010; "
+            f"oracle={seed['oracle']!r}; "
+            f"observation={json.dumps({k: observation.get(k) for k in ('after_env','path_delta','effects')}, default=str)[:2000]}"
+        )
+        assert verdict["matched_effects"] == []
+        assert verdict["disposition"] == "import_time_repaired_inert"
+    else:
+        assert verdict["purity_passed"] is False, (
+            f"{defect_id} purity unexpectedly passed; oracle={seed['oracle']!r}; "
+            f"observation={json.dumps({k: observation.get(k) for k in ('after_env','path_delta','effects','force_error','pip_error')}, default=str)[:2000]}"
+        )
+        assert verdict["matched_effects"], f"{defect_id} recorded no matched legacy effects"
+        assert verdict["disposition"] == "legacy_impurity_observed"
 
     # Exact observed behavior must be present (not erased / not success-shaped).
     assert observation["defect_id"] == defect_id
@@ -623,12 +635,15 @@ def test_observation_never_normalized_as_success(defect_id: str) -> None:
     # Disposition and FCA labels must not claim success/purity.
     assert verdict["disposition"] not in FORBIDDEN_SUCCESS_LABELS
     assert verdict["normalized_as_success"] is False
-    assert '"purity_passed": false' in json.dumps(verdict).lower() or verdict["purity_passed"] is False
     for label in ("production_supported", "effect_successful"):
         assert label in verdict["fca"]["forbidden_predicates"]
-    # Do not treat observed impurity as a green hermetic import claim.
-    assert "legacy_impurity" in verdict["disposition"]
     assert "success" not in verdict["disposition"]
+    if defect_id in IMPORT_TIME_REPAIRED:
+        assert verdict["purity_passed"] is True
+        assert verdict["disposition"] == "import_time_repaired_inert"
+    else:
+        assert '"purity_passed": false' in json.dumps(verdict).lower() or verdict["purity_passed"] is False
+        assert "legacy_impurity" in verdict["disposition"]
     # Observation payload itself must not advertise success disposition.
     for key in ("disposition", "status", "result", "outcome"):
         value = observation.get(key)

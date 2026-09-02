@@ -1,8 +1,11 @@
 """
 Automated Dependency Installation System
 
-Provides cross-platform automated installation of dependencies to replace
-mock implementations with full functionality. Supports Linux, macOS, and Windows.
+Explicit CLI and operator installer. Importing this module must not construct
+``DependencyInstaller``, mutate process environment, mkdir project bin/deps,
+or invoke pip. Construction is ``get_installer()``, ``DependencyInstaller``,
+or ``python -m ipfs_datasets_py.auto_installer``. Package import of
+``ipfs_datasets_py`` does not call those entry points (PCPR-010).
 """
 import os
 import sys
