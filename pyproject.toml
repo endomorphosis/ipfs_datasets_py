@@ -7,7 +7,7 @@ name = "ipfs_datasets_py"
 version = "0.2.0"
 description = "IPFS-native decentralized AI data platform"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "AGPL-3.0-only"}
 requires-python = ">=3.12"
 # Core dependencies are resolved dynamically from setup.py.  The proof-context
 # provider's core is intentionally dependency-free; optional capabilities stay
@@ -353,6 +353,7 @@ all = [
 
 [tool.setuptools]
 include-package-data = true
+license-files = ["LICENSE"]
 
 [tool.setuptools.packages.find]
 include = ["ipfs_datasets_py", "ipfs_datasets_py.*"]

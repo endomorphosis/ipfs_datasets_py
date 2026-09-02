@@ -1161,7 +1161,9 @@ car_cid = create_car_file("data/", "output.car")
 
 ## 📄 License
 
-This project is licensed under the AGPL-3.0 License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under AGPL-3.0-only. See the [LICENSE](LICENSE) file for the GNU Affero General Public License v3 text.
+
+This package is not dual-licensed. Dual-license authority is not granted. MIT in historical packaging metadata or non-authoritative documentation is not a license grant.
 
 ## 🔗 Links
 

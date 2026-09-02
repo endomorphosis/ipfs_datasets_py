@@ -1,3 +1,4 @@
+include LICENSE
 include requirements*.txt
 recursive-include typescript/logic-runtime-mtl *.json *.ts
 prune typescript/logic-runtime-mtl/node_modules

@@ -93,6 +93,12 @@ DATASETS_SHARED_VECTORS_INTERFACE: Final = "DatasetsSharedVectors@1"
 DATASETS_SHARED_VECTORS_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/shared-vectors@1"
 )
+# PCPR-016 package license metadata. Handshake identity only; LICENSE remains
+# the legal text. Dual-license authority is explicit and currently none.
+DATASETS_LICENSE_METADATA_INTERFACE: Final = "DatasetsLicenseMetadata@1"
+DATASETS_LICENSE_METADATA_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/license-authority@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -340,6 +346,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_SEMANTIC_API_CATALOG_INTERFACE: "1",
             DATASETS_SCHEMA_PACKAGING_INTERFACE: "1",
             DATASETS_SHARED_VECTORS_INTERFACE: "1",
+            DATASETS_LICENSE_METADATA_INTERFACE: "1",
         }
     )
 
@@ -363,6 +370,7 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_semantic_api_catalog": DATASETS_SEMANTIC_API_CATALOG_SCHEMA,
             "datasets_schema_packaging": DATASETS_SCHEMA_PACKAGING_SCHEMA,
             "datasets_shared_vectors": DATASETS_SHARED_VECTORS_SCHEMA,
+            "datasets_license_metadata": DATASETS_LICENSE_METADATA_SCHEMA,
         }
     )
 
@@ -384,6 +392,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "canonical_ir_identity": "1",
             "schema_packaging": "1",
             "shared_vectors": "1",
+            "license_metadata": "1",
         }
     )
 

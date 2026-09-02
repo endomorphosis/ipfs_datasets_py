@@ -3,7 +3,7 @@ Name: ipfs_datasets_py
 Version: 0.2.0
 Summary: IPFS-native decentralized AI data platform
 Author: IPFS Datasets Contributors
-License: MIT
+License: AGPL-3.0-only
 Requires-Python: >=3.12
 Description-Content-Type: text/markdown
 License-File: LICENSE

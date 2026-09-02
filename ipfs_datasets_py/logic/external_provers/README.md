@@ -796,7 +796,7 @@ To add a new external prover:
 
 ## License
 
-Same as main project (MIT License)
+Same as main project (AGPL-3.0-only)
 
 ---
 
