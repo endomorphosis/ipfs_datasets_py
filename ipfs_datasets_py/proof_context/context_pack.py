@@ -69,9 +69,29 @@ AUTHORITY = "ipfs_datasets_py.proof_context.context_pack"
 INTERFACE = "DatasetsContextPackAuthority@0.1"
 GENERATOR_ID = "datasets_v01_context_pack"
 SEMANTIC_BUILDER_ID = "datasets_v01_minimal_semantic_pack"
+INCREMENTAL_BUILDER_ID = "datasets_v01_incremental_context_pack"
 CONTEXT_PACK_SCHEMA = "ipfs-datasets.proof-context.context-pack@0.1"
+INCREMENTAL_DELTA_SCHEMA = "ipfs-datasets.proof-context.incremental-delta@0.1"
 CONSUMER_INTERFACE = "ContextPack@1"
 SCHEMA_PATH = Path(__file__).resolve().parent / "schemas" / "context_pack.schema.json"
+NAMED_MISSING_KINDS: Final[tuple[str, ...]] = (
+    "cid",
+    "symbol",
+    "contract",
+    "test",
+    "counterexample",
+    "obligation",
+)
+INCREMENTAL_PACK_KINDS: Final[tuple[str, ...]] = ("delta", "affected_suffix")
+TREE_CHANGE_TRIGGER: Final[str] = "tree-change"
+TREE_UNCHANGED_CONDITION: Final[str] = "tree-unchanged"
+NAMED_MISSING_RECORD_FIELDS: Final[tuple[str, ...]] = (
+    "kind",
+    "name",
+    "cid",
+    "path",
+    "meaning",
+)
 
 FORBIDDEN_INTERFACES: Final[frozenset[str]] = frozenset(
     {"SupervisorContextPack@1", "SupervisorContextPack"}
@@ -252,6 +272,20 @@ _CONSISTENT_KINDS: Final[frozenset[tuple[str, str, str]]] = frozenset(
 
 class ContextPackConstructionError(RuntimeError):
     reason = "invalid"
+
+
+class CompletenessFailure(ContextPackConstructionError):
+    """Typed completeness failure. Whole-repository expansion is never success."""
+
+    reason = "completeness_failure"
+
+
+class CriticalOmissionError(ContextPackConstructionError):
+    reason = "critical_omission"
+
+
+class UnboundParentError(ContextPackConstructionError):
+    reason = "unbound_parent"
 
 
 def _error(message: str) -> ContextPackConstructionError:
@@ -902,6 +936,16 @@ class DatasetsContextPackAuthority:
 
     def build_minimal(self, **kwargs: Any) -> ContextPackRecord:
         return build_minimal_semantic_pack(**kwargs)
+
+    def build_incremental(self, **kwargs: Any) -> ContextPackRecord:
+        return build_incremental_semantic_pack(**kwargs)
+
+    def expand_incremental(self, **kwargs: Any) -> Any:
+        from ipfs_datasets_py.proof_context.incremental_context import (
+            expand_incremental_pack,
+        )
+
+        return expand_incremental_pack(**kwargs)
 
     def canonical_bytes(self, record: ContextPackRecord) -> bytes:
         return record.canonical_bytes()
@@ -1610,5 +1654,284 @@ def build_minimal_semantic_pack(
         freshness_bindings=derived_freshness,
         history=history,
         invalidation=invalidation,
+        **kwargs,
+    )
+
+
+def format_named_missing_reference(kind: str, name: str) -> str:
+    """Return the closed ``kind:name`` token for a named missing reference."""
+
+    kind_value = _enum_member(kind, NAMED_MISSING_KINDS, "named_missing.kind")
+    name_value = _nfc(name, "named_missing.name")
+    return f"{kind_value}:{name_value}"
+
+
+def parse_named_missing_reference(value: Any) -> tuple[str, str]:
+    """Parse a named missing CID/symbol/contract/test/counterexample/obligation."""
+
+    if isinstance(value, Mapping):
+        closed = _closed(value, ("kind", "name"), "named_missing")
+        return (
+            _enum_member(closed["kind"], NAMED_MISSING_KINDS, "named_missing.kind"),
+            _nfc(closed["name"], "named_missing.name"),
+        )
+    text = _nfc(value, "named_missing")
+    if ":" not in text:
+        raise _error(f"missing reference {text!r}")
+    kind, name = text.split(":", 1)
+    if kind not in NAMED_MISSING_KINDS or not name:
+        raise _error(f"missing reference {text!r}")
+    return kind, _nfc(name, "named_missing.name")
+
+
+def bind_named_missing_references(values: Sequence[Any] | None) -> list[str]:
+    """Normalize named missing references to sorted unique ``kind:name`` tokens."""
+
+    if values is None:
+        return []
+    if not isinstance(values, (list, tuple)):
+        raise _error("named_missing must be a list")
+    tokens = [
+        format_named_missing_reference(*parse_named_missing_reference(item))
+        for item in values
+    ]
+    return _string_list(tokens, "named_missing")
+
+
+def compute_incremental_delta_cid(
+    *,
+    parent_context_pack_cid: str,
+    scanned_tree_oid: str,
+    named_missing: Sequence[str] = (),
+    changed_files: Sequence[str] = (),
+    changed_symbols: Sequence[str] = (),
+    pack_kind: str = "delta",
+) -> str:
+    """Mint the datasets-owned incremental delta identity from closed inputs."""
+
+    parent_cid = _cid(parent_context_pack_cid, "parent_context_pack_cid")
+    tree = _git_oid(scanned_tree_oid, "scanned_tree_oid")
+    kind = _enum_member(pack_kind, INCREMENTAL_PACK_KINDS, "pack_kind")
+    payload = {
+        "schema": INCREMENTAL_DELTA_SCHEMA,
+        "interface": INTERFACE,
+        "builder_identity": INCREMENTAL_BUILDER_ID,
+        "parent_context_pack_cid": parent_cid,
+        "scanned_tree_oid": tree,
+        "named_missing": bind_named_missing_references(list(named_missing)),
+        "changed_files": _string_list(list(changed_files), "changed_files"),
+        "changed_symbols": _string_list(list(changed_symbols), "changed_symbols"),
+        "pack_kind": kind,
+    }
+    return cid_for_structured(payload)
+
+
+def parent_tree_oid_from_envelope(envelope: Mapping[str, Any]) -> str:
+    """Return the bound tree identity from a parent pack envelope."""
+
+    if not isinstance(envelope, Mapping):
+        raise UnboundParentError("unbound parent")
+    tree = envelope.get("scanned_tree_oid")
+    if tree is None:
+        identity = envelope.get("identity")
+        if isinstance(identity, Mapping):
+            tree = identity.get("tree")
+    if tree is None:
+        raise UnboundParentError("unbound parent tree")
+    return _git_oid(tree, "parent.scanned_tree_oid")
+
+
+def parent_pack_cid_from_envelope(envelope: Mapping[str, Any] | ContextPackRecord) -> str:
+    """Return the datasets-owned parent pack CID, failing closed if unbound."""
+
+    if isinstance(envelope, ContextPackRecord):
+        return _cid(envelope.pack_cid, "parent_context_pack_cid")
+    if not isinstance(envelope, Mapping):
+        raise UnboundParentError("unbound parent")
+    claimed = envelope.get("pack_cid")
+    if claimed is None:
+        raise UnboundParentError("unbound parent")
+    pack_cid = _cid(claimed, "parent_context_pack_cid")
+    if all(field in envelope for field in ENVELOPE_FIELDS):
+        validated = validate_context_pack_envelope(envelope)
+        if validated["pack_cid"] != pack_cid:
+            raise UnboundParentError("parent pack_cid does not match canonical identity")
+    return pack_cid
+
+
+def build_incremental_semantic_pack(
+    *,
+    repository_state_cid: str,
+    task_id: str,
+    target_source_cid: str,
+    surrounding_source_cid: str,
+    test_source_cid: str,
+    scanned_tree_oid: str,
+    parent_context_pack_cid: str,
+    named_missing: Sequence[Any] = (),
+    changed_files: Sequence[str] = (),
+    changed_symbols: Sequence[str] = (),
+    pack_kind: str = "delta",
+    delta_cid: str | None = None,
+    parent_tree_oid: str | None = None,
+    source_tree_oid: str | None = None,
+    dependencies: Sequence[Mapping[str, Any] | str] = (),
+    obligations: Sequence[str] = (),
+    contracts: Mapping[str, Any] | None = None,
+    validation: Mapping[str, Any] | None = None,
+    history: Mapping[str, Any] | None = None,
+    questions: Mapping[str, Any] | None = None,
+    scope: Mapping[str, Any] | None = None,
+    budgets: Mapping[str, Any] | None = None,
+    freshness_bindings: Mapping[str, Any] | None = None,
+    invalidation: Mapping[str, Any] | None = None,
+    reverse_dependencies: Sequence[str] = (),
+    explicitly_excluded_paths: Sequence[str] = (),
+    changed_interfaces_and_schemas: Sequence[str] = (),
+    semantic_diff_summary: str | None = None,
+    **kwargs: Any,
+) -> ContextPackRecord:
+    """Build a datasets-owned delta or affected-suffix ContextPack.
+
+    Parent and delta identity are mandatory. Named missing references must be
+    closed ``kind:name`` tokens. Token/execution budgets remain Accelerator
+    consumer concerns.
+    """
+    extra = set(kwargs) & FORBIDDEN_EXECUTION_KEYS
+    if extra:
+        raise _error(
+            "Accelerator-owned budget decisions or proof reuse cannot be admitted "
+            f"by the Datasets semantic builder: {sorted(extra)}"
+        )
+    if not parent_context_pack_cid:
+        raise UnboundParentError("unbound parent")
+    parent_cid = _cid(parent_context_pack_cid, "parent_context_pack_cid")
+    kind = _enum_member(pack_kind, INCREMENTAL_PACK_KINDS, "pack_kind")
+    bound_missing = bind_named_missing_references(list(named_missing))
+    bound_files = _string_list(list(changed_files), "changed_files")
+    bound_symbols = _string_list(list(changed_symbols), "changed_symbols")
+    computed_delta = compute_incremental_delta_cid(
+        parent_context_pack_cid=parent_cid,
+        scanned_tree_oid=scanned_tree_oid,
+        named_missing=bound_missing,
+        changed_files=bound_files,
+        changed_symbols=bound_symbols,
+        pack_kind=kind,
+    )
+    if delta_cid is None:
+        bound_delta = computed_delta
+    else:
+        bound_delta = _cid(delta_cid, "delta_cid")
+        if bound_delta != computed_delta:
+            raise _error("delta_cid does not match derived incremental identity")
+
+    tree_changed = False
+    if parent_tree_oid is not None:
+        parent_tree = _git_oid(parent_tree_oid, "parent_tree_oid")
+        current_tree = _git_oid(scanned_tree_oid, "scanned_tree_oid")
+        tree_changed = parent_tree != current_tree
+
+    derived_invalidation = {
+        "invalidation_triggers": [TREE_CHANGE_TRIGGER] if tree_changed else [],
+        "reusable_until_conditions": [TREE_UNCHANGED_CONDITION],
+    }
+    if invalidation is not None:
+        provided_invalidation = _bind_invalidation(invalidation)
+        derived_invalidation = {
+            "invalidation_triggers": _merge_string_lists(
+                derived_invalidation["invalidation_triggers"],
+                provided_invalidation["invalidation_triggers"],
+            ),
+            "reusable_until_conditions": _merge_string_lists(
+                derived_invalidation["reusable_until_conditions"],
+                provided_invalidation["reusable_until_conditions"],
+            ),
+        }
+    if tree_changed and TREE_CHANGE_TRIGGER not in derived_invalidation[
+        "invalidation_triggers"
+    ]:
+        raise _error("changed tree must bind the tree-change invalidation trigger")
+
+    derived_freshness = {field: [] for field in FRESHNESS_BINDING_FIELDS}
+    if freshness_bindings is not None:
+        derived_freshness = _bind_freshness_bindings(freshness_bindings)
+    derived_freshness["reusable_until_conditions"] = _merge_string_lists(
+        derived_freshness["reusable_until_conditions"],
+        [TREE_UNCHANGED_CONDITION],
+    )
+
+    if semantic_diff_summary is None:
+        summary_parts = [kind]
+        if bound_missing:
+            summary_parts.append("named-missing " + ",".join(bound_missing))
+        if bound_files:
+            summary_parts.append("changed-files " + ",".join(bound_files))
+        if bound_symbols:
+            summary_parts.append("changed-symbols " + ",".join(bound_symbols))
+        semantic_diff_summary = "; ".join(summary_parts)
+
+    derived_questions = {
+        "named_unresolved_questions": [],
+        "missing_evidence": list(bound_missing),
+        "completeness_witness": None,
+        "expansion_references": list(bound_missing),
+    }
+    if questions is not None:
+        provided_questions = _closed(questions, QUESTION_FIELDS, "questions")
+        claimed_missing = _string_list(
+            provided_questions["missing_evidence"], "questions.missing_evidence"
+        )
+        claimed_expansion = _string_list(
+            provided_questions["expansion_references"],
+            "questions.expansion_references",
+        )
+        if claimed_missing and claimed_missing != bound_missing:
+            raise _error("questions.missing_evidence does not match named_missing")
+        if claimed_expansion and claimed_expansion != bound_missing:
+            raise _error("questions.expansion_references does not match named_missing")
+        derived_questions["named_unresolved_questions"] = _string_list(
+            provided_questions["named_unresolved_questions"],
+            "questions.named_unresolved_questions",
+        )
+        if provided_questions["completeness_witness"] is not None:
+            raise CompletenessFailure(
+                "incremental expansion cannot claim silent completeness"
+            )
+        derived_questions["missing_evidence"] = bound_missing
+        derived_questions["expansion_references"] = bound_missing
+
+    return build_minimal_semantic_pack(
+        repository_state_cid=repository_state_cid,
+        task_id=task_id,
+        target_source_cid=target_source_cid,
+        surrounding_source_cid=surrounding_source_cid,
+        test_source_cid=test_source_cid,
+        scanned_tree_oid=scanned_tree_oid,
+        source_tree_oid=source_tree_oid,
+        dependencies=dependencies,
+        obligations=obligations,
+        missing_evidence=bound_missing,
+        expansion_references=bound_missing,
+        reverse_dependencies=reverse_dependencies,
+        explicitly_excluded_paths=explicitly_excluded_paths,
+        changed_interfaces_and_schemas=changed_interfaces_and_schemas,
+        semantic_diff_summary=semantic_diff_summary,
+        contracts=contracts,
+        validation=validation,
+        history=history,
+        questions=derived_questions,
+        scope=scope,
+        budgets=budgets,
+        freshness_bindings=derived_freshness,
+        invalidation=derived_invalidation,
+        parent_context_pack_cid=parent_cid,
+        delta_cid=bound_delta,
+        incremental=True,
+        parent={"parent_context_pack_cid": parent_cid},
+        delta={
+            "delta_cid": bound_delta,
+            "incremental": True,
+            "named_missing": bound_missing,
+        },
         **kwargs,
     )
