@@ -27,3 +27,9 @@ recursive-exclude ipfs_datasets_py/logic/zkp/provekit/circuits target *
 recursive-exclude ipfs_datasets_py/logic/zkp/provekit/circuits *.pkp *.pkv *.np Prover.toml
 prune ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type/test
 prune ipfs_datasets_py/processors/multimedia/convert_to_txt_based_on_mime_type/test
+# PCPR-050: clean installs must not require sibling source trees or
+# recursive submodule checkouts. These directories are gitlinks for
+# development checkouts only and are not distribution members.
+prune ipfs_kit_py
+prune ipfs_accelerate_py
+prune .tools

@@ -9,6 +9,16 @@ description = "IPFS-native decentralized AI data platform"
 readme = "README.md"
 license = {text = "AGPL-3.0-only"}
 requires-python = ">=3.12"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: System :: Distributed Computing",
+]
 # Core dependencies are resolved dynamically from setup.py.  The proof-context
 # provider's core is intentionally dependency-free; optional capabilities stay
 # behind the established extras below.
@@ -30,6 +40,21 @@ shared-formal-verification-bindings = [
 ]
 optional-formal-verification-bindings = ["symbolicai"]
 external-native-tools-policy = "explicit-transactional-lazy-installer-only"
+
+[tool.ipfs-datasets-py.clean-package]
+schema = "ipfs_datasets_py/assurance/clean-package@1"
+interface = "DatasetsCleanPackage@1"
+task-id = "PCPR-050"
+goal-id = "PCPR-G600"
+requires-sibling-source-trees = false
+requires-recursive-submodules = false
+editable-local-dependencies = false
+sys-path-injection = false
+import-network = false
+mutable-git-release-requires = false
+runtime-requires-authority = "setup.py:install_requires"
+development-requirements-role = "source-checkout-development-and-integration"
+sibling-trees = ["ipfs_kit_py", "ipfs_accelerate_py", ".tools"]
 
 [tool.ipfs-accelerate-py.agent-supervisor.validation-dependencies]
 schema = "ipfs_accelerate_py/agent-supervisor/validation-dependencies@1"

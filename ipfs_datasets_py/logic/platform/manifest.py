@@ -105,6 +105,12 @@ DATASETS_SOLVER_QUALIFICATION_INTERFACE: Final = "DatasetsSolverQualification@1"
 DATASETS_SOLVER_QUALIFICATION_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/solver-qualification@1"
 )
+# PCPR-050 clean package. Handshake identity only; a wheel or sdist is not a
+# closed PCPR release. Sibling source trees are never required.
+DATASETS_CLEAN_PACKAGE_INTERFACE: Final = "DatasetsCleanPackage@1"
+DATASETS_CLEAN_PACKAGE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/clean-package@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -354,6 +360,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_SHARED_VECTORS_INTERFACE: "1",
             DATASETS_LICENSE_METADATA_INTERFACE: "1",
             DATASETS_SOLVER_QUALIFICATION_INTERFACE: "1",
+            DATASETS_CLEAN_PACKAGE_INTERFACE: "1",
         }
     )
 
@@ -379,6 +386,7 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_shared_vectors": DATASETS_SHARED_VECTORS_SCHEMA,
             "datasets_license_metadata": DATASETS_LICENSE_METADATA_SCHEMA,
             "datasets_solver_qualification": DATASETS_SOLVER_QUALIFICATION_SCHEMA,
+            "datasets_clean_package": DATASETS_CLEAN_PACKAGE_SCHEMA,
         }
     )
 
@@ -402,6 +410,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "shared_vectors": "1",
             "license_metadata": "1",
             "solver_qualification": "1",
+            "clean_package": "1",
         }
     )
 
