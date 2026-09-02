@@ -216,22 +216,101 @@ lazy_import = ensure_module
 
 
 class _FallbackIPFSDatasets:
-    """Fallback IPFSDatasets interface when core dependencies are missing."""
+    """Unavailable IPFSDatasets stand-in when core dependencies are missing.
+
+    PCPR-011: download and upload never return status success without a real
+    effect. Missing backends stay typed Unavailable. Simulation requires
+    explicit caller selection and is never represented as live.
+    """
 
     def __init__(self, *_: object, **__: object) -> None:
-        self.status = "initialized"
+        self.status = "unavailable"
+        self.outcome = "Unavailable"
+        self.ok = False
+        self.live = False
 
     def list_datasets(self) -> list:
-        """Return an empty dataset list as a safe fallback."""
+        """No catalog is observed when the backend is unavailable."""
         return []
 
-    def download_dataset(self, *_: object, **__: object) -> dict:
-        """Return a stub response for dataset downloads."""
-        return {"status": "success", "dataset": None}
+    def download_dataset(self, *_: object, **kwargs: object) -> dict:
+        """Typed unavailable download; never a false success."""
+        from .assurance.outcomes import replace_false_success_fallback
 
-    def upload_dataset(self, *_: object, **__: object) -> dict:
-        """Return a stub response for dataset uploads."""
-        return {"status": "success"}
+        explicit_simulation = _truthy(
+            str(kwargs.get("explicit_simulation") or "")
+        ) or _truthy(os.environ.get("IPFS_DATASETS_EXPLICIT_SIMULATION"))
+        if explicit_simulation:
+            result = replace_false_success_fallback(
+                family="download_fallback_stub_success",
+                operation="download",
+                backend_available=True,
+                dependency_available=True,
+                simulated=True,
+                legacy={
+                    "backend": "ipfs",
+                    "dependency": "ipfs_datasets_core",
+                    "simulated": True,
+                    "durable_effect": False,
+                },
+            )
+        else:
+            result = replace_false_success_fallback(
+                family="download_fallback_stub_success",
+                operation="download",
+                backend_available=False,
+                dependency_available=False,
+                legacy={
+                    "backend": "ipfs",
+                    "dependency": "ipfs_datasets_core",
+                },
+            )
+        payload = result.to_legacy_compat_dict()
+        payload["dataset"] = None
+        payload["live"] = False
+        payload["simulated"] = bool(explicit_simulation)
+        payload["simulated_represented_as_live"] = False
+        payload["durable_effect"] = False
+        return payload
+
+    def upload_dataset(self, *_: object, **kwargs: object) -> dict:
+        """Typed unavailable upload; never a false success."""
+        from .assurance.outcomes import replace_false_success_fallback
+
+        explicit_simulation = _truthy(
+            str(kwargs.get("explicit_simulation") or "")
+        ) or _truthy(os.environ.get("IPFS_DATASETS_EXPLICIT_SIMULATION"))
+        if explicit_simulation:
+            result = replace_false_success_fallback(
+                family="upload_placeholder_success",
+                operation="upload",
+                backend_available=True,
+                dependency_available=True,
+                simulated=True,
+                legacy={
+                    "backend": "ipfs",
+                    "dependency": "ipfs_datasets_core",
+                    "simulated": True,
+                    "durable_effect": False,
+                },
+            )
+        else:
+            result = replace_false_success_fallback(
+                family="upload_placeholder_success",
+                operation="upload",
+                backend_available=False,
+                dependency_available=False,
+                legacy={
+                    "backend": "ipfs",
+                    "dependency": "ipfs_datasets_core",
+                },
+            )
+        payload = result.to_legacy_compat_dict()
+        payload["live"] = False
+        payload["simulated"] = bool(explicit_simulation)
+        payload["simulated_represented_as_live"] = False
+        payload["durable_effect"] = False
+        return payload
 
 
 # Main entry points with automated installation
