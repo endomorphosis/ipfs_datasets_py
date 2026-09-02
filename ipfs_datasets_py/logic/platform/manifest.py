@@ -111,6 +111,12 @@ DATASETS_CLEAN_PACKAGE_INTERFACE: Final = "DatasetsCleanPackage@1"
 DATASETS_CLEAN_PACKAGE_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/clean-package@1"
 )
+# PCPR-053 declared release-profile dependency locks. Handshake identity only;
+# hashes and live resolver results stay typed unavailable until admitted.
+DATASETS_DEPENDENCY_LOCKS_INTERFACE: Final = "DatasetsDependencyLocks@1"
+DATASETS_DEPENDENCY_LOCKS_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/dependency-locks@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -361,6 +367,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_LICENSE_METADATA_INTERFACE: "1",
             DATASETS_SOLVER_QUALIFICATION_INTERFACE: "1",
             DATASETS_CLEAN_PACKAGE_INTERFACE: "1",
+            DATASETS_DEPENDENCY_LOCKS_INTERFACE: "1",
         }
     )
 
@@ -387,6 +394,7 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_license_metadata": DATASETS_LICENSE_METADATA_SCHEMA,
             "datasets_solver_qualification": DATASETS_SOLVER_QUALIFICATION_SCHEMA,
             "datasets_clean_package": DATASETS_CLEAN_PACKAGE_SCHEMA,
+            "datasets_dependency_locks": DATASETS_DEPENDENCY_LOCKS_SCHEMA,
         }
     )
 
@@ -411,6 +419,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "license_metadata": "1",
             "solver_qualification": "1",
             "clean_package": "1",
+            "dependency_locks": "1",
         }
     )
 

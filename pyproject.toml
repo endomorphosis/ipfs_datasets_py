@@ -56,6 +56,20 @@ runtime-requires-authority = "setup.py:install_requires"
 development-requirements-role = "source-checkout-development-and-integration"
 sibling-trees = ["ipfs_kit_py", "ipfs_accelerate_py", ".tools"]
 
+[tool.ipfs-datasets-py.dependency-locks]
+schema = "ipfs_datasets_py/assurance/dependency-locks@1"
+interface = "DatasetsDependencyLocks@1"
+task-id = "PCPR-053"
+goal-id = "PCPR-G600"
+lock-kind = "declared_release_profile"
+profile = "release"
+python-requires = ">=3.12"
+requirements-authority = "setup.py:install_requires"
+development-requirements-role = "source-checkout-development-and-integration"
+hashes-invented = false
+live-resolver-qualified = false
+release-claim = false
+
 [tool.ipfs-accelerate-py.agent-supervisor.validation-dependencies]
 schema = "ipfs_accelerate_py/agent-supervisor/validation-dependencies@1"
 scope = "complete-authoritative-validation-environment"
