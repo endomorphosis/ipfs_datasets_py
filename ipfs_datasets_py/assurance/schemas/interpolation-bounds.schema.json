@@ -1,0 +1,19 @@
+{
+  "$id": "https://schemas.ipfs-datasets.dev/assurance/interpolation-bounds.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Packaged interpolation bounds. Executable interpolation requires positive finite bounds. Live solvers stay typed unavailable here.",
+  "properties": {
+    "max_symbols": { "minimum": 1, "type": "integer" },
+    "max_term_nodes": { "minimum": 1, "type": "integer" },
+    "memory_limit_mib": { "minimum": 1, "type": "integer" },
+    "schema": { "const": "interpolation-bounds/v1" },
+    "theory": { "type": "string", "minLength": 1 },
+    "timeout_ms": { "minimum": 1, "type": "integer" }
+  },
+  "required": ["memory_limit_mib", "schema", "timeout_ms"],
+  "title": "InterpolationBounds@1",
+  "type": "object",
+  "x-interface": "ValidatedCraigInterpolation@1",
+  "x-schema-version": "interpolation-bounds/v1"
+}

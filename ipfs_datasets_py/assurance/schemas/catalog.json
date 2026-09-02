@@ -1,0 +1,214 @@
+{
+  "goal_id": "PCPR-G230",
+  "interface": "DatasetsSchemaPackaging@1",
+  "packaging_globs": [
+    "assurance/schemas/*.json",
+    "assurance/vectors/*.json",
+    "logic/bridge/schemas/*.json",
+    "logic/intent_ir/intent_ir.schema.json",
+    "logic/legal_ir/schemas/*.json",
+    "logic/software_contracts/adversarial_assurance/schemas/*.json",
+    "logic/software_contracts/semantic_governor/schemas/*.json",
+    "logic/software_contracts/semantic_state/schemas/*.json",
+    "logic/ui_ux_ir/ui_ux_ir.schema.json",
+    "processors/groth16_backend/schemas/*.json"
+  ],
+  "requires_sibling_tests_tree": false,
+  "schema": "ipfs_datasets_py/assurance/schema-packaging-catalog@1",
+  "schemas": [
+    {
+      "interface": "DatasetsSchemaPackaging@1",
+      "maturity": "stable",
+      "name": "schema_packaging_catalog",
+      "package_relpath": "assurance/schemas/catalog.json",
+      "schema_id": "ipfs_datasets_py/assurance/schema-packaging-catalog@1",
+      "source_kind": "package_data"
+    },
+    {
+      "interface": "DatasetsContextPack@1",
+      "maturity": "stable",
+      "name": "datasets_context_pack",
+      "package_relpath": "assurance/schemas/datasets-context-pack.schema.json",
+      "schema_id": "ipfs_datasets_py/datasets-context-pack@1",
+      "source_kind": "package_data"
+    },
+    {
+      "interface": "CanonicalIRIdentity@1",
+      "maturity": "stable",
+      "name": "canonical_ir_identity",
+      "package_relpath": "assurance/schemas/canonical-ir-identity.schema.json",
+      "schema_id": "ir-canonical-identity-v1",
+      "source_kind": "package_data"
+    },
+    {
+      "interface": "SourceLineage@1",
+      "maturity": "stable",
+      "name": "source_lineage",
+      "package_relpath": "assurance/schemas/source-lineage.schema.json",
+      "schema_id": "ir-lineage-graph/v1",
+      "source_kind": "package_data"
+    },
+    {
+      "interface": "ProofObligation@1",
+      "maturity": "stable",
+      "name": "proof_obligation",
+      "package_relpath": "assurance/schemas/proof-obligation.schema.json",
+      "schema_id": "ir-proof-obligation/v1",
+      "source_kind": "package_data"
+    },
+    {
+      "interface": "ProofResult@1",
+      "maturity": "stable",
+      "name": "proof_result",
+      "package_relpath": "assurance/schemas/proof-result.schema.json",
+      "schema_id": "bounded-result/v1",
+      "source_kind": "package_data"
+    },
+    {
+      "interface": "LogicTranslationReceipt@1",
+      "maturity": "stable",
+      "name": "translation_receipt",
+      "package_relpath": "assurance/schemas/translation-receipt.schema.json",
+      "schema_id": "logic-translation-receipt/v1",
+      "source_kind": "package_data"
+    },
+    {
+      "interface": "ValidatedCraigInterpolation@1",
+      "maturity": "experimental",
+      "name": "interpolation_bounds",
+      "package_relpath": "assurance/schemas/interpolation-bounds.schema.json",
+      "schema_id": "interpolation-bounds/v1",
+      "source_kind": "package_data"
+    },
+    {
+      "interface": "BoundedInterpolationCegar@1",
+      "maturity": "experimental",
+      "name": "cegar_budget",
+      "package_relpath": "assurance/schemas/cegar-budget.schema.json",
+      "schema_id": "bounded-interpolation-cegar-budget/v1",
+      "source_kind": "package_data"
+    },
+    {
+      "interface": "IncrementalSmtSession@1",
+      "maturity": "experimental",
+      "name": "incremental_smt",
+      "package_relpath": "assurance/schemas/incremental-smt.schema.json",
+      "schema_id": "incremental-smt-session/v1",
+      "source_kind": "package_data"
+    },
+    {
+      "interface": "SourceRightsManifest@1",
+      "maturity": "stable",
+      "name": "source_rights",
+      "package_relpath": "assurance/schemas/source-rights.schema.json",
+      "schema_id": "ir-corpus-rights-manifest/v1",
+      "source_kind": "package_data"
+    },
+    {
+      "interface": "CanonicalRoundTripIR@1",
+      "maturity": "stable",
+      "name": "legal_ir_canonical_roundtrip",
+      "package_relpath": "logic/legal_ir/schemas/canonical_roundtrip_ir.schema.json",
+      "schema_id": "ipfs-datasets.canonical-roundtrip-ir.v1",
+      "source_kind": "owner_package_data"
+    },
+    {
+      "interface": "SemanticStatePayload@1",
+      "maturity": "stable",
+      "name": "semantic_state_payload",
+      "package_relpath": "logic/software_contracts/semantic_state/schemas/semantic-state.payload.schema.json",
+      "schema_id": "ipfs-datasets.semantic-state.payload.v1",
+      "source_kind": "owner_package_data"
+    },
+    {
+      "interface": "CanonicalTypedBridge@1",
+      "maturity": "stable",
+      "name": "canonical_typed_bridge",
+      "package_relpath": "logic/bridge/schemas/canonical_typed_bridge.schema.json",
+      "schema_id": "ipfs-datasets.canonical-typed-bridge.v1",
+      "source_kind": "owner_package_data"
+    },
+    {
+      "interface": "CanonicalTranslationReceipt@1",
+      "maturity": "stable",
+      "name": "canonical_translation_receipt",
+      "package_relpath": "logic/bridge/schemas/canonical_translation_receipt.schema.json",
+      "schema_id": "ipfs-datasets.canonical-translation-receipt.v1",
+      "source_kind": "owner_package_data"
+    },
+    {
+      "interface": "AdversarialAssuranceBase@1",
+      "maturity": "stable",
+      "name": "adversarial_assurance_base",
+      "package_relpath": "logic/software_contracts/adversarial_assurance/schemas/base.schema.json",
+      "schema_id": "ipfs-datasets.adversarial-assurance.base.v1",
+      "source_kind": "owner_package_data"
+    },
+    {
+      "interface": "AdversarialAssuranceReceipt@1",
+      "maturity": "stable",
+      "name": "adversarial_assurance_receipt",
+      "package_relpath": "logic/software_contracts/adversarial_assurance/schemas/receipt.schema.json",
+      "schema_id": "ipfs-datasets.adversarial-assurance.receipt.v1",
+      "source_kind": "owner_package_data"
+    },
+    {
+      "interface": "SemanticGovernorBase@1",
+      "maturity": "stable",
+      "name": "semantic_governor_base",
+      "package_relpath": "logic/software_contracts/semantic_governor/schemas/base.schema.json",
+      "schema_id": "ipfs-datasets.semantic-governor.base.v1",
+      "source_kind": "owner_package_data"
+    },
+    {
+      "interface": "SemanticGovernorAudit@1",
+      "maturity": "stable",
+      "name": "semantic_governor_audit",
+      "package_relpath": "logic/software_contracts/semantic_governor/schemas/audit.schema.json",
+      "schema_id": "ipfs-datasets.semantic-governor.audit.v1",
+      "source_kind": "owner_package_data"
+    },
+    {
+      "interface": "IntentIR@1",
+      "maturity": "stable",
+      "name": "intent_ir",
+      "package_relpath": "logic/intent_ir/intent_ir.schema.json",
+      "schema_id": "ipfs-datasets.intent-ir.v1",
+      "source_kind": "owner_package_data"
+    },
+    {
+      "interface": "UiUxIR@1",
+      "maturity": "stable",
+      "name": "ui_ux_ir",
+      "package_relpath": "logic/ui_ux_ir/ui_ux_ir.schema.json",
+      "schema_id": "ipfs-datasets.ui-ux-ir.v1",
+      "source_kind": "owner_package_data"
+    },
+    {
+      "interface": "Groth16ErrorEnvelope@1",
+      "maturity": "experimental",
+      "name": "groth16_error_envelope",
+      "package_relpath": "processors/groth16_backend/schemas/error_envelope_v1.schema.json",
+      "schema_id": "ipfs-datasets.groth16.error-envelope.v1",
+      "source_kind": "owner_package_data"
+    },
+    {
+      "interface": "Groth16Proof@1",
+      "maturity": "experimental",
+      "name": "groth16_proof",
+      "package_relpath": "processors/groth16_backend/schemas/proof_v1.schema.json",
+      "schema_id": "ipfs-datasets.groth16.proof.v1",
+      "source_kind": "owner_package_data"
+    },
+    {
+      "interface": "Groth16Witness@1",
+      "maturity": "experimental",
+      "name": "groth16_witness",
+      "package_relpath": "processors/groth16_backend/schemas/witness_v1.schema.json",
+      "schema_id": "ipfs-datasets.groth16.witness.v1",
+      "source_kind": "owner_package_data"
+    }
+  ],
+  "task_id": "PCPR-015",
+  "vector_catalog": "assurance/vectors/recipes.json"
+}

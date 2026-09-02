@@ -1,0 +1,22 @@
+{
+  "$id": "https://schemas.ipfs-datasets.dev/assurance/cegar-budget.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Packaged CEGAR budget. Executable CEGAR requires a positive finite budget. Live solvers stay typed unavailable here.",
+  "properties": {
+    "max_abstract_states": { "minimum": 1, "type": "integer" },
+    "max_iterations": { "minimum": 1, "type": "integer" },
+    "max_predicates": { "minimum": 1, "type": "integer" },
+    "max_symbols": { "minimum": 1, "type": "integer" },
+    "max_term_nodes": { "minimum": 1, "type": "integer" },
+    "max_trace_length": { "minimum": 1, "type": "integer" },
+    "memory_limit_mib": { "minimum": 1, "type": "integer" },
+    "schema": { "const": "bounded-interpolation-cegar-budget/v1" },
+    "timeout_ms": { "minimum": 1, "type": "integer" }
+  },
+  "required": ["max_iterations", "memory_limit_mib", "schema", "timeout_ms"],
+  "title": "CegarBudget@1",
+  "type": "object",
+  "x-interface": "BoundedInterpolationCegar@1",
+  "x-schema-version": "bounded-interpolation-cegar-budget/v1"
+}

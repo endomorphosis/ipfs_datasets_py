@@ -1,0 +1,27 @@
+{
+  "$id": "https://schemas.ipfs-datasets.dev/assurance/source-rights.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Packaged SourceRightsManifest@1 record. Admitted plus unresolved fails closed.",
+  "properties": {
+    "disposition": {
+      "enum": ["admitted", "quarantined", "denied", "unresolved"],
+      "type": "string"
+    },
+    "license_expression": { "type": "string", "minLength": 1 },
+    "scope": { "type": "string", "minLength": 1 },
+    "source_rights_status": { "type": "string", "minLength": 1 },
+    "transformation_rights_status": { "type": "string", "minLength": 1 }
+  },
+  "required": [
+    "disposition",
+    "license_expression",
+    "scope",
+    "source_rights_status",
+    "transformation_rights_status"
+  ],
+  "title": "SourceRightsManifest@1",
+  "type": "object",
+  "x-interface": "SourceRightsManifest@1",
+  "x-schema-version": "ir-corpus-rights-manifest/v1"
+}

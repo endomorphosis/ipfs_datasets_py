@@ -1,0 +1,26 @@
+{
+  "$id": "https://schemas.ipfs-datasets.dev/assurance/proof-obligation.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Packaged ProofObligation@1. Theorem-shaped declaration with no implied verification.",
+  "properties": {
+    "assumption_ids": {
+      "items": { "type": "string", "minLength": 1 },
+      "type": "array"
+    },
+    "logic_family": { "type": "string", "minLength": 1 },
+    "metadata": { "additionalProperties": true, "type": "object" },
+    "obligation_id": { "type": "string", "minLength": 1 },
+    "schema_version": { "const": "ir-proof-obligation/v1" },
+    "source_refs": {
+      "items": { "type": "string", "minLength": 1 },
+      "type": "array"
+    },
+    "statement": { "type": "string", "minLength": 1 }
+  },
+  "required": ["obligation_id", "schema_version", "statement"],
+  "title": "ProofObligation@1",
+  "type": "object",
+  "x-interface": "ProofObligation@1",
+  "x-schema-version": "ir-proof-obligation/v1"
+}

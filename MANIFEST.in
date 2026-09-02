@@ -13,8 +13,15 @@ include ipfs_datasets_py/processors/groth16_backend/build.sh
 include ipfs_datasets_py/processors/provekit_backend/README.md
 include ipfs_datasets_py/processors/provekit_backend/build.sh
 recursive-include ipfs_datasets_py/logic/zkp/provekit/circuits Nargo.toml *.nr
+recursive-include ipfs_datasets_py/assurance/schemas *.json
+recursive-include ipfs_datasets_py/assurance/vectors *.json
+recursive-include ipfs_datasets_py/logic/bridge/schemas *.json
+include ipfs_datasets_py/logic/intent_ir/intent_ir.schema.json
 recursive-include ipfs_datasets_py/logic/legal_ir/schemas *.json
+recursive-include ipfs_datasets_py/logic/software_contracts/adversarial_assurance/schemas *.json
+recursive-include ipfs_datasets_py/logic/software_contracts/semantic_governor/schemas *.json
 recursive-include ipfs_datasets_py/logic/software_contracts/semantic_state/schemas *.json
+include ipfs_datasets_py/logic/ui_ux_ir/ui_ux_ir.schema.json
 recursive-exclude ipfs_datasets_py/logic/zkp/provekit/circuits target *
 recursive-exclude ipfs_datasets_py/logic/zkp/provekit/circuits *.pkp *.pkv *.np Prover.toml
 prune ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type/test

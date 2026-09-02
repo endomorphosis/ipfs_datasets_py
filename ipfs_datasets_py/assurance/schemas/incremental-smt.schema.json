@@ -1,0 +1,36 @@
+{
+  "$id": "https://schemas.ipfs-datasets.dev/assurance/incremental-smt.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Packaged IncrementalSmtSession@1 fingerprint. Positive timeout and memory are required. Sessions are not opened here.",
+  "properties": {
+    "configuration_root": { "type": "string", "minLength": 1 },
+    "environment_root": { "type": "string", "minLength": 1 },
+    "logic": { "type": "string", "minLength": 1 },
+    "memory_limit_mib": { "minimum": 1, "type": "integer" },
+    "policy_root": { "type": "string", "minLength": 1 },
+    "provider": { "type": "string", "minLength": 1 },
+    "provider_version": { "type": "string", "minLength": 1 },
+    "schema": { "const": "incremental-smt-session/v1" },
+    "theory_fingerprint": { "type": "string", "minLength": 1 },
+    "timeout_ms": { "minimum": 1, "type": "integer" },
+    "translator_identity": { "type": "string", "minLength": 1 }
+  },
+  "required": [
+    "configuration_root",
+    "environment_root",
+    "logic",
+    "memory_limit_mib",
+    "policy_root",
+    "provider",
+    "provider_version",
+    "schema",
+    "theory_fingerprint",
+    "timeout_ms",
+    "translator_identity"
+  ],
+  "title": "IncrementalSmtSession@1",
+  "type": "object",
+  "x-interface": "IncrementalSmtSession@1",
+  "x-schema-version": "incremental-smt-session/v1"
+}

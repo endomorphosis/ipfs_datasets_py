@@ -83,6 +83,16 @@ DATASETS_SEMANTIC_API_CATALOG_INTERFACE: Final = "DatasetsSemanticApiCatalog@1"
 DATASETS_SEMANTIC_API_CATALOG_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/semantic-api-catalog@1"
 )
+# PCPR-015 packaged schemas and shared vectors. Handshake identity only;
+# loaders remain importlib.resources and never require a sibling tests tree.
+DATASETS_SCHEMA_PACKAGING_INTERFACE: Final = "DatasetsSchemaPackaging@1"
+DATASETS_SCHEMA_PACKAGING_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/schema-packaging-catalog@1"
+)
+DATASETS_SHARED_VECTORS_INTERFACE: Final = "DatasetsSharedVectors@1"
+DATASETS_SHARED_VECTORS_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/shared-vectors@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -328,6 +338,8 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_CONTEXT_PACK_V01_INTERFACE: "0.1",
             CANONICAL_IR_IDENTITY_INTERFACE: "1",
             DATASETS_SEMANTIC_API_CATALOG_INTERFACE: "1",
+            DATASETS_SCHEMA_PACKAGING_INTERFACE: "1",
+            DATASETS_SHARED_VECTORS_INTERFACE: "1",
         }
     )
 
@@ -349,6 +361,8 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_context_pack": DATASETS_CONTEXT_PACK_SCHEMA,
             "canonical_ir_identity": CANONICAL_IR_IDENTITY_SCHEMA,
             "datasets_semantic_api_catalog": DATASETS_SEMANTIC_API_CATALOG_SCHEMA,
+            "datasets_schema_packaging": DATASETS_SCHEMA_PACKAGING_SCHEMA,
+            "datasets_shared_vectors": DATASETS_SHARED_VECTORS_SCHEMA,
         }
     )
 
@@ -368,6 +382,8 @@ def _default_operation_versions() -> Mapping[str, str]:
             "catalog": CANONICAL_CATALOG_SNAPSHOT_VERSION,
             "context_pack": DATASETS_CONTEXT_PACK_VERSION,
             "canonical_ir_identity": "1",
+            "schema_packaging": "1",
+            "shared_vectors": "1",
         }
     )
 

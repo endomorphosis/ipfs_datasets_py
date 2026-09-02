@@ -1,0 +1,250 @@
+{
+  "interface": "DatasetsSharedVectors@1",
+  "requires_sibling_tests_tree": false,
+  "schema": "ipfs_datasets_py/assurance/shared-vectors@1",
+  "task_id": "PCPR-015",
+  "vectors": [
+    {
+      "payload": {
+        "capsule_cids": ["bafkreiagecontextpackcapsulecidabcdefghijklmnopqrstuv"],
+        "interface": "DatasetsContextPack@1",
+        "repository_state_cid": "bafkreiagerepostatecidabcdefghijklmnopqrstuvwxyzabcd",
+        "scanned_tree_oid": "16ef68abe8a35a3033dfaf1ed4e8d6132600df8f",
+        "schema": "ipfs_datasets_py/datasets-context-pack@1",
+        "source_tree_oid": "16ef68abe8a35a3033dfaf1ed4e8d6132600df8f",
+        "surrounding_source_cid": "bafkreiagesurroundcidabcdefghijklmnopqrstuvwxyzabcde",
+        "target_source_cid": "bafkreiagetargetsourcecidabcdefghijklmnopqrstuvwxyz",
+        "task_id": "PCPR-015",
+        "test_source_cid": "bafkreiagetestsourcecidabcdefghijklmnopqrstuvwxyzab"
+      },
+      "polarity": "positive",
+      "schema_name": "datasets_context_pack",
+      "vector_id": "context_pack_positive"
+    },
+    {
+      "payload": {
+        "identity_cid": "bafkreiageny3j2wlf5yg4gkdorhps6tf6buimdnfb4iyil5lsanke6cilm",
+        "interface": "CanonicalIRIdentity@1",
+        "profile": "ir-canonical-identity-v1",
+        "schema": "ir-canonical-identity-v1"
+      },
+      "polarity": "positive",
+      "schema_name": "canonical_ir_identity",
+      "vector_id": "canonical_ir_identity_positive"
+    },
+    {
+      "payload": {
+        "edges": [],
+        "interface": "SourceLineage@1",
+        "nodes": [],
+        "schema": "ir-lineage-graph/v1"
+      },
+      "polarity": "positive",
+      "schema_name": "source_lineage",
+      "vector_id": "source_lineage_positive"
+    },
+    {
+      "payload": {
+        "assumption_ids": [],
+        "logic_family": "unspecified",
+        "obligation_id": "obl-pcpr-015",
+        "schema_version": "ir-proof-obligation/v1",
+        "source_refs": [],
+        "statement": "packaged schemas load without a sibling tests tree"
+      },
+      "polarity": "positive",
+      "schema_name": "proof_obligation",
+      "vector_id": "proof_obligation_positive"
+    },
+    {
+      "payload": {
+        "bounds": { "memory_limit_mib": 512, "timeout_ms": 1000 },
+        "interface": "ProofResult@1",
+        "obligation_id": "obl-pcpr-015",
+        "schema": "bounded-result/v1",
+        "status": "unavailable"
+      },
+      "polarity": "positive",
+      "schema_name": "proof_result",
+      "vector_id": "proof_result_unavailable_positive"
+    },
+    {
+      "payload": {
+        "freshness": "current",
+        "interface": "LogicTranslationReceipt@1",
+        "schema": "logic-translation-receipt/v1",
+        "source_family": "ir",
+        "target_family": "smtlib",
+        "translation_cid": "bafkreiagetranslationcidabcdefghijklmnopqrstuvwxyzab"
+      },
+      "polarity": "positive",
+      "schema_name": "translation_receipt",
+      "vector_id": "translation_receipt_positive"
+    },
+    {
+      "payload": {
+        "max_symbols": 256,
+        "max_term_nodes": 1024,
+        "memory_limit_mib": 512,
+        "schema": "interpolation-bounds/v1",
+        "theory": "QF_LIA",
+        "timeout_ms": 1000
+      },
+      "polarity": "positive",
+      "schema_name": "interpolation_bounds",
+      "vector_id": "interpolation_bounds_positive"
+    },
+    {
+      "payload": {
+        "max_abstract_states": 64,
+        "max_iterations": 8,
+        "max_predicates": 16,
+        "max_symbols": 256,
+        "max_term_nodes": 1024,
+        "max_trace_length": 32,
+        "memory_limit_mib": 512,
+        "schema": "bounded-interpolation-cegar-budget/v1",
+        "timeout_ms": 1000
+      },
+      "polarity": "positive",
+      "schema_name": "cegar_budget",
+      "vector_id": "cegar_budget_positive"
+    },
+    {
+      "payload": {
+        "configuration_root": "cfg-pcpr-015",
+        "environment_root": "env-pcpr-015",
+        "logic": "QF_LIA",
+        "memory_limit_mib": 512,
+        "policy_root": "policy-pcpr-015",
+        "provider": "unavailable",
+        "provider_version": "typed-unavailable",
+        "schema": "incremental-smt-session/v1",
+        "theory_fingerprint": "fp-pcpr-015",
+        "timeout_ms": 1000,
+        "translator_identity": "datasets-smt-translator@1"
+      },
+      "polarity": "positive",
+      "schema_name": "incremental_smt",
+      "vector_id": "incremental_smt_positive"
+    },
+    {
+      "payload": {
+        "disposition": "admitted",
+        "license_expression": "AGPL-3.0-or-later",
+        "scope": "source",
+        "source_rights_status": "resolved",
+        "transformation_rights_status": "resolved"
+      },
+      "polarity": "positive",
+      "schema_name": "source_rights",
+      "vector_id": "source_rights_admitted_positive"
+    },
+    {
+      "payload": {
+        "backend_request": { "freeform": true },
+        "repository_state_cid": "bafkreiagerepostatecidabcdefghijklmnopqrstuvwxyzabcd",
+        "scanned_tree_oid": "16ef68abe8a35a3033dfaf1ed4e8d6132600df8f",
+        "surrounding_source_cid": "bafkreiagesurroundcidabcdefghijklmnopqrstuvwxyzabcde",
+        "target_source_cid": "bafkreiagetargetsourcecidabcdefghijklmnopqrstuvwxyz",
+        "task_id": "PCPR-015",
+        "test_source_cid": "bafkreiagetestsourcecidabcdefghijklmnopqrstuvwxyzab"
+      },
+      "polarity": "negative",
+      "reason": "free-form field backend_request cannot mint DatasetsContextPack@1",
+      "reject_kind": "schema",
+      "schema_name": "datasets_context_pack",
+      "vector_id": "context_pack_freeform_rejected"
+    },
+    {
+      "payload": {
+        "advisory": true,
+        "repository_state_cid": "bafkreiagerepostatecidabcdefghijklmnopqrstuvwxyzabcd",
+        "scanned_tree_oid": "16ef68abe8a35a3033dfaf1ed4e8d6132600df8f",
+        "surrounding_source_cid": "bafkreiagesurroundcidabcdefghijklmnopqrstuvwxyzabcde",
+        "target_source_cid": "bafkreiagetargetsourcecidabcdefghijklmnopqrstuvwxyz",
+        "task_id": "PCPR-015",
+        "test_source_cid": "bafkreiagetestsourcecidabcdefghijklmnopqrstuvwxyzab"
+      },
+      "polarity": "negative",
+      "reason": "advisory ContextPack material is non-authoritative",
+      "reject_kind": "semantic",
+      "schema_name": "datasets_context_pack",
+      "vector_id": "context_pack_advisory_rejected"
+    },
+    {
+      "payload": {
+        "memory_limit_mib": 512,
+        "schema": "interpolation-bounds/v1",
+        "timeout_ms": 0
+      },
+      "polarity": "negative",
+      "reason": "executable interpolation requires positive finite bounds",
+      "reject_kind": "schema",
+      "schema_name": "interpolation_bounds",
+      "vector_id": "interpolation_missing_bounds_rejected"
+    },
+    {
+      "payload": {
+        "max_iterations": 0,
+        "memory_limit_mib": 512,
+        "schema": "bounded-interpolation-cegar-budget/v1",
+        "timeout_ms": 1000
+      },
+      "polarity": "negative",
+      "reason": "executable CEGAR requires a positive finite budget",
+      "reject_kind": "schema",
+      "schema_name": "cegar_budget",
+      "vector_id": "cegar_missing_budget_rejected"
+    },
+    {
+      "payload": {
+        "path": "tests/fixtures/context_pack.json"
+      },
+      "polarity": "negative",
+      "reason": "installed packaging must not load a sibling tests tree",
+      "reject_kind": "path",
+      "schema_name": "datasets_context_pack",
+      "vector_id": "sibling_tests_path_rejected"
+    },
+    {
+      "payload": {
+        "live": true,
+        "simulated": true,
+        "status": "verified"
+      },
+      "polarity": "negative",
+      "reason": "simulated results must not be represented as live",
+      "reject_kind": "semantic",
+      "schema_name": "proof_result",
+      "vector_id": "simulated_as_live_rejected"
+    },
+    {
+      "payload": {
+        "obligation_id": "obl-pcpr-015",
+        "schema_version": "ir-proof-obligation/v1",
+        "solver_witness": { "freeform": true },
+        "statement": "unknown fields fail closed"
+      },
+      "polarity": "negative",
+      "reason": "unknown proof-obligation fields fail closed",
+      "reject_kind": "schema",
+      "schema_name": "proof_obligation",
+      "vector_id": "proof_obligation_unknown_field_rejected"
+    },
+    {
+      "payload": {
+        "disposition": "admitted",
+        "license_expression": "AGPL-3.0-or-later",
+        "scope": "source",
+        "source_rights_status": "unresolved",
+        "transformation_rights_status": "resolved"
+      },
+      "polarity": "negative",
+      "reason": "admitted rights require a resolved source-rights status",
+      "reject_kind": "semantic",
+      "schema_name": "source_rights",
+      "vector_id": "admitted_unresolved_rights_rejected"
+    }
+  ]
+}
