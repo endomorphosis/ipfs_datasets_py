@@ -266,6 +266,16 @@ DATASETS_FINAL_RECEIPT_CHAIN_INTERFACE: Final = (
 DATASETS_FINAL_RECEIPT_CHAIN_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/final-receipt-chain-binding@1"
 )
+# PCPR-080 Datasets binding to Accelerate-owned Python external-client
+# demonstration. Handshake identity only; live Supervisor.run stays
+# typed unavailable until admitted. LogicProviderProtocol@2 is not
+# reminted.
+DATASETS_PYTHON_EXTERNAL_CLIENT_INTERFACE: Final = (
+    "DatasetsPythonExternalClientBinding@1"
+)
+DATASETS_PYTHON_EXTERNAL_CLIENT_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/python-external-client-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -534,6 +544,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_STATE_OWNER_RESTART_INTERFACE: "1",
             DATASETS_RECOVERY_AND_IDEMPOTENCY_INTERFACE: "1",
             DATASETS_FINAL_RECEIPT_CHAIN_INTERFACE: "1",
+            DATASETS_PYTHON_EXTERNAL_CLIENT_INTERFACE: "1",
         }
     )
 
@@ -590,6 +601,7 @@ def _default_schema_roots() -> Mapping[str, str]:
                 DATASETS_RECOVERY_AND_IDEMPOTENCY_SCHEMA
             ),
             "datasets_final_receipt_chain": DATASETS_FINAL_RECEIPT_CHAIN_SCHEMA,
+            "datasets_python_external_client": DATASETS_PYTHON_EXTERNAL_CLIENT_SCHEMA,
         }
     )
 
@@ -632,6 +644,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "state_owner_restart": "1",
             "recovery_and_idempotency": "1",
             "final_receipt_chain": "1",
+            "python_external_client": "1",
         }
     )
 
