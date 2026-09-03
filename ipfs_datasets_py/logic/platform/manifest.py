@@ -256,6 +256,16 @@ DATASETS_RECOVERY_AND_IDEMPOTENCY_INTERFACE: Final = (
 DATASETS_RECOVERY_AND_IDEMPOTENCY_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/recovery-and-idempotency-binding@1"
 )
+# PCPR-072 Datasets binding to Accelerate-owned final proof-carrying
+# receipt chain. Handshake identity only; live Quack chain emission
+# stays typed unavailable until admitted. LogicProviderProtocol@2 is
+# not reminted.
+DATASETS_FINAL_RECEIPT_CHAIN_INTERFACE: Final = (
+    "DatasetsFinalReceiptChainBinding@1"
+)
+DATASETS_FINAL_RECEIPT_CHAIN_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/final-receipt-chain-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -523,6 +533,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_STALE_REJECTION_INTERFACE: "1",
             DATASETS_STATE_OWNER_RESTART_INTERFACE: "1",
             DATASETS_RECOVERY_AND_IDEMPOTENCY_INTERFACE: "1",
+            DATASETS_FINAL_RECEIPT_CHAIN_INTERFACE: "1",
         }
     )
 
@@ -578,6 +589,7 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_recovery_and_idempotency": (
                 DATASETS_RECOVERY_AND_IDEMPOTENCY_SCHEMA
             ),
+            "datasets_final_receipt_chain": DATASETS_FINAL_RECEIPT_CHAIN_SCHEMA,
         }
     )
 
@@ -619,6 +631,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "stale_rejection": "1",
             "state_owner_restart": "1",
             "recovery_and_idempotency": "1",
+            "final_receipt_chain": "1",
         }
     )
 
