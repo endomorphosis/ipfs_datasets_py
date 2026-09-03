@@ -185,6 +185,13 @@ DATASETS_DETERMINISTIC_FIRST_ROUTE_INTERFACE: Final = (
 DATASETS_DETERMINISTIC_FIRST_ROUTE_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/deterministic-first-route-binding@1"
 )
+# PCPR-064 Datasets binding to Accelerate-owned bounded PatchPlan.
+# Handshake identity only; live supervisor application stays typed
+# unavailable until admitted. LogicProviderProtocol@2 is not reminted.
+DATASETS_BOUNDED_PATCH_INTERFACE: Final = "DatasetsBoundedPatchBinding@1"
+DATASETS_BOUNDED_PATCH_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/bounded-patch-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -444,6 +451,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_SEMANTIC_CONTEXT_PACK_INTERFACE: "1",
             DATASETS_CONTEXT_PACK_STORAGE_INTERFACE: "1",
             DATASETS_DETERMINISTIC_FIRST_ROUTE_INTERFACE: "1",
+            DATASETS_BOUNDED_PATCH_INTERFACE: "1",
         }
     )
 
@@ -483,6 +491,7 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_deterministic_first_route": (
                 DATASETS_DETERMINISTIC_FIRST_ROUTE_SCHEMA
             ),
+            "datasets_bounded_patch": DATASETS_BOUNDED_PATCH_SCHEMA,
         }
     )
 
@@ -516,6 +525,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "semantic_context_pack": "1",
             "context_pack_storage": "1",
             "deterministic_first_route": "1",
+            "bounded_patch": "1",
         }
     )
 

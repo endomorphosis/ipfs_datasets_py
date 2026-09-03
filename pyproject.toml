@@ -179,6 +179,18 @@ live-execution = false
 live-selected-tests = false
 release-claim = false
 
+[tool.ipfs-datasets-py.bounded-patch]
+schema = "ipfs_datasets_py/assurance/bounded-patch-binding@1"
+interface = "DatasetsBoundedPatchBinding@1"
+task-id = "PCPR-064"
+goal-id = "PCPR-G700"
+objective-kind = "declared_bounded_patch_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-selected-tests = false
+release-claim = false
+
 [tool.ipfs-accelerate-py.agent-supervisor.validation-dependencies]
 schema = "ipfs_accelerate_py/agent-supervisor/validation-dependencies@1"
 scope = "complete-authoritative-validation-environment"

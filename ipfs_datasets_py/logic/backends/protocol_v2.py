@@ -74,7 +74,7 @@ CANONICAL_LOGIC_PROVIDER_PROTOCOL_INTERFACE: Final = (
     LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE
 )
 CANONICAL_LOGIC_PROVIDER_PROTOCOL_VERSION: Final = LOGIC_PROVIDER_PROTOCOL_VERSION
-LOGIC_PROVIDER_PROTOCOL_V2_MODULE_VERSION: Final = "1.0.0"
+LOGIC_PROVIDER_PROTOCOL_V2_MODULE_VERSION: Final = "1.1.0"
 
 LOGIC_PROVIDER_PROTOCOL_V2_SCHEMA: Final = (
     "ipfs_datasets_py/logic-provider-protocol@2"
@@ -118,6 +118,23 @@ PROTOCOL_V2_OPERATIONS: Final[frozenset[str]] = frozenset(
     {"capability", *EXECUTABLE_OPERATIONS}
 )
 
+# PCPR-064 additive bounded PatchPlan surface. This does not remint
+# LogicProviderProtocol@2 and does not add a protocol operation.
+BOUNDED_PATCH_PLAN_INTERFACE: Final = "LogicProviderProtocolBoundedPatchPlan@1"
+BOUNDED_PATCH_PLAN_SCHEMA: Final = (
+    "ipfs_datasets_py/logic-provider-bounded-patch-plan@1"
+)
+BOUNDED_PATCH_PLAN_TASK_ID: Final = "PCPR-064"
+AUTHORIZED_PROTOCOL_PATCH_RELPATHS: Final[frozenset[str]] = frozenset(
+    {
+        "ipfs_datasets_py/logic/backends/protocol_v2.py",
+        "ipfs_datasets_py/assurance/logic_provider_protocol.py",
+        "ipfs_datasets_py/assurance/bounded_patch.py",
+        "tests/unit/test_pcpr_013_logic_provider_protocol.py",
+        "tests/unit/test_pcpr_014_semantic_apis.py",
+    }
+)
+
 
 class ProtocolV2Error(LogicProviderContractError):
     """Raised when a LogicProviderProtocol@2 request is malformed."""
@@ -125,6 +142,140 @@ class ProtocolV2Error(LogicProviderContractError):
 
 class ProtocolV2AdmissionError(ProtocolV2Error):
     """Raised when a request fails closed before provider dispatch."""
+
+
+class UnauthorizedProtocolPatchPathError(ProtocolV2AdmissionError):
+    """Raised when a PatchPlan path escapes the authorized protocol cone."""
+
+
+class ProtocolPatchRemintError(ProtocolV2AdmissionError):
+    """Raised when a PatchPlan would remint LogicProviderProtocol@2."""
+
+
+def protocol_patch_path_is_authorized(path: str) -> bool:
+    """Return whether *path* is inside the authorized protocol patch cone."""
+
+    normalized = str(path).replace("\\", "/").lstrip("./")
+    return normalized in AUTHORIZED_PROTOCOL_PATCH_RELPATHS
+
+
+def refuse_unauthorized_protocol_patch_path(path: str) -> str:
+    """Fail closed when a PatchPlan path is outside the protocol cone."""
+
+    normalized = str(path).replace("\\", "/").lstrip("./")
+    if normalized not in AUTHORIZED_PROTOCOL_PATCH_RELPATHS:
+        raise UnauthorizedProtocolPatchPathError(
+            f"path {path!r} is not an authorized LogicProviderProtocol@2 "
+            "patch path"
+        )
+    return normalized
+
+
+def refuse_protocol_operation_remint(operation: object) -> str:
+    """Reject a PatchPlan that would add or remint a protocol operation."""
+
+    value = str(getattr(operation, "value", operation) or "").strip()
+    if value not in PROTOCOL_V2_OPERATIONS:
+        raise ProtocolPatchRemintError(
+            f"bounded patch must not add protocol operation {operation!r}; "
+            "LogicProviderProtocol@2 operations remain the closed @2 set"
+        )
+    return value
+
+
+@dataclass(frozen=True)
+class BoundedPatchPlanV2:
+    """Typed bounded PatchPlan over LogicProviderProtocol@2.
+
+    Additive PCPR-064 surface. The plan authorizes source edits inside
+    :data:`AUTHORIZED_PROTOCOL_PATCH_RELPATHS` and refuses to remint the
+    canonical protocol identity or to add a protocol operation.
+    """
+
+    interface: str = BOUNDED_PATCH_PLAN_INTERFACE
+    schema: str = BOUNDED_PATCH_PLAN_SCHEMA
+    protocol_interface: str = LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE
+    protocol_version: int = LOGIC_PROVIDER_PROTOCOL_VERSION
+    remints_protocol: bool = False
+    adds_protocol_operation: bool = False
+    paths: tuple[str, ...] = field(default_factory=tuple)
+
+    def __post_init__(self) -> None:
+        if self.interface != BOUNDED_PATCH_PLAN_INTERFACE:
+            raise ProtocolV2AdmissionError(
+                "bounded patch interface must remain "
+                f"{BOUNDED_PATCH_PLAN_INTERFACE}"
+            )
+        if self.schema != BOUNDED_PATCH_PLAN_SCHEMA:
+            raise ProtocolV2AdmissionError(
+                "bounded patch schema must remain "
+                f"{BOUNDED_PATCH_PLAN_SCHEMA}"
+            )
+        if self.protocol_interface != LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE:
+            raise ProtocolPatchRemintError(
+                "bounded patch must not remint LogicProviderProtocol@2"
+            )
+        if int(self.protocol_version) != LOGIC_PROVIDER_PROTOCOL_VERSION:
+            raise ProtocolPatchRemintError(
+                "bounded patch must not remint LogicProviderProtocol@2 version"
+            )
+        if self.remints_protocol:
+            raise ProtocolPatchRemintError(
+                "bounded patch must not remint LogicProviderProtocol@2"
+            )
+        if self.adds_protocol_operation:
+            raise ProtocolPatchRemintError(
+                "bounded patch must not add a LogicProviderProtocol@2 operation"
+            )
+        normalized = tuple(
+            refuse_unauthorized_protocol_patch_path(path) for path in self.paths
+        )
+        object.__setattr__(self, "paths", normalized)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "adds_protocol_operation": False,
+            "interface": self.interface,
+            "paths": list(self.paths),
+            "protocol_interface": self.protocol_interface,
+            "protocol_version": self.protocol_version,
+            "remints_protocol": False,
+            "schema": self.schema,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "BoundedPatchPlanV2":
+        body = dict(payload)
+        _forbid_free_form_payload(body, "BoundedPatchPlanV2")
+        _reject_unknown(
+            body,
+            {
+                "adds_protocol_operation",
+                "interface",
+                "paths",
+                "protocol_interface",
+                "protocol_version",
+                "remints_protocol",
+                "schema",
+            },
+            "BoundedPatchPlanV2",
+        )
+        return cls(
+            interface=str(body.get("interface") or BOUNDED_PATCH_PLAN_INTERFACE),
+            schema=str(body.get("schema") or BOUNDED_PATCH_PLAN_SCHEMA),
+            protocol_interface=str(
+                body.get("protocol_interface")
+                or LOGIC_PROVIDER_PROTOCOL_V2_INTERFACE
+            ),
+            protocol_version=int(
+                body.get("protocol_version", LOGIC_PROVIDER_PROTOCOL_VERSION)
+            ),
+            remints_protocol=bool(body.get("remints_protocol", False)),
+            adds_protocol_operation=bool(
+                body.get("adds_protocol_operation", False)
+            ),
+            paths=tuple(body.get("paths") or ()),
+        )
 
 
 class MissingExecutableBoundsError(ProtocolV2AdmissionError, MissingBoundsError):
@@ -1545,6 +1696,10 @@ def v1_operation_for(operation: ProtocolOperationV2 | str) -> LogicProviderOpera
 
 __all__ = [
     "ATTEST_REQUEST_V2_SCHEMA",
+    "AUTHORIZED_PROTOCOL_PATCH_RELPATHS",
+    "BOUNDED_PATCH_PLAN_INTERFACE",
+    "BOUNDED_PATCH_PLAN_SCHEMA",
+    "BOUNDED_PATCH_PLAN_TASK_ID",
     "CANONICAL_LOGIC_PROVIDER_PROTOCOL_INTERFACE",
     "CANONICAL_LOGIC_PROVIDER_PROTOCOL_VERSION",
     "CAPABILITY_REQUEST_V2_SCHEMA",
@@ -1563,6 +1718,7 @@ __all__ = [
     "VERIFY_REQUEST_V2_SCHEMA",
     "ArbitraryPayloadProtocolError",
     "AttestRequestV2",
+    "BoundedPatchPlanV2",
     "CapabilityRequestV2",
     "LogicProviderProtocol",
     "LogicProviderProtocolV2",
@@ -1570,17 +1726,22 @@ __all__ = [
     "ProveCheckMode",
     "ProveCheckRequestV2",
     "ProtocolOperationV2",
+    "ProtocolPatchRemintError",
     "ProtocolV2AdmissionError",
     "ProtocolV2Error",
     "ProviderProtocolEnvelopeV2",
     "ProviderRequestV2",
     "ReconstructRequestV2",
     "TranslationRequestV2",
+    "UnauthorizedProtocolPatchPathError",
     "VerifyRequestV2",
     "admit_canonical_provider_request",
     "admit_provider_request_v2",
     "content_digest_for_request",
     "is_executable_operation",
+    "protocol_patch_path_is_authorized",
+    "refuse_protocol_operation_remint",
+    "refuse_unauthorized_protocol_patch_path",
     "require_executable_bounds",
     "v1_operation_for",
 ]
