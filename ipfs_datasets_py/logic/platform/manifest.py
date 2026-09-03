@@ -160,6 +160,13 @@ DATASETS_REFERENCE_HIGH_LEVEL_OBJECTIVE_INTERFACE: Final = (
 DATASETS_REFERENCE_HIGH_LEVEL_OBJECTIVE_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/reference-high-level-objective-binding@1"
 )
+# PCPR-061 Datasets-owned semantic ContextPack. Handshake identity only;
+# live supervisor admission, solver-backed impact, and Kit current-root
+# CAS stay typed unavailable until admitted.
+DATASETS_SEMANTIC_CONTEXT_PACK_INTERFACE: Final = "DatasetsSemanticContextPack@1"
+DATASETS_SEMANTIC_CONTEXT_PACK_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/semantic-context-pack@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -416,6 +423,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_PORTFOLIO_COMPATIBILITY_LOCK_INTERFACE: "1",
             DATASETS_BRANCH_AND_RELEASE_GATES_INTERFACE: "1",
             DATASETS_REFERENCE_HIGH_LEVEL_OBJECTIVE_INTERFACE: "1",
+            DATASETS_SEMANTIC_CONTEXT_PACK_INTERFACE: "1",
         }
     )
 
@@ -450,6 +458,7 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_reference_high_level_objective": (
                 DATASETS_REFERENCE_HIGH_LEVEL_OBJECTIVE_SCHEMA
             ),
+            "datasets_semantic_context_pack": DATASETS_SEMANTIC_CONTEXT_PACK_SCHEMA,
         }
     )
 
@@ -480,6 +489,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "portfolio_compatibility_lock": "1",
             "branch_and_release_gates": "1",
             "reference_high_level_objective": "1",
+            "semantic_context_pack": "1",
         }
     )
 

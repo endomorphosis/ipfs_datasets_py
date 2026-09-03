@@ -1,0 +1,346 @@
+{
+  "applied": false,
+  "closed_release_outcome": null,
+  "context_pack": {
+    "admitted_live": false,
+    "capsule_cids": [
+      "bafkreihvtxeeorzuhiq7efbde3ld6epsnkg2ycf46xojxqptwhgcmwno2e",
+      "bafkreifwuzoexs7g23vb76pd2hut6vb5qtjfnjoiggm7pmzbit4pekr2l4",
+      "bafkreibiftotu25brkiapgeggn6tmc5oitnboj2i7kr22jyv2idra4g6hm"
+    ],
+    "constructed": true,
+    "current_root_published": false,
+    "deterministic": true,
+    "evidence_kind": "measured",
+    "freshness": "fresh",
+    "interface": "DatasetsContextPack@1",
+    "live": false,
+    "opaque": false,
+    "pack_cid": "bafkreih72d3nncekez43wmtlczq5mdtymzniluujypwybpgu3mtt7i4v2e",
+    "producer": "ipfs_datasets_py.proof_context.context_pack",
+    "repository_state_cid": "baguqeerajorugdc52stghgeujb4hq74rkt2ikk6fpw72lebmjiuvyvctvraa",
+    "required_source_cids": {
+      "surrounding_source": "bafkreia2bjp4cpebvscty2ciwibbgubliiji6ok7ddo52jnj5hpvmfq2mi",
+      "target_source": "bafkreih2gdfklkg6ypikg6cho2ijyqohbib4fw55vtiasnh46m6lk2tmfe",
+      "test_source": "bafkreigqatkl3tydc5rsjlp7tdetjliqi7eenypwrlxuaonl6uvkzqnoia"
+    },
+    "scanned_tree_oid": "08fd20feca64070950335c120c8ae8d7d56fc07de7a745dab7b08ac2520c7f04",
+    "schema": "ipfs_datasets_py/datasets-context-pack@1",
+    "stored": false,
+    "task_class": "typed_formal_logic_api_modification",
+    "task_id": "PCPR-061"
+  },
+  "contracts_frozen": false,
+  "duckdb_or_quack_state_written": false,
+  "evidence_kind": "measured",
+  "goal_id": "PCPR-G700",
+  "hashes_invented": false,
+  "idea": "Modify a typed formal-logic API while reusing unaffected proofs, selecting only impacted tests, rejecting stale-tree evidence, and producing a complete proof-carrying execution receipt.",
+  "idea_digest": "baguqeeracbayojdov4jmqiirx22pavrg6nabazcocru6y3scrdx5e54mw2zq",
+  "interface": "DatasetsSemanticContextPack@1",
+  "language": "Python",
+  "live": false,
+  "live_context_pack_admission": {
+    "evidence_kind": "unavailable",
+    "live": false,
+    "reason": "No admitted Quack-fenced supervisor session was observed. Declared DatasetsContextPack@1 is not live admission.",
+    "status": "unavailable"
+  },
+  "live_solver_impact": {
+    "evidence_kind": "unavailable",
+    "live": false,
+    "reason": "Sealed PATH has no admitted live solver session for semantic-impact proofs. AST inspection is not live proving.",
+    "status": "unavailable"
+  },
+  "lock_cid": "baguqeerawsekbbbt5ccctjt4tydzeahfkahsatb6q5x7k6cy4inrii5lhqmq",
+  "materialization": {
+    "admitted": false,
+    "applied": false,
+    "duckdb_or_quack_state_written": false,
+    "evidence_kind": "unavailable",
+    "kind": "declared_context_pack_not_live_admission",
+    "live": false
+  },
+  "normative_objective_source": "ipfs_accelerate_py/assurance/declared-reference-objective@1",
+  "objective_cid": "baguqeeraynsn7tjr3iaggnreylzxo3akaooqwp5bf5oheaa6eubth2zwqeba",
+  "objective_id": "PCPR-G700",
+  "objective_kind": "declared_semantic_context_pack",
+  "operator_blocking_task": {
+    "action": "Keep this declared pack identity. Do not write DuckDB or Quack state. PCPR-062 stores exact bytes and publishes the current root.",
+    "applied": false,
+    "evidence_kind": "unavailable",
+    "live": false,
+    "reason": "Hermetic DatasetsContextPack@1 construction is not live supervisor admission. Sealed validation has no admitted Quack-fenced session.",
+    "requires": "An admitted Quack-fenced state-owner session before the DatasetsContextPack@1 identity is admitted into live supervisor state",
+    "status": "typed_blocked",
+    "task_id": "pcpr-061-operator-live-context-pack-admission"
+  },
+  "owner_interface": "DatasetsContextPack@1",
+  "owner_repository": "ipfs_datasets_py",
+  "owner_schema": "ipfs_datasets_py/datasets-context-pack@1",
+  "pack_document_cid": "baguqeera5ykn6pm3xvty6taigxxjtnguutg7oznw4ez52jv676igcif4wkda",
+  "package_name": "ipfs_datasets_py",
+  "package_version": "0.2.0",
+  "portfolio_id": "portfolio:pcpr-v1",
+  "portfolio_version": "proof-carrying-platform-0.1.0",
+  "prerequisite_task_id": "PCPR-060",
+  "program_id": "proof-carrying-platform-qualification-and-release-v1",
+  "proof_obligations": [
+    {
+      "assumption_ids": [],
+      "digest": "f2633caed61cfd0f6528b00cf1866a4e382a69b4502816e2e83cd71b5ce4ad33",
+      "evidence_kind": "measured",
+      "live": false,
+      "logic_family": "typed-formal-logic",
+      "metadata": {},
+      "obligation_id": "pcpr-061-free-form-cannot-mint-executable",
+      "schema_version": "ir-proof-obligation/v1",
+      "source_refs": [
+        "ipfs_datasets_py/logic/backends/protocol_v2.py"
+      ],
+      "statement": "Free-form payloads cannot mint executable BackendRequest values on LogicProviderProtocol@2.",
+      "verification": {
+        "evidence_kind": "unavailable",
+        "live": false,
+        "reason": "ProofObligation@1 is a declaration. Live solver verification was not performed and is not represented as passing.",
+        "status": "unavailable"
+      },
+      "verified": false
+    },
+    {
+      "assumption_ids": [],
+      "digest": "1c57bfc4ef7d07c1d3a3508371b60a42daadf2c46ddebb090a9cbad8592fb0f9",
+      "evidence_kind": "measured",
+      "live": false,
+      "logic_family": "typed-formal-logic",
+      "metadata": {},
+      "obligation_id": "pcpr-061-v1-adapter-explicit",
+      "schema_version": "ir-proof-obligation/v1",
+      "source_refs": [
+        "ipfs_datasets_py/assurance/logic_provider_protocol.py"
+      ],
+      "statement": "The LogicProviderProtocol v1 adapter remains explicit and fail-closed; it is not a silent success path.",
+      "verification": {
+        "evidence_kind": "unavailable",
+        "live": false,
+        "reason": "ProofObligation@1 is a declaration. Live solver verification was not performed and is not represented as passing.",
+        "status": "unavailable"
+      },
+      "verified": false
+    },
+    {
+      "assumption_ids": [],
+      "digest": "5176079fb483058f871c24563cfa3c75691fa844974bfa947634b4ee5521aba2",
+      "evidence_kind": "measured",
+      "live": false,
+      "logic_family": "typed-formal-logic",
+      "metadata": {},
+      "obligation_id": "pcpr-061-stale-tree-rejected",
+      "schema_version": "ir-proof-obligation/v1",
+      "source_refs": [
+        "ipfs_datasets_py/proof_context/context_pack.py"
+      ],
+      "statement": "Stale-tree evidence cannot mint DatasetsContextPack@1.",
+      "verification": {
+        "evidence_kind": "unavailable",
+        "live": false,
+        "reason": "ProofObligation@1 is a declaration. Live solver verification was not performed and is not represented as passing.",
+        "status": "unavailable"
+      },
+      "verified": false
+    },
+    {
+      "assumption_ids": [],
+      "digest": "4221823eed612fe7c01fc6d656dc1b7a499ba64546302304b178b5a7c6c3ec25",
+      "evidence_kind": "measured",
+      "live": false,
+      "logic_family": "typed-formal-logic",
+      "metadata": {},
+      "obligation_id": "pcpr-061-selected-tests-only",
+      "schema_version": "ir-proof-obligation/v1",
+      "source_refs": [
+        "tests/unit/test_pcpr_013_logic_provider_protocol.py",
+        "tests/unit/test_pcpr_014_semantic_apis.py"
+      ],
+      "statement": "Only impacted tests are selected for this typed-API modification; the full suite is not implied.",
+      "verification": {
+        "evidence_kind": "unavailable",
+        "live": false,
+        "reason": "ProofObligation@1 is a declaration. Live solver verification was not performed and is not represented as passing.",
+        "status": "unavailable"
+      },
+      "verified": false
+    },
+    {
+      "assumption_ids": [],
+      "digest": "91569081a70011b0ef607d2addd233ee8bfd14c56977dc8b24470729b5783c2b",
+      "evidence_kind": "measured",
+      "live": false,
+      "logic_family": "typed-formal-logic",
+      "metadata": {},
+      "obligation_id": "pcpr-061-unaffected-proofs-reusable",
+      "schema_version": "ir-proof-obligation/v1",
+      "source_refs": [
+        "tests/unit/test_pcpr_017_solver_qualification.py",
+        "ipfs_datasets_py/assurance/solver_qualification.py"
+      ],
+      "statement": "Unaffected solver-qualification proofs remain reusable and are not invalidated by this ContextPack.",
+      "verification": {
+        "evidence_kind": "unavailable",
+        "live": false,
+        "reason": "ProofObligation@1 is a declaration. Live solver verification was not performed and is not represented as passing.",
+        "status": "unavailable"
+      },
+      "verified": false
+    }
+  ],
+  "release_claim": false,
+  "reusable_unimpacted": [
+    "tests/unit/test_pcpr_017_solver_qualification.py",
+    "ipfs_datasets_py/assurance/solver_qualification.py"
+  ],
+  "schema": "ipfs_datasets_py/assurance/declared-semantic-context-pack@1",
+  "selected_tests": [
+    "tests/unit/test_pcpr_013_logic_provider_protocol.py",
+    "tests/unit/test_pcpr_014_semantic_apis.py"
+  ],
+  "semantic_impact": {
+    "canonical_alias_present": true,
+    "evidence_kind": "measured_hermetic",
+    "expected_methods": [
+      "capability",
+      "translate",
+      "prove",
+      "check",
+      "reconstruct",
+      "verify",
+      "attest"
+    ],
+    "impacted_methods": [
+      "capability",
+      "translate",
+      "prove",
+      "check",
+      "reconstruct",
+      "verify",
+      "attest"
+    ],
+    "impacted_symbols": [
+      "LogicProviderProtocol",
+      "LogicProviderProtocolV2",
+      "admit_canonical_provider_request",
+      "require_executable_bounds"
+    ],
+    "kind": "hermetic_ast",
+    "live": false,
+    "methods_match_expected": true,
+    "protocol_classes": [
+      "LogicProviderProtocolV2"
+    ],
+    "reason": "AST inspection of the typed formal-logic API is hermetic. Live solver-backed semantic impact stays typed unavailable.",
+    "reusable_unimpacted": [
+      "tests/unit/test_pcpr_017_solver_qualification.py",
+      "ipfs_datasets_py/assurance/solver_qualification.py"
+    ],
+    "selected_tests": [
+      "tests/unit/test_pcpr_013_logic_provider_protocol.py",
+      "tests/unit/test_pcpr_014_semantic_apis.py"
+    ],
+    "solver_backed": false,
+    "stale_tree_policy": "reject",
+    "target_interface": "LogicProviderProtocol@2"
+  },
+  "sibling_source_required": false,
+  "signatures_invented": false,
+  "source": {
+    "binding": "current_head_not_mutable_main",
+    "commit": {
+      "evidence_kind": "measured",
+      "field": "PCPR-061 receipt current_tree_binding",
+      "live": false,
+      "reason": "Exact commit and tree are bound by the task receipt because nested admission rewrites HEAD.",
+      "status": "observed_at_evaluation"
+    },
+    "kind": "git",
+    "mutable_main_reference": false,
+    "repository": "endomorphosis/ipfs_datasets_py"
+  },
+  "source_date_epoch": "0",
+  "sources": {
+    "capsules": [
+      {
+        "bytes": 63741,
+        "cid": "bafkreihvtxeeorzuhiq7efbde3ld6epsnkg2ycf46xojxqptwhgcmwno2e",
+        "evidence_kind": "measured",
+        "live": false,
+        "path": "ipfs_datasets_py/assurance/semantic_apis.py",
+        "present": true,
+        "role": "capsule_0",
+        "sha256": "f59dc84747343a21f2142326d63f11f26a8dac08bcf5dc9bc1f3b1cc2659aed1"
+      },
+      {
+        "bytes": 19873,
+        "cid": "bafkreifwuzoexs7g23vb76pd2hut6vb5qtjfnjoiggm7pmzbit4pekr2l4",
+        "evidence_kind": "measured",
+        "live": false,
+        "path": "ipfs_datasets_py/proof_context/context_pack.py",
+        "present": true,
+        "role": "capsule_1",
+        "sha256": "b6a65c4bcbe6d6ea1ff9e3d1e93f543d84d256a5c83199f7b32144f8f22a3a5f"
+      },
+      {
+        "bytes": 16176,
+        "cid": "bafkreibiftotu25brkiapgeggn6tmc5oitnboj2i7kr22jyv2idra4g6hm",
+        "evidence_kind": "measured",
+        "live": false,
+        "path": "ipfs_datasets_py/logic/ir_core/claims.py",
+        "present": true,
+        "role": "capsule_2",
+        "sha256": "282cdd3a6ba18a90079886337d360bae44da172748faa3ad2715d2071070de3b"
+      }
+    ],
+    "scanned_tree_oid": "08fd20feca64070950335c120c8ae8d7d56fc07de7a745dab7b08ac2520c7f04",
+    "surrounding": {
+      "bytes": 36965,
+      "cid": "bafkreia2bjp4cpebvscty2ciwibbgubliiji6ok7ddo52jnj5hpvmfq2mi",
+      "evidence_kind": "measured",
+      "live": false,
+      "path": "ipfs_datasets_py/assurance/logic_provider_protocol.py",
+      "present": true,
+      "role": "surrounding_source",
+      "sha256": "1a0a5fc13c81ac853c6848b20213502b42128f395f18dddd25a9e9df56161a62"
+    },
+    "target": {
+      "bytes": 56522,
+      "cid": "bafkreih2gdfklkg6ypikg6cho2ijyqohbib4fw55vtiasnh46m6lk2tmfe",
+      "evidence_kind": "measured",
+      "live": false,
+      "path": "ipfs_datasets_py/logic/backends/protocol_v2.py",
+      "present": true,
+      "role": "target_source",
+      "sha256": "fa30caa5a8dec3d0a3784776909c41c70a03c2dbbdacd00934fcf33cb56a6c29"
+    },
+    "test": {
+      "bytes": 12084,
+      "cid": "bafkreigqatkl3tydc5rsjlp7tdetjliqi7eenypwrlxuaonl6uvkzqnoia",
+      "evidence_kind": "measured",
+      "live": false,
+      "path": "tests/unit/test_pcpr_013_logic_provider_protocol.py",
+      "present": true,
+      "role": "test_source",
+      "sha256": "d004d4bdcf03176324adff98c934ad1047c846e1f68aef4039abf52aacc1ae40"
+    }
+  },
+  "stale_tree_rejected": true,
+  "storage": {
+    "current_root_published": false,
+    "deferred": true,
+    "live": false,
+    "reason": "Durable ContextPack storage remains PCPR-062.",
+    "stored": false,
+    "task_id": "PCPR-062"
+  },
+  "submitted_live": false,
+  "task_id": "PCPR-061",
+  "this_task_created_competing_authority": false
+}
