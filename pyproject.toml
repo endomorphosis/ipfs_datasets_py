@@ -112,6 +112,23 @@ signatures-invented = false
 live-signed-lock = false
 release-claim = false
 
+[tool.ipfs-datasets-py.branch-and-release-gates]
+schema = "ipfs_datasets_py/assurance/branch-and-release-gates-binding@1"
+interface = "DatasetsBranchAndReleaseGatesBinding@1"
+task-id = "PCPR-057"
+goal-id = "PCPR-G600"
+policy-kind = "declared_branch_protection_policy_binding"
+gate-kind = "declared_release_gate_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+default-branch = "main"
+intended-tag-pattern = "ipfs_datasets_py-v*"
+partial-required-build-failure-prohibits-release = true
+live-branch-protection = false
+live-tag-protection = false
+governance-gate-complete = false
+release-claim = false
+
 [tool.ipfs-accelerate-py.agent-supervisor.validation-dependencies]
 schema = "ipfs_accelerate_py/agent-supervisor/validation-dependencies@1"
 scope = "complete-authoritative-validation-environment"
