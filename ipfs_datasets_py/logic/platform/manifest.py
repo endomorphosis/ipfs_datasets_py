@@ -151,6 +151,15 @@ DATASETS_BRANCH_AND_RELEASE_GATES_INTERFACE: Final = (
 DATASETS_BRANCH_AND_RELEASE_GATES_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/branch-and-release-gates-binding@1"
 )
+# PCPR-060 declared reference high-level objective binding. Handshake
+# identity only; live Supervisor submission, DuckDB/Quack materialization,
+# and ContextPack construction stay typed unavailable until admitted.
+DATASETS_REFERENCE_HIGH_LEVEL_OBJECTIVE_INTERFACE: Final = (
+    "DatasetsReferenceHighLevelObjectiveBinding@1"
+)
+DATASETS_REFERENCE_HIGH_LEVEL_OBJECTIVE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/reference-high-level-objective-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -406,6 +415,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_SIGNED_TAGS_AND_ARTIFACTS_INTERFACE: "1",
             DATASETS_PORTFOLIO_COMPATIBILITY_LOCK_INTERFACE: "1",
             DATASETS_BRANCH_AND_RELEASE_GATES_INTERFACE: "1",
+            DATASETS_REFERENCE_HIGH_LEVEL_OBJECTIVE_INTERFACE: "1",
         }
     )
 
@@ -437,6 +447,9 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_signed_tags_and_artifacts": DATASETS_SIGNED_TAGS_AND_ARTIFACTS_SCHEMA,
             "datasets_portfolio_compatibility_lock": DATASETS_PORTFOLIO_COMPATIBILITY_LOCK_SCHEMA,
             "datasets_branch_and_release_gates": DATASETS_BRANCH_AND_RELEASE_GATES_SCHEMA,
+            "datasets_reference_high_level_objective": (
+                DATASETS_REFERENCE_HIGH_LEVEL_OBJECTIVE_SCHEMA
+            ),
         }
     )
 
@@ -466,6 +479,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "signed_tags_and_artifacts": "1",
             "portfolio_compatibility_lock": "1",
             "branch_and_release_gates": "1",
+            "reference_high_level_objective": "1",
         }
     )
 
