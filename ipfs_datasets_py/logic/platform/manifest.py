@@ -176,6 +176,15 @@ DATASETS_CONTEXT_PACK_STORAGE_INTERFACE: Final = (
 DATASETS_CONTEXT_PACK_STORAGE_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/context-pack-storage-binding@1"
 )
+# PCPR-063 Datasets binding to Accelerate-owned deterministic-first
+# route. Handshake identity only; live supervisor execution stays
+# typed unavailable until admitted.
+DATASETS_DETERMINISTIC_FIRST_ROUTE_INTERFACE: Final = (
+    "DatasetsDeterministicFirstRouteBinding@1"
+)
+DATASETS_DETERMINISTIC_FIRST_ROUTE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/deterministic-first-route-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -434,6 +443,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_REFERENCE_HIGH_LEVEL_OBJECTIVE_INTERFACE: "1",
             DATASETS_SEMANTIC_CONTEXT_PACK_INTERFACE: "1",
             DATASETS_CONTEXT_PACK_STORAGE_INTERFACE: "1",
+            DATASETS_DETERMINISTIC_FIRST_ROUTE_INTERFACE: "1",
         }
     )
 
@@ -470,6 +480,9 @@ def _default_schema_roots() -> Mapping[str, str]:
             ),
             "datasets_semantic_context_pack": DATASETS_SEMANTIC_CONTEXT_PACK_SCHEMA,
             "datasets_context_pack_storage": DATASETS_CONTEXT_PACK_STORAGE_SCHEMA,
+            "datasets_deterministic_first_route": (
+                DATASETS_DETERMINISTIC_FIRST_ROUTE_SCHEMA
+            ),
         }
     )
 
@@ -502,6 +515,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "reference_high_level_objective": "1",
             "semantic_context_pack": "1",
             "context_pack_storage": "1",
+            "deterministic_first_route": "1",
         }
     )
 
