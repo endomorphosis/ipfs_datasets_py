@@ -246,6 +246,16 @@ DATASETS_STATE_OWNER_RESTART_INTERFACE: Final = (
 DATASETS_STATE_OWNER_RESTART_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/state-owner-restart-binding@1"
 )
+# PCPR-071 Datasets binding to Accelerate-owned recovery and
+# idempotency. Handshake identity only; live Quack recovery stays
+# typed unavailable until admitted. LogicProviderProtocol@2 is not
+# reminted.
+DATASETS_RECOVERY_AND_IDEMPOTENCY_INTERFACE: Final = (
+    "DatasetsRecoveryAndIdempotencyBinding@1"
+)
+DATASETS_RECOVERY_AND_IDEMPOTENCY_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/recovery-and-idempotency-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -512,6 +522,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_RELEVANT_INTERFACE_CHANGE_INTERFACE: "1",
             DATASETS_STALE_REJECTION_INTERFACE: "1",
             DATASETS_STATE_OWNER_RESTART_INTERFACE: "1",
+            DATASETS_RECOVERY_AND_IDEMPOTENCY_INTERFACE: "1",
         }
     )
 
@@ -564,6 +575,9 @@ def _default_schema_roots() -> Mapping[str, str]:
             ),
             "datasets_stale_rejection": DATASETS_STALE_REJECTION_SCHEMA,
             "datasets_state_owner_restart": DATASETS_STATE_OWNER_RESTART_SCHEMA,
+            "datasets_recovery_and_idempotency": (
+                DATASETS_RECOVERY_AND_IDEMPOTENCY_SCHEMA
+            ),
         }
     )
 
@@ -604,6 +618,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "relevant_interface_change": "1",
             "stale_rejection": "1",
             "state_owner_restart": "1",
+            "recovery_and_idempotency": "1",
         }
     )
 
