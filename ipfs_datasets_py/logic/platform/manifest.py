@@ -236,6 +236,16 @@ DATASETS_STALE_REJECTION_INTERFACE: Final = (
 DATASETS_STALE_REJECTION_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/stale-rejection-binding@1"
 )
+# PCPR-070 Datasets binding to Accelerate-owned authoritative
+# state-owner restart. Handshake identity only; live Quack restart
+# stays typed unavailable until admitted. LogicProviderProtocol@2 is
+# not reminted.
+DATASETS_STATE_OWNER_RESTART_INTERFACE: Final = (
+    "DatasetsAuthoritativeStateOwnerRestartBinding@1"
+)
+DATASETS_STATE_OWNER_RESTART_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/state-owner-restart-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -501,6 +511,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_SAFE_REUSE_INTERFACE: "1",
             DATASETS_RELEVANT_INTERFACE_CHANGE_INTERFACE: "1",
             DATASETS_STALE_REJECTION_INTERFACE: "1",
+            DATASETS_STATE_OWNER_RESTART_INTERFACE: "1",
         }
     )
 
@@ -552,6 +563,7 @@ def _default_schema_roots() -> Mapping[str, str]:
                 DATASETS_RELEVANT_INTERFACE_CHANGE_SCHEMA
             ),
             "datasets_stale_rejection": DATASETS_STALE_REJECTION_SCHEMA,
+            "datasets_state_owner_restart": DATASETS_STATE_OWNER_RESTART_SCHEMA,
         }
     )
 
@@ -591,6 +603,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "safe_reuse": "1",
             "relevant_interface_change": "1",
             "stale_rejection": "1",
+            "state_owner_restart": "1",
         }
     )
 
