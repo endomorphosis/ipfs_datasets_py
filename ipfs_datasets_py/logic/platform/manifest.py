@@ -167,6 +167,15 @@ DATASETS_SEMANTIC_CONTEXT_PACK_INTERFACE: Final = "DatasetsSemanticContextPack@1
 DATASETS_SEMANTIC_CONTEXT_PACK_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/semantic-context-pack@1"
 )
+# PCPR-062 Datasets binding to Kit-owned ContextPack persist and
+# current-root CAS. Handshake identity only; live IPFS publication
+# stays typed unavailable until admitted.
+DATASETS_CONTEXT_PACK_STORAGE_INTERFACE: Final = (
+    "DatasetsContextPackStorageBinding@1"
+)
+DATASETS_CONTEXT_PACK_STORAGE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/context-pack-storage-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -424,6 +433,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_BRANCH_AND_RELEASE_GATES_INTERFACE: "1",
             DATASETS_REFERENCE_HIGH_LEVEL_OBJECTIVE_INTERFACE: "1",
             DATASETS_SEMANTIC_CONTEXT_PACK_INTERFACE: "1",
+            DATASETS_CONTEXT_PACK_STORAGE_INTERFACE: "1",
         }
     )
 
@@ -459,6 +469,7 @@ def _default_schema_roots() -> Mapping[str, str]:
                 DATASETS_REFERENCE_HIGH_LEVEL_OBJECTIVE_SCHEMA
             ),
             "datasets_semantic_context_pack": DATASETS_SEMANTIC_CONTEXT_PACK_SCHEMA,
+            "datasets_context_pack_storage": DATASETS_CONTEXT_PACK_STORAGE_SCHEMA,
         }
     )
 
@@ -490,6 +501,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "branch_and_release_gates": "1",
             "reference_high_level_objective": "1",
             "semantic_context_pack": "1",
+            "context_pack_storage": "1",
         }
     )
 
