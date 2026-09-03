@@ -192,6 +192,15 @@ DATASETS_BOUNDED_PATCH_INTERFACE: Final = "DatasetsBoundedPatchBinding@1"
 DATASETS_BOUNDED_PATCH_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/bounded-patch-binding@1"
 )
+# PCPR-065 Datasets binding to Accelerate-owned selected tests and proofs.
+# Handshake identity only; live selected tests stay typed unavailable
+# until admitted. LogicProviderProtocol@2 is not reminted.
+DATASETS_SELECTED_TESTS_AND_PROOFS_INTERFACE: Final = (
+    "DatasetsSelectedTestsAndProofsBinding@1"
+)
+DATASETS_SELECTED_TESTS_AND_PROOFS_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/selected-tests-and-proofs-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -452,6 +461,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_CONTEXT_PACK_STORAGE_INTERFACE: "1",
             DATASETS_DETERMINISTIC_FIRST_ROUTE_INTERFACE: "1",
             DATASETS_BOUNDED_PATCH_INTERFACE: "1",
+            DATASETS_SELECTED_TESTS_AND_PROOFS_INTERFACE: "1",
         }
     )
 
@@ -492,6 +502,9 @@ def _default_schema_roots() -> Mapping[str, str]:
                 DATASETS_DETERMINISTIC_FIRST_ROUTE_SCHEMA
             ),
             "datasets_bounded_patch": DATASETS_BOUNDED_PATCH_SCHEMA,
+            "datasets_selected_tests_and_proofs": (
+                DATASETS_SELECTED_TESTS_AND_PROOFS_SCHEMA
+            ),
         }
     )
 
@@ -526,6 +539,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "context_pack_storage": "1",
             "deterministic_first_route": "1",
             "bounded_patch": "1",
+            "selected_tests_and_proofs": "1",
         }
     )
 

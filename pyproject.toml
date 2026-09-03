@@ -191,6 +191,18 @@ live-application = false
 live-selected-tests = false
 release-claim = false
 
+[tool.ipfs-datasets-py.selected-tests-and-proofs]
+schema = "ipfs_datasets_py/assurance/selected-tests-and-proofs-binding@1"
+interface = "DatasetsSelectedTestsAndProofsBinding@1"
+task-id = "PCPR-065"
+goal-id = "PCPR-G700"
+objective-kind = "declared_selected_tests_and_proofs_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-selected-tests = false
+release-claim = false
+
 [tool.ipfs-accelerate-py.agent-supervisor.validation-dependencies]
 schema = "ipfs_accelerate_py/agent-supervisor/validation-dependencies@1"
 scope = "complete-authoritative-validation-environment"
