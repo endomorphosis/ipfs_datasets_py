@@ -217,6 +217,15 @@ DATASETS_SAFE_REUSE_INTERFACE: Final = "DatasetsSafeReuseBinding@1"
 DATASETS_SAFE_REUSE_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/safe-reuse-binding@1"
 )
+# PCPR-068 Datasets binding to Accelerate-owned relevant interface
+# change. Handshake identity only; live application stays typed
+# unavailable until admitted. LogicProviderProtocol@2 is not reminted.
+DATASETS_RELEVANT_INTERFACE_CHANGE_INTERFACE: Final = (
+    "DatasetsRelevantInterfaceChangeBinding@1"
+)
+DATASETS_RELEVANT_INTERFACE_CHANGE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/relevant-interface-change-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -480,6 +489,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_SELECTED_TESTS_AND_PROOFS_INTERFACE: "1",
             DATASETS_UNRELATED_STATE_CHANGE_INTERFACE: "1",
             DATASETS_SAFE_REUSE_INTERFACE: "1",
+            DATASETS_RELEVANT_INTERFACE_CHANGE_INTERFACE: "1",
         }
     )
 
@@ -527,6 +537,9 @@ def _default_schema_roots() -> Mapping[str, str]:
                 DATASETS_UNRELATED_STATE_CHANGE_SCHEMA
             ),
             "datasets_safe_reuse": DATASETS_SAFE_REUSE_SCHEMA,
+            "datasets_relevant_interface_change": (
+                DATASETS_RELEVANT_INTERFACE_CHANGE_SCHEMA
+            ),
         }
     )
 
@@ -564,6 +577,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "selected_tests_and_proofs": "1",
             "unrelated_state_change": "1",
             "safe_reuse": "1",
+            "relevant_interface_change": "1",
         }
     )
 
