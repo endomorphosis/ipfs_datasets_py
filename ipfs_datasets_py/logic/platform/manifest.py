@@ -133,6 +133,15 @@ DATASETS_SIGNED_TAGS_AND_ARTIFACTS_INTERFACE: Final = (
 DATASETS_SIGNED_TAGS_AND_ARTIFACTS_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/signed-tags-and-artifacts@1"
 )
+# PCPR-056 declared portfolio compatibility lock binding. Handshake identity
+# only; live signatures and unpublished artifact hashes stay typed
+# unavailable until admitted. Sibling source trees are never required.
+DATASETS_PORTFOLIO_COMPATIBILITY_LOCK_INTERFACE: Final = (
+    "DatasetsPortfolioCompatibilityLockBinding@1"
+)
+DATASETS_PORTFOLIO_COMPATIBILITY_LOCK_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/portfolio-compatibility-lock-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -386,6 +395,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_DEPENDENCY_LOCKS_INTERFACE: "1",
             DATASETS_SBOM_AND_PROVENANCE_INTERFACE: "1",
             DATASETS_SIGNED_TAGS_AND_ARTIFACTS_INTERFACE: "1",
+            DATASETS_PORTFOLIO_COMPATIBILITY_LOCK_INTERFACE: "1",
         }
     )
 
@@ -415,6 +425,7 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_dependency_locks": DATASETS_DEPENDENCY_LOCKS_SCHEMA,
             "datasets_sbom_and_provenance": DATASETS_SBOM_AND_PROVENANCE_SCHEMA,
             "datasets_signed_tags_and_artifacts": DATASETS_SIGNED_TAGS_AND_ARTIFACTS_SCHEMA,
+            "datasets_portfolio_compatibility_lock": DATASETS_PORTFOLIO_COMPATIBILITY_LOCK_SCHEMA,
         }
     )
 
@@ -442,6 +453,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "dependency_locks": "1",
             "sbom_and_provenance": "1",
             "signed_tags_and_artifacts": "1",
+            "portfolio_compatibility_lock": "1",
         }
     )
 
