@@ -276,6 +276,16 @@ DATASETS_PYTHON_EXTERNAL_CLIENT_INTERFACE: Final = (
 DATASETS_PYTHON_EXTERNAL_CLIENT_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/python-external-client-binding@1"
 )
+# PCPR-081 Datasets binding to Accelerate-owned generic MCP-client
+# demonstration. Handshake identity only; live MCP stdio/HTTP stays
+# typed unavailable until admitted. LogicProviderProtocol@2 is not
+# reminted.
+DATASETS_GENERIC_MCP_CLIENT_INTERFACE: Final = (
+    "DatasetsGenericMcpClientBinding@1"
+)
+DATASETS_GENERIC_MCP_CLIENT_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/generic-mcp-client-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -545,6 +555,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_RECOVERY_AND_IDEMPOTENCY_INTERFACE: "1",
             DATASETS_FINAL_RECEIPT_CHAIN_INTERFACE: "1",
             DATASETS_PYTHON_EXTERNAL_CLIENT_INTERFACE: "1",
+            DATASETS_GENERIC_MCP_CLIENT_INTERFACE: "1",
         }
     )
 
@@ -602,6 +613,7 @@ def _default_schema_roots() -> Mapping[str, str]:
             ),
             "datasets_final_receipt_chain": DATASETS_FINAL_RECEIPT_CHAIN_SCHEMA,
             "datasets_python_external_client": DATASETS_PYTHON_EXTERNAL_CLIENT_SCHEMA,
+            "datasets_generic_mcp_client": DATASETS_GENERIC_MCP_CLIENT_SCHEMA,
         }
     )
 
@@ -645,6 +657,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "recovery_and_idempotency": "1",
             "final_receipt_chain": "1",
             "python_external_client": "1",
+            "generic_mcp_client": "1",
         }
     )
 
