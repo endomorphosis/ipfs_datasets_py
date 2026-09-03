@@ -201,6 +201,15 @@ DATASETS_SELECTED_TESTS_AND_PROOFS_INTERFACE: Final = (
 DATASETS_SELECTED_TESTS_AND_PROOFS_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/selected-tests-and-proofs-binding@1"
 )
+# PCPR-066 Datasets binding to Accelerate-owned unrelated documentation
+# change. Handshake identity only; live application stays typed
+# unavailable until admitted. LogicProviderProtocol@2 is not reminted.
+DATASETS_UNRELATED_STATE_CHANGE_INTERFACE: Final = (
+    "DatasetsUnrelatedStateChangeBinding@1"
+)
+DATASETS_UNRELATED_STATE_CHANGE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/unrelated-state-change-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -462,6 +471,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_DETERMINISTIC_FIRST_ROUTE_INTERFACE: "1",
             DATASETS_BOUNDED_PATCH_INTERFACE: "1",
             DATASETS_SELECTED_TESTS_AND_PROOFS_INTERFACE: "1",
+            DATASETS_UNRELATED_STATE_CHANGE_INTERFACE: "1",
         }
     )
 
@@ -505,6 +515,9 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_selected_tests_and_proofs": (
                 DATASETS_SELECTED_TESTS_AND_PROOFS_SCHEMA
             ),
+            "datasets_unrelated_state_change": (
+                DATASETS_UNRELATED_STATE_CHANGE_SCHEMA
+            ),
         }
     )
 
@@ -540,6 +553,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "deterministic_first_route": "1",
             "bounded_patch": "1",
             "selected_tests_and_proofs": "1",
+            "unrelated_state_change": "1",
         }
     )
 
