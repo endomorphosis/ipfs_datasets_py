@@ -226,6 +226,16 @@ DATASETS_RELEVANT_INTERFACE_CHANGE_INTERFACE: Final = (
 DATASETS_RELEVANT_INTERFACE_CHANGE_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/relevant-interface-change-binding@1"
 )
+# PCPR-069 Datasets binding to Accelerate-owned stale rejection and
+# PlanDelta. Handshake identity only; live PlanDelta admission stays
+# typed unavailable until admitted. LogicProviderProtocol@2 is not
+# reminted.
+DATASETS_STALE_REJECTION_INTERFACE: Final = (
+    "DatasetsStaleRejectionAndPlanDeltaBinding@1"
+)
+DATASETS_STALE_REJECTION_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/stale-rejection-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -490,6 +500,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_UNRELATED_STATE_CHANGE_INTERFACE: "1",
             DATASETS_SAFE_REUSE_INTERFACE: "1",
             DATASETS_RELEVANT_INTERFACE_CHANGE_INTERFACE: "1",
+            DATASETS_STALE_REJECTION_INTERFACE: "1",
         }
     )
 
@@ -540,6 +551,7 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_relevant_interface_change": (
                 DATASETS_RELEVANT_INTERFACE_CHANGE_SCHEMA
             ),
+            "datasets_stale_rejection": DATASETS_STALE_REJECTION_SCHEMA,
         }
     )
 
@@ -578,6 +590,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "unrelated_state_change": "1",
             "safe_reuse": "1",
             "relevant_interface_change": "1",
+            "stale_rejection": "1",
         }
     )
 
