@@ -27,14 +27,28 @@ from __future__ import annotations
 
 import json
 import re
-from collections import defaultdict, deque
-from collections.abc import Iterable, Mapping, Sequence
+import sys
+from collections import ChainMap, defaultdict, deque
+from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Final, Optional, Union
 
+from ipfs_datasets_py.processors.legal_data.legal_graph_projection_runtime import (
+    ingest_graph_work_record,
+    load_work_dir,
+    mutating_row_worker,
+    prepare_partition_work_dir,
+    run_projection_pass,
+)
+from ipfs_datasets_py.processors.legal_data.lexical_neighbor_runtime import (
+    PressureFn,
+)
+from ipfs_datasets_py.processors.legal_data.open_us_law_graph_work import (
+    write_manifest,
+)
 from ipfs_datasets_py.processors.legal_data.uscode_identity import (
     DEFAULT_JURISDICTION,
     build_legal_id,
@@ -1641,6 +1655,10 @@ class UscodeGraphProjector:
         *,
         similarity_neighbors: Sequence[SimilarityNeighbor | Mapping[str, Any]] | None = None,
         include_code_root: bool = True,
+        checkpoint_dir: Path | None = None,
+        corpus_digest: str | None = None,
+        max_workers: int | None = None,
+        pressure: PressureFn | None = None,
     ) -> UscodeGraphProjection:
         corpus = [self._coerce_row(item) for item in rows]
         if not corpus:
@@ -1648,7 +1666,22 @@ class UscodeGraphProjector:
 
         known_legal_ids = {row.legal_id for row in corpus}
         nodes: dict[str, UscodeGraphNode] = {}
-        edges: list[UscodeGraphEdge] = []
+        edges_by_cid: dict[str, UscodeGraphEdge] = {}
+        work_root, manifest = prepare_partition_work_dir(
+            Path(checkpoint_dir) if checkpoint_dir is not None else None,
+            corpus_digest=str(corpus_digest or ""),
+            partition=None,
+        )
+        structure_done = 0
+        citation_done = 0
+        if manifest is not None and work_root is not None:
+            load_work_dir(work_root, nodes, edges_by_cid, self._ingest_work_record)
+            structure_done = max(
+                0, min(len(corpus), int(manifest.get("structure_rows_done") or 0))
+            )
+            citation_done = max(
+                0, min(len(corpus), int(manifest.get("citation_rows_done") or 0))
+            )
 
         if include_code_root:
             self._ensure_node(
@@ -1659,8 +1692,8 @@ class UscodeGraphProjector:
                 payload={"jurisdiction": "us"},
             )
 
-        # First pass: structural section nodes and hierarchy.
-        for row in corpus:
+        def _structure_body(nodes, edges, row):
+            # First pass: structural section nodes and hierarchy.
             section_key = f"section:{row.legal_id}"
             node_type = (
                 GraphNodeType.SUBSECTION
@@ -1792,8 +1825,24 @@ class UscodeGraphProjector:
                     )
                 )
 
-        # Second pass: citations, public laws, amendments.
-        for row in corpus:
+        run_projection_pass(
+            corpus,
+            start=structure_done,
+            worker=mutating_row_worker(_structure_body, nodes),
+            nodes=nodes,
+            edges_by_cid=edges_by_cid,
+            work_root=work_root,
+            manifest=manifest,
+            stage="structure",
+            max_workers=max_workers,
+            pressure=pressure,
+        )
+        if manifest is not None and work_root is not None:
+            manifest["stage"] = "citations"
+            write_manifest(work_root, manifest)
+
+        def _citation_body(nodes, edges, row):
+            # Second pass: citations, public laws, amendments.
             section_key = f"section:{row.legal_id}"
             source_node = nodes[section_key]
             citations = resolve_citations(
@@ -1996,6 +2045,19 @@ class UscodeGraphProjector:
                     )
                 )
 
+        run_projection_pass(
+            corpus,
+            start=citation_done,
+            worker=mutating_row_worker(_citation_body, nodes),
+            nodes=nodes,
+            edges_by_cid=edges_by_cid,
+            work_root=work_root,
+            manifest=manifest,
+            stage="citations",
+            max_workers=max_workers,
+            pressure=pressure,
+        )
+
         # Similarity neighbors (non-authoritative).
         for neighbor in similarity_neighbors or ():
             sim = self._coerce_similarity(neighbor)
@@ -2006,31 +2068,47 @@ class UscodeGraphProjector:
                     "similarity neighbor endpoints must exist in the legal graph: "
                     f"{sim.source_legal_id!r} -> {sim.target_legal_id!r}"
                 )
-            edges.append(
-                self._edge(
-                    sim.edge_type,
-                    nodes[src_key],
-                    nodes[tgt_key],
-                    weight=sim.score,
-                    payload={
-                        "authority": "non_authoritative",
-                        "config_cid": sim.config_cid,
-                        "metric": sim.metric,
-                    },
-                )
+            edge = self._edge(
+                sim.edge_type,
+                nodes[src_key],
+                nodes[tgt_key],
+                weight=sim.score,
+                payload={
+                    "authority": "non_authoritative",
+                    "config_cid": sim.config_cid,
+                    "metric": sim.metric,
+                },
             )
+            edges_by_cid.setdefault(edge.edge_cid, edge)
 
-        # Deduplicate edges by edge_cid (deterministic).
-        unique_edges: dict[str, UscodeGraphEdge] = {}
-        for edge in edges:
-            unique_edges[edge.edge_cid] = edge
+        unique_edges = dict(edges_by_cid)
 
         projection = UscodeGraphProjection(
             nodes=tuple(nodes.values()),
             edges=tuple(unique_edges.values()),
         )
         projection.assert_semantics_disjoint()
+        if manifest is not None and work_root is not None:
+            manifest["stage"] = "complete"
+            manifest["node_count"] = len(projection.nodes)
+            manifest["edge_count"] = len(projection.edges)
+            write_manifest(work_root, manifest)
         return projection
+
+    def _ingest_work_record(
+        self,
+        record: Mapping[str, Any],
+        nodes: MutableMapping[str, UscodeGraphNode],
+        edges_by_cid: MutableMapping[str, UscodeGraphEdge],
+    ) -> None:
+        ingest_graph_work_record(
+            record,
+            nodes,
+            edges_by_cid,
+            node_cls=UscodeGraphNode,
+            edge_cls=UscodeGraphEdge,
+            source_span_cls=SourceSpan,
+        )
 
     def _coerce_row(self, value: GraphCorpusRow | Mapping[str, Any]) -> GraphCorpusRow:
         if isinstance(value, GraphCorpusRow):
@@ -2177,6 +2255,10 @@ def project_uscode_graph(
     *,
     similarity_neighbors: Sequence[SimilarityNeighbor | Mapping[str, Any]] | None = None,
     include_code_root: bool = True,
+    checkpoint_dir: Path | None = None,
+    corpus_digest: str | None = None,
+    max_workers: int | None = None,
+    pressure: PressureFn | None = None,
 ) -> UscodeGraphProjection:
     """Project corpus rows into a deterministic legal graph."""
 
@@ -2184,6 +2266,10 @@ def project_uscode_graph(
         rows,
         similarity_neighbors=similarity_neighbors,
         include_code_root=include_code_root,
+        checkpoint_dir=checkpoint_dir,
+        corpus_digest=corpus_digest,
+        max_workers=max_workers,
+        pressure=pressure,
     )
 
 

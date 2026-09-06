@@ -37,6 +37,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import shutil
 import tempfile
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Iterator, Mapping, Sequence
@@ -64,9 +65,12 @@ from ipfs_datasets_py.processors.legal_data.uscode_tokenizer import (
     tokenize_legal_text,
     tokenizer_identity,
 )
+from ipfs_datasets_py.retrieval.hf_graphrag.artifacts import (
+    iter_zstd_parquet,
+    write_zstd_parquet,
+)
 from ipfs_datasets_py.retrieval.hf_graphrag.bm25 import bm25_term_score
 from ipfs_datasets_py.retrieval.hf_graphrag.external_sort import (
-    DEFAULT_MAX_RECORDS_IN_MEMORY,
     ExternalSortReceipt,
     document_sort_key,
     external_sort_to_file,
@@ -163,6 +167,13 @@ DEFAULT_TEST_MAX_ROWS_PER_SHARD: Final = 2
 DEFAULT_TEST_POSTINGS_PER_CELL: Final = 2
 DEFAULT_TEST_ROUTE_PAGE_ROWS: Final = 2
 DEFAULT_TEST_MAX_RECORDS_IN_MEMORY: Final = 3
+# Shared sorter default is 256 records/run. At 54M postings that is ~211k
+# JSONL runs and a multi-megabyte checkpoint rewrite per spill. Production
+# spills 65,536 records (~25 MiB) so merge fan-in stays small.
+PRODUCTION_MAX_RECORDS_IN_MEMORY: Final = 65_536
+SORTED_POSTINGS_PARQUET_DIR: Final = "postings.sorted.parquet"
+SORTED_POSTINGS_MANIFEST: Final = "manifest.json"
+SORTED_POSTINGS_MANIFEST_SCHEMA: Final = "oul.bm25.sorted-postings-parquet.v1"
 
 PathLike = Union[str, Path]
 JsonMapping = Mapping[str, Any]
@@ -531,7 +542,7 @@ class OpenUsLawBm25Config:
     max_rows_per_shard: int = MAX_ROWS_PER_PHYSICAL_SHARD
     postings_per_cell: int = MAX_POSTING_POINTERS_PER_ROW
     max_route_page_rows: int = MAX_ROWS_PER_PHYSICAL_SHARD
-    max_records_in_memory: int = DEFAULT_MAX_RECORDS_IN_MEMORY
+    max_records_in_memory: int = PRODUCTION_MAX_RECORDS_IN_MEMORY
     shared_title_weight: float = DEFAULT_SHARED_TITLE_WEIGHT
     shared_body_weight: float = DEFAULT_SHARED_BODY_WEIGHT
     schema_version: str = SCHEMA_VERSION
@@ -1510,7 +1521,7 @@ def external_sort_documents(
     records: Iterable[Mapping[str, Any]],
     *,
     work_dir: PathLike,
-    max_records_in_memory: int = DEFAULT_MAX_RECORDS_IN_MEMORY,
+    max_records_in_memory: int = PRODUCTION_MAX_RECORDS_IN_MEMORY,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Externally sort document records by ``(document_index, entry_cid)``."""
 
@@ -1523,7 +1534,7 @@ def external_sort_documents(
         key_fn=document_sort_key,
         family="documents",
         max_records_in_memory=max_records_in_memory,
-        resume=False,
+        resume=True,
     )
     if receipt.interrupted:
         raise OpenUsLawBm25Error("document external sort interrupted before merge")
@@ -1534,16 +1545,267 @@ def external_sort_documents(
     return ordered, _sort_receipt_summary(receipt)
 
 
+def _posting_to_parquet_row(record: Mapping[str, Any]) -> dict[str, Any]:
+    field_tf = record.get("field_tf") or {}
+    if not isinstance(field_tf, Mapping):
+        raise Bm25ProjectionError("field_tf must be a mapping")
+    return {
+        "document_index": int(record["document_index"]),
+        "entry_cid": str(record["entry_cid"]),
+        "field_tf_json": json.dumps(
+            {str(name): int(tf) for name, tf in field_tf.items()},
+            allow_nan=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+        "term": str(record["term"]),
+        "tf": int(record.get("tf") or 0),
+    }
+
+
+def _parquet_row_to_posting(row: Mapping[str, Any]) -> dict[str, Any]:
+    raw = row.get("field_tf_json") or "{}"
+    field_tf = json.loads(str(raw))
+    if not isinstance(field_tf, Mapping):
+        raise Bm25ProjectionError("field_tf_json must decode to a mapping")
+    return {
+        "document_index": int(row["document_index"]),
+        "entry_cid": str(row["entry_cid"]),
+        "field_tf": {str(name): int(tf) for name, tf in field_tf.items()},
+        "term": str(row["term"]),
+        "tf": int(row.get("tf") or 0),
+    }
+
+
+def _sorted_postings_part_paths(parquet_dir: Path) -> tuple[Path, ...]:
+    return tuple(sorted(parquet_dir.glob("part-*.parquet")))
+
+
+def write_sorted_postings_manifest(
+    parquet_dir: PathLike,
+    *,
+    paths: Sequence[PathLike],
+    row_count: int,
+) -> dict[str, Any]:
+    """Record a complete posting-parquet spill so later builds can skip sort."""
+
+    dest = Path(parquet_dir)
+    dest.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "parts": [Path(path).name for path in paths],
+        "row_count": int(row_count),
+        "schema": SORTED_POSTINGS_MANIFEST_SCHEMA,
+        "shard_count": len(paths),
+        "status": "complete",
+    }
+    (dest / SORTED_POSTINGS_MANIFEST).write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return payload
+
+
+def load_complete_sorted_postings_parquet(
+    work_dir: PathLike,
+) -> tuple[tuple[Path, ...], dict[str, Any]] | None:
+    """Return durable posting parquet shards when a previous spill finished.
+
+    A finished spill unlinks ``postings.sorted.jsonl``. Partial spills keep
+    the JSONL and must not be treated as complete.
+    """
+
+    work = Path(work_dir)
+    parquet_dir = work / SORTED_POSTINGS_PARQUET_DIR
+    jsonl = work / "postings.sorted.jsonl"
+    if jsonl.exists():
+        return None
+    parts = _sorted_postings_part_paths(parquet_dir)
+    if not parts:
+        return None
+    manifest_path = parquet_dir / SORTED_POSTINGS_MANIFEST
+    if manifest_path.is_file():
+        try:
+            payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        if not isinstance(payload, Mapping):
+            return None
+        if payload.get("schema") != SORTED_POSTINGS_MANIFEST_SCHEMA:
+            return None
+        if payload.get("status") != "complete":
+            return None
+        names = payload.get("parts")
+        if not isinstance(names, list) or len(names) != len(parts):
+            return None
+        expected = [part.name for part in parts]
+        if expected != [str(name) for name in names]:
+            return None
+        row_count = int(payload.get("row_count") or 0)
+        if row_count < 1:
+            return None
+        summary = {
+            "externally_sorted": True,
+            "family": "postings",
+            "max_records_in_memory": PRODUCTION_MAX_RECORDS_IN_MEMORY,
+            "parquet_dir": SORTED_POSTINGS_PARQUET_DIR,
+            "parquet_shard_count": len(parts),
+            "peak_resident_records": 0,
+            "records_consumed": row_count,
+            "resumed_from_parquet": True,
+            "row_count": row_count,
+            "run_count": 0,
+            "status": "complete",
+        }
+        return parts, summary
+    checkpoint = work / "postings-sort" / "sort_checkpoint.json"
+    row_count = 0
+    if checkpoint.is_file():
+        try:
+            payload = json.loads(checkpoint.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            payload = {}
+        if isinstance(payload, Mapping):
+            row_count = int(payload.get("row_count") or 0)
+    if row_count < 1:
+        return None
+    summary = {
+        "externally_sorted": True,
+        "family": "postings",
+        "max_records_in_memory": PRODUCTION_MAX_RECORDS_IN_MEMORY,
+        "parquet_dir": SORTED_POSTINGS_PARQUET_DIR,
+        "parquet_shard_count": len(parts),
+        "peak_resident_records": 0,
+        "records_consumed": row_count,
+        "resumed_from_parquet": True,
+        "row_count": row_count,
+        "run_count": 0,
+        "status": "complete",
+    }
+    write_sorted_postings_manifest(parquet_dir, paths=parts, row_count=row_count)
+    return parts, summary
+
+
+def spill_sorted_postings_to_zstd_parquet(
+    source: PathLike,
+    dest_dir: PathLike,
+    *,
+    max_rows: int = MAX_ROWS_PER_PHYSICAL_SHARD,
+) -> tuple[tuple[Path, ...], int]:
+    """Copy a sorted posting JSONL stream into ZSTD Parquet shards.
+
+    At most *max_rows* posting dicts are resident. The JSONL is unlinked
+    after a successful spill so the 54M-row stream does not occupy RAM
+    or a second uncompressed copy on disk.
+    """
+
+    bound = _validate_physical_bound(
+        max_rows, name="max_rows", maximum=MAX_ROWS_PER_PHYSICAL_SHARD
+    )
+    jsonl_path = Path(source)
+    parquet_dir = Path(dest_dir)
+    parquet_dir.mkdir(parents=True, exist_ok=True)
+    buffer: list[dict[str, Any]] = []
+    paths: list[Path] = []
+    previous: dict[str, Any] | None = None
+    total = 0
+    shard_id = 0
+
+    def flush() -> None:
+        nonlocal shard_id
+        if not buffer:
+            return
+        path = parquet_dir / f"part-{shard_id:06d}.parquet"
+        write_zstd_parquet(
+            path,
+            tuple(_posting_to_parquet_row(item) for item in buffer),
+            max_rows=bound,
+        )
+        paths.append(path)
+        buffer.clear()
+        shard_id += 1
+
+    for record in iter_jsonl(jsonl_path):
+        payload = dict(record)
+        if previous is not None and posting_sort_key(payload) < posting_sort_key(
+            previous
+        ):
+            raise Bm25CoverageError("posting stream is not externally sorted")
+        previous = payload
+        buffer.append(payload)
+        total += 1
+        if len(buffer) >= bound:
+            flush()
+    flush()
+    if total < 1:
+        raise Bm25CoverageError("cannot spill an empty posting stream")
+    jsonl_path.unlink(missing_ok=True)
+    return tuple(paths), total
+
+
+def iter_posting_parquet_shards(
+    paths: Sequence[PathLike],
+) -> Iterator[dict[str, Any]]:
+    """Yield posting records from ZSTD Parquet shards, one batch at a time."""
+
+    previous: dict[str, Any] | None = None
+    for path in paths:
+        for row in iter_zstd_parquet(path, max_rows=MAX_ROWS_PER_PHYSICAL_SHARD):
+            record = _parquet_row_to_posting(row)
+            if previous is not None and posting_sort_key(record) < posting_sort_key(
+                previous
+            ):
+                raise Bm25CoverageError(
+                    "posting parquet shards are not externally sorted"
+                )
+            previous = record
+            yield record
+
+
 def external_sort_postings(
     records: Iterable[Mapping[str, Any]],
     *,
     work_dir: PathLike,
-    max_records_in_memory: int = DEFAULT_MAX_RECORDS_IN_MEMORY,
-) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Externally sort posting records by ``(term, entry_cid)``."""
+    max_records_in_memory: int = PRODUCTION_MAX_RECORDS_IN_MEMORY,
+) -> tuple[Iterator[dict[str, Any]], dict[str, Any]]:
+    """Externally sort posting records by ``(term, entry_cid)``.
+
+    The merged JSONL is immediately spilled to ZSTD Parquet shards of at
+    most 4,096 rows and then deleted. Callers must iterate the returned
+    stream; ``list()`` of the 54M-row posting corpus is the OOM path.
+    """
 
     work = Path(work_dir)
     output = work / "postings.sorted.jsonl"
+    parquet_dir = work / SORTED_POSTINGS_PARQUET_DIR
+    reused = load_complete_sorted_postings_parquet(work)
+    if reused is not None:
+        paths, summary = reused
+        leftover_runs = work / "postings-sort"
+        if leftover_runs.exists():
+            shutil.rmtree(leftover_runs, ignore_errors=True)
+        return iter_posting_parquet_shards(paths), summary
+    if output.exists() and not _sorted_postings_part_paths(parquet_dir):
+        paths, row_count = spill_sorted_postings_to_zstd_parquet(
+            output, parquet_dir, max_rows=MAX_ROWS_PER_PHYSICAL_SHARD
+        )
+        write_sorted_postings_manifest(parquet_dir, paths=paths, row_count=row_count)
+        summary = {
+            "externally_sorted": True,
+            "family": "postings",
+            "max_records_in_memory": max_records_in_memory,
+            "parquet_dir": SORTED_POSTINGS_PARQUET_DIR,
+            "parquet_shard_count": len(paths),
+            "peak_resident_records": 0,
+            "records_consumed": row_count,
+            "resumed_from_jsonl": True,
+            "row_count": row_count,
+            "run_count": 0,
+            "status": "complete",
+        }
+        leftover_runs = work / "postings-sort"
+        if leftover_runs.exists():
+            shutil.rmtree(leftover_runs, ignore_errors=True)
+        return iter_posting_parquet_shards(paths), summary
     receipt = external_sort_to_file(
         records,
         output,
@@ -1551,22 +1813,31 @@ def external_sort_postings(
         key_fn=posting_sort_key,
         family="postings",
         max_records_in_memory=max_records_in_memory,
-        resume=False,
+        resume=True,
     )
     if receipt.interrupted:
         raise OpenUsLawBm25Error("posting external sort interrupted before merge")
-    ordered = list(iter_jsonl(output))
-    for previous, current in zip(ordered, ordered[1:]):
-        if posting_sort_key(current) < posting_sort_key(previous):
-            raise Bm25CoverageError("posting stream is not externally sorted")
-    return ordered, _sort_receipt_summary(receipt)
+    if parquet_dir.exists():
+        shutil.rmtree(parquet_dir, ignore_errors=True)
+    paths, row_count = spill_sorted_postings_to_zstd_parquet(
+        output, parquet_dir, max_rows=MAX_ROWS_PER_PHYSICAL_SHARD
+    )
+    write_sorted_postings_manifest(parquet_dir, paths=paths, row_count=row_count)
+    leftover_runs = work / "postings-sort"
+    if leftover_runs.exists():
+        shutil.rmtree(leftover_runs, ignore_errors=True)
+    summary = _sort_receipt_summary(receipt)
+    summary["parquet_dir"] = SORTED_POSTINGS_PARQUET_DIR
+    summary["parquet_shard_count"] = len(paths)
+    summary["row_count"] = row_count
+    return iter_posting_parquet_shards(paths), summary
 
 
 def external_sort_terms(
     records: Iterable[Mapping[str, Any]],
     *,
     work_dir: PathLike,
-    max_records_in_memory: int = DEFAULT_MAX_RECORDS_IN_MEMORY,
+    max_records_in_memory: int = PRODUCTION_MAX_RECORDS_IN_MEMORY,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Externally sort term-range records lexicographically."""
 
@@ -1591,36 +1862,51 @@ def external_sort_terms(
 
 
 def group_sorted_postings(
-    postings: Sequence[Mapping[str, Any]],
+    postings: Iterable[Mapping[str, Any]],
     *,
     document_count: int,
     postings_per_cell: int,
 ) -> list[TermPosting]:
-    """Collapse a ``(term, entry_cid)``-sorted stream into term rows."""
+    """Collapse a ``(term, entry_cid)``-sorted stream into term rows.
+
+    Only the current term's pointers are resident. The full posting
+    corpus must not be materialized as a list first.
+    """
 
     n_docs = _require_positive_int(document_count, "document_count")
-    grouped: dict[str, list[Mapping[str, Any]]] = {}
-    order: list[str] = []
-    for record in postings:
-        term = _require_non_empty_str(record.get("term"), "term")
-        if term not in grouped:
-            grouped[term] = []
-            order.append(term)
-        grouped[term].append(record)
     terms: list[TermPosting] = []
-    for term in order:
-        rows = grouped[term]
-        cells = split_posting_cells(rows, max_pointers=postings_per_cell)
+    current_term: str | None = None
+    current_rows: list[Mapping[str, Any]] = []
+    previous_key: tuple[Any, ...] | None = None
+
+    def flush() -> None:
+        if current_term is None:
+            return
+        cells = split_posting_cells(current_rows, max_pointers=postings_per_cell)
         df = sum(cell.pointer_count for cell in cells)
-        idf = robertson_sparck_jones_idf(df, n_docs)
         terms.append(
             TermPosting(
-                term=term,
+                term=current_term,
                 document_frequency=df,
-                idf=idf,
+                idf=robertson_sparck_jones_idf(df, n_docs),
                 cells=cells,
             )
         )
+
+    for record in postings:
+        term = _require_non_empty_str(record.get("term"), "term")
+        key = posting_sort_key(record)
+        if previous_key is not None and key < previous_key:
+            raise Bm25CoverageError("posting stream is not externally sorted")
+        previous_key = key
+        if current_term is None:
+            current_term = term
+        elif term != current_term:
+            flush()
+            current_rows = []
+            current_term = term
+        current_rows.append(record)
+    flush()
     return terms
 
 
@@ -2261,14 +2547,26 @@ def build_open_us_law_bm25_index(
             document_count=n_docs,
             postings_per_cell=cfg.postings_per_cell,
         )
-        term_payloads = [item.to_dict() for item in grouped_terms]
-        sorted_term_payloads, term_sort = external_sort_terms(
-            term_payloads,
-            work_dir=work / "terms",
-            max_records_in_memory=cfg.max_records_in_memory,
-        )
-        terms_by_name = {item.term: item for item in grouped_terms}
-        ordered_terms = [terms_by_name[str(item["term"])] for item in sorted_term_payloads]
+        if not grouped_terms:
+            raise Bm25CoverageError("cannot shard an empty term stream")
+        names = [item.term for item in grouped_terms]
+        if names != sorted(names):
+            raise Bm25CoverageError("grouped terms are not lexicographically sorted")
+        # Postings are sorted by (term, entry_cid), so grouped terms already
+        # arrive in lexicographic order. A second external sort would
+        # list() every posting cell back into RAM.
+        ordered_terms = grouped_terms
+        term_sort = {
+            "externally_sorted": True,
+            "family": "terms",
+            "inherited_from": "postings",
+            "max_records_in_memory": cfg.max_records_in_memory,
+            "peak_resident_records": 1,
+            "records_consumed": len(ordered_terms),
+            "row_count": len(ordered_terms),
+            "run_count": 0,
+            "status": "complete",
+        }
         term_shards = shard_term_records(ordered_terms, max_rows=cfg.max_rows_per_shard)
 
         document_routes = build_hierarchical_routes(
@@ -2825,8 +3123,13 @@ __all__ = [
     "POSTINGS_SORTED_BY",
     "PRIMARY_KEY",
     "PRODUCER",
+    "PRODUCTION_MAX_RECORDS_IN_MEMORY",
     "PROGRAM_ID",
     "RECEIPT_SCHEMA_VERSION",
+    "SORTED_POSTINGS_MANIFEST",
+    "SORTED_POSTINGS_MANIFEST_SCHEMA",
+    "SORTED_POSTINGS_PARQUET_DIR",
+    "load_complete_sorted_postings_parquet",
     "RELEASE_PROFILE",
     "SCHEMA_VERSION",
     "TASK_ID",
@@ -2874,6 +3177,7 @@ __all__ = [
     "external_sort_documents",
     "external_sort_postings",
     "external_sort_terms",
+    "iter_posting_parquet_shards",
     "fixture_bm25_chunks",
     "fixture_bm25_config",
     "inherited_shared_layout_would_truncate",
@@ -2887,6 +3191,7 @@ __all__ = [
     "robertson_sparck_jones_idf",
     "shared_tokenizer_identity",
     "shard_document_records",
+    "spill_sorted_postings_to_zstd_parquet",
     "shard_term_records",
     "split_posting_cells",
     "tokenize_index_text",

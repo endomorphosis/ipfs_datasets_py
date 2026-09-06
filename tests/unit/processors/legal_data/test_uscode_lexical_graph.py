@@ -411,6 +411,22 @@ def test_neighbor_edges_are_deterministic(sample_index):
             assert prev.score >= cur.score
 
 
+def test_neighbor_edges_match_serial_and_pressure_capped_threads(sample_index):
+    serial = materialize_bm25_neighbor_edges(
+        sample_index,
+        max_workers=1,
+        pressure=lambda: (1, "admitted"),
+    )
+    threaded = materialize_bm25_neighbor_edges(
+        sample_index,
+        max_workers=4,
+        pressure=lambda: (4, "admitted"),
+    )
+    assert [edge.to_dict() for edge in serial] == [
+        edge.to_dict() for edge in threaded
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Non-authoritative edge semantics
 # ---------------------------------------------------------------------------

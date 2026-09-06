@@ -38,6 +38,13 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Final, Iterable, Optional, Union
 
+from ipfs_datasets_py.processors.legal_data.lexical_neighbor_runtime import (
+    PressureFn,
+    candidate_documents_for_terms,
+    invert_document_terms,
+    log_neighbor_progress,
+    map_documents_under_pressure,
+)
 from ipfs_datasets_py.processors.legal_data.uscode_bm25 import (
     DEFAULT_B,
     DEFAULT_K1,
@@ -997,13 +1004,23 @@ def _score_neighbors_for_document(
     *,
     query_terms: Sequence[str],
     top_k: int,
+    candidates: Sequence[LegalBm25Document] | None = None,
 ) -> list[Bm25Hit]:
-    """Score other documents as BM25 neighbors of *document*."""
+    """Score overlapping-term documents as BM25 neighbors of *document*."""
 
     if not query_terms or top_k < 1:
         return []
+    pool = (
+        candidates
+        if candidates is not None
+        else tuple(
+            other
+            for other in index.documents
+            if other.entry_cid != document.entry_cid
+        )
+    )
     hits: list[Bm25Hit] = []
-    for candidate in index.documents:
+    for candidate in pool:
         if candidate.entry_cid == document.entry_cid:
             continue
         score, matched, explanations = index.score_document(candidate, query_terms)
@@ -1026,17 +1043,67 @@ def _score_neighbors_for_document(
     return hits[:top_k]
 
 
+def _neighbor_edges_for_document(
+    index: UscodeBm25Index,
+    document: LegalBm25Document,
+    *,
+    config: LexicalGraphConfig,
+    config_cid: str,
+    inverted: Mapping[str, Sequence[LegalBm25Document]],
+) -> list[Bm25NeighborEdge]:
+    query_terms = _neighbor_query_terms(
+        document,
+        config=config,
+        tokenizer=index.config.tokenizer,
+    )
+    candidates = candidate_documents_for_terms(
+        inverted,
+        query_terms,
+        exclude_entry_cid=document.entry_cid,
+    )
+    hits = _score_neighbors_for_document(
+        index,
+        document,
+        query_terms=query_terms,
+        top_k=config.neighbor_k,
+        candidates=candidates,
+    )
+    if len(hits) > config.max_neighbors_per_document:
+        raise LexicalGraphNeighborCapError(
+            f"neighbor materialization exceeded cap for {document.entry_cid}"
+        )
+    return [
+        Bm25NeighborEdge(
+            source_entry_cid=document.entry_cid,
+            target_entry_cid=hit.entry_cid,
+            score=hit.score,
+            matched_terms=hit.matched_terms,
+            config_cid=config_cid,
+            source_legal_id=document.legal_id,
+            target_legal_id=hit.legal_id,
+            rank=rank,
+        )
+        for rank, hit in enumerate(hits)
+    ]
+
+
 def materialize_bm25_neighbor_edges(
     index: UscodeBm25Index,
     *,
     config: LexicalGraphConfig | None = None,
     config_cid: str | None = None,
+    max_workers: int | None = None,
+    pressure: PressureFn | None = None,
 ) -> tuple[Bm25NeighborEdge, ...]:
     """Emit deterministic bounded top-K ``BM25_NEIGHBOR_OF`` edges.
 
     Neighbor caps (``neighbor_k`` / ``max_neighbors_per_document``) are
     enforced per source document. Edges are sorted by
     ``(source_entry_cid, -score, target_entry_cid)``.
+
+    Candidates are documents that share at least one query term, not
+    an all-pairs corpus scan. Default thread count is the live
+    CPU/RAM/swap heuristic, recapped every 4096 documents.
     """
 
     cfg = config or default_lexical_graph_config()
@@ -1046,36 +1113,42 @@ def materialize_bm25_neighbor_edges(
         return ()
 
     cid = config_cid or cfg.config_cid
-    edges: list[Bm25NeighborEdge] = []
-    for document in index.documents:
-        query_terms = _neighbor_query_terms(
-            document,
-            config=cfg,
-            tokenizer=index.config.tokenizer,
-        )
-        hits = _score_neighbors_for_document(
+    inverted = invert_document_terms(index.documents)
+
+    def _one(document: LegalBm25Document) -> list[Bm25NeighborEdge]:
+        return _neighbor_edges_for_document(
             index,
             document,
-            query_terms=query_terms,
-            top_k=cfg.neighbor_k,
+            config=cfg,
+            config_cid=cid,
+            inverted=inverted,
         )
-        if len(hits) > cfg.max_neighbors_per_document:
-            raise LexicalGraphNeighborCapError(
-                f"neighbor materialization exceeded cap for {document.entry_cid}"
-            )
-        for rank, hit in enumerate(hits):
-            edges.append(
-                Bm25NeighborEdge(
-                    source_entry_cid=document.entry_cid,
-                    target_entry_cid=hit.entry_cid,
-                    score=hit.score,
-                    matched_terms=hit.matched_terms,
-                    config_cid=cid,
-                    source_legal_id=document.legal_id,
-                    target_legal_id=hit.legal_id,
-                    rank=rank,
-                )
-            )
+
+    def _progress(
+        processed: int,
+        total: int,
+        workers: int,
+        reason: str,
+        rows: Sequence[list[Bm25NeighborEdge]],
+    ) -> None:
+        log_neighbor_progress(
+            processed=processed,
+            total=total,
+            workers=workers,
+            reason=reason,
+            edges=sum(len(doc_edges) for doc_edges in rows),
+        )
+
+    batch_rows = map_documents_under_pressure(
+        index.documents,
+        _one,
+        max_workers=max_workers,
+        pressure=pressure,
+        progress=_progress,
+    )
+    edges: list[Bm25NeighborEdge] = []
+    for doc_edges in batch_rows:
+        edges.extend(doc_edges)
 
     edges.sort(
         key=lambda edge: (

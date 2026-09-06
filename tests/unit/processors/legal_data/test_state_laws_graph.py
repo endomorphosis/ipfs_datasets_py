@@ -345,6 +345,38 @@ def test_resolved_cross_jurisdiction_citation(fixture_payload: dict, fixture_pro
     assert "Penal Code" in cites[0].source_span.text
 
 
+def test_partition_by_jurisdiction_does_not_resolve_cross_state_cites(
+    fixture_payload: dict, fixture_projection
+) -> None:
+    partitioned = project_state_laws_graph(
+        fixture_payload["records"],
+        similarity_neighbors=fixture_payload.get("similarity_neighbors") or [],
+        partition_by_jurisdiction=True,
+    )
+    oregon = _section_record(fixture_payload, "192.311")
+    california = _section_record(fixture_payload, "187")
+    oregon_key = f"section:{oregon['legal_id']}"
+    california_key = f"section:{california['legal_id']}"
+    lookup = partitioned.node_by_cid()
+    cites = [
+        item
+        for item in partitioned.edges
+        if item.edge_type is GraphEdgeType.CITES
+        and lookup[item.source_node_cid].node_key == oregon_key
+        and lookup[item.target_node_cid].node_key == california_key
+    ]
+    assert cites == []
+    combined = [
+        item
+        for item in fixture_projection.edges
+        if item.edge_type is GraphEdgeType.CITES
+        and fixture_projection.node_by_cid()[item.source_node_cid].node_key == oregon_key
+        and fixture_projection.node_by_cid()[item.target_node_cid].node_key
+        == california_key
+    ]
+    assert combined
+
+
 # ---------------------------------------------------------------------------
 # Similarity is not legal authority
 # ---------------------------------------------------------------------------

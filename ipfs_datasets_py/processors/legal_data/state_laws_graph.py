@@ -32,16 +32,32 @@ import hashlib
 import json
 import os
 import re
+import sys
 import tempfile
 import unicodedata
-from collections import defaultdict, deque
-from collections.abc import Iterable, Mapping, Sequence
+from collections import ChainMap, defaultdict, deque
+from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Final, Optional, Union
 
+from ipfs_datasets_py.processors.legal_data.legal_graph_projection_runtime import (
+    group_rows_by_jurisdiction,
+    ingest_graph_work_record,
+    load_work_dir,
+    merge_graph_projections,
+    neighbors_for_legal_ids,
+    prepare_partition_work_dir,
+    run_projection_pass,
+)
+from ipfs_datasets_py.processors.legal_data.lexical_neighbor_runtime import (
+    PressureFn,
+)
+from ipfs_datasets_py.processors.legal_data.open_us_law_graph_work import (
+    write_manifest,
+)
 from ipfs_datasets_py.processors.legal_data.state_laws_completeness import (
     CANONICAL_JURISDICTION_ORDER,
 )
@@ -2182,7 +2198,38 @@ class StateLawsGraphProjector:
         rows: Sequence[GraphCorpusRow | Mapping[str, Any]],
         *,
         similarity_neighbors: Sequence[SimilarityNeighbor | Mapping[str, Any]] | None = None,
+        checkpoint_dir: Path | None = None,
+        corpus_digest: str | None = None,
+        max_workers: int | None = None,
+        pressure: PressureFn | None = None,
+        partition_by_jurisdiction: bool = False,
     ) -> StateLawsGraphProjection:
+        admitted, skipped = self._admit_rows(rows)
+        if not admitted:
+            raise GraphProjectionError("cannot project an empty corpus")
+        if partition_by_jurisdiction:
+            return self._project_partitioned(
+                admitted,
+                skipped=skipped,
+                similarity_neighbors=similarity_neighbors,
+                checkpoint_dir=checkpoint_dir,
+                corpus_digest=corpus_digest,
+                max_workers=max_workers,
+                pressure=pressure,
+            )
+        return self._project_admitted(
+            admitted,
+            skipped=skipped,
+            similarity_neighbors=similarity_neighbors,
+            checkpoint_dir=checkpoint_dir,
+            corpus_digest=corpus_digest,
+            max_workers=max_workers,
+            pressure=pressure,
+        )
+
+    def _admit_rows(
+        self, rows: Sequence[GraphCorpusRow | Mapping[str, Any]]
+    ) -> tuple[list[GraphCorpusRow], int]:
         admitted: list[GraphCorpusRow] = []
         skipped = 0
         for item in rows:
@@ -2193,16 +2240,67 @@ class StateLawsGraphProjector:
                 skipped += 1
                 continue
             admitted.append(row)
-        if not admitted:
-            raise GraphProjectionError("cannot project an empty corpus")
+        return admitted, skipped
 
+    def _project_partitioned(
+        self,
+        admitted: Sequence[GraphCorpusRow],
+        *,
+        skipped: int,
+        similarity_neighbors: Sequence[SimilarityNeighbor | Mapping[str, Any]] | None,
+        checkpoint_dir: Path | None,
+        corpus_digest: str | None,
+        max_workers: int | None,
+        pressure: PressureFn | None,
+    ) -> StateLawsGraphProjection:
+        groups = group_rows_by_jurisdiction(admitted)
+        parts: list[StateLawsGraphProjection] = []
+        digest = str(corpus_digest or "")
+        for code, part_rows in groups.items():
+            legal_ids = {row.legal_id for row in part_rows}
+            print(
+                f"graph_progress partition={code} documents={len(part_rows)}/"
+                f"{len(admitted)}",
+                file=sys.stderr,
+                flush=True,
+            )
+            parts.append(
+                self._project_admitted(
+                    part_rows,
+                    skipped=0,
+                    similarity_neighbors=neighbors_for_legal_ids(
+                        similarity_neighbors, legal_ids
+                    ),
+                    checkpoint_dir=checkpoint_dir,
+                    corpus_digest=f"{digest}:{code}" if digest else code,
+                    max_workers=max_workers,
+                    pressure=pressure,
+                    partition=code,
+                )
+            )
+        merged = merge_graph_projections(
+            parts,
+            factory=StateLawsGraphProjection,
+            skipped_row_count=skipped,
+        )
+        merged.assert_semantics_disjoint()
+        return merged
+
+    def _project_admitted(
+        self,
+        admitted: Sequence[GraphCorpusRow],
+        *,
+        skipped: int,
+        similarity_neighbors: Sequence[SimilarityNeighbor | Mapping[str, Any]] | None,
+        checkpoint_dir: Path | None,
+        corpus_digest: str | None,
+        max_workers: int | None,
+        pressure: PressureFn | None,
+        partition: str | None = None,
+    ) -> StateLawsGraphProjection:
         known_legal_ids = {row.legal_id for row in admitted}
         locator_index: dict[tuple[str, str, str], list[str]] = defaultdict(list)
-        nodes: dict[str, StateLawsGraphNode] = {}
-        edges: list[StateLawsGraphEdge] = []
-
         for row in admitted:
-            self._project_structure(nodes, edges, row)
             if row.section:
                 locator_index[(row.jurisdiction_code, row.code_family, row.section)].append(
                     row.legal_id
@@ -2210,22 +2308,85 @@ class StateLawsGraphProjector:
             parent_id = strip_subsection_qualifier(row.legal_id)
             if parent_id != row.legal_id:
                 known_legal_ids.add(parent_id)
-                parent_section = row.section
-                if parent_section:
+                if row.section:
                     locator_index[
-                        (row.jurisdiction_code, row.code_family, parent_section)
+                        (row.jurisdiction_code, row.code_family, row.section)
                     ].append(parent_id)
 
-        for row in admitted:
+        digest = str(corpus_digest or "")
+        work_root, manifest = prepare_partition_work_dir(
+            Path(checkpoint_dir) if checkpoint_dir is not None else None,
+            corpus_digest=digest,
+            partition=partition if checkpoint_dir is not None and partition else None,
+        )
+        nodes: dict[str, StateLawsGraphNode] = {}
+        edges_by_cid: dict[str, StateLawsGraphEdge] = {}
+        structure_done = 0
+        citation_done = 0
+        if manifest is not None and work_root is not None:
+            load_work_dir(work_root, nodes, edges_by_cid, self._ingest_work_record)
+            structure_done = max(
+                0, min(len(admitted), int(manifest.get("structure_rows_done") or 0))
+            )
+            citation_done = max(
+                0, min(len(admitted), int(manifest.get("citation_rows_done") or 0))
+            )
+
+        def _structure_one(
+            row: GraphCorpusRow,
+        ) -> tuple[dict[str, StateLawsGraphNode], list[StateLawsGraphEdge]]:
+            local_nodes: dict[str, StateLawsGraphNode] = {}
+            local_edges: list[StateLawsGraphEdge] = []
+            self._project_structure(local_nodes, local_edges, row)
+            return local_nodes, local_edges
+
+        def _citation_one(
+            row: GraphCorpusRow,
+        ) -> tuple[dict[str, StateLawsGraphNode], list[StateLawsGraphEdge]]:
+            local_nodes: dict[str, StateLawsGraphNode] = {}
+            local_edges: list[StateLawsGraphEdge] = []
+            view: ChainMap[str, StateLawsGraphNode] = ChainMap(local_nodes, nodes)
             self._project_citations(
-                nodes,
-                edges,
+                view,
+                local_edges,
                 row,
                 known_legal_ids=known_legal_ids,
                 locator_index=locator_index,
             )
-            self._project_amendments(nodes, edges, row)
+            self._project_amendments(view, local_edges, row)
+            return local_nodes, local_edges
 
+        run_projection_pass(
+            admitted,
+            start=structure_done,
+            worker=_structure_one,
+            nodes=nodes,
+            edges_by_cid=edges_by_cid,
+            work_root=work_root,
+            manifest=manifest,
+            stage="structure",
+            max_workers=max_workers,
+            pressure=pressure,
+            partition=partition,
+        )
+        if manifest is not None and work_root is not None:
+            manifest["stage"] = "citations"
+            write_manifest(work_root, manifest)
+        run_projection_pass(
+            admitted,
+            start=citation_done,
+            worker=_citation_one,
+            nodes=nodes,
+            edges_by_cid=edges_by_cid,
+            work_root=work_root,
+            manifest=manifest,
+            stage="citations",
+            max_workers=max_workers,
+            pressure=pressure,
+            partition=partition,
+        )
+
+        edges: list[StateLawsGraphEdge] = list(edges_by_cid.values())
         for neighbor in similarity_neighbors or ():
             sim = self._coerce_similarity(neighbor)
             src_key = _section_or_subsection_key(sim.source_legal_id)
@@ -2256,13 +2417,17 @@ class StateLawsGraphProjector:
         unique_edges: dict[str, StateLawsGraphEdge] = {}
         for edge in edges:
             unique_edges[edge.edge_cid] = edge
-
         projection = StateLawsGraphProjection(
             nodes=tuple(nodes.values()),
             edges=tuple(unique_edges.values()),
             skipped_row_count=skipped,
         )
         projection.assert_semantics_disjoint()
+        if manifest is not None and work_root is not None:
+            manifest["stage"] = "complete"
+            manifest["node_count"] = len(projection.nodes)
+            manifest["edge_count"] = len(projection.edges)
+            write_manifest(work_root, manifest)
         return projection
 
     def _project_structure(
@@ -2749,6 +2914,21 @@ class StateLawsGraphProjector:
                 )
             )
 
+    def _ingest_work_record(
+        self,
+        record: Mapping[str, Any],
+        nodes: MutableMapping[str, StateLawsGraphNode],
+        edges_by_cid: MutableMapping[str, StateLawsGraphEdge],
+    ) -> None:
+        ingest_graph_work_record(
+            record,
+            nodes,
+            edges_by_cid,
+            node_cls=StateLawsGraphNode,
+            edge_cls=StateLawsGraphEdge,
+            source_span_cls=SourceSpan,
+        )
+
     def _coerce_row(self, value: GraphCorpusRow | Mapping[str, Any]) -> GraphCorpusRow:
         if isinstance(value, GraphCorpusRow):
             return value
@@ -2894,11 +3074,25 @@ def project_state_laws_graph(
     rows: Sequence[GraphCorpusRow | Mapping[str, Any]],
     *,
     similarity_neighbors: Sequence[SimilarityNeighbor | Mapping[str, Any]] | None = None,
+    checkpoint_dir: Path | None = None,
+    corpus_digest: str | None = None,
+    max_workers: int | None = None,
+    pressure: PressureFn | None = None,
+    partition_by_jurisdiction: bool = False,
 ) -> StateLawsGraphProjection:
-    """Project corpus rows into a deterministic multi-jurisdiction legal graph."""
+    """Project corpus rows into a deterministic legal graph.
+
+    ``partition_by_jurisdiction=True`` projects each state independently.
+    """
 
     return StateLawsGraphProjector().project(
-        rows, similarity_neighbors=similarity_neighbors
+        rows,
+        similarity_neighbors=similarity_neighbors,
+        checkpoint_dir=checkpoint_dir,
+        corpus_digest=corpus_digest,
+        max_workers=max_workers,
+        pressure=pressure,
+        partition_by_jurisdiction=partition_by_jurisdiction,
     )
 
 

@@ -17,7 +17,8 @@ Design invariants
 * Recovery and quarantine rows never increment graph family counts.
 * Physical adjacency paging belongs to OUL-031; this module emits the
   legal ontology projection only.
-* No network I/O or Parquet I/O. Unit tests use compact sealed recipes.
+* No network I/O. Optional JSONL work shards make a crash-resume of
+  production projection durable. Unit tests use compact sealed recipes.
 
 Depends on OUL-024 (canonical corpus identity) and OUL-026 (streaming
 atomic writers / shared layout primitives).
@@ -27,15 +28,31 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 import unicodedata
-from collections import defaultdict, deque
-from collections.abc import Iterable, Mapping, Sequence
+from collections import ChainMap, defaultdict, deque
+from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Final, Optional, Union
 
+from ipfs_datasets_py.processors.legal_data.legal_graph_projection_runtime import (
+    group_rows_by_jurisdiction,
+    ingest_graph_work_record,
+    load_work_dir,
+    merge_graph_projections,
+    neighbors_for_legal_ids,
+    prepare_partition_work_dir,
+    run_projection_pass,
+)
+from ipfs_datasets_py.processors.legal_data.lexical_neighbor_runtime import (
+    PressureFn,
+)
+from ipfs_datasets_py.processors.legal_data.open_us_law_graph_work import (
+    write_manifest,
+)
 from ipfs_datasets_py.processors.legal_data.open_us_law_schema import (
     ADR_PATH,
     DEFAULT_CONFIGURATION,
@@ -1985,7 +2002,38 @@ class OpenUsLawGraphProjector:
         rows: Sequence[GraphCorpusRow | Mapping[str, Any]],
         *,
         similarity_neighbors: Sequence[SimilarityNeighbor | Mapping[str, Any]] | None = None,
+        checkpoint_dir: Path | None = None,
+        corpus_digest: str | None = None,
+        max_workers: int | None = None,
+        pressure: PressureFn | None = None,
+        partition_by_jurisdiction: bool = False,
     ) -> OpenUsLawGraphProjection:
+        admitted, skipped = self._admit_rows(rows)
+        if not admitted:
+            raise GraphProjectionError("cannot project an empty corpus")
+        if partition_by_jurisdiction:
+            return self._project_partitioned(
+                admitted,
+                skipped=skipped,
+                similarity_neighbors=similarity_neighbors,
+                checkpoint_dir=checkpoint_dir,
+                corpus_digest=corpus_digest,
+                max_workers=max_workers,
+                pressure=pressure,
+            )
+        return self._project_admitted(
+            admitted,
+            skipped=skipped,
+            similarity_neighbors=similarity_neighbors,
+            checkpoint_dir=checkpoint_dir,
+            corpus_digest=corpus_digest,
+            max_workers=max_workers,
+            pressure=pressure,
+        )
+
+    def _admit_rows(
+        self, rows: Sequence[GraphCorpusRow | Mapping[str, Any]]
+    ) -> tuple[list[GraphCorpusRow], int]:
         admitted: list[GraphCorpusRow] = []
         skipped = 0
         for item in rows:
@@ -1994,16 +2042,66 @@ class OpenUsLawGraphProjector:
                 skipped += 1
                 continue
             admitted.append(row)
-        if not admitted:
-            raise GraphProjectionError("cannot project an empty corpus")
+        return admitted, skipped
 
+    def _project_partitioned(
+        self,
+        admitted: Sequence[GraphCorpusRow],
+        *,
+        skipped: int,
+        similarity_neighbors: Sequence[SimilarityNeighbor | Mapping[str, Any]] | None,
+        checkpoint_dir: Path | None,
+        corpus_digest: str | None,
+        max_workers: int | None,
+        pressure: PressureFn | None,
+    ) -> OpenUsLawGraphProjection:
+        groups = group_rows_by_jurisdiction(admitted)
+        parts: list[OpenUsLawGraphProjection] = []
+        digest = str(corpus_digest or "")
+        for code, part_rows in groups.items():
+            legal_ids = {row.legal_id for row in part_rows}
+            part_neighbors = neighbors_for_legal_ids(similarity_neighbors, legal_ids)
+            print(
+                f"graph_progress partition={code} documents={len(part_rows)}/"
+                f"{len(admitted)}",
+                file=sys.stderr,
+                flush=True,
+            )
+            parts.append(
+                self._project_admitted(
+                    part_rows,
+                    skipped=0,
+                    similarity_neighbors=part_neighbors,
+                    checkpoint_dir=checkpoint_dir,
+                    corpus_digest=f"{digest}:{code}" if digest else code,
+                    max_workers=max_workers,
+                    pressure=pressure,
+                    partition=code,
+                )
+            )
+        merged = merge_graph_projections(
+            parts,
+            factory=OpenUsLawGraphProjection,
+            skipped_row_count=skipped,
+        )
+        merged.assert_semantics_disjoint()
+        return merged
+
+    def _project_admitted(
+        self,
+        admitted: Sequence[GraphCorpusRow],
+        *,
+        skipped: int,
+        similarity_neighbors: Sequence[SimilarityNeighbor | Mapping[str, Any]] | None,
+        checkpoint_dir: Path | None,
+        corpus_digest: str | None,
+        max_workers: int | None,
+        pressure: PressureFn | None,
+        partition: str | None = None,
+    ) -> OpenUsLawGraphProjection:
         known_legal_ids = {row.legal_id for row in admitted}
         locator_index: dict[tuple[str, str, str], list[str]] = defaultdict(list)
-        nodes: dict[str, OpenUsLawGraphNode] = {}
-        edges: list[OpenUsLawGraphEdge] = []
-
         for row in admitted:
-            self._project_structure(nodes, edges, row)
             if row.section:
                 locator_index[(row.jurisdiction_code, row.code_family, row.section)].append(
                     row.legal_id
@@ -2011,21 +2109,85 @@ class OpenUsLawGraphProjector:
             parent_id = strip_subsection_qualifier(row.legal_id)
             if parent_id != row.legal_id:
                 known_legal_ids.add(parent_id)
-                parent_section = row.section
-                if parent_section:
+                if row.section:
                     locator_index[
-                        (row.jurisdiction_code, row.code_family, parent_section)
+                        (row.jurisdiction_code, row.code_family, row.section)
                     ].append(parent_id)
 
-        for row in admitted:
+        digest = str(corpus_digest or "")
+        work_root, manifest = prepare_partition_work_dir(
+            Path(checkpoint_dir) if checkpoint_dir is not None else None,
+            corpus_digest=digest,
+            partition=partition if checkpoint_dir is not None and partition else None,
+        )
+
+        nodes: dict[str, OpenUsLawGraphNode] = {}
+        edges_by_cid: dict[str, OpenUsLawGraphEdge] = {}
+        structure_done = 0
+        citation_done = 0
+        if manifest is not None and work_root is not None:
+            load_work_dir(work_root, nodes, edges_by_cid, self._ingest_work_record)
+            structure_done = int(manifest.get("structure_rows_done") or 0)
+            citation_done = int(manifest.get("citation_rows_done") or 0)
+            structure_done = max(0, min(len(admitted), structure_done))
+            citation_done = max(0, min(len(admitted), citation_done))
+
+        def _structure_one(
+            row: GraphCorpusRow,
+        ) -> tuple[dict[str, OpenUsLawGraphNode], list[OpenUsLawGraphEdge]]:
+            local_nodes: dict[str, OpenUsLawGraphNode] = {}
+            local_edges: list[OpenUsLawGraphEdge] = []
+            self._project_structure(local_nodes, local_edges, row)
+            return local_nodes, local_edges
+
+        def _citation_one(
+            row: GraphCorpusRow,
+        ) -> tuple[dict[str, OpenUsLawGraphNode], list[OpenUsLawGraphEdge]]:
+            local_nodes: dict[str, OpenUsLawGraphNode] = {}
+            local_edges: list[OpenUsLawGraphEdge] = []
+            view: ChainMap[str, OpenUsLawGraphNode] = ChainMap(local_nodes, nodes)
             self._project_citations(
-                nodes,
-                edges,
+                view,
+                local_edges,
                 row,
                 known_legal_ids=known_legal_ids,
                 locator_index=locator_index,
             )
-            self._project_amendments(nodes, edges, row)
+            self._project_amendments(view, local_edges, row)
+            return local_nodes, local_edges
+
+        run_projection_pass(
+            admitted,
+            start=structure_done,
+            worker=_structure_one,
+            nodes=nodes,
+            edges_by_cid=edges_by_cid,
+            work_root=work_root,
+            manifest=manifest,
+            stage="structure",
+            max_workers=max_workers,
+            pressure=pressure,
+            partition=partition,
+        )
+        if manifest is not None:
+            manifest["stage"] = "citations"
+            if work_root is not None:
+                write_manifest(work_root, manifest)
+        run_projection_pass(
+            admitted,
+            start=citation_done,
+            worker=_citation_one,
+            nodes=nodes,
+            edges_by_cid=edges_by_cid,
+            work_root=work_root,
+            manifest=manifest,
+            stage="citations",
+            max_workers=max_workers,
+            pressure=pressure,
+            partition=partition,
+        )
+
+        edges: list[OpenUsLawGraphEdge] = list(edges_by_cid.values())
 
         for neighbor in similarity_neighbors or ():
             sim = self._coerce_similarity(neighbor)
@@ -2064,6 +2226,11 @@ class OpenUsLawGraphProjector:
             skipped_row_count=skipped,
         )
         projection.assert_semantics_disjoint()
+        if manifest is not None and work_root is not None:
+            manifest["stage"] = "complete"
+            manifest["node_count"] = len(projection.nodes)
+            manifest["edge_count"] = len(projection.edges)
+            write_manifest(work_root, manifest)
         return projection
 
     def _project_structure(
@@ -2547,6 +2714,21 @@ class OpenUsLawGraphProjector:
                 )
             )
 
+    def _ingest_work_record(
+        self,
+        record: Mapping[str, Any],
+        nodes: MutableMapping[str, OpenUsLawGraphNode],
+        edges_by_cid: MutableMapping[str, OpenUsLawGraphEdge],
+    ) -> None:
+        ingest_graph_work_record(
+            record,
+            nodes,
+            edges_by_cid,
+            node_cls=OpenUsLawGraphNode,
+            edge_cls=OpenUsLawGraphEdge,
+            source_span_cls=SourceSpan,
+        )
+
     def _coerce_row(self, value: GraphCorpusRow | Mapping[str, Any]) -> GraphCorpusRow:
         if isinstance(value, GraphCorpusRow):
             return value
@@ -2692,11 +2874,146 @@ def project_open_us_law_graph(
     rows: Sequence[GraphCorpusRow | Mapping[str, Any]],
     *,
     similarity_neighbors: Sequence[SimilarityNeighbor | Mapping[str, Any]] | None = None,
+    checkpoint_dir: Path | None = None,
+    corpus_digest: str | None = None,
+    max_workers: int | None = None,
+    pressure: PressureFn | None = None,
+    partition_by_jurisdiction: bool = False,
 ) -> OpenUsLawGraphProjection:
-    """Project corpus rows into a deterministic multi-jurisdiction legal graph."""
+    """Project corpus rows into a deterministic legal graph.
+
+    When ``checkpoint_dir`` is set, structure and citation batches spill to
+    JSONL parts so a crash can resume. Worker count follows live host
+    pressure. Process pools are refused.
+
+    ``partition_by_jurisdiction=True`` projects each state independently so
+    citations and similarity neighbors cannot cross jurisdictions. The
+    returned object is the CID-sorted concatenation of those per-state
+    graphs.
+    """
 
     return OpenUsLawGraphProjector().project(
-        rows, similarity_neighbors=similarity_neighbors
+        rows,
+        similarity_neighbors=similarity_neighbors,
+        checkpoint_dir=checkpoint_dir,
+        corpus_digest=corpus_digest,
+        max_workers=max_workers,
+        pressure=pressure,
+        partition_by_jurisdiction=partition_by_jurisdiction,
+    )
+
+
+def project_open_us_law_graphs_by_jurisdiction(
+    rows: Sequence[GraphCorpusRow | Mapping[str, Any]],
+    *,
+    similarity_neighbors: Sequence[SimilarityNeighbor | Mapping[str, Any]] | None = None,
+    checkpoint_dir: Path | None = None,
+    corpus_digest: str | None = None,
+    max_workers: int | None = None,
+    pressure: PressureFn | None = None,
+) -> dict[str, OpenUsLawGraphProjection]:
+    """Project one durable graph per jurisdiction. No interstate edges."""
+
+    projector = OpenUsLawGraphProjector()
+    admitted, _skipped = projector._admit_rows(rows)
+    if not admitted:
+        raise GraphProjectionError("cannot project an empty corpus")
+    digest = str(corpus_digest or "")
+    graphs: dict[str, OpenUsLawGraphProjection] = {}
+    for code, part_rows in group_rows_by_jurisdiction(admitted).items():
+        legal_ids = {row.legal_id for row in part_rows}
+        graphs[code] = projector._project_admitted(
+            part_rows,
+            skipped=0,
+            similarity_neighbors=neighbors_for_legal_ids(
+                similarity_neighbors, legal_ids
+            ),
+            checkpoint_dir=checkpoint_dir,
+            corpus_digest=f"{digest}:{code}" if digest else code,
+            max_workers=max_workers,
+            pressure=pressure,
+            partition=code,
+        )
+    return graphs
+
+
+def graph_projection_from_dict(
+    payload: Mapping[str, Any],
+) -> OpenUsLawGraphProjection:
+    """Rehydrate a projection previously written by ``to_dict``."""
+
+    if not isinstance(payload, Mapping):
+        raise GraphProjectionError("graph projection payload must be a mapping")
+    raw_nodes = payload.get("nodes") or ()
+    raw_edges = payload.get("edges") or ()
+    if not isinstance(raw_nodes, Sequence) or isinstance(raw_nodes, (str, bytes)):
+        raise GraphProjectionError("nodes must be a sequence")
+    if not isinstance(raw_edges, Sequence) or isinstance(raw_edges, (str, bytes)):
+        raise GraphProjectionError("edges must be a sequence")
+    nodes = []
+    for item in raw_nodes:
+        if not isinstance(item, Mapping):
+            raise GraphProjectionError("graph node must be a mapping")
+        nodes.append(
+            OpenUsLawGraphNode(
+                node_type=item.get("node_type"),
+                node_key=str(item.get("node_key") or ""),
+                label=str(item.get("label") or ""),
+                legal_id=item.get("legal_id"),
+                entry_cid=item.get("entry_cid"),
+                payload=dict(item.get("payload") or {}),
+                ontology_version=str(
+                    item.get("ontology_version") or payload.get("ontology_version") or ""
+                ),
+                schema_version=str(
+                    item.get("schema_version") or payload.get("schema_version") or ""
+                ),
+                node_cid=str(item.get("node_cid") or ""),
+            )
+        )
+    edges = []
+    for item in raw_edges:
+        if not isinstance(item, Mapping):
+            raise GraphProjectionError("graph edge must be a mapping")
+        span_payload = item.get("source_span")
+        source_span = (
+            SourceSpan.from_mapping(span_payload)
+            if isinstance(span_payload, Mapping)
+            else None
+        )
+        resolution = item.get("resolution_status")
+        edges.append(
+            OpenUsLawGraphEdge(
+                edge_type=item.get("edge_type"),
+                source_node_cid=str(item.get("source_node_cid") or ""),
+                target_node_cid=str(item.get("target_node_cid") or ""),
+                edge_class=item.get("edge_class"),
+                source_span=source_span,
+                resolution_status=resolution,
+                weight=item.get("weight"),
+                payload=dict(item.get("payload") or {}),
+                ontology_version=str(
+                    item.get("ontology_version") or payload.get("ontology_version") or ""
+                ),
+                schema_version=str(
+                    item.get("schema_version") or payload.get("schema_version") or ""
+                ),
+                edge_cid=str(item.get("edge_cid") or ""),
+            )
+        )
+    return OpenUsLawGraphProjection(
+        nodes=tuple(nodes),
+        edges=tuple(edges),
+        ontology_version=str(payload.get("ontology_version") or ONTOLOGY_VERSION),
+        schema_version=str(payload.get("schema_version") or SCHEMA_VERSION),
+        citation_parser_version=str(
+            payload.get("citation_parser_version") or CITATION_PARSER_VERSION
+        ),
+        unresolved_count=int(payload.get("unresolved_count") or 0),
+        legal_edge_count=int(payload.get("legal_edge_count") or 0),
+        similarity_edge_count=int(payload.get("similarity_edge_count") or 0),
+        skipped_row_count=int(payload.get("skipped_row_count") or 0),
+        graph_cid=str(payload.get("graph_cid") or ""),
     )
 
 
@@ -3500,6 +3817,7 @@ __all__ = [
     "TASK_ID",
     "CitationMention",
     "CitationResolutionError",
+    "graph_projection_from_dict",
     "GraphCorpusRow",
     "GraphEdgeClass",
     "GraphEdgeType",
@@ -3538,6 +3856,7 @@ __all__ = [
     "match_expected_paths",
     "production_graph_bounds",
     "project_open_us_law_graph",
+    "project_open_us_law_graphs_by_jurisdiction",
     "resolve_citations",
     "run_fixture_case",
     "sha256_cid",
