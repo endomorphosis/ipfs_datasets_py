@@ -42,6 +42,12 @@ from ipfs_datasets_py.processors.legal_data.federal_register_acquisition import 
     assert_no_secrets,
     find_secret_surfaces,
 )
+from ipfs_datasets_py.processors.legal_data.lexical_neighbor_runtime import (
+    PressureFn,
+    documents_by_cid as index_documents_by_cid,
+    log_neighbor_progress,
+    map_documents_under_pressure,
+)
 from ipfs_datasets_py.processors.legal_data.federal_register_bm25 import (
     FIELD_ORDER,
     PRIMARY_KEY as BM25_PRIMARY_KEY,
@@ -1366,12 +1372,17 @@ def score_posting_candidates(
     *,
     candidates: Mapping[str, Sequence[str]],
     top_k: int,
+    documents_by_cid: Mapping[str, LegalBm25Document] | None = None,
 ) -> list[Bm25Hit]:
     """Score only posting-accumulated candidates. Never scans the corpus."""
 
     if not candidates or top_k < 1:
         return []
-    by_cid = {document.entry_cid: document for document in index.documents}
+    by_cid = (
+        documents_by_cid
+        if documents_by_cid is not None
+        else index_documents_by_cid(index.documents)
+    )
     hits: list[Bm25Hit] = []
     for entry_cid, terms in candidates.items():
         document = by_cid.get(entry_cid)
@@ -1406,16 +1417,78 @@ def score_posting_candidates(
     return hits[:top_k]
 
 
+def _neighbor_edges_for_document(
+    index: FederalRegisterBm25Index,
+    document: LegalBm25Document,
+    *,
+    config: LexicalGraphConfig,
+    config_cid: str,
+    by_cid: Mapping[str, LegalBm25Document],
+) -> tuple[list[Bm25NeighborEdge], int]:
+    query_terms = neighbor_query_terms(
+        document,
+        config=config,
+        tokenizer=index.config.tokenizer,
+    )
+    candidates = accumulate_neighbor_candidates(
+        index,
+        query_terms,
+        exclude_entry_cid=document.entry_cid,
+    )
+    hits = score_posting_candidates(
+        index,
+        candidates=candidates,
+        top_k=config.neighbor_k,
+        documents_by_cid=by_cid,
+    )
+    if len(hits) > config.max_neighbors_per_document:
+        raise LexicalGraphNeighborCapError(
+            f"neighbor materialization exceeded cap for {document.entry_cid}"
+        )
+    edges = []
+    for rank, hit in enumerate(hits):
+        target = by_cid.get(hit.entry_cid)
+        edges.append(
+            Bm25NeighborEdge(
+                source_entry_cid=document.entry_cid,
+                target_entry_cid=hit.entry_cid,
+                score=hit.score,
+                matched_terms=hit.matched_terms,
+                config_cid=config_cid,
+                source_legal_id=document.legal_id,
+                target_legal_id=hit.legal_id,
+                source_chunk_cid=document.chunk_cid,
+                target_chunk_cid=(
+                    target.chunk_cid if target is not None else hit.chunk_cid
+                ),
+                source_document_number=document.document_number,
+                target_document_number=(
+                    target.document_number
+                    if target is not None
+                    else hit.document_number
+                ),
+                rank=rank,
+            )
+        )
+    return edges, len(candidates)
+
+
 def materialize_bm25_neighbor_edges(
     index: FederalRegisterBm25Index,
     *,
     config: LexicalGraphConfig | None = None,
     config_cid: str | None = None,
+    max_workers: int | None = None,
+    pressure: PressureFn | None = None,
 ) -> tuple[tuple[Bm25NeighborEdge, ...], NeighborBuildStats]:
     """Emit deterministic bounded top-K ``BM25_NEIGHBOR_OF`` edges.
 
     Candidates are accumulated from BM25 posting cells of each source
     document's query terms. The corpus is never scanned pairwise.
+
+    Thread pools share the frozen index and a single CID map. Process
+    pools are refused. Default worker count is the live CPU/RAM/swap
+    heuristic, recapped every 4096 documents.
     """
 
     cfg = config or default_lexical_graph_config()
@@ -1429,54 +1502,46 @@ def materialize_bm25_neighbor_edges(
         return (), NeighborBuildStats()
 
     cid = config_cid or cfg.config_cid
+    by_cid = index_documents_by_cid(index.documents)
+
+    def _one(document: LegalBm25Document) -> tuple[list[Bm25NeighborEdge], int]:
+        return _neighbor_edges_for_document(
+            index,
+            document,
+            config=cfg,
+            config_cid=cid,
+            by_cid=by_cid,
+        )
+
+    def _progress(
+        processed: int,
+        total: int,
+        workers: int,
+        reason: str,
+        rows: Sequence[tuple[list[Bm25NeighborEdge], int]],
+    ) -> None:
+        log_neighbor_progress(
+            processed=processed,
+            total=total,
+            workers=workers,
+            reason=reason,
+            edges=sum(len(doc_edges) for doc_edges, _cand in rows),
+        )
+
+    batch_rows = map_documents_under_pressure(
+        index.documents,
+        _one,
+        max_workers=max_workers,
+        pressure=pressure,
+        progress=_progress,
+    )
     edges: list[Bm25NeighborEdge] = []
     posting_candidates = 0
     candidates_scored = 0
-    by_cid = {document.entry_cid: document for document in index.documents}
-    for document in index.documents:
-        query_terms = neighbor_query_terms(
-            document,
-            config=cfg,
-            tokenizer=index.config.tokenizer,
-        )
-        candidates = accumulate_neighbor_candidates(
-            index,
-            query_terms,
-            exclude_entry_cid=document.entry_cid,
-        )
-        posting_candidates += len(candidates)
-        hits = score_posting_candidates(
-            index, candidates=candidates, top_k=cfg.neighbor_k
-        )
-        candidates_scored += len(candidates)
-        if len(hits) > cfg.max_neighbors_per_document:
-            raise LexicalGraphNeighborCapError(
-                f"neighbor materialization exceeded cap for {document.entry_cid}"
-            )
-        for rank, hit in enumerate(hits):
-            target = by_cid.get(hit.entry_cid)
-            edges.append(
-                Bm25NeighborEdge(
-                    source_entry_cid=document.entry_cid,
-                    target_entry_cid=hit.entry_cid,
-                    score=hit.score,
-                    matched_terms=hit.matched_terms,
-                    config_cid=cid,
-                    source_legal_id=document.legal_id,
-                    target_legal_id=hit.legal_id,
-                    source_chunk_cid=document.chunk_cid,
-                    target_chunk_cid=(
-                        target.chunk_cid if target is not None else hit.chunk_cid
-                    ),
-                    source_document_number=document.document_number,
-                    target_document_number=(
-                        target.document_number
-                        if target is not None
-                        else hit.document_number
-                    ),
-                    rank=rank,
-                )
-            )
+    for doc_edges, cand_count in batch_rows:
+        edges.extend(doc_edges)
+        posting_candidates += cand_count
+        candidates_scored += cand_count
 
     edges.sort(
         key=lambda edge: (edge.source_entry_cid, -edge.score, edge.target_entry_cid)

@@ -72,6 +72,7 @@ from ipfs_datasets_py.processors.legal_data.open_us_law_lexical_graph import (
     materialize_bm25_neighbor_edges,
     neighbor_query_terms,
     non_authoritative_edge_semantics,
+    score_posting_candidates,
     page_adjacency_pointers,
     production_adjacency_bounds,
     shard_adjacency_pages,
@@ -379,6 +380,53 @@ def test_neighbor_edges_are_deterministic(sample_overlay) -> None:
     for prev, cur in zip(a.neighbor_edges, a.neighbor_edges[1:]):
         if prev.source_entry_cid == cur.source_entry_cid:
             assert prev.score >= cur.score
+
+
+def test_neighbor_edges_match_serial_and_pressure_capped_threads(
+    sample_overlay,
+) -> None:
+    serial, _stats = materialize_bm25_neighbor_edges(
+        sample_overlay.index,
+        max_workers=1,
+        pressure=lambda: (1, "admitted"),
+    )
+    threaded, _threaded_stats = materialize_bm25_neighbor_edges(
+        sample_overlay.index,
+        max_workers=4,
+        pressure=lambda: (4, "admitted"),
+    )
+    assert [edge.to_dict() for edge in serial] == [
+        edge.to_dict() for edge in threaded
+    ]
+
+
+def test_score_posting_candidates_reuses_shared_document_map(
+    sample_overlay,
+) -> None:
+    index = sample_overlay.index
+    source = index.documents[0]
+    terms = neighbor_query_terms(
+        source,
+        config=sample_overlay.config,
+        tokenizer=index.config.tokenizer,
+    )
+    candidates = accumulate_neighbor_candidates(
+        index,
+        terms,
+        exclude_entry_cid=source.entry_cid,
+    )
+    by_cid = {document.entry_cid: document for document in index.documents}
+    rebuilt = score_posting_candidates(
+        index, candidates=candidates, top_k=8
+    )
+    reused = score_posting_candidates(
+        index,
+        candidates=candidates,
+        top_k=8,
+        documents_by_cid=by_cid,
+    )
+    assert [hit.entry_cid for hit in rebuilt] == [hit.entry_cid for hit in reused]
+    assert [hit.score for hit in rebuilt] == [hit.score for hit in reused]
 
 
 def test_edge_semantics_are_explicitly_non_authoritative(sample_overlay) -> None:

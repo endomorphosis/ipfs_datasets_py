@@ -8,6 +8,7 @@ similarity misrepresented as legal authority.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -438,6 +439,143 @@ def test_projection_is_deterministic(fixture_payload: dict) -> None:
         for item in first.edges
     ]
     assert edge_order == sorted(edge_order)
+
+
+def test_projection_threads_match_serial(fixture_payload: dict) -> None:
+    serial = project_open_us_law_graph(
+        fixture_payload["records"],
+        similarity_neighbors=fixture_payload.get("similarity_neighbors") or [],
+        max_workers=1,
+        pressure=lambda: (1, "admitted"),
+    )
+    threaded = project_open_us_law_graph(
+        fixture_payload["records"],
+        similarity_neighbors=fixture_payload.get("similarity_neighbors") or [],
+        max_workers=4,
+        pressure=lambda: (4, "admitted"),
+    )
+    assert serial.graph_cid == threaded.graph_cid
+    assert [item.node_cid for item in serial.nodes] == [
+        item.node_cid for item in threaded.nodes
+    ]
+    assert [item.edge_cid for item in serial.edges] == [
+        item.edge_cid for item in threaded.edges
+    ]
+
+
+def test_projection_work_dir_resume_matches(tmp_path: Path, fixture_payload: dict) -> None:
+    records = fixture_payload["records"]
+    neighbors = fixture_payload.get("similarity_neighbors") or []
+    work = tmp_path / "graph-work"
+    first = project_open_us_law_graph(
+        records,
+        similarity_neighbors=neighbors,
+        checkpoint_dir=work,
+        corpus_digest="fixture-digest",
+        max_workers=1,
+        pressure=lambda: (1, "admitted"),
+    )
+    resumed = project_open_us_law_graph(
+        records,
+        similarity_neighbors=neighbors,
+        checkpoint_dir=work,
+        corpus_digest="fixture-digest",
+        max_workers=2,
+        pressure=lambda: (2, "admitted"),
+    )
+    assert first.graph_cid == resumed.graph_cid
+    citations = work / "citations"
+    if citations.is_dir():
+        for part in citations.glob("part-*.jsonl"):
+            part.unlink()
+    manifest_path = work / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["citation_rows_done"] = 0
+    manifest["citation_parts"] = 0
+    manifest["stage"] = "citations"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    rebuilt = project_open_us_law_graph(
+        records,
+        similarity_neighbors=neighbors,
+        checkpoint_dir=work,
+        corpus_digest="fixture-digest",
+        max_workers=1,
+        pressure=lambda: (1, "admitted"),
+    )
+    assert rebuilt.graph_cid == first.graph_cid
+
+
+def test_partition_by_jurisdiction_does_not_resolve_cross_state_cites(
+    fixture_payload: dict,
+) -> None:
+    combined = project_open_us_law_graph(
+        fixture_payload["records"],
+        similarity_neighbors=fixture_payload.get("similarity_neighbors") or [],
+    )
+    partitioned = project_open_us_law_graph(
+        fixture_payload["records"],
+        similarity_neighbors=fixture_payload.get("similarity_neighbors") or [],
+        partition_by_jurisdiction=True,
+    )
+    oregon = _section_record(fixture_payload, "192.311")
+    california = _section_record(fixture_payload, "187")
+    oregon_key = f"section:{oregon['legal_id']}"
+    california_key = f"section:{california['legal_id']}"
+    by_cid = partitioned.node_by_cid()
+
+    def _cites(projection) -> list:
+        lookup = projection.node_by_cid()
+        return [
+            item
+            for item in projection.edges
+            if item.edge_type is GraphEdgeType.CITES
+            and lookup[item.source_node_cid].node_key == oregon_key
+            and lookup[item.target_node_cid].node_key == california_key
+        ]
+
+    assert _cites(combined)
+    assert not _cites(partitioned)
+    jurisdictions = {
+        item.payload.get("jurisdiction_code")
+        for item in partitioned.nodes
+        if item.node_type is GraphNodeType.JURISDICTION
+    }
+    assert {"OR", "CA"} <= jurisdictions
+    for edge in partitioned.edges:
+        if edge.edge_type is GraphEdgeType.CITES:
+            source = by_cid[edge.source_node_cid]
+            target = by_cid[edge.target_node_cid]
+            source_j = source.payload.get("jurisdiction_code")
+            target_j = target.payload.get("jurisdiction_code")
+            if source_j and target_j:
+                assert source_j == target_j
+
+
+def test_partition_work_dir_is_per_jurisdiction(
+    tmp_path: Path, fixture_payload: dict
+) -> None:
+    work = tmp_path / "graph-work"
+    first = project_open_us_law_graph(
+        fixture_payload["records"],
+        similarity_neighbors=[],
+        checkpoint_dir=work,
+        corpus_digest="fixture-digest",
+        partition_by_jurisdiction=True,
+        max_workers=1,
+        pressure=lambda: (1, "admitted"),
+    )
+    assert (work / "OR" / "manifest.json").is_file()
+    assert (work / "CA" / "manifest.json").is_file()
+    resumed = project_open_us_law_graph(
+        fixture_payload["records"],
+        similarity_neighbors=[],
+        checkpoint_dir=work,
+        corpus_digest="fixture-digest",
+        partition_by_jurisdiction=True,
+        max_workers=2,
+        pressure=lambda: (2, "admitted"),
+    )
+    assert first.graph_cid == resumed.graph_cid
 
 
 def test_empty_corpus_fails_closed() -> None:

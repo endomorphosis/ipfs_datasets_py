@@ -402,6 +402,24 @@ def test_neighbor_edges_are_deterministic(sample_overlay) -> None:
             assert prev.score >= cur.score
 
 
+def test_neighbor_edges_match_serial_and_pressure_capped_threads(
+    sample_overlay,
+) -> None:
+    serial, _stats = materialize_bm25_neighbor_edges(
+        sample_overlay.index,
+        max_workers=1,
+        pressure=lambda: (1, "admitted"),
+    )
+    threaded, _threaded_stats = materialize_bm25_neighbor_edges(
+        sample_overlay.index,
+        max_workers=4,
+        pressure=lambda: (4, "admitted"),
+    )
+    assert [edge.to_dict() for edge in serial] == [
+        edge.to_dict() for edge in threaded
+    ]
+
+
 def test_edge_semantics_are_explicitly_non_authoritative(sample_overlay) -> None:
     semantics = non_authoritative_edge_semantics()
     assert semantics["authority"] == EDGE_AUTHORITY

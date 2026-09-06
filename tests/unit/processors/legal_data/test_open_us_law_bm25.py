@@ -26,6 +26,8 @@ from ipfs_datasets_py.processors.legal_data.open_us_law_bm25 import (
     MAX_POSTING_POINTERS_PER_ROW,
     MAX_ROWS_PER_PHYSICAL_SHARD,
     POSTINGS_SORTED_BY,
+    PRODUCTION_MAX_RECORDS_IN_MEMORY,
+    SORTED_POSTINGS_PARQUET_DIR,
     PRIMARY_KEY,
     PROGRAM_ID,
     RECEIPT_SCHEMA_VERSION,
@@ -54,6 +56,7 @@ from ipfs_datasets_py.processors.legal_data.open_us_law_bm25 import (
     default_bm25_config,
     default_bm25_receipt_path,
     document_count_ceiling,
+    external_sort_postings,
     fixture_bm25_chunks,
     fixture_bm25_config,
     inherited_shared_layout_would_truncate,
@@ -70,6 +73,7 @@ from ipfs_datasets_py.processors.legal_data.open_us_law_bm25 import (
     write_bm25_receipt,
 )
 from ipfs_datasets_py.processors.legal_data.open_us_law_schema import RELEASE_PROFILE
+from ipfs_datasets_py.retrieval.hf_graphrag.artifacts import validate_zstd_parquet
 from ipfs_datasets_py.processors.legal_data.uscode_tokenizer import TOKENIZER_VERSION
 from ipfs_datasets_py.retrieval.hf_graphrag.bm25 import (
     BM25LayoutConfig,
@@ -355,6 +359,7 @@ def test_terms_and_postings_are_externally_sorted_lexicographically() -> None:
     assert index.sort_receipts["terms"]["family"] == "terms"
     assert index.sort_receipts["postings"]["externally_sorted"] is True
     assert index.sort_receipts["postings"]["family"] == "postings"
+    assert index.sort_receipts["terms"]["inherited_from"] == "postings"
     for shard in index.term_shards:
         for term in shard.terms:
             cids = [
@@ -363,6 +368,61 @@ def test_terms_and_postings_are_externally_sorted_lexicographically() -> None:
                 for pointer in cell.pointers
             ]
             assert cids == sorted(cids)
+
+
+def test_postings_sort_spills_zstd_parquet_instead_of_a_ram_list(
+    tmp_path: Path,
+) -> None:
+    documents = project_admitted_documents(
+        fixture_bm25_chunks(), config=fixture_bm25_config()
+    )
+    stream, receipt = external_sort_postings(
+        (record for document in documents for record in document.to_posting_records()),
+        work_dir=tmp_path,
+        max_records_in_memory=3,
+    )
+    assert not isinstance(stream, list)
+    parquet_dir = tmp_path / SORTED_POSTINGS_PARQUET_DIR
+    parts = sorted(parquet_dir.glob("part-*.parquet"))
+    assert parts
+    assert receipt["parquet_shard_count"] == len(parts)
+    assert receipt["row_count"] >= len(parts)
+    assert not (tmp_path / "postings.sorted.jsonl").exists()
+    for part in parts:
+        validate_zstd_parquet(part, max_rows=MAX_ROWS_PER_PHYSICAL_SHARD)
+    rows = list(stream)
+    assert rows
+    assert {row["term"] for row in rows}
+    keys = [(row["term"], row["entry_cid"]) for row in rows]
+    assert keys == sorted(keys)
+
+
+def test_postings_sort_reuses_complete_parquet_without_rewriting(
+    tmp_path: Path,
+) -> None:
+    documents = project_admitted_documents(
+        fixture_bm25_chunks(), config=fixture_bm25_config()
+    )
+    first_stream, first_receipt = external_sort_postings(
+        (record for document in documents for record in document.to_posting_records()),
+        work_dir=tmp_path,
+        max_records_in_memory=3,
+    )
+    list(first_stream)
+    parquet_dir = tmp_path / SORTED_POSTINGS_PARQUET_DIR
+    parts = sorted(parquet_dir.glob("part-*.parquet"))
+    assert parts
+    mtimes = [part.stat().st_mtime_ns for part in parts]
+    second_stream, second_receipt = external_sort_postings(
+        (record for document in documents for record in document.to_posting_records()),
+        work_dir=tmp_path,
+        max_records_in_memory=3,
+    )
+    assert second_receipt["resumed_from_parquet"] is True
+    assert second_receipt["row_count"] == first_receipt["row_count"]
+    reused_parts = sorted(parquet_dir.glob("part-*.parquet"))
+    assert [part.stat().st_mtime_ns for part in reused_parts] == mtimes
+    assert list(second_stream)
 
 
 # ---------------------------------------------------------------------------
@@ -425,6 +485,8 @@ def test_production_bounds_are_4096_even_when_fixtures_are_tighter() -> None:
     assert production.max_rows_per_shard == 4096
     assert production.postings_per_cell == 4096
     assert production.max_route_page_rows == 4096
+    assert production.max_records_in_memory == PRODUCTION_MAX_RECORDS_IN_MEMORY
+    assert production.max_records_in_memory == 65_536
     assert fixture.max_rows_per_shard == 2
     assert fixture.postings_per_cell == 2
     index = bind_fixture_bm25()

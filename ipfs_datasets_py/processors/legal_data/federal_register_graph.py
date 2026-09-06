@@ -37,13 +37,26 @@ import os
 import re
 import tempfile
 from collections import defaultdict, deque
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Final, Optional, Union
 
+from ipfs_datasets_py.processors.legal_data.legal_graph_projection_runtime import (
+    ingest_graph_work_record,
+    load_work_dir,
+    mutating_row_worker,
+    prepare_partition_work_dir,
+    run_projection_pass,
+)
+from ipfs_datasets_py.processors.legal_data.lexical_neighbor_runtime import (
+    PressureFn,
+)
+from ipfs_datasets_py.processors.legal_data.open_us_law_graph_work import (
+    write_manifest,
+)
 from ipfs_datasets_py.processors.legal_data.federal_register_acquisition import (
     SecretInReceiptError,
     assert_no_secrets,
@@ -1965,6 +1978,10 @@ class FederalRegisterGraphProjector:
         similarity_neighbors: Sequence[SimilarityNeighbor | Mapping[str, Any]] | None = None,
         corpus_root_cid: Optional[str] = None,
         require_coverage: bool = False,
+        checkpoint_dir: Path | None = None,
+        corpus_digest: str | None = None,
+        max_workers: int | None = None,
+        pressure: PressureFn | None = None,
     ) -> FederalRegisterGraphProjection:
         admitted, skipped = self._admit_rows(rows)
         if not admitted:
@@ -1973,25 +1990,66 @@ class FederalRegisterGraphProjector:
         known_legal_ids = {row.legal_id: row for row in admitted}
         known_document_numbers = {row.document_number: row for row in admitted}
         nodes: dict[str, FederalRegisterGraphNode] = {}
-        edges: list[FederalRegisterGraphEdge] = []
+        edges_by_cid: dict[str, FederalRegisterGraphEdge] = {}
+        work_root, manifest = prepare_partition_work_dir(
+            Path(checkpoint_dir) if checkpoint_dir is not None else None,
+            corpus_digest=str(corpus_digest or corpus_root_cid or ""),
+            partition=None,
+        )
+        structure_done = 0
+        citation_done = 0
+        if manifest is not None and work_root is not None:
+            load_work_dir(work_root, nodes, edges_by_cid, self._ingest_work_record)
+            structure_done = max(
+                0, min(len(admitted), int(manifest.get("structure_rows_done") or 0))
+            )
+            citation_done = max(
+                0, min(len(admitted), int(manifest.get("citation_rows_done") or 0))
+            )
 
-        for row in admitted:
-            self._project_document(nodes, edges, row)
-
-        for row in admitted:
+        def _citation_body(view, edges, row):
             self._project_citations(
-                nodes,
+                view,
                 edges,
                 row,
                 known_document_numbers=known_document_numbers,
             )
             self._project_relations(
-                nodes,
+                view,
                 edges,
                 row,
                 known_legal_ids=known_legal_ids,
                 known_document_numbers=known_document_numbers,
             )
+
+        run_projection_pass(
+            admitted,
+            start=structure_done,
+            worker=mutating_row_worker(self._project_document, nodes),
+            nodes=nodes,
+            edges_by_cid=edges_by_cid,
+            work_root=work_root,
+            manifest=manifest,
+            stage="structure",
+            max_workers=max_workers,
+            pressure=pressure,
+        )
+        if manifest is not None and work_root is not None:
+            manifest["stage"] = "citations"
+            write_manifest(work_root, manifest)
+        run_projection_pass(
+            admitted,
+            start=citation_done,
+            worker=mutating_row_worker(_citation_body, nodes),
+            nodes=nodes,
+            edges_by_cid=edges_by_cid,
+            work_root=work_root,
+            manifest=manifest,
+            stage="citations",
+            max_workers=max_workers,
+            pressure=pressure,
+        )
+        edges = list(edges_by_cid.values())
 
         for neighbor in similarity_neighbors or ():
             sim = (
@@ -2040,7 +2098,27 @@ class FederalRegisterGraphProjector:
         )
         if require_coverage:
             projection.assert_coverage()
+        if manifest is not None and work_root is not None:
+            manifest["stage"] = "complete"
+            manifest["node_count"] = len(projection.nodes)
+            manifest["edge_count"] = len(projection.edges)
+            write_manifest(work_root, manifest)
         return projection
+
+    def _ingest_work_record(
+        self,
+        record: Mapping[str, Any],
+        nodes: MutableMapping[str, FederalRegisterGraphNode],
+        edges_by_cid: MutableMapping[str, FederalRegisterGraphEdge],
+    ) -> None:
+        ingest_graph_work_record(
+            record,
+            nodes,
+            edges_by_cid,
+            node_cls=FederalRegisterGraphNode,
+            edge_cls=FederalRegisterGraphEdge,
+            source_span_cls=SourceSpan,
+        )
 
     def _admit_rows(
         self,
@@ -2952,6 +3030,10 @@ def project_federal_register_graph(
     config: FederalRegisterGraphConfig | None = None,
     corpus_root_cid: Optional[str] = None,
     require_coverage: bool = False,
+    checkpoint_dir: Path | None = None,
+    corpus_digest: str | None = None,
+    max_workers: int | None = None,
+    pressure: PressureFn | None = None,
 ) -> FederalRegisterGraphProjection:
     projector = FederalRegisterGraphProjector(config=config)
     root = corpus_root_cid or build_corpus_root_cid(rows)
@@ -2960,6 +3042,10 @@ def project_federal_register_graph(
         similarity_neighbors=similarity_neighbors,
         corpus_root_cid=root,
         require_coverage=require_coverage,
+        checkpoint_dir=checkpoint_dir,
+        corpus_digest=corpus_digest,
+        max_workers=max_workers,
+        pressure=pressure,
     )
 
 

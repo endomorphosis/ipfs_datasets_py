@@ -32,6 +32,7 @@ Design invariants
 
 from __future__ import annotations
 
+import gc
 import hashlib
 import json
 import math
@@ -563,6 +564,21 @@ def select_device(
             f"requested device {req!r} is unavailable and fallback policy is block"
         )
     raise EmbeddingConfigError(f"unknown fallback policy: {fallback!r}")
+
+
+def empty_cuda_working_set() -> None:
+    """Drop unreferenced tensors so GB10 unified memory can load gte-small."""
+
+    gc.collect()
+    try:
+        import torch
+    except ImportError:
+        return
+    try:
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except Exception:
+        return
 
 
 def collect_runtime_evidence(device: str) -> dict[str, Any]:
@@ -1958,6 +1974,8 @@ class OpenUsLawEmbeddingGenerator:
         self._injected_embedder = embedder
         self._device_probe = device_probe
         self._model_factory = model_factory
+        self._cached_embedder_bundle: tuple[Any, ...] | None = None
+        self._cached_embedder_device: str | None = None
         if embedder is not None and not callable(embedder):
             raise EmbeddingConfigError("embedder must be callable")
 
@@ -1971,6 +1989,33 @@ class OpenUsLawEmbeddingGenerator:
             fallback=self._config.device_fallback,
             probe=self._device_probe,
         )
+
+    def release(self) -> None:
+        """Drop a cached sentence-transformers model so later stages can use RAM."""
+
+        self._cached_embedder_bundle = None
+        self._cached_embedder_device = None
+        empty_cuda_working_set()
+
+    def _resolve_embedder_cached(
+        self, device_selected: str
+    ) -> tuple[EmbeddingFunction, TruncationEvidence, dict[str, Any], str, bool]:
+        if (
+            self._cached_embedder_bundle is not None
+            and self._cached_embedder_device == device_selected
+        ):
+            return self._cached_embedder_bundle  # type: ignore[return-value]
+        if self._cached_embedder_bundle is None and device_selected.startswith("cuda"):
+            empty_cuda_working_set()
+        bundle = resolve_embedder(
+            self._config,
+            embedder=self._injected_embedder,
+            device=device_selected,
+            model_factory=self._model_factory,
+        )
+        self._cached_embedder_bundle = bundle
+        self._cached_embedder_device = device_selected
+        return bundle
 
     def embed_texts(
         self,
@@ -2024,24 +2069,40 @@ class OpenUsLawEmbeddingGenerator:
             runtime=runtime,
         )
 
-        embedder, truncation, model_files, embedder_kind, real_inference = (
-            resolve_embedder(
-                self._config,
-                embedder=self._injected_embedder,
-                device=device_selected,
-                model_factory=self._model_factory,
-            )
-        )
-
         completed_records: dict[str, EmbeddingRecord] = {}
+        completed_hashes: dict[str, str] = {}
         checkpoint = EmbeddingCheckpoint(config_digest=self._config.digest)
-        if checkpoint_path is not None and resume and Path(checkpoint_path).is_file():
-            checkpoint = load_checkpoint(checkpoint_path)
-            assert_checkpoint_compatible(checkpoint, self._config)
-            for cid, payload in checkpoint.completed.items():
-                completed_records[cid] = record_from_checkpoint(
-                    cid, payload, self._config
-                )
+        parquet_store = None
+        ckpt_path = Path(checkpoint_path) if checkpoint_path is not None else None
+        use_parquet = False
+        if ckpt_path is not None:
+            from ipfs_datasets_py.processors.legal_data.open_us_law_embedding_parquet import (
+                ParquetEmbeddingCheckpoint,
+                is_parquet_checkpoint_path,
+                parquet_checkpoint_root,
+            )
+
+            use_parquet = is_parquet_checkpoint_path(ckpt_path)
+            if use_parquet:
+                parquet_root = parquet_checkpoint_root(ckpt_path)
+                if resume and (parquet_root / "manifest.json").is_file():
+                    parquet_store = ParquetEmbeddingCheckpoint.load(
+                        parquet_root, config_digest=self._config.digest
+                    )
+                    completed_hashes = parquet_store.load_skip_index()
+                    checkpoint.batch_count = parquet_store.batch_count
+                else:
+                    parquet_store = ParquetEmbeddingCheckpoint.create(
+                        parquet_root, config_digest=self._config.digest
+                    )
+            elif resume and ckpt_path.is_file():
+                checkpoint = load_checkpoint(ckpt_path)
+                assert_checkpoint_compatible(checkpoint, self._config)
+                for cid, payload in checkpoint.completed.items():
+                    completed_records[cid] = record_from_checkpoint(
+                        cid, payload, self._config
+                    )
+                    completed_hashes[cid] = str(payload.get("input_hash") or "")
 
         embeddings: dict[str, EmbeddingRecord] = {}
         missing: list[MissingVectorDiagnostic] = []
@@ -2053,18 +2114,50 @@ class OpenUsLawEmbeddingGenerator:
         pending: list[AdmittedChunk] = []
         for chunk in admitted:
             existing = completed_records.get(chunk.chunk_cid)
-            if existing is not None:
+            existing_hash = (
+                existing.input_hash if existing is not None else completed_hashes.get(chunk.chunk_cid)
+            )
+            if existing_hash is not None:
                 expected_hash = input_content_hash(
                     chunk.resolve_input_text(self._config.input_fields)
                 )
-                if existing.input_hash != expected_hash:
+                if existing_hash != expected_hash:
                     raise EmbeddingCheckpointError(
                         f"input hash changed for completed chunk {chunk.chunk_cid}"
                     )
-                embeddings[chunk.chunk_cid] = existing
+                if existing is not None:
+                    embeddings[chunk.chunk_cid] = existing
                 resumed.append(chunk.chunk_cid)
                 continue
             pending.append(chunk)
+
+        if pending or self._injected_embedder is not None:
+            embedder, truncation, model_files, embedder_kind, real_inference = (
+                self._resolve_embedder_cached(device_selected)
+            )
+        elif self._cached_embedder_bundle is not None:
+            embedder, truncation, model_files, embedder_kind, real_inference = (
+                self._cached_embedder_bundle
+            )
+        else:
+            production = is_production_backend(self._config.backend)
+            truncation = TruncationEvidence(
+                applied=production,
+                max_seq_length=PINNED_MAX_TOKENS if production else None,
+                tokenizer_model_max_length=PINNED_MAX_TOKENS if production else None,
+                max_tokens=self._config.max_tokens,
+            )
+            model_files = {
+                "file_count": 0,
+                "files": [],
+                "revision": self._config.model_revision,
+            }
+            embedder_kind = self._config.backend
+            real_inference = production and use_parquet
+            embedder = None
+
+        if pending and embedder is None:
+            raise OpenUsLawEmbeddingError("embedder missing for pending chunks")
 
         for start in range(0, len(pending), batch_size):
             batch = pending[start : start + batch_size]
@@ -2086,6 +2179,7 @@ class OpenUsLawEmbeddingGenerator:
                     )
                 continue
 
+            batch_records: list[EmbeddingRecord] = []
             for chunk, vector, in_hash in zip(batch, vectors, input_hashes):
                 norm = l2_norm(vector)
                 if (
@@ -2121,11 +2215,34 @@ class OpenUsLawEmbeddingGenerator:
                 )
                 embeddings[chunk.chunk_cid] = record
                 executed.append(chunk.chunk_cid)
-                checkpoint.completed[chunk.chunk_cid] = record.checkpoint_dict()
+                batch_records.append(record)
+                if not use_parquet:
+                    checkpoint.completed[chunk.chunk_cid] = record.checkpoint_dict()
 
             checkpoint.batch_count = batch_count
-            if checkpoint_path is not None:
-                write_checkpoint_atomic(checkpoint_path, checkpoint)
+            if parquet_store is not None:
+                parquet_store.append(batch_records)
+                if batch_count == 1 or batch_count % 10 == 0:
+                    print(
+                        f"embeddings device={device_selected} "
+                        f"batch={batch_count} stored={parquet_store.row_count} "
+                        f"pending={len(pending) - start - len(batch)}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+            elif ckpt_path is not None:
+                write_checkpoint_atomic(ckpt_path, checkpoint)
+
+        if use_parquet and parquet_store is not None:
+            missing_keys = [
+                cid for cid in admitted_cids if cid not in embeddings
+            ]
+            if missing_keys:
+                embeddings.update(
+                    parquet_store.load_records_for_cids(
+                        missing_keys, config=self._config
+                    )
+                )
 
         if not allow_missing and missing:
             raise MissingVectorError(f"{len(missing)} vectors missing after generation")
