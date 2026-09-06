@@ -11,6 +11,7 @@ from __future__ import annotations
 import sys
 from collections import ChainMap, defaultdict
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from dataclasses import is_dataclass, replace
 from pathlib import Path
 from typing import Any, TypeVar
 
@@ -208,6 +209,66 @@ def ingest_graph_work_record(
             edges_by_cid[edge.edge_cid] = edge
 
 
+def remap_edge_endpoints(edge: Any, cid_remap: Mapping[str, str]) -> Any:
+    """Rewrite edge endpoints onto first-writer node CIDs.
+
+    Parallel citation workers can mint the same node_key with different
+    CIDs in one batch (for example public-law nodes whose labels differ).
+    First-writer-wins keeps one node; edges that pointed at the discarded
+    CID must follow it or the projection fails closed on a dangling edge.
+    """
+
+    if not cid_remap:
+        return edge
+    source = cid_remap.get(edge.source_node_cid, edge.source_node_cid)
+    target = cid_remap.get(edge.target_node_cid, edge.target_node_cid)
+    if source == edge.source_node_cid and target == edge.target_node_cid:
+        return edge
+    if is_dataclass(edge):
+        return replace(
+            edge,
+            source_node_cid=source,
+            target_node_cid=target,
+            edge_cid="",
+        )
+    rebuilt = type(edge)(
+        source_node_cid=source,
+        target_node_cid=target,
+        edge_type=getattr(edge, "edge_type", None),
+        edge_class=getattr(edge, "edge_class", None),
+        payload=dict(getattr(edge, "payload", None) or {}),
+        edge_cid="",
+    )
+    return rebuilt
+
+
+def merge_local_graph_delta(
+    local_nodes: Mapping[str, Any],
+    local_edges: Sequence[Any],
+    nodes: MutableMapping[str, Any],
+    edges_by_cid: MutableMapping[str, Any],
+) -> tuple[list[Any], list[Any]]:
+    """Merge one worker's nodes/edges. First writer wins on node_key."""
+
+    cid_remap: dict[str, str] = {}
+    delta_nodes: list[Any] = []
+    delta_edges: list[Any] = []
+    for key, node in local_nodes.items():
+        existing = nodes.get(key)
+        if existing is None:
+            nodes[key] = node
+            delta_nodes.append(node)
+            continue
+        if node.node_cid != existing.node_cid:
+            cid_remap[node.node_cid] = existing.node_cid
+    for edge in local_edges:
+        remapped = remap_edge_endpoints(edge, cid_remap)
+        if remapped.edge_cid not in edges_by_cid:
+            edges_by_cid[remapped.edge_cid] = remapped
+            delta_edges.append(remapped)
+    return delta_nodes, delta_edges
+
+
 def run_projection_pass(
     admitted: Sequence[Any],
     *,
@@ -242,14 +303,11 @@ def run_projection_pass(
         delta_nodes: list[Any] = []
         delta_edges: list[Any] = []
         for local_nodes, local_edges in produced:
-            for key, node in local_nodes.items():
-                if key not in nodes:
-                    nodes[key] = node
-                    delta_nodes.append(node)
-            for edge in local_edges:
-                if edge.edge_cid not in edges_by_cid:
-                    edges_by_cid[edge.edge_cid] = edge
-                    delta_edges.append(edge)
+            batch_nodes, batch_edges = merge_local_graph_delta(
+                local_nodes, local_edges, nodes, edges_by_cid
+            )
+            delta_nodes.extend(batch_nodes)
+            delta_edges.extend(batch_edges)
         if work_root is not None and manifest is not None:
             part_key = "structure_parts" if stage == "structure" else "citation_parts"
             done_key = (
@@ -332,6 +390,8 @@ __all__ = [
     "ingest_graph_work_record",
     "load_work_dir",
     "merge_graph_projections",
+    "merge_local_graph_delta",
+    "remap_edge_endpoints",
     "mutating_row_worker",
     "neighbors_for_legal_ids",
     "prepare_partition_work_dir",

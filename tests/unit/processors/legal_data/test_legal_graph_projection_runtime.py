@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 from ipfs_datasets_py.processors.legal_data.legal_graph_projection_runtime import (
     group_rows_by_jurisdiction,
+    merge_local_graph_delta,
     neighbors_for_legal_ids,
     same_jurisdiction_candidates,
 )
@@ -51,3 +52,49 @@ def test_same_jurisdiction_candidates_keeps_only_matching_state() -> None:
         by_cid=by_cid,
     )
     assert list(kept) == ["in"]
+
+
+class _Node:
+    def __init__(self, node_key: str, node_cid: str) -> None:
+        self.node_key = node_key
+        self.node_cid = node_cid
+
+
+class _Edge:
+    def __init__(
+        self,
+        *,
+        source_node_cid: str,
+        target_node_cid: str,
+        edge_cid: str = "",
+        edge_type: str = "cites",
+        edge_class: str = "citation",
+        payload: dict | None = None,
+    ) -> None:
+        self.edge_type = edge_type
+        self.source_node_cid = source_node_cid
+        self.target_node_cid = target_node_cid
+        self.edge_class = edge_class
+        self.source_span = None
+        self.resolution_status = None
+        self.weight = None
+        self.payload = dict(payload or {})
+        self.edge_cid = edge_cid or f"edge:{source_node_cid}->{target_node_cid}"
+
+
+def test_merge_local_graph_delta_remaps_edges_onto_first_writer_cid() -> None:
+    kept = _Node("public_law:pl:us:112:29", "cid-first")
+    discarded = _Node("public_law:pl:us:112:29", "cid-second")
+    source = _Node("section:or", "cid-src")
+    nodes = {"section:or": source, kept.node_key: kept}
+    edges: dict[str, _Edge] = {}
+    dangling = _Edge(source_node_cid="cid-src", target_node_cid="cid-second")
+    merge_local_graph_delta(
+        {discarded.node_key: discarded},
+        [dangling],
+        nodes,
+        edges,
+    )
+    assert nodes[kept.node_key] is kept
+    assert list(edges) == ["edge:cid-src->cid-first"]
+    assert edges["edge:cid-src->cid-first"].target_node_cid == "cid-first"
