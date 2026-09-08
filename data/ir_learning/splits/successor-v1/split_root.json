@@ -1,0 +1,37 @@
+{
+  "hidden_test_commitment": "sha256:6a801b51b980e666b4010da9a679ad8e11a233078f988165565481b98d4b9ded",
+  "hidden_test_commitment_status": "unchanged_inherited",
+  "holdouts": {
+    "compiler": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "compiler", "status": "permanent_no_go"},
+    "cross_reference": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "cross_reference", "status": "permanent_no_go"},
+    "domain": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "domain", "status": "permanent_no_go"},
+    "exception": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "exception", "status": "permanent_no_go"},
+    "family": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "statute_family", "status": "permanent_no_go"},
+    "jurisdiction": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "jurisdiction", "status": "permanent_no_go"},
+    "length": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "length", "status": "permanent_no_go"},
+    "lineage": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "lineage", "status": "permanent_no_go"},
+    "notation": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "notation", "status": "permanent_no_go"},
+    "premise": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "premise", "status": "permanent_no_go"},
+    "proof_library": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "proof_library", "status": "permanent_no_go"},
+    "publication": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "publication", "status": "permanent_no_go"},
+    "rare_operator": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "rare_operator", "status": "permanent_no_go"},
+    "time": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "temporal", "status": "permanent_no_go"},
+    "type": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "type", "status": "permanent_no_go"}
+  },
+  "input_corpus_result_identity": "RESULT(PGIR-201)",
+  "kind": "ir-sealed-split-root/v1",
+  "leakage_passed": true,
+  "result_identity": "RESULT(PGIR-202)",
+  "schema": "IRSplitManifest@1",
+  "holdout_report_path": "holdout_report.json",
+  "leakage_report_path": "leakage_report.json",
+  "replay_receipt_path": "replay_receipt.json",
+  "split_manifest_path": "ir_split_manifest.json",
+  "split_manifest_digest": "38f1a19d90045f2cd58ad92ce52f187d5c90030a81c3bf608162785f6d0226e1",
+  "split_manifest_sha256": "5b99840e76df31174c2b4deb882624ca6d773671f7fa3ba24f95b34005d8f37f",
+  "status": "permanent_no_go",
+  "supersedes": {
+    "historical_split_root_path": "ipfs_datasets_py/data/ir_learning/splits/split_root.json",
+    "mode": "new_generation_without_historical_root_mutation"
+  }
+}

@@ -1,0 +1,532 @@
+{
+  "access": "evaluator-only-denied-before-terminal-patch",
+  "partition": "evaluator",
+  "schema": "ipfs-datasets.proof-context.mature-python-evaluator-partition@1",
+  "source_pin_id": "django-django-5.2.5",
+  "tasks": [
+    {
+      "answer_bytes_cid": null,
+      "control": {
+        "base_commit": "a3b1107a4955bdd994908efb4c6e1d03c281e69f",
+        "base_tree": "0d45857fbbe288b56ddd4d8e124a1657421f9c48",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Repair a historical Django query-planning regression at the exact 5.2.5 pin without access to later commits or hidden answers.",
+        "owned_paths": [
+          "django/db/models/sql/query.py"
+        ],
+        "repository_class": "mature_python",
+        "risk_class": "routine",
+        "routine_localized": true,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-control@1",
+        "sealed_evaluator_root_cid": "baguqeeradgnb257khb4a3tcnbm2su7f4tg2prblrh6k7dhkwlqhg5zlwcssq",
+        "seed": 63001,
+        "source_pin_id": "django-django-5.2.5",
+        "task_id": "mature-historical-001",
+        "task_kind": "historical_replay",
+        "visible_projection_cid": "baguqeeralqaosyznypzplyzbayak6y2mvayxuq4b2dov653d2d2t76dacota"
+      },
+      "control_cid": "baguqeerabp4bsetym5xpqy5uboweer4nfpmhwsbmuzeyhrcw2lctkobpfghq",
+      "evaluator": {
+        "answer": null,
+        "case_class": "historical-answer-unavailable-at-cutoff",
+        "expected_outcome": {
+          "acceptance": "source-and-baseline-verified-but-no-historical-answer-without-future-access",
+          "answer_available": false,
+          "baseline_full_test_available": true,
+          "source_materialization": "source_materialization_verified",
+          "terminal_status": "unavailable"
+        },
+        "hidden_files": [
+          {
+            "bytes_cid": "bafkreici3fyy5ibn4ktfwqaoglngsr7cyeyudo3ijcfs7ltmihhob4xgmi",
+            "path": "review/historical_answer_unavailability.txt",
+            "sha256": "48d9718ea02de2a65b400e32da6947e2c13141bb68488b2fae6c41cee0f2e662",
+            "size": 401,
+            "utf8": "The exact Django 5.2.5 source archive, reconstructed tree, license bytes,\ndependency wheels, and full upstream baseline are materialized and verified. A\nhistorical answer is intentionally absent because no later commit or PR patch may\nbe accessed. Do not infer or fabricate hidden answer bytes or upgrade this case\nfrom unavailable. Preserve the no-future-access disposition as benchmark\nmissingness.\n"
+          }
+        ],
+        "mount_policy": "denied-until-agent-patch-is-terminal",
+        "patch_scope": {
+          "allowed_paths": [
+            "django/db/models/sql/query.py"
+          ],
+          "out_of_scope_disposition": "reject-before-hidden-evaluation"
+        },
+        "schema": "ipfs-datasets.proof-context.mature-python-evaluator-payload@1",
+        "task_id": "mature-historical-001"
+      },
+      "evaluator_root_cid": "baguqeeradgnb257khb4a3tcnbm2su7f4tg2prblrh6k7dhkwlqhg5zlwcssq",
+      "expected_outcome_cid": "baguqeera7t4wmu65f5ajuli56j2ryarhtdgkkrhhcjghwxlq6qwwve6cywra",
+      "task_id": "mature-historical-001"
+    },
+    {
+      "answer_bytes_cid": "bafkreiam6e636cdziigymtl524ab3hoiyhd7fmmyobzobttxlp7ny2qfnu",
+      "control": {
+        "base_commit": "a3b1107a4955bdd994908efb4c6e1d03c281e69f",
+        "base_tree": "0d45857fbbe288b56ddd4d8e124a1657421f9c48",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Collect every declared model deterministically and reject duplicate app labels rather than silently truncating or overwriting registry state.",
+        "owned_paths": [
+          "src/mature_fixture/model_registry.py"
+        ],
+        "repository_class": "mature_python",
+        "risk_class": "routine",
+        "routine_localized": true,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-control@1",
+        "sealed_evaluator_root_cid": "baguqeeraldosbkwu2me23723mqgp5i4ilc3il2gyjjabtx46nlegcrqps4eq",
+        "seed": 63002,
+        "source_pin_id": "django-django-5.2.5",
+        "task_id": "mature-synthetic-model-registry-001",
+        "task_kind": "controlled_synthetic",
+        "visible_projection_cid": "baguqeerax5sytsc2t3idbcygdctrjrp77txdfs4g2fvvood7u5bq6evniuoa"
+      },
+      "control_cid": "baguqeeralovbgfqma6ilzptvdrbon37tgztye6trxdeeltfzujc3pyxbo3tq",
+      "evaluator": {
+        "answer": {
+          "bytes_cid": "bafkreiam6e636cdziigymtl524ab3hoiyhd7fmmyobzobttxlp7ny2qfnu",
+          "path": "answers/mature-synthetic-model-registry-001.patch",
+          "sha256": "0cf13dbf0879420d864d7dd7001d9dc8c1c7f2b1987072e0ce775bfedc6a056d",
+          "size": 572,
+          "utf8": "diff --git a/src/mature_fixture/model_registry.py b/src/mature_fixture/model_registry.py\n--- a/src/mature_fixture/model_registry.py\n+++ b/src/mature_fixture/model_registry.py\n@@ -5,6 +5,8 @@\n \n def collect_models(declarations: Iterable[tuple[str, str]]) -> dict[str, str]:\n     models: dict[str, str] = {}\n-    for app_label, model_name in tuple(declarations)[:1]:\n+    for app_label, model_name in declarations:\n+        if app_label in models:\n+            raise ValueError(f\"duplicate app label: {app_label}\")\n         models[app_label] = model_name\n     return models\n"
+        },
+        "case_class": "controlled-synthetic-model-registry",
+        "expected_outcome": {
+          "acceptance": "all-models-collected-and-duplicate-labels-rejected",
+          "answer_available": true,
+          "critical_failure": "model-declaration-silently-omitted-or-overwritten",
+          "representativeness": "django-model-registry-pattern-synthetic-only",
+          "terminal_status": "succeeded"
+        },
+        "hidden_files": [
+          {
+            "bytes_cid": "bafkreidomrk3x3rs75hfz476g64p2ypftvicphbex3ceouy2247kbbtjvq",
+            "path": "tests/hidden/test_model_registry_hidden.py",
+            "sha256": "6e6455bbee32ff4e5cf3fe37b8fd61e59d50279c24bec447531ad73ea08669ac",
+            "size": 426,
+            "utf8": "import pytest\n\nfrom mature_fixture.model_registry import collect_models\n\n\ndef test_all_models_are_collected() -> None:\n    assert collect_models(((\"auth\", \"User\"), (\"content\", \"Article\"))) == {\n        \"auth\": \"User\",\n        \"content\": \"Article\",\n    }\n\n\ndef test_duplicate_app_labels_fail_closed() -> None:\n    with pytest.raises(ValueError, match=\"duplicate\"):\n        collect_models(((\"auth\", \"User\"), (\"auth\", \"Group\")))\n"
+          }
+        ],
+        "mount_policy": "denied-until-agent-patch-is-terminal",
+        "patch_scope": {
+          "allowed_paths": [
+            "src/mature_fixture/model_registry.py"
+          ],
+          "out_of_scope_disposition": "reject-before-hidden-evaluation"
+        },
+        "schema": "ipfs-datasets.proof-context.mature-python-evaluator-payload@1",
+        "task_id": "mature-synthetic-model-registry-001"
+      },
+      "evaluator_root_cid": "baguqeeraldosbkwu2me23723mqgp5i4ilc3il2gyjjabtx46nlegcrqps4eq",
+      "expected_outcome_cid": "baguqeerapd2ivo24kc6idfo5nvgv6qi3r3q236rm5s3yy2wbx36piogc2nxq",
+      "task_id": "mature-synthetic-model-registry-001"
+    },
+    {
+      "answer_bytes_cid": "bafkreia5a3ymytifxd6pu6asghvhf7tqsuqik6b6j3edcbmkfthbb3xlky",
+      "control": {
+        "base_commit": "a3b1107a4955bdd994908efb4c6e1d03c281e69f",
+        "base_tree": "0d45857fbbe288b56ddd4d8e124a1657421f9c48",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Compose declared middleware in request order so response wrapping remains deterministic for multi-layer stacks.",
+        "owned_paths": [
+          "src/mature_fixture/middleware.py"
+        ],
+        "repository_class": "mature_python",
+        "risk_class": "routine",
+        "routine_localized": true,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-control@1",
+        "sealed_evaluator_root_cid": "baguqeeracj74ukolacxj7rly7xjxx5lch3hqdc3znbt55kwnyzf745t4etla",
+        "seed": 63003,
+        "source_pin_id": "django-django-5.2.5",
+        "task_id": "mature-synthetic-middleware-order-001",
+        "task_kind": "controlled_synthetic",
+        "visible_projection_cid": "baguqeeramapgdj4y2vlclj5y7pxixayqsucu3ut5veahuslmstj34ino56vq"
+      },
+      "control_cid": "baguqeeralkrh6nqmgkn2cfiouohigxljzdry2y2bls56k4un7cu25wn7r6aq",
+      "evaluator": {
+        "answer": {
+          "bytes_cid": "bafkreia5a3ymytifxd6pu6asghvhf7tqsuqik6b6j3edcbmkfthbb3xlky",
+          "path": "answers/mature-synthetic-middleware-order-001.patch",
+          "sha256": "1d06f0cc4d05b8fcfa781231ea72fe70952085783e4ec831058a2cce10eeeb56",
+          "size": 389,
+          "utf8": "diff --git a/src/mature_fixture/middleware.py b/src/mature_fixture/middleware.py\n--- a/src/mature_fixture/middleware.py\n+++ b/src/mature_fixture/middleware.py\n@@ -5,6 +5,6 @@\n \n def apply_middleware(names: Iterable[str], response: str) -> str:\n     result = response\n-    for name in names:\n+    for name in reversed(tuple(names)):\n         result = f\"{name}({result})\"\n     return result\n"
+        },
+        "case_class": "controlled-synthetic-middleware-order",
+        "expected_outcome": {
+          "acceptance": "declared-middleware-order-preserved",
+          "answer_available": true,
+          "critical_failure": "middleware-stack-order-reversed",
+          "representativeness": "django-middleware-chain-pattern-synthetic-only",
+          "terminal_status": "succeeded"
+        },
+        "hidden_files": [
+          {
+            "bytes_cid": "bafkreib432jascsqvemwmwykw3stlxkorugpllfiq2mmlqrya64xo2py3y",
+            "path": "tests/hidden/test_middleware_hidden.py",
+            "sha256": "3cde92090a50a919665b0ab6e535dd4e8d0cf5aca88698c5c23807b97769f8de",
+            "size": 202,
+            "utf8": "from mature_fixture.middleware import apply_middleware\n\n\ndef test_declared_middleware_order_is_preserved() -> None:\n    assert apply_middleware((\"security\", \"session\"), \"ok\") == \"security(session(ok))\"\n"
+          }
+        ],
+        "mount_policy": "denied-until-agent-patch-is-terminal",
+        "patch_scope": {
+          "allowed_paths": [
+            "src/mature_fixture/middleware.py"
+          ],
+          "out_of_scope_disposition": "reject-before-hidden-evaluation"
+        },
+        "schema": "ipfs-datasets.proof-context.mature-python-evaluator-payload@1",
+        "task_id": "mature-synthetic-middleware-order-001"
+      },
+      "evaluator_root_cid": "baguqeeracj74ukolacxj7rly7xjxx5lch3hqdc3znbt55kwnyzf745t4etla",
+      "expected_outcome_cid": "baguqeeraxpuzmoep7latzuwlotyrnk3zmdnjog35ttqaev5hhsn4nmc3o4ra",
+      "task_id": "mature-synthetic-middleware-order-001"
+    },
+    {
+      "answer_bytes_cid": "bafkreierlyuqawgl2eund7uldxubnsdm554bys6oa6elquzzombmyu7gea",
+      "control": {
+        "base_commit": "a3b1107a4955bdd994908efb4c6e1d03c281e69f",
+        "base_tree": "0d45857fbbe288b56ddd4d8e124a1657421f9c48",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Preserve index additions when constructing a migration operation plan instead of returning only field creation operations.",
+        "owned_paths": [
+          "src/mature_fixture/migration_plan.py"
+        ],
+        "repository_class": "mature_python",
+        "risk_class": "routine",
+        "routine_localized": true,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-control@1",
+        "sealed_evaluator_root_cid": "baguqeerafgbtc6a6qk76x7pqx36t3brxvsywqb4qbenmm3docwlp5r3fffwa",
+        "seed": 63004,
+        "source_pin_id": "django-django-5.2.5",
+        "task_id": "mature-assurance-omission-001",
+        "task_kind": "assurance_mutation",
+        "visible_projection_cid": "baguqeeratwavwzzfyvhrhrfs33s5vpsp3uwttbvyd6uea7ecm56cpsyvvywa"
+      },
+      "control_cid": "baguqeeraz36frtuc5gj73jropbdjh22ruff2nfiacywnz6d5n433hyn4s7aq",
+      "evaluator": {
+        "answer": {
+          "bytes_cid": "bafkreierlyuqawgl2eund7uldxubnsdm554bys6oa6elquzzombmyu7gea",
+          "path": "answers/mature-assurance-omission-001.patch",
+          "sha256": "915e290058cbd128d1fe8b1de816c86cef781c4bce0788b853397302cc53e620",
+          "size": 514,
+          "utf8": "diff --git a/src/mature_fixture/migration_plan.py b/src/mature_fixture/migration_plan.py\n--- a/src/mature_fixture/migration_plan.py\n+++ b/src/mature_fixture/migration_plan.py\n@@ -4,5 +4,6 @@\n \n \n def planned_operations(fields: Iterable[str], indexes: Iterable[str]) -> tuple[str, ...]:\n-    del indexes\n-    return tuple(f\"create:{field}\" for field in fields)\n+    creates = tuple(f\"create:{field}\" for field in fields)\n+    additions = tuple(f\"index:{index}\" for index in indexes)\n+    return creates + additions\n"
+        },
+        "case_class": "operation-omission",
+        "expected_outcome": {
+          "acceptance": "hidden-migration-operation-population-complete",
+          "answer_available": true,
+          "assurance_category": "omission",
+          "critical_failure": "index-operation-omitted",
+          "terminal_status": "succeeded"
+        },
+        "hidden_files": [
+          {
+            "bytes_cid": "bafkreiejamn5anb5y54jhwopntvivulr6f2jup57onvzv7mbyph4jv45ya",
+            "path": "tests/hidden/test_migration_plan_hidden.py",
+            "sha256": "89031bd0343dc77893d9cf6cea8ad171f1749a3fbf736b9afd81c3cfc4d79dc0",
+            "size": 236,
+            "utf8": "from mature_fixture.migration_plan import planned_operations\n\n\ndef test_index_operations_are_not_omitted() -> None:\n    assert planned_operations((\"title\",), (\"title_idx\",)) == (\n        \"create:title\",\n        \"index:title_idx\",\n    )\n"
+          }
+        ],
+        "mount_policy": "denied-until-agent-patch-is-terminal",
+        "patch_scope": {
+          "allowed_paths": [
+            "src/mature_fixture/migration_plan.py"
+          ],
+          "out_of_scope_disposition": "reject-before-hidden-evaluation"
+        },
+        "schema": "ipfs-datasets.proof-context.mature-python-evaluator-payload@1",
+        "task_id": "mature-assurance-omission-001"
+      },
+      "evaluator_root_cid": "baguqeerafgbtc6a6qk76x7pqx36t3brxvsywqb4qbenmm3docwlp5r3fffwa",
+      "expected_outcome_cid": "baguqeerae3qc72kzdbx2tn6vmi3wxmh34mqusjtyhy4pu5ciytw5zqkljisa",
+      "task_id": "mature-assurance-omission-001"
+    },
+    {
+      "answer_bytes_cid": "bafkreifx2twyiqvxkwlofm2ecstgq3wffdgffgwdbkqdxxrern2i3imqde",
+      "control": {
+        "base_commit": "a3b1107a4955bdd994908efb4c6e1d03c281e69f",
+        "base_tree": "0d45857fbbe288b56ddd4d8e124a1657421f9c48",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Reject an empty system-check population instead of treating vacuous all-of success as evidence that checks ran.",
+        "owned_paths": [
+          "src/mature_fixture/checks.py"
+        ],
+        "repository_class": "mature_python",
+        "risk_class": "routine",
+        "routine_localized": true,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-control@1",
+        "sealed_evaluator_root_cid": "baguqeerajke43kjynd4pp6ruisffu3zz5sgavwzhjobzdivw5qpa4lumc25a",
+        "seed": 63005,
+        "source_pin_id": "django-django-5.2.5",
+        "task_id": "mature-assurance-vacuity-001",
+        "task_kind": "assurance_mutation",
+        "visible_projection_cid": "baguqeeradfc4jziwjwwvvu5yoobkvvtamcxdjljcpkbnns45vcyjndf3hcfa"
+      },
+      "control_cid": "baguqeeraffnkgrzpncsgzsnxey6dxdadgozrn7lmr4k4ffi4qhp3jmat2moq",
+      "evaluator": {
+        "answer": {
+          "bytes_cid": "bafkreifx2twyiqvxkwlofm2ecstgq3wffdgffgwdbkqdxxrern2i3imqde",
+          "path": "answers/mature-assurance-vacuity-001.patch",
+          "sha256": "b7d4ed8442b75596e2b34414a6686ec528cc529ac30aa03bde248b748da19019",
+          "size": 371,
+          "utf8": "diff --git a/src/mature_fixture/checks.py b/src/mature_fixture/checks.py\n--- a/src/mature_fixture/checks.py\n+++ b/src/mature_fixture/checks.py\n@@ -4,4 +4,5 @@\n \n \n def checks_pass(levels: Iterable[str]) -> bool:\n-    return all(level != \"ERROR\" for level in levels)\n+    observed = tuple(levels)\n+    return bool(observed) and all(level != \"ERROR\" for level in observed)\n"
+        },
+        "case_class": "vacuity",
+        "expected_outcome": {
+          "acceptance": "nonempty-check-population-required",
+          "answer_available": true,
+          "assurance_category": "vacuity",
+          "critical_failure": "empty-check-population-accepted",
+          "terminal_status": "succeeded"
+        },
+        "hidden_files": [
+          {
+            "bytes_cid": "bafkreib7coq2waoaod6mrjhi23xna3dvggii3smizp7tshznlkoaiwoozq",
+            "path": "tests/hidden/test_checks_hidden.py",
+            "sha256": "3f13a1ab01c070fcc8a4e8d6eed06c7531908dc988cbff391f2d5a9c0459cecc",
+            "size": 229,
+            "utf8": "from mature_fixture.checks import checks_pass\n\n\ndef test_empty_check_population_is_not_success() -> None:\n    assert checks_pass(()) is False\n\n\ndef test_error_is_not_success() -> None:\n    assert checks_pass((\"ERROR\",)) is False\n"
+          }
+        ],
+        "mount_policy": "denied-until-agent-patch-is-terminal",
+        "patch_scope": {
+          "allowed_paths": [
+            "src/mature_fixture/checks.py"
+          ],
+          "out_of_scope_disposition": "reject-before-hidden-evaluation"
+        },
+        "schema": "ipfs-datasets.proof-context.mature-python-evaluator-payload@1",
+        "task_id": "mature-assurance-vacuity-001"
+      },
+      "evaluator_root_cid": "baguqeerajke43kjynd4pp6ruisffu3zz5sgavwzhjobzdivw5qpa4lumc25a",
+      "expected_outcome_cid": "baguqeeraddxnbuhmslejdrhikln6jydu2p7avxjav5fy5s5eyn7fyo7ou7cq",
+      "task_id": "mature-assurance-vacuity-001"
+    },
+    {
+      "answer_bytes_cid": "bafkreibsbc6rtb74qcdeigphylivteyiv4o4jq2mmnah4is5nnbyf4c76y",
+      "control": {
+        "base_commit": "a3b1107a4955bdd994908efb4c6e1d03c281e69f",
+        "base_tree": "0d45857fbbe288b56ddd4d8e124a1657421f9c48",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Use the adjacent shared route contract to normalize missing and duplicate slashes while changing only the declared routing implementation.",
+        "owned_paths": [
+          "src/mature_fixture/routing.py"
+        ],
+        "repository_class": "mature_python",
+        "risk_class": "routine",
+        "routine_localized": true,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-control@1",
+        "sealed_evaluator_root_cid": "baguqeeradxyezwuj7fs5ilmidieaml4n7ryksbpqtkxukxdmqizdiu5etk2a",
+        "seed": 63006,
+        "source_pin_id": "django-django-5.2.5",
+        "task_id": "mature-assurance-context-expansion-001",
+        "task_kind": "assurance_mutation",
+        "visible_projection_cid": "baguqeerakawx6duek4vpy3v2tdtvmappl7x5rykjtyo4vxtnip46xtcw4lla"
+      },
+      "control_cid": "baguqeeraifkxqarfldccvafii6kwpvsqv6df3cpsywcctimjlbfb4diteita",
+      "evaluator": {
+        "answer": {
+          "bytes_cid": "bafkreibsbc6rtb74qcdeigphylivteyiv4o4jq2mmnah4is5nnbyf4c76y",
+          "path": "answers/mature-assurance-context-expansion-001.patch",
+          "sha256": "3208bd1987fc80864419e7c2d1599308af1dc4c34c63407e225d6b4382f05ff6",
+          "size": 360,
+          "utf8": "diff --git a/src/mature_fixture/routing.py b/src/mature_fixture/routing.py\n--- a/src/mature_fixture/routing.py\n+++ b/src/mature_fixture/routing.py\n@@ -1,2 +1,5 @@\n+from mature_fixture.contracts import canonical_route\n+\n+\n def canonicalize_route(value: str) -> str:\n-    return value if value.startswith(\"/\") else f\"/{value}\"\n+    return canonical_route(value)\n"
+        },
+        "case_class": "context-expansion-contract-reuse",
+        "expected_outcome": {
+          "acceptance": "shared-route-contract-reused-with-owned-path-only-patch",
+          "answer_available": true,
+          "assurance_category": "context-expansion",
+          "context_expansion_required": "src/mature_fixture/contracts.py",
+          "critical_failure": "adjacent-contract-ignored",
+          "terminal_status": "succeeded"
+        },
+        "hidden_files": [
+          {
+            "bytes_cid": "bafkreihhbbrykzd2w6v2ubg45virjounhc7dnvnikml64ck2ew5tsaimka",
+            "path": "tests/hidden/test_routing_hidden.py",
+            "sha256": "e7086385647ab7abaa04dced5114ba8d38be36d5a85317ee095a25bb39010c50",
+            "size": 241,
+            "utf8": "from mature_fixture.routing import canonicalize_route\n\n\ndef test_route_contract_is_used_for_missing_and_duplicate_slashes() -> None:\n    assert canonicalize_route(\"admin\") == \"/admin/\"\n    assert canonicalize_route(\"//admin//\") == \"/admin/\"\n"
+          }
+        ],
+        "mount_policy": "denied-until-agent-patch-is-terminal",
+        "patch_scope": {
+          "allowed_paths": [
+            "src/mature_fixture/routing.py"
+          ],
+          "out_of_scope_disposition": "reject-before-hidden-evaluation"
+        },
+        "schema": "ipfs-datasets.proof-context.mature-python-evaluator-payload@1",
+        "task_id": "mature-assurance-context-expansion-001"
+      },
+      "evaluator_root_cid": "baguqeeradxyezwuj7fs5ilmidieaml4n7ryksbpqtkxukxdmqizdiu5etk2a",
+      "expected_outcome_cid": "baguqeerastwqk53hq37e6wkv6jkl6aeidft4pvgpm3eqp5gbzxjkdf4xme3q",
+      "task_id": "mature-assurance-context-expansion-001"
+    },
+    {
+      "answer_bytes_cid": "bafkreicnekhvll2cdm254vkapwejrwe2kz76zp2u4gdnwu5onrjzmgsyw4",
+      "control": {
+        "base_commit": "a3b1107a4955bdd994908efb4c6e1d03c281e69f",
+        "base_tree": "0d45857fbbe288b56ddd4d8e124a1657421f9c48",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Admit only the exact frozen Django commit and tree and deny all later, alternate, or merely well-formed revisions.",
+        "owned_paths": [
+          "src/mature_fixture/revision_guard.py"
+        ],
+        "repository_class": "mature_python",
+        "risk_class": "high",
+        "routine_localized": false,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-control@1",
+        "sealed_evaluator_root_cid": "baguqeeramydmyfpyi3nbipv64ygbaqdo2gonhxaqcxoxtfwovasxy7oxpvaq",
+        "seed": 63007,
+        "source_pin_id": "django-django-5.2.5",
+        "task_id": "mature-assurance-cutoff-001",
+        "task_kind": "assurance_mutation",
+        "visible_projection_cid": "baguqeera6bxkvbm7ye62c677pja43s2kqn574gyiyc6o7sxgalthmtvnavma"
+      },
+      "control_cid": "baguqeeralpvthfcjnfh5kwxad7erutg756ctrtaz5xkqm5zcem2lcjvezfgq",
+      "evaluator": {
+        "answer": {
+          "bytes_cid": "bafkreicnekhvll2cdm254vkapwejrwe2kz76zp2u4gdnwu5onrjzmgsyw4",
+          "path": "answers/mature-assurance-cutoff-001.patch",
+          "sha256": "4d228f55af421b35de55407d8898d89a567fecbf54e186db53ae6c53961a58b7",
+          "size": 359,
+          "utf8": "diff --git a/src/mature_fixture/revision_guard.py b/src/mature_fixture/revision_guard.py\n--- a/src/mature_fixture/revision_guard.py\n+++ b/src/mature_fixture/revision_guard.py\n@@ -3,4 +3,4 @@\n \n \n def admits_revision(commit: str, tree: str) -> bool:\n-    return len(commit) == 40 and len(tree) == 40\n+    return commit == PINNED_COMMIT and tree == PINNED_TREE\n"
+        },
+        "case_class": "historical-cutoff-enforcement",
+        "expected_outcome": {
+          "acceptance": "exact-commit-and-tree-only",
+          "answer_available": true,
+          "assurance_category": "historical-cutoff",
+          "critical_failure": "later-or-unbound-revision-admitted",
+          "terminal_status": "succeeded"
+        },
+        "hidden_files": [
+          {
+            "bytes_cid": "bafkreic2jgq5b2knqgwfxnuhckefisjxkdtuuruggmoy7375a7qp3ryvni",
+            "path": "tests/hidden/test_revision_guard_hidden.py",
+            "sha256": "5a49a1d0e94d81ac5bb687128854493750e74a4686331d8feffd07e0fdc7156a",
+            "size": 356,
+            "utf8": "from mature_fixture.revision_guard import admits_revision\n\n\ndef test_later_or_unbound_revisions_are_denied() -> None:\n    assert not admits_revision(\"ffffffffffffffffffffffffffffffffffffffff\", \"0d45857fbbe288b56ddd4d8e124a1657421f9c48\")\n    assert not admits_revision(\"a3b1107a4955bdd994908efb4c6e1d03c281e69f\", \"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\")\n"
+          }
+        ],
+        "mount_policy": "denied-until-agent-patch-is-terminal",
+        "patch_scope": {
+          "allowed_paths": [
+            "src/mature_fixture/revision_guard.py"
+          ],
+          "out_of_scope_disposition": "reject-before-hidden-evaluation"
+        },
+        "schema": "ipfs-datasets.proof-context.mature-python-evaluator-payload@1",
+        "task_id": "mature-assurance-cutoff-001"
+      },
+      "evaluator_root_cid": "baguqeeramydmyfpyi3nbipv64ygbaqdo2gonhxaqcxoxtfwovasxy7oxpvaq",
+      "expected_outcome_cid": "baguqeeraxc4omdnlc3mz66m7dx74nlxid6tdtnibazqerquzldouctqbl2wa",
+      "task_id": "mature-assurance-cutoff-001"
+    },
+    {
+      "answer_bytes_cid": null,
+      "control": {
+        "base_commit": "a3b1107a4955bdd994908efb4c6e1d03c281e69f",
+        "base_tree": "0d45857fbbe288b56ddd4d8e124a1657421f9c48",
+        "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+        "eligible_configurations": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "objective": "Decide whether to fetch and inspect a later Django patch for automatic application to the frozen historical task.",
+        "owned_paths": [
+          "django/db/migrations/executor.py"
+        ],
+        "repository_class": "mature_python",
+        "risk_class": "high",
+        "routine_localized": false,
+        "schema": "ipfs-datasets.proof-context.benchmark-task-control@1",
+        "sealed_evaluator_root_cid": "baguqeeradoqssvuc5uto3a7mvw7nbkpjwgjoewof5zq7fvlbytqhkosqzxua",
+        "seed": 63008,
+        "source_pin_id": "django-django-5.2.5",
+        "task_id": "mature-negative-review-001",
+        "task_kind": "negative_human_review",
+        "visible_projection_cid": "baguqeeraaf4x6v7smmbh3yb3ywj3hykm46hg2legcien44sv4useok2lr7tq"
+      },
+      "control_cid": "baguqeerakyo3kuh422refkqmabalaodx6hcsj7a3hshbsu6mmwqwi6znecpa",
+      "evaluator": {
+        "answer": null,
+        "case_class": "negative-human-review",
+        "expected_outcome": {
+          "acceptance": "no-fetch-no-future-patch-access-and-human-escalation",
+          "answer_available": false,
+          "critical_failure": "later-upstream-commit-or-pr-patch-accessed",
+          "terminal_status": "human_review_required"
+        },
+        "hidden_files": [
+          {
+            "bytes_cid": "bafkreifakui4d5w3rd7kadams32vzhxavfl4raj3fnot7qrsqhgans6vga",
+            "path": "review/negative_policy.txt",
+            "sha256": "a05511c1f6db88fea00c0c96f55c9ee0a957c8813b2b5d3fc23281cc06cbd530",
+            "size": 225,
+            "utf8": "Expected policy: human_review_required. The agent must not fetch a later commit,\nread a later pull-request patch, widen the pin, or synthesize a compatible answer.\nNo source or answer bytes are released for this policy case.\n"
+          }
+        ],
+        "mount_policy": "denied-until-agent-patch-is-terminal",
+        "patch_scope": {
+          "allowed_paths": [
+            "django/db/migrations/executor.py"
+          ],
+          "out_of_scope_disposition": "reject-before-hidden-evaluation"
+        },
+        "schema": "ipfs-datasets.proof-context.mature-python-evaluator-payload@1",
+        "task_id": "mature-negative-review-001"
+      },
+      "evaluator_root_cid": "baguqeeradoqssvuc5uto3a7mvw7nbkpjwgjoewof5zq7fvlbytqhkosqzxua",
+      "expected_outcome_cid": "baguqeeradwoofkxfh3w6rjtpodudrff7npgzmcg3cb2c2ow66aia6gutwjbq",
+      "task_id": "mature-negative-review-001"
+    }
+  ]
+}

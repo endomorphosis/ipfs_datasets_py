@@ -34,6 +34,29 @@ DEFAULT_BOOTSTRAP_NODES = [
 ]
 
 
+def capability_status() -> dict[str, Any]:
+    """Report whether the bootstrap adapter can perform real work.
+
+    ``HAVE_BOOTSTRAP`` only records that an optional symbol was imported.  The
+    datasets adapter still has no bound implementation or successful self-test,
+    so importability alone must not be presented as network reachability.
+    """
+    import_ok = bool(HAVE_BOOTSTRAP and callable(_bootstrap_network))
+    reason_codes: list[str] = []
+    if not import_ok:
+        reason_codes.append("import_missing")
+    reason_codes.append("backend_not_bound")
+
+    return {
+        "capability": "bootstrap",
+        "import_ok": import_ok,
+        "has_durable_instance": False,
+        "self_tested": False,
+        "reachable": False,
+        "reason_codes": reason_codes,
+    }
+
+
 async def bootstrap_network(
     bootstrap_nodes: Optional[List[str]] = None, timeout: float = 60.0, **kwargs: Any
 ) -> Dict[str, Any]:
@@ -54,13 +77,19 @@ async def bootstrap_network(
     """
     nodes = bootstrap_nodes or DEFAULT_BOOTSTRAP_NODES
 
-    if not HAVE_BOOTSTRAP:
-        logger.warning("Bootstrap not available - MCP++ module not installed")
+    status = capability_status()
+    if not status["reachable"]:
+        if status["import_ok"]:
+            error = "Bootstrap backend is importable but not bound"
+        else:
+            error = "MCP++ module not available"
+        logger.warning("Bootstrap not reachable: %s", error)
         return {
             "success": False,
-            "error": "MCP++ module not available",
+            "error": error,
             "peers_connected": 0,
             "bootstrap_nodes": nodes,
+            "reason_codes": status["reason_codes"],
         }
 
     try:
@@ -209,6 +238,7 @@ class BootstrapConfig:
 __all__ = [
     "HAVE_BOOTSTRAP",
     "DEFAULT_BOOTSTRAP_NODES",
+    "capability_status",
     "bootstrap_network",
     "quick_bootstrap",
     "get_default_bootstrap_nodes",

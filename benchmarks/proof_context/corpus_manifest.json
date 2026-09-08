@@ -1,0 +1,236 @@
+{
+  "benchmark_id": "pcce-external-generalization-v0.1",
+  "board_namespace": "proof-carrying-context-engine-v0.1",
+  "catalog_bindings": {
+    "configuration_catalog_cid": "baguqeerawkkjkycel5hybwjmbtmdjaxljjzleespr4gdpuvcmu6jgd7yorqq",
+    "isolation_policy_cid": "baguqeeranng5ntf2bgqe7tsdb7mn5i4ikbwx5bvawkndgybyozfoo4ww4ala",
+    "metric_catalog_cid": "baguqeera2vl3nwxx4zytbrjuh5jlvnr5myeshaeheh2eexac65gm2zb3nbxq",
+    "metric_completeness_matrix_cid": "baguqeeraye7lwnyrelx3feqqn54h5yc7csnxgpjha3jvv5pess7jidiazc4q",
+    "schema_catalog_cid": "baguqeeraxjtfwbm4ci3yimo4u2c6ow74ziryk45npuzp3bkezgjr4camagba"
+  },
+  "corpus_requirements": {
+    "default_eligible_configurations": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "eligibility_rule": "frozen-before-first-attempt-no-result-informed-exclusions",
+    "historical_base_rule": "exact-ancestor-of-class-cutoff",
+    "minimum_tasks_per_kind_per_class": 1,
+    "minimum_total_tasks": 12,
+    "repository_classes": [
+      "typed_structured",
+      "dynamic_plugins",
+      "mature_python"
+    ],
+    "task_kind_labels_are_distinct": true,
+    "task_kinds": [
+      "historical_replay",
+      "controlled_synthetic",
+      "assurance_mutation",
+      "negative_human_review"
+    ]
+  },
+  "downstream_bindings": {
+    "configuration_ab_task_id": "PCCE-064",
+    "configuration_cd_task_id": "PCCE-065",
+    "dynamic_plugins": {
+      "path": "benchmarks/proof_context/corpus/dynamic_plugins",
+      "task_id": "PCCE-062"
+    },
+    "execution_task_id": "PCCE-067",
+    "mature_python": {
+      "path": "benchmarks/proof_context/corpus/mature_python",
+      "task_id": "PCCE-063"
+    },
+    "metrics_task_id": "PCCE-066",
+    "qualification_task_id": "PCCE-068",
+    "typed_structured": {
+      "path": "benchmarks/proof_context/corpus/typed_structured",
+      "task_id": "PCCE-061"
+    }
+  },
+  "freeze_state": "pre-execution-design-freeze",
+  "freeze_task_cid": "baguqeerad676dzstuii524wli6hnfdfxgsfsmxgk2behffki6xtf3udcdvdq",
+  "freeze_task_id": "PCCE-060",
+  "frozen_at": "2026-08-24T17:07:45Z",
+  "identity_profile": "software-contract-cid-profile-v1",
+  "isolation_policy": {
+    "agent_forbidden": [
+      "future-commits",
+      "expected-patch-bytes",
+      "hidden-test-bytes",
+      "gold-labels",
+      "evaluator-paths",
+      "pre-terminal-evaluator-diagnostics"
+    ],
+    "agent_projection": [
+      "history-stripped-baseline-tree",
+      "objective",
+      "owned-paths",
+      "public-tests"
+    ],
+    "aggregation": {
+      "answer_bytes_visible": false,
+      "repair_feedback_from_hidden_evaluation": false,
+      "terminal_scores_visible": true
+    },
+    "contamination_disposition": "invalidate-v1-and-create-new-version",
+    "evaluator_projection": [
+      "hidden-tests",
+      "historical-answer",
+      "negative-review-rubric",
+      "assurance-mutant-outcomes"
+    ],
+    "execution": {
+      "cache": "namespaced-by-corpus-task-configuration-and-environment",
+      "hidden_evaluator_namespace": "separate-denied-projection",
+      "hidden_mount_time": "after-patch-proposal",
+      "network": "denied-except-explicit-provider-permit",
+      "provider_conversation_reuse_across_arms": false,
+      "symlink_hardlink_and_path_escape": "denied",
+      "worktree": "one-disposable-worktree-per-task-arm"
+    },
+    "historical_replay": {
+      "descendant_objects": "absent",
+      "git_history": "absent-from-agent-projection",
+      "remotes": "absent",
+      "task_base": "exact-ancestor-of-class-cutoff"
+    },
+    "schema": "ipfs-datasets.proof-context.benchmark-isolation-policy@1"
+  },
+  "materialization_policy": {
+    "archive_verification": "exact-size-sha256-commit-and-tree",
+    "commit_tree_and_archive_authority": true,
+    "execution_network": "denied",
+    "fetch": "one-explicit-corpus-fetch-permit-then-offline",
+    "hugging_face_dataset_allowed": false,
+    "mutable_revision_allowed": false,
+    "repin_after_results_allowed": false,
+    "shard_manifests": "created-by-PCCE-061-PCCE-062-PCCE-063-without-editing-freeze",
+    "tag_authority": false
+  },
+  "results_observed_before_freeze": false,
+  "runtime_gate": {
+    "binding_state": "final-content-addressed",
+    "dependency_task_id": "PCCE-056",
+    "live_execution_eligible": false,
+    "qualification_cid": "bafkreibxr5ztwmp65yzmhfksy525rz3u6dhosoazedaa6fdetxh5v6y664",
+    "qualification_path": "artifacts/proof_carrying_context_engine/installation/qualification.json",
+    "qualification_sha256": "378f733b31feee32c39552c775d8e774f0cee9381920c00f14649dcfdafb1ef7",
+    "qualification_status": "no-go",
+    "receipt_path": "artifacts/proof_carrying_context_engine/receipts/PCCE-056.json"
+  },
+  "schema": "ipfs-datasets.proof-context.benchmark-corpus-manifest@1",
+  "source_pins": [
+    {
+      "archive": {
+        "sha256": "61aae3bc10caff0a26598c38bcfa1270ae3d67914a8e4b89e8074f5a0323c568",
+        "size": 812534,
+        "url": "https://codeload.github.com/python-attrs/attrs/tar.gz/3dca08ce5bbe673d7df25f44f3dda92505d1043d"
+      },
+      "authority": "commit-tree-and-exact-archive-bytes",
+      "availability_probe": {
+        "archive_http_status": 200,
+        "commit_api": "exact-commit-and-tree-match",
+        "git_ls_remote": "exact-tag-and-resolved-commit-match",
+        "license_http_status": 200,
+        "observed_at": "2026-08-24T17:07:45Z",
+        "status": "available-observational-not-execution-authority"
+      },
+      "commit": "3dca08ce5bbe673d7df25f44f3dda92505d1043d",
+      "commit_time": "2025-03-13T11:00:23Z",
+      "display_tag": "25.3.0",
+      "inventory": {
+        "blob_count": 123,
+        "python_file_count": 52,
+        "python_test_file_count": 32
+      },
+      "license": {
+        "path": "LICENSE",
+        "sha256": "882115c95dfc2af1eeb6714f8ec6d5cbcabf667caff8729f42420da63f714e9f",
+        "spdx": "MIT"
+      },
+      "origin": "https://github.com/python-attrs/attrs.git",
+      "pin_id": "python-attrs-attrs-25.3.0",
+      "repository": "python-attrs/attrs",
+      "repository_class": "typed_structured",
+      "tag_kind": "annotated",
+      "tag_object": "bd2446d77736a164b59b268a3792ed3e4bfba088",
+      "tree": "2f143c350d12dc394f3320a2d4e259dda86874d7"
+    },
+    {
+      "archive": {
+        "sha256": "d5f397694a7b520e09127a384369d94004acd8bef1810bcb184d0cf7567e506f",
+        "size": 64481,
+        "url": "https://codeload.github.com/pytest-dev/pluggy/tar.gz/fd08ab5f811a9b2fa9124ae8cbbd393221151e2c"
+      },
+      "authority": "commit-tree-and-exact-archive-bytes",
+      "availability_probe": {
+        "archive_http_status": 200,
+        "commit_api": "exact-commit-and-tree-match",
+        "git_ls_remote": "exact-tag-and-resolved-commit-match",
+        "license_http_status": 200,
+        "observed_at": "2026-08-24T17:07:45Z",
+        "status": "available-observational-not-execution-authority"
+      },
+      "commit": "fd08ab5f811a9b2fa9124ae8cbbd393221151e2c",
+      "commit_time": "2025-05-15T08:14:23Z",
+      "display_tag": "1.6.0",
+      "inventory": {
+        "blob_count": 62,
+        "python_file_count": 29,
+        "python_test_file_count": 11
+      },
+      "license": {
+        "path": "LICENSE",
+        "sha256": "d6b65e6c213a5d0b577911d34d6e5949b9f59d76c238c5071a2f3fc16cfb2606",
+        "spdx": "MIT"
+      },
+      "origin": "https://github.com/pytest-dev/pluggy.git",
+      "pin_id": "pytest-dev-pluggy-1.6.0",
+      "repository": "pytest-dev/pluggy",
+      "repository_class": "dynamic_plugins",
+      "tag_kind": "lightweight",
+      "tag_object": null,
+      "tree": "d3aac17eab19c9e8f6f6358ad2dcaec02d734020"
+    },
+    {
+      "archive": {
+        "sha256": "600a460db656899969c7dd4b1c70ce268eada7c49fa0b57e942da79030faa7af",
+        "size": 10551627,
+        "url": "https://codeload.github.com/django/django/tar.gz/a3b1107a4955bdd994908efb4c6e1d03c281e69f"
+      },
+      "authority": "commit-tree-and-exact-archive-bytes",
+      "availability_probe": {
+        "archive_http_status": 200,
+        "commit_api": "exact-commit-and-tree-match",
+        "git_ls_remote": "exact-tag-and-resolved-commit-match",
+        "license_http_status": 200,
+        "observed_at": "2026-08-24T17:07:45Z",
+        "status": "available-observational-not-execution-authority"
+      },
+      "commit": "a3b1107a4955bdd994908efb4c6e1d03c281e69f",
+      "commit_time": "2025-08-06T08:04:41Z",
+      "display_tag": "5.2.5",
+      "inventory": {
+        "blob_count": 6898,
+        "python_file_count": 2818,
+        "python_test_file_count": 1945
+      },
+      "license": {
+        "path": "LICENSE",
+        "sha256": "b846415d1b514e9c1dff14a22deb906d794bc546ca6129f950a18cd091e2a669",
+        "spdx": "BSD-3-Clause"
+      },
+      "origin": "https://github.com/django/django.git",
+      "pin_id": "django-django-5.2.5",
+      "repository": "django/django",
+      "repository_class": "mature_python",
+      "tag_kind": "annotated",
+      "tag_object": "3206c23a43029a07ea078a4680f4443f4214df95",
+      "tree": "0d45857fbbe288b56ddd4d8e124a1657421f9c48"
+    }
+  ]
+}

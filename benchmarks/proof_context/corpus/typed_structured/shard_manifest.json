@@ -1,0 +1,168 @@
+{
+  "access_policy": {
+    "agent_mounts": [
+      "visible_manifest.json",
+      "LICENSE"
+    ],
+    "control_mounts": [
+      "shard_manifest.json"
+    ],
+    "evaluator_mounts_after_terminal_patch": [
+      "evaluator_manifest.json"
+    ],
+    "hardlinks": "denied",
+    "path_escape": "denied",
+    "symlinks": "denied"
+  },
+  "benchmark_id": "pcce-external-generalization-v0.1",
+  "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+  "freeze_task_id": "PCCE-060",
+  "identity_profile": "software-contract-cid-profile-v1",
+  "license": {
+    "bytes_cid": "bafkreieieek4sxp4fly65ntrj6hmnvolzk7wm7fp7bzj6qscbwtd64kot4",
+    "path": "LICENSE",
+    "sha256": "882115c95dfc2af1eeb6714f8ec6d5cbcabf667caff8729f42420da63f714e9f",
+    "size": 1109,
+    "spdx": "MIT"
+  },
+  "partitions": {
+    "evaluator": {
+      "bytes_cid": "bafkreigh2vlt7lh5i7o4jm72zfghoha2dxi4gpehbpbx4k45ks3mgqr4rm",
+      "path": "evaluator_manifest.json",
+      "sha256": "c7d5573facfd47ddc4b3fac94c771c1a1dd1c33c870bc37e2b9d54b6c3423c8b",
+      "size": 20011,
+      "structured_cid": "baguqeeraovf4uescwf35z3uojzclp2qruonfn3ezdftrnubvjpzd4yaqw2gq"
+    },
+    "visible": {
+      "bytes_cid": "bafkreie6me36zhm442xohcm7ieeh264x6zjk5twn6jah3dh3cgmjhywete",
+      "path": "visible_manifest.json",
+      "sha256": "9e6137ec9d9ce6aee3899f41087d7b97f652aececdf2407d8cfb119893e2c499",
+      "size": 16757,
+      "structured_cid": "baguqeeraz2thoqg5s2isjh6ueh4m47wmxhp4d4vpvpu25nv6cezyrlhmmqha"
+    }
+  },
+  "repository_class": "typed_structured",
+  "schema": "ipfs-datasets.proof-context.typed-corpus-shard@1",
+  "shard_id": "typed-structured-v0.1",
+  "source_materialization": {
+    "archive_present": false,
+    "archive_sha256": "61aae3bc10caff0a26598c38bcfa1270ae3d67914a8e4b89e8074f5a0323c568",
+    "archive_size": 812534,
+    "fetch_permit": null,
+    "historical_answer_present": false,
+    "network_used": false,
+    "reason": "no-explicit-corpus-fetch-permit-and-no-exact-local-source-archive",
+    "state": "source_materialization_unavailable"
+  },
+  "source_pin": {
+    "archive": {
+      "sha256": "61aae3bc10caff0a26598c38bcfa1270ae3d67914a8e4b89e8074f5a0323c568",
+      "size": 812534,
+      "url": "https://codeload.github.com/python-attrs/attrs/tar.gz/3dca08ce5bbe673d7df25f44f3dda92505d1043d"
+    },
+    "authority": "commit-tree-and-exact-archive-bytes",
+    "availability_probe": {
+      "archive_http_status": 200,
+      "commit_api": "exact-commit-and-tree-match",
+      "git_ls_remote": "exact-tag-and-resolved-commit-match",
+      "license_http_status": 200,
+      "observed_at": "2026-08-24T17:07:45Z",
+      "status": "available-observational-not-execution-authority"
+    },
+    "commit": "3dca08ce5bbe673d7df25f44f3dda92505d1043d",
+    "commit_time": "2025-03-13T11:00:23Z",
+    "display_tag": "25.3.0",
+    "inventory": {
+      "blob_count": 123,
+      "python_file_count": 52,
+      "python_test_file_count": 32
+    },
+    "license": {
+      "path": "LICENSE",
+      "sha256": "882115c95dfc2af1eeb6714f8ec6d5cbcabf667caff8729f42420da63f714e9f",
+      "spdx": "MIT"
+    },
+    "origin": "https://github.com/python-attrs/attrs.git",
+    "pin_id": "python-attrs-attrs-25.3.0",
+    "repository": "python-attrs/attrs",
+    "repository_class": "typed_structured",
+    "tag_kind": "annotated",
+    "tag_object": "bd2446d77736a164b59b268a3792ed3e4bfba088",
+    "tree": "2f143c350d12dc394f3320a2d4e259dda86874d7"
+  },
+  "status": "frozen-partitions-with-historical-source-unavailable",
+  "task_count": 6,
+  "tasks": [
+    {
+      "agent_view_cid": "baguqeera7b367ykdzyhfkdj4wuvkz5ofoafftxpqx7ekxdsbhhwi3zacn6ta",
+      "answer_bytes_cid": null,
+      "case_class": "historical-source-unavailable",
+      "control_cid": "baguqeerafgnjzbtcc6j2drk6dpbwirslxfcsfde3ze5oceilmjgnqxx5t7ba",
+      "evaluator_root_cid": "baguqeerao5erssszqz4pcmvoabcn6hitfozqad7jjexrzf22nnl5fqour76a",
+      "expected_outcome_cid": "baguqeeradvzwta26lzy7gzbdadulrexg26juwuhlg53bb3wslya4qjenwnda",
+      "projection_cid": "baguqeerau3r7vankgrb3ejfehsb64g2xqcwx55wpx37wynwyqe2t47u6mpja",
+      "task_id": "typed-historical-001",
+      "task_kind": "historical_replay"
+    },
+    {
+      "agent_view_cid": "baguqeeraedq7kh7yjprqqlmooh2m62bv35qq2kpf6fc63pnemi4rjtjyowma",
+      "answer_bytes_cid": "bafkreig4mfbwrmngdatjf633fqpyn5riaa3hcqcvt6b6z33wesdntnidfe",
+      "case_class": "controlled-synthetic-type-edge",
+      "control_cid": "baguqeera2hb5udqpnk2twfzgutx2jf2bxlot7yd6sqgeztdcinbo77qggpvq",
+      "evaluator_root_cid": "baguqeerayzgwkedhhuss5qw3fso6rwzkeqxf4q2np4jrmmj6ox7wycmip3tq",
+      "expected_outcome_cid": "baguqeeramhqtxpzcawec3mzqdgzpvwwugboctu5rksjozu3j5pcs2zn26nyq",
+      "projection_cid": "baguqeeragxaip3eqp722irikvq25a6bmgnncsxhru4rb3fcyqwzzeqk4damq",
+      "task_id": "typed-synthetic-001",
+      "task_kind": "controlled_synthetic"
+    },
+    {
+      "agent_view_cid": "baguqeerad2uac5647r4zy6lfmjva3mil6f7juvpq5r4dwmf6ssw7pssmuyfa",
+      "answer_bytes_cid": "bafkreiasc3ppdb7stbmbljfkidrf5tfnuxiejdir2llsu5r5yd65z7rbpm",
+      "case_class": "omission",
+      "control_cid": "baguqeera62dsli4td5euynhd7cco35vajthws3ptmdsu3nnlemrxtta6puta",
+      "evaluator_root_cid": "baguqeeracl7hvxsyxd4ahct2ruvmcxrenr6tfxnzv6wkgncqc4nenctn7hdq",
+      "expected_outcome_cid": "baguqeerasgtuc6paorn53bdlpkfsp2xk7mxziurjifa73nw3dgrvhr36jl7q",
+      "projection_cid": "baguqeerarpxcl4u3rmqoeeoafgtatbzd7fi5gbfgbupsq45wbmiitd55s6zq",
+      "task_id": "typed-assurance-omission-001",
+      "task_kind": "assurance_mutation"
+    },
+    {
+      "agent_view_cid": "baguqeerahj6pguyc5b3ulupmv3dz3vvpomt6fhja7wylabammedcbqpmymbq",
+      "answer_bytes_cid": "bafkreifi2vd5hrst2dk4cm2j4wx3ydon6xxvgi7jjk7ijnpkr56capjb44",
+      "case_class": "vacuity",
+      "control_cid": "baguqeerag24vlictisf47bhy65io7vn2eot22fy6hmeckuz23cseb7exbnda",
+      "evaluator_root_cid": "baguqeeranbov2lyav5i2jcac6iwi74tkuo56paruufz4zt2dmqsxxyvghy2a",
+      "expected_outcome_cid": "baguqeerajnngvgsyq4ndp2omf53mj4kmcdt6qa3ja5yitf2s2b7ioiey4ccq",
+      "projection_cid": "baguqeeralmadkcqnjffrtpo7n336kzpg7ueavcuwvr76ompulodhd3evivwa",
+      "task_id": "typed-assurance-vacuity-001",
+      "task_kind": "assurance_mutation"
+    },
+    {
+      "agent_view_cid": "baguqeerahmtn6lsmxgnreup3dvucgylosa5euuganqg7j2q4r7ogpai53e2q",
+      "answer_bytes_cid": "bafkreic5k6esrutsge4hywl4oezaujvn53nm4ovm2f374jxaltst2vhxoi",
+      "case_class": "context-expansion",
+      "control_cid": "baguqeerariixu7wcw2uewb5u5qjcg6u4wded3sfmllyho4d6ojnueocvoypq",
+      "evaluator_root_cid": "baguqeeravfel5wbhyd6gtgm2hfr3s7k3shnytcn77dkx3yimlheh76sezinq",
+      "expected_outcome_cid": "baguqeerar4655yngbbbquspsnwlyyk2lvzr5lihklnaw4ku5c3qdw3x2yyyq",
+      "projection_cid": "baguqeera4suapyzgz2ym77gjydwdi3usjjmrzhpx6mmtlbtx4rsgtwkwwcaq",
+      "task_id": "typed-assurance-context-expansion-001",
+      "task_kind": "assurance_mutation"
+    },
+    {
+      "agent_view_cid": "baguqeera5xm7wdc3i7m4iuo37glpxdcp5jfhxkwedezlfhxfjqxtvkoxdeiq",
+      "answer_bytes_cid": null,
+      "case_class": "negative-human-review",
+      "control_cid": "baguqeera2ml2r23s3ezmzl5tsxrjjx7ssmuqy7ogqb7t3r5pcnf6getqlaya",
+      "evaluator_root_cid": "baguqeera3b474m3i2sulozu7vue5szduxy5x5p6iz6k74zsevmpoowiocz4a",
+      "expected_outcome_cid": "baguqeera2gvn7ad5ca2mlpjgm3s5fmlzmobubuesvdpyjdzvz4hjejqjisza",
+      "projection_cid": "baguqeeravu6yoeaop4ehywbwonsmcro5dyk3cmhgezfrbnul6qkgwq4wex6q",
+      "task_id": "typed-negative-review-001",
+      "task_kind": "negative_human_review"
+    }
+  ],
+  "validation_state": {
+    "live_execution_eligible": false,
+    "reason": "PCCE-056-no-go-and-historical-source-materialization-unavailable",
+    "synthetic_answers_locally_executable": true
+  }
+}

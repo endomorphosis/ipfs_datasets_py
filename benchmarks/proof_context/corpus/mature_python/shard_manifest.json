@@ -1,0 +1,246 @@
+{
+  "access_policy": {
+    "agent_mounts": [
+      "visible_manifest.json",
+      "source/django-5.2.5-a3b1107.tar.gz"
+    ],
+    "control_mounts": [
+      "baseline_replay.json",
+      "shard_manifest.json",
+      "source_verification.json"
+    ],
+    "evaluator_mounts_after_terminal_patch": [
+      "evaluator_manifest.json"
+    ],
+    "hardlinks": "denied",
+    "network_during_task_execution": "denied",
+    "path_escape": "denied",
+    "symlinks": "denied"
+  },
+  "baseline_full_test": {
+    "command": "env -i <baseline_replay.json environment> python3.12 -P tests/runtests.py --parallel 4 --verbosity 1",
+    "discovered_tests": 18098,
+    "duration_milliseconds_by_seed": {
+      "0": 91819,
+      "777": 92038
+    },
+    "execution_boundary": "host-filesystem-visible-not-chroot-or-container-rootfs-isolated",
+    "expected_failures": 5,
+    "passed": true,
+    "ran_tests": 18096,
+    "receipt_path": "source_verification.json",
+    "replay_profile_path": "baseline_replay.json",
+    "reproduction_count": 2,
+    "skipped": 1912,
+    "state": "baseline_full_test_passed",
+    "tests_executed": true
+  },
+  "benchmark_id": "pcce-external-generalization-v0.1",
+  "corpus_manifest_cid": "baguqeeraedh4m4sadrllnzrp7zi4bherd2dbp5injbvv7myzybjjnju3mlwa",
+  "freeze_task_id": "PCCE-060",
+  "historical_cutoff": {
+    "agent_source_view": "exact-pinned-tree-visible-projection-only",
+    "base_commit": "a3b1107a4955bdd994908efb4c6e1d03c281e69f",
+    "base_tree": "0d45857fbbe288b56ddd4d8e124a1657421f9c48",
+    "commit_time": "2025-08-06T08:04:41Z",
+    "future_commits_or_pr_patches": "denied",
+    "network_during_task_execution": "denied"
+  },
+  "identity_profile": "software-contract-cid-profile-v1",
+  "license": {
+    "bytes_present": true,
+    "expected_bytes_cid": "bafkreifyizav2g2rj2ob37yuuiw6xednpff4krwkmeu7sufbrtijdyvgne",
+    "path": "LICENSE",
+    "sha256": "b846415d1b514e9c1dff14a22deb906d794bc546ca6129f950a18cd091e2a669",
+    "shard_path": "LICENSE.django-5.2.5",
+    "spdx": "BSD-3-Clause"
+  },
+  "license_materialization": {
+    "bytes_present": true,
+    "exact_local_source": "LICENSE.django-5.2.5",
+    "fetch_permit": "operator-confirmed-exact-pin-only",
+    "network_used_during_construction": true,
+    "network_used_during_task_execution": false,
+    "state": "license_materialization_verified"
+  },
+  "partitions": {
+    "baseline_replay": {
+      "bytes_cid": "bafkreigeeljnvjdyqlsigr23jvcgnoit67iz4vm674ons5s2gsdppkpgam",
+      "path": "baseline_replay.json",
+      "sha256": "c422d2daa47882e483475b4d4466b913f7d19e559eff1cd9765a3486f7a9e603",
+      "size": 10551,
+      "structured_cid": "baguqeeraekkxhc5fhgyvirryn35blbaq3lmpmdzpinuxi3jeelvgozv2ycfa"
+    },
+    "evaluator": {
+      "bytes_cid": "bafkreign5mtdpq6mnqnxl7qyrykioxwuywess7zkfwgm2qbk4ppwqienxy",
+      "path": "evaluator_manifest.json",
+      "sha256": "cdeb2637c3cc6c1b75fe188e14875ed4c589297f2a2d8ccd402ae3df68208dbe",
+      "size": 28928,
+      "structured_cid": "baguqeeraa3b5a46e27piufmnmfdw3wo7txygzpmu2rl6gva2o55f57lm6qrq"
+    },
+    "source_verification": {
+      "bytes_cid": "bafkreicfavand4p7tcn5xg4vekmwzpmrrirs7oj2yrrkkyzirw2u6hvpcu",
+      "path": "source_verification.json",
+      "sha256": "450540d1f1ff989bdb9b9522996cbd918a232fb93ac462a563288db54f1eaf15",
+      "size": 6793,
+      "structured_cid": "baguqeerapb32avsobnjpf5hqaijquuhpgetgt27bvagnyjxw6rcdb2s7yema"
+    },
+    "visible": {
+      "bytes_cid": "bafkreifiyxm5jj3tsexhktj4isturcknmqpi2edxayd2tub3gclskevzy4",
+      "path": "visible_manifest.json",
+      "sha256": "a8c5d9d4a773912e754d3c44a748894d641e8d10770607a9d03b30972512b9c7",
+      "size": 23294,
+      "structured_cid": "baguqeera5hzu6jvajc2auchzntt2tn2432hl2qvqty3pl6httosqgpfcry4q"
+    }
+  },
+  "repository_class": "mature_python",
+  "schema": "ipfs-datasets.proof-context.mature-python-corpus-shard@1",
+  "shard_id": "mature-python-v0.1",
+  "source_materialization": {
+    "archive_bytes_cid": "bafkreidabjda3nswrgmwtr65jmohbtrgr2w2pre7uc2x5fbnu6idb6vhv4",
+    "archive_path": "source/django-5.2.5-a3b1107.tar.gz",
+    "archive_present": true,
+    "archive_sha256": "600a460db656899969c7dd4b1c70ce268eada7c49fa0b57e942da79030faa7af",
+    "archive_size": 10551627,
+    "fetch_permit": "operator-confirmed-exact-pin-only",
+    "historical_answer_present": false,
+    "network_used_during_construction": true,
+    "network_used_during_task_execution": false,
+    "reconstructed_tree": "0d45857fbbe288b56ddd4d8e124a1657421f9c48",
+    "state": "source_materialization_verified"
+  },
+  "source_pin": {
+    "archive": {
+      "sha256": "600a460db656899969c7dd4b1c70ce268eada7c49fa0b57e942da79030faa7af",
+      "size": 10551627,
+      "url": "https://codeload.github.com/django/django/tar.gz/a3b1107a4955bdd994908efb4c6e1d03c281e69f"
+    },
+    "authority": "commit-tree-and-exact-archive-bytes",
+    "availability_probe": {
+      "archive_http_status": 200,
+      "commit_api": "exact-commit-and-tree-match",
+      "git_ls_remote": "exact-tag-and-resolved-commit-match",
+      "license_http_status": 200,
+      "observed_at": "2026-08-24T17:07:45Z",
+      "status": "available-observational-not-execution-authority"
+    },
+    "commit": "a3b1107a4955bdd994908efb4c6e1d03c281e69f",
+    "commit_time": "2025-08-06T08:04:41Z",
+    "display_tag": "5.2.5",
+    "inventory": {
+      "blob_count": 6898,
+      "python_file_count": 2818,
+      "python_test_file_count": 1945
+    },
+    "license": {
+      "path": "LICENSE",
+      "sha256": "b846415d1b514e9c1dff14a22deb906d794bc546ca6129f950a18cd091e2a669",
+      "spdx": "BSD-3-Clause"
+    },
+    "origin": "https://github.com/django/django.git",
+    "pin_id": "django-django-5.2.5",
+    "repository": "django/django",
+    "repository_class": "mature_python",
+    "tag_kind": "annotated",
+    "tag_object": "3206c23a43029a07ea078a4680f4443f4214df95",
+    "tree": "0d45857fbbe288b56ddd4d8e124a1657421f9c48"
+  },
+  "status": "frozen-materialized-source-baseline-passed-historical-answer-unavailable",
+  "task_count": 8,
+  "tasks": [
+    {
+      "agent_view_cid": "baguqeeraubtpjyq2cg4gtzrz6jp37anb3qm4v6xn566bkmxi3wjb4vdysxwq",
+      "answer_bytes_cid": null,
+      "case_class": "historical-answer-unavailable-at-cutoff",
+      "control_cid": "baguqeerabp4bsetym5xpqy5uboweer4nfpmhwsbmuzeyhrcw2lctkobpfghq",
+      "evaluator_root_cid": "baguqeeradgnb257khb4a3tcnbm2su7f4tg2prblrh6k7dhkwlqhg5zlwcssq",
+      "expected_outcome_cid": "baguqeera7t4wmu65f5ajuli56j2ryarhtdgkkrhhcjghwxlq6qwwve6cywra",
+      "projection_cid": "baguqeeralqaosyznypzplyzbayak6y2mvayxuq4b2dov653d2d2t76dacota",
+      "task_id": "mature-historical-001",
+      "task_kind": "historical_replay"
+    },
+    {
+      "agent_view_cid": "baguqeeraonbsoagwblzlgvu7r6f3nkgtbpnkjctvabo526lqedpzmm3hdewq",
+      "answer_bytes_cid": "bafkreiam6e636cdziigymtl524ab3hoiyhd7fmmyobzobttxlp7ny2qfnu",
+      "case_class": "controlled-synthetic-model-registry",
+      "control_cid": "baguqeeralovbgfqma6ilzptvdrbon37tgztye6trxdeeltfzujc3pyxbo3tq",
+      "evaluator_root_cid": "baguqeeraldosbkwu2me23723mqgp5i4ilc3il2gyjjabtx46nlegcrqps4eq",
+      "expected_outcome_cid": "baguqeerapd2ivo24kc6idfo5nvgv6qi3r3q236rm5s3yy2wbx36piogc2nxq",
+      "projection_cid": "baguqeerax5sytsc2t3idbcygdctrjrp77txdfs4g2fvvood7u5bq6evniuoa",
+      "task_id": "mature-synthetic-model-registry-001",
+      "task_kind": "controlled_synthetic"
+    },
+    {
+      "agent_view_cid": "baguqeera22c2srv2hfuqukw6l2ppuudoxbryx63nxcukwxj2ijgiwqxfj5ka",
+      "answer_bytes_cid": "bafkreia5a3ymytifxd6pu6asghvhf7tqsuqik6b6j3edcbmkfthbb3xlky",
+      "case_class": "controlled-synthetic-middleware-order",
+      "control_cid": "baguqeeralkrh6nqmgkn2cfiouohigxljzdry2y2bls56k4un7cu25wn7r6aq",
+      "evaluator_root_cid": "baguqeeracj74ukolacxj7rly7xjxx5lch3hqdc3znbt55kwnyzf745t4etla",
+      "expected_outcome_cid": "baguqeeraxpuzmoep7latzuwlotyrnk3zmdnjog35ttqaev5hhsn4nmc3o4ra",
+      "projection_cid": "baguqeeramapgdj4y2vlclj5y7pxixayqsucu3ut5veahuslmstj34ino56vq",
+      "task_id": "mature-synthetic-middleware-order-001",
+      "task_kind": "controlled_synthetic"
+    },
+    {
+      "agent_view_cid": "baguqeeram4ibwk35hwyrzsh65numbyfuxrewiov66uhkyyp2mpqs6cnsi65a",
+      "answer_bytes_cid": "bafkreierlyuqawgl2eund7uldxubnsdm554bys6oa6elquzzombmyu7gea",
+      "case_class": "operation-omission",
+      "control_cid": "baguqeeraz36frtuc5gj73jropbdjh22ruff2nfiacywnz6d5n433hyn4s7aq",
+      "evaluator_root_cid": "baguqeerafgbtc6a6qk76x7pqx36t3brxvsywqb4qbenmm3docwlp5r3fffwa",
+      "expected_outcome_cid": "baguqeerae3qc72kzdbx2tn6vmi3wxmh34mqusjtyhy4pu5ciytw5zqkljisa",
+      "projection_cid": "baguqeeratwavwzzfyvhrhrfs33s5vpsp3uwttbvyd6uea7ecm56cpsyvvywa",
+      "task_id": "mature-assurance-omission-001",
+      "task_kind": "assurance_mutation"
+    },
+    {
+      "agent_view_cid": "baguqeera4uq3lqiqpydieo2bz3n6ykjdbxhgybwkqryfqpxd6hwmea35mnea",
+      "answer_bytes_cid": "bafkreifx2twyiqvxkwlofm2ecstgq3wffdgffgwdbkqdxxrern2i3imqde",
+      "case_class": "vacuity",
+      "control_cid": "baguqeeraffnkgrzpncsgzsnxey6dxdadgozrn7lmr4k4ffi4qhp3jmat2moq",
+      "evaluator_root_cid": "baguqeerajke43kjynd4pp6ruisffu3zz5sgavwzhjobzdivw5qpa4lumc25a",
+      "expected_outcome_cid": "baguqeeraddxnbuhmslejdrhikln6jydu2p7avxjav5fy5s5eyn7fyo7ou7cq",
+      "projection_cid": "baguqeeradfc4jziwjwwvvu5yoobkvvtamcxdjljcpkbnns45vcyjndf3hcfa",
+      "task_id": "mature-assurance-vacuity-001",
+      "task_kind": "assurance_mutation"
+    },
+    {
+      "agent_view_cid": "baguqeera4f6nobnszkap4gqmj2uv3i4nievjuaxso2rk34gs4puufx54tj6q",
+      "answer_bytes_cid": "bafkreibsbc6rtb74qcdeigphylivteyiv4o4jq2mmnah4is5nnbyf4c76y",
+      "case_class": "context-expansion-contract-reuse",
+      "control_cid": "baguqeeraifkxqarfldccvafii6kwpvsqv6df3cpsywcctimjlbfb4diteita",
+      "evaluator_root_cid": "baguqeeradxyezwuj7fs5ilmidieaml4n7ryksbpqtkxukxdmqizdiu5etk2a",
+      "expected_outcome_cid": "baguqeerastwqk53hq37e6wkv6jkl6aeidft4pvgpm3eqp5gbzxjkdf4xme3q",
+      "projection_cid": "baguqeerakawx6duek4vpy3v2tdtvmappl7x5rykjtyo4vxtnip46xtcw4lla",
+      "task_id": "mature-assurance-context-expansion-001",
+      "task_kind": "assurance_mutation"
+    },
+    {
+      "agent_view_cid": "baguqeerakydad4vx5wq46k3tb3gun6c4tlujmylpi4i4sibgchhebwc5yqya",
+      "answer_bytes_cid": "bafkreicnekhvll2cdm254vkapwejrwe2kz76zp2u4gdnwu5onrjzmgsyw4",
+      "case_class": "historical-cutoff-enforcement",
+      "control_cid": "baguqeeralpvthfcjnfh5kwxad7erutg756ctrtaz5xkqm5zcem2lcjvezfgq",
+      "evaluator_root_cid": "baguqeeramydmyfpyi3nbipv64ygbaqdo2gonhxaqcxoxtfwovasxy7oxpvaq",
+      "expected_outcome_cid": "baguqeeraxc4omdnlc3mz66m7dx74nlxid6tdtnibazqerquzldouctqbl2wa",
+      "projection_cid": "baguqeera6bxkvbm7ye62c677pja43s2kqn574gyiyc6o7sxgalthmtvnavma",
+      "task_id": "mature-assurance-cutoff-001",
+      "task_kind": "assurance_mutation"
+    },
+    {
+      "agent_view_cid": "baguqeeraxztx2i5qbquewgc566ltngvw7ufoxatrseipo3cx4hhvfldi46da",
+      "answer_bytes_cid": null,
+      "case_class": "negative-human-review",
+      "control_cid": "baguqeerakyo3kuh422refkqmabalaodx6hcsj7a3hshbsu6mmwqwi6znecpa",
+      "evaluator_root_cid": "baguqeeradoqssvuc5uto3a7mvw7nbkpjwgjoewof5zq7fvlbytqhkosqzxua",
+      "expected_outcome_cid": "baguqeeradwoofkxfh3w6rjtpodudrff7npgzmcg3cb2c2ow66aia6gutwjbq",
+      "projection_cid": "baguqeeraaf4x6v7smmbh3yb3ywj3hykm46hg2legcien44sv4useok2lr7tq",
+      "task_id": "mature-negative-review-001",
+      "task_kind": "negative_human_review"
+    }
+  ],
+  "validation_state": {
+    "ground_truth_scope": "exact-source-baseline-controlled-synthetic-and-policy-cases",
+    "live_execution_eligible": false,
+    "reason": "PCCE-056-no-go-and-historical-answer-unavailable-without-future-access",
+    "synthetic_answers_locally_executable": true
+  }
+}

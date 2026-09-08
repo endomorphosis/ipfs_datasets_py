@@ -36,6 +36,7 @@ from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
     ArtifactRecord,
     DependencyEdge,
     RepositoryState,
+    SemanticIndexModelError,
     SymbolRecord,
 )
 from ipfs_datasets_py.logic.software_contracts.semantic_state.bindings import (
@@ -59,14 +60,18 @@ from ipfs_datasets_py.logic.software_contracts.semantic_state.merkle import (
 )
 from ipfs_datasets_py.logic.software_contracts.semantic_state.models import (
     AnalysisLimitation,
+    ArtifactFactNode,
     EnvironmentBinding,
     EnvironmentBindingSet,
+    LinkTargetKind,
     SemanticCapsule,
+    SemanticLinkNode,
     SemanticStateBundle,
     SemanticStateModelError,
     SemanticStateProducer,
     SemanticStateRoot,
     SortedPairIndex,
+    SymbolFactNode,
     SymbolMerkleNode,
     verify_block_bytes,
 )
@@ -86,6 +91,7 @@ from ipfs_datasets_py.logic.software_contracts.semantic_state.test_selection imp
 
 SEMANTIC_STATE_PRODUCER_INTERFACE: Final[str] = "SemanticStateProducer@1"
 SEMANTIC_STATE_VIEW_INTERFACE: Final[str] = "SemanticStateView@1"
+INDEXED_SEMANTIC_STATE_VIEW_INTERFACE: Final[str] = "IndexedSemanticStateView@1"
 SEMANTIC_STATE_BLOCK_READER_INTERFACE: Final[str] = "SemanticStateBlockReader@1"
 SEMANTIC_STATE_API_SCHEMA: Final[str] = (
     "ipfs-datasets.software-contracts.semantic-state-api@1"
@@ -126,6 +132,18 @@ class UnknownSymbolError(SemanticStateApiError):
     """Raised when a stable symbol id is not present in a verified index."""
 
 
+class UnknownArtifactError(SemanticStateApiError):
+    """Raised when an artifact id is not present in the verified fact index."""
+
+
+class UnknownSemanticLinkError(SemanticStateApiError):
+    """Raised when an edge id is not present in the verified link index."""
+
+
+class UnknownAnalysisLimitationError(SemanticStateApiError):
+    """Raised when a limitation CID is not present in its verified index."""
+
+
 # ---------------------------------------------------------------------------
 # Protocols
 # ---------------------------------------------------------------------------
@@ -140,7 +158,7 @@ class SemanticStateBlockReader(Protocol):
 
 @runtime_checkable
 class SemanticStateView(Protocol):
-    """Verified read-only view over a semantic-state root and its blocks."""
+    """Legacy verified view contract; its required members remain unchanged."""
 
     @property
     def root(self) -> SemanticStateRoot: ...
@@ -150,6 +168,25 @@ class SemanticStateView(Protocol):
     def symbol_node(self, stable_symbol_id: str) -> SymbolMerkleNode: ...
 
     def capsule(self, stable_symbol_id: str) -> SemanticCapsule: ...
+
+
+@runtime_checkable
+class IndexedSemanticStateView(SemanticStateView, Protocol):
+    """Additive typed access to every root-backed semantic-state index."""
+
+    def symbol_fact(self, stable_symbol_id: str) -> SymbolFactNode: ...
+
+    def artifact_fact(self, artifact_id: str) -> ArtifactFactNode: ...
+
+    def semantic_link(self, edge_id: str) -> SemanticLinkNode: ...
+
+    def analysis_limitation(self, limitation_cid: str) -> AnalysisLimitation: ...
+
+    def semantic_links_for_symbol(
+        self,
+        stable_symbol_id: str,
+        direction: str = "both",
+    ) -> tuple[SemanticLinkNode, ...]: ...
 
 
 # ---------------------------------------------------------------------------
@@ -578,6 +615,285 @@ class VerifiedSemanticStateView:
     def get_block(self, cid: str) -> bytes:
         return _read_verified_block(self._get_block, cid)
 
+    def symbol_fact(self, stable_symbol_id: str) -> SymbolFactNode:
+        """Return the verified symbol fact selected by its authoritative ID."""
+        if type(stable_symbol_id) is not str or not stable_symbol_id:
+            raise SemanticStateApiError("stable_symbol_id must be a nonempty string")
+        index = _load_sorted_pair_index(
+            self._get_block, self._root.symbol_fact_index_cid
+        )
+        fact_cid = _lookup_index(index, stable_symbol_id)
+        if fact_cid is None:
+            raise UnknownSymbolError(
+                f"unknown stable_symbol_id {stable_symbol_id!r} in symbol fact index"
+            )
+        identity = _load_structured_identity(self._get_block, fact_cid)
+        try:
+            fact = SymbolFactNode.from_dict({**identity, "fact_cid": fact_cid})
+        except (SemanticStateModelError, SemanticIndexModelError) as exc:
+            raise CorruptBlockError(
+                f"symbol fact {fact_cid} failed schema reverify"
+            ) from exc
+        if fact.stable_symbol_id != stable_symbol_id:
+            raise CorruptBlockError(
+                f"symbol fact {fact_cid} stable_symbol_id mismatch"
+            )
+        return fact
+
+    def artifact_fact(self, artifact_id: str) -> ArtifactFactNode:
+        """Return the verified artifact fact selected by its authoritative ID."""
+        if type(artifact_id) is not str or not artifact_id:
+            raise SemanticStateApiError("artifact_id must be a nonempty string")
+        index = _load_sorted_pair_index(
+            self._get_block, self._root.artifact_fact_index_cid
+        )
+        fact_cid = _lookup_index(index, artifact_id)
+        if fact_cid is None:
+            raise UnknownArtifactError(
+                f"unknown artifact_id {artifact_id!r} in artifact fact index"
+            )
+        identity = _load_structured_identity(self._get_block, fact_cid)
+        try:
+            fact = ArtifactFactNode.from_dict({**identity, "fact_cid": fact_cid})
+        except (SemanticStateModelError, SemanticIndexModelError) as exc:
+            raise CorruptBlockError(
+                f"artifact fact {fact_cid} failed schema reverify"
+            ) from exc
+        if fact.artifact_id != artifact_id:
+            raise CorruptBlockError(
+                f"artifact fact {fact_cid} artifact_id mismatch"
+            )
+        return fact
+
+    def _semantic_link_from_cid(
+        self,
+        link_cid: str,
+        *,
+        link_index: SortedPairIndex,
+        expected_edge_id: str | None = None,
+    ) -> SemanticLinkNode:
+        """Reconstruct one link and prove its membership in ``link_index``."""
+        key = _normalize_cid(link_cid, "link_cid")
+        identity = _load_structured_identity(self._get_block, key)
+        try:
+            link = SemanticLinkNode.from_dict({**identity, "link_cid": key})
+        except (SemanticStateModelError, SemanticIndexModelError) as exc:
+            raise CorruptBlockError(
+                f"semantic link {key} failed schema reverify"
+            ) from exc
+        if expected_edge_id is not None and link.edge_id != expected_edge_id:
+            raise CorruptBlockError(
+                f"semantic link {key} edge_id mismatch"
+            )
+        indexed_cid = _lookup_index(link_index, link.edge_id)
+        if indexed_cid != key:
+            raise CorruptBlockError(
+                f"semantic link {key} is not bound to its edge_id in the link index"
+            )
+        self._verify_semantic_link_fact_bindings(link, link_cid=key)
+        return link
+
+    def _verify_semantic_link_fact_bindings(
+        self,
+        link: SemanticLinkNode,
+        *,
+        link_cid: str,
+    ) -> None:
+        """Rebind a link's fact/version claims to the root fact indexes."""
+        try:
+            source_fact = self.symbol_fact(link.source_stable_id)
+        except UnknownSymbolError as exc:
+            raise CorruptBlockError(
+                f"semantic link {link_cid} source symbol is absent from the fact index"
+            ) from exc
+        if link.source_fact_cid != source_fact.fact_cid:
+            raise CorruptBlockError(
+                f"semantic link {link_cid} source_fact_cid mismatch"
+            )
+        if link.source_version_cid != source_fact.version_cid:
+            raise CorruptBlockError(
+                f"semantic link {link_cid} source_version_cid mismatch"
+            )
+
+        if link.target_kind == LinkTargetKind.SYMBOL.value:
+            if link.target_stable_id is None:
+                raise CorruptBlockError(
+                    f"semantic link {link_cid} symbol target identity is missing"
+                )
+            try:
+                target_fact = self.symbol_fact(link.target_stable_id)
+            except UnknownSymbolError as exc:
+                raise CorruptBlockError(
+                    f"semantic link {link_cid} target symbol is absent from the fact index"
+                ) from exc
+            if link.target_fact_cid != target_fact.fact_cid:
+                raise CorruptBlockError(
+                    f"semantic link {link_cid} target_fact_cid mismatch"
+                )
+            if link.target_version_cid != target_fact.version_cid:
+                raise CorruptBlockError(
+                    f"semantic link {link_cid} target_version_cid mismatch"
+                )
+            return
+
+        if link.target_kind == LinkTargetKind.ARTIFACT.value:
+            if link.target_stable_id is None:
+                raise CorruptBlockError(
+                    f"semantic link {link_cid} artifact target identity is missing"
+                )
+            try:
+                target_fact = self.artifact_fact(link.target_stable_id)
+            except UnknownArtifactError as exc:
+                raise CorruptBlockError(
+                    f"semantic link {link_cid} target artifact is absent from the fact index"
+                ) from exc
+            if link.target_fact_cid != target_fact.fact_cid:
+                raise CorruptBlockError(
+                    f"semantic link {link_cid} target_fact_cid mismatch"
+                )
+            if link.target_version_cid is not None:
+                raise CorruptBlockError(
+                    f"semantic link {link_cid} artifact target_version_cid must be null"
+                )
+            return
+
+        if link.target_kind != LinkTargetKind.UNRESOLVED.value:
+            raise CorruptBlockError(
+                f"semantic link {link_cid} has unsupported target_kind"
+            )
+        if link.target_fact_cid is None:
+            return
+
+        # The durable model permits an unresolved target to retain a known fact
+        # CID without inventing a logical target identity.  If present, that CID
+        # must still select a valid record through one of the root fact indexes.
+        symbol_index = _load_sorted_pair_index(
+            self._get_block, self._root.symbol_fact_index_cid
+        )
+        for stable_symbol_id, fact_cid in symbol_index.pairs:
+            if fact_cid == link.target_fact_cid:
+                self.symbol_fact(stable_symbol_id)
+                return
+        artifact_index = _load_sorted_pair_index(
+            self._get_block, self._root.artifact_fact_index_cid
+        )
+        for artifact_id, fact_cid in artifact_index.pairs:
+            if fact_cid == link.target_fact_cid:
+                self.artifact_fact(artifact_id)
+                return
+        raise CorruptBlockError(
+            f"semantic link {link_cid} unresolved target_fact_cid is not root-bound"
+        )
+
+    def semantic_link(self, edge_id: str) -> SemanticLinkNode:
+        """Return the verified semantic link selected by its ISI edge ID."""
+        key = _normalize_cid(edge_id, "edge_id")
+        index = _load_sorted_pair_index(
+            self._get_block, self._root.semantic_link_index_cid
+        )
+        link_cid = _lookup_index(index, key)
+        if link_cid is None:
+            raise UnknownSemanticLinkError(
+                f"unknown edge_id {key!r} in semantic link index"
+            )
+        return self._semantic_link_from_cid(
+            link_cid,
+            link_index=index,
+            expected_edge_id=key,
+        )
+
+    def analysis_limitation(self, limitation_cid: str) -> AnalysisLimitation:
+        """Return one verified analysis limitation by its content identity."""
+        key = _normalize_cid(limitation_cid, "limitation_cid")
+        index = _load_sorted_pair_index(
+            self._get_block, self._root.analysis_limitation_index_cid
+        )
+        block_cid = _lookup_index(index, key)
+        if block_cid is None:
+            raise UnknownAnalysisLimitationError(
+                f"unknown limitation_cid {key!r} in analysis limitation index"
+            )
+        identity = _load_structured_identity(self._get_block, block_cid)
+        try:
+            limitation = AnalysisLimitation.from_dict(
+                {**identity, "limitation_cid": block_cid}
+            )
+        except SemanticStateModelError as exc:
+            raise CorruptBlockError(
+                f"analysis limitation {block_cid} failed schema reverify"
+            ) from exc
+        if limitation.limitation_cid != key or block_cid != key:
+            raise CorruptBlockError(
+                f"analysis limitation {block_cid} limitation_cid mismatch"
+            )
+        return limitation
+
+    def semantic_links_for_symbol(
+        self,
+        stable_symbol_id: str,
+        direction: str = "both",
+    ) -> tuple[SemanticLinkNode, ...]:
+        """Return verified incoming/outgoing links for one stable symbol ID.
+
+        Link membership comes only from the symbol node and the root's semantic
+        link index.  Self-loops are returned once.  Any disagreement between the
+        node, link, and index fails closed as corrupt state.
+        """
+        if type(direction) is not str or direction not in {
+            "incoming",
+            "outgoing",
+            "both",
+        }:
+            raise SemanticStateApiError(
+                "direction must be one of 'incoming', 'outgoing', or 'both'"
+            )
+        node = self.symbol_node(stable_symbol_id)
+        roles_by_cid: dict[str, set[str]] = {}
+        if direction in {"incoming", "both"}:
+            for link_cid in node.incoming_link_cids:
+                roles_by_cid.setdefault(link_cid, set()).add("incoming")
+        if direction in {"outgoing", "both"}:
+            for link_cid in node.outgoing_link_cids:
+                roles_by_cid.setdefault(link_cid, set()).add("outgoing")
+
+        index = _load_sorted_pair_index(
+            self._get_block, self._root.semantic_link_index_cid
+        )
+        links: list[SemanticLinkNode] = []
+        for link_cid, roles in sorted(roles_by_cid.items()):
+            link = self._semantic_link_from_cid(link_cid, link_index=index)
+            if "outgoing" in roles:
+                if link.source_stable_id != stable_symbol_id:
+                    raise CorruptBlockError(
+                        f"semantic link {link_cid} outgoing source mismatch"
+                    )
+                if link.source_fact_cid != node.symbol_fact_cid:
+                    raise CorruptBlockError(
+                        f"semantic link {link_cid} outgoing node fact mismatch"
+                    )
+                if link.source_version_cid != node.version_cid:
+                    raise CorruptBlockError(
+                        f"semantic link {link_cid} outgoing node version mismatch"
+                    )
+            if "incoming" in roles:
+                if (
+                    link.target_kind != LinkTargetKind.SYMBOL.value
+                    or link.target_stable_id != stable_symbol_id
+                ):
+                    raise CorruptBlockError(
+                        f"semantic link {link_cid} incoming target mismatch"
+                    )
+                if link.target_fact_cid != node.symbol_fact_cid:
+                    raise CorruptBlockError(
+                        f"semantic link {link_cid} incoming node fact mismatch"
+                    )
+                if link.target_version_cid != node.version_cid:
+                    raise CorruptBlockError(
+                        f"semantic link {link_cid} incoming node version mismatch"
+                    )
+            links.append(link)
+        return tuple(sorted(links, key=lambda item: item.edge_id))
+
     def symbol_node(self, stable_symbol_id: str) -> SymbolMerkleNode:
         if type(stable_symbol_id) is not str or not stable_symbol_id:
             raise SemanticStateApiError("stable_symbol_id must be a nonempty string")
@@ -825,17 +1141,22 @@ __all__ = [
     # Interfaces / constants
     "SEMANTIC_STATE_API_SCHEMA",
     "SEMANTIC_STATE_BLOCK_READER_INTERFACE",
+    "INDEXED_SEMANTIC_STATE_VIEW_INTERFACE",
     "SEMANTIC_STATE_PRODUCER_INTERFACE",
     "SEMANTIC_STATE_VIEW_INTERFACE",
     # Protocols / view
     "SemanticStateBlockReader",
     "SemanticStateView",
+    "IndexedSemanticStateView",
     "VerifiedSemanticStateView",
     # Errors
     "SemanticStateApiError",
     "MissingBlockError",
     "CorruptBlockError",
     "UnknownSymbolError",
+    "UnknownArtifactError",
+    "UnknownSemanticLinkError",
+    "UnknownAnalysisLimitationError",
     # Core assembly
     "build_semantic_state",
     "verify_semantic_state_bundle",

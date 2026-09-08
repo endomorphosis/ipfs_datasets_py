@@ -1,0 +1,71 @@
+{
+  "artifacts": {
+    "corpus_manifest.json": {
+      "content_cid": "bafkreiguo3yfddohi2r4h4s3yckib7woxkyqjkoltk2ixaaw2ol7k2c7em",
+      "path": "corpus_manifest.json",
+      "sha256": "d476f0518dc746a3c3f25bc09480fecebab104a9cb9ab48b8016d397f5685f23",
+      "size_bytes": 1065
+    },
+    "count_receipt.json": {
+      "content_cid": "bafkreig5mj5nf222bnxxgflxukbk7wwxma3w567he4w5vyzi3jfgnxy25i",
+      "path": "count_receipt.json",
+      "sha256": "dd627ad2eb5a0b6f731577a282afdad760376efbe7272ddae328da4a66df1aea",
+      "size_bytes": 796
+    },
+    "lineage_graph.json": {
+      "content_cid": "bafkreibh6yg36hwxcdwyilpwxy7cgiip7i37cgbidaedy3w3wnfgvixzsu",
+      "path": "lineage_graph.json",
+      "sha256": "27f60dbf1ed710ed842df6be3e23210ffa37f1182818083c6edbb34a6aa2f995",
+      "size_bytes": 1404
+    },
+    "load_receipt.json": {
+      "content_cid": "bafkreifjlakhkvlrnzpl3vle3gkj53cixh5f6rdnggy57qn2wl4omho2we",
+      "path": "load_receipt.json",
+      "sha256": "a958147555716e5ebdd564d9949eec48b9fa5f446d31b1dfc1bab2f8e61ddab1",
+      "size_bytes": 1594
+    },
+    "quarantine_manifest.json": {
+      "content_cid": "bafkreidvpg27erl3tiks64t6efhyinhae2cv64dwxzgnasjiwlerekrpfi",
+      "path": "quarantine_manifest.json",
+      "sha256": "7579b5f2457b9a152f727e214f8434e026855f7076be4cd04928b2c9122a2f2a",
+      "size_bytes": 2687
+    },
+    "replay_receipt.json": {
+      "content_cid": "bafkreieun3v53ypgesrx7hbrer26a5uin7bujdkfeo543dtb2qpuunsw7m",
+      "path": "replay_receipt.json",
+      "sha256": "946eebdde1e624a37f9c312475e076886fc3448d4523bbcd8e61d41f4a3656fb",
+      "size_bytes": 1778
+    },
+    "rights_manifest.json": {
+      "content_cid": "bafkreibazjieqttwkfdoqutvzi4p2ermkg7hrbwtbkzaerdznmsrvewcsq",
+      "path": "rights_manifest.json",
+      "sha256": "20ca50484e765146e85275ca38fd122c51be7886d30ab20244796b251a92c294",
+      "size_bytes": 1485
+    },
+    "source_releases.json": {
+      "content_cid": "bafkreieoec34j6z2kehajpljkwtg7vwybhgunnm5hylml6q5ort4s2xcmy",
+      "path": "source_releases.json",
+      "sha256": "8e20b7c4fb3a510e04bd6955a66fd6d809cd46b59d3e16c5fa1d7467c96ae266",
+      "size_bytes": 13797
+    }
+  },
+  "counts": {
+    "admitted_source_rows": 0,
+    "candidate_source_rows_excluded_by_rights": 7173,
+    "materialized_derived_artifacts": 0,
+    "materialized_source_rows": 0,
+    "observed_historical_derived_artifacts": 38690
+  },
+  "kind": "successor_sealed_corpus_root",
+  "lineage_graph_cid": "bafkreibh6yg36hwxcdwyilpwxy7cgiip7i37cgbidaedy3w3wnfgvixzsu",
+  "manifest_cid": "bafkreiguo3yfddohi2r4h4s3yckib7woxkyqjkoltk2ixaaw2ol7k2c7em",
+  "manifest_id": "corp:successor-v1:jdao-pinset-1",
+  "materialized": false,
+  "materialization_status": "not_materialized_permanent_no_go",
+  "materialized_derived_artifact_ids": [],
+  "materialized_source_record_ids": [],
+  "pinset_id": "JDAO-PINSET-1",
+  "result_identity": "RESULT(PGIR-201)",
+  "schema": "proof-grounded-ir-learning/successor-sealed-corpus-root/v1",
+  "source_rights_result_identity": "RESULT(PGIR-200)"
+}

@@ -1,0 +1,29 @@
+{
+  "denominator_policy": "A current denominator contains only rights-admitted, materialized rows assigned to the named non-hidden partition. A zero denominator is not a score.",
+  "interface": "IRDeterministicBaselineRetirementStrata@1",
+  "metrics": {
+    "status": "not_run",
+    "value": null,
+    "why": "No current rows were eligible for measurement; no missing metric is represented as zero."
+  },
+  "result_identity": "RESULT(PGIR-204)",
+  "schema": "proof-grounded-ir-learning/successor-r1-retirement-strata/v1",
+  "strata": [
+    {"denominator": 0, "name": "compiler", "reason_code": "no_rights_admitted_materialized_rows", "status": "permanent_no_go"},
+    {"denominator": 0, "name": "cross_reference", "reason_code": "no_rights_admitted_materialized_rows", "status": "permanent_no_go"},
+    {"denominator": 0, "name": "domain", "reason_code": "no_rights_admitted_materialized_rows", "status": "permanent_no_go"},
+    {"denominator": 0, "name": "exception", "reason_code": "no_rights_admitted_materialized_rows", "status": "permanent_no_go"},
+    {"denominator": 0, "name": "family", "reason_code": "no_rights_admitted_materialized_rows", "status": "permanent_no_go"},
+    {"denominator": 0, "name": "jurisdiction", "reason_code": "no_rights_admitted_materialized_rows", "status": "permanent_no_go"},
+    {"denominator": 0, "name": "length", "reason_code": "no_rights_admitted_materialized_rows", "status": "permanent_no_go"},
+    {"denominator": 0, "name": "lineage", "reason_code": "no_rights_admitted_materialized_rows", "status": "permanent_no_go"},
+    {"denominator": 0, "name": "notation", "reason_code": "no_rights_admitted_materialized_rows", "status": "permanent_no_go"},
+    {"denominator": 0, "name": "premise", "reason_code": "no_rights_admitted_materialized_rows", "status": "permanent_no_go"},
+    {"denominator": 0, "name": "proof_library", "reason_code": "no_rights_admitted_materialized_rows", "status": "permanent_no_go"},
+    {"denominator": 0, "name": "publication", "reason_code": "no_rights_admitted_materialized_rows", "status": "permanent_no_go"},
+    {"denominator": 0, "name": "rare_operator", "reason_code": "no_rights_admitted_materialized_rows", "status": "permanent_no_go"},
+    {"denominator": 0, "name": "time", "reason_code": "no_rights_admitted_materialized_rows", "status": "permanent_no_go"},
+    {"denominator": 0, "name": "type", "reason_code": "no_rights_admitted_materialized_rows", "status": "permanent_no_go"}
+  ],
+  "total_current_eligible_denominator": 0
+}

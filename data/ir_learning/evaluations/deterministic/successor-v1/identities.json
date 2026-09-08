@@ -1,0 +1,41 @@
+{
+  "current_source_inputs": {
+    "corpus": {
+      "content_cid": "bafkreig22siid32ilaygdudo2ccpojinsv4dnmjk5dm5begmlfq4brxbba",
+      "path": "ipfs_datasets_py/data/ir_learning/corpora/successor-v1/corpus_root.json",
+      "result_identity": "RESULT(PGIR-201)",
+      "sha256": "sha256:dad49081ef48583061d06ed084f7250d957836b12ae8d9d090cc5961c0c6e108"
+    },
+    "rights": {
+      "content_cid": "bafkreibazjieqttwkfdoqutvzi4p2ermkg7hrbwtbkzaerdznmsrvewcsq",
+      "path": "ipfs_datasets_py/data/ir_learning/corpora/successor-v1/rights_manifest.json",
+      "result_identity": "RESULT(PGIR-200)",
+      "sha256": "sha256:20ca50484e765146e85275ca38fd122c51be7886d30ab20244796b251a92c294"
+    },
+    "split": {
+      "content_cid": "bafkreid6m4zd5e42eyqcljvr4uiwuwonpz4vyqcsa2zpx22khy6fplusdu",
+      "path": "ipfs_datasets_py/data/ir_learning/splits/successor-v1/split_root.json",
+      "result_identity": "RESULT(PGIR-202)",
+      "sha256": "sha256:7e67323e939a262025a6b1e5116a59cd7e795c405206b2fbeb4a3e3c57ae921d"
+    }
+  },
+  "historical_r1": {
+    "identities_cid": "baguqeeraejouoqkj2inudgumy7nygoowwvu3zi767pdofnhguoyxjuzqhpmq",
+    "manifest_cid": "baguqeeraf3mevd4zrpkcy6hmsamfyszkq5zeisq2ipu6bvupquprtfqi53ta",
+    "report_cid": "baguqeerau73uowpiy22d7rohi7gvbtfkwivyldlivxnxqw4zzc7zeyzavasq",
+    "task_id": "PGIR-023"
+  },
+  "interface": "IRDeterministicBaselineRetirementIdentities@1",
+  "implementation_raw_cids": {
+    "compiler": "bafkreihkepmhrqadg7uldzbmnqdpvklwuyod55vui23dywqegj5diz4lci",
+    "contracts": "bafkreigwn3h2ulewptnebiopjobjg2ruaopdrtg3gbcenbuxut4qv4uejm",
+    "decompiler": "bafkreih2ju5hvcdwcni3wtxjy2dksmjp5qvo2ipofghkq73ygk2tnnkmke",
+    "roundtrip": "bafkreid2wn2of5alfxwu6oqgcl7kanjsuqgnapkdpgfglbnc3wxeyu34ny"
+  },
+  "repository": {
+    "datasets_commit": "8736a0023d5d3afe4d0e5b044a3e4480966a8bf7",
+    "repository_tree": "c4cf42fccb58d73b9f48c7f70799165b29cfe3a9"
+  },
+  "result_identity": "RESULT(PGIR-204)",
+  "schema": "proof-grounded-ir-learning/successor-r1-retirement-identities/v1"
+}

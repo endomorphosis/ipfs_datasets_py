@@ -113,19 +113,27 @@ def _nl_to_dcec(text: str, language: str) -> Dict[str, Any]:
 def _try_dcec_prove(goal: str, axioms: List[str], strategy: str, timeout: int) -> Dict[str, Any]:
     """Attempt to prove a DCEC goal; falls back gracefully."""
     try:
-        from ipfs_datasets_py.logic.CEC.provers import ProverManager, ProverStrategy
         from ipfs_datasets_py.logic.CEC.native import parse_dcec_string
+        from ipfs_datasets_py.logic.CEC.provers import ProverManager, ProverStrategy
 
         goal_formula = parse_dcec_string(goal)
         axiom_formulas = [parse_dcec_string(a) for a in axioms]
 
+        # ``ProverStrategy`` selects a scheduling mode.  Individual solver
+        # names are retained for API compatibility, but solver selection is
+        # owned by ``ProverManager`` and therefore maps to AUTO.
         strategy_map = {
             "auto": ProverStrategy.AUTO,
-            "z3": ProverStrategy.Z3,
-            "vampire": ProverStrategy.VAMPIRE,
-            "e_prover": ProverStrategy.E_PROVER,
+            "parallel": getattr(ProverStrategy, "PARALLEL", ProverStrategy.AUTO),
+            "sequential": getattr(ProverStrategy, "SEQUENTIAL", ProverStrategy.AUTO),
+            "best": getattr(ProverStrategy, "BEST", ProverStrategy.AUTO),
+            "z3": ProverStrategy.AUTO,
+            "vampire": ProverStrategy.AUTO,
+            "e_prover": ProverStrategy.AUTO,
         }
-        prover_strategy = strategy_map.get(strategy, ProverStrategy.AUTO)
+        prover_strategy = strategy_map.get(
+            str(strategy or "auto").lower(), ProverStrategy.AUTO
+        )
 
         manager = ProverManager()
         result = manager.prove(
@@ -134,11 +142,40 @@ def _try_dcec_prove(goal: str, axioms: List[str], strategy: str, timeout: int) -
             strategy=prover_strategy,
             timeout=timeout,
         )
+        # ``UnifiedProofResult`` and older result adapters use different
+        # attribute names.  Normalize both without turning a successful proof
+        # into an exception-driven error result.
+        proved = bool(
+            getattr(result, "success", None)
+            if getattr(result, "success", None) is not None
+            else getattr(result, "proved", None)
+            if getattr(result, "proved", None) is not None
+            else getattr(result, "is_valid", False)
+        )
+        prover_used = (
+            getattr(result, "prover_name", None)
+            or getattr(result, "prover_used", None)
+            or getattr(result, "best_prover", None)
+            or getattr(result, "backend", None)
+            or "unknown"
+        )
+        steps = (
+            getattr(result, "steps", None)
+            if getattr(result, "steps", None) is not None
+            else getattr(result, "proof_steps", 0)
+        )
+        elapsed = (
+            getattr(result, "time_taken", None)
+            if getattr(result, "time_taken", None) is not None
+            else getattr(result, "execution_time", None)
+            if getattr(result, "execution_time", None) is not None
+            else getattr(result, "total_time", 0.0)
+        )
         return {
-            "proved": result.success,
-            "prover_used": result.prover_name,
-            "proof_steps": result.steps,
-            "execution_time": result.time_taken,
+            "proved": proved,
+            "prover_used": prover_used,
+            "proof_steps": steps or 0,
+            "execution_time": elapsed or 0.0,
         }
     except ImportError:
         return {
@@ -428,6 +465,21 @@ class LogicProcessor:
         """Prove a DCEC theorem."""
         start = time.monotonic()
         axioms = axioms or []
+        try:
+            from ipfs_datasets_py.logic.common.validators import (
+                validate_axiom_list,
+                validate_formula_string,
+            )
+
+            validate_formula_string(goal, field_name="goal")
+            validate_axiom_list(axioms)
+        except Exception as exc:
+            return {
+                "success": False,
+                "proved": False,
+                "error": str(exc),
+                "elapsed_ms": (time.monotonic() - start) * 1000,
+            }
         prover_result = _try_dcec_prove(goal, axioms, strategy, timeout)
         prover_result["success"] = "error" not in prover_result
         prover_result["elapsed_ms"] = (time.monotonic() - start) * 1000
@@ -441,6 +493,21 @@ class LogicProcessor:
         """Check whether a DCEC formula is a tautology."""
         start = time.monotonic()
         axioms = axioms or []
+        try:
+            from ipfs_datasets_py.logic.common.validators import (
+                validate_axiom_list,
+                validate_formula_string,
+            )
+
+            validate_formula_string(formula, field_name="formula")
+            validate_axiom_list(axioms)
+        except Exception as exc:
+            return {
+                "success": False,
+                "is_theorem": False,
+                "error": str(exc),
+                "elapsed_ms": (time.monotonic() - start) * 1000,
+            }
         prover_result = _try_dcec_prove(formula, axioms, "auto", 30)
         return {
             "success": "error" not in prover_result,

@@ -1,0 +1,12 @@
+{
+  "audit_scope": {
+    "assignment_count": 0,
+    "principal_split": "lineage-group",
+    "source_corpus_result_identity": "RESULT(PGIR-201)"
+  },
+  "blocked_operations": [],
+  "leakage_check": "passed",
+  "passed": true,
+  "schema": "legal-ir-split-leakage-report/v1",
+  "violations": []
+}

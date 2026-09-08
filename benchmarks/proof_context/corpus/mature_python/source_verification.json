@@ -1,0 +1,161 @@
+{
+  "archive": {
+    "bytes_cid": "bafkreidabjda3nswrgmwtr65jmohbtrgr2w2pre7uc2x5fbnu6idb6vhv4",
+    "path": "source/django-5.2.5-a3b1107.tar.gz",
+    "sha256": "600a460db656899969c7dd4b1c70ce268eada7c49fa0b57e942da79030faa7af",
+    "size": 10551627,
+    "url": "https://codeload.github.com/django/django/tar.gz/a3b1107a4955bdd994908efb4c6e1d03c281e69f",
+    "verified": true
+  },
+  "baseline_full_test": {
+    "command": "env -i <baseline_replay.json environment> python3.12 -P tests/runtests.py --parallel 4 --verbosity 1",
+    "discovered_tests": 18098,
+    "errors": 0,
+    "expected_failures": 5,
+    "failures": 0,
+    "network_used": false,
+    "observations": [
+      {
+        "command_execution_id": "exec-e81cb2f7-21f5-44e3-be58-b8494e77cede",
+        "duration_milliseconds": 91819,
+        "python_hash_seed": 0,
+        "stderr_bytes": 0,
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_bytes": 19284,
+        "stdout_sha256": "645323ce6173c2d8f7287ac6683b9722731fbf0a7ae306bbbb25362dbec0d03d",
+        "wall_duration_nanoseconds": 103376432838
+      },
+      {
+        "command_execution_id": "exec-0476ce8d-4990-48ed-92e2-b9c14d41f2d6",
+        "duration_milliseconds": 92038,
+        "python_hash_seed": 777,
+        "stderr_bytes": 0,
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_bytes": 19372,
+        "stdout_sha256": "8e881b644f8980c673cdf4e2fe56a15fc41ccc57c91501264e2fa78b126b9fb2",
+        "wall_duration_nanoseconds": 103718371241
+      }
+    ],
+    "passed": true,
+    "profile": "host-filesystem-visible-isolated-venv",
+    "ran_tests": 18096,
+    "replay_profile_path": "baseline_replay.json",
+    "reproduction_count": 2,
+    "skipped": 1912,
+    "source_edits": false
+  },
+  "baseline_replay": {
+    "bytes_cid": "bafkreigeeljnvjdyqlsigr23jvcgnoit67iz4vm674ons5s2gsdppkpgam",
+    "path": "baseline_replay.json",
+    "sha256": "c422d2daa47882e483475b4d4466b913f7d19e559eff1cd9765a3486f7a9e603",
+    "size": 10551,
+    "structured_cid": "baguqeeraekkxhc5fhgyvirryn35blbaq3lmpmdzpinuxi3jeelvgozv2ycfa"
+  },
+  "dependencies": [
+    {
+      "bytes_cid": "bafkreib6dy7mzbeygl7ffthszntinn5fl6blwhlk5zzklcbgi4jzam26i4",
+      "name": "asgiref",
+      "path": "dependencies/asgiref-3.8.1-py3-none-any.whl",
+      "sha256": "3e1e3ecc849832fe52ccf2cb6686b7a55f82bb1d6aee72a58826471390335e47",
+      "size": 23828,
+      "version": "3.8.1"
+    },
+    {
+      "bytes_cid": "bafkreigpeglo2nay6o5f3zvpp2bmnffj7pn75tgn7rzofakuqulqqhywzi",
+      "name": "sqlparse",
+      "path": "dependencies/sqlparse-0.5.3-py3-none-any.whl",
+      "sha256": "cf2196ed3418f3ba5de6af7e82c694a9fbdbfecccdfc72e281548517081f16ca",
+      "size": 44415,
+      "version": "0.5.3"
+    }
+  ],
+  "historical_cutoff": {
+    "future_commits_or_pr_patches_accessed": false,
+    "network_during_task_execution": false
+  },
+  "license": {
+    "bytes_cid": "bafkreifyizav2g2rj2ob37yuuiw6xednpff4krwkmeu7sufbrtijdyvgne",
+    "path": "LICENSE.django-5.2.5",
+    "sha256": "b846415d1b514e9c1dff14a22deb906d794bc546ca6129f950a18cd091e2a669",
+    "size": 1552,
+    "spdx": "BSD-3-Clause",
+    "verified": true
+  },
+  "limitations": {
+    "historical_answer_materialized": false,
+    "historical_task_disposition": "unavailable-no-future-patch-access",
+    "host_system_libraries_visible": true,
+    "live_provider_qualification": false,
+    "optional_python_distributions": "absent-beyond-pinned-inventory"
+  },
+  "observed_at": "2026-08-25T00:19:18.124Z",
+  "permit": {
+    "authority": "operator-confirmed-resume-after-narrow-fetch-disclosure",
+    "network_scope": "exact-source-archive-and-two-pinned-runtime-dependency-wheels-only"
+  },
+  "reconstructed_repository": {
+    "commit": "a3b1107a4955bdd994908efb4c6e1d03c281e69f",
+    "method": "archive-root-git-add-force-write-tree",
+    "tree": "0d45857fbbe288b56ddd4d8e124a1657421f9c48",
+    "verified": true
+  },
+  "runtime": {
+    "execution_boundary": {
+      "chroot": false,
+      "container_rootfs_isolated": false,
+      "host_filesystem_visible": true,
+      "host_system_libraries": [
+        {
+          "name": "libgdal.so.34",
+          "path": "/lib/aarch64-linux-gnu/libgdal.so.34"
+        },
+        {
+          "name": "libgeos.so.3.12.1",
+          "path": "/lib/aarch64-linux-gnu/libgeos.so.3.12.1"
+        },
+        {
+          "name": "libgeos_c.so.1",
+          "path": "/lib/aarch64-linux-gnu/libgeos_c.so.1"
+        },
+        {
+          "name": "libspatialite.so.8",
+          "path": "/lib/aarch64-linux-gnu/libspatialite.so.8"
+        }
+      ],
+      "host_visible_paths": [
+        "/dev",
+        "/etc",
+        "/lib",
+        "/proc"
+      ],
+      "network_namespace_isolated": false
+    },
+    "html_parser": {
+      "path": "/home/barberb/.local/share/docker/containerd/daemon/io.containerd.snapshotter.v1.overlayfs/snapshots/1743/fs/usr/local/lib/python3.12/html/parser.py",
+      "sha256": "ab5a0a2fce2bec75d969dbe057b490ef574f9ac57cce9e0eaaf7a220b301e838"
+    },
+    "libpython": {
+      "path": "/home/barberb/.local/share/docker/containerd/daemon/io.containerd.snapshotter.v1.overlayfs/snapshots/1743/fs/usr/local/lib/libpython3.12.so.1.0",
+      "sha256": "cd8768ab1575197cbefcda5ddd3ed16ef3c3baa1de8739e060feeef124a540fd"
+    },
+    "path_namespace": {
+      "container_logical_ld_library_path": "/usr/local/lib",
+      "execution_ld_library_path": "/home/barberb/.local/share/docker/containerd/daemon/io.containerd.snapshotter.v1.overlayfs/snapshots/1743/fs/usr/local/lib",
+      "execution_namespace": "host-physical-paths",
+      "host_path_suffix": "/usr/bin:/bin",
+      "note": "No container rootfs was mounted; every execution path is a host-physical path and unresolved absolute paths use the host filesystem."
+    },
+    "purpose": "host-filesystem-visible-isolated-venv-historical-replay-baseline-only",
+    "python_binary": {
+      "path": "/tmp/pcce063-django.1yGMMk/venv-historical/bin/python3.12",
+      "resolved_path": "/home/barberb/.local/share/docker/containerd/daemon/io.containerd.snapshotter.v1.overlayfs/snapshots/1743/fs/usr/local/bin/python3.12",
+      "sha256": "01546f67998cb9e41d014fee4e1df67c86273b3cf40cb692fe435f4027ec7c2d"
+    },
+    "python_build": "Python 3.12.3 (main, May 14 2024, 05:51:03) [GCC 12.2.0]",
+    "python_runtime_origin_manifest": "python:3.12.3-slim-bookworm@sha256:c27c26153fdf6863da2a1d85b474d1be004c42cc8ea2fd647004a8d4007a34d5",
+    "python_runtime_snapshot_root": "/home/barberb/.local/share/docker/containerd/daemon/io.containerd.snapshotter.v1.overlayfs/snapshots/1743/fs"
+  },
+  "schema": "ipfs-datasets.proof-context.mature-python-source-verification@1",
+  "source_pin_id": "django-django-5.2.5",
+  "verification_result": "passed"
+}

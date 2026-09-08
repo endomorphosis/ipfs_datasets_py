@@ -1,0 +1,17 @@
+{
+  "artifacts": {
+    "identities.json": {"content_cid": "bafkreiczrwm4bupcjzwx6s7tsaz6ymx2ttalled24x5glqbi24gzdkup6a", "schema_cid": "baguqeera42wgxluzyas2imuxyh6t4cqrkpj2ualjl55mjjnzcx4qwiig3oxa"},
+    "recipe.json": {"content_cid": "bafkreib3yjmtfc5tohbcww6ntnpxh3k4gpx7x43pkme53dbeqluzejm6jm", "schema_cid": "baguqeeral4lcpzdtp74nrzso6ftbm6zg633excdjhimelvtwxvj77hzryvnq"},
+    "replay_receipt.json": {"content_cid": "bafkreifxg5zmunej7q4abiesoktxhlmradmkkbirwmyyegdoxh5i4djuwm", "schema_cid": "baguqeerav2roro3ra4txvpqesgebbc3sk3colu4njtnw2kf4lka5awxxoy2a"},
+    "retirement_receipt.json": {"content_cid": "bafkreigf246fld7sdiiaoei5637uxfuawvkdxorsizjdis2iw5tjuq56cu", "retirement_cid": "baguqeeraw4nh2c7xxamku4juzt5257krzlzuaxe64vl5cuz4h4c4iwm6xdjq"},
+    "strata.json": {"content_cid": "bafkreigr6avtmlr4v4femncg4s3n6noghooxuljxpql2hwz5xy27lsvkju", "schema_cid": "baguqeerazw6ktrzkvqoaj7hxj55bmdbti2ovghff32h4ibbferzokcbisriq"},
+    "tool_versions.json": {"content_cid": "bafkreigmiylkzag5aajytrmebjspkfqifc4puoni6hbrnijii7iuxnmmca", "schema_cid": "baguqeerajnij2dpevdavdi7cb6exwfhkt7sjq6yqd63xutuv24voa6ntvpmq"}
+  },
+  "interface": "IRDeterministicBaselineRetirementManifest@1",
+  "manifest_cid": "baguqeera5ozoenmh6thpjua23i4inzixolmrux4fp46puffyk7j55wil3xma",
+  "outcome": "historical_r1_retired",
+  "report_cid": "baguqeeraw4nh2c7xxamku4juzt5257krzlzuaxe64vl5cuz4h4c4iwm6xdjq",
+  "result_identity": "RESULT(PGIR-204)",
+  "schema": "proof-grounded-ir-learning/successor-r1-retirement-manifest/v1",
+  "task_id": "PGIR-204"
+}

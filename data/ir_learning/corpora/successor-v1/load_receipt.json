@@ -1,0 +1,29 @@
+{
+  "deterministic_load": {
+    "algorithm": "Read rights_manifest.json.admitted_source_record_ids in order; materialize exactly those rows only when each row has an admitted rights disposition and an entry in lineage_graph.json.materialized_row_lineage. For this pinset the admitted set is empty, so the loader writes no row payloads and no derived artifacts.",
+    "loaded_derived_artifact_ids": [],
+    "loaded_source_record_ids": [],
+    "status": "not_materialized_permanent_no_go"
+  },
+  "input_artifacts": [
+    "rights_manifest.json",
+    "quarantine_manifest.json",
+    "source_releases.json",
+    "replay_receipt.json"
+  ],
+  "kind": "successor_corpus_load_receipt",
+  "no_go": {
+    "reason_code": "missing_exact_source_and_transformation_rights_authority",
+    "result_identity": "RESULT(PGIR-200)",
+    "supersession_rule": "A future task may load rows only after a new exact release revision receives a new rights review with authoritative source rights, transformation rights, complete lineage, and explicit row admission."
+  },
+  "pinset_id": "JDAO-PINSET-1",
+  "replay": {
+    "expected_admitted_source_rows": 0,
+    "expected_materialized_derived_artifacts": 0,
+    "expected_materialized_source_rows": 0,
+    "method": "Verify the rights admitted-record list is empty; verify both materialized ID lists are empty; verify the count receipt reports zero admitted and materialized rows; and verify no row payload files are present under this corpus root."
+  },
+  "result_identity": "RESULT(PGIR-201)",
+  "schema": "proof-grounded-ir-learning/successor-corpus-load-receipt/v1"
+}

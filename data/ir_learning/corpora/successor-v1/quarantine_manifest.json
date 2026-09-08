@@ -1,0 +1,62 @@
+{
+  "all_quarantined_rows_have_a_citation": true,
+  "fresh_reviewed_at": "2026-08-25T00:00:00Z",
+  "kind": "successor_quarantine_manifest",
+  "permanent_no_go_reason": "No exact source-and-transformation-rights authority exists for either source population in the immutable pinset; see rights_manifest.json#permanent_no_go.",
+  "pinset_id": "JDAO-PINSET-1",
+  "quarantined_release_ids": [
+    "justicedao/Caselaw_Access_Project_embeddings",
+    "justicedao/american_municipal_law",
+    "justicedao/ipfs_caselaw_access_project",
+    "justicedao/ipfs_court_rules",
+    "justicedao/ipfs_netherlands_laws",
+    "justicedao/ipfs_netherlands_laws_bm25_index",
+    "justicedao/ipfs_netherlands_laws_knowledge_graph",
+    "justicedao/ipfs_netherlands_laws_vector_index",
+    "justicedao/ipfs_state_laws",
+    "justicedao/netherlands-laws-nl-normalized",
+    "justicedao/patent-legal-ir-graphrag",
+    "justicedao/wetwijzer_netherlands_legal_corpus"
+  ],
+  "rejected_release_ids": [
+    "justicedao/dedup_ipfs_caselaw_access_project",
+    "justicedao/ipfs_federal_register",
+    "justicedao/ipfs_state_admin_rules",
+    "justicedao/ipfs_uscode",
+    "justicedao/legal-ir-autoencoder-checkpoints",
+    "justicedao/patent-legal-bm25",
+    "justicedao/patent-legal-corpus",
+    "justicedao/patent-legal-knowledge-graph",
+    "justicedao/patent-legal-vectors"
+  ],
+  "row_dispositions": [
+    {
+      "citation_id": "hf-api:justicedao/patent-legal-ir-graphrag@845669408081f1334c54519d2bb7df6bf780ccd5",
+      "disposition": "permanently_quarantined_for_this_pinset",
+      "record_id_format": "src:patent:%04d",
+      "record_id_range": {"first": 0, "last": 2173},
+      "release_id": "justicedao/patent-legal-ir-graphrag",
+      "residual_rights_gaps": [
+        "authoritative upstream source-rights grant",
+        "authority to create and use retrieval, embedding, graph, and BM25 transformations",
+        "complete source lineage"
+      ],
+      "row_count": 2174
+    },
+    {
+      "citation_id": "hf-api:justicedao/wetwijzer_netherlands_legal_corpus@827e9412f55cbe332f18824ff669bdbbae39005d",
+      "disposition": "permanently_quarantined_for_this_pinset",
+      "record_id_format": "src:dutch-law:%04d",
+      "record_id_range": {"first": 0, "last": 4998},
+      "release_id": "justicedao/wetwijzer_netherlands_legal_corpus",
+      "residual_rights_gaps": [
+        "authoritative upstream source-rights grant",
+        "authority to create and use normalized, embedding, graph, and BM25 transformations",
+        "complete source lineage"
+      ],
+      "row_count": 4999
+    }
+  ],
+  "schema": "proof-grounded-ir-learning/successor-quarantine-manifest/v1",
+  "training_eligible_rows": 0
+}

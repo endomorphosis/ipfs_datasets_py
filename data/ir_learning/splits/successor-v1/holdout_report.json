@@ -1,0 +1,32 @@
+{
+  "all_declared_holdouts_resolved": true,
+  "hidden_test_commitment": "sha256:6a801b51b980e666b4010da9a679ad8e11a233078f988165565481b98d4b9ded",
+  "hidden_test_commitment_status": "unchanged_inherited",
+  "holdouts": {
+    "compiler": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "compiler", "status": "permanent_no_go"},
+    "cross_reference": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "cross_reference", "status": "permanent_no_go"},
+    "domain": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "domain", "status": "permanent_no_go"},
+    "exception": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "exception", "status": "permanent_no_go"},
+    "family": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "statute_family", "status": "permanent_no_go"},
+    "jurisdiction": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "jurisdiction", "status": "permanent_no_go"},
+    "length": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "length", "status": "permanent_no_go"},
+    "lineage": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "lineage", "status": "permanent_no_go"},
+    "notation": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "notation", "status": "permanent_no_go"},
+    "premise": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "premise", "status": "permanent_no_go"},
+    "proof_library": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "proof_library", "status": "permanent_no_go"},
+    "publication": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "publication", "status": "permanent_no_go"},
+    "rare_operator": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "rare_operator", "status": "permanent_no_go"},
+    "time": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "temporal", "status": "permanent_no_go"},
+    "type": {"count": 0, "permanent_no_go_reason": "no_rights_admitted_materialized_rows", "split": "type", "status": "permanent_no_go"}
+  },
+  "in_scope_holdouts": ["compiler", "cross_reference", "domain", "exception", "length", "lineage", "notation", "premise", "proof_library", "publication", "rare_operator", "time", "type"],
+  "no_go": {
+    "authority": "RESULT(PGIR-201)",
+    "corpus_root_path": "ipfs_datasets_py/data/ir_learning/corpora/successor-v1/corpus_root.json",
+    "permanent": true,
+    "reason_code": "no_rights_admitted_materialized_rows",
+    "reason_detail": "The successor sealed corpus contains zero rights-admitted and zero materialized source rows. Populating any holdout would require admitting or deriving from a quarantined row, which is prohibited until a future rights review supersedes RESULT(PGIR-200) and RESULT(PGIR-201).",
+    "supersession_rule": "Only a later corpus generation with exact source and transformation rights, admitted rows, and lineage may replace this no-go. Historical split rows must not be copied into this successor root."
+  },
+  "schema": "ir-split-holdout-report/v1"
+}

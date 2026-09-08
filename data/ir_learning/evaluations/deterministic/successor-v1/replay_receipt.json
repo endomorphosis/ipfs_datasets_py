@@ -1,0 +1,36 @@
+{
+  "algorithm": [
+    "Parse the successor corpus root, rights manifest, split root, holdout report, and leakage report as JSON.",
+    "Require RESULT(PGIR-200), RESULT(PGIR-201), and RESULT(PGIR-202) identities in those artifacts.",
+    "Require admitted_source_rows=0, materialized_source_rows=0, materialized=false, training_eligible=false, and training_admitted_rows=0.",
+    "Require leakage_passed=true and the inherited public hidden-test commitment; never open or enumerate hidden-test membership.",
+    "Require every listed stratum to have denominator zero and permanent_no_go/no_rights_admitted_materialized_rows.",
+    "Require the historical R1 report CID to match the historical manifest, while treating its fixture metrics as historical only.",
+    "Conclude retirement rather than calculate an R1 metric."
+  ],
+  "independence": {
+    "method": "Read-only source recomputation from the listed predecessor and successor artifacts; no compiler, decompiler, fixture, network, cache, or hidden-test access is used.",
+    "replay_status": "passed"
+  },
+  "interface": "IRDeterministicBaselineRetirementReplayReceipt@1",
+  "input_content_cids": {
+    "historical_r1_manifest": "bafkreidg4c4gtbe2bgx3dr447yez63mdwgd5equ4vvgo3efh3idwnbxi4a",
+    "historical_r1_report": "bafkreifd2qezmn3aw2aunokf2ntnp4eouswxfxpm2fcyd5cxvfuoxnrwwm",
+    "successor_corpus_root": "bafkreig22siid32ilaygdudo2ccpojinsv4dnmjk5dm5begmlfq4brxbba",
+    "successor_holdout_report": "bafkreieoinmrtfqurf55jd2vjcyo5dnbbtraeqojbvgnelrkqu275mxr7q",
+    "successor_leakage_report": "bafkreia52gsj2zavviwbsy72huy5jji4mm5cix77rpjrxbl7uxj7gog6h4",
+    "successor_rights_manifest": "bafkreibazjieqttwkfdoqutvzi4p2ermkg7hrbwtbkzaerdznmsrvewcsq",
+    "successor_split_root": "bafkreid6m4zd5e42eyqcljvr4uiwuwonpz4vyqcsa2zpx22khy6fplusdu"
+  },
+  "result_identity": "RESULT(PGIR-204)",
+  "schema": "proof-grounded-ir-learning/successor-r1-retirement-replay-receipt/v1",
+  "verified_inputs": [
+    "ipfs_datasets_py/data/ir_learning/corpora/successor-v1/corpus_root.json",
+    "ipfs_datasets_py/data/ir_learning/corpora/successor-v1/rights_manifest.json",
+    "ipfs_datasets_py/data/ir_learning/splits/successor-v1/split_root.json",
+    "ipfs_datasets_py/data/ir_learning/splits/successor-v1/holdout_report.json",
+    "ipfs_datasets_py/data/ir_learning/splits/successor-v1/leakage_report.json",
+    "ipfs_datasets_py/data/ir_learning/evaluations/deterministic/manifest.json",
+    "ipfs_datasets_py/data/ir_learning/evaluations/deterministic/r1_baseline.json"
+  ]
+}

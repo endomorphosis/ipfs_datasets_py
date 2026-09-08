@@ -1,0 +1,61 @@
+{
+  "schema": "ExternalAgentDatasetsReconciliation@1",
+  "task_id": "EAAEF-003",
+  "campaign": "ExternalAgentAutonomousExecutionFabric",
+  "owning_repository": "ipfs_datasets_py",
+  "integration_root": {
+    "commit": "41533721c5559ad68cecfe226fa6ba5f76f8a15d",
+    "tree": "d88b10b706d91c37e4be346366ff06bb58d1e8a3",
+    "integration_branch": "integration/external-agent-autonomous-execution-fabric-v1",
+    "decision": "provenance-preserving UI/UX-IR merge; current LPC API and registry semantics retained in the two conflicts"
+  },
+  "ui_ux_ir_merge": {
+    "classification": "content_integrated_without_ancestry",
+    "source_branch": "origin/agent/ui-ux-ir",
+    "source_head": "9d558ad706e83a944bbf3b66508f969041cc9518",
+    "two_parent_merge": "41533721c5559ad68cecfe226fa6ba5f76f8a15d",
+    "parents": [
+      "480a1666f144ad606fcb3cacb66e59775f28d0d1",
+      "9d558ad706e83a944bbf3b66508f969041cc9518"
+    ],
+    "changed_paths": 111,
+    "identical_on_main": 106,
+    "conflicting_code_paths": 2,
+    "disposition": "real two-parent merge completed; current LPC API and registry semantics retained"
+  },
+  "retained_lpc_surfaces": {
+    "logic_axis_schema": "logic-axis/v1",
+    "logic_provider_protocol": "LogicProviderProtocol@2",
+    "v1_adapter": "LPC-051",
+    "paths": [
+      "ipfs_datasets_py/logic/ir_core/axes.py",
+      "ipfs_datasets_py/logic/backends/protocol_v2.py",
+      "ipfs_datasets_py/logic/backends/protocol_v1_adapter.py",
+      "docs/architecture/UI_UX_IR_CONTRACT.md"
+    ]
+  },
+  "proof_reuse_residual": {
+    "classification": "stale_proof_reuse_restoration",
+    "source_branch": "origin/agent/ptr-161-163-171-g140-restore",
+    "source_head": "382e0d7e0ba4a774e15573cea27607e8ae617ab5",
+    "safe_to_cherry_pick": false,
+    "disposition": "compare against current proof sealer; manual port or typed no-go, never blind cherry-pick"
+  },
+  "semantic_contract_residuals": [
+    {
+      "classification": "isolated_two_file_semantic_contract_candidate",
+      "source_head": "d087dd9c781f9e953c148ee9fd29395c5b4f0e1c",
+      "disposition": "review child delta without importing conflict-heavy parent 0691203"
+    },
+    {
+      "classification": "alternate_conflict_heavy_snapshot",
+      "source_head": "0691203550c0f316852c74d293d8fc3c4ce130a6",
+      "add_add_conflicts": 23,
+      "disposition": "preserve; do not merge wholesale"
+    }
+  ],
+  "wholesale_stale_snapshots": {
+    "rejected": true,
+    "rule": "never merge conflict-heavy alternate snapshots or stale proof-reuse restorations wholesale"
+  }
+}
