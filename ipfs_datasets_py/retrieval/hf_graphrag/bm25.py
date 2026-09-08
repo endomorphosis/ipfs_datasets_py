@@ -157,10 +157,12 @@ class BM25LayoutConfig:
             raise HfGraphragBM25Error(
                 "b must be finite and between zero and one"
             )
-        if self.tokenizer != DEFAULT_BM25_TOKENIZER_ID:
+        tokenizer = str(self.tokenizer or "").strip()
+        if not tokenizer or "\x00" in tokenizer or len(tokenizer) > 256:
             raise HfGraphragBM25Error(
-                "unsupported CVEfixes BM25 tokenizer"
+                "tokenizer must be a non-empty versioned identifier"
             )
+        object.__setattr__(self, "tokenizer", tokenizer)
         if self.schema_version != BM25_LAYOUT_SCHEMA_VERSION:
             raise HfGraphragBM25Error(
                 "unsupported CVEfixes BM25 layout schema"
@@ -746,6 +748,12 @@ def _export_documents(
             )
         )
     return metadata, lengths
+
+
+def fts5_idf(document_count: int, document_frequency: int) -> float:
+    """Public FTS5 Okapi IDF used by nested posting cells."""
+
+    return _fts5_idf(document_count, document_frequency)
 
 
 def _fts5_idf(document_count: int, document_frequency: int) -> float:

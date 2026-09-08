@@ -40,6 +40,7 @@ from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
     ArtifactFamily,
     ArtifactPathError,
     CompactIndexRow,
+    HfGraphragSchemaError,
     InvalidDigestError,
     PhysicalBoundError,
     SortKeyError,
@@ -87,6 +88,14 @@ def test_example_descriptor_and_compact_index_round_trip():
     assert CompactIndexRow.from_mapping(index_row.to_dict()).to_dict()[
         "relative_path"
     ] == index_row.relative_path
+
+
+def test_compact_index_row_rejects_inverted_range():
+    payload = example_compact_index_payload()
+    payload["first_key"] = "gormley"
+    payload["last_key"] = "etiologic"
+    with pytest.raises(HfGraphragSchemaError, match="inverted"):
+        CompactIndexRow.from_mapping(payload)
 
 
 def test_manifest_descriptor_adds_shared_resolver_cid_alias():

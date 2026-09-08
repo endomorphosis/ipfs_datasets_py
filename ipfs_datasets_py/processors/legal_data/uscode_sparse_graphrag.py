@@ -177,10 +177,23 @@ _LAZY_EXPORTS: Final[Mapping[str, tuple[str, str]]] = MappingProxyType(
         "tokenize_indexable_batch": (".graphrag_parallel", "tokenize_indexable_batch"),
         "tokenize_process_pool_size": (".graphrag_parallel", "tokenize_process_pool_size"),
         "project_documents_parallel": (".graphrag_parallel", "project_documents_parallel"),
+        "assign_document_identities": (".graphrag_parallel", "assign_document_identities"),
+        "build_contains_term_graph": (".graphrag_parallel", "build_contains_term_graph"),
         "extract_document_graph": (".graphrag_parallel", "extract_document_graph"),
         "map_graph_partitions": (".graphrag_parallel", "map_graph_partitions"),
         "map_neighbor_clusters": (".graphrag_parallel", "map_neighbor_clusters"),
         "map_adjacency_directions": (".graphrag_parallel", "map_adjacency_directions"),
+        "map_graph_edge_cid_files": (".graphrag_parallel", "map_graph_edge_cid_files"),
+        "map_vector_entry_cid_files": (".graphrag_parallel", "map_vector_entry_cid_files"),
+        "nest_exploded_postings": (".graphrag_parallel", "nest_exploded_postings"),
+        "retrieval_method_for_edge_type": (
+            ".graphrag_parallel",
+            "retrieval_method_for_edge_type",
+        ),
+        "write_standard_compact_indexes": (
+            ".graphrag_parallel",
+            "write_standard_compact_indexes",
+        ),
         "IsolatedRowMutator": (".graphrag_parallel", "IsolatedRowMutator"),
         "map_documents_under_pressure": (
             ".graphrag_parallel",

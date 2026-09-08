@@ -21,6 +21,11 @@ def test_public_parallel_names_are_exported() -> None:
     assert "map_bm25_neighbor_groups" in public_names
     assert "bm25_neighbor_group" in public_names
     assert "map_adjacency_directions" in public_names
+    assert "map_graph_edge_cid_files" in public_names
+    assert "map_vector_entry_cid_files" in public_names
+    assert "assign_document_identities" in public_names
+    assert "nest_exploded_postings" in public_names
+    assert "write_standard_compact_indexes" in public_names
     assert "IsolatedRowMutator" in public_names
     assert "map_documents_under_pressure" in public_names
 
@@ -49,6 +54,11 @@ def test_sparse_graphrag_facades_reexport_parallel_apis() -> None:
         "map_graph_partitions",
         "map_neighbor_clusters",
         "map_adjacency_directions",
+        "map_graph_edge_cid_files",
+        "map_vector_entry_cid_files",
+        "assign_document_identities",
+        "nest_exploded_postings",
+        "write_standard_compact_indexes",
         "IsolatedRowMutator",
         "map_documents_under_pressure",
     )

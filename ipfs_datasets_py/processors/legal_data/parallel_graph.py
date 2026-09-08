@@ -2,8 +2,8 @@
 
 Citation/docket/RIN extraction is regex-heavy and GIL-bound, so it uses
 the same spawn pool as tokenization. Embedding-neighbor kNN is per-cluster
-and reads a shared memmap. Two-way adjacency sorts outgoing and incoming
-independently.
+and reads a shared memmap. Two-way adjacency shards each direction by
+node-key range and sizes the pool with :func:`tokenize_process_pool_size`.
 
 Do not use this to mutate a live in-memory BM25 index. Query-time graph
 walks stay serial over the adjacency pages.
@@ -20,6 +20,7 @@ from typing import Any
 
 import numpy as np
 import pyarrow as pa
+import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
 from ipfs_datasets_py.processors.legal_data.federal_register_graph import (
@@ -32,6 +33,7 @@ from ipfs_datasets_py.processors.legal_data.host_worker_budget import (
     tokenize_process_pool_size,
 )
 from ipfs_datasets_py.processors.legal_data.parallel_tokenize import (
+    chunk_items,
     ordered_process_map,
 )
 
@@ -39,6 +41,8 @@ DEFAULT_MAX_GRAPH_CHARS = 20000
 DEFAULT_NEIGHBOR_K = 8
 DEFAULT_SHARD_ROWS = 4096
 ADJ_SCHEMA_VERSION = "skillcenter-hf-graph-adjacency/v1"
+ADJ_BYTES_PER_WORKER = 1024 * 1024 * 1024
+REMAP_FILES_PER_CHUNK = 32
 
 
 def extract_document_graph(
@@ -292,8 +296,65 @@ def _adj_table(rows: list[dict[str, Any]]) -> pa.Table:
     )
 
 
+def split_adjacency_key_ranges(
+    keys: Sequence[str], n_parts: int
+) -> list[tuple[str | None, str | None]]:
+    """Split sorted unique keys into contiguous ``[lo, hi)`` ranges."""
+
+    uniq = sorted({str(key) for key in keys})
+    if not uniq:
+        return [(None, None)]
+    parts = max(1, min(int(n_parts), len(uniq)))
+    if parts <= 1:
+        return [(None, None)]
+    width = (len(uniq) + parts - 1) // parts
+    ranges: list[tuple[str | None, str | None]] = []
+    for index in range(parts):
+        start = index * width
+        if start >= len(uniq):
+            break
+        end = start + width
+        lo = uniq[start]
+        hi = uniq[end] if end < len(uniq) else None
+        ranges.append((lo, hi))
+    return ranges or [(None, None)]
+
+
+def _empty_adjacency_result(direction: str) -> dict[str, Any]:
+    return {
+        "direction": direction,
+        "max_degree": 0,
+        "nodes_with_edges": 0,
+        "pages": 0,
+        "pointer_total": 0,
+        "routing": [],
+        "shards": 0,
+    }
+
+
+def _filter_edge_table(
+    table: pa.Table, node_col: str, key_lo: str | None, key_hi: str | None
+) -> pa.Table:
+    if key_lo is None and key_hi is None:
+        return table
+    col = table[node_col]
+    mask = None
+    if key_lo is not None:
+        mask = pc.greater_equal(col, str(key_lo))
+    if key_hi is not None:
+        upper = pc.less(col, str(key_hi))
+        mask = upper if mask is None else pc.and_(mask, upper)
+    return table.filter(mask)
+
+
+def _clear_parquet_dir(dest: Path) -> None:
+    dest.mkdir(parents=True, exist_ok=True)
+    for stale in dest.glob("*.parquet"):
+        stale.unlink()
+
+
 def write_adjacency_direction(payload: Mapping[str, Any]) -> dict[str, Any]:
-    """Sort one directed adjacency family. Spawn-worker entry."""
+    """Sort one directed adjacency family or node-key slice. Spawn-worker entry."""
 
     edge_files = [Path(p) for p in payload["edge_files"]]
     node_files = [Path(p) for p in payload["node_files"]]
@@ -302,9 +363,16 @@ def write_adjacency_direction(payload: Mapping[str, Any]) -> dict[str, Any]:
     node_col = str(payload["node_col"])
     neighbor_col = str(payload["neighbor_col"])
     shard_rows = int(payload.get("shard_rows") or DEFAULT_SHARD_ROWS)
+    key_lo = payload.get("key_lo")
+    key_hi = payload.get("key_hi")
+    part_id = int(payload.get("part_id") or 0)
     dest.mkdir(parents=True, exist_ok=True)
-    for stale in dest.glob("*.parquet"):
-        stale.unlink()
+    if payload.get("clear_dest", True):
+        _clear_parquet_dir(dest)
+    else:
+        prefix = f"part-{part_id:04d}-"
+        for stale in dest.glob(f"{prefix}*.parquet"):
+            stale.unlink()
     node_types: dict[str, str] = {}
     for path in node_files:
         table = pq.read_table(path, columns=["node_id", "node_type"])
@@ -312,7 +380,14 @@ def write_adjacency_direction(payload: Mapping[str, Any]) -> dict[str, Any]:
             table.column("node_id").to_pylist(), table.column("node_type").to_pylist()
         ):
             node_types[str(nid)] = str(ntype)
-    edges = pa.concat_tables([pq.read_table(path) for path in edge_files])
+    tables = []
+    for path in edge_files:
+        table = _filter_edge_table(pq.read_table(path), node_col, key_lo, key_hi)
+        if table.num_rows:
+            tables.append(table)
+    if not tables:
+        return _empty_adjacency_result(direction)
+    edges = pa.concat_tables(tables)
     ordered = edges.sort_by(
         [(node_col, "ascending"), ("type", "ascending"), (neighbor_col, "ascending")]
     )
@@ -327,12 +402,17 @@ def write_adjacency_direction(payload: Mapping[str, Any]) -> dict[str, Any]:
     pointer_total = 0
     max_degree = 0
     n_nodes = 0
+    ranged = key_lo is not None or key_hi is not None or part_id > 0
 
     def flush() -> None:
         nonlocal shard, rows
         if not rows:
             return
-        name = f"part-{shard:06d}.parquet"
+        name = (
+            f"part-{part_id:04d}-{shard:04d}.parquet"
+            if ranged
+            else f"part-{shard:06d}.parquet"
+        )
         pq.write_table(_adj_table(rows), dest / name, compression="zstd")
         routing.append(
             {
@@ -400,6 +480,7 @@ def write_adjacency_direction(payload: Mapping[str, Any]) -> dict[str, Any]:
         "max_degree": max_degree,
         "nodes_with_edges": n_nodes,
         "pages": sum(item["row_count"] for item in routing),
+        "part_id": part_id,
         "pointer_total": pointer_total,
         "routing": routing,
         "shards": len(routing),
@@ -535,6 +616,51 @@ def map_bm25_neighbor_groups(
     return results
 
 
+def _load_node_keys(
+    node_files: Sequence[Path],
+) -> tuple[list[str], list[str]]:
+    documents: list[str] = []
+    all_ids: list[str] = []
+    for path in node_files:
+        table = pq.read_table(path, columns=["node_id", "node_type"])
+        for nid, ntype in zip(
+            table.column("node_id").to_pylist(), table.column("node_type").to_pylist()
+        ):
+            nid = str(nid)
+            all_ids.append(nid)
+            if str(ntype) == "document":
+                documents.append(nid)
+    return documents or all_ids, all_ids
+
+
+def _merge_adjacency_parts(parts: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    filled = [dict(part) for part in parts if int(part.get("pointer_total") or 0) > 0]
+    if not filled:
+        direction = str(parts[0]["direction"]) if parts else "outgoing"
+        return _empty_adjacency_result(direction)
+    filled.sort(
+        key=lambda part: (
+            str((part.get("routing") or [{"first_key": ""}])[0].get("first_key") or ""),
+            int(part.get("part_id") or 0),
+        )
+    )
+    routing: list[dict[str, Any]] = []
+    for part in filled:
+        for item in part.get("routing") or ():
+            rec = dict(item)
+            rec["shard_id"] = len(routing)
+            routing.append(rec)
+    return {
+        "direction": str(filled[0]["direction"]),
+        "max_degree": max(int(part["max_degree"]) for part in filled),
+        "nodes_with_edges": sum(int(part["nodes_with_edges"]) for part in filled),
+        "pages": sum(int(part["pages"]) for part in filled),
+        "pointer_total": sum(int(part["pointer_total"]) for part in filled),
+        "routing": routing,
+        "shards": len(routing),
+    }
+
+
 def map_adjacency_directions(
     *,
     edge_files: Sequence[Path],
@@ -542,39 +668,291 @@ def map_adjacency_directions(
     outgoing_dest: Path,
     incoming_dest: Path,
     shard_rows: int = DEFAULT_SHARD_ROWS,
+    workers: int | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Build outgoing and incoming adjacency in two spawn workers."""
+    """Build outgoing and incoming adjacency with resource-aware spawn workers.
 
+    Each direction is split into contiguous node-key ranges so the host can
+    use more than two processes. Locator ``first_key``/``last_key`` ranges
+    stay ordered after merge. Query-time walks stay serial.
+    """
+
+    plan = tokenize_process_pool_size(
+        per_task_budget=ADJ_BYTES_PER_WORKER, requested=workers
+    )
     files = [str(path) for path in edge_files]
     nodes = [str(path) for path in node_files]
+    document_ids, all_ids = _load_node_keys(node_files)
+    n_parts = max(1, plan.workers)
+    outgoing_ranges = split_adjacency_key_ranges(document_ids, n_parts)
+    incoming_ranges = split_adjacency_key_ranges(all_ids, n_parts)
+    _clear_parquet_dir(outgoing_dest)
+    _clear_parquet_dir(incoming_dest)
+    payloads: list[dict[str, Any]] = []
+    for direction, dest, node_col, neighbor_col, ranges in (
+        ("outgoing", outgoing_dest, "src", "dst", outgoing_ranges),
+        ("incoming", incoming_dest, "dst", "src", incoming_ranges),
+    ):
+        for part_id, (key_lo, key_hi) in enumerate(ranges):
+            payloads.append(
+                {
+                    "clear_dest": False,
+                    "dest": str(dest),
+                    "direction": direction,
+                    "edge_files": files,
+                    "key_hi": key_hi,
+                    "key_lo": key_lo,
+                    "neighbor_col": neighbor_col,
+                    "node_col": node_col,
+                    "node_files": nodes,
+                    "part_id": part_id,
+                    "shard_rows": shard_rows,
+                }
+            )
+    print(
+        f"graph adjacency directions=2 parts={n_parts} workers={plan.workers}",
+        flush=True,
+    )
+    if plan.workers <= 1 or len(payloads) <= 1:
+        results = [write_adjacency_direction(item) for item in payloads]
+    else:
+        ctx = mp.get_context(plan.start_method)
+        results = []
+        with ProcessPoolExecutor(max_workers=plan.workers, mp_context=ctx) as pool:
+            futures = [pool.submit(write_adjacency_direction, item) for item in payloads]
+            done = 0
+            for fut in as_completed(futures):
+                rec = fut.result()
+                results.append(rec)
+                done += 1
+                print(
+                    f"  adjacency parts={done}/{len(payloads)} "
+                    f"direction={rec['direction']} pointers={rec['pointer_total']}",
+                    flush=True,
+                )
+    outgoing = _merge_adjacency_parts(
+        [item for item in results if item.get("direction") == "outgoing"]
+    )
+    incoming = _merge_adjacency_parts(
+        [item for item in results if item.get("direction") == "incoming"]
+    )
+    return outgoing, incoming
+
+
+def _identity_key_to_cid(path: Path) -> dict[str, str]:
+    table = pq.read_table(path, columns=["node_key", "node_cid"])
+    return {
+        str(key): str(cid)
+        for key, cid in zip(
+            table.column("node_key").to_pylist(), table.column("node_cid").to_pylist()
+        )
+    }
+
+
+def remap_graph_edge_file(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Rewrite one edge parquet onto CIDv1 src/dst/edge_cid. Spawn-worker entry."""
+
+    path = Path(str(payload["path"]))
+    dest = Path(str(payload["dest"]))
+    key_to_cid = payload.get("key_to_cid")
+    if not isinstance(key_to_cid, Mapping):
+        key_to_cid = _identity_key_to_cid(Path(str(payload["identity_path"])))
+    table = pq.read_table(path, columns=["src", "dst", "type"])
+    srcs: list[str] = []
+    dsts: list[str] = []
+    types: list[str] = []
+    cids: list[str] = []
+    missing = 0
+    for src, dst, etype in zip(
+        table.column("src").to_pylist(),
+        table.column("dst").to_pylist(),
+        table.column("type").to_pylist(),
+    ):
+        src_cid = key_to_cid.get(str(src))
+        dst_cid = key_to_cid.get(str(dst))
+        if src_cid is None or dst_cid is None:
+            missing += 1
+            continue
+        srcs.append(str(src_cid))
+        dsts.append(str(dst_cid))
+        types.append(str(etype))
+        cids.append(_edge_cid(str(src_cid), str(etype), str(dst_cid)))
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if srcs:
+        pq.write_table(
+            pa.table({"src": srcs, "dst": dsts, "type": types, "edge_cid": cids}),
+            dest,
+            compression="zstd",
+        )
+    return {"kept": len(srcs), "missing": missing, "name": path.name}
+
+
+def remap_graph_edge_files_chunk(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Rewrite a batch of edge parquet files. Spawn-worker entry."""
+
+    key_to_cid = _identity_key_to_cid(Path(str(payload["identity_path"])))
+    src_dir = Path(str(payload["src_dir"]))
+    dest_dir = Path(str(payload["dest_dir"]))
+    kept = 0
+    missing = 0
+    for name in payload["names"]:
+        rec = remap_graph_edge_file(
+            {
+                "path": str(src_dir / str(name)),
+                "dest": str(dest_dir / str(name)),
+                "key_to_cid": key_to_cid,
+            }
+        )
+        kept += int(rec["kept"])
+        missing += int(rec["missing"])
+    return {"kept": kept, "missing": missing, "files": len(payload["names"])}
+
+
+def map_graph_edge_cid_files(
+    edge_files: Sequence[Path],
+    *,
+    identity_path: Path,
+    dest_dir: Path,
+    workers: int | None = None,
+) -> dict[str, int]:
+    """Process-pool CIDv1 rewrite of graph edge parquet files."""
+
+    files = [Path(path) for path in edge_files]
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    plan = tokenize_process_pool_size(
+        per_task_budget=TOKENIZE_BYTES_PER_WORKER, requested=workers
+    )
+    names = [path.name for path in files]
+    src_dir = files[0].parent if files else dest_dir
+    chunk_size = max(1, REMAP_FILES_PER_CHUNK)
     payloads = [
         {
-            "dest": str(outgoing_dest),
-            "direction": "outgoing",
-            "edge_files": files,
-            "neighbor_col": "dst",
-            "node_col": "src",
-            "node_files": nodes,
-            "shard_rows": shard_rows,
-        },
-        {
-            "dest": str(incoming_dest),
-            "direction": "incoming",
-            "edge_files": files,
-            "neighbor_col": "src",
-            "node_col": "dst",
-            "node_files": nodes,
-            "shard_rows": shard_rows,
-        },
+            "dest_dir": str(dest_dir),
+            "identity_path": str(identity_path),
+            "names": list(chunk),
+            "src_dir": str(src_dir),
+        }
+        for chunk in chunk_items(names, chunk_size)
     ]
-    results = ordered_process_map(
-        write_adjacency_direction, payloads, workers=2
+    print(
+        f"graph remap-edges files={len(names)} chunks={len(payloads)} workers={plan.workers}",
+        flush=True,
     )
-    by_dir = {str(item["direction"]): item for item in results}
-    return by_dir["outgoing"], by_dir["incoming"]
+    if plan.workers <= 1 or len(payloads) <= 1:
+        recs = [remap_graph_edge_files_chunk(item) for item in payloads]
+    else:
+        ctx = mp.get_context(plan.start_method)
+        recs = []
+        with ProcessPoolExecutor(max_workers=plan.workers, mp_context=ctx) as pool:
+            futures = [pool.submit(remap_graph_edge_files_chunk, item) for item in payloads]
+            done = 0
+            kept = 0
+            for fut in as_completed(futures):
+                rec = fut.result()
+                recs.append(rec)
+                done += 1
+                kept += int(rec["kept"])
+                if done % 10 == 0 or done == len(payloads):
+                    print(
+                        f"  remap-edges chunks={done}/{len(payloads)} kept={kept}",
+                        flush=True,
+                    )
+    return {
+        "files": len(names),
+        "kept": int(sum(int(rec["kept"]) for rec in recs)),
+        "missing": int(sum(int(rec["missing"]) for rec in recs)),
+        "workers": int(plan.workers),
+    }
+
+
+def remap_vector_entry_cid_file(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Rewrite ``entry_cid`` on one vector parquet. Spawn-worker entry."""
+
+    path = Path(str(payload["path"]))
+    dest = Path(str(payload.get("dest") or path))
+    key_to_cid = payload.get("key_to_cid")
+    if not isinstance(key_to_cid, Mapping):
+        key_to_cid = _identity_key_to_cid(Path(str(payload["identity_path"])))
+    table = pq.read_table(path)
+    old = table.column("entry_cid").to_pylist()
+    new = [str(key_to_cid.get(str(item), str(item))) for item in old]
+    cols = {name: table.column(name) for name in table.schema.names if name != "entry_cid"}
+    cols["entry_cid"] = pa.array(new, type=pa.string())
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    pq.write_table(pa.table(cols), dest, compression="zstd")
+    return {"rows": len(new), "name": path.name}
+
+
+def remap_vector_entry_cid_files_chunk(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Rewrite ``entry_cid`` on a batch of vector parquet files."""
+
+    key_to_cid = _identity_key_to_cid(Path(str(payload["identity_path"])))
+    rows = 0
+    for item in payload["files"]:
+        rec = remap_vector_entry_cid_file(
+            {
+                "path": str(item["path"]),
+                "dest": str(item.get("dest") or item["path"]),
+                "key_to_cid": key_to_cid,
+            }
+        )
+        rows += int(rec["rows"])
+    return {"rows": rows, "files": len(payload["files"])}
+
+
+def map_vector_entry_cid_files(
+    files: Sequence[tuple[Path, Path]],
+    *,
+    identity_path: Path,
+    workers: int | None = None,
+) -> dict[str, int]:
+    """Process-pool CIDv1 rewrite of vector ``entry_cid`` columns."""
+
+    pairs = [(Path(src), Path(dst)) for src, dst in files]
+    plan = tokenize_process_pool_size(
+        per_task_budget=TOKENIZE_BYTES_PER_WORKER, requested=workers
+    )
+    payloads = [
+        {
+            "files": [{"path": str(src), "dest": str(dst)} for src, dst in chunk],
+            "identity_path": str(identity_path),
+        }
+        for chunk in chunk_items(pairs, max(1, REMAP_FILES_PER_CHUNK))
+    ]
+    print(
+        f"graph remap-vectors files={len(pairs)} chunks={len(payloads)} workers={plan.workers}",
+        flush=True,
+    )
+    if plan.workers <= 1 or len(payloads) <= 1:
+        recs = [remap_vector_entry_cid_files_chunk(item) for item in payloads]
+    else:
+        ctx = mp.get_context(plan.start_method)
+        recs = []
+        with ProcessPoolExecutor(max_workers=plan.workers, mp_context=ctx) as pool:
+            futures = [
+                pool.submit(remap_vector_entry_cid_files_chunk, item) for item in payloads
+            ]
+            done = 0
+            rows = 0
+            for fut in as_completed(futures):
+                rec = fut.result()
+                recs.append(rec)
+                done += 1
+                rows += int(rec["rows"])
+                if done % 5 == 0 or done == len(payloads):
+                    print(
+                        f"  remap-vectors chunks={done}/{len(payloads)} rows={rows}",
+                        flush=True,
+                    )
+    return {
+        "files": len(pairs),
+        "rows": int(sum(int(rec["rows"]) for rec in recs)),
+        "workers": int(plan.workers),
+    }
 
 
 __all__ = [
+    "ADJ_BYTES_PER_WORKER",
     "ADJ_SCHEMA_VERSION",
     "bm25_neighbor_group",
     "embedding_neighbor_cluster",
@@ -582,7 +960,12 @@ __all__ = [
     "extract_partition_graph",
     "map_adjacency_directions",
     "map_bm25_neighbor_groups",
+    "map_graph_edge_cid_files",
     "map_graph_partitions",
     "map_neighbor_clusters",
+    "map_vector_entry_cid_files",
+    "remap_graph_edge_file",
+    "remap_vector_entry_cid_file",
+    "split_adjacency_key_ranges",
     "write_adjacency_direction",
 ]

@@ -742,6 +742,11 @@ class CompactIndexRow:
         object.__setattr__(
             self, "last_key", _require_non_empty_str(self.last_key, "last_key")
         )
+        if self.first_key > self.last_key:
+            raise HfGraphragSchemaError(
+                f"compact index range is inverted: first_key={self.first_key!r} "
+                f"> last_key={self.last_key!r}"
+            )
         object.__setattr__(
             self, "kind", _require_non_empty_str(self.kind, "kind", maximum=128)
         )

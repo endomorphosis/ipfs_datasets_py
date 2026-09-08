@@ -24,10 +24,10 @@
   "admitted": {
     "chunk_count": 36,
     "corpus_count": 14,
-    "corpus_root_cid": "sha256:3b9e0b924a28e09b9347c76b35a3294a857277e83f21fbc9a4b2abfbf5b61790",
+    "corpus_root_cid": "bafkreib3tyfzesri4cnzgr6hnm22gkkkqvzhp2b7eh54tjfsvp57lnqxsa",
     "document_count": 14,
     "edge_count": 70,
-    "graph_cid": "sha256:a4fcf7baf29996f890d37669040f2f45b415e8c3c5db735fc7756ab72452af92",
+    "graph_cid": "bafkreibchudvcufol44ivxcd77tnhulukbh66j3cifr5wnvmeqgrzzaxne",
     "incoming_descriptor_count": 45,
     "node_count": 59,
     "outgoing_descriptor_count": 14,
@@ -99,7 +99,7 @@
       "outgoing_descriptor_count": 9,
       "sorted_by": "node_cid_then_edge_type_then_neighbor_cid"
     },
-    "corpus_root_cid": "sha256:5cbfd575b67f5f7baccd5b84f0bddf5e21884f7e54a9a41937195b0fa9b39a78",
+    "corpus_root_cid": "bafkreic4x7kxlnt7l552ztk3qtyl3x26egee67suvgsbsnyzlmh2tm42pa",
     "document_count": 8,
     "document_keys": [
       "document:fr:2026-04567:2026-03-16:type=rule",
@@ -135,7 +135,7 @@
       "unresolved_citations": 1,
       "unresolved_related_documents": 1
     },
-    "graph_cid": "sha256:9e92662e0d82f2e6be869102face3623191642958593ab920a4ff36ea7be3646",
+    "graph_cid": "bafkreigcdfjse3i62iosjaaa7sq6k7ymcu4y7f3b3oeo5zauofvbdc22hy",
     "legal_edge_count": 61,
     "node_count": 55,
     "node_type_counts": {
@@ -271,7 +271,7 @@
   "program_id": "legal-corpora-reindex-v1",
   "proves_software_contract_only": true,
   "release_profile": "federal-register-ir-graphrag/v2",
-  "report_digest_sha256": "861d442a3e034b60286cf8affc7a613e1667f6640df4556df7a9214a0659c602",
+  "report_digest_sha256": "e770ef8977226c20abc07fa8ae860f86f404bc19288cd209af5be9aa5f2d6acb",
   "report_kind": "fixture_graph",
   "schema": "ipfs_datasets_py/legal-corpora-reindex-federal-graph@1",
   "schema_version": "federal-register-graph-v1",
