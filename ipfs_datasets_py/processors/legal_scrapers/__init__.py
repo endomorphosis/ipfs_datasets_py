@@ -262,6 +262,13 @@ from .eu_legal_citation_bridge import (
     register_de_openlegaldata_ecli_resolver,
     register_fr_judilibre_ecli_resolver,
 )
+from .national_collectors import (
+    collector_for_hf_dataset,
+    get_national_collector,
+    hf_dataset_coverage,
+    list_national_collectors,
+    load_collector_module,
+)
 from .justicedao_dataset_inventory import (
     BluebookDatasetExecutionResult,
     BluebookDatasetQueryPlan,
@@ -714,6 +721,11 @@ __all__ = [
     "recover_packaged_docket_missing_authorities_from_parameters",
     "plan_packaged_docket_missing_authority_follow_up_from_parameters",
     "execute_packaged_docket_missing_authority_follow_up_from_parameters",
+    "list_national_collectors",
+    "get_national_collector",
+    "collector_for_hf_dataset",
+    "load_collector_module",
+    "hf_dataset_coverage",
     "build_justicedao_bluebook_query_plan",
     "build_justicedao_legal_citation_query_plan",
     "derive_justicedao_bluebook_strategies",
