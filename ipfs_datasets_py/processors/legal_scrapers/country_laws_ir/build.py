@@ -5,16 +5,28 @@ from __future__ import annotations
 import os
 
 import json
+
+import pandas as pd
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from .bm25 import bm25_neighbors, build_index
+from .mem import MemAbort, checkpoint, log_mem
+from .spill import (
+    SQLITE_THRESHOLD,
+    build_bm25_tf_spill,
+    build_graph_from_neighbor_shards,
+    neighbors_via_sqlite,
+    should_use_sqlite,
+    spill_dir_for,
+    spill_pickle,
+)
+from .package import package_from_spill, package_release
 from .catalog import get_country, indexable_countries, target_repo
 from .graph import build_graph
 from .normalize import build_corpus, load_source
-from .package import package_release
 from .auth import configure_hf
 from .vectors import encode_corpus, embeddings_available, layout_stub_vectors, layout_vectors
 
@@ -81,46 +93,90 @@ def build_country(
     if corpus.empty:
         raise RuntimeError("Normalized corpus is empty; refusing to package")
 
-    bm25 = build_index(corpus)
-    _log(f"bm25 terms={bm25['stats']['n_terms']} postings={bm25['stats']['n_postings']}")
-    _log(f"bm25 neighbors start n={len(corpus)} k={neighbor_k}")
-    neighbors = bm25_neighbors(bm25, k=neighbor_k)
-    _log("bm25 neighbors done")
-    graph = build_graph(corpus, neighbors)
-    _log(f"graph nodes={graph['stats']['n_nodes']} edges={graph['stats']['n_edges']}")
+    import gc
+
+    n_docs = len(corpus)
+    spill = spill_dir_for(country["slug"], CACHE)
+    spill.mkdir(parents=True, exist_ok=True)
+    corpus_ckpt = CACHE / f"{country['slug']}_corpus.parquet"
+    corpus.to_parquet(corpus_ckpt, index=False)
+    checkpoint("after_normalize", log=_log)
 
     vector_blocker = None
     if skip_vectors:
         vectors = layout_stub_vectors(corpus, reason="skip_vectors flag")
         vector_blocker = "skip_vectors"
+        spill_pickle(spill / "vectors.pkl", vectors)
+        del vectors
+        gc.collect()
     elif embeddings_available():
         try:
             ckpt = CACHE / "embeddings" / f"{country['slug']}.npy"
-            _log(f"vectors encode start n={len(corpus)} checkpoint={ckpt}")
+            _log(f"vectors encode start n={n_docs} checkpoint={ckpt}")
             embeddings = encode_corpus(corpus, device=device, checkpoint_path=str(ckpt))
             vectors = layout_vectors(corpus, embeddings)
             _log(f"vectors n={vectors['stats']['n_vectors']} shards={vectors['stats']['shard_count']}")
+            spill_pickle(spill / "vectors.pkl", vectors)
+            del embeddings, vectors
+            gc.collect()
+            checkpoint("vectors_spilled", log=_log)
         except Exception as exc:
             vector_blocker = f"embedding_failed: {exc}"
             _log(f"vector embedding failed; writing stub ({exc})")
             vectors = layout_stub_vectors(corpus, reason=vector_blocker)
+            spill_pickle(spill / "vectors.pkl", vectors)
+            del vectors
+            gc.collect()
     else:
         vector_blocker = "sentence-transformers/torch unavailable"
         _log(f"vectors stub: {vector_blocker}")
         vectors = layout_stub_vectors(corpus, reason=vector_blocker)
+        spill_pickle(spill / "vectors.pkl", vectors)
+        del vectors
+        gc.collect()
 
-    code_root = Path(__file__).resolve().parent.parent
-    manifest = package_release(
-        out,
-        corpus,
-        bm25,
-        graph,
-        vectors,
-        source_meta,
-        country,
-        code_root,
-        normalization_report=norm_report,
-    )
+    use_sqlite = should_use_sqlite(n_docs)
+    neighbor_via = "stock"
+    if use_sqlite:
+        _log(f"sqlite neighbors path n={n_docs} (>= {SQLITE_THRESHOLD}) spill={spill}")
+        # Free corpus body for neighbor stream — reload later for graph
+        del corpus
+        gc.collect()
+        neighbors_via_sqlite(corpus_ckpt, spill, n_docs, k=neighbor_k, log=_log)
+        neighbor_via = "sqlite_fts"
+        bm25_info = build_bm25_tf_spill(corpus_ckpt, spill, n_docs, log=_log)
+        corpus = pd.read_parquet(corpus_ckpt)
+        graph = build_graph_from_neighbor_shards(corpus, spill, log=_log)
+        spill_pickle(spill / "graph.pkl", graph)
+        del graph, corpus
+        gc.collect()
+        checkpoint("graph_spilled", log=_log)
+        code_root = Path(__file__).resolve().parent.parent
+        manifest = package_from_spill(
+            out, spill, corpus_ckpt, source_meta, country, code_root,
+            normalization_report=norm_report, expected_rows=n_docs,
+        )
+        _log(f"packaged sequential via={neighbor_via} {out}")
+    else:
+        bm25 = build_index(corpus)
+        _log(f"bm25 terms={bm25['stats']['n_terms']} postings={bm25['stats']['n_postings']}")
+        _log(f"bm25 neighbors start n={n_docs} k={neighbor_k}")
+        neighbors = bm25_neighbors(bm25, k=neighbor_k)
+        _log("bm25 neighbors done")
+        graph = build_graph(corpus, neighbors)
+        del neighbors
+        gc.collect()
+        _log(f"graph nodes={graph['stats']['n_nodes']} edges={graph['stats']['n_edges']}")
+        with open(spill / "vectors.pkl", "rb") as _vf:
+            import pickle as _pickle
+            vectors = _pickle.load(_vf)
+        code_root = Path(__file__).resolve().parent.parent
+        manifest = package_release(
+            out, corpus, bm25, graph, vectors, source_meta, country, code_root,
+            normalization_report=norm_report,
+        )
+        del corpus, bm25, graph, vectors
+        gc.collect()
     _log(f"packaged {out}")
     result = {
         "country": country["slug"],
@@ -131,6 +187,7 @@ def build_country(
         "counts": manifest["counts"],
         "normalization": norm_report,
         "vector_blocker": vector_blocker,
+        "neighbor_via": neighbor_via,
         "schema_version": manifest["schema_version"],
     }
     if upload:

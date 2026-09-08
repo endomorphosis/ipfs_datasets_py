@@ -109,6 +109,14 @@ def encode_corpus(
         out[done:j] = np.asarray(chunk, dtype=np.float32)
         done = j
         print(f"embeddings checkpoint {done}/{n}", flush=True)
+        try:
+            from .mem import checkpoint as _mem_checkpoint
+            _mem_checkpoint(f"embeddings@{done}", row=done, every_n=max(chunk_size, 4096))
+        except Exception as _mem_exc:
+            # MemAbort should propagate; other import issues are non-fatal
+            from .mem import MemAbort
+            if isinstance(_mem_exc, MemAbort):
+                raise
         if ckpt is not None:
             ckpt.parent.mkdir(parents=True, exist_ok=True)
             tmp = ckpt.with_name(ckpt.name + ".tmp.npy")

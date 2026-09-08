@@ -59,6 +59,27 @@ def cid_v1_raw_sha256(data: bytes) -> str:
     return "b" + _b32encode(cid_bytes)
 
 
+def sha256_key_to_cidv1(value: str) -> str:
+    """Turn a bare/prefixed SHA-256 routing key into ``bafkrei…`` CIDv1.
+
+    GraphRAG locators must not use hex digests as ``entry_cid`` / ``node_cid``.
+    """
+
+    text = str(value or "").strip()
+    if text.startswith("bafkrei"):
+        return text
+    hex_part = text[7:71] if text.lower().startswith("sha256:") else text[:64]
+    rest = text[71:] if text.lower().startswith("sha256:") else text[64:]
+    if len(hex_part) != 64:
+        return text
+    try:
+        digest = bytes.fromhex(hex_part)
+    except ValueError:
+        return text
+    cid_bytes = bytes([0x01, 0x55, 0x12, 0x20]) + digest
+    return "b" + _b32encode(cid_bytes) + rest
+
+
 def cid_of_json(obj: Any) -> str:
     return cid_v1_raw_sha256(canonical_json_bytes(obj))
 
