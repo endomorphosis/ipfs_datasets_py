@@ -23,6 +23,7 @@ from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import
     EXPECTED_JURISDICTION_COUNT,
     FORBIDDEN_OPERATIONS,
     GOAL_ID,
+    HISTORICAL_BASELINE_REVISION,
     JurisdictionCoverageError,
     LiveMutationDeniedError,
     LiveMutationRequest,
@@ -30,17 +31,19 @@ from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import
     MutationPhase,
     OperationForbiddenError,
     PREVIOUS_PUBLIC_PIN,
+    PUBLICATION_PARENT_REVISION,
     PublicationAuthorization,
     PublicationOperation,
     REQUIRED_LIVE_MUTATION_GATES,
+    RollbackPinError,
     SCHEMA_VERSION,
     SECRET_ENV_NAMES,
-    SecretRedactionError,
     StagingCanaryError,
     StagingFirstError,
     TASK_ID,
     TargetUnauthorizedError,
     assert_environment_only_credentials,
+    assert_historical_baseline_pin_preserved,
     assert_operation_authorized,
     assert_rollback_pin_preserved,
     assert_target_authorized,
@@ -96,6 +99,10 @@ def test_schema_and_task_identity_are_stable() -> None:
     assert EXPECTED_JURISDICTION_COUNT == 51
     assert DEFAULT_DATASET_REPO_ID == "justicedao/ipfs_state_laws"
     assert PREVIOUS_PUBLIC_PIN == "42f0546acc7c6cd55627eaf51fb820d5613b9021"
+    assert HISTORICAL_BASELINE_REVISION == PREVIOUS_PUBLIC_PIN
+    assert PUBLICATION_PARENT_REVISION == (
+        "78cba0ed86c3971a7b90620c6df167af8a1a6fb2"
+    )
     assert AUTHORIZED_ON == "2026-08-10"
     assert REQUIRED_LIVE_MUTATION_GATES == (
         "exact_51_coverage",
@@ -205,11 +212,14 @@ def test_rollback_pin_must_be_preserved(
     sealed_authorization: PublicationAuthorization,
 ) -> None:
     assert_rollback_pin_preserved(
+        PUBLICATION_PARENT_REVISION, authorization=sealed_authorization
+    )
+    assert_historical_baseline_pin_preserved(
         PREVIOUS_PUBLIC_PIN, authorization=sealed_authorization
     )
-    with pytest.raises(Exception):
+    with pytest.raises(RollbackPinError):
         assert_rollback_pin_preserved(
-            "a" * 40, authorization=sealed_authorization
+            PREVIOUS_PUBLIC_PIN, authorization=sealed_authorization
         )
 
 
@@ -219,7 +229,9 @@ def test_rollback_pin_must_be_preserved(
 
 
 def test_authorized_staging_mutation_passes_all_gates() -> None:
-    decision = evaluate_live_mutation(example_authorized_staging_request())
+    request = example_authorized_staging_request()
+    assert request["previous_public_pin"] == PUBLICATION_PARENT_REVISION
+    decision = evaluate_live_mutation(request)
     assert decision.authorized is True
     assert decision.operation == PublicationOperation.ADDITIVE_STAGING_UPLOAD.value
     assert decision.phase == MutationPhase.STAGING.value
@@ -229,7 +241,9 @@ def test_authorized_staging_mutation_passes_all_gates() -> None:
 
 
 def test_authorized_main_mutation_requires_staging_canary() -> None:
-    decision = evaluate_live_mutation(example_authorized_main_request())
+    request = example_authorized_main_request()
+    assert request["previous_public_pin"] == PUBLICATION_PARENT_REVISION
+    decision = evaluate_live_mutation(request)
     assert decision.authorized is True
     assert decision.operation == PublicationOperation.ADDITIVE_MAIN_UPLOAD.value
     assert decision.phase == MutationPhase.MAIN.value

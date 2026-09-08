@@ -6045,6 +6045,7 @@ class BaseStateScraper(ABC):
                         url_terms=url_terms,
                         mime_terms=mime_terms,
                         max_results=inventory_limit,
+                        exact_urls=targets,
                     )
                 )
             except Exception as exc:
@@ -6192,20 +6193,33 @@ class BaseStateScraper(ABC):
                         * int(max_queries_per_origin or configured_max_queries),
                     ),
                 )
-                outcome = await fetch_wayback_capture_inventory(
-                    inventory_targets,
-                    timeout_seconds=max(1, int(timeout_seconds or 25)),
-                    max_queries=max_queries,
-                    max_queries_per_origin=max_queries_per_origin,
-                    max_results_per_query=max_results,
-                    result_multiplier=result_multiplier,
-                    # The engine retries only the exact transiently failed
-                    # query plan.  Successful same-origin chunks are never
-                    # submitted again, so a bounded plural retry cannot turn
-                    # back into a whole-frontier or per-page archive loop.
-                    query_attempts=configured_query_attempts,
-                    retry_delay_seconds=retry_delay_seconds,
-                )
+                try:
+                    outcome = await fetch_wayback_capture_inventory(
+                        inventory_targets,
+                        timeout_seconds=max(1, int(timeout_seconds or 25)),
+                        max_queries=max_queries,
+                        max_queries_per_origin=max_queries_per_origin,
+                        max_results_per_query=max_results,
+                        result_multiplier=result_multiplier,
+                        # The engine retries only the exact transiently failed
+                        # query plan.  Successful same-origin chunks are never
+                        # submitted again, so a bounded plural retry cannot turn
+                        # back into a whole-frontier or per-page archive loop.
+                        query_attempts=configured_query_attempts,
+                        retry_delay_seconds=retry_delay_seconds,
+                    )
+                except Exception as exc:  # noqa: BLE001 - CDX 429/timeout must not skip snapshot GET
+                    outcome = {
+                        "status": "error",
+                        "captures_by_url": {},
+                        "receipts": [],
+                        "stats": {
+                            "requested_pages": len(inventory_targets),
+                            "unique_pages": len(inventory_targets),
+                            "prefix_queries_failed": 1,
+                            "loader_error": f"{type(exc).__name__}: {exc}",
+                        },
+                    }
                 if not isinstance(outcome, dict):
                     raise TypeError(
                         "shared Wayback capture inventory returned a non-mapping"
@@ -6217,6 +6231,142 @@ class BaseStateScraper(ABC):
                             self._state_law_archive_discovery_receipts.append(
                                 dict(receipt)
                             )
+                raw_captures = outcome.get("captures_by_url")
+                captures = (
+                    dict(raw_captures) if isinstance(raw_captures, Mapping) else {}
+                )
+                missing_targets = [
+                    target_url
+                    for target_url in inventory_targets
+                    if target_url not in captures
+                ]
+                if missing_targets:
+                    all_missed = len(missing_targets) == len(inventory_targets)
+                    stats = (
+                        outcome.get("stats")
+                        if isinstance(outcome.get("stats"), Mapping)
+                        else {}
+                    )
+                    prefix_failed = str(
+                        outcome.get("status") or ""
+                    ).strip().casefold() in {"error", "failed"}
+                    try:
+                        prefix_failed = prefix_failed or (
+                            int(stats.get("prefix_queries_failed") or 0) > 0
+                        )
+                    except (TypeError, ValueError):
+                        prefix_failed = True
+                    # An authoritative empty CDX inventory may skip identity
+                    # fan-out on a huge miss set.  Timeout/429/connection
+                    # errors are not empty inventories; /web/2id_/ can still
+                    # return bodies.
+                    if all_missed and len(missing_targets) > 128 and not prefix_failed:
+                        logger.info(
+                            "Wayback prefix inventory missed all %s URL(s) with no "
+                            "captures; skipping closest identity replay fan-out",
+                            len(missing_targets),
+                        )
+                    else:
+                        logger.info(
+                            "Wayback prefix inventory missed %s URL(s); "
+                            "trying closest identity replay",
+                            len(missing_targets),
+                        )
+                        from ...web_archiving.wayback_machine_engine import (
+                            get_wayback_content,
+                            wayback_identity_replay_url,
+                        )
+
+                        cdx_rate_limited = "429" in str(outcome)
+                        if cdx_rate_limited:
+                            await asyncio.sleep(3.0)
+                        for target_url in missing_targets:
+                            # Prefix CDX is already 429/empty. Skip another CDX
+                            # lookup; identity replay `/web/2id_/` is the latest raw body.
+                            content_outcome: Mapping[str, Any] | None = None
+                            for identity_attempt in range(3):
+                                content_outcome = await get_wayback_content(
+                                    target_url,
+                                    closest=False,
+                                )
+                                if (
+                                    isinstance(content_outcome, Mapping)
+                                    and content_outcome.get("status") == "success"
+                                ):
+                                    break
+                                response_status = 0
+                                if isinstance(content_outcome, Mapping):
+                                    try:
+                                        response_status = int(
+                                            content_outcome.get("response_status") or 0
+                                        )
+                                    except (TypeError, ValueError):
+                                        response_status = 0
+                                if response_status != 429 or identity_attempt == 2:
+                                    break
+                                await asyncio.sleep(3.0 * (identity_attempt + 1))
+                            if (
+                                not isinstance(content_outcome, Mapping)
+                                or content_outcome.get("status") != "success"
+                            ):
+                                logger.info(
+                                    "Wayback closest identity replay missed %s: %s",
+                                    target_url,
+                                    (
+                                        content_outcome.get("error")
+                                        if isinstance(content_outcome, Mapping)
+                                        else content_outcome
+                                    ),
+                                )
+                                continue
+                            timestamp = str(
+                                content_outcome.get("capture_timestamp") or ""
+                            ).strip()
+                            if not timestamp:
+                                continue
+                            wayback_url = str(
+                                content_outcome.get("wayback_url") or ""
+                            ).strip() or wayback_identity_replay_url(
+                                target_url,
+                                timestamp=timestamp,
+                            )
+                            capture = {
+                                "original_url": target_url,
+                                "status_code": 200,
+                                "timestamp": timestamp,
+                                "wayback_url": wayback_url,
+                            }
+                            discovery_receipt = next(
+                                (
+                                    dict(receipt)
+                                    for receipt in (
+                                        receipts if isinstance(receipts, list) else []
+                                    )
+                                    if isinstance(receipt, Mapping)
+                                    and str(receipt.get("query_url") or "").strip()
+                                    and str(receipt.get("response_sha256") or "").strip()
+                                    and str(receipt.get("fetched_at") or "").strip()
+                                ),
+                                None,
+                            )
+                            if discovery_receipt is not None:
+                                capture["wayback_cdx_query_url"] = str(
+                                    discovery_receipt.get("query_url") or ""
+                                ).strip()
+                                capture["wayback_cdx_response_sha256"] = str(
+                                    discovery_receipt.get("response_sha256") or ""
+                                ).strip()
+                                capture["wayback_cdx_fetched_at"] = str(
+                                    discovery_receipt.get("fetched_at") or ""
+                                ).strip()
+                            logger.info(
+                                "Wayback identity replay bound %s timestamp=%s cdx_receipt=%s",
+                                target_url,
+                                timestamp,
+                                bool(discovery_receipt),
+                            )
+                            captures[target_url] = capture
+                    outcome["captures_by_url"] = captures
                 return outcome
 
             wayback_inventory_loader = _discover_wayback_capture_inventory
@@ -8812,6 +8962,7 @@ class BaseStateScraper(ABC):
         url_terms: Optional[List[str]] = None,
         mime_terms: Optional[List[str]] = None,
         max_results: int = 20,
+        exact_urls: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """Query the state Common Crawl HF index for this scraper's state."""
         self._raise_if_retained_replay_only_network(
@@ -8879,6 +9030,7 @@ class BaseStateScraper(ABC):
                 url_terms=list(url_terms or []),
                 mime_terms=list(mime_terms or ["html"]),
                 max_results=max_results,
+                exact_urls=list(exact_urls or []),
             )
         except Exception as e:
             self.logger.warning(
@@ -8888,8 +9040,23 @@ class BaseStateScraper(ABC):
             )
             local_records = []
 
-        if local_records or not hf_fallback_enabled:
-            inventory_stats["source"] = "local" if local_records else "disabled"
+        local_index_present = False
+        check_local = getattr(loader, "_check_local_index", None)
+        if callable(check_local):
+            try:
+                local_index_present = check_local("state") is not None
+            except Exception:
+                local_index_present = False
+        # Local state parquet is the full common_crawl_state_index. Empty
+        # means this domain is absent; do not HEAD Hugging Face or the
+        # remote-meta engine after that.
+        if local_records or not hf_fallback_enabled or local_index_present:
+            if local_records:
+                inventory_stats["source"] = "local"
+            elif local_index_present:
+                inventory_stats["source"] = "local_empty"
+            else:
+                inventory_stats["source"] = "disabled"
             return list(local_records or [])
 
         normalized_domains: List[str] = []
@@ -9247,6 +9414,7 @@ class BaseStateScraper(ABC):
                 url_terms=list(url_terms or []),
                 mime_terms=list(mime_terms or ["html"]),
                 max_results=max_results,
+                exact_urls=list(exact_urls or []),
             )
         except Exception as exc:
             detail = f"{type(exc).__name__}: {exc}"

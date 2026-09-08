@@ -19,15 +19,11 @@ from urllib.parse import urljoin, urlparse
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
 BASE = "https://webserver.rilegislature.gov/Statutes"
-_HEAD_RE = re.compile(r"§\s*(?P<num>[0-9A-Za-z.-]+)\.\s*(?P<head>.+)")
+_HEAD_RE = re.compile(r"§\s*(?P<num>[0-9A-Za-z.-]+)\.\s+(?P<head>.+)")
+_HEAD_RE_NO_DOT = re.compile(r"§\s*(?P<num>[0-9A-Za-z.-]+)\s+(?P<head>.+)")
 _TERMINAL_TOKEN_PATTERN = (
     r"repealed|expired|reserved|renumbered|superseded|obsolete|"
     r"transferred|deleted|omitted|rejected"
-)
-_RESERVED = re.compile(
-    rf"\[(?:{_TERMINAL_TOKEN_PATTERN})\.?\]"
-    rf"|(?:{_TERMINAL_TOKEN_PATTERN})\.",
-    re.IGNORECASE,
 )
 _HISTORY_PREFIX = "History of Section"
 _WS = re.compile(r"\s+")
@@ -50,7 +46,7 @@ _TERMINAL_RANGE_HEADING_RE = re.compile(
     re.IGNORECASE,
 )
 _TERMINAL_LIST_HEADING_RE = re.compile(
-    r"^§§\s*(?P<sections>[0-9A-Za-z.-]+\.?"
+    r"^§{1,2}\s*(?P<sections>[0-9A-Za-z.-]+\.?"
     r"(?:\s*,\s*[0-9A-Za-z.-]+\.?)+)\s*"
     rf"(?P<terminal>(?:\[(?:{_TERMINAL_TOKEN_PATTERN})\.?\]"
     rf"|(?:{_TERMINAL_TOKEN_PATTERN})\.))$",
@@ -133,6 +129,12 @@ _SOURCE_BOUND_CHAPTER_RANGE_MATERIALS = {
         "§ Chs. 18 - 25. [REPEALED AND TRANSFERRED]",
     ): "repealed_and_transferred_chapter_range",
 }
+
+
+def _match_section_heading(heading: str):
+    """Match ``§ 1-1-1. Head`` and the rarer official ``§ 1-1-1 Head`` form."""
+
+    return _HEAD_RE.fullmatch(heading) or _HEAD_RE_NO_DOT.fullmatch(heading)
 
 
 def _clean(text: str) -> str:
@@ -256,6 +258,12 @@ def _content_variants(body: Any) -> List[Dict[str, str]]:
             paragraphs.append(text)
         if not heading:
             continue
+        if not paragraphs:
+            for nested in content.find_all("div", recursive=False):
+                nested_text = _clean(nested.get_text(" "))
+                if not nested_text or nested_text.startswith(_HISTORY_PREFIX):
+                    continue
+                paragraphs.append(nested_text)
         history_parts = [
             _clean(nested.get_text(" "))
             for nested in content.find_all("div", recursive=False)
@@ -316,7 +324,7 @@ def _exact_terminal_heading_disposition(
     *,
     expected_section: str,
 ) -> Optional[str]:
-    match = _HEAD_RE.fullmatch(_clean(heading))
+    match = _match_section_heading(_clean(heading))
     if match is None or match.group("num").casefold() != expected_section.casefold():
         return None
     terminal = _TERMINAL_HEADING_RE.fullmatch(match.group("head").strip())
@@ -373,7 +381,7 @@ def _temporal_variant_resolution(
         return None
     parsed: List[Dict[str, Any]] = []
     for index, row in enumerate(variants, start=1):
-        match = _HEAD_RE.fullmatch(row["heading"])
+        match = _match_section_heading(row["heading"])
         if match is None or match.group("num").casefold() != expected_section.casefold():
             return None
         lower, upper, kind = _heading_interval(row["heading"])
@@ -602,7 +610,7 @@ def parse_rhode_island_section_html(
                 return None
             if variants:
                 selected = dict(variants[0])
-                match = _HEAD_RE.fullmatch(selected["heading"])
+                match = _match_section_heading(selected["heading"])
                 if (
                     match is None
                     or match.group("num").casefold()
@@ -665,9 +673,14 @@ def parse_rhode_island_section_html(
 
     heading = _clean(str(selected.get("heading") or ""))
     body_text = _clean(str(selected.get("body") or ""))
-    if len(body_text) < 40:
+    if not body_text:
         return None
-    if _RESERVED.search(heading) or _RESERVED.search(body_text[:160]):
+    if not strict_official_identity and len(body_text) < 40:
+        return None
+    heading_match = _match_section_heading(heading)
+    if heading_match and _TERMINAL_HEADING_RE.fullmatch(
+        heading_match.group("head").strip()
+    ):
         return None
     if not number:
         return None
@@ -814,7 +827,7 @@ def source_bound_terminal_section_disposition(
                 return None
             terminal = list_match.group("terminal").strip("[].").lower()
             return f"{terminal}_list"
-        match = _HEAD_RE.fullmatch(heading)
+        match = _match_section_heading(heading)
         if (
             not match
             or match.group("num").casefold() != body_heading_section.casefold()

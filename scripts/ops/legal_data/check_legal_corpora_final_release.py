@@ -76,9 +76,11 @@ from ipfs_datasets_py.processors.legal_data.federal_register_source_policy impor
 from ipfs_datasets_py.processors.legal_data.legal_corpora_query import (  # noqa: E402
     SHARED_VECTOR_SPACE_ID,
 )
+from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import (  # noqa: E402
+    PUBLICATION_PARENT_REVISION as STATE_PREVIOUS_PUBLIC_PIN,
+)
 from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (  # noqa: E402
     DEFAULT_DATASET_REPO_ID as STATE_DATASET_REPO_ID,
-    PREVIOUS_PUBLIC_PIN as STATE_PREVIOUS_PUBLIC_PIN,
     RELEASE_PROFILE as STATE_RELEASE_PROFILE,
     canonical_json_dumps,
     digest_mapping,

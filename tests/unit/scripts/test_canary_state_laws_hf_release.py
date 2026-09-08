@@ -19,6 +19,7 @@ for _name in tuple(sys.modules):
         sys.modules.pop(_name, None)
 stage = importlib.import_module("scripts.ops.legal_data.stage_state_laws_hf_release")
 canary = importlib.import_module("scripts.ops.legal_data.canary_state_laws_hf_release")
+probe = importlib.import_module("scripts.ops.legal_data.state_laws_release_probe")
 
 
 PARENT = "1" * 40
@@ -104,10 +105,22 @@ def _staging_receipt() -> dict:
 
 
 def _queries() -> dict:
+    staging_receipt = _staging_receipt()
     return {
         name: {"passed": True, "trace_count": 1}
         for name in ("bm25", "vector", "hybrid", "graph", "filters", "cache")
-    } | {"jurisdictions": list(canary.SORTED_JURISDICTIONS)}
+    } | {
+        "jurisdictions": list(canary.SORTED_JURISDICTIONS),
+        "measurement_source": probe.MEASUREMENT_SOURCE,
+        "externally_supplied": False,
+        "observed_at": "2026-08-29T12:00:00Z",
+        "probe_bindings": probe.release_probe_bindings(
+            repo_id=staging_receipt["dataset_repo_id"],
+            revision=staging_receipt["staging_revision"],
+            release_manifest_digest=staging_receipt["release_manifest_digest"],
+            parent_evidence_digest=staging_receipt["canonical_digest"],
+        ),
+    }
 
 
 def _redownload() -> dict:
@@ -156,6 +169,24 @@ def test_live_canary_binds_exact_staging_pin_and_exact_51() -> None:
     assert receipt["jurisdictions"] == list(canary.SORTED_JURISDICTIONS)
     assert "DC" in receipt["jurisdictions"]
     assert receipt["remote_mutation_attempted"] is False
+
+
+def test_builder_and_checker_require_first_party_provenance() -> None:
+    unsealed = _queries()
+    unsealed.pop("measurement_source")
+    with pytest.raises(canary.CanaryReceiptError, match="internally bound"):
+        canary.build_canonical_staging_canary_receipt(
+            staging_receipt=_staging_receipt(),
+            redownload=_redownload(),
+            query_canaries=unsealed,
+        )
+
+    receipt = _canary_receipt()
+    receipt.pop("measurement_source")
+    digest = canary.publication_digest(receipt)
+    receipt["canonical_digest"] = receipt["content_digest"] = digest
+    with pytest.raises(canary.CanaryReceiptError, match="first-party provenance"):
+        canary.check_canonical_staging_canary_receipt(receipt)
 
 
 def test_query_modes_and_missing_dc_fail_closed() -> None:
@@ -231,3 +262,18 @@ def test_check_cli_is_read_only(tmp_path: Path) -> None:
     ) == 0
     assert target.read_bytes() == before
     assert canary.main(["--check", "--report", str(target)]) == 1
+
+
+def test_generation_cli_rejects_external_query_canary_json(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    external = tmp_path / "operator-query-canaries.json"
+    external.write_text(json.dumps(_queries()), encoding="utf-8")
+    assert canary.main(
+        [
+            "--require-live-staging",
+            "--query-canaries",
+            str(external),
+        ]
+    ) == 1
+    assert "external --query-canaries cannot authorize" in capsys.readouterr().err

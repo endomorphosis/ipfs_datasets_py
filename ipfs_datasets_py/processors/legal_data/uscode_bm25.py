@@ -35,6 +35,10 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Final, Optional, Union
 
+from ipfs_datasets_py.processors.legal_data.parallel_tokenize import (
+    iter_as_list,
+    project_documents_parallel,
+)
 from ipfs_datasets_py.processors.legal_data.uscode_tokenizer import (
     TOKENIZER_ID,
     TOKENIZER_VERSION,
@@ -776,15 +780,17 @@ def project_admitted_documents(
     if len(rows) > cfg.max_documents:
         raise Bm25ProjectionError("corpus rows exceed max_documents")
 
-    documents: list[LegalBm25Document] = []
-    for position, row in enumerate(rows):
+    materialized = iter_as_list(rows)
+    admitted: list[Mapping[str, Any]] = []
+    for position, row in enumerate(materialized):
         if not isinstance(row, Mapping):
             raise Bm25ProjectionError(f"corpus row {position} must be a mapping")
         if not _is_admitted_row(row):
             continue
-        documents.append(
-            project_legal_document(row, document_index=len(documents), config=cfg)
-        )
+        admitted.append(row)
+    documents = project_documents_parallel(
+        admitted, project_fn=project_legal_document, config=cfg
+    )
 
     if not documents:
         raise Bm25CoverageError("no admitted corpus rows produced BM25 documents")

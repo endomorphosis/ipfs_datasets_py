@@ -1,0 +1,114 @@
+{
+  "all_four_public_and_previous_pins_queryable": true,
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "both_staging_branches_still_present": true,
+  "current_bundle": false,
+  "federal_overlap": {
+    "local_payload_files": 11809,
+    "payload_overwrite_count": 0,
+    "previous_files": 555,
+    "previous_still_present_on_public": 555,
+    "public_files": 12364,
+    "public_minus_previous": 11809
+  },
+  "forward_operation": "Re-advertise STATE_PUBLIC / FR_PUBLIC. Previous pins remain git history.",
+  "goal_id": "LCR-G140",
+  "history_rewrite": false,
+  "hub_mutation_performed": false,
+  "lcr084_deferred": true,
+  "lcr084_taskboard_status": "todo",
+  "live_official": false,
+  "notes": "Operator-deferred LCR-084 path. Not a sealed live-official current-bundle. LCR-084 remains todo. Retrieval output is a research aid, not legal authority.",
+  "observed_at": "2026-09-07T07:33:08Z",
+  "pins": {
+    "federal_previous": {
+      "file_count": 555,
+      "reachable": true,
+      "repo_id": "justicedao/ipfs_federal_register",
+      "revision": "720668ae016cc400916dda884c9005e03618edfa",
+      "sha": "720668ae016cc400916dda884c9005e03618edfa"
+    },
+    "federal_public": {
+      "file_count": 12364,
+      "reachable": true,
+      "repo_id": "justicedao/ipfs_federal_register",
+      "revision": "d748016d96a7af6d261751d51a5959bd7bc0e2b7",
+      "sha": "d748016d96a7af6d261751d51a5959bd7bc0e2b7"
+    },
+    "federal_staging": {
+      "file_count": 12364,
+      "reachable": true,
+      "repo_id": "justicedao/ipfs_federal_register",
+      "revision": "stage/federal-register-ir-graphrag-v2",
+      "sha": "3442c2b402cc36317be6176c8b0752e97d793323"
+    },
+    "state_previous": {
+      "file_count": 2348,
+      "reachable": true,
+      "repo_id": "justicedao/ipfs_state_laws",
+      "revision": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2",
+      "sha": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2"
+    },
+    "state_public": {
+      "file_count": 4834,
+      "reachable": true,
+      "repo_id": "justicedao/ipfs_state_laws",
+      "revision": "9b55fb4db5baef7183832bcb232ad2309180d6cb",
+      "sha": "9b55fb4db5baef7183832bcb232ad2309180d6cb"
+    },
+    "state_staging": {
+      "file_count": 4834,
+      "reachable": true,
+      "repo_id": "justicedao/ipfs_state_laws",
+      "revision": "stage/state-laws-sparse-graphrag-v2",
+      "sha": "491fcd8f8855ad8e845632f14a248e6a86daf6de"
+    }
+  },
+  "producer": "deferred_lcr_remainder.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "rollback_operation": "Re-advertise STATE_PREV / FR_PREV independently. Do not delete 9b55fb4d or d748016d.",
+  "schema": "ipfs_datasets_py/lcr-deferred-dual-rollback-rehearsal@1",
+  "state_overlap": {
+    "local_payload_files": 2512,
+    "payload_overwrite_count": 26,
+    "payload_paths_that_existed_on_previous_pin": [
+      "README.md",
+      "data/bm25/postings/part-000000.parquet",
+      "data/graph/adjacency/in/part-000000.parquet",
+      "data/graph/adjacency/out/part-000000.parquet",
+      "data/graph/edges/part-000000.parquet",
+      "data/graph/nodes/part-000000.parquet",
+      "data/vectors/centroid-000-part-000000.parquet",
+      "data/vectors/centroids/part-000000.parquet",
+      "dataset_configs.json",
+      "dataset_infos.json",
+      "indexes/bm25_documents_chunks-000000.parquet",
+      "indexes/bm25_postings_chunks-000000.parquet",
+      "indexes/centroids_chunks-000000.parquet",
+      "indexes/corpus_chunks-000000.parquet",
+      "indexes/graph_adjacency_in_chunks-000000.parquet",
+      "indexes/graph_adjacency_out_chunks-000000.parquet",
+      "indexes/graph_edges_chunks-000000.parquet",
+      "indexes/graph_nodes_chunks-000000.parquet",
+      "indexes/vectors_chunks-000000.parquet",
+      "manifest.json",
+      "recovery/part-000000.json",
+      "release_metadata.json",
+      "reports/admission.json",
+      "reports/lineage.json",
+      "reports/quality.json",
+      "reports/reproducibility.json"
+    ],
+    "previous_files": 2348,
+    "previous_still_present_on_public": 2348,
+    "public_files": 4834,
+    "public_minus_previous": 2486
+  },
+  "status": "deferred_rehearsed_pointer_only",
+  "task_id": "LCR-068",
+  "update_semantics": {
+    "federal_register": "cutoff-relative daily register; this snapshot is 2026-08-10",
+    "state_laws": "jurisdictional; official live pairs remain unclosed for seven states"
+  }
+}

@@ -27,6 +27,35 @@ def _sha(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
+def _current_public_parent_provenance() -> dict[str, object]:
+    parent_audit = audit.candidate_builder.current_public_parent_audit
+    return {
+        "authorizes_exact_51_acceptance": False,
+        "authorizes_hub_mutation": False,
+        "authorizes_publication": False,
+        "current_corpus_accepted": False,
+        "current_corpus_non_acceptance": copy.deepcopy(
+            audit.candidate_builder.EXPECTED_CURRENT_CORPUS_NON_ACCEPTANCE
+        ),
+        "current_public_parent_pin": parent_audit.CURRENT_PUBLIC_PARENT_PIN,
+        "current_public_parent_role": "optimistic_parent_and_rollback_only",
+        "current_public_parent_tree_oid": parent_audit.CURRENT_PUBLIC_PARENT_TREE_OID,
+        "evidence_only": True,
+        "goal_id": "LCR-G146",
+        "historical_baseline_pin": parent_audit.HISTORICAL_BASELINE_PIN,
+        "historical_baseline_role": "sealed_historical_evidence_only",
+        "historical_baseline_tree_oid": parent_audit.HISTORICAL_BASELINE_TREE_OID,
+        "identity_sha256": "1" * 64,
+        "observed_at_utc": _stamp(NOW - timedelta(seconds=1)),
+        "path": audit.CURRENT_PUBLIC_PARENT_RELPATH.as_posix(),
+        "receipt_file_sha256": "2" * 64,
+        "receipt_sha256": "3" * 64,
+        "satisfies_lcr084_acceptance": False,
+        "schema": parent_audit.REPORT_SCHEMA,
+        "task_id": "LCR-084",
+    }
+
+
 def _production_evidence(tmp_path: Path) -> dict[str, object]:
     jurisdictions: list[dict[str, object]] = []
     official_replay: list[dict[str, object]] = []
@@ -313,6 +342,7 @@ def _production_evidence(tmp_path: Path) -> dict[str, object]:
             "verifier_owned_live_reobservation": True,
         },
         "baseline_reconciliation": comparisons,
+        "current_public_parent_provenance": _current_public_parent_provenance(),
         "input_map": {
             "path": str(tmp_path / "input-map.json"),
             "schema_version": "state-laws-production-input-map/v2",
@@ -386,6 +416,7 @@ def _production_evidence(tmp_path: Path) -> dict[str, object]:
             "clean_at_seal": True,
             "excluded_evidence_paths": [
                 str(tmp_path / "baseline.json"),
+                audit.CURRENT_PUBLIC_PARENT_RELPATH.as_posix(),
                 "docs/reports/legal_corpora_reindex/full_scrape_acceptance.json",
                 "docs/reports/legal_corpora_reindex/release_candidate.json",
             ],
@@ -531,7 +562,66 @@ def test_production_seal_is_exact51_schema_valid_and_verifier_timed(
     assert report["network_io_performed"] is True
     assert report["read_only_live_verification"] is True
     assert report["hub_mutation_performed"] is False
+    parent = report["evidence"]["current_public_parent_provenance"]
+    assert parent["historical_baseline_pin"].startswith("42f0546")
+    assert parent["current_public_parent_pin"].startswith("78cba0e")
+    assert parent["current_corpus_accepted"] is False
+    assert parent["satisfies_lcr084_acceptance"] is False
+    assert parent["authorizes_exact_51_acceptance"] is False
+    assert parent["authorizes_publication"] is False
     assert report["report_digest_sha256"] == audit._report_digest(report)
+
+
+def test_current_public_parent_cli_defaults_to_canonical_receipt() -> None:
+    args = audit.build_parser().parse_args(["--check"])
+    assert args.current_public_parent == (
+        REPO_ROOT / audit.CURRENT_PUBLIC_PARENT_RELPATH
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["current_pin", "acceptance_authority", "corpus_acceptance", "blockers"],
+)
+def test_current_parent_provenance_cannot_gain_acceptance_authority(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    evidence = _production_evidence(tmp_path)
+    parent = evidence["current_public_parent_provenance"]
+    assert isinstance(parent, dict)
+    if mutation == "current_pin":
+        parent["current_public_parent_pin"] = "0" * 40
+    elif mutation == "acceptance_authority":
+        parent["authorizes_exact_51_acceptance"] = True
+    elif mutation == "corpus_acceptance":
+        parent["current_corpus_accepted"] = True
+    else:
+        parent["current_corpus_non_acceptance"]["blocking_findings"] = []  # type: ignore[index]
+    with pytest.raises(
+        audit.ScrapeAcceptanceError,
+        match="current-public-parent|current corpus",
+    ):
+        audit._check_evidence_semantics(
+            evidence,
+            repository_root=REPO_ROOT,
+            now=NOW,
+        )
+
+
+def test_current_parent_receipt_alone_never_satisfies_exact51_acceptance() -> None:
+    evidence = {
+        "current_public_parent_provenance": _current_public_parent_provenance()
+    }
+    with pytest.raises(
+        audit.ScrapeAcceptanceError,
+        match="jurisdictions",
+    ):
+        audit._check_evidence_semantics(
+            evidence,
+            repository_root=REPO_ROOT,
+            now=NOW,
+        )
 
 
 def test_authenticated_baseline_anchor_survives_live_replay_runtime(

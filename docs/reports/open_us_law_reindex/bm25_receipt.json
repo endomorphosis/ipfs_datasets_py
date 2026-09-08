@@ -83,6 +83,8 @@
         "externally_sorted": true,
         "family": "postings",
         "max_records_in_memory": 3,
+        "parquet_dir": "postings.sorted.parquet",
+        "parquet_shard_count": 1,
         "peak_resident_records": 3,
         "records_consumed": 196,
         "row_count": 196,
@@ -92,11 +94,12 @@
       "terms": {
         "externally_sorted": true,
         "family": "terms",
+        "inherited_from": "postings",
         "max_records_in_memory": 3,
-        "peak_resident_records": 3,
+        "peak_resident_records": 1,
         "records_consumed": 136,
         "row_count": 136,
-        "run_count": 46,
+        "run_count": 0,
         "status": "complete"
       }
     },
@@ -145,7 +148,7 @@
   "producer": "open_us_law_bm25.py",
   "program_id": "open-us-law-reindex-v1",
   "proves_software_contract_only": true,
-  "receipt_sha256": "6e24c22646b920103419be0d986b916c63790e675dd64b8b8fbe0a1e1c5e07db",
+  "receipt_sha256": "68e193100d24719c92424b9c1abde43a81f9d99247507fb5d15ba4bc8ffc32da",
   "release_profile": "open-us-law-sparse-graphrag/v1",
   "repairs": {
     "area_id": "field_weighted_term_range_bm25",

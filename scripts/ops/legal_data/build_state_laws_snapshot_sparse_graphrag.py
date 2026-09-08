@@ -674,7 +674,9 @@ def run_snapshot_build(
         )
     graph.assert_semantics_disjoint()
     overlay = build_open_us_law_lexical_graph(
-        bm25, same_jurisdiction_only=True
+        bm25,
+        same_jurisdiction_only=True,
+        checkpoint_dir=output_dir / "checkpoints" / "neighbors",
     )
     adjacency = build_two_way_adjacency(
         graph,
@@ -683,7 +685,11 @@ def run_snapshot_build(
     )
     gc.collect()
 
-    print("snapshot stage=vectors", file=sys.stderr, flush=True)
+    print(
+        "snapshot stage=vectors partition=jurisdiction kmeans_device=cuda",
+        file=sys.stderr,
+        flush=True,
+    )
     records = load_parquet_checkpoint_records(
         embedding_ckpt, config=embedding_config
     )
@@ -704,10 +710,18 @@ def run_snapshot_build(
     )
     del records
     gc.collect()
+    chunk_jurisdiction = {
+        chunk.chunk_cid: chunk.jurisdiction_code
+        for chunk in corpus.admitted_chunks
+    }
     vectors = bind_open_us_law_vectors(
         embeddings,
         corpus_root_cid=corpus_root_cid,
         config=embeddings.config,
+        chunk_jurisdiction=chunk_jurisdiction,
+        checkpoint_dir=output_dir / "checkpoints" / "vectors",
+        progress_log=lambda message: print(message, file=sys.stderr, flush=True),
+        kmeans_device="cuda",
     )
     gc.collect()
     parity = prove_key_parity(

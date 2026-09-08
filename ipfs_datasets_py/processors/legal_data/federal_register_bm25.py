@@ -66,6 +66,10 @@ from ipfs_datasets_py.processors.legal_data.federal_register_source_policy impor
     digest_mapping,
     repository_root,
 )
+from ipfs_datasets_py.processors.legal_data.parallel_tokenize import (
+    iter_as_list,
+    project_documents_parallel,
+)
 from ipfs_datasets_py.processors.legal_data.uscode_tokenizer import (
     STOPWORD_POLICY_ID,
     TOKENIZER_ID as LEGAL_TOKENIZER_ID,
@@ -1142,11 +1146,13 @@ def iter_projected_documents(
     """Stream admitted searchable chunks into BM25 documents."""
 
     cfg = config or default_bm25_config()
-    admitted_rows = [row for row in rows if _is_admitted_row(row)]
+    admitted_rows = [row for row in iter_as_list(rows) if _is_admitted_row(row)]
     admitted_rows.sort(key=lambda row: _document_sort_tuple(row, 0))
+    projected = project_documents_parallel(
+        admitted_rows, project_fn=project_legal_document, config=cfg
+    )
     seen: set[str] = set()
-    for position, row in enumerate(admitted_rows):
-        document = project_legal_document(row, document_index=position, config=cfg)
+    for position, document in enumerate(projected):
         if document.entry_cid in seen or document.chunk_cid in seen:
             raise Bm25CoverageError(
                 f"duplicate chunk_cid among BM25 documents: {document.chunk_cid}"

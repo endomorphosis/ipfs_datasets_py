@@ -18,7 +18,7 @@ import hashlib
 import json
 import re
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Any
 from urllib.parse import parse_qs, urljoin, urlparse
 
@@ -138,6 +138,10 @@ _BLOCKED_PAGE_RE = re.compile(
     r"destination|\bI\s+Agree\b.*?(?:terms|conditions)|"
     r"(?:terms|conditions).*?\bI\s+Agree\b|\bResults\s+for\s*:",
     re.IGNORECASE | re.DOTALL,
+)
+_RENDERED_TOC_NODE_RE = re.compile(
+    r"<li\b[^>]*\bjs-node\b[^>]*\bdata-nodeid\s*=",
+    re.IGNORECASE,
 )
 _WS_RE = re.compile(r"\s+")
 _EDITORIAL_HEADING_RE = re.compile(
@@ -404,6 +408,20 @@ def _node_from_mapping(value: Mapping[str, Any]) -> TennesseeLexisNode | None:
         link_href=_clean(props.get("linkhref") or props.get("docfullpath")),
         open_to_levels=levels,
     )
+    if (
+        node.link_href
+        and is_document_path(node.link_href)
+        and (node.can_expand or node.has_children)
+    ):
+        # Live Title 8 "APPENDIX Superseded Retirement Systems" names an
+        # official content-item path and expandable children. Keep the
+        # document locator; descendants still walk as their own nodes.
+        node = replace(
+            node,
+            can_expand=False,
+            has_children=False,
+            open_to_levels=(),
+        )
     return node if not _node_shape_error(node) else None
 
 
@@ -487,10 +505,11 @@ def parse_root_dom_rows(
             )
         direct_reserved = number in {"19", "51"}
         if direct_reserved:
+            # Live free-public-access HTML omits data-canopen on reserved
+            # titles; the official document path is the locator.
             if not (
                 node.title_label == "[Reserved]"
                 and node.is_document_locator
-                and node.can_open
                 and not node.can_expand
                 and not node.has_children
                 and not node.open_to_levels
@@ -521,7 +540,10 @@ def parse_root_html(
     except ImportError as exc:  # pragma: no cover - production dependency
         raise RuntimeError("BeautifulSoup is required for Tennessee Lexis parsing") from exc
     source = str(html or "")
-    if _BLOCKED_PAGE_RE.search(source):
+    # Free-public-access chrome includes a Terms "I Agree" control and CSS
+    # icon names that otherwise match the shell regex under DOTALL. A
+    # rendered li.js-node TOC is not a robot/signin wall.
+    if _BLOCKED_PAGE_RE.search(source) and not _RENDERED_TOC_NODE_RE.search(source):
         raise ValueError("Tennessee container returned an access or bootstrap shell")
     soup = BeautifulSoup(source, "html.parser")
     rows: list[dict[str, Any]] = []
@@ -619,10 +641,15 @@ def _is_node_shaped_mapping(value: Mapping[str, Any]) -> bool:
     if not isinstance(props, Mapping):
         return False
     lowered = _mapping_lower(props)
+    raw = _mapping_lower(value)
+    node_id = str(raw.get("id") or lowered.get("nodeid") or "").strip()
+    # Live PATCH payloads embed "Open to level N" chrome objects that have a
+    # title but no node id. Those are not TOC descendants.
+    if not _NODE_ID_RE.fullmatch(node_id):
+        return False
     return any(
         key in lowered
         for key in (
-            "nodeid",
             "nodepath",
             "level",
             "linktemplatetitle",
@@ -711,7 +738,15 @@ def parse_title_subtree_payload(
             or immediate_parent not in paths
         ):
             return [], (), "subtree contains a node outside its exact title hierarchy"
-        if node.section_number and node.section_number.split("-", 1)[0] != parent.title_number:
+        if (
+            node.section_number
+            and node.section_number.split("-", 1)[0] != parent.title_number
+            and not node.is_document_locator
+        ):
+            # Live Title 33 nests official related-document locators whose
+            # citation prefix belongs to another title (e.g. 38-7-111 under
+            # Mental Health). Path ancestry already bound the node to this
+            # title root; keep fail-closed only for non-document mix-ups.
             return [], (), "subtree citation crossed its requested title"
         if node.is_document_locator:
             document_paths.append(node.link_href)
@@ -887,9 +922,23 @@ def publisher_container_delegation_present(html: str) -> bool:
     """Require the publisher entry response to name the exact container."""
 
     text = str(html or "")
+    if PUBLIC_CONTAINER_CONFIG not in text:
+        return False
+    if re.search(
+        r"advance\.lexis\.com(?:/|&(?:#x2F;|sol;))container",
+        text,
+        re.IGNORECASE,
+    ):
+        return True
+    # Live hottopics/tncode wraps the exact container in a cookiesrequired
+    # interstitial or a URL-encoded CaptureReturnUrl target.
+    escaped = re.escape(PUBLIC_CONTAINER_CONFIG)
     return bool(
-        PUBLIC_CONTAINER_CONFIG in text
-        and re.search(r"advance\.lexis\.com(?:/|&(?:#x2F;|sol;))container", text, re.IGNORECASE)
+        re.search(
+            rf"(?:/|%2[Ff])container(?:\?|%3[Ff])config(?:=|%3[Dd]){escaped}",
+            text,
+            re.IGNORECASE,
+        )
     )
 
 

@@ -15,6 +15,13 @@ import pytest
 from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime import (
     canonical_no_self_field_digest,
 )
+from ipfs_datasets_py.processors.legal_data.state_laws_publication_package import (
+    VIEWER_CONTROL_SKIP,
+    StateLawsViewerControlPlan,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
+    state_laws_root_viewer_configs,
+)
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPOSITORY_ROOT))
@@ -23,6 +30,7 @@ for _name in tuple(sys.modules):
         sys.modules.pop(_name, None)
 publish = importlib.import_module("scripts.ops.legal_data.publish_state_laws_hf_release")
 check = importlib.import_module("scripts.ops.legal_data.check_state_laws_public_release")
+probe = importlib.import_module("scripts.ops.legal_data.state_laws_release_probe")
 
 
 PARENT = publish.PRODUCTION_REVISION
@@ -37,7 +45,37 @@ FILE_DIGEST = hashlib.sha256(FILE_BYTES).hexdigest()
 REMOTE_PATH = f"releases/sha256-{RELEASE_DIGEST}/manifest.json"
 
 
+def _provenance() -> dict:
+    publication = _publication_receipt()
+    return {
+        "measurement_source": probe.MEASUREMENT_SOURCE,
+        "externally_supplied": False,
+        "observed_at": "2026-08-29T12:00:00Z",
+        "probe_bindings": probe.release_probe_bindings(
+            repo_id=publication["dataset_repo_id"],
+            revision=publication["public_revision"],
+            release_manifest_digest=publication["release_manifest_digest"],
+            parent_evidence_digest=publication["canonical_digest"],
+        ),
+    }
+
+
 def _publication_receipt() -> dict:
+    release_prefix = f"data/state_laws/sha256-{RELEASE_DIGEST}"
+    viewer_sha256 = "5" * 64
+    viewer_control = StateLawsViewerControlPlan(
+        repository_id=publish.DEFAULT_DATASET_REPO,
+        target_revision="main",
+        audited_parent_commit=PARENT,
+        release_prefix=release_prefix,
+        release_manifest_digest=RELEASE_DIGEST,
+        sha256=viewer_sha256,
+        size_bytes=1_234,
+        configs=tuple(state_laws_root_viewer_configs(release_prefix)),
+        existing_state="present",
+        operation=VIEWER_CONTROL_SKIP,
+        expected_existing_sha256=viewer_sha256,
+    ).to_dict()
     operation = {
         "operation": "add",
         "relative_path": "manifest.json",
@@ -88,12 +126,14 @@ def _publication_receipt() -> dict:
             "runtime_authorized": True,
         },
         "operations": [operation],
+        "viewer_control": viewer_control,
         "uploaded": [
             {key: operation[key] for key in ("relative_path", "remote_path", "sha256", "size_bytes")}
         ],
         "skipped": [],
         "unexpected_operations": [],
         "additive_only": True,
+        "immutable_release_artifacts_additive_only": True,
         "legacy_paths_preserved": True,
         "remote_mutation_attempted": True,
         "remote_write_performed": True,
@@ -109,13 +149,76 @@ def _publication_receipt() -> dict:
 
 
 def _viewer() -> dict:
+    responses = [
+        {
+            "endpoint": "is-valid",
+            "response_bytes": 1,
+            "response_sha256": "1" * 64,
+            "semantic": {
+                "capabilities": {
+                    "filter": False,
+                    "preview": True,
+                    "search": False,
+                    "statistics": False,
+                    "viewer": True,
+                }
+            },
+            "status": 200,
+            "x_revision": PUBLIC,
+        },
+        *[
+            {
+                "endpoint": endpoint,
+                "response_bytes": 1,
+                "response_sha256": digest * 64,
+                "semantic": {
+                    "config": check.DEFAULT_CONFIG_NAME,
+                    **(
+                        {"split_count": 1}
+                        if endpoint == "splits"
+                        else {"row_count": 51}
+                    ),
+                },
+                "status": 200,
+                "x_revision": PUBLIC,
+            }
+            for endpoint, digest in (("info", "2"), ("size", "3"), ("splits", "4"))
+        ],
+    ]
     return {
+        "bounded": True,
         "passed": True,
         "dataset_viewer_api_passed": True,
         "default_config": check.DEFAULT_CONFIG_NAME,
         "ia_only": False,
         "jurisdictions": list(check.SORTED_JURISDICTIONS),
-    }
+        "manifest_binding": {
+            "default_config": check.DEFAULT_CONFIG_NAME,
+            "default_config_sha256": "5" * 64,
+            "default_data_files": [
+                {
+                    "path": (
+                        f"data/state_laws/sha256-{RELEASE_DIGEST}/"
+                        "data/corpus/part-*.parquet"
+                    ),
+                    "split": "train",
+                }
+            ],
+            "default_matched_artifact_count": 5,
+            "default_matched_artifacts_sha256": "7" * 64,
+            "expected_rows": 51,
+            "jurisdictions_sha256": "6" * 64,
+            "key_parity_sha256": "f" * 64,
+            "manifest_default_config_sha256": "8" * 64,
+            "manifest_default_data_files": [
+                {"path": "data/corpus/part-*.parquet", "split": "train"}
+            ],
+            "manifest_digest": RELEASE_DIGEST,
+            "release_prefix": f"data/state_laws/sha256-{RELEASE_DIGEST}",
+        },
+        "pinned_revision": PUBLIC,
+        "responses": responses,
+    } | _provenance()
 
 
 def _key_sets() -> dict:
@@ -126,14 +229,14 @@ def _key_sets() -> dict:
         "families": {
             name: digest for name in ("embeddings", "bm25", "vectors", "graph", "adjacency")
         },
-    }
+    } | _provenance()
 
 
 def _queries() -> dict:
     return {
         name: {"passed": True}
         for name in ("bm25", "vector", "hybrid", "graph", "filters", "cache")
-    } | {"jurisdictions": list(check.SORTED_JURISDICTIONS)}
+    } | {"jurisdictions": list(check.SORTED_JURISDICTIONS)} | _provenance()
 
 
 def _redownload() -> dict:
@@ -183,6 +286,69 @@ def test_public_canary_binds_public_pin_viewer_keys_and_queries() -> None:
     assert receipt["jurisdiction_count"] == 51
     assert "DC" in receipt["jurisdictions"]
     assert receipt["read_only"] is True
+
+
+def test_builder_and_checker_require_first_party_provenance() -> None:
+    external = _viewer()
+    external["externally_supplied"] = True
+    with pytest.raises(check.PublicParityError, match="internally measured"):
+        check.build_canonical_public_canary_receipt(
+            publication_receipt=_publication_receipt(),
+            redownload=_redownload(),
+            viewer_probe=external,
+            key_set_probe=_key_sets(),
+            query_canaries=_queries(),
+        )
+
+    receipt = _canary()
+    receipt.pop("probe_bindings")
+    digest = canonical_no_self_field_digest(receipt)
+    receipt["canonical_digest"] = receipt["content_digest"] = digest
+    with pytest.raises(check.PublicPinError, match="first-party provenance"):
+        check.check_canonical_public_canary_receipt(receipt)
+
+
+def test_builder_rejects_status_only_or_semantically_drifted_viewer() -> None:
+    status_only = {
+        **_provenance(),
+        "dataset_viewer_api_passed": True,
+        "default_config": check.DEFAULT_CONFIG_NAME,
+        "ia_only": False,
+        "jurisdictions": list(check.SORTED_JURISDICTIONS),
+        "passed": True,
+    }
+    with pytest.raises(check.PublicViewerError, match="immutable/bounded"):
+        check.build_canonical_public_canary_receipt(
+            publication_receipt=_publication_receipt(),
+            redownload=_redownload(),
+            viewer_probe=status_only,
+            key_set_probe=_key_sets(),
+            query_canaries=_queries(),
+        )
+
+    drifted = _viewer()
+    next(
+        item for item in drifted["responses"] if item["endpoint"] == "info"
+    )["semantic"]["row_count"] = 50
+    with pytest.raises(check.PublicViewerError, match="semantic/config/row"):
+        check.build_canonical_public_canary_receipt(
+            publication_receipt=_publication_receipt(),
+            redownload=_redownload(),
+            viewer_probe=drifted,
+            key_set_probe=_key_sets(),
+            query_canaries=_queries(),
+        )
+
+    missing_glob_binding = _viewer()
+    missing_glob_binding["manifest_binding"].pop("default_data_files")
+    with pytest.raises(check.PublicViewerError, match="local-manifest binding"):
+        check.build_canonical_public_canary_receipt(
+            publication_receipt=_publication_receipt(),
+            redownload=_redownload(),
+            viewer_probe=missing_glob_binding,
+            key_set_probe=_key_sets(),
+            query_canaries=_queries(),
+        )
 
 
 def test_ia_only_viewer_and_derived_key_drift_fail_closed() -> None:
@@ -243,6 +409,24 @@ def test_check_cli_is_read_only(tmp_path: Path) -> None:
         ["--require-public-pin", "--check", "--canary-report", str(target)]
     ) == 0
     assert target.read_bytes() == before
+
+
+def test_generation_cli_rejects_external_verification_json(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    external = tmp_path / "operator-verification.json"
+    external.write_text(
+        json.dumps(
+            {
+                "viewer": _viewer(),
+                "key_sets": _key_sets(),
+                "query_canaries": _queries(),
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert check.main(["--network", "--verification", str(external)]) == 2
+    assert "external --verification cannot authorize" in capsys.readouterr().err
 
 
 def _install_final_dependency_stub(

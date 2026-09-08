@@ -73,11 +73,11 @@ admitted.
 | leaf_acquisition_wave_count | source_dependent_at_least_2 |
 | close_each_source_derived_continuation_wave | true |
 | per_page_archive_loop | false |
-| archive_recovery_enabled | false |
+| archive_recovery_enabled | true |
 | grouped_warc_recovery | false |
 | wayback_prefix_inventory | false |
-| current_authorizing_transport | direct_only |
-| archive_current_equivalence | unavailable; archive bodies remain historical diagnostics |
+| current_authorizing_transport | direct_or_grouped_archive_cdx |
+| archive_current_equivalence | identity Wayback/Common Crawl capture timestamp is legal_as_of; no prefix CDX storm; live direct still preferred |
 | residual_only_retries | true |
 | archive_is | forbidden |
 | host_retained_replay_network_requests | 0 |

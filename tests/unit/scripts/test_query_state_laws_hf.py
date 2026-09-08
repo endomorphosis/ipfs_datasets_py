@@ -932,6 +932,104 @@ def test_manifest_and_pointer_seams_are_explicit_and_path_safe(
             manifest_path="../manifest.json",
         )
 
+    release_prefix = f"data/state_laws/sha256-{'d' * 64}"
+    candidate = api.open_query_client(
+        revision=PINNED_REVISION,
+        repo_id=REPO_ID,
+        manifest_path="manifest.json",
+        release_prefix=release_prefix,
+    )
+    assert candidate.uses_release_pointer is False
+    assert candidate.release_prefix == release_prefix
+    with pytest.raises(api.ReleasePointerError, match="requires explicit"):
+        api.open_query_client(
+            revision=PINNED_REVISION,
+            repo_id=REPO_ID,
+            release_prefix=release_prefix,
+        )
+    with pytest.raises(api.ReleasePointerError, match="mutually exclusive"):
+        api.open_query_client(
+            revision=PINNED_REVISION,
+            repo_id=REPO_ID,
+            manifest_path="manifest.json",
+            pointer_path=api.DEFAULT_RELEASE_POINTER_PATH,
+            release_prefix=release_prefix,
+        )
+    with pytest.raises(api.ReleasePointerError, match="only valid for remote"):
+        api.open_query_client(
+            revision=PINNED_REVISION,
+            local_root=mini_release,
+            manifest_path="manifest.json",
+            release_prefix=release_prefix,
+        )
+
+
+def test_candidate_release_prefix_reaches_remote_resolver(monkeypatch) -> None:
+    release_prefix = f"data/state_laws/sha256-{'e' * 64}"
+    observed: dict[str, object] = {}
+
+    class _Resolver:
+        def __init__(self, path_prefix: str) -> None:
+            self.path_prefix = path_prefix
+
+    class _QueryClient:
+        def __init__(self, resolver, **kwargs) -> None:
+            self.resolver = resolver
+            observed["manifest_path"] = kwargs["manifest_path"]
+
+    def _resolver(_pin, **kwargs):
+        observed["path_prefix"] = kwargs["path_prefix"]
+        return _Resolver(kwargs["path_prefix"])
+
+    original_export = api.resolve_export
+    monkeypatch.setattr(api, "_build_hub_resolver", _resolver)
+    monkeypatch.setattr(
+        api,
+        "resolve_export",
+        lambda name: _QueryClient
+        if name == "StateLawsQueryClient"
+        else original_export(name),
+    )
+    client = api.open_query_client(
+        revision=PINNED_REVISION,
+        repo_id=REPO_ID,
+        manifest_path="manifest.json",
+        release_prefix=release_prefix,
+    )
+    assert client.resolver.path_prefix == release_prefix
+    assert observed == {
+        "manifest_path": "manifest.json",
+        "path_prefix": release_prefix,
+    }
+
+
+def test_local_root_transport_exposes_real_cold_warm_cache_trace(
+    mini_release: Path, tmp_path: Path
+) -> None:
+    cache = tmp_path / "shared-local-cache"
+    cold = api.open_query_client(
+        revision=PINNED_REVISION,
+        repo_id=REPO_ID,
+        local_root=mini_release,
+        cache_dir=cache,
+        manifest_path="manifest.json",
+    ).bm25_search("foia", top_k=1)
+    warm = api.open_query_client(
+        revision=PINNED_REVISION,
+        repo_id=REPO_ID,
+        local_root=mini_release,
+        cache_dir=cache,
+        manifest_path="manifest.json",
+    ).bm25_search("foia", top_k=1)
+
+    cold_files = list(cold.to_dict()["fetch_trace"]["files"])
+    warm_files = list(warm.to_dict()["fetch_trace"]["files"])
+    assert cold_files and any(item["cache_hit"] is False for item in cold_files)
+    assert warm_files and all(item["cache_hit"] is True for item in warm_files)
+    assert [item["relative_path"] for item in cold_files] == [
+        item["relative_path"] for item in warm_files
+    ]
+
 
 def test_package_all_modes_including_dc(mini_release: Path) -> None:
     client = api.open_query_client(

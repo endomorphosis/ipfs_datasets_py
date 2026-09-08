@@ -19,7 +19,14 @@ from ipfs_datasets_py.huggingface.publisher import (
 from ipfs_datasets_py.processors.legal_data.state_laws_publication_package import (
     BASE_PROHIBITED_OPERATIONS,
     STATE_LAWS_PLAN_SCHEMA,
+    VIEWER_CONTROL_REPLACE,
+    VIEWER_CONTROL_SKIP,
     StateLawsCanonicalControlBundle,
+    StateLawsViewerControlAuthorization,
+    StateLawsViewerControlPlan,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
+    state_laws_root_viewer_configs,
 )
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
@@ -54,19 +61,50 @@ def _candidate() -> dict:
     }
 
 
-def _plan() -> PublicationPlan:
+def _plan(
+    *,
+    viewer_operation: str = VIEWER_CONTROL_SKIP,
+    existing_root_sha256: str = "5" * 64,
+) -> PublicationPlan:
     release_id = f"sha256-{RELEASE_DIGEST}"
+    release_prefix = f"data/state_laws/{release_id}"
+    replacement_review = None
+    if viewer_operation == VIEWER_CONTROL_REPLACE:
+        replacement_review = StateLawsViewerControlAuthorization(
+            review_id="root-readme-review",
+            reviewer="state-laws-release-board",
+            repository_id=publish.DEFAULT_DATASET_REPO,
+            target_revision="main",
+            audited_parent_commit=PARENT,
+            release_manifest_digest=RELEASE_DIGEST,
+            expected_existing_sha256=existing_root_sha256,
+            replacement_sha256="5" * 64,
+        ).to_dict()
+    control = StateLawsViewerControlPlan(
+        repository_id=publish.DEFAULT_DATASET_REPO,
+        target_revision="main",
+        audited_parent_commit=PARENT,
+        release_prefix=release_prefix,
+        release_manifest_digest=RELEASE_DIGEST,
+        sha256="5" * 64,
+        size_bytes=1234,
+        configs=tuple(state_laws_root_viewer_configs(release_prefix)),
+        existing_state="present",
+        operation=viewer_operation,
+        expected_existing_sha256=existing_root_sha256,
+        replacement_review=replacement_review,
+    )
     return PublicationPlan(
         schema_version=STATE_LAWS_PLAN_SCHEMA,
         repository_id=publish.DEFAULT_DATASET_REPO,
         repository_type="dataset",
         release_id=release_id,
-        release_prefix=f"releases/{release_id}",
+        release_prefix=release_prefix,
         release_sha256=RELEASE_DIGEST,
         operations=(
             PublicationFilePlan(
                 relative_path="manifest.json",
-                remote_path=f"releases/{release_id}/manifest.json",
+                remote_path=f"{release_prefix}/manifest.json",
                 size_bytes=9,
                 sha256="e" * 64,
             ),
@@ -75,6 +113,7 @@ def _plan() -> PublicationPlan:
         audited_parent_commit=PARENT,
         target_revision="main",
         prohibited_operations=BASE_PROHIBITED_OPERATIONS,
+        metadata={"viewer_control": control.to_dict()},
     )
 
 
@@ -189,7 +228,7 @@ def test_exact_local_seal_load_ignores_ambiguous_scripts_module(
     assert loaded.check_state_prepublication_seal is not poison_check
 
 
-def test_dry_run_is_add_only_and_non_authorizing() -> None:
+def test_dry_run_separates_additive_payload_and_exact_viewer_control() -> None:
     receipt = publish.build_canonical_publication_dry_run_receipt(
         candidate=_candidate(), plan=_plan()
     )
@@ -197,7 +236,70 @@ def test_dry_run_is_add_only_and_non_authorizing() -> None:
     assert receipt["remote_mutation_attempted"] is False
     assert receipt["seal_verified_before_mutation"] is False
     assert receipt["operations"][0]["operation"] == "add"
+    assert receipt["immutable_release_artifacts_additive_only"] is True
+    assert receipt["viewer_control"]["operation"] == VIEWER_CONTROL_SKIP
+    assert receipt["viewer_control"]["configs"] == list(
+        state_laws_root_viewer_configs(
+            f"data/state_laws/sha256-{RELEASE_DIGEST}"
+        )
+    )
     assert receipt["previous_public_pin"] == PARENT
+
+
+def test_reviewed_root_replacement_is_not_mislabeled_add_only() -> None:
+    plan = _plan(
+        viewer_operation=VIEWER_CONTROL_REPLACE,
+        existing_root_sha256="4" * 64,
+    )
+    receipt = publish.build_canonical_publication_dry_run_receipt(
+        candidate=_candidate(),
+        plan=plan,
+    )
+    assert receipt["immutable_release_artifacts_additive_only"] is True
+    assert receipt["additive_only"] is False
+    assert receipt["viewer_control"]["operation"] == VIEWER_CONTROL_REPLACE
+    assert receipt["viewer_control"]["replacement_review"]["review_id"] == (
+        "root-readme-review"
+    )
+    assert publish.check_canonical_publication_receipt(
+        receipt,
+        require_live=False,
+    ) == receipt
+
+    forged = copy.deepcopy(receipt)
+    forged["additive_only"] = True
+    forged["canonical_digest"] = forged["content_digest"] = publish.publication_digest(
+        forged
+    )
+    with pytest.raises(publish.PublishReceiptError, match="Viewer control binding"):
+        publish.check_canonical_publication_receipt(forged, require_live=False)
+
+
+def test_compound_writer_accepts_reviewed_root_replacement() -> None:
+    calls: list[tuple] = []
+
+    class Publisher:
+        def execute_canonical_legal_corpora_mutation(self, *args, **kwargs):
+            calls.append((args, kwargs))
+            return "compound-commit"
+
+    plan = _plan(
+        viewer_operation=VIEWER_CONTROL_REPLACE,
+        existing_root_sha256="4" * 64,
+    )
+    control = publish.require_supported_canonical_viewer_control(plan)
+    assert control["canonical_writer_supports_operation"] is True
+    assert control["whole_publication_additive_only"] is False
+    result = publish.authorize_state_main_upload(
+        publisher=Publisher(),
+        plan=plan,
+        approval="approval",
+        local_root=Path("."),
+        policy_proof_digest=PROOF_DIGEST,
+        live_policy_proof="proof",
+    )
+    assert result == "compound-commit"
+    assert len(calls) == 1
 
 
 def test_live_receipt_binds_seal_staging_old_and_public_pins() -> None:

@@ -74,3 +74,21 @@ def test_projection_backend_binds_centroid_routes(tmp_path: Path) -> None:
     assert report["cluster_count"] >= 1
     assert (tmp_path / "vectors" / "vectors.npy").is_file()
     assert (tmp_path / "repo" / vec.VECTORS_RELPATH).is_file()
+
+
+def test_complete_live_vectors_refuse_projection_backend(tmp_path: Path) -> None:
+    corpus = tmp_path / "corpus"
+    _write_body(
+        corpus,
+        "fr:2026-04129:2026-03-03",
+        "Department of Energy notice",
+        content_hash="ab" * 32,
+    )
+    with pytest.raises(vec.LiveVectorError, match="sentence_transformers"):
+        vec.build_live_vectors(
+            corpus_dir=corpus,
+            vector_dir=tmp_path / "vectors",
+            require_complete=True,
+            write_receipt=False,
+            backend="projection",
+        )

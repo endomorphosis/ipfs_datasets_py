@@ -550,9 +550,45 @@ class VermontScraper(BaseStateScraper):
 
     @staticmethod
     def _normalize_vermont_unit_number(value: Any) -> str:
-        text = str(value or "").strip().upper()
-        match = re.match(r"^0*(\d+)(.*)$", text)
-        return f"{int(match.group(1))}{match.group(2)}" if match else text
+        text = (
+            str(value or "")
+            .strip()
+            .upper()
+            .replace("–", "-")
+            .replace("—", "-")
+        )
+        if not text:
+            return text
+        parts = re.split(r"[.-]", text)
+        normalized: list[str] = []
+        for part in parts:
+            if not part:
+                continue
+            match = re.match(r"^0*(\d+)(.*)$", part)
+            if match:
+                normalized.append(f"{int(match.group(1))}{match.group(2)}")
+            else:
+                normalized.append(part)
+        return "-".join(normalized) if normalized else text
+
+    @classmethod
+    def _vermont_bound_section_number(
+        cls,
+        printed_section: Any,
+        *,
+        chapter_number: Any,
+        title_number: Any,
+    ) -> str:
+        printed = cls._normalize_vermont_unit_number(printed_section)
+        chapter = cls._normalize_vermont_unit_number(chapter_number)
+        title = str(title_number or "").strip().upper()
+        if not printed:
+            return printed
+        if title.endswith("APPENDIX") and chapter and not printed.casefold().startswith(
+            f"{chapter}-".casefold()
+        ):
+            return f"{chapter}-{printed}"
+        return printed
 
     @classmethod
     def _vermont_printed_section_matches_locator(
@@ -561,16 +597,31 @@ class VermontScraper(BaseStateScraper):
         *,
         chapter_number: Any,
         locator_section: Any,
+        title_number: Any = None,
     ) -> bool:
         """Bind a printed VT cite to its exact chapter/section URL tuple."""
 
         printed = cls._normalize_vermont_unit_number(printed_section).casefold()
         chapter = cls._normalize_vermont_unit_number(chapter_number).casefold()
         locator = cls._normalize_vermont_unit_number(locator_section).casefold()
+        if not (printed and locator):
+            return False
+        if printed in {locator, f"{chapter}-{locator}"}:
+            return True
+        # Official appendix pages sometimes print a range ("§§ 290-297")
+        # on the first locator of that range.
+        if printed.startswith(f"{locator}-") or (
+            bool(chapter) and printed.startswith(f"{chapter}-{locator}-")
+        ):
+            return True
+        # Official 24 Appendix municipal-charter pages sometimes keep a short
+        # printed section ("§ 14") at a CMS locator that is not zero-padded
+        # ("01731" in chapter 173). Title and chapter already bind the page.
+        title = str(title_number or "").strip().upper()
         return bool(
-            printed
-            and locator
-            and printed in {locator, f"{chapter}-{locator}"}
+            title.endswith("APPENDIX")
+            and chapter
+            and re.fullmatch(r"[0-9]+[A-Za-z]{0,2}(?:-[0-9]+[A-Za-z]{0,2})*", printed)
         )
 
     def _canonical_vermont_hierarchy_url(
@@ -1295,6 +1346,7 @@ class VermontScraper(BaseStateScraper):
                         statute.section_number,
                         chapter_number=unit["chapter"],
                         locator_section=unit["section"],
+                        title_number=unit["title"],
                     )
                     or str(statute.source_url or "") != unit["source_url"]
                 ):
@@ -1307,8 +1359,13 @@ class VermontScraper(BaseStateScraper):
                 printed_section = self._normalize_vermont_unit_number(
                     statute.section_number
                 )
-                statute.section_number = printed_section
-                statute.statute_id = f"{unit['title']} V.S.A. § {printed_section}"
+                bound_section = self._vermont_bound_section_number(
+                    printed_section,
+                    chapter_number=unit["chapter"],
+                    title_number=unit["title"],
+                )
+                statute.section_number = bound_section
+                statute.statute_id = f"{unit['title']} V.S.A. § {bound_section}"
                 statute.official_cite = statute.statute_id
                 statute.structured_data = {
                     **dict(statute.structured_data or {}),

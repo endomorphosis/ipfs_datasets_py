@@ -181,6 +181,10 @@ PRODUCTION_PROVIDER: Final = "huggingface"
 PROJECTION_BACKEND: Final = "local_deterministic_projection"
 DEFAULT_BACKEND: Final = PROJECTION_BACKEND
 DEFAULT_PROVIDER: Final = "local"
+EMBEDDING_NEIGHBOR_METRIC: Final = "gte-small-cosine"
+EMBEDDING_NEIGHBOR_EDGE_TYPE: Final = "EMBEDDING_NEIGHBOR_OF"
+DEFAULT_EMBEDDING_NEIGHBOR_K: Final = 8
+MAX_EMBEDDING_NEIGHBOR_K: Final = 64
 
 AUTHORIZES_PUBLICATION: Final = False
 AUTHORIZES_HUB_UPLOAD: Final = False
@@ -247,6 +251,12 @@ class EmbeddingConfigError(FederalRegisterVectorError):
     """Raised when the embedding pin is incomplete or not GTE-small."""
 
     code = "config_invalid"
+
+
+class EmbeddingNeighborError(FederalRegisterVectorError):
+    """Raised when GTE-small kNN neighbors cannot be projected."""
+
+    code = "embedding_neighbor_invalid"
 
 
 class VectorBindingError(FederalRegisterVectorError):
@@ -1504,6 +1514,223 @@ def generate_federal_register_embeddings(
         config=uscode_pin,
         embedder=chosen,
     )
+
+
+def assert_production_gte_small_vectors(
+    *,
+    backend: Any,
+    model_id: Any,
+    model_revision: Any,
+    dimension: Any,
+    vector_space_id: Any = "",
+) -> None:
+    """Fail closed unless the matrix is the sealed production GTE-small pin."""
+
+    require_pinned_gte_small(model_id=model_id, model_revision=model_revision)
+    backend_text = str(backend or "").strip().lower()
+    if backend_text != PRODUCTION_BACKEND:
+        raise EmbeddingNeighborError(
+            "GTE-small graph neighbors require backend="
+            f"{PRODUCTION_BACKEND!r}; got {backend_text!r}. "
+            "The local deterministic projection is fixture-only."
+        )
+    if int(dimension or 0) != PINNED_DIMENSION:
+        raise EmbeddingNeighborError(
+            f"GTE-small neighbors require dimension={PINNED_DIMENSION}; got {dimension!r}"
+        )
+    space = str(vector_space_id or "").strip()
+    if space and space != default_vector_space_id():
+        raise EmbeddingNeighborError(
+            f"vector_space_id must be {default_vector_space_id()!r}; got {space!r}"
+        )
+
+
+def gte_small_embedding_neighbors(
+    vectors: Any,
+    legal_ids: Sequence[str],
+    *,
+    k: int = DEFAULT_EMBEDDING_NEIGHBOR_K,
+    min_score: float = 0.0,
+    backend: str = PRODUCTION_BACKEND,
+    model_id: str = PINNED_MODEL_ID,
+    model_revision: str = PINNED_MODEL_REVISION,
+    vector_space_id: str = "",
+    config_cid: str | None = None,
+) -> list[dict[str, Any]]:
+    """Project undirected-ready kNN edges from pinned GTE-small vectors.
+
+    Input rows must already be the production sentence-transformers GTE-small
+    pin. Fixture hashed projections fail closed. Does not download a model.
+    """
+
+    import numpy as np
+
+    assert_production_gte_small_vectors(
+        backend=backend,
+        model_id=model_id,
+        model_revision=model_revision,
+        dimension=PINNED_DIMENSION,
+        vector_space_id=vector_space_id,
+    )
+    ids = [str(item or "").strip() for item in legal_ids]
+    if any(not item for item in ids):
+        raise EmbeddingNeighborError("every vector row needs a non-empty legal_id")
+    if len(ids) != len(set(ids)):
+        raise EmbeddingNeighborError("legal_ids for GTE-small neighbors must be unique")
+    matrix = np.asarray(vectors, dtype=np.float32)
+    if matrix.ndim != 2:
+        raise EmbeddingNeighborError("GTE-small neighbor matrix must be 2-d")
+    if matrix.shape[0] != len(ids):
+        raise EmbeddingNeighborError(
+            f"vector rows ({matrix.shape[0]}) must match legal_ids ({len(ids)})"
+        )
+    if matrix.shape[1] != PINNED_DIMENSION:
+        raise EmbeddingNeighborError(
+            f"GTE-small neighbor matrix must be {PINNED_DIMENSION}-d; got {matrix.shape[1]}"
+        )
+    if not np.isfinite(matrix).all():
+        raise EmbeddingNeighborError("GTE-small neighbor matrix contains NaN or Inf")
+    if isinstance(k, bool) or not isinstance(k, int) or k < 1:
+        raise EmbeddingNeighborError("neighbor k must be a positive integer")
+    if k > MAX_EMBEDDING_NEIGHBOR_K:
+        raise EmbeddingNeighborError(
+            f"neighbor k must be <= {MAX_EMBEDDING_NEIGHBOR_K}; got {k}"
+        )
+    if len(ids) < 2:
+        return []
+    norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+    if float(np.min(norms)) < 1e-6:
+        raise EmbeddingNeighborError("GTE-small neighbor matrix has a zero vector")
+    matrix = matrix / norms
+    neighbor_k = min(k, len(ids) - 1)
+    pin = {
+        "backend": PRODUCTION_BACKEND,
+        "dimension": PINNED_DIMENSION,
+        "k": neighbor_k,
+        "metric": EMBEDDING_NEIGHBOR_METRIC,
+        "model_id": PINNED_MODEL_ID,
+        "model_revision": PINNED_MODEL_REVISION,
+        "vector_space_id": vector_space_id or default_vector_space_id(),
+    }
+    neighbor_config_cid = str(config_cid or "").strip() or content_cid(pin)
+    neighbors: list[dict[str, Any]] = []
+    batch_size = 512
+    for start in range(0, len(ids), batch_size):
+        block = matrix[start : start + batch_size]
+        sims = block @ matrix.T
+        for offset, row in enumerate(sims):
+            source_index = start + offset
+            row[source_index] = -np.inf
+            top = np.argpartition(-row, neighbor_k - 1)[:neighbor_k]
+            ranked = sorted(
+                ((int(target), float(row[int(target)])) for target in top),
+                key=lambda item: (-item[1], ids[item[0]]),
+            )
+            for target_index, score in ranked:
+                if score < float(min_score):
+                    continue
+                neighbors.append(
+                    {
+                        "config_cid": neighbor_config_cid,
+                        "edge_type": EMBEDDING_NEIGHBOR_EDGE_TYPE,
+                        "metric": EMBEDDING_NEIGHBOR_METRIC,
+                        "score": score,
+                        "source_legal_id": ids[source_index],
+                        "target_legal_id": ids[target_index],
+                    }
+                )
+    neighbors.sort(
+        key=lambda item: (
+            str(item["source_legal_id"]),
+            -float(item["score"]),
+            str(item["target_legal_id"]),
+        )
+    )
+    return neighbors
+
+
+def load_gte_small_vector_matrix(
+    vector_dir: PathLike,
+) -> tuple[Any, list[str], dict[str, Any]]:
+    """Load a live GTE-small matrix and fail closed on fixture backends."""
+
+    import numpy as np
+
+    root = Path(vector_dir)
+    manifest_path = root / "manifest.json"
+    if not manifest_path.is_file():
+        raise EmbeddingNeighborError(f"GTE-small vector manifest missing: {manifest_path}")
+    try:
+        receipt = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise EmbeddingNeighborError(
+            f"GTE-small vector manifest is not JSON: {manifest_path}"
+        ) from exc
+    if type(receipt) is not dict:
+        raise EmbeddingNeighborError("GTE-small vector manifest root must be an object")
+    assert_production_gte_small_vectors(
+        backend=receipt.get("backend"),
+        model_id=receipt.get("model_id"),
+        model_revision=receipt.get("model_revision"),
+        dimension=receipt.get("dimension"),
+        vector_space_id=receipt.get("vector_space_id") or "",
+    )
+    vectors_path = Path(str(receipt.get("vectors_path") or root / "vectors.npy"))
+    ids_path = Path(str(receipt.get("ids_path") or root / "ids.jsonl"))
+    if not vectors_path.is_file():
+        raise EmbeddingNeighborError(f"GTE-small vectors.npy missing: {vectors_path}")
+    if not ids_path.is_file():
+        raise EmbeddingNeighborError(f"GTE-small ids.jsonl missing: {ids_path}")
+    matrix = np.load(str(vectors_path))
+    legal_ids: list[str] = []
+    with ids_path.open(encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            item = json.loads(line)
+            legal_ids.append(str(item.get("legal_id") or ""))
+    if int(receipt.get("vector_count") or 0) and int(receipt["vector_count"]) != len(legal_ids):
+        raise EmbeddingNeighborError(
+            "GTE-small vector_count does not match ids.jsonl "
+            f"({receipt.get('vector_count')} != {len(legal_ids)})"
+        )
+    return matrix, legal_ids, receipt
+
+
+def gte_small_embedding_neighbors_from_dir(
+    vector_dir: PathLike,
+    *,
+    k: int = DEFAULT_EMBEDDING_NEIGHBOR_K,
+    min_score: float = 0.0,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Load live GTE-small vectors and emit EMBEDDING_NEIGHBOR_OF records."""
+
+    matrix, legal_ids, receipt = load_gte_small_vector_matrix(vector_dir)
+    neighbors = gte_small_embedding_neighbors(
+        matrix,
+        legal_ids,
+        k=k,
+        min_score=min_score,
+        backend=str(receipt.get("backend") or ""),
+        model_id=str(receipt.get("model_id") or ""),
+        model_revision=str(receipt.get("model_revision") or ""),
+        vector_space_id=str(receipt.get("vector_space_id") or ""),
+        config_cid=str(receipt.get("config_cid") or "") or None,
+    )
+    report = {
+        "backend": receipt.get("backend"),
+        "config_cid": receipt.get("config_cid"),
+        "edge_count": len(neighbors),
+        "edge_type": EMBEDDING_NEIGHBOR_EDGE_TYPE,
+        "k": min(k, max(0, len(legal_ids) - 1)),
+        "metric": EMBEDDING_NEIGHBOR_METRIC,
+        "model_id": receipt.get("model_id"),
+        "model_revision": receipt.get("model_revision"),
+        "vector_count": len(legal_ids),
+        "vector_space_id": receipt.get("vector_space_id") or default_vector_space_id(),
+    }
+    return neighbors, report
 
 
 def assert_embedding_conservation(
@@ -2894,8 +3121,12 @@ __all__ = [
     "AUTHORIZES_HUB_UPLOAD",
     "AUTHORIZES_PUBLICATION",
     "DEFAULT_BACKEND",
+    "DEFAULT_EMBEDDING_NEIGHBOR_K",
     "DEFAULT_VECTOR_KMEANS_SEED",
+    "EMBEDDING_NEIGHBOR_EDGE_TYPE",
+    "EMBEDDING_NEIGHBOR_METRIC",
     "FORBIDDEN_LEGACY_FAISS_FILENAMES",
+    "MAX_EMBEDDING_NEIGHBOR_K",
     "GOAL_ID",
     "MAX_ROWS_PER_PHYSICAL_SHARD",
     "MAX_ROWS_PER_VECTOR_CENTROID",
@@ -2916,6 +3147,7 @@ __all__ = [
     "TASK_ID",
     "CorpusParentLink",
     "EmbeddingConfigError",
+    "EmbeddingNeighborError",
     "FederalRegisterEmbeddingConfig",
     "FederalRegisterVectorBinding",
     "FederalRegisterVectorError",
@@ -2945,10 +3177,14 @@ __all__ = [
     "build_layout_root_cid",
     "build_model_cid",
     "chunks_from_materialized_corpus",
+    "assert_production_gte_small_vectors",
     "default_embedding_config",
     "default_vector_space_id",
     "default_vectors_report_path",
     "fixture_embedding_config",
+    "gte_small_embedding_neighbors",
+    "gte_small_embedding_neighbors_from_dir",
+    "load_gte_small_vector_matrix",
     "fixture_vector_bounds",
     "fixture_vector_chunks",
     "generate_federal_register_embeddings",

@@ -155,6 +155,17 @@ SOURCE_RIGHTS_PRODUCER: Final = HARDENED_RIGHTS_PRODUCER
 SOURCE_RIGHTS_COMPLIANCE_SCHEMA: Final = HARDENED_RIGHTS_COMPLIANCE_SCHEMA
 SOURCE_RIGHTS_CODE_VERSION: Final = HARDENED_RIGHTS_CODE_VERSION
 
+VIEWER_DEFAULT_CONFIG_NAME: Final = "state_statutes_exact_51"
+VIEWER_LEGACY_CONFIG_NAME: Final = "legacy-state-parquet-v1"
+VIEWER_DEFAULT_CORPUS_GLOB: Final = "data/corpus/part-*.parquet"
+VIEWER_LEGACY_ROOT_GLOB: Final = "STATE-*.parquet"
+VIEWER_ROOT_PATH: Final = "README.md"
+
+_VIEWER_CONFIG_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+_IMMUTABLE_STATE_LAWS_RELEASE_PREFIX_RE = re.compile(
+    r"^data/state_laws/sha256-([0-9a-f]{64})$"
+)
+
 # Exact jurisdiction set: 50 postal state codes + DC (no extras, no omissions).
 CANONICAL_JURISDICTIONS: Final = frozenset(
     {
@@ -310,6 +321,129 @@ class JurisdictionSetError(StateLawsReleaseSchemaError):
 
 class OfficialProvenanceError(StateLawsReleaseSchemaError):
     """Raised when official-source provenance is incomplete or non-official."""
+
+
+# ---------------------------------------------------------------------------
+# Repository-root Dataset Viewer controls
+# ---------------------------------------------------------------------------
+
+
+def validate_viewer_config_name(value: Any) -> str:
+    """Return one conservative Hugging Face Dataset Viewer identifier."""
+
+    name = str(value or "").strip()
+    if (
+        not _VIEWER_CONFIG_NAME_RE.fullmatch(name)
+        or name in {".", ".."}
+    ):
+        raise StateLawsReleaseSchemaError(
+            f"invalid Dataset Viewer config identifier: {value!r}"
+        )
+    return name
+
+
+def state_laws_root_viewer_configs(
+    release_prefix: str,
+) -> tuple[dict[str, Any], ...]:
+    """Return the exact two configs consumed from repository-root README."""
+
+    prefix = str(release_prefix or "").strip().strip("/")
+    match = _IMMUTABLE_STATE_LAWS_RELEASE_PREFIX_RE.fullmatch(prefix)
+    if match is None:
+        raise StateLawsReleaseSchemaError(
+            "root Viewer configs require data/state_laws/"
+            "sha256-<release-manifest-digest>"
+        )
+    default_name = validate_viewer_config_name(VIEWER_DEFAULT_CONFIG_NAME)
+    legacy_name = validate_viewer_config_name(VIEWER_LEGACY_CONFIG_NAME)
+    return (
+        {
+            "config_name": default_name,
+            "data_files": [
+                {
+                    "split": "train",
+                    "path": f"{prefix}/{VIEWER_DEFAULT_CORPUS_GLOB}",
+                }
+            ],
+        },
+        {
+            "config_name": legacy_name,
+            "data_files": [
+                {"split": "train", "path": VIEWER_LEGACY_ROOT_GLOB}
+            ],
+        },
+    )
+
+
+def render_state_laws_root_viewer_card(
+    *,
+    release_prefix: str,
+    release_manifest_digest: str,
+    source_rights_receipt_digest: str,
+) -> str:
+    """Render exact root metadata after the content-addressed prefix exists."""
+
+    digest = str(release_manifest_digest or "")
+    if not re.fullmatch(r"[0-9a-f]{64}", digest):
+        raise InvalidDigestError(
+            "release_manifest_digest must be lowercase SHA-256"
+        )
+    rights_digest = str(source_rights_receipt_digest or "")
+    if not re.fullmatch(r"[0-9a-f]{64}", rights_digest):
+        raise InvalidDigestError(
+            "source_rights_receipt_digest must be lowercase SHA-256"
+        )
+    prefix = str(release_prefix or "").strip().strip("/")
+    match = _IMMUTABLE_STATE_LAWS_RELEASE_PREFIX_RE.fullmatch(prefix)
+    if match is None or match.group(1) != digest:
+        raise StateLawsReleaseSchemaError(
+            "root Viewer release prefix does not encode the manifest digest"
+        )
+    configs = state_laws_root_viewer_configs(prefix)
+    lines = [
+        "---",
+        "license: other",
+        'pretty_name: "State Laws Sparse GraphRAG"',
+        "tags:",
+        "  - legal",
+        "  - state-statutes",
+        "  - graphrag",
+        "  - justicedao",
+        "  - exact-51",
+        "  - state-laws",
+        "configs:",
+    ]
+    for config in configs:
+        lines.extend(
+            (
+                f"- config_name: {json.dumps(config['config_name'])}",
+                "  data_files:",
+                '  - split: "train"',
+                f"    path: {json.dumps(config['data_files'][0]['path'])}",
+            )
+        )
+    lines.extend(
+        (
+            "---",
+            "",
+            "# State Laws Sparse GraphRAG",
+            "",
+            f"Immutable release prefix: `{prefix}`",
+            "",
+            f"Release manifest digest: `{digest}`",
+            "",
+            f"Source-rights receipt digest: `{rights_digest}`",
+            "",
+            "The default Dataset Viewer configuration reads only the combined "
+            "exact-51 corpus Parquet shards at the immutable release prefix.",
+            "",
+            "Legacy root `STATE-*.parquet` objects remain available through the "
+            f"separate `{VIEWER_LEGACY_CONFIG_NAME}` compatibility configuration "
+            "and are not overwritten or deleted.",
+            "",
+        )
+    )
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
@@ -3249,6 +3383,11 @@ __all__ = [
     "TASK_ID",
     "VectorRecord",
     "VerificationResult",
+    "VIEWER_DEFAULT_CONFIG_NAME",
+    "VIEWER_DEFAULT_CORPUS_GLOB",
+    "VIEWER_LEGACY_CONFIG_NAME",
+    "VIEWER_LEGACY_ROOT_GLOB",
+    "VIEWER_ROOT_PATH",
     "canonical_json_dumps",
     "coerce_family_set",
     "content_sha256",
@@ -3267,6 +3406,8 @@ __all__ = [
     "require_immutable_revision",
     "require_source_rights_binding",
     "required_semantic_families",
+    "render_state_laws_root_viewer_card",
+    "state_laws_root_viewer_configs",
     "validate_admission_provenance_fields",
     "validate_bound_declaration",
     "validate_centroid_capacity",
@@ -3274,6 +3415,7 @@ __all__ = [
     "validate_document_index",
     "validate_durable_identity_fields",
     "validate_entry_cid",
+    "validate_viewer_config_name",
     "validate_jurisdiction",
     "validate_jurisdiction_set",
     "validate_legal_id",

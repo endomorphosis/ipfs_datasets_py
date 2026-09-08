@@ -1,21 +1,25 @@
 """Shared pressure-aware neighbor materialization for legal GraphRAG.
 
-Process pools are refused: they would duplicate a multi-tens-of-GiB BM25
-index. Threads may share a frozen index. Default worker count comes from
-:func:`host_worker_pressure` (unused cores, RAM / 2GiB, half the machine)
-and is recapped every 4096 documents. Combined RAM+CPU+swap heat
-collapses to 1; swap alone does not.
+Picklable callables run in a spawn process pool sized by
+:func:`tokenize_process_pool_size`. Closures that capture a live BM25
+index stay on threads so the index is not duplicated. Default thread
+admission still comes from :func:`host_worker_pressure`. Combined
+RAM+CPU+swap heat collapses to 1; swap alone does not.
 """
 
 from __future__ import annotations
 
+import multiprocessing as mp
+import os
+import pickle
 import sys
 from collections.abc import Callable, Mapping, Sequence
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from typing import TypeVar
 
 from ipfs_datasets_py.processors.legal_data.host_worker_budget import (
     host_worker_pressure,
+    tokenize_process_pool_size,
 )
 
 PRESSURE_BATCH = 4096
@@ -99,13 +103,28 @@ def log_neighbor_progress(
     reason: str,
     edges: int,
     label: str = "neighbor_progress",
+    partition: str | None = None,
 ) -> None:
+    extra = f" partition={partition}" if partition else ""
     print(
-        f"{label} documents={processed}/{total} "
+        f"{label}{extra} documents={processed}/{total} "
         f"workers={workers} reason={reason} edges={edges}",
         file=sys.stderr,
         flush=True,
     )
+
+
+def _process_pool_allowed(fn: Callable[..., R], workers: int) -> bool:
+    if workers <= 1:
+        return False
+    flag = os.environ.get("LEGAL_GRAPH_PROCESS_POOL", "1").strip().lower()
+    if flag in {"0", "false", "no"}:
+        return False
+    try:
+        pickle.dumps(fn, protocol=pickle.HIGHEST_PROTOCOL)
+    except Exception:
+        return False
+    return True
 
 
 def map_documents_under_pressure(
@@ -117,11 +136,12 @@ def map_documents_under_pressure(
     progress: ProgressFn | None = None,
     batch_size: int = PRESSURE_BATCH,
 ) -> list[R]:
-    """Map *fn* over *documents* with a pressure-capped in-process thread pool.
+    """Map *fn* over *documents* with a pressure-capped pool.
 
-    Results stay in document order. ``fn`` must only read shared frozen
-    state. Worker count is resampled at each batch so swap/RAM/CPU
-    heat collapses the pool to 1.
+    Picklable workers use spawn processes. Closures that capture a live
+    index stay on threads. Results stay in document order. Worker count
+    is resampled at each batch so swap/RAM/CPU heat collapses the pool
+    to 1.
     """
 
     total = len(documents)
@@ -139,6 +159,13 @@ def map_documents_under_pressure(
         batch = documents[offset:batch_end]
         if workers <= 1:
             rows = [fn(document) for document in batch]
+        elif _process_pool_allowed(fn, workers):
+            plan = tokenize_process_pool_size(requested=workers)
+            ctx = mp.get_context(plan.start_method)
+            with ProcessPoolExecutor(max_workers=plan.workers, mp_context=ctx) as pool:
+                rows = list(pool.map(fn, batch, chunksize=min(32, len(batch))))
+            reason = plan.reason
+            workers = plan.workers
         else:
             with ThreadPoolExecutor(max_workers=workers) as pool:
                 rows = list(pool.map(fn, batch, chunksize=min(32, len(batch))))

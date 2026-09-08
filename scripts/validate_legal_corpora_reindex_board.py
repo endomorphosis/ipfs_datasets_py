@@ -20,6 +20,10 @@ TARGET_DATASETS = {
     "justicedao/ipfs_state_laws": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
     "justicedao/ipfs_federal_register": "720668ae016cc400916dda884c9005e03618edfa",
 }
+PUBLICATION_PARENT_REVISIONS = {
+    "justicedao/ipfs_state_laws": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2",
+    "justicedao/ipfs_federal_register": "720668ae016cc400916dda884c9005e03618edfa",
+}
 CONFIG_RELATIVE = "config/agent_supervisor_legal_corpora_reindex_scheduler.json"
 PLAN_RELATIVE = "docs/architecture/LEGAL_CORPORA_REINDEX_PLAN.md"
 OBJECTIVES_RELATIVE = "docs/architecture/legal_corpora_reindex.objectives.md"
@@ -1220,6 +1224,11 @@ def _validate_bundle_policies(
         errors.append("release policy dataset_repo_ids must name the two exact targets")
     if release_policy.get("baseline_revisions") != TARGET_DATASETS:
         errors.append("release policy baseline revisions mismatch")
+    if (
+        release_policy.get("publication_parent_revisions")
+        != PUBLICATION_PARENT_REVISIONS
+    ):
+        errors.append("release policy publication parent revisions mismatch")
     if release_policy.get("release_mode") != "additive":
         errors.append("release policy release_mode must be additive")
     jurisdiction = release_policy.get("jurisdiction_contract")

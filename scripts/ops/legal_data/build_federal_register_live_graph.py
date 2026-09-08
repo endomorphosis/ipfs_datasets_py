@@ -2,8 +2,10 @@
 """Project a live Federal Register citation graph over LCR-071 corpus bodies.
 
 Reads hash-verified GovInfo HTML JSON from the live corpus directory and
-emits compact graph + two-way adjacency receipts. Does not rewrite the
-sealed LCR-058 fixture ``federal_graph.json``. Does not upload to Hub.
+emits compact graph + two-way adjacency receipts. Complete live runs also
+project non-authoritative ``EMBEDDING_NEIGHBOR_OF`` edges from the pinned
+sentence-transformers GTE-small matrix. Does not rewrite the sealed
+LCR-058 fixture ``federal_graph.json``. Does not upload to Hub.
 """
 
 from __future__ import annotations
@@ -26,6 +28,11 @@ from ipfs_datasets_py.processors.legal_data.federal_register_graph import (  # n
     extract_docket_mentions,
     extract_rin_mentions,
 )
+from ipfs_datasets_py.processors.legal_data.graphrag_parallel import (  # noqa: E402
+    chunk_items,
+    ordered_process_map,
+    tokenize_process_pool_size,
+)
 from ipfs_datasets_py.processors.legal_data.federal_register_source_policy import (  # noqa: E402
     CURRENTNESS_DISCLAIMER,
     DEFAULT_OBSERVATION_CUTOFF,
@@ -38,6 +45,7 @@ PROGRAM_ID = "legal-corpora-reindex-v1"
 EXPECTED_LIVE_DOCUMENTS = 11784
 DEFAULT_CORPUS_DIR = Path("/var/tmp/lcr-071-fr-corpus")
 DEFAULT_GRAPH_DIR = Path("/var/tmp/lcr-071-fr-graph")
+DEFAULT_VECTOR_DIR = Path("/var/tmp/lcr-071-fr-vectors")
 GRAPH_RELPATH = Path("docs/reports/legal_corpora_reindex/federal_graph.live.json")
 ADJACENCY_RELPATH = Path(
     "docs/reports/legal_corpora_reindex/federal_adjacency_reconciliation.live.json"
@@ -99,58 +107,36 @@ def _edge_key(source: str, edge_type: str, target: str) -> str:
     return f"{source}\t{edge_type}\t{target}"
 
 
-def build_live_graph(
-    *,
-    corpus_dir: Path,
-    graph_dir: Path,
-    repository_root: Path = REPOSITORY_ROOT,
-    require_complete: bool = True,
-    limit: int | None = None,
-    write_receipts: bool = True,
-) -> dict[str, Any]:
-    rows = _load_index(corpus_dir)
-    if limit is not None:
-        rows = rows[:limit]
-    if require_complete and limit is None and len(rows) != EXPECTED_LIVE_DOCUMENTS:
-        raise LiveGraphError(
-            f"live graph requires {EXPECTED_LIVE_DOCUMENTS} verified bodies, got {len(rows)}"
-        )
-    if not rows:
-        raise LiveGraphError("no verified corpus bodies")
+def _live_graph_chunk(payload: dict[str, Any]) -> dict[str, Any]:
+    """Extract nodes/edges for a slice of live FR bodies. Spawn-worker entry."""
 
-    document_numbers = {_document_number(str(row["legal_id"])) for row in rows}
+    corpus_dir = Path(str(payload["corpus_dir"]))
+    document_numbers = set(payload["document_numbers"])
     nodes: dict[str, str] = {}
-    edges: set[str] = set()
-    outgoing: dict[str, set[str]] = defaultdict(set)
-    incoming: dict[str, set[str]] = defaultdict(set)
-    edge_types: Counter[str] = Counter()
-    node_types: Counter[str] = Counter()
+    edges: list[str] = []
     unresolved = 0
     documents_with_citations = 0
-
-    for row in rows:
+    for row in payload["rows"]:
         legal_id = str(row["legal_id"])
         docno = _document_number(legal_id)
         body_path = corpus_dir / str(row.get("path") or "")
-        payload = json.loads(body_path.read_text(encoding="utf-8"))
-        text = _plain_text(str(payload.get("text") or ""))
-        publication_date = str(payload.get("publication_date") or "")
-        source_url = str(payload.get("official_source_url") or "")
-
+        payload_json = json.loads(body_path.read_text(encoding="utf-8"))
+        text = _plain_text(str(payload_json.get("text") or ""))
+        publication_date = str(payload_json.get("publication_date") or "")
+        source_url = str(payload_json.get("official_source_url") or "")
         doc_key = f"document:{legal_id}"
         _add_node(nodes, doc_key, "document")
         if publication_date:
             date_key = f"date:{publication_date}"
             _add_node(nodes, date_key, "date")
-            edges.add(_edge_key(doc_key, "PUBLISHED_ON", date_key))
+            edges.append(_edge_key(doc_key, "PUBLISHED_ON", date_key))
         if source_url:
             source_key = f"source:{_sha256_text(source_url)[:16]}"
             _add_node(nodes, source_key, "source")
-            edges.add(_edge_key(doc_key, "HAS_SOURCE", source_key))
+            edges.append(_edge_key(doc_key, "HAS_SOURCE", source_key))
             prov_key = f"provenance:{legal_id}"
             _add_node(nodes, prov_key, "provenance")
-            edges.add(_edge_key(doc_key, "HAS_PROVENANCE", prov_key))
-
+            edges.append(_edge_key(doc_key, "HAS_PROVENANCE", prov_key))
         cited = False
         unique_targets: set[str] = set()
         for mention in extract_citation_mentions(text):
@@ -172,9 +158,8 @@ def build_live_graph(
                 continue
             unique_targets.add(target_key)
             _add_node(nodes, target_key, node_type)
-            edges.add(_edge_key(doc_key, edge_type, target_key))
+            edges.append(_edge_key(doc_key, edge_type, target_key))
             cited = True
-
         for match in _FR_DOCNO_RE.finditer(text):
             cited_no = match.group(1)
             if cited_no == docno:
@@ -184,31 +169,132 @@ def build_live_graph(
                 continue
             unique_targets.add(target_key)
             _add_node(nodes, target_key, "citation_fr")
-            edges.add(_edge_key(doc_key, "CITES", target_key))
+            edges.append(_edge_key(doc_key, "CITES", target_key))
             if cited_no not in document_numbers:
                 unresolved += 1
             cited = True
-
         for docket, _start, _end in extract_docket_mentions(text):
             target_key = f"docket:{docket}"
             if target_key in unique_targets:
                 continue
             unique_targets.add(target_key)
             _add_node(nodes, target_key, "docket")
-            edges.add(_edge_key(doc_key, "HAS_DOCKET", target_key))
+            edges.append(_edge_key(doc_key, "HAS_DOCKET", target_key))
             cited = True
-
         for rin, _start, _end in extract_rin_mentions(text):
             target_key = f"rin:{rin}"
             if target_key in unique_targets:
                 continue
             unique_targets.add(target_key)
             _add_node(nodes, target_key, "rin")
-            edges.add(_edge_key(doc_key, "HAS_RIN", target_key))
+            edges.append(_edge_key(doc_key, "HAS_RIN", target_key))
             cited = True
-
         if cited:
             documents_with_citations += 1
+    return {
+        "documents_with_citations": documents_with_citations,
+        "edges": edges,
+        "nodes": nodes,
+        "unresolved": unresolved,
+    }
+
+
+def build_live_graph(
+    *,
+    corpus_dir: Path,
+    graph_dir: Path,
+    repository_root: Path = REPOSITORY_ROOT,
+    require_complete: bool = True,
+    limit: int | None = None,
+    write_receipts: bool = True,
+    vectors_dir: Path | None = None,
+) -> dict[str, Any]:
+    rows = _load_index(corpus_dir)
+    if limit is not None:
+        rows = rows[:limit]
+    neighbor_source = vectors_dir if vectors_dir is not None else (
+        DEFAULT_VECTOR_DIR if require_complete and limit is None else None
+    )
+    preloaded_neighbors: tuple[list[dict[str, Any]], dict[str, Any]] | None = None
+    if neighbor_source is not None:
+        from ipfs_datasets_py.processors.legal_data.federal_register_vectors import (
+            EmbeddingNeighborError,
+            gte_small_embedding_neighbors_from_dir,
+        )
+
+        try:
+            preloaded_neighbors = gte_small_embedding_neighbors_from_dir(neighbor_source)
+        except EmbeddingNeighborError as exc:
+            raise LiveGraphError(
+                f"complete live graph requires pinned GTE-small neighbors: {exc}"
+            ) from exc
+    if require_complete and limit is None and len(rows) != EXPECTED_LIVE_DOCUMENTS:
+        raise LiveGraphError(
+            f"live graph requires {EXPECTED_LIVE_DOCUMENTS} verified bodies, got {len(rows)}"
+        )
+    if not rows:
+        raise LiveGraphError("no verified corpus bodies")
+
+    document_numbers = {_document_number(str(row["legal_id"])) for row in rows}
+    nodes: dict[str, str] = {}
+    edges: set[str] = set()
+    outgoing: dict[str, set[str]] = defaultdict(set)
+    incoming: dict[str, set[str]] = defaultdict(set)
+    edge_types: Counter[str] = Counter()
+    node_types: Counter[str] = Counter()
+    unresolved = 0
+    documents_with_citations = 0
+    plan = tokenize_process_pool_size()
+    slim_rows = [{"legal_id": row.get("legal_id"), "path": row.get("path")} for row in rows]
+    payloads = [
+        {
+            "corpus_dir": str(corpus_dir),
+            "document_numbers": sorted(document_numbers),
+            "rows": list(chunk),
+        }
+        for chunk in chunk_items(slim_rows, 64)
+    ]
+    parts = ordered_process_map(
+        _live_graph_chunk, payloads, workers=plan.workers, plan=plan
+    )
+    for part in parts:
+        unresolved += int(part["unresolved"])
+        documents_with_citations += int(part["documents_with_citations"])
+        for key, node_type in (part.get("nodes") or {}).items():
+            _add_node(nodes, str(key), str(node_type))
+        edges.update(part.get("edges") or ())
+
+    embedding_neighbors: dict[str, Any] | None = None
+    if preloaded_neighbors is not None:
+        neighbor_rows, embedding_neighbors = preloaded_neighbors
+        document_ids = {
+            key[len("document:") :]
+            for key, node_type in nodes.items()
+            if node_type == "document"
+        }
+        for item in neighbor_rows:
+            source_id = str(item["source_legal_id"])
+            target_id = str(item["target_legal_id"])
+            if source_id not in document_ids or target_id not in document_ids:
+                continue
+            edges.add(
+                _edge_key(
+                    f"document:{source_id}",
+                    "EMBEDDING_NEIGHBOR_OF",
+                    f"document:{target_id}",
+                )
+            )
+        kept = sum(
+            1
+            for item in neighbor_rows
+            if str(item["source_legal_id"]) in document_ids
+            and str(item["target_legal_id"]) in document_ids
+        )
+        embedding_neighbors = {
+            **embedding_neighbors,
+            "kept_edge_count": kept,
+            "similarity_cannot_establish_legal_authority": True,
+        }
 
     for edge in edges:
         source, edge_type, target = edge.split("\t", 2)
@@ -278,6 +364,7 @@ def build_live_graph(
         "citation_parser_version": "federal-register-citation-parser/v1",
         "adjacency_inversion": inversion_holds,
         "dangling_keys": dangling,
+        "embedding_neighbors": embedding_neighbors,
         "authorizing_for_publication": False,
         "authorizing_hub_upload": False,
         "status": "passed" if complete and inversion_holds else "partial",
@@ -344,6 +431,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Build live FR citation graph")
     parser.add_argument("--corpus-dir", type=Path, default=DEFAULT_CORPUS_DIR)
     parser.add_argument("--graph-dir", type=Path, default=DEFAULT_GRAPH_DIR)
+    parser.add_argument("--vectors-dir", type=Path, default=None)
     parser.add_argument("--repository-root", type=Path, default=REPOSITORY_ROOT)
     parser.add_argument("--require-complete", action="store_true", default=True)
     parser.add_argument("--allow-partial", action="store_true")
@@ -366,6 +454,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             require_complete=require_complete,
             limit=args.limit,
             write_receipts=not bool(args.no_write_receipts),
+            vectors_dir=args.vectors_dir,
         )
     except LiveGraphError as exc:
         sys.stderr.write(f"build_federal_register_live_graph: FAILED: {exc}\n")

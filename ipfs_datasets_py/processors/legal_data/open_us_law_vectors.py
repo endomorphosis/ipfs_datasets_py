@@ -62,6 +62,7 @@ from ipfs_datasets_py.processors.legal_data.open_us_law_embeddings import (
     OpenUsLawEmbeddingConfig,
     default_embedding_config,
     default_vector_space_id,
+    empty_cuda_working_set,
     fixture_embedding_config,
     generate_open_us_law_embeddings,
     require_pinned_gte_small,
@@ -863,6 +864,7 @@ class OpenUsLawVectorBinding:
         *,
         candidate_centroids: int = DEFAULT_CANDIDATE_CENTROIDS,
         max_shards: int | None = None,
+        jurisdiction_code: str | None = None,
     ) -> tuple[VectorShardRoute, ...]:
         """Bounded centroid routing for dense retrieval (no data-shard I/O)."""
 
@@ -871,6 +873,7 @@ class OpenUsLawVectorBinding:
             query_embedding,
             candidate_centroids=candidate_centroids,
             max_shards=max_shards,
+            jurisdiction_code=jurisdiction_code,
         )
 
     def hydrate_off_centroid_frontier(
@@ -1833,12 +1836,55 @@ def _balanced_position_groups(positions: Sequence[int], group_count: int) -> lis
     return groups
 
 
+def _require_kmeans_device(device: str | None) -> str:
+    text = str(device or "cpu").strip().lower()
+    if text in {"", "cpu"}:
+        return "cpu"
+    if text != "cuda":
+        raise VectorBindingError(f"unsupported kmeans device {device!r}")
+    try:
+        import torch
+    except ImportError as exc:
+        raise VectorBindingError("CUDA k-means requires torch") from exc
+    if not bool(torch.cuda.is_available()):
+        raise VectorBindingError("CUDA k-means requested but CUDA is not available")
+    return "cuda"
+
+
+def _gpu_matrix_from_cpu(matrix: Sequence[Sequence[float]]) -> Any:
+    import torch
+
+    if not matrix:
+        raise VectorBindingError("cannot upload an empty embedding matrix")
+    tensor = torch.tensor(matrix, dtype=torch.float32, device="cuda")
+    norms = torch.linalg.vector_norm(tensor, dim=1, keepdim=True)
+    if bool((~torch.isfinite(norms) | (norms <= 0)).any().item()):
+        raise VectorBindingError("embedding must be finite and non-zero")
+    return tensor / norms
+
+
 def _unit_centroid(
     matrix: Sequence[Sequence[float]],
     positions: Sequence[int],
+    gpu_matrix: Any | None = None,
 ) -> tuple[float, ...]:
     if not positions:
         raise VectorBindingError("cannot form a centroid from an empty group")
+    if gpu_matrix is not None:
+        import torch
+
+        index = torch.tensor(
+            [int(value) for value in positions],
+            device=gpu_matrix.device,
+            dtype=torch.long,
+        )
+        mean = gpu_matrix.index_select(0, index).mean(dim=0)
+        norm = torch.linalg.vector_norm(mean)
+        if not bool(torch.isfinite(norm).item()) or float(norm.item()) == 0.0:
+            fallback = gpu_matrix[int(min(positions))]
+            return tuple(float(value) for value in fallback.detach().cpu().tolist())
+        unit = mean / norm
+        return tuple(float(value) for value in unit.detach().cpu().tolist())
     dimension = len(matrix[positions[0]])
     totals = [0.0] * dimension
     for index in positions:
@@ -1862,6 +1908,7 @@ def _learn_centroids(
     iterations: int,
     seed: int,
     max_training_rows: int,
+    gpu_matrix: Any | None = None,
 ) -> list[tuple[float, ...]]:
     if cluster_count < 1 or cluster_count > len(positions):
         raise VectorBindingError("semantic centroid count is malformed")
@@ -1869,6 +1916,15 @@ def _learn_centroids(
     training = rng.sample_sorted(positions, min(len(positions), max_training_rows))
     first = rng.integers(len(training))
     selected: list[int] = [first]
+    if gpu_matrix is not None:
+        return _learn_centroids_cuda(
+            gpu_matrix,
+            training=training,
+            selected=selected,
+            cluster_count=cluster_count,
+            iterations=iterations,
+            seed=seed,
+        )
     while len(selected) < cluster_count:
         nearest = []
         for local, source in enumerate(training):
@@ -1925,6 +1981,73 @@ def _learn_centroids(
     return centroids
 
 
+def _learn_centroids_cuda(
+    gpu_matrix: Any,
+    *,
+    training: Sequence[int],
+    selected: list[int],
+    cluster_count: int,
+    iterations: int,
+    seed: int,
+) -> list[tuple[float, ...]]:
+    import torch
+
+    device = gpu_matrix.device
+    training_index = torch.tensor(list(training), device=device, dtype=torch.long)
+    train = gpu_matrix.index_select(0, training_index)
+    while len(selected) < cluster_count:
+        cents = train[selected]
+        nearest = (train @ cents.T).max(dim=1).values
+        nearest = nearest.clone()
+        nearest[selected] = float("inf")
+        min_value = float(nearest.min().item())
+        close = torch.isclose(
+            nearest,
+            torch.tensor(min_value, device=device, dtype=nearest.dtype),
+            atol=1e-12,
+            rtol=0.0,
+        )
+        candidates = torch.nonzero(close | (nearest == min_value), as_tuple=False)
+        local_ids = [int(value) for value in candidates.flatten().tolist()]
+        if len(local_ids) == 1:
+            selected.append(local_ids[0])
+        else:
+            scored = [
+                (
+                    (int(seed) + 0xA5A5A5A5 + int(local) * 0x9E3779B97F4A7C15)
+                    & 0xFFFFFFFFFFFFFFFF,
+                    int(local),
+                )
+                for local in local_ids
+            ]
+            scored.sort()
+            selected.append(scored[0][1])
+    centroids = train[selected].clone()
+    for _ in range(iterations):
+        assignments = (train @ centroids.T).argmax(dim=1)
+        updated = centroids.clone()
+        changed = False
+        for cluster_id in range(cluster_count):
+            members = torch.nonzero(assignments == cluster_id, as_tuple=False).flatten()
+            if int(members.numel()) == 0:
+                continue
+            mean = train.index_select(0, members).mean(dim=0)
+            norm = torch.linalg.vector_norm(mean)
+            if not bool(torch.isfinite(norm).item()) or float(norm.item()) == 0.0:
+                continue
+            candidate = mean / norm
+            if not bool(torch.allclose(candidate, updated[cluster_id], atol=1e-6, rtol=0.0)):
+                updated[cluster_id] = candidate
+                changed = True
+        centroids = updated
+        if not changed:
+            break
+    return [
+        tuple(float(value) for value in row.detach().cpu().tolist())
+        for row in centroids
+    ]
+
+
 def _capacity_constrained_assignments(
     scores: Sequence[Sequence[float]],
 ) -> list[int]:
@@ -1974,6 +2097,7 @@ def _spherical_kmeans_groups(
     seed: int,
     iterations: int,
     max_training_rows: int,
+    gpu_matrix: Any | None = None,
 ) -> list[list[int]]:
     position_list = [int(value) for value in positions]
     row_count = len(position_list)
@@ -1991,11 +2115,22 @@ def _spherical_kmeans_groups(
         iterations=iterations,
         seed=seed,
         max_training_rows=max_training_rows,
+        gpu_matrix=gpu_matrix,
     )
-    scores = [
-        [_dot(matrix[index], centroid) for centroid in centroids]
-        for index in position_list
-    ]
+    if gpu_matrix is not None:
+        import torch
+
+        index = torch.tensor(position_list, device=gpu_matrix.device, dtype=torch.long)
+        points = gpu_matrix.index_select(0, index)
+        centroid_tensor = torch.tensor(
+            centroids, dtype=torch.float32, device=gpu_matrix.device
+        )
+        scores = (points @ centroid_tensor.T).detach().cpu().tolist()
+    else:
+        scores = [
+            [_dot(matrix[index], centroid) for centroid in centroids]
+            for index in position_list
+        ]
     assignments = _capacity_constrained_assignments(scores)
     groups = [[] for _ in range(cluster_count)]
     for local, cluster_id in enumerate(assignments):
@@ -2014,6 +2149,7 @@ def _recursive_bounded_groups(
     max_training_rows: int,
     max_centroids: int,
     depth: int = 0,
+    gpu_matrix: Any | None = None,
 ) -> list[list[int]]:
     position_list = [int(value) for value in positions]
     row_count = len(position_list)
@@ -2033,6 +2169,7 @@ def _recursive_bounded_groups(
             seed=seed + depth * 1_000_003,
             iterations=iterations,
             max_training_rows=max_training_rows,
+            gpu_matrix=gpu_matrix,
         )
         if len(children) < 2:
             return [position_list]
@@ -2049,6 +2186,7 @@ def _recursive_bounded_groups(
                     max_training_rows=max_training_rows,
                     max_centroids=max_centroids,
                     depth=depth + 1,
+                    gpu_matrix=gpu_matrix,
                 )
             )
         return output
@@ -2064,6 +2202,7 @@ def _recursive_bounded_groups(
         seed=seed + depth * 1_000_003,
         iterations=iterations,
         max_training_rows=max_training_rows,
+        gpu_matrix=gpu_matrix,
     )
     if len(children) < 2 or max(map(len, children)) == row_count:
         ordered = sorted(position_list)
@@ -2084,6 +2223,7 @@ def _recursive_bounded_groups(
                 max_training_rows=max_training_rows,
                 max_centroids=max_centroids,
                 depth=depth + 1,
+                gpu_matrix=gpu_matrix,
             )
         )
     return output
@@ -2098,6 +2238,7 @@ def _physical_shards(
     seed: int,
     iterations: int,
     max_training_rows: int,
+    gpu_matrix: Any | None = None,
 ) -> list[list[int]]:
     position_list = [int(value) for value in positions]
     row_count = len(position_list)
@@ -2120,6 +2261,7 @@ def _physical_shards(
         seed=seed,
         iterations=iterations,
         max_training_rows=max_training_rows,
+        gpu_matrix=gpu_matrix,
     )
     if len(children) != shard_count:
         return _balanced_position_groups(position_list, shard_count)
@@ -2139,6 +2281,7 @@ def build_open_us_law_centroid_layout(
     kmeans_iterations: int = DEFAULT_KMEANS_ITERATIONS,
     max_training_rows: int = DEFAULT_TRAINING_ROWS,
     data_dir: str = VECTOR_DATA_DIR,
+    kmeans_device: str | None = None,
 ) -> VectorClusterLayout:
     """Cluster embeddings with deterministic balanced spherical k-means."""
 
@@ -2160,6 +2303,8 @@ def build_open_us_law_centroid_layout(
     chunk_cids = tuple(record.chunk_cid for record in ordered)
     parent_cids = tuple(record.entry_cid or record.chunk_cid for record in ordered)
     document_indexes = tuple(index for index, _ in enumerate(ordered))
+    device = _require_kmeans_device(kmeans_device)
+    gpu_matrix = _gpu_matrix_from_cpu(matrix) if device == "cuda" else None
 
     groups = _recursive_bounded_groups(
         matrix,
@@ -2170,6 +2315,7 @@ def build_open_us_law_centroid_layout(
         iterations=bounds["kmeans_iterations"],
         max_training_rows=max_training_rows,
         max_centroids=max_centroids,
+        gpu_matrix=gpu_matrix,
     )
     if not groups:
         raise VectorCoverageError("vector centroid coverage is empty")
@@ -2190,7 +2336,9 @@ def build_open_us_law_centroid_layout(
                 f"cluster {cluster_id} has {len(group_positions)} rows; "
                 f"exceeds {bounds['max_rows_per_centroid']}"
             )
-        routing_centroid = _unit_centroid(matrix, group_positions)
+        routing_centroid = _unit_centroid(
+            matrix, group_positions, gpu_matrix=gpu_matrix
+        )
         physical = _physical_shards(
             matrix,
             group_positions,
@@ -2199,6 +2347,7 @@ def build_open_us_law_centroid_layout(
             seed=bounds["seed"] + 1_000_000 + cluster_id * 97,
             iterations=bounds["kmeans_iterations"],
             max_training_rows=max_training_rows,
+            gpu_matrix=gpu_matrix,
         )
         if not 1 <= len(physical) <= bounds["max_shards_per_centroid"]:
             raise VectorCoverageError(
@@ -2212,7 +2361,9 @@ def build_open_us_law_centroid_layout(
                     f"shard cluster={cluster_id} chunk={chunk_in_cluster} "
                     f"has {len(selected)} rows; exceeds {bounds['max_rows_per_shard']}"
                 )
-            shard_centroid = _unit_centroid(matrix, selected)
+            shard_centroid = _unit_centroid(
+                matrix, selected, gpu_matrix=gpu_matrix
+            )
             keyed = []
             for index in selected:
                 score = _dot(matrix[index], shard_centroid)
@@ -2263,7 +2414,420 @@ def build_open_us_law_centroid_layout(
         target_rows_per_centroid=bounds["target_rows_per_centroid"],
         kmeans_iterations=bounds["kmeans_iterations"],
     )
+    if gpu_matrix is not None:
+        del gpu_matrix
+        empty_cuda_working_set()
     return layout
+
+
+def _chunk_set_digest(cids: Sequence[str]) -> str:
+    return _prefixed_digest(content_sha256(canonical_json_bytes(sorted(cids))))
+
+
+def _normalize_jurisdiction_code(value: Any) -> str:
+    code = str(value or "").strip().upper()
+    if not code:
+        raise VectorBindingError("jurisdiction_code must be a non-empty string")
+    return code
+
+
+def group_records_by_jurisdiction(
+    records: Sequence[EmbeddingRecord],
+    chunk_jurisdiction: Mapping[str, str],
+) -> dict[str, list[EmbeddingRecord]]:
+    """Partition embedding records by postal jurisdiction code."""
+
+    grouped: dict[str, list[EmbeddingRecord]] = {}
+    missing: list[str] = []
+    for record in records:
+        raw = chunk_jurisdiction.get(record.chunk_cid)
+        if raw is None or not str(raw).strip():
+            missing.append(record.chunk_cid)
+            continue
+        code = _normalize_jurisdiction_code(raw)
+        grouped.setdefault(code, []).append(record)
+    if missing:
+        raise VectorBindingError(
+            "chunk_jurisdiction is missing "
+            f"{len(missing)} chunk_cids; example={missing[:3]!r}"
+        )
+    if not grouped:
+        raise VectorBindingError("chunk_jurisdiction produced no partitions")
+    return {code: grouped[code] for code in sorted(grouped)}
+
+
+def assert_centroids_jurisdiction_pure(
+    layout: VectorClusterLayout,
+    chunk_jurisdiction: Mapping[str, str],
+) -> None:
+    """Fail closed if any centroid mixes more than one jurisdiction."""
+
+    for group in layout.clusters:
+        codes = {
+            _normalize_jurisdiction_code(chunk_jurisdiction[cid])
+            for cid in group.entry_cids
+        }
+        if len(codes) != 1:
+            raise VectorCoverageError(
+                f"cluster {group.cluster_id} mixes jurisdictions {sorted(codes)}"
+            )
+
+
+def assignment_payload_from_layout(layout: VectorClusterLayout) -> dict[str, Any]:
+    """Serialize a layout without raw embeddings so k-means can resume."""
+
+    if not isinstance(layout, VectorClusterLayout):
+        raise VectorBindingError("layout must be a VectorClusterLayout")
+    return {
+        "clusters": [
+            {
+                "cluster_id": group.cluster_id,
+                "entry_cids": list(group.entry_cids),
+                "routing_centroid": [float(value) for value in group.routing_centroid],
+                "shards": [
+                    {
+                        "chunk_in_cluster": shard.chunk_in_cluster,
+                        "dimension": shard.dimension,
+                        "document_indexes": list(shard.document_indexes),
+                        "entry_cids": list(shard.entry_cids),
+                        "global_shard_id": shard.global_shard_id,
+                        "max_score": float(shard.max_score),
+                        "min_score": float(shard.min_score),
+                        "relative_path": shard.relative_path,
+                        "scores": [float(score) for score in shard.scores],
+                        "shard_centroid": [
+                            float(value) for value in shard.shard_centroid
+                        ],
+                    }
+                    for shard in group.shards
+                ],
+            }
+            for group in layout.clusters
+        ],
+        "dimension": layout.dimension,
+        "kmeans_iterations": layout.kmeans_iterations,
+        "max_rows_per_centroid": layout.max_rows_per_centroid,
+        "max_rows_per_shard": layout.max_rows_per_shard,
+        "max_shards_per_centroid": layout.max_shards_per_centroid,
+        "schema_version": layout.schema_version,
+        "seed": layout.seed,
+        "target_rows_per_centroid": layout.target_rows_per_centroid,
+        "total_rows": layout.total_rows,
+    }
+
+
+def layout_from_assignment_payload(
+    payload: Mapping[str, Any],
+    records: Sequence[EmbeddingRecord],
+    *,
+    data_dir: str = VECTOR_DATA_DIR,
+) -> VectorClusterLayout:
+    """Rehydrate a layout by joining assignment rows to trusted embeddings."""
+
+    if not isinstance(payload, Mapping):
+        raise VectorBindingError("assignment payload must be a mapping")
+    records_by_cid = {record.chunk_cid: record for record in records}
+    dimension = int(payload.get("dimension") or 0)
+    if dimension < 1:
+        raise VectorBindingError("assignment dimension must be positive")
+    groups: list[VectorClusterGroup] = []
+    for raw_group in payload.get("clusters") or ():
+        if not isinstance(raw_group, Mapping):
+            raise VectorBindingError("assignment cluster must be a mapping")
+        cluster_id = int(raw_group["cluster_id"])
+        shards: list[VectorShardSpec] = []
+        for raw_shard in raw_group.get("shards") or ():
+            if not isinstance(raw_shard, Mapping):
+                raise VectorBindingError("assignment shard must be a mapping")
+            entry_cids = tuple(str(cid) for cid in raw_shard.get("entry_cids") or ())
+            embeddings: list[tuple[float, ...]] = []
+            for chunk_cid in entry_cids:
+                record = records_by_cid.get(chunk_cid)
+                if record is None:
+                    raise VectorCoverageError(
+                        f"assignment references unknown chunk_cid {chunk_cid!r}"
+                    )
+                embeddings.append(_as_unit(record.embedding))
+            scores = tuple(float(score) for score in raw_shard.get("scores") or ())
+            if len(scores) != len(entry_cids):
+                raise VectorBindingError("assignment shard scores do not match rows")
+            shards.append(
+                VectorShardSpec(
+                    cluster_id=cluster_id,
+                    chunk_in_cluster=int(raw_shard["chunk_in_cluster"]),
+                    global_shard_id=int(raw_shard["global_shard_id"]),
+                    entry_cids=entry_cids,
+                    document_indexes=tuple(
+                        int(index)
+                        for index in (
+                            raw_shard.get("document_indexes")
+                            or range(len(entry_cids))
+                        )
+                    ),
+                    embeddings=tuple(embeddings),
+                    scores=scores,
+                    routing_centroid=tuple(
+                        float(value) for value in raw_group.get("routing_centroid") or ()
+                    ),
+                    shard_centroid=tuple(
+                        float(value) for value in raw_shard.get("shard_centroid") or ()
+                    ),
+                    min_score=float(raw_shard.get("min_score") or 0.0),
+                    max_score=float(raw_shard.get("max_score") or 0.0),
+                    relative_path=str(
+                        raw_shard.get("relative_path")
+                        or vector_shard_relative_path(
+                            cluster_id,
+                            int(raw_shard["chunk_in_cluster"]),
+                            data_dir=data_dir,
+                        )
+                    ),
+                    dimension=int(raw_shard.get("dimension") or dimension),
+                )
+            )
+        groups.append(
+            VectorClusterGroup(
+                cluster_id=cluster_id,
+                entry_cids=tuple(str(cid) for cid in raw_group.get("entry_cids") or ()),
+                routing_centroid=tuple(
+                    float(value) for value in raw_group.get("routing_centroid") or ()
+                ),
+                shards=tuple(shards),
+            )
+        )
+    return VectorClusterLayout(
+        clusters=tuple(groups),
+        dimension=dimension,
+        total_rows=int(payload.get("total_rows") or 0),
+        seed=int(payload.get("seed") or 0),
+        max_rows_per_shard=int(payload.get("max_rows_per_shard") or 0),
+        max_rows_per_centroid=int(payload.get("max_rows_per_centroid") or 0),
+        max_shards_per_centroid=int(payload.get("max_shards_per_centroid") or 0),
+        target_rows_per_centroid=int(payload.get("target_rows_per_centroid") or 0),
+        kmeans_iterations=int(payload.get("kmeans_iterations") or 0),
+        schema_version=str(payload.get("schema_version") or VECTOR_LAYOUT_SCHEMA_VERSION),
+    )
+
+
+def _relabel_layout(
+    layout: VectorClusterLayout,
+    *,
+    cluster_offset: int,
+    shard_offset: int,
+    data_dir: str,
+) -> VectorClusterLayout:
+    groups: list[VectorClusterGroup] = []
+    for group in layout.clusters:
+        cluster_id = int(group.cluster_id) + int(cluster_offset)
+        shards: list[VectorShardSpec] = []
+        for shard in group.shards:
+            shards.append(
+                replace(
+                    shard,
+                    cluster_id=cluster_id,
+                    global_shard_id=int(shard.global_shard_id) + int(shard_offset),
+                    relative_path=vector_shard_relative_path(
+                        cluster_id,
+                        shard.chunk_in_cluster,
+                        data_dir=data_dir,
+                    ),
+                )
+            )
+        groups.append(
+            replace(group, cluster_id=cluster_id, shards=tuple(shards))
+        )
+    return replace(layout, clusters=tuple(groups))
+
+
+def concat_jurisdiction_layouts(
+    parts: Sequence[tuple[str, VectorClusterLayout]],
+    *,
+    data_dir: str = VECTOR_DATA_DIR,
+) -> tuple[VectorClusterLayout, dict[int, str]]:
+    """Concatenate per-jurisdiction layouts and remap cluster/shard ids."""
+
+    if not parts:
+        raise VectorBindingError("cannot concatenate empty jurisdiction layouts")
+    first_layout = parts[0][1]
+    groups: list[VectorClusterGroup] = []
+    cluster_to_code: dict[int, str] = {}
+    cluster_offset = 0
+    shard_offset = 0
+    total_rows = 0
+    for code, layout in parts:
+        if layout.dimension != first_layout.dimension:
+            raise VectorBindingError("partitioned layouts mix embedding dimensions")
+        relabeled = _relabel_layout(
+            layout,
+            cluster_offset=cluster_offset,
+            shard_offset=shard_offset,
+            data_dir=data_dir,
+        )
+        for group in relabeled.clusters:
+            cluster_to_code[int(group.cluster_id)] = code
+            groups.append(group)
+        cluster_offset += relabeled.cluster_count
+        shard_offset += relabeled.shard_count
+        total_rows += layout.total_rows
+    combined = replace(
+        first_layout,
+        clusters=tuple(groups),
+        total_rows=total_rows,
+    )
+    return combined, cluster_to_code
+
+
+def _jurisdiction_vector_dir(checkpoint_dir: Path, code: str) -> Path:
+    return checkpoint_dir / "by_jurisdiction" / code
+
+
+def write_jurisdiction_vector_checkpoint(
+    checkpoint_dir: Path,
+    code: str,
+    layout: VectorClusterLayout,
+    *,
+    chunk_cids: Sequence[str],
+) -> None:
+    """Persist one jurisdiction's centroid assignment for crash-safe resume."""
+
+    dest = _jurisdiction_vector_dir(checkpoint_dir, code)
+    dest.mkdir(parents=True, exist_ok=True)
+    write_json_atomic(dest / "assignment.json", assignment_payload_from_layout(layout))
+    write_json_atomic(
+        dest / "identity.json",
+        {
+            "chunk_cid_sha256": _chunk_set_digest(chunk_cids),
+            "chunk_count": len(chunk_cids),
+            "cluster_count": layout.cluster_count,
+            "jurisdiction_code": code,
+            "partition": "jurisdiction",
+            "row_count": layout.total_rows,
+            "schema": "ipfs_datasets_py.state_laws.snapshot_graphrag.vectors.v1",
+            "stage": "vectors",
+            "status": "complete",
+        },
+    )
+
+
+def load_jurisdiction_vector_checkpoint(
+    checkpoint_dir: Path,
+    code: str,
+    records: Sequence[EmbeddingRecord],
+    *,
+    data_dir: str = VECTOR_DATA_DIR,
+) -> VectorClusterLayout | None:
+    dest = _jurisdiction_vector_dir(checkpoint_dir, code)
+    identity_path = dest / "identity.json"
+    assignment_path = dest / "assignment.json"
+    if not identity_path.is_file() or not assignment_path.is_file():
+        return None
+    try:
+        identity = json.loads(identity_path.read_text(encoding="utf-8"))
+        payload = json.loads(assignment_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, MemoryError):
+        return None
+    if not isinstance(identity, Mapping) or identity.get("status") != "complete":
+        return None
+    if str(identity.get("jurisdiction_code") or "") != code:
+        return None
+    expected = [record.chunk_cid for record in records]
+    if str(identity.get("chunk_cid_sha256") or "") != _chunk_set_digest(expected):
+        return None
+    if int(identity.get("chunk_count") or -1) != len(expected):
+        return None
+    if not isinstance(payload, Mapping):
+        return None
+    layout = layout_from_assignment_payload(payload, records, data_dir=data_dir)
+    if layout.total_rows != len(expected):
+        return None
+    return layout
+
+
+def build_partitioned_centroid_layout(
+    records: Sequence[EmbeddingRecord],
+    chunk_jurisdiction: Mapping[str, str],
+    *,
+    seed: int,
+    max_rows_per_shard: int,
+    max_shards_per_centroid: int,
+    max_rows_per_centroid: int,
+    target_rows_per_centroid: int,
+    kmeans_iterations: int,
+    data_dir: str = VECTOR_DATA_DIR,
+    checkpoint_dir: Path | None = None,
+    progress_log: Any | None = None,
+    kmeans_device: str | None = None,
+) -> tuple[VectorClusterLayout, dict[int, str]]:
+    """Cluster each jurisdiction independently, optionally checkpointing to disk."""
+
+    grouped = group_records_by_jurisdiction(records, chunk_jurisdiction)
+    parts: list[tuple[str, VectorClusterLayout]] = []
+    for code, part_records in grouped.items():
+        loaded = (
+            load_jurisdiction_vector_checkpoint(
+                checkpoint_dir, code, part_records, data_dir=data_dir
+            )
+            if checkpoint_dir is not None
+            else None
+        )
+        if loaded is not None:
+            if progress_log is not None:
+                progress_log(
+                    f"vector_progress partition={code} documents={len(part_records)} "
+                    f"reason=resume clusters={loaded.cluster_count}"
+                )
+            layout = loaded
+        else:
+            device = _require_kmeans_device(kmeans_device)
+            if progress_log is not None:
+                progress_log(
+                    f"vector_progress partition={code} documents={len(part_records)} "
+                    f"reason=kmeans device={device}"
+                )
+            layout = build_open_us_law_centroid_layout(
+                part_records,
+                seed=seed,
+                max_rows_per_shard=max_rows_per_shard,
+                max_shards_per_centroid=max_shards_per_centroid,
+                max_rows_per_centroid=max_rows_per_centroid,
+                target_rows_per_centroid=target_rows_per_centroid,
+                kmeans_iterations=kmeans_iterations,
+                data_dir=data_dir,
+                kmeans_device=device,
+            )
+            layout = resort_layout_by_centroid_cosine_then_entry_cid(
+                layout, records=part_records
+            )
+            if checkpoint_dir is not None:
+                write_jurisdiction_vector_checkpoint(
+                    checkpoint_dir,
+                    code,
+                    layout,
+                    chunk_cids=[record.chunk_cid for record in part_records],
+                )
+                if progress_log is not None:
+                    progress_log(
+                        f"vector_progress partition={code} documents={len(part_records)} "
+                        f"reason=checkpoint clusters={layout.cluster_count}"
+                    )
+        parts.append((code, layout))
+    combined, cluster_to_code = concat_jurisdiction_layouts(parts, data_dir=data_dir)
+    assert_centroids_jurisdiction_pure(combined, chunk_jurisdiction)
+    if checkpoint_dir is not None:
+        write_json_atomic(
+            checkpoint_dir / "identity.json",
+            {
+                "cluster_count": combined.cluster_count,
+                "jurisdiction_count": len(parts),
+                "jurisdictions": [code for code, _ in parts],
+                "partition": "jurisdiction",
+                "row_count": combined.total_rows,
+                "schema": "ipfs_datasets_py.state_laws.snapshot_graphrag.vectors.v1",
+                "stage": "vectors",
+                "status": "complete",
+            },
+        )
+    return combined, cluster_to_code
 
 
 # ---------------------------------------------------------------------------
@@ -2337,8 +2901,19 @@ def bind_open_us_law_vectors(
     data_dir: str = VECTOR_DATA_DIR,
     entry_locator_page_size: int = MAX_ROWS_PER_PHYSICAL_SHARD,
     shard_descriptors: Mapping[str, Mapping[str, Any]] | None = None,
+    chunk_jurisdiction: Mapping[str, str] | None = None,
+    checkpoint_dir: str | Path | None = None,
+    progress_log: Any | None = None,
+    kmeans_device: str | None = None,
 ) -> OpenUsLawVectorBinding:
-    """Bind trusted Open US Law embeddings to centroid routes and an entry locator."""
+    """Bind trusted Open US Law embeddings to centroid routes and an entry locator.
+
+    When ``chunk_jurisdiction`` is supplied, spherical k-means runs independently
+    per postal code (the 51-jurisdiction snapshot path). Optional
+    ``checkpoint_dir`` writes each partition's assignment to disk so a crash
+    can resume without re-clustering finished states. Omit both for the
+    default global centroid layout used by non-state corpora.
+    """
 
     records = _embedding_records_from_input(embeddings)
     chunk_cids = [rec.chunk_cid for rec in records]
@@ -2392,17 +2967,36 @@ def bind_open_us_law_vectors(
         target_rows_per_centroid=target_rows_per_centroid,
         kmeans_iterations=kmeans_iterations,
     )
-    layout = build_open_us_law_centroid_layout(
-        records,
-        seed=bounds["seed"],
-        max_rows_per_shard=bounds["max_rows_per_shard"],
-        max_shards_per_centroid=bounds["max_shards_per_centroid"],
-        max_rows_per_centroid=bounds["max_rows_per_centroid"],
-        target_rows_per_centroid=bounds["target_rows_per_centroid"],
-        kmeans_iterations=bounds["kmeans_iterations"],
-        data_dir=data_dir,
-    )
-    layout = resort_layout_by_centroid_cosine_then_entry_cid(layout, records=records)
+    cluster_to_code: dict[int, str] = {}
+    if chunk_jurisdiction is not None:
+        checkpoint_path = Path(checkpoint_dir) if checkpoint_dir is not None else None
+        layout, cluster_to_code = build_partitioned_centroid_layout(
+            records,
+            chunk_jurisdiction,
+            seed=bounds["seed"],
+            max_rows_per_shard=bounds["max_rows_per_shard"],
+            max_shards_per_centroid=bounds["max_shards_per_centroid"],
+            max_rows_per_centroid=bounds["max_rows_per_centroid"],
+            target_rows_per_centroid=bounds["target_rows_per_centroid"],
+            kmeans_iterations=bounds["kmeans_iterations"],
+            data_dir=data_dir,
+            checkpoint_dir=checkpoint_path,
+            progress_log=progress_log,
+            kmeans_device=kmeans_device,
+        )
+    else:
+        layout = build_open_us_law_centroid_layout(
+            records,
+            seed=bounds["seed"],
+            max_rows_per_shard=bounds["max_rows_per_shard"],
+            max_shards_per_centroid=bounds["max_shards_per_centroid"],
+            max_rows_per_centroid=bounds["max_rows_per_centroid"],
+            target_rows_per_centroid=bounds["target_rows_per_centroid"],
+            kmeans_iterations=bounds["kmeans_iterations"],
+            data_dir=data_dir,
+            kmeans_device=kmeans_device,
+        )
+        layout = resort_layout_by_centroid_cosine_then_entry_cid(layout, records=records)
     assert_every_chunk_once(layout, expected_chunk_cids=chunk_cids)
     assert_centroid_routes_bounded(layout)
 
@@ -2415,6 +3009,9 @@ def bind_open_us_law_vectors(
     for row in routing_rows:
         row["first_last_keys_are_not_lexical_ranges"] = True
         row["rows_sorted_by"] = ROWS_SORTED_BY
+        code = cluster_to_code.get(int(row["cluster_id"]))
+        if code:
+            row["jurisdiction_code"] = code
     entry_locator_rows = build_entry_locator_rows(
         entry_locations, max_keys_per_page=entry_locator_page_size
     )
@@ -2522,6 +3119,7 @@ def route_open_us_law_shards(
     *,
     candidate_centroids: int = DEFAULT_CANDIDATE_CENTROIDS,
     max_shards: int | None = None,
+    jurisdiction_code: str | None = None,
 ) -> tuple[VectorShardRoute, ...]:
     """Rank routing centroids without NumPy and return selected shard routes."""
 
@@ -2531,6 +3129,23 @@ def route_open_us_law_shards(
     max_shards = _require_positive_int(max_shards, "max_shards")
     if not routing_rows:
         raise VectorLocatorError("vector routing meta-index is empty")
+    if jurisdiction_code is not None and str(jurisdiction_code).strip():
+        wanted = str(jurisdiction_code).strip().upper()
+        tagged = [
+            row
+            for row in routing_rows
+            if str(row.get("jurisdiction_code") or "").strip()
+        ]
+        if tagged:
+            routing_rows = [
+                row
+                for row in tagged
+                if str(row.get("jurisdiction_code") or "").strip().upper() == wanted
+            ]
+            if not routing_rows:
+                raise VectorLocatorError(
+                    f"no centroids for jurisdiction {wanted}"
+                )
 
     groups: dict[int, list[Mapping[str, Any]]] = {}
     dimensions: set[int] = set()
@@ -3228,9 +3843,11 @@ __all__ = [
     "assert_rows_sorted_by_centroid_cosine_then_entry_cid",
     "assert_vector_receipt",
     "bind_fixture_vectors",
+    "assert_centroids_jurisdiction_pure",
     "bind_open_us_law_vectors",
     "bind_open_us_law_vectors_from_chunks",
     "build_entry_locator_rows",
+    "build_partitioned_centroid_layout",
     "build_entry_locations",
     "build_layout_root_cid",
     "build_location_map",

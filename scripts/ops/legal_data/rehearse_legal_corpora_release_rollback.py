@@ -66,10 +66,11 @@ from ipfs_datasets_py.processors.legal_data.state_laws_hf_release import (  # no
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import (  # noqa: E402
     DEFAULT_STAGING_BRANCH as STATE_STAGING_BRANCH,
+    PUBLICATION_PARENT_REVISION as STATE_PREVIOUS_PUBLIC_PIN,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (  # noqa: E402
     DEFAULT_DATASET_REPO_ID as STATE_DATASET_REPO_ID,
-    PREVIOUS_PUBLIC_PIN as STATE_PREVIOUS_PUBLIC_PIN,
+    PREVIOUS_PUBLIC_PIN as STATE_HISTORICAL_BASELINE_PIN,
     RELEASE_PROFILE as STATE_RELEASE_PROFILE,
     RollbackRecord as StateRollbackRecord,
     canonical_json_dumps,
@@ -301,7 +302,7 @@ RUNBOOK_REQUIRED_PHRASES: Final[tuple[str, ...]] = (
     "LCR-067",
     "justicedao/ipfs_state_laws",
     "justicedao/ipfs_federal_register",
-    STATE_PREVIOUS_PUBLIC_PIN,
+    STATE_HISTORICAL_BASELINE_PIN,
     FEDERAL_PREVIOUS_PUBLIC_PIN,
     STATE_RELEASE_PROFILE,
     FEDERAL_RELEASE_PROFILE,
@@ -769,9 +770,10 @@ def load_state_baseline(
         acceptance.get("pinned_revision") or baseline.get("pinned_revision"),
         name="state.baseline.pinned_revision",
     )
-    if pin != STATE_PREVIOUS_PUBLIC_PIN:
+    if pin != STATE_HISTORICAL_BASELINE_PIN:
         raise RehearsalMismatchError(
-            "state baseline pinned revision drifted from STATE_PREVIOUS_PUBLIC_PIN"
+            "state baseline pinned revision drifted from "
+            "STATE_HISTORICAL_BASELINE_PIN"
         )
     return baseline
 

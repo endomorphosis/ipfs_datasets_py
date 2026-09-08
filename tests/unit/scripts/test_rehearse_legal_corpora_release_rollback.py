@@ -49,7 +49,7 @@ def _query_evidence(rehearsal) -> dict:
         "state_baseline": {
             "acceptance": {
                 "jurisdictions": rehearsal.EXPECTED_JURISDICTION_COUNT,
-                "pinned_revision": rehearsal.STATE_PREVIOUS_PUBLIC_PIN,
+                "pinned_revision": rehearsal.STATE_HISTORICAL_BASELINE_PIN,
             }
         },
         "federal_baseline": {
@@ -75,6 +75,9 @@ def test_help_identity_and_source_is_non_mutating(rehearsal) -> None:
         "state_previous",
         "federal_new",
         "federal_previous",
+    )
+    assert rehearsal.STATE_PREVIOUS_PUBLIC_PIN != (
+        rehearsal.STATE_HISTORICAL_BASELINE_PIN
     )
     source = Path(rehearsal.__file__).read_text(encoding="utf-8")
     for forbidden in (

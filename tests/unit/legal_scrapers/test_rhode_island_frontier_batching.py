@@ -330,6 +330,177 @@ def test_rhode_island_terminal_classifier_is_exact_and_source_bound() -> None:
         source_url=nested_obsolete_url,
     ) == "obsolete"
 
+    combined_obsolete_url = f"{ROOT_URL}TITLE2/2-9/2-9-1.htm"
+    combined_obsolete_html = (
+        "<html><body><b>§ 2-9-1, 2-9-2. [Obsolete.]</b></body></html>"
+    )
+    assert source_bound_terminal_section_disposition(
+        combined_obsolete_html,
+        section_number="2-9-1",
+        source_url=combined_obsolete_url,
+    ) == "obsolete_list"
+    assert source_bound_terminal_section_disposition(
+        combined_obsolete_html.replace("§", "§§"),
+        section_number="2-9-1",
+        source_url=combined_obsolete_url,
+    ) == "obsolete_list"
+    assert source_bound_terminal_section_disposition(
+        combined_obsolete_html,
+        section_number="2-9-3",
+        source_url=combined_obsolete_url,
+    ) is None
+
+
+def test_rhode_island_preserved_heading_is_not_a_reserved_terminal() -> None:
+    url = f"{ROOT_URL}TITLE2/2-15/2-15-17.htm"
+    html = (
+        "<html><body>"
+        "<div>Rhode Island General Laws</div>"
+        "<div>Chapter 15</div>"
+        "<div>"
+        "<p><b>§ 2-15-17. Powers of department of environmental management "
+        "preserved.</b></p>"
+        "<p>No provision of §§ 2-15-12 — 2-15-17 shall be construed to divest "
+        "the department of environmental management of any power previously "
+        "granted.</p>"
+        "<div><p>History of Section. P.L. 1939, ch. 735, § 6; G.L. 1956, "
+        "§ 2-15-17.</p></div>"
+        "</div>"
+        "</body></html>"
+    )
+    assert source_bound_terminal_section_disposition(
+        html,
+        section_number="2-15-17",
+        source_url=url,
+    ) is None
+    parsed = parse_rhode_island_section_html(
+        html,
+        source_url=url,
+        expected_section_number="2-15-17",
+        strict_official_identity=True,
+    )
+    assert parsed is not None
+    assert parsed.section_number == "2-15-17"
+    assert "preserved" in (parsed.section_name or "").casefold()
+    assert "divest" in (parsed.full_text or "").casefold()
+
+
+def test_rhode_island_short_official_body_is_admitted_under_strict_identity() -> None:
+    url = f"{ROOT_URL}TITLE6A/6A-1/6A-1/6A-1-107.htm"
+    html = (
+        "<html><body>"
+        "<div>Rhode Island General Laws</div>"
+        "<div>Chapter 1</div>"
+        "<div>"
+        "<p><b>§ 6A-1-107. Section captions.</b></p>"
+        "<p>Section captions are part of title 6A.</p>"
+        "<div><p>History of Section. P.L. 1960, ch. 147, § 1.</p></div>"
+        "</div>"
+        "</body></html>"
+    )
+    parsed = parse_rhode_island_section_html(
+        html,
+        source_url=url,
+        expected_section_number="6A-1-107",
+        strict_official_identity=True,
+    )
+    assert parsed is not None
+    assert parsed.section_number == "6A-1-107"
+    assert parsed.full_text == "Section captions are part of title 6A."
+    assert parse_rhode_island_section_html(
+        html,
+        source_url=url,
+        expected_section_number="6A-1-107",
+        strict_official_identity=False,
+    ) is None
+
+
+def test_rhode_island_decimal_cite_without_dot_before_title_parses() -> None:
+    url = f"{ROOT_URL}TITLE42/42-128.3/42-128.3-1.htm"
+    html = (
+        "<html><body>"
+        "<div>Rhode Island General Laws</div>"
+        "<div>Chapter 128.3</div>"
+        "<div>"
+        "<p><b>§ 42-128.3-1 Short title.</b></p>"
+        "<p>This chapter shall be known as “Housing Incentives for Municipalities.”</p>"
+        "<div><p>History of Section. P.L. 2024, ch. 1, § 1.</p></div>"
+        "</div>"
+        "</body></html>"
+    )
+    parsed = parse_rhode_island_section_html(
+        html,
+        source_url=url,
+        expected_section_number="42-128.3-1",
+        strict_official_identity=True,
+    )
+    assert parsed is not None
+    assert parsed.section_number == "42-128.3-1"
+    assert "housing incentives" in (parsed.full_text or "").casefold()
+
+
+def test_rhode_island_operative_heading_may_end_in_reserved_or_superseded() -> None:
+    reserved_url = f"{ROOT_URL}TITLE28/28-42/28-42-72.htm"
+    reserved_html = (
+        "<html><body>"
+        "<div>Rhode Island General Laws</div>"
+        "<div>Chapter 42</div>"
+        "<div>"
+        "<p><b>§ 28-42-72. Legislative control reserved.</b></p>"
+        "<p>The general assembly reserves the right to amend or repeal this "
+        "chapter and nothing in this chapter shall be construed as a contract.</p>"
+        "<div><p>History of Section. P.L. 1936, ch. 2333, § 12.</p></div>"
+        "</div>"
+        "</body></html>"
+    )
+    assert source_bound_terminal_section_disposition(
+        reserved_html,
+        section_number="28-42-72",
+        source_url=reserved_url,
+    ) is None
+    reserved = parse_rhode_island_section_html(
+        reserved_html,
+        source_url=reserved_url,
+        expected_section_number="28-42-72",
+        strict_official_identity=True,
+    )
+    assert reserved is not None
+    assert reserved.section_number == "28-42-72"
+    assert "legislative control reserved" in (reserved.section_name or "").casefold()
+
+    superseded_url = f"{ROOT_URL}TITLE42/42-64.2/42-64.2-10.htm"
+    superseded_html = (
+        "<html><body>"
+        "<div>Rhode Island General Laws</div>"
+        "<div>Chapter 64.2</div>"
+        "<div>"
+        "<p><b>§ 42-64.2-10. Inconsistent provisions in other laws superseded.</b></p>"
+        "<p>Insofar as the provisions of this chapter are inconsistent with the "
+        "provisions of any other law, the provisions of this chapter shall be "
+        "controlling.</p>"
+        "<div><p>History of Section. P.L. 1987, ch. 118, art. 5, § 1.</p></div>"
+        "</div>"
+        "</body></html>"
+    )
+    superseded = parse_rhode_island_section_html(
+        superseded_html,
+        source_url=superseded_url,
+        expected_section_number="42-64.2-10",
+        strict_official_identity=True,
+    )
+    assert superseded is not None
+    assert "superseded" in (superseded.section_name or "").casefold()
+    repealed = parse_rhode_island_section_html(
+        "<html><body><div>Rhode Island General Laws</div><div>Chapter 1</div>"
+        "<div><p><b>§ 1-1-1. Repealed.</b></p>"
+        "<p>This section was repealed and has no operative statutory text remaining "
+        "on the official page.</p></div></body></html>",
+        source_url=f"{ROOT_URL}TITLE1/1-1/1-1-1.htm",
+        expected_section_number="1-1-1",
+        strict_official_identity=True,
+    )
+    assert repealed is None
+
 
 def test_rhode_island_exact_2_1_part_frontier_is_source_bound() -> None:
     chapter_html = _chapter_parts_html(

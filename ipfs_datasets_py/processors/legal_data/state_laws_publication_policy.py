@@ -16,8 +16,10 @@ Design invariants
   logs, or authorization records; tokens are environment-only.
 * **Additive only**: deletion, force-push, history rewrite, and visibility
   changes are structurally forbidden.
-* **Rollback pin**: the previous public pin
-  ``42f0546acc7c6cd55627eaf51fb820d5613b9021`` must be preserved.
+* **Pin roles**: the sealed historical baseline remains
+  ``42f0546acc7c6cd55627eaf51fb820d5613b9021``; the immediate publication
+  parent and rollback target is
+  ``78cba0ed86c3971a7b90620c6df167af8a1a6fb2``.
 
 This module performs no network I/O and never reads credential values for
 any purpose other than redaction/leak detection.
@@ -49,7 +51,15 @@ PROGRAM_ID: Final = "legal-corpora-reindex-v1"
 PRODUCER: Final = "state_laws_publication_policy.py"
 
 DEFAULT_DATASET_REPO_ID: Final = "justicedao/ipfs_state_laws"
-PREVIOUS_PUBLIC_PIN: Final = "42f0546acc7c6cd55627eaf51fb820d5613b9021"
+HISTORICAL_BASELINE_REVISION: Final = (
+    "42f0546acc7c6cd55627eaf51fb820d5613b9021"
+)
+# Compatibility name for historical LCR-001/LCR-081 evidence. Operational
+# publication code must use PUBLICATION_PARENT_REVISION instead.
+PREVIOUS_PUBLIC_PIN: Final = HISTORICAL_BASELINE_REVISION
+PUBLICATION_PARENT_REVISION: Final = (
+    "78cba0ed86c3971a7b90620c6df167af8a1a6fb2"
+)
 AUTHORIZED_ON: Final = "2026-08-10"
 AUTHORIZATION_STATUS: Final = "recorded"
 RELEASE_MODE: Final = "additive"
@@ -728,7 +738,11 @@ def assert_environment_only_credentials(
 
 @dataclass(frozen=True, slots=True)
 class PublicationAuthorization:
-    """Sealed operator authorization for additive state-law Hub publication."""
+    """Sealed operator authorization for additive state-law Hub publication.
+
+    Its legacy ``previous_public_pin`` field remains the historical baseline
+    recorded in 2026; it is not the moving operational publication parent.
+    """
 
     schema: str
     schema_version: str
@@ -828,7 +842,8 @@ class PublicationAuthorization:
         )
         if pin != PREVIOUS_PUBLIC_PIN:
             raise AuthorizationRecordError(
-                f"previous_public_pin must be {PREVIOUS_PUBLIC_PIN!r}, got {pin!r}"
+                "sealed authorization historical previous_public_pin must be "
+                f"{PREVIOUS_PUBLIC_PIN!r}, got {pin!r}"
             )
         object.__setattr__(self, "previous_public_pin", pin)
         mode = _require_non_empty_str(self.release_mode, "release_mode").lower()
@@ -1180,7 +1195,7 @@ class LiveMutationRequest:
             jurisdictions=tuple(jurisdictions),
             final_manifest_digest=value.get("final_manifest_digest", ""),
             previous_public_pin=value.get(
-                "previous_public_pin", PREVIOUS_PUBLIC_PIN
+                "previous_public_pin", PUBLICATION_PARENT_REVISION
             ),
             secret_redacted=value.get("secret_redacted", False),
             credentials_environment_only=value.get(
@@ -1244,7 +1259,7 @@ class PublicationDecision:
     reason_codes: tuple[str, ...]
     passed_gates: tuple[str, ...]
     required_gates: tuple[str, ...] = REQUIRED_LIVE_MUTATION_GATES
-    previous_public_pin: str = PREVIOUS_PUBLIC_PIN
+    previous_public_pin: str = PUBLICATION_PARENT_REVISION
     message: str = ""
     details: Mapping[str, Any] = field(default_factory=dict)
 
@@ -1353,18 +1368,43 @@ def assert_operation_authorized(
     return op
 
 
+def assert_historical_baseline_pin_preserved(
+    previous_public_pin: Any,
+    *,
+    authorization: Optional[PublicationAuthorization] = None,
+) -> str:
+    """Validate the immutable historical LCR-001/LCR-081 evidence pin."""
+
+    pin = require_immutable_revision(
+        previous_public_pin, name="previous_public_pin"
+    )
+    auth = authorization or get_publication_authorization()
+    if (
+        pin != auth.previous_public_pin
+        or pin != HISTORICAL_BASELINE_REVISION
+    ):
+        raise RollbackPinError(
+            "historical baseline revision must remain "
+            f"{HISTORICAL_BASELINE_REVISION!r}, got {pin!r}"
+        )
+    return pin
+
+
 def assert_rollback_pin_preserved(
     previous_public_pin: Any,
     *,
     authorization: Optional[PublicationAuthorization] = None,
 ) -> str:
+    """Validate the immediate operational publication parent/rollback pin."""
+
     pin = require_immutable_revision(
         previous_public_pin, name="previous_public_pin"
     )
     auth = authorization or get_publication_authorization()
-    if pin != auth.previous_public_pin or pin != PREVIOUS_PUBLIC_PIN:
+    if pin != PUBLICATION_PARENT_REVISION:
         raise RollbackPinError(
-            f"previous_public_pin must remain {PREVIOUS_PUBLIC_PIN!r}, got {pin!r}"
+            "operational publication parent must remain "
+            f"{PUBLICATION_PARENT_REVISION!r}, got {pin!r}"
         )
     if not auth.rollback_pin_must_be_preserved:
         raise AuthorizationRecordError(
@@ -1688,7 +1728,7 @@ def example_authorized_staging_request(
         "dataset_repo_id": DEFAULT_DATASET_REPO_ID,
         "jurisdictions": sorted(CANONICAL_JURISDICTIONS),
         "final_manifest_digest": digest,
-        "previous_public_pin": PREVIOUS_PUBLIC_PIN,
+        "previous_public_pin": PUBLICATION_PARENT_REVISION,
         "secret_redacted": True,
         "credentials_environment_only": True,
         "credentials_scope": DEFAULT_CREDENTIALS_SCOPE,
@@ -1720,7 +1760,7 @@ def example_authorized_main_request(
         "dataset_repo_id": DEFAULT_DATASET_REPO_ID,
         "jurisdictions": sorted(CANONICAL_JURISDICTIONS),
         "final_manifest_digest": digest,
-        "previous_public_pin": PREVIOUS_PUBLIC_PIN,
+        "previous_public_pin": PUBLICATION_PARENT_REVISION,
         "secret_redacted": True,
         "credentials_environment_only": True,
         "credentials_scope": DEFAULT_CREDENTIALS_SCOPE,
@@ -1828,6 +1868,7 @@ __all__ = [
     "EXPECTED_JURISDICTION_COUNT",
     "FORBIDDEN_OPERATIONS",
     "GOAL_ID",
+    "HISTORICAL_BASELINE_REVISION",
     "JurisdictionCoverageError",
     "LiveMutationDeniedError",
     "LiveMutationRequest",
@@ -1835,6 +1876,7 @@ __all__ = [
     "MutationPhase",
     "OperationForbiddenError",
     "PREVIOUS_PUBLIC_PIN",
+    "PUBLICATION_PARENT_REVISION",
     "PROGRAM_ID",
     "PRODUCER",
     "PublicationAuthorization",
@@ -1852,6 +1894,7 @@ __all__ = [
     "TASK_ID",
     "TargetUnauthorizedError",
     "assert_environment_only_credentials",
+    "assert_historical_baseline_pin_preserved",
     "assert_operation_authorized",
     "assert_rollback_pin_preserved",
     "assert_target_authorized",

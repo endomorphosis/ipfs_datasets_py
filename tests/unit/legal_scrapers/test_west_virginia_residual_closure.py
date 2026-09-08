@@ -15,6 +15,7 @@ import hashlib
 import inspect
 import json
 import re
+from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -56,8 +57,13 @@ CHAPTER_05A = "https://code.wvlegislature.gov/5A/"
 CHAPTER_64 = "https://code.wvlegislature.gov/64/"
 ARTICLE_01 = "https://code.wvlegislature.gov/1-1/"
 ARTICLE_05A = "https://code.wvlegislature.gov/5A-1/"
+ARTICLE_11_13AA = "https://code.wvlegislature.gov/11-13AA/"
 SECTION_01 = "https://code.wvlegislature.gov/1-1-1/"
 SECTION_05A = "https://code.wvlegislature.gov/5A-1-1/"
+SECTION_11_13AA = "https://code.wvlegislature.gov/11-13AA-3/"
+SECTION_11_2_5_56 = "https://code.wvlegislature.gov/11-2-5(56)/"
+SECTION_48_1_233_1 = "https://code.wvlegislature.gov/48-1-233.1/"
+INVENTED_ARTICLE_13AAA = "https://code.wvlegislature.gov/11-13AAA/"
 INVENTED_CHAPTER_48A = "https://code.wvlegislature.gov/48A/"
 SINGLETON_61_2_1 = "https://code.wvlegislature.gov/61-2-1/"
 CONSTITUTION_URL = "https://home.wvlegislature.gov/constitution-of-west-virginia/"
@@ -492,6 +498,676 @@ def test_west_virginia_adapter_has_no_static_residual_url_list() -> None:
     assert '[unit["source_url"] for unit in chapter_units]' in strict
     assert "[self.OFFICIAL_ENTRY_URL]" in strict
     assert adapter.count("https://code.wvlegislature.gov/61-2-1/") <= 1
+
+
+def test_west_virginia_chapter_identity_strips_bom_prefix() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    payload = (
+        "<html><body>"
+        "<h3>Primary menu</h3>"
+        "<h3>\ufeffCHAPTER 37B. MINERAL DEVELOPMENT.</h3>"
+        "<h3>Loading Articles</h3>"
+        "</body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="chapter") == "37B"
+
+
+def test_west_virginia_admits_official_double_letter_article_urls() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    article_url, article_groups = scraper._canonical_west_virginia_hierarchy_url(
+        ARTICLE_11_13AA,
+        level="article",
+        chapter_number="11",
+    )
+    section_url, section_groups = scraper._canonical_west_virginia_hierarchy_url(
+        SECTION_11_13AA,
+        level="section",
+        chapter_number="11",
+        article_number="13AA",
+    )
+    assert article_url == ARTICLE_11_13AA
+    assert article_groups == {"chapter": "11", "article": "13AA"}
+    assert section_url == SECTION_11_13AA
+    assert section_groups == {
+        "chapter": "11",
+        "article": "13AA",
+        "section": "3",
+    }
+    with pytest.raises(RuntimeError, match="non-canonical URL"):
+        scraper._canonical_west_virginia_hierarchy_url(
+            INVENTED_ARTICLE_13AAA,
+            level="article",
+            chapter_number="11",
+        )
+
+
+def test_west_virginia_admits_official_parenthetical_section_urls() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    section_url, section_groups = scraper._canonical_west_virginia_hierarchy_url(
+        SECTION_11_2_5_56,
+        level="section",
+        chapter_number="11",
+        article_number="2",
+    )
+    assert section_url == SECTION_11_2_5_56
+    assert section_groups == {
+        "chapter": "11",
+        "article": "2",
+        "section": "5(56)",
+    }
+    payload = (
+        "<html><body><h4>§ 11-2-5(56). Restricted accounts.</h4></body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="section") == "11-2-5(56)"
+
+
+def test_west_virginia_admits_official_dotted_section_urls() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    section_url, section_groups = scraper._canonical_west_virginia_hierarchy_url(
+        SECTION_48_1_233_1,
+        level="section",
+        chapter_number="48",
+        article_number="1",
+    )
+    assert section_url == SECTION_48_1_233_1
+    assert section_groups == {
+        "chapter": "48",
+        "article": "1",
+        "section": "233.1",
+    }
+    payload = (
+        "<html><body><h4>§ 48-1-233.1. Definitions.</h4></body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="section") == "48-1-233.1"
+
+
+def test_west_virginia_captioned_acts_repeal_is_source_bound_terminal() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/1-2-2A/"
+    payload = (
+        "<html><body>"
+        "<h4>§1-2-2a. Legislative findings.</h4>"
+        "<div class='sectiontext'>"
+        "§1-2-2a. Legislative findings. Repealed. Acts, 1971 2nd Ex. Sess., Ch. 60."
+        "</div></body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="section") == "1-2-2A"
+    assert scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="1-2-2A",
+        payload=payload,
+        discovery_method="test",
+    ) is None
+    assert scraper._source_bound_west_virginia_terminal_disposition(
+        payload,
+        source_url=url,
+        source_label="§1-2-2a. Legislative findings.",
+        level="section",
+        expected_identity="1-2-2A",
+        observed_on=date(2026, 8, 30),
+    ) == {
+        "disposition": "repealed",
+        "source_label": "§1-2-2a. Legislative findings.",
+        "source_url": url,
+    }
+    assert scraper._west_virginia_terminal_disposition(
+        "§1-2-2. Priority of repealed statutes.",
+        observed_on=date(2026, 8, 30),
+    ) is None
+
+
+def test_west_virginia_short_operative_repeal_section_is_not_dropped() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/1-5-4/"
+    payload = (
+        "<html><body>"
+        "<h4>§1-5-4. Repeal.</h4>"
+        "<div class='sectiontext'><h4>§1-5-4. Repeal.</h4>"
+        "<p>All acts or parts of acts which are inconsistent with the provisions "
+        "of this article are hereby repealed to the extent of such inconsistency.</p>"
+        "</div></body></html>"
+    ).encode("utf-8")
+    row = scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="1-5-4",
+        payload=payload,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    )
+    assert row is not None
+    assert row.section_number == "1-5-4"
+    assert "inconsistent with the provisions of this article" in (row.full_text or "")
+    assert scraper._source_bound_west_virginia_terminal_disposition(
+        payload,
+        source_url=url,
+        source_label="§1-5-4. Repeal.",
+        level="section",
+        expected_identity="1-5-4",
+        observed_on=date(2026, 8, 30),
+    ) is None
+
+
+def test_west_virginia_section_identity_reads_sectiontext_without_h4() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/5-1C-1/"
+    payload = (
+        "<html><body>"
+        "<div class='sectiontext'>"
+        "§5-1C-1. Repealed. Acts, 2003 Reg. Sess., Ch. 197."
+        "</div></body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="section") == "5-1C-1"
+    assert scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="5-1C-1",
+        payload=payload,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    ) is None
+    assert scraper._source_bound_west_virginia_terminal_disposition(
+        payload,
+        source_url=url,
+        source_label="§5-1C-1",
+        level="section",
+        expected_identity="5-1C-1",
+        observed_on=date(2026, 8, 30),
+    ) == {
+        "disposition": "repealed",
+        "source_label": "§5-1C-1",
+        "source_url": url,
+    }
+
+
+def test_west_virginia_en_dash_heading_and_glued_acts_repeal() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/5A-3-14/"
+    payload = (
+        "<html><body>"
+        "<h4>§5A–3-14.</h4>"
+        "<div class='sectiontext'>§5A–3-14. Repealed.Acts, 2010 Reg. Sess., Ch 169.</div>"
+        "</body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="section") == "5A-3-14"
+    assert scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="5A-3-14",
+        payload=payload,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    ) is None
+    assert scraper._source_bound_west_virginia_terminal_disposition(
+        payload,
+        source_url=url,
+        source_label="§5A-3-14",
+        level="section",
+        expected_identity="5A-3-14",
+        observed_on=date(2026, 8, 30),
+    ) == {
+        "disposition": "repealed",
+        "source_label": "§5A-3-14",
+        "source_url": url,
+    }
+
+
+def test_west_virginia_heading_without_section_sign_and_bracketed_repeal() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/5A-11-6/"
+    payload = (
+        "<html><head><title>West Virginia Code | §5A-11-6</title></head><body>"
+        "<h4>5A-11-6. Competitive bidding and notice requirements before the "
+        "development or extraction of minerals on certain lands; related "
+        "standards.</h4>"
+        "<div class='sectiontext'>5A-11-6. Competitive bidding and notice "
+        "requirements before the development or extraction of minerals on "
+        "certain lands; related standards. [Repealed.]</div>"
+        "</body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="section") == "5A-11-6"
+    assert scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="5A-11-6",
+        payload=payload,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    ) is None
+    assert scraper._source_bound_west_virginia_terminal_disposition(
+        payload,
+        source_url=url,
+        source_label="5A-11-6",
+        level="section",
+        expected_identity="5A-11-6",
+        observed_on=date(2026, 8, 30),
+    ) == {
+        "disposition": "repealed",
+        "source_label": "5A-11-6",
+        "source_url": url,
+    }
+
+
+def test_west_virginia_part_header_does_not_mask_section_heading() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/7-27-4/"
+    payload = (
+        "<html><head><title>West Virginia Code | §7-27-4</title></head><body>"
+        "<div class='sectiontext'>"
+        "<h4>PART II. COUNTY ROAD AND BRIDGE CONSTRUCTION PROJECTS.</h4>"
+        "<h4>§7-27-4. Creation of county road construction project plan.</h4>"
+        "<p>A county commission may, upon its own initiative or upon application of "
+        "a highway authority, propose creation of a road construction project plan "
+        "for the county.</p>"
+        "</div></body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="section") == "7-27-4"
+    row = scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="7-27-4",
+        payload=payload,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    )
+    assert row is not None
+    assert row.section_number == "7-27-4"
+    assert "propose creation of a road construction project plan" in (row.full_text or "")
+    assert scraper._source_bound_west_virginia_terminal_disposition(
+        payload,
+        source_url=url,
+        source_label="§7-27-4",
+        level="section",
+        expected_identity="7-27-4",
+        observed_on=date(2026, 8, 30),
+    ) is None
+
+
+def test_west_virginia_heading_collapses_spaces_around_cite_hyphens() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/30-10-24/"
+    payload = (
+        "<html><head><title>West Virginia Code | §30-10-24</title></head><body>"
+        "<div class='sectiontext'>"
+        "<h4>§30-10- 24. Telehealth practice.</h4>"
+        "<p>(a) For purposes of this section, these terms have the following "
+        "meaning:</p>"
+        "<p>(1) Interstate telehealth services means the provision of telehealth "
+        "services to a patient located in West Virginia by a registered "
+        "veterinary care professional located in any other state.</p>"
+        "</div></body></html>"
+    ).encode("utf-8")
+    assert (
+        scraper._west_virginia_normalize_heading("§30-10- 24. Telehealth practice.")
+        == "§30-10-24. Telehealth practice."
+    )
+    assert scraper._west_virginia_page_identity(payload, level="section") == "30-10-24"
+    row = scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="30-10-24",
+        payload=payload,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    )
+    assert row is not None
+    assert row.section_number == "30-10-24"
+    assert "telehealth" in (row.full_text or "").casefold()
+
+
+def test_west_virginia_operative_body_in_h5() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/48-31-103/"
+    payload = (
+        "<html><head><title>West Virginia Code | §48-31-103</title></head><body>"
+        "<div class='sectiontext'>"
+        "<h4>§48-31-103. Remedies for noncompliance.</h4>"
+        "<h4></h4>"
+        "<h5>In addition to other remedies under law of this state other than this "
+        "article, if a court finds that a party to a proceeding under this article "
+        "has acted in bad faith or intentionally failed to comply with this article "
+        "or a court order issued under this article, the court may assess reasonable "
+        "attorney's fees and costs against the party and order other appropriate "
+        "relief.</h5>"
+        "</div></body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="section") == "48-31-103"
+    row = scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="48-31-103",
+        payload=payload,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    )
+    assert row is not None
+    assert row.section_number == "48-31-103"
+    assert "reasonable attorney" in (row.full_text or "")
+
+
+def test_west_virginia_heading_strips_duplicate_chapter_section_sign() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/31B-11-1104/"
+    payload = (
+        "<html><head><title>West Virginia Code | §31B-11-1104</title></head><body>"
+        "<div class='sectiontext'>"
+        "<h4>§31B-§31B-11-1104. Expenses.</h4>"
+        "<p>If a derivative action for a limited liability company is successful, "
+        "in whole or in part, or if anything is received by the plaintiff as a "
+        "result of a judgment, compromise or settlement of an action or claim, "
+        "the court may award the plaintiff reasonable expenses, including "
+        "reasonable attorney's fees.</p>"
+        "</div></body></html>"
+    ).encode("utf-8")
+    assert (
+        scraper._west_virginia_normalize_heading("§31B-§31B-11-1104. Expenses.")
+        == "§31B-11-1104. Expenses."
+    )
+    assert scraper._west_virginia_page_identity(payload, level="section") == "31B-11-1104"
+    row = scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="31B-11-1104",
+        payload=payload,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    )
+    assert row is not None
+    assert row.section_number == "31B-11-1104"
+    assert "reasonable expenses" in (row.full_text or "")
+
+
+def test_west_virginia_operative_body_in_second_h4() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/30-9-34/"
+    payload = (
+        "<html><head><title>West Virginia Code | §30-9-34</title></head><body>"
+        "<div class='sectiontext'>"
+        "<h4>§30-9-34. Indemnification.</h4>"
+        "<h4>In the event that a lawsuit is filed alleging violation of federal "
+        "antitrust laws, the board may indemnify its board members and current "
+        "and former employees for expenses reasonably incurred in connection with "
+        "judicial or administrative proceedings.</h4>"
+        "</div></body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="section") == "30-9-34"
+    row = scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="30-9-34",
+        payload=payload,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    )
+    assert row is not None
+    assert row.section_number == "30-9-34"
+    assert "indemnify its board members" in (row.full_text or "")
+
+
+def test_west_virginia_paragraph_cite_ignores_later_cross_references() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/5-3-3/"
+    payload = (
+        "<html><head><title>West Virginia Code | §5-3-3</title></head><body>"
+        "<div class='sectiontext'>"
+        "<p>§5-3-3. Assistants to Attorney General.</p>"
+        "<p>The Attorney General may appoint such deputy or assistant attorneys "
+        "general as may be necessary. Contingency appointments must follow "
+        "W. Va. Code §5-3-3a(a)(1).</p>"
+        "</div></body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="section") == "5-3-3"
+    row = scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="5-3-3",
+        payload=payload,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    )
+    assert row is not None
+    assert row.section_number == "5-3-3"
+
+
+def test_west_virginia_part_title_h4_reads_cite_from_h2() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/22A-2-7/"
+    payload = (
+        "<html><head><title>West Virginia Code | §22A-2-7</title></head><body>"
+        "<div class='sectiontext'><h4>MINE FOREMAN</h4>"
+        "<h2>§22A-2-7. When underground mine foreman-fire boss required; assistants; "
+        "certification.</h2>"
+        "<p>(a) In every underground mine where five or more persons are employed "
+        "in a period of twenty-four hours, the operator shall employ at least one "
+        "person certified as a mine foreman-fire boss.</p>"
+        "</div></body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="section") == "22A-2-7"
+    row = scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="22A-2-7",
+        payload=payload,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    )
+    assert row is not None
+    assert row.section_number == "22A-2-7"
+    assert "mine foreman-fire boss" in (row.full_text or "")
+
+
+def test_west_virginia_empty_h4_reads_cite_from_first_paragraph() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/22-16-1/"
+    payload = (
+        "<html><head><title>West Virginia Code | §22-16-1</title></head><body>"
+        "<div class='sectiontext'><h4></h4>"
+        "<p>§22-16-1. Legislative findings and purpose.</p>"
+        "<p>The Legislature finds that there are numerous landfills throughout the "
+        "state that must be closed because they cannot be operated in an "
+        "environmentally sound manner.</p>"
+        "</div></body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="section") == "22-16-1"
+    row = scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="22-16-1",
+        payload=payload,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    )
+    assert row is not None
+    assert row.section_number == "22-16-1"
+    assert "landfills throughout the state" in (row.full_text or "")
+
+
+def test_west_virginia_heading_strips_control_char_before_cite() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/18-9A-8A/"
+    payload = (
+        "<html><head><title>West Virginia Code | §18-9A-8A</title></head><body>"
+        "<div class='sectiontext'>"
+        "<h4>\x1518-9A-8a. Foundation allowance for regional education service "
+        "agencies.</h4>"
+        "<p>[Repealed.]</p>"
+        "</div></body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="section") == "18-9A-8A"
+    assert scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="18-9A-8A",
+        payload=payload,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    ) is None
+    assert scraper._source_bound_west_virginia_terminal_disposition(
+        payload,
+        source_url=url,
+        source_label="§18-9A-8A",
+        level="section",
+        expected_identity="18-9A-8A",
+        observed_on=date(2026, 8, 30),
+    ) == {
+        "disposition": "repealed",
+        "source_label": "§18-9A-8A",
+        "source_url": url,
+    }
+
+
+def test_west_virginia_heading_strips_cms_digit_before_section_sign() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/11-17-7/"
+    payload = (
+        "<html><head><title>West Virginia Code | §11-17-7</title></head><body>"
+        "<div class='sectiontext'>"
+        "<h4>0§11-17-7. Form of stamps; custody; discounts; security for payments.</h4>"
+        "<p>The commissioner shall design and procure stamps to be used as herein "
+        "provided for, affixed and attached to containers, packages or receptacle "
+        "of whatever kind that may be used for containing cigarettes.</p>"
+        "</div></body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="section") == "11-17-7"
+    row = scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="11-17-7",
+        payload=payload,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    )
+    assert row is not None
+    assert row.section_number == "11-17-7"
+    assert "design and procure stamps" in (row.full_text or "")
+
+
+def test_west_virginia_heading_without_section_sign_is_operative() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    url = "https://code.wvlegislature.gov/11-13HH-2/"
+    payload = (
+        "<html><head><title>West Virginia Code | §11-13HH-2</title></head><body>"
+        "<div class='sectiontext'><h4>11-13HH-2. Definitions.</h4>"
+        "<p>(a) General. When used in this article, terms defined in subsection "
+        "(b) have the meanings ascribed to them by this section.</p>"
+        "<p>(b) Terms defined. Affiliate means an individual, corporation, "
+        "partnership, affiliate, association or trust controlled by the taxpayer.</p>"
+        "</div></body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(payload, level="section") == "11-13HH-2"
+    row = scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url=url,
+        section_number="11-13HH-2",
+        payload=payload,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    )
+    assert row is not None
+    assert row.section_number == "11-13HH-2"
+    assert "meanings ascribed to them" in (row.full_text or "")
+
+
+def test_west_virginia_catalog_href_defers_to_printed_section_cite() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    payload = (
+        "<html><body>"
+        "<div class='art-head'>ARTICLE 29. INTERGOVERNMENTAL RELATIONS -- "
+        "REGIONAL AIRPORTS.</div>"
+        "<div class='sec-head' data-id='ah-29'>"
+        "<a href='/8-29-8A/'>§8-29B-8a. Abandoned or derelict aircraft.</a>"
+        "</div></body></html>"
+    ).encode("utf-8")
+    units = scraper._west_virginia_child_units(
+        payload,
+        level="section",
+        chapter_number="8",
+        article_number="29",
+    )
+    assert units == [
+        {
+            "article": "29B",
+            "chapter": "8",
+            "section": "8A",
+            "source_label": "§8-29B-8a. Abandoned or derelict aircraft.",
+            "source_url": "https://code.wvlegislature.gov/8-29-8A/",
+        }
+    ]
+    page = (
+        "<html><head><title>West Virginia Code | §8-29-8A</title></head><body>"
+        "<div class='sectiontext'>"
+        "<h4>§8-29B-8a. Abandoned or derelict aircraft.</h4>"
+        "<p>If an abandoned or derelict aircraft is discovered on an airport, "
+        "the airport authority shall make a record of the date the aircraft was "
+        "discovered on the airport.</p>"
+        "</div></body></html>"
+    ).encode("utf-8")
+    assert scraper._west_virginia_page_identity(page, level="section") == "8-29B-8A"
+    row = scraper._parse_west_virginia_section_payload(
+        code_name="West Virginia Code",
+        source_url="https://code.wvlegislature.gov/8-29-8A/",
+        section_number="8-29B-8A",
+        payload=page,
+        discovery_method="test",
+        observed_on=date(2026, 8, 30),
+    )
+    assert row is not None
+    assert row.section_number == "8-29B-8A"
+    assert "abandoned or derelict aircraft" in (row.full_text or "").lower()
+
+
+def test_west_virginia_intra_article_alias_prefers_printed_href() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    payload = (
+        "<html><body>"
+        "<div class='art-head'>ARTICLE 5. HOSPITALS.</div>"
+        "<div class='sec-head'><a href='/16B-5-16A/'>§16B-5-16. Duplicate alias.</a></div>"
+        "<div class='sec-head'><a href='/16B-5-16/'>§16B-5-16. Canonical row.</a></div>"
+        "</body></html>"
+    ).encode("utf-8")
+    units = scraper._west_virginia_child_units(
+        payload,
+        level="section",
+        chapter_number="16B",
+        article_number="5",
+    )
+    assert [row["source_url"] for row in units] == [
+        "https://code.wvlegislature.gov/16B-5-16/"
+    ]
+    assert units[0]["section"] == "16"
+
+
+def test_west_virginia_cross_article_alias_prefers_printed_href() -> None:
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    section_units: list[dict[str, str]] = []
+    seen: set[tuple[str, str, str]] = set()
+    alias = {
+        "article": "5P",
+        "chapter": "16",
+        "section": "15",
+        "source_label": "§16-5P-15. Establishment of In-home Care Registry.",
+        "source_url": "https://code.wvlegislature.gov/16-5O-15/",
+    }
+    canonical = {
+        **alias,
+        "source_url": "https://code.wvlegislature.gov/16-5P-15/",
+    }
+    scraper._west_virginia_record_section_unit(
+        alias, section_units=section_units, seen_sections=seen
+    )
+    scraper._west_virginia_record_section_unit(
+        canonical, section_units=section_units, seen_sections=seen
+    )
+    assert [row["source_url"] for row in section_units] == [
+        "https://code.wvlegislature.gov/16-5P-15/"
+    ]
+    scraper._west_virginia_record_section_unit(
+        alias, section_units=section_units, seen_sections=seen
+    )
+    assert [row["source_url"] for row in section_units] == [
+        "https://code.wvlegislature.gov/16-5P-15/"
+    ]
 
 
 def test_west_virginia_residual_sha256_uses_canonical_json_of_ordered_urls() -> None:

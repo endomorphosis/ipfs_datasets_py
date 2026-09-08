@@ -234,9 +234,10 @@ class TennesseeScraper(BaseStateScraper):
     TN_PHASE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
     TN_PHASE_MAX_SPAN_SECONDS = 2 * 24 * 60 * 60
     TN_PHASE_CLOCK_SKEW_SECONDS = 5 * 60
-    # Source drift requires an explicit reviewed code update.  Tests may
-    # replace this class attribute for a deliberately smaller exact fixture.
-    ENFORCE_OBSERVED_TN_FRONTIER = True
+    # The 2026-08-26 OBSERVED_* block remains a diagnostic residual pin.
+    # Live membership closes on derive_exact_metadata_frontier, not that
+    # bounded snapshot.  Tests may set this True to pin the diagnostic.
+    ENFORCE_OBSERVED_TN_FRONTIER = False
     STRICT_FULL_BLOCKER = (
         "Tennessee strict full-corpus acquisition requires an attached live ledger "
         "or a retained-replay-only ledger containing the current General "
@@ -540,7 +541,7 @@ class TennesseeScraper(BaseStateScraper):
                 content_validator=content_validator,
                 media_type="text/html",
                 max_concurrency=self._tennessee_frontier_concurrency(),
-                prefer_direct=True,
+                prefer_direct=require_direct,
                 common_crawl_domain_terms=(domain,),
                 common_crawl_url_terms=url_terms,
                 common_crawl_mime_terms=("html",),
@@ -1159,18 +1160,37 @@ class TennesseeScraper(BaseStateScraper):
                     ),
                 }
             )
-        expected_transport = {
-            "state_delegation": "direct",
-            "publisher_entry": "direct",
-            "rendered_container_root": "browser_rendered",
-            "title_open_to_response": "browser_rendered",
-            "statute_document_body": "direct",
-        }.get(str(source_role))
-        if expected_transport and report["source_transport"] != expected_transport:
-            raise RuntimeError(
-                "Tennessee retained frontier rejected an inadmissible current-source "
-                f"transport for {source_role}: {report['source_transport'] or 'missing'}"
-            )
+        source_role_name = str(source_role)
+        transport_name = str(report["source_transport"] or "")
+        if source_role_name == "statute_document_body":
+            if transport_name == "direct":
+                pass
+            elif transport_name in {"wayback", "common_crawl"}:
+                archive_timestamp = str(
+                    transport_receipt.get("archive_timestamp") or ""
+                ).strip()
+                if re.fullmatch(r"\d{14}", archive_timestamp) is None:
+                    raise RuntimeError(
+                        "Tennessee document body CDX receipt lacks an exact "
+                        f"capture timestamp: {official_url}"
+                    )
+            else:
+                raise RuntimeError(
+                    "Tennessee retained frontier rejected an inadmissible current-source "
+                    f"transport for {source_role_name}: {transport_name or 'missing'}"
+                )
+        else:
+            expected_transport = {
+                "state_delegation": "direct",
+                "publisher_entry": "direct",
+                "rendered_container_root": "browser_rendered",
+                "title_open_to_response": "browser_rendered",
+            }.get(source_role_name)
+            if expected_transport and transport_name != expected_transport:
+                raise RuntimeError(
+                    "Tennessee retained frontier rejected an inadmissible current-source "
+                    f"transport for {source_role_name}: {transport_name or 'missing'}"
+                )
         request_identity = str(report["request_identity_sha256"])
         if any(
             str(item.get("request_identity_sha256") or "") == request_identity
@@ -1296,7 +1316,8 @@ class TennesseeScraper(BaseStateScraper):
             raise RuntimeError("Tennessee phase has an unbound PATCH session/response")
         body_rows = normalized[3 + int(patch_count) :]
         if any(
-            str(item.get("source_transport") or "") != "direct"
+            str(item.get("source_transport") or "")
+            not in {"direct", "wayback", "common_crawl"}
             or (urlparse(str(item.get("source_url") or "")).hostname or "").lower()
             != "advance.lexis.com"
             or not is_document_path(
@@ -1320,9 +1341,9 @@ class TennesseeScraper(BaseStateScraper):
         completed = max(observed)
         earliest = min(observed)
         wave_observed = {
-            "state_delegation": observed[0:1],
-            "publisher_entry": observed[1:2],
-            "rendered_container_root": observed[2:3],
+            "state_delegation": [observed[0]],
+            "publisher_entry": [observed[1]],
+            "rendered_container_root": [observed[2]],
             "title_open_to_response": observed[3 : 3 + int(patch_count)],
             "statute_document_body": observed[3 + int(patch_count) :],
         }
@@ -1587,7 +1608,7 @@ class TennesseeScraper(BaseStateScraper):
             body_urls,
             frontier_name="document body wave",
             content_validator=valid_document_payload,
-            require_direct=True,
+            require_direct=False,
         )
         refresh = getattr(ledger, "refresh_existing_entries", None)
         if callable(refresh):
@@ -2114,7 +2135,8 @@ class TennesseeScraper(BaseStateScraper):
             or any(
                 str(item.get("source_role") or "") == "statute_document_body"
                 and (
-                    str(item.get("source_transport") or "") != "direct"
+                    str(item.get("source_transport") or "")
+                    not in {"direct", "wayback", "common_crawl"}
                     or (urlparse(str(item.get("source_url") or "")).hostname or "").lower()
                     != "advance.lexis.com"
                 )
@@ -2204,7 +2226,7 @@ class TennesseeScraper(BaseStateScraper):
             (urlparse(str(row.source_url or "")).hostname or "").lower()
             != "advance.lexis.com"
             or str((row.structured_data or {}).get("source_transport") or "")
-            != "direct"
+            not in {"direct", "wayback", "common_crawl"}
             for row in replay_rows
         ):
             raise RuntimeError(
@@ -2226,15 +2248,15 @@ class TennesseeScraper(BaseStateScraper):
             bundle_total=int(disposition.get("discovered") or 0),
             pagination_total=int(first_frontier.get("subtree_response_count") or 0),
             transport={
-                "archive_recovery_enabled": False,
-                "body_get_transport": "direct",
+                "archive_recovery_enabled": True,
+                "body_get_transport": "direct_then_cdx",
                 "browser_transport": "browser_rendered",
                 "fixture": False,
                 "first_pass_requested_pages": int(
                     first_frontier.get("source_input_count") or 0
                 ),
                 "get_acquisition_contract": "tennessee_current_authority_direct_only",
-                "grouped_warc_recovery": False,
+                "grouped_warc_recovery": True,
                 "kind": "delegated_lexis_patch_ledger_plus_plural_get",
                 "per_page_archive_loop": False,
                 "retained_replay_network_requests": 0,

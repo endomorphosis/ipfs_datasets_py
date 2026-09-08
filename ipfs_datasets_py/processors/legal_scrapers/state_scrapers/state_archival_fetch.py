@@ -26,6 +26,12 @@ from urllib.error import HTTPError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
+from ipfs_datasets_py.processors.legal_scrapers.http_user_agents import (
+    DEFAULT_USER_AGENT,
+    headers_with_user_agent,
+    looks_paywalled_or_empty,
+    user_agent_retry_sequence,
+)
 from ipfs_datasets_py.processors.web_archiving.common_crawl_integration import (
     CommonCrawlSearchEngine,
 )
@@ -331,11 +337,7 @@ class ArchivalFetchClient:
         *,
         request_timeout_seconds: int = 30,
         delay_seconds: float = 0.0,
-        user_agent: str = (
-            "Mozilla/5.0 (X11; Linux x86_64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/122.0.0.0 Safari/537.36"
-        ),
+        user_agent: str = DEFAULT_USER_AGENT,
         content_validator: Optional[Callable[[bytes], bool]] = None,
         enable_common_crawl: Optional[bool] = None,
         enable_direct: bool = True,
@@ -1180,34 +1182,57 @@ class ArchivalFetchClient:
             # If verified TLS fails to produce a response, retry insecurely.
             attempts.append((False, "direct_insecure_tls"))
 
-        for verify, source in attempts:
-            try:
-                response = self._request_with_retries(
-                    url,
-                    timeout=self.request_timeout_seconds,
-                    verify=verify,
-                    headers={
-                        str(key): str(value)
-                        for key, value in dict(headers or {}).items()
-                        if str(key).strip()
-                    }
-                    or None,
-                )
-            except ssl.SSLError:
-                continue
-            except Exception:
-                continue
-            if response is None:
-                continue
-            if response.status_code == 200 and self._content_validator(response.content):
-                return FetchResult(
-                    url=url,
-                    content=response.content,
-                    source=source,
-                    fetched_at=datetime.now(timezone.utc).isoformat(),
+        caller_headers = {
+            str(key): str(value)
+            for key, value in dict(headers or {}).items()
+            if str(key).strip()
+        }
+        caller_ua = next(
+            (
+                value
+                for key, value in caller_headers.items()
+                if key.lower() == "user-agent" and str(value).strip()
+            ),
+            self.user_agent,
+        )
+        for user_agent in user_agent_retry_sequence(caller_ua):
+            request_headers = headers_with_user_agent(caller_headers, user_agent)
+            paywalled_or_empty = False
+            for verify, source in attempts:
+                try:
+                    response = self._request_with_retries(
+                        url,
+                        timeout=self.request_timeout_seconds,
+                        verify=verify,
+                        headers=request_headers,
+                    )
+                except ssl.SSLError:
+                    continue
+                except Exception:
+                    continue
+                if response is None:
+                    continue
+                if looks_paywalled_or_empty(
+                    response.content,
                     status_code=response.status_code,
-                )
-            # Explicit non-200 responses should not be retried with altered TLS.
+                ):
+                    paywalled_or_empty = True
+                    break
+                if (
+                    response.status_code == 200
+                    and self._content_validator(response.content)
+                ):
+                    return FetchResult(
+                        url=url,
+                        content=response.content,
+                        source=source,
+                        fetched_at=datetime.now(timezone.utc).isoformat(),
+                        status_code=response.status_code,
+                    )
+                # Explicit non-200 responses should not be retried with altered TLS.
+                return None
+            if paywalled_or_empty:
+                continue
             return None
         return None
 

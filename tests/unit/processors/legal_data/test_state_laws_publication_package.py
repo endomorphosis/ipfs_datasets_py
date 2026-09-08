@@ -42,18 +42,23 @@ from ipfs_datasets_py.processors.legal_data.state_laws_local_release import (
 from ipfs_datasets_py.processors.legal_data.state_laws_publication_package import (
     STATE_LAWS_PLAN_SCHEMA,
     STATE_LAWS_RECEIPT_SCHEMA,
+    VIEWER_CONTROL_OBSERVE,
+    VIEWER_CONTROL_REPLACE,
     StateLawsLivePolicyProof,
     StateLawsPublicationPackageError,
+    StateLawsViewerControlAuthorization,
     materialize_state_laws_canonical_controls,
     plan_state_laws_publication_dry_run,
     prepare_state_laws_publication_package,
     require_state_laws_policy_binding,
+    state_laws_viewer_control_card_bytes,
     verify_state_laws_live_policy_proof,
     verify_state_laws_publication_package_identity,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import (
     DEFAULT_DATASET_REPO_ID,
     PREVIOUS_PUBLIC_PIN,
+    PUBLICATION_PARENT_REVISION,
     example_authorized_main_request,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
@@ -581,7 +586,7 @@ def local_release(tmp_path: Path) -> tuple[Path, dict[str, object]]:
 def _sealed_live_policy_fixture(root: Path):
     dry_run = plan_state_laws_publication_dry_run(
         root,
-        audited_parent_commit="0" * 40,
+        audited_parent_commit=PUBLICATION_PARENT_REVISION,
     )
     request = example_authorized_main_request(
         manifest_digest=dry_run.package.manifest_digest
@@ -939,7 +944,115 @@ def test_dry_run_is_deterministic_and_never_contacts_write_api(
     assert first.receipt["remote_write_performed"] is False
     assert first.to_dict()["physical_artifacts_reencoded"] is False
     assert first.to_dict()["network_io_performed"] is False
+    viewer_control = first.to_dict()["viewer_control"]
+    assert viewer_control["operation"] == VIEWER_CONTROL_OBSERVE
+    assert viewer_control["canonical_writer_supports_operation"] is False
+    assert viewer_control["configs"] == [
+        {
+            "config_name": "state_statutes_exact_51",
+            "data_files": [
+                {
+                    "split": "train",
+                    "path": (
+                        f"{first.plan.release_prefix}/data/corpus/part-*.parquet"
+                    ),
+                }
+            ],
+        },
+        {
+            "config_name": "legacy-state-parquet-v1",
+            "data_files": [{"split": "train", "path": "STATE-*.parquet"}],
+        },
+    ]
+    root_card = state_laws_viewer_control_card_bytes(
+        first.package,
+        release_prefix=first.plan.release_prefix,
+    ).decode("utf-8")
+    assert (
+        '  - split: "train"\n'
+        f'    path: "{first.plan.release_prefix}/data/corpus/part-*.parquet"'
+    ) in root_card
+    assert '  - split: "train"\n    path: "STATE-*.parquet"' in root_card
+    assert 'split: "train"    path:' not in root_card
     assert api.calls == []
+
+
+def test_root_viewer_conflict_requires_exact_reviewed_replacement(
+    local_release: tuple[Path, dict[str, object]],
+) -> None:
+    root, _ = local_release
+    parent = "0" * 40
+    observation = plan_state_laws_publication_dry_run(
+        root,
+        audited_parent_commit=parent,
+    )
+    replacement_sha256 = observation.to_dict()["viewer_control"]["sha256"]
+    existing_sha256 = "c" * 64
+
+    with pytest.raises(
+        StateLawsPublicationPackageError,
+        match="conflicts.*replacement authorization",
+    ):
+        plan_state_laws_publication_dry_run(
+            root,
+            audited_parent_commit=parent,
+            root_readme_exists=True,
+            existing_root_readme_sha256=existing_sha256,
+        )
+    with pytest.raises(
+        StateLawsPublicationPackageError,
+        match="requires its observed",
+    ):
+        plan_state_laws_publication_dry_run(
+            root,
+            audited_parent_commit=parent,
+            root_readme_exists=True,
+        )
+
+    review = StateLawsViewerControlAuthorization(
+        review_id="lcr-043-root-review",
+        reviewer="state-laws-release-board",
+        repository_id=DEFAULT_DATASET_REPO_ID,
+        target_revision="main",
+        audited_parent_commit=parent,
+        release_manifest_digest=observation.package.manifest_digest,
+        expected_existing_sha256=existing_sha256,
+        replacement_sha256=replacement_sha256,
+    )
+    reviewed = plan_state_laws_publication_dry_run(
+        root,
+        audited_parent_commit=parent,
+        root_readme_exists=True,
+        existing_root_readme_sha256=existing_sha256,
+        root_readme_replacement_authorization=review,
+    )
+    control = reviewed.to_dict()["viewer_control"]
+    assert control["operation"] == VIEWER_CONTROL_REPLACE
+    assert control["canonical_writer_supports_operation"] is True
+    assert control["expected_existing_sha256"] == existing_sha256
+    assert control["sha256"] == replacement_sha256
+    assert control["replacement_review"] == review.to_dict()
+    assert control["whole_publication_additive_only"] is False
+    assert reviewed.plan.plan_digest != observation.plan.plan_digest
+
+    mismatched = StateLawsViewerControlAuthorization(
+        review_id="wrong-old-root",
+        reviewer="state-laws-release-board",
+        repository_id=DEFAULT_DATASET_REPO_ID,
+        target_revision="main",
+        audited_parent_commit=parent,
+        release_manifest_digest=observation.package.manifest_digest,
+        expected_existing_sha256="d" * 64,
+        replacement_sha256=replacement_sha256,
+    )
+    with pytest.raises(StateLawsPublicationPackageError, match="differs"):
+        plan_state_laws_publication_dry_run(
+            root,
+            audited_parent_commit=parent,
+            root_readme_exists=True,
+            existing_root_readme_sha256=existing_sha256,
+            root_readme_replacement_authorization=mismatched,
+        )
 
 
 def test_package_fails_closed_on_artifact_or_manifest_drift(
@@ -1143,7 +1256,10 @@ def test_live_policy_request_must_bind_the_exact_verified_package(
     local_release: tuple[Path, dict[str, object]],
 ) -> None:
     root, _ = local_release
-    dry_run = plan_state_laws_publication_dry_run(root)
+    dry_run = plan_state_laws_publication_dry_run(
+        root,
+        audited_parent_commit=PUBLICATION_PARENT_REVISION,
+    )
     package = dry_run.package
     assert package.policy_binding["final_manifest_digest"] == package.manifest_digest
     assert package.policy_binding["previous_public_pin"] == PREVIOUS_PUBLIC_PIN
@@ -1163,6 +1279,18 @@ def test_live_policy_request_must_bind_the_exact_verified_package(
     assert proof.final_manifest_digest == package.manifest_digest
     assert proof.dataset_repo_id == DEFAULT_DATASET_REPO_ID
     assert proof.plan_digest == dry_run.plan.plan_digest
+
+    stale_parent = plan_state_laws_publication_dry_run(
+        root,
+        audited_parent_commit=PREVIOUS_PUBLIC_PIN,
+    )
+    with pytest.raises(StateLawsPublicationPackageError, match="not bound"):
+        require_state_laws_policy_binding(
+            package,
+            request,
+            plan=stale_parent.plan,
+            environ={},
+        )
 
     drifted = dict(request)
     drifted["final_manifest_digest"] = sha256(b"different-manifest").hexdigest()
@@ -1236,7 +1364,7 @@ def test_live_policy_proof_roundtrip_and_generic_boundary_rejects_fake_transport
     api = _WriteTrackingApi()
     with pytest.raises(
         HuggingFacePublicationError,
-        match="exact HfApi template",
+        match="unobserved root README state cannot authorize a State-main mutation",
     ):
         HuggingFaceReleasePublisher(
             profile=dry_run.profile,

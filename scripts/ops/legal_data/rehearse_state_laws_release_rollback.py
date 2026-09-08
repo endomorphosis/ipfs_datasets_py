@@ -62,10 +62,11 @@ from ipfs_datasets_py.processors.legal_data.state_laws_hf_release import (
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import (
     DEFAULT_STAGING_BRANCH,
+    PUBLICATION_PARENT_REVISION,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
     DEFAULT_DATASET_REPO_ID,
-    PREVIOUS_PUBLIC_PIN,
+    PREVIOUS_PUBLIC_PIN as HISTORICAL_BASELINE_REVISION,
     RELEASE_PROFILE,
     RollbackRecord,
     canonical_json_dumps,
@@ -87,6 +88,11 @@ from scripts.ops.legal_data.check_state_laws_public_release import (
 )
 from scripts.ops.legal_data.publish_state_laws_hf_release import (
     check_canonical_publication_receipt,
+)
+from scripts.ops.legal_data.state_laws_release_probe import (
+    StateLawsReleaseProbeError,
+    assert_first_party_dual_pin_measurement,
+    run_dual_pin_probe,
 )
 
 # ---------------------------------------------------------------------------
@@ -124,7 +130,8 @@ DEFAULT_DEFAULT_CONFIG: Final = DEFAULT_CONFIG_NAME
 DEFAULT_LEGACY_CONFIG: Final = LEGACY_CONFIG_NAME
 DEFAULT_RECOVERY_CONFIG: Final = RECOVERY_CONFIG_NAME
 LEGACY_DATA_GLOBS: Final = ("STATE-*.parquet", "state_laws.parquet")
-ROLLBACK_TARGET: Final = PREVIOUS_PUBLIC_PIN
+PREVIOUS_PUBLIC_PIN: Final = PUBLICATION_PARENT_REVISION
+ROLLBACK_TARGET: Final = PUBLICATION_PARENT_REVISION
 DEFAULT_STAGING: Final = DEFAULT_STAGING_BRANCH
 PUBLIC_BRANCH: Final = "main"
 DEFAULT_RELEASE_POINT: Final = "state-laws/v2/2026-08-10"
@@ -289,7 +296,7 @@ RUNBOOK_REQUIRED_PHRASES: Final[tuple[str, ...]] = (
     "LCR-045",
     "LCR-G090",
     "justicedao/ipfs_state_laws",
-    PREVIOUS_PUBLIC_PIN,
+    HISTORICAL_BASELINE_REVISION,
     "state-laws-ir-graphrag/v2",
     "legacy-state-laws-parquet/v1",
     "query_state_laws_hf.py",
@@ -318,7 +325,7 @@ MIGRATION_REQUIRED_PHRASES: Final[tuple[str, ...]] = (
     "legacy-state-laws-parquet/v1",
     "state-laws-ir-graphrag/v2",
     "recovery-quarantine/v1",
-    PREVIOUS_PUBLIC_PIN,
+    HISTORICAL_BASELINE_REVISION,
     "entry_cid",
     "ipfs_cid",
     "STATE-*.parquet",
@@ -568,7 +575,7 @@ def load_publication_receipt(
     require_immutable_revision(previous, name="publication.previous_public_pin")
     if previous != PREVIOUS_PUBLIC_PIN:
         raise RehearsalMismatchError(
-            "publication previous public pin drifted from PREVIOUS_PUBLIC_PIN"
+            "publication rollback target drifted from PUBLICATION_PARENT_REVISION"
         )
     if public_sha == previous:
         raise RehearsalMismatchError(
@@ -608,7 +615,7 @@ def load_public_canary(
     require_immutable_revision(previous, name="canary.previous_public_pin")
     if previous != PREVIOUS_PUBLIC_PIN:
         raise RehearsalMismatchError(
-            "public canary previous pin drifted from PREVIOUS_PUBLIC_PIN"
+            "public canary rollback target drifted from PUBLICATION_PARENT_REVISION"
         )
     viewer = canary.get("viewer") if isinstance(canary.get("viewer"), Mapping) else {}
     if viewer.get("ok") is not True:
@@ -644,9 +651,9 @@ def load_baseline(
         acceptance.get("pinned_revision") or baseline.get("pinned_revision") or ""
     )
     require_immutable_revision(pin, name="baseline.pinned_revision")
-    if pin != PREVIOUS_PUBLIC_PIN:
+    if pin != HISTORICAL_BASELINE_REVISION:
         raise RehearsalMismatchError(
-            "baseline pinned revision drifted from PREVIOUS_PUBLIC_PIN"
+            "baseline pinned revision drifted from HISTORICAL_BASELINE_REVISION"
         )
     return baseline
 
@@ -1295,8 +1302,21 @@ def build_canonical_rollback_rehearsal(
         or canary["previous_public_pin"] != previous_pin
     ):
         raise RehearsalMismatchError("public canary pin lineage drifted")
+    try:
+        first_party = assert_first_party_dual_pin_measurement(
+            pin_probes,
+            repo_id=publication["dataset_repo_id"],
+            new_revision=new_pin,
+            previous_revision=previous_pin,
+            release_manifest_digest=publication["release_manifest_digest"],
+            parent_evidence_digest=canary["canonical_digest"],
+        )
+    except StateLawsReleaseProbeError as exc:
+        raise RehearsalMismatchError(
+            "rollback probes are not internally measured/bound evidence"
+        ) from exc
     probes = validate_canonical_pin_probes(
-        pin_probes, new_pin=new_pin, previous_pin=previous_pin
+        first_party, new_pin=new_pin, previous_pin=previous_pin
     )
     docs = validate_operator_docs(repo_root=Path(repo_root).resolve())
     legacy = explicit_legacy_configuration()
@@ -1322,6 +1342,10 @@ def build_canonical_rollback_rehearsal(
         "publication_receipt_digest": publication["canonical_digest"],
         "public_canary_digest": canary["canonical_digest"],
         "pin_probes": probes,
+        "measurement_source": first_party["measurement_source"],
+        "externally_supplied": first_party["externally_supplied"],
+        "observed_at": first_party["observed_at"],
+        "probe_bindings": first_party["probe_bindings"],
         "both_pins_queryable": True,
         "legacy_configuration": legacy,
         "legacy_configuration_explicit": True,
@@ -1388,6 +1412,22 @@ def check_canonical_rollback_rehearsal(
     ):
         if re.fullmatch(r"[0-9a-f]{64}", str(report.get(name) or "")) is None:
             raise RehearsalMismatchError(f"canonical rollback {name} is malformed")
+    binding_args = {
+        "repo_id": report["dataset_repo_id"],
+        "new_revision": new_pin,
+        "previous_revision": previous_pin,
+        "release_manifest_digest": report["release_manifest_digest"],
+        "parent_evidence_digest": report["public_canary_digest"],
+    }
+    try:
+        assert_first_party_dual_pin_measurement(report, **binding_args)
+        assert_first_party_dual_pin_measurement(
+            report.get("pin_probes") or {}, **binding_args
+        )
+    except StateLawsReleaseProbeError as exc:
+        raise RehearsalMismatchError(
+            "canonical rollback lacks sealed first-party provenance"
+        ) from exc
     validate_canonical_pin_probes(
         report.get("pin_probes") or {}, new_pin=new_pin, previous_pin=previous_pin
     )
@@ -1690,10 +1730,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="Canonical LCR-043 public canary receipt",
     )
     parser.add_argument(
+        "--network",
+        action="store_true",
+        help="Opt in to bounded read-only queries at both immutable pins",
+    )
+    parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        default=None,
+        help="Empty cache directory for bounded dual-pin query measurements",
+    )
+    parser.add_argument(
         "--pin-probes",
         type=Path,
         default=None,
-        help="Measured dual-pin query/switch/board diagnostic probes",
+        help=(
+            "Rejected legacy input. Canonical dual-pin evidence is measured "
+            "internally through the production sparse-query API."
+        ),
     )
     return parser
 
@@ -1718,7 +1772,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         if args.check:
-            if args.write:
+            if args.write or args.network:
                 raise RehearsalSafetyError("--check is read-only")
             result = check_canonical_rollback_rehearsal(
                 load_json_mapping(report_path)
@@ -1745,19 +1799,58 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             return 0
 
+        if args.pin_probes is not None:
+            raise RehearsalSafetyError(
+                "external --pin-probes cannot authorize canonical evidence"
+            )
+        if not args.network:
+            raise RehearsalMissingInputError(
+                "new rehearsal requires explicit --network opt-in"
+            )
         if (
             args.publication_receipt is None
             or args.public_canary is None
-            or args.pin_probes is None
+            or args.cache_dir is None
         ):
             raise RehearsalMissingInputError(
                 "new rehearsal requires --publication-receipt, --public-canary, "
-                "and --pin-probes"
+                "and --cache-dir"
             )
+        publication = check_canonical_publication_receipt(
+            load_json_mapping(args.publication_receipt), require_live=True
+        )
+        canary = check_canonical_public_canary_receipt(
+            load_json_mapping(args.public_canary)
+        )
+        if (
+            canary["publication_receipt_digest"] != publication["canonical_digest"]
+            or canary["dataset_repo_id"] != publication["dataset_repo_id"]
+            or canary["public_revision"] != publication["public_revision"]
+            or canary["previous_public_pin"] != publication["previous_public_pin"]
+            or canary["release_manifest_digest"]
+            != publication["release_manifest_digest"]
+        ):
+            raise RehearsalMismatchError(
+                "public canary/publication immutable identity chain drifted"
+            )
+        probe_coordinates = {
+            "repo_id": str(publication["dataset_repo_id"]),
+            "new_revision": str(publication["public_revision"]),
+            "previous_revision": str(publication["previous_public_pin"]),
+            "release_manifest_digest": str(publication["release_manifest_digest"]),
+            "parent_evidence_digest": str(canary["canonical_digest"]),
+        }
+        probes = assert_first_party_dual_pin_measurement(
+            run_dual_pin_probe(
+                args.cache_dir,
+                **probe_coordinates,
+            ),
+            **probe_coordinates,
+        )
         report = build_canonical_rollback_rehearsal(
-            publication_receipt=load_json_mapping(args.publication_receipt),
-            public_canary=load_json_mapping(args.public_canary),
-            pin_probes=load_json_mapping(args.pin_probes),
+            publication_receipt=publication,
+            public_canary=canary,
+            pin_probes=probes,
         )
         if args.write:
             destination = (
@@ -1775,7 +1868,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif args.output is not None or args.print_json or not args.check:
             write_json(args.output, report)
         return 0
-    except (RehearsalError, MutableRevisionError) as exc:
+    except (
+        RehearsalError,
+        MutableRevisionError,
+        StateLawsReleaseProbeError,
+    ) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 

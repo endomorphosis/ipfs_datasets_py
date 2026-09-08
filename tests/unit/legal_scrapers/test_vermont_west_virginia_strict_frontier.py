@@ -440,6 +440,7 @@ def test_vermont_catalog_collapses_same_url_temporal_presentation_rows() -> None
         ("§ 667. Redesignated. 2017, No. 83, § 118.", "redesignated"),
         ("§§ 907-910. [Omitted.]", "omitted"),
         ("§ 4003. [Eliminated.]", "eliminated"),
+        ("§ 430. [Deleted.]", "deleted"),
         (
             "§ 3-71. Exec. Order No. 3-71 [Intentionally left blank.]",
             "intentionally_left_blank",
@@ -522,6 +523,205 @@ def test_vermont_executive_order_identity_includes_order_series() -> None:
         chapter_number="6",
         locator_section="3",
     )
+
+
+def test_vermont_appendix_dotted_locator_matches_printed_hyphen_cite() -> None:
+    url = "https://legislature.vermont.gov/statutes/section/16APPENDIX/001/00001.01"
+    row = parse_vermont_section_html(
+        "<html><head><title>Vermont Statutes</title></head><body>"
+        "<ul class='statutes-detail'><li><p><b>§ 1-1. Establishment as corporate "
+        "body</b></p><p>The University of Vermont and the Vermont Agricultural "
+        "College are hereby united and constituted a body corporate.</p></li>"
+        "</ul></body></html>",
+        source_url=url,
+    )
+
+    assert row is not None
+    assert row.section_number == "1-1"
+    assert VermontScraper._vermont_printed_section_matches_locator(
+        row.section_number,
+        chapter_number="001",
+        locator_section="00001.01",
+    )
+
+
+def test_vermont_heading_only_operative_appendix_section() -> None:
+    url = "https://legislature.vermont.gov/statutes/section/16APPENDIX/005/00005.05"
+    row = parse_vermont_section_html(
+        "<html><head><title>The Vermont Statutes Online</title></head><body>"
+        "<h2>The Vermont Statutes Online</h2>"
+        "<h2>Title 16 Appendix : Education Charters and Agreements</h2>"
+        "<h3>Chapter 005 : Bennington School District Incorporated</h3>"
+        "<ul class='item-list statutes-detail'><li><p></p>"
+        "<p style='margin-left:0px'><b>§ 5-5. New district responsible for "
+        "Mt. Anthony Union High School District (No. 14) expenses of old "
+        "districts.</b></p></li></ul></body></html>",
+        source_url=url,
+    )
+
+    assert row is not None
+    assert row.section_number == "5-5"
+    assert "Mt. Anthony Union High School District" in (row.full_text or "")
+    assert VermontScraper._vermont_printed_section_matches_locator(
+        row.section_number,
+        chapter_number="005",
+        locator_section="00005.05",
+    )
+
+
+def test_vermont_appendix_range_heading_binds_to_first_locator() -> None:
+    url = "https://legislature.vermont.gov/statutes/section/24APPENDIX/003/00290"
+    html = (
+        "<html><head><title>The Vermont Statutes Online</title></head><body>"
+        "<h2>The Vermont Statutes Online</h2>"
+        "<h2>Title 24 Appendix : Municipal Charters</h2>"
+        "<h3>Chapter 003 : City of Burlington</h3>"
+        "<ul class='item-list statutes-detail'><li><p></p>"
+        "<p style='margin-left:0px'><b>§§ 290-297. [Transitional provisions.]</b></p>"
+        "</li></ul></body></html>"
+    )
+    row = parse_vermont_section_html(html, source_url=url)
+    assert row is not None
+    assert row.section_number == "290-297"
+    assert VermontScraper._vermont_printed_section_matches_locator(
+        row.section_number,
+        chapter_number="003",
+        locator_section="00290",
+    )
+    assert not VermontScraper._vermont_printed_section_matches_locator(
+        row.section_number,
+        chapter_number="003",
+        locator_section="00291",
+    )
+    assert (
+        VermontScraper._vermont_bound_section_number(
+            row.section_number,
+            chapter_number="003",
+            title_number="24APPENDIX",
+        )
+        == "3-290-297"
+    )
+
+
+def test_vermont_appendix_local_section_at_cms_locator() -> None:
+    url = "https://legislature.vermont.gov/statutes/section/24APPENDIX/173/01731"
+    html = (
+        "<html><head><title>The Vermont Statutes Online</title></head><body>"
+        "<h2>The Vermont Statutes Online</h2>"
+        "<h2>Title 24 Appendix : Municipal Charters</h2>"
+        "<h3>Chapter 173 : Town of Windsor</h3>"
+        "<ul class='item-list statutes-detail'><li><p></p>"
+        "<p style='margin-left:0px'><b>§ 14. Board of Listers</b></p>"
+        "<p>(a) The Board of Listers shall consist of three listers, one elected "
+        "each year for a term of three years.</p>"
+        "</li></ul></body></html>"
+    )
+    row = parse_vermont_section_html(html, source_url=url)
+    assert row is not None
+    assert row.section_number == "14"
+    assert VermontScraper._vermont_printed_section_matches_locator(
+        row.section_number,
+        chapter_number="173",
+        locator_section="01731",
+        title_number="24APPENDIX",
+    )
+    assert not VermontScraper._vermont_printed_section_matches_locator(
+        row.section_number,
+        chapter_number="173",
+        locator_section="01731",
+        title_number="18",
+    )
+    assert (
+        VermontScraper._vermont_bound_section_number(
+            row.section_number,
+            chapter_number="173",
+            title_number="24APPENDIX",
+        )
+        == "173-14"
+    )
+
+
+def test_vermont_appendix_same_section_in_two_chapters_is_chapter_qualified() -> None:
+    assert VermontScraper._vermont_bound_section_number(
+        "101",
+        chapter_number="001",
+        title_number="24APPENDIX",
+    ) == "1-101"
+    assert VermontScraper._vermont_bound_section_number(
+        "101",
+        chapter_number="003",
+        title_number="24APPENDIX",
+    ) == "3-101"
+    assert VermontScraper._vermont_bound_section_number(
+        "5-5",
+        chapter_number="005",
+        title_number="16APPENDIX",
+    ) == "5-5"
+    assert VermontScraper._vermont_bound_section_number(
+        "4551",
+        chapter_number="088",
+        title_number="18",
+    ) == "4551"
+
+
+def test_vermont_reclassified_range_is_source_bound_terminal() -> None:
+    url = "https://legislature.vermont.gov/statutes/section/18/088/04551"
+    html = (
+        "<html><head><title>The Vermont Statutes Online</title></head><body>"
+        "<h2>The Vermont Statutes Online</h2>"
+        "<h2>Title 18 : Health</h2>"
+        "<h3>Chapter 088 : Meat Inspection</h3>"
+        "<ul class='item-list statutes-detail'><li><p></p>"
+        "<p style='margin-left:0px'><b>§§ 4551-4573. Reclassified.</b></p>"
+        "</li></ul></body></html>"
+    )
+    assert parse_vermont_section_html(html, source_url=url) is None
+    assert source_bound_terminal_disposition(
+        html,
+        source_url=url,
+        frontier_label="§§ 4551-4573. Reclassified.",
+        expected_level="section",
+        observed_on=date(2026, 8, 30),
+    ) == {
+        "disposition": "reclassified",
+        "source_label": "§§ 4551-4573. Reclassified.",
+        "source_url": url,
+    }
+
+
+def test_vermont_deleted_section_is_source_bound_terminal() -> None:
+    url = "https://legislature.vermont.gov/statutes/section/16/009/00430"
+    html = (
+        "<html><head><title>The Vermont Statutes Online</title></head><body>"
+        "<h2>The Vermont Statutes Online</h2>"
+        "<h3>Chapter 009 : School Districts</h3>"
+        "<ul class='statutes-detail'><li><p><b>§ 430. [Deleted.]</b></p></li></ul>"
+        "</body></html>"
+    )
+
+    assert parse_vermont_section_html(html, source_url=url) is None
+    assert source_bound_terminal_disposition(
+        html,
+        source_url=url,
+        frontier_label="§ 430. [Deleted.]",
+        expected_level="section",
+        observed_on=date(2026, 8, 30),
+    ) == {
+        "disposition": "deleted",
+        "source_label": "§ 430. [Deleted.]",
+        "source_url": url,
+    }
+    assert source_bound_terminal_disposition(
+        html,
+        source_url=url,
+        frontier_label="§ 430",
+        expected_level="section",
+        observed_on=date(2026, 8, 30),
+    ) == {
+        "disposition": "deleted",
+        "source_label": "§ 430",
+        "source_url": url,
+    }
 
 
 def test_vermont_revoked_executive_order_is_source_bound_terminal() -> None:

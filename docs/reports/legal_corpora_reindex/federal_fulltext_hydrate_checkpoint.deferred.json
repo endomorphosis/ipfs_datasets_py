@@ -1,0 +1,28 @@
+{
+  "admitted_full_text": 623558,
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "closed_months": 230,
+  "counts": {
+    "failed_final": 1,
+    "full_text": 623558,
+    "quarantined_anti_bot": 45
+  },
+  "current_bundle": false,
+  "hydrate_pid_at_snapshot": 1030670,
+  "in_progress_partitions": [
+    "2013-03-01_2013-03-31"
+  ],
+  "inventory_unique_legal_ids": 1005970,
+  "last_closed_gte": "2013-02-01",
+  "last_closed_lte": "2013-02-28",
+  "lcr084_deferred": true,
+  "notes": "Freeze of durable monthly zstd parquet partitions. Hydrator left running. Bulk zip downloads go to bulkdata/ and do not overwrite these files.",
+  "producer": "hydrate_checkpoint",
+  "rows": 623604,
+  "schema": "ipfs_datasets_py/fr-full-fulltext-checkpoint@1",
+  "status": "partial_persisted",
+  "target_docs": 1005970,
+  "target_months": 392,
+  "written_at": "2026-09-07T17:33:10Z"
+}

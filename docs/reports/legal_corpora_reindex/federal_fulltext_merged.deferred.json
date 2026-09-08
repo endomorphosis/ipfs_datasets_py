@@ -1,0 +1,20 @@
+{
+  "admitted_full_text": 1005963,
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "counts": {
+    "full_text": 639700,
+    "full_text_bulk_xml": 365630,
+    "full_text_reused_lcr071": 633,
+    "quarantined_anti_bot": 7
+  },
+  "current_bundle": false,
+  "lcr084_deferred": true,
+  "notes": "Merged HTML hydrate + bulk XML + residual GovInfo HTML. 7 remaining quarantined_anti_bot after retry. Not a sealed LCR-053 close. Not a current-bundle.",
+  "producer": "residual_fr_html.py",
+  "residual_html_fetches": 643,
+  "rows": 1005970,
+  "schema": "ipfs_datasets_py/fr-full-fulltext@1",
+  "status": "closed",
+  "written_at": "2026-09-07T18:39:00Z"
+}

@@ -113,6 +113,7 @@ from ipfs_datasets_py.processors.legal_data.legal_graph_projection_runtime impor
     ingest_graph_work_record,
     load_work_dir,
     merge_graph_projections,
+    mutating_row_worker,
     neighbors_for_legal_ids,
     prepare_partition_work_dir,
     run_projection_pass,
@@ -1682,34 +1683,10 @@ class StateLawsGraphProjector(LegalGraphProjectorCore):
                 0, min(len(admitted), int(manifest.get("citation_rows_done") or 0))
             )
 
-        def _structure_one(
-            row: GraphCorpusRow,
-        ) -> tuple[dict[str, StateLawsGraphNode], list[StateLawsGraphEdge]]:
-            local_nodes: dict[str, StateLawsGraphNode] = {}
-            local_edges: list[StateLawsGraphEdge] = []
-            self._project_structure(local_nodes, local_edges, row)
-            return local_nodes, local_edges
-
-        def _citation_one(
-            row: GraphCorpusRow,
-        ) -> tuple[dict[str, StateLawsGraphNode], list[StateLawsGraphEdge]]:
-            local_nodes: dict[str, StateLawsGraphNode] = {}
-            local_edges: list[StateLawsGraphEdge] = []
-            view: ChainMap[str, StateLawsGraphNode] = ChainMap(local_nodes, nodes)
-            self._project_citations(
-                view,
-                local_edges,
-                row,
-                known_legal_ids=known_legal_ids,
-                locator_index=locator_index,
-            )
-            self._project_amendments(view, local_edges, row)
-            return local_nodes, local_edges
-
         run_projection_pass(
             admitted,
             start=structure_done,
-            worker=_structure_one,
+            worker=mutating_row_worker(self._project_structure),
             nodes=nodes,
             edges_by_cid=edges_by_cid,
             work_root=work_root,
@@ -1725,7 +1702,13 @@ class StateLawsGraphProjector(LegalGraphProjectorCore):
         run_projection_pass(
             admitted,
             start=citation_done,
-            worker=_citation_one,
+            worker=mutating_row_worker(
+                self._project_citation_pass,
+                nodes,
+                seed=self._project_structure,
+                known_legal_ids=known_legal_ids,
+                locator_index=locator_index,
+            ),
             nodes=nodes,
             edges_by_cid=edges_by_cid,
             work_root=work_root,

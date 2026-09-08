@@ -40,6 +40,10 @@ def test_invert_document_terms_skips_non_overlapping() -> None:
     assert [doc.entry_cid for doc in hits] == ["b"]
 
 
+def _triple(value: int) -> int:
+    return value * 3
+
+
 def test_map_documents_under_pressure_preserves_order_with_threads() -> None:
     docs = list(range(20))
     observed: list[int] = []
@@ -57,6 +61,18 @@ def test_map_documents_under_pressure_preserves_order_with_threads() -> None:
     )
     assert out == [value * 3 for value in docs]
     assert observed
+
+
+def test_map_documents_under_pressure_picklable_fn_matches_serial() -> None:
+    docs = list(range(12))
+    out = map_documents_under_pressure(
+        docs,
+        _triple,
+        max_workers=2,
+        pressure=lambda: (2, "admitted"),
+        batch_size=4,
+    )
+    assert out == [_triple(value) for value in docs]
 
 
 def test_worker_limit_collapses_under_pressure() -> None:

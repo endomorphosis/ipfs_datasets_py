@@ -198,12 +198,11 @@ def _body_excerpt(corpus_dir: Path, legal_id: str) -> str:
 
 
 def _embed_texts(texts: Sequence[str], *, backend: str) -> list[list[float]]:
-    from ipfs_datasets_py.processors.legal_data.uscode_embeddings import (
-        deterministic_project,
-    )
-
     if backend != "sentence_transformers":
-        return deterministic_project(list(texts), dimension=384, normalize=True)
+        raise LiveEvalError(
+            "live vector evaluation requires backend='sentence_transformers' "
+            f"with pinned GTE-small; got {backend!r}"
+        )
     from sentence_transformers import SentenceTransformer
 
     from ipfs_datasets_py.processors.legal_data.federal_register_vectors import (
@@ -242,6 +241,24 @@ def _evaluate_vectors(
             "fixture_only": True,
             "meets_declared_gates": False,
             "reason": "vector receipt is fixture-only",
+        }
+    backend = str(receipt.get("backend") or "")
+    model_id = str(receipt.get("model_id") or "")
+    model_revision = str(receipt.get("model_revision") or "")
+    if (
+        backend != "sentence_transformers"
+        or model_id != "thenlper/gte-small"
+        or model_revision != "17e1f347d17fe144873b1201da91788898c639cd"
+    ):
+        return {
+            "available": True,
+            "deferred": False,
+            "fixture_only": False,
+            "backend": backend,
+            "model_id": model_id,
+            "model_revision": model_revision,
+            "meets_declared_gates": False,
+            "reason": "live vectors must use sentence_transformers thenlper/gte-small",
         }
     import numpy as np
 

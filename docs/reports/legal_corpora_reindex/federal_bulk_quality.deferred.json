@@ -1,0 +1,57 @@
+{
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "current_bundle": false,
+  "html_hydrator_stopped": true,
+  "lcr084_deferred": true,
+  "notes": "GovInfo yearly FR zips 2000-2026 are daily issue XML with real per-document bodies. A strict [FR Doc. YYYY-NNNNN Filed] matcher recovers ~98.8% of inventory document numbers for 2013/2024/2026; presidential documents are present but use a truncated <FRDOC> form. 2000 uses era IDs like 00-9038, not YYYY-NNNNN. No 1994-1999 zips. 2026 zip continues through 2026-09-08 (past cutoff). Average extracted body 21-31k characters. HTML hydrator was stopped pending this audit.",
+  "producer": "bulk-quality-audit",
+  "samples": {
+    "2000": {
+      "avg_body_chars_strict_matcher": 0,
+      "first_issue": "2000-01-18",
+      "frdoc_era": "00-NNNN / C0-NNNN inside <FRDOC>",
+      "inv_docs": 33303,
+      "issues": 237,
+      "last_issue": "2000-12-29",
+      "strict_yyyy_nnnnn_overlap": 0
+    },
+    "2013": {
+      "avg_body_chars": 21562,
+      "doc_missing_from_strict_matcher": 367,
+      "doc_overlap": 30404,
+      "first_issue": "2013-01-02",
+      "inv_docs": 30771,
+      "issues": 251,
+      "last_issue": "2013-12-31",
+      "missing_are_mostly": "presidential documents with truncated FRDOC; bodies exist in PRESDOCU",
+      "overlap_pct": 98.8
+    },
+    "2024": {
+      "avg_body_chars": 31065,
+      "doc_missing_from_strict_matcher": 377,
+      "doc_overlap": 30453,
+      "first_issue": "2024-01-02",
+      "inv_docs": 30830,
+      "issues": 250,
+      "last_issue": "2024-12-31",
+      "overlap_pct": 98.8
+    },
+    "2026": {
+      "avg_body_chars": 25221,
+      "cutoff": "2026-08-10",
+      "doc_missing_from_strict_matcher": 199,
+      "doc_overlap_through_cutoff": 15705,
+      "first_issue": "2026-01-02",
+      "inv_docs_through_cutoff": 15904,
+      "issues_in_zip": 172,
+      "last_issue_in_zip": "2026-09-08",
+      "overlap_pct": 98.7
+    }
+  },
+  "schema": "ipfs_datasets_py/fr-govinfo-bulk-quality@1",
+  "status": "usable_for_2000_2026_with_parser_work",
+  "verdict": "Bulk XML is good enough to replace remaining HTML GETs for 2000-2026 after a document splitter; keep HTML parquet for 1994-1999 and residual misses.",
+  "zip_bytes": 3577252824,
+  "zip_years": "2000-2026"
+}

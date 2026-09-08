@@ -471,9 +471,9 @@ class NewHampshireScraper(BaseStateScraper):
                 int(
                     self._env_int(
                         "STATE_SCRAPER_NH_FRONTIER_CONCURRENCY",
-                        default=12,
+                        default=1,
                     )
-                    or 12
+                    or 1
                 ),
             ),
         )
@@ -774,14 +774,31 @@ class NewHampshireScraper(BaseStateScraper):
             ) from exc
         observed_at = retrieved_time.astimezone(UTC).isoformat()
 
-        if source_transport != "direct":
+        archive_timestamp = str(
+            aligned_transport.get("archive_timestamp")
+            or retained_transport.get("archive_timestamp")
+            or ""
+        ).strip()
+        if source_transport == "direct":
+            legal_as_of = retrieved_time.date().isoformat()
+            archive_timestamp = ""
+        elif source_transport in {"wayback", "common_crawl"}:
+            if re.fullmatch(r"\d{14}", archive_timestamp) is None:
+                raise RuntimeError(
+                    "New Hampshire current frontier CDX receipt lacks an exact "
+                    f"capture timestamp: {url}"
+                )
+            captured = datetime.strptime(archive_timestamp, "%Y%m%d%H%M%S").replace(
+                tzinfo=UTC
+            )
+            legal_as_of = captured.date().isoformat()
+        else:
             raise RuntimeError(
                 "New Hampshire current frontier requires direct official-source "
                 f"receipts; archive transport cannot authorize: {url}"
             )
-        legal_as_of = retrieved_time.date().isoformat()
         return {
-            "archive_timestamp": "",
+            "archive_timestamp": archive_timestamp,
             "content_sha256": digest,
             "legal_as_of": legal_as_of,
             "observed_at": observed_at,
@@ -888,7 +905,8 @@ class NewHampshireScraper(BaseStateScraper):
             # frontier wave.  Residual retries may repeat the plural direct
             # attempt, but must not fan back out into CC/CDX/archive lookups.
             repeat_grouped_archive_inventory_on_residual=False,
-            timeout_seconds=20,
+            timeout_seconds=90,
+            archive_recovery_enabled=True,
             content_validator=content_validator,
             media_type="text/html",
             max_concurrency=self._new_hampshire_frontier_concurrency(),

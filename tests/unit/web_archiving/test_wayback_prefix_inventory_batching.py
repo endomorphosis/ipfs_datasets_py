@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import inspect
 import re
 from urllib.parse import parse_qs, urlparse
 
@@ -676,3 +677,12 @@ async def test_base_plural_path_retains_inventory_receipt_and_eager_wayback_inpu
     assert len(ledger.entries) == 1
     assert scraper._state_law_archive_discovery_receipts == [discovery_receipt]
     assert result.stats["eager_parser_inputs_admitted"] == 1
+
+
+def test_prefix_inventory_identity_fanout_still_runs_after_failed_cdx() -> None:
+    source = inspect.getsource(
+        BaseStateScraper._fetch_page_contents_with_archival_fallback
+    )
+    assert "prefix_queries_failed" in source
+    assert "skipping closest identity replay fan-out" in source
+    assert "not empty inventories" in source.casefold() or "not prefix_failed" in source

@@ -105,9 +105,9 @@ UNRESOLVED_SHA_BEFORE_AGM = (
 )
 UNRESOLVED_SHA_AFTER_AGM_PREFIX = "d6b209ac65ab"
 RESIDUAL_SHA256 = (
-    "b03131cd20eb808d159427e548a732a078fc7b3f94291a2c5fff8a4cd206dde0"
+    "0c33f61954a7c25d80e41f4b67008fb4d2bdffee29bc9dd71f69a6f3ab1c7235"
 )
-RESIDUAL_SHA256_PREFIX = "b03131cd20eb"
+RESIDUAL_SHA256_PREFIX = "0c33f61954a7"
 SOURCE_BUNDLE = (
     "f68d2672e24092c93810dd0f168a098a855d7879bea746faa63f676ef3ccdd75"
 )
@@ -194,6 +194,7 @@ RETAINED_RESOLVER_CASES = (
             "f9176c690fedaade9769beca8a23246e2af371cdf3e2ceaea27bb71ade6cf479"
         ),
         "page_sha256": ny_pdf.EPT365_SENATE_SECTION_SHA256,
+        "projection_sha256": ny_pdf.EPT365_SENATE_SECTION_PROJECTION_SHA256,
         "url": ny_pdf.EPT365_SENATE_SECTION_URL,
         "residual": {
             "section_number": "3-6.5",
@@ -218,6 +219,7 @@ RETAINED_RESOLVER_CASES = (
             "56ee2480b30cf406829f0a1fa6be468777b2acea9bc007224c75c29e0ed023a5"
         ),
         "page_sha256": ny_pdf.GMU902_SENATE_SECTION_SHA256,
+        "projection_sha256": ny_pdf.GMU902_SENATE_SECTION_PROJECTION_SHA256,
         "url": ny_pdf.GMU902_SENATE_SECTION_URL,
         "residual": {
             "section_number": "902",
@@ -242,6 +244,7 @@ RETAINED_RESOLVER_CASES = (
             "13d0f8cd7ef7fa8cc25e6b2a6da3315d5a9bc2104b3c2f3436ddf0ad310f210c"
         ),
         "page_sha256": ny_pdf.PAR2709_SENATE_SECTION_SHA256,
+        "projection_sha256": ny_pdf.PAR2709_SENATE_SECTION_PROJECTION_SHA256,
         "url": ny_pdf.PAR2709_SENATE_SECTION_URL,
         "residual": {
             "section_number": "27.09",
@@ -514,6 +517,96 @@ def _rss1204a_osc_fixture() -> bytes:
     ).encode()
 
 
+def _bnk_part_y_bill_fixture_text() -> str:
+    return (
+        "5 PART Y 6 Section 1. The banking law is amended by adding a new "
+        "article 14-B to read as follows: ARTICLE 14-B BUY-NOW-PAY-LATER "
+        "LENDERS Section 735. Short title. 749. Severability. "
+        "§ 13. This act shall take effect on the one hundred eightieth day "
+        "32 after the department of financial services shall have promulgated "
+        "rules 33 and/or regulations to effectuate the provisions of this act. "
+        "45 PART Z 46 Section 1."
+    )
+
+
+def _bnk_dfs_proposed_rule_fixture_text() -> str:
+    return (
+        "PROPOSED NEW 3 NYCRR 423 and AMENDMENT TO 23 NYCRR 101 "
+        "BUY-NOW-PAY-LATER (BNPL) LENDERS pursuant to the authority granted "
+        "by Banking Law sections 10, 14, 14-a, 37, and 736 through 747. "
+        "For purposes of article 14-B of the Banking Law and this Part, "
+        "to take effect 180 days after publication of the Notice of Adoption "
+        "in the State Register, to read as follows."
+    )
+
+
+def _bnk_part_y_proofs(monkeypatch):
+    bill_payload = b"%PDF synthetic S3008B Part Y"
+    dfs_payload = b"%PDF synthetic 3 NYCRR 423 proposed"
+    bill_text = _bnk_part_y_bill_fixture_text()
+    dfs_text = _bnk_dfs_proposed_rule_fixture_text()
+
+    def _projection_text(payload: bytes) -> str:
+        if payload == bill_payload:
+            return bill_text
+        if payload == dfs_payload:
+            return dfs_text
+        return ""
+
+    monkeypatch.setattr(
+        ny_pdf,
+        "_new_york_official_pdf_projection_text",
+        _projection_text,
+    )
+    bill_projection = ny_pdf._new_york_bnk_part_y_bill_projection_sha256(
+        bill_payload
+    )
+    dfs_projection = ny_pdf._new_york_bnk_dfs_proposed_rule_projection_sha256(
+        dfs_payload
+    )
+    bundle_projection = ny_pdf._new_york_bnk_part_y_bundle_projection_sha256(
+        bill_payload,
+        dfs_payload,
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "BNK_DFS_PROPOSED_RULE_SHA256",
+        hashlib.sha256(dfs_payload).hexdigest(),
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "BNK_PART_Y_ENACTED_BILL_PROJECTION_SHA256",
+        bill_projection,
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "BNK_DFS_PROPOSED_RULE_PROJECTION_SHA256",
+        dfs_projection,
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "BNK_PART_Y_PROOF_BUNDLE_PROJECTION_SHA256",
+        bundle_projection,
+    )
+    proofs = [
+        ny_pdf.NewYorkSupplementalProofInput.bind(
+            selector_key=ny_pdf.BNK_PART_Y_ENACTED_BILL_SELECTOR_KEY,
+            proof_kind="official_part_y_effective_clause",
+            official_url=ny_pdf.BNK_PART_Y_ENACTED_BILL_URL,
+            media_type="application/pdf",
+            payload=bill_payload,
+        ),
+        ny_pdf.NewYorkSupplementalProofInput.bind(
+            selector_key=ny_pdf.BNK_DFS_PROPOSED_RULE_SELECTOR_KEY,
+            proof_kind="official_dfs_proposed_rule",
+            official_url=ny_pdf.BNK_DFS_PROPOSED_RULE_URL,
+            media_type="application/pdf",
+            payload=dfs_payload,
+        ),
+    ]
+    return proofs, bundle_projection
+
+
 def _retained_wave_d_object(content_sha256: str) -> bytes:
     path = RETAINED_WAVE_D_OBJECT_ROOT / f"{content_sha256}.bin"
     if not path.is_file():
@@ -668,15 +761,27 @@ def test_new_york_supplemental_wave_is_source_derived_from_pinned_residual_rows(
     assert ny_pdf.AGM28_LIFECYCLE_REPORT_URL == AGM28_URL
     assert ny_pdf.AGM28_LIFECYCLE_REPORT_SHA256 == AGM28_SHA256
     assert ny_pdf.AGM28_LIFECYCLE_SELECTOR_KEY == AGM28_SELECTOR_KEY
+    agm_headers = scraper._new_york_agm28_selector_headers()
+    assert agm_headers["Accept"] == "application/pdf,*/*;q=0.8"
+    assert agm_headers["User-Agent"] == "ipfs-datasets-new-york-laws/2.0"
     assert ny_pdf.EPT365_SENATE_SECTION_URL == FIRST_RESIDUAL_URL
     assert ny_pdf.EPT365_SENATE_SECTION_SHA256 == (
         "7dc2b7e182e4d36cd358d87384c34981061c7b74156739d12442c6c118c040ff"
     )
+    assert ny_pdf.EPT365_SENATE_SECTION_PROJECTION_SHA256 == (
+        "29807a2a7174ae923db7de283bd8bb3b50f76d4cbdc726fc6eb5f5770d395b46"
+    )
     assert ny_pdf.GMU902_SENATE_SECTION_SHA256 == (
         "fc117a03232e1ae39b983d8b982caf318147e574af8488500502beb042f253a0"
     )
+    assert ny_pdf.GMU902_SENATE_SECTION_PROJECTION_SHA256 == (
+        "ad1e05f78c78cce414d15f8f9856a7a101e9eaf928a893ebfa6c53cba17a2bd9"
+    )
     assert ny_pdf.PAR2709_SENATE_SECTION_SHA256 == (
         "76f0a5cfe5313182d5969e5a4c82faeab2aff9f6d2a09a125a35e008006a3b09"
+    )
+    assert ny_pdf.PAR2709_SENATE_SECTION_PROJECTION_SHA256 == (
+        "c5523126e96adb5fd41295a18d9afbdde5869f3387bc092a2767840fe3192b52"
     )
     assert len(rows) == SUPPLEMENTAL_RESIDUAL_ROWS
     assert len(pinned) == ENUMERABLE_URL_RESIDUAL == len(set(pinned))
@@ -845,12 +950,16 @@ def test_new_york_event_wave_is_exact_official_and_source_derived() -> None:
         ("PBA", "mac_liability_discharge"),
         ("RSS", "rss_2011_ch525_condition"),
         ("RSS", "rss_2011_ch525_condition"),
+        ("ELN", "eln_npv_immediate_effect"),
+        ("ELN", "eln_npv_immediate_effect"),
     ]
     assert urls == [
         ny_pdf.MHY82_STATE_REGISTER_URL,
         ny_pdf.MAC_TERMINATION_REPORT_URL,
         ny_pdf.RSS1204A_ENACTED_BILL_URL,
         ny_pdf.RSS1204A_OSC_BULLETIN_URL,
+        ny_pdf.ELN_NPV_CHAPTER19_BILL_URL,
+        ny_pdf.ELN_NPV_CHAPTER421_BILL_URL,
     ]
     assert _newline_residual_sha256(urls) == (
         NewYorkScraper.STRICT_CURRENT_EVENT_PROOF_URL_SHA256
@@ -860,6 +969,8 @@ def test_new_york_event_wave_is_exact_official_and_source_derived() -> None:
         "www.nyc.gov",
         "legislation.nysenate.gov",
         "www.osc.ny.gov",
+        "legislation.nysenate.gov",
+        "legislation.nysenate.gov",
     ]
     reports = [
         SimpleNamespace(
@@ -897,8 +1008,385 @@ def test_new_york_event_wave_is_exact_official_and_source_derived() -> None:
                 }
             ],
         ),
+        SimpleNamespace(
+            law_code="ELN",
+            unclassified_sections=[
+                {
+                    "section_number": section,
+                    "toc_variant": "",
+                    "reason": "ambiguous_lifecycle_status",
+                    "detail": "event_conditioned_effective: exact source note",
+                }
+                for section in ny_pdf.ELN_NPV_SECTIONS
+            ],
+        ),
     ]
     assert NewYorkScraper._new_york_exact_event_proof_rows(reports) == rows
+
+
+def _eln_npv_fixture_inputs() -> list[ny_pdf.NewYorkSupplementalProofInput]:
+    data_dir = Path(__file__).resolve().parent / "data"
+    return [
+        ny_pdf.NewYorkSupplementalProofInput.bind(
+            selector_key=ny_pdf.ELN_NPV_CHAPTER19_BILL_SELECTOR_KEY,
+            proof_kind="official_enacted_bill_text",
+            official_url=ny_pdf.ELN_NPV_CHAPTER19_BILL_URL,
+            media_type="application/pdf",
+            payload=(data_dir / "ny_eln_A4422A.pdf").read_bytes(),
+        ),
+        ny_pdf.NewYorkSupplementalProofInput.bind(
+            selector_key=ny_pdf.ELN_NPV_CHAPTER421_BILL_SELECTOR_KEY,
+            proof_kind="official_enacted_bill_text",
+            official_url=ny_pdf.ELN_NPV_CHAPTER421_BILL_URL,
+            media_type="application/pdf",
+            payload=(data_dir / "ny_eln_A6044.pdf").read_bytes(),
+        ),
+    ]
+
+
+@pytest.mark.parametrize("section", ("12-400", "12-402"))
+def test_new_york_eln_resolver_closes_exact_event_rows(section: str) -> None:
+    proofs = _eln_npv_fixture_inputs()
+    if section == "12-400":
+        body = (
+            "This title shall be known and may be cited as agreement among "
+            "the states to elect the president by national popular vote."
+        )
+        name = "Short title"
+    else:
+        body = (
+            "ARTICLE I Membership. Any state of the United States and the "
+            "District of Columbia may become a member of this agreement by "
+            "enacting this agreement. ARTICLE II Right of the people."
+        )
+        name = "Adoption and text of compact"
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry(proofs).resolve_residual(
+        law_code="ELN",
+        residual={
+            "section_number": section,
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": (
+                "event_conditioned_effective: Effective upon notification by "
+                "the commissioner of the state board of elections upon the "
+                "occurence of the adoption of the agreement among the states "
+                "to elect the president by national popular vote by two or "
+                "more states."
+            ),
+            "_supplemental_source_full_text": body,
+            "_supplemental_source_section_name": name,
+        },
+    )
+    assert outcome["status"] == "resolved"
+    assert outcome["decision_action"] == "operative"
+    assert outcome["decision"]["effective_date"] == "2014-04-15"
+    assert outcome["decision"]["disposition"] == "immediate_effective"
+    assert outcome["source_projection_sha256"] == (
+        ny_pdf.ELN_NPV_PROOF_BUNDLE_PROJECTION_SHA256
+    )
+    assert all(outcome["conjuncts"].values())
+
+
+def test_new_york_eln_resolver_fails_closed_on_sunset_still_present() -> None:
+    proofs = _eln_npv_fixture_inputs()
+    swapped = [
+        ny_pdf.NewYorkSupplementalProofInput.bind(
+            selector_key=proof.selector_key,
+            proof_kind=proof.proof_kind,
+            official_url=proof.official_url,
+            media_type=proof.media_type,
+            payload=(
+                proofs[0].payload
+                if proof.official_url == ny_pdf.ELN_NPV_CHAPTER421_BILL_URL
+                else proof.payload
+            ),
+        )
+        for proof in proofs
+    ]
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry(swapped).resolve_residual(
+        law_code="ELN",
+        residual={
+            "section_number": "12-400",
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": "event_conditioned_effective: exact source note",
+            "_supplemental_source_full_text": (
+                "This title shall be known and may be cited as agreement "
+                "among the states to elect the president by national popular vote."
+            ),
+            "_supplemental_source_section_name": "Short title",
+        },
+    )
+    assert outcome["status"] == "unknown"
+    assert outcome["decision_action"] is None
+    assert outcome["conjuncts"]["exact_chapter421_projection_sha256"] is False
+    assert "decision" not in outcome
+
+
+def _env_albany_fixture_html() -> bytes:
+    return (
+        b"<!DOCTYPE html><html><head><title>DEC Statewide Offices</title></head>"
+        b"<body>"
+        b"DEC's headquarters is housed at our Central Office in Albany. "
+        b"Central Office 625 Broadway, Albany, NY 12233-0001"
+        b"</body></html>"
+    )
+
+
+def test_new_york_env_albany_wave_is_exact_official() -> None:
+    rows = list(NewYorkScraper.STRICT_CURRENT_ENV_ALBANY_PROOF_ROWS)
+    urls = [row[2] for row in rows]
+    assert rows == [
+        (
+            "ENV:3-0105:dec-central-office",
+            "official_dec_office_directory",
+            ny_pdf.ENV_ALBANY_OFFICE_URL,
+        )
+    ]
+    assert _newline_residual_sha256(urls) == (
+        NewYorkScraper.STRICT_CURRENT_ENV_ALBANY_PROOF_URL_SHA256
+    )
+    report = SimpleNamespace(
+        law_code="ENV",
+        unclassified_sections=[
+            {
+                "section_number": "3-0105",
+                "toc_variant": "",
+                "reason": "ambiguous_lifecycle_status",
+                "detail": (
+                    "event_conditioned_effective: Effective prior to Dept. of "
+                    "Environmental Conservation moving to the city of Albany | "
+                    "event_conditioned_effective: Effective upon Dept. of "
+                    "Environmental Conservation moving to the city of Albany"
+                ),
+            }
+        ],
+    )
+    assert NewYorkScraper._new_york_exact_env_albany_proof_rows([report]) == rows
+
+
+def test_new_york_env_albany_resolver_closes_city_variant(monkeypatch) -> None:
+    payload = _env_albany_fixture_html()
+    projection = ny_pdf._new_york_env_albany_office_projection_sha256(payload)
+    monkeypatch.setattr(
+        ny_pdf,
+        "ENV_ALBANY_OFFICE_PROJECTION_SHA256",
+        projection,
+    )
+    proof = ny_pdf.NewYorkSupplementalProofInput.bind(
+        selector_key=ny_pdf.ENV_ALBANY_OFFICE_SELECTOR_KEY,
+        proof_kind="official_dec_office_directory",
+        official_url=ny_pdf.ENV_ALBANY_OFFICE_URL,
+        media_type="text/html",
+        payload=payload,
+    )
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry([proof]).resolve_residual(
+        law_code="ENV",
+        residual={
+            "section_number": "3-0105",
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": (
+                "event_conditioned_effective: Effective prior to Dept. of "
+                "Environmental Conservation moving to the city of Albany | "
+                "event_conditioned_effective: Effective upon Dept. of "
+                "Environmental Conservation moving to the city of Albany"
+            ),
+            "_supplemental_source_full_text": (
+                "The principal office of the department shall be in the city "
+                "of Albany."
+            ),
+            "_supplemental_source_section_name": "Offices of the department",
+        },
+    )
+    assert outcome["status"] == "resolved"
+    assert outcome["decision_action"] == "operative"
+    assert outcome["decision"]["disposition"] == "event_condition_occurred_operative"
+    assert "city of Albany" in outcome["decision"]["full_text"]
+    assert "county of albany" not in outcome["decision"]["full_text"].casefold()
+    assert all(outcome["conjuncts"].values())
+
+
+def test_new_york_env_albany_resolver_fails_closed_on_county_body(
+    monkeypatch,
+) -> None:
+    payload = _env_albany_fixture_html()
+    projection = ny_pdf._new_york_env_albany_office_projection_sha256(payload)
+    monkeypatch.setattr(
+        ny_pdf,
+        "ENV_ALBANY_OFFICE_PROJECTION_SHA256",
+        projection,
+    )
+    proof = ny_pdf.NewYorkSupplementalProofInput.bind(
+        selector_key=ny_pdf.ENV_ALBANY_OFFICE_SELECTOR_KEY,
+        proof_kind="official_dec_office_directory",
+        official_url=ny_pdf.ENV_ALBANY_OFFICE_URL,
+        media_type="text/html",
+        payload=payload,
+    )
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry([proof]).resolve_residual(
+        law_code="ENV",
+        residual={
+            "section_number": "3-0105",
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": "event_conditioned_effective: exact source note",
+            "_supplemental_source_full_text": (
+                "The principal office of the department shall be in the County "
+                "of Albany."
+            ),
+            "_supplemental_source_section_name": "Offices of department",
+        },
+    )
+    assert outcome["status"] == "unknown"
+    assert outcome["decision_action"] is None
+    assert outcome["conjuncts"]["source_bound_city_body"] is False
+    assert "decision" not in outcome
+
+
+def _gbs396eeee_fixture_html(*, delayed: bool = True) -> bytes:
+    delay = (
+        b"section two of this act shall take effect one year after the "
+        b"promulgation of rules as provided for in subdivision 3 of "
+        b"section 837-aa of the executive law"
+        if delayed
+        else b"section two of this act shall take effect immediately"
+    )
+    body = (
+        b"<!DOCTYPE html><html><head><title>A10005C</title></head><body>"
+        b"<div id='jump_to_Actions'></div><table>"
+        b"<tr><td>BILL NO | A10005C</td></tr>"
+        b"<tr><td>05/27/2026 | SIGNED CHAP.55</td></tr>"
+        b"</table>"
+        b"<div id='jump_to_Text'></div><pre>"
+        b"PART C SUBPART B "
+        b"Section 1. The executive law is amended by adding a new section "
+        b"837-aa. Firearm prevention technology requirements for "
+        b"three-dimensional printers. No later than one year after the "
+        b"working group convenes, the working group shall make recommendations. "
+        b"Section 2. The general business law is amended by adding a new "
+        b"section 396-eeee. Three-dimensional printers. "
+        + delay
+        + b"</pre>"
+    )
+    pad = b" " * max(0, 110_000 - len(body))
+    return body + pad + b"</body></html>"
+
+
+def test_new_york_gbs396eeee_wave_is_exact_official() -> None:
+    rows = list(NewYorkScraper.STRICT_CURRENT_GBS_396EEEE_PROOF_ROWS)
+    urls = [row[2] for row in rows]
+    assert rows == [
+        (
+            "GBS:396-eeee:chapter-55-effective-clause",
+            "official_gbs_396eeee_effective_clause",
+            ny_pdf.GBS396EEEE_SIGNED_BILL_URL,
+        )
+    ]
+    assert _newline_residual_sha256(urls) == (
+        NewYorkScraper.STRICT_CURRENT_GBS_396EEEE_PROOF_URL_SHA256
+    )
+    report = SimpleNamespace(
+        law_code="GBS",
+        unclassified_sections=[
+            {
+                "section_number": "396-eeee",
+                "toc_variant": "",
+                "reason": "ambiguous_lifecycle_status",
+                "detail": (
+                    "event_conditioned_effective: Effective one year after "
+                    "the promulgation of rules as specified in subdivision 3 "
+                    "of section 837-aa of the general business law (see Ch. "
+                    "55 of 2026, Part C, Subpart B, § 6)"
+                ),
+            }
+        ],
+    )
+    assert NewYorkScraper._new_york_exact_gbs396eeee_proof_rows([report]) == rows
+
+
+def test_new_york_gbs396eeee_resolver_closes_future_effective(monkeypatch) -> None:
+    payload = _gbs396eeee_fixture_html()
+    projection = ny_pdf._new_york_gbs396eeee_signed_bill_projection_sha256(
+        payload
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "GBS396EEEE_SIGNED_BILL_PROJECTION_SHA256",
+        projection,
+    )
+    proof = ny_pdf.NewYorkSupplementalProofInput.bind(
+        selector_key=ny_pdf.GBS396EEEE_SIGNED_BILL_SELECTOR_KEY,
+        proof_kind="official_gbs_396eeee_effective_clause",
+        official_url=ny_pdf.GBS396EEEE_SIGNED_BILL_URL,
+        media_type="text/html",
+        payload=payload,
+    )
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry([proof]).resolve_residual(
+        law_code="GBS",
+        residual={
+            "section_number": "396-eeee",
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": (
+                "event_conditioned_effective: Effective one year after the "
+                "promulgation of rules as specified in subdivision 3 of "
+                "section 837-aa of the general business law (see Ch. 55 of "
+                "2026, Part C, Subpart B, § 6)"
+            ),
+            "_supplemental_source_full_text": (
+                "No person, firm, partnership, association, or corporation "
+                "shall sell or deliver any three-dimensional printer in the "
+                "state of New York unless such printer is equipped with "
+                "blocking technology."
+            ),
+            "_supplemental_source_section_name": "Three-dimensional printers",
+        },
+    )
+    assert outcome["status"] == "resolved"
+    assert outcome["decision_action"] == "terminal"
+    assert outcome["decision"]["disposition"] == "future_effective"
+    assert "2027-05-27" in outcome["decision"]["note"]
+    assert all(outcome["conjuncts"].values())
+
+
+def test_new_york_gbs396eeee_resolver_fails_closed_without_delay(
+    monkeypatch,
+) -> None:
+    payload = _gbs396eeee_fixture_html(delayed=False)
+    delayed = _gbs396eeee_fixture_html(delayed=True)
+    projection = ny_pdf._new_york_gbs396eeee_signed_bill_projection_sha256(
+        delayed
+    )
+    monkeypatch.setattr(
+        ny_pdf,
+        "GBS396EEEE_SIGNED_BILL_PROJECTION_SHA256",
+        projection,
+    )
+    proof = ny_pdf.NewYorkSupplementalProofInput.bind(
+        selector_key=ny_pdf.GBS396EEEE_SIGNED_BILL_SELECTOR_KEY,
+        proof_kind="official_gbs_396eeee_effective_clause",
+        official_url=ny_pdf.GBS396EEEE_SIGNED_BILL_URL,
+        media_type="text/html",
+        payload=payload,
+    )
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry([proof]).resolve_residual(
+        law_code="GBS",
+        residual={
+            "section_number": "396-eeee",
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": "event_conditioned_effective: exact source note",
+            "_supplemental_source_full_text": (
+                "No person shall sell or deliver any three-dimensional printer."
+            ),
+            "_supplemental_source_section_name": "Three-dimensional printers",
+        },
+    )
+    assert outcome["status"] == "unknown"
+    assert outcome["decision_action"] is None
+    assert outcome["conjuncts"]["exact_source_projection_sha256"] is False
+    assert "decision" not in outcome
 
 
 @pytest.mark.parametrize("section", ("82.01", "82.15"))
@@ -1231,6 +1719,282 @@ def test_new_york_rss1204a_resolver_fails_closed_on_semantic_drift(
     assert "decision" not in outcome
 
 
+def test_new_york_bnk_wave_is_exact_official_and_source_derived() -> None:
+    rows = list(NewYorkScraper.STRICT_CURRENT_BNK_PROOF_ROWS)
+    urls = [row[2] for row in rows]
+    assert urls == [
+        ny_pdf.BNK_PART_Y_ENACTED_BILL_URL,
+        ny_pdf.BNK_DFS_PROPOSED_RULE_URL,
+    ]
+    assert _newline_residual_sha256(urls) == (
+        NewYorkScraper.STRICT_CURRENT_BNK_PROOF_URL_SHA256
+    )
+    assert [urlparse(url).hostname for url in urls] == [
+        "legislation.nysenate.gov",
+        "www.dfs.ny.gov",
+    ]
+    report = SimpleNamespace(
+        law_code="BNK",
+        unclassified_sections=[
+            {
+                "section_number": section,
+                "toc_variant": "",
+                "reason": "ambiguous_lifecycle_status",
+                "detail": "event_conditioned_effective_until: current until event",
+            }
+            for section in ny_pdf.BNK_PART_Y_UNTIL_SECTIONS
+        ]
+        + [
+            {
+                "section_number": section,
+                "toc_variant": "",
+                "reason": "ambiguous_lifecycle_status",
+                "detail": "event_conditioned_effective: 180 days after DFS rules",
+            }
+            for section in ny_pdf.BNK_PART_Y_FUTURE_SECTIONS
+        ],
+    )
+    assert NewYorkScraper._new_york_exact_bnk_proof_rows([report]) == rows
+
+
+@pytest.mark.parametrize("section", ("735", "749"))
+def test_new_york_bnk_resolver_closes_future_article_14b_rows(
+    monkeypatch,
+    section: str,
+) -> None:
+    proofs, bundle_projection = _bnk_part_y_proofs(monkeypatch)
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry(proofs).resolve_residual(
+        law_code="BNK",
+        residual={
+            "section_number": section,
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": "event_conditioned_effective: Ch. 58 of 2025, Part Y, § 13",
+        },
+    )
+    assert outcome["status"] == "resolved"
+    assert outcome["decision_action"] == "terminal"
+    assert outcome["decision"]["disposition"] == "future_effective"
+    assert outcome["source_projection_sha256"] == bundle_projection
+    assert all(outcome["conjuncts"].values())
+
+
+@pytest.mark.parametrize("section", ("39", "103"))
+def test_new_york_bnk_resolver_keeps_until_text_operative(
+    monkeypatch,
+    section: str,
+) -> None:
+    proofs, bundle_projection = _bnk_part_y_proofs(monkeypatch)
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry(proofs).resolve_residual(
+        law_code="BNK",
+        residual={
+            "section_number": section,
+            "toc_variant": "",
+            "reason": "ambiguous_lifecycle_status",
+            "detail": "event_conditioned_effective_until: current until Part Y",
+            "_supplemental_source_full_text": (
+                f"§ {section}. Current Banking Law body remains operative "
+                "until DFS promulgates Part Y rules. "
+                + ("Source-bound statutory body. " * 3)
+            ),
+            "_supplemental_source_section_name": f"Banking Law section {section}",
+        },
+    )
+    assert outcome["status"] == "resolved"
+    assert outcome["decision_action"] == "operative"
+    assert outcome["decision"]["disposition"] == (
+        "event_condition_not_occurred_operative"
+    )
+    assert outcome["source_projection_sha256"] == bundle_projection
+    assert all(outcome["conjuncts"].values())
+
+
+def test_new_york_bnk_resolver_fails_closed_on_semantic_drift(
+    monkeypatch,
+) -> None:
+    proofs, _bundle = _bnk_part_y_proofs(monkeypatch)
+    monkeypatch.setattr(
+        ny_pdf,
+        "_new_york_official_pdf_projection_text",
+        lambda _payload: _bnk_dfs_proposed_rule_fixture_text().replace(
+            "PROPOSED NEW 3 NYCRR 423",
+            "NOTICE OF ADOPTION 3 NYCRR 423",
+        ),
+    )
+    outcome = ny_pdf.evaluate_new_york_bnk_part_y_proof_bundle(
+        proofs,
+        section="735",
+        source_full_text="",
+        source_section_name="",
+    )
+    assert outcome["status"] == "unknown"
+    assert outcome["decision_action"] is None
+    assert outcome["conjuncts"]["exact_dfs_projection_sha256"] is False
+    assert "decision" not in outcome
+
+
+def test_new_york_openleg_selector_uses_uppercase_locator() -> None:
+    payload = (
+        "<html><body><div class='nys-openleg-not-found'>"
+        "The requested entry could not be found</div></body></html>"
+    ).encode()
+    proof = ny_pdf.NewYorkSupplementalProofInput.bind(
+        selector_key="EDN:669-C:source-page",
+        proof_kind="official_senate_section",
+        official_url="https://www.nysenate.gov/legislation/laws/EDN/669-C",
+        media_type="text/html",
+        payload=payload + b" " * 2000,
+    )
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry([proof]).resolve_residual(
+        law_code="EDN",
+        residual={
+            "section_number": "669-c",
+            "toc_variant": "",
+            "reason": "toc_section_missing_body_identity",
+        },
+    )
+    assert outcome["status"] == "resolved"
+    assert outcome["decision_action"] == "terminal"
+    assert outcome["decision"]["disposition"] == "official_senate_html_absent"
+
+
+def test_new_york_openleg_toc_variant_does_not_duplicate_section() -> None:
+    html = (
+        "<html><body>"
+        "<div class='nys-openleg-head-container'>"
+        "SECTION 2023-B Certification of compliance with tax levy limit"
+        "</div>"
+        "<div class='nys-openleg-content-container'>"
+        + ("§ 2023-b. Certification of compliance with tax levy limit. " * 40)
+        + "</div>"
+        "<div class='nys-openleg-history-container'>history</div>"
+        "</body></html>"
+    ).encode()
+    proof = ny_pdf.NewYorkSupplementalProofInput.bind(
+        selector_key="EDN:2023-B:source-page",
+        proof_kind="official_senate_section",
+        official_url="https://www.nysenate.gov/legislation/laws/EDN/2023-B",
+        media_type="text/html",
+        payload=html,
+    )
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry([proof]).resolve_residual(
+        law_code="EDN",
+        residual={
+            "section_number": "2023-b",
+            "toc_variant": "*2",
+            "reason": "toc_section_missing_body_identity",
+        },
+    )
+    assert outcome["status"] == "resolved"
+    assert outcome["decision_action"] == "terminal"
+    assert outcome["decision"]["disposition"] == (
+        "toc_variant_without_distinct_body"
+    )
+
+
+def test_new_york_openleg_json_url_has_no_api_key() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york_openleg import (
+        openleg_law_json_url,
+    )
+
+    url = openleg_law_json_url("edn")
+    assert url == "https://legislation.nysenate.gov/api/3/laws/EDN?full=true"
+    assert "key=" not in url
+    assert openleg_law_json_url("../PEN") == ""
+
+
+def test_new_york_openleg_json_rejects_401_error_shell() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york_openleg import (
+        is_valid_openleg_law_json,
+    )
+
+    denied = (
+        b'{"success":false,"message":"A valid API key is needed to fulfill '
+        b'this request.","responseType":"error","errorCode":701}'
+    )
+    assert is_valid_openleg_law_json(denied) is False
+    assert NewYorkScraper._is_valid_new_york_openleg_law_json(denied) is False
+
+
+def test_new_york_openleg_json_resolves_missing_pdf_body() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york_openleg import (
+        is_valid_openleg_law_json,
+        openleg_law_json_url,
+    )
+
+    tree = {
+        "success": True,
+        "result": {
+            "info": {"lawId": "EDN", "name": "Education"},
+            "documents": {
+                "docType": "CHAPTER",
+                "documents": {
+                    "items": [
+                        {
+                            "docType": "SECTION",
+                            "docLevelId": "669-c",
+                            "locationId": "669-C",
+                            "title": "Student loan ombudsman",
+                            "text": (
+                                "There is hereby established in the department a "
+                                "student loan ombudsman. The ombudsman shall "
+                                "receive, review and attempt to resolve complaints "
+                                "from student loan borrowers."
+                            ),
+                        }
+                    ]
+                },
+            },
+        },
+    }
+    payload = json.dumps(tree).encode("utf-8")
+    assert is_valid_openleg_law_json(payload) is True
+    proof = ny_pdf.NewYorkSupplementalProofInput.bind(
+        selector_key="EDN:openleg-json",
+        proof_kind="official_openleg_law_json",
+        official_url=openleg_law_json_url("EDN"),
+        media_type="application/json",
+        payload=payload,
+    )
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry([proof]).resolve_residual(
+        law_code="EDN",
+        residual={
+            "section_number": "669-c",
+            "toc_variant": "",
+            "reason": "toc_section_missing_body_identity",
+        },
+    )
+    assert outcome["status"] == "resolved"
+    assert outcome["decision_action"] == "operative"
+    assert "student loan ombudsman" in outcome["decision"]["full_text"]
+
+
+def test_new_york_openleg_json_wave_uses_archive_json_terms() -> None:
+    fetch_source = inspect.getsource(NewYorkScraper._fetch_new_york_frontier_batch)
+    assert 'mime_terms = ("json",)' in fetch_source
+    assert "allow_incomplete: bool = False" in fetch_source
+    wave_source = inspect.getsource(
+        NewYorkScraper._scrape_official_senate_pdf_frontier
+    )
+    assert 'common_crawl_url_terms=("/api/3/laws/", "full=true")' in wave_source
+    assert "allow_incomplete=True" in wave_source
+
+
+def test_new_york_com_port_authority_proviso_is_current() -> None:
+    assert ny_pdf._annotated_lifecycle_status(
+        "Amendments effective insofar as they pertain to the Port Authority "
+        "of New York and New Jersey upon passage of same as legislation by "
+        "New Jersey",
+        release_date=ny_pdf._EXPLICIT_RELEASE_DATE,
+    ) == ("current", "bi_state_application_proviso")
+    assert ny_pdf._annotated_lifecycle_status(
+        "Section effective insofar as it pertains to the Port Authority of "
+        "New York and New Jersey upon passage of same as legislation by "
+        "New Jersey",
+        release_date=ny_pdf._EXPLICIT_RELEASE_DATE,
+    ) == ("current", "bi_state_application_proviso")
+
+
 def test_new_york_event_pdf_validator_accepts_dos_warning_prefix() -> None:
     payload = b"\n**** Ghostscript warning\n%PDF-1.4\n" + (b"x" * 100_001)
     assert NewYorkScraper._is_valid_new_york_event_proof_pdf(payload)
@@ -1517,6 +2281,27 @@ def test_new_york_signed_bill_proof_manifest_replays_without_network(
         )
 
 
+def test_new_york_openleg_section_locator_uppercases_letter_runs() -> None:
+    assert NewYorkScraper._new_york_openleg_section_locator("495-d") == "495-D"
+    assert NewYorkScraper._new_york_openleg_section_locator("2799-aaaa") == "2799-AAAA"
+    assert NewYorkScraper._new_york_openleg_section_locator("3-6.5") == "3-6.5"
+    assert NewYorkScraper._new_york_openleg_section_locator("364-j-1") == "364-J-1"
+    assert ny_pdf.public_section_url("GBS", "495-d").endswith("/GBS/495-D")
+
+
+def test_new_york_official_not_found_html_is_admissible_but_not_a_section() -> None:
+    not_found = (
+        b"<html><head><title>NYS Open Legislation</title></head><body>"
+        + (b"navigation shell " * 80)
+        + b"<div class='nys-openleg-not-found'>"
+        + b"The requested entry could not be found."
+        + b"</div></body></html>"
+    )
+    assert NewYorkScraper._is_official_new_york_senate_not_found_html(not_found)
+    assert not NewYorkScraper._is_valid_new_york_senate_section_html(not_found)
+    assert NewYorkScraper._is_admissible_new_york_senate_section_payload(not_found)
+
+
 def test_new_york_senate_section_validator_rejects_retained_soft_not_found_shape() -> None:
     substantive = _senate_section_fixture(
         head="SECTION 3-6.5 Caution to the testator",
@@ -1616,6 +2401,7 @@ def test_new_york_exact_retained_senate_resolvers_reconcile_supported_rows(
     assert outcome["decision"]["disposition"] == case["disposition"]
     assert outcome["source_revision_date"] == case["revision"]
     assert outcome["proof"]["content_sha256"] == case["page_sha256"]
+    assert outcome["source_projection_sha256"] == case["projection_sha256"]
     assert all(outcome["conjuncts"].values())
     source_record_id = f"{code}:{section}"
     if case["action"] == "terminal":
@@ -1670,9 +2456,38 @@ def test_new_york_retained_senate_resolvers_fail_closed_on_source_drift(
     assert outcome["status"] == "unknown"
     assert outcome["decision_action"] is None
     assert outcome["reason"] == "source_bound_conjunction_failed"
-    assert outcome["conjuncts"]["exact_retained_page_sha256"] is False
+    assert outcome["conjuncts"]["exact_source_projection_sha256"] is False
     assert outcome["conjuncts"][str(case["drift_conjunct"])] is False
     assert "decision" not in outcome
+
+
+def test_new_york_ept365_resolver_accepts_gtag_cache_buster_drift() -> None:
+    case = RETAINED_RESOLVER_CASES[0]
+    retained = _retained_wave_d_object(str(case["page_sha256"]))
+    drifted = retained.replace(b"gtag.js?tk3q87", b"gtag.js?tkid71")
+    if drifted == retained:
+        drifted = retained.replace(b"gtag.js?", b"gtag.js?tkid71&", 1)
+    assert drifted != retained
+    assert hashlib.sha256(drifted).hexdigest() != case["page_sha256"]
+    proof = ny_pdf.NewYorkSupplementalProofInput.bind(
+        selector_key="EPT:3-6.5:source-page",
+        proof_kind="official_senate_section",
+        official_url=str(case["url"]),
+        media_type="text/html",
+        payload=drifted,
+    )
+
+    outcome = ny_pdf.NewYorkSupplementalProofRegistry([proof]).resolve_residual(
+        law_code="EPT",
+        residual=dict(case["residual"]),
+    )
+
+    assert outcome["status"] == "resolved"
+    assert outcome["decision_action"] == "terminal"
+    assert outcome["decision"]["disposition"] == "future_effective"
+    assert outcome["source_projection_sha256"] == case["projection_sha256"]
+    assert outcome["proof"]["content_sha256"] != case["page_sha256"]
+    assert all(outcome["conjuncts"].values())
 
 
 def test_new_york_retained_senate_proof_manifest_replays_without_network(
@@ -1994,7 +2809,7 @@ def test_new_york_compact_recipe_emits_twenty_eight_url_wave_not_invented_target
     pinned = list(NewYorkScraper.STRICT_CURRENT_SUPPLEMENTAL_SECTION_URLS)
     assert derived == pinned
     assert derived[0] == FIRST_RESIDUAL_URL
-    assert derived[-1] == "https://www.nysenate.gov/legislation/laws/VAT/1180-i"
+    assert derived[-1] == "https://www.nysenate.gov/legislation/laws/VAT/1180-I"
     assert INVENTED_SENATE_URL not in derived
     assert PUBLIC_LAW_URL not in derived
     assert AGM28_URL not in derived
@@ -2090,17 +2905,27 @@ def test_new_york_compact_supplemental_wave_is_plural_and_stays_unresolved(
         requested = list(urls)
         calls.append((requested, dict(kwargs)))
         payloads = []
+        errors: list[str | None] = []
         for url in requested:
             if url == self.OFFICIAL_CONSOLIDATED_URL:
                 payloads.append(catalog)
+                errors.append(None)
             elif url in pdf_by_url:
                 payloads.append(pdf_by_url[url])
+                errors.append(None)
             elif url in section_html:
                 payloads.append(section_html[url])
+                errors.append(None)
+            elif "/api/3/laws/" in url and url.endswith("?full=true"):
+                payloads.append(b"")
+                errors.append("openleg json 401 without archive hit")
             else:
                 raise AssertionError(f"compact residual requested unknown URL {url}")
-        assert all(kwargs["content_validator"](body) for body in payloads)
-        return _aligned_result(requested, payloads)
+        valid_bodies = [
+            body for body, error in zip(payloads, errors, strict=True) if error is None
+        ]
+        assert all(kwargs["content_validator"](body) for body in valid_bodies)
+        return _aligned_result(requested, payloads, errors=errors)
 
     resolution_attempts: list[dict[str, Any]] = []
 
@@ -2196,16 +3021,26 @@ def test_new_york_compact_supplemental_wave_is_plural_and_stays_unresolved(
     requested_waves = [call[0] for call in calls]
     assert requested_waves[0] == [scraper.OFFICIAL_CONSOLIDATED_URL]
     assert requested_waves[1] == list(pdf_by_url)
-    assert requested_waves[-1] == list(supplemental_urls)
+    assert requested_waves[2] == list(supplemental_urls)
+    assert requested_waves[3] == [
+        "https://legislation.nysenate.gov/api/3/laws/BBB?full=true"
+    ]
     assert INVENTED_SENATE_URL not in [url for wave in requested_waves for url in wave]
     assert PUBLIC_LAW_URL not in [url for wave in requested_waves for url in wave]
     assert AGM28_URL not in [url for wave in requested_waves for url in wave]
-    supplemental_kwargs = calls[-1][1]
+    supplemental_kwargs = calls[2][1]
     assert supplemental_kwargs["common_crawl_domain_terms"] == (OFFICIAL_DOMAIN,)
     assert supplemental_kwargs["common_crawl_url_terms"] == ("/legislation/laws/",)
     assert supplemental_kwargs["wayback_prefix_inventory"] is True
     assert supplemental_kwargs["prefer_direct"] is True
+    json_kwargs = calls[3][1]
+    assert json_kwargs["common_crawl_domain_terms"] == ("legislation.nysenate.gov",)
+    assert json_kwargs["common_crawl_url_terms"] == ("/api/3/laws/", "full=true")
+    assert json_kwargs["common_crawl_mime_terms"] == ("json",)
+    assert json_kwargs["prefer_direct"] is True
     assert all(row["status"] == "unknown" for row in resolution_attempts)
     assert all(row["decision_action"] is None for row in resolution_attempts)
     stats = list(getattr(scraper, "_new_york_frontier_batch_stats", []))
-    assert [row["frontier_name"] for row in stats][-1] == RESIDUAL_WAVE_NAME
+    names = [row["frontier_name"] for row in stats]
+    assert RESIDUAL_WAVE_NAME in names
+    assert names[-1] == "openleg-law-json-residual-1-1"

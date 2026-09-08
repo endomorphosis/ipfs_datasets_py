@@ -346,7 +346,7 @@
       "top_score": 11.551643956088153
     }
   ],
-  "content_digest": "4f28bf9864252a3270b5d7e463e72dd775f4002aca33f9f658e00f4f6dabd090",
+  "content_digest": "60a483a0ab9265f0ba32ce34ab0c7334f2e4620584691a5b0ae1da6188dab1c0",
   "currentness_disclaimer": "Federal Register completeness is cutoff-relative. Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the daily register is permanently current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
   "documents": 11784,
   "fixture_only": false,
@@ -366,7 +366,7 @@
   },
   "graph": {
     "available": true,
-    "edge_count": 134108,
+    "edge_count": 228380,
     "fixture_only": false,
     "inversion_holds": true,
     "meets_declared_gates": true,

@@ -1391,6 +1391,7 @@ async def test_large_same_domain_frontier_compacts_inventory_terms_then_exact_ma
     assert len(inventory_queries) == 1
     assert inventory_queries[0]["domain_terms"] == ["codes.example.gov"]
     assert inventory_queries[0]["url_terms"] == ["/legislation/code/"]
+    assert inventory_queries[0]["exact_urls"] == urls
 
 
 @pytest.mark.asyncio

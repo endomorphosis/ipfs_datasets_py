@@ -2,7 +2,9 @@
 
 This lane indexes locally available statute text with the existing Open US
 Law GraphRAG stack (term-range BM25, pinned gte-small, centroid vectors,
-legal graph). It does not authorize Hub publication or a current-bundle.
+legal graph). Build-time tokenization, graph extraction, and adjacency
+invert share :mod:`ipfs_datasets_py.processors.legal_data.graphrag_parallel`.
+It does not authorize Hub publication or a current-bundle.
 
 NY, WI, TN, AR, NH, MS, and GA must come from the operator dumps under
 ``/tmp/tmp_laws`` (durable ingest: ``vaquill-snapshot-normalized-v2026.08.31``).

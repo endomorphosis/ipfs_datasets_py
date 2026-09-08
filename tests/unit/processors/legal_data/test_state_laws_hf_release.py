@@ -25,6 +25,8 @@ from ipfs_datasets_py.processors.legal_data.state_laws_hf_release import (
     StateLawsHFReleaseConfigError,
     StateLawsHFReleaseSafetyError,
     StateLawsHuggingFaceRelease,
+    ViewerConfig,
+    advertised_root_viewer_configs,
     advertised_viewer_configs,
     assemble_state_laws_hf_release,
     assert_configs_schema_coherent,
@@ -35,6 +37,7 @@ from ipfs_datasets_py.processors.legal_data.state_laws_hf_release import (
     load_source_rights_receipt,
     releases_are_byte_identical,
     render_dataset_card,
+    render_root_viewer_dataset_card,
     route_bounds_policy,
     rows_from_bm25_index,
     rows_from_graph_projection,
@@ -90,7 +93,7 @@ def test_sealed_dataset_card_fixture_documents_configs() -> None:
     assert "lineage" in card.lower()
     assert "source-scope rights" in card.lower()
     front = card.split("---", 2)[1]
-    assert 'path: "data/**/*.parquet"' in front
+    assert 'path: "data/corpus/part-*.parquet"' in front
     assert f'config_name: "{DEFAULT_CONFIG_NAME}"' in front
     assert f'config_name: "{RECOVERY_CONFIG_NAME}"' in front
     assert DEFAULT_EMBEDDING_MODEL_ID in card
@@ -132,6 +135,47 @@ def test_advertised_configs_schema_coherent() -> None:
     assert RECOVERY_CONFIG_NAME in names
     assert QUARANTINE_CONFIG_NAME in names
     assert LEGACY_CONFIG_NAME in names
+
+
+def test_viewer_config_identifier_rejects_release_profile_slash() -> None:
+    with pytest.raises(StateLawsHFReleaseConfigError, match="identifier"):
+        ViewerConfig(
+            config_name=RELEASE_PROFILE,
+            data_files=({"split": "train", "path": "data/corpus/part-*.parquet"},),
+            primary_key="entry_cid",
+        )
+
+
+def test_root_viewer_configs_are_exact_prefix_corpus_plus_legacy_only() -> None:
+    prefix = f"data/state_laws/sha256-{'a' * 64}"
+    configs = advertised_root_viewer_configs(prefix)
+    assert [config.config_name for config in configs] == [
+        DEFAULT_CONFIG_NAME,
+        LEGACY_CONFIG_NAME,
+    ]
+    assert configs[0].data_files == (
+        {
+            "split": "train",
+            "path": f"{prefix}/data/corpus/part-*.parquet",
+        },
+    )
+    assert configs[1].data_files == (
+        {"split": "train", "path": "STATE-*.parquet"},
+    )
+    card = render_root_viewer_dataset_card(
+        render_dataset_card(),
+        release_prefix=prefix,
+    )
+    frontmatter = card.split("---", 2)[1]
+    assert frontmatter.count("config_name:") == 2
+    assert RECOVERY_CONFIG_NAME not in frontmatter
+    assert QUARANTINE_CONFIG_NAME not in frontmatter
+
+
+def test_broad_heterogeneous_default_glob_is_rejected() -> None:
+    configs = advertised_viewer_configs(default_data_glob="data/**/*.parquet")
+    with pytest.raises(StateLawsHFReleaseSafetyError, match="combined corpus"):
+        assert_configs_schema_coherent(configs)
 
 
 def test_default_config_cannot_advertise_recovery_path() -> None:

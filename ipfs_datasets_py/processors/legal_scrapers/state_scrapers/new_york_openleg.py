@@ -32,6 +32,7 @@ _SKIP_LAW_SLUGS = {
     "NYCRR",
 }
 SENATE_BASE = "https://www.nysenate.gov"
+OPENLEG_API_BASE = "https://legislation.nysenate.gov/api/3"
 _LEAF_TYPES = {"SECTION", "RULE"}
 _CLS = {
     "ARTICLE": "article",
@@ -55,6 +56,8 @@ def iter_sections(result: Dict) -> Iterator[Dict]:
         if node.get("repealed"):
             return
         items = (node.get("documents") or {}).get("items") or []
+        # Leaf SECTION/RULE nodes, plus single-blob unconsolidated acts
+        # (Vaquill LEH/NNY: a CHAPTER with statutory text and no children).
         if doc_type in _LEAF_TYPES or not items:
             text = (node.get("text") or "").strip()
             if text and (doc_type in _LEAF_TYPES or not items):
@@ -164,6 +167,75 @@ def parse_configured_category_html() -> List[Tuple[str, str, str]]:
     if path is None:
         return []
     return category_law_links(path.read_text(encoding="utf-8", errors="replace"))
+
+
+def openleg_law_json_url(law_id: str) -> str:
+    """Unkeyed official Open Legislation law-tree URL.
+
+    Live GETs may attach ``OPENLEG_API_KEY`` as a request query; receipts and
+    Common Crawl / Wayback locators must keep this identity without a key.
+    """
+
+    code = str(law_id or "").strip().upper()
+    if not re.fullmatch(r"[A-Z][A-Z0-9]{1,5}", code):
+        return ""
+    return f"{OPENLEG_API_BASE}/laws/{code}?full=true"
+
+
+def is_valid_openleg_law_json(payload: bytes) -> bool:
+    """Admit a successful OpenLeg law tree; reject 401/error shells."""
+
+    raw = bytes(payload or b"")
+    if len(raw) < 32 or raw[:1] not in {b"{", b"["}:
+        return False
+    try:
+        data = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError):
+        return False
+    if not isinstance(data, dict) or data.get("success") is False:
+        return False
+    result = data.get("result") if isinstance(data.get("result"), dict) else data
+    documents = result.get("documents") if isinstance(result, dict) else None
+    return isinstance(documents, dict) and bool(documents)
+
+
+def section_from_openleg_law_json(
+    payload: bytes,
+    *,
+    law_code: str,
+    section: str,
+) -> Optional[Dict[str, str]]:
+    """Return the matching leaf from a retained OpenLeg law tree."""
+
+    if not is_valid_openleg_law_json(payload):
+        return None
+    data = json.loads(bytes(payload).decode("utf-8"))
+    result = data.get("result") if isinstance(data.get("result"), dict) else data
+    wanted = re.sub(
+        r"[A-Za-z]+",
+        lambda match: match.group(0).upper(),
+        str(section or "").strip(),
+    )
+    wanted_fold = wanted.replace("–", "-").replace("—", "-").casefold()
+    expected_law = str(law_code or "").strip().upper()
+    for row in iter_sections(result if isinstance(result, dict) else {}):
+        if expected_law and str(row.get("law_id") or "").strip().upper() != expected_law:
+            continue
+        for token in (row.get("location_id"), row.get("doc_level_id")):
+            candidate = re.sub(
+                r"[A-Za-z]+",
+                lambda match: match.group(0).upper(),
+                str(token or "").strip(),
+            )
+            if candidate.replace("–", "-").replace("—", "-").casefold() == wanted_fold:
+                return {
+                    "law_id": str(row.get("law_id") or ""),
+                    "location_id": str(row.get("location_id") or ""),
+                    "doc_level_id": str(row.get("doc_level_id") or ""),
+                    "title": str(row.get("title") or ""),
+                    "text": str(row.get("text") or ""),
+                }
+    return None
 
 
 def parse_configured_law_json(

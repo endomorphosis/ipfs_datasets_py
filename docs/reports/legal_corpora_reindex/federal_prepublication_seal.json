@@ -1,0 +1,22 @@
+{
+  "schema": "ipfs_datasets_py/federal-register-prepublication-seal-deferred@1",
+  "task_id": "LCR-073",
+  "goal_id": "LCR-G140",
+  "program_id": "legal-corpora-reindex-v1",
+  "producer": "deferred-staging-canary",
+  "status": "deferred_not_authorizing",
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "current_bundle": false,
+  "lcr084_deferred": true,
+  "lcr084_taskboard_status": "todo",
+  "dataset_repo_id": "justicedao/ipfs_federal_register",
+  "staging_branch": "stage/federal-register-ir-graphrag-v2",
+  "previous_public_pin": "720668ae016cc400916dda884c9005e03618edfa",
+  "staging_sha": "3442c2b402cc36317be6176c8b0752e97d793323",
+  "canary_status": "passed",
+  "canary_checked": 11809,
+  "canary_missing": 0,
+  "canary_mismatched": 0,
+  "notes": "Binds the deferred staging SHA after a redownload hash canary. Does not authorize main-branch mutation or current-bundle advertisement while LCR-084 remains todo."
+}

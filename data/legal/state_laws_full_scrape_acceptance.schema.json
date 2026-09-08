@@ -415,9 +415,88 @@
         "tree": { "$ref": "#/$defs/gitSha" },
         "clean_at_seal": { "const": true },
         "excluded_evidence_paths": {
-          "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
+          "type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true,
           "items": { "$ref": "#/$defs/path" }
         }
+      }
+    },
+    "currentPublicParentProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authorizes_exact_51_acceptance",
+        "authorizes_hub_mutation",
+        "authorizes_publication",
+        "current_corpus_accepted",
+        "current_corpus_non_acceptance",
+        "current_public_parent_pin",
+        "current_public_parent_role",
+        "current_public_parent_tree_oid",
+        "evidence_only",
+        "goal_id",
+        "historical_baseline_pin",
+        "historical_baseline_role",
+        "historical_baseline_tree_oid",
+        "identity_sha256",
+        "observed_at_utc",
+        "path",
+        "receipt_file_sha256",
+        "receipt_sha256",
+        "satisfies_lcr084_acceptance",
+        "schema",
+        "task_id"
+      ],
+      "properties": {
+        "authorizes_exact_51_acceptance": { "const": false },
+        "authorizes_hub_mutation": { "const": false },
+        "authorizes_publication": { "const": false },
+        "current_corpus_accepted": { "const": false },
+        "current_corpus_non_acceptance": {
+          "const": {
+            "current_corpus_accepted": false,
+            "current_corpus_role": "optimistic_parent_and_rollback_only",
+            "authorizes_publication": false,
+            "authorizes_hub_mutation": false,
+            "authorizes_exact_51_candidate": false,
+            "blocking_findings": [
+              "current Viewer configuration names are invalid or heterogeneous",
+              "this receipt proves parent state only, not corrected-corpus validity",
+              "a later publication must use independent preflight, CAS, and postflight evidence"
+            ]
+          }
+        },
+        "current_public_parent_pin": {
+          "const": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2"
+        },
+        "current_public_parent_role": {
+          "const": "optimistic_parent_and_rollback_only"
+        },
+        "current_public_parent_tree_oid": {
+          "const": "946615aca49847b5d2ee0c6b7da05589e4b4bcd0"
+        },
+        "evidence_only": { "const": true },
+        "goal_id": { "const": "LCR-G146" },
+        "historical_baseline_pin": {
+          "const": "42f0546acc7c6cd55627eaf51fb820d5613b9021"
+        },
+        "historical_baseline_role": {
+          "const": "sealed_historical_evidence_only"
+        },
+        "historical_baseline_tree_oid": {
+          "const": "54bc2acf18f1e27ddde070565ffe89854621d2d1"
+        },
+        "identity_sha256": { "$ref": "#/$defs/sha256" },
+        "observed_at_utc": { "$ref": "#/$defs/timestamp" },
+        "path": {
+          "const": "docs/reports/legal_corpora_reindex/state_laws_current_public_parent_evidence.json"
+        },
+        "receipt_file_sha256": { "$ref": "#/$defs/sha256" },
+        "receipt_sha256": { "$ref": "#/$defs/sha256" },
+        "satisfies_lcr084_acceptance": { "const": false },
+        "schema": {
+          "const": "ipfs_datasets_py/state-laws-current-public-parent-evidence@1"
+        },
+        "task_id": { "const": "LCR-084" }
       }
     },
     "adapterDispositions": {
@@ -488,7 +567,8 @@
     "evidence": {
       "type": "object", "additionalProperties": false,
       "required": [
-        "authenticated_live_baseline", "baseline_reconciliation", "input_map",
+        "authenticated_live_baseline", "baseline_reconciliation",
+        "current_public_parent_provenance", "input_map",
         "jurisdictions", "official_frontier_reobservation",
         "production_release", "rights_receipt", "source_bundle", "source_control",
         "source_receipts_digest_sha256", "union"
@@ -498,6 +578,9 @@
         "baseline_reconciliation": {
           "type": "array", "minItems": 51, "maxItems": 51,
           "items": { "$ref": "#/$defs/baselineReconciliation" }
+        },
+        "current_public_parent_provenance": {
+          "$ref": "#/$defs/currentPublicParentProvenance"
         },
         "input_map": { "$ref": "#/$defs/inputMap" },
         "jurisdictions": {

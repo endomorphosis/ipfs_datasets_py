@@ -40,6 +40,10 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Final, Optional, Union
 
+from ipfs_datasets_py.processors.legal_data.parallel_tokenize import (
+    iter_as_list,
+    project_documents_parallel,
+)
 from ipfs_datasets_py.processors.legal_data.state_laws_corpus import (
     assert_no_secrets_or_home_paths,
 )
@@ -1191,11 +1195,13 @@ def iter_projected_documents(
     cfg = config or default_bm25_config()
     if isinstance(rows, (str, bytes, bytearray)):
         raise Bm25ProjectionError("corpus rows must be an iterable of mappings")
-    admitted_rows = [row for row in rows if _is_admitted_row(row)]
+    admitted_rows = [row for row in iter_as_list(rows) if _is_admitted_row(row)]
     admitted_rows.sort(key=lambda row: _document_sort_tuple(row, 0))
+    projected = project_documents_parallel(
+        admitted_rows, project_fn=project_legal_document, config=cfg
+    )
     seen: set[str] = set()
-    for position, row in enumerate(admitted_rows):
-        document = project_legal_document(row, document_index=position, config=cfg)
+    for position, document in enumerate(projected):
         if document.entry_cid in seen or document.chunk_cid in seen:
             raise Bm25CoverageError(
                 f"duplicate chunk_cid among BM25 documents: {document.chunk_cid}"

@@ -48,12 +48,14 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime im
     RECEIPT_SCHEMA_V1,
     canonical_no_self_field_digest,
 )
+from ipfs_datasets_py.processors.legal_data.state_laws_completeness import (
+    CANONICAL_JURISDICTION_ORDER,
+)
 from ipfs_datasets_py.processors.legal_data.state_laws_query import (
     DEFAULT_BM25_WEIGHT,
     DEFAULT_VECTOR_WEIGHT,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
-    CANONICAL_JURISDICTIONS,
     DEFAULT_DATASET_REPO_ID,
     DEFAULT_EMBEDDING_MODEL_ID,
     DEFAULT_EMBEDDING_MODEL_REVISION,
@@ -95,11 +97,14 @@ from scripts.ops.legal_data.canary_state_laws_hf_release import (
 )
 from scripts.ops.legal_data.check_state_laws_public_release import (
     PUBLIC_BUDGETS,
+    PublicParityError,
     PublicPinError,
+    PublicRemoteError,
     assert_public_pin_contract,
     check_canonical_public_canary_receipt,
     load_publication_receipt,
     reconstruct_public_revision,
+    redownload_canonical_public_release,
     require_public_pin,
 )
 from scripts.ops.legal_data.publish_state_laws_hf_release import (
@@ -113,10 +118,16 @@ from scripts.ops.legal_data.publish_state_laws_hf_release import (
     PublishSafetyError,
     PublishStateLawsError,
     candidate_file_bytes,
+    check_canonical_publication_receipt,
     declared_file_digests,
     reject_credentials_in_payload,
     reject_secrets_in_argv,
     require_immutable_revision,
+)
+from scripts.ops.legal_data.state_laws_release_probe import (
+    StateLawsReleaseProbeError,
+    assert_first_party_measurement,
+    run_remote_release_probe,
 )
 
 # ---------------------------------------------------------------------------
@@ -171,7 +182,7 @@ CURRENTNESS_DISCLAIMER: Final = (
     "legally current as of wall-clock time. Retrieval output is a research "
     "aid and is not a substitute for the official source."
 )
-SORTED_JURISDICTIONS: Final = tuple(sorted(CANONICAL_JURISDICTIONS))
+SORTED_JURISDICTIONS: Final = CANONICAL_JURISDICTION_ORDER
 
 SELF_DIGEST_FIELDS: Final = frozenset(
     {
@@ -1796,7 +1807,19 @@ def build_canonical_public_benchmark_receipt(
     measurements: Mapping[str, Any],
 ) -> dict[str, Any]:
     canary = check_canonical_public_canary_receipt(public_canary)
-    measured = validate_canonical_benchmark_measurements(measurements)
+    try:
+        first_party = assert_first_party_measurement(
+            measurements,
+            repo_id=canary["dataset_repo_id"],
+            revision=canary["public_revision"],
+            release_manifest_digest=canary["release_manifest_digest"],
+            parent_evidence_digest=canary["canonical_digest"],
+        )
+    except StateLawsReleaseProbeError as exc:
+        raise PublicBenchmarkError(
+            "benchmark is not internally measured/bound evidence"
+        ) from exc
+    measured = validate_canonical_benchmark_measurements(first_party)
     receipt = {
         "schema": CANONICAL_BENCHMARK_SCHEMA,
         "receipt_kind": CANONICAL_BENCHMARK_KIND,
@@ -1834,6 +1857,13 @@ def build_canonical_public_benchmark_receipt(
         "secrets_persisted": False,
         "local_paths_persisted": False,
     }
+    for key in (
+        "measurement_source",
+        "externally_supplied",
+        "observed_at",
+        "probe_bindings",
+    ):
+        receipt[key] = measured[key]
     digest = canonical_no_self_field_digest(receipt)
     receipt["canonical_digest"] = digest
     receipt["content_digest"] = digest
@@ -1891,6 +1921,18 @@ def check_canonical_public_benchmark_receipt(
     ):
         if re.fullmatch(r"[0-9a-f]{64}", str(report.get(name) or "")) is None:
             raise PublicBenchmarkError(f"canonical benchmark {name} is malformed")
+    try:
+        assert_first_party_measurement(
+            report,
+            repo_id=report["dataset_repo_id"],
+            revision=report["public_revision"],
+            release_manifest_digest=report["release_manifest_digest"],
+            parent_evidence_digest=report["public_canary_digest"],
+        )
+    except StateLawsReleaseProbeError as exc:
+        raise PublicBenchmarkError(
+            "canonical benchmark lacks sealed first-party provenance"
+        ) from exc
     validate_canonical_benchmark_measurements(report)
     declared = str(report.get("canonical_digest") or report.get("content_digest") or "")
     if re.fullmatch(r"[0-9a-f]{64}", declared) is None or (
@@ -2060,10 +2102,19 @@ def build_parser() -> argparse.ArgumentParser:
         help="Canonical LCR-043 public canary receipt.",
     )
     parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        default=None,
+        help="Empty directory for the immutable public-release redownload.",
+    )
+    parser.add_argument(
         "--measurements",
         type=Path,
         default=None,
-        help="Measured cold/warm/recall/skew/CID benchmark JSON.",
+        help=(
+            "Rejected legacy input. Canonical cold/warm/query measurements "
+            "are observed internally from the pinned public release."
+        ),
     )
     parser.add_argument(
         "--output",
@@ -2108,19 +2159,57 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise PublicBenchmarkRemoteError(
                 "new public benchmark generation requires explicit --network opt-in"
             )
-        if args.public_canary is None or args.measurements is None:
+        if args.measurements is not None:
             raise PublicBenchmarkError(
-                "benchmark generation requires --public-canary and --measurements"
+                "external --measurements cannot authorize canonical evidence"
+            )
+        if args.public_canary is None or args.cache_dir is None:
+            raise PublicBenchmarkError(
+                "benchmark generation requires --public-canary and --cache-dir"
             )
         canary = load_json_mapping(args.public_canary)
         checked_canary = check_canonical_public_canary_receipt(canary)
+        publication = check_canonical_publication_receipt(
+            load_json_mapping(args.receipt or default_receipt_path()),
+            require_live=True,
+        )
+        if (
+            checked_canary["publication_receipt_digest"]
+            != publication["canonical_digest"]
+            or checked_canary["dataset_repo_id"] != publication["dataset_repo_id"]
+            or checked_canary["public_revision"] != publication["public_revision"]
+            or checked_canary["release_manifest_digest"]
+            != publication["release_manifest_digest"]
+        ):
+            raise PublicBenchmarkParityError(
+                "public canary/publication immutable identity chain drifted"
+            )
         if args.repo_id and args.repo_id != checked_canary["dataset_repo_id"]:
             raise PublicBenchmarkRemoteError("--repo-id differs from public canary")
         if args.revision and args.revision != checked_canary["public_revision"]:
             raise PublicBenchmarkRemoteError("--revision differs from public canary")
+        redownload_canonical_public_release(
+            publication,
+            cache_root=args.cache_dir,
+        )
+        probe_coordinates = {
+            "repo_id": str(checked_canary["dataset_repo_id"]),
+            "revision": str(checked_canary["public_revision"]),
+            "release_manifest_digest": str(
+                checked_canary["release_manifest_digest"]
+            ),
+            "parent_evidence_digest": str(checked_canary["canonical_digest"]),
+        }
+        measured = assert_first_party_measurement(
+            run_remote_release_probe(
+                args.cache_dir,
+                **probe_coordinates,
+            ),
+            **probe_coordinates,
+        )
         report = build_canonical_public_benchmark_receipt(
             public_canary=checked_canary,
-            measurements=load_json_mapping(args.measurements),
+            measurements=measured["benchmark"],
         )
         if args.write_report:
             write_benchmark_report(
@@ -2148,6 +2237,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         PublicBenchmarkBudgetError,
         PublicBenchmarkParityError,
         PublicBenchmarkRemoteError,
+        PublicParityError,
+        PublicRemoteError,
         CanaryBudgetError,
         CanaryParityError,
         CanaryStateLawsError,
@@ -2155,6 +2246,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         PublishSafetyError,
         MutableRevisionError,
         ResolverError,
+        StateLawsReleaseProbeError,
         ValueError,
         RuntimeError,
     ) as exc:

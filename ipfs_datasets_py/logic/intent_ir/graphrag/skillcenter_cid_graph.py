@@ -16,6 +16,9 @@ import sqlite3
 import tempfile
 from typing import Any, Final
 
+from ipfs_datasets_py.processors.legal_data.host_worker_budget import (
+    tokenize_process_pool_size,
+)
 from ipfs_datasets_py.utils.cid_utils import cid_for_bytes
 
 from ...ir_core.canonical import canonical_json_bytes
@@ -647,6 +650,7 @@ def _query_neighbor_batch(
     k: int,
     workers: int,
 ) -> list[tuple[str, tuple[str, ...], tuple[SkillCenterCorpusBM25Hit, ...]]]:
+    workers = tokenize_process_pool_size(requested=max(1, int(workers))).workers
     chunks = [list(rows[index::workers]) for index in range(workers)]
     chunks = [chunk for chunk in chunks if chunk]
 

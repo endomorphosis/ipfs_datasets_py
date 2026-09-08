@@ -102,8 +102,10 @@ _CANONICAL_REQUESTS_DEFAULT_HEADERS: Final[tuple[tuple[str, str], ...]] = (
 from .protected_repo_guard import (
     PROTECTED_REPOS,
     PROTECTED_WRITE_METHODS,
+    STATE_MAIN_ROOT_README_CAS_OPERATION,
     CanonicalMutationBinding,
     CanonicalMutationFileBinding,
+    StateMainRootReadmeCASPlanBinding,
     guarded_write,
     is_protected_repo,
     require_unprotected_or_runtime,
@@ -195,6 +197,9 @@ _STATE_LAWS_PROGRAM_ID: Final = "state-laws-sparse-graphrag"
 _STATE_LAWS_GOAL_ID: Final = "LCR-G010"
 _STATE_LAWS_PLAN_SCHEMA: Final = "state-laws-hf-publication-plan/v1"
 _STATE_LAWS_RELEASE_PREFIX: Final = "data/state_laws/"
+_STATE_LAWS_DATASET_CARD_RELPATH: Final = (
+    "docs/reports/legal_corpora_reindex/state_dataset_card.md"
+)
 _STATE_LAWS_PROTECTED_REPOSITORIES: Final = frozenset(
     repository_id
     for repository_id in PROTECTED_REPOS
@@ -255,6 +260,7 @@ _CANONICAL_HF_API_METHOD_NAMES: Final = (
     "create_branch",
     "create_commit",
     "get_paths_info",
+    "hf_hub_download",
     "repo_info",
     "whoami",
 )
@@ -881,7 +887,7 @@ class PublicationApproval:
 
 @dataclass(frozen=True, slots=True)
 class PublicationCommitReceipt:
-    """Append-only commit receipt returned after an approved create_commit."""
+    """Receipt for an approved release commit and optional root-control CAS."""
 
     repository_id: str
     commit_sha: str
@@ -893,6 +899,7 @@ class PublicationCommitReceipt:
     uploaded_paths: tuple[str, ...]
     upload_bytes: int
     approval_id: str
+    root_readme_compare_and_swap: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -933,10 +940,22 @@ class PublicationCommitReceipt:
                 "upload_bytes must be a non-negative integer"
             )
         object.__setattr__(self, "uploaded_paths", paths)
+        if type(self.root_readme_compare_and_swap) is not bool:
+            raise HuggingFacePublicationError(
+                "root_readme_compare_and_swap must be an exact boolean"
+            )
+        if self.root_readme_compare_and_swap and (
+            self.repository_id.casefold() != "justicedao/ipfs_state_laws"
+            or self.target_revision != "main"
+            or paths.count("README.md") != 1
+        ):
+            raise HuggingFacePublicationError(
+                "root README CAS receipt must describe exact State main README.md"
+            )
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "append_only_commit_receipt": True,
+        payload = {
+            "append_only_commit_receipt": not self.root_readme_compare_and_swap,
             "approval_id": self.approval_id,
             "commit_sha": self.commit_sha,
             "plan_digest": self.plan_digest,
@@ -948,6 +967,9 @@ class PublicationCommitReceipt:
             "upload_bytes": self.upload_bytes,
             "uploaded_paths": list(self.uploaded_paths),
         }
+        if self.root_readme_compare_and_swap:
+            payload["root_readme_compare_and_swap"] = True
+        return payload
 
 
 @dataclass(frozen=True, slots=True)
@@ -974,7 +996,12 @@ class CanonicalLegalCorporaMutationReceipt:
             revision=self.revision,
             method=self.method,
         )
-        if self.operation != operation:
+        compound_root_cas = bool(
+            phase == "state_main"
+            and self.method == "create_commit"
+            and self.operation == STATE_MAIN_ROOT_README_CAS_OPERATION
+        )
+        if self.operation != operation and not compound_root_cas:
             raise HuggingFacePublicationError(
                 "canonical mutation receipt operation differs from its phase"
             )
@@ -1886,6 +1913,7 @@ def _canonical_hf_api_read(
     if type(api) is not _CANONICAL_HF_API_TYPE or method not in {
         "auth_check",
         "get_paths_info",
+        "hf_hub_download",
         "repo_info",
         "whoami",
     }:
@@ -2045,6 +2073,170 @@ def _canonical_state_laws_parent_and_prefix_empty(
             f"release prefix: {existing_path}"
         )
     return current
+
+
+def _canonical_revalidate_compound_parent_prefix_and_readme(
+    mutation_binding: CanonicalMutationBinding,
+    runtime_token: str,
+) -> str:
+    """Bracket-read the exact State-main parent and root control before CAS.
+
+    The immutable release objects must still be absent.  If ``README.md`` is
+    present, its bytes are downloaded at the audited immutable parent and
+    matched to the separately reviewed previous digest.  The final mutable
+    ``main`` observation is intentionally the last network operation before
+    the one-shot guarded ``create_commit(parent_commit=...)`` callback.
+    """
+
+    if type(mutation_binding) is not CanonicalMutationBinding:
+        raise HuggingFacePublicationError(
+            "root README CAS revalidation requires the exact mutation binding"
+        )
+    control = mutation_binding.root_readme_cas
+    if (
+        type(control) is not StateMainRootReadmeCASPlanBinding
+        or mutation_binding.method != "create_commit"
+        or mutation_binding.repository_id != "justicedao/ipfs_state_laws"
+        or mutation_binding.repository_type != "dataset"
+        or mutation_binding.revision != "main"
+    ):
+        raise HuggingFacePublicationError(
+            "root README CAS revalidation is limited to the exact State-main commit"
+        )
+    api = _new_canonical_hf_api(runtime_token)
+
+    def repo_head() -> str:
+        try:
+            info = _canonical_hf_api_read(
+                api,
+                "repo_info",
+                runtime_token,
+                repo_id=mutation_binding.repository_id,
+                repo_type=mutation_binding.repository_type,
+                revision=mutation_binding.revision,
+            )
+        except Exception as exc:
+            raise HuggingFacePublicationError(
+                "cannot re-read State main immediately before root README CAS"
+            ) from exc
+        return _extract_repo_commit_sha(info)
+
+    def paths_info(paths: Sequence[str]) -> list[Any]:
+        normalized = tuple(_normalize_relative_path(path) for path in paths)
+        records: list[Any] = []
+        for offset in range(0, len(normalized), DEFAULT_REMOTE_INFO_BATCH_SIZE):
+            try:
+                page = _canonical_hf_api_read(
+                    api,
+                    "get_paths_info",
+                    runtime_token,
+                    repo_id=mutation_binding.repository_id,
+                    paths=list(
+                        normalized[
+                            offset : offset + DEFAULT_REMOTE_INFO_BATCH_SIZE
+                        ]
+                    ),
+                    repo_type=mutation_binding.repository_type,
+                    revision=control.audited_parent_commit,
+                )
+            except Exception as exc:
+                raise HuggingFacePublicationError(
+                    "cannot inspect pinned State-main paths immediately before CAS"
+                ) from exc
+            records.extend(list(page or ()))
+        return records
+
+    head_before = repo_head()
+    immutable_paths = tuple(
+        item.remote_path
+        for item in mutation_binding.files
+        if item.remote_path != control.remote_path
+    )
+    occupied = paths_info((control.release_prefix, *immutable_paths))
+    if occupied:
+        raise HuggingFacePublicationError(
+            "root README CAS refuses a pre-existing immutable release object"
+        )
+
+    readme_records = paths_info((control.remote_path,))
+    if control.expected_previous_sha256 is None:
+        if readme_records:
+            raise HuggingFacePublicationError(
+                "root README CAS expected audited absence but README.md exists"
+            )
+    else:
+        if (
+            len(readme_records) != 1
+            or _record_value(readme_records[0], "path") != control.remote_path
+        ):
+            raise HuggingFacePublicationError(
+                "root README CAS expected one exact pinned README.md object"
+            )
+        try:
+            with tempfile.TemporaryDirectory(prefix="lcr-root-readme-") as directory:
+                download_root = Path(directory).resolve(strict=True)
+                downloaded = _canonical_hf_api_read(
+                    api,
+                    "hf_hub_download",
+                    runtime_token,
+                    repo_id=mutation_binding.repository_id,
+                    filename=control.remote_path,
+                    repo_type=mutation_binding.repository_type,
+                    revision=control.audited_parent_commit,
+                    local_dir=download_root.as_posix(),
+                    force_download=True,
+                )
+                downloaded_path = Path(str(downloaded)).resolve(strict=True)
+                if (
+                    os.path.commonpath(
+                        (download_root.as_posix(), downloaded_path.as_posix())
+                    )
+                    != download_root.as_posix()
+                ):
+                    raise HuggingFacePublicationError(
+                        "pinned README download escaped its private directory"
+                    )
+                flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+                descriptor = os.open(downloaded_path, flags)
+                try:
+                    metadata = os.fstat(descriptor)
+                    if (
+                        not stat.S_ISREG(metadata.st_mode)
+                        or metadata.st_size < 0
+                        or metadata.st_size > 8 * 1024 * 1024
+                    ):
+                        raise HuggingFacePublicationError(
+                            "pinned README download is not a bounded regular file"
+                        )
+                    with os.fdopen(descriptor, "rb", closefd=False) as stream:
+                        previous_bytes = stream.read(8 * 1024 * 1024 + 1)
+                finally:
+                    os.close(descriptor)
+        except HuggingFacePublicationError:
+            raise
+        except Exception as exc:
+            raise HuggingFacePublicationError(
+                "cannot download the audited previous README.md bytes"
+            ) from exc
+        if (
+            len(previous_bytes) > 8 * 1024 * 1024
+            or sha256(previous_bytes).hexdigest()
+            != control.expected_previous_sha256
+        ):
+            raise HuggingFacePublicationError(
+                "remote README.md bytes differ from the reviewed previous digest"
+            )
+
+    head_after = repo_head()
+    if (
+        head_before != control.audited_parent_commit
+        or head_after != control.audited_parent_commit
+        or head_before != head_after
+    ):
+        raise HuggingFacePublicationError(
+            "State main advanced during the final root README CAS observation"
+        )
+    return head_after
 
 
 def _canonical_legal_corpora_branch_parent(
@@ -2230,6 +2422,123 @@ def _state_laws_write_authority_from_whoami(
     }
 
 
+def _state_main_root_readme_cas_from_plan(
+    plan: PublicationPlan,
+    approval: PublicationApproval,
+    *,
+    phase: str,
+    method: str,
+    policy_proof_digest: str,
+) -> tuple[StateMainRootReadmeCASPlanBinding | None, PublicationFilePlan | None]:
+    """Translate one sealed Viewer-control plan into the compound commit binding."""
+
+    if phase != "state_main":
+        return None, None
+    if method != "create_commit":
+        raise HuggingFacePublicationError(
+            "State-main Viewer control can only accompany create_commit"
+        )
+    from ..processors.legal_data.state_laws_publication_package import (
+        StateLawsViewerControlPlan,
+        VIEWER_CONTROL_ADD,
+        VIEWER_CONTROL_OBSERVE,
+        VIEWER_CONTROL_REPLACE,
+        VIEWER_CONTROL_SKIP,
+    )
+
+    raw_control = plan.metadata.get("viewer_control")
+    try:
+        control = StateLawsViewerControlPlan.from_mapping(raw_control)
+    except Exception as exc:
+        raise HuggingFacePublicationError(
+            "State-main publication requires one exact sealed Viewer-control plan"
+        ) from exc
+    if (
+        control.repository_id != plan.repository_id
+        or control.target_revision != plan.target_revision
+        or control.audited_parent_commit != plan.audited_parent_commit
+        or control.release_prefix != plan.release_prefix
+        or control.release_manifest_digest != plan.release_sha256
+        or control.remote_path != "README.md"
+    ):
+        raise HuggingFacePublicationError(
+            "Viewer-control plan differs from the exact approved publication plan"
+        )
+    if control.operation == VIEWER_CONTROL_OBSERVE:
+        raise HuggingFacePublicationError(
+            "unobserved root README state cannot authorize a State-main mutation"
+        )
+    if control.operation == VIEWER_CONTROL_SKIP:
+        return None, None
+    if control.operation not in {VIEWER_CONTROL_ADD, VIEWER_CONTROL_REPLACE}:
+        raise HuggingFacePublicationError(
+            "Viewer-control plan operation is not supported by the canonical writer"
+        )
+    if control.operation == VIEWER_CONTROL_ADD:
+        if control.existing_state != "absent" or control.expected_existing_sha256:
+            raise HuggingFacePublicationError(
+                "Viewer-control add requires separately audited README.md absence"
+            )
+        expected_previous_sha256 = None
+        review_id = approval.approval_id
+        reviewer = approval.approver
+    else:
+        review = control.replacement_review
+        if (
+            control.existing_state != "present"
+            or not control.expected_existing_sha256
+            or not isinstance(review, Mapping)
+        ):
+            raise HuggingFacePublicationError(
+                "Viewer-control replacement lacks an exact previous digest and review"
+            )
+        expected_previous_sha256 = control.expected_existing_sha256
+        review_id = _text(review.get("review_id"), label="Viewer review_id")
+        reviewer = _text(review.get("reviewer"), label="Viewer reviewer")
+
+    binding = StateMainRootReadmeCASPlanBinding(
+        audited_parent_commit=control.audited_parent_commit,
+        expected_previous_sha256=expected_previous_sha256,
+        replacement_sha256=control.sha256,
+        replacement_size_bytes=control.size_bytes,
+        release_manifest_digest=control.release_manifest_digest,
+        release_prefix=control.release_prefix,
+        publication_plan_digest=plan.plan_digest,
+        policy_proof_digest=policy_proof_digest,
+        control_plan_digest=control.plan_digest,
+        review_id=review_id,
+        reviewer=reviewer,
+    )
+    root_file = PublicationFilePlan(
+        relative_path=_STATE_LAWS_DATASET_CARD_RELPATH,
+        remote_path="README.md",
+        size_bytes=control.size_bytes,
+        sha256=control.sha256,
+    )
+    return binding, root_file
+
+
+def _canonical_mutation_operation(
+    phase: str,
+    mutation_binding: CanonicalMutationBinding,
+) -> str:
+    """Return the truthful operation carried by one exact mutation binding."""
+
+    if mutation_binding.root_readme_cas is not None:
+        if phase != "state_main":
+            raise HuggingFacePublicationError(
+                "root README CAS operation is limited to State main"
+            )
+        return STATE_MAIN_ROOT_README_CAS_OPERATION
+    _, operation = _canonical_legal_corpora_phase_contract(
+        phase,
+        repository_id=mutation_binding.repository_id,
+        revision=mutation_binding.revision,
+        method=mutation_binding.method,
+    )
+    return operation
+
+
 @dataclass(frozen=True, slots=True)
 class _StateLawsCanonicalCommitPreflight:
     """Sealed legal-corpora inputs used only before authority is opened.
@@ -2311,8 +2620,12 @@ class _StateLawsCanonicalCommitPreflight:
                     "non-State-main canonical mutations reject caller proof objects"
                 )
             proof_digest = self.mutation_binding.policy_proof_digest
-        if not self.operations_payload or len(self.operations_payload) != len(
-            self.plan.operations
+        expected_operation_count = len(self.plan.operations) + (
+            1 if self.mutation_binding.root_readme_cas is not None else 0
+        )
+        if (
+            not self.operations_payload
+            or len(self.operations_payload) != expected_operation_count
         ):
             raise HuggingFacePublicationError(
                 "canonical State Laws commit operations do not match its plan"
@@ -2323,9 +2636,10 @@ class _StateLawsCanonicalCommitPreflight:
             repository_type=self.publisher.repository_type,
             revision=self.plan.target_revision,
             parent_commit=self.plan.audited_parent_commit,
-            files=_rehash_anonymous_snapshot_files(
+            files=_rehash_canonical_mutation_snapshots(
                 self.operations_payload,
                 self.plan,
+                self.mutation_binding.root_readme_cas,
             ),
             plan_digest=self.plan.plan_digest,
             release_manifest_digest=self.plan.release_sha256,
@@ -2333,6 +2647,7 @@ class _StateLawsCanonicalCommitPreflight:
             commit_message_digest=sha256(
                 self.canonical_message.encode("utf-8")
             ).hexdigest(),
+            root_readme_cas=self.mutation_binding.root_readme_cas,
         )
         if (
             self.mutation_binding != expected_binding
@@ -2367,12 +2682,13 @@ class _StateLawsCanonicalCommitPreflight:
             label="canonical candidate release manifest digest",
         )
         payload_digest = self.mutation_binding.payload_digest
-        phase, operation = _canonical_legal_corpora_phase_contract(
+        phase, _ = _canonical_legal_corpora_phase_contract(
             _record_value(decision, "phase"),
             repository_id=self.mutation_binding.repository_id,
             revision=self.mutation_binding.revision,
             method=self.mutation_binding.method,
         )
+        operation = _canonical_mutation_operation(phase, self.mutation_binding)
         if (
             _record_value(decision, "authorized") is not True
             or _record_value(decision, "network_mutation_permitted") is not True
@@ -2406,9 +2722,10 @@ class _StateLawsCanonicalCommitPreflight:
                 proof=self.live_policy_proof,
                 local_root=self.local_root,
             )
-        final_files = _rehash_anonymous_snapshot_files(
+        final_files = _rehash_canonical_mutation_snapshots(
             self.operations_payload,
             self.plan,
+            self.mutation_binding.root_readme_cas,
         )
         if final_files != self.mutation_binding.files:
             raise HuggingFacePublicationError(
@@ -2449,6 +2766,7 @@ def _build_state_laws_prepared_commit_call(
     *,
     require_guard: Callable[..., Any],
     rehash_files: Callable[..., Any],
+    revalidate_remote: Callable[..., Any],
     protected_write: Callable[..., Any],
     create_branch: Callable[..., Any],
     create_commit: Callable[..., Any],
@@ -2458,6 +2776,7 @@ def _build_state_laws_prepared_commit_call(
     def prepared_call(self: Any) -> tuple[str, Any]:
         require_guard_local = require_guard
         rehash_files_local = rehash_files
+        revalidate_remote_local = revalidate_remote
         protected_write_local = protected_write
         corpus = (
             "state"
@@ -2467,10 +2786,9 @@ def _build_state_laws_prepared_commit_call(
         )
         target = "main" if self.mutation_binding.revision == "main" else "staging"
         phase = f"{corpus}_{target}"
-        operation = (
-            "additive_main_upload"
-            if target == "main"
-            else "additive_staging_upload"
+        operation = _canonical_mutation_operation(
+            phase,
+            self.mutation_binding,
         )
         payload_digest = self.mutation_binding.payload_digest
         final_files = rehash_files_local(
@@ -2521,6 +2839,15 @@ def _build_state_laws_prepared_commit_call(
                 ) from exc
             return self.mutation_binding.parent_commit, committed
 
+        if self.mutation_binding.root_readme_cas is not None:
+            observed_parent = revalidate_remote_local(
+                self.mutation_binding,
+                self.runtime_token,
+            )
+            if observed_parent != self.mutation_binding.parent_commit:
+                raise HuggingFacePublicationError(
+                    "final root README CAS parent differs from the mutation binding"
+                )
         require_guard_local(
             self.mutation_binding.repository_id,
             method="create_commit",
@@ -3163,7 +3490,25 @@ class HuggingFaceReleasePublisher:
                 "only State Laws main accepts a live policy proof object"
             )
 
-        _assert_anonymous_snapshot_capacity(upload_bytes)
+        root_readme_cas, root_readme_file = (
+            _state_main_root_readme_cas_from_plan(
+                plan,
+                approval,
+                phase=phase,
+                method=mutation_method,
+                policy_proof_digest=proof_digest,
+            )
+        )
+        compound_upload_bytes = upload_bytes + (
+            root_readme_file.size_bytes
+            if root_readme_file is not None
+            else 0
+        )
+        if compound_upload_bytes > int(approval.max_upload_bytes):
+            raise HuggingFacePublicationError(
+                "compound release and root README bytes exceed max_upload_bytes"
+            )
+        _assert_anonymous_snapshot_capacity(compound_upload_bytes)
         message = (
             commit_message
             if commit_message is not None
@@ -3183,11 +3528,33 @@ class HuggingFaceReleasePublisher:
                 )
                 for item in plan.operations
             )
+            if root_readme_file is not None:
+                canonical_root, canonical_root_fd = (
+                    _open_local_root_directory_nofollow(
+                        Path(__file__).resolve().parents[2],
+                        snapshots=snapshots,
+                    )
+                )
+                if canonical_root != Path(__file__).resolve().parents[2]:
+                    raise HuggingFacePublicationError(
+                        "canonical State Laws card root resolved unexpectedly"
+                    )
+                operations_payload += (
+                    _snapshot_commit_add_operation(
+                        root_fd=canonical_root_fd,
+                        item=root_readme_file,
+                        snapshots=snapshots,
+                    ),
+                )
             if not operations_payload:
                 raise HuggingFacePublicationError(
                     "canonical mutation refuses an empty reviewed payload"
                 )
-            files = _rehash_anonymous_snapshot_files(operations_payload, plan)
+            files = _rehash_canonical_mutation_snapshots(
+                operations_payload,
+                plan,
+                root_readme_cas,
+            )
             mutation_binding = CanonicalMutationBinding(
                 method=mutation_method,
                 repository_id=self.repository_id,
@@ -3201,7 +3568,9 @@ class HuggingFaceReleasePublisher:
                 commit_message_digest=sha256(
                     canonical_message.encode("utf-8")
                 ).hexdigest(),
+                root_readme_cas=root_readme_cas,
             )
+            operation = _canonical_mutation_operation(phase, mutation_binding)
             api_template = self.api
             sealed_preflight = _StateLawsCanonicalCommitPreflight(
                 publisher=self,
@@ -3415,6 +3784,15 @@ class HuggingFaceReleasePublisher:
                 commit_message=commit_message,
                 live_policy_proof=live_policy_proof,
             )
+            root_readme_cas = (
+                canonical.operation == STATE_MAIN_ROOT_README_CAS_OPERATION
+            )
+            root_control = plan.metadata.get("viewer_control")
+            root_size = (
+                int(_record_value(root_control, "size_bytes"))
+                if root_readme_cas
+                else 0
+            )
             return PublicationCommitReceipt(
                 repository_id=self.repository_id,
                 commit_sha=canonical.resulting_commit_sha,
@@ -3423,9 +3801,13 @@ class HuggingFaceReleasePublisher:
                 plan_digest=plan.plan_digest,
                 parent_commit=canonical.parent_commit,
                 target_revision=plan.target_revision,
-                uploaded_paths=tuple(item.remote_path for item in plan.operations),
-                upload_bytes=upload_bytes,
+                uploaded_paths=(
+                    tuple(item.remote_path for item in plan.operations)
+                    + (("README.md",) if root_readme_cas else ())
+                ),
+                upload_bytes=upload_bytes + root_size,
                 approval_id=approval.approval_id,
+                root_readme_compare_and_swap=root_readme_cas,
             )
         _assert_anonymous_snapshot_capacity(upload_bytes)
 
@@ -4474,6 +4856,40 @@ def _rehash_anonymous_snapshot_files(
     return _rehash_prepared_snapshot_files(operations, expected)
 
 
+def _rehash_canonical_mutation_snapshots(
+    operations: Sequence[Any],
+    plan: PublicationPlan,
+    root_readme_cas: StateMainRootReadmeCASPlanBinding | None,
+) -> tuple[CanonicalMutationFileBinding, ...]:
+    """Rehash immutable release adds plus the optional reviewed root CAS bytes."""
+
+    expected = tuple(
+        CanonicalMutationFileBinding(
+            relative_path=item.relative_path,
+            remote_path=item.remote_path,
+            size_bytes=item.size_bytes,
+            sha256=item.sha256,
+            local_sha256=item.sha256,
+        )
+        for item in plan.operations
+    )
+    if root_readme_cas is not None:
+        if type(root_readme_cas) is not StateMainRootReadmeCASPlanBinding:
+            raise HuggingFacePublicationError(
+                "compound root README snapshot binding is noncanonical"
+            )
+        expected += (
+            CanonicalMutationFileBinding(
+                relative_path=_STATE_LAWS_DATASET_CARD_RELPATH,
+                remote_path=root_readme_cas.remote_path,
+                size_bytes=root_readme_cas.replacement_size_bytes,
+                sha256=root_readme_cas.replacement_sha256,
+                local_sha256=root_readme_cas.replacement_sha256,
+            ),
+        )
+    return _rehash_prepared_snapshot_files(operations, expected)
+
+
 def _rehash_prepared_snapshot_files(
     operations: Sequence[Any],
     expected_files: tuple[CanonicalMutationFileBinding, ...],
@@ -4605,6 +5021,9 @@ _PreparedStateLawsCanonicalCommitExecutor.__call__ = (
     _build_state_laws_prepared_commit_call(
         require_guard=require_unprotected_or_runtime,
         rehash_files=_rehash_prepared_snapshot_files,
+        revalidate_remote=(
+            _canonical_revalidate_compound_parent_prefix_and_readme
+        ),
         protected_write=guarded_write,
         create_branch=_canonical_hf_api_create_branch,
         create_commit=_canonical_hf_api_create_commit,

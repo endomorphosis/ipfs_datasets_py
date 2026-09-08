@@ -72,6 +72,7 @@ from ipfs_datasets_py.processors.legal_data.state_laws_publication_package impor
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import (
     DEFAULT_STAGING_BRANCH,
+    PUBLICATION_PARENT_REVISION,
     PROHIBITED_STAGING_BRANCHES,
     evaluate_live_mutation,
     example_authorized_staging_request,
@@ -81,7 +82,6 @@ from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
     DEFAULT_DATASET_REPO_ID,
-    PREVIOUS_PUBLIC_PIN,
 )
 
 # ---------------------------------------------------------------------------
@@ -108,7 +108,7 @@ DEFAULT_CANDIDATE_RELPATH: Final = Path(
 )
 
 DEFAULT_DATASET_REPO: Final = DEFAULT_DATASET_REPO_ID
-DEFAULT_BASE_PIN: Final = PREVIOUS_PUBLIC_PIN
+DEFAULT_BASE_PIN: Final = PUBLICATION_PARENT_REVISION
 DEFAULT_OBSERVATION_TIME: Final = "2026-08-10T12:00:00Z"
 AUTHORIZATION_ENV: Final = "STATE_LAWS_STAGING_AUTHORIZATION"
 MAX_REPORT_BYTES: Final = 1048576
@@ -506,7 +506,7 @@ def load_production_candidate_report(
     if type(payload) is not dict:
         raise StageReceiptError("production candidate must be an object")
     try:
-        from scripts.ops.legal_data import build_state_laws_hf_release as builder
+        import scripts.ops.legal_data.build_state_laws_hf_release as builder
 
         checked = builder.check_production_candidate_report(
             payload,
@@ -1217,7 +1217,8 @@ def build_staging_receipt(
     pin = require_immutable_revision(base_pin, name="base_pin")
     if pin != DEFAULT_BASE_PIN:
         raise StageSafetyError(
-            f"base pin must remain the sealed previous public pin {DEFAULT_BASE_PIN}"
+            "base pin must remain the audited publication parent "
+            f"{DEFAULT_BASE_PIN}"
         )
 
     candidate_digest = normalize_sha256(

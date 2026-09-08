@@ -21,8 +21,10 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.wisconsin import 
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.wisconsin_chapter import (
     close_wisconsin_section_windows,
+    current_html_chapter_number,
     parse_wisconsin_chapter_frontier_window,
     parse_wisconsin_section_window,
+    toc_chapter_links,
 )
 
 
@@ -356,12 +358,13 @@ async def test_wisconsin_plural_policy_is_ordered_and_does_not_reinventory_resid
     assert calls[0][1]["wayback_prefix_inventory"] is False
     assert calls[0][1]["common_crawl_domain_terms"] == (
         "docs.legis.wisconsin.gov",
+        "wisconsin.gov",
     )
     assert calls[0][1]["common_crawl_url_terms"] == (
         "/statutes/statutes",
         "/document/statutes/",
     )
-    assert calls[0][1]["archive_recovery_enabled"] is False
+    assert calls[0][1]["archive_recovery_enabled"] is True
 
     with pytest.raises(RuntimeError, match="off-domain"):
         await scraper._fetch_wisconsin_frontier_batch(
@@ -373,7 +376,7 @@ async def test_wisconsin_plural_policy_is_ordered_and_does_not_reinventory_resid
 
 
 @pytest.mark.parametrize("source_transport", ["common_crawl", "wayback"])
-def test_wisconsin_current_frontier_rejects_archive_only_parser_input(
+def test_wisconsin_current_frontier_admits_grouped_archive_cdx_parser_input(
     source_transport: str,
 ) -> None:
     scraper = WisconsinScraper("WI", "Wisconsin")
@@ -381,27 +384,122 @@ def test_wisconsin_current_frontier_rejects_archive_only_parser_input(
         _toc("1.01")
         + _block(
             "1.01",
-            "An archived viewer body cannot be silently stamped current.",
+            "Grouped-archive CDX may authorize when live direct is unreachable.",
             path="/statutes/statutes/1/01",
         ),
         title="Wisconsin Legislature: Chapter 1",
     )
     url = f"{scraper.get_base_url()}/document/statutes/1"
     scraper._state_law_acquisition_ledger = object()
+    scraper._validate_wisconsin_aligned_evidence(
+        url=url,
+        payload=payload,
+        transport_receipt={
+            "archive_timestamp": "20260722161219",
+            "content_sha256": hashlib.sha256(payload).hexdigest(),
+            "official_url": url,
+            "source_transport": source_transport,
+        },
+        parser_input_envelope=SimpleNamespace(body=payload),
+        frontier_name="chapter-toc-wave-1",
+    )
 
-    with pytest.raises(RuntimeError, match="only historical as-of authority"):
+
+def test_wisconsin_current_frontier_rejects_non_cdx_archive_parser_input() -> None:
+    scraper = WisconsinScraper("WI", "Wisconsin")
+    payload = _html(
+        _toc("1.01")
+        + _block("1.01", "archive.is is not an authorizing current transport.", path="/statutes/statutes/1/01"),
+        title="Wisconsin Legislature: Chapter 1",
+    )
+    url = f"{scraper.get_base_url()}/document/statutes/1"
+    scraper._state_law_acquisition_ledger = object()
+    with pytest.raises(RuntimeError, match="grouped-archive CDX source receipt"):
         scraper._validate_wisconsin_aligned_evidence(
             url=url,
             payload=payload,
             transport_receipt={
-                "archive_timestamp": "20230801000000",
+                "archive_timestamp": "20260722161219",
                 "content_sha256": hashlib.sha256(payload).hexdigest(),
                 "official_url": url,
-                "source_transport": source_transport,
+                "source_transport": "archive_is",
             },
             parser_input_envelope=SimpleNamespace(body=payload),
             frontier_name="chapter-toc-wave-1",
         )
+
+
+def test_wisconsin_current_frontier_rejects_archive_receipt_without_timestamp() -> None:
+    scraper = WisconsinScraper("WI", "Wisconsin")
+    payload = _html(
+        _toc("1.01")
+        + _block(
+            "1.01",
+            "Identity Wayback still requires a 14-digit capture timestamp.",
+            path="/document/statutes/1/01",
+        ),
+        title="Wisconsin Legislature: Chapter 1",
+    )
+    url = f"{scraper.get_base_url()}/document/statutes/1"
+    scraper._state_law_acquisition_ledger = object()
+    with pytest.raises(RuntimeError, match="exact capture timestamp"):
+        scraper._validate_wisconsin_aligned_evidence(
+            url=url,
+            payload=payload,
+            transport_receipt={
+                "content_sha256": hashlib.sha256(payload).hexdigest(),
+                "official_url": url,
+                "source_transport": "wayback",
+            },
+            parser_input_envelope=SimpleNamespace(body=payload),
+            frontier_name="chapter-toc-wave-1",
+        )
+
+
+@pytest.mark.parametrize(
+    ("href", "expected"),
+    [
+        ("/document/statutes/1", "1"),
+        ("https://docs.legis.wisconsin.gov/document/statutes/854", "854"),
+        ("/document/statutes/1/", "1"),
+        ("/document/statutes/1.pdf", ""),
+        ("/document/statutes/1.epub", ""),
+        ("/document/statutes/1.rtf", ""),
+        ("/document/statutes/1.docx", ""),
+        ("/document/statutes/1/print", ""),
+        ("/document/statutes/1/export", ""),
+        ("/document/statutes/1/download", ""),
+        ("/document/statutes/1?down=1", ""),
+        ("/statutes/statutes/1", ""),
+        ("https://docs.legis.wisconsin.gov/statutes/statutes/940", ""),
+        ("/constitution/wi", ""),
+        ("/code/admin_code", ""),
+        ("/document/statutes/1.01", ""),
+    ],
+)
+def test_wisconsin_current_html_chapter_number_keeps_html_document_locators(
+    href: str,
+    expected: str,
+) -> None:
+    assert current_html_chapter_number(href) == expected
+
+
+def test_wisconsin_toc_chapter_links_walks_span_anchors_and_drops_non_html() -> None:
+    rows = toc_chapter_links(
+        "<p><span><a href='/document/statutes/1'>Chapter 1</a></span></p>"
+        "<div><a href='/document/statutes/2'>Chapter 2</a></div>"
+        "<p><a href='/document/statutes/3.pdf'>Chapter 3 PDF</a></p>"
+        "<p><a href='/document/statutes/4/print'>Print 4</a></p>"
+        "<p><a href='/document/statutes/5?down=1'>Export 5</a></p>"
+        "<p><a href='/statutes/statutes/6'>Old path 6</a></p>"
+        "<p><a href='/document/statutes/1.01'>Section 1.01</a></p>"
+        "<p><a href='/constitution/wi'>Constitution</a></p>"
+        "<p><a href='/code/admin_code'>Admin code</a></p>"
+    )
+    assert [(number, url) for number, _name, url in rows] == [
+        ("1", "https://docs.legis.wisconsin.gov/document/statutes/1"),
+        ("2", "https://docs.legis.wisconsin.gov/document/statutes/2"),
+    ]
 
 
 @pytest.mark.anyio
@@ -612,7 +710,7 @@ async def test_wisconsin_strict_frontier_pluralizes_waves_and_replays_zero_netwo
     ]
     assert all(call[1]["retries"] == 1 for call in calls)
     assert all(call[1]["wayback_prefix_inventory"] is False for call in calls)
-    assert all(call[1]["archive_recovery_enabled"] is False for call in calls)
+    assert all(call[1]["archive_recovery_enabled"] is True for call in calls)
     assert all(
         call[1]["repeat_grouped_archive_inventory_on_residual"] is False
         for call in calls
@@ -670,7 +768,7 @@ async def test_wisconsin_strict_frontier_pluralizes_waves_and_replays_zero_netwo
     }
     assert completion["rights"]["basis"] == "public_law_no_state_copyright"
     assert completion["replay"]["network_requests"] == 0
-    assert completion["transport"]["archive_recovery_enabled"] is False
+    assert completion["transport"]["archive_recovery_enabled"] is True
     assert completion["transport"]["grouped_warc_recovery"] is False
     assert completion["transport"]["per_page_archive_loop"] is False
     assert completion["transport"]["wayback_prefix_inventory"] is False

@@ -36,9 +36,20 @@ import time
 import shutil
 import hashlib
 from urllib.parse import urlencode
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 logger = logging.getLogger(__name__)
+
+try:
+    from ipfs_datasets_py.processors.web_archiving.common_crawl_search_engine.ccindex.hf_datasets_adapter import (
+        configure_duckdb_huggingface_auth,
+        huggingface_authorization_headers,
+    )
+except ImportError:  # pragma: no cover - nested package import path
+    from common_crawl_search_engine.ccindex.hf_datasets_adapter import (  # type: ignore
+        configure_duckdb_huggingface_auth,
+        huggingface_authorization_headers,
+    )
 
 
 def _admin_rules_force_state_hf_index() -> bool:
@@ -152,6 +163,27 @@ class CommonCrawlIndexLoader:
         logger.info(f"  HF fallback: {self.use_hf_fallback}")
         logger.info(f"  datasets library: {self._have_datasets}")
 
+    @staticmethod
+    def _hf_urlopen(url: str, timeout: int):
+        """Open a Hugging Face HTTP locator, attaching a Hub token when available."""
+
+        headers = huggingface_authorization_headers()
+        request = Request(url, headers=headers)
+        return urlopen(request, timeout=timeout)
+
+    @staticmethod
+    def _connect_duckdb():
+        """Open DuckDB and attach Hugging Face auth for remote parquet when a token exists."""
+
+        import duckdb
+
+        connection = duckdb.connect()
+        try:
+            configure_duckdb_huggingface_auth(connection)
+        except Exception:
+            logger.debug("DuckDB HuggingFace auth was not applied")
+        return connection
+
     def _check_datasets_available(self) -> bool:
         """Check if HuggingFace datasets library is available."""
         try:
@@ -256,7 +288,7 @@ class CommonCrawlIndexLoader:
         for repo_name in candidates:
             try:
                 query = urlencode({"dataset": repo_name})
-                with urlopen(
+                with self._hf_urlopen(
                     f"https://datasets-server.huggingface.co/parquet?{query}", timeout=30
                 ) as response:
                     payload = json.loads(response.read().decode("utf-8"))
@@ -301,7 +333,7 @@ class CommonCrawlIndexLoader:
                 downloaded.append(target)
                 continue
             try:
-                with urlopen(url, timeout=120) as response, target.open("wb") as fh:
+                with self._hf_urlopen(url, timeout=120) as response, target.open("wb") as fh:
                     shutil.copyfileobj(response, fh)
                 downloaded.append(target)
             except Exception as exc:
@@ -315,6 +347,19 @@ class CommonCrawlIndexLoader:
     @staticmethod
     def _sql_literal(value: Any) -> str:
         return "'" + str(value or "").replace("'", "''") + "'"
+
+    @staticmethod
+    def _records_from_sql(connection: Any, sql: str) -> List[Dict[str, Any]]:
+        """Return DuckDB rows as native Python dicts, not pandas/NumPy scalars.
+
+        ``fetchdf()`` yields ``numpy.int64`` offsets that the archival pointer
+        checker rejects (``type(value) is int``).  ``fetchall()`` keeps BIGINT
+        as Python ``int`` so WARC range fetches can proceed.
+        """
+
+        result = connection.execute(sql)
+        columns = [str(column[0]) for column in (result.description or ())]
+        return [dict(zip(columns, values)) for values in result.fetchall()]
 
     def _state_query_sidecar_dir(self) -> Path:
         configured = str(
@@ -456,7 +501,7 @@ class CommonCrawlIndexLoader:
             ) TO {self._sql_literal(str(tmp_target))} (FORMAT PARQUET)
         """
         try:
-            duckdb.connect().execute(sql)
+            self._connect_duckdb().execute(sql)
             if tmp_target.exists() and tmp_target.stat().st_size > 0:
                 tmp_target.replace(target)
                 logger.info("Materialized state query sidecar at %s", target)
@@ -565,9 +610,7 @@ class CommonCrawlIndexLoader:
         backoff_seconds = 5.0
         for attempt in range(attempts):
             try:
-                return [
-                    dict(row) for row in duckdb.connect().execute(sql).fetchdf().to_dict("records")
-                ]
+                return self._records_from_sql(self._connect_duckdb(), sql)
             except Exception as exc:
                 self.last_query_error = str(exc)
                 is_rate_limited = "429" in str(exc) or "Too Many Requests" in str(exc)
@@ -586,8 +629,15 @@ class CommonCrawlIndexLoader:
         mime_terms: Optional[List[str]] = None,
         status_code: Optional[int] = 200,
         max_results: int = 100,
+        exact_urls: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
-        """Query state Common Crawl records without loading the full index."""
+        """Query state Common Crawl records without loading the full index.
+
+        ``exact_urls`` are not part of the sidecar signature. They only
+        reorder an already-filtered domain/url inventory so a small
+        ``LIMIT`` still returns the caller's exact locators instead of
+        newer prefix hits.
+        """
         try:
             import duckdb
         except Exception as exc:
@@ -613,6 +663,18 @@ class CommonCrawlIndexLoader:
             return []
 
         limit = max(1, int(max_results or 100))
+        exact_keys: List[str] = []
+        for value in list(exact_urls or []):
+            key = str(value or "").strip().lower().rstrip("/")
+            if key and key not in exact_keys:
+                exact_keys.append(key)
+        exact_order_sql = ""
+        if exact_keys:
+            in_list = ", ".join(self._sql_literal(key) for key in exact_keys)
+            exact_order_sql = (
+                "CASE WHEN rtrim(lower(CAST(url AS VARCHAR)), '/') "
+                f"IN ({in_list}) THEN 0 ELSE 1 END, "
+            )
 
         def _build_query(include_state_code: bool) -> str:
             filters: List[str] = []
@@ -660,6 +722,7 @@ class CommonCrawlIndexLoader:
                 FROM {relation}
                 WHERE {where_clause}
                 ORDER BY
+                    {exact_order_sql}
                     CASE WHEN status = 200 THEN 0 ELSE 1 END,
                     CASE WHEN lower(mime) LIKE '%html%' THEN 0 ELSE 1 END,
                     timestamp DESC
@@ -667,7 +730,7 @@ class CommonCrawlIndexLoader:
             """
 
         def _execute(sql: str) -> List[Dict[str, Any]]:
-            return [dict(row) for row in duckdb.connect().execute(sql).fetchdf().to_dict("records")]
+            return self._records_from_sql(self._connect_duckdb(), sql)
 
         attempts = 3
         backoff_seconds = 5.0

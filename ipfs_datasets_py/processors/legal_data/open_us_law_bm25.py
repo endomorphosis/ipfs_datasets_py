@@ -56,6 +56,10 @@ from ipfs_datasets_py.processors.legal_data.open_us_law_schema import (
     reject_positional_durable_identity,
     validate_entry_cid,
 )
+from ipfs_datasets_py.processors.legal_data.parallel_tokenize import (
+    iter_as_list,
+    project_documents_parallel,
+)
 from ipfs_datasets_py.processors.legal_data.uscode_tokenizer import (
     STOPWORD_POLICY_ID,
     TOKENIZER_ID,
@@ -1091,26 +1095,27 @@ def iter_projected_documents(
     if isinstance(rows, (str, bytes, bytearray)):
         raise Bm25ProjectionError("corpus rows must be an iterable of mappings")
     assert_no_document_ceiling(cfg)
-    admitted = 0
-    seen: set[str] = set()
-    for position, row in enumerate(rows):
+    admitted_rows: list[Mapping[str, Any]] = []
+    for position, row in enumerate(iter_as_list(rows)):
         if not isinstance(row, Mapping):
             raise Bm25ProjectionError(f"corpus row {position} must be a mapping")
         if not _is_admitted_row(row):
             continue
-        document = project_legal_document(
-            row, document_index=admitted, config=cfg
-        )
+        admitted_rows.append(row)
+    if not admitted_rows:
+        raise Bm25CoverageError("no admitted corpus rows produced BM25 documents")
+    assert_document_count_admissible(len(admitted_rows), cfg)
+    projected = project_documents_parallel(
+        admitted_rows, project_fn=project_legal_document, config=cfg
+    )
+    seen: set[str] = set()
+    for document in projected:
         if document.entry_cid in seen:
             raise Bm25CoverageError(
                 f"duplicate entry_cid among BM25 documents: {document.entry_cid}"
             )
         seen.add(document.entry_cid)
-        admitted += 1
-        assert_document_count_admissible(admitted, cfg)
         yield document
-    if admitted <= 0:
-        raise Bm25CoverageError("no admitted corpus rows produced BM25 documents")
 
 
 def project_admitted_documents(

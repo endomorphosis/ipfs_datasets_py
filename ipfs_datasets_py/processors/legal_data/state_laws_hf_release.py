@@ -98,6 +98,10 @@ from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
     PREVIOUS_PUBLIC_PIN,
     RELEASE_PROFILE,
     SOURCE_RIGHTS_RECEIPT_RELPATH,
+    VIEWER_DEFAULT_CONFIG_NAME,
+    VIEWER_DEFAULT_CORPUS_GLOB,
+    VIEWER_LEGACY_CONFIG_NAME,
+    VIEWER_LEGACY_ROOT_GLOB,
     ArtifactDescriptor,
     ArtifactFamily,
     SourceRightsBindingError,
@@ -110,9 +114,11 @@ from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
     physical_bounds_policy as identity_physical_bounds,
     require_immutable_revision,
     require_source_rights_binding,
+    state_laws_root_viewer_configs,
     validate_entry_cid,
     validate_jurisdiction,
     validate_jurisdiction_set,
+    validate_viewer_config_name,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_source_policy import (
     CURRENTNESS_DISCLAIMER,
@@ -146,10 +152,15 @@ QUALITY_REPORT_PATH: Final = "reports/quality.json"
 REPRODUCIBILITY_REPORT_PATH: Final = "reports/reproducibility.json"
 LINEAGE_REPORT_PATH: Final = "reports/lineage.json"
 
-DEFAULT_CONFIG_NAME: Final = DEFAULT_VIEWER_CONFIG
+DEFAULT_CONFIG_NAME: Final = VIEWER_DEFAULT_CONFIG_NAME
+if DEFAULT_CONFIG_NAME != DEFAULT_VIEWER_CONFIG:
+    raise RuntimeError("State Laws Viewer default identifier drifted")
 RECOVERY_CONFIG_NAME: Final = "recovery"
 QUARANTINE_CONFIG_NAME: Final = "quarantine"
-LEGACY_CONFIG_NAME: Final = "legacy-state-parquet/v1"
+LEGACY_CONFIG_NAME: Final = VIEWER_LEGACY_CONFIG_NAME
+
+DEFAULT_VIEWER_DATA_GLOB: Final = VIEWER_DEFAULT_CORPUS_GLOB
+LEGACY_VIEWER_DATA_GLOB: Final = VIEWER_LEGACY_ROOT_GLOB
 
 PRIMARY_KEY_V2: Final = PRIMARY_KEY
 DEFAULT_LICENSE: Final = "other"
@@ -583,6 +594,12 @@ class ViewerConfig:
         name = str(self.config_name or "").strip()
         if not name:
             raise StateLawsHFReleaseConfigError("config_name is required")
+        try:
+            name = validate_viewer_config_name(name)
+        except Exception as exc:
+            raise StateLawsHFReleaseConfigError(
+                f"config_name is not a valid Dataset Viewer identifier: {name!r}"
+            ) from exc
         if self.is_default and (self.is_recovery or self.is_quarantine or self.is_legacy):
             raise StateLawsHFReleaseConfigError(
                 "default config cannot also be recovery, quarantine, or legacy"
@@ -659,10 +676,10 @@ def advertised_viewer_configs(
     include_legacy: bool = True,
     include_recovery: bool = True,
     include_quarantine: bool = True,
-    default_data_glob: str = "data/**/*.parquet",
+    default_data_glob: str = DEFAULT_VIEWER_DATA_GLOB,
     recovery_data_glob: str = "recovery/**/*.json",
     quarantine_data_glob: str = "quarantine/**/*.json",
-    legacy_data_glob: str = "STATE-*.parquet",
+    legacy_data_glob: str = LEGACY_VIEWER_DATA_GLOB,
 ) -> tuple[ViewerConfig, ...]:
     """Return the sealed set of advertised Dataset Viewer configurations."""
 
@@ -744,6 +761,39 @@ def advertised_viewer_configs(
     return tuple(configs)
 
 
+def advertised_root_viewer_configs(
+    release_prefix: str,
+    *,
+    include_legacy: bool = True,
+    include_recovery: bool = False,
+    include_quarantine: bool = False,
+) -> tuple[ViewerConfig, ...]:
+    """Return root-card configs pinned to one immutable release prefix.
+
+    Hugging Face resolves ``configs`` from the repository-root ``README.md``.
+    New release data therefore needs fully qualified repository-relative paths,
+    while the compatibility config deliberately continues to select the
+    pre-existing root ``STATE-*.parquet`` objects.
+    """
+
+    try:
+        controls = state_laws_root_viewer_configs(release_prefix)
+    except Exception as exc:
+        raise StateLawsHFReleaseConfigError(str(exc)) from exc
+    prefix = str(release_prefix or "").strip().strip("/")
+    configs = advertised_viewer_configs(
+        include_legacy=include_legacy,
+        include_recovery=include_recovery,
+        include_quarantine=include_quarantine,
+        default_data_glob=controls[0]["data_files"][0]["path"],
+        recovery_data_glob=f"{prefix}/recovery/*.json",
+        quarantine_data_glob=f"{prefix}/quarantine/*.json",
+        legacy_data_glob=controls[1]["data_files"][0]["path"],
+    )
+    assert_configs_schema_coherent(configs)
+    return configs
+
+
 def assert_configs_schema_coherent(
     configs: Sequence[ViewerConfig | Mapping[str, Any]],
 ) -> dict[str, Any]:
@@ -814,6 +864,16 @@ def assert_configs_schema_coherent(
             raise StateLawsHFReleaseSafetyError(
                 "default config excludes recovery, quarantine, and legacy; "
                 f"found path {path!r}"
+            )
+        corpus_marker = "data/corpus/"
+        if (
+            corpus_marker not in path
+            or not path.endswith(".parquet")
+            or "/" in path.rsplit(corpus_marker, 1)[1]
+        ):
+            raise StateLawsHFReleaseSafetyError(
+                "default config must select only the combined corpus Parquet "
+                f"shards; found path {path!r}"
             )
 
     names = [c.config_name for c in resolved]
@@ -1297,6 +1357,59 @@ def _family_binding(
 # ---------------------------------------------------------------------------
 
 
+def _dataset_card_frontmatter_lines(
+    configs: Sequence[ViewerConfig],
+) -> list[str]:
+    lines = [
+        "---",
+        f"license: {DEFAULT_LICENSE}",
+        'pretty_name: "State Laws Sparse GraphRAG"',
+        "tags:",
+        "  - legal",
+        "  - state-statutes",
+        "  - graphrag",
+        "  - justicedao",
+        "  - exact-51",
+        "  - state-laws",
+        "configs:",
+    ]
+    for config in configs:
+        lines.extend(config.yaml_block())
+    return lines
+
+
+def render_root_viewer_dataset_card(
+    dataset_card_text: str,
+    *,
+    release_prefix: str,
+) -> str:
+    """Rewrite only card frontmatter for repository-root Viewer discovery.
+
+    The descriptive body remains byte-for-byte unchanged.  Every new-release
+    config is pinned to ``release_prefix``; the legacy config intentionally
+    remains rooted at ``STATE-*.parquet`` so publication is additive with
+    respect to those compatibility objects.
+    """
+
+    if not isinstance(dataset_card_text, str) or not dataset_card_text.startswith(
+        "---\n"
+    ):
+        raise StateLawsHFReleaseConfigError(
+            "dataset card must start with YAML frontmatter"
+        )
+    parts = dataset_card_text.split("---", 2)
+    if len(parts) != 3 or parts[0] != "" or not parts[2].startswith("\n"):
+        raise StateLawsHFReleaseConfigError(
+            "dataset card YAML frontmatter is malformed"
+        )
+    configs = advertised_root_viewer_configs(release_prefix)
+    assert_configs_schema_coherent(configs)
+    rendered = "\n".join((*_dataset_card_frontmatter_lines(configs), "---"))
+    rendered += parts[2]
+    _assert_no_secrets_or_absolute_paths(rendered, label="root-dataset-card")
+    return rendered
+
+
 def render_dataset_card(
     *,
     dataset_id: str = DEFAULT_DATASET_REPO_ID,
@@ -1339,21 +1452,7 @@ def render_dataset_card(
         )
     )
 
-    lines: list[str] = [
-        "---",
-        f"license: {DEFAULT_LICENSE}",
-        'pretty_name: "State Laws Sparse GraphRAG"',
-        "tags:",
-        "  - legal",
-        "  - state-statutes",
-        "  - graphrag",
-        "  - justicedao",
-        "  - exact-51",
-        "  - state-laws",
-        "configs:",
-    ]
-    for cfg in viewer_configs:
-        lines.extend(cfg.yaml_block())
+    lines = _dataset_card_frontmatter_lines(viewer_configs)
     lines.extend(
         [
             "---",
@@ -3118,8 +3217,10 @@ __all__ = [
     "DEFAULT_CONFIG_NAME",
     "DEFAULT_DATASET_REPO_ID",
     "DEFAULT_SOURCE_REVISION",
+    "DEFAULT_VIEWER_DATA_GLOB",
     "GOAL_ID",
     "LEGACY_CONFIG_NAME",
+    "LEGACY_VIEWER_DATA_GLOB",
     "LINEAGE_REPORT_PATH",
     "MANIFEST_FILENAME",
     "PRODUCER",
@@ -3142,6 +3243,7 @@ __all__ = [
     "StateLawsHFReleaseSafetyError",
     "StateLawsHuggingFaceRelease",
     "ViewerConfig",
+    "advertised_root_viewer_configs",
     "advertised_viewer_configs",
     "assemble_state_laws_hf_release",
     "assert_configs_schema_coherent",
@@ -3154,6 +3256,7 @@ __all__ = [
     "merge_family_rows",
     "releases_are_byte_identical",
     "render_dataset_card",
+    "render_root_viewer_dataset_card",
     "route_bounds_policy",
     "rows_from_bm25_index",
     "rows_from_graph_projection",

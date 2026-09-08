@@ -233,6 +233,18 @@ _LAZY_EXPORTS: Final[Mapping[str, tuple[str, str]]] = MappingProxyType(
             "ipfs_datasets_py.huggingface.publisher",
             "RuntimeReleasePointer",
         ),
+        "tokenize_indexable_batch": (".graphrag_parallel", "tokenize_indexable_batch"),
+        "tokenize_process_pool_size": (".graphrag_parallel", "tokenize_process_pool_size"),
+        "project_documents_parallel": (".graphrag_parallel", "project_documents_parallel"),
+        "extract_document_graph": (".graphrag_parallel", "extract_document_graph"),
+        "map_graph_partitions": (".graphrag_parallel", "map_graph_partitions"),
+        "map_neighbor_clusters": (".graphrag_parallel", "map_neighbor_clusters"),
+        "map_adjacency_directions": (".graphrag_parallel", "map_adjacency_directions"),
+        "IsolatedRowMutator": (".graphrag_parallel", "IsolatedRowMutator"),
+        "map_documents_under_pressure": (
+            ".graphrag_parallel",
+            "map_documents_under_pressure",
+        ),
     }
 )
 
@@ -1250,11 +1262,12 @@ def _build_query_client(
     fusion: Mapping[str, Any] | None,
     manifest_path: str | None,
     pointer_path: str | None,
+    release_prefix: str | None,
 ) -> tuple[Any, StateLawsReleasePointer | None, Mapping[str, Any]]:
     release_pointer: StateLawsReleasePointer | None = None
     pointer_trace: Mapping[str, Any] = MappingProxyType({})
     effective_pin = pin
-    path_prefix = ""
+    path_prefix = release_prefix or ""
     effective_manifest_path = manifest_path or DEFAULT_MANIFEST_NAME
     if pointer_path is not None:
         pointer_resolver = _build_hub_resolver(
@@ -1323,6 +1336,7 @@ class StateLawsSparseGraphragClient:
     cache_dir: Path | str | None = None
     manifest_path: str | None = None
     pointer_path: str | None = None
+    release_prefix: str | None = None
     budgets: ResourceBudgets = field(default_factory=ResourceBudgets)
     query_embedder: Callable[..., Any] | None = field(
         default=None, repr=False
@@ -1350,9 +1364,22 @@ class StateLawsSparseGraphragClient:
             )
         manifest_path = self.manifest_path
         pointer_path = self.pointer_path
+        release_prefix = self.release_prefix
         if manifest_path is not None and pointer_path is not None:
             raise ReleasePointerError(
                 "manifest_path and pointer_path are mutually exclusive"
+            )
+        if release_prefix is not None and pointer_path is not None:
+            raise ReleasePointerError(
+                "release_prefix and pointer_path are mutually exclusive"
+            )
+        if release_prefix is not None and manifest_path is None:
+            raise ReleasePointerError(
+                "release_prefix requires explicit direct manifest_path"
+            )
+        if release_prefix is not None and self.local_root is not None:
+            raise ReleasePointerError(
+                "release_prefix is only valid for remote direct-manifest mode"
             )
         if manifest_path is None and pointer_path is None:
             if self.local_root is None:
@@ -1363,8 +1390,13 @@ class StateLawsSparseGraphragClient:
             manifest_path = _safe_relative_posix_path(manifest_path, "manifest_path")
         if pointer_path is not None:
             pointer_path = _safe_relative_posix_path(pointer_path, "pointer_path")
+        if release_prefix is not None:
+            release_prefix = _safe_relative_posix_path(
+                release_prefix, "release_prefix"
+            )
         object.__setattr__(self, "manifest_path", manifest_path)
         object.__setattr__(self, "pointer_path", pointer_path)
+        object.__setattr__(self, "release_prefix", release_prefix)
 
     @property
     def inner(self) -> Any:
@@ -1378,6 +1410,7 @@ class StateLawsSparseGraphragClient:
                 fusion=self.fusion,
                 manifest_path=self.manifest_path,
                 pointer_path=self.pointer_path,
+                release_prefix=self.release_prefix,
             )
             self._inner = inner
             self._release_pointer = pointer
@@ -1728,6 +1761,7 @@ def open_query_client(
     cache_dir: PathLike | None = None,
     manifest_path: PathLike | None = None,
     pointer_path: PathLike | None = None,
+    release_prefix: PathLike | None = None,
     budgets: ResourceBudgets | Mapping[str, Any] | None = None,
     limits: ResourceBudgets | Mapping[str, Any] | None = None,
     query_embedder: Callable[..., Any] | None = None,
@@ -1742,7 +1776,9 @@ def open_query_client(
     ``local_root`` clients retain the explicit root ``manifest.json`` layout;
     pass ``pointer_path`` to exercise a materialized publication repository.
     Supplying ``manifest_path`` always selects direct-manifest mode, and it is
-    mutually exclusive with ``pointer_path``.
+    mutually exclusive with ``pointer_path``.  Remote callers may additionally
+    supply a validated repository-relative ``release_prefix`` so a candidate
+    append-only release can be queried before the runtime pointer is promoted.
     """
 
     resolved = coerce_query_pin(
@@ -1781,6 +1817,9 @@ def open_query_client(
         cache_dir=resolved_cache,
         manifest_path=(os.fspath(manifest_path) if manifest_path is not None else None),
         pointer_path=os.fspath(pointer_path) if pointer_path is not None else None,
+        release_prefix=(
+            os.fspath(release_prefix) if release_prefix is not None else None
+        ),
         budgets=resolved_budgets,
         query_embedder=query_embedder,
         fusion=fusion,

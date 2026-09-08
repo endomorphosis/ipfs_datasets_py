@@ -439,3 +439,49 @@ async def test_state_inventory_domain_query_has_a_hard_async_deadline(
     assert scraper._last_state_common_crawl_inventory_stats[
         "shared_domain_query_failures"
     ] == 1
+
+
+@pytest.mark.asyncio
+async def test_local_state_index_empty_is_authoritative_and_skips_engine(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+) -> None:
+    class _Loader:
+        def __init__(self, **kwargs: Any) -> None:
+            self.use_hf_fallback = bool(kwargs["use_hf_fallback"])
+            self.last_query_error = None
+
+        def _check_local_index(self, index_type: str) -> object:
+            assert index_type == "state"
+            return tmp_path / "state"
+
+        def query_state_index(self, **_kwargs: Any) -> list[dict[str, Any]]:
+            return []
+
+    class _Engine:
+        def __init__(self, **_kwargs: Any) -> None:
+            raise AssertionError("remote Common Crawl engine must not run")
+
+        def is_available(self) -> bool:
+            raise AssertionError("remote Common Crawl engine must not run")
+
+        def search_domain(self, *args: Any, **kwargs: Any) -> list[dict[str, Any]]:
+            raise AssertionError("remote Common Crawl engine must not run")
+
+    monkeypatch.setattr(common_crawl_index_loader, "CommonCrawlIndexLoader", _Loader)
+    monkeypatch.setattr(common_crawl_integration, "CommonCrawlSearchEngine", _Engine)
+    monkeypatch.setenv(
+        "LEGAL_SCRAPER_IPFS_PAGE_CACHE_DIR",
+        str(tmp_path / "page-cache"),
+    )
+
+    scraper = ConnecticutScraper("CT", "Connecticut")
+    records = await scraper._search_state_common_crawl_records(
+        domain_terms=["gc.nh.gov"],
+        url_terms=["/rsa/html/"],
+        mime_terms=["html"],
+        max_results=25,
+    )
+
+    assert records == []
+    assert scraper._last_state_common_crawl_inventory_stats["source"] == "local_empty"

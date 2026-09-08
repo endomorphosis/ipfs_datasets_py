@@ -19,11 +19,13 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
+from ipfs_datasets_py.processors.legal_data.graphrag_parallel import (  # noqa: E402
+    tokenize_indexable_batch,
+)
 from ipfs_datasets_py.processors.legal_data.uscode_tokenizer import (  # noqa: E402
     TOKENIZER_ID,
     TOKENIZER_VERSION,
     default_tokenizer_config,
-    tokenize_legal_text,
     tokenizer_identity,
 )
 
@@ -73,34 +75,41 @@ def build_live_bm25(
     index_dir.mkdir(parents=True, exist_ok=True)
     documents_path = index_dir / "documents.jsonl"
     triples_path = index_dir / "posting_triples.jsonl"
+    texts: list[str] = []
+    identities: list[tuple[str, str]] = []
+    for row in rows:
+        rel = str(row.get("path") or "")
+        body_path = corpus_dir / rel
+        payload = json.loads(body_path.read_text(encoding="utf-8"))
+        texts.append(str(payload.get("text") or ""))
+        identities.append(
+            (
+                str(payload.get("legal_id") or row.get("legal_id")),
+                str(payload.get("content_hash") or row.get("content_hash") or ""),
+            )
+        )
+    term_lists = tokenize_indexable_batch(texts, drop_stopwords=True)
     df: Counter[str] = Counter()
     token_total = 0
     with documents_path.open("w", encoding="utf-8") as docs_out, triples_path.open(
         "w", encoding="utf-8"
     ) as triples_out:
-        for row in rows:
-            rel = str(row.get("path") or "")
-            body_path = corpus_dir / rel
-            payload = json.loads(body_path.read_text(encoding="utf-8"))
-            text = str(payload.get("text") or "")
-            result = tokenize_legal_text(text, drop_stopwords=True)
-            terms = list(result.indexable_terms)
+        for (legal_id, content_hash), terms in zip(identities, term_lists):
             tf = Counter(terms)
-            token_total += sum(tf.values())
+            token_total += int(sum(tf.values()))
             df.update(tf.keys())
             docs_out.write(
                 json.dumps(
                     {
-                        "legal_id": payload.get("legal_id") or row.get("legal_id"),
-                        "content_hash": payload.get("content_hash") or row.get("content_hash"),
-                        "token_count": sum(tf.values()),
+                        "legal_id": legal_id,
+                        "content_hash": content_hash,
+                        "token_count": int(sum(tf.values())),
                         "unique_terms": len(tf),
                     },
                     sort_keys=True,
                 )
                 + "\n"
             )
-            legal_id = str(payload.get("legal_id") or row.get("legal_id"))
             for term, count in tf.items():
                 triples_out.write(
                     json.dumps(

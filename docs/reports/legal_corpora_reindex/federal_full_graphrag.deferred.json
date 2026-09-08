@@ -1,0 +1,136 @@
+{
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "current_bundle": false,
+  "dest": "/home/barberb/.ipfs_datasets/federal_register/full-graphrag-v2026.08.10/hf-release",
+  "lcr084_deferred": true,
+  "lcr084_taskboard_status": "todo",
+  "manifest": {
+    "adjacency": {
+      "authorizing_for_publication": false,
+      "compiler_decision": {
+        "compiler_exists": true,
+        "compiler_interfaces": [
+          "CanonicalStructuredTextCompiler@1",
+          "TypedDeonticCanonicalConstructor@1",
+          "formalization-compiler-config/v1"
+        ],
+        "dense_matrix_required_for_compiler": false,
+        "reason": "The measured legal-text compiler lowers a single document to deontic/canonical IR with a caller-supplied vocabulary and source map. It is fail-closed, use_ml=False, and does not take pairwise similarity as input. Compilation walks typed sparse edges (CITES, HAS_DOCKET, HAS_RIN, PUBLISHED_ON, HAS_PROVENANCE) via two-way adjacency. Embedding/BM25 neighbors are retrieval proposals only and cannot establish legal authority. A dense NxN matrix is neither an IR nor a walk index; materializing 1e6^2 cosine cells would be ~4TiB and would not make the compiler more correct.",
+        "similarity_cannot_establish_legal_authority": true,
+        "walk_index": "two_way_sparse_adjacency"
+      },
+      "incoming": {
+        "direction": "incoming",
+        "max_degree": 84935,
+        "nodes_with_edges": 2415859,
+        "pages": 2416191,
+        "pointer_total": 14994449,
+        "shards": 590
+      },
+      "keys_are_node_ids_not_cidv1": true,
+      "outgoing": {
+        "direction": "outgoing",
+        "max_degree": 295,
+        "nodes_with_edges": 1005963,
+        "pages": 1005963,
+        "pointer_total": 14994449,
+        "shards": 246
+      },
+      "schema": "ipfs_datasets_py/fr-full-adjacency@1",
+      "schema_version": "skillcenter-hf-graph-adjacency/v1",
+      "similarity_cannot_establish_legal_authority": true,
+      "status": "closed",
+      "written_at": "2026-09-07T22:30:40Z"
+    },
+    "authorizing_for_publication": false,
+    "authorizing_hub_upload": false,
+    "bm25": {
+      "authorizing_for_publication": false,
+      "avg_doc_tokens": 1504.9006673207662,
+      "documents": 1005963,
+      "parallel": {
+        "cpu_count": 20,
+        "mem_available_bytes": 127049658368,
+        "partition_batch_rows": 512,
+        "partitions": 392,
+        "per_task_budget_bytes": 805306368,
+        "posting_flush_rows": 20000,
+        "ram_fraction": 0.45,
+        "sort_workers": 8,
+        "start_method": "spawn",
+        "workers": 19
+      },
+      "posting_shards": 108664,
+      "schema": "ipfs_datasets_py/fr-full-bm25@1",
+      "status": "closed",
+      "token_total": 1513874390,
+      "tokenizer_id": "uscode-bm25-tokenizer/v1",
+      "vocabulary_size": 9239892,
+      "written_at": "2026-09-07T21:22:13Z"
+    },
+    "compiler_decision": {
+      "compiler_exists": true,
+      "compiler_interfaces": [
+        "CanonicalStructuredTextCompiler@1",
+        "TypedDeonticCanonicalConstructor@1",
+        "formalization-compiler-config/v1"
+      ],
+      "dense_matrix_required_for_compiler": false,
+      "reason": "The measured legal-text compiler lowers a single document to deontic/canonical IR with a caller-supplied vocabulary and source map. It is fail-closed, use_ml=False, and does not take pairwise similarity as input. Compilation walks typed sparse edges (CITES, HAS_DOCKET, HAS_RIN, PUBLISHED_ON, HAS_PROVENANCE) via two-way adjacency. Embedding/BM25 neighbors are retrieval proposals only and cannot establish legal authority. A dense NxN matrix is neither an IR nor a walk index; materializing 1e6^2 cosine cells would be ~4TiB and would not make the compiler more correct.",
+      "similarity_cannot_establish_legal_authority": true,
+      "walk_index": "two_way_sparse_adjacency"
+    },
+    "corpus_documents": 1005963,
+    "corpus_shards": 246,
+    "current_bundle": false,
+    "graph": {
+      "authorizing_for_publication": false,
+      "documents": 1005963,
+      "edge_count": 14994449,
+      "edge_types": {
+        "CITES": 3745425,
+        "EMBEDDING_NEIGHBOR_OF": 8047704,
+        "HAS_DOCKET": 1039849,
+        "HAS_PROVENANCE": 1005963,
+        "HAS_RIN": 149545,
+        "PUBLISHED_ON": 1005963
+      },
+      "embedding_neighbor_edges": 8047704,
+      "node_count": 2451616,
+      "schema": "ipfs_datasets_py/fr-full-graph@1",
+      "similarity_cannot_establish_legal_authority": true,
+      "status": "closed",
+      "written_at": "2026-09-07T22:28:52Z"
+    },
+    "kmeans": {
+      "assignment": "spherical_kmeans",
+      "authorizing_for_publication": false,
+      "cluster_count": 496,
+      "layout_seed": 1431520073,
+      "max_cluster": 5914,
+      "schema": "ipfs_datasets_py/fr-full-kmeans@1",
+      "status": "closed",
+      "written_at": "2026-09-07T22:27:06Z"
+    },
+    "lcr084_deferred": true,
+    "schema": "ipfs_datasets_py/fr-full-hf-release@1",
+    "status": "closed",
+    "vectors": {
+      "authorizing_for_publication": false,
+      "dimension": 384,
+      "model_id": "thenlper/gte-small",
+      "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+      "schema": "ipfs_datasets_py/fr-full-vectors@1",
+      "status": "closed",
+      "vector_count": 1005963,
+      "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2",
+      "written_at": "2026-09-07T22:27:04Z"
+    },
+    "written_at": "2026-09-07T22:31:59Z"
+  },
+  "producer": "build_fr_full_graphrag.py",
+  "schema": "ipfs_datasets_py/fr-full-graphrag-deferred@1",
+  "status": "closed",
+  "written_at": "2026-09-07T22:31:59Z"
+}

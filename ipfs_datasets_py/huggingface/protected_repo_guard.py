@@ -26,6 +26,14 @@ PROTECTED_REPOS: Final = frozenset(
         "justicedao/ipfs_federal_register",
     }
 )
+STATE_MAIN_ROOT_README_CAS_OPERATION: Final = (
+    "state_main_root_readme_compare_and_swap"
+)
+STATE_MAIN_ROOT_README_CAS_TASK_ID: Final = "LCR-042"
+STATE_MAIN_ROOT_README_CAS_REPOSITORY_ID: Final = (
+    "justicedao/ipfs_state_laws"
+)
+STATE_MAIN_ROOT_README_CAS_PATH: Final = "README.md"
 PROTECTED_WRITE_METHODS: Final = frozenset(
     {
         # Repository lifecycle, visibility, and gated-access controls.
@@ -105,6 +113,15 @@ def _normalized_sha256(value: Any, *, label: str) -> str:
     return digest
 
 
+def _normalized_git_sha(value: Any, *, label: str) -> str:
+    digest = str(value or "").strip().casefold()
+    if _GIT_SHA_RE.fullmatch(digest) is None:
+        raise ProtectedRepoGuardError(
+            f"canonical mutation {label} must be an exact 40-hex Git SHA"
+        )
+    return digest
+
+
 @dataclass(frozen=True, slots=True)
 class CanonicalMutationFileBinding:
     """One immutable local-file/remote-object pair in commit order."""
@@ -169,6 +186,7 @@ class CanonicalMutationBinding:
     release_manifest_digest: str
     policy_proof_digest: str
     commit_message_digest: str
+    root_readme_cas: StateMainRootReadmeCASPlanBinding | None = None
 
     def __post_init__(self) -> None:
         method = _normalized_text(self.method, label="method")
@@ -229,9 +247,55 @@ class CanonicalMutationBinding:
                 attribute,
                 _normalized_sha256(getattr(self, attribute), label=attribute),
             )
+        root_readme_cas = self.root_readme_cas
+        if root_readme_cas is not None:
+            if type(root_readme_cas) is not StateMainRootReadmeCASPlanBinding:
+                raise ProtectedRepoGuardError(
+                    "canonical mutation root_readme_cas must be its exact immutable binding"
+                )
+            root_files = tuple(
+                item
+                for item in files
+                if item.remote_path == STATE_MAIN_ROOT_README_CAS_PATH
+            )
+            immutable_files = tuple(
+                item
+                for item in files
+                if item.remote_path != STATE_MAIN_ROOT_README_CAS_PATH
+            )
+            release_prefix = root_readme_cas.release_prefix + "/"
+            if (
+                method != "create_commit"
+                or repository_id != STATE_MAIN_ROOT_README_CAS_REPOSITORY_ID
+                or repository_type != "dataset"
+                or revision != "main"
+                or parent_commit != root_readme_cas.audited_parent_commit
+                or self.plan_digest
+                != root_readme_cas.publication_plan_digest
+                or self.release_manifest_digest
+                != root_readme_cas.release_manifest_digest
+                or self.policy_proof_digest
+                != root_readme_cas.policy_proof_digest
+                or len(root_files) != 1
+                or not immutable_files
+                or any(
+                    not item.remote_path.startswith(release_prefix)
+                    for item in immutable_files
+                )
+                or root_files[0].sha256
+                != root_readme_cas.replacement_sha256
+                or root_files[0].local_sha256
+                != root_readme_cas.replacement_sha256
+                or root_files[0].size_bytes
+                != root_readme_cas.replacement_size_bytes
+            ):
+                raise ProtectedRepoGuardError(
+                    "root README CAS must be the sole non-additive object in one "
+                    "exact State-main immutable-release create_commit"
+                )
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "commit_message_digest": self.commit_message_digest,
             "files": [item.to_dict() for item in self.files],
             "method": self.method,
@@ -243,6 +307,9 @@ class CanonicalMutationBinding:
             "repository_type": self.repository_type,
             "revision": self.revision,
         }
+        if self.root_readme_cas is not None:
+            payload["root_readme_cas"] = self.root_readme_cas.to_dict()
+        return payload
 
     @property
     def payload_digest(self) -> str:
@@ -253,6 +320,152 @@ class CanonicalMutationBinding:
             separators=(",", ":"),
         ).encode("utf-8")
         return hashlib.sha256(payload).hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
+class StateMainRootReadmeCASPlanBinding:
+    """Reviewed intent for the sole mutable State Laws control object.
+
+    Release artifacts retain their append-only contract while this nested
+    binding truthfully records the sole compare-and-swap replacement (or an add
+    conditioned on audited absence) allowed in the same one-shot commit:
+    repository-root ``README.md``.
+    """
+
+    audited_parent_commit: str
+    expected_previous_sha256: str | None
+    replacement_sha256: str
+    replacement_size_bytes: int
+    release_manifest_digest: str
+    release_prefix: str
+    publication_plan_digest: str
+    policy_proof_digest: str
+    control_plan_digest: str
+    review_id: str
+    reviewer: str
+    repository_id: str = STATE_MAIN_ROOT_README_CAS_REPOSITORY_ID
+    repository_type: str = "dataset"
+    revision: str = "main"
+    remote_path: str = STATE_MAIN_ROOT_README_CAS_PATH
+    phase: str = "state_main"
+    operation: str = STATE_MAIN_ROOT_README_CAS_OPERATION
+    task_id: str = STATE_MAIN_ROOT_README_CAS_TASK_ID
+
+    def __post_init__(self) -> None:
+        if (
+            self.repository_id != STATE_MAIN_ROOT_README_CAS_REPOSITORY_ID
+            or self.repository_type != "dataset"
+            or self.revision != "main"
+            or self.remote_path != STATE_MAIN_ROOT_README_CAS_PATH
+            or self.phase != "state_main"
+            or self.operation != STATE_MAIN_ROOT_README_CAS_OPERATION
+            or self.task_id != STATE_MAIN_ROOT_README_CAS_TASK_ID
+        ):
+            raise ProtectedRepoGuardError(
+                "root control CAS is limited to LCR-042, State main, and exact "
+                "repository-root README.md"
+            )
+        if (
+            not isinstance(self.replacement_size_bytes, int)
+            or isinstance(self.replacement_size_bytes, bool)
+            or self.replacement_size_bytes <= 0
+        ):
+            raise ProtectedRepoGuardError(
+                "root control CAS replacement_size_bytes must be a positive integer"
+            )
+        object.__setattr__(
+            self,
+            "audited_parent_commit",
+            _normalized_git_sha(
+                self.audited_parent_commit,
+                label="audited_parent_commit",
+            ),
+        )
+        expected_previous = self.expected_previous_sha256
+        if expected_previous is not None:
+            if type(expected_previous) is not str:
+                raise ProtectedRepoGuardError(
+                    "root control CAS expected_previous_sha256 must be a digest "
+                    "or exact null for audited absence"
+                )
+            expected_previous = _normalized_sha256(
+                expected_previous,
+                label="expected_previous_sha256",
+            )
+            object.__setattr__(
+                self,
+                "expected_previous_sha256",
+                expected_previous,
+            )
+        for attribute in (
+            "replacement_sha256",
+            "release_manifest_digest",
+            "publication_plan_digest",
+            "policy_proof_digest",
+            "control_plan_digest",
+        ):
+            object.__setattr__(
+                self,
+                attribute,
+                _normalized_sha256(getattr(self, attribute), label=attribute),
+            )
+        if expected_previous == self.replacement_sha256:
+            raise ProtectedRepoGuardError(
+                "root control CAS refuses an identical no-op replacement"
+            )
+        expected_prefix = (
+            "data/state_laws/sha256-" + self.release_manifest_digest
+        )
+        if self.release_prefix != expected_prefix:
+            raise ProtectedRepoGuardError(
+                "root control CAS release_prefix must be the exact immutable "
+                "State Laws release-manifest prefix"
+            )
+        for attribute in ("review_id", "reviewer"):
+            value = _normalized_text(getattr(self, attribute), label=attribute)
+            if len(value) > 512:
+                raise ProtectedRepoGuardError(
+                    f"canonical mutation {attribute} is too long"
+                )
+            object.__setattr__(self, attribute, value)
+
+    @property
+    def expected_previous_absent(self) -> bool:
+        return self.expected_previous_sha256 is None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "audited_parent_commit": self.audited_parent_commit,
+            "control_plan_digest": self.control_plan_digest,
+            "expected_previous_absent": self.expected_previous_absent,
+            "expected_previous_sha256": self.expected_previous_sha256,
+            "operation": self.operation,
+            "phase": self.phase,
+            "policy_proof_digest": self.policy_proof_digest,
+            "publication_plan_digest": self.publication_plan_digest,
+            "release_manifest_digest": self.release_manifest_digest,
+            "release_prefix": self.release_prefix,
+            "remote_path": self.remote_path,
+            "replacement_sha256": self.replacement_sha256,
+            "replacement_size_bytes": self.replacement_size_bytes,
+            "repository_id": self.repository_id,
+            "repository_type": self.repository_type,
+            "review_id": self.review_id,
+            "reviewer": self.reviewer,
+            "revision": self.revision,
+            "task_id": self.task_id,
+        }
+
+    @property
+    def payload_digest(self) -> str:
+        return hashlib.sha256(
+            json.dumps(
+                self.to_dict(),
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
 
 
 def is_protected_repo(repo_id: Any) -> bool:
@@ -275,6 +488,7 @@ def _build_authority_manager():
         Path(__file__).resolve().parents[1]
         / "processors/legal_data/legal_corpora_publication_runtime.py"
     ).resolve()
+
     expected_publisher_path = Path(__file__).resolve().with_name("publisher.py")
 
     class OneShotConsumption:
@@ -465,6 +679,14 @@ def _build_authority_manager():
                     "rehash_files",
                     "rehash_files_local",
                     namespace.get("_rehash_prepared_snapshot_files"),
+                ),
+                (
+                    "_canonical_revalidate_compound_parent_prefix_and_readme",
+                    "revalidate_remote",
+                    "revalidate_remote_local",
+                    namespace.get(
+                        "_canonical_revalidate_compound_parent_prefix_and_readme"
+                    ),
                 ),
                 (
                     "guarded_write",

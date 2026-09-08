@@ -1,0 +1,20 @@
+{
+  "schema": "ipfs_datasets_py/state-laws-hf-staging-upload-deferred@1",
+  "task_id": "LCR-040",
+  "goal_id": "LCR-G070",
+  "program_id": "legal-corpora-reindex-v1",
+  "producer": "stage_deferred_lcr_hf.py",
+  "status": "staged_deferred",
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "current_bundle": false,
+  "lcr084_deferred": true,
+  "lcr084_taskboard_status": "todo",
+  "dataset_repo_id": "justicedao/ipfs_state_laws",
+  "staging_branch": "stage/state-laws-sparse-graphrag-v2",
+  "base_pin": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2",
+  "staging_sha": "491fcd8f8855ad8e845632f14a248e6a86daf6de",
+  "staging_file_count": 4834,
+  "source": "/home/barberb/.ipfs_datasets/state_laws/snapshot-graphrag-v2026.08.31-all51-cuda/hf-release",
+  "notes": "Operator-deferred LCR-084 staging. Snapshot GraphRAG tree uploaded additively to a non-production branch. Does not close LCR-084, does not mutate main, and is not a current-bundle."
+}

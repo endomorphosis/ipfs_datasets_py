@@ -4,12 +4,31 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import pickle
+
 from ipfs_datasets_py.processors.legal_data.legal_graph_projection_runtime import (
+    IsolatedRowMutator,
     group_rows_by_jurisdiction,
+    merge_graph_projections,
     merge_local_graph_delta,
+    mutating_row_worker,
     neighbors_for_legal_ids,
     same_jurisdiction_candidates,
 )
+
+
+def _mutator(nodes: dict[str, str], edges: list[tuple[str, str]], row: str) -> None:
+    nodes[row] = "document"
+    edges.append((row, f"date:{row}", "PUBLISHED_ON"))
+
+
+def test_isolated_row_mutator_is_picklable_and_local() -> None:
+    worker = mutating_row_worker(_mutator)
+    clone = pickle.loads(pickle.dumps(worker))
+    nodes, edges = clone("doc-1")
+    assert nodes == {"doc-1": "document"}
+    assert edges == [("doc-1", "date:doc-1", "PUBLISHED_ON")]
+    assert isinstance(worker, IsolatedRowMutator)
 
 
 def test_group_rows_by_jurisdiction_sorts_and_partitions() -> None:
@@ -98,3 +117,29 @@ def test_merge_local_graph_delta_remaps_edges_onto_first_writer_cid() -> None:
     assert nodes[kept.node_key] is kept
     assert list(edges) == ["edge:cid-src->cid-first"]
     assert edges["edge:cid-src->cid-first"].target_node_cid == "cid-first"
+
+
+def test_merge_graph_projections_remaps_cross_partition_first_writer_cids() -> None:
+    kept = _Node("public_law:pl:us:112:29", "cid-first")
+    discarded = _Node("public_law:pl:us:112:29", "cid-second")
+    or_src = _Node("section:or", "cid-or")
+    wa_src = _Node("section:wa", "cid-wa")
+    first = SimpleNamespace(
+        nodes=(or_src, kept),
+        edges=(_Edge(source_node_cid="cid-or", target_node_cid="cid-first"),),
+    )
+    second = SimpleNamespace(
+        nodes=(wa_src, discarded),
+        edges=(_Edge(source_node_cid="cid-wa", target_node_cid="cid-second"),),
+    )
+
+    def factory(*, nodes, edges, skipped_row_count=0):
+        return SimpleNamespace(
+            nodes=nodes, edges=edges, skipped_row_count=skipped_row_count
+        )
+
+    merged = merge_graph_projections((first, second), factory=factory)
+    by_key = {node.node_key: node.node_cid for node in merged.nodes}
+    assert by_key["public_law:pl:us:112:29"] == "cid-first"
+    assert {edge.target_node_cid for edge in merged.edges} == {"cid-first"}
+    assert {edge.source_node_cid for edge in merged.edges} == {"cid-or", "cid-wa"}

@@ -51,11 +51,15 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime im
     RECEIPT_SCHEMA_V1,
     canonical_no_self_field_digest,
 )
+from ipfs_datasets_py.processors.legal_data.state_laws_completeness import (
+    CANONICAL_JURISDICTION_ORDER,
+)
+from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import (
+    PUBLICATION_PARENT_REVISION,
+)
 from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
-    CANONICAL_JURISDICTIONS,
     DEFAULT_DATASET_REPO_ID,
     EXPECTED_JURISDICTION_COUNT,
-    PREVIOUS_PUBLIC_PIN,
     RELEASE_PROFILE,
     canonical_json_dumps,
     digest_mapping,
@@ -69,10 +73,22 @@ from scripts.ops.legal_data.benchmark_state_laws_public_release import (
     check_canonical_public_benchmark_receipt,
 )
 from scripts.ops.legal_data.check_state_laws_public_release import (
+    PublicParityError,
+    PublicRemoteError,
     check_canonical_public_canary_receipt,
+    redownload_canonical_public_release,
+)
+from scripts.ops.legal_data.publish_state_laws_hf_release import (
+    PublishStateLawsError,
+    check_canonical_publication_receipt,
 )
 from scripts.ops.legal_data.rehearse_state_laws_release_rollback import (
     check_canonical_rollback_rehearsal,
+)
+from scripts.ops.legal_data.state_laws_release_probe import (
+    StateLawsReleaseProbeError,
+    assert_first_party_measurement,
+    run_post_publication_audit_probe,
 )
 
 # ---------------------------------------------------------------------------
@@ -83,10 +99,11 @@ TASK_ID: Final = "LCR-046"
 GOAL_ID: Final = "LCR-G090"
 PROGRAM_ID: Final = "legal-corpora-reindex-v1"
 DEFAULT_DATASET_REPO: Final = DEFAULT_DATASET_REPO_ID
-PRODUCTION_REVISION: Final = PREVIOUS_PUBLIC_PIN
+PREVIOUS_PUBLIC_PIN: Final = PUBLICATION_PARENT_REVISION
+PRODUCTION_REVISION: Final = PUBLICATION_PARENT_REVISION
 PUBLIC_BRANCH: Final = "main"
 DEFAULT_OBSERVATION_CUTOFF: Final = "2026-08-10T00:00:00Z"
-SORTED_JURISDICTIONS: Final = tuple(sorted(CANONICAL_JURISDICTIONS))
+SORTED_JURISDICTIONS: Final = CANONICAL_JURISDICTION_ORDER
 if DEFAULT_DATASET_REPO != "justicedao/ipfs_state_laws":
     raise RuntimeError("sealed state-law target drifted from the publication gate")
 if DEFAULT_DATASET_REPO != DEFAULT_DATASET_REPO_ID:
@@ -459,7 +476,7 @@ def load_publication_receipt(
     old = require_immutable_revision(receipt.get("old_sha"), name="old_sha")
     if old != PRODUCTION_REVISION:
         raise PostPublicationPinError(
-            f"receipt old SHA must remain the sealed previous public pin {PRODUCTION_REVISION}"
+            f"receipt old SHA must remain the publication parent {PRODUCTION_REVISION}"
         )
     if pin == old:
         raise PostPublicationPinError("public SHA must differ from the previous public pin")
@@ -1562,8 +1579,10 @@ def build_post_publication_audit_report(
         publication.get("previous_public_pin") or publication.get("old_sha"),
         name="previous_public_pin",
     )
-    if previous != PREVIOUS_PUBLIC_PIN or previous != PRODUCTION_REVISION:
-        raise PostPublicationPinError("previous public pin drifted from the sealed rollback target")
+    if previous != PRODUCTION_REVISION:
+        raise PostPublicationPinError(
+            "previous public pin drifted from the publication parent"
+        )
     if public_sha == previous:
         raise PostPublicationPinError("public SHA must differ from the previous public pin")
     repo = str(
@@ -2045,8 +2064,29 @@ def build_canonical_post_publication_audit(
     release_digest = _canonical_sha256(
         canary.get("release_manifest_digest"), name="release_manifest_digest"
     )
+    expected_dependencies = {
+        "public_benchmark": benchmark["canonical_digest"],
+        "public_canary": canary["canonical_digest"],
+        "rollback_rehearsal": rehearsal["canonical_digest"],
+    }
+    try:
+        first_party = assert_first_party_measurement(
+            measurements,
+            repo_id=canary["dataset_repo_id"],
+            revision=public_revision,
+            release_manifest_digest=release_digest,
+            parent_evidence_digest=rehearsal["canonical_digest"],
+        )
+    except StateLawsReleaseProbeError as exc:
+        raise PostPublicationContradictionError(
+            "audit is not internally measured/bound evidence"
+        ) from exc
+    if first_party.get("dependency_digests") != expected_dependencies:
+        raise PostPublicationContradictionError(
+            "audit measurement dependency bindings drifted"
+        )
     measured = validate_canonical_post_publication_measurements(
-        measurements, release_manifest_digest=release_digest
+        first_party, release_manifest_digest=release_digest
     )
     receipt = {
         "schema": CANONICAL_AUDIT_SCHEMA,
@@ -2084,6 +2124,14 @@ def build_canonical_post_publication_audit(
         "secrets_persisted": False,
         "local_paths_persisted": False,
     }
+    for key in (
+        "measurement_source",
+        "externally_supplied",
+        "observed_at",
+        "probe_bindings",
+        "dependency_digests",
+    ):
+        receipt[key] = measured[key]
     digest = canonical_no_self_field_digest(receipt)
     receipt["canonical_digest"] = digest
     receipt["content_digest"] = digest
@@ -2136,6 +2184,27 @@ def check_canonical_post_publication_audit(
         "rollback_rehearsal_digest",
     ):
         _canonical_sha256(report.get(name), name=name)
+    expected_dependencies = {
+        "public_benchmark": report["public_benchmark_digest"],
+        "public_canary": report["public_canary_digest"],
+        "rollback_rehearsal": report["rollback_rehearsal_digest"],
+    }
+    try:
+        assert_first_party_measurement(
+            report,
+            repo_id=report["dataset_repo_id"],
+            revision=public_revision,
+            release_manifest_digest=report["release_manifest_digest"],
+            parent_evidence_digest=report["rollback_rehearsal_digest"],
+        )
+    except StateLawsReleaseProbeError as exc:
+        raise PostPublicationContradictionError(
+            "canonical audit lacks sealed first-party provenance"
+        ) from exc
+    if report.get("dependency_digests") != expected_dependencies:
+        raise PostPublicationContradictionError(
+            "canonical audit dependency bindings drifted"
+        )
     validate_canonical_post_publication_measurements(
         report, release_manifest_digest=report["release_manifest_digest"]
     )
@@ -2234,6 +2303,12 @@ def build_parser() -> argparse.ArgumentParser:
         help=f"Canonical LCR-043 receipt (default: {DEFAULT_CANARY_RELPATH.as_posix()})",
     )
     parser.add_argument(
+        "--publication-receipt",
+        type=Path,
+        default=None,
+        help=f"Canonical LCR-042 receipt (default: {DEFAULT_RECEIPT_RELPATH.as_posix()})",
+    )
+    parser.add_argument(
         "--public-benchmark",
         type=Path,
         default=None,
@@ -2246,10 +2321,24 @@ def build_parser() -> argparse.ArgumentParser:
         help=f"Canonical LCR-045 receipt (default: {DEFAULT_REHEARSAL_RELPATH.as_posix()})",
     )
     parser.add_argument(
+        "--network",
+        action="store_true",
+        help="Opt in to the immutable public-release redownload",
+    )
+    parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        default=None,
+        help="Empty directory for immutable public audit bytes",
+    )
+    parser.add_argument(
         "--measurements",
         type=Path,
         default=None,
-        help="Measured, bounded read-only audit JSON (required when generating)",
+        help=(
+            "Rejected legacy input. Canonical completeness measurements are "
+            "derived internally from verified immutable release bytes."
+        ),
     )
     return parser
 
@@ -2274,7 +2363,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         if args.check:
-            if args.write:
+            if args.write or args.network:
                 raise PostPublicationSafetyError("--check and --write are mutually exclusive")
             result = check_canonical_post_publication_audit(
                 load_json_mapping(report_path)
@@ -2296,19 +2385,79 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             return 0
 
-        if args.measurements is None:
-            raise PostPublicationAuditError(
-                "--measurements is required to generate canonical LCR-046 evidence"
+        if args.measurements is not None:
+            raise PostPublicationSafetyError(
+                "external --measurements cannot authorize canonical evidence"
             )
+        if not args.network:
+            raise PostPublicationAuditError(
+                "new canonical LCR-046 evidence requires explicit --network opt-in"
+            )
+        if args.cache_dir is None:
+            raise PostPublicationAuditError(
+                "new canonical LCR-046 evidence requires --cache-dir"
+            )
+        publication = check_canonical_publication_receipt(
+            load_json_mapping(
+                args.publication_receipt or default_receipt_path()
+            ),
+            require_live=True,
+        )
+        canary = check_canonical_public_canary_receipt(
+            load_json_mapping(args.public_canary or default_canary_path())
+        )
+        benchmark = check_canonical_public_benchmark_receipt(
+            load_json_mapping(args.public_benchmark or default_benchmark_path())
+        )
+        rehearsal = check_canonical_rollback_rehearsal(
+            load_json_mapping(args.rollback_rehearsal or default_rehearsal_path())
+        )
+        if (
+            canary["publication_receipt_digest"] != publication["canonical_digest"]
+            or canary["dataset_repo_id"] != publication["dataset_repo_id"]
+            or canary["public_revision"] != publication["public_revision"]
+            or canary["release_manifest_digest"]
+            != publication["release_manifest_digest"]
+            or benchmark["public_canary_digest"] != canary["canonical_digest"]
+            or rehearsal["public_canary_digest"] != canary["canonical_digest"]
+        ):
+            raise PostPublicationContradictionError(
+                "LCR-042..045 immutable identity chain drifted"
+            )
+        redownload_canonical_public_release(
+            publication,
+            cache_root=args.cache_dir,
+        )
+        dependencies = {
+            "public_benchmark": str(benchmark["canonical_digest"]),
+            "public_canary": str(canary["canonical_digest"]),
+            "rollback_rehearsal": str(rehearsal["canonical_digest"]),
+        }
+        probe_coordinates = {
+            "repo_id": str(canary["dataset_repo_id"]),
+            "revision": str(canary["public_revision"]),
+            "release_manifest_digest": str(canary["release_manifest_digest"]),
+            "parent_evidence_digest": str(rehearsal["canonical_digest"]),
+        }
+        measured = assert_first_party_measurement(
+            run_post_publication_audit_probe(
+                args.cache_dir,
+                **probe_coordinates,
+                dependency_digests=dependencies,
+                currentness_disclaimer=CURRENTNESS_DISCLAIMER,
+            ),
+            **probe_coordinates,
+        )
+        if measured.get("dependency_digests") != dependencies:
+            raise PostPublicationContradictionError(
+                "internally measured dependency digest chain drifted"
+            )
+        measured["update_plan"] = build_update_plan()
         report = build_canonical_post_publication_audit(
-            public_canary=load_json_mapping(args.public_canary or default_canary_path()),
-            public_benchmark=load_json_mapping(
-                args.public_benchmark or default_benchmark_path()
-            ),
-            rollback_rehearsal=load_json_mapping(
-                args.rollback_rehearsal or default_rehearsal_path()
-            ),
-            measurements=load_json_mapping(args.measurements),
+            public_canary=canary,
+            public_benchmark=benchmark,
+            rollback_rehearsal=rehearsal,
+            measurements=measured,
         )
         if args.write:
             destination = (
@@ -2335,6 +2484,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         PostPublicationSafetyError,
         PostPublicationDeltaError,
         PostPublicationPinError,
+        PublicParityError,
+        PublicRemoteError,
+        PublishStateLawsError,
+        StateLawsReleaseProbeError,
     ) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

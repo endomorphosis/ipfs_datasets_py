@@ -1,0 +1,22 @@
+{
+  "schema": "ipfs_datasets_py/lcr084-operator-deferral@1",
+  "task_id": "LCR-084",
+  "goal_id": "LCR-G146",
+  "program_id": "legal-corpora-reindex-v1",
+  "producer": "operator-deferral",
+  "status": "deferred",
+  "lcr084_taskboard_status": "todo",
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "current_bundle": false,
+  "live_official": false,
+  "reason": "residential_proxy_not_used",
+  "operator_instruction": "Continue remaining LCR Hub staging without closing LCR-084 as live_official. Vaquill/snapshot rows are admitted only as research staging evidence.",
+  "blocked_official_frontiers": ["AR", "GA", "MS", "NH", "NY", "TN", "WI"],
+  "state_staging_branch": "stage/state-laws-sparse-graphrag-v2",
+  "federal_staging_branch": "stage/federal-register-ir-graphrag-v2",
+  "state_dataset_repo_id": "justicedao/ipfs_state_laws",
+  "federal_dataset_repo_id": "justicedao/ipfs_federal_register",
+  "state_parent_revision": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2",
+  "federal_parent_revision": "720668ae016cc400916dda884c9005e03618edfa"
+}

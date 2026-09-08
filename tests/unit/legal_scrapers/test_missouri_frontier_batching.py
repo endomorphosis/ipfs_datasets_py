@@ -28,6 +28,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri_chapter 
     section_page_identity,
     source_bound_empty_chapter_disposition,
     statute_from_section_html,
+    unnumbered_operative_section_body_agrees,
 )
 
 
@@ -177,6 +178,40 @@ def _page_select_identity_mismatch_html(
     )
 
 
+def _unnumbered_title_section_html(
+    section: str,
+    *,
+    bid: str,
+    title: str,
+    conflicting_leading_identity: str | None = None,
+) -> bytes:
+    """Revisor body that opens with a title line instead of ``208.856.``."""
+
+    first = f"<p class='indent norm'>{title}</p>"
+    second = (
+        f"<p class='norm'>{conflicting_leading_identity}. "
+        + ("Official Missouri statutory text. " * 12)
+        + "</p>"
+        if conflicting_leading_identity
+        else (
+            "<p class='norm'>1. Operative Missouri statutory text. "
+            + ("More enacted text. " * 12)
+            + "</p>"
+        )
+    )
+    return (
+        "<html><head><title>Missouri Revisor of Statutes - Revised Statutes "
+        f"of Missouri, RSMo Section {section}</title>"
+        f"<meta property='og:title' content='{section}'>"
+        "<meta property='og:url' content='https://revisor.mo.gov/main/"
+        f"OneSection.aspx?section={section}&amp;bid={bid}'></head>"
+        "<body><div id='TOP'></div><div><div><div class='norm'>"
+        f"{first}{second}"
+        "<div class='foot'>---- (L. 2008 Adopted by Initiative)</div>"
+        "</div></div></div><div id='BOTTOM'></div></body></html>"
+    ).encode()
+
+
 def _blocked_robot_html() -> bytes:
     """Exact structural shape retained for the 2026-08-28 Revisor block."""
 
@@ -296,6 +331,62 @@ def test_missouri_section_identity_allows_official_footnote_asterisk() -> None:
 def test_missouri_section_body_identity_is_exact() -> None:
     assert section_body_identity(_section_html("51.282").decode()) == "51.282"
     assert section_body_identity("<html><body>navigation only</body></html>") == ""
+
+
+def test_missouri_unnumbered_title_body_parses_when_page_identity_binds() -> None:
+    html = _unnumbered_title_section_html(
+        "208.856",
+        bid="11170",
+        title="The Missouri Quality Home Care Council.",
+    ).decode()
+
+    assert section_body_identity(html) == ""
+    assert section_page_identity(html) == "208.856"
+    assert unnumbered_operative_section_body_agrees(
+        html,
+        expected_identity="208.856",
+    )
+    statute = statute_from_section_html(html, section_number="208.856")
+    assert statute is not None
+    assert statute.section_number == "208.856"
+    assert "Missouri Quality Home Care Council" in statute.full_text
+    assert statute_from_section_html(html, section_number="208.857") is None
+
+
+def test_missouri_unnumbered_title_body_rejects_conflicting_leading_identity() -> None:
+    html = _unnumbered_title_section_html(
+        "208.856",
+        bid="11170",
+        title="The Missouri Quality Home Care Council.",
+        conflicting_leading_identity="208.857",
+    ).decode()
+
+    assert section_body_identity(html) == ""
+    assert unnumbered_operative_section_body_agrees(
+        html,
+        expected_identity="208.856",
+    ) is False
+    assert statute_from_section_html(html, section_number="208.856") is None
+
+
+def test_missouri_identity_aligned_validator_accepts_unnumbered_operative_body() -> None:
+    aligned = _unnumbered_title_section_html(
+        "210.620",
+        bid="11394",
+        title="The Interstate Compact on the Placement of Children.",
+    )
+    blank = _page_select_body_unavailable_html("210.620", "11394")
+    mismatched = _page_select_identity_mismatch_html("210.620", "11394", "210.621")
+
+    assert MissouriScraper._is_valid_missouri_identity_aligned_section_payload(aligned)
+    assert (
+        MissouriScraper._is_valid_missouri_identity_aligned_section_payload(blank)
+        is False
+    )
+    assert (
+        MissouriScraper._is_valid_missouri_identity_aligned_section_payload(mismatched)
+        is False
+    )
 
 
 def test_missouri_section_page_identity_requires_independent_exact_markers() -> None:

@@ -250,6 +250,155 @@ def test_deepest_toc_parser_closes_ancestry_and_preserves_duplicate_citations() 
     assert len(frontier["document_nodes"]) == 2
 
 
+def test_deepest_toc_parser_ignores_open_to_level_chrome() -> None:
+    scraper = TennesseeScraper("TN", "Tennessee")
+    roots, _tables = parse_root_html(
+        _root_html(scraper, target_level=3),
+        expected_titles=scraper.OFFICIAL_TITLES,
+    )
+    parent = roots[0]
+    chapter = _node_mapping(
+        node_id="C001",
+        title="CHAPTER 1",
+        level=2,
+        path=f"{parent.node_path}/C001",
+        expandable=True,
+    )
+    chapter["props"]["descendantinfo"] = [
+        {"props": {"title": "Open to level 3", "count": "(16 items)", "targetlevel": 3}}
+    ]
+    leaf = _node_mapping(
+        node_id="D001A",
+        title="1-1-1. First",
+        level=3,
+        path=f"{parent.node_path}/C001/D001A",
+        href=_content_path("TN01-TEST-BODY-00001-00"),
+    )
+    payload = {
+        "collections": {
+            "toccontainer": {"collections": {"tocnodes": [chapter, leaf]}}
+        }
+    }
+    nodes, closed_ids, error = parse_title_subtree_payload(
+        payload,
+        parent=parent,
+        target_level=3,
+    )
+    assert error == ""
+    assert [node.node_id for node in nodes] == ["C001", "D001A"]
+    assert closed_ids == (parent.node_id, "C001")
+
+
+def test_deepest_toc_parser_admits_document_appendix_that_also_lists_children() -> None:
+    scraper = TennesseeScraper("TN", "Tennessee")
+    roots, _tables = parse_root_html(
+        _root_html(scraper, target_level=3),
+        expected_titles=scraper.OFFICIAL_TITLES,
+    )
+    parent = roots[0]
+    appendix = _node_mapping(
+        node_id="CAPP",
+        title="APPENDIX Superseded Retirement Systems",
+        level=2,
+        path=f"{parent.node_path}/CAPP",
+        href=_content_path("TN01-APDX-0000-00000-00"),
+        expandable=True,
+    )
+    child = _node_mapping(
+        node_id="DAPP1",
+        title="1-99-1. Nested appendix section",
+        level=3,
+        path=f"{parent.node_path}/CAPP/DAPP1",
+        href=_content_path("TN01-APDX-0000-00001-00"),
+    )
+    payload = {
+        "collections": {
+            "toccontainer": {"collections": {"tocnodes": [appendix, child]}}
+        }
+    }
+    nodes, closed_ids, error = parse_title_subtree_payload(
+        payload,
+        parent=parent,
+        target_level=3,
+    )
+    assert error == ""
+    appendix_node = next(node for node in nodes if node.node_id == "CAPP")
+    assert appendix_node.is_document_locator
+    assert not appendix_node.can_expand
+    assert not appendix_node.has_children
+    assert [node.node_id for node in nodes] == ["CAPP", "DAPP1"]
+    assert closed_ids == (parent.node_id,)
+
+
+def test_deepest_toc_parser_admits_related_document_with_foreign_citation_prefix() -> None:
+    scraper = TennesseeScraper("TN", "Tennessee")
+    roots, _tables = parse_root_html(
+        _root_html(scraper, target_level=4),
+        expected_titles=scraper.OFFICIAL_TITLES,
+    )
+    parent = next(node for node in roots if node.title_number == "33")
+    chapter = _node_mapping(
+        node_id="C033",
+        title="CHAPTER 11",
+        level=2,
+        path=f"{parent.node_path}/C033",
+        expandable=True,
+    )
+    related = _node_mapping(
+        node_id="D38111",
+        title=(
+            "38-7-111. Suspected drug overdose — Testing for Kratom. "
+            '"Effective on July 1, 2026. See the version effective until July 1, 2026.]'
+        ),
+        level=3,
+        path=f"{parent.node_path}/C033/D38111",
+        href=_content_path("TN38-TEST-BODY-00111-00"),
+    )
+    payload = {
+        "collections": {
+            "toccontainer": {"collections": {"tocnodes": [chapter, related]}}
+        }
+    }
+    nodes, closed_ids, error = parse_title_subtree_payload(
+        payload,
+        parent=parent,
+        target_level=4,
+    )
+    assert error == ""
+    related_node = next(node for node in nodes if node.node_id == "D38111")
+    assert related_node.section_number == "38-7-111"
+    assert related_node.is_document_locator
+    assert [node.node_id for node in nodes] == ["C033", "D38111"]
+    assert closed_ids == (parent.node_id, "C033")
+
+
+def test_deepest_toc_parser_rejects_non_document_cross_title_citation() -> None:
+    scraper = TennesseeScraper("TN", "Tennessee")
+    roots, _tables = parse_root_html(
+        _root_html(scraper, target_level=3),
+        expected_titles=scraper.OFFICIAL_TITLES,
+    )
+    parent = roots[0]
+    crossed = _node_mapping(
+        node_id="C002",
+        title="2-1-1. Crossed title container",
+        level=2,
+        path=f"{parent.node_path}/C002",
+        expandable=True,
+    )
+    payload = {
+        "collections": {"toccontainer": {"collections": {"tocnodes": [crossed]}}}
+    }
+    nodes, closed, error = parse_title_subtree_payload(
+        payload,
+        parent=parent,
+        target_level=3,
+    )
+    assert nodes == []
+    assert closed == ()
+    assert error == "subtree citation crossed its requested title"
+
+
 def test_deepest_toc_parser_rejects_orphan_and_cross_title_citation() -> None:
     scraper = TennesseeScraper("TN", "Tennessee")
     roots, _tables = parse_root_html(
@@ -453,7 +602,8 @@ async def test_future_get_wave_reuses_shared_plural_archive_contract(
     kwargs = calls[0][1]
     assert kwargs["common_crawl_domain_terms"] == ("advance.lexis.com",)
     assert kwargs["wayback_prefix_inventory"] is True
-    assert kwargs["prefer_direct"] is True
+    assert kwargs["prefer_direct"] is False
+    assert kwargs["archive_recovery_enabled"] is True
     assert kwargs["residual_retry_attempts"] in range(4)
     assert kwargs["headers"]["Accept"] == TennesseeScraper.STRICT_GET_ACCEPT
     assert scraper._tennessee_get_request(urls[0])["headers"] == {
@@ -765,6 +915,20 @@ class _FakePage:
     async def wait_for_selector(self, *_args: Any, **_kwargs: Any) -> None:
         return None
 
+    def locator(self, *_args: Any, **_kwargs: Any) -> Any:
+        class _Empty:
+            async def count(self) -> int:
+                return 0
+
+            @property
+            def first(self) -> Any:
+                return self
+
+            async def click(self, **_click: Any) -> None:
+                return None
+
+        return _Empty()
+
     async def content(self) -> str:
         return self._root_html
 
@@ -1048,7 +1212,10 @@ async def test_live_ledger_route_derives_body_wave_then_uses_retained_parser(
         content_validator: Any,
         require_direct: bool = False,
     ) -> StateLawPageMultiFetchResult:
-        assert require_direct is True
+        if frontier_name == "document body wave":
+            assert require_direct is False
+        else:
+            assert require_direct is True
         requested = list(urls)
         get_waves.append((frontier_name, requested))
         if frontier_name == "General Assembly delegation":

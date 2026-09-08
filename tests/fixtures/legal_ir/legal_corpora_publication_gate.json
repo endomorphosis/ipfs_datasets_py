@@ -15,9 +15,14 @@
     "justicedao/ipfs_state_laws": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
     "justicedao/ipfs_federal_register": "720668ae016cc400916dda884c9005e03618edfa"
   },
+  "publication_parent_revisions": {
+    "justicedao/ipfs_state_laws": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2",
+    "justicedao/ipfs_federal_register": "720668ae016cc400916dda884c9005e03618edfa"
+  },
   "authorized_operations": [
     "additive_main_upload",
-    "additive_staging_upload"
+    "additive_staging_upload",
+    "state_main_root_readme_compare_and_swap"
   ],
   "forbidden_operations": [
     "copy",
@@ -97,7 +102,7 @@
         "LCR-G070",
         "LCR-G080"
       ],
-      "previous_public_pin": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
+      "previous_public_pin": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2",
       "seal_receipt_path": null
     },
     "state_main": {
@@ -136,7 +141,7 @@
         "LCR-G070",
         "LCR-G080"
       ],
-      "previous_public_pin": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
+      "previous_public_pin": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2",
       "seal_receipt_path": "docs/reports/legal_corpora_reindex/state_prepublication_seal.json"
     },
     "federal_staging": {

@@ -52,6 +52,9 @@ from ipfs_datasets_py.processors.legal_data.federal_register_vectors import (
     SCHEMA_VERSION,
     TASK_ID,
     EmbeddingConfigError,
+    EmbeddingNeighborError,
+    EMBEDDING_NEIGHBOR_EDGE_TYPE,
+    EMBEDDING_NEIGHBOR_METRIC,
     FederalRegisterEmbeddingConfig,
     FederalRegisterVectorBinding,
     LegacyFaissOverwriteError,
@@ -80,6 +83,8 @@ from ipfs_datasets_py.processors.legal_data.federal_register_vectors import (
     fixture_vector_bounds,
     fixture_vector_chunks,
     generate_federal_register_embeddings,
+    gte_small_embedding_neighbors,
+    gte_small_embedding_neighbors_from_dir,
     load_federal_vectors_report,
     production_embedding_config,
     production_vector_bounds,
@@ -164,6 +169,86 @@ def test_production_config_declares_gte_small_and_sentence_transformers() -> Non
     fixture = fixture_embedding_config()
     assert fixture.is_projection_backend is True
     assert fixture.backend != production.backend
+
+
+def _unit_vector(index: int):
+    import numpy as np
+
+    row = np.zeros(PINNED_DIMENSION, dtype=np.float32)
+    row[index] = 1.0
+    return row
+
+
+def test_gte_small_neighbors_fail_closed_on_projection_backend() -> None:
+    vectors = [_unit_vector(0), _unit_vector(1)]
+    with pytest.raises(EmbeddingNeighborError, match="sentence_transformers"):
+        gte_small_embedding_neighbors(
+            vectors,
+            ["fr:2026-04129:2026-03-03", "fr:2026-04130:2026-03-03"],
+            backend=PROJECTION_BACKEND,
+        )
+
+
+def test_gte_small_neighbors_are_cosine_knn() -> None:
+    import numpy as np
+
+    a = _unit_vector(0)
+    b = np.zeros(PINNED_DIMENSION, dtype=np.float32)
+    b[0] = 0.8
+    b[1] = 0.6
+    b = b / float(np.linalg.norm(b))
+    c = _unit_vector(2)
+    ids = [
+        "fr:2026-04129:2026-03-03",
+        "fr:2026-04130:2026-03-03",
+        "fr:2026-04131:2026-03-04",
+    ]
+    neighbors = gte_small_embedding_neighbors(
+        [a, b, c],
+        ids,
+        k=1,
+        backend=PRODUCTION_BACKEND,
+        model_id=PINNED_MODEL_ID,
+        model_revision=PINNED_MODEL_REVISION,
+    )
+    by_source = {item["source_legal_id"]: item for item in neighbors}
+    assert set(by_source) == set(ids)
+    assert by_source[ids[0]]["target_legal_id"] == ids[1]
+    assert by_source[ids[1]]["target_legal_id"] == ids[0]
+    assert by_source[ids[0]]["edge_type"] == EMBEDDING_NEIGHBOR_EDGE_TYPE
+    assert by_source[ids[0]]["metric"] == EMBEDDING_NEIGHBOR_METRIC
+    assert by_source[ids[0]]["score"] > by_source[ids[2]]["score"]
+
+
+def test_gte_small_neighbors_from_dir_refuse_fixture_manifest(tmp_path: Path) -> None:
+    import numpy as np
+
+    vector_dir = tmp_path / "vectors"
+    vector_dir.mkdir()
+    np.save(vector_dir / "vectors.npy", np.stack([_unit_vector(0), _unit_vector(1)]))
+    (vector_dir / "ids.jsonl").write_text(
+        json.dumps({"legal_id": "fr:2026-04129:2026-03-03", "row": 0})
+        + "\n"
+        + json.dumps({"legal_id": "fr:2026-04130:2026-03-03", "row": 1})
+        + "\n",
+        encoding="utf-8",
+    )
+    (vector_dir / "manifest.json").write_text(
+        json.dumps(
+            {
+                "backend": PROJECTION_BACKEND,
+                "dimension": 384,
+                "model_id": PINNED_MODEL_ID,
+                "model_revision": PINNED_MODEL_REVISION,
+                "vector_count": 2,
+                "vectors_path": str(vector_dir / "vectors.npy"),
+                "ids_path": str(vector_dir / "ids.jsonl"),
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(EmbeddingNeighborError, match="sentence_transformers"):
+        gte_small_embedding_neighbors_from_dir(vector_dir)
 
 
 def test_placeholder_model_refs_fail_closed() -> None:

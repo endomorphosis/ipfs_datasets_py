@@ -400,6 +400,67 @@ def test_neighbor_edges_match_serial_and_pressure_capped_threads(
     ]
 
 
+def test_same_jurisdiction_neighbors_do_not_cross_states(sample_overlay) -> None:
+    edges, _stats = materialize_bm25_neighbor_edges(
+        sample_overlay.index,
+        same_jurisdiction_only=True,
+        max_workers=1,
+        pressure=lambda: (1, "admitted"),
+    )
+    by_cid = {doc.entry_cid: doc for doc in sample_overlay.index.documents}
+    assert by_cid
+    codes = {
+        str(doc.jurisdiction_code or (doc.filters or {}).get("jurisdiction") or "")
+        for doc in sample_overlay.index.documents
+    }
+    assert len(codes) >= 2
+    for edge in edges:
+        source = by_cid[edge.source_entry_cid]
+        target = by_cid[edge.target_entry_cid]
+        source_code = str(
+            source.jurisdiction_code or (source.filters or {}).get("jurisdiction") or ""
+        )
+        target_code = str(
+            target.jurisdiction_code or (target.filters or {}).get("jurisdiction") or ""
+        )
+        assert source_code == target_code
+        assert source_code
+
+
+def test_same_jurisdiction_neighbors_checkpoint_resume(
+    sample_overlay, tmp_path: Path
+) -> None:
+    dest = tmp_path / "neighbors"
+    first, first_stats = materialize_bm25_neighbor_edges(
+        sample_overlay.index,
+        same_jurisdiction_only=True,
+        checkpoint_dir=dest,
+        max_workers=1,
+        pressure=lambda: (1, "admitted"),
+    )
+    codes = {
+        str(doc.jurisdiction_code or (doc.filters or {}).get("jurisdiction") or "")
+        for doc in sample_overlay.index.documents
+    }
+    codes.discard("")
+    assert codes
+    for code in codes:
+        identity = dest / "by_jurisdiction" / code / "identity.json"
+        edges = dest / "by_jurisdiction" / code / "edges.jsonl"
+        assert identity.is_file()
+        assert edges.is_file()
+    assert (dest / "identity.json").is_file()
+    second, second_stats = materialize_bm25_neighbor_edges(
+        sample_overlay.index,
+        same_jurisdiction_only=True,
+        checkpoint_dir=dest,
+        max_workers=1,
+        pressure=lambda: (1, "admitted"),
+    )
+    assert [edge.to_dict() for edge in first] == [edge.to_dict() for edge in second]
+    assert first_stats.neighbor_edges_emitted == second_stats.neighbor_edges_emitted
+
+
 def test_score_posting_candidates_reuses_shared_document_map(
     sample_overlay,
 ) -> None:

@@ -32,9 +32,8 @@ from ipfs_datasets_py.processors.legal_data.state_laws_completeness import (
     CANONICAL_JURISDICTION_ORDER,
     EXPECTED_JURISDICTION_COUNT,
 )
-from scripts.ops.legal_data import (
-    build_state_laws_hf_release as candidate_builder,
-)
+
+import scripts.ops.legal_data.build_state_laws_hf_release as candidate_builder
 
 TASK_ID: Final = "LCR-084"
 GOAL_ID: Final = "LCR-G146"
@@ -44,6 +43,9 @@ SCHEMA: Final = "ipfs_datasets_py/state-laws-full-scrape-acceptance@2"
 ACCEPTANCE_RELPATH: Final = Path("docs/reports/legal_corpora_reindex/full_scrape_acceptance.json")
 CANDIDATE_RELPATH: Final = Path("docs/reports/legal_corpora_reindex/release_candidate.json")
 SCHEMA_RELPATH: Final = Path("data/legal/state_laws_full_scrape_acceptance.schema.json")
+CURRENT_PUBLIC_PARENT_RELPATH: Final = (
+    candidate_builder.DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH
+)
 COHORT_F_RELPATH: Final = Path("docs/reports/legal_corpora_reindex/cohort_f.json")
 COHORT_I_RELPATH: Final = Path("docs/reports/legal_corpora_reindex/cohort_i.json")
 TWO_ROW_SYNTHETIC_MAX: Final = 2
@@ -251,6 +253,13 @@ def _check_nonterminal_claims(value: Any, *, jurisdiction: str, path: str = "rec
 def _check_evidence_semantics(
     evidence: Mapping[str, Any], *, repository_root: Path, now: datetime
 ) -> None:
+    try:
+        candidate_builder.validate_current_public_parent_provenance(
+            evidence.get(candidate_builder.CURRENT_PUBLIC_PARENT_EVIDENCE_KEY),
+            repo_root=repository_root,
+        )
+    except candidate_builder.CandidateError as exc:
+        raise ScrapeAcceptanceError(str(exc)) from exc
     jurisdictions = evidence.get("jurisdictions")
     if not isinstance(jurisdictions, list):
         raise ScrapeAcceptanceError("evidence.jurisdictions must be an array")
@@ -714,7 +723,12 @@ def _check_evidence_semantics(
             raise ScrapeAcceptanceError(f"{code} normalized receipt projection drifted")
 
 
-def _remeasure_report_evidence(payload: Mapping[str, Any], *, repository_root: Path) -> dict[str, Any]:
+def _remeasure_report_evidence(
+    payload: Mapping[str, Any],
+    *,
+    repository_root: Path,
+    current_public_parent_path: Path | str | None = None,
+) -> dict[str, Any]:
     evidence = payload.get("evidence")
     if not isinstance(evidence, Mapping):
         raise ScrapeAcceptanceError("acceptance evidence is missing")
@@ -740,6 +754,11 @@ def _remeasure_report_evidence(payload: Mapping[str, Any], *, repository_root: P
             input_map_path=input_map_path, rights_receipt_path=rights_path,
             production_output_root=output_root,
             live_baseline_path=baseline_path,
+            current_public_parent_path=(
+                current_public_parent_path
+                if current_public_parent_path is not None
+                else repository_root / CURRENT_PUBLIC_PARENT_RELPATH
+            ),
             source_revision=str(source_control.get("revision") or ""),
             repo_root=repository_root, require_clean_source=False,
             sealed_source_control=source_control,
@@ -880,6 +899,7 @@ def seal_full_scrape_acceptance(
     *, input_map_path: Path | str, rights_receipt_path: Path | str,
     production_output_root: Path | str, source_revision: str,
     live_baseline_path: Path | str, candidate_path: Path | str,
+    current_public_parent_path: Path | str | None = None,
     repository_root: Path = REPOSITORY_ROOT, require_clean_source: bool = True,
 ) -> dict[str, Any]:
     """Create (but do not write) one schema-valid local production receipt."""
@@ -888,6 +908,11 @@ def seal_full_scrape_acceptance(
             input_map_path=input_map_path, rights_receipt_path=rights_receipt_path,
             production_output_root=production_output_root,
             live_baseline_path=live_baseline_path,
+            current_public_parent_path=(
+                current_public_parent_path
+                if current_public_parent_path is not None
+                else repository_root / CURRENT_PUBLIC_PARENT_RELPATH
+            ),
             source_revision=source_revision, repo_root=repository_root,
             require_clean_source=require_clean_source,
         )
@@ -934,6 +959,7 @@ def seal_full_scrape_acceptance(
 def inspect_full_scrape_acceptance(
     *, require_live_official: bool, require_jurisdictions: int,
     require_production_candidate: bool, repository_root: Path = REPOSITORY_ROOT,
+    current_public_parent_path: Path | str | None = None,
 ) -> dict[str, Any]:
     if not require_live_official and not require_production_candidate:
         return _inspect_legacy(repository_root)
@@ -960,7 +986,11 @@ def inspect_full_scrape_acceptance(
         raise ScrapeAcceptanceError("acceptance jurisdiction_count is not exactly 51")
     if payload.get("freshness_max_age_seconds") != MAX_EVIDENCE_AGE_SECONDS:
         raise ScrapeAcceptanceError("acceptance freshness policy drifted")
-    measured = _remeasure_report_evidence(payload, repository_root=repository_root)
+    measured = _remeasure_report_evidence(
+        payload,
+        repository_root=repository_root,
+        current_public_parent_path=current_public_parent_path,
+    )
     if payload.get("evidence") != measured:
         raise ScrapeAcceptanceError("acceptance evidence differs from current verified bytes")
     evidence_digest = candidate_builder.digest_payload(measured)
@@ -1039,6 +1069,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--rights-receipt", type=Path, default=None)
     parser.add_argument("--production-output-root", type=Path, default=None)
     parser.add_argument("--live-baseline", type=Path, default=None)
+    parser.add_argument(
+        "--current-public-parent",
+        type=Path,
+        default=REPOSITORY_ROOT / CURRENT_PUBLIC_PARENT_RELPATH,
+        help=(
+            "Fresh non-authorizing current-parent receipt "
+            f"(default: {CURRENT_PUBLIC_PARENT_RELPATH.as_posix()})"
+        ),
+    )
     parser.add_argument("--source-revision", default="")
     parser.add_argument("--candidate", type=Path, default=None)
     parser.add_argument("--json", action="store_true")
@@ -1090,6 +1129,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 input_map_path=args.input_map, rights_receipt_path=args.rights_receipt,
                 production_output_root=args.production_output_root,
                 live_baseline_path=args.live_baseline,
+                current_public_parent_path=(
+                    args.current_public_parent
+                    if args.current_public_parent is not None
+                    else REPOSITORY_ROOT / CURRENT_PUBLIC_PARENT_RELPATH
+                ),
                 source_revision=args.source_revision, candidate_path=candidate_path,
                 repository_root=REPOSITORY_ROOT,
             )
@@ -1104,6 +1148,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 require_jurisdictions=int(args.require_jurisdictions),
                 require_production_candidate=bool(args.require_production_candidate),
                 repository_root=REPOSITORY_ROOT,
+                current_public_parent_path=(
+                    args.current_public_parent
+                    if args.current_public_parent is not None
+                    else REPOSITORY_ROOT / CURRENT_PUBLIC_PARENT_RELPATH
+                ),
             )
     except ScrapeAcceptanceError as exc:
         sys.stderr.write(f"audit_state_laws_full_scrape_acceptance: FAILED: {exc}\n")

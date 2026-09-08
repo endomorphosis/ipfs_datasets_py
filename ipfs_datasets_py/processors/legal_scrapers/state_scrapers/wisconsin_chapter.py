@@ -545,7 +545,33 @@ def statutes_from_page(
     return out
 
 
-_CHAPTER_TOC_RE = re.compile(r"/document/statutes/(\d+)$")
+_CHAPTER_TOC_RE = re.compile(r"/document/statutes/(\d+)/?$", re.IGNORECASE)
+_NON_HTML_LOCATOR_RE = re.compile(
+    r"(?:\.(?:pdf|epub|rtf|docx?)(?:$|[?#]))"
+    r"|(?:/(?:print|export|download)(?:/|$))"
+    r"|(?:[?&]down=)",
+    re.IGNORECASE,
+)
+_OLD_CHAPTER_PATH_RE = re.compile(
+    r"/statutes/statutes/(\d+)(?:/|$)",
+    re.IGNORECASE,
+)
+
+
+def current_html_chapter_number(href: str) -> str:
+    """Return the chapter number for a current HTML locator, else empty.
+
+    Current chapters are ``/document/statutes/{n}``. PDF/print/export/download
+    variants and the old ``/statutes/statutes/{n}`` path are not current HTML.
+    """
+
+    text = str(href or "").strip()
+    if not text or _NON_HTML_LOCATOR_RE.search(text):
+        return ""
+    if _OLD_CHAPTER_PATH_RE.search(text):
+        return ""
+    match = _CHAPTER_TOC_RE.search(text.split("#", 1)[0])
+    return str(match.group(1)) if match else ""
 
 
 def toc_chapter_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str, str]]:
@@ -560,26 +586,23 @@ def toc_chapter_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str
     soup = BeautifulSoup(html or "", "html.parser")
     out: List[Tuple[str, str, str]] = []
     seen: set[str] = set()
-    for paragraph in soup.find_all("p"):
-        anchor = None
-        for candidate in paragraph.find_all("a", href=True):
-            href = str(candidate.get("href") or "").strip()
-            if _CHAPTER_TOC_RE.search(href):
-                anchor = candidate
-                break
-        if anchor is None:
-            continue
-        match = _CHAPTER_TOC_RE.search(str(anchor.get("href") or ""))
-        if not match:
-            continue
-        number = match.group(1)
-        if number in seen:
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        number = current_html_chapter_number(href)
+        if not number or number in seen:
             continue
         seen.add(number)
-        name = _clean(paragraph.get_text(" "))
+        container = anchor.find_parent("p") or anchor
+        name = _clean(container.get_text(" "))
         name = re.sub(r"\(PDF:[^)]*\)", "", name)
         name = _clean(name).strip(" -")
-        out.append((number, name or f"Chapter {number}", urljoin(base_url, f"/document/statutes/{number}")))
+        out.append(
+            (
+                number,
+                name or f"Chapter {number}",
+                urljoin(base_url, f"/document/statutes/{number}"),
+            )
+        )
     return out
 
 

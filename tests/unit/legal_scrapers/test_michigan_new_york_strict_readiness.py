@@ -2216,6 +2216,75 @@ def test_new_york_toc_parser_rejects_prose_section_candidates() -> None:
     assert [entry.section for entry in blocks[0].entries] == ["1"]
 
 
+def test_new_york_pdf_parser_rejects_wrapped_section_cross_references(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    text = """
+    ARTICLE 1
+    SOURCE INVENTORY
+    Section 1. First operative provision.
+      § 1. First operative provision. This retained body cites
+    § 674 of the Tax Law before numbered subdivisions.
+      * § 1-a. Starred operative heading. This retained starred body is not a citation.
+    """
+    monkeypatch.setattr(
+        ny_pdf,
+        "extract_new_york_law_pdf_text",
+        lambda _payload: (text, 1),
+    )
+
+    headers = ny_pdf._source_header_matches(text)
+    assert [match.group("section") for match in headers] == ["1", "1-a"]
+    assert not any(
+        ny_pdf._section_header_is_line_leading_citation(text, match)
+        for match in headers
+    )
+    citation = next(
+        match
+        for match in ny_pdf._SECTION_HEADER_RE.finditer(text)
+        if match.group("section") == "674"
+    )
+    assert ny_pdf._section_header_is_line_leading_citation(text, citation)
+
+    report = ny_pdf.parse_new_york_law_pdf(
+        b"%PDF-wrapped-citation",
+        law_code="TAX",
+        law_name="Tax",
+    )
+    assert "674" not in [row.section_number for row in report.statutes]
+    assert any(
+        row.get("reason") == "line_leading_section_citation"
+        and row.get("section_number") == "674"
+        for row in report.embedded_section_markers
+    )
+
+
+def test_new_york_generated_pdf_text_normalizes_unicode_dashes() -> None:
+    assert ny_pdf._normalize_generated_law_pdf_text("§ 890–a. Heading") == (
+        "§ 890-a. Heading"
+    )
+    assert ny_pdf._normalize_generated_law_pdf_text("§ 3—6.5 Caution") == (
+        "§ 3-6.5 Caution"
+    )
+
+
+def test_new_york_word_section_supplement_rejects_prose_of_clause() -> None:
+    text = """
+    ARTICLE 1
+    SOURCE INVENTORY
+    Section 5. Short title.
+      Section 5 of the tax law is mentioned here as a wrapped citation
+      rather than a body heading.
+      § 5. Short title. This retained body is the official leaf.
+    """
+    matches = ny_pdf._source_header_matches(text)
+    units = []
+    supplements = ny_pdf._source_bound_word_header_supplements(
+        text, matches, units
+    )
+    assert supplements == []
+
+
 def test_new_york_pdf_parser_admits_applicable_historical_text_without_note(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -3127,15 +3196,27 @@ async def test_new_york_exact_supplemental_wave_is_plural_and_stays_unresolved(
         requested = list(urls)
         calls.append((requested, residual_retry_attempts, dict(kwargs)))
         payloads = []
+        errors: list[str | None] = []
         for url in requested:
             if url == self.OFFICIAL_CONSOLIDATED_URL:
                 payloads.append(catalog)
+                errors.append(None)
             elif url in pdf_by_url:
                 payloads.append(pdf_by_url[url])
-            else:
+                errors.append(None)
+            elif url in section_html:
                 payloads.append(section_html[url])
-        assert all(kwargs["content_validator"](body) for body in payloads)
-        return _aligned_result(requested, payloads)
+                errors.append(None)
+            elif "/api/3/laws/" in url and url.endswith("?full=true"):
+                payloads.append(b"")
+                errors.append("openleg json 401 without archive hit")
+            else:
+                raise AssertionError(f"unknown NY frontier URL {url}")
+        valid_bodies = [
+            body for body, error in zip(payloads, errors, strict=True) if error is None
+        ]
+        assert all(kwargs["content_validator"](body) for body in valid_bodies)
+        return _aligned_result(requested, payloads, errors=errors)
 
     parse_registry_manifests = []
     resolution_attempts = []
@@ -3232,14 +3313,23 @@ async def test_new_york_exact_supplemental_wave_is_plural_and_stays_unresolved(
         [scraper.OFFICIAL_CONSOLIDATED_URL],
         list(pdf_by_url),
         list(supplemental_urls),
+        ["https://legislation.nysenate.gov/api/3/laws/BBB?full=true"],
     ]
-    assert calls[-1][2]["common_crawl_domain_terms"] == (
+    assert calls[2][2]["common_crawl_domain_terms"] == (
         scraper.OFFICIAL_DOMAIN,
     )
-    assert calls[-1][2]["common_crawl_url_terms"] == (
+    assert calls[2][2]["common_crawl_url_terms"] == (
         "/legislation/laws/",
     )
-    assert calls[-1][2]["wayback_prefix_inventory"] is True
+    assert calls[2][2]["wayback_prefix_inventory"] is True
+    assert calls[3][2]["common_crawl_domain_terms"] == (
+        scraper.OFFICIAL_PDF_DOMAIN,
+    )
+    assert calls[3][2]["common_crawl_url_terms"] == (
+        "/api/3/laws/",
+        "full=true",
+    )
+    assert calls[3][2]["common_crawl_mime_terms"] == ("json",)
     assert parse_registry_manifests[:2] == [[], []]
     assert all(len(manifest) == 2 for manifest in parse_registry_manifests[2:])
     assert [row["proof_present"] for row in resolution_attempts] == [

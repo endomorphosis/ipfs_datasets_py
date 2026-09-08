@@ -208,6 +208,21 @@ class MissouriScraper(BaseStateScraper):
         )
 
     @staticmethod
+    def _is_missouri_server_busy_wait_payload(payload: bytes) -> bool:
+        """Return True for the source-bound HTTP-200 Wait.aspx busy shell."""
+
+        if not payload:
+            return False
+        lowered = bytes(payload).lower()
+        return (
+            _MISSOURI_SERVER_BUSY_WAIT_FORM_RE.search(lowered) is not None
+            and b"/main/home.aspx" in lowered
+            and b"/mopics/revisorlogo.png" in lowered
+            and b"server busy!" in lowered
+            and _MISSOURI_SERVER_BUSY_MESSAGE in lowered
+        )
+
+    @staticmethod
     def _is_valid_missouri_frontier_payload(payload: bytes) -> bool:
         """Reject source-bound Revisor throttle shells before retention."""
 
@@ -226,21 +241,11 @@ class MissouriScraper(BaseStateScraper):
         # request.  Attribute quoting, casing, and whitespace may vary, so the
         # independent form, home-link, logo, and message markers are used as
         # the semantic identity of the shell.
-        busy_wait_form = (
-            _MISSOURI_SERVER_BUSY_WAIT_FORM_RE.search(lowered) is not None
-        )
-        busy_wait_page = (
-            busy_wait_form
-            and b"/main/home.aspx" in lowered
-            and b"/mopics/revisorlogo.png" in lowered
-            and b"server busy!" in lowered
-            and _MISSOURI_SERVER_BUSY_MESSAGE in lowered
-        )
         return (
             b"nofish.aspx" not in lowered
             and b"are you double clicking links?" not in lowered
             and not blocked_robot_page
-            and not busy_wait_page
+            and not MissouriScraper._is_missouri_server_busy_wait_payload(payload)
         )
 
     @classmethod
@@ -251,25 +256,32 @@ class MissouriScraper(BaseStateScraper):
         """Require one internally source-bound Revisor section response.
 
         The plural transport validator receives response bytes but not the
-        aligned requested URL.  The Revisor page still publishes two
-        independent identities in those bytes: its statutory body heading and
-        its title/OpenGraph/canonical page identity.  Requiring those markers
-        to agree prevents a mismatched recovery page from reaching the
-        prospective evidence ledger; the caller additionally binds that
-        agreed identity to the exact requested catalog URL before parsing.
+        aligned requested URL.  Numbered bodies must agree with the
+        title/OpenGraph/canonical page identity.  Unnumbered operative
+        bodies (title lines, compact recitals) are admitted only when the
+        page identity is present and no paragraph leads with a different
+        section number.  The caller still binds that identity to the exact
+        requested catalog URL before parsing.
         """
 
         if not cls._is_valid_missouri_frontier_payload(payload):
             return False
-        from .missouri_chapter import section_body_identity, section_page_identity
+        from .missouri_chapter import (
+            section_body_identity,
+            section_page_identity,
+            unnumbered_operative_section_body_agrees,
+        )
 
         section_html = bytes(payload).decode("utf-8", errors="replace")
         body_identity = section_body_identity(section_html)
         page_identity = section_page_identity(section_html)
-        return bool(
-            body_identity
-            and page_identity
-            and body_identity.casefold() == page_identity.casefold()
+        if not page_identity:
+            return False
+        if body_identity:
+            return body_identity.casefold() == page_identity.casefold()
+        return unnumbered_operative_section_body_agrees(
+            section_html,
+            expected_identity=page_identity,
         )
 
     @staticmethod
@@ -527,6 +539,12 @@ class MissouriScraper(BaseStateScraper):
                     f"Missouri {frontier_name} retained input failed fixity: "
                     f"{source_url}"
                 )
+            if self._is_missouri_server_busy_wait_payload(payload):
+                # HTTP 200 Wait.aspx/busy shells are not parser inputs. Treat
+                # them as ledger misses so a live residual can replace them.
+                # Robot-block and nofish shells stay in the ledger so the
+                # caller can fail closed instead of opening a recovery fetch.
+                continue
             raw_transport = getattr(retained, "transport_receipt", {})
             transport_receipt = (
                 dict(raw_transport) if isinstance(raw_transport, Mapping) else {}
@@ -1236,8 +1254,19 @@ class MissouriScraper(BaseStateScraper):
                 report_index,
             ) = frontier_row
             fallback_html = fallback_payload.decode("utf-8", errors="replace")
-            fallback_identity = section_body_identity(fallback_html)
-            if fallback_identity.casefold() != section_number.casefold():
+            parsed = statute_from_section_html(
+                fallback_html,
+                section_number=section_number,
+                code_name=code_name,
+                section_title=section_title,
+                source_url=fallback_url,
+                source_record_bid=source_record_bid,
+                effective_date=effective_date,
+                source_frontier_record_url=frontier_url,
+                source_identity_fallback_reason=fallback_reason,
+            )
+            if parsed is None:
+                fallback_identity = section_body_identity(fallback_html)
                 page_identity = section_page_identity(fallback_html)
                 if page_identity.casefold() == section_number.casefold():
                     # The exact OneSection response identifies the requested
@@ -1254,22 +1283,6 @@ class MissouriScraper(BaseStateScraper):
                 raise RuntimeError(
                     "Missouri alternate official section body failed requested "
                     f"identity verification: {fallback_url}"
-                )
-            parsed = statute_from_section_html(
-                fallback_html,
-                section_number=section_number,
-                code_name=code_name,
-                section_title=section_title,
-                source_url=fallback_url,
-                source_record_bid=source_record_bid,
-                effective_date=effective_date,
-                source_frontier_record_url=frontier_url,
-                source_identity_fallback_reason=fallback_reason,
-            )
-            if parsed is None:
-                raise RuntimeError(
-                    "Missouri alternate official section body failed official "
-                    f"parsing: {fallback_url}"
                 )
             parsed.structured_data = {
                 **dict(parsed.structured_data or {}),
@@ -1340,9 +1353,14 @@ class MissouriScraper(BaseStateScraper):
             recovery_html = recovery_payload.decode("utf-8", errors="replace")
             recovery_body_identity = section_body_identity(recovery_html)
             recovery_page_identity = section_page_identity(recovery_html)
+            if recovery_page_identity.casefold() != section_number.casefold():
+                raise RuntimeError(
+                    "Missouri exact PageSelect recovery failed requested identity "
+                    f"verification: {frontier_url}"
+                )
             if (
-                recovery_body_identity.casefold() != section_number.casefold()
-                or recovery_page_identity.casefold() != section_number.casefold()
+                recovery_body_identity
+                and recovery_body_identity.casefold() != section_number.casefold()
             ):
                 raise RuntimeError(
                     "Missouri exact PageSelect recovery failed requested identity "

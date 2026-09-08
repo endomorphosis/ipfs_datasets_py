@@ -42,6 +42,10 @@ def test_cli_identity_and_help() -> None:
     assert cli.GOAL_ID == "LCR-G070"
     parser = cli.build_parser()
     assert parser.prog == "build_state_laws_hf_release.py"
+    args = parser.parse_args([])
+    assert args.current_public_parent == (
+        REPO_ROOT / cli.DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH
+    )
     assert cli.main(["--help"]) == 0
 
 
@@ -250,6 +254,8 @@ def test_collect_production_evidence_honors_clean_source_flag(
     baseline = tmp_path / cli.DEFAULT_LIVE_BASELINE_RELPATH
     baseline.parent.mkdir(parents=True)
     baseline.write_text("{}\n", encoding="utf-8")
+    current_parent = tmp_path / cli.DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH
+    current_parent.write_text("{}\n", encoding="utf-8")
     observed: dict[str, bool] = {}
 
     class _ObservedSourceBinding(RuntimeError):
@@ -282,9 +288,10 @@ def test_report_only_remeasurement_requires_exact_prior_clean_binding(
     _git(tmp_path, "config", "user.name", "LCR Test")
     _git(tmp_path, "config", "user.email", "lcr@example.invalid")
     baseline = tmp_path / cli.DEFAULT_LIVE_BASELINE_RELPATH
+    current_parent = tmp_path / cli.DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH
     acceptance = tmp_path / cli.PRODUCTION_ACCEPTANCE_RELPATH
     candidate = tmp_path / cli.DEFAULT_REPORT_RELPATH
-    for path in (baseline, acceptance, candidate):
+    for path in (baseline, current_parent, acceptance, candidate):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("{}\n", encoding="utf-8")
     _git(tmp_path, "add", ".")
@@ -295,6 +302,7 @@ def test_report_only_remeasurement_requires_exact_prior_clean_binding(
         "clean_at_seal": True,
         "excluded_evidence_paths": [
             cli.DEFAULT_LIVE_BASELINE_RELPATH.as_posix(),
+            cli.DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH.as_posix(),
             cli.PRODUCTION_ACCEPTANCE_RELPATH.as_posix(),
             cli.DEFAULT_REPORT_RELPATH.as_posix(),
         ],
@@ -1278,6 +1286,136 @@ def test_baseline_partition_observer_rejects_nonempty_missing_or_ambiguous_ident
         )
 
 
+def _current_public_parent_provenance(
+    observed_at: datetime,
+) -> dict[str, object]:
+    parent_audit = cli.current_public_parent_audit
+    return {
+        "authorizes_exact_51_acceptance": False,
+        "authorizes_hub_mutation": False,
+        "authorizes_publication": False,
+        "current_corpus_accepted": False,
+        "current_corpus_non_acceptance": copy.deepcopy(
+            cli.EXPECTED_CURRENT_CORPUS_NON_ACCEPTANCE
+        ),
+        "current_public_parent_pin": parent_audit.CURRENT_PUBLIC_PARENT_PIN,
+        "current_public_parent_role": "optimistic_parent_and_rollback_only",
+        "current_public_parent_tree_oid": parent_audit.CURRENT_PUBLIC_PARENT_TREE_OID,
+        "evidence_only": True,
+        "goal_id": "LCR-G146",
+        "historical_baseline_pin": parent_audit.HISTORICAL_BASELINE_PIN,
+        "historical_baseline_role": "sealed_historical_evidence_only",
+        "historical_baseline_tree_oid": parent_audit.HISTORICAL_BASELINE_TREE_OID,
+        "identity_sha256": "1" * 64,
+        "observed_at_utc": observed_at.isoformat().replace("+00:00", "Z"),
+        "path": cli.DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH.as_posix(),
+        "receipt_file_sha256": "2" * 64,
+        "receipt_sha256": "3" * 64,
+        "satisfies_lcr084_acceptance": False,
+        "schema": parent_audit.REPORT_SCHEMA,
+        "task_id": "LCR-084",
+    }
+
+
+def _current_public_parent_receipt(
+    observed_at: datetime,
+) -> dict[str, object]:
+    parent_audit = cli.current_public_parent_audit
+    return {
+        "current_corpus_non_acceptance": copy.deepcopy(
+            cli.EXPECTED_CURRENT_CORPUS_NON_ACCEPTANCE
+        ),
+        "fixture_only": False,
+        "goal_id": "LCR-G146",
+        "identity": {"identity_sha256": "1" * 64},
+        "mode": "live",
+        "observed_at_utc": observed_at.isoformat().replace("+00:00", "Z"),
+        "pins": {
+            "current_public_parent": {
+                "revision": parent_audit.CURRENT_PUBLIC_PARENT_PIN,
+                "role": "optimistic_parent_and_rollback_only",
+                "tree_oid": parent_audit.CURRENT_PUBLIC_PARENT_TREE_OID,
+            },
+            "historical_baseline": {
+                "revision": parent_audit.HISTORICAL_BASELINE_PIN,
+                "role": "sealed_historical_evidence_only",
+                "tree_oid": parent_audit.HISTORICAL_BASELINE_TREE_OID,
+            },
+            "pins_are_distinct": True,
+        },
+        "receipt_sha256": "3" * 64,
+        "schema": parent_audit.REPORT_SCHEMA,
+        "task_id": "LCR-084",
+    }
+
+
+def test_current_parent_loader_always_requires_live_semantics(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    receipt = _current_public_parent_receipt(datetime.now(UTC))
+    calls: list[tuple[Path, bool]] = []
+
+    def load(path: Path, *, require_live: bool) -> dict[str, object]:
+        calls.append((path, require_live))
+        return copy.deepcopy(receipt)
+
+    monkeypatch.setattr(
+        cli.current_public_parent_audit,
+        "load_and_validate_receipt",
+        load,
+    )
+    selected = tmp_path / "receipt.json"
+    assert cli._load_current_public_parent_receipt(selected) == receipt
+    assert calls == [(selected, True)]
+
+
+def test_current_parent_binding_bookends_exact_receipt_bytes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    receipt = _current_public_parent_receipt(datetime.now(UTC))
+    path = tmp_path / cli.DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(receipt, sort_keys=True), encoding="utf-8")
+    monkeypatch.setattr(
+        cli,
+        "_load_current_public_parent_receipt",
+        lambda _path: copy.deepcopy(receipt),
+    )
+
+    binding = cli.current_public_parent_provenance_binding(
+        path,
+        repo_root=tmp_path,
+    )
+
+    assert binding["receipt_file_sha256"] == cli.file_sha256(path)
+    assert binding["receipt_sha256"] == "3" * 64
+    assert binding["historical_baseline_pin"].startswith("42f0546")
+    assert binding["current_public_parent_pin"].startswith("78cba0e")
+    assert binding["current_corpus_accepted"] is False
+    assert binding["satisfies_lcr084_acceptance"] is False
+    assert binding["authorizes_publication"] is False
+
+
+def test_current_parent_binding_rejects_receipt_byte_race(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    receipt = _current_public_parent_receipt(datetime.now(UTC))
+    path = tmp_path / cli.DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(receipt, sort_keys=True), encoding="utf-8")
+
+    def mutate(selected: Path) -> dict[str, object]:
+        selected.write_bytes(selected.read_bytes() + b"\n")
+        return copy.deepcopy(receipt)
+
+    monkeypatch.setattr(cli, "_load_current_public_parent_receipt", mutate)
+    with pytest.raises(cli.CandidateError, match="changed during live validation"):
+        cli.current_public_parent_provenance_binding(path, repo_root=tmp_path)
+
+
 def _production_evidence(
     *, sealed_at: datetime | None = None
 ) -> dict[str, object]:
@@ -1480,6 +1618,9 @@ def _production_evidence(
             "verifier_owned_live_reobservation": True,
         },
         "baseline_reconciliation": reconciliation,
+        "current_public_parent_provenance": (
+            _current_public_parent_provenance(seal_time - timedelta(seconds=1))
+        ),
         "input_map": {
             "path": "evidence/input-map.json",
             "schema_version": "state-laws-production-input-map/v2",
@@ -1542,6 +1683,7 @@ def _production_evidence(
             "clean_at_seal": True,
             "excluded_evidence_paths": [
                 cli.DEFAULT_LIVE_BASELINE_RELPATH.as_posix(),
+                cli.DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH.as_posix(),
                 "docs/reports/legal_corpora_reindex/full_scrape_acceptance.json",
                 "docs/reports/legal_corpora_reindex/release_candidate.json",
             ],
@@ -1575,6 +1717,7 @@ def _production_candidate(tmp_path: Path) -> dict[str, object]:
         "evidence/input-map.json",
         "evidence/rights.json",
         cli.DEFAULT_LIVE_BASELINE_RELPATH,
+        cli.DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH,
     ):
         evidence_file = tmp_path / relative
         evidence_file.parent.mkdir(parents=True, exist_ok=True)
@@ -1722,6 +1865,35 @@ def _production_candidate(tmp_path: Path) -> dict[str, object]:
     }
     payload["report_digest_sha256"] = cli._digest_for_report(payload)
     return payload
+
+
+def test_candidate_parent_provenance_is_strictly_non_authorizing(
+    tmp_path: Path,
+) -> None:
+    payload = _production_candidate(tmp_path)
+    evidence = payload["production_evidence"]
+    assert isinstance(evidence, dict)
+    parent = evidence["current_public_parent_provenance"]
+    assert isinstance(parent, dict)
+    assert parent["current_corpus_accepted"] is False
+    assert parent["satisfies_lcr084_acceptance"] is False
+    assert parent["authorizes_exact_51_acceptance"] is False
+    assert parent["authorizes_publication"] is False
+    assert payload["authorizing_for_publication"] is False
+    assert payload["authorizing_for_release"] is False
+
+    parent["authorizes_exact_51_acceptance"] = True
+    payload["production_evidence_digest_sha256"] = cli.digest_payload(evidence)
+    payload["acceptance"]["production_evidence_digest_sha256"] = payload[  # type: ignore[index]
+        "production_evidence_digest_sha256"
+    ]
+    payload["report_digest_sha256"] = cli._digest_for_report(payload)
+    with pytest.raises(cli.CandidateError):
+        cli.check_production_candidate_report(
+            payload,
+            repo_root=tmp_path,
+            remeasure_production_evidence=False,
+        )
 
 
 def _main_publication_candidate(

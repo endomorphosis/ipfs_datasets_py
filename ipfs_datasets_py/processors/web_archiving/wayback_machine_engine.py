@@ -15,6 +15,7 @@ import json
 import logging
 import posixpath
 import re
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -382,6 +383,26 @@ async def fetch_wayback_cdx_rows(
             retry_after = str(response_headers.get("Retry-After") or "").strip()
             if retry_after:
                 error_result["retry_after"] = retry_after
+        error_payload = b""
+        if error_response is not None:
+            try:
+                error_payload = bytes(getattr(error_response, "content", b"") or b"")
+            except Exception:
+                error_payload = b""
+        error_result["receipt"] = {
+            "schema_version": "wayback-cdx-discovery-receipt-v1",
+            "source_transport": "wayback_cdx",
+            "query_url": secure_url,
+            "response_url": str(
+                getattr(error_response, "url", "") or secure_url
+            ).strip()
+            or secure_url,
+            "response_status": error_status,
+            "response_sha256": hashlib.sha256(error_payload).hexdigest(),
+            "response_length": len(error_payload),
+            "row_count": 0,
+            "fetched_at": datetime.now(timezone.utc).isoformat(),
+        }
         return error_result
 
 
@@ -780,7 +801,9 @@ def wayback_identity_replay_url(
 
     original_url = parse_exact_http_locator(url).raw
     if timestamp is None:
-        replay_key = "id_"
+        # Wayback's current latest-identity calendar token. Bare `id_`
+        # now 302s to the Wayback homepage instead of a dated capture.
+        replay_key = "2id_"
     else:
         capture_timestamp = _valid_capture_timestamp(timestamp)
         if not capture_timestamp:
@@ -789,6 +812,26 @@ def wayback_identity_replay_url(
             )
         replay_key = f"{capture_timestamp}id_"
     return f"https://web.archive.org/web/{replay_key}/{original_url}"
+
+
+def _wayback_calendar_original_compatible(
+    located_original: str,
+    official_url: str,
+) -> bool:
+    """Admit calendar redirects that only case-fold host or path."""
+
+    try:
+        left = parse_exact_http_locator(located_original)
+        right = parse_exact_http_locator(official_url)
+    except ValueError:
+        return False
+    return (
+        left.scheme == right.scheme
+        and left.hostname.casefold() == right.hostname.casefold()
+        and left.path.casefold() == right.path.casefold()
+        and left.has_query == right.has_query
+        and left.query == right.query
+    )
 
 
 async def fetch_wayback_capture_inventory(
@@ -1040,6 +1083,12 @@ async def fetch_wayback_capture_inventory(
                 pass
             if delay > 0:
                 await asyncio.sleep(delay)
+        receipt = outcome.get("receipt") if isinstance(outcome, Mapping) else None
+        if isinstance(receipt, Mapping) and receipt:
+            retained_receipt = dict(receipt)
+            retained_receipt["query_prefix"] = prefix
+            retained_receipt["query_target_count"] = len(members)
+            receipts.append(retained_receipt)
         if not isinstance(outcome, Mapping) or outcome.get("status") != "success":
             errors.append(
                 {
@@ -1052,12 +1101,6 @@ async def fetch_wayback_capture_inventory(
                 }
             )
             continue
-        receipt = outcome.get("receipt")
-        if isinstance(receipt, Mapping) and receipt:
-            retained_receipt = dict(receipt)
-            retained_receipt["query_prefix"] = prefix
-            retained_receipt["query_target_count"] = len(members)
-            receipts.append(retained_receipt)
 
         target_lookup = {
             exact_http_locator_identity(member): member for member in members
@@ -1421,7 +1464,11 @@ async def get_wayback_content(
             }
         except Exception as capture_error:
             logger.error(f"Failed to get capture: {capture_error}")
-            return {"status": "error", "error": f"No capture found for {official_url}: {capture_error}"}
+            return await _get_wayback_content_direct(
+                official_url,
+                timestamp,
+                closest=closest,
+            )
     except Exception as e:
         logger.error(f"Failed to get Wayback content for {url}: {e}")
         return {"status": "error", "error": str(e)}
@@ -1440,12 +1487,55 @@ async def _get_wayback_content_direct(
             url,
             timestamp=timestamp,
         )
-        response = requests.get(
-            wayback_url,
-            timeout=30,
-            allow_redirects=False,
-        )
+
+        def _identity_get(request_url: str):
+            last_exc: Exception | None = None
+            for attempt in range(3):
+                try:
+                    return requests.get(
+                        request_url,
+                        timeout=30,
+                        allow_redirects=False,
+                    )
+                except requests.RequestException as exc:
+                    last_exc = exc
+                    if attempt == 2:
+                        raise
+                    time.sleep(2.0 * (attempt + 1))
+            raise last_exc  # pragma: no cover
+
+        response = _identity_get(wayback_url)
         response_status = int(getattr(response, "status_code", 0) or 0)
+        if timestamp is None and response_status in {301, 302, 303, 307, 308}:
+            location = str(
+                (getattr(response, "headers", {}) or {}).get("Location")
+                or (getattr(response, "headers", {}) or {}).get("location")
+                or ""
+            ).strip()
+            if location.startswith("/"):
+                location = f"https://web.archive.org{location}"
+            try:
+                located = parse_wayback_archive_url(
+                    location,
+                    allowed_modifiers=("id_",),
+                    require_identity_modifier=True,
+                )
+            except ValueError:
+                located = None
+            official_url = parse_exact_http_locator(url).raw
+            if located is not None and _wayback_calendar_original_compatible(
+                located.original_url,
+                official_url,
+            ):
+                # Calendar redirects often lowercase the stored original.
+                # Replay the exact official locator at the redirected timestamp.
+                response = _identity_get(
+                    wayback_identity_replay_url(
+                        official_url,
+                        timestamp=located.timestamp,
+                    )
+                )
+                response_status = int(getattr(response, "status_code", 0) or 0)
         if response_status != 200:
             return {
                 "status": "error",

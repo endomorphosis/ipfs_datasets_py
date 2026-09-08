@@ -30,7 +30,7 @@ import subprocess
 import sys
 import tempfile
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from hashlib import sha256
 from pathlib import Path
 from types import MappingProxyType
@@ -57,10 +57,11 @@ from ipfs_datasets_py.processors.legal_data.state_laws_local_release import (
 from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import (
     DEFAULT_CREDENTIALS_SCOPE,
     PREVIOUS_PUBLIC_PIN,
+    PUBLICATION_PARENT_REVISION,
     REQUIRED_LIVE_MUTATION_GATES,
     LiveMutationRequest,
     PublicationAuthorization,
-    assert_rollback_pin_preserved,
+    assert_historical_baseline_pin_preserved,
     assert_target_authorized,
     validate_exact_51_coverage,
 )
@@ -73,7 +74,11 @@ from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import
 from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
     DEFAULT_DATASET_REPO_ID,
     SOURCE_RIGHTS_RECEIPT_RELPATH,
+    VIEWER_DEFAULT_CONFIG_NAME,
+    VIEWER_LEGACY_CONFIG_NAME,
     digest_mapping,
+    render_state_laws_root_viewer_card,
+    state_laws_root_viewer_configs,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
     SCHEMA_VERSION as RELEASE_SCHEMA_VERSION,
@@ -106,6 +111,19 @@ STATE_LAWS_STAGING_CANARY_RELPATH: Final = (
     "docs/reports/legal_corpora_reindex/staging_canary.json"
 )
 
+VIEWER_CONTROL_SCHEMA_VERSION: Final = "state-laws-viewer-control-plan/v1"
+VIEWER_CONTROL_AUTHORIZATION_SCHEMA_VERSION: Final = (
+    "state-laws-viewer-control-replacement-authorization/v1"
+)
+VIEWER_ROOT_PATH: Final = "README.md"
+VIEWER_CONTROL_OBSERVE: Final = "observe_root_control"
+VIEWER_CONTROL_ADD: Final = "add_root_control_if_absent"
+VIEWER_CONTROL_SKIP: Final = "skip_identical_root_control"
+VIEWER_CONTROL_REPLACE: Final = "replace_root_control_if_digest_matches"
+
+DEFAULT_CONFIG_NAME: Final = VIEWER_DEFAULT_CONFIG_NAME
+LEGACY_CONFIG_NAME: Final = VIEWER_LEGACY_CONFIG_NAME
+
 AUTHORIZES_PUBLICATION: Final = False
 AUTHORIZES_HUB_UPLOAD: Final = False
 PERFORMS_NETWORK_IO: Final = False
@@ -113,6 +131,331 @@ REENCODES_PHYSICAL_ARTIFACTS: Final = False
 
 class StateLawsPublicationPackageError(ValueError):
     """Raised when a local release cannot be planned without weakening it."""
+
+
+@dataclass(frozen=True, slots=True)
+class StateLawsViewerControlAuthorization:
+    """Review binding for one exact root ``README.md`` CAS replacement."""
+
+    review_id: str
+    reviewer: str
+    repository_id: str
+    target_revision: str
+    audited_parent_commit: str
+    release_manifest_digest: str
+    expected_existing_sha256: str
+    replacement_sha256: str
+    remote_path: str = VIEWER_ROOT_PATH
+    operation: str = VIEWER_CONTROL_REPLACE
+    schema_version: str = VIEWER_CONTROL_AUTHORIZATION_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        if self.schema_version != VIEWER_CONTROL_AUTHORIZATION_SCHEMA_VERSION:
+            raise StateLawsPublicationPackageError(
+                "unsupported Viewer-control replacement authorization schema"
+            )
+        if self.operation != VIEWER_CONTROL_REPLACE:
+            raise StateLawsPublicationPackageError(
+                "Viewer-control authorization only permits digest-matched replacement"
+            )
+        if self.remote_path != VIEWER_ROOT_PATH:
+            raise StateLawsPublicationPackageError(
+                "Viewer-control authorization must target root README.md"
+            )
+        if self.repository_id != DEFAULT_DATASET_REPO_ID:
+            raise StateLawsPublicationPackageError(
+                "Viewer-control authorization targets the wrong dataset repository"
+            )
+        if self.target_revision != "main":
+            raise StateLawsPublicationPackageError(
+                "Viewer-control replacement authorization must target main"
+            )
+        parent = str(self.audited_parent_commit or "")
+        if (
+            len(parent) != 40
+            or parent != parent.casefold()
+            or any(character not in "0123456789abcdef" for character in parent)
+        ):
+            raise StateLawsPublicationPackageError(
+                "Viewer-control authorization requires an exact audited parent commit"
+            )
+        for field_name in (
+            "release_manifest_digest",
+            "expected_existing_sha256",
+            "replacement_sha256",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _require_sha256(getattr(self, field_name), label=field_name),
+            )
+        for field_name in ("review_id", "reviewer"):
+            value = str(getattr(self, field_name) or "")
+            if not value or value.strip() != value:
+                raise StateLawsPublicationPackageError(
+                    f"Viewer-control authorization {field_name} is required"
+                )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "audited_parent_commit": self.audited_parent_commit,
+            "expected_existing_sha256": self.expected_existing_sha256,
+            "operation": self.operation,
+            "release_manifest_digest": self.release_manifest_digest,
+            "remote_path": self.remote_path,
+            "replacement_sha256": self.replacement_sha256,
+            "repository_id": self.repository_id,
+            "review_id": self.review_id,
+            "reviewer": self.reviewer,
+            "schema_version": self.schema_version,
+            "target_revision": self.target_revision,
+        }
+
+    @classmethod
+    def from_mapping(
+        cls,
+        value: Mapping[str, Any],
+    ) -> "StateLawsViewerControlAuthorization":
+        if not isinstance(value, Mapping):
+            raise StateLawsPublicationPackageError(
+                "Viewer-control replacement authorization must be an object"
+            )
+        allowed = {
+            "audited_parent_commit",
+            "expected_existing_sha256",
+            "operation",
+            "release_manifest_digest",
+            "remote_path",
+            "replacement_sha256",
+            "repository_id",
+            "review_id",
+            "reviewer",
+            "schema_version",
+            "target_revision",
+        }
+        if set(value) != allowed:
+            raise StateLawsPublicationPackageError(
+                "Viewer-control replacement authorization fields differ from "
+                "the sealed schema"
+            )
+        return cls(**{name: value[name] for name in allowed})
+
+
+@dataclass(frozen=True, slots=True)
+class StateLawsViewerControlPlan:
+    """Exact root-card intent kept separate from immutable release adds."""
+
+    repository_id: str
+    target_revision: str
+    audited_parent_commit: str
+    release_prefix: str
+    release_manifest_digest: str
+    sha256: str
+    size_bytes: int
+    configs: tuple[Mapping[str, Any], ...]
+    existing_state: str
+    operation: str
+    expected_existing_sha256: str = ""
+    replacement_review: Mapping[str, Any] | None = None
+    remote_path: str = VIEWER_ROOT_PATH
+    schema_version: str = VIEWER_CONTROL_SCHEMA_VERSION
+    plan_digest: str = ""
+
+    def __post_init__(self) -> None:
+        if self.schema_version != VIEWER_CONTROL_SCHEMA_VERSION:
+            raise StateLawsPublicationPackageError(
+                "unsupported State Laws Viewer-control plan schema"
+            )
+        if self.repository_id != DEFAULT_DATASET_REPO_ID:
+            raise StateLawsPublicationPackageError(
+                "Viewer-control plan targets the wrong repository"
+            )
+        if self.remote_path != VIEWER_ROOT_PATH:
+            raise StateLawsPublicationPackageError(
+                "Viewer-control plan must target root README.md"
+            )
+        digest = _require_sha256(self.sha256, label="Viewer-control sha256")
+        release_digest = _require_sha256(
+            self.release_manifest_digest,
+            label="Viewer-control release_manifest_digest",
+        )
+        if not isinstance(self.size_bytes, int) or isinstance(self.size_bytes, bool):
+            raise StateLawsPublicationPackageError(
+                "Viewer-control size_bytes must be a non-negative integer"
+            )
+        if self.size_bytes < 0:
+            raise StateLawsPublicationPackageError(
+                "Viewer-control size_bytes must be a non-negative integer"
+            )
+        configs = tuple(
+            MappingProxyType(_canonical_mapping(item, label="Viewer config"))
+            for item in self.configs
+        )
+        if not configs:
+            raise StateLawsPublicationPackageError(
+                "Viewer-control plan requires exact config controls"
+            )
+        if self.existing_state not in {"unobserved", "absent", "present"}:
+            raise StateLawsPublicationPackageError(
+                "Viewer-control existing_state is invalid"
+            )
+        if self.operation not in {
+            VIEWER_CONTROL_OBSERVE,
+            VIEWER_CONTROL_ADD,
+            VIEWER_CONTROL_SKIP,
+            VIEWER_CONTROL_REPLACE,
+        }:
+            raise StateLawsPublicationPackageError(
+                "Viewer-control operation is invalid"
+            )
+        expected_existing = str(self.expected_existing_sha256 or "")
+        if expected_existing:
+            expected_existing = _require_sha256(
+                expected_existing,
+                label="Viewer-control expected_existing_sha256",
+            )
+        authorization = (
+            None
+            if self.replacement_review is None
+            else MappingProxyType(
+                _canonical_mapping(
+                    self.replacement_review,
+                    label="Viewer-control replacement authorization",
+                )
+            )
+        )
+        if self.operation == VIEWER_CONTROL_REPLACE and authorization is None:
+            raise StateLawsPublicationPackageError(
+                "Viewer-control replacement lacks exact review authorization"
+            )
+        if self.operation != VIEWER_CONTROL_REPLACE and authorization is not None:
+            raise StateLawsPublicationPackageError(
+                "Viewer-control authorization is only valid for replacement"
+            )
+        if authorization is not None:
+            review = StateLawsViewerControlAuthorization.from_mapping(authorization)
+            expected_review = {
+                "audited_parent_commit": self.audited_parent_commit,
+                "expected_existing_sha256": expected_existing,
+                "release_manifest_digest": release_digest,
+                "remote_path": self.remote_path,
+                "replacement_sha256": digest,
+                "repository_id": self.repository_id,
+                "target_revision": self.target_revision,
+            }
+            if any(
+                review.to_dict().get(key) != value
+                for key, value in expected_review.items()
+            ):
+                raise StateLawsPublicationPackageError(
+                    "Viewer-control replacement review binding drifted"
+                )
+        object.__setattr__(self, "sha256", digest)
+        object.__setattr__(self, "release_manifest_digest", release_digest)
+        object.__setattr__(self, "configs", configs)
+        object.__setattr__(self, "expected_existing_sha256", expected_existing)
+        object.__setattr__(self, "replacement_review", authorization)
+        identity = self._identity_payload()
+        computed = sha256(canonical_json_bytes(identity)).hexdigest()
+        if self.plan_digest and self.plan_digest != computed:
+            raise StateLawsPublicationPackageError(
+                "Viewer-control plan digest mismatch"
+            )
+        object.__setattr__(self, "plan_digest", computed)
+
+    def _identity_payload(self) -> dict[str, Any]:
+        replaces_root = self.operation == VIEWER_CONTROL_REPLACE
+        supported = self.operation in {
+            VIEWER_CONTROL_ADD,
+            VIEWER_CONTROL_REPLACE,
+            VIEWER_CONTROL_SKIP,
+        }
+        return {
+            "audited_parent_commit": self.audited_parent_commit,
+            "canonical_writer_supports_operation": supported,
+            "configs": [dict(item) for item in self.configs],
+            "default_config": DEFAULT_CONFIG_NAME,
+            "existing_state": self.existing_state,
+            "expected_existing_sha256": self.expected_existing_sha256 or None,
+            "immutable_release_artifacts_additive_only": True,
+            "jurisdiction_count": len(CANONICAL_JURISDICTION_ORDER),
+            "legacy_config": LEGACY_CONFIG_NAME,
+            "legacy_root_objects_preserved": True,
+            "operation": self.operation,
+            "release_manifest_digest": self.release_manifest_digest,
+            "release_prefix": self.release_prefix,
+            "remote_path": self.remote_path,
+            "replacement_review": (
+                dict(self.replacement_review)
+                if self.replacement_review is not None
+                else None
+            ),
+            "repository_id": self.repository_id,
+            "requires_root_control_plane_write": self.operation
+            in {VIEWER_CONTROL_ADD, VIEWER_CONTROL_REPLACE},
+            "replaces_existing_root": replaces_root,
+            "schema_version": self.schema_version,
+            "sha256": self.sha256,
+            "size_bytes": self.size_bytes,
+            "target_revision": self.target_revision,
+            "whole_publication_additive_only": self.operation
+            in {VIEWER_CONTROL_ADD, VIEWER_CONTROL_SKIP},
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        return {**self._identity_payload(), "plan_digest": self.plan_digest}
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any]) -> "StateLawsViewerControlPlan":
+        if not isinstance(value, Mapping):
+            raise StateLawsPublicationPackageError(
+                "Viewer-control plan must be an object"
+            )
+        required = {
+            "audited_parent_commit",
+            "configs",
+            "existing_state",
+            "expected_existing_sha256",
+            "operation",
+            "plan_digest",
+            "release_manifest_digest",
+            "release_prefix",
+            "remote_path",
+            "replacement_review",
+            "repository_id",
+            "schema_version",
+            "sha256",
+            "size_bytes",
+            "target_revision",
+        }
+        if not required.issubset(value):
+            raise StateLawsPublicationPackageError(
+                "Viewer-control plan omits required fields"
+            )
+        plan = cls(
+            repository_id=value["repository_id"],
+            target_revision=value["target_revision"],
+            audited_parent_commit=value["audited_parent_commit"],
+            release_prefix=value["release_prefix"],
+            release_manifest_digest=value["release_manifest_digest"],
+            sha256=value["sha256"],
+            size_bytes=value["size_bytes"],
+            configs=tuple(value["configs"]),
+            existing_state=value["existing_state"],
+            operation=value["operation"],
+            expected_existing_sha256=(
+                value.get("expected_existing_sha256") or ""
+            ),
+            replacement_review=value.get("replacement_review"),
+            remote_path=value["remote_path"],
+            schema_version=value["schema_version"],
+            plan_digest=value["plan_digest"],
+        )
+        if canonical_json_bytes(plan.to_dict()) != canonical_json_bytes(dict(value)):
+            raise StateLawsPublicationPackageError(
+                "Viewer-control plan contains unexpected or derived-field drift"
+            )
+        return plan
 
 
 def _canonical_mapping(value: Mapping[str, Any], *, label: str) -> dict[str, Any]:
@@ -448,6 +791,314 @@ def verify_state_laws_publication_package_identity(
     return package
 
 
+def state_laws_viewer_control_card_bytes(
+    package: StateLawsPublicationPackage,
+    *,
+    release_prefix: str,
+) -> bytes:
+    """Render the exact repository-root card for one verified release."""
+
+    verify_state_laws_publication_package_identity(package)
+    expected_prefix = STATE_LAWS_RELEASE_PREFIX_TEMPLATE.format(
+        release_id=package.release_id
+    )
+    if release_prefix != expected_prefix:
+        raise StateLawsPublicationPackageError(
+            "Viewer root card release prefix differs from the verified package"
+        )
+    corpus_paths = tuple(
+        str(item.get("relative_path") or "")
+        for item in package.artifact_descriptors
+        if str(item.get("relative_path") or "").startswith("data/corpus/")
+        and str(item.get("relative_path") or "").endswith(".parquet")
+    )
+    if not corpus_paths:
+        raise StateLawsPublicationPackageError(
+            "Viewer root card requires combined corpus Parquet artifacts"
+        )
+    rights_bytes = _read_regular_file_nofollow(
+        Path(package.output_root) / SOURCE_RIGHTS_RECEIPT_RELPATH,
+        label="packaged source-rights receipt for Viewer control",
+        maximum_bytes=16 * 1024 * 1024,
+    )
+    try:
+        rights = json.loads(
+            rights_bytes.decode("utf-8", errors="strict"),
+            object_pairs_hook=_reject_duplicate_json_object,
+        )
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise StateLawsPublicationPackageError(
+            "packaged source-rights receipt for Viewer control is malformed"
+        ) from exc
+    if not isinstance(rights, Mapping):
+        raise StateLawsPublicationPackageError(
+            "packaged source-rights receipt for Viewer control must be an object"
+        )
+    rights_digest = _require_sha256(
+        rights.get("report_digest_sha256")
+        or rights.get("receipt_digest")
+        or rights.get("content_digest"),
+        label="Viewer-control source-rights receipt digest",
+    )
+    try:
+        rendered = render_state_laws_root_viewer_card(
+            release_prefix=release_prefix,
+            release_manifest_digest=package.manifest_digest,
+            source_rights_receipt_digest=rights_digest,
+        )
+    except Exception as exc:
+        raise StateLawsPublicationPackageError(
+            f"cannot render exact root Viewer control: {exc}"
+        ) from exc
+    return rendered.encode("utf-8")
+
+
+def plan_state_laws_viewer_control(
+    package: StateLawsPublicationPackage,
+    plan: PublicationPlan,
+    *,
+    root_readme_exists: bool | None = None,
+    existing_root_readme_sha256: str | None = None,
+    replacement_authorization: (
+        StateLawsViewerControlAuthorization | Mapping[str, Any] | None
+    ) = None,
+) -> StateLawsViewerControlPlan:
+    """Plan root Viewer metadata without conflating it with release adds.
+
+    ``root_readme_exists=None`` means the remote root has not been observed and
+    yields a non-executable observation requirement.  A present, differing
+    root is a hard conflict unless an exact digest-bound replacement review is
+    supplied.
+    """
+
+    verify_state_laws_publication_package_identity(package)
+    if not isinstance(plan, PublicationPlan):
+        raise StateLawsPublicationPackageError(
+            "Viewer-control planning requires a PublicationPlan"
+        )
+    if (
+        plan.repository_id != DEFAULT_DATASET_REPO_ID
+        or plan.release_id != package.release_id
+        or plan.release_sha256 != package.manifest_digest
+        or plan.release_prefix
+        != STATE_LAWS_RELEASE_PREFIX_TEMPLATE.format(release_id=package.release_id)
+    ):
+        raise StateLawsPublicationPackageError(
+            "Viewer-control planning is not bound to the exact State Laws release"
+        )
+    card_bytes = state_laws_viewer_control_card_bytes(
+        package,
+        release_prefix=plan.release_prefix,
+    )
+    card_sha256 = sha256(card_bytes).hexdigest()
+    configs = tuple(
+        MappingProxyType(dict(config))
+        for config in state_laws_root_viewer_configs(plan.release_prefix)
+    )
+    observed_digest = str(existing_root_readme_sha256 or "")
+    if observed_digest:
+        observed_digest = _require_sha256(
+            observed_digest,
+            label="existing root README sha256",
+        )
+        if root_readme_exists is False:
+            raise StateLawsPublicationPackageError(
+                "root README cannot be both absent and digest-observed"
+            )
+        root_readme_exists = True
+    if root_readme_exists not in {None, True, False}:
+        raise StateLawsPublicationPackageError(
+            "root_readme_exists must be true, false, or unobserved"
+        )
+    if root_readme_exists is True and not observed_digest:
+        raise StateLawsPublicationPackageError(
+            "present root README requires its observed SHA-256 digest"
+        )
+
+    authorization: StateLawsViewerControlAuthorization | None
+    if replacement_authorization is None:
+        authorization = None
+    elif isinstance(
+        replacement_authorization,
+        StateLawsViewerControlAuthorization,
+    ):
+        authorization = replacement_authorization
+    else:
+        authorization = StateLawsViewerControlAuthorization.from_mapping(
+            replacement_authorization
+        )
+
+    if root_readme_exists is None:
+        existing_state = "unobserved"
+        operation = VIEWER_CONTROL_OBSERVE
+    elif root_readme_exists is False:
+        existing_state = "absent"
+        operation = VIEWER_CONTROL_ADD
+    elif observed_digest == card_sha256:
+        existing_state = "present"
+        operation = VIEWER_CONTROL_SKIP
+    else:
+        existing_state = "present"
+        operation = VIEWER_CONTROL_REPLACE
+
+    if operation != VIEWER_CONTROL_REPLACE and authorization is not None:
+        raise StateLawsPublicationPackageError(
+            "replacement authorization supplied when no replacement is needed"
+        )
+    if operation == VIEWER_CONTROL_REPLACE:
+        if authorization is None:
+            raise StateLawsPublicationPackageError(
+                "existing root README conflicts with the exact Viewer control; "
+                "an exact digest-bound replacement authorization is required"
+            )
+        expected_authorization = {
+            "audited_parent_commit": plan.audited_parent_commit,
+            "expected_existing_sha256": observed_digest,
+            "operation": VIEWER_CONTROL_REPLACE,
+            "release_manifest_digest": package.manifest_digest,
+            "remote_path": VIEWER_ROOT_PATH,
+            "replacement_sha256": card_sha256,
+            "repository_id": plan.repository_id,
+            "target_revision": plan.target_revision,
+        }
+        actual_authorization = authorization.to_dict()
+        if any(
+            actual_authorization.get(key) != value
+            for key, value in expected_authorization.items()
+        ):
+            raise StateLawsPublicationPackageError(
+                "Viewer-control replacement authorization differs from the "
+                "observed root, replacement, parent, or release"
+            )
+
+    control = StateLawsViewerControlPlan(
+        repository_id=plan.repository_id,
+        target_revision=plan.target_revision,
+        audited_parent_commit=plan.audited_parent_commit,
+        release_prefix=plan.release_prefix,
+        release_manifest_digest=package.manifest_digest,
+        sha256=card_sha256,
+        size_bytes=len(card_bytes),
+        configs=configs,
+        existing_state=existing_state,
+        operation=operation,
+        expected_existing_sha256=observed_digest,
+        replacement_review=(
+            authorization.to_dict() if authorization is not None else None
+        ),
+    )
+    return verify_state_laws_viewer_control_plan(package, plan, control)
+
+
+def verify_state_laws_viewer_control_plan(
+    package: StateLawsPublicationPackage,
+    plan: PublicationPlan,
+    control: StateLawsViewerControlPlan | Mapping[str, Any] | None = None,
+) -> StateLawsViewerControlPlan:
+    """Recompute and verify the exact Viewer controls carried by a plan."""
+
+    verify_state_laws_publication_package_identity(package)
+    raw = plan.metadata.get("viewer_control") if control is None else control
+    resolved = (
+        raw
+        if isinstance(raw, StateLawsViewerControlPlan)
+        else StateLawsViewerControlPlan.from_mapping(raw)
+    )
+    card_bytes = state_laws_viewer_control_card_bytes(
+        package,
+        release_prefix=plan.release_prefix,
+    )
+    expected_configs = [
+        dict(config) for config in state_laws_root_viewer_configs(plan.release_prefix)
+    ]
+    if (
+        resolved.repository_id != plan.repository_id
+        or resolved.target_revision != plan.target_revision
+        or resolved.audited_parent_commit != plan.audited_parent_commit
+        or resolved.release_prefix != plan.release_prefix
+        or resolved.release_manifest_digest != package.manifest_digest
+        or resolved.sha256 != sha256(card_bytes).hexdigest()
+        or resolved.size_bytes != len(card_bytes)
+        or [dict(item) for item in resolved.configs] != expected_configs
+    ):
+        raise StateLawsPublicationPackageError(
+            "Viewer-control plan differs from the exact package, plan, or card"
+        )
+    state_operation = {
+        "unobserved": VIEWER_CONTROL_OBSERVE,
+        "absent": VIEWER_CONTROL_ADD,
+    }
+    if resolved.existing_state in state_operation:
+        if (
+            resolved.operation != state_operation[resolved.existing_state]
+            or resolved.expected_existing_sha256
+        ):
+            raise StateLawsPublicationPackageError(
+                "Viewer-control remote-state operation is incoherent"
+            )
+    elif resolved.operation == VIEWER_CONTROL_SKIP:
+        if resolved.expected_existing_sha256 != resolved.sha256:
+            raise StateLawsPublicationPackageError(
+                "Viewer-control skip requires an exact root-card digest match"
+            )
+    elif resolved.operation == VIEWER_CONTROL_REPLACE:
+        if (
+            not resolved.expected_existing_sha256
+            or resolved.expected_existing_sha256 == resolved.sha256
+        ):
+            raise StateLawsPublicationPackageError(
+                "Viewer-control replacement requires distinct old and new digests"
+            )
+        authorization = StateLawsViewerControlAuthorization.from_mapping(
+            resolved.replacement_review or {}
+        )
+        expected = {
+            "audited_parent_commit": resolved.audited_parent_commit,
+            "expected_existing_sha256": resolved.expected_existing_sha256,
+            "release_manifest_digest": resolved.release_manifest_digest,
+            "remote_path": resolved.remote_path,
+            "replacement_sha256": resolved.sha256,
+            "repository_id": resolved.repository_id,
+            "target_revision": resolved.target_revision,
+        }
+        if any(
+            authorization.to_dict().get(key) != value
+            for key, value in expected.items()
+        ):
+            raise StateLawsPublicationPackageError(
+                "Viewer-control replacement authorization binding drifted"
+            )
+    else:
+        raise StateLawsPublicationPackageError(
+            "present Viewer-control state has an invalid operation"
+        )
+    return resolved
+
+
+def _attach_state_laws_viewer_control(
+    package: StateLawsPublicationPackage,
+    plan: PublicationPlan,
+    *,
+    root_readme_exists: bool | None,
+    existing_root_readme_sha256: str | None,
+    replacement_authorization: (
+        StateLawsViewerControlAuthorization | Mapping[str, Any] | None
+    ),
+) -> PublicationPlan:
+    control = plan_state_laws_viewer_control(
+        package,
+        plan,
+        root_readme_exists=root_readme_exists,
+        existing_root_readme_sha256=existing_root_readme_sha256,
+        replacement_authorization=replacement_authorization,
+    )
+    metadata = dict(plan.metadata)
+    metadata["viewer_control"] = control.to_dict()
+    enriched = replace(plan, metadata=metadata, plan_digest="")
+    verify_state_laws_viewer_control_plan(package, enriched)
+    return enriched
+
+
 def prepare_state_laws_publication_package(
     output_root: str | Path,
 ) -> StateLawsPublicationPackage:
@@ -490,7 +1141,7 @@ def prepare_state_laws_publication_package(
     try:
         validate_exact_51_coverage(payload["jurisdictions"])
         assert_target_authorized(payload["dataset_repo_id"])
-        assert_rollback_pin_preserved(PREVIOUS_PUBLIC_PIN)
+        assert_historical_baseline_pin_preserved(PREVIOUS_PUBLIC_PIN)
     except Exception as exc:
         raise StateLawsPublicationPackageError(
             "completed local manifest failed its State Laws policy binding"
@@ -551,6 +1202,10 @@ class StateLawsPublicationDryRun:
     receipt: Mapping[str, Any]
 
     def to_dict(self) -> dict[str, Any]:
+        viewer_control = verify_state_laws_viewer_control_plan(
+            self.package,
+            self.plan,
+        )
         return {
             "authorizes_hub_upload": False,
             "authorizes_publication": False,
@@ -562,6 +1217,7 @@ class StateLawsPublicationDryRun:
             "receipt": dict(self.receipt),
             "remote_mutation_attempted": False,
             "schema_version": DRY_RUN_SCHEMA_VERSION,
+            "viewer_control": viewer_control.to_dict(),
         }
 
 
@@ -795,6 +1451,11 @@ def plan_state_laws_publication_dry_run(
     existing_remote_paths: Sequence[str] = (),
     existing_remote_digests: Mapping[str, str] | None = None,
     audited_parent_commit: str = "",
+    root_readme_exists: bool | None = None,
+    existing_root_readme_sha256: str | None = None,
+    root_readme_replacement_authorization: (
+        StateLawsViewerControlAuthorization | Mapping[str, Any] | None
+    ) = None,
 ) -> StateLawsPublicationDryRun:
     """Return a deterministic shared-publisher plan with zero network calls."""
 
@@ -808,6 +1469,28 @@ def plan_state_laws_publication_dry_run(
         existing_remote_digests=existing_remote_digests,
         audited_parent_commit=audited_parent_commit,
     )
+    root_digest = str(existing_root_readme_sha256 or "")
+    remote_digests = dict(existing_remote_digests or {})
+    if VIEWER_ROOT_PATH in remote_digests:
+        observed = str(remote_digests[VIEWER_ROOT_PATH])
+        if root_digest and root_digest != observed:
+            raise StateLawsPublicationPackageError(
+                "root README digest evidence disagrees"
+            )
+        root_digest = observed
+    if VIEWER_ROOT_PATH in set(existing_remote_paths):
+        if root_readme_exists is False:
+            raise StateLawsPublicationPackageError(
+                "root README presence evidence disagrees"
+            )
+        root_readme_exists = True
+    plan = _attach_state_laws_viewer_control(
+        package,
+        plan,
+        root_readme_exists=root_readme_exists,
+        existing_root_readme_sha256=root_digest or None,
+        replacement_authorization=root_readme_replacement_authorization,
+    )
     if (
         plan.release_id != package.release_id
         or plan.release_sha256 != package.manifest_digest
@@ -816,6 +1499,7 @@ def plan_state_laws_publication_dry_run(
         raise StateLawsPublicationPackageError(
             "shared publisher plan drifted from the verified State Laws package"
         )
+    _verify_state_laws_plan_binding(package, plan, profile)
     receipt = publisher.build_publication_receipt(
         plan=plan,
         status="dry_run_only",
@@ -840,6 +1524,8 @@ def plan_state_laws_staging_publication_dry_run(
     existing_remote_paths: Sequence[str] = (),
     existing_remote_digests: Mapping[str, str] | None = None,
     audited_parent_commit: str,
+    root_readme_exists: bool | None = None,
+    existing_root_readme_sha256: str | None = None,
 ) -> StateLawsPublicationDryRun:
     """Return the exact offline plan for a dedicated State staging branch."""
 
@@ -853,6 +1539,28 @@ def plan_state_laws_staging_publication_dry_run(
         existing_remote_digests=existing_remote_digests,
         audited_parent_commit=audited_parent_commit,
         target_revision=staging_branch,
+    )
+    root_digest = str(existing_root_readme_sha256 or "")
+    remote_digests = dict(existing_remote_digests or {})
+    if VIEWER_ROOT_PATH in remote_digests:
+        observed = str(remote_digests[VIEWER_ROOT_PATH])
+        if root_digest and root_digest != observed:
+            raise StateLawsPublicationPackageError(
+                "staging root README digest evidence disagrees"
+            )
+        root_digest = observed
+    if VIEWER_ROOT_PATH in set(existing_remote_paths):
+        if root_readme_exists is False:
+            raise StateLawsPublicationPackageError(
+                "staging root README presence evidence disagrees"
+            )
+        root_readme_exists = True
+    plan = _attach_state_laws_viewer_control(
+        package,
+        plan,
+        root_readme_exists=root_readme_exists,
+        existing_root_readme_sha256=root_digest or None,
+        replacement_authorization=None,
     )
     _verify_state_laws_plan_binding(
         package,
@@ -905,6 +1613,7 @@ def _verify_state_laws_plan_binding(
         raise StateLawsPublicationPackageError(
             "publisher plan is not bound to the official State Laws release"
         )
+    verify_state_laws_viewer_control_plan(package, plan)
 
     expected_descriptors = [
         *(dict(item) for item in package.artifact_descriptors),
@@ -980,6 +1689,8 @@ def require_state_laws_policy_binding(
     if (
         normalized.final_manifest_digest != package.manifest_digest
         or normalized.dataset_repo_id != DEFAULT_DATASET_REPO_ID
+        or normalized.previous_public_pin != PUBLICATION_PARENT_REVISION
+        or normalized.previous_public_pin != plan.audited_parent_commit
         or set(normalized.jurisdictions)
         != set(CANONICAL_JURISDICTION_ORDER)
     ):
@@ -1200,6 +1911,8 @@ def verify_state_laws_live_policy_proof(
         if (
             normalized.final_manifest_digest != plan.release_sha256
             or normalized.dataset_repo_id != plan.repository_id
+            or normalized.previous_public_pin != PUBLICATION_PARENT_REVISION
+            or normalized.previous_public_pin != plan.audited_parent_commit
             or normalized.operation != sealed.operation
             or normalized.phase != sealed.phase
         ):
@@ -1930,16 +2643,15 @@ def materialize_state_laws_staging_controls(
         candidate_manifest_digest=candidate_digest,
         plan=plan,
     )
-    card_bytes = (
-        "# State Laws immutable release\n\n"
-        f"Release manifest digest: `{plan.release_sha256}`\n\n"
-        f"Canonical candidate digest: `{candidate_digest}`\n\n"
-        "Canonical source-rights compliance digest: "
-        f"`{rights_digest}`\n\n"
-        f"Staging plan digest: `{plan.plan_digest}`\n\n"
-        f"Staging policy binding: `{proof_digest}`\n\n"
-        "Coverage: exact 51 U.S. state-level jurisdictions.\n"
-    ).encode("utf-8")
+    viewer_control = verify_state_laws_viewer_control_plan(package, plan)
+    card_bytes = state_laws_viewer_control_card_bytes(
+        package,
+        release_prefix=plan.release_prefix,
+    )
+    if sha256(card_bytes).hexdigest() != viewer_control.sha256:
+        raise StateLawsPublicationPackageError(
+            "staging Viewer control bytes differ from the reviewed plan"
+        )
     if (
         _read_regular_file_nofollow(
             canonical_root / canonical_runtime.STATE_CANDIDATE_MANIFEST_RELPATH,
@@ -2272,18 +2984,15 @@ def materialize_state_laws_canonical_controls(
             "canonical LCR-084 main candidate digest chain failed validation"
         )
     candidate_bytes = canonical_json_bytes(candidate) + b"\n"
-    card_bytes = (
-        "# State Laws immutable release\n\n"
-        f"Release manifest digest: `{plan.release_sha256}`\n\n"
-        f"Canonical candidate digest: `{candidate_digest}`\n\n"
-        f"Staging candidate digest: `{staging_candidate_digest}`\n\n"
-        "Canonical source-rights compliance digest: "
-        f"`{rights_digest}`\n\n"
-        f"Main plan digest: `{plan.plan_digest}`\n\n"
-        f"Main policy proof digest: `{sealed.proof_digest}`\n\n"
-        f"Verified staging commit: `{staging_revision}`\n\n"
-        "Coverage: exact 51 U.S. state-level jurisdictions.\n"
-    ).encode("utf-8")
+    viewer_control = verify_state_laws_viewer_control_plan(package, plan)
+    card_bytes = state_laws_viewer_control_card_bytes(
+        package,
+        release_prefix=plan.release_prefix,
+    )
+    if sha256(card_bytes).hexdigest() != viewer_control.sha256:
+        raise StateLawsPublicationPackageError(
+            "main Viewer control bytes differ from the reviewed plan"
+        )
     seal_payload = {
         "authorizing_for_publication": False,
         "authorizing_hub_upload": False,
@@ -2305,7 +3014,7 @@ def materialize_state_laws_canonical_controls(
         "policy_proof_digest": sealed.proof_digest,
         "post_hoc": False,
         "present": True,
-        "previous_public_pin": PREVIOUS_PUBLIC_PIN,
+        "previous_public_pin": plan.audited_parent_commit,
         "producer": "seal_state_laws_prepublication.py",
         "program_id": "legal-corpora-reindex-v1",
         "release_manifest_digest": plan.release_sha256,
@@ -2468,20 +3177,32 @@ __all__ = [
     "STATE_LAWS_PLAN_SCHEMA",
     "STATE_LAWS_PROFILE_ID",
     "STATE_LAWS_RECEIPT_SCHEMA",
+    "VIEWER_CONTROL_ADD",
+    "VIEWER_CONTROL_AUTHORIZATION_SCHEMA_VERSION",
+    "VIEWER_CONTROL_OBSERVE",
+    "VIEWER_CONTROL_REPLACE",
+    "VIEWER_CONTROL_SCHEMA_VERSION",
+    "VIEWER_CONTROL_SKIP",
+    "VIEWER_ROOT_PATH",
     "StateLawsCanonicalControlBundle",
     "StateLawsStagingControlBundle",
     "StateLawsPublicationDryRun",
     "StateLawsLivePolicyProof",
     "StateLawsPublicationPackage",
     "StateLawsPublicationPackageError",
+    "StateLawsViewerControlAuthorization",
+    "StateLawsViewerControlPlan",
     "materialize_state_laws_canonical_controls",
     "materialize_state_laws_staging_controls",
     "plan_state_laws_publication_dry_run",
     "plan_state_laws_staging_publication_dry_run",
+    "plan_state_laws_viewer_control",
     "prepare_state_laws_publication_package",
     "require_state_laws_policy_binding",
     "state_laws_publication_profile",
     "state_laws_staging_publication_profile",
+    "state_laws_viewer_control_card_bytes",
     "verify_state_laws_live_policy_proof",
     "verify_state_laws_publication_package_identity",
+    "verify_state_laws_viewer_control_plan",
 ]

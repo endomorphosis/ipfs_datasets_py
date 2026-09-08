@@ -384,7 +384,22 @@ async def acquire_live_catalog(
             timeout=timeout,
             referer=PUBLIC_ENTRY_URL,
         )
-        await page.wait_for_selector("li.js-node", timeout=min(timeout, 30_000))
+        # Free-public-access chrome can cover the TOC (Terms "I Agree"), so
+        # wait for attached nodes rather than visible ones. v3 retained a
+        # complete rendered tree while v4 timed out waiting for visibility.
+        agree = page.locator(
+            'input.primary[value="I Agree"], button:has-text("I Agree")'
+        )
+        if await agree.count():
+            try:
+                await agree.first.click(timeout=5_000)
+            except Exception:
+                pass
+        await page.wait_for_selector(
+            "li.js-node",
+            state="attached",
+            timeout=timeout,
+        )
         live_page_url = str(page.url or "")
         if not container_url_matches(live_page_url):
             raise RuntimeError(

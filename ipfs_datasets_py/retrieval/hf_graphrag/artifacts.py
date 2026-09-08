@@ -530,6 +530,28 @@ def validate_zstd_parquet(
     return row_count
 
 
+def iter_zstd_parquet(
+    path: str | Path,
+    *,
+    batch_size: int = 1024,
+    max_rows: int | None = MAX_ROWS_PER_PHYSICAL_SHARD,
+) -> Iterator[dict[str, Any]]:
+    """Yield row mappings from a ZSTD Parquet file without loading it whole."""
+
+    target = Path(path)
+    validate_zstd_parquet(target, max_rows=max_rows)
+    _, pq = _pyarrow()
+    parquet = pq.ParquetFile(target)
+    bound = max(1, int(batch_size))
+    for batch in parquet.iter_batches(batch_size=bound):
+        for row in batch.to_pylist():
+            if not isinstance(row, Mapping):
+                raise ArtifactIntegrityError(
+                    f"Parquet row is not a mapping: {target}"
+                )
+            yield dict(row)
+
+
 def write_zstd_parquet(
     path: str | Path,
     rows: Sequence[Mapping[str, Any]] | Any,
@@ -989,6 +1011,7 @@ __all__ = [
     "confine_path",
     "describe_file",
     "file_digest",
+    "iter_zstd_parquet",
     "manifest_descriptor",
     "physical_bounds_policy",
     "resolve_release_root",

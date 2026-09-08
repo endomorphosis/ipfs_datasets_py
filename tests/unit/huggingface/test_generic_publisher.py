@@ -1231,6 +1231,10 @@ def test_prepared_executor_retains_no_proof_plan_profile_or_api_hooks() -> None:
         "protected_write": publisher_module.guarded_write,
         "rehash_files": publisher_module._rehash_prepared_snapshot_files,
         "require_guard": publisher_module.require_unprotected_or_runtime,
+        "revalidate_remote": (
+            publisher_module
+            ._canonical_revalidate_compound_parent_prefix_and_readme
+        ),
     }
     assert {
         "create_branch_local",
@@ -1238,6 +1242,7 @@ def test_prepared_executor_retains_no_proof_plan_profile_or_api_hooks() -> None:
         "protected_write_local",
         "rehash_files_local",
         "require_guard_local",
+        "revalidate_remote_local",
     }.issubset(
         set(prepared_type.__call__.__code__.co_varnames)
         | set(prepared_type.__call__.__code__.co_cellvars)
@@ -1249,6 +1254,7 @@ def test_prepared_executor_retains_no_proof_plan_profile_or_api_hooks() -> None:
     [
         "require_unprotected_or_runtime",
         "_rehash_prepared_snapshot_files",
+        "_canonical_revalidate_compound_parent_prefix_and_readme",
         "guarded_write",
         "_canonical_hf_api_create_branch",
         "_canonical_hf_api_create_commit",
@@ -1386,7 +1392,9 @@ def _state_publication_binding_fixture(
         output_root=release_root,
     )
     plan = SimpleNamespace(
+        audited_parent_commit="78cba0ed86c3971a7b90620c6df167af8a1a6fb2",
         plan_digest=plan_digest,
+        release_prefix=f"data/state_laws/sha256-{release_digest}",
         release_sha256=release_digest,
         repository_id="justicedao/ipfs_state_laws",
     )
@@ -1588,6 +1596,19 @@ def test_state_main_controls_promote_only_publication_binding(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     fixture = _state_publication_binding_fixture(tmp_path, monkeypatch)
+    viewer_card = b"viewer control\n"
+    monkeypatch.setattr(
+        fixture.package_module,
+        "state_laws_viewer_control_card_bytes",
+        lambda *_args, **_kwargs: viewer_card,
+    )
+    monkeypatch.setattr(
+        fixture.package_module,
+        "verify_state_laws_viewer_control_plan",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            sha256=sha256(viewer_card).hexdigest()
+        ),
+    )
     before = copy.deepcopy(fixture.candidate)
     bundle = fixture.package_module.materialize_state_laws_canonical_controls(
         fixture.package,
@@ -1726,7 +1747,10 @@ def test_untrusted_policy_hook_runs_before_authority_and_cannot_steal_it(
         stealing_verifier,
     )
     publisher = HuggingFaceReleasePublisher(profile=dry_run.profile, api=api)
-    with pytest.raises(HuggingFacePublicationError, match="exact HfApi template"):
+    with pytest.raises(
+        HuggingFacePublicationError,
+        match="unobserved root README state cannot authorize a State-main mutation",
+    ):
         publisher.publish_append_only(
             dry_run.plan,
             approval=approval,

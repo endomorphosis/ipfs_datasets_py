@@ -30,10 +30,12 @@ from scripts import ops as _repository_scripts_ops_package  # noqa: E402,F401
 from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate import (
     AUTHORIZED_DATASET_REPO_IDS,
     BASELINE_REVISIONS,
+    PUBLICATION_PARENT_REVISIONS,
     PHASE_REQUIREMENTS,
     REQUIRED_PUBLICATION_GATES,
     RIGHTS_RECEIPT_RELPATH,
     RUNTIME_TASK_ID,
+    STATE_DATASET_REPO_ID,
     SUCCESSOR_TASK_ID,
     PublicationGateDeniedError,
     credentials_scope_for,
@@ -199,6 +201,13 @@ def _release_policy() -> dict[str, Any]:
         "schema": "ipfs_datasets_py/legal-corpora-reindex-release-policy@1",
         "dataset_repo_ids": sorted(AUTHORIZED_DATASET_REPO_IDS),
         "baseline_revisions": dict(BASELINE_REVISIONS),
+        "publication_parent_revisions": dict(PUBLICATION_PARENT_REVISIONS),
+        "publication_authorization": {
+            "authorized_operations": [
+                "additive_staging_upload",
+                "additive_main_upload",
+            ]
+        },
         "prepublication_evidence_contract": {"phase_requirements": phases},
     }
 
@@ -646,6 +655,32 @@ def test_runtime_identity_preserves_gate_and_rights_successors() -> None:
     assert "task_statuses" in AUTHORITATIVE_OVERRIDE_KEYS
 
 
+@pytest.mark.parametrize("missing", ("baseline_revisions", "publication_parent_revisions"))
+def test_policy_contract_rejects_missing_baseline_or_publication_parent_map(
+    missing: str,
+) -> None:
+    from ipfs_datasets_py.processors.legal_data import (
+        legal_corpora_publication_runtime as runtime,
+    )
+
+    policy = _release_policy()
+    policy.pop(missing)
+    with pytest.raises(PublicationRuntimeError, match="release policy"):
+        runtime._require_policy_phase_contract(policy, "state_main")
+
+
+def test_policy_contract_rejects_swapped_historical_and_publication_parents() -> None:
+    from ipfs_datasets_py.processors.legal_data import (
+        legal_corpora_publication_runtime as runtime,
+    )
+
+    policy = _release_policy()
+    policy["baseline_revisions"] = dict(PUBLICATION_PARENT_REVISIONS)
+    policy["publication_parent_revisions"] = dict(BASELINE_REVISIONS)
+    with pytest.raises(PublicationRuntimeError, match="baseline_revisions"):
+        runtime._require_policy_phase_contract(policy, "state_main")
+
+
 def test_utc_z_parser_rejects_offsets() -> None:
     parsed = parse_utc_z("2020-01-01T00:00:00Z")
     assert parsed.tzinfo is not None
@@ -928,6 +963,73 @@ def test_runtime_accepts_builder_shaped_lcr084_candidate_with_strict_evidence(
     assert on_disk["schema"] == builder.PRODUCTION_REPORT_SCHEMA
     assert on_disk["mutation_audit"]["status"] == "passed"
     assert on_disk["acceptance"]["contains_exact_51"] is True
+
+
+def test_current_additive_policy_denies_compound_root_cas_before_callback(
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.huggingface.protected_repo_guard import (
+        CanonicalMutationBinding,
+        CanonicalMutationFileBinding,
+        StateMainRootReadmeCASPlanBinding,
+    )
+
+    repo = _seed_repo(tmp_path, "state_main")
+    request = _request(repo, "state_main")
+    replacement = b"reviewed replacement card\n"
+    release_digest = str(request["expected_release_manifest_digest"])
+    control = StateMainRootReadmeCASPlanBinding(
+        audited_parent_commit=phase_requirements("state_main")[
+            "previous_public_pin"
+        ],
+        expected_previous_sha256="a" * 64,
+        replacement_sha256=hashlib.sha256(replacement).hexdigest(),
+        replacement_size_bytes=len(replacement),
+        release_manifest_digest=release_digest,
+        release_prefix=f"data/state_laws/sha256-{release_digest}",
+        publication_plan_digest=str(request["expected_plan_digest"]),
+        policy_proof_digest=str(request["expected_policy_proof_digest"]),
+        control_plan_digest="b" * 64,
+        review_id="LCR-042-review-fixture",
+        reviewer="fixture-reviewer",
+    )
+    immutable_path = f"{control.release_prefix}/release-manifest.json"
+    immutable = CanonicalMutationFileBinding(
+        relative_path="release-manifest.json",
+        remote_path=immutable_path,
+        size_bytes=1,
+        sha256="c" * 64,
+        local_sha256="c" * 64,
+    )
+    root_file = CanonicalMutationFileBinding(
+        relative_path=(
+            "docs/reports/legal_corpora_reindex/state_dataset_card.md"
+        ),
+        remote_path="README.md",
+        size_bytes=len(replacement),
+        sha256=control.replacement_sha256,
+        local_sha256=control.replacement_sha256,
+    )
+    request["mutation_binding"] = CanonicalMutationBinding(
+        method="create_commit",
+        repository_id=STATE_DATASET_REPO_ID,
+        repository_type="dataset",
+        revision="main",
+        parent_commit=control.audited_parent_commit,
+        files=(immutable, root_file),
+        plan_digest=control.publication_plan_digest,
+        release_manifest_digest=control.release_manifest_digest,
+        policy_proof_digest=control.policy_proof_digest,
+        commit_message_digest="d" * 64,
+        root_readme_cas=control,
+    )
+    calls: list[str] = []
+    with pytest.raises(PublicationGateDeniedError, match="does not explicitly authorize"):
+        authorize_and_mutate_canonical(
+            request,
+            lambda *_args, **_kwargs: calls.append("mutated"),
+        )
+    assert calls == []
 
 
 def test_state_main_accepts_exact_a_b_chain_without_gate_digest_conflation(

@@ -82,3 +82,46 @@ def test_document_number_self_retrieval_passes(tmp_path: Path) -> None:
     assert report["bm25"]["recall_at_1"] == 1.0
     assert report["status"] == "passed"
     assert (repo / ev.EVAL_RELPATH).is_file()
+
+
+def test_live_eval_rejects_deterministic_vector_backend(tmp_path: Path) -> None:
+    index_dir = tmp_path / "bm25"
+    _write_index(index_dir)
+    repo = tmp_path / "repo"
+    graph_path = repo / ev.GRAPH_RELPATH
+    graph_path.parent.mkdir(parents=True, exist_ok=True)
+    graph_path.write_text(
+        json.dumps(
+            {
+                "fixture_only": False,
+                "node_count": 4,
+                "edge_count": 3,
+                "adjacency_inversion": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    vectors_path = repo / ev.VECTORS_RELPATH
+    vectors_path.write_text(
+        json.dumps(
+            {
+                "fixture_only": False,
+                "backend": "local_deterministic_projection",
+                "model_id": "thenlper/gte-small",
+                "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+                "centroid_bounds_hold": True,
+                "vector_count": 2,
+            }
+        ),
+        encoding="utf-8",
+    )
+    report = ev.evaluate_live(
+        index_dir=index_dir,
+        corpus_dir=tmp_path,
+        repository_root=repo,
+        sample_size=2,
+        require_complete=False,
+        write_receipt=False,
+    )
+    assert report["vector"]["meets_declared_gates"] is False
+    assert "sentence_transformers" in str(report["vector"].get("reason") or "")

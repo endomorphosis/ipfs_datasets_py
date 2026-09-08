@@ -132,6 +132,9 @@ from scripts.ops.legal_data import (
     audit_legal_corpora_live_baseline as live_baseline_audit,
 )
 from scripts.ops.legal_data import (
+    audit_state_laws_current_public_parent as current_public_parent_audit,
+)
+from scripts.ops.legal_data import (
     run_state_laws_production_release as production_runner,
 )
 
@@ -198,6 +201,22 @@ PRODUCTION_MUTATION_AUDIT_RELPATH: Final = mutation_path_audit.REPORT_RELPATH
 DEFAULT_LIVE_BASELINE_RELPATH: Final = Path(
     "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json"
 )
+DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH: Final = (
+    current_public_parent_audit.CANONICAL_RECEIPT_RELPATH
+)
+CURRENT_PUBLIC_PARENT_EVIDENCE_KEY: Final = "current_public_parent_provenance"
+EXPECTED_CURRENT_CORPUS_NON_ACCEPTANCE: Final[Mapping[str, Any]] = {
+    "current_corpus_accepted": False,
+    "current_corpus_role": "optimistic_parent_and_rollback_only",
+    "authorizes_publication": False,
+    "authorizes_hub_mutation": False,
+    "authorizes_exact_51_candidate": False,
+    "blocking_findings": [
+        "current Viewer configuration names are invalid or heterogeneous",
+        "this receipt proves parent state only, not corrected-corpus validity",
+        "a later publication must use independent preflight, CAS, and postflight evidence",
+    ],
+}
 LOCAL_E2E_RELPATH: Final = Path("docs/reports/legal_corpora_reindex/local_e2e.json")
 REQUIRED_FAMILIES: Final = (
     "corpus",
@@ -951,6 +970,206 @@ def _display_path(path: Path | str, *, repo_root: Path) -> str:
         return target.relative_to(repo_root.resolve()).as_posix()
     except ValueError:
         return str(target)
+
+
+def _load_current_public_parent_receipt(path: Path) -> dict[str, Any]:
+    """Narrow test seam around the canonical live-receipt validator."""
+
+    try:
+        return current_public_parent_audit.load_and_validate_receipt(
+            path,
+            require_live=True,
+        )
+    except current_public_parent_audit.PublicParentEvidenceError as exc:
+        raise CandidateError(
+            f"current-public-parent receipt failed live validation: {exc}"
+        ) from exc
+
+
+_CURRENT_PUBLIC_PARENT_PROVENANCE_KEYS: Final = frozenset(
+    {
+        "authorizes_exact_51_acceptance",
+        "authorizes_hub_mutation",
+        "authorizes_publication",
+        "current_corpus_accepted",
+        "current_corpus_non_acceptance",
+        "current_public_parent_pin",
+        "current_public_parent_role",
+        "current_public_parent_tree_oid",
+        "evidence_only",
+        "goal_id",
+        "historical_baseline_pin",
+        "historical_baseline_role",
+        "historical_baseline_tree_oid",
+        "identity_sha256",
+        "observed_at_utc",
+        "path",
+        "receipt_file_sha256",
+        "receipt_sha256",
+        "satisfies_lcr084_acceptance",
+        "schema",
+        "task_id",
+    }
+)
+
+
+def validate_current_public_parent_provenance(
+    value: Any,
+    *,
+    repo_root: Path,
+) -> dict[str, Any]:
+    """Validate the sealed non-authorizing projection, without granting status."""
+
+    if not isinstance(value, Mapping) or set(value) != set(
+        _CURRENT_PUBLIC_PARENT_PROVENANCE_KEYS
+    ):
+        raise CandidateError("current-public-parent provenance fields drifted")
+    expected_path = DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH.as_posix()
+    if (
+        value.get("schema") != current_public_parent_audit.REPORT_SCHEMA
+        or value.get("task_id") != current_public_parent_audit.TASK_ID
+        or value.get("goal_id") != current_public_parent_audit.GOAL_ID
+        or value.get("path") != expected_path
+        or _lexical_absolute(value.get("path"), base=repo_root)
+        != _lexical_absolute(repo_root / DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH)
+        or value.get("historical_baseline_pin")
+        != current_public_parent_audit.HISTORICAL_BASELINE_PIN
+        or value.get("historical_baseline_role")
+        != "sealed_historical_evidence_only"
+        or value.get("historical_baseline_tree_oid")
+        != current_public_parent_audit.HISTORICAL_BASELINE_TREE_OID
+        or value.get("current_public_parent_pin")
+        != current_public_parent_audit.CURRENT_PUBLIC_PARENT_PIN
+        or value.get("current_public_parent_role")
+        != "optimistic_parent_and_rollback_only"
+        or value.get("current_public_parent_tree_oid")
+        != current_public_parent_audit.CURRENT_PUBLIC_PARENT_TREE_OID
+    ):
+        raise CandidateError("current-public-parent identity or pin role drifted")
+    for field_name in (
+        "identity_sha256",
+        "receipt_file_sha256",
+        "receipt_sha256",
+    ):
+        _require_sha256(value.get(field_name), label=f"current parent {field_name}")
+    observed_at = str(value.get("observed_at_utc") or "")
+    try:
+        parsed = datetime.fromisoformat(observed_at)
+    except ValueError as exc:
+        raise CandidateError(
+            "current-public-parent observed_at_utc is not RFC3339"
+        ) from exc
+    if not observed_at.endswith("Z") or parsed.tzinfo is None:
+        raise CandidateError("current-public-parent observed_at_utc is not strict UTC")
+    if value.get("current_corpus_non_acceptance") != dict(
+        EXPECTED_CURRENT_CORPUS_NON_ACCEPTANCE
+    ):
+        raise CandidateError("current corpus non-acceptance binding drifted")
+    if (
+        value.get("evidence_only") is not True
+        or value.get("current_corpus_accepted") is not False
+        or value.get("satisfies_lcr084_acceptance") is not False
+        or value.get("authorizes_exact_51_acceptance") is not False
+        or value.get("authorizes_publication") is not False
+        or value.get("authorizes_hub_mutation") is not False
+    ):
+        raise CandidateError("current-public-parent provenance gained authority")
+    return dict(value)
+
+
+def current_public_parent_provenance_binding(
+    path: Path | str,
+    *,
+    repo_root: Path,
+) -> dict[str, Any]:
+    """Validate and bookend the canonical live receipt, then project its role."""
+
+    target = _require_canonical_repo_path(
+        path,
+        repo_root=repo_root,
+        relative_path=DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH,
+        label="current-public-parent evidence",
+        must_exist=True,
+    )
+    before, before_bytes, before_sha256 = load_json_mapping_snapshot(
+        target,
+        label="current-public-parent evidence",
+    )
+    validated = _load_current_public_parent_receipt(target)
+    after, after_bytes, after_sha256 = load_json_mapping_snapshot(
+        target,
+        label="current-public-parent evidence bookend",
+    )
+    if (
+        before != validated
+        or after != before
+        or after_bytes != before_bytes
+        or after_sha256 != before_sha256
+    ):
+        raise CandidateError(
+            "current-public-parent receipt changed during live validation"
+        )
+    pins = validated.get("pins")
+    identity = validated.get("identity")
+    non_acceptance = validated.get("current_corpus_non_acceptance")
+    if (
+        not isinstance(pins, Mapping)
+        or not isinstance(identity, Mapping)
+        or not isinstance(non_acceptance, Mapping)
+    ):
+        raise CandidateError("current-public-parent receipt projection is malformed")
+    historical = pins.get("historical_baseline")
+    current = pins.get("current_public_parent")
+    if not isinstance(historical, Mapping) or not isinstance(current, Mapping):
+        raise CandidateError("current-public-parent pin evidence is malformed")
+    binding = {
+        "authorizes_exact_51_acceptance": False,
+        "authorizes_hub_mutation": False,
+        "authorizes_publication": False,
+        "current_corpus_accepted": False,
+        "current_corpus_non_acceptance": dict(non_acceptance),
+        "current_public_parent_pin": current.get("revision"),
+        "current_public_parent_role": current.get("role"),
+        "current_public_parent_tree_oid": current.get("tree_oid"),
+        "evidence_only": True,
+        "goal_id": validated.get("goal_id"),
+        "historical_baseline_pin": historical.get("revision"),
+        "historical_baseline_role": historical.get("role"),
+        "historical_baseline_tree_oid": historical.get("tree_oid"),
+        "identity_sha256": identity.get("identity_sha256"),
+        "observed_at_utc": validated.get("observed_at_utc"),
+        "path": _display_path(target, repo_root=repo_root),
+        "receipt_file_sha256": before_sha256,
+        "receipt_sha256": validated.get(
+            current_public_parent_audit.RECEIPT_SELF_DIGEST_FIELD
+        ),
+        "satisfies_lcr084_acceptance": False,
+        "schema": validated.get("schema"),
+        "task_id": validated.get("task_id"),
+    }
+    return validate_current_public_parent_provenance(
+        binding,
+        repo_root=repo_root,
+    )
+
+
+def bind_current_public_parent_provenance(
+    evidence: Mapping[str, Any],
+    *,
+    path: Path | str,
+    repo_root: Path,
+) -> dict[str, Any]:
+    """Add validated parent provenance without changing acceptance semantics."""
+
+    if CURRENT_PUBLIC_PARENT_EVIDENCE_KEY in evidence:
+        raise CandidateError("production evidence pre-populated current parent provenance")
+    return {
+        **dict(evidence),
+        CURRENT_PUBLIC_PARENT_EVIDENCE_KEY: current_public_parent_provenance_binding(
+            path,
+            repo_root=repo_root,
+        ),
+    }
 
 
 def resolve_evidence_path(value: Any, *, repo_root: Path, label: str) -> Path:
@@ -3518,6 +3737,7 @@ def collect_production_evidence(
     rights_receipt_path: Path | str,
     production_output_root: Path | str,
     live_baseline_path: Path | str,
+    current_public_parent_path: Path | str | None = None,
     source_revision: str,
     repo_root: Path | str | None = None,
     require_clean_source: bool,
@@ -3542,10 +3762,22 @@ def collect_production_evidence(
         label="authenticated live-baseline receipt",
         must_exist=True,
     )
+    current_public_parent_lexical = _require_canonical_repo_path(
+        (
+            current_public_parent_path
+            if current_public_parent_path is not None
+            else root / DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH
+        ),
+        repo_root=root,
+        relative_path=DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH,
+        label="current-public-parent evidence",
+        must_exist=True,
+    )
     acceptance_path = root / PRODUCTION_ACCEPTANCE_RELPATH
     candidate_path = root / DEFAULT_REPORT_RELPATH
     controlled_evidence_paths = (
         baseline_lexical,
+        current_public_parent_lexical,
         acceptance_path,
         candidate_path,
     )
@@ -3993,7 +4225,11 @@ def collect_production_evidence(
         ),
         "union": exact_corpus_closure["union"],
     }
-    return evidence
+    return bind_current_public_parent_provenance(
+        evidence,
+        path=current_public_parent_lexical,
+        repo_root=root,
+    )
 
 
 def write_json_report(report: Mapping[str, Any], path: Path | str) -> Path:
@@ -4410,6 +4646,7 @@ def assemble_production_candidate(
     rights_receipt_path: Path | str,
     production_output_root: Path | str,
     live_baseline_path: Path | str,
+    current_public_parent_path: Path | str | None = None,
     source_revision: str,
     acceptance_report_path: Path | str,
     candidate_report_path: Path | str,
@@ -4435,6 +4672,17 @@ def assemble_production_candidate(
         label="production candidate report",
         must_exist=False,
     )
+    current_parent_path = _require_canonical_repo_path(
+        (
+            current_public_parent_path
+            if current_public_parent_path is not None
+            else root / DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH
+        ),
+        repo_root=root,
+        relative_path=DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH,
+        label="current-public-parent evidence",
+        must_exist=True,
+    )
     acceptance, _, acceptance_file_sha256 = load_json_mapping_snapshot(
         acceptance_path, label="production acceptance report"
     )
@@ -4448,13 +4696,18 @@ def assemble_production_candidate(
         require_only_expected_dirty_paths(
             repo_root=root,
             source_revision=source_revision,
-            allowed_paths=(_lexical_absolute(live_baseline_path), acceptance_path),
+            allowed_paths=(
+                _lexical_absolute(live_baseline_path),
+                current_parent_path,
+                acceptance_path,
+            ),
         )
     evidence = collect_production_evidence(
         input_map_path=input_map_path,
         rights_receipt_path=rights_receipt_path,
         production_output_root=production_output_root,
         live_baseline_path=live_baseline_path,
+        current_public_parent_path=current_parent_path,
         source_revision=source_revision,
         repo_root=root,
         require_clean_source=False,
@@ -4772,6 +5025,7 @@ def check_production_candidate_report(
     *,
     repo_root: Path | str | None = None,
     remeasure_production_evidence: bool = True,
+    current_public_parent_path: Path | str | None = None,
 ) -> dict[str, Any]:
     if not isinstance(payload, Mapping):
         raise CandidateError("production candidate report must be an object")
@@ -4825,6 +5079,13 @@ def check_production_candidate_report(
     if not isinstance(evidence, Mapping):
         raise CandidateError("production candidate lacks production_evidence")
     _validate_production_evidence_schema(evidence)
+    current_parent_provenance = validate_current_public_parent_provenance(
+        evidence.get(CURRENT_PUBLIC_PARENT_EVIDENCE_KEY),
+        repo_root=_safe_existing_directory(
+            repo_root or REPOSITORY_ROOT,
+            label="repository root",
+        ),
+    )
     evidence_digest = digest_payload(evidence)
     if payload.get("production_evidence_digest_sha256") != evidence_digest:
         raise CandidateError("production candidate evidence digest drifted")
@@ -4999,6 +5260,17 @@ def check_production_candidate_report(
         label="candidate authenticated live baseline",
         must_exist=True,
     )
+    resolved_current_parent = _require_canonical_repo_path(
+        (
+            current_public_parent_path
+            if current_public_parent_path is not None
+            else str(current_parent_provenance.get("path") or "")
+        ),
+        repo_root=root,
+        relative_path=DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH,
+        label="candidate current-public-parent evidence",
+        must_exist=True,
+    )
 
     # Production --check is an evidence verifier, not a self-digest checker.
     # There is intentionally no public switch that disables the authenticated
@@ -5010,6 +5282,7 @@ def check_production_candidate_report(
             rights_receipt_path=resolved_rights,
             production_output_root=resolved_output_root,
             live_baseline_path=resolved_baseline,
+            current_public_parent_path=resolved_current_parent,
             source_revision=str(source_control.get("revision") or ""),
             repo_root=root,
             require_clean_source=False,
@@ -5210,6 +5483,15 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=f"Fresh authenticated LCR-081 receipt (default: {DEFAULT_LIVE_BASELINE_RELPATH})",
     )
+    parser.add_argument(
+        "--current-public-parent",
+        type=Path,
+        default=REPOSITORY_ROOT / DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH,
+        help=(
+            "Fresh non-authorizing LCR-084 public-parent receipt "
+            f"(default: {DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH})"
+        ),
+    )
     parser.add_argument("--source-revision", default="")
     parser.add_argument(
         "--acceptance-report",
@@ -5272,6 +5554,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if args.live_baseline is not None
                 else REPOSITORY_ROOT / DEFAULT_LIVE_BASELINE_RELPATH
             )
+            current_public_parent_path = _lexical_absolute(
+                args.current_public_parent
+                if args.current_public_parent is not None
+                else REPOSITORY_ROOT / DEFAULT_CURRENT_PUBLIC_PARENT_RELPATH
+            )
             _require_canonical_repo_path(
                 acceptance_path,
                 repo_root=REPOSITORY_ROOT,
@@ -5294,7 +5581,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 on_disk, _, report_file_sha256 = load_json_mapping_snapshot(
                     report_path, label="production candidate report"
                 )
-                check_production_candidate_report(on_disk)
+                check_production_candidate_report(
+                    on_disk,
+                    current_public_parent_path=current_public_parent_path,
+                )
                 bookend, _, bookend_sha256 = load_json_mapping_snapshot(
                     report_path, label="production candidate report bookend"
                 )
@@ -5314,6 +5604,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 rights_receipt_path=args.rights_receipt,
                 production_output_root=args.production_output_root,
                 live_baseline_path=live_baseline_path,
+                current_public_parent_path=current_public_parent_path,
                 source_revision=args.source_revision,
                 acceptance_report_path=acceptance_path,
                 candidate_report_path=report_path,

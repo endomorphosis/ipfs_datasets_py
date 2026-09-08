@@ -1,0 +1,60 @@
+{
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "compiler_decision": {
+    "compiler_exists": true,
+    "compiler_interfaces": [
+      "CanonicalStructuredTextCompiler@1",
+      "TypedDeonticCanonicalConstructor@1",
+      "formalization-compiler-config/v1"
+    ],
+    "dense_matrix_required_for_compiler": false,
+    "reason": "The measured legal-text compiler lowers a single document to deontic/canonical IR with a caller-supplied vocabulary and source map. It is fail-closed, use_ml=False, and does not take pairwise similarity as input. Compilation walks typed sparse edges (CITES, HAS_DOCKET, HAS_RIN, PUBLISHED_ON, HAS_PROVENANCE) via two-way adjacency. Embedding/BM25 neighbors are retrieval proposals only and cannot establish legal authority. A dense NxN matrix is neither an IR nor a walk index; materializing 1e6^2 cosine cells would be ~4TiB and would not make the compiler more correct.",
+    "similarity_cannot_establish_legal_authority": true,
+    "walk_index": "two_way_sparse_adjacency"
+  },
+  "current_bundle": false,
+  "lcr084_deferred": true,
+  "lcr084_taskboard_status": "todo",
+  "producer": "build_fr_full_graphrag.py",
+  "receipt": {
+    "authorizing_for_publication": false,
+    "compiler_decision": {
+      "compiler_exists": true,
+      "compiler_interfaces": [
+        "CanonicalStructuredTextCompiler@1",
+        "TypedDeonticCanonicalConstructor@1",
+        "formalization-compiler-config/v1"
+      ],
+      "dense_matrix_required_for_compiler": false,
+      "reason": "The measured legal-text compiler lowers a single document to deontic/canonical IR with a caller-supplied vocabulary and source map. It is fail-closed, use_ml=False, and does not take pairwise similarity as input. Compilation walks typed sparse edges (CITES, HAS_DOCKET, HAS_RIN, PUBLISHED_ON, HAS_PROVENANCE) via two-way adjacency. Embedding/BM25 neighbors are retrieval proposals only and cannot establish legal authority. A dense NxN matrix is neither an IR nor a walk index; materializing 1e6^2 cosine cells would be ~4TiB and would not make the compiler more correct.",
+      "similarity_cannot_establish_legal_authority": true,
+      "walk_index": "two_way_sparse_adjacency"
+    },
+    "incoming": {
+      "direction": "incoming",
+      "max_degree": 84935,
+      "nodes_with_edges": 2415859,
+      "pages": 2416191,
+      "pointer_total": 14994449,
+      "shards": 590
+    },
+    "keys_are_node_ids_not_cidv1": true,
+    "outgoing": {
+      "direction": "outgoing",
+      "max_degree": 295,
+      "nodes_with_edges": 1005963,
+      "pages": 1005963,
+      "pointer_total": 14994449,
+      "shards": 246
+    },
+    "schema": "ipfs_datasets_py/fr-full-adjacency@1",
+    "schema_version": "skillcenter-hf-graph-adjacency/v1",
+    "similarity_cannot_establish_legal_authority": true,
+    "status": "closed",
+    "written_at": "2026-09-07T22:30:40Z"
+  },
+  "schema": "ipfs_datasets_py/fr-full-adjacency-deferred@1",
+  "status": "closed",
+  "written_at": "2026-09-07T22:30:40Z"
+}

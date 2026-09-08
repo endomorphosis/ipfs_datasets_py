@@ -6,10 +6,12 @@ from ipfs_datasets_py.processors.legal_data.host_worker_budget import (
     BYTES_PER_WORKER,
     COMBINED_COLLAPSE,
     HostPressureSnapshot,
+    TOKENIZE_BYTES_PER_WORKER,
     combined_pressure,
     cpu_memory_worker_limit,
     heuristic_worker_cap,
     host_worker_pressure,
+    tokenize_process_pool_size,
 )
 
 GIB = 1024 * 1024 * 1024
@@ -104,3 +106,28 @@ def test_bytes_per_worker_limits_admission() -> None:
     assert reason == "admitted"
     assert workers == 1
     assert 3 * GIB // BYTES_PER_WORKER == 1
+
+
+def test_tokenize_pool_uses_more_than_half_the_cores_when_ram_allows(
+    monkeypatch: object,
+) -> None:
+    monkeypatch.delenv("LEGAL_TOKENIZE_WORKERS", raising=False)  # type: ignore[attr-defined]
+    plan = tokenize_process_pool_size(_snap())
+    assert plan.reason == "admitted"
+    assert plan.workers == 19
+    assert plan.workers > heuristic_worker_cap(20)
+    assert plan.start_method == "spawn"
+    assert plan.per_task_budget_bytes == TOKENIZE_BYTES_PER_WORKER
+
+
+def test_tokenize_pool_collapses_on_memory_headroom(monkeypatch: object) -> None:
+    monkeypatch.delenv("LEGAL_TOKENIZE_WORKERS", raising=False)  # type: ignore[attr-defined]
+    plan = tokenize_process_pool_size(_snap(mem_available=GIB, mem_total=121 * GIB))
+    assert plan.workers == 1
+    assert plan.reason == "host_memory_headroom"
+
+
+def test_tokenize_pool_honors_requested() -> None:
+    plan = tokenize_process_pool_size(_snap(), requested=2)
+    assert plan.workers == 2
+    assert plan.reason == "requested"

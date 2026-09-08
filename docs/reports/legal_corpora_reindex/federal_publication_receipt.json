@@ -1,0 +1,20 @@
+{
+  "schema": "ipfs_datasets_py/federal-register-publication-receipt-deferred@1",
+  "task_id": "LCR-065",
+  "goal_id": "LCR-G140",
+  "program_id": "legal-corpora-reindex-v1",
+  "producer": "upload_fr_graphrag_hf.py",
+  "status": "published_deferred",
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "current_bundle": false,
+  "lcr084_deferred": true,
+  "lcr084_taskboard_status": "todo",
+  "dataset_repo_id": "justicedao/ipfs_federal_register",
+  "previous_public_pin": "720668ae016cc400916dda884c9005e03618edfa",
+  "staging_sha": "3442c2b402cc36317be6176c8b0752e97d793323",
+  "public_sha": "d748016d96a7af6d261751d51a5959bd7bc0e2b7",
+  "public_file_count": 12364,
+  "operation": "additive_main_upload",
+  "notes": "Operator-deferred LCR-084 additive upload to main. Live LCR-071 GraphRAG tree added without deleting legacy files. Does not close LCR-084 and is not a sealed live-official current-bundle."
+}

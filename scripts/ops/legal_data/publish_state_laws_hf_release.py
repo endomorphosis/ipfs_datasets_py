@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Authorize and execute the additive state-law public upload (LCR-042).
+"""Plan the State Laws payload and repository-root Viewer control (LCR-042).
 
 Default mode is **offline** (credential-free, no live Hub network contact):
 
@@ -8,10 +8,14 @@ Default mode is **offline** (credential-free, no live Hub network contact):
    fails closed.
 2. Invoke the LCR-074 publication gate for the ``state_main`` phase
    **before** the first Hub write callback.
-3. Upload the identical staged candidate additively to
+3. Upload the identical staged candidate payload additively to
    ``justicedao/ipfs_state_laws`` (public ``main``), preserving
    legacy files and the rollback pin.
-4. Bind old / staging / public SHAs, the candidate manifest, and the
+4. Separately bind the repository-root Viewer card intent.  The current
+   protected writer can proceed only when that card is already byte-identical;
+   a required add/CAS replacement remains blocked pending distinct reviewed
+   control-plane authority.
+5. Bind old / staging / public SHAs, the candidate manifest, and the
    operation list on the Hub receipt. Every upload response must succeed.
 
 Live writes remain opt-in (``--authorize-mutation`` plus environment
@@ -37,7 +41,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib.util
 import json
 import os
 import re
@@ -82,19 +85,27 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime im
     canonical_no_self_field_digest,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_publication_package import (
+    VIEWER_CONTROL_ADD,
+    VIEWER_CONTROL_REPLACE,
+    VIEWER_CONTROL_SKIP,
     StateLawsCanonicalControlBundle,
     StateLawsPublicationPackage,
+    StateLawsViewerControlAuthorization,
+    StateLawsViewerControlPlan,
     materialize_state_laws_canonical_controls,
     plan_state_laws_publication_dry_run,
     require_state_laws_policy_binding,
 )
+from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
+    state_laws_root_viewer_configs,
+)
 from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import (
     DEFAULT_STAGING_BRANCH,
+    PUBLICATION_PARENT_REVISION,
     example_authorized_main_request,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
     DEFAULT_DATASET_REPO_ID,
-    PREVIOUS_PUBLIC_PIN,
     canonical_json_dumps,
     digest_mapping,
 )
@@ -180,7 +191,8 @@ if DEFAULT_DATASET_REPO != STATE_DATASET_REPO_ID:
 if DEFAULT_DATASET_REPO != "justicedao/ipfs_state_laws":
     raise RuntimeError("sealed state-law target drifted from justicedao/ipfs_state_laws")
 
-PRODUCTION_REVISION: Final = PREVIOUS_PUBLIC_PIN
+PREVIOUS_PUBLIC_PIN: Final = PUBLICATION_PARENT_REVISION
+PRODUCTION_REVISION: Final = PUBLICATION_PARENT_REVISION
 PUBLIC_BRANCH: Final = "main"
 DEFAULT_OBSERVATION_CUTOFF: Final = "2026-08-10T00:00:00Z"
 
@@ -640,7 +652,7 @@ def load_production_candidate_report(
     if type(payload) is not dict:
         raise PublishReceiptError("production candidate must be an object")
     try:
-        from scripts.ops.legal_data import build_state_laws_hf_release as builder
+        import scripts.ops.legal_data.build_state_laws_hf_release as builder
 
         checked = builder.check_production_candidate_report(
             payload,
@@ -665,8 +677,13 @@ def build_canonical_main_plan(
     audited_parent_commit: str = PRODUCTION_REVISION,
     existing_remote_paths: Sequence[str] = (),
     existing_remote_digests: Mapping[str, str] | None = None,
+    root_readme_exists: bool | None = None,
+    existing_root_readme_sha256: str | None = None,
+    root_readme_replacement_authorization: (
+        StateLawsViewerControlAuthorization | Mapping[str, Any] | None
+    ) = None,
 ) -> tuple[StateLawsPublicationPackage, HuggingFaceReleasePublisher, PublicationPlan]:
-    """Build the official add-only main plan without network contact."""
+    """Build the payload-add plus explicit root Viewer-control plan offline."""
 
     parent = require_immutable_revision(
         audited_parent_commit, name="audited_parent_commit"
@@ -676,6 +693,11 @@ def build_canonical_main_plan(
         existing_remote_paths=existing_remote_paths,
         existing_remote_digests=existing_remote_digests,
         audited_parent_commit=parent,
+        root_readme_exists=root_readme_exists,
+        existing_root_readme_sha256=existing_root_readme_sha256,
+        root_readme_replacement_authorization=(
+            root_readme_replacement_authorization
+        ),
     )
     package = dry_run.package
     publisher = HuggingFaceReleasePublisher(profile=dry_run.profile)
@@ -688,6 +710,7 @@ def build_canonical_main_plan(
         or not plan.operations
     ):
         raise PublishReceiptError("canonical main publication plan drifted")
+    canonical_viewer_control(plan)
     return package, publisher, plan
 
 
@@ -744,6 +767,56 @@ def canonical_plan_inventory(plan: PublicationPlan) -> list[dict[str, Any]]:
     return rows
 
 
+def canonical_viewer_control(plan: PublicationPlan) -> dict[str, Any]:
+    """Return and validate the exact root-card sub-plan bound by ``plan``."""
+
+    if not isinstance(plan, PublicationPlan):
+        raise PublishReceiptError("canonical Viewer control requires a plan")
+    try:
+        control = StateLawsViewerControlPlan.from_mapping(
+            plan.metadata.get("viewer_control")
+        )
+        expected_configs = [
+            dict(item) for item in state_laws_root_viewer_configs(plan.release_prefix)
+        ]
+    except Exception as exc:
+        raise PublishReceiptError(
+            f"canonical plan lacks valid exact Viewer controls: {exc}"
+        ) from exc
+    if (
+        control.repository_id != plan.repository_id
+        or control.target_revision != plan.target_revision
+        or control.audited_parent_commit != plan.audited_parent_commit
+        or control.release_prefix != plan.release_prefix
+        or control.release_manifest_digest != plan.release_sha256
+        or [dict(item) for item in control.configs] != expected_configs
+    ):
+        raise PublishReceiptError(
+            "canonical Viewer controls differ from the payload plan"
+        )
+    return control.to_dict()
+
+
+def require_supported_canonical_viewer_control(plan: PublicationPlan) -> dict[str, Any]:
+    """Require a compound-writer-supported root-card operation.
+
+    The protected compound writer binds root-card add/CAS and immutable-prefix
+    payload operations into the same parent-checked commit. An unobserved root
+    remains non-executable.
+    """
+
+    control = canonical_viewer_control(plan)
+    if (
+        control.get("operation")
+        not in {VIEWER_CONTROL_ADD, VIEWER_CONTROL_REPLACE, VIEWER_CONTROL_SKIP}
+        or control.get("canonical_writer_supports_operation") is not True
+    ):
+        raise PublishSafetyError(
+            "canonical compound writer requires observed root README state"
+        )
+    return control
+
+
 def build_canonical_publication_dry_run_receipt(
     *,
     candidate: Mapping[str, Any],
@@ -759,6 +832,7 @@ def build_canonical_publication_dry_run_receipt(
     )
     if plan.release_sha256 != release_digest:
         raise PublishReceiptError("candidate and main plan release digests differ")
+    viewer_control = canonical_viewer_control(plan)
     receipt = {
         "schema": RECEIPT_SCHEMA,
         "receipt_kind": RECEIPT_KIND,
@@ -783,10 +857,12 @@ def build_canonical_publication_dry_run_receipt(
         "plan_digest": plan.plan_digest,
         "policy_proof_digest": None,
         "operations": canonical_plan_inventory(plan),
+        "viewer_control": viewer_control,
         "uploaded": [],
         "skipped": list(plan.skipped_exact_matches),
         "unexpected_operations": [],
-        "additive_only": True,
+        "additive_only": viewer_control["whole_publication_additive_only"],
+        "immutable_release_artifacts_additive_only": True,
         "legacy_paths_preserved": True,
         "rollback_target": plan.audited_parent_commit,
         "remote_mutation_attempted": False,
@@ -931,7 +1007,7 @@ def assert_seal_precedes_mutation(seal: Mapping[str, Any]) -> dict[str, Any]:
     )
     if previous != PRODUCTION_REVISION:
         raise PublishSealError(
-            f"seal previous public pin must remain {PRODUCTION_REVISION}"
+            f"seal publication parent must remain {PRODUCTION_REVISION}"
         )
     final_manifest = _normalize_sha256(
         seal.get("final_manifest_digest") or seal.get("manifest_digest"),
@@ -1210,6 +1286,8 @@ def authorize_state_main_upload(
 ) -> Any:
     """Execute the one canonical State Laws main-branch commit."""
 
+    if isinstance(plan, PublicationPlan):
+        require_supported_canonical_viewer_control(plan)
     execute = getattr(
         publisher, "execute_canonical_legal_corpora_mutation", None
     )
@@ -1277,6 +1355,7 @@ def build_canonical_publication_receipt(
     )
     if public_revision == plan.audited_parent_commit:
         raise PublishReceiptError("public mutation did not advance the immutable pin")
+    viewer_control = require_supported_canonical_viewer_control(plan)
     operations = canonical_plan_inventory(plan)
     uploaded = [
         {
@@ -1316,10 +1395,12 @@ def build_canonical_publication_receipt(
         "prepublication_seal_digest": controls.seal_content_digest,
         "main_mutation": mutation,
         "operations": operations,
+        "viewer_control": viewer_control,
         "uploaded": uploaded,
         "skipped": list(plan.skipped_exact_matches),
         "unexpected_operations": [],
-        "additive_only": True,
+        "additive_only": viewer_control["whole_publication_additive_only"],
+        "immutable_release_artifacts_additive_only": True,
         "legacy_paths_preserved": True,
         "remote_mutation_attempted": True,
         "remote_write_performed": True,
@@ -1352,7 +1433,7 @@ def check_canonical_publication_receipt(
         or report.get("dataset_repo_id") != DEFAULT_DATASET_REPO
         or report.get("target") != DEFAULT_DATASET_REPO
         or report.get("public_branch") != PUBLIC_BRANCH
-        or report.get("additive_only") is not True
+        or report.get("immutable_release_artifacts_additive_only") is not True
         or report.get("legacy_paths_preserved") is not True
         or report.get("unexpected_operations") != []
         or report.get("secrets_persisted") is not False
@@ -1373,6 +1454,33 @@ def check_canonical_publication_receipt(
         "plan_digest",
     ):
         _normalize_sha256(report.get(name), name=name)
+    try:
+        viewer_control = StateLawsViewerControlPlan.from_mapping(
+            report.get("viewer_control")
+        ).to_dict()
+        expected_viewer_configs = [
+            dict(item)
+            for item in state_laws_root_viewer_configs(
+                viewer_control["release_prefix"]
+            )
+        ]
+    except Exception as exc:
+        raise PublishReceiptError(
+            f"canonical publication Viewer control is invalid: {exc}"
+        ) from exc
+    if (
+        viewer_control.get("repository_id") != report["dataset_repo_id"]
+        or viewer_control.get("target_revision") != report["public_branch"]
+        or viewer_control.get("audited_parent_commit") != parent
+        or viewer_control.get("release_manifest_digest")
+        != report["release_manifest_digest"]
+        or viewer_control.get("configs") != expected_viewer_configs
+        or report.get("additive_only")
+        is not viewer_control.get("whole_publication_additive_only")
+    ):
+        raise PublishReceiptError(
+            "canonical publication Viewer control binding drifted"
+        )
     declared = _normalize_sha256(
         report.get("canonical_digest") or report.get("content_digest"),
         name="canonical_digest",
@@ -1407,6 +1515,9 @@ def check_canonical_publication_receipt(
             or report.get("remote_write_performed") is not True
             or report.get("seal_verified_before_mutation") is not True
             or report.get("gate_invoked_before_mutation") is not True
+            or viewer_control.get("operation")
+            not in {VIEWER_CONTROL_ADD, VIEWER_CONTROL_REPLACE, VIEWER_CONTROL_SKIP}
+            or viewer_control.get("canonical_writer_supports_operation") is not True
         ):
             raise PublishReceiptError("canonical publication is not live passed evidence")
         staging = require_immutable_revision(
@@ -1478,6 +1589,11 @@ def prepare_and_execute_canonical_main_release(
     audited_parent_commit: str = PRODUCTION_REVISION,
     repository_root: Path | str = REPOSITORY_ROOT,
     environ: Mapping[str, str] | None = None,
+    root_readme_exists: bool | None = None,
+    existing_root_readme_sha256: str | None = None,
+    root_readme_replacement_authorization: (
+        StateLawsViewerControlAuthorization | Mapping[str, Any] | None
+    ) = None,
 ) -> dict[str, Any]:
     """Seal candidate B and execute one canonical main commit."""
 
@@ -1488,7 +1604,13 @@ def prepare_and_execute_canonical_main_release(
     package, publisher, plan = build_canonical_main_plan(
         release_root=release_root,
         audited_parent_commit=audited_parent_commit,
+        root_readme_exists=root_readme_exists,
+        existing_root_readme_sha256=existing_root_readme_sha256,
+        root_readme_replacement_authorization=(
+            root_readme_replacement_authorization
+        ),
     )
+    require_supported_canonical_viewer_control(plan)
     candidate_a, binding_a = load_production_candidate_report(
         repo_root=root, phase="state_staging"
     )
@@ -1717,7 +1839,7 @@ def plan_public_from_candidate(
     old_sha = require_immutable_revision(base_revision, name="old_sha")
     if old_sha != PRODUCTION_REVISION:
         raise PublishTargetError(
-            f"old SHA must remain the sealed previous public pin {PRODUCTION_REVISION}"
+            f"old SHA must remain the audited publication parent {PRODUCTION_REVISION}"
         )
     staged = require_immutable_revision(
         staging_revision

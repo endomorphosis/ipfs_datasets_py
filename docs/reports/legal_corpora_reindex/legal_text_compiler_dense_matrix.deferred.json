@@ -1,0 +1,20 @@
+{
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "compiler_exists": true,
+  "compiler_interfaces": [
+    "CanonicalStructuredTextCompiler@1",
+    "TypedDeonticCanonicalConstructor@1",
+    "formalization-compiler-config/v1"
+  ],
+  "current_bundle": false,
+  "dense_matrix_required_for_compiler": false,
+  "lcr084_deferred": true,
+  "lcr084_taskboard_status": "todo",
+  "producer": "build_fr_full_graphrag.py",
+  "reason": "The measured legal-text compiler lowers a single document to deontic/canonical IR with a caller-supplied vocabulary and source map. It is fail-closed, use_ml=False, and does not take pairwise similarity as input. Compilation walks typed sparse edges (CITES, HAS_DOCKET, HAS_RIN, PUBLISHED_ON, HAS_PROVENANCE) via two-way adjacency. Embedding/BM25 neighbors are retrieval proposals only and cannot establish legal authority. A dense NxN matrix is neither an IR nor a walk index; materializing 1e6^2 cosine cells would be ~4TiB and would not make the compiler more correct.",
+  "schema": "ipfs_datasets_py/legal-text-compiler-dense-matrix-decision@1",
+  "similarity_cannot_establish_legal_authority": true,
+  "status": "closed",
+  "walk_index": "two_way_sparse_adjacency"
+}

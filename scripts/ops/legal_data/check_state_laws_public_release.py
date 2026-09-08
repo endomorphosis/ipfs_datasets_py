@@ -54,6 +54,9 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime im
     RECEIPT_SCHEMA_V1,
     canonical_no_self_field_digest,
 )
+from ipfs_datasets_py.processors.legal_data.state_laws_completeness import (
+    CANONICAL_JURISDICTION_ORDER,
+)
 from ipfs_datasets_py.processors.legal_data.state_laws_hf_release import (
     DEFAULT_CONFIG_NAME,
     advertised_viewer_configs,
@@ -63,14 +66,15 @@ from ipfs_datasets_py.processors.legal_data.state_laws_local_release import (
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import (
     DEFAULT_STAGING_BRANCH,
+    PUBLICATION_PARENT_REVISION,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
-    CANONICAL_JURISDICTIONS,
     DEFAULT_DATASET_REPO_ID,
     EXPECTED_JURISDICTION_COUNT,
-    PREVIOUS_PUBLIC_PIN,
     RELEASE_PROFILE,
+    VIEWER_DEFAULT_CORPUS_GLOB,
     required_semantic_families,
+    state_laws_root_viewer_configs,
     validate_jurisdiction_set,
 )
 from ipfs_datasets_py.retrieval.hf_graphrag.resolver import (
@@ -134,6 +138,11 @@ from scripts.ops.legal_data.publish_state_laws_hf_release import (
     reject_secrets_in_argv,
     require_immutable_revision,
 )
+from scripts.ops.legal_data.state_laws_release_probe import (
+    StateLawsReleaseProbeError,
+    assert_first_party_measurement,
+    run_public_release_probe,
+)
 
 # ---------------------------------------------------------------------------
 # Identity / sealed policy
@@ -142,6 +151,7 @@ from scripts.ops.legal_data.publish_state_laws_hf_release import (
 TASK_ID: Final = "LCR-043"
 GOAL_ID: Final = "LCR-G080"
 PROGRAM_ID: Final = "legal-corpora-reindex-v1"
+PREVIOUS_PUBLIC_PIN: Final = PUBLICATION_PARENT_REVISION
 if DEFAULT_DATASET_REPO != "justicedao/ipfs_state_laws":
     raise RuntimeError("sealed state-law target drifted from the publication gate")
 if DEFAULT_DATASET_REPO != DEFAULT_DATASET_REPO_ID:
@@ -210,7 +220,7 @@ CURRENTNESS_DISCLAIMER: Final = (
     "legally current as of wall-clock time. Retrieval output is a research "
     "aid and is not a substitute for the official source."
 )
-SORTED_JURISDICTIONS: Final = tuple(sorted(CANONICAL_JURISDICTIONS))
+SORTED_JURISDICTIONS: Final = CANONICAL_JURISDICTION_ORDER
 
 SELF_DIGEST_FIELDS: Final = frozenset(
     {
@@ -1522,6 +1532,97 @@ def validate_canonical_viewer_probe(value: Mapping[str, Any]) -> dict[str, Any]:
         raise PublicViewerError(
             "default Dataset Viewer config is not the measured exact-51 release"
         )
+    pinned_revision = str(value.get("pinned_revision") or "")
+    if (
+        _GIT_SHA_RE.fullmatch(pinned_revision) is None
+        or value.get("bounded") is not True
+    ):
+        raise PublicViewerError("Dataset Viewer probe is not immutable/bounded")
+    binding = value.get("manifest_binding")
+    if not isinstance(binding, Mapping):
+        raise PublicViewerError(
+            "Dataset Viewer probe lacks verified local-manifest binding"
+        )
+    manifest_digest = str(binding.get("manifest_digest") or "")
+    release_prefix = f"data/state_laws/sha256-{manifest_digest}"
+    try:
+        expected_viewer_data_files = list(
+            state_laws_root_viewer_configs(release_prefix)[0]["data_files"]
+        )
+    except Exception as exc:
+        raise PublicViewerError(
+            "Dataset Viewer probe has an invalid release-prefix binding"
+        ) from exc
+    if (
+        binding.get("default_config") != DEFAULT_CONFIG_NAME
+        or _SHA256_RE.fullmatch(manifest_digest) is None
+        or _SHA256_RE.fullmatch(str(binding.get("default_config_sha256") or ""))
+        is None
+        or _SHA256_RE.fullmatch(
+            str(binding.get("manifest_default_config_sha256") or "")
+        )
+        is None
+        or _SHA256_RE.fullmatch(str(binding.get("jurisdictions_sha256") or ""))
+        is None
+        or _SHA256_RE.fullmatch(str(binding.get("key_parity_sha256") or ""))
+        is None
+        or binding.get("default_data_files") != expected_viewer_data_files
+        or binding.get("manifest_default_data_files")
+        != [{"path": VIEWER_DEFAULT_CORPUS_GLOB, "split": "train"}]
+        or binding.get("release_prefix") != release_prefix
+        or isinstance(binding.get("default_matched_artifact_count"), bool)
+        or not isinstance(binding.get("default_matched_artifact_count"), int)
+        or int(binding["default_matched_artifact_count"]) <= 0
+        or _SHA256_RE.fullmatch(
+            str(binding.get("default_matched_artifacts_sha256") or "")
+        )
+        is None
+        or isinstance(binding.get("expected_rows"), bool)
+        or not isinstance(binding.get("expected_rows"), int)
+        or int(binding["expected_rows"]) <= 0
+    ):
+        raise PublicViewerError(
+            "Dataset Viewer probe lacks verified local-manifest binding"
+        )
+    responses = value.get("responses")
+    if not isinstance(responses, list) or len(responses) != 4:
+        raise PublicViewerError("Dataset Viewer endpoint evidence is incomplete")
+    by_endpoint = {
+        str(item.get("endpoint") or ""): item
+        for item in responses
+        if isinstance(item, Mapping)
+    }
+    if set(by_endpoint) != {"is-valid", "info", "size", "splits"}:
+        raise PublicViewerError("Dataset Viewer endpoint evidence drifted")
+    for endpoint, item in by_endpoint.items():
+        if (
+            item.get("x_revision") != pinned_revision
+            or not isinstance(item.get("status"), int)
+            or not 200 <= int(item["status"]) < 300
+            or not isinstance(item.get("response_bytes"), int)
+            or int(item["response_bytes"]) <= 0
+            or _SHA256_RE.fullmatch(str(item.get("response_sha256") or "")) is None
+            or not isinstance(item.get("semantic"), Mapping)
+        ):
+            raise PublicViewerError(
+                f"Dataset Viewer {endpoint} response evidence is malformed"
+            )
+    capabilities = by_endpoint["is-valid"]["semantic"].get("capabilities")
+    expected_rows = int(binding["expected_rows"])
+    if (
+        not isinstance(capabilities, Mapping)
+        or capabilities.get("viewer") is not True
+        or capabilities.get("preview") is not True
+        or by_endpoint["info"]["semantic"].get("config") != DEFAULT_CONFIG_NAME
+        or by_endpoint["size"]["semantic"].get("config") != DEFAULT_CONFIG_NAME
+        or by_endpoint["splits"]["semantic"].get("config") != DEFAULT_CONFIG_NAME
+        or by_endpoint["info"]["semantic"].get("row_count") != expected_rows
+        or by_endpoint["size"]["semantic"].get("row_count") != expected_rows
+        or int(by_endpoint["splits"]["semantic"].get("split_count") or 0) <= 0
+    ):
+        raise PublicViewerError(
+            "Dataset Viewer semantic/config/row evidence did not close"
+        )
     return dict(value)
 
 
@@ -1551,9 +1652,35 @@ def build_canonical_public_canary_receipt(
     publication = check_canonical_publication_receipt(
         publication_receipt, require_live=True
     )
-    viewer = validate_canonical_viewer_probe(viewer_probe)
-    keys = validate_canonical_key_set_probe(key_set_probe)
-    queries = validate_canonical_query_canaries(query_canaries)
+    binding_args = {
+        "repo_id": publication["dataset_repo_id"],
+        "revision": publication["public_revision"],
+        "release_manifest_digest": publication["release_manifest_digest"],
+        "parent_evidence_digest": publication["canonical_digest"],
+    }
+    try:
+        first_party_viewer = assert_first_party_measurement(viewer_probe, **binding_args)
+        first_party_keys = assert_first_party_measurement(key_set_probe, **binding_args)
+        first_party_queries = assert_first_party_measurement(
+            query_canaries, **binding_args
+        )
+    except StateLawsReleaseProbeError as exc:
+        raise PublicParityError(
+            "public probes are not internally measured/bound evidence"
+        ) from exc
+    viewer = validate_canonical_viewer_probe(first_party_viewer)
+    keys = validate_canonical_key_set_probe(first_party_keys)
+    queries = validate_canonical_query_canaries(first_party_queries)
+    if (
+        viewer["pinned_revision"] != publication["public_revision"]
+        or viewer["manifest_binding"]["manifest_digest"]
+        != publication["release_manifest_digest"]
+        or viewer["manifest_binding"]["key_parity_sha256"]
+        != keys["canonical_keys_sha256"]
+    ):
+        raise PublicParityError(
+            "Viewer/local-manifest/key-set immutable bindings drifted"
+        )
     if (
         redownload.get("cache_empty_before_fetch") is not True
         or redownload.get("exact_descriptor_match") is not True
@@ -1591,6 +1718,10 @@ def build_canonical_public_canary_receipt(
         "viewer": viewer,
         "key_sets": keys,
         "query_canaries": queries,
+        "measurement_source": first_party_viewer["measurement_source"],
+        "externally_supplied": first_party_viewer["externally_supplied"],
+        "observed_at": first_party_viewer["observed_at"],
+        "probe_bindings": first_party_viewer["probe_bindings"],
         "jurisdictions": list(SORTED_JURISDICTIONS),
         "jurisdiction_count": EXPECTED_JURISDICTION_COUNT,
         "read_only": True,
@@ -1676,13 +1807,40 @@ def check_canonical_public_canary_receipt(
     ):
         if _SHA256_RE.fullmatch(str(report.get(name) or "")) is None:
             raise PublicPinError(f"{name} is malformed")
+    binding_args = {
+        "repo_id": report["dataset_repo_id"],
+        "revision": report["public_revision"],
+        "release_manifest_digest": report["release_manifest_digest"],
+        "parent_evidence_digest": report["publication_receipt_digest"],
+    }
+    try:
+        assert_first_party_measurement(report, **binding_args)
+        assert_first_party_measurement(report.get("viewer") or {}, **binding_args)
+        assert_first_party_measurement(report.get("key_sets") or {}, **binding_args)
+        assert_first_party_measurement(
+            report.get("query_canaries") or {}, **binding_args
+        )
+    except StateLawsReleaseProbeError as exc:
+        raise PublicPinError(
+            "canonical public canary lacks sealed first-party provenance"
+        ) from exc
     declared = str(report.get("canonical_digest") or report.get("content_digest") or "")
     if _SHA256_RE.fullmatch(declared) is None or canonical_no_self_field_digest(
         report
     ) != declared:
         raise PublicPinError("canonical public canary digest mismatch")
-    validate_canonical_viewer_probe(report.get("viewer") or {})
-    validate_canonical_key_set_probe(report.get("key_sets") or {})
+    viewer = validate_canonical_viewer_probe(report.get("viewer") or {})
+    keys = validate_canonical_key_set_probe(report.get("key_sets") or {})
+    if (
+        viewer["pinned_revision"] != report["public_revision"]
+        or viewer["manifest_binding"]["manifest_digest"]
+        != report["release_manifest_digest"]
+        or viewer["manifest_binding"]["key_parity_sha256"]
+        != keys["canonical_keys_sha256"]
+    ):
+        raise PublicPinError(
+            "canonical Viewer/local-manifest/key-set bindings drifted"
+        )
     validate_canonical_query_canaries(report.get("query_canaries") or {})
     downloaded = report.get("downloaded")
     if (
@@ -2299,7 +2457,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--verification",
         type=Path,
         default=None,
-        help="Measured Viewer, key-set, and bounded query probe JSON.",
+        help=(
+            "Rejected legacy input. Canonical Viewer, key-set, and query "
+            "evidence is measured internally from the pinned public release."
+        ),
     )
     parser.add_argument(
         "--output",
@@ -2380,9 +2541,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise PublicRemoteError(
                 "new public canary generation requires explicit --network opt-in"
             )
-        if args.cache_dir is None or args.verification is None:
+        if args.verification is not None:
             raise PublicRemoteError(
-                "public canary generation requires --cache-dir and --verification"
+                "external --verification cannot authorize canonical evidence"
+            )
+        if args.cache_dir is None:
+            raise PublicRemoteError(
+                "public canary generation requires --cache-dir"
             )
         publication = load_json_mapping(args.receipt or default_receipt_path())
         checked_publication = check_canonical_publication_receipt(
@@ -2397,11 +2562,25 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise PublicRemoteError(
                 "explicit remote coordinates differ from the publication receipt"
             )
-        measured = load_json_mapping(args.verification)
         redownload = redownload_canonical_public_release(
             checked_publication,
             cache_root=args.cache_dir,
             fetch_to_path=huggingface_pinned_fetch_to_path,
+        )
+        probe_coordinates = {
+            "repo_id": str(checked_publication["dataset_repo_id"]),
+            "revision": str(checked_publication["public_revision"]),
+            "release_manifest_digest": str(
+                checked_publication["release_manifest_digest"]
+            ),
+            "parent_evidence_digest": str(checked_publication["canonical_digest"]),
+        }
+        measured = assert_first_party_measurement(
+            run_public_release_probe(
+                args.cache_dir,
+                **probe_coordinates,
+            ),
+            **probe_coordinates,
         )
         report = build_canonical_public_canary_receipt(
             publication_receipt=checked_publication,
@@ -2434,6 +2613,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         PublishSafetyError,
         MutableRevisionError,
         ResolverError,
+        StateLawsReleaseProbeError,
         ValueError,
         RuntimeError,
     ) as exc:

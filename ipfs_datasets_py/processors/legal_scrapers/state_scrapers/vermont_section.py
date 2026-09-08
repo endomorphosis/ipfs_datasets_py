@@ -44,7 +44,8 @@ _EXEC_ORDER_REVOKED_BODY_RE = re.compile(
 _WS = re.compile(r"\s+")
 _TERMINAL_KIND_PATTERN = (
     r"repealed|expired|reserved|renumbered|redesignated|transferred|"
-    r"recodified|eliminated|omitted|intentionally\s+left\s+blank"
+    r"recodified|reclassified|eliminated|omitted|deleted|"
+    r"intentionally\s+left\s+blank"
 )
 _FUTURE_EFFECTIVE_RE = re.compile(
     r"\b(?:effective|eff\.?)\s+"
@@ -222,7 +223,18 @@ def parse_vermont_section_html(
             paras.append(body_part)
     body = _clean(" ".join(paras))
     if not body:
-        return None
+        # Official appendix/charter units sometimes print the entire operative
+        # text in the bold heading with no following paragraphs.
+        if heading and terminal_disposition_from_label(
+            heading,
+            observed_on=observed_on,
+        ) is None and (
+            _HEAD_RE.search(heading) is not None
+            or _EXEC_ORDER_HEAD_RE.search(heading) is not None
+        ):
+            body = heading
+        if not body:
+            return None
     if (
         _EXEC_ORDER_HEAD_RE.search(heading) is not None
         and _EXEC_ORDER_REVOKED_BODY_RE.match(body) is not None

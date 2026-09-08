@@ -172,8 +172,20 @@ _LAZY_EXPORTS: Final[Mapping[str, tuple[str, str]]] = MappingProxyType(
             ".uscode_source_policy",
             "CANONICAL_USCODE_TITLES",
         ),
-        # Tokenizer / chunker
+        # Tokenizer / chunker / shared GraphRAG parallelism
         "tokenize_legal_text": (".uscode_tokenizer", "tokenize_legal_text"),
+        "tokenize_indexable_batch": (".graphrag_parallel", "tokenize_indexable_batch"),
+        "tokenize_process_pool_size": (".graphrag_parallel", "tokenize_process_pool_size"),
+        "project_documents_parallel": (".graphrag_parallel", "project_documents_parallel"),
+        "extract_document_graph": (".graphrag_parallel", "extract_document_graph"),
+        "map_graph_partitions": (".graphrag_parallel", "map_graph_partitions"),
+        "map_neighbor_clusters": (".graphrag_parallel", "map_neighbor_clusters"),
+        "map_adjacency_directions": (".graphrag_parallel", "map_adjacency_directions"),
+        "IsolatedRowMutator": (".graphrag_parallel", "IsolatedRowMutator"),
+        "map_documents_under_pressure": (
+            ".graphrag_parallel",
+            "map_documents_under_pressure",
+        ),
         "chunk_legal_text": (".uscode_chunker", "chunk_legal_text"),
     }
 )

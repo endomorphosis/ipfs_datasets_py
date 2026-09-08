@@ -23,8 +23,11 @@ Design invariants
   an upload callback unless every gate has passed.
 * **Secret safety**: credentials remain environment-only; secrets never
   enter decisions, receipts, or argv surfaces managed here.
-* **Additive only**: delete, force-push, history rewrite, and visibility
-  changes are structurally forbidden.
+* **Immutable payloads remain additive**: delete, force-push, history rewrite,
+  and visibility changes are structurally forbidden.  State main has one
+  separately reviewed, digest-CAS control-plane operation for repository-root
+  ``README.md``; it is truthfully non-additive and cannot target release
+  payload objects.
 * **Canonical runtime (LCR-080)**: live mutation authority is derived by
   ``legal_corpora_publication_runtime`` from fixed repository-relative
   paths at the actual clean 40-hex HEAD. Caller-asserted statuses,
@@ -101,17 +104,31 @@ AUTHORIZED_DATASET_REPO_IDS: Final = frozenset(
 
 STATE_PREVIOUS_PUBLIC_PIN: Final = "42f0546acc7c6cd55627eaf51fb820d5613b9021"
 FEDERAL_PREVIOUS_PUBLIC_PIN: Final = "720668ae016cc400916dda884c9005e03618edfa"
+STATE_PUBLICATION_PARENT_PIN: Final = (
+    "78cba0ed86c3971a7b90620c6df167af8a1a6fb2"
+)
 BASELINE_REVISIONS: Final = MappingProxyType(
     {
         STATE_DATASET_REPO_ID: STATE_PREVIOUS_PUBLIC_PIN,
         FEDERAL_DATASET_REPO_ID: FEDERAL_PREVIOUS_PUBLIC_PIN,
     }
 )
+PUBLICATION_PARENT_REVISIONS: Final = MappingProxyType(
+    {
+        STATE_DATASET_REPO_ID: STATE_PUBLICATION_PARENT_PIN,
+        FEDERAL_DATASET_REPO_ID: FEDERAL_PREVIOUS_PUBLIC_PIN,
+    }
+)
+
+STATE_MAIN_ROOT_README_CAS_OPERATION: Final = (
+    "state_main_root_readme_compare_and_swap"
+)
 
 AUTHORIZED_OPERATIONS: Final = frozenset(
     {
         "additive_staging_upload",
         "additive_main_upload",
+        STATE_MAIN_ROOT_README_CAS_OPERATION,
     }
 )
 
@@ -261,7 +278,7 @@ class StagingSealSubstitutionError(PublicationGateError):
 
 
 class OperationForbiddenError(PublicationGateError):
-    """Raised when the requested operation is not additive/authorized."""
+    """Raised when the requested operation is not phase-authorized."""
 
     code = "operation_forbidden_error"
 
@@ -344,10 +361,17 @@ class PublicationPhase(str, Enum):
 
 
 class PublicationOperation(str, Enum):
-    """Authorized additive operations only."""
+    """Authorized publication operations.
+
+    Release payload uploads are additive.  The sole non-additive member is a
+    separately reviewed root-README compare-and-swap for State main.
+    """
 
     ADDITIVE_STAGING_UPLOAD = "additive_staging_upload"
     ADDITIVE_MAIN_UPLOAD = "additive_main_upload"
+    STATE_MAIN_ROOT_README_COMPARE_AND_SWAP = (
+        STATE_MAIN_ROOT_README_CAS_OPERATION
+    )
 
     @classmethod
     def coerce(cls, value: Any) -> "PublicationOperation":
@@ -441,7 +465,7 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
                 "LCR-G070",
                 "LCR-G080",
             ),
-            previous_public_pin=STATE_PREVIOUS_PUBLIC_PIN,
+            previous_public_pin=STATE_PUBLICATION_PARENT_PIN,
             seal_receipt_path=None,
         ),
         PublicationPhase.STATE_MAIN.value: _phase_contract(
@@ -480,7 +504,7 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
                 "LCR-G070",
                 "LCR-G080",
             ),
-            previous_public_pin=STATE_PREVIOUS_PUBLIC_PIN,
+            previous_public_pin=STATE_PUBLICATION_PARENT_PIN,
             seal_receipt_path=STATE_PREPUBLICATION_SEAL_PATH,
         ),
         PublicationPhase.FEDERAL_STAGING.value: _phase_contract(
@@ -1268,10 +1292,13 @@ def check_phase_target_operation(request: PublicationGateRequest) -> None:
         raise TargetUnauthorizedError(
             f"dataset target {request.dataset_repo_id!r} is not authorized"
         )
-    if request.operation != contract["authorized_operation"]:
+    phase_operations = {str(contract["authorized_operation"])}
+    if phase is PublicationPhase.STATE_MAIN:
+        phase_operations.add(STATE_MAIN_ROOT_README_CAS_OPERATION)
+    if request.operation not in phase_operations:
         raise OperationForbiddenError(
-            f"phase {phase.value} requires operation="
-            f"{contract['authorized_operation']!r}, got {request.operation!r}"
+            f"phase {phase.value} permits only operations="
+            f"{sorted(phase_operations)!r}, got {request.operation!r}"
         )
     if request.operation not in AUTHORIZED_OPERATIONS:
         raise OperationForbiddenError(
@@ -1287,6 +1314,88 @@ def check_phase_target_operation(request: PublicationGateRequest) -> None:
         raise OperationForbiddenError(
             "authorize_mutation must be true before any network mutation"
         )
+    release_mode = str(request.payload.get("release_mode") or "").strip()
+    expected_release_mode = (
+        "state_main_root_readme_compare_and_swap"
+        if request.operation == STATE_MAIN_ROOT_README_CAS_OPERATION
+        else "additive"
+    )
+    if release_mode != expected_release_mode:
+        raise OperationForbiddenError(
+            f"operation {request.operation!r} requires truthful release_mode="
+            f"{expected_release_mode!r}"
+        )
+    if request.operation == STATE_MAIN_ROOT_README_CAS_OPERATION:
+        root_control = request.payload.get("root_control")
+        expected_fields = {
+            "audited_parent_commit",
+            "control_plan_digest",
+            "expected_previous_absent",
+            "expected_previous_sha256",
+            "operation",
+            "phase",
+            "policy_proof_digest",
+            "publication_plan_digest",
+            "release_manifest_digest",
+            "release_prefix",
+            "remote_path",
+            "replacement_sha256",
+            "replacement_size_bytes",
+            "repository_id",
+            "repository_type",
+            "review_id",
+            "reviewer",
+            "revision",
+            "task_id",
+        }
+        if not isinstance(root_control, Mapping) or set(root_control) != expected_fields:
+            raise OperationForbiddenError(
+                "root README CAS lacks its exact sealed control binding"
+            )
+        release_digest = str(
+            root_control.get("release_manifest_digest") or ""
+        )
+        expected_previous = root_control.get("expected_previous_sha256")
+        expected_absent = root_control.get("expected_previous_absent")
+        if (
+            root_control.get("repository_id") != STATE_DATASET_REPO_ID
+            or root_control.get("repository_type") != "dataset"
+            or root_control.get("revision") != "main"
+            or root_control.get("remote_path") != "README.md"
+            or root_control.get("phase") != "state_main"
+            or root_control.get("operation")
+            != STATE_MAIN_ROOT_README_CAS_OPERATION
+            or root_control.get("task_id") != "LCR-042"
+            or root_control.get("audited_parent_commit")
+            != request.previous_public_pin
+            or _SHA256_RE.fullmatch(release_digest) is None
+            or root_control.get("release_prefix")
+            != f"data/state_laws/sha256-{release_digest}"
+            or any(
+                _SHA256_RE.fullmatch(str(root_control.get(field) or ""))
+                is None
+                for field in (
+                    "control_plan_digest",
+                    "policy_proof_digest",
+                    "publication_plan_digest",
+                    "replacement_sha256",
+                )
+            )
+            or (
+                expected_previous is not None
+                and _SHA256_RE.fullmatch(str(expected_previous)) is None
+            )
+            or expected_absent is not (expected_previous is None)
+            or not isinstance(root_control.get("replacement_size_bytes"), int)
+            or isinstance(root_control.get("replacement_size_bytes"), bool)
+            or int(root_control["replacement_size_bytes"]) <= 0
+            or not str(root_control.get("review_id") or "").strip()
+            or not str(root_control.get("reviewer") or "").strip()
+        ):
+            raise OperationForbiddenError(
+                "root README CAS control binding is malformed or targets "
+                "anything beyond the exact reviewed State-main control"
+            )
 
 
 def check_task_ancestor_closure(request: PublicationGateRequest) -> None:
@@ -1879,7 +1988,7 @@ def evaluate_publication_gate(
         raw_op = "unknown"
         raw_repo = STATE_DATASET_REPO_ID
         raw_digest = "0" * 64
-        raw_pin = STATE_PREVIOUS_PUBLIC_PIN
+        raw_pin = STATE_PUBLICATION_PARENT_PIN
         if isinstance(request, Mapping):
             raw_phase = str(request.get("phase") or "unknown")
             raw_op = str(request.get("operation") or "unknown")
@@ -1893,11 +2002,11 @@ def evaluate_publication_gate(
                 raw_digest = "0" * 64
             try:
                 raw_pin = require_immutable_revision(
-                    str(request.get("previous_public_pin") or STATE_PREVIOUS_PUBLIC_PIN),
+                    str(request.get("previous_public_pin") or STATE_PUBLICATION_PARENT_PIN),
                     name="previous_public_pin",
                 )
             except PublicationGateError:
-                raw_pin = STATE_PREVIOUS_PUBLIC_PIN
+                raw_pin = STATE_PUBLICATION_PARENT_PIN
         try:
             safe_repo = normalize_dataset_repo_id(raw_repo)
         except PublicationGateError:
@@ -2442,6 +2551,7 @@ def sealed_gate_fixture_payload(*, include_examples: bool = True) -> dict[str, A
         ),
         "authorized_dataset_repo_ids": sorted(AUTHORIZED_DATASET_REPO_IDS),
         "baseline_revisions": dict(BASELINE_REVISIONS),
+        "publication_parent_revisions": dict(PUBLICATION_PARENT_REVISIONS),
         "authorized_operations": sorted(AUTHORIZED_OPERATIONS),
         "forbidden_operations": sorted(FORBIDDEN_OPERATIONS),
         "generated_work_guard": dict(GENERATED_WORK_GUARD),
@@ -2734,6 +2844,7 @@ __all__ = [
     "AUTHORIZED_DATASET_REPO_IDS",
     "AUTHORIZED_OPERATIONS",
     "BASELINE_REVISIONS",
+    "PUBLICATION_PARENT_REVISIONS",
     "CREDENTIALS_SCOPE_PREFIX",
     "CredentialMismatchError",
     "DEFAULT_FIXTURE_RELATIVE_PATH",
@@ -2774,6 +2885,8 @@ __all__ = [
     "SECRET_ENV_NAMES",
     "SOURCE_RIGHTS_GATE_SCHEMA",
     "STATE_DATASET_REPO_ID",
+    "STATE_MAIN_ROOT_README_CAS_OPERATION",
+    "STATE_PUBLICATION_PARENT_PIN",
     "STATE_PREVIOUS_PUBLIC_PIN",
     "StagingSealSubstitutionError",
     "TASK_ID",

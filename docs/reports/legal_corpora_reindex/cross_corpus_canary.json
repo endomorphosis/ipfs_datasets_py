@@ -1,0 +1,43 @@
+{
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "current_bundle": false,
+  "dimension": 384,
+  "dimension_alone_establishes_compatibility": false,
+  "federal_graph_ontology": "federal-register-graph-ontology/v1",
+  "federal_public_sha": "d748016d96a7af6d261751d51a5959bd7bc0e2b7",
+  "federal_queries": {
+    "bm25_complete": true,
+    "hub_body_bytes": 10246,
+    "vector_self_retrieval_ok": true
+  },
+  "federal_repo_id": "justicedao/ipfs_federal_register",
+  "federal_vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2",
+  "fusion_must_remain_labeled_per_corpus": true,
+  "goal_id": "LCR-G140",
+  "graph_ontologies_remain_private": true,
+  "lcr084_deferred": true,
+  "lcr084_taskboard_status": "todo",
+  "live_official": false,
+  "model_id": "thenlper/gte-small",
+  "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+  "notes": "Operator-deferred LCR-084 path. Not a sealed live-official current-bundle. LCR-084 remains todo. Retrieval output is a research aid, not legal authority. Compatibility is the full vector_space_id (model+rev+dim+pool+norm), not dimension 384 alone.",
+  "observed_at": "2026-09-07T07:33:08Z",
+  "producer": "deferred_lcr_remainder.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "research_aid_disclaimer": "Cross-corpus retrieval is a research aid. It is not legal authority or advice.",
+  "schema": "ipfs_datasets_py/lcr-deferred-cross-corpus-canary@1",
+  "shared_vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2",
+  "state_graph_ontology": "open-us-law-graph-ontology/v1",
+  "state_public_sha": "9b55fb4db5baef7183832bcb232ad2309180d6cb",
+  "state_queries": {
+    "bm25_complete": true,
+    "centroid_self_retrieval_ok": true,
+    "graph_complete": true
+  },
+  "state_repo_id": "justicedao/ipfs_state_laws",
+  "state_vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2",
+  "status": "deferred_compatible_labeled",
+  "task_id": "LCR-067",
+  "vector_spaces_identical": true
+}

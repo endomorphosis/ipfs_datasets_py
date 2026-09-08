@@ -60,7 +60,7 @@ job, remote publication, or Hub mutation was performed.
 | remaining_unresolved_rows | 173 |
 | remaining_senate_wave_url_count | 28 |
 | remaining_senate_wave_name | `source-derived-supplemental-sections-1-28` |
-| remaining_senate_wave_sha256 | `b03131cd20eb808d159427e548a732a078fc7b3f94291a2c5fff8a4cd206dde0` |
+| remaining_senate_wave_sha256 | `0c33f61954a7c25d80e41f4b67008fb4d2bdffee29bc9dd71f69a6f3ab1c7235` |
 | current_bundle_sealed | false |
 | publication_authorized | false |
 | hub_mutation | forbidden |
@@ -195,11 +195,11 @@ The production acquisition path derives and pins this ordered 28-URL wave:
 
 ```text
 https://www.nysenate.gov/legislation/laws/EPT/3-6.5
-https://www.nysenate.gov/legislation/laws/GBS/495-d
+https://www.nysenate.gov/legislation/laws/GBS/495-D
 https://www.nysenate.gov/legislation/laws/GMU/902
-https://www.nysenate.gov/legislation/laws/PBA/2799-aaaa
-https://www.nysenate.gov/legislation/laws/EDN/669-c
-https://www.nysenate.gov/legislation/laws/EDN/2023-b
+https://www.nysenate.gov/legislation/laws/PBA/2799-AAAA
+https://www.nysenate.gov/legislation/laws/EDN/669-C
+https://www.nysenate.gov/legislation/laws/EDN/2023-B
 https://www.nysenate.gov/legislation/laws/ELD/221
 https://www.nysenate.gov/legislation/laws/ELN/3-408
 https://www.nysenate.gov/legislation/laws/ELN/7-108
@@ -210,22 +210,22 @@ https://www.nysenate.gov/legislation/laws/ELN/11-304
 https://www.nysenate.gov/legislation/laws/ELN/17-140
 https://www.nysenate.gov/legislation/laws/ELN/17-158
 https://www.nysenate.gov/legislation/laws/EXC/236
-https://www.nysenate.gov/legislation/laws/GMU/371-a
+https://www.nysenate.gov/legislation/laws/GMU/371-A
 https://www.nysenate.gov/legislation/laws/ISC/3114
 https://www.nysenate.gov/legislation/laws/MHY/7.48
 https://www.nysenate.gov/legislation/laws/PAR/27.09
-https://www.nysenate.gov/legislation/laws/SOS/364-j-1
-https://www.nysenate.gov/legislation/laws/SOS/369-ii
+https://www.nysenate.gov/legislation/laws/SOS/364-J-1
+https://www.nysenate.gov/legislation/laws/SOS/369-II
 https://www.nysenate.gov/legislation/laws/TAX/602
 https://www.nysenate.gov/legislation/laws/TAX/622
 https://www.nysenate.gov/legislation/laws/TAX/636
-https://www.nysenate.gov/legislation/laws/TAX/1262-l
+https://www.nysenate.gov/legislation/laws/TAX/1262-L
 https://www.nysenate.gov/legislation/laws/VAT/235
-https://www.nysenate.gov/legislation/laws/VAT/1180-i
+https://www.nysenate.gov/legislation/laws/VAT/1180-I
 ```
 
 Its ordered URL SHA-256 is
-`b03131cd20eb808d159427e548a732a078fc7b3f94291a2c5fff8a4cd206dde0`.
+`0c33f61954a7c25d80e41f4b67008fb4d2bdffee29bc9dd71f69a6f3ab1c7235`.
 The pin is computed as
 `sha256("\n".join(urls).encode("utf-8"))`. Canonical proof manifests use
 `json.dumps(..., ensure_ascii=False, separators=(",", ":"), sort_keys=True)`;

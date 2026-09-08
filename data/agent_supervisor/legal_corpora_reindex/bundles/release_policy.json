@@ -8,6 +8,10 @@
     "justicedao/ipfs_state_laws": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
     "justicedao/ipfs_federal_register": "720668ae016cc400916dda884c9005e03618edfa"
   },
+  "publication_parent_revisions": {
+    "justicedao/ipfs_state_laws": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2",
+    "justicedao/ipfs_federal_register": "720668ae016cc400916dda884c9005e03618edfa"
+  },
   "release_mode": "additive",
   "jurisdiction_contract": {
     "required_count": 51,

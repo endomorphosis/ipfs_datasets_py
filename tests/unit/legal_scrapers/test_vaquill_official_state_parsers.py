@@ -745,6 +745,32 @@ def test_new_york_openleg_json(tmp_path: Path, monkeypatch) -> None:
     assert "intent to cause the death" in rows[0].full_text
 
 
+def test_new_york_openleg_json_single_blob_unconsolidated_act() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york_openleg import (
+        parse_new_york_law_tree,
+    )
+
+    payload = {
+        "info": {"lawId": "LEH", "name": "Local Emergency Housing Rent Control Act"},
+        "documents": {
+            "docType": "CHAPTER",
+            "docLevelId": "LEH",
+            "locationId": "LEH",
+            "title": "Local Emergency Housing Rent Control Act",
+            "text": (
+                "This act shall be known as the local emergency housing rent "
+                "control act and applies to housing accommodations in cities "
+                "with a population of one million or more."
+            ),
+            "documents": {"items": []},
+        },
+    }
+    rows = parse_new_york_law_tree(payload, code_name="New York Consolidated Laws")
+    assert len(rows) == 1
+    assert rows[0].title_number == "LEH"
+    assert "local emergency housing rent control act" in rows[0].full_text.casefold()
+
+
 def test_pennsylvania_last_section_header_wins(tmp_path: Path, monkeypatch) -> None:
     from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.pennsylvania import PennsylvaniaScraper
     from ipfs_datasets_py.utils import anyio_compat as asyncio

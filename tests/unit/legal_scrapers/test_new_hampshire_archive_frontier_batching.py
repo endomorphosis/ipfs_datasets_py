@@ -403,12 +403,39 @@ async def test_new_hampshire_legacy_root_cannot_authorize_current_frontier(
         )
 
 
-def test_new_hampshire_archive_receipt_cannot_authorize_current_frontier() -> None:
+def test_new_hampshire_wayback_cdx_receipt_authorizes_current_frontier() -> None:
     payload = b"exact archived title"
     batch = _aligned_result([TITLE_I], [payload])
     transport = batch.transport_receipts[0]
     assert isinstance(transport, dict)
     transport["source_transport"] = "wayback"
+    transport["archive_timestamp"] = "20260827085501"
+    envelope = batch.parser_input_envelopes[0]
+    envelope_dict = envelope.to_dict()
+    envelope_dict["acquisition"]["receipt"]["metadata"][
+        "transport_receipt"
+    ] = dict(transport)
+
+    evidence = NewHampshireScraper(
+        "NH", "New Hampshire"
+    )._validate_new_hampshire_aligned_evidence(
+        url=TITLE_I,
+        payload=payload,
+        transport_receipt=transport,
+        parser_input_envelope=envelope,
+        frontier_name="title",
+    )
+    assert evidence["source_transport"] == "wayback"
+    assert evidence["archive_timestamp"] == "20260827085501"
+    assert evidence["legal_as_of"] == "2026-08-27"
+
+
+def test_new_hampshire_archive_receipt_cannot_authorize_current_frontier() -> None:
+    payload = b"exact archived title"
+    batch = _aligned_result([TITLE_I], [payload])
+    transport = batch.transport_receipts[0]
+    assert isinstance(transport, dict)
+    transport["source_transport"] = "archive_is"
     transport["archive_timestamp"] = "20250124114611"
     envelope = batch.parser_input_envelopes[0]
     envelope_dict = envelope.to_dict()

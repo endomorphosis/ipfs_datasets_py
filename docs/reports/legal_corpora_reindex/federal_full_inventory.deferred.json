@@ -1,0 +1,23 @@
+{
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "current_bundle": false,
+  "dataset_repo_id": "justicedao/ipfs_federal_register",
+  "dest": "/home/barberb/.ipfs_datasets/federal_register/full-graphrag-v2026.08.10/inventory",
+  "fetched": 1005970,
+  "lcr084_deferred": true,
+  "lcr084_taskboard_status": "todo",
+  "live_official": false,
+  "notes": "Deferred full-register inventory via FederalRegister.gov API. Unique legal_ids equal official monthly count sum (1005970) for 1994-01-01 through 2026-08-10. Sealed LCR-052 live path remains the 11784-document 2026-03-03..2026-08-10 delta and was not overwritten. API returns zero pre-1994 documents. Not a current-bundle.",
+  "observation_cutoff": "2026-08-10T00:00:00Z",
+  "official_count_sum": 1005970,
+  "partition_count": 392,
+  "producer": "acquire_fr_full_inventory.py",
+  "range_end": "2026-08-10",
+  "range_start": "1994-01-01",
+  "schema": "ipfs_datasets_py/fr-full-inventory-deferred@1",
+  "status": "closed",
+  "task_id": "LCR-052-deferred-full",
+  "unique_legal_ids": 1005970,
+  "written_at": "2026-09-07T08:47:50Z"
+}

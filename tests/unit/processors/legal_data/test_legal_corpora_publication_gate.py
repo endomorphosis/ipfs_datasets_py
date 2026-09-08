@@ -30,6 +30,7 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate impor
     GOAL_ID,
     INADMISSIBLE_RIGHTS_CONDITIONS,
     PHASE_REQUIREMENTS,
+    PUBLICATION_PARENT_REVISIONS,
     PROGRAM_ID,
     PublicationGateDeniedError,
     PublicationGateRequest,
@@ -44,6 +45,8 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate impor
     SCHEMA_VERSION,
     SOURCE_RIGHTS_GATE_SCHEMA,
     STATE_DATASET_REPO_ID,
+    STATE_MAIN_ROOT_README_CAS_OPERATION,
+    STATE_PUBLICATION_PARENT_PIN,
     STATE_PREVIOUS_PUBLIC_PIN,
     SUCCESSOR_GOAL_ID,
     SUCCESSOR_TASK_ID,
@@ -98,13 +101,18 @@ def test_schema_and_task_identity_are_stable() -> None:
     assert STATE_DATASET_REPO_ID == "justicedao/ipfs_state_laws"
     assert FEDERAL_DATASET_REPO_ID == "justicedao/ipfs_federal_register"
     assert STATE_PREVIOUS_PUBLIC_PIN == "42f0546acc7c6cd55627eaf51fb820d5613b9021"
+    assert STATE_PUBLICATION_PARENT_PIN == "78cba0ed86c3971a7b90620c6df167af8a1a6fb2"
     assert FEDERAL_PREVIOUS_PUBLIC_PIN == "720668ae016cc400916dda884c9005e03618edfa"
     assert GENERATED_WORK_TASK_NUMBER_FLOOR == 77
     assert AUTHORIZED_DATASET_REPO_IDS == frozenset(
         {STATE_DATASET_REPO_ID, FEDERAL_DATASET_REPO_ID}
     )
     assert AUTHORIZED_OPERATIONS == frozenset(
-        {"additive_staging_upload", "additive_main_upload"}
+        {
+            "additive_staging_upload",
+            "additive_main_upload",
+            STATE_MAIN_ROOT_README_CAS_OPERATION,
+        }
     )
     assert REQUIRED_PUBLICATION_GATES == (
         "phase_target_operation",
@@ -136,6 +144,9 @@ def test_default_fixture_path_exists_and_matches_generator() -> None:
         "authorized_dataset_repo_ids"
     ]
     assert on_disk["baseline_revisions"] == generated["baseline_revisions"]
+    assert on_disk["publication_parent_revisions"] == generated[
+        "publication_parent_revisions"
+    ]
     assert on_disk["prepublication_seal_is_not_required_for_staging"] is True
     assert on_disk["prepublication_seal_must_precede_main_mutation"] is True
     assert on_disk["uploader_must_invoke_gate_before_first_network_mutation"] is True
@@ -173,7 +184,7 @@ def test_phase_requirements_match_release_policy_contract() -> None:
 
     state_main = phase_requirements("state_main")
     assert state_prepublication in state_main["required_receipts"]
-    assert state_main["previous_public_pin"] == STATE_PREVIOUS_PUBLIC_PIN
+    assert state_main["previous_public_pin"] == STATE_PUBLICATION_PARENT_PIN
 
     federal_main = phase_requirements("federal_main")
     assert federal_main["dataset_repo_id"] == FEDERAL_DATASET_REPO_ID
@@ -211,6 +222,12 @@ def test_phase_requirements_match_release_policy_contract() -> None:
     )
     assert BASELINE_REVISIONS[STATE_DATASET_REPO_ID] == STATE_PREVIOUS_PUBLIC_PIN
     assert BASELINE_REVISIONS[FEDERAL_DATASET_REPO_ID] == FEDERAL_PREVIOUS_PUBLIC_PIN
+    assert PUBLICATION_PARENT_REVISIONS[STATE_DATASET_REPO_ID] == (
+        STATE_PUBLICATION_PARENT_PIN
+    )
+    assert PUBLICATION_PARENT_REVISIONS[FEDERAL_DATASET_REPO_ID] == (
+        FEDERAL_PREVIOUS_PUBLIC_PIN
+    )
 
 
 # ---------------------------------------------------------------------------

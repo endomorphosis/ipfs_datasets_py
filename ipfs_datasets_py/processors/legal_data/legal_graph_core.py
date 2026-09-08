@@ -1818,6 +1818,26 @@ class LegalGraphProjectorCore:
                 )
             )
 
+    def _project_citation_pass(
+        self,
+        nodes: MutableMapping[str, Any],
+        edges: list[Any],
+        row: Any,
+        *,
+        known_legal_ids: set[str],
+        locator_index: Mapping[tuple[str, str, str], Sequence[str]],
+    ) -> None:
+        """Citation + amendment edges for one row (process-pool safe with seed)."""
+
+        self._project_citations(
+            nodes,
+            edges,
+            row,
+            known_legal_ids=known_legal_ids,
+            locator_index=locator_index,
+        )
+        self._project_amendments(nodes, edges, row)
+
     def _project_amendments(
         self,
         nodes: MutableMapping[str, Any],

@@ -2007,25 +2007,10 @@ class FederalRegisterGraphProjector:
                 0, min(len(admitted), int(manifest.get("citation_rows_done") or 0))
             )
 
-        def _citation_body(view, edges, row):
-            self._project_citations(
-                view,
-                edges,
-                row,
-                known_document_numbers=known_document_numbers,
-            )
-            self._project_relations(
-                view,
-                edges,
-                row,
-                known_legal_ids=known_legal_ids,
-                known_document_numbers=known_document_numbers,
-            )
-
         run_projection_pass(
             admitted,
             start=structure_done,
-            worker=mutating_row_worker(self._project_document, nodes),
+            worker=mutating_row_worker(self._project_document),
             nodes=nodes,
             edges_by_cid=edges_by_cid,
             work_root=work_root,
@@ -2040,7 +2025,13 @@ class FederalRegisterGraphProjector:
         run_projection_pass(
             admitted,
             start=citation_done,
-            worker=mutating_row_worker(_citation_body, nodes),
+            worker=mutating_row_worker(
+                self._project_citation_pass,
+                nodes,
+                seed=self._project_document,
+                known_document_numbers=known_document_numbers,
+                known_legal_ids=known_legal_ids,
+            ),
             nodes=nodes,
             edges_by_cid=edges_by_cid,
             work_root=work_root,
@@ -2304,6 +2295,29 @@ class FederalRegisterGraphProjector:
             payload=provenance_payload,
         )
         edges.append(self._edge(GraphEdgeType.HAS_PROVENANCE, document, provenance_node))
+
+    def _project_citation_pass(
+        self,
+        nodes: dict[str, FederalRegisterGraphNode],
+        edges: list[FederalRegisterGraphEdge],
+        row: GraphCorpusRow,
+        *,
+        known_document_numbers: Mapping[str, GraphCorpusRow],
+        known_legal_ids: Mapping[str, GraphCorpusRow],
+    ) -> None:
+        self._project_citations(
+            nodes,
+            edges,
+            row,
+            known_document_numbers=known_document_numbers,
+        )
+        self._project_relations(
+            nodes,
+            edges,
+            row,
+            known_legal_ids=known_legal_ids,
+            known_document_numbers=known_document_numbers,
+        )
 
     def _project_citations(
         self,

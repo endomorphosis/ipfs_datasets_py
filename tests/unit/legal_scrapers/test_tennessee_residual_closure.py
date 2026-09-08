@@ -60,6 +60,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.tennessee_lexis i
     OBSERVED_REPEATED_CITATION_IDENTITY_COUNT,
     OBSERVED_STRICT_REUSABLE_INPUT_COUNT,
     OBSERVED_TOTAL_RESIDUAL_COUNT,
+    PUBLIC_CONTAINER_CONFIG,
     PUBLIC_CONTAINER_URL,
     PUBLIC_ENTRY_URL,
     TOC_ENDPOINT_URL,
@@ -67,9 +68,11 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.tennessee_lexis i
     canonical_toc_patch_request,
     document_url,
     grouped_get_acquisition_contract,
+    publisher_container_delegation_present,
     parse_root_html,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.tennessee_lexis_live import (
+    acquire_live_catalog,
     canonical_live_toc_patch_request,
     canonical_rendered_root_request,
 )
@@ -525,6 +528,13 @@ def test_tennessee_adapter_has_no_static_residual_url_list() -> None:
     )
     assert content_item_literals == []
     assert adapter.count("https://advance.lexis.com/shared/document/") == 0
+    assert "observed[0:1]" not in adapter
+    assert "observed[1:2]" not in adapter
+    assert "observed[2:3]" not in adapter
+    phase_source = inspect.getsource(TennesseeScraper._validate_tennessee_phase_reports)
+    assert '"state_delegation": [observed[0]]' in phase_source
+    assert '"publisher_entry": [observed[1]]' in phase_source
+    assert '"rendered_container_root": [observed[2]]' in phase_source
 
 
 def test_tennessee_residual_sha256_uses_canonical_json_of_ordered_get_urls() -> None:
@@ -553,7 +563,7 @@ def test_tennessee_one_domain_get_wave_disables_per_page_archive_and_reinventory
     fetch_source = inspect.getsource(TennesseeScraper._fetch_tennessee_lexis_get_wave)
     assert "grouped_get_acquisition_contract" in fetch_source
     assert "wayback_prefix_inventory=True" in fetch_source
-    assert "prefer_direct=True" in fetch_source
+    assert "prefer_direct=require_direct" in fetch_source
     assert "_fetch_page_contents_with_archival_fallback_retrying_residuals" in (
         fetch_source
     )
@@ -587,14 +597,14 @@ def test_tennessee_one_domain_get_wave_disables_per_page_archive_and_reinventory
     )
     assert '"per_page_archive_loop": False' in closure_source
     assert '"retained_replay_network_requests": 0' in closure_source
-    assert '"archive_recovery_enabled": False' in closure_source
-    assert '"body_get_transport": "direct"' in closure_source
+    assert '"archive_recovery_enabled": True' in closure_source
+    assert '"body_get_transport": "direct_then_cdx"' in closure_source
     assert '"browser_transport": "browser_rendered"' in closure_source
     assert (
         '"get_acquisition_contract": "tennessee_current_authority_direct_only"'
         in closure_source
     )
-    assert '"grouped_warc_recovery": False' in closure_source
+    assert '"grouped_warc_recovery": True' in closure_source
     assert '"toc_patch_archive_substitution_allowed": False' in closure_source
 
 
@@ -694,6 +704,100 @@ def test_tennessee_closure_helper_still_requires_zero_network_seal_inputs() -> N
     assert TennesseeScraper.CURRENT_GENERAL_ASSEMBLY_PUBLICATIONS_URL == (
         FIRST_RESIDUAL_URL
     )
+
+
+def test_tennessee_publisher_cookiesrequired_page_names_exact_container() -> None:
+    live = (
+        "<html><script>"
+        "window.location.replace('/open/error/cookiesrequired?target=' + "
+        "encodeURIComponent('/container?config="
+        f"{PUBLIC_CONTAINER_CONFIG}"
+        "&crid=78134f46-eb5a-4013-8166-2195b242c396'));"
+        "</script>"
+        "<a href='http://advance.lexis.com/open/entry/CaptureReturnUrl?"
+        "target=%2Fcontainer%3Fconfig%3D"
+        f"{PUBLIC_CONTAINER_CONFIG}"
+        "'>continue</a></html>"
+    )
+    historic = (
+        f"<html><a href='https://advance.lexis.com/container?config="
+        f"{PUBLIC_CONTAINER_CONFIG}'>continue</a></html>"
+    )
+    assert publisher_container_delegation_present(live)
+    assert publisher_container_delegation_present(historic)
+    assert not publisher_container_delegation_present(
+        "<html><script>window.location.replace('/open/error/cookiesrequired')"
+        "</script></html>"
+    )
+    drifted = live.replace(
+        PUBLIC_CONTAINER_CONFIG,
+        "DRIFTED" + PUBLIC_CONTAINER_CONFIG[7:],
+    )
+    assert not publisher_container_delegation_present(drifted)
+
+
+def _live_shaped_compact_root_html() -> str:
+    href19 = _content_path("TN19-RSVD-0000-00000-00")
+    href51 = _content_path("TN51-RSVD-0000-00000-00")
+    title1 = (
+        "<li class='js-node' data-nodeid='T001' data-nodepath='/ROOT/T001' "
+        "data-level='1' data-title='TITLE 1 - Code and Statutes' "
+        "data-haschildren='true'><div class='js-node-header'>"
+        "<button data-command='open-to' data-targetlevel='2'>Open</button>"
+        "<button data-command='open-to' data-targetlevel='3'>Open</button>"
+        "</div></li>"
+    )
+    reserved19 = (
+        '<li role="treeitem" class="js-node" data-nodeid="T019" '
+        'data-nodepath="/ROOT/T019" data-level="1" data-haschildren="" '
+        'data-title="Title 19 [Reserved]" '
+        f'data-docfullpath="{href19}">'
+        '<div class="js-node-header"><a href="#" data-action="toclink">'
+        "<span>Title 19 [Reserved]</span></a></div></li>"
+    )
+    reserved51 = (
+        '<li role="treeitem" class="js-node" data-nodeid="T051" '
+        'data-nodepath="/ROOT/T051" data-level="1" data-haschildren="" '
+        'data-title="Title 51 [Reserved]" '
+        f'data-docfullpath="{href51}">'
+        '<div class="js-node-header"><a href="#" data-action="toclink">'
+        "<span>Title 51 [Reserved]</span></a></div></li>"
+    )
+    tables = (
+        "<li class='js-node' data-nodeid='TAB13' data-nodepath='/ROOT/TAB13' "
+        "data-level='1' data-title='Volume 13 Tables' data-haschildren='true'>"
+        "<div class='js-node-header'></div></li>"
+    )
+    return (
+        '<html><style>.la-NavigateTerms:before{content:"x"}</style><body>'
+        '<td>Terms and Conditions by clicking "I Agree" below.</td>'
+        f"{title1}{reserved19}{reserved51}{tables}</body></html>"
+    )
+
+
+def test_tennessee_free_public_access_toc_is_not_bootstrap_shell() -> None:
+    roots, tables = parse_root_html(
+        _live_shaped_compact_root_html(),
+        expected_titles=COMPACT_TITLES,
+    )
+    reserved_node = next(node for node in roots if node.title_number == "19")
+    assert reserved_node.title_label == "[Reserved]"
+    assert reserved_node.is_document_locator
+    assert not reserved_node.can_open
+    assert "tables" in tables.title.casefold()
+    with pytest.raises(ValueError, match="access or bootstrap shell"):
+        parse_root_html(
+            "<html><script>window.location.replace('/open/error/cookiesrequired')"
+            "</script><p>Terms and Conditions I Agree</p></html>",
+            expected_titles=COMPACT_TITLES,
+        )
+
+
+def test_tennessee_browser_waits_for_attached_toc_nodes() -> None:
+    source = inspect.getsource(acquire_live_catalog)
+    assert 'state="attached"' in source
+    assert "I Agree" in source
+    assert "timeout=min(timeout, 30_000)" not in source
 
 
 def test_tennessee_compact_recipe_emits_ga_first_residual_not_static_bodies() -> None:
@@ -981,14 +1085,14 @@ async def test_tennessee_real_closure_keeps_catalog_authority_truthful_and_binds
     assert completion["source_domain"] == "wapp.capitol.tn.gov"
     assert completion["delegating_authority_url"] == FIRST_RESIDUAL_URL
     assert completion["delegated_body_source_domain"] == "advance.lexis.com"
-    assert completion["transport"]["archive_recovery_enabled"] is False
-    assert completion["transport"]["body_get_transport"] == "direct"
+    assert completion["transport"]["archive_recovery_enabled"] is True
+    assert completion["transport"]["body_get_transport"] == "direct_then_cdx"
     assert completion["transport"]["browser_transport"] == "browser_rendered"
     assert (
         completion["transport"]["get_acquisition_contract"]
         == "tennessee_current_authority_direct_only"
     )
-    assert completion["transport"]["grouped_warc_recovery"] is False
+    assert completion["transport"]["grouped_warc_recovery"] is True
     body_authority = completion["delegated_body_authority"]
     assert body_authority["body_input_count"] == 3
     assert len(body_authority["acquisition_phase"]["input_receipt_sha256s"]) == 7

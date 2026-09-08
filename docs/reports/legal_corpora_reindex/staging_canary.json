@@ -1,0 +1,18 @@
+{
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "checked": 2512,
+  "current_bundle": false,
+  "dataset_repo_id": "justicedao/ipfs_state_laws",
+  "lcr084_deferred": true,
+  "local_payload_files": 2512,
+  "mismatched": [],
+  "missing": [],
+  "notes": "Deferred LCR-084 canary: redownload+sha256 of local payload vs immutable staging SHA. Not a sealed LCR-041/064 candidate-A canary.",
+  "remote_file_count": 4834,
+  "schema": "ipfs_datasets_py/lcr-deferred-staging-canary@1",
+  "staging_branch": "stage/state-laws-sparse-graphrag-v2",
+  "staging_sha": "491fcd8f8855ad8e845632f14a248e6a86daf6de",
+  "status": "passed",
+  "task_id": "LCR-041"
+}

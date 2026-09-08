@@ -1723,6 +1723,14 @@ class UscodeGraphProjector:
                 payload={"title": row.title},
             )
             if include_code_root:
+                if "code:us" not in nodes:
+                    self._ensure_node(
+                        nodes,
+                        node_type=GraphNodeType.CODE,
+                        node_key="code:us",
+                        label="United States Code",
+                        payload={"jurisdiction": "us"},
+                    )
                 edges.append(
                     self._edge(
                         GraphEdgeType.CONTAINS,
@@ -1828,7 +1836,7 @@ class UscodeGraphProjector:
         run_projection_pass(
             corpus,
             start=structure_done,
-            worker=mutating_row_worker(_structure_body, nodes),
+            worker=mutating_row_worker(_structure_body),
             nodes=nodes,
             edges_by_cid=edges_by_cid,
             work_root=work_root,
@@ -1862,8 +1870,14 @@ class UscodeGraphProjector:
                     ):
                         target_key = f"section:{citation.target_legal_id}"
                         if target_key not in nodes:
-                            # Known legal id from set but node missing — should not happen.
-                            continue
+                            self._ensure_node(
+                                nodes,
+                                node_type=GraphNodeType.SECTION,
+                                node_key=target_key,
+                                label=citation.target_legal_id,
+                                legal_id=citation.target_legal_id,
+                                payload={"placeholder": True},
+                            )
                         edges.append(
                             self._edge(
                                 GraphEdgeType.CITES,
@@ -2048,7 +2062,7 @@ class UscodeGraphProjector:
         run_projection_pass(
             corpus,
             start=citation_done,
-            worker=mutating_row_worker(_citation_body, nodes),
+            worker=mutating_row_worker(_citation_body, nodes, seed=_structure_body),
             nodes=nodes,
             edges_by_cid=edges_by_cid,
             work_root=work_root,

@@ -23,6 +23,7 @@ public = importlib.import_module("scripts.ops.legal_data.check_state_laws_public
 bench = importlib.import_module("scripts.ops.legal_data.benchmark_state_laws_public_release")
 rollback = importlib.import_module("scripts.ops.legal_data.rehearse_state_laws_release_rollback")
 audit = importlib.import_module("scripts.ops.legal_data.audit_state_laws_post_publication")
+probe = importlib.import_module("scripts.ops.legal_data.state_laws_release_probe")
 
 
 PREVIOUS = public.PREVIOUS_PUBLIC_PIN
@@ -36,11 +37,89 @@ def _queries() -> dict:
     return {
         name: {"passed": True}
         for name in ("bm25", "vector", "hybrid", "graph", "filters", "cache")
-    } | {"jurisdictions": list(public.SORTED_JURISDICTIONS)}
+    } | {"jurisdictions": list(public.SORTED_JURISDICTIONS)} | _canary_provenance()
+
+
+def _canary_provenance() -> dict:
+    return {
+        "measurement_source": probe.MEASUREMENT_SOURCE,
+        "externally_supplied": False,
+        "observed_at": "2026-08-29T12:00:00Z",
+        "probe_bindings": probe.release_probe_bindings(
+            repo_id=public.DEFAULT_DATASET_REPO,
+            revision=PUBLIC,
+            release_manifest_digest=RELEASE_DIGEST,
+            parent_evidence_digest="e" * 64,
+        ),
+    }
+
+
+def _viewer_probe() -> dict:
+    semantics = {
+        "is-valid": {
+            "capabilities": {
+                "filter": False,
+                "preview": True,
+                "search": False,
+                "statistics": False,
+                "viewer": True,
+            }
+        },
+        "info": {"config": public.DEFAULT_CONFIG_NAME, "row_count": 51},
+        "size": {"config": public.DEFAULT_CONFIG_NAME, "row_count": 51},
+        "splits": {"config": public.DEFAULT_CONFIG_NAME, "split_count": 1},
+    }
+    return {
+        "bounded": True,
+        "passed": True,
+        "dataset_viewer_api_passed": True,
+        "default_config": public.DEFAULT_CONFIG_NAME,
+        "ia_only": False,
+        "jurisdictions": list(public.SORTED_JURISDICTIONS),
+        "manifest_binding": {
+            "default_config": public.DEFAULT_CONFIG_NAME,
+            "default_config_sha256": "5" * 64,
+            "default_data_files": [
+                {
+                    "path": (
+                        f"data/state_laws/sha256-{RELEASE_DIGEST}/"
+                        "data/corpus/part-*.parquet"
+                    ),
+                    "split": "train",
+                }
+            ],
+            "default_matched_artifact_count": 5,
+            "default_matched_artifacts_sha256": "7" * 64,
+            "expected_rows": 51,
+            "jurisdictions_sha256": "6" * 64,
+            "key_parity_sha256": "f" * 64,
+            "manifest_default_config_sha256": "8" * 64,
+            "manifest_default_data_files": [
+                {"path": "data/corpus/part-*.parquet", "split": "train"}
+            ],
+            "manifest_digest": RELEASE_DIGEST,
+            "release_prefix": f"data/state_laws/sha256-{RELEASE_DIGEST}",
+        },
+        "pinned_revision": PUBLIC,
+        "responses": [
+            {
+                "endpoint": endpoint,
+                "response_bytes": 1,
+                "response_sha256": str(index) * 64,
+                "semantic": semantics[endpoint],
+                "status": 200,
+                "x_revision": PUBLIC,
+            }
+            for index, endpoint in enumerate(
+                ("is-valid", "info", "size", "splits"), start=1
+            )
+        ],
+    } | _canary_provenance()
 
 
 def _public_canary() -> dict:
     key_digest = "f" * 64
+    provenance = _canary_provenance()
     receipt = {
         "schema": public.CANONICAL_CANARY_SCHEMA,
         "receipt_kind": public.CANONICAL_CANARY_KIND,
@@ -61,19 +140,14 @@ def _public_canary() -> dict:
         "plan_digest": "c" * 64,
         "policy_proof_digest": "d" * 64,
         "publication_receipt_digest": "e" * 64,
+        **provenance,
         "downloaded": [
             {"relative_path": "manifest.json", "sha256": "1" * 64, "size_bytes": 1}
         ],
         "downloaded_bytes": 1,
         "downloaded_file_count": 1,
         "exact_descriptor_match": True,
-        "viewer": {
-            "passed": True,
-            "dataset_viewer_api_passed": True,
-            "default_config": public.DEFAULT_CONFIG_NAME,
-            "ia_only": False,
-            "jurisdictions": list(public.SORTED_JURISDICTIONS),
-        },
+        "viewer": _viewer_probe(),
         "key_sets": {
             "passed": True,
             "canonical_keys_sha256": key_digest,
@@ -81,6 +155,7 @@ def _public_canary() -> dict:
                 name: key_digest
                 for name in ("embeddings", "bm25", "vectors", "graph", "adjacency")
             },
+            **provenance,
         },
         "query_canaries": _queries(),
         "jurisdictions": list(public.SORTED_JURISDICTIONS),
@@ -97,6 +172,7 @@ def _public_canary() -> dict:
 
 
 def _benchmark() -> dict:
+    canary = _public_canary()
     measurements = {
         "cold": {"bytes": 1, "shards": 1, "latency_ms": 1.0, "cache_hits": 0},
         "warm": {"bytes": 0, "shards": 1, "latency_ms": 1.0, "cache_hits": 1},
@@ -111,13 +187,23 @@ def _benchmark() -> dict:
         "route_justified": True,
         "complete_family_downloaded": False,
         "repair_tasks": [],
+        "measurement_source": probe.MEASUREMENT_SOURCE,
+        "externally_supplied": False,
+        "observed_at": "2026-08-29T12:00:00Z",
+        "probe_bindings": probe.release_probe_bindings(
+            repo_id=canary["dataset_repo_id"],
+            revision=canary["public_revision"],
+            release_manifest_digest=canary["release_manifest_digest"],
+            parent_evidence_digest=canary["canonical_digest"],
+        ),
     }
     return bench.build_canonical_public_benchmark_receipt(
-        public_canary=_public_canary(), measurements=measurements
+        public_canary=canary, measurements=measurements
     )
 
 
 def _pin_probes() -> dict:
+    canary = _public_canary()
     return {
         "new": {
             "revision": PUBLIC,
@@ -142,11 +228,22 @@ def _pin_probes() -> dict:
             "remote_mutation_performed": False,
         },
         "board_diagnostics": {"blocked": True, "idle": True, "stale": True},
+        "measurement_source": probe.MEASUREMENT_SOURCE,
+        "externally_supplied": False,
+        "observed_at": "2026-08-29T12:00:00Z",
+        "probe_bindings": probe.dual_pin_probe_bindings(
+            repo_id=canary["dataset_repo_id"],
+            new_revision=PUBLIC,
+            previous_revision=PREVIOUS,
+            release_manifest_digest=RELEASE_DIGEST,
+            parent_evidence_digest=canary["canonical_digest"],
+        ),
     }
 
 
 def _rollback() -> dict:
     canary = _public_canary()
+    pin_probes = _pin_probes()
     receipt = {
         "schema": rollback.CANONICAL_REHEARSAL_SCHEMA,
         "receipt_kind": rollback.CANONICAL_REHEARSAL_KIND,
@@ -166,7 +263,11 @@ def _rollback() -> dict:
         "release_manifest_digest": RELEASE_DIGEST,
         "publication_receipt_digest": "e" * 64,
         "public_canary_digest": canary["canonical_digest"],
-        "pin_probes": _pin_probes(),
+        "pin_probes": pin_probes,
+        "measurement_source": pin_probes["measurement_source"],
+        "externally_supplied": pin_probes["externally_supplied"],
+        "observed_at": pin_probes["observed_at"],
+        "probe_bindings": pin_probes["probe_bindings"],
         "both_pins_queryable": True,
         "legacy_configuration": {"explicit": True},
         "legacy_configuration_explicit": True,
@@ -187,6 +288,9 @@ def _rollback() -> dict:
 
 
 def _measurements() -> dict:
+    canary = _public_canary()
+    benchmark = _benchmark()
+    rehearsal = _rollback()
     return {
         "source_receipts": {
             "passed": True,
@@ -226,6 +330,20 @@ def _measurements() -> dict:
         "delta_refill_findings_bounded": True,
         "max_delta_findings": 51,
         "update_plan": audit.build_update_plan(),
+        "measurement_source": probe.MEASUREMENT_SOURCE,
+        "externally_supplied": False,
+        "observed_at": "2026-08-29T12:00:00Z",
+        "probe_bindings": probe.release_probe_bindings(
+            repo_id=canary["dataset_repo_id"],
+            revision=canary["public_revision"],
+            release_manifest_digest=canary["release_manifest_digest"],
+            parent_evidence_digest=rehearsal["canonical_digest"],
+        ),
+        "dependency_digests": {
+            "public_benchmark": benchmark["canonical_digest"],
+            "public_canary": canary["canonical_digest"],
+            "rollback_rehearsal": rehearsal["canonical_digest"],
+        },
     }
 
 
@@ -258,6 +376,38 @@ def test_canonical_audit_closes_all_board_acceptance() -> None:
     assert receipt["upstream_changes_mixed_into_release"] is False
     assert receipt["update_plan"]["preserves_exact_51"] is True
     assert receipt["update_plan"]["preserves_transactional_gates"] is True
+
+
+def test_audit_builder_and_checker_require_first_party_provenance() -> None:
+    unsealed = _measurements()
+    unsealed.pop("probe_bindings")
+    with pytest.raises(
+        audit.PostPublicationContradictionError, match="internally measured"
+    ):
+        audit.build_canonical_post_publication_audit(
+            public_canary=_public_canary(),
+            public_benchmark=_benchmark(),
+            rollback_rehearsal=_rollback(),
+            measurements=unsealed,
+        )
+
+    receipt = _receipt()
+    receipt.pop("measurement_source")
+    digest = canonical_no_self_field_digest(receipt)
+    receipt["canonical_digest"] = receipt["content_digest"] = digest
+    with pytest.raises(
+        audit.PostPublicationContradictionError, match="first-party provenance"
+    ):
+        audit.check_canonical_post_publication_audit(receipt)
+
+
+def test_rollback_checker_rejects_omitted_first_party_provenance() -> None:
+    receipt = _rollback()
+    receipt.pop("observed_at")
+    digest = canonical_no_self_field_digest(receipt)
+    receipt["canonical_digest"] = receipt["content_digest"] = digest
+    with pytest.raises(rollback.RehearsalMismatchError, match="first-party provenance"):
+        rollback.check_canonical_rollback_rehearsal(receipt)
 
 
 @pytest.mark.parametrize(
@@ -340,3 +490,12 @@ def test_check_cli_is_read_only(tmp_path: Path) -> None:
     assert audit.main(["--check", "--report", str(target)]) == 0
     assert target.read_bytes() == before
     assert audit.main(["--check", "--write", "--report", str(target)]) != 0
+
+
+def test_generation_cli_rejects_external_measurement_json(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    external = tmp_path / "operator-audit-measurements.json"
+    external.write_text(json.dumps(_measurements()), encoding="utf-8")
+    assert audit.main(["--measurements", str(external)]) == 1
+    assert "external --measurements cannot authorize" in capsys.readouterr().err

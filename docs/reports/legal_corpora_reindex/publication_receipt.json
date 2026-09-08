@@ -1,0 +1,20 @@
+{
+  "schema": "ipfs_datasets_py/state-laws-publication-receipt-deferred@1",
+  "task_id": "LCR-042",
+  "goal_id": "LCR-G080",
+  "program_id": "legal-corpora-reindex-v1",
+  "producer": "stage_deferred_lcr_hf.py",
+  "status": "published_deferred",
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "current_bundle": false,
+  "lcr084_deferred": true,
+  "lcr084_taskboard_status": "todo",
+  "dataset_repo_id": "justicedao/ipfs_state_laws",
+  "previous_public_pin": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2",
+  "staging_sha": "491fcd8f8855ad8e845632f14a248e6a86daf6de",
+  "public_sha": "9b55fb4db5baef7183832bcb232ad2309180d6cb",
+  "public_file_count": 4834,
+  "operation": "additive_main_upload",
+  "notes": "Operator-deferred LCR-084 additive upload to main. Snapshot GraphRAG tree added without deleting legacy files. Does not close LCR-084 and is not a sealed live-official current-bundle."
+}

@@ -46,6 +46,9 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime im
     RECEIPT_SCHEMA_V1,
     canonical_no_self_field_digest,
 )
+from ipfs_datasets_py.processors.legal_data.state_laws_completeness import (
+    CANONICAL_JURISDICTION_ORDER,
+)
 from ipfs_datasets_py.processors.legal_data.state_laws_hf_release import (
     _FAMILY_SCHEMA_IDS,
     DEFAULT_CONFIG_NAME,
@@ -71,12 +74,12 @@ from ipfs_datasets_py.processors.legal_data.state_laws_local_release import (
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import (
     DEFAULT_STAGING_BRANCH,
+    PUBLICATION_PARENT_REVISION,
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
     CANONICAL_JURISDICTIONS,
     DEFAULT_DATASET_REPO_ID,
     EXPECTED_JURISDICTION_COUNT,
-    PREVIOUS_PUBLIC_PIN,
     RELEASE_PROFILE,
     JurisdictionSetError,
     MutableReferenceError,
@@ -97,6 +100,11 @@ from ipfs_datasets_py.retrieval.hf_graphrag.schema import (
 )
 from scripts.ops.legal_data.stage_state_laws_hf_release import (
     planned_staging_sha,
+)
+from scripts.ops.legal_data.state_laws_release_probe import (
+    StateLawsReleaseProbeError,
+    assert_first_party_measurement,
+    run_remote_release_probe,
 )
 
 # ---------------------------------------------------------------------------
@@ -124,10 +132,11 @@ DEFAULT_STAGING_UPLOAD_RELPATH: Final = Path(
 )
 
 DEFAULT_DATASET_REPO: Final = DEFAULT_DATASET_REPO_ID
-DEFAULT_BASE_PIN: Final = PREVIOUS_PUBLIC_PIN
+PREVIOUS_PUBLIC_PIN: Final = PUBLICATION_PARENT_REVISION
+DEFAULT_BASE_PIN: Final = PUBLICATION_PARENT_REVISION
 DEFAULT_OBSERVATION_TIME: Final = "2026-08-10T12:00:00Z"
 MAX_REPORT_BYTES: Final = 1048576
-SORTED_JURISDICTIONS: Final = tuple(sorted(CANONICAL_JURISDICTIONS))
+SORTED_JURISDICTIONS: Final = CANONICAL_JURISDICTION_ORDER
 
 
 def compact_recipe_parquet_encoder(
@@ -783,9 +792,18 @@ def validate_canonical_query_canaries(value: Mapping[str, Any]) -> dict[str, Any
     jurisdictions = list(value.get("jurisdictions") or ())
     if jurisdictions != list(SORTED_JURISDICTIONS) or "DC" not in jurisdictions:
         raise CanaryReceiptError("query canaries do not cover canonical exact-51")
-    return {key: dict(value[key]) for key in required} | {
+    result = {key: dict(value[key]) for key in required} | {
         "jurisdictions": jurisdictions
     }
+    for key in (
+        "measurement_source",
+        "externally_supplied",
+        "observed_at",
+        "probe_bindings",
+    ):
+        if key in value:
+            result[key] = value[key]
+    return result
 
 
 def build_canonical_staging_canary_receipt(
@@ -799,7 +817,19 @@ def build_canonical_staging_canary_receipt(
     )
 
     staging = check_canonical_staging_receipt(staging_receipt, require_live=True)
-    queries = validate_canonical_query_canaries(query_canaries)
+    try:
+        first_party = assert_first_party_measurement(
+            query_canaries,
+            repo_id=staging["dataset_repo_id"],
+            revision=staging["staging_revision"],
+            release_manifest_digest=staging["release_manifest_digest"],
+            parent_evidence_digest=staging["canonical_digest"],
+        )
+    except StateLawsReleaseProbeError as exc:
+        raise CanaryReceiptError(
+            "staging query evidence is not an internally bound measurement"
+        ) from exc
+    queries = validate_canonical_query_canaries(first_party)
     if (
         redownload.get("exact_descriptor_match") is not True
         or redownload.get("cache_empty_before_fetch") is not True
@@ -838,6 +868,10 @@ def build_canonical_staging_canary_receipt(
         "jurisdiction_count": EXPECTED_JURISDICTION_COUNT,
         "jurisdictions": list(SORTED_JURISDICTIONS),
         "query_canaries": queries,
+        "measurement_source": first_party["measurement_source"],
+        "externally_supplied": first_party["externally_supplied"],
+        "observed_at": first_party["observed_at"],
+        "probe_bindings": first_party["probe_bindings"],
         "read_only": True,
         "remote_mutation_attempted": False,
         "unexpected_operations": [],
@@ -888,6 +922,25 @@ def check_canonical_staging_canary_receipt(
         "staging_upload_digest",
     ):
         normalize_sha256(report.get(field), name=field)
+    try:
+        assert_first_party_measurement(
+            report,
+            repo_id=report["dataset_repo_id"],
+            revision=report["staging_revision"],
+            release_manifest_digest=report["release_manifest_digest"],
+            parent_evidence_digest=report["staging_upload_digest"],
+        )
+        assert_first_party_measurement(
+            report.get("query_canaries") or {},
+            repo_id=report["dataset_repo_id"],
+            revision=report["staging_revision"],
+            release_manifest_digest=report["release_manifest_digest"],
+            parent_evidence_digest=report["staging_upload_digest"],
+        )
+    except StateLawsReleaseProbeError as exc:
+        raise CanaryReceiptError(
+            "canonical staging canary lacks sealed first-party provenance"
+        ) from exc
     declared = normalize_sha256(
         report.get("canonical_digest") or report.get("content_digest"),
         name="canonical_digest",
@@ -2098,7 +2151,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--query-canaries",
         type=Path,
         default=None,
-        help="Measured BM25/vector/hybrid/graph/filter/cache probe result",
+        help=(
+            "Rejected legacy input. Canonical evidence is measured internally "
+            "from the verified pinned staging release."
+        ),
     )
     parser.add_argument(
         "--output",
@@ -2189,26 +2245,39 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         if not require_live:
             raise CanaryFixtureError("--require-live-staging is required")
-        if (
-            args.staging_upload is None
-            or args.cache_dir is None
-            or args.query_canaries is None
-        ):
+        if args.query_canaries is not None:
             raise CanaryReceiptError(
-                "live canary requires --staging-upload, --cache-dir, and "
-                "--query-canaries"
+                "external --query-canaries cannot authorize canonical evidence"
+            )
+        if args.staging_upload is None or args.cache_dir is None:
+            raise CanaryReceiptError(
+                "live canary requires --staging-upload and --cache-dir"
             )
         staging = load_json_mapping(args.staging_upload, label="staging upload")
-        queries = load_json_mapping(args.query_canaries, label="query canaries")
         redownload = redownload_canonical_staging(
             staging,
             cache_root=args.cache_dir,
             fetch_to_path=huggingface_pinned_fetch_to_path,
         )
+        probe_coordinates = {
+            "repo_id": str(staging.get("dataset_repo_id") or ""),
+            "revision": str(staging.get("staging_revision") or ""),
+            "release_manifest_digest": str(
+                staging.get("release_manifest_digest") or ""
+            ),
+            "parent_evidence_digest": str(staging.get("canonical_digest") or ""),
+        }
+        measured = assert_first_party_measurement(
+            run_remote_release_probe(
+                args.cache_dir,
+                **probe_coordinates,
+            ),
+            **probe_coordinates,
+        )
         report = build_canonical_staging_canary_receipt(
             staging_receipt=staging,
             redownload=redownload,
-            query_canaries=queries,
+            query_canaries=measured["query_canaries"],
         )
         if args.write_report or args.output is not None:
             write_staging_canary(
@@ -2222,6 +2291,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         MutableReferenceError,
         ResolverError,
         StateLawsHFReleaseError,
+        StateLawsReleaseProbeError,
     ) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

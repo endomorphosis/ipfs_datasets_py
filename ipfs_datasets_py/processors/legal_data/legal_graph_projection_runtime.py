@@ -1,14 +1,19 @@
 """Shared durable, pressure-capped graph projection for legal GraphRAG.
 
-Open US Law, state-law, US Code, and Federal Register projectors use the
-same in-process thread pool and JSONL work shards. Process pools are
-refused. State-law corpora partition by jurisdiction so a query-by-state
-graph never materializes interstate legal edges.
+Open US Law, state-law, US Code, and Federal Register projectors use
+:class:`IsolatedRowMutator`. Structure passes omit the live node map and
+run in a spawn process pool. Citation passes that look up other documents
+keep a thread-local shared map. Parent-side :func:`merge_local_graph_delta`
+keeps first-writer-wins node identity. BM25-neighbor scoring that closes
+over a live inverted index also stays on threads. State-law corpora
+partition by jurisdiction so a query-by-state graph never materializes
+interstate legal edges.
 """
 
 from __future__ import annotations
 
 import sys
+import pickle
 from collections import ChainMap, defaultdict
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from dataclasses import is_dataclass, replace
@@ -106,21 +111,64 @@ def same_jurisdiction_candidates(
     return kept
 
 
-def mutating_row_worker(
-    fn: Callable[..., None],
-    shared_nodes: MutableMapping[str, Any],
-    **kwargs: Any,
-) -> RowWorker:
-    """Adapt a ``(nodes, edges, row)`` mutator into a local-map worker."""
+class IsolatedRowMutator:
+    """``row → (local_nodes, local_edges)`` graph worker.
 
-    def worker(row: Any) -> tuple[dict[str, Any], list[Any]]:
+    Structure passes omit *shared_nodes* and are spawn-picklable. Citation
+    passes that look up other documents keep a thread-local shared map and
+    refuse pickle so :func:`map_documents_under_pressure` stays in-process.
+    """
+
+    def __init__(
+        self,
+        fn: Callable[..., None],
+        shared_nodes: MutableMapping[str, Any] | None = None,
+        *,
+        seed: Callable[..., None] | None = None,
+        extra: Mapping[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        self.fn = fn
+        self.seed = seed
+        self.extra = dict(extra or {})
+        self.extra.update(kwargs)
+        self._shared_nodes = shared_nodes
+
+    def __getstate__(self) -> dict[str, Any]:
+        if self._shared_nodes:
+            raise pickle.PicklingError(
+                "IsolatedRowMutator with a shared node map is thread-only"
+            )
+        return {"fn": self.fn, "seed": self.seed, "extra": self.extra}
+
+    def __setstate__(self, state: Mapping[str, Any]) -> None:
+        self.fn = state["fn"]
+        self.seed = state["seed"]
+        self.extra = dict(state["extra"] or {})
+        self._shared_nodes = None
+
+    def __call__(self, row: Any) -> tuple[dict[str, Any], list[Any]]:
         local_nodes: dict[str, Any] = {}
         local_edges: list[Any] = []
-        view: ChainMap[str, Any] = ChainMap(local_nodes, shared_nodes)
-        fn(view, local_edges, row, **kwargs)
+        if self.seed is not None:
+            self.seed(local_nodes, [], row)
+        view: Any = local_nodes
+        if self._shared_nodes:
+            view = ChainMap(local_nodes, self._shared_nodes)
+        self.fn(view, local_edges, row, **self.extra)
         return local_nodes, local_edges
 
-    return worker
+
+def mutating_row_worker(
+    fn: Callable[..., None],
+    shared_nodes: MutableMapping[str, Any] | None = None,
+    *,
+    seed: Callable[..., None] | None = None,
+    **kwargs: Any,
+) -> IsolatedRowMutator:
+    """Adapt a ``(nodes, edges, row)`` mutator into a local-map worker."""
+
+    return IsolatedRowMutator(fn, shared_nodes, seed=seed, extra=kwargs)
 
 
 def load_work_dir(
@@ -343,19 +391,32 @@ def merge_graph_projections(
     factory: Callable[..., Any],
     skipped_row_count: int = 0,
 ) -> Any:
-    """Concatenate per-partition projections. First writer wins on key/CID."""
+    """Concatenate per-partition projections. First writer wins on key/CID.
+
+    Independent state graphs can mint the same ``node_key`` with different
+    CIDs (shared public-law / citation targets). Dropping the later node
+    without rewriting its edges leaves a dangling endpoint.
+    """
 
     nodes: dict[str, Any] = {}
     edges: dict[str, Any] = {}
+    cid_remap: dict[str, str] = {}
     for part in parts:
         for node in getattr(part, "nodes", ()) or ():
             key = getattr(node, "node_key", "")
-            if key and key not in nodes:
+            if not key:
+                continue
+            existing = nodes.get(key)
+            if existing is None:
                 nodes[key] = node
+                continue
+            if node.node_cid != existing.node_cid:
+                cid_remap[node.node_cid] = existing.node_cid
         for edge in getattr(part, "edges", ()) or ():
-            cid = getattr(edge, "edge_cid", "")
+            remapped = remap_edge_endpoints(edge, cid_remap)
+            cid = getattr(remapped, "edge_cid", "")
             if cid and cid not in edges:
-                edges[cid] = edge
+                edges[cid] = remapped
     kwargs: dict[str, Any] = {
         "nodes": tuple(nodes.values()),
         "edges": tuple(edges.values()),
@@ -392,6 +453,7 @@ __all__ = [
     "merge_graph_projections",
     "merge_local_graph_delta",
     "remap_edge_endpoints",
+    "IsolatedRowMutator",
     "mutating_row_worker",
     "neighbors_for_legal_ids",
     "prepare_partition_work_dir",

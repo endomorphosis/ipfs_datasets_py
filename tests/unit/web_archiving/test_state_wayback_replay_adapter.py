@@ -192,6 +192,87 @@ async def test_direct_exact_replay_rejects_redirect_status_without_following(
 
 
 @pytest.mark.anyio
+async def test_untimestamped_identity_replay_follows_canonical_id_redirect(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    official_url = "https://gc.nh.gov/rsa/html/NHTOC.htm"
+    dated_url = (
+        "https://web.archive.org/web/20260827085501id_/"
+        "https://gc.nh.gov/rsa/html/NHTOC.htm"
+    )
+    body = b"<html>New Hampshire Statutes - Table of Contents TITLE I</html>"
+    seen: list[str] = []
+
+    class _Redirect:
+        status_code = 302
+        content = b""
+        url = "https://web.archive.org/web/2id_/https://gc.nh.gov/rsa/html/NHTOC.htm"
+
+        def __init__(self) -> None:
+            self.headers = {
+                "Location": (
+                    "/web/20260827085501id_/https://gc.nh.gov/rsa/html/nhtoc.htm"
+                )
+            }
+
+    class _Final:
+        status_code = 200
+        content = body
+        url = dated_url
+
+        def __init__(self) -> None:
+            self.headers = {"content-type": "text/html"}
+
+    def _get(url: str, **kwargs):
+        seen.append(url)
+        assert kwargs.get("allow_redirects") is False
+        if url.endswith("/web/2id_/https://gc.nh.gov/rsa/html/NHTOC.htm"):
+            return _Redirect()
+        if url == dated_url:
+            return _Final()
+        raise AssertionError(f"unexpected Wayback request: {url}")
+
+    monkeypatch.setattr("requests.get", _get)
+    result = await wayback_machine_engine._get_wayback_content_direct(
+        official_url,
+        timestamp=None,
+        closest=False,
+    )
+    assert result["status"] == "success"
+    assert result["content"] == body
+    assert result["capture_timestamp"] == "20260827085501"
+    assert seen == [
+        "https://web.archive.org/web/2id_/https://gc.nh.gov/rsa/html/NHTOC.htm",
+        dated_url,
+    ]
+
+
+@pytest.mark.anyio
+async def test_untimestamped_identity_replay_rejects_homepage_redirect(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _Redirect:
+        status_code = 302
+        content = b"Redirecting..."
+        url = "https://web.archive.org/web/id_/https://gc.nh.gov/rsa/html/NHTOC.htm"
+
+        def __init__(self) -> None:
+            self.headers = {"Location": "https://web.archive.org/"}
+
+    monkeypatch.setattr(
+        "requests.get",
+        lambda *_args, **_kwargs: _Redirect(),
+    )
+    result = await wayback_machine_engine._get_wayback_content_direct(
+        "https://gc.nh.gov/rsa/html/NHTOC.htm",
+        timestamp=None,
+        closest=False,
+    )
+    assert result["status"] == "error"
+    assert result["response_status"] == 302
+
+
+@pytest.mark.anyio
 async def test_explicit_wayback_replay_keeps_official_and_archive_locators_separate(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

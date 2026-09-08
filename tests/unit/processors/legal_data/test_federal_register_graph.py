@@ -439,6 +439,41 @@ def test_provenance_paths_bind_official_source_fields(compact_graph) -> None:
         assert str(node.payload.get("official_source_url") or "").startswith("https://")
 
 
+def test_gte_small_embedding_neighbors_are_non_authoritative() -> None:
+    rows = [
+        row
+        for row in fixture_graph_rows()
+        if str(row.get("legal_id") or "").startswith("fr:2026-04567")
+        or str(row.get("legal_id") or "").startswith("fr:2026-04568")
+    ]
+    assert len(rows) >= 2
+    source = str(rows[0]["legal_id"])
+    target = str(rows[1]["legal_id"])
+    projection = project_federal_register_graph(
+        rows,
+        similarity_neighbors=[
+            {
+                "source_legal_id": source,
+                "target_legal_id": target,
+                "score": 0.91,
+                "edge_type": "EMBEDDING_NEIGHBOR_OF",
+                "metric": "gte-small-cosine",
+            }
+        ],
+        require_coverage=False,
+        config=fixture_graph_config(),
+    )
+    similar = [edge for edge in projection.edges if edge.edge_type is GraphEdgeType.EMBEDDING_NEIGHBOR_OF]
+    assert similar
+    for edge in similar:
+        assert edge.edge_class is GraphEdgeClass.SIMILARITY
+        assert edge.payload.get("authority") == NON_AUTHORITATIVE_AUTHORITY
+        assert edge.payload.get("metric") == "gte-small-cosine"
+    legal_paths = find_graph_paths(projection, legal_only=True, max_depth=2)
+    for path in legal_paths:
+        assert "EMBEDDING_NEIGHBOR_OF" not in path.edge_types
+
+
 def test_similarity_edges_are_non_authoritative(compact_graph) -> None:
     similar = [edge for edge in compact_graph.edges if edge.is_similarity]
     assert similar

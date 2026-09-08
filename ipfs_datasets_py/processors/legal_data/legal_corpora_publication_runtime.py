@@ -73,10 +73,12 @@ _AUTHORITY_GIT_ENVIRONMENT: Final[Mapping[str, str]] = MappingProxyType(
 
 from ipfs_datasets_py.huggingface.protected_repo_guard import (
     CanonicalMutationBinding,
+    STATE_MAIN_ROOT_README_CAS_OPERATION,
 )
 from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate import (
     AUTHORIZED_DATASET_REPO_IDS,
     BASELINE_REVISIONS,
+    PUBLICATION_PARENT_REVISIONS,
     REQUIRED_PUBLICATION_GATES,
     RIGHTS_RECEIPT_RELPATH,
     SECRET_ENV_NAMES,
@@ -1743,13 +1745,24 @@ def _require_policy_phase_contract(policy: Mapping[str, Any], phase: str) -> Non
                 f"release policy {phase}.{key} drifts from the sealed gate contract"
             )
     baselines = policy.get("baseline_revisions")
-    if not isinstance(baselines, Mapping):
+    if (
+        not isinstance(baselines, Mapping)
+        or dict(baselines) != dict(BASELINE_REVISIONS)
+    ):
         raise PublicationRuntimeError("release policy missing baseline_revisions")
+    publication_parents = policy.get("publication_parent_revisions")
+    if (
+        not isinstance(publication_parents, Mapping)
+        or dict(publication_parents) != dict(PUBLICATION_PARENT_REVISIONS)
+    ):
+        raise PublicationRuntimeError(
+            "release policy publication-parent pins drift from the sealed gate contract"
+        )
     expected_pin = contract["previous_public_pin"]
-    observed_pin = baselines.get(contract["dataset_repo_id"])
+    observed_pin = publication_parents.get(contract["dataset_repo_id"])
     if observed_pin != expected_pin:
         raise PublicationRuntimeError(
-            "release policy baseline pin drifts from the sealed gate contract"
+            "release policy publication-parent pin drifts from the phase contract"
         )
 
 
@@ -2617,6 +2630,30 @@ def capture_canonical_snapshot(
     _require_policy_phase_contract(policy, request.phase)
     lineage = load_task_lineage(root)
     contract = phase_requirements(request.phase)
+    root_readme_cas = (
+        request.mutation_binding.root_readme_cas
+        if request.mutation_binding is not None
+        else None
+    )
+    snapshot_operation = (
+        STATE_MAIN_ROOT_README_CAS_OPERATION
+        if root_readme_cas is not None
+        else str(contract["authorized_operation"])
+    )
+    publication_authorization = policy.get("publication_authorization")
+    authorized_policy_operations = (
+        publication_authorization.get("authorized_operations")
+        if isinstance(publication_authorization, Mapping)
+        else None
+    )
+    if (
+        type(authorized_policy_operations) is not list
+        or snapshot_operation not in authorized_policy_operations
+    ):
+        raise PublicationRuntimeError(
+            "release policy does not explicitly authorize the exact canonical "
+            f"operation {snapshot_operation!r}"
+        )
     receipts: dict[str, dict[str, Any]] = {}
     expected: dict[str, str] = {}
     for relpath in contract["required_receipts"]:
@@ -2917,7 +2954,7 @@ def capture_canonical_snapshot(
             candidate_release_manifest_digest
         ),
         "dataset_repo_id": dataset_repo_id,
-        "operation": contract["authorized_operation"],
+        "operation": snapshot_operation,
         "previous_public_pin": contract["previous_public_pin"],
         "prepublication_seal": seal,
         "staging_revision": staging_revision,
@@ -2939,14 +2976,22 @@ def capture_canonical_snapshot(
             else None
         ),
     }
+    if root_readme_cas is not None:
+        snapshot["root_control"] = root_readme_cas.to_dict()
     _assert_secret_free(snapshot, label="canonical_snapshot", environ=environ)
     return snapshot
 
 
 def build_gate_request(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    operation = str(snapshot["operation"])
+    release_mode = (
+        STATE_MAIN_ROOT_README_CAS_OPERATION
+        if operation == STATE_MAIN_ROOT_README_CAS_OPERATION
+        else "additive"
+    )
     payload = {
         "phase": snapshot["phase"],
-        "operation": snapshot["operation"],
+        "operation": operation,
         "dataset_repo_id": snapshot["dataset_repo_id"],
         "final_manifest_digest": snapshot["final_manifest_digest"],
         "previous_public_pin": snapshot["previous_public_pin"],
@@ -2969,7 +3014,7 @@ def build_gate_request(snapshot: Mapping[str, Any]) -> dict[str, Any]:
         "fixture_only_evidence": False,
         "current_commit": snapshot["head"],
         "payload": {
-            "release_mode": "additive",
+            "release_mode": release_mode,
             "credentials_environment_only": True,
             "secret_redacted": True,
             "candidate_manifest": dict(snapshot["candidate_manifest"]),
@@ -2995,12 +3040,23 @@ def build_gate_request(snapshot: Mapping[str, Any]) -> dict[str, Any]:
         payload["staging_revision"] = snapshot["staging_revision"]
     if snapshot.get("prepublication_seal") is not None:
         payload["prepublication_seal"] = dict(snapshot["prepublication_seal"])
+    if operation == STATE_MAIN_ROOT_README_CAS_OPERATION:
+        root_control = snapshot.get("root_control")
+        if not isinstance(root_control, Mapping):
+            raise PublicationRuntimeError(
+                "root README CAS gate request lacks its exact control binding"
+            )
+        payload["payload"]["root_control"] = dict(root_control)
     return payload
 
 
 def _snapshot_fingerprint(snapshot: Mapping[str, Any]) -> str:
     material = {
         "head": snapshot.get("head"),
+        "phase": snapshot.get("phase"),
+        "operation": snapshot.get("operation"),
+        "dataset_repo_id": snapshot.get("dataset_repo_id"),
+        "previous_public_pin": snapshot.get("previous_public_pin"),
         "control_digests": snapshot.get("control_digests"),
         "expected_receipt_digests": snapshot.get("expected_receipt_digests"),
         "final_manifest_digest": snapshot.get("final_manifest_digest"),
@@ -3012,6 +3068,7 @@ def _snapshot_fingerprint(snapshot: Mapping[str, Any]) -> str:
             "expected_policy_proof_digest"
         ),
         "expected_payload_digest": snapshot.get("expected_payload_digest"),
+        "root_control": snapshot.get("root_control"),
         "task_statuses": snapshot.get("task_statuses"),
         "principal": snapshot.get("principal"),
         "credential_identity": snapshot.get("credential_identity"),
@@ -3020,6 +3077,7 @@ def _snapshot_fingerprint(snapshot: Mapping[str, Any]) -> str:
         "principal_authority_digest": snapshot.get(
             "principal_authority_digest"
         ),
+        "prepublication_seal": snapshot.get("prepublication_seal"),
     }
     return hashlib.sha256(canonical_json_bytes(material)).hexdigest()
 
@@ -3346,7 +3404,12 @@ def _require_exact_mutation_binding(
         )
     expected_repository = str(request.expected_dataset_repo_id or "").strip().casefold()
     contract = phase_requirements(request.phase)
-    expected_operation = str(contract["authorized_operation"])
+    root_readme_cas = executor_binding.root_readme_cas
+    expected_operation = (
+        STATE_MAIN_ROOT_README_CAS_OPERATION
+        if root_readme_cas is not None
+        else str(contract["authorized_operation"])
+    )
     expected_phase_repository = str(contract["dataset_repo_id"]).casefold()
     staging_phase = request.phase.endswith("_staging")
     revision = executor_binding.revision
@@ -3373,6 +3436,11 @@ def _require_exact_mutation_binding(
         or request.phase not in CANONICAL_MUTATION_EXECUTOR_PHASES
         or snapshot.get("phase") != request.phase
         or snapshot.get("operation") != expected_operation
+        or (root_readme_cas is not None and request.phase != "state_main")
+        or (
+            root_readme_cas is not None
+            and snapshot.get("root_control") != root_readme_cas.to_dict()
+        )
         or executor_binding.method not in ("create_branch", "create_commit")
         or (executor_binding.method == "create_branch" and not staging_phase)
         or executor_binding.repository_id != expected_repository

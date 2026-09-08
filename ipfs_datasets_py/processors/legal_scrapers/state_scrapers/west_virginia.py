@@ -9,7 +9,7 @@ import re
 import ssl
 import urllib.request
 from collections.abc import Mapping, Sequence
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urljoin, urlparse
@@ -179,18 +179,21 @@ class WestVirginiaScraper(BaseStateScraper):
     )
     OFFICIAL_CHAPTER_COUNT = len(OFFICIAL_CHAPTERS)
 
-    _WV_SECTION_URL_RE = re.compile(r"/\d+[A-Za-z]?(?:-\d+[A-Za-z]?){1,2}/?$")
+    _WV_SECTION_URL_RE = re.compile(
+        r"/\d+[A-Za-z]{0,2}(?:-\d+[A-Za-z]{0,2}){1,2}"
+        r"(?:\.[0-9]+[A-Za-z]{0,2})?(?:\([0-9A-Za-z]+\))?/?$"
+    )
     _WV_CHAPTER_PATH_RE = re.compile(
         r"^/(?P<chapter>\d+[A-Za-z]?)/?$",
         re.IGNORECASE,
     )
     _WV_ARTICLE_PATH_RE = re.compile(
-        r"^/(?P<chapter>\d+[A-Za-z]?)-(?P<article>\d+[A-Za-z]?)/?$",
+        r"^/(?P<chapter>\d+[A-Za-z]?)-(?P<article>\d+[A-Za-z]{0,2})/?$",
         re.IGNORECASE,
     )
     _WV_STRICT_SECTION_PATH_RE = re.compile(
-        r"^/(?P<chapter>\d+[A-Za-z]?)-(?P<article>\d+[A-Za-z]?)-"
-        r"(?P<section>\d+[A-Za-z]?)/?$",
+        r"^/(?P<chapter>\d+[A-Za-z]?)-(?P<article>\d+[A-Za-z]{0,2})-"
+        r"(?P<section>\d+[A-Za-z]{0,2}(?:\.[0-9]+[A-Za-z]{0,2})?(?:\([0-9A-Za-z]+\))?)\/?$",
         re.IGNORECASE,
     )
     _WV_FUTURE_EFFECTIVE_RE = re.compile(
@@ -375,7 +378,10 @@ class WestVirginiaScraper(BaseStateScraper):
         batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
             requested,
             residual_retry_attempts=retry_attempts,
-            timeout_seconds=25,
+            timeout_seconds=self._env_int(
+                "STATE_SCRAPER_WV_FRONTIER_TIMEOUT_SECONDS",
+                default=60,
+            ),
             content_validator=self._is_valid_west_virginia_frontier_payload,
             media_type="text/html",
             max_concurrency=self._west_virginia_frontier_concurrency(),
@@ -770,24 +776,82 @@ class WestVirginiaScraper(BaseStateScraper):
                 chapter_number=chapter_number,
                 article_number=article_number,
             )
+            label = self._normalize_legal_text(anchor.get_text(" ", strip=True))
+            if level == "section":
+                printed = self._west_virginia_printed_section_identity(label)
+                href_identity = (
+                    f"{groups['chapter']}-{groups['article']}-{groups['section']}"
+                )
+                if printed and printed.casefold() != href_identity.casefold():
+                    printed_url = f"{self.get_base_url()}/{printed}/"
+                    _, printed_groups = self._canonical_west_virginia_hierarchy_url(
+                        printed_url,
+                        level="section",
+                        chapter_number=chapter_number,
+                    )
+                    groups = printed_groups
             identity = (
                 (groups["chapter"], groups["article"])
                 if level == "article"
                 else (groups["chapter"], groups["article"], groups["section"])
             )
             folded = tuple(value.casefold() for value in identity)
-            if canonical in seen_urls or folded in seen_identities:
+            if canonical in seen_urls:
                 raise RuntimeError(
                     f"West Virginia {level} frontier repeated identity: {canonical}"
                 )
+            if folded in seen_identities:
+                if level != "section":
+                    raise RuntimeError(
+                        f"West Virginia {level} frontier repeated identity: {canonical}"
+                    )
+                printed_url = (
+                    f"{self.get_base_url()}/"
+                    f"{groups['chapter']}-{groups['article']}-{groups['section']}/"
+                )
+                new_is_printed = (
+                    canonical.rstrip("/").casefold()
+                    == printed_url.rstrip("/").casefold()
+                )
+                if not new_is_printed:
+                    continue
+                replaced = False
+                for index, existing in enumerate(units):
+                    existing_identity = (
+                        existing["chapter"].casefold(),
+                        existing["article"].casefold(),
+                        existing["section"].casefold(),
+                    )
+                    if existing_identity != folded:
+                        continue
+                    existing_is_printed = (
+                        existing["source_url"].rstrip("/").casefold()
+                        == printed_url.rstrip("/").casefold()
+                    )
+                    if existing_is_printed:
+                        raise RuntimeError(
+                            f"West Virginia {level} frontier repeated identity: {canonical}"
+                        )
+                    seen_urls.discard(existing["source_url"])
+                    seen_urls.add(canonical)
+                    units[index] = {
+                        **groups,
+                        "source_label": label,
+                        "source_url": canonical,
+                    }
+                    replaced = True
+                    break
+                if not replaced:
+                    raise RuntimeError(
+                        f"West Virginia {level} frontier repeated identity: {canonical}"
+                    )
+                continue
             seen_urls.add(canonical)
             seen_identities.add(folded)
             units.append(
                 {
                     **groups,
-                    "source_label": self._normalize_legal_text(
-                        anchor.get_text(" ", strip=True)
-                    ),
+                    "source_label": label,
                     "source_url": canonical,
                 }
             )
@@ -897,27 +961,125 @@ class WestVirginiaScraper(BaseStateScraper):
             return ""
         soup = BeautifulSoup(payload.decode("utf-8", errors="replace"), "html.parser")
         if level == "chapter":
-            nodes = soup.find_all("h3")
+            node_groups = (soup.find_all("h3"),)
             pattern = re.compile(r"^CHAPTER\s+(\d+[A-Za-z]?)\b", re.IGNORECASE)
         elif level == "article":
-            nodes = soup.select("div.art-head")
-            pattern = re.compile(r"^ARTICLE\s+(\d+[A-Za-z]?)\b", re.IGNORECASE)
+            node_groups = (soup.select("div.art-head"),)
+            pattern = re.compile(r"^ARTICLE\s+(\d+[A-Za-z]{0,2})\b", re.IGNORECASE)
         else:
-            nodes = soup.find_all("h4")
+            node_groups = (
+                soup.select("div.sectiontext h2, div.sectiontext h3"),
+                soup.find_all("h4"),
+                soup.select("div.sectiontext p"),
+                soup.select("div.sectiontext"),
+            )
             pattern = re.compile(
-                r"^§\s*(\d+[A-Za-z]?\-\d+[A-Za-z]?\-\d+[A-Za-z]?)\b",
+                r"^(?:§\s*)?(\d+[A-Za-z]?\-\d+[A-Za-z]{0,2}\-\d+[A-Za-z]{0,2}"
+                r"(?:\.[0-9]+[A-Za-z]{0,2})?(?:\([0-9A-Za-z]+\))?)(?!\w)",
                 re.IGNORECASE,
             )
-        identities = []
-        for node in nodes:
-            match = pattern.match(
-                re.sub(r"\s+", " ", node.get_text(" ", strip=True)).strip()
-            )
-            if match:
-                identities.append(match.group(1).upper())
+        identities: list[str] = []
+        for nodes in node_groups:
+            identities = []
+            for node in nodes:
+                heading = WestVirginiaScraper._west_virginia_normalize_heading(
+                    node.get_text(" ", strip=True)
+                )
+                match = pattern.match(heading)
+                if match:
+                    identities.append(match.group(1).upper())
+            if identities:
+                break
         if not identities or any(item != identities[0] for item in identities[1:]):
             return ""
         return identities[0]
+
+    def _west_virginia_record_section_unit(
+        self,
+        child: Dict[str, str],
+        *,
+        section_units: List[Dict[str, str]],
+        seen_sections: set[Tuple[str, str, str]],
+    ) -> None:
+        identity = (
+            child["chapter"].casefold(),
+            child["article"].casefold(),
+            child["section"].casefold(),
+        )
+        printed_url = (
+            f"{self.get_base_url()}/"
+            f"{child['chapter']}-{child['article']}-{child['section']}/"
+        )
+        new_is_printed = (
+            child["source_url"].rstrip("/").casefold()
+            == printed_url.rstrip("/").casefold()
+        )
+        if identity not in seen_sections:
+            seen_sections.add(identity)
+            section_units.append(child)
+            return
+        if not new_is_printed:
+            return
+        for index, existing in enumerate(section_units):
+            existing_identity = (
+                existing["chapter"].casefold(),
+                existing["article"].casefold(),
+                existing["section"].casefold(),
+            )
+            if existing_identity != identity:
+                continue
+            existing_is_printed = (
+                existing["source_url"].rstrip("/").casefold()
+                == printed_url.rstrip("/").casefold()
+            )
+            if existing_is_printed:
+                raise RuntimeError(
+                    "West Virginia article frontier repeated section identity: "
+                    f"{child['source_url']}"
+                )
+            section_units[index] = child
+            return
+        raise RuntimeError(
+            "West Virginia article frontier repeated section identity: "
+            f"{child['source_url']}"
+        )
+
+    @staticmethod
+    def _west_virginia_normalize_heading(text: str) -> str:
+        heading = (
+            str(text or "")
+            .replace("\ufeff", "")
+            .replace("\u200b", "")
+            .replace("–", "-")
+            .replace("—", "-")
+            .replace("\xa0", " ")
+        )
+        heading = re.sub(r"[\x00-\x1f\x7f]", "", heading)
+        heading = re.sub(r"\s+", " ", heading).strip()
+        # Official pages sometimes prefix the section sign with a CMS list digit.
+        heading = re.sub(r"^\d+(?=§)", "", heading)
+        # Official CMS headings sometimes insert spaces around cite hyphens
+        # ("§30-10- 24" vs "§30-10-24").
+        heading = re.sub(r"\s*-\s*", "-", heading)
+        # Official CMS headings sometimes glue a duplicate "§chapter-" fragment
+        # onto the complete cite ("§31B-§31B-11-1104" vs "§31B-11-1104").
+        return re.sub(
+            r"^(§\s*)(\d+[A-Za-z]?)-(?=§\s*\2-)",
+            "",
+            heading,
+            count=1,
+        )
+
+    @classmethod
+    def _west_virginia_printed_section_identity(cls, label: str) -> str:
+        heading = cls._west_virginia_normalize_heading(label)
+        match = re.match(
+            r"^(?:§\s*)?(\d+[A-Za-z]?\-\d+[A-Za-z]{0,2}\-\d+[A-Za-z]{0,2}"
+            r"(?:\.[0-9]+[A-Za-z]{0,2})?(?:\([0-9A-Za-z]+\))?)(?!\w)",
+            heading,
+            flags=re.IGNORECASE,
+        )
+        return match.group(1).upper() if match else ""
 
     def _west_virginia_terminal_disposition(
         self,
@@ -925,7 +1087,7 @@ class WestVirginiaScraper(BaseStateScraper):
         *,
         observed_on: Any,
     ) -> Optional[str]:
-        value = self._normalize_legal_text(label)
+        value = self._normalize_legal_text(label).replace("–", "-").replace("—", "-")
         if not value:
             return None
         future = self._WV_FUTURE_EFFECTIVE_RE.search(value)
@@ -948,7 +1110,12 @@ class WestVirginiaScraper(BaseStateScraper):
             value,
             flags=re.IGNORECASE,
         )
-        match = bracketed or labelled
+        acts_repealed = re.search(
+            r"(?:^|\.\s*)(repealed)\.(?:\s*Acts\b|\s*$)",
+            value,
+            flags=re.IGNORECASE,
+        )
+        match = bracketed or labelled or acts_repealed
         if match is None:
             return None
         if bracketed is not None:
@@ -986,7 +1153,7 @@ class WestVirginiaScraper(BaseStateScraper):
             selectors = {
                 "chapter": ("h3",),
                 "article": ("div.art-head",),
-                "section": ("h4", "div.sectiontext"),
+                "section": ("h2", "h3", "h4", "h5", "div.sectiontext"),
             }[level]
             for selector in selectors:
                 for node in soup.select(selector):
@@ -1268,18 +1435,11 @@ class WestVirginiaScraper(BaseStateScraper):
                 )
                 continue
             for child in children:
-                identity = (
-                    child["chapter"].casefold(),
-                    child["article"].casefold(),
-                    child["section"].casefold(),
+                self._west_virginia_record_section_unit(
+                    child,
+                    section_units=section_units,
+                    seen_sections=seen_sections,
                 )
-                if identity in seen_sections:
-                    raise RuntimeError(
-                        "West Virginia article frontier repeated section identity: "
-                        f"{child['source_url']}"
-                    )
-                seen_sections.add(identity)
-                section_units.append(child)
         if not section_units:
             raise RuntimeError("West Virginia hierarchy produced no active section frontier")
 
@@ -1335,6 +1495,7 @@ class WestVirginiaScraper(BaseStateScraper):
                     discovery_method=(
                         "official_batched_chapter_article_section_frontier"
                     ),
+                    observed_on=observed_on,
                 )
                 if statute is None:
                     terminal = self._source_bound_west_virginia_terminal_disposition(
@@ -1790,6 +1951,7 @@ class WestVirginiaScraper(BaseStateScraper):
                 section_number=section_number,
                 payload=bytes(raw),
                 discovery_method=discovery_method,
+                observed_on=date.today(),
             )
             if parsed is not None:
                 out.append(parsed)
@@ -1803,6 +1965,7 @@ class WestVirginiaScraper(BaseStateScraper):
         section_number: str,
         payload: bytes,
         discovery_method: str,
+        observed_on: Any = None,
     ) -> Optional[NormalizedStatute]:
         """Parse one already-retained official section response."""
 
@@ -1814,17 +1977,68 @@ class WestVirginiaScraper(BaseStateScraper):
         node = soup.select_one("div.sectiontext")
         if node is None:
             return None
-        heading = self._normalize_legal_text(
-            (node.find("h4") or node).get_text(" ", strip=True)
+        heading_nodes = node.find_all(["h2", "h3", "h4", "h5"])
+        heading = ""
+        expected = str(section_number or "").casefold()
+        heading_pattern = re.compile(
+            r"^(?:§\s*)?(\d+[A-Za-z]?\-\d+[A-Za-z]{0,2}\-\d+[A-Za-z]{0,2}"
+            r"(?:\.[0-9]+[A-Za-z]{0,2})?(?:\([0-9A-Za-z]+\))?)(?!\w)",
+            re.IGNORECASE,
         )
-        body_parts = [
+        for candidate in heading_nodes:
+            text = self._west_virginia_normalize_heading(
+                self._normalize_legal_text(candidate.get_text(" ", strip=True))
+            )
+            match = heading_pattern.match(text)
+            if match and match.group(1).casefold() == expected:
+                heading = text
+                break
+        if not heading:
+            for paragraph in node.find_all("p"):
+                text = self._west_virginia_normalize_heading(
+                    self._normalize_legal_text(paragraph.get_text(" ", strip=True))
+                )
+                match = heading_pattern.match(text)
+                if match and match.group(1).casefold() == expected:
+                    heading = text
+                    break
+        if not heading:
+            heading = self._west_virginia_normalize_heading(
+                self._normalize_legal_text(
+                    (heading_nodes[-1] if heading_nodes else node).get_text(
+                        " ", strip=True
+                    )
+                )
+            )
+        body_parts = []
+        for extra in heading_nodes:
+            text = self._west_virginia_normalize_heading(
+                self._normalize_legal_text(extra.get_text(" ", strip=True))
+            )
+            if not text:
+                continue
+            match = heading_pattern.match(text)
+            if match and match.group(1).casefold() == expected:
+                continue
+            body_parts.append(text)
+        body_parts.extend(
             self._normalize_legal_text(paragraph.get_text(" ", strip=True))
             for paragraph in node.find_all("p")
-        ]
+        )
         body = self._normalize_legal_text(" ".join([heading, *body_parts]))
-        if len(body) < 180:
+        observed = observed_on or date.today()
+        if (
+            self._west_virginia_terminal_disposition(heading, observed_on=observed)
+            is not None
+            or self._west_virginia_terminal_disposition(body, observed_on=observed)
+            is not None
+        ):
             return None
-        section_name = re.sub(r"^§\s*[\w\-]+\.?\s*", "", heading).strip() or heading
+        if heading_pattern.match(heading) is None or len(body) < 40:
+            return None
+        section_name = re.sub(
+            r"^(?:§\s*)?[\w\-]+\.?\s*", "", heading
+        ).strip() or heading
         return NormalizedStatute(
             state_code=self.state_code,
             state_name=self.state_name,

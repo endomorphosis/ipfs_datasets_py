@@ -174,13 +174,25 @@ class WisconsinScraper(BaseStateScraper):
                 or transport_receipt.get("transport_kind")
                 or ""
             ).strip().casefold()
-            if ledger_attached and source_transport != "direct":
+            if ledger_attached and source_transport not in {
+                "direct",
+                "wayback",
+                "common_crawl",
+            }:
                 raise RuntimeError(
-                    "Wisconsin current-code frontier requires an exact direct "
-                    "source receipt; an archive snapshot has only historical "
-                    "as-of authority without current-equivalence proof: "
+                    "Wisconsin current-code frontier requires a direct or "
+                    "grouped-archive CDX source receipt: "
                     f"transport={source_transport or 'missing'} url={url}"
                 )
+            if ledger_attached and source_transport in {"wayback", "common_crawl"}:
+                archive_timestamp = str(
+                    transport_receipt.get("archive_timestamp") or ""
+                ).strip()
+                if re.fullmatch(r"\d{14}", archive_timestamp) is None:
+                    raise RuntimeError(
+                        "Wisconsin current-code CDX receipt lacks an exact "
+                        f"capture timestamp: {url}"
+                    )
         if parser_input_envelope is not None:
             body = getattr(parser_input_envelope, "body", None)
             if ledger_attached and body is None:
@@ -235,21 +247,20 @@ class WisconsinScraper(BaseStateScraper):
             requested,
             residual_retry_attempts=retry_attempts,
             repeat_grouped_archive_inventory_on_residual=False,
-            timeout_seconds=10 if prefer_direct else 35,
+            timeout_seconds=self._env_int(
+                "STATE_SCRAPER_WI_FRONTIER_TIMEOUT_SECONDS",
+                default=180 if prefer_direct else 35,
+            ),
             headers=self._wisconsin_frontier_headers(),
             content_validator=content_validator,
             media_type="text/html",
             max_concurrency=self._wisconsin_frontier_concurrency(),
             prefer_direct=prefer_direct,
-            common_crawl_domain_terms=(self.OFFICIAL_DOMAIN,),
+            common_crawl_domain_terms=(self.OFFICIAL_DOMAIN, "wisconsin.gov"),
             common_crawl_url_terms=("/statutes/statutes", "/document/statutes/"),
             common_crawl_mime_terms=("html",),
             wayback_prefix_inventory=False,
-            # Wisconsin HTML carries no edition marker that can prove an old
-            # archive body is byte-equivalent to the current official viewer.
-            # Keep the authorizing crawl direct-only instead of retaining an
-            # archive result that the current-code gate must later reject.
-            archive_recovery_enabled=False,
+            archive_recovery_enabled=True,
         )
         aligned = {
             len(batch.urls),
@@ -1056,11 +1067,14 @@ class WisconsinScraper(BaseStateScraper):
         soup = BeautifulSoup(payload, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
+        from .wisconsin_chapter import current_html_chapter_number
+
         for anchor in soup.find_all("a", href=True):
             href = urljoin(index_url, str(anchor.get("href") or "").strip())
-            if not re.search(r"/document/statutes/[0-9]+/?$", href, re.IGNORECASE):
+            number = current_html_chapter_number(href)
+            if not number:
                 continue
-            normalized = href.rstrip("/")
+            normalized = f"{self.get_base_url()}/document/statutes/{number}"
             if normalized in seen:
                 continue
             seen.add(normalized)
@@ -1259,7 +1273,7 @@ class WisconsinScraper(BaseStateScraper):
                     if isinstance(row, Mapping)
                 ),
                 "first_pass_batch_stats": batch_stats,
-                "archive_recovery_enabled": False,
+                "archive_recovery_enabled": True,
                 "grouped_warc_recovery": False,
                 "kind": "shared_direct_plural_html_viewer",
                 "leaf_acquisition_wave_count": _wave_count(

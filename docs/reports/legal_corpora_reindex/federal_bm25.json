@@ -149,17 +149,17 @@
       },
       {
         "chunk_cid": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "idf": 1.791759469228055,
-        "reference_score": 1.598672991084128,
-        "score": 1.598672991084128,
-        "term": "epaemissionsrule"
-      },
-      {
-        "chunk_cid": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "idf": 0.05715841383994862,
         "reference_score": 0.3620338660363289,
         "score": 0.3620338660363289,
         "term": "emissions"
+      },
+      {
+        "chunk_cid": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "idf": 1.791759469228055,
+        "reference_score": 1.598672991084128,
+        "score": 1.598672991084128,
+        "term": "epaemissionsrule"
       },
       {
         "chunk_cid": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
@@ -240,7 +240,7 @@
   "program_id": "legal-corpora-reindex-v1",
   "proves_software_contract_only": true,
   "release_profile": "federal-register-ir-graphrag/v2",
-  "report_digest_sha256": "ac00bfb09257a79d1d557f607cea12de74640447d2377528df49d2e36ed27c3c",
+  "report_digest_sha256": "20688aa758d5f0ebf203cbb3ba8428b75f50ebc227fe7327bf86561ac90616b6",
   "report_kind": "fixture_bm25",
   "schema": "ipfs_datasets_py/legal-corpora-reindex-federal-bm25@1",
   "schema_version": "federal-register-bm25-v1",

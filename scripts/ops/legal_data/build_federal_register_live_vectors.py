@@ -116,6 +116,18 @@ def build_live_vectors(
     backend: str = PRODUCTION_BACKEND,
     write_receipt: bool = True,
 ) -> dict[str, Any]:
+    if backend == PRODUCTION_BACKEND:
+        config = production_embedding_config()
+    elif backend in {PROJECTION_BACKEND, "projection", "deterministic"}:
+        if require_complete and limit is None:
+            raise LiveVectorError(
+                "complete live vectors require backend='sentence_transformers' "
+                "with pinned thenlper/gte-small; the deterministic projection "
+                "is fixture-only"
+            )
+        config = default_embedding_config()
+    else:
+        raise LiveVectorError(f"unsupported embedding backend: {backend!r}")
     rows = _load_index(corpus_dir)
     if limit is not None:
         rows = rows[:limit]
@@ -126,12 +138,6 @@ def build_live_vectors(
     if not rows:
         raise LiveVectorError("no verified corpus bodies")
     chunks = _chunks_from_corpus(corpus_dir, rows)
-    if backend == PRODUCTION_BACKEND:
-        config = production_embedding_config()
-    elif backend in {PROJECTION_BACKEND, "projection", "deterministic"}:
-        config = default_embedding_config()
-    else:
-        raise LiveVectorError(f"unsupported embedding backend: {backend!r}")
     result = generate_federal_register_embeddings(chunks, config=config)
     missing = list(result.missing or [])
     if missing:

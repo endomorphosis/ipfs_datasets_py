@@ -21,6 +21,14 @@ import shutil
 import tempfile
 from typing import Any, Final, Iterator
 
+from ipfs_datasets_py.processors.legal_data.parallel_tokenize import (
+    MIN_PARALLEL_ITEMS,
+    chunk_items,
+    ordered_process_map,
+)
+from ipfs_datasets_py.processors.legal_data.host_worker_budget import (
+    tokenize_process_pool_size,
+)
 from ipfs_datasets_py.processors.retrieval import tokenize_lexical_text
 
 from ...ir_core.canonical import canonical_json_bytes
@@ -579,8 +587,6 @@ def _build_into_directory(
     policy_rows = []
     prepared_documents = []
     decision_counts: Counter[str] = Counter()
-    document_frequency: Counter[str] = Counter()
-    corpus_frequency: Counter[str] = Counter()
     for record in records:
         decision = policy.evaluate(record)
         decision_counts[decision.allowed_use.value] += 1
@@ -605,13 +611,22 @@ def _build_into_directory(
         )
         if decision.allowed_use not in config.included_allowed_uses:
             continue
-        tokens = _record_tokens(record, config)
+        prepared_documents.append((record, decision, source_ref))
+
+    token_lists = _record_tokens_parallel(
+        [item[0] for item in prepared_documents], config
+    )
+    kept: list[tuple[Any, Any, Any, Counter[str]]] = []
+    document_frequency = Counter()
+    corpus_frequency = Counter()
+    for (record, decision, source_ref), tokens in zip(prepared_documents, token_lists):
         if not tokens:
             continue
         counts = Counter(tokens)
         document_frequency.update(counts.keys())
         corpus_frequency.update(counts)
-        prepared_documents.append((record, decision, source_ref, counts))
+        kept.append((record, decision, source_ref, counts))
+    prepared_documents = kept
 
     document_count = len(prepared_documents)
     if document_count < 1:
@@ -732,21 +747,61 @@ def _profile_for_reader(reader: SkillCenterBundleReader) -> str:
     return record.profile if record is not None else "unknown"
 
 
+def _skillcenter_token_chunk(
+    payload: list[tuple[str, str, str, str, str, int, int]],
+) -> list[list[str]]:
+    rows = []
+    for title, domain, profile, skill_kind, skill_md, title_boost, max_chars in payload:
+        fields = [title] * int(title_boost) + [domain, profile, skill_kind, skill_md]
+        tokens: list[str] = []
+        for value in fields:
+            tokens.extend(
+                token
+                for token in tokenize_lexical_text(value)
+                if len(token) <= int(max_chars)
+            )
+        rows.append(tokens)
+    return rows
+
+
+def _record_tokens_parallel(
+    records: Sequence[SkillCenterSkillRecord],
+    config: SkillCenterBM25Config,
+) -> list[list[str]]:
+    if not records:
+        return []
+    fields = [
+        (
+            record.title,
+            record.domain,
+            record.profile,
+            record.skill_kind,
+            record.skill_md,
+            int(config.title_boost),
+            int(config.max_token_chars),
+        )
+        for record in records
+    ]
+    plan = tokenize_process_pool_size()
+    if plan.workers <= 1 or len(fields) < MIN_PARALLEL_ITEMS:
+        return _skillcenter_token_chunk(fields)
+    parts = ordered_process_map(
+        _skillcenter_token_chunk,
+        chunk_items(fields, 64),
+        workers=plan.workers,
+        plan=plan,
+    )
+    out: list[list[str]] = []
+    for part in parts:
+        out.extend(part)
+    return out
+
+
 def _record_tokens(
     record: SkillCenterSkillRecord,
     config: SkillCenterBM25Config,
 ) -> list[str]:
-    fields = [
-        *(record.title for _ in range(config.title_boost)),
-        record.domain,
-        record.profile,
-        record.skill_kind,
-        record.skill_md,
-    ]
-    tokens = []
-    for value in fields:
-        tokens.extend(_tokenize(value, config))
-    return tokens
+    return _record_tokens_parallel([record], config)[0]
 
 
 def _tokenize(value: str, config: SkillCenterBM25Config) -> list[str]:

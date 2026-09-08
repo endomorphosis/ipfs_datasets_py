@@ -437,6 +437,36 @@ def section_body_identity(section_html: str) -> str:
     return match.group(1).strip() if match is not None else ""
 
 
+def unnumbered_operative_section_body_agrees(
+    section_html: str,
+    *,
+    expected_identity: str,
+) -> bool:
+    """Return True for an operative body with no conflicting leading identity.
+
+    Some current Revisor records open with a title line or compact recital
+    instead of ``208.856.``.  Those pages still publish independent page
+    identity.  Reject the body when any paragraph leads with a different
+    section number, or when the operative text is missing.
+    """
+
+    expected = str(expected_identity or "").strip().casefold()
+    if not expected:
+        return False
+    paras, _history = section_content(section_html)
+    body = " ".join(paras).strip()
+    if len(body) < 20:
+        return False
+    for para in paras:
+        match = _SECTION_BODY_ID_RE.match(para)
+        if (
+            match is not None
+            and match.group(1).strip().casefold() != expected
+        ):
+            return False
+    return True
+
+
 def section_page_identity(section_html: str) -> str:
     """Return a source-bound Revisor page identity even when its body is omitted.
 
@@ -506,11 +536,17 @@ def statute_from_section_html(
     body = " ".join(paras).strip()
     if len(body) < 20:
         return None
+    requested = str(section_number or "").strip()
     body_identity = _SECTION_BODY_ID_RE.match(paras[0] if paras else "")
-    if (
-        body_identity is None
-        or body_identity.group(1).strip().casefold()
-        != str(section_number or "").strip().casefold()
+    if body_identity is not None:
+        if body_identity.group(1).strip().casefold() != requested.casefold():
+            return None
+    elif (
+        not unnumbered_operative_section_body_agrees(
+            html,
+            expected_identity=requested,
+        )
+        or section_page_identity(html).casefold() != requested.casefold()
     ):
         return None
     exact_source_url = str(source_url or "").strip() or section_url(section_number)

@@ -60,6 +60,7 @@ from ipfs_datasets_py.processors.legal_data.open_us_law_vectors import (
     bind_fixture_vectors,
     bind_open_us_law_vectors,
     bind_open_us_law_vectors_from_chunks,
+    route_open_us_law_shards,
     build_layout_root_cid,
     build_membership_hash,
     build_model_cid,
@@ -716,3 +717,145 @@ def test_write_vector_receipt_roundtrip(tmp_path: Path) -> None:
     loaded = load_vector_receipt(target)
     assert_vector_receipt(loaded)
     assert loaded["receipt_sha256"] == build_vector_receipt()["receipt_sha256"]
+
+
+def test_jurisdiction_centroids_do_not_mix_states() -> None:
+    ak_a = _record(chunk_nibble="1", entry_nibble="a", axis=0)
+    ak_b = _record(chunk_nibble="2", entry_nibble="b", axis=0)
+    wy_a = _record(chunk_nibble="3", entry_nibble="c", axis=0)
+    wy_b = _record(chunk_nibble="4", entry_nibble="d", axis=0)
+    mapping = {
+        ak_a.chunk_cid: "AK",
+        ak_b.chunk_cid: "AK",
+        wy_a.chunk_cid: "WY",
+        wy_b.chunk_cid: "WY",
+    }
+    binding = bind_open_us_law_vectors(
+        [ak_a, ak_b, wy_a, wy_b],
+        chunk_jurisdiction=mapping,
+        max_rows_per_shard=4,
+        max_rows_per_centroid=4,
+        target_rows_per_centroid=4,
+    )
+    codes_by_cluster = {}
+    for row in binding.routing_rows:
+        codes_by_cluster.setdefault(int(row["cluster_id"]), set()).add(
+            row["jurisdiction_code"]
+        )
+    assert codes_by_cluster
+    assert all(len(codes) == 1 for codes in codes_by_cluster.values())
+    for group in binding.layout.clusters:
+        member_codes = {mapping[cid] for cid in group.entry_cids}
+        assert member_codes in ({"AK"}, {"WY"})
+    global_binding = bind_open_us_law_vectors(
+        [ak_a, ak_b, wy_a, wy_b],
+        max_rows_per_shard=4,
+        max_rows_per_centroid=4,
+        target_rows_per_centroid=4,
+    )
+    mixed = False
+    for group in global_binding.layout.clusters:
+        if {mapping[cid] for cid in group.entry_cids} == {"AK", "WY"}:
+            mixed = True
+    assert mixed
+    routes = route_open_us_law_shards(
+        binding.routing_rows,
+        _axis_unit(0),
+        candidate_centroids=8,
+        jurisdiction_code="AK",
+    )
+    assert routes
+    assert {int(route.cluster_id) for route in routes} <= {
+        cluster_id
+        for cluster_id, codes in codes_by_cluster.items()
+        if codes == {"AK"}
+    }
+
+
+def test_jurisdiction_vector_checkpoints_resume(tmp_path: Path) -> None:
+    ak = _record(chunk_nibble="1", entry_nibble="a", axis=0)
+    wy = _record(chunk_nibble="3", entry_nibble="c", axis=1)
+    mapping = {ak.chunk_cid: "AK", wy.chunk_cid: "WY"}
+    dest = tmp_path / "vectors"
+    first = bind_open_us_law_vectors(
+        [ak, wy],
+        chunk_jurisdiction=mapping,
+        checkpoint_dir=dest,
+        max_rows_per_shard=4,
+        max_rows_per_centroid=4,
+        target_rows_per_centroid=4,
+    )
+    assert (dest / "by_jurisdiction" / "AK" / "identity.json").is_file()
+    assert (dest / "by_jurisdiction" / "AK" / "assignment.json").is_file()
+    assert (dest / "by_jurisdiction" / "WY" / "identity.json").is_file()
+    assert (dest / "identity.json").is_file()
+    second = bind_open_us_law_vectors(
+        [ak, wy],
+        chunk_jurisdiction=mapping,
+        checkpoint_dir=dest,
+        max_rows_per_shard=4,
+        max_rows_per_centroid=4,
+        target_rows_per_centroid=4,
+    )
+    assert first.vector_root_cid == second.vector_root_cid
+    assert first.membership_hash == second.membership_hash
+
+
+def test_missing_chunk_jurisdiction_fails_closed() -> None:
+    record = _record(chunk_nibble="1", entry_nibble="a", axis=0)
+    with pytest.raises(VectorBindingError, match="chunk_jurisdiction"):
+        bind_open_us_law_vectors(
+            [record],
+            chunk_jurisdiction={},
+            max_rows_per_shard=4,
+            max_rows_per_centroid=4,
+            target_rows_per_centroid=4,
+        )
+
+
+def _cuda_available() -> bool:
+    try:
+        import torch
+
+        return bool(torch.cuda.is_available())
+    except Exception:
+        return False
+
+
+def test_unknown_kmeans_device_fails_closed() -> None:
+    record = _record(chunk_nibble="1", entry_nibble="a", axis=0)
+    with pytest.raises(VectorBindingError, match="unsupported kmeans device"):
+        bind_open_us_law_vectors(
+            [record],
+            kmeans_device="tpu",
+            max_rows_per_shard=4,
+            max_rows_per_centroid=4,
+            target_rows_per_centroid=4,
+        )
+
+
+@pytest.mark.skipif(not _cuda_available(), reason="CUDA required")
+def test_cuda_kmeans_keeps_jurisdiction_centroids_pure() -> None:
+    ak_a = _record(chunk_nibble="1", entry_nibble="a", axis=0)
+    ak_b = _record(chunk_nibble="2", entry_nibble="b", axis=1)
+    wy_a = _record(chunk_nibble="3", entry_nibble="c", axis=2)
+    wy_b = _record(chunk_nibble="4", entry_nibble="d", axis=3)
+    mapping = {
+        ak_a.chunk_cid: "AK",
+        ak_b.chunk_cid: "AK",
+        wy_a.chunk_cid: "WY",
+        wy_b.chunk_cid: "WY",
+    }
+    binding = bind_open_us_law_vectors(
+        [ak_a, ak_b, wy_a, wy_b],
+        chunk_jurisdiction=mapping,
+        kmeans_device="cuda",
+        max_rows_per_shard=4,
+        max_rows_per_centroid=4,
+        target_rows_per_centroid=4,
+    )
+    expected = [ak_a.chunk_cid, ak_b.chunk_cid, wy_a.chunk_cid, wy_b.chunk_cid]
+    assert_every_chunk_once(binding.layout, expected_chunk_cids=expected)
+    for group in binding.layout.clusters:
+        assert {mapping[cid] for cid in group.entry_cids} in ({"AK"}, {"WY"})
+    assert {row["jurisdiction_code"] for row in binding.routing_rows} <= {"AK", "WY"}

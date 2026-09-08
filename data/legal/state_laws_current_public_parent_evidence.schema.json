@@ -1,0 +1,788 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets-py.invalid/schemas/state_laws_current_public_parent_evidence.schema.json",
+  "title": "LCR-084 State Laws current public parent evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "task_id",
+    "goal_id",
+    "program_id",
+    "producer",
+    "mode",
+    "fixture_only",
+    "verifier_clock",
+    "observed_at_utc",
+    "max_evidence_age_seconds",
+    "identity",
+    "pins",
+    "main_resolution",
+    "commits",
+    "inventories",
+    "delta",
+    "root_blobs",
+    "requests",
+    "current_corpus_non_acceptance",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ipfs_datasets_py/state-laws-current-public-parent-evidence@1"
+    },
+    "schema_version": {
+      "const": "1"
+    },
+    "task_id": {
+      "const": "LCR-084"
+    },
+    "goal_id": {
+      "const": "LCR-G146"
+    },
+    "program_id": {
+      "const": "legal-corpora-reindex-v1"
+    },
+    "producer": {
+      "const": "audit_state_laws_current_public_parent.py@1"
+    },
+    "mode": {
+      "const": "live"
+    },
+    "fixture_only": {
+      "const": false
+    },
+    "verifier_clock": {
+      "const": "system_utc"
+    },
+    "observed_at_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,6})?Z$"
+    },
+    "max_evidence_age_seconds": {
+      "const": 1800
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "goal_id",
+        "program_id",
+        "producer",
+        "schema",
+        "schema_version",
+        "repository",
+        "historical_baseline_pin",
+        "current_public_parent_pin",
+        "identity_sha256"
+      ],
+      "properties": {
+        "task_id": {
+          "const": "LCR-084"
+        },
+        "goal_id": {
+          "const": "LCR-G146"
+        },
+        "program_id": {
+          "const": "legal-corpora-reindex-v1"
+        },
+        "producer": {
+          "const": "audit_state_laws_current_public_parent.py@1"
+        },
+        "schema": {
+          "const": "ipfs_datasets_py/state-laws-current-public-parent-evidence@1"
+        },
+        "schema_version": {
+          "const": "1"
+        },
+        "repository": {
+          "const": "justicedao/ipfs_state_laws"
+        },
+        "historical_baseline_pin": {
+          "const": "42f0546acc7c6cd55627eaf51fb820d5613b9021"
+        },
+        "current_public_parent_pin": {
+          "const": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2"
+        },
+        "identity_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "pins": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "historical_baseline",
+        "current_public_parent",
+        "pins_are_distinct"
+      ],
+      "properties": {
+        "historical_baseline": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "revision",
+            "role",
+            "tree_oid"
+          ],
+          "properties": {
+            "revision": {
+              "const": "42f0546acc7c6cd55627eaf51fb820d5613b9021"
+            },
+            "role": {
+              "const": "sealed_historical_evidence_only"
+            },
+            "tree_oid": {
+              "const": "54bc2acf18f1e27ddde070565ffe89854621d2d1"
+            }
+          }
+        },
+        "current_public_parent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "revision",
+            "role",
+            "tree_oid"
+          ],
+          "properties": {
+            "revision": {
+              "const": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2"
+            },
+            "role": {
+              "const": "optimistic_parent_and_rollback_only"
+            },
+            "tree_oid": {
+              "const": "946615aca49847b5d2ee0c6b7da05589e4b4bcd0"
+            }
+          }
+        },
+        "pins_are_distinct": {
+          "const": true
+        }
+      }
+    },
+    "main_resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mutable_revision",
+        "resolved_revision",
+        "endpoint",
+        "request_sha256",
+        "response_sha256",
+        "immutable_endpoint",
+        "immutable_request_sha256",
+        "immutable_response_sha256"
+      ],
+      "properties": {
+        "mutable_revision": {
+          "const": "main"
+        },
+        "resolved_revision": {
+          "const": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2"
+        },
+        "endpoint": {
+          "type": "string",
+          "pattern": "^https://huggingface\\.co/api/datasets/justicedao/ipfs_state_laws/revision/main$"
+        },
+        "request_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "response_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "immutable_endpoint": {
+          "type": "string",
+          "pattern": "^https://huggingface\\.co/api/datasets/justicedao/ipfs_state_laws/revision/78cba0ed86c3971a7b90620c6df167af8a1a6fb2$"
+        },
+        "immutable_request_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "immutable_response_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "commits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "historical_baseline",
+        "current_public_parent",
+        "exact_direct_ancestry"
+      ],
+      "properties": {
+        "historical_baseline": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/commit"
+            },
+            {
+              "properties": {
+                "commit_oid": {
+                  "const": "42f0546acc7c6cd55627eaf51fb820d5613b9021"
+                },
+                "tree_oid": {
+                  "const": "54bc2acf18f1e27ddde070565ffe89854621d2d1"
+                }
+              }
+            }
+          ]
+        },
+        "current_public_parent": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/commit"
+            },
+            {
+              "properties": {
+                "commit_oid": {
+                  "const": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2"
+                },
+                "tree_oid": {
+                  "const": "946615aca49847b5d2ee0c6b7da05589e4b4bcd0"
+                },
+                "parent_oids": {
+                  "const": [
+                    "42f0546acc7c6cd55627eaf51fb820d5613b9021"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "exact_direct_ancestry": {
+          "const": true
+        }
+      }
+    },
+    "inventories": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "historical_baseline",
+        "current_public_parent"
+      ],
+      "properties": {
+        "historical_baseline": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/inventory"
+            },
+            {
+              "properties": {
+                "revision": {
+                  "const": "42f0546acc7c6cd55627eaf51fb820d5613b9021"
+                },
+                "path_count": {
+                  "const": 2878
+                },
+                "file_count": {
+                  "const": 2116
+                },
+                "directory_count": {
+                  "const": 762
+                },
+                "entries": {
+                  "minItems": 2878,
+                  "maxItems": 2878
+                }
+              }
+            }
+          ]
+        },
+        "current_public_parent": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/inventory"
+            },
+            {
+              "properties": {
+                "revision": {
+                  "const": "78cba0ed86c3971a7b90620c6df167af8a1a6fb2"
+                },
+                "path_count": {
+                  "const": 3231
+                },
+                "file_count": {
+                  "const": 2348
+                },
+                "directory_count": {
+                  "const": 883
+                },
+                "entries": {
+                  "minItems": 3231,
+                  "maxItems": 3231
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "added_path_count",
+        "added_file_count",
+        "added_directory_count",
+        "added_paths",
+        "added_paths_sha256",
+        "deleted_path_count",
+        "deleted_paths",
+        "deleted_paths_sha256",
+        "modified_blob_path_count",
+        "modified_blob_paths",
+        "modified_blob_paths_sha256",
+        "kind_changed_path_count",
+        "kind_changed_paths",
+        "changed_directory_oid_count",
+        "preserved_preexisting_blob_count",
+        "delta_sha256"
+      ],
+      "properties": {
+        "added_path_count": {
+          "const": 353
+        },
+        "added_file_count": {
+          "const": 232
+        },
+        "added_directory_count": {
+          "const": 121
+        },
+        "added_paths": {
+          "type": "array",
+          "minItems": 353,
+          "maxItems": 353,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/repoPath"
+          }
+        },
+        "added_paths_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "deleted_path_count": {
+          "const": 0
+        },
+        "deleted_paths": {
+          "const": []
+        },
+        "deleted_paths_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "modified_blob_path_count": {
+          "const": 2
+        },
+        "modified_blob_paths": {
+          "const": [
+            "README.md",
+            "manifest.json"
+          ]
+        },
+        "modified_blob_paths_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "kind_changed_path_count": {
+          "const": 0
+        },
+        "kind_changed_paths": {
+          "const": []
+        },
+        "changed_directory_oid_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 762
+        },
+        "preserved_preexisting_blob_count": {
+          "const": 2114
+        },
+        "delta_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "root_blobs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "independently_downloaded",
+        "count",
+        "records",
+        "records_sha256"
+      ],
+      "properties": {
+        "independently_downloaded": {
+          "const": true
+        },
+        "count": {
+          "const": 4
+        },
+        "records": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/rootBlob"
+          }
+        },
+        "records_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "requests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "count",
+        "records",
+        "records_sha256"
+      ],
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 10
+        },
+        "records": {
+          "type": "array",
+          "minItems": 10,
+          "items": {
+            "$ref": "#/$defs/request"
+          }
+        },
+        "records_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "current_corpus_non_acceptance": {
+      "const": {
+        "current_corpus_accepted": false,
+        "current_corpus_role": "optimistic_parent_and_rollback_only",
+        "authorizes_publication": false,
+        "authorizes_hub_mutation": false,
+        "authorizes_exact_51_candidate": false,
+        "blocking_findings": [
+          "current Viewer configuration names are invalid or heterogeneous",
+          "this receipt proves parent state only, not corrected-corpus validity",
+          "a later publication must use independent preflight, CAS, and postflight evidence"
+        ]
+      }
+    },
+    "receipt_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha1": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "repoPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//).+$"
+    },
+    "commit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commit_oid",
+        "tree_oid",
+        "parent_oids",
+        "raw_commit_sha256",
+        "raw_commit_bytes"
+      ],
+      "properties": {
+        "commit_oid": {
+          "$ref": "#/$defs/sha1"
+        },
+        "tree_oid": {
+          "$ref": "#/$defs/sha1"
+        },
+        "parent_oids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sha1"
+          }
+        },
+        "raw_commit_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "raw_commit_bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "lfs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "oid",
+        "size"
+      ],
+      "properties": {
+        "oid": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "entry": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "kind",
+            "oid"
+          ],
+          "properties": {
+            "path": {
+              "$ref": "#/$defs/repoPath"
+            },
+            "kind": {
+              "const": "directory"
+            },
+            "oid": {
+              "$ref": "#/$defs/sha1"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "kind",
+            "oid",
+            "size"
+          ],
+          "properties": {
+            "path": {
+              "$ref": "#/$defs/repoPath"
+            },
+            "kind": {
+              "const": "file"
+            },
+            "oid": {
+              "$ref": "#/$defs/sha1"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "lfs": {
+              "$ref": "#/$defs/lfs"
+            }
+          }
+        }
+      ]
+    },
+    "page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "endpoint",
+        "entry_count",
+        "paths",
+        "request_sha256",
+        "response_sha256",
+        "entries_sha256",
+        "has_next"
+      ],
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "pattern": "^https://huggingface\\.co/api/datasets/justicedao/ipfs_state_laws/tree/[0-9a-f]{40}"
+        },
+        "entry_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/repoPath"
+          }
+        },
+        "request_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "response_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "entries_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "has_next": {
+          "type": "boolean"
+        }
+      }
+    },
+    "inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision",
+        "page_count",
+        "pages",
+        "path_count",
+        "file_count",
+        "directory_count",
+        "entries",
+        "entries_sha256",
+        "pages_sha256",
+        "pagination_exhausted"
+      ],
+      "properties": {
+        "revision": {
+          "$ref": "#/$defs/sha1"
+        },
+        "page_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "pages": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/page"
+          }
+        },
+        "path_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "file_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "directory_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/entry"
+          }
+        },
+        "entries_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "pages_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "pagination_exhausted": {
+          "const": true
+        }
+      }
+    },
+    "rootBlob": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision",
+        "path",
+        "endpoint",
+        "size",
+        "sha256",
+        "git_blob_oid",
+        "request_sha256",
+        "response_sha256"
+      ],
+      "properties": {
+        "revision": {
+          "enum": [
+            "42f0546acc7c6cd55627eaf51fb820d5613b9021",
+            "78cba0ed86c3971a7b90620c6df167af8a1a6fb2"
+          ]
+        },
+        "path": {
+          "enum": [
+            "README.md",
+            "manifest.json"
+          ]
+        },
+        "endpoint": {
+          "type": "string",
+          "pattern": "^https://huggingface\\.co/datasets/justicedao/ipfs_state_laws/resolve/[0-9a-f]{40}/(?:README\\.md|manifest\\.json)$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "git_blob_oid": {
+          "$ref": "#/$defs/sha1"
+        },
+        "request_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "response_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "endpoint",
+        "accept",
+        "request_sha256",
+        "status",
+        "response_bytes",
+        "response_sha256"
+      ],
+      "properties": {
+        "method": {
+          "enum": [
+            "GET",
+            "GIT_CAT_FILE"
+          ]
+        },
+        "endpoint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accept": {
+          "const": "public-read-only"
+        },
+        "request_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "status": {
+          "const": 200
+        },
+        "response_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "response_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

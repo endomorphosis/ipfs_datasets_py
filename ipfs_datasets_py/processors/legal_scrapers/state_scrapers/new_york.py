@@ -86,11 +86,11 @@ class NewYorkScraper(BaseStateScraper):
     )
     STRICT_CURRENT_SUPPLEMENTAL_SECTION_URLS = (
         "https://www.nysenate.gov/legislation/laws/EPT/3-6.5",
-        "https://www.nysenate.gov/legislation/laws/GBS/495-d",
+        "https://www.nysenate.gov/legislation/laws/GBS/495-D",
         "https://www.nysenate.gov/legislation/laws/GMU/902",
-        "https://www.nysenate.gov/legislation/laws/PBA/2799-aaaa",
-        "https://www.nysenate.gov/legislation/laws/EDN/669-c",
-        "https://www.nysenate.gov/legislation/laws/EDN/2023-b",
+        "https://www.nysenate.gov/legislation/laws/PBA/2799-AAAA",
+        "https://www.nysenate.gov/legislation/laws/EDN/669-C",
+        "https://www.nysenate.gov/legislation/laws/EDN/2023-B",
         "https://www.nysenate.gov/legislation/laws/ELD/221",
         "https://www.nysenate.gov/legislation/laws/ELN/3-408",
         "https://www.nysenate.gov/legislation/laws/ELN/7-108",
@@ -101,21 +101,21 @@ class NewYorkScraper(BaseStateScraper):
         "https://www.nysenate.gov/legislation/laws/ELN/17-140",
         "https://www.nysenate.gov/legislation/laws/ELN/17-158",
         "https://www.nysenate.gov/legislation/laws/EXC/236",
-        "https://www.nysenate.gov/legislation/laws/GMU/371-a",
+        "https://www.nysenate.gov/legislation/laws/GMU/371-A",
         "https://www.nysenate.gov/legislation/laws/ISC/3114",
         "https://www.nysenate.gov/legislation/laws/MHY/7.48",
         "https://www.nysenate.gov/legislation/laws/PAR/27.09",
-        "https://www.nysenate.gov/legislation/laws/SOS/364-j-1",
-        "https://www.nysenate.gov/legislation/laws/SOS/369-ii",
+        "https://www.nysenate.gov/legislation/laws/SOS/364-J-1",
+        "https://www.nysenate.gov/legislation/laws/SOS/369-II",
         "https://www.nysenate.gov/legislation/laws/TAX/602",
         "https://www.nysenate.gov/legislation/laws/TAX/622",
         "https://www.nysenate.gov/legislation/laws/TAX/636",
-        "https://www.nysenate.gov/legislation/laws/TAX/1262-l",
+        "https://www.nysenate.gov/legislation/laws/TAX/1262-L",
         "https://www.nysenate.gov/legislation/laws/VAT/235",
-        "https://www.nysenate.gov/legislation/laws/VAT/1180-i",
+        "https://www.nysenate.gov/legislation/laws/VAT/1180-I",
     )
     STRICT_CURRENT_SUPPLEMENTAL_URL_SHA256 = (
-        "b03131cd20eb808d159427e548a732a078fc7b3f94291a2c5fff8a4cd206dde0"
+        "0c33f61954a7c25d80e41f4b67008fb4d2bdffee29bc9dd71f69a6f3ab1c7235"
     )
     OFFICIAL_ASSEMBLY_DOMAIN = "assembly.ny.gov"
     STRICT_CURRENT_SIGNED_BILL_PROOF_ROWS = (
@@ -208,9 +208,64 @@ class NewYorkScraper(BaseStateScraper):
                 "tax-paf-btx-and-new-deduction"
             ),
         ),
+        (
+            "ELN",
+            "eln_npv_immediate_effect",
+            "ELN:12-400-12-402:chapter-19-effective-clause",
+            "official_enacted_bill_text",
+            "https://legislation.nysenate.gov/pdf/bills/2013/A4422A",
+        ),
+        (
+            "ELN",
+            "eln_npv_immediate_effect",
+            "ELN:12-400-12-402:chapter-421-permanence",
+            "official_enacted_bill_text",
+            "https://legislation.nysenate.gov/pdf/bills/2015/A6044",
+        ),
     )
     STRICT_CURRENT_EVENT_PROOF_URL_SHA256 = (
-        "0e874dec7297f2d6862acba3f5c1369033ab2817cbb47bf61ec4d076adeb23a6"
+        "0f381c02e0cd752638bbac91e9d4814af9a268804b06e3194499cadc43baadc2"
+    )
+    STRICT_CURRENT_BNK_PROOF_ROWS = (
+        (
+            "BNK:part-y:enacted-effective-clause",
+            "official_part_y_effective_clause",
+            "https://legislation.nysenate.gov/pdf/bills/2025/S3008B",
+        ),
+        (
+            "BNK:part-y:dfs-proposed-3nycrr-423",
+            "official_dfs_proposed_rule",
+            (
+                "https://www.dfs.ny.gov/system/files/documents/2026/07/"
+                "rp-bank-3nycrr-423-text.pdf"
+            ),
+        ),
+    )
+    STRICT_CURRENT_BNK_PROOF_URL_SHA256 = (
+        "35e2b08a7757de3308eef67e607cc58f01cddd8b09828aa013055aa1a1aabe23"
+    )
+    STRICT_CURRENT_ENV_ALBANY_PROOF_ROWS = (
+        (
+            "ENV:3-0105:dec-central-office",
+            "official_dec_office_directory",
+            "https://dec.ny.gov/about/contact-us/statewide-office-information",
+        ),
+    )
+    STRICT_CURRENT_ENV_ALBANY_PROOF_URL_SHA256 = (
+        "4f700d0a3615e0c5554519e5c1b5b118ebcb7895469c7af9f4e93ca83cc84511"
+    )
+    STRICT_CURRENT_GBS_396EEEE_PROOF_ROWS = (
+        (
+            "GBS:396-eeee:chapter-55-effective-clause",
+            "official_gbs_396eeee_effective_clause",
+            (
+                "https://assembly.ny.gov/leg/"
+                "?Actions=Y&Summary=Y&Text=Y&bn=A10005&term=2025"
+            ),
+        ),
+    )
+    STRICT_CURRENT_GBS_396EEEE_PROOF_URL_SHA256 = (
+        "627b55d3b62b19641e0fbafcdc948fd18f49a223f255fd7ad94725d2dd166a75"
     )
     _NY_LAW_HREF_RE = re.compile(
         r"/legislation/laws/(?P<code>[A-Z]{2,4})(?:/|$)",
@@ -302,26 +357,69 @@ class NewYorkScraper(BaseStateScraper):
 
     @staticmethod
     def _new_york_frontier_headers(media_type: str) -> Dict[str, str]:
+        if media_type == "application/pdf":
+            accept = "application/pdf,*/*;q=0.8"
+        elif media_type == "application/json":
+            accept = "application/json,*/*;q=0.8"
+        else:
+            accept = "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8"
         return {
-            "Accept": (
-                "application/pdf,*/*;q=0.8"
-                if media_type == "application/pdf"
-                else "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8"
-            ),
+            "Accept": accept,
             "User-Agent": "ipfs-datasets-new-york-laws/2.0",
         }
+
+    @staticmethod
+    def _is_valid_new_york_openleg_law_json(payload: bytes) -> bool:
+        from .new_york_openleg import is_valid_openleg_law_json
+
+        return is_valid_openleg_law_json(payload)
 
     @staticmethod
     def _new_york_agm28_selector_headers() -> Dict[str, str]:
         """Return the exact request identity retained for the AGM selector."""
 
-        return {"Accept": "application/pdf,*/*;q=0.8"}
+        return {
+            "Accept": "application/pdf,*/*;q=0.8",
+            "User-Agent": "ipfs-datasets-new-york-laws/2.0",
+        }
 
     @staticmethod
     def _new_york_constitution_section_headers() -> Dict[str, str]:
         """Use the direct request shape accepted by the official CNS pages."""
 
         return {"Accept": "*/*", "User-Agent": "curl/8.5.0"}
+
+    @staticmethod
+    def _new_york_openleg_section_locator(section: str) -> str:
+        """OpenLeg locators uppercase alphabetic runs (``495-d`` → ``495-D``)."""
+
+        return re.sub(
+            r"[A-Za-z]+",
+            lambda match: match.group(0).upper(),
+            str(section or "").strip(),
+        )
+
+    @staticmethod
+    def _is_official_new_york_senate_not_found_html(payload: bytes) -> bool:
+        sample = bytes(payload or b"").lower()
+        return bool(
+            len(sample) > 1_000
+            and b"<html" in sample[:4_000]
+            and b"</html>" in sample[-4_000:]
+            and (
+                b"nys-openleg-not-found" in sample
+                or b"the requested entry could not be found" in sample
+            )
+            and b'class="nys-openleg-content-container"' not in sample
+            and b"class='nys-openleg-content-container'" not in sample
+        )
+
+    @classmethod
+    def _is_admissible_new_york_senate_section_payload(cls, payload: bytes) -> bool:
+        return bool(
+            cls._is_valid_new_york_senate_section_html(payload)
+            or cls._is_official_new_york_senate_not_found_html(payload)
+        )
 
     def _new_york_pdf_frontier_batch_size(self) -> int:
         return max(
@@ -365,6 +463,21 @@ class NewYorkScraper(BaseStateScraper):
         return bool(len(raw) > 1_000 and 0 <= pdf_offset < 1_024)
 
     @staticmethod
+    def _is_valid_new_york_dec_office_html(payload: bytes) -> bool:
+        """Admit the official DEC statewide offices directory."""
+
+        sample = bytes(payload or b"").lower()
+        return bool(
+            len(sample) > 10_000
+            and b"<html" in sample[:4_000]
+            and b"</html>" in sample[-4_000:]
+            and b"625 broadway" in sample
+            and b"albany, ny 12233" in sample
+            and b"central office" in sample
+            and b"headquarters is housed at our central office in albany" in sample
+        )
+
+    @staticmethod
     def _is_valid_new_york_event_proof_html(payload: bytes) -> bool:
         """Admit the exact OSC payroll bulletin event record."""
 
@@ -382,12 +495,18 @@ class NewYorkScraper(BaseStateScraper):
     @staticmethod
     def _new_york_event_proof_media_type(proof_kind: str) -> str:
         kind = str(proof_kind or "").strip()
-        if kind == "official_comptroller_payroll_bulletin":
+        if kind in {
+            "official_comptroller_payroll_bulletin",
+            "official_dec_office_directory",
+            "official_gbs_396eeee_effective_clause",
+        }:
             return "text/html"
         if kind in {
             "official_enacted_bill_text",
             "official_government_financial_report",
             "official_state_register_adoption",
+            "official_part_y_effective_clause",
+            "official_dfs_proposed_rule",
         }:
             return "application/pdf"
         raise RuntimeError("New York event proof has an unsupported media type")
@@ -610,16 +729,19 @@ class NewYorkScraper(BaseStateScraper):
                 "3041",
             ),
             "RSS": ("1204-a",),
+            "ELN": ("12-400", "12-402"),
         }
         target_dispositions = {
             "MHY": "event_conditioned_effective",
             "PBA": "event_conditioned_expiration",
             "RSS": "event_conditioned_effective",
+            "ELN": "event_conditioned_effective",
         }
         expected_hosts = {
             "MHY": {"dos.ny.gov"},
             "PBA": {"www.nyc.gov"},
             "RSS": {"legislation.nysenate.gov", "www.osc.ny.gov"},
+            "ELN": {"legislation.nysenate.gov"},
         }
         reports_by_code = {
             str(getattr(report, "law_code", "") or "").strip().upper(): report
@@ -687,6 +809,251 @@ class NewYorkScraper(BaseStateScraper):
         return selected
 
     @classmethod
+    def _new_york_exact_bnk_proof_rows(
+        cls,
+        parsed_reports,
+    ) -> List[tuple[str, str, str]]:
+        """Select the Part Y proof chain only for its exact BNK residuals."""
+
+        from .new_york_law_pdf import (
+            BNK_PART_Y_FUTURE_SECTIONS,
+            BNK_PART_Y_UNTIL_SECTIONS,
+        )
+
+        expected = [
+            tuple(str(value) for value in row)
+            for row in cls.STRICT_CURRENT_BNK_PROOF_ROWS
+        ]
+        urls = [row[2] for row in expected]
+        if len(urls) != len(set(urls)):
+            raise RuntimeError("New York BNK proof URLs are not unique")
+        observed_sha256 = hashlib.sha256(
+            "\n".join(urls).encode("utf-8")
+        ).hexdigest()
+        if observed_sha256 != cls.STRICT_CURRENT_BNK_PROOF_URL_SHA256:
+            raise RuntimeError(
+                "New York BNK proof URL projection changed: "
+                f"{observed_sha256}"
+            )
+        expected_hosts = {
+            "official_part_y_effective_clause": {cls.OFFICIAL_PDF_DOMAIN},
+            "official_dfs_proposed_rule": {"www.dfs.ny.gov"},
+        }
+        for selector_key, proof_kind, url in expected:
+            parsed = urlparse(url)
+            if (
+                parsed.scheme != "https"
+                or parsed.hostname not in expected_hosts.get(proof_kind, ())
+                or proof_kind
+                not in {
+                    "official_part_y_effective_clause",
+                    "official_dfs_proposed_rule",
+                }
+                or not selector_key.startswith("BNK:part-y:")
+                or cls._new_york_event_proof_media_type(proof_kind)
+                != "application/pdf"
+            ):
+                raise RuntimeError(
+                    "New York BNK proof escaped its exact official identity"
+                )
+
+        report = next(
+            (
+                item
+                for item in parsed_reports
+                if str(getattr(item, "law_code", "") or "").strip().upper()
+                == "BNK"
+            ),
+            None,
+        )
+        if report is None:
+            return []
+        target_sections = set(BNK_PART_Y_FUTURE_SECTIONS) | set(
+            BNK_PART_Y_UNTIL_SECTIONS
+        )
+        observed = {
+            (
+                str(row.get("section_number") or "").strip(),
+                str(row.get("toc_variant") or "").strip(),
+                str(row.get("reason") or "").strip(),
+                str(row.get("detail") or "").strip().split(":", 1)[0],
+            )
+            for row in list(getattr(report, "unclassified_sections", []) or [])
+            if isinstance(row, Mapping)
+            and str(row.get("section_number") or "").strip() in target_sections
+        }
+        targets = {
+            (
+                section,
+                "",
+                "ambiguous_lifecycle_status",
+                "event_conditioned_effective_until",
+            )
+            for section in BNK_PART_Y_UNTIL_SECTIONS
+        } | {
+            (
+                section,
+                "",
+                "ambiguous_lifecycle_status",
+                "event_conditioned_effective",
+            )
+            for section in BNK_PART_Y_FUTURE_SECTIONS
+        }
+        if not observed:
+            return []
+        if observed != targets:
+            raise RuntimeError(
+                "New York BNK residual membership drifted; "
+                f"observed={sorted(observed)}"
+            )
+        return expected
+
+    @classmethod
+    def _new_york_exact_env_albany_proof_rows(
+        cls,
+        parsed_reports,
+    ) -> List[tuple[str, str, str]]:
+        """Select the DEC central-office proof only for ENV 3-0105."""
+
+        expected = [
+            tuple(str(value) for value in row)
+            for row in cls.STRICT_CURRENT_ENV_ALBANY_PROOF_ROWS
+        ]
+        urls = [row[2] for row in expected]
+        if len(urls) != len(set(urls)):
+            raise RuntimeError("New York ENV Albany proof URLs are not unique")
+        observed_sha256 = hashlib.sha256(
+            "\n".join(urls).encode("utf-8")
+        ).hexdigest()
+        if observed_sha256 != cls.STRICT_CURRENT_ENV_ALBANY_PROOF_URL_SHA256:
+            raise RuntimeError(
+                "New York ENV Albany proof URL projection changed: "
+                f"{observed_sha256}"
+            )
+        for selector_key, proof_kind, url in expected:
+            parsed = urlparse(url)
+            if (
+                parsed.scheme != "https"
+                or parsed.hostname != "dec.ny.gov"
+                or proof_kind != "official_dec_office_directory"
+                or not selector_key.startswith("ENV:3-0105:")
+                or cls._new_york_event_proof_media_type(proof_kind)
+                != "text/html"
+            ):
+                raise RuntimeError(
+                    "New York ENV Albany proof escaped its exact official identity"
+                )
+        report = next(
+            (
+                item
+                for item in parsed_reports
+                if str(getattr(item, "law_code", "") or "").strip().upper()
+                == "ENV"
+            ),
+            None,
+        )
+        if report is None:
+            return []
+        observed = {
+            (
+                str(row.get("section_number") or "").strip(),
+                str(row.get("toc_variant") or "").strip(),
+                str(row.get("reason") or "").strip(),
+                str(row.get("detail") or "").strip().split(":", 1)[0],
+            )
+            for row in list(getattr(report, "unclassified_sections", []) or [])
+            if isinstance(row, Mapping)
+            and str(row.get("section_number") or "").strip() == "3-0105"
+        }
+        targets = {
+            ("3-0105", "", "ambiguous_lifecycle_status", "event_conditioned_effective")
+        }
+        if not observed:
+            return []
+        if observed != targets:
+            raise RuntimeError(
+                "New York ENV Albany residual membership drifted; "
+                f"observed={sorted(observed)}"
+            )
+        return expected
+
+    @classmethod
+    def _new_york_exact_gbs396eeee_proof_rows(
+        cls,
+        parsed_reports,
+    ) -> List[tuple[str, str, str]]:
+        """Select the Ch. 55 signed-bill clause only for GBS 396-eeee."""
+
+        expected = [
+            tuple(str(value) for value in row)
+            for row in cls.STRICT_CURRENT_GBS_396EEEE_PROOF_ROWS
+        ]
+        urls = [row[2] for row in expected]
+        if len(urls) != len(set(urls)):
+            raise RuntimeError("New York GBS 396-eeee proof URLs are not unique")
+        observed_sha256 = hashlib.sha256(
+            "\n".join(urls).encode("utf-8")
+        ).hexdigest()
+        if observed_sha256 != cls.STRICT_CURRENT_GBS_396EEEE_PROOF_URL_SHA256:
+            raise RuntimeError(
+                "New York GBS 396-eeee proof URL projection changed: "
+                f"{observed_sha256}"
+            )
+        for selector_key, proof_kind, url in expected:
+            parsed = urlparse(url)
+            if (
+                parsed.scheme != "https"
+                or parsed.hostname != cls.OFFICIAL_ASSEMBLY_DOMAIN
+                or parsed.path != "/leg/"
+                or not parsed.query
+                or proof_kind != "official_gbs_396eeee_effective_clause"
+                or not selector_key.startswith("GBS:396-eeee:")
+                or cls._new_york_event_proof_media_type(proof_kind)
+                != "text/html"
+            ):
+                raise RuntimeError(
+                    "New York GBS 396-eeee proof escaped its exact official identity"
+                )
+        report = next(
+            (
+                item
+                for item in parsed_reports
+                if str(getattr(item, "law_code", "") or "").strip().upper()
+                == "GBS"
+            ),
+            None,
+        )
+        if report is None:
+            return []
+        observed = {
+            (
+                str(row.get("section_number") or "").strip(),
+                str(row.get("toc_variant") or "").strip(),
+                str(row.get("reason") or "").strip(),
+                str(row.get("detail") or "").strip().split(":", 1)[0],
+            )
+            for row in list(getattr(report, "unclassified_sections", []) or [])
+            if isinstance(row, Mapping)
+            and str(row.get("section_number") or "").strip() == "396-eeee"
+        }
+        targets = {
+            (
+                "396-eeee",
+                "",
+                "ambiguous_lifecycle_status",
+                "event_conditioned_effective",
+            )
+        }
+        if not observed:
+            return []
+        if observed != targets:
+            raise RuntimeError(
+                "New York GBS 396-eeee residual membership drifted; "
+                f"observed={sorted(observed)}"
+            )
+        return expected
+
+    @classmethod
     def _new_york_exact_supplemental_urls(
         cls,
         parsed_reports,
@@ -747,7 +1114,7 @@ class NewYorkScraper(BaseStateScraper):
         for law_code, section, _variant, _reason in expected:
             url = (
                 f"https://{cls.OFFICIAL_DOMAIN}/legislation/laws/"
-                f"{law_code}/{section}"
+                f"{law_code}/{cls._new_york_openleg_section_locator(section)}"
             )
             if url not in derived_urls:
                 derived_urls.append(url)
@@ -779,6 +1146,42 @@ class NewYorkScraper(BaseStateScraper):
                 f"{observed_sha256}"
             )
         return pinned_urls
+
+    def _new_york_openleg_json_urls_for_residuals(
+        self,
+        parsed_reports,
+    ) -> List[str]:
+        """Official unkeyed OpenLeg JSON trees for remaining PDF residuals.
+
+        This wave is optional: a live 401 without an archive hit must not
+        fail-close the PDF/HTML frontier. Membership is source-derived from
+        remaining ``toc_section_missing_body_identity`` rows after the pinned
+        Senate HTML wave.
+        """
+
+        from .new_york_openleg import openleg_law_json_url
+
+        codes: List[str] = []
+        seen: set[str] = set()
+        for report in parsed_reports:
+            law_code = str(getattr(report, "law_code", "") or "").strip().upper()
+            if not law_code or law_code in seen:
+                continue
+            has_residual = False
+            for row in list(getattr(report, "unclassified_sections", []) or []):
+                if not isinstance(row, Mapping):
+                    continue
+                if str(row.get("reason") or "").strip() == "toc_section_missing_body_identity":
+                    has_residual = True
+                    break
+            if not has_residual:
+                continue
+            url = openleg_law_json_url(law_code)
+            if not url:
+                continue
+            seen.add(law_code)
+            codes.append(url)
+        return codes
 
     def _validate_new_york_aligned_evidence(
         self,
@@ -845,6 +1248,7 @@ class NewYorkScraper(BaseStateScraper):
         common_crawl_url_terms,
         residual_retry_attempts: Optional[int] = None,
         request_headers: Optional[Mapping[str, str]] = None,
+        allow_incomplete: bool = False,
     ) -> StateLawPageMultiFetchResult:
         """Fetch one NY frontier through shared residual/grouped-WARC recovery."""
 
@@ -869,10 +1273,19 @@ class NewYorkScraper(BaseStateScraper):
                 ),
             )
         )
+        if media_type == "application/pdf":
+            timeout_seconds = 90
+            mime_terms = ("pdf",)
+        elif media_type == "application/json":
+            timeout_seconds = 90
+            mime_terms = ("json",)
+        else:
+            timeout_seconds = 25
+            mime_terms = ("html",)
         batch = await self._fetch_page_contents_with_archival_fallback_retrying_residuals(
             requested,
             residual_retry_attempts=retry_attempts,
-            timeout_seconds=90 if media_type == "application/pdf" else 25,
+            timeout_seconds=timeout_seconds,
             headers=(
                 dict(request_headers)
                 if request_headers is not None
@@ -884,7 +1297,7 @@ class NewYorkScraper(BaseStateScraper):
             prefer_direct=True,
             common_crawl_domain_terms=tuple(common_crawl_domains),
             common_crawl_url_terms=tuple(common_crawl_url_terms),
-            common_crawl_mime_terms=("pdf",) if media_type == "application/pdf" else ("html",),
+            common_crawl_mime_terms=mime_terms,
             wayback_prefix_inventory=True,
         )
         batch_stats = dict(batch.stats or {})
@@ -960,7 +1373,7 @@ class NewYorkScraper(BaseStateScraper):
                 parser_input_envelope=envelope,
                 frontier_name=frontier_name,
             )
-        if failures:
+        if failures and not allow_incomplete:
             raise RuntimeError(
                 f"New York {frontier_name} frontier is incomplete; "
                 f"unresolved exact URLs: {failures[:10]}"
@@ -1786,15 +2199,132 @@ class NewYorkScraper(BaseStateScraper):
             proof_registry = proof_registry.with_inputs(event_proofs)
             parsed_reports = _parse_pdf_inputs(proof_registry)
 
+        bnk_proof_rows = self._new_york_exact_bnk_proof_rows(parsed_reports)
+        if bnk_proof_rows:
+            bnk_urls = [row[2] for row in bnk_proof_rows]
+            bnk_batch = await self._fetch_new_york_frontier_batch(
+                bnk_urls,
+                frontier_name="bnk-part-y-proof-chain-1-2",
+                content_validator=self._is_valid_new_york_event_proof_pdf,
+                media_type="application/pdf",
+                common_crawl_domains=tuple(
+                    str(urlparse(url).hostname or "") for url in bnk_urls
+                ),
+                common_crawl_url_terms=tuple(
+                    urlparse(url).path for url in bnk_urls
+                ),
+                residual_retry_attempts=0,
+            )
+            bnk_proofs = []
+            for row, url, payload in zip(
+                bnk_proof_rows,
+                bnk_batch.urls,
+                bnk_batch.payloads,
+                strict=True,
+            ):
+                selector_key, proof_kind, expected_url = row
+                if url != self._canonical_fetch_url(expected_url):
+                    raise RuntimeError(
+                        "New York BNK proof changed exact URL identity"
+                    )
+                bnk_proofs.append(
+                    NewYorkSupplementalProofInput.bind(
+                        selector_key=selector_key,
+                        proof_kind=proof_kind,
+                        official_url=url,
+                        media_type="application/pdf",
+                        payload=bytes(payload),
+                    )
+                )
+            proof_registry = proof_registry.with_inputs(bnk_proofs)
+            parsed_reports = _parse_pdf_inputs(proof_registry)
+
+        env_albany_proof_rows = self._new_york_exact_env_albany_proof_rows(
+            parsed_reports
+        )
+        if env_albany_proof_rows:
+            albany_urls = [row[2] for row in env_albany_proof_rows]
+            albany_batch = await self._fetch_new_york_frontier_batch(
+                albany_urls,
+                frontier_name="env-albany-office-proof-chain-1-1",
+                content_validator=self._is_valid_new_york_dec_office_html,
+                media_type="text/html",
+                common_crawl_domains=("dec.ny.gov",),
+                common_crawl_url_terms=("/about/contact-us/statewide-office-information",),
+                residual_retry_attempts=0,
+            )
+            albany_proofs = []
+            for row, url, payload in zip(
+                env_albany_proof_rows,
+                albany_batch.urls,
+                albany_batch.payloads,
+                strict=True,
+            ):
+                selector_key, proof_kind, expected_url = row
+                if url != self._canonical_fetch_url(expected_url):
+                    raise RuntimeError(
+                        "New York ENV Albany proof changed exact URL identity"
+                    )
+                albany_proofs.append(
+                    NewYorkSupplementalProofInput.bind(
+                        selector_key=selector_key,
+                        proof_kind=proof_kind,
+                        official_url=url,
+                        media_type="text/html",
+                        payload=bytes(payload),
+                    )
+                )
+            proof_registry = proof_registry.with_inputs(albany_proofs)
+            parsed_reports = _parse_pdf_inputs(proof_registry)
+
+        gbs396eeee_proof_rows = self._new_york_exact_gbs396eeee_proof_rows(
+            parsed_reports
+        )
+        if gbs396eeee_proof_rows:
+            gbs_urls = [row[2] for row in gbs396eeee_proof_rows]
+            gbs_batch = await self._fetch_new_york_frontier_batch(
+                gbs_urls,
+                frontier_name="gbs-396eeee-chapter-55-proof-chain-1-1",
+                content_validator=self._is_valid_new_york_assembly_signed_bill_html,
+                media_type="text/html",
+                common_crawl_domains=(self.OFFICIAL_ASSEMBLY_DOMAIN,),
+                common_crawl_url_terms=("/leg/", "Actions=Y", "bn=A10005"),
+                residual_retry_attempts=0,
+            )
+            gbs_proofs = []
+            for row, url, payload in zip(
+                gbs396eeee_proof_rows,
+                gbs_batch.urls,
+                gbs_batch.payloads,
+                strict=True,
+            ):
+                selector_key, proof_kind, expected_url = row
+                if url != self._canonical_fetch_url(expected_url):
+                    raise RuntimeError(
+                        "New York GBS 396-eeee proof changed exact URL identity"
+                    )
+                gbs_proofs.append(
+                    NewYorkSupplementalProofInput.bind(
+                        selector_key=selector_key,
+                        proof_kind=proof_kind,
+                        official_url=url,
+                        media_type="text/html",
+                        payload=bytes(payload),
+                    )
+                )
+            proof_registry = proof_registry.with_inputs(gbs_proofs)
+            parsed_reports = _parse_pdf_inputs(proof_registry)
+
         supplemental_urls = self._new_york_exact_supplemental_urls(parsed_reports)
         if supplemental_urls:
             supplemental_batch = await self._fetch_new_york_frontier_batch(
                 supplemental_urls,
                 frontier_name="source-derived-supplemental-sections-1-28",
-                content_validator=self._is_valid_new_york_senate_section_html,
+                content_validator=self._is_admissible_new_york_senate_section_payload,
                 media_type="text/html",
                 common_crawl_domains=(self.OFFICIAL_DOMAIN,),
                 common_crawl_url_terms=("/legislation/laws/",),
+                request_headers=self._new_york_constitution_section_headers(),
             )
             section_proofs = []
             for url, payload in zip(
@@ -1822,6 +2352,47 @@ class NewYorkScraper(BaseStateScraper):
             # reviewed source-bound resolvers may change a disposition; all
             # other retained pages remain typed residuals.
             parsed_reports = _parse_pdf_inputs(proof_registry)
+
+        json_urls = self._new_york_openleg_json_urls_for_residuals(parsed_reports)
+        if json_urls:
+            json_batch = await self._fetch_new_york_frontier_batch(
+                json_urls,
+                frontier_name=f"openleg-law-json-residual-1-{len(json_urls)}",
+                content_validator=self._is_valid_new_york_openleg_law_json,
+                media_type="application/json",
+                common_crawl_domains=(self.OFFICIAL_PDF_DOMAIN,),
+                common_crawl_url_terms=("/api/3/laws/", "full=true"),
+                residual_retry_attempts=0,
+                allow_incomplete=True,
+            )
+            json_proofs = []
+            for url, payload, error in zip(
+                json_batch.urls,
+                json_batch.payloads,
+                json_batch.errors,
+                strict=True,
+            ):
+                raw = bytes(payload or b"")
+                if error is not None or not self._is_valid_new_york_openleg_law_json(raw):
+                    continue
+                path_parts = [part for part in urlparse(url).path.split("/") if part]
+                if path_parts[:3] != ["api", "3", "laws"] or len(path_parts) != 4:
+                    raise RuntimeError(
+                        "New York OpenLeg JSON residual changed exact law identity"
+                    )
+                law_code = path_parts[3].upper()
+                json_proofs.append(
+                    NewYorkSupplementalProofInput.bind(
+                        selector_key=f"{law_code}:openleg-json",
+                        proof_kind="official_openleg_law_json",
+                        official_url=url,
+                        media_type="application/json",
+                        payload=raw,
+                    )
+                )
+            if json_proofs:
+                proof_registry = proof_registry.with_inputs(json_proofs)
+                parsed_reports = _parse_pdf_inputs(proof_registry)
 
         statutes: List[NormalizedStatute] = []
         seen_identities: set[str] = set()
@@ -2257,6 +2828,129 @@ class NewYorkScraper(BaseStateScraper):
                 )
             replay_proof_inputs.append(bound_proof)
 
+        pinned_bnk_rows = (
+            [
+                tuple(str(value) for value in row)
+                for row in self.STRICT_CURRENT_BNK_PROOF_ROWS
+            ]
+            if "BNK" in replay_catalog_codes
+            else []
+        )
+        observed_bnk_urls = {
+            url
+            for url, row in proof_manifest_by_url.items()
+            if str(row.get("proof_kind") or "")
+            in {
+                "official_part_y_effective_clause",
+                "official_dfs_proposed_rule",
+            }
+        }
+        expected_bnk_urls = {row[2] for row in pinned_bnk_rows}
+        if observed_bnk_urls != expected_bnk_urls:
+            raise RuntimeError(
+                "New York retained BNK proof membership changed"
+            )
+        for selector_key, proof_kind, url in pinned_bnk_rows:
+            expected_proof = proof_manifest_by_url[url]
+            payload = self._replay_new_york_retained_input(
+                url,
+                media_type="application/pdf",
+                content_validator=self._is_valid_new_york_event_proof_pdf,
+                frontier_name=f"retained-bnk-{selector_key}-replay",
+            )
+            bound_proof = NewYorkSupplementalProofInput.bind(
+                selector_key=selector_key,
+                proof_kind=proof_kind,
+                official_url=url,
+                media_type="application/pdf",
+                payload=payload,
+            )
+            if bound_proof.manifest_row() != expected_proof:
+                raise RuntimeError(
+                    f"New York retained BNK proof changed: {url}"
+                )
+            replay_proof_inputs.append(bound_proof)
+
+        pinned_env_albany_rows = (
+            [
+                tuple(str(value) for value in row)
+                for row in self.STRICT_CURRENT_ENV_ALBANY_PROOF_ROWS
+            ]
+            if "ENV" in replay_catalog_codes
+            else []
+        )
+        observed_env_albany_urls = {
+            url
+            for url, row in proof_manifest_by_url.items()
+            if str(row.get("proof_kind") or "")
+            == "official_dec_office_directory"
+        }
+        expected_env_albany_urls = {row[2] for row in pinned_env_albany_rows}
+        if observed_env_albany_urls != expected_env_albany_urls:
+            raise RuntimeError(
+                "New York retained ENV Albany proof membership changed"
+            )
+        for selector_key, proof_kind, url in pinned_env_albany_rows:
+            expected_proof = proof_manifest_by_url[url]
+            payload = self._replay_new_york_retained_input(
+                url,
+                media_type="text/html",
+                content_validator=self._is_valid_new_york_dec_office_html,
+                frontier_name=f"retained-env-albany-{selector_key}-replay",
+            )
+            bound_proof = NewYorkSupplementalProofInput.bind(
+                selector_key=selector_key,
+                proof_kind=proof_kind,
+                official_url=url,
+                media_type="text/html",
+                payload=payload,
+            )
+            if bound_proof.manifest_row() != expected_proof:
+                raise RuntimeError(
+                    f"New York retained ENV Albany proof changed: {url}"
+                )
+            replay_proof_inputs.append(bound_proof)
+
+        pinned_gbs396eeee_rows = (
+            [
+                tuple(str(value) for value in row)
+                for row in self.STRICT_CURRENT_GBS_396EEEE_PROOF_ROWS
+            ]
+            if "GBS" in replay_catalog_codes
+            else []
+        )
+        observed_gbs396eeee_urls = {
+            url
+            for url, row in proof_manifest_by_url.items()
+            if str(row.get("proof_kind") or "")
+            == "official_gbs_396eeee_effective_clause"
+        }
+        expected_gbs396eeee_urls = {row[2] for row in pinned_gbs396eeee_rows}
+        if observed_gbs396eeee_urls != expected_gbs396eeee_urls:
+            raise RuntimeError(
+                "New York retained GBS 396-eeee proof membership changed"
+            )
+        for selector_key, proof_kind, url in pinned_gbs396eeee_rows:
+            expected_proof = proof_manifest_by_url[url]
+            payload = self._replay_new_york_retained_input(
+                url,
+                media_type="text/html",
+                content_validator=self._is_valid_new_york_assembly_signed_bill_html,
+                frontier_name=f"retained-gbs-396eeee-{selector_key}-replay",
+            )
+            bound_proof = NewYorkSupplementalProofInput.bind(
+                selector_key=selector_key,
+                proof_kind=proof_kind,
+                official_url=url,
+                media_type="text/html",
+                payload=payload,
+            )
+            if bound_proof.manifest_row() != expected_proof:
+                raise RuntimeError(
+                    f"New York retained GBS 396-eeee proof changed: {url}"
+                )
+            replay_proof_inputs.append(bound_proof)
+
         pinned_supplemental_urls = list(
             self.STRICT_CURRENT_SUPPLEMENTAL_SECTION_URLS
         )
@@ -2285,8 +2979,9 @@ class NewYorkScraper(BaseStateScraper):
             payload = self._replay_new_york_retained_input(
                 url,
                 media_type="text/html",
-                content_validator=self._is_valid_new_york_senate_section_html,
+                content_validator=self._is_admissible_new_york_senate_section_payload,
                 frontier_name=f"retained-supplemental-{law_code}-{section}-replay",
+                request_headers=self._new_york_constitution_section_headers(),
             )
             bound_proof = NewYorkSupplementalProofInput.bind(
                 selector_key=f"{law_code.upper()}:{section}:source-page",
@@ -2298,6 +2993,41 @@ class NewYorkScraper(BaseStateScraper):
             if bound_proof.manifest_row() != expected_proof:
                 raise RuntimeError(
                     f"New York retained supplemental proof changed: {url}"
+                )
+            replay_proof_inputs.append(bound_proof)
+        observed_json_urls = [
+            url
+            for url, row in proof_manifest_by_url.items()
+            if str(row.get("proof_kind") or "") == "official_openleg_law_json"
+        ]
+        for url in sorted(observed_json_urls):
+            expected_proof = proof_manifest_by_url[url]
+            path_parts = [part for part in urlparse(url).path.split("/") if part]
+            if (
+                path_parts[:3] != ["api", "3", "laws"]
+                or len(path_parts) != 4
+                or "key=" in url.casefold()
+            ):
+                raise RuntimeError(
+                    "New York retained OpenLeg JSON proof changed URL identity"
+                )
+            law_code = path_parts[3].upper()
+            payload = self._replay_new_york_retained_input(
+                url,
+                media_type="application/json",
+                content_validator=self._is_valid_new_york_openleg_law_json,
+                frontier_name=f"retained-openleg-json-{law_code}-replay",
+            )
+            bound_proof = NewYorkSupplementalProofInput.bind(
+                selector_key=f"{law_code}:openleg-json",
+                proof_kind="official_openleg_law_json",
+                official_url=url,
+                media_type="application/json",
+                payload=payload,
+            )
+            if bound_proof.manifest_row() != expected_proof:
+                raise RuntimeError(
+                    f"New York retained OpenLeg JSON proof changed: {url}"
                 )
             replay_proof_inputs.append(bound_proof)
         replay_proof_registry = NewYorkSupplementalProofRegistry(

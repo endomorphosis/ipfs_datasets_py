@@ -394,10 +394,10 @@ def test_wisconsin_residual_closure_report_records_exact_viewer_frontier_residua
     assert table["leaf_acquisition_wave_count"] == "source_dependent_at_least_2"
     assert table["close_each_source_derived_continuation_wave"] == "true"
     assert table["per_page_archive_loop"] == "false"
-    assert table["archive_recovery_enabled"] == "false"
+    assert table["archive_recovery_enabled"] == "true"
     assert table["grouped_warc_recovery"] == "false"
     assert table["wayback_prefix_inventory"] == "false"
-    assert table["current_authorizing_transport"] == "direct_only"
+    assert table["current_authorizing_transport"] == "direct_or_grouped_archive_cdx"
     assert table["residual_only_retries"] == "true"
     assert table["archive_is"] == "forbidden"
     assert table["host_retained_replay_network_requests"] == "0"
@@ -531,11 +531,13 @@ def test_wisconsin_residual_sha256_uses_canonical_json_of_ordered_urls() -> None
     assert SECTION_WAVE_PREFIX in report
 
 
-def test_wisconsin_current_wave_disables_archive_recovery_and_per_page_fallback() -> None:
+def test_wisconsin_current_wave_uses_identity_archive_without_prefix_inventory() -> None:
     fetch_source = inspect.getsource(WisconsinScraper._fetch_wisconsin_frontier_batch)
     assert "wayback_prefix_inventory=False" in fetch_source
-    assert "archive_recovery_enabled=False" in fetch_source
-    assert "common_crawl_domain_terms=(self.OFFICIAL_DOMAIN,)" in fetch_source
+    assert "archive_recovery_enabled=True" in fetch_source
+    assert 'common_crawl_domain_terms=(self.OFFICIAL_DOMAIN, "wisconsin.gov")' in (
+        fetch_source
+    )
     assert 'common_crawl_url_terms=("/statutes/statutes", "/document/statutes/")' in (
         fetch_source
     )
@@ -555,7 +557,7 @@ def test_wisconsin_current_wave_disables_archive_recovery_and_per_page_fallback(
     assert '"per_page_archive_loop": False' in closure_source
     assert '"residual_only_retries": True' in closure_source
     assert '"retained_replay_network_requests": 0' in closure_source
-    assert '"archive_recovery_enabled": False' in closure_source
+    assert '"archive_recovery_enabled": True' in closure_source
     assert '"grouped_warc_recovery": False' in closure_source
     assert '"wayback_prefix_inventory": False' in closure_source
     assert '"kind": "shared_direct_plural_html_viewer"' in closure_source
@@ -762,7 +764,7 @@ def test_wisconsin_compact_recipe_closes_each_source_derived_continuation_wave(
         kwargs["wayback_prefix_inventory"] is False for _urls, kwargs in batch_calls
     )
     assert all(
-        kwargs["archive_recovery_enabled"] is False for _urls, kwargs in batch_calls
+        kwargs["archive_recovery_enabled"] is True for _urls, kwargs in batch_calls
     )
     assert all(
         kwargs["repeat_grouped_archive_inventory_on_residual"] is False

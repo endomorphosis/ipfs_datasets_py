@@ -49,11 +49,14 @@ from types import MappingProxyType
 from typing import Any, Final, Optional, Union
 
 from ipfs_datasets_py.processors.legal_data.legal_graph_projection_runtime import (
+    row_jurisdiction_code,
     same_jurisdiction_candidates,
 )
 from ipfs_datasets_py.processors.legal_data.lexical_neighbor_runtime import (
+    PRESSURE_BATCH,
     PressureFn,
     documents_by_cid as index_documents_by_cid,
+    invert_document_terms,
     log_neighbor_progress,
     map_documents_under_pressure,
 )
@@ -90,6 +93,7 @@ from ipfs_datasets_py.processors.legal_data.open_us_law_schema import (
     content_sha256,
 )
 from ipfs_datasets_py.processors.legal_data.open_us_law_streaming import (
+    write_bytes_atomic,
     write_json_atomic,
 )
 from ipfs_datasets_py.processors.legal_data.uscode_tokenizer import (
@@ -140,6 +144,7 @@ FORBIDDEN_CANDIDATE_METHODS: Final = frozenset(
 EXACT_51_DOCUMENT_TERM_PAIR_LOWER_BOUND: Final = EXACT_51_SEED_ROW_LOWER_BOUND
 
 DEFAULT_NEIGHBOR_K: Final = 8
+DEFAULT_MAX_NEIGHBOR_CANDIDATES: Final = 256
 MAX_NEIGHBOR_K: Final = 64
 DEFAULT_MAX_NEIGHBOR_QUERY_TERMS: Final = 16
 DEFAULT_MIN_NEIGHBOR_TERM_LENGTH: Final = 3
@@ -798,6 +803,23 @@ class Bm25NeighborEdge:
             "target_legal_id": self.target_legal_id,
         }
 
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "Bm25NeighborEdge":
+        if not isinstance(value, Mapping):
+            raise LexicalGraphConfigError("neighbor edge payload must be a mapping")
+        source_legal = value.get("source_legal_id")
+        target_legal = value.get("target_legal_id")
+        return cls(
+            source_entry_cid=str(value.get("source_entry_cid") or ""),
+            target_entry_cid=str(value.get("target_entry_cid") or ""),
+            score=float(value.get("score") or 0.0),
+            matched_terms=tuple(value.get("matched_terms") or ()),
+            config_cid=str(value.get("config_cid") or ""),
+            source_legal_id=str(source_legal) if source_legal not in (None, "") else None,
+            target_legal_id=str(target_legal) if target_legal not in (None, "") else None,
+            rank=int(value.get("rank") or 0),
+        )
+
     def to_similarity_neighbor(self) -> SimilarityNeighbor:
         source = self.source_legal_id or self.source_entry_cid
         target = self.target_legal_id or self.target_entry_cid
@@ -1343,6 +1365,164 @@ def accumulate_neighbor_candidates(
     return candidates
 
 
+def accumulate_neighbor_candidates_from_inverted(
+    inverted: Mapping[str, Sequence[LegalBm25Document]],
+    query_terms: Sequence[str],
+    *,
+    exclude_entry_cid: str,
+    max_candidates: int = DEFAULT_MAX_NEIGHBOR_CANDIDATES,
+) -> dict[str, list[str]]:
+    """Accumulate candidates from a jurisdiction-local term→document map.
+
+    Walk rarest query terms first and stop adding new documents once
+    ``max_candidates`` unique CIDs are collected so large states do not
+    score tens of thousands of posting hits per source.
+    """
+
+    if not query_terms:
+        return {}
+    exclude = _require_non_empty_str(exclude_entry_cid, "exclude_entry_cid")
+    cap = max(1, int(max_candidates))
+    ranked_terms = sorted(
+        dict.fromkeys(
+            _require_non_empty_str(term, "query_term") for term in query_terms
+        ),
+        key=lambda term: (len(inverted.get(term, ())), term),
+    )
+    candidates: dict[str, list[str]] = {}
+    for key in ranked_terms:
+        for document in inverted.get(key, ()):
+            entry_cid = str(getattr(document, "entry_cid", "") or "")
+            if not entry_cid or entry_cid == exclude:
+                continue
+            if entry_cid not in candidates and len(candidates) >= cap:
+                continue
+            matched = candidates.setdefault(entry_cid, [])
+            if key not in matched:
+                matched.append(key)
+        if len(candidates) >= cap:
+            break
+    return candidates
+
+
+def _document_jurisdiction(document: LegalBm25Document) -> str:
+    code = row_jurisdiction_code(document)
+    if code:
+        return code
+    filters = getattr(document, "filters", None) or {}
+    return str(filters.get("jurisdiction") or "").strip().upper()
+
+
+NEIGHBOR_CHECKPOINT_SCHEMA: Final = (
+    "ipfs_datasets_py.state_laws.snapshot_graphrag.neighbors.v1"
+)
+
+
+def _source_set_digest(cids: Sequence[str]) -> str:
+    return "sha256:" + content_sha256(
+        canonical_json_dumps({"entry_cids": sorted(str(cid) for cid in cids)})
+    )
+
+
+def _jurisdiction_neighbor_dir(checkpoint_dir: Path, code: str) -> Path:
+    return checkpoint_dir / "by_jurisdiction" / code
+
+
+def write_jurisdiction_neighbor_checkpoint(
+    checkpoint_dir: Path,
+    code: str,
+    edges: Sequence[Bm25NeighborEdge],
+    *,
+    source_cids: Sequence[str],
+    config_cid: str,
+    posting_candidates: int,
+) -> None:
+    """Persist one state's BM25 neighbor edges for crash-safe resume."""
+
+    dest = _jurisdiction_neighbor_dir(checkpoint_dir, code)
+    dest.mkdir(parents=True, exist_ok=True)
+    ordered = sorted(
+        edges,
+        key=lambda edge: (edge.source_entry_cid, -edge.score, edge.target_entry_cid),
+    )
+    payload = "".join(
+        json.dumps(edge.to_dict(), sort_keys=True, ensure_ascii=False) + "\n"
+        for edge in ordered
+    )
+    write_bytes_atomic((dest / "edges.jsonl"), payload.encode("utf-8"))
+    write_json_atomic(
+        dest / "identity.json",
+        {
+            "config_cid": config_cid,
+            "edge_count": len(ordered),
+            "jurisdiction_code": code,
+            "partition": "jurisdiction",
+            "posting_candidates": int(posting_candidates),
+            "same_jurisdiction_only": True,
+            "schema": NEIGHBOR_CHECKPOINT_SCHEMA,
+            "source_cid_sha256": _source_set_digest(source_cids),
+            "source_count": len(source_cids),
+            "stage": "neighbors",
+            "status": "complete",
+        },
+    )
+
+
+def load_jurisdiction_neighbor_checkpoint(
+    checkpoint_dir: Path,
+    code: str,
+    *,
+    source_cids: Sequence[str],
+    config_cid: str,
+) -> tuple[list[Bm25NeighborEdge], int] | None:
+    dest = _jurisdiction_neighbor_dir(checkpoint_dir, code)
+    identity_path = dest / "identity.json"
+    edges_path = dest / "edges.jsonl"
+    if not identity_path.is_file() or not edges_path.is_file():
+        return None
+    try:
+        identity = json.loads(identity_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, MemoryError):
+        return None
+    if not isinstance(identity, Mapping) or identity.get("status") != "complete":
+        return None
+    if str(identity.get("jurisdiction_code") or "") != code:
+        return None
+    if str(identity.get("config_cid") or "") != str(config_cid):
+        return None
+    if str(identity.get("source_cid_sha256") or "") != _source_set_digest(source_cids):
+        return None
+    if int(identity.get("source_count") or -1) != len(source_cids):
+        return None
+    edges: list[Bm25NeighborEdge] = []
+    try:
+        with edges_path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                text = line.strip()
+                if not text:
+                    continue
+                payload = json.loads(text)
+                if not isinstance(payload, Mapping):
+                    return None
+                edges.append(Bm25NeighborEdge.from_dict(payload))
+    except (OSError, json.JSONDecodeError, MemoryError, LexicalGraphConfigError):
+        return None
+    if int(identity.get("edge_count") or -1) != len(edges):
+        return None
+    return edges, int(identity.get("posting_candidates") or 0)
+
+
+def invert_documents_by_jurisdiction(
+    documents: Sequence[LegalBm25Document],
+) -> dict[str, Mapping[str, tuple[LegalBm25Document, ...]]]:
+    """Build per-jurisdiction term maps so neighbor walks skip other states."""
+
+    groups: dict[str, list[LegalBm25Document]] = defaultdict(list)
+    for document in documents:
+        groups[_document_jurisdiction(document)].append(document)
+    return {code: invert_document_terms(rows) for code, rows in groups.items()}
+
+
 def score_posting_candidates(
     index: OpenUsLawBm25Index,
     *,
@@ -1401,23 +1581,38 @@ def _neighbor_edges_for_document(
     config_cid: str,
     by_cid: Mapping[str, LegalBm25Document],
     same_jurisdiction_only: bool = False,
+    inverted_by_jurisdiction: Mapping[str, Mapping[str, tuple[LegalBm25Document, ...]]]
+    | None = None,
 ) -> tuple[list[Bm25NeighborEdge], int]:
     query_terms = neighbor_query_terms(
         document,
         config=config,
         tokenizer=index.config.tokenizer,
     )
-    candidates = accumulate_neighbor_candidates(
-        index,
-        query_terms,
-        exclude_entry_cid=document.entry_cid,
-    )
-    if same_jurisdiction_only:
-        candidates = same_jurisdiction_candidates(
-            candidates,
-            source=document,
-            by_cid=by_cid,
+    local_inverted = None
+    if inverted_by_jurisdiction is not None:
+        local_inverted = inverted_by_jurisdiction.get(_document_jurisdiction(document))
+    if local_inverted is not None:
+        candidates = accumulate_neighbor_candidates_from_inverted(
+            local_inverted,
+            query_terms,
+            exclude_entry_cid=document.entry_cid,
+            max_candidates=max(
+                DEFAULT_MAX_NEIGHBOR_CANDIDATES, int(config.neighbor_k) * 32
+            ),
         )
+    else:
+        candidates = accumulate_neighbor_candidates(
+            index,
+            query_terms,
+            exclude_entry_cid=document.entry_cid,
+        )
+        if same_jurisdiction_only:
+            candidates = same_jurisdiction_candidates(
+                candidates,
+                source=document,
+                by_cid=by_cid,
+            )
     hits = score_posting_candidates(
         index,
         candidates=candidates,
@@ -1452,6 +1647,7 @@ def materialize_bm25_neighbor_edges(
     max_workers: int | None = None,
     pressure: PressureFn | None = None,
     same_jurisdiction_only: bool = False,
+    checkpoint_dir: str | Path | None = None,
 ) -> tuple[tuple[Bm25NeighborEdge, ...], NeighborBuildStats]:
     """Emit deterministic bounded top-K ``BM25_NEIGHBOR_OF`` edges.
 
@@ -1476,45 +1672,135 @@ def materialize_bm25_neighbor_edges(
     cid = config_cid or cfg.config_cid
     by_cid = index_documents_by_cid(index.documents)
 
-    def _one(document: LegalBm25Document) -> tuple[list[Bm25NeighborEdge], int]:
-        return _neighbor_edges_for_document(
-            index,
-            document,
-            config=cfg,
-            config_cid=cid,
-            by_cid=by_cid,
-            same_jurisdiction_only=same_jurisdiction_only,
+    def _edges_for(
+        documents: Sequence[LegalBm25Document],
+        *,
+        inverted_by_jurisdiction: Mapping[str, Mapping[str, tuple[LegalBm25Document, ...]]]
+        | None,
+        partition: str | None = None,
+    ) -> list[tuple[list[Bm25NeighborEdge], int]]:
+        def _one(document: LegalBm25Document) -> tuple[list[Bm25NeighborEdge], int]:
+            return _neighbor_edges_for_document(
+                index,
+                document,
+                config=cfg,
+                config_cid=cid,
+                by_cid=by_cid,
+                same_jurisdiction_only=same_jurisdiction_only,
+                inverted_by_jurisdiction=inverted_by_jurisdiction,
+            )
+
+        def _progress(
+            processed: int,
+            total: int,
+            workers: int,
+            reason: str,
+            rows: Sequence[tuple[list[Bm25NeighborEdge], int]],
+        ) -> None:
+            log_neighbor_progress(
+                processed=processed,
+                total=total,
+                workers=workers,
+                reason=reason,
+                edges=sum(len(doc_edges) for doc_edges, _cand in rows),
+                partition=partition,
+            )
+
+        return map_documents_under_pressure(
+            documents,
+            _one,
+            max_workers=max_workers,
+            pressure=pressure,
+            progress=_progress,
+            batch_size=512 if partition else PRESSURE_BATCH,
         )
 
-    def _progress(
-        processed: int,
-        total: int,
-        workers: int,
-        reason: str,
-        rows: Sequence[tuple[list[Bm25NeighborEdge], int]],
-    ) -> None:
-        log_neighbor_progress(
-            processed=processed,
-            total=total,
-            workers=workers,
-            reason=reason,
-            edges=sum(len(doc_edges) for doc_edges, _cand in rows),
-        )
-
-    batch_rows = map_documents_under_pressure(
-        index.documents,
-        _one,
-        max_workers=max_workers,
-        pressure=pressure,
-        progress=_progress,
-    )
+    checkpoint_path = Path(checkpoint_dir) if checkpoint_dir is not None else None
     edges: list[Bm25NeighborEdge] = []
     posting_candidates = 0
     candidates_scored = 0
-    for doc_edges, cand_count in batch_rows:
-        edges.extend(doc_edges)
-        posting_candidates += cand_count
-        candidates_scored += cand_count
+    finished_codes: list[str] = []
+    if same_jurisdiction_only:
+        groups: dict[str, list[LegalBm25Document]] = defaultdict(list)
+        for document in index.documents:
+            groups[_document_jurisdiction(document)].append(document)
+        for code in sorted(groups):
+            docs = groups[code]
+            source_cids = [document.entry_cid for document in docs]
+            loaded = (
+                load_jurisdiction_neighbor_checkpoint(
+                    checkpoint_path,
+                    code,
+                    source_cids=source_cids,
+                    config_cid=cid,
+                )
+                if checkpoint_path is not None
+                else None
+            )
+            if loaded is not None:
+                part_edges, part_cands = loaded
+                log_neighbor_progress(
+                    processed=len(docs),
+                    total=len(docs),
+                    workers=0,
+                    reason="resume",
+                    edges=len(part_edges),
+                    partition=code,
+                )
+            else:
+                log_neighbor_progress(
+                    processed=0,
+                    total=len(docs),
+                    workers=0,
+                    reason="invert_local_terms",
+                    edges=0,
+                    partition=code,
+                )
+                inverted = {code: invert_document_terms(docs)}
+                rows = _edges_for(
+                    docs, inverted_by_jurisdiction=inverted, partition=code
+                )
+                part_edges = []
+                part_cands = 0
+                for doc_edges, cand_count in rows:
+                    part_edges.extend(doc_edges)
+                    part_cands += cand_count
+                if checkpoint_path is not None:
+                    write_jurisdiction_neighbor_checkpoint(
+                        checkpoint_path,
+                        code,
+                        part_edges,
+                        source_cids=source_cids,
+                        config_cid=cid,
+                        posting_candidates=part_cands,
+                    )
+            edges.extend(part_edges)
+            posting_candidates += part_cands
+            candidates_scored += part_cands
+            finished_codes.append(code)
+        if checkpoint_path is not None:
+            write_json_atomic(
+                checkpoint_path / "identity.json",
+                {
+                    "edge_count": len(edges),
+                    "jurisdiction_count": len(finished_codes),
+                    "jurisdictions": finished_codes,
+                    "partition": "jurisdiction",
+                    "same_jurisdiction_only": True,
+                    "schema": NEIGHBOR_CHECKPOINT_SCHEMA,
+                    "source_documents_considered": index.document_count,
+                    "stage": "neighbors",
+                    "status": "complete",
+                },
+            )
+    else:
+        batch_rows = _edges_for(
+            index.documents, inverted_by_jurisdiction=None, partition=None
+        )
+        for doc_edges, cand_count in batch_rows:
+            edges.extend(doc_edges)
+            posting_candidates += cand_count
+            candidates_scored += cand_count
 
     edges.sort(
         key=lambda edge: (edge.source_entry_cid, -edge.score, edge.target_entry_cid)
@@ -1543,6 +1829,7 @@ def build_open_us_law_lexical_graph(
     *,
     config: LexicalGraphConfig | None = None,
     same_jurisdiction_only: bool = False,
+    checkpoint_dir: str | Path | None = None,
 ) -> OpenUsLawLexicalGraphOverlay:
     """Build the postings-backed lexical graph overlay from a BM25 index."""
 
@@ -1558,6 +1845,7 @@ def build_open_us_law_lexical_graph(
         config=cfg,
         config_cid=cfg.config_cid,
         same_jurisdiction_only=same_jurisdiction_only,
+        checkpoint_dir=checkpoint_dir,
     )
     return OpenUsLawLexicalGraphOverlay(
         index=index,
@@ -2688,7 +2976,9 @@ __all__ = [
     "graph_rows_for_bm25",
     "isolated_alaska_chunk",
     "load_graph_adjacency_receipt",
+    "load_jurisdiction_neighbor_checkpoint",
     "materialize_bm25_neighbor_edges",
+    "write_jurisdiction_neighbor_checkpoint",
     "neighbor_query_terms",
     "non_authoritative_edge_semantics",
     "page_adjacency_pointers",

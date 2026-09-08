@@ -43,6 +43,7 @@ from ipfs_datasets_py.processors.legal_data.state_laws_publication_package impor
 )
 from ipfs_datasets_py.processors.legal_data.state_laws_publication_policy import (
     DEFAULT_CREDENTIALS_SCOPE,
+    PUBLICATION_PARENT_REVISION,
     example_authorized_main_request,
 )
 
@@ -53,7 +54,7 @@ PRODUCER = "seal_state_laws_prepublication.py"
 SCHEMA = "ipfs_datasets_py/state-laws-prepublication-seal@1"
 CANONICAL_SCHEMA = "ipfs_datasets_py/legal-corpora-prepublication-seal@1"
 TARGET_REPO = "justicedao/ipfs_state_laws"
-PREVIOUS_PUBLIC_PIN = "42f0546acc7c6cd55627eaf51fb820d5613b9021"
+PREVIOUS_PUBLIC_PIN = PUBLICATION_PARENT_REVISION
 CANDIDATE_RELPATH = Path("docs/reports/legal_corpora_reindex/release_candidate.json")
 STAGING_RELPATH = Path("docs/reports/legal_corpora_reindex/staging_canary.json")
 SEAL_RELPATH = Path("docs/reports/legal_corpora_reindex/state_prepublication_seal.json")
