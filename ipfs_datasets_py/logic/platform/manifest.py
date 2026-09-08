@@ -296,6 +296,16 @@ DATASETS_OBJECTIVE_IDENTITY_PARITY_INTERFACE: Final = (
 DATASETS_OBJECTIVE_IDENTITY_PARITY_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/objective-identity-parity-binding@1"
 )
+# PCPR-083 Datasets binding to Accelerate-owned external-client
+# authority-bypass proof. Handshake identity only; live Supervisor.run
+# and live MCP stdio/HTTP stay typed unavailable until admitted.
+# LogicProviderProtocol@2 is not reminted.
+DATASETS_AUTHORITY_BYPASS_INTERFACE: Final = (
+    "DatasetsAuthorityBypassBinding@1"
+)
+DATASETS_AUTHORITY_BYPASS_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/authority-bypass-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -567,6 +577,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_PYTHON_EXTERNAL_CLIENT_INTERFACE: "1",
             DATASETS_GENERIC_MCP_CLIENT_INTERFACE: "1",
             DATASETS_OBJECTIVE_IDENTITY_PARITY_INTERFACE: "1",
+            DATASETS_AUTHORITY_BYPASS_INTERFACE: "1",
         }
     )
 
@@ -628,6 +639,7 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_objective_identity_parity": (
                 DATASETS_OBJECTIVE_IDENTITY_PARITY_SCHEMA
             ),
+            "datasets_authority_bypass": DATASETS_AUTHORITY_BYPASS_SCHEMA,
         }
     )
 
@@ -673,6 +685,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "python_external_client": "1",
             "generic_mcp_client": "1",
             "objective_identity_parity": "1",
+            "authority_bypass": "1",
         }
     )
 
