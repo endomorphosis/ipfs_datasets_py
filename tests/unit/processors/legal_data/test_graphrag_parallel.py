@@ -18,6 +18,8 @@ def test_public_parallel_names_are_exported() -> None:
     assert "extract_document_graph" in public_names
     assert "map_graph_partitions" in public_names
     assert "map_neighbor_clusters" in public_names
+    assert "map_bm25_neighbor_groups" in public_names
+    assert "bm25_neighbor_group" in public_names
     assert "map_adjacency_directions" in public_names
     assert "IsolatedRowMutator" in public_names
     assert "map_documents_under_pressure" in public_names

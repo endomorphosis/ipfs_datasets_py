@@ -11,7 +11,6 @@ walks stay serial over the adjacency pages.
 
 from __future__ import annotations
 
-import hashlib
 import multiprocessing as mp
 from collections import Counter
 from collections.abc import Mapping, Sequence
@@ -188,8 +187,81 @@ def embedding_neighbor_cluster(payload: Mapping[str, Any]) -> dict[str, Any]:
     return {"cid": cid, "dst": dst, "n": int(len(idx)), "src": src}
 
 
+def bm25_neighbor_group(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """BM25 kNN inside one centroid group. Spawn-worker entry.
+
+    Tokenizes the clipped texts with the shared legal tokenizer and scores
+    Okapi BM25 against the in-group inverted index. Similarity edges are
+    retrieval proposals, not legal authority.
+    """
+
+    from collections import Counter, defaultdict
+    import math
+
+    from ipfs_datasets_py.processors.legal_data.uscode_tokenizer import (
+        tokenize_terms,
+    )
+
+    legal_ids = [str(item) for item in payload.get("legal_ids") or ()]
+    texts = [str(item or "") for item in payload.get("texts") or ()]
+    neighbor_k = int(payload.get("neighbor_k") or DEFAULT_NEIGHBOR_K)
+    k1 = float(payload.get("k1") or 1.2)
+    b = float(payload.get("b") or 0.75)
+    cid = int(payload.get("cid") or 0)
+    if len(legal_ids) != len(texts):
+        raise ValueError("legal_ids and texts must be aligned")
+    n = len(legal_ids)
+    if n < 2:
+        return {"cid": cid, "dst": [], "n": n, "scores": [], "src": []}
+    term_lists = [tokenize_terms(text) for text in texts]
+    dl = [max(len(terms), 1) for terms in term_lists]
+    avgdl = float(sum(dl)) / float(n)
+    df: Counter[str] = Counter()
+    postings: dict[str, list[tuple[int, int]]] = defaultdict(list)
+    tfs: list[Counter[str]] = []
+    for index, terms in enumerate(term_lists):
+        tf = Counter(str(term) for term in terms)
+        tfs.append(tf)
+        for term, freq in tf.items():
+            df[term] += 1
+            postings[term].append((index, int(freq)))
+    src: list[str] = []
+    dst: list[str] = []
+    scores: list[float] = []
+    k = min(max(1, neighbor_k), n - 1)
+    for index, tf in enumerate(tfs):
+        accum: dict[int, float] = defaultdict(float)
+        for term, freq in tf.items():
+            docs = df[term]
+            idf = math.log(1.0 + (n - docs + 0.5) / (docs + 0.5))
+            for other, other_tf in postings[term]:
+                if other == index:
+                    continue
+                denom = other_tf + k1 * (1.0 - b + b * dl[other] / avgdl)
+                accum[other] += idf * (other_tf * (k1 + 1.0)) / denom
+        ranked = sorted(
+            accum.items(),
+            key=lambda item: (-item[1], legal_ids[item[0]]),
+        )[:k]
+        for other, score in ranked:
+            src.append(legal_ids[index])
+            dst.append(legal_ids[other])
+            scores.append(float(score))
+    return {"cid": cid, "dst": dst, "n": n, "scores": scores, "src": src}
+
+
 def _edge_cid(src: str, etype: str, dst: str) -> str:
-    return "sha256:" + hashlib.sha256(f"{src}\t{etype}\t{dst}".encode("utf-8")).hexdigest()
+    from ipfs_datasets_py.logic.ir_core.identity import cid_v1
+
+    return cid_v1(f"{src}\t{etype}\t{dst}".encode("utf-8"))
+
+
+def _retrieval_method(edge_type: str) -> str:
+    if edge_type == "BM25_NEIGHBOR_OF":
+        return "bm25"
+    if edge_type == "EMBEDDING_NEIGHBOR_OF":
+        return "embedding"
+    return "graph"
 
 
 def _adj_table(rows: list[dict[str, Any]]) -> pa.Table:
@@ -294,10 +366,11 @@ def write_adjacency_direction(payload: Mapping[str, Any]) -> dict[str, Any]:
                 edge_cids = [_edge_cid(key, et, nb) for et, nb in zip(ets, neigh)]
             else:
                 edge_cids = [_edge_cid(nb, et, key) for et, nb in zip(ets, neigh)]
-            methods = [
-                "embedding" if et == "EMBEDDING_NEIGHBOR_OF" else "graph" for et in ets
+            methods = [_retrieval_method(et) for et in ets]
+            scores = [
+                0.0 if et in {"EMBEDDING_NEIGHBOR_OF", "BM25_NEIGHBOR_OF"} else 1.0
+                for et in ets
             ]
-            scores = [0.0 if et == "EMBEDDING_NEIGHBOR_OF" else 1.0 for et in ets]
             page_key = f"{key}:{page_index:08d}"
             rows.append(
                 {
@@ -426,6 +499,42 @@ def map_neighbor_clusters(
     return results
 
 
+def map_bm25_neighbor_groups(
+    payloads: Sequence[Mapping[str, Any]],
+    *,
+    workers: int | None = None,
+) -> list[dict[str, Any]]:
+    """Process-pool BM25 neighbors over centroid groups."""
+
+    plan = tokenize_process_pool_size(
+        per_task_budget=TOKENIZE_BYTES_PER_WORKER, requested=workers
+    )
+    items = [dict(item) for item in payloads]
+    print(
+        f"graph bm25-neighbors groups={len(items)} workers={plan.workers}",
+        flush=True,
+    )
+    if plan.workers <= 1 or len(items) <= 1:
+        return [bm25_neighbor_group(item) for item in items]
+    ctx = mp.get_context(plan.start_method)
+    results: list[dict[str, Any]] = []
+    with ProcessPoolExecutor(max_workers=plan.workers, mp_context=ctx) as pool:
+        futures = [pool.submit(bm25_neighbor_group, item) for item in items]
+        done = 0
+        n_edges = 0
+        for fut in as_completed(futures):
+            rec = fut.result()
+            results.append(rec)
+            done += 1
+            n_edges += len(rec.get("src") or ())
+            if done % 50 == 0 or done == len(items):
+                print(
+                    f"  bm25-neighbors groups={done}/{len(items)} edges={n_edges}",
+                    flush=True,
+                )
+    return results
+
+
 def map_adjacency_directions(
     *,
     edge_files: Sequence[Path],
@@ -467,10 +576,12 @@ def map_adjacency_directions(
 
 __all__ = [
     "ADJ_SCHEMA_VERSION",
+    "bm25_neighbor_group",
     "embedding_neighbor_cluster",
     "extract_document_graph",
     "extract_partition_graph",
     "map_adjacency_directions",
+    "map_bm25_neighbor_groups",
     "map_graph_partitions",
     "map_neighbor_clusters",
     "write_adjacency_direction",

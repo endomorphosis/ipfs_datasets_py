@@ -79,6 +79,7 @@ from ipfs_datasets_py.processors.legal_data.federal_register_release_schema impo
     reject_positional_durable_identity,
     validate_entry_cid,
 )
+from ipfs_datasets_py.logic.ir_core.identity import cid_v1_from_digest
 from ipfs_datasets_py.processors.legal_data.federal_register_source_policy import (
     CURRENTNESS_DISCLAIMER,
     DEFAULT_DATASET_REPO_ID,
@@ -528,9 +529,9 @@ def _validate_physical_bound(value: Any, *, name: str, maximum: int) -> int:
 
 
 def sha256_cid(payload: Mapping[str, Any]) -> str:
-    """Return a deterministic ``sha256:<hex>`` content address."""
+    """Return a deterministic raw/sha2-256 CIDv1 (``bafkrei…``)."""
 
-    return f"sha256:{digest_mapping(dict(payload))}"
+    return cid_v1_from_digest(bytes.fromhex(digest_mapping(dict(payload))))
 
 
 def content_cid(value: Any) -> str:
@@ -539,8 +540,10 @@ def content_cid(value: Any) -> str:
     elif isinstance(value, str):
         digest = content_sha256(value)
     else:
-        digest = content_sha256(canonical_json_dumps(value if isinstance(value, Mapping) else {"value": value}))
-    return f"sha256:{digest}"
+        digest = content_sha256(
+            canonical_json_dumps(value if isinstance(value, Mapping) else {"value": value})
+        )
+    return cid_v1_from_digest(bytes.fromhex(digest))
 
 
 def write_bytes_atomic(path: PathLike, data: bytes) -> Path:

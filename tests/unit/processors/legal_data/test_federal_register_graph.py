@@ -381,7 +381,7 @@ def test_endpoint_closure_edge_uniqueness_and_adjacency_inversion(compact_graph)
     assert_edge_uniqueness(compact_graph)
     assert_adjacency_inversion(compact_graph)
     assert_family_bounds(compact_graph)
-    assert compact_graph.graph_cid.startswith("sha256:")
+    assert compact_graph.graph_cid.startswith("bafkrei")
     node_cids = [node.node_cid for node in compact_graph.nodes]
     assert node_cids == sorted(
         node_cids,
