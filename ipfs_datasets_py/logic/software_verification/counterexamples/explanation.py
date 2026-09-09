@@ -7,7 +7,8 @@ Produces stable, redacted explanations from public counterexample material:
 * causal chain leading to that divergence;
 * assumptions and finite bounds;
 * affected proof holes (by property / source-span overlap);
-* separately labeled repair *hypotheses* that never claim proof.
+* separately labeled repair *hypotheses* that never claim proof;
+* counterexample and unsat-core refinement records for planning (DOEP-082).
 
 Acceptance obligations (FVT-G042 / FVT-020):
 
@@ -20,9 +21,14 @@ Acceptance obligations (FVT-G042 / FVT-020):
 * Unsupported source mappings remain explicit rather than invented.
 * The stable public API returns no ``raw`` payload.
 
-This module owns the explanation contract and deterministic derivation.
-Provider syntax is never reinterpreted; private material is stripped via the
-public counterexample boundary before any fact is recorded.
+Counterexample / unsat-core refinement (CounterexampleUnsatCoreRefinement@1)
+extends this same explanation surface.  It is not a new planner, not a
+competing CEGAR subsystem, and not a second minimizer.  An unsat core is
+never called an interpolant.  The record cannot grant completion authority;
+operational admission remains accelerate-owned while this module independently
+verifies semantic identity of public refinement hints.  Accelerate may later
+consume these records for CEGAR plan refinement; this module only names the
+deterministic, redacted refinement facts.
 """
 
 from __future__ import annotations
@@ -30,7 +36,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
 from types import MappingProxyType
@@ -2627,18 +2633,1103 @@ def explain_counterexample(
     )
 
 
+# ---------------------------------------------------------------------------
+# Counterexample and unsat-core refinement (CounterexampleUnsatCoreRefinement@1)
+# ---------------------------------------------------------------------------
+#
+# Extends the canonical explanation module for logic-constrained incremental
+# planning.  Not a new planner, not a competing CEGAR subsystem, and not a
+# second minimizer.  An unsat core is never called an interpolant.  The record
+# cannot grant completion authority; a supervisor independently verifies
+# semantic identity before operational admission.
+
+COUNTEREXAMPLE_UNSAT_CORE_REFINEMENT_INTERFACE: Final = (
+    "CounterexampleUnsatCoreRefinement@1"
+)
+COUNTEREXAMPLE_REFINEMENT_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/counterexample-unsat-core-refinement@1"
+)
+COUNTEREXAMPLE_REFINEMENT_SCHEMA_VERSION: Final = (
+    "counterexample-unsat-core-refinement/v1"
+)
+UNSAT_CORE_REFINEMENT_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/unsat-core-refinement@1"
+)
+REFINEMENT_PREDICATE_HINT_SCHEMA: Final = (
+    "ipfs_datasets_py/logic/refinement-predicate-hint@1"
+)
+REFINEMENT_ALGORITHM_NAME: Final = (
+    "deterministic_counterexample_unsat_core_refinement"
+)
+REFINEMENT_ALGORITHM_VERSION: Final = (
+    "counterexample-unsat-core-refinement/1.0.0"
+)
+
+COUNTEREXAMPLE_REFINEMENT_FORBIDDEN_FIELDS: Final[frozenset[str]] = frozenset(
+    {
+        "lease_id",
+        "admission_receipt_cid",
+        "policy_pointer",
+        "self_granted_substitution",
+        "self_granted_admission",
+        "authorizes_full_replan",
+        "interpolant_cid",
+        "interpolant_receipt_cid",
+        "raw",
+        "raw_output",
+        "prover_output",
+    }
+)
+
+_REFINEMENT_HINT_AUTHORITIES: Final[frozenset[str]] = frozenset(
+    {
+        "none",
+        "advisory",
+        "hypothesis",
+    }
+)
+
+_INTERPOLANT_CLAIM_MARKERS: Final[tuple[str, ...]] = (
+    "interpolant",
+    "craig_interpolant",
+    "claims_interpolant",
+    "is_interpolant",
+    "validated_interpolant",
+)
+
+
+class RefinementSourceKind(StrEnum):
+    """Closed origins for a planning refinement record."""
+
+    COUNTEREXAMPLE_EXPLANATION = "counterexample_explanation"
+    UNSAT_CORE = "unsat_core"
+    COMBINED = "combined"
+
+
+class CoreMinimality(StrEnum):
+    """How far an unsat-core refinement claims to have reduced the core."""
+
+    UNVALIDATED = "unvalidated"
+    STRUCTURALLY_REDUCED = "structurally_reduced"
+    ORACLE_MINIMAL = "oracle_minimal"
+
+
+class PredicateHintOrigin(StrEnum):
+    """Where a public refinement predicate hint was derived."""
+
+    COUNTEREXAMPLE_DIVERGENCE = "counterexample_divergence"
+    UNSAT_CORE_MEMBER = "unsat_core_member"
+    CAUSAL_LINK = "causal_link"
+    REPAIR_HYPOTHESIS = "repair_hypothesis"
+    DECODED_CORE_MEMBER = "decoded_core_member"
+
+
+def _claims_interpolant(value: Mapping[str, Any] | str) -> bool:
+    """True only for affirmative interpolant claims, not denial flags."""
+
+    if isinstance(value, str):
+        lowered = value.lower()
+        if "never" in lowered and "interpolant" in lowered:
+            return False
+        if "must not" in lowered and "interpolant" in lowered:
+            return False
+        return any(marker in lowered for marker in _INTERPOLANT_CLAIM_MARKERS)
+
+    def _walk(node: Any, *, key: str = "") -> bool:
+        key_l = key.lower()
+        if isinstance(node, Mapping):
+            for child_key, child in node.items():
+                if _walk(child, key=str(child_key)):
+                    return True
+            return False
+        if isinstance(node, Sequence) and not isinstance(node, (str, bytes, bytearray)):
+            return any(_walk(item, key=key) for item in node)
+        if isinstance(node, bool):
+            # ``claims_interpolant: false`` is a denial, not a claim.
+            return bool(node) and any(
+                marker in key_l for marker in _INTERPOLANT_CLAIM_MARKERS
+            )
+        if isinstance(node, str):
+            lowered = node.lower()
+            if key_l in {"schema", "schema_version", "interface", "algorithm"}:
+                return False
+            if key_l == "claims_interpolant":
+                return False
+            return any(marker in lowered for marker in _INTERPOLANT_CLAIM_MARKERS)
+        return False
+
+    return _walk(_strip_private(dict(value)))
+
+
+def _normalize_core_members(value: object, label: str) -> tuple[str, ...]:
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
+        raise ExplanationError(f"{label} must be a sequence of core members")
+    members: list[str] = []
+    seen: set[str] = set()
+    for index, item in enumerate(value):
+        if isinstance(item, Mapping):
+            text = str(
+                item.get("id")
+                or item.get("member_id")
+                or item.get("name")
+                or item.get("formula")
+                or item.get("assertion")
+                or ""
+            ).strip()
+            if not text:
+                text = _canonical(_strip_private(dict(item)))
+        else:
+            text = str(item).strip()
+        if not text:
+            raise ExplanationError(f"{label}[{index}] must be a non-empty member")
+        if "\x00" in text:
+            raise ExplanationError(f"{label}[{index}] must not contain NUL bytes")
+        if text in seen:
+            continue
+        seen.add(text)
+        members.append(text)
+        if len(text) > 512:
+            raise ExplanationError(f"{label}[{index}] exceeds maximum length")
+    return tuple(members)
+
+
+@dataclass(frozen=True, slots=True)
+class RefinementPredicateHint:
+    """Public, redacted predicate hint for planning refinement.
+
+    Hints never advertise proof, interpolant, or completion authority.  They
+    name implicated facts that a later admitted CEGAR / replanner step may
+    consume after independent verification.
+    """
+
+    predicate_id: str
+    statement: str
+    origin: PredicateHintOrigin | str
+    source_ref: str = ""
+    authority: str = "hypothesis"
+    schema: str = REFINEMENT_PREDICATE_HINT_SCHEMA
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "predicate_id",
+            _text(self.predicate_id, "predicate_id", maximum=256),
+        )
+        object.__setattr__(
+            self,
+            "statement",
+            _text(self.statement, "statement", maximum=512),
+        )
+        origin = self.origin
+        if isinstance(origin, str):
+            try:
+                origin = PredicateHintOrigin(origin)
+            except ValueError as exc:
+                raise ExplanationError(
+                    f"unsupported predicate hint origin {self.origin!r}"
+                ) from exc
+        object.__setattr__(self, "origin", origin)
+        object.__setattr__(
+            self,
+            "source_ref",
+            _text(self.source_ref, "source_ref", optional=True, maximum=256),
+        )
+        authority = _text(self.authority, "authority", maximum=64)
+        if authority not in _REFINEMENT_HINT_AUTHORITIES:
+            raise ExplanationError("refinement predicate hint authority is elevated")
+        object.__setattr__(self, "authority", authority)
+        if self.schema != REFINEMENT_PREDICATE_HINT_SCHEMA:
+            raise ExplanationError("unsupported refinement predicate hint schema")
+        if _claims_proof(self.statement) or _claims_interpolant(self.statement):
+            raise ExplanationError(
+                "refinement predicate hint must not claim proof or interpolant"
+            )
+        _assert_public_safe(self.to_dict(), label="refinement predicate hint")
+
+    def to_dict(self) -> dict[str, Any]:
+        origin = self.origin
+        return {
+            "authority": self.authority,
+            "origin": origin.value if isinstance(origin, PredicateHintOrigin) else str(origin),
+            "predicate_id": self.predicate_id,
+            "schema": self.schema,
+            "source_ref": self.source_ref,
+            "statement": self.statement,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "RefinementPredicateHint":
+        data = _mapping(value, "refinement predicate hint")
+        allowed = {
+            "authority",
+            "origin",
+            "predicate_id",
+            "schema",
+            "source_ref",
+            "statement",
+        }
+        unknown = set(data).difference(allowed)
+        if unknown:
+            raise ExplanationError(
+                f"unknown refinement predicate hint field: {sorted(unknown)[0]}"
+            )
+        return cls(
+            predicate_id=str(data.get("predicate_id") or ""),
+            statement=str(data.get("statement") or ""),
+            origin=str(data.get("origin") or ""),
+            source_ref=str(data.get("source_ref") or ""),
+            authority=str(data.get("authority") or "hypothesis"),
+            schema=str(data.get("schema") or REFINEMENT_PREDICATE_HINT_SCHEMA),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class UnsatCoreRefinement:
+    """Deterministic unsat-core refinement record.
+
+    Subset reduction is oracle-guided when a membership checker is supplied;
+    otherwise the core is only structurally deduplicated and marked
+    unvalidated.  Validated authority requires an explicit validation receipt.
+    An unsat core is never called an interpolant.  This is not a second
+    minimizer subsystem — it records the public core slice for planning.
+    """
+
+    original_core: tuple[str, ...]
+    refined_core: tuple[str, ...]
+    dropped_members: tuple[str, ...] = ()
+    minimality: CoreMinimality | str = CoreMinimality.UNVALIDATED
+    core_validated: bool = False
+    validation_receipt_id: str = ""
+    claims_interpolant: bool = False
+    completion_authoritative: bool = False
+    schema: str = UNSAT_CORE_REFINEMENT_SCHEMA
+    refinement_id: str = ""
+    content_id: str = ""
+
+    def __post_init__(self) -> None:
+        original = _normalize_core_members(self.original_core, "original_core")
+        refined = _normalize_core_members(self.refined_core, "refined_core")
+        object.__setattr__(self, "original_core", original)
+        object.__setattr__(self, "refined_core", refined)
+        if not refined:
+            raise ExplanationError("refined unsat core must not be empty")
+        refined_set = set(refined)
+        if not refined_set.issubset(set(original)):
+            raise ExplanationError(
+                "refined unsat core must be a subset of the original core"
+            )
+        dropped = tuple(member for member in original if member not in refined_set)
+        if self.dropped_members:
+            claimed_dropped = _normalize_core_members(
+                self.dropped_members, "dropped_members"
+            )
+            if set(claimed_dropped) != set(dropped):
+                raise ExplanationError("dropped_members must match the refined subset")
+        object.__setattr__(self, "dropped_members", dropped)
+        minimality = self.minimality
+        if isinstance(minimality, str):
+            try:
+                minimality = CoreMinimality(minimality)
+            except ValueError as exc:
+                raise ExplanationError(
+                    f"unsupported core minimality {self.minimality!r}"
+                ) from exc
+        object.__setattr__(self, "minimality", minimality)
+        if not isinstance(self.core_validated, bool):
+            raise ExplanationError("core_validated must be boolean")
+        object.__setattr__(
+            self,
+            "validation_receipt_id",
+            _text(
+                self.validation_receipt_id,
+                "validation_receipt_id",
+                optional=True,
+                maximum=256,
+            ),
+        )
+        if self.core_validated and not self.validation_receipt_id:
+            raise ExplanationError(
+                "validated unsat-core refinement requires a validation receipt"
+            )
+        if not self.core_validated and self.validation_receipt_id:
+            raise ExplanationError(
+                "validation_receipt_id requires core_validated=True"
+            )
+        if minimality is CoreMinimality.ORACLE_MINIMAL and not self.core_validated:
+            raise ExplanationError(
+                "oracle-minimal unsat-core refinement requires core_validated"
+            )
+        if self.claims_interpolant:
+            raise ExplanationError(
+                "unsat-core refinement must never claim to be an interpolant"
+            )
+        object.__setattr__(self, "claims_interpolant", False)
+        if self.completion_authoritative:
+            raise ExplanationError(
+                "unsat-core refinement cannot grant completion authority"
+            )
+        object.__setattr__(self, "completion_authoritative", False)
+        if self.schema != UNSAT_CORE_REFINEMENT_SCHEMA:
+            raise ExplanationError("unsupported unsat-core refinement schema")
+        public = self._public_core()
+        _assert_public_safe(public, label="unsat-core refinement")
+        computed_content = _sha256_hex(_canonical(public))
+        if self.content_id:
+            claimed = _text(self.content_id, "content_id", maximum=256)
+            if claimed != computed_content:
+                raise ExplanationError(
+                    "unsat-core refinement content identity does not match"
+                )
+            object.__setattr__(self, "content_id", claimed)
+        else:
+            object.__setattr__(self, "content_id", computed_content)
+        computed_id = _content_id("unsat-core-refinement", public)
+        if self.refinement_id:
+            claimed_id = _text(self.refinement_id, "refinement_id", maximum=128)
+            if claimed_id != computed_id:
+                raise ExplanationError(
+                    "unsat-core refinement identity does not match"
+                )
+            object.__setattr__(self, "refinement_id", claimed_id)
+        else:
+            object.__setattr__(self, "refinement_id", computed_id)
+
+    def _public_core(self) -> dict[str, Any]:
+        minimality = self.minimality
+        return {
+            "claims_interpolant": False,
+            "completion_authoritative": False,
+            "core_validated": self.core_validated,
+            "dropped_members": list(self.dropped_members),
+            "minimality": (
+                minimality.value
+                if isinstance(minimality, CoreMinimality)
+                else str(minimality)
+            ),
+            "original_core": list(self.original_core),
+            "refined_core": list(self.refined_core),
+            "schema": self.schema,
+            "validation_receipt_id": self.validation_receipt_id,
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = self._public_core()
+        payload["content_id"] = self.content_id
+        payload["refinement_id"] = self.refinement_id
+        return payload
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "UnsatCoreRefinement":
+        data = _mapping(value, "unsat-core refinement")
+        forbidden = set(data).intersection(COUNTEREXAMPLE_REFINEMENT_FORBIDDEN_FIELDS)
+        # interpolant / raw markers already in forbidden set
+        if forbidden:
+            raise ExplanationError(
+                "unsat-core refinement contains operational authority field(s): "
+                f"{sorted(forbidden)[0]}"
+            )
+        allowed = {
+            "claims_interpolant",
+            "completion_authoritative",
+            "content_id",
+            "core_validated",
+            "dropped_members",
+            "minimality",
+            "original_core",
+            "refined_core",
+            "refinement_id",
+            "schema",
+            "validation_receipt_id",
+        }
+        unknown = set(data).difference(allowed)
+        if unknown:
+            raise ExplanationError(
+                f"unknown unsat-core refinement field: {sorted(unknown)[0]}"
+            )
+        return cls(
+            original_core=tuple(data.get("original_core") or ()),
+            refined_core=tuple(data.get("refined_core") or ()),
+            dropped_members=tuple(data.get("dropped_members") or ()),
+            minimality=str(data.get("minimality") or CoreMinimality.UNVALIDATED.value),
+            core_validated=bool(data.get("core_validated", False)),
+            validation_receipt_id=str(data.get("validation_receipt_id") or ""),
+            claims_interpolant=bool(data.get("claims_interpolant", False)),
+            completion_authoritative=bool(data.get("completion_authoritative", False)),
+            schema=str(data.get("schema") or UNSAT_CORE_REFINEMENT_SCHEMA),
+            refinement_id=str(data.get("refinement_id") or ""),
+            content_id=str(data.get("content_id") or ""),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class CounterexampleRefinement:
+    """Planning refinement derived from a counterexample and/or unsat core.
+
+    Extends the canonical explanation surface without creating a competing
+    subsystem.  Predicate hints remain hypotheses/advisory until a later
+    admitted verifier step independently verifies them.  This record cannot
+    grant completion authority and must never claim interpolant status for an
+    unsat core.
+    """
+
+    counterexample_id: str
+    source_kind: RefinementSourceKind | str
+    predicate_hints: tuple[RefinementPredicateHint, ...]
+    explanation_id: str = ""
+    explanation_content_id: str = ""
+    violated_property: str = ""
+    witness_kind: str = ""
+    unsat_core: UnsatCoreRefinement | None = None
+    replay_verified: bool = False
+    affected_region_ids: tuple[str, ...] = ()
+    summary: str = ""
+    claims_interpolant: bool = False
+    completion_authoritative: bool = False
+    interface: str = COUNTEREXAMPLE_UNSAT_CORE_REFINEMENT_INTERFACE
+    schema: str = COUNTEREXAMPLE_REFINEMENT_SCHEMA
+    schema_version: str = COUNTEREXAMPLE_REFINEMENT_SCHEMA_VERSION
+    algorithm: str = REFINEMENT_ALGORITHM_NAME
+    algorithm_version: str = REFINEMENT_ALGORITHM_VERSION
+    refinement_id: str = ""
+    content_id: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "counterexample_id",
+            _text(self.counterexample_id, "counterexample_id", maximum=256),
+        )
+        source_kind = self.source_kind
+        if isinstance(source_kind, str):
+            try:
+                source_kind = RefinementSourceKind(source_kind)
+            except ValueError as exc:
+                raise ExplanationError(
+                    f"unsupported refinement source kind {self.source_kind!r}"
+                ) from exc
+        object.__setattr__(self, "source_kind", source_kind)
+        hints = tuple(self.predicate_hints)
+        if not hints:
+            raise ExplanationError("refinement requires at least one predicate hint")
+        if any(not isinstance(item, RefinementPredicateHint) for item in hints):
+            raise ExplanationError(
+                "predicate_hints must be RefinementPredicateHint values"
+            )
+        hint_ids = [item.predicate_id for item in hints]
+        if len(hint_ids) != len(set(hint_ids)):
+            raise ExplanationError("predicate hint IDs must be unique")
+        object.__setattr__(self, "predicate_hints", hints)
+        object.__setattr__(
+            self,
+            "explanation_id",
+            _text(self.explanation_id, "explanation_id", optional=True, maximum=128),
+        )
+        object.__setattr__(
+            self,
+            "explanation_content_id",
+            _text(
+                self.explanation_content_id,
+                "explanation_content_id",
+                optional=True,
+                maximum=256,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "violated_property",
+            _text(
+                self.violated_property,
+                "violated_property",
+                optional=True,
+                maximum=256,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "witness_kind",
+            _text(self.witness_kind, "witness_kind", optional=True, maximum=128),
+        )
+        if self.unsat_core is not None and not isinstance(
+            self.unsat_core, UnsatCoreRefinement
+        ):
+            raise ExplanationError("unsat_core must be an UnsatCoreRefinement or None")
+        if source_kind is RefinementSourceKind.UNSAT_CORE and self.unsat_core is None:
+            raise ExplanationError("unsat_core source requires an UnsatCoreRefinement")
+        if (
+            source_kind is RefinementSourceKind.COUNTEREXAMPLE_EXPLANATION
+            and not self.explanation_id
+        ):
+            raise ExplanationError(
+                "counterexample_explanation source requires explanation_id"
+            )
+        if source_kind is RefinementSourceKind.COMBINED and (
+            self.unsat_core is None or not self.explanation_id
+        ):
+            raise ExplanationError(
+                "combined refinement requires explanation_id and unsat_core"
+            )
+        if not isinstance(self.replay_verified, bool):
+            raise ExplanationError("replay_verified must be boolean")
+        object.__setattr__(
+            self,
+            "affected_region_ids",
+            _string_tuple(self.affected_region_ids, "affected_region_ids"),
+        )
+        object.__setattr__(
+            self,
+            "summary",
+            _text(self.summary, "summary", optional=True, maximum=512),
+        )
+        if self.claims_interpolant or (
+            self.unsat_core is not None and self.unsat_core.claims_interpolant
+        ):
+            raise ExplanationError(
+                "counterexample refinement must never claim an interpolant"
+            )
+        object.__setattr__(self, "claims_interpolant", False)
+        if self.completion_authoritative:
+            raise ExplanationError(
+                "counterexample refinement cannot grant completion authority"
+            )
+        object.__setattr__(self, "completion_authoritative", False)
+        if self.interface != COUNTEREXAMPLE_UNSAT_CORE_REFINEMENT_INTERFACE:
+            raise ExplanationError(
+                f"unsupported refinement interface {self.interface!r}"
+            )
+        if self.schema != COUNTEREXAMPLE_REFINEMENT_SCHEMA:
+            raise ExplanationError(f"unsupported refinement schema {self.schema!r}")
+        if self.schema_version != COUNTEREXAMPLE_REFINEMENT_SCHEMA_VERSION:
+            raise ExplanationError(
+                f"unsupported refinement schema version {self.schema_version!r}"
+            )
+        object.__setattr__(
+            self,
+            "algorithm",
+            _text(self.algorithm, "algorithm", maximum=128)
+            or REFINEMENT_ALGORITHM_NAME,
+        )
+        object.__setattr__(
+            self,
+            "algorithm_version",
+            _text(self.algorithm_version, "algorithm_version", maximum=128)
+            or REFINEMENT_ALGORITHM_VERSION,
+        )
+        public = self._public_core()
+        if _claims_interpolant(public):
+            raise ExplanationError(
+                "counterexample refinement must never claim an interpolant"
+            )
+        _assert_public_safe(public, label="counterexample refinement")
+        computed_content = _sha256_hex(_canonical(public))
+        if self.content_id:
+            claimed = _text(self.content_id, "content_id", maximum=256)
+            if claimed != computed_content:
+                raise ExplanationError(
+                    "counterexample refinement content identity does not match"
+                )
+            object.__setattr__(self, "content_id", claimed)
+        else:
+            object.__setattr__(self, "content_id", computed_content)
+        computed_id = _content_id("counterexample-refinement", public)
+        if self.refinement_id:
+            claimed_id = _text(self.refinement_id, "refinement_id", maximum=128)
+            if claimed_id != computed_id:
+                raise ExplanationError(
+                    "counterexample refinement identity does not match"
+                )
+            object.__setattr__(self, "refinement_id", claimed_id)
+        else:
+            object.__setattr__(self, "refinement_id", computed_id)
+
+    def _public_core(self) -> dict[str, Any]:
+        source_kind = self.source_kind
+        return {
+            "affected_region_ids": list(self.affected_region_ids),
+            "algorithm": self.algorithm,
+            "algorithm_version": self.algorithm_version,
+            "claims_interpolant": False,
+            "completion_authoritative": False,
+            "counterexample_id": self.counterexample_id,
+            "explanation_content_id": self.explanation_content_id,
+            "explanation_id": self.explanation_id,
+            "interface": self.interface,
+            "predicate_hints": [item.to_dict() for item in self.predicate_hints],
+            "replay_verified": self.replay_verified,
+            "schema": self.schema,
+            "schema_version": self.schema_version,
+            "source_kind": (
+                source_kind.value
+                if isinstance(source_kind, RefinementSourceKind)
+                else str(source_kind)
+            ),
+            "summary": self.summary,
+            "unsat_core": None if self.unsat_core is None else self.unsat_core.to_dict(),
+            "violated_property": self.violated_property,
+            "witness_kind": self.witness_kind,
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = self._public_core()
+        payload["content_id"] = self.content_id
+        payload["refinement_id"] = self.refinement_id
+        return payload
+
+    def to_public_dict(self) -> dict[str, Any]:
+        public = self.to_dict()
+        public.pop("raw", None)
+        _assert_public_safe(public, label="counterexample refinement public projection")
+        return public
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "CounterexampleRefinement":
+        data = _mapping(value, "counterexample refinement")
+        forbidden = set(data).intersection(COUNTEREXAMPLE_REFINEMENT_FORBIDDEN_FIELDS)
+        if forbidden:
+            raise ExplanationError(
+                "counterexample refinement contains operational authority field(s): "
+                f"{sorted(forbidden)[0]}"
+            )
+        allowed = {
+            "affected_region_ids",
+            "algorithm",
+            "algorithm_version",
+            "claims_interpolant",
+            "completion_authoritative",
+            "content_id",
+            "counterexample_id",
+            "explanation_content_id",
+            "explanation_id",
+            "interface",
+            "predicate_hints",
+            "refinement_id",
+            "replay_verified",
+            "schema",
+            "schema_version",
+            "source_kind",
+            "summary",
+            "unsat_core",
+            "violated_property",
+            "witness_kind",
+        }
+        unknown = set(data).difference(allowed)
+        if unknown:
+            raise ExplanationError(
+                f"unknown counterexample refinement field: {sorted(unknown)[0]}"
+            )
+        raw_hints = data.get("predicate_hints", ())
+        if not isinstance(raw_hints, Sequence) or isinstance(raw_hints, (str, bytes)):
+            raise ExplanationError("predicate_hints must be a sequence")
+        hints: list[RefinementPredicateHint] = []
+        for item in raw_hints:
+            if isinstance(item, RefinementPredicateHint):
+                hints.append(item)
+            elif isinstance(item, Mapping):
+                hints.append(RefinementPredicateHint.from_dict(item))
+            else:
+                raise ExplanationError("predicate hint must be an object")
+        raw_core = data.get("unsat_core")
+        unsat_core: UnsatCoreRefinement | None
+        if raw_core is None:
+            unsat_core = None
+        elif isinstance(raw_core, UnsatCoreRefinement):
+            unsat_core = raw_core
+        elif isinstance(raw_core, Mapping):
+            unsat_core = UnsatCoreRefinement.from_dict(raw_core)
+        else:
+            raise ExplanationError("unsat_core must be an object or null")
+        return cls(
+            counterexample_id=str(data.get("counterexample_id") or ""),
+            source_kind=str(data.get("source_kind") or ""),
+            predicate_hints=tuple(hints),
+            explanation_id=str(data.get("explanation_id") or ""),
+            explanation_content_id=str(data.get("explanation_content_id") or ""),
+            violated_property=str(data.get("violated_property") or ""),
+            witness_kind=str(data.get("witness_kind") or ""),
+            unsat_core=unsat_core,
+            replay_verified=bool(data.get("replay_verified", False)),
+            affected_region_ids=tuple(data.get("affected_region_ids") or ()),
+            summary=str(data.get("summary") or ""),
+            claims_interpolant=bool(data.get("claims_interpolant", False)),
+            completion_authoritative=bool(data.get("completion_authoritative", False)),
+            interface=str(
+                data.get("interface") or COUNTEREXAMPLE_UNSAT_CORE_REFINEMENT_INTERFACE
+            ),
+            schema=str(data.get("schema") or COUNTEREXAMPLE_REFINEMENT_SCHEMA),
+            schema_version=str(
+                data.get("schema_version") or COUNTEREXAMPLE_REFINEMENT_SCHEMA_VERSION
+            ),
+            algorithm=str(data.get("algorithm") or REFINEMENT_ALGORITHM_NAME),
+            algorithm_version=str(
+                data.get("algorithm_version") or REFINEMENT_ALGORITHM_VERSION
+            ),
+            refinement_id=str(data.get("refinement_id") or ""),
+            content_id=str(data.get("content_id") or ""),
+        )
+
+
+def refine_unsat_core(
+    core: Sequence[Any],
+    *,
+    still_unsat: Callable[[Sequence[str]], bool] | None = None,
+    core_validated: bool = False,
+    validation_receipt_id: str = "",
+) -> UnsatCoreRefinement:
+    """Refine an unsat core to a deterministic subset.
+
+    When ``still_unsat`` is provided it must return True iff the candidate
+    subset remains unsatisfiable.  Members are dropped one-at-a-time in stable
+    order (QuickXplain-style).  Without an oracle the core is only
+    deduplicated and marked ``unvalidated`` unless an external validation
+    receipt is supplied with ``core_validated=True``.
+
+    An unsat core is never called an interpolant.  This helper is not a second
+    minimizer subsystem; it records the public core slice for planning.
+    """
+
+    original = _normalize_core_members(core, "core")
+    if not original:
+        raise ExplanationError("unsat core must not be empty")
+    refined = list(original)
+    if still_unsat is not None:
+        if not still_unsat(tuple(refined)):
+            raise ExplanationError(
+                "original unsat core is not unsatisfiable under the membership oracle"
+            )
+        changed = True
+        while changed:
+            changed = False
+            for index in range(len(refined)):
+                trial = refined[:index] + refined[index + 1 :]
+                if not trial:
+                    continue
+                if still_unsat(tuple(trial)):
+                    refined = trial
+                    changed = True
+                    break
+        # Oracle-minimal is only claimed with an explicit validation receipt.
+        minimality = (
+            CoreMinimality.ORACLE_MINIMAL
+            if core_validated
+            else CoreMinimality.STRUCTURALLY_REDUCED
+        )
+    elif core_validated:
+        minimality = CoreMinimality.STRUCTURALLY_REDUCED
+    else:
+        minimality = CoreMinimality.UNVALIDATED
+    return UnsatCoreRefinement(
+        original_core=original,
+        refined_core=tuple(refined),
+        minimality=minimality,
+        core_validated=core_validated,
+        validation_receipt_id=validation_receipt_id,
+    )
+
+
+def _affected_regions_from_explanation(
+    explanation: CounterexampleExplanation,
+) -> tuple[str, ...]:
+    regions: list[str] = []
+    seen: set[str] = set()
+
+    def _add(value: str) -> None:
+        text = value.strip()
+        if text and text not in seen:
+            seen.add(text)
+            regions.append(text)
+
+    divergence = explanation.first_divergence
+    if divergence.path:
+        _add(divergence.path)
+    if divergence.source_span.span_ids:
+        for span_id in divergence.source_span.span_ids:
+            _add(span_id)
+    for span in explanation.source_spans:
+        for span_id in span.span_ids:
+            _add(span_id)
+        for ref in span.source_ref_ids:
+            _add(ref)
+    for hole in explanation.affected_proof_holes:
+        if hole.hole_id:
+            _add(hole.hole_id)
+        if hole.formal_goal_id:
+            _add(hole.formal_goal_id)
+    return tuple(regions)
+
+
+def _predicate_hints_from_explanation(
+    explanation: CounterexampleExplanation,
+) -> list[RefinementPredicateHint]:
+    hints: list[RefinementPredicateHint] = []
+    authority = "advisory" if explanation.replay_verified else "hypothesis"
+    divergence = explanation.first_divergence
+    divergence_statement = (
+        divergence.detail
+        or f"first divergence at {divergence.path or 'unknown path'}"
+    )[:512]
+    hints.append(
+        RefinementPredicateHint(
+            predicate_id=(
+                f"hint:divergence:"
+                f"{divergence.divergence_id or explanation.explanation_id}"
+            ),
+            statement=divergence_statement,
+            origin=PredicateHintOrigin.COUNTEREXAMPLE_DIVERGENCE,
+            source_ref=divergence.path or divergence.divergence_id,
+            authority=authority,
+        )
+    )
+    for index, link in enumerate(explanation.causal_chain):
+        statement = link.detail or link.label or _canonical(link.to_dict())
+        link_id = f"causal-{link.step}-{index}"
+        hints.append(
+            RefinementPredicateHint(
+                predicate_id=f"hint:causal:{link_id}",
+                statement=statement[:512],
+                origin=PredicateHintOrigin.CAUSAL_LINK,
+                source_ref=link.path or link_id,
+                authority=authority,
+            )
+        )
+    for value in explanation.decoded_values:
+        if value.role not in {"core_member", "assumption", "premise"}:
+            continue
+        rendered = value.value
+        if isinstance(rendered, (dict, list, tuple)):
+            rendered_text = _canonical(rendered)
+        else:
+            rendered_text = str(rendered)
+        path = value.path or value.name
+        statement = f"{path}={rendered_text}" if rendered_text else path
+        hints.append(
+            RefinementPredicateHint(
+                predicate_id=f"hint:decoded:{path}",
+                statement=statement[:512],
+                origin=PredicateHintOrigin.DECODED_CORE_MEMBER,
+                source_ref=path,
+                authority=authority,
+            )
+        )
+    for hyp in explanation.repair_hypotheses:
+        hyp_id = hyp.hypothesis_id or hyp.repair_class
+        hints.append(
+            RefinementPredicateHint(
+                predicate_id=f"hint:repair:{hyp_id}",
+                statement=(hyp.detail or hyp_id)[:512],
+                origin=PredicateHintOrigin.REPAIR_HYPOTHESIS,
+                source_ref=hyp_id,
+                authority="hypothesis",
+            )
+        )
+    # Stable unique by predicate_id (first wins).
+    unique: list[RefinementPredicateHint] = []
+    seen: set[str] = set()
+    for hint in hints:
+        if hint.predicate_id in seen:
+            continue
+        seen.add(hint.predicate_id)
+        unique.append(hint)
+    return unique
+
+
+def _predicate_hints_from_unsat_core(
+    core: UnsatCoreRefinement,
+    *,
+    authority: str = "hypothesis",
+) -> list[RefinementPredicateHint]:
+    hints: list[RefinementPredicateHint] = []
+    for index, member in enumerate(core.refined_core):
+        hints.append(
+            RefinementPredicateHint(
+                predicate_id=f"hint:core:{index}:{_sha256_hex(member)[:16]}",
+                statement=member[:512],
+                origin=PredicateHintOrigin.UNSAT_CORE_MEMBER,
+                source_ref=f"core[{index}]",
+                authority=authority if core.core_validated else "hypothesis",
+            )
+        )
+    return hints
+
+
+def refine_from_counterexample(
+    explanation: CounterexampleExplanation | Mapping[str, Any],
+    *,
+    unsat_core: Sequence[Any] | UnsatCoreRefinement | None = None,
+    still_unsat: Callable[[Sequence[str]], bool] | None = None,
+    core_validated: bool = False,
+    validation_receipt_id: str = "",
+) -> CounterexampleRefinement:
+    """Derive a planning refinement from an explanation and optional unsat core.
+
+    Extends the canonical CounterexampleExplanation@1 surface.  Not a new
+    planner, not a competing CEGAR subsystem, and not a second minimizer.  An
+    unsat core is never called an interpolant.  The resulting record cannot
+    grant completion authority; a supervisor independently verifies it before
+    operational admission.
+    """
+
+    if isinstance(explanation, CounterexampleExplanation):
+        explained = explanation
+    elif isinstance(explanation, Mapping):
+        explained = CounterexampleExplanation.from_dict(explanation)
+    else:
+        raise ExplanationError("explanation must be a CounterexampleExplanation")
+
+    core_record: UnsatCoreRefinement | None = None
+    if isinstance(unsat_core, UnsatCoreRefinement):
+        core_record = unsat_core
+    elif unsat_core is not None:
+        core_record = refine_unsat_core(
+            unsat_core,
+            still_unsat=still_unsat,
+            core_validated=core_validated,
+            validation_receipt_id=validation_receipt_id,
+        )
+
+    hints = _predicate_hints_from_explanation(explained)
+    if core_record is not None:
+        hints.extend(
+            _predicate_hints_from_unsat_core(
+                core_record,
+                authority="advisory" if explained.replay_verified else "hypothesis",
+            )
+        )
+    # Deduplicate by predicate_id after merge.
+    merged: list[RefinementPredicateHint] = []
+    seen: set[str] = set()
+    for hint in hints:
+        if hint.predicate_id in seen:
+            continue
+        seen.add(hint.predicate_id)
+        merged.append(hint)
+    if not merged:
+        raise ExplanationError("refinement requires at least one predicate hint")
+
+    if core_record is None:
+        source_kind = RefinementSourceKind.COUNTEREXAMPLE_EXPLANATION
+    else:
+        source_kind = RefinementSourceKind.COMBINED
+
+    summary_parts = [
+        f"source={source_kind.value}",
+        f"hints={len(merged)}",
+    ]
+    if core_record is not None:
+        summary_parts.append(
+            f"core={len(core_record.refined_core)}/{len(core_record.original_core)}"
+        )
+    if explained.replay_verified:
+        summary_parts.append("replay_verified")
+
+    return CounterexampleRefinement(
+        counterexample_id=explained.counterexample_id,
+        source_kind=source_kind,
+        predicate_hints=tuple(merged),
+        explanation_id=explained.explanation_id,
+        explanation_content_id=explained.content_id,
+        violated_property=explained.violated_property,
+        witness_kind=explained.witness_kind,
+        unsat_core=core_record,
+        replay_verified=explained.replay_verified,
+        affected_region_ids=_affected_regions_from_explanation(explained),
+        summary="; ".join(summary_parts),
+    )
+
+
+def refine_from_unsat_core(
+    core: Sequence[Any] | UnsatCoreRefinement,
+    *,
+    counterexample_id: str = "",
+    still_unsat: Callable[[Sequence[str]], bool] | None = None,
+    core_validated: bool = False,
+    validation_receipt_id: str = "",
+    violated_property: str = "",
+) -> CounterexampleRefinement:
+    """Build a refinement record from an unsat core alone.
+
+    Useful when a solver returns a core without a full explanation document.
+    Still not a competing CEGAR subsystem and never claims interpolant status.
+    """
+
+    if isinstance(core, UnsatCoreRefinement):
+        core_record = core
+    else:
+        core_record = refine_unsat_core(
+            core,
+            still_unsat=still_unsat,
+            core_validated=core_validated,
+            validation_receipt_id=validation_receipt_id,
+        )
+    hints = _predicate_hints_from_unsat_core(core_record)
+    identity = counterexample_id or (
+        "counterexample:unsat-core:" + core_record.content_id[:32]
+    )
+    return CounterexampleRefinement(
+        counterexample_id=identity,
+        source_kind=RefinementSourceKind.UNSAT_CORE,
+        predicate_hints=tuple(hints),
+        violated_property=violated_property,
+        witness_kind="smt_core",
+        unsat_core=core_record,
+        replay_verified=False,
+        affected_region_ids=tuple(core_record.refined_core),
+        summary=(
+            f"source=unsat_core; core={len(core_record.refined_core)}/"
+            f"{len(core_record.original_core)}; "
+            f"minimality={core_record.minimality.value if isinstance(core_record.minimality, CoreMinimality) else core_record.minimality}"
+        ),
+    )
+
+
+def validate_counterexample_refinement(
+    value: Mapping[str, Any] | CounterexampleRefinement,
+) -> CounterexampleRefinement:
+    """Validate a counterexample / unsat-core refinement; no self-admission."""
+
+    refinement = (
+        value
+        if isinstance(value, CounterexampleRefinement)
+        else CounterexampleRefinement.from_dict(value)
+    )
+    if refinement.completion_authoritative:
+        raise ExplanationError(
+            "counterexample refinement cannot grant completion authority"
+        )
+    if refinement.claims_interpolant:
+        raise ExplanationError(
+            "counterexample refinement must never claim an interpolant"
+        )
+    if refinement.unsat_core is not None and refinement.unsat_core.claims_interpolant:
+        raise ExplanationError(
+            "unsat-core refinement must never claim to be an interpolant"
+        )
+    return refinement
+
+
 __all__ = [
     "ALGORITHM_NAME",
     "ALGORITHM_VERSION",
     "COUNTEREXAMPLE_EXPLANATION_INTERFACE",
+    "COUNTEREXAMPLE_REFINEMENT_FORBIDDEN_FIELDS",
+    "COUNTEREXAMPLE_REFINEMENT_SCHEMA",
+    "COUNTEREXAMPLE_REFINEMENT_SCHEMA_VERSION",
+    "COUNTEREXAMPLE_UNSAT_CORE_REFINEMENT_INTERFACE",
+    "CoreMinimality",
     "EXPLANATION_FACT_SCHEMA",
     "EXPLANATION_SCHEMA",
+    "PredicateHintOrigin",
     "REPAIR_HYPOTHESIS_SCHEMA",
+    "REFINEMENT_ALGORITHM_NAME",
+    "REFINEMENT_ALGORITHM_VERSION",
+    "REFINEMENT_PREDICATE_HINT_SCHEMA",
+    "RefinementPredicateHint",
+    "RefinementSourceKind",
+    "UNSAT_CORE_REFINEMENT_SCHEMA",
     "AffectedProofHole",
     "CausalLink",
     "CounterexampleExplanation",
     "CounterexampleExplanationProtocol",
     "CounterexampleExplainer",
+    "CounterexampleRefinement",
     "DecodedValue",
     "DivergenceKind",
     "ExpectedActualDelta",
@@ -2650,5 +3741,10 @@ __all__ = [
     "MappingStatus",
     "RepairHypothesis",
     "SourceSpanRef",
+    "UnsatCoreRefinement",
     "explain_counterexample",
+    "refine_from_counterexample",
+    "refine_from_unsat_core",
+    "refine_unsat_core",
+    "validate_counterexample_refinement",
 ]
