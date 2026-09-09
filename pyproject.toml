@@ -347,6 +347,18 @@ live-application = false
 live-client = false
 release-claim = false
 
+[tool.ipfs-datasets-py.trusted-computing-base]
+schema = "ipfs_datasets_py/assurance/trusted-computing-base-binding@1"
+interface = "DatasetsTrustedComputingBaseBinding@1"
+task-id = "PCPR-091"
+goal-id = "PCPR-G900"
+objective-kind = "declared_trusted_computing_base_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-client = false
+release-claim = false
+
 [tool.ipfs-accelerate-py.agent-supervisor.validation-dependencies]
 schema = "ipfs_accelerate_py/agent-supervisor/validation-dependencies@1"
 scope = "complete-authoritative-validation-environment"

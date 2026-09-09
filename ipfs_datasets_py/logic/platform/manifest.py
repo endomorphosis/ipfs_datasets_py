@@ -313,6 +313,16 @@ DATASETS_THREAT_MODEL_INTERFACE: Final = "DatasetsThreatModelBinding@1"
 DATASETS_THREAT_MODEL_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/threat-model-binding@1"
 )
+# PCPR-091 Datasets binding to Accelerate-owned objective-to-release
+# trusted-computing-base inventory. Handshake identity only; live
+# Supervisor.run stays typed unavailable until admitted.
+# LogicProviderProtocol@2 is not reminted.
+DATASETS_TRUSTED_COMPUTING_BASE_INTERFACE: Final = (
+    "DatasetsTrustedComputingBaseBinding@1"
+)
+DATASETS_TRUSTED_COMPUTING_BASE_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/trusted-computing-base-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -586,6 +596,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_OBJECTIVE_IDENTITY_PARITY_INTERFACE: "1",
             DATASETS_AUTHORITY_BYPASS_INTERFACE: "1",
             DATASETS_THREAT_MODEL_INTERFACE: "1",
+            DATASETS_TRUSTED_COMPUTING_BASE_INTERFACE: "1",
         }
     )
 
@@ -649,6 +660,9 @@ def _default_schema_roots() -> Mapping[str, str]:
             ),
             "datasets_authority_bypass": DATASETS_AUTHORITY_BYPASS_SCHEMA,
             "datasets_threat_model": DATASETS_THREAT_MODEL_SCHEMA,
+            "datasets_trusted_computing_base": (
+                DATASETS_TRUSTED_COMPUTING_BASE_SCHEMA
+            ),
         }
     )
 
@@ -696,6 +710,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "objective_identity_parity": "1",
             "authority_bypass": "1",
             "threat_model": "1",
+            "trusted_computing_base": "1",
         }
     )
 
