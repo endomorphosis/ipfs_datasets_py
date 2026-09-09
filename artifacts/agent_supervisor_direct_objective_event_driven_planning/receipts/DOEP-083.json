@@ -1,0 +1,126 @@
+{
+  "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-receipt@1",
+  "task_id": "DOEP-083",
+  "task_cid": "sha256:b3c8e41242eb5ecede2e2b91a91c77e2001ba857adfc6ba110c9ffe2c6d0f70d",
+  "title": "Add bounded Craig-interpolation planning assistance where qualified",
+  "plan_revision": "DOEP-PLAN-V5",
+  "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
+  "plan_epoch": 1,
+  "board_namespace": "agent-supervisor-direct-objective-and-event-driven-planning-v1",
+  "goal_id": "DOEP-G090.S2",
+  "parent_goal_id": "DOEP-G090",
+  "root_goal_id": "DOEP-G000",
+  "candidate_status": "implemented",
+  "completion_authoritative": false,
+  "worker_completion_insufficient": true,
+  "no_competing_subsystem_created": true,
+  "base_repositories": {
+    "ipfs_accelerate_py": {
+      "commit": "87715e9295626e7918f7fc8a7b1a1531ab04208f",
+      "tree": "1c9a399cc7a599d5904e5be2ae58c6be3650cff7"
+    },
+    "ipfs_datasets_py": {
+      "commit": "3668b8857a9aa7b1a3c847be12725b5cd057d2e7",
+      "tree": "456e09b51d6a07a3a5873436df24054768195320"
+    },
+    "ipfs_kit_py": {
+      "commit": "b6c65ba732733d7e33852713ba18aa3b12235668",
+      "tree": "14da7d92e130b7ba3523d0d6741a3ef7ef1e1bc2"
+    },
+    "lift_coding": {
+      "commit": "bb8869ed72eb7002434345d9969efee729c4f7f6",
+      "tree": "99e85bfe584b7688ffbeff86da1e612dd6893a42"
+    }
+  },
+  "expected_outputs": [
+    "ipfs_datasets_py/logic/backends/smt/interpolation.py",
+    "tests/doep/test_doep_083_add_bounded_craig_interpolation_planning_assistance_.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-083.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-083.json"
+  ],
+  "changed_paths": [
+    "ipfs_datasets_py/logic/backends/smt/interpolation.py",
+    "tests/doep/test_doep_083_add_bounded_craig_interpolation_planning_assistance_.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-083.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-083.json"
+  ],
+  "write_scope": [
+    "ipfs_datasets_py/logic/backends/smt/interpolation.py",
+    "tests/doep/test_doep_083_add_bounded_craig_interpolation_planning_assistance_.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-083.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-083.json"
+  ],
+  "outputs_present": {
+    "ipfs_datasets_py/logic/backends/smt/interpolation.py": true,
+    "tests/doep/test_doep_083_add_bounded_craig_interpolation_planning_assistance_.py": true,
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-083.json": true,
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-083.json": true
+  },
+  "path_digests": {
+    "ipfs_datasets_py/logic/backends/smt/interpolation.py": "sha256:47e7d88d3def4e70b147180603d7c877f81f1f5d4cf4b5f01df63058911c2e48",
+    "tests/doep/test_doep_083_add_bounded_craig_interpolation_planning_assistance_.py": "sha256:f32412d8c811d6bedcfe57403c0a00871f11fd1cc6b0965159b8bd23d4cc3da4",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-083.json": "sha256:ba21d9bd637faeda050de465a1be31f00d041378d007f39a615a6811050a7e3f"
+  },
+  "required_evidence": {
+    "source_commit_tree_gitlinks": {
+      "ipfs_accelerate_py": {
+        "commit": "87715e9295626e7918f7fc8a7b1a1531ab04208f",
+        "tree": "1c9a399cc7a599d5904e5be2ae58c6be3650cff7"
+      },
+      "ipfs_datasets_py": {
+        "commit": "3668b8857a9aa7b1a3c847be12725b5cd057d2e7",
+        "tree": "456e09b51d6a07a3a5873436df24054768195320"
+      },
+      "ipfs_kit_py": {
+        "commit": "b6c65ba732733d7e33852713ba18aa3b12235668",
+        "tree": "14da7d92e130b7ba3523d0d6741a3ef7ef1e1bc2"
+      },
+      "lift_coding": {
+        "commit": "bb8869ed72eb7002434345d9969efee729c4f7f6",
+        "tree": "99e85bfe584b7688ffbeff86da1e612dd6893a42"
+      }
+    },
+    "test_proof_results": {
+      "validation_command": [
+        "python3",
+        "-m",
+        "pytest",
+        "tests/doep/test_doep_083_add_bounded_craig_interpolation_planning_assistance_.py",
+        "-q"
+      ],
+      "proof_selection": "verified_empty",
+      "proof_reason": "The contract is exercised by independent pytest over BoundedCraigInterpolationPlanningAssistance; no formal prover was selected."
+    },
+    "receipt_cid": {
+      "status": "unavailable",
+      "reason": "No IPFS CLI was used; SHA-256 is not substituted for a CID."
+    },
+    "verifier_admission": "pending_independent_fenced_supervisor",
+    "limitations": [
+      "Candidate receipt only; independent fenced supervisor admission is required.",
+      "BoundedCraigInterpolationPlanningAssistance@1 does not grant operational admission, CEGAR discharge, or completion authority.",
+      "Planning assistance is emitted only where an interpolant was independently validated; fallback unsat cores are never rewritten into interpolant hints.",
+      "Accelerate owns operational CEGAR / replanner admission; this module only names bounded planning assistance facts.",
+      "Worker or model assertion alone is insufficient."
+    ]
+  },
+  "validation": {
+    "commands": [
+      {
+        "argv": [
+          "python3",
+          "-m",
+          "pytest",
+          "tests/doep/test_doep_083_add_bounded_craig_interpolation_planning_assistance_.py",
+          "-q"
+        ],
+        "cwd": "external/ipfs_datasets",
+        "status": "candidate_local"
+      }
+    ]
+  },
+  "supervisor_acceptance": {
+    "state": "pending_independent_fenced_supervisor",
+    "completion_authoritative": false
+  }
+}
