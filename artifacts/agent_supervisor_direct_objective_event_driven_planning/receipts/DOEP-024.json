@@ -1,0 +1,56 @@
+{
+  "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-receipt@1",
+  "task_id": "DOEP-024",
+  "task_cid": "sha256:49d9b700fc52e1c19e77bf738cc27fb6523dce93c3b39958777baa7d9fa32577",
+  "title": "Add assumptions, guarantees, non-goals, and acceptance conditions",
+  "plan_revision": "DOEP-PLAN-V5",
+  "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
+  "plan_epoch": 1,
+  "board_namespace": "agent-supervisor-direct-objective-and-event-driven-planning-v1",
+  "goal_id": "DOEP-G030.S2",
+  "parent_goal_id": "DOEP-G030",
+  "root_goal_id": "DOEP-G000",
+  "candidate_status": "implemented",
+  "completion_authoritative": false,
+  "worker_completion_insufficient": true,
+  "no_competing_subsystem_created": true,
+  "expected_outputs": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_024_add_assumptions_guarantees_non_goals_and_acceptance_.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-024.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-024.json"
+  ],
+  "changed_paths": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_024_add_assumptions_guarantees_non_goals_and_acceptance_.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-024.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-024.json"
+  ],
+  "path_digests": {
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py": "sha256:51db0f292f0eb08603c049bf7e3e7cc0961022c06bef292d2f6a38a13691ae42",
+    "tests/doep/test_doep_024_add_assumptions_guarantees_non_goals_and_acceptance_.py": "sha256:3c77afe8740501db3fbdb577a85f8e68a8d9ff442797b55dc19b44d5ea86b790",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-024.json": "sha256:9b01a73385ffe3b2a6ec7c0e9b513efcd137ac8c5cc5b7d356b41e9cfc577a6a"
+  },
+  "required_evidence": {
+    "test_proof_results": {
+      "validation_command": ["python3", "-m", "pytest", "tests/doep/test_doep_024_add_assumptions_guarantees_non_goals_and_acceptance_.py", "-q"],
+      "proof_selection": "verified_empty",
+      "proof_reason": "The contract is exercised by independent pytest; no formal prover was selected."
+    },
+    "receipt_cid": {"status": "unavailable", "reason": "No IPFS CLI was used; SHA-256 is not substituted for a CID."},
+    "verifier_admission": "pending_independent_fenced_supervisor",
+    "limitations": [
+      "Candidate receipt only; independent fenced supervisor admission is required.",
+      "Plan terms do not grant operational admission or completion authority.",
+      "Assumptions bound guarantees, and non-goals limit claims beyond the declared plan.",
+      "Every acceptance condition requires an explicit verification method; worker or model assertion alone is insufficient."
+    ]
+  },
+  "supervisor_acceptance": {"state": "pending_independent_fenced_supervisor", "completion_authoritative": false},
+  "write_scope": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_024_add_assumptions_guarantees_non_goals_and_acceptance_.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-024.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-024.json"
+  ]
+}
