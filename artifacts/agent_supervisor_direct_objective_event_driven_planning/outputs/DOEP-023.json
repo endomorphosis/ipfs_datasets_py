@@ -1,0 +1,90 @@
+{
+  "base_repositories": {
+    "ipfs_accelerate_py": {
+      "commit": "87715e9295626e7918f7fc8a7b1a1531ab04208f",
+      "tree": "1c9a399cc7a599d5904e5be2ae58c6be3650cff7"
+    },
+    "ipfs_datasets_py": {
+      "commit": "3668b8857a9aa7b1a3c847be12725b5cd057d2e7",
+      "tree": "456e09b51d6a07a3a5873436df24054768195320"
+    },
+    "ipfs_kit_py": {
+      "commit": "b6c65ba732733d7e33852713ba18aa3b12235668",
+      "tree": "14da7d92e130b7ba3523d0d6741a3ef7ef1e1bc2"
+    },
+    "lift_coding": {
+      "commit": "bb8869ed72eb7002434345d9969efee729c4f7f6",
+      "tree": "99e85bfe584b7688ffbeff86da1e612dd6893a42"
+    }
+  },
+  "board_namespace": "agent-supervisor-direct-objective-and-event-driven-planning-v1",
+  "completion_authoritative": false,
+  "cross_repository_ownership": {
+    "canonical_semantic_identity": "ipfs_datasets_py",
+    "ducklake_authority": false,
+    "exact_bytes_cid_storage": "ipfs_kit_py",
+    "model_output_is_completion_authority": false,
+    "operational_admission": "ipfs_accelerate_py"
+  },
+  "declared_outputs": [
+    "ipfs_datasets_py/logic/intent_ir/schema.py",
+    "tests/doep/test_doep_023_add_rule_driven_objective_decomposition.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-023.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-023.json"
+  ],
+  "goal_id": "DOEP-G030.S2",
+  "no_competing_subsystem_created": true,
+  "observed_at": "2026-09-09T00:00:00Z",
+  "outputs": [
+    {
+      "kind": "primary",
+      "path": "ipfs_datasets_py/logic/intent_ir/schema.py"
+    },
+    {
+      "kind": "independent_test",
+      "path": "tests/doep/test_doep_023_add_rule_driven_objective_decomposition.py"
+    },
+    {
+      "kind": "output_manifest",
+      "path": "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-023.json"
+    },
+    {
+      "kind": "candidate_receipt",
+      "path": "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-023.json"
+    }
+  ],
+  "owning_repository": "ipfs_datasets_py",
+  "parent_goal_id": "DOEP-G030",
+  "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
+  "plan_epoch": 1,
+  "plan_revision": "DOEP-PLAN-V5",
+  "primary_output": "ipfs_datasets_py/logic/intent_ir/schema.py",
+  "root_goal_id": "DOEP-G000",
+  "rule_driven_objective_decomposition_contract": {
+    "authority": "semantic_only",
+    "class_name": "RuleDrivenObjectiveDecomposition",
+    "competing_subsystem_created": false,
+    "decomposer_id": "ipfs_datasets_py/logic/intent-ir/rule-driven-objective-decomposer@1",
+    "decomposer_version": "1",
+    "entrypoint": "decompose_supervisor_objective_by_rules",
+    "known_objective_classes": [
+      "direct_objective_contract",
+      "deterministic_normalization",
+      "repository_capability_analysis",
+      "staged_objective_compiler",
+      "unknown"
+    ],
+    "module": "ipfs_datasets_py.logic.intent_ir.schema",
+    "operational_admission_owner": "ipfs_accelerate_py",
+    "parallel_to": "DeterministicObjectiveNormalization",
+    "schema": "ipfs_datasets_py/logic/intent-ir/rule-driven-objective-decomposition@1",
+    "schema_version": "rule-driven-objective-decomposition/v1",
+    "semantic_identity_owner": "ipfs_datasets_py"
+  },
+  "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-output@1",
+  "task_cid": "sha256:1e73cc9a3cc1497b35f69a69be882a35555de72c1fa2a81a015d56997336c27c",
+  "task_id": "DOEP-023",
+  "title": "Add rule-driven objective decomposition",
+  "validation_profile": "doep-validation/DOEP-PLAN-V5/DOEP-023@1",
+  "worker_completion_insufficient": true
+}

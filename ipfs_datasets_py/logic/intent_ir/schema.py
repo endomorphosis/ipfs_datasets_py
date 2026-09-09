@@ -148,6 +148,39 @@ DETERMINISTIC_NORMALIZATION_FORBIDDEN_FIELDS = frozenset(
     }
 )
 
+# Datasets-owned rule/template objective decomposition (DOEP-023).  Extends the
+# existing SupervisorObjectiveIntent / DeterministicObjectiveNormalization
+# contracts with a fail-closed, semantic-only decomposition carrier for known
+# objective classes.  It does not authorize execution, admit policy, or complete
+# objectives, and it is not a second Intent IR, planner, or competing subsystem.
+RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_SCHEMA = (
+    "ipfs_datasets_py/logic/intent-ir/rule-driven-objective-decomposition@1"
+)
+RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_SCHEMA_VERSION = (
+    "rule-driven-objective-decomposition/v1"
+)
+RULE_DRIVEN_OBJECTIVE_DECOMPOSER_ID = (
+    "ipfs_datasets_py/logic/intent-ir/rule-driven-objective-decomposer@1"
+)
+RULE_DRIVEN_OBJECTIVE_DECOMPOSER_VERSION = "1"
+RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_AUTHORITY = "semantic_only"
+RULE_DRIVEN_DECOMPOSITION_MAX_CHILDREN = 12
+RULE_DRIVEN_DECOMPOSITION_MAX_CHILD_SCOPE_PATHS = 64
+RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_FORBIDDEN_FIELDS = frozenset(
+    DETERMINISTIC_NORMALIZATION_FORBIDDEN_FIELDS
+    | {
+        "assumptions",
+        "acceptance_conditions",
+        "guarantees",
+        "non_goals",
+        "budget_profile",
+        "risk_class",
+        "dry_run",
+        "effect_claims",
+        "expected_effects",
+    }
+)
+
 
 class IntentIRValidationError(ValueError):
     """Raised when an Intent IR document violates its canonical contract."""
@@ -1519,6 +1552,1029 @@ def normalize_supervisor_objective_deterministically(
     return validate_deterministic_objective_normalization(result)
 
 
+class KnownObjectiveClass(str, Enum):
+    """Closed set of objective classes with rule/template decomposition."""
+
+    DIRECT_OBJECTIVE_CONTRACT = "direct_objective_contract"
+    DETERMINISTIC_NORMALIZATION = "deterministic_normalization"
+    REPOSITORY_CAPABILITY_ANALYSIS = "repository_capability_analysis"
+    STAGED_OBJECTIVE_COMPILER = "staged_objective_compiler"
+    UNKNOWN = "unknown"
+
+
+@dataclass(frozen=True, slots=True)
+class RuleDrivenDecompositionChild:
+    """One semantic child fragment produced by a known-class rule template.
+
+    Children are advisory plan fragments only.  They do not admit tasks, leases,
+    policy, or execution, and they are not a second planner subsystem.
+    """
+
+    child_id: str
+    title: str
+    role: str
+    scope_paths: tuple[str, ...] = ()
+    depends_on: tuple[str, ...] = ()
+    covers: tuple[str, ...] = ()
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "child_id": self.child_id,
+            "covers": list(self.covers),
+            "depends_on": list(self.depends_on),
+            "role": self.role,
+            "scope_paths": list(self.scope_paths),
+            "title": self.title,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "RuleDrivenDecompositionChild":
+        if not isinstance(value, Mapping):
+            raise IntentIRValidationError(
+                "RuleDrivenDecompositionChild mapping must be a mapping"
+            )
+        allowed = {
+            "child_id",
+            "covers",
+            "depends_on",
+            "role",
+            "scope_paths",
+            "title",
+        }
+        unknown = sorted(key for key in value if key not in allowed)
+        if unknown:
+            raise IntentIRValidationError(
+                "RuleDrivenDecompositionChild has unknown fields: "
+                + ", ".join(unknown)
+            )
+        for key in ("scope_paths", "depends_on", "covers"):
+            raw = value.get(key, ())
+            if isinstance(raw, str) or not isinstance(raw, Iterable):
+                raise IntentIRValidationError(
+                    f"RuleDrivenDecompositionChild.{key} must be an iterable of strings"
+                )
+        return cls(
+            child_id=str(value.get("child_id") or ""),
+            title=str(value.get("title") or ""),
+            role=str(value.get("role") or ""),
+            scope_paths=tuple(str(item) for item in value.get("scope_paths", ())),
+            depends_on=tuple(str(item) for item in value.get("depends_on", ())),
+            covers=tuple(str(item) for item in value.get("covers", ())),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class KnownObjectiveClassRule:
+    """Closed rule/template used to expand one known objective class."""
+
+    rule_id: str
+    objective_class: KnownObjectiveClass
+    match_tags: tuple[str, ...]
+    child_templates: tuple[Mapping[str, Any], ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "child_templates": [dict(item) for item in self.child_templates],
+            "match_tags": list(self.match_tags),
+            "objective_class": self.objective_class.value,
+            "rule_id": self.rule_id,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class RuleDrivenObjectiveDecomposition:
+    """Semantic-only result of rule/template supervisor-objective decomposition.
+
+    Parallel to :class:`DeterministicObjectiveNormalization` and
+    :class:`SupervisorObjectiveIntent`.  The carrier binds a validated
+    normalization digest to a bounded, acyclic child-fragment DAG for a known
+    objective class.  Accelerate alone admits operational plans and execution.
+    It does not create a competing Intent IR or planner subsystem.
+    """
+
+    intent_id: str
+    intent_sha256: str
+    idea_sha256: str
+    normalization_sha256: str
+    repository_id: str
+    board_namespace: str
+    objective_class: str
+    matched_rule_id: str
+    matched: bool
+    truncated: bool
+    reason_code: str
+    scope_paths: tuple[str, ...] = ()
+    children: tuple[RuleDrivenDecompositionChild, ...] = ()
+    dependency_edges: tuple[tuple[str, str], ...] = ()
+    available_capability_ids: tuple[str, ...] = ()
+    repository_analysis_cid: str = ""
+    decomposer_id: str = RULE_DRIVEN_OBJECTIVE_DECOMPOSER_ID
+    decomposer_version: str = RULE_DRIVEN_OBJECTIVE_DECOMPOSER_VERSION
+    schema_version: str = RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_SCHEMA_VERSION
+
+    def validate(self) -> None:
+        validate_rule_driven_objective_decomposition(self)
+
+    @property
+    def schema(self) -> str:
+        return RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_SCHEMA
+
+    @property
+    def authority(self) -> str:
+        return RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_AUTHORITY
+
+    @property
+    def is_completion_authority(self) -> bool:
+        return False
+
+    @property
+    def callers_supply_authoritative_policy(self) -> bool:
+        return False
+
+    @property
+    def decomposition_sha256(self) -> str:
+        payload = self.to_dict()
+        canonical = json.dumps(
+            payload,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "authority": RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_AUTHORITY,
+            "available_capability_ids": list(self.available_capability_ids),
+            "board_namespace": self.board_namespace,
+            "children": [child.to_dict() for child in self.children],
+            "decomposer_id": self.decomposer_id,
+            "decomposer_version": self.decomposer_version,
+            "dependency_edges": [list(edge) for edge in self.dependency_edges],
+            "idea_sha256": self.idea_sha256,
+            "intent_id": self.intent_id,
+            "intent_sha256": self.intent_sha256,
+            "matched": self.matched,
+            "matched_rule_id": self.matched_rule_id,
+            "normalization_sha256": self.normalization_sha256,
+            "objective_class": self.objective_class,
+            "reason_code": self.reason_code,
+            "repository_analysis_cid": self.repository_analysis_cid,
+            "repository_id": self.repository_id,
+            "schema": RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_SCHEMA,
+            "schema_version": self.schema_version,
+            "scope_paths": list(self.scope_paths),
+            "truncated": self.truncated,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "RuleDrivenObjectiveDecomposition":
+        if not isinstance(value, Mapping):
+            raise IntentIRValidationError(
+                "RuleDrivenObjectiveDecomposition mapping must be a mapping"
+            )
+        forbidden = sorted(
+            key
+            for key in value
+            if key in RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_FORBIDDEN_FIELDS
+        )
+        if forbidden:
+            raise IntentIRValidationError(
+                "RuleDrivenObjectiveDecomposition forbids authoritative fields: "
+                + ", ".join(forbidden)
+            )
+        allowed = {
+            "authority",
+            "available_capability_ids",
+            "board_namespace",
+            "children",
+            "decomposition_sha256",
+            "decomposer_id",
+            "decomposer_version",
+            "dependency_edges",
+            "idea_sha256",
+            "intent_id",
+            "intent_sha256",
+            "matched",
+            "matched_rule_id",
+            "normalization_sha256",
+            "objective_class",
+            "reason_code",
+            "repository_analysis_cid",
+            "repository_id",
+            "schema",
+            "schema_version",
+            "scope_paths",
+            "truncated",
+        }
+        unknown = sorted(key for key in value if key not in allowed)
+        if unknown:
+            raise IntentIRValidationError(
+                "RuleDrivenObjectiveDecomposition has unknown fields: "
+                + ", ".join(unknown)
+            )
+        schema = value.get("schema", RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_SCHEMA)
+        if schema != RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_SCHEMA:
+            raise IntentIRValidationError(
+                "Unsupported RuleDrivenObjectiveDecomposition schema: "
+                f"{schema!r}"
+            )
+        authority = value.get(
+            "authority", RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_AUTHORITY
+        )
+        if authority != RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_AUTHORITY:
+            raise IntentIRValidationError(
+                "RuleDrivenObjectiveDecomposition cannot claim authority"
+            )
+        for key in (
+            "scope_paths",
+            "available_capability_ids",
+        ):
+            raw = value.get(key, ())
+            if isinstance(raw, str) or not isinstance(raw, Iterable):
+                raise IntentIRValidationError(
+                    f"RuleDrivenObjectiveDecomposition.{key} must be an iterable of strings"
+                )
+        children_raw = value.get("children", ())
+        if isinstance(children_raw, (str, bytes, bytearray)) or not isinstance(
+            children_raw, Iterable
+        ):
+            raise IntentIRValidationError(
+                "RuleDrivenObjectiveDecomposition.children must be an iterable"
+            )
+        edges_raw = value.get("dependency_edges", ())
+        if isinstance(edges_raw, (str, bytes, bytearray)) or not isinstance(
+            edges_raw, Iterable
+        ):
+            raise IntentIRValidationError(
+                "RuleDrivenObjectiveDecomposition.dependency_edges must be an iterable"
+            )
+        children: list[RuleDrivenDecompositionChild] = []
+        for item in children_raw:
+            if isinstance(item, RuleDrivenDecompositionChild):
+                children.append(item)
+            elif isinstance(item, Mapping):
+                children.append(RuleDrivenDecompositionChild.from_dict(item))
+            else:
+                raise IntentIRValidationError(
+                    "RuleDrivenObjectiveDecomposition.children members must be mappings"
+                )
+        edges: list[tuple[str, str]] = []
+        for item in edges_raw:
+            if (
+                isinstance(item, Sequence)
+                and not isinstance(item, (str, bytes, bytearray))
+                and len(item) == 2
+            ):
+                edges.append((str(item[0]), str(item[1])))
+            else:
+                raise IntentIRValidationError(
+                    "RuleDrivenObjectiveDecomposition.dependency_edges members must be pairs"
+                )
+        matched = value.get("matched", False)
+        truncated = value.get("truncated", False)
+        if not isinstance(matched, bool):
+            raise IntentIRValidationError(
+                "RuleDrivenObjectiveDecomposition.matched must be a bool"
+            )
+        if not isinstance(truncated, bool):
+            raise IntentIRValidationError(
+                "RuleDrivenObjectiveDecomposition.truncated must be a bool"
+            )
+        return cls(
+            intent_id=str(value.get("intent_id") or ""),
+            intent_sha256=str(value.get("intent_sha256") or ""),
+            idea_sha256=str(value.get("idea_sha256") or ""),
+            normalization_sha256=str(value.get("normalization_sha256") or ""),
+            repository_id=str(value.get("repository_id") or ""),
+            board_namespace=str(value.get("board_namespace") or ""),
+            objective_class=str(value.get("objective_class") or ""),
+            matched_rule_id=str(value.get("matched_rule_id") or ""),
+            matched=matched,
+            truncated=truncated,
+            reason_code=str(value.get("reason_code") or ""),
+            scope_paths=tuple(str(item) for item in value.get("scope_paths", ())),
+            children=tuple(children),
+            dependency_edges=tuple(edges),
+            available_capability_ids=tuple(
+                str(item) for item in value.get("available_capability_ids", ())
+            ),
+            repository_analysis_cid=str(value.get("repository_analysis_cid") or ""),
+            decomposer_id=str(
+                value.get("decomposer_id") or RULE_DRIVEN_OBJECTIVE_DECOMPOSER_ID
+            ),
+            decomposer_version=str(
+                value.get("decomposer_version")
+                or RULE_DRIVEN_OBJECTIVE_DECOMPOSER_VERSION
+            ),
+            schema_version=str(
+                value.get("schema_version")
+                or RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_SCHEMA_VERSION
+            ),
+        )
+
+
+def _known_objective_class_rules() -> tuple[KnownObjectiveClassRule, ...]:
+    """Return the closed rule/template table for known objective classes."""
+
+    return (
+        KnownObjectiveClassRule(
+            rule_id="rule:direct-objective-contract/v1",
+            objective_class=KnownObjectiveClass.DIRECT_OBJECTIVE_CONTRACT,
+            match_tags=("contract", "direct-objective", "doep"),
+            child_templates=(
+                {
+                    "child_id_suffix": "define-contract",
+                    "title": "Define datasets-owned semantic contract",
+                    "role": "define_contract",
+                    "covers": ("schema", "contract"),
+                    "depends_on": (),
+                },
+                {
+                    "child_id_suffix": "independent-test",
+                    "title": "Add independent current-tree contract test",
+                    "role": "independent_test",
+                    "covers": ("test",),
+                    "depends_on": ("define-contract",),
+                },
+                {
+                    "child_id_suffix": "output-receipt",
+                    "title": "Emit output manifest and candidate receipt",
+                    "role": "output_receipt",
+                    "covers": ("output", "receipt"),
+                    "depends_on": ("independent-test",),
+                },
+            ),
+        ),
+        KnownObjectiveClassRule(
+            rule_id="rule:deterministic-normalization/v1",
+            objective_class=KnownObjectiveClass.DETERMINISTIC_NORMALIZATION,
+            match_tags=("deterministic", "normalization", "doep"),
+            child_templates=(
+                {
+                    "child_id_suffix": "validate-intent",
+                    "title": "Validate supervisor objective intent",
+                    "role": "validate_intent",
+                    "covers": ("intent",),
+                    "depends_on": (),
+                },
+                {
+                    "child_id_suffix": "normalize-scope",
+                    "title": "Normalize scope and non-authoritative bindings",
+                    "role": "normalize_scope",
+                    "covers": ("scope", "budget_hint", "risk_hint"),
+                    "depends_on": ("validate-intent",),
+                },
+                {
+                    "child_id_suffix": "bind-carrier",
+                    "title": "Bind deterministic normalization carrier",
+                    "role": "bind_carrier",
+                    "covers": ("normalization",),
+                    "depends_on": ("normalize-scope",),
+                },
+            ),
+        ),
+        KnownObjectiveClassRule(
+            rule_id="rule:repository-capability-analysis/v1",
+            objective_class=KnownObjectiveClass.REPOSITORY_CAPABILITY_ANALYSIS,
+            match_tags=("capability", "repository-analysis", "doep"),
+            child_templates=(
+                {
+                    "child_id_suffix": "inspect-capabilities",
+                    "title": "Inspect repository capability indexes",
+                    "role": "inspect_capabilities",
+                    "covers": ("capability",),
+                    "depends_on": (),
+                },
+                {
+                    "child_id_suffix": "emit-analysis",
+                    "title": "Emit advisory repository analysis fragment",
+                    "role": "emit_analysis",
+                    "covers": ("analysis",),
+                    "depends_on": ("inspect-capabilities",),
+                },
+            ),
+        ),
+        KnownObjectiveClassRule(
+            rule_id="rule:staged-objective-compiler/v1",
+            objective_class=KnownObjectiveClass.STAGED_OBJECTIVE_COMPILER,
+            match_tags=("compiler", "staged", "doep"),
+            child_templates=(
+                {
+                    "child_id_suffix": "normalize",
+                    "title": "Deterministically normalize objective",
+                    "role": "normalize",
+                    "covers": ("normalization",),
+                    "depends_on": (),
+                },
+                {
+                    "child_id_suffix": "analyze",
+                    "title": "Analyze repository and capabilities",
+                    "role": "analyze",
+                    "covers": ("analysis",),
+                    "depends_on": ("normalize",),
+                },
+                {
+                    "child_id_suffix": "decompose",
+                    "title": "Apply rule-driven decomposition",
+                    "role": "decompose",
+                    "covers": ("decomposition",),
+                    "depends_on": ("analyze",),
+                },
+                {
+                    "child_id_suffix": "obligations",
+                    "title": "Attach assumptions, guarantees, and acceptance",
+                    "role": "obligations",
+                    "covers": ("obligations",),
+                    "depends_on": ("decompose",),
+                },
+                {
+                    "child_id_suffix": "questions",
+                    "title": "Capture unresolved semantic questions",
+                    "role": "questions",
+                    "covers": ("questions",),
+                    "depends_on": ("obligations",),
+                },
+                {
+                    "child_id_suffix": "residual",
+                    "title": "Interpret logic-constrained residuals",
+                    "role": "residual",
+                    "covers": ("residual",),
+                    "depends_on": ("questions",),
+                },
+                {
+                    "child_id_suffix": "validate-plan",
+                    "title": "Validate plan and completeness witness",
+                    "role": "validate_plan",
+                    "covers": ("validation",),
+                    "depends_on": ("residual",),
+                },
+            ),
+        ),
+    )
+
+
+_KNOWN_OBJECTIVE_CLASS_RULES: tuple[KnownObjectiveClassRule, ...] = (
+    _known_objective_class_rules()
+)
+_KNOWN_OBJECTIVE_CLASS_BY_VALUE: dict[str, KnownObjectiveClass] = {
+    item.value: item for item in KnownObjectiveClass
+}
+_RULE_BY_OBJECTIVE_CLASS: dict[KnownObjectiveClass, KnownObjectiveClassRule] = {
+    rule.objective_class: rule for rule in _KNOWN_OBJECTIVE_CLASS_RULES
+}
+
+
+def list_known_objective_class_rules() -> tuple[KnownObjectiveClassRule, ...]:
+    """Return the closed known-objective-class rule/template table."""
+
+    return _KNOWN_OBJECTIVE_CLASS_RULES
+
+
+def _coerce_known_objective_class(
+    value: str | KnownObjectiveClass | None,
+) -> KnownObjectiveClass | None:
+    if value is None:
+        return None
+    if isinstance(value, KnownObjectiveClass):
+        return value
+    if not isinstance(value, str):
+        raise IntentIRValidationError("objective_class must be a string or enum")
+    text = value.strip()
+    if not text:
+        return None
+    matched = _KNOWN_OBJECTIVE_CLASS_BY_VALUE.get(text)
+    if matched is None:
+        raise IntentIRValidationError(
+            f"objective_class is not a closed known class: {text!r}"
+        )
+    return matched
+
+
+def _select_known_objective_class_rule(
+    *,
+    objective_class: KnownObjectiveClass | None,
+    tags: Sequence[str],
+) -> tuple[KnownObjectiveClassRule | None, KnownObjectiveClass, str]:
+    if objective_class is not None:
+        if objective_class is KnownObjectiveClass.UNKNOWN:
+            return None, KnownObjectiveClass.UNKNOWN, "unknown_objective_class"
+        rule = _RULE_BY_OBJECTIVE_CLASS.get(objective_class)
+        if rule is None:
+            return None, KnownObjectiveClass.UNKNOWN, "unknown_objective_class"
+        return rule, objective_class, "matched_template"
+
+    tag_set = set(tags)
+    ranked: list[tuple[int, KnownObjectiveClassRule]] = []
+    for rule in _KNOWN_OBJECTIVE_CLASS_RULES:
+        overlap = len(tag_set.intersection(rule.match_tags))
+        if overlap:
+            ranked.append((overlap, rule))
+    if not ranked:
+        return None, KnownObjectiveClass.UNKNOWN, "unknown_objective_class"
+    ranked.sort(key=lambda item: (-item[0], item[1].rule_id))
+    best_overlap, best_rule = ranked[0]
+    if len(ranked) > 1 and ranked[1][0] == best_overlap:
+        return None, KnownObjectiveClass.UNKNOWN, "ambiguous_objective_class"
+    return best_rule, best_rule.objective_class, "matched_template"
+
+
+def _child_scope_subset_of_parent(
+    child_paths: Sequence[str], parent_paths: Sequence[str]
+) -> bool:
+    if not child_paths:
+        return True
+    if not parent_paths:
+        return False
+    parent = set(parent_paths)
+    for path in child_paths:
+        if path in parent:
+            continue
+        if not any(
+            path == item or path.startswith(f"{item}/") for item in parent_paths
+        ):
+            return False
+    return True
+
+
+def _validate_dependency_dag(
+    children: Sequence[RuleDrivenDecompositionChild],
+) -> tuple[tuple[str, str], ...]:
+    ids = [child.child_id for child in children]
+    id_set = set(ids)
+    if len(ids) != len(id_set):
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.children child_id values must be unique"
+        )
+    edges: list[tuple[str, str]] = []
+    for child in children:
+        for dependency in child.depends_on:
+            if dependency not in id_set:
+                raise IntentIRValidationError(
+                    "RuleDrivenObjectiveDecomposition child depends_on references unknown child_id: "
+                    f"{dependency!r}"
+                )
+            if dependency == child.child_id:
+                raise IntentIRValidationError(
+                    "RuleDrivenObjectiveDecomposition child cannot depend on itself"
+                )
+            edges.append((dependency, child.child_id))
+    # Kahn topological sort for acyclicity.
+    incoming: dict[str, int] = {child_id: 0 for child_id in ids}
+    adjacency: dict[str, list[str]] = {child_id: [] for child_id in ids}
+    for source, target in edges:
+        adjacency[source].append(target)
+        incoming[target] += 1
+    queue = sorted(child_id for child_id, count in incoming.items() if count == 0)
+    seen = 0
+    while queue:
+        node = queue.pop(0)
+        seen += 1
+        for nxt in sorted(adjacency[node]):
+            incoming[nxt] -= 1
+            if incoming[nxt] == 0:
+                queue.append(nxt)
+                queue.sort()
+    if seen != len(ids):
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.children dependency graph must be acyclic"
+        )
+    return tuple(sorted(edges))
+
+
+def validate_rule_driven_decomposition_child(
+    value: RuleDrivenDecompositionChild | Mapping[str, Any],
+    *,
+    parent_scope_paths: Sequence[str] | None = None,
+) -> RuleDrivenDecompositionChild:
+    """Validate one rule-driven decomposition child fragment."""
+
+    if isinstance(value, Mapping):
+        value = RuleDrivenDecompositionChild.from_dict(value)
+    if not isinstance(value, RuleDrivenDecompositionChild):
+        raise IntentIRValidationError(
+            "RuleDrivenDecompositionChild mappings require from_dict or a typed value"
+        )
+    _validate_identifier("RuleDrivenDecompositionChild.child_id", value.child_id)
+    _validate_string("RuleDrivenDecompositionChild.title", value.title)
+    if not value.title.strip():
+        raise IntentIRValidationError(
+            "RuleDrivenDecompositionChild.title must not be empty"
+        )
+    if value.title != value.title.strip():
+        raise IntentIRValidationError(
+            "RuleDrivenDecompositionChild.title must be trimmed"
+        )
+    _validate_identifier("RuleDrivenDecompositionChild.role", value.role)
+    _require_tuple("RuleDrivenDecompositionChild.scope_paths", value.scope_paths)
+    if len(value.scope_paths) > RULE_DRIVEN_DECOMPOSITION_MAX_CHILD_SCOPE_PATHS:
+        raise IntentIRValidationError(
+            "RuleDrivenDecompositionChild.scope_paths exceeds "
+            f"{RULE_DRIVEN_DECOMPOSITION_MAX_CHILD_SCOPE_PATHS} members"
+        )
+    normalized_paths = tuple(
+        _normalize_scope_path(
+            path, label=f"RuleDrivenDecompositionChild.scope_paths[{index}]"
+        )
+        for index, path in enumerate(value.scope_paths)
+    )
+    _require_unique(
+        normalized_paths, "RuleDrivenDecompositionChild.scope_paths member"
+    )
+    if normalized_paths != value.scope_paths:
+        raise IntentIRValidationError(
+            "RuleDrivenDecompositionChild.scope_paths must be lexically normalized"
+        )
+    if list(value.scope_paths) != sorted(value.scope_paths):
+        raise IntentIRValidationError(
+            "RuleDrivenDecompositionChild.scope_paths must be sorted"
+        )
+    if parent_scope_paths is not None and not _child_scope_subset_of_parent(
+        value.scope_paths, parent_scope_paths
+    ):
+        raise IntentIRValidationError(
+            "RuleDrivenDecompositionChild.scope_paths must be within parent scope"
+        )
+    _require_tuple("RuleDrivenDecompositionChild.depends_on", value.depends_on)
+    _validate_string_items(
+        "RuleDrivenDecompositionChild.depends_on", value.depends_on
+    )
+    for dependency in value.depends_on:
+        _validate_identifier("RuleDrivenDecompositionChild.depends_on member", dependency)
+    _require_unique(
+        value.depends_on, "RuleDrivenDecompositionChild.depends_on member"
+    )
+    if list(value.depends_on) != sorted(value.depends_on):
+        raise IntentIRValidationError(
+            "RuleDrivenDecompositionChild.depends_on must be sorted"
+        )
+    _require_tuple("RuleDrivenDecompositionChild.covers", value.covers)
+    _validate_string_items("RuleDrivenDecompositionChild.covers", value.covers)
+    for cover in value.covers:
+        _validate_identifier("RuleDrivenDecompositionChild.covers member", cover)
+    _require_unique(value.covers, "RuleDrivenDecompositionChild.covers member")
+    if list(value.covers) != sorted(value.covers):
+        raise IntentIRValidationError(
+            "RuleDrivenDecompositionChild.covers must be sorted"
+        )
+    return value
+
+
+def validate_rule_driven_objective_decomposition(
+    value: RuleDrivenObjectiveDecomposition | Mapping[str, Any],
+) -> RuleDrivenObjectiveDecomposition:
+    """Validate and return a :class:`RuleDrivenObjectiveDecomposition`."""
+
+    if isinstance(value, Mapping):
+        value = RuleDrivenObjectiveDecomposition.from_dict(value)
+    if not isinstance(value, RuleDrivenObjectiveDecomposition):
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition mappings require from_dict or a typed value"
+        )
+    if value.schema_version != RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_SCHEMA_VERSION:
+        raise IntentIRValidationError(
+            "Unsupported RuleDrivenObjectiveDecomposition schema_version: "
+            f"{value.schema_version!r}"
+        )
+    if value.decomposer_id != RULE_DRIVEN_OBJECTIVE_DECOMPOSER_ID:
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.decomposer_id is unsupported: "
+            f"{value.decomposer_id!r}"
+        )
+    if value.decomposer_version != RULE_DRIVEN_OBJECTIVE_DECOMPOSER_VERSION:
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.decomposer_version is unsupported: "
+            f"{value.decomposer_version!r}"
+        )
+    _validate_identifier(
+        "RuleDrivenObjectiveDecomposition.intent_id", value.intent_id
+    )
+    _validate_sha256(
+        "RuleDrivenObjectiveDecomposition.intent_sha256", value.intent_sha256
+    )
+    _validate_sha256(
+        "RuleDrivenObjectiveDecomposition.idea_sha256", value.idea_sha256
+    )
+    _validate_sha256(
+        "RuleDrivenObjectiveDecomposition.normalization_sha256",
+        value.normalization_sha256,
+    )
+    _validate_string(
+        "RuleDrivenObjectiveDecomposition.repository_id", value.repository_id
+    )
+    if value.repository_id:
+        _validate_identifier(
+            "RuleDrivenObjectiveDecomposition.repository_id",
+            value.repository_id,
+        )
+    _validate_string(
+        "RuleDrivenObjectiveDecomposition.board_namespace", value.board_namespace
+    )
+    if value.board_namespace:
+        _validate_identifier(
+            "RuleDrivenObjectiveDecomposition.board_namespace",
+            value.board_namespace,
+        )
+    objective_class = _KNOWN_OBJECTIVE_CLASS_BY_VALUE.get(value.objective_class)
+    if objective_class is None:
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.objective_class is unsupported: "
+            f"{value.objective_class!r}"
+        )
+    _validate_string(
+        "RuleDrivenObjectiveDecomposition.matched_rule_id", value.matched_rule_id
+    )
+    if value.matched:
+        _validate_identifier(
+            "RuleDrivenObjectiveDecomposition.matched_rule_id",
+            value.matched_rule_id,
+        )
+        if objective_class is KnownObjectiveClass.UNKNOWN:
+            raise IntentIRValidationError(
+                "RuleDrivenObjectiveDecomposition cannot match the unknown class"
+            )
+    elif value.matched_rule_id:
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.matched_rule_id must be empty when unmatched"
+        )
+    _validate_identifier(
+        "RuleDrivenObjectiveDecomposition.reason_code", value.reason_code
+    )
+    _require_tuple(
+        "RuleDrivenObjectiveDecomposition.scope_paths", value.scope_paths
+    )
+    if len(value.scope_paths) > DETERMINISTIC_NORMALIZATION_MAX_SCOPE_PATHS:
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.scope_paths exceeds "
+            f"{DETERMINISTIC_NORMALIZATION_MAX_SCOPE_PATHS} members"
+        )
+    normalized_paths = tuple(
+        _normalize_scope_path(
+            path, label=f"RuleDrivenObjectiveDecomposition.scope_paths[{index}]"
+        )
+        for index, path in enumerate(value.scope_paths)
+    )
+    _require_unique(
+        normalized_paths, "RuleDrivenObjectiveDecomposition.scope_paths member"
+    )
+    if normalized_paths != value.scope_paths:
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.scope_paths must be lexically normalized"
+        )
+    if list(value.scope_paths) != sorted(value.scope_paths):
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.scope_paths must be sorted"
+        )
+    _require_tuple("RuleDrivenObjectiveDecomposition.children", value.children)
+    if len(value.children) > RULE_DRIVEN_DECOMPOSITION_MAX_CHILDREN:
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.children exceeds "
+            f"{RULE_DRIVEN_DECOMPOSITION_MAX_CHILDREN} members"
+        )
+    if value.truncated and len(value.children) < RULE_DRIVEN_DECOMPOSITION_MAX_CHILDREN:
+        # Truncation is only meaningful at the declared child cap.
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.truncated requires a full child cap"
+        )
+    validated_children = tuple(
+        validate_rule_driven_decomposition_child(
+            child, parent_scope_paths=value.scope_paths
+        )
+        for child in value.children
+    )
+    if validated_children != value.children:
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.children must already be validated shape"
+        )
+    child_ids = [child.child_id for child in value.children]
+    if list(child_ids) != sorted(child_ids):
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.children must be sorted by child_id"
+        )
+    derived_edges = _validate_dependency_dag(value.children)
+    _require_tuple(
+        "RuleDrivenObjectiveDecomposition.dependency_edges", value.dependency_edges
+    )
+    normalized_edges = tuple(
+        (str(edge[0]), str(edge[1])) for edge in value.dependency_edges
+    )
+    for index, edge in enumerate(normalized_edges):
+        if len(edge) != 2:
+            raise IntentIRValidationError(
+                "RuleDrivenObjectiveDecomposition.dependency_edges members must be pairs"
+            )
+        _validate_identifier(
+            f"RuleDrivenObjectiveDecomposition.dependency_edges[{index}][0]",
+            edge[0],
+        )
+        _validate_identifier(
+            f"RuleDrivenObjectiveDecomposition.dependency_edges[{index}][1]",
+            edge[1],
+        )
+    if normalized_edges != tuple(sorted(normalized_edges)):
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.dependency_edges must be sorted"
+        )
+    if normalized_edges != derived_edges:
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.dependency_edges must match children depends_on"
+        )
+    if not value.matched and value.children:
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition unmatched results must not invent children"
+        )
+    _require_tuple(
+        "RuleDrivenObjectiveDecomposition.available_capability_ids",
+        value.available_capability_ids,
+    )
+    _validate_string_items(
+        "RuleDrivenObjectiveDecomposition.available_capability_ids",
+        value.available_capability_ids,
+    )
+    for capability_id in value.available_capability_ids:
+        _validate_identifier(
+            "RuleDrivenObjectiveDecomposition.available_capability_ids member",
+            capability_id,
+        )
+    _require_unique(
+        value.available_capability_ids,
+        "RuleDrivenObjectiveDecomposition.available_capability_ids member",
+    )
+    if list(value.available_capability_ids) != sorted(value.available_capability_ids):
+        raise IntentIRValidationError(
+            "RuleDrivenObjectiveDecomposition.available_capability_ids must be sorted"
+        )
+    _validate_string(
+        "RuleDrivenObjectiveDecomposition.repository_analysis_cid",
+        value.repository_analysis_cid,
+    )
+    if value.repository_analysis_cid:
+        _validate_identifier(
+            "RuleDrivenObjectiveDecomposition.repository_analysis_cid",
+            value.repository_analysis_cid,
+        )
+    return value
+
+
+def decompose_supervisor_objective_by_rules(
+    normalization: DeterministicObjectiveNormalization | Mapping[str, Any],
+    *,
+    objective_class: str | KnownObjectiveClass | None = None,
+    available_capability_ids: Sequence[str] = (),
+    repository_analysis_cid: str = "",
+) -> RuleDrivenObjectiveDecomposition:
+    """Apply closed rule/template decomposition to one normalized objective.
+
+    This is a thin extension of the existing datasets-owned intent contracts:
+    it reuses :func:`validate_deterministic_objective_normalization`, matches a
+    known objective class, and expands a bounded child-fragment DAG.  It does
+    not create a competing Intent IR document, planner, or admission authority.
+    Unknown classes fail closed with empty children so residuals stay with the
+    later unresolved-question / residual stages.
+    """
+
+    if isinstance(normalization, Mapping):
+        forbidden = sorted(
+            key
+            for key in normalization
+            if key in RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_FORBIDDEN_FIELDS
+            or key in DETERMINISTIC_NORMALIZATION_FORBIDDEN_FIELDS
+        )
+        if forbidden:
+            raise IntentIRValidationError(
+                "rule-driven decomposition rejects authority/path escapes: "
+                + ", ".join(forbidden)
+            )
+    validated = validate_deterministic_objective_normalization(normalization)
+    requested_class = _coerce_known_objective_class(objective_class)
+    rule, selected_class, reason_code = _select_known_objective_class_rule(
+        objective_class=requested_class,
+        tags=validated.tags,
+    )
+    if isinstance(available_capability_ids, (str, bytes, bytearray)) or not isinstance(
+        available_capability_ids, Sequence
+    ):
+        raise IntentIRValidationError(
+            "available_capability_ids must be a sequence of strings"
+        )
+    capability_ids = tuple(
+        sorted(
+            {
+                item.strip()
+                for item in available_capability_ids
+                if isinstance(item, str) and item.strip()
+            }
+        )
+    )
+    for capability_id in capability_ids:
+        _validate_identifier("available_capability_ids member", capability_id)
+    if repository_analysis_cid is not None and not isinstance(
+        repository_analysis_cid, str
+    ):
+        raise IntentIRValidationError("repository_analysis_cid must be a string")
+    analysis_cid = repository_analysis_cid.strip() if repository_analysis_cid else ""
+    if analysis_cid:
+        _validate_identifier("repository_analysis_cid", analysis_cid)
+
+    children: list[RuleDrivenDecompositionChild] = []
+    truncated = False
+    matched = False
+    matched_rule_id = ""
+    if rule is not None:
+        matched = True
+        matched_rule_id = rule.rule_id
+        parent_scope = validated.scope_paths
+        for template in rule.child_templates:
+            if len(children) >= RULE_DRIVEN_DECOMPOSITION_MAX_CHILDREN:
+                truncated = True
+                break
+            suffix = str(template.get("child_id_suffix") or "").strip()
+            if not suffix:
+                raise IntentIRValidationError(
+                    "known objective class rule child template missing child_id_suffix"
+                )
+            child_id = f"{validated.intent_id}:{suffix}"
+            depends_suffixes = tuple(
+                sorted(
+                    {
+                        str(item).strip()
+                        for item in template.get("depends_on", ())
+                        if str(item).strip()
+                    }
+                )
+            )
+            depends_on = tuple(
+                f"{validated.intent_id}:{item}" for item in depends_suffixes
+            )
+            covers = tuple(
+                sorted(
+                    {
+                        str(item).strip()
+                        for item in template.get("covers", ())
+                        if str(item).strip()
+                    }
+                )
+            )
+            template_scope = template.get("scope_paths")
+            if template_scope is None:
+                child_scope = parent_scope
+            else:
+                if isinstance(template_scope, str) or not isinstance(
+                    template_scope, Iterable
+                ):
+                    raise IntentIRValidationError(
+                        "child template scope_paths must be an iterable of strings"
+                    )
+                child_scope = tuple(
+                    sorted(
+                        {
+                            _normalize_scope_path(
+                                path, label="child template scope_paths"
+                            )
+                            for path in template_scope
+                        }
+                    )
+                )
+                if not _child_scope_subset_of_parent(child_scope, parent_scope):
+                    raise IntentIRValidationError(
+                        "child template scope_paths escape parent scope"
+                    )
+            children.append(
+                RuleDrivenDecompositionChild(
+                    child_id=child_id,
+                    title=str(template.get("title") or "").strip(),
+                    role=str(template.get("role") or "").strip(),
+                    scope_paths=child_scope,
+                    depends_on=depends_on,
+                    covers=covers,
+                )
+            )
+        children.sort(key=lambda item: item.child_id)
+
+    dependency_edges = (
+        _validate_dependency_dag(children) if children else tuple()
+    )
+    result = RuleDrivenObjectiveDecomposition(
+        intent_id=validated.intent_id,
+        intent_sha256=validated.intent_sha256,
+        idea_sha256=validated.idea_sha256,
+        normalization_sha256=validated.normalization_sha256,
+        repository_id=validated.repository_id,
+        board_namespace=validated.board_namespace,
+        objective_class=selected_class.value,
+        matched_rule_id=matched_rule_id,
+        matched=matched,
+        truncated=truncated,
+        reason_code=reason_code,
+        scope_paths=validated.scope_paths,
+        children=tuple(children),
+        dependency_edges=dependency_edges,
+        available_capability_ids=capability_ids,
+        repository_analysis_cid=analysis_cid,
+    )
+    return validate_rule_driven_objective_decomposition(result)
+
+
 __all__ = [
     "CollectionSemantics",
     "DETERMINISTIC_NORMALIZATION_AUTHORITY",
@@ -1535,6 +2591,14 @@ __all__ = [
     "OBJECTIVE_MATERIALIZATION_RECEIPT_FORBIDDEN_FIELDS",
     "OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA",
     "OBJECTIVE_MATERIALIZATION_RECEIPT_SCHEMA_VERSION",
+    "RULE_DRIVEN_DECOMPOSITION_MAX_CHILDREN",
+    "RULE_DRIVEN_DECOMPOSITION_MAX_CHILD_SCOPE_PATHS",
+    "RULE_DRIVEN_OBJECTIVE_DECOMPOSER_ID",
+    "RULE_DRIVEN_OBJECTIVE_DECOMPOSER_VERSION",
+    "RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_AUTHORITY",
+    "RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_FORBIDDEN_FIELDS",
+    "RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_SCHEMA",
+    "RULE_DRIVEN_OBJECTIVE_DECOMPOSITION_SCHEMA_VERSION",
     "SUPERVISOR_OBJECTIVE_INTENT_FORBIDDEN_FIELDS",
     "SUPERVISOR_OBJECTIVE_INTENT_MAX_IDEA_UTF8_BYTES",
     "SUPERVISOR_OBJECTIVE_INTENT_MAX_TAGS",
@@ -1550,19 +2614,27 @@ __all__ = [
     "IntentKind",
     "IntentModality",
     "IntentStatement",
+    "KnownObjectiveClass",
+    "KnownObjectiveClassRule",
     "NodeGrounding",
     "ObjectiveMaterializationReceipt",
     "ReviewStatus",
+    "RuleDrivenDecompositionChild",
+    "RuleDrivenObjectiveDecomposition",
     "SourceRef",
     "SourceSpan",
     "StatementKind",
     "SupervisorObjectiveIntent",
     "SupervisorObjectiveSubmitterKind",
+    "decompose_supervisor_objective_by_rules",
     "idea_text_sha256",
+    "list_known_objective_class_rules",
     "normalize_supervisor_objective_deterministically",
     "supervisor_objective_intent_sha256",
     "validate_deterministic_objective_normalization",
     "validate_intent_ir",
     "validate_objective_materialization_receipt",
+    "validate_rule_driven_decomposition_child",
+    "validate_rule_driven_objective_decomposition",
     "validate_supervisor_objective_intent",
 ]
