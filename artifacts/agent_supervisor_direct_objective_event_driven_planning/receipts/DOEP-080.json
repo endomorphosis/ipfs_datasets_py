@@ -1,0 +1,69 @@
+{
+  "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-receipt@1",
+  "task_id": "DOEP-080",
+  "task_cid": "sha256:eba385c7c88c70cc9ff10427b1ebbf48c641b28e0e870781ebbb3a1a8c10af15",
+  "title": "Add assume-guarantee planning contracts",
+  "plan_revision": "DOEP-PLAN-V5",
+  "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
+  "plan_epoch": 1,
+  "board_namespace": "agent-supervisor-direct-objective-and-event-driven-planning-v1",
+  "goal_id": "DOEP-G090.S1",
+  "parent_goal_id": "DOEP-G090",
+  "root_goal_id": "DOEP-G000",
+  "candidate_status": "implemented",
+  "completion_authoritative": false,
+  "worker_completion_insufficient": true,
+  "no_competing_subsystem_created": true,
+  "expected_outputs": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_080_add_assume_guarantee_planning_contracts.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-080.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-080.json"
+  ],
+  "changed_paths": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_080_add_assume_guarantee_planning_contracts.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-080.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-080.json"
+  ],
+  "path_digests": {
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py": "sha256:30ce5f19da98ba76b372d4a1845ab0804d277a2cc726593cc38316ee6f874973",
+    "tests/doep/test_doep_080_add_assume_guarantee_planning_contracts.py": "sha256:25adb54d34b0269bffd8116a5e3d9ec91f92e4afbe0e5080395d63d80a0439a4",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-080.json": "sha256:9c938df2f7b97a1d5346938897c14544ab5539b7ff3c52413c38936cf6711241"
+  },
+  "required_evidence": {
+    "test_proof_results": {
+      "validation_command": [
+        "python3",
+        "-m",
+        "pytest",
+        "tests/doep/test_doep_080_add_assume_guarantee_planning_contracts.py",
+        "-q"
+      ],
+      "proof_selection": "verified_empty",
+      "proof_reason": "The contract is exercised by independent pytest; no formal prover was selected."
+    },
+    "receipt_cid": {
+      "status": "unavailable",
+      "reason": "No IPFS CLI was used; SHA-256 is not substituted for a CID."
+    },
+    "verifier_admission": "pending_independent_fenced_supervisor",
+    "limitations": [
+      "Candidate receipt only; independent fenced supervisor admission is required.",
+      "PlanAssumeGuarantee does not grant operational admission, discharge authority, or completion authority.",
+      "Accelerate owns operational assume-guarantee admission; this contract only names compositional substitutions.",
+      "Substitution requires current admitted guarantees and satisfied assumptions.",
+      "Worker or model assertion alone is insufficient."
+    ]
+  },
+  "supervisor_acceptance": {
+    "state": "pending_independent_fenced_supervisor",
+    "completion_authoritative": false
+  },
+  "write_scope": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_080_add_assume_guarantee_planning_contracts.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-080.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-080.json"
+  ]
+}

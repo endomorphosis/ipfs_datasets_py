@@ -1,0 +1,38 @@
+{
+  "schema": "ipfs_accelerate_py/agent-supervisor/doep-task-output@1",
+  "task_id": "DOEP-080",
+  "task_cid": "sha256:eba385c7c88c70cc9ff10427b1ebbf48c641b28e0e870781ebbb3a1a8c10af15",
+  "title": "Add assume-guarantee planning contracts",
+  "plan_revision": "DOEP-PLAN-V5",
+  "plan_cid": "sha256:6c197a4b92682b3b813656123e09956846dc4f5abadf417f37fb7cc0133ddba4",
+  "plan_epoch": 1,
+  "board_namespace": "agent-supervisor-direct-objective-and-event-driven-planning-v1",
+  "owning_repository": "ipfs_datasets_py",
+  "root_goal_id": "DOEP-G000",
+  "parent_goal_id": "DOEP-G090",
+  "goal_id": "DOEP-G090.S1",
+  "completion_authoritative": false,
+  "worker_completion_insufficient": true,
+  "no_competing_subsystem_created": true,
+  "primary_output": "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+  "declared_outputs": [
+    "ipfs_datasets_py/logic/external_work_plan_obligations.py",
+    "tests/doep/test_doep_080_add_assume_guarantee_planning_contracts.py",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-080.json",
+    "artifacts/agent_supervisor_direct_objective_event_driven_planning/receipts/DOEP-080.json"
+  ],
+  "assume_guarantee_contract": {
+    "module": "ipfs_datasets_py.logic.external_work_plan_obligations",
+    "class_name": "PlanAssumeGuarantee",
+    "substitution_class": "AssumeGuaranteeSubstitution",
+    "schema": "ipfs_datasets_py/logic/external-work-plan-assume-guarantee@1",
+    "schema_version": "external-work-plan-assume-guarantee/v1",
+    "parallel_to": "PlanTerms",
+    "competing_subsystem_created": false,
+    "operational_admission_owner": "ipfs_accelerate_py",
+    "semantic_identity_owner": "ipfs_datasets_py",
+    "substitution_requires_admitted_guarantees": true,
+    "substitution_requires_satisfied_assumptions": true,
+    "completion_authoritative": false
+  }
+}

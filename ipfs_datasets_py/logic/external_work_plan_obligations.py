@@ -1,12 +1,15 @@
-"""Planning proof obligations, bounded-plan terms, and PlanDelta contracts.
+"""Planning proof obligations, bounded-plan terms, PlanDelta, and assume-guarantee contracts.
 
-The terms and deltas in this module describe a plan; they never grant
-execution or completion authority.  Operational admission remains the
-responsibility of the supervisor that independently verifies the recorded
-acceptance evidence.  PlanDelta is deliberately parallel to PlanTerms and PlanObligation: it is
-not a new planner and is not a competing operational subsystem.  Accelerate
-owns operational PlanDelta@1 admission; this record only names the impacted
-suffix, the preserved unaffected set, and model-free refill identities.
+The terms, deltas, and assume-guarantee records in this module describe a
+plan; they never grant execution or completion authority.  Operational
+admission remains the responsibility of the supervisor that independently verifies
+the recorded acceptance evidence.  PlanDelta and PlanAssumeGuarantee are
+deliberately parallel to PlanTerms and PlanObligation: they are not a new
+planner and are not a competing operational subsystem.  Accelerate owns
+operational PlanDelta@1 and assume-guarantee admission; this record only names
+the impacted suffix, the preserved unaffected set, model-free refill
+identities, and compositional substitutions whose guarantees apply only when
+assumptions are satisfied and current admitted guarantee receipts exist.
 """
 
 from __future__ import annotations
@@ -28,6 +31,12 @@ PLAN_DELTA_SCHEMA: Final[str] = (
     "ipfs_datasets_py/logic/external-work-plan-delta@1"
 )
 PLAN_DELTA_SCHEMA_VERSION: Final[str] = "external-work-plan-delta/v1"
+PLAN_ASSUME_GUARANTEE_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/logic/external-work-plan-assume-guarantee@1"
+)
+PLAN_ASSUME_GUARANTEE_SCHEMA_VERSION: Final[str] = (
+    "external-work-plan-assume-guarantee/v1"
+)
 KINDS: Final[frozenset[str]] = frozenset(
     {
         "child_covers_parent",
@@ -50,6 +59,14 @@ PLAN_DELTA_FORBIDDEN_FIELDS: Final[frozenset[str]] = frozenset(
         "request_cid",
         "roots",
         "scan_receipt_cid",
+    }
+)
+PLAN_ASSUME_GUARANTEE_FORBIDDEN_FIELDS: Final[frozenset[str]] = frozenset(
+    PLAN_DELTA_FORBIDDEN_FIELDS
+    | {
+        "discharge_decision",
+        "operational_admission",
+        "self_granted_substitution",
     }
 )
 
@@ -370,6 +387,290 @@ def validate_plan_delta(value: Mapping[str, Any] | PlanDelta) -> PlanDelta:
     if not delta.model_free_refill:
         raise ObligationError("plan delta refill must be model-free")
     return delta
+
+
+@dataclass(frozen=True)
+class AssumeGuaranteeSubstitution:
+    """One producer-guarantee to consumer-assumption planning edge.
+
+    Guarantees may be substituted only when the named assumptions are
+    satisfied and current admitted guarantee receipts are present.  The edge
+    itself never grants completion or operational admission authority.
+    """
+
+    substitution_id: str
+    producer_component_id: str
+    consumer_component_id: str
+    guarantees: tuple[str, ...]
+    assumptions: tuple[str, ...]
+    admitted_guarantee_receipt_ids: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "substitution_id",
+            _validated_identifier(self.substitution_id, field="substitution_id"),
+        )
+        object.__setattr__(
+            self,
+            "producer_component_id",
+            _validated_identifier(
+                self.producer_component_id, field="producer_component_id"
+            ),
+        )
+        object.__setattr__(
+            self,
+            "consumer_component_id",
+            _validated_identifier(
+                self.consumer_component_id, field="consumer_component_id"
+            ),
+        )
+        guarantees = tuple(
+            _validated_text(value, field="guarantees") for value in self.guarantees
+        )
+        if not guarantees:
+            raise ObligationError("guarantees must not be empty")
+        if len(set(guarantees)) != len(guarantees):
+            raise ObligationError("guarantees must not contain duplicates")
+        object.__setattr__(self, "guarantees", guarantees)
+        assumptions = tuple(
+            _validated_text(value, field="assumptions") for value in self.assumptions
+        )
+        if not assumptions:
+            raise ObligationError("assumptions must not be empty")
+        if len(set(assumptions)) != len(assumptions):
+            raise ObligationError("assumptions must not contain duplicates")
+        object.__setattr__(self, "assumptions", assumptions)
+        object.__setattr__(
+            self,
+            "admitted_guarantee_receipt_ids",
+            _validated_ids(
+                self.admitted_guarantee_receipt_ids,
+                field="admitted_guarantee_receipt_ids",
+            ),
+        )
+        if not self.admitted_guarantee_receipt_ids:
+            raise ObligationError(
+                "assume-guarantee substitution requires current admitted guarantees"
+            )
+
+    def to_dict(self) -> Mapping[str, Any]:
+        return MappingProxyType(
+            {
+                "substitution_id": self.substitution_id,
+                "producer_component_id": self.producer_component_id,
+                "consumer_component_id": self.consumer_component_id,
+                "guarantees": list(self.guarantees),
+                "assumptions": list(self.assumptions),
+                "admitted_guarantee_receipt_ids": list(
+                    self.admitted_guarantee_receipt_ids
+                ),
+            }
+        )
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "AssumeGuaranteeSubstitution":
+        if not isinstance(payload, Mapping):
+            raise ObligationError("assume-guarantee substitution must be an object")
+        allowed = {
+            "substitution_id",
+            "producer_component_id",
+            "consumer_component_id",
+            "guarantees",
+            "assumptions",
+            "admitted_guarantee_receipt_ids",
+        }
+        unknown = set(payload).difference(allowed)
+        if unknown:
+            raise ObligationError(
+                f"unknown assume-guarantee substitution field: {sorted(unknown)[0]}"
+            )
+        return cls(
+            substitution_id=str(payload.get("substitution_id") or ""),
+            producer_component_id=str(payload.get("producer_component_id") or ""),
+            consumer_component_id=str(payload.get("consumer_component_id") or ""),
+            guarantees=tuple(payload.get("guarantees") or ()),
+            assumptions=tuple(payload.get("assumptions") or ()),
+            admitted_guarantee_receipt_ids=tuple(
+                payload.get("admitted_guarantee_receipt_ids") or ()
+            ),
+        )
+
+
+@dataclass(frozen=True)
+class PlanAssumeGuarantee:
+    """Compositional assume-guarantee planning contract.
+
+    ``PlanAssumeGuarantee`` is deliberately parallel to :class:`PlanTerms` and
+    :class:`PlanDelta`.  It is not a new planner and is not a competing
+    operational subsystem.  Assume-guarantee substitution requires current
+    admitted guarantees and satisfied assumptions.  It cannot grant completion
+    authority.  Operational admission remains accelerate-owned; this record
+    only names the compositional substitutions and their preconditions.
+    """
+
+    base_plan_revision: str
+    substitutions: tuple[AssumeGuaranteeSubstitution, ...]
+    satisfied_assumptions: tuple[str, ...]
+    schema: str = PLAN_ASSUME_GUARANTEE_SCHEMA
+    schema_version: str = PLAN_ASSUME_GUARANTEE_SCHEMA_VERSION
+    substitution_requires_admitted_guarantees: bool = True
+    substitution_requires_satisfied_assumptions: bool = True
+    completion_authoritative: bool = False
+
+    def __post_init__(self) -> None:
+        if self.schema != PLAN_ASSUME_GUARANTEE_SCHEMA:
+            raise ObligationError("unsupported assume-guarantee schema")
+        if self.schema_version != PLAN_ASSUME_GUARANTEE_SCHEMA_VERSION:
+            raise ObligationError("unsupported assume-guarantee schema version")
+        if self.completion_authoritative:
+            raise ObligationError(
+                "assume-guarantee contract cannot grant completion authority"
+            )
+        if not self.substitution_requires_admitted_guarantees:
+            raise ObligationError(
+                "assume-guarantee substitution requires current admitted guarantees"
+            )
+        if not self.substitution_requires_satisfied_assumptions:
+            raise ObligationError(
+                "assume-guarantee substitution requires satisfied assumptions"
+            )
+        object.__setattr__(
+            self,
+            "base_plan_revision",
+            _validated_identifier(
+                self.base_plan_revision, field="base_plan_revision"
+            ),
+        )
+        substitutions = tuple(self.substitutions)
+        if not substitutions:
+            raise ObligationError("substitutions must not be empty")
+        if not all(
+            isinstance(item, AssumeGuaranteeSubstitution) for item in substitutions
+        ):
+            raise ObligationError(
+                "substitutions must contain AssumeGuaranteeSubstitution values"
+            )
+        if len({item.substitution_id for item in substitutions}) != len(substitutions):
+            raise ObligationError("substitution IDs must be unique")
+        object.__setattr__(self, "substitutions", substitutions)
+        satisfied = tuple(
+            _validated_text(value, field="satisfied_assumptions")
+            for value in self.satisfied_assumptions
+        )
+        if len(set(satisfied)) != len(satisfied):
+            raise ObligationError("satisfied_assumptions must not contain duplicates")
+        object.__setattr__(self, "satisfied_assumptions", satisfied)
+        required_assumptions = {
+            assumption
+            for item in substitutions
+            for assumption in item.assumptions
+        }
+        missing = sorted(required_assumptions.difference(satisfied))
+        if missing:
+            raise ObligationError(
+                "assume-guarantee substitution requires satisfied assumptions"
+            )
+        object.__setattr__(self, "substitution_requires_admitted_guarantees", True)
+        object.__setattr__(self, "substitution_requires_satisfied_assumptions", True)
+        object.__setattr__(self, "completion_authoritative", False)
+
+    def to_dict(self) -> Mapping[str, Any]:
+        return MappingProxyType(
+            {
+                "schema": self.schema,
+                "schema_version": self.schema_version,
+                "base_plan_revision": self.base_plan_revision,
+                "substitutions": [dict(item.to_dict()) for item in self.substitutions],
+                "satisfied_assumptions": list(self.satisfied_assumptions),
+                "substitution_requires_admitted_guarantees": True,
+                "substitution_requires_satisfied_assumptions": True,
+                "completion_authoritative": False,
+            }
+        )
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "PlanAssumeGuarantee":
+        if not isinstance(payload, Mapping):
+            raise ObligationError("assume-guarantee contract must be an object")
+        forbidden = set(payload).intersection(PLAN_ASSUME_GUARANTEE_FORBIDDEN_FIELDS)
+        if forbidden:
+            raise ObligationError(
+                "assume-guarantee contract contains operational authority field(s): "
+                f"{sorted(forbidden)[0]}"
+            )
+        allowed = {
+            "schema",
+            "schema_version",
+            "base_plan_revision",
+            "substitutions",
+            "satisfied_assumptions",
+            "substitution_requires_admitted_guarantees",
+            "substitution_requires_satisfied_assumptions",
+            "completion_authoritative",
+        }
+        unknown = set(payload).difference(allowed)
+        if unknown:
+            raise ObligationError(
+                f"unknown assume-guarantee field: {sorted(unknown)[0]}"
+            )
+        raw_substitutions = payload.get("substitutions", ())
+        if not isinstance(raw_substitutions, Sequence) or isinstance(
+            raw_substitutions, (str, bytes)
+        ):
+            raise ObligationError("substitutions must be a sequence")
+        substitutions = []
+        for item in raw_substitutions:
+            if isinstance(item, AssumeGuaranteeSubstitution):
+                substitutions.append(item)
+            elif isinstance(item, Mapping):
+                substitutions.append(AssumeGuaranteeSubstitution.from_dict(item))
+            else:
+                raise ObligationError("assume-guarantee substitution must be an object")
+        return cls(
+            base_plan_revision=str(payload.get("base_plan_revision") or ""),
+            substitutions=tuple(substitutions),
+            satisfied_assumptions=tuple(payload.get("satisfied_assumptions") or ()),
+            schema=str(payload.get("schema", PLAN_ASSUME_GUARANTEE_SCHEMA)),
+            schema_version=str(
+                payload.get(
+                    "schema_version", PLAN_ASSUME_GUARANTEE_SCHEMA_VERSION
+                )
+            ),
+            substitution_requires_admitted_guarantees=bool(
+                payload.get("substitution_requires_admitted_guarantees", True)
+            ),
+            substitution_requires_satisfied_assumptions=bool(
+                payload.get("substitution_requires_satisfied_assumptions", True)
+            ),
+            completion_authoritative=bool(
+                payload.get("completion_authoritative", False)
+            ),
+        )
+
+
+def validate_plan_assume_guarantee(
+    value: Mapping[str, Any] | PlanAssumeGuarantee,
+) -> PlanAssumeGuarantee:
+    """Validate canonical assume-guarantee contract; no caller can self-admit it."""
+    contract = (
+        value
+        if isinstance(value, PlanAssumeGuarantee)
+        else PlanAssumeGuarantee.from_dict(value)
+    )
+    if contract.completion_authoritative:
+        raise ObligationError(
+            "assume-guarantee contract cannot grant completion authority"
+        )
+    if not contract.substitution_requires_admitted_guarantees:
+        raise ObligationError(
+            "assume-guarantee substitution requires current admitted guarantees"
+        )
+    if not contract.substitution_requires_satisfied_assumptions:
+        raise ObligationError(
+            "assume-guarantee substitution requires satisfied assumptions"
+        )
+    return contract
 
 
 @dataclass(frozen=True)
