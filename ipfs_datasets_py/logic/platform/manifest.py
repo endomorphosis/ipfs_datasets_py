@@ -306,6 +306,13 @@ DATASETS_AUTHORITY_BYPASS_INTERFACE: Final = (
 DATASETS_AUTHORITY_BYPASS_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/authority-bypass-binding@1"
 )
+# PCPR-090 Datasets binding to Accelerate-owned objective-to-release
+# threat model. Handshake identity only; live Supervisor.run stays typed
+# unavailable until admitted. LogicProviderProtocol@2 is not reminted.
+DATASETS_THREAT_MODEL_INTERFACE: Final = "DatasetsThreatModelBinding@1"
+DATASETS_THREAT_MODEL_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/threat-model-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -578,6 +585,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_GENERIC_MCP_CLIENT_INTERFACE: "1",
             DATASETS_OBJECTIVE_IDENTITY_PARITY_INTERFACE: "1",
             DATASETS_AUTHORITY_BYPASS_INTERFACE: "1",
+            DATASETS_THREAT_MODEL_INTERFACE: "1",
         }
     )
 
@@ -640,6 +648,7 @@ def _default_schema_roots() -> Mapping[str, str]:
                 DATASETS_OBJECTIVE_IDENTITY_PARITY_SCHEMA
             ),
             "datasets_authority_bypass": DATASETS_AUTHORITY_BYPASS_SCHEMA,
+            "datasets_threat_model": DATASETS_THREAT_MODEL_SCHEMA,
         }
     )
 
@@ -686,6 +695,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "generic_mcp_client": "1",
             "objective_identity_parity": "1",
             "authority_bypass": "1",
+            "threat_model": "1",
         }
     )
 
