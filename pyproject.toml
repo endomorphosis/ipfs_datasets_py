@@ -383,6 +383,18 @@ live-application = false
 live-client = false
 release-claim = false
 
+[tool.ipfs-datasets-py.promotion-or-non-promotion]
+schema = "ipfs_datasets_py/assurance/promotion-or-non-promotion-binding@1"
+interface = "DatasetsPromotionOrNonPromotionBinding@1"
+task-id = "PCPR-094"
+goal-id = "PCPR-G900"
+objective-kind = "declared_promotion_or_non_promotion_binding"
+portfolio-id = "portfolio:pcpr-v1"
+portfolio-version = "proof-carrying-platform-0.1.0"
+live-application = false
+live-client = false
+release-claim = false
+
 [tool.ipfs-accelerate-py.agent-supervisor.validation-dependencies]
 schema = "ipfs_accelerate_py/agent-supervisor/validation-dependencies@1"
 scope = "complete-authoritative-validation-environment"

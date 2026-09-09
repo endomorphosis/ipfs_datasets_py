@@ -344,6 +344,17 @@ DATASETS_RELEASE_CANDIDATE_GATE_INTERFACE: Final = (
 DATASETS_RELEASE_CANDIDATE_GATE_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/release-candidate-gate-binding@1"
 )
+# PCPR-094 Datasets binding to Accelerate-owned objective-to-release
+# promotion or honest non-promotion receipt. Handshake identity only;
+# live Supervisor.run stays typed unavailable until admitted.
+# LogicProviderProtocol@2 is not reminted. This binding does not claim
+# a closed PCPR release outcome.
+DATASETS_PROMOTION_OR_NON_PROMOTION_INTERFACE: Final = (
+    "DatasetsPromotionOrNonPromotionBinding@1"
+)
+DATASETS_PROMOTION_OR_NON_PROMOTION_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/promotion-or-non-promotion-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -620,6 +631,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_TRUSTED_COMPUTING_BASE_INTERFACE: "1",
             DATASETS_SECURITY_AND_CORRECTNESS_AUDIT_INTERFACE: "1",
             DATASETS_RELEASE_CANDIDATE_GATE_INTERFACE: "1",
+            DATASETS_PROMOTION_OR_NON_PROMOTION_INTERFACE: "1",
         }
     )
 
@@ -690,6 +702,9 @@ def _default_schema_roots() -> Mapping[str, str]:
                 DATASETS_SECURITY_AND_CORRECTNESS_AUDIT_SCHEMA
             ),
             "datasets_release_candidate_gate": DATASETS_RELEASE_CANDIDATE_GATE_SCHEMA,
+            "datasets_promotion_or_non_promotion": (
+                DATASETS_PROMOTION_OR_NON_PROMOTION_SCHEMA
+            ),
         }
     )
 
@@ -740,6 +755,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "trusted_computing_base": "1",
             "security_and_correctness_audit_package": "1",
             "release_candidate_gate": "1",
+            "promotion_or_non_promotion": "1",
         }
     )
 
