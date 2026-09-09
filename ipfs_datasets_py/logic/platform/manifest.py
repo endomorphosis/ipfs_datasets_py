@@ -323,6 +323,17 @@ DATASETS_TRUSTED_COMPUTING_BASE_INTERFACE: Final = (
 DATASETS_TRUSTED_COMPUTING_BASE_SCHEMA: Final = (
     "ipfs_datasets_py/assurance/trusted-computing-base-binding@1"
 )
+# PCPR-092 Datasets binding to Accelerate-owned objective-to-release
+# security and correctness audit package. Handshake identity only; live
+# Supervisor.run stays typed unavailable until admitted.
+# LogicProviderProtocol@2 is not reminted. Status is external_audit_ready,
+# never externally_audited.
+DATASETS_SECURITY_AND_CORRECTNESS_AUDIT_INTERFACE: Final = (
+    "DatasetsSecurityAndCorrectnessAuditPackageBinding@1"
+)
+DATASETS_SECURITY_AND_CORRECTNESS_AUDIT_SCHEMA: Final = (
+    "ipfs_datasets_py/assurance/security-and-correctness-audit-package-binding@1"
+)
 
 # ---------------------------------------------------------------------------
 # Interface / schema identities
@@ -597,6 +608,7 @@ def _default_interface_versions() -> Mapping[str, str]:
             DATASETS_AUTHORITY_BYPASS_INTERFACE: "1",
             DATASETS_THREAT_MODEL_INTERFACE: "1",
             DATASETS_TRUSTED_COMPUTING_BASE_INTERFACE: "1",
+            DATASETS_SECURITY_AND_CORRECTNESS_AUDIT_INTERFACE: "1",
         }
     )
 
@@ -663,6 +675,9 @@ def _default_schema_roots() -> Mapping[str, str]:
             "datasets_trusted_computing_base": (
                 DATASETS_TRUSTED_COMPUTING_BASE_SCHEMA
             ),
+            "datasets_security_and_correctness_audit_package": (
+                DATASETS_SECURITY_AND_CORRECTNESS_AUDIT_SCHEMA
+            ),
         }
     )
 
@@ -711,6 +726,7 @@ def _default_operation_versions() -> Mapping[str, str]:
             "authority_bypass": "1",
             "threat_model": "1",
             "trusted_computing_base": "1",
+            "security_and_correctness_audit_package": "1",
         }
     )
 
