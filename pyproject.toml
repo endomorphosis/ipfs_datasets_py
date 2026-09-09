@@ -148,7 +148,7 @@ target = "tests/doep/test_doep_011_define_objectivematerializationreceipt_contra
 validation-command-sha256 = "fb7627d7b866c84bda2fe798b8e82ed058c8e67aed984585e3161eebd84e95ab"
 requirements = ["pytest>=9.0.3,<10.0.0"]
 task = { board-namespace = "agent-supervisor-direct-objective-and-event-driven-planning-v1", canonical-task-cid = "sha256:b0c8a8584f596e06818fcaa1c625f117334b19930a5d8a620590eecd29f099c0", declared-output = "external/ipfs_datasets/tests/doep/test_doep_011_define_objectivematerializationreceipt_contract.py" }
-baseline = { state = "declared-output-absent" }
+baseline = { state = "present", sha256 = "6883fb2498ef6fba4e623036a30a2df8f3b3dce2d7a088180043dbfbda8613a0" }
 
 [[tool.ipfs-accelerate-agent-supervisor.project-dependency-preflight.targets]]
 target = "tests/doep/test_doep_021_add_deterministic_normalization.py"
